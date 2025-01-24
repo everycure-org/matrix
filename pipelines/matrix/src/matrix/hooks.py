@@ -39,39 +39,44 @@ class MLFlowHooks:
 
     @hook_impl
     def after_dataset_loaded(self, dataset_name, data, node):
+        """Logs used datasets to MLflow - their real names and dummy values.
+        Logging actual datasets is not possible / is difficult, due to the fact that the data has to be first
+        converted to mlflow.data.dataset.Dataset class. This works for common formats like pandas and spark
+        where the from_ functions exist, e.g.:
+
+        dataset = mlflow.data.from_pandas(data, name=dataset_name)
+        mlflow.log_input(dataset)
+
+        but our datasets are too heterogenous and can't be always parsed, e.g. matrix.datasets.graph.KnowledgeGraph
+        or would need a lot of hard-coded logic and would make this code brittle.
+        """
+
+        if not dataset_name.startswith("params:"):
+            dataset = mlflow.data.from_pandas(pd.DataFrame(), name=dataset_name)
+            mlflow.log_input(dataset)
+        return
+
         print(f"type is {type(data)}")
+        print(f"name is {dataset_name}")
         datatype = type(data)
         try:
-            if isinstance(data, ps.SparkDataFrame):
+            if isinstance(data, ps.DataFrame):
                 dataset = mlflow.data.from_spark(data, name=dataset_name)
                 print(f"Trying to log Spark DataFrame: {dataset_name}")
             elif isinstance(data, pd.DataFrame):
                 dataset = mlflow.data.from_pandas(data, name=dataset_name)
                 print(f"Trying to log Pandas DataFrame: {dataset_name}")
-            elif isinstance(data, np.ndarray):
-                data_df = pd.DataFrame(data)
-                dataset = mlflow.data.from_pandas(data_df, name=dataset_name)
-                print(f"Trying to log NumPy array as Pandas DataFrame: {dataset_name}")
             elif isinstance(data, list):
-                data_df = pd.DataFrame(data)
+                data_df = pd.DataFrame(data[0])
                 dataset = mlflow.data.from_pandas(data_df, name=dataset_name)
-                print(f"Trying to log list as Pandas DataFrame: {dataset_name}")
-            elif isinstance(data, dict):
-                data_df = (
-                    pd.DataFrame([data]) if not isinstance(next(iter(data.values())), list) else pd.DataFrame(data)
-                )
-                dataset = mlflow.data.from_pandas(data_df, name=dataset_name)
-                print(f"Trying to log dict as Pandas DataFrame: {dataset_name}")
-            elif isinstance(data, (int, str)):
-                data_df = pd.DataFrame({"value": [data]})
-                dataset = mlflow.data.from_pandas(data_df, name=dataset_name)
-                print(f"Trying to log int dataset as DataFrame: {dataset_name}")
+                print(f"Trying to log a list as Pandas DataFrame: {dataset_name}")
             else:
+                # batch.int.source_disease_list.input_bucketized@partitioned
                 print(f"Unsupported data type: {type(data)}. Cannot log dataset: {dataset_name}")
         except Exception as e:
             print(f"Failed to log dataset '{dataset_name}' of type '{type(data)}': {e}")
             raise
-        mlflow.log_input(dataset)
+        # mlflow.log_input(dataset)
 
     @hook_impl
     def after_context_created(self, context) -> None:
@@ -87,6 +92,7 @@ class MLFlowHooks:
         # NOTE: This piece of code ensures that every MLFlow experiment
         # is created by our Kedro pipeline with the right artifact root.
         mlflow.set_tracking_uri(cfg.server.mlflow_tracking_uri)
+        # mlflow.autolog()
         experiment_id = self._create_experiment(cfg.tracking.experiment.name, globs.mlflow_artifact_root)
 
         if cfg.tracking.run.name:
@@ -373,7 +379,7 @@ class ReleaseInfoHooks:
             f.write(json.dumps(release_info).encode("utf-8"))
 
     @hook_impl
-    def after_node_run(self, node: Node) -> None:
+    def before_node_run(self, node: Node) -> None:
         """Runs after the last node of the data_release pipeline"""
         # We chose to add this using the `after_node_run` hook, rather than
         # `after_pipeline_run`, because one does not know a priori which
