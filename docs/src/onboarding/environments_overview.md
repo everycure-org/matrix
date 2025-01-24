@@ -101,7 +101,7 @@ Further information may be found [here](https://docs.kedro.org/en/stable/noteboo
 The sample environment allows to run parts of the pipeline with a smaller dataset, sampled from the original data. This sample is stored in GCS, you can then run the pipeling with this sample data locally or in kubernetes.
 
 Two pipelines are defined in the `sample` environment:
-- `create_sample`: Creates the sample data and overrides the one currently in GCS.
+- `create_sample`: Creates the sample data, (over)writing it in GCS.
 - `test_sample`: Runs the pipeline from the embeddings step onwards with the sample data stored in GCS.
 
 ### Run with sample data locally
