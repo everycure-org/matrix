@@ -10,6 +10,7 @@ from joblib import Memory
 
 from matrix.inject import inject_object
 from matrix.pipelines.integration.filters import determine_most_specific_category
+from matrix.utils.metric_utilities import log_metric
 from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
 
 from .schema import BIOLINK_KG_EDGE_SCHEMA, BIOLINK_KG_NODE_SCHEMA
@@ -130,12 +131,13 @@ def _apply_transformations(
 ) -> ps.DataFrame:
     logger.info(f"Filtering dataframe with {len(transformations)} transformations")
     last_count = df.count()
-    logger.info(f"Number of rows before filtering: {last_count}")
+    log_metric(f"integration", f"Number of rows before filtering", last_count)
     for name, transformation in transformations.items():
         logger.info(f"Applying transformation: {name}")
         df = df.transform(transformation, **kwargs)
         new_count = df.count()
-        logger.info(f"Number of rows after transformation: {new_count}, cut out {last_count - new_count} rows")
+        log_metric(f"integration", f"Number of rows after transformation", new_count)
+        log_metric(f"integration", f"Number of rows removed after transformation", last_count - new_count)
         last_count = new_count
 
     return df
@@ -163,7 +165,7 @@ def filter_unified_kg_edges(
 
     # filter down edges to only include those that are present in the filtered nodes
     edges_count = edges.count()
-    logger.info(f"Number of edges before filtering: {edges_count}")
+    log_metric(f"integration", f"Number of edges before filtering", edges_count)
     edges = (
         edges.alias("edges")
         .join(nodes.alias("subject"), on=F.col("edges.subject") == F.col("subject.id"), how="inner")
@@ -190,7 +192,7 @@ def filter_nodes_without_edges(
     """
 
     # Construct list of edges
-    logger.info("Nodes before filtering: %s", nodes.count())
+    log_metric(f"integration", f"Number of node before filtering", nodes.count())
     edge_nodes = (
         edges.withColumn("id", F.col("subject"))
         .unionByName(edges.withColumn("id", F.col("object")))
@@ -199,7 +201,7 @@ def filter_nodes_without_edges(
     )
 
     nodes = nodes.alias("nodes").join(edge_nodes, on="id").select("nodes.*").persist()
-    logger.info("Nodes after filtering: %s", nodes.count())
+    log_metric(f"integration", f"Number of nodes after filtering", nodes.count())
     return nodes
 
 
@@ -224,7 +226,8 @@ def normalize_edges(
     """
     mapping_df = _format_mapping_df(mapping_df)
 
-    # edges are bit more complex, we need to map both the subject and object
+    # edges are a bit more complex, we need to map both the subject and object
+    log_metric(f"integration", f"Number of edges before normalizing", edges.count())
     edges = edges.join(
         mapping_df.withColumnsRenamed(
             {
@@ -250,6 +253,7 @@ def normalize_edges(
     edges = edges.withColumnsRenamed({"subject": "original_subject", "object": "original_object"}).withColumnsRenamed(
         {"subject_normalized": "subject", "object_normalized": "object"}
     )
+    log_metric(f"integration", f"Number of edges after normalizing", edges.count())
 
     return edges
 
