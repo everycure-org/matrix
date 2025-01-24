@@ -96,7 +96,7 @@ def submit(
 
 
     if not dry_run:
-        summarize_submission(run_name, namespace, pipeline, is_test, release_version, headless)
+        summarize_submission(run_name, namespace, pipeline, environment, is_test, release_version, headless)
    
     _submit(
         username=username,
@@ -193,12 +193,13 @@ def _submit(
 
 
 
-def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: bool, release_version: str, headless:bool):
+def summarize_submission(run_name: str, namespace: str, pipeline: str, environment: str, is_test: bool, release_version: str, headless:bool):
     console.print(Panel.fit(
         f"[bold green]About to submit workflow:[/bold green]\n"
         f"Run Name: {run_name}\n"
         f"Namespace: {namespace}\n"
         f"Pipeline: {pipeline}\n"
+        f"Environment: {environment}\n"
         f"Writing to test folder: {is_test}\n"
         f"Data Release Version: {release_version}\n",
         title="Submission Summary"
