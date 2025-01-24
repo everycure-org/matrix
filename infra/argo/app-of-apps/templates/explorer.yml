@@ -11,7 +11,7 @@ spec:
   source:
     path: infra/argo/applications/explorer
     repoURL: https://github.com/everycure-org/matrix-ui.git
-    targetRevision: infra # TODO: Switch to main
+    targetRevision: main
   syncPolicy:
     syncOptions:     # Sync options which modifies sync behavior
     - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
