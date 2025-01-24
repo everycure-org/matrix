@@ -316,11 +316,13 @@ class ReleaseInfoHooks:
         # Using lazy import to prevent circular import error
         from matrix.settings import DYNAMIC_PIPELINES_MAPPING
 
-        dataset_names = [item["name"] for item in DYNAMIC_PIPELINES_MAPPING["integration"]]
+        dataset_names = [item["name"] for item in DYNAMIC_PIPELINES_MAPPING["integration"] if item["integrate_in_kg"]]
         cls._datasets_used = dataset_names
 
     @staticmethod
     def extract_release_info() -> dict[str, str]:
+        # Currently we represent this data in docs with each datasource in its own column,
+        # we could also just output a dict of datasources if this list grows.
         info = {
             "Release Name": ReleaseInfoHooks._globals["versions"]["release"],
             "Robokop Version": ReleaseInfoHooks._globals["data_sources"]["robokop"]["version"]
@@ -358,7 +360,7 @@ class ReleaseInfoHooks:
         # `after_pipeline_run`, because one does not know a priori which
         # pipelines the (last) data release node is part of. With an
         # `after_node_run`, you can limit your filters easily.
-        if True:  # node.name == last_data_release_node_name:
+        if node.name == last_data_release_node_name:
             release_info = self.extract_release_info()
             try:
                 self.upload_to_storage(release_info)
