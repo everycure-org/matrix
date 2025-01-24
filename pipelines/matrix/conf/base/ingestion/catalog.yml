@@ -98,36 +98,36 @@ ingestion.raw.ec_medical_team.nodes@pandas:
   <<: [*_layer_raw, *_pandas_csv]
   filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec-medical-team.version}/nodes_conflated_raw.csv
 
-ingestion.raw.ec_medical_team.nodes@spark:
-  <<: [*_spark_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec-medical-team.version}/nodes_conflated_raw.csv
-  save_args:
-    mode: overwrite
-    header: True
-  load_args:
-    header: True
+# ingestion.raw.ec_medical_team.nodes@spark:
+#   <<: [*_spark_csv, *_layer_raw]
+#   filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec-medical-team.version}/nodes_conflated_raw.csv
+#   save_args:
+#     mode: overwrite
+#     header: True
+#   load_args:
+#     header: True
 
 ingestion.raw.ec_medical_team.edges@pandas:
   <<: [ *_layer_int, *_pandas_csv]
   filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec-medical-team.version}/edges_conflated_raw.csv
 
-ingestion.raw.ec_medical_team.edges@spark:
-  <<: [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec-medical-team.version}/edges_conflated_raw.csv
-  save_args:
-    mode: overwrite
-    header: True
-  load_args:
-    header: True
+# ingestion.raw.ec_medical_team.edges@spark:
+#   <<: [*_spark_csv, *_layer_int]
+#   filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec-medical-team.version}/edges_conflated_raw.csv
+#   save_args:
+#     mode: overwrite
+#     header: True
+#   load_args:
+#     header: True
 
 
-ingestion.int.ec_medical_team.nodes:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/ec_medical_team/translator/${globals:data_sources.ec-medical-team.version}/nodes_conflated_raw
+# ingestion.int.ec_medical_team.nodes:
+#   <<: [*_spark_parquet, *_layer_int]
+#   filepath: ${globals:paths.ingestion}/int/ec_medical_team/translator/${globals:data_sources.ec-medical-team.version}/nodes_conflated_raw
 
-ingestion.int.ec_medical_team.edges:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/ec_medical_team/translator/${globals:data_sources.ec-medical-team.version}/edges_conflated_raw
+# ingestion.int.ec_medical_team.edges:
+#   <<: [*_spark_parquet, *_layer_int]
+#   filepath: ${globals:paths.ingestion}/int/ec_medical_team/translator/${globals:data_sources.ec-medical-team.version}/edges_conflated_raw
 
 
 # -------------------------------------------------------------------------
@@ -138,25 +138,25 @@ ingestion.raw.ec_clinical_trails.nodes@pandas:
   <<: [*_layer_int, *_pandas_csv]
   filepath: ${globals:paths.raw}/clinical_trials_data/translator/${globals:data_sources.clinical-trial-data.version}/nodes_raw.tsv
 
-ingestion.raw.ec_clinical_trails.nodes@spark:
-  <<: [*_layer_int, *_spark_csv]
-  filepath: ${globals:paths.raw}/clinical_trials_data/translator/${globals:data_sources.clinical-trial-data.version}/nodes_raw.tsv
+# ingestion.raw.ec_clinical_trails.nodes@spark:
+#   <<: [*_layer_int, *_spark_csv]
+#   filepath: ${globals:paths.raw}/clinical_trials_data/translator/${globals:data_sources.clinical-trial-data.version}/nodes_raw.tsv
 
 ingestion.raw.ec_clinical_trails.edges@pandas:
   <<: [*_layer_int, *_pandas_csv]
   filepath: ${globals:paths.raw}/clinical_trials_data/translator/${globals:data_sources.clinical-trial-data.version}/edges_raw.tsv
 
-ingestion.raw.ec_clinical_trails.edges@spark:
-  <<: [*_layer_int, *_spark_csv]
-  filepath: ${globals:paths.raw}/clinical_trials_data/translator/${globals:data_sources.clinical-trial-data.version}/edges_raw.tsv
+# ingestion.raw.ec_clinical_trails.edges@spark:
+#   <<: [*_layer_int, *_spark_csv]
+#   filepath: ${globals:paths.raw}/clinical_trials_data/translator/${globals:data_sources.clinical-trial-data.version}/edges_raw.tsv
 
-ingestion.int.ec_clinical_trails.nodes:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/clinical_trials_data/translator/${globals:data_sources.ec-medical-team.version}/nodes_conflated_raw
+# ingestion.int.ec_clinical_trails.nodes:
+#   <<: [*_spark_parquet, *_layer_int]
+#   filepath: ${globals:paths.ingestion}/int/clinical_trials_data/translator/${globals:data_sources.ec-medical-team.version}/nodes_conflated_raw
 
-ingestion.int.ec_clinical_trails.edges:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/clinical_trials_data/translator/${globals:data_sources.ec-medical-team.version}/edges_conflated_raw
+# ingestion.int.ec_clinical_trails.edges:
+#   <<: [*_spark_parquet, *_layer_int]
+#   filepath: ${globals:paths.ingestion}/int/clinical_trials_data/translator/${globals:data_sources.ec-medical-team.version}/edges_conflated_raw
 
 
 
