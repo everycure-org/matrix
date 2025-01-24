@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,6 +13,7 @@ from langchain_openai import OpenAIEmbeddings
 from pyspark.ml.functions import array_to_vector, vector_to_array
 from pyspark.sql import SparkSession
 from pyspark.sql.types import ArrayType, DoubleType, StringType, StructField, StructType
+from pyspark.sql.window import Window
 
 # from refit.v1.core.inline_has_schema import has_schema
 # from refit.v1.core.inline_primary_key import primary_key
@@ -503,20 +504,27 @@ def create_node_embeddings(
     **transformer_kwargs,
 ) -> None:
     """
-    Function to create node embeddings, enriching the cache and processing batches.
+    Function to create node embeddings.
+    There's 3 steps:
+    1. Load embeddings from cache
+    2. Lookup and generate missing embeddings
+    3. Overwrite cache with updated embeddings
+
     Args:
         df: Input DataFrame containing nodes to process.
         cache: DataFrame holding cached embeddings.
         batch_size: Number of rows per batch.
+        transformer_config: Configuration for the transformer.
+        transformer_kwargs: Additional arguments for the transformer.
     """
-    # Instantiate the encoder
-    encoder_config = transformer_config["encoder"]
-    encoder = OpenAIEmbeddings(model=encoder_config["model"], timeout=encoder_config["timeout"])
+    # # Instantiate the encoder
+    # encoder_config = transformer_config["encoder"]
+    # encoder = OpenAIEmbeddings(model=encoder_config["model"], timeout=encoder_config["timeout"])
 
-    # Create the transformer
-    transformer = LangChainEncoder(
-        encoder=encoder, dimensions=transformer_config["dimensions"], timeout=encoder_config["timeout"]
-    )
+    # # Create the transformer
+    # transformer = LangChainEncoder(
+    #     encoder=encoder, dimensions=transformer_config["dimensions"], timeout=encoder_config["timeout"]
+    # )
 
     # Create a spark session
     spark = SparkSession.builder.appName("Empty_Dataframe").getOrCreate()
@@ -529,13 +537,19 @@ def create_node_embeddings(
 
     # Load embeddings from cache
     cached_df = load_embeddings_from_cache(df, cache).cache()
+
     # Determine number of batches and repartition the data
     num_elements = cached_df.count()
     num_batches = (num_elements + batch_size - 1) // batch_size
+    # Partitionate the dataframe
     partitioned_df = cached_df.repartition(num_batches)
     # Lookup and generate missing embeddings
-    enriched_df = lookup_missing_embeddings(partitioned_df, transformer, **transformer_kwargs)
-
+    enriched_df = lookup_missing_embeddings(partitioned_df, transformer_config, **transformer_kwargs)
+    # print("Cached df schema:" + str(cached_df.schema))
+    # bucketized_df = bucketize(cached_df, bucket_size=batch_size, columns=["name", "category"])
+    # print("Bucketized df schema:" + str(bucketized_df.schema))
+    # # Lookup and generate missing embeddings
+    # enriched_df = lookup_missing_embeddings(bucketized_df, transformer_config, **transformer_kwargs)
     # Overwrite cache with updated embeddings
     updated_cache = overwrite_cache(enriched_df)
     return enriched_df, updated_cache
@@ -555,7 +569,7 @@ def load_embeddings_from_cache(
     Returns:
         DataFrame enriched with cached embeddings.
     """
-
+    # TODO: what if the data is in another batch?
     return (
         cache.alias("cache")
         .filter(F.col("scope") == F.lit(scope))
@@ -568,7 +582,7 @@ def load_embeddings_from_cache(
     )
 
 
-def lookup_missing_embeddings(df: ps.DataFrame, transformer, **transformer_kwargs) -> ps.DataFrame:
+def lookup_missing_embeddings(df: ps.DataFrame, transformer_config, **transformer_kwargs) -> ps.DataFrame:
     """
     Generate embeddings for rows missing in the cache.
 
@@ -582,15 +596,18 @@ def lookup_missing_embeddings(df: ps.DataFrame, transformer, **transformer_kwarg
     """
     columns = list(df.columns)
     # Process data in parallel using mapPartitions
-    return df.rdd.mapPartitions(lambda it: enrich_embeddings(it, columns, transformer, **transformer_kwargs)).toDF()
+    return df.rdd.mapPartitions(
+        lambda it: enrich_embeddings(it, columns, transformer_config, **transformer_kwargs)
+    ).toDF()
 
 
-def enrich_embeddings(iterable, columns, transformer, **transformer_kwargs):
+async def enrich_embeddings(iterable, columns, transformer_config, **transformer_kwargs):
     """
     Process a batch of rows, generating embeddings for rows with null values.
 
     Args:
         iterable: Iterator over rows in the partition.
+        columns: List of column names in the DataFrame.
         transformer: Transformer to generate embeddings.
         transformer_kwargs: Additional arguments for the transformer.
 
@@ -602,7 +619,7 @@ def enrich_embeddings(iterable, columns, transformer, **transformer_kwargs):
         print("enrich_embeddings: Empty partition received.")
         return iter([])  # Handle empty partition
 
-    # Reconstruct DataFrame with correct column names
+    # Reconstruct DataFrame with correct column names, because partioning loses column names
     subdf = pd.DataFrame(rows, columns=columns)
 
     subdf_with_embed = subdf[subdf["embedding"].notnull()]
@@ -610,7 +627,11 @@ def enrich_embeddings(iterable, columns, transformer, **transformer_kwargs):
 
     # Generate embeddings for missing rows (example implementation)
     if not subdf_without_embed.empty:
-        subdf_without_embed = transform(subdf_without_embed, transformer, **transformer_kwargs)
+        # Instantiate the encoder locally within the partition
+        encoder_config = transformer_config["encoder"]
+        encoder = OpenAIEmbeddings(model=encoder_config["model"], timeout=encoder_config["timeout"])
+        transformer = LangChainEncoder(encoder=encoder, dimensions=transformer_config["dimensions"])
+        subdf_without_embed = await transform(subdf_without_embed, transformer, **transformer_kwargs)
     # Concatenate the results and return as an iterator
     return iter(pd.concat([subdf_with_embed, subdf_without_embed], axis=0).to_dict("records"))
 
@@ -638,5 +659,37 @@ def transform(df, transformer, **transformer_kwargs):
     Returns:
         DataFrame with generated embeddings.
     """
-    # print(f"Transformer's type: {type(transformer)}")
     return transformer.apply(df, **transformer_kwargs)
+
+
+# def bucketize(df: F.DataFrame, bucket_size: int, columns: Optional[List[str]] = None) -> pd.DataFrame:
+#     """Function to bucketize df in given number of buckets.
+
+#     Args:
+#         df: dataframe to bucketize
+#         bucket_size: size of the buckets
+#     Returns:
+#         Dataframe augmented with `bucket` column
+#     """
+
+#     if columns is None:
+#         columns = []
+
+#     # Retrieve number of elements
+#     num_elements = df.count()
+#     num_buckets = (num_elements + bucket_size - 1) // bucket_size
+
+#     # Construct df to bucketize
+#     spark_session: SparkSession = SparkSession.builder.getOrCreate()
+
+#     # Bucketize df
+#     buckets = spark_session.createDataFrame(
+#         data=[(bucket, bucket * bucket_size, (bucket + 1) * bucket_size) for bucket in range(num_buckets)],
+#         schema=["bucket", "min_range", "max_range"],
+#     )
+
+#     return (
+#         df.withColumn("row_num", F.row_number().over(Window.orderBy("id")) - F.lit(1))
+#         .join(buckets, on=[(F.col("row_num") >= (F.col("min_range"))) & (F.col("row_num") < F.col("max_range"))])
+#         .select("id", *columns, "bucket")
+#     )
