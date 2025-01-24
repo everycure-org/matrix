@@ -5,7 +5,7 @@ metadata:
   namespace: argocd
 spec:
   destination:
-    namespace: explorer
+    namespace: medical
     server: {{ .Values.spec.destination.server }}
   project: default
   source:
