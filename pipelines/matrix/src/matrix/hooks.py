@@ -46,7 +46,6 @@ class MLFlowHooks:
 
         cfg = OmegaConf.create(context.config_loader["mlflow"])
         globs = OmegaConf.create(context.config_loader["globals"])
-
         # Set tracking uri
         # NOTE: This piece of code ensures that every MLFlow experiment
         # is created by our Kedro pipeline with the right artifact root.
@@ -326,13 +325,13 @@ class ReleaseInfoHooks:
             "Release Name": ReleaseInfoHooks._globals["versions"]["release"],
             "Robokop Version": ReleaseInfoHooks._globals["data_sources"]["robokop"]["version"]
             if "robokop" in ReleaseInfoHooks._datasets_used
-            else "",
+            else "not in use",
             "RTX-KG2 Version": ReleaseInfoHooks._globals["data_sources"]["rtx-kg2"]["version"]
             if "rtx_kg2" in ReleaseInfoHooks._datasets_used
-            else "",
+            else "not in use",
             "EC Medical Team Version": ReleaseInfoHooks._globals["data_sources"]["ec-medical-team"]["version"]
             if "ec_medical_team" in ReleaseInfoHooks._datasets_used
-            else "",
+            else "not in use",
             "Topological Estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["_object"],
             "Embeddings Encoder": ReleaseInfoHooks._params["embeddings.node"]["encoder"]["encoder"]["model"],
             "BigQuery Link": ReleaseInfoHooks.build_bigquery_link(),
