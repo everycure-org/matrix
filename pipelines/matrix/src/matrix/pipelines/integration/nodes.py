@@ -7,6 +7,7 @@ import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 from joblib import Memory
+from pyspark.sql.window import Window
 
 from matrix.inject import inject_object
 from matrix.pipelines.integration.filters import determine_most_specific_category
@@ -251,7 +252,16 @@ def normalize_edges(
         {"subject_normalized": "subject", "object_normalized": "object"}
     )
 
-    return edges
+    return (
+        edges.withColumn(
+            "_rn",
+            F.row_number().over(
+                Window.partitionBy(["subject", "object", "predicate"]).orderBy(F.col("original_subject"))
+            ),
+        )
+        .filter(F.col("_rn") == 1)
+        .drop("_rn")
+    )
 
 
 def normalize_nodes(
@@ -272,4 +282,8 @@ def normalize_nodes(
         nodes.join(mapping_df, on="id", how="left")
         .withColumnsRenamed({"id": "original_id"})
         .withColumnsRenamed({"normalized_id": "id"})
+        # Ensure deduplicated
+        .withColumn("_rn", F.row_number().over(Window.partitionBy("id").orderBy(F.col("original_id"))))
+        .filter(F.col("_rn") == 1)
+        .drop("_rn")
     )

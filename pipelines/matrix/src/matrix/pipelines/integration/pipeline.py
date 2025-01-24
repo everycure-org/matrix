@@ -1,3 +1,5 @@
+from typing import List
+
 import pyspark.sql as ps
 from kedro.pipeline import Pipeline, node, pipeline
 
