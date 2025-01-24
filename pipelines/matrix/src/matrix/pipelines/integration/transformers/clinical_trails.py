@@ -23,7 +23,7 @@ class ClinicalTrialsTransformer(GraphTransformer):
         df = (
             nodes_df
             .distinct()
-            .groupBy("curie") # Removes duplicates in the id column where multiple names exist
+            .groupBy("curie") # Removes duplicates in the id column
             .agg(
                 f.collect_list("name").alias("all_names"),
                 f.first("name").alias("name")
@@ -50,14 +50,15 @@ class ClinicalTrialsTransformer(GraphTransformer):
             pubmed_mapping: pubmed mapping
         Returns:
             Transformed DataFrame.
-        """ ""
+        """
         # fmt: off
         df = (
             edges_df
             .distinct()
             .withColumnRenamed("drug_curie", "subject")
             .withColumnRenamed("disease_curie", "object")
-            .groupBy( # We do not aggregate outcome purposely to not lose information
+            .groupBy( # Removes duplicates in the subject and object columns
+                # We do not aggregate outcome columns purposely, to not lose information
                 "subject",
                 "object",
                 "significantly_better",
