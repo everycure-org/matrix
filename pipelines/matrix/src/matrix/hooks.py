@@ -268,14 +268,14 @@ class ReleaseInfoHooks:
     _kedro_context: Optional[KedroContext] = None
     _globals: Optional[dict] = None
     _params: Optional[dict] = None
-    _datasets_used: Optional[list] = None
 
     @classmethod
     def set_context(cls, context: KedroContext) -> None:
         """Utility class method that stores context in class as singleton."""
         cls._kedro_context = context
         cls._globals = context.config_loader["globals"]
-        cls._params = context.config_loader["parameters"]
+        cls._params = context.config_loader["parameters"]  # NOT NEEDED, IS ALREADY IN THE CONTEXT
+        print("pok")
 
     @hook_impl
     def after_context_created(self, context: KedroContext) -> None:
@@ -317,12 +317,33 @@ class ReleaseInfoHooks:
         from matrix.settings import DYNAMIC_PIPELINES_MAPPING
 
         dataset_names = [item["name"] for item in DYNAMIC_PIPELINES_MAPPING["integration"] if item["integrate_in_kg"]]
-        cls._datasets_used = dataset_names
+        return dataset_names
+
+    @classmethod
+    def extract_global_datasets(cls, hidden_datasets) -> None:
+        datasources_to_versions = {
+            k: v["version"] for k, v in ReleaseInfoHooks._globals["data_sources"].items() if k not in hidden_datasets
+        }
+        return datasources_to_versions
+
+    @classmethod
+    def mark_only_used_datasets(cls, global_datasets, datasets_used) -> None:
+        """Takes a list of globally defined datasets (and their versions) and compares it against datasets
+        actually used, as dictated by the settings.py file responsible for the generation of dynamic pipelines.
+        For global datasets that were excluded in the settings.py, a note is placed in the dict value that normally
+        features the version number."""
+
+        for global_dataset in global_datasets:
+            # Done due to inconsistencies in datasource syntax across the codebase.
+            global_dataset_variations = {global_dataset.replace("-", "_"), global_dataset.replace("_", "-")}
+            if not global_dataset_variations.intersection(set(datasets_used)):
+                global_datasets[global_dataset] = "excluded in dynamic pipeline"
 
     @staticmethod
     def extract_release_info() -> dict[str, str]:
         # Currently we represent this data in docs with each datasource in its own column,
         # we could also just output a dict of datasources if this list grows.
+
         info = {
             "Release Name": ReleaseInfoHooks._globals["versions"]["release"],
             "Robokop Version": ReleaseInfoHooks._globals["data_sources"]["robokop"]["version"]
@@ -354,13 +375,17 @@ class ReleaseInfoHooks:
             f.write(json.dumps(release_info).encode("utf-8"))
 
     @hook_impl
-    def after_node_run(self, node: Node) -> None:
+    def before_node_run(self, node: Node) -> None:
         """Runs after the last node of the data_release pipeline"""
         # We chose to add this using the `after_node_run` hook, rather than
         # `after_pipeline_run`, because one does not know a priori which
         # pipelines the (last) data release node is part of. With an
         # `after_node_run`, you can limit your filters easily.
-        if node.name == last_data_release_node_name:
+        if True:  # node.name == last_data_release_node_name:
+            hidden_datasets = frozenset([""])
+            global_datasets = self.extract_global_datasets(hidden_datasets)
+            datasets_used = self.extract_datasets_used()
+            self.mark_only_used_datasets(global_datasets, datasets_used)
             release_info = self.extract_release_info()
             try:
                 self.upload_to_storage(release_info)
