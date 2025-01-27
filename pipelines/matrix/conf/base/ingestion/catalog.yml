@@ -190,6 +190,10 @@ ingestion.raw.disease_list.nodes@spark:
     sep: "\t"
     header: true
     index: false
+  save_args:
+     sep: "\t"
+     header: true
+     index: false
 
 ingestion.raw.drug_list.nodes@pandas:
   <<: [*_layer_raw]
@@ -209,6 +213,10 @@ ingestion.raw.drug_list.nodes@spark:
     sep: "\t"
     header: true
     index: false
+  save_args:
+     sep: "\t"
+     header: true
+     index: false
 
 ingestion.int.drug_list.nodes:
   <<: [*_spark_parquet, *_layer_int]
