@@ -32,16 +32,6 @@ from .graph_algorithms import GDSGraphAlgorithm
 
 logger = logging.getLogger(__name__)
 
-# Define the schema for caching dataset
-cache_schema = StructType(
-    [
-        StructField("model", StringType(), nullable=False),
-        StructField("scope", StringType(), nullable=False),
-        StructField("id", StringType(), nullable=False),
-        StructField("embedding", ArrayType(DoubleType()), nullable=False),
-    ]
-)
-
 
 class GraphDS(GraphDataScience):
     """Adaptor class to allow injecting the GDS object.
@@ -484,21 +474,6 @@ def visualise_pca(nodes: ps.DataFrame, column_name: str) -> plt.Figure:
     return fig
 
 
-# @has_schema(
-#     schema={
-#         "id": "string",
-#         "model": "string",
-#         "scope": "string",
-#         "embedding": "array<double>",
-#     },
-#     output=0,
-# )
-# # NOTE: This validates the new cache shard does _not_
-# # contain duplicates. This only checks a _single_ shard though,
-# # hence why we're also validating the result dataframe below.
-# # Let's avoid using the primary key statement on the cache, as that
-# # might be a very heavy operation.
-# @primary_key(primary_key=["model", "scope", "id"], output=0)
 def create_node_embeddings(
     df: ps.DataFrame,
     cache: ps.DataFrame,
@@ -684,6 +659,8 @@ def upload_with_precondition(bucket_name, object_name, file_path, target_generat
     client = storage.Client()
 
     # Reference the bucket and blob
+    bucket_name = "mtrx-us-central1-hub-dev-storage"
+    object_name = "kedro/data/cache/embeddings_cache"
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(object_name)
 
