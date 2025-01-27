@@ -61,3 +61,5 @@ The input data contained 3.7M nodes, 18.8M edges and 53k ground truth edges.
 2. Sample nodes from the knowledge graph respective of the `knowledge_graph_nodes_sample_ratio` parameter.
 3. Define the sampled nodes as the union of the ground truth nodes and the knowledge graph nodes.
 4. Define the sampled edges as all the edges between the sampled nodes.
+
+![](../assets/img/groundtruthsampler_illustration.svg)
