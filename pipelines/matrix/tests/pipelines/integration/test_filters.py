@@ -30,21 +30,6 @@ def sample_predicates():
 
 
 @pytest.fixture
-def sample_biolink_categories():
-    # as returned from biolink-api
-    return [
-        {
-            "name": "NamedThing",
-            "parent": None,
-            "children": [
-                {"name": "chemical_entity"},
-                {"name": "drug"},
-            ],
-        }
-    ]
-
-
-@pytest.fixture
 def sample_edges(spark):
     return spark.createDataFrame(
         [
@@ -156,9 +141,9 @@ def test_biolink_deduplicate(spark, sample_edges):
     assertDataFrameEqual(result.select(*expected.columns), expected)
 
 
-def test_determine_most_specific_category(spark, sample_nodes, sample_biolink_categories):
+def test_determine_most_specific_category(spark, sample_nodes):
     # When applying the biolink deduplicate
-    result = filters.determine_most_specific_category(sample_nodes, sample_biolink_categories)
+    result = filters.determine_most_specific_category(sample_nodes)
     expected = spark.createDataFrame(
         [
             (
