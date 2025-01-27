@@ -101,13 +101,15 @@ def determine_most_specific_category(nodes: ps.DataFrame, biolink_categories_df:
     - then node will be assigned biolink:ChemicalEntity as most specific category
 
     """
-
-    labels_hierarchy = convert_biolink_hierarchy_json_to_df(
-        biolink_categories_df, "category", convert_to_pascal_case=True
-    )
-
     # pre-calculate the mappping table of ID -> most specific category
     mapping_table = nodes.select("id", "all_categories").withColumn("category", F.explode("all_categories"))
+    labels_hierarchy = (
+        mapping_table.withColumn(
+            "parents", F.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))(F.col("category"))
+        )
+        .select("category", "parents")
+        .distinct()
+    )
 
     mapping_table = (
         mapping_table.join(F.broadcast(labels_hierarchy), on="category", how="left")
