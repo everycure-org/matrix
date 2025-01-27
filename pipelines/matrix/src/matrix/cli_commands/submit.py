@@ -19,7 +19,7 @@ from rich.panel import Panel
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
 from matrix.git_utils import (
     BRANCH_NAME_REGEX,
-    get_current_git_branch,
+    git_tag_exists,
     has_dirty_git,
     has_legal_branch_name,
     has_unpushed_commits,
@@ -54,15 +54,28 @@ def cli():
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
-@click.option("--headless", is_flag=True, default=False, help="Disable prompts for confirmation")
+@click.option("--headless", is_flag=True, default=False, help="Skip confirmation prompt")
+@click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, quiet: bool, dry_run: bool, from_nodes: List[str], is_test: bool, headless:bool):
+def submit(
+    username: str, 
+    namespace: str, 
+    run_name: str, 
+    release_version: str, 
+    pipeline: str, 
+    quiet: bool, 
+    dry_run: bool, 
+    from_nodes: List[str], 
+    is_test: bool, 
+    headless: bool,
+    environment: str
+):
     """Submit the end-to-end workflow. """
     if not quiet:
         log.setLevel(logging.DEBUG)
 
     if pipeline in ('data_release', 'kg_release'):
-        abort_if_unmet_git_requirements()
+        abort_if_unmet_git_requirements(release_version)
 
     if pipeline not in kedro_pipelines.keys():
         raise ValueError("Pipeline requested for execution not found")
@@ -82,7 +95,9 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
     pipeline_obj.name = pipeline
 
 
-    summarize_submission(run_name, namespace, pipeline, is_test, release_version, headless)
+    if not dry_run:
+        summarize_submission(run_name, namespace, pipeline, environment, is_test, release_version, headless)
+   
     _submit(
         username=username,
         namespace=namespace,
@@ -94,21 +109,23 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
         template_directory=ARGO_TEMPLATES_DIR_PATH,
         allow_interactions=not headless,
         is_test=is_test,
+        environment=environment,
     )
 
 
 def _submit(
-        username: str, 
-        namespace: str, 
-        run_name: str, 
-        release_version: str,
-        pipeline_obj: Pipeline,
-        verbose: bool,
-        dry_run: bool, 
-        template_directory: Path,
-        allow_interactions: bool = True,
-        is_test: bool = False,
-    ) -> None:
+    username: str, 
+    namespace: str, 
+    run_name: str, 
+    release_version: str,
+    pipeline_obj: Pipeline,
+    verbose: bool,
+    dry_run: bool, 
+    environment: str,
+    template_directory: Path,
+    allow_interactions: bool = True,
+    is_test: bool = False,
+) -> None:
     """Submit the end-to-end workflow.
 
     This function contains redundancy.
@@ -130,16 +147,17 @@ def _submit(
         verbose (bool): If True, enable verbose output.
         dry_run (bool): If True, do not submit the workflow.
         template_directory (Path): The directory containing the Argo template.
-        allow_interactions (bool): If True, allow prompts for confirmation
-        is_test (bool): If True, submit to test folder, not release folder
+        allow_interactions (bool): If True, allow prompts for confirmation.
+        is_test (bool): If True, submit to test folder, not release folder.
     """
     
     try:
         console.rule("[bold blue]Submitting Workflow")
 
-        check_dependencies(verbose=verbose)
+        if not can_talk_to_kubernetes():
+            raise EnvironmentError("Cannot communicate with Kubernetes")
 
-        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, is_test=is_test, )
+        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, environment, is_test=is_test, )
 
         file_path = save_argo_template(argo_template, template_directory)
 
@@ -174,12 +192,14 @@ def _submit(
         sys.exit(1)
 
 
-def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: bool, release_version: str, headless: bool):
+
+def summarize_submission(run_name: str, namespace: str, pipeline: str, environment: str, is_test: bool, release_version: str, headless:bool):
     console.print(Panel.fit(
         f"[bold green]About to submit workflow:[/bold green]\n"
         f"Run Name: {run_name}\n"
         f"Namespace: {namespace}\n"
         f"Pipeline: {pipeline}\n"
+        f"Environment: {environment}\n"
         f"Writing to test folder: {is_test}\n"
         f"Data Release Version: {release_version}\n",
         title="Submission Summary"
@@ -187,7 +207,7 @@ def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: 
     console.print("Reminder: A data release should only be submitted once and not overwritten.\n"
                   "If you need to make changes, please make this part of the next release.\n"
                   "Experiments (modelling pipeline) are nested under the release and can be overwritten.\n\n")
-
+    
     if not headless:
         if not click.confirm("Are you sure you want to submit the workflow?", default=False):
             raise click.Abort()
@@ -265,79 +285,102 @@ def command_exists(command: str) -> bool:
     return run_subprocess(f"which {command}", check=False).returncode == 0
 
 
-def check_dependencies(verbose: bool):
-    """Check and set up gcloud and kubectl dependencies.
+def can_talk_to_kubernetes(
+    project: str = "mtrx-hub-dev-3of",
+    region:  str = "us-central1",
+    cluster_name: str = "compute-cluster",
+) -> bool:
+    """Check if one can communicate with the Kubernetes cluster, using the kubectl CLI.
 
-    This function verifies that gcloud and kubectl are installed and properly configured.
-    If kubectl is not installed, it attempts to install it using gcloud components.
-
-    Args:
-        verbose (bool): If True, provides more detailed output.
+    If kubectl is not installed, it attempts to install and configure it using gcloud components.
 
     Raises:
         EnvironmentError: If gcloud is not installed or kubectl cannot be configured.
     """
-    console.print("Checking dependencies...")
 
-    if not command_exists("gcloud"):
-        raise EnvironmentError("gcloud is not installed. Please install it first.")
+    def run_gcloud_cmd(s: str, timeout: int = 300) -> None:
+        try:
+            subprocess.check_output(s, shell=True, stderr=subprocess.PIPE, timeout=timeout)
+        except FileNotFoundError as e:
+            raise EnvironmentError("gcloud is not installed. Please install it first.") from e
+        except subprocess.TimeoutExpired as e:
+            raise RuntimeError(f"The command '{s}' took more than {timeout}s to complete.") from e
+        except subprocess.CalledProcessError as e:
+            if b"You do not currently have an active account selected" in e.stderr:
+                log.warning(
+                    "You're not using an authenticated account to interact with the gcloud CLI. Attempting to log you in…")
+                run_gcloud_cmd("gcloud auth login")
+                log.info("Logged in to GCS.")
+                subprocess.check_output(s, shell=True, stderr=subprocess.PIPE, timeout=timeout)
+            else:
+                pretty_report_on_error(e)
 
-    if not command_exists("kubectl"):
-        console.print("kubectl is not installed. Installing it now...")
-        run_subprocess("gcloud components install kubectl")
+    def refresh_kube_credentials() -> None:
+        log.debug("Refreshing kubectl credentials…")
+        run_gcloud_cmd(
+            f"gcloud container clusters get-credentials {cluster_name} --project {project} --region {region}")
 
-    # Authenticate gcloud
-    active_account = (
-        run_subprocess(
-            "gcloud auth list --filter=status:ACTIVE --format=value'(ACCOUNT)'",
-        )
-        .stdout.strip()
-        .split("\n")[0]
-    )
+    def get_kubernetes_context() -> str:
+        return subprocess.check_output(["kubectl", "config", "current-context"], text=True).strip()
 
-    if not active_account:
-        console.print("Authenticating gcloud...")
-        run_subprocess("gcloud auth login", stream_output=verbose)
+    def use_kubernetes_context(context: str) -> subprocess.CompletedProcess[bytes]:
+        log.info(f"Switching kubernetes context to '{context}'")
+        return subprocess.run(["kubectl", "config", "use-context", context], check=True, stdout=subprocess.DEVNULL)
 
-    # Configure kubectl
-    project = "mtrx-hub-dev-3of"
-    region = "us-central1"
-    cluster = "compute-cluster"
+    def pretty_report_on_error(e: subprocess.CalledProcessError):
+        try:
+            raise EnvironmentError(f"Calling '{e.cmd}' failed, with stderr: '{e.stderr}'") from e
+        except EnvironmentError:
+            console.print_exception()
+            raise
 
-    # Check if kubectl is already authenticated
+    right_kube_context = "_".join(("gke", project, region, cluster_name))
     try:
-        run_subprocess("kubectl get nodes", stream_output=verbose)
-        console.print("[green]✓[/green] kubectl authenticated")
-    except subprocess.CalledProcessError:
-        console.print("Authenticating kubectl...")
-        run_subprocess(
-            f"gcloud container clusters get-credentials {cluster} --project {project} --region {region}",
-            stream_output=verbose,
-        )
-        console.print("[green]✓[/green] kubectl authenticated")
+        current_context = get_kubernetes_context()
+    except FileNotFoundError:
+        log.warning("kubectl is not installed. Attempting to install it now…")
+        run_gcloud_cmd("gcloud components install kubectl")
+        current_context = get_kubernetes_context()
 
-    # Verify kubectl
+    if current_context != right_kube_context:
+        log.debug(f"Current context ({current_context}) does not match intended ({right_kube_context}).")
+        use_kubernetes_context(right_kube_context)
+
+    test_cmd = "kubectl get nodes"
+    # Drop the stdout of the test_cmd, but track any errors, so they can be logged
     try:
-        run_subprocess("kubectl get ns", stream_output=verbose)
-    except subprocess.CalledProcessError:
-        raise EnvironmentError(
-            "kubectl is not working. Please check your configuration."
-        )
-    console.print("[green]✓[/green] Dependencies checked")
+        subprocess.run(test_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=True)
+    except subprocess.CalledProcessError as e:
+        log.debug(f"'{test_cmd}' failed. Reason: {e.stderr}")
+        if b"Unauthorized" in e.stderr:
+            refresh_kube_credentials()
+            subprocess.run(test_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=True)
+        else:
+            pretty_report_on_error(e)
 
+    console.print("[green]✓[/green] kubectl authenticated")
+    return True
 
 
 def build_push_docker(username: str, verbose: bool):
     """Build and push Docker image."""
     console.print("Building Docker image...")
-    run_subprocess(f"make docker_push TAG={username}", stream_output=True)
+    run_subprocess(f"make docker_push TAG={username}", stream_output=False)
     console.print("[green]✓[/green] Docker image built and pushed")
 
 
-def build_argo_template(run_name: str, release_version: str, username: str, namespace: str, pipeline_obj: Pipeline, is_test: bool, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
+def build_argo_template(
+    run_name: str, 
+    release_version: str, 
+    username: str, 
+    namespace: str, 
+    pipeline_obj: Pipeline, 
+    environment: str,
+    is_test: bool, 
+    default_execution_resources: Optional[ArgoResourceConfig] = None
+) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
-
     matrix_root = Path(__file__).parent.parent.parent.parent
     metadata = bootstrap_project(matrix_root)
     package_name = metadata.package_name
@@ -358,6 +401,7 @@ def build_argo_template(run_name: str, release_version: str, username: str, name
         package_name=package_name,
         release_folder_name=release_folder_name,
         pipeline=pipeline_obj,
+        environment=environment,
         default_execution_resources=default_execution_resources,
     )
     console.print("[green]✓[/green] Argo template built")
@@ -422,6 +466,7 @@ def submit_workflow(run_name: str, namespace: str, verbose: bool):
         "-o json"
     ])
     console.print(f"Running submit command: [blue]{cmd}[/blue]")
+    console.print(f"\nSee your workflow in the ArgoCD UI here: [blue]https://argo.platform.dev.everycure.org/workflows/argo-workflows/{run_name}[/blue]")
     result = run_subprocess(cmd)
     job_name = json.loads(result.stdout).get("metadata", {}).get("name")
 
@@ -459,7 +504,7 @@ def get_run_name(run_name: Optional[str]) -> str:
     sanitized_name = re.sub(r"[^a-zA-Z0-9-]", "-", unsanitized_name)
     return sanitized_name
 
-def abort_if_unmet_git_requirements():
+def abort_if_unmet_git_requirements(release_version: str) -> None:
     """
     Validates the current Git repository:
     1. The current Git branch must be either 'main' or 'master'.
@@ -477,7 +522,10 @@ def abort_if_unmet_git_requirements():
         errors.append(f"Your branch name doesn't match the regex: {BRANCH_NAME_REGEX}")
 
     if has_unpushed_commits():
-        errors.append(f"You have commits not pushed to remote")
+        errors.append(f"You have commits not pushed to remote.")
+
+    if git_tag_exists(release_version):
+        errors.append(f"The git tag for the release version you specified already exists.")
 
     if errors:
         error_list = "\n".join(errors)

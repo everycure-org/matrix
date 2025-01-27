@@ -12,17 +12,17 @@ def edges_df(spark):
         [
             StructField("subject", StringType(), True),
             StructField("object", StringType(), True),
-            StructField("primary_knowledge_source", StringType(), True),
+            StructField("aggregator_knowledge_source", ArrayType(StringType()), True),
             StructField("publications", ArrayType(StringType()), True),
         ]
     )
 
     data = [
         # Semmed edges
-        ("curie1", "curie2", "infores:semmeddb", ["pub1", "pub2", "pub3"]),
-        ("curie3", "curie4", "infores:semmeddb", ["pub4"]),
+        ("curie1", "curie2", ["infores:semmeddb"], ["pub1", "pub2", "pub3"]),
+        ("curie3", "curie4", ["infores:semmeddb"], ["pub4"]),
         # Non-semmed edge
-        ("curie5", "curie6", "other_source", ["pub7", "pub8"]),
+        ("curie5", "curie6", ["other_source"], ["pub7", "pub8"]),
     ]
 
     return spark.createDataFrame(data, schema)
@@ -49,7 +49,10 @@ def test_filter_semmed_publication_threshold(edges_df, curie_to_pmids):
     )
 
     # Check that edges with fewer publications than threshold are filtered out
-    semmed_edges = result.filter(f.col("primary_knowledge_source") == f.lit("infores:semmeddb"))
+    semmed_edges = result.filter(
+        (f.size(f.col("aggregator_knowledge_source")) == 1)
+        & (f.col("aggregator_knowledge_source").getItem(0) == f.lit("infores:semmeddb"))
+    )
     assert semmed_edges.filter(f.size("publications") < 2).count() == 0
 
 
@@ -64,5 +67,14 @@ def test_filter_semmed_preserves_non_semmed(edges_df, curie_to_pmids):
     )
 
     # Check that non-semmed edges are preserved
-    non_semmed = result.filter(f.col("primary_knowledge_source") != f.lit("infores:semmeddb"))
-    assert non_semmed.count() == edges_df.filter(f.col("primary_knowledge_source") != f.lit("infores:semmeddb")).count()
+    non_semmed = result.filter(
+        (f.size(f.col("aggregator_knowledge_source")) == 1)
+        & (f.col("aggregator_knowledge_source").getItem(0) == f.lit("infores:semmeddb"))
+    )
+    assert (
+        non_semmed.count()
+        == edges_df.filter(
+            ~(f.size(f.col("aggregator_knowledge_source")) == 1)
+            & (f.col("aggregator_knowledge_source").getItem(0) == f.lit("infores:semmeddb"))
+        ).count()
+    )

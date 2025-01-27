@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 import pyspark.sql as ps
@@ -38,7 +38,9 @@ def enrich_embeddings(
     )
 
 
-def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_trials: pd.DataFrame) -> pd.DataFrame:
+def _add_flag_columns(
+    matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_trials: Optional[pd.DataFrame] = None
+) -> pd.DataFrame:
     """Adds boolean columns flagging known positives and known negatives.
 
     Args:
@@ -65,14 +67,15 @@ def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_
     matrix["is_known_positive"] = create_flag_column(test_pos_pairs)
     matrix["is_known_negative"] = create_flag_column(test_neg_pairs)
 
-    # Flag clinical trials data
-    clinical_trials = clinical_trials.rename(columns={"drug_curie": "source", "disease_curie": "target"})
-    matrix["trial_sig_better"] = create_flag_column(clinical_trials[clinical_trials["significantly_better"] == 1])
-    matrix["trial_non_sig_better"] = create_flag_column(
-        clinical_trials[clinical_trials["non_significantly_better"] == 1]
-    )
-    matrix["trial_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["non_significantly_worse"] == 1])
-    matrix["trial_non_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["significantly_worse"] == 1])
+    # TODO: Need to make this dynamic
+    # # Flag clinical trials data
+    # clinical_trials = clinical_trials.rename(columns={"drug_curie": "source", "disease_curie": "target"})
+    # matrix["trial_sig_better"] = create_flag_column(clinical_trials[clinical_trials["significantly_better"] == 1])
+    # matrix["trial_non_sig_better"] = create_flag_column(
+    #     clinical_trials[clinical_trials["non_significantly_better"] == 1]
+    # )
+    # matrix["trial_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["non_significantly_worse"] == 1])
+    # matrix["trial_non_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["significantly_worse"] == 1])
 
     return matrix
 
@@ -98,7 +101,7 @@ def generate_pairs(
     drugs: pd.DataFrame,
     diseases: pd.DataFrame,
     graph: KnowledgeGraph,
-    clinical_trials: pd.DataFrame,
+    clinical_trials: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """Function to generate matrix dataset.
 
@@ -396,12 +399,12 @@ def _flag_known_pairs(top_pairs: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: DataFrame with added flags for known positive and negative pairs.
     """
-    top_pairs["is_known_positive"] = (
-        top_pairs["is_known_positive"] | top_pairs["trial_sig_better"] | top_pairs["trial_non_sig_better"]
-    )
-    top_pairs["is_known_negative"] = (
-        top_pairs["is_known_negative"] | top_pairs["trial_sig_worse"] | top_pairs["trial_non_sig_worse"]
-    )
+    top_pairs["is_known_positive"] = top_pairs[
+        "is_known_positive"
+    ]  # | top_pairs["trial_sig_better"] | top_pairs["trial_non_sig_better"]
+    top_pairs["is_known_negative"] = top_pairs[
+        "is_known_negative"
+    ]  # | top_pairs["trial_sig_worse"] | top_pairs["trial_non_sig_worse"]
     return top_pairs
 
 
