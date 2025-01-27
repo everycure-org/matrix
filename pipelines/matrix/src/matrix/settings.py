@@ -14,7 +14,7 @@ from kedro_mlflow.framework.hooks import MlflowHook
 import matrix.hooks as matrix_hooks
 from matrix.utils.hook_utilities import determine_hooks_to_execute, generate_dynamic_pipeline_mapping
 
-from .resolvers import cast_to_int, env, merge_dicts
+from .resolvers import cast_to_int, env, if_null, merge_dicts
 
 hooks = {
     "node_timer": matrix_hooks.NodeTimerHooks(),
@@ -100,7 +100,13 @@ CONFIG_LOADER_ARGS = {
             "**/parameters*/**",
         ],
     },
-    "custom_resolvers": {"merge": merge_dicts, "oc.env": env, "oc.int": cast_to_int, "setting": _load_setting},
+    "custom_resolvers": {
+        "merge": merge_dicts,
+        "oc.env": env,
+        "oc.int": cast_to_int,
+        "setting": _load_setting,
+        "if_null": if_null,
+    },
 }
 
 # Class that manages Kedro's library components.
