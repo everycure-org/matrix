@@ -15,7 +15,8 @@ from graphdatascience import GraphDataScience
 from langchain_openai import OpenAIEmbeddings
 from pyspark.ml.functions import array_to_vector, vector_to_array
 from pyspark.sql import Row, SparkSession
-from pyspark.sql.types import ArrayType, DoubleType, StringType, StructField, StructType
+from pyspark.sql.functions import col, concat_ws
+from pyspark.sql.types import ArrayType, FloatType, StringType, StructField, StructType
 from pyspark.sql.window import Window
 
 # from refit.v1.core.inline_has_schema import has_schema
@@ -498,7 +499,7 @@ def create_node_embeddings(
         max_input_len: Maximum length of input features.
     """
     # Load embeddings from cache
-    cached_df = load_embeddings_from_cache(df, cache).cache()
+    cached_df = load_embeddings_from_cache(df, cache, input_features, max_input_len).cache()
     new_fields = [field for field in cached_df.schema.fields if field.name not in input_features]
     new_schema = StructType(new_fields)
     # Determine number of batches and repartition the data
@@ -513,14 +514,19 @@ def create_node_embeddings(
     # Overwrite cache with updated embeddings
     updated_cache = overwrite_cache(enriched_df)
     enriched_df = enriched_df.drop("model", "scope")
-    bucket_name = "mtrx-us-central1-hub-dev-storage"
-    object_name = "kedro/data/cache/embeddings_cache"
-    upload_with_generation_check(bucket_name, object_name, file_path)
+    # bucket_name = "mtrx-us-central1-hub-dev-storage"
+    # object_name = "kedro/data/cache/embeddings_cache"
+    # upload_with_generation_check(bucket_name, object_name, file_path)
     return enriched_df, updated_cache
 
 
 def load_embeddings_from_cache(
-    dataframe: ps.DataFrame, cache: ps.DataFrame, model: str = "gpt-4", scope: str = "rtx_kg2", id_column: str = "id"
+    dataframe: ps.DataFrame,
+    cache: ps.DataFrame,
+    input_features,
+    max_input_len,
+    model: str = "gpt-4",
+    scope: str = "rtx_kg2",
 ) -> ps.DataFrame:
     """
     Enrich the dataframe with cached embeddings.
@@ -533,11 +539,15 @@ def load_embeddings_from_cache(
     Returns:
         DataFrame enriched with cached embeddings.
     """
+    dataframe = dataframe.withColumn(
+        "text_to_embed", concat_ws("", *[col(column) for column in input_features]).substr(1, max_input_len)
+    )
+
     return (
         cache.alias("cache")
         .filter(F.col("scope") == F.lit(scope))
         .filter(F.col("model") == F.lit(model))
-        .join(dataframe.alias("df"), on=[F.col(f"df.{id_column}") == F.col("cache.id")], how="right")
+        .join(dataframe.alias("df"), on=[F.col("df.text_to_embed") == F.col("cache.text_to_embed")], how="right")
         .select(
             *[F.col(f"df.{col}") for col in dataframe.columns],  # Select all original dataframe columns
             F.col("cache.embedding").alias("embedding"),  # Add the embedding from cache

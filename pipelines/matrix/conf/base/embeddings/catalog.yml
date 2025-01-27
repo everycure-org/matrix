@@ -119,7 +119,7 @@ embeddings.cache: &_cache
             _object: pyspark.sql.types.StringType
           nullable: False
         - _object: pyspark.sql.types.StructField
-          name: id
+          name: text_to_embed
           dataType: 
             _object: pyspark.sql.types.StringType
           nullable: False
@@ -128,7 +128,7 @@ embeddings.cache: &_cache
           dataType: 
             _object: pyspark.sql.types.ArrayType
             elementType: 
-              _object: pyspark.sql.types.DoubleType
+              _object: pyspark.sql.types.FloatType
           nullable: False
   save_args:
     mode: overwrite
