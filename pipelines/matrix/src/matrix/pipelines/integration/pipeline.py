@@ -1,8 +1,13 @@
+from typing import Dict
+
 import pyspark.sql as ps
 from kedro.pipeline import Pipeline, node, pipeline
+from pyspark.sql import functions as F
+from pyspark.sql import types as T
 
 from matrix import settings
 from matrix.pipelines.batch import pipeline as batch_pipeline
+from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
 
 from . import nodes
 
@@ -41,7 +46,8 @@ def _create_integration_pipeline(source: str, nodes_only: bool = False) -> Pipel
                     outputs=f"integration.int.{source}.nodes.norm@spark",
                     name=f"normalize_{source}_nodes",
                 ),
-            ]
+            ],
+            tags=source,
         )
     )
 
@@ -73,25 +79,69 @@ def _create_integration_pipeline(source: str, nodes_only: bool = False) -> Pipel
                         outputs=f"integration.int.{source}.edges.norm@spark",
                         name=f"normalize_{source}_edges",
                     ),
-                ]
+                ],
+                tags=source,
             )
         )
 
     return sum(pipelines)
 
 
-def format_drugmech(df: ps.DataFrame):
-    breakpoint()
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "id": Column(T.StringType(), nullable=False),
+        },
+        unique=["id"],
+    ),
+    df_name="nodes",
+)
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "graph_id": Column(T.StringType(), nullable=False),
+            "subject": Column(T.StringType(), nullable=False),
+            "object": Column(T.StringType(), nullable=False),
+            "predicate": Column(T.StringType(), nullable=False),
+        },
+        unique=["graph_id", "subject", "predicate", "object"],
+    ),
+    df_name="edges",
+)
+def format_drugmech(df: ps.DataFrame) -> Dict[str, ps.DataFrame]:
+    edges = (
+        df.withColumn("graph_id", F.col("graph").getItem("_id"))
+        .select("graph_id", F.explode("links").alias("links"))
+        .withColumn("subject", F.col("links").getItem("source"))
+        .withColumn("object", F.col("links").getItem("target"))
+        .withColumn("predicate", F.col("links").getItem("key"))
+        .select("graph_id", "subject", "predicate", "object")
+        .distinct()
+    )
+
+    nodes = (
+        edges.withColumn("id", F.col("subject")).union(edges.withColumn("id", F.col("object"))).select("id").distinct()
+    )
+
+    return {"nodes": nodes, "edges": edges}
 
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
 
     pipelines = []
+
     # Construct drugmech
     pipelines.append(
         pipeline(
-            [node(func=format_drugmech, inputs=["ingestion.raw.drugmech@spark"], outputs=None, name="format_drugmech")]
+            [
+                node(
+                    func=format_drugmech,
+                    inputs=["ingestion.raw.drugmech@spark"],
+                    outputs={"nodes": "ingestion.int.drugmech.nodes", "edges": "ingestion.int.drugmech.edges"},
+                    name="format_drugmech",
+                )
+            ]
         )
     )
 
