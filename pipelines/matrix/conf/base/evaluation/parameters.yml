@@ -28,9 +28,9 @@ evaluation.disease_specific:
       _object: matrix.datasets.pair_generator.MatrixTestDiseases
       positive_columns: 
         - "is_known_positive"
-      removal_columns:
-        - "trial_sig_better"
-        - "trial_non_sig_better"
+      # removal_columns:
+      #   - "trial_sig_better"
+      #   - "trial_non_sig_better"
     evaluation:
       _object: matrix.pipelines.evaluation.evaluation.SpecificRanking 
       specific_col: "target"
@@ -51,9 +51,9 @@ evaluation.full_matrix:
       _object: matrix.datasets.pair_generator.FullMatrixPositives
       positive_columns: 
         - "is_known_positive"
-      removal_columns:
-        - "trial_sig_better"
-        - "trial_non_sig_better"
+      # removal_columns:
+      #   - "trial_sig_better"
+      #   - "trial_non_sig_better"
     evaluation:
       _object: matrix.pipelines.evaluation.evaluation.FullMatrixRanking 
       rank_func_lst: 
@@ -75,9 +75,9 @@ evaluation.full_matrix_negatives:
       _object: matrix.datasets.pair_generator.FullMatrixPositives
       positive_columns: 
         - "is_known_negative"
-      removal_columns:
-        - "trial_sig_worse"
-        - "trial_non_sig_worse"
+      # removal_columns:
+      #   - "trial_sig_worse"
+      #   - "trial_non_sig_worse"
     evaluation:
       _object: matrix.pipelines.evaluation.evaluation.FullMatrixRanking 
       rank_func_lst: 
@@ -93,70 +93,70 @@ evaluation.full_matrix_negatives:
 ## Clinical trial versions. These use ground truth provided by results of clinical trials occurring after March 2023 (release date of RTX-KG2 v2.7.3).
 
 # Threshold-based classification metrics for ground truth data (clinical trials version)
-evaluation.simple_classification_trials:
-  evaluation_options:
-    generator:
-      _object: matrix.datasets.pair_generator.GroundTruthTestPairs
-      positive_columns: 
-        - "trial_sig_better"
-        - "trial_non_sig_better"
-      negative_columns:
-        - "trial_sig_worse"
-        - "trial_non_sig_worse"
-    evaluation:
-      _object: matrix.pipelines.evaluation.evaluation.DiscreteMetrics
-      metrics:
-        - _object: sklearn.metrics.accuracy_score
-        - _object: sklearn.metrics.f1_score
-      score_col_name: *score-col
-      threshold: 0.5
+# evaluation.simple_classification_trials:
+#   evaluation_options:
+#     generator:
+#       _object: matrix.datasets.pair_generator.GroundTruthTestPairs
+#       positive_columns: 
+#         - "trial_sig_better"
+#         - "trial_non_sig_better"
+#       negative_columns:
+#         - "trial_sig_worse"
+#         - "trial_non_sig_worse"
+#     evaluation:
+#       _object: matrix.pipelines.evaluation.evaluation.DiscreteMetrics
+#       metrics:
+#         - _object: sklearn.metrics.accuracy_score
+#         - _object: sklearn.metrics.f1_score
+#       score_col_name: *score-col
+#       threshold: 0.5
 
-# Disease-specific ranking (clinical trials version)
-evaluation.disease_specific_trials:
-  evaluation_options:
-    generator:
-      _object: matrix.datasets.pair_generator.MatrixTestDiseases
-      positive_columns: 
-        - "trial_sig_better"
-        - "trial_non_sig_better"
-      removal_columns: 
-        - "is_known_positive"
-    evaluation:
-      _object: matrix.pipelines.evaluation.evaluation.SpecificRanking
-      specific_col: "target"
-      rank_func_lst: 
-        - _object: matrix.pipelines.evaluation.named_metric_functions.MRR
-        - _object:  matrix.pipelines.evaluation.named_metric_functions.HitK
-          k: 2
-        - _object:  matrix.pipelines.evaluation.named_metric_functions.HitK
-          k: 10
-        - _object:  matrix.pipelines.evaluation.named_metric_functions.HitK
-          k: 100
-      score_col_name: *score-col
+# # Disease-specific ranking (clinical trials version)
+# evaluation.disease_specific_trials:
+#   evaluation_options:
+#     generator:
+#       _object: matrix.datasets.pair_generator.MatrixTestDiseases
+#       positive_columns: 
+#         - "trial_sig_better"
+#         - "trial_non_sig_better"
+#       removal_columns: 
+#         - "is_known_positive"
+#     evaluation:
+#       _object: matrix.pipelines.evaluation.evaluation.SpecificRanking
+#       specific_col: "target"
+#       rank_func_lst: 
+#         - _object: matrix.pipelines.evaluation.named_metric_functions.MRR
+#         - _object:  matrix.pipelines.evaluation.named_metric_functions.HitK
+#           k: 2
+#         - _object:  matrix.pipelines.evaluation.named_metric_functions.HitK
+#           k: 10
+#         - _object:  matrix.pipelines.evaluation.named_metric_functions.HitK
+#           k: 100
+#       score_col_name: *score-col
 
-# Full matrix ranking (clinical trials version)
-evaluation.full_matrix_trials:
-  evaluation_options:
-    generator:
-      _object: matrix.datasets.pair_generator.FullMatrixPositives
-      positive_columns:
-        - "trial_sig_better"
-        - "trial_non_sig_better"
-      removal_columns:
-        - "is_known_positive"
-    evaluation:
-      _object: matrix.pipelines.evaluation.evaluation.FullMatrixRanking 
-      rank_func_lst: 
-        - _object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN 
-          n: 1000
-        - _object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
-          n: 10000
-        - _object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
-          n: 100000
-        - _object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
-          n: 1000000
-      quantile_func_lst: 
-        - _object: matrix.pipelines.evaluation.named_metric_functions.AUROC
+# # Full matrix ranking (clinical trials version)
+# evaluation.full_matrix_trials:
+#   evaluation_options:
+#     generator:
+#       _object: matrix.datasets.pair_generator.FullMatrixPositives
+#       positive_columns:
+#         - "trial_sig_better"
+#         - "trial_non_sig_better"
+#       removal_columns:
+#         - "is_known_positive"
+#     evaluation:
+#       _object: matrix.pipelines.evaluation.evaluation.FullMatrixRanking 
+#       rank_func_lst: 
+#         - _object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN 
+#           n: 1000
+#         - _object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
+#           n: 10000
+#         - _object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
+#           n: 100000
+#         - _object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
+#           n: 1000000
+#       quantile_func_lst: 
+#         - _object: matrix.pipelines.evaluation.named_metric_functions.AUROC
 
 evaluation.stability_overlap:
   evaluation_options:

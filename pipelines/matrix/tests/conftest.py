@@ -7,7 +7,7 @@ from kedro.config import OmegaConfigLoader
 from kedro.framework.context import KedroContext
 from kedro.framework.hooks import _create_hook_manager
 from kedro.framework.project import settings
-from matrix.resolvers import cast_to_int, merge_dicts
+from matrix.resolvers import cast_to_int, if_null, merge_dicts
 from matrix.settings import _load_setting
 from omegaconf.resolvers import oc
 
@@ -45,7 +45,13 @@ def config_loader(conf_source: Path) -> OmegaConfigLoader:
                 "**/parameters*/**",
             ],
         },
-        custom_resolvers={"merge": merge_dicts, "oc.env": oc.env, "setting": _load_setting, "oc.int": cast_to_int},
+        custom_resolvers={
+            "merge": merge_dicts,
+            "oc.env": oc.env,
+            "setting": _load_setting,
+            "oc.int": cast_to_int,
+            "if_null": if_null,
+        },
     )
 
 
