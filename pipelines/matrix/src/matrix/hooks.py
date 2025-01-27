@@ -312,7 +312,7 @@ class ReleaseInfoHooks:
         return tmpl
 
     @classmethod
-    def extract_datasets_used(cls) -> None:
+    def extract_datasets_used(cls) -> list:
         # Using lazy import to prevent circular import error
         from matrix.settings import DYNAMIC_PIPELINES_MAPPING
 
@@ -320,44 +320,31 @@ class ReleaseInfoHooks:
         return dataset_names
 
     @classmethod
-    def extract_global_datasets(cls, hidden_datasets) -> None:
+    def extract_all_global_datasets(cls, hidden_datasets) -> None:
         datasources_to_versions = {
             k: v["version"] for k, v in ReleaseInfoHooks._globals["data_sources"].items() if k not in hidden_datasets
         }
         return datasources_to_versions
 
     @classmethod
-    def mark_only_used_datasets(cls, global_datasets, datasets_used) -> None:
+    def mark_unused_datasets(cls, global_datasets, datasets_used) -> None:
         """Takes a list of globally defined datasets (and their versions) and compares it against datasets
         actually used, as dictated by the settings.py file responsible for the generation of dynamic pipelines.
-        For global datasets that were excluded in the settings.py, a note is placed in the dict value that normally
+        For global datasets that were excluded in the settings.py, a note is placed in the dict value that otherwise
         features the version number."""
 
         for global_dataset in global_datasets:
-            # Done due to inconsistencies in datasource syntax across the codebase.
-            global_dataset_variations = {global_dataset.replace("-", "_"), global_dataset.replace("_", "-")}
-            if not global_dataset_variations.intersection(set(datasets_used)):
-                global_datasets[global_dataset] = "excluded in dynamic pipeline"
+            if not global_dataset in datasets_used:
+                global_datasets[global_dataset] = "not included"
 
     @staticmethod
-    def extract_release_info() -> dict[str, str]:
+    def extract_release_info(global_datasets: str) -> dict[str, str]:
         # Currently we represent this data in docs with each datasource in its own column,
         # we could also just output a dict of datasources if this list grows.
 
         info = {
             "Release Name": ReleaseInfoHooks._globals["versions"]["release"],
-            "Robokop Version": ReleaseInfoHooks._globals["data_sources"]["robokop"]["version"],
-            "RTX-KG2 Version": ReleaseInfoHooks._globals["data_sources"]["rtx_kg2"]["version"],
-            "EC Medical Team Version": ReleaseInfoHooks._globals["data_sources"]["ec_medical_team"]["version"],
-            "Robokop Version": ReleaseInfoHooks._globals["data_sources"]["robokop"]["version"]
-            if "robokop" in ReleaseInfoHooks._datasets_used
-            else "not in use",
-            "RTX-KG2 Version": ReleaseInfoHooks._globals["data_sources"]["rtx-kg2"]["version"]
-            if "rtx_kg2" in ReleaseInfoHooks._datasets_used
-            else "not in use",
-            "EC Medical Team Version": ReleaseInfoHooks._globals["data_sources"]["ec-medical-team"]["version"]
-            if "ec_medical_team" in ReleaseInfoHooks._datasets_used
-            else "not in use",
+            "Datasets": global_datasets,
             "Topological Estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["_object"],
             "Embeddings Encoder": ReleaseInfoHooks._params["embeddings.node"]["encoder"]["encoder"]["model"],
             "BigQuery Link": ReleaseInfoHooks.build_bigquery_link(),
@@ -385,11 +372,11 @@ class ReleaseInfoHooks:
         # pipelines the (last) data release node is part of. With an
         # `after_node_run`, you can limit your filters easily.
         if True:  # node.name == last_data_release_node_name:
-            hidden_datasets = frozenset([""])
-            global_datasets = self.extract_global_datasets(hidden_datasets)
+            datasets_to_hide = frozenset(["disease_list", "drug_list", "ec_clinical_trials", "gt"])
+            global_datasets = self.extract_all_global_datasets(datasets_to_hide)
             datasets_used = self.extract_datasets_used()
-            self.mark_only_used_datasets(global_datasets, datasets_used)
-            release_info = self.extract_release_info()
+            self.mark_unused_datasets(global_datasets, datasets_used)
+            release_info = self.extract_release_info(global_datasets)
             try:
                 self.upload_to_storage(release_info)
             except KeyError:
