@@ -101,7 +101,7 @@ def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes, col
         )
 
         # next we need to apply a number of transformations to the nodes to ensure grouping by id did not select wrong information
-        .transform(determine_most_specific_category, biolink_categories_df)
+        #.transform(determine_most_specific_category, biolink_categories_df)
 
         # finally we select the columns that we want to keep
         .select(*cols)
