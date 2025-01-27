@@ -22,25 +22,26 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # Add ingestion pipeline for each source
     for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration"):
-        nodes.append(
-            node(
-                func=lambda x: x,
-                inputs=[f'ingestion.raw.{source["name"]}.nodes@spark'],
-                outputs=f'ingestion.int.{source["name"]}.nodes',
-                name=f'write_{source["name"]}_nodes',
-                tags=[f'{source["name"]}'],
-            )
-        )
-
-        if not source.get("nodes_only", False):
+        if source.get("ingest", True):
             nodes.append(
                 node(
                     func=lambda x: x,
-                    inputs=[f'ingestion.raw.{source["name"]}.edges@spark'],
-                    outputs=f'ingestion.int.{source["name"]}.edges',
-                    name=f'write_{source["name"]}_edges',
+                    inputs=[f'ingestion.raw.{source["name"]}.nodes@spark'],
+                    outputs=f'ingestion.int.{source["name"]}.nodes',
+                    name=f'write_{source["name"]}_nodes',
                     tags=[f'{source["name"]}'],
                 )
             )
+
+            if not source.get("nodes_only", False):
+                nodes.append(
+                    node(
+                        func=lambda x: x,
+                        inputs=[f'ingestion.raw.{source["name"]}.edges@spark'],
+                        outputs=f'ingestion.int.{source["name"]}.edges',
+                        name=f'write_{source["name"]}_edges',
+                        tags=[f'{source["name"]}'],
+                    )
+                )
 
     return pipeline(nodes)

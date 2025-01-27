@@ -3,8 +3,10 @@ import logging
 import os
 import re
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Optional
 
+import fsspec
 import google.api_core.exceptions as exceptions
 import numpy as np
 import pandas as pd
@@ -45,7 +47,7 @@ class LazySparkDataset(SparkDataset):
         credentials: dict[str, Any] | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> None:
-        self._filepath = filepath
+        self._full_url = filepath
 
         super().__init__(
             filepath=filepath,
@@ -60,9 +62,14 @@ class LazySparkDataset(SparkDataset):
     def load(self):
         SparkHooks._initialize_spark()
 
-        # Make local copy
-        if self.self._filepath.startswith("https://"):
-            breakpoint()
+        # Spark cannot read http files directly
+        if self._fs_prefix in ["http://", "https://"]:
+            with fsspec.open(self._full_url, "rb") as remote_file:
+                name = f"/tmp/{Path(self._full_url).name}"
+                with open(name, "wb") as local_file:
+                    local_file.write(remote_file.read())
+                    self._filepath = Path(name)
+                    self._fs_prefix = "file://"
 
         return super().load()
 
