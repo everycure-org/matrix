@@ -80,3 +80,8 @@ integration:
         _object: matrix.pipelines.modelling.utils.partial_
         func:
           _object: matrix.pipelines.integration.filters.biolink_deduplicate_edges
+    knowledge_source_filters:
+      columns: 
+        - primary_knowledge_source 
+      categories:
+        - infores:text-mining-provider-targeted

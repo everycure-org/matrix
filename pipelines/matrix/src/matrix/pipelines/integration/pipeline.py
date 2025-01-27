@@ -141,6 +141,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                         "integration.prm.prefiltered_nodes",
                         "integration.prm.unified_edges",
                         "params:integration.filtering.edge_filters",
+                        "params:integration.filtering.knowledge_source_filters.columns",
+                        "params:integration.filtering.knowledge_source_filters.categories",
                     ],
                     outputs="integration.prm.filtered_edges",
                     name="filter_prm_knowledge_graph_edges",
