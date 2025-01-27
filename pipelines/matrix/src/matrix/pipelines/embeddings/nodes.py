@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import pyspark
 import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
@@ -13,7 +14,7 @@ from google.cloud import storage
 from graphdatascience import GraphDataScience
 from langchain_openai import OpenAIEmbeddings
 from pyspark.ml.functions import array_to_vector, vector_to_array
-from pyspark.sql import SparkSession
+from pyspark.sql import Row, SparkSession
 from pyspark.sql.types import ArrayType, DoubleType, StringType, StructField, StructType
 from pyspark.sql.window import Window
 
@@ -532,9 +533,12 @@ def create_node_embeddings(
 
     # Create an empty RDD with empty schema
     cache = spark.createDataFrame(data=emp_RDD, schema=cache_schema)
-
+    # cache.show()
     # Load embeddings from cache
     cached_df = load_embeddings_from_cache(df, cache).cache()
+    print("---cached df---")
+    print("cached df schema:" + str(cached_df.schema))
+    # cached_df.show()
     # print("---cached df---")
     # cached_df.filter(F.col("name").isNull()).show()
     # cached_df.filter(F.col("category").isNull()).show()
@@ -546,6 +550,8 @@ def create_node_embeddings(
     partitioned_df = cached_df.repartition(num_batches)
     # Lookup and generate missing embeddings
     enriched_df = lookup_missing_embeddings(partitioned_df, transformer_config, **transformer_kwargs)
+    print("---enriched df---")
+    # enriched_df.show()
     # print("Cached df schema:" + str(cached_df.schema))
     # bucketized_df = bucketize(cached_df, bucket_size=batch_size, columns=["name", "category"])
     # print("Bucketized df schema:" + str(bucketized_df.schema))
@@ -553,6 +559,9 @@ def create_node_embeddings(
     # enriched_df = lookup_missing_embeddings(bucketized_df, transformer_config, **transformer_kwargs)
     # Overwrite cache with updated embeddings
     updated_cache = overwrite_cache(enriched_df)
+    # print("---updated cache---")
+    # # updated_cache.show()
+    enriched_df = enriched_df.drop(columns=["model", "scope"])
     return enriched_df, updated_cache
 
 
@@ -578,6 +587,8 @@ def load_embeddings_from_cache(
         .select(
             *[F.col(f"df.{col}") for col in dataframe.columns],  # Select all original dataframe columns
             F.col("cache.embedding").alias("embedding"),  # Add the embedding from cache
+            F.col("cache.scope").alias("scope"),  # Add the scope from cache
+            F.col("cache.model").alias("model"),  # Add the model from cache
         )
     )
 
@@ -595,12 +606,16 @@ def lookup_missing_embeddings(df: ps.DataFrame, transformer_config, **transforme
         DataFrame with generated embeddings for missing rows.
     """
     columns = list(df.columns)
-    print("Transformer kwargs:", transformer_kwargs)
-    print("df schema:" + str(df.schema))
     # Process data in parallel using mapPartitions
-    return df.rdd.mapPartitions(
+    # return df.rdd.mapPartitions(
+    #     lambda it: enrich_embeddings_sync(it, columns, transformer_config, **transformer_kwargs)
+    # ).toDF()
+    rdd_result = df.rdd.mapPartitions(
         lambda it: enrich_embeddings_sync(it, columns, transformer_config, **transformer_kwargs)
-    ).toDF()
+    )
+    # Debug the RDD result
+    # print("Sample RDD result:", rdd_result.take(5))
+    return rdd_result
 
 
 async def enrich_embeddings(iterable, columns, transformer_config, **transformer_kwargs):
@@ -642,7 +657,7 @@ def enrich_embeddings_sync(iterable, columns, transformer_config, **transformer_
     """
     Synchronous wrapper for the async enrich_embeddings function.
     """
-    print("Transformer kwargs:", transformer_kwargs)
+    # print("Transformer kwargs:", transformer_kwargs)
 
     async def process():
         return await enrich_embeddings(iterable, columns, transformer_config, **transformer_kwargs)
@@ -656,6 +671,12 @@ def overwrite_cache(df: ps.DataFrame) -> None:
     Args:
         df: DataFrame containing updated embeddings.
     """
+
+    # If the input is an RDD, convert it to a DataFrame
+    if isinstance(df, pyspark.RDD):
+        columns = ["model", "scope", "embedding", "id"]
+        df = df.map(lambda row: Row(**row)).toDF(columns)
+
     # Extract relevant columns for the cache
     cache_update = df.select("model", "scope", "embedding", "id").distinct()
     return cache_update
