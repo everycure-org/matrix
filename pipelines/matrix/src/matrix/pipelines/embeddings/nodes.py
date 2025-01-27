@@ -513,6 +513,9 @@ def create_node_embeddings(
     # Overwrite cache with updated embeddings
     updated_cache = overwrite_cache(enriched_df)
     enriched_df = enriched_df.drop("model", "scope")
+    bucket_name = "mtrx-us-central1-hub-dev-storage"
+    object_name = "kedro/data/cache/embeddings_cache"
+    upload_with_generation_check(bucket_name, object_name, file_path)
     return enriched_df, updated_cache
 
 
@@ -589,9 +592,10 @@ async def enrich_embeddings(iterable, columns, transformer_config, input_feature
     subdf_with_embed = subdf[subdf["embedding"].notnull()]
     subdf_without_embed = subdf[subdf["embedding"].isnull()]
 
-    # Generate embeddings for missing rows (example implementation)
+    # Generate embeddings for missing rows
     if not subdf_without_embed.empty:
         # Instantiate the encoder locally within the partition
+        # TODO: should be able to be parsed automatically
         encoder_config = transformer_config["encoder"]
         encoder = OpenAIEmbeddings(model=encoder_config["model"], timeout=encoder_config["timeout"])
         transformer = LangChainEncoder(encoder=encoder, dimensions=transformer_config["dimensions"])
@@ -604,7 +608,6 @@ def enrich_embeddings_sync(iterable, columns, transformer_config, input_features
     """
     Synchronous wrapper for the async enrich_embeddings function.
     """
-    # print("Transformer kwargs:", transformer_kwargs)
 
     async def process():
         return await enrich_embeddings(iterable, columns, transformer_config, input_features, max_input_len)
@@ -659,8 +662,6 @@ def upload_with_precondition(bucket_name, object_name, file_path, target_generat
     client = storage.Client()
 
     # Reference the bucket and blob
-    bucket_name = "mtrx-us-central1-hub-dev-storage"
-    object_name = "kedro/data/cache/embeddings_cache"
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(object_name)
 
