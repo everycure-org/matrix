@@ -35,10 +35,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "input_features": "params:embeddings.node.input_features",
                     "max_input_len": "params:embeddings.node.max_input_len",
                 },
-                outputs=[
-                    "embeddings.feat.graph.node_embeddings@spark",
-                    "embeddings.cache_out",
-                ],
+                outputs=["embeddings.feat.graph.node_embeddings@spark", "embeddings.cache_out"],
                 name="create_node_embeddings",
                 argo_config=ArgoResourceConfig(
                     cpu_request=48,

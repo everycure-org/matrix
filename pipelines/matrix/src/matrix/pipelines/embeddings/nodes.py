@@ -17,9 +17,10 @@ from pyspark.ml.functions import array_to_vector, vector_to_array
 from pyspark.sql import Row, SparkSession
 from pyspark.sql.types import ArrayType, DoubleType, StringType, StructField, StructType
 from pyspark.sql.window import Window
-from refit.v1.core.inline_has_schema import has_schema
-from refit.v1.core.inline_primary_key import primary_key
-from refit.v1.core.output_primary_key import _duplicate_and_null_check
+
+# from refit.v1.core.inline_has_schema import has_schema
+# from refit.v1.core.inline_primary_key import primary_key
+# from refit.v1.core.output_primary_key import _duplicate_and_null_check
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from matrix.inject import inject_object, unpack_params
@@ -483,22 +484,21 @@ def visualise_pca(nodes: ps.DataFrame, column_name: str) -> plt.Figure:
     return fig
 
 
-@has_schema(
-    schema={
-        "id": "string",
-        "model": "string",
-        "scope": "string",
-        "embedding": "array<double>",
-    },
-    output=0,
-)
-# NOTE: This validates the new cache shard does _not_
-# contain duplicates. This only checks a _single_ shard though,
-# hence why we're also validating the result dataframe below.
-# Let's avoid using the primary key statement on the cache, as that
-# might be a very heavy operation.
-@primary_key(primary_key=["model", "scope", "id"], output=0)
-# @inline_primary_key(primary_key=["model", "scope", "id"], df="cache")
+# @has_schema(
+#     schema={
+#         "id": "string",
+#         "model": "string",
+#         "scope": "string",
+#         "embedding": "array<double>",
+#     },
+#     output=0,
+# )
+# # NOTE: This validates the new cache shard does _not_
+# # contain duplicates. This only checks a _single_ shard though,
+# # hence why we're also validating the result dataframe below.
+# # Let's avoid using the primary key statement on the cache, as that
+# # might be a very heavy operation.
+# @primary_key(primary_key=["model", "scope", "id"], output=0)
 def create_node_embeddings(
     df: ps.DataFrame,
     cache: ps.DataFrame,
@@ -524,7 +524,6 @@ def create_node_embeddings(
     """
     # Load embeddings from cache
     cached_df = load_embeddings_from_cache(df, cache).cache()
-    print("loaded cached df")
     new_fields = [field for field in cached_df.schema.fields if field.name not in input_features]
     new_schema = StructType(new_fields)
     # Determine number of batches and repartition the data
@@ -536,15 +535,9 @@ def create_node_embeddings(
     enriched_df = lookup_missing_embeddings(
         partitioned_df, transformer_config, new_schema, input_features, max_input_len
     )
-    print("enriched df")
     # Overwrite cache with updated embeddings
     updated_cache = overwrite_cache(enriched_df)
-    print("updated cache")
     enriched_df = enriched_df.drop("model", "scope")
-    print("enriched_df type", type(enriched_df))
-    print("updated_cache type", type(updated_cache))
-    print(enriched_df.schema)
-    print(updated_cache.schema)
     return enriched_df, updated_cache
 
 
@@ -632,14 +625,14 @@ async def enrich_embeddings(iterable, columns, transformer_config, input_feature
     return iter(pd.concat([subdf_with_embed, subdf_without_embed], axis=0).to_dict("records"))
 
 
-def enrich_embeddings_sync(iterable, columns, transformer_config, **transformer_kwargs):
+def enrich_embeddings_sync(iterable, columns, transformer_config, input_features, max_input_len):
     """
     Synchronous wrapper for the async enrich_embeddings function.
     """
     # print("Transformer kwargs:", transformer_kwargs)
 
     async def process():
-        return await enrich_embeddings(iterable, columns, transformer_config, **transformer_kwargs)
+        return await enrich_embeddings(iterable, columns, transformer_config, input_features, max_input_len)
 
     return asyncio.run(process())
 
