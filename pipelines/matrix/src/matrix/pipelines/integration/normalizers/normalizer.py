@@ -18,7 +18,7 @@ class NopNormalizer(ABC):
     async def apply(self, df: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """Function to apply normalization."""
 
-        df["normalized_id"] = [None for _ in range(len(df))]
+        df["normalized_id"] = df["id"]
         df["normalized_id"] = df["normalized_id"].astype(pd.StringDtype())
 
         return df
