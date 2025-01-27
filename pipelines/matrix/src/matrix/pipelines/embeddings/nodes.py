@@ -17,10 +17,9 @@ from pyspark.ml.functions import array_to_vector, vector_to_array
 from pyspark.sql import Row, SparkSession
 from pyspark.sql.types import ArrayType, DoubleType, StringType, StructField, StructType
 from pyspark.sql.window import Window
-
-# from refit.v1.core.inline_has_schema import has_schema
-# from refit.v1.core.inline_primary_key import primary_key
-# from refit.v1.core.output_primary_key import _duplicate_and_null_check
+from refit.v1.core.inline_has_schema import has_schema
+from refit.v1.core.inline_primary_key import primary_key
+from refit.v1.core.output_primary_key import _duplicate_and_null_check
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from matrix.inject import inject_object, unpack_params
@@ -32,6 +31,7 @@ from .graph_algorithms import GDSGraphAlgorithm
 
 logger = logging.getLogger(__name__)
 
+# Define the schema for caching dataset
 cache_schema = StructType(
     [
         StructField("model", StringType(), nullable=False),
@@ -483,30 +483,29 @@ def visualise_pca(nodes: ps.DataFrame, column_name: str) -> plt.Figure:
     return fig
 
 
-# @has_schema(
-#     schema={
-#         "id": "string",
-#         "model": "string",
-#         "scope": "string",
-#         "embedding": "array<double>",
-#     },
-#     output=0,
-# )
-# # NOTE: This validates the new cache shard does _not_
-# # contain duplicates. This only checks a _single_ shard though,
-# # hence why we're also validating the result dataframe below.
-# # Let's avoid using the primary key statement on the cache, as that
-# # might be a very heavy operation.
-# @primary_key(primary_key=["model", "scope", "id"], output=0)
-# # @inline_primary_key(primary_key=["model", "scope", "id"], df="cache")
+@has_schema(
+    schema={
+        "id": "string",
+        "model": "string",
+        "scope": "string",
+        "embedding": "array<double>",
+    },
+    output=0,
+)
+# NOTE: This validates the new cache shard does _not_
+# contain duplicates. This only checks a _single_ shard though,
+# hence why we're also validating the result dataframe below.
+# Let's avoid using the primary key statement on the cache, as that
+# might be a very heavy operation.
+@primary_key(primary_key=["model", "scope", "id"], output=0)
+# @inline_primary_key(primary_key=["model", "scope", "id"], df="cache")
 def create_node_embeddings(
     df: ps.DataFrame,
-    # cache: ps.DataFrame,
+    cache: ps.DataFrame,
     batch_size: int,
     transformer_config,
-    **transformer_kwargs,
-    # input_features,
-    # max_input_len
+    input_features: List[str],
+    max_input_len: int,
 ) -> None:
     """
     Function to create node embeddings.
@@ -520,48 +519,32 @@ def create_node_embeddings(
         cache: DataFrame holding cached embeddings.
         batch_size: Number of rows per batch.
         transformer_config: Configuration for the transformer.
-        transformer_kwargs: Additional arguments for the transformer.
+        input_features: List of input features to use for embeddings.
+        max_input_len: Maximum length of input features.
     """
-    # print("---raw df---")
-    # df.filter(F.col("name").isNull()).show()
-    # df.filter(F.col("category").isNull()).show()
-    # Create a spark session
-    spark = SparkSession.builder.appName("Empty_Dataframe").getOrCreate()
-
-    # Create an empty RDD
-    emp_RDD = spark.sparkContext.emptyRDD()
-
-    # Create an empty RDD with empty schema
-    cache = spark.createDataFrame(data=emp_RDD, schema=cache_schema)
-    # cache.show()
     # Load embeddings from cache
     cached_df = load_embeddings_from_cache(df, cache).cache()
-    print("---cached df---")
-    print("cached df schema:" + str(cached_df.schema))
-    # cached_df.show()
-    # print("---cached df---")
-    # cached_df.filter(F.col("name").isNull()).show()
-    # cached_df.filter(F.col("category").isNull()).show()
-
+    print("loaded cached df")
+    new_fields = [field for field in cached_df.schema.fields if field.name not in input_features]
+    new_schema = StructType(new_fields)
     # Determine number of batches and repartition the data
     num_elements = cached_df.count()
     num_batches = (num_elements + batch_size - 1) // batch_size
     # Partitionate the dataframe
     partitioned_df = cached_df.repartition(num_batches)
     # Lookup and generate missing embeddings
-    enriched_df = lookup_missing_embeddings(partitioned_df, transformer_config, **transformer_kwargs)
-    print("---enriched df---")
-    # enriched_df.show()
-    # print("Cached df schema:" + str(cached_df.schema))
-    # bucketized_df = bucketize(cached_df, bucket_size=batch_size, columns=["name", "category"])
-    # print("Bucketized df schema:" + str(bucketized_df.schema))
-    # # Lookup and generate missing embeddings
-    # enriched_df = lookup_missing_embeddings(bucketized_df, transformer_config, **transformer_kwargs)
+    enriched_df = lookup_missing_embeddings(
+        partitioned_df, transformer_config, new_schema, input_features, max_input_len
+    )
+    print("enriched df")
     # Overwrite cache with updated embeddings
     updated_cache = overwrite_cache(enriched_df)
-    # print("---updated cache---")
-    # # updated_cache.show()
-    enriched_df = enriched_df.drop(columns=["model", "scope"])
+    print("updated cache")
+    enriched_df = enriched_df.drop("model", "scope")
+    print("enriched_df type", type(enriched_df))
+    print("updated_cache type", type(updated_cache))
+    print(enriched_df.schema)
+    print(updated_cache.schema)
     return enriched_df, updated_cache
 
 
@@ -593,7 +576,9 @@ def load_embeddings_from_cache(
     )
 
 
-def lookup_missing_embeddings(df: ps.DataFrame, transformer_config, **transformer_kwargs) -> ps.DataFrame:
+def lookup_missing_embeddings(
+    df: ps.DataFrame, transformer_config, output_schema, input_features, max_input_len
+) -> ps.DataFrame:
     """
     Generate embeddings for rows missing in the cache.
 
@@ -606,19 +591,13 @@ def lookup_missing_embeddings(df: ps.DataFrame, transformer_config, **transforme
         DataFrame with generated embeddings for missing rows.
     """
     columns = list(df.columns)
-    # Process data in parallel using mapPartitions
-    # return df.rdd.mapPartitions(
-    #     lambda it: enrich_embeddings_sync(it, columns, transformer_config, **transformer_kwargs)
-    # ).toDF()
     rdd_result = df.rdd.mapPartitions(
-        lambda it: enrich_embeddings_sync(it, columns, transformer_config, **transformer_kwargs)
+        lambda it: enrich_embeddings_sync(it, columns, transformer_config, input_features, max_input_len)
     )
-    # Debug the RDD result
-    # print("Sample RDD result:", rdd_result.take(5))
-    return rdd_result
+    return rdd_result.toDF(schema=output_schema)
 
 
-async def enrich_embeddings(iterable, columns, transformer_config, **transformer_kwargs):
+async def enrich_embeddings(iterable, columns, transformer_config, input_features, max_input_len):
     """
     Process a batch of rows, generating embeddings for rows with null values.
 
@@ -648,7 +627,7 @@ async def enrich_embeddings(iterable, columns, transformer_config, **transformer
         encoder_config = transformer_config["encoder"]
         encoder = OpenAIEmbeddings(model=encoder_config["model"], timeout=encoder_config["timeout"])
         transformer = LangChainEncoder(encoder=encoder, dimensions=transformer_config["dimensions"])
-        subdf_without_embed = await transform(subdf_without_embed, transformer, **transformer_kwargs)
+        subdf_without_embed = await transform(subdf_without_embed, transformer, input_features, max_input_len)
     # Concatenate the results and return as an iterator
     return iter(pd.concat([subdf_with_embed, subdf_without_embed], axis=0).to_dict("records"))
 
@@ -682,7 +661,7 @@ def overwrite_cache(df: ps.DataFrame) -> None:
     return cache_update
 
 
-def transform(df, transformer, **transformer_kwargs):
+def transform(df, transformer, input_features, max_input_len):
     """
     Apply a transformer to generate embeddings for the input DataFrame.
 
@@ -694,7 +673,7 @@ def transform(df, transformer, **transformer_kwargs):
     Returns:
         DataFrame with generated embeddings.
     """
-    return transformer.apply(df, input_features=["name", "category"], max_input_len=100)
+    return transformer.apply(df, input_features, max_input_len)
 
 
 def upload_with_precondition(bucket_name, object_name, file_path, target_generation=None):
@@ -767,36 +746,3 @@ def upload_with_generation_check(bucket_name, object_name, file_path):
     upload_with_precondition(
         bucket_name=bucket_name, object_name=object_name, file_path=file_path, target_generation=generation
     )
-
-
-# def bucketize(df: F.DataFrame, bucket_size: int, columns: Optional[List[str]] = None) -> pd.DataFrame:
-#     """Function to bucketize df in given number of buckets.
-
-#     Args:
-#         df: dataframe to bucketize
-#         bucket_size: size of the buckets
-#     Returns:
-#         Dataframe augmented with `bucket` column
-#     """
-
-#     if columns is None:
-#         columns = []
-
-#     # Retrieve number of elements
-#     num_elements = df.count()
-#     num_buckets = (num_elements + bucket_size - 1) // bucket_size
-
-#     # Construct df to bucketize
-#     spark_session: SparkSession = SparkSession.builder.getOrCreate()
-
-#     # Bucketize df
-#     buckets = spark_session.createDataFrame(
-#         data=[(bucket, bucket * bucket_size, (bucket + 1) * bucket_size) for bucket in range(num_buckets)],
-#         schema=["bucket", "min_range", "max_range"],
-#     )
-
-#     return (
-#         df.withColumn("row_num", F.row_number().over(Window.orderBy("id")) - F.lit(1))
-#         .join(buckets, on=[(F.col("row_num") >= (F.col("min_range"))) & (F.col("row_num") < F.col("max_range"))])
-#         .select("id", *columns, "bucket")
-#     )

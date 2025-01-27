@@ -73,7 +73,8 @@ class LangChainEncoder(AttributeEncoder):
             combined_texts = df["text_to_embed"].tolist()
             # print(combined_texts[:10])
             df["embedding"] = list(range(len(combined_texts)))  # await self._client.aembed_documents(combined_texts)
-            df["embedding"] = df["embedding"].apply(lambda x: np.array(x, dtype=np.float32))
+            # df["embedding"] = df["embedding"].apply(lambda x: np.array(x, dtype=np.float32))
+            df["embedding"] = df["embedding"].apply(lambda x: np.array([float(x)], dtype=np.float64).tolist())
             df = df.drop(columns=["text_to_embed", *input_features])
             return df
         except Exception as e:
