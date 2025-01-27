@@ -274,8 +274,7 @@ class ReleaseInfoHooks:
         """Utility class method that stores context in class as singleton."""
         cls._kedro_context = context
         cls._globals = context.config_loader["globals"]
-        cls._params = context.config_loader["parameters"]  # NOT NEEDED, IS ALREADY IN THE CONTEXT
-        print("pok")
+        cls._params = context.config_loader["parameters"]
 
     @hook_impl
     def after_context_created(self, context: KedroContext) -> None:
@@ -365,13 +364,13 @@ class ReleaseInfoHooks:
             f.write(json.dumps(release_info).encode("utf-8"))
 
     @hook_impl
-    def before_node_run(self, node: Node) -> None:
+    def after_node_run(self, node: Node) -> None:
         """Runs after the last node of the data_release pipeline"""
         # We chose to add this using the `after_node_run` hook, rather than
         # `after_pipeline_run`, because one does not know a priori which
         # pipelines the (last) data release node is part of. With an
         # `after_node_run`, you can limit your filters easily.
-        if True:  # node.name == last_data_release_node_name:
+        if node.name == last_data_release_node_name:
             datasets_to_hide = frozenset(["disease_list", "drug_list", "ec_clinical_trials", "gt"])
             global_datasets = self.extract_all_global_datasets(datasets_to_hide)
             datasets_used = self.extract_datasets_used()
