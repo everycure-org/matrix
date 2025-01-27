@@ -28,7 +28,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.create_node_embeddings,
                 inputs={
                     "df": "integration.prm.filtered_nodes",
-                    # "cache": "embeddings.cache",
+                    "cache": "embeddings.cache",
                     "batch_size": "params:embeddings.node.batch_size",
                     "transformer_config": "params:embeddings.node.encoder",
                     # NOTE: These are kwargs
@@ -37,7 +37,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 outputs=[
                     "embeddings.feat.graph.node_embeddings@spark",
-                    "embeddings.cache",
+                    "embeddings.cache_out",
                 ],
                 name="create_node_embeddings",
                 argo_config=ArgoResourceConfig(

@@ -130,9 +130,8 @@ embeddings.cache: &_cache
             elementType: 
               object: pyspark.sql.types.DoubleType
           nullable: False
-
   save_args:
-    mode: append
+    mode: overwrite
     partitionBy:
       - model
       - scope
