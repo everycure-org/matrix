@@ -281,7 +281,6 @@ class ReleaseInfoHooks:
         """Remember context for later export from a node hook."""
         logger.info("Remembering context for context export later")
         ReleaseInfoHooks.set_context(context)
-        ReleaseInfoHooks.extract_datasets_used()
 
     @staticmethod
     def build_bigquery_link() -> str:
@@ -338,9 +337,6 @@ class ReleaseInfoHooks:
 
     @staticmethod
     def extract_release_info(global_datasets: str) -> dict[str, str]:
-        # Currently we represent this data in docs with each datasource in its own column,
-        # we could also just output a dict of datasources if this list grows.
-
         info = {
             "Release Name": ReleaseInfoHooks._globals["versions"]["release"],
             "Datasets": global_datasets,
