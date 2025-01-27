@@ -319,14 +319,14 @@ class ReleaseInfoHooks:
         return dataset_names
 
     @classmethod
-    def extract_all_global_datasets(cls, hidden_datasets) -> None:
+    def extract_all_global_datasets(cls, hidden_datasets: frozenset) -> dict:
         datasources_to_versions = {
             k: v["version"] for k, v in ReleaseInfoHooks._globals["data_sources"].items() if k not in hidden_datasets
         }
         return datasources_to_versions
 
     @classmethod
-    def mark_unused_datasets(cls, global_datasets, datasets_used) -> None:
+    def mark_unused_datasets(cls, global_datasets: dict, datasets_used: list) -> None:
         """Takes a list of globally defined datasets (and their versions) and compares it against datasets
         actually used, as dictated by the settings.py file responsible for the generation of dynamic pipelines.
         For global datasets that were excluded in the settings.py, a note is placed in the dict value that otherwise
