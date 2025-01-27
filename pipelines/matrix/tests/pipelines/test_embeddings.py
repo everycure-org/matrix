@@ -1,6 +1,8 @@
 import numpy as np
 import pyspark.sql as ps
+import pyspark.sql.types as ty
 import pytest
+from matrix.pipelines.embeddings import nodes
 from matrix.pipelines.embeddings.nodes import (
     _cast_to_array,
     extract_topological_embeddings,
@@ -108,6 +110,13 @@ def sample_array_embeddings_df(spark):
     ]
 
     return spark.createDataFrame(data, schema)
+
+
+@pytest.fixture
+def sample_pre_embedding_df(spark: ps.SparkSession) -> ps.DataFrame:
+    """Provides the outcome of the integration."""
+
+    return spark.createDataFrame([(1, "a", "A"), (2, "a", "B")], schema=("id", "name", "category"))
 
 
 def test_ingest_nodes_basic(spark: ps.SparkSession, sample_input_df: ps.DataFrame) -> None:
@@ -218,3 +227,38 @@ def test_cast_to_array(sample_string_embeddings_df):
     # check if almost equal
     assert np.allclose(node1.topological_embedding, [1.0, 2.0, 3.0])
     assert np.allclose(node1.pca_embedding, [0.1, 0.2])
+
+
+def test_cached_embeddings_can_get_loaded(sample_pre_embedding_df: ps.DataFrame):
+    scope, model = "foo", "bar"
+    dummy_cache = sample_pre_embedding_df.sparkSession.createDataFrame(
+        [
+            (scope, model, "aA", [1.0]),
+            (scope, model, "bB", [2.0]),
+        ],
+        schema=ty.StructType(
+            [
+                ty.StructField("scope", ty.StringType(), nullable=False),
+                ty.StructField("model", ty.StringType(), nullable=False),
+                ty.StructField("id", ty.StringType(), nullable=False),
+                ty.StructField("embedding", ty.ArrayType(ty.DoubleType()), nullable=False),
+            ]
+        ),
+    )
+
+    result = nodes.load_embeddings_from_cache(
+        dataframe=sample_pre_embedding_df,
+        cache=dummy_cache,
+        model=model,
+        scope=scope,
+    )
+
+    expected = result.sparkSession.createDataFrame(
+        [(1, "a", "A", scope, model, [1.0]), (2, "a", "B", scope, model, [2.0])],
+        schema=("id", "name", "category", "scope", "model", "embedding"),
+    )
+
+    expected.show()
+    result.show()
+    assert sorted(expected.columns) == sorted(result.columns)  # order of columns is unimportant
+    assertDataFrameEqual(result.select(expected.columns), expected)
