@@ -288,17 +288,17 @@ def normalize_edges(
     edges = edges.withColumnsRenamed({"subject": "original_subject", "object": "original_object"}).withColumnsRenamed(
         {"subject_normalized": "subject", "object_normalized": "object"}
     )
-
-    return (
-        edges.withColumn(
-            "_rn",
-            F.row_number().over(
-                Window.partitionBy(["subject", "object", "predicate"]).orderBy(F.col("original_subject"))
-            ),
-        )
-        .filter(F.col("_rn") == 1)
-        .drop("_rn")
-    )
+    return edges
+    # return edges (
+    #     edges.withColumn(
+    #         "_rn",
+    #         F.row_number().over(
+    #             Window.partitionBy(["subject", "object", "predicate"]).orderBy(F.col("original_subject"))
+    #         ),
+    #     )
+    #     .filter(F.col("_rn") == 1)
+    #     .drop("_rn")
+    # )
 
 
 def normalize_nodes(
@@ -320,7 +320,7 @@ def normalize_nodes(
         .withColumnsRenamed({"id": "original_id"})
         .withColumnsRenamed({"normalized_id": "id"})
         # Ensure deduplicated
-        .withColumn("_rn", F.row_number().over(Window.partitionBy("id").orderBy(F.col("original_id"))))
-        .filter(F.col("_rn") == 1)
-        .drop("_rn")
+        # .withColumn("_rn", F.row_number().over(Window.partitionBy("id").orderBy(F.col("original_id"))))
+        # .filter(F.col("_rn") == 1)
+        # .drop("_rn")
     )
