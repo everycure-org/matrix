@@ -93,7 +93,7 @@ def convert_biolink_hierarchy_json_to_df(biolink_predicates, col_name: str, conv
     return biolink_hierarchy
 
 
-def determine_most_specific_category(nodes: ps.DataFrame, biolink_categories_df: pd.DataFrame) -> ps.DataFrame:
+def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
     """Function to retrieve most specific entry for each node.
 
     Example:
