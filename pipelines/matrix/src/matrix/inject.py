@@ -7,8 +7,6 @@ from inspect import getfullargspec
 from types import BuiltinFunctionType, FunctionType
 from typing import Any, Dict, List, Tuple
 
-from pyspark.sql.types import ArrayType, DoubleType, StringType, StructField, StructType
-
 OBJECT_KW = "_object"
 INSTANTIATE_KW = "instantiate"
 UNPACK_KW = "unpack"
@@ -82,34 +80,35 @@ def _parse_for_objects(param, exclude_kwargs: List[str] = None) -> Dict:
 
         return instantiated_obj
 
-    # Special handling for schema dictionaries
-    if isinstance(param, dict):
-        if param.get("object") == "pyspark.sql.types.StructType":
-            fields = [
-                StructField(
-                    name=field["name"],
-                    dataType=_parse_for_objects(field["dataType"]),
-                    nullable=field["nullable"],
-                )
-                for field in param.get("fields", [])
-            ]
-            return StructType(fields)
-        if param.get("object") == "pyspark.sql.types.StructField":
-            return StructField(
-                name=param["name"],
-                dataType=_parse_for_objects(param["dataType"]),
-                nullable=param["nullable"],
-            )
-        if param.get("object") == "pyspark.sql.types.ArrayType":
-            return ArrayType(
-                elementType=_parse_for_objects(param["elementType"]),
-                containsNull=param.get("containsNull", True),
-            )
-        if param.get("object") == "pyspark.sql.types.StringType":
-            return StringType()
-        if param.get("object") == "pyspark.sql.types.DoubleType":
-            return DoubleType()
+    # # Special handling for schema dictionaries
+    # if isinstance(param, dict):
+    #     if param.get("object") == "pyspark.sql.types.StructType":
+    #         fields = [
+    #             StructField(
+    #                 name=field["name"],
+    #                 dataType=_parse_for_objects(field["dataType"]),
+    #                 nullable=field["nullable"],
+    #             )
+    #             for field in param.get("fields", [])
+    #         ]
+    #         return StructType(fields)
+    #     if param.get("object") == "pyspark.sql.types.StructField":
+    #         return StructField(
+    #             name=param["name"],
+    #             dataType=_parse_for_objects(param["dataType"]),
+    #             nullable=param["nullable"],
+    #         )
+    #     if param.get("object") == "pyspark.sql.types.ArrayType":
+    #         return ArrayType(
+    #             elementType=_parse_for_objects(param["elementType"]),
+    #             containsNull=param.get("containsNull", True),
+    #         )
+    #     if param.get("object") == "pyspark.sql.types.StringType":
+    #         return StringType()
+    #     if param.get("object") == "pyspark.sql.types.DoubleType":
+    #         return DoubleType()
 
+    if isinstance(param, dict):
         new_dict = {}
         if OBJECT_KW in param.keys():
             param = deepcopy(param)

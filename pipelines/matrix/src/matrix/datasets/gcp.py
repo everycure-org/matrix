@@ -73,14 +73,11 @@ class SparkWithSchemaDataset(SparkDataset):
     def load(self) -> ps.DataFrame:
         SparkHooks._initialize_spark()
         load_path = self._strip_dbfs_prefix(self._fs_prefix + str(self._get_load_path()))
-        # read_obj = ps.SparkSession.builder.getOrCreate()
         spark = ps.SparkSession.builder.getOrCreate()
+        # Use the 'read' method and apply schema correctly
         reader = spark.read
 
         return reader.schema(_parse_for_objects(self._df_schema)).load(load_path, self._file_format, **self._load_args)
-        # return read_obj.schema(_parse_for_objects(self._df_schema)).load(
-        #     load_path, self._file_format, **self._load_args
-        # )
 
     @staticmethod
     def _strip_dbfs_prefix(path: str, prefix: str = "/dbfs") -> str:
