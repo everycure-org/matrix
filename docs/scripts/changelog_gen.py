@@ -67,7 +67,7 @@ def save_yaml(yaml_data: str, changelog_abs_path: Path) -> None:
 def stringify_datasources(files: List[Dict]) -> List[Dict]:
     """Formats the dictionary to be rendered correctly using read_yaml of mkdocs."""
     for release_data in files:
-        release_data["Datasets"] = "<br/>".join(f"&#8227; {k}: `{v}`" for k, v in release_data["Datasets"].items())
+        release_data["Datasets"] = "<br/>".join(f"‣ {k}: `{v}`" for k, v in release_data["Datasets"].items())
     return files
 
 
