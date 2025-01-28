@@ -69,7 +69,6 @@ def _add_flag_columns(
 
     # TODO: Need to make this dynamic
     # Flag clinical trials data
-
     clinical_trials = clinical_trials.rename(columns={"subject": "source", "object": "target"})
     matrix["trial_sig_better"] = create_flag_column(clinical_trials[clinical_trials["significantly_better"] == 1])
     matrix["trial_non_sig_better"] = create_flag_column(

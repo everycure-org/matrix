@@ -90,8 +90,11 @@ def process_medical_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> p
 
 
 def add_source_and_target_to_clinical_trails(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.head(10)
+    """Resolve names to curies for source and target columns in clinical trials data.
 
+    Args:
+        df: Clinical trial dataset
+    """
     # Normalize the name
     drug_data = df["drug_name"].apply(resolve_name, cols_to_get=["curie"])
     disease_data = df["disease_name"].apply(resolve_name, cols_to_get=["curie"])
@@ -104,32 +107,32 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# @check_output(
-#     schema=DataFrameSchema(
-#         columns={
-#             "curie": Column(str, nullable=False),
-#             "name": Column(str, nullable=False),
-#         },
-#         unique=["curie"]
-#     ),
-#     df_name="nodes"
-# )
-# @check_output(
-#     schema=DataFrameSchema(
-#         columns={
-#             "drug_name": Column(str, nullable=False),
-#             "disease_name": Column(str, nullable=False),
-#             "drug_curie": Column(str, nullable=False),
-#             "disease_curie": Column(str, nullable=False),
-#             "significantly_better": Column(bool, nullable=False),
-#             "non_significantly_better": Column(bool, nullable=False),
-#             "non_significantly_worse": Column(bool, nullable=False),
-#             "significantly_worse": Column(bool, nullable=False),
-#         },
-#         unique=["drug_curie", "disease_curie"]
-#     ),
-#     df_name="edges"
-# )
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "curie": Column(str, nullable=False),
+            "name": Column(str, nullable=False),
+        },
+        unique=["curie"],
+    ),
+    df_name="nodes",
+)
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "drug_name": Column(str, nullable=False),
+            "disease_name": Column(str, nullable=False),
+            "drug_curie": Column(str, nullable=False),
+            "disease_curie": Column(str, nullable=False),
+            "significantly_better": Column(bool, nullable=False),
+            "non_significantly_better": Column(bool, nullable=False),
+            "non_significantly_worse": Column(bool, nullable=False),
+            "significantly_worse": Column(bool, nullable=False),
+        },
+        unique=["drug_curie", "disease_curie"],
+    ),
+    df_name="edges",
+)
 def clean_clinical_trial_data(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Clean clinical trails data.
 
@@ -183,8 +186,8 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFr
     # Extract nodes
     drugs = df.rename(columns={"drug_curie": "curie", "drug_name": "name"})[["curie", "name"]]
     diseases = df.rename(columns={"disease_curie": "curie", "disease_name": "name"})[["curie", "name"]]
-    nodes = pd.concat([drugs, diseases], ignore_index=True)
-    return nodes, edges
+    nodes = pd.concat([drugs, diseases], ignore_index=True).drop_duplicates(subset="curie")
+    return {"nodes": nodes, "edges": edges}
 
 
 # -------------------------------------------------------------------------
