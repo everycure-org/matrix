@@ -87,15 +87,15 @@ def process_medical_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> p
     return res
 
 
-def add_source_and_target_to_clinical_trails(df: pd.DataFrame) -> pd.DataFrame:
+def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
     """Resolve names to curies for source and target columns in clinical trials data.
 
     Args:
         df: Clinical trial dataset
     """
     # Normalize the name
-    drug_data = df["drug_name"].apply(resolve_name, cols_to_get=["curie"])
-    disease_data = df["disease_name"].apply(resolve_name, cols_to_get=["curie"])
+    drug_data = df["drug_name"].apply(resolve_name, cols_to_get=["curie"], url=resolver_url)
+    disease_data = df["disease_name"].apply(resolve_name, cols_to_get=["curie"], url=resolver_url)
 
     # Concat dfs
     drug_df = pd.DataFrame(drug_data.tolist()).rename(columns={"curie": "drug_curie"})
