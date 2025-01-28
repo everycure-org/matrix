@@ -8,6 +8,8 @@ import pyspark.sql.functions as f
 from bmt import toolkit
 from pyspark.sql import types as T
 
+from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
+
 tk = toolkit.Toolkit()
 
 logger = logging.getLogger(__name__)
@@ -93,6 +95,43 @@ def convert_biolink_hierarchy_json_to_df(biolink_predicates, col_name: str, conv
     return biolink_hierarchy
 
 
+# def create_mapping_table(mapping_table: ps.DataFrame) -> ps.DataFrame:
+#     """Function to create a mapping table.
+
+#     Args:
+#         mapping_table: mapping table
+#     Returns:
+#         Mapping table
+#     """
+#     labels_hierarchy = (
+#         mapping_table.withColumn(
+#             "parents", F.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))(F.col("category"))
+#         )
+#         .select("category", "parents")
+#         .distinct()
+#     )
+#     mapping_table = (
+#         mapping_table.join(F.broadcast(labels_hierarchy), on="category", how="left")
+#         # some categories are not found in the biolink hierarchy
+#         # we deal with failed joins by setting their parents to [] == the depth as level 0 == chosen last
+#         .withColumn("parents", f.coalesce("parents", f.lit(f.array())))
+#         .withColumn("depth", F.array_size("parents"))
+#         .withColumn("row_num", F.row_number().over(ps.Window.partitionBy("id").orderBy(F.col("depth").desc())))
+#         .filter(F.col("row_num") == 1)
+#         .drop("row_num")
+#         .select("id", "category")
+#     )
+#     return mapping_table
+
+
+@check_output(
+    DataFrameSchema(
+        columns={
+            "id": Column(T.StringType(), nullable=False),
+        },
+        unique=["id"],
+    ),
+)
 def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
     """Function to retrieve most specific entry for each node.
 
