@@ -10,9 +10,9 @@ integration:
     # robokop:
     #   transformer:
     #     object: matrix.pipelines.integration.transformers.robokop.RobokopTransformer
-    ec_medical_team:
-      transformer:
-        _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
+    # ec_medical_team:
+    #   transformer:
+    #     _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
     ec_clinical_trails: 
       transformer:
         _object: matrix.pipelines.integration.transformers.clinical_trails.ClinicalTrialsTransformer

@@ -22,13 +22,7 @@ class ClinicalTrialsTransformer(GraphTransformer):
         # fmt: off
         df = (
             nodes_df
-            .distinct()
-            .groupBy("curie") # Removes duplicates in the id column
-            .agg(
-                f.collect_list("name").alias("all_names"),
-                f.first("name").alias("name")
-            )
-            .withColumnRenamed("curie", "id")
+            .withColumn("id",                                f.col("curie"))
             .withColumn("upstream_data_source",              f.array(f.lit("ec_clinical_trails")))
             .withColumn("labels",                            f.array(f.lit("entity label"))) # TODO: Fix entity labels for medical?
             .withColumn("all_categories",                    f.array(f.lit("biolink:"))) # TODO fix
@@ -54,27 +48,10 @@ class ClinicalTrialsTransformer(GraphTransformer):
         # fmt: off
         df = (
             edges_df
-            .distinct()
-            .withColumnRenamed("drug_curie", "subject")
-            .withColumnRenamed("disease_curie", "object")
-            .groupBy( # Removes duplicates in the subject and object columns
-                # We do not aggregate outcome columns purposely, to not lose information
-                "subject",
-                "object",
-                "significantly_better",
-                "significantly_worse",
-                "non_significantly_worse",
-                "non_significantly_better",
-            )
-            .agg(
-                f.collect_list("drug_name").alias("all_drug_names"),
-                f.first("drug_name").alias("drug_name"),
-                f.collect_list("disease_name").alias("all_disease_names"),
-                f.first("disease_name").alias("disease_name"),
-            )
-
-            # FUTURE: Consider setting predicate based on outcome (significantly_better, significantly_worse, etc.)
-            .withColumn("predicate", f.lit("clinical_trials"))
+            .withColumn("subject", f.col("drug_curie"))
+            .withColumn("object", f.col("disease_curie"))
+            # NOTE: Setting predicate such that it is unique
+            .withColumn("predicate", f.lit("clinical_trails"))
             .filter((f.col("subject").isNotNull()) & (f.col("object").isNotNull()))
             .withColumn("significantly_better", f.col('significantly_better').cast('int'))
             .withColumn("significantly_worse", f.col('significantly_worse').cast('int'))
