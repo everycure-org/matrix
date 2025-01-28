@@ -74,6 +74,8 @@ def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async
     pipeline_name = pipeline
     pipeline_obj = pipelines[pipeline_name]
 
+    #intentional bug
+    print(data)
     config = RunConfig(
         pipeline_obj=pipeline_obj,
         pipeline_name=pipeline_name,
