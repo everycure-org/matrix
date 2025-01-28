@@ -70,8 +70,7 @@ def generate_paths(edges: pd.DataFrame, ground_truth: pd.DataFrame):
                 }
                 for i in range(len(path) - 1)
             ]
-        except Exception as e:
-            print(e)
+        except Exception:
             return None
 
     graph = nx.DiGraph()
