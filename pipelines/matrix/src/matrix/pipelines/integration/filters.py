@@ -27,11 +27,22 @@ def get_ancestors_for_category_delimited(category: str, mixin: bool = False) -> 
     Returns:
         List of ancestors in a string format
     """
-    output = tk.get_ancestors(category, mixin=mixin, formatted=True)
+    # TODO: Need to know if NULL is not found
+    output = tk.get_ancestors(category, mixin=mixin, formatted=True, reflexive=True)
     return output
 
 
-def biolink_deduplicate_edges(r_edges_df: ps.DataFrame):
+@check_output(
+    DataFrameSchema(
+        columns={
+            "subject": Column(T.StringType(), nullable=False),
+            "predicate": Column(T.StringType(), nullable=False),
+            "object": Column(T.StringType(), nullable=False),
+        },
+        unique=["subject", "object", "predicate"],
+    ),
+)
+def biolink_deduplicate_edges(r_edges_df: ps.DataFrame) -> ps.DataFrame:
     """Function to deduplicate biolink edges.
 
     Knowledge graphs in biolink format may contain multiple edges between nodes. Where
@@ -81,53 +92,11 @@ def biolink_deduplicate_edges(r_edges_df: ps.DataFrame):
     )
 
 
-def convert_biolink_hierarchy_json_to_df(biolink_predicates, col_name: str, convert_to_pascal_case: bool):
-    spark = ps.SparkSession.builder.getOrCreate()
-    biolink_hierarchy = spark.createDataFrame(
-        unnest_biolink_hierarchy(
-            col_name,
-            biolink_predicates,
-            prefix="biolink:",
-            convert_to_pascal_case=convert_to_pascal_case,
-        )
-    )
-
-    return biolink_hierarchy
-
-
-# def create_mapping_table(mapping_table: ps.DataFrame) -> ps.DataFrame:
-#     """Function to create a mapping table.
-
-#     Args:
-#         mapping_table: mapping table
-#     Returns:
-#         Mapping table
-#     """
-#     labels_hierarchy = (
-#         mapping_table.withColumn(
-#             "parents", F.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))(F.col("category"))
-#         )
-#         .select("category", "parents")
-#         .distinct()
-#     )
-#     mapping_table = (
-#         mapping_table.join(F.broadcast(labels_hierarchy), on="category", how="left")
-#         # some categories are not found in the biolink hierarchy
-#         # we deal with failed joins by setting their parents to [] == the depth as level 0 == chosen last
-#         .withColumn("parents", f.coalesce("parents", f.lit(f.array())))
-#         .withColumn("depth", F.array_size("parents"))
-#         .withColumn("row_num", F.row_number().over(ps.Window.partitionBy("id").orderBy(F.col("depth").desc())))
-#         .filter(F.col("row_num") == 1)
-#         .drop("row_num")
-#         .select("id", "category")
-#     )
-#     return mapping_table
-
-
 @check_output(
     DataFrameSchema(
         columns={
             "id": Column(T.StringType(), nullable=False),
+            "category": Column(T.StringType(), nullable=False),
         },
         unique=["id"],
     ),
@@ -135,101 +104,34 @@ def convert_biolink_hierarchy_json_to_df(biolink_predicates, col_name: str, conv
 def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
     """Function to retrieve most specific entry for each node.
 
+    This function uses the `all_categories` column to infer a final `category` for the
+    node based on the category that is the deepest in the hierarchy. We remove any categories
+    from `all_categories` that could not be resolved against biolink.
+
     Example:
     - node has all_categories [biolink:ChemicalEntity, biolink:NamedThing]
     - then node will be assigned biolink:ChemicalEntity as most specific category
 
     """
     # pre-calculate the mappping table of ID -> most specific category
-    mapping_table = nodes.select("id", "all_categories").withColumn("category", F.explode("all_categories"))
-    labels_hierarchy = (
-        mapping_table.withColumn(
+    mapping_table = (
+        nodes.select("id", "all_categories")
+        .withColumn("category", F.explode("all_categories"))
+        .withColumn(
             "parents", F.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))(F.col("category"))
         )
-        .select("category", "parents")
-        .distinct()
-    )
-
-    mapping_table = (
-        mapping_table.join(F.broadcast(labels_hierarchy), on="category", how="left")
-        # some categories are not found in the biolink hierarchy
-        # we deal with failed joins by setting their parents to [] == the depth as level 0 == chosen last
-        .withColumn("parents", f.coalesce("parents", f.lit(f.array())))
+        # Remove all parents that we could not resolve against biolink
+        .filter(F.col("parents").isNotNull())
         .withColumn("depth", F.array_size("parents"))
         .withColumn("row_num", F.row_number().over(ps.Window.partitionBy("id").orderBy(F.col("depth").desc())))
         .filter(F.col("row_num") == 1)
         .drop("row_num")
         .select("id", "category")
     )
-    # now we can join the mapping table back to the nodes
-    nodes = nodes.drop("category").join(mapping_table, on="id", how="left")
 
-    return nodes
+    return nodes.drop("category").join(mapping_table, on="id", how="left")
 
 
 def remove_rows_containing_category(nodes: ps.DataFrame, categories: List[str], column: str, **kwargs) -> ps.DataFrame:
     """Function to remove rows containing a category."""
     return nodes.filter(~F.col(column).isin(categories))
-
-
-def unnest_biolink_hierarchy(
-    scope: str,
-    predicates: List[Dict[str, Any]],
-    convert_to_pascal_case: bool,
-    parents: Optional[List[str]] = None,
-    prefix: str = "",
-):
-    """Function to unnest a biolink hierarchy.
-
-    The biolink predicates are organized in an hierarchical JSON object. To enable
-    hierarchical deduplication, the JSON object is pre-processed into a flat pandas
-    dataframe that adds the full path to each predicate.
-
-    NOTE: The biolink standard is a bit confusing.
-    Predicates are often written in snake_case while categories are written in PascalCase.
-    This function should thus be called with the right convert_to_pascal_case flag.
-
-    Args:
-        predicates: predicates to unnest
-        parents: list of parents in hierarchy
-        convert_to_pascal_case: whether to convert the predicate name to pascal case
-        prefix: prefix to add to the predicate name
-    Returns:
-        Unnested dataframe
-    """
-
-    if parents is None:
-        parents = []
-
-    slices = []
-    for predicate in predicates:
-        name = predicate.get("name")
-        if convert_to_pascal_case:
-            name = to_pascal_case(name)
-
-        # add prefix if provided
-        name = f"{prefix}{name}"
-
-        # Recurse the children
-        if children := predicate.get("children"):
-            slices.append(
-                unnest_biolink_hierarchy(
-                    scope,
-                    children,
-                    parents=[*parents, name],
-                    convert_to_pascal_case=convert_to_pascal_case,
-                    prefix=prefix,
-                )
-            )
-
-        slices.append(pd.DataFrame([[name, parents]], columns=[scope, "parents"]))
-
-    return pd.concat(slices, ignore_index=True)
-
-
-def to_pascal_case(s: str) -> str:
-    # PascalCase is a writing style (like camelCase) where the first letter of each word is capitalized
-    words = s.split("_")
-    for i, word in enumerate(words):
-        words[i] = word[0].upper() + word[1:]
-    return "".join(words)
