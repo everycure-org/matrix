@@ -27,9 +27,7 @@ def get_ancestors_for_category_delimited(category: str, mixin: bool = False) -> 
     Returns:
         List of ancestors in a string format
     """
-    # TODO: Need to know if NULL is not found
-    output = tk.get_ancestors(category, mixin=mixin, formatted=True, reflexive=True)
-    return output
+    return tk.get_ancestors(category, mixin=mixin, formatted=True, reflexive=True)
 
 
 @check_output(
