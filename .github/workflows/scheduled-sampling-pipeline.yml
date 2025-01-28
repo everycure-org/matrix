@@ -87,7 +87,7 @@ jobs:
           kedro submit \
             -e sample \
             -p test_sample \
-            --run-name scheduled_sampled-test \
+            --run-name scheduled-sampled-test \
             --username github_actions_bot \
             --release-version v0.2.7 \
             --headless
