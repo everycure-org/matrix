@@ -1,6 +1,7 @@
 import pandas as pd
 import pytest
 from matrix.pipelines.integration import filters
+from pandera.errors import SchemaError
 from pyspark.sql.types import ArrayType, StringType, StructField, StructType
 from pyspark.testing import assertDataFrameEqual
 
@@ -142,3 +143,25 @@ def test_determine_most_specific_category(spark, sample_nodes):
     )
 
     assertDataFrameEqual(result.select(*expected.columns), expected)
+
+
+def test_determine_most_specific_category_unknown(spark):
+    # When applying the biolink deduplicate
+
+    nodes = spark.createDataFrame(
+        [
+            (
+                "CHEBI:001",
+                ["biolink:foo"],
+            ),
+        ],
+        schema=StructType(
+            [
+                StructField("id", StringType(), False),
+                StructField("all_categories", ArrayType(StringType()), False),
+            ]
+        ),
+    )
+
+    with pytest.raises(SchemaError):
+        filters.determine_most_specific_category(nodes)
