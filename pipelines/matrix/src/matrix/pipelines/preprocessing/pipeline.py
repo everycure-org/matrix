@@ -15,7 +15,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             # -------------------------------------------------------------------------
             node(
                 func=nodes.process_medical_nodes,
-                inputs=["preprocessing.raw.nodes"],
+                inputs=["preprocessing.raw.nodes", "params:preprocessing.name_resolution.url"],
                 outputs="preprocessing.int.nodes",
                 name="normalize_ec_medical_team_nodes",
                 tags=["ec-medical-kg"],
@@ -47,6 +47,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.add_source_and_target_to_clinical_trails,
                 inputs={
                     "df": "preprocessing.raw.clinical_trials_data",
+                    "resolver_url": "params:preprocessing.name_resolution.url",
                 },
                 outputs="preprocessing.int.mapped_clinical_trials_data",
                 name="mapped_clinical_trials_data",

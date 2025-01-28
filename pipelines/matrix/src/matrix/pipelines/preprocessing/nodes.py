@@ -14,7 +14,7 @@ def coalesce(s: pd.Series, *series: List[pd.Series]):
 
 
 @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
-def resolve_name(name: str, cols_to_get: List[str]) -> dict:
+def resolve_name(name: str, cols_to_get: List[str], url: str) -> dict:
     """Function to retrieve the normalized identifier through the normalizer.
 
     Args:
@@ -26,10 +26,7 @@ def resolve_name(name: str, cols_to_get: List[str]) -> dict:
 
     if not name or pd.isna(name):
         return {}
-
-    result = requests.get(
-        f"https://name-resolution-sri.renci.org/lookup?string={name}&autocomplete=True&highlighting=False&offset=0&limit=1"
-    )
+    result = requests.get(url.format(name=name))
     if len(result.json()) != 0:
         element = result.json()[0]
         print({col: element.get(col) for col in cols_to_get})
@@ -38,9 +35,10 @@ def resolve_name(name: str, cols_to_get: List[str]) -> dict:
     return {}
 
 
-def process_medical_nodes(df: pd.DataFrame) -> pd.DataFrame:
+def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
     # Normalize the name
-    enriched_data = df["name"].apply(resolve_name, cols_to_get=["curie", "label", "types"])
+
+    enriched_data = df["name"].apply(resolve_name, cols_to_get=["curie", "label", "types"], url=resolver_url)
 
     # Extract into df
     enriched_df = pd.DataFrame(enriched_data.tolist())
