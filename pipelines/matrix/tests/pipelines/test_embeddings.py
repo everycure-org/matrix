@@ -1,7 +1,9 @@
-from typing import Iterable, Iterator, Sequence, Tuple, Type
+from random import choice
+from typing import Iterable, Iterator, Sequence, Tuple, Type, TypeVar
 from unittest.mock import Mock, patch
 
 import numpy as np
+import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.types as ty
 import pytest
@@ -119,7 +121,15 @@ def sample_array_embeddings_df(spark):
 def pre_embedding(spark: ps.SparkSession) -> ps.DataFrame:
     """Provides the outcome of the integration."""
 
-    return spark.createDataFrame([(1, "a", "A"), (2, "a", "B")], schema=("id", "name", "category"))
+    return spark.createDataFrame(
+        [
+            (1, "a", "A"),
+            (2, "a", "B"),
+            (3, "a", "C"),
+            (4, "a", "D"),
+        ],
+        schema=("id", "name", "category"),
+    )
 
 
 @pytest.fixture
@@ -143,12 +153,18 @@ def embeddings_cache(scope: str, model: str, spark: ps.SparkSession) -> ps.DataF
     )
 
 
+U = TypeVar("U")
+V = TypeVar("V")
+
+
+def return_constant(docs: Iterable[U]) -> Iterator[Tuple[U, V]]:
+    for doc in docs:
+        yield doc, [1.0] * choice((1, 2))
+
+
 @pytest.fixture
 def mock_encoder() -> Mock:
     encoder = Mock()
-
-    def return_constant(docs: Sequence[str]) -> Tuple[int]:
-        return (1.0,) * len(docs)
 
     encoder.embed = Mock(side_effect=return_constant)
     return encoder
@@ -307,41 +323,32 @@ def test_cached_embeddings_can_get_loaded(pre_embedding: ps.DataFrame):
 def test_re_embedding_is_a_noop(
     pre_embedding: ps.DataFrame,
     embeddings_cache: ps.DataFrame,
-    mock_encoder: Mock,
-    mock_encoder2: Mock,
     scope: str,
     model: str,
 ):
+    """Given a cache from an earlier call to the function under test, the
+    function under test will return identical output and will not delegate to
+    an expensive transformer function."""
     embeddings_cache = embeddings_cache.withColumnsRenamed({"key": "_text_to_embed", "value": "embedding"})
+    pre_embedding.cache()
+    kwargs = {
+        "df": pre_embedding,
+        "transformer": return_constant,  # the function will get called as many times as there are partitions
+        "max_input_len": 10,
+        "input_features": ("name", "category"),
+        "scope": scope,
+        "model": model,
+        "new_colname": "embedding",
+    }
     embedded, cache_v2 = nodes.create_node_embeddings(
-        df=pre_embedding.cache(),
         cache=embeddings_cache,
-        batch_size=1,
-        transformer=mock_encoder,
-        max_input_len=10,
-        input_features=("name", "category"),
-        scope=scope,
-        model=model,
-        new_colname="embedding",
+        **kwargs,
     )
-    embedded.show()
-    cache_v2.show()
-    assert mock_encoder.embed.called_once()
 
-    # New run, but with an extended cache. Pass in a new mock, as we want to verify it has not been called.
     re_embedded, cache_v3 = nodes.create_node_embeddings(
-        df=pre_embedding,
         cache=cache_v2.cache(),
-        batch_size=1,
-        transformer=mock_encoder2,
-        max_input_len=10,
-        input_features=("name", "category"),
-        scope=scope,
-        model=model,
-        new_colname="embedding",
+        **kwargs,
     )
-
-    mock_encoder2.embed.assert_not_called()
 
     assertDataFrameEqual(embedded, re_embedded)
     assertDataFrameEqual(cache_v3, cache_v2)
@@ -392,7 +399,7 @@ def test_embedding_cache_gets_bootstrapped(
     # this is not bootstrapping, since Kedro will barf if the dataset doesn't exist
     embedded, cache_v2 = nodes.create_node_embeddings(
         df=pre_embedding.cache(),
-        cache=empty_cache,
+        cache=empty_cache,  # for bootstrapping: create (maybe it exists already?) a LazySparkDataset and on entry in create_node_embeddings wrap it with a try except
         batch_size=1,
         transformer=mock_encoder,
         max_input_len=10,
