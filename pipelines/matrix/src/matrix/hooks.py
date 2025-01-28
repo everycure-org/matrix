@@ -139,9 +139,9 @@ class SparkHooks:
             # DEBT ugly fix, ideally we overwrite this in the spark.yml config file but currently no
             # known way of doing so
             # if prod environment, remove all config keys that start with spark.hadoop.google.cloud.auth.service
-            if cls._kedro_context.env == "cloud" and os.environ.get("ARGO_NODE_ID") is not None:
+            if os.environ.get("ARGO_NODE_ID") is not None:
                 logger.warning(
-                    "we're manipulating the spark configuration now. this is done assuming this is a production execution in argo"
+                    "We're manipulating the spark configuration now. This is done assuming this is a production execution in argo"
                 )
                 parameters = {
                     k: v for k, v in parameters.items() if not k.startswith("spark.hadoop.google.cloud.auth.service")
@@ -314,8 +314,8 @@ class ReleaseInfoHooks:
         info = {
             "Release Name": ReleaseInfoHooks._globals["versions"]["release"],
             "Robokop Version": ReleaseInfoHooks._globals["data_sources"]["robokop"]["version"],
-            "RTX-KG2 Version": ReleaseInfoHooks._globals["data_sources"]["rtx-kg2"]["version"],
-            "EC Medical Team Version": ReleaseInfoHooks._globals["data_sources"]["ec-medical-team"]["version"],
+            "RTX-KG2 Version": ReleaseInfoHooks._globals["data_sources"]["rtx_kg2"]["version"],
+            "EC Medical Team Version": ReleaseInfoHooks._globals["data_sources"]["ec_medical_team"]["version"],
             "Topological Estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["_object"],
             "Embeddings Encoder": ReleaseInfoHooks._params["embeddings.node"]["encoder"]["encoder"]["model"],
             "BigQuery Link": ReleaseInfoHooks.build_bigquery_link(),
