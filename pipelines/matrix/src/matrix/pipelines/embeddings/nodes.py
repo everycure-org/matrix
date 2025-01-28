@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, Sequence
+from typing import Any, Callable, Dict, Iterable, Iterator, List, Sequence, Tuple, TypeAlias
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -32,6 +32,8 @@ from .encoders import AttributeEncoder
 from .graph_algorithms import GDSGraphAlgorithm
 
 logger = logging.getLogger(__name__)
+
+ResolvedEmbedding: TypeAlias = tuple[str, list[float]]
 
 
 class GraphDS(GraphDataScience):
@@ -478,65 +480,68 @@ def visualise_pca(nodes: ps.DataFrame, column_name: str) -> plt.Figure:
 def create_node_embeddings(
     df: ps.DataFrame,
     cache: ps.DataFrame,
-    batch_size: int,
-    transformer: Any,
+    transformer: Callable[[Iterable[str]], Iterator[ResolvedEmbedding]],
     input_features: Sequence[str],
     max_input_len: int,
     scope: str,
     model: str,
     new_colname: str = "embedding",
-) -> None:
+) -> tuple[ps.DataFrame, ps.DataFrame]:
     """
-    Function to create node embeddings.
-    There's 3 steps:
-    1. Load embeddings from cache
-    2. Lookup and generate missing embeddings
-    3. Overwrite cache with updated embeddings
+    Add the embeddings of the text composed of the `input_features`, truncated
+    to a length of `max_input_len`, as the column `new_colname` to the `df`.
+
+    This function makes use of a cache to prevent time-consuming API calls made
+    in the transformer. As well as the dataframe with embeddings, an updated
+    version of the cache is returned.
 
     Args:
         df: Input DataFrame containing nodes to process.
         cache: DataFrame holding cached embeddings.
-        batch_size: Number of rows per batch.
-        transformer_config: Configuration for the transformer.
+        transformer: function that for each string composed of the concatenation
+          of the `input_features`, limited to a length of `max_input_len`,
+          returns the string itself and its embedding. How the function does
+          this (batch/async/…) is an implementation detail. The function must
+          be serializable though.
         input_features: sequence of strings representing the columns that will be sent in concatenated form to the transformer's embedding call.
-        max_input_len: Maximum length of input features.
+        max_input_len: Maximum length of the text for which embeddings will be retrieved.
+        scope: string used to filter the cache
+        model: string used to filter the cache
+        new_colname: name of the column that will contain the embeddings
     """
-    # Load embeddings from cache
     embeddings_pkey = "_text_to_embed"
     df = df.withColumn(embeddings_pkey, concat_ws("", *input_features).substr(1, max_input_len))
     assert embeddings_pkey in cache.columns
-    cache = cache.filter(F.col("scope") == F.lit(scope)).filter(F.col("model") == F.lit(model))
-    partly_enriched = (
-        load_embeddings_from_cache(df=df, cache=cache, primary_key=embeddings_pkey).drop("scope", "model").cache()
+    scoped_cache = (
+        cache.cache().filter((cache["scope"] == F.lit(scope)) & (cache["model"] == F.lit(model))).drop("scope", "model")
     )
-    # new_fields = [field for field in cached_df.schema.fields if field.name not in input_features]
-    # new_schema = StructType(new_fields)
-    # # Determine number of batches and repartition the data
-    # num_elements = cached_df.count()
-    # num_batches = (num_elements + batch_size - 1) // batch_size
-    # # Partitionate the dataframe
-    # partitioned_df = cached_df.repartition(num_batches)
-    # # Lookup and generate missing embeddings
-    enriched = partly_enriched.filter(partly_enriched[new_colname].isNotNull())
-    non_enriched = partly_enriched.filter(partly_enriched[new_colname].isNull())
+    partly_enriched = load_embeddings_from_cache(df=df, cache=scoped_cache, primary_key=embeddings_pkey).cache()
+    enriched_from_cache, non_enriched = partitionby_presence_of_an_embedding(
+        partly_enriched, embeddings_col=new_colname
+    )
+    non_enriched = non_enriched.drop(new_colname).cache()
 
-    enriched_df = lookup_missing_embeddings(
-        df=non_enriched.drop(new_colname), callback=transformer.embed, pkey=embeddings_pkey, new_colname=new_colname
-    ).drop(embeddings_pkey)
+    texts_not_in_cache = non_enriched.select(embeddings_pkey).distinct()
 
-    print("triple")
-    for df in (non_enriched, enriched_df, enriched):
-        df.show()
-    complete = enriched_df.unionByName(enriched).drop("scope", "model").cache()
-    new_cache = enriched_df.select("scope", "model", embeddings_pkey, new_colname).unionByName(cache).distinct()
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug('{"cache size": %d, "model-scoped cache size": %d', cache.count(), scoped_cache.cache().count())
+        logger.debug(
+            '{"total embeddable texts": %d, "records not in cache": %d, "texts needing an embedding": %d}',
+            df.count(),
+            non_enriched.count(),
+            texts_not_in_cache.cache().count(),
+        )
+
+    texts_with_embeddings = lookup_missing_embeddings(
+        df=texts_not_in_cache,
+        embedder=transformer,
+        new_colname=new_colname,
+    ).cache()
+    enriched_from_external = non_enriched.join(texts_with_embeddings, on=embeddings_pkey, how="left")
+
+    complete = enriched_from_cache.unionByName(enriched_from_external).drop(embeddings_pkey).cache()
+    new_cache = cache.unionByName(texts_with_embeddings.withColumns({"scope": F.lit(scope), "model": F.lit(model)}))
     return complete, new_cache
-    # Overwrite cache with updated embeddings
-    updated_cache = overwrite_cache(enriched_df)
-    enriched_df = enriched_df.drop("model", "scope", embeddings_pkey)
-    # bucket_name = "mtrx-us-central1-hub-dev-storage"
-    # object_name = "kedro/data/cache/embeddings_cache"
-    # upload_with_generation_check(bucket_name, object_name, file_path)
-    return enriched_df, updated_cache
 
 
 def load_embeddings_from_cache(
@@ -544,53 +549,44 @@ def load_embeddings_from_cache(
     cache: ps.DataFrame,
     primary_key: str,
 ) -> ps.DataFrame:
-    """
-    Enrich the dataframe with cached embeddings.
-    Args:
-        dataframe: Input DataFrame to enrich.
-        cache: DataFrame containing cached embeddings.
-        primary_key: str representing the column name that is the primary key of the cache and is also present in the dataframe.
-    Returns:
-        DataFrame enriched with cached embeddings.
-    """
-    print(f"in load_embeddings, {primary_key=}")
-    for frame in (df, cache):
-        frame.show()
     return df.join(cache, on=primary_key, how="left")
+
+
+def partitionby_presence_of_an_embedding(df: ps.DataFrame, embeddings_col: str) -> tuple[ps.DataFrame, ps.DataFrame]:
+    df = df.cache()
+    with_ = df.filter(df[embeddings_col].isNotNull())
+    without = df.filter(df[embeddings_col].isNull())
+    return with_, without
 
 
 def lookup_missing_embeddings(
     df: ps.DataFrame,
-    callback: Callable[[Sequence[str]], List[float]],
-    pkey: str,
-    new_colname: str,  # , output_schema, input_features, max_input_len
+    embedder: Callable[[Iterable[str]], Iterator[ResolvedEmbedding]],
+    new_colname: str,
 ) -> ps.DataFrame:
     """
     Generate embeddings for rows missing in the cache.
 
     Args:
-        df: Input DataFrame with missing embeddings for the column named `pkey`
-        callback: function that, given a list of strings from the `pkey` column, returns the embeddings of those strings
-        pkey: name of the column containing the values to be embedded
+        df: Input DataFrame consisting of a single column containing texts that need embeddings.
+        embedder: function that returns for each string of the DataFrame's
+           first and only column the string and its embedding of that string.
+        new_colname: name of the column under which the embeddings will be placed.
 
     Returns:
-        DataFrame with generated embeddings for missing rows.
+        DataFrame with generated embeddings.
     """
 
-    def embed_docs(new_colname: str, pkey: str) -> Callable[[Iterable[Row]], Iterator[Row]]:
-        def inner(it: Iterable[Row]) -> Iterator[Row]:
-            # todo: consume the iterable entirely as pandas DataFrame
-            frame = pd.DataFrame(map(lambda x: x.asDict(), it))
-            frame[new_colname] = frame[pkey].apply(callback)
-            return frame.itertuples(index=False)
+    assert len(df.columns) == 1, "Only one Column is to be embedded."
+    pkey = df.columns[0]
+
+    def embed_docs(pkey: str) -> Callable[[Iterable[Row]], Iterator[ResolvedEmbedding]]:
+        def inner(it: Iterable[Row]) -> Iterator[ResolvedEmbedding]:
+            return embedder(_[pkey] for _ in it)
 
         return inner
 
-    # For convenience, place the element to be embedded in the last column
-    rdd_result = df.rdd.mapPartitions(
-        embed_docs(new_colname=new_colname, pkey=pkey)
-        # lambda it: enrich_embeddings_sync(it, columns, transformer_config, input_features, max_input_len)
-    )
+    rdd_result = df.rdd.mapPartitions(embed_docs(pkey=pkey))
     new_schema = df.schema.add(StructField(new_colname, ArrayType(FloatType()), nullable=True))
     return rdd_result.toDF(schema=new_schema)
 
@@ -640,23 +636,6 @@ def enrich_embeddings_sync(iterable, columns, transformer_config, input_features
         return await enrich_embeddings(iterable, columns, transformer_config, input_features, max_input_len)
 
     return asyncio.run(process())
-
-
-def overwrite_cache(df: ps.DataFrame) -> None:
-    """
-    Update the cache with newly generated embeddings.
-    Args:
-        df: DataFrame containing updated embeddings.
-    """
-
-    # If the input is an RDD, convert it to a DataFrame
-    if isinstance(df, pyspark.RDD):
-        columns = ["model", "scope", "embedding", "id"]
-        df = df.map(lambda row: Row(**row)).toDF(columns)
-
-    # Extract relevant columns for the cache
-    cache_update = df.select("model", "scope", "embedding", "id").distinct()
-    return cache_update
 
 
 def transform(df, transformer, input_features, max_input_len):
