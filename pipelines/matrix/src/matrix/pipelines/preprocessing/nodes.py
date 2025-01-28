@@ -95,8 +95,6 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame) -> pd.DataFrame:
     Args:
         df: Clinical trial dataset
     """
-    df = df.head(10)
-
     # Normalize the name
     drug_data = df["drug_name"].apply(resolve_name, cols_to_get=["curie"])
     disease_data = df["disease_name"].apply(resolve_name, cols_to_get=["curie"])
