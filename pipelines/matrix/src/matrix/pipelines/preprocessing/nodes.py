@@ -26,9 +26,7 @@ def resolve_name(name: str, cols_to_get: List[str], url: str) -> dict:
 
     if not name or pd.isna(name):
         return {}
-    result = requests.get(
-        url.format(name=name)
-    )
+    result = requests.get(url.format(name=name))
     if len(result.json()) != 0:
         element = result.json()[0]
         print({col: element.get(col) for col in cols_to_get})
