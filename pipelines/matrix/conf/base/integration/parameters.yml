@@ -46,6 +46,13 @@ integration:
       drug_chemical_conflate: true
       description: false
 
+  deduplication:
+    # choose if a node should have the most specific category. 
+    # E.g. if a node has all_categories [biolink:ChemicalEntity, biolink:NamedThing],
+    # then node will be assigned biolink:ChemicalEntity as most specific category.
+    # For RTX-KG2 reproduction from KGML-xDTD, choose false
+    retrieve_most_specific_category: false
+
   filtering:
     node_filters:
       filter_node_labels:
