@@ -132,6 +132,7 @@ fabricator.rtx_kg2:
           seed: 590590
       pmids:
           type: generate_random_arrays
+          to_json: True
           sample_values:
             - 12345678
             - 678

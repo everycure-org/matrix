@@ -94,7 +94,7 @@ preprocessing.int.mapped_clinical_trials_data:
 preprocessing.raw.disease_list: 
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: https://api.github.com/repos/everycure-org/matrix-disease-list/releases/assets/${globals:data_sources.ec-disease-list.version}
+  filepath: https://api.github.com/repos/everycure-org/matrix-disease-list/releases/assets/${globals:data_sources.disease_list.version}
   fs_args:
     Accept: application/octet-stream
     Authorization: token ${globals:gh_token}
@@ -105,7 +105,7 @@ preprocessing.raw.drug_list:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
   # NOTE: This is currently being downloaded through the assets as the repository is private.
-  filepath: https://api.github.com/repos/everycure-org/matrix-drug-list/releases/assets/${globals:data_sources.ec-drug-list.version}
+  filepath: https://api.github.com/repos/everycure-org/matrix-drug-list/releases/assets/${globals:data_sources.drug_list.version}
   fs_args:
     Accept: application/octet-stream
     Authorization: token ${globals:gh_token}
