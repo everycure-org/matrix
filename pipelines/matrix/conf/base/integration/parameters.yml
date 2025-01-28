@@ -27,7 +27,7 @@ integration:
         _object: matrix.pipelines.integration.transformers.ground_truth.GroundTruthTransformer
     drugmech:
       transformer:
-         _object: matrix.pipelines.integration.transformers.nop.NopTransformer
+         _object: matrix.pipelines.integration.transformers.drugmech.DrugMechTransformer
     
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:
