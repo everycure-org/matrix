@@ -29,6 +29,17 @@ logger = logging.getLogger(__name__)
     ),
     df_name="nodes",
 )
+@check_output(
+    DataFrameSchema(
+        columns={
+            "subject": Column(T.StringType(), nullable=False),
+            "predicate": Column(T.StringType(), nullable=False),
+            "object": Column(T.StringType(), nullable=False),
+        },
+        # unique=["subject", "predicate", "object"],
+    ),
+    df_name="edges",
+)
 def transform(transformer, **kwargs) -> Dict[str, ps.DataFrame]:
     return transformer.transform(**kwargs)
 
