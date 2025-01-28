@@ -120,9 +120,11 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
         .withColumn(
             "parents", F.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))(F.col("category"))
         )
-        # Remove all parents that we could not resolve against biolink
-        .filter(F.col("parents").isNotNull())
+        # Our parents list is empty if the parent could not be found, we're removing
+        # these elements and ensure there is a non_null check to ensure each element
+        # was found in the hierarchy
         .withColumn("depth", F.array_size("parents"))
+        .filter(F.col("depth") > 0)
         .withColumn("row_num", F.row_number().over(ps.Window.partitionBy("id").orderBy(F.col("depth").desc())))
         .filter(F.col("row_num") == 1)
         .drop("row_num")
