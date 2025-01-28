@@ -1,27 +1,19 @@
 import asyncio
 import logging
-from typing import Any, Callable, Dict, Iterable, Iterator, List, Sequence, Tuple, TypeAlias
+from typing import Any, Callable, Dict, Iterable, Iterator, List, Sequence, TypeAlias
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pyspark
 import pyspark.sql as ps
-import pyspark.sql.functions as F
-import pyspark.sql.types as T
 import seaborn as sns
 from google.cloud import storage
 from graphdatascience import GraphDataScience
 from langchain_openai import OpenAIEmbeddings
 from pyspark.ml.functions import array_to_vector, vector_to_array
-from pyspark.sql import Row, SparkSession
-from pyspark.sql.functions import col, concat_ws
-from pyspark.sql.types import ArrayType, FloatType, StringType, StructField, StructType
-from pyspark.sql.window import Window
-
-# from refit.v1.core.inline_has_schema import has_schema
-# from refit.v1.core.inline_primary_key import primary_key
-# from refit.v1.core.output_primary_key import _duplicate_and_null_check
+from pyspark.sql import Row
+from pyspark.sql.functions import concat_ws, lit
+from pyspark.sql.types import ArrayType, FloatType, StringType, StructField
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from matrix.inject import inject_object, unpack_params
@@ -59,12 +51,12 @@ class GraphDS(GraphDataScience):
 @check_output(
     schema=DataFrameSchema(
         columns={
-            "id": Column(T.StringType(), nullable=False),
-            "label": Column(T.StringType(), nullable=False),
-            "name": Column(T.StringType(), nullable=True),
-            "property_keys": Column(T.ArrayType(T.StringType()), nullable=False),
-            "property_values": Column(T.ArrayType(T.StringType()), nullable=False),
-            "upstream_data_source": Column(T.ArrayType(T.StringType()), nullable=False),
+            "id": Column(StringType(), nullable=False),
+            "label": Column(StringType(), nullable=False),
+            "name": Column(StringType(), nullable=True),
+            "property_keys": Column(ArrayType(StringType()), nullable=False),
+            "property_values": Column(ArrayType(StringType()), nullable=False),
+            "upstream_data_source": Column(ArrayType(StringType()), nullable=False),
         }
     )
 )
@@ -218,9 +210,9 @@ async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.D
 @check_output(
     schema=DataFrameSchema(
         columns={
-            "id": Column(T.StringType(), nullable=False),
-            "embedding": Column(T.ArrayType(T.FloatType()), nullable=False),
-            "pca_embedding": Column(T.ArrayType(T.FloatType()), nullable=False),
+            "id": Column(StringType(), nullable=False),
+            "embedding": Column(ArrayType(FloatType()), nullable=False),
+            "pca_embedding": Column(ArrayType(FloatType()), nullable=False),
         },
         unique=["id"],
     )
@@ -433,9 +425,9 @@ def _cast_to_array(df, col: str) -> ps.DataFrame:
 @check_output(
     schema=DataFrameSchema(
         columns={
-            "id": Column(T.StringType(), nullable=False),
-            "topological_embedding": Column(T.ArrayType(T.FloatType()), nullable=False),
-            "pca_embedding": Column(T.ArrayType(T.FloatType()), nullable=False),
+            "id": Column(StringType(), nullable=False),
+            "topological_embedding": Column(ArrayType(FloatType()), nullable=False),
+            "pca_embedding": Column(ArrayType(FloatType()), nullable=False),
         },
         unique=["id"],
     )
@@ -514,7 +506,7 @@ def create_node_embeddings(
     df = df.withColumn(embeddings_pkey, concat_ws("", *input_features).substr(1, max_input_len))
     assert {embeddings_pkey, new_colname}.issubset(cache.columns)
     scoped_cache = (
-        cache.cache().filter((cache["scope"] == F.lit(scope)) & (cache["model"] == F.lit(model))).drop("scope", "model")
+        cache.cache().filter((cache["scope"] == lit(scope)) & (cache["model"] == lit(model))).drop("scope", "model")
     )
 
     if logger.isEnabledFor(logging.DEBUG):
@@ -523,7 +515,7 @@ def create_node_embeddings(
     complete, missing_from_cache = lookup_embeddings(
         df=df, cache=scoped_cache, embedder=transformer, text_colname=embeddings_pkey, new_colname=new_colname
     )
-    new_cache = cache.unionByName(missing_from_cache.withColumns({"scope": F.lit(scope), "model": F.lit(model)}))
+    new_cache = cache.unionByName(missing_from_cache.withColumns({"scope": lit(scope), "model": lit(model)}))
     return complete, new_cache
 
 
