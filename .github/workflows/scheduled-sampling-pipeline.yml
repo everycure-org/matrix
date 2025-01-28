@@ -41,6 +41,15 @@ jobs:
         working-directory: pipelines/matrix
         run: |
           pip install -r requirements.txt
+
+      - name: Authenticate with Google Cloud
+        id: auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{env.project_id}}
+          workload_identity_provider: ${{env.workload_identity_provider}}
+          service_account: ${{env.service_account}}
+          token_format: access_token
           
       - name: Run the kedro sampling pipeline
         working-directory: pipelines/matrix
@@ -50,19 +59,19 @@ jobs:
             -e sample \
             -p sampling
 
-      - name: Post to a Slack channel
-        # Only post to Slack if the deployment failed and we're on the infra branch
-        if: failure()
-        id: slack
-        uses: slackapi/slack-github-action@v1.26.0
-        with:
-          # Slack channel id, channel name, or user id to post message.
-          # See also: https://api.slack.com/methods/chat.postMessage#channels
-          # You can pass in multiple channels to post to by providing a comma-delimited list of channel IDs.
-          channel-id: 'C07HU35MKAQ' #github-notifications
-          # For posting a simple plain text message
-          slack-message: |
-            ** 🧪 Weekly Sampling Pipeline Failed! 🚨**
-            🔗 Action run link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+#      - name: Post to a Slack channel
+#        # Only post to Slack if the deployment failed and we're on the infra branch
+#        if: failure()
+#        id: slack
+#        uses: slackapi/slack-github-action@v1.26.0
+#        with:
+#          # Slack channel id, channel name, or user id to post message.
+#          # See also: https://api.slack.com/methods/chat.postMessage#channels
+#          # You can pass in multiple channels to post to by providing a comma-delimited list of channel IDs.
+#          channel-id: 'C07HU35MKAQ' #github-notifications
+#          # For posting a simple plain text message
+#          slack-message: |
+#            ** 🧪 Weekly Sampling Pipeline Failed! 🚨**
+#            🔗 Action run link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+#        env:
+#          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
