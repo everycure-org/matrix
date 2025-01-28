@@ -1,3 +1,6 @@
+from typing import Iterable, Iterator, Sequence, Tuple, Type
+from unittest.mock import Mock, patch
+
 import numpy as np
 import pyspark.sql as ps
 import pyspark.sql.types as ty
@@ -113,10 +116,37 @@ def sample_array_embeddings_df(spark):
 
 
 @pytest.fixture
-def sample_pre_embedding_df(spark: ps.SparkSession) -> ps.DataFrame:
+def pre_embedding(spark: ps.SparkSession) -> ps.DataFrame:
     """Provides the outcome of the integration."""
 
     return spark.createDataFrame([(1, "a", "A"), (2, "a", "B")], schema=("id", "name", "category"))
+
+
+@pytest.fixture
+def embeddings_cache(spark: ps.SparkSession) -> ps.DataFrame:
+    return spark.createDataFrame(
+        [
+            ("foo", "bar", "aA", [1]),
+            ("foo", "bar", "cC", [1]),
+        ],
+        schema=("scope", "model", "key", "value"),
+    )
+
+
+@pytest.fixture
+def mock_encoder() -> Mock:
+    encoder = Mock()
+
+    def return_constant(docs: Sequence[str]) -> Tuple[int]:
+        return (1,) * len(docs)
+
+    encoder.embed = Mock(side_effect=return_constant)
+    return encoder
+
+
+@pytest.fixture
+def mock_encoder2(mock_encoder) -> Mock:
+    return mock_encoder
 
 
 def test_ingest_nodes_basic(spark: ps.SparkSession, sample_input_df: ps.DataFrame) -> None:
@@ -229,9 +259,9 @@ def test_cast_to_array(sample_string_embeddings_df):
     assert np.allclose(node1.pca_embedding, [0.1, 0.2])
 
 
-def test_cached_embeddings_can_get_loaded(sample_pre_embedding_df: ps.DataFrame):
+def test_cached_embeddings_can_get_loaded(pre_embedding: ps.DataFrame):
     scope, model = "foo", "bar"
-    dummy_cache = sample_pre_embedding_df.sparkSession.createDataFrame(
+    dummy_cache = pre_embedding.sparkSession.createDataFrame(
         [
             (scope, model, "aA", [1.0]),
             (scope, model, "bB", [2.0]),
@@ -247,7 +277,7 @@ def test_cached_embeddings_can_get_loaded(sample_pre_embedding_df: ps.DataFrame)
     )
 
     result = nodes.load_embeddings_from_cache(
-        dataframe=sample_pre_embedding_df,
+        dataframe=pre_embedding,
         cache=dummy_cache,
         model=model,
         scope=scope,
@@ -262,3 +292,95 @@ def test_cached_embeddings_can_get_loaded(sample_pre_embedding_df: ps.DataFrame)
     result.show()
     assert sorted(expected.columns) == sorted(result.columns)  # order of columns is unimportant
     assertDataFrameEqual(result.select(expected.columns), expected)
+
+
+def test_re_embedding_is_a_noop(
+    pre_embedding: ps.DataFrame, embeddings_cache: ps.DataFrame, mock_encoder: Mock, mock_encoder2: Mock
+):
+    embedded, cache_v2 = nodes.create_node_embeddings(
+        df=pre_embedding.cache(),
+        cache=embeddings_cache,
+        batch_size=1,
+        transformer=mock_encoder,
+        max_input_len=10,
+        input_features=("name", "category"),
+    )
+
+    assert mock_encoder.embed.called_once()
+
+    # New run, but with an extended cache. Pass in a new mock, as we want to verify it has not been called.
+    re_embedded, cache_v3 = nodes.create_node_embeddings(
+        df=pre_embedding,
+        cache=cache_v2.cache(),
+        batch_size=1,
+        transformer=mock_encoder2,
+        max_input_len=10,
+        input_features=("name", "category"),
+    )
+
+    mock_encoder2.embed.assert_not_called()
+
+    assertDataFrameEqual(embedded, re_embedded)
+    assertDataFrameEqual(cache_v3, cache_v2)
+
+
+def test_reduced_embedding_calls_in_presence_of_a_cache(
+    pre_embedding: ps.DataFrame, embeddings_cache: ps.DataFrame, mock_encoder: Mock, mock_encoder2: Mock
+):
+    embedded, cache_v2 = nodes.create_node_embeddings(
+        df=pre_embedding.cache(),
+        cache=embeddings_cache,
+        batch_size=1,
+        transformer=mock_encoder,
+        max_input_len=10,
+        input_features=("name", "category"),
+    )
+
+    assert mock_encoder.embed.called_once()
+
+    pre_embedding.union(pre_embedding.sparkSession.createDataFrame([(3, "c", "C")], schema=pre_embedding.schema))
+    # New run, but with an extended cache. Pass in a new mock, as we want to verify it has not been called.
+    re_embedded, cache_v3 = nodes.create_node_embeddings(
+        df=pre_embedding,
+        cache=cache_v2.cache(),
+        batch_size=1,
+        transformer=mock_encoder2,
+        max_input_len=10,
+        input_features=("name", "category"),
+    )
+
+    mock_encoder2.embed.assert_called_once_with(["cC"])
+
+    assertDataFrameEqual(embedded, re_embedded)
+    assertDataFrameEqual(cache_v3, cache_v2)
+
+    pass
+
+
+def test_embedding_cache_gets_bootstrapped(
+    pre_embedding: ps.DataFrame, embeddings_cache: ps.DataFrame, mock_encoder: Mock, mock_encoder2: Mock
+):
+    empty_cache = embeddings_cache.limit(0)
+    # this is not bootstrapping, since Kedro will barf if the dataset doesn't exist
+    embedded, cache_v2 = nodes.create_node_embeddings(
+        df=pre_embedding.cache(),
+        cache=empty_cache,
+        batch_size=1,
+        transformer=mock_encoder,
+        max_input_len=10,
+        input_features=("name", "category"),
+    )
+
+    assert mock_encoder.embed.called_once_with(["aA", "bB"])
+    expected_cache = pre_embedding.sparkSession.createDataFrame(
+        [
+            ("foo", "bar", "aA", [1]),
+            ("foo", "bar", "bB", [1]),
+        ]
+    )
+    assertDataFrameEqual(cache_v2, expected_cache)
+
+
+def test_embeddings_batch_size_determines_number_of_network_calls():
+    # 5 rows, batch_size=1-> 5 calls. 5 rows, batch_size=2, -> 5calls or less (depends on number of partitions)
+    pass
