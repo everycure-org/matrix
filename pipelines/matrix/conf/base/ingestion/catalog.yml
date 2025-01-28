@@ -163,17 +163,12 @@ ingestion.int.ec_clinical_trails.edges:
 # DrugMech
 # -------------------------------------------------------------------------  
 
-ingestion.raw.drugmech@spark:
+ingestion.raw.drugmech.edges:
   type: matrix.datasets.gcp.LazySparkDataset
   filepath: https://raw.githubusercontent.com/SuLab/DrugMechDB/refs/tags/${globals:data_sources.drugmech.version}/indication_paths.json
   file_format: json
   load_args:
     multiline: true
-
-
-ingestion.int.drugmech.nodes:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/drugmech/${globals:data_sources.drugmech.version}/nodes
 
 ingestion.int.drugmech.edges:
   <<: [*_spark_parquet, *_layer_int]

@@ -1,5 +1,6 @@
 import logging
 
+import pyspark.sql as ps
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
 from pyspark.sql import DataFrame
@@ -11,16 +12,8 @@ logger = logging.getLogger(__name__)
 
 class ClinicalTrialsTransformer(GraphTransformer):
     def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
-        """Transform nodes to our target schema.
-
-        Args:
-            nodes_df: Nodes DataFrame.
-
-        Returns:
-            Transformed DataFrame.
-        """
         # fmt: off
-        df = (
+        return (
             nodes_df
             .withColumn("id",                                f.col("curie"))
             .withColumn("upstream_data_source",              f.array(f.lit("ec_clinical_trails")))
@@ -33,25 +26,14 @@ class ClinicalTrialsTransformer(GraphTransformer):
             # Filter nodes we could not correctly resolve
             .filter(f.col("id").isNotNull())
         )
-        return df
-        # fmt: on
 
     def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
-        """Transform edges to our target schema.
-
-        Args:
-            edges_df: Edges DataFrame.
-            pubmed_mapping: pubmed mapping
-        Returns:
-            Transformed DataFrame.
-        """
         # fmt: off
-        df = (
+        return (
             edges_df
             .withColumn("subject", f.col("drug_curie"))
             .withColumn("object", f.col("disease_curie"))
-            # NOTE: Setting predicate such that it is unique
             .withColumn("predicate", f.lit("clinical_trails"))
             .filter((f.col("subject").isNotNull()) & (f.col("object").isNotNull()))
         )
-        return df
+        # fmt: on

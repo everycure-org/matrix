@@ -22,7 +22,7 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # Add ingestion pipeline for each source
     for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration"):
-        if source.get("ingest", True):
+        if source.get("nodes", True):
             nodes.append(
                 node(
                     func=lambda x: x,
@@ -33,7 +33,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 )
             )
 
-            if not source.get("nodes_only", False):
+            if source.get("edges", True):
                 nodes.append(
                     node(
                         func=lambda x: x,

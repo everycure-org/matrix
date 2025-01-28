@@ -27,24 +27,10 @@ logger = logging.getLogger(__name__)
         },
         unique=["id"],
     ),
+    df_name="nodes",
 )
-def transform_nodes(transformer, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
-    return transformer.transform_nodes(nodes_df=nodes_df, **kwargs)
-
-
-@inject_object()
-@check_output(
-    DataFrameSchema(
-        columns={
-            "subject": Column(T.StringType(), nullable=False),
-            "predicate": Column(T.StringType(), nullable=False),
-            "object": Column(T.StringType(), nullable=False),
-        },
-        # unique=["subject", "predicate", "object"],
-    ),
-)
-def transform_edges(transformer, edges_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
-    return transformer.transform_edges(edges_df=edges_df, **kwargs)
+def transform(transformer, **kwargs) -> Dict[str, ps.DataFrame]:
+    return transformer.transform(**kwargs)
 
 
 @check_output(
