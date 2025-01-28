@@ -1,6 +1,8 @@
+from pathlib import Path
 from random import choice
-from typing import Iterable, Iterator, Sequence, Tuple, Type, TypeVar
+from typing import Callable, Iterable, Iterator, Sequence, Tuple, Type, TypeVar
 from unittest.mock import Mock, patch
+from uuid import uuid4
 
 import numpy as np
 import pandas as pd
@@ -157,9 +159,19 @@ U = TypeVar("U")
 V = TypeVar("V")
 
 
-def return_constant(docs: Iterable[U]) -> Iterator[Tuple[U, V]]:
-    for doc in docs:
-        yield doc, [1.0] * choice((1, 2))
+@pytest.fixture
+def return_constant(tmp_path: Path):
+    # The function below will be used in Spark's executors. To do so, the
+    # function gets serialized, which means mocks get recreated and one can no
+    # longer use their `assert_called_once` and similar methods. The following
+    # allows us to track how many times the function actually got called, when
+    # dealing with subprocesses that unpickle this function.
+    def embedder(docs: Iterable[str]) -> Iterator[Tuple[str, float]]:
+        for doc in docs:
+            (tmp_path / uuid4().hex).touch(exist_ok=False)
+            yield doc, [1.0] * choice((1, 2))
+
+    yield embedder, tmp_path
 
 
 @pytest.fixture
@@ -323,6 +335,7 @@ def test_cached_embeddings_can_get_loaded(pre_embedding: ps.DataFrame):
 def test_re_embedding_is_a_noop(
     pre_embedding: ps.DataFrame,
     embeddings_cache: ps.DataFrame,
+    return_constant: tuple[Callable, Path],
     scope: str,
     model: str,
 ):
@@ -333,7 +346,7 @@ def test_re_embedding_is_a_noop(
     pre_embedding.cache()
     kwargs = {
         "df": pre_embedding,
-        "transformer": return_constant,  # the function will get called as many times as there are partitions
+        "transformer": return_constant[0],  # the function will get called as many times as there are partitions
         "max_input_len": 10,
         "input_features": ("name", "category"),
         "scope": scope,
@@ -345,26 +358,39 @@ def test_re_embedding_is_a_noop(
         **kwargs,
     )
 
+    # Force materialization and thus calling of the transformer/embedder
+    embedded.count()
+    assert next(return_constant[1].glob("*"))  # The embedder function got called at least once
+
+    for f in return_constant[1].glob("*"):
+        f.unlink()  # The fixture only creates files in there. Empty the dir for a new run.
+
     re_embedded, cache_v3 = nodes.create_node_embeddings(
         cache=cache_v2.cache(),
         **kwargs,
     )
+    assert list(return_constant[1].glob("*")) == []  # This indicates we did not step into the external embedder!
 
     assertDataFrameEqual(embedded, re_embedded)
     assertDataFrameEqual(cache_v3, cache_v2)
 
 
 def test_reduced_embedding_calls_in_presence_of_a_cache(
-    pre_embedding: ps.DataFrame, embeddings_cache: ps.DataFrame, mock_encoder: Mock, mock_encoder2: Mock
+    pre_embedding: ps.DataFrame,
+    embeddings_cache: ps.DataFrame,
+    return_constant: tuple[Callable, Path],
+    scope: str,
+    model: str,
 ):
     embedded, cache_v2 = nodes.create_node_embeddings(
         df=pre_embedding.cache(),
         cache=embeddings_cache,
-        batch_size=1,
-        transformer=mock_encoder,
+        transformer=return_constant[0],
         max_input_len=10,
         input_features=("name", "category"),
     )
+
+    assert pre_embedding.select("name", "category")
 
     assert mock_encoder.embed.called_once()
 
@@ -373,7 +399,6 @@ def test_reduced_embedding_calls_in_presence_of_a_cache(
     re_embedded, cache_v3 = nodes.create_node_embeddings(
         df=pre_embedding,
         cache=cache_v2.cache(),
-        batch_size=1,
         transformer=mock_encoder2,
         max_input_len=10,
         input_features=("name", "category"),
@@ -400,7 +425,6 @@ def test_embedding_cache_gets_bootstrapped(
     embedded, cache_v2 = nodes.create_node_embeddings(
         df=pre_embedding.cache(),
         cache=empty_cache,  # for bootstrapping: create (maybe it exists already?) a LazySparkDataset and on entry in create_node_embeddings wrap it with a try except
-        batch_size=1,
         transformer=mock_encoder,
         max_input_len=10,
         input_features=("name", "category"),

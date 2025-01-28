@@ -515,16 +515,30 @@ def create_node_embeddings(
     scoped_cache = (
         cache.cache().filter((cache["scope"] == F.lit(scope)) & (cache["model"] == F.lit(model))).drop("scope", "model")
     )
-    partly_enriched = load_embeddings_from_cache(df=df, cache=scoped_cache, primary_key=embeddings_pkey).cache()
+    complete, missing_from_cache = lookup_embeddings(
+        df=df, cache=scoped_cache, embedder=transformer, text_colname=embeddings_pkey, new_colname=new_colname
+    )
+    new_cache = cache.unionByName(missing_from_cache.withColumns({"scope": F.lit(scope), "model": F.lit(model)}))
+    return complete, new_cache
+
+
+def lookup_embeddings(
+    df: ps.DataFrame,
+    cache: ps.DataFrame,
+    text_colname: str,
+    new_colname: str,
+    embedder: Callable[[Iterable[str]], Iterator[ResolvedEmbedding]],
+) -> tuple[ps.DataFrame, ps.DataFrame]:
+    partly_enriched = load_embeddings_from_cache(df=df, cache=cache, primary_key=text_colname).cache()
     enriched_from_cache, non_enriched = partitionby_presence_of_an_embedding(
         partly_enriched, embeddings_col=new_colname
     )
     non_enriched = non_enriched.drop(new_colname).cache()
 
-    texts_not_in_cache = non_enriched.select(embeddings_pkey).distinct()
+    texts_not_in_cache = non_enriched.select(text_colname).distinct()
 
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug('{"cache size": %d, "model-scoped cache size": %d', cache.count(), scoped_cache.cache().count())
+        logger.debug('{"cache size": %d, "model-scoped cache size": %d', cache.count(), cache.cache().count())
         logger.debug(
             '{"total embeddable texts": %d, "records not in cache": %d, "texts needing an embedding": %d}',
             df.count(),
@@ -534,14 +548,13 @@ def create_node_embeddings(
 
     texts_with_embeddings = lookup_missing_embeddings(
         df=texts_not_in_cache,
-        embedder=transformer,
+        embedder=embedder,
         new_colname=new_colname,
     ).cache()
-    enriched_from_external = non_enriched.join(texts_with_embeddings, on=embeddings_pkey, how="left")
+    enriched_from_external = non_enriched.join(texts_with_embeddings, on=text_colname, how="left")
 
-    complete = enriched_from_cache.unionByName(enriched_from_external).drop(embeddings_pkey).cache()
-    new_cache = cache.unionByName(texts_with_embeddings.withColumns({"scope": F.lit(scope), "model": F.lit(model)}))
-    return complete, new_cache
+    complete = enriched_from_cache.unionByName(enriched_from_external).drop(text_colname).cache()
+    return complete, texts_with_embeddings
 
 
 def load_embeddings_from_cache(
