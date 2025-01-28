@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
         # unique=["subject", "predicate", "object"],
     ),
     df_name="edges",
+    raise_df_undefined=False,
 )
 def transform(transformer, **kwargs) -> Dict[str, ps.DataFrame]:
     return transformer.transform(**kwargs)

@@ -61,12 +61,15 @@ class DataFrameSchema:
         raise TypeError()
 
 
-def check_output(schema: DataFrameSchema, df_name: Optional[str] = None, pass_columns: bool = False):
+def check_output(
+    schema: DataFrameSchema, df_name: Optional[str] = None, raise_df_undefined: bool = True, pass_columns: bool = False
+):
     """Decorator to validate output schema of decorated function.
 
     Args:
         schema: Schema to validate
         df_name (optional): name of output arg to validate
+        raise_df_undefined: if set, ensures error is thrown if `df_name` is not defined
         pass_cols (optional): boolean indicating whether cols should be passed into callable
     """
 
@@ -91,6 +94,9 @@ def check_output(schema: DataFrameSchema, df_name: Optional[str] = None, pass_co
 
             if df_name is not None:
                 df = output.get(df_name)
+
+                if df is None and raise_df_undefined:
+                    raise RuntimeError(f"df {df_name} not found!")
             else:
                 df = output
 
