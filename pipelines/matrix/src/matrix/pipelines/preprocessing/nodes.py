@@ -37,7 +37,7 @@ def resolve_name(name: str, cols_to_get: List[str], url: str) -> dict:
     return {}
 
 
-def process_medical_nodes(df: pd.DataFrame, resolver_url: dict) -> pd.DataFrame:
+def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
     # Normalize the name
 
     enriched_data = df["name"].apply(resolve_name, cols_to_get=["curie", "label", "types"], url=resolver_url)
