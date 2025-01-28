@@ -120,7 +120,7 @@ def sample_array_embeddings_df(spark):
 
 
 @pytest.fixture
-def pre_embedding(spark: ps.SparkSession) -> ps.DataFrame:
+def raw_embeddable_nodes(spark: ps.SparkSession) -> ps.DataFrame:
     """Provides the outcome of the integration."""
 
     return spark.createDataFrame(
@@ -135,6 +135,21 @@ def pre_embedding(spark: ps.SparkSession) -> ps.DataFrame:
 
 
 @pytest.fixture
+def embeddable_nodes(spark: ps.SparkSession, text_col: str) -> ps.DataFrame:
+    """Provides the data with the texts in a format that will be sent unaltered to the embedding function."""
+    return spark.createDataFrame(
+        [
+            (1, "aA"),
+            (2, "aB"),
+            (3, "aC"),
+            (4, "aC"),  # intentional duplicate text
+            (5, "aD"),
+        ],
+        schema=("id", text_col),
+    )
+
+
+@pytest.fixture
 def scope():
     return "foo"
 
@@ -145,18 +160,29 @@ def model():
 
 
 @pytest.fixture
-def embeddings_cache(scope: str, model: str, spark: ps.SparkSession) -> ps.DataFrame:
+def text_col():
+    return "text"
+
+
+@pytest.fixture
+def embedding_col():
+    return "embedding"
+
+
+@pytest.fixture
+def embeddings_cache(scope: str, model: str, text_col: str, embedding_col: str, spark: ps.SparkSession) -> ps.DataFrame:
     return spark.createDataFrame(
         [
-            (scope, model, "aA", [1]),
-            (scope, model, "cC", [1]),
+            (scope, model, "aA", [1.0]),
+            (scope, model, "cC", [1.0]),
         ],
-        schema=("scope", "model", "key", "value"),
+        schema=("scope", "model", text_col, embedding_col),
     )
 
 
-U = TypeVar("U")
-V = TypeVar("V")
+@pytest.fixture
+def scope_ltd_embeddings_cache(text_col: str, embedding_col: str, spark: ps.SparkSession) -> ps.DataFrame:
+    return spark.createDataFrame([("aA", [1.0]), ("cC", [1.0])], schema=(text_col, embedding_col))
 
 
 @pytest.fixture
@@ -297,9 +323,9 @@ def test_cast_to_array(sample_string_embeddings_df):
     assert np.allclose(node1.pca_embedding, [0.1, 0.2])
 
 
-def test_cached_embeddings_can_get_loaded(pre_embedding: ps.DataFrame):
+def test_cached_embeddings_can_get_loaded(raw_embeddable_nodes: ps.DataFrame):
     scope, model = "foo", "bar"
-    dummy_cache = pre_embedding.sparkSession.createDataFrame(
+    dummy_cache = raw_embeddable_nodes.sparkSession.createDataFrame(
         [
             (scope, model, "aA", [1.0]),
             (scope, model, "bB", [2.0]),
@@ -315,7 +341,7 @@ def test_cached_embeddings_can_get_loaded(pre_embedding: ps.DataFrame):
     )
 
     result = nodes.load_embeddings_from_cache(
-        dataframe=pre_embedding,
+        dataframe=raw_embeddable_nodes,
         cache=dummy_cache,
         model=model,
         scope=scope,
@@ -333,25 +359,27 @@ def test_cached_embeddings_can_get_loaded(pre_embedding: ps.DataFrame):
 
 
 def test_re_embedding_is_a_noop(
-    pre_embedding: ps.DataFrame,
+    raw_embeddable_nodes: ps.DataFrame,
     embeddings_cache: ps.DataFrame,
     return_constant: tuple[Callable, Path],
     scope: str,
     model: str,
+    embedding_col: str,
+    text_col: str,
 ):
     """Given a cache from an earlier call to the function under test, the
     function under test will return identical output and will not delegate to
     an expensive transformer function."""
-    embeddings_cache = embeddings_cache.withColumnsRenamed({"key": "_text_to_embed", "value": "embedding"})
-    pre_embedding.cache()
+    raw_embeddable_nodes.cache()
     kwargs = {
-        "df": pre_embedding,
+        "df": raw_embeddable_nodes,
         "transformer": return_constant[0],  # the function will get called as many times as there are partitions
         "max_input_len": 10,
         "input_features": ("name", "category"),
         "scope": scope,
         "model": model,
-        "new_colname": "embedding",
+        "new_colname": embedding_col,
+        "embeddings_pkey": text_col,
     }
     embedded, cache_v2 = nodes.create_node_embeddings(
         cache=embeddings_cache,
@@ -376,44 +404,30 @@ def test_re_embedding_is_a_noop(
 
 
 def test_reduced_embedding_calls_in_presence_of_a_cache(
-    pre_embedding: ps.DataFrame,
-    embeddings_cache: ps.DataFrame,
+    embeddable_nodes: ps.DataFrame,
+    scope_ltd_embeddings_cache: ps.DataFrame,
     return_constant: tuple[Callable, Path],
-    scope: str,
-    model: str,
+    text_col: str,
+    embedding_col: str,
 ):
-    embedded, cache_v2 = nodes.create_node_embeddings(
-        df=pre_embedding.cache(),
-        cache=embeddings_cache,
-        transformer=return_constant[0],
-        max_input_len=10,
-        input_features=("name", "category"),
+    embedded, cache_v2 = nodes.lookup_embeddings(
+        df=embeddable_nodes.cache(),
+        cache=scope_ltd_embeddings_cache,
+        embedder=return_constant[0],
+        text_colname=text_col,
+        new_colname=embedding_col,
     )
 
-    assert pre_embedding.select("name", "category")
-
-    assert mock_encoder.embed.called_once()
-
-    pre_embedding.union(pre_embedding.sparkSession.createDataFrame([(3, "c", "C")], schema=pre_embedding.schema))
-    # New run, but with an extended cache. Pass in a new mock, as we want to verify it has not been called.
-    re_embedded, cache_v3 = nodes.create_node_embeddings(
-        df=pre_embedding,
-        cache=cache_v2.cache(),
-        transformer=mock_encoder2,
-        max_input_len=10,
-        input_features=("name", "category"),
+    embedded.count()  # Force execution of the query plan.
+    unique_texts, cache_keys = (
+        set(_[0] for _ in df.select(text_col).collect()) for df in (embeddable_nodes, scope_ltd_embeddings_cache)
     )
-
-    mock_encoder2.embed.assert_called_once_with(["cC"])
-
-    assertDataFrameEqual(embedded, re_embedded)
-    assertDataFrameEqual(cache_v3, cache_v2)
-
-    pass
+    # For each unique_text that is not in the cache, a lookup will be made.
+    assert len(list(return_constant[1].glob("*"))) == len(unique_texts.difference(cache_keys))
 
 
 def test_embedding_cache_gets_bootstrapped(
-    pre_embedding: ps.DataFrame,
+    raw_embeddable_nodes: ps.DataFrame,
     embeddings_cache: ps.DataFrame,
     mock_encoder: Mock,
     mock_encoder2: Mock,
@@ -423,7 +437,7 @@ def test_embedding_cache_gets_bootstrapped(
     empty_cache = embeddings_cache.limit(0)
     # this is not bootstrapping, since Kedro will barf if the dataset doesn't exist
     embedded, cache_v2 = nodes.create_node_embeddings(
-        df=pre_embedding.cache(),
+        df=raw_embeddable_nodes.cache(),
         cache=empty_cache,  # for bootstrapping: create (maybe it exists already?) a LazySparkDataset and on entry in create_node_embeddings wrap it with a try except
         transformer=mock_encoder,
         max_input_len=10,
@@ -431,7 +445,7 @@ def test_embedding_cache_gets_bootstrapped(
     )
 
     assert mock_encoder.embed.called_once_with(["aA", "bB"])
-    expected_cache = pre_embedding.sparkSession.createDataFrame(
+    expected_cache = raw_embeddable_nodes.sparkSession.createDataFrame(
         [
             ("foo", "bar", "aA", [1]),
             ("foo", "bar", "bB", [1]),

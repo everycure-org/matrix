@@ -486,6 +486,7 @@ def create_node_embeddings(
     scope: str,
     model: str,
     new_colname: str = "embedding",
+    embeddings_pkey: str = "_text_to_embed",
 ) -> tuple[ps.DataFrame, ps.DataFrame]:
     """
     Add the embeddings of the text composed of the `input_features`, truncated
@@ -508,13 +509,17 @@ def create_node_embeddings(
         scope: string used to filter the cache
         model: string used to filter the cache
         new_colname: name of the column that will contain the embeddings
+        embeddings_pkey: name of the column containing the texts, which should be present in the cache.
     """
-    embeddings_pkey = "_text_to_embed"
     df = df.withColumn(embeddings_pkey, concat_ws("", *input_features).substr(1, max_input_len))
-    assert embeddings_pkey in cache.columns
+    assert {embeddings_pkey, new_colname}.issubset(cache.columns)
     scoped_cache = (
         cache.cache().filter((cache["scope"] == F.lit(scope)) & (cache["model"] == F.lit(model))).drop("scope", "model")
     )
+
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug('{"cache size": %d, "model-scoped cache size": %d}', cache.count(), scoped_cache.cache().count())
+
     complete, missing_from_cache = lookup_embeddings(
         df=df, cache=scoped_cache, embedder=transformer, text_colname=embeddings_pkey, new_colname=new_colname
     )
@@ -525,9 +530,9 @@ def create_node_embeddings(
 def lookup_embeddings(
     df: ps.DataFrame,
     cache: ps.DataFrame,
+    embedder: Callable[[Iterable[str]], Iterator[ResolvedEmbedding]],
     text_colname: str,
     new_colname: str,
-    embedder: Callable[[Iterable[str]], Iterator[ResolvedEmbedding]],
 ) -> tuple[ps.DataFrame, ps.DataFrame]:
     partly_enriched = load_embeddings_from_cache(df=df, cache=cache, primary_key=text_colname).cache()
     enriched_from_cache, non_enriched = partitionby_presence_of_an_embedding(
@@ -538,7 +543,6 @@ def lookup_embeddings(
     texts_not_in_cache = non_enriched.select(text_colname).distinct()
 
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug('{"cache size": %d, "model-scoped cache size": %d', cache.count(), cache.cache().count())
         logger.debug(
             '{"total embeddable texts": %d, "records not in cache": %d, "texts needing an embedding": %d}',
             df.count(),
