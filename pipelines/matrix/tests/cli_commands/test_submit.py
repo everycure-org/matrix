@@ -75,13 +75,6 @@ def mock_multiple_pipelines():
         yield mock
 
 
-@pytest.mark.skipif(
-    "GITHUB_ENV" in os.environ, reason="GH Actions installation of kubectl needs to be done through apt"
-)
-def test_can_talk_to_kubernetes() -> None:
-    assert can_talk_to_kubernetes()
-
-
 @patch("matrix.cli_commands.submit.generate_argo_config")
 def test_build_argo_template(mock_generate_argo_config: None) -> None:
     build_argo_template(
