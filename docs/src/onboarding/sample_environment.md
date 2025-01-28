@@ -2,9 +2,14 @@
 title: Sample environment guide
 --- 
 
-# Overview
+# Sample environment guide
+
+## Overview
 
 The sample environment allows to run parts of the pipeline with a smaller dataset, sampled from the original data. This sample is stored in GCS. You can run the pipeline with this sample data locally or in kubernetes.
+
+!!! info "The engineering team provides these samples for users to run the sampling pipeline"
+    
 
 Two pipelines are defined in the `sample` environment:
 - `create_sample`: Creates the sample data, (over)writing it in GCS.
