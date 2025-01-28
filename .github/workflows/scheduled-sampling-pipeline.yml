@@ -31,6 +31,16 @@ jobs:
         with:
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
+
+      - name: Remove unnecessary files
+        # debug: remove unnecessary files to free up disk space for building and pushing docker images
+        # ref: https://github.com/actions/runner-images/issues/2840
+        run: |
+          sudo rm -rf \
+           /usr/local/.ghcup \
+           /usr/local/lib/android/sdk/ndk \
+           "$AGENT_TOOLSDIRECTORY" && \
+          df -h
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -40,6 +50,11 @@ jobs:
       - name: Set up kedro project dependencies
         working-directory: pipelines/matrix
         run: |
+          curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
+          gunzip argo-linux-amd64.gz
+          chmod +x argo-linux-amd64
+          sudo mv argo-linux-amd64 /usr/local/bin/argo
+          argo version
           pip install -r requirements.txt
 
       - name: Authenticate with Google Cloud
@@ -51,36 +66,27 @@ jobs:
           service_account: ${{env.service_account}}
           token_format: access_token
 
-      - name: Download release info file
-        working-directory: docs/src/releases/changelog_files
-        env:
-          RELEASE_DIR_GCS: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
-          FILENAME: v0.2.7_info.json
-        run: |
-          set -eux
-          BLOB_PATH="${RELEASE_DIR_GCS}/v0.2.7/${FILENAME}"
-          gcloud storage cp "$BLOB_PATH" "$FILENAME"
+      - uses: google-github-actions/get-gke-credentials@v1
+      # configure authentication to a GKE cluster (configure kubectl)
+        with:
+          cluster_name: ${{env.cluster}}
+          location: ${{env.region}}
+          project_id: ${{env.project_id}}
+
+      - name: Login to Google Artifact Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{env.region}}-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
       - name: Run the kedro sampling pipeline
         working-directory: pipelines/matrix
         run: |
           echo "Run the kedro sampling pipeline"
-          kedro run \
+          kedro submit \
             -e sample \
-            -p test_sample
-
-#      - name: Post to a Slack channel
-#        # Only post to Slack if the deployment failed and we're on the infra branch
-#        if: failure()
-#        id: slack
-#        uses: slackapi/slack-github-action@v1.26.0
-#        with:
-#          # Slack channel id, channel name, or user id to post message.
-#          # See also: https://api.slack.com/methods/chat.postMessage#channels
-#          # You can pass in multiple channels to post to by providing a comma-delimited list of channel IDs.
-#          channel-id: 'C07HU35MKAQ' #github-notifications
-#          # For posting a simple plain text message
-#          slack-message: |
-#            🧪 Weekly Sampling Pipeline Failed! 🚨
-#            🔗 Action run link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-#        env:
-#          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+            -p test_sample \
+            --run-name scheduled_sampled-test
+            --username github_actions_bot \
+            --release-version v0.2.7
