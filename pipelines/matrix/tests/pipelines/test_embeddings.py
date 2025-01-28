@@ -123,11 +123,21 @@ def pre_embedding(spark: ps.SparkSession) -> ps.DataFrame:
 
 
 @pytest.fixture
-def embeddings_cache(spark: ps.SparkSession) -> ps.DataFrame:
+def scope():
+    return "foo"
+
+
+@pytest.fixture
+def model():
+    return "bar"
+
+
+@pytest.fixture
+def embeddings_cache(scope: str, model: str, spark: ps.SparkSession) -> ps.DataFrame:
     return spark.createDataFrame(
         [
-            ("foo", "bar", "aA", [1]),
-            ("foo", "bar", "cC", [1]),
+            (scope, model, "aA", [1]),
+            (scope, model, "cC", [1]),
         ],
         schema=("scope", "model", "key", "value"),
     )
@@ -138,7 +148,7 @@ def mock_encoder() -> Mock:
     encoder = Mock()
 
     def return_constant(docs: Sequence[str]) -> Tuple[int]:
-        return (1,) * len(docs)
+        return (1.0,) * len(docs)
 
     encoder.embed = Mock(side_effect=return_constant)
     return encoder
@@ -295,8 +305,14 @@ def test_cached_embeddings_can_get_loaded(pre_embedding: ps.DataFrame):
 
 
 def test_re_embedding_is_a_noop(
-    pre_embedding: ps.DataFrame, embeddings_cache: ps.DataFrame, mock_encoder: Mock, mock_encoder2: Mock
+    pre_embedding: ps.DataFrame,
+    embeddings_cache: ps.DataFrame,
+    mock_encoder: Mock,
+    mock_encoder2: Mock,
+    scope: str,
+    model: str,
 ):
+    embeddings_cache = embeddings_cache.withColumnsRenamed({"key": "_text_to_embed", "value": "embedding"})
     embedded, cache_v2 = nodes.create_node_embeddings(
         df=pre_embedding.cache(),
         cache=embeddings_cache,
@@ -304,8 +320,12 @@ def test_re_embedding_is_a_noop(
         transformer=mock_encoder,
         max_input_len=10,
         input_features=("name", "category"),
+        scope=scope,
+        model=model,
+        new_colname="embedding",
     )
-
+    embedded.show()
+    cache_v2.show()
     assert mock_encoder.embed.called_once()
 
     # New run, but with an extended cache. Pass in a new mock, as we want to verify it has not been called.
@@ -316,6 +336,9 @@ def test_re_embedding_is_a_noop(
         transformer=mock_encoder2,
         max_input_len=10,
         input_features=("name", "category"),
+        scope=scope,
+        model=model,
+        new_colname="embedding",
     )
 
     mock_encoder2.embed.assert_not_called()
@@ -358,7 +381,12 @@ def test_reduced_embedding_calls_in_presence_of_a_cache(
 
 
 def test_embedding_cache_gets_bootstrapped(
-    pre_embedding: ps.DataFrame, embeddings_cache: ps.DataFrame, mock_encoder: Mock, mock_encoder2: Mock
+    pre_embedding: ps.DataFrame,
+    embeddings_cache: ps.DataFrame,
+    mock_encoder: Mock,
+    mock_encoder2: Mock,
+    scope: str,
+    model: str,
 ):
     empty_cache = embeddings_cache.limit(0)
     # this is not bootstrapping, since Kedro will barf if the dataset doesn't exist
