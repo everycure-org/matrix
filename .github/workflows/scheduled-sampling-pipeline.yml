@@ -89,4 +89,5 @@ jobs:
             -p test_sample \
             --run-name scheduled_sampled-test \
             --username github_actions_bot \
-            --release-version v0.2.7
+            --release-version v0.2.7 \
+            --headless
