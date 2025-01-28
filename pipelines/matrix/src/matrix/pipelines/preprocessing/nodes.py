@@ -28,7 +28,6 @@ def resolve_name(name: str, cols_to_get: List[str], url: str) -> dict:
         return {}
     result = requests.get(
         url.format(name=name)
-        # https://name-resolution-sri.renci.org/lookup?string={name}&autocomplete=True&highlighting=False&offset=0&limit=1"
     )
     if len(result.json()) != 0:
         element = result.json()[0]
