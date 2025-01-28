@@ -33,15 +33,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                 )
             )
 
-            if source.get("edges", True):
-                nodes.append(
-                    node(
-                        func=lambda x: x,
-                        inputs=[f'ingestion.raw.{source["name"]}.edges@spark'],
-                        outputs=f'ingestion.int.{source["name"]}.edges',
-                        name=f'write_{source["name"]}_edges',
-                        tags=[f'{source["name"]}'],
-                    )
+        if source.get("edges", True):
+            nodes.append(
+                node(
+                    func=lambda x: x,
+                    inputs=[f'ingestion.raw.{source["name"]}.edges@spark'],
+                    outputs=f'ingestion.int.{source["name"]}.edges',
+                    name=f'write_{source["name"]}_edges',
+                    tags=[f'{source["name"]}'],
                 )
+            )
 
     return pipeline(nodes)
