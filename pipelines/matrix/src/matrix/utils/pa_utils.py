@@ -90,14 +90,15 @@ def check_output(schema: DataFrameSchema, df_name: Optional[str] = None, pass_co
                 output = func(*args, **kwargs)
 
             if df_name is not None:
-                df = output[df_name]
+                df = output.get(df_name)
             else:
                 df = output
 
-            try:
-                df_schema.validate(df, lazy=False)
-            except pa.errors.SchemaError as e:
-                _handle_schema_error("check_output", func, df_schema, df, e)
+            if df is not None:
+                try:
+                    df_schema.validate(df, lazy=False)
+                except pa.errors.SchemaError as e:
+                    _handle_schema_error("check_output", func, df_schema, df, e)
 
             return output
 
