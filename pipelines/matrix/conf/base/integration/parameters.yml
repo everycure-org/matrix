@@ -10,12 +10,12 @@ integration:
     # robokop:
     #   transformer:
     #     object: matrix.pipelines.integration.transformers.robokop.RobokopTransformer
-    ec_medical_team:
-      transformer:
-        _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
-    ec_clinical_trails: 
-      transformer:
-        _object: matrix.pipelines.integration.transformers.clinical_trails.ClinicalTrialsTransformer
+    # ec_medical_team:
+    #   transformer:
+    #     _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
+    # ec_clinical_trails: 
+    #   transformer:
+    #     _object: matrix.pipelines.integration.transformers.clinical_trails.ClinicalTrialsTransformer
     drug_list: 
       transformer:
         _object: matrix.pipelines.integration.transformers.drugs.DrugsTransformer
@@ -45,6 +45,13 @@ integration:
       conflate: true
       drug_chemical_conflate: true
       description: false
+
+  deduplication:
+    # choose if a node should have the most specific category. 
+    # E.g. if a node has all_categories [biolink:ChemicalEntity, biolink:NamedThing],
+    # then node will be assigned biolink:ChemicalEntity as most specific category.
+    # For RTX-KG2 reproduction from KGML-xDTD, choose false
+    retrieve_most_specific_category: false
 
   filtering:
     node_filters:
