@@ -49,7 +49,7 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             {"name": "rtx_kg2", "integrate_in_kg": True},
             # {"name": "spoke"},
             # {"name": "robokop"},
-            # {"name": "ec_medical_team", "integrate_in_kg": True},
+            {"name": "ec_medical_team", "integrate_in_kg": True},
             {"name": "drug_list", "integrate_in_kg": False, "nodes_only": True},
             {"name": "disease_list", "integrate_in_kg": False, "nodes_only": True},
             {"name": "kgml_xdtd_ground_truth", "integrate_in_kg": False},
