@@ -95,6 +95,8 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame) -> pd.DataFrame:
     Args:
         df: Clinical trial dataset
     """
+    df = df.head(10)
+
     # Normalize the name
     drug_data = df["drug_name"].apply(resolve_name, cols_to_get=["curie"])
     disease_data = df["disease_name"].apply(resolve_name, cols_to_get=["curie"])
@@ -124,10 +126,10 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame) -> pd.DataFrame:
             "disease_name": Column(str, nullable=False),
             "drug_curie": Column(str, nullable=False),
             "disease_curie": Column(str, nullable=False),
-            "significantly_better": Column(bool, nullable=False),
-            "non_significantly_better": Column(bool, nullable=False),
-            "non_significantly_worse": Column(bool, nullable=False),
-            "significantly_worse": Column(bool, nullable=False),
+            "significantly_better": Column(int, nullable=False),
+            "non_significantly_better": Column(int, nullable=False),
+            "non_significantly_worse": Column(int, nullable=False),
+            "significantly_worse": Column(int, nullable=False),
         },
         unique=["drug_curie", "disease_curie"],
     ),
@@ -158,12 +160,13 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFr
     df = df[df["reason_for_rejection"].isna()]
 
     # Drop columns that are not needed and convert outcome columns to bool
-    df = df[["drug_curie", "disease_curie", *name_columns, *outcome_columns]].astype(
-        {col: bool for col in outcome_columns}
-    )
+    df = df[["drug_curie", "disease_curie", *name_columns, *outcome_columns]]
 
     # Drop rows with missing values in cols
     df = df.dropna().reset_index(drop=True)
+
+    # Convert outcome column to int
+    df = df.astype({col: int for col in outcome_columns})
 
     # Aggregate drug/disease IDs with multiple names or outcomes. Take the worst outcome.
     edges = (
@@ -177,8 +180,8 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFr
         Ensure at most one outcome column is true, taking the worst outcome by convention.
         """
         for n in range(len(outcome_columns) - 1):
-            if row[outcome_columns[n]] == True:
-                row[outcome_columns[n + 1 :]] = False
+            if row[outcome_columns[n]] == 1:
+                row[outcome_columns[n + 1 :]] = 0
         return row
 
     edges = edges.apply(ensure_one_true, axis=1)
