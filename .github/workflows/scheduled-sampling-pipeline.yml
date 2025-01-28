@@ -57,7 +57,7 @@ jobs:
           echo "Run the kedro sampling pipeline"
           kedro run \
             -e sample \
-            -p sampling
+            -p test_sample
 
 #      - name: Post to a Slack channel
 #        # Only post to Slack if the deployment failed and we're on the infra branch
