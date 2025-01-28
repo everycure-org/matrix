@@ -45,16 +45,16 @@ data_sources:
     # of the latest release as follows:
     # curl -X GET -H "Content-Type: application/json" -H "Authorization: token PAT" -H "Accept: application/vnd.github.v3.raw" https://api.github.com/repos/everycure-org/matrix-disease-list/releases | jq ".[0].assets | map(select(.name == \"matrix-disease-list.tsv\"))[0] | .id"
     version: 197752375
-  kgml-xdtd-gt:
+  kgml_xdtd_gt:
     version: *_rtx_kg_version
-  ec-gt:
+  ec_gt:
     # NOTE: This is currently the artifact id, as the GitHub API only
     # allows for downloading an artifact by its id. Get the artifact id
     # of the latest release as follows:
     # curl -X GET -H "Content-Type: application/json" -H "Authorization: token PAT" -H "Accept: application/vnd.github.v3.raw" https://api.github.com/repos/everycure-org/matrix-indication-list/releases | jq ".[0].assets | map(select(.name == \"ground-truths-list.tsv\"))[0] | .id"
     version: &_ec_gt_version 201341606 #*_rtx_kg_version # NOTE: This is the version of the GT dataset which was developed for rtx-kg2 as a part of KGML-xDTD pipeline
-  modelling-gt:
-    source: ec #kgml-xdtd
+  modelling_gt:
+    source: ec # or kgml-xdtd - note this should match the name specified in settings.py
     version: *_ec_gt_version
 
 # NOTE: MLflow does not like "new options" in the mlflow.yml
