@@ -386,8 +386,9 @@ def test_re_embedding_is_a_noop(
         **kwargs,
     )
 
-    # Force materialization and thus calling of the transformer/embedder
-    embedded.count()
+    # Force materialization and thus calling of the transformer/embedder,
+    # while also verifying that the cache grew in size.
+    assert cache_v2.count() > embeddings_cache.count()
     assert next(return_constant[1].glob("*"))  # The embedder function got called at least once
 
     for f in return_constant[1].glob("*"):
