@@ -35,5 +35,9 @@ class ClinicalTrialsTransformer(GraphTransformer):
             .withColumn("object", f.col("disease_curie"))
             .withColumn("predicate", f.lit("clinical_trails"))
             .filter((f.col("subject").isNotNull()) & (f.col("object").isNotNull()))
+            .withColumn("significantly_better", f.col('significantly_better').cast('int'))
+            .withColumn("significantly_worse", f.col('significantly_worse').cast('int'))
+            .withColumn("non_significantly_worse", f.col('non_significantly_worse').cast('int'))
+            .withColumn("non_significantly_better", f.col('non_significantly_better').cast('int'))
         )
         # fmt: on

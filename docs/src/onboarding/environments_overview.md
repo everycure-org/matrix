@@ -7,6 +7,7 @@ We have 4 environments declared in the kedro project for `MATRIX`:
 - `cloud`: Contains the cloud environment with real data. All data is read and written to a GCP project as configured (see below). Assumes fully stateless local machine operations (e.g. in docker containers)
 - `test`: Fully local and contains parameters that "break" the meaning of algorithms in the pipeline (e.g. 2 dimensions PCA). This is useful for running an integration test with mock data to validate the programming of the pipeline is correct to a large degree. 
 - `local`: A default environment which you can use for local adjustments and tweaks. Changes to this repo are not usually committed to git as they are unique for every developer. 
+- `sample`: Contains a sample of the data and is useful for fast iterations on the pipeline from the embeddings pipeline and on.
 
 !!! info
     Our `cloud` environment is equipped with environment variables that allows for configuring the GCP project to use. This is especially relevant to switch between the `hub` and `wg` projects as desired.
@@ -94,3 +95,38 @@ from matrix.pipelines.modelling.nodes import train_model
 Further information may be found [here](https://docs.kedro.org/en/stable/notebooks_and_ipython/kedro_and_notebooks.html). 
 
 [Next up, some advanced kedro features in our codebase :material-skip-next:](./kedro_extensions.md){ .md-button .md-button--primary }
+
+## Sample environment
+
+The sample environment allows to run parts of the pipeline with a smaller dataset, sampled from the original data. This sample is stored in GCS. You can run the pipeline with this sample data locally or in kubernetes.
+
+Two pipelines are defined in the `sample` environment:
+- `create_sample`: Creates the sample data, (over)writing it in GCS.
+- `test_sample`: Runs the pipeline from the embeddings step onwards with the sample data stored in GCS.
+
+### Run with sample data locally
+
+Local tests using sample are done in the `sample` environment. They will pull the latest sample 
+
+```bash
+kedro run -e sample -p test_sample
+```
+
+### Run with sample data in kubernetes 
+
+```bash
+kedro submit -e sample -p test_sample
+```
+
+### Update sample data
+
+You can update sample data by running the `create_sample` pipeline locally. This will create a sample of the nodes and edges produced by a release of the integration layer. The release version can be found, and changed, in the `sample/globals.yml` file.
+
+Make sure to use your own service account key file to get write access to the GCS bucket.
+
+!!! warning
+    There is only one version of the sample data in GCS. Updating it means deleting the previous sample.
+
+```bash
+kedro run -e sample -p create_sample
+```
