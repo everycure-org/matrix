@@ -49,7 +49,7 @@ jobs:
           project_id: ${{env.project_id}}
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
-          token_format: access_token
+          # token_format: access_token
           
       - name: Run the kedro sampling pipeline
         working-directory: pipelines/matrix
@@ -71,7 +71,7 @@ jobs:
 #          channel-id: 'C07HU35MKAQ' #github-notifications
 #          # For posting a simple plain text message
 #          slack-message: |
-#            ** 🧪 Weekly Sampling Pipeline Failed! 🚨**
+#            🧪 Weekly Sampling Pipeline Failed! 🚨
 #            🔗 Action run link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 #        env:
 #          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
