@@ -2,7 +2,7 @@ name: Scheduled Sampling Pipeline
 
 on:
   schedule:
-    - cron: '0 9 * * 1' # every monday at 9 am UTC
+    - cron: '0 5 * * 1' # every monday at 5am GMT
   push:
     branches:
       - feat/run_sampling_pipeline_on_schedule
@@ -91,3 +91,4 @@ jobs:
             --username github_actions_bot \
             --release-version v0.2.7 \
             --headless
+            --quiet
