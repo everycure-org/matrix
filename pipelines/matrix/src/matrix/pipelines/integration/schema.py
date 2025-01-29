@@ -15,7 +15,7 @@ BIOLINK_KG_NODE_SCHEMA = DataFrameSchema(
         "international_resource_identifier": Column(T.StringType(), nullable=True),
         "upstream_data_source": Column(T.ArrayType(T.StringType()), nullable=True),
     },
-    unique=["id"],
+    # unique=["id"],
     strict=True,
 )
 
@@ -34,6 +34,6 @@ BIOLINK_KG_EDGE_SCHEMA = DataFrameSchema(
         "object_direction_qualifier": Column(T.StringType(), nullable=True),
         "upstream_data_source": Column(T.ArrayType(T.StringType()), nullable=False),
     },
-    unique=["subject", "predicate", "object"],
+    # unique=["subject", "predicate", "object"], # TODO REMOVE
     strict=True,
 )
