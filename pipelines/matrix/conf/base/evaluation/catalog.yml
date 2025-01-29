@@ -32,3 +32,11 @@ _pandas_parquet: &_pandas_parquet
 "evaluation.reporting.master_report":
   filepath: ${globals:paths.evaluation}/reporting/master_report.yml
   type: yaml.YAMLDataset
+
+"evaluation.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.model_stability_output.result":
+  filepath: ${globals:paths.evaluation}/reporting/stability/fold_{fold_main}_fold_{fold_to_compare}/{evaluation}/result.yml
+  type: yaml.YAMLDataset
+
+"evaluation.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.model_stability_output.pairs@pandas":
+  <<: *_pandas_parquet  
+  filepath: ${globals:paths.evaluation}/reporting/stability/fold_{fold_main}_fold_{fold_to_compare}/{evaluation}/pairs.parquet
