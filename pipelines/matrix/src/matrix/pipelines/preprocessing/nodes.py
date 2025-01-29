@@ -114,6 +114,23 @@ def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> p
     return res
 
 
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "clinical_trial_id": Column(str, nullable=False),
+            "reason_for_rejection": Column(str, nullable=True),
+            "drug_name": Column(str, nullable=False),
+            "disease_name": Column(str, nullable=False),
+            "significantly_better": Column(float, nullable=True),
+            "non_significantly_better": Column(float, nullable=True),
+            "non_significantly_worse": Column(float, nullable=True),
+            "significantly_worse": Column(float, nullable=True),
+            "drug_curie": Column(str, nullable=True),
+            "disease_curie": Column(str, nullable=True),
+        },
+        unique=["drug_curie", "disease_curie"],
+    )
+)
 def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
     """Resolve names to curies for source and target columns in clinical trials data.
 
