@@ -32,8 +32,7 @@ integration:
       semmed_filters:
         publication_threshold: 10
         ngd_threshold: 0.6
-        # limit_pmids: 50_000_000 # essentially unlimited, but allows for local clipping if local run is desired
-        limit_pmids: 1_000_000 
+        limit_pmids: 50_000_000 # essentially unlimited, but allows for local clipping if local run is desired
 
   normalization:
     batch_size: 1000
