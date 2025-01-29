@@ -21,7 +21,7 @@ from mlflow.exceptions import RestException
 from omegaconf import OmegaConf
 from pyspark import SparkConf
 
-# from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
+from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +89,6 @@ class MLFlowHooks:
         # NOTE: This piece of code ensures that every MLFlow experiment
         # is created by our Kedro pipeline with the right artifact root.
         mlflow.set_tracking_uri(cfg.server.mlflow_tracking_uri)
-        # mlflow.autolog()
         experiment_id = self._create_experiment(cfg.tracking.experiment.name, globs.mlflow_artifact_root)
 
         if cfg.tracking.run.name:
@@ -399,21 +398,14 @@ class ReleaseInfoHooks:
         with fsspec.open(full_blob_path, "wb") as f:
             f.write(json.dumps(release_info).encode("utf-8"))
 
-    def get_pipeline_inputs(self):
-        pipeline_name = ReleaseInfoHooks._kedro_context.extra_params["pipeline_name"]
-        pipeline_obj = pipelines[pipeline_name]
-        inputs = {input for input in pipeline_obj.all_inputs() if not input.startswith("params:")}
-        outputs = pipeline_obj.all_outputs()
-        inputs_only = inputs - outputs
-
     @hook_impl
-    def before_node_run(self, node: Node) -> None:
+    def after_node_run(self, node: Node) -> None:
         """Runs after the last node of the data_release pipeline"""
         # We chose to add this using the `after_node_run` hook, rather than
         # `after_pipeline_run`, because one does not know a priori which
         # pipelines the (last) data release node is part of. With an
         # `after_node_run`, you can limit your filters easily.
-        if True:  # node.name == last_data_release_node_name:
+        if node.name == last_data_release_node_name:
             datasets_to_hide = frozenset(["disease_list", "drug_list", "ec_clinical_trials", "gt"])
             global_datasets = self.extract_all_global_datasets(datasets_to_hide)
             datasets_used = self.extract_datasets_used()
