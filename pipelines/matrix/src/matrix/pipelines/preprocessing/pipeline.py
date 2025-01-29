@@ -4,6 +4,7 @@ from . import nodes
 from .tagging import generate_tags
 
 
+# TODO: fix the comment below as it now ingests drug and disease lists from GitHub
 # NOTE: This pipeline in highly preliminary and used for ingestion of the
 # medical data provided in Google Sheets __ONLY__.
 def create_pipeline(**kwargs) -> Pipeline:
