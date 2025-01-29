@@ -131,13 +131,13 @@ def _apply_transformations(
 ) -> ps.DataFrame:
     logger.info(f"Filtering dataframe with {len(transformations)} transformations")
     last_count = df.count()
-    log_metric(f"integration", f"Number of rows before filtering", last_count)
+    log_metric(f"integration", f"Number of edges before filtering", last_count)
     for name, transformation in transformations.items():
         logger.info(f"Applying transformation: {name}")
         df = df.transform(transformation, **kwargs)
         new_count = df.count()
-        log_metric(f"integration", f"Number of rows after transformation", new_count)
-        log_metric(f"integration", f"Number of rows removed after transformation", last_count - new_count)
+        log_metric(f"integration", f"Number of edges after transformation", new_count)
+        log_metric(f"integration", f"Number of edges removed after transformation", last_count - new_count)
         last_count = new_count
 
     return df
@@ -174,6 +174,7 @@ def filter_unified_kg_edges(
     )
     new_edges_count = edges.count()
     logger.info(f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges")
+    log_metric(f"integration", f"Number of edges after filtering", new_edges_count)
 
     return _apply_transformations(edges, transformations)
 
@@ -192,7 +193,8 @@ def filter_nodes_without_edges(
     """
 
     # Construct list of edges
-    log_metric(f"integration", f"Number of node before filtering", nodes.count())
+    original_num_nodes = nodes.count()
+    log_metric(f"integration", f"Number of node before filtering", original_num_nodes)
     edge_nodes = (
         edges.withColumn("id", F.col("subject"))
         .unionByName(edges.withColumn("id", F.col("object")))
@@ -202,6 +204,7 @@ def filter_nodes_without_edges(
 
     nodes = nodes.alias("nodes").join(edge_nodes, on="id").select("nodes.*").persist()
     log_metric(f"integration", f"Number of nodes after filtering", nodes.count())
+    log_metric(f"integration", f"Number of orphan nodes removed", original_num_nodes - nodes.count())
     return nodes
 
 
