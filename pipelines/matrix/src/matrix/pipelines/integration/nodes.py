@@ -41,7 +41,9 @@ def transform_nodes(transformer, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFra
             "predicate": Column(T.StringType(), nullable=False),
             "object": Column(T.StringType(), nullable=False),
         },
-        unique=["subject", "predicate", "object"],
+        # removing the uniqueness constraint as some KGs have duplicate edges. These will be deduplicated later when we do edge deduplication
+        # anyways
+        # unique=["subject", "predicate", "object"],
     ),
 )
 def transform_edges(transformer, edges_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
