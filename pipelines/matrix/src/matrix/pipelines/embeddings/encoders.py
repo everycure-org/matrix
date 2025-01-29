@@ -1,6 +1,7 @@
 import itertools
 import json
 import logging
+import os
 from abc import ABC, abstractmethod
 from typing import Iterable, Iterator, Optional, TypeAlias, TypeVar
 
@@ -47,7 +48,7 @@ class LangChainEncoder(AttributeEncoder):
 
     def __init__(
         self,
-        encoder: OpenAIEmbeddings,
+        # encoder: OpenAIEmbeddings,
         dimensions: int,
         random_seed: Optional[int] = None,
         batch_size: int = 500,
@@ -61,7 +62,7 @@ class LangChainEncoder(AttributeEncoder):
             timeout: Timeout for OpenAI API requests
         """
         super().__init__(dimensions, random_seed)
-        self._client = encoder
+        # self._client = encoder
         self.batch_size = batch_size
 
     @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
@@ -75,11 +76,16 @@ class LangChainEncoder(AttributeEncoder):
             tuples of the text and its embedding, for each text
 
         """
+        encoder = OpenAIEmbeddings(model="text-embedding-3-small", timeout=10)
+        pid = os.getpid()
         for index, batch in enumerate(self.batched(texts, self.batch_size)):
             # Note: on error, due to the retry logic and iterables, we might lose a batch. Should we remove the retry logic?
             # Write a test for this case, that when embed_documents errors out, it still returns for all texts an embedding.
-            logger.debug('{"batch": %d, "texts": %s}', index, json.dumps(batch))
-            embeddings = self._client.embed_documents(texts=batch)
+
+            logger.debug('{"PID": %d, "batch": %d}', pid, index)
+            embeddings = encoder.embed_documents(texts=batch)
+            # fake_embeddings = [1., 2.]
+            # embeddings = [fake_embeddings]* len(batch)
             yield from zip(batch, embeddings)
 
     @staticmethod
@@ -87,7 +93,7 @@ class LangChainEncoder(AttributeEncoder):
         # Taken from the recipe at https://docs.python.org/3/library/itertools.html#itertools.batched , which is available by default in 3.12
         # batched('ABCDEFG', 3) → ABC DEF G
         if n < 1:
-            raise ValueError("n must be at least one")
+            raise ValueError("batch size must be at least one")
         iterator = iter(iterable)
         while batch := tuple(itertools.islice(iterator, n)):
             if strict and len(batch) != n:

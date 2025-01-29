@@ -34,4 +34,5 @@ paths:
   tmp:           data/tmp
 
   # Embedding cache dataset
-  cache:         ${gcs_bucket}/kedro/data/cache
+  cache:         ${release_dir}/cache
+  # cache:         ${gcs_bucket}/cache

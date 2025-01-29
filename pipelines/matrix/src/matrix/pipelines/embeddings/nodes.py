@@ -469,6 +469,7 @@ def visualise_pca(nodes: ps.DataFrame, column_name: str) -> plt.Figure:
     return fig
 
 
+@inject_object()
 def create_node_embeddings(
     df: ps.DataFrame,
     cache: ps.DataFrame,
@@ -482,7 +483,7 @@ def create_node_embeddings(
 ) -> tuple[ps.DataFrame, ps.DataFrame]:
     """
     Add the embeddings of the text composed of the `input_features`, truncated
-    to a length of `max_input_len`, as the column `new_colname` to the `df`.
+    to a length of `max_input_len`, as the column `embeddings_pkey` to the `df`.
 
     This function makes use of a cache to prevent time-consuming API calls made
     in the transformer. As well as the dataframe with embeddings, an updated
@@ -516,6 +517,11 @@ def create_node_embeddings(
         df=df, cache=scoped_cache, embedder=transformer.apply, text_colname=embeddings_pkey, new_colname=new_colname
     )
     new_cache = cache.unionByName(missing_from_cache.withColumns({"scope": lit(scope), "model": lit(model)}))
+
+    failed_to_enrich = complete.filter(complete[new_colname].isNull())
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug('{"failed to enrich": %d, "new cache size": %d}', failed_to_enrich.count(), new_cache.count())
+
     return complete, new_cache
 
 
@@ -527,9 +533,38 @@ def lookup_embeddings(
     new_colname: str,
 ) -> tuple[ps.DataFrame, ps.DataFrame]:
     partly_enriched = load_embeddings_from_cache(df=df, cache=cache, primary_key=text_colname).cache()
+
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug(
+            '{"partly enriched dataframe size": %d, "original dataframe size": %d}', partly_enriched.count(), df.count()
+        )
+
     enriched_from_cache, non_enriched = partitionby_presence_of_an_embedding(
         partly_enriched, embeddings_col=new_colname
     )
+
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug(
+            '{"enriched dataframe size": %d, "non enriched dataframe size": %d}',
+            enriched_from_cache.count(),
+            non_enriched.count(),
+        )
+
+    partly_enriched.select(text_colname, new_colname).show()
+    cache.select(text_colname, new_colname).show()
+    # partly_enriched.groupBy(new_colname).count().show()
+    # print(new_colname)
+    # (df.select(text_colname).withColumn("foo", lit("bar"))
+    #     .join(cache, on=text_colname, how="left")
+    #     .orderBy(text_colname).show(truncate=False))
+
+    # for frame in (df, cache):
+    #     frame.select(text_colname).orderBy(text_colname).show(truncate=False)
+
+    # df.select(text_colname).show()
+    # print("---")
+    # cache.show()
+
     non_enriched = non_enriched.drop(new_colname).cache()
 
     texts_not_in_cache = non_enriched.select(text_colname).distinct()
@@ -547,7 +582,15 @@ def lookup_embeddings(
         embedder=embedder,
         new_colname=new_colname,
     ).cache()
+
     enriched_from_external = non_enriched.join(texts_with_embeddings, on=text_colname, how="left")
+
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug(
+            '{"enriched dataframe size": %d, "enriched from external size": %d}',
+            texts_with_embeddings.count(),
+            enriched_from_external.count(),
+        )
 
     complete = enriched_from_cache.unionByName(enriched_from_external).drop(text_colname).cache()
     return complete, texts_with_embeddings
