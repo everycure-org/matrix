@@ -58,16 +58,16 @@ class RTXTransformer(GraphTransformer):
         # fmt: off
         return (
             edges_df
+            .withColumn("aggregator_knowledge_source",   f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR)) # RTX KG2 2.10 does not exist
+            .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
+            .transform(filter_semmed, curie_to_pmids, **semmed_filters)
             .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
-            .withColumn("aggregator_knowledge_source",   f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR)) # RTX KG2 2.10 does not exist
             .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(0)) # RTX KG2 2.10 `primary_knowledge_source``
-            .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
             .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-            .transform(filter_semmed, curie_to_pmids, **semmed_filters)
             .select(*schema.BIOLINK_KG_EDGE_SCHEMA.columns.keys())
         )
         # fmt: on
@@ -101,15 +101,12 @@ def filter_semmed(
         .withColumnRenamed("curie", "id")
         .cache()
     )
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.debug(
-            '{"curie_to_pmids shape": %dx%d, "curie_to_pmids schema": "%s"}',
-            curie_to_pmids.count(),
-            len(curie_to_pmids.columns),
-            curie_to_pmids.schema.simpleString(),
+    if logger.isEnabledFor(logging.INFO):
+        logger.info(
+            f'{{"curie_to_pmids shape": "{curie_to_pmids.count():_}x{len(curie_to_pmids.columns)}", "curie_to_pmids schema": "{curie_to_pmids.schema.simpleString()}"}}',
         )
-        logger.debug(
-            '{"edges_df shape": %dx%d, "edges_df schema": "%s"}', edges_df.count(), edges_df.schema.simpleString()
+        logger.info(
+            f'{{"edges_df shape": "{edges_df.count():_}x{len(edges_df.columns)}", "edges_df schema": "{edges_df.schema.simpleString()}"}}',
         )
 
     semmeddb_is_only_knowledge_source = (f.size("aggregator_knowledge_source") == 1) & (
@@ -130,10 +127,9 @@ def filter_semmed(
             how="left",
         )
         .transform(compute_ngd)
-        .withColumn("num_publications", f.size("publications"))
         .filter(
             # Retain only semmed edges more than 10 publications or ndg score below/equal 0.6
-            (f.col("num_publications") >= f.lit(publication_threshold)) & (f.col("ngd") <= f.lit(ngd_threshold))
+            (f.size("publications") >= f.lit(publication_threshold)) & (f.col("ngd") <= f.lit(ngd_threshold))
         )
         .select("edges.*")
     )
@@ -153,11 +149,9 @@ def compute_ngd(df: ps.DataFrame, num_pairs: int = 3.7e7 * 20) -> ps.DataFrame:
     """
     return (
         # Take first max_pmids elements from each array
-        df.withColumn(
-            "num_common_pmids", f.array_size(f.array_intersect(f.col("subj.pmids"), f.col("obj.pmids")))
-        ).withColumn(
+        df.withColumn("num_common_pmids", f.array_size(f.array_intersect("subj.pmids", "obj.pmids"))).withColumn(
             "ngd",
-            (f.log2(f.greatest("subj.num_pmids", "obj.num_pmids")) - f.log2(f.col("num_common_pmids")))
+            (f.log2(f.greatest("subj.num_pmids", "obj.num_pmids")) - f.log2("num_common_pmids"))
             / (f.log2(f.lit(num_pairs)) - f.log2(f.least("subj.num_pmids", "obj.num_pmids"))),
         )
     )
