@@ -22,6 +22,7 @@ from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
 from matrix.hooks import SparkHooks
 from matrix.inject import _parse_for_objects
 from pygsheets import Spreadsheet, Worksheet
+from pyspark.errors.exceptions.captured import AnalysisException
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -43,6 +44,9 @@ class SparkWithSchemaDataset(SparkDataset):
 
     Dataset extends the behaviour of the standard SparkDataset with
     a schema load argument that can be specified in the Data catalog.
+    It also provides an empty DataFrame with this schema in case the
+    data doesn't exist yet, thus making it useful to bootstrap, e.g.
+    in the case of a cache.
     """
 
     def __init__(  # noqa: PLR0913
@@ -55,10 +59,12 @@ class SparkWithSchemaDataset(SparkDataset):
         version: Version | None = None,
         credentials: dict[str, Any] | None = None,
         metadata: dict[str, Any] | None = None,
+        provide_empty_if_not_present: bool = False,
     ) -> None:
         """Creates a new instance of ``SparkWithSchemaDataset``."""
         self._load_args = deepcopy(load_args) or {}
         self._df_schema = self._load_args.pop("schema")
+        self._boostrappable = provide_empty_if_not_present
 
         super().__init__(
             filepath=filepath,
@@ -72,16 +78,23 @@ class SparkWithSchemaDataset(SparkDataset):
 
     def load(self) -> ps.DataFrame:
         SparkHooks._initialize_spark()
-        load_path = self._strip_dbfs_prefix(self._fs_prefix + str(self._get_load_path()))
+        load_path = (self._fs_prefix + str(self._get_load_path())).removeprefix("/dbfs")
         spark = ps.SparkSession.builder.getOrCreate()
-        # Use the 'read' method and apply schema correctly
         reader = spark.read
 
-        return reader.schema(_parse_for_objects(self._df_schema)).load(load_path, self._file_format, **self._load_args)
-
-    @staticmethod
-    def _strip_dbfs_prefix(path: str, prefix: str = "/dbfs") -> str:
-        return path[len(prefix) :] if path.startswith(prefix) else path
+        schema = _parse_for_objects(self._df_schema)
+        try:
+            frame = reader.schema(schema).load(load_path, self._file_format, **self._load_args)
+        except AnalysisException as e:
+            if self._boostrappable and ("PATH_NOT_FOUND" in e.desc):
+                logger.warning(
+                    """{"warning": "Dataset not found at '%s'.",  "Resolution": "providing empty dataset with identical schema."}""",
+                    load_path,
+                )
+                frame = spark.createDataFrame([], schema=schema)
+            else:
+                raise e
+        return frame
 
 
 class SparkDatasetWithBQExternalTable(LazySparkDataset):

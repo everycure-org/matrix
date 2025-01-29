@@ -104,6 +104,7 @@ embeddings.cache: &_cache
   filepath: ${globals:paths.cache}/embeddings_cache
   type: matrix.datasets.gcp.SparkWithSchemaDataset
   file_format: parquet
+  provide_empty_if_not_present: true
   load_args:
     schema:
       _object: pyspark.sql.types.StructType
