@@ -1,5 +1,8 @@
+import itertools
+import json
+import logging
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import Iterable, Iterator, Optional, TypeAlias, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -7,6 +10,10 @@ import torch
 from langchain_openai import OpenAIEmbeddings
 from tenacity import retry, stop_after_attempt, wait_exponential
 from transformers import AutoModel, AutoTokenizer
+
+logger = logging.getLogger(__name__)
+
+T: TypeAlias = TypeVar("T")
 
 
 class AttributeEncoder(ABC):
@@ -43,7 +50,7 @@ class LangChainEncoder(AttributeEncoder):
         encoder: OpenAIEmbeddings,
         dimensions: int,
         random_seed: Optional[int] = None,
-        timeout: int = 10,
+        batch_size: int = 500,
     ):
         """Initialize OpenAI encoder.
 
@@ -55,27 +62,35 @@ class LangChainEncoder(AttributeEncoder):
         """
         super().__init__(dimensions, random_seed)
         self._client = encoder
+        self.batch_size = batch_size
 
     @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
-    async def apply(self, df: pd.DataFrame, input_features: List[str], max_input_len: int) -> pd.DataFrame:
-        """Encode text from dataframe using OpenAI embeddings.
+    def apply(self, texts: Iterable[str]) -> Iterator[tuple[str, list[float]]]:
+        """Encode texts using OpenAI embeddings.
 
         Args:
-            df: Input dataframe containing 'text_to_embed' column
+            texts: strings for which the embedding must be computed
 
         Returns:
-            DataFrame with new 'embedding' column and 'text_to_embed' removed
+            tuples of the text and its embedding, for each text
+
         """
-        try:
-            combined_texts = df["text_to_embed"].tolist()
-            df["embedding"] = list(range(len(combined_texts)))  # await self._client.aembed_documents(combined_texts)
-            # df["embedding"] = df["embedding"].apply(lambda x: np.array(x, dtype=np.float32))
-            df["embedding"] = df["embedding"].apply(lambda x: np.array([float(x)], dtype=np.float32).tolist())
-            df = df.drop(columns=[*input_features])
-            return df
-        except Exception as e:
-            print(f"Exception occurred: {e}")
-            raise e
+        for index, batch in enumerate(self.batched(texts, self.batch_size)):
+            logger.debug('{"batch": %d, "texts": %s}', index, json.dumps(batch))
+            embeddings = self._client.embed_documents(texts=batch)
+            yield from zip(batch, embeddings)
+
+    @staticmethod
+    def batched(iterable: Iterable[T], n: int, *, strict: bool = False) -> Iterator[tuple[T]]:
+        # Taken from the recipe at https://docs.python.org/3/library/itertools.html#itertools.batched , which is available by default in 3.12
+        # batched('ABCDEFG', 3) → ABC DEF G
+        if n < 1:
+            raise ValueError("n must be at least one")
+        iterator = iter(iterable)
+        while batch := tuple(itertools.islice(iterator, n)):
+            if strict and len(batch) != n:
+                raise ValueError("batched(): incomplete batch")
+            yield batch
 
 
 class RandomizedEncoder(AttributeEncoder):
