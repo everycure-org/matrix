@@ -76,7 +76,7 @@ preprocessing.int.mapped_clinical_trials_data:
   <<: *_medical_clinical_trials_sheet_dataset
   save_args:
     sheet_name: new_clinical_trial_DD_pairs
-    write_columns: ["drug_curie", "disease_curie", "conflict"]
+    write_columns: ["drug_curie", "disease_curie"]
   load_args:
     sheet_name: new_clinical_trial_DD_pairs
     columns:
@@ -90,7 +90,6 @@ preprocessing.int.mapped_clinical_trials_data:
       - "significantly_worse"
       - "drug_curie"
       - "disease_curie"
-      - "conflict"
 
 preprocessing.raw.disease_list:
   <<: [*_layer_raw]
