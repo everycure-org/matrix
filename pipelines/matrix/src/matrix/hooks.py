@@ -7,7 +7,6 @@ from typing import Any, Dict, Optional, Set
 
 import fsspec
 import mlflow
-import numpy as np
 import pandas as pd
 import pyspark.sql as ps
 import termplotlib as tpl
