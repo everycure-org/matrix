@@ -35,7 +35,7 @@ class RTXTransformer(GraphTransformer):
             .withColumn("publications",                      f.split(f.col("publications:string[]"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
             .withColumn("international_resource_identifier", f.col("iri"))
             .withColumnRenamed("id:ID", "id")
-            .select(*[col for col in schema.BIOLINK_KG_NODE_SCHEMA.columns.keys()])
+            .select(*schema.BIOLINK_KG_NODE_SCHEMA.columns.keys())
         )
         # fmt: on
 
@@ -68,7 +68,7 @@ class RTXTransformer(GraphTransformer):
             .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .transform(filter_semmed, curie_to_pmids, **semmed_filters)
-            .select(*[col for col in schema.BIOLINK_KG_EDGE_SCHEMA.columns.keys()])
+            .select(*schema.BIOLINK_KG_EDGE_SCHEMA.columns.keys())
         )
         # fmt: on
 
@@ -93,44 +93,48 @@ def filter_semmed(
     Returns
         Filtered dataframe
     """
+
+    sorted_pmids = f.sort_array(f.from_json("pmids", T.ArrayType(T.IntegerType())))
     curie_to_pmids = (
-        curie_to_pmids.withColumn("pmids", f.from_json("pmids", T.ArrayType(T.IntegerType())))
-        .withColumn("pmids", f.sort_array(f.col("pmids")))
-        .withColumn("limited_pmids", f.slice(f.col("pmids"), 1, limit_pmids))
-        .drop("pmids")
-        .withColumnRenamed("limited_pmids", "pmids")
-        .withColumn("num_pmids", f.array_size(f.col("pmids")))
+        curie_to_pmids.withColumn("pmids", f.slice(sorted_pmids, 1, limit_pmids))
+        .withColumn("num_pmids", f.array_size("pmids"))
         .withColumnRenamed("curie", "id")
-        .persist()
+        .cache()
     )
-    semmeddb_is_only_knowledge_source = (f.size(f.col("aggregator_knowledge_source")) == 1) & (
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug(
+            '{"curie_to_pmids shape": %dx%d, "curie_to_pmids schema": "%s"}',
+            curie_to_pmids.count(),
+            len(curie_to_pmids.columns),
+            curie_to_pmids.schema.simpleString(),
+        )
+        logger.debug(
+            '{"edges_df shape": %dx%d, "edges_df schema": "%s"}', edges_df.count(), edges_df.schema.simpleString()
+        )
+
+    semmeddb_is_only_knowledge_source = (f.size("aggregator_knowledge_source") == 1) & (
         f.col("aggregator_knowledge_source").getItem(0) == "infores:semmeddb"
     )
     table = f.broadcast(curie_to_pmids)
     single_semmed_edges = (
-        edges_df.cache()
-        .filter(semmeddb_is_only_knowledge_source)
-        # Enrich subject pubmed identifiers
+        edges_df.filter(semmeddb_is_only_knowledge_source)
         .alias("edges")
         .join(
             table.alias("subj"),
             on=[f.col("edges.subject") == f.col("subj.id")],
             how="left",
         )
-        # Enrich object pubmed identifiers
         .join(
             table.alias("obj"),
             on=[f.col("edges.object") == f.col("obj.id")],
             how="left",
         )
         .transform(compute_ngd)
-        .withColumn("num_publications", f.size(f.col("publications")))
-        # fmt: off
+        .withColumn("num_publications", f.size("publications"))
         .filter(
             # Retain only semmed edges more than 10 publications or ndg score below/equal 0.6
             (f.col("num_publications") >= f.lit(publication_threshold)) & (f.col("ngd") <= f.lit(ngd_threshold))
         )
-        # fmt: on
         .select("edges.*")
     )
     edges_filtered = edges_df.filter(~semmeddb_is_only_knowledge_source).unionByName(single_semmed_edges)
@@ -153,10 +157,7 @@ def compute_ngd(df: ps.DataFrame, num_pairs: int = 3.7e7 * 20) -> ps.DataFrame:
             "num_common_pmids", f.array_size(f.array_intersect(f.col("subj.pmids"), f.col("obj.pmids")))
         ).withColumn(
             "ngd",
-            (
-                f.greatest(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))
-                - f.log2(f.col("num_common_pmids"))
-            )
-            / (f.log2(f.lit(num_pairs)) - f.least(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))),
+            (f.log2(f.greatest("subj.num_pmids", "obj.num_pmids")) - f.log2(f.col("num_common_pmids")))
+            / (f.log2(f.lit(num_pairs)) - f.log2(f.least("subj.num_pmids", "obj.num_pmids"))),
         )
     )
