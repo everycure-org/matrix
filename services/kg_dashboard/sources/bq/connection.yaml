@@ -1,6 +1,0 @@
-# This file was automatically generated
-name: bq
-type: bigquery
-options:
-  location: US
-  authenticator: service-account

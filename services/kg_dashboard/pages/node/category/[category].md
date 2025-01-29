@@ -5,7 +5,7 @@ Title: {params.category} Dashboard
 
 ```sql node_prefixes_by_upstream_data_source
 select prefix, upstream_data_source, sum(count) as count 
-from bq.merged_kg_nodes
+from reports.merged_kg_nodes_report
 where category = 'biolink:${params.category}'
 group by all
 having count > 0
@@ -21,7 +21,7 @@ limit 50
       replace(object_category,'biolink:','') as edge_type,
       primary_knowledge_source,
       sum(count) as count
-  from bq.merged_kg_edges
+  from reports.merged_kg_edges_report
   where subject_category = 'biolink:${params.category}'
     or object_category = 'biolink:${params.category}'    
   group by all

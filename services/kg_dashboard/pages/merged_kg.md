@@ -11,14 +11,14 @@ title: Merged KG Dashboard
 
 ```sql node_categories_by_upstream_data_source
 select category, upstream_data_source, sum(count) as count 
-from bq.merged_kg_nodes
+from reports.merged_kg_nodes_report
 group by all
 order by count desc
 limit ${inputs.node_category_limit.value}
 ```
 ```sql node_prefix_by_upstream_data_source
 select prefix, upstream_data_source, sum(count) as count
-from bq.merged_kg_nodes
+from reports.merged_kg_nodes_report
 group by all
 having count > 0
 order by count desc
@@ -29,7 +29,7 @@ limit ${inputs.node_prefix_limit.value}
 <!-- Edge Queries -->
 
 ```sql edges
-select * from bq.merged_kg_edges
+select * from reports.merged_kg_edges_report
 ```
 
 ```sql predicates_by_upstream_data_source
@@ -37,7 +37,7 @@ select
     predicate,
     upstream_data_source,
     sum(count) as count
-from bq.merged_kg_edges
+from reports.merged_kg_edges_report
   where subject_prefix in ${inputs.subject_prefix.value}
     and subject_category in ${inputs.subject_category.value}
     and object_prefix in ${inputs.object_prefix.value}
@@ -58,7 +58,7 @@ limit ${inputs.edge_limit.value}
       replace(object_category,'biolink:','') as edge_type,
       upstream_data_source,
       sum(count) as count
-  from bq.merged_kg_edges
+  from reports.merged_kg_edges_report
   where subject_prefix in ${inputs.subject_prefix.value}
     and object_prefix in ${inputs.object_prefix.value}
     and subject_category in ${inputs.subject_category.value}
@@ -77,7 +77,7 @@ select
     subject_prefix || ' to ' || object_prefix as edge_type,
     primary_knowledge_source,
     sum(count) as count
-from bq.merged_kg_edges
+from reports.merged_kg_edges_report
     where subject_prefix in ${inputs.subject_prefix.value}
         and object_prefix in ${inputs.object_prefix.value}
         and upstream_data_source in ${inputs.upstream_data_source.value}
@@ -94,7 +94,7 @@ select
     predicate,
     primary_knowledge_source,
     sum(count) as count
-from bq.merged_kg_edges
+from reports.merged_kg_edges_report
   where subject_prefix in ${inputs.subject_prefix.value}
     and object_prefix in ${inputs.object_prefix.value}
     and subject_category in ${inputs.subject_category.value}

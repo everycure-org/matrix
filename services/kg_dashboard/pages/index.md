@@ -9,7 +9,7 @@ Dashboard pages on the left side of the screen are for exploring the data in the
       replace(subject_category,'biolink:','') as subject_category,      
       replace(object_category,'biolink:','') || ' ' as object_category,
       sum(count) as count
-  from bq.merged_kg_edges
+  from reports.merged_kg_edges_report
   group by all
   order by count desc
 ```

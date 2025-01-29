@@ -7,7 +7,7 @@ Explore Graph Nodes
       category,
       '/node/category/' || replace(category,'biolink:','') as link,
       sum(count) as count
-  from bq.merged_kg_nodes
+  from reports.merged_kg_nodes_report
   group by all
   order by count desc  
 ```
@@ -17,7 +17,7 @@ Explore Graph Nodes
         prefix,
         '/node/prefix/' || prefix as link,
         sum(count) as count
-    from bq.merged_kg_nodes
+    from reports.merged_kg_nodes_report
     group by all
     order by count desc
 ```

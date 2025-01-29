@@ -5,7 +5,7 @@ Title: {params.prefix} Dashboard
 
 ```sql node_categories_by_upstream_data_source
 select category, upstream_data_source, sum(count) as count 
-from bq.merged_kg_nodes
+from reports.merged_kg_nodes
 where prefix = '${params.prefix}'
 group by all
 having count > 0
@@ -21,7 +21,7 @@ limit 50
       replace(object_category,'biolink:','') as edge_type,
       primary_knowledge_source,
       sum(count) as count
-  from bq.merged_kg_edges
+  from reports.merged_kg_edges_report
   where subject_prefix = '${params.prefix}'
     or object_prefix = '${params.prefix}'    
   group by all
@@ -34,7 +34,7 @@ limit 50
       primary_knowledge_source,
       upstream_data_source,
       sum(count) as count
-  from bq.merged_kg_edges
+  from reports.merged_kg_edges_report
   where subject_prefix = '${params.prefix}'
     or object_prefix = '${params.prefix}'
   group by all

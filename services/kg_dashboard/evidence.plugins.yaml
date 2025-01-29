@@ -18,3 +18,4 @@ datasources:
   "@evidence-dev/sqlite": { }
   "@evidence-dev/trino": { }
   "@evidence-dev/motherduck": { }
+  "evidence-connector-parquet": {}
