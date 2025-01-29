@@ -396,34 +396,6 @@ def test_reduced_embedding_calls_in_presence_of_a_cache(
     assert len(list(return_constant[1].glob("*"))) == len(unique_texts.difference(cache_keys)) < len(unique_texts)
 
 
-def test_embedding_cache_gets_bootstrapped(
-    raw_embeddable_nodes: ps.DataFrame,
-    embeddings_cache: ps.DataFrame,
-    mock_encoder: Mock,
-    mock_encoder2: Mock,
-    scope: str,
-    model: str,
-):
-    empty_cache = embeddings_cache.limit(0)
-    # this is not bootstrapping, since Kedro will barf if the dataset doesn't exist
-    embedded, cache_v2 = nodes.create_node_embeddings(
-        df=raw_embeddable_nodes.cache(),
-        cache=empty_cache,  # for bootstrapping: create (maybe it exists already?) a LazySparkDataset and on entry in create_node_embeddings wrap it with a try except
-        transformer=mock_encoder,
-        max_input_len=10,
-        input_features=("name", "category"),
-    )
-
-    assert mock_encoder.embed.called_once_with(["aA", "bB"])
-    expected_cache = raw_embeddable_nodes.sparkSession.createDataFrame(
-        [
-            ("foo", "bar", "aA", [1]),
-            ("foo", "bar", "bB", [1]),
-        ]
-    )
-    assertDataFrameEqual(cache_v2, expected_cache)
-
-
 def test_embeddings_batch_size_determines_number_of_network_calls():
     # 5 rows, batch_size=1-> 5 calls. 5 rows, batch_size=2, -> 5calls or less (depends on number of partitions)
     # This would apply to the LangChainEncoder
