@@ -41,3 +41,5 @@ loggers:
     level: INFO
   matrix.pipelines.embeddings.nodes:
     level: DEBUG
+  matrix.pipelines.embeddings.encoders:
+    level: DEBUG
