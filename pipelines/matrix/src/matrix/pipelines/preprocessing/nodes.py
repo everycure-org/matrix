@@ -35,9 +35,28 @@ def resolve_name(name: str, cols_to_get: List[str], url: str) -> dict:
     return {}
 
 
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "normalized_curie": Column(str, nullable=False),
+            "label": Column(str, nullable=False),
+            "types": Column(List[str], nullable=False),
+            "category": Column(str, nullable=False),
+        },
+        unique=["normalized_curie"],
+    )
+)
 def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
-    # Normalize the name
+    """Map medical nodes with name resolver.
 
+    Args:
+        df: raw medical nodes
+        resolver_url: url for name resolver
+
+    Returns:
+        Processed medical nodes
+    """
+    # Normalize the name
     enriched_data = df["name"].apply(resolve_name, cols_to_get=["curie", "label", "types"], url=resolver_url)
 
     # Extract into df
@@ -47,6 +66,12 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
     # Coalesce id and new id to allow adding "new" nodes
     df["normalized_curie"] = coalesce(df["new_id"], df["curie"])
 
+    # Filter out nodes that are not resolved
+    df = df[df["normalized_curie"].notna()]
+
+    # Merge duplicates in normalized_curie
+    df = df.groupby("normalized_curie").agg({"label": "first", "types": "first", "category": "first"}).reset_index()
+
     return df
 
 
@@ -55,34 +80,36 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
         columns={
             "SourceId": Column(str, nullable=False),
             "TargetId": Column(str, nullable=False),
-        }
+            "Label": Column(str, nullable=False),
+        },
+        unique=["SourceId", "TargetId"],
     )
 )
-def process_medical_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.DataFrame:
+def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> pd.DataFrame:
     """Function to create int edges dataset.
 
     Function ensures edges dataset link curies in the KG.
-    """
-    index = int_nodes[int_nodes["normalized_curie"].notna()]
 
+    Args:
+        int_nodes: Processed medical nodes with normalized curies
+        raw_edges: Raw medical edges
+    """
     res = (
-        int_edges.merge(
-            index.rename(columns={"normalized_curie": "SourceId"}),
+        raw_edges.merge(
+            int_nodes.rename(columns={"normalized_curie": "SourceId"}),
             left_on="Source",
             right_on="ID",
             how="left",
         )
         .drop(columns="ID")
         .merge(
-            index.rename(columns={"normalized_curie": "TargetId"}),
+            int_nodes.rename(columns={"normalized_curie": "TargetId"}),
             left_on="Target",
             right_on="ID",
             how="left",
         )
         .drop(columns="ID")
     )
-
-    res["Included"] = res.apply(lambda row: not (pd.isna(row["SourceId"]) or pd.isna(row["TargetId"])), axis=1)
 
     return res
 
