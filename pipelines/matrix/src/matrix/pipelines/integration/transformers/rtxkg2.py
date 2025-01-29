@@ -5,6 +5,8 @@ import pyspark.sql as ps
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
 
+from matrix.pipelines.integration import schema
+
 from .transformer import GraphTransformer
 
 logger = logging.getLogger(__name__)
@@ -33,6 +35,7 @@ class RTXTransformer(GraphTransformer):
             .withColumn("publications",                      f.split(f.col("publications:string[]"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
             .withColumn("international_resource_identifier", f.col("iri"))
             .withColumnRenamed("id:ID", "id")
+            .select(*[col for col in schema.BIOLINK_KG_NODE_SCHEMA.columns.keys()])
         )
         # fmt: on
 
@@ -64,7 +67,9 @@ class RTXTransformer(GraphTransformer):
             .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-        ).transform(filter_semmed, curie_to_pmids, **semmed_filters)
+            .transform(filter_semmed, curie_to_pmids, **semmed_filters)
+            .select(*[col for col in schema.BIOLINK_KG_NODE_SCHEMA.columns.keys()])
+        )
         # fmt: on
 
 
