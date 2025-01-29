@@ -1,7 +1,6 @@
 - Release Name: v0.2.5
-  Robokop Version: c5ec1f282158182f
-  RTX-KG2 Version: v2.7.3
-  EC Medical Team Version: 20241031
+  Datasets: "\u2023 rtx_kg2: `v2.7.3`<br/>\u2023 robokop: `c5ec1f282158182f`<br/>\u2023\
+    \ ec_medical_team: `20241031`"
   NodeNorm Endpoint Link: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
   Embeddings Encoder: '`text-embedding-3-small`'
   Topological Estimator: '`matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage`'
@@ -10,9 +9,8 @@
   BigQuery Link: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_2_5)'
   Neo4j Link: '[Link](coming soon!)'
 - Release Name: v0.2.3
-  Robokop Version: c5ec1f282158182f
-  RTX-KG2 Version: v2.7.3
-  EC Medical Team Version: 20241031
+  Datasets: "\u2023 rtx_kg2: `v2.7.3`<br/>\u2023 robokop: `c5ec1f282158182f`<br/>\u2023\
+    \ ec_medical_team: `20241031`"
   Topological Estimator: '`matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec`'
   Embeddings Encoder: '`text-embedding-3-small`'
   BigQuery Link: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_2_3)'
