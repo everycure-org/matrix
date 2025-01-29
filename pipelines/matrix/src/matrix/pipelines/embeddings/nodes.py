@@ -478,7 +478,7 @@ def create_node_embeddings(
     scope: str,
     model: str,
     new_colname: str = "embedding",
-    embeddings_pkey: str = "_text_to_embed",
+    embeddings_pkey: str = "text",
 ) -> tuple[ps.DataFrame, ps.DataFrame]:
     """
     Add the embeddings of the text composed of the `input_features`, truncated

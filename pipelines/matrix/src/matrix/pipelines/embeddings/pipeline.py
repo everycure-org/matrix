@@ -15,11 +15,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "df": "integration.prm.filtered_nodes",
                     "cache": "embeddings.cache",
-                    "batch_size": "params:embeddings.node.batch_size",
-                    "transformer_config": "params:embeddings.node.encoder",
+                    "transformer": "params:embeddings.node.encoder",
                     # NOTE: These are kwargs
                     "input_features": "params:embeddings.node.input_features",
                     "max_input_len": "params:embeddings.node.max_input_len",
+                    "scope": "params:embeddings.node.scope",
+                    "model": "params:embeddings.node.model",
+                    "new_colname": "params:embeddings.node.new_colname",
+                    "embeddings_pkey": "params:embeddings.node.embeddings_pkey",
                 },
                 outputs=["embeddings.feat.graph.node_embeddings@spark", "embeddings.cache_out"],
                 name="create_node_embeddings",
