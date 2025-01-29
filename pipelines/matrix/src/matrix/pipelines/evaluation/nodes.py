@@ -183,3 +183,66 @@ def consolidate_evaluation_reports(**reports) -> dict:
             master_report = add_report(master_report, evaluation, fold, report)
 
     return json.loads(json.dumps(master_report, default=float))
+
+
+@inject_object()
+def evaluate_stability_predictions(
+    overlapping_pairs: pd.DataFrame, evaluation: Evaluation, *matrices: pd.DataFrame
+) -> Any:
+    """Function to apply stabilityevaluation.
+
+    Args:
+        overlapping_pairs: pairs that overlap across all matrices.
+        evaluation: stability metric to use for evaluation.
+        matrix_1: full matrix coming from one model
+        matrix_2: full matrix coming from another model to compare against
+    Returns:
+        Evaluation report
+    """
+    return evaluation.evaluate(overlapping_pairs, matrices)
+
+
+@inject_object()
+def generate_overlapping_dataset(generator: DrugDiseasePairGenerator, *matrices: pd.DataFrame) -> pd.DataFrame:
+    """Function to generate overlapping dataset.
+
+    Args:
+        generator: generator strategy
+        matrices: DataFrames coming from different models to compare against
+    Returns:
+        Evaluation report
+    """
+    return generator.generate(matrices)
+
+
+def calculate_rank_commonality(ranking_output: dict, commonality_output: dict) -> dict:
+    """Function to calculate rank commonality (custom metric).
+
+    Args:
+        ranking_output: ranking output
+        commonality_output: commonality output
+
+    Returns:
+        rank commonality output
+    """
+    rank_commonality_output = {}
+    ranking_output = {k: v for k, v in ranking_output.items() if "spearman" in k}
+    n_ranking_values = [int(n.split("_")[-1]) for n in ranking_output.keys() if n.split("_")[-1]]
+    n_commonality_values = [int(n.split("_")[-1]) for n in commonality_output.keys() if n.split("_")[-1]]
+    n_values = list(set(n_ranking_values) & set(n_commonality_values))
+    # Compute harmonic mean between Commonality@n and Spearman-rank@n
+    for i in n_values:
+        # Spearman correlation is between -1 and 1, taking the absolute value to avoid division by small numbers
+        r_k = abs(ranking_output[f"spearman_at_{i}"]["correlation"])
+        c_k = commonality_output[f"commonality_at_{i}"]
+        if r_k + c_k == 0:
+            s_f1 = None
+        elif pd.isnull(r_k) | pd.isnull(c_k):
+            s_f1 = None
+        else:
+            s_f1 = (2 * r_k * c_k) / (r_k + c_k)
+        rank_commonality_output[f"rank_commonality_at_{i}"] = {
+            "score": s_f1,
+            "pvalue": ranking_output[f"spearman_at_{i}"]["pvalue"],
+        }
+    return json.loads(json.dumps(rank_commonality_output, default=float))
