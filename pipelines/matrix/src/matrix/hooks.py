@@ -3,7 +3,7 @@ import logging
 import os
 import re
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Set
 
 import fsspec
 import mlflow
@@ -13,6 +13,7 @@ import pyspark.sql as ps
 import termplotlib as tpl
 from kedro.framework.context import KedroContext
 from kedro.framework.hooks import hook_impl
+from kedro.framework.project import pipelines
 from kedro.io.data_catalog import DataCatalog
 from kedro.pipeline.node import Node
 from kedro_datasets.spark import SparkDataset
@@ -20,7 +21,7 @@ from mlflow.exceptions import RestException
 from omegaconf import OmegaConf
 from pyspark import SparkConf
 
-from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
+# from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,25 @@ class MLFlowHooks:
 
     https://github.com/Galileo-Galilei/kedro-mlflow/issues/579
     """
+
+    _kedro_context: Optional[KedroContext] = None
+    _input_datasets: Optional[Set] = None
+
+    @classmethod
+    def set_context(cls, context: KedroContext) -> None:
+        """Utility class method that stores context in class as singleton."""
+        cls._kedro_context = context
+
+    @classmethod
+    def get_pipeline_inputs(cls):
+        if cls._input_datasets is None:
+            pipeline_name = cls._kedro_context._extra_params["pipeline_name"]
+            pipeline_obj = pipelines[pipeline_name]
+            inputs = {input for input in pipeline_obj.all_inputs() if not input.startswith("params:")}
+            outputs = pipeline_obj.all_outputs()
+            inputs_only = inputs - outputs
+            cls._input_datasets = inputs_only
+        return
 
     @hook_impl
     def after_dataset_loaded(self, dataset_name, data, node):
@@ -85,7 +105,8 @@ class MLFlowHooks:
         Initialises a MLFlow run and passes it on for
         other hooks to consume.
         """
-
+        MLFlowHooks.set_context(context)
+        MLFlowHooks.get_pipeline_inputs()
         cfg = OmegaConf.create(context.config_loader["mlflow"])
         globs = OmegaConf.create(context.config_loader["globals"])
         # Set tracking uri
@@ -402,6 +423,13 @@ class ReleaseInfoHooks:
         with fsspec.open(full_blob_path, "wb") as f:
             f.write(json.dumps(release_info).encode("utf-8"))
 
+    def get_pipeline_inputs(self):
+        pipeline_name = ReleaseInfoHooks._kedro_context.extra_params["pipeline_name"]
+        pipeline_obj = pipelines[pipeline_name]
+        inputs = {input for input in pipeline_obj.all_inputs() if not input.startswith("params:")}
+        outputs = pipeline_obj.all_outputs()
+        inputs_only = inputs - outputs
+
     @hook_impl
     def before_node_run(self, node: Node) -> None:
         """Runs after the last node of the data_release pipeline"""
@@ -409,7 +437,7 @@ class ReleaseInfoHooks:
         # `after_pipeline_run`, because one does not know a priori which
         # pipelines the (last) data release node is part of. With an
         # `after_node_run`, you can limit your filters easily.
-        if node.name == last_data_release_node_name:
+        if True:  # node.name == last_data_release_node_name:
             datasets_to_hide = frozenset(["disease_list", "drug_list", "ec_clinical_trials", "gt"])
             global_datasets = self.extract_all_global_datasets(datasets_to_hide)
             datasets_used = self.extract_datasets_used()
