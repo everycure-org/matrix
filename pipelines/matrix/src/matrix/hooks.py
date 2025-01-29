@@ -55,12 +55,11 @@ class MLFlowHooks:
             outputs = pipeline_obj.all_outputs()
             inputs_only = inputs - outputs
             cls._input_datasets = inputs_only
-        return
 
     @hook_impl
     def after_dataset_loaded(self, dataset_name, data, node):
         """Logs used datasets to MLflow - their real names and dummy values.
-        Logging actual datasets is not possible / is difficult, due to the fact that the data has to be first
+        Logging actual datasets would be difficult, due to the fact that the data has to be first
         converted to mlflow.data.dataset.Dataset class. This works for common formats like pandas and spark
         where the from_ functions exist, e.g.:
 
@@ -71,32 +70,9 @@ class MLFlowHooks:
         or would need a lot of hard-coded logic and would make this code brittle.
         """
 
-        if not dataset_name.startswith("params:"):
+        if dataset_name in MLFlowHooks._input_datasets:
             dataset = mlflow.data.from_pandas(pd.DataFrame(), name=dataset_name)
             mlflow.log_input(dataset)
-        return
-
-        print(f"type is {type(data)}")
-        print(f"name is {dataset_name}")
-        datatype = type(data)
-        try:
-            if isinstance(data, ps.DataFrame):
-                dataset = mlflow.data.from_spark(data, name=dataset_name)
-                print(f"Trying to log Spark DataFrame: {dataset_name}")
-            elif isinstance(data, pd.DataFrame):
-                dataset = mlflow.data.from_pandas(data, name=dataset_name)
-                print(f"Trying to log Pandas DataFrame: {dataset_name}")
-            elif isinstance(data, list):
-                data_df = pd.DataFrame(data[0])
-                dataset = mlflow.data.from_pandas(data_df, name=dataset_name)
-                print(f"Trying to log a list as Pandas DataFrame: {dataset_name}")
-            else:
-                # batch.int.source_disease_list.input_bucketized@partitioned
-                print(f"Unsupported data type: {type(data)}. Cannot log dataset: {dataset_name}")
-        except Exception as e:
-            print(f"Failed to log dataset '{dataset_name}' of type '{type(data)}': {e}")
-            raise
-        # mlflow.log_input(dataset)
 
     @hook_impl
     def after_context_created(self, context) -> None:
