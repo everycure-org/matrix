@@ -76,6 +76,8 @@ class LangChainEncoder(AttributeEncoder):
 
         """
         for index, batch in enumerate(self.batched(texts, self.batch_size)):
+            # Note: on error, due to the retry logic and iterables, we might lose a batch. Should we remove the retry logic?
+            # Write a test for this case, that when embed_documents errors out, it still returns for all texts an embedding.
             logger.debug('{"batch": %d, "texts": %s}', index, json.dumps(batch))
             embeddings = self._client.embed_documents(texts=batch)
             yield from zip(batch, embeddings)
