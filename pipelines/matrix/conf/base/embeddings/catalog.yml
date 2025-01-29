@@ -120,7 +120,7 @@ embeddings.cache: &_cache
             _object: pyspark.sql.types.StringType
           nullable: False
         - _object: pyspark.sql.types.StructField
-          name: text_to_embed
+          name: text
           dataType: 
             _object: pyspark.sql.types.StringType
           nullable: False
