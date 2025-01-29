@@ -472,7 +472,7 @@ def visualise_pca(nodes: ps.DataFrame, column_name: str) -> plt.Figure:
 def create_node_embeddings(
     df: ps.DataFrame,
     cache: ps.DataFrame,
-    transformer: AttributeEncoder,  # Callable[[Iterable[str]], Iterator[ResolvedEmbedding]],
+    transformer: AttributeEncoder,
     input_features: Sequence[str],
     max_input_len: int,
     scope: str,
