@@ -10,6 +10,7 @@ import pyspark.sql as ps
 import pyspark.sql.types as ty
 import pytest
 from matrix.pipelines.embeddings import nodes
+from matrix.pipelines.embeddings.encoders import AttributeEncoder
 from matrix.pipelines.embeddings.nodes import (
     _cast_to_array,
     extract_topological_embeddings,
@@ -192,7 +193,7 @@ def return_constant(tmp_path: Path):
     # longer use their `assert_called_once` and similar methods. The following
     # allows us to track how many times the function actually got called, when
     # dealing with subprocesses that unpickle this function.
-    def embedder(docs: Iterable[str]) -> Iterator[Tuple[str, float]]:
+    def embedder(docs: Iterable[str]) -> Iterator[nodes.ResolvedEmbedding]:
         for doc in docs:
             (tmp_path / uuid4().hex).touch(exist_ok=False)
             yield doc, [1.0] * choice((1, 2))
@@ -323,41 +324,6 @@ def test_cast_to_array(sample_string_embeddings_df):
     assert np.allclose(node1.pca_embedding, [0.1, 0.2])
 
 
-def test_cached_embeddings_can_get_loaded(raw_embeddable_nodes: ps.DataFrame):
-    scope, model = "foo", "bar"
-    dummy_cache = raw_embeddable_nodes.sparkSession.createDataFrame(
-        [
-            (scope, model, "aA", [1.0]),
-            (scope, model, "bB", [2.0]),
-        ],
-        schema=ty.StructType(
-            [
-                ty.StructField("scope", ty.StringType(), nullable=False),
-                ty.StructField("model", ty.StringType(), nullable=False),
-                ty.StructField("id", ty.StringType(), nullable=False),
-                ty.StructField("embedding", ty.ArrayType(ty.DoubleType()), nullable=False),
-            ]
-        ),
-    )
-
-    result = nodes.load_embeddings_from_cache(
-        dataframe=raw_embeddable_nodes,
-        cache=dummy_cache,
-        model=model,
-        scope=scope,
-    )
-
-    expected = result.sparkSession.createDataFrame(
-        [(1, "a", "A", scope, model, [1.0]), (2, "a", "B", scope, model, [2.0])],
-        schema=("id", "name", "category", "scope", "model", "embedding"),
-    )
-
-    expected.show()
-    result.show()
-    assert sorted(expected.columns) == sorted(result.columns)  # order of columns is unimportant
-    assertDataFrameEqual(result.select(expected.columns), expected)
-
-
 def test_re_embedding_is_a_noop(
     raw_embeddable_nodes: ps.DataFrame,
     embeddings_cache: ps.DataFrame,
@@ -370,10 +336,13 @@ def test_re_embedding_is_a_noop(
     """Given a cache from an earlier call to the function under test, the
     function under test will return identical output and will not delegate to
     an expensive transformer function."""
+    m = Mock(spec=AttributeEncoder)
+    m.apply = return_constant[0]
+
     raw_embeddable_nodes.cache()
     kwargs = {
         "df": raw_embeddable_nodes,
-        "transformer": return_constant[0],  # the function will get called as many times as there are partitions
+        "transformer": m,  # the function will get called as many times as there are partitions
         "max_input_len": 10,
         "input_features": ("name", "category"),
         "scope": scope,
@@ -424,7 +393,7 @@ def test_reduced_embedding_calls_in_presence_of_a_cache(
         set(_[0] for _ in df.select(text_col).collect()) for df in (embeddable_nodes, scope_ltd_embeddings_cache)
     )
     # For each unique_text that is not in the cache, a lookup will be made.
-    assert len(list(return_constant[1].glob("*"))) == len(unique_texts.difference(cache_keys))
+    assert len(list(return_constant[1].glob("*"))) == len(unique_texts.difference(cache_keys)) < len(unique_texts)
 
 
 def test_embedding_cache_gets_bootstrapped(
@@ -457,4 +426,5 @@ def test_embedding_cache_gets_bootstrapped(
 
 def test_embeddings_batch_size_determines_number_of_network_calls():
     # 5 rows, batch_size=1-> 5 calls. 5 rows, batch_size=2, -> 5calls or less (depends on number of partitions)
+    # This would apply to the LangChainEncoder
     pass

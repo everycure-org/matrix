@@ -472,7 +472,7 @@ def visualise_pca(nodes: ps.DataFrame, column_name: str) -> plt.Figure:
 def create_node_embeddings(
     df: ps.DataFrame,
     cache: ps.DataFrame,
-    transformer: Callable[[Iterable[str]], Iterator[ResolvedEmbedding]],
+    transformer: AttributeEncoder,  # Callable[[Iterable[str]], Iterator[ResolvedEmbedding]],
     input_features: Sequence[str],
     max_input_len: int,
     scope: str,
@@ -513,7 +513,7 @@ def create_node_embeddings(
         logger.debug('{"cache size": %d, "model-scoped cache size": %d}', cache.count(), scoped_cache.cache().count())
 
     complete, missing_from_cache = lookup_embeddings(
-        df=df, cache=scoped_cache, embedder=transformer, text_colname=embeddings_pkey, new_colname=new_colname
+        df=df, cache=scoped_cache, embedder=transformer.apply, text_colname=embeddings_pkey, new_colname=new_colname
     )
     new_cache = cache.unionByName(missing_from_cache.withColumns({"scope": lit(scope), "model": lit(model)}))
     return complete, new_cache
