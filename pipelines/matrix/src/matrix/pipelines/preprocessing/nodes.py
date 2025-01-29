@@ -117,7 +117,6 @@ def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> p
 @check_output(
     schema=DataFrameSchema(
         columns={
-            "clinical_trial_id": Column(str, nullable=False),
             "reason_for_rejection": Column(str, nullable=True),
             "drug_name": Column(str, nullable=False),
             "disease_name": Column(str, nullable=False),
