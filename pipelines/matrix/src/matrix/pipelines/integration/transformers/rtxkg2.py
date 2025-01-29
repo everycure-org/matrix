@@ -68,7 +68,7 @@ class RTXTransformer(GraphTransformer):
             .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .transform(filter_semmed, curie_to_pmids, **semmed_filters)
-            .select(*[col for col in schema.BIOLINK_KG_NODE_SCHEMA.columns.keys()])
+            .select(*[col for col in schema.BIOLINK_KG_EDGE_SCHEMA.columns.keys()])
         )
         # fmt: on
 
