@@ -68,14 +68,14 @@ def _add_flag_columns(
     matrix["is_known_negative"] = create_flag_column(test_neg_pairs)
 
     # TODO: Need to make this dynamic
-    # # Flag clinical trials data
-    # clinical_trials = clinical_trials.rename(columns={"drug_curie": "source", "disease_curie": "target"})
-    # matrix["trial_sig_better"] = create_flag_column(clinical_trials[clinical_trials["significantly_better"] == 1])
-    # matrix["trial_non_sig_better"] = create_flag_column(
-    #     clinical_trials[clinical_trials["non_significantly_better"] == 1]
-    # )
-    # matrix["trial_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["non_significantly_worse"] == 1])
-    # matrix["trial_non_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["significantly_worse"] == 1])
+    # Flag clinical trials data
+    clinical_trials = clinical_trials.rename(columns={"subject": "source", "object": "target"})
+    matrix["trial_sig_better"] = create_flag_column(clinical_trials[clinical_trials["significantly_better"] == 1])
+    matrix["trial_non_sig_better"] = create_flag_column(
+        clinical_trials[clinical_trials["non_significantly_better"] == 1]
+    )
+    matrix["trial_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["non_significantly_worse"] == 1])
+    matrix["trial_non_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["significantly_worse"] == 1])
 
     return matrix
 
@@ -87,10 +87,10 @@ def _add_flag_columns(
             "target": Column(str, nullable=False),
             "is_known_positive": Column(bool, nullable=False),
             "is_known_negative": Column(bool, nullable=False),
-            # "trial_sig_better": Column(bool, nullable=False),
-            # "trial_non_sig_better": Column(bool, nullable=False),
-            # "trial_sig_worse": Column(bool, nullable=False),
-            # "trial_non_sig_worse": Column(bool, nullable=False),
+            "trial_sig_better": Column(bool, nullable=False),
+            "trial_non_sig_better": Column(bool, nullable=False),
+            "trial_sig_worse": Column(bool, nullable=False),
+            "trial_non_sig_worse": Column(bool, nullable=False),
         },
         unique=["source", "target"],
     )
