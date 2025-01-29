@@ -466,6 +466,7 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
         pipeline=pipeline_obj,
         package_name="matrix",
         release_folder_name="releases",
+        environment="cloud",
         default_execution_resources=argo_default_resources,
     )
 
