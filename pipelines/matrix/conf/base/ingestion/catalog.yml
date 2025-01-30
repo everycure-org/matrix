@@ -175,7 +175,6 @@ ingestion.int.ec_clinical_trails.edges:
 ingestion.raw.disease_list.nodes@pandas:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-
   filepath: ${globals:paths.raw}/disease_list/${globals:data_sources.disease_list.version}/disease_list_conflated.tsv
   save_args:
     sep: "\t"
