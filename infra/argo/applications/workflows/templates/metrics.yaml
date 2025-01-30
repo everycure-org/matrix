@@ -27,4 +27,4 @@ spec:
   - port: metrics
   selector:
     matchLabels:
-      app: argo-workflows-workflow-controller
+      app: workflow-controller
