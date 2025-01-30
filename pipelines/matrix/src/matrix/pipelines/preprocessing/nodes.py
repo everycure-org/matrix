@@ -1,9 +1,12 @@
+import logging
 from typing import List, Tuple
 
 import pandas as pd
 import requests
 from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
 from tenacity import retry, stop_after_attempt, wait_exponential
+
+logger = logging.getLogger(__name__)
 
 
 def coalesce(s: pd.Series, *series: List[pd.Series]):
@@ -68,10 +71,16 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
     df["normalized_curie"] = coalesce(df["new_id"], df["curie"])
 
     # Filter out nodes that are not resolved
-    df = df[df["normalized_curie"].notna()]
+    is_resolved = df["normalized_curie"].notna()
+    df = df[is_resolved]
+    if not is_resolved.all():
+        logger.warning(f"{(~is_resolved).sum()} EC medical nodes have not been resolved.")
 
     # Filter out duplicate IDs
-    df = df[df["normalized_curie"].groupby(df["normalized_curie"]).transform("count") == 1]
+    is_unique = df["normalized_curie"].groupby(df["normalized_curie"]).transform("count") == 1
+    df = df[is_unique]
+    if not is_unique.all():
+        logger.warning(f"{(~is_unique).sum()} EC medical nodes have been removed due to duplicate IDs.")
 
     return df
 
