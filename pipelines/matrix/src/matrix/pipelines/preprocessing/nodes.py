@@ -83,7 +83,7 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
             "TargetId": Column(str, nullable=False),
             "Label": Column(str, nullable=False),
         },
-        unique=["SourceId", "TargetId"],
+        unique=["SourceId", "TargetId", "Label"],
     )
 )
 def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> pd.DataFrame:
