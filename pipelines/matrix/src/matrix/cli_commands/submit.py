@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List, Optional
 
 import click
+import semver
 from kedro.framework.cli.utils import CONTEXT_SETTINGS, split_string
 from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.framework.startup import bootstrap_project
@@ -19,6 +20,7 @@ from rich.panel import Panel
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
 from matrix.git_utils import (
     BRANCH_NAME_REGEX,
+    get_latest_minor_release,
     git_tag_exists,
     has_dirty_git,
     has_legal_branch_name,
@@ -76,6 +78,7 @@ def submit(
 
     if pipeline in ('data_release', 'kg_release'):
         abort_if_unmet_git_requirements(release_version)
+        abort_if_intermediate_release(release_version)
 
     if pipeline not in kedro_pipelines.keys():
         raise ValueError("Pipeline requested for execution not found")
@@ -530,3 +533,9 @@ def abort_if_unmet_git_requirements(release_version: str) -> None:
     if errors:
         error_list = "\n".join(errors)
         raise RuntimeError(f"Submission failed due to the following issues:\n\n{error_list}")
+
+def abort_if_intermediate_release(release_version: str) -> None:
+    release_version = semver.Version.parse(release_version.lstrip("v"))
+    latest_minor = get_latest_minor_release().split(".")[1]
+    if release_version.minor < latest_minor:
+        raise ValueError("Cannot release a minor version lower than the latest official release")

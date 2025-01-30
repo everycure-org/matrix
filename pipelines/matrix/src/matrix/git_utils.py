@@ -1,3 +1,4 @@
+import json
 import re
 import subprocess
 
@@ -39,3 +40,26 @@ def has_unpushed_commits() -> bool:
 def git_tag_exists(tag: str) -> bool:
     result = subprocess.check_output(f"git ls-remote --tags origin {tag}", shell=True, text=True)
     return tag in result
+
+
+def get_latest_minor_release():
+    releases_list = (
+        (subprocess.check_output(["gh", "release", "list", "--json", "tagName", "--jq", ".[].tagName"]))
+        .decode("utf-8")
+        .strip("\n")
+        .split("\n")
+    )
+    latest_minor = -1
+    latest_minor_release = "v0.1"
+    for v in releases_list:
+        parsed_version = v.split(".")
+        minor_version = int(parsed_version[1])
+        if len(parsed_version) == 2:  # Handle "X.Y" format
+            if minor_version >= latest_minor:
+                latest_minor = minor_version
+                latest_minor_release = v
+        else:  # Handle proper format "X.Y.Z"
+            if int(parsed_version[2]) == 0 and minor_version >= latest_minor:  # Only consider minor versions (patch==0)
+                latest_minor = minor_version
+                latest_minor_release = v
+    return latest_minor_release
