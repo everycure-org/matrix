@@ -83,10 +83,14 @@ def ask_for_release():
 
 
 def get_latest_release():
-    return get_releases()[0]
+    return run_command(
+        ["gh", "release", "list", "--jq", ".[0].tagName", "--json", "tagName", "--order", "desc"], cwd=get_git_root()
+    ).strip()
 
 
 def get_releases():
     # Sort releases by version using semantic versioning
     # Remark: repo should be fully checked out for this to work!
-    return run_command(["git", "tag", "--list", "--sort=-v:refname"], cwd=get_git_root()).split("\n")
+    return run_command(["gh", "release", "list", "--json", "tagName", "--jq", ".[].tagName"], cwd=get_git_root()).split(
+        "\n"
+    )
