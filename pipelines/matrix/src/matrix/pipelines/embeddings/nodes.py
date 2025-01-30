@@ -552,18 +552,6 @@ def lookup_embeddings(
 
     partly_enriched.select(text_colname, new_colname).show()
     cache.select(text_colname, new_colname).show()
-    # partly_enriched.groupBy(new_colname).count().show()
-    # print(new_colname)
-    # (df.select(text_colname).withColumn("foo", lit("bar"))
-    #     .join(cache, on=text_colname, how="left")
-    #     .orderBy(text_colname).show(truncate=False))
-
-    # for frame in (df, cache):
-    #     frame.select(text_colname).orderBy(text_colname).show(truncate=False)
-
-    # df.select(text_colname).show()
-    # print("---")
-    # cache.show()
 
     non_enriched = non_enriched.drop(new_colname).cache()
 
@@ -638,6 +626,7 @@ def lookup_missing_embeddings(
 
         return inner
 
+    df = df.repartition(3000)
     rdd_result = df.rdd.mapPartitions(embed_docs(pkey=pkey))
     new_schema = df.schema.add(StructField(new_colname, ArrayType(FloatType()), nullable=True))
     return rdd_result.toDF(schema=new_schema)

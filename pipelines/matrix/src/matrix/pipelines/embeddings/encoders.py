@@ -76,6 +76,7 @@ class LangChainEncoder(AttributeEncoder):
             tuples of the text and its embedding, for each text
 
         """
+        # TODO: tune timeout
         encoder = OpenAIEmbeddings(model="text-embedding-3-small", timeout=10)
         pid = os.getpid()
         for index, batch in enumerate(self.batched(texts, self.batch_size)):
