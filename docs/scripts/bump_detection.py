@@ -7,12 +7,10 @@ import semver
 
 
 def get_generate_notes_flag():
-    # latest_official_release = os.getenv("latest_official_release", "v0.0.0").lstrip("v")
-    latest_official_release = "0.3.0"
+    latest_official_release = os.getenv("latest_official_release", "v0.0.0").lstrip("v")
     tag_version = semver.Version.parse(latest_official_release)
 
-    # release = os.getenv("release", "v0.0.0").lstrip("v")
-    release = "0.2.1"
+    release = os.getenv("release", "v0.0.0").lstrip("v")
     release_version = semver.Version.parse(release)
 
     minor_bump = tag_version.major == release_version.major and tag_version.minor < release_version.minor
