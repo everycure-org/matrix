@@ -53,7 +53,7 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             {"name": "drug_list", "integrate_in_kg": False, "nodes_only": True},
             {"name": "disease_list", "integrate_in_kg": False, "nodes_only": True},
             {"name": "ground_truth", "integrate_in_kg": False},
-            #  {"name": "ec_clinical_trails", "integrate_in_kg": False},
+            {"name": "ec_clinical_trails", "integrate_in_kg": False},
         ],
         "modelling": {
             "model_name": "xg_ensemble",  # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth
@@ -64,9 +64,16 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             {"evaluation_name": "disease_specific"},
             {"evaluation_name": "full_matrix_negatives"},
             {"evaluation_name": "full_matrix"},
-            # {"evaluation_name": "simple_classification_trials"},
-            # {"evaluation_name": "disease_specific_trials"},
-            # {"evaluation_name": "full_matrix_trials"},
+            {"evaluation_name": "simple_classification_trials"},
+            {"evaluation_name": "disease_specific_trials"},
+            {"evaluation_name": "full_matrix_trials"},
+        ],
+        "stability": [
+            {"stability_name": "stability_overlap"},
+            {"stability_name": "stability_ranking"},
+            {
+                "stability_name": "rank_commonality"
+            },  # note - rank_commonality will be only used if you have a shared commonality@k and spearman@k metrics
         ],
     }
 )

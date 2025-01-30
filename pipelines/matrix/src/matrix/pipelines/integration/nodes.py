@@ -80,12 +80,11 @@ def union_and_deduplicate_edges(*edges, cols: List[str]) -> ps.DataFrame:
     schema=BIOLINK_KG_NODE_SCHEMA,
     pass_columns=True,
 )
-def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes, cols: List[str]) -> ps.DataFrame:
+def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, cols: List[str]) -> ps.DataFrame:
     """Function to unify nodes datasets."""
     # fmt: off
-    return (
+    unioned_datasets = (
         _union_datasets(*nodes)
-
         # first we group the dataset by id to deduplicate
         .groupBy("id")
         .agg(
@@ -99,13 +98,13 @@ def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes, col
             F.flatten(F.collect_set("publications")).alias("publications"),
             F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
         )
+        )
+    # next we need to apply a number of transformations to the nodes to ensure grouping by id did not select wrong information
+    # this is especially important if we integrate multiple KGs
+    if retrieve_most_specific_category:
+        unioned_datasets = unioned_datasets.transform(determine_most_specific_category)
+    return unioned_datasets.select(*cols)
 
-        # next we need to apply a number of transformations to the nodes to ensure grouping by id did not select wrong information
-        .transform(determine_most_specific_category, biolink_categories_df)
-
-        # finally we select the columns that we want to keep
-        .select(*cols)
-    )
     # fmt: on
 
 
@@ -114,7 +113,6 @@ def _union_datasets(
 ) -> ps.DataFrame:
     """
     Helper function to unify datasets and deduplicate them.
-
     Args:
         datasets_to_union: List of dataset names to unify.
         **datasets: Arbitrary number of DataFrame keyword arguments.
