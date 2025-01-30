@@ -7,6 +7,11 @@ export TQDM_DISABLE ?= 1
 TARGET_PLATFORM ?= linux/amd64
 PREREQUISITES := docker gcloud python3 java uv
 
+# Add GCP project variables
+GCP_PROJECT ?= mtrx-hub-dev-3of
+SA_KEY_SECRET_NAME ?= storage-viewer-sa-key
+SA_KEY_PATH ?= conf/local/service-account.json
+
 # ensures all make targets run in one shell (rather than line by line in new shell)
 .ONESHELL: 
 
@@ -18,12 +23,28 @@ prerequisites:
 	$(foreach exec,$(PREREQUISITES),\
         $(if $(shell command -v $(exec) 2>/dev/null),,$(error "$(exec) is not installed.")))
 	$(info All prerequisites are installed.)
+	$(info Checking gcloud auth...)
+	@if ! gcloud auth print-access-token >/dev/null 2>&1; then \
+		echo "Not logged into gcloud. Please run 'gcloud auth login' first."; \
+		exit 1; \
+	fi
+
+fetch_sa_key:
+	@echo "Fetching service account key from Secret Manager..."
+	@mkdir -p conf/local
+	@gcloud secrets versions access latest \
+		--secret=$(SA_KEY_SECRET_NAME) \
+		--project=$(GCP_PROJECT) \
+		> $(SA_KEY_PATH)
+	@chmod 600 $(SA_KEY_PATH)
+	@echo "Service account key saved to $(SA_KEY_PATH)"
+
 
 venv: prerequisites
 	if [ ! -d .venv ]; then uv venv -p 3.11; fi
 	uv run python -m ensurepip --upgrade || true
 
-install: venv precommit-hooks
+install: venv precommit-hooks fetch_sa_key
 	uv pip install -r requirements.txt #force it to install in our venv
 
 precommit: precommit-hooks
@@ -95,7 +116,7 @@ licenses_container: docker_build
 		-v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy  \
 		image --scanners license --severity UNKNOWN,CRITICAL $(dev_docker_image)
 
-clean:
+clean: clean_sa_key
 	@echo "cleaning various cache locations to ensure clean installation is possible"
 	@echo "this may be necessary e.g. when updating one of our local packages"
 	uv run pre-commit clean
