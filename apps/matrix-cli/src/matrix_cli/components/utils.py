@@ -47,7 +47,7 @@ def get_markdown_contents(folder_path: Path | str) -> str:
     """Iteratively reads and concatenates markdown files from a directory.
 
     Args:
-        folder_path (Path | str): Path to the directory containing markdown files.
+        folder_path (Pathg | str): Path to the directory containing markdown files.
 
     Returns:
         str: Concatenated content of all markdown files, separated by delimiters.
