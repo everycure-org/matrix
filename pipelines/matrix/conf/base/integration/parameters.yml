@@ -84,4 +84,4 @@ integration:
       columns: 
         - primary_knowledge_source 
       categories:
-        - infores:text-mining-provider-targeted
+        - infores:drugbank
