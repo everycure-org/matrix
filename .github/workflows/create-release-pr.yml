@@ -100,10 +100,6 @@ jobs:
           uv venv -p 3.11
           uv pip install -r requirements.txt
           uv run scripts/bump_detection.py >> "${GITHUB_ENV}"
-      
-      - name: Print env vars
-        run: |
-          echo "generate_notes=${generate_notes}"
 
       - name: Create Release Notes
         working-directory: apps/matrix-cli
