@@ -24,21 +24,24 @@ prerequisites:
         $(if $(shell command -v $(exec) 2>/dev/null),,$(error "$(exec) is not installed.")))
 	$(info All prerequisites are installed.)
 	$(info Checking gcloud auth...)
-	@if ! gcloud auth print-access-token >/dev/null 2>&1; then \
+	@if [ -z "${CI}" ] && ! gcloud auth print-access-token >/dev/null 2>&1; then \
 		echo "Not logged into gcloud. Please run 'gcloud auth login' first."; \
 		exit 1; \
 	fi
 
 fetch_sa_key:
-	@echo "Fetching service account key from Secret Manager..."
-	@mkdir -p conf/local
-	@gcloud secrets versions access latest \
-		--secret=$(SA_KEY_SECRET_NAME) \
-		--project=$(GCP_PROJECT) \
-		> $(SA_KEY_PATH)
-	@chmod 600 $(SA_KEY_PATH)
-	@echo "Service account key saved to $(SA_KEY_PATH)"
-
+	@if [ -z "${CI}" ]; then \
+		echo "Fetching service account key from Secret Manager..."; \
+		mkdir -p conf/local; \
+		gcloud secrets versions access latest \
+			--secret=$(SA_KEY_SECRET_NAME) \
+			--project=$(GCP_PROJECT) \
+			> $(SA_KEY_PATH); \
+		chmod 600 $(SA_KEY_PATH); \
+		echo "Service account key saved to $(SA_KEY_PATH)"; \
+	else \
+		echo "Skipping SA key fetch in CI environment"; \
+	fi
 
 venv: prerequisites
 	if [ ! -d .venv ]; then uv venv -p 3.11; fi
