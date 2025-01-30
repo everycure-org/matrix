@@ -13,7 +13,7 @@ spec:
     protocol: TCP
     targetPort: 9090
   selector:
-      app: argo-workflows-workflow-controller
+      app.kubernetes.io/name: argo-workflows-workflow-controller
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
