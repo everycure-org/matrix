@@ -3,17 +3,17 @@ from kedro.pipeline import Pipeline, node, pipeline
 from matrix import settings
 from matrix.pipelines.batch import pipeline as batch_pipeline
 
-from . import nodes as n
+from . import nodes
 
 
-def _create_integration_pipeline(source: str, nodes: bool = True, edges: bool = True) -> Pipeline:
+def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges: bool = True) -> Pipeline:
     pipelines = []
 
     pipelines.append(
         pipeline(
             [
                 node(
-                    func=n.transform,
+                    func=nodes.transform,
                     inputs={
                         "transformer": f"params:integration.sources.{source}.transformer",
                         # NOTE: The datasets below are currently only picked up by RTX
@@ -25,12 +25,12 @@ def _create_integration_pipeline(source: str, nodes: bool = True, edges: bool = 
                         # This is due to the fact that the Transformer objects are only created
                         # during node execution time, otherwise we could infer this based on
                         # the transformer.
-                        **({"nodes_df": f"ingestion.int.{source}.nodes"} if nodes else {}),
-                        **({"edges_df": f"ingestion.int.{source}.edges"} if edges else {}),
+                        **({"nodes_df": f"ingestion.int.{source}.nodes"} if has_nodes else {}),
+                        **({"edges_df": f"ingestion.int.{source}.edges"} if has_edges else {}),
                     },
                     outputs={
                         "nodes": f"integration.int.{source}.nodes",
-                        **({"edges": f"integration.int.{source}.edges"} if edges else {}),
+                        **({"edges": f"integration.int.{source}.edges"} if has_edges else {}),
                     },
                     name=f"transform_{source}_nodes",
                     tags=["standardize"],
@@ -57,7 +57,7 @@ def _create_integration_pipeline(source: str, nodes: bool = True, edges: bool = 
         )
     )
 
-    if edges:
+    if has_edges:
         pipelines.append(
             pipeline(
                 [
@@ -88,7 +88,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         pipelines.append(
             pipeline(
                 _create_integration_pipeline(
-                    source=source["name"], nodes=source.get("nodes", True), edges=source.get("edges", True)
+                    source=source["name"], nodes=source.get("has_nodes", True), edges=source.get("has_edges", True)
                 ),
                 tags=[source["name"]],
             )
@@ -99,13 +99,13 @@ def create_pipeline(**kwargs) -> Pipeline:
         pipeline(
             [
                 node(
-                    func=n.union_and_deduplicate_nodes,
+                    func=nodes.union_and_deduplicate_nodes,
                     inputs=[
                         "params:integration.deduplication.retrieve_most_specific_category",
                         *[
                             f'integration.int.{source["name"]}.nodes.norm@spark'
                             for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
-                            if source.get("integrate_in_kg", True) and not source.get("nodes_only", False)
+                            if source.get("integrate_in_kg", True)
                         ],
                     ],
                     outputs="integration.prm.unified_nodes",
@@ -113,18 +113,18 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ),
                 # union edges
                 node(
-                    func=n.union_and_deduplicate_edges,
+                    func=nodes.union_and_deduplicate_edges,
                     inputs=[
                         f'integration.int.{source["name"]}.edges.norm@spark'
                         for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
-                        if source.get("integrate_in_kg", True) and not source.get("nodes_only", False)
+                        if source.get("integrate_in_kg", True)
                     ],
                     outputs="integration.prm.unified_edges",
                     name="create_prm_unified_edges",
                 ),
                 # filter nodes given a set of filter stages
                 node(
-                    func=n.prefilter_unified_kg_nodes,
+                    func=nodes.prefilter_unified_kg_nodes,
                     inputs=[
                         "integration.prm.unified_nodes",
                         "params:integration.filtering.node_filters",
@@ -135,7 +135,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ),
                 # filter edges given a set of filter stages
                 node(
-                    func=n.filter_unified_kg_edges,
+                    func=nodes.filter_unified_kg_edges,
                     inputs=[
                         "integration.prm.prefiltered_nodes",
                         "integration.prm.unified_edges",
@@ -146,7 +146,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     tags=["filtering"],
                 ),
                 node(
-                    func=n.filter_nodes_without_edges,
+                    func=nodes.filter_nodes_without_edges,
                     inputs=[
                         "integration.prm.prefiltered_nodes",
                         "integration.prm.filtered_edges",
