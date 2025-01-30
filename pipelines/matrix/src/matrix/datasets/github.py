@@ -25,7 +25,7 @@ class GitHubReleaseCSVDataset(CSVDataset):
         pwal = repository_url.replace("github.com", "api.github.com/repos") + "/releases"
 
         super().__init__(
-            # ... we are not getting the actual file path in the init to avoid HTTP requests during tests
+            # we are not getting the actual file path in the init to avoid HTTP requests during tests
             filepath=pwal,
             fs_args=fs_args,
             load_args=load_args,
