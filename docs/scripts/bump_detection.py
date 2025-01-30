@@ -17,7 +17,8 @@ def get_generate_notes_flag():
         and tag_version.minor == release_version.minor
         and tag_version.patch < release_version.patch
     )
-    print(f"generate_notes={new_version_is_a_patch}")
+    generate_notes = not new_version_is_a_patch
+    print(f"generate_notes={generate_notes}")
 
 
 if __name__ == "__main__":
