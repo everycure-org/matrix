@@ -49,44 +49,44 @@ jobs:
           git config --global user.name "All of us at Every Cure"
           git config --global push.autosetupremote true
 
-      - name: Tag the commit from which the data release was triggered
-        run: |
-          # Create an annotated tag, so that we can push it easily with the files using `follow-tags`.
-          git tag --annotate --message '' -- "${{env.release}}" "${{env.gitref}}" && \
-          git push --follow-tags
+      # - name: Tag the commit from which the data release was triggered
+      #   run: |
+      #     # Create an annotated tag, so that we can push it easily with the files using `follow-tags`.
+      #     git tag --annotate --message '' -- "${{env.release}}" "${{env.gitref}}" && \
+      #     git push --follow-tags
 
-      - name: Branch off
-        # To comply with the protected-branch policy, we checkout a different
-        # branch, but from the commit that created the release.
-        # It should have been pushed, otherwise this errors out.
-        run: git switch -C release/${{env.release}} "${{env.gitref}}"
+      # - name: Branch off
+      #   # To comply with the protected-branch policy, we checkout a different
+      #   # branch, but from the commit that created the release.
+      #   # It should have been pushed, otherwise this errors out.
+      #   run: git switch -C release/${{env.release}} "${{env.gitref}}"
 
-      - name: Setup Matrix CLI
-        working-directory: apps/matrix-cli
-        run: |
-          pip install uv
-          uv sync
+      # - name: Setup Matrix CLI
+      #   working-directory: apps/matrix-cli
+      #   run: |
+      #     pip install uv
+      #     uv sync
 
-      - name: Authenticate with Google Cloud
-        uses: 'google-github-actions/auth@v2'
-        with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.workload_identity_provider}}
-          service_account: ${{env.service_account}}
+      # - name: Authenticate with Google Cloud
+      #   uses: 'google-github-actions/auth@v2'
+      #   with:
+      #     project_id: ${{env.project_id}}
+      #     workload_identity_provider: ${{env.workload_identity_provider}}
+      #     service_account: ${{env.service_account}}
 
-      - name: Download & commit release info file
-        working-directory: docs/src/releases/changelog_files
-        env:
-          RELEASE_DIR_GCS: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
-          FILENAME: ${{env.release}}_info.json
-        run: |
-          set -eux
-          BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
-          gcloud storage cp "$BLOB_PATH" "$FILENAME"
+      # - name: Download & commit release info file
+      #   working-directory: docs/src/releases/changelog_files
+      #   env:
+      #     RELEASE_DIR_GCS: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
+      #     FILENAME: ${{env.release}}_info.json
+      #   run: |
+      #     set -eux
+      #     BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
+      #     gcloud storage cp "$BLOB_PATH" "$FILENAME"
           
-          git add "${FILENAME}" && \
-          git commit -m "added release info json" && \
-          git push
+      #     git add "${FILENAME}" && \
+      #     git commit -m "added release info json" && \
+      #     git push
 
       - name: Discover Latest Official Release on GitHub
         env:
