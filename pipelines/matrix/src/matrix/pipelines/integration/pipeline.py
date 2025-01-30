@@ -162,9 +162,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                         "integration.prm.filtered_nodes",
                         "integration.int.drug_list.nodes.norm@spark",
                         "integration.int.disease_list.nodes.norm@spark",
-                        "integration.int.ec_ground_truth.edges.norm@spark",
-                        "integration.int.kgml_xdtd_ground_truth.edges.norm@spark",
-                        "integration.int.ec_clinical_trails.edges.norm@spark",
+                        *[
+                            f"integration.int.{source['name']}.edges.norm@spark"
+                            for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
+                            if not source.get("integrate_in_kg", True) and not source.get("nodes_only", False)
+                        ],
                     ],
                     outputs="integration.prm.filtered_gt_nodes",
                     name="add_gt_category",
