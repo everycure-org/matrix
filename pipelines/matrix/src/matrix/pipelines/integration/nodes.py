@@ -111,7 +111,6 @@ def _union_datasets(
 ) -> ps.DataFrame:
     """
     Helper function to unify datasets and deduplicate them.
-
     Args:
         datasets_to_union: List of dataset names to unify.
         **datasets: Arbitrary number of DataFrame keyword arguments.

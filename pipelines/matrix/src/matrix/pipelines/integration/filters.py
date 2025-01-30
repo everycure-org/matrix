@@ -132,6 +132,14 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
     return nodes.drop("category").join(mapping_table, on="id", how="left")
 
 
-def remove_rows_containing_category(nodes: ps.DataFrame, categories: List[str], column: str, **kwargs) -> ps.DataFrame:
+def remove_rows_containing_category(
+    nodes: ps.DataFrame, categories: List[str], column: str, exclude_sources: Optional[List[str]] = None, **kwargs
+) -> ps.DataFrame:
     """Function to remove rows containing a category."""
-    return nodes.filter(~F.col(column).isin(categories))
+    if exclude_sources is None:
+        exclude_sources = []
+
+    df = nodes.withColumn("_exclude", f.arrays_overlap(f.col("upstream_data_source"), f.lit(exclude_sources))).filter(
+        (F.col("_exclude") | ~F.col(column).isin(categories))
+    )
+    return df.drop("_exclude")
