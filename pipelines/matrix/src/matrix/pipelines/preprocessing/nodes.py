@@ -42,6 +42,7 @@ def resolve_name(name: str, cols_to_get: List[str], url: str) -> dict:
             "label": Column(str, nullable=False),
             "types": Column(List[str], nullable=False),
             "category": Column(str, nullable=False),
+            "ID": Column(int, nullable=False),
         },
         unique=["normalized_curie"],
     )
@@ -69,8 +70,8 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
     # Filter out nodes that are not resolved
     df = df[df["normalized_curie"].notna()]
 
-    # Merge duplicates in normalized_curie
-    df = df.groupby("normalized_curie").agg({"label": "first", "types": "first", "category": "first"}).reset_index()
+    # Filter out duplicate IDs
+    df = df[df["normalized_curie"].groupby(df["normalized_curie"]).transform("count") == 1]
 
     return df
 
@@ -94,19 +95,22 @@ def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> p
         int_nodes: Processed medical nodes with normalized curies
         raw_edges: Raw medical edges
     """
+    df = int_nodes[["normalized_curie", "ID"]]
+
+    # Attach source and target curies. Drop edge un the case of a missing curies.
     res = (
         raw_edges.merge(
-            int_nodes.rename(columns={"normalized_curie": "SourceId"}),
+            df.rename(columns={"normalized_curie": "SourceId"}),
             left_on="Source",
             right_on="ID",
-            how="left",
+            how="inner",
         )
         .drop(columns="ID")
         .merge(
-            int_nodes.rename(columns={"normalized_curie": "TargetId"}),
+            df.rename(columns={"normalized_curie": "TargetId"}),
             left_on="Target",
             right_on="ID",
-            how="left",
+            how="inner",
         )
         .drop(columns="ID")
     )
