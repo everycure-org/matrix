@@ -12,7 +12,7 @@ embeddings.node:
   encoder:
     _object: matrix.pipelines.embeddings.encoders.LangChainEncoder
     dimensions: 512
-    batch_size: 1000
+    batch_size: 50 #TODO: tuning
     # encoder:
     #   _object: langchain_openai.OpenAIEmbeddings
     #   model: text-embedding-3-small
