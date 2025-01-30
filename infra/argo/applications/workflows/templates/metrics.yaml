@@ -20,6 +20,8 @@ kind: ServiceMonitor
 metadata:
   name: argo-workflows
   namespace: argo-workflows
+  labels:
+    release: kube-prometheus-stack
 spec:
   endpoints:
   - port: metrics
