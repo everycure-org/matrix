@@ -44,7 +44,7 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
                     max_workers=120,
                 ),
                 node(
-                    func=n.normalize_nodes,
+                    func=nodes.normalize_nodes,
                     inputs={
                         "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
                         "nodes": f"integration.int.{source}.nodes",
@@ -62,7 +62,7 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
             pipeline(
                 [
                     node(
-                        func=n.normalize_edges,
+                        func=nodes.normalize_edges,
                         inputs={
                             "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
                             "edges": f"integration.int.{source}.edges",
@@ -88,7 +88,9 @@ def create_pipeline(**kwargs) -> Pipeline:
         pipelines.append(
             pipeline(
                 _create_integration_pipeline(
-                    source=source["name"], nodes=source.get("has_nodes", True), edges=source.get("has_edges", True)
+                    source=source["name"],
+                    has_nodes=source.get("has_nodes", True),
+                    has_edges=source.get("has_edges", True),
                 ),
                 tags=[source["name"]],
             )
