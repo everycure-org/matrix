@@ -288,7 +288,7 @@ def normalize_nodes(
 
 
 def add_gt_category(
-    nodes: ps.DataFrame, drug_list: ps.DataFrame, disease_list: ps.DataFrame, *known_pairs: ps.DataFrame
+    nodes: ps.DataFrame, drug_list: ps.DataFrame, disease_list: ps.DataFrame, *gt_pairs: ps.DataFrame
 ) -> ps.DataFrame:
     """Adds ground truth categories to nodes based on their presence in known pairs and biolink categories.
     Args:
@@ -302,7 +302,7 @@ def add_gt_category(
 
     known_sources = []
     known_targets = []
-    for known_pair in known_pairs:
+    for known_pair in gt_pairs:
         known_sources.extend([row["subject"] for row in known_pair.select("subject").distinct().collect()])
         known_targets.extend([row["object"] for row in known_pair.select("object").distinct().collect()])
     drug_ids = [row["id"] for row in drug_list.select("id").distinct().collect()]
