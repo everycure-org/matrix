@@ -83,9 +83,7 @@ def ask_for_release():
 
 
 def get_latest_release():
-    return run_command(
-        ["gh", "release", "list", "--jq", ".[0].tagName", "--json", "tagName", "--order", "desc"], cwd=get_git_root()
-    ).strip()
+    return get_releases()[0]
 
 
 def get_releases():
