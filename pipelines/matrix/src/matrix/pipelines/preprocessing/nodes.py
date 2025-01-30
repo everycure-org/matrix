@@ -14,7 +14,7 @@ def coalesce(s: pd.Series, *series: List[pd.Series]):
 
 
 @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
-def resolve_name(name: str, cols_to_get: List[str]) -> dict:
+def resolve_name(name: str, cols_to_get: List[str], url: str) -> dict:
     """Function to retrieve the normalized identifier through the normalizer.
 
     Args:
@@ -26,10 +26,7 @@ def resolve_name(name: str, cols_to_get: List[str]) -> dict:
 
     if not name or pd.isna(name):
         return {}
-
-    result = requests.get(
-        f"https://name-resolution-sri-dev.apps.renci.org/lookup?string={name}&autocomplete=True&highlighting=False&offset=0&limit=1"
-    )
+    result = requests.get(url.format(name=name))
     if len(result.json()) != 0:
         element = result.json()[0]
         print({col: element.get(col) for col in cols_to_get})
@@ -38,9 +35,10 @@ def resolve_name(name: str, cols_to_get: List[str]) -> dict:
     return {}
 
 
-def process_medical_nodes(df: pd.DataFrame) -> pd.DataFrame:
+def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
     # Normalize the name
-    enriched_data = df["name"].apply(resolve_name, cols_to_get=["curie", "label", "types"])
+
+    enriched_data = df["name"].apply(resolve_name, cols_to_get=["curie", "label", "types"], url=resolver_url)
 
     # Extract into df
     enriched_df = pd.DataFrame(enriched_data.tolist())
@@ -89,25 +87,20 @@ def process_medical_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> p
     return res
 
 
-def add_source_and_target_to_clinical_trails(df: pd.DataFrame) -> pd.DataFrame:
+def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
+    """Resolve names to curies for source and target columns in clinical trials data.
+
+    Args:
+        df: Clinical trial dataset
+    """
     # Normalize the name
-    drug_data = df["drug_name"].apply(resolve_name, cols_to_get=["curie"])
-    disease_data = df["disease_name"].apply(resolve_name, cols_to_get=["curie"])
+    drug_data = df["drug_name"].apply(resolve_name, cols_to_get=["curie"], url=resolver_url)
+    disease_data = df["disease_name"].apply(resolve_name, cols_to_get=["curie"], url=resolver_url)
+
     # Concat dfs
     drug_df = pd.DataFrame(drug_data.tolist()).rename(columns={"curie": "drug_curie"})
     disease_df = pd.DataFrame(disease_data.tolist()).rename(columns={"curie": "disease_curie"})
     df = pd.concat([df, drug_df, disease_df], axis=1)
-
-    # Check values
-    cols = [
-        "significantly_better",
-        "non_significantly_better",
-        "non_significantly_worse",
-        "significantly_worse",
-    ]
-
-    # check conflict
-    df["conflict"] = df.groupby(["drug_curie", "disease_curie"])[cols].transform(lambda x: x.nunique() > 1).any(axis=1)
 
     return df
 
@@ -115,22 +108,30 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame) -> pd.DataFrame:
 @check_output(
     schema=DataFrameSchema(
         columns={
-            "clinical_trial_id": Column(str, nullable=False),
-            "reason_for_rejection": Column(str, nullable=False),
+            "curie": Column(str, nullable=False),
+            "name": Column(str, nullable=False),
+        },
+        unique=["curie"],
+    ),
+    df_name="nodes",
+)
+@check_output(
+    schema=DataFrameSchema(
+        columns={
             "drug_name": Column(str, nullable=False),
             "disease_name": Column(str, nullable=False),
-            "drug_kg_curie": Column(str, nullable=False),
-            "disease_kg_curie": Column(str, nullable=False),
-            "conflict": Column(bool, nullable=False),
-            "significantly_better": Column(bool, nullable=False),
-            "non_significantly_better": Column(bool, nullable=False),
-            "non_significantly_worse": Column(bool, nullable=False),
-            "significantly_worse": Column(bool, nullable=False),
+            "drug_curie": Column(str, nullable=False),
+            "disease_curie": Column(str, nullable=False),
+            "significantly_better": Column(int, nullable=False),
+            "non_significantly_better": Column(int, nullable=False),
+            "non_significantly_worse": Column(int, nullable=False),
+            "significantly_worse": Column(int, nullable=False),
         },
-        unique=["clinical_trial_id", "drug_kg_curie", "disease_kg_curie"],
-    )
+        unique=["drug_curie", "disease_curie"],
+    ),
+    df_name="edges",
 )
-def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
+def clean_clinical_trial_data(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Clean clinical trails data.
 
     Function to clean the mapped clinical trial dataset for use in time-split evaluation metrics.
@@ -140,32 +141,52 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         Cleaned clinical trial data.
     """
-    # Remove rows with conflicts
-    df = df[df["conflict"].eq("FALSE")].reset_index(drop=True)
-
-    # remove rows with reason for rejection
-    df = df[df["reason_for_rejection"].isna()].reset_index(drop=True)
-
-    # Define columns to check
-    columns_to_check = [
-        "drug_curie",
-        "disease_curie",
+    # Columns for outcome (ordered best to worst outcome)
+    outcome_columns = [
         "significantly_better",
         "non_significantly_better",
         "non_significantly_worse",
         "significantly_worse",
     ]
 
-    # Remove rows with missing values in cols
-    df = df.dropna(subset=columns_to_check).reset_index(drop=True)
-    edges = df.drop(columns=["reason_for_rejection", "conflict"]).reset_index(drop=True)
+    # Columns for drug and disease names
+    name_columns = ["drug_name", "disease_name"]
 
-    # extract nodes
+    # Remove rows with reason for rejection
+    df = df[df["reason_for_rejection"].isna()]
+
+    # Drop columns that are not needed and convert outcome columns to bool
+    df = df[["drug_curie", "disease_curie", *name_columns, *outcome_columns]]
+
+    # Drop rows with missing values in cols
+    df = df.dropna().reset_index(drop=True)
+
+    # Convert outcome column to int
+    df = df.astype({col: int for col in outcome_columns})
+
+    # Aggregate drug/disease IDs with multiple names or outcomes. Take the worst outcome.
+    edges = (
+        df.groupby(["drug_curie", "disease_curie"])
+        .agg({"drug_name": "first", "disease_name": "first", **{col: "max" for col in outcome_columns}})
+        .reset_index()
+    )
+
+    def ensure_one_true(row):
+        """
+        Ensure at most one outcome column is true, taking the worst outcome by convention.
+        """
+        for n in range(len(outcome_columns) - 1):
+            if row[outcome_columns[n]] == 1:
+                row[outcome_columns[n + 1 :]] = 0
+        return row
+
+    edges = edges.apply(ensure_one_true, axis=1)
+
+    # Extract nodes
     drugs = df.rename(columns={"drug_curie": "curie", "drug_name": "name"})[["curie", "name"]]
     diseases = df.rename(columns={"disease_curie": "curie", "disease_name": "name"})[["curie", "name"]]
-    nodes = pd.concat([drugs, diseases], ignore_index=True)
-
-    return [nodes, edges]
+    nodes = pd.concat([drugs, diseases], ignore_index=True).drop_duplicates(subset="curie")
+    return {"nodes": nodes, "edges": edges}
 
 
 # -------------------------------------------------------------------------
