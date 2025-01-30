@@ -4,7 +4,7 @@ from typing import Any, Optional, Union
 from kedro.pipeline.node import Node
 from pydantic import BaseModel, field_validator, model_validator
 
-# Values are in Gb
+# Values are in GiB
 KUBERNETES_DEFAULT_LIMIT_RAM = 52
 KUBERNETES_DEFAULT_REQUEST_RAM = 52
 
