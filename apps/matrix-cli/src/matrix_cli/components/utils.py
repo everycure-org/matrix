@@ -82,8 +82,22 @@ def ask_for_release():
     ).ask()
 
 
-def get_latest_release():
-    return get_releases()[0]
+def get_latest_minor_release():
+    releases_list = get_releases()
+    latest_minor = -1
+    latest_minor_release = "v0.1"
+    for v in releases_list:
+        parsed_version = v.split(".")
+        minor_version = int(parsed_version[1])
+        if len(parsed_version) == 2:  # Handle "X.Y" format
+            if minor_version >= latest_minor:
+                latest_minor = minor_version
+                latest_minor_release = v
+        else:  # Handle proper format "X.Y.Z"
+            if int(parsed_version[2]) == 0 and minor_version >= latest_minor:  # Only consider minor versions (patch==0)
+                latest_minor = minor_version
+                latest_minor_release = v
+    return latest_minor_release
 
 
 def get_releases():

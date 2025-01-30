@@ -25,7 +25,7 @@ from matrix_cli.components.utils import (
     ask_for_release,
     console,
     get_git_root,
-    get_latest_release,
+    get_latest_minor_release,
     get_markdown_contents,
     invoke_model,
     run_command,
@@ -439,7 +439,7 @@ def write_excel(df: "pd.DataFrame", filename: str):
 
 def select_release(headless: bool) -> str:
     if headless:
-        return get_latest_release()
+        return get_latest_minor_release()
     return ask_for_release()
 
 
