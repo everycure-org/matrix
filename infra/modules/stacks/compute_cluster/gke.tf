@@ -10,7 +10,7 @@ locals {
     min_count          = 0
     max_count          = 20
     local_ssd_count    = 0
-    disk_size_gb       = 500
+    disk_size_gb       = 200
     enable_gcfs        = true
     enable_gvnic       = true
     initial_node_count = 0
@@ -96,8 +96,10 @@ module "gke" {
   enable_private_endpoint         = false # FUTURE: switch this to true
   enable_vertical_pod_autoscaling = true
   create_service_account          = true
-  service_account_name            = "sa-k8s-node"
-  node_metadata                   = "UNSPECIFIED"
+  # see instructions here: https://cloud.google.com/kubernetes-engine/docs/how-to/google-groups-rbac
+  authenticator_security_group = "gke-security-groups@everycure.org"
+  service_account_name         = "sa-k8s-node"
+  node_metadata                = "UNSPECIFIED"
 
   # FUTURE: Refine node pools
   node_pools = local.node_pools_combined
