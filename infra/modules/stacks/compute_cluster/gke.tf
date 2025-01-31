@@ -10,7 +10,8 @@ locals {
     min_count          = 0
     max_count          = 20
     local_ssd_count    = 0
-    disk_size_gb       = 200
+    disk_type          = "pd-standard"
+    disk_size_gb       = 500
     enable_gcfs        = true
     enable_gvnic       = true
     initial_node_count = 0
