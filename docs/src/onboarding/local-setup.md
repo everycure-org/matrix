@@ -8,9 +8,8 @@ Our codebase is structured around the `Makefile`. This allows for a quick and ea
 
 
 !!! tip 
-    For the impatient ones, just run `make`. No errors? Great you're all set!
-
-At the end of this section, we will show you how you can set up your entire local environment by using a single `make` command however prior to that, we will explain the set-up on a step-by-step basis.
+    For the impatient ones, just run `make`. No errors? Great you're all set! It is probably still worth reading this page
+    to understand everything that's happening though. 
 
 <!--
 TODO wrong place
