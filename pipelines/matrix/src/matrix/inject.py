@@ -80,34 +80,6 @@ def _parse_for_objects(param, exclude_kwargs: List[str] = None) -> Dict:
 
         return instantiated_obj
 
-    # # Special handling for schema dictionaries
-    # if isinstance(param, dict):
-    #     if param.get("object") == "pyspark.sql.types.StructType":
-    #         fields = [
-    #             StructField(
-    #                 name=field["name"],
-    #                 dataType=_parse_for_objects(field["dataType"]),
-    #                 nullable=field["nullable"],
-    #             )
-    #             for field in param.get("fields", [])
-    #         ]
-    #         return StructType(fields)
-    #     if param.get("object") == "pyspark.sql.types.StructField":
-    #         return StructField(
-    #             name=param["name"],
-    #             dataType=_parse_for_objects(param["dataType"]),
-    #             nullable=param["nullable"],
-    #         )
-    #     if param.get("object") == "pyspark.sql.types.ArrayType":
-    #         return ArrayType(
-    #             elementType=_parse_for_objects(param["elementType"]),
-    #             containsNull=param.get("containsNull", True),
-    #         )
-    #     if param.get("object") == "pyspark.sql.types.StringType":
-    #         return StringType()
-    #     if param.get("object") == "pyspark.sql.types.DoubleType":
-    #         return DoubleType()
-
     if isinstance(param, dict):
         new_dict = {}
         if OBJECT_KW in param.keys():

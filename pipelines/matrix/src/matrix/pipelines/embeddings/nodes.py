@@ -626,7 +626,7 @@ def lookup_missing_embeddings(
 
         return inner
 
-    df = df.repartition(3000)
+    df = df.repartition(5000)
     rdd_result = df.rdd.mapPartitions(embed_docs(pkey=pkey))
     new_schema = df.schema.add(StructField(new_colname, ArrayType(FloatType()), nullable=True))
     return rdd_result.toDF(schema=new_schema)
