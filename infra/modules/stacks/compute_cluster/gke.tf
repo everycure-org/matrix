@@ -96,10 +96,8 @@ module "gke" {
   enable_private_endpoint         = false # FUTURE: switch this to true
   enable_vertical_pod_autoscaling = true
   create_service_account          = true
-  # see instructions here: https://cloud.google.com/kubernetes-engine/docs/how-to/google-groups-rbac
-  authenticator_security_group = "gke-security-groups@everycure.org"
-  service_account_name         = "sa-k8s-node"
-  node_metadata                = "UNSPECIFIED"
+  service_account_name            = "sa-k8s-node"
+  node_metadata                   = "UNSPECIFIED"
 
   # FUTURE: Refine node pools
   node_pools = local.node_pools_combined
