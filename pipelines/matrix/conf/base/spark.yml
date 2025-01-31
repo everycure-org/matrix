@@ -1,6 +1,6 @@
 spark.sql.execution.arrow.pyspark.enabled: true
 spark.scheduler.mode: FAIR
-spark.driver.memory: 30g
+spark.driver.memory: 32g
 # only using this due to 
 # https://github.com/fsspec/gcsfs/issues/632
 spark.driver.maxResultSize: 12g
@@ -15,3 +15,6 @@ spark.hadoop.fs.gs.impl: com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem
 spark.executor.instances: 4
 spark.executor.cores: 2
 spark.dynamicAllocation.enabled: false
+# Amount of memory to use per executor process
+spark.executor.memory: 16g
+# https://spark.apache.org/docs/latest/tuning.html
