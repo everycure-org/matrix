@@ -1,7 +1,7 @@
 import pyspark.sql as ps
 import pyspark.sql.functions as f
 import pytest
-from matrix.pipelines.create_sample.samplers import KnowledgeGraphSampler
+from matrix.pipelines.create_sample.samplers import GroundTruthRandomSampler
 
 original_knowledge_graph_nodes_count = 500
 original_knowledge_graph_edges_count = 1000
@@ -34,7 +34,7 @@ def test_knowledge_graph_sampler(
     original_knowledge_graph_edges: ps.DataFrame,
     ground_truth_edges: ps.DataFrame,
 ):
-    sampler = KnowledgeGraphSampler(
+    sampler = GroundTruthRandomSampler(
         knowledge_graph_nodes_sample_ratio=0.1,
         ground_truth_edges_sample_ratio=0.1,
         seed=42,

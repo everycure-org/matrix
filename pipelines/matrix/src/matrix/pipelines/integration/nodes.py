@@ -7,6 +7,7 @@ import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 from joblib import Memory
+from pyspark.sql.window import Window
 
 from matrix.inject import inject_object
 from matrix.pipelines.integration.filters import determine_most_specific_category
@@ -80,12 +81,11 @@ def union_and_deduplicate_edges(*edges, cols: List[str]) -> ps.DataFrame:
     schema=BIOLINK_KG_NODE_SCHEMA,
     pass_columns=True,
 )
-def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes, cols: List[str]) -> ps.DataFrame:
+def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, cols: List[str]) -> ps.DataFrame:
     """Function to unify nodes datasets."""
     # fmt: off
-    return (
+    unioned_datasets = (
         _union_datasets(*nodes)
-
         # first we group the dataset by id to deduplicate
         .groupBy("id")
         .agg(
@@ -99,13 +99,13 @@ def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes, col
             F.flatten(F.collect_set("publications")).alias("publications"),
             F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
         )
+        )
+    # next we need to apply a number of transformations to the nodes to ensure grouping by id did not select wrong information
+    # this is especially important if we integrate multiple KGs
+    if retrieve_most_specific_category:
+        unioned_datasets = unioned_datasets.transform(determine_most_specific_category)
+    return unioned_datasets.select(*cols)
 
-        # next we need to apply a number of transformations to the nodes to ensure grouping by id did not select wrong information
-        .transform(determine_most_specific_category, biolink_categories_df)
-
-        # finally we select the columns that we want to keep
-        .select(*cols)
-    )
     # fmt: on
 
 
@@ -114,7 +114,6 @@ def _union_datasets(
 ) -> ps.DataFrame:
     """
     Helper function to unify datasets and deduplicate them.
-
     Args:
         datasets_to_union: List of dataset names to unify.
         **datasets: Arbitrary number of DataFrame keyword arguments.
@@ -208,10 +207,20 @@ def filter_nodes_without_edges(
     return nodes
 
 
-def _format_mapping_df(mapping_df: ps.DataFrame):
+@check_output(
+    DataFrameSchema(
+        columns={
+            "normalization_success": Column(T.BooleanType(), nullable=False),
+        },
+    ),
+)
+def _format_mapping_df(mapping_df: ps.DataFrame) -> ps.DataFrame:
     return (
         mapping_df.drop("bucket")
-        .withColumn("normalization_success", F.col("normalized_id").isNotNull())
+        .withColumn(
+            "normalization_success",
+            F.when((F.col("normalized_id").isNotNull() | (F.col("normalized_id") != "None")), True).otherwise(False),
+        )
         # avoids nulls in id column, if we couldn't resolve IDs, we keep original
         .withColumn("normalized_id", F.coalesce(F.col("normalized_id"), F.col("id")))
     )
@@ -258,7 +267,16 @@ def normalize_edges(
     )
     log_metric(f"integration", f"Number of edges after normalizing", edges.count())
 
-    return edges
+    return (
+        edges.withColumn(
+            "_rn",
+            F.row_number().over(
+                Window.partitionBy(["subject", "object", "predicate"]).orderBy(F.col("original_subject"))
+            ),
+        )
+        .filter(F.col("_rn") == 1)
+        .drop("_rn")
+    )
 
 
 def normalize_nodes(
@@ -279,4 +297,8 @@ def normalize_nodes(
         nodes.join(mapping_df, on="id", how="left")
         .withColumnsRenamed({"id": "original_id"})
         .withColumnsRenamed({"normalized_id": "id"})
+        # Ensure deduplicated
+        .withColumn("_rn", F.row_number().over(Window.partitionBy("id").orderBy(F.col("original_id"))))
+        .filter(F.col("_rn") == 1)
+        .drop("_rn")
     )

@@ -43,9 +43,9 @@ class MLFlowHooks:
         Initialises a MLFlow run and passes it on for
         other hooks to consume.
         """
+
         cfg = OmegaConf.create(context.config_loader["mlflow"])
         globs = OmegaConf.create(context.config_loader["globals"])
-
         # Set tracking uri
         # NOTE: This piece of code ensures that every MLFlow experiment
         # is created by our Kedro pipeline with the right artifact root.
@@ -139,9 +139,9 @@ class SparkHooks:
             # DEBT ugly fix, ideally we overwrite this in the spark.yml config file but currently no
             # known way of doing so
             # if prod environment, remove all config keys that start with spark.hadoop.google.cloud.auth.service
-            if cls._kedro_context.env == "cloud" and os.environ.get("ARGO_NODE_ID") is not None:
+            if os.environ.get("ARGO_NODE_ID") is not None:
                 logger.warning(
-                    "we're manipulating the spark configuration now. this is done assuming this is a production execution in argo"
+                    "We're manipulating the spark configuration now. This is done assuming this is a production execution in argo"
                 )
                 parameters = {
                     k: v for k, v in parameters.items() if not k.startswith("spark.hadoop.google.cloud.auth.service")
@@ -309,13 +309,37 @@ class ReleaseInfoHooks:
         tmpl = f"https://mlflow.platform.dev.everycure.org/#/experiments/{experiment_id}/runs/{run_id}"
         return tmpl
 
+    @classmethod
+    def extract_datasets_used(cls) -> list:
+        # Using lazy import to prevent circular import error
+        from matrix.settings import DYNAMIC_PIPELINES_MAPPING
+
+        dataset_names = [item["name"] for item in DYNAMIC_PIPELINES_MAPPING["integration"] if item["integrate_in_kg"]]
+        return dataset_names
+
+    @classmethod
+    def extract_all_global_datasets(cls, hidden_datasets: frozenset) -> dict:
+        datasources_to_versions = {
+            k: v["version"] for k, v in ReleaseInfoHooks._globals["data_sources"].items() if k not in hidden_datasets
+        }
+        return datasources_to_versions
+
+    @classmethod
+    def mark_unused_datasets(cls, global_datasets: dict, datasets_used: list) -> None:
+        """Takes a list of globally defined datasets (and their versions) and compares it against datasets
+        actually used, as dictated by the settings.py file responsible for the generation of dynamic pipelines.
+        For global datasets that were excluded in the settings.py, a note is placed in the dict value that otherwise
+        features the version number."""
+
+        for global_dataset in global_datasets:
+            if not global_dataset in datasets_used:
+                global_datasets[global_dataset] = "not included"
+
     @staticmethod
-    def extract_release_info() -> dict[str, str]:
+    def extract_release_info(global_datasets: str) -> dict[str, str]:
         info = {
             "Release Name": ReleaseInfoHooks._globals["versions"]["release"],
-            "Robokop Version": ReleaseInfoHooks._globals["data_sources"]["robokop"]["version"],
-            "RTX-KG2 Version": ReleaseInfoHooks._globals["data_sources"]["rtx-kg2"]["version"],
-            "EC Medical Team Version": ReleaseInfoHooks._globals["data_sources"]["ec-medical-team"]["version"],
+            "Datasets": global_datasets,
             "Topological Estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["_object"],
             "Embeddings Encoder": ReleaseInfoHooks._params["embeddings.node"]["encoder"]["encoder"]["model"],
             "BigQuery Link": ReleaseInfoHooks.build_bigquery_link(),
@@ -343,7 +367,11 @@ class ReleaseInfoHooks:
         # pipelines the (last) data release node is part of. With an
         # `after_node_run`, you can limit your filters easily.
         if node.name == last_data_release_node_name:
-            release_info = self.extract_release_info()
+            datasets_to_hide = frozenset(["disease_list", "drug_list", "ec_clinical_trials", "gt"])
+            global_datasets = self.extract_all_global_datasets(datasets_to_hide)
+            datasets_used = self.extract_datasets_used()
+            self.mark_unused_datasets(global_datasets, datasets_used)
+            release_info = self.extract_release_info(global_datasets)
             try:
                 self.upload_to_storage(release_info)
             except KeyError:
