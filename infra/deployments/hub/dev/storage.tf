@@ -19,6 +19,32 @@ resource "google_service_account" "storage_viewer_sa" {
   description  = "Service account with storage object viewer role"
 }
 
+# Create a service account key
+resource "google_service_account_key" "storage_viewer_key" {
+  service_account_id = google_service_account.storage_viewer_sa.name
+}
+
+# Store the key in Secret Manager
+resource "google_secret_manager_secret" "storage_viewer_key" {
+  secret_id = "storage-viewer-sa-key"
+
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "storage_viewer_key" {
+  secret      = google_secret_manager_secret.storage_viewer_key.id
+  secret_data = base64decode(google_service_account_key.storage_viewer_key.private_key)
+}
+
+# Grant access to the secret to matrix-all group
+resource "google_secret_manager_secret_iam_member" "storage_viewer_key_access" {
+  secret_id = google_secret_manager_secret.storage_viewer_key.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "group:matrix-all@everycure.org"
+}
+
 resource "google_project_iam_member" "storage_viewer_iam" {
   project = var.project_id
   role    = "roles/storage.objectViewer"
