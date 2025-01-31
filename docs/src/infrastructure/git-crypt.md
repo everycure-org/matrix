@@ -3,6 +3,9 @@
 Our repository uses [git-crypt](https://www.agwa.name/projects/git-crypt/) to encrypt secrets in our code repository. This way, everything one needs to access the data is contained in the repository
 without actually exposing the data itself because a decryption key is required.
 
+!!! info
+    We have moved to using [Secret Manager](https://cloud.google.com/secret-manager) to manage secrets for most people. This page is only relevant for system admins.
+
 <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;"><iframe src="https://us06web.zoom.us/clips/embed/fAnKtX_JDGeJAZgjqlvODUuQuSZ18FRO08Ia9yEdxbS_zMm07xgBMUtY4JrStCKb3gOuZWg-jCyAlgG-2SikYOQA.Qa3KXZe2qmtNyJSH" frameborder="0" allowfullscreen="allowfullscreen" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; "></iframe></div>
 
 ## Required installations
@@ -142,8 +145,6 @@ KtNQIAEAvRQ6jqDyNl4iIaa9mv2qxEJF182ajO5Br6sgoAJv7wI=
     secret key itself with anyone else. The files are stored in `.git-crypt/keys/` for those curious. 
 
 
-[As you wait, learn about kedro! :material-skip-next:](./kedro.md){ .md-button .md-button--primary }
-
 ### Unlocking the key once your key was added
 
 Once the public key was added to the repo (i.e. the PR was merged and the team lead added the encrypted shared secret key), you can unlock the key by running
@@ -161,12 +162,12 @@ git-crypt lock -a
 
 ## General setup
 
-We have 2 keys in the repository:
+We have 1 key in the repository:
 
-- `HUB` key: used to decrypt the SA to read the data on GCS from the hub project.
-- `default` key: used to decrypt additional infra secrets used to set up the infrastructure. Not shared with everyone
+- `default` key: used to decrypt infra secrets used to set up the infrastructure. Not shared with everyone
 
-Most people should not need to decrypt the `default` key and can stick to the `HUB` key.
+Most people should not need to decrypt the `default` key. In fact most people no longer need git-crypt at all. We have moved to using [Secret Manager](https://cloud.google.com/secret-manager) to manage secrets.
+
 The CD system uses the `default` key to decrypt the secrets needed to deploy the
 infrastructure.
 

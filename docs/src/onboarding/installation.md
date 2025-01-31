@@ -315,4 +315,4 @@ We use `make` and `Makefile`s in a lot of places. If you want to [learn more abo
     sudo pacman -S make
     ```
 
-[Request access to the data :material-skip-next:](./git-crypt.md){ .md-button .md-button--primary }
+[Now, you're ready to dive into kedro! :material-skip-next:](./kedro.md){ .md-button .md-button--primary }

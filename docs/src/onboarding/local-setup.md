@@ -6,7 +6,10 @@ Our codebase is structured around the `Makefile`. This allows for a quick and ea
 
 <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;"><iframe src="https://us06web.zoom.us/clips/embed/ghxELqxMExaMh96j_58dMq8UnXaXEcEtSTRVxXf7zXNd5l4OSgdvC5xwANUE1ydp7afd-M42UkQNe_eUJQkCrXIZ.SAPUAWjHFb-sh7Pj" frameborder="0" allowfullscreen="allowfullscreen" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; "></iframe></div>
 
-At the end of this section, we will show you how you can set up your entire local environment by using a single `make` command however prior to that, we will explain the set-up on a step-by-step basis.
+
+!!! tip 
+    For the impatient ones, just run `make`. No errors? Great you're all set! It is probably still worth reading this page
+    to understand everything that's happening though. 
 
 <!--
 TODO wrong place
