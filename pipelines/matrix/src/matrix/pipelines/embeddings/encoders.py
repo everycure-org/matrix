@@ -104,9 +104,7 @@ class RandomizedEncoder(AttributeEncoder):
         """
         df = df.copy()
         # Generate random embeddings
-        # df["text_to_embed"] = df[input_features].apply(lambda row: "".join(row)[0:max_input_len], axis=1)
         df["embedding"] = [np.random.rand(self._embedding_dim).astype(np.float32) for _ in range(len(df))]
-        # df = df.drop(columns=["text_to_embed"])
         return df
 
 
