@@ -11,7 +11,7 @@ from google.cloud import storage
 from graphdatascience import GraphDataScience
 from langchain_openai import OpenAIEmbeddings
 from pyspark.ml.functions import array_to_vector, vector_to_array
-from pyspark.sql import Row
+from pyspark.sql import Row, SparkSession
 from pyspark.sql.functions import concat_ws, lit
 from pyspark.sql.types import ArrayType, FloatType, StringType, StructField
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -504,6 +504,11 @@ def create_node_embeddings(
         new_colname: name of the column that will contain the embeddings
         embeddings_pkey: name of the column containing the texts, which should be present in the cache.
     """
+
+    # spark = SparkSession.builder.getOrCreate()
+    # for key, value in spark.sparkContext.getConf().getAll():
+    #     logger.debug('{"conf key": %s, "value": %s}', str(key), str(value))
+
     df = df.withColumn(embeddings_pkey, concat_ws("", *input_features).substr(1, max_input_len))
     assert {embeddings_pkey, new_colname}.issubset(cache.columns)
     scoped_cache = (
@@ -626,72 +631,10 @@ def lookup_missing_embeddings(
 
         return inner
 
-    df = df.repartition(5000)
+    df = df.repartition(2000)
     rdd_result = df.rdd.mapPartitions(embed_docs(pkey=pkey))
     new_schema = df.schema.add(StructField(new_colname, ArrayType(FloatType()), nullable=True))
     return rdd_result.toDF(schema=new_schema)
-
-
-async def enrich_embeddings(iterable, columns, transformer_config, input_features, max_input_len):
-    """
-    Process a batch of rows, generating embeddings for rows with null values.
-
-    Args:
-        iterable: Iterator over rows in the partition.
-        columns: List of column names in the DataFrame.
-        transformer: Transformer to generate embeddings.
-        transformer_kwargs: Additional arguments for the transformer.
-
-    Returns:
-        Iterator over rows with updated embeddings.
-    """
-    rows = list(iterable)
-    if not rows:
-        print("enrich_embeddings: Empty partition received.")
-        return iter([])  # Handle empty partition
-
-    # Reconstruct DataFrame with correct column names, because partioning loses column names
-    subdf = pd.DataFrame(rows, columns=columns)
-
-    subdf_with_embed = subdf[subdf["embedding"].notnull()]
-    subdf_without_embed = subdf[subdf["embedding"].isnull()]
-
-    # Generate embeddings for missing rows
-    if not subdf_without_embed.empty:
-        # Instantiate the encoder locally within the partition
-        # TODO: should be able to be parsed automatically
-        encoder_config = transformer_config["encoder"]
-        encoder = OpenAIEmbeddings(model=encoder_config["model"], timeout=encoder_config["timeout"])
-        transformer = LangChainEncoder(encoder=encoder, dimensions=transformer_config["dimensions"])
-        subdf_without_embed = await transform(subdf_without_embed, transformer, input_features, max_input_len)
-    # Concatenate the results and return as an iterator
-    return iter(pd.concat([subdf_with_embed, subdf_without_embed], axis=0).to_dict("records"))
-
-
-def enrich_embeddings_sync(iterable, columns, transformer_config, input_features, max_input_len):
-    """
-    Synchronous wrapper for the async enrich_embeddings function.
-    """
-
-    async def process():
-        return await enrich_embeddings(iterable, columns, transformer_config, input_features, max_input_len)
-
-    return asyncio.run(process())
-
-
-def transform(df, transformer, input_features, max_input_len):
-    """
-    Apply a transformer to generate embeddings for the input DataFrame.
-
-    Args:
-        df: Input DataFrame.
-        transformer: The transformer instance to apply.
-        transformer_kwargs: Additional arguments for the transformer.
-
-    Returns:
-        DataFrame with generated embeddings.
-    """
-    return transformer.apply(df, input_features, max_input_len)
 
 
 def upload_with_precondition(bucket_name, object_name, file_path, target_generation=None):
