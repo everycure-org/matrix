@@ -32,6 +32,7 @@ class SpokeTransformer(GraphTransformer):
             .withColumn("international_resource_identifier", F.lit(None).cast(T.StringType()))
             # getting most specific category
             .transform(determine_most_specific_category)
+            .select("id", "name", "category", "all_categories", "equivalent_identifiers", "labels", "publications", "international_resource_identifier")
         )
         # fmt: on
 
@@ -56,5 +57,5 @@ class SpokeTransformer(GraphTransformer):
             .withColumn("object_direction_qualifier",               F.lit(None).cast(T.StringType()))
             .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
             .withColumn("subject_direction_qualifier",              F.lit(None).cast(T.StringType()))
-        )
+        ).select("subject", "predicate", "object", "publications", "knowledge_level", "primary_knowledge_source", "aggregator_knowledge_source", "object_aspect_qualifier", "object_direction_qualifier", "subject_aspect_qualifier", "subject_direction_qualifier")
         # fmt: on
