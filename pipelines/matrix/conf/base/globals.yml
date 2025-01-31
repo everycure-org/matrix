@@ -38,7 +38,7 @@ data_sources:
     version: "Release v2.0.0"
   disease_list:
     # check releases here: https://github.com/everycure-org/matrix-disease-list/releases
-    version: "2024-12-20 release"
+    version: "2024-10-08"
   gt:
     version: *_rtx_kg_version # NOTE: This is the version of the GT dataset which was developed for rtx-kg2 as a part of KGML-xDTD pipeline
 # NOTE: MLflow does not like "new options" in the mlflow.yml
