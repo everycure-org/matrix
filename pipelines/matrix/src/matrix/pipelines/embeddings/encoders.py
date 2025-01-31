@@ -93,7 +93,7 @@ class RandomizedEncoder(AttributeEncoder):
         if random_seed is not None:
             np.random.seed(random_seed)
 
-    async def encode(self, df: pd.DataFrame) -> pd.DataFrame:
+    async def apply(self, df: pd.DataFrame, input_features: List[str], max_input_len: int) -> pd.DataFrame:
         """Generate random embeddings for the input dataframe.
 
         Args:
@@ -105,7 +105,6 @@ class RandomizedEncoder(AttributeEncoder):
         df = df.copy()
         # Generate random embeddings
         df["embedding"] = [np.random.rand(self._embedding_dim).astype(np.float32) for _ in range(len(df))]
-        df = df.drop(columns=["text_to_embed"])
         return df
 
 
