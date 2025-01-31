@@ -1,10 +1,9 @@
-// NOTE: This configuration was partially generated using AI assistance.
-
-module "evidence_dev_website" {
+module "public_data_bucket" {
   source = "github.com/gruntwork-io/terraform-google-static-assets//modules/cloud-storage-static-website?ref=v0.6.0"
 
-  project               = var.project_id
-  website_domain_name   = "data.${data.google_dns_managed_zone.dev_zone.dns_name}"
+  project = var.project_id
+  #   website_domain_name   = "data.${data.google_dns_managed_zone.dev_zone.dns_name}"
+  website_domain_name   = "data.dev.everycure.org"
   website_location      = var.region
   website_storage_class = "STANDARD"
 
@@ -36,7 +35,7 @@ module "evidence_dev_website" {
 
   custom_labels = {
     environment = var.environment
-    component   = "evidence-dev"
+    component   = "public-data-bucket"
   }
 }
 
