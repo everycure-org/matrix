@@ -5,7 +5,7 @@ export PYSPARK_PYTHON = .venv/bin/python
 export UV_PYTHON = .venv/bin/python
 export TQDM_DISABLE ?= 1
 TARGET_PLATFORM ?= linux/amd64
-PREREQUISITES := docker gcloud python3 java uv
+PREREQUISITES := docker gcloud python3 java uv kubectl
 
 # Add GCP project variables
 GCP_PROJECT ?= mtrx-hub-dev-3of
@@ -15,7 +15,7 @@ SA_KEY_PATH ?= conf/local/service-account.json
 # ensures all make targets run in one shell (rather than line by line in new shell)
 .ONESHELL: 
 
-default: install fast_test compose_down integration_test
+default: prerequisites install fast_test compose_down integration_test
 	echo "done!"
 
 prerequisites:
@@ -24,30 +24,26 @@ prerequisites:
         $(if $(shell command -v $(exec) 2>/dev/null),,$(error "$(exec) is not installed.")))
 	$(info All prerequisites are installed.)
 	$(info Checking gcloud auth...)
-	@if [ -z "${CI}" ] && ! gcloud auth print-access-token >/dev/null 2>&1; then \
+	@if ! gcloud auth print-access-token >/dev/null 2>&1; then \
 		echo "Not logged into gcloud. Please run 'gcloud auth login' first."; \
 		exit 1; \
 	fi
 
 fetch_sa_key:
-	@if [ -z "${CI}" ]; then \
-		echo "Fetching service account key from Secret Manager..."; \
-		mkdir -p conf/local; \
-		gcloud secrets versions access latest \
-			--secret=$(SA_KEY_SECRET_NAME) \
-			--project=$(GCP_PROJECT) \
-			> $(SA_KEY_PATH); \
-		chmod 600 $(SA_KEY_PATH); \
-		echo "Service account key saved to $(SA_KEY_PATH)"; \
-	else \
-		echo "Skipping SA key fetch in CI environment"; \
-	fi
+	echo "Fetching service account key from Secret Manager..."; \
+	mkdir -p conf/local; \
+	gcloud secrets versions access latest \
+		--secret=$(SA_KEY_SECRET_NAME) \
+		--project=$(GCP_PROJECT) \
+		> $(SA_KEY_PATH); \
+	chmod 600 $(SA_KEY_PATH); \
+	echo "Service account key saved to $(SA_KEY_PATH)"; \
 
-venv: prerequisites
+venv: 
 	if [ ! -d .venv ]; then uv venv -p 3.11; fi
 	uv run python -m ensurepip --upgrade || true
 
-install: venv precommit-hooks fetch_sa_key
+install: venv precommit-hooks 
 	uv pip install -r requirements.txt #force it to install in our venv
 
 precommit: precommit-hooks
