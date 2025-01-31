@@ -4,12 +4,12 @@ integration:
     rtx_kg2:
       transformer:
         _object: matrix.pipelines.integration.transformers.rtxkg2.RTXTransformer
-    # spoke:
-    #   transformer:
-    #     object: matrix.pipelines.integration.transformers.spoke.SpokeTransformer
-    robokop:
+    spoke:
       transformer:
-        _object: matrix.pipelines.integration.transformers.robokop.RobokopTransformer
+        _object: matrix.pipelines.integration.transformers.spoke.SpokeTransformer
+    # robokop:
+    #   transformer:
+    #     _object: matrix.pipelines.integration.transformers.robokop.RobokopTransformer
     # ec_medical_team:
     #   transformer:
     #     _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
