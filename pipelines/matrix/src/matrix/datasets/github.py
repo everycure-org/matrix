@@ -22,7 +22,7 @@ class GitHubReleaseCSVDataset(CSVDataset):
         self.fs_args = fs_args
         self.metadata = metadata
 
-        # ... get release API URL from repository URL
+        # get release API URL from repository URL
         self.release_url = self.repository_url.replace("github.com", "api.github.com/repos") + "/releases"
 
         super().__init__(
@@ -54,12 +54,12 @@ class GitHubReleaseCSVDataset(CSVDataset):
         Get the asset ID from the release's JSON.
         """
 
-        # ... find the release
+        # find the release
         release = next((r for r in release_json if r["name"] == release_name), None)
         if not release:
             raise ValueError(f"Could not find release {release_name} in releases {[r['name'] for r in release_json]}")
 
-        # ... find the asset_id in release's assets
+        # find the asset_id in release's assets
         asset_id = next((a["id"] for a in release["assets"] if a["name"] == release_asset_name), None)
         if not asset_id:
             raise ValueError(
@@ -72,8 +72,8 @@ class GitHubReleaseCSVDataset(CSVDataset):
         release_json = self._get_release_json(self.release_url, self.fs_args)
         asset_id = self._get_asset_id(release_json, self.release_name, self.release_asset_name)
 
-        # ... CSVDataset load function adds the protocol and protocol delimiter to filepath, so we need to remove them
-        # ... link to source code: https://github.com/kedro-org/kedro-plugins/blob/main/kedro-datasets/kedro_datasets/pandas/csv_dataset.py
+        # CSVDataset load function adds the protocol and protocol delimiter to filepath, so we need to remove them
+        # link to source code: https://github.com/kedro-org/kedro-plugins/blob/main/kedro-datasets/kedro_datasets/pandas/csv_dataset.py
         asset_url = f"{self.release_url}/assets/{asset_id}".removeprefix(f"{self._protocol}{PROTOCOL_DELIMITER}")
         self._filepath = asset_url
 
