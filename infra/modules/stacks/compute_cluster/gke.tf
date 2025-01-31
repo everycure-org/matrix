@@ -10,7 +10,8 @@ locals {
     min_count          = 0
     max_count          = 20
     local_ssd_count    = 0
-    disk_size_gb       = 200
+    disk_type          = "pd-ssd"
+    disk_size_gb       = 500
     enable_gcfs        = true
     enable_gvnic       = true
     initial_node_count = 0
@@ -70,7 +71,7 @@ locals {
 # docs here https://registry.terraform.io/modules/terraform-google-modules/kubernetes-engine/google/latest/submodules/private-cluster
 module "gke" {
   source              = "terraform-google-modules/kubernetes-engine/google//modules/private-cluster"
-  version             = "31.0.0"
+  version             = "35.0.1"
   project_id          = var.project_id
   name                = var.name
   deletion_protection = var.environment == "dev" ? false : true

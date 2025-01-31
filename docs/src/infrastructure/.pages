@@ -4,6 +4,7 @@ nav:
     - compute_cluster.md
     - observability.md
     - gcp.md
+    - git-crypt.md
     - runbooks
     - argo_workflows_locally.md
     - glossary.md
