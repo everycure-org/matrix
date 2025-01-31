@@ -41,7 +41,9 @@ def transform_nodes(transformer, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFra
             "predicate": Column(T.StringType(), nullable=False),
             "object": Column(T.StringType(), nullable=False),
         },
-        unique=["subject", "predicate", "object"],
+        # removing the uniqueness constraint as some KGs have duplicate edges. These will be deduplicated later when we do edge deduplication
+        # anyways
+        # unique=["subject", "predicate", "object"],
     ),
 )
 def transform_edges(transformer, edges_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
@@ -98,13 +100,13 @@ def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, c
             F.flatten(F.collect_set("publications")).alias("publications"),
             F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
         )
-        )
+    )
     # next we need to apply a number of transformations to the nodes to ensure grouping by id did not select wrong information
     # this is especially important if we integrate multiple KGs
     if retrieve_most_specific_category:
         unioned_datasets = unioned_datasets.transform(determine_most_specific_category)
-    return unioned_datasets.select(*cols)
 
+    return unioned_datasets.select(*cols)
     # fmt: on
 
 
