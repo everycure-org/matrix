@@ -1,5 +1,3 @@
-// NOTE: This configuration was partially generated using AI assistance.
-
 locals {
   website_domain_name = "data.${trimsuffix(data.google_dns_managed_zone.dev_zone.dns_name, ".")}"
 }
