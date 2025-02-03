@@ -1,0 +1,37 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: argo-workflows-submitter
+  namespace: {{ .Values.argo.namespace }}
+rules:
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - "*"
+    verbs:
+      - create
+      - patch
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Values.argo.namespace }}-submitter
+  namespace: {{ .Values.argo.namespace }}
+subjects:
+  {{- range $email := .Values.argo.rbac.users }}
+  - kind: User
+    name: {{ $email }}
+    apiGroup: rbac.authorization.k8s.io
+  {{- end }}
+  {{- range $group := .Values.argo.rbac.groups }}
+  - kind: Group
+    name: {{ $group }}
+    apiGroup: rbac.authorization.k8s.io
+  {{- end }}
+roleRef:
+  kind: Role
+  name: argo-workflows-submitter
+  apiGroup: rbac.authorization.k8s.io
