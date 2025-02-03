@@ -15,7 +15,7 @@ SA_KEY_PATH ?= conf/local/service-account.json
 # ensures all make targets run in one shell (rather than line by line in new shell)
 .ONESHELL: 
 
-default: prerequisites install fast_test integration_test
+default: prerequisites fetch_sa_key install fast_test integration_test
 	echo "done!"
 
 prerequisites:
