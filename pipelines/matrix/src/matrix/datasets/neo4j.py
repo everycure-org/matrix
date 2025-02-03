@@ -1,18 +1,35 @@
+import logging
 import time
-from typing import Any
 from copy import deepcopy
+from typing import Any, Tuple
 
-from neo4j import GraphDatabase
-from pyspark.sql import DataFrame, SparkSession
-
+import pyspark.sql as ps
+from graphdatascience import GraphDataScience
 from kedro.io.core import Version
 from kedro_datasets.spark import SparkDataset
-
-import logging
-
-from refit.v1.core.inject import _parse_for_objects
+from matrix.inject import _parse_for_objects
+from neo4j import GraphDatabase
 
 logger = logging.Logger(__name__)
+
+
+class GraphDS(GraphDataScience):
+    """Adaptor class to allow injecting the GDS object.
+
+    This is due to a drawback where refit cannot inject a tuple into
+    the constructor of an object.
+    """
+
+    def __init__(
+        self,
+        *,
+        endpoint: str,
+        auth: Tuple[str] | None = None,
+        database: str | None = None,
+    ):
+        """Create `GraphDS` instance."""
+        driver = GraphDatabase.driver(endpoint, auth=tuple(auth), database=database)
+        super().__init__(driver)
 
 
 class Neo4JSparkDataset(SparkDataset):
@@ -86,11 +103,11 @@ class Neo4JSparkDataset(SparkDataset):
             versioned: Flag to decide if we create new databases or stick to the default one.
         """
         self._database = database
-        self._url = url
         self._credentials = deepcopy(credentials) or {}
 
         self._load_args = deepcopy(load_args) or {}
         self._df_schema = self._load_args.pop("schema", None)
+        self._url = url
 
         super().__init__(
             filepath="filepath",
@@ -118,7 +135,12 @@ class Neo4JSparkDataset(SparkDataset):
             credentials.get("authentication.basic.username"),
             credentials.get("authentication.basic.password"),
         )
-        with GraphDatabase.driver(url, auth=creds, database="system") as driver:
+
+        with GraphDatabase.driver(
+            url,
+            auth=creds,
+            database="system",
+        ) as driver:
             if overwrite:
                 driver.execute_query(f"CREATE OR REPLACE DATABASE `{database}`")
                 # TODO: Some strange race condition going on here
@@ -135,8 +157,8 @@ class Neo4JSparkDataset(SparkDataset):
         dbs = [record["name"] for record in result[0] if record["name"] != "system"]
         return dbs
 
-    def _load(self) -> Any:
-        spark_session = SparkSession.builder.getOrCreate()
+    def load(self) -> ps.DataFrame:
+        spark_session = ps.SparkSession.builder.getOrCreate()
 
         load_obj = (
             spark_session.read.format("org.neo4j.spark.DataSource")
@@ -151,7 +173,7 @@ class Neo4JSparkDataset(SparkDataset):
 
         return load_obj.load()
 
-    def _save(self, data: DataFrame) -> None:
+    def save(self, data: ps.DataFrame) -> None:
         try:
             if self._save_args.get("persist") is False:
                 # skip persistence

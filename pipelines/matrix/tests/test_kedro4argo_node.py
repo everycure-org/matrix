@@ -1,15 +1,14 @@
-from kedro.pipeline import pipeline, Pipeline
-
-from kedro.pipeline.node import Node, node
 import pytest
-
-from matrix.kedro4argo_node import ArgoResourceConfig, ArgoNode, argo_node
-
+from kedro.pipeline import Pipeline, pipeline
+from kedro.pipeline.node import Node, node
 from matrix.kedro4argo_node import (
     KUBERNETES_DEFAULT_LIMIT_CPU,
     KUBERNETES_DEFAULT_LIMIT_RAM,
+    KUBERNETES_DEFAULT_NUM_GPUS,
     KUBERNETES_DEFAULT_REQUEST_CPU,
     KUBERNETES_DEFAULT_REQUEST_RAM,
+    ArgoNode,
+    ArgoResourceConfig,
 )
 
 
@@ -56,15 +55,15 @@ def test_invalid_resource_constraints(cpu_request, cpu_limit, memory_request, me
 
 
 @pytest.mark.parametrize(
-    "cpu_limit, memory_limit",
+    "cpu_limit, memory_limit, msg",
     [
-        (100, 1000),
-        (200, 2000),
+        (3 * KUBERNETES_DEFAULT_LIMIT_CPU, 2 * KUBERNETES_DEFAULT_LIMIT_RAM, "Some of the CPU settings*"),
+        (KUBERNETES_DEFAULT_LIMIT_CPU, 3 * KUBERNETES_DEFAULT_LIMIT_RAM, "Some of the memory settings*"),
     ],
 )
-def test_high_resource_values_warning(cpu_limit, memory_limit):
+def test_high_resource_values_warning(cpu_limit, memory_limit, msg):
     """Test that unrealistically high resource values trigger a warning."""
-    with pytest.warns(UserWarning, match="CPU .* and memory .* limits and requests are unrealistically high"):
+    with pytest.warns(UserWarning, match=msg):
         ArgoResourceConfig(
             cpu_limit=cpu_limit,
             memory_limit=memory_limit,
@@ -223,14 +222,8 @@ def test_argo_node_can_request_gpu():
     assert k8s_node.argo_config.num_gpus == 1
 
 
-def test_validate_values_are_sane():
-    """Test that validate_values_are_sane raises warnings for unrealistic values."""
-    with pytest.warns(UserWarning, match="CPU .* and memory .* limits and requests are unrealistically high"):
-        ArgoResourceConfig(cpu_limit=100, memory_limit=1000)
-
-
 def test_argo_node_factory():
-    argo_node_instance = argo_node(
+    argo_node_instance = ArgoNode(
         func=dummy_func,
         inputs=["int_number_ds_in"],
         outputs=["int_number_ds_out"],
@@ -239,7 +232,7 @@ def test_argo_node_factory():
     assert argo_node_instance.argo_config.cpu_limit == KUBERNETES_DEFAULT_LIMIT_CPU
     assert argo_node_instance.argo_config.memory_request == KUBERNETES_DEFAULT_REQUEST_RAM
     assert argo_node_instance.argo_config.memory_limit == KUBERNETES_DEFAULT_LIMIT_RAM
-    assert argo_node_instance.argo_config.num_gpus == 0
+    assert argo_node_instance.argo_config.num_gpus == KUBERNETES_DEFAULT_NUM_GPUS
 
     kedro_node = node(func=dummy_func, inputs=["int_number_ds_in"], outputs=["int_number_ds_out"])
     assert argo_node_instance.func == kedro_node.func

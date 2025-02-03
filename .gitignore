@@ -36,3 +36,12 @@ infra/**/Chart.lock
 
 **/.joblib/**
 
+# Ignore generated credentials from google-github-actions/auth
+gha-creds-*.json
+
+pipelines/matrix/src/matrix/pipelines/matrix_generation/matrix.code-workspace
+
+# Artifact from the google-github-actions/get-gke-credentials@v1
+# Having it would not allow us to trigger a release from GH Actions,
+# since the repo would be in a dirty state.
+gha-kubeconfig*

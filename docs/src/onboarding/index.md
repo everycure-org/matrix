@@ -2,6 +2,9 @@
 title: Onboarding
 ---
 
+
+
+
 Welcome to the Matrix onboarding guide! This guide provides an introduction to the project and the codebase, and guides you through the process of setting up your local environment.
 
 !!! success
@@ -27,7 +30,7 @@ Welcome to the Matrix onboarding guide! This guide provides an introduction to t
 
 ### Every Cure MATRIX SteerCo
 
-- Provide strategic alignment to Working Groups to ensure APRA-H obligations are met
+- Provide strategic alignment to Working Groups to ensure ARPA-H obligations are met
 - Maintain MATRIX Project Management Infrastructure
 - Onboard new MATRIX members
 - Propose and negotiate necessary contractual modifications to ARPA-H Team
@@ -56,14 +59,6 @@ Welcome to the Matrix onboarding guide! This guide provides an introduction to t
 
   - Scientific Lead = Andrew Su
 
-**Working Group 3: Validation**
-
-  - *N.B. Not kicking-off until ~Sep-Oct 2024*
-
-  - Project Manager = *To be named*
-
-  - Scientific Lead = *To be named*
-
 ### Workstream Leads
 
 - Responsible for Workstream deliverable(s)
@@ -85,7 +80,6 @@ We use slack channels for day 2 day communication. These channels are prepared t
 
 - **matrix-wg-data-kg:** Data and KG working group
 - **matrix-wg-modelling:** Modelling and Evaluation working group
-- **matrix-wg-validation:** Validation working group
 - **matrix-all:** Matrix wide chat
 - **matrix-interesting:** Matrix wide interesting information to share. Used for papers, external sources etc that are worth sharing
 - **matrix-updates:** Updates chat for sharing regular structured updates from each WG
