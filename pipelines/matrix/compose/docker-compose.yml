@@ -21,6 +21,17 @@ services:
       - NEO4J_dbms_security_procedures_unrestricted=gds.*, apoc.*
       - NEO4J_db_logs_query_enabled=OFF
       - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+      
+      # SSL Configuration
+      - NEO4J_dbms_ssl_policy_bolt_enabled=true
+      - NEO4J_dbms_ssl_policy_bolt_base__directory=certificates/bolt
+      - NEO4J_dbms_ssl_policy_bolt_private__key=private_and_public.pem
+      - NEO4J_dbms_ssl_policy_bolt_public__certificate=public.crt
+      
+      # Bolt TLS Configuration
+      - NEO4J_dbms_connector_bolt_enabled=true
+      - NEO4J_dbms_connector_bolt_tls__level=REQUIRED
+
       # License file can be activated using the following env variable
       # https://neo4j.com/docs/graph-data-science/current/installation/installation-enterprise-edition
       # - NEO4J_gds_enterprise_license__file=/licenses/gds

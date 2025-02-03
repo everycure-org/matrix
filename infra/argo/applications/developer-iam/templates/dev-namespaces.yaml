@@ -1,5 +1,5 @@
 {{- /* Create the namespace-admin Role for each namespace */ -}}
-{{- range $email, $namespace := .Values.users }}
+{{- range $email, $namespace := .Values.dev_namespaces.users }}
 ---
 apiVersion: v1
 kind: Namespace
