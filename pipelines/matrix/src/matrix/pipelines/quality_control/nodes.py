@@ -4,14 +4,14 @@ import pyspark.sql as ps
 import pyspark.sql.functions as F
 
 
-def count_nodes_by(nodes: ps.DataFrame) -> ps.DataFrame:
+def count_filtered_nodes(nodes: ps.DataFrame) -> ps.DataFrame:
     count_by_columns: List[str] = ["category", "prefix", "upstream_data_source"]
     return (
         nodes.withColumn("prefix", F.split("id", ":")[0]).select(*count_by_columns).groupBy(*count_by_columns).count()
     )
 
 
-def count_edges_by(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFrame:
+def count_filtered_edges(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFrame:
     subject_nodes = (
         nodes.select("id", "category").withColumnRenamed("category", "subject_category").alias("subject_nodes")
     )
