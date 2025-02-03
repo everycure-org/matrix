@@ -23,3 +23,9 @@ variable "dns_managed_zone_name" {
   description = "The name of the Cloud DNS managed zone for creating DNS records"
   type        = string
 }
+
+variable "enable_cdn" {
+  description = "Whether to enable the CDN for the website"
+  type        = bool
+  default     = true
+}
