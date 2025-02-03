@@ -33,24 +33,20 @@ data_sources:
   # EveryCure medical team.
   ec_clinical_trials:
     version: 20230309 # NOTE: Here 0309 is a period of time (here Mar to Sep 2023)
-  # NOTE: all datasest below contain artifact ids as their version numbers
-  # as Github API only allows for downloading the artifact by its id. 
-  # To get the artifact id, use the following command for each dataset:
   drug_list:
-    # curl -X GET -H "Content-Type: application/json" -H "Authorization: token PAT" -H "Accept: application/vnd.github.v3.raw" https://api.github.com/repos/everycure-org/matrix-drug-list/releases | jq ".[0].assets | map(select(.name == \"drugList.tsv\"))[0] | .id"
-    version: 214074059
+    # check releases here: https://github.com/everycure-org/matrix-drug-list/releases
+    version: "Release v2.0.0"
   disease_list:
-    # curl -X GET -H "Content-Type: application/json" -H "Authorization: token PAT" -H "Accept: application/vnd.github.v3.raw" https://api.github.com/repos/everycure-org/matrix-disease-list/releases | jq ".[0].assets | map(select(.name == \"matrix-disease-list.tsv\"))[0] | .id"
-    version: 197752375
+    # check releases here: https://github.com/everycure-org/matrix-disease-list/releases
+    version: "2024-10-08"
   kgml_xdtd_gt:
     version: *_rtx_kg_version
   ec_gt:
-    # curl -X GET -H "Content-Type: application/json" -H "Authorization: token PAT" -H "Accept: application/vnd.github.v3.raw" https://api.github.com/repos/everycure-org/matrix-indication-list/releases | jq ".[0].assets | map(select(.name == \"ground-truths-list.tsv\"))[0] | .id"
-    version: &_ec_gt_version 201341606
+    # check releases here: https://github.com/everycure-org/matrix-disease-list/releases
+    version: &_ec_gt_version "Release v0.1.2"
   modelling_gt:
     source: ec
     version: *_ec_gt_version
-
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation. Will make PR.
 mlflow_artifact_root: null

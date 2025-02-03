@@ -202,10 +202,20 @@ def filter_nodes_without_edges(
     return nodes
 
 
-def _format_mapping_df(mapping_df: ps.DataFrame):
+@check_output(
+    DataFrameSchema(
+        columns={
+            "normalization_success": Column(T.BooleanType(), nullable=False),
+        },
+    ),
+)
+def _format_mapping_df(mapping_df: ps.DataFrame) -> ps.DataFrame:
     return (
         mapping_df.drop("bucket")
-        .withColumn("normalization_success", F.col("normalized_id").isNotNull())
+        .withColumn(
+            "normalization_success",
+            F.when((F.col("normalized_id").isNotNull() | (F.col("normalized_id") != "None")), True).otherwise(False),
+        )
         # avoids nulls in id column, if we couldn't resolve IDs, we keep original
         .withColumn("normalized_id", F.coalesce(F.col("normalized_id"), F.col("id")))
     )
