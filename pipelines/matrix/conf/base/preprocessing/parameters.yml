@@ -51,4 +51,8 @@ preprocessing.enrichment:
 #           - "LOW"
 #           - "NONE"
 
+preprocessing.feedback_known_entities:
+  subject: "drug_id"
+  object: "disease_id"
+
 

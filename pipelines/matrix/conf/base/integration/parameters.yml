@@ -28,6 +28,9 @@ integration:
     ec_ground_truth: 
       transformer:
         _object: matrix.pipelines.integration.transformers.ground_truth.GroundTruthTransformer
+    feedback_known_entities: 
+      transformer:
+        _object: matrix.pipelines.integration.transformers.feedback.FeedbackTransformer
     
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:

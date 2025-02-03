@@ -55,6 +55,7 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             {"name": "kgml_xdtd_ground_truth", "integrate_in_kg": False},
             {"name": "ec_ground_truth", "integrate_in_kg": False},
             {"name": "ec_clinical_trails", "integrate_in_kg": False},
+            {"name": "feedback_known_entities", "integrate_in_kg": False},
         ],
         "modelling": {
             "model_name": "xg_ensemble",  # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth

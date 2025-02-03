@@ -56,6 +56,22 @@ def _create_pairs(
     return nodes, edges
 
 
+def _create_feedback_pairs(
+    nodes: pd.DataFrame,
+    edges: pd.DataFrame,
+) -> pd.DataFrame:
+    """Create feedback pairs from nodes and edges."""
+    edges = edges.head(2)
+    nodes = nodes.head(2)
+
+    edges["pair_id"] = edges["subject"] + "|" + edges["object"]
+    edges["rationale"] = "is known entity"
+    edges["is_duplicate"] = False
+    edges["drug_name"] = edges["subject"] + "_name"
+    edges["disease_name"] = edges["object"] + "_name"
+    return nodes, edges
+
+
 def create_pipeline(**kwargs) -> Pipeline:
     """Create fabricator pipeline."""
     return pipeline(
@@ -134,6 +150,18 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "ingestion.raw.ec_ground_truth.edges@pandas",
                 ],
                 name="create_ec_gt_pairs",
+            ),
+            ArgoNode(
+                func=_create_feedback_pairs,
+                inputs=[
+                    "ingestion.raw.kgml_xdtd_ground_truth.nodes@pandas",
+                    "ingestion.raw.kgml_xdtd_ground_truth.edges@pandas",
+                ],
+                outputs=[
+                    "ingestion.raw.feedback_known_entities.nodes@pandas",
+                    "ingestion.raw.feedback_known_entities.edges@pandas",
+                ],
+                name="create_feedback_known_entities_pairs",
             ),
         ]
     )
