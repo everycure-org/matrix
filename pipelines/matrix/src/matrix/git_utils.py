@@ -1,6 +1,8 @@
 import re
 import subprocess
 
+import semver
+
 BRANCH_NAME_REGEX = r"^release/v\d+\.\d+\.\d+(-[a-zA-Z0-9]+)?$"
 
 
@@ -41,24 +43,27 @@ def git_tag_exists(tag: str) -> bool:
     return tag in result
 
 
-def get_latest_minor_release():
+def get_latest_minor_release() -> str:
     releases_list = (
         (subprocess.check_output(["gh", "release", "list", "--json", "tagName", "--jq", ".[].tagName"]))
         .decode("utf-8")
         .strip("\n")
         .split("\n")
     )
-    latest_minor = -1
-    latest_minor_release = "v0.1"
-    for v in releases_list:
-        parsed_version = v.split(".")
-        minor_version = int(parsed_version[1])
-        if len(parsed_version) == 2:  # Handle "X.Y" format
-            if minor_version >= latest_minor:
-                latest_minor = minor_version
-                latest_minor_release = v
-        else:  # Handle proper format "X.Y.Z"
-            if int(parsed_version[2]) == 0 and minor_version >= latest_minor:  # Only consider minor versions (patch==0)
-                latest_minor = minor_version
-                latest_minor_release = v
-    return latest_minor_release
+
+    # Map the case where the release is not in the semver compliant format x.y.z
+    mapper = {"v0.1": "v0.1.0", "v0.2": "v0.2.0"}
+    mapped_releases = [mapper.get(release, release) for release in releases_list]
+    # Store original-to-mapped version mapping
+    original_to_mapped = {mapper.get(release, release): release for release in releases_list}
+    # Remove 'v' prefix and parse versions
+    try:
+        parsed_versions = [semver.Version.parse(v.lstrip("v")) for v in mapped_releases]
+    except ValueError as e:
+        raise ValueError(f"[red]Error parsing versions: {e}")
+
+    # Get the latest minor version
+    latest_minor = max(parsed_versions, key=lambda v: (v.major, v.minor)).minor
+    # Get the earlist patch within the latest minor
+    latest_minor_release = min([v for v in parsed_versions if v.minor == latest_minor], key=lambda v: v.patch)
+    return original_to_mapped[f"v{latest_minor_release}"]
