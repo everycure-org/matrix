@@ -50,6 +50,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "diseases": "integration.int.disease_list.nodes.norm@pandas",
                             "graph": "matrix_generation.feat.nodes@kg",
                             "clinical_trials": "integration.int.ec_clinical_trails.edges.norm@pandas",
+                            "feedback_pairs": "integration.int.feedback_known_entities.edges.norm@pandas",
+                            "add_feedback_pairs": "params:matrix_generation.add_feedback_pairs",
                         },
                         outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs",
                         name=f"generate_matrix_pairs_fold_{fold}",

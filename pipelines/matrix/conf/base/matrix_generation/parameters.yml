@@ -3,6 +3,8 @@ matrix_generation.matrix_generation_options:
     - target 
   n_reporting: 100000 # Number of items in the final report
 
+matrix_generation.add_feedback_pairs: true
+
 matrix_generation.matrix:
   metadata:
     drug_list:
