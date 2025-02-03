@@ -12,8 +12,11 @@ RUN npm install
 # Copy the rest of the application code
 COPY . .
 
-# Run the build script
-RUN npm run build:strict
+# Add build arg and environment variable for gcloud config
+ENV GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
+# Use BuildKit's secret mount for build time only
+RUN --mount=type=secret,id=gcloud,target=/root/.config/gcloud/application_default_credentials.json \
+    npm run build:strict
 
 # Stage 2: Serve the static files with Nginx
 FROM nginx:alpine

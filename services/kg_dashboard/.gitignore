@@ -11,3 +11,5 @@ static/data
 .evidence
 .npmrc
 
+
+sources/bq/connection.options.yaml
