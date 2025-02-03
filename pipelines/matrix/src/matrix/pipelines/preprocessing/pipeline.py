@@ -4,6 +4,8 @@ from . import nodes
 from .tagging import generate_tags
 
 
+# NOTE: This pipeline in highly preliminary and used for ingestion of the
+# medical data provided in Google Sheets __ONLY__.
 def create_pipeline(**kwargs) -> Pipeline:
     """Create preprocessing pipeline."""
     return pipeline(
