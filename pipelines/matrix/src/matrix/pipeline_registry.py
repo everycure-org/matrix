@@ -51,6 +51,9 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + pipelines["matrix_generation"]
         + pipelines["evaluation"]
     )
+    pipelines["feature"] = (
+        pipelines["embeddings"]
+    )
     pipelines["__default__"] = (
           pipelines["data_engineering"]
         + pipelines["modelling_run"]
@@ -67,11 +70,6 @@ def register_pipelines() -> Dict[str, Pipeline]:
         pipelines["embeddings"]
         + pipelines["modelling_run"]
     )
-
-    pipelines["feature"] = (
-        pipelines["embeddings"]
-    )
-
     # fmt: on
 
     return pipelines
