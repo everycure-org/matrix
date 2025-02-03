@@ -505,10 +505,6 @@ def create_node_embeddings(
         embeddings_pkey: name of the column containing the texts, which should be present in the cache.
     """
 
-    # spark = SparkSession.builder.getOrCreate()
-    # for key, value in spark.sparkContext.getConf().getAll():
-    #     logger.debug('{"conf key": %s, "value": %s}', str(key), str(value))
-
     df = df.withColumn(embeddings_pkey, concat_ws("", *input_features).substr(1, max_input_len))
     assert {embeddings_pkey, new_colname}.issubset(cache.columns)
     scoped_cache = (
