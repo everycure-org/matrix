@@ -26,6 +26,11 @@ venv: prerequisites
 install: venv precommit-hooks
 	uv pip install -r requirements.txt #force it to install in our venv
 
+install_compatibility: venv precommit-hooks
+	# expects the file requirements.overrides.txt to be present, allows devs to override
+	# versions for local machine limitations (e.g. newer pytorch on macos intel)
+	uv pip install -r requirements.txt --overrides requirements.overrides.txt
+
 precommit: precommit-hooks
 	git fetch origin
 	uv run pre-commit run --from-ref origin/main --to-ref HEAD
@@ -84,7 +89,7 @@ wipe_neo:
 integration_test: compose_up wipe_neo
 	# NOTE: We are running without xgc due to its long runtime. 
 	ulimit -n 10000
-	uv run kedro run --env test -p test --runner ThreadRunner --without-tags xgc,not-shared
+	uv run kedro run --env test -p test --without-tags xgc,not-shared
 
 fabricate:
 	uv run kedro run -p fabricator --env test

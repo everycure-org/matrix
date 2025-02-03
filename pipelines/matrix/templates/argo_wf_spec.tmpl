@@ -30,7 +30,7 @@ spec:
       - name: openai_endpoint
         value: "https://api.openai.com/v1"
       - name: env
-        value: "cloud"
+        value: "{{ environment }}"
       - name: release_folder_name
         value: "{{ release_folder_name }}"
   templates:
@@ -138,6 +138,12 @@ spec:
     name: neo4j
     podSpecPatch: |
       containers:
+        - name: main
+          resources:
+            requests:
+              memory: 50Gi
+            limits:
+              memory: 50Gi
         - name: neo4j
           resources:
             requests:

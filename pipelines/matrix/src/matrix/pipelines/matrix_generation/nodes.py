@@ -1,17 +1,15 @@
 import logging
 from datetime import datetime
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
-import pandera as pa
 import pyspark.sql as ps
 import pyspark.sql.functions as F
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.inject import _extract_elements_in_list, inject_object
 from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.nodes import apply_transformers
-from pandera import DataFrameModel
-from pandera.typing import Series
+from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
 from sklearn.impute._base import _BaseImputer
 from tqdm import tqdm
 
@@ -40,7 +38,9 @@ def enrich_embeddings(
     )
 
 
-def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_trials: pd.DataFrame) -> pd.DataFrame:
+def _add_flag_columns(
+    matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_trials: Optional[pd.DataFrame] = None
+) -> pd.DataFrame:
     """Adds boolean columns flagging known positives and known negatives.
 
     Args:
@@ -67,8 +67,9 @@ def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_
     matrix["is_known_positive"] = create_flag_column(test_pos_pairs)
     matrix["is_known_negative"] = create_flag_column(test_neg_pairs)
 
+    # TODO: Need to make this dynamic
     # Flag clinical trials data
-    clinical_trials = clinical_trials.rename(columns={"drug_curie": "source", "disease_curie": "target"})
+    clinical_trials = clinical_trials.rename(columns={"subject": "source", "object": "target"})
     matrix["trial_sig_better"] = create_flag_column(clinical_trials[clinical_trials["significantly_better"] == 1])
     matrix["trial_non_sig_better"] = create_flag_column(
         clinical_trials[clinical_trials["non_significantly_better"] == 1]
@@ -79,28 +80,28 @@ def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_
     return matrix
 
 
-class TrialSchema(DataFrameModel):
-    source: Series[str]
-    target: Series[str]
-    is_known_positive: Series[bool]
-    is_known_negative: Series[bool]
-    trial_sig_better: Series[bool]
-    trial_non_sig_better: Series[bool]
-    trial_sig_worse: Series[bool]
-    trial_non_sig_worse: Series[bool]
-
-    class Config:
-        strict = False
-
-
-@pa.check_output(TrialSchema)
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "source": Column(str, nullable=False),
+            "target": Column(str, nullable=False),
+            "is_known_positive": Column(bool, nullable=False),
+            "is_known_negative": Column(bool, nullable=False),
+            "trial_sig_better": Column(bool, nullable=False),
+            "trial_non_sig_better": Column(bool, nullable=False),
+            "trial_sig_worse": Column(bool, nullable=False),
+            "trial_non_sig_worse": Column(bool, nullable=False),
+        },
+        unique=["source", "target"],
+    )
+)
 @inject_object()
 def generate_pairs(
     known_pairs: pd.DataFrame,
     drugs: pd.DataFrame,
     diseases: pd.DataFrame,
     graph: KnowledgeGraph,
-    clinical_trials: pd.DataFrame,
+    clinical_trials: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """Function to generate matrix dataset.
 
@@ -398,12 +399,12 @@ def _flag_known_pairs(top_pairs: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: DataFrame with added flags for known positive and negative pairs.
     """
-    top_pairs["is_known_positive"] = (
-        top_pairs["is_known_positive"] | top_pairs["trial_sig_better"] | top_pairs["trial_non_sig_better"]
-    )
-    top_pairs["is_known_negative"] = (
-        top_pairs["is_known_negative"] | top_pairs["trial_sig_worse"] | top_pairs["trial_non_sig_worse"]
-    )
+    top_pairs["is_known_positive"] = top_pairs[
+        "is_known_positive"
+    ]  # | top_pairs["trial_sig_better"] | top_pairs["trial_non_sig_better"]
+    top_pairs["is_known_negative"] = top_pairs[
+        "is_known_negative"
+    ]  # | top_pairs["trial_sig_worse"] | top_pairs["trial_non_sig_worse"]
     return top_pairs
 
 

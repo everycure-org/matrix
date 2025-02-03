@@ -1,6 +1,6 @@
 fabricator.rtx_kg2:
   nodes:
-    num_rows: 150
+    num_rows: 500
     columns:
       id:ID:
         type: generate_unique_id
@@ -58,7 +58,7 @@ fabricator.rtx_kg2:
         freq: M
 
   edges:
-    num_rows: 500
+    num_rows: 100
     columns:
       # NOTE: This is a rather complex syntax, but is results in a "subject"
       # column that contains random values from the nodes table defined above.
@@ -132,6 +132,7 @@ fabricator.rtx_kg2:
           seed: 590590
       pmids:
           type: generate_random_arrays
+          to_json: True
           sample_values:
             - 12345678
             - 678
@@ -228,7 +229,7 @@ fabricator.rtx_kg2:
         
 fabricator.clinical_trials:
   nodes:
-    num_rows: 30
+    num_rows: 50
     columns:
       curie:
         type: row_apply
@@ -244,7 +245,7 @@ fabricator.clinical_trials:
         seed: 40599
 
   edges:
-    num_rows: 50
+    num_rows: 10
     columns:
       drug_curie:
         type: row_apply
@@ -437,7 +438,7 @@ fabricator.robokop:
 
 fabricator.ec_medical_kg:
   nodes:
-    num_rows: 10
+    num_rows: 30
     columns:
       normalized_curie: 
         type: generate_unique_id
@@ -470,7 +471,7 @@ fabricator.ec_medical_kg:
           seed: 590590
 
   edges:
-    num_rows: 50
+    num_rows: 10
     columns:
       SourceId:
         type: row_apply

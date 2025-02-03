@@ -47,3 +47,31 @@ evaluation.full_matrix_trials:
           n: 10
         - _object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
           n: 100
+
+evaluation.stability_overlap:
+  evaluation_options:
+    generator:
+      _object: matrix.datasets.pair_generator.NoGenerator
+    stability:
+      _object: matrix.pipelines.evaluation.evaluation.StabilityCommonalityAtN
+      rank_func_lst: 
+        - _object:  matrix.pipelines.evaluation.named_metric_functions.CommonalityAtN 
+          n: 10
+        - _object:  matrix.pipelines.evaluation.named_metric_functions.CommonalityAtN
+          n: 100
+
+evaluation.stability_ranking:
+   evaluation_options:
+    generator:
+      _object: matrix.datasets.pair_generator.OnlyOverlappingPairs
+    stability:
+      _object: matrix.pipelines.evaluation.evaluation.StabilityRankingMetrics 
+      rank_func_lst: 
+        - _object:  matrix.pipelines.evaluation.named_metric_functions.SpearmanAtN
+          n: 10
+        - _object:  matrix.pipelines.evaluation.named_metric_functions.HypergeomAtN
+          n: 10
+        - _object:  matrix.pipelines.evaluation.named_metric_functions.SpearmanAtN
+          n: 100
+        - _object:  matrix.pipelines.evaluation.named_metric_functions.HypergeomAtN
+          n: 100

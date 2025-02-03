@@ -3,49 +3,108 @@ from functools import partial, reduce
 from typing import Any, Callable, Dict, List, Tuple
 
 import pandas as pd
-import pandera
 import pyspark.sql as ps
 import pyspark.sql.functions as F
+import pyspark.sql.types as T
 from joblib import Memory
+from pyspark.sql.window import Window
 
 from matrix.inject import inject_object
 from matrix.pipelines.integration.filters import determine_most_specific_category
-from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
+from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
+
+from .schema import BIOLINK_KG_EDGE_SCHEMA, BIOLINK_KG_NODE_SCHEMA
 
 # TODO move these into config
 memory = Memory(location=".cache/nodenorm", verbose=0)
 logger = logging.getLogger(__name__)
 
 
-@pandera.check_output(KGEdgeSchema)
-def union_and_deduplicate_edges(*edges) -> ps.DataFrame:
+@inject_object()
+@check_output(
+    DataFrameSchema(
+        columns={
+            "id": Column(T.StringType(), nullable=False),
+        },
+        unique=["id"],
+    ),
+)
+def transform_nodes(transformer, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
+    return transformer.transform_nodes(nodes_df=nodes_df, **kwargs)
+
+
+@inject_object()
+@check_output(
+    DataFrameSchema(
+        columns={
+            "subject": Column(T.StringType(), nullable=False),
+            "predicate": Column(T.StringType(), nullable=False),
+            "object": Column(T.StringType(), nullable=False),
+        },
+        unique=["subject", "predicate", "object"],
+    ),
+)
+def transform_edges(transformer, edges_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
+    return transformer.transform_edges(edges_df=edges_df, **kwargs)
+
+
+@check_output(
+    schema=BIOLINK_KG_EDGE_SCHEMA,
+    pass_columns=True,
+)
+def union_and_deduplicate_edges(*edges, cols: List[str]) -> ps.DataFrame:
     """Function to unify edges datasets."""
 
     # fmt: off
     return (
         _union_datasets(*edges)
-        .transform(KGEdgeSchema.group_edges_by_id)
+        .groupBy(["subject", "predicate", "object"])
+        .agg(
+            F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
+            # TODO: we shouldn't just take the first one but collect these values from multiple upstream sources
+            F.first("knowledge_level", ignorenulls=True).alias("knowledge_level"),
+            F.first("subject_aspect_qualifier", ignorenulls=True).alias("subject_aspect_qualifier"),
+            F.first("subject_direction_qualifier", ignorenulls=True).alias("subject_direction_qualifier"),
+            F.first("object_direction_qualifier", ignorenulls=True).alias("object_direction_qualifier"),
+            F.first("object_aspect_qualifier", ignorenulls=True).alias("object_aspect_qualifier"),
+            F.first("primary_knowledge_source", ignorenulls=True).alias("primary_knowledge_source"),
+            F.flatten(F.collect_set("aggregator_knowledge_source")).alias("aggregator_knowledge_source"),
+            F.flatten(F.collect_set("publications")).alias("publications"),
+        )
+        .select(*cols)
     )
     # fmt: on
 
 
-@pandera.check_output(KGNodeSchema)
-def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> ps.DataFrame:
+@check_output(
+    schema=BIOLINK_KG_NODE_SCHEMA,
+    pass_columns=True,
+)
+def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, cols: List[str]) -> ps.DataFrame:
     """Function to unify nodes datasets."""
-
     # fmt: off
-    return (
+    unioned_datasets = (
         _union_datasets(*nodes)
-
         # first we group the dataset by id to deduplicate
-        .transform(KGNodeSchema.group_nodes_by_id)
+        .groupBy("id")
+        .agg(
+            F.first("name", ignorenulls=True).alias("name"),
+            F.first("category", ignorenulls=True).alias("category"),
+            F.first("description", ignorenulls=True).alias("description"),
+            F.first("international_resource_identifier", ignorenulls=True).alias("international_resource_identifier"),
+            F.flatten(F.collect_set("equivalent_identifiers")).alias("equivalent_identifiers"),
+            F.flatten(F.collect_set("all_categories")).alias("all_categories"),
+            F.flatten(F.collect_set("labels")).alias("labels"),
+            F.flatten(F.collect_set("publications")).alias("publications"),
+            F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
+        )
+        )
+    # next we need to apply a number of transformations to the nodes to ensure grouping by id did not select wrong information
+    # this is especially important if we integrate multiple KGs
+    if retrieve_most_specific_category:
+        unioned_datasets = unioned_datasets.transform(determine_most_specific_category)
+    return unioned_datasets.select(*cols)
 
-        # next we need to apply a number of transformations to the nodes to ensure grouping by id did not select wrong information
-        .transform(determine_most_specific_category, biolink_categories_df)
-
-        # finally we select the columns that we want to keep
-        .select(*cols_for_schema(KGNodeSchema))
-    )
     # fmt: on
 
 
@@ -54,7 +113,6 @@ def _union_datasets(
 ) -> ps.DataFrame:
     """
     Helper function to unify datasets and deduplicate them.
-
     Args:
         datasets_to_union: List of dataset names to unify.
         **datasets: Arbitrary number of DataFrame keyword arguments.
@@ -94,7 +152,6 @@ def prefilter_unified_kg_nodes(
 def filter_unified_kg_edges(
     nodes: ps.DataFrame,
     edges: ps.DataFrame,
-    biolink_predicates: Dict[str, Any],
     transformations: List[Tuple[Callable, Dict[str, Any]]],
 ) -> ps.DataFrame:
     """Function to filter the knowledge graph edges.
@@ -115,7 +172,7 @@ def filter_unified_kg_edges(
     new_edges_count = edges.count()
     logger.info(f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges")
 
-    return _apply_transformations(edges, transformations, biolink_predicates=biolink_predicates)
+    return _apply_transformations(edges, transformations)
 
 
 def filter_nodes_without_edges(
@@ -145,10 +202,20 @@ def filter_nodes_without_edges(
     return nodes
 
 
-def _format_mapping_df(mapping_df: ps.DataFrame):
+@check_output(
+    DataFrameSchema(
+        columns={
+            "normalization_success": Column(T.BooleanType(), nullable=False),
+        },
+    ),
+)
+def _format_mapping_df(mapping_df: ps.DataFrame) -> ps.DataFrame:
     return (
         mapping_df.drop("bucket")
-        .withColumn("normalization_success", F.col("normalized_id").isNotNull())
+        .withColumn(
+            "normalization_success",
+            F.when((F.col("normalized_id").isNotNull() | (F.col("normalized_id") != "None")), True).otherwise(False),
+        )
         # avoids nulls in id column, if we couldn't resolve IDs, we keep original
         .withColumn("normalized_id", F.coalesce(F.col("normalized_id"), F.col("id")))
     )
@@ -193,7 +260,16 @@ def normalize_edges(
         {"subject_normalized": "subject", "object_normalized": "object"}
     )
 
-    return edges
+    return (
+        edges.withColumn(
+            "_rn",
+            F.row_number().over(
+                Window.partitionBy(["subject", "object", "predicate"]).orderBy(F.col("original_subject"))
+            ),
+        )
+        .filter(F.col("_rn") == 1)
+        .drop("_rn")
+    )
 
 
 def normalize_nodes(
@@ -214,4 +290,8 @@ def normalize_nodes(
         nodes.join(mapping_df, on="id", how="left")
         .withColumnsRenamed({"id": "original_id"})
         .withColumnsRenamed({"normalized_id": "id"})
+        # Ensure deduplicated
+        .withColumn("_rn", F.row_number().over(Window.partitionBy("id").orderBy(F.col("original_id"))))
+        .filter(F.col("_rn") == 1)
+        .drop("_rn")
     )
