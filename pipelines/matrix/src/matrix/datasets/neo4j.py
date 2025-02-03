@@ -1,14 +1,13 @@
 import logging
 import time
 from copy import deepcopy
-from typing import Any, Dict, Tuple
+from typing import Any, Tuple
 
 import pyspark.sql as ps
 from graphdatascience import GraphDataScience
 from kedro.io.core import Version
 from kedro_datasets.spark import SparkDataset
-from neo4j import TRUST_ALL_CERTIFICATES, GraphDatabase
-from pyspark.sql import DataFrame, SparkSession
+from neo4j import GraphDatabase
 
 from matrix.inject import _parse_for_objects
 
@@ -43,10 +42,6 @@ class Neo4JSparkDataset(SparkDataset):
 
     DEFAULT_LOAD_ARGS: dict[str, Any] = {}
     DEFAULT_SAVE_ARGS: dict[str, Any] = {}
-    DEFAULT_SSL_ARGS: dict[str, Any] = {
-        "encryption.enabled": "true",
-        "encryption.trust.strategy": "TRUST_ALL_CERTIFICATES",
-    }
 
     def __init__(  # noqa: PLR0913
         self,
@@ -115,12 +110,6 @@ class Neo4JSparkDataset(SparkDataset):
         self._df_schema = self._load_args.pop("schema", None)
         self._url = url
 
-        # NOTE: It's not possible to set certificates with the bolt+s
-        # protocol with the Neo4J driver. Hence were traslating this ourselves.
-        self._fq_url = url
-        self._ssl_enabled = True if "+s" in url else False
-        self._url = url.replace("+s", "")
-
         super().__init__(
             filepath="filepath",
             save_args=save_args,
@@ -176,7 +165,6 @@ class Neo4JSparkDataset(SparkDataset):
             spark_session.read.format("org.neo4j.spark.DataSource")
             .option("database", self._database)
             .option("url", self._url)
-            .options(**self.get_ssl_config())
             .options(**self._credentials)
             .options(**self._load_args)
         )
@@ -194,14 +182,13 @@ class Neo4JSparkDataset(SparkDataset):
             else:
                 # Create database
                 overwrite = self._save_args.pop("mode", "append") == "overwrite"
-                self._create_db(self._fq_url, self._database, overwrite, self._credentials)
+                self._create_db(self._url, self._database, overwrite, self._credentials)
 
                 # Write dataset
                 (
                     data.write.format("org.neo4j.spark.DataSource")
                     .option("database", self._database)
                     .option("url", self._url)
-                    .options(**self.get_ssl_config())
                     .options(**self._credentials)
                     .options(**self._save_args)
                     .save(**{"mode": "overwrite"})
