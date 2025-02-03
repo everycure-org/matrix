@@ -1,11 +1,8 @@
 import logging
 
-import pandera.pyspark as pa
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
 from pyspark.sql import DataFrame
-
-from matrix.schemas.knowledge_graph import EdgeSchema, NodeSchema
 
 from .transformer import GraphTransformer
 
@@ -13,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 class ClinicalTrialsTransformer(GraphTransformer):
-    @pa.check_output(NodeSchema)
     def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
         """Transform nodes to our target schema.
 
@@ -36,12 +32,10 @@ class ClinicalTrialsTransformer(GraphTransformer):
             # .transform(determine_most_specific_category, biolink_categories_df) need this?
             # Filter nodes we could not correctly resolve
             .filter(f.col("id").isNotNull())
-            # .select(*cols_for_schema(KGNodeSchema))
         )
         return df
         # fmt: on
 
-    @pa.check_output(EdgeSchema)
     def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
         """Transform edges to our target schema.
 
@@ -54,8 +48,14 @@ class ClinicalTrialsTransformer(GraphTransformer):
         # fmt: off
         df = (
             edges_df
-            .withColumn("subject",                       f.col("drug_curie"))
-            .withColumn("object",                        f.col("disease_curie"))
+            .withColumn("subject", f.col("drug_curie"))
+            .withColumn("object", f.col("disease_curie"))
+            # NOTE: Setting predicate such that it is unique
+            .withColumn("predicate", f.lit("clinical_trails"))
             .filter((f.col("subject").isNotNull()) & (f.col("object").isNotNull()))
+            .withColumn("significantly_better", f.col('significantly_better').cast('int'))
+            .withColumn("significantly_worse", f.col('significantly_worse').cast('int'))
+            .withColumn("non_significantly_worse", f.col('non_significantly_worse').cast('int'))
+            .withColumn("non_significantly_better", f.col('non_significantly_better').cast('int'))
         )
         return df

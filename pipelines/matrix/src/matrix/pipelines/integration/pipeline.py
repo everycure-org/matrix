@@ -1,22 +1,12 @@
+from typing import List
+
 import pyspark.sql as ps
 from kedro.pipeline import Pipeline, node, pipeline
 
 from matrix import settings
-from matrix.inject import inject_object
-from matrix.kedro4argo_node import ArgoNode
 from matrix.pipelines.batch import pipeline as batch_pipeline
 
 from . import nodes
-
-
-@inject_object()
-def transform_nodes(transformer, nodes_df: ps.DataFrame, **kwargs):
-    return transformer.transform_nodes(nodes_df=nodes_df, **kwargs)
-
-
-@inject_object()
-def transform_edges(transformer, edges_df: ps.DataFrame, **kwargs):
-    return transformer.transform_edges(edges_df=edges_df, **kwargs)
 
 
 def _create_integration_pipeline(source: str, nodes_only: bool = False) -> Pipeline:
@@ -26,7 +16,7 @@ def _create_integration_pipeline(source: str, nodes_only: bool = False) -> Pipel
         pipeline(
             [
                 node(
-                    func=transform_nodes,
+                    func=nodes.transform_nodes,
                     inputs={
                         "transformer": f"params:integration.sources.{source}.transformer",
                         "nodes_df": f"ingestion.int.{source}.nodes",
@@ -62,7 +52,7 @@ def _create_integration_pipeline(source: str, nodes_only: bool = False) -> Pipel
             pipeline(
                 [
                     node(
-                        func=transform_edges,
+                        func=nodes.transform_edges,
                         inputs={
                             "transformer": f"params:integration.sources.{source}.transformer",
                             "edges_df": f"ingestion.int.{source}.edges",
@@ -112,7 +102,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 node(
                     func=nodes.union_and_deduplicate_nodes,
                     inputs=[
-                        "integration.raw.biolink.categories",
+                        "params:integration.deduplication.retrieve_most_specific_category",
                         *[
                             f'integration.int.{source["name"]}.nodes.norm@spark'
                             for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
@@ -150,7 +140,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                     inputs=[
                         "integration.prm.prefiltered_nodes",
                         "integration.prm.unified_edges",
-                        "integration.raw.biolink.predicates",
                         "params:integration.filtering.edge_filters",
                     ],
                     outputs="integration.prm.filtered_edges",
