@@ -11,6 +11,7 @@ FROM `mtrx-hub-dev-3of.kg_rtx_kg2.edges_v2_7_3` AS edges
  JOIN `mtrx-hub-dev-3of.kg_rtx_kg2.nodes_v2_7_3` AS object_nodes ON edges.object = object_nodes.id
 GROUP BY all
 UNION all
+
 SELECT subject_nodes.category AS subject_category,
        SPLIT(subject_nodes.id, ':')[OFFSET(0)] AS subject_prefix,  
        predicate, 
