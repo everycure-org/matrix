@@ -14,5 +14,3 @@ plugins:
     "@evidence-dev/bigquery": { }
     "@evidence-dev/csv": { }
     "@evidence-dev/duckdb": { }
-    "@evidence-dev/postgres": { }
-    "@evidence-dev/sqlite": { }
