@@ -63,5 +63,6 @@ paths:
   evaluation:         data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
   matrix_generation:  data/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
   inference:          data/releases/${versions.release}/runs/${run_name}/datasets/inference
+  reporting:          data/releases/${versions.release}/runs/${run_name}/datasets/reporting
  
   tmp:                data/tmp

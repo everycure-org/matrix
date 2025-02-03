@@ -12,6 +12,7 @@ from matrix.pipelines.integration.pipeline import create_pipeline as create_inte
 from matrix.pipelines.matrix_generation.pipeline import create_pipeline as create_matrix_pipeline
 from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
 from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
+from matrix.pipelines.quality_control.pipeline import create_pipeline as create_quality_control_pipeline
 
 
 def register_pipelines() -> Dict[str, Pipeline]:
@@ -32,6 +33,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         "modelling": create_modelling_pipeline(),
         "matrix_generation": create_matrix_pipeline(),
         "evaluation": create_evaluation_pipeline(),
+        "quality_control": create_quality_control_pipeline(),
         "create_sample": create_create_sample_pipeline(),
         # "inference": create_inference_pipeline(),  # Run manually based on medical input
     }
@@ -55,6 +57,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines["__default__"] = (
           pipelines["data_engineering"]
         + pipelines["modelling_run"]
+        + pipelines["quality_control"]
     )
 
     # Test pipelines
