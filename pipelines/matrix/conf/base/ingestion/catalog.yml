@@ -461,3 +461,25 @@ ingestion.raw.spoke.edges@pandas:
 #   <<: [*_spark_parquet, *_layer_int]
 #   filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/edges
 
+_feedback_credentials: &_feedback_credentials
+  con: sqlite:///data/tmp/test-db.db
+  connect_args:
+    check_same_thread: False
+
+# _feedback_credentials: &_feedback_credentials
+#   con: sqlite:///data/tmp/test-db.db
+#   connect_args:
+#     check_same_thread: False
+#   creator: 
+#     module: sqlalchemy
+#     function: create_engine
+#     encoded: False
+
+ingestion.raw.feedback_known_pairs.edges@pandas: 
+  <<: [*_layer_raw]
+  type: pandas.SQLTableDataset
+  table_name: feedback_known_pairs
+  credentials: *_feedback_credentials
+  save_args:
+    if_exists: replace
+    index: false
