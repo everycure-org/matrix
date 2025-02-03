@@ -57,8 +57,8 @@ class MLFlowHooks:
 
     @hook_impl
     def after_dataset_loaded(self, dataset_name, data, node):
-        """Logs used datasets to MLflow - their real names and dummy values.
-        Logging actual datasets would be difficult, due to the fact that the data has to be first
+        """In the v1 of this feature we only log the dataset names.
+        Logging actual datasets requires extra work, due to the fact that the data has to be first
         converted to mlflow.data.dataset.Dataset class. This works for common formats like pandas and spark
         where the from_ functions exist, e.g.:
 
@@ -67,8 +67,13 @@ class MLFlowHooks:
 
         but our datasets are too heterogenous and can't be always parsed, e.g. matrix.datasets.graph.KnowledgeGraph
         or would need a lot of hard-coded logic and would make this code brittle.
-        """
+        One idea is to only log select certain dataset types - pandas and spark, for other keep logging names only.
 
+        Another improvement idea for v2 would be to additionally  log the dataset paths, e.g.:
+        path = self._kedro_context.catalog.datasets[dataset_name]._get_load_path()
+        or using the url for remote datasets:
+        path = self._kedro_context.catalog.datasets[dataset_name]._url
+        """
         if dataset_name in MLFlowHooks._input_datasets:
             dataset = mlflow.data.from_pandas(pd.DataFrame(), name=dataset_name)
             mlflow.log_input(dataset)
