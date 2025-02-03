@@ -23,6 +23,11 @@ _medical_clinical_trials_sheet_dataset: &_medical_clinical_trials_sheet_dataset
   key: 1Wlrjr8ojUGCfWJg-QF5PzpJFqpD7LLH7b60u2XAngh0
   service_file: conf/local/service-account.json
 
+_feedback_known_entities_sheet_dataset: &_feedback_known_entities_sheet_dataset
+  type: matrix.datasets.gcp.GoogleSheetsDataset
+  key: 1WHahhC0QXnp0BgipyHHKyEdD_8TSrlRIJnyakxOsGqc
+  service_file: conf/local/service-account.json
+
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
@@ -184,3 +189,16 @@ preprocessing.int.ec_ground_truth.edges@pandas:
     sep: "\t"
   save_args:
     sep: "\t"
+
+preprocessing.raw.feedback_known_entities:
+  <<: [*_layer_raw, *_feedback_known_entities_sheet_dataset]
+  load_args:
+    sheet_name: full_list
+    columns:
+      - "pair_id"
+      - "drug_id"
+      - "disease_id"
+      - "drug_name"
+      - "disease_name"
+      - "rationale"
+      - "is_duplicate"

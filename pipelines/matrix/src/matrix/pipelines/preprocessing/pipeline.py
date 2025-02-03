@@ -158,5 +158,22 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="produce_kgml_xdtd_ground_truth_kg",
                 tags=["ground-truth-kgml"],
             ),
+            # -------------------------------------------------------------------------
+            # Feedback Loop
+            # -------------------------------------------------------------------------
+            node(
+                func=nodes.ingest_feedback_known,
+                inputs="preprocessing.raw.feedback_known_entities",
+                outputs="ingestion.raw.feedback_known_pairs.edges@pandas",
+                name="create_feedback_loop",
+                tags=["feedback-loop"],
+            ),
+            # node(
+            #     func=nodes.ingest_feedback_names,
+            #     inputs="preprocessing.raw.feedback_known_entities",
+            #     outputs="ingestion.raw.feedback_known_pairs.edges@pandas",
+            #     name="create_feedback_loop",
+            #     tags=["feedback-loop"],
+            # ),
         ]
     )
