@@ -7,10 +7,10 @@ import pyspark.sql as ps
 from graphdatascience import GraphDataScience
 from kedro.io.core import Version
 from kedro_datasets.spark import SparkDataset
-from matrix.inject import _parse_for_objects
 from neo4j import TRUST_ALL_CERTIFICATES, GraphDatabase
 from pyspark.sql import DataFrame, SparkSession
-from refit.v1.core.inject import _parse_for_objects
+
+from matrix.inject import _parse_for_objects
 
 logger = logging.Logger(__name__)
 
