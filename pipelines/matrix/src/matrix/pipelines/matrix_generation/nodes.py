@@ -39,7 +39,11 @@ def enrich_embeddings(
 
 
 def _add_flag_columns(
-    matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_trials: Optional[pd.DataFrame] = None
+    matrix: pd.DataFrame,
+    known_pairs: pd.DataFrame,
+    clinical_trials: Optional[pd.DataFrame] = None,
+    feedback_pairs: Optional[pd.DataFrame] = None,
+    add_feedback_pairs: bool = False,
 ) -> pd.DataFrame:
     """Adds boolean columns flagging known positives and known negatives.
 
@@ -47,7 +51,8 @@ def _add_flag_columns(
         matrix: Drug-disease pairs dataset.
         known_pairs: Labelled ground truth drug-disease pairs dataset.
         clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
-
+        feedback_pairs: Pairs dataset representing feedback from the user.
+        add_feedback_pairs: Whether to add feedback pairs to the matrix.
     Returns:
         Pairs dataset with flag columns.
     """
@@ -59,8 +64,10 @@ def _add_flag_columns(
 
         return result.astype(bool)
 
-    # Flag known positives and negatives
+    # Flag known positives and negatives from training
     test_pairs = known_pairs[known_pairs["split"].eq("TEST")]
+    if feedback_pairs is not None and add_feedback_pairs:
+        test_pairs = pd.concat([test_pairs, feedback_pairs])
     test_pair_is_pos = test_pairs["y"].eq(1)
     test_pos_pairs = test_pairs[test_pair_is_pos]
     test_neg_pairs = test_pairs[~test_pair_is_pos]
@@ -102,6 +109,8 @@ def generate_pairs(
     diseases: pd.DataFrame,
     graph: KnowledgeGraph,
     clinical_trials: Optional[pd.DataFrame] = None,
+    feedback_pairs: Optional[pd.DataFrame] = None,
+    add_feedback_pairs: bool = False,
 ) -> pd.DataFrame:
     """Function to generate matrix dataset.
 
@@ -145,7 +154,7 @@ def generate_pairs(
     is_in_train = matrix.apply(lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1)
     matrix = matrix[~is_in_train]
     # Add flag columns for known positives and negatives
-    matrix = _add_flag_columns(matrix, known_pairs, clinical_trials)
+    matrix = _add_flag_columns(matrix, known_pairs, clinical_trials, feedback_pairs, add_feedback_pairs)
 
     return matrix
 
