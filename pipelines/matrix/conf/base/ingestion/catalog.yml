@@ -461,25 +461,64 @@ ingestion.raw.spoke.edges@pandas:
 #   <<: [*_spark_parquet, *_layer_int]
 #   filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/edges
 
-_feedback_credentials: &_feedback_credentials
-  con: sqlite:///data/tmp/test-db.db
-  connect_args:
-    check_same_thread: False
-
-# _feedback_credentials: &_feedback_credentials
-#   con: sqlite:///data/tmp/test-db.db
-#   connect_args:
-#     check_same_thread: False
-#   creator: 
-#     module: sqlalchemy
-#     function: create_engine
-#     encoded: False
-
-ingestion.raw.feedback_known_pairs.edges@pandas: 
+ingestion.raw.feedback_known_entities.edges@pandas:
   <<: [*_layer_raw]
-  type: pandas.SQLTableDataset
-  table_name: feedback_known_pairs
-  credentials: *_feedback_credentials
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw}/feedback/known_entities/${globals:data_sources.feedback_list.version}/edges.tsv
   save_args:
-    if_exists: replace
+    sep: "\t"
     index: false
+  load_args:
+    sep: "\t"
+    header: true
+
+ingestion.raw.feedback_known_entities.nodes@pandas:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw}/feedback/known_entities/${globals:data_sources.feedback_list.version}/nodes.tsv
+  save_args:
+    sep: "\t"
+    index: false
+  load_args:
+    sep: "\t"
+    header: true
+
+ingestion.raw.feedback_known_entities.edges@spark:
+  <<: [*_layer_raw, *_spark_csv]
+  filepath: ${globals:paths.raw}/feedback/known_entities/${globals:data_sources.feedback_list.version}/edges.tsv
+  load_args:
+    sep: "\t"
+    header: true
+
+ingestion.raw.feedback_known_entities.nodes@spark:
+  <<: [*_layer_raw, *_spark_csv]
+  filepath: ${globals:paths.raw}/feedback/known_entities/${globals:data_sources.feedback_list.version}/nodes.tsv
+  load_args:
+    sep: "\t"
+    header: true
+    
+ingestion.int.feedback_known_entities.nodes:
+  <<: [*_spark_csv, *_layer_int]
+  filepath: ${globals:paths.ingestion}/feedback/known_entities/${globals:data_sources.feedback_list.version}/nodes.tsv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+    mode: overwrite
+
+ingestion.int.feedback_known_entities.edges:
+  <<: [*_spark_csv, *_layer_int]
+  filepath: ${globals:paths.ingestion}/feedback/known_entities/${globals:data_sources.feedback_list.version}/edges.tsv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+    mode: overwrite

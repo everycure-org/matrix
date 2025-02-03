@@ -39,6 +39,8 @@ data_sources:
   disease_list:
     # check releases here: https://github.com/everycure-org/matrix-disease-list/releases
     version: "2024-10-08"
+  feedback_list:
+    version: "2025-02-01"
   kgml_xdtd_gt:
     version: *_rtx_kg_version
   ec_gt:

@@ -202,3 +202,16 @@ preprocessing.raw.feedback_known_entities:
       - "disease_name"
       - "rationale"
       - "is_duplicate"
+
+_feedback_credentials: &_feedback_credentials
+  con: sqlite+pysqlite:///data/tmp/test-db.db
+  
+
+preprocessing.int.feedback_known_entities: 
+  <<: [*_layer_raw]
+  type: pandas.SQLTableDataset
+  table_name: feedback_known_pairs
+  credentials: *_feedback_credentials
+  save_args:
+    if_exists: replace
+    index: false

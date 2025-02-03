@@ -213,22 +213,8 @@ def create_gt(pos_df: pd.DataFrame, neg_df: pd.DataFrame) -> pd.DataFrame:
     return gt_df
 
 
-def create_gt_nodes_edges(edges: pd.DataFrame, source_name: str, target_name: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def create_nodes_edges(edges: pd.DataFrame, source_name: str, target_name: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
     id_list = set(edges[source_name]) | set(edges[target_name])
     nodes = pd.DataFrame(id_list, columns=["id"])
     edges.rename({source_name: "subject", target_name: "object"}, axis=1, inplace=True)
     return nodes, edges
-
-
-@check_output(
-    schema=DataFrameSchema(
-        columns={
-            "drug_id": Column(str, nullable=False),
-            "disease_id": Column(str, nullable=False),
-            "rationale": Column(str, nullable=False),
-        }
-    )
-)
-def ingest_feedback_known(df: pd.DataFrame) -> pd.DataFrame:
-    """Ingest the feedback known pairs."""
-    return df.drop(columns=["is_duplicate"])

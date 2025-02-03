@@ -92,7 +92,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             # EveryCure GT  ingestion and preprocessing
             # -------------------------------------------------------------------------
             node(
-                func=nodes.create_gt_nodes_edges,
+                func=nodes.create_nodes_edges,
                 inputs=[
                     "preprocessing.int.ec_ground_truth.combined",
                     "params:preprocessing.ground_truth_ec.subject",
@@ -132,7 +132,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["ground-truth-kgml"],
             ),
             node(
-                func=nodes.create_gt_nodes_edges,
+                func=nodes.create_nodes_edges,
                 inputs=[
                     "preprocessing.int.kgml_xdtd_ground_truth.combined",
                     "params:preprocessing.ground_truth_kgml_xdtd.subject",
@@ -162,18 +162,25 @@ def create_pipeline(**kwargs) -> Pipeline:
             # Feedback Loop
             # -------------------------------------------------------------------------
             node(
-                func=nodes.ingest_feedback_known,
+                func=lambda x: x,
                 inputs="preprocessing.raw.feedback_known_entities",
-                outputs="ingestion.raw.feedback_known_pairs.edges@pandas",
-                name="create_feedback_loop",
+                outputs="preprocessing.int.feedback_known_entities",
+                name="ingest_known_entities",
                 tags=["feedback-loop"],
             ),
-            # node(
-            #     func=nodes.ingest_feedback_names,
-            #     inputs="preprocessing.raw.feedback_known_entities",
-            #     outputs="ingestion.raw.feedback_known_pairs.edges@pandas",
-            #     name="create_feedback_loop",
-            #     tags=["feedback-loop"],
-            # ),
+            node(
+                func=nodes.create_nodes_edges,
+                inputs=[
+                    "preprocessing.int.feedback_known_entities",
+                    "params:preprocessing.feedback_known_entities.subject",
+                    "params:preprocessing.feedback_known_entities.object",
+                ],
+                outputs=[
+                    "ingestion.raw.feedback_known_entities.nodes@pandas",
+                    "ingestion.raw.feedback_known_entities.edges@pandas",
+                ],
+                name="produce_known_entities_datasets",
+                tags=["feedback-loop"],
+            ),
         ]
     )
