@@ -4,7 +4,7 @@ SELECT SPLIT(subject, ':')[OFFSET(0)] AS subject_prefix,
        SPLIT(object, ':')[OFFSET(0)] AS object_prefix,
        object_nodes.category AS object_category,   
        primary_knowledge_source,       
-       edges.upstream_data_source.list AS upstream_data_source,
+       STRING_AGG(DISTINCT edges.upstream_data_source.list[SAFE_OFFSET(0)].element, ',' ORDER BY edges.upstream_data_source.list[SAFE_OFFSET(0)].element) AS upstream_data_source,
        count(*) AS count
 from `mtrx-hub-dev-3of.release_${release_version}.edges` AS edges
   JOIN `mtrx-hub-dev-3of.release_${release_version}.nodes` AS subject_nodes ON edges.subject = subject_nodes.id
