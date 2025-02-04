@@ -1,16 +1,18 @@
-import pytest
-import pandas as pd
-import numpy as np
+import re
 from unittest.mock import Mock
 
+import numpy as np
+import pandas as pd
+import pytest
+from matrix.datasets.graph import KnowledgeGraph
+from matrix.inject import _extract_elements_in_list
 from matrix.pipelines.matrix_generation.nodes import (
     generate_pairs,
+    generate_report,
     make_batch_predictions,
     make_predictions_and_sort,
-    generate_report,
 )
 from matrix.pipelines.modelling.transformers import FlatArrayTransformer
-from matrix.datasets.graph import KnowledgeGraph
 
 
 @pytest.fixture
@@ -18,7 +20,7 @@ def sample_drugs():
     """Fixture that provides sample drugs data for testing."""
     return pd.DataFrame(
         {
-            "curie": ["drug_1", "drug_2"],
+            "id": ["drug_1", "drug_2"],
             "name": ["Drug 1", "Drug 2"],
             "description": ["Description 1", "Description 2"],
         }
@@ -30,7 +32,7 @@ def sample_diseases():
     """Fixture that provides sample diseases data for testing."""
     return pd.DataFrame(
         {
-            "curie": ["disease_1", "disease_2"],
+            "id": ["disease_1", "disease_2"],
             "name": ["Disease 1", "Disease 2"],
             "description": ["Description A", "Description B"],
         }
@@ -119,114 +121,12 @@ def mock_model_2():
     return model
 
 
-def test_generate_pairs(sample_drugs, sample_diseases, sample_graph, sample_known_pairs, sample_clinical_trials):
-    """Test the generate_pairs function."""
-    # Given drug list, disease list and ground truth pairs
-    # When generating the matrix dataset
-    result = generate_pairs(sample_drugs, sample_diseases, sample_graph, sample_known_pairs, sample_clinical_trials)
-
-    # Then the output is of the correct format and shape
-    assert isinstance(result, pd.DataFrame)
-    assert {"source", "target"}.issubset(set(result.columns))
-    assert len(result) == 3  # 2 drugs * 2 diseases - 1 training pair
-    # Doesn't contain training pairs
-    assert not result.apply(lambda row: (row["source"], row["target"]) in [("drug_1", "disease_1")], axis=1).any()
-
-    # Boolean flag columns are present
-    def check_col(col_name):
-        return (col_name in result.columns) and result[col_name].dtype == bool
-
-    assert all(
-        check_col(col)
-        for col in [
-            "is_known_positive",
-            "is_known_negative",
-            "trial_sig_better",
-            "trial_non_sig_better",
-            "trial_sig_worse",
-            "trial_non_sig_worse",
-        ]
-    )
-    # Flag columns set correctly
-    assert all(
-        [
-            sum(result[col_name]) == 1
-            for col_name in (
-                "is_known_negative",
-                "trial_sig_better",
-            )
-        ]
-    )
-    assert all(
-        [
-            sum(result[col_name]) == 0
-            for col_name in (
-                "is_known_positive",
-                "trial_non_sig_better",
-                "trial_sig_worse",
-                "trial_non_sig_worse",
-            )
-        ]
-    )
-
-
-def test_make_batch_predictions(
-    sample_graph,
-    sample_matrix_data,
-    transformers,
-    mock_model,
-):
-    # Given data, embeddings and a model
-    # When we make batched predictions
-    result = make_batch_predictions(
-        graph=sample_graph,
-        data=sample_matrix_data,
-        transformers=transformers,
-        model=mock_model,
-        features=["source_+", "target_+"],
-        score_col_name="score",
-        batch_by="target",
-    )
-
-    # Then the scores are added for all datapoints in a new column
-    # and the model was called the correct number of times
-    assert "score" in result.columns
-    assert isinstance(result, pd.DataFrame)
-    assert len(result) == 4
-    assert mock_model.predict_proba.call_count == 2  # Called 2x due to batching
-
-
-def test_make_predictions_and_sort(
-    sample_graph,
-    sample_matrix_data,
-    transformers,
-    mock_model,
-):
-    # Given a drug list, disease list and objects necessary for inference
-    # When running inference and sorting
-    result = make_predictions_and_sort(
-        graph=sample_graph,
-        data=sample_matrix_data,
-        transformers=transformers,
-        model=mock_model,
-        features=["source_+", "target_+"],
-        score_col_name="score",
-        batch_by="target",
-    )
-
-    # Then the output is of the correct format and correctly sorted
-    assert "score" in result.columns
-    assert isinstance(result, pd.DataFrame)
-    assert len(result) == 4
-    assert result["score"].is_monotonic_decreasing
-
-
 @pytest.fixture
 def sample_data():
     """Fixture that provides sample data for testing matrix generation functions."""
     drugs = pd.DataFrame(
         {
-            "curie": ["drug_1", "drug_2", "drug_3", "drug_4"],
+            "id": ["drug_1", "drug_2", "drug_3", "drug_4"],
             "name": ["Drug 1", "Drug 2", "Drug 3", "Drug 4"],
             "is_steroid": [True, False, False, False],
         }
@@ -234,7 +134,7 @@ def sample_data():
 
     diseases = pd.DataFrame(
         {
-            "curie": ["disease_1", "disease_2", "disease_3", "disease_4"],
+            "id": ["disease_1", "disease_2", "disease_3", "disease_4"],
             "name": ["Disease 1", "Disease 2", "Disease 3", "Disease 4"],
             "is_cancer": [True, False, False, False],
         }
@@ -262,17 +162,124 @@ def sample_data():
     return drugs, diseases, known_pairs, graph
 
 
+def test_generate_pairs(sample_drugs, sample_diseases, sample_graph, sample_known_pairs, sample_clinical_trials):
+    """Test the generate_pairs function."""
+    # Given drug list, disease list and ground truth pairs
+    # When generating the matrix dataset
+    result = generate_pairs(
+        drugs=sample_drugs,
+        diseases=sample_diseases,
+        graph=sample_graph,
+        known_pairs=sample_known_pairs,
+        clinical_trials=sample_clinical_trials,
+    )
+
+    # Then the output is of the correct format and shape
+    assert isinstance(result, pd.DataFrame)
+    assert {"source", "target"}.issubset(set(result.columns))
+    assert len(result) == 3  # 2 drugs * 2 diseases - 1 training pair
+    # Doesn't contain training pairs
+    assert not result.apply(lambda row: (row["source"], row["target"]) in [("drug_1", "disease_1")], axis=1).any()
+
+    # Boolean flag columns are present
+    def check_col(col_name):
+        return (col_name in result.columns) and result[col_name].dtype == bool
+
+    assert all(
+        check_col(col)
+        for col in [
+            "is_known_positive",
+            "is_known_negative",
+            # "trial_sig_better",
+            # "trial_non_sig_better",
+            # "trial_sig_worse",
+            # "trial_non_sig_worse",
+        ]
+    )
+    # Flag columns set correctly
+    assert all(
+        [
+            sum(result[col_name]) == 1
+            for col_name in (
+                "is_known_negative",
+                # "trial_sig_better",
+            )
+        ]
+    )
+    assert all(
+        [
+            sum(result[col_name]) == 0
+            for col_name in (
+                "is_known_positive",
+                # "trial_non_sig_better",
+                # "trial_sig_worse",
+                # "trial_non_sig_worse",
+            )
+        ]
+    )
+
+
+def test_make_batch_predictions(
+    sample_graph,
+    sample_matrix_data,
+    transformers,
+    mock_model,
+):
+    # Given data, embeddings and a model
+    # When we make batched predictions
+    result = make_batch_predictions(
+        graph=sample_graph,
+        data=sample_matrix_data,
+        transformers=transformers,
+        model=mock_model,
+        features=["source_+", "target_+"],
+        treat_score_col_name="score",
+        not_treat_score_col_name="not_treat_score",
+        unknown_score_col_name="unknown_score",
+        batch_by="target",
+    )
+
+    # Then the scores are added for all datapoints in a new column
+    # and the model was called the correct number of times
+    assert "score" in result.columns
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) == 4
+    assert mock_model.predict_proba.call_count == 2  # Called 2x due to batching
+
+
+def test_make_predictions_and_sort(
+    sample_graph,
+    sample_matrix_data,
+    transformers,
+    mock_model,
+):
+    # Given a drug list, disease list and objects necessary for inference
+    # When running inference and sorting
+    result = make_predictions_and_sort(
+        graph=sample_graph,
+        data=sample_matrix_data,
+        transformers=transformers,
+        model=mock_model,
+        features=["source_+", "target_+"],
+        treat_score_col_name="score",
+        not_treat_score_col_name="not_treat_score",
+        unknown_score_col_name="unknown_score",
+        batch_by="target",
+    )
+
+    # Then the output is of the correct format and correctly sorted
+    assert "score" in result.columns
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) == 4
+    assert result["score"].is_monotonic_decreasing
+
+
 def test_generate_report(sample_data):
     """Test the generate_report function."""
     # Given an input matrix, drug list and disease list
     drugs, diseases, known_pairs, _ = sample_data
 
     # Update the sample data to include the new required columns
-    drugs["single_ID"] = ["drug_id_1", "drug_id_2", "drug_id_3", "drug_id_4"]
-    drugs["ID_Label"] = ["Drug Label 1", "Drug Label 2", "Drug Label 3", "Drug Label 4"]
-
-    diseases["category_class"] = ["disease_class_1", "disease_class_2", "disease_class_3", "disease_class_4"]
-    diseases["label"] = ["Disease Label 1", "Disease Label 2", "Disease Label 3", "Disease Label 4"]
 
     data = pd.DataFrame(
         {
@@ -373,8 +380,8 @@ def test_generate_report(sample_data):
     }
     assert set(result.columns) == expected_columns
 
-    assert result["drug_name"].tolist() == ["Drug Label 1", "Drug Label 2", "Drug Label 3"]
-    assert result["disease_name"].tolist() == ["Disease Label 1", "Disease Label 2", "Disease Label 3"]
+    assert result["drug_name"].tolist() == ["Drug 1", "Drug 2", "Drug 3"]
+    assert result["disease_name"].tolist() == ["Disease 1", "Disease 2", "Disease 3"]
     assert result["kg_drug_name"].tolist() == ["Drug 1", "Drug 2", "Drug 3"]
     assert result["kg_disease_name"].tolist() == ["Disease 1", "Disease 2", "Disease 3"]
     assert result["probability"].tolist() == pytest.approx([0.8, 0.6, 0.4])

@@ -57,6 +57,34 @@ gitGraph
    merge feat/new-project-x  tag: "v0.2"
 ```
     
+## Code Review
+
+Code review is a crucial part of our collaborative development process and a fantastic opportunity for mutual learning and growth. We believe that every code review is a chance to:
+
+- Share knowledge and best practices across the team
+- Learn new approaches and techniques from colleagues
+- Improve code quality through constructive feedback
+- Build a stronger, more cohesive engineering culture
+
+We encourage reviewers to:
+- Ask questions about implementation choices to understand different perspectives
+- Share alternative approaches that might be helpful
+- Point out clever solutions that they learned from
+- Take time to understand the context and goals of the changes
+
+Similarly, we encourage code authors to:
+- Explain their thought process and design decisions
+- Be open to suggestions and alternative viewpoints
+- Use the review process as an opportunity to mentor others
+- View feedback as a chance to improve and learn
+
+To facilitate efficient reviews:
+- We use round-robin assignment within teams
+- Code ownership is defined in our `CODEOWNERS` file at the root of the repository
+- We have several teams organized on [Github Teams](https://github.com/orgs/everycure-org/teams)
+- We expect proactive engagement from both authors and reviewers
+
+Remember: Code review is not about finding fault - it's about learning from each other and collectively improving our codebase. That said, if you spot a bug 🐛, please point it out 🙃.
 
 ## Project Organization
 

@@ -26,6 +26,11 @@ venv: prerequisites
 install: venv precommit-hooks
 	uv pip install -r requirements.txt #force it to install in our venv
 
+install_compatibility: venv precommit-hooks
+	# expects the file requirements.overrides.txt to be present, allows devs to override
+	# versions for local machine limitations (e.g. newer pytorch on macos intel)
+	uv pip install -r requirements.txt --overrides requirements.overrides.txt
+
 precommit: precommit-hooks
 	git fetch origin
 	uv run pre-commit run --from-ref origin/main --to-ref HEAD
@@ -47,7 +52,7 @@ format:
 	uv run ruff check . --fix
 
 # executes E2E integration test fully in docker. 
-docker_test: docker_build
+docker_test: certificate docker_build
 	IMG="$(dev_docker_image)" docker compose -f compose/docker-compose.yml \
 		-f compose/docker-compose.ci.yml \
 		up \
@@ -61,6 +66,11 @@ docker_build:
 
 docker_push: docker_build
 	docker push $(dev_docker_image):${TAG}
+
+certificate:
+	@echo "Generating test SSL certificate for Neo4J."
+	openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout compose/certs/bolt/private.key -out compose/certs/bolt/public.crt -config compose/certs/openssl.cnf > /dev/null 2>&1
+	cat compose/certs/bolt/private.key compose/certs/bolt/public.crt > compose/certs/bolt/private_and_public.pem
 
 compose_up:
 	docker compose -f compose/docker-compose.yml up -d --wait --remove-orphans
@@ -79,7 +89,7 @@ wipe_neo:
 integration_test: compose_up wipe_neo
 	# NOTE: We are running without xgc due to its long runtime. 
 	ulimit -n 10000
-	uv run kedro run --env test -p test --runner ThreadRunner --without-tags xgc,not-shared
+	uv run kedro run --env test -p test --without-tags xgc,not-shared
 
 fabricate:
 	uv run kedro run -p fabricator --env test

@@ -18,26 +18,29 @@ jobs:
         with:
           # Stale settings
           days-before-stale: 90
-          days-before-close: 90
+          days-before-close: 28
+          # we give people 2 weeks to respond to stale PRs before closing them
+          days-before-pr-close: 14
+          days-before-pr-stale: 14
           
           # Stale issue settings
           stale-issue-message: |
             This issue has been automatically marked as stale because it has had no activity in the last 90 days.
             
             If this issue is still relevant, please leave a comment to keep it open.
-            Otherwise, it will be closed in 90 days if no further activity occurs.
+            Otherwise, it will be closed in 28 days if no further activity occurs.
           stale-issue-label: 'stale'
           
           # Stale PR settings
           stale-pr-message: |
-            This pull request has been automatically marked as stale because it has had no activity in the last 90 days.
+            This pull request has been automatically marked as stale because it has had no activity in the last 14 days.
             
             If this PR is still relevant:
-            1. Please update it to the latest main/master branch
-            2. Address any existing review comments
-            3. Leave a comment to keep it open
+            - Please update it to the latest main/master branch
+            - Address any existing review comments
+            - Leave a comment to keep it open
             
-            Otherwise, it will be closed in 90 days if no further activity occurs.
+            Otherwise, it will be closed in 2 weeks if no further activity occurs.
           stale-pr-label: 'stale'
           
           # Close messages

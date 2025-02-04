@@ -1,33 +1,26 @@
 import logging
-from tqdm import tqdm
-from typing import List, Dict, Union, Tuple
-
-from sklearn.impute._base import _BaseImputer
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
-
-from pyspark.sql import DataFrame
+import pyspark.sql as ps
 import pyspark.sql.functions as F
-
-from refit.v1.core.inject import inject_object
-from refit.v1.core.inline_has_schema import has_schema
-from refit.v1.core.make_list_regexable import _extract_elements_in_list
-
 from matrix.datasets.graph import KnowledgeGraph
-
-from matrix.pipelines.modelling.nodes import apply_transformers
+from matrix.inject import _extract_elements_in_list, inject_object
 from matrix.pipelines.modelling.model import ModelWrapper
-
-from datetime import datetime
+from matrix.pipelines.modelling.nodes import apply_transformers
+from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
+from sklearn.impute._base import _BaseImputer
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
 
 def enrich_embeddings(
-    nodes: DataFrame,
-    drugs: DataFrame,
-    diseases: DataFrame,
-) -> DataFrame:
+    nodes: ps.DataFrame,
+    drugs: ps.DataFrame,
+    diseases: ps.DataFrame,
+) -> ps.DataFrame:
     """Function to enrich drug and disease list with embeddings.
 
     Args:
@@ -38,7 +31,6 @@ def enrich_embeddings(
     return (
         drugs.withColumn("is_drug", F.lit(True))
         .unionByName(diseases.withColumn("is_disease", F.lit(True)), allowMissingColumns=True)
-        .withColumnRenamed("curie", "id")
         .join(nodes, on="id", how="inner")
         .select("is_drug", "is_disease", "id", "topological_embedding")
         .withColumn("is_drug", F.coalesce(F.col("is_drug"), F.lit(False)))
@@ -46,7 +38,9 @@ def enrich_embeddings(
     )
 
 
-def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_trials: pd.DataFrame) -> pd.DataFrame:
+def _add_flag_columns(
+    matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_trials: Optional[pd.DataFrame] = None
+) -> pd.DataFrame:
     """Adds boolean columns flagging known positives and known negatives.
 
     Args:
@@ -60,7 +54,10 @@ def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_
 
     def create_flag_column(pairs):
         pairs_set = set(zip(pairs["source"], pairs["target"]))
-        return matrix.apply(lambda row: (row["source"], row["target"]) in pairs_set, axis=1)
+        # Ensure the function returns a Series
+        result = matrix.apply(lambda row: (row["source"], row["target"]) in pairs_set, axis=1)
+
+        return result.astype(bool)
 
     # Flag known positives and negatives
     test_pairs = known_pairs[known_pairs["split"].eq("TEST")]
@@ -70,8 +67,9 @@ def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_
     matrix["is_known_positive"] = create_flag_column(test_pos_pairs)
     matrix["is_known_negative"] = create_flag_column(test_neg_pairs)
 
+    # TODO: Need to make this dynamic
     # Flag clinical trials data
-    clinical_trials = clinical_trials.rename(columns={"drug_kg_curie": "source", "disease_kg_curie": "target"})
+    clinical_trials = clinical_trials.rename(columns={"subject": "source", "object": "target"})
     matrix["trial_sig_better"] = create_flag_column(clinical_trials[clinical_trials["significantly_better"] == 1])
     matrix["trial_non_sig_better"] = create_flag_column(
         clinical_trials[clinical_trials["non_significantly_better"] == 1]
@@ -82,56 +80,46 @@ def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_
     return matrix
 
 
-def spark_to_pd(nodes: DataFrame) -> pd.DataFrame:
-    """Temporary function to transform spark parquet to pandas parquet.
-
-    Related to https://github.com/everycure-org/matrix/issues/71.
-    TODO: replace/remove the function once pyarrow error is fixed.
-
-    Args:
-        nodes: Dataframe with node embeddings
-    """
-    return nodes.toPandas()
-
-
-@has_schema(
-    schema={
-        "source": "object",
-        "target": "object",
-        "is_known_positive": "bool",
-        "is_known_negative": "bool",
-        "trial_sig_better": "bool",
-        "trial_non_sig_better": "bool",
-        "trial_sig_worse": "bool",
-        "trial_non_sig_worse": "bool",
-    },
-    allow_subset=True,
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "source": Column(str, nullable=False),
+            "target": Column(str, nullable=False),
+            "is_known_positive": Column(bool, nullable=False),
+            "is_known_negative": Column(bool, nullable=False),
+            "trial_sig_better": Column(bool, nullable=False),
+            "trial_non_sig_better": Column(bool, nullable=False),
+            "trial_sig_worse": Column(bool, nullable=False),
+            "trial_non_sig_worse": Column(bool, nullable=False),
+        },
+        unique=["source", "target"],
+    )
 )
 @inject_object()
 def generate_pairs(
+    known_pairs: pd.DataFrame,
     drugs: pd.DataFrame,
     diseases: pd.DataFrame,
     graph: KnowledgeGraph,
-    known_pairs: pd.DataFrame,
-    clinical_trials: pd.DataFrame,
+    clinical_trials: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """Function to generate matrix dataset.
 
     FUTURE: Consider rewriting operations in PySpark for speed
 
     Args:
+        known_pairs: Labelled ground truth drug-disease pairs dataset.
         drugs: Dataframe containing IDs for the list of drugs.
         diseases: Dataframe containing IDs for the list of diseases.
         graph: Object containing node embeddings.
-        known_pairs: Labelled ground truth drug-disease pairs dataset.
         clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
 
     Returns:
         Pairs dataframe containing all combinations of drugs and diseases that do not lie in the training set.
     """
     # Collect list of drugs and diseases
-    drugs_lst = drugs["curie"].tolist()
-    diseases_lst = diseases["curie"].tolist()
+    drugs_lst = drugs["id"].tolist()
+    diseases_lst = diseases["id"].tolist()
 
     # Remove duplicates
     drugs_lst = list(set(drugs_lst))
@@ -156,7 +144,6 @@ def generate_pairs(
     train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
     is_in_train = matrix.apply(lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1)
     matrix = matrix[~is_in_train]
-
     # Add flag columns for known positives and negatives
     matrix = _add_flag_columns(matrix, known_pairs, clinical_trials)
 
@@ -169,7 +156,9 @@ def make_batch_predictions(
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     model: ModelWrapper,
     features: List[str],
-    score_col_name: str,
+    treat_score_col_name: str,
+    not_treat_score_col_name: str,
+    unknown_score_col_name: str,
     batch_by: str = "target",
 ) -> pd.DataFrame:
     """Generate probability scores for drug-disease dataset.
@@ -220,24 +209,22 @@ def make_batch_predictions(
         transformed = apply_transformers(batch, transformers)
 
         # Extract features
-        batch_features = _extract_elements_in_list(transformed.columns, features, raise_exc=True)
+        batch_features = _extract_elements_in_list(transformed.columns, features, True)
 
         # Generate model probability scores
-        batch[score_col_name] = model.predict_proba(transformed[batch_features].values)[:, 1]
-
-        # Drop embedding columns
+        preds = model.predict_proba(transformed[batch_features].values)
+        batch[not_treat_score_col_name] = preds[:, 0]
+        batch[treat_score_col_name] = preds[:, 1]
+        batch[unknown_score_col_name] = preds[:, 2]
         batch = batch.drop(columns=["source_embedding", "target_embedding"])
         return batch
 
-    # Group data by the specified prefix
     grouped = data.groupby(batch_by)
 
-    # Process data in batches
     result_parts = []
     for _, batch in tqdm(grouped):
         result_parts.append(process_batch(batch))
 
-    # Combine results
     results = pd.concat(result_parts, axis=0)
 
     return results
@@ -249,7 +236,9 @@ def make_predictions_and_sort(
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     model: ModelWrapper,
     features: List[str],
-    score_col_name: str,
+    treat_score_col_name: str,
+    not_treat_score_col_name: str,
+    unknown_score_col_name: str,
     batch_by: str,
 ) -> pd.DataFrame:
     """Generate and sort probability scores for a drug-disease dataset.
@@ -262,27 +251,38 @@ def make_predictions_and_sort(
         transformers: Dictionary of trained transformers.
         model: Model making the predictions.
         features: List of features, may be regex specified.
-        score_col_name: Probability score column name.
+        treat_score_col_name: Probability score column name.
+        not_treat_score_col_name: Probability score column name for not treat.
+        unknown_score_col_name: Probability score column name for unknown.
         batch_by: Column to use for batching (e.g., "target" or "source").
 
     Returns:
         Pairs dataset sorted by an additional column containing the probability scores.
     """
     # Generate scores
-    data = make_batch_predictions(graph, data, transformers, model, features, score_col_name, batch_by=batch_by)
+    data = make_batch_predictions(
+        graph,
+        data,
+        transformers,
+        model,
+        features,
+        treat_score_col_name,
+        not_treat_score_col_name,
+        unknown_score_col_name,
+        batch_by=batch_by,
+    )
 
     # Sort by the probability score
-    sorted_data = data.sort_values(by=score_col_name, ascending=False)
+    sorted_data = data.sort_values(by=treat_score_col_name, ascending=False)
     return sorted_data
 
 
-def generate_summary_metadata(matrix_parameters: Dict, score_col_name: str) -> pd.DataFrame:
+def generate_summary_metadata(matrix_parameters: Dict) -> pd.DataFrame:
     """
     Generate metadata for the output matrix.
 
     Args:
         matrix_parameters (Dict): Dictionary containing matrix parameters.
-        score_col_name (str): Name of the score column.
 
     Returns:
         pd.DataFrame: DataFrame containing summary metadata.
@@ -332,18 +332,17 @@ def _process_top_pairs(
         pd.DataFrame: Processed DataFrame containing the top pairs with additional information.
     """
     top_pairs = data.head(n_reporting).copy()
-
     # Generate mapping dictionaries
     drug_mappings = {
-        "kg_name": {row["curie"]: row["name"] for _, row in drugs.iterrows()},
-        "list_id": {row["curie"]: row["single_ID"] for _, row in drugs.iterrows()},
-        "list_name": {row["curie"]: row["ID_Label"] for _, row in drugs.iterrows()},
+        "kg_name": {row["id"]: row["name"] for _, row in drugs.iterrows()},
+        "list_id": {row["id"]: row["id"] for _, row in drugs.iterrows()},
+        "list_name": {row["id"]: row["name"] for _, row in drugs.iterrows()},
     }
 
     disease_mappings = {
-        "kg_name": {row["curie"]: row["name"] for _, row in diseases.iterrows()},
-        "list_id": {row["curie"]: row["category_class"] for _, row in diseases.iterrows()},
-        "list_name": {row["curie"]: row["label"] for _, row in diseases.iterrows()},
+        "kg_name": {row["id"]: row["name"] for _, row in diseases.iterrows()},
+        "list_id": {row["id"]: row["id"] for _, row in diseases.iterrows()},
+        "list_name": {row["id"]: row["name"] for _, row in diseases.iterrows()},
     }
 
     # Add additional information
@@ -400,12 +399,12 @@ def _flag_known_pairs(top_pairs: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: DataFrame with added flags for known positive and negative pairs.
     """
-    top_pairs["is_known_positive"] = (
-        top_pairs["is_known_positive"] | top_pairs["trial_sig_better"] | top_pairs["trial_non_sig_better"]
-    )
-    top_pairs["is_known_negative"] = (
-        top_pairs["is_known_negative"] | top_pairs["trial_sig_worse"] | top_pairs["trial_non_sig_worse"]
-    )
+    top_pairs["is_known_positive"] = top_pairs[
+        "is_known_positive"
+    ]  # | top_pairs["trial_sig_better"] | top_pairs["trial_non_sig_better"]
+    top_pairs["is_known_negative"] = top_pairs[
+        "is_known_negative"
+    ]  # | top_pairs["trial_sig_worse"] | top_pairs["trial_non_sig_worse"]
     return top_pairs
 
 
@@ -479,12 +478,15 @@ def _add_tags(
         pd.DataFrame: DataFrame with added tag columns.
     """
     # Add tag columns for drugs and diseasesto the top pairs DataFrame
-    for set, set_id, df in [("drugs", "kg_drug_id", drugs), ("diseases", "kg_disease_id", diseases)]:
+    for set, set_id, df, df_id in [
+        ("drugs", "kg_drug_id", drugs, "id"),
+        ("diseases", "kg_disease_id", diseases, "id"),
+    ]:
         for tag_name, _ in matrix_params.get(set, {}).items():
             if tag_name not in df.columns:
                 logger.warning(f"Tag column '{tag_name}' not found in {set} DataFrame. Skipping.")
             else:
-                tag_mapping = dict(zip(df["curie"], df[tag_name]))
+                tag_mapping = dict(zip(df[df_id], df[tag_name]))
                 # Add the tag to top_pairs
                 top_pairs[tag_name] = top_pairs[set_id].map(tag_mapping)
 
@@ -523,7 +525,7 @@ def generate_metadata(
             meta_dict[key] = value
 
     # Generate legends column and filter out based on
-    legends_df = generate_summary_metadata(matrix_params, score_col_name)
+    legends_df = generate_summary_metadata(matrix_params)
     legends_df = legends_df.loc[legends_df["Key"].isin(matrix_report.columns.values)]
 
     # Generate metadata df
@@ -561,10 +563,10 @@ def generate_report(
         score_col_name: Probability score column name.
         matrix_params: Dictionary containing matrix metadata and other meters.
         run_metadata: Dictionary containing run metadata.
-        score_col_name: Probability score column name.
     Returns:
         Dataframe with the top pairs and additional information for the drugs and diseases.
     """
+    # Add tags and process top pairs
     stats = matrix_params.get("stats_col_names")
     tags = matrix_params.get("tags")
     top_pairs = _process_top_pairs(data, n_reporting, drugs, diseases, score_col_name)

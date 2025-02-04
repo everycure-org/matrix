@@ -4,17 +4,10 @@ FROM $CUDA_IMAGE AS build
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
 
-# Install Python 3.11 and required system packages
+# Install required system packages
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    software-properties-common && \
-    add-apt-repository ppa:deadsnakes/ppa && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
-    python3.11 python3.11-venv python3.11-dev \
-    gcc curl g++ openjdk-11-jre-headless libomp-dev git && \
-    ln -s /usr/bin/python3.11 /usr/bin/python && \
-    curl -sS https://bootstrap.pypa.io/get-pip.py | python && \
+    gcc curl g++ openjdk-17-jre-headless libomp-dev git && \
     apt-get clean
 
 
@@ -22,15 +15,13 @@ RUN apt-get update && \
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
-# Set up Python dependencies
-ENV PIP_NO_CACHE_DIR=1
 WORKDIR /app
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ADD requirements.txt .
-RUN --mount=type=cache,target=/root/.cache pip install -U uv
 
 # Install Python dependencies
 ADD packages/ ./packages/
-RUN --mount=type=cache,target=/root/.cache uv venv && \
+RUN --mount=type=cache,target=/root/.cache uv venv -p 3.11 && \
     uv pip install -r requirements.txt
 ENV PATH=/app/.venv/bin:$PATH
 

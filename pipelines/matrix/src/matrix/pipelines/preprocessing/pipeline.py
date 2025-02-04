@@ -1,32 +1,25 @@
-from kedro.pipeline import Pipeline, pipeline, node
+from kedro.pipeline import Pipeline, node, pipeline
 
 from . import nodes
+from .tagging import generate_tags
 
 
-# NOTE: This pipeline in highly preliminary and used for ingestion of the
-# medical data provided in Google Sheets __ONLY__.
 def create_pipeline(**kwargs) -> Pipeline:
-    """Create integration pipeline."""
+    """Create preprocessing pipeline."""
     return pipeline(
         [
-            # Normalize nodes
+            # -------------------------------------------------------------------------
+            # EC Medical Team ingestion and enrichment
+            # -------------------------------------------------------------------------
             node(
-                func=nodes.create_int_nodes,
-                inputs={
-                    "nodes": "preprocessing.raw.nodes",
-                    "name_resolver": "params:preprocessing.translator.name_resolver",
-                    "endpoint": "params:preprocessing.translator.normalizer",
-                    "conflate": "params:integration.nodenorm.conflate",
-                    "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
-                    "batch_size": "params:integration.nodenorm.batch_size",
-                    "parallelism": "params:integration.nodenorm.parallelism",
-                },
+                func=nodes.process_medical_nodes,
+                inputs=["preprocessing.raw.nodes", "params:preprocessing.name_resolution.url"],
                 outputs="preprocessing.int.nodes",
                 name="normalize_ec_medical_team_nodes",
                 tags=["ec-medical-kg"],
             ),
             node(
-                func=nodes.create_int_edges,
+                func=nodes.process_medical_edges,
                 inputs=[
                     "preprocessing.int.nodes",
                     "preprocessing.raw.edges",
@@ -36,36 +29,23 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["ec-medical-kg"],
             ),
             node(
-                func=nodes.create_prm_edges,
-                inputs=[
-                    "preprocessing.int.edges",
-                ],
-                outputs="ingestion.raw.ec_medical_team.edges@pandas",
-                name="create_prm_ec_medical_team_edges",
-                tags=["ec-medical-kg"],
-            ),
-            node(
-                func=nodes.create_prm_nodes,
+                func=lambda x, y: [x, y],
                 inputs=[
                     "preprocessing.int.nodes",
+                    "preprocessing.int.edges",
                 ],
-                outputs="ingestion.raw.ec_medical_team.nodes@pandas",
-                name="create_prm_ec_medical_team_nodes",
+                outputs=["ingestion.raw.ec_medical_team.nodes@pandas", "ingestion.raw.ec_medical_team.edges@pandas"],
+                name="produce_medical_kg",
                 tags=["ec-medical-kg"],
             ),
-            # NOTE: Take raw clinical trial data and map the "name" to "curie" using the synonymizer
+            # -------------------------------------------------------------------------
+            # EC Clinical Trials ingestion and enrichment
+            # -------------------------------------------------------------------------
             node(
-                func=nodes.map_name_to_curie,
+                func=nodes.add_source_and_target_to_clinical_trails,
                 inputs={
                     "df": "preprocessing.raw.clinical_trials_data",
-                    "name_resolver": "params:preprocessing.translator.name_resolver",
-                    "endpoint": "params:preprocessing.translator.normalizer",
-                    "drug_types": "params:modelling.drug_types",
-                    "disease_types": "params:modelling.disease_types",
-                    "conflate": "params:integration.nodenorm.conflate",
-                    "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
-                    "batch_size": "params:integration.nodenorm.batch_size",
-                    "parallelism": "params:integration.nodenorm.parallelism",
+                    "resolver_url": "params:preprocessing.name_resolution.url",
                 },
                 outputs="preprocessing.int.mapped_clinical_trials_data",
                 name="mapped_clinical_trials_data",
@@ -77,88 +57,65 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "preprocessing.int.mapped_clinical_trials_data",
                 ],
-                outputs="ingestion.raw.clinical_trials_data",
+                outputs={
+                    "nodes": "ingestion.raw.ec_clinical_trails.nodes@pandas",
+                    "edges": "ingestion.raw.ec_clinical_trails.edges@pandas",
+                },
                 name="clean_clinical_trial_data",
                 tags=["ec-clinical-trials-data"],
             ),
-            node(
-                func=nodes.clean_drug_list,
-                inputs={
-                    "drug_df": "preprocessing.raw.drug_list",
-                    "endpoint": "params:preprocessing.translator.normalizer",
-                    "conflate": "params:integration.nodenorm.conflate",
-                    "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
-                    "batch_size": "params:integration.nodenorm.batch_size",
-                    "parallelism": "params:integration.nodenorm.parallelism",
-                },
-                outputs="ingestion.raw.drug_list@pandas",
-                name="resolve_drug_list",
-                tags=["drug-list"],
-            ),
+            # -------------------------------------------------------------------------
+            # Drug List ingestion
+            # -------------------------------------------------------------------------
             node(
                 func=lambda x: x,
-                inputs="ingestion.raw.drug_list@pandas",
-                outputs="ingestion.reporting.drug_list",
-                name="write_drug_list_to_gsheets",
+                inputs=["preprocessing.raw.drug_list"],
+                outputs="ingestion.raw.drug_list.nodes@pandas",
+                name="write_drug_list",
+                tags=["drug-list"],
             ),
-            # FUTURE: Remove this node once we have a new disease list with tags
+            # -------------------------------------------------------------------------
+            # Disease List ingestion and enrichment
+            # -------------------------------------------------------------------------
             node(
-                func=nodes.enrich_disease_list,
+                func=generate_tags,
                 inputs=[
                     "preprocessing.raw.disease_list",
-                    "params:preprocessing.enrichment_tags",
+                    "params:preprocessing.enrichment.model",
+                    "params:preprocessing.enrichment.tags",
                 ],
-                outputs="preprocessing.raw.enriched_disease_list",
+                outputs="ingestion.raw.disease_list.nodes@pandas",
                 name="enrich_disease_list",
                 tags=["disease-list"],
             ),
+            # -------------------------------------------------------------------------
+            # Ground Truth ingestion and preprocessing
+            # -------------------------------------------------------------------------
             node(
-                func=nodes.clean_disease_list,
-                inputs={
-                    "disease_df": "preprocessing.raw.enriched_disease_list",
-                    "endpoint": "params:preprocessing.translator.normalizer",
-                    "conflate": "params:integration.nodenorm.conflate",
-                    "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
-                    "batch_size": "params:integration.nodenorm.batch_size",
-                    "parallelism": "params:integration.nodenorm.parallelism",
-                },
-                outputs="ingestion.raw.disease_list@pandas",
-                name="resolve_disease_list",
-                tags=["disease-list"],
-            ),
-            node(
-                func=lambda x: x,
-                inputs="ingestion.raw.disease_list@pandas",
-                outputs="ingestion.reporting.disease_list",
-                name="write_disease_list_to_gsheets",
-            ),
-            node(
-                func=nodes.clean_input_sheet,
-                inputs={
-                    "input_df": "preprocessing.raw.infer_sheet",
-                    "endpoint": "params:preprocessing.translator.normalizer",
-                    "conflate": "params:integration.nodenorm.conflate",
-                    "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
-                    "batch_size": "params:integration.nodenorm.batch_size",
-                    "parallelism": "params:integration.nodenorm.parallelism",
-                },
-                outputs="inference.raw.normalized_inputs",
-                name="clean_input_sheet",
-                tags=["inference-input"],
-            ),
-            node(
-                func=nodes.clean_gt_data,
+                func=nodes.create_gt,
                 inputs={
                     "pos_df": "preprocessing.raw.ground_truth.positives",
                     "neg_df": "preprocessing.raw.ground_truth.negatives",
-                    "endpoint": "params:preprocessing.translator.normalizer",
-                    "conflate": "params:integration.nodenorm.conflate",
-                    "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
-                    "batch_size": "params:integration.nodenorm.batch_size",
-                    "parallelism": "params:integration.nodenorm.parallelism",
                 },
-                outputs=["modelling.raw.ground_truth.positives@pandas", "modelling.raw.ground_truth.negatives@pandas"],
-                name="resolve_gt",
+                outputs="preprocessing.int.ground_truth.combined",
+                name="create_gt_dataframe",
+                tags=["ground-truth"],
+            ),
+            node(
+                func=nodes.create_gt_nodes_edges,
+                inputs="preprocessing.int.ground_truth.combined",
+                outputs=["preprocessing.int.ground_truth.nodes@pandas", "preprocessing.int.ground_truth.edges@pandas"],
+                name="create_nodes_and_edges",
+                tags=["ground-truth"],
+            ),
+            node(
+                func=lambda x, y: [x, y],
+                inputs=[
+                    "preprocessing.int.ground_truth.nodes@pandas",
+                    "preprocessing.int.ground_truth.edges@pandas",
+                ],
+                outputs=["ingestion.raw.ground_truth.nodes@pandas", "ingestion.raw.ground_truth.edges@pandas"],
+                name="produce_ground_truth_kg",
                 tags=["ground-truth"],
             ),
         ]
