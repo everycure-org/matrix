@@ -402,7 +402,7 @@ ingestion.raw.spoke.edges@pandas:
 
 # -------------------------------------------------------------------------
 # Reporting
-
+# -------------------------------------------------------------------------
 
 ingestion.reporting.{source}.nodes:
   <<: [*_spark_parquet, *_layer_reporting]

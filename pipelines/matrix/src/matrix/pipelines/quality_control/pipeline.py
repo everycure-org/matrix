@@ -29,8 +29,8 @@ def ingestion_quality_control_pipeline() -> Pipeline:
                             "edges": f"ingestion.int.{source_name}.edges",
                         },
                         outputs={
-                            "nodes_report": f"ingestion.reporting.{source_name}.nodes",
-                            "edges_report": f"ingestion.reporting.{source_name}.edges",
+                            "nodes_report": f"ingestion.reporting.{source_name}.nodes.ingested",
+                            "edges_report": f"ingestion.reporting.{source_name}.edges.ingested",
                         },
                         name=f"qc_{source_name}_ingested",
                     )
