@@ -5,6 +5,8 @@ import secrets
 import subprocess
 import sys
 from pathlib import Path
+from queue import Queue
+from threading import Thread
 from typing import List, Optional
 
 import click
@@ -58,15 +60,15 @@ def cli():
 @click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
 # fmt: on
 def submit(
-    username: str, 
-    namespace: str, 
-    run_name: str, 
-    release_version: str, 
-    pipeline: str, 
-    quiet: bool, 
-    dry_run: bool, 
-    from_nodes: List[str], 
-    is_test: bool, 
+    username: str,
+    namespace: str,
+    run_name: str,
+    release_version: str,
+    pipeline: str,
+    quiet: bool,
+    dry_run: bool,
+    from_nodes: List[str],
+    is_test: bool,
     headless: bool,
     environment: str
 ):
@@ -97,7 +99,7 @@ def submit(
 
     if not dry_run:
         summarize_submission(run_name, namespace, pipeline, environment, is_test, release_version, headless)
-   
+
     _submit(
         username=username,
         namespace=namespace,
@@ -114,13 +116,13 @@ def submit(
 
 
 def _submit(
-    username: str, 
-    namespace: str, 
-    run_name: str, 
+    username: str,
+    namespace: str,
+    run_name: str,
     release_version: str,
     pipeline_obj: Pipeline,
     verbose: bool,
-    dry_run: bool, 
+    dry_run: bool,
     environment: str,
     template_directory: Path,
     allow_interactions: bool = True,
@@ -166,13 +168,13 @@ def _submit(
         if dry_run:
             return
 
-        build_push_docker(run_name, verbose=True)
+        build_push_docker(run_name, verbose=verbose)
 
         ensure_namespace(namespace, verbose=verbose)
 
         apply_argo_template(namespace, file_path, verbose=verbose)
 
-        submit_workflow(run_name, namespace, verbose=False)
+        submit_workflow(run_name, namespace, verbose=verbose)
 
         console.print(Panel.fit(
             f"[bold green]Workflow {'prepared' if dry_run else 'submitted'} successfully![/bold green]\n"
@@ -207,11 +209,11 @@ def summarize_submission(run_name: str, namespace: str, pipeline: str, environme
     console.print("Reminder: A data release should only be submitted once and not overwritten.\n"
                   "If you need to make changes, please make this part of the next release.\n"
                   "Experiments (modelling pipeline) are nested under the release and can be overwritten.\n\n")
-    
+
     if not headless:
         if not click.confirm("Are you sure you want to submit the workflow?", default=False):
             raise click.Abort()
-        
+
 
 def run_subprocess(
     cmd: str,
@@ -237,36 +239,25 @@ def run_subprocess(
         stderr=subprocess.PIPE if stream_output else None,
         text=True,
         bufsize=1,
+        universal_newlines=True,
     )
-
+    q = Queue()
     stdout, stderr = [], []
 
     if stream_output:
-        while True:
-            out_line = process.stdout.readline() if process.stdout else ''
-            err_line = process.stderr.readline() if process.stderr else ''
-
-            if not out_line and not err_line and process.poll() is not None:
-                break
-
-            if out_line:
-                sys.stdout.write(out_line)
-                sys.stdout.flush()
-                stdout.append(out_line)
-            if err_line:
-                sys.stderr.write(err_line)
-                sys.stderr.flush()
-                stderr.append(err_line)
-
-        # Get any remaining output
-        out, err = process.communicate()
-        if out:
-            stdout.append(out)
-        if err:
-            stderr.append(err)
-    else:
-        process.wait()
-
+        tout = Thread(
+            target=read_output, args=(process.stdout, [q.put, stdout.append]))
+        terr = Thread(
+            target=read_output, args=(process.stderr, [q.put, stderr.append]))
+        twrite = Thread(target=write_output, args=(q.get,))
+        for t in (tout, terr, twrite):
+            t.daemon = True
+            t.start()
+        for t in (tout, terr):
+            t.join()
+        q.put(None)
+        twrite.join()
+    process.wait()
     if check and process.returncode != 0:
         raise subprocess.CalledProcessError(
             process.returncode, cmd,
@@ -279,6 +270,19 @@ def run_subprocess(
         ''.join(stdout) if stdout else None,
         ''.join(stderr) if stderr else None
     )
+
+
+def read_output(pipe, funcs):
+    for line in iter(pipe.readline, ''):
+        for func in funcs:
+            func(line)
+            # time.sleep(1)
+    pipe.close()
+
+def write_output(get):
+    for line in iter(get, None):
+        sys.stdout.write(line)
+
 
 def command_exists(command: str) -> bool:
     """Check if a command exists in the system."""
@@ -365,18 +369,18 @@ def can_talk_to_kubernetes(
 def build_push_docker(username: str, verbose: bool):
     """Build and push Docker image."""
     console.print("Building Docker image...")
-    run_subprocess(f"make docker_push TAG={username}", stream_output=False)
+    run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
     console.print("[green]✓[/green] Docker image built and pushed")
 
 
 def build_argo_template(
-    run_name: str, 
-    release_version: str, 
-    username: str, 
-    namespace: str, 
-    pipeline_obj: Pipeline, 
+    run_name: str,
+    release_version: str,
+    username: str,
+    namespace: str,
+    pipeline_obj: Pipeline,
     environment: str,
-    is_test: bool, 
+    is_test: bool,
     default_execution_resources: Optional[ArgoResourceConfig] = None
 ) -> str:
     """Build Argo workflow template."""
@@ -408,6 +412,7 @@ def build_argo_template(
 
     return generated_template
 
+
 def save_argo_template(argo_template: str, template_directory: Path) -> str:
     console.print("Writing Argo template...")
     file_path = template_directory / "argo-workflow-template.yml"
@@ -425,6 +430,7 @@ def argo_template_lint(file_path: str, verbose: bool) -> str:
         stream_output=verbose,
     )
     console.print("[green]✓[/green] Argo template linted")
+
 
 def ensure_namespace(namespace, verbose: bool):
     """Create or verify Kubernetes namespace."""
@@ -451,6 +457,7 @@ def apply_argo_template(namespace, file_path: Path, verbose: bool):
         stream_output=verbose,
     )
     console.print("[green]✓[/green] Argo template applied")
+
 
 def submit_workflow(run_name: str, namespace: str, verbose: bool):
     """Submit the Argo workflow and provide instructions for watching."""
@@ -479,6 +486,7 @@ def submit_workflow(run_name: str, namespace: str, verbose: bool):
     console.print("\nTo view the workflow in the Argo UI, run:")
     console.print(f"argo get -n {namespace} {job_name}")
     console.print("[green]✓[/green] Workflow submitted")
+
 
 def get_run_name(run_name: Optional[str]) -> str:
     """Get the experiment name based on input or Git branch.
