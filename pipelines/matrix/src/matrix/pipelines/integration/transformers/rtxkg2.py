@@ -67,6 +67,54 @@ class RTXTransformer(GraphTransformer):
         ).transform(filter_semmed, curie_to_pmids, **semmed_filters)
         # fmt: on
 
+    # TODO: use multiple inheritance to add this to the interface as not all sources need this function right now
+    def count_knowledge_graph(self, nodes: ps.DataFrame, edges: ps.DataFrame) -> Dict[str, ps.DataFrame]:
+        # nodes report
+        nodes_count_by_columns = ["category", "prefix"]
+        nodes_report = (
+            nodes.withColumn("prefix", f.split("id:ID", ":")[0])
+            .select(*nodes_count_by_columns)
+            .groupBy(*nodes_count_by_columns)
+            .count()
+        )
+
+        # edges report
+        subject_nodes = (
+            nodes.select("id:ID", "category").withColumnRenamed("category", "subject_category").alias("subject_nodes")
+        )
+        object_nodes = (
+            nodes.select("id:ID", "category").withColumnRenamed("category", "object_category").alias("object_nodes")
+        )
+
+        edges_count_by_columns = [
+            "subject_prefix",
+            "subject_category",
+            "predicate",
+            "object_prefix",
+            "object_category",
+            "primary_knowledge_source",
+            "aggregator_knowledge_source",
+        ]
+        edges_report = (
+            edges.withColumn(
+                "aggregator_knowledge_source", f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR)
+            )  # RTX KG2 2.10 does not exist
+            .withColumn(
+                "primary_knowledge_source", f.col("aggregator_knowledge_source").getItem(0)
+            )  # RTX KG2 2.10 `primary_knowledge_source``
+            .withColumn("subject_prefix", f.split("subject", ":")[0])
+            .withColumn("object_prefix", f.split("object", ":")[0])
+            .join(subject_nodes, edges.subject == subject_nodes["`id:ID`"], "left")
+            .join(object_nodes, edges.object == object_nodes["`id:ID`"], "left")
+            .select(*edges_count_by_columns)
+            .groupBy(*edges_count_by_columns)
+            .count()
+        )
+        return {
+            "nodes_report": nodes_report,
+            "edges_report": edges_report,
+        }
+
 
 def filter_semmed(
     edges_df: ps.DataFrame,

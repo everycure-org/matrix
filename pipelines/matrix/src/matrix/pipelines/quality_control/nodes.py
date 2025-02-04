@@ -1,23 +1,36 @@
-from typing import Dict, List
+from typing import Dict
 
 import pyspark.sql as ps
 import pyspark.sql.functions as F
 
+from matrix.inject import inject_object
+from matrix.pipelines.integration.transformers.transformer import GraphTransformer
 
-def count_filtered_nodes(nodes: ps.DataFrame) -> ps.DataFrame:
-    count_by_columns: List[str] = ["category", "prefix", "upstream_data_source"]
-    return (
-        nodes.withColumn("prefix", F.split("id", ":")[0]).select(*count_by_columns).groupBy(*count_by_columns).count()
+
+@inject_object()
+def count_untransformed_knowledge_graph(
+    transformer: GraphTransformer, nodes: ps.DataFrame, edges: ps.DataFrame
+) -> Dict[str, ps.DataFrame]:
+    return transformer.count_knowledge_graph(nodes, edges)
+
+
+def count_filtered_knowledge_graph(nodes: ps.DataFrame, edges: ps.DataFrame) -> Dict[str, ps.DataFrame]:
+    # nodes report
+    nodes_count_by_columns = ["category", "prefix", "upstream_data_source"]
+    nodes_report = (
+        nodes.withColumn("prefix", F.split("id", ":")[0])
+        .select(*nodes_count_by_columns)
+        .groupBy(*nodes_count_by_columns)
+        .count()
     )
 
-
-def count_filtered_edges(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFrame:
+    # edges report
     subject_nodes = (
         nodes.select("id", "category").withColumnRenamed("category", "subject_category").alias("subject_nodes")
     )
     object_nodes = nodes.select("id", "category").withColumnRenamed("category", "object_category").alias("object_nodes")
 
-    count_by_columns = [
+    edges_count_by_columns = [
         "subject_prefix",
         "subject_category",
         "predicate",
@@ -27,13 +40,16 @@ def count_filtered_edges(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFra
         "aggregator_knowledge_source",
         "upstream_data_source",
     ]
-
-    return (
+    edges_report = (
         edges.withColumn("subject_prefix", F.split("subject", ":")[0])
         .withColumn("object_prefix", F.split("object", ":")[0])
         .join(subject_nodes, edges.subject == subject_nodes.id, "left")
         .join(object_nodes, edges.object == object_nodes.id, "left")
-        .select(*count_by_columns)
-        .groupBy(*count_by_columns)
+        .select(*edges_count_by_columns)
+        .groupBy(*edges_count_by_columns)
         .count()
     )
+    return {
+        "nodes_report": nodes_report,
+        "edges_report": edges_report,
+    }
