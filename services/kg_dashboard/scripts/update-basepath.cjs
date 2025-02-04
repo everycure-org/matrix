@@ -7,7 +7,7 @@ const configPath = path.join(__dirname, '../evidence.config.yaml');
 
 let content = fs.readFileSync(configPath, 'utf8');
 content = content.replace(
-    /(basePath:\s*\/evidence\/)[^/\n]*/,
+    /(basePath:\s*\/versions\/)[^/\n]*/,
     `$1${version}`
 );
 fs.writeFileSync(configPath, content);

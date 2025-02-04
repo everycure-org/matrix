@@ -2,11 +2,13 @@
 IMAGE_NAME = kg-dashboard
 REPO_NAME = matrix-images
 PROJECT_ID = $(shell gcloud config get-value project)
-BUCKET_NAME = gs://data.dev.everycure.org
+EVIDENCE_BASE_PATH = gs://data.dev.everycure.org/versions
 
 # controls the release version of the KG used in the dashboard
 RELEASE_VERSION ?= v0.3.0
 export EVIDENCE_VAR__release_version := $(subst .,_,$(RELEASE_VERSION))
+
+.ONESHELL:
 
 .PHONY: clean install bump_basepath run-dev
 
@@ -18,9 +20,9 @@ build: bump_basepath
 	npm run build:strict
 
 deploy: build
-	gsutil -m rsync -r build/ $(BUCKET_NAME)/evidence/$(RELEASE_VERSION)
-	# gsutil rm -r $(BUCKET_NAME)/evidence/latest
-	# gsutil -m rsync -r $(BUCKET_NAME)/evidence/$(RELEASE_VERSION) $(BUCKET_NAME)/evidence/latest
+	gsutil -m rsync -r build/ $(EVIDENCE_BASE_PATH)/$(RELEASE_VERSION)/evidence
+	gsutil rm -r $(EVIDENCE_BASE_PATH)/latest/evidence || true
+	gsutil -m rsync -r $(EVIDENCE_BASE_PATH)/$(RELEASE_VERSION)/evidence $(EVIDENCE_BASE_PATH)/latest/evidence
 
 install:
 	npm install
