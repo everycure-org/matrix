@@ -199,9 +199,8 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFr
         columns={
             "drug|disease": Column(str, nullable=False),
             "y": Column(int, nullable=False),
-            # TODO: Piotr add
         },
-        unique=["clinical_trial_id", "drug_kg_curie", "disease_kg_curie"],
+        unique=["source", "target", "drug|disease"],
     )
 )
 def create_gt(pos_df: pd.DataFrame, neg_df: pd.DataFrame) -> pd.DataFrame:
