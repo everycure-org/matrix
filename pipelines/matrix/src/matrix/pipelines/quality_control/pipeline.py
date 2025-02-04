@@ -89,7 +89,6 @@ def integration_quality_control_pipeline() -> Pipeline:
                         "nodes": "integration.prm.unified_nodes",
                         "edges": "integration.prm.unified_edges",
                     },
-                    # TODO: create catalog entries
                     outputs={
                         "nodes_report": "integration.reporting.nodes.unified",
                         "edges_report": "integration.reporting.edges.unified",
@@ -102,7 +101,6 @@ def integration_quality_control_pipeline() -> Pipeline:
                         "nodes": "integration.prm.prefiltered_nodes",
                         "edges": "integration.prm.filtered_edges",
                     },
-                    # TODO: create catalog entries
                     outputs={
                         "nodes_report": "integration.reporting.nodes.prefiltered",
                         "edges_report": "integration.reporting.edges.prefiltered",
