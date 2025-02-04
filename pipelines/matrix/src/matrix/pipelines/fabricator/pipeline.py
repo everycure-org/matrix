@@ -66,8 +66,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs={
                     "nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                     "edges": "ingestion.raw.rtx_kg2.edges@pandas",
-                    "disease_list": "ingestion.raw.disease_list.nodes@pandas",
-                    "drug_list": "ingestion.raw.drug_list.nodes@pandas",
+                    "disease_list": "ingestion.raw.disease_list",
+                    "drug_list": "ingestion.raw.drug_list",
                     "pubmed_ids_mapping": "ingestion.raw.rtx_kg2.curie_to_pmids@pandas",
                 },
                 name="fabricate_kg2_datasets",
@@ -114,8 +114,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             ArgoNode(
                 func=_create_pairs,
                 inputs=[
-                    "ingestion.raw.drug_list.nodes@pandas",
-                    "ingestion.raw.disease_list.nodes@pandas",
+                    "ingestion.raw.drug_list",
+                    "ingestion.raw.disease_list",
                 ],
                 outputs=[
                     "ingestion.raw.ground_truth.nodes@pandas",

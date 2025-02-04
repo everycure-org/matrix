@@ -67,27 +67,27 @@ def create_pipeline(**kwargs) -> Pipeline:
             # -------------------------------------------------------------------------
             # Drug List ingestion
             # -------------------------------------------------------------------------
-            node(
-                func=lambda x: x,
-                inputs=["preprocessing.raw.drug_list"],
-                outputs="ingestion.raw.drug_list.nodes@pandas",
-                name="write_drug_list",
-                tags=["drug-list"],
-            ),
-            # -------------------------------------------------------------------------
-            # Disease List ingestion and enrichment
-            # -------------------------------------------------------------------------
-            node(
-                func=generate_tags,
-                inputs=[
-                    "preprocessing.raw.disease_list",
-                    "params:preprocessing.enrichment.model",
-                    "params:preprocessing.enrichment.tags",
-                ],
-                outputs="ingestion.raw.disease_list.nodes@pandas",
-                name="enrich_disease_list",
-                tags=["disease-list"],
-            ),
+            # node(
+            #     func=lambda x: x,
+            #     inputs=["preprocessing.raw.drug_list"],
+            #     outputs="ingestion.raw.drug_list.nodes@pandas",
+            #     name="write_drug_list",
+            #     tags=["drug-list"],
+            # ),
+            # # -------------------------------------------------------------------------
+            # # Disease List ingestion and enrichment
+            # # -------------------------------------------------------------------------
+            # node(
+            #     func=generate_tags,
+            #     inputs=[
+            #         "preprocessing.raw.disease_list",
+            #         "params:preprocessing.enrichment.model",
+            #         "params:preprocessing.enrichment.tags",
+            #     ],
+            #     outputs="ingestion.raw.disease_list.nodes@pandas",
+            #     name="enrich_disease_list",
+            #     tags=["disease-list"],
+            # ),
             # -------------------------------------------------------------------------
             # Ground Truth ingestion and preprocessing
             # -------------------------------------------------------------------------
