@@ -171,6 +171,16 @@ ingestion.int.ec_clinical_trails.edges:
 # -------------------------------------------------------------------------
 # Drug and disease lists
 # -------------------------------------------------------------------------  
+ingestion.raw.disease_list:
+  <<: [*_layer_raw]
+  type: matrix.datasets.github.GitHubReleaseCSVDataset
+  repository_url: https://github.com/everycure-org/matrix-disease-list
+  release_name: ${globals:data_sources.disease_list.version}
+  release_asset_name: matrix-disease-list.tsv
+  fs_args:
+    Accept: application/octet-stream
+  load_args:
+    sep: "\t"
 
 ingestion.raw.disease_list.nodes@pandas:
   <<: [*_layer_raw]
@@ -194,6 +204,18 @@ ingestion.raw.disease_list.nodes@spark:
      sep: "\t"
      header: true
      index: false
+
+ingestion.raw.drug_list:
+  <<: [*_layer_raw]
+  type: matrix.datasets.github.GitHubReleaseCSVDataset
+  repository_url: https://github.com/everycure-org/matrix-drug-list
+  release_name: ${globals:data_sources.drug_list.version}
+  release_asset_name: drugList.tsv
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: token ${globals:gh_token}
+  load_args:
+    sep: "\t"
 
 ingestion.raw.drug_list.nodes@pandas:
   <<: [*_layer_raw]

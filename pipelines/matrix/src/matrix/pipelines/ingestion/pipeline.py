@@ -13,6 +13,25 @@ def create_pipeline(**kwargs) -> Pipeline:
     nodes.append(
         node(
             func=lambda x: x,
+            inputs=["ingestion.raw.drug_list"],
+            outputs="ingestion.raw.drug_list.nodes@pandas",
+            name="write_drug_list",
+            tags=["drug-list"],
+        )
+    )
+    nodes.append(
+        node(
+            func=lambda x: x,
+            inputs=["ingestion.raw.disease_list"],
+            outputs="ingestion.raw.disease_list.nodes@pandas",
+            name="write_disease_list",
+            tags=["disease-list"],
+        )
+    )
+
+    nodes.append(
+        node(
+            func=lambda x: x,
             inputs=["ingestion.raw.rtx_kg2.curie_to_pmids@spark"],
             outputs="ingestion.int.rtx_kg2.curie_to_pmids",
             name="write_rtx_kg2_curie_to_pmids",
