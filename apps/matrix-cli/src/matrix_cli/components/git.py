@@ -80,6 +80,10 @@ def parse_diff_input(since: str, until: str) -> Tuple[str, str]:
     return from_ref, until
 
 
+def get_current_branch() -> str:
+    return run_command(["git", "branch", "--show-current"]).strip()
+
+
 def get_code_diff(
     since: str, until: str = "origin/main", file_patterns: List[str] = settings.inclusion_patterns
 ) -> Optional[str]:
@@ -94,6 +98,7 @@ def get_code_diff(
     Returns:
         str: Formatted diff output
     """
+    until = get_current_branch()
     from_ref, to_ref = parse_diff_input(since, until)
     git_root = get_git_root()
     # allow also single ref which gets the diff just for that commit

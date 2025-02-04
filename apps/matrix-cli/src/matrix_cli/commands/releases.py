@@ -24,6 +24,7 @@ from matrix_cli.components.settings import settings
 from matrix_cli.components.utils import (
     ask_for_release,
     console,
+    get_current_branch,
     get_git_root,
     get_latest_minor_release,
     get_markdown_contents,
@@ -241,7 +242,8 @@ def get_pr_details_since(previous_tag: str) -> List[PRInfo]:
 
 
 def get_commit_logs(previous_tag: str) -> List[str]:
-    command = ["git", "log", f"{previous_tag}..origin/main", "--oneline"]
+    current_branch = get_current_branch()
+    command = ["git", "log", f"{previous_tag}..{current_branch}", "--oneline"]
     return run_command(command).split("\n")
 
 
