@@ -232,7 +232,7 @@ def enrich_paths_with_node_attributes(
         .join(
             nodes.select("id", *node_attribute_list).withColumnRenamed("id", "node_in_path"),
             on=["node_in_path"],
-            how="inner",
+            how="left",
         )
         .withColumn(
             "node_attributes",
@@ -284,7 +284,7 @@ def enrich_paths_with_edge_attributes(
         )
         .withColumn("object", F.col("hop_pairs.end_nodes"))
         # Join in edge attribute information
-        .join(edges_processed, on=["subject", "object"], how="inner")
+        .join(edges_processed, on=["subject", "object"], how="left")
         # Collapse hop edge attribute information into a list for each path
         .groupBy("path_id", "start_nodes", "end_nodes")
         .agg(F.collect_list("edge_attributes").alias("edge_attributes_list"))
