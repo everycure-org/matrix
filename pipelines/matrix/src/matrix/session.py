@@ -87,8 +87,9 @@ class KedroSessionWithFromCatalog(KedroSession):
         session_id = self.store["session_id"]
         save_version = session_id
         extra_params = self.store.get("extra_params") or {}
+        extra_params["pipeline_name"] = pipeline_name
+        self._store["extra_params"] = extra_params
         context = self.load_context()
-
         name = pipeline_name or "__default__"
 
         try:
