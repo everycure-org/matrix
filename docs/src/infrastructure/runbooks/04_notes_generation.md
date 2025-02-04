@@ -20,7 +20,7 @@ Given that the latest minor release is v0.2.5:
     
 4. **Patch downgrade**  
     - New release: v0.2.3 (patch downgrade). Notes and article generation are skipped.  
-    - Heads up: If the release version order is v0.2.5 → v0.3.2 → v0.3.0, **v0.3.2** is considered a minor bump, and **v0.3.0** is considered a patch downgrade.
+    - Heads up: If the release version order is v0.2.5 → v0.3.2 → v0.3.0, **v0.3.2** is considered a minor bump, as it is triggered first, and **v0.3.0** is considered a patch downgrade, as it follows v0.3.2.
     
 5. **Major or minor downgrade**  
     - New release: v0.1.8 (minor downgrade). This is forbidden and prevented from `kedro submit`. The same applies to major downgrades.
