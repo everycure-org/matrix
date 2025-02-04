@@ -93,7 +93,12 @@ class MLFlowHooks:
         # NOTE: This piece of code ensures that every MLFlow experiment
         # is created by our Kedro pipeline with the right artifact root.
         mlflow.set_tracking_uri(cfg.server.mlflow_tracking_uri)
-        experiment_id = self._create_experiment(cfg.tracking.experiment.name, globs.mlflow_artifact_root)
+        # TODO: check artifact root in new method
+        mlflow_experiment_id = os.environ.get("MLFLOW_EXPERIMENT_ID")
+        # experiment_id = self._create_experiment(cfg.tracking.experiment.name, globs.mlflow_artifact_root)
+        experiment_id = mlflow_experiment_id
+
+        print("mlflow after context", experiment_id)
 
         if cfg.tracking.run.name:
             run_id = self._create_run(cfg.tracking.run.name, experiment_id)

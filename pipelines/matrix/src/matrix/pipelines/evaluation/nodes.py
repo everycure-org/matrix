@@ -246,3 +246,7 @@ def calculate_rank_commonality(ranking_output: dict, commonality_output: dict) -
             "pvalue": ranking_output[f"spearman_at_{i}"]["pvalue"],
         }
     return json.loads(json.dumps(rank_commonality_output, default=float))
+
+
+def dummy_function(x):
+    print("Hello!")
