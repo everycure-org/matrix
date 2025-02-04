@@ -11,6 +11,8 @@ from matrix_cli.components.utils import get_latest_minor_release
         (["v0.1", "v0.2", "v0.2.5"], "v0.2"),
     ],
 )
-def test_get_latest_minor_release(releases_list, expected_result):
-    result = get_latest_minor_release(releases_list)
+@patch("matrix_cli.components.utils.get_releases")
+def test_get_latest_minor_release(mock_get_releases, releases_list, expected_result):
+    mock_get_releases.return_value = releases_list
+    result = get_latest_minor_release()
     assert result == expected_result

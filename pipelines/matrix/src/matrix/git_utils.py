@@ -53,7 +53,8 @@ def get_releases() -> List[str]:
     )
 
 
-def get_latest_minor_release(releases_list: List[str]) -> str:
+def get_latest_minor_release() -> str:
+    releases_list = get_releases()
     # Map the case where the release is not in the semver compliant format x.y.z
     mapper = {"v0.1": "v0.1.0", "v0.2": "v0.2.0"}
     mapped_releases = [mapper.get(release, release) for release in releases_list]

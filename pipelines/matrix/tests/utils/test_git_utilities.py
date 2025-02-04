@@ -60,6 +60,8 @@ def test_git_tag_exists(mock_subprocess, tag, mock_return_val, expected_result):
         (["v0.1", "v0.2", "v0.2.5"], "v0.2"),
     ],
 )
-def test_get_latest_minor_release(releases_list, expected_result):
-    result = get_latest_minor_release(releases_list)
+@patch("matrix.git_utils.get_releases")
+def test_get_latest_minor_release(mock_get_releases, releases_list, expected_result):
+    mock_get_releases.return_value = releases_list
+    result = get_latest_minor_release()
     assert result == expected_result
