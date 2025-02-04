@@ -37,7 +37,7 @@ To start development work, you need to branch out from the release tag. You can 
 This will create a `feat/foobar` branch which you can use for development. While you can also branch out from main directly (which is the most natural for most git users), you need to note that branch might not be production-ready and might not guarantee error-prone e2e runs or QC'ed data products. You may want to think about our `main` as a development branch where only tags are in-production.
 
 #### Testing before merging
-Once you feature is complete, you should make sure to test it before merging it. While some changes might not require thorough testing (e.g. ruff re-formatting, docs changes, adding comments), pipeline changes should be verified with a sampled real data. Thus before merging your pipeline, you should ensure it runs locally with sampled data.
+Once your feature is complete, you should make sure to test it with real data before merging it into main. While some changes might not require thorough testing (e.g. ruff re-formatting, docs changes, adding comments), pipeline changes should be verified with a sampled real data to uncover some caveats which cannot be reproduced with fabricated data (e.g. normalization process, missing data, size of datasets etc). Thus before merging your pipeline, you should ensure it runs with sampled (or full) real data.
 
 #### Merging back to main
 Once your feature is complete and tested with sampled data, you can merge it back to main. Whilst some bugs might still sneak in (as some bugs will be only detected with full real data), **the main is not production-ready until it has been tagged as a release**.
