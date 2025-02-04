@@ -6,7 +6,9 @@ EVIDENCE_BASE_PATH = gs://data.dev.everycure.org/versions
 
 # controls the release version of the KG used in the dashboard
 RELEASE_VERSION ?= v0.3.0
-export EVIDENCE_VAR__release_version := $(subst .,_,$(RELEASE_VERSION))
+export EVIDENCE_VAR__release_version := $(RELEASE_VERSION)
+export EVIDENCE_VAR__bq_release_version := $(subst .,_,$(RELEASE_VERSION))
+export VITE_release_version := $(RELEASE_VERSION)
 
 .ONESHELL:
 
@@ -15,14 +17,14 @@ export EVIDENCE_VAR__release_version := $(subst .,_,$(RELEASE_VERSION))
 bump_basepath:
 	node ./scripts/update-basepath.cjs $(RELEASE_VERSION)
 
-build: bump_basepath
+build: bump_basepath 
 	@echo "Building with EVIDENCE_VAR__release_version=$(EVIDENCE_VAR__release_version)"
 	npm run build:strict
 
-deploy: build
-	gsutil -m rsync -r build/ $(EVIDENCE_BASE_PATH)/$(RELEASE_VERSION)/evidence
-	gsutil rm -r $(EVIDENCE_BASE_PATH)/latest/evidence || true
-	gsutil -m rsync -r $(EVIDENCE_BASE_PATH)/$(RELEASE_VERSION)/evidence $(EVIDENCE_BASE_PATH)/latest/evidence
+deploy: 
+	# both rsync's are set up to delete extra files
+	gsutil -m rsync -dr build/ $(EVIDENCE_BASE_PATH)/$(RELEASE_VERSION)/evidence
+	gsutil -m rsync -dr $(EVIDENCE_BASE_PATH)/$(RELEASE_VERSION)/evidence $(EVIDENCE_BASE_PATH)/latest/evidence
 
 install:
 	npm install

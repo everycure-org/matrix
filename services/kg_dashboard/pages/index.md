@@ -2,6 +2,12 @@
 title: Matrix KG Dashboard
 ---
 
+<script>
+  const release_version = import.meta.env.VITE_release_version;
+</script>
+
+## Version: {release_version}
+
 Dashboard pages on the left side of the screen are for exploring the data in the Matrix Knowledge Graph. The dropdowns at the top of the page allow you to filter the data by KG Source, Subject Prefix, Predicate, and Object Prefix. The dropdown at the bottom of the page allows you to limit the number of results displayed.
 
 ```sql edges_for_sankey
