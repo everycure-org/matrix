@@ -60,6 +60,7 @@ class RunConfig(NamedTuple):
 # fmt: off
 @project_group.command()
 @env_option
+@click.argument( "function_to_call",      type=str, default=None,)
 # @click.option( "--name",   type=str, default="")
 # @click.option( "--from-inputs",   type=str, default="", help=FROM_INPUTS_HELP, callback=split_string)
 # @click.option( "--to-outputs",    type=str, default="", help=TO_OUTPUTS_HELP, callback=split_string)
@@ -80,19 +81,25 @@ class RunConfig(NamedTuple):
 # def experiment(env:str, name: Optional[str]):
 # def experiment(tags: list[str], without_tags: list[str], env:str, runner: str, is_async: bool, node_names: list[str], to_nodes: list[str], from_nodes: list[str], from_inputs: list[str], to_outputs: list[str], load_versions: list[str], pipeline: str, conf_source: str, params: dict[str, Any], from_env: Optional[str]=None, experiment_id: Optional[str]=None):
 @click.pass_context
-def experiment(ctx, env:str, node_names: list[str], experiment_name: Optional[str]):
+def experiment(ctx, function_to_call, env:str, node_names: list[str], experiment_name: Optional[str]):
     """Run an experiment."""
     
     if not experiment_name:
         # TODO: sanitize branch name
         experiment_name = get_current_git_branch()
+        print("experiment_name", experiment_name)
 
     run_id = get_run_id_from_mlflow(experiment_name=experiment_name)
 
-    print(run_id)
-
-    # invokes another command with the arguments you provide as a caller
-    ctx.invoke(run, experiment_id=run_id, node_names=node_names)
+    if function_to_call == "run":
+        # invokes another command with the arguments you provide as a caller
+        ctx.invoke(run, experiment_id=run_id, node_names=node_names)
+    elif  function_to_call == "submit":
+        # TODO add submit
+        print("Run kedro submit")
+    else:
+        print(f"{function_to_call} not a valid option")
+        raise click.Abort()
 
 
 

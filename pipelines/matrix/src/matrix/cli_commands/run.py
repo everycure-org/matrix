@@ -123,10 +123,7 @@ def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
 
         from_catalog = _extract_config(config, session)
 
-        # To be passed in from kedro experiment run
         os.environ["MLFLOW_EXPERIMENT_ID"] = config.experiment_id
-
-
         # TODO: get/set run id
 
         session.run(
