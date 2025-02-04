@@ -1,5 +1,5 @@
 import logging
-from typing import List, Tuple
+from typing import Iterable, List, Tuple
 
 import pandas as pd
 import requests
@@ -17,7 +17,7 @@ def coalesce(s: pd.Series, *series: List[pd.Series]):
 
 
 @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
-def resolve_name(name: str, cols_to_get: List[str], url: str) -> dict:
+def resolve_name(name: str, cols_to_get: Iterable[str], url: str) -> dict:
     """Function to retrieve the normalized identifier through the normalizer.
 
     Args:
@@ -29,13 +29,14 @@ def resolve_name(name: str, cols_to_get: List[str], url: str) -> dict:
 
     if not name or pd.isna(name):
         return {}
-    result = requests.get(url.format(name=name))
-    if len(result.json()) != 0:
-        element = result.json()[0]
-        print({col: element.get(col) for col in cols_to_get})
-        return {col: element.get(col) for col in cols_to_get}
+    result = requests.get(url.format(name=name)).json()
+    if not result:
+        return {}
 
-    return {}
+    element = result[0]
+    ret = {col: element.get(col) for col in cols_to_get}
+    logger.debug(f'{{"resolver url": {url}, "name": {name}, "response extraction": {json.dumps(ret)}}}')
+    return ret
 
 
 @check_output(
@@ -123,7 +124,6 @@ def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> p
         )
         .drop(columns="ID")
     )
-
     return res
 
 
@@ -255,9 +255,8 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFr
         columns={
             "drug|disease": Column(str, nullable=False),
             "y": Column(int, nullable=False),
-            # TODO: Piotr add
         },
-        unique=["clinical_trial_id", "drug_kg_curie", "disease_kg_curie"],
+        unique=["source", "target", "drug|disease"],
     )
 )
 def create_gt(pos_df: pd.DataFrame, neg_df: pd.DataFrame) -> pd.DataFrame:
