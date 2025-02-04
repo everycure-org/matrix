@@ -85,13 +85,8 @@ def ask_for_release():
 
 def get_latest_minor_release() -> str:
     mapped_releases, original_to_mapped = get_releases_with_semver_mapping()
-    # Remove 'v' prefix and parse versions
     parsed_versions = [semver.Version.parse(v.lstrip("v")) for v in mapped_releases]
-
-    # Get the latest minor version (latest major & minor pair)
     latest_major_minor = max(parsed_versions, key=lambda v: (v.major, v.minor))
-
-    # Find the earliest patch version in the latest (major, minor)
     latest_minor_release = min(
         [v for v in parsed_versions if v.major == latest_major_minor.major and v.minor == latest_major_minor.minor]
     )
@@ -103,9 +98,7 @@ def get_releases_with_semver_mapping() -> tuple[list[str], dict[str, str]]:
     """Fetch releases and map non-semver versions to semver-compliant ones."""
     releases_list = get_releases()
     mapper = {"v0.1": "v0.1.0", "v0.2": "v0.2.0"}
-    # Store original-to-mapped version mapping in one step
     original_to_mapped = {mapper.get(release, release): release for release in releases_list}
-    # Avoid duplicate work by using original_to_mapped.keys()
     mapped_releases = list(original_to_mapped.keys())
     return mapped_releases, original_to_mapped
 

@@ -9,7 +9,7 @@ from bump_detection import get_generate_notes_flag
 @pytest.fixture
 def set_env_vars():
     """Fixture to temporarily set environment variables."""
-    with patch.dict(os.environ, {}):  # Clears all env vars for isolation
+    with patch.dict(os.environ, {}):
         yield
 
 
