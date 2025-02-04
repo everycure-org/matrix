@@ -123,7 +123,6 @@ def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> p
         )
         .drop(columns="ID")
     )
-
     return res
 
 
