@@ -45,32 +45,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # leveraging a paths-filter approach to be able to make this run required for all PRs while still
-  # not blocking merging with "Expected" for those runs that have a paths filter
-  # FUTURE eventually github will likely fix this
-  # https://github.com/orgs/community/discussions/26698
-  paths_filter:
-    if: github.event.pull_request.draft == false || github.ref == 'refs/heads/main'
-    runs-on: 'ubuntu-latest'
-    permissions: 
-      pull-requests: read
-      contents: 'read'
-    outputs: 
-      changed: ${{ steps.changes.outputs.src }}
-    steps:
-      - name: 'Checkout'
-        uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: changes
-        with:
-          filters: |
-            src:
-              - docs/
-              - .github/workflows/docs-deploy.yml
   build_and_deploy:
-    needs: [paths_filter]
     runs-on: ubuntu-latest
-    name: Build Documentation
+    name: Build Dashboard
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -78,27 +55,20 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@main
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-node@v4
         with:
-          python-version: '3.11' 
-      # build Docs
-      - name: Build Docs
-        env:
-          MKDOCS_GIT_COMMITTERS_APIKEY: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          pip install uv
-          make build #builds the static files in site/
-
+          node-version: '20' 
+          cache: 'npm'
+      # authenticate with GCP
       - uses: 'google-github-actions/auth@v2'
         if: github.ref == 'refs/heads/main'
         with:
           project_id: ${{env.project_id}}
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
-      
-      # https://github.com/google-github-actions/deploy-appengine
-      - id: 'deploy'
-        if: github.ref == 'refs/heads/main'
-        uses: 'google-github-actions/deploy-appengine@v2'
-        with:
-          working_directory: docs/ #ignores above setting
+
+
+      - run: make install
+      - run: make run-sources
+      - run: make build
+      - run: make deploy
