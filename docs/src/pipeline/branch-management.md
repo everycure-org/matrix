@@ -34,7 +34,7 @@ To start development work, you need to branch out from the release tag. You can 
  ```bash
    git checkout -b feat/foobar v0.2.5
  ```
-This will create a `feat/foobar` branch which you can use for development. While you can also branch out from main directly (which is the most natural for most git users), you need to note that branch might be broken/not fully checked.
+This will create a `feat/foobar` branch which you can use for development. While you can also branch out from main directly (which is the most natural for most git users), you need to note that branch might not be production-ready and might not guarantee error-prone e2e runs or QC'ed data products. You may want to think about our `main` as a development branch where only tags are in-production.
 
 #### Testing before merging
 Once you feature is complete, you should make sure to test it before merging it. While some changes might not require thorough testing (e.g. ruff re-formatting, docs changes, adding comments), pipeline changes should be verified with a sampled real data. Thus before merging your pipeline, you should ensure it runs locally with sampled data.
