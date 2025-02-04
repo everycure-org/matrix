@@ -53,7 +53,7 @@ preprocessing.int.edges:
   <<: [*_layer_prm, *_medical_kg_sheets_dataset]
   save_args:
     sheet_name: new_edges
-    write_columns: ["SourceId", "TargetId", "Included"]
+    write_columns: ["SourceId", "TargetId"]
   load_args:
     sheet_name: new_edges
     columns: ["SourceId", "TargetId", "Label"]
