@@ -245,7 +245,7 @@ def get_current_branch() -> str:
 
 def get_commit_logs(previous_tag: str) -> List[str]:
     current_branch = get_current_branch()
-    command = ["git", "log", f"{previous_tag}..origin/{current_branch}", "--oneline"]
+    command = ["git", "log", f"{previous_tag}..{current_branch}", "--oneline"]
     return run_command(command).split("\n")
 
 
