@@ -15,14 +15,14 @@ def integration_quality_control_pipeline() -> Pipeline:
             ArgoNode(
                 func=nodes.count_filtered_nodes,
                 inputs="integration.prm.filtered_nodes",
-                outputs="reporting.integration.filtered_nodes_agg_count",
+                outputs="integration.reporting.filtered_nodes_agg_count",
                 name="count_filtered_nodes",
                 tags=["integration_quality_control"],
             ),
             ArgoNode(
                 func=nodes.count_filtered_edges,
                 inputs=["integration.prm.filtered_nodes", "integration.prm.filtered_edges"],
-                outputs="reporting.integration.filtered_edges_agg_count",
+                outputs="integration.reporting.filtered_edges_agg_count",
                 name="count_filtered_edges",
                 tags=["integration_quality_control"],
             ),
