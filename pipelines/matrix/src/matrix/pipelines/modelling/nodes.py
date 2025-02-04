@@ -1,27 +1,25 @@
-import logging
-from typing import Any, Callable, Dict, List, Union, Tuple
-import pandas as pd
-import pyspark.sql as ps
 import json
-from pandera.typing import Series
-from pandera.pyspark import DataFrameModel as PysparkDataFrameModel
-from pandera import DataFrameModel as PandasDataFrameModel
-import pandera
-from pyspark.sql import functions as f
-import pyspark.sql.types as T
-
-
-from sklearn.model_selection import BaseCrossValidator
-from sklearn.impute._base import _BaseImputer
-from sklearn.base import BaseEstimator
+import logging
+from functools import wraps
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
-
-from functools import wraps
-from matrix.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
+import pandas as pd
+import pandera
+import pyspark.sql as ps
+import pyspark.sql.types as T
+from pandera import DataFrameModel as PandasDataFrameModel
+from pandera.pyspark import DataFrameModel as PysparkDataFrameModel
+from pandera.typing import Series
+from pyspark.sql import functions as f
+from sklearn.base import BaseEstimator
+from sklearn.impute._base import _BaseImputer
+from sklearn.model_selection import BaseCrossValidator
 
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
+from matrix.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
+
 from .model import ModelWrapper
 
 logger = logging.getLogger(__name__)
@@ -209,6 +207,7 @@ class ModelSplitsSchema(PandasDataFrameModel):
 @inject_object()
 def make_folds(
     data: ps.DataFrame,
+    nodes: ps.DataFrame,
     splitter: BaseCrossValidator,
 ) -> Tuple[pd.DataFrame]:
     """Function to split data.
@@ -238,8 +237,13 @@ def make_folds(
     full_fold_data["split"] = "TRAIN"
     full_fold_data["fold"] = splitter.n_splits
     all_data_frames.append(full_fold_data)
-
-    return pd.concat(all_data_frames, ignore_index=True)
+    concatenated_df = pd.concat(all_data_frames, ignore_index=True)
+    # Filter out phenotypic features
+    nodes_df = nodes.withColumnRenamed("id", "target").select("target", "category").toPandas()
+    nodes_df = nodes_df.set_index("target")
+    concatenated_df = concatenated_df.set_index("target").join(nodes_df, how="left").reset_index()
+    concatenated_df = concatenated_df.loc[(concatenated_df["category"] != "biolink:PhenotypicFeature")]
+    return concatenated_df
 
 
 @pandera.check_output(ModelSplitsSchema)

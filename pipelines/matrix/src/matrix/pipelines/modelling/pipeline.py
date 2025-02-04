@@ -261,6 +261,7 @@ def create_shared_pipeline(models_lst: List[str]) -> Pipeline:
                 func=nodes.make_folds,
                 inputs=[
                     "modelling.int.known_pairs@pandas",
+                    "integration.prm.filtered_nodes",
                     "params:modelling.splitter",
                 ],
                 outputs="modelling.model_input.splits",
