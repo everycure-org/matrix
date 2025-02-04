@@ -1,9 +1,12 @@
+import logging
 from typing import List, Tuple
 
 import pandas as pd
 import requests
 from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
 from tenacity import retry, stop_after_attempt, wait_exponential
+
+logger = logging.getLogger(__name__)
 
 
 def coalesce(s: pd.Series, *series: List[pd.Series]):
@@ -35,9 +38,29 @@ def resolve_name(name: str, cols_to_get: List[str], url: str) -> dict:
     return {}
 
 
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "normalized_curie": Column(str, nullable=False),
+            "label": Column(str, nullable=False),
+            "types": Column(List[str], nullable=False),
+            "category": Column(str, nullable=False),
+            "ID": Column(int, nullable=False),
+        },
+        unique=["normalized_curie"],
+    )
+)
 def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
-    # Normalize the name
+    """Map medical nodes with name resolver.
 
+    Args:
+        df: raw medical nodes
+        resolver_url: url for name resolver
+
+    Returns:
+        Processed medical nodes
+    """
+    # Normalize the name
     enriched_data = df["name"].apply(resolve_name, cols_to_get=["curie", "label", "types"], url=resolver_url)
 
     # Extract into df
@@ -47,6 +70,18 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
     # Coalesce id and new id to allow adding "new" nodes
     df["normalized_curie"] = coalesce(df["new_id"], df["curie"])
 
+    # Filter out nodes that are not resolved
+    is_resolved = df["normalized_curie"].notna()
+    df = df[is_resolved]
+    if not is_resolved.all():
+        logger.warning(f"{(~is_resolved).sum()} EC medical nodes have not been resolved.")
+
+    # Filter out duplicate IDs
+    is_unique = df["normalized_curie"].groupby(df["normalized_curie"]).transform("count") == 1
+    df = df[is_unique]
+    if not is_unique.all():
+        logger.warning(f"{(~is_unique).sum()} EC medical nodes have been removed due to duplicate IDs.")
+
     return df
 
 
@@ -55,38 +90,59 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
         columns={
             "SourceId": Column(str, nullable=False),
             "TargetId": Column(str, nullable=False),
-        }
+            "Label": Column(str, nullable=False),
+        },
+        unique=["SourceId", "TargetId", "Label"],
     )
 )
-def process_medical_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.DataFrame:
+def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> pd.DataFrame:
     """Function to create int edges dataset.
 
     Function ensures edges dataset link curies in the KG.
-    """
-    index = int_nodes[int_nodes["normalized_curie"].notna()]
 
+    Args:
+        int_nodes: Processed medical nodes with normalized curies
+        raw_edges: Raw medical edges
+    """
+    df = int_nodes[["normalized_curie", "ID"]]
+
+    # Attach source and target curies. Drop edge un the case of a missing curies.
     res = (
-        int_edges.merge(
-            index.rename(columns={"normalized_curie": "SourceId"}),
+        raw_edges.merge(
+            df.rename(columns={"normalized_curie": "SourceId"}),
             left_on="Source",
             right_on="ID",
-            how="left",
+            how="inner",
         )
         .drop(columns="ID")
         .merge(
-            index.rename(columns={"normalized_curie": "TargetId"}),
+            df.rename(columns={"normalized_curie": "TargetId"}),
             left_on="Target",
             right_on="ID",
-            how="left",
+            how="inner",
         )
         .drop(columns="ID")
     )
-
-    res["Included"] = res.apply(lambda row: not (pd.isna(row["SourceId"]) or pd.isna(row["TargetId"])), axis=1)
 
     return res
 
 
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "reason_for_rejection": Column(str, nullable=True),
+            "drug_name": Column(str, nullable=False),
+            "disease_name": Column(str, nullable=False),
+            "significantly_better": Column(float, nullable=True),
+            "non_significantly_better": Column(float, nullable=True),
+            "non_significantly_worse": Column(float, nullable=True),
+            "significantly_worse": Column(float, nullable=True),
+            "drug_curie": Column(str, nullable=True),
+            "disease_curie": Column(str, nullable=True),
+        },
+        unique=["drug_curie", "disease_curie"],
+    )
+)
 def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
     """Resolve names to curies for source and target columns in clinical trials data.
 
