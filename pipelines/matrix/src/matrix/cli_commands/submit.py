@@ -61,6 +61,7 @@ def cli():
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 @click.option("--headless", is_flag=True, default=False, help="Skip confirmation prompt")
 @click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
+@click.option("--experiment_id", "-e", type=str, default="cloud", help="mlflow_experiment_id")
 # fmt: on
 def submit(
     username: str,
@@ -73,7 +74,8 @@ def submit(
     from_nodes: List[str],
     is_test: bool,
     headless: bool,
-    environment: str
+    environment: str,
+    experiment_id: str
 ):
     """Submit the end-to-end workflow. """
     if not quiet:
@@ -100,6 +102,7 @@ def submit(
     run_name = get_run_name(run_name)
     pipeline_obj.name = pipeline
 
+    print("experiment id", experiment_id)
 
     if not dry_run:
         summarize_submission(run_name, namespace, pipeline, environment, is_test, release_version, headless)
@@ -113,6 +116,7 @@ def submit(
         verbose=not quiet,
         dry_run=dry_run,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
+        mlflow_experiment_id=experiment_id,
         allow_interactions=not headless,
         is_test=is_test,
         environment=environment,
@@ -129,6 +133,7 @@ def _submit(
     dry_run: bool,
     environment: str,
     template_directory: Path,
+    mlflow_experiment_id: str,
     allow_interactions: bool = True,
     is_test: bool = False,
 ) -> None:
@@ -162,8 +167,10 @@ def _submit(
 
         if not can_talk_to_kubernetes():
             raise EnvironmentError("Cannot communicate with Kubernetes")
+        
+        print("mlflow_experiment_id", mlflow_experiment_id)
 
-        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, environment, is_test=is_test, )
+        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, environment, mlflow_experiment_id, is_test=is_test, )
 
         file_path = save_argo_template(argo_template, template_directory)
 
@@ -384,6 +391,10 @@ def build_argo_template(
     namespace: str,
     pipeline_obj: Pipeline,
     environment: str,
+<<<<<<< HEAD
+=======
+    mlflow_experiment_id: str,
+>>>>>>> aa52aaf1 (kedro submit - pass in experiment id and apply to argo)
     is_test: bool,
     default_execution_resources: Optional[ArgoResourceConfig] = None
 ) -> str:
@@ -404,6 +415,7 @@ def build_argo_template(
         run_name=run_name,
         release_version=release_version,
         image_tag=run_name,
+        mlflow_experiment_id=mlflow_experiment_id,
         namespace=namespace,
         username=username,
         package_name=package_name,
