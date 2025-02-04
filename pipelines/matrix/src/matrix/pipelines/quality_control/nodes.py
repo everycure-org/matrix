@@ -14,8 +14,7 @@ def count_untransformed_knowledge_graph(
     return transformer.count_knowledge_graph(nodes, edges)
 
 
-def count_filtered_knowledge_graph(nodes: ps.DataFrame, edges: ps.DataFrame) -> Dict[str, ps.DataFrame]:
-    # nodes report
+def _count_nodes(nodes: ps.DataFrame) -> ps.DataFrame:
     nodes_count_by_columns = ["category", "prefix", "upstream_data_source"]
     nodes_report = (
         nodes.withColumn("prefix", F.split("id", ":")[0])
@@ -23,8 +22,10 @@ def count_filtered_knowledge_graph(nodes: ps.DataFrame, edges: ps.DataFrame) -> 
         .groupBy(*nodes_count_by_columns)
         .count()
     )
+    return nodes_report
 
-    # edges report
+
+def _count_edges(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFrame:
     subject_nodes = (
         nodes.select("id", "category").withColumnRenamed("category", "subject_category").alias("subject_nodes")
     )
@@ -49,6 +50,13 @@ def count_filtered_knowledge_graph(nodes: ps.DataFrame, edges: ps.DataFrame) -> 
         .groupBy(*edges_count_by_columns)
         .count()
     )
+
+    return edges_report
+
+
+def count_knowledge_graph(nodes: ps.DataFrame, edges: ps.DataFrame) -> Dict[str, ps.DataFrame]:
+    nodes_report = _count_nodes(nodes)
+    edges_report = _count_edges(nodes, edges)
     return {
         "nodes_report": nodes_report,
         "edges_report": edges_report,
