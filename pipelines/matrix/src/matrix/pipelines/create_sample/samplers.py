@@ -30,7 +30,7 @@ class Sampler(ABC):
         """
 
 
-class KnowledgeGraphSampler(Sampler):
+class GroundTruthRandomSampler(Sampler):
     """
     A sampler that will sample from knowledge graph nodes, and then only keep edges between those sampled nodes.
     """

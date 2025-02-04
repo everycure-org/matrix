@@ -4,7 +4,7 @@ title: Improve testing through sampling
 
 ## Status
 
-Under review
+Accepted
 
 ## Context
 
