@@ -54,8 +54,8 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
         "modelling": {
             "xg_baseline": {"num_shards": 1, "run_inference": False},
             "xg_ensemble": {"num_shards": 3, "run_inference": True},
-            "rf": {"num_shards": 1, "run_inference": False},
-            "xg_synth": {"num_shards": 1, "run_inference": False},
+            # "rf": {"num_shards": 1, "run_inference": False},
+            # "xg_synth": {"num_shards": 1, "run_inference": False},
         },
         "evaluation": [
             {"evaluation_name": "simple_classification"},
