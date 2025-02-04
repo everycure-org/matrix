@@ -239,8 +239,13 @@ def get_pr_details_since(previous_tag: str) -> List[PRInfo]:
     return get_pr_details(pr_numbers)
 
 
+def get_current_branch() -> str:
+    return run_command(["git", "branch", "--show-current"]).strip()
+
+
 def get_commit_logs(previous_tag: str) -> List[str]:
-    command = ["git", "log", f"{previous_tag}..origin/main", "--oneline"]
+    current_branch = get_current_branch()
+    command = ["git", "log", f"{previous_tag}..origin/{current_branch}", "--oneline"]
     return run_command(command).split("\n")
 
 
