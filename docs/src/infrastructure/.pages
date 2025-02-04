@@ -2,7 +2,9 @@
 nav:
     - index.md
     - compute_cluster.md
+    - observability.md
     - gcp.md
     - runbooks
     - argo_workflows_locally.md
     - glossary.md
+    - architecture_decision_records.md

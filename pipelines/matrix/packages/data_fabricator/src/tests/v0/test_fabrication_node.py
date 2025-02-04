@@ -4,9 +4,9 @@
 #
 # This material is intended solely for your internal use and may not be reproduced,
 # disclosed or distributed without McKinsey & Company's express prior written consent.
-# Except as otherwise stated, the Deliverables are provided ‘as is’, without any express
+# Except as otherwise stated, the Deliverables are provided 'as is', without any express
 # or implied warranty, and McKinsey shall not be obligated to maintain, support, host,
-# update, or correct the Deliverables. Client guarantees that McKinsey’s use of
+# update, or correct the Deliverables. Client guarantees that McKinsey's use of
 # information provided by Client as authorised herein will not violate any law
 # or contractual right of a third party. Client is responsible for the operation
 # and security of its operating environment. Client is responsible for performing final
@@ -23,7 +23,7 @@
 """This module provides tests for fabrication node."""
 import pandas as pd
 import yaml
-from pyspark.sql import SparkSession
+import pyspark.sql as ps
 
 from data_fabricator.v0.nodes.fabrication import fabricate_datasets
 
@@ -115,7 +115,7 @@ def test_param_dfs_provided():
 
     parsed_dict = yaml.safe_load(string)
 
-    spark = SparkSession.builder.getOrCreate()
+    spark = ps.SparkSession.builder.getOrCreate()
 
     dfs = {
         "input_pd": pd.DataFrame(data={"pd_input_col": ["one", "two"]}),

@@ -25,8 +25,15 @@ To fix this, remove the directory ".venv" from `pipelines/matrix` and set the py
 
 ```
 rm -r .venv
+
+THEN
+
 pyenv install 3.11
 pyenv global 3.11
+
+OR
+
+uv venv --python=3.11
 ```
 
 then `make` again.
@@ -114,57 +121,6 @@ java.lang.NullPointerException
 24/07/26 10:52:32 WARN Executor: Issue communicating with driver in heartbeater
 org.apache.spark.SparkException: Exception thrown in awaitResult:
 ```
-
-TODO
-
-## Failed batches in the embedding step
-
-
-```
-│ main   File "/usr/local/lib/python3.11/site-packages/kedro/runner/runner.py", line 117, in run                                                                                                                   │
-│ main     self._run(pipeline, catalog, hook_or_null_manager, session_id)  # type: ignore[arg-type]                                                                                                                │
-│ main     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                                                                                                                          │
-│ main   File "/usr/local/lib/python3.11/site-packages/kedro/runner/sequential_runner.py", line 75, in _run                                                                                                        │
-│ main     run_node(node, catalog, hook_manager, self._is_async, session_id)                                                                                                                                       │
-│ main   File "/usr/local/lib/python3.11/site-packages/kedro/runner/runner.py", line 413, in run_node                                                                                                              │
-│ main     node = _run_node_sequential(node, catalog, hook_manager, session_id)                                                                                                                                    │
-│ main            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                                                                                                                    │
-│ main   File "/usr/local/lib/python3.11/site-packages/kedro/runner/runner.py", line 506, in _run_node_sequential                                                                                                  │
-│ main     outputs = _call_node_run(                                                                                                                                                                               │
-│ main               ^^^^^^^^^^^^^^^                                                                                                                                                                               │
-│ main   File "/usr/local/lib/python3.11/site-packages/kedro/runner/runner.py", line 472, in _call_node_run                                                                                                        │
-│ main     raise exc                                                                                                                                                                                               │
-│ main   File "/usr/local/lib/python3.11/site-packages/kedro/runner/runner.py", line 462, in _call_node_run                                                                                                        │
-│ main     outputs = node.run(inputs)                                                                                                                                                                              │
-│ main               ^^^^^^^^^^^^^^^^                                                                                                                                                                              │
-│ main   File "/usr/local/lib/python3.11/site-packages/kedro/pipeline/node.py", line 392, in run                                                                                                                   │
-│ main     raise exc                                                                                                                                                                                               │
-│ main   File "/usr/local/lib/python3.11/site-packages/kedro/pipeline/node.py", line 380, in run                                                                                                                   │
-│ main     outputs = self._run_with_dict(inputs, self._inputs)                                                                                                                                                     │
-│ main               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                                                                                                                                     │
-│ main   File "/usr/local/lib/python3.11/site-packages/kedro/pipeline/node.py", line 437, in _run_with_dict                                                                                                        │
-│ main     return self._func(**kwargs)                                                                                                                                                                             │
-│ main            ^^^^^^^^^^^^^^^^^^^^                                                                                                                                                                             │
-│ main   File "/usr/local/lib/python3.11/site-packages/refit/v1/core/unpack.py", line 62, in wrapper                                                                                                               │
-│ main     result = func(*args, **kwargs)                                                                                                                                                                          │
-│ main              ^^^^^^^^^^^^^^^^^^^^^                                                                                                                                                                          │
-│ main   File "/usr/local/lib/python3.11/site-packages/refit/v1/core/inject.py", line 171, in wrapper                                                                                                              │
-│ main     result_df = func(*args, **kwargs)                                                                                                                                                                       │
-│ main                 ^^^^^^^^^^^^^^^^^^^^^                                                                                                                                                                       │
-│ main   File "/app/src/matrix/pipelines/embeddings/nodes.py", line 166, in compute_embeddings                                                                                                                     │
-│ main     raise RuntimeError("Failed batches in the embedding step")                                                                                                                                              │
-│ main RuntimeError: Failed batches in the embedding step                                                                                                                                                          │
-│ main time="2024-07-26T09:55:54.436Z" level=info msg="sub-process exited" argo=true error="<nil>"                                                                                                                 │
-│ main Error: exit status 1
-```
-
-This often means there is a `400` error from OpenAI or another backend issue. We throw this error ourselves explicitly to catch API errors.
-Unfortuantely one has to dig into the Debug Log of Neo4J to find out the exact issue
-
-1. connect to neo4j instance
-2. cd to `logs`
-3. tail / grep on `debug.log` and check what was logged by the DB
-
 
 ## MLFlow error about changing params when executing locally
 
@@ -350,6 +306,25 @@ Failed to establish a new connection: [Errno 61] Connection refused'))
 ```
 This error is due to kedro trying to send API requests to your MLFlow container which hasn't been set up. You can set the MLFlow container from your Docker Desktop application or by running `make compose_up` from your terminal. This should set up a healthy docker container to which kedro can send API requests. 
 
+
+
+## The RAW data files appear much smaller than expected
+
+
+The issue arises as people have write permission to the RAW folder
+and may accidentally run the fabricator pipeline in the cloud environment. This leads to
+the pipeline writing the fabricator output to the raw datasets and because the cloud
+environment is selected, the data is not stored in the cloud bucket. However, the full
+raw data resides here, so the pipeline overwrites it. 
+
+**Solution**: 
+- Guardrails have been put in place to avoid this from happening again.
+- If it still occurs, please notify the team. Our guardrails should prevent this from happening again.
+
+!!! info
+    This error should be resolved but in case it still occurs, please create a new issue
+    and tag Every Cure devs. 
+
 ### Orphan container error when running docker
 ```
 Error response from daemon: Conflict. The container name “/mockserver” is already in use by container “a2381853d58b482a3c4b82e17dbb25173e5af75903e98e7cb3481318f6abc7f1". You have to remove (or rename) that container to be able to reuse that name.
@@ -456,10 +431,60 @@ After setting up installing the gcloud SDK, make sure that a default project is 
 gcloud config list
 ```
 If no project is listed, then it can be set by running:
+
 ```
 gcloud config set project mtrx-hub-dev-3of
 ```
-### Issue with kedro run -e test -p test after updating git pull.
-```filter_by_category() missing 1 required positional argument: 'categories```
 
-This is due to our local libraries (e.g. `data_fabricator`) being cached in the uv cache and thus not being installed to the latest version when running `make install`. Cleaning the uv cache solves this issue which you can do via `make clean` and then run a fresh `make install`.
+### Issue with kedro run -e test -p test after updating git pull.
+
+```
+filter_by_category() missing 1 required positional argument: 'categories
+```
+
+This is due to our local libraries (e.g. `data_fabricator`) being cached in the uv cache
+and thus not being installed to the latest version when running `make install`. Cleaning
+the uv cache solves this issue which you can do via `make clean` and then run a fresh
+`make install`.
+
+
+### Issues with Neo4j authentication
+
+```
+ServiceUnavailable: Couldn't connect to 127.0.0.1:7687 (resolved to ()):
+
+OR various other authentication errors related to Neo4j or issues with Spark failing when it attempts to write to Neo4j
+```
+
+This may be due to another neo4j instance running on your device. Common sources for these services may be either brew or neo4j desktop. 
+
+To check brew for running neo4j instances, run:
+
+```bash
+brew services list
+```
+
+if you see neo4j running, try:
+
+```bash
+brew services stop neo4j
+```
+
+
+### libomp for LLMs
+
+The [libomp](https://openmp.llvm.org/index.html) library might be required as a local runtime for LLMs. If not installed it will trigger an error containing the following:
+
+```
+* OpenMP runtime is not installed
+  - vcomp140.dll or libgomp-1.dll for Windows
+  - libomp.dylib for Mac OSX
+  - libgomp.so for Linux and other UNIX-like OSes
+  Mac OSX users: Run `brew install libomp` to install OpenMP runtime.
+```
+
+To install it on MacOS, run:
+
+```bash
+brew install libomp
+```

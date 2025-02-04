@@ -1,7 +1,7 @@
-from typing import List, Callable
-from sklearn.base import BaseEstimator
+from typing import Callable, List
 
 import numpy as np
+from sklearn.base import BaseEstimator
 
 
 class ModelWrapper:

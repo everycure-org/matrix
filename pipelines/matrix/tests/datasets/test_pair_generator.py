@@ -1,19 +1,16 @@
-import pytest
-
-import pandas as pd
 import numpy as np
-from sklearn.model_selection import ShuffleSplit
-
+import pandas as pd
+import pytest
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import (
+    FullMatrixPositives,
+    GroundTruthTestPairs,
+    MatrixTestDiseases,
     RandomDrugDiseasePairGenerator,
     ReplacementDrugDiseasePairGenerator,
-    MatrixTestDiseases,
-    GroundTruthTestPairs,
-    FullMatrixPositives,
 )
-from matrix.pipelines.modelling.nodes import make_splits
-
+from matrix.pipelines.modelling.nodes import make_folds
+from sklearn.model_selection import ShuffleSplit
 
 ## Test negative sampling pair generators
 
@@ -86,10 +83,11 @@ def test_replacement_drug_disease_pair_generator(
         disease_flags=["is_disease"],
     )
 
-    known_pairs_split = make_splits(
+    known_pairs_split = make_folds(
         known_pairs,
         splitter,
     )
+    known_pairs_split = known_pairs_split[known_pairs_split["fold"] == 0]
 
     # When generating unknown pairs
     unknown = generator.generate(graph, known_pairs_split)

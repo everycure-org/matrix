@@ -69,3 +69,7 @@ matrix_generation.run:
   git_sha: ${globals:git_sha}
   release_version: ${globals:versions.release}
   versions: ${globals:data_sources}
+
+matrix_generation.treat_score_col_name: &score-col "treat score"
+matrix_generation.not_treat_score_col_name: "not treat score"
+matrix_generation.unknown_score_col_name: "unknown score"

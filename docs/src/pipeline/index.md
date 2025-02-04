@@ -47,7 +47,7 @@ Finally, catalog entries should be defined to ensure the correct linkage of the 
 ```yaml
 # catalog.yml
 integration.raw.rtx_kg2.edges:
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/edges.tsv
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/edges.tsv
   ... # Remaining configuration here
 ```
 
@@ -141,7 +141,8 @@ The modelling pipeline trains prediction models using drug-disease pairs and kno
 
 Key steps implemented include: 
 
-1. *Prepare ground truth dataset*. Load ground truth positive and negative drug-disease pairs. Perform test-train split using a stratified approach which includes the ability to stratify by drug. This enhances the training-test split, ensuring that the test set is representative of the training set. 
+1. *Prepare ground truth dataset*. Load ground truth positive and negative drug-disease pairs. Perform test-train split using a stratified approach which includes the ability to stratify by drug. This enhances the training-test split, ensuring that the test set is representative of the training set. We also implement k-fold cross-validation where by several different train-test splits, referred to as "folds", are created. We also create a "full" split, where the entirety of the ground truth data is used for training the final model.
+
 
 2. *Synthesise additional training data*. Synthesise additional drug-disease pairs for training using an appropriate sampling strategy.  This is an important step as it allows for the training of models that are not only representative of the training data but also generalise to new, unseen data.
 
@@ -152,6 +153,8 @@ Key steps implemented include:
 ### Matrix Generation 
 
 The matrix generation pipeline scores all drug-disease pairs using trained models. The process includes flags for known positives and negatives, exclusion of training data for unbiased scoring, and outputs are enriched with metadata and statistics, all exported in an Excel-ready format.
+
+Note that the matrix generation is performed for each fold, as well as the full split.
 
 ### Evaluation
 
@@ -164,6 +167,8 @@ Computed metrics generally fall into three categories:
 3. **Ground truth classification metrics**: These metrics examine the model's ability to distinguish between known positive and known negative drug-disease pairs (e.g. accuracy, F1 score).
 
 To further enhance the pipeline, we have implemented **time-split validation** using clinical trial data curated after the publication date of our knowledge graph. This approach ensures that model predictions are assessed on future data, simulating real-world application scenarios and testing the model's predictive power on unseen, temporally shifted information. By evaluating with post-publication clinical trial data, this process validates the model's effectiveness and stability in longitudinal, real-world contexts.
+
+The evaluation pipeline utilises k-fold cross-validation, where by the metrics are computed for each fold, and then aggregated across folds for a more robust estimate of the model's performance.
 
 Additionally, to address biases, we have been experimenting with matrix transformation and normalization techniques to counteract the effect of "frequent flyer" diseases and drugs—those that appear frequently and can skew results. By normalizing these high-occurrence entities, we are able to reduce their disproportionate influence on the model, allowing for a more balanced representation across all drug-disease pairs.
 
