@@ -112,10 +112,19 @@ integration.prm.original.filtered_edges:
 # Reporting
 
 
-integration.reporting.filtered_nodes_agg_count:
+integration.reporting.{source}.nodes.{reporting_stage}:
   <<: [*_spark_parquet, *_layer_reporting]
-  filepath: ${globals:paths.integration}/reporting/integration/filtered_nodes_count
+  filepath: ${globals:paths.integration}/reporting/{source}/{reporting_stage}/nodes
 
-integration.reporting.filtered_edges_agg_count:
+integration.reporting.{source}.edges.{reporting_stage}:
   <<: [*_spark_parquet, *_layer_reporting]
-  filepath: ${globals:paths.integration}/reporting/integration/filtered_edges_count
+  filepath: ${globals:paths.integration}/reporting/{source}/{reporting_stage}/edges
+
+
+integration.reporting.nodes.{reporting_stage}:
+  <<: [*_spark_parquet, *_layer_reporting]
+  filepath: ${globals:paths.integration}/reporting/{reporting_stage}/nodes
+
+integration.reporting.edges.{reporting_stage}:
+  <<: [*_spark_parquet, *_layer_reporting]
+  filepath: ${globals:paths.integration}/reporting/{reporting_stage}/edges

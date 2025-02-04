@@ -28,10 +28,9 @@ def ingestion_quality_control_pipeline() -> Pipeline:
                             "nodes": f"ingestion.int.{source_name}.nodes",
                             "edges": f"ingestion.int.{source_name}.edges",
                         },
-                        # TODO: create catalog entries
                         outputs={
-                            "nodes_report": f"ingestion.reporting.{source_name}_nodes",
-                            "edges_report": f"ingestion.reporting.{source_name}_edges",
+                            "nodes_report": f"ingestion.reporting.{source_name}.nodes",
+                            "edges_report": f"ingestion.reporting.{source_name}.edges",
                         },
                         name=f"qc_{source_name}_ingested",
                     )
@@ -59,10 +58,9 @@ def integration_quality_control_pipeline() -> Pipeline:
                             "nodes": f"integration.int.{source_name}.nodes",
                             "edges": f"integration.int.{source_name}.edges",
                         },
-                        # TODO: create catalog entries
                         outputs={
-                            "nodes_report": f"integration.reporting.{source_name}_nodes_transformed",
-                            "edges_report": f"integration.reporting.{source_name}_edges_transformed",
+                            "nodes_report": f"integration.reporting.{source_name}.nodes.transformed",
+                            "edges_report": f"integration.reporting.{source_name}.edges.transformed",
                         },
                         name=f"qc_{source_name}_transformed",
                     ),
@@ -72,10 +70,9 @@ def integration_quality_control_pipeline() -> Pipeline:
                             "nodes": f"integration.int.{source_name}.nodes.norm@spark",
                             "edges": f"integration.int.{source_name}.edges",
                         },
-                        # TODO: create catalog entries
                         outputs={
-                            "nodes_report": f"integration.reporting.{source_name}_nodes_normalized",
-                            "edges_report": f"integration.reporting.{source_name}_edges_normalized",
+                            "nodes_report": f"integration.reporting.{source_name}.nodes.normalized",
+                            "edges_report": f"integration.reporting.{source_name}.edges.normalized",
                         },
                         name=f"qc_{source_name}_normalized",
                     ),
@@ -94,8 +91,8 @@ def integration_quality_control_pipeline() -> Pipeline:
                     },
                     # TODO: create catalog entries
                     outputs={
-                        "nodes_report": "integration.reporting.nodes_unified",
-                        "edges_report": "integration.reporting.edges_unified",
+                        "nodes_report": "integration.reporting.nodes.unified",
+                        "edges_report": "integration.reporting.edges.unified",
                     },
                     name="qc_unified_knowledge_graph",
                 ),
@@ -107,8 +104,8 @@ def integration_quality_control_pipeline() -> Pipeline:
                     },
                     # TODO: create catalog entries
                     outputs={
-                        "nodes_report": "integration.reporting.prefiltered_nodes_count",
-                        "edges_report": "integration.reporting.prefiltered_edges_count",
+                        "nodes_report": "integration.reporting.nodes.prefiltered",
+                        "edges_report": "integration.reporting.edges.prefiltered",
                     },
                     name="qc_prefiltered_knowledge_graph",
                 ),
@@ -119,8 +116,8 @@ def integration_quality_control_pipeline() -> Pipeline:
                         "edges": "integration.prm.filtered_edges",
                     },
                     outputs={
-                        "nodes_report": "integration.reporting.filtered_nodes_count",
-                        "edges_report": "integration.reporting.filtered_edges_count",
+                        "nodes_report": "integration.reporting.nodes.filtered",
+                        "edges_report": "integration.reporting.edges.filtered",
                     },
                     name="qc_filtered_knowledge_graph",
                 ),
