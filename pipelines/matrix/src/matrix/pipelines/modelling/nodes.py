@@ -104,6 +104,9 @@ def filter_valid_pairs(
     # Combine filtered pairs
     pairs_df = filtered_tp.withColumn("y", f.lit(1)).unionByName(filtered_tn.withColumn("y", f.lit(0)))
 
+    # # Filter out phenotypic features
+    phenotypic_nodes = nodes.filter(f.col("category") == "biolink:PhenotypicFeature").select("id").distinct()
+    pairs_df = pairs_df.join(phenotypic_nodes, pairs_df.target == phenotypic_nodes.id, "left_anti")
     return {"pairs": pairs_df, "metrics": retention_stats}
 
 
