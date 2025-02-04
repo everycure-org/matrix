@@ -13,14 +13,16 @@ def get_generate_notes_flag():
     release = os.getenv("release", "v0.0.0").lstrip("v")
     release_version = semver.Version.parse(release)
 
-    minor_bump = tag_version.major == release_version.major and tag_version.minor < release_version.minor
+    release_is_minor_bump = tag_version.major == release_version.major and tag_version.minor < release_version.minor
 
-    major_bump = tag_version.major < release_version.major
+    release_is_major_bump = tag_version.major < release_version.major
 
-    generate_notes = minor_bump or major_bump
+    generate_notes = release_is_minor_bump or release_is_major_bump
 
-    if tag_version.major == release_version.major and tag_version.minor > release_version.minor:
-        raise ValueError("Cannot release a minor version lower than the latest official release")
+    if (
+        tag_version.major == release_version.major and tag_version.minor > release_version.minor
+    ) or tag_version.major > release_version.major:
+        raise ValueError("Cannot release a major/minor version lower than the latest official release")
 
     print(f"generate_notes={generate_notes}")
 

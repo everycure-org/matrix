@@ -54,20 +54,27 @@ def get_releases() -> List[str]:
 
 
 def get_latest_minor_release() -> str:
-    releases_list = get_releases()
-    # Map the case where the release is not in the semver compliant format x.y.z
-    mapper = {"v0.1": "v0.1.0", "v0.2": "v0.2.0"}
-    mapped_releases = [mapper.get(release, release) for release in releases_list]
-    # Store original-to-mapped version mapping
-    original_to_mapped = {mapper.get(release, release): release for release in releases_list}
+    mapped_releases, original_to_mapped = get_releases_with_semver_mapping()
     # Remove 'v' prefix and parse versions
-    try:
-        parsed_versions = [semver.Version.parse(v.lstrip("v")) for v in mapped_releases]
-    except ValueError as e:
-        raise ValueError(f"[red]Error parsing versions: {e}")
+    parsed_versions = [semver.Version.parse(v.lstrip("v")) for v in mapped_releases]
 
-    # Get the latest minor version
-    latest_minor = max(parsed_versions, key=lambda v: (v.major, v.minor)).minor
-    # Get the earliest patch within the latest minor
-    latest_minor_release = min([v for v in parsed_versions if v.minor == latest_minor], key=lambda v: v.patch)
+    # Get the latest minor version (latest major & minor pair)
+    latest_major_minor = max(parsed_versions, key=lambda v: (v.major, v.minor))
+
+    # Find the earliest patch version in the latest (major, minor)
+    latest_minor_release = min(
+        [v for v in parsed_versions if v.major == latest_major_minor.major and v.minor == latest_major_minor.minor]
+    )
+
     return original_to_mapped[f"v{latest_minor_release}"]
+
+
+def get_releases_with_semver_mapping() -> tuple[list[str], dict[str, str]]:
+    """Fetch releases and map non-semver versions to semver-compliant ones."""
+    releases_list = get_releases()
+    mapper = {"v0.1": "v0.1.0", "v0.2": "v0.2.0"}
+    # Store original-to-mapped version mapping in one step
+    original_to_mapped = {mapper.get(release, release): release for release in releases_list}
+    # Avoid duplicate work by using original_to_mapped.keys()
+    mapped_releases = list(original_to_mapped.keys())
+    return mapped_releases, original_to_mapped
