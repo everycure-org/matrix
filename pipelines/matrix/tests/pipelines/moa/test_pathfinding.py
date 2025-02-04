@@ -129,8 +129,8 @@ def test_get_connecting_paths_complete_graph(spark, complete_graph, k):
     assert all(len(row.node_id_list) == k + 1 for row in paths.collect())
 
 
-def test_enrich_paths_with_node_attributes(spark, single_path_graph):
-    """Test path enrichment with node attributes"""
+def test_enrich_paths_with_node_attributes_single_path(spark, single_path_graph):
+    """Test path enrichment with node attributes on single path graph."""
     # Given: A graph with a single path
     nodes, edges = single_path_graph
     preprocessed_edges = preprocess_edges(edges)
@@ -153,11 +153,46 @@ def test_enrich_paths_with_node_attributes(spark, single_path_graph):
     first_node_attrs = path.node_attributes_list[0]
     assert set(first_node_attrs.keys()) == {"name", "category"}
 
+    # And: The node attributes should be in the correct order
+    node_attribute_list_for_path = enriched.collect()[0]["node_attributes_list"]
+    correct_node_order = ["source", "a", "b", "c", "target"]
+    assert [node_attrs["name"] for node_attrs in node_attribute_list_for_path] == [
+        node_id + "_name" for node_id in correct_node_order
+    ]
+    assert [node_attrs["category"] for node_attrs in node_attribute_list_for_path] == [
+        node_id + "_cat" for node_id in correct_node_order
+    ]
 
-def test_enrich_paths_with_edge_attributes(spark, single_path_graph):
+
+def test_enrich_paths_with_node_attributes_complete_graph(spark, complete_graph):
+    """Test path enrichment with node attributes on complete graph."""
+    # Given: A complete graph
+    nodes, edges = complete_graph
+    preprocessed_edges = preprocess_edges(edges)
+
+    # And: A pair of nodes
+    pairs = spark.createDataFrame([("id_0", "id_4")], ["source", "target"])
+
+    # When: Finding 4-hop paths
+    paths = get_connecting_paths(pairs, preprocessed_edges, n_hops=4, no_repeats=True)
+
+    # When: Enriching with node attributes
+    enriched = enrich_paths_with_node_attributes(paths, nodes, ["name"])
+
+    # Then: Should maintain the same number of paths
+    assert enriched.count() == paths.count()
+
+    # And: The node attributes should be in the correct order
+    collect_paths = enriched.collect()
+    path_ids = [path["node_id_list"] for path in collect_paths]
+    path_names = [[node["name"] for node in path["node_attributes_list"]] for path in collect_paths]
+    assert path_names == [["name_" + node_id_string[-1] for node_id_string in path_id] for path_id in path_ids]
+
+
+def test_enrich_paths_with_edge_attributes_single_path(spark, single_path_graph):
     """Test path enrichment with edge attributes"""
     # Given: A graph with a single path
-    nodes, edges = single_path_graph
+    _, edges = single_path_graph
     preprocessed_edges = preprocess_edges(edges)
 
     # And: A found path
@@ -184,3 +219,37 @@ def test_enrich_paths_with_edge_attributes(spark, single_path_graph):
     # And: First edge should be marked as backward (is_forward = false)
     directions_list = [edge_attrs_list[0]["is_forward"] for edge_attrs_list in path.edge_attributes_list]
     assert directions_list == ["false", "true", "true", "true"]
+
+    # And: First predicates are in the correct order
+    predicates_list = [edge_attrs_list[0]["predicate"] for edge_attrs_list in path.edge_attributes_list]
+    assert predicates_list == ["first_edge", "second_edge", "third_edge", "fourth_edge"]
+
+
+def test_enrich_paths_with_edge_attributes_complete_graph(spark, complete_graph):
+    """Test path enrichment with edge attributes"""
+    # Given: A complete graph
+    _, edges = complete_graph
+    preprocessed_edges = preprocess_edges(edges)
+
+    # And: A pair of nodes
+    pairs = spark.createDataFrame([("id_0", "id_4")], ["source", "target"])
+
+    # When: Finding 4-hop paths
+    paths = get_connecting_paths(pairs, preprocessed_edges, n_hops=4, no_repeats=True)
+
+    # When: Enriching with edge attributes
+    enriched = enrich_paths_with_edge_attributes(paths, preprocessed_edges)
+
+    # Then: Should maintain the same number of paths
+    assert enriched.count() == paths.count()
+
+    # And: The edge attributes should be in the correct order
+    collect_paths = enriched.collect()
+    path_ids = [path["node_id_list"] for path in collect_paths]
+    path_predicates = [
+        [edge_attributes[0]["predicate"] for edge_attributes in path["edge_attributes_list"]] for path in collect_paths
+    ]
+    assert path_predicates == [
+        ["predicate_" + path_id_list[i][-1] + "_" + path_id_list[i + 1][-1] for i in range(len(path_id_list) - 1)]
+        for path_id_list in path_ids
+    ]
