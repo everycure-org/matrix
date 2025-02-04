@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from matrix.git_utils import git_tag_exists, has_legal_branch_name
+from matrix.git_utils import get_latest_minor_release, git_tag_exists, has_legal_branch_name
 
 
 @pytest.mark.parametrize(
@@ -51,3 +51,15 @@ def test_git_tag_exists(mock_subprocess, tag, mock_return_val, expected_result):
     mock_subprocess.return_value = mock_return_val
     result = git_tag_exists(tag)
     assert result is expected_result
+
+
+@pytest.mark.parametrize(
+    "releases_list, expected_result",
+    [
+        (["v0.1.2", "v0.2.0", "v0.3.0", "v0.3.3", "v0.3.5"], "v0.3.0"),
+        (["v0.1", "v0.2", "v0.2.5"], "v0.2"),
+    ],
+)
+def test_get_latest_minor_release(releases_list, expected_result):
+    result = get_latest_minor_release(releases_list)
+    assert result == expected_result

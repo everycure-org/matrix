@@ -21,6 +21,7 @@ from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
 from matrix.git_utils import (
     BRANCH_NAME_REGEX,
     get_latest_minor_release,
+    get_releases,
     git_tag_exists,
     has_dirty_git,
     has_legal_branch_name,
@@ -536,6 +537,7 @@ def abort_if_unmet_git_requirements(release_version: str) -> None:
 
 def abort_if_intermediate_release(release_version: str) -> None:
     release_version = semver.Version.parse(release_version.lstrip("v"))
-    latest_minor = get_latest_minor_release().split(".")[1]
+    releases_list = get_releases()
+    latest_minor = get_latest_minor_release(releases_list).split(".")[1]
     if release_version.minor < latest_minor:
         raise ValueError("Cannot release a minor version lower than the latest official release")

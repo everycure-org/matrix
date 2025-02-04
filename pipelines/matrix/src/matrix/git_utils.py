@@ -1,5 +1,6 @@
 import re
 import subprocess
+from typing import TYPE_CHECKING, List
 
 import semver
 
@@ -43,14 +44,16 @@ def git_tag_exists(tag: str) -> bool:
     return tag in result
 
 
-def get_latest_minor_release() -> str:
-    releases_list = (
+def get_releases() -> List[str]:
+    return (
         (subprocess.check_output(["gh", "release", "list", "--json", "tagName", "--jq", ".[].tagName"]))
         .decode("utf-8")
         .strip("\n")
         .split("\n")
     )
 
+
+def get_latest_minor_release(releases_list: List[str]) -> str:
     # Map the case where the release is not in the semver compliant format x.y.z
     mapper = {"v0.1": "v0.1.0", "v0.2": "v0.2.0"}
     mapped_releases = [mapper.get(release, release) for release in releases_list]
@@ -64,6 +67,6 @@ def get_latest_minor_release() -> str:
 
     # Get the latest minor version
     latest_minor = max(parsed_versions, key=lambda v: (v.major, v.minor)).minor
-    # Get the earlist patch within the latest minor
+    # Get the earliest patch within the latest minor
     latest_minor_release = min([v for v in parsed_versions if v.minor == latest_minor], key=lambda v: v.patch)
     return original_to_mapped[f"v{latest_minor_release}"]
