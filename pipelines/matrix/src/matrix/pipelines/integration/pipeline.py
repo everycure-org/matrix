@@ -1,3 +1,5 @@
+from typing import List
+
 import pyspark.sql as ps
 from kedro.pipeline import Pipeline, node, pipeline
 
@@ -100,7 +102,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 node(
                     func=nodes.union_and_deduplicate_nodes,
                     inputs=[
-                        "integration.raw.biolink.categories",
+                        "params:integration.deduplication.retrieve_most_specific_category",
                         *[
                             f'integration.int.{source["name"]}.nodes.norm@spark'
                             for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
