@@ -61,7 +61,7 @@ def cli():
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 @click.option("--headless", is_flag=True, default=False, help="Skip confirmation prompt")
 @click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
-@click.option("--experiment_id", "-e", type=str, default="cloud", help="mlflow_experiment_id")
+@click.option("--experiment_id", type=str, help="mlflow_experiment_id")
 # fmt: on
 def submit(
     username: str,
@@ -75,7 +75,7 @@ def submit(
     is_test: bool,
     headless: bool,
     environment: str,
-    experiment_id: str
+    experiment_id: Optional[str]
 ):
     """Submit the end-to-end workflow. """
     if not quiet:
@@ -102,7 +102,7 @@ def submit(
     run_name = get_run_name(run_name)
     pipeline_obj.name = pipeline
 
-    print("experiment id", experiment_id)
+    # print("experiment id", experiment_id)
 
     if not dry_run:
         summarize_submission(run_name, namespace, pipeline, environment, is_test, release_version, headless)
@@ -167,8 +167,6 @@ def _submit(
 
         if not can_talk_to_kubernetes():
             raise EnvironmentError("Cannot communicate with Kubernetes")
-        
-        print("mlflow_experiment_id", mlflow_experiment_id)
 
         argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, environment, mlflow_experiment_id, is_test=is_test, )
 

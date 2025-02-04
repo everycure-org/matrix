@@ -12,8 +12,9 @@ def cli():
 
 
 cli.add_command(submit)
+
 cli.add_command(run)
-cli.add_command(experiment)
+# cli.add_command(experiment)
 
 if __name__ == "__main__":
     try:
