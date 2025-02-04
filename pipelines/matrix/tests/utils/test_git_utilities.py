@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 from matrix.git_utils import get_latest_minor_release, git_tag_exists, has_legal_branch_name
 
