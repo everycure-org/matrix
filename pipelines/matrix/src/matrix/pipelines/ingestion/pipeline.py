@@ -6,71 +6,79 @@ from matrix import settings
 from . import nodes
 
 
+def create_ground_truth_pipeline() -> list:
+    """Create pipeline nodes for ground truth processing."""
+    return [
+        node(
+            func=nodes.create_gt,
+            inputs={
+                "pos_df": "ingestion.raw.ground_truth.positives",
+                "neg_df": "ingestion.raw.ground_truth.negatives",
+            },
+            outputs="ingestion.int.ground_truth.combined",
+            name="create_gt_dataframe",
+            tags=["ground-truth"],
+        ),
+        node(
+            func=nodes.create_gt_nodes_edges,
+            inputs="ingestion.int.ground_truth.combined",
+            outputs=["ingestion.raw.ground_truth.nodes@pandas", "ingestion.raw.ground_truth.edges@pandas"],
+            name="create_nodes_and_edges",
+            tags=["ground-truth"],
+        ),
+    ]
+
+
+def create_medical_team_pipeline() -> list:
+    """Create pipeline nodes for EC Medical Team processing."""
+    return [
+        node(
+            func=nodes.process_medical_nodes,
+            inputs=["ingestion.raw.ec_medical_team_nodes", "params:ingestion.name_resolution.url"],
+            outputs="ingestion.raw.ec_medical_team.nodes@pandas",
+            name="normalize_ec_medical_nodes",
+            tags=["ec-medical-kg"],
+        ),
+        node(
+            func=nodes.process_medical_edges,
+            inputs=[
+                "ingestion.raw.ec_medical_team.nodes@pandas",
+                "ingestion.raw.ec_medical_team_edges",
+            ],
+            outputs="ingestion.raw.ec_medical_team.edges@pandas",
+            name="create_int_ec_medical_edges",
+            tags=["ec-medical-kg"],
+        ),
+    ]
+
+
 def create_pipeline(**kwargs) -> Pipeline:
     """Create ingestion pipeline."""
     # Create pipeline per source
     nodes_lst = []
+
     # Ground truth
-    nodes_lst.extend(
-        [
-            node(
-                func=nodes.create_gt,
-                inputs={
-                    "pos_df": "ingestion.raw.ground_truth.positives",
-                    "neg_df": "ingestion.raw.ground_truth.negatives",
-                },
-                outputs="ingestion.int.ground_truth.combined",
-                name="create_gt_dataframe",
-                tags=["ground-truth"],
-            ),
-            node(
-                func=nodes.create_gt_nodes_edges,
-                inputs="ingestion.int.ground_truth.combined",
-                outputs=["ingestion.raw.ground_truth.nodes@pandas", "ingestion.raw.ground_truth.edges@pandas"],
-                name="create_nodes_and_edges",
-                tags=["ground-truth"],
-            ),
-        ]
-    )
-    # Drug list
-    nodes_lst.append(
-        node(
-            func=lambda x: x,
-            inputs=["ingestion.raw.drug_list"],
-            outputs="ingestion.raw.drug_list.nodes@pandas",
-            name="write_drug_list",
-            tags=["drug-list"],
-        )
-    )
-    # Disease list
-    nodes_lst.append(
-        node(
-            func=lambda x: x,
-            inputs=["ingestion.raw.disease_list"],
-            outputs="ingestion.raw.disease_list.nodes@pandas",
-            name="write_disease_list",
-            tags=["disease-list"],
-        )
-    )
+    nodes_lst.extend(create_ground_truth_pipeline())
+
     # EC Medical Team
+    nodes_lst.extend(create_medical_team_pipeline())
+
+    # Drug list and disease list
     nodes_lst.extend(
         [
             node(
-                func=nodes.process_medical_nodes,
-                inputs=["ingestion.raw.ec_medical_team_nodes", "params:ingestion.name_resolution.url"],
-                outputs="ingestion.raw.ec_medical_team.nodes@pandas",
-                name="normalize_ec_medical_nodes",
-                tags=["ec-medical-kg"],
+                func=lambda x: x,
+                inputs=["ingestion.raw.drug_list"],
+                outputs="ingestion.raw.drug_list.nodes@pandas",
+                name="write_drug_list",
+                tags=["drug-list"],
             ),
             node(
-                func=nodes.process_medical_edges,
-                inputs=[
-                    "ingestion.raw.ec_medical_team.nodes@pandas",
-                    "ingestion.raw.ec_medical_team_edges",
-                ],
-                outputs="ingestion.raw.ec_medical_team.edges@pandas",
-                name="create_int_ec_medical_edges",
-                tags=["ec-medical-kg"],
+                func=lambda x: x,
+                inputs=["ingestion.raw.disease_list"],
+                outputs="ingestion.raw.disease_list.nodes@pandas",
+                name="write_disease_list",
+                tags=["disease-list"],
             ),
         ]
     )
