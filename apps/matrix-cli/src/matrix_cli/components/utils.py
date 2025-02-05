@@ -96,7 +96,7 @@ def get_latest_minor_release(releases_list: List[str]) -> str:
 
 
 def correct_non_semver_compliant_release_names(releases_list: List[str]) -> dict[str, str]:
-    """Fetch releases and map non-semver versions to semver-compliant ones."""
+"""Map versions that aren't semver compliant to compliant ones."""
     mapper = {"v0.1": "v0.1.0", "v0.2": "v0.2.0"}
     original_to_mapped = {mapper.get(release, release): release for release in releases_list}
     return original_to_mapped
