@@ -126,10 +126,8 @@ def get_release_notes(since: str, model: str) -> str:
     console.print("[bold green]Collecting PR details...")
     pr_details_df = get_pr_details_since(since)
     pr_details_dict = pr_details_df[["title", "number"]].sort_values(by="number").to_dict(orient="records")
-
     console.print("[bold green]Collecting git diff...")
     diff_output = get_code_diff(since)
-
     release_template = get_release_template()
     release_yaml = yaml.load(release_template, Loader=yaml.FullLoader)
     categories = tuple(c["title"] for c in release_yaml["changelog"]["categories"])
