@@ -440,11 +440,13 @@ fabricator.ec_medical_kg:
   nodes:
     num_rows: 30
     columns:
-      normalized_curie: 
+      ID:
+        type: generate_unique_id
+      new_id: 
         type: generate_unique_id
         prefix: ec_medical_node_
     
-      label:
+      name:
         type: faker
         provider: name
 
@@ -452,7 +454,7 @@ fabricator.ec_medical_kg:
         type: faker
         provider: sentence
 
-      type:
+      category:
           type: generate_values
           sample_values:
             - biolink:Drug
@@ -460,29 +462,20 @@ fabricator.ec_medical_kg:
             - biolink:Gene
             - biolink:ChemicalSubstance
             - biolink:Protein
-      types:
-          type: row_apply
-          list_of_values: [nodes.type]
-          # NOTE: This ensures the full path from root to child is added in the categories column
-          row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
-          row_func_kwargs:
-            delimiter: "\u01c2"
-          resize: True
-          seed: 590590
 
   edges:
     num_rows: 10
     columns:
-      SourceId:
+      Source:
         type: row_apply
-        list_of_values: [nodes.normalized_curie]
+        list_of_values: [nodes.ID]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 340590
       
-      TargetId:
+      Target:
         type: row_apply
-        list_of_values: [nodes.normalized_curie]
+        list_of_values: [nodes.ID]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 57000
@@ -492,10 +485,6 @@ fabricator.ec_medical_kg:
         sample_values:
           - treats
           - interacts_with
-      
-      knowledge_source:
-        type: faker
-        provider: name
 
 fabricator.spoke:
   # spoke nodes definition

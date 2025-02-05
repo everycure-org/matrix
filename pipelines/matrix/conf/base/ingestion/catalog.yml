@@ -25,7 +25,11 @@ _layer_int: &_layer_int
     kedro-viz:
       layer: integration
 
-
+_medical_kg_sheets_dataset: &_medical_kg_sheets_dataset
+  type: matrix.datasets.gcp.GoogleSheetsDataset
+  key: 1LMtOmA10t7a3lcKeTP7zmptOPIcCBIPFVJt9J7jZ2bQ
+  service_file: conf/local/service-account.json
+  
 # -------------------------------------------------------------------------
 # RTX-KG2
 # -------------------------------------------------------------------------  
@@ -102,6 +106,18 @@ ingestion.int.rtx_kg2.curie_to_pmids:
 # EveryCure Medical
 # -------------------------------------------------------------------------  
 # TODO: Remove raw suffix from all outputs of preprocessing pipeline once its in main
+ingestion.raw.ec_medical_team_nodes:
+  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
+  load_args:
+    sheet_name: new_nodes
+    columns: ["ID", "name", "category", "new_id", "description"]
+
+ingestion.raw.ec_medical_team_edges:
+  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
+  load_args:
+    sheet_name: new_edges
+    columns: ["Source", "Target", "Label"]
+
 ingestion.raw.ec_medical_team.nodes@pandas:
   <<: [*_layer_raw, *_pandas_csv]
   filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/nodes_conflated_raw.csv
