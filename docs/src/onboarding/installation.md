@@ -289,6 +289,12 @@ gcloud auth application-default login
 
 Set the GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your service account key file. You can find the file path in previous step's console output.
 
+We also need to configure Docker to use the Google Container Registry:
+
+```bash
+gcloud auth configure-docker us-central1-docker.pkg.dev
+```
+
 === "MacOS"
 
     ```bash
@@ -342,7 +348,7 @@ Once installed, use the gcloud SDK to connect kubectl to the kubernetes cluster.
 
     ```bash
     gcloud components install gke-gcloud-auth-plugin
-    gcloud container clusters get-credentials compute-cluster --region {REGION} --project {PROJECT_ID}
+    gcloud container clusters get-credentials compute-cluster --region us-central1 --project mtrx-hub-dev-3of
     # ... test your installation. You should see a list of the cluster's namespaces.
     kubectl get namespaces
     ```
