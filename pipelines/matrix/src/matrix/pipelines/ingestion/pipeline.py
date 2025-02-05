@@ -3,14 +3,37 @@ from kedro.pipeline import Pipeline, node, pipeline
 
 from matrix import settings
 
+from . import nodes
+
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create ingestion pipeline."""
     # Create pipeline per source
-    nodes = []
-
-    # Add shared nodes
-    nodes.append(
+    nodes_lst = []
+    # Ground truth
+    nodes_lst.extend(
+        [
+            node(
+                func=nodes.create_gt,
+                inputs={
+                    "pos_df": "ingestion.raw.ground_truth.positives",
+                    "neg_df": "ingestion.raw.ground_truth.negatives",
+                },
+                outputs="ingestion.int.ground_truth.combined",
+                name="create_gt_dataframe",
+                tags=["ground-truth"],
+            ),
+            node(
+                func=nodes.create_gt_nodes_edges,
+                inputs="ingestion.int.ground_truth.combined",
+                outputs=["ingestion.raw.ground_truth.nodes@pandas", "ingestion.raw.ground_truth.edges@pandas"],
+                name="create_nodes_and_edges",
+                tags=["ground-truth"],
+            ),
+        ]
+    )
+    # Drug list
+    nodes_lst.append(
         node(
             func=lambda x: x,
             inputs=["ingestion.raw.drug_list"],
@@ -19,7 +42,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             tags=["drug-list"],
         )
     )
-    nodes.append(
+    # Disease list
+    nodes_lst.append(
         node(
             func=lambda x: x,
             inputs=["ingestion.raw.disease_list"],
@@ -29,7 +53,8 @@ def create_pipeline(**kwargs) -> Pipeline:
         )
     )
 
-    nodes.append(
+    # RTX-KG2 curies
+    nodes_lst.append(
         node(
             func=lambda x: x,
             inputs=["ingestion.raw.rtx_kg2.curie_to_pmids@spark"],
@@ -41,7 +66,7 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # Add ingestion pipeline for each source
     for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration"):
-        nodes.append(
+        nodes_lst.append(
             node(
                 func=lambda x: x,
                 inputs=[f'ingestion.raw.{source["name"]}.nodes@spark'],
@@ -52,7 +77,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         )
 
         if not source.get("nodes_only", False):
-            nodes.append(
+            nodes_lst.append(
                 node(
                     func=lambda x: x,
                     inputs=[f'ingestion.raw.{source["name"]}.edges@spark'],
@@ -62,4 +87,4 @@ def create_pipeline(**kwargs) -> Pipeline:
                 )
             )
 
-    return pipeline(nodes)
+    return pipeline(nodes_lst)
