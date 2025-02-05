@@ -40,9 +40,6 @@ spec:
           - name: "argo_custom_workflow_error_counter"
             help: "Total number of failed workflows"
             labels:
-              - key: workflow_name
-                value: {% raw %}"{{ workflow.name }}"
-                {% endraw %}
               - key: pipeline_name
                 value: "{{ pipeline_name }}"
             when: {% raw %}"{{ status }}  == Failed"
