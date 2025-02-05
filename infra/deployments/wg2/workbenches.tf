@@ -20,8 +20,8 @@ module "workbenches" {
   network = var.shared_network_name
   subnet  = var.shared_subnetwork_name
 
-  service_account = "vertex-ai-workbench-sa@mtrx-wg2-modeling-dev-9yj.iam.gserviceaccount.com"
-  project_id      = "mtrx-wg2-modeling-dev-9yj"
+  service_account = "vertex-ai-workbench-sa@${module.bootstrap_data.content.project_id}.iam.gserviceaccount.com"
+  project_id      = module.bootstrap_data.content.project_id
 
   # Optional: Override defaults if needed
   # machine_type = "e2-standard-8"

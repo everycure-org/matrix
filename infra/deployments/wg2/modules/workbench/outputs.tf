@@ -2,15 +2,15 @@
 
 output "workbench_instances" {
   description = "Map of created workbench instances"
-  value       = google_notebooks_instance.user_workbench
+  value       = google_workbench_instance.user_workbench
 }
 
 output "instance_name" {
   description = "Name of the workbench instance"
-  value       = google_notebooks_instance.user_workbench.name
+  value       = google_workbench_instance.user_workbench.name
 }
 
 output "instance_url" {
   description = "URL of the workbench instance"
-  value       = google_notebooks_instance.user_workbench.proxy_uri
+  value       = google_workbench_instance.user_workbench.proxy_uri
 } 
