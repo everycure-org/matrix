@@ -1,23 +1,19 @@
 import logging
-from pandera import DataFrameModel
-import pandera as pa
-from tqdm import tqdm
-from typing import List, Dict, Union, Tuple
-import pyspark.sql as ps
-from sklearn.impute._base import _BaseImputer
+from datetime import datetime
+from typing import Dict, List, Tuple, Union
 
 import pandas as pd
+import pandera as pa
+import pyspark.sql as ps
 import pyspark.sql.functions as F
-from pandera.typing import Series
-
-from matrix.inject import inject_object, _extract_elements_in_list
-
 from matrix.datasets.graph import KnowledgeGraph
-
-from matrix.pipelines.modelling.nodes import apply_transformers
+from matrix.inject import _extract_elements_in_list, inject_object
 from matrix.pipelines.modelling.model import ModelWrapper
-
-from datetime import datetime
+from matrix.pipelines.modelling.nodes import apply_transformers
+from pandera import DataFrameModel
+from pandera.typing import Series
+from sklearn.impute._base import _BaseImputer
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -70,13 +66,13 @@ def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_
     matrix["is_known_negative"] = create_flag_column(test_neg_pairs)
 
     # Flag clinical trials data
-    clinical_trials = clinical_trials.rename(columns={"drug_kg_curie": "source", "disease_kg_curie": "target"})
-    matrix["trial_sig_better"] = create_flag_column(clinical_trials[clinical_trials["significantly_better"] == 1])
-    matrix["trial_non_sig_better"] = create_flag_column(
-        clinical_trials[clinical_trials["non_significantly_better"] == 1]
-    )
-    matrix["trial_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["non_significantly_worse"] == 1])
-    matrix["trial_non_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["significantly_worse"] == 1])
+    # clinical_trials = clinical_trials.rename(columns={"drug_kg_curie": "source", "disease_kg_curie": "target"})
+    # matrix["trial_sig_better"] = create_flag_column(clinical_trials[clinical_trials["significantly_better"] == 1])
+    # matrix["trial_non_sig_better"] = create_flag_column(
+    #     clinical_trials[clinical_trials["non_significantly_better"] == 1]
+    # )
+    # matrix["trial_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["non_significantly_worse"] == 1])
+    # matrix["trial_non_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["significantly_worse"] == 1])
 
     return matrix
 
@@ -132,7 +128,7 @@ def generate_pairs(
     """
     # Collect list of drugs and diseases
     drugs_lst = drugs["curie"].tolist()
-    diseases_lst = diseases["curie"].tolist()
+    diseases_lst = diseases["category_class"].tolist()
 
     # Remove duplicates
     drugs_lst = list(set(drugs_lst))
