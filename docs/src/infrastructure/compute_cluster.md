@@ -113,7 +113,43 @@ Our setup leverages these concepts to provide a flexible and powerful routing so
 
 ## Access and Permissions
 
-We will provide `roles/container.developer` and `roles/iap.tunnelResourceAccessor` to everyone in the MATRIX project to enable cluster access. 
+### Submitting workflows
+
+We enabled [Google Groups RBAC](https://cloud.google.com/kubernetes-engine/docs/how-to/google-groups-rbac) for the Argo workflows application. Access to Argo Workflows is managed through Google Groups, specifically:
+
+1. The cluster is configured with Google Groups for RBAC using the security group `gke-security-groups@everycure.org`
+2. Argo Workflows access is granted to:
+   - Individual users (can be added in the configuration)
+   - Members of the `matrix-all@everycure.org` Google Group
+
+The configuration is managed in the `values.yaml` file for the `developer-iam` argo application:
+
+```yaml
+argo:
+  namespace: argo-workflows
+  rbac:
+    users:
+      # add new users here that should be able to submit workflows
+      #- user@example.com
+    groups:
+      - matrix-all@everycure.org
+```
+
+To request access to submit workflows:
+1. Ensure you are a member of the `matrix-all@everycure.org` Google Group
+2. For individual access, request to be added to the `users` section in the configuration (should rarely be needed)
+
+For more details on Google Groups RBAC setup, refer to the [official documentation](https://cloud.google.com/kubernetes-engine/docs/how-to/google-groups-rbac).
+
+### Administering the cluster
+
+We will provide `roles/container.developer` to everyone in the MATRIX project that should be able to administer the cluster.
+
+### Accessing applications running on the cluster
+
+We expose the applications via web-based interfaces, which are accessible via the web browser. Those that should not be accessible to the public are protected by IAP.
+See [the google docs](https://cloud.google.com/iap/docs/enabling-kubernetes-howto) for more details.
+
 
 ## Cluster Configuration
 
