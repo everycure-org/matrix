@@ -37,14 +37,18 @@ spec:
   - &_kedro_template
     metrics:
         prometheus:
-          - name: "argo_custom_workflow_errors_total"
+          - name: "argo_custom_workflow_error_counter"
             help: "Total number of failed workflows"
             labels:
               - key: workflow_name
-                value: "{{name}}"
+                value: {% raw %}"{{ workflow.name }}"
+                {% endraw %}
               - key: pipeline_name
                 value: "{{ pipeline_name }}"
-            when: "{{status}} == Failed"
+            when: {% raw %}"{{ status }}  == Failed"
+            # Note that this should be 'workflow.status' not 'status' if docs are followed, but it doesn't work.
+            # https://argo-workflows.readthedocs.io/en/latest/variables/#exit-handler
+            {% endraw %}
             counter:
               value: "1"
     name: kedro
