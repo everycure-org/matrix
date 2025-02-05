@@ -4,8 +4,6 @@ from . import nodes
 from .tagging import generate_tags
 
 
-# NOTE: This pipeline in highly preliminary and used for ingestion of the
-# medical data provided in Google Sheets __ONLY__.
 def create_pipeline(**kwargs) -> Pipeline:
     """Create preprocessing pipeline."""
     return pipeline(
@@ -15,7 +13,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             # -------------------------------------------------------------------------
             node(
                 func=nodes.process_medical_nodes,
-                inputs=["preprocessing.raw.nodes"],
+                inputs=["preprocessing.raw.nodes", "params:preprocessing.name_resolution.url"],
                 outputs="preprocessing.int.nodes",
                 name="normalize_ec_medical_team_nodes",
                 tags=["ec-medical-kg"],
@@ -47,6 +45,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.add_source_and_target_to_clinical_trails,
                 inputs={
                     "df": "preprocessing.raw.clinical_trials_data",
+                    "resolver_url": "params:preprocessing.name_resolution.url",
                 },
                 outputs="preprocessing.int.mapped_clinical_trials_data",
                 name="mapped_clinical_trials_data",
@@ -58,10 +57,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "preprocessing.int.mapped_clinical_trials_data",
                 ],
-                outputs=[
-                    "ingestion.raw.ec_clinical_trails.nodes@pandas",
-                    "ingestion.raw.ec_clinical_trails.edges@pandas",
-                ],
+                outputs={
+                    "nodes": "ingestion.raw.ec_clinical_trails.nodes@pandas",
+                    "edges": "ingestion.raw.ec_clinical_trails.edges@pandas",
+                },
                 name="clean_clinical_trial_data",
                 tags=["ec-clinical-trials-data"],
             ),

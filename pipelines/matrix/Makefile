@@ -5,12 +5,17 @@ export PYSPARK_PYTHON = .venv/bin/python
 export UV_PYTHON = .venv/bin/python
 export TQDM_DISABLE ?= 1
 TARGET_PLATFORM ?= linux/amd64
-PREREQUISITES := docker gcloud python3 java uv
+PREREQUISITES := docker gcloud python3 java uv kubectl
+
+# Add GCP project variables
+GCP_PROJECT ?= mtrx-hub-dev-3of
+SA_KEY_SECRET_NAME ?= storage-viewer-sa-key
+SA_KEY_PATH ?= conf/local/service-account.json
 
 # ensures all make targets run in one shell (rather than line by line in new shell)
 .ONESHELL: 
 
-default: install fast_test compose_down integration_test
+default: prerequisites fetch_sa_key install fast_test integration_test
 	echo "done!"
 
 prerequisites:
@@ -18,12 +23,27 @@ prerequisites:
 	$(foreach exec,$(PREREQUISITES),\
         $(if $(shell command -v $(exec) 2>/dev/null),,$(error "$(exec) is not installed.")))
 	$(info All prerequisites are installed.)
+	$(info Checking gcloud auth...)
+	@if ! gcloud auth print-access-token >/dev/null 2>&1; then \
+		echo "Not logged into gcloud. Please run 'gcloud auth login' first."; \
+		exit 1; \
+	fi
 
-venv: prerequisites
+fetch_sa_key:
+	echo "Fetching service account key from Secret Manager..."; \
+	mkdir -p conf/local; \
+	gcloud secrets versions access latest \
+		--secret=$(SA_KEY_SECRET_NAME) \
+		--project=$(GCP_PROJECT) \
+		> $(SA_KEY_PATH); \
+	chmod 600 $(SA_KEY_PATH); \
+	echo "Service account key saved to $(SA_KEY_PATH)"; \
+
+venv: 
 	if [ ! -d .venv ]; then uv venv -p 3.11; fi
 	uv run python -m ensurepip --upgrade || true
 
-install: venv precommit-hooks
+install: venv precommit-hooks 
 	uv pip install -r requirements.txt #force it to install in our venv
 
 install_compatibility: venv precommit-hooks
@@ -100,7 +120,7 @@ licenses_container: docker_build
 		-v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy  \
 		image --scanners license --severity UNKNOWN,CRITICAL $(dev_docker_image)
 
-clean:
+clean: clean_sa_key
 	@echo "cleaning various cache locations to ensure clean installation is possible"
 	@echo "this may be necessary e.g. when updating one of our local packages"
 	uv run pre-commit clean
@@ -126,6 +146,8 @@ diagnostics:
 	-uv --version || echo "UV is not installed."
 	echo "\nCheck Virtual Environment (if applicable):"
 	-uv run which python || echo "Python is not in PATH."
+	echo "\nKubectl permissions:"
+	-kubectl auth can-i --list
 	echo "\nPython Version:"
 	-uv run python3 --version || echo "Python is not installed."
 	echo "\nSystem Information:"

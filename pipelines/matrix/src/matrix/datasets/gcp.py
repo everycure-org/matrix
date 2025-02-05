@@ -19,11 +19,12 @@ from kedro.io.core import (
 )
 from kedro_datasets.partitions import PartitionedDataset
 from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
-from matrix.hooks import SparkHooks
-from matrix.inject import _parse_for_objects
 from pygsheets import Spreadsheet, Worksheet
 from pyspark.errors.exceptions.captured import AnalysisException
 from tqdm import tqdm
+
+from matrix.hooks import SparkHooks
+from matrix.inject import _parse_for_objects
 
 logger = logging.getLogger(__name__)
 
@@ -346,10 +347,14 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
 
         protocol, fs_prefix, blob_name = self.split_remote_jdbc_path(url)
 
-        if fs_prefix != "gs://":
+        if fs_prefix and fs_prefix != "gs://":
             raise DatasetError("RemoteSparkJDBCDataset currently supports GCS only")
 
-        self._bucket, self._blob_name = blob_name.split("/", maxsplit=1)
+        if fs_prefix:
+            self._bucket, self._blob_name = blob_name.split("/", maxsplit=1)
+        else:
+            self._bucket = None
+            self._blob_name = blob_name
 
         super().__init__(
             table=table,
@@ -372,11 +377,11 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
 
     def load(self) -> Any:
         SparkHooks._initialize_spark()
-        bucket = self._get_client().bucket(self._bucket)
-        blob = bucket.blob(self._blob_name)
 
-        if not os.path.exists(self._blob_name):
+        if self._bucket and not os.path.exists(self._blob_name):
             logger.info("downloading file to local")
+            bucket = self._get_client().bucket(self._bucket)
+            blob = bucket.blob(self._blob_name)
             os.makedirs(self._blob_name.rsplit("/", maxsplit=1)[0], exist_ok=True)
             blob.download_to_filename(self._blob_name)
         else:
