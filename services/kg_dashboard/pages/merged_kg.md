@@ -74,7 +74,9 @@ limit ${inputs.edge_limit.value}
 
 ```sql edge_prefixes_by_primary_knowledge_source
 select 
-    subject_prefix || ' to ' || object_prefix as edge_type,
+    subject_prefix || ' ' ||
+    replace(predicate,'biolink:','') || ' ' ||
+    object_prefix as edge_type,
     primary_knowledge_source,
     sum(count) as count
 from bq.merged_kg_edges
