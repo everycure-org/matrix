@@ -7,19 +7,3 @@ _bigquery_ds: &_bigquery_ds
     mode: overwrite
     labels:
       git_sha: ${globals:git_sha}
-
-
-# -------------------------------------------------------------------------
-# Reporting
-# -------------------------------------------------------------------------
-
-# overwriting the base catalog to use the bigquery datasets
-ingestion.reporting.{source}.nodes.{reporting_stage}:
-  <<: *_bigquery_ds
-  filepath: ${globals:paths.ingestion}/reporting/{source}/{reporting_stage}/nodes
-  table: reporting_{source}_nodes_{reporting_stage}
-
-ingestion.reporting.{source}.edges.{reporting_stage}:
-  <<: *_bigquery_ds
-  filepath: ${globals:paths.ingestion}/reporting/{source}/{reporting_stage}/edges
-  table: reporting_{source}_edges_{reporting_stage}

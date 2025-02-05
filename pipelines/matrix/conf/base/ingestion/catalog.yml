@@ -25,11 +25,6 @@ _layer_int: &_layer_int
     kedro-viz:
       layer: integration
 
-_layer_reporting: &_layer_reporting
-  metadata:
-    kedro-viz:
-      layer: reporting
-
 # -------------------------------------------------------------------------
 # RTX-KG2
 # -------------------------------------------------------------------------  
@@ -399,15 +394,3 @@ ingestion.raw.spoke.edges@pandas:
 # ingestion.int.spoke.edges:
 #   <<: [*_spark_parquet, *_layer_int]
 #   filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/edges
-
-# -------------------------------------------------------------------------
-# Reporting
-# -------------------------------------------------------------------------
-
-ingestion.reporting.{source}.nodes.{reporting_stage}:
-  <<: [*_spark_parquet, *_layer_reporting]
-  filepath: ${globals:paths.ingestion}/reporting/{source}/{reporting_stage}/nodes
-
-ingestion.reporting.{source}.edges.{reporting_stage}:
-  <<: [*_spark_parquet, *_layer_reporting]
-  filepath: ${globals:paths.ingestion}/reporting/{source}/{reporting_stage}/edges

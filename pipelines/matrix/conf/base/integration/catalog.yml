@@ -23,11 +23,6 @@ _layer_prm: &_layer_prm
     kedro-viz:
       layer: primary
 
-_layer_reporting: &_layer_reporting
-  metadata:
-    kedro-viz:
-      layer: reporting
-
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
@@ -107,24 +102,3 @@ integration.prm.original.filtered_nodes:
 integration.prm.original.filtered_edges:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.integration}/prm/filtered/edges
-
-# ==============================
-# Reporting
-
-
-integration.reporting.{source}.nodes.{reporting_stage}:
-  <<: [*_spark_parquet, *_layer_reporting]
-  filepath: ${globals:paths.integration}/reporting/{source}/{reporting_stage}/nodes
-
-integration.reporting.{source}.edges.{reporting_stage}:
-  <<: [*_spark_parquet, *_layer_reporting]
-  filepath: ${globals:paths.integration}/reporting/{source}/{reporting_stage}/edges
-
-
-integration.reporting.nodes.{reporting_stage}:
-  <<: [*_spark_parquet, *_layer_reporting]
-  filepath: ${globals:paths.integration}/reporting/{reporting_stage}/nodes
-
-integration.reporting.edges.{reporting_stage}:
-  <<: [*_spark_parquet, *_layer_reporting]
-  filepath: ${globals:paths.integration}/reporting/{reporting_stage}/edges

@@ -22,28 +22,3 @@ integration.prm.filtered_edges:
   <<: *_bigquery_ds
   filepath: ${globals:paths.integration}/prm/filtered/edges
   table: edges
-
-# -------------------------------------------------------------------------
-# Reporting
-# -------------------------------------------------------------------------
-
-integration.reporting.{source}.nodes.{reporting_stage}:
-  <<: *_bigquery_ds
-  filepath: ${globals:paths.integration}/reporting/{source}/{reporting_stage}/nodes
-  table: reporting_{source}_nodes_{reporting_stage}
-
-integration.reporting.{source}.edges.{reporting_stage}:
-  <<: *_bigquery_ds
-  filepath: ${globals:paths.integration}/reporting/{source}/{reporting_stage}/edges
-  table: reporting_{source}_edges_{reporting_stage}
-
-
-integration.reporting.nodes.{reporting_stage}:
-  <<: *_bigquery_ds
-  filepath: ${globals:paths.integration}/reporting/{reporting_stage}/nodes
-  table: reporting_nodes_{reporting_stage}
-
-integration.reporting.edges.{reporting_stage}:
-  <<: *_bigquery_ds
-  filepath: ${globals:paths.integration}/reporting/{reporting_stage}/edges
-  table: reporting_edges_{reporting_stage}
