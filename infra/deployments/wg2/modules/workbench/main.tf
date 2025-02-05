@@ -46,7 +46,8 @@ resource "google_workbench_instance" "user_workbench" {
     }
     disable_public_ip = true
     metadata = {
-      idle_timeout_seconds = "10800"
+      idle-timeout-seconds = "10800"
+      post-startup-script  = var.post_startup_script
     }
   }
 
@@ -60,7 +61,7 @@ resource "google_workbench_instance" "user_workbench" {
     ignore_changes = [
       create_time,
       update_time,
-      desired_state
+      desired_state,
     ]
   }
   desired_state = "STOPPED"

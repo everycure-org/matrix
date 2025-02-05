@@ -23,7 +23,7 @@ variable "location" {
 variable "machine_type" {
   description = "The machine type for the workbench instances"
   type        = string
-  default     = "e2-standard-4"
+  default     = "e2-standard-8"
 }
 
 variable "network" {
@@ -62,4 +62,9 @@ variable "labels" {
   description = "Additional labels to apply to the workbench instances"
   type        = map(string)
   default     = {}
-} 
+}
+
+variable "post_startup_script" {
+  description = "The post startup script to run on the workbench instances"
+  type        = string
+}
