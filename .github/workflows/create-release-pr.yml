@@ -99,8 +99,8 @@ jobs:
           pip install uv
           uv venv -p 3.11
           uv pip install -r requirements.txt
-          uv run scripts/bump_detection.py >> "${GITHUB_ENV}"
-
+          uv run scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
+      
       - name: Create Release Notes
         working-directory: apps/matrix-cli
         env:
