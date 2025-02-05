@@ -120,6 +120,9 @@ licenses_container: docker_build
 		-v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy  \
 		image --scanners license --severity UNKNOWN,CRITICAL $(dev_docker_image)
 
+clean_sa_key:
+	rm -f $(SA_KEY_PATH)
+
 clean: clean_sa_key
 	@echo "cleaning various cache locations to ensure clean installation is possible"
 	@echo "this may be necessary e.g. when updating one of our local packages"
