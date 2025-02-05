@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from matrix.git_utils import get_latest_minor_release, git_tag_exists, has_legal_branch_name
@@ -61,8 +61,6 @@ def test_git_tag_exists(mock_subprocess, tag, mock_return_val, expected_result):
         (["v2.1.5", "v2.1.2", "v1.2.3", "v1.3.2", "v1.1.2", "v1.1.1"], "v2.1.2"),
     ],
 )
-@patch("matrix.git_utils.get_releases")
-def test_get_latest_minor_release(mock_get_releases, releases_list, expected_result):
-    mock_get_releases.return_value = releases_list
-    result = get_latest_minor_release()
+def test_get_latest_minor_release(releases_list, expected_result):
+    result = get_latest_minor_release(releases_list)
     assert result == expected_result

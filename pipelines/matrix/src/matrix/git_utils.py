@@ -46,17 +46,17 @@ def git_tag_exists(tag: str) -> bool:
 
 def get_releases() -> List[str]:
     return (
-        (subprocess.check_output(["gh", "release", "list", "--json", "tagName", "--jq", ".[].tagName"]))
-        .decode("utf-8")
+        (subprocess.check_output(["gh", "release", "list", "--json", "tagName", "--jq", ".[].tagName"], text=True))
         .strip("\n")
         .split("\n")
     )
 
 
-def get_latest_minor_release() -> str:
-    mapped_releases, original_to_mapped = get_releases_with_semver_mapping()
-    parsed_versions = [semver.Version.parse(v.lstrip("v")) for v in mapped_releases]
-    latest_major_minor = max(parsed_versions, key=lambda v: (v.major, v.minor))
+def get_latest_minor_release(releases_list: List[str]) -> str:
+    original_to_mapped = correct_non_semver_compliant_release_names(releases_list)
+    parsed_versions = [semver.Version.parse(v.lstrip("v")) for v in original_to_mapped]
+    latest_major_minor = max(parsed_versions)
+    # Find the earliest release in the latest major-minor series.
     latest_minor_release = min(
         [v for v in parsed_versions if v.major == latest_major_minor.major and v.minor == latest_major_minor.minor]
     )
@@ -64,10 +64,8 @@ def get_latest_minor_release() -> str:
     return original_to_mapped[f"v{latest_minor_release}"]
 
 
-def get_releases_with_semver_mapping() -> tuple[list[str], dict[str, str]]:
-    """Fetch releases and map non-semver versions to semver-compliant ones."""
-    releases_list = get_releases()
+def correct_non_semver_compliant_release_names(releases_list: List[str]) -> dict[str, str]:
+    """Map versions that aren't semver compliant to compliant ones."""
     mapper = {"v0.1": "v0.1.0", "v0.2": "v0.2.0"}
     original_to_mapped = {mapper.get(release, release): release for release in releases_list}
-    mapped_releases = list(original_to_mapped.keys())
-    return mapped_releases, original_to_mapped
+    return original_to_mapped

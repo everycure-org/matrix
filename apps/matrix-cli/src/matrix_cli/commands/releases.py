@@ -442,7 +442,8 @@ def write_excel(df: "pd.DataFrame", filename: str):
 
 def select_release(headless: bool) -> str:
     if headless:
-        return get_latest_minor_release()
+        releases_list = get_releases()
+        return get_latest_minor_release(releases_list)
     return ask_for_release()
 
 
