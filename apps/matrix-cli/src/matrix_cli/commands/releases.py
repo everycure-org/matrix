@@ -18,7 +18,7 @@ from tqdm.rich import tqdm
 from matrix_cli.commands.code import get_ai_code_summary
 from matrix_cli.components.cache import memory
 from matrix_cli.components.gh_api import get_pr_details, update_prs
-from matrix_cli.components.git import get_code_diff
+from matrix_cli.components.git import get_code_diff, get_current_branch
 from matrix_cli.components.models import PRInfo
 from matrix_cli.components.settings import settings
 from matrix_cli.components.utils import (
@@ -55,9 +55,14 @@ def write_release_article(
     disable_rendering: bool = typer.Option(True, help="Disable rendering of the release article"),
     headless: bool = typer.Option(False, help="Don't ask interactive questions."),
     notes_file: str = typer.Option(None, help="File containing release notes"),
+    until: str = typer.Option(
+        None, help="Ending git reference for fetching PR and code difference (default: current branch)"
+    ),
 ):
     """Write a release article for a given git reference."""
     since = select_release(headless)
+    if until is None:
+        until = get_current_branch()
 
     if notes_file:
         console.print("[green]Loading release notes")
@@ -71,7 +76,7 @@ def write_release_article(
     previous_articles = get_previous_articles()
 
     console.print("[green]Summarizing code changes...")
-    code_summary = get_ai_code_summary(since, model=model)
+    code_summary = get_ai_code_summary(since, until, model=model)
 
     focus_direction = ""
     if not headless:
@@ -104,12 +109,17 @@ def release_notes(
     headless: bool = typer.Option(
         False, help="Don't ask interactive questions. The most recent release will be automatically used."
     ),
+    until: str = typer.Option(
+        None, help="Ending git reference for fetching PR and code difference (default: current branch)"
+    ),
 ):
     """Generate an AI summary of code changes since a specific git reference."""
     since = select_release(headless)
+    if until is None:
+        until = get_current_branch()
     try:
         console.print("Generating release notes...")
-        response = get_release_notes(since, model)
+        response = get_release_notes(since, until, model)
 
         if output_file:
             Path(output_file).write_text(response)
@@ -122,13 +132,12 @@ def release_notes(
         raise typer.Exit(1)
 
 
-def get_release_notes(since: str, model: str) -> str:
+def get_release_notes(since: str, until: str, model: str) -> str:
     console.print("[bold green]Collecting PR details...")
-    pr_details_df = get_pr_details_since(since)
+    pr_details_df = get_pr_details_since(since, until)
     pr_details_dict = pr_details_df[["title", "number"]].sort_values(by="number").to_dict(orient="records")
-
     console.print("[bold green]Collecting git diff...")
-    diff_output = get_code_diff(since)
+    diff_output = get_code_diff(since, until)
 
     release_template = get_release_template()
     release_yaml = yaml.load(release_template, Loader=yaml.FullLoader)
@@ -231,8 +240,8 @@ def _read_modified_excel_file(output_file: str) -> "pd.DataFrame":
         raise typer.Exit(1)
 
 
-def get_pr_details_since(previous_tag: str) -> List[PRInfo]:
-    commit_messages = get_commit_logs(previous_tag)
+def get_pr_details_since(previous_tag: str, end_git_ref: str) -> List[PRInfo]:
+    commit_messages = get_commit_logs(previous_tag, end_git_ref)
     pr_numbers = extract_pr_numbers(commit_messages)
     if not pr_numbers:
         typer.echo("No PRs found since the previous tag.")
@@ -240,8 +249,8 @@ def get_pr_details_since(previous_tag: str) -> List[PRInfo]:
     return get_pr_details(pr_numbers)
 
 
-def get_commit_logs(previous_tag: str) -> List[str]:
-    command = ["git", "log", f"{previous_tag}..origin/main", "--oneline"]
+def get_commit_logs(previous_tag: str, end_git_ref: str) -> List[str]:
+    command = ["git", "log", f"{previous_tag}..{end_git_ref}", "--oneline"]
     return run_command(command).split("\n")
 
 
