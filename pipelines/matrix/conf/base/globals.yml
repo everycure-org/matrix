@@ -1,7 +1,6 @@
 random_state: 111
 
 neo4j:
-  # NOTE: This configuration was partially generated using AI assistance.
   # these get overwritten in prod through the env variables, in base we default to 2nd param
   host: ${oc.env:NEO4J_HOST,bolt://127.0.0.1:7687}
   user: ${oc.env:NEO4J_USER,neo4j}
