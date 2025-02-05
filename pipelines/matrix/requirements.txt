@@ -878,6 +878,7 @@ strawberry-graphql==0.258.0
 stringcase==1.2.0
     # via bmt
 sympy==1.13.1
+semver==3.0.2
     # via torch
 tenacity==9.0.0
     # via

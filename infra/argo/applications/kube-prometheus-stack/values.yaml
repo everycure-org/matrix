@@ -1,11 +1,12 @@
 kube-prometheus-stack:
   prometheus:
     prometheusSpec:
+      retention: 180d
       storageSpec:
         volumeClaimTemplate:
           spec:
             # by default prometheus uses a local storage, which is not persistent
-            storageClassName: standard
+            storageClassName: standard-rwo # balanced 
             accessModes: ["ReadWriteOnce"]
             resources:
               requests:
