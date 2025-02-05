@@ -25,6 +25,8 @@ server:
     pass_context: False # should the class be instantiated with "kedro_context" argument?
     init_kwargs: {} # any kwargs to pass to the class when it is instantiated
 
+af_experiment_id: ${oc.env:MLFLOW_EXPERIMENT_ID}
+
 tracking:
   # You can specify a list of pipeline names for which tracking will be disabled
   # Running "kedro run --pipeline=<pipeline_name>" will not log parameters
