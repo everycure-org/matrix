@@ -18,13 +18,12 @@ from tqdm.rich import tqdm
 from matrix_cli.commands.code import get_ai_code_summary
 from matrix_cli.components.cache import memory
 from matrix_cli.components.gh_api import get_pr_details, update_prs
-from matrix_cli.components.git import get_code_diff
+from matrix_cli.components.git import get_code_diff, get_current_branch
 from matrix_cli.components.models import PRInfo
 from matrix_cli.components.settings import settings
 from matrix_cli.components.utils import (
     ask_for_release,
     console,
-    get_current_branch,
     get_git_root,
     get_latest_minor_release,
     get_markdown_contents,
@@ -126,25 +125,25 @@ def release_notes(
 def get_release_notes(since: str, model: str) -> str:
     console.print("[bold green]Collecting PR details...")
     pr_details_df = get_pr_details_since(since)
-    pr_details_dict = pr_details_df[["title", "number"]].sort_values(by="number").to_dict(orient="records")
+    # pr_details_dict = pr_details_df[["title", "number"]].sort_values(by="number").to_dict(orient="records")
 
-    console.print("[bold green]Collecting git diff...")
-    diff_output = get_code_diff(since)
+    # console.print("[bold green]Collecting git diff...")
+    # diff_output = get_code_diff(since)
 
-    release_template = get_release_template()
-    release_yaml = yaml.load(release_template, Loader=yaml.FullLoader)
-    categories = tuple(c["title"] for c in release_yaml["changelog"]["categories"])
+    # release_template = get_release_template()
+    # release_yaml = yaml.load(release_template, Loader=yaml.FullLoader)
+    # categories = tuple(c["title"] for c in release_yaml["changelog"]["categories"])
 
-    prompt = get_template("release_notes.prompt.tmpl").render(
-        release_template=release_template,
-        diff_output=diff_output,
-        pr_details_dict=yaml.dump(pr_details_dict),
-        categories=categories,
-    )
-    response = invoke_model(prompt, model)
+    # prompt = get_template("release_notes.prompt.tmpl").render(
+    #     release_template=release_template,
+    #     diff_output=diff_output,
+    #     pr_details_dict=yaml.dump(pr_details_dict),
+    #     categories=categories,
+    # )
+    # response = invoke_model(prompt, model)
 
-    authors = pr_details_df["author"].unique()
-    return get_template("release_notes.tmpl").render(date=date.today().isoformat(), authors=authors, notes=response)
+    # authors = pr_details_df["author"].unique()
+    # return get_template("release_notes.tmpl").render(date=date.today().isoformat(), authors=authors, notes=response)
 
 
 def get_release_template() -> str:

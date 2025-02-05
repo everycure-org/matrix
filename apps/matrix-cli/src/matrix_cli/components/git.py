@@ -20,8 +20,17 @@ def fetch_pr_detail(pr_number: int) -> PRInfo:
     """
     # Fetch PR details including merge commit
     command = ["gh", "pr", "view", str(pr_number), "--json", "number,title,author,labels,url,mergeCommit,headRefName"]
-    pr_json = run_command(command)
-    pr_info = json.loads(pr_json)
+
+    try:
+        pr_json = run_command(command)
+        pr_info = json.loads(pr_json)
+    except RuntimeError as e:
+        if "Could not resolve to a PullRequest" in str(e):
+            print(e)
+            typer.echo(f"Skipping missing PR #{pr_number}", err=True)
+            return None  # Skip this PR
+        else:
+            raise
 
     # Extract only the login from the author field
     if "author" in pr_info and isinstance(pr_info["author"], dict):
