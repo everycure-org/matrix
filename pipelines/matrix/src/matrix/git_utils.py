@@ -69,3 +69,9 @@ def correct_non_semver_compliant_release_names(releases_list: List[str]) -> dict
     mapper = {"v0.1": "v0.1.0", "v0.2": "v0.2.0"}
     original_to_mapped = {mapper.get(release, release): release for release in releases_list}
     return original_to_mapped
+
+
+def create_new_branch(branch_name: str) -> bool:
+    result = subprocess.run(
+        ["git", "checkout", "-b", branch_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True
+    )
