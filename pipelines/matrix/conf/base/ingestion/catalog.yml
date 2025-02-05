@@ -404,10 +404,10 @@ ingestion.raw.spoke.edges@pandas:
 # Reporting
 # -------------------------------------------------------------------------
 
-ingestion.reporting.{source}.nodes:
+ingestion.reporting.{source}.nodes.{reporting_stage}:
   <<: [*_spark_parquet, *_layer_reporting]
-  filepath: ${globals:paths.ingestion}/reporting/{source}/nodes
+  filepath: ${globals:paths.ingestion}/reporting/{source}/{reporting_stage}/nodes
 
-ingestion.reporting.{source}.edges:
+ingestion.reporting.{source}.edges.{reporting_stage}:
   <<: [*_spark_parquet, *_layer_reporting]
-  filepath: ${globals:paths.ingestion}/reporting/{source}/edges
+  filepath: ${globals:paths.ingestion}/reporting/{source}/{reporting_stage}/edges
