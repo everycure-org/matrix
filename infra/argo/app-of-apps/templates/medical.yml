@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: medical
+  namespace: argocd
+spec:
+  destination:
+    namespace: medical
+    server: {{ .Values.spec.destination.server }}
+  project: default
+  source:
+    path: infra/argo/applications/explorer
+    repoURL: https://github.com/everycure-org/matrix-ui.git
+    targetRevision: infra
+  syncPolicy:
+    syncOptions:     # Sync options which modifies sync behavior
+    - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
+    automated: 
+      prune: true

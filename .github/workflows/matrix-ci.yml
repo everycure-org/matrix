@@ -89,7 +89,6 @@ jobs:
 
       # On every PR
       - run: env | sort # prints out all env variables, helpful for debugging
-      - run: make venv
       - run: make install
       - run: make precommit
       - run: make full_test
