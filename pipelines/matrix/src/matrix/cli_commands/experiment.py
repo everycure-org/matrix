@@ -32,6 +32,7 @@ from kedro.pipeline.pipeline import Pipeline
 from kedro.utils import load_obj
 
 from matrix.cli_commands.run import run
+from matrix.cli_commands.submit import submit
 from matrix.git_utils import get_current_git_branch
 from matrix.session import KedroSessionWithFromCatalog
 from matrix.utils.authentication import get_iap_token
@@ -66,22 +67,32 @@ class RunConfig(NamedTuple):
 # @click.option( "--to-outputs",    type=str, default="", help=TO_OUTPUTS_HELP, callback=split_string)
 # @click.option( "--from-nodes",    type=str, default="", help=FROM_NODES_HELP, callback=split_node_names,)
 # @click.option( "--to-nodes",      type=str, default="", help=TO_NODES_HELP, callback=split_node_names)
-@click.option( "--nodes",         "-n", "node_names", type=str, multiple=False, help=NODE_ARG_HELP, callback=split_string, default="",)
+# @click.option( "--nodes",         "-n", "node_names", type=str, multiple=False, help=NODE_ARG_HELP, callback=split_string, default="",)
 # @click.option( "--runner",        "-r", type=str, default=None, multiple=False, help=RUNNER_ARG_HELP)
 # @click.option("--async",          "is_async", is_flag=True, multiple=False, help=ASYNC_ARG_HELP) 
 # @click.option("--tags",           "-t", type=str, multiple=True, help=TAG_ARG_HELP)
 # @click.option( "--without-tags",  "-wt", type=str, help="used to filter out nodes with tags that should not be run. All dependent downstream nodes are also removed. Note nodes need to have _all_ tags to be removed.", callback=split_string, default=[],)
 # @click.option( "--load-versions", "-lv", type=str, multiple=True, help=LOAD_VERSION_HELP, callback=_split_load_versions,)
-# @click.option("--pipeline",       "-p", required=True, default="__default__", type=str, help=PIPELINE_ARG_HELP)
+@click.option("--pipeline",       "-p", required=True, default="__default__", type=str, help=PIPELINE_ARG_HELP)
 # @click.option( "--conf-source",   type=click.Path(exists=True, file_okay=False, resolve_path=True), help=CONF_SOURCE_HELP,)
 # @click.option( "--params",        type=click.UNPROCESSED, default="", help=PARAMS_ARG_HELP, callback=_split_params,)
 # @click.option( "--from-env",      type=str, default=None, help="Custom env to read from, if specified will read from the `--from-env` and write to the `--env`",)
 @click.option( "--experiment_name",      type=str, default=None,)
+@click.option("--username", type=str, required=True, help="Specify the username to use")
+@click.option("--release-version", type=str, required=True, help="Specify a custom release name")
 # fmt: on
 # def experiment(env:str, name: Optional[str]):
 # def experiment(tags: list[str], without_tags: list[str], env:str, runner: str, is_async: bool, node_names: list[str], to_nodes: list[str], from_nodes: list[str], from_inputs: list[str], to_outputs: list[str], load_versions: list[str], pipeline: str, conf_source: str, params: dict[str, Any], from_env: Optional[str]=None, experiment_id: Optional[str]=None):
 @click.pass_context
-def experiment(ctx, function_to_call, env:str, node_names: list[str], experiment_name: Optional[str]):
+def experiment(
+    ctx,
+    function_to_call,
+    env:str,
+    pipeline: str, 
+    username: str,
+    release_version: str, 
+    experiment_name: Optional[str]
+):
     """Run an experiment."""
     
     if not experiment_name:
@@ -93,14 +104,15 @@ def experiment(ctx, function_to_call, env:str, node_names: list[str], experiment
 
     if function_to_call == "run":
         # invokes another command with the arguments you provide as a caller
-        ctx.invoke(run, experiment_id=run_id, node_names=node_names)
+        print("Run kedro run")
+        # ctx.invoke(run, experiment_id=run_id, node_names=node_names)
     elif  function_to_call == "submit":
         # TODO add submit
         print("Run kedro submit")
+        ctx.invoke(submit, username=username, release_version=release_version, pipeline=pipeline, experiment_id=run_id, )
     else:
         print(f"{function_to_call} not a valid option")
         raise click.Abort()
-
 
 
 def get_run_id_from_mlflow(experiment_name:str):
@@ -108,8 +120,8 @@ def get_run_id_from_mlflow(experiment_name:str):
     token = get_iap_token()
     # print(token.to_json())
 
-    # mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")
-    mlflow.set_tracking_uri("http://127.0.0.1:5001/")
+    mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")
+    # mlflow.set_tracking_uri("http://127.0.0.1:5001/")
     os.environ["MLFLOW_TRACKING_TOKEN"] = token.id_token
 
     # try: 
