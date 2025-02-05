@@ -106,3 +106,7 @@ def get_code_from_commit(commit: str, file_patterns: List[str] = settings.inclus
     command = ["git", "diff", f"{commit}^!", "--", *file_patterns]
     print(command)
     return run_command(command, cwd=git_root)
+
+
+def get_current_branch() -> str:
+    return run_command(["git", "branch", "--show-current"]).strip()

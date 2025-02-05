@@ -18,7 +18,7 @@ from tqdm.rich import tqdm
 from matrix_cli.commands.code import get_ai_code_summary
 from matrix_cli.components.cache import memory
 from matrix_cli.components.gh_api import get_pr_details, update_prs
-from matrix_cli.components.git import get_code_diff
+from matrix_cli.components.git import get_code_diff, get_current_branch
 from matrix_cli.components.models import PRInfo
 from matrix_cli.components.settings import settings
 from matrix_cli.components.utils import (
@@ -241,7 +241,9 @@ def get_pr_details_since(previous_tag: str) -> List[PRInfo]:
 
 
 def get_commit_logs(previous_tag: str) -> List[str]:
-    command = ["git", "log", f"{previous_tag}..origin/main", "--oneline"]
+    current_branch = get_current_branch()
+    # Question: should I add origin to the branch name? (local vs remote)
+    command = ["git", "log", f"{previous_tag}..{current_branch}", "--oneline"]
     return run_command(command).split("\n")
 
 
