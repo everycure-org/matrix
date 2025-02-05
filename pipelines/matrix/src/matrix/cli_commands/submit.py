@@ -61,7 +61,7 @@ def cli():
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 @click.option("--headless", is_flag=True, default=False, help="Skip confirmation prompt")
 @click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
-@click.option("--experiment_id", type=str, help="mlflow_experiment_id")
+@click.option("--experiment_id", type=str, help="MLFlow experiment id")
 # fmt: on
 def submit(
     username: str,

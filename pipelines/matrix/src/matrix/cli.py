@@ -12,7 +12,6 @@ def cli():
 
 
 cli.add_command(submit)
-
 cli.add_command(run)
 cli.add_command(experiment)
 

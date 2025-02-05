@@ -14,7 +14,7 @@ gcp_project: ${oc.env:GCP_PROJECT_ID, mtrx-hub-dev-3of}
 git_sha: ${oc.env:GIT_SHA, default-sha}
 gh_token: ${oc.env:GH_TOKEN, dummy}
 
-af_experiment_id: ${oc.env:MLFLOW_EXPERIMENT_ID}
+mlflow_experiment_id: ${oc.env:MLFLOW_EXPERIMENT_ID}
 
 run_name: ${oc.env:RUN_NAME, default-run-name}
 versions:
