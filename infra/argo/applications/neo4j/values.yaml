@@ -9,8 +9,8 @@ neo4j: # the name of the helm dependency
     name: neo4j
     resources:
       requests:
-        cpu: "2"
-        memory: "8Gi"
+        cpu: "0.5"
+        memory: "16Gi"
       limits:
         cpu: "16"
         memory: "16Gi"
@@ -100,7 +100,7 @@ neo4j: # the name of the helm dependency
     # https://neo4j.com/docs/operations-manual/current/kubernetes/configuration/#_config
     # https://neo4j.com/docs/operations-manual/current/configuration/configuration-settings/
     dbms.security.procedures.unrestricted: "gds.*, apoc.*, bloom.*"
-    dbms.security.procedures.allowlist: "apoc.load*, bloom.*"
+    dbms.security.procedures.allowlist: "apoc.*, bloom.*"
     dbms.security.procedures.whitelist: "gds.*, apoc.*"
     dbms.security.allow_csv_import_from_file_urls: "true"
     # server.directories.import: /var/lib/neo4j/import

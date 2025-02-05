@@ -3,7 +3,7 @@ import logging
 import os
 import re
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Set
 
 import fsspec
 import mlflow
@@ -12,6 +12,7 @@ import pyspark.sql as ps
 import termplotlib as tpl
 from kedro.framework.context import KedroContext
 from kedro.framework.hooks import hook_impl
+from kedro.framework.project import pipelines
 from kedro.io.data_catalog import DataCatalog
 from kedro.pipeline.node import Node
 from kedro_datasets.spark import SparkDataset
@@ -36,6 +37,47 @@ class MLFlowHooks:
     https://github.com/Galileo-Galilei/kedro-mlflow/issues/579
     """
 
+    _kedro_context: Optional[KedroContext] = None
+    _input_datasets: Optional[Set] = None
+
+    @classmethod
+    def set_context(cls, context: KedroContext) -> None:
+        """Utility class method that stores context in class as singleton."""
+        cls._kedro_context = context
+
+    @classmethod
+    def get_pipeline_inputs(cls):
+        if cls._input_datasets is None:
+            pipeline_name = cls._kedro_context._extra_params["pipeline_name"]
+            pipeline_obj = pipelines[pipeline_name]
+            inputs = {input for input in pipeline_obj.all_inputs() if not input.startswith("params:")}
+            outputs = pipeline_obj.all_outputs()
+            inputs_only = inputs - outputs
+            cls._input_datasets = inputs_only
+
+    @hook_impl
+    def after_dataset_loaded(self, dataset_name, data, node):
+        """In the v1 of this feature we only log the dataset names.
+        Logging actual datasets requires extra work, due to the fact that the data has to be first
+        converted to mlflow.data.dataset.Dataset class. This works for common formats like pandas and spark
+        where the from_ functions exist, e.g.:
+
+        dataset = mlflow.data.from_pandas(data, name=dataset_name)
+        mlflow.log_input(dataset)
+
+        but our datasets are too heterogenous and can't be always parsed, e.g. matrix.datasets.graph.KnowledgeGraph
+        or would need a lot of hard-coded logic and would make this code brittle.
+        One idea is to only log select certain dataset types - pandas and spark, for other keep logging names only.
+
+        Another improvement idea for v2 would be to additionally  log the dataset paths, e.g.:
+        path = self._kedro_context.catalog.datasets[dataset_name]._get_load_path()
+        or using the url for remote datasets:
+        path = self._kedro_context.catalog.datasets[dataset_name]._url
+        """
+        if dataset_name in MLFlowHooks._input_datasets:
+            dataset = mlflow.data.from_pandas(pd.DataFrame(), name=dataset_name)
+            mlflow.log_input(dataset)
+
     @hook_impl
     def after_context_created(self, context) -> None:
         """Initialise MLFlow run.
@@ -43,9 +85,10 @@ class MLFlowHooks:
         Initialises a MLFlow run and passes it on for
         other hooks to consume.
         """
+        MLFlowHooks.set_context(context)
+        MLFlowHooks.get_pipeline_inputs()
         cfg = OmegaConf.create(context.config_loader["mlflow"])
         globs = OmegaConf.create(context.config_loader["globals"])
-
         # Set tracking uri
         # NOTE: This piece of code ensures that every MLFlow experiment
         # is created by our Kedro pipeline with the right artifact root.
@@ -309,13 +352,37 @@ class ReleaseInfoHooks:
         tmpl = f"https://mlflow.platform.dev.everycure.org/#/experiments/{experiment_id}/runs/{run_id}"
         return tmpl
 
+    @classmethod
+    def extract_datasets_used(cls) -> list:
+        # Using lazy import to prevent circular import error
+        from matrix.settings import DYNAMIC_PIPELINES_MAPPING
+
+        dataset_names = [item["name"] for item in DYNAMIC_PIPELINES_MAPPING["integration"] if item["integrate_in_kg"]]
+        return dataset_names
+
+    @classmethod
+    def extract_all_global_datasets(cls, hidden_datasets: frozenset) -> dict:
+        datasources_to_versions = {
+            k: v["version"] for k, v in ReleaseInfoHooks._globals["data_sources"].items() if k not in hidden_datasets
+        }
+        return datasources_to_versions
+
+    @classmethod
+    def mark_unused_datasets(cls, global_datasets: dict, datasets_used: list) -> None:
+        """Takes a list of globally defined datasets (and their versions) and compares it against datasets
+        actually used, as dictated by the settings.py file responsible for the generation of dynamic pipelines.
+        For global datasets that were excluded in the settings.py, a note is placed in the dict value that otherwise
+        features the version number."""
+
+        for global_dataset in global_datasets:
+            if not global_dataset in datasets_used:
+                global_datasets[global_dataset] = "not included"
+
     @staticmethod
-    def extract_release_info() -> dict[str, str]:
+    def extract_release_info(global_datasets: str) -> dict[str, str]:
         info = {
             "Release Name": ReleaseInfoHooks._globals["versions"]["release"],
-            "Robokop Version": ReleaseInfoHooks._globals["data_sources"]["robokop"]["version"],
-            "RTX-KG2 Version": ReleaseInfoHooks._globals["data_sources"]["rtx_kg2"]["version"],
-            "EC Medical Team Version": ReleaseInfoHooks._globals["data_sources"]["ec_medical_team"]["version"],
+            "Datasets": global_datasets,
             "Topological Estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["_object"],
             "Embeddings Encoder": ReleaseInfoHooks._params["embeddings.node"]["encoder"]["encoder"]["model"],
             "BigQuery Link": ReleaseInfoHooks.build_bigquery_link(),
@@ -343,7 +410,11 @@ class ReleaseInfoHooks:
         # pipelines the (last) data release node is part of. With an
         # `after_node_run`, you can limit your filters easily.
         if node.name == last_data_release_node_name:
-            release_info = self.extract_release_info()
+            datasets_to_hide = frozenset(["disease_list", "drug_list", "ec_clinical_trials", "gt"])
+            global_datasets = self.extract_all_global_datasets(datasets_to_hide)
+            datasets_used = self.extract_datasets_used()
+            self.mark_unused_datasets(global_datasets, datasets_used)
+            release_info = self.extract_release_info(global_datasets)
             try:
                 self.upload_to_storage(release_info)
             except KeyError:
