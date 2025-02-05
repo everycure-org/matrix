@@ -30,6 +30,7 @@ def enrich_embeddings(
         drugs: List of drugs
         diseases: List of diseases
     """
+    diseases = diseases.withColumnRenamed("category_class", "curie")
     return (
         drugs.withColumn("is_drug", F.lit(True))
         .unionByName(diseases.withColumn("is_disease", F.lit(True)), allowMissingColumns=True)
@@ -126,6 +127,7 @@ def generate_pairs(
     Returns:
         Pairs dataframe containing all combinations of drugs and diseases that do not lie in the training set.
     """
+
     # Collect list of drugs and diseases
     drugs_lst = drugs["curie"].tolist()
     diseases_lst = diseases["category_class"].tolist()
@@ -138,7 +140,6 @@ def generate_pairs(
     nodes_with_embeddings = set(graph._nodes["id"])
     drugs_lst = [drug for drug in drugs_lst if drug in nodes_with_embeddings]
     diseases_lst = [disease for disease in diseases_lst if disease in nodes_with_embeddings]
-
     # Generate all combinations
     matrix_slices = []
     for disease in tqdm(diseases_lst):
@@ -156,7 +157,6 @@ def generate_pairs(
 
     # Add flag columns for known positives and negatives
     matrix = _add_flag_columns(matrix, known_pairs, clinical_trials)
-
     return matrix
 
 
