@@ -8,6 +8,8 @@ from kedro.framework.cli.project import (
     project_group,
 )
 from kedro.framework.cli.utils import (
+    CONTEXT_SETTINGS,
+    KedroCliError,
     env_option,
 )
 
@@ -16,25 +18,35 @@ from matrix.git_utils import get_current_git_branch
 from matrix.utils.authentication import get_iap_token
 
 
-# fmt: off
-@project_group.command()
+@click.group()
+def experiment():
+    print("here")
+    pass
+
+
+@experiment.command()
+def create():
+    print("experiment group created")
+
+
+@experiment.command()
 @env_option
 # TODO: add all requried options
-@click.argument( "function_to_call",      type=str, default=None,)
-@click.option( "--experiment_name",      type=str, default=None,)
-@click.option("--pipeline",       "-p", required=True, default="__default__", type=str, help=PIPELINE_ARG_HELP)
+# @click.argument( "function_to_call",      type=str, default=None,)
+@click.option(
+    "--experiment_name",
+    type=str,
+    default=None,
+)
+@click.option("--pipeline", "-p", required=True, default="__default__", type=str, help=PIPELINE_ARG_HELP)
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--release-version", type=str, required=True, help="Specify a custom release name")
+@click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 # fmt: on
+# TODO: remove this - we won't need to pass context anymore. just point directly at submit
 @click.pass_context
-def experiment(
-    ctx,
-    function_to_call,
-    env:str,
-    pipeline: str, 
-    username: str,
-    release_version: str, 
-    experiment_name: Optional[str]
+def run(
+    ctx, env: str, experiment_name: Optional[str], pipeline: str, username: str, release_version: str, dry_run: bool
 ):
     """Run an experiment."""
     if not experiment_name:
@@ -44,19 +56,17 @@ def experiment(
 
     run_id = get_run_id_from_mlflow(experiment_name=experiment_name)
 
-    # Q: do we need this? Will we ever do kedro experiment run, or is it just for submit?
-    # TODO: tidy up
-    if function_to_call == "run":
-        print("Run kedro run")
-        # ctx.invoke(run, experiment_id=run_id, node_names=node_names)
-    elif  function_to_call == "submit":
-        ctx.invoke(submit, username=username, release_version=release_version, pipeline=pipeline, experiment_id=run_id, )
-    else:
-        print(f"{function_to_call} not a valid option")
-        raise click.Abort()
+    ctx.invoke(
+        submit,
+        username=username,
+        release_version=release_version,
+        pipeline=pipeline,
+        experiment_id=run_id,
+        dry_run=dry_run,
+    )
 
 
-def get_run_id_from_mlflow(experiment_name:str):
+def get_run_id_from_mlflow(experiment_name: str):
     token = get_iap_token()
     # TODO: Pull from config?
     mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")

@@ -5,12 +5,15 @@ from matrix.cli_commands.experiment import experiment
 from matrix.cli_commands.run import run
 from matrix.cli_commands.submit import submit
 
+# from matrix.cli_commands.experiment import debug
+
 
 @click.group(context_settings=CONTEXT_SETTINGS, name=__file__)
 def cli():
     pass
 
 
+# TODO: deprecation warning on submit
 cli.add_command(submit)
 cli.add_command(run)
 cli.add_command(experiment)
