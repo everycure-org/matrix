@@ -30,8 +30,7 @@ def enrich_embeddings(
         drugs: List of drugs
         diseases: List of diseases
     """
-    diseases = diseases.withColumnRenamed("category_class", "curie")
-    return (
+    df = (
         drugs.withColumn("is_drug", F.lit(True))
         .unionByName(diseases.withColumn("is_disease", F.lit(True)), allowMissingColumns=True)
         .withColumnRenamed("curie", "id")
@@ -40,6 +39,7 @@ def enrich_embeddings(
         .withColumn("is_drug", F.coalesce(F.col("is_drug"), F.lit(False)))
         .withColumn("is_disease", F.coalesce(F.col("is_disease"), F.lit(False)))
     )
+    return df
 
 
 def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_trials: pd.DataFrame) -> pd.DataFrame:
