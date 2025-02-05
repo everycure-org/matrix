@@ -46,9 +46,9 @@ spec:
               - key: pipeline_name
                 value: "{{ pipeline_name }}"
             when: {% raw %}"{{ status }}  == Failed"
+            {% endraw %}
             # Note that this should be 'workflow.status' not 'status' if docs are followed, but it doesn't work.
             # https://argo-workflows.readthedocs.io/en/latest/variables/#exit-handler
-            {% endraw %}
             counter:
               value: "1"
     name: kedro
