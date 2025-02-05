@@ -13,11 +13,6 @@ _layer_prm: &_layer_prm
     kedro-viz:
       layer: primary
 
-_medical_kg_sheets_dataset: &_medical_kg_sheets_dataset
-  type: matrix.datasets.gcp.GoogleSheetsDataset
-  key: 1LMtOmA10t7a3lcKeTP7zmptOPIcCBIPFVJt9J7jZ2bQ
-  service_file: conf/local/service-account.json
-
 _medical_clinical_trials_sheet_dataset: &_medical_clinical_trials_sheet_dataset
   type: matrix.datasets.gcp.GoogleSheetsDataset
   key: 1Wlrjr8ojUGCfWJg-QF5PzpJFqpD7LLH7b60u2XAngh0
@@ -26,37 +21,6 @@ _medical_clinical_trials_sheet_dataset: &_medical_clinical_trials_sheet_dataset
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
-
-preprocessing.raw.ec_medical_team_nodes:
-  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
-  load_args:
-    sheet_name: new_nodes
-    columns: ["ID", "name", "category", "new_id", "description"]
-
-preprocessing.int.nodes:
-  <<: [*_layer_int, *_medical_kg_sheets_dataset]
-  save_args:
-    sheet_name: new_nodes
-    write_columns: ["curie", "normalized_curie", "label", "types"]
-
-  load_args:
-    sheet_name: new_nodes
-    columns: ["ID", "category", "normalized_curie", "label", "types", "description"]
-
-preprocessing.raw.edges:
-  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
-  load_args:
-    sheet_name: new_edges
-    columns: ["Source", "Target", "Label"]
-
-preprocessing.int.edges:
-  <<: [*_layer_prm, *_medical_kg_sheets_dataset]
-  save_args:
-    sheet_name: new_edges
-    write_columns: ["SourceId", "TargetId"]
-  load_args:
-    sheet_name: new_edges
-    columns: ["SourceId", "TargetId", "Label"]
 
 preprocessing.raw.clinical_trials_data:
   <<: *_medical_clinical_trials_sheet_dataset
@@ -90,71 +54,3 @@ preprocessing.int.mapped_clinical_trials_data:
       - "significantly_worse"
       - "drug_curie"
       - "disease_curie"
-
-preprocessing.raw.disease_list:
-  <<: [*_layer_raw]
-  type: matrix.datasets.github.GitHubReleaseCSVDataset
-  repository_url: https://github.com/everycure-org/matrix-disease-list
-  release_name: ${globals:data_sources.disease_list.version}
-  release_asset_name: matrix-disease-list.tsv
-  fs_args:
-    Accept: application/octet-stream
-  load_args:
-    sep: "\t"
-
-preprocessing.raw.drug_list:
-  <<: [*_layer_raw]
-  type: matrix.datasets.github.GitHubReleaseCSVDataset
-  repository_url: https://github.com/everycure-org/matrix-drug-list
-  release_name: ${globals:data_sources.drug_list.version}
-  release_asset_name: drugList.tsv
-  fs_args:
-    Accept: application/octet-stream
-    Authorization: token ${globals:gh_token}
-  load_args:
-    sep: "\t"
-
-preprocessing.raw.ground_truth.positives:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tp_pairs.txt
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
-
-preprocessing.raw.ground_truth.negatives:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tn_pairs.txt
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
-
-preprocessing.int.ground_truth.combined:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/gt_pairs.txt
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
-
-preprocessing.int.ground_truth.nodes@pandas:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.tmp}/ground_truth/kg2/${globals:data_sources.gt.version}/nodes.tsv
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
-
-preprocessing.int.ground_truth.edges@pandas:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.tmp}/ground_truth/kg2/${globals:data_sources.gt.version}/edges.tsv
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
