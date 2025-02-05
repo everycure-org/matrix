@@ -1,7 +1,9 @@
+import asyncio
 import json
 import logging
 from typing import Iterable, List, Tuple
 
+import aiohttp
 import pandas as pd
 import requests
 from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
@@ -17,27 +19,50 @@ def coalesce(s: pd.Series, *series: List[pd.Series]):
     return s
 
 
-@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
-def resolve_name(name: str, cols_to_get: Iterable[str], url: str) -> dict:
-    """Function to retrieve the normalized identifier through the normalizer.
+@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(5))
+async def resolve_name_async(name: str, cols_to_get: Iterable[str], url: str, session: aiohttp.ClientSession) -> dict:
+    """Asynchronously retrieve the normalized identifier through the normalizer.
 
     Args:
         name: name of the node to be resolved
         cols_to_get: attribute to get from API
+        url: URL template for the API
+        session: aiohttp client session
     Returns:
         Name and corresponding curie
     """
-
     if not name or pd.isna(name):
         return {}
-    result = requests.get(url.format(name=name)).json()
-    if not result:
-        return {}
 
-    element = result[0]
-    ret = {col: element.get(col) for col in cols_to_get}
-    logger.debug(f'{{"resolver url": {url}, "name": {name}, "response extraction": {json.dumps(ret)}}}')
-    return ret
+    try:
+        async with session.get(url.format(name=name)) as response:
+            result = await response.json()
+
+        if not result:
+            return {}
+
+        element = result[0]
+        ret = {col: element.get(col) for col in cols_to_get}
+        return ret
+
+    except Exception as e:
+        logger.error(f"Error resolving name {name}: {str(e)}")
+        raise e
+
+
+async def resolve_names_batch(names: pd.Series, cols_to_get: Iterable[str], url: str) -> List[dict]:
+    """Resolve a batch of names asynchronously.
+
+    Args:
+        names: Series of names to resolve
+        cols_to_get: attributes to get from API
+        url: URL template for the API
+    Returns:
+        List of resolved name data
+    """
+    async with aiohttp.ClientSession() as session:
+        tasks = [resolve_name_async(name, cols_to_get, url, session) for name in names]
+        return await asyncio.gather(*tasks)
 
 
 @check_output(
@@ -62,11 +87,11 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
     Returns:
         Processed medical nodes
     """
-    # Normalize the name
-    enriched_data = df["name"].apply(resolve_name, cols_to_get=["curie", "label", "types"], url=resolver_url)
+    # Normalize names asynchronously
+    enriched_data = asyncio.run(resolve_names_batch(df["name"], ["curie", "label", "types"], resolver_url))
 
     # Extract into df
-    enriched_df = pd.DataFrame(enriched_data.tolist())
+    enriched_df = pd.DataFrame(enriched_data)
     df = pd.concat([df, enriched_df], axis=1)
 
     # Coalesce id and new id to allow adding "new" nodes
@@ -150,13 +175,13 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
     Args:
         df: Clinical trial dataset
     """
-    # Normalize the name
-    drug_data = df["drug_name"].apply(resolve_name, cols_to_get=["curie"], url=resolver_url)
-    disease_data = df["disease_name"].apply(resolve_name, cols_to_get=["curie"], url=resolver_url)
+    # Normalize names asynchronously
+    drug_data = asyncio.run(resolve_names_batch(df["drug_name"], ["curie"], resolver_url))
+    disease_data = asyncio.run(resolve_names_batch(df["disease_name"], ["curie"], resolver_url))
 
     # Concat dfs
-    drug_df = pd.DataFrame(drug_data.tolist()).rename(columns={"curie": "drug_curie"})
-    disease_df = pd.DataFrame(disease_data.tolist()).rename(columns={"curie": "disease_curie"})
+    drug_df = pd.DataFrame(drug_data).rename(columns={"curie": "drug_curie"})
+    disease_df = pd.DataFrame(disease_data).rename(columns={"curie": "disease_curie"})
     df = pd.concat([df, drug_df, disease_df], axis=1)
 
     return df
