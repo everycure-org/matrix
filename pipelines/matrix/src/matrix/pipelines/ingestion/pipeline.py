@@ -52,6 +52,28 @@ def create_pipeline(**kwargs) -> Pipeline:
             tags=["disease-list"],
         )
     )
+    # EC Medical Team
+    nodes_lst.extend(
+        [
+            node(
+                func=nodes.process_medical_nodes,
+                inputs=["ingestion.raw.ec_medical_team_nodes", "params:ingestion.name_resolution.url"],
+                outputs="ingestion.raw.ec_medical_team.nodes@pandas",
+                name="normalize_ec_medical_nodes",
+                tags=["ec-medical-kg"],
+            ),
+            node(
+                func=nodes.process_medical_edges,
+                inputs=[
+                    "ingestion.raw.ec_medical_team.nodes@pandas",
+                    "ingestion.raw.ec_medical_team_edges",
+                ],
+                outputs="ingestion.raw.ec_medical_team.edges@pandas",
+                name="create_int_ec_medical_edges",
+                tags=["ec-medical-kg"],
+            ),
+        ]
+    )
 
     # RTX-KG2 curies
     nodes_lst.append(

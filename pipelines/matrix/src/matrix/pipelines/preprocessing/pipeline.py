@@ -15,7 +15,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             #     func=nodes.process_medical_nodes,
             #     inputs=["preprocessing.raw.nodes", "params:preprocessing.name_resolution.url"],
             #     outputs="preprocessing.int.nodes",
-            #     name="normalize_ec_medical_team_nodes",
+            #     name="normalize_ec_medical_team_nodes-p",
             #     tags=["ec-medical-kg"],
             # ),
             # node(
@@ -25,7 +25,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             #         "preprocessing.raw.edges",
             #     ],
             #     outputs="preprocessing.int.edges",
-            #     name="create_int_ec_medical_team_edges",
+            #     name="create_int_ec_medical_team_edges-p",
             #     tags=["ec-medical-kg"],
             # ),
             # node(

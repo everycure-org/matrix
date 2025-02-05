@@ -27,7 +27,7 @@ _medical_clinical_trials_sheet_dataset: &_medical_clinical_trials_sheet_dataset
 # Datasets
 # -------------------------------------------------------------------------
 
-preprocessing.raw.nodes:
+preprocessing.raw.ec_medical_team_nodes:
   <<: [*_layer_raw, *_medical_kg_sheets_dataset]
   load_args:
     sheet_name: new_nodes
