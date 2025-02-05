@@ -13,6 +13,13 @@ _layer_int: &_layer_int
     kedro-viz:
       layer: integration
 
+# -------------------------------------------------------------------------
+# Datasets
+# -------------------------------------------------------------------------
+
+# Overwriting the base catalog to use the bigquery datasets
+
+# Ingested RTX KG2 nodes/edges
 ingestion.int.rtx_kg2.nodes:
   <<: [*_bigquery_ds, *_layer_int]
   filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes
