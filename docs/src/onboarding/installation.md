@@ -330,8 +330,6 @@ We use `make` and `Makefile`s in a lot of places. If you want to [learn more abo
     sudo pacman -S make
     ```
 
-[Request access to the data :material-skip-next:](./git-crypt.md){ .md-button .md-button--primary }
-
 ### kubectl
 
 Kubectl is a CLI tool we use to interact with our Kubernetes cluster. It is required to submit workflows to the cloud environment.
@@ -355,12 +353,24 @@ Once installed, use the gcloud SDK to connect kubectl to the kubernetes cluster.
     kubectl get namespaces
     ```
 
-### argo
+### Argo Workflows
 
-[ArgoCD](https://argo-cd.readthedocs.io/en/stable/) is our main tool to run jobs in kubernetes. Its CLI tool `argo` is required to submit workflows to the cloud environment.
+[Argo](https://argoproj.github.io/) is our main tool to run jobs in kubernetes. Its CLI tool `argo` is required to submit workflows to the cloud environment.
+
+!!! warning
+
+    Argo Workflows is not the same as ArgoCD. Argo is a family of tools operating on kubernetes. We use both but most people only need to care about Argo Workflows.
+
 
 === "MacOS"
 
     ```bash
     brew install argo
     ```
+
+=== "Linux"
+
+    Check the [official documentation from argo](https://github.com/argoproj/argo-workflows/releases/).
+
+
+[Now, you're ready to dive into kedro! :material-skip-next:](./kedro.md){ .md-button .md-button--primary }
