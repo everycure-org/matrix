@@ -19,7 +19,7 @@ jobs:
   submit_sampling_pipeline:
     runs-on: 
       labels: ubuntu-24.04
-    name: Submit the Kedro Pipeline Periodically
+    name: Submit the Sampling Pipeline Periodically
     permissions:
       contents: 'write'
       id-token: 'write'
