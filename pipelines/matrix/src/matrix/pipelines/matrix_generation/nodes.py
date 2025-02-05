@@ -95,10 +95,10 @@ class TrialSchema(DataFrameModel):
     target: Series[str]
     is_known_positive: Series[bool]
     is_known_negative: Series[bool]
-    trial_sig_better: Series[bool]
-    trial_non_sig_better: Series[bool]
-    trial_sig_worse: Series[bool]
-    trial_non_sig_worse: Series[bool]
+    # trial_sig_better: Series[bool]
+    # trial_non_sig_better: Series[bool]
+    # trial_sig_worse: Series[bool]
+    # trial_non_sig_worse: Series[bool]
 
     class Config:
         strict = False
