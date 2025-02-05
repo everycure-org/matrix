@@ -14,7 +14,7 @@ def ingestion_quality_control_pipeline() -> Pipeline:
     pipelines = []
 
     for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration"):
-        if not source["integrate_in_kg"]:
+        if not source.get("quality_control", False):
             continue
 
         source_name = source["name"]
@@ -45,7 +45,7 @@ def integration_quality_control_pipeline() -> Pipeline:
     pipelines = []
 
     for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration"):
-        if not source["integrate_in_kg"]:
+        if not source.get("quality_control", False):
             continue
 
         source_name = source["name"]

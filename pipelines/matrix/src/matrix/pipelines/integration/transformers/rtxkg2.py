@@ -67,7 +67,6 @@ class RTXTransformer(GraphTransformer):
         ).transform(filter_semmed, curie_to_pmids, **semmed_filters)
         # fmt: on
 
-    # TODO: use multiple inheritance to add this to the interface as not all sources need this function right now
     def count_knowledge_graph(self, nodes: ps.DataFrame, edges: ps.DataFrame) -> Dict[str, ps.DataFrame]:
         # nodes report
         nodes_count_by_columns = ["category", "prefix"]
