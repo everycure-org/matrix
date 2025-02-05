@@ -290,7 +290,7 @@ ingestion.raw.ground_truth.negatives:
 ingestion.int.ground_truth.combined:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/gt_pairs.txt
+  filepath: ${globals:paths.raw}/ground_truth/kg2/${globals:data_sources.gt.version}/gt_pairs.txt
   load_args:
     sep: "\t"
   save_args:
