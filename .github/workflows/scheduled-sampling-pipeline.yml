@@ -3,10 +3,6 @@ name: Scheduled Sampling Pipeline
 on:
   schedule:
     - cron: '0 5 * * 1' # every monday at  5am GMT
-  push:
-    branches:
-      - feat/run_sampling_pipeline_on_schedule
-
 env:
   project_id: 'mtrx-hub-dev-3of'
   workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
