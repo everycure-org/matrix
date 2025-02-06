@@ -11,12 +11,12 @@ embeddings.node:
   # to compute the attribute embedding.
   input_features: ["name", "category"]
   encoder:
-    _object: matrix.pipelines.embeddings.encoders.RandomizedEncoder
+    _object: matrix.pipelines.embeddings.encoders.LangChainEncoder
     dimensions: 512
-  #  encoder:
-  #    _object: langchain_openai.OpenAIEmbeddings
-  #    model: text-embedding-3-small
-  #    timeout: 10
+    encoder:
+      _object: langchain_openai.OpenAIEmbeddings
+      model: text-embedding-3-small
+      timeout: 10
 
 # Defines strategy used to reduce dimensions of the node embeddings
 # https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.feature.PCA.html
