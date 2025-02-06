@@ -20,7 +20,7 @@ default: prerequisites fetch_sa_key install fast_test integration_test
 .PHONY: always
 # steps here get run on _every_ make call, no matter the target. Make sure this is 100% idempotent and fast.
 always:
-	@git update-index --assume-unchanged example_notebook.ipynb
+	@git update-index --assume-unchanged *.ipynb
 %: always
 	@:
 
