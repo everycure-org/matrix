@@ -17,3 +17,7 @@ provider "google-beta" {
 }
 EOF
 }
+
+inputs = {
+  github_token = yamldecode(file("${dirname(find_in_parent_folders("root.hcl"))}//secrets/github.yaml")).read_only_token
+}
