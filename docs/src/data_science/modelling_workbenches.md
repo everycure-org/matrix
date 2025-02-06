@@ -1,3 +1,6 @@
+!!! example "Proposal Document"
+    This document is not yet describing completed work. Thus, it is meant as a proposal document and is open for discussion.
+
 - This doc is for those that do not want to dive fully into the
   development and contribution to the main Every Cure data integration and modelling pipelines
   but instead want to solely focus on building a good model based on our data. 
@@ -16,6 +19,8 @@
 - good practices on experimentation and documentation, especially when the experiment fails. We still want to learn from what did not work.
     - *note we will create a more structured process for streamlining experimentation as well as result dissemination and reporting in the future*
 - basic understanding of cloud platforms like GCP or the ability to learn this or work with a colleague who is familiar with GCP
+
+
 
 ## Getting started
 
@@ -61,7 +66,7 @@ and the result of the query will be stored in a pandas dataframe that you can us
 
 <!-- add explanation on how to get it into spark -->
 
-![](../assets/bq_access.png)
+![](../assets/img/bq_access.png)
 
 
 #### Using the matrix repo

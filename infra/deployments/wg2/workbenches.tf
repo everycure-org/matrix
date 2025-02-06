@@ -120,7 +120,7 @@ locals {
     "roles/storage.objectViewer",
     "roles/artifactregistry.writer",
     "roles/run.invoker",
-    "storage.buckets.list"
+    "roles/reader"
   ]
 }
 resource "google_project_iam_member" "logging_log_writer" {
