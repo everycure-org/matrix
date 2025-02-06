@@ -136,10 +136,12 @@ locals {
     "roles/artifactregistry.writer",
     "roles/run.invoker",
     "roles/reader",
-    "roles/secretmanager.secretAccessor"
+    "roles/secretmanager.secretAccessor",
+    "roles/notebooks.runner",
+    "roles/notebooks.viewer"
   ]
 }
-resource "google_project_iam_member" "logging_log_writer" {
+resource "google_project_iam_member" "workbench_sa_permissions" {
   for_each = toset(local.permissions)
   project  = var.project_id
   role     = each.value
@@ -150,7 +152,7 @@ resource "google_project_iam_member" "logging_log_writer" {
 module "workbench_alert_function" {
   source = "GoogleCloudPlatform/cloud-functions/google"
   depends_on = [
-    google_project_iam_member.logging_log_writer
+    google_project_iam_member.workbench_sa_permissions
   ]
   version = "0.6.0"
 
