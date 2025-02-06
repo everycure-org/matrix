@@ -22,10 +22,7 @@ def experiment():
 @experiment.command()
 def create():
     current_branch = get_current_git_branch()
-    # temp: current branch is feat/, but want to test with experiment/
-    current_branch = current_branch.replace("feat/", "experiment/")
 
-    # TODO: Change to experiment/
     if current_branch.startswith("experiment/"):
         click.confirm(
             f"Creating new mlflow experiment from current branch {current_branch}, is that correct?", abort=True
@@ -35,6 +32,7 @@ def create():
         user_input_name = click.prompt("Please enter a name for your experiment", type=str)
         if not user_input_name.startswith("experiment/"):
             exp_name = f"experiment/{user_input_name}"
+        click.echo(f"Checking out new branch: {exp_name}")
         create_new_branch(exp_name)
     else:
         print("Error: please begin with an experiment/ branch or begin from main")
@@ -45,13 +43,11 @@ def create():
     click.echo(f"kedro experiment created on branch {exp_name}")
     click.echo(f"mlflow experiment created: {mlflow.get_tracking_uri()}/#/experiments/{mlflow_id}")
 
-    print("experiment group created")
-
 
 @experiment.command()
 # @env_option
 # These are all copied directly from submit. If we want to maintain kedro submit functionality I think we need to
-# keep the duplication for now. Then we can just rename submit to run and add the extra mlflow steps there.
+# keep the duplication for now. Then we can just rename submit to run and add the extra mlflow steps.
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
@@ -80,15 +76,16 @@ def run(
 ):
     """Run an experiment."""
 
-    current_branch = get_current_git_branch()
-    # temp: current branch is feat/, but want to test with experiment/
-    experiment_name = current_branch.replace("feat/", "experiment/")
+    experiment_name = get_current_git_branch()
+    if not experiment_name.startswith("experiment/"):
+        click.echo(f"Error: current branch does not begin with experiment/")
+        raise click.Abort()
 
     click.confirm(f"Start a new run on experiment {experiment_name}, is that correct?", abort=True)
     experiment_id = get_run_id_from_mlflow_name(experiment_name=experiment_name)
 
     if not run_name:
-        # Note, it is not possible to search mlflow runs by name, so we cannot enforce uniqueness, this is down to the user
+        # Note, it is not possible to search mlflow runs by name, so we cannot enforce uniqueness, this is down to the user.
         run_name = click.prompt("Please define a name for your run")
 
     # Invokes the the submit command and forwards all arguments from current command
@@ -97,37 +94,40 @@ def run(
 
 
 def create_mlflow_experiment(experiment_name: str) -> str:
-    existing_experiment = mlflow.get_experiment_by_name(name=experiment_name)
-    if existing_experiment:
-        if existing_experiment.lifecycle_stage == "deleted":
+    existing_exp = mlflow.get_experiment_by_name(name=experiment_name)
+    if existing_exp:
+        if existing_exp.lifecycle_stage == "deleted":
             click.echo(f"Error: Experiment {experiment_name} already exists and has been deleted.")
-
+            # mlflow does not allow you to re-use an experiment name, even after the experiment has been deleted
+            # This introduces a workaround to rename the deleted experiment to allow the user to progress.
             if click.confirm(
                 f"Would you like to rename the deleted experiment and continue with this experiment name: {experiment_name}?"
             ):
                 try:
-                    mlflow.tracking.MlflowClient().restore_experiment(existing_experiment.experiment_id)
+                    mlflow.tracking.MlflowClient().restore_experiment(existing_exp.experiment_id)
                     random_sfx = str.lower(secrets.token_hex(4))
                     mlflow.tracking.MlflowClient().rename_experiment(
-                        experiment_id=existing_experiment.experiment_id,
+                        experiment_id=existing_exp.experiment_id,
                         new_name=f"deleted-{experiment_name}-{random_sfx}",
                     )
-                    mlflow.delete_experiment(existing_experiment.experiment_id)
+                    mlflow.delete_experiment(existing_exp.experiment_id)
 
                     experiment_id = mlflow.create_experiment(name=experiment_name)
                 except Exception as e:
                     click.echo(e)
                     raise click.Abort()
-            else:
-                new_exp_name = click.prompt("Please provide a new experiment name")
-                print(new_exp_name)
-                experiment_id = mlflow.create_experiment(name=new_exp_name)
+            # else:
+            #     # If a user does NOT want to rename the deletd experiment, they can define a new experiment name here
+            #     # Maybe we don't want to do this if we want to tie to the git branch...
+            #     new_exp_name = click.prompt("Please provide a new experiment name")
+            #     click.echo(f"Creating new experiment with name: {new_exp_name}")
+            #     experiment_id = mlflow.create_experiment(name=new_exp_name)
 
             return experiment_id
 
         else:
             click.echo(
-                f"Error: Experiment {experiment_name} already found at {mlflow.get_tracking_uri()}/#/experiments/{existing_experiment.experiment_id}"
+                f"Error: Experiment {experiment_name} already found at {mlflow.get_tracking_uri()}/#/experiments/{existing_exp.experiment_id}"
             )
             raise click.Abort()
 

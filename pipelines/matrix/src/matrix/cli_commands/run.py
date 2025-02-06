@@ -50,7 +50,6 @@ class RunConfig(NamedTuple):
     conf_source: Optional[str]
     params: Dict[str, Any]
     from_env: Optional[str]
-    # experiment_id: Optional[str]
 
 
 # fmt: off
@@ -70,11 +69,8 @@ class RunConfig(NamedTuple):
 @click.option( "--conf-source",   type=click.Path(exists=True, file_okay=False, resolve_path=True), help=CONF_SOURCE_HELP,)
 @click.option( "--params",        type=click.UNPROCESSED, default="", help=PARAMS_ARG_HELP, callback=_split_params,)
 @click.option( "--from-env",      type=str, default=None, help="Custom env to read from, if specified will read from the `--from-env` and write to the `--env`",)
-# @click.option( "--experiment_id",      type=str, default=None,)
 # fmt: on
-def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async: bool, node_names: list[str], to_nodes: list[str], from_nodes: list[str], from_inputs: list[str], to_outputs: list[str], load_versions: list[str], pipeline: str, conf_source: str, params: dict[str, Any], from_env: Optional[str]=None, 
-        # experiment_id: Optional[str]=None
-        ):
+def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async: bool, node_names: list[str], to_nodes: list[str], from_nodes: list[str], from_inputs: list[str], to_outputs: list[str], load_versions: list[str], pipeline: str, conf_source: str, params: dict[str, Any], from_env: Optional[str]=None, ):
     """Run the pipeline."""
     pipeline_name = pipeline
     pipeline_obj = pipelines[pipeline_name]
@@ -96,7 +92,6 @@ def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async
         conf_source=conf_source,
         params=params,
         from_env=from_env,
-        # experiment_id=experiment_id
     )
 
     _run(config, KedroSessionWithFromCatalog)
@@ -125,9 +120,6 @@ def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
 
         from_catalog = _extract_config(config, session)
 
-        # os.environ["MLFLOW_EXPERIMENT_ID"] = config.experiment_id
-        # # TODO: get/set run id
-
         session.run(
             from_catalog=from_catalog,
             tags=config.tags,
@@ -139,7 +131,7 @@ def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
             to_outputs=config.to_outputs,
             load_versions=config.load_versions,
             pipeline_name=config.pipeline_name,
-        )    
+        )
 
 
 def _extract_config(config: RunConfig, session: KedroSessionWithFromCatalog) -> Optional[DataCatalog]:
