@@ -505,7 +505,7 @@ def create_node_embeddings(
         embeddings_pkey: name of the column containing the texts, which should be present in the cache.
     """
 
-    df = df.withColumn(embeddings_pkey, concat_ws("", *input_features).substr(1, max_input_len))
+    df = df.limit(10_000).withColumn(embeddings_pkey, concat_ws("", *input_features).substr(1, max_input_len))
     assert {embeddings_pkey, new_colname}.issubset(cache.columns)
     scoped_cache = (
         cache.cache().filter((cache["scope"] == lit(scope)) & (cache["model"] == lit(model))).drop("scope", "model")
@@ -518,10 +518,6 @@ def create_node_embeddings(
         df=df, cache=scoped_cache, embedder=transformer.apply, text_colname=embeddings_pkey, new_colname=new_colname
     )
     new_cache = cache.unionByName(missing_from_cache.withColumns({"scope": lit(scope), "model": lit(model)}))
-
-    failed_to_enrich = complete.filter(complete[new_colname].isNull())
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.debug('{"failed to enrich": %d, "new cache size": %d}', failed_to_enrich.count(), new_cache.count())
 
     return complete, new_cache
 
@@ -550,9 +546,6 @@ def lookup_embeddings(
             enriched_from_cache.count(),
             non_enriched.count(),
         )
-
-    partly_enriched.select(text_colname, new_colname).show()
-    cache.select(text_colname, new_colname).show()
 
     non_enriched = non_enriched.drop(new_colname).cache()
 
