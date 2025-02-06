@@ -21,7 +21,7 @@ default: prerequisites fetch_sa_key install fast_test integration_test
 # steps here get run on _every_ make call, no matter the target. Make sure this is 100% idempotent and fast.
 always:
 	# never track notebooks in the pipeline subfolder
-	@git update-index --assume-unchanged pipelines/matrix/*.ipynb
+	git update-index --assume-unchanged *.ipynb
 %: always
 	@:
 
