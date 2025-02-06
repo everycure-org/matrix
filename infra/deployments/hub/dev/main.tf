@@ -18,3 +18,11 @@ module "compute_cluster" {
 module "dns" {
   source = "../../../modules/components/dns"
 }
+
+module "data_release_zone" {
+  source                = "../../../modules/stacks/data_release_zone"
+  project_id            = var.project_id
+  region                = var.default_region
+  dns_managed_zone_name = module.dns.dns_zone
+  environment           = "dev"
+}
