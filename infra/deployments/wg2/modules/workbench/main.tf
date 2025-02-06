@@ -52,9 +52,11 @@ resource "google_workbench_instance" "user_workbench" {
       create_time,
       update_time,
       desired_state,
+      gce_setup[0].metadata.resource-url
     ]
   }
-  desired_state = "STOPPED"
+  # setting this to stopped turns off running instances upon updates which is not what we want, we rely on the idle timeout to stop the instances
+  # desired_state = "STOPPED"
 
   labels = merge({
     consumer-project-id = var.project_id

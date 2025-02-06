@@ -18,9 +18,9 @@ SA_KEY_PATH ?= conf/local/service-account.json
 default: prerequisites fetch_sa_key install fast_test integration_test
 
 .PHONY: always
+# steps here get run on _every_ make call, no matter the target. Make sure this is 100% idempotent and fast.
 always:
-	# steps here get run on _every_ make call, no matter the target. Make sure this is 100% idempotent and fast.
-	git update-index --assume-unchanged example_notebook.ipynb
+	@git update-index --assume-unchanged example_notebook.ipynb
 %: always
 	@:
 
