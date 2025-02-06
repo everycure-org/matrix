@@ -8,16 +8,6 @@ _bigquery_ds: &_bigquery_ds
     labels:
       git_sha: ${globals:git_sha}
 
-_layer_int: &_layer_int
-  metadata:
-    kedro-viz:
-      layer: integration
-
-_layer_prm: &_layer_prm
-  metadata:
-    kedro-viz:
-      layer: primary
-
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
@@ -26,40 +16,40 @@ _layer_prm: &_layer_prm
 
 # Transformed nodes/edges
 integration.int.{source}.nodes:
-  <<: [*_bigquery_ds, *_layer_int]
+  <<: *_bigquery_ds
   filepath: ${globals:paths.integration}/int/{source}/nodes
   table: ${source}_nodes_transformed
 
 integration.int.{source}.edges:
-  <<: [*_bigquery_ds, *_layer_int]
+  <<: *_bigquery_ds
   filepath: ${globals:paths.integration}/int/{source}/edges
   table: ${source}_edges_transformed
 
 # Normalised nodes/edges
 integration.int.{source}.nodes.norm@spark:
-  <<: [*_bigquery_ds, *_layer_int]
+  <<: *_bigquery_ds
   filepath: ${globals:paths.integration}/int/{source}/nodes.norm
   table: ${source}_nodes_normalized
 
 integration.int.{source}.edges.norm@spark:
-  <<: [*_bigquery_ds, *_layer_int]
+  <<: *_bigquery_ds
   filepath: ${globals:paths.integration}/int/{source}/edges.norm
   table: ${source}_edges_normalized
 
 # Unified nodes/edges
 integration.prm.unified_nodes:
-  <<: [*_bigquery_ds, *_layer_prm]
+  <<: *_bigquery_ds
   filepath: ${globals:paths.integration}/prm/unified/nodes
   table: nodes_unified
 
 integration.prm.unified_edges:
-  <<: [*_bigquery_ds, *_layer_prm]
+  <<: *_bigquery_ds
   filepath: ${globals:paths.integration}/prm/unified/edges
   table: edges_unified
 
 # Prefiltered nodes
 integration.prm.prefiltered_nodes:
-  <<: [*_bigquery_ds, *_layer_prm]
+  <<: *_bigquery_ds
   filepath: ${globals:paths.integration}/prm/prefiltered/nodes
   table: nodes_prefiltered
 

@@ -8,11 +8,6 @@ _bigquery_ds: &_bigquery_ds
     labels:
       git_sha: ${globals:git_sha}
 
-_layer_int: &_layer_int
-  metadata:
-    kedro-viz:
-      layer: integration
-
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
@@ -21,11 +16,11 @@ _layer_int: &_layer_int
 
 # Ingested RTX KG2 nodes/edges
 ingestion.int.rtx_kg2.nodes:
-  <<: [*_bigquery_ds, *_layer_int]
+  <<: *_bigquery_ds
   filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes
   table: rtx_kg2_nodes_ingested_${globals:data_sources.rtx_kg2.version}
 
 ingestion.int.rtx_kg2.edges:
-  <<: [*_bigquery_ds, *_layer_int]
+  <<: *_bigquery_ds
   filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx_kg2.version}/edges
   table: rtx_kg2_edges_ingested_${globals:data_sources.rtx_kg2.version}
