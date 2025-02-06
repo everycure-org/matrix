@@ -505,7 +505,7 @@ def create_node_embeddings(
         embeddings_pkey: name of the column containing the texts, which should be present in the cache.
     """
 
-    df = df.limit(10_000).withColumn(embeddings_pkey, concat_ws("", *input_features).substr(1, max_input_len))
+    df = df.limit(20_000).withColumn(embeddings_pkey, concat_ws("", *input_features).substr(1, max_input_len))
     assert {embeddings_pkey, new_colname}.issubset(cache.columns)
     scoped_cache = (
         cache.cache().filter((cache["scope"] == lit(scope)) & (cache["model"] == lit(model))).drop("scope", "model")
