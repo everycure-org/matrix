@@ -209,17 +209,4 @@ def create_pipeline(**kwargs) -> Pipeline:
                     )
                 )
 
-    pipelines.append(
-        pipeline(
-            [
-                ArgoNode(
-                    func=nodes.dummy_function,
-                    inputs="evaluation.reporting.master_report",
-                    outputs=None,
-                    name="dummy_node",
-                )
-            ]
-        )
-    )
-
     return sum(pipelines)

@@ -1,4 +1,5 @@
 import os
+import secrets
 from typing import List
 
 import click
@@ -12,6 +13,9 @@ from matrix.utils.authentication import get_iap_token
 
 @click.group()
 def experiment():
+    token = get_iap_token()
+    mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")
+    os.environ["MLFLOW_TRACKING_TOKEN"] = token.id_token
     pass
 
 
@@ -83,31 +87,52 @@ def run(
     click.confirm(f"Start a new run on experiment {experiment_name}, is that correct?", abort=True)
     experiment_id = get_run_id_from_mlflow_name(experiment_name=experiment_name)
 
+    if not run_name:
+        # Note, it is not possible to search mlflow runs by name, so we cannot enforce uniqueness, this is down to the user
+        run_name = click.prompt("Please define a name for your run")
+
     # Invokes the the submit command and forwards all arguments from current command
     # Temporary measure until we formally deprecate kedro submit
-    ctx.forward(
-        submit,
-        experiment_id=experiment_id,
-    )
+    ctx.forward(submit, experiment_id=experiment_id, run_name=run_name)
 
 
 def create_mlflow_experiment(experiment_name: str) -> str:
-    token = get_iap_token()
-    # TODO: Pull from config?
-    mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")
-    os.environ["MLFLOW_TRACKING_TOKEN"] = token.id_token
+    existing_experiment = mlflow.get_experiment_by_name(name=experiment_name)
+    if existing_experiment:
+        if existing_experiment.lifecycle_stage == "deleted":
+            click.echo(f"Error: Experiment {experiment_name} already exists and has been deleted.")
 
-    experiment = mlflow.get_experiment_by_name(name=experiment_name)
-    if experiment:
-        click.echo(
-            f"Error: Experiment {experiment_name} already found at {mlflow.get_tracking_uri()}/#/experiments/{experiment.experiment_id}"
-        )
-        # TODO: this is currently not working because deleted runs are still searchable??
-        raise click.Abort()
+            if click.confirm(
+                f"Would you like to rename the deleted experiment and continue with this experiment name: {experiment_name}?"
+            ):
+                try:
+                    mlflow.tracking.MlflowClient().restore_experiment(existing_experiment.experiment_id)
+                    random_sfx = str.lower(secrets.token_hex(4))
+                    mlflow.tracking.MlflowClient().rename_experiment(
+                        experiment_id=existing_experiment.experiment_id,
+                        new_name=f"deleted-{experiment_name}-{random_sfx}",
+                    )
+                    mlflow.delete_experiment(existing_experiment.experiment_id)
+
+                    experiment_id = mlflow.create_experiment(name=experiment_name)
+                except Exception as e:
+                    click.echo(e)
+                    raise click.Abort()
+            else:
+                new_exp_name = click.prompt("Please provide a new experiment name")
+                print(new_exp_name)
+                experiment_id = mlflow.create_experiment(name=new_exp_name)
+
+            return experiment_id
+
+        else:
+            click.echo(
+                f"Error: Experiment {experiment_name} already found at {mlflow.get_tracking_uri()}/#/experiments/{existing_experiment.experiment_id}"
+            )
+            raise click.Abort()
 
     else:
         click.echo(f"Generating experiment {experiment_name}")
-        # TODO: Add error handling
         experiment_id = mlflow.create_experiment(name=experiment_name)
         click.echo(f"Experiment {experiment_name} generated with ID {experiment_id}")
 
@@ -115,10 +140,6 @@ def create_mlflow_experiment(experiment_name: str) -> str:
 
 
 def get_run_id_from_mlflow_name(experiment_name: str) -> str:
-    token = get_iap_token()
-    mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")
-    os.environ["MLFLOW_TRACKING_TOKEN"] = token.id_token
-
     experiment = mlflow.get_experiment_by_name(name=experiment_name)
     if experiment:
         click.echo(

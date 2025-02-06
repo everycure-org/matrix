@@ -75,7 +75,7 @@ def submit(
     is_test: bool,
     headless: bool,
     environment: str,
-    experiment_id: Optional[str]
+    experiment_id: Optional[str],
 ):
     """Submit the end-to-end workflow. """
     if not quiet:
@@ -101,8 +101,6 @@ def submit(
 
     run_name = get_run_name(run_name)
     pipeline_obj.name = pipeline
-
-    # print("experiment id", experiment_id)
 
     if not dry_run:
         summarize_submission(run_name, namespace, pipeline, environment, is_test, release_version, headless)
