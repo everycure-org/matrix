@@ -505,7 +505,7 @@ def create_node_embeddings(
         embeddings_pkey: name of the column containing the texts, which should be present in the cache.
     """
 
-    df = df.limit(500_000).withColumn(embeddings_pkey, concat_ws("", *input_features).substr(1, max_input_len))
+    df = df.withColumn(embeddings_pkey, concat_ws("", *input_features).substr(1, max_input_len))
     assert {embeddings_pkey, new_colname}.issubset(cache.columns)
     scoped_cache = (
         cache.cache().filter((cache["scope"] == lit(scope)) & (cache["model"] == lit(model))).drop("scope", "model")
@@ -574,7 +574,7 @@ def lookup_embeddings(
             enriched_from_external.count(),
         )
 
-    complete = enriched_from_cache.unionByName(enriched_from_external).drop(text_colname).cache()
+    complete = enriched_from_cache.unionByName(enriched_from_external).drop(text_colname)
     return complete, texts_with_embeddings
 
 
@@ -620,7 +620,7 @@ def lookup_missing_embeddings(
 
         return inner
 
-    df = df.repartition(2000)
+    # df = df.repartition(2000)
     rdd_result = df.rdd.mapPartitions(embed_docs(pkey=pkey))
     new_schema = df.schema.add(StructField(new_colname, ArrayType(FloatType()), nullable=True))
     return rdd_result.toDF(schema=new_schema)
