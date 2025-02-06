@@ -1,14 +1,9 @@
 import os
-from typing import Optional
+from typing import List
 
 import click
 import mlflow
-from kedro.framework.cli.project import (
-    PIPELINE_ARG_HELP,
-)
-from kedro.framework.cli.utils import (
-    env_option,
-)
+from kedro.framework.cli.utils import split_string
 
 from matrix.cli_commands.submit import submit
 from matrix.git_utils import create_new_branch, get_current_git_branch
@@ -23,70 +18,82 @@ def experiment():
 @experiment.command()
 def create():
     current_branch = get_current_git_branch()
+    # temp: current branch is feat/, but want to test with experiment/
+    current_branch = current_branch.replace("feat/", "experiment/")
 
     # TODO: Change to experiment/
-    if current_branch.startswith("feat/"):
-        click.confirm(f"Current experiment is running from branch {current_branch}, is that correct?")
-        exp_name = current_branch.strip("feat/")
+    if current_branch.startswith("experiment/"):
+        click.confirm(
+            f"Creating new mlflow experiment from current branch {current_branch}, is that correct?", abort=True
+        )
+        exp_name = current_branch
     elif current_branch == "main":
-        exp_name = click.prompt("Please enter a name for your experiment", type=str)
+        user_input_name = click.prompt("Please enter a name for your experiment", type=str)
+        if not user_input_name.startswith("experiment/"):
+            exp_name = f"experiment/{user_input_name}"
         create_new_branch(exp_name)
     else:
         print("Error: please begin with an experiment/ branch or begin from main")
-        click.Abort()
-
-    branch_name = f"experiment/{exp_name}"
-    print("branch_name", branch_name)
-    print("exp_name", exp_name)
+        raise click.Abort()
 
     mlflow_id = create_mlflow_experiment(experiment_name=exp_name)
 
-    click.echo(f"kedro experiment created on branch {branch_name}")
+    click.echo(f"kedro experiment created on branch {exp_name}")
     click.echo(f"mlflow experiment created: {mlflow.get_tracking_uri()}/#/experiments/{mlflow_id}")
 
     print("experiment group created")
 
 
 @experiment.command()
-@env_option
-# TODO: add all requried options
-# @click.argument( "function_to_call",      type=str, default=None,)
-@click.option(
-    "--experiment_name",
-    type=str,
-    default=None,
-)
-@click.option("--pipeline", "-p", required=True, default="__default__", type=str, help=PIPELINE_ARG_HELP)
+# @env_option
+# These are all copied directly from submit. If we want to maintain kedro submit functionality I think we need to
+# keep the duplication for now. Then we can just rename submit to run and add the extra mlflow steps there.
 @click.option("--username", type=str, required=True, help="Specify the username to use")
+@click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
+@click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
 @click.option("--release-version", type=str, required=True, help="Specify a custom release name")
+@click.option("--pipeline", "-p", type=str, default="modelling_run", help="Specify which pipeline to execute")
+@click.option("--quiet", "-q", is_flag=True, default=False, help="Disable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
-# fmt: on
-# TODO: remove this - we won't need to pass context anymore. just point directly at submit
-# Unless we need to maintain submit...
+@click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
+@click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
+@click.option("--headless", is_flag=True, default=False, help="Skip confirmation prompt")
+@click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
 @click.pass_context
 def run(
-    ctx, env: str, experiment_name: Optional[str], pipeline: str, username: str, release_version: str, dry_run: bool
+    ctx,
+    username: str,
+    namespace: str,
+    run_name: str,
+    release_version: str,
+    pipeline: str,
+    quiet: bool,
+    dry_run: bool,
+    from_nodes: List[str],
+    is_test: bool,
+    headless: bool,
+    environment: str,
 ):
     """Run an experiment."""
-    if not experiment_name:
-        # TODO: sanitize branch name
-        experiment_name = get_current_git_branch()
-        print("experiment_name", experiment_name)
 
-    run_id = get_run_id_from_mlflow_name(experiment_name=experiment_name)
+    current_branch = get_current_git_branch()
+    # temp: current branch is feat/, but want to test with experiment/
+    experiment_name = current_branch.replace("feat/", "experiment/")
 
-    ctx.invoke(
+    click.confirm(f"Start a new run on experiment {experiment_name}, is that correct?", abort=True)
+    experiment_id = get_run_id_from_mlflow_name(experiment_name=experiment_name)
+
+    # Invokes the the submit command and forwards all arguments from current command
+    # Temporary measure until we formally deprecate kedro submit
+    ctx.forward(
         submit,
-        username=username,
-        release_version=release_version,
-        pipeline=pipeline,
-        experiment_id=run_id,
-        dry_run=dry_run,
+        experiment_id=experiment_id,
     )
 
 
-def create_mlflow_experiment(experiment_name: str):
+def create_mlflow_experiment(experiment_name: str) -> str:
     token = get_iap_token()
+    # TODO: Pull from config?
     mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")
     os.environ["MLFLOW_TRACKING_TOKEN"] = token.id_token
 
@@ -95,6 +102,7 @@ def create_mlflow_experiment(experiment_name: str):
         click.echo(
             f"Error: Experiment {experiment_name} already found at {mlflow.get_tracking_uri()}/#/experiments/{experiment.experiment_id}"
         )
+        # TODO: this is currently not working because deleted runs are still searchable??
         raise click.Abort()
 
     else:
@@ -106,9 +114,8 @@ def create_mlflow_experiment(experiment_name: str):
         return experiment_id
 
 
-def get_run_id_from_mlflow_name(experiment_name: str):
+def get_run_id_from_mlflow_name(experiment_name: str) -> str:
     token = get_iap_token()
-    # TODO: Pull from config?
     mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")
     os.environ["MLFLOW_TRACKING_TOKEN"] = token.id_token
 

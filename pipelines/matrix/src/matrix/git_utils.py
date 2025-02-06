@@ -72,6 +72,8 @@ def correct_non_semver_compliant_release_names(releases_list: List[str]) -> dict
 
 
 def create_new_branch(branch_name: str) -> bool:
+    # Fix
     result = subprocess.run(
         ["git", "checkout", "-b", branch_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True
     )
+    return result
