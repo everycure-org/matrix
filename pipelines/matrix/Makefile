@@ -36,7 +36,7 @@ fetch_sa_key:
 		--secret=$(SA_KEY_SECRET_NAME) \
 		--project=$(GCP_PROJECT) \
 		> $(SA_KEY_PATH); \
-	chmod 400 $(SA_KEY_PATH); \
+	chmod 600 $(SA_KEY_PATH); \
 	echo "Service account key saved to $(SA_KEY_PATH)"; \
 
 venv: 
@@ -119,6 +119,9 @@ licenses_container: docker_build
 		-v $(PWD)/trivy.yaml:/trivy.yaml \
 		-v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy  \
 		image --scanners license --severity UNKNOWN,CRITICAL $(dev_docker_image)
+
+clean_sa_key:
+	rm -f $(SA_KEY_PATH)
 
 clean: clean_sa_key
 	@echo "cleaning various cache locations to ensure clean installation is possible"
