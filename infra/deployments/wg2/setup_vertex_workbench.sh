@@ -78,7 +78,7 @@ if [ ! -d "matrix" ]; then
     make install
     # Install the virtual environment's Python as a Jupyter kernel without activating the venv
     .venv/bin/python -m ipykernel install --user --name matrix --display-name "Python (matrix)"
-    jupyter kernelspec set-default matrix
+    # .venv/bin/jupyter kernelspec set-default matrix
 
     popd
 fi
@@ -87,7 +87,8 @@ fi
 if ! grep -q "mtrx-us-central1-wg2-modeling-dev-storage" /etc/fstab; then
     echo "Adding GCS bucket mount point to /etc/fstab..."
     mkdir -p /home/jupyter/bucket
-    echo "mtrx-us-central1-wg2-modeling-dev-storage /home/jupyter/bucket gcsfuse rw,noauto,user" | sudo tee -a /etc/fstab
+    echo "mtrx-us-central1-wg2-modeling-dev-storage /home/jupyter/bucket gcsfuse rw,x-systemd.requires=network-online.target,_netdev,allow_other,uid=1001,gid=1001" | sudo tee -a /etc/fstab
+    sudo mount -a
 else
     echo "GCS bucket mount point already exists in /etc/fstab, skipping..."
 fi

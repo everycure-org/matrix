@@ -1,6 +1,6 @@
 locals {
   users = {
-    # "amy" = "amy@everycure.org"
+    "alexei" = "alexei@everycure.org"
     "pascal" = "pascal@everycure.org"
   }
 }
