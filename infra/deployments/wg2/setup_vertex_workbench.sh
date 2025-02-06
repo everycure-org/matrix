@@ -86,8 +86,8 @@ fi
 # Check if the mount point is already in fstab before adding it
 if ! grep -q "mtrx-us-central1-wg2-modeling-dev-storage" /etc/fstab; then
     echo "Adding GCS bucket mount point to /etc/fstab..."
-    mkdir -p /home/jupyter/bucket
-    echo "mtrx-us-central1-wg2-modeling-dev-storage /home/jupyter/bucket gcsfuse rw,x-systemd.requires=network-online.target,_netdev,allow_other,uid=1001,gid=1001" | sudo tee -a /etc/fstab
+    mkdir -p /home/jupyter/buckets/mtrx-us-central1-wg2-modeling-dev-storage
+    echo "mtrx-us-central1-wg2-modeling-dev-storage /home/jupyter/buckets/mtrx-us-central1-wg2-modeling-dev-storage gcsfuse rw,x-systemd.requires=network-online.target,_netdev,allow_other,uid=1001,gid=1001" | sudo tee -a /etc/fstab
     sudo mount -a
 else
     echo "GCS bucket mount point already exists in /etc/fstab, skipping..."
