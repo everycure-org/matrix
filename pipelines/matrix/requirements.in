@@ -39,12 +39,13 @@ python-cypher==0.20.1
 rich
 ruff==0.6.8 # Matches pre-commit version
 s3fs
+semver==3.0.2
 scikit-learn==1.4.0
 scikit-optimize
 seaborn
 tenacity
 termplotlib
-torch
+torch==2.5.1
 transformers
 # used for convenience libraries, to be moved to a dev requirements eventually
 typer
