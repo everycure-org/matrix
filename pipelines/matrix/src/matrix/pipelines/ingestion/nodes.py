@@ -262,10 +262,8 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFr
 )
 def create_gt(pos_df: pd.DataFrame, neg_df: pd.DataFrame) -> pd.DataFrame:
     """Converts the KGML-xDTD true positives and true negative dataframes into a singular dataframe compatible with EC format."""
-    pos_df["indication"], pos_df["contraindication"] = True, False
-    pos_df["y"] = 1
-    neg_df["indication"], neg_df["contraindication"] = False, True
-    neg_df["y"] = 0
+    pos_df["indication"], pos_df["contraindication"], pos_df["y"] = True, False, 1
+    neg_df["indication"], neg_df["contraindication"], neg_df["y"] = False, True, 0
     gt_df = pd.concat([pos_df, neg_df], axis=0)
     gt_df["drug|disease"] = gt_df["source"] + "|" + gt_df["target"]
     return gt_df
