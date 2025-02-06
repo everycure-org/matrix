@@ -1,15 +1,14 @@
-from pydantic import BaseModel, Field
 from typing import List, Literal, Union
+
 from models import BASELINE_MODEL, CHALLENGER_MODEL
+from pydantic import BaseModel, Field
 
 
 class EmbeddingRequest(BaseModel):
     """Request model for embedding generation."""
 
     input: Union[str, List[str]] = Field(..., description="The input text(s) to embed.")
-    model: Literal[BASELINE_MODEL, CHALLENGER_MODEL] = Field(
-        ..., description="The model to use for embedding."
-    )
+    model: Literal[BASELINE_MODEL, CHALLENGER_MODEL] = Field(..., description="The model to use for embedding.")
 
 
 class Embedding(BaseModel):

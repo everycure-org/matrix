@@ -1,6 +1,6 @@
-from pydantic_settings import BaseSettings
-from pydantic import Field, HttpUrl, BaseModel
 import streamlit as st
+from pydantic import BaseModel, Field, HttpUrl
+from pydantic_settings import BaseSettings
 
 
 class OntologyUrls(BaseModel):

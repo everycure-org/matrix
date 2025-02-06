@@ -1,15 +1,14 @@
 import re
-import yaml
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import yaml
 from jinja2 import Environment, FileSystemLoader
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
-from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from matrix.git_utils import get_git_sha
-
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
@@ -23,6 +22,7 @@ def generate_argo_config(
     namespace: str,
     username: str,
     pipeline: Pipeline,
+    environment: str,
     package_name: str,
     release_folder_name: str,
     default_execution_resources: Optional[ArgoResourceConfig] = None,
@@ -35,11 +35,13 @@ def generate_argo_config(
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
     pipeline_tasks = get_dependencies(fuse(pipeline), default_execution_resources)
     git_sha = get_git_sha()
+    trigger_release = get_trigger_release_flag(pipeline.name)
 
     rendered_template = template.render(
         package_name=package_name,
         pipeline_tasks=pipeline_tasks,
         pipeline_name=pipeline.name,
+        trigger_release=trigger_release,
         image=image,
         image_tag=image_tag,
         namespace=namespace,
@@ -48,6 +50,7 @@ def generate_argo_config(
         release_version=release_version,
         release_folder_name=release_folder_name,
         git_sha=git_sha,
+        environment=environment,
         default_execution_resources=default_execution_resources.model_dump(),
     )
     yaml_data = yaml.safe_load(rendered_template)
@@ -282,3 +285,7 @@ def clean_name(name: str) -> str:
         Clean node name, according to Argo's requirements
     """
     return re.sub(r"[\W_]+", "-", name).strip("-")
+
+
+def get_trigger_release_flag(pipeline: str) -> str:
+    return str(pipeline in ("data_release", "kg_release"))

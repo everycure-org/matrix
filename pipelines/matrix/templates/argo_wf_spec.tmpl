@@ -11,6 +11,7 @@ spec:
       {% endraw %}
       username: "{{ username }}"
       pipeline_name: "{{ pipeline_name }}"
+      trigger_release: "{{ trigger_release }}"
       release_version: "{{ release_version }}"
       git_sha: "{{ git_sha }}"
   entrypoint: "pipeline"
@@ -23,17 +24,30 @@ spec:
       - name: run_name
         value: "{{ image_tag }}"
       - name: neo4j_host
-        value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
+        value: "bolt+ssc://neo4j.neo4j.svc.cluster.local:7687"
       - name: mlflow_endpoint
         value: "http://mlflow-tracking.mlflow.svc.cluster.local:80"
       - name: openai_endpoint
         value: "https://api.openai.com/v1"
       - name: env
-        value: "cloud"
+        value: "{{ environment }}"
       - name: release_folder_name
         value: "{{ release_folder_name }}"
   templates:
   - &_kedro_template
+    metrics:
+        prometheus:
+          - name: "argo_custom_workflow_error_counter"
+            help: "Total number of failed workflows"
+            labels:
+              - key: pipeline_name
+                value: "{{ pipeline_name }}"
+            when: {% raw %}"{{ status }}  == Failed"
+            {% endraw %}
+            # Note that this should be 'workflow.status' not 'status' if docs are followed, but it doesn't work.
+            # https://argo-workflows.readthedocs.io/en/latest/variables/#exit-handler
+            counter:
+              value: "1"
     name: kedro
     affinity:
       nodeAffinity:
@@ -137,6 +151,12 @@ spec:
     name: neo4j
     podSpecPatch: |
       containers:
+        - name: main
+          resources:
+            requests:
+              memory: 50Gi
+            limits:
+              memory: 50Gi
         - name: neo4j
           resources:
             requests:

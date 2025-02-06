@@ -130,16 +130,13 @@ python
 # Python 3.11.<something>, as opposed to another version of Python, such as 3.9, 3.12, or 3.13.
 ```
 
-### Virtual environment
+### uv installation
 
 We leverage [`uv`](https://github.com/astral-sh/uv) to manage/install our Python
 requirements. Note that while many may be used to Conda, UV and Conda cannot be used in parallel. Using Conda is hence at your own risk.
 
 
 Python 3.11 is currently **required** to build the matrix pipeline. If you attempt to use Python 3.12, you will likely encounter errors with the recently-removed `distutils` package (see the common errors document for how to solve this) 
-
-Install as follows, then create a virtual env in the `matrix/pipelines/matrix` directory in the repo and install the requirements `requirements.txt`:
-
 
 !!! warning
     Don't forget to link your uv installation using the instructions prompted after the downloaded.
@@ -240,24 +237,24 @@ Our pipeline uses [Spark](https://spark.apache.org/) for distributed computation
 === "MacOS"
 
     ```bash
-    brew install openjdk@11
-    brew link --overwrite openjdk@11 # makes the java version available in PATH
+    brew install openjdk@17
+    brew link --overwrite openjdk@17 # makes the java version available in PATH
     ```
 
 === "Windows (WSL)"
     
     ```bash
     # install jdk
-    sudo apt install openjdk-11-jdk
+    sudo apt install openjdk-17-jdk
     ```
 
 === "Linux"
 
     ```bash
-    # Java on Linux is complicated, check for your specific distro how to get JDK@11. 
+    # Java on Linux is complicated, check for your specific distro how to get JDK@17. 
 
     # On Arch/Manjaro
-    pacman -S jdk11-openjdk
+    pacman -S jdk17-openjdk
     ```
 
 ### gcloud SDK
@@ -282,12 +279,18 @@ We leverage Google (GCP) as our Cloud provider, the following cask installation 
     # update and install 
     sudo apt-get update && sudo apt-get install google-cloud-cli
     ```
-    
+
 After succesfully installation, authenticate the client:
 
 ```bash
 gcloud auth login
 gcloud auth application-default login
+```
+
+We also need to configure Docker to use the Google Container Registry:
+
+```bash
+gcloud auth configure-docker us-central1-docker.pkg.dev
 ```
 
 ### GNU Make
@@ -314,5 +317,48 @@ We use `make` and `Makefile`s in a lot of places. If you want to [learn more abo
     # for arch/manjaro
     sudo pacman -S make
     ```
+
+### kubectl
+
+Kubectl is a CLI tool we use to interact with our Kubernetes cluster. It is required to submit workflows to the cloud environment.
+
+=== "MacOS"
+
+    ```bash
+    brew install kubectl
+    # ... test your installation. You should see your kubectl version.
+    kubectl version --client
+    ```
+
+Once installed, use the gcloud SDK to connect kubectl to the kubernetes cluster. Replace `REGION` and `PROJECT_ID` below with your own values found in GCP.
+
+=== "MacOS"
+
+    ```bash
+    gcloud components install gke-gcloud-auth-plugin
+    gcloud container clusters get-credentials compute-cluster --region us-central1 --project mtrx-hub-dev-3of
+    # ... test your installation. You should see a list of the cluster's namespaces.
+    kubectl get namespaces
+    ```
+
+### Argo Workflows
+
+[Argo](https://argoproj.github.io/) is our main tool to run jobs in kubernetes. Its CLI tool `argo` is required to submit workflows to the cloud environment.
+
+!!! warning
+
+    Argo Workflows is not the same as ArgoCD. Argo is a family of tools operating on kubernetes. We use both but most people only need to care about Argo Workflows.
+
+
+=== "MacOS"
+
+    ```bash
+    brew install argo
+    ```
+
+=== "Linux"
+
+    Check the [official documentation from argo](https://github.com/argoproj/argo-workflows/releases/).
+
 
 [Now, you're ready to dive into kedro! :material-skip-next:](./kedro.md){ .md-button .md-button--primary }
