@@ -410,12 +410,12 @@ def _flag_known_pairs(top_pairs: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: DataFrame with added flags for known positive and negative pairs.
     """
-    top_pairs["is_known_positive"] = (
-        top_pairs["is_known_positive"] | top_pairs["trial_sig_better"] | top_pairs["trial_non_sig_better"]
-    )
-    top_pairs["is_known_negative"] = (
-        top_pairs["is_known_negative"] | top_pairs["trial_sig_worse"] | top_pairs["trial_non_sig_worse"]
-    )
+    top_pairs["is_known_positive"] = top_pairs[
+        "is_known_positive"
+    ]  # | top_pairs["trial_sig_better"] | top_pairs["trial_non_sig_better"]
+    top_pairs["is_known_negative"] = top_pairs[
+        "is_known_negative"
+    ]  # | top_pairs["trial_sig_worse"] | top_pairs["trial_non_sig_worse"]
     return top_pairs
 
 

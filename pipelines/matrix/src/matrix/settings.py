@@ -62,9 +62,9 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             {"evaluation_name": "disease_specific"},
             {"evaluation_name": "full_matrix_negatives"},
             {"evaluation_name": "full_matrix"},
-            {"evaluation_name": "simple_classification_trials"},
-            {"evaluation_name": "disease_specific_trials"},
-            {"evaluation_name": "full_matrix_trials"},
+            # {"evaluation_name": "simple_classification_trials"},
+            # {"evaluation_name": "disease_specific_trials"},
+            # {"evaluation_name": "full_matrix_trials"},
         ],
     }
 )
