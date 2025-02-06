@@ -137,17 +137,17 @@ GROUP BY upstream_data_source
 ### Core Components
 
 1. **Vertex AI Workbenches**: 
-   - Individual workbenches per data scientist (Terraform managed)
-   - Dedicated service accounts
-   - VPC network connectivity
-   - Post-startup configuration script
+    - Individual workbenches per data scientist (Terraform managed)
+    - Dedicated service accounts
+    - VPC network connectivity
+    - Post-startup configuration script
 
 2. **Resource Management System**:
-   - PubSub topic: `ds-workbench-machine-state-events`
-   - CPU utilization monitoring:
-     - Threshold: 10% for 3 hours
-     - Automated notifications
-   - Cloud Function for alert processing
+    - PubSub topic: `ds-workbench-machine-state-events`
+    - CPU utilization monitoring:
+        - Threshold: 10% for 3 hours
+        - Automated notifications
+    - Cloud Function for alert processing
 
 ### Alert System Flow
 
@@ -159,16 +159,16 @@ GROUP BY upstream_data_source
 ### Infrastructure as Code
 
 - **Components**:
-  - Reusable workbench modules
-  - Declarative monitoring policies
-  - Cloud Pub/Sub notification system
-  - Python-based alert processing
+    - Reusable workbench modules
+    - Declarative monitoring policies
+    - Cloud Pub/Sub notification system
+    - Python-based alert processing
 
 - **Benefits**:
-  - Resource usage optimization
-  - Consistent configurations
-  - Scalable infrastructure
-  - Version-controlled changes
+    - Resource usage optimization
+    - Consistent configurations
+    - Scalable infrastructure
+    - Version-controlled changes
 
 ---
 
