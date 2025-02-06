@@ -1,21 +1,25 @@
-import pytest
-import pandas as pd
 import numpy as np
-from sklearn.metrics import accuracy_score, roc_auc_score
+import pandas as pd
+import pytest
+from matrix.datasets.pair_generator import DrugDiseasePairGenerator
 from matrix.pipelines.evaluation.evaluation import (
-    DiscreteMetrics,
     ContinuousMetrics,
-    SpecificRanking,
+    DiscreteMetrics,
     FullMatrixRanking,
     RecallAtN,
+    SpecificRanking,
 )
 from matrix.pipelines.evaluation.named_metric_functions import (
-    MRR,
-    HitK,
     AUROC,
+    MRR,
+    CommonalityAtN,
+    HitK,
+    HypergeomAtN,
+    SpearmanAtN,
 )
-
 from matrix.pipelines.evaluation.named_metric_functions import RecallAtN as RecallAtN_
+from matrix.pipelines.evaluation.nodes import generate_test_dataset
+from sklearn.metrics import accuracy_score, roc_auc_score
 
 
 @pytest.fixture
@@ -61,6 +65,29 @@ def sample_positives():
     )
     data["non_pos_quantile_rank"] = (data["non_pos_rank"] - 1) / 2
     return data
+
+
+@pytest.fixture
+def sample_matrix():
+    """Sample matrix dataframe fixture."""
+    return pd.DataFrame(
+        {
+            "source": ["drug1", "drug2", "drug3"],
+            "target": ["disease1", "disease2", "disease3"],
+            "score": [0.9, 0.8, 0.7],
+        }
+    )
+
+
+@pytest.fixture
+def mock_generator():
+    """Mock generator that returns predefined test data."""
+
+    class MockGenerator(DrugDiseasePairGenerator):
+        def generate(self, matrix):
+            return pd.DataFrame({"source": ["drug1", "drug2"], "target": ["disease1", "disease2"], "y": [1, 0]})
+
+    return MockGenerator()
 
 
 def test_discrete_metrics(sample_data):
@@ -161,3 +188,77 @@ def test_recall_at_n(sample_data):
 
     assert "recall_at_5" in result
     assert np.isclose(result["recall_at_5"], 1.0, atol=1e-6)  # All true positives included
+
+
+def test_generate_test_dataset_injection():
+    """Test object injection functionality."""
+    sample_df = pd.DataFrame({"source": ["drug1"], "target": ["disease1"], "score": [0.9]})
+
+    # Test with string-based injection
+    with pytest.raises(Exception):
+        # Should fail because DrugDiseasePairGenerator is abstract
+        generate_test_dataset(
+            matrix=sample_df, generator={"object": "matrix.datasets.pair_generator.DrugDiseasePairGenerator"}
+        )
+
+
+@pytest.fixture
+def sample_rank_sets():
+    """Fixture that provides sample rank sets for testing."""
+    return (
+        pd.DataFrame({"pair_id": [1, 2, 3, 4, 5], "rank": [12, 522, 33, 14, 1]}),
+        pd.DataFrame({"pair_id": [1, 2, 3, 5, 6], "rank": [1, 2, 3, 4, 5]}),
+    )
+
+
+@pytest.fixture
+def sample_hypergeom_sets():
+    """Fixture that provides sample rank sets for testing."""
+    return (
+        pd.DataFrame({"pair_id": [1, 2, 3, 4, 5, 6], "rank": [1, 2, 3, 4, 5, 6]}),  # Increased to 6 items
+        pd.DataFrame({"pair_id": [3, 4, 5, 7, 8, 9], "rank": [1, 2, 3, 4, 5, 6]}),  # Keep 5 items to ensure overlap
+    )
+
+
+@pytest.fixture
+def sample_commonality_matrices():
+    """Fixture that provides sample matrices for testing commonality."""
+    return [pd.DataFrame({"pair_id": [1, 2, 3]}), pd.DataFrame({"pair_id": [1, 3, 5]})]
+
+
+def test_hypergeom_at_n(sample_hypergeom_sets):
+    """Test the HypergeomAtN class."""
+    n = 5
+    hypergeom_evaluator = HypergeomAtN(n)
+    result = hypergeom_evaluator.generate()(sample_hypergeom_sets, common_items=pd.DataFrame({"pair_id": [3, 4, 5]}))
+
+    result_same = hypergeom_evaluator.generate()(
+        (sample_hypergeom_sets[0], sample_hypergeom_sets[0]), common_items=pd.DataFrame({"pair_id": [3, 4, 5]})
+    )
+    assert result["pvalue"] > 0.05
+
+
+def test_spearman_at_n(sample_rank_sets):
+    """Test the SpearmanAtN class."""
+    n = 4
+    spearman_evaluator = SpearmanAtN(n)
+
+    # First one is testing the pvalue
+    result = spearman_evaluator.generate()(sample_rank_sets, common_items=pd.DataFrame({"pair_id": [1, 2, 3, 4]}))
+
+    # Second one is testing correlation
+    result_same = spearman_evaluator.generate()(
+        (sample_rank_sets[0], sample_rank_sets[0]), common_items=pd.DataFrame({"pair_id": [1, 2, 3, 4]})
+    )
+
+    assert result["pvalue"] > 0.05
+    assert round(result_same["correlation"]) == 1.0
+    assert result_same["pvalue"] < 0.05
+
+
+def test_commonality_at_n(sample_commonality_matrices):
+    """Test the CommonalityAtN class."""
+    n = 3
+    commonality_evaluator = CommonalityAtN(n)
+    result = commonality_evaluator.generate()(sample_commonality_matrices)
+    assert round(result, 2) == 0.67

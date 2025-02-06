@@ -15,7 +15,7 @@ SA_KEY_PATH ?= conf/local/service-account.json
 # ensures all make targets run in one shell (rather than line by line in new shell)
 .ONESHELL: 
 
-default: prerequisites install fast_test integration_test
+default: prerequisites fetch_sa_key install fast_test integration_test
 	echo "done!"
 
 prerequisites:
@@ -45,6 +45,11 @@ venv:
 
 install: venv precommit-hooks 
 	uv pip install -r requirements.txt #force it to install in our venv
+
+install_compatibility: venv precommit-hooks
+	# expects the file requirements.overrides.txt to be present, allows devs to override
+	# versions for local machine limitations (e.g. newer pytorch on macos intel)
+	uv pip install -r requirements.txt --overrides requirements.overrides.txt
 
 precommit: precommit-hooks
 	git fetch origin
@@ -87,7 +92,7 @@ certificate:
 	openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout compose/certs/bolt/private.key -out compose/certs/bolt/public.crt -config compose/certs/openssl.cnf > /dev/null 2>&1
 	cat compose/certs/bolt/private.key compose/certs/bolt/public.crt > compose/certs/bolt/private_and_public.pem
 
-compose_up: certificate
+compose_up:
 	docker compose -f compose/docker-compose.yml up -d --wait --remove-orphans
 	
 compose_down:
@@ -104,7 +109,7 @@ wipe_neo:
 integration_test: compose_up wipe_neo
 	# NOTE: We are running without xgc due to its long runtime. 
 	ulimit -n 10000
-	uv run kedro run --env test -p test --runner ThreadRunner --without-tags xgc,not-shared
+	uv run kedro run --env test -p test --without-tags xgc,not-shared
 
 fabricate:
 	uv run kedro run -p fabricator --env test
@@ -114,6 +119,9 @@ licenses_container: docker_build
 		-v $(PWD)/trivy.yaml:/trivy.yaml \
 		-v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy  \
 		image --scanners license --severity UNKNOWN,CRITICAL $(dev_docker_image)
+
+clean_sa_key:
+	rm -f $(SA_KEY_PATH)
 
 clean: clean_sa_key
 	@echo "cleaning various cache locations to ensure clean installation is possible"

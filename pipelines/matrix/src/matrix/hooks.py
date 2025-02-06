@@ -1,25 +1,26 @@
-import logging
 import json
+import logging
 import os
+import re
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Set
 
+import fsspec
 import mlflow
 import pandas as pd
+import pyspark.sql as ps
 import termplotlib as tpl
 from kedro.framework.context import KedroContext
 from kedro.framework.hooks import hook_impl
+from kedro.framework.project import pipelines
 from kedro.io.data_catalog import DataCatalog
 from kedro.pipeline.node import Node
 from kedro_datasets.spark import SparkDataset
 from mlflow.exceptions import RestException
 from omegaconf import OmegaConf
 from pyspark import SparkConf
-from pyspark.sql import SparkSession
-from google.cloud import storage
-from google.cloud.storage.bucket import Bucket
-from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
 
+from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,47 @@ class MLFlowHooks:
     https://github.com/Galileo-Galilei/kedro-mlflow/issues/579
     """
 
+    _kedro_context: Optional[KedroContext] = None
+    _input_datasets: Optional[Set] = None
+
+    @classmethod
+    def set_context(cls, context: KedroContext) -> None:
+        """Utility class method that stores context in class as singleton."""
+        cls._kedro_context = context
+
+    @classmethod
+    def get_pipeline_inputs(cls):
+        if cls._input_datasets is None:
+            pipeline_name = cls._kedro_context._extra_params["pipeline_name"]
+            pipeline_obj = pipelines[pipeline_name]
+            inputs = {input for input in pipeline_obj.all_inputs() if not input.startswith("params:")}
+            outputs = pipeline_obj.all_outputs()
+            inputs_only = inputs - outputs
+            cls._input_datasets = inputs_only
+
+    @hook_impl
+    def after_dataset_loaded(self, dataset_name, data, node):
+        """In the v1 of this feature we only log the dataset names.
+        Logging actual datasets requires extra work, due to the fact that the data has to be first
+        converted to mlflow.data.dataset.Dataset class. This works for common formats like pandas and spark
+        where the from_ functions exist, e.g.:
+
+        dataset = mlflow.data.from_pandas(data, name=dataset_name)
+        mlflow.log_input(dataset)
+
+        but our datasets are too heterogenous and can't be always parsed, e.g. matrix.datasets.graph.KnowledgeGraph
+        or would need a lot of hard-coded logic and would make this code brittle.
+        One idea is to only log select certain dataset types - pandas and spark, for other keep logging names only.
+
+        Another improvement idea for v2 would be to additionally  log the dataset paths, e.g.:
+        path = self._kedro_context.catalog.datasets[dataset_name]._get_load_path()
+        or using the url for remote datasets:
+        path = self._kedro_context.catalog.datasets[dataset_name]._url
+        """
+        if dataset_name in MLFlowHooks._input_datasets:
+            dataset = mlflow.data.from_pandas(pd.DataFrame(), name=dataset_name)
+            mlflow.log_input(dataset)
+
     @hook_impl
     def after_context_created(self, context) -> None:
         """Initialise MLFlow run.
@@ -43,9 +85,10 @@ class MLFlowHooks:
         Initialises a MLFlow run and passes it on for
         other hooks to consume.
         """
+        MLFlowHooks.set_context(context)
+        MLFlowHooks.get_pipeline_inputs()
         cfg = OmegaConf.create(context.config_loader["mlflow"])
         globs = OmegaConf.create(context.config_loader["globals"])
-
         # Set tracking uri
         # NOTE: This piece of code ensures that every MLFlow experiment
         # is created by our Kedro pipeline with the right artifact root.
@@ -113,7 +156,7 @@ class MLFlowHooks:
 class SparkHooks:
     """Spark project hook with lazy initialization and global session override."""
 
-    _spark_session: Optional[SparkSession] = None
+    _spark_session: Optional[ps.SparkSession] = None
     _already_initialized = False
     _kedro_context: Optional[KedroContext] = None
 
@@ -130,7 +173,7 @@ class SparkHooks:
         # if we have not initiated one, we initiate one
         if cls._spark_session is None:
             # Clear any existing default session, we take control!
-            sess = SparkSession.getActiveSession()
+            sess = ps.SparkSession.getActiveSession()
             if sess is not None:
                 logger.warning("we are killing spark to create a fresh one")
                 sess.stop()
@@ -139,9 +182,9 @@ class SparkHooks:
             # DEBT ugly fix, ideally we overwrite this in the spark.yml config file but currently no
             # known way of doing so
             # if prod environment, remove all config keys that start with spark.hadoop.google.cloud.auth.service
-            if cls._kedro_context.env == "cloud" and os.environ.get("ARGO_NODE_ID") is not None:
+            if os.environ.get("ARGO_NODE_ID") is not None:
                 logger.warning(
-                    "we're manipulating the spark configuration now. this is done assuming this is a production execution in argo"
+                    "We're manipulating the spark configuration now. This is done assuming this is a production execution in argo"
                 )
                 parameters = {
                     k: v for k, v in parameters.items() if not k.startswith("spark.hadoop.google.cloud.auth.service")
@@ -156,7 +199,9 @@ class SparkHooks:
 
             # Create and set our configured session as the default
             cls._spark_session = (
-                SparkSession.builder.appName(cls._kedro_context.project_path.name).config(conf=spark_conf).getOrCreate()
+                ps.SparkSession.builder.appName(cls._kedro_context.project_path.name)
+                .config(conf=spark_conf)
+                .getOrCreate()
             )
         else:
             logger.debug("SparkSession already initialized")
@@ -283,8 +328,14 @@ class ReleaseInfoHooks:
     @staticmethod
     def build_bigquery_link() -> str:
         version = ReleaseInfoHooks._globals["versions"]["release"]
-        version = "release_" + version.replace(".", "_")
-        tmpl = f"https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m5!1m4!4m3!1smtrx-hub-dev-3of!2smtrx-hub-dev-3of!3s{version}"
+        version_formatted = "release_" + re.sub(r"[.-]", "_", version)
+        tmpl = (
+            f"https://console.cloud.google.com/bigquery?"
+            f"project={ReleaseInfoHooks._globals['gcp_project']}"
+            f"&ws=!1m4!1m3!3m2!1s"
+            f"mtrx-hub-dev-3of!2s"
+            f"{version_formatted}"
+        )
         return tmpl
 
     @staticmethod
@@ -301,43 +352,55 @@ class ReleaseInfoHooks:
         tmpl = f"https://mlflow.platform.dev.everycure.org/#/experiments/{experiment_id}/runs/{run_id}"
         return tmpl
 
+    @classmethod
+    def extract_datasets_used(cls) -> list:
+        # Using lazy import to prevent circular import error
+        from matrix.settings import DYNAMIC_PIPELINES_MAPPING
+
+        dataset_names = [item["name"] for item in DYNAMIC_PIPELINES_MAPPING["integration"] if item["integrate_in_kg"]]
+        return dataset_names
+
+    @classmethod
+    def extract_all_global_datasets(cls, hidden_datasets: frozenset) -> dict:
+        datasources_to_versions = {
+            k: v["version"] for k, v in ReleaseInfoHooks._globals["data_sources"].items() if k not in hidden_datasets
+        }
+        return datasources_to_versions
+
+    @classmethod
+    def mark_unused_datasets(cls, global_datasets: dict, datasets_used: list) -> None:
+        """Takes a list of globally defined datasets (and their versions) and compares it against datasets
+        actually used, as dictated by the settings.py file responsible for the generation of dynamic pipelines.
+        For global datasets that were excluded in the settings.py, a note is placed in the dict value that otherwise
+        features the version number."""
+
+        for global_dataset in global_datasets:
+            if not global_dataset in datasets_used:
+                global_datasets[global_dataset] = "not included"
+
     @staticmethod
-    def extract_release_info() -> dict[str, str]:
+    def extract_release_info(global_datasets: str) -> dict[str, str]:
         info = {
-            "release_version": ReleaseInfoHooks._globals["versions"]["release"],
-            "robokop_version": ReleaseInfoHooks._globals["data_sources"]["robokop"]["version"],
-            "rtx-kg2_version": ReleaseInfoHooks._globals["data_sources"]["rtx-kg2"]["version"],
-            "ec-medical-team": ReleaseInfoHooks._globals["data_sources"]["ec-medical-team"]["version"],
-            "topological_estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["object"],
-            "topological_encoder": ReleaseInfoHooks._params["embeddings.node"]["encoder"]["encoder"]["model"],
-            "bigquery_link": ReleaseInfoHooks.build_bigquery_link(),
-            "mlflow_link": ReleaseInfoHooks.build_mlflow_link(),
-            "code_link": ReleaseInfoHooks.build_code_link(),
+            "Release Name": ReleaseInfoHooks._globals["versions"]["release"],
+            "Datasets": global_datasets,
+            "Topological Estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["_object"],
+            "Embeddings Encoder": ReleaseInfoHooks._params["embeddings.node"]["encoder"]["encoder"]["model"],
+            "BigQuery Link": ReleaseInfoHooks.build_bigquery_link(),
+            "MLFlow Link": ReleaseInfoHooks.build_mlflow_link(),
+            "Code Link": ReleaseInfoHooks.build_code_link(),
+            "Neo4j Link": "coming soon!",
+            "NodeNorm Endpoint Link": "https://nodenorm.transltr.io/1.5/get_normalized_nodes",
         }
         return info
 
     @staticmethod
-    def get_bucket() -> Bucket:
-        project_name = ReleaseInfoHooks._globals["gcp_project"]
-        bucket_name = ReleaseInfoHooks._globals["gcs_bucket"]
-        client = storage.Client(project_name)
-        bucket = client.bucket(bucket_name.replace("gs://", ""))
-        return bucket
-
-    @staticmethod
-    def build_blobpath() -> str:
-        release_dir = ReleaseInfoHooks._globals["release_dir"]
-        blob_path = release_dir.replace("gs://", "").split("/", 1)[1]
-        release_version = ReleaseInfoHooks._globals["versions"]["release"]
-        full_blob_path = os.path.join(blob_path, f"{release_version}_info.json")
-        return full_blob_path
-
-    @staticmethod
     def upload_to_storage(release_info: dict[str, str]) -> None:
-        bucket = ReleaseInfoHooks.get_bucket()
-        blobpath = ReleaseInfoHooks.build_blobpath()
-        blob = bucket.blob(blobpath)
-        blob.upload_from_string(data=json.dumps(release_info), content_type="application/json")
+        release_dir = ReleaseInfoHooks._globals["release_dir"]
+        release_version = ReleaseInfoHooks._globals["versions"]["release"]
+        full_blob_path = os.path.join(release_dir, f"{release_version}_info.json")
+
+        with fsspec.open(full_blob_path, "wb") as f:
+            f.write(json.dumps(release_info).encode("utf-8"))
 
     @hook_impl
     def after_node_run(self, node: Node) -> None:
@@ -347,7 +410,11 @@ class ReleaseInfoHooks:
         # pipelines the (last) data release node is part of. With an
         # `after_node_run`, you can limit your filters easily.
         if node.name == last_data_release_node_name:
-            release_info = self.extract_release_info()
+            datasets_to_hide = frozenset(["disease_list", "drug_list", "ec_clinical_trials", "gt"])
+            global_datasets = self.extract_all_global_datasets(datasets_to_hide)
+            datasets_used = self.extract_datasets_used()
+            self.mark_unused_datasets(global_datasets, datasets_used)
+            release_info = self.extract_release_info(global_datasets)
             try:
                 self.upload_to_storage(release_info)
             except KeyError:

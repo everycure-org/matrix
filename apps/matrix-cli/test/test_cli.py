@@ -1,7 +1,7 @@
 # smoketest that checks the CLI is set up correctly
-import pytest
 from typing import List, Union
 
+import pytest
 from matrix_cli.main import app
 from typer.testing import CliRunner
 
