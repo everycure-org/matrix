@@ -71,7 +71,7 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
     df = pd.concat([df, enriched_df], axis=1)
 
     # Coalesce id and new id to allow adding "new" nodes
-    df["normalized_curie"] = coalesce(df["new_id"], df["curie"])
+    df["normalized_curie"] = df["new_id"].fillna(df["curie"])
 
     # Filter out nodes that are not resolved
     is_resolved = df["normalized_curie"].notna()
