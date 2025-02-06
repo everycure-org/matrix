@@ -41,17 +41,12 @@ resource "google_workbench_instance" "user_workbench" {
     }
   }
 
-
   instance_owners = [var.email]
-
-
-
-
   lifecycle {
     ignore_changes = [
       create_time,
       update_time,
-      desired_state,
+      # desired_state,
       gce_setup[0].metadata.resource-url
     ]
   }

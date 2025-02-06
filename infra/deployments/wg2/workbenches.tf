@@ -35,6 +35,21 @@ resource "google_storage_bucket_object" "post_startup_script" {
   source = "./setup_vertex_workbench.sh"
 }
 
+# secret for github that allows cloning matrix repo only
+resource "google_secret_manager_secret" "github_token" {
+  secret_id = "github-token"
+
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "github_token" {
+  secret      = google_secret_manager_secret.github_token.id
+  secret_data = var.github_token
+}
+
+
 
 # inspiration from 
 # https://github.com/GoogleCloudPlatform/terraform-google-cloud-functions/blob/v0.6.0/examples/cloud_function2_pubsub_trigger/main.tf
@@ -120,7 +135,8 @@ locals {
     "roles/storage.objectViewer",
     "roles/artifactregistry.writer",
     "roles/run.invoker",
-    "roles/reader"
+    "roles/reader",
+    "roles/secretmanager.secretAccessor"
   ]
 }
 resource "google_project_iam_member" "logging_log_writer" {

@@ -18,3 +18,9 @@ variable "project_id" {
 variable "location" {
   default = "us-central1"
 }
+
+variable "github_token" {
+  description = "GitHub token for cloning the matrix repository"
+  type        = string
+  sensitive   = true
+}
