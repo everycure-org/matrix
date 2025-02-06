@@ -34,7 +34,7 @@ def create_medical_team_pipeline() -> list:
     return [
         node(
             func=nodes.process_medical_nodes,
-            inputs=["ingestion.raw.ec_medical_team_nodes", "params:ingestion.name_resolution.url"],
+            inputs=["ingestion.raw.ec_medical_team.nodes.raw", "params:ingestion.name_resolution.url"],
             outputs="ingestion.raw.ec_medical_team.nodes@pandas",
             name="normalize_ec_medical_nodes",
             tags=["ec-medical-kg"],
@@ -43,7 +43,7 @@ def create_medical_team_pipeline() -> list:
             func=nodes.process_medical_edges,
             inputs=[
                 "ingestion.raw.ec_medical_team.nodes@pandas",
-                "ingestion.raw.ec_medical_team_edges",
+                "ingestion.raw.ec_medical_team.edges.raw",
             ],
             outputs="ingestion.raw.ec_medical_team.edges@pandas",
             name="create_int_ec_medical_edges",

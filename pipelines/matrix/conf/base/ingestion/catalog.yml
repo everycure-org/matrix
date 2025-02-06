@@ -106,13 +106,13 @@ ingestion.int.rtx_kg2.curie_to_pmids:
 # EveryCure Medical
 # -------------------------------------------------------------------------  
 # TODO: Remove raw suffix from all outputs of preprocessing pipeline once its in main
-ingestion.raw.ec_medical_team_nodes:
+ingestion.raw.ec_medical_team.nodes.raw:
   <<: [*_layer_raw, *_medical_kg_sheets_dataset]
   load_args:
     sheet_name: new_nodes
     columns: ["ID", "name", "category", "new_id", "description"]
 
-ingestion.raw.ec_medical_team_edges:
+ingestion.raw.ec_medical_team.edges.raw:
   <<: [*_layer_raw, *_medical_kg_sheets_dataset]
   load_args:
     sheet_name: new_edges
