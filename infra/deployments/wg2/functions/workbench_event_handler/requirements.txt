@@ -1,0 +1,2 @@
+# NOTE: This file was partially generated using AI assistance.
+functions-framework==3.* 

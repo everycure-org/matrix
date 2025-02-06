@@ -14,3 +14,7 @@ variable "shared_subnetwork_name" {
 variable "project_id" {
   default = "mtrx-wg2-modeling-dev-9yj"
 }
+
+variable "location" {
+  default = "us-central1"
+}
