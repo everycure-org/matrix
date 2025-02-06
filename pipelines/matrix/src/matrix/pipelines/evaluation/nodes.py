@@ -2,12 +2,10 @@ import json
 from typing import Any
 
 import pandas as pd
-
-from refit.v1.core.inject import inject_object
-from refit.v1.core.inline_has_schema import has_schema
-
 from matrix.datasets.pair_generator import DrugDiseasePairGenerator
+from matrix.inject import inject_object
 from matrix.pipelines.evaluation.evaluation import Evaluation
+from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
 
 
 def check_no_train(data: pd.DataFrame, known_pairs: pd.DataFrame) -> None:
@@ -47,17 +45,34 @@ def check_ordered(
         raise ValueError(f"The '{score_col_name}' column is not monotonically descending.")
 
 
-@has_schema(
-    schema={
-        "source": "object",
-        "target": "object",
-        "y": "int",
-    },
-    allow_subset=True,
+def perform_matrix_checks(matrix: pd.DataFrame, known_pairs: pd.DataFrame, score_col_name: str) -> None:
+    """Perform various checks on the evaluation dataset.
+
+    Args:
+        matrix: DataFrame containing a sorted matrix pairs dataset with probability scores, ranks and quantile ranks.
+        known_pairs: DataFrame with known drug-disease pairs.
+        score_col_name: Name of the column containing the treat scores.
+
+    Raises:
+        ValueError: If any of the checks fail.
+    """
+    check_no_train(matrix, known_pairs)
+    check_ordered(matrix, score_col_name)
+
+
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "source": Column(str, nullable=False),
+            "target": Column(str, nullable=False),
+            "y": Column(int, nullable=False),
+        },
+        unique=["source", "target"],
+    )
 )
 @inject_object()
 def generate_test_dataset(
-    matrix: pd.DataFrame, generator: DrugDiseasePairGenerator, known_pairs: pd.DataFrame, score_col_name: str
+    known_pairs: pd.DataFrame, matrix: pd.DataFrame, generator: DrugDiseasePairGenerator, score_col_name: str
 ) -> pd.DataFrame:
     """Function to generate test dataset.
 
@@ -65,8 +80,10 @@ def generate_test_dataset(
     pairs dataset.
 
     Args:
+        known_pairs: Dataframe containing known pairs with test/train split.
         matrix: Pairs dataframe representing the full matrix with treat scores.
         generator: Generator strategy.
+        score_col_name: name of column containing treat scores
 
     Returns:
         Pairs dataframe
@@ -125,48 +142,107 @@ def consolidate_evaluation_reports(**reports) -> dict:
         Dictionary representing consolidated report.
     """
 
-    def add_report(master_report: dict, model: str, evaluation: str, type: str, report: dict) -> dict:
+    def add_report(master_report: dict, evaluation: str, type: str, report: dict) -> dict:
         """Add a metrics to the master report, appending the evaluation type to the metric name.
 
         Args:
             master_report: Master report to add to.
-            model: Model name.
             evaluation: Evaluation name.
             type: Type of report (e.g. mean, fold_1,...).
             report: Report to add.
         """
-        # Add key for model if not present
-        if model not in master_report:
-            master_report[model] = {}
 
         for metric, value in report.items():
             # Add evaluation type suffix to the metric name
             full_metric_name = evaluation + "_" + metric
 
             # Add keys for metrics name and type if not present
-            if full_metric_name not in master_report[model]:
-                master_report[model][full_metric_name] = {}
-            if type not in master_report[model][full_metric_name]:
-                master_report[model][full_metric_name][type] = {}
+            if full_metric_name not in master_report:
+                master_report[full_metric_name] = {}
+            if type not in master_report[full_metric_name]:
+                master_report[full_metric_name][type] = {}
 
             # Add value to the metric name and type
-            master_report[model][full_metric_name][type] = value
+            master_report[full_metric_name][type] = value
 
         return master_report
 
     master_report = {}
     for report_name, report in reports.items():
         # Parse the report name key created in evaluation/pipeline.py
-        model, evaluation, fold_or_aggregated = report_name.split(".")
+        evaluation, fold_or_aggregated = report_name.split(".")
 
         # In the case of aggregated results, add the results for each aggregation function
         if fold_or_aggregated == "aggregated":
             for aggregation, report in report.items():
-                master_report = add_report(master_report, model, evaluation, aggregation, report)
+                master_report = add_report(master_report, evaluation, aggregation, report)
 
         # In the case of a fold result, add the results directly for the fold
         else:
             fold = fold_or_aggregated
-            master_report = add_report(master_report, model, evaluation, fold, report)
+            master_report = add_report(master_report, evaluation, fold, report)
 
     return json.loads(json.dumps(master_report, default=float))
+
+
+@inject_object()
+def evaluate_stability_predictions(
+    overlapping_pairs: pd.DataFrame, evaluation: Evaluation, *matrices: pd.DataFrame
+) -> Any:
+    """Function to apply stabilityevaluation.
+
+    Args:
+        overlapping_pairs: pairs that overlap across all matrices.
+        evaluation: stability metric to use for evaluation.
+        matrix_1: full matrix coming from one model
+        matrix_2: full matrix coming from another model to compare against
+    Returns:
+        Evaluation report
+    """
+    return evaluation.evaluate(overlapping_pairs, matrices)
+
+
+@inject_object()
+def generate_overlapping_dataset(generator: DrugDiseasePairGenerator, *matrices: pd.DataFrame) -> pd.DataFrame:
+    """Function to generate overlapping dataset.
+
+    Args:
+        generator: generator strategy
+        matrices: DataFrames coming from different models to compare against
+    Returns:
+        Evaluation report
+    """
+    return generator.generate(matrices)
+
+
+def calculate_rank_commonality(ranking_output: dict, commonality_output: dict) -> dict:
+    """Function to calculate rank commonality (custom metric).
+
+    Args:
+        ranking_output: ranking output
+        commonality_output: commonality output
+
+    Returns:
+        rank commonality output
+    """
+    rank_commonality_output = {}
+    ranking_output = {k: v for k, v in ranking_output.items() if "spearman" in k}
+    n_ranking_values = [int(n.split("_")[-1]) for n in ranking_output.keys() if n.split("_")[-1]]
+    n_commonality_values = [int(n.split("_")[-1]) for n in commonality_output.keys() if n.split("_")[-1]]
+    n_values = list(set(n_ranking_values) & set(n_commonality_values))
+    # Compute harmonic mean between Commonality@n and Spearman-rank@n
+    for i in n_values:
+        # Spearman correlation is between -1 and 1, taking the absolute value to avoid division by small numbers
+        r_k = abs(ranking_output[f"spearman_at_{i}"]["correlation"])
+        c_k = commonality_output[f"commonality_at_{i}"]
+        if r_k + c_k == 0:
+            s_f1 = None
+        elif pd.isnull(r_k) | pd.isnull(c_k):
+            s_f1 = None
+        else:
+            s_f1 = (2 * r_k * c_k) / (r_k + c_k)
+        rank_commonality_output[f"rank_commonality_at_{i}"] = {
+            "score": s_f1,
+            "pvalue": ranking_output[f"spearman_at_{i}"]["pvalue"],
+        }
+    return json.loads(json.dumps(rank_commonality_output, default=float))

@@ -1,0 +1,16 @@
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+# ==============================
+# Sampled sources
+
+integration.prm.filtered_nodes:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.integration_sample}/prm/filtered/nodes
+
+integration.prm.filtered_edges:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.integration_sample}/prm/filtered/edges

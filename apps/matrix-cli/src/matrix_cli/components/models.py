@@ -1,4 +1,5 @@
 from typing import Dict, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -7,6 +8,7 @@ class PRInfo(BaseModel):
 
     number: int
     title: str
+    author: str
     current_labels: str = Field(description="Comma-separated list of current labels")
     new_title: str
     new_labels: str = Field(description="Comma-separated list of new labels")
@@ -32,6 +34,7 @@ class PRInfo(BaseModel):
         return cls(
             number=pr_info["number"],
             title=pr_info["title"],
+            author=pr_info["author"],
             current_labels=labels,
             new_title=pr_info["title"],  # Initially same as current title
             new_labels=labels,  # Initially same as current labels

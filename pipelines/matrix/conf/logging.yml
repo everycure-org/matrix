@@ -39,3 +39,5 @@ loggers:
     level: INFO
   matrix:
     level: INFO
+  matrix.pipelines.preprocessing.nodes:
+    level: DEBUG

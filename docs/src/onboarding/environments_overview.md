@@ -7,6 +7,7 @@ We have 4 environments declared in the kedro project for `MATRIX`:
 - `cloud`: Contains the cloud environment with real data. All data is read and written to a GCP project as configured (see below). Assumes fully stateless local machine operations (e.g. in docker containers)
 - `test`: Fully local and contains parameters that "break" the meaning of algorithms in the pipeline (e.g. 2 dimensions PCA). This is useful for running an integration test with mock data to validate the programming of the pipeline is correct to a large degree. 
 - `local`: A default environment which you can use for local adjustments and tweaks. Changes to this repo are not usually committed to git as they are unique for every developer. 
+- `sample`: Contains a sample of the data and is useful for fast iterations on the pipeline from the embeddings pipeline and on.
 
 !!! info
     Our `cloud` environment is equipped with environment variables that allows for configuring the GCP project to use. This is especially relevant to switch between the `hub` and `wg` projects as desired.
@@ -51,6 +52,17 @@ Hereafter, you can run the default pipeline.
 # Default pipeline in default environment
 kedro run
 ```
+
+### Run with sample data locally
+
+To run the the pipeline from the embeddings step onwards with a smaller dataset for testing or development purposes, use the sample environment:
+
+```bash
+# Run pipeline with sample data
+kedro run -e sample -p test_sample
+```
+
+For more details, see the [Sample Environment Guide](./sample_environment.md).
 
 ## Pipeline with Jupyter notebooks
 
