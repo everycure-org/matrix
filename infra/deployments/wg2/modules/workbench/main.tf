@@ -56,7 +56,6 @@ resource "google_workbench_instance" "user_workbench" {
   labels = merge({
     consumer-project-id = var.project_id
     notebooks-product   = "workbench-instances"
-    resource-name       = "${var.username}-workbench"
     email               = local.sanitized_email
   }, var.labels)
 }

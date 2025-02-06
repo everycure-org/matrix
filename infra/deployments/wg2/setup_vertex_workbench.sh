@@ -1,4 +1,21 @@
 #!/bin/bash
+
+################################################################################
+# Setup script for Vertex AI Workbench development environment
+#
+# This script configures a fresh Vertex AI Workbench instance with all necessary
+# dependencies and configurations for the Matrix project, including:
+# - Java 17 installation
+# - UV package manager installation
+# - Matrix repository setup with proper authentication
+# - Python virtual environment configuration
+# - Jupyter kernel setup
+# - GCS bucket mounting
+#
+# The script is idempotent and will only run once, tracking its completion status
+# in /home/jupyter/.vertex_setup_complete
+################################################################################
+
 set -e  # Exit on any error
 
 
@@ -64,6 +81,15 @@ if [ ! -d "matrix" ]; then
     jupyter kernelspec set-default matrix
 
     popd
+fi
+
+# Check if the mount point is already in fstab before adding it
+if ! grep -q "mtrx-us-central1-wg2-modeling-dev-storage" /etc/fstab; then
+    echo "Adding GCS bucket mount point to /etc/fstab..."
+    mkdir -p /home/jupyter/bucket
+    echo "mtrx-us-central1-wg2-modeling-dev-storage /home/jupyter/bucket gcsfuse rw,noauto,user" | sudo tee -a /etc/fstab
+else
+    echo "GCS bucket mount point already exists in /etc/fstab, skipping..."
 fi
 
 # note to the user that the setup is complete
