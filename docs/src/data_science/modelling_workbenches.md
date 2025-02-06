@@ -14,16 +14,24 @@
 
 - basic knowledge of Linux, Git, Python.
 - good practices on experimentation and documentation, especially when the experiment fails. We still want to learn from what did not work.
+    - *note we will create a more structured process for streamlining experimentation as well as result dissemination and reporting in the future*
 - basic understanding of cloud platforms like GCP or the ability to learn this or work with a colleague who is familiar with GCP
 
 ## Getting started
 
 ### Getting a workbench
 
-<!-- TODO update the link after merging -->
-1. Create a pull request to [this file](https://github.com/everycure-org/matrix/pull/1102/files#diff-e92de7fa0b983c12a1b3bd7e1d7ab6d13df3bb1df37b75f1e1d5d63a9e4d8b41), adding your name and email to the list of users for which we create a workbench
-2. After the PR was merged, navigate to [this page](https://console.cloud.google.com/vertex-ai/workbench/instances?inv=1&invt=AboxFQ&project=mtrx-wg2-modeling-dev-9yj) which lists all workbenches we have provisioned for you and others.
-3. Click "Open Jupyterlab" to open the workbench with your name on it. Note you may not be able to access others' workbenches as we will work towards restricting access to avoid any credentials being exposed.
+<!-- TODO check the link after merging -->
+1. Create a pull request to [this
+   file](https://github.com/everycure-org/matrix/edit/infra/infra/deployments/wg2/workbenches.tf),
+   adding your name and email to the list of users for which we create a workbench. Please
+   create the PR _to the infra branch_ and not main.
+2. After the PR was merged, navigate to [this
+   page](https://console.cloud.google.com/vertex-ai/workbench/instances?inv=1&invt=AboxFQ&project=mtrx-wg2-modeling-dev-9yj)
+   which lists all workbenches we have provisioned for you and others.
+3. Click "Open Jupyterlab" to open the workbench with your name on it. Note you may not
+   be able to access others' workbenches as we will work towards restricting access to avoid
+   any credentials being exposed.
 
 This workbench comes pre-installed with the correct version of java, python, uv and anything else you may need.
 
@@ -66,3 +74,48 @@ and the result of the query will be stored in a pandas dataframe that you can us
 ```python
 
 ```
+
+## How it works behind the scenes
+
+The workbench infrastructure is managed through Terraform in the `infra/deployments/wg2` directory. Here's what's set up:
+
+### Core Components
+
+1. **Vertex AI Workbenches**: Individual workbenches are provisioned for each data scientist through a Terraform module. Each workbench:
+   - Has its own service account for authentication
+   - Is connected to the shared VPC network
+   - Runs a post-startup script to configure the environment
+
+2. **Idle Instance Management**: To help manage costs, we've implemented an automated system to detect and notify about idle instances:
+
+   - A PubSub topic `ds-workbench-machine-state-events` receives monitoring alerts
+   - A Cloud Monitoring alert policy watches for low CPU utilization:
+     - Triggers when CPU usage is below 10% for 3 hours
+     - Sends notifications through a PubSub notification channel
+   - A Cloud Function processes these alerts and may take additional actions such as shutting down or deleting unused instances
+     <!-- - shuts down idle instances -->
+     <!-- - alerts about the deletion of instances after 30 days of inactivity -->
+     <!-- - deletes the instances (including their disk storage) after 35 days of inactivity -->
+
+### Alert Flow
+
+1. Cloud Monitoring continuously checks workbench VM instances for CPU utilization
+2. If a VM's CPU stays below a defined threshold (currently 10% for 3 hours), an alert is triggered
+3. The alert is sent to a PubSub topic via the notification channel
+4. A serverless Cloud Function receives these messages and logs them for tracking
+
+The same as above is done but for testing whether an instance has been used at all in order to create deletion alerts.
+
+### Infrastructure as Code
+
+All components are defined in Terraform:
+- Workbenches are created through a reusable module
+- Monitoring and alerting policies are defined declaratively
+- The notification system uses Cloud Pub/Sub for reliable message delivery
+- A Python-based Cloud Function handles the alert processing
+
+This setup ensures we can:
+- Track idle instances to optimize resource usage
+- Maintain consistent workbench configurations across the team
+- Scale the infrastructure as the team grows
+- Keep infrastructure changes version controlled and reviewable

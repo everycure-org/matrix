@@ -1,13 +1,3 @@
-# NOTE: This configuration was partially generated using AI assistance.
-
-terraform {
-  required_providers {
-    google-beta = {
-      source  = "hashicorp/google-beta"
-      version = ">= 6.19.0"
-    }
-  }
-}
 
 locals {
   # Sanitize email for labels: lowercase, replace @ and . with dash, max 63 chars
