@@ -15,7 +15,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "df": "integration.prm.filtered_nodes",
                     "cache": "embeddings.cache",
                     "transformer": "params:embeddings.node.encoder",
-                    # NOTE: These are kwargs
                     "input_features": "params:embeddings.node.input_features",
                     "max_input_len": "params:embeddings.node.max_input_len",
                     "scope": "params:embeddings.node.scope",
