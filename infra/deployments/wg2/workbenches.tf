@@ -1,8 +1,5 @@
 locals {
-  users = {
-    "alexei" = "alexei@everycure.org"
-    "pascal" = "pascal@everycure.org"
-  }
+  users = yamldecode(file("workbenches.yaml"))
 }
 
 module "workbenches" {
