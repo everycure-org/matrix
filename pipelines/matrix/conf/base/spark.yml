@@ -18,4 +18,3 @@ spark.dynamicAllocation.enabled: false
 # Amount of memory to use per executor process
 spark.executor.memory: 32g
 # https://spark.apache.org/docs/latest/tuning.html
-# The higher this is, the less working memory may be available to execution and tasks may spill to disk more often.

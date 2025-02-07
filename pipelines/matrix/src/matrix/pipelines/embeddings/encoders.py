@@ -48,7 +48,6 @@ class LangChainEncoder(AttributeEncoder):
 
     def __init__(
         self,
-        # encoder: OpenAIEmbeddings,
         dimensions: int,
         random_seed: Optional[int] = None,
         batch_size: int = 500,
@@ -62,7 +61,6 @@ class LangChainEncoder(AttributeEncoder):
             timeout: Timeout for OpenAI API requests
         """
         super().__init__(dimensions, random_seed)
-        # self._client = encoder
         self.batch_size = batch_size
 
     @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
@@ -82,7 +80,6 @@ class LangChainEncoder(AttributeEncoder):
         for index, batch in enumerate(self.batched(texts, self.batch_size)):
             # Note: on error, due to the retry logic and iterables, we might lose a batch. Should we remove the retry logic?
             # Write a test for this case, that when embed_documents errors out, it still returns for all texts an embedding.
-
             logger.debug('{"PID": %d, "batch": %d}', pid, index)
             embeddings = encoder.embed_documents(texts=batch)
             yield from zip(batch, embeddings)
