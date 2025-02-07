@@ -100,7 +100,7 @@ embeddings.reporting.topological_pca_plot:
   type: kedro_datasets.matplotlib.MatplotlibWriter
   filepath: ${globals:paths.embeddings}/reporting/pca_plot.png
 
-embeddings.cache: &_cache
+embeddings.feat.cache: &_cache
   filepath: ${globals:paths.cache}/embeddings_cache
   type: matrix.datasets.gcp.SparkWithSchemaDataset
   file_format: parquet
@@ -137,5 +137,5 @@ embeddings.cache: &_cache
       - model
       - scope
 
-embeddings.cache_out:
+embeddings.feat.cache_out:
   <<: *_cache

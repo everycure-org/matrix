@@ -13,7 +13,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.create_node_embeddings,
                 inputs={
                     "df": "integration.prm.filtered_nodes",
-                    "cache": "embeddings.cache",
+                    "cache": "embeddings.feat.cache",
                     "transformer": "params:embeddings.node.encoder",
                     "input_features": "params:embeddings.node.input_features",
                     "max_input_len": "params:embeddings.node.max_input_len",
@@ -22,7 +22,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "new_colname": "params:embeddings.node.new_colname",
                     "embeddings_pkey": "params:embeddings.node.embeddings_pkey",
                 },
-                outputs=["embeddings.feat.graph.node_embeddings@spark", "embeddings.cache_out"],
+                outputs=["embeddings.feat.graph.node_embeddings@spark", "embeddings.feat.cache_out"],
                 name="create_node_embeddings",
                 argo_config=ArgoResourceConfig(
                     ephemeral_storage_request=256,
