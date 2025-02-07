@@ -19,10 +19,11 @@ from kedro.io.core import (
 )
 from kedro_datasets.partitions import PartitionedDataset
 from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
-from matrix.hooks import SparkHooks
-from matrix.inject import _parse_for_objects
 from pygsheets import Spreadsheet, Worksheet
 from tqdm import tqdm
+
+from matrix.hooks import SparkHooks
+from matrix.inject import _parse_for_objects
 
 logger = logging.getLogger(__name__)
 
@@ -159,7 +160,10 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         table = bigquery.Table(f"{self._dataset_id}.{self._table}")
         table.labels = self._labels
         table.external_data_configuration = external_config
-        table = self._client.create_table(table, exists_ok=True)
+        try:
+            self._client.create_table(table, exists_ok=False)
+        except exceptions.Conflict:
+            self._client.update_table(table, fields=["labels"])
 
     def _create_dataset(self) -> str:
         try:
