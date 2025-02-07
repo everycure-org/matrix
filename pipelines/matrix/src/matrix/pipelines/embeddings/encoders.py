@@ -100,7 +100,7 @@ class LangChainEncoder(AttributeEncoder):
 class RandomizedEncoder(AttributeEncoder):
     """Encoder class for generating random embeddings."""
 
-    def __init__(self, dimensions: int, random_seed: Optional[int] = None, encoder: Optional[AttributeEncoder] = None):
+    def __init__(self, dimensions: int, random_seed: Optional[int] = None):
         """Initialize Randomized encoder.
 
         Args:
