@@ -85,8 +85,6 @@ class LangChainEncoder(AttributeEncoder):
 
             logger.debug('{"PID": %d, "batch": %d}', pid, index)
             embeddings = encoder.embed_documents(texts=batch)
-            # fake_embeddings = [1., 2.]
-            # embeddings = [fake_embeddings]* len(batch)
             yield from zip(batch, embeddings)
 
     @staticmethod
