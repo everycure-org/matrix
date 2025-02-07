@@ -1,4 +1,3 @@
-import os
 import subprocess
 import tempfile
 from pathlib import Path
@@ -14,8 +13,6 @@ from matrix.cli_commands.submit import (
     _submit,
     apply_argo_template,
     build_argo_template,
-    build_push_docker,
-    can_talk_to_kubernetes,
     command_exists,
     ensure_namespace,
     get_run_name,
@@ -200,6 +197,18 @@ def test_run_subprocess_no_streaming_error() -> None:
     assert exc_info.value.returncode == 127
     assert exc_info.value.stderr is None
     assert exc_info.value.stdout is None
+
+
+@pytest.mark.parametrize("stream", ("/dev/stdout", "/dev/stderr"))
+@pytest.mark.timeout(15)
+def test_run_subprocess_no_deadlock(stream: str) -> None:
+    """Reproduces an annoying deadlocking issue with the way run_subprocess in streaming mode was written up to c0f2f3f."""
+    # Put "lots" of output in one of stdout or stderr.
+    big_number = 100_000  # big enough to fill a process pipe, though that is platform dependant
+    cmd = f"yes | head -n {big_number} > {stream}"
+    finished_process = run_subprocess(cmd, stream_output=True, check=True, shell=True)
+    channel = finished_process.stdout if stream == "/dev/stdout" else finished_process.stderr
+    assert len(channel) == big_number * len("y\n")
 
 
 @pytest.mark.parametrize("pipeline_for_execution", ["__default__", "test_pipeline"])

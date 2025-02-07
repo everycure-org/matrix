@@ -43,22 +43,26 @@ resource "helm_release" "argo" {
   # pass through ssl to enable grpc/https for argocd CLI, see
   # https://argoproj.github.io/argo-cd/operator-manual/ingress/#kubernetesingress-nginx
 
-  values = [
-    # config that goes into the declarative config of argocd
-    # https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/#repositories
-    yamlencode({
-      "server.ingress.annotations" : {
-        "kubernetes.io/ingress.class" : "nginx",
-        "nginx.ingress.kubernetes.io/force-ssl-redirect" : "true",
-        "nginx.ingress.kubernetes.io/ssl-passthrough" : "true",
-      },
-      # disables ssl for argocd server since we do SSL termination at the gateway
-      "configs.params" : {
-        "server.insecure" : true,
-        "server.basehref" : "/"
-      }
-    })
-  ]
+  set {
+    name  = "server.ingress.annotations.kubernetes.io/ingress.class"
+    value = "nginx"
+  }
+  set {
+    name  = "server.ingress.annotations.nginx.ingress.kubernetes.io/force-ssl-redirect"
+    value = "true"
+  }
+  set {
+    name  = "server.ingress.annotations.nginx.ingress.kubernetes.io/ssl-passthrough"
+    value = "true"
+  }
+  set {
+    name  = "configs.params.server\\.insecure"
+    value = "true"
+  }
+  set {
+    name  = "configs.params.server.basehref"
+    value = "/"
+  }
 }
 
 resource "kubernetes_manifest" "app_of_apps" {

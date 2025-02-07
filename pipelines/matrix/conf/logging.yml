@@ -39,5 +39,5 @@ loggers:
     level: INFO
   matrix:
     level: INFO
-  matrix.pipelines.integration.transformers.rtxkg2:
+  matrix.pipelines.preprocessing.nodes:
     level: DEBUG

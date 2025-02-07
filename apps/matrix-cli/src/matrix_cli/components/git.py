@@ -20,7 +20,13 @@ def fetch_pr_detail(pr_number: int) -> PRInfo:
     """
     # Fetch PR details including merge commit
     command = ["gh", "pr", "view", str(pr_number), "--json", "number,title,author,labels,url,mergeCommit,headRefName"]
-    pr_json = run_command(command)
+
+    try:
+        pr_json = run_command(command)
+    except:
+        typer.echo(f"\nWarning: Failed to fetch PR details for missing PR #{pr_number}", err=True)
+        return
+
     pr_info = json.loads(pr_json)
 
     # Extract only the login from the author field
@@ -80,9 +86,7 @@ def parse_diff_input(since: str, until: str) -> Tuple[str, str]:
     return from_ref, until
 
 
-def get_code_diff(
-    since: str, until: str = "origin/main", file_patterns: List[str] = settings.inclusion_patterns
-) -> Optional[str]:
+def get_code_diff(since: str, until: str, file_patterns: List[str] = settings.inclusion_patterns) -> Optional[str]:
     """Get code differences between two git references or time periods.
 
     Defaults to all files until latest main
@@ -106,3 +110,7 @@ def get_code_from_commit(commit: str, file_patterns: List[str] = settings.inclus
     command = ["git", "diff", f"{commit}^!", "--", *file_patterns]
     print(command)
     return run_command(command, cwd=git_root)
+
+
+def get_current_branch() -> str:
+    return run_command(["git", "branch", "--show-current"]).strip()
