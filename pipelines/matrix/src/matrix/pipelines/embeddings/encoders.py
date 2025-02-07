@@ -57,7 +57,7 @@ class LangChainEncoder(AttributeEncoder):
         Args:
             dimensions: Output dimension of the output embeddings
             random_seed: Random seed for reproducibility
-            timeout: Timeout for OpenAI API requests
+            batch_size: Batch size for efficient encoding
         """
         super().__init__(dimensions, random_seed)
         self.batch_size = batch_size
