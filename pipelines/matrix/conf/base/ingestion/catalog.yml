@@ -233,7 +233,7 @@ ingestion.int.disease_list.nodes:
 ingestion.raw.ground_truth.nodes@pandas:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.disease_list.version}/gt_ids_raw.tsv
+  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/gt_ids_raw.tsv
   save_args:
     sep: "\t"
     header: true
@@ -243,7 +243,7 @@ ingestion.raw.ground_truth.nodes@pandas:
 
 ingestion.raw.ground_truth.nodes@spark:
   <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.disease_list.version}/gt_ids_raw.tsv
+  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/gt_ids_raw.tsv
   load_args:
     sep: "\t"
     header: true
@@ -252,7 +252,7 @@ ingestion.raw.ground_truth.nodes@spark:
 ingestion.raw.ground_truth.edges@pandas:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.disease_list.version}/gt_pairs_raw.tsv
+  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_raw.tsv
   save_args:
     sep: "\t"
     header: true
@@ -262,7 +262,7 @@ ingestion.raw.ground_truth.edges@pandas:
 
 ingestion.raw.ground_truth.edges@spark:
   <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.disease_list.version}/gt_pairs_raw.tsv
+  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_raw.tsv
   load_args:
     sep: "\t"
     header: true
@@ -270,7 +270,7 @@ ingestion.raw.ground_truth.edges@spark:
 
 ingestion.int.ground_truth.nodes:
   <<: [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.disease_list.version}/gt_ids_raw.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_ids_raw.tsv
   load_args:
     sep: "\t"
     header: true
@@ -283,7 +283,7 @@ ingestion.int.ground_truth.nodes:
 
 ingestion.int.ground_truth.edges:
   <<: [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.disease_list.version}/gt_pairs_raw.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_raw.tsv
   load_args:
     sep: "\t"
     header: true
