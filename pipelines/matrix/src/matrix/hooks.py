@@ -3,7 +3,7 @@ import logging
 import os
 import re
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Set
 
 import fsspec
 import mlflow
@@ -12,6 +12,7 @@ import pyspark.sql as ps
 import termplotlib as tpl
 from kedro.framework.context import KedroContext
 from kedro.framework.hooks import hook_impl
+from kedro.framework.project import pipelines
 from kedro.io.data_catalog import DataCatalog
 from kedro.pipeline.node import Node
 from kedro_datasets.spark import SparkDataset
@@ -36,6 +37,47 @@ class MLFlowHooks:
     https://github.com/Galileo-Galilei/kedro-mlflow/issues/579
     """
 
+    _kedro_context: Optional[KedroContext] = None
+    _input_datasets: Optional[Set] = None
+
+    @classmethod
+    def set_context(cls, context: KedroContext) -> None:
+        """Utility class method that stores context in class as singleton."""
+        cls._kedro_context = context
+
+    @classmethod
+    def get_pipeline_inputs(cls):
+        if cls._input_datasets is None:
+            pipeline_name = cls._kedro_context._extra_params["pipeline_name"]
+            pipeline_obj = pipelines[pipeline_name]
+            inputs = {input for input in pipeline_obj.all_inputs() if not input.startswith("params:")}
+            outputs = pipeline_obj.all_outputs()
+            inputs_only = inputs - outputs
+            cls._input_datasets = inputs_only
+
+    @hook_impl
+    def after_dataset_loaded(self, dataset_name, data, node):
+        """In the v1 of this feature we only log the dataset names.
+        Logging actual datasets requires extra work, due to the fact that the data has to be first
+        converted to mlflow.data.dataset.Dataset class. This works for common formats like pandas and spark
+        where the from_ functions exist, e.g.:
+
+        dataset = mlflow.data.from_pandas(data, name=dataset_name)
+        mlflow.log_input(dataset)
+
+        but our datasets are too heterogenous and can't be always parsed, e.g. matrix.datasets.graph.KnowledgeGraph
+        or would need a lot of hard-coded logic and would make this code brittle.
+        One idea is to only log select certain dataset types - pandas and spark, for other keep logging names only.
+
+        Another improvement idea for v2 would be to additionally  log the dataset paths, e.g.:
+        path = self._kedro_context.catalog.datasets[dataset_name]._get_load_path()
+        or using the url for remote datasets:
+        path = self._kedro_context.catalog.datasets[dataset_name]._url
+        """
+        if dataset_name in MLFlowHooks._input_datasets:
+            dataset = mlflow.data.from_pandas(pd.DataFrame(), name=dataset_name)
+            mlflow.log_input(dataset)
+
     @hook_impl
     def after_context_created(self, context) -> None:
         """Initialise MLFlow run.
@@ -43,7 +85,8 @@ class MLFlowHooks:
         Initialises a MLFlow run and passes it on for
         other hooks to consume.
         """
-
+        MLFlowHooks.set_context(context)
+        MLFlowHooks.get_pipeline_inputs()
         cfg = OmegaConf.create(context.config_loader["mlflow"])
         globs = OmegaConf.create(context.config_loader["globals"])
         # Set tracking uri
