@@ -133,11 +133,11 @@ Navigate to [https://localhost:2746](https://localhost:2746/)
 
 Argo Workflows UI:
 
-![Argo Workflows Locally](../assets/img/local_workflow.png)
+![Argo Workflows Locally](../../assets/img/local_workflow.png)
 
 K9s view:
 
-![Argo Workflows Locally K9s](../assets/img/k9s_screenshot.png)
+![Argo Workflows Locally K9s](../../assets/img/k9s_screenshot.png)
 
 ### Listing Workflows
 
