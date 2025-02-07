@@ -387,10 +387,7 @@ def build_argo_template(
     namespace: str,
     pipeline_obj: Pipeline,
     environment: str,
-<<<<<<< HEAD
-=======
     mlflow_experiment_id: str,
->>>>>>> aa52aaf1 (kedro submit - pass in experiment id and apply to argo)
     is_test: bool,
     default_execution_resources: Optional[ArgoResourceConfig] = None
 ) -> str:
