@@ -19,6 +19,7 @@ def pubsub_handler(cloud_event: CloudEvent) -> None:
     """
     try:
         # Extract and decode the Pub/Sub message data
+        # TODO this function needs to be expanded to handle events and act on them (e.g. delete workbenches etc)
         if cloud_event.data and "message" in cloud_event.data:
             message_data = cloud_event.data["message"].get("data", "")
             if message_data:
