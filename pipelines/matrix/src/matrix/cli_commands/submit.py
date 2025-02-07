@@ -10,6 +10,7 @@ from threading import Thread
 from typing import List, Optional
 
 import click
+import mlflow
 import semver
 from kedro.framework.cli.utils import CONTEXT_SETTINGS, split_string
 from kedro.framework.project import pipelines as kedro_pipelines
@@ -61,7 +62,7 @@ def cli():
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 @click.option("--headless", is_flag=True, default=False, help="Skip confirmation prompt")
 @click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
-@click.option("--experiment_id", type=str, help="MLFlow experiment id")
+@click.option("--experiment_id", type=int, help="MLFlow experiment id")
 # fmt: on
 def submit(
     username: str,
@@ -75,7 +76,7 @@ def submit(
     is_test: bool,
     headless: bool,
     environment: str,
-    experiment_id: Optional[str],
+    experiment_id: Optional[int],
 ):
     """Submit the end-to-end workflow. """
     if not quiet:
@@ -103,7 +104,7 @@ def submit(
     pipeline_obj.name = pipeline
 
     if not dry_run:
-        summarize_submission(run_name, namespace, pipeline, environment, is_test, release_version, headless)
+        summarize_submission(experiment_id, run_name, namespace, pipeline, environment, is_test, release_version, headless)
 
     _submit(
         username=username,
@@ -202,9 +203,10 @@ def _submit(
 
 
 
-def summarize_submission(run_name: str, namespace: str, pipeline: str, environment: str, is_test: bool, release_version: str, headless:bool):
+def summarize_submission(experiment_id: str, run_name: str, namespace: str, pipeline: str, environment: str, is_test: bool, release_version: str, headless:bool):
     console.print(Panel.fit(
         f"[bold green]About to submit workflow:[/bold green]\n"
+        f"MLFlow Experiment: {mlflow.get_tracking_uri()}/#/experiments/{experiment_id}\n"
         f"Run Name: {run_name}\n"
         f"Namespace: {namespace}\n"
         f"Pipeline: {pipeline}\n"

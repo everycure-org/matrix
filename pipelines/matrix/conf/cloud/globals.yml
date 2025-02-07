@@ -13,6 +13,7 @@ gcp_project: ${oc.env:GCP_PROJECT_ID}
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation.
 mlflow_artifact_root: ${run_dir}/mlflow
+mlflow_experiment_id: ${oc.env:MLFLOW_EXPERIMENT_ID}
 
 paths:
   raw:                ${gcs_bucket}/kedro/data/01_raw

@@ -34,7 +34,7 @@ spec:
       - name: release_folder_name
         value: "{{ release_folder_name }}"
       - name: mlflow_experiment_id
-        value: "{{ mlflow_experiment_id }}"
+        value: {{ mlflow_experiment_id }}
   templates:
   - &_kedro_template
     metrics:

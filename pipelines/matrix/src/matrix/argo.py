@@ -19,7 +19,7 @@ def generate_argo_config(
     run_name: str,
     release_version: str,
     image_tag: str,
-    mlflow_experiment_id: str,
+    mlflow_experiment_id: int,
     namespace: str,
     username: str,
     pipeline: Pipeline,

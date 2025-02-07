@@ -1,5 +1,4 @@
 import os
-import secrets
 from typing import List, Optional
 
 import click
@@ -7,8 +6,9 @@ import mlflow
 from kedro.framework.cli.utils import split_string
 
 from matrix.cli_commands.submit import submit
-from matrix.git_utils import create_new_branch, get_current_git_branch
+from matrix.git_utils import get_current_git_branch
 from matrix.utils.authentication import get_iap_token
+from matrix.utils.mlflow_utils import create_mlflow_experiment, get_experiment_id_from_name
 
 
 @click.group()
@@ -28,26 +28,16 @@ def experiment():
 def create(experiment_name):
     if not experiment_name:
         current_branch = get_current_git_branch()
-
         if current_branch.startswith("experiment/"):
             click.confirm(
                 f"Creating new mlflow experiment from current branch {current_branch}, is that correct?", abort=True
             )
-            experiment_name = current_branch
-        elif current_branch == "main":
-            user_input_name = click.prompt("Please enter a name for your experiment", type=str)
-            if not user_input_name.startswith("experiment/"):
-                experiment_name = f"experiment/{user_input_name}"
-            click.echo(f"Checking out new branch: {experiment_name}")
-            create_new_branch(experiment_name)
+            experiment_name = current_branch.strip("experiment/")
         else:
-            click.echo("❌ Error: please begin with an `experiment/` prefixed branch or begin from main")
-            raise click.Abort()
+            experiment_name = click.prompt("Please enter a name for your experiment", type=str)
 
     mlflow_id = create_mlflow_experiment(experiment_name=experiment_name)
-
-    click.echo(f"kedro experiment created on branch {experiment_name}")
-    click.echo(f"mlflow experiment created: {mlflow.get_tracking_uri()}/#/experiments/{mlflow_id}")
+    click.echo(f"✅ MLFlow experiment created: {mlflow.get_tracking_uri()}/#/experiments/{mlflow_id}")
 
 
 @experiment.command()
@@ -65,6 +55,9 @@ def create(experiment_name):
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 @click.option("--headless", is_flag=True, default=False, help="Skip confirmation prompt")
 @click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
+@click.option(
+    "--experiment-name", type=str, help="Optional: specify the MLFlow experiment name to use. Defaults to branch name"
+)
 @click.pass_context
 def run(
     ctx,
@@ -79,12 +72,16 @@ def run(
     is_test: bool,
     headless: bool,
     environment: str,
+    experiment_name: str,
 ):
     """Run an experiment."""
 
-    experiment_name = get_current_git_branch()
+    if not experiment_name:
+        experiment_name = get_current_git_branch()
     if not experiment_name.startswith("experiment/"):
-        click.echo(f"Error: current branch does not begin with experiment/")
+        click.echo(
+            f"❌ Error: current branch does not begin with experiment/. Please define an experiment name or start from an experiment branch."
+        )
         raise click.Abort()
 
     click.confirm(f"Start a new run on experiment {experiment_name}, is that correct?", abort=True)
@@ -94,70 +91,19 @@ def run(
         # Note, it is not possible to search mlflow runs by name, so we cannot enforce uniqueness, this is down to the user.
         run_name = click.prompt("Please define a name for your run")
 
-    # Invokes the the submit command and forwards all arguments from current command
     # Temporary measure until we formally deprecate kedro submit
-    ctx.forward(submit, experiment_id=experiment_id, run_name=run_name)
-
-
-def create_mlflow_experiment(experiment_name: str) -> str:
-    """Creates an MLflow experiment with a given name.
-
-    If an experiment with the same name exists but is deleted, the user is prompted
-    to rename the deleted experiment to allow creation of a new one.
-    """
-    client = mlflow.tracking.MlflowClient()
-    existing_exp = mlflow.get_experiment_by_name(name=experiment_name)
-
-    if existing_exp:
-        if existing_exp.lifecycle_stage == "deleted":
-            click.echo(f"Error: Experiment '{experiment_name}' exists but is deleted.")
-
-            if click.confirm(
-                f"Would you like to rename the deleted experiment and continue using the name '{experiment_name}'?",
-                abort=True,
-            ):
-                try:
-                    # Restore, rename and re-delete the deleted experiment
-                    client.restore_experiment(existing_exp.experiment_id)
-                    new_deleted_name = f"deleted-{experiment_name}-{secrets.token_hex(4)}"
-                    client.rename_experiment(existing_exp.experiment_id, new_deleted_name)
-                    client.delete_experiment(existing_exp.experiment_id)
-
-                    click.echo(f"Renamed deleted experiment to '{new_deleted_name}' and removed it.")
-
-                    # Create a new experiment
-                    experiment_id = mlflow.create_experiment(name=experiment_name)
-                    click.echo(f"New experiment '{experiment_name}' created with ID {experiment_id}.")
-                    return experiment_id
-
-                except Exception as e:
-                    click.echo(f"An error occurred: {e}")
-                    raise click.Abort()
-
-        else:
-            click.echo(
-                f"Error: Experiment '{experiment_name}' already exists at {mlflow.get_tracking_uri()}/#/experiments/{existing_exp.experiment_id}"
-            )
-            raise click.Abort()
-
-    # If no existing experiment, create a new one
-    click.echo(f"Creating new experiment: '{experiment_name}'")
-    experiment_id = mlflow.create_experiment(name=experiment_name)
-    click.echo(f"Experiment '{experiment_name}' created with ID {experiment_id}.")
-
-    return experiment_id
-
-
-def get_experiment_id_from_name(experiment_name: str) -> Optional[str]:
-    """Fetches the experiment ID from MLflow by experiment name."""
-    experiment = mlflow.get_experiment_by_name(name=experiment_name)
-
-    if experiment:
-        click.echo(
-            f"✅ Experiment '{experiment_name}' found at {mlflow.get_tracking_uri()}/#/experiments/{experiment.experiment_id}"
-        )
-        return experiment.experiment_id
-    else:
-        click.echo(f"❌ Experiment '{experiment_name}' not found.")
-        click.echo("ℹ️  Please create an experiment using `kedro experiment create` before proceeding.")
-        raise click.Abort()
+    ctx.invoke(
+        submit,
+        username=username,
+        namespace=namespace,
+        run_name=run_name,
+        release_version=release_version,
+        pipeline=pipeline,
+        quiet=quiet,
+        dry_run=dry_run,
+        from_nodes=from_nodes,
+        is_test=is_test,
+        headless=headless,
+        environment=environment,
+        experiment_id=experiment_id,
+    )
