@@ -10,8 +10,6 @@ import mlflow
 import pandas as pd
 import pyspark.sql as ps
 import termplotlib as tpl
-from google.cloud import storage
-from google.cloud.storage.bucket import Bucket
 from kedro.framework.context import KedroContext
 from kedro.framework.hooks import hook_impl
 from kedro.framework.project import pipelines
