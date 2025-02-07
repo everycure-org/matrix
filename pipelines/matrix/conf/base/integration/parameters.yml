@@ -7,15 +7,15 @@ integration:
     # spoke:
     #   transformer:
     #     object: matrix.pipelines.integration.transformers.spoke.SpokeTransformer
-    robokop:
+    # robokop:
+    #   transformer:
+    #     object: matrix.pipelines.integration.transformers.robokop.RobokopTransformer
+    ec_medical_team:
       transformer:
-        _object: matrix.pipelines.integration.transformers.robokop.RobokopTransformer
-    # ec_medical_team:
-    #   transformer:
-    #     _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
-    # ec_clinical_trails: 
-    #   transformer:
-    #     _object: matrix.pipelines.integration.transformers.clinical_trails.ClinicalTrialsTransformer
+        _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
+    ec_clinical_trails:
+      transformer:
+        _object: matrix.pipelines.integration.transformers.clinical_trails.ClinicalTrialsTransformer
     drug_list: 
       transformer:
         _object: matrix.pipelines.integration.transformers.drugs.DrugsTransformer
@@ -56,6 +56,7 @@ integration:
         _object: matrix.pipelines.modelling.utils.partial_
         func:
           _object: matrix.pipelines.integration.filters.remove_rows_containing_category
+        exclude_sources: ["ec_medical"]
         column: category
         categories:
         # TODO: We should likely not remove these before our data release stage but afterwards in the modelling pipeline (if the model so desires)
