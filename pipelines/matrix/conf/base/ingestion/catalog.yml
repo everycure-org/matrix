@@ -25,7 +25,6 @@ _layer_int: &_layer_int
     kedro-viz:
       layer: integration
 
-
 # -------------------------------------------------------------------------
 # RTX-KG2
 # -------------------------------------------------------------------------  
@@ -395,4 +394,3 @@ ingestion.raw.spoke.edges@pandas:
 # ingestion.int.spoke.edges:
 #   <<: [*_spark_parquet, *_layer_int]
 #   filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/edges
-
