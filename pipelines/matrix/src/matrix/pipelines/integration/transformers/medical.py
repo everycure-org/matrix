@@ -36,7 +36,6 @@ class MedicalTransformer(GraphTransformer):
             # Filter nodes we could not correctly resolve
             .filter(f.col("id").isNotNull())
         )
-
         return df
         # fmt: on
 
