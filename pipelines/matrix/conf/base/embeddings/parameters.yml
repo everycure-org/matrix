@@ -13,10 +13,6 @@ embeddings.node:
     _object: matrix.pipelines.embeddings.encoders.LangChainEncoder
     dimensions: 512
     batch_size: 50 #TODO: tuning
-    # encoder:
-    #   _object: langchain_openai.OpenAIEmbeddings
-    #   model: text-embedding-3-small
-    #   timeout: 10
   scope: "rtx_kg2"
   model: "gpt-4"
   new_colname: "embedding"
