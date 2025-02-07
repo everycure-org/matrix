@@ -287,23 +287,11 @@ gcloud auth login
 gcloud auth application-default login
 ```
 
-Set the GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your service account key file. You can find the file path in previous step's console output.
-
 We also need to configure Docker to use the Google Container Registry:
 
 ```bash
 gcloud auth configure-docker us-central1-docker.pkg.dev
 ```
-
-=== "MacOS"
-
-    ```bash
-    # Add to your shell config
-    echo 'export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"' >> ~/.bashrc
-
-    # Reload
-    source ~/.bashrc
-    ```
 
 ### GNU Make
 
