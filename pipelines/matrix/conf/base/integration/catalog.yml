@@ -17,6 +17,7 @@ _layer_int: &_layer_int
   metadata:
     kedro-viz:
       layer: integration
+
 _layer_prm: &_layer_prm
   metadata:
     kedro-viz:
@@ -66,13 +67,13 @@ integration.int.{source}.nodes_norm_mapping:
   filepath: ${globals:paths.integration}/int/{source}/nodes_norm_mapping
 
 # Unified KGs
-integration.prm.unified_edges:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/unified/edges
-
 integration.prm.unified_nodes:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/unified/nodes
+
+integration.prm.unified_edges:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.integration}/prm/unified/edges
 
 # filtered KGs
 integration.prm.filtered_edges:
