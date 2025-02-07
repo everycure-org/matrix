@@ -83,7 +83,6 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
     df = df[is_unique]
     if not is_unique.all():
         logger.warning(f"{(~is_unique).sum()} EC medical nodes have been removed due to duplicate IDs.")
-
     return df
 
 
