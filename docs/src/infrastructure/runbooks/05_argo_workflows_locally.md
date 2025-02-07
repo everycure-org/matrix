@@ -4,7 +4,6 @@ This document describes how to run Argo Workflows locally. This local setup is u
 
 !!! info
     For simple argo template validation `argo lint` can also be used. 
-Read more about our Argo toolchain [here](glossary.md).
 
 # Tasks
 
