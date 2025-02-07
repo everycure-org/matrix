@@ -1,7 +1,8 @@
 
 nav:
     - index.md
-    - compute_cluster.md
+    - kubernetes_cluster.md
+    - public_data_zone.md
     - observability.md
     - gcp.md
     - git-crypt.md
