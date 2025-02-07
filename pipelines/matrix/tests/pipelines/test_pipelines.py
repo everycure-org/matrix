@@ -192,6 +192,8 @@ def test_parameters_filepath_follows_conventions(conf_source, config_loader):
         {pipeline}.{layer}.*
 
         {pipeline}.{namespace}.{layer}.*
+
+        cache.*
     """
 
     # Check catalog entries
