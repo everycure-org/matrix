@@ -19,7 +19,7 @@ _layer_int: &_layer_int
       layer: integration
 
 _layer_prm: &_layer_prm
-metadata:
+  metadata:
     kedro-viz:
       layer: primary
 
