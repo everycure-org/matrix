@@ -1,3 +1,4 @@
+import networkx as nx
 import pandas as pd
 from data_fabricator.v0.nodes.fabrication import fabricate_datasets
 from kedro.pipeline import Pipeline, node, pipeline
@@ -46,6 +47,37 @@ def _create_pairs(
         attempt += 1
 
     return df[:num], df[num : 2 * num]
+
+
+def generate_paths(edges: pd.DataFrame, ground_truth: pd.DataFrame):
+    def find_path(graph, start, end):
+        try:
+            # Find the shortest path between start and end
+            path = nx.shortest_path(graph, source=start, target=end)
+            return [
+                {
+                    "source": path[i],
+                    "target": path[i + 1],
+                    "key": graph.get_edge_data(path[i], path[i + 1])["predicate"],
+                }
+                for i in range(len(path) - 1)
+            ]
+        except Exception:
+            return None
+
+    graph = nx.DiGraph()
+
+    # Fill graph
+    for _, row in edges.iterrows():
+        graph.add_edge(row["subject"], row["object"], predicate=row["predicate"])
+
+    # Generate paths for GT
+    rows = []
+    for idx, row in ground_truth.iterrows():
+        if path := find_path(graph, row["subject"], row["object"]):
+            rows.append({"graph": {"_id": str(idx)}, "links": path})
+
+    return rows
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -103,7 +135,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_spoke_datasets",
             ),
-            ArgoNode(
+            node(
                 func=_create_pairs,
                 inputs=[
                     "ingestion.raw.drug_list",
@@ -114,6 +146,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "ingestion.raw.ground_truth.negatives",
                 ],
                 name="create_gt_pairs",
+            ),
+            node(
+                func=generate_paths,
+                inputs=[
+                    "ingestion.raw.rtx_kg2.edges@pandas",
+                    "ingestion.raw.ground_truth.edges@pandas",
+                ],
+                outputs="ingestion.raw.drugmech.edges@pandas",
+                name="create_drugmech_pairs",
             ),
         ]
     )

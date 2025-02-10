@@ -1,2 +1,0 @@
-ingestion.name_resolution:
-  url: https://name-resolution-sri.renci.org/lookup?string={name}&autocomplete=True&highlighting=False&offset=0&limit=1
