@@ -39,23 +39,3 @@ clean:
 	rm -rf build
 	rm -rf node_modules
 	rm -rf .evidence
-
-# docker centric commands
-# Build the Docker image
-docker-build:
-	DOCKER_BUILDKIT=1 docker build --secret id=gcloud,src=$(HOME)/.config/gcloud/application_default_credentials.json .
-
-# Run the Docker container
-docker-run: docker-build
-	docker run -d -p 80:80 $(IMAGE_NAME)
-
-# Command to push the Docker container to gcloud artifact registry
-docker-push: docker-build
-	docker tag $(IMAGE_NAME) gcr.io/$(PROJECT_ID)/$(REPO_NAME)/$(IMAGE_NAME)
-	docker push gcr.io/$(PROJECT_ID)/$(REPO_NAME)/$(IMAGE_NAME)
-
-# Clean up Docker resources
-docker-clean:
-	docker rm -f $(shell docker ps -aq --filter "ancestor=$(IMAGE_NAME)")
-	docker rmi -f $(IMAGE_NAME)
-
