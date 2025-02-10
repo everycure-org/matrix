@@ -410,6 +410,7 @@ def create_node_embeddings(
         embedder=transformer.apply,
         text_colname=embeddings_primary_key,
         new_colname=new_colname,
+        input_features=input_features,
     )
     new_cache = cache.unionByName(missing_from_cache.withColumns({"scope": lit(scope), "model": lit(model)}))
 
@@ -422,6 +423,7 @@ def lookup_embeddings(
     embedder: Callable[[Iterable[str]], Iterator[ResolvedEmbedding]],
     text_colname: str,
     new_colname: str,
+    input_features: Sequence[str],
 ) -> tuple[ps.DataFrame, ps.DataFrame]:
     partly_enriched = load_embeddings_from_cache(df=df, cache=cache, primary_key=text_colname).cache()
 
@@ -468,7 +470,7 @@ def lookup_embeddings(
             enriched_from_external.count(),
         )
 
-    complete = enriched_from_cache.unionByName(enriched_from_external).drop(text_colname)
+    complete = enriched_from_cache.unionByName(enriched_from_external).drop(text_colname, *input_features)
     return complete, texts_with_embeddings
 
 
