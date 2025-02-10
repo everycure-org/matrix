@@ -60,13 +60,13 @@ preprocessing.int.mapped_clinical_trials_data:
       - "drug_curie"
       - "disease_curie"
 
-preprocessing.raw.ec_medical_team.nodes.raw:
+preprocessing.raw.ec_medical_team.nodes:
   <<: [*_layer_raw, *_medical_kg_sheets_dataset]
   load_args:
     sheet_name: new_nodes
     columns: ["ID", "name", "category", "new_id", "description"]
 
-preprocessing.raw.ec_medical_team.edges.raw:
+preprocessing.raw.ec_medical_team.edges:
   <<: [*_layer_raw, *_medical_kg_sheets_dataset]
   load_args:
     sheet_name: new_edges
