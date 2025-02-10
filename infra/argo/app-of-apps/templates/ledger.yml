@@ -9,7 +9,7 @@ spec:
     server: {{ .Values.spec.destination.server }}
   project: default
   source:
-    path: infra/argo/applications/explorer
+    path: infra/argo/applications/ledger
     repoURL: https://github.com/everycure-org/matrix-ui.git
     targetRevision: feature/timescale-test
   syncPolicy:
