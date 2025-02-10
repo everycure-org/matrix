@@ -74,6 +74,7 @@ def spark() -> Generator[ps.SparkSession, None, None]:
         ps.SparkSession.builder.config("spark.sql.shuffle.partitions", 1)
         .config("spark.executorEnv.PYTHONPATH", "src")
         .config("spark.driver.bindAddress", "127.0.0.1")
+        .config("spark.ui.showConsoleProgress", "false")
         .master("local")
         .appName("tests")
         .getOrCreate()
