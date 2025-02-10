@@ -348,7 +348,7 @@ def test_re_embedding_is_a_noop(
         "scope": scope,
         "model": model,
         "new_colname": embedding_col,
-        "embeddings_pkey": text_col,
+        "embeddings_primary_key": text_col,
     }
     embedded, cache_v2 = nodes.create_node_embeddings(
         cache=embeddings_cache,

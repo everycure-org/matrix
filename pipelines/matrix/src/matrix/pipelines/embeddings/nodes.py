@@ -405,7 +405,11 @@ def create_node_embeddings(
         logger.debug('{"cache size": %d, "model-scoped cache size": %d}', cache.count(), scoped_cache.cache().count())
 
     complete, missing_from_cache = lookup_embeddings(
-        df=df, cache=scoped_cache, embedder=transformer.apply, text_colname=embeddings_pkey, new_colname=new_colname
+        df=df,
+        cache=scoped_cache,
+        embedder=transformer.apply,
+        text_colname=embeddings_primary_key,
+        new_colname=new_colname,
     )
     new_cache = cache.unionByName(missing_from_cache.withColumns({"scope": lit(scope), "model": lit(model)}))
 
