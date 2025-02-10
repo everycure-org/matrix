@@ -10,9 +10,9 @@ integration:
     # robokop:
     #   transformer:
     #     object: matrix.pipelines.integration.transformers.robokop.RobokopTransformer
-    ec_medical_team:
-      transformer:
-        _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
+    # ec_medical_team:
+    #   transformer:
+    #     _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
     ec_clinical_trails: 
       transformer:
         _object: matrix.pipelines.integration.transformers.clinical_trails.ClinicalTrialsTransformer
@@ -25,9 +25,9 @@ integration:
     ground_truth: 
       transformer:
         _object: matrix.pipelines.integration.transformers.ground_truth.GroundTruthTransformer
-    drugmech:
-      transformer:
-         _object: matrix.pipelines.integration.transformers.drugmech.DrugMechTransformer
+    # drugmech:
+    #   transformer:
+    #      _object: matrix.pipelines.integration.transformers.drugmech.DrugMechTransformer
     
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:

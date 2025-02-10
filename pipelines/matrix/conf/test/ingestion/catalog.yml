@@ -1,7 +1,3 @@
-ingestion.raw.drugmech.edges@pandas:
-  type: json.JSONDataset
-  filepath: ${globals:paths.raw}/drugmech/${globals:data_sources.drugmech.version}/indication_paths.json
-
 ingestion.raw.drugmech.edges@spark:
   type: matrix.datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.raw}/drugmech/${globals:data_sources.drugmech.version}/indication_paths.json
