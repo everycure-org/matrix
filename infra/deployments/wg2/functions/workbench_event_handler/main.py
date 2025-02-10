@@ -1,4 +1,3 @@
-# NOTE: This file was partially generated using AI assistance.
 import base64
 import logging
 
@@ -20,6 +19,16 @@ def pubsub_handler(cloud_event: CloudEvent) -> None:
     try:
         # Extract and decode the Pub/Sub message data
         # TODO this function needs to be expanded to handle events and act on them (e.g. delete workbenches etc)
+        # FUTURE: This function should do the following:
+        # 1. Determine the event type
+        # 2. act accordingly. Currently it should do one of three
+        # - stop a notebook instance
+        # - delete a notebook instance
+        # - send a final email reminder about the pending deletion unless it's used at least once in the next X days
+        # 3. log action taken / send a notification
+
+        # note there are also alternatives out there, e.g.
+        # https://github.com/GoogleCloudPlatform/community/blob/master/archived/delete-idle-instances/index.md
         if cloud_event.data and "message" in cloud_event.data:
             message_data = cloud_event.data["message"].get("data", "")
             if message_data:
