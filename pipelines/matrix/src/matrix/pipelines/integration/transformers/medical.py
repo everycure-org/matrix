@@ -20,6 +20,7 @@ class MedicalTransformer(GraphTransformer):
         Returns:
             Transformed DataFrame.
         """
+
         # fmt: off
         df = (
             nodes_df
@@ -35,6 +36,7 @@ class MedicalTransformer(GraphTransformer):
             # .transform(determine_most_specific_category, biolink_categories_df) need this?
             # Filter nodes we could not correctly resolve
             .filter(f.col("id").isNotNull())
+            .dropDuplicates(["id"]) # Drop any duplicate nodes
         )
         return df
         # fmt: on

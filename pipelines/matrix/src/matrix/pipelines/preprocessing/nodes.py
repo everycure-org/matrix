@@ -49,7 +49,6 @@ def resolve_name(name: str, cols_to_get: Iterable[str], url: str) -> dict:
             "category": Column(str, nullable=False),
             "ID": Column(int, nullable=False),
         },
-        unique=["normalized_curie"],
     )
 )
 def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
@@ -78,11 +77,10 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
     if not is_resolved.all():
         logger.warning(f"{(~is_resolved).sum()} EC medical nodes have not been resolved.")
 
-    # Filter out duplicate IDs
+    # Flag the number of duplicate IDs
     is_unique = df["normalized_curie"].groupby(df["normalized_curie"]).transform("count") == 1
-    df = df[is_unique]
     if not is_unique.all():
-        logger.warning(f"{(~is_unique).sum()} EC medical nodes have been removed due to duplicate IDs.")
+        logger.warning(f"{(~is_unique).sum()} EC medical nodes are duplicated.")
     return df
 
 
