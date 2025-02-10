@@ -22,14 +22,15 @@ module "project_iam_bindings" {
     "roles/ml.admin"                       = local.tech_team_group
     "roles/aiplatform.admin"               = local.tech_team_group
     "roles/ml.developer"                   = local.tech_team_group
-    "roles/artifactregistry.writer"        = flatten([local.tech_team_group, [local.matrix_all_group]]) # enables people to run kedro submit
     "roles/storage.objectCreator"          = local.tech_team_group
-    "roles/storage.objectUser"             = flatten([local.tech_team_group, local.cross_account_sas])
     "roles/container.clusterAdmin"         = local.tech_team_group
     "roles/container.developer"            = local.tech_team_group
     "roles/compute.admin"                  = local.tech_team_group
     "roles/iam.workloadIdentityPoolAdmin"  = local.tech_team_group
     "roles/iam.serviceAccountTokenCreator" = local.tech_team_group
+    "roles/storage.objectUser"             = local.tech_team_group
+    "roles/storage.objectViewer"           = local.cross_account_sas
+    "roles/artifactregistry.writer"        = flatten([local.tech_team_group, [local.matrix_all_group]]) # enables people to run kedro submit
     "roles/viewer"                         = flatten([local.matrix_viewers_group, local.cross_account_sas])
     "roles/bigquery.jobUser"               = flatten([local.matrix_viewers_group, local.cross_account_sas])
     "roles/bigquery.dataViewer"            = flatten([local.matrix_viewers_group, local.cross_account_sas])
