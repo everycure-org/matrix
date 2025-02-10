@@ -1,7 +1,5 @@
 import itertools
-import json
 import logging
-import os
 from abc import ABC, abstractmethod
 from typing import Iterable, Iterator, Optional, TypeAlias, TypeVar
 
@@ -51,6 +49,7 @@ class LangChainEncoder(AttributeEncoder):
         dimensions: int,
         random_seed: Optional[int] = None,
         batch_size: int = 500,
+        timeout: int = 10,
     ):
         """Initialize OpenAI encoder.
 
@@ -58,11 +57,12 @@ class LangChainEncoder(AttributeEncoder):
             dimensions: Output dimension of the output embeddings
             random_seed: Random seed for reproducibility
             batch_size: Batch size for efficient encoding
+            timeout: Timeout for OpenAI API requests
         """
         super().__init__(dimensions, random_seed)
         self.batch_size = batch_size
+        self.timeout = timeout
 
-    @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
     def apply(self, texts: Iterable[str]) -> Iterator[tuple[str, list[float]]]:
         """Encode texts using OpenAI embeddings.
 
@@ -73,14 +73,9 @@ class LangChainEncoder(AttributeEncoder):
             tuples of the text and its embedding, for each text
 
         """
-        # TODO: tune timeout
-        encoder = OpenAIEmbeddings(model="text-embedding-3-small", timeout=10)
-        pid = os.getpid()
-        for index, batch in enumerate(self.batched(texts, self.batch_size)):
-            # Note: on error, due to the retry logic and iterables, we might lose a batch. Should we remove the retry logic?
-            # Write a test for this case, that when embed_documents errors out, it still returns for all texts an embedding.
-            logger.debug('{"PID": %d, "batch": %d}', pid, index)
-            embeddings = encoder.embed_documents(texts=batch)
+        encoder = OpenAIEmbeddings(model="text-embedding-3-small", request_timeout=self.timeout)
+        for batch in self.batched(texts, self.batch_size):
+            embeddings = self._encode(list(batch), encoder)
             yield from zip(batch, embeddings)
 
     @staticmethod
@@ -94,6 +89,10 @@ class LangChainEncoder(AttributeEncoder):
             if strict and len(batch) != n:
                 raise ValueError("batched(): incomplete batch")
             yield batch
+
+    @retry(wait=wait_exponential(multiplier=10, min=2, max=180), stop=stop_after_attempt(5))
+    def _encode(self, texts: list[str], encoder: OpenAIEmbeddings):
+        return encoder.embed_documents(texts=texts)
 
 
 class RandomizedEncoder(AttributeEncoder):

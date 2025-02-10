@@ -12,7 +12,8 @@ embeddings.node:
   encoder:
     _object: matrix.pipelines.embeddings.encoders.LangChainEncoder
     dimensions: 512
-    batch_size: 50 #TODO: tuning
+    batch_size: 50
+    timeout: 10
   scope: "rtx_kg2"
   model: "gpt-4"
   new_colname: "embedding"
