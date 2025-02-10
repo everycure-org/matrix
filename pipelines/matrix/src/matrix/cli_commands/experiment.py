@@ -8,7 +8,12 @@ from kedro.framework.cli.utils import split_string
 from matrix.cli_commands.submit import submit
 from matrix.git_utils import get_current_git_branch
 from matrix.utils.authentication import get_iap_token
-from matrix.utils.mlflow_utils import create_mlflow_experiment, get_experiment_id_from_name
+from matrix.utils.mlflow_utils import (
+    DeletedExperimentExistsWithName,
+    create_mlflow_experiment,
+    get_experiment_id_from_name,
+    rename_soft_deleted_experiment,
+)
 
 
 @click.group()
@@ -36,7 +41,17 @@ def create(experiment_name):
         else:
             experiment_name = click.prompt("Please enter a name for your experiment", type=str)
 
-    mlflow_id = create_mlflow_experiment(experiment_name=experiment_name)
+    try:
+        mlflow_id = create_mlflow_experiment(experiment_name=experiment_name)
+    except DeletedExperimentExistsWithName as e:
+        if click.confirm(
+            f"Would you like to rename the deleted experiment and continue using the name '{experiment_name}'?",
+            abort=True,
+        ):
+            # Rename the soft deleted experiment, then try again
+            rename_soft_deleted_experiment(experiment_name)
+            mlflow_id = create_mlflow_experiment(experiment_name=experiment_name)
+
     click.echo(f"✅ MLFlow experiment created: {mlflow.get_tracking_uri()}/#/experiments/{mlflow_id}")
 
 
@@ -88,7 +103,6 @@ def run(
     experiment_id = get_experiment_id_from_name(experiment_name=experiment_name)
 
     if not run_name:
-        # Note, it is not possible to search mlflow runs by name, so we cannot enforce uniqueness, this is down to the user.
         run_name = click.prompt("Please define a name for your run")
 
     # Temporary measure until we formally deprecate kedro submit
