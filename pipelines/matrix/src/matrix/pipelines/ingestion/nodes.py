@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
+from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
 logger = logging.getLogger(__name__)
 
