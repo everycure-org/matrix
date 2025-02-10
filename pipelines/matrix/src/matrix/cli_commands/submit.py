@@ -79,6 +79,9 @@ def submit(
     experiment_id: Optional[int],
 ):
     """Submit the end-to-end workflow. """
+
+    click.secho("Warning - kedro submit will be deprecated soon. Please use kedro experiment run.", bg="yellow", fg="black")
+
     if not quiet:
         log.setLevel(logging.DEBUG)
 
