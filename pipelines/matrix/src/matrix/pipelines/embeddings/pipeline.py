@@ -20,7 +20,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "scope": "params:embeddings.node.scope",
                     "model": "params:embeddings.node.model",
                     "new_colname": "params:embeddings.node.new_colname",
-                    "embeddings_pkey": "params:embeddings.node.embeddings_pkey",
+                    "embeddings_primary_key": "params:embeddings.node.embeddings_primary_key",
                 },
                 outputs=["embeddings.feat.graph.node_embeddings@spark", "embeddings.feat.cache_out"],
                 name="create_node_embeddings",
