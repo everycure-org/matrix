@@ -130,6 +130,8 @@ GROUP BY upstream_data_source
 2. :white_check_mark: cd to `matrix/pipelines/matrix` and follow the [installation instructions](../onboarding/local-setup.md)
 3. Open the notebook `example_notebook.ipynb` and follow the instructions in the notebook.
 
+<!-- 
+FUTURE: May build this out better in the future. Then we can document how we built this, potentially in a separate page.
 ---
 
 ## 🔧 Technical Infrastructure
@@ -148,7 +150,6 @@ GROUP BY upstream_data_source
         - Threshold: 10% for 3 hours
         - Automated notifications
     - Cloud Function for alert processing
-
 ### Alert System Flow
 
 1. Continuous CPU utilization monitoring
@@ -170,11 +171,4 @@ GROUP BY upstream_data_source
     - Scalable infrastructure
     - Version-controlled changes
 
----
-
-## 📋 Open Work Items
-
-- [AIP-97: Enable people to schedule notebooks on larger instance types and GPU backed machines while restricting such use for interactive notebooks](https://linear.app/everycure/issue/AIP-97/enable-people-to-schedule-notebooks-on-larger-instance-types-and-gpu)
-- [AIP-138: Block conda from injecting itself into `.bashrc` all the time](https://linear.app/everycure/issue/AIP-138/block-conda-from-injecting-itself-into-bashrc-all-the-time)
-- [AIP-118: Automate stopping and deletion of instances in Vertex](https://linear.app/everycure/issue/AIP-118/automate-stopping-and-deletion-of-instances-in-vertex)
-- [AIP-96: Block non admins from changing instance types in vertex AI via IAM](https://linear.app/everycure/issue/AIP-96/block-non-admins-from-changing-instance-types-in-vertex-ai-via-iam)
+ -->
