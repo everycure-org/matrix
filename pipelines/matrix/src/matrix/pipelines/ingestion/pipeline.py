@@ -29,29 +29,6 @@ def create_ground_truth_pipeline() -> list:
     ]
 
 
-def create_medical_team_pipeline() -> list:
-    """Create pipeline nodes for EC Medical Team processing."""
-    return [
-        node(
-            func=nodes.process_medical_nodes,
-            inputs=["ingestion.raw.ec_medical_team.nodes.raw", "params:ingestion.name_resolution.url"],
-            outputs="ingestion.raw.ec_medical_team.nodes@pandas",
-            name="normalize_ec_medical_nodes",
-            tags=["ec-medical-kg"],
-        ),
-        node(
-            func=nodes.process_medical_edges,
-            inputs=[
-                "ingestion.raw.ec_medical_team.nodes@pandas",
-                "ingestion.raw.ec_medical_team.edges.raw",
-            ],
-            outputs="ingestion.raw.ec_medical_team.edges@pandas",
-            name="create_int_ec_medical_edges",
-            tags=["ec-medical-kg"],
-        ),
-    ]
-
-
 def create_pipeline(**kwargs) -> Pipeline:
     """Create ingestion pipeline."""
     # Create pipeline per source
@@ -59,9 +36,6 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # Ground truth
     nodes_lst.extend(create_ground_truth_pipeline())
-
-    # EC Medical Team
-    nodes_lst.extend(create_medical_team_pipeline())
 
     # Drug list and disease list
     nodes_lst.extend(
