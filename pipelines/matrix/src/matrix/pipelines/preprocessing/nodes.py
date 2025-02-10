@@ -4,7 +4,7 @@ from typing import Iterable, List, Tuple
 
 import pandas as pd
 import requests
-from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
+from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 logger = logging.getLogger(__name__)
