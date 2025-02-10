@@ -1,0 +1,43 @@
+_leaderboard_sheet_dataset: &_leaderboard_sheet_dataset
+  type: matrix.datasets.gcp.GoogleSheetsDataset
+  key: 1wDTwsjXmny943KRwUO9o3lCmjJOSIyAxis8Q0mewNE0
+  service_file: conf/local/service-account.json
+
+# -------------------------------------------------------------------------
+# Datasets
+# -------------------------------------------------------------------------
+
+sharing.reporting.input_leaderboard:
+  <<: [*_leaderboard_sheet_dataset]
+  load_args:
+    sheet_name: LEADERBOARD
+    columns: &cols
+      - "RUN_NAME"
+      - "EXPERIMENT_NAME"
+      - "DESCRIPTION" 
+      - "DOCUMENT"
+      - "TIER"
+      - "RECALL_1000"
+      - "RECALL_10000"
+      - "RECALL_100000"
+      - "MRR"
+      - "F1"
+     # - "HIT_5"
+     # - "HIT_10"
+     # - "HIT_100"
+     # - "RECALL_1000_CLINICAL"
+     # - "RECALL_10000_CLINICAL"
+     # - "RECALL_100000_CLINICAL"
+     # - "MRR_CLINICAL"
+     # - "F1_CLINICAL"
+     # - "HIT_5_CLINICAL"
+     # - "HIT_10_CLINICAL"
+     # - "HIT_100_CLINICAL"
+      - "MODEL"
+      - "TIMESTAMP"
+
+sharing.reporting.output_leaderboard:
+  <<: [*_leaderboard_sheet_dataset]
+  save_args:
+    sheet_name: LEADERBOARD
+    write_columns: *cols
