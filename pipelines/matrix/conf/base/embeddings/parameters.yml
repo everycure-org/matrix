@@ -16,7 +16,7 @@ embeddings.node:
   scope: "rtx_kg2"
   model: "gpt-4"
   new_colname: "embedding"
-  embeddings_pkey: "text"  # Needs to match the pkey from the cache, see catalog.yml
+  embeddings_primary_key: "text"  # Needs to match the primary key from the cache, see catalog.yml
 
 # Defines strategy used to reduce dimensions of the node embeddings
 # https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.feature.PCA.html

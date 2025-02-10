@@ -368,7 +368,7 @@ def create_node_embeddings(
     scope: str,
     model: str,
     new_colname: str = "embedding",
-    embeddings_pkey: str = "text",
+    embeddings_primary_key: str = "text",
 ) -> tuple[ps.DataFrame, ps.DataFrame]:
     """
     Add the embeddings of the text composed of the `input_features`, truncated
@@ -391,11 +391,11 @@ def create_node_embeddings(
         scope: string used to filter the cache
         model: string used to filter the cache
         new_colname: name of the column that will contain the embeddings
-        embeddings_pkey: name of the column containing the texts, which should be present in the cache.
+        embeddings_primary_key: name of the column containing the texts, which should be present in the cache.
     """
 
-    df = df.withColumn(embeddings_pkey, concat_ws("", *input_features).substr(1, max_input_len))
-    assert {embeddings_pkey, new_colname}.issubset(cache.columns)
+    df = df.withColumn(embeddings_primary_key, concat_ws("", *input_features).substr(1, max_input_len))
+    assert {embeddings_primary_key, new_colname}.issubset(cache.columns)
     scoped_cache = (
         cache.cache().filter((cache["scope"] == lit(scope)) & (cache["model"] == lit(model))).drop("scope", "model")
     )
