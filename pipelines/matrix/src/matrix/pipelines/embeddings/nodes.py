@@ -17,7 +17,6 @@ from pyspark.sql.types import ArrayType, FloatType, StringType, StructField
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from matrix.inject import inject_object, unpack_params
-from matrix.pipelines.embeddings.encoders import LangChainEncoder
 from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
 
 from .encoders import AttributeEncoder
