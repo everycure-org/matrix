@@ -18,23 +18,23 @@ _bigquery_ds: &_bigquery_ds
 integration.int.{source}.nodes:
   <<: *_bigquery_ds
   filepath: ${globals:paths.integration}/int/{source}/nodes
-  table: ${source}_nodes_transformed
+  table: nodes_transformed_{source}
 
 integration.int.{source}.edges:
   <<: *_bigquery_ds
   filepath: ${globals:paths.integration}/int/{source}/edges
-  table: ${source}_edges_transformed
+  table: edges_transformed_{source}
 
 # Normalised nodes/edges
 integration.int.{source}.nodes.norm@spark:
   <<: *_bigquery_ds
   filepath: ${globals:paths.integration}/int/{source}/nodes.norm
-  table: ${source}_nodes_normalized
+  table: nodes_normalized_{source}
 
 integration.int.{source}.edges.norm@spark:
   <<: *_bigquery_ds
   filepath: ${globals:paths.integration}/int/{source}/edges.norm
-  table: ${source}_edges_normalized
+  table: edges_normalized_{source}
 
 # Unified nodes/edges
 integration.prm.unified_nodes:
