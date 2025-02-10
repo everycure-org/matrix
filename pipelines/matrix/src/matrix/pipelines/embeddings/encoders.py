@@ -50,6 +50,7 @@ class LangChainEncoder(AttributeEncoder):
         random_seed: Optional[int] = None,
         batch_size: int = 500,
         timeout: int = 10,
+        openai_model: str = "text-embedding-3-small",
     ):
         """Initialize OpenAI encoder.
 
@@ -62,6 +63,7 @@ class LangChainEncoder(AttributeEncoder):
         super().__init__(dimensions, random_seed)
         self.batch_size = batch_size
         self.timeout = timeout
+        self.openai_model = openai_model
 
     def apply(self, texts: Iterable[str]) -> Iterator[tuple[str, list[float]]]:
         """Encode texts using OpenAI embeddings.
@@ -73,7 +75,7 @@ class LangChainEncoder(AttributeEncoder):
             tuples of the text and its embedding, for each text
 
         """
-        encoder = OpenAIEmbeddings(model="text-embedding-3-small", request_timeout=self.timeout)
+        encoder = OpenAIEmbeddings(model=self.openai_model, request_timeout=self.timeout)
         for batch in self.batched(texts, self.batch_size):
             embeddings = self._encode(list(batch), encoder)
             yield from zip(batch, embeddings)
