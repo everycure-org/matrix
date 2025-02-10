@@ -9,7 +9,7 @@ from matrix.datasets.graph import KnowledgeGraph
 from matrix.inject import _extract_elements_in_list, inject_object
 from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.nodes import apply_transformers
-from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
+from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 from sklearn.impute._base import _BaseImputer
 from tqdm import tqdm
 
