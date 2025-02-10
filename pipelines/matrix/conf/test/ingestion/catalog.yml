@@ -43,20 +43,9 @@ ingestion.raw.ground_truth.negatives:
   save_args:
     sep: "\t"
 
-ingestion.raw.ec_medical_team.nodes.raw:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/raw_nodes.csv
+ingestion.raw.drugmech.edges@spark:
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.raw}/drugmech/${globals:data_sources.drugmech.version}/indication_paths.json
+  file_format: json
   load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
-
-ingestion.raw.ec_medical_team.edges.raw:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/raw_edges.csv
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
+    multiline: true

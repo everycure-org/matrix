@@ -1,9 +1,7 @@
-import asyncio
 import json
 import logging
 from typing import Iterable, List, Tuple
 
-import aiohttp
 import pandas as pd
 import requests
 from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
@@ -19,50 +17,114 @@ def coalesce(s: pd.Series, *series: List[pd.Series]):
     return s
 
 
-@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(5))
-async def resolve_name_async(name: str, cols_to_get: Iterable[str], url: str, session: aiohttp.ClientSession) -> dict:
-    """Asynchronously retrieve the normalized identifier through the normalizer.
+@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
+def resolve_name(name: str, cols_to_get: Iterable[str], url: str) -> dict:
+    """Function to retrieve the normalized identifier through the normalizer.
 
     Args:
         name: name of the node to be resolved
         cols_to_get: attribute to get from API
-        url: URL template for the API
-        session: aiohttp client session
     Returns:
         Name and corresponding curie
     """
+
     if not name or pd.isna(name):
         return {}
+    result = requests.get(url.format(name=name)).json()
+    if not result:
+        return {}
 
-    try:
-        async with session.get(url.format(name=name)) as response:
-            result = await response.json()
-
-        if not result:
-            return {}
-
-        element = result[0]
-        ret = {col: element.get(col) for col in cols_to_get}
-        return ret
-
-    except Exception as e:
-        logger.error(f"Error resolving name {name}: {str(e)}")
-        raise e
+    element = result[0]
+    ret = {col: element.get(col) for col in cols_to_get}
+    logger.debug(f'{{"resolver url": {url}, "name": {name}, "response extraction": {json.dumps(ret)}}}')
+    return ret
 
 
-async def resolve_names_batch(names: pd.Series, cols_to_get: Iterable[str], url: str) -> List[dict]:
-    """Resolve a batch of names asynchronously.
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "normalized_curie": Column(str, nullable=False),
+            "label": Column(str, nullable=False),
+            "types": Column(List[str], nullable=False),
+            "category": Column(str, nullable=False),
+            "ID": Column(int, nullable=False),
+        },
+        unique=["normalized_curie"],
+    )
+)
+def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
+    """Map medical nodes with name resolver.
 
     Args:
-        names: Series of names to resolve
-        cols_to_get: attributes to get from API
-        url: URL template for the API
+        df: raw medical nodes
+        resolver_url: url for name resolver
+
     Returns:
-        List of resolved name data
+        Processed medical nodes
     """
-    async with aiohttp.ClientSession() as session:
-        tasks = [resolve_name_async(name, cols_to_get, url, session) for name in names]
-        return await asyncio.gather(*tasks)
+    # Normalize the name
+    enriched_data = df["name"].apply(resolve_name, cols_to_get=["curie", "label", "types"], url=resolver_url)
+
+    # Extract into df
+    enriched_df = pd.DataFrame(enriched_data.tolist())
+    df = pd.concat([df, enriched_df], axis=1)
+
+    # Coalesce id and new id to allow adding "new" nodes
+    df["normalized_curie"] = df["new_id"].fillna(df["curie"])
+
+    # Filter out nodes that are not resolved
+    is_resolved = df["normalized_curie"].notna()
+    df = df[is_resolved]
+    if not is_resolved.all():
+        logger.warning(f"{(~is_resolved).sum()} EC medical nodes have not been resolved.")
+
+    # Filter out duplicate IDs
+    is_unique = df["normalized_curie"].groupby(df["normalized_curie"]).transform("count") == 1
+    df = df[is_unique]
+    if not is_unique.all():
+        logger.warning(f"{(~is_unique).sum()} EC medical nodes have been removed due to duplicate IDs.")
+
+    return df
+
+
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "SourceId": Column(str, nullable=False),
+            "TargetId": Column(str, nullable=False),
+            "Label": Column(str, nullable=False),
+        },
+        unique=["SourceId", "TargetId", "Label"],
+    )
+)
+def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> pd.DataFrame:
+    """Function to create int edges dataset.
+
+    Function ensures edges dataset link curies in the KG.
+
+    Args:
+        int_nodes: Processed medical nodes with normalized curies
+        raw_edges: Raw medical edges
+    """
+    df = int_nodes[["normalized_curie", "ID"]]
+    # Attach source and target curies. Drop edge un the case of a missing curies.
+    res = (
+        raw_edges.merge(
+            df.rename(columns={"normalized_curie": "SourceId"}),
+            left_on="Source",
+            right_on="ID",
+            how="inner",
+        )
+        .drop(columns="ID")
+        .merge(
+            df.rename(columns={"normalized_curie": "TargetId"}),
+            left_on="Target",
+            right_on="ID",
+            how="inner",
+        )
+        .drop(columns="ID")
+    )
+    return res
 
 
 @check_output(
@@ -87,13 +149,13 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
     Args:
         df: Clinical trial dataset
     """
-    # Normalize names asynchronously
-    drug_data = asyncio.run(resolve_names_batch(df["drug_name"], ["curie"], resolver_url))
-    disease_data = asyncio.run(resolve_names_batch(df["disease_name"], ["curie"], resolver_url))
+    # Normalize the name
+    drug_data = df["drug_name"].apply(resolve_name, cols_to_get=["curie"], url=resolver_url)
+    disease_data = df["disease_name"].apply(resolve_name, cols_to_get=["curie"], url=resolver_url)
 
     # Concat dfs
-    drug_df = pd.DataFrame(drug_data).rename(columns={"curie": "drug_curie"})
-    disease_df = pd.DataFrame(disease_data).rename(columns={"curie": "disease_curie"})
+    drug_df = pd.DataFrame(drug_data.tolist()).rename(columns={"curie": "drug_curie"})
+    disease_df = pd.DataFrame(disease_data.tolist()).rename(columns={"curie": "disease_curie"})
     df = pd.concat([df, drug_df, disease_df], axis=1)
 
     return df

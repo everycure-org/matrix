@@ -11,7 +11,7 @@ from pyspark.sql.window import Window
 
 from matrix.inject import inject_object
 from matrix.pipelines.integration.filters import determine_most_specific_category
-from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
+from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
 from .schema import BIOLINK_KG_EDGE_SCHEMA, BIOLINK_KG_NODE_SCHEMA
 
@@ -28,12 +28,8 @@ logger = logging.getLogger(__name__)
         },
         unique=["id"],
     ),
+    df_name="nodes",
 )
-def transform_nodes(transformer, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
-    return transformer.transform_nodes(nodes_df=nodes_df, **kwargs)
-
-
-@inject_object()
 @check_output(
     DataFrameSchema(
         columns={
@@ -41,11 +37,13 @@ def transform_nodes(transformer, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFra
             "predicate": Column(T.StringType(), nullable=False),
             "object": Column(T.StringType(), nullable=False),
         },
-        unique=["subject", "predicate", "object"],
+        # unique=["subject", "predicate", "object"],
     ),
+    df_name="edges",
+    raise_df_undefined=False,
 )
-def transform_edges(transformer, edges_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
-    return transformer.transform_edges(edges_df=edges_df, **kwargs)
+def transform(transformer, **kwargs) -> Dict[str, ps.DataFrame]:
+    return transformer.transform(**kwargs)
 
 
 @check_output(

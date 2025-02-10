@@ -31,5 +31,25 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="clean_clinical_trial_data",
                 tags=["ec-clinical-trials-data"],
             ),
+            # -------------------------------------------------------------------------
+            # EC Medical Team ingestion and enrichment
+            # -------------------------------------------------------------------------
+            node(
+                func=nodes.process_medical_nodes,
+                inputs=["preprocessing.raw.nodes", "params:preprocessing.name_resolution.url"],
+                outputs="ingestion.raw.ec_medical_team.nodes@pandas",
+                name="normalize_ec_medical_team_nodes",
+                tags=["ec-medical-kg"],
+            ),
+            node(
+                func=nodes.process_medical_edges,
+                inputs=[
+                    "preprocessing.int.nodes",
+                    "preprocessing.raw.edges",
+                ],
+                outputs="ingestion.raw.ec_medical_team.edges@pandas",
+                name="create_int_ec_medical_team_edges",
+                tags=["ec-medical-kg"],
+            ),
         ]
     )

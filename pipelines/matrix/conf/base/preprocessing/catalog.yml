@@ -18,6 +18,11 @@ _medical_clinical_trials_sheet_dataset: &_medical_clinical_trials_sheet_dataset
   key: 1Wlrjr8ojUGCfWJg-QF5PzpJFqpD7LLH7b60u2XAngh0
   service_file: conf/local/service-account.json
 
+_medical_kg_sheets_dataset: &_medical_kg_sheets_dataset
+  type: matrix.datasets.gcp.GoogleSheetsDataset
+  key: 1LMtOmA10t7a3lcKeTP7zmptOPIcCBIPFVJt9J7jZ2bQ
+  service_file: conf/local/service-account.json
+
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
@@ -54,3 +59,15 @@ preprocessing.int.mapped_clinical_trials_data:
       - "significantly_worse"
       - "drug_curie"
       - "disease_curie"
+
+preprocessing.raw.ec_medical_team.nodes.raw:
+  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
+  load_args:
+    sheet_name: new_nodes
+    columns: ["ID", "name", "category", "new_id", "description"]
+
+preprocessing.raw.ec_medical_team.edges.raw:
+  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
+  load_args:
+    sheet_name: new_edges
+    columns: ["Source", "Target", "Label"]
