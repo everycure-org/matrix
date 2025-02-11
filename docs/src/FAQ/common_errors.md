@@ -29,21 +29,8 @@ ModuleNotFoundError: No module named 'distutils'
 ```
 
 
-
 To fix this, remove the directory ".venv" from `pipelines/matrix` and set the python version to 3.11:
 
-```
-rm -r .venv
-
-THEN
-
-pyenv install 3.11
-pyenv global 3.11
-
-OR
-
-uv venv --python=3.11
-```
 
 then `make` again.
 
