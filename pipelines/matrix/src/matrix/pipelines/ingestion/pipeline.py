@@ -24,7 +24,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration"):
         nodes.append(
             node(
-                func=lambda x: x.limit(1000),
+                func=lambda x: x,
                 inputs=[f'ingestion.raw.{source["name"]}.nodes@spark'],
                 outputs=f'ingestion.int.{source["name"]}.nodes',
                 name=f'write_{source["name"]}_nodes',
