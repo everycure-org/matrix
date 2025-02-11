@@ -104,9 +104,12 @@ jobs:
 
       - name: Branch off
         run: |
+          # git switch -C release/${{env.release_version}} "${{github.ref_name}}"
+          # git push
           git fetch origin #to be deleted
           git switch -C release/${{env.release_version}} origin/main
-          git push --set-upstream origin release/${{env.release_version}}
+          git push --set-upstream origin release/${{env.release_version}}   
+
 
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
