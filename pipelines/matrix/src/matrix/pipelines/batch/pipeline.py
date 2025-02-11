@@ -23,9 +23,13 @@ def _transform(dfs: Dict[str, Any], transformer, **transformer_kwargs):
         return lambda df=dataframe: transformer.apply(df(), **transformer_kwargs)
 
     shards = {}
+    couter = 0
+    print(len(dfs.keys()))
     for path, df in dfs.items():
         # Invoke function to compute embeddings
         shards[path] = _func(df)
+        print(couter)
+        couter += 1
 
     return shards
 

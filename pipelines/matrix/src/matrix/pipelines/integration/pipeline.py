@@ -41,7 +41,7 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
                     output=f"integration.int.{source}.nodes.nodes_norm_mapping",
                     bucket_size="params:integration.normalization.batch_size",
                     transformer="params:integration.normalization.normalizer",
-                    max_workers=120,
+                    max_workers=12000,
                 ),
                 node(
                     func=nodes.normalize_nodes,
