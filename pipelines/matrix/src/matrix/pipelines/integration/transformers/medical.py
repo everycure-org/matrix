@@ -1,6 +1,5 @@
 import logging
 
-import pandera.pyspark as pa
 import pyspark.sql as ps
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
@@ -11,17 +10,11 @@ logger = logging.getLogger(__name__)
 
 
 class MedicalTransformer(GraphTransformer):
+    """Transformer for medical data."""
+
     def transform_nodes(self, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
-        """Transform nodes to our target schema.
-
-        Args:
-            nodes_df: Nodes DataFrame.
-
-        Returns:
-            Transformed DataFrame.
-        """
         # fmt: off
-        df = (
+        return (
             nodes_df
             .withColumn("id",                                f.col("normalized_curie"))
             .withColumn("name",                              f.col("label"))
@@ -35,21 +28,13 @@ class MedicalTransformer(GraphTransformer):
             # .transform(determine_most_specific_category, biolink_categories_df) need this?
             # Filter nodes we could not correctly resolve
             .filter(f.col("id").isNotNull())
+            .dropDuplicates(["id"]) # Drop any duplicate nodes
         )
-        return df
         # fmt: on
 
     def transform_edges(self, edges_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
-        """Transform edges to our target schema.
-
-        Args:
-            edges_df: Edges DataFrame.
-            pubmed_mapping: pubmed mapping
-        Returns:
-            Transformed DataFrame.
-        """
         # fmt: off
-        edges = (
+        return (
             edges_df
             .withColumn("subject",                       f.col("SourceId"))
             .withColumn("object",                        f.col("TargetId"))
@@ -67,5 +52,3 @@ class MedicalTransformer(GraphTransformer):
             # Filter edges we could not correctly resolve
             .filter(f.col("subject").isNotNull() & f.col("object").isNotNull())
         )
-
-        return edges
