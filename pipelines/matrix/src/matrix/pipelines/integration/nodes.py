@@ -54,7 +54,6 @@ def transform_edges(transformer, edges_df: ps.DataFrame, **kwargs) -> ps.DataFra
 )
 def union_and_deduplicate_edges(*edges, cols: List[str]) -> ps.DataFrame:
     """Function to unify edges datasets."""
-
     # fmt: off
     return (
         _union_datasets(*edges)
