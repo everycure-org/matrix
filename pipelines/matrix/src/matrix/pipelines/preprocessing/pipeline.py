@@ -4,10 +4,14 @@ from . import nodes
 from .tagging import generate_tags
 
 
+# NOTE: Preprocessing pipeline is not well optimized and thus might take a while to run.
 def create_pipeline(**kwargs) -> Pipeline:
     """Create preprocessing pipeline."""
     return pipeline(
         [
+            # -------------------------------------------------------------------------
+            # EC Clinical Data ingestion and name->id mapping
+            # -------------------------------------------------------------------------
             node(
                 func=nodes.add_source_and_target_to_clinical_trails,
                 inputs={
@@ -18,7 +22,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="mapped_clinical_trials_data",
                 tags=["ec-clinical-trials-data"],
             ),
-            # NOTE: Clean up the clinical trial data and write it to the GCS bucket
             node(
                 func=nodes.clean_clinical_trial_data,
                 inputs=[
@@ -32,7 +35,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["ec-clinical-trials-data"],
             ),
             # -------------------------------------------------------------------------
-            # EC Medical Team ingestion and enrichment
+            # EC Medical Team ingestion and name-> id mapping
             # -------------------------------------------------------------------------
             node(
                 func=nodes.process_medical_nodes,
