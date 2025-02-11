@@ -1,6 +1,4 @@
-# NOTE: This file was partially generated using AI assistance.
-
-output "workbench_instances" {
+output "workbench_instance" {
   description = "Map of created workbench instances"
   value       = google_workbench_instance.user_workbench
 }
