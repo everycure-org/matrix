@@ -287,26 +287,6 @@ ingestion.raw.ground_truth.negatives:
   save_args:
     sep: "\t"
 
-ingestion.int.ground_truth.combined:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.ingestion}/raw/ground_truth/kg2/${globals:data_sources.gt.version}/gt_pairs.txt
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
-
-ingestion.raw.ground_truth.nodes@pandas:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.ingestion}/raw/ground_truth/translator/${globals:data_sources.disease_list.version}/gt_ids_raw.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
-
 ingestion.raw.ground_truth.nodes@spark:
   <<: [*_layer_raw, *_spark_csv]
   filepath: ${globals:paths.ingestion}/raw/ground_truth/translator/${globals:data_sources.disease_list.version}/gt_ids_raw.tsv
