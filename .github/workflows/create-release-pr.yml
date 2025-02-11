@@ -105,7 +105,8 @@ jobs:
         working-directory: apps/matrix-cli
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_DIR: docs/src/releases
+          RELEASE_NOTES_DIR: /docs/src/releases/notes
+          RELEASE_POSTS_DIR: /docs/src/releases/posts
         # only create release notes for minor, major, and intermediate bumps
         if: env.generate_notes == 'True'
         run: |
@@ -125,13 +126,13 @@ jobs:
             --notes-file "${{env.release}}/notes.md" \
             --until ${{env.gitref}}
           
-          mkdir -p "${GITHUB_WORKSPACE}/${RELEASE_DIR}/notes/${{env.release}}" \
-                   "${GITHUB_WORKSPACE}/${RELEASE_DIR}/posts/${{env.release}}"
+          mkdir -p "${GITHUB_WORKSPACE}/${RELEASE_NOTES_DIR}/${{env.release}}" \
+                   "${GITHUB_WORKSPACE}/${RELEASE_POSTS_DIR}/${{env.release}}"
 
-          mv "${{env.release}}/notes.md" "${GITHUB_WORKSPACE}/${RELEASE_DIR}/notes/${{env.release}}" && \
-          mv "${{env.release}}/post.md" "${GITHUB_WORKSPACE}/${RELEASE_DIR}/posts/${{env.release}}" && \
-          git add "${GITHUB_WORKSPACE}/${RELEASE_DIR}/notes/${{env.release}}/notes.md" \
-                  "${GITHUB_WORKSPACE}/${RELEASE_DIR}/posts/${{env.release}}/post.md"
+          mv "${{env.release}}/notes.md" "${GITHUB_WORKSPACE}/${RELEASE_NOTES_DIR}/${{env.release}}" && \
+          mv "${{env.release}}/post.md" "${GITHUB_WORKSPACE}/${RELEASE_POSTS_DIR}/${{env.release}}" && \
+          git add "${GITHUB_WORKSPACE}/${RELEASE_NOTES_DIR}/${{env.release}}/notes.md" \
+                  "${GITHUB_WORKSPACE}/${RELEASE_POSTS_DIR}/${{env.release}}/post.md"
 
           git commit -m "added release notes & article draft"
 
