@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - 'debug/release*'
-      - "siyanluo/aip-159-notes-shouldnt-be-in-the-same-folder-as-article"
   repository_dispatch:
     types: distribute-release
 
@@ -60,7 +59,6 @@ jobs:
         # It should have been pushed, otherwise this errors out.
         run: |
           git switch -C release/${{env.release}} "${{env.gitref}}"
-          git push --set-upstream origin release/${{env.release}} #To be deleted
 
       - name: Setup Matrix CLI
         working-directory: apps/matrix-cli
@@ -75,34 +73,34 @@ jobs:
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
 
-      # - name: Download & commit release info file
-      #   working-directory: docs/src/releases/changelog_files
-      #   env:
-      #     RELEASE_DIR_GCS: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
-      #     FILENAME: ${{env.release}}_info.json
-      #   run: |
-      #     set -eux
-      #     BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
-      #     gcloud storage cp "$BLOB_PATH" "$FILENAME"
+      - name: Download & commit release info file
+        working-directory: docs/src/releases/changelog_files
+        env:
+          RELEASE_DIR_GCS: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
+          FILENAME: ${{env.release}}_info.json
+        run: |
+          set -eux
+          BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
+          gcloud storage cp "$BLOB_PATH" "$FILENAME"
           
-      #     git add "${FILENAME}" && \
-      #     git commit -m "added release info json" && \
-      #     git push
+          git add "${FILENAME}" && \
+          git commit -m "added release info json" && \
+          git push
 
-      # - name: Discover Latest Official Release on GitHub
-      #   env:
-      #     GH_TOKEN: ${{ github.token }}
-      #   run: |
-      #     latest_official_release=$(gh release list --jq '.[0].tagName' --json tagName --order desc)
-      #     echo "latest_official_release=${latest_official_release}" >> "$GITHUB_ENV"
+      - name: Discover Latest Official Release on GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          latest_official_release=$(gh release list --jq '.[0].tagName' --json tagName --order desc)
+          echo "latest_official_release=${latest_official_release}" >> "$GITHUB_ENV"
 
-      # - name: Detect bump type
-      #   working-directory: docs
-      #   run: |
-      #     pip install uv
-      #     uv venv -p 3.11
-      #     uv pip install -r requirements.txt
-      #     uv run scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
+      - name: Detect bump type
+        working-directory: docs
+        run: |
+          pip install uv
+          uv venv -p 3.11
+          uv pip install -r requirements.txt
+          uv run scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
       
       - name: Create Release Notes
         working-directory: apps/matrix-cli
@@ -137,28 +135,27 @@ jobs:
                   "${GITHUB_WORKSPACE}/${RELEASE_DIR}/posts/${{env.release}}/post.md"
 
           git commit -m "added release notes & article draft"
-          git push # To be deleted
 
-      # - name: Setup docs venv & generate yaml
-      #   working-directory: docs/scripts
-      #   run: |
-      #     uv run changelog_gen.py
+      - name: Setup docs venv & generate yaml
+        working-directory: docs/scripts
+        run: |
+          uv run changelog_gen.py
 
-      # - name: Commit YAML release info file
-      #   working-directory: docs/src/releases/changelog_files
-      #   env:
-      #     FILENAME: releases_aggregated.yaml
-      #   run: |
-      #     git add "${FILENAME}"
+      - name: Commit YAML release info file
+        working-directory: docs/src/releases/changelog_files
+        env:
+          FILENAME: releases_aggregated.yaml
+        run: |
+          git add "${FILENAME}"
           
-      #     # Otherwise this will error out if the generated file is identical to the one in repo
-      #     if git diff --cached --exit-code; then
-      #       echo "No changes to $FILENAME. Skipping commit."
-      #     else
-      #       echo "Changes detected in $FILENAME. Committing..."
-      #       git commit -m "Add or update $FILENAME"
-      #       git push
-      #     fi
+          # Otherwise this will error out if the generated file is identical to the one in repo
+          if git diff --cached --exit-code; then
+            echo "No changes to $FILENAME. Skipping commit."
+          else
+            echo "Changes detected in $FILENAME. Committing..."
+            git commit -m "Add or update $FILENAME"
+            git push
+          fi
 
       - name: Create Pull Request
         env:
