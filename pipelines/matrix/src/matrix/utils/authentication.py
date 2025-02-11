@@ -14,9 +14,8 @@ from rich.console import Console
 console = Console()
 
 # OAuth 2.0 client configuration
-CLIENT_ID = "938607797672-i7md7k1u3kv89e02b6d8ouo0mi9tscos.apps.googleusercontent.com"
-CLIENT_SECRET = "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"
-AUTH_URI = "https://accounts.google.com/o/oauth2/auth"
+CLIENT_ID = "938607797672-3958nfhihd2s9lv8vlvka60g3810ad4n.apps.googleusercontent.com"
+AUTH_URI = "https://accounts.google.com/o/oauth2/v2/auth"
 TOKEN_URI = "https://oauth2.googleapis.com/token"
 SCOPE = ["openid", "email"]
 LOCAL_PATH = "data/.credentials/"
@@ -107,8 +106,7 @@ def perform_oauth_flow(local_port: int) -> dict:
         f"client_id={CLIENT_ID}&"
         f"redirect_uri=http://localhost:{successful_port}/hook&"
         f"scope={' '.join(SCOPE)}&"
-        f"response_type=code&"
-        f"access_type=offline"
+        f"response_type=token"
     )
     console.print("Opening browser for authentication...")
     console.print("if the browser does not open, please open it manually and navigate to the following URL:")
@@ -137,7 +135,7 @@ def exchange_auth_code(auth_code: str, port: int) -> dict:
     token_request = {
         "code": auth_code,
         "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET,
+        # "client_secret": CLIENT_SECRET,
         "redirect_uri": f"http://localhost:{port}/hook",
         "scope": " ".join(SCOPE),
         "grant_type": "authorization_code",
@@ -195,7 +193,7 @@ def request_new_iap_token(local_port: int = 33333) -> Credentials:
         id_token=token_data["id_token"],
         token_uri=TOKEN_URI,
         client_id=CLIENT_ID,
-        client_secret=CLIENT_SECRET,
+        # client_secret=CLIENT_SECRET,
         scopes=SCOPE,
     )
 
@@ -206,7 +204,7 @@ def refresh_token(token_data: dict) -> dict:
     params = {
         "grant_type": "refresh_token",
         "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET,
+        # "client_secret": CLIENT_SECRET,
         "refresh_token": token_data["refresh_token"],
     }
 

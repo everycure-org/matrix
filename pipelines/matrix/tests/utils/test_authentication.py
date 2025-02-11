@@ -8,7 +8,7 @@ import pytest
 import requests
 import responses
 from google.oauth2.credentials import Credentials
-from matrix.utils.authentication import TOKEN_URI, request_new_iap_token
+from matrix.utils.authentication import TOKEN_URI, get_iap_token, request_new_iap_token
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ def test_oauth_flow(oauth2_token_response, tmpdir, monkeypatch):
     random_port = random.randint(4000, 5000)
 
     def mock_click_launch(*args, **kwargs):
-        # this should simulate an immidiately returning function call that opens a browser
+        # this should simulate an immediately returning function call that opens a browser
         # where the user performs an authentication flow
         def _mock_callback():
             time.sleep(1)
@@ -55,3 +55,12 @@ def test_oauth_flow(oauth2_token_response, tmpdir, monkeypatch):
     assert token is not None
     assert isinstance(token, Credentials)
     assert token.id_token == "test_token"
+
+
+@pytest.mark.skip()
+def test_iap_flow():
+    token = get_iap_token()
+
+    assert token.token
+    assert token.client_id
+    assert token.token_uri == "https://oauth2.googleapis.com/token"
