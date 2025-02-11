@@ -38,12 +38,33 @@ jobs:
           git config --global user.name "All of us at Every Cure"
           git config --global push.autosetupremote true
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Fetch latest tag
+        id: fetch_latest_tag
+        run: |
+          latest_tag=$(git tag --list --sort="v:refname" | tail -n 1)
+          echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
+          echo "Latest tag is ${latest_tag}"
+
+      - name: Increment version
+        working-directory: docs/scripts
+        run: |
+          pip install semver
+          # If it's the first of the month, it's a minor bump, even if it's Tuesday. On all other Tuesdays, it's a patch.
+          [[ $(date +%-d) -eq 1 ]] && BUMP_TYPE='minor' || BUMP_TYPE='patch'
+          echo "Bumping version with type: ${BUMP_TYPE}"
+          python bump_version.py --type="${BUMP_TYPE}" >> "$GITHUB_ENV"
+
       - name: Branch off
         run: |
           git fetch origin #to be deleted
           git switch -C release/${{env.release_version}} origin/main
           git push --set-upstream origin release/${{env.release_version}}
-          
+
       - name: Remove unnecessary files
         # debug: remove unnecessary files to free up disk space for building and pushing docker images
         # ref: https://github.com/actions/runner-images/issues/2840
@@ -53,11 +74,6 @@ jobs:
               /usr/local/lib/android/sdk/ndk \
               "$AGENT_TOOLSDIRECTORY" && \
           df -h
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
 
       - name: Set up kedro project dependencies
         working-directory: pipelines/matrix
@@ -91,22 +107,6 @@ jobs:
           registry: ${{env.region}}-docker.pkg.dev
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
-
-      - name: Fetch latest tag
-        id: fetch_latest_tag
-        run: |
-          latest_tag=$(git tag --list --sort="v:refname" | tail -n 1)
-          echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
-          echo "Latest tag is ${latest_tag}"
-
-      - name: Increment version
-        working-directory: docs/scripts
-        run: |
-          pip install semver
-          # If it's the first of the month, it's a minor bump, even if it's Tuesday. On all other Tuesdays, it's a patch.
-          [[ $(date +%-d) -eq 1 ]] && BUMP_TYPE='minor' || BUMP_TYPE='patch'
-          echo "Bumping version with type: ${BUMP_TYPE}"
-          python bump_version.py --type="${BUMP_TYPE}" >> "$GITHUB_ENV"
           
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
