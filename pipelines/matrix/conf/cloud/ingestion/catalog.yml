@@ -1,0 +1,26 @@
+_bigquery_ds: &_bigquery_ds
+  type: matrix.datasets.gcp.SparkDatasetWithBQExternalTable
+  project_id: ${oc.env:GCP_PROJECT_ID}
+  dataset: release_${globals:versions.release}
+  file_format: parquet
+  save_args:
+    mode: overwrite
+    labels:
+      git_sha: ${globals:git_sha}
+
+# -------------------------------------------------------------------------
+# Datasets
+# -------------------------------------------------------------------------
+
+# Overwriting the base catalog to use the bigquery datasets
+
+# Ingested RTX KG2 nodes/edges
+ingestion.int.rtx_kg2.nodes:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes
+  table: rtx_kg2_nodes_ingested_${globals:data_sources.rtx_kg2.version}
+
+ingestion.int.rtx_kg2.edges:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx_kg2.version}/edges
+  table: rtx_kg2_edges_ingested_${globals:data_sources.rtx_kg2.version}
