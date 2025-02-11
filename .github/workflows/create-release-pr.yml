@@ -107,7 +107,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_DIR: docs/src/releases
         # only create release notes for minor, major, and intermediate bumps
-        # if: env.generate_notes == 'True'
+        if: env.generate_notes == 'True'
         run: |
           mkdir -p "${{env.release}}"
 
