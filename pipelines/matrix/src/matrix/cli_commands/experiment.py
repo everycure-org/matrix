@@ -10,6 +10,7 @@ from matrix.git_utils import get_current_git_branch
 from matrix.utils.authentication import get_iap_token
 from matrix.utils.mlflow_utils import (
     DeletedExperimentExistsWithName,
+    ExperimentNotFound,
     create_mlflow_experiment,
     get_experiment_id_from_name,
     rename_soft_deleted_experiment,
@@ -48,9 +49,11 @@ def create(experiment_name):
             f"Would you like to rename the deleted experiment and continue using the name '{experiment_name}'?",
             abort=True,
         ):
-            # Rename the soft deleted experiment, then try again
-            rename_soft_deleted_experiment(experiment_name)
-            mlflow_id = create_mlflow_experiment(experiment_name=experiment_name)
+            renamed_exp = rename_soft_deleted_experiment(experiment_name)
+            click.echo(
+                f"✅ Deleted experiment {experiment_name} has been renamed to {renamed_exp}. You may now `kedro experiment create` using this name."
+            )
+            raise click.Abort()
 
     click.echo(f"✅ MLFlow experiment created: {mlflow.get_tracking_uri()}/#/experiments/{mlflow_id}")
 
@@ -93,19 +96,25 @@ def run(
 
     if not experiment_name:
         experiment_name = get_current_git_branch()
-    if not experiment_name.startswith("experiment/"):
-        click.echo(
-            f"❌ Error: current branch does not begin with experiment/. Please define an experiment name or start from an experiment branch."
-        )
-        raise click.Abort()
+        if not experiment_name.startswith("experiment/"):
+            click.echo(
+                f"❌ Error: current branch does not begin with experiment/. Please define an experiment name or start from an experiment branch."
+            )
+            raise click.Abort()
 
-    click.confirm(f"Start a new run on experiment {experiment_name}, is that correct?", abort=True)
-    experiment_id = get_experiment_id_from_name(experiment_name=experiment_name)
+    click.confirm(f"Start a new run on experiment '{experiment_name}', is that correct?", abort=True)
+
+    try:
+        experiment_id = get_experiment_id_from_name(experiment_name=experiment_name)
+    except ExperimentNotFound:
+        if click.confirm(
+            f"Experiment '{experiment_name}' not found. Would you like to create a new experiment?", abort=True
+        ):
+            experiment_id = create_mlflow_experiment(experiment_name=experiment_name)
 
     if not run_name:
         run_name = click.prompt("Please define a name for your run")
 
-    # Temporary measure until we formally deprecate kedro submit
     ctx.invoke(
         submit,
         username=username,
