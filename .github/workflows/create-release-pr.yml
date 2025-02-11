@@ -137,6 +137,7 @@ jobs:
                   "${GITHUB_WORKSPACE}/${RELEASE_DIR}/posts/${{env.release}}/post.md"
 
           git commit -m "added release notes & article draft"
+          git push # To be deleted
 
       # - name: Setup docs venv & generate yaml
       #   working-directory: docs/scripts
