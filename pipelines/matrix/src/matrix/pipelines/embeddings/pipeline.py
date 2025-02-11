@@ -25,8 +25,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs=["embeddings.feat.graph.node_embeddings@spark", "embeddings.feat.cache_out"],
                 name="create_node_embeddings",
                 argo_config=ArgoResourceConfig(
-                    ephemeral_storage_request=256,
-                    ephemeral_storage_limit=256,
+                    ephemeral_storage_request=128,
+                    ephemeral_storage_limit=128,
                 ),
             ),
             # Reduce dimension
