@@ -18,7 +18,7 @@ ROBOKOP_SEPARATOR = "\x1f"
 
 
 class RobokopTransformer(GraphTransformer):
-    def transform_nodes(self, nodes_df: ps.DataFrame, biolink_categories_df: pd.DataFrame, **kwargs) -> ps.DataFrame:
+    def transform_nodes(self, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
         """Transform Robokop nodes to our target schema.
 
         Args:
@@ -41,7 +41,7 @@ class RobokopTransformer(GraphTransformer):
             .withColumnRenamed("name:string", "name")
             .withColumnRenamed("description:string", "description")
             # getting most specific category
-            .transform(determine_most_specific_category, biolink_categories_df)
+            .transform(determine_most_specific_category)
         )
         # fmt: on
 
