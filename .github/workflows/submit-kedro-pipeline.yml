@@ -104,7 +104,8 @@ jobs:
 
       - name: Branch off
         run: |
-          git switch -C release/${{env.release_version}} main
+          git fetch origin #to be deleted
+          git switch -C release/${{env.release_version}} origin/main
           git push
           
       - name: Submit the kedro pipeline
