@@ -12,7 +12,7 @@ from pyspark.ml.functions import array_to_vector, vector_to_array
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from matrix.inject import inject_object, unpack_params
-from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
+from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
 from .encoders import AttributeEncoder
 from .graph_algorithms import GDSGraphAlgorithm
