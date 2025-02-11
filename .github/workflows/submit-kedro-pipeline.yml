@@ -1,9 +1,6 @@
 name: Periodically run kedro kg-release
 
 on:
-  push:
-    branches:
-      - bug/add-gh-token
   schedule:
     - cron: '20 14 1 * 2' # At 15:20 CET on the 1st day of the month and on Tuesday.
 
@@ -104,12 +101,8 @@ jobs:
 
       - name: Branch off
         run: |
-          # git switch -C release/${{env.release_version}} "${{github.ref_name}}"
-          # git push
-          git fetch origin #to be deleted
-          git switch -C release/${{env.release_version}} origin/main
-          git push --set-upstream origin release/${{env.release_version}}   
-
+          git switch -C release/${{env.release_version}} "${{github.ref_name}}"
+          git push
 
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
