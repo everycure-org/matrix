@@ -47,11 +47,11 @@ jobs:
           git config --global user.name "All of us at Every Cure"
           git config --global push.autosetupremote true
 
-      # - name: Tag the commit from which the data release was triggered
-      #   run: |
-      #     # Create an annotated tag, so that we can push it easily with the files using `follow-tags`.
-      #     git tag --annotate --message '' -- "${{env.release}}" "${{env.gitref}}" && \
-      #     git push --follow-tags
+      - name: Tag the commit from which the data release was triggered
+        run: |
+          # Create an annotated tag, so that we can push it easily with the files using `follow-tags`.
+          git tag --annotate --message '' -- "${{env.release}}" "${{env.gitref}}" && \
+          git push --follow-tags
 
       - name: Branch off
         # To comply with the protected-branch policy, we checkout a different
