@@ -49,7 +49,7 @@ def _create_pairs(
     return df[:num], df[num : 2 * num]
 
 
-def generate_paths(edges: pd.DataFrame, ground_truth: pd.DataFrame):
+def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.DataFrame):
     def find_path(graph, start, end):
         try:
             # Find the shortest path between start and end
@@ -73,8 +73,9 @@ def generate_paths(edges: pd.DataFrame, ground_truth: pd.DataFrame):
 
     # Generate paths for GT
     rows = []
+    ground_truth = pd.concat([positives, negatives])
     for idx, row in ground_truth.iterrows():
-        if path := find_path(graph, row["subject"], row["object"]):
+        if path := find_path(graph, row["source"], row["target"]):
             rows.append({"graph": {"_id": str(idx)}, "links": path})
 
     return rows
@@ -151,7 +152,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=generate_paths,
                 inputs=[
                     "ingestion.raw.rtx_kg2.edges@pandas",
-                    "ingestion.raw.ground_truth.edges@pandas",
+                    "ingestion.raw.ground_truth.positives",
+                    "ingestion.raw.ground_truth.negatives",
                 ],
                 outputs="ingestion.raw.drugmech.edges@pandas",
                 name="create_drugmech_pairs",
