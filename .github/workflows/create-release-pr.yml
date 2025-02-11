@@ -57,8 +57,7 @@ jobs:
         # To comply with the protected-branch policy, we checkout a different
         # branch, but from the commit that created the release.
         # It should have been pushed, otherwise this errors out.
-        run: |
-          git switch -C release/${{env.release}} "${{env.gitref}}"
+        run: git switch -C release/${{env.release}} "${{env.gitref}}"
 
       - name: Setup Matrix CLI
         working-directory: apps/matrix-cli
