@@ -53,6 +53,14 @@ class NCATSNodeNormalizer(Normalizer):
 
                 resp.raise_for_status()
 
+        # async with aiohttp.ClientSession() as session:
+        #     try:
+        #         async with session.post(url=self._endpoint, json=request_json) as resp:
+        #             response_json = await resp.json()
+        #     except Exception as ex:
+        #             logger.error(f"Request failed with error: {ex}")
+        #             raise
+
         df["normalized_id"] = [self._extract_id(curie, response_json, self._json_parser) for curie in curies]
         df["normalized_id"] = df["normalized_id"].astype(pd.StringDtype())
         return df
