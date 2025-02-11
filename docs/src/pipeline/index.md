@@ -12,15 +12,11 @@ The matrix pipeline is our main codebase in the Every Cure organization. Its goa
 
 The current pre-processing pipeline is highly preliminary and is ONLY used to ingest experimental nodes to our GCS bucket. The pipeline is integrated with a Google sheet for rapid hypothesis testing.
 
-The preprocessing pipeline is mapping the names assigned by our medical team to specific IDs using name-resolver service.If you want to run the full pre-processing pipeline, you can do so by running the following command:
+The preprocessing pipeline is mapping the names assigned by our medical team to specific IDs using name-resolver service. If you want to run the full pre-processing pipeline, you can do so by running the following command or specifying tags for a specific source:
 
 ```
 kedro run -p preprocessing 
-```
-
-Alternatively, if you are interested in processing a specific source, you can specify it in the tag:
-
-```
+# or the following tags for specific sources
 kedro run -p preprocessing --tag ec-clinical-trials-data
 kedro run -p preprocessing --tag ec-medical-kg
 ```
