@@ -46,6 +46,26 @@ class MLFlowHooks:
         cls._kedro_context = context
 
     @classmethod
+    def get_gcs_paths(cls):
+        globals = cls._kedro_context.config_loader["globals"]
+        gcs_bucket = globals["source_gcs_bucket"].lstrip("gs://")
+        paths = []
+        gcs_datasets = {}
+        catalog = cls._kedro_context.catalog
+        for name in catalog.list():
+            dataset = catalog._get_dataset(name)
+            if hasattr(dataset, "_filepath") and dataset._filepath and str(dataset._filepath).startswith(gcs_bucket):
+                paths.append(dataset._filepath)
+                gcs_datasets[name] = dataset._filepath
+
+        client = storage.Client()
+        bucket = client.bucket(gcs_bucket)
+        path = str(gcs_datasets["preprocessing.raw.ground_truth.positives"]).lstrip(gcs_bucket).lstrip("/")
+        blob = bucket.blob(path)
+        blob.exists()
+        return paths
+
+    @classmethod
     def get_pipeline_inputs(cls):
         if cls._input_datasets is None:
             pipeline_name = cls._kedro_context._extra_params["pipeline_name"]
@@ -87,6 +107,7 @@ class MLFlowHooks:
         """
         MLFlowHooks.set_context(context)
         MLFlowHooks.get_pipeline_inputs()
+        # MLFlowHooks.get_gcs_paths()
         cfg = OmegaConf.create(context.config_loader["mlflow"])
         globs = OmegaConf.create(context.config_loader["globals"])
         # Set tracking uri
@@ -178,6 +199,13 @@ class SparkHooks:
                 logger.warning("we are killing spark to create a fresh one")
                 sess.stop()
             parameters = cls._kedro_context.config_loader["spark"]
+
+            # HOTFIX:
+            # parameters.update({
+            #     'spark.driver.bindAddress': '127.0.0.1',
+            #     'spark.driver.host': '127.0.0.1',
+            #     'spark.driver.port': '7077'
+            # })
 
             # DEBT ugly fix, ideally we overwrite this in the spark.yml config file but currently no
             # known way of doing so
