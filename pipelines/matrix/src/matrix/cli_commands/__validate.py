@@ -1,7 +1,6 @@
 from typing import Any, Collection, Dict, List, NamedTuple, Optional, Set
 
 import click
-from google.cloud import storage
 from kedro.framework.cli.project import (
     ASYNC_ARG_HELP,
     CONF_SOURCE_HELP,
@@ -34,102 +33,36 @@ from matrix.session import KedroSessionWithFromCatalog
 
 
 class RunConfig(NamedTuple):
-    pipeline_obj: Optional[Pipeline]
-    pipeline_name: str
     env: str
-    runner: str
-    is_async: bool
-    node_names: List[str]
-    to_nodes: List[str]
-    from_nodes: List[str]
-    from_inputs: List[str]
-    to_outputs: List[str]
-    load_versions: dict[str, str]
-    tags: List[str]
-    without_tags: List[str]
     conf_source: Optional[str]
-    params: Dict[str, Any]
-    from_env: Optional[str]
 
 
-# fmt: off
 @project_group.command()
 @env_option
-@click.option("--from-inputs", type=str, default="", help=FROM_INPUTS_HELP, callback=split_string)
-@click.option("--to-outputs", type=str, default="", help=TO_OUTPUTS_HELP, callback=split_string)
-@click.option("--from-nodes", type=str, default="", help=FROM_NODES_HELP, callback=split_node_names, )
-@click.option("--to-nodes", type=str, default="", help=TO_NODES_HELP, callback=split_node_names)
-@click.option("--nodes", "-n", "node_names", type=str, multiple=False, help=NODE_ARG_HELP, callback=split_string,
-              default="", )
-@click.option("--runner", "-r", type=str, default=None, multiple=False, help=RUNNER_ARG_HELP)
-@click.option("--async", "is_async", is_flag=True, multiple=False, help=ASYNC_ARG_HELP)
-@click.option("--tags", "-t", type=str, multiple=True, help=TAG_ARG_HELP)
-@click.option("--without-tags", "-wt", type=str,
-              help="used to filter out nodes with tags that should not be run. All dependent downstream nodes are also removed. Note nodes need to have _all_ tags to be removed.",
-              callback=split_string, default=[], )
-@click.option("--load-versions", "-lv", type=str, multiple=True, help=LOAD_VERSION_HELP,
-              callback=_split_load_versions, )
-@click.option("--pipeline", "-p", required=True, default="__default__", type=str, help=PIPELINE_ARG_HELP)
-@click.option("--conf-source", type=click.Path(exists=True, file_okay=False, resolve_path=True),
-              help=CONF_SOURCE_HELP, )
-@click.option("--params", type=click.UNPROCESSED, default="", help=PARAMS_ARG_HELP, callback=_split_params, )
-@click.option("--from-env", type=str, default=None,
-              help="Custom env to read from, if specified will read from the `--from-env` and write to the `--env`", )
-# fmt: on
-def validate(tags: list[str], without_tags: list[str], env: str, runner: str, is_async: bool, node_names: list[str],
-        to_nodes: list[str], from_nodes: list[str], from_inputs: list[str], to_outputs: list[str],
-        load_versions: list[str], pipeline: str, conf_source: str, params: dict[str, Any],
-        from_env: Optional[str] = None):
+@click.option(
+    "--conf-source",
+    type=click.Path(exists=True, file_okay=False, resolve_path=True),
+    help=CONF_SOURCE_HELP,
+)
+def validate():
     """Run the pipeline."""
-    pipeline_name = pipeline
-    pipeline_obj = pipelines[pipeline_name]
 
     config = RunConfig(
-        pipeline_obj=pipeline_obj,
-        pipeline_name=pipeline_name,
-        env=env,
-        runner=runner,
-        is_async=is_async,
-        node_names=node_names,
-        to_nodes=to_nodes,
-        from_nodes=from_nodes,
-        from_inputs=from_inputs,
-        to_outputs=to_outputs,
-        load_versions=load_versions,
-        tags=tags,
-        without_tags=without_tags,
         conf_source=conf_source,
-        params=params,
-        from_env=from_env,
     )
-
     _validate(config, KedroSessionWithFromCatalog)
 
 
 def _validate(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
-    if config.pipeline_name in ["test", "fabricator"] and config.env in [None, "base"]:
-        raise RuntimeError(
-            "Running the fabricator in the base environment might overwrite production data! Use the test env `-e test` instead."
-        )
-    elif config.pipeline_name in ["create_sample", "test_sample"] and config.env not in ["sample"]:
-        raise RuntimeError(
-            "Running the sample pipelines outside of the sample environment might overwrite production data! Use the sample env `-e sample` instead."
-        )
-
     runner = load_obj(config.runner or "SequentialRunner", "kedro.runner")
 
-    with kedro_session.create(
-            env=config.env, conf_source=config.conf_source, extra_params=config.params
-    ) as session:
+    with kedro_session.create(env=config.env, conf_source=config.conf_source, extra_params=config.params) as session:
         # introduced to filter out tags that should not be run
         node_names = _filter_nodes_missing_tag(
             without_tags=config.without_tags, pipeline_obj=config.pipeline_obj, node_names=config.node_names
         )
 
         from_catalog = _extract_config(config, session)
-        ctx = session.load_context()
-        paths = get_gcs_paths(ctx)
-        filepaths_exist(paths)
 
         session.run(
             from_catalog=from_catalog,
@@ -143,30 +76,6 @@ def _validate(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> 
             load_versions=config.load_versions,
             pipeline_name=config.pipeline_name,
         )
-
-def get_gcs_paths(context):
-    globals = context.config_loader["globals"]
-    catalog = context.catalog
-
-    gcs_bucket = globals["source_gcs_bucket"].lstrip("gs://")
-    paths = []
-    gcs_datasets = {}
-
-    for name in catalog.list():
-        dataset = catalog._get_dataset(name)
-        if hasattr(dataset, "_filepath") and dataset._filepath and str(dataset._filepath).startswith(gcs_bucket):
-            paths.append(dataset._filepath)
-            gcs_datasets[name] = dataset._filepath
-    return gcs_datasets
-
-def filepaths_exist(gcs_bucket, gcs_datasets):
-    client = storage.Client()
-    bucket = client.bucket(gcs_bucket)
-    for name, path in gcs_datasets.items():
-        path = str(gcs_datasets[name]).lstrip(gcs_bucket).lstrip("/")
-        blob = bucket.blob(path)
-        blob.exists()
-
 
 
 def _extract_config(config: RunConfig, session: KedroSessionWithFromCatalog) -> Optional[DataCatalog]:
@@ -222,7 +131,7 @@ def _get_feed_dict(params: Dict) -> dict[str, Any]:
 
 
 def _filter_nodes_missing_tag(
-        without_tags: Collection[str], pipeline_obj: Pipeline, node_names: Collection[str]
+    without_tags: Collection[str], pipeline_obj: Pipeline, node_names: Collection[str]
 ) -> set[str]:
     """Filter out nodes that have tags that should not be run and their downstream nodes."""
     if not without_tags:
@@ -234,9 +143,7 @@ def _filter_nodes_missing_tag(
         node_names = {node.name for node in pipeline_obj.nodes}
 
     # Step 1: Identify nodes to remove
-    nodes_to_remove = set(
-        node.name for node in pipeline_obj.nodes if node.tags.issuperset(without_tags)
-    )
+    nodes_to_remove = set(node.name for node in pipeline_obj.nodes if node.tags.issuperset(without_tags))
 
     # Step 2: Identify and add downstream nodes
     downstream_nodes = pipeline_obj.from_nodes(*nodes_to_remove).nodes
