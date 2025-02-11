@@ -27,7 +27,6 @@ authors:
 
 ## Exciting New Features 🎉
 
-* **Implement k-fold cross-validation:** Added k-fold cross-validation to the modelling pipeline for improved model performance assessment. (#683)
 * **Implement a new Spoke KG Integration:** Integrated the Spoke Knowledge Graph into the pipeline. (#772)
 * **Add a parameter to abstract out the ensemble model's aggregation function:**  Allows for easier customization of ensemble model aggregation strategies. (#905)
 * **Deploy Grafana and Prometheus:** Implemented Grafana and Prometheus for improved cluster and experiment monitoring and observability. (#834)
@@ -70,14 +69,11 @@ authors:
 * **Add import sorting:** Improved code readability with added import sorting. (#931)
 * **Remove duplicate catalog file for data_release pipeline:** Removed a redundant catalog file, simplifying project structure. (#795)
 * **Swap `kedro submit`'s counterintuitive verbose flag for a quiet flag:** Improved usability of the `kedro submit` command. (#828)
-* **Swap `kedro submit`'s counterintuitive verbose flag for a quiet flag:** Improved usability of the `kedro submit` command. (#828)
 
 
 ## Documentation ✏️
 
-* **Fixed created date for articles:** Corrected date formatting in release articles. (#796)
-* **Math formulas added:** Implemented support for MathJax to render mathematical formulas in documentation. (#796)
-* **Added google analytics:** Enabled Google Analytics tracking for website analytics. (#796)
+* **Fixed created date for articles, math formulas added google analytics:** Corrected date formatting in release articles, implemented support for MathJax to render mathematical formulas in documentation, enabled Google Analytics tracking for website analytics. (#796)
 * **Add documentation for mechanism of action codebase:** Improved documentation for the MOA codebase. (#798)
 * **Add debugging documentation for VSCode:** Provided improved instructions on debugging the codebase using VS Code. (#799)
 * **Update virtual environment onboarding documentation:** Updated instructions for setting up a virtual environment during onboarding. (#906)
@@ -93,7 +89,8 @@ authors:
 * **Add documentation for Mechanism of Action (MoA) extraction pipeline:** Added detailed documentation to explain this pipeline. (#798)
 * **Add debugging documentation for VS Code:** Added documentation and examples explaining how to debug with VS Code. (#799)
 * **Add SILC troubleshooting document:** Added a troubleshooting document for the SILC (Service Integration, Logging, and Configuration) process. (#836)
-
+* **Onboarding fixes:** Fixed a minor issue in the onboarding documentation. (#902)
+* **Add more specific information on the error in `common_errors.md`:** Added additional troubleshooting details regarding the issues with the Spark failure, including what to look for within the logs. (#925)
 
 ## Newly onboarded colleagues 🚤
 
@@ -118,14 +115,10 @@ authors:
 * **incrementing spoke version:** Increased the version number for the Spoke KG integration. (#914)
 * **Add `--headless` flag to CLI:** Added a flag to disable user prompts. (#861)
 * **Bring back old filtering logic for SemMedDB:**  Reverted changes to the SemMedDB filtering logic. (#826)
-* **Onboarding fixes:** Fixed a minor issue in the onboarding documentation. (#902)
 * **Fix minor typos in Kedro Extensions' documentation:** Corrected minor typos in the documentation. (#913)
 * **Add protocol information to the `wipe_neo` script:** Added necessary details on the protocol used in connecting to the Neo4j database within the `wipe_neo` script. (#899)
-* **Add more specific information on the error in `common_errors.md`:** Added additional troubleshooting details regarding the issues with the Spark failure, including what to look for within the logs. (#925)
 * **Improve error handling in the CLI:** Updated the `run_subprocess` function to capture and display output to both stdout and stderr during streaming, improving diagnostics in cases of issues. (#827)
 * **Refactor test suite:** Improved the test suite for easier maintenance and expandability. (#930)
-* **Add import sorting:** Added functionality that automatically sorts the imports, improving code readability. (#931)
-* **Added additional instructions for using `pyenv` rather than `brew` to install python:** Added details for alternative python installations within the onboarding documentation. (#812)
 * **Swap `is_async` flag for `is_test` flag:** Changed the meaning of a flag passed into the `kedro run` command from `is_async` to `is_test`. (#811)
 * **Change the `RELEASE_NAME` environment variable to a more specific version format:** Updated the `RELEASE_NAME` environment variable for more fine-grained versioning. (#750)
 * **Upgrade the required java version 11 to 17 in the docs and in the docker image:** Updated the required java version to 17 for improved compatibility. (#903)
