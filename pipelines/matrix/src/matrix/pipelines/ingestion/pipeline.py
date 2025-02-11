@@ -15,17 +15,10 @@ def create_ground_truth_pipeline() -> list:
                 "pos_df": "ingestion.raw.ground_truth.positives",
                 "neg_df": "ingestion.raw.ground_truth.negatives",
             },
-            outputs="ingestion.int.ground_truth.combined",
+            outputs="ingestion.raw.ground_truth.edges@pandas",
             name="create_gt_dataframe",
             tags=["ground-truth"],
-        ),
-        node(
-            func=nodes.create_gt_nodes_edges,
-            inputs="ingestion.int.ground_truth.combined",
-            outputs=["ingestion.raw.ground_truth.nodes@pandas", "ingestion.raw.ground_truth.edges@pandas"],
-            name="create_nodes_and_edges",
-            tags=["ground-truth"],
-        ),
+        )
     ]
 
 
