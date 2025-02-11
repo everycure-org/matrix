@@ -69,7 +69,7 @@ if [ ! -d "matrix" ]; then
     echo "Installing our repository and its dependencies..."
     pushd ./
     export GIT_TOKEN=$(gcloud secrets versions access latest --secret=github-token --project=mtrx-wg2-modeling-dev-9yj)
-    git clone https://pascalwhoop:${GIT_TOKEN}@github.com/everycure-org/matrix.git
+    git clone https://${GIT_TOKEN}@github.com/everycure-org/matrix.git
     cd matrix/pipelines/matrix
     # reset the remote to the normal URL, users are required to provide their own credentials to access the repo
     git remote set-url origin https://github.com/everycure-org/matrix.git
