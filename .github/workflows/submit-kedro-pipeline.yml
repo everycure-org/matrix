@@ -44,7 +44,7 @@ jobs:
               /usr/local/lib/android/sdk/ndk \
               "$AGENT_TOOLSDIRECTORY" && \
           df -h
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -103,9 +103,11 @@ jobs:
         run: |
           git switch -C release/${{env.release_version}} "${{github.ref_name}}"
           git push
-          
+
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Submit the kedro pipeline"
           kedro submit \
