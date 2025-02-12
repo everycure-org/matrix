@@ -240,7 +240,7 @@ def normalize_edges(
             }
         ),
         on="subject",
-        how="left",
+        how="right",
     )
     edges = edges.join(
         mapping_df.withColumnsRenamed(
@@ -251,12 +251,11 @@ def normalize_edges(
             }
         ),
         on="object",
-        how="left",
+        how="right",
     )
     edges = edges.withColumnsRenamed({"subject": "original_subject", "object": "original_object"}).withColumnsRenamed(
         {"subject_normalized": "subject", "object_normalized": "object"}
     )
-
     return (
         edges.withColumn(
             "_rn",
