@@ -48,11 +48,12 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
         "integration": [
             {"name": "rtx_kg2", "integrate_in_kg": True},
             # {"name": "spoke"},
-            # {"name": "robokop"},
-            {"name": "ec_medical_team", "integrate_in_kg": True},
-            {"name": "drug_list", "integrate_in_kg": False, "nodes_only": True},
-            {"name": "disease_list", "integrate_in_kg": False, "nodes_only": True},
+            # {"name": "robokop", "integrate_in_kg": True},
+            # {"name": "ec_medical_team", "integrate_in_kg": True},
+            {"name": "drug_list", "integrate_in_kg": False, "has_edges": False},
+            {"name": "disease_list", "integrate_in_kg": False, "has_edges": False},
             {"name": "ground_truth", "integrate_in_kg": False},
+            # {"name": "drugmech", "integrate_in_kg": False, "has_nodes": False},
             {"name": "ec_clinical_trails", "integrate_in_kg": False},
         ],
         "modelling": {
@@ -69,11 +70,11 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             {"evaluation_name": "full_matrix_trials"},
         ],
         "stability": [
-            {"stability_name": "stability_overlap"},
-            {"stability_name": "stability_ranking"},
-            {
-                "stability_name": "rank_commonality"
-            },  # note - rank_commonality will be only used if you have a shared commonality@k and spearman@k metrics
+            # {"stability_name": "stability_overlap"},
+            # {"stability_name": "stability_ranking"},
+            # {
+            #     "stability_name": "rank_commonality"
+            # },  # note - rank_commonality will be only used if you have a shared commonality@k and spearman@k metrics
         ],
     }
 )
