@@ -96,12 +96,12 @@ class SparkWithSchemaDataset(SparkDataset):
         version: Version | None = None,
         credentials: dict[str, Any] | None = None,
         metadata: dict[str, Any] | None = None,
-        bootstrappable: bool = False,  # provide empty dataframe if the cache dataset is not present
+        provide_empty_if_not_present: bool = False,
     ) -> None:
         """Creates a new instance of ``SparkWithSchemaDataset``."""
         self._load_args = deepcopy(load_args) or {}
         self._df_schema = self._load_args.pop("schema")
-        self._boostrappable = bootstrappable
+        self._boostrappable = provide_empty_if_not_present
 
         super().__init__(
             filepath=filepath,
