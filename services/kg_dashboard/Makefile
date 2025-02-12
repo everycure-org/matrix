@@ -22,9 +22,9 @@ build: bump_basepath
 	npm run build:strict
 
 deploy: 
-	# both rsync's are set up to delete extra files
-	gsutil -m rsync -dr build/ $(EVIDENCE_BASE_PATH)/$(RELEASE_VERSION)/evidence
-	gsutil -m rsync -dr $(EVIDENCE_BASE_PATH)/$(RELEASE_VERSION)/evidence $(EVIDENCE_BASE_PATH)/latest/evidence
+	# both rsyncs are set up to delete extra files. We use gcloud storage over gsutil because gsutil does not use github action authentication
+	gcloud storage rsync --recursive --delete-unmatched-destination-objects build/ $(EVIDENCE_BASE_PATH)/$(RELEASE_VERSION)/evidence
+	gcloud storage rsync --recursive --delete-unmatched-destination-objects $(EVIDENCE_BASE_PATH)/$(RELEASE_VERSION)/evidence $(EVIDENCE_BASE_PATH)/latest/evidence
 
 install:
 	npm install
