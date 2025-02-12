@@ -11,7 +11,7 @@ _bigquery_ds: &_bigquery_ds
 data_release.feat.nodes_with_embeddings:
   <<: *_bigquery_ds
   filepath: ${globals:paths.release}/prm/nodes_with_embeddings
-  table: {pwal}_nodes_with_embeddings
+  table: nodes_with_embeddings
 
 data_release.prm.bigquery_edges:
   <<: *_bigquery_ds
