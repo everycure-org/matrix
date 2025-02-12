@@ -16,7 +16,14 @@ SA_KEY_PATH ?= conf/local/service-account.json
 .ONESHELL: 
 
 default: prerequisites fetch_sa_key install fast_test integration_test
-	echo "done!"
+
+.PHONY: always
+# steps here get run on _every_ make call, no matter the target. Make sure this is 100% idempotent and fast.
+always:
+	# never track notebooks in the pipeline subfolder
+	git update-index --assume-unchanged *.ipynb
+%: always
+	@:
 
 prerequisites:
 	$(info Checking if prerequisites are installed...)
@@ -169,4 +176,4 @@ diagnostics:
 	-df -h
 	echo "\nDiagnostics complete."
 
-# NOTE: This Makefile target was partially generated using AI assistance.
+
