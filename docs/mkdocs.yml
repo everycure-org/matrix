@@ -50,6 +50,9 @@ plugins:
   - blog:
      blog_dir: releases
      categories: false
+  - exclude:
+        glob:
+          - "releases/notes/**"
       
 
 extra:
