@@ -138,7 +138,7 @@ jobs:
           # See also: https://api.slack.com/methods/chat.postMessage#channels
           # You can pass in multiple channels to post to by providing a comma-delimited list of channel IDs.
           # channel-id: 'C07HU35MKAQ' #github-notifications
-          channel-id: 'C0860G2UBEW'
+          channel-id: 'C0860G2UBEW' #github-notifications
           # For posting a simple plain text message
           slack-message: |
             Release pipeline submission failed in GitHub Actions! 🚨
