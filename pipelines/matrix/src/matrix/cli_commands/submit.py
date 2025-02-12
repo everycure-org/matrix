@@ -58,10 +58,11 @@ def cli():
 @click.option("--quiet", "-q", is_flag=True, default=False, help="Disable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
-@click.option("--nodes", type=str, default="", help="Specify nodes to run", callback=split_string)
+@click.option("--nodes", "-n", type=str, default="", help="Specify nodes to run", callback=split_string)
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 @click.option("--headless", is_flag=True, default=False, help="Skip confirmation prompt")
 @click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
+@click.option("--skip-git-checks", is_flag=True, type=bool, default=False, help="Skip git checks")
 # fmt: on
 def submit(
     username: str,
@@ -75,13 +76,14 @@ def submit(
     from_nodes: List[str],
     is_test: bool,
     headless: bool,
-    environment: str
+    environment: str,
+    skip_git_checks: bool
 ):
     """Submit the end-to-end workflow. """
     if not quiet:
         log.setLevel(logging.DEBUG)
 
-    if pipeline in ('data_release', 'kg_release') and not nodes:
+    if pipeline in ('data_release', 'kg_release') and not skip_git_checks:
         abort_if_unmet_git_requirements(release_version)
         abort_if_intermediate_release(release_version)
 
