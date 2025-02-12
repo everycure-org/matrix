@@ -59,8 +59,9 @@ def test_oauth_flow(oauth2_token_response, tmpdir, monkeypatch):
 
 @pytest.mark.skip()
 def test_iap_flow():
+    """Comment out the @pytest.mark.skip() to test the authentication flow locally"""
     token = get_iap_token()
 
     assert token.token
-    assert token.client_id
+    assert token.id_token
     assert token.token_uri == "https://oauth2.googleapis.com/token"
