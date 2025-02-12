@@ -11,9 +11,12 @@ logger = logging.getLogger(__name__)
 
 
 class ClinicalTrialsTransformer(GraphTransformer):
-    def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
+    def __init__(self, drop_duplicates: bool = True):
+        self._drop_duplicates = drop_duplicates
+
+    def transform_nodes(self, nodes_df: DataFrame, drop_duplicates: bool = True, **kwargs) -> DataFrame:
         # fmt: off
-        return (
+        df = (
             nodes_df
             .withColumn("id",                                f.col("curie"))
             .withColumn("upstream_data_source",              f.array(f.lit("ec_clinical_trails")))
@@ -26,10 +29,13 @@ class ClinicalTrialsTransformer(GraphTransformer):
             # Filter nodes we could not correctly resolve
             .filter(f.col("id").isNotNull())
         )
+        if self._drop_duplicates:
+            df = df.dropDuplicates(["id"])  # Drop any duplicate nodes
+        return df
 
-    def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
+    def transform_edges(self, edges_df: DataFrame, drop_duplicates: bool = True, **kwargs) -> DataFrame:
         # fmt: off
-        return (
+        df = (
             edges_df
             .withColumn("subject", f.col("drug_curie"))
             .withColumn("object", f.col("disease_curie"))
@@ -40,4 +46,9 @@ class ClinicalTrialsTransformer(GraphTransformer):
             .withColumn("non_significantly_worse", f.col('non_significantly_worse').cast('int'))
             .withColumn("non_significantly_better", f.col('non_significantly_better').cast('int'))
         )
+
+        if self._drop_duplicates:
+            df = df.dropDuplicates(["subject", "object", "predicate"])
+
+        return df
         # fmt: on

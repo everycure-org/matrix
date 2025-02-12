@@ -12,9 +12,11 @@ integration:
     ec_medical_team:
       transformer:
         _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
+        drop_duplicates: true
     ec_clinical_trails: 
       transformer:
         _object: matrix.pipelines.integration.transformers.clinical_trails.ClinicalTrialsTransformer
+        drop_duplicates: true
     drug_list: 
       transformer:
         _object: matrix.pipelines.integration.transformers.drugs.DrugsTransformer

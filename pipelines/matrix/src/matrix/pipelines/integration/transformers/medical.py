@@ -12,9 +12,12 @@ logger = logging.getLogger(__name__)
 class MedicalTransformer(GraphTransformer):
     """Transformer for medical data."""
 
-    def transform_nodes(self, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
+    def __init__(self, drop_duplicates: bool = True):
+        self._drop_duplicates = drop_duplicates
+
+    def transform_nodes(self, nodes_df: ps.DataFrame, drop_duplicates: bool = True, **kwargs) -> ps.DataFrame:
         # fmt: off
-        return (
+        df = (
             nodes_df
             .withColumn("id",                                f.col("normalized_curie"))
             .withColumn("name",                              f.col("label"))
@@ -28,13 +31,17 @@ class MedicalTransformer(GraphTransformer):
             # .transform(determine_most_specific_category, biolink_categories_df) need this?
             # Filter nodes we could not correctly resolve
             .filter(f.col("id").isNotNull())
-            .dropDuplicates(["id"]) # Drop any duplicate nodes
         )
+
+        if self._drop_duplicates:
+            df = df.dropDuplicates(["id"])  # Drop any duplicate nodes
+            
+        return df
         # fmt: on
 
-    def transform_edges(self, edges_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
+    def transform_edges(self, edges_df: ps.DataFrame, drop_duplicates: bool = True, **kwargs) -> ps.DataFrame:
         # fmt: off
-        return (
+        df = (
             edges_df
             .withColumn("subject",                       f.col("SourceId"))
             .withColumn("object",                        f.col("TargetId"))
@@ -52,3 +59,8 @@ class MedicalTransformer(GraphTransformer):
             # Filter edges we could not correctly resolve
             .filter(f.col("subject").isNotNull() & f.col("object").isNotNull())
         )
+
+        if self._drop_duplicates:
+            df = df.dropDuplicates(["subject", "object", "predicate"])
+
+        return df
