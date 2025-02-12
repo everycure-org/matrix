@@ -155,7 +155,7 @@ spec:
         - name: GH_TOKEN
           valueFrom:
             secretKeyRef:
-              name: matrix-secrets
+              name: gh-password
               key: GH_CREDS
       command: [kedro]
       args: ["run", "-p", "{{ pipeline_name }}", "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
