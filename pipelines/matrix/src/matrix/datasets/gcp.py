@@ -19,10 +19,11 @@ from kedro.io.core import (
 )
 from kedro_datasets.partitions import PartitionedDataset
 from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
-from matrix.hooks import SparkHooks
-from matrix.inject import _parse_for_objects
 from pygsheets import Spreadsheet, Worksheet
 from tqdm import tqdm
+
+from matrix.hooks import SparkHooks
+from matrix.inject import _parse_for_objects
 
 logger = logging.getLogger(__name__)
 
