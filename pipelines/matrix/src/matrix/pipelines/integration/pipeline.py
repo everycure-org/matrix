@@ -1,6 +1,3 @@
-from typing import List
-
-import pyspark.sql as ps
 from kedro.pipeline import Pipeline, node, pipeline
 
 from matrix import settings
@@ -9,20 +6,32 @@ from matrix.pipelines.batch import pipeline as batch_pipeline
 from . import nodes
 
 
-def _create_integration_pipeline(source: str, nodes_only: bool = False) -> Pipeline:
+def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges: bool = True) -> Pipeline:
     pipelines = []
 
     pipelines.append(
         pipeline(
             [
                 node(
-                    func=nodes.transform_nodes,
+                    func=nodes.transform,
                     inputs={
                         "transformer": f"params:integration.sources.{source}.transformer",
-                        "nodes_df": f"ingestion.int.{source}.nodes",
-                        "biolink_categories_df": "integration.raw.biolink.categories",
+                        # NOTE: The datasets below are currently only picked up by RTX
+                        # the goal is to ensure that semmed filtering occurs for all
+                        # graphs in the future.
+                        "curie_to_pmids": "ingestion.int.rtx_kg2.curie_to_pmids",
+                        "semmed_filters": "params:integration.preprocessing.rtx.semmed_filters",
+                        # NOTE: This dynamically wires the nodes and edges into each transformer.
+                        # This is due to the fact that the Transformer objects are only created
+                        # during node execution time, otherwise we could infer this based on
+                        # the transformer.
+                        **({"nodes_df": f"ingestion.int.{source}.nodes"} if has_nodes else {}),
+                        **({"edges_df": f"ingestion.int.{source}.edges"} if has_edges else {}),
                     },
-                    outputs=f"integration.int.{source}.nodes",
+                    outputs={
+                        "nodes": f"integration.int.{source}.nodes",
+                        **({"edges": f"integration.int.{source}.edges"} if has_edges else {}),
+                    },
                     name=f"transform_{source}_nodes",
                     tags=["standardize"],
                 ),
@@ -43,29 +52,15 @@ def _create_integration_pipeline(source: str, nodes_only: bool = False) -> Pipel
                     outputs=f"integration.int.{source}.nodes.norm@spark",
                     name=f"normalize_{source}_nodes",
                 ),
-            ]
+            ],
+            tags=source,
         )
     )
 
-    if not nodes_only:
+    if has_edges:
         pipelines.append(
             pipeline(
                 [
-                    node(
-                        func=nodes.transform_edges,
-                        inputs={
-                            "transformer": f"params:integration.sources.{source}.transformer",
-                            "edges_df": f"ingestion.int.{source}.edges",
-                            # NOTE: The datasets below are currently only picked up by RTX
-                            # the goal is to ensure that semmed filtering occurs for all
-                            # graphs in the future.
-                            "curie_to_pmids": "ingestion.int.rtx_kg2.curie_to_pmids",
-                            "semmed_filters": "params:integration.preprocessing.rtx.semmed_filters",
-                        },
-                        outputs=f"integration.int.{source}.edges",
-                        name=f"transform_{source}_edges",
-                        tags=["standardize"],
-                    ),
                     node(
                         func=nodes.normalize_edges,
                         inputs={
@@ -75,7 +70,8 @@ def _create_integration_pipeline(source: str, nodes_only: bool = False) -> Pipel
                         outputs=f"integration.int.{source}.edges.norm@spark",
                         name=f"normalize_{source}_edges",
                     ),
-                ]
+                ],
+                tags=source,
             )
         )
 
@@ -85,12 +81,17 @@ def _create_integration_pipeline(source: str, nodes_only: bool = False) -> Pipel
 def create_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
 
-    # Create pipeline per source
     pipelines = []
+
+    # Create pipeline per source
     for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration"):
         pipelines.append(
             pipeline(
-                _create_integration_pipeline(source=source["name"], nodes_only=source.get("nodes_only", False)),
+                _create_integration_pipeline(
+                    source=source["name"],
+                    has_nodes=source.get("has_nodes", True),
+                    has_edges=source.get("has_edges", True),
+                ),
                 tags=[source["name"]],
             )
         )
@@ -106,7 +107,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         *[
                             f'integration.int.{source["name"]}.nodes.norm@spark'
                             for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
-                            if source.get("integrate_in_kg", True) and not source.get("nodes_only", False)
+                            if source.get("integrate_in_kg", True)
                         ],
                     ],
                     outputs="integration.prm.unified_nodes",
@@ -118,7 +119,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     inputs=[
                         f'integration.int.{source["name"]}.edges.norm@spark'
                         for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
-                        if source.get("integrate_in_kg", True) and not source.get("nodes_only", False)
+                        if source.get("integrate_in_kg", True)
                     ],
                     outputs="integration.prm.unified_edges",
                     name="create_prm_unified_edges",
