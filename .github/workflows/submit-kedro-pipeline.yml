@@ -88,12 +88,12 @@ jobs:
       #     username: oauth2accesstoken
       #     password: ${{ steps.auth.outputs.access_token }}
 
-      - name: Fetch latest tag
-        id: fetch_latest_tag
-        run: |
-          latest_tag=$(git tag --list --sort="v:refname" | tail -n 1)
-          echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
-          echo "Latest tag is ${latest_tag}"
+      # - name: Fetch latest tag
+      #   id: fetch_latest_tag
+      #   run: |
+      #     latest_tag=$(git tag --list --sort="v:refname" | tail -n 1)
+      #     echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
+      #     echo "Latest tag is ${latest_tag}"
 
       # - name: Increment version
       #   working-directory: docs/scripts
@@ -109,19 +109,19 @@ jobs:
       #     git switch -C release/${{env.release_version}} "${{github.ref_name}}"
       #     git push
 
-      # - name: Submit the kedro pipeline
-      #   working-directory: pipelines/matrix
-      #   env:
-      #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: |
-      #     echo "Submit the kedro pipeline"
-      #     kedro submit \
-      #       --username GH-Actions-bot \
-      #       --namespace argo-workflows \
-      #       --run-name auto-kg-release \
-      #       --release-version "${{ env.release_version }}" \
-      #       --pipeline kg_release \
-      #       --headless
+      - name: Submit the kedro pipeline
+        working-directory: pipelines/matrix
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Submit the kedro pipeline"
+          kedro submit \
+            --username GH-Actions-bot \
+            --namespace argo-workflows \
+            --run-name auto-kg-release \
+            --release-version "${{ env.release_version }}" \
+            --pipeline kg_release \
+            --headless
 
   notify_failure:
     # This condition ensures it runs only if any previous job fails
