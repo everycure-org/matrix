@@ -15,7 +15,7 @@ class MedicalTransformer(GraphTransformer):
     def __init__(self, drop_duplicates: bool = True):
         self._drop_duplicates = drop_duplicates
 
-    def transform_nodes(self, nodes_df: ps.DataFrame, drop_duplicates: bool = True, **kwargs) -> ps.DataFrame:
+    def transform_nodes(self, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
         # fmt: off
         df = (
             nodes_df
@@ -39,7 +39,7 @@ class MedicalTransformer(GraphTransformer):
         return df
         # fmt: on
 
-    def transform_edges(self, edges_df: ps.DataFrame, drop_duplicates: bool = True, **kwargs) -> ps.DataFrame:
+    def transform_edges(self, edges_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
         # fmt: off
         df = (
             edges_df

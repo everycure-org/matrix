@@ -14,7 +14,7 @@ class ClinicalTrialsTransformer(GraphTransformer):
     def __init__(self, drop_duplicates: bool = True):
         self._drop_duplicates = drop_duplicates
 
-    def transform_nodes(self, nodes_df: DataFrame, drop_duplicates: bool = True, **kwargs) -> DataFrame:
+    def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
         # fmt: off
         df = (
             nodes_df
@@ -33,7 +33,7 @@ class ClinicalTrialsTransformer(GraphTransformer):
             df = df.dropDuplicates(["id"])  # Drop any duplicate nodes
         return df
 
-    def transform_edges(self, edges_df: DataFrame, drop_duplicates: bool = True, **kwargs) -> DataFrame:
+    def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
         # fmt: off
         df = (
             edges_df
