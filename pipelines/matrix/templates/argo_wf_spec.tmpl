@@ -89,6 +89,14 @@ spec:
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
+          volumeMounts:
+            - name: github-token
+              mountPath: /etc/github
+              readOnly: true
+    volumes:
+      - name: github-token
+        secret:
+          secretName: gh-password
     container: &_kedro_container
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
@@ -144,6 +152,11 @@ spec:
         - name: NUM_CPU
           value: {% raw %} "{{inputs.parameters.cpu_limit}}"
           {% endraw %}
+        - name: GH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: GH_CREDS
       command: [kedro]
       args: ["run", "-p", "{{ pipeline_name }}", "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
 
@@ -194,6 +207,9 @@ spec:
           items:
             - key: gds_key
               path: gds-key
+      - name: github-token
+        secret:
+          secretName: gh-password
     sidecars:
       # Neo4j enterprise sidecar
       - name: neo4j
