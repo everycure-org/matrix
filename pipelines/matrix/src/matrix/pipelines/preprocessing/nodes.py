@@ -10,13 +10,6 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 logger = logging.getLogger(__name__)
 
 
-def coalesce(s: pd.Series, *series: List[pd.Series]):
-    """Coalesce the column information like a SQL coalesce."""
-    for other in series:
-        s = s.mask(pd.isnull, other)
-    return s
-
-
 @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
 def resolve_name(name: str, cols_to_get: Iterable[str], url: str) -> dict:
     """Function to retrieve the normalized identifier through the normalizer.
@@ -91,7 +84,6 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
             "TargetId": Column(str, nullable=False),
             "Label": Column(str, nullable=False),
         },
-        unique=["SourceId", "TargetId", "Label"],
     )
 )
 def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> pd.DataFrame:
@@ -137,7 +129,6 @@ def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> p
             "drug_curie": Column(str, nullable=True),
             "disease_curie": Column(str, nullable=True),
         },
-        unique=["drug_curie", "disease_curie"],
     )
 )
 def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
@@ -180,7 +171,6 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
             "non_significantly_worse": Column(int, nullable=False),
             "significantly_worse": Column(int, nullable=False),
         },
-        unique=["drug_curie", "disease_curie"],
     ),
     df_name="edges",
 )
@@ -238,5 +228,5 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFr
     # Extract nodes
     drugs = df.rename(columns={"drug_curie": "curie", "drug_name": "name"})[["curie", "name"]]
     diseases = df.rename(columns={"disease_curie": "curie", "disease_name": "name"})[["curie", "name"]]
-    nodes = pd.concat([drugs, diseases], ignore_index=True).drop_duplicates(subset="curie")
+    nodes = pd.concat([drugs, diseases], ignore_index=True)
     return {"nodes": nodes, "edges": edges}
