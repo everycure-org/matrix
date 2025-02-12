@@ -60,4 +60,5 @@ jobs:
 
           gh release create "${{ env.intended_tag }}" \
             --title "${{ env.intended_tag }}" \
+            --generate-notes \
             "${ARG_LATEST[@]}"
