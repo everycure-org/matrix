@@ -78,6 +78,9 @@ jobs:
     outputs:
       status: ${{ steps.finally.outputs.status }}
 
+    permissions:
+     contents: 'read'
+     id-token: 'write'
     defaults:
       run:
         working-directory: ./pipelines/matrix
