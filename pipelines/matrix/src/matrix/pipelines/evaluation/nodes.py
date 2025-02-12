@@ -5,7 +5,7 @@ import pandas as pd
 from matrix.datasets.pair_generator import DrugDiseasePairGenerator
 from matrix.inject import inject_object
 from matrix.pipelines.evaluation.evaluation import Evaluation
-from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
+from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
 
 def check_no_train(data: pd.DataFrame, known_pairs: pd.DataFrame) -> None:
