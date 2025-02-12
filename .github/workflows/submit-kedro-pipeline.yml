@@ -3,6 +3,8 @@ name: Periodically run kedro kg-release
 on:
   schedule:
     - cron: '20 14 1 * 2' # At 15:20 CET on the 1st day of the month and on Tuesday.
+  repository_dispatch:
+    types: [submit-kedro-pipeline]
 
 env:
   project_id: 'mtrx-hub-dev-3of'
