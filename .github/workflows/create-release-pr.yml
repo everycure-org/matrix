@@ -121,7 +121,6 @@ jobs:
             --headless \
             --output-file "${{env.release}}/post.md" \
             --no-disable-rendering \
-            --notes-file "${{env.release}}/notes.md" \
             --until ${{env.gitref}}
             
           mv "${{env.release}}" "${GITHUB_WORKSPACE}/${POSTS_DIR}"
