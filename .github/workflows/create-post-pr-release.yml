@@ -51,7 +51,7 @@ jobs:
       - name: Create GitHub release
         env:
             GH_TOKEN: ${{ github.token }}
-            NOTES_DIR: docs/src/releases/notes
+            POSTS_DIR: docs/src/releases/posts
         run: |
           set -euxo pipefail
           echo "Creating release"
@@ -60,7 +60,7 @@ jobs:
           if [ "${{ env.intended_tag }}" = "${highest_version}" ]; then ARG_LATEST=(--latest); else ARG_LATEST=( ); fi
           
           # If the notes file is generated, pass it to --notes-file. Otherwise, pass a default note.
-          NOTES_FILE="${GITHUB_WORKSPACE}/${NOTES_DIR}/${{ env.intended_tag }}/notes.md"
+          NOTES_FILE="${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.intended_tag }}/notes.md"
           
           if [ -f "$NOTES_FILE" ]; then 
             # Remove the mkdocs frontmatter 
