@@ -7,7 +7,7 @@ from .tagging import generate_tags
 # NOTE: Preprocessing pipeline is not well optimized and thus might take a while to run.
 def create_pipeline(**kwargs) -> Pipeline:
     """Create preprocessing pipeline."""
-    return pipeline(
+    pip = pipeline(
         [
             # -------------------------------------------------------------------------
             # EC Clinical Data ingestion and name->id mapping
@@ -18,15 +18,16 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "df": "preprocessing.raw.clinical_trials_data",
                     "resolver_url": "params:preprocessing.name_resolution.url",
                 },
-                outputs="preprocessing.int.mapped_clinical_trials_data",
+                outputs=[
+                    "preprocessing.int.mapped_clinical_trials_data",
+                    "preprocessing.reporting.mapped_clinical_trials_data",
+                ],
                 name="mapped_clinical_trials_data",
                 tags=["ec-clinical-trials-data"],
             ),
             node(
                 func=nodes.clean_clinical_trial_data,
-                inputs=[
-                    "preprocessing.int.mapped_clinical_trials_data",
-                ],
+                inputs={"df": "preprocessing.int.mapped_clinical_trials_data"},
                 outputs={
                     "nodes": "ingestion.raw.ec_clinical_trails.nodes@pandas",
                     "edges": "ingestion.raw.ec_clinical_trails.edges@pandas",
@@ -39,20 +40,24 @@ def create_pipeline(**kwargs) -> Pipeline:
             # -------------------------------------------------------------------------
             node(
                 func=nodes.process_medical_nodes,
-                inputs=["preprocessing.raw.ec_medical_team.nodes", "params:preprocessing.name_resolution.url"],
-                outputs="ingestion.raw.ec_medical_team.nodes@pandas",
+                inputs={
+                    "df": "preprocessing.raw.ec_medical_team.nodes",
+                    "resolver_url": "params:preprocessing.name_resolution.url",
+                },
+                outputs=["ingestion.raw.ec_medical_team.nodes@pandas", "preprocessing.reporting.ec_medical_team.nodes"],
                 name="normalize_ec_medical_team_nodes",
                 tags=["ec-medical-kg"],
             ),
             node(
                 func=nodes.process_medical_edges,
-                inputs=[
-                    "ingestion.raw.ec_medical_team.nodes@pandas",
-                    "preprocessing.raw.ec_medical_team.edges",
-                ],
-                outputs="ingestion.raw.ec_medical_team.edges@pandas",
+                inputs={
+                    "int_nodes": "ingestion.raw.ec_medical_team.nodes@pandas",
+                    "raw_edges": "preprocessing.raw.ec_medical_team.edges",
+                },
+                outputs=["ingestion.raw.ec_medical_team.edges@pandas", "preprocessing.reporting.ec_medical_team.edges"],
                 name="create_int_ec_medical_team_edges",
                 tags=["ec-medical-kg"],
             ),
         ]
     )
+    return pip

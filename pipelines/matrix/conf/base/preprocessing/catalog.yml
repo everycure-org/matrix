@@ -49,14 +49,31 @@ preprocessing.int.mapped_clinical_trials_data:
   save_args:
     sep: "\t"
 
+preprocessing.raw.ec_medical_team.edges:
+  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
+  load_args:
+    sheet_name: new_edges
+    columns: ["Source", "Target", "Label"] 
 preprocessing.raw.ec_medical_team.nodes:
   <<: [*_layer_raw, *_medical_kg_sheets_dataset]
   load_args:
     sheet_name: new_nodes
     columns: ["ID", "name", "category", "new_id", "description"]
 
-preprocessing.raw.ec_medical_team.edges:
+preprocessing.reporting.ec_medical_team.nodes:
   <<: [*_layer_raw, *_medical_kg_sheets_dataset]
-  load_args:
+  save_args:
+    sheet_name: new_nodes
+    write_columns: ["curie", "normalized_curie", "label", "types"]
+
+preprocessing.reporting.ec_medical_team.edges:
+  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
+  save_args:
     sheet_name: new_edges
-    columns: ["Source", "Target", "Label"]
+    write_columns: ["SourceId", "TargetId"]
+
+preprocessing.reporting.mapped_clinical_trials_data:
+  <<: [*_layer_raw, *_medical_clinical_trials_sheet_dataset]
+  save_args:
+    sheet_name: new_clinical_trial_DD_pairs
+    write_columns: ["drug_curie", "disease_curie"]

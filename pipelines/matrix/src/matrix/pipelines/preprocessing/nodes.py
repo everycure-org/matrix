@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Iterable, List, Tuple
+from typing import Dict, Iterable, List, Tuple
 
 import pandas as pd
 import requests
@@ -44,7 +44,7 @@ def resolve_name(name: str, cols_to_get: Iterable[str], url: str) -> dict:
         },
     )
 )
-def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
+def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Map medical nodes with name resolver.
 
     Args:
@@ -74,7 +74,7 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
     is_unique = df["normalized_curie"].groupby(df["normalized_curie"]).transform("count") == 1
     if not is_unique.all():
         logger.warning(f"{(~is_unique).sum()} EC medical nodes are duplicated.")
-    return df
+    return df, df
 
 
 @check_output(
@@ -86,7 +86,7 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
         },
     )
 )
-def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> pd.DataFrame:
+def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Function to create int edges dataset.
 
     Function ensures edges dataset link curies in the KG.
@@ -113,7 +113,7 @@ def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> p
         )
         .drop(columns="ID")
     )
-    return res
+    return res, res
 
 
 @check_output(
@@ -131,7 +131,7 @@ def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> p
         },
     )
 )
-def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
+def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Resolve names to curies for source and target columns in clinical trials data.
 
     Args:
@@ -146,7 +146,7 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
     disease_df = pd.DataFrame(disease_data.tolist()).rename(columns={"curie": "disease_curie"})
     df = pd.concat([df, drug_df, disease_df], axis=1)
 
-    return df
+    return df, df
 
 
 @check_output(
@@ -174,7 +174,7 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
     ),
     df_name="edges",
 )
-def clean_clinical_trial_data(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def clean_clinical_trial_data(df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
     """Clean clinical trails data.
 
     Function to clean the mapped clinical trial dataset for use in time-split evaluation metrics.
