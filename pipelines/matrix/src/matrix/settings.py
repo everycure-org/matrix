@@ -70,11 +70,11 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             {"evaluation_name": "full_matrix_trials"},
         ],
         "stability": [
-            # {"stability_name": "stability_overlap"},
-            # {"stability_name": "stability_ranking"},
-            # {
-            #     "stability_name": "rank_commonality"
-            # },  # note - rank_commonality will be only used if you have a shared commonality@k and spearman@k metrics
+            {"stability_name": "stability_overlap"},
+            {"stability_name": "stability_ranking"},
+            {
+                "stability_name": "rank_commonality"
+            },  # note - rank_commonality will be only used if you have a shared commonality@k and spearman@k metrics
         ],
     }
 )
