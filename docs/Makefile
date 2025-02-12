@@ -1,5 +1,9 @@
+export UV_PYTHON = .venv/bin/python
+
 # Makefile that builds or serves the docs.
 .PHONY: build serve
+
+.ONESHELL:
 
 build: install
 	.venv/bin/mkdocs build -s # build in strict mode, all links must function
@@ -17,3 +21,6 @@ test: install
 
 deploy: build
 	gcloud app deploy
+
+lock:
+	uv pip compile requirements.in > requirements.txt
