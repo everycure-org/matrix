@@ -58,6 +58,7 @@ def cli():
 @click.option("--quiet", "-q", is_flag=True, default=False, help="Disable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
+@click.option("--nodes", type=str, default="", help="Specify nodes to run", callback=split_string)
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 @click.option("--headless", is_flag=True, default=False, help="Skip confirmation prompt")
 @click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
@@ -70,6 +71,7 @@ def submit(
     pipeline: str,
     quiet: bool,
     dry_run: bool,
+    nodes: List[str],
     from_nodes: List[str],
     is_test: bool,
     headless: bool,
@@ -79,7 +81,7 @@ def submit(
     if not quiet:
         log.setLevel(logging.DEBUG)
 
-    if pipeline in ('data_release', 'kg_release'):
+    if pipeline in ('data_release', 'kg_release') and not nodes:
         abort_if_unmet_git_requirements(release_version)
         abort_if_intermediate_release(release_version)
 
@@ -89,13 +91,16 @@ def submit(
     if pipeline in ["fabricator", "test"]:
         raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
     
-    if not headless and from_nodes:
-        if not click.confirm("Using 'from-nodes' is highly experimental and may break due to MLFlow issues with tracking the right run. Are you sure you want to continue?", default=False):
+    if not headless and (from_nodes or nodes):
+        if not click.confirm("Using 'from-nodes' or 'nodes' is highly experimental and may break due to MLFlow issues with tracking the right run. Are you sure you want to continue?", default=False):
             raise click.Abort()
 
     pipeline_obj = kedro_pipelines[pipeline]
     if from_nodes:
         pipeline_obj = pipeline_obj.from_nodes(*from_nodes)
+
+    if nodes:
+        pipeline_obj = pipeline_obj.filter(node_names=nodes)
 
     run_name = get_run_name(run_name)
     pipeline_obj.name = pipeline
