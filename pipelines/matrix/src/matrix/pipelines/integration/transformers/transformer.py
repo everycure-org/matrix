@@ -1,29 +1,24 @@
 from abc import ABC, abstractmethod
+from typing import Dict
 
 import pyspark.sql as ps
 
 
-class GraphTransformer(ABC):
-    @abstractmethod
-    def transform_nodes(self, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
-        """
-        Function to transform nodes into the common format.
-
-        Args:
-            nodes_df: dataframe with nodes
-        Returns:
-            Nodes in standarized format
-        """
-        ...
+class Transformer(ABC):
+    """Data source transformer."""
 
     @abstractmethod
-    def transform_edges(self, edges_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
-        """
-        Function to transform edges into the common format.
+    def transform(self, **kwargs) -> Dict[str, ps.DataFrame]: ...
 
-        Args:
-            edges_df: dataframe with edges
-        Returns:
-            Edges in standarized format
-        """
-        ...
+
+class GraphTransformer(Transformer):
+    """Transformer for graph input sources."""
+
+    def transform(self, nodes_df: ps.DataFrame, edges_df: ps.DataFrame, **kwargs) -> Dict[str, ps.DataFrame]:
+        return {"nodes": self.transform_nodes(nodes_df, **kwargs), "edges": self.transform_edges(edges_df, **kwargs)}
+
+    @abstractmethod
+    def transform_nodes(self, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFrame: ...
+
+    @abstractmethod
+    def transform_edges(self, edges_df: ps.DataFrame, **kwargs) -> ps.DataFrame: ...
