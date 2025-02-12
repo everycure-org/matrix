@@ -16,7 +16,7 @@ def create_ground_truth_pipeline() -> list:
                 "neg_df": "ingestion.raw.ground_truth.negatives",
             },
             outputs="ingestion.raw.ground_truth.edges@pandas",
-            name="create_gt_dataframe",
+            name="concatenate_gt_dataframe",
             tags=["ground-truth"],
         )
     ]
