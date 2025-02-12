@@ -2,6 +2,12 @@
 
 [![CI pipline](https://github.com/everycure-org/matrix/actions/workflows/matrix-ci.yml/badge.svg?branch=main)](https://github.com/everycure-org/matrix/actions/workflows/matrix-ci.yml)
 
+[![Infrastructure Deploy](https://github.com/everycure-org/matrix/actions/workflows/infra-deploy.yml/badge.svg?branch=infra&event=push)](https://github.com/everycure-org/matrix/actions/workflows/infra-deploy.yml)
+
+[![Documentation Page Deployment](https://github.com/everycure-org/matrix/actions/workflows/docs-deploy.yml/badge.svg)](https://github.com/everycure-org/matrix/actions/workflows/docs-deploy.yml)
+
+[![Evidence Dashboard Deployment](https://github.com/everycure-org/matrix/actions/workflows/evidence-deploy.yml/badge.svg)](https://github.com/everycure-org/matrix/actions/workflows/evidence-deploy.yml)
+
 This repo contains the infrastructure for the MATRIX project for drug repurposing, including data science pipelines, documentation and data base configurations.
 
 **Please visit our [Documentation Page](http://docs.dev.everycure.org) for all details, including onboarding instructions and documentation about the pipeline and our infrastructure. 
