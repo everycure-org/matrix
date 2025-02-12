@@ -21,12 +21,11 @@ The current approach optimizes the caching mechanism using a Spark DataFrame and
 ### Steps
 1. **Frame with text column:** The input DataFrame contains text values that need enrichment.
 2. **Cache lookup:** A join operation is performed with the existing cache to retrieve precomputed embeddings.
-3. **Partly enriched frame:** Some rows are enriched from the cache, while others remain NULL (cache misses).
-4. **Cache miss handling:**
+3. **Cache miss handling:**
    - The distinct cache misses are identified.
    - API calls are made only for these missing entries.
-5. **Cache update:** The newly retrieved embeddings are merged into the cache.
-6. **Final enrichment:** The dataset is fully enriched using both cached and newly computed embeddings.
+4. **Cache update:** The newly retrieved embeddings are merged into the cache.
+5. **Final enrichment:** The dataset is fully enriched using both cached and newly computed embeddings.
 
 ## 3. **Future Approach**
 ### Overview
