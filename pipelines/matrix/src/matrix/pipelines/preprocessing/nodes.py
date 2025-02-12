@@ -42,9 +42,10 @@ def resolve_name(name: str, cols_to_get: Iterable[str], url: str) -> dict:
             "category": Column(str, nullable=False),
             "ID": Column(int, nullable=False),
         },
+        # unique=["normalized_curie"],
     )
 )
-def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
     """Map medical nodes with name resolver.
 
     Args:
@@ -74,7 +75,7 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> Tuple[pd.DataF
     is_unique = df["normalized_curie"].groupby(df["normalized_curie"]).transform("count") == 1
     if not is_unique.all():
         logger.warning(f"{(~is_unique).sum()} EC medical nodes are duplicated.")
-    return df, df
+    return df
 
 
 @check_output(
@@ -84,9 +85,10 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> Tuple[pd.DataF
             "TargetId": Column(str, nullable=False),
             "Label": Column(str, nullable=False),
         },
+        # unique=["SourceId", "TargetId", "Label"],
     )
 )
-def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> pd.DataFrame:
     """Function to create int edges dataset.
 
     Function ensures edges dataset link curies in the KG.
@@ -113,7 +115,7 @@ def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> T
         )
         .drop(columns="ID")
     )
-    return res, res
+    return res
 
 
 @check_output(
@@ -129,9 +131,10 @@ def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> T
             "drug_curie": Column(str, nullable=True),
             "disease_curie": Column(str, nullable=True),
         },
+        # unique=["drug_curie", "disease_curie"],
     )
 )
-def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
     """Resolve names to curies for source and target columns in clinical trials data.
 
     Args:
@@ -146,7 +149,7 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
     disease_df = pd.DataFrame(disease_data.tolist()).rename(columns={"curie": "disease_curie"})
     df = pd.concat([df, drug_df, disease_df], axis=1)
 
-    return df, df
+    return df
 
 
 @check_output(
@@ -155,7 +158,7 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
             "curie": Column(str, nullable=False),
             "name": Column(str, nullable=False),
         },
-        unique=["curie"],
+        # unique=["curie"],
     ),
     df_name="nodes",
 )
@@ -171,6 +174,7 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
             "non_significantly_worse": Column(int, nullable=False),
             "significantly_worse": Column(int, nullable=False),
         },
+        unique=["drug_curie", "disease_curie"],
     ),
     df_name="edges",
 )
