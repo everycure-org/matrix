@@ -230,7 +230,7 @@ def normalize_edges(
     """
     mapping_df = _format_mapping_df(mapping_df)
 
-    # edges are bit more complex, we need to map both the subject and object
+    # edges are bit more complex, we need to map both the subject and object; right join to ensure we only keep edges
     edges = edges.join(
         mapping_df.withColumnsRenamed(
             {
@@ -240,7 +240,7 @@ def normalize_edges(
             }
         ),
         on="subject",
-        how="right",
+        how="left",
     )
     edges = edges.join(
         mapping_df.withColumnsRenamed(
@@ -251,7 +251,7 @@ def normalize_edges(
             }
         ),
         on="object",
-        how="right",
+        how="left",
     )
     edges = edges.withColumnsRenamed({"subject": "original_subject", "object": "original_object"}).withColumnsRenamed(
         {"subject_normalized": "subject", "object_normalized": "object"}
