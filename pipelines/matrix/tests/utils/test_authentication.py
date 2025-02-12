@@ -29,6 +29,9 @@ def oauth2_token_response(monkeypatch):
 def test_oauth_flow(oauth2_token_response, tmpdir, monkeypatch):
     random_port = random.randint(4000, 5000)
 
+    # Mock the OAuth client secret
+    monkeypatch.setattr("matrix.utils.authentication.get_oauth_client_secret", lambda: "mock_client_secret")
+
     def mock_click_launch(*args, **kwargs):
         # this should simulate an immediately returning function call that opens a browser
         # where the user performs an authentication flow
