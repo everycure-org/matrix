@@ -1,6 +1,7 @@
 import os
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
 from queue import Queue
 from urllib.parse import parse_qs, urlparse
 
@@ -13,12 +14,32 @@ from rich.console import Console
 
 console = Console()
 
+
+def get_oauth_client_secret() -> str:
+    """Get OAuth client secret from local configuration.
+
+    Returns:
+        str: The OAuth client secret
+    """
+    secret_path = Path(__file__).parents[3] / "conf" / "local" / "oauth_client_secret.txt"
+
+    if not secret_path.exists():
+        raise FileNotFoundError(
+            f"OAuth client secret file not found at {secret_path}. "
+            "Please run 'make fetch_oauth_client_secret' first."
+        )
+
+    with open(secret_path, "r") as f:
+        return f.read().strip()
+
+
 # OAuth 2.0 client configuration
-CLIENT_ID = "938607797672-3958nfhihd2s9lv8vlvka60g3810ad4n.apps.googleusercontent.com"
-AUTH_URI = "https://accounts.google.com/o/oauth2/v2/auth"
+CLIENT_ID = "938607797672-i7md7k1u3kv89e02b6d8ouo0mi9tscos.apps.googleusercontent.com"
+CLIENT_SECRET = get_oauth_client_secret()
+AUTH_URI = "https://accounts.google.com/o/oauth2/auth"
 TOKEN_URI = "https://oauth2.googleapis.com/token"
 SCOPE = ["openid", "email"]
-LOCAL_PATH = "data/.credentials/"
+LOCAL_PATH = "conf/local/"
 
 # FastAPI app for callback handling
 result_queue = Queue()
@@ -106,7 +127,8 @@ def perform_oauth_flow(local_port: int) -> dict:
         f"client_id={CLIENT_ID}&"
         f"redirect_uri=http://localhost:{successful_port}/hook&"
         f"scope={' '.join(SCOPE)}&"
-        f"response_type=token"
+        f"response_type=code&"
+        f"access_type=offline"
     )
     console.print("Opening browser for authentication...")
     console.print("if the browser does not open, please open it manually and navigate to the following URL:")
@@ -135,7 +157,7 @@ def exchange_auth_code(auth_code: str, port: int) -> dict:
     token_request = {
         "code": auth_code,
         "client_id": CLIENT_ID,
-        # "client_secret": CLIENT_SECRET,
+        "client_secret": CLIENT_SECRET,
         "redirect_uri": f"http://localhost:{port}/hook",
         "scope": " ".join(SCOPE),
         "grant_type": "authorization_code",
@@ -193,7 +215,7 @@ def request_new_iap_token(local_port: int = 33333) -> Credentials:
         id_token=token_data["id_token"],
         token_uri=TOKEN_URI,
         client_id=CLIENT_ID,
-        # client_secret=CLIENT_SECRET,
+        client_secret=CLIENT_SECRET,
         scopes=SCOPE,
     )
 
@@ -204,7 +226,7 @@ def refresh_token(token_data: dict) -> dict:
     params = {
         "grant_type": "refresh_token",
         "client_id": CLIENT_ID,
-        # "client_secret": CLIENT_SECRET,
+        "client_secret": CLIENT_SECRET,
         "refresh_token": token_data["refresh_token"],
     }
 

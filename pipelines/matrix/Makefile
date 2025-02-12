@@ -11,11 +11,14 @@ PREREQUISITES := docker gcloud python3 java uv kubectl
 GCP_PROJECT ?= mtrx-hub-dev-3of
 SA_KEY_SECRET_NAME ?= storage-viewer-sa-key
 SA_KEY_PATH ?= conf/local/service-account.json
+# TODO: Update once we have the new secret created using terraform
+OAUTH_CLIENT_SECRET_SECRET_NAME ?= af_oauth_client_secret
+OAUTH_CLIENT_SECRET_PATH ?= conf/local/oauth_client_secret.txt
 
 # ensures all make targets run in one shell (rather than line by line in new shell)
 .ONESHELL: 
 
-default: prerequisites fetch_sa_key install fast_test integration_test
+default: prerequisites fetch_sa_key fetch_oauth_client_secret install fast_test integration_test
 	echo "done!"
 
 prerequisites:
@@ -38,6 +41,16 @@ fetch_sa_key:
 		> $(SA_KEY_PATH); \
 	chmod 600 $(SA_KEY_PATH); \
 	echo "Service account key saved to $(SA_KEY_PATH)"; \
+
+fetch_oauth_client_secret:
+	echo "Fetching OAuth client secret from Secret Manager..."; \
+	mkdir -p conf/local; \
+	gcloud secrets versions access latest \
+		--secret=$(OAUTH_CLIENT_SECRET_SECRET_NAME) \
+		--project=$(GCP_PROJECT) \
+		> $(OAUTH_CLIENT_SECRET_PATH); \
+	chmod 600 $(OAUTH_CLIENT_SECRET_PATH); \
+	echo "Service account key saved to $(OAUTH_CLIENT_SECRET_PATH)"; \
 
 venv: 
 	if [ ! -d .venv ]; then uv venv -p 3.11; fi
