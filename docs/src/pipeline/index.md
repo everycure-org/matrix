@@ -14,7 +14,7 @@ The current pre-processing pipeline is highly preliminary and is ONLY used to in
 
 The preprocessing pipeline is mapping the names assigned by our medical team to specific IDs using name-resolver service. If you want to run the full pre-processing pipeline, you can do so by running the following command or specifying tags for a specific source:
 
-```
+```bash
 kedro run -p preprocessing 
 # or the following tags for specific sources
 kedro run -p preprocessing --tag ec-clinical-trials-data
