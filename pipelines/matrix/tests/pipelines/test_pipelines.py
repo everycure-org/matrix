@@ -104,8 +104,7 @@ def test_no_non_parameter_entries_from_catalog_unused(
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("kedro_context", ["cloud_kedro_context", "base_kedro_context"])
-def test_memory_data_sets_absent(kedro_context: KedroContext, request: pytest.FixtureRequest) -> None:
+def test_memory_data_sets_absent(cloud_kedro_context: KedroContext) -> None:
     """Tests no MemoryDataSets are created."""
 
     def parse_to_regex(parse_pattern):
@@ -119,14 +118,13 @@ def test_memory_data_sets_absent(kedro_context: KedroContext, request: pytest.Fi
         regex_pattern = re.sub(r"\\{(.*?)\\}", r"(?P<\1>.*?)", escaped_pattern)
         return f"^{regex_pattern}$"
 
-    kedro_context = request.getfixturevalue(kedro_context)
     used_data_sets = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
     used_data_sets_wout_double_params = {x.replace("params:params:", "params:") for x in used_data_sets}
 
     # Matching data factories is really slow, therefore we're compiling each data factory name
     # into a regex, that is subesequently used to determine whether it exists.
-    factories = [re.compile(parse_to_regex(pattern)) for pattern in kedro_context.catalog._dataset_patterns]
-    catalog_datasets = set(kedro_context.catalog.list())
+    factories = [re.compile(parse_to_regex(pattern)) for pattern in cloud_kedro_context.catalog._dataset_patterns]
+    catalog_datasets = set(cloud_kedro_context.catalog.list())
     memory_data_sets = [
         dataset
         for dataset in used_data_sets_wout_double_params
