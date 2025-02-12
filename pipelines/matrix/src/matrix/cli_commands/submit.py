@@ -554,8 +554,8 @@ def abort_if_intermediate_release(release_version: str) -> None:
     release_version = semver.Version.parse(release_version.lstrip("v"))
     releases_list = get_releases()
     latest_minor_release = (get_latest_minor_release(releases_list)).lstrip("v").split(".")
-    latest_major = latest_minor_release[0]
-    latest_minor = latest_minor_release[1]
+    latest_major = int(latest_minor_release[0])
+    latest_minor = int(latest_minor_release[1])
     if ((release_version.major == latest_major and release_version.minor < latest_minor)
         or release_version.major < latest_major):
         raise ValueError("Cannot release a minor/major version lower than the latest official release")

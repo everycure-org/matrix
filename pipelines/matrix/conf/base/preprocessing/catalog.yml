@@ -38,7 +38,6 @@ preprocessing.int.nodes:
   save_args:
     sheet_name: new_nodes
     write_columns: ["curie", "normalized_curie", "label", "types"]
-
   load_args:
     sheet_name: new_nodes
     columns: ["ID", "category", "normalized_curie", "label", "types", "description"]

@@ -12,6 +12,7 @@ def cli():
 
 cli.add_command(submit)
 
+# Add the run command
 cli.add_command(run)
 
 if __name__ == "__main__":

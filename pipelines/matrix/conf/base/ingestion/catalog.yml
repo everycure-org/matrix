@@ -105,36 +105,35 @@ ingestion.raw.ec_medical_team.nodes@pandas:
   <<: [*_layer_raw, *_pandas_csv]
   filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/nodes_conflated_raw.csv
 
-ingestion.raw.ec_medical_team.nodes@spark:
-  <<: [*_spark_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/nodes_conflated_raw.csv
-  save_args:
-    mode: overwrite
-    header: True
-  load_args:
-    header: True
+# ingestion.raw.ec_medical_team.nodes@spark:
+#   <<: [*_spark_csv, *_layer_raw]
+#   filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/nodes_conflated_raw.csv
+#   save_args:
+#     mode: overwrite
+#     header: True
+#   load_args:
+#     header: True
 
 ingestion.raw.ec_medical_team.edges@pandas:
   <<: [ *_layer_int, *_pandas_csv]
   filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/edges_conflated_raw.csv
 
-ingestion.raw.ec_medical_team.edges@spark:
-  <<: [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/edges_conflated_raw.csv
-  save_args:
-    mode: overwrite
-    header: True
-  load_args:
-    header: True
+# ingestion.raw.ec_medical_team.edges@spark:
+#   <<: [*_spark_csv, *_layer_int]
+#   filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/edges_conflated_raw.csv
+#   save_args:
+#     mode: overwrite
+#     header: True
+#   load_args:
+#     header: True
 
+# ingestion.int.ec_medical_team.nodes:
+#   <<: [*_spark_parquet, *_layer_int]
+#   filepath: ${globals:paths.ingestion}/int/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/nodes_conflated_raw
 
-ingestion.int.ec_medical_team.nodes:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/nodes_conflated_raw
-
-ingestion.int.ec_medical_team.edges:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/edges_conflated_raw
+# ingestion.int.ec_medical_team.edges:
+#   <<: [*_spark_parquet, *_layer_int]
+#   filepath: ${globals:paths.ingestion}/int/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/edges_conflated_raw
 
 
 # -------------------------------------------------------------------------
@@ -166,6 +165,24 @@ ingestion.int.ec_clinical_trails.edges:
   filepath: ${globals:paths.ingestion}/int/clinical_trials_data/translator/${globals:data_sources.ec_clinical_trials.version}/edges_conflated_raw
 
 
+# -------------------------------------------------------------------------
+# DrugMech
+# -------------------------------------------------------------------------  
+
+ingestion.raw.drugmech.edges@pandas:
+  type: json.JSONDataset
+  filepath: ${globals:paths.raw}/drugmech/${globals:data_sources.drugmech.version}/indication_paths.json
+
+# ingestion.raw.drugmech.edges@spark:
+#   type: matrix.datasets.gcp.LazySparkDataset
+#   filepath: https://raw.githubusercontent.com/SuLab/DrugMechDB/refs/tags/${globals:data_sources.drugmech.version}/indication_paths.json
+#   file_format: json
+#   load_args:
+#     multiline: true
+
+# ingestion.int.drugmech.edges:
+#   <<: [*_spark_parquet, *_layer_int]
+#   filepath: ${globals:paths.ingestion}/drugmech/${globals:data_sources.drugmech.version}/edges
 
 # -------------------------------------------------------------------------
 # Drug and disease lists
