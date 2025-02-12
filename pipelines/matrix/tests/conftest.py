@@ -27,11 +27,10 @@ def conf_source(matrix_root: Path) -> Path:
     return matrix_root / settings.CONF_SOURCE
 
 
-@pytest.fixture(scope="session")
-def config_loader(conf_source: Path) -> OmegaConfigLoader:
+def build_config_loader(env: str, conf_source: Path) -> OmegaConfigLoader:
     """Instantiate a config loader."""
     return OmegaConfigLoader(
-        env="cloud",
+        env=env,
         base_env="base",
         default_run_env="base",
         conf_source=conf_source,
@@ -55,8 +54,7 @@ def config_loader(conf_source: Path) -> OmegaConfigLoader:
     )
 
 
-@pytest.fixture(scope="session")
-def kedro_context(config_loader: OmegaConfigLoader) -> KedroContext:
+def build_kedro_context(config_loader: OmegaConfigLoader) -> KedroContext:
     """Instantiate a KedroContext."""
     return KedroContext(
         env="cloud",
@@ -65,6 +63,28 @@ def kedro_context(config_loader: OmegaConfigLoader) -> KedroContext:
         config_loader=config_loader,
         hook_manager=_create_hook_manager(),
     )
+
+
+@pytest.fixture(scope="session")
+def cloud_config_loader(conf_source: Path) -> OmegaConfigLoader:
+    return build_config_loader("cloud", conf_source)
+
+
+@pytest.fixture(scope="session")
+def base_config_loader(conf_source: Path) -> OmegaConfigLoader:
+    return build_config_loader("base", conf_source)
+
+
+@pytest.fixture(scope="session")
+def cloud_kedro_context(conf_source: Path) -> KedroContext:
+    config_loader = build_config_loader("cloud", conf_source)
+    return build_kedro_context(config_loader)
+
+
+@pytest.fixture(scope="session")
+def base_kedro_context(conf_source: Path) -> KedroContext:
+    config_loader = build_config_loader("base", conf_source)
+    return build_kedro_context(config_loader)
 
 
 @pytest.fixture(scope="session")
