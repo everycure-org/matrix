@@ -110,10 +110,6 @@ jobs:
         if: env.generate_notes == 'True'
         run: |
           mkdir -p "${{env.release}}"
-          uv run matrix releases release-notes \
-            --headless \
-            --output-file "${{env.release}}/notes.md" \
-            --until ${{env.gitref}}
 
           # If these fail, you may have crossed the quotas. See 
           # https://cloud.google.com/vertex-ai/generative-ai/docs/quotas
@@ -121,12 +117,11 @@ jobs:
             --headless \
             --output-file "${{env.release}}/post.md" \
             --no-disable-rendering \
-            --notes-file "${{env.release}}/notes.md" \
             --until ${{env.gitref}}
-            
+          
           mv "${{env.release}}" "${GITHUB_WORKSPACE}/${POSTS_DIR}"
           git add "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{env.release}}" && \
-          git commit -m "added release notes & article draft" 
+          git commit -m "added release notes & article draft"
 
       - name: Setup docs venv & generate yaml
         working-directory: docs/scripts

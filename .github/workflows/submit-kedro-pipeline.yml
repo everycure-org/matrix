@@ -3,6 +3,8 @@ name: Periodically run kedro kg-release
 on:
   schedule:
     - cron: '20 14 1 * 2' # At 15:20 CET on the 1st day of the month and on Tuesday.
+  repository_dispatch:
+    types: [submit-kedro-pipeline]
 
 env:
   project_id: 'mtrx-hub-dev-3of'
@@ -44,7 +46,7 @@ jobs:
               /usr/local/lib/android/sdk/ndk \
               "$AGENT_TOOLSDIRECTORY" && \
           df -h
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -103,9 +105,11 @@ jobs:
         run: |
           git switch -C release/${{env.release_version}} "${{github.ref_name}}"
           git push
-          
+
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Submit the kedro pipeline"
           kedro submit \
