@@ -11,7 +11,6 @@ def cli():
     pass
 
 
-# TODO: deprecation warning on submit
 cli.add_command(submit)
 cli.add_command(run)
 cli.add_command(experiment)

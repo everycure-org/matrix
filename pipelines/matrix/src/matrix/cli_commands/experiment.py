@@ -59,7 +59,6 @@ def create(experiment_name):
 
 
 @experiment.command()
-# @env_option
 # These are all copied directly from submit. If we want to maintain kedro submit functionality I think we need to
 # keep the duplication for now. Then we can just rename submit to run and add the extra mlflow steps.
 @click.option("--username", type=str, required=True, help="Specify the username to use")
@@ -101,6 +100,7 @@ def run(
                 f"❌ Error: current branch does not begin with experiment/. Please define an experiment name or start from an experiment branch."
             )
             raise click.Abort()
+        experiment_name = experiment_name.strip("experiment/")
 
     click.confirm(f"Start a new run on experiment '{experiment_name}', is that correct?", abort=True)
 
