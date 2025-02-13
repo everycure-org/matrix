@@ -73,7 +73,6 @@ def get_iap_token() -> Credentials:
         with open(f"{LOCAL_PATH}/token.json", "w") as f:
             f.write(token_data.to_json())
 
-    # always: return
     return token_data
 
 
