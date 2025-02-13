@@ -100,6 +100,7 @@ jobs:
       - run: make install
       - run: make precommit
       - run: make fetch_sa_key
+      - run: make fetch_oauth_client_secret
       - run: uv run kedro catalog resolve --env base
       - run: uv run kedro catalog resolve --env cloud
       - run: uv run kedro catalog resolve --env test

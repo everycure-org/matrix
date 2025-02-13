@@ -25,12 +25,14 @@ def oauth2_token_response(monkeypatch):
     )
 
 
+@pytest.fixture
+def mock_oauth_client_secret(monkeypatch):
+    monkeypatch.setattr("matrix.utils.authentication.get_oauth_client_secret", lambda: "mock_client_secret")
+
+
 @responses.activate
 def test_oauth_flow(oauth2_token_response, tmpdir, monkeypatch):
     random_port = random.randint(4000, 5000)
-
-    # Mock the OAuth client secret
-    monkeypatch.setattr("matrix.utils.authentication.get_oauth_client_secret", lambda: "mock_client_secret")
 
     def mock_click_launch(*args, **kwargs):
         # this should simulate an immediately returning function call that opens a browser
@@ -54,6 +56,7 @@ def test_oauth_flow(oauth2_token_response, tmpdir, monkeypatch):
     responses.add(method="POST", url=TOKEN_URI, json=token_response)
 
     with patch("matrix.utils.authentication.LOCAL_PATH", new=tmpdir):
+        monkeypatch.setattr("matrix.utils.authentication.get_oauth_client_secret", lambda: "mock_client_secret")
         token = request_new_iap_token(random_port)
     assert token is not None
     assert isinstance(token, Credentials)
