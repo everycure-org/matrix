@@ -3,6 +3,8 @@
 # Aggregations to report in MLFlow (list of names in modelling.aggregation_functions)
 evaluation.reported_aggregations:
   - mean
+  - min
+  - max
 
 # Threshold-based classification metrics for ground truth data
 evaluation.simple_classification:
