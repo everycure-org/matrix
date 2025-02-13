@@ -139,3 +139,51 @@ embeddings.feat.cache: &_cache
 
 embeddings.feat.cache_out:
   <<: *_cache
+
+caching.input:
+    type: matrix.datasets.gcp.LazySparkDataset
+    filepath: data/01_raw/cache_input
+
+# cache:
+cache.read: &dataset_cache
+  type: matrix.datasets.gcp.SparkWithSchemaDataset
+  filepath: data/01_raw/cache
+  provide_empty_if_not_present: true
+  load_args:
+    schema:
+      _object: pyspark.sql.types.StructType
+      fields:
+        - _object: pyspark.sql.types.StructField
+          name: key
+          dataType:
+            _object: pyspark.sql.types.StringType
+          nullable: False
+        - _object: pyspark.sql.types.StructField
+          name: value
+          dataType:
+            _object: pyspark.sql.types.ArrayType
+            elementType:
+              _object: pyspark.sql.types.FloatType
+          nullable: False
+        - _object: pyspark.sql.types.StructField
+          name: api
+          dataType:
+            _object: pyspark.sql.types.StringType
+          nullable: False
+cache.write:
+  <<: *dataset_cache
+  save_args:
+    mode: append
+    partitionBy:
+    - api
+cache.misses:
+    type: matrix.datasets.gcp.LazySparkDataset
+    filepath: data/01_raw/cache_misses
+    save_args:
+      mode: overwrite
+
+fully_enriched:
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: data/01_raw/fully_enriched
+  save_args:
+    mode: overwrite

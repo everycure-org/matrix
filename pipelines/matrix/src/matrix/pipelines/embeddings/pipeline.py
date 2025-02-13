@@ -2,6 +2,7 @@ from kedro.pipeline import Pipeline, pipeline
 
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
+from ..batch.pipeline import cached_api_enrichment_pipeline
 from . import nodes
 
 
@@ -164,3 +165,24 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
         ],
     )
+
+
+def create_node_embeddings_pipeline() -> Pipeline:
+    # A demo for now
+    return cached_api_enrichment_pipeline(
+        input="caching.input",
+        cache="cache.read",
+        cache_out="cache.write",
+        cache_misses="cache.misses",
+        primary_key="params:caching.primary_key",
+        cache_miss_resolver="params:caching.resolver",
+        preprocessor="params:caching.preprocessor",
+        api="params:caching.api",
+        output="fully_enriched",
+        new_col="params:caching.new_col",
+    )
+
+
+# TODO:
+#  - write e2e test
+#  - use node normalizer with async
