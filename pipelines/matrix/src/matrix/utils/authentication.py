@@ -35,7 +35,6 @@ def get_oauth_client_secret() -> str:
 
 # OAuth 2.0 client configuration
 CLIENT_ID = "938607797672-i7md7k1u3kv89e02b6d8ouo0mi9tscos.apps.googleusercontent.com"
-CLIENT_SECRET = get_oauth_client_secret()
 AUTH_URI = "https://accounts.google.com/o/oauth2/auth"
 TOKEN_URI = "https://oauth2.googleapis.com/token"
 SCOPE = ["openid", "email"]
@@ -154,6 +153,7 @@ def exchange_auth_code(auth_code: str, port: int) -> dict:
     Raises:
         ValueError: If ID token is not present in response
     """
+    CLIENT_SECRET = get_oauth_client_secret()
     token_request = {
         "code": auth_code,
         "client_id": CLIENT_ID,
@@ -197,7 +197,8 @@ def request_new_iap_token(local_port: int = 33333) -> Credentials:
     Raises:
         ValueError: If required tokens are not received in the authentication flow
     """
-    # Start the local server
+
+    CLIENT_SECRET = get_oauth_client_secret()
 
     # Construct and launch OAuth URL
     code_response, port = perform_oauth_flow(local_port)
@@ -223,6 +224,7 @@ def request_new_iap_token(local_port: int = 33333) -> Credentials:
 def refresh_token(token_data: dict) -> dict:
     """Refresh the OAuth2 tokens using the refresh token."""
 
+    CLIENT_SECRET = get_oauth_client_secret()
     params = {
         "grant_type": "refresh_token",
         "client_id": CLIENT_ID,
