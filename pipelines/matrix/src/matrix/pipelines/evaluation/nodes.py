@@ -215,7 +215,7 @@ def generate_overlapping_dataset(generator: DrugDiseasePairGenerator, *matrices:
     return generator.generate(matrices)
 
 
-def calculate_rank_commonality(ranking_output: dict, commonality_output: dict) -> dict:
+def calculate_rank_commonality(ranking_output: dict, commonality_output: dict) -> Any:
     """Function to calculate rank commonality (custom metric).
 
     Args:
