@@ -28,3 +28,4 @@ variable "k8s_pod_ip_range" {
 
 variable "k8s_svc_ip_range" {
 }
+
