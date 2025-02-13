@@ -1,13 +1,7 @@
-resource "google_iap_brand" "matrix_google_iap_brand" {
-  application_title = "Every Cure Dev Platform"
-  project           = var.project_id
-  support_email     = "gcp-admins@everycure.org"
-}
-
 # Create OAuth client
 resource "google_iap_client" "matrix_cli_client" {
   display_name = "Matrix CLI OAuth Client"
-  brand        = google_iap_brand.matrix_google_iap_brand.name
+  brand        = "Every Cure Dev Platform"
 }
 
 # Create a secret in Secret Manager for the OAuth client secret
