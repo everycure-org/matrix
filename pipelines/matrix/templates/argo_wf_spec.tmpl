@@ -95,10 +95,6 @@ spec:
               {% endraw %}
               ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_limit}}"
               {% endraw %}
-          volumeMounts:
-            - name: github-token
-              mountPath: /etc/github
-              readOnly: true
     volumes:
       - name: github-token
         secret:
