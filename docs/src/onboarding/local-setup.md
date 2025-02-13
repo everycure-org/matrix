@@ -112,7 +112,7 @@ This command will kick off our kedro pipeline in a test environment using a fabr
 Generally, the `Makefile` is a good place to refer to when you need to re-set your environment. Once the command runs successfully, you should be able to run the pipeline end-to-end locally!
 
 !!! help "Encountering issues?"
-    If you're experiencing any problems running the `MakeFile`, please refer to our [Common Errors FAQ](../FAQ/common_errors.md) for troubleshooting guidance. This resource contains solutions to frequently encountered issues and may help resolve your problem quickly.
+    If you're experiencing any problems running the `MakeFile`, please refer to our [Common Errors FAQ](../references/common_errors.md) for troubleshooting guidance. This resource contains solutions to frequently encountered issues and may help resolve your problem quickly.
 
 
 ??? note "Understanding and troubleshooting your `make` run"
