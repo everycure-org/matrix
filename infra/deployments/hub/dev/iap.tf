@@ -1,18 +1,18 @@
 resource "google_iap_brand" "matrix_google_iap_brand" {
-  support_email     = "matrix-all@everycure.org" # Using the existing group email
-  application_title = "Matrix Hub Dev Application"
+  application_title = "Every Cure Dev Platform"
   project           = var.project_id
+  support_email     = "gcp-admins@everycure.org"
 }
 
-# Create OAuth client for desktop application
-resource "google_iap_client" "desktop_client" {
+# Create OAuth client
+resource "google_iap_client" "matrix_cli_client" {
   display_name = "Matrix CLI OAuth Client"
   brand        = google_iap_brand.matrix_google_iap_brand.name
 }
 
 # Create a secret in Secret Manager for the OAuth client secret
 resource "google_secret_manager_secret" "oauth_client_secret" {
-  secret_id = "desktop-app-oauth-client-secret"
+  secret_id = "matrix-cli-oauth-client-secret"
 
   replication {
     auto {}
@@ -22,7 +22,7 @@ resource "google_secret_manager_secret" "oauth_client_secret" {
 # Store the OAuth client secret in Secret Manager
 resource "google_secret_manager_secret_version" "oauth_client_secret_version" {
   secret      = google_secret_manager_secret.oauth_client_secret.id
-  secret_data = google_iap_client.desktop_client.secret
+  secret_data = google_iap_client.matrix_cli_client.secret
 }
 
 # IAM binding to allow necessary service accounts to access the secret
