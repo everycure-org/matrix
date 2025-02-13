@@ -9,7 +9,7 @@
 
 This error occurs when the authentication libraries from Google try to fetch
 authentication credentials from the Compute Engine Metadata server. This occurs because
-no credentials were found. When running on a personal machine, a `make fetch_sa_key`
+no credentials were found. When running on a personal machine, a `make fetch_secrets`
 should fix this issue. This usually gets executed automatically when running `make` upon
 setup of the local environment.
 
