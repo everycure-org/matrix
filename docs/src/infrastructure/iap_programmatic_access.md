@@ -25,7 +25,7 @@ The authentication process follows these steps:
 
 1. **OAuth2 Configuration**: Set up OAuth2 client credentials for authentication:
    - Client ID and Secret are configured
-   - Redirect URI is set to a local callback server (http://localhost:4444/hook)
+   - Redirect URI is set to a local callback server (http://localhost:33333/hook)
    - Required scopes: "openid" and "email"
 
 2. **User Authentication**:

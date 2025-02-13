@@ -29,24 +29,6 @@ from rich.console import Console
 
 console = Console()
 
-
-def get_oauth_client_secret() -> str:
-    """Get OAuth client secret from local configuration.
-
-    Returns:
-        str: The OAuth client secret
-    """
-    secret_path = Path(__file__).parents[3] / "conf" / "local" / "oauth_client_secret.txt"
-
-    if not secret_path.exists():
-        raise FileNotFoundError(
-            f"OAuth client secret file not found at {secret_path}. " "Please run 'make fetch_secrets' first."
-        )
-
-    with open(secret_path, "r") as f:
-        return f.read().strip()
-
-
 # OAuth 2.0 client configuration
 CLIENT_ID = "938607797672-i7md7k1u3kv89e02b6d8ouo0mi9tscos.apps.googleusercontent.com"
 AUTH_URI = "https://accounts.google.com/o/oauth2/auth"
@@ -122,6 +104,18 @@ def start_callback_server(local_port: int) -> int:
     server_thread = threading.Thread(target=_run_callback_server)
     server_thread.start()
     return local_port
+
+
+def get_oauth_client_secret() -> str:
+    """Get OAuth client secret from local configuration.
+
+    Returns:
+        str: The OAuth client secret
+    """
+    path = f"{LOCAL_PATH}/oauth_client_secret.txt"
+
+    with open(path, "r") as f:
+        return f.read().strip()
 
 
 def perform_oauth_flow(local_port: int) -> dict:
@@ -232,29 +226,3 @@ def request_new_iap_token(local_port: int = 33333) -> Credentials:
         client_secret=CLIENT_SECRET,
         scopes=SCOPE,
     )
-
-
-def refresh_token(token_data: dict) -> dict:
-    """Refresh the OAuth2 tokens using the refresh token."""
-
-    CLIENT_SECRET = get_oauth_client_secret()
-    params = {
-        "grant_type": "refresh_token",
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET,
-        "refresh_token": token_data["refresh_token"],
-    }
-
-    console.print("Refreshing tokens...")
-    response = requests.post(TOKEN_URI, data=params)
-
-    if not response.ok:
-        raise ValueError(f"Token refresh failed: {response.status_code} - {response.text}")
-
-    new_token_data = response.json()
-
-    # Verify the new ID token
-    _verify_token(new_token_data["id_token"])
-    console.print("Successfully refreshed tokens")
-
-    return new_token_data
