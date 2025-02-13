@@ -42,7 +42,6 @@ class RobokopTransformer(GraphTransformer):
             .withColumnRenamed("description:string", "description")
             # getting most specific category
             .transform(determine_most_specific_category)
-            .select(*[col for col in schema.BIOLINK_KG_NODE_SCHEMA.columns.keys()])
         )
         # fmt: on
 
