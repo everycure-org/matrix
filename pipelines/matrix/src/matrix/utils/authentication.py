@@ -1,3 +1,18 @@
+"""Authentication utilities for Identity-Aware Proxy (IAP) access.
+
+This module handles OAuth2 authentication flow with Google's Identity-Aware Proxy (IAP).
+It manages the process of obtaining and refreshing IAP tokens by:
+
+1. Prompting users to authenticate via browser-based Google login
+2. Handling the OAuth2 callback to receive authorization codes
+3. Exchanging codes for access tokens
+4. Storing credentials for future use with MLFlow and other IAP-protected services
+
+
+Typical usage:
+    token = get_iap_token()
+"""
+
 import os
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -25,8 +40,7 @@ def get_oauth_client_secret() -> str:
 
     if not secret_path.exists():
         raise FileNotFoundError(
-            f"OAuth client secret file not found at {secret_path}. "
-            "Please run 'make fetch_oauth_client_secret' first."
+            f"OAuth client secret file not found at {secret_path}. " "Please run 'make fetch_secrets' first."
         )
 
     with open(secret_path, "r") as f:

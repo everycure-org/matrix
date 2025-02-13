@@ -10,7 +10,8 @@ class OntologyUrls(BaseModel):
     UniProtKB: HttpUrl = Field("https://www.uniprot.org/uniprotkb/", description="UniProtKB database URL")
     CHEMBL: HttpUrl = Field("https://www.ebi.ac.uk/chembl/", description="ChEMBL database URL")
 
-    model_config = {"frozen": True}
+    class Config:
+        frozen = True
 
 
 class NodeColumns(BaseModel):
@@ -132,7 +133,9 @@ process is illustrated by the following diagram:
         description="Explainer for MOA information",
     )
 
-    model_config = {"case_sensitive": True, "validate_assignment": True}
+    class Config:
+        case_sensitive = True
+        validate_assignment = True
 
 
 def set_wide_space_default():

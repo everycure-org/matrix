@@ -18,7 +18,7 @@ OAUTH_CLIENT_SECRET_PATH ?= conf/local/oauth_client_secret.txt
 # ensures all make targets run in one shell (rather than line by line in new shell)
 .ONESHELL: 
 
-default: prerequisites fetch_sa_key fetch_oauth_client_secret install fast_test integration_test
+default: prerequisites fetch_secrets install fast_test integration_test
 	echo "done!"
 
 prerequisites:
@@ -32,7 +32,7 @@ prerequisites:
 		exit 1; \
 	fi
 
-fetch_sa_key:
+fetch_secrets:
 	echo "Fetching service account key from Secret Manager..."; \
 	mkdir -p conf/local; \
 	gcloud secrets versions access latest \
@@ -42,7 +42,6 @@ fetch_sa_key:
 	chmod 600 $(SA_KEY_PATH); \
 	echo "Service account key saved to $(SA_KEY_PATH)"; \
 
-fetch_oauth_client_secret:
 	echo "Fetching OAuth client secret from Secret Manager..."; \
 	mkdir -p conf/local; \
 	gcloud secrets versions access latest \
