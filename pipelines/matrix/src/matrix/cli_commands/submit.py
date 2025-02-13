@@ -504,7 +504,6 @@ def get_run_name(run_name: Optional[str]) -> str:
     Returns:
         str: The final run name to be used for the workflow.
     """
-    # If no run_name is provided, use the current Git branch name
     if not run_name:
         run_name = run_subprocess(
             "git rev-parse --abbrev-ref HEAD", stream_output=True
