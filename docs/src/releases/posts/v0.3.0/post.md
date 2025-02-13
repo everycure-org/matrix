@@ -14,7 +14,8 @@ authors:
 
 # Matrix Platform `v0.3.0`: Unified integration, sampling and model stability
 
-The release
+The release introduces a new unified integration layer, a sampling mechanism and a suite of
+stability metrics.
 
 !!! tip
     To check out this release, run `git checkout v0.3.0`.
