@@ -15,3 +15,14 @@ embeddings.topological:
     args:
       batchSize: 20
       embeddingDimension: 3
+
+
+caching:
+  preprocessor:
+    _object: matrix.pipelines.batch.pipeline.pass_through
+  resolver:
+    _object: matrix.pipelines.batch.pipeline.dummy_resolver
+    api: &api myapi
+  primary_key: text
+  api: *api
+  new_col: lookup

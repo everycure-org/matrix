@@ -4,6 +4,7 @@ from kedro.pipeline import Pipeline
 
 from matrix.pipelines.create_sample.pipeline import create_pipeline as create_create_sample_pipeline
 from matrix.pipelines.data_release.pipeline import create_pipeline as create_data_release_pipeline
+from matrix.pipelines.embeddings.pipeline import create_node_embeddings_pipeline
 from matrix.pipelines.embeddings.pipeline import create_pipeline as create_embeddings_pipeline
 from matrix.pipelines.evaluation.pipeline import create_pipeline as create_evaluation_pipeline
 from matrix.pipelines.fabricator.pipeline import create_pipeline as create_fabricator_pipeline
@@ -33,6 +34,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         "matrix_generation": create_matrix_pipeline(),
         "evaluation": create_evaluation_pipeline(),
         "create_sample": create_create_sample_pipeline(),
+        "caching": create_node_embeddings_pipeline(),
         # "inference": create_inference_pipeline(),  # Run manually based on medical input
     }
 
