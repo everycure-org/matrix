@@ -458,7 +458,7 @@ def create_model(agg_func: Callable, *estimators) -> ModelWrapper:
     """Function to create final model.
 
     Args:
-        agg_func: function to aggregate ensemble models' treat score
+        agg_func: function to  aggregate ensemble models' treat score
         estimators: list of fitted estimators
     Returns:
         ModelWrapper encapsulating estimators
@@ -540,29 +540,3 @@ def check_model_performance(
             report[f"{split.lower()}_{name}"] = func(y_true, y_pred)
 
     return json.loads(json.dumps(report, default=float))
-
-
-@inject_object()
-def aggregate_metrics(aggregation_functions: List[Dict], *metrics) -> Dict:
-    """
-    Aggregate metrics for the separate folds into a single set of metrics.
-
-    Args:
-        aggregation_functions: List of dictionaries containing the name and object of the aggregation function.
-        metrics: Dictionaries of metrics for all folds.
-    """
-
-    # Extract list of metrics for each fold and check consistency
-    metric_names_lst_all_folds = [list(report.keys()) for report in metrics]
-    metric_names_lst = metric_names_lst_all_folds[0]
-    if not all(metric_names == metric_names_lst_all_folds[0] for metric_names in metric_names_lst_all_folds):
-        raise ValueError("Inconsistent metrics across folds. Each fold should have the same set of metrics.")
-
-    # Perform aggregation
-    aggregated_metrics = dict()
-    for agg_func in aggregation_functions:
-        aggregated_metrics[agg_func.__name__] = {
-            metric_name: agg_func([report[metric_name] for report in metrics]) for metric_name in metric_names_lst
-        }
-
-    return json.loads(json.dumps(aggregated_metrics, default=float))
