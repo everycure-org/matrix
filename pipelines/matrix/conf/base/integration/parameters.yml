@@ -3,15 +3,15 @@ integration:
     rtx_kg2:
       transformer:
         _object: matrix.pipelines.integration.transformers.rtxkg2.RTXTransformer
-    # spoke:
-    #   transformer:
-    #     object: matrix.pipelines.integration.transformers.spoke.SpokeTransformer
-    # robokop:
-    #   transformer:
-    #     _object: matrix.pipelines.integration.transformers.robokop.RobokopTransformer
-    # ec_medical_team:
-    #   transformer:
-    #     _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
+    spoke:
+      transformer:
+        _object: matrix.pipelines.integration.transformers.spoke.SpokeTransformer
+    robokop:
+      transformer:
+        _object: matrix.pipelines.integration.transformers.robokop.RobokopTransformer
+    ec_medical_team:
+      transformer:
+        _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
     ec_clinical_trails: 
       transformer:
         _object: matrix.pipelines.integration.transformers.clinical_trails.ClinicalTrialsTransformer
@@ -21,9 +21,9 @@ integration:
     disease_list: 
       transformer:
         _object: matrix.pipelines.integration.transformers.diseases.DiseasesTransformer
-    # drugmech:
-    #   transformer:
-    #      _object: matrix.pipelines.integration.transformers.drugmech.DrugMechTransformer
+    drugmech:
+      transformer:
+         _object: matrix.pipelines.integration.transformers.drugmech.DrugMechTransformer
     ground_truth: 
       transformer:
         _object: matrix.pipelines.integration.transformers.ground_truth.GroundTruthTransformer
