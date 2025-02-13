@@ -170,8 +170,6 @@ evaluation.stability_overlap:
         - _object:  matrix.pipelines.evaluation.named_metric_functions.CommonalityAtN
           n: 10000
         - _object:  matrix.pipelines.evaluation.named_metric_functions.CommonalityAtN
-          n: 100000
-        - _object:  matrix.pipelines.evaluation.named_metric_functions.CommonalityAtN
           n: 1000000
 
 evaluation.stability_ranking:
@@ -184,12 +182,8 @@ evaluation.stability_ranking:
         - _object:  matrix.pipelines.evaluation.named_metric_functions.SpearmanAtN
           n: 10000
         - _object:  matrix.pipelines.evaluation.named_metric_functions.SpearmanAtN
-          n: 100000
-        - _object:  matrix.pipelines.evaluation.named_metric_functions.SpearmanAtN
           n: 1000000
         - _object:  matrix.pipelines.evaluation.named_metric_functions.HypergeomAtN
           n: 10000
-        - _object:  matrix.pipelines.evaluation.named_metric_functions.HypergeomAtN
-          n: 100000
         - _object:  matrix.pipelines.evaluation.named_metric_functions.HypergeomAtN
           n: 1000000
