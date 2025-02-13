@@ -118,7 +118,7 @@ maintainability:
 - Added **GitHubReleaseCSVDataset** to streamline ingestion of sources from GitHub releases into the
   pipeline. (PR #1050)
 
-- Added automation to **ochestrate periodic data releases**, ensuring a monthly data release (PR
+- Added automation to **orchestrate periodic data releases**, ensuring a monthly data release (PR
   #877)
 
 - Simplify pipeline to produce _single model_ per run, streamlining comparability across runs (PR
@@ -127,7 +127,3 @@ maintainability:
 - Update pipeline to use
   **[Pandera](https://pandera.readthedocs.io/en/stable/dataframe_schemas.html)** for runtime data
   quality checks, removing dependency on private package (PR #938)
-
-## Other Changes
-
-We've onboarded two new EveryCure colleagues, Jacques and Amy.
