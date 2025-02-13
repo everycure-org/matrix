@@ -109,7 +109,7 @@ contourpy==1.3.1
     # via matplotlib
 cookiecutter==2.6.0
     # via kedro
-coverage==7.6.11
+coverage==7.6.12
     # via
     #   pytest-cov
     #   pytest-testmon
@@ -119,7 +119,7 @@ curies==0.10.4
     #   prefixmaps
 cycler==0.12.1
     # via matplotlib
-databricks-sdk==0.43.0
+databricks-sdk==0.44.0
     # via mlflow-skinny
 db-dtypes==1.4.1
     # via -r requirements.in
@@ -195,6 +195,7 @@ google-api-core==2.24.1
     #   google-cloud-bigquery
     #   google-cloud-bigquery-storage
     #   google-cloud-core
+    #   google-cloud-iam
     #   google-cloud-storage
 google-api-python-client==2.160.0
     # via pygsheets
@@ -209,6 +210,7 @@ google-auth==2.38.0
     #   google-cloud-bigquery
     #   google-cloud-bigquery-storage
     #   google-cloud-core
+    #   google-cloud-iam
     #   google-cloud-storage
 google-auth-httplib2==0.2.0
     # via google-api-python-client
@@ -224,6 +226,8 @@ google-cloud-core==2.4.1
     # via
     #   google-cloud-bigquery
     #   google-cloud-storage
+google-cloud-iam==2.18.0
+    # via -r requirements.in
 google-cloud-storage==3.0.0
     # via gcsfs
 google-crc32c==1.6.0
@@ -234,9 +238,10 @@ google-resumable-media==2.7.2
     # via
     #   google-cloud-bigquery
     #   google-cloud-storage
-googleapis-common-protos==1.66.0
+googleapis-common-protos==1.67.0
     # via
     #   google-api-core
+    #   grpc-google-iam-v1
     #   grpcio-status
 graphdatascience==1.13
     # via -r requirements.in
@@ -249,9 +254,13 @@ graphql-core==3.2.6
     #   strawberry-graphql
 graphql-relay==3.2.0
     # via graphene
+grpc-google-iam-v1==0.14.0
+    # via google-cloud-iam
 grpcio==1.70.0
     # via
     #   google-api-core
+    #   googleapis-common-protos
+    #   grpc-google-iam-v1
     #   grpcio-status
 grpcio-status==1.62.3
     # via google-api-core
@@ -421,12 +430,12 @@ kiwisolver==1.4.8
     # via matplotlib
 langchain==0.3.17
     # via -r requirements.in
-langchain-core==0.3.34
+langchain-core==0.3.35
     # via
     #   langchain
     #   langchain-openai
     #   langchain-text-splitters
-langchain-openai==0.3.4
+langchain-openai==0.3.5
     # via -r requirements.in
 langchain-text-splitters==0.3.6
     # via langchain
@@ -532,7 +541,7 @@ oauthlib==3.2.2
     # via requests-oauthlib
 omegaconf==2.3.0
     # via kedro
-openai==1.61.1
+openai==1.62.0
     # via
     #   -r requirements.in
     #   langchain-openai
@@ -634,11 +643,14 @@ proto-plus==1.24.0.dev1
     #   -r requirements.in
     #   google-api-core
     #   google-cloud-bigquery-storage
+    #   google-cloud-iam
 protobuf==4.25.6
     # via
     #   google-api-core
     #   google-cloud-bigquery-storage
+    #   google-cloud-iam
     #   googleapis-common-protos
+    #   grpc-google-iam-v1
     #   grpcio-status
     #   mlflow-skinny
     #   proto-plus
@@ -760,6 +772,7 @@ pyyaml==6.0.2
     #   prefixcommons
     #   prefixmaps
     #   pyaml
+    #   responses
     #   transformers
     #   uvicorn
 pyzmq==26.2.1
@@ -801,12 +814,15 @@ requests==2.32.3
     #   prefixcommons
     #   requests-oauthlib
     #   requests-toolbelt
+    #   responses
     #   tiktoken
     #   transformers
 requests-oauthlib==2.0.0
     # via google-auth-oauthlib
 requests-toolbelt==1.0.0
     # via langsmith
+responses==0.25.6
+    # via -r requirements.in
 rfc3339-validator==0.1.4
     # via
     #   jsonschema
@@ -893,7 +909,7 @@ stack-data==0.6.3
     # via ipython
 starlette==0.45.3
     # via fastapi
-strawberry-graphql==0.259.0
+strawberry-graphql==0.260.1
     # via kedro-viz
 stringcase==1.2.0
     # via bmt
@@ -1002,6 +1018,7 @@ urllib3==2.3.0
     #   botocore
     #   docker
     #   requests
+    #   responses
 uvicorn==0.34.0
     # via kedro-viz
 uvloop==0.21.0
