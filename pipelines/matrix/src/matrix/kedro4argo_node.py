@@ -4,7 +4,7 @@ from typing import Any, Optional, Union
 from kedro.pipeline.node import Node
 from pydantic import BaseModel, field_validator, model_validator
 
-# Values are in Gb
+# Values are in GiB
 KUBERNETES_DEFAULT_LIMIT_RAM = 52
 KUBERNETES_DEFAULT_REQUEST_RAM = 52
 
@@ -37,6 +37,8 @@ class ArgoResourceConfig(BaseModel):
     cpu_limit: int = KUBERNETES_DEFAULT_LIMIT_CPU
     memory_request: int = KUBERNETES_DEFAULT_REQUEST_RAM
     memory_limit: int = KUBERNETES_DEFAULT_LIMIT_RAM
+    ephemeral_storage_request: int = 0
+    ephemeral_storage_limit: int = 128
 
     model_config = {"validate_assignment": True, "extra": "forbid"}
 
@@ -81,12 +83,16 @@ class ArgoResourceConfig(BaseModel):
         self.memory_limit = max(self.memory_limit, argo_config.memory_limit)
         self.memory_request = max(self.memory_request, argo_config.memory_request)
         self.num_gpus = max(self.num_gpus, argo_config.num_gpus)
+        self.ephemeral_storage_request = max(self.ephemeral_storage_request, argo_config.ephemeral_storage_request)
+        self.ephemeral_storage_limit = max(self.ephemeral_storage_limit, argo_config.ephemeral_storage_limit)
 
     def model_dump(self, **kwargs) -> dict:
         """Customize JSON or dict export with Kubernetes-compatible formatting."""
         data = super().model_dump(**kwargs)
         data["memory_request"] = f"{int(self.memory_request)}Gi"
         data["memory_limit"] = f"{int(self.memory_limit)}Gi"
+        data["ephemeral_storage_request"] = f"{int(self.ephemeral_storage_request)}Gi"
+        data["ephemeral_storage_limit"] = f"{int(self.ephemeral_storage_limit)}Gi"
         return data
 
 
