@@ -243,6 +243,9 @@ def cached_api_enrichment_pipeline(
     `input` such that it has a column `primary_key` which is used in the
     look-up process.
 
+    output: Kedro reference to a dataset that is the input plus this new
+    `new_col` containing the results from the enrichment with the cache/API.
+
     new_col: name of the column in which the values associated with the
     primary_key should appear.
     """
