@@ -71,6 +71,8 @@ spec:
       - name: memory_request
       - name: cpu_limit
       - name: cpu_request
+      - name: ephemeral_storage_request
+      - name: ephemeral_storage_limit
     podSpecPatch: |
       containers:
         - name: main
@@ -82,12 +84,16 @@ spec:
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
+              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_request}}"
+              {% endraw %}
             limits:
               memory: {% raw %} "{{inputs.parameters.memory_limit}}"
               {% endraw %}
               cpu: {% raw %} "{{inputs.parameters.cpu_limit}}"
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
+              {% endraw %}
+              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_limit}}"
               {% endraw %}
           volumeMounts:
             - name: github-token
@@ -179,12 +185,16 @@ spec:
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
+              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_request}}"
+              {% endraw %}
             limits:
               memory: {% raw %} "{{inputs.parameters.memory_limit}}"
               {% endraw %}
               cpu: {% raw %} "{{inputs.parameters.cpu_limit}}"
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
+              {% endraw %}
+              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_limit}}"
               {% endraw %}
     container: 
       <<: *_kedro_container
@@ -274,5 +284,9 @@ spec:
             value: {{ task.resources.cpu_request }}
           - name: cpu_limit
             value: {{ task.resources.cpu_limit }}
+          - name: ephemeral_storage_request
+            value: {{ task.resources.ephemeral_storage_request }}
+          - name: ephemeral_storage_limit
+            value: {{ task.resources.ephemeral_storage_limit }}
 
       {% endfor %}

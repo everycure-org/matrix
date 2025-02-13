@@ -256,6 +256,8 @@ def test_get_dependencies_default_different_than_task(nodes_where_first_is_input
         "memory_limit": "64Gi",
         "memory_request": "32Gi",
         "num_gpus": 1,
+        "ephemeral_storage_limit": "128Gi",
+        "ephemeral_storage_request": "0Gi",
     }
 
 
