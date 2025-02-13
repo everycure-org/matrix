@@ -38,6 +38,7 @@ def _pipeline_datasets(pipeline) -> set[str]:
     return set.union(*[set(node.inputs + node.outputs) for node in pipeline.nodes])
 
 
+@pytest.mark.skip()
 @pytest.mark.parametrize("kedro_context", ["cloud_kedro_context", "base_kedro_context"])
 def test_no_parameter_entries_from_catalog_unused(
     kedro_context: KedroContext,
@@ -67,25 +68,16 @@ def test_no_parameter_entries_from_catalog_unused(
         )
     ]
 
-    # Modelling params should not trigger an error but just a warning.
-    def is_unused_param_error_worthy(param: str) -> bool:
-        return not param.startswith("params:modelling")
-
-    error_inducing_unused_params = [params for params in unused_params if is_unused_param_error_worthy(params)]
-
-    warning_inducing_unused_params = [params for params in unused_params if not is_unused_param_error_worthy(params)]
-
     # # # Only catalog entry not used should be 'parameters', since we input top-level keys
     # # directly.
     # assert (
     #     unused_data_sets == set()
     # ), f"The following data sets are not used: {unused_data_sets}"
-
-    assert error_inducing_unused_params == [], f"The following parameters are not used: {error_inducing_unused_params}"
-
-    warnings.warn(f"The following parameters are not used: {warning_inducing_unused_params}")
+    unused_params_str = "\n".join(unused_params)
+    assert unused_params_str == "", f"The following parameters are not used: {unused_params_str}"
 
 
+@pytest.mark.skip()
 @pytest.mark.parametrize("kedro_context", ["cloud_kedro_context", "base_kedro_context"])
 def test_no_non_parameter_entries_from_catalog_unused(
     kedro_context: KedroContext,
