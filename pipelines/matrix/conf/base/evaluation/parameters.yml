@@ -165,8 +165,6 @@ evaluation.stability_overlap:
     stability:
       _object: matrix.pipelines.evaluation.evaluation.StabilityCommonalityAtN
       rank_func_lst: 
-        - _object:  matrix.pipelines.evaluation.named_metric_functions.CommonalityAtN 
-          n: 1000
         - _object:  matrix.pipelines.evaluation.named_metric_functions.CommonalityAtN
           n: 10000
         - _object:  matrix.pipelines.evaluation.named_metric_functions.CommonalityAtN
