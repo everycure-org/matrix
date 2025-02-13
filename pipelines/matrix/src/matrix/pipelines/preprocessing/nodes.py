@@ -9,6 +9,10 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 logger = logging.getLogger(__name__)
 
+BATCH_RESOLVER_URL = "https://name-resolution-sri.renci.org/bulk-lookup"
+HEADERS = {"Content-Type": "application/json"}
+BATCH_SIZE = 10
+
 
 def coalesce(s: pd.Series, *series: List[pd.Series]):
     """Coalesce the column information like a SQL coalesce."""
@@ -17,8 +21,51 @@ def coalesce(s: pd.Series, *series: List[pd.Series]):
     return s
 
 
-@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
-def resolve_name(name: str, cols_to_get: Iterable[str], url: str) -> dict:
+# @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
+# def resolve_name(name: str, cols_to_get: Iterable[str], url: str) -> dict:
+#     """Function to retrieve the normalized identifier through the normalizer.
+#
+#     Args:
+#         name: name of the node to be resolved
+#         cols_to_get: attribute to get from API
+#     Returns:
+#         Name and corresponding curie
+#     """
+#
+#     if not name or pd.isna(name):
+#         return {}
+#     result = requests.get(url.format(name=name)).json()
+#     if not result:
+#         return {}
+#
+#     element = result[0]
+#     ret = {col: element.get(col) for col in cols_to_get}
+#     logger.debug(f'{{"resolver url": {url}, "name": {name}, "response extraction": {json.dumps(ret)}}}')
+#     return ret
+
+
+def resolve_name_batch(names: List[str], cols_to_get: Iterable[str]) -> dict:
+    """Batch resolve a list of names to their corresponding CURIEs."""
+    payload = {
+        "strings": names,
+        "autocomplete": True,
+        "highlighting": False,
+        "offset": 0,
+        "limit": 1,  # Unlike in GET endpoint lookup, limit has no effect here.
+    }
+    response = requests.post(BATCH_RESOLVER_URL, json=payload, headers=HEADERS)
+    response.raise_for_status()
+    result = response.json()
+    resolved_data = {}
+
+    for name, attributes in result.items():
+        # We get first item of each list to simulate limit=1 which doesn't get applied for some reason
+        resolved_data[name] = {col: attributes[0].get(col) for col in cols_to_get}
+    return resolved_data
+
+
+# @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
+def resolve_names(names: str, cols_to_get: Iterable[str], url: str) -> dict:
     """Function to retrieve the normalized identifier through the normalizer.
 
     Args:
@@ -28,16 +75,15 @@ def resolve_name(name: str, cols_to_get: Iterable[str], url: str) -> dict:
         Name and corresponding curie
     """
 
-    if not name or pd.isna(name):
-        return {}
-    result = requests.get(url.format(name=name)).json()
-    if not result:
-        return {}
-
-    element = result[0]
-    ret = {col: element.get(col) for col in cols_to_get}
-    logger.debug(f'{{"resolver url": {url}, "name": {name}, "response extraction": {json.dumps(ret)}}}')
-    return ret
+    resolved_data = {}
+    for i in range(0, len(names), BATCH_SIZE):
+        batch = names[i : i + BATCH_SIZE]
+        try:
+            batch_result = resolve_name_batch(batch, cols_to_get)
+            resolved_data.update(batch_result)
+        except Exception as e:
+            logger.error(f"Batch resolution failed for {batch}: {e}")
+    return resolved_data
 
 
 @check_output(
@@ -125,6 +171,40 @@ def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> p
     return res
 
 
+# @check_output(
+#     schema=DataFrameSchema(
+#         columns={
+#             "reason_for_rejection": Column(str, nullable=True),
+#             "drug_name": Column(str, nullable=False),
+#             "disease_name": Column(str, nullable=False),
+#             "significantly_better": Column(float, nullable=True),
+#             "non_significantly_better": Column(float, nullable=True),
+#             "non_significantly_worse": Column(float, nullable=True),
+#             "significantly_worse": Column(float, nullable=True),
+#             "drug_curie": Column(str, nullable=True),
+#             "disease_curie": Column(str, nullable=True),
+#         },
+#         unique=["drug_curie", "disease_curie"],
+#     )
+# )
+# def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
+#     """Resolve names to curies for source and target columns in clinical trials data.
+#
+#     Args:
+#         df: Clinical trial dataset
+#     """
+#     # Normalize the name
+#     drug_data = df["drug_name"].apply(resolve_name, cols_to_get=["curie"], url=resolver_url)
+#     disease_data = df["disease_name"].apply(resolve_name, cols_to_get=["curie"], url=resolver_url)
+#
+#     # Concat dfs
+#     drug_df = pd.DataFrame(drug_data.tolist()).rename(columns={"curie": "drug_curie"})
+#     disease_df = pd.DataFrame(disease_data.tolist()).rename(columns={"curie": "disease_curie"})
+#     df = pd.concat([df, drug_df, disease_df], axis=1)
+#
+#     return df
+
+
 @check_output(
     schema=DataFrameSchema(
         columns={
@@ -147,6 +227,16 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
     Args:
         df: Clinical trial dataset
     """
+
+    drug_names = df["drug_name"].dropna().unique().tolist()
+    disease_names = df["disease_name"].dropna().unique().tolist()
+
+    drug_mapping = resolve_names(drug_names, cols_to_get=["curie"], url=BATCH_RESOLVER_URL)
+    disease_mapping = resolve_names(disease_names, cols_to_get=["curie"], url=BATCH_RESOLVER_URL)
+
+    df["drug_curie"] = df["drug_name"].map(lambda x: drug_mapping.get(x, {}).get("curie", None))
+    df["disease_curie"] = df["disease_name"].map(lambda x: disease_mapping.get(x, {}).get("curie", None))
+
     # Normalize the name
     drug_data = df["drug_name"].apply(resolve_name, cols_to_get=["curie"], url=resolver_url)
     disease_data = df["disease_name"].apply(resolve_name, cols_to_get=["curie"], url=resolver_url)
