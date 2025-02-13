@@ -56,8 +56,8 @@ def register_pipelines() -> Dict[str, Pipeline]:
     )
     pipelines["__default__"] = (
           pipelines["data_engineering"]
-        + pipelines["modelling_run"]
         + pipelines['feature']
+        + pipelines["modelling_run"]
     )
 
     # Test pipelines
