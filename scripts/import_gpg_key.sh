@@ -4,6 +4,8 @@
 echo "Please share the name of the key to share (see git-crypt -k)"
 read keyName
 
+
+
 # Prompt the user to enter the public key
 echo "Please enter the public GPG key (press Ctrl-D when done):"
 publicKey=$(</dev/stdin)
@@ -13,4 +15,9 @@ echo "The fingerprint is: $fingerprint"
 echo "$publicKey" | gpg --import
 
 echo "$fingerprint:6:" | gpg --import-ownertrust
-git-crypt add-gpg-user -k $keyName $fingerprint
+# only add -k if keyName is not empty   
+if [ -n "$keyName" ]; then
+    git-crypt add-gpg-user -k $keyName $fingerprint
+else
+    git-crypt add-gpg-user $fingerprint
+fi
