@@ -85,12 +85,12 @@ def create_pipeline(
                 },
                 outputs=f"batch.int.{source}.input_bucketized@spark",
                 name=f"bucketize_{source}_input",
-                argo_config=ArgoResourceConfig(
-                    cpu_request=48,
-                    cpu_limit=48,
-                    memory_limit=192,
-                    memory_request=120,
-                ),
+                # argo_config=ArgoResourceConfig(
+                #    cpu_request=48,
+                #    cpu_limit=48,
+                #    memory_limit=192,
+                #    memory_request=120,
+                # ),
             ),
             node(
                 func=_transform,
