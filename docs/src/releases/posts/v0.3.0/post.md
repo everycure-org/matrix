@@ -17,10 +17,11 @@ authors:
 The release introduces a new unified integration layer, a sampling mechanism and a suite of
 stability metrics.
 
+<!-- more -->
+
 !!! tip
     To check out this release, run `git checkout v0.3.0`.
 
-<!-- more -->
 
 ## Key Enhancements
 
