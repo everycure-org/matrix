@@ -42,6 +42,7 @@ def resolve_name(name: str, cols_to_get: Iterable[str], url: str) -> dict:
             "category": Column(str, nullable=False),
             "ID": Column(int, nullable=False),
         },
+        # NOTE: We should re-enable when the medical team fixed the dataset
         # unique=["normalized_curie"],
     )
 )
