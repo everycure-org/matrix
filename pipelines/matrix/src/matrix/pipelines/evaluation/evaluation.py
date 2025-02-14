@@ -298,8 +298,7 @@ class StabilityCommonalityAtN(Evaluation, StabilityMetricsMixin):
         for rank_func_generator in self._rank_func_lst:
             rank_func = rank_func_generator.generate()
             report[f"{rank_func_generator.name()}"] = rank_func(matrices)
-
-        return pd.json_normalize(report, sep="_")
+        return json.loads(json.dumps(report, default=float))
 
 
 class StabilityRankingMetrics(Evaluation, StabilityMetricsMixin):
@@ -326,5 +325,7 @@ class StabilityRankingMetrics(Evaluation, StabilityMetricsMixin):
         report = {}
         for rank_func_generator in self._rank_func_lst:
             rank_func = rank_func_generator.generate()
-            report[f"{rank_func_generator.name()}"] = rank_func((rank_sets_1, rank_sets_2), pair_ids)
-        return pd.json_normalize(report, sep="_")
+            output = rank_func((rank_sets_1, rank_sets_2), pair_ids)
+            report[f"{rank_func_generator.name()}_stat"] = output["stat"]
+            report[f"{rank_func_generator.name()}_pvalue"] = output["pvalue"]
+        return json.loads(json.dumps(report, default=float))
