@@ -10,6 +10,7 @@ from threading import Thread
 from typing import List, Optional
 
 import click
+import mlflow
 import semver
 from kedro.framework.cli.utils import CONTEXT_SETTINGS, split_string
 from kedro.framework.project import pipelines as kedro_pipelines
@@ -62,6 +63,7 @@ def cli():
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 @click.option("--headless", is_flag=True, default=False, help="Skip confirmation prompt")
 @click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
+@click.option("--experiment_id", type=int, help="MLFlow experiment id")
 @click.option("--skip-git-checks", is_flag=True, type=bool, default=False, help="Skip git checks")
 # fmt: on
 def submit(
@@ -77,9 +79,13 @@ def submit(
     is_test: bool,
     headless: bool,
     environment: str,
-    skip_git_checks: bool
+    skip_git_checks: bool,
+    experiment_id: Optional[int]
 ):
     """Submit the end-to-end workflow. """
+
+    click.secho("Warning - kedro submit will be deprecated soon. Please use kedro experiment run.", bg="yellow", fg="black")
+
     if not quiet:
         log.setLevel(logging.DEBUG)
 
@@ -107,9 +113,8 @@ def submit(
     run_name = get_run_name(run_name)
     pipeline_obj.name = pipeline
 
-
     if not dry_run:
-        summarize_submission(run_name, namespace, pipeline, environment, is_test, release_version, headless)
+        summarize_submission(experiment_id, run_name, namespace, pipeline, environment, is_test, release_version, headless)
 
     _submit(
         username=username,
@@ -120,6 +125,7 @@ def submit(
         verbose=not quiet,
         dry_run=dry_run,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
+        mlflow_experiment_id=experiment_id,
         allow_interactions=not headless,
         is_test=is_test,
         environment=environment,
@@ -136,6 +142,7 @@ def _submit(
     dry_run: bool,
     environment: str,
     template_directory: Path,
+    mlflow_experiment_id: int,
     allow_interactions: bool = True,
     is_test: bool = False,
 ) -> None:
@@ -170,7 +177,7 @@ def _submit(
         if not can_talk_to_kubernetes():
             raise EnvironmentError("Cannot communicate with Kubernetes")
 
-        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, environment, is_test=is_test, )
+        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, environment, mlflow_experiment_id, is_test=is_test, )
 
         file_path = save_argo_template(argo_template, template_directory)
 
@@ -206,9 +213,10 @@ def _submit(
 
 
 
-def summarize_submission(run_name: str, namespace: str, pipeline: str, environment: str, is_test: bool, release_version: str, headless:bool):
+def summarize_submission(experiment_id: int, run_name: str, namespace: str, pipeline: str, environment: str, is_test: bool, release_version: str, headless:bool):
     console.print(Panel.fit(
         f"[bold green]About to submit workflow:[/bold green]\n"
+        f"MLFlow Experiment: {mlflow.get_tracking_uri()}/#/experiments/{experiment_id}\n"
         f"Run Name: {run_name}\n"
         f"Namespace: {namespace}\n"
         f"Pipeline: {pipeline}\n"
@@ -391,6 +399,7 @@ def build_argo_template(
     namespace: str,
     pipeline_obj: Pipeline,
     environment: str,
+    mlflow_experiment_id: int,
     is_test: bool,
     default_execution_resources: Optional[ArgoResourceConfig] = None
 ) -> str:
@@ -411,6 +420,7 @@ def build_argo_template(
         run_name=run_name,
         release_version=release_version,
         image_tag=run_name,
+        mlflow_experiment_id=mlflow_experiment_id,
         namespace=namespace,
         username=username,
         package_name=package_name,

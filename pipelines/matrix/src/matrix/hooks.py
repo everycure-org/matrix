@@ -93,7 +93,13 @@ class MLFlowHooks:
         # NOTE: This piece of code ensures that every MLFlow experiment
         # is created by our Kedro pipeline with the right artifact root.
         mlflow.set_tracking_uri(cfg.server.mlflow_tracking_uri)
-        experiment_id = self._create_experiment(cfg.tracking.experiment.name, globs.mlflow_artifact_root)
+
+        # Temporary - while we still support kedro submit alongside kedro experiment
+        # Once kedro submit is deprecated we can probably remove this entire hook
+        if globs.mlflow_experiment_id and globs.mlflow_experiment_id != "None":
+            experiment_id = globs.mlflow_experiment_id
+        else:
+            experiment_id = self._create_experiment(cfg.tracking.experiment.name, globs.mlflow_artifact_root)
 
         if cfg.tracking.run.name:
             run_id = self._create_run(cfg.tracking.run.name, experiment_id)
