@@ -266,8 +266,6 @@ def calculate_rank_commonality(ranking_output: dict, commonality_output: dict) -
             s_f1 = None
         else:
             s_f1 = (2 * r_k * c_k) / (r_k + c_k)
-        rank_commonality_output[f"rank_commonality_at_{i}"] = {
-            "score": s_f1,
-            "pvalue": ranking_output[f"spearman_at_{i}_pvalue"],
-        }
+        rank_commonality_output[f"rank_commonality_at_{i}_stat"] = s_f1
+        rank_commonality_output[f"rank_commonality_at_{i}_pvalue"] = ranking_output[f"spearman_at_{i}_pvalue"]
     return json.loads(json.dumps(rank_commonality_output, default=float))
