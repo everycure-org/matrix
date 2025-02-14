@@ -284,7 +284,7 @@ The pipeline than creates tags based on those groups that are then exported into
 
 ### Outputs
 
-A table [] is generated that looks like this:
+[A table](https://raw.githubusercontent.com/everycure-org/matrix-disease-list/refs/heads/main/matrix-disease-groupings.tsv) is generated that looks like this:
 
 | category_class | label                                         | harrisons_view            | matrix_txgnn_grouping     | mondo_top_grouping                                                     |
 |----------------|-----------------------------------------------|---------------------------|---------------------------|------------------------------------------------------------------------|
