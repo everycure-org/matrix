@@ -131,6 +131,7 @@ def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> p
             "drug_curie": Column(str, nullable=True),
             "disease_curie": Column(str, nullable=True),
         },
+        # NOTE: We should re-enable when the medical team fixed the dataset
         # unique=["drug_curie", "disease_curie"],
     )
 )
