@@ -35,7 +35,6 @@ class RTXTransformer(GraphTransformer):
             .withColumn("publications",                      f.split(f.col("publications:string[]"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
             .withColumn("international_resource_identifier", f.col("iri"))
             .withColumnRenamed("id:ID", "id")
-            .select(*schema.BIOLINK_KG_NODE_SCHEMA.columns.keys())
         )
         # fmt: on
 

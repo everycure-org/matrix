@@ -69,6 +69,5 @@ class RobokopTransformer(GraphTransformer):
             .withColumn("aggregator_knowledge_source",              F.split(F.col("aggregator_knowledge_source:string[]"), ROBOKOP_SEPARATOR))
             .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
             .withColumn("subject_direction_qualifier",              F.lit(None).cast(T.StringType()))
-            .select(*[col for col in schema.BIOLINK_KG_EDGE_SCHEMA.columns.keys()])
         )
         # fmt: on
