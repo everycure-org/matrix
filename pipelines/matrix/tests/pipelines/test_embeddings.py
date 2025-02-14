@@ -1,13 +1,11 @@
 from pathlib import Path
 from random import choice
-from typing import Callable, Iterable, Iterator, Sequence, Tuple, Type, TypeVar
+from typing import Callable, Iterable, Iterator
 from unittest.mock import Mock, patch
 from uuid import uuid4
 
 import numpy as np
-import pandas as pd
 import pyspark.sql as ps
-import pyspark.sql.types as ty
 import pytest
 from matrix.pipelines.embeddings import nodes
 from matrix.pipelines.embeddings.encoders import AttributeEncoder

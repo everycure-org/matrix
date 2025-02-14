@@ -1,0 +1,318 @@
+import pytest
+from kedro.framework.context import KedroContext
+from matrix.datasets.gcp import SparkWithSchemaDataset
+from matrix.pipelines.batch.pipeline import (
+    cache_miss_resolver_wrapper,
+    derive_cache_misses,
+    dummy_resolver,
+    limit_cache_to_results_from_api,
+    lookup_from_cache,
+    pass_through,
+    resolve_cache_duplicates,
+)
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.types import ArrayType, FloatType, StringType, StructField, StructType
+from pyspark.testing import assertDataFrameEqual
+
+
+@pytest.fixture
+def test_schema():
+    mock_schema = {
+        "schema": {
+            "_object": "pyspark.sql.types.StructType",
+            "fields": [
+                {
+                    "_object": "pyspark.sql.types.StructField",
+                    "name": "key",
+                    "dataType": {
+                        "_object": "pyspark.sql.types.StringType",
+                    },
+                    "nullable": False,
+                },
+                {
+                    "_object": "pyspark.sql.types.StructField",
+                    "name": "value",
+                    "dataType": {
+                        "_object": "pyspark.sql.types.ArrayType",
+                        "elementType": {
+                            "_object": "pyspark.sql.types.FloatType",
+                        },
+                    },
+                    "nullable": False,
+                },
+            ],
+        }
+    }
+    return mock_schema
+
+
+@pytest.fixture
+def input_df_schema():
+    return StructType(
+        [
+            StructField("to_resolve", StringType(), True),
+            StructField("category", StringType(), True),
+        ]
+    )
+
+
+@pytest.fixture
+def sample_input_df(spark: SparkSession, input_df_schema) -> DataFrame:
+    data = [
+        {"to_resolve": "A", "category": "g"},
+        {"to_resolve": "B", "category": "h"},
+        {"to_resolve": "D", "category": "j"},
+        {"to_resolve": "E", "category": "k"},
+    ]
+    return spark.createDataFrame(data, input_df_schema)
+
+
+@pytest.fixture
+def sample_primary_key():
+    return "to_resolve"
+
+
+@pytest.fixture
+def cache_schema():
+    return StructType(
+        [
+            StructField("key", StringType(), True),
+            StructField("value", ArrayType(FloatType()), True),
+            StructField("api", StringType(), False),
+        ]
+    )
+
+
+@pytest.fixture
+def filtered_cache_schema():
+    return StructType(
+        [
+            StructField("key", StringType(), True),
+            StructField("value", ArrayType(FloatType()), True),
+        ]
+    )
+
+
+@pytest.fixture
+def cache_misses_schema():
+    return StructType(
+        [
+            StructField("key", StringType(), True),
+        ]
+    )
+
+
+@pytest.fixture
+def sample_cache(spark: SparkSession, cache_schema) -> DataFrame:
+    data = [
+        {"key": "A", "value": [1.0, 2.0], "api": "gpt-4"},
+        {
+            "key": "B",
+            "value": [
+                4.0,
+                5.0,
+            ],
+            "api": "gpt-4",
+        },
+        {"key": "C", "value": [7.0, 8.0], "api": "gpt-3"},
+        {"key": "D", "value": [8.0, 9.0], "api": "gpt-3"},
+    ]
+    return spark.createDataFrame(data, schema=cache_schema)
+
+
+@pytest.fixture
+def api1_filtered_cache(spark: SparkSession, filtered_cache_schema) -> DataFrame:
+    data = [
+        {"key": "A", "value": [1.0, 2.0]},
+        {
+            "key": "B",
+            "value": [
+                4.0,
+                5.0,
+            ],
+        },
+    ]
+    return spark.createDataFrame(data, schema=filtered_cache_schema)
+
+
+@pytest.fixture
+def api2_filtered_cache(spark: SparkSession, filtered_cache_schema) -> DataFrame:
+    data = [
+        {"key": "C", "value": [7.0, 8.0]},
+        {"key": "D", "value": [8.0, 9.0]},
+    ]
+    return spark.createDataFrame(data, schema=filtered_cache_schema)
+
+
+@pytest.fixture
+def sample_cache_out(spark: SparkSession, cache_schema) -> DataFrame:
+    data = [
+        {"key": "E", "value": [5.0, 3.0], "api": "gpt-4"},
+        {"key": "D", "value": [5.0, 3.0], "api": "gpt-4"},
+    ]
+    return spark.createDataFrame(data, schema=cache_schema)
+
+
+@pytest.fixture
+def sample_duplicate_cache(spark: SparkSession, cache_schema) -> DataFrame:
+    data = [
+        {"key": "A", "value": [1.0, 2.0], "api": "gpt-4"},
+        {"key": "B", "value": [4.0, 5.0], "api": "gpt-4"},
+        {
+            "key": "B",
+            "value": [
+                4.0,
+                5.0,
+            ],
+            "api": "gpt-4",
+        },
+        {"key": "D", "value": [8.0, 9.0], "api": "gpt-3"},
+    ]
+    return spark.createDataFrame(data, schema=cache_schema)
+
+
+@pytest.fixture
+def sample_cache_misses(spark: SparkSession, cache_misses_schema) -> DataFrame:
+    data = [
+        {"key": "D"},
+        {"key": "E"},
+    ]
+    return spark.createDataFrame(data, schema=cache_misses_schema)
+
+
+@pytest.fixture
+def sample_api1():
+    return "gpt-4"
+
+
+@pytest.fixture
+def sample_api2():
+    return "gpt-3"
+
+
+@pytest.fixture
+def sample_id_col():
+    return "key"
+
+
+@pytest.fixture
+def sample_preprocessor():
+    return pass_through
+
+
+@pytest.fixture
+def sample_resolver():
+    return dummy_resolver
+
+
+@pytest.fixture
+def sample_new_col():
+    return "resolved"
+
+
+def test_spark_with_schema_dataset_bootstrap(request: pytest.FixtureRequest, test_schema):
+    kedro_context = request.getfixturevalue("kedro_context")
+    # Define a non-existent filepath to trigger the bootstrap behavior
+    non_existent_path = "file:///tmp/non_existent_path"
+    # Create an instance of SparkWithSchemaDataset with bootstrapping enabled
+    dataset = SparkWithSchemaDataset(
+        filepath=non_existent_path,
+        file_format="parquet",
+        load_args=test_schema,
+        provide_empty_if_not_present=True,
+    )
+
+    # Attempt to load the dataset
+    result_df = dataset.load()
+
+    # Verify that the result is an empty DataFrame with the correct schema
+    assert result_df.rdd.isEmpty(), "The DataFrame should be empty"
+    assert result_df.schema == test_schema, "The schema should match the provided schema"
+
+
+def test_derive_cache_misses(
+    sample_input_df, sample_cache, sample_api1, sample_primary_key, sample_preprocessor, sample_cache_misses
+):
+    result_df = derive_cache_misses(sample_input_df, sample_cache, sample_api1, sample_primary_key, sample_preprocessor)
+    assertDataFrameEqual(result_df, sample_cache_misses)
+
+
+def test_dataframe_is_enriched(
+    sample_cache,
+    sample_cache_out,
+    sample_cache_misses,
+    sample_resolver,
+    sample_api1,
+    sample_input_df,
+    sample_primary_key,
+    sample_preprocessor,
+):
+    sample_cache.show()
+    sample_cache.printSchema()
+    sample_cache_misses.show()
+    cache_out = cache_miss_resolver_wrapper(sample_cache_misses, sample_resolver, sample_api1)
+    cache_out.printSchema()
+    assert isinstance(cache_out, DataFrame)
+    # cache_out.show()
+    assertDataFrameEqual(cache_out, sample_cache_out)
+    new_cache = sample_cache.union(cache_out)
+    cache_misses2 = derive_cache_misses(
+        sample_input_df, new_cache, sample_api1, sample_primary_key, sample_preprocessor
+    )
+    assert cache_misses2.count() == 0, "The cache misses should be empty"
+
+
+def test_re_call_is_a_noop(
+    sample_cache,
+    sample_input_df,
+    sample_cache_misses,
+    sample_resolver,
+    sample_api1,
+    sample_primary_key,
+    sample_preprocessor,
+    sample_new_col,
+):
+    cache_out = cache_miss_resolver_wrapper(sample_cache_misses, sample_resolver, sample_api1)
+
+    new_cache = sample_cache.union(cache_out)
+    enriched_df = lookup_from_cache(
+        sample_input_df, new_cache, sample_api1, sample_primary_key, sample_preprocessor, sample_new_col
+    )
+    cache_misses2 = derive_cache_misses(enriched_df, sample_cache, sample_api1, sample_primary_key, sample_preprocessor)
+    assert cache_misses2.count() == 0, "The cache misses should be empty"
+
+
+def test_cache_contains_duplicates_warning(sample_duplicate_cache, sample_id_col):
+    # Capture the warning
+    with pytest.warns(UserWarning, match="The cache contains duplicate keys."):
+        resolve_cache_duplicates(sample_duplicate_cache, sample_id_col)
+
+
+def test_enriched_keeps_same_size_with_cache_duplicates(
+    sample_input_df,
+    sample_cache,
+    sample_duplicate_cache,
+    sample_api1,
+    sample_primary_key,
+    sample_preprocessor,
+    sample_resolver,
+    sample_new_col,
+):
+    cache_misses = derive_cache_misses(
+        sample_input_df, sample_duplicate_cache, sample_api1, sample_primary_key, sample_preprocessor
+    )
+    cache_out = cache_miss_resolver_wrapper(cache_misses, sample_resolver, sample_api1)
+    new_cache = sample_cache.union(cache_out)
+    enriched_df = lookup_from_cache(
+        sample_input_df, new_cache, sample_api1, sample_primary_key, sample_preprocessor, sample_new_col
+    )
+    assert (
+        enriched_df.count() == sample_input_df.count()
+    ), "The enriched DataFrame should have the same number of rows as the input DataFrame"
+
+
+def test_different_api(sample_cache, sample_api1, api1_filtered_cache, sample_api2, api2_filtered_cache):
+    result1_df = limit_cache_to_results_from_api(sample_cache, sample_api1)
+    assertDataFrameEqual(result1_df, api1_filtered_cache)
+    result2_df = limit_cache_to_results_from_api(sample_cache, sample_api2)
+    assertDataFrameEqual(result2_df, api2_filtered_cache)
