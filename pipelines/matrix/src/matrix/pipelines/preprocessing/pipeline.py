@@ -69,8 +69,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="clean_clinical_trial_data",
                 tags=["ec-clinical-trials-data"],
             ),
-            # # -------------------------------------------------------------------------
-            # # Drug List ingestion
+            # -------------------------------------------------------------------------
+            # Drug List ingestion
             # -------------------------------------------------------------------------
             node(
                 func=lambda x: x,
