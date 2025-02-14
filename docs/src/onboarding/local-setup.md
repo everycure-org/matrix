@@ -56,6 +56,14 @@ make precommit
 
 These hooks were also installed at the time you called `make` so whenever you try to push something to the repository, the hooks will run automatically. We ensure a minimum level of code quality this way.
 
+
+### Secrets
+We need to fetch the secrets for the local environment such as fetching a storage service account and and OAuth client secret. This can be done by running the following command:
+
+```bash
+make fetch_secrets
+```
+
 ### Fast tests
 To ensure that the codebase is working as expected, you can run the following command to execute the fast tests:
 

@@ -1,15 +1,14 @@
 integration:
-
   sources:
     rtx_kg2:
       transformer:
         _object: matrix.pipelines.integration.transformers.rtxkg2.RTXTransformer
-    # spoke:
-    #   transformer:
-    #     object: matrix.pipelines.integration.transformers.spoke.SpokeTransformer
-    # robokop:
-    #   transformer:
-    #     object: matrix.pipelines.integration.transformers.robokop.RobokopTransformer
+    spoke:
+      transformer:
+        _object: matrix.pipelines.integration.transformers.spoke.SpokeTransformer
+    robokop:
+      transformer:
+        _object: matrix.pipelines.integration.transformers.robokop.RobokopTransformer
     ec_medical_team:
       transformer:
         _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
@@ -22,10 +21,13 @@ integration:
     disease_list: 
       transformer:
         _object: matrix.pipelines.integration.transformers.diseases.DiseasesTransformer
+    drugmech:
+      transformer:
+         _object: matrix.pipelines.integration.transformers.drugmech.DrugMechTransformer
     ground_truth: 
       transformer:
         _object: matrix.pipelines.integration.transformers.ground_truth.GroundTruthTransformer
-    
+
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:
     rtx:
