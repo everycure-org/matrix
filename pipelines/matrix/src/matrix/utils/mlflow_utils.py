@@ -64,6 +64,12 @@ def get_experiment_id_from_name(experiment_name: str) -> Optional[str]:
 def rename_soft_deleted_experiment(experiment_name: str) -> str:
     """
     Restore, rename and re-delete the deleted experiment
+
+    Args:
+         experiment_name: name of the deleted experiment
+
+    Returns:
+        str: the new name of the deleted experiment
     """
     client = mlflow.tracking.MlflowClient()
     experiment = mlflow.get_experiment_by_name(name=experiment_name)

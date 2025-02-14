@@ -16,6 +16,8 @@ from matrix.utils.mlflow_utils import (
     rename_soft_deleted_experiment,
 )
 
+EXPERIMENT_BRANCH_PREFIX = "experiment/"
+
 
 @click.group()
 def experiment():
@@ -34,11 +36,11 @@ def experiment():
 def create(experiment_name):
     if not experiment_name:
         current_branch = get_current_git_branch()
-        if current_branch.startswith("experiment/"):
+        if current_branch.startswith(EXPERIMENT_BRANCH_PREFIX):
             click.confirm(
                 f"Creating new mlflow experiment from current branch {current_branch}, is that correct?", abort=True
             )
-            experiment_name = current_branch.strip("experiment/")
+            experiment_name = current_branch.strip(EXPERIMENT_BRANCH_PREFIX)
         else:
             experiment_name = click.prompt("Please enter a name for your experiment", type=str)
 
@@ -100,12 +102,12 @@ def run(
 
     if not experiment_name:
         experiment_name = get_current_git_branch()
-        if not experiment_name.startswith("experiment/"):
+        if not experiment_name.startswith(EXPERIMENT_BRANCH_PREFIX):
             click.echo(
                 f"❌ Error: current branch does not begin with experiment/. Please define an experiment name or start from an experiment branch."
             )
             raise click.Abort()
-        experiment_name = experiment_name.strip("experiment/")
+        experiment_name = experiment_name.strip(EXPERIMENT_BRANCH_PREFIX)
 
     click.confirm(f"Start a new run on experiment '{experiment_name}', is that correct?", abort=True)
 
