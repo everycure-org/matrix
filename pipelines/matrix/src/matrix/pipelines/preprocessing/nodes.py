@@ -86,6 +86,7 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
             "TargetId": Column(str, nullable=False),
             "Label": Column(str, nullable=False),
         },
+        # NOTE: We should re-enable when the medical team fixed the dataset
         # unique=["SourceId", "TargetId", "Label"],
     )
 )
