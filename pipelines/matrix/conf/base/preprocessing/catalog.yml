@@ -116,7 +116,7 @@ preprocessing.raw.drug_list:
 preprocessing.raw.ground_truth.positives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/experimental-time-split/v2.7.3/ground_truth/tp_pair_ts-pre2014.txt
+  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tp_pairs.txt
   load_args:
     sep: "\t"
   save_args:
@@ -125,7 +125,7 @@ preprocessing.raw.ground_truth.positives:
 preprocessing.raw.ground_truth.negatives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/experimental-time-split/v2.7.3/ground_truth/tn_pair_ts-pre2014.txt
+  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tn_pairs.txt
   load_args:
     sep: "\t"
   save_args:
@@ -134,7 +134,7 @@ preprocessing.raw.ground_truth.negatives:
 preprocessing.int.ground_truth.combined:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/experimental-time-split/v2.7.3/ground_truth/gt_pair_ts-pre2014.txt
+  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/gt_pairs.txt
   load_args:
     sep: "\t"
   save_args:
