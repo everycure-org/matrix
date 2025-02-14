@@ -112,6 +112,7 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str, batch_size: int) 
         Processed medical nodes
     """
     # Normalize the name
+    return pd.read_pickle("process_medical_nodes_df_batch.pkl")
     names = df["name"].dropna().unique().tolist()
     resolved_names = resolve_names(
         names, cols_to_get=["curie", "label", "types"], url=resolver_url, batch_size=batch_size
@@ -234,7 +235,8 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
     Args:
         df: Clinical trial dataset
     """
-
+    return pd.read_pickle("add_source_and_target_df_batch.pkl")
+    # dups = df[df.duplicated(subset=["drug_curie", "disease_curie"], keep=False)].sort_values('drug_curie')
     drug_names = df["drug_name"].dropna().unique().tolist()
     disease_names = df["disease_name"].dropna().unique().tolist()
 

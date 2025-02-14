@@ -22,26 +22,26 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="normalize_ec_medical_team_nodes",
                 tags=["ec-medical-kg"],
             ),
-            node(
-                func=nodes.process_medical_edges,
-                inputs=[
-                    "preprocessing.int.nodes",
-                    "preprocessing.raw.edges",
-                ],
-                outputs="preprocessing.int.edges",
-                name="create_int_ec_medical_team_edges",
-                tags=["ec-medical-kg"],
-            ),
-            node(
-                func=lambda x, y: [x, y],
-                inputs=[
-                    "preprocessing.int.nodes",
-                    "preprocessing.int.edges",
-                ],
-                outputs=["ingestion.raw.ec_medical_team.nodes@pandas", "ingestion.raw.ec_medical_team.edges@pandas"],
-                name="produce_medical_kg",
-                tags=["ec-medical-kg"],
-            ),
+            # node(
+            #     func=nodes.process_medical_edges,
+            #     inputs=[
+            #         "preprocessing.int.nodes",
+            #         "preprocessing.raw.edges",
+            #     ],
+            #     outputs="preprocessing.int.edges",
+            #     name="create_int_ec_medical_team_edges",
+            #     tags=["ec-medical-kg"],
+            # ),
+            # node(
+            #     func=lambda x, y: [x, y],
+            #     inputs=[
+            #         "preprocessing.int.nodes",
+            #         "preprocessing.int.edges",
+            #     ],
+            #     outputs=["ingestion.raw.ec_medical_team.nodes@pandas", "ingestion.raw.ec_medical_team.edges@pandas"],
+            #     name="produce_medical_kg",
+            #     tags=["ec-medical-kg"],
+            # ),
             # -------------------------------------------------------------------------
             # EC Clinical Trials ingestion and enrichment
             # -------------------------------------------------------------------------
