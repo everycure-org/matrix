@@ -60,7 +60,6 @@ class RTXTransformer(GraphTransformer):
             edges_df
             .withColumn("aggregator_knowledge_source",   f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR)) # RTX KG2 2.10 does not exist
             .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
-            .transform(filter_semmed, curie_to_pmids, **semmed_filters)
             .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
             .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(0)) # RTX KG2 2.10 `primary_knowledge_source``
@@ -68,7 +67,7 @@ class RTXTransformer(GraphTransformer):
             .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-            .select(*schema.BIOLINK_KG_EDGE_SCHEMA.columns.keys())
+            .transform(filter_semmed, curie_to_pmids, **semmed_filters)
         )
         # fmt: on
 

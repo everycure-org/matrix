@@ -1,0 +1,6 @@
+ingestion.raw.drugmech.edges@spark:
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.raw}/drugmech/${globals:data_sources.drugmech.version}/indication_paths.json
+  file_format: json
+  load_args:
+    multiline: true
