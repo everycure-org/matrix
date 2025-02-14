@@ -251,14 +251,14 @@ def calculate_rank_commonality(ranking_output: dict, commonality_output: dict) -
         rank commonality output
     """
     rank_commonality_output = {}
-    ranking_output = {k: v for k, v in ranking_output.items() if "spearman" in k}
-    n_ranking_values = [int(n.split("_")[-1]) for n in ranking_output.keys() if n.split("_")[-1]]
+    ranking_output = {k: v for k, v in ranking_output.items() if ("spearman" in k)}
+    n_ranking_values = [int(n.split("_")[-2]) for n in ranking_output.keys() if "p_value" not in n]
     n_commonality_values = [int(n.split("_")[-1]) for n in commonality_output.keys() if n.split("_")[-1]]
     n_values = list(set(n_ranking_values) & set(n_commonality_values))
     # Compute harmonic mean between Commonality@n and Spearman-rank@n
     for i in n_values:
         # Spearman correlation is between -1 and 1, taking the absolute value to avoid division by small numbers
-        r_k = abs(ranking_output[f"spearman_at_{i}"]["correlation"])
+        r_k = abs(ranking_output[f"spearman_at_{i}_stat"])
         c_k = commonality_output[f"commonality_at_{i}"]
         if r_k + c_k == 0:
             s_f1 = None
@@ -268,6 +268,6 @@ def calculate_rank_commonality(ranking_output: dict, commonality_output: dict) -
             s_f1 = (2 * r_k * c_k) / (r_k + c_k)
         rank_commonality_output[f"rank_commonality_at_{i}"] = {
             "score": s_f1,
-            "pvalue": ranking_output[f"spearman_at_{i}"]["pvalue"],
+            "pvalue": ranking_output[f"spearman_at_{i}_pvalue"],
         }
     return json.loads(json.dumps(rank_commonality_output, default=float))
