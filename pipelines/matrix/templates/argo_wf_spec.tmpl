@@ -95,10 +95,6 @@ spec:
               {% endraw %}
               ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_limit}}"
               {% endraw %}
-    volumes:
-      - name: github-token
-        secret:
-          secretName: gh-password
     container: &_kedro_container
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
