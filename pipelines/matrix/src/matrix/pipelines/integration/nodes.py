@@ -257,7 +257,6 @@ def normalize_edges(
     edges = edges.withColumnsRenamed({"subject": "original_subject", "object": "original_object"}).withColumnsRenamed(
         {"subject_normalized": "subject", "object_normalized": "object"}
     )
-
     return (
         edges.withColumn(
             "_rn",

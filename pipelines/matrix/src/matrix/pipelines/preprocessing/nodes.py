@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Iterable, List, Tuple
+from typing import Dict, Iterable, List, Tuple
 
 import pandas as pd
 import requests
@@ -8,13 +8,6 @@ from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 logger = logging.getLogger(__name__)
-
-
-def coalesce(s: pd.Series, *series: List[pd.Series]):
-    """Coalesce the column information like a SQL coalesce."""
-    for other in series:
-        s = s.mask(pd.isnull, other)
-    return s
 
 
 @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
@@ -49,6 +42,8 @@ def resolve_name(name: str, cols_to_get: Iterable[str], url: str) -> dict:
             "category": Column(str, nullable=False),
             "ID": Column(int, nullable=False),
         },
+        # NOTE: We should re-enable when the medical team fixed the dataset
+        # unique=["normalized_curie"],
     )
 )
 def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
@@ -69,7 +64,7 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
     df = pd.concat([df, enriched_df], axis=1)
 
     # Coalesce id and new id to allow adding "new" nodes
-    df["normalized_curie"] = coalesce(df["new_id"], df["curie"])
+    df["normalized_curie"] = df["new_id"].fillna(df["curie"])
 
     # Filter out nodes that are not resolved
     is_resolved = df["normalized_curie"].notna()
@@ -91,7 +86,8 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
             "TargetId": Column(str, nullable=False),
             "Label": Column(str, nullable=False),
         },
-        unique=["SourceId", "TargetId", "Label"],
+        # NOTE: We should re-enable when the medical team fixed the dataset
+        # unique=["SourceId", "TargetId", "Label"],
     )
 )
 def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> pd.DataFrame:
@@ -104,7 +100,6 @@ def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> p
         raw_edges: Raw medical edges
     """
     df = int_nodes[["normalized_curie", "ID"]]
-
     # Attach source and target curies. Drop edge un the case of a missing curies.
     res = (
         raw_edges.merge(
@@ -138,7 +133,8 @@ def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> p
             "drug_curie": Column(str, nullable=True),
             "disease_curie": Column(str, nullable=True),
         },
-        unique=["drug_curie", "disease_curie"],
+        # NOTE: We should re-enable when the medical team fixed the dataset
+        # unique=["drug_curie", "disease_curie"],
     )
 )
 def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
@@ -165,7 +161,8 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
             "curie": Column(str, nullable=False),
             "name": Column(str, nullable=False),
         },
-        unique=["curie"],
+        # NOTE: We should re-enable when the medical team fixed the dataset
+        # unique=["curie"],
     ),
     df_name="nodes",
 )
@@ -185,7 +182,7 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
     ),
     df_name="edges",
 )
-def clean_clinical_trial_data(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def clean_clinical_trial_data(df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
     """Clean clinical trails data.
 
     Function to clean the mapped clinical trial dataset for use in time-split evaluation metrics.
@@ -239,37 +236,5 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFr
     # Extract nodes
     drugs = df.rename(columns={"drug_curie": "curie", "drug_name": "name"})[["curie", "name"]]
     diseases = df.rename(columns={"disease_curie": "curie", "disease_name": "name"})[["curie", "name"]]
-    nodes = pd.concat([drugs, diseases], ignore_index=True).drop_duplicates(subset="curie")
+    nodes = pd.concat([drugs, diseases], ignore_index=True)
     return {"nodes": nodes, "edges": edges}
-
-
-# -------------------------------------------------------------------------
-# Ground Truth Concatenation
-# -------------------------------------------------------------------------
-
-
-@check_output(
-    schema=DataFrameSchema(
-        columns={
-            "drug|disease": Column(str, nullable=False),
-            "y": Column(int, nullable=False),
-        },
-        unique=["source", "target", "drug|disease"],
-    )
-)
-def create_gt(pos_df: pd.DataFrame, neg_df: pd.DataFrame) -> pd.DataFrame:
-    """Converts the KGML-xDTD true positives and true negative dataframes into a singular dataframe compatible with EC format."""
-    pos_df["indication"], pos_df["contraindication"] = True, False
-    pos_df["y"] = 1
-    neg_df["indication"], neg_df["contraindication"] = False, True
-    neg_df["y"] = 0
-    gt_df = pd.concat([pos_df, neg_df], axis=0)
-    gt_df["drug|disease"] = gt_df["source"] + "|" + gt_df["target"]
-    return gt_df
-
-
-def create_gt_nodes_edges(edges: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    id_list = set(edges.source) | set(edges.target)
-    nodes = pd.DataFrame(id_list, columns=["id"])
-    edges.rename({"source": "subject", "target": "object"}, axis=1, inplace=True)
-    return nodes, edges
