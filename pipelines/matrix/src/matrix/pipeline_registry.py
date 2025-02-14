@@ -58,7 +58,6 @@ def register_pipelines() -> Dict[str, Pipeline]:
           pipelines["data_engineering"]
         + pipelines['feature']
         + pipelines["modelling_run"]
-        + pipelines['feature']
     )
 
     # Test pipelines
