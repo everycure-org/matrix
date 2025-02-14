@@ -12,37 +12,11 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 logger = logging.getLogger(__name__)
 
 
-BATCH_SIZE = 50
-
-
 def coalesce(s: pd.Series, *series: List[pd.Series]):
     """Coalesce the column information like a SQL coalesce."""
     for other in series:
         s = s.mask(pd.isnull, other)
     return s
-
-
-# @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
-# def resolve_name(name: str, cols_to_get: Iterable[str], url: str) -> dict:
-#     """Function to retrieve the normalized identifier through the normalizer.
-#
-#     Args:
-#         name: name of the node to be resolved
-#         cols_to_get: attribute to get from API
-#     Returns:
-#         Name and corresponding curie
-#     """
-#
-#     if not name or pd.isna(name):
-#         return {}
-#     result = requests.get(url.format(name=name)).json()
-#     if not result:
-#         return {}
-#
-#     element = result[0]
-#     ret = {col: element.get(col) for col in cols_to_get}
-#     logger.debug(f'{{"resolver url": {url}, "name": {name}, "response extraction": {json.dumps(ret)}}}')
-#     return ret
 
 
 @retry(wait=wait_exponential(multiplier=2, min=2, max=120), stop=stop_after_attempt(5))
@@ -112,7 +86,7 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str, batch_size: int) 
         Processed medical nodes
     """
     # Normalize the name
-    return pd.read_pickle("process_medical_nodes_df_batch.pkl")
+    # return pd.read_pickle("process_medical_nodes_df_batch.pkl")
     names = df["name"].dropna().unique().tolist()
     resolved_names = resolve_names(
         names, cols_to_get=["curie", "label", "types"], url=resolver_url, batch_size=batch_size
@@ -134,7 +108,7 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str, batch_size: int) 
     if not is_unique.all():
         logger.warning(f"{(~is_unique).sum()} EC medical nodes are duplicated.")
 
-    df.to_pickle("process_medical_nodes_df_batch.pkl")
+    # df.to_pickle("process_medical_nodes_df_batch.pkl")
     return df
 
 
@@ -179,40 +153,6 @@ def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> p
     return res
 
 
-# @check_output(
-#     schema=DataFrameSchema(
-#         columns={
-#             "reason_for_rejection": Column(str, nullable=True),
-#             "drug_name": Column(str, nullable=False),
-#             "disease_name": Column(str, nullable=False),
-#             "significantly_better": Column(float, nullable=True),
-#             "non_significantly_better": Column(float, nullable=True),
-#             "non_significantly_worse": Column(float, nullable=True),
-#             "significantly_worse": Column(float, nullable=True),
-#             "drug_curie": Column(str, nullable=True),
-#             "disease_curie": Column(str, nullable=True),
-#         },
-#         unique=["drug_curie", "disease_curie"],
-#     )
-# )
-# def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
-#     """Resolve names to curies for source and target columns in clinical trials data.
-#
-#     Args:
-#         df: Clinical trial dataset
-#     """
-#     # Normalize the name
-#     drug_data = df["drug_name"].apply(resolve_name, cols_to_get=["curie"], url=resolver_url)
-#     disease_data = df["disease_name"].apply(resolve_name, cols_to_get=["curie"], url=resolver_url)
-#
-#     # Concat dfs
-#     drug_df = pd.DataFrame(drug_data.tolist()).rename(columns={"curie": "drug_curie"})
-#     disease_df = pd.DataFrame(disease_data.tolist()).rename(columns={"curie": "disease_curie"})
-#     df = pd.concat([df, drug_df, disease_df], axis=1)
-#
-#     return df
-
-
 @check_output(
     schema=DataFrameSchema(
         columns={
@@ -235,7 +175,7 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
     Args:
         df: Clinical trial dataset
     """
-    return pd.read_pickle("add_source_and_target_df_batch.pkl")
+    # return pd.read_pickle("add_source_and_target_df_batch.pkl")
     # dups = df[df.duplicated(subset=["drug_curie", "disease_curie"], keep=False)].sort_values('drug_curie')
     drug_names = df["drug_name"].dropna().unique().tolist()
     disease_names = df["disease_name"].dropna().unique().tolist()
@@ -245,8 +185,7 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
 
     df["drug_curie"] = df["drug_name"].map(lambda x: drug_mapping.get(x, {}).get("curie", None))
     df["disease_curie"] = df["disease_name"].map(lambda x: disease_mapping.get(x, {}).get("curie", None))
-    df.to_pickle("add_source_and_target_df_batch.pkl")
-
+    # df.to_pickle("add_source_and_target_df_batch.pkl")
     return df
 
 
