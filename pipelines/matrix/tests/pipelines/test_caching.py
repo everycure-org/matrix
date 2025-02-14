@@ -1,3 +1,5 @@
+from functools import partial
+
 import pytest
 from kedro.framework.context import KedroContext
 from matrix.datasets.gcp import SparkWithSchemaDataset
@@ -250,7 +252,7 @@ def test_dataframe_is_enriched(
     sample_cache.show()
     sample_cache.printSchema()
     sample_cache_misses.show()
-    cache_out = cache_miss_resolver_wrapper(sample_cache_misses, sample_resolver, sample_api1)
+    cache_out = cache_miss_resolver_wrapper(sample_cache_misses, partial(sample_resolver, api=sample_api1), sample_api1)
     cache_out.printSchema()
     assert isinstance(cache_out, DataFrame)
     # cache_out.show()
@@ -272,7 +274,7 @@ def test_re_call_is_a_noop(
     sample_preprocessor,
     sample_new_col,
 ):
-    cache_out = cache_miss_resolver_wrapper(sample_cache_misses, sample_resolver, sample_api1)
+    cache_out = cache_miss_resolver_wrapper(sample_cache_misses, partial(sample_resolver, api=sample_api1), sample_api1)
 
     new_cache = sample_cache.union(cache_out)
     enriched_df = lookup_from_cache(
@@ -301,7 +303,7 @@ def test_enriched_keeps_same_size_with_cache_duplicates(
     cache_misses = derive_cache_misses(
         sample_input_df, sample_duplicate_cache, sample_api1, sample_primary_key, sample_preprocessor
     )
-    cache_out = cache_miss_resolver_wrapper(cache_misses, sample_resolver, sample_api1)
+    cache_out = cache_miss_resolver_wrapper(cache_misses, partial(sample_resolver, api=sample_api1), sample_api1)
     new_cache = sample_cache.union(cache_out)
     enriched_df = lookup_from_cache(
         sample_input_df, new_cache, sample_api1, sample_primary_key, sample_preprocessor, sample_new_col

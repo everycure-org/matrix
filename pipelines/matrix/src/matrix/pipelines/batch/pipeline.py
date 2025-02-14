@@ -1,6 +1,6 @@
 import logging
 import warnings
-from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, TypeVar
+from typing import Any, Callable, Collection, Dict, Iterable, Iterator, List, Optional, Sequence, TypeVar
 
 import pandas as pd
 from kedro.pipeline import Pipeline, node, pipeline
@@ -277,14 +277,10 @@ def cached_api_enrichment_pipeline(
     return pipeline(nodes)
 
 
-def dummy_resolver(api):
-    def inner(foo):
-        foo2 = list(foo)
-
-        logging.warning(f"resolving, {foo2}, using {api}")
-        yield from zip((_[0] for _ in foo2), [[5.0, 3.0]] * len(foo2))
-
-    return inner
+def dummy_resolver(sequence: Collection[T], api) -> Iterator[tuple[T, V]]:
+    seq = tuple(sequence)
+    logging.debug(f"resolving, {seq}, using {api}")
+    yield from zip((_[0] for _ in seq), [[5.0, 3.0]] * len(seq))
 
 
 def pass_through(x):
