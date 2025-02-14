@@ -159,6 +159,7 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
             "curie": Column(str, nullable=False),
             "name": Column(str, nullable=False),
         },
+        # NOTE: We should re-enable when the medical team fixed the dataset
         # unique=["curie"],
     ),
     df_name="nodes",
