@@ -99,7 +99,7 @@ jobs:
       - run: env | sort # prints out all env variables, helpful for debugging
       - run: make install
       - run: make precommit
-      - run: make fetch_sa_key
+      - run: make fetch_secrets
       - run: uv run kedro catalog resolve --env base
       - run: uv run kedro catalog resolve --env cloud
       - run: uv run kedro catalog resolve --env test
