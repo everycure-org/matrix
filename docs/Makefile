@@ -1,6 +1,10 @@
 # Makefile that builds or serves the docs.
 .PHONY: build serve
 
+venv:
+	if [ ! -d .venv ]; then uv venv -p 3.11; fi
+	uv run python -m ensurepip --upgrade || true
+
 build: install
 	.venv/bin/mkdocs build -s # build in strict mode, all links must function
 
