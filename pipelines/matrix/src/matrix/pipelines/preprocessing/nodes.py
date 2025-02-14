@@ -60,7 +60,7 @@ def resolve_one_name_batch(names: List[str], cols_to_get: Iterable[str], url: st
     time.sleep(random.randint(5, 10))
     response = requests.post(url, json=payload, headers={"Content-Type": "application/json"})
     response.raise_for_status()
-    logger.debug(f"API Response - Status: {response.status_code}, Time: {response.elapsed.total_seconds():.3f}s")
+    logger.debug(f"API Response - Status: {response.status_code}, \nTime: {response.elapsed.total_seconds():.3f}s")
     result = response.json()
     resolved_data = {}
 
@@ -112,16 +112,12 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str, batch_size: int) 
         Processed medical nodes
     """
     # Normalize the name
-    names = df["drug_name"].dropna().unique().tolist()
+    names = df["name"].dropna().unique().tolist()
     resolved_names = resolve_names(
         names, cols_to_get=["curie", "label", "types"], url=resolver_url, batch_size=batch_size
     )
-
-    enriched_data = df["name"].apply(resolve_name, cols_to_get=["curie", "label", "types"], url=resolver_url)
-
-    # Extract into df
-    enriched_df = pd.DataFrame(enriched_data.tolist())
-    df = pd.concat([df, enriched_df], axis=1)
+    df["extra_cols"] = df.name.map(resolved_names)
+    df = df.join(pd.json_normalize(df["extra_cols"])).drop(columns="extra_cols")
 
     # Coalesce id and new id to allow adding "new" nodes
     df["normalized_curie"] = coalesce(df["new_id"], df["curie"])
@@ -136,6 +132,8 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str, batch_size: int) 
     is_unique = df["normalized_curie"].groupby(df["normalized_curie"]).transform("count") == 1
     if not is_unique.all():
         logger.warning(f"{(~is_unique).sum()} EC medical nodes are duplicated.")
+
+    df.to_pickle("process_medical_nodes_df_batch.pkl")
     return df
 
 
@@ -245,6 +243,8 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
 
     df["drug_curie"] = df["drug_name"].map(lambda x: drug_mapping.get(x, {}).get("curie", None))
     df["disease_curie"] = df["disease_name"].map(lambda x: disease_mapping.get(x, {}).get("curie", None))
+    df.to_pickle("add_source_and_target_df_batch.pkl")
+
     return df
 
 
