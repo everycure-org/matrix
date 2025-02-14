@@ -61,6 +61,7 @@ def create(experiment_name):
 @experiment.command()
 # These are all copied directly from submit. If we want to maintain kedro submit functionality I think we need to
 # keep the duplication for now. Then we can just rename submit to run and add the extra mlflow steps.
+
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
@@ -69,9 +70,11 @@ def create(experiment_name):
 @click.option("--quiet", "-q", is_flag=True, default=False, help="Disable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
+@click.option("--nodes", "-n", type=str, default="", help="Specify nodes to run", callback=split_string)
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 @click.option("--headless", is_flag=True, default=False, help="Skip confirmation prompt")
 @click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
+@click.option("--skip-git-checks", is_flag=True, type=bool, default=False, help="Skip git checks")
 @click.option(
     "--experiment-name", type=str, help="Optional: specify the MLFlow experiment name to use. Defaults to branch name"
 )
@@ -86,9 +89,11 @@ def run(
     quiet: bool,
     dry_run: bool,
     from_nodes: List[str],
+    nodes: List[str],
     is_test: bool,
     headless: bool,
     environment: str,
+    skip_git_checks: bool,
     experiment_name: str,
 ):
     """Run an experiment."""
@@ -125,8 +130,10 @@ def run(
         quiet=quiet,
         dry_run=dry_run,
         from_nodes=from_nodes,
+        nodes=nodes,
         is_test=is_test,
         headless=headless,
         environment=environment,
         experiment_id=experiment_id,
+        skip_git_checks=skip_git_checks,
     )

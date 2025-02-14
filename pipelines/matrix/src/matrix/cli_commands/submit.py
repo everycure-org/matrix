@@ -79,8 +79,8 @@ def submit(
     is_test: bool,
     headless: bool,
     environment: str,
-    experiment_id: Optional[int],
-    skip_git_checks: bool
+    skip_git_checks: bool,
+    experiment_id: Optional[int]
 ):
     """Submit the end-to-end workflow. """
 
@@ -142,7 +142,7 @@ def _submit(
     dry_run: bool,
     environment: str,
     template_directory: Path,
-    mlflow_experiment_id: str,
+    mlflow_experiment_id: int,
     allow_interactions: bool = True,
     is_test: bool = False,
 ) -> None:
@@ -213,7 +213,7 @@ def _submit(
 
 
 
-def summarize_submission(experiment_id: str, run_name: str, namespace: str, pipeline: str, environment: str, is_test: bool, release_version: str, headless:bool):
+def summarize_submission(experiment_id: int, run_name: str, namespace: str, pipeline: str, environment: str, is_test: bool, release_version: str, headless:bool):
     console.print(Panel.fit(
         f"[bold green]About to submit workflow:[/bold green]\n"
         f"MLFlow Experiment: {mlflow.get_tracking_uri()}/#/experiments/{experiment_id}\n"
@@ -399,7 +399,7 @@ def build_argo_template(
     namespace: str,
     pipeline_obj: Pipeline,
     environment: str,
-    mlflow_experiment_id: str,
+    mlflow_experiment_id: int,
     is_test: bool,
     default_execution_resources: Optional[ArgoResourceConfig] = None
 ) -> str:
