@@ -3,6 +3,8 @@ from typing import Dict
 
 import pyspark.sql as ps
 
+from matrix.pipelines.integration import schema
+
 
 class Transformer(ABC):
     """Data source transformer."""
@@ -15,7 +17,10 @@ class GraphTransformer(Transformer):
     """Transformer for graph input sources."""
 
     def transform(self, nodes_df: ps.DataFrame, edges_df: ps.DataFrame, **kwargs) -> Dict[str, ps.DataFrame]:
-        return {"nodes": self.transform_nodes(nodes_df, **kwargs), "edges": self.transform_edges(edges_df, **kwargs)}
+        return {
+            "nodes": self.transform_nodes(nodes_df, **kwargs).select(*schema.BIOLINK_KG_NODE_SCHEMA.columns.keys()),
+            "edges": self.transform_edges(edges_df, **kwargs).select(*schema.BIOLINK_KG_EDGE_SCHEMA.columns.keys()),
+        }
 
     @abstractmethod
     def transform_nodes(self, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFrame: ...
