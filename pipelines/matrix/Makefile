@@ -18,8 +18,15 @@ OAUTH_CLIENT_SECRET_PATH ?= conf/local/oauth_client_secret.txt
 # ensures all make targets run in one shell (rather than line by line in new shell)
 .ONESHELL: 
 
-default: prerequisites fetch_secrets install fast_test integration_test
-	echo "done!"
+default: prerequisites fetch_sa_key install fast_test integration_test
+
+.PHONY: always
+# steps here get run on _every_ make call, no matter the target. Make sure this is 100% idempotent and fast.
+always:
+	# never track notebooks in the pipeline subfolder
+	git update-index --assume-unchanged *.ipynb
+%: always
+	@:
 
 prerequisites:
 	$(info Checking if prerequisites are installed...)
@@ -181,4 +188,4 @@ diagnostics:
 	-df -h
 	echo "\nDiagnostics complete."
 
-# NOTE: This Makefile target was partially generated using AI assistance.
+
