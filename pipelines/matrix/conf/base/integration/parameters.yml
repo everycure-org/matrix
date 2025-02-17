@@ -16,6 +16,7 @@ integration:
       transformer:
         _object: matrix.pipelines.integration.transformers.clinical_trails.ClinicalTrialsTransformer
         select_cols: false
+        drop_duplicates: true
     drug_list: 
       transformer:
         _object: matrix.pipelines.integration.transformers.drugs.DrugsTransformer
