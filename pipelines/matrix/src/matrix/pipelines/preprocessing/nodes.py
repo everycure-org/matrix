@@ -20,7 +20,7 @@ def coalesce(s: pd.Series, *series: List[pd.Series]):
 
 
 @retry(wait=wait_exponential(multiplier=2, min=2, max=120), stop=stop_after_attempt(5))
-def resolve_one_name_batch(names: List[str], cols_to_get: Iterable[str], url: str) -> dict:
+def resolve_one_name_batch(names: List[str], url: str) -> dict:
     """Batch resolve a list of names to their corresponding CURIEs."""
     payload = {
         "strings": names,
@@ -35,14 +35,21 @@ def resolve_one_name_batch(names: List[str], cols_to_get: Iterable[str], url: st
     response = requests.post(url, json=payload, headers={"Content-Type": "application/json"})
     response.raise_for_status()
     logger.debug(f"API Response - Status: {response.status_code}, \nTime: {response.elapsed.total_seconds():.3f}s")
-    result = response.json()
+    return response.json()
+
+
+def parse_one_name_batch(
+    result: dict[str, list[dict[str, str]]], cols_to_get: Iterable[str]
+) -> dict[str, dict[str, str | None]]:
+    """Parse API response to extract resolved names and corresponding attributes."""
     resolved_data = {}
 
     for name, attributes in result.items():
-        if len(attributes) > 0:
+        if attributes:
             resolved_data[name] = {col: attributes[0].get(col) for col in cols_to_get}
         else:
             resolved_data[name] = {col: None for col in cols_to_get}
+
     return resolved_data
 
 
@@ -59,8 +66,9 @@ def resolve_names(names: str, cols_to_get: Iterable[str], url: str, batch_size: 
     resolved_data = {}
     for i in range(0, len(names), batch_size):
         batch = names[i : i + batch_size]
-        batch_result = resolve_one_name_batch(batch, cols_to_get, url)
-        resolved_data.update(batch_result)
+        batch_response = resolve_one_name_batch(batch, url)
+        batch_parsed = parse_one_name_batch(batch_response, cols_to_get)
+        resolved_data.update(batch_parsed)
     return resolved_data
 
 
@@ -87,6 +95,9 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str, batch_size: int) 
     """
     # Normalize the name
     # return pd.read_pickle("process_medical_nodes_df_batch.pkl")
+
+    start = time.perf_counter()
+
     names = df["name"].dropna().unique().tolist()
     resolved_names = resolve_names(
         names, cols_to_get=["curie", "label", "types"], url=resolver_url, batch_size=batch_size
@@ -109,6 +120,10 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str, batch_size: int) 
         logger.warning(f"{(~is_unique).sum()} EC medical nodes are duplicated.")
 
     # df.to_pickle("process_medical_nodes_df_batch.pkl")
+
+    end = time.perf_counter()
+    print(f"Execution time process nodes: {end - start:.6f} seconds")
+
     return df
 
 
@@ -177,6 +192,9 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
     """
     # return pd.read_pickle("add_source_and_target_df_batch.pkl")
     # dups = df[df.duplicated(subset=["drug_curie", "disease_curie"], keep=False)].sort_values('drug_curie')
+
+    start = time.perf_counter()
+
     drug_names = df["drug_name"].dropna().unique().tolist()
     disease_names = df["disease_name"].dropna().unique().tolist()
 
@@ -186,6 +204,8 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
     df["drug_curie"] = df["drug_name"].map(lambda x: drug_mapping.get(x, {}).get("curie", None))
     df["disease_curie"] = df["disease_name"].map(lambda x: disease_mapping.get(x, {}).get("curie", None))
     # df.to_pickle("add_source_and_target_df_batch.pkl")
+    end = time.perf_counter()
+    print(f"Execution time ADD SOURCE AND TARGET: {end - start:.6f} seconds")
     return df
 
 
