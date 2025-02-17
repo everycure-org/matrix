@@ -1,0 +1,25 @@
+_pandas_csv: &_pandas_csv
+  type:  pandas.CSVDataset
+
+_layer_raw: &_layer_raw
+  metadata:
+    kedro-viz:
+      layer: raw
+
+# ==============================
+
+filtering.prm.rtxkg2_filtered_nodes:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: data/test/filtering/rtxkg2_filtered_nodes.csv
+
+filtering.prm.rtxkg2_filtered_edges:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: data/test/filtering/rtxkg2_filtered_edges.csv
+
+filtering.prm.robokop_filtered_nodes:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: data/test/filtering/robokop_filtered_nodes.csv
+
+filtering.prm.robokop_filtered_edges:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: data/test/filtering/robokop_filtered_edges.csv

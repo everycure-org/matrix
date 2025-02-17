@@ -7,6 +7,7 @@ from matrix.pipelines.data_release.pipeline import create_pipeline as create_dat
 from matrix.pipelines.embeddings.pipeline import create_pipeline as create_embeddings_pipeline
 from matrix.pipelines.evaluation.pipeline import create_pipeline as create_evaluation_pipeline
 from matrix.pipelines.fabricator.pipeline import create_pipeline as create_fabricator_pipeline
+from matrix.pipelines.filtering.pipeline import create_pipeline as create_filtering_pipeline
 from matrix.pipelines.ingestion.pipeline import create_pipeline as create_ingestion_pipeline
 from matrix.pipelines.integration.pipeline import create_pipeline as create_integration_pipeline
 from matrix.pipelines.matrix_generation.pipeline import create_pipeline as create_matrix_pipeline
@@ -27,6 +28,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         "fabricator": create_fabricator_pipeline(),
         "ingestion": create_ingestion_pipeline(),
         "integration": create_integration_pipeline(),
+        "filtering": create_filtering_pipeline(),
         "embeddings": create_embeddings_pipeline(),
         "data_release": create_data_release_pipeline(),
         "modelling": create_modelling_pipeline(),
@@ -52,7 +54,8 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + pipelines["evaluation"]
     )
     pipelines["feature"] = (
-        pipelines["embeddings"]
+        pipelines["filtering"]
+        + pipelines["embeddings"]
     )
     pipelines["__default__"] = (
           pipelines["data_engineering"]
