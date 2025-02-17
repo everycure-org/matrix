@@ -15,4 +15,3 @@ embeddings.topological_estimator:
   iterations: 1
   embedding_dim: 3
   walk_length: 2
-  # epochs: 1
