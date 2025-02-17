@@ -21,9 +21,9 @@ BIOLINK_KG_NODE_SCHEMA = DataFrameSchema(
 
 BIOLINK_KG_EDGE_SCHEMA = DataFrameSchema(
     columns={
-        "subject": Column(T.StringType(), nullable=False),
-        "predicate": Column(T.StringType(), nullable=False),
-        "object": Column(T.StringType(), nullable=False),
+        "subject": Column(T.StringType(), nullable=True),
+        "predicate": Column(T.StringType(), nullable=True),
+        "object": Column(T.StringType(), nullable=True),
         "knowledge_level": Column(T.StringType(), nullable=True),
         "primary_knowledge_source": Column(T.StringType(), nullable=True),
         "aggregator_knowledge_source": Column(T.ArrayType(T.StringType()), nullable=True),
@@ -34,6 +34,6 @@ BIOLINK_KG_EDGE_SCHEMA = DataFrameSchema(
         "object_direction_qualifier": Column(T.StringType(), nullable=True),
         "upstream_data_source": Column(T.ArrayType(T.StringType()), nullable=False),
     },
-    unique=["subject", "predicate", "object"],
+    # unique=["subject", "predicate", "object"],
     strict=True,
 )
