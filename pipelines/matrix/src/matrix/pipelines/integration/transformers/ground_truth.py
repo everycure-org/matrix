@@ -1,23 +1,27 @@
 import logging
 
+import pyspark.sql as ps
 import pyspark.sql.functions as f
 from pyspark.sql import DataFrame
 
-from .transformer import GraphTransformer
+from .transformer import Transformer
 
 logger = logging.getLogger(__name__)
 
 
-class GroundTruthTransformer(GraphTransformer):
+class GroundTruthTransformer(Transformer):
     """Transformer for ground truth data"""
 
-    def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
-        return nodes_df
+    def transform(self, edges_df: DataFrame, **kwargs) -> dict[str, DataFrame]:
+        edges = self._extract_edges(edges_df)
+        id_list = edges.select("subject").union(edges.select("object")).distinct().withColumnRenamed("subject", "id")
+        return {"nodes": id_list, "edges": edges}
 
-    def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
-        # fmt: off
+    @staticmethod
+    def _extract_edges(edges_df: ps.DataFrame) -> ps.DataFrame:
         return (
-            edges_df
+            edges_df.withColumnRenamed("source", "subject")
+            .withColumnRenamed("target", "object")
             .withColumn("disease", f.col("object"))
             .withColumn("drug", f.col("subject"))
             .withColumn(
@@ -25,4 +29,3 @@ class GroundTruthTransformer(GraphTransformer):
             )
             .withColumn("predicate", f.lit("clinical_trails"))
         )
-        # fmt: on

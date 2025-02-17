@@ -432,6 +432,7 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
     run_name = "test_run"
     release_version = "test_release"
     image_tag = "test_tag"
+    mlflow_experiment_id = 1
     namespace = "test_namespace"
     username = "test_user"
     pipeline_obj = Pipeline(
@@ -463,6 +464,7 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
         run_name=run_name,
         release_version=release_version,
         image_tag=image_tag,
+        mlflow_experiment_id=mlflow_experiment_id,
         namespace=namespace,
         username=username,
         pipeline=pipeline_obj,
