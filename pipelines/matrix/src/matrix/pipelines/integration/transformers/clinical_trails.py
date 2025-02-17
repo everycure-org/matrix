@@ -11,7 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 class ClinicalTrialsTransformer(GraphTransformer):
-    def __init__(self, drop_duplicates: bool = True):
+    def __init__(self, select_cols: str = True, drop_duplicates: bool = True):
+        super().__init__(select_cols)
         self._drop_duplicates = drop_duplicates
 
     def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
