@@ -1,7 +1,7 @@
 import itertools
 import logging
 from abc import ABC, abstractmethod
-from typing import Iterable, Iterator, Optional, TypeAlias, TypeVar
+from typing import Iterable, Iterator, List, Optional, Tuple, TypeAlias, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -174,3 +174,50 @@ class PubmedBERTEncoder(AttributeEncoder):
         df["embedding"] = list(embeddings)
         df = df.drop(columns=["text_to_embed"])
         return df
+
+
+def lang_chain_encoder(
+    texts: Iterable[str],
+    dimensions: int,
+    random_seed: Optional[int] = None,
+    batch_size: int = 500,
+    timeout: int = 10,
+    openai_model: str = "text-embedding-3-small",
+    openai_api_base: Optional[str] = None,
+) -> Iterator[Tuple[str, List[float]]]:
+    """Encode texts using OpenAI embeddings with efficient batch processing.
+
+    Args:
+        texts: Strings for which the embedding must be computed.
+        dimensions: Output dimension of the output embeddings.
+        random_seed: Random seed for reproducibility.
+        batch_size: Batch size for efficient encoding.
+        timeout: Timeout for OpenAI API requests.
+        openai_model: Name of the model to use.
+        openai_api_base: Endpoint for the OpenAI model.
+
+    Returns:
+        Tuples of the text and its embedding, for each text.
+    """
+    encoder = OpenAIEmbeddings(
+        model=openai_model, request_timeout=timeout, openai_api_base=openai_api_base, dimensions=dimensions
+    )
+
+    def batched(iterable: Iterable[T], n: int, *, strict: bool = False) -> Iterator[Tuple[T]]:
+        """Batch an iterable into tuples of size n."""
+        if n < 1:
+            raise ValueError("batch size must be at least one")
+        iterator = iter(iterable)
+        while batch := tuple(itertools.islice(iterator, n)):
+            if strict and len(batch) != n:
+                raise ValueError("batched(): incomplete batch")
+            yield batch
+
+    @retry(wait=wait_exponential(multiplier=10, min=2, max=180), stop=stop_after_attempt(5))
+    def _encode(texts: List[str], encoder: OpenAIEmbeddings) -> List[List[float]]:
+        """Encode a list of texts using the OpenAI encoder."""
+        return encoder.embed_documents(texts=texts)
+
+    for batch in batched(texts, batch_size):
+        embeddings = _encode(list(batch), encoder)
+        yield from zip(batch, embeddings)
