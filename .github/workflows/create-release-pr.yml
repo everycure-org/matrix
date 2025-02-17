@@ -105,7 +105,7 @@ jobs:
         working-directory: apps/matrix-cli
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_POSTS_DIR: docs/src/releases/posts/${{env.release}}
+          POSTS_DIR: docs/src/releases/posts
         # only create release notes for minor, major, and intermediate bumps
         if: env.generate_notes == 'True'
         run: |
