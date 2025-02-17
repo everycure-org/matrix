@@ -1,13 +1,17 @@
+import os
+import tempfile
 from functools import partial
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
-from kedro.framework.context import KedroContext
 from kedro.framework.project import configure_project
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import bootstrap_project
 from kedro.io import DataCatalog
-from matrix.datasets.gcp import SparkWithSchemaDataset
+from kedro.runner import SequentialRunner
+from kedro_datasets.spark import SparkDataset
+from matrix.datasets.gcp import LazySparkDataset, SparkWithSchemaDataset
 from matrix.pipelines.batch.pipeline import (
     cache_miss_resolver_wrapper,
     cached_api_enrichment_pipeline,
@@ -18,7 +22,6 @@ from matrix.pipelines.batch.pipeline import (
     pass_through,
     resolve_cache_duplicates,
 )
-from matrix.session import KedroSessionWithFromCatalog
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import ArrayType, FloatType, StringType, StructField, StructType
 from pyspark.testing import assertDataFrameEqual
@@ -227,6 +230,18 @@ def sample_new_col():
     return "resolved"
 
 
+@pytest.fixture
+def mock_encoder(sample_api1) -> Mock:
+    encoder = Mock(side_effect=partial(dummy_resolver, api=sample_api1))
+    return encoder
+
+
+@pytest.fixture
+def mock_encoder2(sample_api1) -> Mock:
+    encoder = Mock(side_effect=partial(dummy_resolver, api=sample_api1))
+    return encoder
+
+
 def test_spark_with_schema_dataset_bootstrap(test_schema, cache_schema):
     # Define the path
     project_path = Path.cwd()
@@ -325,3 +340,109 @@ def test_different_api(sample_cache, sample_api1, api1_filtered_cache, sample_ap
     assertDataFrameEqual(result1_df, api1_filtered_cache)
     result2_df = limit_cache_to_results_from_api(sample_cache, sample_api2)
     assertDataFrameEqual(result2_df, api2_filtered_cache)
+
+
+def test_re_resolve_is_noop(
+    sample_primary_key,
+    sample_preprocessor,
+    sample_cache,
+    sample_input_df,
+    mock_encoder,
+    mock_encoder2,
+    sample_cache_misses,
+    sample_api1,
+):
+    cache_out = cache_miss_resolver_wrapper(sample_cache_misses, mock_encoder, sample_api1)
+    new_cache = sample_cache.union(cache_out)
+    cache_misses2 = derive_cache_misses(
+        sample_input_df, new_cache, sample_api1, sample_primary_key, sample_preprocessor
+    )
+    result2 = cache_miss_resolver_wrapper(cache_misses2, mock_encoder2, sample_api1)
+    mock_encoder2.assert_not_called()
+
+
+# def test_cached_api_enrichment_pipeline(sample_input_df,
+#                                         sample_primary_key,
+#                                         sample_api1,
+#                                         sample_new_col,
+#                                         mock_encoder,
+#                                         mock_encoder2,
+#                                         sample_preprocessor,
+#                                         test_schema):
+#     project_path = Path.cwd()
+#     bootstrap_project(project_path)
+#     configure_project("matrix")
+#     with KedroSession.create(project_path) as session:
+#         kedro_context = session.load_context()
+#         temp_dir = tempfile.TemporaryDirectory().name
+
+#         test_cache = SparkWithSchemaDataset(
+#                     filepath=os.path.join(temp_dir, "cache_dataset"),
+#                     provide_empty_if_not_present=True,
+#                     load_args={"schema": test_schema},
+#                     )
+
+#         test_cache_write = SparkWithSchemaDataset(
+#                             filepath=os.path.join(temp_dir, "cache_dataset"),
+#                             provide_empty_if_not_present=True,
+#                             load_args={"schema": test_schema},
+#                             save_args={"mode": "append", "partitionBy": ["api"]}
+#         )
+
+#         test_cache_misses = LazySparkDataset(
+#                             filepath=os.path.join(temp_dir, "cache_misses"),
+#                             save_args={"mode": "overwrite"}
+#                         )
+
+#         test_fully_enriched = LazySparkDataset(
+#                                 filepath=os.path.join(temp_dir, "fully_enriched"),
+#                                 save_args={"mode": "overwrite"}
+#                             )
+
+#         pipeline = cached_api_enrichment_pipeline(input="caching.input",
+#                                                 cache="cache.read",
+#                                                 cache_out="cache.write",
+#                                                 cache_misses="cache.misses",
+#                                                 primary_key="params:caching.primary_key",
+#                                                 cache_miss_resolver="params:caching.resolver",
+#                                                 preprocessor="params:caching.preprocessor",
+#                                                 api="params:caching.api",
+#                                                 output="fully_enriched",
+#                                                 new_col="params:caching.new_col")
+
+#         mock_catalog1 = DataCatalog({
+#             "caching.input": LazySparkDataset(filepath=os.path.join(temp_dir, "input_dataset")),
+#             "cache.read": test_cache,
+#             "cache.write": test_cache_write,
+#             "cache_misses": test_cache_misses,
+#             "params:caching.primary_key": sample_primary_key,
+#             "params:caching.resolver": mock_encoder,
+#             "params:caching.api": sample_api1,
+#             "params:caching.preprocessor": sample_preprocessor,
+#             "fully_enriched": test_fully_enriched,
+#             "params:caching.new_col": sample_new_col,
+#         })
+
+#         mock_catalog1.save("caching.input", sample_input_df)
+
+#         result1 = SequentialRunner().run(pipeline, mock_catalog1)
+
+#         result1["cache.read"].load().show()
+
+#         mock_catalog2 = DataCatalog({
+#             "caching.input": LazySparkDataset(filepath=os.path.join(temp_dir, "input_dataset")),
+#             "cache.read": test_cache,
+#             "cache.write": test_cache_write,
+#             "cache_misses": test_cache_misses,
+#             "params:caching.primary_key": sample_primary_key,
+#             "params:caching.resolver": mock_encoder2,
+#             "params:caching.api": sample_api1,
+#             "params:caching.preprocessor": sample_preprocessor,
+#             "fully_enriched": test_fully_enriched,
+#             "params:caching.new_col": sample_new_col,
+#         })
+
+#         mock_catalog2.save("caching.input", sample_input_df)
+
+#         result2 = SequentialRunner().run(pipeline, mock_catalog2)
+#         mock_encoder2.assert_not_called()
