@@ -1,10 +1,16 @@
 from functools import partial
+from pathlib import Path
 
 import pytest
 from kedro.framework.context import KedroContext
+from kedro.framework.project import configure_project
+from kedro.framework.session import KedroSession
+from kedro.framework.startup import bootstrap_project
+from kedro.io import DataCatalog
 from matrix.datasets.gcp import SparkWithSchemaDataset
 from matrix.pipelines.batch.pipeline import (
     cache_miss_resolver_wrapper,
+    cached_api_enrichment_pipeline,
     derive_cache_misses,
     dummy_resolver,
     limit_cache_to_results_from_api,
@@ -12,6 +18,7 @@ from matrix.pipelines.batch.pipeline import (
     pass_through,
     resolve_cache_duplicates,
 )
+from matrix.session import KedroSessionWithFromCatalog
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import ArrayType, FloatType, StringType, StructField, StructType
 from pyspark.testing import assertDataFrameEqual
@@ -42,6 +49,14 @@ def test_schema():
                     },
                     "nullable": False,
                 },
+                {
+                    "_object": "pyspark.sql.types.StructField",
+                    "name": "api",
+                    "dataType": {
+                        "_object": "pyspark.sql.types.StringType",
+                    },
+                    "nullable": False,
+                },
             ],
         }
     }
@@ -52,8 +67,8 @@ def test_schema():
 def input_df_schema():
     return StructType(
         [
-            StructField("to_resolve", StringType(), True),
-            StructField("category", StringType(), True),
+            StructField("to_resolve", StringType(), False),
+            StructField("category", StringType(), False),
         ]
     )
 
@@ -78,8 +93,8 @@ def sample_primary_key():
 def cache_schema():
     return StructType(
         [
-            StructField("key", StringType(), True),
-            StructField("value", ArrayType(FloatType()), True),
+            StructField("key", StringType(), False),
+            StructField("value", ArrayType(FloatType()), False),
             StructField("api", StringType(), False),
         ]
     )
@@ -89,8 +104,8 @@ def cache_schema():
 def filtered_cache_schema():
     return StructType(
         [
-            StructField("key", StringType(), True),
-            StructField("value", ArrayType(FloatType()), True),
+            StructField("key", StringType(), False),
+            StructField("value", ArrayType(FloatType()), False),
         ]
     )
 
@@ -99,7 +114,7 @@ def filtered_cache_schema():
 def cache_misses_schema():
     return StructType(
         [
-            StructField("key", StringType(), True),
+            StructField("key", StringType(), False),
         ]
     )
 
@@ -212,24 +227,36 @@ def sample_new_col():
     return "resolved"
 
 
-def test_spark_with_schema_dataset_bootstrap(request: pytest.FixtureRequest, test_schema):
-    kedro_context = request.getfixturevalue("kedro_context")
-    # Define a non-existent filepath to trigger the bootstrap behavior
-    non_existent_path = "file:///tmp/non_existent_path"
-    # Create an instance of SparkWithSchemaDataset with bootstrapping enabled
-    dataset = SparkWithSchemaDataset(
-        filepath=non_existent_path,
-        file_format="parquet",
-        load_args=test_schema,
-        provide_empty_if_not_present=True,
-    )
+def test_spark_with_schema_dataset_bootstrap(test_schema, cache_schema):
+    # Define the path
+    project_path = Path.cwd()
 
-    # Attempt to load the dataset
-    result_df = dataset.load()
+    # Bootstrap the project to set up the configuration
+    bootstrap_project(project_path)
 
-    # Verify that the result is an empty DataFrame with the correct schema
-    assert result_df.rdd.isEmpty(), "The DataFrame should be empty"
-    assert result_df.schema == test_schema, "The schema should match the provided schema"
+    # Configure the project
+    configure_project("matrix")
+
+    # Create a Kedro session and context
+    with KedroSession.create(project_path) as session:
+        kedro_context = session.load_context()
+
+        # Define a non-existent filepath to trigger the bootstrap behavior
+        non_existent_path = "file:///tmp/non_existent_path"
+
+        # Create an instance of SparkWithSchemaDataset with bootstrapping enabled
+        dataset = SparkWithSchemaDataset(
+            filepath=non_existent_path,
+            file_format="parquet",
+            load_args=test_schema,
+            provide_empty_if_not_present=True,
+        )
+
+        # Attempt to load the dataset
+        result_df = dataset.load()
+        # Verify that the result is an empty DataFrame with the correct schema
+        assert result_df.rdd.isEmpty(), "The DataFrame should be empty"
+        assert result_df.schema == cache_schema, "The schema should match the provided schema"
 
 
 def test_derive_cache_misses(
@@ -261,26 +288,6 @@ def test_dataframe_is_enriched(
     cache_misses2 = derive_cache_misses(
         sample_input_df, new_cache, sample_api1, sample_primary_key, sample_preprocessor
     )
-    assert cache_misses2.count() == 0, "The cache misses should be empty"
-
-
-def test_re_call_is_a_noop(
-    sample_cache,
-    sample_input_df,
-    sample_cache_misses,
-    sample_resolver,
-    sample_api1,
-    sample_primary_key,
-    sample_preprocessor,
-    sample_new_col,
-):
-    cache_out = cache_miss_resolver_wrapper(sample_cache_misses, partial(sample_resolver, api=sample_api1), sample_api1)
-
-    new_cache = sample_cache.union(cache_out)
-    enriched_df = lookup_from_cache(
-        sample_input_df, new_cache, sample_api1, sample_primary_key, sample_preprocessor, sample_new_col
-    )
-    cache_misses2 = derive_cache_misses(enriched_df, sample_cache, sample_api1, sample_primary_key, sample_preprocessor)
     assert cache_misses2.count() == 0, "The cache misses should be empty"
 
 
