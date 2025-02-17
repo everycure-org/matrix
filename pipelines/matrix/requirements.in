@@ -3,6 +3,8 @@ bmt # biolink model toolkit
 gcsfs==2024.3.1
 google-cloud-bigquery
 google-cloud-iam
+google-cloud-bigquery-storage
+db-dtypes # needed for bigquery in line queries in notebooks
 graphdatascience
 hdfs
 hdfs==2.7.3
