@@ -23,6 +23,8 @@ We're using [Kedro](https://kedro.org/) as our data pipelining framework. Kedro 
 
 Our core pipelines' kedro project directory can be found in `pipelines/matrix` directory with an associated `README.md` with instructions.
 
+[^1]: Kedro allows for fine-grained control over pipeline execution, through the [kedro run](https://docs.kedro.org/en/stable/nodes_and_pipelines/run_a_pipeline.html) command.
+
 <!--
 FUTURE: Commented this out for the time being, we may want to add this back in, but need to clearly explain how we structure our catalog (pipeline centric) vs. how kedro normally does it (layers)
 
