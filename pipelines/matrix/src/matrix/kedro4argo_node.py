@@ -108,6 +108,10 @@ class ArgoNode(Node):
     def argo_config(self) -> ArgoResourceConfig:
         return self._argo_config
 
+    def force_default_config(self):
+        # Quick fix to make sampling pipeline use less resources when run in env sample
+        self._argo_config = ArgoResourceConfig()
+
     # TODO: Add fuse() method here.
 
     def _copy(self, **overwrite_params: Any) -> "ArgoNode":
