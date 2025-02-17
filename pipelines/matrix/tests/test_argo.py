@@ -256,6 +256,8 @@ def test_get_dependencies_default_different_than_task(nodes_where_first_is_input
         "memory_limit": "64Gi",
         "memory_request": "32Gi",
         "num_gpus": 1,
+        "ephemeral_storage_limit": "128Gi",
+        "ephemeral_storage_request": "0Gi",
     }
 
 
@@ -430,6 +432,7 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
     run_name = "test_run"
     release_version = "test_release"
     image_tag = "test_tag"
+    mlflow_experiment_id = 1
     namespace = "test_namespace"
     username = "test_user"
     pipeline_obj = Pipeline(
@@ -461,11 +464,13 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
         run_name=run_name,
         release_version=release_version,
         image_tag=image_tag,
+        mlflow_experiment_id=mlflow_experiment_id,
         namespace=namespace,
         username=username,
         pipeline=pipeline_obj,
         package_name="matrix",
         release_folder_name="releases",
+        environment="cloud",
         default_execution_resources=argo_default_resources,
     )
 

@@ -1,9 +1,90 @@
 from typing import Dict, Tuple
 
+# from matrix.pipelines.integration.nodes import batch_map_ids
+# from jsonpath_ng import parse
 import pandas as pd
 from matplotlib.figure import Figure
 
 from . import visualisers
+
+# @has_schema(
+#     {
+#         "timestamp": "object",
+#         "drug_id": "object",
+#         "disease_id": "object",
+#         "norm_drug_id": "object",
+#         "norm_disease_id": "object",
+#         "norm_drug_name": "object",
+#         "norm_disease_name": "object",
+#     },
+#     allow_subset=True,
+# )
+# def clean_input_sheet(
+#     input_df: pd.DataFrame,
+#     endpoint: str,
+#     conflate: bool,
+#     drug_chemical_conflate: bool,
+#     batch_size: int,
+#     parallelism: int,
+# ) -> pd.DataFrame:
+#     """Synonymize the input sheet and filter out NaNs.
+
+#     Args:
+#         input_df: input list in a dataframe format.
+#         endpoint: endpoint of the synonymizer.
+#         conflate: whether to conflate
+#         drug_chemical_conflate: whether to conflate drug and chemical
+#         batch_size: batch size
+#         parallelism: parallelism
+#     Returns:
+#         dataframe with synonymized disease IDs in normalized_curie column.
+#     """
+#     # Synonymize Drug_ID column to normalized ID and name compatible with RTX-KG2
+#     attributes = [
+#         ("$.id.identifier", "norm_drug_id"),
+#         ("$.id.label", "norm_drug_name"),
+#     ]
+#     for expr, target in attributes:
+#         json_parser = parse(expr)
+#         node_id_map = batch_map_ids(
+#             frozenset(input_df["Drug_ID"]),
+#             api_endpoint=endpoint,
+#             batch_size=batch_size,
+#             parallelism=parallelism,
+#             conflate=conflate,
+#             drug_chemical_conflate=drug_chemical_conflate,
+#             json_parser=json_parser,
+#         )
+#         input_df[target] = input_df["Drug_ID"].map(node_id_map)
+
+#     for expr, target in attributes:
+#         json_parser = parse(expr)
+#         node_id_map = batch_map_ids(
+#             frozenset(input_df["Disease_ID"]),
+#             api_endpoint=endpoint,
+#             batch_size=batch_size,
+#             parallelism=parallelism,
+#             conflate=conflate,
+#             drug_chemical_conflate=drug_chemical_conflate,
+#             json_parser=json_parser,
+#         )
+#         input_df[target] = input_df["Disease_ID"].map(node_id_map)
+
+#     # Select columns of interest and rename
+#     col_list = [
+#         "Timestamp",
+#         "Drug_ID",
+#         "Disease_ID",
+#         "norm_drug_id",
+#         "norm_drug_name",
+#         "norm_disease_id",
+#         "norm_disease_name",
+#     ]
+#     df = input_df.loc[:, col_list]
+#     df.columns = [string.lower() for string in col_list]
+
+#     # Fill NaNs and return
+#     return df.fillna("")
 
 
 def resolve_input_sheet(

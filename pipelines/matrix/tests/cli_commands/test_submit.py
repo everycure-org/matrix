@@ -13,8 +13,6 @@ from matrix.cli_commands.submit import (
     _submit,
     apply_argo_template,
     build_argo_template,
-    build_push_docker,
-    check_dependencies,
     command_exists,
     ensure_namespace,
     get_run_name,
@@ -35,7 +33,7 @@ def mock_run_subprocess():
 
 @pytest.fixture
 def mock_dependencies():
-    with patch("matrix.cli_commands.submit.check_dependencies") as _, patch(
+    with patch("matrix.cli_commands.submit.can_talk_to_kubernetes") as _, patch(
         "matrix.cli_commands.submit.build_push_docker"
     ) as _, patch("matrix.cli_commands.submit.apply_argo_template") as _, patch(
         "matrix.cli_commands.submit.ensure_namespace"
@@ -74,22 +72,17 @@ def mock_multiple_pipelines():
         yield mock
 
 
-def test_check_dependencies(mock_run_subprocess: None) -> None:
-    mock_run_subprocess.return_value.returncode = 0
-    mock_run_subprocess.return_value.stdout = "active_account"
-    check_dependencies(verbose=True)
-    assert mock_run_subprocess.call_count > 0
-
-
-def test_build_push_docker(mock_run_subprocess: None) -> None:
-    build_push_docker("testuser", verbose=True)
-    mock_run_subprocess.assert_called_once_with("make docker_push TAG=testuser", stream_output=True)
-
-
 @patch("matrix.cli_commands.submit.generate_argo_config")
 def test_build_argo_template(mock_generate_argo_config: None) -> None:
     build_argo_template(
-        "test_run", "testuser", "test_namespace", {"test": MagicMock()}, ArgoResourceConfig(), is_test=True
+        "test_run",
+        "testuser",
+        "test_namespace",
+        {"test": MagicMock()},
+        ArgoResourceConfig(),
+        "cloud",
+        is_test=True,
+        mlflow_experiment_id=1,
     )
     mock_generate_argo_config.assert_called_once()
 
@@ -213,6 +206,18 @@ def test_run_subprocess_no_streaming_error() -> None:
     assert exc_info.value.stdout is None
 
 
+@pytest.mark.parametrize("stream", ("/dev/stdout", "/dev/stderr"))
+@pytest.mark.timeout(15)
+def test_run_subprocess_no_deadlock(stream: str) -> None:
+    """Reproduces an annoying deadlocking issue with the way run_subprocess in streaming mode was written up to c0f2f3f."""
+    # Put "lots" of output in one of stdout or stderr.
+    big_number = 100_000  # big enough to fill a process pipe, though that is platform dependant
+    cmd = f"yes | head -n {big_number} > {stream}"
+    finished_process = run_subprocess(cmd, stream_output=True, check=True, shell=True)
+    channel = finished_process.stdout if stream == "/dev/stdout" else finished_process.stderr
+    assert len(channel) == big_number * len("y\n")
+
+
 @pytest.mark.parametrize("pipeline_for_execution", ["__default__", "test_pipeline"])
 def test_workflow_submission(
     mock_run_subprocess: None, mock_dependencies: None, temporary_directory: Path, pipeline_for_execution: str
@@ -235,7 +240,9 @@ def test_workflow_submission(
         verbose=True,
         dry_run=False,
         template_directory=temporary_directory,
+        mlflow_experiment_id=1,
         allow_interactions=False,
+        environment="cloud",
     )
 
     yaml_file = temporary_directory / "argo-workflow-template.yml"

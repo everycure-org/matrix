@@ -5,6 +5,15 @@
     that come after us debug issues we solved before. We need this because some errors appear when trying something else and that is not codified because we codify _what works_ not what we tried to get to this working state. However, reoccuring errors often occur in software engineering and experienced project members regularly help by "giving the solution" to the error that "they have seen before". This page seeks to collect those errors.
 
 
+## Compute Engine Metadata server unavailable on attempt x out of 5
+
+This error occurs when the authentication libraries from Google try to fetch
+authentication credentials from the Compute Engine Metadata server. This occurs because
+no credentials were found. When running on a personal machine, a `make fetch_secrets`
+should fix this issue. This usually gets executed automatically when running `make` upon
+setup of the local environment.
+
+
 ## Attempting to build local instance of matrix pipeline with Python 3.12
 
 If you attempted to build the matrix pipeline locally with Python 3.12, it will fail due to the removal of distutils from Python after version 3.11. you may get a message that looks somewhat like the following:
@@ -20,21 +29,8 @@ ModuleNotFoundError: No module named 'distutils'
 ```
 
 
-
 To fix this, remove the directory ".venv" from `pipelines/matrix` and set the python version to 3.11:
 
-```
-rm -r .venv
-
-THEN
-
-pyenv install 3.11
-pyenv global 3.11
-
-OR
-
-uv venv --python=3.11
-```
 
 then `make` again.
 

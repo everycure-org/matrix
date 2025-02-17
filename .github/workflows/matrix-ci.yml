@@ -11,7 +11,7 @@
 # pipx ensurepath
 # sudo cp $(which uv) /usr/local/bin/uv
 
-name: CI pipline
+name: CI pipeline
 
 on:
   pull_request:
@@ -33,7 +33,6 @@ on:
     paths: 
       - pipelines/matrix/**
       - .github/workflows/matrix-ci.yml
-      - .github/workflows/matrix-push.yml
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -69,7 +68,6 @@ jobs:
             src:
               - pipelines/matrix/**
               - .github/workflows/matrix-ci.yml
-              - .github/workflows/matrix-push.yml
 
   ci:
     runs-on:  'self-hosted'
@@ -80,6 +78,9 @@ jobs:
     outputs:
       status: ${{ steps.finally.outputs.status }}
 
+    permissions:
+     contents: 'read'
+     id-token: 'write'
     defaults:
       run:
         working-directory: ./pipelines/matrix
@@ -88,15 +89,23 @@ jobs:
         with: 
           sparse-checkout: |
             pipelines/matrix/
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider}}
+          service_account: ${{vars.service_account}}
 
       # On every PR
       - run: env | sort # prints out all env variables, helpful for debugging
-      - run: make venv
       - run: make install
       - run: make precommit
+      - run: make fetch_secrets
+      - run: uv run kedro catalog resolve --env base
+      - run: uv run kedro catalog resolve --env cloud
+      - run: uv run kedro catalog resolve --env test
       - run: make full_test
       - run: make compose_down # ensures containers & state are removed
-      - run: make docker_test GIT_SHA=${GITHUB_SHA:0:7} #we overwrite the GIT_SHA in the Makefile
+      - run: make docker_test GIT_SHA="${GITHUB_SHA:0:7}" #we overwrite the GIT_SHA in the Makefile
         # only if PR is labelled with "ready" or if branch is main
         # if: contains(github.event.pull_request.labels.*.name, 'ready') || github.ref == 'refs/heads/main'
       # workaround as the `failure()` call did not work in downstream matrix_ci_check

@@ -1,14 +1,12 @@
-import pandas as pd
 import logging
-
-from kedro_datasets.pandas import ParquetDataset
-
 from typing import Any, Dict, List
+
+import pandas as pd
 from kedro.io.core import (
     DatasetError,
     Version,
 )
-
+from kedro_datasets.pandas import ParquetDataset
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +90,10 @@ class PandasParquetDataset(ParquetDataset):
             metadata=metadata,
         )
 
-    def _load(self) -> KnowledgeGraph:
+    def save(self, df: pd.DataFrame):
+        return super().save(df)
+
+    def load(self) -> KnowledgeGraph:
         attempt = 0
 
         # Retrying due to a very flaky error, causing GCS not retrieving
@@ -101,13 +102,13 @@ class PandasParquetDataset(ParquetDataset):
             try:
                 # Attempt reading the object
                 # https://github.com/everycure-org/matrix/issues/71
-                df = super()._load()
+                df = super().load()
 
                 if self._as_type:
                     return df.astype(self._as_type)
 
                 return df
-            except FileNotFoundError:
+            except Exception:
                 attempt += 1
                 logger.warning(f"Parquet file `{self._filepath}` not found, retrying!")
 
@@ -141,7 +142,7 @@ class KnowledgeGraphDataset(ParquetDataset):
             **kwargs,
         )
 
-    def _load(self) -> KnowledgeGraph:
+    def load(self) -> KnowledgeGraph:
         attempt = 0
 
         # Retrying due to a very flaky error, causing GCS not retrieving
@@ -150,8 +151,8 @@ class KnowledgeGraphDataset(ParquetDataset):
             try:
                 # Attempt reading the object
                 # https://github.com/everycure-org/matrix/issues/71
-                return KnowledgeGraph(super()._load())
-            except FileNotFoundError:
+                return KnowledgeGraph(super().load())
+            except Exception:
                 attempt += 1
                 logger.warning(f"Parquet file `{self._filepath}` not found, retrying!")
 

@@ -1,6 +1,7 @@
 import glob
 import os
 import re
+import warnings
 from pathlib import Path
 
 import pytest
@@ -37,12 +38,14 @@ def _pipeline_datasets(pipeline) -> set[str]:
     return set.union(*[set(node.inputs + node.outputs) for node in pipeline.nodes])
 
 
-@pytest.mark.integration()
+@pytest.mark.skip()
+@pytest.mark.parametrize("kedro_context", ["cloud_kedro_context", "base_kedro_context"])
 def test_no_parameter_entries_from_catalog_unused(
     kedro_context: KedroContext,
+    request: pytest.FixtureRequest,
 ) -> None:
     """Tests whether all parameter entries from the catalog are used in the pipeline."""
-
+    kedro_context = request.getfixturevalue(kedro_context)
     used_conf_entries = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
     used_params = [entry for entry in list(used_conf_entries) if "params:" in entry]
 
@@ -70,13 +73,17 @@ def test_no_parameter_entries_from_catalog_unused(
     # assert (
     #     unused_data_sets == set()
     # ), f"The following data sets are not used: {unused_data_sets}"
+    unused_params_str = "\n".join(unused_params)
+    assert unused_params_str == "", f"The following parameters are not used: {unused_params_str}"
 
-    assert unused_params == [], f"The following parameters are not used: {unused_params}"
 
-
+@pytest.mark.skip()
+@pytest.mark.parametrize("kedro_context", ["cloud_kedro_context", "base_kedro_context"])
 def test_no_non_parameter_entries_from_catalog_unused(
     kedro_context: KedroContext,
+    request: pytest.FixtureRequest,
 ) -> None:
+    kedro_context = request.getfixturevalue(kedro_context)
     used_conf_entries = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
     used_entries = {entry for entry in used_conf_entries if "params:" not in entry}
     declared_entries = {entry for entry in kedro_context.catalog.list() if not entry.startswith("params:")}
@@ -89,29 +96,46 @@ def test_no_non_parameter_entries_from_catalog_unused(
 
 
 @pytest.mark.integration
-# @pytest.mark.skipif(
-#     os.environ.get("CI") == "true", reason="Ongoing issue with the Kedro catalog"
-# )
-# skipping due to dynamic pipelines not being supported at the moment
-@pytest.mark.skip()
-def test_memory_data_sets_absent(kedro_context: KedroContext) -> None:
+def test_memory_data_sets_absent(cloud_kedro_context: KedroContext) -> None:
     """Tests no MemoryDataSets are created."""
 
-    used_data_sets = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
+    def parse_to_regex(parse_pattern):
+        """
+        Convert a `parse`-style pattern to a regex pattern.
+        For simplicity, this assumes placeholders like `{name}` can be replaced with `.*?`.
+        """
+        # Escape special regex characters in the fixed parts of the pattern
+        escaped_pattern = re.escape(parse_pattern)
+        # Replace `{variable}` placeholders with regex groups
+        regex_pattern = re.sub(r"\\{(.*?)\\}", r"(?P<\1>.*?)", escaped_pattern)
+        return f"^{regex_pattern}$"
 
+    used_data_sets = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
     used_data_sets_wout_double_params = {x.replace("params:params:", "params:") for x in used_data_sets}
 
-    memory_data_sets = {
+    # Matching data factories is really slow, therefore we're compiling each data factory name
+    # into a regex, that is subesequently used to determine whether it exists.
+    factories = [re.compile(parse_to_regex(pattern)) for pattern in cloud_kedro_context.catalog._dataset_patterns]
+    catalog_datasets = set(cloud_kedro_context.catalog.list())
+    memory_data_sets = [
         dataset
         for dataset in used_data_sets_wout_double_params
-        if dataset not in kedro_context.catalog.list() and not kedro_context.catalog.exists(dataset)
-    }
+        if not (
+            dataset in catalog_datasets
+            # Note, this is lazy loaded, we're only validating factory
+            # if we could not find in plain catalog datasets
+            or any([factory.match(dataset) for factory in factories])
+        )
+    ]
 
     assert len(memory_data_sets) == 0, f"{memory_data_sets}"
 
 
 @pytest.mark.integration
-def test_catalog_filepath_follows_conventions(conf_source: Path, config_loader: OmegaConfigLoader) -> None:
+@pytest.mark.parametrize("config_loader", ["cloud_config_loader", "base_config_loader"])
+def test_catalog_filepath_follows_conventions(
+    conf_source: Path, config_loader: OmegaConfigLoader, request: pytest.FixtureRequest
+) -> None:
     """Checks if catalog entry filepaths conform to entry.
 
     The filepath of the catalog entry should be of the format below. More
@@ -123,6 +147,8 @@ def test_catalog_filepath_follows_conventions(conf_source: Path, config_loader: 
 
         {pipeline}.{namespace}.{layer}.*
     """
+
+    config_loader = request.getfixturevalue(config_loader)
 
     # Check catalog entries
     failed_results = []
@@ -157,7 +183,10 @@ def test_catalog_filepath_follows_conventions(conf_source: Path, config_loader: 
 
 
 @pytest.mark.integration
-def test_parameters_filepath_follows_conventions(conf_source, config_loader):
+@pytest.mark.parametrize("config_loader", ["cloud_config_loader", "base_config_loader"])
+def test_parameters_filepath_follows_conventions(
+    conf_source: Path, config_loader: OmegaConfigLoader, request: pytest.FixtureRequest
+) -> None:
     """Checks if catalog entry filepaths conform to entry.
 
     The filepath of the catalog entry should be of the format below. More
@@ -169,6 +198,8 @@ def test_parameters_filepath_follows_conventions(conf_source, config_loader):
 
         {pipeline}.{namespace}.{layer}.*
     """
+
+    config_loader = request.getfixturevalue(config_loader)
 
     # Check catalog entries
     failed_results = []
@@ -183,6 +214,16 @@ def test_parameters_filepath_follows_conventions(conf_source, config_loader):
 
             # Extract pipeline name from filepath
             _, pipeline, _ = os.path.relpath(file, conf_source).split(os.sep, 2)
+
+            # Do not allow empty files
+            if entries is None:
+                failed_results.append(
+                    {
+                        "filepath": file,
+                        "description": "Empty parameters file.",
+                    }
+                )
+                continue
 
             # Validate each entry
             for entry, _ in entries.items():

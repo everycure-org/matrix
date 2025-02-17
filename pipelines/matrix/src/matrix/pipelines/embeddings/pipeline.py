@@ -1,5 +1,7 @@
 from kedro.pipeline import Pipeline, pipeline
+
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
+from matrix.pipelines.batch import pipeline as batch_pipeline
 
 from . import nodes
 
@@ -8,29 +10,19 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create embeddings pipeline."""
     return pipeline(
         [
-            # Bucketize and partition nodes
-            ArgoNode(
-                func=nodes.bucketize_df,
-                inputs={
-                    "df": "integration.prm.filtered_nodes",
-                    "input_features": "params:embeddings.node.input_features",
-                    "bucket_size": "params:embeddings.node.batch_size",
-                    "max_input_len": "params:embeddings.node.max_input_len",
-                },
-                outputs="embeddings.feat.bucketized_nodes@spark",
-                name="bucketize_nodes",
-                tags=["argowf.fuse", "argowf.fuse-group.node_embeddings"],
-            ),
-            # Compute embeddings
-            ArgoNode(
-                func=nodes.compute_embeddings,
-                inputs={
-                    "dfs": "embeddings.feat.bucketized_nodes@partitioned",
-                    "encoder": "params:embeddings.node.encoder",
-                },
-                outputs="embeddings.feat.graph.node_embeddings@partitioned",
-                name="add_node_embeddings",
-                tags=["argowf.fuse", "argowf.fuse-group.node_embeddings"],
+            batch_pipeline.create_pipeline(
+                # Source to uniquely identify dataset
+                source="node_embeddings",
+                # Input and output datasets
+                df="integration.prm.filtered_nodes",
+                output="embeddings.feat.graph.node_embeddings@spark",
+                # Transformer
+                columns="params:embeddings.node.input_features",
+                bucket_size="params:embeddings.node.batch_size",
+                transformer="params:embeddings.node.encoder",
+                # NOTE: These are kwargs
+                input_features="params:embeddings.node.input_features",
+                max_input_len="params:embeddings.node.max_input_len",
             ),
             # Reduce dimension
             ArgoNode(
@@ -42,6 +34,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="embeddings.feat.graph.pca_node_embeddings",
                 name="apply_pca",
                 tags=["argowf.fuse", "argowf.fuse-group.node_embeddings"],
+                argo_config=ArgoResourceConfig(
+                    cpu_request=48,
+                    cpu_limit=48,
+                    memory_limit=192,
+                    memory_request=120,
+                    ephemeral_storage_request=256,
+                    ephemeral_storage_limit=256,
+                ),
             ),
             ArgoNode(
                 func=nodes.filter_edges_for_topological_embeddings,

@@ -5,12 +5,20 @@ export PYSPARK_PYTHON = .venv/bin/python
 export UV_PYTHON = .venv/bin/python
 export TQDM_DISABLE ?= 1
 TARGET_PLATFORM ?= linux/amd64
-PREREQUISITES := docker gcloud python3 java uv
+PREREQUISITES := docker gcloud python3 java uv kubectl
+
+# Add GCP project variables
+GCP_PROJECT ?= mtrx-hub-dev-3of
+SA_KEY_SECRET_NAME ?= storage-viewer-sa-key
+SA_KEY_PATH ?= conf/local/service-account.json
+# TODO: Update once we have the new secret created using terraform
+OAUTH_CLIENT_SECRET_SECRET_NAME ?= af_oauth_client_secret
+OAUTH_CLIENT_SECRET_PATH ?= conf/local/oauth_client_secret.txt
 
 # ensures all make targets run in one shell (rather than line by line in new shell)
 .ONESHELL: 
 
-default: install fast_test compose_down integration_test
+default: prerequisites fetch_secrets install fast_test integration_test
 	echo "done!"
 
 prerequisites:
@@ -18,13 +26,42 @@ prerequisites:
 	$(foreach exec,$(PREREQUISITES),\
         $(if $(shell command -v $(exec) 2>/dev/null),,$(error "$(exec) is not installed.")))
 	$(info All prerequisites are installed.)
+	$(info Checking gcloud auth...)
+	@if ! gcloud auth print-access-token >/dev/null 2>&1; then \
+		echo "Not logged into gcloud. Please run 'gcloud auth login' first."; \
+		exit 1; \
+	fi
 
-venv: prerequisites
+fetch_secrets:
+	echo "Fetching service account key from Secret Manager..."; \
+	mkdir -p conf/local; \
+	gcloud secrets versions access latest \
+		--secret=$(SA_KEY_SECRET_NAME) \
+		--project=$(GCP_PROJECT) \
+		> $(SA_KEY_PATH); \
+	chmod 600 $(SA_KEY_PATH); \
+	echo "Service account key saved to $(SA_KEY_PATH)"; \
+
+	echo "Fetching OAuth client secret from Secret Manager..."; \
+	mkdir -p conf/local; \
+	gcloud secrets versions access latest \
+		--secret=$(OAUTH_CLIENT_SECRET_SECRET_NAME) \
+		--project=$(GCP_PROJECT) \
+		> $(OAUTH_CLIENT_SECRET_PATH); \
+	chmod 600 $(OAUTH_CLIENT_SECRET_PATH); \
+	echo "Service account key saved to $(OAUTH_CLIENT_SECRET_PATH)"; \
+
+venv: 
 	if [ ! -d .venv ]; then uv venv -p 3.11; fi
 	uv run python -m ensurepip --upgrade || true
 
-install: venv precommit-hooks
+install: venv precommit-hooks 
 	uv pip install -r requirements.txt #force it to install in our venv
+
+install_compatibility: venv precommit-hooks
+	# expects the file requirements.overrides.txt to be present, allows devs to override
+	# versions for local machine limitations (e.g. newer pytorch on macos intel)
+	uv pip install -r requirements.txt --overrides requirements.overrides.txt
 
 precommit: precommit-hooks
 	git fetch origin
@@ -67,7 +104,7 @@ certificate:
 	openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout compose/certs/bolt/private.key -out compose/certs/bolt/public.crt -config compose/certs/openssl.cnf > /dev/null 2>&1
 	cat compose/certs/bolt/private.key compose/certs/bolt/public.crt > compose/certs/bolt/private_and_public.pem
 
-compose_up: certificate
+compose_up:
 	docker compose -f compose/docker-compose.yml up -d --wait --remove-orphans
 	
 compose_down:
@@ -84,7 +121,7 @@ wipe_neo:
 integration_test: compose_up wipe_neo
 	# NOTE: We are running without xgc due to its long runtime. 
 	ulimit -n 10000
-	uv run kedro run --env test -p test --runner ThreadRunner --without-tags xgc,not-shared
+	uv run kedro run --env test -p test --without-tags xgc,not-shared
 
 fabricate:
 	uv run kedro run -p fabricator --env test
@@ -95,7 +132,10 @@ licenses_container: docker_build
 		-v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy  \
 		image --scanners license --severity UNKNOWN,CRITICAL $(dev_docker_image)
 
-clean:
+clean_sa_key:
+	rm -f $(SA_KEY_PATH)
+
+clean: clean_sa_key
 	@echo "cleaning various cache locations to ensure clean installation is possible"
 	@echo "this may be necessary e.g. when updating one of our local packages"
 	uv run pre-commit clean
@@ -121,6 +161,8 @@ diagnostics:
 	-uv --version || echo "UV is not installed."
 	echo "\nCheck Virtual Environment (if applicable):"
 	-uv run which python || echo "Python is not in PATH."
+	echo "\nKubectl permissions:"
+	-kubectl auth can-i --list
 	echo "\nPython Version:"
 	-uv run python3 --version || echo "Python is not installed."
 	echo "\nSystem Information:"
