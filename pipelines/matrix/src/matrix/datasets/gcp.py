@@ -487,7 +487,7 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
             fs_args=fs_args,
         )
 
-    def save(self, data: dict[str, Any], timeout: int = 60) -> None:
+    def save(self, data: dict[str, Any], timeout: int = 90) -> None:
         logger.info(f"saving with {self._max_workers} parallelism")
 
         if self._overwrite and self._filesystem.exists(self._normalized_path):

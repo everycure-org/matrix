@@ -16,7 +16,6 @@ embeddings.topological:
       batchSize: 20
       embeddingDimension: 3
 
-
 caching:
   preprocessor:
     _object: matrix.pipelines.batch.pipeline.pass_through
@@ -26,3 +25,9 @@ caching:
   primary_key: text
   api: *api
   new_col: lookup
+
+embeddings.topological_estimator:
+  iterations: 1
+  embedding_dim: 3
+  walk_length: 2
+

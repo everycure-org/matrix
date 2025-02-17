@@ -28,7 +28,7 @@ class NCATSNodeNormalizer(Normalizer):
         self._json_parser = parse("$.id.identifier")  # FUTURE: Ensure we can update
 
     @retry(
-        wait=wait_exponential(min=1, max=30),
+        wait=wait_exponential(multiplier=2, min=1, max=60),
         retry=retry_if_exception_type((aiohttp.ClientError, asyncio.TimeoutError)),
         before_sleep=print,
     )

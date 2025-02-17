@@ -47,6 +47,7 @@ data_sources:
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation. Will make PR.
 mlflow_artifact_root: null
+mlflow_experiment_id: null
 
 mlflow_url: https://mlflow.platform.dev.everycure.org/
 

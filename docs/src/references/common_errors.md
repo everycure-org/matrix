@@ -9,7 +9,7 @@
 
 This error occurs when the authentication libraries from Google try to fetch
 authentication credentials from the Compute Engine Metadata server. This occurs because
-no credentials were found. When running on a personal machine, a `make fetch_sa_key`
+no credentials were found. When running on a personal machine, a `make fetch_secrets`
 should fix this issue. This usually gets executed automatically when running `make` upon
 setup of the local environment.
 
@@ -29,21 +29,8 @@ ModuleNotFoundError: No module named 'distutils'
 ```
 
 
-
 To fix this, remove the directory ".venv" from `pipelines/matrix` and set the python version to 3.11:
 
-```
-rm -r .venv
-
-THEN
-
-pyenv install 3.11
-pyenv global 3.11
-
-OR
-
-uv venv --python=3.11
-```
 
 then `make` again.
 
