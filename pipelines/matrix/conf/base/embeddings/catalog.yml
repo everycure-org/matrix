@@ -147,7 +147,7 @@ caching.input:
 # cache:
 cache.read: &dataset_cache
   type: matrix.datasets.gcp.SparkWithSchemaDataset
-  filepath: data/01_raw/cache
+  filepath: ${globals:paths.cache}/embeddings_cache2
   provide_empty_if_not_present: true
   load_args:
     schema:
@@ -178,12 +178,12 @@ cache.write:
     - api
 cache.misses:
     type: matrix.datasets.gcp.LazySparkDataset
-    filepath: data/01_raw/cache_misses
+    filepath: ${globals:paths.cache}/cache_misses2
     save_args:
       mode: overwrite
 
 fully_enriched:
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: data/01_raw/fully_enriched
+  filepath: ${globals:paths.cache}/embeddings_cache2data_out
   save_args:
     mode: overwrite

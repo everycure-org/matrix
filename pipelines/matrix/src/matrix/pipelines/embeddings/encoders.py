@@ -1,13 +1,16 @@
+import asyncio
 import itertools
+import json
 import logging
+import time
 from abc import ABC, abstractmethod
-from typing import Iterable, Iterator, List, Optional, Tuple, TypeAlias, TypeVar
+from typing import Generator, Iterable, Iterator, List, Optional, Sequence, Tuple, TypeAlias, TypeVar
 
 import numpy as np
 import pandas as pd
 import torch
 from langchain_openai import OpenAIEmbeddings
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import Retrying, retry, stop_after_attempt, wait_exponential
 from transformers import AutoModel, AutoTokenizer
 
 logger = logging.getLogger(__name__)
@@ -39,6 +42,88 @@ class AttributeEncoder(ABC):
             DataFrame with new 'embedding' column and 'text_to_embed' removed
         """
         ...
+
+
+async def embed_with_openai(
+    documents: Iterable[str], init_workers: int, docs_per_async_task: int, model: str, request_timeout: int
+) -> Generator[tuple[str, tuple[float]], None, None]:
+    # OpenAIEmbeddings splits the list in batches, based on the class attribute chunk_size. To do so, it needs a collection instead of an iterable.
+    tasks = []
+    sem = asyncio.Semaphore(init_workers)
+    embedder = OpenAIEmbeddings(model=model, request_timeout=request_timeout)
+    async with asyncio.TaskGroup() as tg:
+        for index, batch in enumerate(batched(documents, docs_per_async_task)):
+            tasks.append(tg.create_task(call_for_minibatch(batch, embedder, index, sem)))
+    print(f"final sem: {sem._value}")
+    ret = itertools.chain.from_iterable(t.result() for t in tasks)
+    return ret
+
+
+def embed_with_openai_async(
+    documents: Iterable[str],
+    init_workers: int = 40,
+    docs_per_async_task: int = 10_000,
+    model: str = "text-embedding-3-small",
+    request_timeout: int = 10,
+) -> Iterator[tuple[str, tuple[float, ...]]]:
+    res = asyncio.run(
+        embed_with_openai(
+            (_[0] for _ in documents),
+            init_workers=init_workers,
+            docs_per_async_task=docs_per_async_task,
+            request_timeout=request_timeout,
+            model=model,
+        )
+    )
+    print(type(res))
+    return res
+
+
+async def call_for_minibatch(
+    docs: Sequence[str], embedder: OpenAIEmbeddings, batch_index: int, sem: asyncio.Semaphore
+) -> list[tuple[str, tuple[float, ...]]]:
+    logger.warning(f"About to start actual coro on batch_index: {batch_index}, semaphore: {sem._value}")
+    async with sem:
+        logger.warning(f"Started coro on batch_index: {batch_index}, semaphore: {sem._value}")
+        for index, attempt in enumerate(
+            Retrying(wait=wait_exponential(multiplier=5, min=2, max=60), stop=stop_after_attempt(3))
+        ):
+            with attempt:
+                tic = time.perf_counter()
+                list_of_embeddings: list[list[float]] = await embedder.aembed_documents(docs)
+                embedding_lengths = list(map(len, list_of_embeddings))
+                embeddings = (tuple(embedding) for embedding in list_of_embeddings)
+                notes = {
+                    "batch_index": batch_index,
+                    "attempt number": index,
+                    "completion time (s)": time.perf_counter() - tic,
+                    "number of documents": len(docs),
+                    "number of embeddings": len(embedding_lengths),
+                    "avg embedding length": sum(embedding_lengths) / len(embedding_lengths),
+                }
+                logger.warning(json.dumps(notes))
+    if index == 0:
+        logger.warning("increasing the semaphore")
+        sem.release()  # increases the number of tasks that can run
+    else:
+        logger.warning(f"decreasing the semaphore from {batch_index=}")
+        await sem.acquire()
+        if sem.locked():
+            logger.warning(f"Found we're locked in {batch_index=}")
+            sem.release()  # ensure there's always 1
+    return list(zip(docs, embeddings))
+
+
+def batched(iterable: Iterable[T], n: int, *, strict: bool = False) -> Iterator[tuple[T]]:
+    # Taken from the recipe at https://docs.python.org/3/library/itertools.html#itertools.batched , which is available by default in 3.12
+    # batched('ABCDEFG', 3) → ABC DEF G
+    if n < 1:
+        raise ValueError("batch size must be at least one")
+    iterator = iter(iterable)
+    while batch := tuple(itertools.islice(iterator, n)):
+        if strict and len(batch) != n:
+            raise ValueError("batched(): incomplete batch")
+        yield batch
 
 
 class LangChainEncoder(AttributeEncoder):
@@ -85,18 +170,6 @@ class LangChainEncoder(AttributeEncoder):
         for batch in self.batched(texts, self.batch_size):
             embeddings = self._encode(list(batch), encoder)
             yield from zip(batch, embeddings)
-
-    @staticmethod
-    def batched(iterable: Iterable[T], n: int, *, strict: bool = False) -> Iterator[tuple[T]]:
-        # Taken from the recipe at https://docs.python.org/3/library/itertools.html#itertools.batched , which is available by default in 3.12
-        # batched('ABCDEFG', 3) → ABC DEF G
-        if n < 1:
-            raise ValueError("batch size must be at least one")
-        iterator = iter(iterable)
-        while batch := tuple(itertools.islice(iterator, n)):
-            if strict and len(batch) != n:
-                raise ValueError("batched(): incomplete batch")
-            yield batch
 
     @retry(wait=wait_exponential(multiplier=10, min=2, max=180), stop=stop_after_attempt(5))
     def _encode(self, texts: list[str], encoder: OpenAIEmbeddings):
