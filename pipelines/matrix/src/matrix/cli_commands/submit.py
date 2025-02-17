@@ -30,7 +30,7 @@ from matrix.git_utils import (
     has_legal_branch_name,
     has_unpushed_commits,
 )
-from matrix.kedro4argo_node import ArgoResourceConfig
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 logging.basicConfig(
     level=logging.INFO,
@@ -104,6 +104,9 @@ def submit(
             raise click.Abort()
 
     pipeline_obj = kedro_pipelines[pipeline]
+    if pipeline == 'test_sample':
+        apply_default_resource_config(pipeline_obj)
+
     if from_nodes:
         pipeline_obj = pipeline_obj.from_nodes(*from_nodes)
 
@@ -569,3 +572,15 @@ def abort_if_intermediate_release(release_version: str) -> None:
     if ((release_version.major == latest_major and release_version.minor < latest_minor)
         or release_version.major < latest_major):
         raise ValueError("Cannot release a minor/major version lower than the latest official release")
+
+
+def apply_default_resource_config(pipeline_obj):
+    for node in pipeline_obj.nodes:
+        if isinstance(node, ArgoNode):
+            node.force_default_config()
+
+    for node_group in pipeline_obj.grouped_nodes:
+        for node in node_group:
+            if isinstance(node, ArgoNode):
+                node.force_default_config()
+    return pipeline_obj
