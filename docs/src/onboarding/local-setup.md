@@ -56,6 +56,14 @@ make precommit
 
 These hooks were also installed at the time you called `make` so whenever you try to push something to the repository, the hooks will run automatically. We ensure a minimum level of code quality this way.
 
+
+### Secrets
+We need to fetch the secrets for the local environment such as fetching a storage service account and and OAuth client secret. This can be done by running the following command:
+
+```bash
+make fetch_secrets
+```
+
 ### Fast tests
 To ensure that the codebase is working as expected, you can run the following command to execute the fast tests:
 
@@ -112,7 +120,7 @@ This command will kick off our kedro pipeline in a test environment using a fabr
 Generally, the `Makefile` is a good place to refer to when you need to re-set your environment. Once the command runs successfully, you should be able to run the pipeline end-to-end locally!
 
 !!! help "Encountering issues?"
-    If you're experiencing any problems running the `MakeFile`, please refer to our [Common Errors FAQ](../FAQ/common_errors.md) for troubleshooting guidance. This resource contains solutions to frequently encountered issues and may help resolve your problem quickly.
+    If you're experiencing any problems running the `MakeFile`, please refer to our [Common Errors FAQ](../references/common_errors.md) for troubleshooting guidance. This resource contains solutions to frequently encountered issues and may help resolve your problem quickly.
 
 
 ??? note "Understanding and troubleshooting your `make` run"
