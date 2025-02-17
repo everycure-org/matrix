@@ -1,3 +1,4 @@
+import networkx as nx
 import pandas as pd
 from data_fabricator.v0.nodes.fabrication import fabricate_datasets
 from kedro.pipeline import Pipeline, node, pipeline
@@ -29,11 +30,13 @@ def _create_pairs(
     while not is_enough_generated:
         # Sample random pairs (we sample twice the required amount in case duplicates are removed)
         random_drugs = drug_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=seed)
-        random_diseases = disease_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=2 * seed)
+        random_diseases = disease_list["category_class"].sample(
+            num * 4, replace=True, ignore_index=True, random_state=2 * seed
+        )
 
         df = pd.DataFrame(
-            data=[[drug, disease] for drug, disease in zip(random_drugs, random_diseases)],
-            columns=["source", "target"],
+            data=[[drug, disease, f"{drug}|{disease}"] for drug, disease in zip(random_drugs, random_diseases)],
+            columns=["source", "target", "drug|disease"],
         )
 
         # Remove duplicate pairs
@@ -46,6 +49,38 @@ def _create_pairs(
     return df[:num], df[num : 2 * num]
 
 
+def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.DataFrame):
+    def find_path(graph, start, end):
+        try:
+            # Find the shortest path between start and end
+            path = nx.shortest_path(graph, source=start, target=end)
+            return [
+                {
+                    "source": path[i],
+                    "target": path[i + 1],
+                    "key": graph.get_edge_data(path[i], path[i + 1])["predicate"],
+                }
+                for i in range(len(path) - 1)
+            ]
+        except Exception:
+            return None
+
+    graph = nx.DiGraph()
+
+    # Fill graph
+    for _, row in edges.iterrows():
+        graph.add_edge(row["subject"], row["object"], predicate=row["predicate"])
+
+    # Generate paths for GT
+    rows = []
+    ground_truth = pd.concat([positives, negatives])
+    for idx, row in ground_truth.iterrows():
+        if path := find_path(graph, row["source"], row["target"]):
+            rows.append({"graph": {"_id": str(idx)}, "links": path})
+
+    return rows
+
+
 def create_pipeline(**kwargs) -> Pipeline:
     """Create fabricator pipeline."""
     return pipeline(
@@ -56,14 +91,25 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs={
                     "nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                     "edges": "ingestion.raw.rtx_kg2.edges@pandas",
-                    "clinical_trials": "ingestion.raw.clinical_trials_data",
-                    "disease_list": "ingestion.raw.disease_list@pandas",
-                    "drug_list": "ingestion.raw.drug_list@pandas",
+                    "disease_list": "ingestion.raw.disease_list",
+                    "drug_list": "ingestion.raw.drug_list",
                     "pubmed_ids_mapping": "ingestion.raw.rtx_kg2.curie_to_pmids@pandas",
                 },
                 name="fabricate_kg2_datasets",
             ),
             ArgoNode(
+                func=fabricate_datasets,
+                inputs={
+                    "fabrication_params": "params:fabricator.clinical_trials",
+                    "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                },
+                outputs={
+                    "nodes": "ingestion.raw.ec_clinical_trails.nodes@pandas",
+                    "edges": "ingestion.raw.ec_clinical_trails.edges@pandas",
+                },
+                name="fabricate_clinical_trails_datasets",
+            ),
+            node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.ec_medical_kg"},
                 outputs={
@@ -90,17 +136,27 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_spoke_datasets",
             ),
-            ArgoNode(
+            node(
                 func=_create_pairs,
                 inputs=[
-                    "ingestion.raw.drug_list@pandas",
-                    "ingestion.raw.disease_list@pandas",
+                    "ingestion.raw.drug_list",
+                    "ingestion.raw.disease_list",
                 ],
                 outputs=[
-                    "modelling.raw.ground_truth.positives@pandas",
-                    "modelling.raw.ground_truth.negatives@pandas",
+                    "ingestion.raw.ground_truth.positives",
+                    "ingestion.raw.ground_truth.negatives",
                 ],
-                name="create_gn_pairs",
+                name="create_gt_pairs",
+            ),
+            node(
+                func=generate_paths,
+                inputs=[
+                    "ingestion.raw.rtx_kg2.edges@pandas",
+                    "ingestion.raw.ground_truth.positives",
+                    "ingestion.raw.ground_truth.negatives",
+                ],
+                outputs="ingestion.raw.drugmech.edges@pandas",
+                name="create_drugmech_pairs",
             ),
         ]
     )

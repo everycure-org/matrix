@@ -145,7 +145,7 @@ node(
 ingestion.raw.rtx_kg2.nodes@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.SparkWithSchemaDataset
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes_c.tsv
   file_format: csv
   load_args:
     sep: "\t"

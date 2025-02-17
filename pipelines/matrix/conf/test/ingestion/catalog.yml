@@ -1,22 +1,51 @@
-_pandas_csv: &_pandas_csv
-  type:  pandas.CSVDataset
-
 _layer_raw: &_layer_raw
   metadata:
     kedro-viz:
       layer: raw
-
-_spark_csv: &_spark_csv
-  type: spark.SparkDataset
-  file_format: csv
+      
+ingestion.raw.disease_list:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw}/disease_list/translator/${globals:data_sources.disease_list.version}/source_disease_list.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
   load_args:
-    header: True
+    sep: "\t"
 
+ingestion.raw.drug_list:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw}/drug_list/translator/${globals:data_sources.drug_list.version}/source_drug_list.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
 
-ingestion.raw.rtx_kg2.curie_to_pmids@pandas:
-  <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/integration/raw/curie_to_pmids.csv
+ingestion.raw.ground_truth.positives:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tp_pairs.txt
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"
 
-ingestion.raw.rtx_kg2.curie_to_pmids@spark:
-  <<: [*_spark_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/integration/raw/curie_to_pmids.csv
+ingestion.raw.ground_truth.negatives:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tn_pairs.txt
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"
+
+ingestion.raw.drugmech.edges@spark:
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.raw}/drugmech/${globals:data_sources.drugmech.version}/indication_paths.json
+  file_format: json
+  load_args:
+    multiline: true

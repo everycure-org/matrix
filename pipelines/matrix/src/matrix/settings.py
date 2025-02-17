@@ -14,7 +14,7 @@ from kedro_mlflow.framework.hooks import MlflowHook
 import matrix.hooks as matrix_hooks
 from matrix.utils.hook_utilities import determine_hooks_to_execute, generate_dynamic_pipeline_mapping
 
-from .resolvers import cast_to_int, env, merge_dicts
+from .resolvers import cast_to_int, env, if_null, merge_dicts
 
 hooks = {
     "node_timer": matrix_hooks.NodeTimerHooks(),
@@ -46,16 +46,19 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             "n_cross_val_folds": 3,
         },
         "integration": [
-            {"name": "rtx_kg2"},
-            # {"name": "spoke"},
-            # {"name": "robokop"},
-            {"name": "ec_medical_team"},
+            {"name": "rtx_kg2", "integrate_in_kg": True},
+            # {"name": "spoke", "integrate_in_kg": True},
+            {"name": "robokop", "integrate_in_kg": True},
+            {"name": "ec_medical_team", "integrate_in_kg": True},
+            {"name": "drug_list", "integrate_in_kg": False, "has_edges": False},
+            {"name": "disease_list", "integrate_in_kg": False, "has_edges": False},
+            {"name": "ground_truth", "integrate_in_kg": False, "has_nodes": False},
+            # {"name": "drugmech", "integrate_in_kg": False, "has_nodes": False},
+            {"name": "ec_clinical_trails", "integrate_in_kg": False},
         ],
         "modelling": {
-            "xg_baseline": {"num_shards": 1, "run_inference": False},
-            "xg_ensemble": {"num_shards": 3, "run_inference": True},
-            "rf": {"num_shards": 1, "run_inference": False},
-            "xg_synth": {"num_shards": 1, "run_inference": False},
+            "model_name": "xg_ensemble",  # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth
+            "model_config": {"num_shards": 3},
         },
         "evaluation": [
             {"evaluation_name": "simple_classification"},
@@ -65,6 +68,13 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             {"evaluation_name": "simple_classification_trials"},
             {"evaluation_name": "disease_specific_trials"},
             {"evaluation_name": "full_matrix_trials"},
+        ],
+        "stability": [
+            # {"stability_name": "stability_overlap"},
+            # {"stability_name": "stability_ranking"},
+            # {
+            #     "stability_name": "rank_commonality"
+            # },  # note - rank_commonality will be only used if you have a shared commonality@k and spearman@k metrics
         ],
     }
 )
@@ -98,7 +108,13 @@ CONFIG_LOADER_ARGS = {
             "**/parameters*/**",
         ],
     },
-    "custom_resolvers": {"merge": merge_dicts, "oc.env": env, "oc.int": cast_to_int, "setting": _load_setting},
+    "custom_resolvers": {
+        "merge": merge_dicts,
+        "oc.env": env,
+        "oc.int": cast_to_int,
+        "setting": _load_setting,
+        "if_null": if_null,
+    },
 }
 
 # Class that manages Kedro's library components.

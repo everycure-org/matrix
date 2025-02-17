@@ -1,27 +1,31 @@
-import os
-import logging
-import re
 import asyncio
-from tqdm import tqdm
+import logging
+import os
+import re
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Optional
 
+import fsspec
 import google.api_core.exceptions as exceptions
 import numpy as np
 import pandas as pd
 import pygsheets
+import pyspark.sql as ps
+import requests
 from google.cloud import bigquery, storage
 from kedro.io.core import (
+    AbstractDataset,
     AbstractVersionedDataset,
     DatasetError,
     Version,
 )
 from kedro_datasets.partitions import PartitionedDataset
 from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
-from kedro_datasets.spark.spark_dataset import _get_spark, _split_filepath, _strip_dbfs_prefix
-from matrix.hooks import SparkHooks
 from pygsheets import Spreadsheet, Worksheet
-import pyspark.sql as ps
+from tqdm import tqdm
+
+from matrix.hooks import SparkHooks
 from matrix.inject import _parse_for_objects
 
 logger = logging.getLogger(__name__)
@@ -33,9 +37,42 @@ class LazySparkDataset(SparkDataset):
     A trick that makes our spark loading lazy so we never initiate
     """
 
-    def _load(self):
+    def __init__(  # noqa: PLR0913
+        self,
+        *,
+        filepath: str,
+        file_format: str = "parquet",
+        load_args: dict[str, Any] | None = None,
+        save_args: dict[str, Any] | None = None,
+        version: Version | None = None,
+        credentials: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        self._full_url = filepath
+
+        super().__init__(
+            filepath=filepath,
+            file_format=file_format,
+            save_args=save_args,
+            load_args=load_args,
+            credentials=credentials,
+            version=version,
+            metadata=metadata,
+        )
+
+    def load(self):
         SparkHooks._initialize_spark()
-        return super()._load()
+
+        # Spark cannot read http files directly
+        if self._fs_prefix in ["http://", "https://"]:
+            with fsspec.open(self._full_url, "rb") as remote_file:
+                name = f"/tmp/{Path(self._full_url).name}"
+                with open(name, "wb") as local_file:
+                    local_file.write(remote_file.read())
+                    self._filepath = Path(name)
+                    self._fs_prefix = "file://"
+
+        return super().load()
 
 
 class SparkWithSchemaDataset(SparkDataset):
@@ -70,14 +107,18 @@ class SparkWithSchemaDataset(SparkDataset):
             metadata=metadata,
         )
 
-    def _load(self) -> ps.DataFrame:
+    def load(self) -> ps.DataFrame:
         SparkHooks._initialize_spark()
-        load_path = _strip_dbfs_prefix(self._fs_prefix + str(self._get_load_path()))
-        read_obj = _get_spark().read
+        load_path = self._strip_dbfs_prefix(self._fs_prefix + str(self._get_load_path()))
+        read_obj = ps.SparkSession.builder.getOrCreate()
 
         return read_obj.schema(_parse_for_objects(self._df_schema)).load(
             load_path, self._file_format, **self._load_args
         )
+
+    @staticmethod
+    def _strip_dbfs_prefix(path: str, prefix: str = "/dbfs") -> str:
+        return path[len(prefix) :] if path.startswith(prefix) else path
 
 
 class SparkDatasetWithBQExternalTable(LazySparkDataset):
@@ -140,9 +181,9 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
             **kwargs,
         )
 
-    def _save(self, data: ps.DataFrame) -> None:
+    def save(self, data: ps.DataFrame) -> None:
         # Invoke saving of the underlying spark dataset
-        super()._save(data)
+        super().save(data)
 
         # Ensure dataset exists
         self._create_dataset()
@@ -155,7 +196,10 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         table = bigquery.Table(f"{self._dataset_id}.{self._table}")
         table.labels = self._labels
         table.external_data_configuration = external_config
-        table = self._client.create_table(table, exists_ok=True)
+        try:
+            self._client.create_table(table, exists_ok=False)
+        except exceptions.Conflict:
+            self._client.update_table(table, fields=["labels"])
 
     def _create_dataset(self) -> str:
         try:
@@ -240,7 +284,7 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
             gc = pygsheets.authorize(service_file=self._service_file)
             self._sheet = gc.open_by_key(self._key)
 
-    def _load(self) -> pd.DataFrame:
+    def load(self) -> pd.DataFrame:
         self._init_sheet()
 
         sheet_name = self._load_args["sheet_name"]
@@ -255,7 +299,7 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
         # NOTE: Upon loading, replace empty strings with NaN
         return df.replace(r"^\s*$|^N/A$", np.nan, regex=True)
 
-    def _save(self, data: pd.DataFrame) -> None:
+    def save(self, data: pd.DataFrame) -> None:
         self._init_sheet()
 
         sheet_name = self._save_args["sheet_name"]
@@ -329,10 +373,14 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
 
         protocol, fs_prefix, blob_name = self.split_remote_jdbc_path(url)
 
-        if fs_prefix != "gs://":
+        if fs_prefix and fs_prefix != "gs://":
             raise DatasetError("RemoteSparkJDBCDataset currently supports GCS only")
 
-        self._bucket, self._blob_name = blob_name.split("/", maxsplit=1)
+        if fs_prefix:
+            self._bucket, self._blob_name = blob_name.split("/", maxsplit=1)
+        else:
+            self._bucket = None
+            self._blob_name = blob_name
 
         super().__init__(
             table=table,
@@ -353,22 +401,22 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
             self._client = storage.Client(self._project)
         return self._client
 
-    def _load(self) -> Any:
+    def load(self) -> Any:
         SparkHooks._initialize_spark()
-        bucket = self._get_client().bucket(self._bucket)
-        blob = bucket.blob(self._blob_name)
 
-        if not os.path.exists(self._blob_name):
+        if self._bucket and not os.path.exists(self._blob_name):
             logger.info("downloading file to local")
+            bucket = self._get_client().bucket(self._bucket)
+            blob = bucket.blob(self._blob_name)
             os.makedirs(self._blob_name.rsplit("/", maxsplit=1)[0], exist_ok=True)
             blob.download_to_filename(self._blob_name)
         else:
             logger.info("file present skipping")
 
-        return super()._load()
+        return super().load()
 
-    def _save(self, df: ps.DataFrame) -> Any:
-        super()._save(df)
+    def save(self, df: ps.DataFrame) -> Any:
+        super().save(df)
 
     @staticmethod
     def split_remote_jdbc_path(url: str):
@@ -382,9 +430,16 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
             fs_prefix: filesystem prefix
         """
         protocol, file_name = url.split(":", maxsplit=1)
-        fs_prefix, file_name = _split_filepath(file_name)
+        fs_prefix, file_name = RemoteSparkJDBCDataset._split_filepath(file_name)
 
         return protocol, fs_prefix, file_name
+
+    @staticmethod
+    def _split_filepath(filepath: str | os.PathLike) -> tuple[str, str]:
+        split_ = str(filepath).split("://", 1)
+        if len(split_) == 2:  # noqa: PLR2004
+            return split_[0] + "://", split_[1]
+        return "", split_[0]
 
 
 class PartitionedAsyncParallelDataset(PartitionedDataset):
@@ -392,7 +447,36 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
     Custom implementation of the ParallelDataset that allows concurrent processing.
     """
 
-    def _save(self, data: dict[str, Any], max_workers: int = 10, timeout: int = 60) -> None:
+    def __init__(  # noqa: PLR0913
+        self,
+        *,
+        path: str,
+        dataset: str | type[AbstractDataset] | dict[str, Any],
+        max_workers: int = 10,
+        filepath_arg: str = "filepath",
+        filename_suffix: str = "",
+        credentials: dict[str, Any] | None = None,
+        load_args: dict[str, Any] | None = None,
+        fs_args: dict[str, Any] | None = None,
+        overwrite: bool = False,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        self._max_workers = int(max_workers)
+
+        super().__init__(
+            path=path,
+            dataset=dataset,
+            filepath_arg=filepath_arg,
+            filename_suffix=filename_suffix,
+            credentials=credentials,
+            load_args=load_args,
+            overwrite=overwrite,
+            fs_args=fs_args,
+        )
+
+    def save(self, data: dict[str, Any], timeout: int = 90) -> None:
+        logger.info(f"saving with {self._max_workers} parallelism")
+
         if self._overwrite and self._filesystem.exists(self._normalized_path):
             self._filesystem.rm(self._normalized_path, recursive=True)
 
@@ -423,7 +507,7 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
             # Create an event loop and a thread pool executor for async execution
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            sem = asyncio.Semaphore(max_workers)
+            sem = asyncio.Semaphore(self._max_workers)
 
             tasks = [
                 loop.create_task(process_partition(sem, partition_id, partition_data))

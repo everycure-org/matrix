@@ -1,15 +1,11 @@
 import json
-from typing import Any
+from typing import Any, Dict, List
 
 import pandas as pd
-from pandera import DataFrameModel
-import pandera
-from pandera.typing import Series
-
-from matrix.inject import inject_object
-
 from matrix.datasets.pair_generator import DrugDiseasePairGenerator
+from matrix.inject import inject_object
 from matrix.pipelines.evaluation.evaluation import Evaluation
+from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
 
 def check_no_train(data: pd.DataFrame, known_pairs: pd.DataFrame) -> None:
@@ -64,16 +60,16 @@ def perform_matrix_checks(matrix: pd.DataFrame, known_pairs: pd.DataFrame, score
     check_ordered(matrix, score_col_name)
 
 
-class EdgesSchema(DataFrameModel):
-    source: Series[object]
-    target: Series[object]
-    y: Series[int]
-
-    class Config:
-        strict = False
-
-
-@pandera.check_output(EdgesSchema)
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "source": Column(str, nullable=False),
+            "target": Column(str, nullable=False),
+            "y": Column(int, nullable=False),
+        },
+        unique=["source", "target"],
+    )
+)
 @inject_object()
 def generate_test_dataset(
     known_pairs: pd.DataFrame, matrix: pd.DataFrame, generator: DrugDiseasePairGenerator, score_col_name: str
@@ -116,6 +112,31 @@ def evaluate_test_predictions(data: pd.DataFrame, evaluation: Evaluation) -> Any
     return evaluation.evaluate(data)
 
 
+@inject_object()
+def aggregate_metrics(aggregation_functions: List[Dict], *metrics) -> Dict:
+    """
+    Aggregate metrics for the separate folds into a single set of metrics.
+
+    Args:
+        aggregation_functions: List of dictionaries containing the name and object of the aggregation function.
+        metrics: Dictionaries of metrics for all folds.
+    """
+    # Extract list of metrics for each fold and check consistency
+    metric_names_lst_all_folds = [list(report.keys()) for report in metrics]
+    metric_names_lst = metric_names_lst_all_folds[0]
+    if not all(metric_names == metric_names_lst_all_folds[0] for metric_names in metric_names_lst_all_folds):
+        raise ValueError("Inconsistent metrics across folds. Each fold should have the same set of metrics.")
+
+    # Perform aggregation
+    aggregated_metrics = dict()
+    for agg_func in aggregation_functions:
+        aggregated_metrics[agg_func.__name__] = {
+            metric_name: agg_func([report[metric_name] for report in metrics]) for metric_name in metric_names_lst
+        }
+
+    return json.loads(json.dumps(aggregated_metrics, default=float))
+
+
 def reduce_aggregated_results(aggregated_results: dict, aggregation_function_names: list) -> dict:
     """Reduce the aggregated results to a simpler format for MLFlow readout.
 
@@ -146,48 +167,107 @@ def consolidate_evaluation_reports(**reports) -> dict:
         Dictionary representing consolidated report.
     """
 
-    def add_report(master_report: dict, model: str, evaluation: str, type: str, report: dict) -> dict:
+    def add_report(master_report: dict, evaluation: str, type: str, report: dict) -> dict:
         """Add a metrics to the master report, appending the evaluation type to the metric name.
 
         Args:
             master_report: Master report to add to.
-            model: Model name.
             evaluation: Evaluation name.
             type: Type of report (e.g. mean, fold_1,...).
             report: Report to add.
         """
-        # Add key for model if not present
-        if model not in master_report:
-            master_report[model] = {}
 
         for metric, value in report.items():
             # Add evaluation type suffix to the metric name
             full_metric_name = evaluation + "_" + metric
 
             # Add keys for metrics name and type if not present
-            if full_metric_name not in master_report[model]:
-                master_report[model][full_metric_name] = {}
-            if type not in master_report[model][full_metric_name]:
-                master_report[model][full_metric_name][type] = {}
+            if full_metric_name not in master_report:
+                master_report[full_metric_name] = {}
+            if type not in master_report[full_metric_name]:
+                master_report[full_metric_name][type] = {}
 
             # Add value to the metric name and type
-            master_report[model][full_metric_name][type] = value
+            master_report[full_metric_name][type] = value
 
         return master_report
 
     master_report = {}
     for report_name, report in reports.items():
         # Parse the report name key created in evaluation/pipeline.py
-        model, evaluation, fold_or_aggregated = report_name.split(".")
+        evaluation, fold_or_aggregated = report_name.split(".")
 
         # In the case of aggregated results, add the results for each aggregation function
         if fold_or_aggregated == "aggregated":
             for aggregation, report in report.items():
-                master_report = add_report(master_report, model, evaluation, aggregation, report)
+                master_report = add_report(master_report, evaluation, aggregation, report)
 
         # In the case of a fold result, add the results directly for the fold
         else:
             fold = fold_or_aggregated
-            master_report = add_report(master_report, model, evaluation, fold, report)
+            master_report = add_report(master_report, evaluation, fold, report)
 
     return json.loads(json.dumps(master_report, default=float))
+
+
+@inject_object()
+def evaluate_stability_predictions(
+    overlapping_pairs: pd.DataFrame, evaluation: Evaluation, *matrices: pd.DataFrame
+) -> Any:
+    """Function to apply stability evaluation.
+
+    Args:
+        overlapping_pairs: pairs that overlap across all matrices.
+        evaluation: stability metric to use for evaluation.
+        matrix_1: full matrix coming from one model
+        matrix_2: full matrix coming from another model to compare against
+    Returns:
+        Evaluation report
+    """
+    return evaluation.evaluate(overlapping_pairs, matrices)
+
+
+@inject_object()
+def generate_overlapping_dataset(generator: DrugDiseasePairGenerator, *matrices: pd.DataFrame) -> pd.DataFrame:
+    """Function to generate overlapping dataset.
+
+    Args:
+        generator: generator strategy
+        matrices: DataFrames coming from different models to compare against
+    Returns:
+        Evaluation report
+    """
+    return generator.generate(matrices)
+
+
+def calculate_rank_commonality(ranking_output: dict, commonality_output: dict) -> dict:
+    """Function to calculate rank commonality (custom metric).
+
+    Args:
+        ranking_output: ranking output
+        commonality_output: commonality output
+
+    Returns:
+        rank commonality output
+    """
+    rank_commonality_output = {}
+    ranking_output = {k: v for k, v in ranking_output.items() if "spearman" in k}
+    n_ranking_values = [int(n.split("_")[-1]) for n in ranking_output.keys() if n.split("_")[-1]]
+    n_commonality_values = [int(n.split("_")[-1]) for n in commonality_output.keys() if n.split("_")[-1]]
+    n_values = list(set(n_ranking_values) & set(n_commonality_values))
+    # Compute harmonic mean between Commonality@n and Spearman-rank@n
+    for i in n_values:
+        # Spearman correlation is between -1 and 1, taking the absolute value to avoid division by small numbers
+        r_k = abs(ranking_output[f"spearman_at_{i}"]["correlation"])
+        c_k = commonality_output[f"commonality_at_{i}"]
+        if r_k + c_k == 0:
+            s_f1 = None
+        elif pd.isnull(r_k) | pd.isnull(c_k):
+            s_f1 = None
+        else:
+            s_f1 = (2 * r_k * c_k) / (r_k + c_k)
+        rank_commonality_output[f"rank_commonality_at_{i}"] = {
+            "score": s_f1,
+            "pvalue": ranking_output[f"spearman_at_{i}"]["pvalue"],
+        }
+    return json.loads(json.dumps(rank_commonality_output, default=float))

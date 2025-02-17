@@ -1,18 +1,33 @@
 integration:
-
   sources:
     rtx_kg2:
       transformer:
-        _object: matrix.pipelines.integration.rtxkg2.RTXTransformer
-    # spoke:
-    #   transformer:
-    #     _object: matrix.pipelines.integration.spoke.SpokeTransformer
+        _object: matrix.pipelines.integration.transformers.rtxkg2.RTXTransformer
+    spoke:
+      transformer:
+        _object: matrix.pipelines.integration.transformers.spoke.SpokeTransformer
     robokop:
       transformer:
-        _object: matrix.pipelines.integration.robokop.RobokopTransformer
+        _object: matrix.pipelines.integration.transformers.robokop.RobokopTransformer
     ec_medical_team:
       transformer:
-        _object: matrix.pipelines.integration.medical.MedicalTransformer
+        _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
+    ec_clinical_trails: 
+      transformer:
+        _object: matrix.pipelines.integration.transformers.clinical_trails.ClinicalTrialsTransformer
+        drop_duplicates: true
+    drug_list: 
+      transformer:
+        _object: matrix.pipelines.integration.transformers.drugs.DrugsTransformer
+    disease_list: 
+      transformer:
+        _object: matrix.pipelines.integration.transformers.diseases.DiseasesTransformer
+    drugmech:
+      transformer:
+         _object: matrix.pipelines.integration.transformers.drugmech.DrugMechTransformer
+    ground_truth: 
+      transformer:
+        _object: matrix.pipelines.integration.transformers.ground_truth.GroundTruthTransformer
 
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:
@@ -22,14 +37,21 @@ integration:
         ngd_threshold: 0.6
         limit_pmids: 50_000_000 # essentially unlimited, but allows for local clipping if local run is desired
 
-  # FUTURE: Implement strategy to ensure this can be injected in the future
-  nodenorm:
-    # api_endpoint: https://nodenormalization-sri.renci.org/get_normalized_nodes
-    api_endpoint: ${oc.env:NODENORM_ENDPOINT, https://nodenorm.transltr.io/1.5/get_normalized_nodes}
-    conflate: true
-    drug_chemical_conflate: true
+  normalization:
     batch_size: 1000
-    parallelism: 120
+    normalizer:
+      _object: matrix.pipelines.integration.normalizers.ncats.NCATSNodeNormalizer
+      endpoint: ${oc.env:NODENORM_ENDPOINT, https://nodenorm.transltr.io/1.5/get_normalized_nodes}
+      conflate: true
+      drug_chemical_conflate: true
+      description: false
+
+  deduplication:
+    # choose if a node should have the most specific category. 
+    # E.g. if a node has all_categories [biolink:ChemicalEntity, biolink:NamedThing],
+    # then node will be assigned biolink:ChemicalEntity as most specific category.
+    # For RTX-KG2 reproduction from KGML-xDTD, choose false
+    retrieve_most_specific_category: false
 
   filtering:
     node_filters:
@@ -37,6 +59,7 @@ integration:
         _object: matrix.pipelines.modelling.utils.partial_
         func:
           _object: matrix.pipelines.integration.filters.remove_rows_containing_category
+        exclude_sources: ["ec_medical"]
         column: category
         categories:
         # TODO: We should likely not remove these before our data release stage but afterwards in the modelling pipeline (if the model so desires)
