@@ -178,19 +178,14 @@ def create_pipeline(**kwargs) -> Pipeline:
 def create_node_embeddings_pipeline() -> Pipeline:
     # A demo for now
     return cached_api_enrichment_pipeline(
-        input="caching.input",
+        input="integration.prm.filtered_nodes",
+        output="fully_enriched",
+        preprocessor="params:caching.preprocessor",
+        cache_miss_resolver="params:caching.resolver",
+        api="params:caching.api",
+        new_col="params:caching.new_col",
         cache="cache.read",
         cache_out="cache.write",
         cache_misses="cache.misses",
         primary_key="params:caching.primary_key",
-        cache_miss_resolver="params:caching.resolver",
-        preprocessor="params:caching.preprocessor",
-        api="params:caching.api",
-        output="fully_enriched",
-        new_col="params:caching.new_col",
     )
-
-
-# TODO:
-#  - write e2e test
-#  - use node normalizer with async
