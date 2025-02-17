@@ -4,6 +4,7 @@ from typing import List, Optional
 import click
 import mlflow
 from kedro.framework.cli.utils import split_string
+from mlflow.entities import ViewType
 
 from matrix.cli_commands.submit import submit
 from matrix.git_utils import get_current_git_branch
@@ -11,6 +12,7 @@ from matrix.utils.authentication import get_iap_token
 from matrix.utils.mlflow_utils import (
     DeletedExperimentExistsWithName,
     ExperimentNotFound,
+    archive_runs_and_experiments,
     create_mlflow_experiment,
     get_experiment_id_from_name,
     rename_soft_deleted_experiment,
@@ -139,3 +141,13 @@ def run(
         experiment_id=experiment_id,
         skip_git_checks=skip_git_checks,
     )
+
+
+@experiment.command()
+@click.option("--dry-run", "-d", is_flag=True, default=True, help="Whether to actually archive runs and experiments")
+def archive(dry_run: bool):
+    if dry_run:
+        click.echo("Dry run of archiving runs and experiments")
+        archive_runs_and_experiments(dry_run=dry_run)
+    elif click.confirm("Are you sure you want to archive all runs and experiments?", abort=True):
+        archive_runs_and_experiments(dry_run=dry_run)

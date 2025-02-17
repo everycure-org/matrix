@@ -3,6 +3,8 @@ import secrets
 from typing import List, Optional
 
 import mlflow
+from mlflow.entities import Experiment, ViewType
+from mlflow.tracking import MlflowClient
 from rich.console import Console
 
 console = Console()
@@ -18,6 +20,10 @@ class DeletedExperimentExistsWithName(Exception):
     "Raised when an experiment exists with the desired name, but has been soft-deleted"
 
     pass
+
+
+EXPERIMENT_ARCHIVE_EXCLUSION_LIST = ["archive"]
+ARCHIVE_EXPERIMENT_ID = 17123
 
 
 def create_mlflow_experiment(experiment_name: str) -> str:
@@ -88,3 +94,89 @@ def rename_soft_deleted_experiment(experiment_name: str) -> str:
     except Exception as e:
         console.print(f"Error renaming deleted experiment: {e}")
         raise e
+
+
+def copy_run(run_id: str, new_experiment_id: int):
+    console.print(f"Copying run {run_id} to experiment {new_experiment_id}")
+    client = mlflow.tracking.MlflowClient()
+
+    original_run = client.get_run(run_id)
+    new_run = client.create_run(
+        experiment_id=new_experiment_id,
+        tags=original_run.data.tags,
+        run_name=original_run.info.run_name,
+    )
+
+    # Update run status to match original
+    client.update_run(new_run.info.run_id, status=original_run.info.status)
+    #   Copy metrics and params
+    console.print("Updating metrics")
+    for metric in original_run.data.metrics.items():
+        client.log_metric(new_run.info.run_id, metric[0], metric[1])
+    console.print("Updating params")
+    for param in original_run.data.params.items():
+        client.log_param(new_run.info.run_id, param[0], param[1])
+
+    console.print(f"Run {run_id} copied to experiment {new_experiment_id}")
+
+
+def delete_run(client: MlflowClient, run_id: str):
+    try:
+        run_to_delete = client.get_run(run_id)
+    except Exception as e:
+        console.print(f"Run {run_id} not found")
+        raise e
+
+    try:
+        client.delete_run(run_to_delete.info.run_id)
+    except Exception as e:
+        console.print(f"Error deleting run {run_id}: {e}")
+        raise e
+
+
+def archive_runs_and_experiments(dry_run: bool = True):
+    """Archives MLflow runs and experiments by copying them to an archive experiment.
+
+    Searches MLFlow for all experiments and:
+    1. Skips experiments that are in the EXPERIMENT_ARCHIVE_EXCLUSION_LIST (for example, the archive experiment itself, and any other experiments that we do not want to archive)
+    2. For each remaining experiment:
+        - Finds all active runs
+            - Copies each run to the archive experiment
+            - Soft deletes the original runs
+        - Soft deletes the original experiment
+    """
+    client = MlflowClient()
+
+    experiments = client.search_experiments()
+    console.print(f"Found {len(experiments)} experiments")
+
+    for experiment in experiments:
+        if experiment.name in EXPERIMENT_ARCHIVE_EXCLUSION_LIST:
+            console.print(f"Skipping experiment: {experiment.name}")
+            continue
+
+        runs = client.search_runs(experiment_ids=[experiment.experiment_id], run_view_type=ViewType.ACTIVE_ONLY)
+        console.print(f"Found {len(runs)} runs in experiment {experiment.name}")
+
+        for run in runs:
+            if dry_run:
+                print(
+                    f"Dry run. Would archive run {run.info.run_name} ({run.info.run_id}) to experiment {ARCHIVE_EXPERIMENT_ID}"
+                )
+            else:
+                copy_run(run_id=run.info.run_id, new_experiment_id=ARCHIVE_EXPERIMENT_ID)
+                console.print(
+                    f"Run {run.info.run_name} ({run.info.run_id}) copied to experiment {ARCHIVE_EXPERIMENT_ID}"
+                )
+                delete_run(client, run.info.run_id)
+                console.print(f"Original run {run.info.run_name} ({run.info.run_id}) deleted")
+
+        try:
+            if dry_run:
+                print(f"Dry run. Would delete experiment {experiment.name}")
+            else:
+                client.delete_experiment(experiment.experiment_id)
+                console.print(f"Experiment {experiment.name} deleted")
+        except Exception as e:
+            console.print(f"Error deleting experiment {experiment.name}: {e}")
+            raise e
