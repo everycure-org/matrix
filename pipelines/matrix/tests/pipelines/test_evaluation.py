@@ -250,9 +250,8 @@ def test_spearman_at_n(sample_rank_sets):
     result_same = spearman_evaluator.generate()(
         (sample_rank_sets[0], sample_rank_sets[0]), common_items=pd.DataFrame({"pair_id": [1, 2, 3, 4]})
     )
-
     assert result["pvalue"] > 0.05
-    assert round(result_same["correlation"]) == 1.0
+    assert round(result_same["stat"]) == 1.0
     assert result_same["pvalue"] < 0.05
 
 
