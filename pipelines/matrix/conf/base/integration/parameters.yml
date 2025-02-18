@@ -26,9 +26,13 @@ integration:
     kgml_xdtd_ground_truth: 
       transformer:
         _object: matrix.pipelines.integration.transformers.ground_truth.GroundTruthTransformer
+        source_col: source
+        target_col: target
     ec_ground_truth: 
       transformer:
         _object: matrix.pipelines.integration.transformers.ground_truth.GroundTruthTransformer
+        source_col: drug ID
+        target_col: disease ID
     drugmech:
       transformer:
          _object: matrix.pipelines.integration.transformers.drugmech.DrugMechTransformer
