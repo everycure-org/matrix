@@ -1,3 +1,4 @@
+import itertools
 import logging
 import warnings
 from typing import Any, Callable, Collection, Dict, Iterable, Iterator, List, Optional, Sequence, TypeVar
@@ -304,3 +305,51 @@ def pass_through(x):
 
 def embeddings_preprocessor(df: DataFrame, key_length: int, combine_cols: Sequence[str], new_col: str) -> DataFrame:
     return df.withColumn(new_col, F.concat_ws("", *combine_cols).substr(startPos=1, length=key_length))
+
+
+@inject_object()
+def cache_miss_resolver_wrapper(
+    df: DataFrame, resolver: Callable[[Iterable[T]], Iterator[tuple[T, V]]], api: str
+) -> DataFrame:
+    assert (
+        df.columns == CACHE_COLUMNS[:1]
+    ), f"The cache misses should consist of just one column named '{CACHE_COLUMNS[0]}'"
+    ret = df.rdd.mapPartitions(resolver)
+    # The order of columns must match the initial cache. One could enforce it, by having the initial cache (or its schema) as an input, but that would be inefficient.
+    return ret.toDF(schema=df.schema.add(CACHE_COLUMNS[1], data_type=ArrayType(FloatType()))).withColumn(
+        CACHE_COLUMNS[2], F.lit(api)
+    )
+
+
+def batched(iterable: Iterable[T], n: int, *, strict: bool = False) -> Iterator[tuple[T]]:
+    # Taken from the recipe at https://docs.python.org/3/library/itertools.html#itertools.batched , which is available by default in 3.12
+    # batched('ABCDEFG', 3) → ABC DEF G
+    if n < 1:
+        raise ValueError("batch size must be at least one")
+    iterator = iter(iterable)
+    while batch := tuple(itertools.islice(iterator, n)):
+        if strict and len(batch) != n:
+            raise ValueError("batched(): incomplete batch")
+        yield batch
+
+
+def revised_cache_miss_resolver_wrapper(df, batch_size):
+    documents = (_[0] for _ in df.toLocalIterator(prefetchPartitions=True))
+    batches = batched(
+        documents, batch_size
+    )  # add batch_size as param to this kedro node function  (a good batch size would be about 50k, according to my calculations)
+
+    def prep(batches, api: str):  # add api as param to this kedro node function
+        for batch in batches:
+            head = batch[0]
+            key = hashlib.sha256(
+                (head + api).encode("utf-8")
+            ).hexdigest()  # the produced partition files must be unique wrt the api
+            yield (
+                key,
+                lambda: pd.DataFrame(
+                    {CACHE_SCHEMA[0]: batch, CACHE_SCHEMA[1]: transformer.apply(batch), CACHE_SCHEMA[2]: api}
+                ),
+            )  # It's important that the transform does not get executed, so it must be kept part of the lambda!
+
+        return {k: v for k, v in prep(batches, api)}

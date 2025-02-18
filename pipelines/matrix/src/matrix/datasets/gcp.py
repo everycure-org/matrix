@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import re
+import time
 from copy import deepcopy
 from pathlib import Path
 from typing import Any, Optional
@@ -495,25 +496,25 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
 
         # Helper function to process a single partition
         async def process_partition(sem, partition_id, partition_data):
-            async with sem:
-                try:
-                    # Set up arguments and path
-                    kwargs = deepcopy(self._dataset_config)
-                    partition = self._partition_to_path(partition_id)
-                    kwargs[self._filepath_arg] = self._join_protocol(partition)
-                    dataset = self._dataset_type(**kwargs)  # type: ignore
+            try:
+                # Set up arguments and path
+                kwargs = deepcopy(self._dataset_config)
+                partition = self._partition_to_path(partition_id)
+                kwargs[self._filepath_arg] = self._join_protocol(partition)
+                dataset = self._dataset_type(**kwargs)  # type: ignore
 
-                    # Evaluate partition data if it's callable
-                    if callable(partition_data):
+                # Evaluate partition data if it's callable
+                if callable(partition_data):
+                    async with sem:
                         partition_data = await partition_data()  # noqa: PLW2901
-                    else:
-                        raise RuntimeError("not callable")
-
-                    # Save the partition data
-                    dataset.save(partition_data)
-                except Exception as e:
-                    logger.error(f"Error in process_partition with partition {partition_id}: {e}")
-                    raise
+                else:
+                    raise RuntimeError("not callable")
+                await time.sleep(0.01)
+                # Save the partition data
+                dataset.save(partition_data)
+            except Exception as e:
+                logger.error(f"Error in process_partition with partition {partition_id}: {e}")
+                raise
 
         # Define function to run asyncio tasks within a synchronous function
         def run_async_tasks():
