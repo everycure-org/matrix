@@ -166,7 +166,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         *[
                             f"integration.int.{source['name']}.edges.norm@spark"
                             for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
-                            if not source.get("integrate_in_kg", True) and not source.get("nodes_only", False)
+                            if "ground_truth" in source["name"]
                         ],
                     ],
                     outputs="integration.prm.filtered_gt_nodes",
