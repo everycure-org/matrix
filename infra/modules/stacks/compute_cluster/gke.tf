@@ -4,6 +4,9 @@ data "google_client_config" "default" {
 locals {
   default_node_locations = "us-central1-a,us-central1-c"
 
+  # NOTE: Debugging node group scaling can be done using the GCP cluster logs, we create
+  # node groups in 2 node locations, hence why the total amount of node groups.
+  # https://console.cloud.google.com/kubernetes/clusters/details/us-central1/compute-cluster/logs/autoscaler_logs?chat=true&inv=1&invt=Abp5KQ&project=mtrx-hub-dev-3of
   n2d_node_pools = [for size in [8, 16, 32, 48, 64] : {
     name           = "n2d-highmem-${size}-nodes"
     machine_type   = "n2d-highmem-${size}"
