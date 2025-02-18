@@ -78,6 +78,9 @@ jobs:
     outputs:
       status: ${{ steps.finally.outputs.status }}
 
+    permissions:
+     contents: 'read'
+     id-token: 'write'
     defaults:
       run:
         working-directory: ./pipelines/matrix
@@ -86,12 +89,20 @@ jobs:
         with: 
           sparse-checkout: |
             pipelines/matrix/
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider}}
+          service_account: ${{vars.service_account}}
 
       # On every PR
       - run: env | sort # prints out all env variables, helpful for debugging
-      - run: make venv
       - run: make install
       - run: make precommit
+      - run: make fetch_secrets
+      - run: uv run kedro catalog resolve --env base
+      - run: uv run kedro catalog resolve --env cloud
+      - run: uv run kedro catalog resolve --env test
       - run: make full_test
       - run: make compose_down # ensures containers & state are removed
       - run: make docker_test GIT_SHA="${GITHUB_SHA:0:7}" #we overwrite the GIT_SHA in the Makefile

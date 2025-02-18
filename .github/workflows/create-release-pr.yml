@@ -99,8 +99,8 @@ jobs:
           pip install uv
           uv venv -p 3.11
           uv pip install -r requirements.txt
-          uv run scripts/bump_detection.py >> "${GITHUB_ENV}"
-
+          uv run scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
+      
       - name: Create Release Notes
         working-directory: apps/matrix-cli
         env:
@@ -110,17 +110,18 @@ jobs:
         if: env.generate_notes == 'True'
         run: |
           mkdir -p "${{env.release}}"
-          uv run matrix releases release-notes --headless --output-file "${{env.release}}/notes.md"
+
           # If these fail, you may have crossed the quotas. See 
           # https://cloud.google.com/vertex-ai/generative-ai/docs/quotas
           uv run matrix releases article \
             --headless \
             --output-file "${{env.release}}/post.md" \
             --no-disable-rendering \
-            --notes-file "${{env.release}}/notes.md"
+            --until ${{env.gitref}}
+          
           mv "${{env.release}}" "${GITHUB_WORKSPACE}/${POSTS_DIR}"
           git add "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{env.release}}" && \
-          git commit -m "added release notes & article draft" 
+          git commit -m "added release notes & article draft"
 
       - name: Setup docs venv & generate yaml
         working-directory: docs/scripts

@@ -38,7 +38,7 @@ data_sources:
     version: "Release v2.0.0"
   disease_list:
     # check releases here: https://github.com/everycure-org/matrix-disease-list/releases
-    version: "2024-10-08"
+    version: "2024-12-20 release"
   kgml_xdtd_gt:
     version: *_rtx_kg_version
   ec_gt:
@@ -47,9 +47,15 @@ data_sources:
   modelling_gt:
     source: ec
     version: *_ec_gt_version
+  gt:
+    version: *_rtx_kg_version # NOTE: This is the version of the GT dataset which was developed for rtx-kg2 as a part of KGML-xDTD pipeline
+  drugmech:
+    # check releases here: https://github.com/SuLab/DrugMechDB/releases/ 
+    version: 2.0.1
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation. Will make PR.
 mlflow_artifact_root: null
+mlflow_experiment_id: null
 
 mlflow_url: https://mlflow.platform.dev.everycure.org/
 

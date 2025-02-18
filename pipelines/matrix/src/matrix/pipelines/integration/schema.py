@@ -1,6 +1,6 @@
 import pyspark.sql.types as T
 
-from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
+from matrix.utils.pandera_utils import Column, DataFrameSchema
 
 BIOLINK_KG_NODE_SCHEMA = DataFrameSchema(
     columns={
