@@ -338,6 +338,11 @@ ingestion.raw.ec_ground_truth:
   repository_url: https://github.com/everycure-org/matrix-indication-list
   release_name: ${globals:data_sources.ec_gt.version}
   release_asset_name: ground-truths-list.tsv
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: token ${globals:gh_token}
+  load_args:
+    sep: "\t"
 
 ingestion.raw.ec_ground_truth.nodes@spark:
   <<: [*_layer_raw, *_spark_csv]

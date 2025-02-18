@@ -37,7 +37,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=lambda x: x,
                 inputs=["ingestion.raw.ec_ground_truth"],
                 outputs="ingestion.raw.ec_ground_truth.edges@pandas",
-                name="write_ec_ground_truth_edges",
+                name="write_ec_ground_truth",
+                tags=["ec-ground-truth"],
             ),
         ]
     )
