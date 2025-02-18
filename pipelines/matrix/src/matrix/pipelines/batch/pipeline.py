@@ -139,12 +139,12 @@ def derive_cache_misses(
 
 @inject_object()
 def cache_miss_resolver_wrapper(
-    df: DataFrame, resolver: Callable[[Iterable[T]], Iterator[tuple[T, V]]], api: str
+    df: DataFrame, resolver: Callable[[Iterable[T]], Iterator[tuple[T, V]]], api: str, partitions: int
 ) -> DataFrame:
     assert (
         df.columns == CACHE_COLUMNS[:1]
     ), f"The cache misses should consist of just one column named '{CACHE_COLUMNS[0]}'"
-    ret = df.rdd.mapPartitions(resolver)
+    ret = df.repartition(partitions).rdd.mapPartitions(resolver)
     # The order of columns must match the initial cache. One could enforce it, by having the initial cache (or its schema) as an input, but that would be inefficient.
     return ret.toDF(schema=df.schema.add(CACHE_COLUMNS[1], data_type=ArrayType(FloatType()))).withColumn(
         CACHE_COLUMNS[2], F.lit(api)
@@ -171,7 +171,9 @@ def lookup_from_cache(
 def limit_cache_to_results_from_api(df: DataFrame, api: str) -> DataFrame:
     """Filter the cache for results from a particular `api`.
 
-    Note that the reason for filtering for results from the api is that you likely don't want to add results from a different API than the one you use to resolve cache misses."""
+    Note that the reason for filtering for results from the api is that
+    you likely don't want to add results from a different API than the one
+    you use to resolve cache misses."""
     return df.filter(df[CACHE_COLUMNS[2]] == api).drop(CACHE_COLUMNS[2])
 
 
@@ -200,6 +202,7 @@ def cached_api_enrichment_pipeline(
     preprocessor: str,  # Callable[[DataFrame], DataFrame],
     output: str,
     new_col: str,
+    partitions: str,
 ) -> Pipeline:
     """Pipeline to enrich a dataframe using optionally cached API calls.
 
@@ -248,6 +251,10 @@ def cached_api_enrichment_pipeline(
 
     new_col: name of the column in which the values associated with the
     primary_key should appear.
+
+    partitions: the number of partitions in which the dataset is split internally.
+    A higher number will decrease the memory footprint, also decreasing the number
+    of elements sent to the API in parallel.
     """
 
     common_inputs = {"df": input, "cache": cache, "api": api, "primary_key": primary_key, "preprocessor": preprocessor}
@@ -269,7 +276,7 @@ def cached_api_enrichment_pipeline(
         ArgoNode(
             name="resolve_cache_misses",
             func=cache_miss_resolver_wrapper,
-            inputs={"df": cache_misses, "resolver": cache_miss_resolver, "api": api},
+            inputs={"df": cache_misses, "resolver": cache_miss_resolver, "api": api, "partitions": partitions},
             outputs=cache_out,
             argo_config=ArgoResourceConfig(
                 ephemeral_storage_request=128,
@@ -282,7 +289,8 @@ def cached_api_enrichment_pipeline(
         ArgoNode(
             name="lookup_from_cache",
             func=lookup_from_cache,
-            # By supplying the output of the previous node, which shares the same path as the starting cache, as an input, Kedro reloads the dataset, noticing now that it had more data.
+            # By supplying the output of the previous node, which shares the same path as the starting
+            # cache, as an input, Kedro reloads the dataset, noticing now that it had more data.
             # Note that replacing the `cache_out` by `cache`, it is NOT reloaded, as `cache` is an input.
             inputs=common_inputs | {"cache": cache_out, "new_col": new_col},
             outputs=output,
@@ -297,7 +305,7 @@ def dummy_resolver(
 ) -> Iterator[tuple[T, V]]:
     seq = tuple(sequence)
     logging.debug(f"resolving, {seq}, using {api}")
-    yield from zip((_[0] for _ in seq), [[5.0, 3.0]] * len(seq))
+    yield from zip((_[0] for _ in seq), [[1.0, 2.0]] * len(seq))
 
 
 def pass_through(x):
