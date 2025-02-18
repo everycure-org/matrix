@@ -49,3 +49,12 @@ ingestion.raw.drugmech.edges@spark:
   file_format: json
   load_args:
     multiline: true
+
+ingestion.raw.ec_ground_truth:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw}/ground_truth/ec/${globals:data_sources.ec_gt.version}/ground-truths-list.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"

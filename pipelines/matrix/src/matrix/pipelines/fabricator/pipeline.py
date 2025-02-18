@@ -81,6 +81,41 @@ def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.D
     return rows
 
 
+# NOTE: This function was partially generated using AI assistance.
+def _create_ec_gt_pairs(positives: pd.DataFrame, negatives: pd.DataFrame):
+    """Create ground truth pairs for EC data.
+
+    Args:
+        positives: DataFrame containing positive drug-disease pairs
+        negatives: DataFrame containing negative drug-disease pairs
+
+    Returns:
+        DataFrame with formatted drug-disease pairs
+    """
+    # Rename columns consistently
+    positives = positives.rename(columns={"source": "drug ID", "target": "disease ID"})
+    negatives = negatives.rename(columns={"source": "drug ID", "target": "disease ID"})
+
+    # Add indication flags
+    positives["indication"] = True
+    positives["contraindication"] = False
+    negatives["indication"] = False
+    negatives["contraindication"] = True
+
+    # Combine positive and negative pairs
+    df = pd.concat([positives, negatives])
+    df = df.drop_duplicates()
+
+    # Add required columns
+    df["active ingredient"] = "dummy"
+    df["drug label"] = df["drug ID"].copy().apply(lambda x: f"name_{x}")
+    df["disease label"] = df["disease ID"].copy().apply(lambda x: f"name_{x}")
+    df["disease name"] = df["disease label"]
+    df["drug|disease"] = df["drug label"] + "|" + df["disease name"]
+
+    return df
+
+
 def create_pipeline(**kwargs) -> Pipeline:
     """Create fabricator pipeline."""
     return pipeline(
@@ -143,10 +178,19 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "ingestion.raw.disease_list",
                 ],
                 outputs=[
-                    "ingestion.raw.ground_truth.positives",
-                    "ingestion.raw.ground_truth.negatives",
+                    "ingestion.raw.kgml_xdtd_ground_truth.positives",
+                    "ingestion.raw.kgml_xdtd_ground_truth.negatives",
                 ],
                 name="create_gt_pairs",
+            ),
+            node(
+                func=_create_ec_gt_pairs,
+                inputs=[
+                    "ingestion.raw.kgml_xdtd_ground_truth.negatives",
+                    "ingestion.raw.kgml_xdtd_ground_truth.negatives",
+                ],
+                outputs="ingestion.raw.ec_ground_truth",
+                name="create_ec_gt_pairs",
             ),
             node(
                 func=generate_paths,
