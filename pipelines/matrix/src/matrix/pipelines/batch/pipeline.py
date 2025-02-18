@@ -292,7 +292,9 @@ def cached_api_enrichment_pipeline(
     return pipeline(nodes)
 
 
-def dummy_resolver(sequence: Collection[T], api) -> Iterator[tuple[T, V]]:
+def dummy_resolver(
+    sequence: Collection[T], api, init_workers: None, docs_per_async_task: None, model: None, request_timeout: None
+) -> Iterator[tuple[T, V]]:
     seq = tuple(sequence)
     logging.debug(f"resolving, {seq}, using {api}")
     yield from zip((_[0] for _ in seq), [[5.0, 3.0]] * len(seq))

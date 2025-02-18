@@ -18,11 +18,12 @@ embeddings.topological:
 
 
 caching.preprocessor:
-  _object: matrix.pipelines.batch.pipeline.pass_through
+  _object: matrix.pipelines.batch.pipeline.embeddings_preprocessor
+  new_col: &pkey mykey
 caching.resolver:
   _object: matrix.pipelines.batch.pipeline.dummy_resolver
   api: &api myapi
-caching.primary_key: text
+caching.primary_key: *pkey
 caching.api: *api
 caching.new_col: lookup
 
