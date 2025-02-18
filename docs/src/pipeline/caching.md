@@ -1,6 +1,6 @@
 # Caching Approaches for Embeddings Enrichment
 
-![Embeddings Caching](../assets/img/embeddings_caching.png)
+![Embeddings Caching](../assets/img/embeddings_caching.svg)
 
 This document describes the current approach to optimizing data enrichment
 using external APIs.
