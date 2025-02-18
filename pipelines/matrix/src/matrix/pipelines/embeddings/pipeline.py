@@ -35,9 +35,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="apply_pca",
                 tags=["argowf.fuse", "argowf.fuse-group.node_embeddings"],
                 argo_config=ArgoResourceConfig(
-                    cpu_request=48,
-                    cpu_limit=48,
-                    memory_limit=192,
+                    cpu_request=14,
+                    cpu_limit=14,
+                    memory_limit=120,
                     memory_request=120,
                     ephemeral_storage_request=256,
                     ephemeral_storage_limit=256,
