@@ -45,10 +45,62 @@ unrestricted by licenses.
 
 ### User context
 
-### Questions
+### Approach
+
+We'll mirror the current "dev" environment using a second Google project.
+
+#### Rationale
+
+Data (and logs) are made available to users under the following (non-exhaustive list of) services:
+
+    - GCS (uses Google SSO)
+    - BigQuery (uses Google SSO)
+    - Neo4J (uses username, password credentials for authentication)
+    - MlFlow
+    - Argo Workflows 
+
+    For the latter, access to unauthorized staff should be prohibited, so that they cannot read logs, nor trigger workflows. That is, the URL `https://argo.platform.dev.everycure.org/workflows/` should be hosted separately so that people without access cannot even see the logs.
+
+    Considering these services, it's easier to restrict access using the Google Cloud authentication flow using SSO, rather than on per-app level.
+
+→ Permissions need to be set on those locations.
 
 - Do we need a separate K8s cluster for this?
 - Do we need a second Google Project?
+
+For the same reason as above in what services the data must be made available,
+it is _easier_ to continue with a second Google Project.
+
+For Neo4J (and possibly other services where there is no OAuth flow using your
+GC credentials), credentials (username, password) are typically stored in a
+secrets vault Google Cloud Secret Manager, under _the same_ keys as they would
+be in other environments. This has the advantage that storing such secrets from
+Terraform is easy, as well as retrieving these programmatically, since users do
+not need to know different secret names.
+
+- Do we double the k8s cluster?
+  PRO:
+
+  - it's easier to deploy.
+  - making changes to the K8s cluster, like adding nodes, redimensioning them,
+    becomes less impacting, as long as people understand that the dev
+    environment might show breaking infra. 
+
+    :warning: if subcontractors, who were meant not to work on prod (because
+    that's where we have the private data), start complaining that services are
+    sometimes not operational, then there should be even a 2nd non-prod
+    environment. Dev should be for making changes to infra and pipelines.
+
+  - all kinds of objects (namespaces, services like Argo, cluster roles) would
+    not need to have suffixes (or similar)
+
+  CON:
+  - it might slow down development.
+    COUNTERARGUMENT: switching k8s context is a single command, as is switching a Google Project. Can be in the Makefile.
+
+  - Should authorization be granted through Google project ids?
+    It seems so, as it makes it easier for granting access to MLFlow and Neo4J.
+
 - Shall we have _main_ and _dev_ branches?
 - Shall we have infra-dev and infra-prod branches?
 - If this is about dataset protection, what is the impact if it gets used by unauthorized people?
@@ -62,22 +114,7 @@ unrestricted by licenses.
        - (marginally) higher storage cost
        - chance of missing a sync
        PROS
-  - Who is the handful of people that needs access to this private data?
-    - All of Every Cure staff (sic Pascal)
-  - How is the data made available?
-    - GCS
-    - BigQuery
-    - Neo4J
-    - MlFlow
 
-    - Argo Workflows processing these private data should not be accessible to unauthorized staff
-    - https://argo.platform.dev.everycure.org/workflows/?&phase=Succeeded&phase=Running&phase=Pending&phase=Failed&phase=Error&limit=50
-      it's easier to restrict access using namespaces, rather than on per-app level
-
-    → Permissions need to be set on those locations.
-
-  - Should authorization be granted through Google project ids?
-    It seems so, as it makes it easier for granting access to MLFlow and Neo4J.
 
   - Should we create a different yml in the env folder, e.g. cloud-prod?
     Can we inherit from the current conf/cloud?
@@ -89,6 +126,8 @@ unrestricted by licenses.
     conf/cloud-prod would be nice to inherit from conf/cloud (to be renamed as conf/cloud-dev), because then we only need to add the Elsevier entry to the catalog, not duplicate the entire catalog.
     Instead of erroring out on attempting to access private dataset within an environment that's available to an enduser, private datasets are part of an environment that is inaccessible.
 
+- Who is the handful of people that needs access to this private data?
+  All of Every Cure staff (sic Pascal)
 
 | Issue | Importance | Description | Why is it not covered in tests | Mitigation |
 | ------------- | ------------- | ------------- | ------------- | ------------- |
