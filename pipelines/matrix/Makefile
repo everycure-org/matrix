@@ -12,7 +12,7 @@ GCP_PROJECT ?= mtrx-hub-dev-3of
 SA_KEY_SECRET_NAME ?= storage-viewer-sa-key
 SA_KEY_PATH ?= conf/local/service-account.json
 # TODO: Update once we have the new secret created using terraform
-OAUTH_CLIENT_SECRET_SECRET_NAME ?= af_oauth_client_secret
+OAUTH_CLIENT_SECRET_SECRET_NAME ?= oauth_client_secret
 OAUTH_CLIENT_SECRET_PATH ?= conf/local/oauth_client_secret.txt
 
 # ensures all make targets run in one shell (rather than line by line in new shell)
