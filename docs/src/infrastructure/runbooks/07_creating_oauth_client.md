@@ -4,7 +4,7 @@ title: Creating an OAuth Client
 
 ## Overview
 
-This runbook describes the process of creating an OAuth client for the Matrix project.
+This runbook describes the process of creating an OAuth client for the Matrix project. This client is used to give users access to MLFlow when using `kedro experiment`.
 
 OAuth client creation must be done manually through the Google Cloud Console. This limitation exists because:
 
