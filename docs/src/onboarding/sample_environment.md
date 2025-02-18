@@ -38,7 +38,7 @@ You can update sample data by running the `create_sample` pipeline locally. This
 Make sure to use your own service account key file to get write access to the GCS bucket.
 
 !!! warning
-    There is only one version of the sample data per release in GCS. Updating it means deleting the previous release'ssample.
+    There is only one version of the sample data per release in GCS. Updating it means deleting the previous release's sample.
 
 ```bash
 kedro submit -e sample -p create_sample --username {your-username} --release-version {your-release-version}
