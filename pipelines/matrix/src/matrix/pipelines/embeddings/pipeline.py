@@ -87,6 +87,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                     cpu_limit=48,
                     memory_limit=192,
                     memory_request=120,
+                    ephemeral_storage_request=256,
+                    ephemeral_storage_limit=256,
                 ),
             ),
             ArgoNode(
