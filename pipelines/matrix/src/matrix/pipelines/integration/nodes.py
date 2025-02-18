@@ -306,7 +306,6 @@ def add_gt_category(
     Returns:
         DataFrame with updated categories if needed.
     """
-
     known_sources = []
     known_targets = []
     for known_pair in gt_pairs:
