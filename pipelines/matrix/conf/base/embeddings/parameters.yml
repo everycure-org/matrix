@@ -118,7 +118,7 @@ caching.preprocessor:
     new_col: &pkey mykey
 caching.resolver:
     _object: matrix.pipelines.embeddings.encoders.embed_with_openai_async
-    init_workers: 10
+    init_workers: 200
     docs_per_async_task: 1000
     model: &api text-embedding-3-small
     request_timeout: 10
