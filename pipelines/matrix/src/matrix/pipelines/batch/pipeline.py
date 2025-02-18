@@ -265,8 +265,6 @@ def cached_api_enrichment_pipeline(
             inputs=common_inputs,
             outputs=cache_misses,
             argo_config=ArgoResourceConfig(
-                ephemeral_storage_request=0,
-                ephemeral_storage_limit=10,
                 memory_limit=8,
                 memory_request=4,
                 cpu_request=2,
@@ -279,9 +277,6 @@ def cached_api_enrichment_pipeline(
             inputs={"df": cache_misses, "resolver": cache_miss_resolver, "api": api, "partitions": partitions},
             outputs=cache_out,
             argo_config=ArgoResourceConfig(
-                ephemeral_storage_request=128,
-                ephemeral_storage_limit=128,
-                memory_limit=128,
                 cpu_request=1,
                 cpu_limit=2,
             ),
