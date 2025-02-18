@@ -75,7 +75,6 @@ def embed_with_openai_async(
             model=model,
         )
     )
-    print(type(res))
     return res
 
 

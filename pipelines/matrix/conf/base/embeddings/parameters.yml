@@ -125,3 +125,4 @@ caching.resolver:
 caching.primary_key: *pkey
 caching.api: *api
 caching.new_col: lookup
+caching.partition_count: 40
