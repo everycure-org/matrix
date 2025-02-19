@@ -81,7 +81,6 @@ def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.D
     return rows
 
 
-# NOTE: This function was partially generated using AI assistance.
 def _create_ec_gt_pairs(positives: pd.DataFrame, negatives: pd.DataFrame):
     """Create ground truth pairs for EC data.
 
@@ -186,7 +185,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=_create_ec_gt_pairs,
                 inputs=[
-                    "ingestion.raw.kgml_xdtd_ground_truth.negatives",
+                    "ingestion.raw.kgml_xdtd_ground_truth.positives",
                     "ingestion.raw.kgml_xdtd_ground_truth.negatives",
                 ],
                 outputs="ingestion.raw.ec_ground_truth",
