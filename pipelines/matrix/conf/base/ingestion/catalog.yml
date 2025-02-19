@@ -65,7 +65,8 @@ ingestion.raw.rtx_kg2.nodes@spark:
     header: true
 
 ingestion.raw.rtx_kg2.edges@pandas:
-  <<: [*_pandas_csv, *_layer_raw]
+  <<: *_layer_raw
+  type: pandas.CSVDataset
   filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/edges_c.tsv
   save_args:
     sep: "\t"
@@ -290,17 +291,19 @@ ingestion.raw.kgml_xdtd_ground_truth.negatives:
 ingestion.raw.kgml_xdtd_ground_truth.edges@pandas:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/gt_pairs_raw.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/gt_pairs_raw.tsv
   save_args:
     sep: "\t"
     header: true
     index: false
   load_args:
     sep: "\t"
+    header: true
+    index: false
 
 ingestion.raw.kgml_xdtd_ground_truth.edges@spark:
   <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.ingestion}/raw/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_raw.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/gt_pairs_raw.tsv
   load_args:
     sep: "\t"
     header: true
@@ -348,6 +351,10 @@ ingestion.raw.ec_ground_truth.nodes@spark:
   <<: [*_layer_raw, *_spark_csv]
   filepath: ${globals:paths.raw}/ground_truth/ec/${globals:data_sources.ec_gt.version}/gt_ids_raw.tsv
   load_args:
+    sep: "\t"
+    header: true
+    index: false
+  save_args:
     sep: "\t"
     header: true
     index: false
