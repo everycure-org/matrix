@@ -3,7 +3,7 @@ import logging
 import os
 import re
 from datetime import datetime
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
 import fsspec
 import mlflow
@@ -75,8 +75,19 @@ class MLFlowHooks:
         path = self._kedro_context.catalog.datasets[dataset_name]._url
         """
         if dataset_name in MLFlowHooks._input_datasets:
-            dataset = mlflow.data.from_pandas(pd.DataFrame(), name=dataset_name)
-            mlflow.log_input(dataset)
+            if dataset_name not in self.fetch_logged_datasets():
+                dataset = mlflow.data.from_pandas(pd.DataFrame(), name=dataset_name)
+                mlflow.log_input(dataset)
+            else:
+                logger.info(f"Dataset {dataset_name} has already been logged as input.")
+
+    @staticmethod
+    def fetch_logged_datasets() -> List[str]:
+        run_id = MLFlowHooks._kedro_context.mlflow.tracking.run.id
+        client = mlflow.tracking.MlflowClient()
+        logged_inputs = client.get_run(run_id).inputs
+        logged_names = [dataset.dataset.name for dataset in logged_inputs.dataset_inputs]
+        return logged_names
 
     @hook_impl
     def after_context_created(self, context) -> None:
