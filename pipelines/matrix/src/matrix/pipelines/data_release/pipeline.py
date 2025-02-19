@@ -36,13 +36,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="data_release.prm.bigquery_nodes",
                 name="release_nodes_to_bigquery",
             ),
-            # release to neo4j
-            ArgoNode(
-                func=lambda x: x,
-                inputs=["embeddings.feat.nodes"],
-                outputs="data_release.feat.nodes_with_embeddings",
-                name="ingest_nodes_with_embeddings",
-            ),
             ArgoNode(
                 func=ingest_nodes,
                 inputs=["integration.prm.filtered_nodes"],
@@ -72,6 +65,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["kgx"],
             ),
             last_node,
+            # NOTE: Enable when the embeddings pipeline worked piror to this pipeline
+            # # release to neo4j
+            # ArgoNode(
+            #     func=lambda x: x,
+            #     inputs=["embeddings.feat.nodes"],
+            #     outputs="data_release.feat.nodes_with_embeddings",
+            #     name="ingest_nodes_with_embeddings",
+            # ),
             # NOTE: Enable if you want embeddings
             # ArgoNode(
             #     func=lambda _, x: x,
