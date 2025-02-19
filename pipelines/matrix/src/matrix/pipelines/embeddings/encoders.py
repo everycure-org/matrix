@@ -85,7 +85,7 @@ async def call_for_minibatch(
     async with sem:
         logger.warning(f"Started coro on batch_index: {batch_index}, semaphore: {sem._value}")
         for index, attempt in enumerate(
-            Retrying(wait=wait_exponential(multiplier=5, min=2, max=120), stop=stop_after_attempt(5))
+            Retrying(wait=wait_exponential(multiplier=5, min=2, max=60), stop=stop_after_attempt(5))
         ):
             with attempt:
                 tic = time.perf_counter()
