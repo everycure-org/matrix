@@ -562,9 +562,8 @@ def abort_if_unmet_git_requirements(release_version: str) -> None:
 
 def abort_if_intermediate_release(release_version: str) -> None:
     release_version = semver.Version.parse(release_version.lstrip("v"))
-    # releases_list = get_releases()
-    releases_list = get_tags()
-    latest_minor_release = (get_latest_minor_release(releases_list)).lstrip("v").split(".")
+    tags_list = get_tags()
+    latest_minor_release = (get_latest_minor_release(tags_list)).lstrip("v").split(".")
     latest_major = int(latest_minor_release[0])
     latest_minor = int(latest_minor_release[1])
     if ((release_version.major == latest_major and release_version.minor < latest_minor)
