@@ -1,4 +1,3 @@
-# NOTE: This file was partially generated using AI assistance.
 from copy import deepcopy
 from typing import Any, Dict, Union
 
