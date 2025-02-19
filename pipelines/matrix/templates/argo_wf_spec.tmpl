@@ -173,6 +173,9 @@ spec:
               memory: 50Gi
             limits:
               memory: 50Gi
+          env:
+            - name: SPARK_DRIVER_MEMORY
+              value: "{{ spark_driver_memory }}"
         - name: neo4j
           resources:
             requests:
@@ -193,7 +196,7 @@ spec:
               {% endraw %}
               ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_limit}}"
               {% endraw %}
-    container: 
+    container:
       <<: *_kedro_container
       command: ["/bin/sh", "-c"]
       args:
