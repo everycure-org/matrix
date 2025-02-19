@@ -44,12 +44,8 @@ def git_tag_exists(tag: str) -> bool:
     return tag in result
 
 
-def get_releases() -> List[str]:
-    return (
-        (subprocess.check_output(["gh", "release", "list", "--json", "tagName", "--jq", ".[].tagName"], text=True))
-        .strip("\n")
-        .split("\n")
-    )
+def get_tags() -> List[str]:
+    return (subprocess.check_output(["git", "tag"], text=True)).strip("\n").split("\n")
 
 
 def get_latest_minor_release(releases_list: List[str]) -> str:
@@ -66,6 +62,6 @@ def get_latest_minor_release(releases_list: List[str]) -> str:
 
 def correct_non_semver_compliant_release_names(releases_list: List[str]) -> dict[str, str]:
     """Map versions that aren't semver compliant to compliant ones."""
-    mapper = {"v0.1": "v0.1.0", "v0.2": "v0.2.0"}
+    mapper = {"debug-dont-release": "v0.0.0", "v0.1": "v0.1.0", "v0.2": "v0.2.0"}
     original_to_mapped = {mapper.get(release, release): release for release in releases_list}
     return original_to_mapped
