@@ -250,6 +250,10 @@ def calculate_rank_commonality(ranking_output: dict, commonality_output: dict) -
     Returns:
         rank commonality output
     """
+    # clean names from fold x, y
+    commonality_output = {k.split("stability_overlap_")[1]: v for k, v in commonality_output.items()}
+    ranking_output = {k.split("stability_ranking_")[1]: v for k, v in ranking_output.items()}
+    # calculate
     rank_commonality_output = {}
     ranking_output = {k: v for k, v in ranking_output.items() if ("spearman" in k)}
     n_ranking_values = [int(n.split("_")[-2]) for n in ranking_output.keys() if "p_value" not in n]
