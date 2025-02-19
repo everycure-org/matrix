@@ -12,7 +12,7 @@ integration:
     ec_medical_team:
       transformer:
         _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
-    ec_clinical_trails:
+    ec_clinical_trials_ground_truth:
       transformer:
         _object: matrix.pipelines.integration.transformers.clinical_trails.ClinicalTrialsTransformer
         select_cols: false

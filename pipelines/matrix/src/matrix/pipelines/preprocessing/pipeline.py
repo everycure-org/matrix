@@ -25,8 +25,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.clean_clinical_trial_data,
                 inputs={"df": "preprocessing.int.mapped_clinical_trials_data"},
                 outputs={
-                    "nodes": "ingestion.raw.ec_clinical_trails.nodes@pandas",
-                    "edges": "ingestion.raw.ec_clinical_trails.edges@pandas",
+                    "nodes": "ingestion.raw.ec_clinical_trials_ground_truth.nodes@pandas",
+                    "edges": "ingestion.raw.ec_clinical_trials_ground_truth.edges@pandas",
                 },
                 name="clean_clinical_trial_data",
                 tags=["ec-clinical-trials-data"],
