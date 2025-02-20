@@ -130,49 +130,32 @@ class LangChainEncoder(AttributeEncoder):
 
     def __init__(
         self,
+        encoder: OpenAIEmbeddings,
         dimensions: int,
         random_seed: Optional[int] = None,
-        batch_size: int = 500,
-        timeout: int = 10,
-        openai_model: str = "text-embedding-3-small",
-        openai_api_base: Optional[str] = None,
     ):
         """Initialize OpenAI encoder.
 
         Args:
-            dimensions: Output dimension of the output embeddings
+            encoder: Name of the embedding model
+            output_dim: Dimension of the output embeddings
             random_seed: Random seed for reproducibility
-            batch_size: Batch size for efficient encoding
             timeout: Timeout for OpenAI API requests
-            openai_model: name of the model to use
-            openai_api_base: endpoint for the openai model
         """
         super().__init__(dimensions, random_seed)
-        self.batch_size = batch_size
-        self.timeout = timeout
-        self.openai_model = openai_model
-        self.openai_base = openai_api_base
+        self._client = encoder
 
-    def apply(self, texts: Iterable[str]) -> Iterator[tuple[str, list[float]]]:
-        """Encode texts using OpenAI embeddings.
+    @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(5))
+    async def apply(self, documents: Sequence[str]) -> list[list[float]]:
+        """Encode text from dataframe using OpenAI embeddings.
 
         Args:
-            texts: strings for which the embedding must be computed
+            documents: sequence of strings for which you want their embeddings
 
         Returns:
-            tuples of the text and its embedding, for each text
-
+            a list of embeddings, where each embedding is a list of floats
         """
-        encoder = OpenAIEmbeddings(
-            model=self.openai_model, request_timeout=self.timeout, openai_api_base=self.openai_base
-        )
-        for batch in self.batched(texts, self.batch_size):
-            embeddings = self._encode(list(batch), encoder)
-            yield from zip(batch, embeddings)
-
-    @retry(wait=wait_exponential(multiplier=10, min=2, max=180), stop=stop_after_attempt(5))
-    def _encode(self, texts: list[str], encoder: OpenAIEmbeddings):
-        return encoder.embed_documents(texts=texts)
+        return await self._client.aembed_documents(list(documents))
 
 
 class RandomizedEncoder(AttributeEncoder):
@@ -293,3 +276,11 @@ def lang_chain_encoder(
     for batch in batched(texts, batch_size):
         embeddings = _encode(list(batch), encoder)
         yield from zip(batch, embeddings)
+
+
+class DummyResolver(AttributeEncoder):
+    def __init__(self, **kwargs):
+        super().__init__(0, 0)
+
+    async def apply(self, documents: Sequence[str]) -> list[list[float]]:
+        return [[1.0, 2.0]] * len(documents)

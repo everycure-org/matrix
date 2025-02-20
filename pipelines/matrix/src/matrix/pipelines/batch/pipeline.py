@@ -1,14 +1,14 @@
-import logging
+import hashlib
 import warnings
-from typing import Any, Callable, Collection, Dict, Iterable, Iterator, List, Optional, Sequence, TypeVar
+from typing import Any, Callable, Dict, Optional, Sequence, TypeVar
 
 import pandas as pd
 from kedro.pipeline import Pipeline, node, pipeline
 from matrix.inject import inject_object
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
+from matrix.pipelines.embeddings.encoders import AttributeEncoder, batched
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
-from pyspark.sql.types import ArrayType, FloatType
 from pyspark.sql.window import Window
 
 T = TypeVar("T")
@@ -35,7 +35,7 @@ def _transform(dfs: Dict[str, Any], transformer, **transformer_kwargs):
     return shards
 
 
-def _bucketize(df: DataFrame, bucket_size: int, columns: Optional[List[str]] = None) -> pd.DataFrame:
+def _bucketize(df: DataFrame, bucket_size: int, columns: Optional[list[str]] = None) -> pd.DataFrame:
     """Function to bucketize df in given number of buckets.
 
     Args:
@@ -74,7 +74,7 @@ def create_pipeline(
     output: str,
     bucket_size: str,
     transformer: str,
-    columns: List[str] = None,
+    columns: list[str] = None,
     max_workers: int = 10,
     **transformer_kwargs,
 ) -> Pipeline:
@@ -134,21 +134,36 @@ def derive_cache_misses(
         .select(F.col(primary_key).alias(CACHE_COLUMNS[0]))
         .join(cache, on=CACHE_COLUMNS[0], how="leftanti")
         .distinct()
+        .limit(60_000)
     )
 
 
 @inject_object()
 def cache_miss_resolver_wrapper(
-    df: DataFrame, resolver: Callable[[Iterable[T]], Iterator[tuple[T, V]]], api: str, partitions: int
-) -> DataFrame:
+    df: DataFrame, transformer: AttributeEncoder, api: str, batch_size: int
+) -> Dict[str, Callable[[], DataFrame]]:
     assert (
         df.columns == CACHE_COLUMNS[:1]
     ), f"The cache misses should consist of just one column named '{CACHE_COLUMNS[0]}'"
-    ret = df.repartition(partitions).rdd.mapPartitions(resolver)
-    # The order of columns must match the initial cache. One could enforce it, by having the initial cache (or its schema) as an input, but that would be inefficient.
-    return ret.toDF(schema=df.schema.add(CACHE_COLUMNS[1], data_type=ArrayType(FloatType()))).withColumn(
-        CACHE_COLUMNS[2], F.lit(api)
-    )
+    documents = (_[0] for _ in df.toLocalIterator(prefetchPartitions=True))
+    batches = batched(
+        documents, batch_size
+    )  # add batch_size as param to this kedro node function  (a good batch size would be about 50k, according to my calculations)
+
+    async def async_delegator(batch):
+        return pd.DataFrame(
+            {CACHE_COLUMNS[0]: batch, CACHE_COLUMNS[1]: await transformer.apply(batch), CACHE_COLUMNS[2]: api}
+        )  # It's important that the transform does not get executed, so it must be kept part of the lambda!
+
+    def prep(batches, api: str):  # add api as param to this kedro node function
+        for batch in batches:
+            head = batch[0]
+            key = hashlib.sha256(
+                (head + api).encode("utf-8")
+            ).hexdigest()  # the produced partition files must be unique wrt the api
+            yield key, lambda: async_delegator(batch)
+
+    return {k: v for k, v in prep(batches, api)}
 
 
 @inject_object()
@@ -159,6 +174,7 @@ def lookup_from_cache(
     primary_key: str,
     preprocessor: Callable[[DataFrame], DataFrame],
     new_col: str,
+    lineage_dummy: Any,
 ) -> DataFrame:
     cache = (
         limit_cache_to_results_from_api(cache, api=api)
@@ -202,7 +218,7 @@ def cached_api_enrichment_pipeline(
     preprocessor: str,  # Callable[[DataFrame], DataFrame],
     output: str,
     new_col: str,
-    partitions: str,
+    batch_size: str,
 ) -> Pipeline:
     """Pipeline to enrich a dataframe using optionally cached API calls.
 
@@ -252,9 +268,10 @@ def cached_api_enrichment_pipeline(
     new_col: name of the column in which the values associated with the
     primary_key should appear.
 
-    partitions: the number of partitions in which the dataset is split internally.
-    A higher number will decrease the memory footprint, also decreasing the number
-    of elements sent to the API in parallel.
+    batch_size: the size of a batch that will be sent to the embedder. Keep in
+    mind that concurrent requests may be running, which means the API might be
+    getting more batches in parallel, which in turn can  have an affect
+    (positive or negative, it depends on the API) on the performance.
     """
 
     common_inputs = {"df": input, "cache": cache, "api": api, "primary_key": primary_key, "preprocessor": preprocessor}
@@ -274,7 +291,7 @@ def cached_api_enrichment_pipeline(
         ArgoNode(
             name="resolve_cache_misses",
             func=cache_miss_resolver_wrapper,
-            inputs={"df": cache_misses, "resolver": cache_miss_resolver, "api": api, "partitions": partitions},
+            inputs={"df": cache_misses, "transformer": cache_miss_resolver, "api": api, "batch_size": batch_size},
             outputs=cache_out,
             argo_config=ArgoResourceConfig(
                 cpu_request=1,
@@ -287,20 +304,12 @@ def cached_api_enrichment_pipeline(
             # By supplying the output of the previous node, which shares the same path as the starting
             # cache, as an input, Kedro reloads the dataset, noticing now that it had more data.
             # Note that replacing the `cache_out` by `cache`, it is NOT reloaded, as `cache` is an input.
-            inputs=common_inputs | {"cache": cache_out, "new_col": new_col},
+            inputs=common_inputs | {"cache": cache, "new_col": new_col, "lineage_dummy": cache_out},
             outputs=output,
         ),
     ]
 
     return pipeline(nodes)
-
-
-def dummy_resolver(
-    sequence: Collection[T], api, init_workers: None, docs_per_async_task: None, model: None, request_timeout: None
-) -> Iterator[tuple[T, V]]:
-    seq = tuple(sequence)
-    logging.debug(f"resolving, {seq}, using {api}")
-    yield from zip((_[0] for _ in seq), [[1.0, 2.0]] * len(seq))
 
 
 def pass_through(x):

@@ -145,9 +145,9 @@ caching.input:
     filepath: data/01_raw/cache_input
 
 # cache:
-cache.read: &dataset_cache
+cache.read:
   type: matrix.datasets.gcp.SparkWithSchemaDataset
-  filepath: ${globals:paths.cache}/embeddings_cache2
+  filepath: &cache_location ${globals:paths.cache}/embeddings_cache3
   provide_empty_if_not_present: true
   load_args:
     schema:
@@ -163,7 +163,7 @@ cache.read: &dataset_cache
           dataType:
             _object: pyspark.sql.types.ArrayType
             elementType:
-              _object: pyspark.sql.types.FloatType
+              _object: pyspark.sql.types.DoubleType
           nullable: False
         - _object: pyspark.sql.types.StructField
           name: api
@@ -171,19 +171,18 @@ cache.read: &dataset_cache
             _object: pyspark.sql.types.StringType
           nullable: False
 cache.write:
-  <<: *dataset_cache
-  save_args:
-    mode: append
-    partitionBy:
-    - api
+    type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
+    path: *cache_location
+    dataset: kedro_datasets.pandas.ParquetDataset
+    filename_suffix: ".parquet"
 cache.misses:
     type: matrix.datasets.gcp.LazySparkDataset
-    filepath: ${globals:paths.cache}/cache_misses2
+    filepath: ${globals:paths.cache}/cache_misses3
     save_args:
       mode: overwrite
 
 fully_enriched:
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.cache}/embeddings_cache2data_out
+  filepath: ${globals:paths.cache}/embeddings_cache3data_out
   save_args:
     mode: overwrite
