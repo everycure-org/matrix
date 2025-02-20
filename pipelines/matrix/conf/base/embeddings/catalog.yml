@@ -102,7 +102,7 @@ embeddings.reporting.topological_pca_plot:
 
 
 # cache:
-cache.read:
+cache.read: &cache_in
   type: matrix.datasets.gcp.SparkWithSchemaDataset
   filepath: &cache_location ${globals:paths.cache}/embeddings_cache3
   provide_empty_if_not_present: true
@@ -132,6 +132,8 @@ cache.write:
     path: *cache_location
     dataset: kedro_datasets.pandas.ParquetDataset
     filename_suffix: ".parquet"
+cache.reload:  # an easy way to force Kedro to reload a dataset that has been altered in a previous node, but which is not using the same reference (e.g. due to transcription)
+  <<: *cache_in
 cache.misses:
     type: matrix.datasets.gcp.LazySparkDataset
     filepath: ${globals:paths.cache}/cache_misses3
