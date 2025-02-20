@@ -175,7 +175,7 @@ spec:
               memory: 50Gi
           env:
             - name: SPARK_DRIVER_MEMORY
-              value: "{{ spark_driver_memory }}"
+              value: "{{ inputs.parameters.spark_driver_memory }}"
         - name: neo4j
           resources:
             requests:

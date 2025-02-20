@@ -39,6 +39,7 @@ class ArgoResourceConfig(BaseModel):
     memory_limit: int = KUBERNETES_DEFAULT_LIMIT_RAM
     ephemeral_storage_request: int = 0
     ephemeral_storage_limit: int = 128
+    spark_driver_memory: int = _
 
     model_config = {"validate_assignment": True, "extra": "forbid"}
 
