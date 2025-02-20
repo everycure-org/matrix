@@ -252,15 +252,17 @@ class SparkHooks:
         """Initialize Spark if the dataset is a SparkDataset."""
         self._check_and_initialize_spark(dataset_name)
 
-    # @hook_impl
-    # def after_dataset_loaded(self):
-    #     """Print the current Spark configuration before each node runs."""
-    #     if self._spark_session is not None:
-    #         logger.info("Current Spark Configuration:")
-    #         for key, value in sorted(self._spark_session.sparkContext.getConf().getAll()):
-    #             logger.info(f"{key} = {value}")
-    #     else:
-    #         logger.warning("SparkSession is not initialized yet.")
+    @hook_impl
+    def after_dataset_loaded(self):
+        """Print the current Spark configuration after each dataset is loaded.
+        Must be done after dataset is loaded, because we initialise spark only
+        for Spark dataset types."""
+        if self._spark_session is not None:
+            logger.info("Current Spark Configuration:")
+            for key, value in sorted(self._spark_session.sparkContext.getConf().getAll()):
+                logger.info(f"{key} = {value}")
+        else:
+            logger.warning("SparkSession is not initialized.")
 
 
 class NodeTimerHooks:
