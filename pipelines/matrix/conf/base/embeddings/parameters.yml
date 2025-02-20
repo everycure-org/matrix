@@ -112,7 +112,7 @@ embeddings.topological_pca:
     k: 2
 
 caching.preprocessor:
-    _object: matrix.pipelines.batch.pipeline.embeddings_preprocessor
+    _object: matrix.pipelines.embeddings.nodes.embeddings_preprocessor
     key_length: 100
     combine_cols: ["name", "category"]
     new_col: &pkey mykey

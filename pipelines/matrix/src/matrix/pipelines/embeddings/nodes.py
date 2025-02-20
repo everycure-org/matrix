@@ -11,7 +11,8 @@ from google.cloud import storage
 from graphdatascience import GraphDataScience
 from langchain_openai import OpenAIEmbeddings
 from pyspark.ml.functions import array_to_vector, vector_to_array
-from pyspark.sql import Row, SparkSession
+from pyspark.sql import DataFrame, Row, SparkSession
+from pyspark.sql import functions as F
 from pyspark.sql.functions import concat_ws, lit
 from pyspark.sql.types import ArrayType, FloatType, StringType, StructField
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -518,3 +519,11 @@ def lookup_missing_embeddings(
     rdd_result = df.rdd.mapPartitions(embed_docs(pkey=pkey))
     new_schema = df.schema.add(StructField(new_colname, ArrayType(FloatType()), nullable=True))
     return rdd_result.toDF(schema=new_schema)
+
+
+def pass_through(x):
+    return x
+
+
+def embeddings_preprocessor(df: DataFrame, key_length: int, combine_cols: Sequence[str], new_col: str) -> DataFrame:
+    return df.withColumn(new_col, F.concat_ws("", *combine_cols).substr(startPos=1, length=key_length))

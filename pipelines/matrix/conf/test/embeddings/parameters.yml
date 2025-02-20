@@ -18,7 +18,7 @@ embeddings.topological:
 
 
 caching.preprocessor:
-  _object: matrix.pipelines.batch.pipeline.embeddings_preprocessor
+  _object: matrix.pipelines.embeddings.nodes.embeddings_preprocessor
   new_col: &pkey mykey
 caching.resolver:
   _object: matrix.pipelines.embeddings.encoders.DummyResolver
