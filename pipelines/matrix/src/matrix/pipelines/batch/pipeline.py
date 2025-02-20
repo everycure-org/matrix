@@ -19,7 +19,6 @@ CACHE_COLUMNS = ["key", "value", "api"]
 
 
 def create_node_embeddings_pipeline() -> Pipeline:
-    # A demo for now
     return cached_api_enrichment_pipeline(
         input="integration.prm.filtered_nodes",
         output="fully_enriched",
@@ -28,8 +27,6 @@ def create_node_embeddings_pipeline() -> Pipeline:
         api="params:caching.api",
         new_col="params:caching.new_col",
         cache="cache.read",
-        cache_out="cache.write",
-        cache_misses="cache.misses",
         primary_key="params:caching.primary_key",
         batch_size="params:caching.batch_size",
     )
@@ -38,8 +35,6 @@ def create_node_embeddings_pipeline() -> Pipeline:
 def cached_api_enrichment_pipeline(
     input: str,
     cache: str,
-    cache_out: str,
-    cache_misses: str,
     primary_key: str,
     cache_miss_resolver: str,  # Callable[[str], Callable[[Iterable[T]], Iterator[V]]]
     api: str,
@@ -47,6 +42,7 @@ def cached_api_enrichment_pipeline(
     output: str,
     new_col: str,
     batch_size: str,
+    cache_misses: str = "cache.misses",
 ) -> Pipeline:
     """Pipeline to enrich a dataframe using optionally cached API calls.
 
@@ -69,10 +65,6 @@ def cached_api_enrichment_pipeline(
     resulting from calling the `preprocessor` on the `input`. Aside from the
     key and value column, it also has a third column, named api, linking the
     keys to the API used at the time of the lookup.
-
-    cache_out: same Kedro reference as cache, but allows circumventing circular
-    references in Kedro. Its catalog entry should have the append-mode in its
-    save_args.
 
     cache_misses: a Kedro reference to a SparkDataset that is used for temporary results.
 
@@ -102,6 +94,7 @@ def cached_api_enrichment_pipeline(
     (positive or negative, it depends on the API) on the performance.
     """
 
+    cache_out = "params:cache.write"
     common_inputs = {"df": input, "cache": cache, "api": api, "primary_key": primary_key, "preprocessor": preprocessor}
     nodes = [
         ArgoNode(
@@ -132,7 +125,7 @@ def cached_api_enrichment_pipeline(
             # By supplying the output of the previous node, which shares the same path as the starting
             # cache, as an input, Kedro reloads the dataset, noticing now that it had more data.
             # Note that replacing the `cache_out` by `cache`, it is NOT reloaded, as `cache` is an input.
-            inputs=common_inputs | {"cache": cache, "new_col": new_col, "lineage_dummy": cache_out},
+            inputs=common_inputs | {"cache": "params:cache.reload", "new_col": new_col, "lineage_dummy": cache_out},
             outputs=output,
         ),
     ]
