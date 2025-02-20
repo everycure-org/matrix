@@ -101,7 +101,7 @@ class SparkWithSchemaDataset(SparkDataset):
         """Creates a new instance of ``SparkWithSchemaDataset``."""
         self._load_args = deepcopy(load_args) or {}
         self._df_schema = self._load_args.pop("schema")
-        self._boostrappable = provide_empty_if_not_present
+        self._provide_empty_if_not_present = provide_empty_if_not_present
 
         super().__init__(
             filepath=filepath,
@@ -123,7 +123,7 @@ class SparkWithSchemaDataset(SparkDataset):
         try:
             frame = reader.schema(schema).load(load_path, self._file_format, **self._load_args)
         except AnalysisException as e:
-            if self._boostrappable and ("PATH_NOT_FOUND" in e.desc):
+            if self._provide_empty_if_not_present and ("PATH_NOT_FOUND" in e.desc):
                 logger.warning(
                     """{"warning": "Dataset not found at '%s'.",  "Resolution": "providing empty dataset with identical schema."}""",
                     load_path,
