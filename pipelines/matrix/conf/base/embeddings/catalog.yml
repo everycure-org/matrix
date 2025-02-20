@@ -100,49 +100,6 @@ embeddings.reporting.topological_pca_plot:
   type: kedro_datasets.matplotlib.MatplotlibWriter
   filepath: ${globals:paths.embeddings}/reporting/pca_plot.png
 
-embeddings.feat.cache: &_cache
-  filepath: ${globals:paths.cache}/embeddings_cache
-  type: matrix.datasets.gcp.SparkWithSchemaDataset
-  file_format: parquet
-  provide_empty_if_not_present: true
-  load_args:
-    schema:
-      _object: pyspark.sql.types.StructType
-      fields:
-        - _object: pyspark.sql.types.StructField
-          name: model
-          dataType: 
-            _object: pyspark.sql.types.StringType
-          nullable: False
-        - _object: pyspark.sql.types.StructField
-          name: scope
-          dataType: 
-            _object: pyspark.sql.types.StringType
-          nullable: False
-        - _object: pyspark.sql.types.StructField
-          name: text
-          dataType: 
-            _object: pyspark.sql.types.StringType
-          nullable: False
-        - _object: pyspark.sql.types.StructField
-          name: embedding
-          dataType: 
-            _object: pyspark.sql.types.ArrayType
-            elementType: 
-              _object: pyspark.sql.types.FloatType
-          nullable: False
-  save_args:
-    mode: overwrite
-    partitionBy:
-      - model
-      - scope
-
-embeddings.feat.cache_out:
-  <<: *_cache
-
-caching.input:
-    type: matrix.datasets.gcp.LazySparkDataset
-    filepath: data/01_raw/cache_input
 
 # cache:
 cache.read:
