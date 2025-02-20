@@ -3,7 +3,7 @@ import secrets
 from typing import List, Optional
 
 import mlflow
-from mlflow.entities import Experiment, ViewType
+from mlflow.entities import Run, ViewType
 from mlflow.tracking import MlflowClient
 from rich.console import Console
 
@@ -96,11 +96,11 @@ def rename_soft_deleted_experiment(experiment_name: str) -> str:
         raise e
 
 
-def copy_run(run_id: str, new_experiment_id: int):
+def copy_run(original_run: Run, new_experiment_id: int):
+    run_id = original_run.info.run_id
     console.print(f"Copying run {run_id} to experiment {new_experiment_id}")
     client = mlflow.tracking.MlflowClient()
 
-    original_run = client.get_run(run_id)
     new_run = client.create_run(
         experiment_id=new_experiment_id,
         tags=original_run.data.tags,
@@ -110,14 +110,14 @@ def copy_run(run_id: str, new_experiment_id: int):
     # Update run status to match original
     client.update_run(new_run.info.run_id, status=original_run.info.status)
     #   Copy metrics and params
-    console.print("Updating metrics")
     for metric in original_run.data.metrics.items():
         client.log_metric(new_run.info.run_id, metric[0], metric[1])
-    console.print("Updating params")
     for param in original_run.data.params.items():
         client.log_param(new_run.info.run_id, param[0], param[1])
 
-    console.print(f"Run {run_id} copied to experiment {new_experiment_id}")
+    console.print(
+        f"Run {original_run.info.run_name} ({original_run.info.run_id}) copied to experiment {new_experiment_id}"
+    )
 
 
 def delete_run(client: MlflowClient, run_id: str):
@@ -164,13 +164,9 @@ def archive_runs_and_experiments(dry_run: bool = True):
                     f"Dry run. Would archive run {run.info.run_name} ({run.info.run_id}) to experiment {ARCHIVE_EXPERIMENT_ID}"
                 )
             else:
-                copy_run(run_id=run.info.run_id, new_experiment_id=ARCHIVE_EXPERIMENT_ID)
-                console.print(
-                    f"Run {run.info.run_name} ({run.info.run_id}) copied to experiment {ARCHIVE_EXPERIMENT_ID}"
-                )
+                copy_run(run=run, new_experiment_id=ARCHIVE_EXPERIMENT_ID)
                 delete_run(client, run.info.run_id)
                 console.print(f"Original run {run.info.run_name} ({run.info.run_id}) deleted")
-
         try:
             if dry_run:
                 print(f"Dry run. Would delete experiment {experiment.name}")

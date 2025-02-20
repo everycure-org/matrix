@@ -1,10 +1,9 @@
 import os
-from typing import List, Optional
+from typing import List
 
 import click
 import mlflow
 from kedro.framework.cli.utils import split_string
-from mlflow.entities import ViewType
 
 from matrix.cli_commands.submit import submit
 from matrix.git_utils import get_current_git_branch
