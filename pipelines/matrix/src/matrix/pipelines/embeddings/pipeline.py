@@ -1,8 +1,8 @@
 from kedro.pipeline import Pipeline, pipeline
 
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
+from matrix.pipelines.batch import pipeline as batch_pipeline
 
-from ..batch.pipeline import create_node_embeddings_pipeline
 from . import nodes
 
 
@@ -10,7 +10,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create embeddings pipeline."""
     return pipeline(
         [
-            *create_node_embeddings_pipeline().nodes,
+            *batch_pipeline.create_node_embeddings_pipeline().nodes,
             # Reduce dimension
             ArgoNode(
                 func=nodes.reduce_embeddings_dimension,
