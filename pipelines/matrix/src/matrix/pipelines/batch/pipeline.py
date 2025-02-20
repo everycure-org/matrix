@@ -1,12 +1,13 @@
 import hashlib
+import itertools
 import warnings
-from typing import Any, Callable, Dict, Sequence, TypeVar
+from typing import Any, Callable, Dict, Iterable, Iterator, TypeVar
 
 import pandas as pd
 from kedro.pipeline import Pipeline, pipeline
 from matrix.inject import inject_object
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
-from matrix.pipelines.embeddings.encoders import AttributeEncoder, batched
+from matrix.pipelines.embeddings.encoders import AttributeEncoder, T
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 
@@ -164,9 +165,7 @@ def cache_miss_resolver_wrapper(
         df.columns == CACHE_COLUMNS[:1]
     ), f"The cache misses should consist of just one column named '{CACHE_COLUMNS[0]}'"
     documents = (_[0] for _ in df.toLocalIterator(prefetchPartitions=True))
-    batches = batched(
-        documents, batch_size
-    )  # add batch_size as param to this kedro node function  (a good batch size would be about 50k, according to my calculations)
+    batches = batched(documents, batch_size)
 
     async def async_delegator(batch):
         return pd.DataFrame(
@@ -225,9 +224,13 @@ def resolve_cache_duplicates(df: DataFrame, id_col: str) -> DataFrame:
     return df
 
 
-def pass_through(x):
-    return x
-
-
-def embeddings_preprocessor(df: DataFrame, key_length: int, combine_cols: Sequence[str], new_col: str) -> DataFrame:
-    return df.withColumn(new_col, F.concat_ws("", *combine_cols).substr(startPos=1, length=key_length))
+def batched(iterable: Iterable[T], n: int, *, strict: bool = False) -> Iterator[tuple[T]]:
+    # Taken from the recipe at https://docs.python.org/3/library/itertools.html#itertools.batched , which is available by default in 3.12
+    # batched('ABCDEFG', 3) → ABC DEF G
+    if n < 1:
+        raise ValueError("batch size must be at least one")
+    iterator = iter(iterable)
+    while batch := tuple(itertools.islice(iterator, n)):
+        if strict and len(batch) != n:
+            raise ValueError("batched(): incomplete batch")
+        yield batch
