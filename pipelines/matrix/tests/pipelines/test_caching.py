@@ -14,7 +14,7 @@ from kedro_datasets.spark import SparkDataset
 from matrix.datasets.gcp import LazySparkDataset, SparkWithSchemaDataset
 from matrix.pipelines.batch.pipeline import (
     cache_miss_resolver_wrapper,
-    cached_api_enrichment_pipeline,
+    # cached_api_enrichment_pipeline,
     derive_cache_misses,
     dummy_resolver,
     limit_cache_to_results_from_api,
