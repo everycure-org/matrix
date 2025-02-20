@@ -17,11 +17,6 @@ def main(*args, **kwargs):
     with open("conf/base/spark.yml") as f:
         parameters = yaml.safe_load(f)
 
-    with open("conf/cloud/spark.yml") as f:
-        parameters_cloud = yaml.safe_load(f)
-
-    parameters.update(parameters_cloud)
-
     spark_conf = SparkConf().setAll(parameters.items())
 
     # Initialise the spark session
