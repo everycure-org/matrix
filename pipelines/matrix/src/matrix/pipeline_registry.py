@@ -2,9 +2,9 @@ from typing import Dict
 
 from kedro.pipeline import Pipeline
 
+from matrix.pipelines.batch.pipeline import create_node_embeddings_pipeline
 from matrix.pipelines.create_sample.pipeline import create_pipeline as create_create_sample_pipeline
 from matrix.pipelines.data_release.pipeline import create_pipeline as create_data_release_pipeline
-from matrix.pipelines.embeddings.pipeline import create_node_embeddings_pipeline
 from matrix.pipelines.embeddings.pipeline import create_pipeline as create_embeddings_pipeline
 from matrix.pipelines.evaluation.pipeline import create_pipeline as create_evaluation_pipeline
 from matrix.pipelines.fabricator.pipeline import create_pipeline as create_fabricator_pipeline
