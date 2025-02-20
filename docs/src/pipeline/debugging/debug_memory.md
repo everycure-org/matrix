@@ -57,3 +57,9 @@ It's therefore important to leave a buffer between the memory configured for Spa
             limits:
               memory: 50Gi
 ```
+
+## Follow-ups
+
+1. Ensure Spark Memory can be configured using environment variable
+2. Deep dive into Neo4J Spark connector to learn why so much memory is used
+3. (After few runs) investigate memory profile and right size the nodes
