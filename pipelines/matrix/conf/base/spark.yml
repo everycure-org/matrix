@@ -1,6 +1,6 @@
 spark.sql.execution.arrow.pyspark.enabled: true
 spark.scheduler.mode: FAIR
-spark.driver.memory: ${oc.env:SPARK_DRIVER_MEMORY, 50g}
+spark.driver.memory: ${oc.env:SPARK_DRIVER_MEMORY, 50}g
 # only using this due to 
 # https://github.com/fsspec/gcsfs/issues/632
 spark.driver.maxResultSize: 12g
