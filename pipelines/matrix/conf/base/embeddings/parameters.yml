@@ -117,12 +117,17 @@ caching.preprocessor:
     combine_cols: ["name", "category"]
     new_col: &pkey mykey
 caching.resolver:
-    _object: matrix.pipelines.embeddings.encoders.embed_with_openai_async
-    init_workers: 200
-    docs_per_async_task: 1000
+  _object: matrix.pipelines.embeddings.encoders.LangChainEncoder
+  dimensions: 512
+  encoder:
+    _object: langchain_openai.OpenAIEmbeddings
     model: &api text-embedding-3-small
-    request_timeout: 10
+    timeout: 10
+#    init_workers: 200
+#    docs_per_async_task: 1000
+#    model: &api text-embedding-3-small
+#    request_timeout: 10
 caching.primary_key: *pkey
 caching.api: *api
 caching.new_col: lookup
-caching.partition_count: 40
+caching.batch_size: 50000

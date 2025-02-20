@@ -21,10 +21,10 @@ caching.preprocessor:
   _object: matrix.pipelines.batch.pipeline.embeddings_preprocessor
   new_col: &pkey mykey
 caching.resolver:
-  _object: matrix.pipelines.batch.pipeline.dummy_resolver
-  api: &api myapi
+  _object: matrix.pipelines.embeddings.encoders.DummyResolver
+
 caching.primary_key: *pkey
-caching.api: *api
+caching.api: "foo"
 caching.new_col: lookup
 
 embeddings.topological_estimator:

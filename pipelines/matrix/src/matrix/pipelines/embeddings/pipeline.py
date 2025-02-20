@@ -188,5 +188,5 @@ def create_node_embeddings_pipeline() -> Pipeline:
         cache_out="cache.write",
         cache_misses="cache.misses",
         primary_key="params:caching.primary_key",
-        partitions="params:caching.partition_count",
+        batch_size="params:caching.batch_size",
     )

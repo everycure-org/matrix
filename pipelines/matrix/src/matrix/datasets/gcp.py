@@ -472,7 +472,6 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
         load_args: dict[str, Any] | None = None,
         fs_args: dict[str, Any] | None = None,
         overwrite: bool = False,
-        metadata: dict[str, Any] | None = None,
     ) -> None:
         self._max_workers = int(max_workers)
 
@@ -521,7 +520,6 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             sem = asyncio.Semaphore(self._max_workers)
-
             tasks = [
                 loop.create_task(process_partition(sem, partition_id, partition_data))
                 for partition_id, partition_data in sorted(data.items())
