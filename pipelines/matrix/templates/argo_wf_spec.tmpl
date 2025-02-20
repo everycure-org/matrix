@@ -75,6 +75,7 @@ spec:
       - name: cpu_request
       - name: ephemeral_storage_request
       - name: ephemeral_storage_limit
+      - name: spark_driver_memory
     podSpecPatch: |
       containers:
         - name: main
@@ -175,7 +176,8 @@ spec:
               memory: 50Gi
           env:
             - name: SPARK_DRIVER_MEMORY
-              value: "{{ inputs.parameters.spark_driver_memory }}"
+              value: {% raw %} "{{ inputs.parameters.spark_driver_memory }}"
+              {% endraw %}
         - name: neo4j
           resources:
             requests:
@@ -288,5 +290,6 @@ spec:
             value: {{ task.resources.ephemeral_storage_request }}
           - name: ephemeral_storage_limit
             value: {{ task.resources.ephemeral_storage_limit }}
-
+          - name: spark_driver_memory
+            value: {{ task.resources.spark_driver_memory }}
       {% endfor %}
