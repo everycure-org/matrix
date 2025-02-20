@@ -126,7 +126,7 @@ def cached_api_enrichment_pipeline(
             # By supplying the output of the previous node, which shares the same path as the starting
             # cache, as an input, Kedro reloads the dataset, noticing now that it had more data.
             # Note that replacing the `cache_out` by `cache`, it is NOT reloaded, as `cache` is an input.
-            inputs=common_inputs | {"cache": "params:cache.reload", "new_col": new_col, "lineage_dummy": cache_out},
+            inputs=common_inputs | {"cache": "cache.reload", "new_col": new_col, "lineage_dummy": cache_out},
             outputs=output,
         ),
     ]
