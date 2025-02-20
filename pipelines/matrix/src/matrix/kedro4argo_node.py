@@ -41,6 +41,7 @@ class ArgoResourceConfig(BaseModel):
     ephemeral_storage_request: int = 0
     ephemeral_storage_limit: int = 128
     spark_driver_memory: int = SPARK_DRIVER_MEMORY_DEFAULT
+    neo4j_heap_size: int = 120
 
     model_config = {"validate_assignment": True, "extra": "forbid"}
 
@@ -88,6 +89,7 @@ class ArgoResourceConfig(BaseModel):
         self.ephemeral_storage_request = max(self.ephemeral_storage_request, argo_config.ephemeral_storage_request)
         self.ephemeral_storage_limit = max(self.ephemeral_storage_limit, argo_config.ephemeral_storage_limit)
         self.spark_driver_memory = max(self.spark_driver_memory, argo_config.spark_driver_memory)
+        self.neo4j_heap_size = self.memory_limit - self.spark_driver_memory
 
     def model_dump(self, **kwargs) -> dict:
         """Customize JSON or dict export with Kubernetes-compatible formatting."""
@@ -97,6 +99,7 @@ class ArgoResourceConfig(BaseModel):
         data["ephemeral_storage_request"] = f"{int(self.ephemeral_storage_request)}Gi"
         data["ephemeral_storage_limit"] = f"{int(self.ephemeral_storage_limit)}Gi"
         data["spark_driver_memory"] = f"{int(self.spark_driver_memory)}g"
+        data["neo4j_heap_size"] = f"{int(self.spark_driver_memory)}G"
         return data
 
 
