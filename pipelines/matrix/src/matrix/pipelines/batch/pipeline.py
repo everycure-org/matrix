@@ -95,7 +95,7 @@ def cached_api_enrichment_pipeline(
     (positive or negative, it depends on the API) on the performance.
     """
 
-    cache_out = "params:cache.write"
+    cache_out = "cache.write"
     common_inputs = {"df": input, "cache": cache, "api": api, "primary_key": primary_key, "preprocessor": preprocessor}
     nodes = [
         ArgoNode(
