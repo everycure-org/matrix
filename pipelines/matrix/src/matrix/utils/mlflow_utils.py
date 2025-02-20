@@ -32,13 +32,13 @@ def create_mlflow_experiment(experiment_name: str) -> str:
     If an experiment with the same name exists but is deleted, the user is prompted
     to rename the deleted experiment to allow creation of a new one.
     """
+
     existing_exp = mlflow.get_experiment_by_name(name=experiment_name)
 
     if existing_exp:
         if existing_exp.lifecycle_stage == "deleted":
-            raise DeletedExperimentExistsWithName(
-                f"Error: Experiment '{experiment_name}' exists but is deleted.", existing_exp.experiment_id
-            )
+            console.print(f"Error: Experiment '{experiment_name}' exists but is deleted.", existing_exp.experiment_id)
+            raise DeletedExperimentExistsWithName()
         else:
             raise Exception(
                 f"❌ Error: Experiment '{experiment_name}' already exists at {mlflow.get_tracking_uri()}/#/experiments/{existing_exp.experiment_id}"
