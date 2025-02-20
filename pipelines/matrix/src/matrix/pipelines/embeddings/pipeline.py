@@ -2,7 +2,7 @@ from kedro.pipeline import Pipeline, pipeline
 
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
-from ..batch.pipeline import cached_api_enrichment_pipeline
+from ..batch.pipeline import create_node_embeddings_pipeline
 from . import nodes
 
 
@@ -10,26 +10,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create embeddings pipeline."""
     return pipeline(
         [
-            ArgoNode(
-                func=nodes.create_node_embeddings,
-                inputs={
-                    "df": "integration.prm.filtered_nodes",
-                    "cache": "embeddings.feat.cache",
-                    "transformer": "params:embeddings.node.encoder",
-                    "input_features": "params:embeddings.node.input_features",
-                    "max_input_len": "params:embeddings.node.max_input_len",
-                    "scope": "params:embeddings.node.scope",
-                    "model": "params:embeddings.node.model",
-                    "new_colname": "params:embeddings.node.new_colname",
-                    "embeddings_primary_key": "params:embeddings.node.embeddings_primary_key",
-                },
-                outputs=["embeddings.feat.graph.node_embeddings@spark", "embeddings.feat.cache_out"],
-                name="create_node_embeddings",
-                argo_config=ArgoResourceConfig(
-                    ephemeral_storage_request=128,
-                    ephemeral_storage_limit=128,
-                ),
-            ),
+            *create_node_embeddings_pipeline().nodes,
             # Reduce dimension
             ArgoNode(
                 func=nodes.reduce_embeddings_dimension,
@@ -172,21 +153,4 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
             ),
         ],
-    )
-
-
-def create_node_embeddings_pipeline() -> Pipeline:
-    # A demo for now
-    return cached_api_enrichment_pipeline(
-        input="integration.prm.filtered_nodes",
-        output="fully_enriched",
-        preprocessor="params:caching.preprocessor",
-        cache_miss_resolver="params:caching.resolver",
-        api="params:caching.api",
-        new_col="params:caching.new_col",
-        cache="cache.read",
-        cache_out="cache.write",
-        cache_misses="cache.misses",
-        primary_key="params:caching.primary_key",
-        batch_size="params:caching.batch_size",
     )
