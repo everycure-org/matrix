@@ -41,6 +41,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     memory_request=120,
                     ephemeral_storage_request=256,
                     ephemeral_storage_limit=256,
+                    spark_driver_memory=60,
                 ),
             ),
             ArgoNode(
