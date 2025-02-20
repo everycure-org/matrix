@@ -154,10 +154,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.fuse-group.topological_pca",
                 ],
                 argo_config=ArgoResourceConfig(
-                    cpu_request=14,
-                    cpu_limit=14,
-                    memory_limit=120,
-                    memory_request=100,
+                    cpu_request=48,
+                    cpu_limit=48,
+                    memory_limit=350,
+                    memory_request=350,
                 ),
             ),
             ArgoNode(
