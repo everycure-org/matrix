@@ -39,7 +39,5 @@ loggers:
     level: INFO
   matrix:
     level: INFO
-  matrix.pipelines.embeddings.nodes:
-    level: INFO
   matrix.pipelines.batch.pipeline:
     level: INFO

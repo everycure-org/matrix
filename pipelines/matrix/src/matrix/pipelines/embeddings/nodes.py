@@ -1,29 +1,20 @@
-import asyncio
-import logging
-from typing import Any, Callable, Dict, Iterable, Iterator, List, Sequence, TypeAlias
+from typing import Any, Dict, List, Sequence, TypeAlias
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import pyspark.sql as ps
 import seaborn as sns
-from google.cloud import storage
 from graphdatascience import GraphDataScience
-from langchain_openai import OpenAIEmbeddings
 from pyspark.ml.functions import array_to_vector, vector_to_array
-from pyspark.sql import DataFrame, Row, SparkSession
+from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
-from pyspark.sql.functions import concat_ws, lit
-from pyspark.sql.types import ArrayType, FloatType, StringType, StructField
-from tenacity import retry, stop_after_attempt, wait_exponential
+from pyspark.sql.functions import concat_ws
+from pyspark.sql.types import ArrayType, FloatType, StringType
 
 from matrix.inject import inject_object, unpack_params
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
-from .encoders import AttributeEncoder
 from .graph_algorithms import GDSGraphAlgorithm
-
-logger = logging.getLogger(__name__)
 
 ResolvedEmbedding: TypeAlias = tuple[str, list[float]]
 
@@ -357,168 +348,6 @@ def visualise_pca(nodes: ps.DataFrame, column_name: str) -> plt.Figure:
     plt.tight_layout(rect=[0, 0, 0.85, 1])
 
     return fig
-
-
-@inject_object()
-def create_node_embeddings(
-    df: ps.DataFrame,
-    cache: ps.DataFrame,
-    transformer: AttributeEncoder,
-    input_features: Sequence[str],
-    max_input_len: int,
-    scope: str,
-    model: str,
-    new_colname: str = "embedding",
-    embeddings_primary_key: str = "text",
-) -> tuple[ps.DataFrame, ps.DataFrame]:
-    """
-    Add the embeddings of the text composed of the `input_features`, truncated
-    to a length of `max_input_len`, as the column `embeddings_pkey` to the `df`.
-
-    This function makes use of a cache to prevent time-consuming API calls made
-    in the transformer. As well as the dataframe with embeddings, an updated
-    version of the cache is returned.
-
-    Args:
-        df: Input DataFrame containing nodes to process.
-        cache: DataFrame holding cached embeddings.
-        transformer: function that for each string composed of the concatenation
-          of the `input_features`, limited to a length of `max_input_len`,
-          returns the string itself and its embedding. How the function does
-          this (batch/async/…) is an implementation detail. The function must
-          be serializable though.
-        input_features: sequence of strings representing the columns that will be sent in concatenated form to the transformer's embedding call.
-        max_input_len: Maximum length of the text for which embeddings will be retrieved.
-        scope: string used to filter the cache
-        model: string used to filter the cache
-        new_colname: name of the column that will contain the embeddings
-        embeddings_primary_key: name of the column containing the texts, which should be present in the cache.
-    """
-
-    df = df.withColumn(embeddings_primary_key, concat_ws("", *input_features).substr(1, max_input_len))
-    assert {embeddings_primary_key, new_colname}.issubset(cache.columns)
-    scoped_cache = (
-        cache.cache().filter((cache["scope"] == lit(scope)) & (cache["model"] == lit(model))).drop("scope", "model")
-    )
-
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.debug('{"cache size": %d, "model-scoped cache size": %d}', cache.count(), scoped_cache.cache().count())
-
-    complete, missing_from_cache = lookup_embeddings(
-        df=df,
-        cache=scoped_cache,
-        embedder=transformer.apply,
-        text_colname=embeddings_primary_key,
-        new_colname=new_colname,
-        input_features=input_features,
-    )
-    new_cache = cache.unionByName(missing_from_cache.withColumns({"scope": lit(scope), "model": lit(model)}))
-
-    return complete, new_cache
-
-
-def lookup_embeddings(
-    df: ps.DataFrame,
-    cache: ps.DataFrame,
-    embedder: Callable[[Iterable[str]], Iterator[ResolvedEmbedding]],
-    text_colname: str,
-    new_colname: str,
-    input_features: Sequence[str],
-) -> tuple[ps.DataFrame, ps.DataFrame]:
-    partly_enriched = load_embeddings_from_cache(df=df, cache=cache, primary_key=text_colname).cache()
-
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.debug(
-            '{"partly enriched dataframe size": %d, "original dataframe size": %d}', partly_enriched.count(), df.count()
-        )
-
-    enriched_from_cache, non_enriched = partitionby_presence_of_an_embedding(
-        partly_enriched, embeddings_col=new_colname
-    )
-
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.debug(
-            '{"enriched dataframe size": %d, "non enriched dataframe size": %d}',
-            enriched_from_cache.count(),
-            non_enriched.count(),
-        )
-
-    non_enriched = non_enriched.drop(new_colname).cache()
-
-    texts_not_in_cache = non_enriched.select(text_colname).distinct()
-
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.debug(
-            '{"total embeddable texts": %d, "records not in cache": %d, "texts needing an embedding": %d}',
-            df.count(),
-            non_enriched.count(),
-            texts_not_in_cache.cache().count(),
-        )
-
-    texts_with_embeddings = lookup_missing_embeddings(
-        df=texts_not_in_cache,
-        embedder=embedder,
-        new_colname=new_colname,
-    ).cache()
-
-    enriched_from_external = non_enriched.join(texts_with_embeddings, on=text_colname, how="left")
-
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.debug(
-            '{"enriched dataframe size": %d, "enriched from external size": %d}',
-            texts_with_embeddings.count(),
-            enriched_from_external.count(),
-        )
-
-    complete = enriched_from_cache.unionByName(enriched_from_external).drop(text_colname, *input_features)
-    return complete, texts_with_embeddings
-
-
-def load_embeddings_from_cache(
-    df: ps.DataFrame,
-    cache: ps.DataFrame,
-    primary_key: str,
-) -> ps.DataFrame:
-    return df.join(cache, on=primary_key, how="left")
-
-
-def partitionby_presence_of_an_embedding(df: ps.DataFrame, embeddings_col: str) -> tuple[ps.DataFrame, ps.DataFrame]:
-    df = df.cache()
-    with_ = df.filter(df[embeddings_col].isNotNull())
-    without = df.filter(df[embeddings_col].isNull())
-    return with_, without
-
-
-def lookup_missing_embeddings(
-    df: ps.DataFrame,
-    embedder: Callable[[Iterable[str]], Iterator[ResolvedEmbedding]],
-    new_colname: str,
-) -> ps.DataFrame:
-    """
-    Generate embeddings for rows missing in the cache.
-
-    Args:
-        df: Input DataFrame consisting of a single column containing texts that need embeddings.
-        embedder: function that returns for each string of the DataFrame's
-           first and only column the string and its embedding of that string.
-        new_colname: name of the column under which the embeddings will be placed.
-
-    Returns:
-        DataFrame with generated embeddings.
-    """
-
-    assert len(df.columns) == 1, "Only one Column is to be embedded."
-    pkey = df.columns[0]
-
-    def embed_docs(pkey: str) -> Callable[[Iterable[Row]], Iterator[ResolvedEmbedding]]:
-        def inner(it: Iterable[Row]) -> Iterator[ResolvedEmbedding]:
-            return embedder(_[pkey] for _ in it)
-
-        return inner
-
-    rdd_result = df.rdd.mapPartitions(embed_docs(pkey=pkey))
-    new_schema = df.schema.add(StructField(new_colname, ArrayType(FloatType()), nullable=True))
-    return rdd_result.toDF(schema=new_schema)
 
 
 def pass_through(x):
