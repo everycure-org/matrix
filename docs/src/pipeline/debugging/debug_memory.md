@@ -24,6 +24,11 @@ env:
       value: "120G"
 ```
 
+As the next step, we set the above NEO4J settings same as the pod's memory request. This resulted in the main container stuck at "Waiting for neo4j to be ready..." with the Pod's status "OOM Killed".
+To fix this, we applied 70% of the pod's memory request as the neo4j heap size settings, which solved this problem.
+
+`"{{= sprig.int(inputs.parameters.memory_limit) * 0.7 }}G"`
+
 Moreover, we noticed a similar problem in the Spark configuration, where the the Spark configuration was hardcoded to a specific value.
 
 > ⛔️ This still requires a fix, in the ideal case we would expect the resouces defined in the node to correctly propagate.
