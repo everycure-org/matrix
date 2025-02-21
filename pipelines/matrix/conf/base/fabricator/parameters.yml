@@ -197,27 +197,27 @@ fabricator.rtx_kg2:
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 65690
-      is_cancer: 
+      g_matrix_llm__is_cancer: 
         type: generate_values
         sample_values: 
           - True
           - False
-      is_pathogen_caused: 
+      g_matrix_llm__is_pathogen_caused: 
         type: generate_values
         sample_values: 
           - True
           - False
-      is_glucose_dysfunction: 
+      g_matrix_llm__is_glucose_dysfunction: 
         type: generate_values
         sample_values: 
           - True
           - False
-      tag_existing_treatment: 
+      g_matrix_llm__tag_existing_treatment: 
         type: generate_values
         sample_values: 
           - True
           - False
-      tag_QALY_lost: 
+      g_matrix_llm__tag_qaly_lost: 
         type: generate_values
         sample_values: 
           - LOW
@@ -227,6 +227,7 @@ fabricator.rtx_kg2:
           - HIGH
           - MODERATE
         
+
 fabricator.clinical_trials:
   nodes:
     num_rows: 50
