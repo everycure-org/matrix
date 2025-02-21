@@ -76,19 +76,19 @@ Cloud authentication flow using SSO, rather than on per-app level.
      becomes less impacting, as long as people understand that the dev environment
      might show breaking infra. As a result, you can deploy with confidence to prod.
 
-:warning: if subcontractors, who were meant not to work on prod (because
+     :warning: if subcontractors, who were meant not to work on prod (because
 	that's where we have the private data), start complaining that services are
 	sometimes not operational, then there should be even a 2nd non-prod
 	environment. Dev should be for making changes to infra and pipelines.
 
-Permission management: a group of users would be granted permission to the prod
-cluster. If there were only one cluster, that group of users would need to be
-granted permissions to different namespaces. Additionally, certain cluster
-roles, like those for Argo Events require cross-namespace permissions. With
-multiple functionally equivalent namespaces (like argo-workflows-prod and
-argo-workflows-dev) this division is made harder.  all kinds of objects
-(namespaces, services like Argo, cluster roles) would not need to have suffixes
-(or similar)
+   Permission management: a group of users would be granted permission to the prod
+   cluster. If there were only one cluster, that group of users would need to be
+   granted permissions to different namespaces. Additionally, certain cluster
+   roles, like those for Argo Events require cross-namespace permissions. With
+   multiple functionally equivalent namespaces (like argo-workflows-prod and
+   argo-workflows-dev) this division is made harder.  all kinds of objects
+   (namespaces, services like Argo, cluster roles) would not need to have suffixes
+   (or similar)
  
   CON:
 
@@ -106,32 +106,30 @@ argo-workflows-dev) this division is made harder.  all kinds of objects
   - it might slow down development.
     - COUNTERARGUMENT: switching k8s context is a single command, as is switching a Google Project. Can be in the Makefile.
 
-For the same reason as above in what services the data must be made available,
-and the separate Kubernetes cluster considerations, it is _easier_ to continue
-with a second Google Project.  Additionally, this facilitates billing, as one
-would otherwise need to resort to tags and labels.
+   For the same reason as above in what services the data must be made available,
+   and the separate Kubernetes cluster considerations, it is _easier_ to continue
+   with a second Google Project.  Additionally, this facilitates billing, as one
+   would otherwise need to resort to tags and labels.
+   
+   For Neo4J (and possibly other services where there is no OAuth flow using your
+   GC credentials), credentials (username, password) are typically stored in a
+   secrets vault, like Google Cloud Secret Manager, under _the same_ keys as they would
+   be in other environments. This has the advantage that storing such secrets from
+   Terraform is easy, as well as retrieving these programmatically, since users do
+   not need to know different secret names.
 
-For Neo4J (and possibly other services where there is no OAuth flow using your
-GC credentials), credentials (username, password) are typically stored in a
-secrets vault, like Google Cloud Secret Manager, under _the same_ keys as they would
-be in other environments. This has the advantage that storing such secrets from
-Terraform is easy, as well as retrieving these programmatically, since users do
-not need to know different secret names.
 
-
-  - Should authorization be granted through Google project ids?
+- Should authorization be granted through Google project ids?
 	It seems so, as it makes it easier for granting access to MLFlow and Neo4J.
-
-Where can prod datasets be tested and developed with?
 
 - Shall we have infra-dev and infra-prod branches?  Yes, because we’re using
 ArgoCD and we want to avoid having a commit in the infra folder affecting both
 environments.  
 
   Proposal: In order not to have long running branches main,
-infra-dev and infra-prod, we will have ArgoCD on dev to monitor branch infra,
-as is today, and ArgoCD on prod would monitor branch main. No changes should
-happen to folder infra on main, unless it comes from a merge of branch infra.
+  infra-dev and infra-prod, we will have ArgoCD on dev to monitor branch infra,
+  as is today, and ArgoCD on prod would monitor branch main. No changes should
+  happen to folder infra on main, unless it comes from a merge of branch infra.
 
   Out of scope: whether there should be dev and prod branches for non-infra
   related development, such as triggering a release in the production
