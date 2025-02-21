@@ -22,8 +22,18 @@ class DeletedExperimentExistsWithName(Exception):
     pass
 
 
-EXPERIMENT_ARCHIVE_EXCLUSION_LIST = ["archive"]
-ARCHIVE_EXPERIMENT_ID = 17123
+EXPERIMENT_ARCHIVE_EXCLUSION_LIST = [
+    "archive",
+    "test-caching",
+    "run_node2vec_iter10",
+    "full_matrix_run_10",
+    "feature-attribute-embeddings-strategy-93d6bec0",
+    "feature-attribute-embeddings-strategy-4c53361f",
+    "feature-attribute-embeddings-strategy-94019e37",
+    "lc-baseline-run-run-23-aug-setup-3_FINAL",
+    "fix-mlflow-modelling-bug",
+]
+ARCHIVE_EXPERIMENT_ID = 17365
 
 
 def create_mlflow_experiment(experiment_name: str) -> str:
@@ -115,6 +125,13 @@ def copy_run(original_run: Run, new_experiment_id: int):
     for param in original_run.data.params.items():
         client.log_param(new_run.info.run_id, param[0], param[1])
 
+    # Copy dataset inputs if they exist
+    if hasattr(original_run, "inputs") and original_run.inputs.dataset_inputs:
+        client.log_inputs(
+            run_id=new_run.info.run_id,
+            datasets=original_run.inputs.dataset_inputs,
+        )
+
     console.print(
         f"Run {original_run.info.run_name} ({original_run.info.run_id}) copied to experiment {new_experiment_id}"
     )
@@ -164,7 +181,7 @@ def archive_runs_and_experiments(dry_run: bool = True):
                     f"Dry run. Would archive run {run.info.run_name} ({run.info.run_id}) to experiment {ARCHIVE_EXPERIMENT_ID}"
                 )
             else:
-                copy_run(run=run, new_experiment_id=ARCHIVE_EXPERIMENT_ID)
+                copy_run(original_run=run, new_experiment_id=ARCHIVE_EXPERIMENT_ID)
                 delete_run(client, run.info.run_id)
                 console.print(f"Original run {run.info.run_name} ({run.info.run_id}) deleted")
         try:

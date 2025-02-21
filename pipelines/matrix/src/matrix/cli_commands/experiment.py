@@ -148,7 +148,7 @@ def run(
 
 
 @experiment.command()
-@click.option("--dry-run", "-d", is_flag=True, default=True, help="Whether to actually archive runs and experiments")
+@click.option("--dry-run", "-d", is_flag=True, help="Whether to actually archive runs and experiments")
 def archive(dry_run: bool):
     if dry_run:
         click.echo("Dry run of archiving runs and experiments")
