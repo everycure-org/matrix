@@ -141,16 +141,7 @@ def cached_api_enrichment_pipeline(
 def derive_cache_misses(
     df: DataFrame, cache: DataFrame, api: str, primary_key: str, preprocessor: Callable[[DataFrame], DataFrame]
 ) -> DataFrame:
-    if logger.isEnabledFor(logging.INFO):
-        no_nulls, nulls = (
-            _[1]
-            for _ in sorted(
-                cache.filter(cache[CACHE_COLUMNS[2]] == api).groupBy(F.col(CACHE_COLUMNS[1]).isNull()).count().collect()
-            )
-        )
-        logger.info(
-            json.dumps({"api": api, "cache size": f"{no_nulls+nulls:_}", "non null cache values": f"{no_nulls:_}"})
-        )
+    report_on_cache_misses(cache, api)
     assert (
         cache.columns == CACHE_COLUMNS
     ), f"The cache's columns does not match {CACHE_COLUMNS}. Note that the order is fixed, so that appends would work correctly."
@@ -201,16 +192,7 @@ def lookup_from_cache(
     new_col: str,
     lineage_dummy: Any,  # required for kedro to keep the lineage: this function should come _after_ cache_miss_resolver_wrapper.
 ) -> DataFrame:
-    if logger.isEnabledFor(logging.INFO):
-        no_nulls, nulls = (
-            _[1]
-            for _ in sorted(
-                cache.filter(cache[CACHE_COLUMNS[2]] == api).groupBy(F.col(CACHE_COLUMNS[1]).isNull()).count().collect()
-            )
-        )
-        logger.info(
-            json.dumps({"api": api, "cache size": f"{no_nulls+nulls:_}", "non null cache values": f"{no_nulls:_}"})
-        )
+    report_on_cache_misses(cache, api)
     cache = (
         limit_cache_to_results_from_api(cache, api=api)
         .transform(resolve_cache_duplicates, id_col=CACHE_COLUMNS[0])
@@ -355,3 +337,24 @@ def create_pipeline(
         ],
         tags=["argowf.fuse", f"argowf.fuse-group.{source}"],
     )
+
+
+def report_on_cache_misses(df: DataFrame, api: str) -> None:
+    if logger.isEnabledFor(logging.INFO):
+        rows = sorted(df.filter(df[CACHE_COLUMNS[2]] == api).groupBy(df[CACHE_COLUMNS[1]].isNull()).count().collect())
+        if len(rows) > 1:
+            nulls = rows[0][1]  # False sorts before True, so isNull->False comes first
+            no_nulls = rows[1][1]
+        elif len(rows) == 1:
+            if rows[0][0] is False:
+                nulls = rows[0][1]
+                no_nulls = 0
+            else:
+                nulls = 0
+                no_nulls = rows[1][1]
+        else:
+            nulls = 0
+            no_nulls = 0
+        logger.info(
+            json.dumps({"api": api, "cache size": f"{no_nulls+nulls:_}", "non null cache values": f"{no_nulls:_}"})
+        )
