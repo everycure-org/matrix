@@ -147,7 +147,6 @@ def derive_cache_misses(
         .select(F.col(primary_key).alias(CACHE_COLUMNS[0]))
         .join(cache, on=CACHE_COLUMNS[0], how="leftanti")
         .distinct()
-        .limit(60_000)
     )
 
 
@@ -164,7 +163,7 @@ def cache_miss_resolver_wrapper(
     async def async_delegator(batch):
         return pd.DataFrame(
             {CACHE_COLUMNS[0]: batch, CACHE_COLUMNS[1]: await transformer.apply(batch), CACHE_COLUMNS[2]: api}
-        )  # It's important that the transform does not get executed, so it must be kept part of the lambda!
+        )
 
     def prep(batches, api: str):  # add api as param to this kedro node function
         for batch in batches:
