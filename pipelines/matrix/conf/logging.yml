@@ -41,5 +41,5 @@ loggers:
     level: INFO
   matrix.pipelines.embeddings.nodes:
     level: INFO
-  matrix.pipelines.embeddings.encoders:
-    level: WARNING
+  matrix.pipelines.batch.pipeline:
+    level: INFO
