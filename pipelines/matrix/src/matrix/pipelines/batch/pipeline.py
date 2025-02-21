@@ -1,5 +1,7 @@
 import hashlib
 import itertools
+import json
+import logging
 import warnings
 from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, TypeVar
 
@@ -15,6 +17,7 @@ from pyspark.sql.window import Window
 T = TypeVar("T")
 V = TypeVar("V")
 
+logger = logging.getLogger(__name__)
 
 CACHE_COLUMNS = ["key", "value", "api"]
 
@@ -138,6 +141,16 @@ def cached_api_enrichment_pipeline(
 def derive_cache_misses(
     df: DataFrame, cache: DataFrame, api: str, primary_key: str, preprocessor: Callable[[DataFrame], DataFrame]
 ) -> DataFrame:
+    if logger.isEnabledFor(logging.INFO):
+        no_nulls, nulls = (
+            _[1]
+            for _ in sorted(
+                cache.filter(cache[CACHE_COLUMNS[2]] == api).groupBy(F.col(CACHE_COLUMNS[1]).isNull()).count().collect()
+            )
+        )
+        logger.info(
+            json.dumps({"api": api, "cache size": f"{no_nulls+nulls:_}", "non null cache values": f"{no_nulls:_}"})
+        )
     assert (
         cache.columns == CACHE_COLUMNS
     ), f"The cache's columns does not match {CACHE_COLUMNS}. Note that the order is fixed, so that appends would work correctly."
@@ -154,6 +167,8 @@ def derive_cache_misses(
 def cache_miss_resolver_wrapper(
     df: DataFrame, transformer: AttributeEncoder, api: str, batch_size: int
 ) -> Dict[str, Callable[[], DataFrame]]:
+    if logger.isEnabledFor(logging.INFO):
+        logger.info(json.dumps({"number of cache misses": df.count()}))
     assert (
         df.columns == CACHE_COLUMNS[:1]
     ), f"The cache misses should consist of just one column named '{CACHE_COLUMNS[0]}'"
@@ -186,6 +201,16 @@ def lookup_from_cache(
     new_col: str,
     lineage_dummy: Any,  # required for kedro to keep the lineage: this function should come _after_ cache_miss_resolver_wrapper.
 ) -> DataFrame:
+    if logger.isEnabledFor(logging.INFO):
+        no_nulls, nulls = (
+            _[1]
+            for _ in sorted(
+                cache.filter(cache[CACHE_COLUMNS[2]] == api).groupBy(F.col(CACHE_COLUMNS[1]).isNull()).count().collect()
+            )
+        )
+        logger.info(
+            json.dumps({"api": api, "cache size": f"{no_nulls+nulls:_}", "non null cache values": f"{no_nulls:_}"})
+        )
     cache = (
         limit_cache_to_results_from_api(cache, api=api)
         .transform(resolve_cache_duplicates, id_col=CACHE_COLUMNS[0])
