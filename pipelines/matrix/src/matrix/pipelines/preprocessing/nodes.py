@@ -33,9 +33,9 @@ def resolve_one_name_batch(names: List[str], url: str) -> dict:
     # and using retrying with backoff, which can render the API unresponsive for a long time (> 10 min).
     time.sleep(random.randint(5, 10))
     response = requests.post(url, json=payload, headers={"Content-Type": "application/json"})
+    logger.debug(f"Request time: {response.elapsed.total_seconds():.2f} seconds")
     response.raise_for_status()
-    logger.debug(f"API Response - Status: {response.status_code}, \nTime: {response.elapsed.total_seconds():.3f}s")
-    return response.json()
+    return response.json(), response.elapsed.total_seconds()
 
 
 def parse_one_name_batch(
@@ -64,11 +64,18 @@ def resolve_names(names: str, cols_to_get: Iterable[str], url: str, batch_size: 
     """
 
     resolved_data = {}
+    tot_elapsed = 0
+    iterations = 0
     for i in range(0, len(names), batch_size):
+        logger.debug(f"Running batch {iterations} of size {batch_size}")
         batch = names[i : i + batch_size]
-        batch_response = resolve_one_name_batch(batch, url)
+        batch_response, elapsed = resolve_one_name_batch(batch, url)
+        tot_elapsed += elapsed
+        logger.debug(f"Running total elapsed: {tot_elapsed}")
         batch_parsed = parse_one_name_batch(batch_response, cols_to_get)
         resolved_data.update(batch_parsed)
+        iterations += 1
+    logger.debug(f"Total elapsed was: {tot_elapsed}")
     return resolved_data
 
 
@@ -97,6 +104,7 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str, batch_size: int) 
     # return pd.read_pickle("process_medical_nodes_df_batch.pkl")
 
     start = time.perf_counter()
+    logger.debug("Running process_medical_nodes")
 
     names = df["name"].dropna().unique().tolist()
     resolved_names = resolve_names(
@@ -122,7 +130,7 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str, batch_size: int) 
     # df.to_pickle("process_medical_nodes_df_batch.pkl")
 
     end = time.perf_counter()
-    print(f"Execution time process nodes: {end - start:.6f} seconds")
+    print(f"Execution time process_medical_nodes: {end - start:.6f} seconds")
 
     return df
 
@@ -205,7 +213,7 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
     df["disease_curie"] = df["disease_name"].map(lambda x: disease_mapping.get(x, {}).get("curie", None))
     # df.to_pickle("add_source_and_target_df_batch.pkl")
     end = time.perf_counter()
-    print(f"Execution time ADD SOURCE AND TARGET: {end - start:.6f} seconds")
+    print(f"Execution time add_source_and_target_to_clinical_trails: {end - start:.6f} seconds")
     return df
 
 
