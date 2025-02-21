@@ -51,96 +51,161 @@ We'll mirror the current "dev" environment using a second Google project.
 
 #### Rationale
 
-Data (and logs) are made available to users under the following (non-exhaustive list of) services:
+Data (and logs) are made available to users under the following (non-exhaustive
+list of) services:
 
-    - GCS (uses Google SSO)
-    - BigQuery (uses Google SSO)
-    - Neo4J (uses username, password credentials for authentication)
-    - MlFlow
-    - Argo Workflows 
+- GCS (uses Google SSO)
+- BigQuery (uses Google SSO)
+- Neo4J (uses username, password credentials for authentication)
+- MlFlow
+- Argo Workflows
 
-    For the latter, access to unauthorized staff should be prohibited, so that they cannot read logs, nor trigger workflows. That is, the URL `https://argo.platform.dev.everycure.org/workflows/` should be hosted separately so that people without access cannot even see the logs.
+For the latter, access to unauthorized staff should be prohibited, so that they
+cannot read logs, nor trigger workflows. That is, the URL
+`https://argo.platform.dev.everycure.org/workflows/` should be hosted
+separately so that people without access cannot even see the logs.
 
-    Considering these services, it's easier to restrict access using the Google Cloud authentication flow using SSO, rather than on per-app level.
-
-→ Permissions need to be set on those locations.
+Considering these services, it's easier to restrict access using the Google
+Cloud authentication flow using SSO, rather than on per-app level.
 
 - Do we need a separate K8s cluster for this?
-- Do we need a second Google Project?
+
+  PRO:
+
+   - making changes to the K8s cluster, like adding nodes, redimensioning them,
+     becomes less impacting, as long as people understand that the dev environment
+     might show breaking infra. As a result, you can deploy with confidence to prod.
+
+:warning: if subcontractors, who were meant not to work on prod (because
+	that's where we have the private data), start complaining that services are
+	sometimes not operational, then there should be even a 2nd non-prod
+	environment. Dev should be for making changes to infra and pipelines.
+
+Permission management: a group of users would be granted permission to the prod
+cluster. If there were only one cluster, that group of users would need to be
+granted permissions to different namespaces. Additionally, certain cluster
+roles, like those for Argo Events require cross-namespace permissions. With
+multiple functionally equivalent namespaces (like argo-workflows-prod and
+argo-workflows-dev) this division is made harder.  all kinds of objects
+(namespaces, services like Argo, cluster roles) would not need to have suffixes
+(or similar)
+ 
+  CON:
+
+  - 2nd infra to manage.
+    - Counterargument: it’s with modules in Terraform. Overall cognitive load is considered low.
+
+- Should we use multiple Google Projects?
+  
+  PRO
+
+  - Quotas are [usually](https://cloud.google.com/docs/quotas/view-manage) linked to Google Project IDs (there are a few linked to the  organization-level), meaning there’s less chance of hitting quota limits.
+
+  CON:
+
+  - it might slow down development.
+    - COUNTERARGUMENT: switching k8s context is a single command, as is switching a Google Project. Can be in the Makefile.
 
 For the same reason as above in what services the data must be made available,
-it is _easier_ to continue with a second Google Project.
+and the separate Kubernetes cluster considerations, it is _easier_ to continue
+with a second Google Project.  Additionally, this facilitates billing, as one
+would otherwise need to resort to tags and labels.
 
 For Neo4J (and possibly other services where there is no OAuth flow using your
 GC credentials), credentials (username, password) are typically stored in a
-secrets vault Google Cloud Secret Manager, under _the same_ keys as they would
+secrets vault, like Google Cloud Secret Manager, under _the same_ keys as they would
 be in other environments. This has the advantage that storing such secrets from
 Terraform is easy, as well as retrieving these programmatically, since users do
 not need to know different secret names.
 
-- Do we double the k8s cluster?
-  PRO:
-
-  - it's easier to deploy.
-  - making changes to the K8s cluster, like adding nodes, redimensioning them,
-    becomes less impacting, as long as people understand that the dev
-    environment might show breaking infra. 
-
-    :warning: if subcontractors, who were meant not to work on prod (because
-    that's where we have the private data), start complaining that services are
-    sometimes not operational, then there should be even a 2nd non-prod
-    environment. Dev should be for making changes to infra and pipelines.
-
-  - all kinds of objects (namespaces, services like Argo, cluster roles) would
-    not need to have suffixes (or similar)
-
-  CON:
-  - it might slow down development.
-    COUNTERARGUMENT: switching k8s context is a single command, as is switching a Google Project. Can be in the Makefile.
 
   - Should authorization be granted through Google project ids?
-    It seems so, as it makes it easier for granting access to MLFlow and Neo4J.
+	It seems so, as it makes it easier for granting access to MLFlow and Neo4J.
 
-- Shall we have _main_ and _dev_ branches?
-- Shall we have infra-dev and infra-prod branches?
+Where can prod datasets be tested and developed with?
+
+- Shall we have infra-dev and infra-prod branches?  Yes, because we’re using
+ArgoCD and we want to avoid having a commit in the infra folder affecting both
+environments.  
+
+  Proposal: In order not to have long running branches main,
+infra-dev and infra-prod, we will have ArgoCD on dev to monitor branch infra,
+as is today, and ArgoCD on prod would monitor branch main. No changes should
+happen to folder infra on main, unless it comes from a merge of branch infra.
+
+  Out of scope: whether there should be dev and prod branches for non-infra
+  related development, such as triggering a release in the production
+  environment. 
+
+  Rationale: has nothing to do with the private data being stored and the
+  solutions discussed so far.
+
+
 - If this is about dataset protection, what is the impact if it gets used by unauthorized people?
+
+  Depends on the contractual arrangements. Possibilities: loss of funding, lawsuit, reputation damage.
+
 - What costs can be incurred?
+
+  An extra cluster costs about 4500$/month, based on the current consumption in
+  the current cluster during the weekend.
+
 - Is the MVP clear? What are the Minimum Acceptance Criteria?
+
+  > iii) Completion Criteria
+  > A mirrored environment available under *.platform.everycure.org which has executed a pipeline run E2E successfully and is set to replace the existing dev environment for data release runs. 
+  > argo/mlflow.platform.dev.everycure.org
+  > argo/mlflow.platform.everycure.org
+
 - How will this be used?
-  - Does the public data need to be ²duplicated, in order to facilitate using environment-agnostic code? Or de we add environment checks and modify pipeline.
-    1. Higher level envs can access data in lower level envs.
-    2. All public data is duplicated.
-       CONS
-       - (marginally) higher storage cost
-       - chance of missing a sync
-       PROS
+
+  The idea is that a selection of Every Cure staff gets access to the
+  “production” environment (i.e. the Google Cloud project). There, they can
+  inspect the protected datasets, together with the doubled public datasets.
+
+- Does the public data need to be duplicated, in order to facilitate using environment-agnostic code? Or de we add environment checks and modify pipeline?
+
+  Duplicating the data makes for easier management, as no exceptions need to be
+  entered in obscure corners. It comes with an extra storage cost for the
+  ingested data. By modifying pipelines to let them read data from a lower level
+  env, you’re adding environment-aware checks to the code, which deter from the
+  actual goals of the code. A downside to duplicating data aside from the cost is
+  that the datasets may grow out of sync (a new version of the public data needs
+  to be in both environments). Something that can be solved with
+  cross-bucket-replication.
 
 
-  - Should we create a different yml in the env folder, e.g. cloud-prod?
-    Can we inherit from the current conf/cloud?
+- Should we create a different yml in the env folder, e.g. cloud-prod?
 
-  - Is there an alternative way to create to a different env?
-    Keep cloud and add Elsevier (and its derivates) to the current conf/cloud, and let permissions (and warnings) take care of any authorization exceptions.
-    If we go that way, we will need to add error handling to the gcp.py.Neo4J
-    We can't solve it with error handling.
-    conf/cloud-prod would be nice to inherit from conf/cloud (to be renamed as conf/cloud-dev), because then we only need to add the Elsevier entry to the catalog, not duplicate the entire catalog.
-    Instead of erroring out on attempting to access private dataset within an environment that's available to an enduser, private datasets are part of an environment that is inaccessible.
+  Probably yes, as its catalog would reference the private datasets. However, as
+  Kedro catalogs only override the base environment, and do not seem to offer a
+  way of overriding e.g the current cloud catalog, it means all the entries from
+  env/cloud would need to be duplicated to env/cloud-prod. This is difficult for
+  maintenance. Can symlinks be used? E.g. 
+  
+  ```text
+  env
+  ├── cloud
+  │   └── catalog.yml
+  └── cloud-prod
+  	├── catalog-ext.yml
+  	└── catalog.yml -> ../cloud/catalog.yml
+  ```
+  An initial experiment shows this to be working.
+  
+  An alternative is provided by warning on attempting to load datasets that cannot be found. However, this has a potential downside that it might raise a warning for a public dataset that should really be present (a false negative). 
+  
+  💡it’s probably a good idea to rename cloud to cloud-dev, early on. People joining later will miss the historical context why “cloud” seems to have been better treated than cloud-prod.
 
 - Who is the handful of people that needs access to this private data?
+
   All of Every Cure staff (sic Pascal)
-
-| Issue | Importance | Description | Why is it not covered in tests | Mitigation |
-| ------------- | ------------- | ------------- | ------------- | ------------- |
-
-### Technical context
-
 
 ## Decision
 
-### Mitigation: improving the data fabricator
+We create a Google Project for prod (it already exists) and redeploy the
+currently existing infrastructure there.  We add a catalog entry for the
+private datasets in a conf/cloud-prod folder, next to a symlinked file pointing
+to the conf/cloud catalog.
 
-### Short term: run the pipeline on a sample of production data
 
-#### What is the sampling logic?
-
-# Consequences
