@@ -1,6 +1,5 @@
 import os
 import tempfile
-from functools import partial
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -8,19 +7,18 @@ import pytest
 from kedro.framework.project import configure_project
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import bootstrap_project
-from kedro.io import DataCatalog
+from kedro.io import DataCatalog, MemoryDataset
 from kedro.runner import SequentialRunner
-from kedro_datasets.spark import SparkDataset
-from matrix.datasets.gcp import LazySparkDataset, SparkWithSchemaDataset
+from kedro_datasets.pandas import ParquetDataset
+from matrix.datasets.gcp import LazySparkDataset, PartitionedAsyncParallelDataset, SparkWithSchemaDataset
 from matrix.pipelines.batch.pipeline import (
-    cache_miss_resolver_wrapper,
-    # cached_api_enrichment_pipeline,
+    create_node_embeddings_pipeline,
     derive_cache_misses,
-    dummy_resolver,
     limit_cache_to_results_from_api,
     lookup_from_cache,
     resolve_cache_duplicates,
 )
+from matrix.pipelines.embeddings.encoders import DummyResolver
 from matrix.pipelines.embeddings.nodes import pass_through
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import ArrayType, FloatType, StringType, StructField, StructType
@@ -178,15 +176,9 @@ def sample_duplicate_cache(spark: SparkSession, cache_schema) -> DataFrame:
     data = [
         {"key": "A", "value": [1.0, 2.0], "api": "gpt-4"},
         {"key": "B", "value": [4.0, 5.0], "api": "gpt-4"},
-        {
-            "key": "B",
-            "value": [
-                4.0,
-                5.0,
-            ],
-            "api": "gpt-4",
-        },
-        {"key": "D", "value": [8.0, 9.0], "api": "gpt-3"},
+        {"key": "B", "value": [4.0, 5.0], "api": "gpt-4"},
+        {"key": "D", "value": [8.0, 9.0], "api": "gpt-4"},
+        {"key": "E", "value": [9.0, 10.0], "api": "gpt-4"},
     ]
     return spark.createDataFrame(data, schema=cache_schema)
 
@@ -211,6 +203,11 @@ def sample_api2():
 
 
 @pytest.fixture
+def sample_batch_size():
+    return 2
+
+
+@pytest.fixture
 def sample_id_col():
     return "key"
 
@@ -222,7 +219,7 @@ def sample_preprocessor():
 
 @pytest.fixture
 def sample_resolver():
-    return dummy_resolver
+    return DummyResolver
 
 
 @pytest.fixture
@@ -231,14 +228,14 @@ def sample_new_col():
 
 
 @pytest.fixture
-def mock_encoder(sample_api1) -> Mock:
-    encoder = Mock(side_effect=partial(dummy_resolver, api=sample_api1))
+def mock_encoder() -> Mock:
+    encoder = Mock(side_effect=DummyResolver)
     return encoder
 
 
 @pytest.fixture
-def mock_encoder2(sample_api1) -> Mock:
-    encoder = Mock(side_effect=partial(dummy_resolver, api=sample_api1))
+def mock_encoder2() -> Mock:
+    encoder = Mock(side_effect=DummyResolver)
     return encoder
 
 
@@ -281,31 +278,6 @@ def test_derive_cache_misses(
     assertDataFrameEqual(result_df, sample_cache_misses)
 
 
-def test_dataframe_is_enriched(
-    sample_cache,
-    sample_cache_out,
-    sample_cache_misses,
-    sample_resolver,
-    sample_api1,
-    sample_input_df,
-    sample_primary_key,
-    sample_preprocessor,
-):
-    sample_cache.show()
-    sample_cache.printSchema()
-    sample_cache_misses.show()
-    cache_out = cache_miss_resolver_wrapper(sample_cache_misses, partial(sample_resolver, api=sample_api1), sample_api1)
-    cache_out.printSchema()
-    assert isinstance(cache_out, DataFrame)
-    # cache_out.show()
-    assertDataFrameEqual(cache_out, sample_cache_out)
-    new_cache = sample_cache.union(cache_out)
-    cache_misses2 = derive_cache_misses(
-        sample_input_df, new_cache, sample_api1, sample_primary_key, sample_preprocessor
-    )
-    assert cache_misses2.count() == 0, "The cache misses should be empty"
-
-
 def test_cache_contains_duplicates_warning(sample_duplicate_cache, sample_id_col):
     # Capture the warning
     with pytest.warns(UserWarning, match="The cache contains duplicate keys."):
@@ -314,21 +286,20 @@ def test_cache_contains_duplicates_warning(sample_duplicate_cache, sample_id_col
 
 def test_enriched_keeps_same_size_with_cache_duplicates(
     sample_input_df,
-    sample_cache,
     sample_duplicate_cache,
     sample_api1,
     sample_primary_key,
     sample_preprocessor,
-    sample_resolver,
     sample_new_col,
 ):
-    cache_misses = derive_cache_misses(
-        sample_input_df, sample_duplicate_cache, sample_api1, sample_primary_key, sample_preprocessor
-    )
-    cache_out = cache_miss_resolver_wrapper(cache_misses, partial(sample_resolver, api=sample_api1), sample_api1)
-    new_cache = sample_cache.union(cache_out)
     enriched_df = lookup_from_cache(
-        sample_input_df, new_cache, sample_api1, sample_primary_key, sample_preprocessor, sample_new_col
+        sample_input_df,
+        sample_duplicate_cache,
+        sample_api1,
+        sample_primary_key,
+        sample_preprocessor,
+        sample_new_col,
+        lineage_dummy="foo",
     )
     assert (
         enriched_df.count() == sample_input_df.count()
@@ -342,20 +313,60 @@ def test_different_api(sample_cache, sample_api1, api1_filtered_cache, sample_ap
     assertDataFrameEqual(result2_df, api2_filtered_cache)
 
 
-def test_re_resolve_is_noop(
+def test_df_fully_enriched(
+    sample_input_df,
+    cache_schema,
+    sample_api1,
     sample_primary_key,
     sample_preprocessor,
-    sample_cache,
-    sample_input_df,
+    sample_batch_size,
+    sample_new_col,
     mock_encoder,
     mock_encoder2,
-    sample_cache_misses,
-    sample_api1,
 ):
-    cache_out = cache_miss_resolver_wrapper(sample_cache_misses, mock_encoder, sample_api1)
-    new_cache = sample_cache.union(cache_out)
-    cache_misses2 = derive_cache_misses(
-        sample_input_df, new_cache, sample_api1, sample_primary_key, sample_preprocessor
-    )
-    result2 = cache_miss_resolver_wrapper(cache_misses2, mock_encoder2, sample_api1)
-    mock_encoder2.assert_not_called()
+    project_path = Path.cwd()
+    bootstrap_project(project_path)
+    configure_project("matrix")
+    with KedroSession.create(project_path) as session:
+        kedro_context = session.load_context()
+        temp_dir = tempfile.TemporaryDirectory().name
+        input = {
+            "integration.prm.filtered_nodes": MemoryDataset(sample_input_df),
+            "cache.read": SparkWithSchemaDataset(
+                filepath=os.path.join(temp_dir, "cache_dataset"),
+                provide_empty_if_not_present=True,
+                load_args={"schema": cache_schema},
+            ),
+            "test_fully_enriched": LazySparkDataset(
+                filepath=os.path.join(temp_dir, "fully_enriched"), save_args={"mode": "overwrite"}
+            ),
+            "cache_misses": LazySparkDataset(
+                filepath=os.path.join(temp_dir, "cache_misses"), save_args={"mode": "overwrite"}
+            ),
+            "cache.write": PartitionedAsyncParallelDataset(
+                path=os.path.join(temp_dir, "cache_dataset"),
+                dataset=ParquetDataset,
+                filename_suffix=".parquet",
+            ),
+            "cache.reload": SparkWithSchemaDataset(
+                filepath=os.path.join(temp_dir, "cache_dataset"),
+                load_args={"schema": cache_schema},
+            ),
+            "params:caching.api": sample_api1,
+            "params:caching.primary_key": sample_primary_key,
+            "params:caching.preprocessor": sample_preprocessor,
+            "params:caching.resolver": mock_encoder,
+            "params:caching.new_col": sample_new_col,
+            "params:caching.batch_size": sample_batch_size,
+        }
+        mock_catalog_run1 = DataCatalog(input)
+        pipeline_run1 = create_node_embeddings_pipeline()
+        runner = SequentialRunner()
+        runner.run(pipeline_run1, mock_catalog_run1)
+        enriched_data = mock_catalog_run1.load("fully_enriched").toPandas()
+        assert enriched_data[sample_new_col].isNull().sum() == 0, "The input DataFrame should be fully enriched"
+        mock_catalog_run2 = DataCatalog(input | {"params:caching.resolver": mock_encoder2})
+        pipeline_run2 = create_node_embeddings_pipeline()
+        runner.run(pipeline_run2, mock_catalog_run2)
+        mock_encoder.assert_called()  # The first run, encoder should be called
+        mock_encoder2.assert_not_called()  # The second run, encoder should not be called
