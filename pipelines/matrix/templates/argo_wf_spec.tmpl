@@ -80,22 +80,22 @@ spec:
         - name: main
           resources:
             requests:
-              memory: {% raw %} "{{inputs.parameters.memory_request}}"
+              memory: {% raw %} "{{inputs.parameters.memory_request}}Gi"
               {% endraw %}
               cpu: {% raw %} "{{inputs.parameters.cpu_request}}"
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
-              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_request}}"
+              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_request}}Gi"
               {% endraw %}
             limits:
-              memory: {% raw %} "{{inputs.parameters.memory_limit}}"
+              memory: {% raw %} "{{inputs.parameters.memory_limit}}Gi"
               {% endraw %}
               cpu: {% raw %} "{{inputs.parameters.cpu_limit}}"
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
-              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_limit}}"
+              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_limit}}Gi"
               {% endraw %}
     container: &_kedro_container
       imagePullPolicy: Always
@@ -170,28 +170,28 @@ spec:
         - name: main
           resources:
             requests:
-              memory: 50Gi
+              memory: 100Gi
             limits:
-              memory: 50Gi
+              memory: 100Gi
         - name: neo4j
           resources:
             requests:
-              memory: {% raw %} "{{inputs.parameters.memory_request}}"
+              memory: {% raw %} "{{inputs.parameters.memory_request}}Gi"
               {% endraw %}
               cpu: {% raw %} "{{inputs.parameters.cpu_request}}"
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
-              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_request}}"
+              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_request}}Gi"
               {% endraw %}
             limits:
-              memory: {% raw %} "{{inputs.parameters.memory_limit}}"
+              memory: {% raw %} "{{inputs.parameters.memory_limit}}Gi"
               {% endraw %}
               cpu: {% raw %} "{{inputs.parameters.cpu_limit}}"
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
-              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_limit}}"
+              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_limit}}Gi"
               {% endraw %}
     container: 
       <<: *_kedro_container
@@ -249,9 +249,11 @@ spec:
         - name: NEO4J_ACCEPT_LICENSE_AGREEMENT
           value: "yes"
         - name: NEO4J_dbms_memory_heap_initial__size
-          value: "100G"
+          value: {% raw %} "{{= sprig.int(inputs.parameters.memory_limit) * 0.7 }}G"
+          {% endraw %}
         - name: NEO4J_dbms_memory_heap_max__size
-          value: "120G" # TODO: How do we pass this in w/o Gi
+          value: {% raw %} "{{= sprig.int(inputs.parameters.memory_limit) * 0.7 }}G"
+          {% endraw %}
 
   - name: pipeline
     dag:
