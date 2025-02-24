@@ -1,5 +1,0 @@
-pyproject.toml
-src/docs.egg-info/PKG-INFO
-src/docs.egg-info/SOURCES.txt
-src/docs.egg-info/dependency_links.txt
-src/docs.egg-info/top_level.txt
