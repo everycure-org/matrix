@@ -33,6 +33,8 @@ spec:
         value: "{{ environment }}"
       - name: release_folder_name
         value: "{{ release_folder_name }}"
+      - name: mlflow_experiment_id
+        value: {{ mlflow_experiment_id }}
   templates:
   - &_kedro_template
     metrics:
@@ -71,6 +73,8 @@ spec:
       - name: memory_request
       - name: cpu_limit
       - name: cpu_request
+      - name: ephemeral_storage_request
+      - name: ephemeral_storage_limit
     podSpecPatch: |
       containers:
         - name: main
@@ -82,12 +86,16 @@ spec:
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
+              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_request}}"
+              {% endraw %}
             limits:
               memory: {% raw %} "{{inputs.parameters.memory_limit}}"
               {% endraw %}
               cpu: {% raw %} "{{inputs.parameters.cpu_limit}}"
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
+              {% endraw %}
+              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_limit}}"
               {% endraw %}
     container: &_kedro_container
       imagePullPolicy: Always
@@ -112,6 +120,9 @@ spec:
           {% endraw %}
         - name: MLFLOW_ENDPOINT
           value: {% raw %} "{{workflow.parameters.mlflow_endpoint}}" 
+          {% endraw %}
+        - name: MLFLOW_EXPERIMENT_ID
+          value: {% raw %} "{{workflow.parameters.mlflow_experiment_id}}" 
           {% endraw %}
         - name: NEO4J_USER
           valueFrom:
@@ -144,6 +155,11 @@ spec:
         - name: NUM_CPU
           value: {% raw %} "{{inputs.parameters.cpu_limit}}"
           {% endraw %}
+        - name: GH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: gh-password
+              key: GH_CREDS
       command: [kedro]
       args: ["run", "-p", "{{ pipeline_name }}", "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
 
@@ -166,12 +182,16 @@ spec:
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
+              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_request}}"
+              {% endraw %}
             limits:
               memory: {% raw %} "{{inputs.parameters.memory_limit}}"
               {% endraw %}
               cpu: {% raw %} "{{inputs.parameters.cpu_limit}}"
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
+              {% endraw %}
+              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_limit}}"
               {% endraw %}
     container: 
       <<: *_kedro_container
@@ -261,5 +281,9 @@ spec:
             value: {{ task.resources.cpu_request }}
           - name: cpu_limit
             value: {{ task.resources.cpu_limit }}
+          - name: ephemeral_storage_request
+            value: {{ task.resources.ephemeral_storage_request }}
+          - name: ephemeral_storage_limit
+            value: {{ task.resources.ephemeral_storage_limit }}
 
       {% endfor %}
