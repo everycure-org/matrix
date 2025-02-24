@@ -1,4 +1,5 @@
 import logging
+from pprint import pformat
 from typing import Dict
 
 import pyspark.sql as ps
@@ -110,7 +111,7 @@ def filter_semmed(
     semmeddb_is_only_knowledge_source = (f.size("aggregator_knowledge_source") == 1) & (
         f.col("aggregator_knowledge_source").getItem(0) == "infores:semmeddb"
     )
-    table = f.broadcast(curie_to_pmids)
+    table = curie_to_pmids
     single_semmed_edges = (
         edges_df.filter(semmeddb_is_only_knowledge_source)
         .alias("edges")
@@ -145,6 +146,10 @@ def compute_ngd(df: ps.DataFrame, num_pairs: int = 3.7e7 * 20) -> ps.DataFrame:
     Returns:
         Dataframe with ndg score
     """
+    if logger.isEnabledFor(logging.DEBUG):
+        df.cache()
+        logger.debug(f"Just prior to intersection: df size: {df.count():_}.")
+        logger.debug(pformat(df.head().asDict()))
     return (
         # Take first max_pmids elements from each array
         df.withColumn("num_common_pmids", f.array_size(f.array_intersect("subj.pmids", "obj.pmids"))).withColumn(
