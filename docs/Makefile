@@ -9,14 +9,12 @@ venv:
 	uv run python -m ensurepip --upgrade || true
 
 build: install
-	.venv/bin/mkdocs build -s # build in strict mode, all links must function
+	uv run mkdocs build -s # build in strict mode, all links must function
 
 serve: 
-	.venv/bin/mkdocs serve
+	uv run mkdocs serve
 
 install:
-	deactivate 2> /dev/null || echo 'no venv active, continuing'
-	if [ ! -d .venv ]; then uv venv -p 3.11; fi
 	uv pip install -r requirements.txt
 
 test: install
