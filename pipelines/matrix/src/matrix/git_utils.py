@@ -44,12 +44,13 @@ def git_tag_exists(tag: str) -> bool:
     return tag in result
 
 
-def get_releases() -> List[str]:
-    return (
-        (subprocess.check_output(["gh", "release", "list", "--json", "tagName", "--jq", ".[].tagName"], text=True))
-        .strip("\n")
-        .split("\n")
-    )
+def get_tags() -> List[str]:
+    result = subprocess.run(["git", "ls-remote", "--tags", "origin"], check=True, capture_output=True, text=True)
+    return [
+        line.split("\t")[1].replace("refs/tags/", "")
+        for line in result.stdout.strip().split("\n")
+        if not line.split("\t")[1].endswith("^{}")  # exclude dereferenced annotated tags
+    ]
 
 
 def get_latest_minor_release(releases_list: List[str]) -> str:
