@@ -86,8 +86,10 @@ It's therefore important to leave a buffer between the memory configured for Spa
    connector at all, but load it in batches, only reading partitions as needed.
    In pseudocode:
 
+   ```
    for batch in batches(edges.toLocalIterator(prefetch=False), n=5k):
        load_edges_in_neo4j(batch)
+   ```
 
    That would keep the memory Spark uses down to the smallest partition, which
    you can make arbitrarily small in the previous kedro node.
