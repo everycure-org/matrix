@@ -257,11 +257,11 @@ class SparkHooks:
         """Print the current Spark configuration after each dataset is loaded.
         Must be done after dataset is loaded, because we initialise spark only
         for Spark dataset types."""
-        if self._spark_session is not None:
-            logger.info("Current Spark Configuration:")
-            for key, value in sorted(self._spark_session.sparkContext.getConf().getAll()):
-                logger.info(f"{key} = {value}")
-        else:
+        try:
+            msg = ["Current Spark Configuration:"]
+            msg.extend([f"{k}: {v}" for k, v in sorted(self._spark_session.sparkContext.getConf().getAll())])
+            logger.info("\n".join(msg))
+        except AttributeError:
             logger.warning("SparkSession is not initialized.")
 
 
