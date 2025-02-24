@@ -75,7 +75,14 @@ def mock_multiple_pipelines():
 @patch("matrix.cli_commands.submit.generate_argo_config")
 def test_build_argo_template(mock_generate_argo_config: None) -> None:
     build_argo_template(
-        "test_run", "testuser", "test_namespace", {"test": MagicMock()}, ArgoResourceConfig(), "cloud", is_test=True
+        "test_run",
+        "testuser",
+        "test_namespace",
+        {"test": MagicMock()},
+        ArgoResourceConfig(),
+        "cloud",
+        is_test=True,
+        mlflow_experiment_id=1,
     )
     mock_generate_argo_config.assert_called_once()
 
@@ -233,6 +240,7 @@ def test_workflow_submission(
         verbose=True,
         dry_run=False,
         template_directory=temporary_directory,
+        mlflow_experiment_id=1,
         allow_interactions=False,
         environment="cloud",
     )
