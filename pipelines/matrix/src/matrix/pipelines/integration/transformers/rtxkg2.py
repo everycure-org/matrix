@@ -111,9 +111,10 @@ def filter_semmed(
     semmeddb_is_only_knowledge_source = (f.size("aggregator_knowledge_source") == 1) & (
         f.col("aggregator_knowledge_source").getItem(0) == "infores:semmeddb"
     )
-    table = curie_to_pmids
+    table = f.broadcast(curie_to_pmids)
     single_semmed_edges = (
-        edges_df.filter(semmeddb_is_only_knowledge_source)
+        edges_df.repartition(4_000)
+        .filter(semmeddb_is_only_knowledge_source)
         .alias("edges")
         .join(
             table.alias("subj"),
