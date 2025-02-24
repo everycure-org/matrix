@@ -66,5 +66,30 @@ It's therefore important to leave a buffer between the memory configured for Spa
 ## Follow-ups
 
 1. Ensure Spark Memory can be configured using environment variable
+
+   See [PR 1185](https://github.com/everycure-org/matrix/pull/1185)
+
 2. Deep dive into Neo4J Spark connector to learn why so much memory is used
+
+   From [the run that was triggered this
+   morning](https://argo.platform.dev.everycure.org/workflows/argo-workflows/debug-integrated-embeddings-ac71c0f1?tab=workflow&uid=a9999975-9e1e-483b-a737-58ccb7b84227)
+   after our team discussion, it doesn't look out of the order:
+   ![](./assets/mem_usage_embeddings_pod.png) The Spark process uses about
+   42GiB memory. Not insane for a dataset, that is being loaded as a single
+   partition. The Neo4J docs make the right claims and warnings about wanting
+   to write edges using multiple workers. An attempt at this can be made, in
+   order to lower the memory requirements, but I think it's less of a priority
+   seeing that the bottleneck is the graphsage algorithm which requires the
+   bulk of the resources.
+
+   Note that a simple alternative may actually be to not use the Spark
+   connector at all, but load it in batches, only reading partitions as needed.
+   In pseudocode:
+
+   for batch in batches(edges.toLocalIterator(prefetch=False), n=5k):
+       load_edges_in_neo4j(batch)
+
+   That would keep the memory Spark uses down to the smallest partition, which
+   you can make arbitrarily small in the previous kedro node.
+
 3. (After few runs) investigate memory profile and right size the nodes
