@@ -18,7 +18,7 @@ from
 
 <Grid col=2>
     <p class="text-center text-lg"><span class="font-semibold text-4xl"><Value data={edges_per_node} column="edges_per_node" /></span><br/>edges per node on average</p>
-    <p class="text-center text-lg"><span class="font-semibold text-4xl"><Value data={edges_per_node} column="edges_per_node_without_hyperconnected_nodes" /></span><br/>edges per node excluding the top 1,000 most connected nodes</p>
+    <p class="text-center text-lg"><span class="font-semibold text-4xl"><Value data={edges_per_node} column="edges_per_node_without_hyperconnected_nodes" /></span><br/>edges per node when excluding the top 1,000 most connected nodes</p>
 </Grid>
 
 # Disease list connections
@@ -29,7 +29,7 @@ from
 ```sql disease_list_connected_categories
 with total as (
     select 
-        sum(c) as total_sum
+        sum(n_connections) as sum_n_connections
     from 
         bq.disease_list_connected_categories
 )
@@ -37,22 +37,25 @@ with total as (
 , cumulative_sum as (
     select 
         category
-        , c
-        , 100.0 * sum(c) over (order by c desc) / total_sum as cumsum_percentage
+        , n_connections
+        , 100.0 * sum(n_connections) over (order by n_connections desc) / sum_n_connections as cumsum_percentage
     from 
-        bq.disease_list_connected_categories, total
+        bq.disease_list_connected_categories
+        , total
 )
 
 select 
     category
-    , c as number_of_connections
+    , (disease_edges / disease_nodes) * (n_connections / sum_n_connections) as number_of_connections
 from 
     cumulative_sum
+    , total
+    , bq.overall_metrics
 where 
     -- TODO: parameterize this 
     cumsum_percentage <= 98.0
 order by 
-    c desc
+    n_connections desc
 ```
 
 <BarChart 
@@ -70,7 +73,7 @@ order by
 ```sql drug_list_connected_categories
 with total as (
     select 
-        sum(c) as total_sum
+        sum(n_connections) as sum_n_connections
     from 
         bq.drug_list_connected_categories
 )
@@ -78,22 +81,24 @@ with total as (
 , cumulative_sum as (
     select 
         category
-        , c
-        , 100.0 * sum(c) over (order by c desc) / total_sum as cumsum_percentage
+        , n_connections
+        , 100.0 * sum(n_connections) over (order by n_connections desc) / sum_n_connections as cumsum_percentage
     from 
         bq.drug_list_connected_categories, total
 )
 
 select 
     category
-    , c as number_of_connections
+    , (drug_edges / drug_nodes) * (n_connections / sum_n_connections) as number_of_connections
 from 
     cumulative_sum
+    , total
+    , bq.overall_metrics
 where 
     -- TODO: parameterize this 
     cumsum_percentage <= 98.0
 order by 
-    c desc
+    n_connections desc
 ```
 
 <BarChart 
