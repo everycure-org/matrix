@@ -346,12 +346,13 @@ def report_on_cache_misses(df: DataFrame, api: str) -> None:
             nulls = rows[0][1]  # False sorts before True, so isNull->False comes first
             no_nulls = rows[1][1]
         elif len(rows) == 1:
-            if rows[0][0] is False:
-                nulls = rows[0][1]
+            label, value = rows.pop()
+            if label is False:
+                nulls = value
                 no_nulls = 0
             else:
                 nulls = 0
-                no_nulls = rows[1][1]
+                no_nulls = value
         else:
             nulls = 0
             no_nulls = 0
