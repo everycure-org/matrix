@@ -3,6 +3,10 @@ locals {
 
   matrix_viewers_group = [local.matrix_all_group, "group:matrix-viewers@everycure.org"]
   tech_team_group      = ["group:techteam@everycure.org", "group:ext.tech.dataminded@everycure.org"]
+  cross_account_sas = [
+    "serviceAccount:vertex-ai-workbench-sa@mtrx-wg1-data-dev-nb5.iam.gserviceaccount.com",
+    "serviceAccount:vertex-ai-workbench-sa@mtrx-wg2-modeling-dev-9yj.iam.gserviceaccount.com"
+  ]
 }
 
 module "project_iam_bindings" {
@@ -18,19 +22,20 @@ module "project_iam_bindings" {
     "roles/ml.admin"                       = local.tech_team_group
     "roles/aiplatform.admin"               = local.tech_team_group
     "roles/ml.developer"                   = local.tech_team_group
-    "roles/artifactregistry.writer"        = flatten([local.tech_team_group, [local.matrix_all_group]]) # enables people to run kedro submit
     "roles/storage.objectCreator"          = local.tech_team_group
-    "roles/storage.objectUser"             = local.tech_team_group
     "roles/container.clusterAdmin"         = local.tech_team_group
     "roles/container.developer"            = local.tech_team_group
     "roles/compute.admin"                  = local.tech_team_group
     "roles/iam.workloadIdentityPoolAdmin"  = local.tech_team_group
     "roles/iam.serviceAccountTokenCreator" = local.tech_team_group
-    "roles/viewer"                         = local.matrix_viewers_group
-    "roles/bigquery.jobUser"               = local.matrix_viewers_group
-    "roles/bigquery.dataViewer"            = local.matrix_viewers_group
-    "roles/bigquery.studioUser"            = local.matrix_viewers_group
-    "roles/bigquery.user"                  = local.matrix_viewers_group
+    "roles/storage.objectUser"             = local.tech_team_group
+    "roles/storage.objectViewer"           = local.cross_account_sas
+    "roles/artifactregistry.writer"        = flatten([local.tech_team_group, [local.matrix_all_group]]) # enables people to run kedro submit
+    "roles/viewer"                         = flatten([local.matrix_viewers_group, local.cross_account_sas])
+    "roles/bigquery.jobUser"               = flatten([local.matrix_viewers_group, local.cross_account_sas])
+    "roles/bigquery.dataViewer"            = flatten([local.matrix_viewers_group, local.cross_account_sas])
+    "roles/bigquery.studioUser"            = flatten([local.matrix_viewers_group, local.cross_account_sas])
+    "roles/bigquery.user"                  = flatten([local.matrix_viewers_group, local.cross_account_sas])
     "roles/iap.httpsResourceAccessor"      = local.matrix_viewers_group
 
     "roles/compute.networkUser" = [local.matrix_all_group]
