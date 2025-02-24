@@ -22,7 +22,6 @@ with drug_out_edges as (
 
 select 
   replace(n.category, "biolink:", "") as category
-  , count(distinct d.id) as n_nodes
   , count(*) as n_connections
 from
   drug_connections d
