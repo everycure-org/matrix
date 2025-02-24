@@ -59,15 +59,15 @@ class RTXTransformer(GraphTransformer):
         return (
             edges_df
             .withColumn("aggregator_knowledge_source",   f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR)) # RTX KG2 2.10 does not exist
+            .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(0)) # RTX KG2 2.10 `primary_knowledge_source``
             .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
+            .transform(filter_semmed, curie_to_pmids, **semmed_filters)
             .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
-            .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(0)) # RTX KG2 2.10 `primary_knowledge_source``
             .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-            .transform(filter_semmed, curie_to_pmids, **semmed_filters)
         )
         # fmt: on
 
@@ -101,6 +101,7 @@ def filter_semmed(
         .cache()
     )
     if logger.isEnabledFor(logging.INFO):
+        logger.info(f"{limit_pmids=}")
         logger.info(
             f'{{"curie_to_pmids shape": "{curie_to_pmids.count():_}x{len(curie_to_pmids.columns)}", "curie_to_pmids schema": "{curie_to_pmids.schema.simpleString()}"}}',
         )
@@ -111,11 +112,18 @@ def filter_semmed(
     semmeddb_is_only_knowledge_source = (f.size("aggregator_knowledge_source") == 1) & (
         f.col("aggregator_knowledge_source").getItem(0) == "infores:semmeddb"
     )
-    table = f.broadcast(curie_to_pmids)
+    # table = f.broadcast(curie_to_pmids)
+    table = curie_to_pmids
+    single_semmed_edges = edges_df.filter(semmeddb_is_only_knowledge_source).repartition(4_000)
+    logger.info("$" * 80)
+    if logger.isEnabledFor(logging.INFO):
+        single_semmed_edges.cache()
+        logger.info(
+            f'{{"single_semmed_edges shape": "{single_semmed_edges.count():_}x{len(single_semmed_edges.columns)}"}}',
+        )
+
     single_semmed_edges = (
-        edges_df.repartition(4_000)
-        .filter(semmeddb_is_only_knowledge_source)
-        .alias("edges")
+        single_semmed_edges.alias("edges")
         .join(
             table.alias("subj"),
             on=[f.col("edges.subject") == f.col("subj.id")],
@@ -151,11 +159,14 @@ def compute_ngd(df: ps.DataFrame, num_pairs: int = 3.7e7 * 20) -> ps.DataFrame:
         df.cache()
         logger.debug(f"Just prior to intersection: df size: {df.count():_}.")
         logger.debug(pformat(df.head().asDict()))
+
+    nbr_common_pmids = f.array_size(f.array_intersect("subj.pmids", "obj.pmids"))
+
     return (
         # Take first max_pmids elements from each array
-        df.withColumn("num_common_pmids", f.array_size(f.array_intersect("subj.pmids", "obj.pmids"))).withColumn(
+        df.withColumn(
             "ngd",
-            (f.log2(f.greatest("subj.num_pmids", "obj.num_pmids")) - f.log2("num_common_pmids"))
+            (f.log2(f.greatest("subj.num_pmids", "obj.num_pmids")) - f.log2(nbr_common_pmids))
             / (f.log2(f.lit(num_pairs)) - f.log2(f.least("subj.num_pmids", "obj.num_pmids"))),
         )
     )
