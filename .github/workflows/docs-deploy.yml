@@ -80,7 +80,7 @@ jobs:
         env:
           MKDOCS_GIT_COMMITTERS_APIKEY: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          make env
+          make venv
           make build #builds the static files in site/
 
       - uses: 'google-github-actions/auth@v2'
