@@ -119,7 +119,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="create_prm_unified_nodes",
                 ),
                 # union edges
-                node(
+                ArgoNode(
                     func=nodes.union_and_deduplicate_edges,
                     inputs=[
                         f'integration.int.{source["name"]}.edges.norm@spark'
@@ -128,6 +128,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ],
                     outputs="integration.prm.unified_edges",
                     name="create_prm_unified_edges",
+                    argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
                 ),
                 # filter nodes given a set of filter stages
                 node(
