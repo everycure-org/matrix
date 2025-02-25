@@ -53,7 +53,7 @@ from
     , bq.overall_metrics
 where 
     -- TODO: parameterize this 
-    cumsum_percentage <= 98.0
+    cumsum_percentage <= 99.0
 order by 
     n_connections desc
 ```
@@ -96,7 +96,7 @@ from
     , bq.overall_metrics
 where 
     -- TODO: parameterize this 
-    cumsum_percentage <= 98.0
+    cumsum_percentage <= 99.0
 order by 
     n_connections desc
 ```
