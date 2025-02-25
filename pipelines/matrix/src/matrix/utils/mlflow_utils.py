@@ -1,5 +1,6 @@
 import os
 import secrets
+from datetime import datetime, timezone
 from typing import List, Optional
 
 import mlflow
@@ -32,8 +33,13 @@ EXPERIMENT_ARCHIVE_EXCLUSION_LIST = [
     "feature-attribute-embeddings-strategy-94019e37",
     "lc-baseline-run-run-23-aug-setup-3_FINAL",
     "fix-mlflow-modelling-bug",
+    "sample-run",
+    "Default",
 ]
 ARCHIVE_EXPERIMENT_ID = 17365
+# Choose a cutoff date for experiments to archive
+# Note that MLflow uses millisecond timestamps
+CUTOFF_TIMESTAMP = int(datetime(2025, 2, 21, tzinfo=timezone.utc).timestamp() * 1000)
 
 
 def create_mlflow_experiment(experiment_name: str) -> str:
@@ -107,8 +113,7 @@ def rename_soft_deleted_experiment(experiment_name: str) -> str:
 
 
 def copy_run(original_run: Run, new_experiment_id: int):
-    run_id = original_run.info.run_id
-    console.print(f"Copying run {run_id} to experiment {new_experiment_id}")
+    console.print(f"Copying run '{original_run.info.run_name}' to experiment {new_experiment_id}")
     client = mlflow.tracking.MlflowClient()
 
     new_run = client.create_run(
@@ -168,8 +173,12 @@ def archive_runs_and_experiments(dry_run: bool = True):
     console.print(f"Found {len(experiments)} experiments")
 
     for experiment in experiments:
+        if experiment.creation_time > CUTOFF_TIMESTAMP:
+            console.print(f"Skipping experiment: {experiment.name} (creation time after cutoff)")
+            continue
+
         if experiment.name in EXPERIMENT_ARCHIVE_EXCLUSION_LIST:
-            console.print(f"Skipping experiment: {experiment.name}")
+            console.print(f"Skipping experiment: {experiment.name} (from exclusion list)")
             continue
 
         runs = client.search_runs(experiment_ids=[experiment.experiment_id], run_view_type=ViewType.ACTIVE_ONLY)
