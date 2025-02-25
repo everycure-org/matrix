@@ -3,6 +3,7 @@ from kedro.pipeline import Pipeline, node, pipeline
 from matrix import settings
 from matrix.pipelines.batch import pipeline as batch_pipeline
 
+from ...kedro4argo_node import ArgoNode, ArgoResourceConfig
 from . import nodes
 
 
@@ -12,7 +13,7 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
     pipelines.append(
         pipeline(
             [
-                node(
+                ArgoNode(
                     func=nodes.transform,
                     inputs={
                         "transformer": f"params:integration.sources.{source}.transformer",
@@ -34,6 +35,10 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
                     },
                     name=f"transform_{source}_nodes",
                     tags=["standardize"],
+                    argo_config=ArgoResourceConfig(
+                        memory_request=128,
+                        memory_limit=128,
+                    ),
                 ),
                 batch_pipeline.create_pipeline(
                     source=f"source_{source}",
