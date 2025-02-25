@@ -130,6 +130,7 @@ def filter_semmed(
         .select("edges.*")
     )
     edges_filtered = edges_df.filter(~semmeddb_is_only_knowledge_source).unionByName(single_semmed_edges)
+    edges_filtered.explain()
     return edges_filtered
 
 
