@@ -54,6 +54,7 @@ preprocessing.raw.ec_medical_team.edges:
   load_args:
     sheet_name: new_edges
     columns: ["Source", "Target", "Label"] 
+
 preprocessing.raw.ec_medical_team.nodes:
   <<: [*_layer_raw, *_medical_kg_sheets_dataset]
   load_args:
