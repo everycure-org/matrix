@@ -120,7 +120,7 @@ cache.read: &cache_in
           dataType:
             _object: pyspark.sql.types.ArrayType
             elementType:
-              _object: pyspark.sql.types.DoubleType
+              _object: pyspark.sql.types.FloatType
           nullable: False
         - _object: pyspark.sql.types.StructField
           name: api
@@ -131,7 +131,9 @@ cache.write:
     type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
     path: *cache_location
     dataset: kedro_datasets.pandas.ParquetDataset
+    timeout: 600
     filename_suffix: ".parquet"
+    max_workers: 30
 cache.reload:  # an easy way to force Kedro to reload a dataset that has been altered in a previous node, but which is not using the same reference (e.g. due to transcription)
   <<: *cache_in
 cache.misses:

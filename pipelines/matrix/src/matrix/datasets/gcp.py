@@ -10,9 +10,9 @@ import fsspec
 import google.api_core.exceptions as exceptions
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 import pygsheets
 import pyspark.sql as ps
-import requests
 from google.cloud import bigquery, storage
 from kedro.io.core import (
     AbstractDataset,
@@ -472,8 +472,10 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
         load_args: dict[str, Any] | None = None,
         fs_args: dict[str, Any] | None = None,
         overwrite: bool = False,
+        timeout: int = 90,
     ) -> None:
         self._max_workers = int(max_workers)
+        self._timeout = timeout
 
         super().__init__(
             path=path,
@@ -486,7 +488,7 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
             fs_args=fs_args,
         )
 
-    def save(self, data: dict[str, Any], timeout: int = 90) -> None:
+    def save(self, data: dict[str, Any]) -> None:
         logger.info(f"saving with {self._max_workers} parallelism")
 
         if self._overwrite and self._filesystem.exists(self._normalized_path):
@@ -501,6 +503,7 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
                     partition = self._partition_to_path(partition_id)
                     kwargs[self._filepath_arg] = self._join_protocol(partition)
                     dataset = self._dataset_type(**kwargs)  # type: ignore
+                    logger.warning(f"TODO: remove me from output. {kwargs} & {type(dataset)}, {partition}")
 
                     # Evaluate partition data if it's callable
                     if callable(partition_data):
@@ -509,6 +512,9 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
                         raise RuntimeError("not callable")
 
                     # Save the partition data
+                    if isinstance(partition_data, pa.Table):
+                        # TODO: should be able to write directly from Arrow, using pyarrow.parquet.write_table
+                        partition_data = partition_data.to_pandas()
                     dataset.save(partition_data)
                 except Exception as e:
                     logger.error(f"Error in process_partition with partition {partition_id}: {e}")
@@ -531,9 +537,11 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
                 async def monitor_tasks():
                     for task in asyncio.as_completed(tasks):
                         try:
-                            await asyncio.wait_for(task, timeout)
+                            await asyncio.wait_for(task, self._timeout)
                         except asyncio.TimeoutError as e:
-                            logger.error(f"Timeout error: partition processing took longer than {timeout} seconds.")
+                            logger.error(
+                                f"Timeout error: partition processing took longer than {self._timeout} seconds."
+                            )
                             raise e
                         except Exception as e:
                             logger.error(f"Error processing partition in tqdm loop: {e}")

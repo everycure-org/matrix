@@ -3,9 +3,11 @@ import itertools
 import json
 import logging
 import warnings
-from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, TypeVar
+from functools import partial
+from typing import Any, Callable, Coroutine, Iterable, Iterator, Optional, Sequence, TypeVar
 
 import pandas as pd
+import pyarrow as pa
 from kedro.pipeline import Pipeline, node, pipeline
 from matrix.inject import inject_object
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
@@ -19,7 +21,10 @@ V = TypeVar("V")
 
 logger = logging.getLogger(__name__)
 
-CACHE_COLUMNS = ["key", "value", "api"]
+CACHE_SCHEMA = pa.schema(
+    {"key": pa.string(), "value": pa.list_(pa.float32()), "api": pa.string()}, metadata={"scope": "embeddings"}
+)
+CACHE_COLUMNS = CACHE_SCHEMA.names
 
 
 def create_node_embeddings_pipeline() -> Pipeline:
@@ -157,7 +162,7 @@ def derive_cache_misses(
 @inject_object()
 def cache_miss_resolver_wrapper(
     df: DataFrame, transformer: AttributeEncoder, api: str, batch_size: int
-) -> Dict[str, Callable[[], DataFrame]]:
+) -> dict[str, Callable[[], Coroutine[Any, Any, pa.Table]]]:
     if logger.isEnabledFor(logging.INFO):
         logger.info(json.dumps({"number of cache misses": df.count()}))
     assert (
@@ -166,18 +171,21 @@ def cache_miss_resolver_wrapper(
     documents = (_[0] for _ in df.toLocalIterator(prefetchPartitions=True))
     batches = batched(documents, batch_size)
 
-    async def async_delegator(batch):
-        return pd.DataFrame(
-            {CACHE_COLUMNS[0]: batch, CACHE_COLUMNS[1]: await transformer.apply(batch), CACHE_COLUMNS[2]: api}
-        )
+    async def async_delegator(batch: Sequence[str]) -> pa.Table:
+        logger.info(f"embedding batch with key: {batch[0]}")
+        embeddings: list[list[float]] = await transformer.apply(batch)
+        logger.info(f"received embedding for batch with key: {batch[0]}")
+        return pa.table([batch, embeddings, [api] * len(batch)], schema=CACHE_SCHEMA)
 
-    def prep(batches, api: str):  # add api as param to this kedro node function
-        for batch in batches:
+    def prep(
+        batches: Iterable[Sequence[T]], api: str
+    ) -> Iterator[tuple[str, Callable[[], Coroutine[Any, Any, pa.Table]]]]:
+        for index, batch in enumerate(batches):
             head = batch[0]
-            key = hashlib.sha256(
-                (head + api).encode("utf-8")
-            ).hexdigest()  # the produced partition files must be unique wrt the api
-            yield key, lambda: async_delegator(batch)
+            logger.info(f"materialized batch {index:>8_} of size {len(batch):_} with {head=}")
+            # Create a unique filename per partition, with respect to the API
+            key = hashlib.sha256((head + api).encode("utf-8")).hexdigest()
+            yield key, partial(async_delegator, batch=batch)
 
     return {k: v for k, v in prep(batches, api)}
 
@@ -237,7 +245,7 @@ def batched(iterable: Iterable[T], n: int, *, strict: bool = False) -> Iterator[
 
 
 @inject_object()
-def _transform(dfs: Dict[str, Any], transformer, **transformer_kwargs):
+def _transform(dfs: dict[str, Any], transformer, **transformer_kwargs):
     """Function to bucketize input data.
 
     Args:
@@ -256,7 +264,7 @@ def _transform(dfs: Dict[str, Any], transformer, **transformer_kwargs):
     return shards
 
 
-def _bucketize(df: DataFrame, bucket_size: int, columns: Optional[List[str]] = None) -> pd.DataFrame:
+def _bucketize(df: DataFrame, bucket_size: int, columns: Optional[list[str]] = None) -> pd.DataFrame:
     """Function to bucketize df in given number of buckets.
 
     Args:
@@ -295,7 +303,7 @@ def create_pipeline(
     output: str,
     bucket_size: str,
     transformer: str,
-    columns: List[str] = None,
+    columns: list[str] = None,
     max_workers: int = 10,
     **transformer_kwargs,
 ) -> Pipeline:
