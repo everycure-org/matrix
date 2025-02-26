@@ -5,8 +5,6 @@ import pyspark.sql as ps
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
 
-from matrix.pipelines.integration import schema
-
 from .transformer import GraphTransformer
 
 logger = logging.getLogger(__name__)
@@ -132,6 +130,7 @@ def filter_semmed(
         .select("edges.*")
     )
     edges_filtered = edges_df.filter(~semmeddb_is_only_knowledge_source).unionByName(single_semmed_edges)
+    edges_filtered.explain()
     return edges_filtered
 
 
@@ -145,11 +144,12 @@ def compute_ngd(df: ps.DataFrame, num_pairs: int = 3.7e7 * 20) -> ps.DataFrame:
     Returns:
         Dataframe with ndg score
     """
-    return (
-        # Take first max_pmids elements from each array
-        df.withColumn("num_common_pmids", f.array_size(f.array_intersect("subj.pmids", "obj.pmids"))).withColumn(
-            "ngd",
-            (f.log2(f.greatest("subj.num_pmids", "obj.num_pmids")) - f.log2("num_common_pmids"))
-            / (f.log2(f.lit(num_pairs)) - f.log2(f.least("subj.num_pmids", "obj.num_pmids"))),
-        )
+
+    nbr_common_pmids = f.array_size(f.array_intersect("subj.pmids", "obj.pmids"))
+    num_pmids = ("subj.num_pmids", "obj.num_pmids")
+
+    return df.withColumn(
+        "ngd",
+        (f.log2(f.greatest(*num_pmids)) - f.log2(nbr_common_pmids))
+        / (f.log2(f.lit(num_pairs)) - f.log2(f.least(*num_pmids))),
     )
