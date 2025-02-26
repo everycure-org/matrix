@@ -11,17 +11,17 @@ def create_pipeline(**kwargs) -> Pipeline:
             # -------------------------------------------------------------------------
             # EC Medical Team ingestion and enrichment
             # -------------------------------------------------------------------------
-            # node(
-            #     func=nodes.process_medical_nodes,
-            #     inputs=[
-            #         "preprocessing.raw.nodes",
-            #         "params:preprocessing.name_resolution.url",
-            #         "params:preprocessing.name_resolution.batch_size",
-            #     ],
-            #     outputs="preprocessing.int.nodes",
-            #     name="normalize_ec_medical_team_nodes",
-            #     tags=["ec-medical-kg"],
-            # ),
+            node(
+                func=nodes.process_medical_nodes,
+                inputs=[
+                    "preprocessing.raw.nodes",
+                    "params:preprocessing.name_resolution.url",
+                    "params:preprocessing.name_resolution.batch_size",
+                ],
+                outputs="preprocessing.int.nodes",
+                name="normalize_ec_medical_team_nodes",
+                tags=["ec-medical-kg"],
+            ),
             # node(
             #     func=nodes.process_medical_edges,
             #     inputs=[
@@ -45,17 +45,17 @@ def create_pipeline(**kwargs) -> Pipeline:
             # -------------------------------------------------------------------------
             # EC Clinical Trials ingestion and enrichment
             # -------------------------------------------------------------------------
-            node(
-                func=nodes.add_source_and_target_to_clinical_trails,
-                inputs={
-                    "df": "preprocessing.raw.clinical_trials_data",
-                    "resolver_url": "params:preprocessing.name_resolution.url",
-                    "batch_size": "params:preprocessing.name_resolution.batch_size",
-                },
-                outputs="preprocessing.int.mapped_clinical_trials_data",
-                name="mapped_clinical_trials_data",
-                tags=["ec-clinical-trials-data"],
-            ),
+            # node(
+            #     func=nodes.add_source_and_target_to_clinical_trails,
+            #     inputs={
+            #         "df": "preprocessing.raw.clinical_trials_data",
+            #         "resolver_url": "params:preprocessing.name_resolution.url",
+            #         "batch_size": "params:preprocessing.name_resolution.batch_size",
+            #     },
+            #     outputs="preprocessing.int.mapped_clinical_trials_data",
+            #     name="mapped_clinical_trials_data",
+            #     tags=["ec-clinical-trials-data"],
+            # ),
             # NOTE: Clean up the clinical trial data and write it to the GCS bucket
             # node(
             #     func=nodes.clean_clinical_trial_data,
