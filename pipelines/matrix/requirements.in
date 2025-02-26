@@ -2,6 +2,9 @@
 bmt # biolink model toolkit
 gcsfs==2024.3.1
 google-cloud-bigquery
+google-cloud-bigquery-storage
+db-dtypes # needed for bigquery in line queries in notebooks
+google-cloud-iam
 graphdatascience
 hdfs
 hdfs==2.7.3
@@ -36,6 +39,7 @@ pytest-mock
 pytest-testmon
 pytest-timeout>=2.3.1
 python-cypher==0.20.1
+responses
 rich
 ruff==0.6.8 # Matches pre-commit version
 s3fs

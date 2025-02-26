@@ -1,6 +1,6 @@
 from kedro.pipeline import Pipeline, pipeline
 
-from matrix.kedro4argo_node import ArgoNode
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from matrix.pipelines.data_release import last_node_name
 from matrix.pipelines.data_release.nodes import filtered_edges_to_kgx, filtered_nodes_to_kgx
 from matrix.pipelines.embeddings.nodes import ingest_edges, ingest_nodes
@@ -20,6 +20,12 @@ last_node = ArgoNode(
 
 
 def create_pipeline(**kwargs) -> Pipeline:
+    small_resource_requirement = ArgoResourceConfig(
+        cpu_limit=2,
+        cpu_request=2,
+        memory_limit=24,
+        memory_request=24,
+    )
     """Create release pipeline."""
     return pipeline(
         [
@@ -36,19 +42,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="data_release.prm.bigquery_nodes",
                 name="release_nodes_to_bigquery",
             ),
-            # release to neo4j
-            ArgoNode(
-                func=lambda x: x,
-                inputs=["embeddings.feat.nodes"],
-                outputs="data_release.feat.nodes_with_embeddings",
-                name="ingest_nodes_with_embeddings",
-            ),
             ArgoNode(
                 func=ingest_nodes,
                 inputs=["integration.prm.filtered_nodes"],
                 outputs="data_release.prm.kg_nodes",
                 name="ingest_kg_nodes",
                 tags=["neo4j"],
+                argo_config=small_resource_requirement,
             ),
             ArgoNode(
                 func=ingest_edges,
@@ -56,6 +56,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="data_release.prm.kg_edges",
                 name="ingest_kg_edges",
                 tags=["neo4j"],
+                argo_config=small_resource_requirement,
             ),
             ArgoNode(
                 func=filtered_edges_to_kgx,
@@ -72,6 +73,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["kgx"],
             ),
             last_node,
+            # NOTE: Enable when the embeddings pipeline worked piror to this pipeline
+            # # release to neo4j
+            # ArgoNode(
+            #     func=lambda x: x,
+            #     inputs=["embeddings.feat.nodes"],
+            #     outputs="data_release.feat.nodes_with_embeddings",
+            #     name="ingest_nodes_with_embeddings",
+            # ),
             # NOTE: Enable if you want embeddings
             # ArgoNode(
             #     func=lambda _, x: x,
