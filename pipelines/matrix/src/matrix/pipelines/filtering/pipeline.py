@@ -1,29 +1,52 @@
-from kedro.pipeline import Pipeline, pipeline
-
-from matrix.kedro4argo_node import ArgoNode
+from kedro.pipeline import Pipeline, node, pipeline
 
 from . import nodes
 
 
 def create_pipeline(**kwargs) -> Pipeline:
-    """Create filtering pipeline."""
+    """Create integration pipeline."""
 
-    return pipeline(
-        [
-            ArgoNode(
-                func=nodes.filter_kg,
-                # TODO Figure out what the correct input is
-                inputs={
-                    "nodes": "integration.prm.filtered_nodes",
-                    "edges": "integration.prm.filtered_edges",
-                },
-                outputs=[
-                    "filtering.prm.rtxkg2_filtered_nodes",
-                    "filtering.prm.rtxkg2_filtered_edges",
-                    "filtering.prm.robokop_filtered_nodes",
-                    "filtering.prm.robokop_filtered_edges",
-                ],
-                name="filter_kg",
-            ),
-        ]
+    pipelines = []
+
+    pipelines.append(
+        pipeline(
+            [
+                # Add deduplication?
+                node(
+                    #
+                    func=nodes.prefilter_unified_kg_nodes,
+                    inputs=[
+                        # unified and deduplicated nodes
+                        "integration.prm.unified_nodes",
+                        "params:integration.filtering.node_filters",
+                    ],
+                    outputs="filtering.prm.prefiltered_nodes",
+                    name="prefilter_prm_knowledge_graph_nodes",
+                    tags=["filtering"],
+                ),
+                node(
+                    func=nodes.filter_unified_kg_edges,
+                    inputs=[
+                        "integration.prm.prefiltered_nodes",
+                        "integration.prm.unified_edges",
+                        "params:integration.filtering.edge_filters",
+                    ],
+                    outputs="filtering.prm.filtered_edges",
+                    name="filter_prm_knowledge_graph_edges",
+                    tags=["filtering"],
+                ),
+                node(
+                    func=nodes.filter_nodes_without_edges,
+                    inputs=[
+                        "integration.prm.prefiltered_nodes",
+                        "integration.prm.filtered_edges",
+                    ],
+                    outputs="filtering.prm.filtered_nodes",
+                    name="filter_nodes_without_edges",
+                    tags=["filtering"],
+                ),
+            ]
+        )
     )
+
+    return sum(pipelines)

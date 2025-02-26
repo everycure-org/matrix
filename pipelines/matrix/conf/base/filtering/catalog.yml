@@ -1,0 +1,44 @@
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  load_args:
+    header: True
+  save_args:
+    mode: overwrite
+
+_pandas_parquet: &_pandas_parquet
+  type: matrix.datasets.graph.PandasParquetDataset
+  save_args:
+    engine: pyarrow
+  load_args:
+    engine: pyarrow
+
+_layer_int: &_layer_int
+  metadata:
+    kedro-viz:
+      layer: filtering
+
+_layer_prm: &_layer_prm
+  metadata:
+    kedro-viz:
+      layer: primary
+
+# -------------------------------------------------------------------------
+# Datasets
+# -------------------------------------------------------------------------
+# filtered KGs
+filtering.prm.filtered_edges:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.filtering}/prm/filtered/edges
+
+# FUTURE more elegant: Apply all node filters, then all edge filters, then a "cleanup" final step that removes
+# 1. all edges where nodes were deleted
+# 2. all nodes that have not one edge connected anymore
+filtering.prm.prefiltered_nodes:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.filtering}/prm/prefiltered/nodes
+
+filtering.prm.filtered_nodes:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.filtering}/prm/filtered/nodes
+
