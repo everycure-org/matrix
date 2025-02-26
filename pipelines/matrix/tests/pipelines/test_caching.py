@@ -309,36 +309,37 @@ def test_df_fully_enriched(
     mock_encoder,
     mock_encoder2,
     spark,
+    tmpdir,
 ):
-    project_path = Path.cwd()
+    project_path = Path(__file__).resolve().parents[2]
     bootstrap_project(project_path)
     configure_project("matrix")
     # kedro_context = request.getfixturevalue(kedro_context)
     with KedroSession.create(project_path) as session:
         kedro_context = session.load_context()
-        temp_dir = tempfile.mkdtemp()
-        print(f"Temporary directory: {temp_dir}")
+        # temp_dir = tempfile.mkdtemp()
+        print(f"Temporary directory: {tmpdir}")
         print(spark.sparkContext.getConf().getAll())
         input = {
             "integration.prm.filtered_nodes": MemoryDataset(sample_input_df),
             "cache.read": SparkWithSchemaDataset(
-                filepath=os.path.join(temp_dir, "cache_dataset"),
+                filepath=os.path.join(tmpdir, "cache_dataset"),
                 provide_empty_if_not_present=True,
                 load_args={"schema": cache_schema},
             ),
             "fully_enriched": LazySparkDataset(
-                filepath=os.path.join(temp_dir, "fully_enriched"), save_args={"mode": "overwrite"}
+                filepath=os.path.join(tmpdir, "fully_enriched"), save_args={"mode": "overwrite"}
             ),
             "cache_misses": LazySparkDataset(
-                filepath=os.path.join(temp_dir, "cache_misses"), save_args={"mode": "overwrite"}
+                filepath=os.path.join(tmpdir, "cache_misses"), save_args={"mode": "overwrite"}
             ),
             "cache.write": PartitionedAsyncParallelDataset(
-                path=os.path.join(temp_dir, "cache_dataset"),
+                path=os.path.join(tmpdir, "cache_dataset"),
                 dataset=ParquetDataset,
                 filename_suffix=".parquet",
             ),
             "cache.reload": SparkWithSchemaDataset(
-                filepath=os.path.join(temp_dir, "cache_dataset"),
+                filepath=os.path.join(tmpdir, "cache_dataset"),
                 load_args={"schema": cache_schema},
             ),
             "params:caching.api": sample_api1,
