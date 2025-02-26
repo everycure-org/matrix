@@ -14,3 +14,12 @@ integration.prm.filtered_nodes:
 integration.prm.filtered_edges:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.integration_sample}/prm/filtered/edges
+
+# Sampled unified graph
+integration.prm.sample.unified_nodes:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.integration_sample}/prm/unified/nodes
+
+integration.prm.sample.unified_edges:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.integration_sample}/prm/unified/edges
