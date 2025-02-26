@@ -7,7 +7,7 @@ from typing import Iterable, List, Tuple
 import pandas as pd
 import requests
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import Retrying, retry, stop_after_attempt, wait_exponential
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,6 @@ def coalesce(s: pd.Series, *series: List[pd.Series]):
     return s
 
 
-@retry(wait=wait_exponential(multiplier=2, min=2, max=120), stop=stop_after_attempt(5))
 def resolve_one_name_batch(names: List[str], url: str) -> dict:
     """Batch resolve a list of names to their corresponding CURIEs."""
     payload = {
@@ -32,9 +31,11 @@ def resolve_one_name_batch(names: List[str], url: str) -> dict:
     # Waiting between requests drastically improves the API performance, as opposed to hitting a 5xx code
     # and using retrying with backoff, which can render the API unresponsive for a long time (> 10 min).
     time.sleep(random.randint(5, 10))
-    response = requests.post(url, json=payload, headers={"Content-Type": "application/json"})
-    logger.debug(f"Request time: {response.elapsed.total_seconds():.2f} seconds")
-    response.raise_for_status()
+    for attempt in Retrying(wait=wait_exponential(multiplier=2, min=2, max=120), stop=stop_after_attempt(5)):
+        with attempt:
+            response = requests.post(url, json=payload)
+            logger.debug(f"Request time: {response.elapsed.total_seconds():.2f} seconds")
+            response.raise_for_status()
     return response.json(), response.elapsed.total_seconds()
 
 
@@ -48,7 +49,7 @@ def parse_one_name_batch(
         if attributes:
             resolved_data[name] = {col: attributes[0].get(col) for col in cols_to_get}
         else:
-            resolved_data[name] = {col: None for col in cols_to_get}
+            resolved_data[name] = dict.fromkeys(cols_to_get)
 
     return resolved_data
 
@@ -110,8 +111,8 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str, batch_size: int) 
     resolved_names = resolve_names(
         names, cols_to_get=["curie", "label", "types"], url=resolver_url, batch_size=batch_size
     )
-    df["extra_cols"] = df.name.map(resolved_names)
-    df = df.join(pd.json_normalize(df["extra_cols"])).drop(columns="extra_cols")
+    extra_cols = df.name.map(resolved_names)
+    df = df.join(pd.json_normalize(extra_cols))
 
     # Coalesce id and new id to allow adding "new" nodes
     df["normalized_curie"] = coalesce(df["new_id"], df["curie"])
@@ -209,8 +210,14 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
     drug_mapping = resolve_names(drug_names, cols_to_get=["curie"], url=resolver_url, batch_size=batch_size)
     disease_mapping = resolve_names(disease_names, cols_to_get=["curie"], url=resolver_url, batch_size=batch_size)
 
-    df["drug_curie"] = df["drug_name"].map(lambda x: drug_mapping.get(x, {}).get("curie", None))
-    df["disease_curie"] = df["disease_name"].map(lambda x: disease_mapping.get(x, {}).get("curie", None))
+    drug_mapping_df = pd.DataFrame(drug_mapping).T["curie"].rename("drug_curie")
+    disease_mapping_df = pd.DataFrame(disease_mapping).T["curie"].rename("disease_curie")
+
+    df = pd.merge(df, drug_mapping_df, how="left", left_on="drug_name", right_index=True)
+    df = pd.merge(df, disease_mapping_df, how="left", left_on="disease_name", right_index=True)
+
+    # df["drug_curie"] = df["drug_name"].map(lambda x: drug_mapping.get(x, {}).get("curie", None))
+    # df["disease_curie"] = df["disease_name"].map(lambda x: disease_mapping.get(x, {}).get("curie", None))
     # df.to_pickle("add_source_and_target_df_batch.pkl")
     end = time.perf_counter()
     print(f"Execution time add_source_and_target_to_clinical_trails: {end - start:.6f} seconds")
