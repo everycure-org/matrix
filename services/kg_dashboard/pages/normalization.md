@@ -17,6 +17,19 @@ where normalization_set = 'merged'
 group by all
 ```
 
+```sql failed_normalization
+select original_prefix, 
+       prefix || ' ' as prefix,
+       normalization_set,      
+       sum(count) as count
+from bq.normalization
+where normalization_success = false
+  and normalization_set <> 'merged'
+  and replace(category, 'biolink:', '') in ${inputs.category.value}
+group by all
+```
+
+
 <Dropdown
   data={merged_normalization_categories}
   name=category
@@ -32,6 +45,17 @@ group by all
   sourceCol="original_prefix" 
   targetCol="prefix" 
   valueCol="count" 
-  title="Normalized Prefixes" 
+  title="Normalization Success"
+  linkLabels='full'  
+  linkColor='gradient' 
+  chartAreaHeight={800}
 />
 
+<BarChart 
+  data={failed_normalization}
+  x=prefix
+  y=count
+  series=normalization_set
+  title="Normalization Failures"
+  swapXY=true
+/>

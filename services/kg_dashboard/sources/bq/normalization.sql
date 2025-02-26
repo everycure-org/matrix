@@ -8,7 +8,7 @@ SELECT
        count(*) as count
 FROM `mtrx-hub-dev-3of.release_${bq_release_version}.disease_list_nodes_normalized`
 GROUP BY all
-UNION DISTINCT
+UNION ALL
 SELECT 
        SPLIT(original_id, ':')[OFFSET(0)] AS original_prefix,
        SPLIT(id, ':')[OFFSET(0)] AS prefix,       
@@ -19,7 +19,7 @@ SELECT
        count(*) as count
 FROM `mtrx-hub-dev-3of.release_${bq_release_version}.drug_list_nodes_normalized`
 GROUP BY all
-UNION DISTINCT
+UNION ALL
 SELECT 
        SPLIT(original_id, ':')[OFFSET(0)] AS original_prefix,
        SPLIT(id, ':')[OFFSET(0)] AS prefix,
@@ -30,7 +30,7 @@ SELECT
        count(*) as count
 FROM `mtrx-hub-dev-3of.release_${bq_release_version}.ec_clinical_trails_nodes_normalized`
 GROUP BY all
-UNION DISTINCT
+UNION ALL
 SELECT 
        SPLIT(original_id, ':')[OFFSET(0)] AS original_prefix,
        SPLIT(id, ':')[OFFSET(0)] AS prefix,
@@ -41,7 +41,7 @@ SELECT
        count(*) as count
 FROM `mtrx-hub-dev-3of.release_${bq_release_version}.ground_truth_nodes_normalized`
 GROUP BY all
-UNION DISTINCT
+UNION ALL
 SELECT 
        SPLIT(original_id, ':')[OFFSET(0)] AS original_prefix,
        SPLIT(id, ':')[OFFSET(0)] AS prefix,
@@ -52,7 +52,7 @@ SELECT
        count(*) as count
 FROM `mtrx-hub-dev-3of.release_${bq_release_version}.rtx_kg2_nodes_normalized`
 GROUP BY all
-UNION DISTINCT
+UNION ALL
 SELECT 
        SPLIT(original_id, ':')[OFFSET(0)] AS original_prefix,
        SPLIT(id, ':')[OFFSET(0)] AS prefix,
@@ -63,7 +63,7 @@ SELECT
        count(*) as count
 FROM `mtrx-hub-dev-3of.release_${bq_release_version}.robokop_nodes_normalized`
 GROUP BY all
-UNION DISTINCT
+UNION ALL
 SELECT 
        SPLIT(original_id, ':')[OFFSET(0)] AS original_prefix,
        SPLIT(id, ':')[OFFSET(0)] AS prefix,
