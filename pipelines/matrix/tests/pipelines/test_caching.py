@@ -3,7 +3,9 @@ import tempfile
 from pathlib import Path
 from unittest.mock import Mock
 
+import pyspark as ps
 import pytest
+from kedro.framework.context import KedroContext
 from kedro.framework.project import configure_project
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import bootstrap_project
@@ -124,14 +126,7 @@ def cache_misses_schema():
 def sample_cache(spark: SparkSession, cache_schema) -> DataFrame:
     data = [
         {"key": "A", "value": [1.0, 2.0], "api": "gpt-4"},
-        {
-            "key": "B",
-            "value": [
-                4.0,
-                5.0,
-            ],
-            "api": "gpt-4",
-        },
+        {"key": "B", "value": [4.0, 5.0], "api": "gpt-4"},
         {"key": "C", "value": [7.0, 8.0], "api": "gpt-3"},
         {"key": "D", "value": [8.0, 9.0], "api": "gpt-3"},
     ]
@@ -240,33 +235,23 @@ def mock_encoder2() -> Mock:
 
 
 def test_spark_with_schema_dataset_bootstrap(test_schema, cache_schema):
-    # Define the path
     project_path = Path.cwd()
 
     # Bootstrap the project to set up the configuration
     bootstrap_project(project_path)
-
-    # Configure the project
     configure_project("matrix")
 
     # Create a Kedro session and context
     with KedroSession.create(project_path) as session:
         kedro_context = session.load_context()
-
-        # Define a non-existent filepath to trigger the bootstrap behavior
         non_existent_path = "file:///tmp/non_existent_path"
-
-        # Create an instance of SparkWithSchemaDataset with bootstrapping enabled
         dataset = SparkWithSchemaDataset(
             filepath=non_existent_path,
             file_format="parquet",
             load_args=test_schema,
             provide_empty_if_not_present=True,
         )
-
-        # Attempt to load the dataset
         result_df = dataset.load()
-        # Verify that the result is an empty DataFrame with the correct schema
         assert result_df.rdd.isEmpty(), "The DataFrame should be empty"
         assert result_df.schema == cache_schema, "The schema should match the provided schema"
 
@@ -313,6 +298,7 @@ def test_different_api(sample_cache, sample_api1, api1_filtered_cache, sample_ap
     assertDataFrameEqual(result2_df, api2_filtered_cache)
 
 
+# @pytest.mark.parametrize("kedro_context", ["cloud_kedro_context", "base_kedro_context"])
 def test_df_fully_enriched(
     sample_input_df,
     cache_schema,
@@ -323,13 +309,36 @@ def test_df_fully_enriched(
     sample_new_col,
     mock_encoder,
     mock_encoder2,
+    spark,
+    # kedro_context: KedroContext,
+    # request: pytest.FixtureRequest,
 ):
+    # if 'spark' in globals():
+    #     spark.stop()
+
+    # spark = (
+    #     SparkSession.builder
+    #     .master("local[*]")
+    #     .config("spark.driver.host", "127.0.0.1")
+    #     .config("spark.driver.bindAddress", "127.0.0.1")
+    #     .config("spark.ui.enabled", "false")
+    #     .config("spark.local.dir", "/tmp/spark-temp")
+    #     .config("spark.network.timeout", "10000s")
+    #     .config("spark.sql.shuffle.partitions", "1")
+    #     .config("spark.driver.port", "4040")
+    #     .config("spark.driver.extraJavaOptions", "-Djava.net.preferIPv6Addresses=false")
+    #     .getOrCreate()
+    # )
+
     project_path = Path.cwd()
     bootstrap_project(project_path)
     configure_project("matrix")
+    # kedro_context = request.getfixturevalue(kedro_context)
     with KedroSession.create(project_path) as session:
         kedro_context = session.load_context()
-        temp_dir = tempfile.TemporaryDirectory().name
+        temp_dir = tempfile.mkdtemp()
+        print(f"Temporary directory: {temp_dir}")
+        print(spark.sparkContext.getConf().getAll())
         input = {
             "integration.prm.filtered_nodes": MemoryDataset(sample_input_df),
             "cache.read": SparkWithSchemaDataset(
@@ -360,11 +369,13 @@ def test_df_fully_enriched(
             "params:caching.batch_size": sample_batch_size,
         }
         mock_catalog_run1 = DataCatalog(input)
+        # print(mock_catalog_run1.list())
         pipeline_run1 = create_node_embeddings_pipeline()
         runner = SequentialRunner()
         runner.run(pipeline_run1, mock_catalog_run1)
         enriched_data = mock_catalog_run1.load("fully_enriched").toPandas()
         assert enriched_data[sample_new_col].isNull().sum() == 0, "The input DataFrame should be fully enriched"
+        # Run the pipeline the 2nd time
         mock_catalog_run2 = DataCatalog(input | {"params:caching.resolver": mock_encoder2})
         pipeline_run2 = create_node_embeddings_pipeline()
         runner.run(pipeline_run2, mock_catalog_run2)
