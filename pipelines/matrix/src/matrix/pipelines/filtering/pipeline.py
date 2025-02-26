@@ -18,7 +18,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     inputs=[
                         # unified and deduplicated nodes
                         "integration.prm.unified_nodes",
-                        "params:integration.filtering.node_filters",
+                        "params:filtering.filtering.node_filters",
                     ],
                     outputs="filtering.prm.prefiltered_nodes",
                     name="prefilter_prm_knowledge_graph_nodes",
@@ -27,9 +27,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                 node(
                     func=nodes.filter_unified_kg_edges,
                     inputs=[
-                        "integration.prm.prefiltered_nodes",
+                        "filtering.prm.prefiltered_nodes",
                         "integration.prm.unified_edges",
-                        "params:integration.filtering.edge_filters",
+                        "params:filtering.filtering.edge_filters",
                     ],
                     outputs="filtering.prm.filtered_edges",
                     name="filter_prm_knowledge_graph_edges",
@@ -38,8 +38,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 node(
                     func=nodes.filter_nodes_without_edges,
                     inputs=[
-                        "integration.prm.prefiltered_nodes",
-                        "integration.prm.filtered_edges",
+                        "filtering.prm.prefiltered_nodes",
+                        "filtering.prm.filtered_edges",
                     ],
                     outputs="filtering.prm.filtered_nodes",
                     name="filter_nodes_without_edges",
