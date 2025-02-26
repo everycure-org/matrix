@@ -1,3 +1,4 @@
+import logging
 import os
 import tempfile
 from pathlib import Path
@@ -77,12 +78,12 @@ def input_df_schema():
 
 
 @pytest.fixture
-def sample_input_df(spark: SparkSession, input_df_schema) -> DataFrame:
+def sample_input_df(spark: SparkSession, input_df_schema, sample_primary_key) -> DataFrame:
     data = [
-        {"to_resolve": "A", "category": "g"},
-        {"to_resolve": "B", "category": "h"},
-        {"to_resolve": "D", "category": "j"},
-        {"to_resolve": "E", "category": "k"},
+        {sample_primary_key: "A", "category": "g"},
+        {sample_primary_key: "B", "category": "h"},
+        {sample_primary_key: "D", "category": "j"},
+        {sample_primary_key: "E", "category": "k"},
     ]
     return spark.createDataFrame(data, input_df_schema)
 
@@ -123,12 +124,12 @@ def cache_misses_schema():
 
 
 @pytest.fixture
-def sample_cache(spark: SparkSession, cache_schema) -> DataFrame:
+def sample_cache(spark: SparkSession, cache_schema, sample_api1, sample_api2) -> DataFrame:
     data = [
-        {"key": "A", "value": [1.0, 2.0], "api": "gpt-4"},
-        {"key": "B", "value": [4.0, 5.0], "api": "gpt-4"},
-        {"key": "C", "value": [7.0, 8.0], "api": "gpt-3"},
-        {"key": "D", "value": [8.0, 9.0], "api": "gpt-3"},
+        {"key": "A", "value": [1.0, 2.0], "api": sample_api1},
+        {"key": "B", "value": [4.0, 5.0], "api": sample_api1},
+        {"key": "C", "value": [7.0, 8.0], "api": sample_api2},
+        {"key": "D", "value": [8.0, 9.0], "api": sample_api2},
     ]
     return spark.createDataFrame(data, schema=cache_schema)
 
@@ -158,22 +159,22 @@ def api2_filtered_cache(spark: SparkSession, filtered_cache_schema) -> DataFrame
 
 
 @pytest.fixture
-def sample_cache_out(spark: SparkSession, cache_schema) -> DataFrame:
+def sample_cache_out(spark: SparkSession, cache_schema, sample_api1) -> DataFrame:
     data = [
-        {"key": "E", "value": [5.0, 3.0], "api": "gpt-4"},
-        {"key": "D", "value": [5.0, 3.0], "api": "gpt-4"},
+        {"key": "E", "value": [5.0, 3.0], "api": sample_api1},
+        {"key": "D", "value": [5.0, 3.0], "api": sample_api1},
     ]
     return spark.createDataFrame(data, schema=cache_schema)
 
 
 @pytest.fixture
-def sample_duplicate_cache(spark: SparkSession, cache_schema) -> DataFrame:
+def sample_duplicate_cache(spark: SparkSession, cache_schema, sample_api1) -> DataFrame:
     data = [
-        {"key": "A", "value": [1.0, 2.0], "api": "gpt-4"},
-        {"key": "B", "value": [4.0, 5.0], "api": "gpt-4"},
-        {"key": "B", "value": [4.0, 5.0], "api": "gpt-4"},
-        {"key": "D", "value": [8.0, 9.0], "api": "gpt-4"},
-        {"key": "E", "value": [9.0, 10.0], "api": "gpt-4"},
+        {"key": "A", "value": [1.0, 2.0], "api": sample_api1},
+        {"key": "B", "value": [4.0, 5.0], "api": sample_api1},
+        {"key": "B", "value": [4.0, 5.0], "api": sample_api1},
+        {"key": "D", "value": [8.0, 9.0], "api": sample_api1},
+        {"key": "E", "value": [9.0, 10.0], "api": sample_api1},
     ]
     return spark.createDataFrame(data, schema=cache_schema)
 
@@ -235,8 +236,7 @@ def mock_encoder2() -> Mock:
 
 
 def test_spark_with_schema_dataset_bootstrap(test_schema, cache_schema):
-    project_path = Path.cwd()
-
+    project_path = Path(__file__).resolve().parents[2]
     # Bootstrap the project to set up the configuration
     bootstrap_project(project_path)
     configure_project("matrix")
@@ -298,7 +298,6 @@ def test_different_api(sample_cache, sample_api1, api1_filtered_cache, sample_ap
     assertDataFrameEqual(result2_df, api2_filtered_cache)
 
 
-# @pytest.mark.parametrize("kedro_context", ["cloud_kedro_context", "base_kedro_context"])
 def test_df_fully_enriched(
     sample_input_df,
     cache_schema,
@@ -310,26 +309,7 @@ def test_df_fully_enriched(
     mock_encoder,
     mock_encoder2,
     spark,
-    # kedro_context: KedroContext,
-    # request: pytest.FixtureRequest,
 ):
-    # if 'spark' in globals():
-    #     spark.stop()
-
-    # spark = (
-    #     SparkSession.builder
-    #     .master("local[*]")
-    #     .config("spark.driver.host", "127.0.0.1")
-    #     .config("spark.driver.bindAddress", "127.0.0.1")
-    #     .config("spark.ui.enabled", "false")
-    #     .config("spark.local.dir", "/tmp/spark-temp")
-    #     .config("spark.network.timeout", "10000s")
-    #     .config("spark.sql.shuffle.partitions", "1")
-    #     .config("spark.driver.port", "4040")
-    #     .config("spark.driver.extraJavaOptions", "-Djava.net.preferIPv6Addresses=false")
-    #     .getOrCreate()
-    # )
-
     project_path = Path.cwd()
     bootstrap_project(project_path)
     configure_project("matrix")
@@ -346,7 +326,7 @@ def test_df_fully_enriched(
                 provide_empty_if_not_present=True,
                 load_args={"schema": cache_schema},
             ),
-            "test_fully_enriched": LazySparkDataset(
+            "fully_enriched": LazySparkDataset(
                 filepath=os.path.join(temp_dir, "fully_enriched"), save_args={"mode": "overwrite"}
             ),
             "cache_misses": LazySparkDataset(
@@ -369,6 +349,7 @@ def test_df_fully_enriched(
             "params:caching.batch_size": sample_batch_size,
         }
         mock_catalog_run1 = DataCatalog(input)
+        mock_catalog_run1.load("cache.read")
         # print(mock_catalog_run1.list())
         pipeline_run1 = create_node_embeddings_pipeline()
         runner = SequentialRunner()
