@@ -79,7 +79,11 @@ class MLFlowHooks:
             if dataset_name not in self.fetch_logged_datasets():
                 logger.info(f"Dataset {dataset_name} is not in the already logged datasets. Logging it now:")
                 dataset = mlflow.data.from_pandas(pd.DataFrame(), name=dataset_name)
-                mlflow.log_input(dataset)
+                try:
+                    mlflow.log_input(dataset)
+                except Exception as ex:
+                    logger.error(f"Error encountered when logging dataset {dataset_name}: {ex}")
+                    raise
             else:
                 logger.info(f"Dataset {dataset_name} has already been logged as input.")
 
