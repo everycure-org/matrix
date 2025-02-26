@@ -6,18 +6,6 @@ _spark_parquet_ds: &_spark_parquet
   save_args:
     mode: overwrite
 
-_pandas_parquet: &_pandas_parquet
-  type: matrix.datasets.graph.PandasParquetDataset
-  save_args:
-    engine: pyarrow
-  load_args:
-    engine: pyarrow
-
-_layer_int: &_layer_int
-  metadata:
-    kedro-viz:
-      layer: filtering
-
 _layer_prm: &_layer_prm
   metadata:
     kedro-viz:
