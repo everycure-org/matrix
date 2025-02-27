@@ -20,7 +20,7 @@ with edge_count_per_subject as (
   group by 1
 )
 
-, all_edge_count as (
+, edge_count as (
   select 
     subject as id
     , n_edges_per_subject as n_edges 
@@ -42,7 +42,7 @@ with edge_count_per_subject as (
     id
     , sum(n_edges) as degree
   from 
-    all_edge_count
+    edge_count
   group by 
     id
   order by 
