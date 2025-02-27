@@ -3,7 +3,7 @@
 -- =====
 with edge_count_per_subject as (
   select 
-    subject as id, count(*) as c 
+    subject, count(*) as n_edges_per_subject
   from 
     `mtrx-hub-dev-3of.release_${bq_release_version}.edges`
   group by 1
@@ -11,7 +11,7 @@ with edge_count_per_subject as (
 
 , edge_count_per_object as (
   select 
-    object as id, count(*) as c 
+    object, count(*) as n_edges_per_object
   from 
     `mtrx-hub-dev-3of.release_${bq_release_version}.edges`
   where 
@@ -21,15 +21,25 @@ with edge_count_per_subject as (
 )
 
 , all_edge_count as (
-  select * from edge_count_per_subject s 
+  select 
+    subject as id
+    , n_edges_per_subject as n_edges 
+  from 
+    edge_count_per_subject s 
+
   union all 
-  select * from edge_count_per_object o
+  
+  select 
+    object as id
+    , n_edges_per_object as n_edges 
+  from 
+    edge_count_per_object o
 )
 
 , most_connected_nodes as (
   select 
     id
-    , sum(c) as degree
+    , sum(n_edges) as degree
   from 
     all_edge_count
   group by 
