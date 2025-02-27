@@ -15,7 +15,7 @@ on:
       git_fingerprint:
         description: 'The git sha that triggered the kg_release'
         required: true
-        default: 'debug-dont-release'
+        default: 'main'
 
 env:
   project_id: 'mtrx-hub-dev-3of'
