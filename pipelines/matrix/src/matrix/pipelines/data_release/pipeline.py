@@ -12,8 +12,8 @@ from matrix.pipelines.embeddings.nodes import ingest_edges, ingest_nodes
 # It's a sentinel indicating all data-delivering nodes are really done executing.
 # It _must_ be the very last node in this pipeline.
 last_node = ArgoNode(
-    func=lambda x, y, z: True,
-    inputs=["data_release.prm.kg_edges", "data_release.prm.kgx_edges", "data_release.prm.kgx_nodes"],
+    func=lambda x, y: True,
+    inputs=["data_release.prm.kgx_edges", "data_release.prm.kgx_nodes"],
     outputs="data_release.dummy",
     name=last_node_name,
 )
