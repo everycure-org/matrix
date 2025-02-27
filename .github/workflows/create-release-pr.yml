@@ -126,6 +126,7 @@ jobs:
 
       - name: Setup docs venv & generate yaml
         working-directory: docs/scripts
+        if: env.generate_notes == 'True'
         run: |
           uv run changelog_gen.py
 
@@ -133,6 +134,7 @@ jobs:
         working-directory: docs/src/releases/changelog_files
         env:
           FILENAME: releases_aggregated.yaml
+        if: env.generate_notes == 'True'
         run: |
           git add "${FILENAME}"
           
