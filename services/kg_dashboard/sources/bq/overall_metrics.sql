@@ -36,6 +36,7 @@ with edge_count_per_subject as (
     edge_count_per_object o
 )
 
+-- sum the number of edges of each node to obtain its degree
 , most_connected_nodes as (
   select 
     id
