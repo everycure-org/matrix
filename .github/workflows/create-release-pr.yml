@@ -6,6 +6,16 @@ on:
       - 'debug/release*'
   repository_dispatch:
     types: distribute-release
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'The version of the release'
+        required: true
+        default: 'debug-dont-release'
+      git_fingerprint:
+        description: 'The git sha that triggered the kg_release'
+        required: true
+        default: 'debug-dont-release'
 
 env:
   project_id: 'mtrx-hub-dev-3of'
@@ -27,12 +37,20 @@ jobs:
           if [[ "${{ github.event_name == 'repository_dispatch' }}" == "true" ]]; then
             release='${{ github.event.client_payload.release_version }}'
             gitref='${{ github.event.client_payload.git_fingerprint }}'
+          elif [[ "${{ github.event_name == 'workflow_dispatch' }}" == "true" ]]; then
+            release='${{ github.event.inputs.release_version }}'
+            gitref='${{ github.event.inputs.git_fingerprint }}'
           else
             release="debug-dont-release"
             gitref=${{github.ref_name}}
           fi
           echo "release=${release}" >> "$GITHUB_ENV"
           echo "gitref=${gitref}" >> "$GITHUB_ENV"
+
+      - name: print variables
+        run: |
+          echo "release=${release}"
+          echo "gitref=${gitref}"
 
       - name: Checkout
         uses: actions/checkout@main
