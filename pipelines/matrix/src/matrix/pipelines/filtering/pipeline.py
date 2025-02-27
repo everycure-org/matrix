@@ -11,7 +11,17 @@ def create_pipeline(**kwargs) -> Pipeline:
     pipelines.append(
         pipeline(
             [
-                # Add deduplication?
+                node(
+                    func=nodes.hierarchical_deduplication,
+                    inputs=[
+                        # unified and deduplicated nodes
+                        "integration.prm.unified_nodes",
+                    ],
+                    outputs="filtering.prm.dedpulicated_nodes",
+                    name="hierarchical_dedpulicate_kg_nodes",
+                    tags=["filtering"],
+                ),
+                # Dedup edges too
                 node(
                     #
                     func=nodes.prefilter_unified_kg_nodes,
