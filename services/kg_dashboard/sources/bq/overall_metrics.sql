@@ -1,6 +1,9 @@
+-- =====
+-- Get the ids of the most connected nodes in the KG i.e. the nodes with the highest degree
+-- =====
 with edge_count_per_subject as (
   select 
-    subject, count(*) as c 
+    subject as id, count(*) as c 
   from 
     `mtrx-hub-dev-3of.release_${bq_release_version}.edges`
   group by 1
@@ -8,50 +11,63 @@ with edge_count_per_subject as (
 
 , edge_count_per_object as (
   select 
-    object, count(*) as c 
+    object as id, count(*) as c 
   from 
     `mtrx-hub-dev-3of.release_${bq_release_version}.edges`
   where 
-    -- we don't want to count edges to self twice
+    -- Self edges are already captured in "edge_count_per_subject", we remove them here as we don't want to count them twice 
     object != subject 
   group by 1
 )
 
+, all_edge_count as (
+  select * from edge_count_per_subject s 
+  union all 
+  select * from edge_count_per_object o
+)
+
+-- 
 , most_connected_nodes as (
   select 
-    coalesce(subject, object) as node_id 
-    -- , coalesce(s.c, 0) + coalesce(o.c, 0) as n_edges
+    id
+    , sum(c) as degree
   from 
-    edge_count_per_subject s 
-    full outer join edge_count_per_object o on s.subject = o.object
+    all_edge_count
+  group by 
+    id
   order by 
-    coalesce(s.c, 0) + coalesce(o.c, 0) desc 
+    degree desc 
+  -- We only want to remove the top 1000 most connected nodes. This number was chosen after analysis of the KG nodes' degrees distribution.
+  -- TODO: find a way to parameterize this number in BigQuery
   limit 1000
 )
 
+-- =====
+-- Count nodes and edges 
+-- =====
 , n_nodes as (
   select 
-    count(*) as all_nodes
-    , SUM(IF(m.node_id is null, 1, 0)) as nodes_without_hyperconnected_nodes
-    , SUM(IF(di.id is not null, 1, 0)) as disease_nodes
-    , SUM(IF(dr.id is not null, 1, 0)) as drug_nodes
+    count(*) as n_nodes
+    , SUM(IF(m.id is null, 1, 0)) as n_nodes_without_most_connected_nodes
+    , SUM(IF(di.id is not null, 1, 0)) as n_nodes_from_disease_list
+    , SUM(IF(dr.id is not null, 1, 0)) as n_nodes_from_drug_list
   from 
     `mtrx-hub-dev-3of.release_${bq_release_version}.nodes` n
-    left outer join most_connected_nodes m on n.id = m.node_id
+    left outer join most_connected_nodes m on n.id = m.id
     left outer join `mtrx-hub-dev-3of.release_${bq_release_version}.disease_list_nodes_normalized` di on n.id = di.id 
     left outer join `mtrx-hub-dev-3of.release_${bq_release_version}.drug_list_nodes_normalized` dr on n.id = dr.id 
 )
 
 , n_edges as (
   select 
-    count(*) as all_edges
-    , SUM(IF(m1.node_id is null and m2.node_id is null, 1, 0)) as edges_without_hyperconnected_nodes
-    , SUM(IF(di1.id is not null or di2.id is not null, 1, 0)) as disease_edges
-    , SUM(IF(dr1.id is not null or dr2.id is not null, 1, 0)) as drug_edges
+    count(*) as n_edges
+    , SUM(IF(m1.id is null and m2.id is null, 1, 0)) as n_edges_without_most_connected_nodes
+    , SUM(IF(di1.id is not null or di2.id is not null, 1, 0)) as n_edges_from_disease_list
+    , SUM(IF(dr1.id is not null or dr2.id is not null, 1, 0)) as n_edges_from_drug_list
   from 
     `mtrx-hub-dev-3of.release_${bq_release_version}.edges` e
-    left outer join most_connected_nodes m1 on e.subject = m1.node_id
-    left outer join most_connected_nodes m2 on e.object = m2.node_id
+    left outer join most_connected_nodes m1 on e.subject = m1.id
+    left outer join most_connected_nodes m2 on e.object = m2.id
     left outer join `mtrx-hub-dev-3of.release_${bq_release_version}.disease_list_nodes_normalized` di1 on e.subject = di1.id 
     left outer join `mtrx-hub-dev-3of.release_${bq_release_version}.disease_list_nodes_normalized` di2 on e.object = di2.id 
     left outer join `mtrx-hub-dev-3of.release_${bq_release_version}.drug_list_nodes_normalized` dr1 on e.subject = dr1.id 
@@ -60,14 +76,14 @@ with edge_count_per_subject as (
 
 , output_metrics as (
   select 
-    n_nodes.all_nodes
-    , n_nodes.nodes_without_hyperconnected_nodes
-    , n_nodes.disease_nodes
-    , n_nodes.drug_nodes
-    , n_edges.all_edges
-    , n_edges.edges_without_hyperconnected_nodes
-    , n_edges.disease_edges
-    , n_edges.drug_edges
+    n_nodes.n_nodes
+    , n_nodes.n_nodes_without_most_connected_nodes
+    , n_nodes.n_nodes_from_disease_list
+    , n_nodes.n_nodes_from_drug_list
+    , n_edges.n_edges
+    , n_edges.n_edges_without_most_connected_nodes
+    , n_edges.n_edges_from_disease_list
+    , n_edges.n_edges_from_drug_list
   from 
     n_nodes 
     cross join n_edges
