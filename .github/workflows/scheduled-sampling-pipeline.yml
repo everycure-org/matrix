@@ -2,7 +2,7 @@ name: Scheduled Sampling Pipeline
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Keep existing schedule
+    - cron: '0 0 * * *'  # daily at 5am GMT
   workflow_dispatch:  {}
 env:
   project_id: 'mtrx-hub-dev-3of'
