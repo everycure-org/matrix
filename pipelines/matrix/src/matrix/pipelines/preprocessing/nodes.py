@@ -196,7 +196,7 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
     disease_mapping = resolve_names(disease_names, cols_to_get=["curie"], url=resolver_url, batch_size=batch_size)
 
     drug_mapping_df = pd.DataFrame(drug_mapping).T["curie"].rename("drug_curie")
-    disease_mapping_df = pd.DataFrame(disease_mapping).T["curie"].rename("disease_curie")
+    disease_mapping_df = pd.DataFrame(disease_mapping).transpose()["curie"].rename("disease_curie")
 
     df = pd.merge(df, drug_mapping_df, how="left", left_on="drug_name", right_index=True)
     df = pd.merge(df, disease_mapping_df, how="left", left_on="disease_name", right_index=True)
