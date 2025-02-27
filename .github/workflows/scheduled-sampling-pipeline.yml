@@ -2,7 +2,8 @@ name: Scheduled Sampling Pipeline
 
 on:
   schedule:
-    - cron: '0 5 * * *'  # daily at 5am GMT
+    - cron: '0 0 * * *'  # Keep existing schedule
+  workflow_dispatch:  {}
 env:
   project_id: 'mtrx-hub-dev-3of'
   workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
