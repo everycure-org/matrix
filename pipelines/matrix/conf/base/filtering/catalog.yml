@@ -15,6 +15,14 @@ _layer_prm: &_layer_prm
 # Datasets
 # -------------------------------------------------------------------------
 # filtered KGs
+filtering.prm.deduplicated_nodes:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.filtering}/prm/filtered/deduplicated/nodes
+
+filtering.prm.deduplicated_edges:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.filtering}/prm/filtered/deduplicated/edges
+
 filtering.prm.filtered_edges:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.filtering}/prm/filtered/edges
