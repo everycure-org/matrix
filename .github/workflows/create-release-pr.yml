@@ -67,10 +67,14 @@ jobs:
 
       - name: Tag the commit from which the data release was triggered
         run: |
-          # Create an annotated tag, so that we can push it easily with the files using `follow-tags`.
-          git tag --annotate --message '' -- "${{env.release}}" "${{env.gitref}}" && \
-          git push --follow-tags
-
+          if git ls-remote --tags origin "${{env.release}}"; then
+            echo "Tag ${{env.release}} already exists. Skipping tag creation."
+          else
+            # Create an annotated tag, so that we can push it easily with the files using `follow-tags`.
+            git tag --annotate --message '' -- "${{env.release}}" "${{env.gitref}}" && \
+            git push --follow-tags
+          fi
+          
       - name: Branch off
         # To comply with the protected-branch policy, we checkout a different
         # branch, but from the commit that created the release.
@@ -98,6 +102,13 @@ jobs:
         run: |
           set -eux
           BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
+
+          # Check if the file exists locally
+          if [ -f "$FILENAME" ]; then
+            echo "File '$FILENAME' already exists locally. Skipping download."
+            exit 0
+          fi
+
           gcloud storage cp "$BLOB_PATH" "$FILENAME"
           
           git add "${FILENAME}" && \
@@ -128,6 +139,18 @@ jobs:
         # only create release notes for minor, major, and intermediate bumps
         if: env.generate_notes == 'True'
         run: |
+          set -eux
+
+          # Define the target directory and file path
+          TARGET_DIR="${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.release }}"
+          FILE_PATH="${TARGET_DIR}/post.md"
+
+          # Check if the file is already committed
+          if git ls-files --error-unmatch "$FILE_PATH" > /dev/null 2>&1; then
+            echo "File '$FILE_PATH' is already committed to the repository. Skipping release notes creation."
+            exit 0
+          fi
+
           mkdir -p "${{env.release}}"
 
           # If these fail, you may have crossed the quotas. See 
@@ -139,9 +162,10 @@ jobs:
             --until ${{env.gitref}}
           
           mv "${{env.release}}" "${GITHUB_WORKSPACE}/${POSTS_DIR}"
-          git add "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{env.release}}" && \
+          git add "$TARGET_DIR" && \
           git commit -m "added release notes & article draft"
-
+          git push
+          
       - name: Setup docs venv & generate yaml
         working-directory: docs/scripts
         run: |
