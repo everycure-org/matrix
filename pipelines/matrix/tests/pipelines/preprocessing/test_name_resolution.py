@@ -135,7 +135,6 @@ from matrix.pipelines.preprocessing.nodes import process_medical_nodes, resolve_
 
 @pytest.fixture
 def input_medical_nodes_df():
-    """Fixture for the input DataFrame with first two rows."""
     data = {
         "ID": [1, 2],
         "name": ["Long COVID", "Long COVID Autonomic Dysfunction"],
@@ -148,7 +147,6 @@ def input_medical_nodes_df():
 
 @pytest.fixture
 def expected_output_medical_nodes_df():
-    """Fixture for the expected output DataFrame after processing."""
     data = {
         "ID": [1, 2],
         "name": ["Long COVID", "Long COVID Autonomic Dysfunction"],
@@ -175,7 +173,6 @@ def expected_output_medical_nodes_df():
 
 @pytest.fixture
 def mock_parsed_medical_nodes_names():
-    """Mock response for resolve_names."""
     data = {
         "Long COVID": {
             "curie": "MONDO:0100233",
@@ -197,7 +194,6 @@ def mock_parsed_medical_nodes_names():
 
 @pytest.fixture
 def mock_resolved_medical_nodes_names():
-    """Mock response for resolve_names."""
     data = {
         "Long COVID": [
             {
@@ -241,19 +237,14 @@ def mock_resolved_medical_nodes_names():
 def test_process_medical_nodes(
     mock_resolve_names, input_medical_nodes_df, expected_output_medical_nodes_df, mock_parsed_medical_nodes_names
 ):
-    """Test process_medical_nodes ensuring correct output."""
     resolver_url = "http://resolver-url.com"
     batch_size = 50
 
     mock_resolve_names.return_value = mock_parsed_medical_nodes_names
     output_df = process_medical_nodes(input_medical_nodes_df, resolver_url, batch_size)
 
-    # Reset index for comparison
-    pd.testing.assert_frame_equal(
-        output_df.reset_index(drop=True), expected_output_medical_nodes_df.reset_index(drop=True)
-    )
+    pd.testing.assert_frame_equal(output_df, expected_output_medical_nodes_df)
 
-    # Ensure resolve_names was called with expected parameters
     mock_resolve_names.assert_called_once_with(
         ["Long COVID", "Long COVID Autonomic Dysfunction"],
         cols_to_get=["curie", "label", "types"],
