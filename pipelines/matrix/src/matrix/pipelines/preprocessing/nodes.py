@@ -19,7 +19,7 @@ def coalesce(s: pd.Series, *series: List[pd.Series]):
     return s
 
 
-def resolve_one_name_batch(names: Sequence[str], url: str) -> dict:
+def resolve_one_name_batch(names: Sequence[str], url: str) -> Dict[str, list[dict]]:
     """Batch resolve a list of names to their corresponding CURIEs."""
     payload = {
         "strings": names,
@@ -54,7 +54,7 @@ def parse_one_name_batch(
     return resolved_data
 
 
-def resolve_names(names: Sequence[str], cols_to_get: Collection[str], url: str, batch_size: int) -> dict:
+def resolve_names(names: Sequence[str], cols_to_get: Collection[str], url: str, batch_size: int) -> Dict[str, dict]:
     """Function to retrieve the normalized identifier through the normalizer.
 
     Args:
