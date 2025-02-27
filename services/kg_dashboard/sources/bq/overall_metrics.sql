@@ -26,7 +26,6 @@ with edge_count_per_subject as (
   select * from edge_count_per_object o
 )
 
--- 
 , most_connected_nodes as (
   select 
     id

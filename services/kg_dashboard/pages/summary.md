@@ -2,7 +2,8 @@
 title: Summary
 ---
 
-<!-- TODO: rename merged_kg_nodes sources as misleading  -->
+This page provides key metrics about our knowledge graph (KG), including its size, density, and connectivity patterns, with a focus on how nodes from our disease and drug lists are connected within the graph.
+
 ```sql edges_per_node
 select 
     n_nodes
@@ -27,8 +28,8 @@ from
 ## Graph density
 
 <Grid col=2>
-    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="edges_per_node" /></span><br/>edges per node on average</p>
-    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="edges_per_node_without_most_connected_nodes" /></span><br/>edges per node when excluding the top 1,000 most connected nodes</p>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="edges_per_node" fmt="num1"/></span><br/>edges per node on average</p>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="edges_per_node_without_most_connected_nodes" fmt="num1"/></span><br/>edges per node when excluding the top 1,000 most connected nodes</p>
 </Grid>
 
 ## Disease list nodes connections
@@ -67,7 +68,7 @@ order by
 
 <br/>
 
-<p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="disease_edges_per_node" /></span><br/>edges per disease node on average</p>
+<p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="disease_edges_per_node" fmt="num1"/></span><br/>edges per disease node on average</p>
 
 <br/>
 
@@ -114,7 +115,7 @@ order by
 
 <br/>
 
-<p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="drug_edges_per_node" /></span><br/>edges per drug node on average</p>
+<p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="drug_edges_per_node" fmt="num1"/></span><br/>edges per drug node on average</p>
 
 <br/>
 
