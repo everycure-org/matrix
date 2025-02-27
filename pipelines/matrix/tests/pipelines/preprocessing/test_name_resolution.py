@@ -161,23 +161,38 @@ def expected_output_medical_nodes_df():
             [
                 "biolink:Disease",
                 "biolink:DiseaseOrPhenotypicFeature",
-                "biolink:BiologicalEntity",
-                "biolink:ThingWithTaxon",
-                "biolink:NamedThing",
                 "biolink:Entity",
             ],
             [
                 "biolink:Disease",
-                "biolink:DiseaseOrPhenotypicFeature",
-                "biolink:BiologicalEntity",
-                "biolink:ThingWithTaxon",
-                "biolink:NamedThing",
                 "biolink:Entity",
             ],
         ],
         "normalized_curie": ["MONDO:0100233", "EC:1"],
     }
     return pd.DataFrame(data)
+
+
+@pytest.fixture
+def mock_parsed_medical_nodes_names():
+    """Mock response for resolve_names."""
+    data = {
+        "Long COVID": {
+            "curie": "MONDO:0100233",
+            "label": "long COVID-19",
+            "types": [
+                "biolink:Disease",
+                "biolink:DiseaseOrPhenotypicFeature",
+                "biolink:Entity",
+            ],
+        },
+        "Long COVID Autonomic Dysfunction": {
+            "curie": "MONDO:0100233",
+            "label": "long COVID-19",
+            "types": ["biolink:Disease", "biolink:Entity"],
+        },
+    }
+    return data
 
 
 @pytest.fixture
@@ -224,13 +239,13 @@ def mock_resolved_medical_nodes_names():
 
 @patch("matrix.pipelines.preprocessing.nodes.resolve_names")
 def test_process_medical_nodes(
-    mock_resolve_names, input_medical_nodes_df, expected_output_medical_nodes_df, mock_resolved_medical_nodes_names
+    mock_resolve_names, input_medical_nodes_df, expected_output_medical_nodes_df, mock_parsed_medical_nodes_names
 ):
     """Test process_medical_nodes ensuring correct output."""
-    resolver_url = "http://resolver-url.com"  # Provide a dummy resolver URL
-    batch_size = 50  # Set a valid batch size for the function
+    resolver_url = "http://resolver-url.com"
+    batch_size = 50
 
-    mock_resolve_names.return_value = mock_resolved_medical_nodes_names
+    mock_resolve_names.return_value = mock_parsed_medical_nodes_names
     output_df = process_medical_nodes(input_medical_nodes_df, resolver_url, batch_size)
 
     # Reset index for comparison
@@ -247,15 +262,22 @@ def test_process_medical_nodes(
     )
 
 
-@patch("matrix.pipelines.preprocessing.nodes.resolve_one_name_batch")
-def test_resolve_medical_nodes_names(mock_resolve_one_name_batch, mock_resolved_medical_nodes_names):
-    """Test resolve_names function behavior."""
-    names = ["Long COVID", "Long COVID Autonomic Dysfunction"]
-    resolver_url = "http://resolver-url.com"
-    batch_size = 50
+def test_parse_one_medical_nodes_name_batch(mock_resolved_medical_nodes_names):
+    """Test parsing of API response for resolved names."""
+    cols_to_get = ["curie", "label", "types"]
 
-    mock_resolve_one_name_batch.return_value = mock_resolved_medical_nodes_names
-    result = resolve_names(names, cols_to_get=["curie", "label", "types"], url=resolver_url, batch_size=batch_size)
+    expected_output = {
+        "Long COVID": {
+            "curie": "MONDO:0100233",
+            "label": "long COVID-19",
+            "types": ["biolink:Disease", "biolink:DiseaseOrPhenotypicFeature", "biolink:Entity"],
+        },
+        "Long COVID Autonomic Dysfunction": {
+            "curie": "MONDO:0100233",
+            "label": "long COVID-19",
+            "types": ["biolink:Disease", "biolink:Entity"],
+        },
+    }
 
-    assert result == mock_resolved_medical_nodes_names
-    mock_resolve_one_name_batch.assert_called_once_with(names, resolver_url)
+    result = parse_one_name_batch(mock_resolved_medical_nodes_names, cols_to_get)
+    assert result == expected_output
