@@ -32,8 +32,7 @@ class NCATSNodeNormalizer(Normalizer):
         retry=retry_if_exception_type((aiohttp.ClientError, asyncio.TimeoutError)),
         before_sleep=print,
     )
-    async def apply(self, df: pd.DataFrame, **kwargs):
-        curies = df["id"].tolist()
+    async def apply(self, curies: list[str]) -> list[Dict[str, Any]]:
         request_json = {
             "curies": curies,
             "conflate": self._conflate,
@@ -53,9 +52,7 @@ class NCATSNodeNormalizer(Normalizer):
 
                 resp.raise_for_status()
 
-        df["normalized_id"] = [self._extract_id(curie, response_json, self._json_parser) for curie in curies]
-        df["normalized_id"] = df["normalized_id"].astype(pd.StringDtype())
-        return df
+        return [str(self._extract_id(curie, response_json, self._json_parser) for curie in curies)]
 
     @staticmethod
     def _extract_id(id: str, response: Dict[str, Any], json_parser: parse) -> Dict[str, Any]:
@@ -64,4 +61,3 @@ class NCATSNodeNormalizer(Normalizer):
             return json_parser.find(response.get(id))[0].value
         except (IndexError, KeyError):
             logger.debug(f"Not able to normalize for {id}: {response.get(id)}, {json_parser}")
-            return None
