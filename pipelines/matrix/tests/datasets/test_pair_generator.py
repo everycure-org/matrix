@@ -130,6 +130,8 @@ def matrix():
         other_cols = [c for c in all_cols if c != col]
         df.loc[df[col], other_cols] = False
 
+    df["rank"] = range(1, len(df) + 1)
+    df["quantile_rank"] = df["rank"] / len(df)
     return df
 
 
