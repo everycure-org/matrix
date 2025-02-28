@@ -355,7 +355,7 @@ class FullMatrixPositives(DrugDiseasePairGenerator):
             matrix = matrix[~is_remove].reset_index(drop=True)
 
         # Extract and label positive pairs
-        is_positive = pd.Series(False, index=matrix.indx)
+        is_positive = pd.Series(False)
         for col_name in self.positive_columns:
             is_positive = is_positive | matrix[col_name]
         positive_pairs = matrix[is_positive].assign(y=1)
