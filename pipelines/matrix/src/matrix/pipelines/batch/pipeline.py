@@ -174,7 +174,7 @@ def cache_miss_resolver_wrapper(
         logger.info(f"embedding batch with key: {batch[0]}")
         embeddings: list[list[float]] = await transformer.apply(batch)
         logger.info(f"received embedding for batch with key: {batch[0]}")
-        return pa.table([batch, embeddings, [api] * len(batch)], schema=CACHE_SCHEMA)
+        return pa.table([batch, embeddings, [api] * len(batch)], schema=CACHE_SCHEMA).to_pandas()
 
     def prep(
         batches: Iterable[Sequence[T]], api: str
