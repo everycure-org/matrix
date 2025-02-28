@@ -435,7 +435,7 @@ class ReleaseInfoHooks:
         # pipelines the (last) data release node is part of. With an
         # `after_node_run`, you can limit your filters easily.
         if node.name == last_data_release_node_name:
-            datasets_to_hide = frozenset(["disease_list", "drug_list", "ec_clinical_trials", "gt"])
+            datasets_to_hide = frozenset(["ec_clinical_trials", "gt"])
             global_datasets = self.extract_all_global_datasets(datasets_to_hide)
             datasets_used = self.extract_datasets_used()
             self.mark_unused_datasets(global_datasets, datasets_used)
