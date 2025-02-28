@@ -30,14 +30,17 @@ CACHE_COLUMNS = CACHE_SCHEMA.names
 def create_node_embeddings_pipeline() -> Pipeline:
     return cached_api_enrichment_pipeline(
         input="integration.prm.filtered_nodes",
-        output="fully_enriched",
+        output="fully_enriched",  # TODO: to be fixed by branch feat/embeddings_caching
         preprocessor="params:caching.preprocessor",
         cache_miss_resolver="params:caching.resolver",
         api="params:caching.api",
         new_col="params:caching.new_col",
-        cache="cache.read",
         primary_key="params:caching.primary_key",
         batch_size="params:caching.batch_size",
+        cache="embeddings.cache.read",
+        cache_misses="embeddings.cache.misses",
+        cache_out="embeddings.cache_write",
+        cache_reload="embeddings.cache_reload",
     )
 
 
@@ -51,7 +54,9 @@ def cached_api_enrichment_pipeline(
     output: str,
     new_col: str,
     batch_size: str,
-    cache_misses: str = "cache.misses",
+    cache_misses: str,
+    cache_out: str,
+    cache_reload: str,
 ) -> Pipeline:
     """Pipeline to enrich a dataframe using optionally cached API calls.
 
@@ -103,7 +108,6 @@ def cached_api_enrichment_pipeline(
     (positive or negative, it depends on the API) on the performance.
     """
 
-    cache_out = "cache.write"
     common_inputs = {"df": input, "cache": cache, "api": api, "primary_key": primary_key, "preprocessor": preprocessor}
     nodes = [
         ArgoNode(
@@ -133,7 +137,7 @@ def cached_api_enrichment_pipeline(
         ArgoNode(
             name="lookup_from_cache",
             func=lookup_from_cache,
-            inputs=common_inputs | {"cache": "cache.reload", "new_col": new_col, "lineage_dummy": cache_out},
+            inputs=common_inputs | {"cache": cache_reload, "new_col": new_col, "lineage_dummy": cache_out},
             outputs=output,
         ),
     ]
@@ -366,3 +370,7 @@ def report_on_cache_misses(df: DataFrame, api: str) -> None:
         logger.info(
             json.dumps({"api": api, "cache size": f"{no_nulls+nulls:_}", "non null cache values": f"{no_nulls:_}"})
         )
+
+
+def pass_through(x):
+    return x

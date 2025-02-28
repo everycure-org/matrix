@@ -19,10 +19,10 @@ from matrix.pipelines.batch.pipeline import (
     derive_cache_misses,
     limit_cache_to_results_from_api,
     lookup_from_cache,
+    pass_through,
     resolve_cache_duplicates,
 )
 from matrix.pipelines.embeddings.encoders import DummyResolver
-from matrix.pipelines.embeddings.nodes import pass_through
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import ArrayType, FloatType, StringType, StructField, StructType
 from pyspark.testing import assertDataFrameEqual
