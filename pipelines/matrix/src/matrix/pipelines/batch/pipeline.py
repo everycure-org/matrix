@@ -112,10 +112,10 @@ def cached_api_enrichment_pipeline(
             inputs=common_inputs,
             outputs=cache_misses,
             argo_config=ArgoResourceConfig(
-                memory_limit=8,
-                memory_request=4,
-                cpu_request=2,
+                cpu_request=4,
                 cpu_limit=4,
+                memory_limit=16,
+                memory_request=8,
             ),
         ),
         ArgoNode(
@@ -126,14 +126,13 @@ def cached_api_enrichment_pipeline(
             argo_config=ArgoResourceConfig(
                 cpu_request=1,
                 cpu_limit=2,
+                memory_request=64,
+                memory_limit=64,
             ),
         ),
         ArgoNode(
             name="lookup_from_cache",
             func=lookup_from_cache,
-            # By supplying the output of the previous node, which shares the same path as the starting
-            # cache, as an input, Kedro reloads the dataset, noticing now that it had more data.
-            # Note that replacing the `cache_out` by `cache`, it is NOT reloaded, as `cache` is an input.
             inputs=common_inputs | {"cache": "cache.reload", "new_col": new_col, "lineage_dummy": cache_out},
             outputs=output,
         ),
