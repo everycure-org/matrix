@@ -127,6 +127,10 @@ def run(
         run_name = click.prompt("Please define a name for your run")
 
     click.confirm(f"Start a new run '{run_name}' on experiment '{experiment_name}', is that correct?", abort=True)
+    if not dry_run:
+        run = mlflow.start_run(run_name=run_name, experiment_id=experiment_id)
+        mlflow.set_tag("created_by", "kedro")
+        mlflow_run_id = run.info.run_id
 
     ctx.invoke(
         submit,
@@ -143,6 +147,7 @@ def run(
         headless=headless,
         environment=environment,
         experiment_id=experiment_id,
+        mlflow_run_id=mlflow_run_id,
         skip_git_checks=skip_git_checks,
     )
 

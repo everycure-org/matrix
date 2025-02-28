@@ -35,6 +35,8 @@ spec:
         value: "{{ release_folder_name }}"
       - name: mlflow_experiment_id
         value: {{ mlflow_experiment_id }}
+      - name: mlflow_run_id
+        value: {{ mlflow_run_id }}
   templates:
   - &_kedro_template
     metrics:
@@ -122,7 +124,10 @@ spec:
           value: {% raw %} "{{workflow.parameters.mlflow_endpoint}}" 
           {% endraw %}
         - name: MLFLOW_EXPERIMENT_ID
-          value: {% raw %} "{{workflow.parameters.mlflow_experiment_id}}" 
+          value: {% raw %} "{{workflow.parameters.mlflow_experiment_id}}"
+          {% endraw %}
+        - name: MLFLOW_RUN_ID
+          value: {% raw %} "{{workflow.parameters.mlflow_run_id}}"
           {% endraw %}
         - name: NEO4J_USER
           valueFrom:
