@@ -28,14 +28,14 @@ class AttributeEncoder(ABC):
         self._random_seed = random_seed
 
     @abstractmethod
-    async def apply(self, df: pd.DataFrame, **kwargs) -> pd.DataFrame:
-        """Encode text from dataframe into embeddings.
+    async def apply(self, documents: Sequence[str]) -> list[list[float]]:
+        """Encode text from documents into embeddings.
 
         Args:
-            df: Input dataframe containing 'text_to_embed' column
+            documents: list/tuple of strings that need an embedding
 
         Returns:
-            DataFrame with new 'embedding' column and 'text_to_embed' removed
+            A list of embeddings, one per document.
         """
         ...
 
@@ -88,20 +88,16 @@ class RandomizedEncoder(AttributeEncoder):
         if random_seed is not None:
             np.random.seed(random_seed)
 
-    async def encode(self, df: pd.DataFrame) -> pd.DataFrame:
+    async def encode(self, documents: Sequence[str]) -> list[list[float]]:
         """Generate random embeddings for the input dataframe.
 
         Args:
-            df: Input dataframe containing 'text_to_embed' column
+            documents: list/tuple of strings that need an embedding
 
         Returns:
-            DataFrame with new 'embedding' column and 'text_to_embed' removed
+            A list of embeddings, one per document.
         """
-        df = df.copy()
-        # Generate random embeddings
-        df["embedding"] = [np.random.rand(self._embedding_dim).astype(np.float32) for _ in range(len(df))]
-        df = df.drop(columns=["text_to_embed"])
-        return df
+        return [np.random.rand(self._embedding_dim).tolist() for _ in documents]
 
 
 class PubmedBERTEncoder(AttributeEncoder):
@@ -122,29 +118,24 @@ class PubmedBERTEncoder(AttributeEncoder):
         self.tokenizer = AutoTokenizer.from_pretrained("microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext")
         self.model = AutoModel.from_pretrained("microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext")
 
-    async def encode(self, df: pd.DataFrame) -> pd.DataFrame:
+    async def encode(self, documents: Sequence[str]) -> list[list[float]]:
         """Generate PubmedBERT embeddings for the input dataframe.
 
         Args:
-            df: Input dataframe containing 'text_to_embed' column
+            documents: list/tuple of strings that need an embedding
 
         Returns:
-            DataFrame with new 'embedding' column and 'text_to_embed' removed
+            A list of embeddings, one per document.
         """
-        df = df.copy()
-        feat_list = df["text_to_embed"].tolist()
         inputs = self.tokenizer(
-            feat_list,
+            documents,
             padding=True,
             truncation=True,
             return_tensors="pt",
             max_length=512,
         )
         with torch.no_grad():
-            embeddings = self.model(**inputs, output_hidden_states=True, return_dict=True).pooler_output.cpu().numpy()
-        df["embedding"] = list(embeddings)
-        df = df.drop(columns=["text_to_embed"])
-        return df
+            return list(self.model(**inputs, output_hidden_states=True, return_dict=True).pooler_output.cpu().numpy())
 
 
 class DummyResolver(AttributeEncoder):
