@@ -152,7 +152,10 @@ jobs:
           gh pr create \
           --title "Release/${{env.release}}" \
           --base main \
-          --body "Adds release information. For minor and major bump, the release article is generated." \
+          --body "- For minor and major bump, the release article is generated and commited. 
+                  - Release information file is added. 
+                  - If this PR gets merged, the EveryCure website will be updated with the new article and release history. If the PR is closed, added files will not be included.
+                  - For the weekly patch release, we avoid merging the PR since the run is intended to check the stability of the main branch." \
           --draft \
           --label Release \
           --label hide-from-release
