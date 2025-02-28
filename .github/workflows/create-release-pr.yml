@@ -11,6 +11,7 @@ on:
       release_version:
         description: 'The version of the release'
         required: true
+        default: 'vx.y.z'
       git_fingerprint:
         description: 'The git sha that triggered the kg_release'
         required: true
