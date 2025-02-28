@@ -276,8 +276,8 @@ def make_predictions_and_sort(
     sorted_data = data.sort_values(by=treat_score_col_name, ascending=False)
 
     # Add rank and quantile rank columns
-    sorted_data["rank"] = range(1, len(sorted_data) + 1)
-    sorted_data["quantile_rank"] = sorted_data["rank"] / len(sorted_data)
+    sorted_data["rank_for_ui"] = range(1, len(sorted_data) + 1)
+    sorted_data["quantile_rank_for_ui"] = sorted_data["rank_for_ui"] / len(sorted_data)
 
     return sorted_data
 
