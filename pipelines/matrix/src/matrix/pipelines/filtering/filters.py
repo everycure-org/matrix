@@ -138,16 +138,12 @@ def remove_rows_containing_category(
 
 
 def keep_rows_containing(
-    nodes: ps.DataFrame,
+    input_df: ps.DataFrame,
     keep_list: List[str],
     column: str,
-    # exclude_sources: Optional[List[str]] = None,
     **kwargs,
 ) -> ps.DataFrame:
     """Function to remove rows containing a category."""
     keep_list_array = F.array([F.lit(x) for x in keep_list])
 
-    # Keep only rows where any element in the column array exists in keep_list
-    df = nodes.withColumn("_exclude", ~F.exists(F.col(column), lambda x: F.array_contains(keep_list_array, x)))
-    # Filter out rows where _exclude is True, then drop the temporary column
-    return df.filter(~F.col("_exclude")).drop("_exclude")
+    return input_df.filter(F.exists(F.col(column), lambda x: F.array_contains(keep_list_array, x)))

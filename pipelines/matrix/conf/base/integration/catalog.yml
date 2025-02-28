@@ -72,7 +72,7 @@ integration.prm.unified_edges:
 integration.prm.original.filtered_nodes:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.integration}/prm/filtered/nodes
-  
+
 integration.prm.original.filtered_edges:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.integration}/prm/filtered/edges
