@@ -19,12 +19,6 @@ last_node = ArgoNode(
 
 
 def create_pipeline(**kwargs) -> Pipeline:
-    small_resource_requirement = ArgoResourceConfig(
-        cpu_limit=2,
-        cpu_request=2,
-        memory_limit=24,
-        memory_request=24,
-    )
     """Create release pipeline."""
     return pipeline(
         [
