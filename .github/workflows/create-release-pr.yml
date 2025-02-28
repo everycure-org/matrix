@@ -72,6 +72,20 @@ jobs:
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
 
+      - name: Download & commit release info file
+        working-directory: docs/src/releases/changelog_files
+        env:
+          RELEASE_DIR_GCS: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
+          FILENAME: ${{env.release}}_info.json
+        run: |
+          set -eux
+          BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
+          gcloud storage cp "$BLOB_PATH" "$FILENAME"
+          
+          git add "${FILENAME}" && \
+          git commit -m "added release info json" && \
+          git push
+
       - name: Discover Latest Official Release on GitHub
         env:
           GH_TOKEN: ${{ github.token }}
@@ -110,24 +124,8 @@ jobs:
           git add "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{env.release}}" && \
           git commit -m "added release notes & article draft"
 
-      - name: Download & commit release info file
-        working-directory: docs/src/releases/changelog_files
-        env:
-          RELEASE_DIR_GCS: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
-          FILENAME: ${{env.release}}_info.json
-        if: env.generate_article == 'True'
-        run: |
-          set -eux
-          BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
-          gcloud storage cp "$BLOB_PATH" "$FILENAME"
-          
-          git add "${FILENAME}" && \
-          git commit -m "added release info json" && \
-          git push
-
       - name: Setup docs venv & generate yaml
         working-directory: docs/scripts
-        if: env.generate_article == 'True'
         run: |
           uv run changelog_gen.py
 
@@ -135,7 +133,6 @@ jobs:
         working-directory: docs/src/releases/changelog_files
         env:
           FILENAME: releases_aggregated.yaml
-        if: env.generate_article == 'True'
         run: |
           git add "${FILENAME}"
           
@@ -155,7 +152,7 @@ jobs:
           gh pr create \
           --title "Release/${{env.release}}" \
           --base main \
-          --body "Adds release information. For minor and major bump, the release article and associated notes are generated." \
+          --body "Adds release information. For minor and major bump, the release article is generated." \
           --draft \
           --label Release \
           --label hide-from-release
