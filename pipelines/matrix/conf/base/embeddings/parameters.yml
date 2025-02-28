@@ -101,11 +101,7 @@ caching.resolver:
     _object: langchain_openai.OpenAIEmbeddings
     model: &api text-embedding-3-small
     timeout: 10
-#    init_workers: 200
-#    docs_per_async_task: 1000
-#    model: &api text-embedding-3-small
-#    request_timeout: 10
 caching.primary_key: *pkey
 caching.api: *api
 caching.new_col: lookup
-caching.batch_size: 50000
+caching.batch_size: 40000  # Bigger batch sizes result in larger Parquet files. +-250MB/file is a good rule of thumb on object stores like GCS. However, a bigger batch size also means you need to keep more elements in memory, so too big of a size will result in Out-Of-Memory errors.
