@@ -97,7 +97,7 @@ jobs:
           pip install semver
           # If it's the first of the month, it's a minor bump, even if it's Tuesday. On all other Tuesdays, it's a patch.
           [[ $(date +%-d) -eq 1 ]] && BUMP_TYPE='minor' || BUMP_TYPE='patch'
-          echo "Bumping version with type: ${BUMP_TYPE}"
+          echo "BUMP_TYPE=${BUMP_TYPE}" >> "$GITHUB_ENV"
           python bump_version.py --type="${BUMP_TYPE}" >> "$GITHUB_ENV"
 
       - name: Branch off
