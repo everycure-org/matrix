@@ -11,11 +11,9 @@ on:
       release_version:
         description: 'The version of the release'
         required: true
-        default: 'v0.0.1'
       git_fingerprint:
         description: 'The git sha that triggered the kg_release'
         required: true
-        default: 'main'
 
 env:
   project_id: 'mtrx-hub-dev-3of'
