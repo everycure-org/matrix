@@ -1,3 +1,6 @@
+deployment:
+  basePath: /versions/v0.3.0/evidence
+
 plugins: 
   
   components:
