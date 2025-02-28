@@ -38,7 +38,7 @@ tracking:
     restore_if_deleted: True  # if the experiment`name` was previously deleted experiment, should we restore it?
 
   run:
-    id: ${oc.env:MLFLOW_RUN_ID, test-run-id}
+    id: ${oc.env:MLFLOW_RUN_ID, null}
     name: ${oc.env:RUN_NAME, test-run, True} # if `name` is None, pipeline name will be used for the run name. You can use "${km.random_name:}" to generate a random name (mlflow's default)
     nested: True  # if `nested` is False, you won't be able to launch sub-runs inside your nodes
   params:
