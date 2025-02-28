@@ -39,16 +39,6 @@ filtering:
           - biolink:Publication
           - biolink:Treatment
           # If you add anything here make sure the fabricator is not generating it, else we remove it
-      
-      filter_sources:
-        _object: matrix.pipelines.modelling.utils.partial_
-        func:
-          _object: matrix.pipelines.filtering.filters.remove_rows_containing_category
-        column: upstream_data_source
-        # Think about how to pass this in as conifgurable option
-        categories:
-          - rtx_kg2
-      
     edge_filters:
       # FUTURE: Ensure the semmed filter is moved here instead
       filter_biolink_edges:
@@ -56,10 +46,14 @@ filtering:
         func:
           _object: matrix.pipelines.filtering.filters.biolink_deduplicate_edges
 
+    # Move under node and edge filters
+    node_source_filters:
       filter_sources:
         _object: matrix.pipelines.modelling.utils.partial_
         func:
-          _object: matrix.pipelines.filtering.filters.remove_rows_containing_category
+          _object: matrix.pipelines.filtering.filters.keep_rows_containing
         column: upstream_data_source
-        categories:
-          - rtx_kg2
+        # exclude_sources: ["ec_medical"]
+        keep_list:
+          - rtxkg2
+          - robokop

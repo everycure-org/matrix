@@ -121,5 +121,6 @@ def filter_nodes_without_edges(
 def hierarchical_deduplication(
     nodes: ps.DataFrame,
 ) -> ps.DataFrame:
-    # Decide what we wan tin filtering vs integration
-    pass
+    # Decide what we want to do in filtering vs integration
+
+    return nodes
