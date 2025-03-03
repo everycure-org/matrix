@@ -8,6 +8,8 @@ import pyspark.sql.functions as f
 from bmt import toolkit
 from pyspark.sql import types as T
 
+from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
+
 tk = toolkit.Toolkit()
 
 logger = logging.getLogger(__name__)
@@ -28,6 +30,15 @@ def get_ancestors_for_category_delimited(category: str, mixin: bool = False) -> 
     return tk.get_ancestors(category, mixin=mixin, formatted=True, reflexive=True)
 
 
+@check_output(
+    DataFrameSchema(
+        columns={
+            "id": Column(T.StringType(), nullable=False),
+            "category": Column(T.StringType(), nullable=False),
+        },
+        unique=["id"],
+    ),
+)
 def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
     """Function to retrieve most specific entry for each node.
 
@@ -59,3 +70,16 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
     )
 
     return nodes.drop("category").join(mapping_table, on="id", how="left")
+
+
+def remove_rows_containing_category(
+    nodes: ps.DataFrame, categories: List[str], column: str, exclude_sources: Optional[List[str]] = None, **kwargs
+) -> ps.DataFrame:
+    """Function to remove rows containing a category."""
+    if exclude_sources is None:
+        exclude_sources = []
+
+    df = nodes.withColumn("_exclude", f.arrays_overlap(f.col("upstream_data_source"), f.lit(exclude_sources))).filter(
+        (F.col("_exclude") | ~F.col(column).isin(categories))
+    )
+    return df.drop("_exclude")

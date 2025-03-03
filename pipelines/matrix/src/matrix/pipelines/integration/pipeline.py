@@ -108,7 +108,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 node(
                     func=nodes.union_and_deduplicate_nodes,
                     inputs=[
-                        # Should this be in filtering or integration?
                         "params:integration.deduplication.retrieve_most_specific_category",
                         *[
                             f'integration.int.{source["name"]}.nodes.norm@spark'
@@ -121,7 +120,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ),
                 # union edges
                 ArgoNode(
-                    func=nodes.union_and_deduplicate_edges,
+                    func=nodes.union_edges,
                     inputs=[
                         f'integration.int.{source["name"]}.edges.norm@spark'
                         for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
