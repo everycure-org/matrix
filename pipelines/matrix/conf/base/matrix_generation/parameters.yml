@@ -47,22 +47,22 @@ matrix_generation.matrix:
       is_known_positive: "Whether the pair is a known positive, based on literature and clinical trials"
       is_known_negative: "Whether the pair is a known negative, based on literature and clinical trials"
     diseases:
-      g_matrix_llm__is_cancer: "Whether disease is a cancer"
-      g_matrix_llm__is_pathogen_caused: "Whether disease is a pathogen caused"
-      g_matrix_llm__is_glucose_dysfunction: "Whether disease is a glucose dysfunction"
-      g_matrix_llm__tag_existing_treatment: "Whether disease has existing treatments"
-      g_matrix_llm__tag_qaly_lost: "Whether disease has Quality Adjusted Life Years (QALY) lost"
-      g_matrix_llm__anatomical: 'Anatomical location of the disease'
-      g_matrix_llm__medical_specialization: 'Medical specializations of the disease'
+      is_cancer: "Whether disease is a cancer"
+      is_pathogen_caused: "Whether disease is a pathogen caused"
+      is_glucose_dysfunction: "Whether disease is a glucose dysfunction"
+      tag_existing_treatment: "Whether disease has existing treatments"
+      tag_qaly_lost: "Whether disease has Quality Adjusted Life Years (QALY) lost"
+      anatomical: 'Anatomical location of the disease'
+      medical_specialization: 'Medical specializations of the disease'
     master: 
       legend: "Excludes any pairs where the following conditions are met: known positive or negative status, antimicrobial drug with pathogen-caused disease, steroid drug, chemotherapy with cancer, or glucose regulator drug with glucose dysfunction disease"
       conditions:
         - [is_known_positive]
         - [is_known_negative]
-        - [is_antimicrobial, g_matrix_llm__is_pathogen_caused]
+        - [is_antimicrobial, is_pathogen_caused]
         - [is_steroid]
-        - [is_glucose_regulator, g_matrix_llm__is_glucose_dysfunction]
-        - [is_chemotherapy, g_matrix_llm__is_cancer]
+        - [is_glucose_regulator, is_glucose_dysfunction]
+        - [is_chemotherapy, is_cancer]
 
 matrix_generation.run:
   workflow_id: ${oc.env:WORKFLOW_ID, local}
