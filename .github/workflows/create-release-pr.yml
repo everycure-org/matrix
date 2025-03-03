@@ -3,6 +3,15 @@ name: Create Pull Request to Verify AI Summary of Release Notes
 on:
   repository_dispatch:
     types: distribute-release
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'The version of the release'
+        required: true
+        default: 'vx.y.z'
+      git_fingerprint:
+        description: 'The git sha that triggered the kg_release'
+        required: true
 
 env:
   project_id: 'mtrx-hub-dev-3of'
@@ -24,12 +33,20 @@ jobs:
           if [[ "${{ github.event_name == 'repository_dispatch' }}" == "true" ]]; then
             release='${{ github.event.client_payload.release_version }}'
             gitref='${{ github.event.client_payload.git_fingerprint }}'
+          elif [[ "${{ github.event_name == 'workflow_dispatch' }}" == "true" ]]; then
+            release='${{ github.event.inputs.release_version }}'
+            gitref='${{ github.event.inputs.git_fingerprint }}'
           else
             release="debug-dont-release"
             gitref=${{github.ref_name}}
           fi
           echo "release=${release}" >> "$GITHUB_ENV"
           echo "gitref=${gitref}" >> "$GITHUB_ENV"
+
+      - name: print variables
+        run: |
+          echo "release=${release}"
+          echo "gitref=${gitref}"
 
       - name: Checkout
         uses: actions/checkout@main
@@ -46,10 +63,14 @@ jobs:
 
       - name: Tag the commit from which the data release was triggered
         run: |
-          # Create an annotated tag, so that we can push it easily with the files using `follow-tags`.
-          git tag --annotate --message '' -- "${{env.release}}" "${{env.gitref}}" && \
-          git push --follow-tags
-
+          if git ls-remote --tags origin | grep -q "refs/tags/${{env.release}}"; then
+            echo "Tag ${{env.release}} already exists. Skipping tag creation."
+          else
+            # Create an annotated tag, so that we can push it easily with the files using `follow-tags`.
+            git tag --annotate --message '' -- "${{env.release}}" "${{env.gitref}}" && \
+            git push --follow-tags
+          fi
+          
       - name: Branch off
         # To comply with the protected-branch policy, we checkout a different
         # branch, but from the commit that created the release.
@@ -77,6 +98,12 @@ jobs:
         run: |
           set -eux
           BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
+          
+          if git ls-files --error-unmatch "$FILENAME" &> /dev/null; then
+            echo "File '$FILENAME' is already committed to the repository. Skipping download and commit."
+            exit 0
+          fi
+
           gcloud storage cp "$BLOB_PATH" "$FILENAME"
           
           git add "${FILENAME}" && \
@@ -107,6 +134,16 @@ jobs:
         # only create release notes for minor, major, and intermediate bumps
         if: env.generate_notes == 'True'
         run: |
+          set -eux
+
+          TARGET_DIR="${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.release }}"
+          FILE_PATH="${TARGET_DIR}/post.md"
+
+          if git ls-files --error-unmatch "$FILE_PATH" &> /dev/null; then
+            echo "File '$FILE_PATH' is already committed to the repository. Skipping release notes creation."
+            exit 0
+          fi
+
           mkdir -p "${{env.release}}"
 
           # If these fail, you may have crossed the quotas. See 
@@ -118,9 +155,10 @@ jobs:
             --until ${{env.gitref}}
           
           mv "${{env.release}}" "${GITHUB_WORKSPACE}/${POSTS_DIR}"
-          git add "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{env.release}}" && \
+          git add "$TARGET_DIR" && \
           git commit -m "added release notes & article draft"
-
+          git push
+          
       - name: Setup docs venv & generate yaml
         working-directory: docs/scripts
         run: |
