@@ -36,6 +36,7 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
                     tags=["standardize"],
                 ),
                 batch_pipeline.cached_api_enrichment_pipeline(
+                    source=f"source_{source}",
                     input=f"integration.int.{source}.nodes",
                     cache="integration.cache.read",  # shouldn't be joined with the embeddings cache, because the value in key:value:api is of a different datatype (str instead of list[float])
                     primary_key="params:integration.normalization.primary_key",
@@ -46,6 +47,8 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
                     new_col="params:integration.normalization.new_col",
                     batch_size="params:integration.normalization.batch_size",
                     cache_misses=f"integration.int.{source}.cache_misses",
+                    cache_out=f"integration.{source}.cache.write",
+                    cache_reload=f"integration.{source}.cache.reload",
                 ),
                 node(
                     func=nodes.normalize_nodes,

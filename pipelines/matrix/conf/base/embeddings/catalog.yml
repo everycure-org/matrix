@@ -142,7 +142,7 @@ embeddings.cache.misses:
     save_args:
       mode: overwrite
 
-fully_enriched:
+embeddings.fully_enriched:
   type: matrix.datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.cache}/embedded6
   save_args:
