@@ -108,7 +108,6 @@ jobs:
           else
             BUMP_TYPE="${{ github.event.inputs.bump_type }}"
           fi
-          echo "Bumping version with type: ${BUMP_TYPE}"
           echo "BUMP_TYPE=${BUMP_TYPE}" >> "$GITHUB_ENV"
 
       - name: Increment version
