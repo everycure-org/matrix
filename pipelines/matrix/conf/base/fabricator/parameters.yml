@@ -226,6 +226,11 @@ fabricator.rtx_kg2:
           - VERY HIGH
           - HIGH
           - MODERATE
+      official_matrix_filter:
+        type: generate_values
+        sample_values:
+          - True
+          - False
         
 fabricator.clinical_trials:
   nodes:
