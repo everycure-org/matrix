@@ -1,3 +1,4 @@
+-- TODO: rename source file to include groupby/count by category information
 SELECT
     category, 
     SPLIT(id, ':')[OFFSET(0)] AS prefix,

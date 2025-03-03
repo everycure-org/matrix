@@ -89,10 +89,10 @@ class ArgoResourceConfig(BaseModel):
     def model_dump(self, **kwargs) -> dict:
         """Customize JSON or dict export with Kubernetes-compatible formatting."""
         data = super().model_dump(**kwargs)
-        data["memory_request"] = f"{int(self.memory_request)}Gi"
-        data["memory_limit"] = f"{int(self.memory_limit)}Gi"
-        data["ephemeral_storage_request"] = f"{int(self.ephemeral_storage_request)}Gi"
-        data["ephemeral_storage_limit"] = f"{int(self.ephemeral_storage_limit)}Gi"
+        data["memory_request"] = int(self.memory_request)
+        data["memory_limit"] = int(self.memory_limit)
+        data["ephemeral_storage_request"] = int(self.ephemeral_storage_request)
+        data["ephemeral_storage_limit"] = int(self.ephemeral_storage_limit)
         return data
 
 
