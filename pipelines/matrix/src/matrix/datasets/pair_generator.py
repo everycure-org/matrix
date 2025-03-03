@@ -347,7 +347,7 @@ class FullMatrixPositives(DrugDiseasePairGenerator):
         Returns:
             Labelled drug-disease pairs dataset.
         """
-        # Remove flagged pairs
+        # Remove flagged pairs; ensure index is reset
         matrix = matrix.reset_index(drop=True)
         if self.removal_columns is not None:
             is_remove = pd.Series(False, index=matrix.index)
@@ -362,6 +362,7 @@ class FullMatrixPositives(DrugDiseasePairGenerator):
         positive_pairs = matrix[is_positive].assign(y=1)
 
         # Remove contribution from known positives to compute the rank against non-positive pairs
+        positive_pairs["rank"] = positive_pairs.index + 1
         positive_pairs = positive_pairs.reset_index(drop=True)
         positive_pairs["non_pos_rank"] = positive_pairs["rank"] - positive_pairs.index
 
