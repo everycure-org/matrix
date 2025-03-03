@@ -348,6 +348,7 @@ class FullMatrixPositives(DrugDiseasePairGenerator):
             Labelled drug-disease pairs dataset.
         """
         # Remove flagged pairs
+        matrix = matrix.reset_index(drop=True)
         if self.removal_columns is not None:
             is_remove = pd.Series(False, index=matrix.index)
             for col_name in self.removal_columns:
