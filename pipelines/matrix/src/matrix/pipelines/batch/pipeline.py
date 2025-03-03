@@ -29,14 +29,15 @@ CACHE_COLUMNS = CACHE_SCHEMA.names
 
 def create_node_embeddings_pipeline() -> Pipeline:
     return cached_api_enrichment_pipeline(
+        source="embeddings",
         input="integration.prm.filtered_nodes",
-        output="fully_enriched",  # TODO: to be fixed by branch feat/embeddings_caching
-        preprocessor="params:caching.preprocessor",
-        cache_miss_resolver="params:caching.resolver",
-        api="params:caching.api",
-        new_col="params:caching.new_col",
-        primary_key="params:caching.primary_key",
-        batch_size="params:caching.batch_size",
+        output="embeddings.fully_enriched",  # TODO: to be fixed by branch feat/embeddings_caching
+        preprocessor="params:embeddings.caching.preprocessor",
+        cache_miss_resolver="params:embeddings.caching.resolver",
+        api="params:embeddings.caching.api",
+        new_col="params:embeddings.caching.new_col",
+        primary_key="params:embeddings.caching.primary_key",
+        batch_size="params:embeddings.caching.batch_size",
         cache="embeddings.cache.read",
         cache_misses="embeddings.cache.misses",
         cache_out="embeddings.cache_write",
@@ -45,6 +46,7 @@ def create_node_embeddings_pipeline() -> Pipeline:
 
 
 def cached_api_enrichment_pipeline(
+    source: str,
     input: str,
     cache: str,
     primary_key: str,
@@ -111,7 +113,7 @@ def cached_api_enrichment_pipeline(
     common_inputs = {"df": input, "cache": cache, "api": api, "primary_key": primary_key, "preprocessor": preprocessor}
     nodes = [
         ArgoNode(
-            name="derive_cache_misses",
+            name=f"derive_{source}_cache_misses",
             func=derive_cache_misses,
             inputs=common_inputs,
             outputs=cache_misses,
@@ -123,7 +125,7 @@ def cached_api_enrichment_pipeline(
             ),
         ),
         ArgoNode(
-            name="resolve_cache_misses",
+            name=f"resolve_{source}_cache_misses",
             func=cache_miss_resolver_wrapper,
             inputs={"df": cache_misses, "transformer": cache_miss_resolver, "api": api, "batch_size": batch_size},
             outputs=cache_out,
@@ -135,7 +137,7 @@ def cached_api_enrichment_pipeline(
             ),
         ),
         ArgoNode(
-            name="lookup_from_cache",
+            name=f"lookup_{source}_from_cache",
             func=lookup_from_cache,
             inputs=common_inputs | {"cache": cache_reload, "new_col": new_col, "lineage_dummy": cache_out},
             outputs=output,
