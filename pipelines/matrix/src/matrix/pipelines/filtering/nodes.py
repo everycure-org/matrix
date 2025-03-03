@@ -8,8 +8,6 @@ import pyspark.sql.types as T
 from matrix.inject import inject_object
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
-from .filters import remove_rows_containing_category
-
 logger = logging.getLogger(__name__)
 
 
@@ -115,12 +113,4 @@ def filter_nodes_without_edges(
 
     nodes = nodes.alias("nodes").join(edge_nodes, on="id").select("nodes.*").persist()
     logger.info("Nodes after filtering: %s", nodes.count())
-    return nodes
-
-
-def hierarchical_deduplication(
-    nodes: ps.DataFrame,
-) -> ps.DataFrame:
-    # Decide what we want to do in filtering vs integration
-
     return nodes

@@ -51,7 +51,7 @@ def transform(transformer, **kwargs) -> Dict[str, ps.DataFrame]:
     schema=BIOLINK_KG_EDGE_SCHEMA,
     pass_columns=True,
 )
-def union_and_deduplicate_edges(*edges, cols: List[str]) -> ps.DataFrame:
+def union_edges(*edges, cols: List[str]) -> ps.DataFrame:
     """Function to unify edges datasets."""
     # fmt: off
     return (

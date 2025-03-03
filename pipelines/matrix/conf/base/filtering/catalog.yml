@@ -15,25 +15,11 @@ _layer_prm: &_layer_prm
 # Datasets
 # -------------------------------------------------------------------------
 # filtered KGs
-filtering.prm.deduplicated_nodes:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.filtering}/prm/filtered/deduplicated/nodes
-
-filtering.prm.deduplicated_edges:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.filtering}/prm/filtered/deduplicated/edges
 
 filtering.prm.filtered_edges:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.filtering}/prm/filtered/edges
 
-filtering.prm.prefiltered_nodes_by_source:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.filtering}/prm/prefiltered/nodes_by_source
-
-# FUTURE more elegant: Apply all node filters, then all edge filters, then a "cleanup" final step that removes
-# 1. all edges where nodes were deleted
-# 2. all nodes that have not one edge connected anymore
 filtering.prm.prefiltered_nodes:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.filtering}/prm/prefiltered/nodes
