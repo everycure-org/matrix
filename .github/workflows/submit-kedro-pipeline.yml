@@ -6,9 +6,13 @@ on:
   workflow_dispatch:
     inputs:
       bump_type:
-        description: 'Type of version bump, patch or minor'
+        description: 'Type of version bump'
         required: true
         default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
     
 env:
   project_id: 'mtrx-hub-dev-3of'
