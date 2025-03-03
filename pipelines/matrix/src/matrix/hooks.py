@@ -200,7 +200,7 @@ class SparkHooks:
                 logger.info(f'With ARGO_POD_UID set to: {os.environ.get("ARGO_NODE_ID", "")}')
                 logger.info("Thus determined not to be in k8s cluster and executing with service-account.json file")
 
-            logging.info(f"starting spark session with the following parameters: {parameters}")
+            logger.info(f"starting spark session with the following parameters: {parameters}")
             spark_conf = SparkConf().setAll(parameters.items())
 
             # Create and set our configured session as the default
