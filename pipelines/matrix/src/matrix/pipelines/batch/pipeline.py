@@ -43,15 +43,17 @@ def create_node_embeddings_pipeline() -> Pipeline:
 
 def cached_api_enrichment_pipeline(
     input: str,
-    cache: str,
     primary_key: str,
-    cache_miss_resolver: str,  # Callable[[str], Callable[[Iterable[T]], Iterator[V]]]
+    cache_miss_resolver: str,  # Ref to Union[AttributeEncoder|Normalizer]
     api: str,
     preprocessor: str,  # Callable[[DataFrame], DataFrame],
     output: str,
     new_col: str,
     batch_size: str,
+    cache: str,
     cache_misses: str = "cache.misses",
+    cache_reload: str = "cache.reload",
+    cache_out: str = "cache.write",
 ) -> Pipeline:
     """Pipeline to enrich a dataframe using optionally cached API calls.
 
@@ -103,7 +105,6 @@ def cached_api_enrichment_pipeline(
     (positive or negative, it depends on the API) on the performance.
     """
 
-    cache_out = "cache.write"
     common_inputs = {"df": input, "cache": cache, "api": api, "primary_key": primary_key, "preprocessor": preprocessor}
     nodes = [
         ArgoNode(
@@ -133,7 +134,7 @@ def cached_api_enrichment_pipeline(
         ArgoNode(
             name="lookup_from_cache",
             func=lookup_from_cache,
-            inputs=common_inputs | {"cache": "cache.reload", "new_col": new_col, "lineage_dummy": cache_out},
+            inputs=common_inputs | {"cache": cache_reload, "new_col": new_col, "lineage_dummy": cache_out},
             outputs=output,
         ),
     ]
