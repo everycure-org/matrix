@@ -45,7 +45,7 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
                     output=f"integration.int.{source}.nodes.nodes_norm_mapping",
                     new_col="params:integration.normalization.new_col",
                     batch_size="params:integration.normalization.batch_size",
-                    cache_misses=f"integration.normalization.{source}.cache_misses",
+                    cache_misses=f"integration.int.{source}.cache_misses",
                 ),
                 node(
                     func=nodes.normalize_nodes,

@@ -52,6 +52,7 @@ integration.int.{source}.edges.norm@pandas:
   <<: [*_pandas_parquet, *_layer_int]
   filepath: ${globals:paths.integration}/int/{source}/edges.norm
 
+# Caching strategy
 integration.cache.read: &cache_in
   type: matrix.datasets.gcp.SparkWithSchemaDataset
   filepath: &cache_location ${globals:paths.cache}/integration/normalizer=NCATSNodeNormalizer/
