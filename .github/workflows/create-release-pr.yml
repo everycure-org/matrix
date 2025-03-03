@@ -1,9 +1,6 @@
 name: Create Pull Request to Verify AI Summary of Release Notes
 
 on:
-  push:
-    branches:
-      - 'debug/release*'
   repository_dispatch:
     types: distribute-release
 
