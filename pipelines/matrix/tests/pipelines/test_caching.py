@@ -1,12 +1,7 @@
-import logging
-import os
-import tempfile
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import AsyncMock
 
-import pyspark as ps
 import pytest
-from kedro.framework.context import KedroContext
 from kedro.framework.project import configure_project
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import bootstrap_project
@@ -224,14 +219,16 @@ def sample_new_col():
 
 
 @pytest.fixture
-def mock_encoder() -> Mock:
-    encoder = Mock(side_effect=DummyResolver)
+def mock_encoder() -> AsyncMock:
+    encoder = AsyncMock(spec=DummyResolver)
+    encoder.apply.side_effect = DummyResolver().apply
     return encoder
 
 
 @pytest.fixture
-def mock_encoder2() -> Mock:
-    encoder = Mock(side_effect=DummyResolver)
+def mock_encoder2() -> AsyncMock:
+    encoder = AsyncMock(spec=DummyResolver)
+    encoder.apply.side_effect = DummyResolver().apply
     return encoder
 
 
@@ -308,58 +305,56 @@ def test_df_fully_enriched(
     sample_new_col,
     mock_encoder,
     mock_encoder2,
-    spark,
-    tmpdir,
+    tmp_path: Path,
 ):
+    cache_path = str(tmp_path / "cache_dataset")
+
     project_path = Path(__file__).resolve().parents[2]
     bootstrap_project(project_path)
-    configure_project("matrix")
-    # kedro_context = request.getfixturevalue(kedro_context)
+    configure_project(project_path.name)
+
     with KedroSession.create(project_path) as session:
-        kedro_context = session.load_context()
-        # temp_dir = tempfile.mkdtemp()
-        print(f"Temporary directory: {tmpdir}")
-        print(spark.sparkContext.getConf().getAll())
+        session.load_context()
         input = {
             "integration.prm.filtered_nodes": MemoryDataset(sample_input_df),
             "cache.read": SparkWithSchemaDataset(
-                filepath=os.path.join(tmpdir, "cache_dataset"),
+                filepath=str(tmp_path / "cache_dataset"),
                 provide_empty_if_not_present=True,
                 load_args={"schema": cache_schema},
             ),
-            "fully_enriched": LazySparkDataset(
-                filepath=os.path.join(tmpdir, "fully_enriched"), save_args={"mode": "overwrite"}
-            ),
-            "cache_misses": LazySparkDataset(
-                filepath=os.path.join(tmpdir, "cache_misses"), save_args={"mode": "overwrite"}
-            ),
+            "fully_enriched": LazySparkDataset(filepath=str(tmp_path / "enriched"), save_args={"mode": "overwrite"}),
+            "cache_misses": LazySparkDataset(filepath=str(tmp_path / "cache_misses"), save_args={"mode": "overwrite"}),
             "cache.write": PartitionedAsyncParallelDataset(
-                path=os.path.join(tmpdir, "cache_dataset"),
+                path=cache_path,
                 dataset=ParquetDataset,
                 filename_suffix=".parquet",
             ),
             "cache.reload": SparkWithSchemaDataset(
-                filepath=os.path.join(tmpdir, "cache_dataset"),
+                filepath=cache_path,
                 load_args={"schema": cache_schema},
             ),
-            "params:caching.api": sample_api1,
-            "params:caching.primary_key": sample_primary_key,
-            "params:caching.preprocessor": sample_preprocessor,
-            "params:caching.resolver": mock_encoder,
-            "params:caching.new_col": sample_new_col,
-            "params:caching.batch_size": sample_batch_size,
+            "params:caching.api": MemoryDataset(sample_api1),
+            "params:caching.primary_key": MemoryDataset(sample_primary_key),
+            "params:caching.preprocessor": MemoryDataset(sample_preprocessor),
+            "params:caching.resolver": MemoryDataset(mock_encoder),
+            "params:caching.new_col": MemoryDataset(sample_new_col),
+            "params:caching.batch_size": MemoryDataset(sample_batch_size),
         }
-        mock_catalog_run1 = DataCatalog(input)
-        mock_catalog_run1.load("cache.read")
-        # print(mock_catalog_run1.list())
+        catalog = DataCatalog(input)
         pipeline_run1 = create_node_embeddings_pipeline()
-        runner = SequentialRunner()
-        runner.run(pipeline_run1, mock_catalog_run1)
-        enriched_data = mock_catalog_run1.load("fully_enriched").toPandas()
-        assert enriched_data[sample_new_col].isNull().sum() == 0, "The input DataFrame should be fully enriched"
+        runner = SequentialRunner()  # SequentialRunner kills Spark between nodes.
+
+        runner.run(pipeline_run1, catalog)
+
+        enriched_data = catalog.load("fully_enriched").toPandas()
+        assert enriched_data[sample_new_col].isna().sum() == 0, "The input DataFrame should be fully enriched"
+        assert enriched_data.shape == (4, 3)
         # Run the pipeline the 2nd time
-        mock_catalog_run2 = DataCatalog(input | {"params:caching.resolver": mock_encoder2})
+        catalog_for_run2 = DataCatalog(input | {"params:caching.resolver": MemoryDataset(mock_encoder2)})
         pipeline_run2 = create_node_embeddings_pipeline()
-        runner.run(pipeline_run2, mock_catalog_run2)
-        mock_encoder.assert_called()  # The first run, encoder should be called
+        runner.run(pipeline_run2, catalog_for_run2)
+        mock_encoder.apply.assert_awaited()
+
+        mock_encoder.apply.assert_called()
+        # The first run, encoder should be called
         mock_encoder2.assert_not_called()  # The second run, encoder should not be called
