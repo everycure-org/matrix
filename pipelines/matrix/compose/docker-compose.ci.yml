@@ -58,7 +58,7 @@ services:
       OPENAI_ENDPOINT: http://mockserver:1080/v1
       MLFLOW_ENDPOINT: http://mlflow:5000
       MLFLOW_EXPERIMENT_ID: 1
-      MLFLOW_RUN_ID: test-run-id
+      MLFLOW_RUN_ID: null
       OPENAI_API_KEY: sk-proj-abc
       SYNONYMIZER_ENDPOINT: http://node-synonymizer:8081
       GCP_PROJECT_ID: dummy

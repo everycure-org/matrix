@@ -129,7 +129,7 @@ def run(
     click.confirm(f"Start a new run '{run_name}' on experiment '{experiment_name}', is that correct?", abort=True)
     if not dry_run:
         run = mlflow.start_run(run_name=run_name, experiment_id=experiment_id)
-        mlflow.set_tag("created_by", "kedro")
+        mlflow.set_tag("created_by", username)
         mlflow_run_id = run.info.run_id
 
     ctx.invoke(
