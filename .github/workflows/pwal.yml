@@ -35,7 +35,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'evidence-deploy.yml',
-              ref: ${{ env.BRANCH_REF }}
+              ref: process.env.BRANCH_REF
             })
 
 # NOTE: This workflow was partially generated using AI assistance. 
