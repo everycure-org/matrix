@@ -10,7 +10,7 @@ The workflow automates the release process of a data-release/kg-release pipeline
 ## Triggering Mechanisms
 There are two ways to trigger a release:
 
-1. **Manual Trigger**: A user manually submits a data release or kg release pipeline with a specified version.
+1. **Manual Trigger**: A user manually submits a data release or kg release pipeline with a specified version. You can find more information in [this runbook](https://docs.dev.everycure.org/infrastructure/runbooks/01_releases/)
 2. **Auto-Trigger via GitHub Action**: The release is automatically triggered based on a schedule:
    - Weekly patch bump
    - Monthly minor bump
