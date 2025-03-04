@@ -161,7 +161,7 @@ spec:
           value: {% raw %} "{{inputs.parameters.cpu_limit}}"
           {% endraw %}
         - name: SPARK_DRIVER_MEMORY
-          value: {% raw %} "{{inputs.parameters.memory_limit}}"g
+          value: {% raw %} "{{inputs.parameters.memory_limit}}g"
           {% endraw %}
         - name: GH_TOKEN
           valueFrom:
