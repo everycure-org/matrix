@@ -68,7 +68,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'evidence-deploy.yml',
-              ref: 'release/${{ env.release }}',
+              ref: 'release/v0.4.1',
               inputs: {
                 "release_version": 'v0.4.1' 
               }
