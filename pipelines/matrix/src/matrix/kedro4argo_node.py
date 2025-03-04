@@ -1,4 +1,3 @@
-import os
 import warnings
 from typing import Any, Optional, Union
 
@@ -16,7 +15,7 @@ KUBERNETES_DEFAULT_NUM_GPUS = 0
 KUBERNETES_DEFAULT_LIMIT_CPU = 14
 KUBERNETES_DEFAULT_REQUEST_CPU = 4
 
-SPARK_DRIVER_MEMORY_DEFAULT = int(os.getenv("SPARK_DRIVER_MEMORY", 50))
+
 # FUTURE: Introduce predefined S, M, L, XL resource sizes.
 
 
@@ -40,7 +39,6 @@ class ArgoResourceConfig(BaseModel):
     memory_limit: int = KUBERNETES_DEFAULT_LIMIT_RAM
     ephemeral_storage_request: int = 0
     ephemeral_storage_limit: int = 128
-    spark_driver_memory: int = SPARK_DRIVER_MEMORY_DEFAULT
 
     model_config = {"validate_assignment": True, "extra": "forbid"}
 
@@ -87,16 +85,14 @@ class ArgoResourceConfig(BaseModel):
         self.num_gpus = max(self.num_gpus, argo_config.num_gpus)
         self.ephemeral_storage_request = max(self.ephemeral_storage_request, argo_config.ephemeral_storage_request)
         self.ephemeral_storage_limit = max(self.ephemeral_storage_limit, argo_config.ephemeral_storage_limit)
-        self.spark_driver_memory = max(self.spark_driver_memory, argo_config.spark_driver_memory)
 
     def model_dump(self, **kwargs) -> dict:
         """Customize JSON or dict export with Kubernetes-compatible formatting."""
         data = super().model_dump(**kwargs)
-        data["memory_request"] = f"{int(self.memory_request)}Gi"
-        data["memory_limit"] = f"{int(self.memory_limit)}Gi"
-        data["ephemeral_storage_request"] = f"{int(self.ephemeral_storage_request)}Gi"
-        data["ephemeral_storage_limit"] = f"{int(self.ephemeral_storage_limit)}Gi"
-        data["spark_driver_memory"] = f"{int(self.spark_driver_memory)}g"
+        data["memory_request"] = int(self.memory_request)
+        data["memory_limit"] = int(self.memory_limit)
+        data["ephemeral_storage_request"] = int(self.ephemeral_storage_request)
+        data["ephemeral_storage_limit"] = int(self.ephemeral_storage_limit)
         return data
 
 

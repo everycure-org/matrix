@@ -274,6 +274,11 @@ def make_predictions_and_sort(
 
     # Sort by the probability score
     sorted_data = data.sort_values(by=treat_score_col_name, ascending=False)
+
+    # Add rank and quantile rank columns
+    sorted_data["rank"] = range(1, len(sorted_data) + 1)
+    sorted_data["quantile_rank"] = sorted_data["rank"] / len(sorted_data)
+
     return sorted_data
 
 

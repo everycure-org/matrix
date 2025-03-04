@@ -1,5 +1,6 @@
 import os
-from typing import List, Optional
+import re
+from typing import List
 
 import click
 import mlflow
@@ -11,6 +12,7 @@ from matrix.utils.authentication import get_iap_token
 from matrix.utils.mlflow_utils import (
     DeletedExperimentExistsWithName,
     ExperimentNotFound,
+    archive_runs_and_experiments,
     create_mlflow_experiment,
     get_experiment_id_from_name,
     rename_soft_deleted_experiment,
@@ -57,11 +59,12 @@ def create(experiment_name):
         ):
             renamed_exp = rename_soft_deleted_experiment(experiment_name)
             click.echo(
-                f"✅ Deleted experiment {experiment_name} has been renamed to {renamed_exp}. You may now `kedro experiment create` using this name."
+                f"✅ Deleted experiment {experiment_name} has been renamed to {renamed_exp}. You may now retry using this name."
             )
             raise click.Abort()
 
     click.echo(f"✅ MLFlow experiment created: {mlflow.get_tracking_uri()}/#/experiments/{mlflow_id}")
+    return mlflow_id
 
 
 @experiment.command()
@@ -105,26 +108,29 @@ def run(
     """Run an experiment."""
 
     if not experiment_name:
-        experiment_name = get_current_git_branch()
-        if not experiment_name.startswith(EXPERIMENT_BRANCH_PREFIX):
-            click.echo(
-                f"❌ Error: current branch does not begin with experiment/. Please define an experiment name or start from an experiment branch."
-            )
-            raise click.Abort()
-        experiment_name = experiment_name.strip(EXPERIMENT_BRANCH_PREFIX)
-
-    click.confirm(f"Start a new run on experiment '{experiment_name}', is that correct?", abort=True)
+        current_branch = get_current_git_branch()
+        sanitized_branch_name = re.sub(r"[^a-zA-Z0-9-]", "-", current_branch)
+        if click.confirm(f"Would you like to use the current branch '{sanitized_branch_name}' as the experiment name?"):
+            experiment_name = sanitized_branch_name
+        else:
+            experiment_name = click.prompt("Please enter a name for your experiment", type=str)
 
     try:
         experiment_id = get_experiment_id_from_name(experiment_name=experiment_name)
     except ExperimentNotFound:
-        if click.confirm(
-            f"Experiment '{experiment_name}' not found. Would you like to create a new experiment?", abort=True
-        ):
-            experiment_id = create_mlflow_experiment(experiment_name=experiment_name)
+        click.confirm(
+            f"Experiment '{experiment_name}' not found, would you like to create a new experiment?", abort=True
+        )
+        experiment_id = ctx.invoke(create, experiment_name=experiment_name)
 
     if not run_name:
         run_name = click.prompt("Please define a name for your run")
+
+    click.confirm(f"Start a new run '{run_name}' on experiment '{experiment_name}', is that correct?", abort=True)
+    if not dry_run:
+        run = mlflow.start_run(run_name=run_name, experiment_id=experiment_id)
+        mlflow.set_tag("created_by", username)
+        mlflow_run_id = run.info.run_id
 
     ctx.invoke(
         submit,
@@ -141,5 +147,16 @@ def run(
         headless=headless,
         environment=environment,
         experiment_id=experiment_id,
+        mlflow_run_id=mlflow_run_id,
         skip_git_checks=skip_git_checks,
     )
+
+
+@experiment.command()
+@click.option("--dry-run", "-d", is_flag=True, help="Whether to actually archive runs and experiments")
+def archive(dry_run: bool):
+    if dry_run:
+        click.echo("Dry run of archiving runs and experiments")
+        archive_runs_and_experiments(dry_run=dry_run)
+    elif click.confirm("Are you sure you want to archive all runs and experiments?", abort=True):
+        archive_runs_and_experiments(dry_run=dry_run)

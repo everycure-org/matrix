@@ -238,3 +238,15 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
     diseases = df.rename(columns={"disease_curie": "curie", "disease_name": "name"})[["curie", "name"]]
     nodes = pd.concat([drugs, diseases], ignore_index=True)
     return {"nodes": nodes, "edges": edges}
+
+
+def report_to_gsheets(df: pd.DataFrame, sheet_df: pd.DataFrame, primary_key_col: str):
+    """Report medical nodes to gsheets.
+
+    Args:
+        df: medical nodes
+        sheet_df: gsheets dataframe
+    """
+    # TODO: in the future remove drop_duplicates function
+    df = df.drop_duplicates(subset=primary_key_col, keep="first")
+    return sheet_df.merge(df, on=primary_key_col, how="left").fillna("Not resolved")

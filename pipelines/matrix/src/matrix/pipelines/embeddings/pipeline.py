@@ -87,7 +87,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     cpu_request=48,
                     cpu_limit=48,
                     memory_limit=350,
-                    memory_request=300,
+                    memory_request=350,
                     ephemeral_storage_request=256,
                     ephemeral_storage_limit=256,
                 ),
@@ -154,6 +154,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.fuse",
                     "argowf.fuse-group.topological_pca",
                 ],
+                argo_config=ArgoResourceConfig(
+                    cpu_request=48,
+                    cpu_limit=48,
+                    memory_limit=350,
+                    memory_request=350,
+                ),
             ),
             ArgoNode(
                 func=nodes.visualise_pca,
