@@ -75,6 +75,9 @@ jobs:
           node-version: '20' 
           cache: 'npm'
           cache-dependency-path: services/kg_dashboard/package-lock.json
+      # - run: echo "RELEASE_VERSION=${{ inputs.release_version }}" >> $GITHUB_ENV
+      - run: make pwal
+      - run: exit 1
 
       # authenticate with GCP as read only user to query BQ
       - uses: 'google-github-actions/auth@v2'
@@ -84,9 +87,6 @@ jobs:
           service_account: ${{env.ro_sa}}
 
       # perform build & deploy
-      # - run: echo "RELEASE_VERSION=${{ inputs.release_version }}" >> $GITHUB_ENV
-      - run: make pwal
-      - run: exit 1
       - run: make install
       - run: make run-sources
       - run: make build
