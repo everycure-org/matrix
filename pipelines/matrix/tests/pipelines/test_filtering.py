@@ -8,7 +8,6 @@ from pyspark.testing import assertDataFrameEqual
 
 @pytest.fixture
 def sample_nodes(spark):
-    # Note these are explicitly using PascalCase
     return spark.createDataFrame(
         [
             (
@@ -61,7 +60,13 @@ def sample_edges(spark):
             (
                 "CHEBI:004",
                 "CHEBI:001",
-                "biolink:subclass_of",
+                "biolink:similar_to",
+                ["rtxkg2"],
+            ),
+            (
+                "CHEBI:004",
+                "CHEBI:001",
+                "biolink:chemically_similar_to",
                 ["rtxkg2"],
             ),
         ],
@@ -108,7 +113,7 @@ def test_source_filter_nodes(spark, sample_nodes):
             ]
         ),
     )
-    assertDataFrameEqual(result.select(*expected.columns), expected)
+    assertDataFrameEqual(result, expected)
 
 
 def test_source_filter_edges(spark, sample_edges):
@@ -128,7 +133,48 @@ def test_source_filter_edges(spark, sample_edges):
             (
                 "CHEBI:004",
                 "CHEBI:001",
+                "biolink:similar_to",
+                ["rtxkg2"],
+            ),
+            (
+                "CHEBI:004",
+                "CHEBI:001",
+                "biolink:chemically_similar_to",
+                ["rtxkg2"],
+            ),
+        ],
+        schema=StructType(
+            [
+                StructField("subject", StringType(), False),
+                StructField("object", StringType(), False),
+                StructField("predicate", StringType(), False),
+                StructField("kg_sources", ArrayType(StringType()), False),
+            ]
+        ),
+    )
+    assertDataFrameEqual(result, expected)
+
+
+def test_biolink_deduplicate(spark, sample_edges):
+    result = filters.biolink_deduplicate_edges(sample_edges)
+    expected = spark.createDataFrame(
+        [
+            (
+                "CHEBI:001",
+                "CHEBI:002",
+                "biolink:related_to",
+                ["rtxkg2", "robokop"],
+            ),
+            (
+                "CHEBI:002",
+                "CHEBI:003",
                 "biolink:subclass_of",
+                ["robokop"],
+            ),
+            (
+                "CHEBI:004",
+                "CHEBI:001",
+                "biolink:chemically_similar_to",
                 ["rtxkg2"],
             ),
         ],

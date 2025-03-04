@@ -84,7 +84,6 @@ def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, c
     unioned_datasets = (
         _union_datasets(*nodes)
         # first we group the dataset by id to deduplicate
-        # Should we group by id AND category?
         .groupBy("id")
         .agg(
             F.first("name", ignorenulls=True).alias("name"),

@@ -22,6 +22,7 @@ paths:
   # Release-based
   ingestion:          ${release_dir}/datasets/ingestion
   integration:        ${release_dir}/datasets/integration
+  filtering:          ${release_dir}/datasets/filtering
   embeddings:         ${release_dir}/datasets/embeddings
   release:            ${release_dir}/datasets/release
 
