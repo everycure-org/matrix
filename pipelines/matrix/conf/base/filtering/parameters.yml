@@ -15,8 +15,7 @@ filtering:
       _object: matrix.pipelines.modelling.utils.partial_
       func:
         _object: matrix.pipelines.filtering.filters.keep_rows_containing
-        # Find out why different property on edges
-      column: kg_sources
+      column: upstream_data_source
       keep_list:
         - rtxkg2
         - robokop
