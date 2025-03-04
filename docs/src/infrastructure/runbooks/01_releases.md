@@ -9,20 +9,20 @@ This runbook outlines the steps to create a release in our GitHub repository, ei
 ## Steps to Create a Release Manually
 
 1. **Prepare the branch you will run the release from.**
-    - Make sure the branch includes the desired data sources / parameters you want to you in your run.
+    - Make sure the branch includes the desired data sources / parameters you want to use in your run.
     - The branch name needs to match the naming convention `release/v{semver}`, e.g. `release/v0.2.5`. Suffixes are allowed after a dash, i.e. `release/v0.2.5-alpha`
-    - You git state needs to be clean, i.e. no uncommitted or untracked files. This is to make possible to have someone else running the same command, producing the same result.
+    - Your git state needs to be clean, i.e. no uncommitted or untracked files. This ensures someone else can run the same command and produce the same result.
     - The release version can be a patch downgrade, but not minor or major downgrade, e.g. if `v0.2.5` is the latest official release, `v0.2.3` is allowed to trigger while `v0.1.8` is forbidden.
 2. **Determine which pipeline to run.**
     - A data release is created by running a kedro pipeline. You can run a dedicated pipeline called `data_release` or other pipeline, which contains it.
     - Consult the [pipeline registry](https://github.com/everycure-org/matrix/blob/main/pipelines/matrix/src/matrix/pipeline_registry.py) for the current pipeline definitions.
     - Currently, data release will be triggered if one of the following pipelines are run: `data_release`, `kg_release`.
-2. **Trigger the pipeline.**
+3. **Trigger the pipeline.**
     - Activate the virtual environment, `source ./matrix/pipelines/matrix/.venv/bin/activate`
     - Build and run a kedro submit command, e.g.: `kedro submit --username <YOUR_NAME> --release-version <INTENDED_RELEASE_VERSION> --pipeline kg_release`
-2. **Wait for pipeline to finish.**
+4. **Wait for pipeline to finish.**
     - Once the pipeline finishes, a new data release PR will be created with release article and changelog. 
-2. **Review the PR that was auto-created.**
+5. **Review the PR that was auto-created.**
     - Review the list and check the names of the PRs to ensure they read nicely. Consider reshuffling them so they tell a good story instead of just being a list of things.
     - Manually check who has contributed and list the contributors of the month to encourage contributions through PRs (code, docs, experiment reports, etc.). See the cli command below for how to best do this
     - Upon merging the PR, the release will be publicized to the [Every Cure website](https://docs.dev.everycure.org/releases/) by another GitHub Action. It will then also be listed under the [GitHub releases](https://github.com/everycure-org/matrix/releases).
@@ -37,10 +37,10 @@ To streamline the release process, we use GitHub Actions for periodic **patch** 
 2. **Wait for pipeline to finish.**
     - Once the pipeline finishes, a new data release PR will be created with optional release article and changelog. 
 
-2. **Review the Auto-Created PR**  
+3. **Review the Auto-Created PR**  
    - **For the weekly patch bump:** The primary goal is to verify the stability of the `main` branch after a week of new commits. Once reviewed, simply close the PR, as no further action is needed.  
    - **For the monthly minor bump:** Since this results in an official release, follow these steps:  
-        - Review the list and check the names of the PRs to ensure they read nicely. Consider reshuffling them so they tell a good story instead of just being a list of things: in the past, the person who takes ownership of this PR simply asked everyone on Slack to revise their PR titles, to make them more reflective of what they contribute towards Every Cure's goals.
+        - Review the list and check the names of the PRs to ensure they read nicely. Consider reshuffling them so they tell a good story instead of just being a list of things. In the past, the person who takes ownership of this PR simply asked everyone on Slack to revise their PR titles, to make them more reflective of what they contribute towards Every Cure's goals.
         - Manually check who has contributed and list the contributors of the month to encourage contributions through PRs (code, docs, experiment reports, etc.). See the cli command below for how to best do this
         - Upon merging the PR, the release will be publicized to the [Every Cure website](https://docs.dev.everycure.org/releases/) by another GitHub Action. It will then also be listed under the [GitHub releases](https://github.com/everycure-org/matrix/releases).
 
@@ -58,7 +58,7 @@ git log v0.1..HEAD --pretty=format:"%h %ae%n%b" | \
 ## FAQ
 ### 1. **Why are there more tags than releases**
 
-    - The tag is created and pushed during the creation of the release PR from the GitHub Actions workflow. However, the [release history webpage](https://docs.dev.everycure.org/releases/release_history/) will only be updated if the PR is merged into the main branch, bringing the release information into the main branch, whose codebase is used to build the website.
+The tag is created and pushed during the creation of the release PR from the GitHub Actions workflow. However, the [release history webpage](https://docs.dev.everycure.org/releases/release_history/) will only be updated if the PR is merged into the main branch, bringing the release information into the main branch, whose codebase is used to build the website.
 
 ### 2. **The release pipeline is finished, but I don't see the auto-generated release PR**
 
@@ -79,7 +79,9 @@ This issue might be caused by a failure in the GitHub Actions workflow responsib
    <p align="center">
       <img src="../../assets/img/create-pr-input.png" alt="UI of triggering the PR creation workflow" width="600">
    </p>
-   <p align="center"><i>Figure 1: UI of triggering the PR creation workflow</i></p>
+   <p align="center">
+      <i>Figure 1: UI of triggering the PR creation workflow</i>
+   </p>
 
 ### 3. **The scheduled time has passed, but the auto-submitted release pipeline is not running**  
 
@@ -99,7 +101,9 @@ This issue might be due to a failure in the GitHub Actions workflow responsible 
    <p align="center">
       <img src="../../assets/img/version-bump-input.png" alt="UI of triggering the submission workflow" width="600">
    </p>
-   <p align="center"><i>Figure 2: UI of triggering the submission workflow</i></p>
+   <p align="center">
+      <i>Figure 2: UI of triggering the submission workflow</i>
+  </p>
 
 ## Best Practices
 
