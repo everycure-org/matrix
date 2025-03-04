@@ -20,26 +20,26 @@ on:
         description: 'Version to deploy in format vX.Y.Z'
         required: true
         type: string
-  # push:
-  #   branches:
-  #     - main
-  #   # allows re-building the dashboard by merging to main
-  #   paths: 
-  #     - services/kg_dashboard/**
-  #     - .github/workflows/evidence-deploy.yml
-  # pull_request:
-  #   # Sequence of patterns matched against refs/heads
-  #   branches:
-  #     - main
-  #   # from https://github.com/reviewdog/action-eslint/issues/29#issuecomment-985939887
-  #   types:
-  #     - opened
-  #     - reopened
-  #     - synchronize
-  #     - ready_for_review
-  #   paths: 
-  #     - services/kg_dashboard/**
-  #     - .github/workflows/evidence-deploy.yml
+  push:
+    branches:
+      - main
+    # allows re-building the dashboard by merging to main
+    paths: 
+      - services/kg_dashboard/**
+      - .github/workflows/evidence-deploy.yml
+  pull_request:
+    # Sequence of patterns matched against refs/heads
+    branches:
+      - main
+    # from https://github.com/reviewdog/action-eslint/issues/29#issuecomment-985939887
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+    paths: 
+      - services/kg_dashboard/**
+      - .github/workflows/evidence-deploy.yml
 
 defaults:
   run: 
@@ -77,9 +77,6 @@ jobs:
           node-version: '20' 
           cache: 'npm'
           cache-dependency-path: services/kg_dashboard/package-lock.json
-      - run: printenv RELEASE_VERSION
-      - run: make pwal
-      - run: exit 1
 
       # authenticate with GCP as read only user to query BQ
       - uses: 'google-github-actions/auth@v2'
@@ -89,6 +86,7 @@ jobs:
           service_account: ${{env.ro_sa}}
 
       # perform build & deploy
+      - run: printenv RELEASE_VERSION
       - run: make install
       - run: make run-sources
       - run: make build
