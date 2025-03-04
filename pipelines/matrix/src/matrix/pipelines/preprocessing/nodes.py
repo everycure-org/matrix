@@ -67,7 +67,7 @@ def resolve_names(names: Sequence[str], cols_to_get: Collection[str], url: str, 
     resolved_data = {}
     for i in range(0, len(names), batch_size):
         batch = names[i : i + batch_size]
-        logger.debug(f"Resolving batch of size {batch_size} with offset {i}")
+        logger.info(f"Resolving batch {i} of {len(names)}")
         # Waiting between requests drastically improves the API performance, as opposed to hitting a 5xx code
         # and using retrying with backoff, which can render the API unresponsive for a long time (> 10 min).
         time.sleep(random.randint(5, 10))
