@@ -44,9 +44,9 @@ def create_node_embeddings_pipeline() -> Pipeline:
 def cached_api_enrichment_pipeline(
     input: str,
     primary_key: str,
-    cache_miss_resolver: str,  # Ref to Union[AttributeEncoder|Normalizer]
+    cache_miss_resolver: str,  # Ref to [AttributeEncoder|Normalizer]
     api: str,
-    preprocessor: str,  # Callable[[DataFrame], DataFrame],
+    preprocessor: str,  # Ref to Callable[[DataFrame], DataFrame],
     output: str,
     new_col: str,
     batch_size: str,
@@ -55,7 +55,7 @@ def cached_api_enrichment_pipeline(
     cache_reload: str = "cache.reload",
     cache_out: str = "cache.write",
 ) -> Pipeline:
-    """Pipeline to enrich a dataframe using optionally cached API calls.
+    """Define a Kedro Pipeline to enrich a Spark Dataframe using optionally cached API calls.
 
     The advantage to using this is that any identical API calls that have
     been made in other runs will have been cached, so that the enrichment
@@ -64,30 +64,23 @@ def cached_api_enrichment_pipeline(
     Note: ideally the preprocessor is a no-op, a simple pass-through (like
     `lambda x: x`). If you can shape your DataFrame in such a way that it
     doesn't need a custom preprocessor (e.g. by calling your own preprocessor
-    in the previous node, at the end), it'll be computationally more efficient
+    in the node just prior to this pipeline), it'll be computationally more efficient
     (meaning this subpipeline will complete faster, and thus saves the
     organization money).
 
     input: Kedro reference to a Spark DataFrame where you want to add a column
     `new_col` to.
 
-    cache: Kedro reference to the Spark DataFrame that maps keys to values. The
-    keys will be compared to the `primary_key` column of the DataFrame
-    resulting from calling the `preprocessor` on the `input`. Aside from the
-    key and value column, it also has a third column, named api, linking the
-    keys to the API used at the time of the lookup.
-
-    cache_misses: a Kedro reference to a SparkDataset that is used for temporary results.
-
     primary_key: name of the column that should be produced (or passed) by the
     preprocessor function. It is this column of values that will be used to
     check against the cache, or failing that, sent to the cache_miss_resolver.
 
-    cache_miss_resolver: Kedro reference to a callable that will be used to
-    look up any cache misses.
+    cache_miss_resolver: Kedro reference to an object having an apply method,
+    which is an asynchronous callable that will be used to look up any cache misses.
 
     api: Kedro parameter to restrict the cache to use results from this
-    particular API
+    particular API. You will want to match this with the parameters of
+    the `cache_miss_resolver`.
 
     preprocessor: Kedro reference to a callable that will preprocess the
     `input` such that it has a column `primary_key` which is used in the
@@ -97,13 +90,34 @@ def cached_api_enrichment_pipeline(
     `new_col` containing the results from the enrichment with the cache/API.
 
     new_col: name of the column in which the values associated with the
-    primary_key should appear.
+    `primary_key` should appear.
 
     batch_size: the size of a batch that will be sent to the embedder. Keep in
     mind that concurrent requests may be running, which means the API might be
     getting more batches in parallel, which in turn can  have an affect
-    (positive or negative, it depends on the API) on the performance.
-    """
+    (positive or negative, it depends on the API) on the performance. This
+    argument is a determining factor of the size of the files produced by running
+    the cache miss resolver.
+
+    cache: Kedro reference to the Spark DataFrame that maps keys to values. The
+    keys will be compared to the `primary_key` column of the DataFrame
+    resulting from calling the `preprocessor` on the `input`. Aside from the
+    key and value column, it also has a third column, named api, linking the
+    keys to the API used at the time of the lookup.
+
+    cache_misses: a Kedro reference to a SparkDataset that is used for
+    temporary results.
+    This should refer to a **unique** storage location particular to the API
+    and the kedro node, to avoid concurrent overwrites. That is, for embeddings
+    and node normalization, these should be different paths.
+
+    cache_reload: a Catalog entry that duplicates `cache`. There only to force
+    Kedro to re-load the cache, otherwise it will continue with the files it
+    found before the cache miss resolver modified the cache location.
+
+    cache_out: a Catalog entry that points to the same location as `cache`, and
+    `cache_reload`, but uses PartitionedAsyncParallelDatasets to append batches
+    of resolved misses to the already existing cache."""
 
     common_inputs = {"df": input, "cache": cache, "api": api, "primary_key": primary_key, "preprocessor": preprocessor}
     nodes = [
@@ -226,7 +240,9 @@ def resolve_cache_duplicates(df: DataFrame, id_col: str) -> DataFrame:
     if keys != distinct_keys:
         # Warnings can be converted to errors, making them more ideal here.
         warnings.warn(
-            f"The cache contains duplicate keys. This is likely the result of a concurrent run and should be prevented. Continuing by non-discriminatory dropping duplicates…"
+            "The cache contains duplicate keys. This is likely the result of a "
+            "concurrent run and should be prevented. Continuing by non-"
+            "discriminatory dropping duplicates…"
         )
         df = df.drop_duplicates([id_col])
     return df
