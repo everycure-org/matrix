@@ -1,0 +1,1 @@
+For data_release and kg_release, we added a lable to argo workflow trigger_release, 
