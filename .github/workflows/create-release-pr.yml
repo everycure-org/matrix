@@ -63,12 +63,13 @@ jobs:
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          # HARDCODED VERSIONS AND BRANCH BELOW, TO REMOVE ONCE TESTED
           script: |
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'evidence-deploy.yml',
-              ref: 'release/v0.4.1',
+              ref: 'feature/automate_kg_dashboard_deployment_with_release',
               inputs: {
                 "release_version": 'v0.4.1' 
               }
