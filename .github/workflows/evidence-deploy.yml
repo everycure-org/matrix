@@ -20,26 +20,26 @@ on:
     #     description: 'The version of the release in format vX.Y.Z'
     #     required: true
     #     type: string
-  push:
-    branches:
-      - main
-    # allows re-building the dashboard by merging to main
-    paths: 
-      - services/kg_dashboard/**
-      - .github/workflows/evidence-deploy.yml
-  pull_request:
-    # Sequence of patterns matched against refs/heads
-    branches:
-      - main
-    # from https://github.com/reviewdog/action-eslint/issues/29#issuecomment-985939887
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - ready_for_review
-    paths: 
-      - services/kg_dashboard/**
-      - .github/workflows/evidence-deploy.yml
+  # push:
+  #   branches:
+  #     - main
+  #   # allows re-building the dashboard by merging to main
+  #   paths: 
+  #     - services/kg_dashboard/**
+  #     - .github/workflows/evidence-deploy.yml
+  # pull_request:
+  #   # Sequence of patterns matched against refs/heads
+  #   branches:
+  #     - main
+  #   # from https://github.com/reviewdog/action-eslint/issues/29#issuecomment-985939887
+  #   types:
+  #     - opened
+  #     - reopened
+  #     - synchronize
+  #     - ready_for_review
+  #   paths: 
+  #     - services/kg_dashboard/**
+  #     - .github/workflows/evidence-deploy.yml
 
 defaults:
   run: 
