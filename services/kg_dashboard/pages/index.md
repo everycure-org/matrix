@@ -86,7 +86,7 @@ ORDER BY sum(count) DESC
 ```sql combined_sankey
 -- First level: Subject Category to Predicate
 SELECT 
-    concat('Subject: ', replace(subject_category,'biolink:','')) as source,
+    concat('[S] ', replace(subject_category,'biolink:','')) as source,
     replace(predicate,'biolink:','') as target,
     sum(count) as count
 FROM bq.merged_kg_edges
@@ -99,7 +99,7 @@ UNION ALL
 -- Second level: Predicate to Object Category
 SELECT 
     replace(predicate,'biolink:','') as source,
-    concat('Object: ', replace(object_category,'biolink:','')) as target,
+    concat('[O] ', replace(object_category,'biolink:','')) as target,
     sum(count) as count
 FROM bq.merged_kg_edges
 WHERE replace(predicate,'biolink:','') IN ${inputs.selected_predicates.value}
