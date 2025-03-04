@@ -21,6 +21,11 @@ jobs:
     permissions:
       actions: write      # Needed to trigger workflows
     steps:
+      - name: Print branch ref
+        run: |
+          echo "BRANCH_REF: ${{ env.BRANCH_REF }}"
+          echo "Direct from env: ${BRANCH_REF}"
+          printenv BRANCH_REF
       - name: Trigger Evidence Deploy
         uses: actions/github-script@v7
         with:
