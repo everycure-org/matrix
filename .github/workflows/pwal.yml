@@ -2,16 +2,16 @@ name: Pwal
 
 on:
   workflow_dispatch: {}
-  pull_request:
-    # Sequence of patterns matched against refs/heads
-    branches:
-      - main
-    # from https://github.com/reviewdog/action-eslint/issues/29#issuecomment-985939887
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - ready_for_review
+  # pull_request:
+  #   # Sequence of patterns matched against refs/heads
+  #   branches:
+  #     - main
+  #   # from https://github.com/reviewdog/action-eslint/issues/29#issuecomment-985939887
+  #   types:
+  #     - opened
+  #     - reopened
+  #     - synchronize
+  #     - ready_for_review
 env:
   BRANCH_REF: ${{ github.event.pull_request.head.ref }}
   

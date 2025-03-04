@@ -12,6 +12,16 @@ on:
       git_fingerprint:
         description: 'The git sha that triggered the kg_release'
         required: true
+  pull_request:
+    # Sequence of patterns matched against refs/heads
+    branches:
+      - main
+    # from https://github.com/reviewdog/action-eslint/issues/29#issuecomment-985939887
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
 
 env:
   project_id: 'mtrx-hub-dev-3of'
@@ -48,6 +58,21 @@ jobs:
           echo "release=${release}"
           echo "gitref=${gitref}"
 
+      - name: Trigger KG dashboard deploy
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'evidence-deploy.yml',
+              ref: 'release/${{ env.release }}',
+              inputs: {
+                "release_version": '${{ env.release }}' 
+              }
+            })
+      - run: exit 1
       - name: Checkout
         uses: actions/checkout@main
         with:
