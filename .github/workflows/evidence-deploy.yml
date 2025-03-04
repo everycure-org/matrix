@@ -53,7 +53,7 @@ env:
   # for deploying to GCS, only works on main
   rw_wip: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
   rw_sa: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
-  # release version from input 
+  # release version from input
   RELEASE_VERSION: ${{ inputs.release_version }}
 
 concurrency:
