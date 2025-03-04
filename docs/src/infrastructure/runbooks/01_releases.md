@@ -55,7 +55,9 @@ git log v0.1..HEAD --pretty=format:"%h %ae%n%b" | \
     awk '{print $2}' | \
     sort -u
 ```
+
 ## FAQ
+
 ### 1. **Why are there more tags than releases**
 
 The tag is created and pushed during the creation of the release PR from the GitHub Actions workflow. However, the [release history webpage](https://docs.dev.everycure.org/releases/release_history/) will only be updated if the PR is merged into the main branch, bringing the release information into the main branch, whose codebase is used to build the website.
