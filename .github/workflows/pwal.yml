@@ -26,7 +26,10 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'evidence-deploy.yml',
-              ref: 'main'
+              ref: 'main',
+              inputs: {
+                release_version: 'v0.4.1'
+              }
             })
 
 # NOTE: This workflow was partially generated using AI assistance. 
