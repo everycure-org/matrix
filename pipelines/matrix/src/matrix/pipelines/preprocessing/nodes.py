@@ -1,25 +1,17 @@
-import json
 import logging
 import random
 import time
-from typing import Collection, Dict, Iterable, List, Sequence, Tuple
+from typing import Collection, Dict, List, Sequence
 
 import pandas as pd
 import requests
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
-from tenacity import RetryError, Retrying, retry, stop_after_attempt, wait_exponential
+from tenacity import Retrying, stop_after_attempt, wait_exponential
 
 logger = logging.getLogger(__name__)
 
 
-def coalesce(s: pd.Series, *series: List[pd.Series]):
-    """Coalesce the column information like a SQL coalesce."""
-    for other in series:
-        s = s.mask(pd.isnull, other)
-    return s
-
-
-def resolve_one_name_batch(names: Sequence[str], url: str) -> Dict[str, list[dict]]:
+def resolve_one_name_batch(names: Sequence[str], url: str) -> Dict[str, List[Dict]]:
     """Batch resolve a list of names to their corresponding CURIEs."""
     payload = {
         "strings": names,
@@ -40,8 +32,8 @@ def resolve_one_name_batch(names: Sequence[str], url: str) -> Dict[str, list[dic
 
 
 def parse_one_name_batch(
-    result: dict[str, list[dict[str, str]]], cols_to_get: Collection[str]
-) -> dict[str, dict[str, str | None]]:
+    result: Dict[str, List[Dict[str, str]]], cols_to_get: Collection[str]
+) -> Dict[str, Dict[str, str | None]]:
     """Parse API response to extract resolved names and corresponding attributes."""
     resolved_data = {}
 
@@ -54,7 +46,7 @@ def parse_one_name_batch(
     return resolved_data
 
 
-def resolve_names(names: Sequence[str], cols_to_get: Collection[str], url: str, batch_size: int) -> Dict[str, dict]:
+def resolve_names(names: Sequence[str], cols_to_get: Collection[str], url: str, batch_size: int) -> Dict[str, Dict]:
     """Function to retrieve the normalized identifier through the normalizer.
 
     Args:
@@ -195,7 +187,7 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
     drug_mapping = resolve_names(drug_names, cols_to_get=["curie"], url=resolver_url, batch_size=batch_size)
     disease_mapping = resolve_names(disease_names, cols_to_get=["curie"], url=resolver_url, batch_size=batch_size)
 
-    drug_mapping_df = pd.DataFrame(drug_mapping).T["curie"].rename("drug_curie")
+    drug_mapping_df = pd.DataFrame(drug_mapping).transpose()["curie"].rename("drug_curie")
     disease_mapping_df = pd.DataFrame(disease_mapping).transpose()["curie"].rename("disease_curie")
 
     df = pd.merge(df, drug_mapping_df, how="left", left_on="drug_name", right_index=True)
