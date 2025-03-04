@@ -76,7 +76,6 @@ spec:
       - name: ephemeral_storage_request
       - name: ephemeral_storage_limit
       - name: spark_driver_memory
-      - name: neo4j_heap_size
     podSpecPatch: |
       containers:
         - name: main
@@ -157,6 +156,9 @@ spec:
         - name: NUM_CPU
           value: {% raw %} "{{inputs.parameters.cpu_limit}}"
           {% endraw %}
+        - name: SPARK_DRIVER_MEMORY
+          value: {% raw %} "{{inputs.parameters.memory_limit}}"
+          {% endraw %}
         - name: GH_TOKEN
           valueFrom:
             secretKeyRef:
@@ -177,8 +179,7 @@ spec:
               memory: 50Gi
           env:
             - name: SPARK_DRIVER_MEMORY
-              value: {% raw %} "{{ inputs.parameters.spark_driver_memory }}"
-              {% endraw %}
+              value: "60g"
         - name: neo4j
           resources:
             requests:
@@ -255,11 +256,11 @@ spec:
         - name: NEO4J_ACCEPT_LICENSE_AGREEMENT
           value: "yes"
         - name: NEO4J_dbms_memory_heap_initial__size
-          value: {% raw %} "{{inputs.parameters.neo4j_heap_size}}"
-              {% endraw %}
+          value: {% raw %} "{{= sprig.int(inputs.parameters.memory_limit) * 0.7 }}G"
+          {% endraw %}
         - name: NEO4J_dbms_memory_heap_max__size
-          value: {% raw %} "{{inputs.parameters.neo4j_heap_size}}"
-              {% endraw %}
+          value: {% raw %} "{{= sprig.int(inputs.parameters.memory_limit) * 0.7 }}G"
+          {% endraw %}
 
   - name: pipeline
     dag:
@@ -295,6 +296,4 @@ spec:
             value: {{ task.resources.ephemeral_storage_limit }}
           - name: spark_driver_memory
             value: {{ task.resources.spark_driver_memory }}
-          - name: neo4j_heap_size
-            value: {{ task.resources.neo4j_heap_size }}
       {% endfor %}
