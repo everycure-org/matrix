@@ -1,5 +1,5 @@
 deployment:
-  basePath: /versions/v0.3.3/evidence
+  basePath: /versions/v0.3.6/evidence
 
 plugins: 
   
