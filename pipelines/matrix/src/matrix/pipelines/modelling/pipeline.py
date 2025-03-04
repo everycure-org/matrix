@@ -221,7 +221,7 @@ def create_shared_pipeline() -> Pipeline:
                 func=nodes.filter_valid_pairs,
                 inputs=[
                     "integration.prm.filtered_nodes",
-                    "integration.int.ground_truth.edges.norm@spark",
+                    "integration.int.ground_truth.edges_robokop.norm@spark",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                 ],

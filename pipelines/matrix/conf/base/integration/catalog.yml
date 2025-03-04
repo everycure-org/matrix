@@ -93,3 +93,12 @@ integration.prm.original.filtered_nodes:
 integration.prm.original.filtered_edges:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.integration}/prm/filtered/edges
+
+integration.int.ground_truth.edges_robokop.norm@spark:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.integration}/int/ground_truth/edges_robokop.norm.parquet
+
+integration.int.ground_truth.edges_robokop.norm@pandas:
+  <<: [*_pandas_parquet, *_layer_int]
+  filepath: ${globals:paths.integration}/int/ground_truth/edges_robokop.norm.parquet
+
