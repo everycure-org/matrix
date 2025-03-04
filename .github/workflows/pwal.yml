@@ -1,16 +1,17 @@
 name: Pwal
 
 on:
-  workflow_dispatch:
-    inputs:
-      ref:
-        description: 'Branch to test'
-        required: true
-        default: 'main'
-      message:
-        description: 'Test message'
-        required: false
-        default: 'Hello!'
+  workflow_dispatch: {}
+  pull_request:
+    # Sequence of patterns matched against refs/heads
+    branches:
+      - main
+    # from https://github.com/reviewdog/action-eslint/issues/29#issuecomment-985939887
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
 
 jobs:
   trigger-deploy:
