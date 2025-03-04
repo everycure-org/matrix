@@ -70,7 +70,7 @@ jobs:
               workflow_id: 'evidence-deploy.yml',
               ref: 'release/${{ env.release }}',
               inputs: {
-                "release_version": '${{ env.release }}' 
+                "release_version": 'v0.4.1' 
               }
             })
       - run: exit 1
