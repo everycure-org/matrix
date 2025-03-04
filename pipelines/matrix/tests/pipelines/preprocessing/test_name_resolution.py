@@ -41,19 +41,11 @@ def test_add_source_and_target_to_clinical_trails():
     ):
         result_df = add_source_and_target_to_clinical_trails(df, "mock_url", 10)
 
-    expected_df = pd.DataFrame(
-        {
-            "clinical_trial_id": ["NCT00118846", "NCT00134030", "NCT00859781"],
-            "reason_for_rejection": [None, None, None],
-            "drug_name": ["Soy protein", "Ifosfamide", "177Lu-J591"],
-            "disease_name": ["Atherosclerosis", "Osteosarcoma", "Prostate Cancer"],
-            "significantly_better": [None, 0.0, None],
-            "non_significantly_better": [None, 0.0, None],
-            "non_significantly_worse": [None, 1.0, None],
-            "significantly_worse": [None, 0.0, None],
-            "drug_curie": ["RXCUI:196238", "CHEBI:5864", None],
-            "disease_curie": ["MONDO:0005311", "MONDO:0002629", "MONDO:0008315"],
-        }
+    expected_df = pd.concat([
+        df,
+        pd.Series(["RXCUI:196238", "CHEBI:5864", None], name="drug_curie"),
+        pd.Series(["MONDO:0005311", "MONDO:0002629", "MONDO:0008315"], name="disease_curie")],
+        axis=1
     )
     pd.testing.assert_frame_equal(result_df, expected_df)
 
