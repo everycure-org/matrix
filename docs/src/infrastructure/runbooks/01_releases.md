@@ -44,7 +44,6 @@ To streamline the release process, we use GitHub Actions for periodic **patch** 
         - Manually check who has contributed and list the contributors of the month to encourage contributions through PRs (code, docs, experiment reports, etc.). See the cli command below for how to best do this
         - Upon merging the PR, the release will be publicized to the [Every Cure website](https://docs.dev.everycure.org/releases/) by another GitHub Action. It will then also be listed under the [GitHub releases](https://github.com/everycure-org/matrix/releases).
 
-
 ## Commands
 
 To list contributors, use the following command:
@@ -67,6 +66,7 @@ The tag is created and pushed during the creation of the release PR from the Git
 This issue might be caused by a failure in the GitHub Actions workflow responsible for creating the release PR.  
 
 #### Steps to troubleshoot and re-trigger the workflow:  
+
 1. Navigate to the [**Actions**](https://github.com/everycure-org/matrix/actions) tab in the GitHub repository.  
 2. Open the [**"Create Pull Request to Verify AI Summary of Release Notes"**](https://github.com/everycure-org/matrix/actions/workflows/create-release-pr.yml) workflow.  
 3. Locate the workflow run for the release you triggered (it should be the most recent one).  
@@ -90,6 +90,7 @@ This issue might be caused by a failure in the GitHub Actions workflow responsib
 This issue might be due to a failure in the GitHub Actions workflow responsible for submitting the release pipeline.  
 
 #### Steps to troubleshoot and re-trigger the workflow:  
+
 1. Navigate to the [**Actions**](https://github.com/everycure-org/matrix/actions) tab in the GitHub repository.  
 2. Open the [**"Periodically run kedro kg-release"**](https://github.com/everycure-org/matrix/actions/workflows/submit-kedro-pipeline.yml) workflow.  
 3. Locate the most recent workflow run for the scheduled release.  
