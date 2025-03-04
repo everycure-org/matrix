@@ -35,6 +35,8 @@ spec:
         value: "{{ release_folder_name }}"
       - name: mlflow_experiment_id
         value: {{ mlflow_experiment_id }}
+      - name: mlflow_run_id
+        value: "{{ mlflow_run_id }}"
   templates:
   - &_kedro_template
     metrics:
@@ -75,28 +77,27 @@ spec:
       - name: cpu_request
       - name: ephemeral_storage_request
       - name: ephemeral_storage_limit
-      - name: spark_driver_memory
     podSpecPatch: |
       containers:
         - name: main
           resources:
             requests:
-              memory: {% raw %} "{{inputs.parameters.memory_request}}"
+              memory: {% raw %} "{{inputs.parameters.memory_request}}Gi"
               {% endraw %}
               cpu: {% raw %} "{{inputs.parameters.cpu_request}}"
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
-              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_request}}"
+              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_request}}Gi"
               {% endraw %}
             limits:
-              memory: {% raw %} "{{inputs.parameters.memory_limit}}"
+              memory: {% raw %} "{{inputs.parameters.memory_limit}}Gi"
               {% endraw %}
               cpu: {% raw %} "{{inputs.parameters.cpu_limit}}"
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
-              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_limit}}"
+              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_limit}}Gi"
               {% endraw %}
     container: &_kedro_container
       imagePullPolicy: Always
@@ -123,7 +124,10 @@ spec:
           value: {% raw %} "{{workflow.parameters.mlflow_endpoint}}" 
           {% endraw %}
         - name: MLFLOW_EXPERIMENT_ID
-          value: {% raw %} "{{workflow.parameters.mlflow_experiment_id}}" 
+          value: {% raw %} "{{workflow.parameters.mlflow_experiment_id}}"
+          {% endraw %}
+        - name: MLFLOW_RUN_ID
+          value: {% raw %} "{{workflow.parameters.mlflow_run_id}}"
           {% endraw %}
         - name: NEO4J_USER
           valueFrom:
@@ -174,8 +178,9 @@ spec:
         - name: main
           resources:
             requests:
-              memory: 50Gi
+              memory: 100Gi
             limits:
+              memory: 100Gi
               memory: 50Gi
           env:
             - name: SPARK_DRIVER_MEMORY
@@ -183,24 +188,24 @@ spec:
         - name: neo4j
           resources:
             requests:
-              memory: {% raw %} "{{inputs.parameters.memory_request}}"
+              memory: {% raw %} "{{inputs.parameters.memory_request}}Gi"
               {% endraw %}
               cpu: {% raw %} "{{inputs.parameters.cpu_request}}"
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
-              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_request}}"
+              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_request}}Gi"
               {% endraw %}
             limits:
-              memory: {% raw %} "{{inputs.parameters.memory_limit}}"
+              memory: {% raw %} "{{inputs.parameters.memory_limit}}Gi"
               {% endraw %}
               cpu: {% raw %} "{{inputs.parameters.cpu_limit}}"
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
-              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_limit}}"
+              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_limit}}Gi"
               {% endraw %}
-    container:
+    container: 
       <<: *_kedro_container
       command: ["/bin/sh", "-c"]
       args:
@@ -294,6 +299,5 @@ spec:
             value: {{ task.resources.ephemeral_storage_request }}
           - name: ephemeral_storage_limit
             value: {{ task.resources.ephemeral_storage_limit }}
-          - name: spark_driver_memory
-            value: {{ task.resources.spark_driver_memory }}
+
       {% endfor %}
