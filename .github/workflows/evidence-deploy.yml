@@ -53,6 +53,8 @@ env:
   # for deploying to GCS, only works on main
   rw_wip: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
   rw_sa: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
+  # release version from input 
+  RELEASE_VERSION: ${{ inputs.release_version }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -75,7 +77,7 @@ jobs:
           node-version: '20' 
           cache: 'npm'
           cache-dependency-path: services/kg_dashboard/package-lock.json
-      # - run: echo "RELEASE_VERSION=${{ inputs.release_version }}" >> $GITHUB_ENV
+      - run: printenv RELEASE_VERSION
       - run: make pwal
       - run: exit 1
 
