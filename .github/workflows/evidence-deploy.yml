@@ -73,6 +73,8 @@ jobs:
           service_account: ${{env.ro_sa}}
 
       # perform build & deploy
+      - run: make pwal
+      - run: exit 1
       - run: make install
       - run: make run-sources
       - run: make build
