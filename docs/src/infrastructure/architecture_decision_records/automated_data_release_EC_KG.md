@@ -11,7 +11,7 @@ The workflow automates the release process of a data-release/kg-release pipeline
 There are two ways to trigger a release:
 
 1. **Manual Trigger**: A user manually submits a data release or kg release pipeline with a specified version. You can find more information in [this runbook](https://docs.dev.everycure.org/infrastructure/runbooks/01_releases/)
-2. **Auto-Trigger via GitHub Action**: The release is automatically triggered based on a schedule:
+2. **Auto-Trigger via [GitHub Actions](https://github.com/everycure-org/matrix/blob/main/.github/workflows/submit-kedro-pipeline.yml)**: The release is automatically triggered based on a schedule:
    - Weekly patch bump
    - Monthly minor bump
 
@@ -19,18 +19,18 @@ There are two ways to trigger a release:
 Regardless of the trigger type, the process follows these steps:
 
 1. **Submit Argo Workflow**
-   - The Argo workflow is submitted.
+   - The [Argo workflow](https://github.com/everycure-org/matrix/blob/main/pipelines/matrix/templates/argo_wf_spec.tmpl) is submitted.
 2. **Argo Events Processing**
-   - Once the workflow is finished, `Argo EventSource` creates a data-release event.
+   - Once the workflow is finished, [Argo EventSource](https://github.com/everycure-org/matrix/blob/main/infra/argo/applications/data-release/templates/BuildDataReleaseEventSource.yaml) creates a data-release event.
    - `Argo EventHub` processes and forwards the event.
-   - `Argo EventSensor` detects the event and triggers the next step.
+   - [Argo EventSensor](https://github.com/everycure-org/matrix/blob/main/infra/argo/applications/data-release/templates/BuildDataReleaseSensorWithReleaseVersion.yaml) detects the event and triggers the next step.
 3. **Trigger Repository Dispatch**
    - An HTTP POST request is sent to trigger the repository dispatch.
 
 ## Creating the Release Pull Request
 Once the repository dispatch is triggered:
 
-- A **release PR** is created via GitHub Actions.
+- A **release PR** is created via [GitHub Actions](https://github.com/everycure-org/matrix/blob/main/.github/workflows/create-release-pr.yml).
 - The GitHub action executes:
   - **Tagging**: A tag referencing the commit from which the workflow was triggered.
   - **Generating release context**, including version details and an optional release article, which are added to the PR.
@@ -48,7 +48,7 @@ Once the repository dispatch is triggered:
 ## Creating a Release
 
 Once the release PR is merged:
-- The **official release** is created in GitHub via GitHub Actions.
+- The **official release** is created in GitHub via [GitHub Actions](https://github.com/everycure-org/matrix/blob/main/.github/workflows/create-post-pr-release.yml).
 - The **CI/CD pipeline rebuilds and deploys the website** to update the [release webpage](https://docs.dev.everycure.org/releases/).
 
 ## Additional Resources
