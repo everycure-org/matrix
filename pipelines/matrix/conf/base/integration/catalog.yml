@@ -69,6 +69,7 @@ integration.prm.unified_edges:
 # ==============================
 # Original sources: only used for sampling
 
+# TODO: Validate sample pulling from unified nodes and edges
 integration.prm.original.filtered_nodes:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.integration}/prm/filtered/nodes
