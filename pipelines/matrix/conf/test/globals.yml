@@ -15,6 +15,7 @@ paths:
   ingestion:          data/test/ingestion
   # Release-based
   integration:        data/test/releases/${versions.release}/datasets/integration
+  filtering:          data/test/releases/${versions.release}/datasets/filtering
   embeddings:         data/test/releases/${versions.release}/datasets/embeddings
 
   # Run-based
