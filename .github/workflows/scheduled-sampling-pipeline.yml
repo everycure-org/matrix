@@ -2,7 +2,8 @@ name: Scheduled Sampling Pipeline
 
 on:
   schedule:
-    - cron: '0 5 * * *'  # daily at 5am GMT
+    - cron: '0 0 * * *'  # daily at 5am GMT
+  workflow_dispatch:  {}
 env:
   project_id: 'mtrx-hub-dev-3of'
   workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
@@ -80,10 +81,11 @@ jobs:
         working-directory: pipelines/matrix
         run: |
           echo "Run the kedro sampling pipeline"
-          kedro submit \
+          kedro experiment run \
             -e sample \
             -p test_sample \
             --run-name scheduled-sampled-test \
+            --experiment-name scheduled-sampled-test \
             --username github_actions_bot \
             --release-version v0.2.7 \
             --headless \
