@@ -1,12 +1,16 @@
 name: Pwal
 
 on:
-  workflow_dispatch: {}
-  push:
-    branches:
-      - main
-    paths:
-      - 'services/kg_dashboard/**'  # Only trigger when dashboard files change
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch to test'
+        required: true
+        default: 'main'
+      message:
+        description: 'Test message'
+        required: false
+        default: 'Hello!'
 
 jobs:
   trigger-deploy:
