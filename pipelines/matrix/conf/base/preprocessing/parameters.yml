@@ -1,5 +1,7 @@
 preprocessing.name_resolution:
-  url: https://name-resolution-sri.renci.org/lookup?string={name}&autocomplete=True&highlighting=False&offset=0&limit=1
+  url: https://name-resolution-sri.renci.org/bulk-lookup
+  batch_size: 50
+
 
 preprocessing.medical_kg_gsheets:
   nodes: ['name']
