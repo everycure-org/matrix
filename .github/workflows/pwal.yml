@@ -37,7 +37,7 @@ jobs:
               workflow_id: 'evidence-deploy.yml',
               ref: process.env.BRANCH_REF,
               inputs: {
-                release_version: 'v1.2.3'  # Replace with your actual version
+                "release_version": 'v1.2.3' 
               }
             })
 
