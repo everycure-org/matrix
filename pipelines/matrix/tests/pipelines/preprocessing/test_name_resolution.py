@@ -1,12 +1,8 @@
 from unittest.mock import MagicMock, patch
 
-import pandas as pd
-import pytest
 from matrix.pipelines.preprocessing.nodes import (
     add_source_and_target_to_clinical_trails,
     parse_one_name_batch,
-    process_medical_nodes,
-    resolve_names,
     resolve_one_name_batch,
 )
 
@@ -41,11 +37,13 @@ def test_add_source_and_target_to_clinical_trails():
     ):
         result_df = add_source_and_target_to_clinical_trails(df, "mock_url", 10)
 
-    expected_df = pd.concat([
-        df,
-        pd.Series(["RXCUI:196238", "CHEBI:5864", None], name="drug_curie"),
-        pd.Series(["MONDO:0005311", "MONDO:0002629", "MONDO:0008315"], name="disease_curie")],
-        axis=1
+    expected_df = pd.concat(
+        [
+            df,
+            pd.Series(["RXCUI:196238", "CHEBI:5864", None], name="drug_curie"),
+            pd.Series(["MONDO:0005311", "MONDO:0002629", "MONDO:0008315"], name="disease_curie"),
+        ],
+        axis=1,
     )
     pd.testing.assert_frame_equal(result_df, expected_df)
 
