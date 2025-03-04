@@ -27,6 +27,7 @@ def generate_argo_config(
     package_name: str,
     release_folder_name: str,
     default_execution_resources: Optional[ArgoResourceConfig] = None,
+    mlflow_run_id: Optional[str] = None,
 ) -> str:
     if default_execution_resources is None:
         default_execution_resources = ArgoResourceConfig()
@@ -46,6 +47,7 @@ def generate_argo_config(
         image=image,
         image_tag=image_tag,
         mlflow_experiment_id=mlflow_experiment_id,
+        mlflow_run_id=mlflow_run_id,
         namespace=namespace,
         username=username,
         run_name=run_name,
