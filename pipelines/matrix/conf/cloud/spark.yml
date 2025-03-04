@@ -1,1 +1,0 @@
-spark.driver.memory: ${oc.env:SPARK_DRIVER_MEMORY}g
