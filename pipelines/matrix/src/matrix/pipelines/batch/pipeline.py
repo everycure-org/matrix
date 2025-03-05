@@ -152,6 +152,7 @@ def derive_cache_misses(
     df: DataFrame, cache: DataFrame, api: str, primary_key: str, preprocessor: Callable[[DataFrame], DataFrame]
 ) -> DataFrame:
     report_on_cache_misses(cache, api)
+    df = df.limit(1000)
     assert (
         cache.columns == CACHE_COLUMNS
     ), f"The cache's columns does not match {CACHE_COLUMNS}. Note that the order is fixed, so that appends would work correctly."
@@ -180,6 +181,9 @@ def cache_miss_resolver_wrapper(
         logger.info(f"embedding batch with key: {batch[0]}")
         embeddings: list[list[float]] = await transformer.apply(batch)
         logger.info(f"received embedding for batch with key: {batch[0]}")
+        for emb in embeddings:
+            if not all(isinstance(x, (float, int)) for x in emb):
+                raise ValueError(f"Unexpected non-numeric value in embeddings: {emb}")
         return pa.table([batch, embeddings, [api] * len(batch)], schema=CACHE_SCHEMA).to_pandas()
 
     def prep(

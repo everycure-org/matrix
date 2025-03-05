@@ -9,6 +9,7 @@ from matrix.pipelines.embeddings.pipeline import create_pipeline as create_embed
 from matrix.pipelines.evaluation.pipeline import create_pipeline as create_evaluation_pipeline
 from matrix.pipelines.fabricator.pipeline import create_pipeline as create_fabricator_pipeline
 from matrix.pipelines.ingestion.pipeline import create_pipeline as create_ingestion_pipeline
+from matrix.pipelines.integration.pipeline import create_cached_normalization_pipeline
 from matrix.pipelines.integration.pipeline import create_pipeline as create_integration_pipeline
 from matrix.pipelines.matrix_generation.pipeline import create_pipeline as create_matrix_pipeline
 from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
@@ -35,6 +36,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         "evaluation": create_evaluation_pipeline(),
         "create_sample": create_create_sample_pipeline(),
         "caching": create_node_embeddings_pipeline(),
+        "cached_normalization": create_cached_normalization_pipeline(),
         # "inference": create_inference_pipeline(),  # Run manually based on medical input
     }
 
