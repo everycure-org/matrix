@@ -30,6 +30,9 @@ def _transform(dfs: Dict[str, Any], transformer, **transformer_kwargs):
     return shards
 
 
+print("hello")
+
+
 def _bucketize(df: DataFrame, bucket_size: int, columns: Optional[List[str]] = None) -> pd.DataFrame:
     """Function to bucketize df in given number of buckets.
 
