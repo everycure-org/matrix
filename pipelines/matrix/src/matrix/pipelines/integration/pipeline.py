@@ -6,6 +6,33 @@ from matrix.pipelines.batch import pipeline as batch_pipeline
 from . import nodes
 
 
+def create_cached_normalization_pipeline(**kwargs) -> Pipeline:
+    pipelines = []
+    # Create pipeline per source
+    for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration"):
+        source = source["name"]
+        pipelines.append(
+            pipeline(
+                batch_pipeline.cached_api_enrichment_pipeline(
+                    source=f"source_{source}",
+                    input=f"integration.int.{source}.nodes",
+                    cache="integration.cache.read",  # shouldn't be joined with the embeddings cache, because the value in key:value:api is of a different datatype (str instead of list[float])
+                    primary_key="params:integration.normalization.primary_key",
+                    cache_miss_resolver="params:integration.normalization.normalizer",
+                    api="params:integration.normalization.api",
+                    preprocessor="params:integration.normalization.preprocessor",
+                    output=f"integration.int.{source}.nodes.nodes_norm_mapping",
+                    new_col="params:integration.normalization.new_col",
+                    batch_size="params:integration.normalization.batch_size",
+                    cache_misses=f"integration.int.{source}.cache_misses",
+                    cache_out=f"integration.{source}.cache.write",
+                    cache_reload=f"integration.{source}.cache.reload",
+                ),
+            )
+        )
+    return sum(pipelines)
+
+
 def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges: bool = True) -> Pipeline:
     pipelines = []
 
@@ -41,7 +68,7 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
                     cache="integration.cache.read",  # shouldn't be joined with the embeddings cache, because the value in key:value:api is of a different datatype (str instead of list[float])
                     primary_key="params:integration.normalization.primary_key",
                     cache_miss_resolver="params:integration.normalization.normalizer",
-                    api="params:integration.normalization.normalizer.endpoint",
+                    api="params:integration.normalization.api",
                     preprocessor="params:integration.normalization.preprocessor",
                     output=f"integration.int.{source}.nodes.nodes_norm_mapping",
                     new_col="params:integration.normalization.new_col",
