@@ -52,7 +52,7 @@ class NCATSNodeNormalizer(Normalizer):
 
                 resp.raise_for_status()
 
-        return [str(self._extract_id(curie, response_json, self._json_parser) for curie in curies)]
+        return [str(self._extract_id(curie, response_json, self._json_parser)) for curie in curies]
 
     @staticmethod
     def _extract_id(id: str, response: Dict[str, Any], json_parser: parse) -> Dict[str, Any]:

@@ -51,7 +51,13 @@ integration:
       _object: matrix.pipelines.batch.pipeline.pass_through
     new_col: normalized_id
     primary_key: id
-
+    
+    cache_schema:
+      # _object: pyarrow.schema
+      # key: pyarrow.string()
+      # value: pyarrow.list_(pyarrow.string())
+      value_type: string
+      scope: normalization
 
   deduplication:
     # choose if a node should have the most specific category.

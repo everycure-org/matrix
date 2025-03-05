@@ -1,9 +1,14 @@
+import pyarrow as pa
 from kedro.pipeline import Pipeline, node, pipeline
 
 from matrix import settings
 from matrix.pipelines.batch import pipeline as batch_pipeline
 
 from . import nodes
+
+NORM_CACHE_SCHEMA = pa.schema(
+    {"key": pa.string(), "value": pa.string(), "api": pa.string()}, metadata={"scope": "normalization"}
+)
 
 
 def create_cached_normalization_pipeline(**kwargs) -> Pipeline:
@@ -21,12 +26,14 @@ def create_cached_normalization_pipeline(**kwargs) -> Pipeline:
                     cache_miss_resolver="params:integration.normalization.normalizer",
                     api="params:integration.normalization.api",
                     preprocessor="params:integration.normalization.preprocessor",
-                    output=f"integration.int.{source}.nodes.nodes_norm_mapping",
+                    output=f"integration.int.{source}.nodes_norm_mapping",
                     new_col="params:integration.normalization.new_col",
                     batch_size="params:integration.normalization.batch_size",
                     cache_misses=f"integration.int.{source}.cache_misses",
                     cache_out=f"integration.{source}.cache.write",
                     cache_reload=f"integration.{source}.cache.reload",
+                    value_type="params:integration.normalization.cache_schema.value_type",
+                    scope="params:integration.normalization.cache_schema.scope",
                 ),
             )
         )
@@ -76,6 +83,8 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
                     cache_misses=f"integration.int.{source}.cache_misses",
                     cache_out=f"integration.{source}.cache.write",
                     cache_reload=f"integration.{source}.cache.reload",
+                    value_type="params:integration.normalization.cache_schema.value_type",
+                    scope="params:integration.normalization.cache_schema.scope",
                 ),
                 node(
                     func=nodes.normalize_nodes,
