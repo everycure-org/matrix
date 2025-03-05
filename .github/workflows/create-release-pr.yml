@@ -132,11 +132,6 @@ jobs:
           uv pip compile --quiet requirements.in --output-file requirements.txt
           uv pip install -r requirements.txt 
           uv run scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
-      
-      - name: Print env
-        run: |
-          cat "$GITHUB_ENV"
-          echo "generate_article=${{ env.generate_article }}"
 
       - name: Create Release Notes
         working-directory: apps/matrix-cli
@@ -144,7 +139,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           POSTS_DIR: docs/src/releases/posts
         # only create release notes for minor, major, and intermediate bumps
-        if: env.generate_article == 'True'
+        if: env.generate_notes == 'True'
         run: |
           set -eux
 
