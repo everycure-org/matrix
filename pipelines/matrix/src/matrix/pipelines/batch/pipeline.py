@@ -11,7 +11,7 @@ import pyarrow as pa
 from kedro.pipeline import Pipeline, node, pipeline
 from matrix.inject import inject_object
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
-from matrix.pipelines.embeddings.encoders import AttributeEncoder, T
+from matrix.pipelines.embeddings.encoders import AttributeEncoder
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
