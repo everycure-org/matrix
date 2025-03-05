@@ -89,7 +89,7 @@ integration.{source}.cache.reload:  # an easy way to force Kedro to reload a dat
     <<: *cache_in
 integration.int.{source}.cache_misses:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.tmp}/cache_misses/{source}/
+  filepath: ${globals:paths.cache}/integration/{source}_cache_misses
   save_args:
     mode: overwrite
 
