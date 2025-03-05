@@ -135,6 +135,7 @@ jobs:
       
       - name: Print env
         run: |
+          cat "$GITHUB_ENV"
           echo "generate_article=${{ env.generate_article }}"
 
       - name: Create Release Notes
