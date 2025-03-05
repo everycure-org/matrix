@@ -21,10 +21,20 @@ V = TypeVar("V")
 
 logger = logging.getLogger(__name__)
 
-CACHE_SCHEMA = pa.schema(
-    {"key": pa.string(), "value": pa.list_(pa.float32()), "api": pa.string()}, metadata={"scope": "embeddings"}
-)
-CACHE_COLUMNS = CACHE_SCHEMA.names
+CACHE_COLUMNS = ["key", "value", "api"]
+
+DATA_TYPE_MAPPING = {
+    "string": pa.string(),
+    "float32": pa.float32(),
+    "float64": pa.float64(),
+    "int32": pa.int32(),
+    "int64": pa.int64(),
+}
+
+
+def load_cache_schema(value_type, scope) -> pa.schema:
+    value_type = DATA_TYPE_MAPPING[value_type]
+    return pa.schema({"key": pa.string(), "value": pa.list_(value_type), "api": pa.string()}, metadata={"scope": scope})
 
 
 def create_node_embeddings_pipeline() -> Pipeline:
@@ -41,7 +51,9 @@ def create_node_embeddings_pipeline() -> Pipeline:
         cache="embeddings.cache.read",
         cache_misses="embeddings.cache.misses",
         cache_out="embeddings.cache_write",
-        cache_reload="embeddings.cache_reload",
+        cache_reload="embeddings.cache.reload",
+        value_type="params:embeddings.caching.cache_schema.value_type",
+        scope="params:embeddings.caching.cache_schema.scope",
     )
 
 
@@ -59,6 +71,8 @@ def cached_api_enrichment_pipeline(
     cache_misses: str,
     cache_out: str,
     cache_reload: str,
+    value_type,
+    scope,
 ) -> Pipeline:
     """Pipeline to enrich a dataframe using optionally cached API calls.
 
@@ -109,7 +123,6 @@ def cached_api_enrichment_pipeline(
     getting more batches in parallel, which in turn can  have an affect
     (positive or negative, it depends on the API) on the performance.
     """
-
     common_inputs = {"df": input, "cache": cache, "api": api, "primary_key": primary_key, "preprocessor": preprocessor}
     nodes = [
         ArgoNode(
@@ -127,7 +140,14 @@ def cached_api_enrichment_pipeline(
         ArgoNode(
             name=f"resolve_{source}_cache_misses",
             func=cache_miss_resolver_wrapper,
-            inputs={"df": cache_misses, "transformer": cache_miss_resolver, "api": api, "batch_size": batch_size},
+            inputs={
+                "df": cache_misses,
+                "transformer": cache_miss_resolver,
+                "api": api,
+                "batch_size": batch_size,
+                "value_type": value_type,
+                "scope": scope,
+            },
             outputs=cache_out,
             argo_config=ArgoResourceConfig(
                 cpu_request=1,
@@ -167,8 +187,11 @@ def derive_cache_misses(
 
 @inject_object()
 def cache_miss_resolver_wrapper(
-    df: DataFrame, transformer: AttributeEncoder, api: str, batch_size: int
+    df: DataFrame, transformer: AttributeEncoder, api: str, batch_size: int, value_type, scope
 ) -> dict[str, Callable[[], Coroutine[Any, Any, pa.Table]]]:
+    # cache_schema=NORM_CACHE_SCHEMA
+    cache_schema = load_cache_schema(value_type, scope)
+    logger.info(f"schema: {cache_schema}")
     if logger.isEnabledFor(logging.INFO):
         logger.info(json.dumps({"number of cache misses": df.count()}))
     assert (
@@ -179,12 +202,11 @@ def cache_miss_resolver_wrapper(
 
     async def async_delegator(batch: Sequence[str]) -> pa.Table:
         logger.info(f"embedding batch with key: {batch[0]}")
-        embeddings: list[list[float]] = await transformer.apply(batch)
+        transformed = await transformer.apply(batch)
         logger.info(f"received embedding for batch with key: {batch[0]}")
-        for emb in embeddings:
-            if not all(isinstance(x, (float, int)) for x in emb):
-                raise ValueError(f"Unexpected non-numeric value in embeddings: {emb}")
-        return pa.table([batch, embeddings, [api] * len(batch)], schema=CACHE_SCHEMA).to_pandas()
+        if not all(isinstance(val, str) for val in transformed):
+            logger.warning(f"Transformed data contains non-string values: {transformed}")
+        return pa.table([batch, transformed, [api] * len(batch)], schema=cache_schema).to_pandas()
 
     def prep(
         batches: Iterable[Sequence[T]], api: str
