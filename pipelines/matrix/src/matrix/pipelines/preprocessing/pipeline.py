@@ -16,6 +16,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "df": "preprocessing.raw.clinical_trials_data",
                     "resolver_url": "params:preprocessing.name_resolution.url",
+                    "batch_size": "params:preprocessing.name_resolution.batch_size",
                 },
                 outputs="preprocessing.int.mapped_clinical_trials_data",
                 name="mapped_clinical_trials_data",
@@ -46,6 +47,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "df": "preprocessing.raw.ec_medical_team.nodes",
                     "resolver_url": "params:preprocessing.name_resolution.url",
+                    "batch_size": "params:preprocessing.name_resolution.batch_size",
                 },
                 outputs="ingestion.raw.ec_medical_team.nodes@pandas",
                 name="normalize_ec_medical_team_nodes",
