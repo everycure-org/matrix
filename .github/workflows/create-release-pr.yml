@@ -133,13 +133,13 @@ jobs:
           uv pip install -r requirements.txt 
           uv run scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
 
-      - name: Create Release Notes
+      - name: Create Release Article
         working-directory: apps/matrix-cli
         env:
           GH_TOKEN: ${{ github.token }}
           POSTS_DIR: docs/src/releases/posts
         # only create release notes for minor, major, and intermediate bumps
-        if: env.generate_notes == 'True'
+        if: env.generate_article == 'True'
         run: |
           set -eux
 
@@ -187,21 +187,21 @@ jobs:
             git push
           fi
 
-      # - name: Create Pull Request
-      #   env:
-      #     GITHUB_TOKEN: ${{ github.token }}
-      #   run: |
-      #     gh pr create \
-      #       --title "Release/${{ env.release }}" \
-      #       --base main \
-      #       --body "$(cat <<EOM
-      #     This pull request was created because a release pipeline completed successfully. If this is a patch release (the release version does not end in 0, e.g. "v1.2.5") that was triggered as part of its weekly schedule, you may close this PR directly, unless you want it to [be logged on the website](https://docs.dev.everycure.org/releases/release_history/). A git tag was [created](https://github.com/everycure-org/matrix/tags) regardless, so people can check it out.
+      - name: Create Pull Request
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          gh pr create \
+            --title "Release/${{ env.release }}" \
+            --base main \
+            --body "$(cat <<EOM
+          This pull request was created because a release pipeline completed successfully. If this is a patch release (the release version does not end in 0, e.g. "v1.2.5") that was triggered as part of its weekly schedule, you may close this PR directly, unless you want it to [be logged on the website](https://docs.dev.everycure.org/releases/release_history/). A git tag was [created](https://github.com/everycure-org/matrix/tags) regardless, so people can check it out.
 
-      #     Note: 
-      #     - for minor and major releases, an auto-generated release article is added, meant as a kickstarter for the final release. It should be revised.
-      #     - release information file is used for updating the release history page
-      #     EOM
-      #     )" \
-      #       --draft \
-      #       --label Release \
-      #       --label hide-from-release
+          Note: 
+          - for minor and major releases, an auto-generated release article is added, meant as a kickstarter for the final release. It should be revised.
+          - release information file is used for updating the release history page
+          EOM
+          )" \
+            --draft \
+            --label Release \
+            --label hide-from-release
