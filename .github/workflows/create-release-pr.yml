@@ -197,4 +197,4 @@ jobs:
           )" \
             --draft \
             --label Release \
-            --label hide-from-release-notes
+            --label hide-from-release
