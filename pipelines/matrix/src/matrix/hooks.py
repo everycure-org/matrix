@@ -181,6 +181,18 @@ class SparkHooks:
             # Clear any existing default session, we take control!
             sess = ps.SparkSession.getActiveSession()
             if sess is not None:
+                # Kedro integration tests (those using
+                # kedro.framework.session.KedroSession) that make use of this
+                # hook will make all tests using the SparkSession fail if the
+                # session started by the pytest fixture is stopped. We may
+                # consider to modify the configuration of the SparkSession fixture
+                # using the parameters from spark.yml (as is done below), but
+                # for the moment this is not needed in our test suite.
+                # In other words, referring to the previous comment: we do not
+                # take control in the case of a test suite.
+                if "PYTEST_CURRENT_TEST" in os.environ:
+                    cls._spark_session = sess
+                    return
                 logger.warning("we are killing spark to create a fresh one")
                 sess.stop()
             parameters = cls._kedro_context.config_loader["spark"]

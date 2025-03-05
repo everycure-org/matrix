@@ -6,7 +6,9 @@ import pytest
 from kedro.config import OmegaConfigLoader
 from kedro.framework.context import KedroContext
 from kedro.framework.hooks import _create_hook_manager
-from kedro.framework.project import settings
+from kedro.framework.project import configure_project, settings
+from kedro.framework.session import KedroSession
+from kedro.framework.startup import bootstrap_project
 from matrix.resolvers import cast_to_int, if_null, merge_dicts
 from matrix.settings import _load_setting
 from omegaconf.resolvers import oc
@@ -100,3 +102,19 @@ def spark() -> Generator[ps.SparkSession, None, None]:
         .getOrCreate()
     )
     yield spark
+
+
+@pytest.fixture
+def kedro_session(spark):  # Ensure we have the pytest SparkSession fixture.
+    # If the spark fixture isn't added, the order in which tests are executed
+    # matters, which is bad practice. We want the Spar Kedro Hook NOT to stop
+    # the (test) SparkSession, and we don't want a full-blown SparkSession to
+    # be started by the Kedro hook either.
+    project_path = Path(__file__).resolve().parents[1]
+    bootstrap_project(project_path)
+    configure_project(project_path.name)
+
+    with KedroSession.create(project_path) as session:
+        session.load_context()
+
+        yield session
