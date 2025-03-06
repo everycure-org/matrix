@@ -33,8 +33,8 @@ SELECT
     category,
     normalization_success, 
     no_normalization_change, 
-       'robokop' AS normalization_set,
-       count(*) AS count
+    'robokop' AS normalization_set,
+    count(*) AS count
 FROM (
   SELECT 
       subject AS id, 
