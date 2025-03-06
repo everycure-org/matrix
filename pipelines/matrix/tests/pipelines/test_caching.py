@@ -1,22 +1,21 @@
 from pathlib import Path
-from unittest.mock import AsyncMock
+from typing import Callable, Sequence
+from unittest.mock import AsyncMock, patch
 
 import pytest
-from kedro.framework.project import configure_project
 from kedro.framework.session import KedroSession
-from kedro.framework.startup import bootstrap_project
 from kedro.io import DataCatalog, MemoryDataset
 from kedro.runner import SequentialRunner
 from kedro_datasets.pandas import ParquetDataset
 from matrix.datasets.gcp import LazySparkDataset, PartitionedAsyncParallelDataset, SparkWithSchemaDataset
 from matrix.pipelines.batch.pipeline import (
+    cache_miss_resolver_wrapper,
     create_node_embeddings_pipeline,
     derive_cache_misses,
     limit_cache_to_results_from_api,
     lookup_from_cache,
     resolve_cache_duplicates,
 )
-from matrix.pipelines.embeddings.encoders import DummyResolver
 from matrix.pipelines.embeddings.nodes import pass_through
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import ArrayType, FloatType, StringType, StructField, StructType
@@ -194,11 +193,6 @@ def sample_api2():
 
 
 @pytest.fixture
-def sample_batch_size():
-    return 2
-
-
-@pytest.fixture
 def sample_id_col():
     return "key"
 
@@ -209,48 +203,8 @@ def sample_preprocessor():
 
 
 @pytest.fixture
-def sample_resolver():
-    return DummyResolver
-
-
-@pytest.fixture
 def sample_new_col():
     return "resolved"
-
-
-@pytest.fixture
-def mock_encoder() -> AsyncMock:
-    encoder = AsyncMock(spec=DummyResolver)
-    encoder.apply.side_effect = DummyResolver().apply
-    return encoder
-
-
-@pytest.fixture
-def mock_encoder2() -> AsyncMock:
-    encoder = AsyncMock(spec=DummyResolver)
-    encoder.apply.side_effect = DummyResolver().apply
-    return encoder
-
-
-def test_spark_with_schema_dataset_bootstrap(test_schema, cache_schema):
-    project_path = Path(__file__).resolve().parents[2]
-    # Bootstrap the project to set up the configuration
-    bootstrap_project(project_path)
-    configure_project("matrix")
-
-    # Create a Kedro session and context
-    with KedroSession.create(project_path) as session:
-        kedro_context = session.load_context()
-        non_existent_path = "file:///tmp/non_existent_path"
-        dataset = SparkWithSchemaDataset(
-            filepath=non_existent_path,
-            file_format="parquet",
-            load_args=test_schema,
-            provide_empty_if_not_present=True,
-        )
-        result_df = dataset.load()
-        assert result_df.rdd.isEmpty(), "The DataFrame should be empty"
-        assert result_df.schema == cache_schema, "The schema should match the provided schema"
 
 
 def test_derive_cache_misses(
@@ -295,27 +249,31 @@ def test_different_api(sample_cache, sample_api1, api1_filtered_cache, sample_ap
     assertDataFrameEqual(result2_df, api2_filtered_cache)
 
 
-def test_df_fully_enriched(
-    sample_input_df,
-    cache_schema,
-    sample_api1,
-    sample_primary_key,
-    sample_preprocessor,
-    sample_batch_size,
-    sample_new_col,
+@patch("matrix.pipelines.embeddings.encoders.DummyResolver.__new__", return_value=AsyncMock())
+def test_cached_api_enrichment_pipeline(
     mock_encoder,
-    mock_encoder2,
+    sample_input_df: DataFrame,
+    cache_schema: StructType,
+    sample_api1: str,
+    sample_primary_key: str,
+    sample_preprocessor: Callable,
+    sample_new_col: str,
     tmp_path: Path,
+    kedro_session: KedroSession,
 ):
+    """Verify the workings of the cached_api_enrichment_pipeline by calling it twice on the same dataset."""
+
+    # Given a KedroSession, with a catalog where the cache is empty, and a
+    # dataset where some keys need to be looked up using a service...
+    async def dummy_resolver(docs: Sequence):
+        return [[1.0, 2.0]] * len(docs)
+
+    resolver = mock_encoder()  # Because of the patch, we are guaranteed that this object is _identical_ to the one that will be created by Kedro (through the custom inject decorator).
+    resolver.apply.side_effect = dummy_resolver
+
     cache_path = str(tmp_path / "cache_dataset")
-
-    project_path = Path(__file__).resolve().parents[2]
-    bootstrap_project(project_path)
-    configure_project(project_path.name)
-
-    with KedroSession.create(project_path) as session:
-        session.load_context()
-        input = {
+    catalog = DataCatalog(
+        {
             "integration.prm.filtered_nodes": MemoryDataset(sample_input_df),
             "cache.read": SparkWithSchemaDataset(
                 filepath=str(tmp_path / "cache_dataset"),
@@ -336,25 +294,52 @@ def test_df_fully_enriched(
             "params:caching.api": MemoryDataset(sample_api1),
             "params:caching.primary_key": MemoryDataset(sample_primary_key),
             "params:caching.preprocessor": MemoryDataset(sample_preprocessor),
-            "params:caching.resolver": MemoryDataset(mock_encoder),
+            "params:caching.resolver": MemoryDataset({"_object": "matrix.pipelines.embeddings.encoders.DummyResolver"}),
             "params:caching.new_col": MemoryDataset(sample_new_col),
-            "params:caching.batch_size": MemoryDataset(sample_batch_size),
+            "params:caching.batch_size": MemoryDataset(2),
         }
-        catalog = DataCatalog(input)
-        pipeline_run1 = create_node_embeddings_pipeline()
-        runner = SequentialRunner()  # SequentialRunner kills Spark between nodes.
+    )
+    pipeline_run = create_node_embeddings_pipeline()
 
-        runner.run(pipeline_run1, catalog)
+    runner = SequentialRunner()
+    # ...when running the Kedro pipeline a first time...
+    runner.run(pipeline_run, catalog)
 
-        enriched_data = catalog.load("fully_enriched").toPandas()
-        assert enriched_data[sample_new_col].isna().sum() == 0, "The input DataFrame should be fully enriched"
-        assert enriched_data.shape == (4, 3)
-        # Run the pipeline the 2nd time
-        catalog_for_run2 = DataCatalog(input | {"params:caching.resolver": MemoryDataset(mock_encoder2)})
-        pipeline_run2 = create_node_embeddings_pipeline()
-        runner.run(pipeline_run2, catalog_for_run2)
-        mock_encoder.apply.assert_awaited()
+    # ...then the data is found to be enriched...
+    enriched_data = catalog.load("fully_enriched").toPandas()
+    assert enriched_data[sample_new_col].isna().sum() == 0, "The input DataFrame should be fully enriched"
+    assert enriched_data.shape == (4, 3)
+    # ...by having the lookup service being called...
+    resolver.apply.assert_called()
+    # ...and because it's async, also awaited.
+    resolver.apply.assert_awaited()
+    # ... in other words, the catalog is complete.
+    assert catalog.load("cache.read").toPandas().shape == (4, 3)  # Might need to force reloading the dataset.
 
-        mock_encoder.apply.assert_called()
-        # The first run, encoder should be called
-        mock_encoder2.assert_not_called()  # The second run, encoder should not be called
+    # When the pipeline is run a 2nd time...
+    calls = resolver.apply.call_count
+    awaits = resolver.apply.await_count
+    runner.run(pipeline_run, catalog)
+    # ... then the cache resolver should not have called out to the async function, as there is nothing to resolve.
+    assert resolver.apply.call_count == calls
+    assert resolver.apply.await_count == awaits
+
+
+def test_no_resolver_calls_on_empty_cache_miss(spark: SparkSession):
+    """Given that no keys resulted in a cache miss,
+    when the cache_miss_resolver_wrapper is triggered automatically as a component in the cached_api_enrichment_pipeline,
+    then no calls to the external API, through the cache miss resolver, will be made."""
+
+    result = cache_miss_resolver_wrapper(
+        df=spark.createDataFrame([], schema="key string"),
+        transformer=AsyncMock(),
+        api="foo",
+        batch_size=1,
+    )
+
+    # That the encoder was not called, cannot be tested from here
+    # as the cache_miss_resolver_wrapper only defers the actual lookups until
+    # Kedro's partitioned dataset mechanism kicks in. That is done by the
+    # AsyncParallelDataset's `save` call, which would only be tested from an
+    # integration test, such as the one in `test_cached_api_enrichment_pipeline`.
+    assert result == {}
