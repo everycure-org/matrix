@@ -79,7 +79,7 @@ Similarly, we encourage code authors to:
 - View feedback as a chance to improve and learn
 
 To facilitate efficient reviews:
-- please assign reviewers to your PRs
+- Please assign reviewers to your PRs
 - Being assigned means that you are expected to review the PR, if you cannot due to workload, please let the author know so they can find someone else
 
 !!! note
