@@ -1,17 +1,52 @@
-import json
 import logging
-from typing import Dict, Iterable, List, Tuple
+import random
+import time
+from typing import Collection, Dict, List, Sequence
 
 import pandas as pd
 import requests
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import Retrying, stop_after_attempt, wait_exponential
 
 logger = logging.getLogger(__name__)
 
 
-@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
-def resolve_name(name: str, cols_to_get: Iterable[str], url: str) -> dict:
+def resolve_one_name_batch(names: Sequence[str], url: str) -> Dict[str, List[Dict]]:
+    """Batch resolve a list of names to their corresponding CURIEs."""
+    payload = {
+        "strings": names,
+        "autocomplete": True,
+        "highlighting": False,
+        "offset": 0,
+        "limit": 1,
+    }
+
+    for attempt in Retrying(
+        wait=wait_exponential(multiplier=2, min=2, max=120), stop=stop_after_attempt(5), reraise=True
+    ):
+        with attempt:
+            response = requests.post(url, json=payload)
+            logger.debug(f"Request time: {response.elapsed.total_seconds():.2f} seconds")
+            response.raise_for_status()
+            return response.json()
+
+
+def parse_one_name_batch(
+    result: Dict[str, List[Dict[str, str]]], cols_to_get: Collection[str]
+) -> Dict[str, Dict[str, str | None]]:
+    """Parse API response to extract resolved names and corresponding attributes."""
+    resolved_data = {}
+
+    for name, attributes in result.items():
+        if attributes:
+            resolved_data[name] = {col: attributes[0].get(col) for col in cols_to_get}
+        else:
+            resolved_data[name] = dict.fromkeys(cols_to_get)
+
+    return resolved_data
+
+
+def resolve_names(names: Sequence[str], cols_to_get: Collection[str], url: str, batch_size: int) -> Dict[str, Dict]:
     """Function to retrieve the normalized identifier through the normalizer.
 
     Args:
@@ -21,16 +56,17 @@ def resolve_name(name: str, cols_to_get: Iterable[str], url: str) -> dict:
         Name and corresponding curie
     """
 
-    if not name or pd.isna(name):
-        return {}
-    result = requests.get(url.format(name=name)).json()
-    if not result:
-        return {}
-
-    element = result[0]
-    ret = {col: element.get(col) for col in cols_to_get}
-    logger.debug(f'{{"resolver url": {url}, "name": {name}, "response extraction": {json.dumps(ret)}}}')
-    return ret
+    resolved_data = {}
+    for i in range(0, len(names), batch_size):
+        batch = names[i : i + batch_size]
+        logger.info(f"Resolving batch {i} of {len(names)}")
+        # Waiting between requests drastically improves the API performance, as opposed to hitting a 5xx code
+        # and using retrying with backoff, which can render the API unresponsive for a long time (> 10 min).
+        time.sleep(random.randint(5, 10))
+        batch_response = resolve_one_name_batch(batch, url)
+        batch_parsed = parse_one_name_batch(batch_response, cols_to_get)
+        resolved_data.update(batch_parsed)
+    return resolved_data
 
 
 @check_output(
@@ -46,7 +82,7 @@ def resolve_name(name: str, cols_to_get: Iterable[str], url: str) -> dict:
         # unique=["normalized_curie"],
     )
 )
-def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
+def process_medical_nodes(df: pd.DataFrame, resolver_url: str, batch_size: int) -> pd.DataFrame:
     """Map medical nodes with name resolver.
 
     Args:
@@ -57,11 +93,12 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
         Processed medical nodes
     """
     # Normalize the name
-    enriched_data = df["name"].apply(resolve_name, cols_to_get=["curie", "label", "types"], url=resolver_url)
-
-    # Extract into df
-    enriched_df = pd.DataFrame(enriched_data.tolist())
-    df = pd.concat([df, enriched_df], axis=1)
+    names = df["name"].dropna().unique().tolist()
+    resolved_names = resolve_names(
+        names, cols_to_get=["curie", "label", "types"], url=resolver_url, batch_size=batch_size
+    )
+    extra_cols = df.name.map(resolved_names)
+    df = df.join(pd.json_normalize(extra_cols))
 
     # Coalesce id and new id to allow adding "new" nodes
     df["normalized_curie"] = df["new_id"].fillna(df["curie"])
@@ -137,20 +174,24 @@ def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> p
         # unique=["drug_curie", "disease_curie"],
     )
 )
-def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
+def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str, batch_size: int) -> pd.DataFrame:
     """Resolve names to curies for source and target columns in clinical trials data.
 
     Args:
         df: Clinical trial dataset
     """
-    # Normalize the name
-    drug_data = df["drug_name"].apply(resolve_name, cols_to_get=["curie"], url=resolver_url)
-    disease_data = df["disease_name"].apply(resolve_name, cols_to_get=["curie"], url=resolver_url)
 
-    # Concat dfs
-    drug_df = pd.DataFrame(drug_data.tolist()).rename(columns={"curie": "drug_curie"})
-    disease_df = pd.DataFrame(disease_data.tolist()).rename(columns={"curie": "disease_curie"})
-    df = pd.concat([df, drug_df, disease_df], axis=1)
+    drug_names = df["drug_name"].dropna().unique().tolist()
+    disease_names = df["disease_name"].dropna().unique().tolist()
+
+    drug_mapping = resolve_names(drug_names, cols_to_get=["curie"], url=resolver_url, batch_size=batch_size)
+    disease_mapping = resolve_names(disease_names, cols_to_get=["curie"], url=resolver_url, batch_size=batch_size)
+
+    drug_mapping_df = pd.DataFrame(drug_mapping).transpose()["curie"].rename("drug_curie")
+    disease_mapping_df = pd.DataFrame(disease_mapping).transpose()["curie"].rename("disease_curie")
+
+    df = pd.merge(df, drug_mapping_df, how="left", left_on="drug_name", right_index=True)
+    df = pd.merge(df, disease_mapping_df, how="left", left_on="disease_name", right_index=True)
 
     return df
 
@@ -238,3 +279,15 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
     diseases = df.rename(columns={"disease_curie": "curie", "disease_name": "name"})[["curie", "name"]]
     nodes = pd.concat([drugs, diseases], ignore_index=True)
     return {"nodes": nodes, "edges": edges}
+
+
+def report_to_gsheets(df: pd.DataFrame, sheet_df: pd.DataFrame, primary_key_col: str):
+    """Report medical nodes to gsheets.
+
+    Args:
+        df: medical nodes
+        sheet_df: gsheets dataframe
+    """
+    # TODO: in the future remove drop_duplicates function
+    df = df.drop_duplicates(subset=primary_key_col, keep="first")
+    return sheet_df.merge(df, on=primary_key_col, how="left").fillna("Not resolved")
