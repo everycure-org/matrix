@@ -1,3 +1,4 @@
+from copy import deepcopy
 from pathlib import Path
 from typing import Callable, Sequence
 from unittest.mock import AsyncMock, patch
@@ -72,14 +73,15 @@ def input_df_schema():
 
 
 @pytest.fixture
-def sample_input_df(spark: SparkSession, input_df_schema, sample_primary_key) -> DataFrame:
-    data = [
-        {sample_primary_key: "A", "category": "g"},
-        {sample_primary_key: "B", "category": "h"},
-        {sample_primary_key: "D", "category": "j"},
-        {sample_primary_key: "E", "category": "k"},
-    ]
-    return spark.createDataFrame(data, input_df_schema)
+def sample_input_df(spark: SparkSession, sample_primary_key) -> DataFrame:
+    schema = StructType(
+        [
+            StructField(sample_primary_key, StringType(), False),
+            StructField("category", StringType(), False),
+        ]
+    )
+    data = [("A", "g"), ("B", "h"), ("D", "j"), ("E", "k")]
+    return spark.createDataFrame(data, schema)
 
 
 @pytest.fixture
@@ -88,75 +90,22 @@ def sample_primary_key():
 
 
 @pytest.fixture
-def cache_schema():
-    return StructType(
-        [
-            StructField("key", StringType(), False),
-            StructField("value", ArrayType(FloatType()), False),
-            StructField("api", StringType(), False),
-        ]
-    )
+def cache_schema(filtered_cache_schema):
+    return deepcopy(filtered_cache_schema).add("api", StringType(), False)
 
 
 @pytest.fixture
 def filtered_cache_schema():
-    return StructType(
-        [
-            StructField("key", StringType(), False),
-            StructField("value", ArrayType(FloatType()), False),
-        ]
-    )
-
-
-@pytest.fixture
-def cache_misses_schema():
-    return StructType(
-        [
-            StructField("key", StringType(), False),
-        ]
-    )
+    return StructType().add("key", StringType(), False).add("value", ArrayType(FloatType()), False)
 
 
 @pytest.fixture
 def sample_cache(spark: SparkSession, cache_schema, sample_api1, sample_api2) -> DataFrame:
     data = [
-        {"key": "A", "value": [1.0, 2.0], "api": sample_api1},
-        {"key": "B", "value": [4.0, 5.0], "api": sample_api1},
-        {"key": "C", "value": [7.0, 8.0], "api": sample_api2},
-        {"key": "D", "value": [8.0, 9.0], "api": sample_api2},
-    ]
-    return spark.createDataFrame(data, schema=cache_schema)
-
-
-@pytest.fixture
-def api1_filtered_cache(spark: SparkSession, filtered_cache_schema) -> DataFrame:
-    data = [
-        {"key": "A", "value": [1.0, 2.0]},
-        {
-            "key": "B",
-            "value": [
-                4.0,
-                5.0,
-            ],
-        },
-    ]
-    return spark.createDataFrame(data, schema=filtered_cache_schema)
-
-
-@pytest.fixture
-def api2_filtered_cache(spark: SparkSession, filtered_cache_schema) -> DataFrame:
-    data = [
-        {"key": "C", "value": [7.0, 8.0]},
-        {"key": "D", "value": [8.0, 9.0]},
-    ]
-    return spark.createDataFrame(data, schema=filtered_cache_schema)
-
-
-@pytest.fixture
-def sample_cache_out(spark: SparkSession, cache_schema, sample_api1) -> DataFrame:
-    data = [
-        {"key": "E", "value": [5.0, 3.0], "api": sample_api1},
-        {"key": "D", "value": [5.0, 3.0], "api": sample_api1},
+        ("A", [1.0, 2.0], sample_api1),
+        ("B", [4.0, 5.0], sample_api1),
+        ("C", [7.0, 8.0], sample_api2),
+        ("D", [8.0, 9.0], sample_api2),
     ]
     return spark.createDataFrame(data, schema=cache_schema)
 
@@ -164,22 +113,13 @@ def sample_cache_out(spark: SparkSession, cache_schema, sample_api1) -> DataFram
 @pytest.fixture
 def sample_duplicate_cache(spark: SparkSession, cache_schema, sample_api1) -> DataFrame:
     data = [
-        {"key": "A", "value": [1.0, 2.0], "api": sample_api1},
-        {"key": "B", "value": [4.0, 5.0], "api": sample_api1},
-        {"key": "B", "value": [4.0, 5.0], "api": sample_api1},
-        {"key": "D", "value": [8.0, 9.0], "api": sample_api1},
-        {"key": "E", "value": [9.0, 10.0], "api": sample_api1},
+        ("A", [1.0, 2.0], sample_api1),
+        ("B", [4.0, 5.0], sample_api1),
+        ("B", [4.0, 5.0], sample_api1),
+        ("D", [8.0, 9.0], sample_api1),
+        ("E", [9.0, 10.0], sample_api1),
     ]
     return spark.createDataFrame(data, schema=cache_schema)
-
-
-@pytest.fixture
-def sample_cache_misses(spark: SparkSession, cache_misses_schema) -> DataFrame:
-    data = [
-        {"key": "D"},
-        {"key": "E"},
-    ]
-    return spark.createDataFrame(data, schema=cache_misses_schema)
 
 
 @pytest.fixture
@@ -208,10 +148,19 @@ def sample_new_col():
 
 
 def test_derive_cache_misses(
-    sample_input_df, sample_cache, sample_api1, sample_primary_key, sample_preprocessor, sample_cache_misses
+    sample_input_df, sample_cache, sample_api1, sample_primary_key, sample_preprocessor, spark
 ):
+    expected = spark.createDataFrame(
+        [
+            ("D",),
+            ("E",),
+        ],
+        schema=("key",),
+    )
+
     result_df = derive_cache_misses(sample_input_df, sample_cache, sample_api1, sample_primary_key, sample_preprocessor)
-    assertDataFrameEqual(result_df, sample_cache_misses)
+
+    assertDataFrameEqual(result_df, expected)
 
 
 def test_cache_contains_duplicates_warning(sample_duplicate_cache, sample_id_col):
@@ -242,11 +191,14 @@ def test_enriched_keeps_same_size_with_cache_duplicates(
     ), "The enriched DataFrame should have the same number of rows as the input DataFrame"
 
 
-def test_different_api(sample_cache, sample_api1, api1_filtered_cache, sample_api2, api2_filtered_cache):
-    result1_df = limit_cache_to_results_from_api(sample_cache, sample_api1)
-    assertDataFrameEqual(result1_df, api1_filtered_cache)
-    result2_df = limit_cache_to_results_from_api(sample_cache, sample_api2)
-    assertDataFrameEqual(result2_df, api2_filtered_cache)
+def test_different_api(sample_cache, sample_api2, spark: SparkSession, filtered_cache_schema: StructType):
+    result1_df = limit_cache_to_results_from_api(sample_cache, sample_api2)
+    data = [
+        ("C", [7.0, 8.0]),
+        ("D", [8.0, 9.0]),
+    ]
+    expected = spark.createDataFrame(data, schema=filtered_cache_schema)
+    assertDataFrameEqual(result1_df, expected)
 
 
 @patch("matrix.pipelines.embeddings.encoders.DummyResolver.__new__", return_value=AsyncMock())

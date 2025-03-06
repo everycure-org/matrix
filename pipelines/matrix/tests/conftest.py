@@ -107,7 +107,7 @@ def spark() -> Generator[ps.SparkSession, None, None]:
 @pytest.fixture
 def kedro_session(spark):  # Ensure we have the pytest SparkSession fixture.
     # If the spark fixture isn't added, the order in which tests are executed
-    # matters, which is bad practice. We want the Spar Kedro Hook NOT to stop
+    # matters, which is bad practice. We want the Spark Kedro Hook NOT to stop
     # the (test) SparkSession, and we don't want a full-blown SparkSession to
     # be started by the Kedro hook either.
     project_path = Path(__file__).resolve().parents[1]
