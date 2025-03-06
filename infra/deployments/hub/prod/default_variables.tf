@@ -6,3 +6,4 @@ variable "super_admins" {}
 variable "project_id" {}
 variable "billing_project" {}
 variable "storage_bucket_name" {}
+variable "environment" {}
