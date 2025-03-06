@@ -6,7 +6,7 @@ title: Sample environment guide
 
 ## Overview
 
-The sample environment allows to run parts of the pipeline with a smaller dataset, sampled from the original data. This sample is stored in GCS. You can run the pipeline with this sample data locally or in kubernetes.
+The sample environment allows to run parts of the pipeline with a smaller dataset, sampled from the original release. This sample is stored in GCS. You can run the pipeline with this sample data locally or in kubernetes.
 
 !!! info "The engineering team provides these samples for users to run the sampling pipeline"
     
@@ -17,7 +17,7 @@ Two pipelines are defined in the `sample` environment:
 
 ## Run with sample data locally
 
-Local tests using sample are done in the `sample` environment. They will pull the latest sample 
+Local tests using sample are done in the `sample` environment. They will pull the latest sample from GCS. When running locally, the release version is defined [in the sample's environment's globals.yml file](https://github.com/everycure-org/matrix/blob/b871d8a514b827f748c3db11e8d5e616e6df4c4d/pipelines/matrix/conf/sample/globals.yml#L3).
 
 ```bash
 kedro run -e sample -p test_sample
@@ -25,8 +25,10 @@ kedro run -e sample -p test_sample
 
 ## Run with sample data in kubernetes 
 
+Alternatively, you can run the pipeline in kubernetes.
+
 ```bash
-kedro submit -e sample -p test_sample
+kedro submit -e sample -p test_sample --username {your-username} --release-version {your-release-version}
 ```
 
 ## Update sample data
@@ -36,10 +38,10 @@ You can update sample data by running the `create_sample` pipeline locally. This
 Make sure to use your own service account key file to get write access to the GCS bucket.
 
 !!! warning
-    There is only one version of the sample data in GCS. Updating it means deleting the previous sample.
+    There is only one version of the sample data per release in GCS. Updating it means deleting the previous release's sample.
 
 ```bash
-kedro run -e sample -p create_sample
+kedro submit -e sample -p create_sample --username {your-username} --release-version {your-release-version}
 ```
 
 # Sampling strategies
