@@ -7,6 +7,7 @@ from matrix.pipelines.data_release.pipeline import create_pipeline as create_dat
 from matrix.pipelines.embeddings.pipeline import create_pipeline as create_embeddings_pipeline
 from matrix.pipelines.evaluation.pipeline import create_pipeline as create_evaluation_pipeline
 from matrix.pipelines.fabricator.pipeline import create_pipeline as create_fabricator_pipeline
+from matrix.pipelines.ground_truth.pipeline import create_pipeline as create_ground_truth_pipeline
 from matrix.pipelines.ingest_to_N4J.pipeline import create_pipeline as create_ingest_to_N4J_pipeline
 from matrix.pipelines.ingestion.pipeline import create_pipeline as create_ingestion_pipeline
 from matrix.pipelines.integration.pipeline import create_pipeline as create_integration_pipeline
@@ -35,6 +36,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         "evaluation": create_evaluation_pipeline(),
         "create_sample": create_create_sample_pipeline(),
         "ingest_to_N4J": create_ingest_to_N4J_pipeline(),
+        "ground_truth": create_ground_truth_pipeline(),
         # "inference": create_inference_pipeline(),  # Run manually based on medical input
     }
 
@@ -43,6 +45,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines["data_engineering"] = (
           pipelines["ingestion"]
         + pipelines["integration"]
+        + pipelines['ground_truth']
     )
     pipelines["kg_release_patch"] = (
         pipelines["data_engineering"]

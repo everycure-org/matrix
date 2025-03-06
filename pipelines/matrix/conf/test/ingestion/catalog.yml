@@ -25,19 +25,19 @@ ingestion.raw.drug_list:
   load_args:
     sep: "\t"
 
-ingestion.raw.ground_truth.positives:
+ingestion.raw.kgml_xdtd_ground_truth.positives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tp_pairs.txt
+  filepath: ${globals:paths.kg_raw}/ground_truth/kgml_xdtd/${globals:data_sources.kgml_xdtd_gt.version}/tp_pairs.txt
   load_args:
     sep: "\t"
   save_args:
     sep: "\t"
 
-ingestion.raw.ground_truth.negatives:
+ingestion.raw.kgml_xdtd_ground_truth.negatives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tn_pairs.txt
+  filepath: ${globals:paths.kg_raw}/ground_truth/kgml_xdtd/${globals:data_sources.kgml_xdtd_gt.version}/tn_pairs.txt
   load_args:
     sep: "\t"
   save_args:
@@ -49,3 +49,12 @@ ingestion.raw.drugmech.edges@spark:
   file_format: json
   load_args:
     multiline: true
+
+ ingestion.raw.ec_ground_truth:
+   <<: [*_layer_raw]
+   type: pandas.CSVDataset
+   filepath: ${globals:paths.raw}/ground_truth/ec/${globals:data_sources.ec_gt.version}/ground-truths-list.tsv
+   load_args:
+     sep: "\t"
+   save_args:
+     sep: "\t"

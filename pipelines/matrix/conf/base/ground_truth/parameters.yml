@@ -1,0 +1,16 @@
+ground_truth:
+  sources:
+    ec_clinical_trails:
+      transformer:
+        _object: matrix.pipelines.integration.transformers.clinical_trails.ClinicalTrialsTransformer
+        select_cols: false
+        drop_duplicates: true
+    ec_ground_truth:
+      transformer:
+        _object: matrix.pipelines.integration.transformers.ground_truth.GroundTruthTransformer
+    ec_ground_truth_downfilled:
+      transformer:
+        _object: matrix.pipelines.integration.transformers.ground_truth.GroundTruthTransformer
+    kgml_xdtd:
+      transformer:
+        _object: matrix.pipelines.integration.transformers.ground_truth.GroundTruthTransformer
