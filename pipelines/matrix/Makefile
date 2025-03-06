@@ -11,13 +11,32 @@ PREREQUISITES := docker gcloud python3 java uv kubectl
 GCP_PROJECT ?= mtrx-hub-dev-3of
 SA_KEY_SECRET_NAME ?= storage-viewer-sa-key
 SA_KEY_PATH ?= conf/local/service-account.json
-# TODO: Update once we have the new secret created using terraform
-OAUTH_CLIENT_SECRET_SECRET_NAME ?= af_oauth_client_secret
+OAUTH_CLIENT_SECRET_SECRET_NAME ?= oauth_client_secret
 OAUTH_CLIENT_SECRET_PATH ?= conf/local/oauth_client_secret.txt
+
+fetch_secrets:
+	echo "Fetching secrets from Secret Manager..."; \
+	mkdir -p conf/local; \
+	for pair in "$(SA_KEY_SECRET_NAME) $(SA_KEY_PATH)" "$(OAUTH_CLIENT_SECRET_SECRET_NAME) $(OAUTH_CLIENT_SECRET_PATH)"; do \
+		set -- $$pair; \
+		echo "Fetching secret $$1..."; \
+		gcloud secrets versions access latest --secret="$$1" --project=$(GCP_PROJECT) > "$$2"; \
+		chmod 600 "$$2"; \
+		echo "Secret $$1 saved to $$2"; \
+	done
 
 # ensures all make targets run in one shell (rather than line by line in new shell)
 .ONESHELL: 
 
+default: prerequisites fetch_sa_key install fast_test integration_test
+
+.PHONY: always
+# steps here get run on _every_ make call, no matter the target. Make sure this is 100% idempotent and fast.
+always:
+	# never track notebooks in the pipeline subfolder
+	git update-index --assume-unchanged *.ipynb
+%: always
+	@:
 default: prerequisites fetch_secrets install fast_test integration_test
 	echo "done!"
 
@@ -31,25 +50,6 @@ prerequisites:
 		echo "Not logged into gcloud. Please run 'gcloud auth login' first."; \
 		exit 1; \
 	fi
-
-fetch_secrets:
-	echo "Fetching service account key from Secret Manager..."; \
-	mkdir -p conf/local; \
-	gcloud secrets versions access latest \
-		--secret=$(SA_KEY_SECRET_NAME) \
-		--project=$(GCP_PROJECT) \
-		> $(SA_KEY_PATH); \
-	chmod 600 $(SA_KEY_PATH); \
-	echo "Service account key saved to $(SA_KEY_PATH)"; \
-
-	echo "Fetching OAuth client secret from Secret Manager..."; \
-	mkdir -p conf/local; \
-	gcloud secrets versions access latest \
-		--secret=$(OAUTH_CLIENT_SECRET_SECRET_NAME) \
-		--project=$(GCP_PROJECT) \
-		> $(OAUTH_CLIENT_SECRET_PATH); \
-	chmod 600 $(OAUTH_CLIENT_SECRET_PATH); \
-	echo "Service account key saved to $(OAUTH_CLIENT_SECRET_PATH)"; \
 
 venv: 
 	if [ ! -d .venv ]; then uv venv -p 3.11; fi
@@ -181,4 +181,4 @@ diagnostics:
 	-df -h
 	echo "\nDiagnostics complete."
 
-# NOTE: This Makefile target was partially generated using AI assistance.
+

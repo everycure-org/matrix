@@ -3,7 +3,7 @@ import logging
 import os
 import re
 from datetime import datetime
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
 import fsspec
 import mlflow
@@ -75,8 +75,27 @@ class MLFlowHooks:
         path = self._kedro_context.catalog.datasets[dataset_name]._url
         """
         if dataset_name in MLFlowHooks._input_datasets:
-            dataset = mlflow.data.from_pandas(pd.DataFrame(), name=dataset_name)
-            mlflow.log_input(dataset)
+            logger.info(f"Processing dataset {dataset_name}")
+            if dataset_name not in self.fetch_logged_datasets():
+                logger.info(f"Dataset {dataset_name} is not in the already logged datasets. Logging it now:")
+                dataset = mlflow.data.from_pandas(pd.DataFrame(), name=dataset_name)
+                try:
+                    mlflow.log_input(dataset)
+                except Exception as ex:
+                    logger.error(f"Error encountered when logging dataset {dataset_name}: {ex}")
+                    raise
+            else:
+                logger.info(f"Dataset {dataset_name} has already been logged as input.")
+
+    @staticmethod
+    def fetch_logged_datasets() -> List[str]:
+        run_id = MLFlowHooks._kedro_context.mlflow.tracking.run.id
+        logger.info(f"Fetching already logged datasets for run id: {run_id}")
+        client = mlflow.tracking.MlflowClient()
+        logged_inputs = client.get_run(run_id).inputs
+        logged_names = [dataset.dataset.name for dataset in logged_inputs.dataset_inputs]
+        logger.info(f"These are dataset names that have already been logged: {logged_names}")
+        return logged_names
 
     @hook_impl
     def after_context_created(self, context) -> None:
@@ -98,15 +117,16 @@ class MLFlowHooks:
         # Once kedro submit is deprecated we can probably remove this entire hook
         if globs.mlflow_experiment_id and globs.mlflow_experiment_id != "None":
             experiment_id = globs.mlflow_experiment_id
+            mlflow.start_run(run_id=cfg.tracking.run.id)
         else:
             experiment_id = self._create_experiment(cfg.tracking.experiment.name, globs.mlflow_artifact_root)
 
-        if cfg.tracking.run.name:
-            run_id = self._create_run(cfg.tracking.run.name, experiment_id)
+            if cfg.tracking.run.name:
+                run_id = self._create_run(cfg.tracking.run.name, experiment_id)
 
-            # Update catalog
-            OmegaConf.update(cfg, "tracking.run.id", run_id)
-            context.config_loader["mlflow"] = cfg
+                # Update catalog
+                OmegaConf.update(cfg, "tracking.run.id", run_id)
+                context.config_loader["mlflow"] = cfg
 
     @staticmethod
     def _create_run(run_name: str, experiment_id: str) -> str:
@@ -251,6 +271,18 @@ class SparkHooks:
     def before_dataset_saved(self, dataset_name: str, data: Any, node: Any) -> None:
         """Initialize Spark if the dataset is a SparkDataset."""
         self._check_and_initialize_spark(dataset_name)
+
+    @hook_impl
+    def after_dataset_loaded(self):
+        """Print the current Spark configuration after each dataset is loaded.
+        Must be done after dataset is loaded, because we initialise spark only
+        for Spark dataset types."""
+        try:
+            msg = ["Current Spark Configuration:"]
+            msg.extend([f"{k}: {v}" for k, v in sorted(self._spark_session.sparkContext.getConf().getAll())])
+            logger.info("\n".join(msg))
+        except AttributeError:
+            logger.warning("SparkSession is not initialized.")
 
 
 class NodeTimerHooks:
@@ -416,7 +448,7 @@ class ReleaseInfoHooks:
         # pipelines the (last) data release node is part of. With an
         # `after_node_run`, you can limit your filters easily.
         if node.name == last_data_release_node_name:
-            datasets_to_hide = frozenset(["disease_list", "drug_list", "ec_clinical_trials", "gt"])
+            datasets_to_hide = frozenset([])
             global_datasets = self.extract_all_global_datasets(datasets_to_hide)
             datasets_used = self.extract_datasets_used()
             self.mark_unused_datasets(global_datasets, datasets_used)

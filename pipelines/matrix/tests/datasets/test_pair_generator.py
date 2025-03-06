@@ -122,7 +122,7 @@ def matrix():
         "is_negative_1": np.random.choice([True, False], 100, p=[0.3, 0.7]),
         "is_negative_2": np.random.choice([True, False], 100, p=[0.3, 0.7]),
     }
-    df = pd.DataFrame(data).sort_values("treat_score", ascending=False)
+    df = pd.DataFrame(data, index=np.random.permutation(100) + 1).sort_values("treat_score", ascending=False)
 
     # Ensure no overlap between positive and negative pairs
     all_cols = ["is_positive_1", "is_positive_2", "is_negative_1", "is_negative_2"]
@@ -130,6 +130,8 @@ def matrix():
         other_cols = [c for c in all_cols if c != col]
         df.loc[df[col], other_cols] = False
 
+    df["rank"] = range(1, len(df) + 1)
+    df["quantile_rank"] = df["rank"] / len(df)
     return df
 
 
@@ -183,7 +185,6 @@ def test_full_matrix_positives(matrix):
         positive_columns=["is_positive_1", "is_positive_2"],
         removal_columns=["is_negative_1"],
     )
-
     # When generating the dataset
     generated_data = generator.generate(matrix)
     # Then generated data:

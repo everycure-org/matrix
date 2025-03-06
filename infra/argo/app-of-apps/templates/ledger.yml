@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ledger
+  namespace: argocd
+spec:
+  destination:
+    namespace: ledger
+    server: {{ .Values.spec.destination.server }}
+  project: default
+  source:
+    path: infra/argo/applications/ledger
+    repoURL: https://github.com/everycure-org/matrix-ui.git
+    targetRevision: main
+  syncPolicy:
+    syncOptions:     # Sync options which modifies sync behavior
+    - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
+    automated: 
+      prune: true

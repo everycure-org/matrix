@@ -1,0 +1,26 @@
+[build-system]
+requires = [ "setuptools",]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic.dependencies]
+ file = "requirements.txt"
+
+[tool.pytest.ini_options]
+pythonpath = "src"
+addopts = [
+    "--import-mode=importlib",
+    "--ignore=packages",
+
+]
+norecursedirs = [
+    ".venv",
+    "data",
+    "compose",
+    "packages",
+]
+
+[project]
+name = "docs"
+requires-python = ">=3.11"
+readme = "README.md"
+dynamic = [ "version"]
