@@ -25,11 +25,11 @@ class ArgoResourceConfig(BaseModel):
     Default values are set in settings.py.
 
     Attributes:
-        num_gpus (int): Number of GPUs requested for the container.
-        cpu_request (float): CPU cores requested for the container.
-        cpu_limit (float): Maximum CPU cores allowed for the container.
-        memory_request (float): Memory requested for the container in GB.
-        memory_limit (float): Maximum memory allowed for the container in GB.
+        num_gpus (int): Number of GPUs requested for the pod.
+        cpu_request (float): CPU cores requested for the pod.
+        cpu_limit (float): Maximum CPU cores allowed for the pod.
+        memory_request (float): Memory requested for the pod in GB.
+        memory_limit (float): Maximum memory allowed for the pod in GB.
     """
 
     num_gpus: int = KUBERNETES_DEFAULT_NUM_GPUS

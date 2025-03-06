@@ -7,6 +7,7 @@ from matrix.pipelines.data_release.pipeline import create_pipeline as create_dat
 from matrix.pipelines.embeddings.pipeline import create_pipeline as create_embeddings_pipeline
 from matrix.pipelines.evaluation.pipeline import create_pipeline as create_evaluation_pipeline
 from matrix.pipelines.fabricator.pipeline import create_pipeline as create_fabricator_pipeline
+from matrix.pipelines.ingest_to_N4J.pipeline import create_pipeline as create_ingest_to_N4J_pipeline
 from matrix.pipelines.ingestion.pipeline import create_pipeline as create_ingestion_pipeline
 from matrix.pipelines.integration.pipeline import create_pipeline as create_integration_pipeline
 from matrix.pipelines.matrix_generation.pipeline import create_pipeline as create_matrix_pipeline
@@ -33,6 +34,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         "matrix_generation": create_matrix_pipeline(),
         "evaluation": create_evaluation_pipeline(),
         "create_sample": create_create_sample_pipeline(),
+        "ingest_to_N4J": create_ingest_to_N4J_pipeline(),
         # "inference": create_inference_pipeline(),  # Run manually based on medical input
     }
 
@@ -42,9 +44,14 @@ def register_pipelines() -> Dict[str, Pipeline]:
           pipelines["ingestion"]
         + pipelines["integration"]
     )
-    pipelines["kg_release"] = (
+    pipelines["kg_release_patch"] = (
         pipelines["data_engineering"]
-        + pipelines["data_release"] 
+        + pipelines["data_release"]
+        + pipelines["embeddings"]
+    )
+    pipelines["kg_release"] = (
+        pipelines["kg_release_patch"]
+        + pipelines["ingest_to_N4J"]
     )
     pipelines["modelling_run"] = (
           pipelines["modelling"]
@@ -64,7 +71,8 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines["test"] = (
         pipelines["fabricator"]
         + pipelines["__default__"]
-        + pipelines["data_release"] 
+        + pipelines["data_release"]
+        + pipelines["ingest_to_N4J"]
     )
     pipelines["test_sample"] = (
         pipelines["embeddings"]
