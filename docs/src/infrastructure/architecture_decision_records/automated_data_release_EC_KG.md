@@ -20,7 +20,7 @@ Regardless of the trigger type, the process follows these steps:
 
 1. **Submit Argo Workflow**
    - The [Argo workflow](https://github.com/everycure-org/matrix/blob/main/pipelines/matrix/templates/argo_wf_spec.tmpl) is rendered and submitted.
-2. **Argo Events Creation**
+2. **Argo Events Creation and Routing**
    - Once the workflow is finished, [Argo EventSource](https://github.com/everycure-org/matrix/blob/main/infra/argo/applications/data-release/templates/BuildDataReleaseEventSource.yaml) creates a data-release event.
    - [Argo EventBus](https://github.com/everycure-org/matrix/blob/main/infra/argo/applications/data-release/templates/DeployEventbus.yaml) manages and routes the event.
 3. **Trigger Repository Dispatch**
