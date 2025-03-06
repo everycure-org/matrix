@@ -75,7 +75,14 @@ jobs:
         # To comply with the protected-branch policy, we checkout a different
         # branch, but from the commit that created the release.
         # It should have been pushed, otherwise this errors out.
-        run: git switch -C release/${{env.release}} "${{env.gitref}}"
+        run: |
+          if git ls-remote --exit-code origin release/${{env.release}}; then
+            git switch release/${{env.release}}
+            git pull --ff-only
+          else
+            git switch -C release/${{env.release}} "${{env.gitref}}"
+            git push
+          fi
 
       - name: Setup Matrix CLI
         working-directory: apps/matrix-cli
@@ -125,8 +132,8 @@ jobs:
           uv pip compile --quiet requirements.in --output-file requirements.txt
           uv pip install -r requirements.txt 
           uv run scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
-      
-      - name: Create Release Notes
+
+      - name: Create Release Article
         working-directory: apps/matrix-cli
         env:
           GH_TOKEN: ${{ github.token }}
@@ -197,4 +204,4 @@ jobs:
           )" \
             --draft \
             --label Release \
-            --label hide-from-release-notes
+            --label hide-from-release
