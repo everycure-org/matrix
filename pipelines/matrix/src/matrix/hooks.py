@@ -55,7 +55,7 @@ class MLFlowHooks:
             inputs_only = inputs - outputs
             cls._input_datasets = inputs_only
 
-    @hook_impl
+    # @hook_impl disabled due to https://github.com/everycure-org/matrix/issues/1154
     def after_dataset_loaded(self, dataset_name, data, node):
         """In the v1 of this feature we only log the dataset names.
         Logging actual datasets requires extra work, due to the fact that the data has to be first
@@ -105,7 +105,7 @@ class MLFlowHooks:
         other hooks to consume.
         """
         MLFlowHooks.set_context(context)
-        MLFlowHooks.get_pipeline_inputs()
+        # MLFlowHooks.get_pipeline_inputs()
         cfg = OmegaConf.create(context.config_loader["mlflow"])
         globs = OmegaConf.create(context.config_loader["globals"])
         # Set tracking uri
