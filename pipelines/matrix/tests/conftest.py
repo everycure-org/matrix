@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Generator
 
@@ -94,6 +95,9 @@ def spark() -> Generator[ps.SparkSession, None, None]:
         ps.SparkSession.builder.config("spark.sql.shuffle.partitions", 1)
         .config("spark.executorEnv.PYTHONPATH", "src")
         .config("spark.driver.bindAddress", "127.0.0.1")
+        # For the spark session tests that don't involve `OmegaConfig`, which in turns uses `spark.yml`
+        # that takes care of adding the unit (`g`), we make sure that the raw env var has the correct unit added.
+        .config("spark.driver.memory", f"{os.environ['SPARK_DRIVER_MEMORY']}g")
         .master("local")
         .appName("tests")
         .getOrCreate()
