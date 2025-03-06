@@ -9,14 +9,6 @@ variable "k8s_secrets" {
   type      = map(string)
 }
 
-variable "storage_bucket_name" {
-  default = "mtrx-us-central1-hub-dev-storage"
-}
-
-variable "project_id" {
-}
-
-
 variable "network_name" {
 }
 
