@@ -16,6 +16,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "df": "preprocessing.raw.clinical_trials_data",
                     "resolver_url": "params:preprocessing.name_resolution.url",
+                    "batch_size": "params:preprocessing.name_resolution.batch_size",
                 },
                 outputs="preprocessing.int.mapped_clinical_trials_data",
                 name="mapped_clinical_trials_data",
@@ -46,6 +47,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "df": "preprocessing.raw.ec_medical_team.nodes",
                     "resolver_url": "params:preprocessing.name_resolution.url",
+                    "batch_size": "params:preprocessing.name_resolution.batch_size",
                 },
                 outputs="ingestion.raw.ec_medical_team.nodes@pandas",
                 name="normalize_ec_medical_team_nodes",
@@ -62,16 +64,25 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["ec-medical-kg"],
             ),
             node(
-                func=lambda x, y: [x, y],
+                func=nodes.report_to_gsheets,
                 inputs=[
                     "ingestion.raw.ec_medical_team.nodes@pandas",
+                    "preprocessing.raw.ec_medical_team.nodes",
+                    "params:preprocessing.medical_kg_gsheets.nodes",
+                ],
+                outputs="preprocessing.reporting.ec_medical_team.nodes",
+                name="report_ec_medical_team_nodes",
+                tags=["ec-medical-kg"],
+            ),
+            node(
+                func=nodes.report_to_gsheets,
+                inputs=[
                     "ingestion.raw.ec_medical_team.edges@pandas",
+                    "preprocessing.raw.ec_medical_team.edges",
+                    "params:preprocessing.medical_kg_gsheets.edges",
                 ],
-                outputs=[
-                    "preprocessing.reporting.ec_medical_team.nodes",
-                    "preprocessing.reporting.ec_medical_team.edges",
-                ],
-                name="report_ec_medical_team_data",
+                outputs="preprocessing.reporting.ec_medical_team.edges",
+                name="report_ec_medical_team_edges",
                 tags=["ec-medical-kg"],
             ),
         ]
