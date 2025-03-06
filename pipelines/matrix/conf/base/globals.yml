@@ -39,7 +39,7 @@ data_sources:
   disease_list:
     # check releases here: https://github.com/everycure-org/matrix-disease-list/releases
     version: "2024-12-20 release"
-  kgml_xdtd_gt:
+  kgml_xdtd:
      version: *_rtx_kg_version
   ec_gt:
      # check releases here: https://github.com/everycure-org/matrix-disease-list/releases
@@ -62,6 +62,7 @@ paths:
 
   # Release-based
   integration:        data/releases/${versions.release}/datasets/integration
+  ground_truth:       data/releases/${versions.release}/datasets/ground_truth
   embeddings:         data/releases/${versions.release}/datasets/embeddings
   release:            data/releases/${versions.release}/datasets/release
 

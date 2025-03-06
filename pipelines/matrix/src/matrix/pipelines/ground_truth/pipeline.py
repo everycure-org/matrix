@@ -2,13 +2,13 @@ from kedro.pipeline import Pipeline, node, pipeline
 
 from matrix import settings
 from matrix.pipelines.batch import pipeline as batch_pipeline
-from matrix.pipelines.integration import pipeline as integration_nodes
+from matrix.pipelines.integration import nodes as integration_nodes
 
 from ...kedro4argo_node import ArgoNode, ArgoResourceConfig
 from . import nodes
 
 
-def _create_ground_truth_pipeline(source: str, has_nodes: bool = True, has_edges: bool = True) -> Pipeline:
+def _create_ground_truth_pipeline(source: str) -> Pipeline:
     pipelines = []
 
     pipelines.append(
@@ -22,14 +22,10 @@ def _create_ground_truth_pipeline(source: str, has_nodes: bool = True, has_edges
                         # This is due to the fact that the Transformer objects are only created
                         # during node execution time, otherwise we could infer this based on
                         # the transformer.
-                        **({"nodes_df": f"ingestion.int.{source}.nodes"} if has_nodes else {}),
-                        **({"edges_df": f"ingestion.int.{source}.edges"} if has_edges else {}),
+                        "edges_df": f"ingestion.int.{source}.edges@spark",
                     },
-                    outputs={
-                        "nodes": f"ground_truth.int.{source}.nodes",
-                        **({"edges": f"ground_truth.int.{source}.edges"} if has_edges else {}),
-                    },
-                    name=f"transform_{source}_nodes",
+                    outputs={"edges": f"ground_truth.int.{source}.edges", "nodes": f"ground_truth.int.{source}.nodes"},
+                    name=f"transform_{source}_ground_truth_nodes",
                     tags=["standardize"],
                     argo_config=ArgoResourceConfig(
                         memory_request=128,
@@ -51,7 +47,7 @@ def _create_ground_truth_pipeline(source: str, has_nodes: bool = True, has_edges
                         "edges": f"ground_truth.int.{source}.edges",
                     },
                     outputs=f"ground_truth.int.{source}.edges.norm@spark",
-                    name=f"normalize_{source}_edges",
+                    name=f"normalize_{source}_ground_truth_edges",
                 ),
             ],
             tags=source,
@@ -71,8 +67,6 @@ def create_pipeline(**kwargs) -> Pipeline:
             pipeline(
                 _create_ground_truth_pipeline(
                     source=source["name"],
-                    has_nodes=source.get("has_nodes", True),
-                    has_edges=source.get("has_edges", True),
                 ),
                 tags=[source["name"]],
             )
@@ -83,14 +77,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                 node(
                     func=nodes.unify_edges,
                     inputs=[
-                        "params:ground_truth.sources.ec_ground_truth.nodes",
                         *[
                             f'ground_truth.int.{source["name"]}.edges.norm@spark'
                             for source in settings.DYNAMIC_PIPELINES_MAPPING.get("ground_truth")
                         ],
                     ],
                     outputs="ground_truth.prm.unified_edges",
-                    name="create_prm_unified_edges",
+                    name="unify_ground_truth_datasets",
                 ),
             ]
         )
