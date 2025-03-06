@@ -57,7 +57,7 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
         "ground_truth": [
             # {"name": "ec_clinical_trails", "testing_only": True},
             {"name": "kgml_xdtd", "testing_only": False, "combined": False},
-            # {"name": "ec_ground_truth", "testing_only": False, "combined":True},
+            {"name": "ec_ground_truth", "testing_only": False, "combined": True},
             # {"name": "ec_ground_truth_downfilled", "testing_only": False, "combined":True},
         ],
         "modelling": {
