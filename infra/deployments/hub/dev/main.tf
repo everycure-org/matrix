@@ -16,7 +16,8 @@ module "compute_cluster" {
 
 
 module "dns" {
-  source = "../../../modules/components/dns"
+  source      = "../../../modules/components/dns"
+  environment = var.environment
 }
 
 module "data_release_zone" {

@@ -1,10 +1,10 @@
 # FUTURE need to also have one for non DEV
 resource "google_dns_managed_zone" "dev_zone" {
-  name        = "dev-zone"
-  dns_name    = "dev.everycure.org."
+  name        = "${var.environment}-zone"
+  dns_name    = "${var.environment}.everycure.org."
   description = "DNS zone for EveryCure development"
   labels = {
-    environment = "dev"
+    environment = "${var.environment}"
   }
 }
 
