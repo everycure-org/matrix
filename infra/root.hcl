@@ -35,7 +35,8 @@ locals {
 # where terraform_remote_state data sources are placed directly into the modules.
 inputs = merge(
   local.globals,
-  local.env_vars.locals
+  local.env_vars.locals,
+  {"environment" = local.environment}
 )
 
 # generate a variables file for the above
@@ -50,6 +51,7 @@ variable "super_admins" {}
 variable "project_id" {}
 variable "billing_project" {}
 variable "storage_bucket_name" {}
+variable "environment" {}
 EOF
 }
 
