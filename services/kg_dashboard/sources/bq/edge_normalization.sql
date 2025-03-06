@@ -4,8 +4,8 @@ SELECT
     category,
     normalization_success, 
     no_normalization_change, 
-       'rtx_kg2' AS normalization_set,
-       count(*) AS count
+    'rtx_kg2' AS normalization_set,
+    count(*) AS count
 FROM (
   SELECT subject AS id, 
         original_subject AS original_id, 
