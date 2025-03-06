@@ -42,6 +42,15 @@ ingestion.raw.kgml_xdtd_ground_truth.negatives:
     sep: "\t"
   save_args:
     sep: "\t"
+    
+ingestion.raw.ec_ground_truth.edges:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.kg_raw}/ground_truth/ec/${globals:data_sources.ec_gt.version}/gt_pairs_raw.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"
 
 ingestion.raw.drugmech.edges@spark:
   type: matrix.datasets.gcp.LazySparkDataset

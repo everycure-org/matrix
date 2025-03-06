@@ -345,7 +345,7 @@ ingestion.int.kgml_xdtd.nodes:
     index: false
     mode: overwrite
 
-ingestion.raw.ec_gt.edges:
+ingestion.raw.ec_ground_truth.edges:
   <<: [*_layer_raw]
   type: matrix.datasets.github.GitHubReleaseCSVDataset
   repository_url: https://github.com/everycure-org/matrix-indications-list
@@ -357,7 +357,7 @@ ingestion.raw.ec_gt.edges:
   load_args:
     sep: "\t"
 
-ingestion.raw.ec_gt.edges@pandas:
+ingestion.raw.ec_ground_truth.edges@pandas:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
   filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/gt_pairs_raw.tsv
@@ -368,7 +368,7 @@ ingestion.raw.ec_gt.edges@pandas:
   load_args:
     sep: "\t"
 
-ingestion.raw.ec_gt.edges@spark:
+ingestion.raw.ec_ground_truth.edges@spark:
   <<: [*_layer_raw, *_spark_csv]
   filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/gt_pairs_raw.tsv
   load_args:
@@ -376,7 +376,7 @@ ingestion.raw.ec_gt.edges@spark:
     header: true
     index: false
 
-ingestion.int.ec_gt.edges@spark:
+ingestion.int.ec_ground_truth.edges@spark:
   <<: [*_spark_csv, *_layer_int]
   filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/gt_pairs.tsv
   load_args:
@@ -389,7 +389,7 @@ ingestion.int.ec_gt.edges@spark:
     index: false
     mode: overwrite
 
-ingestion.int.ec_gt.edges@pandas:
+ingestion.int.ec_ground_truth.edges@pandas:
   <<: [*_layer_int, *_pandas_csv]
   filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/gt_pairs.tsv
   load_args:
@@ -402,7 +402,7 @@ ingestion.int.ec_gt.edges@pandas:
     index: false
     mode: overwrite
 
-ingestion.int.ec_gt.nodes:
+ingestion.int.ec_ground_truth.nodes:
   <<: [*_spark_csv, *_layer_int]
   filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/gt_ids.tsv
   load_args:

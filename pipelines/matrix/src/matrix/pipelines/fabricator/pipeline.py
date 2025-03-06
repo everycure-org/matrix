@@ -186,7 +186,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "ingestion.raw.kgml_xdtd.positives",
                     "ingestion.raw.kgml_xdtd.negatives",
                 ],
-                outputs="ingestion.raw.ec_gt.edges",
+                outputs="ingestion.raw.ec_ground_truth.edges",
                 name="create_ec_gt_pairs",
             ),
             node(
