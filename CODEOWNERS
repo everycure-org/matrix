@@ -4,5 +4,6 @@
 
 * lvijnck pascalwhoop piotrkan JacquesVergine
 docs/ alexeistepa leelancashire
-pipelines/matrix/ alexeistepa leelancashire
+pipelines/matrix/** alexeistepa leelancashire
+
 
