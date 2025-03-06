@@ -70,7 +70,7 @@ def write_release_article(
         console.print(f"[green]Release notes loaded. Total length: {len(notes)} characters")
     else:
         console.print("[green]Collecting release notes...")
-        notes = get_release_notes(since, model=model)
+        notes = get_release_notes(since, until, model=model)
 
     console.print("[green]Collecting previous articles...")
     previous_articles = get_previous_articles()
