@@ -10,7 +10,9 @@ The workflow automates the release process of a data-release/kg-release pipeline
 ## Triggering Mechanisms
 There are two ways to trigger a release:
 
-1. **Manual Trigger**: A user manually submits a data release or kg release pipeline with a specified version by running a kedro cli command from thier local machine. You can find more information in [this runbook](https://docs.dev.everycure.org/infrastructure/runbooks/01_releases/)
+1. Manual Trigger
+
+   A person manually triggers a pipeline encompassing the data-release pipeline by running a kedro CLI command from their local machine. You can find more information in [this runbook](../../runbooks/01_releases.md)
 2. **Auto-Trigger via [GitHub Actions](https://github.com/everycure-org/matrix/blob/main/.github/workflows/submit-kedro-pipeline.yml)**: The release is automatically triggered based on a schedule:
    - Weekly patch bump
    - Monthly minor bump
