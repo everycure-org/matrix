@@ -37,8 +37,6 @@ logger = logging.getLogger(__name__)
             "predicate": Column(T.StringType(), nullable=False),
             "object": Column(T.StringType(), nullable=False),
         },
-        # removing the uniqueness constraint as some KGs have duplicate edges. These will be deduplicated later when we do edge deduplication anyways
-        # unique=["subject", "predicate", "object"],
     ),
     df_name="edges",
     raise_df_undefined=False,

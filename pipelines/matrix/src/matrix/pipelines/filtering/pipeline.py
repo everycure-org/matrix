@@ -15,20 +15,17 @@ def create_pipeline(**kwargs) -> Pipeline:
                     func=nodes.prefilter_unified_kg_nodes,
                     inputs=[
                         "integration.prm.unified_nodes",
-                        # So far this is only used for the source filter
                         "params:filtering.node_filters",
                     ],
                     outputs="filtering.prm.prefiltered_nodes",
                     name="prefilter_prm_knowledge_graph_nodes",
                     tags=["filtering"],
                 ),
-                # filter edges given a set of filter stages
                 node(
                     func=nodes.filter_unified_kg_edges,
                     inputs=[
                         "filtering.prm.prefiltered_nodes",
                         "integration.prm.unified_edges",
-                        # This is the source filter, and the biolink deduplication
                         "params:filtering.edge_filters",
                     ],
                     outputs="filtering.prm.filtered_edges",
