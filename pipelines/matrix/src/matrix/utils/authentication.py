@@ -44,15 +44,15 @@ def get_iap_token() -> Credentials:
     """Gets the IAP token, either by using existing credentials or by requesting a new one through a browser OAuth flow."""
 
     # Try loading existing credentials
-    if os.path.exists(f"{LOCAL_PATH}/token.json"):
-        token_data = Credentials.from_authorized_user_file(f"{LOCAL_PATH}/token.json")
+    if os.path.exists(f"{LOCAL_PATH}/oauth_token.json"):
+        token_data = Credentials.from_authorized_user_file(f"{LOCAL_PATH}/oauth_token.json")
         token_data.refresh(google_requests.Request())
 
     # if not present, start oauth flow
     else:
         token_data = request_new_iap_token()
         os.makedirs(LOCAL_PATH, exist_ok=True)
-        with open(f"{LOCAL_PATH}/token.json", "w") as f:
+        with open(f"{LOCAL_PATH}/oauth_token.json", "w") as f:
             f.write(token_data.to_json())
 
     return token_data

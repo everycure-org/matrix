@@ -30,9 +30,9 @@ evaluation.disease_specific:
       _object: matrix.datasets.pair_generator.MatrixTestDiseases
       positive_columns: 
         - "is_known_positive"
-      # removal_columns:
-      #   - "trial_sig_better"
-      #   - "trial_non_sig_better"
+      removal_columns:
+        - "trial_sig_better"
+        - "trial_non_sig_better"
     evaluation:
       _object: matrix.pipelines.evaluation.evaluation.SpecificRanking 
       specific_col: "target"
@@ -53,9 +53,9 @@ evaluation.full_matrix:
       _object: matrix.datasets.pair_generator.FullMatrixPositives
       positive_columns: 
         - "is_known_positive"
-      # removal_columns:
-      #   - "trial_sig_better"
-      #   - "trial_non_sig_better"
+      removal_columns:
+        - "trial_sig_better"
+        - "trial_non_sig_better"
     evaluation:
       _object: matrix.pipelines.evaluation.evaluation.FullMatrixRanking 
       rank_func_lst: 
@@ -77,9 +77,9 @@ evaluation.full_matrix_negatives:
       _object: matrix.datasets.pair_generator.FullMatrixPositives
       positive_columns: 
         - "is_known_negative"
-      # removal_columns:
-      #   - "trial_sig_worse"
-      #   - "trial_non_sig_worse"
+      removal_columns:
+        - "trial_sig_worse"
+        - "trial_non_sig_worse"
     evaluation:
       _object: matrix.pipelines.evaluation.evaluation.FullMatrixRanking 
       rank_func_lst: 

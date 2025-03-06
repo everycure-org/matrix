@@ -61,7 +61,7 @@ embeddings.topological_estimator:
   negative_sampling_rate: 5
   walk_length: 30
   walks_per_node: 10
-  window_size: 100
+  window_size: 10
 
 # embeddings.topological_estimator:
 #   _object: matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage

@@ -2,5 +2,6 @@ nav:
     - index.md
     - evaluation_deep_dive.md
     - model_selection.md
+    - modelling_workbenches.md
     - runbooks
     

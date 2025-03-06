@@ -45,6 +45,20 @@ resource "google_secret_manager_secret_iam_member" "storage_viewer_key_access" {
   member    = "group:matrix-all@everycure.org"
 }
 
+# furthermore grant access to the serviceaccount of wg1/wg2
+resource "google_secret_manager_secret_iam_member" "storage_viewer_key_access_wg1" {
+  secret_id = google_secret_manager_secret.storage_viewer_key.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:vertex-ai-workbench-sa@mtrx-wg1-data-dev-nb5.iam.gserviceaccount.com"
+}
+
+resource "google_secret_manager_secret_iam_member" "storage_viewer_key_access_wg2" {
+  secret_id = google_secret_manager_secret.storage_viewer_key.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:vertex-ai-workbench-sa@mtrx-wg2-modeling-dev-9yj.iam.gserviceaccount.com"
+}
+
+
 resource "google_project_iam_member" "storage_viewer_iam" {
   project = var.project_id
   role    = "roles/storage.objectViewer"
