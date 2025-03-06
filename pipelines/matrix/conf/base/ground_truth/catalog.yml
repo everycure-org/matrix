@@ -1,0 +1,62 @@
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  load_args:
+    header: True
+  save_args:
+    mode: overwrite
+
+_pandas_parquet: &_pandas_parquet
+  type: matrix.datasets.graph.PandasParquetDataset
+  save_args:
+    engine: pyarrow
+  load_args:
+    engine: pyarrow
+
+_layer_int: &_layer_int
+  metadata:
+    kedro-viz:
+      layer: ground_truth
+
+_layer_prm: &_layer_prm
+  metadata:
+    kedro-viz:
+      layer: primary
+
+# -------------------------------------------------------------------------
+# Datasets
+# -------------------------------------------------------------------------
+
+ground_truth.int.{source}.nodes:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ground_truth}/int/{source}/nodes
+
+ground_truth.int.{source}.edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ground_truth}/int/{source}/edges
+
+# Normalized datasets
+ground_truth.int.{source}.edges.norm@spark:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ground_truth}/int/{source}/edges.norm
+
+ground_truth.int.{source}.edges.norm@pandas:
+  <<: [*_pandas_parquet, *_layer_int]
+  filepath: ${globals:paths.ground_truth}/int/{source}/edges.norm
+
+ground_truth.int.{source}.nodes_norm_mapping:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ground_truth}/int/{source}/nodes_norm_mapping
+
+# Unified datasets
+ground_truth.prm.unified_edges:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.ground_truth}/prm/unified/edges
+
+ground_truth.prm.original.filtered_nodes:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.ground_truth}/prm/filtered/nodes
+  
+ground_truth.prm.original.filtered_edges:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.ground_truth}/prm/filtered/edges

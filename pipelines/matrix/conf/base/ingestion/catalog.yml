@@ -269,28 +269,28 @@ ingestion.int.disease_list.nodes:
 # Ground truth
 # -------------------------------------------------------------------------  
 # TODO: Remove raw suffix from all outputs of preprocessing pipeline once its in main
-ingestion.raw.ground_truth.positives:
+ingestion.raw.kgml_xdtd_gt.positives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tp_pairs.txt
+  filepath: ${globals:paths.kg_raw}/ground_truth/kgml_xdtd/${globals:data_sources.kgml_xdtd_gt.version}/tp_pairs.txt
   load_args:
     sep: "\t"
   save_args:
     sep: "\t"
 
-ingestion.raw.ground_truth.negatives:
+ingestion.raw.kgml_xdtd_gt.negatives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tn_pairs.txt
+  filepath: ${globals:paths.kg_raw}/ground_truth/kgml_xdtd/${globals:data_sources.kgml_xdtd_gt.version}/tn_pairs.txt
   load_args:
     sep: "\t"
   save_args:
     sep: "\t"
 
-ingestion.raw.ground_truth.edges@pandas:
+ingestion.raw.kgml_xdtd_gt.edges@pandas:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_raw.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/kgml_xdtd/${globals:data_sources.kgml_xdtd_gt.version}/gt_pairs_raw.tsv
   save_args:
     sep: "\t"
     header: true
@@ -298,17 +298,61 @@ ingestion.raw.ground_truth.edges@pandas:
   load_args:
     sep: "\t"
 
-ingestion.raw.ground_truth.edges@spark:
+ingestion.raw.kgml_xdtd_gt.edges@spark:
   <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_raw.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/kgml_xdtd/${globals:data_sources.kgml_xdtd_gt.version}/gt_pairs_raw.tsv
   load_args:
     sep: "\t"
     header: true
     index: false
 
-ingestion.int.ground_truth.edges:
+ingestion.int.kgml_xdtd_gt.edges:
   <<: [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/kgml_xdtd/${globals:data_sources.kgml_xdtd_gt.version}/gt_pairs.tsv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+    mode: overwrite
+
+ingestion.raw.ec_gt.edges:
+  <<: [*_layer_raw]
+  type: matrix.datasets.github.GitHubReleaseCSVDataset
+  repository_url: https://github.com/everycure-org/matrix-indications-list
+  release_name: ${globals:data_sources.ec_gt.version}
+  release_asset_name: ground-truths-list.tsv
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: token ${globals:gh_token}
+  load_args:
+    sep: "\t"
+
+ingestion.raw.ec_gt.edges@pandas:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/gt_pairs_raw.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
+
+ingestion.raw.ec_gt.edges@spark:
+  <<: [*_layer_raw, *_spark_csv]
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/gt_pairs_raw.tsv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+
+ingestion.int.ec_gt.edges:
+  <<: [*_spark_csv, *_layer_int]
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/gt_pairs.tsv
   load_args:
     sep: "\t"
     header: true

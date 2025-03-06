@@ -8,18 +8,33 @@ from . import nodes
 
 def create_ground_truth_pipeline() -> list:
     """Create pipeline nodes for ground truth processing."""
-    return [
-        node(
-            func=nodes.create_gt,
-            inputs={
-                "pos_df": "ingestion.raw.ground_truth.positives",
-                "neg_df": "ingestion.raw.ground_truth.negatives",
-            },
-            outputs="ingestion.raw.ground_truth.edges@pandas",
-            name="concatenate_gt_dataframe",
-            tags=["ground-truth"],
-        )
-    ]
+    pipelines = []
+    for source in settings.DYNAMIC_PIPELINES_MAPPING.get("ground_truth"):
+        if source.get("combined", True):
+            pipelines.append(
+                node(
+                    func=lambda x: x,
+                    inputs=f'ingestion.raw.{source["name"]}.edges',
+                    outputs=f'ingestion.int.{source["name"]}.edges@pandas',
+                    name=f'write_{source["name"]}_edges',
+                    tags=[f'{source["name"]}'],
+                )
+            )
+
+        else:
+            pipelines.append(
+                node(
+                    func=nodes.create_gt,
+                    inputs={
+                        "pos_df": f"ingestion.raw.{source['name']}.positives",
+                        "neg_df": f"ingestion.raw.{source['name']}.negatives",
+                    },
+                    outputs=f"ingestion.int.{source['name']}.edges@pandas",
+                    name=f'write_{source["name"]}_edges',
+                    tags=[f'{source["name"]}'],
+                )
+            )
+    return pipelines
 
 
 def create_pipeline(**kwargs) -> Pipeline:
