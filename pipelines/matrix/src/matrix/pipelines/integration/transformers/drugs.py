@@ -24,5 +24,4 @@ class DrugsTransformer(Transformer):
         filters = [f for f in nodes_df.columns if f.startswith("is_")]
         for filter in filters:
             df = df.withColumn(filter, f.col(filter).cast("boolean"))
-        # fmt: on
         return {"nodes": df}
