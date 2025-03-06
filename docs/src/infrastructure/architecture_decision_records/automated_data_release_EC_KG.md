@@ -13,7 +13,7 @@ There are two ways to trigger a release:
 1. Manual Trigger
 
    A person manually triggers a pipeline encompassing the data-release pipeline by running a kedro CLI command from their local machine. You can find more information in [this runbook](../runbooks/01_releases.md)
-2. Auto-Trigger via [GitHub Actions](https://github.com/everycure-org/matrix/blob/main/.github/workflows/submit-kedro-pipeline.yml)
+2. Auto-Trigger via [GitHub Actions](../../../.github/workflows/submit-kedro-pipeline.yml)
 
    The release is automatically triggered based on a schedule:
 
