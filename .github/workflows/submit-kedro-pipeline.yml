@@ -4,6 +4,15 @@ on:
   schedule:
     - cron: '20 14 1 * 2' # At 15:20 CET on the 1st day of the month and on Tuesday.
   workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Type of version bump'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
     
 env:
   project_id: 'mtrx-hub-dev-3of'
@@ -91,14 +100,21 @@ jobs:
           echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
           echo "Latest tag is ${latest_tag}"
 
+      - name: Get bump type
+        run: |
+          if [[ "${{ github.event_name == 'schedule' }}" == "true" ]]; then
+            # If it's the first of the month, it's a minor bump, even if it's Tuesday. On all other Tuesdays, it's a patch.
+            [[ $(date +%-d) -eq 1 ]] && BUMP_TYPE='minor' || BUMP_TYPE='patch'
+          else
+            BUMP_TYPE="${{ github.event.inputs.bump_type }}"
+          fi
+          echo "BUMP_TYPE=${BUMP_TYPE}" >> "$GITHUB_ENV"
+
       - name: Increment version
         working-directory: docs/scripts
         run: |
           pip install semver
-          # If it's the first of the month, it's a minor bump, even if it's Tuesday. On all other Tuesdays, it's a patch.
-          [[ $(date +%-d) -eq 1 ]] && BUMP_TYPE='minor' || BUMP_TYPE='patch'
-          echo "Bumping version with type: ${BUMP_TYPE}"
-          python bump_version.py --type="${BUMP_TYPE}" >> "$GITHUB_ENV"
+          python bump_version.py --type="${{env.BUMP_TYPE}}" >> "$GITHUB_ENV"
 
       - name: Branch off
         run: |
@@ -111,12 +127,18 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Submit the kedro pipeline"
-          kedro submit \
+          if [ "${{ env.BUMP_TYPE }}" == "minor" ]; then
+            RELEASE_PIPELINE='kg_release'
+          else
+            RELEASE_PIPELINE='kg_release_patch'
+          fi
+          kedro experiment run \
             --username GH-Actions-bot \
             --namespace argo-workflows \
-            --run-name auto-kg-release \
+            --run-name auto-run \
+            --experiment-name auto-kg-release \
             --release-version "${{ env.release_version }}" \
-            --pipeline kg_release \
+            --pipeline ${RELEASE_PIPELINE} \
             --headless
 
   notify_failure:

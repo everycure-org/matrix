@@ -1,8 +1,12 @@
+import logging
 import re
 import subprocess
-from typing import TYPE_CHECKING, List
+from typing import List
 
 import semver
+
+logger = logging.getLogger(__name__)
+
 
 BRANCH_NAME_REGEX = r"^release/v\d+\.\d+\.\d+(-[a-zA-Z0-9]+)?$"
 
@@ -32,9 +36,16 @@ def has_legal_branch_name() -> bool:
 
 
 def has_unpushed_commits() -> bool:
-    result = subprocess.run(
-        ["git", "log", "@{upstream}.."], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True
-    )
+    try:
+        result = subprocess.run(
+            ["git", "log", "@{upstream}.."], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True
+        )
+    except subprocess.CalledProcessError as e:
+        if "no upstream configured for branch" in e.stderr:
+            logger.exception(
+                "You have not pushed your changes. The remote needs them so we can always checkout the commit from which a release was triggered."
+            )
+        raise
     local_commits = bool(result.stdout)
     return bool(local_commits)
 

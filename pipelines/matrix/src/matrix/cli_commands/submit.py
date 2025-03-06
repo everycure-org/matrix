@@ -64,6 +64,7 @@ def cli():
 @click.option("--headless", is_flag=True, default=False, help="Skip confirmation prompt")
 @click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
 @click.option("--experiment_id", type=int, help="MLFlow experiment id")
+@click.option("--mlflow_run_id", type=str, help="MLFlow run id")
 @click.option("--skip-git-checks", is_flag=True, type=bool, default=False, help="Skip git checks")
 # fmt: on
 def submit(
@@ -80,7 +81,8 @@ def submit(
     headless: bool,
     environment: str,
     skip_git_checks: bool,
-    experiment_id: Optional[int]
+    experiment_id: Optional[int],
+    mlflow_run_id: Optional[str],
 ):
     """Submit the end-to-end workflow. """
 
@@ -126,6 +128,7 @@ def submit(
         dry_run=dry_run,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
         mlflow_experiment_id=experiment_id,
+        mlflow_run_id=mlflow_run_id,
         allow_interactions=not headless,
         is_test=is_test,
         environment=environment,
@@ -143,6 +146,7 @@ def _submit(
     environment: str,
     template_directory: Path,
     mlflow_experiment_id: int,
+    mlflow_run_id: Optional[str] = None,
     allow_interactions: bool = True,
     is_test: bool = False,
 ) -> None:
@@ -177,7 +181,7 @@ def _submit(
         if not can_talk_to_kubernetes():
             raise EnvironmentError("Cannot communicate with Kubernetes")
 
-        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, environment, mlflow_experiment_id, is_test=is_test, )
+        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, environment, mlflow_experiment_id, is_test=is_test, mlflow_run_id=mlflow_run_id)
 
         file_path = save_argo_template(argo_template, template_directory)
 
@@ -401,7 +405,8 @@ def build_argo_template(
     environment: str,
     mlflow_experiment_id: int,
     is_test: bool,
-    default_execution_resources: Optional[ArgoResourceConfig] = None
+    default_execution_resources: Optional[ArgoResourceConfig] = None,
+    mlflow_run_id: Optional[str] = None,
 ) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
@@ -428,6 +433,7 @@ def build_argo_template(
         pipeline=pipeline_obj,
         environment=environment,
         default_execution_resources=default_execution_resources,
+        mlflow_run_id=mlflow_run_id,
     )
     console.print("[green]✓[/green] Argo template built")
 

@@ -35,6 +35,8 @@ spec:
         value: "{{ release_folder_name }}"
       - name: mlflow_experiment_id
         value: {{ mlflow_experiment_id }}
+      - name: mlflow_run_id
+        value: "{{ mlflow_run_id }}"
   templates:
   - &_kedro_template
     metrics:
@@ -114,7 +116,6 @@ spec:
         - name: RELEASE_FOLDER_NAME
           value: {% raw %} "{{workflow.parameters.release_folder_name}}" 
           {% endraw %}
-
         - name: NEO4J_HOST
           value: {% raw %} "{{workflow.parameters.neo4j_host}}" 
           {% endraw %}
@@ -122,7 +123,10 @@ spec:
           value: {% raw %} "{{workflow.parameters.mlflow_endpoint}}" 
           {% endraw %}
         - name: MLFLOW_EXPERIMENT_ID
-          value: {% raw %} "{{workflow.parameters.mlflow_experiment_id}}" 
+          value: {% raw %} "{{workflow.parameters.mlflow_experiment_id}}"
+          {% endraw %}
+        - name: MLFLOW_RUN_ID
+          value: {% raw %} "{{workflow.parameters.mlflow_run_id}}"
           {% endraw %}
         - name: NEO4J_USER
           valueFrom:
@@ -155,6 +159,9 @@ spec:
         - name: NUM_CPU
           value: {% raw %} "{{inputs.parameters.cpu_limit}}"
           {% endraw %}
+        - name: SPARK_DRIVER_MEMORY
+          value: {% raw %} "{{inputs.parameters.memory_limit}}"
+          {% endraw %}
         - name: GH_TOKEN
           valueFrom:
             secretKeyRef:
@@ -173,6 +180,12 @@ spec:
               memory: 100Gi
             limits:
               memory: 100Gi
+          env:
+            - name: SPARK_DRIVER_MEMORY
+              value: "60"
+            # NOTE: We're passing in a regular bolt connection as emphemeral Neo4J has no SSL
+            - name: NEO4J_HOST
+              value: "bolt://127.0.0.1:7687"
         - name: neo4j
           resources:
             requests:
@@ -204,8 +217,7 @@ spec:
               sleep 5
             done
             echo "Neo4j is ready. Starting main application..."
-            # NOTE: We're passing in a regular bolt connection as emphemeral Neo4J has no SSL
-            NEO4J_HOST="bolt://127.0.0.1:7687" kedro run -p {{ pipeline_name }} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
+            kedro run -p {{ pipeline_name }} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
     
     volumes:
       - name: gds-key
