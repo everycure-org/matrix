@@ -104,7 +104,7 @@ embeddings.reporting.topological_pca_plot:
 # cache:
 embeddings.cache.read: &cache_in
   type: matrix.datasets.gcp.SparkWithSchemaDataset
-  filepath: &cache_location ${globals:paths.cache}/embeddings_cache6
+  filepath: &cache_location ${globals:paths.cache}/embeddings/embeddings_cache6
   provide_empty_if_not_present: true
   load_args:
     schema:
@@ -138,12 +138,12 @@ embeddings.cache.reload:  # an easy way to force Kedro to reload a dataset that 
   <<: *cache_in
 embeddings.cache.misses:
     type: matrix.datasets.gcp.LazySparkDataset
-    filepath: ${globals:paths.cache}/cache_misses6
+    filepath: ${globals:paths.cache}/embeddings/cache_misses6
     save_args:
       mode: overwrite
 
 embeddings.fully_enriched:
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.cache}/embedded6
+  filepath: ${globals:paths.cache}/embeddings/embedded6
   save_args:
     mode: overwrite

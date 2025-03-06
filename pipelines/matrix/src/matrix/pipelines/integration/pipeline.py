@@ -6,11 +6,10 @@ from matrix.pipelines.batch import pipeline as batch_pipeline
 
 from . import nodes
 
-NORM_CACHE_SCHEMA = pa.schema(
-    {"key": pa.string(), "value": pa.string(), "api": pa.string()}, metadata={"scope": "normalization"}
-)
 
-
+# this pipeline is created here for faster debugging locally
+# `kedro run -p cached_normalization` will run this pipeline
+# TODO: clean it up, also delete it from the pipeline_registry
 def create_cached_normalization_pipeline(**kwargs) -> Pipeline:
     pipelines = []
     # Create pipeline per source
