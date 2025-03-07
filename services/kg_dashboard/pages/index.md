@@ -146,6 +146,6 @@ Example parameterized dashboards:
  - <a href="/node/prefix/MONDO">Mondo Dashboard</a> 
  - <a href="/node/category/Disease">Disease Dashboard</a> 
 
-To see additional node breakdowns by category or prefix, check out the <a href="/node/explore">Node Explore</a> page.
+Click through to <a href="/node/category">category</a> or <a href="/node/prefix">prefix</a> pages to explore more detailed information about nodes in the knowledge graph
 
 <!-- NOTE: This file was partially generated using AI assistance. -->
