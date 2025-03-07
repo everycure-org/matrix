@@ -143,6 +143,10 @@ ingestion.raw.ec_clinical_trails.edges:
   <<: [*_layer_int, *_pandas_csv]
   filepath: ${globals:paths.raw}/clinical_trials_data/translator/${globals:data_sources.ec_clinical_trials.version}/edges_raw.tsv
 
+ingestion.raw.ec_clinical_trails.nodes:
+  <<: [*_layer_int, *_pandas_csv]
+  filepath: ${globals:paths.raw}/clinical_trials_data/translator/${globals:data_sources.ec_clinical_trials.version}/nodes_raw.tsv
+
 ingestion.int.ec_clinical_trails.edges@pandas:
   <<: [*_layer_int, *_pandas_csv]
   filepath: ${globals:paths.ingestion}/int/clinical_trials_data/translator/${globals:data_sources.ec_clinical_trials.version}/edges_conflated_raw.csv
@@ -259,7 +263,6 @@ ingestion.int.disease_list.nodes:
 ingestion.raw.kgml_xdtd.positives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  
   filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.kgml_xdtd.version}/tp_pairs.txt
   load_args:
     sep: "\t"
