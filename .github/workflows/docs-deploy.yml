@@ -89,8 +89,8 @@ jobs:
           project_id: ${{env.project_id}}
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
-      
-      - name: Limit the Number of Versions
+      # To prevent hitting the limit of 210 versions on Google App Engine
+      - name: Limit the Number of Versions on Google App Engine
         run: |
           mapfile -t VERSIONS < <(gcloud app versions list --service=default --format="value(version.id)" --sort-by="~version.createTime")
           echo "Current versions: ${#VERSIONS[@]}"
