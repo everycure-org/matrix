@@ -94,7 +94,7 @@ jobs:
         run: |
           mapfile -t VERSIONS < <(gcloud app versions list --service=default --format="value(version.id)" --sort-by="~version.createTime")
           echo "Current versions: ${#VERSIONS[@]}"
-          KEEP_VERSIONS=200
+          KEEP_VERSIONS=100
           
           if (( ${#VERSIONS[@]} > KEEP_VERSIONS )); then
             for (( i=KEEP_VERSIONS; i<${#VERSIONS[@]}; i++ )); do
