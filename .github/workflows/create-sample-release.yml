@@ -1,4 +1,4 @@
-name: Create Sample Release
+name: Create Sample from KG Release
 
 on:
   workflow_dispatch: 
@@ -27,7 +27,7 @@ jobs:
   create_sample_release:
     runs-on: 
       labels: ubuntu-24.04
-    name: Create Sample Release
+    name: Create Sample from KG Release
     permissions:
       contents: 'write'
       id-token: 'write'
@@ -98,7 +98,6 @@ jobs:
             -e sample \
             -p create_sample \
             --run-name create-sample-release \
-            --experiment-name create-sample-release \
             --username github_actions_bot \
             --release-version ${RELEASE_VERSION} \
             --headless \
