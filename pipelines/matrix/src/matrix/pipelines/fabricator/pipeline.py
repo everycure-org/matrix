@@ -49,38 +49,6 @@ def _create_pairs(
     return df[:num], df[num : 2 * num]
 
 
-def _create_ec_gt_pairs(positives: pd.DataFrame, negatives: pd.DataFrame):
-    """Create ground truth pairs for EC data.
-    Args:
-        positives: DataFrame containing positive drug-disease pairs
-        negatives: DataFrame containing negative drug-disease pairs
-    Returns:
-        DataFrame with formatted drug-disease pairs
-    """
-    # Rename columns consistently
-    positives = positives.rename(columns={"source": "drug ID", "target": "disease ID"})
-    negatives = negatives.rename(columns={"source": "drug ID", "target": "disease ID"})
-
-    # Add indication flags
-    positives["indication"] = True
-    positives["contraindication"] = False
-    negatives["indication"] = False
-    negatives["contraindication"] = True
-
-    # Combine positive and negative pairs
-    df = pd.concat([positives, negatives])
-    df = df.drop_duplicates()
-
-    # Add required columns
-    df["active ingredient"] = "dummy"
-    df["drug label"] = df["drug ID"].copy().apply(lambda x: f"name_{x}")
-    df["disease label"] = df["disease ID"].copy().apply(lambda x: f"name_{x}")
-    df["disease name"] = df["disease label"]
-    df["drug|disease"] = df["drug label"] + "|" + df["disease name"]
-
-    return df
-
-
 def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.DataFrame):
     def find_path(graph, start, end):
         try:
@@ -181,12 +149,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_gt_pairs",
             ),
             node(
-                func=_create_ec_gt_pairs,
+                func=_create_pairs,
                 inputs=[
-                    "ingestion.raw.kgml_xdtd.positives",
-                    "ingestion.raw.kgml_xdtd.negatives",
+                    "ingestion.raw.drug_list",
+                    "ingestion.raw.disease_list",
                 ],
-                outputs="ingestion.raw.ec_ground_truth.edges",
+                outputs=[
+                    "ingestion.raw.ec_ground_truth.positives",
+                    "ingestion.raw.ec_ground_truth.negatives",
+                ],
                 name="create_ec_gt_pairs",
             ),
             node(

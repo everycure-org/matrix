@@ -43,7 +43,7 @@ data_sources:
      version: *_rtx_kg_version
   ec_gt:
      # check releases here: https://github.com/everycure-org/matrix-disease-list/releases
-     version: "Release v0.1.2"
+     version: "Release v1.1.1"
   drugmech:
     # check releases here: https://github.com/SuLab/DrugMechDB/releases/ 
     version: 2.0.1
