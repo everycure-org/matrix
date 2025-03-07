@@ -193,7 +193,7 @@ ingestion.raw.disease_list:
   type: matrix.datasets.github.GitHubReleaseCSVDataset
   repository_url: https://github.com/everycure-org/matrix-disease-list
   release_name: ${globals:data_sources.disease_list.version}
-  release_asset_name: matrix-disease-list.tsv
+  release_asset_name: matrix-disease-list-unfiltered-processed.tsv
   fs_args:
     Accept: application/octet-stream
   load_args:
