@@ -136,5 +136,5 @@ embeddings.node.cache.reload:  # an easy way to force Kedro to reload a dataset 
   <<: *cache_in
 embeddings.node.cache.misses:
   <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/embeddings/node/cache_misses
+  filepath:  ${globals:paths.cache}/tmp/cache_misses/embeddings/node
 
