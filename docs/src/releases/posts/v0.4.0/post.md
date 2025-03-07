@@ -18,7 +18,7 @@ authors:
   - matentzn
 ---
 
-# Matrix Platform `v0.3.1`: Enhanced Pipeline Control, Monitoring, and Data Integration
+# Matrix Platform `v0.4.0`: Enhanced Pipeline Control, Monitoring, and Data Integration
 
 This release of the Matrix Platform focuses on enhanced pipeline control, improved monitoring capabilities, and streamlined data integration, alongside crucial bug fixes and technical enhancements.  Key changes include a more flexible pipeline submission process,  improved resource management within the Kubernetes cluster, and refined data integration workflows.
 
