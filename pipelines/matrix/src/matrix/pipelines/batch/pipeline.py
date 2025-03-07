@@ -204,8 +204,6 @@ def cache_miss_resolver_wrapper(
         logger.info(f"embedding batch with key: {batch[0]}")
         transformed = await transformer.apply(batch)
         logger.info(f"received embedding for batch with key: {batch[0]}")
-        if not all(isinstance(val, str) for val in transformed):
-            logger.warning(f"Transformed data contains non-string values: {transformed}")
         return pa.table([batch, transformed, [api] * len(batch)], schema=cache_schema).to_pandas()
 
     def prep(
