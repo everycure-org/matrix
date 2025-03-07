@@ -24,12 +24,15 @@ locals {
     super_admins    = ["gcp-admins@everycure.org"]
   }
   root_directory = get_terragrunt_dir()
+  environment = basename(get_terragrunt_dir())   # dev or prod
+
 }
 
 # Configure root level variables that all resources can inherit. This is especially helpful with multi-account configs
 # where terraform_remote_state data sources are placed directly into the modules.
 inputs = merge(
-  local.globals
+  local.globals,
+  {"environment" = local.environment}
 )
 
 # generate a variables file for the above
@@ -41,6 +44,7 @@ variable "org_id" {}
 variable "billing_account" {}
 variable "default_region" {}
 variable "super_admins" {}
+variable "environment" {}
 EOF
 }
 
