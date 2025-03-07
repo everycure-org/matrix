@@ -126,12 +126,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -eux
           echo "Submit the kedro pipeline"
           if [ "${{ env.BUMP_TYPE }}" == "minor" ]; then
             RELEASE_PIPELINE='kg_release'
           else
             RELEASE_PIPELINE='kg_release_patch'
           fi
+          make fetch_secrets
           kedro experiment run \
             --username GH-Actions-bot \
             --namespace argo-workflows \
