@@ -26,6 +26,8 @@ This runbook outlines the steps to create a release in our GitHub repository, ei
     - Review the list and check the names of the PRs to ensure they read nicely. Consider reshuffling them so they tell a good story instead of just being a list of things.
     - Manually check who has contributed and list the contributors of the month to encourage contributions through PRs (code, docs, experiment reports, etc.). See the cli command below for how to best do this
     - Upon merging the PR, the release will be publicized to the [Every Cure website](https://docs.dev.everycure.org/releases/) by another GitHub Action. It will then also be listed under the [GitHub releases](https://github.com/everycure-org/matrix/releases).
+6. **Create a sample release.**
+    - Create a sample release as a subset of the KG release, which will be used for tests.
 
 ## Automated Release Workflow  
 
