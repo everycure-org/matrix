@@ -90,11 +90,10 @@ class MLFlowHooks:
     @staticmethod
     def fetch_logged_datasets() -> List[str]:
         run_id = MLFlowHooks._kedro_context.mlflow.tracking.run.id
-        logger.info(f"Fetching already logged datasets for run id: {run_id}")
         client = mlflow.tracking.MlflowClient()
         logged_inputs = client.get_run(run_id).inputs
         logged_names = [dataset.dataset.name for dataset in logged_inputs.dataset_inputs]
-        logger.info(f"These are dataset names that have already been logged: {logged_names}")
+        logger.debug(f"These are dataset names that have already been logged for run id '{run_id}': {logged_names}")
         return logged_names
 
     @hook_impl
