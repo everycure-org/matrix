@@ -30,14 +30,14 @@ CACHE_COLUMNS = CACHE_SCHEMA.names
 def create_node_embeddings_pipeline() -> Pipeline:
     return cached_api_enrichment_pipeline(
         input="integration.prm.filtered_nodes",
-        output="fully_enriched",
-        preprocessor="params:caching.preprocessor",
-        cache_miss_resolver="params:caching.resolver",
-        api="params:caching.api",
-        new_col="params:caching.new_col",
-        cache="cache.read",
-        primary_key="params:caching.primary_key",
-        batch_size="params:caching.batch_size",
+        output="embeddings.fully_enriched",
+        preprocessor="params:embeddings.caching.preprocessor",
+        cache_miss_resolver="params:embeddings.caching.resolver",
+        api="params:embeddings.caching.api",
+        new_col="params:embeddings.caching.new_col",
+        cache="embeddings.cache.read",
+        primary_key="params:embeddings.caching.primary_key",
+        batch_size="params:embeddings.caching.batch_size",
     )
 
 
@@ -51,9 +51,9 @@ def cached_api_enrichment_pipeline(
     new_col: str,
     batch_size: str,
     cache: str,
-    cache_misses: str = "cache.misses",
-    cache_reload: str = "cache.reload",
-    cache_out: str = "cache.write",
+    cache_misses: str = "embeddings.cache.misses",
+    cache_reload: str = "embeddings.cache.reload",
+    cache_out: str = "embeddings.cache.write",
 ) -> Pipeline:
     """Define a Kedro Pipeline to enrich a Spark Dataframe using optionally cached API calls.
 
@@ -249,7 +249,8 @@ def resolve_cache_duplicates(df: DataFrame, id_col: str) -> DataFrame:
 
 
 def batched(iterable: Iterable[T], n: int, *, strict: bool = False) -> Iterator[tuple[T]]:
-    # Taken from the recipe at https://docs.python.org/3/library/itertools.html#itertools.batched , which is available by default in 3.12
+    # Taken from the recipe at https://docs.python.org/3/library/itertools.html#itertools.batched ,
+    # which is available by default in Python 3.12
     # batched('ABCDEFG', 3) → ABC DEF G
     if n < 1:
         raise ValueError("batch size must be at least one")
