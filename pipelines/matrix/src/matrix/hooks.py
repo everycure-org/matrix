@@ -291,7 +291,7 @@ class SparkHooks:
         try:
             msg = ["Current Spark Configuration:"]
             msg.extend([f"{k}: {v}" for k, v in sorted(self._spark_session.sparkContext.getConf().getAll())])
-            logger.info("\n".join(msg))
+            logger.debug("\n".join(msg))
         except AttributeError:
             logger.warning("SparkSession is not initialized.")
 
