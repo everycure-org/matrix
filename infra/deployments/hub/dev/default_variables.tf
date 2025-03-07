@@ -3,3 +3,4 @@ variable "org_id" {}
 variable "billing_account" {}
 variable "default_region" {}
 variable "super_admins" {}
+variable "environment" {}
