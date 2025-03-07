@@ -3,7 +3,7 @@ import logging
 import os
 import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Collection, Dict, Optional, Set
 
 import fsspec
 import mlflow
@@ -88,11 +88,11 @@ class MLFlowHooks:
                 logger.info(f"Dataset {dataset_name} has already been logged as input.")
 
     @staticmethod
-    def fetch_logged_datasets() -> List[str]:
+    def fetch_logged_datasets() -> set[str]:
         run_id = MLFlowHooks._kedro_context.mlflow.tracking.run.id
         client = mlflow.tracking.MlflowClient()
         logged_inputs = client.get_run(run_id).inputs
-        logged_names = [dataset.dataset.name for dataset in logged_inputs.dataset_inputs]
+        logged_names = {dataset.dataset.name for dataset in logged_inputs.dataset_inputs}
         logger.debug(f"These are dataset names that have already been logged for run id '{run_id}': {logged_names}")
         return logged_names
 
@@ -264,7 +264,7 @@ class SparkHooks:
 
     def _check_and_initialize_spark(self, dataset_name: str) -> None:
         """Check if dataset is SparkDataset and initialize Spark if needed."""
-        if self.__class__._already_initialized is True:
+        if self.__class__._already_initialized:
             return
 
         dataset = self.catalog._get_dataset(dataset_name)
@@ -410,7 +410,7 @@ class ReleaseInfoHooks:
         return dataset_names
 
     @classmethod
-    def extract_all_global_datasets(cls, hidden_datasets: frozenset) -> dict:
+    def extract_all_global_datasets(cls, hidden_datasets: Collection) -> dict:
         datasources_to_versions = {
             k: v["version"] for k, v in ReleaseInfoHooks._globals["data_sources"].items() if k not in hidden_datasets
         }
