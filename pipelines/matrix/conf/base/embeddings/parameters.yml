@@ -103,5 +103,5 @@ embeddings.node.caching.resolver:
     timeout: 10
 embeddings.node.caching.primary_key: *pkey
 embeddings.node.caching.api: *api
-embeddings.node.caching.new_col: lookup
+embeddings.node.caching.new_col: embedding
 embeddings.node.caching.batch_size: 40000  # Bigger batch sizes result in larger Parquet files. +-250MB/file is a good rule of thumb on object stores like GCS. However, a bigger batch size also means you need to keep more elements in memory, so too big of a size will result in Out-Of-Memory errors.
