@@ -255,7 +255,13 @@ def reduce_dimension(df: ps.DataFrame, transformer, input: str, output: str, ski
 
 
 def filter_edges_for_topological_embeddings(
-    nodes: ps.DataFrame, edges: ps.DataFrame, drug_types: List[str], disease_types: List[str]
+    nodes: ps.DataFrame,
+    edges: ps.DataFrame,
+    ground_truth: ps.DataFrame,
+    drugs: ps.DataFrame,
+    diseases: ps.DataFrame,
+    drug_types: List[str],
+    disease_types: List[str],
 ) -> ps.DataFrame:
     """Function to filter edges for topological embeddings process.
 
@@ -267,6 +273,9 @@ def filter_edges_for_topological_embeddings(
     Args:
         nodes: nodes dataframe
         edges: edges dataframe
+        ground_truth: ground truth dataframe
+        drugs: drugs dataframe
+        diseases: diseases dataframe
         drug_types: list of drug types
         disease_types: list of disease types
     Returns:
