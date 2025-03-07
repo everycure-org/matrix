@@ -28,6 +28,10 @@ This runbook outlines the steps to create a release in our GitHub repository, ei
     - Upon merging the PR, the release will be publicized to the [Every Cure website](https://docs.dev.everycure.org/releases/) by another GitHub Action. It will then also be listed under the [GitHub releases](https://github.com/everycure-org/matrix/releases).
 6. **Create a sample release.**
     - Create a sample release as a subset of the KG release, which will be used for tests.
+7. **Check the KG dashboard.**
+    - The KG dashboard will be automatically updated with the new release.
+    - Check the [KG dashboard](https://data.dev.everycure.org/versions/latest/evidence/) to ensure the new release is loaded correctly via the version number.
+    - Give a quick look at the dashboard's summary page's numbers to make sure they are in the right range.
 
 ## Automated Release Workflow  
 

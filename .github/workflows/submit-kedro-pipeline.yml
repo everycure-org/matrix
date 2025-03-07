@@ -126,11 +126,10 @@ jobs:
           else
             RELEASE_PIPELINE='kg_release_patch'
           fi
-          kedro experiment run \
+          kedro submit \
             --username GH-Actions-bot \
             --namespace argo-workflows \
-            --run-name auto-run \
-            --experiment-name auto-kg-release \
+            --run-name auto-kg-release \
             --release-version "${{ env.release_version }}" \
             --pipeline ${RELEASE_PIPELINE} \
             --headless
