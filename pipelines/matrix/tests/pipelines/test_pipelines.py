@@ -194,8 +194,6 @@ def test_parameters_filepath_follows_conventions(
         {pipeline}.{layer}.*
 
         {pipeline}.{namespace}.{layer}.*
-
-        cache.*
     """
 
     config_loader = request.getfixturevalue(config_loader)
