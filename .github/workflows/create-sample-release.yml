@@ -1,6 +1,10 @@
 name: Create Sample from KG Release
 
 on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches:
+      - main
   workflow_dispatch: 
     inputs:
       release_version:
