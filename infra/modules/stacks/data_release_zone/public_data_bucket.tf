@@ -1,5 +1,5 @@
 locals {
-  website_domain_name = "data.${trimsuffix(data.google_dns_managed_zone.dev_zone.dns_name, ".")}"
+  website_domain_name = "data.${trimsuffix(var.dns_name, ".")}"
 }
 
 # Create the main bucket for hosting the website
@@ -42,9 +42,9 @@ resource "google_storage_bucket_iam_member" "public_read" {
 }
 
 # The rest of your load balancer configuration remains unchanged
-data "google_dns_managed_zone" "dev_zone" {
-  name = var.dns_managed_zone_name
-}
+# data "google_dns_managed_zone" "dev_zone" {
+#   name = var.dns_managed_zone_name
+# }
 
 # Create a Google-managed SSL certificate
 resource "google_compute_managed_ssl_certificate" "default" {
@@ -112,7 +112,7 @@ resource "google_compute_global_forwarding_rule" "static_website_http" {
 # Add A record for the domain pointing to the load balancer IP
 resource "google_dns_record_set" "website" {
   name         = "${local.website_domain_name}."
-  managed_zone = data.google_dns_managed_zone.dev_zone.name
+  managed_zone = var.dns_managed_zone_name
   project      = var.project_id
   type         = "A"
   ttl          = 300
