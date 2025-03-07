@@ -201,6 +201,7 @@ def test_different_api(sample_cache, sample_api2, spark: SparkSession, filtered_
     assertDataFrameEqual(result1_df, expected)
 
 
+@pytest.mark.integration
 @patch("matrix.pipelines.embeddings.encoders.DummyResolver.__new__", return_value=AsyncMock())
 def test_cached_api_enrichment_pipeline(
     mock_encoder,
@@ -227,28 +228,34 @@ def test_cached_api_enrichment_pipeline(
     catalog = DataCatalog(
         {
             "integration.prm.filtered_nodes": MemoryDataset(sample_input_df),
-            "cache.read": SparkWithSchemaDataset(
+            "embeddings.cache.read": SparkWithSchemaDataset(
                 filepath=str(tmp_path / "cache_dataset"),
                 provide_empty_if_not_present=True,
                 load_args={"schema": cache_schema},
             ),
-            "fully_enriched": LazySparkDataset(filepath=str(tmp_path / "enriched"), save_args={"mode": "overwrite"}),
-            "cache_misses": LazySparkDataset(filepath=str(tmp_path / "cache_misses"), save_args={"mode": "overwrite"}),
-            "cache.write": PartitionedAsyncParallelDataset(
+            "embeddings.fully_enriched": LazySparkDataset(
+                filepath=str(tmp_path / "enriched"), save_args={"mode": "overwrite"}
+            ),
+            "embeddings.cache_misses": LazySparkDataset(
+                filepath=str(tmp_path / "cache_misses"), save_args={"mode": "overwrite"}
+            ),
+            "embeddings.cache.write": PartitionedAsyncParallelDataset(
                 path=cache_path,
                 dataset=ParquetDataset,
                 filename_suffix=".parquet",
             ),
-            "cache.reload": SparkWithSchemaDataset(
+            "embeddings.cache.reload": SparkWithSchemaDataset(
                 filepath=cache_path,
                 load_args={"schema": cache_schema},
             ),
-            "params:caching.api": MemoryDataset(sample_api1),
-            "params:caching.primary_key": MemoryDataset(sample_primary_key),
-            "params:caching.preprocessor": MemoryDataset(sample_preprocessor),
-            "params:caching.resolver": MemoryDataset({"_object": "matrix.pipelines.embeddings.encoders.DummyResolver"}),
-            "params:caching.new_col": MemoryDataset(sample_new_col),
-            "params:caching.batch_size": MemoryDataset(2),
+            "params:embeddings.caching.api": MemoryDataset(sample_api1),
+            "params:embeddings.caching.primary_key": MemoryDataset(sample_primary_key),
+            "params:embeddings.caching.preprocessor": MemoryDataset(sample_preprocessor),
+            "params:embeddings.caching.resolver": MemoryDataset(
+                {"_object": "matrix.pipelines.embeddings.encoders.DummyResolver"}
+            ),
+            "params:embeddings.caching.new_col": MemoryDataset(sample_new_col),
+            "params:embeddings.caching.batch_size": MemoryDataset(2),
         }
     )
     pipeline_run = create_node_embeddings_pipeline()
@@ -258,15 +265,15 @@ def test_cached_api_enrichment_pipeline(
     runner.run(pipeline_run, catalog)
 
     # ...then the data is found to be enriched...
-    enriched_data = catalog.load("fully_enriched").toPandas()
+    enriched_data = catalog.load("embeddings.fully_enriched").toPandas()
     assert enriched_data[sample_new_col].isna().sum() == 0, "The input DataFrame should be fully enriched"
     assert enriched_data.shape == (4, 3)
     # ...by having the lookup service being called...
     resolver.apply.assert_called()
     # ...and because it's async, also awaited.
     resolver.apply.assert_awaited()
-    # ... in other words, the catalog is complete.
-    assert catalog.load("cache.read").toPandas().shape == (4, 3)  # Might need to force reloading the dataset.
+    # ... in other words, the catalog is now fully seeded.
+    assert catalog.load("embeddings.cache.read").toPandas().shape == (4, 3)
 
     # When the pipeline is run a 2nd time...
     calls = resolver.apply.call_count
