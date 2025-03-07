@@ -29,7 +29,7 @@ def experiment():
         os.environ["MLFLOW_TRACKING_TOKEN"] = token.id_token
     except FileNotFoundError as e:
         click.secho("Error getting IAP token. Please run `make fetch_secrets` first", fg="yellow", bold=True)
-        raise click.Abort()
+        raise
     pass
 
 
