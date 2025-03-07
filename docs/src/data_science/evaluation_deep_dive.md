@@ -151,7 +151,7 @@ All of these metrics are computed at a given rank $k$.
 
 #### Commonality at k 
 
-Commonality at k essentially tells us about overlap of pairs in the top $k$ of two lists. Consider two ranked lists of drugs where $S_k$ is the number of common drug-disease pairs in the top $k$ of both lists. The minimum value of $S_k$ can be 0 while the maximum - 1.
+Commonality at k essentially tells us about overlap of pairs in the top $k$ of two lists. Consider two ranked lists of drugs where $S_k$ is the number of common drug-disease pairs in the top $k$ of both lists. The minimum value of $S_k$ can be 0 while the maximum is 1.
 
 $$
 \text{S}_{k} = \frac{S}{k}
