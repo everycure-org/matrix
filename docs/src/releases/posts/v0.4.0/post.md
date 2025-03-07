@@ -170,15 +170,3 @@ This release of the Matrix Platform focuses on enhanced pipeline control, improv
 * **Improved model evaluation documentation (#905, #878):** Improved documentation for ensemble function addition and Neo4j SSL setup.
 
 
-## Newly Onboarded Colleagues
-
-* Jacques (#883)
-* Kushal (#904)
-* Marcello (#892)
-* Matej (#886)
-* Kathleen (#1032)
-
-
-## Other Notable Changes
-
-This release includes numerous other improvements and changes, including refined code ownership (#822), improved workflow tracking (#771), standardized release naming (#750), addressed technical debt (#757), enhanced score saving (#853), added a release PR label (#852), refactored functions (#808), updated Spoke version (#914), added a headless CLI flag (#861), reverted SemMedDB filtering (#826), improved CLI error handling (#827), refactored test suites (#930), upgraded Java (#903), added missing columns (#811), corrected Argo node output (#844), renamed flags (#811), improved CLI usability for user management (#1040), enhanced dataset tracking (#1048), fixed node processing (#1052), improved notes generation (#1059), updated disease lists (#1072), ensured data quality for Evidence.dev (#1076), updated onboarding documentation (#1081), fixed schema checks (#1082), resolved deadlocking issues (#1089), improved release notes generation (#1096), enhanced workflow failure monitoring (#1098), corrected Makefile targets (#1103), improved JSON handling (#1104), ensured proper GitHub event data handling (#1107), updated installation documentation (#1108), improved dependency management (#1109), optimized BigQuery interactions (#1110), synchronized Evidence.dev infrastructure (#1112), fixed documentation links (#1114), updated ground truth versions (#1116), removed outdated documentation (#1127), enabled manual triggering of sample runs (#1206), and included drug and disease information in release information (#1221).  These changes contribute to a more stable, efficient, and developer-friendly platform.
