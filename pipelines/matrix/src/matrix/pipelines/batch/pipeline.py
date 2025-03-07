@@ -29,6 +29,7 @@ CACHE_COLUMNS = CACHE_SCHEMA.names
 
 def create_node_embeddings_pipeline() -> Pipeline:
     return cached_api_enrichment_pipeline(
+        source="embeddings",
         input="integration.prm.filtered_nodes",
         output="embeddings.feat.graph.node_embeddings@spark",
         preprocessor="params:embeddings.node.caching.preprocessor",
@@ -45,6 +46,7 @@ def create_node_embeddings_pipeline() -> Pipeline:
 
 
 def cached_api_enrichment_pipeline(
+    source: str,
     input: str,
     primary_key: str,
     cache_miss_resolver: str,  # Ref to [AttributeEncoder|Normalizer]
@@ -125,7 +127,7 @@ def cached_api_enrichment_pipeline(
     common_inputs = {"df": input, "cache": cache, "api": api, "primary_key": primary_key, "preprocessor": preprocessor}
     nodes = [
         ArgoNode(
-            name="derive_cache_misses",
+            name=f"derive_{source}_cache_misses",
             func=derive_cache_misses,
             inputs=common_inputs,
             outputs=cache_misses,
@@ -137,7 +139,7 @@ def cached_api_enrichment_pipeline(
             ),
         ),
         ArgoNode(
-            name="resolve_cache_misses",
+            name=f"resolve_{source}_cache_misses",
             func=cache_miss_resolver_wrapper,
             inputs={"df": cache_misses, "transformer": cache_miss_resolver, "api": api, "batch_size": batch_size},
             outputs=cache_out,
@@ -149,7 +151,7 @@ def cached_api_enrichment_pipeline(
             ),
         ),
         ArgoNode(
-            name="lookup_from_cache",
+            name=f"lookup_{source}_from_cache",
             func=lookup_from_cache,
             inputs=common_inputs | {"cache": cache_reload, "new_col": new_col, "lineage_dummy": cache_out},
             outputs=output,
@@ -190,9 +192,9 @@ def cache_miss_resolver_wrapper(
 
     async def async_delegator(batch: Sequence[str]) -> pa.Table:
         logger.info(f"embedding batch with key: {batch[0]}")
-        embeddings: list[list[float]] = await transformer.apply(batch)
+        transformed = await transformer.apply(batch)
         logger.info(f"received embedding for batch with key: {batch[0]}")
-        return pa.table([batch, embeddings, [api] * len(batch)], schema=CACHE_SCHEMA).to_pandas()
+        return pa.table([batch, transformed, [api] * len(batch)], schema=CACHE_SCHEMA).to_pandas()
 
     def prep(
         batches: Iterable[Sequence[T]], api: str
