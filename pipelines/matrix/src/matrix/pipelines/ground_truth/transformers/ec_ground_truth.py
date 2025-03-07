@@ -29,7 +29,8 @@ class GroundTruthTransformer(Transformer):
             .withColumnRenamed("drug|disease", "id")
             .withColumn("predicate", f.lit("indicated").cast(T.StringType()))
             .withColumn("y", f.lit(1))
-            .select("subject", "object", "subject_label", "object_label", "id", "predicate", "y")
+            .withColumn("type", f.lit("indication"))
+            .select("subject", "object", "subject_label", "object_label", "id", "predicate", "y", "type")
         )
 
     def _extract_negatives(self, edges_df: ps.DataFrame) -> ps.DataFrame:
@@ -41,5 +42,6 @@ class GroundTruthTransformer(Transformer):
             .withColumnRenamed("drug|disease", "id")
             .withColumn("predicate", f.lit("contraindicated").cast(T.StringType()))
             .withColumn("y", f.lit(0))
-            .select("subject", "object", "subject_label", "object_label", "id", "predicate", "y")
+            .withColumn("type", f.lit("contraindication"))
+            .select("subject", "object", "subject_label", "object_label", "id", "predicate", "y", "type")
         )
