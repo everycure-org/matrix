@@ -91,6 +91,7 @@ jobs:
           service_account: ${{env.service_account}}
       # To prevent hitting the limit of 210 versions on Google App Engine
       - name: Limit the Number of Versions on Google App Engine
+        if: github.ref == 'refs/heads/main'
         run: |
           mapfile -t VERSIONS < <(gcloud app versions list --service=default --format="value(version.id)" --sort-by="~version.createTime")
           echo "Current versions: ${#VERSIONS[@]}"
