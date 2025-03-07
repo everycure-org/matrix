@@ -345,17 +345,29 @@ ingestion.int.kgml_xdtd.nodes:
     index: false
     mode: overwrite
 
-ingestion.raw.ec_ground_truth.edges:
+ingestion.raw.ec_ground_truth.positives:
   <<: [*_layer_raw]
-  type: matrix.datasets.github.GitHubReleaseCSVDataset
-  repository_url: https://github.com/everycure-org/matrix-indications-list
+  type: matrix.datasets.github.GitHubReleaseExcelDataset
+  repository_url: https://github.com/everycure-org/matrix-indication-list
   release_name: ${globals:data_sources.ec_gt.version}
-  release_asset_name: ground-truths-list.tsv
+  release_asset_name: indicationList.xlsx
   fs_args:
     Accept: application/octet-stream
     Authorization: token ${globals:gh_token}
-  load_args:
-    sep: "\t"
+  # load_args:
+  #   sep: "\t"
+
+ingestion.raw.ec_ground_truth.negatives:
+  <<: [*_layer_raw]
+  type: matrix.datasets.github.GitHubReleaseExcelDataset
+  repository_url: https://github.com/everycure-org/matrix-indication-list
+  release_name: ${globals:data_sources.ec_gt.version}
+  release_asset_name: contraindicationList.xlsx
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: token ${globals:gh_token}
+  # load_args:
+  #   sep: "\t"
 
 ingestion.raw.ec_ground_truth.edges@pandas:
   <<: [*_layer_raw]
