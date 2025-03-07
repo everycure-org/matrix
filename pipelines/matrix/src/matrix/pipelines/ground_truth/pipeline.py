@@ -8,7 +8,9 @@ from ...kedro4argo_node import ArgoNode, ArgoResourceConfig
 from . import nodes
 
 
-def _create_ground_truth_pipeline(source: str) -> Pipeline:
+def _create_ground_truth_pipeline(
+    source: str, is_combined: bool = True, has_positives: bool = True, has_negatives: bool = True
+) -> Pipeline:
     pipelines = []
 
     pipelines.append(
@@ -22,10 +24,16 @@ def _create_ground_truth_pipeline(source: str) -> Pipeline:
                         # This is due to the fact that the Transformer objects are only created
                         # during node execution time, otherwise we could infer this based on
                         # the transformer.
-                        "edges_df": f"ingestion.int.{source}.edges@spark",
+                        **(
+                            {"positive_edges": f"ingestion.int.{source}.edges.positives@spark"} if has_positives else {}
+                        ),
+                        **(
+                            {"negative_edges": f"ingestion.int.{source}.edges.negatives@spark"} if has_negatives else {}
+                        ),
+                        **({"edges_df": f"ingestion.int.{source}.edges@spark"} if is_combined else {}),
                     },
                     outputs={"edges": f"ground_truth.int.{source}.edges", "nodes": f"ground_truth.int.{source}.nodes"},
-                    name=f"transform_{source}_ground_truth_nodes",
+                    name=f"transform_{source}_nodes",
                     tags=["standardize"],
                     argo_config=ArgoResourceConfig(
                         memory_request=128,
@@ -67,6 +75,9 @@ def create_pipeline(**kwargs) -> Pipeline:
             pipeline(
                 _create_ground_truth_pipeline(
                     source=source["name"],
+                    is_combined=source["is_combined"],
+                    has_positives=source["has_positives"],
+                    has_negatives=source["has_negatives"],
                 ),
                 tags=[source["name"]],
             )

@@ -10,7 +10,7 @@ def create_ground_truth_pipeline() -> list:
     """Create pipeline nodes for ground truth processing."""
     pipelines = []
     for source in settings.DYNAMIC_PIPELINES_MAPPING.get("ground_truth"):
-        if source.get("combined", True):
+        if source.get("is_combined", True):
             pipelines.append(
                 node(
                     func=lambda x: x,
@@ -23,20 +23,24 @@ def create_ground_truth_pipeline() -> list:
 
         else:
             pipelines.append(
-                node(
-                    func=lambda x: x,
-                    inputs=f"ingestion.raw.{source['name']}.positives",
-                    outputs=f"ingestion.int.{source['name']}.positives",
-                    name=f'write_{source["name"]}_positives',
-                    tags=[f'{source["name"]}'],
-                ),
-                node(
-                    func=lambda x: x,
-                    inputs=f"ingestion.raw.{source['name']}.negatives",
-                    outputs=f"ingestion.int.{source['name']}.negatives",
-                    name=f'write_{source["name"]}_negatives',
-                    tags=[f'{source["name"]}'],
-                ),
+                pipeline(
+                    [
+                        node(
+                            func=lambda x: x,
+                            inputs=f"ingestion.raw.{source['name']}.positives",
+                            outputs=f"ingestion.int.{source['name']}.edges.positives@pandas",
+                            name=f'write_{source["name"]}_positives',
+                            tags=[f'{source["name"]}'],
+                        ),
+                        node(
+                            func=lambda x: x,
+                            inputs=f"ingestion.raw.{source['name']}.negatives",
+                            outputs=f"ingestion.int.{source['name']}.edges.negatives@pandas",
+                            name=f'write_{source["name"]}_negatives',
+                            tags=[f'{source["name"]}'],
+                        ),
+                    ]
+                )
             )
     return pipelines
 
