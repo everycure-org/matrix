@@ -58,7 +58,6 @@ where normalization_set <> 'merged'
 
 ```sql edge_failed_normalization
 select original_prefix, 
-       prefix || ' ' as prefix,
        normalization_set,      
        sum(count) as count
 from bq.edge_normalization
@@ -95,7 +94,7 @@ group by all
     />
     <BarChart 
       data={edge_failed_normalization}
-      x=prefix
+      x=original_prefix
       y=count
       series=normalization_set
       title="Normalization Failures"
@@ -117,7 +116,7 @@ group by all
     />
     <BarChart 
       data={node_failed_normalization}
-      x=prefix
+      x=original_prefix
       y=count
       series=normalization_set
       title="Normalization Failures"
