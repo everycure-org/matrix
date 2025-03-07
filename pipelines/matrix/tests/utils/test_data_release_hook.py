@@ -56,6 +56,7 @@ def test_extract_release_info(mock_context):
         "Code Link": "https://github.com/everycure-org/matrix/tree/1.0.0",
         "Neo4j Link": "coming soon!",
         "NodeNorm Endpoint Link": "https://nodenorm.transltr.io/1.5/get_normalized_nodes",
+        "KG dashboard link": "https://data.dev.everycure.org/versions/1.0.0/evidence/",
     }
 
     with patch("mlflow.get_experiment_by_name") as mock_mlflow:
