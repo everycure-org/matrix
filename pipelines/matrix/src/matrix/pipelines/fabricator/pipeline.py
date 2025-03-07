@@ -1,4 +1,5 @@
 import networkx as nx
+import numpy as np
 import pandas as pd
 from data_fabricator.v0.nodes.fabrication import fabricate_datasets
 from kedro.pipeline import Pipeline, node, pipeline
@@ -47,6 +48,89 @@ def _create_pairs(
         attempt += 1
 
     return df[:num], df[num : 2 * num]
+
+
+def _create_ec_gt_pairs(
+    drug_list: pd.DataFrame,
+    disease_list: pd.DataFrame,
+    num: int = 100,
+    seed: int = 42,
+) -> pd.DataFrame:
+    """Create 2 sets of random drug-disease pairs. Ensures no duplicate pairs.
+
+    Args:
+        drug_list: Dataframe containing the list of drugs.
+        disease_list: Dataframe containing the list of diseases.
+        num: Size of each set of random pairs. Defaults to 100.
+        seed: Random seed. Defaults to 42.
+
+    Returns:
+        Two dataframes, each containing 'num' unique drug-disease pairs.
+    """
+    is_enough_generated = False
+
+    attempt = 0
+
+    while not is_enough_generated:
+        # Sample random pairs (we sample twice the required amount in case duplicates are removed)
+        random_drugs = drug_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=seed)
+        random_diseases = disease_list["category_class"].sample(
+            num * 4, replace=True, ignore_index=True, random_state=2 * seed
+        )
+
+        df = pd.DataFrame(
+            data=[[drug, disease, f"{drug}|{disease}"] for drug, disease in zip(random_drugs, random_diseases)],
+            columns=["source", "target", "drug|disease"],
+        )
+
+        # Remove duplicate pairs
+        df = df.drop_duplicates()
+
+        # Check that we still have enough fabricated pairs
+        is_enough_generated = len(df) >= num or attempt > 100
+        attempt += 1
+
+    positives = df[:num]
+    negatives = df[num : 2 * num]
+
+    # Rename columns in positives without inplace
+    positives = positives.rename(
+        columns={"source": "final normalized drug id", "target": "final normalized disease id"}
+    )
+    positives["final normalized drug label"] = positives["final normalized drug id"]
+    positives["final normalized disease label"] = positives["final normalized disease id"]
+
+    # Rename columns in negatives without inplace
+    negatives = negatives.rename(
+        columns={"source": "final normalized drug id", "target": "final normalized disease id"}
+    )
+
+    # Add random string columns
+    string_cols = [
+        "active ingredient",
+        "contraindications",
+        "disease contraindicated",
+        "disease id nameres",
+        "disease label nameres",
+        "llm_nameres_correct",
+        "llm disease id",
+        "drug id nameres",
+        "drug label nameres",
+        "final normalized disease id",
+        "final normalized disease label",
+        "final normalized drug label",
+        "llm drug id",
+    ]
+
+    for col in string_cols:
+        negatives[col] = np.random.choice(["string", "dummy"], len(negatives), p=[0.3, 0.7])
+
+    # Add random boolean columns
+    negatives["is_diagnostic_agent"] = np.random.choice([True, False], len(negatives), p=[0.3, 0.7])
+    negatives["is_allergen"] = np.random.choice([True, False], len(negatives), p=[0.3, 0.7])
+    negatives["llm_nameres_correct"] = np.random.choice([True, False], len(negatives), p=[0.3, 0.7])
+    negatives["llm_nameres_correct_drug"] = np.random.choice([True, False], len(negatives), p=[0.3, 0.7])
+    return positives, negatives
 
 
 def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.DataFrame):
@@ -149,7 +233,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_gt_pairs",
             ),
             node(
-                func=_create_pairs,
+                func=_create_ec_gt_pairs,
                 inputs=[
                     "ingestion.raw.drug_list",
                     "ingestion.raw.disease_list",

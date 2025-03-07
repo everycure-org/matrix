@@ -287,28 +287,17 @@ ingestion.raw.kgml_xdtd.negatives:
   save_args:
     sep: "\t"
 
-ingestion.raw.kgml_xdtd.edges@pandas:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.ingestion}/ground_truth/kgml_xdtd/${globals:data_sources.kgml_xdtd.version}/gt_pairs_raw.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
-
-ingestion.raw.kgml_xdtd.edges@spark:
+ingestion.raw.kgml_xdtd.edges.negatives@spark:
   <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.ingestion}/ground_truth/kgml_xdtd/${globals:data_sources.kgml_xdtd.version}/gt_pairs_raw.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/kgml_xdtd/${globals:data_sources.kgml_xdtd.version}/tn_pairs_raw.tsv
   load_args:
     sep: "\t"
     header: true
     index: false
 
-ingestion.int.kgml_xdtd.edges@spark:
+ingestion.int.kgml_xdtd.edges.positives@spark:
   <<: [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.ingestion}/ground_truth/kgml_xdtd/${globals:data_sources.kgml_xdtd.version}/gt_pairs.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/kgml_xdtd/${globals:data_sources.kgml_xdtd.version}/tp_pairs.tsv
   load_args:
     sep: "\t"
     header: true
@@ -319,9 +308,9 @@ ingestion.int.kgml_xdtd.edges@spark:
     index: false
     mode: overwrite
 
-ingestion.int.kgml_xdtd.edges@pandas:
+ingestion.int.kgml_xdtd.edges.positives@pandas:
   <<: [*_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.ingestion}/ground_truth/kgml_xdtd/${globals:data_sources.kgml_xdtd.version}/gt_pairs.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/kgml_xdtd/${globals:data_sources.kgml_xdtd.version}/tp_pairs.tsv
   load_args:
     sep: "\t"
     header: true
@@ -332,9 +321,22 @@ ingestion.int.kgml_xdtd.edges@pandas:
     index: false
     mode: overwrite
 
-ingestion.int.kgml_xdtd.nodes:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/ground_truth/kgml_xdtd/${globals:data_sources.kgml_xdtd.version}/gt_ids.tsv
+ingestion.int.kgml_xdtd.edges.negatives@spark:
+  <<: [*_spark_csv, *_layer_int]
+  filepath: ${globals:paths.ingestion}/ground_truth/kgml_xdtd/${globals:data_sources.kgml_xdtd.version}/tn_pairs.tsv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+    mode: overwrite
+
+ingestion.int.kgml_xdtd.edges.negatives@pandas:
+  <<: [*_layer_int, *_pandas_csv]
+  filepath: ${globals:paths.ingestion}/ground_truth/kgml_xdtd/${globals:data_sources.kgml_xdtd.version}/tn_pairs.tsv
   load_args:
     sep: "\t"
     header: true
@@ -369,10 +371,10 @@ ingestion.raw.ec_ground_truth.negatives:
   # load_args:
   #   sep: "\t"
 
-ingestion.raw.ec_ground_truth.edges@pandas:
+ingestion.int.ec_ground_truth.edges.negatives@pandas:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/gt_pairs_raw.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs.tsv
   save_args:
     sep: "\t"
     header: true
@@ -380,52 +382,32 @@ ingestion.raw.ec_ground_truth.edges@pandas:
   load_args:
     sep: "\t"
 
-ingestion.raw.ec_ground_truth.edges@spark:
+ingestion.int.ec_ground_truth.edges.negatives@spark:
   <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/gt_pairs_raw.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs.tsv
   load_args:
     sep: "\t"
     header: true
     index: false
 
-ingestion.int.ec_ground_truth.edges@spark:
-  <<: [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/gt_pairs.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
+ingestion.int.ec_ground_truth.edges.positives@pandas:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs.tsv
   save_args:
     sep: "\t"
     header: true
     index: false
-    mode: overwrite
+  load_args:
+    sep: "\t"
 
-ingestion.int.ec_ground_truth.edges@pandas:
-  <<: [*_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/gt_pairs.tsv
+ingestion.int.ec_ground_truth.edges.positives@spark:
+  <<: [*_layer_raw, *_spark_csv]
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs.tsv
   load_args:
     sep: "\t"
     header: true
     index: false
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-    mode: overwrite
-
-ingestion.int.ec_ground_truth.nodes:
-  <<: [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/gt_ids.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-    mode: overwrite
 
 # -------------------------------------------------------------------------
 # Robokop
