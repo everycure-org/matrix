@@ -109,7 +109,7 @@ def test_ingest_nodes_empty_df(spark: ps.SparkSession) -> None:
     )
 
     result = ingest_nodes(empty_df)
-    assert result.count() == 0
+    assert result.isEmpty()
 
 
 def test_reduce_embeddings_dimension_with_transformation(
