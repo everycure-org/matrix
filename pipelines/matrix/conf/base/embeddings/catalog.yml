@@ -102,7 +102,7 @@ embeddings.reporting.topological_pca_plot:
 # cache:
 embeddings.node.cache.read: &cache_in
   type: matrix.datasets.gcp.SparkWithSchemaDataset
-  filepath: &cache_location ${globals:paths.cache}/embeddings/node/cache
+  filepath: &cache_location ${globals:paths.cache}/embeddings/node
   provide_empty_if_not_present: true
   load_args:
     schema:
