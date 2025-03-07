@@ -16,7 +16,7 @@ module "compute_cluster" {
 
 
 module "dns" {
-  source = "../../../modules/components/dns"
+  source      = "../../../modules/components/dns"
   environment = var.environment
 }
 
