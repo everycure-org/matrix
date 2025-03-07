@@ -30,14 +30,17 @@ CACHE_COLUMNS = CACHE_SCHEMA.names
 def create_node_embeddings_pipeline() -> Pipeline:
     return cached_api_enrichment_pipeline(
         input="integration.prm.filtered_nodes",
-        output="embeddings.fully_enriched",
-        preprocessor="params:embeddings.caching.preprocessor",
-        cache_miss_resolver="params:embeddings.caching.resolver",
-        api="params:embeddings.caching.api",
-        new_col="params:embeddings.caching.new_col",
-        cache="embeddings.cache.read",
-        primary_key="params:embeddings.caching.primary_key",
-        batch_size="params:embeddings.caching.batch_size",
+        output="embeddings.feat.graph.node_embeddings@spark",
+        preprocessor="params:embeddings.node.caching.preprocessor",
+        cache_miss_resolver="params:embeddings.node.caching.resolver",
+        api="params:embeddings.node.caching.api",
+        new_col="params:embeddings.node.caching.new_col",
+        cache="embeddings.node.cache.read",
+        primary_key="params:embeddings.node.caching.primary_key",
+        batch_size="params:embeddings.node.caching.batch_size",
+        cache_misses="embeddings.node.cache.misses",
+        cache_reload="embeddings.node.cache.reload",
+        cache_out="embeddings.node.cache.write",
     )
 
 
@@ -51,9 +54,9 @@ def cached_api_enrichment_pipeline(
     new_col: str,
     batch_size: str,
     cache: str,
-    cache_misses: str = "embeddings.cache.misses",
-    cache_reload: str = "embeddings.cache.reload",
-    cache_out: str = "embeddings.cache.write",
+    cache_misses: str,
+    cache_reload: str,
+    cache_out: str,
 ) -> Pipeline:
     """Define a Kedro Pipeline to enrich a Spark Dataframe using optionally cached API calls.
 

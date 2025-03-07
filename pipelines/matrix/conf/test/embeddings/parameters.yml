@@ -17,15 +17,15 @@ embeddings.topological:
       embeddingDimension: 3
 
 
-caching.preprocessor:
+embeddings.node.caching.preprocessor:
   _object: matrix.pipelines.embeddings.nodes.embeddings_preprocessor
   new_col: &pkey mykey
-caching.resolver:
+embeddings.node.caching.resolver:
   _object: matrix.pipelines.embeddings.encoders.DummyResolver
 
-caching.primary_key: *pkey
-caching.api: "foo"
-caching.new_col: lookup
+embeddings.node.caching.primary_key: *pkey
+embeddings.node.caching.api: "foo"
+embeddings.node.caching.new_col: lookup
 
 embeddings.topological_estimator:
   iterations: 1

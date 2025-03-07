@@ -89,19 +89,19 @@ embeddings.topological_pca:
     _object: pyspark.ml.feature.PCA
     k: 2
 
-embeddings.caching.preprocessor:
-    _object: matrix.pipelines.embeddings.nodes.embeddings_preprocessor
-    key_length: 100
-    combine_cols: ["name", "category"]
-    new_col: &pkey mykey
-embeddings.caching.resolver:
+embeddings.node.caching.preprocessor:
+  _object: matrix.pipelines.embeddings.nodes.embeddings_preprocessor
+  key_length: 100
+  combine_cols: ["name", "category"]
+  new_col: &pkey mykey
+embeddings.node.caching.resolver:
   _object: matrix.pipelines.embeddings.encoders.LangChainEncoder
   dimensions: 512
   encoder:
     _object: langchain_openai.OpenAIEmbeddings
     model: &api text-embedding-3-small
     timeout: 10
-embeddings.caching.primary_key: *pkey
-embeddings.caching.api: *api
-embeddings.caching.new_col: lookup
-embeddings.caching.batch_size: 40000  # Bigger batch sizes result in larger Parquet files. +-250MB/file is a good rule of thumb on object stores like GCS. However, a bigger batch size also means you need to keep more elements in memory, so too big of a size will result in Out-Of-Memory errors.
+embeddings.node.caching.primary_key: *pkey
+embeddings.node.caching.api: *api
+embeddings.node.caching.new_col: lookup
+embeddings.node.caching.batch_size: 40000  # Bigger batch sizes result in larger Parquet files. +-250MB/file is a good rule of thumb on object stores like GCS. However, a bigger batch size also means you need to keep more elements in memory, so too big of a size will result in Out-Of-Memory errors.
