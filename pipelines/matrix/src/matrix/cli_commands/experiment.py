@@ -28,8 +28,7 @@ def experiment():
         mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")
         os.environ["MLFLOW_TRACKING_TOKEN"] = token.id_token
     except FileNotFoundError as e:
-        click.secho("Error getting IAP token. Please run `make fetch_secrets` first", fg="yellow", bold=True)
-        raise click.Abort()
+        raise click.ClickException("Error getting IAP token. Please run `make fetch_secrets` first.")
     pass
 
 
