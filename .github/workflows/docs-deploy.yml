@@ -84,7 +84,7 @@ jobs:
       #     make build #builds the static files in site/
 
       - uses: 'google-github-actions/auth@v2'
-        if: github.ref == 'refs/heads/main'
+        # if: github.ref == 'refs/heads/main'
         with:
           project_id: ${{env.project_id}}
           workload_identity_provider: ${{env.workload_identity_provider}}
