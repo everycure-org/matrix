@@ -21,7 +21,7 @@ def mock_context():
         },
         "parameters": {
             "embeddings.topological_estimator": {"_object": "topological_estimator_v1"},
-            "embeddings.node": {"encoder": {"encoder": {"model": "node_encoder_v1"}}},
+            "embeddings.node.caching.resolver": {"encoder": {"model": "node_encoder_v1"}},
         },
     }
     mock_mlflow = MagicMock()
