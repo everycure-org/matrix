@@ -188,8 +188,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                 },
                 outputs={
-                    "nodes": "ingestion.raw.ec_clinical_trails.nodes@pandas",
-                    "edges": "ingestion.raw.ec_clinical_trails.edges@pandas",
+                    "nodes": "ingestion.raw.ec_clinical_trails.nodes",
+                    "edges": "ingestion.raw.ec_clinical_trails.edges",
                 },
                 name="fabricate_clinical_trails_datasets",
             ),

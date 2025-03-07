@@ -17,29 +17,31 @@ class GroundTruthTransformer(Transformer):
         pos_edges = self._extract_positives(positive_edges)
         neg_edges = self._extract_negatives(negative_edges)
         edges = pos_edges.union(neg_edges).withColumn("upstream_source", f.lit("kgml_xdtd"))
-        id_list = edges.select("subject").union(edges.select("object")).withColumnRenamed("subject", "id")
+        id_list = edges.select("subject").union(edges.select("object")).withColumnRenamed("subject", "id").distinct()
         return {"nodes": id_list, "edges": edges}
 
     def _extract_positives(self, edges_df: ps.DataFrame) -> ps.DataFrame:
         return (
             edges_df.withColumnRenamed("source", "subject")
             .withColumnRenamed("target", "object")
-            .withColumnRenamed("drug|disease", "id")
+            .withColumn("id", f.concat_ws("|", f.col("subject"), f.col("object")))
             .withColumn("subject_label", f.lit(None).cast(T.StringType()))
             .withColumn("object_label", f.lit(None).cast(T.StringType()))
             .withColumn("predicate", f.lit("indicated").cast(T.StringType()))
             .withColumn("y", f.lit(1))
-            .select("subject", "object", "predicate", "subject_label", "object_label", "id", "y")
+            .withColumn("type", f.lit("indication"))
+            .select("subject", "object", "predicate", "subject_label", "object_label", "id", "y", "type")
         )
 
     def _extract_negatives(self, edges_df: ps.DataFrame) -> ps.DataFrame:
         return (
             edges_df.withColumnRenamed("source", "subject")
             .withColumnRenamed("target", "object")
-            .withColumnRenamed("drug|disease", "id")
+            .withColumn("id", f.concat_ws("|", f.col("subject"), f.col("object")))
             .withColumn("subject_label", f.lit(None).cast(T.StringType()))
             .withColumn("object_label", f.lit(None).cast(T.StringType()))
             .withColumn("predicate", f.lit("contraindicated").cast(T.StringType()))
             .withColumn("y", f.lit(0))
-            .select("subject", "object", "predicate", "subject_label", "object_label", "id", "y")
+            .withColumn("type", f.lit("contraindication"))
+            .select("subject", "object", "predicate", "subject_label", "object_label", "id", "y", "type")
         )

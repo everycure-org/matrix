@@ -3,7 +3,6 @@ ground_truth:
     ec_clinical_trails:
       transformer:
         _object: matrix.pipelines.ground_truth.transformers.clinical_trails.ClinicalTrialsTransformer
-        select_cols: false
         drop_duplicates: true
     ec_ground_truth:
       transformer:
