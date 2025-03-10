@@ -16,8 +16,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.sample_knowledge_graph,
                 inputs={
                     "sampler": "params:create_sample.configuration.sampler",
-                    "knowledge_graph_nodes": "integration.prm.original.filtered_nodes",
-                    "knowledge_graph_edges": "integration.prm.original.filtered_edges",
+                    "knowledge_graph_nodes": "integration.prm.original.unified_nodes",
+                    "knowledge_graph_edges": "integration.prm.original.unified_edges",
                     "ground_truth_edges": "integration.int.ground_truth.edges.norm@spark",
                 },
                 # TODO: Validate sample pulling from unified nodes and edges

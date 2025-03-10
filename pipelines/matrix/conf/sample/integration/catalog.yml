@@ -7,7 +7,6 @@ _spark_parquet_ds: &_spark_parquet
 # ==============================
 # Sampled sources
 
-# TODO: Validate sample pulling from unified nodes and edges
 integration.prm.unified_nodes:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.integration_sample}/prm/unified/nodes
