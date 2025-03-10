@@ -95,7 +95,7 @@ jobs:
         run: |
           mapfile -t VERSIONS < <(gcloud app versions list --service=default --format="value(version.id)" --sort-by="version.createTime")
           echo "Current versions: ${#VERSIONS[@]}"
-          KEEP_VERSIONS=120
+          KEEP_VERSIONS=110
           DELETE_VERSIONS=$((${#VERSIONS[@]} - KEEP_VERSIONS))
 
           if [ "$DELETE_VERSIONS" -le 0 ]; then
@@ -104,6 +104,7 @@ jobs:
               echo "Deleting $DELETE_VERSIONS versions"
               OLD_VERSIONS=("${VERSIONS[@]:$KEEP_VERSIONS}")
               echo "Deleting versions: ${OLD_VERSIONS[*]}"
+              gcloud app versions delete "${OLD_VERSIONS[@]}" --service=default --quiet
           fi
 
       # # https://github.com/google-github-actions/deploy-appengine
