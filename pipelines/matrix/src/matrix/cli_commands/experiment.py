@@ -110,7 +110,9 @@ def run(
     if not experiment_name:
         current_branch = get_current_git_branch()
         sanitized_branch_name = re.sub(r"[^a-zA-Z0-9-]", "-", current_branch)
-        if click.confirm(f"Would you like to use the current branch '{sanitized_branch_name}' as the experiment name?"):
+        if headless or click.confirm(
+            f"Would you like to use the current branch '{sanitized_branch_name}' as the experiment name?"
+        ):
             experiment_name = sanitized_branch_name
         else:
             experiment_name = click.prompt("Please enter a name for your experiment", type=str)
@@ -118,15 +120,18 @@ def run(
     try:
         experiment_id = get_experiment_id_from_name(experiment_name=experiment_name)
     except ExperimentNotFound:
-        click.confirm(
-            f"Experiment '{experiment_name}' not found, would you like to create a new experiment?", abort=True
-        )
+        if not headless:
+            click.confirm(
+                f"Experiment '{experiment_name}' not found, would you like to create a new experiment?", abort=True
+            )
         experiment_id = ctx.invoke(create, experiment_name=experiment_name)
 
     if not run_name:
         run_name = click.prompt("Please define a name for your run")
 
-    click.confirm(f"Start a new run '{run_name}' on experiment '{experiment_name}', is that correct?", abort=True)
+    if not headless:
+        click.confirm(f"Start a new run '{run_name}' on experiment '{experiment_name}', is that correct?", abort=True)
+
     if not dry_run:
         run = mlflow.start_run(run_name=run_name, experiment_id=experiment_id)
         mlflow.set_tag("created_by", username)
