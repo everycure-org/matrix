@@ -102,7 +102,7 @@ jobs:
               echo "No versions to delete"
           else
               echo "Deleting $DELETE_VERSIONS versions"
-              OLD_VERSIONS=("${VERSIONS[@]:$DELETE_VERSIONS}")
+              OLD_VERSIONS=("${VERSIONS[@]:$KEEP_VERSIONS}")
               echo "Deleting versions: ${OLD_VERSIONS[*]}"
           fi
 
