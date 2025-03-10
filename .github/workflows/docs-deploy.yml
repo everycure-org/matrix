@@ -93,7 +93,7 @@ jobs:
       - name: Limit the Number of Versions on Google App Engine
         # if: github.ref == 'refs/heads/main'
         run: |
-          mapfile -t VERSIONS < <(gcloud app versions list --service=default --format="value(version.id)" --sort-by="version.createTime")
+          mapfile -t VERSIONS < <(gcloud app versions list --service=default --format="value(version.id)" --sort-by="~version.createTime")
           echo "Current versions: ${#VERSIONS[@]}"
           KEEP_VERSIONS=110
           DELETE_VERSIONS=$((${#VERSIONS[@]} - KEEP_VERSIONS))
