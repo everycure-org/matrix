@@ -1,6 +1,7 @@
+import itertools
 import json
 import logging
-from typing import Any, Callable, Union
+from typing import Any, Callable, Iterable, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -26,8 +27,8 @@ plt.switch_backend("Agg")
 def filter_valid_pairs(
     nodes: ps.DataFrame,
     edges_gt: ps.DataFrame,
-    drug_categories: list[str],
-    disease_categories: list[str],
+    drug_categories: Iterable[str],
+    disease_categories: Iterable[str],
 ) -> tuple[ps.DataFrame, dict[str, float]]:
     """Filter GT pairs to only include nodes that 1) exist in the nodes DataFrame, 2) have the correct category.
 
@@ -43,7 +44,7 @@ def filter_valid_pairs(
         - Dictionary with retention statistics
     """
     # Create set of categories to filter on
-    categories = drug_categories + disease_categories
+    categories = set(itertools.chain(drug_categories, disease_categories))
     categories_array = f.array([f.lit(cat) for cat in categories])
 
     # Get list of nodes in the KG
@@ -225,7 +226,7 @@ def prefilter_nodes(
 )
 @inject_object()
 def make_folds(
-    data: ps.DataFrame,
+    data: pd.DataFrame,
     splitter: BaseCrossValidator,
 ) -> pd.DataFrame:
     """Function to split data.
