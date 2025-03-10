@@ -4,16 +4,16 @@ date: 2025-03-10
 categories:
   - Release
 authors:
-  - app/github-actions
   - JacquesVergine
-  - piotrkan
-  - alexeistepa
-  - oliverw1
-  - pascalwhoop
-  - amyford
   - eKathleenCarter
   - emil-k
+  - amyford
+  - pascalwhoop
   - Siyan-Luo
+  - oliverw1
+  - app/github-actions
+  - piotrkan
+  - alexeistepa
   - lvijnck
   - matentzn
 ---
