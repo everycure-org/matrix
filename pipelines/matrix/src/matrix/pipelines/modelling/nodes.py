@@ -1,10 +1,9 @@
 import json
 import logging
-from typing import Any, Callable, Dict, List, Tuple, Union
+from typing import Any, Callable, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
-import pandera
 import pyspark.sql as ps
 import pyspark.sql.types as T
 from pyspark.sql import functions as f
@@ -27,19 +26,19 @@ plt.switch_backend("Agg")
 def filter_valid_pairs(
     nodes: ps.DataFrame,
     edges_gt: ps.DataFrame,
-    drug_categories: List[str],
-    disease_categories: List[str],
-) -> Tuple[ps.DataFrame, Dict[str, float]]:
+    drug_categories: list[str],
+    disease_categories: list[str],
+) -> tuple[ps.DataFrame, dict[str, float]]:
     """Filter GT pairs to only include nodes that 1) exist in the nodes DataFrame, 2) have the correct category.
 
     Args:
         nodes: Nodes dataframe
         edges_gt: DataFrame with ground truth pairs
-        drug_categories: List of drug categories to be filtered on
-        disease_categories: List of disease categories to be filtered on
+        drug_categories: list of drug categories to be filtered on
+        disease_categories: list of disease categories to be filtered on
 
     Returns:
-        Tuple containing:
+        tuple containing:
         - DataFrame with combined filtered positive and negative pairs
         - Dictionary with retention statistics
     """
@@ -176,8 +175,8 @@ def prefilter_nodes(
     full_nodes: ps.DataFrame,
     nodes: ps.DataFrame,
     gt: ps.DataFrame,
-    drug_types: List[str],
-    disease_types: List[str],
+    drug_types: list[str],
+    disease_types: list[str],
 ) -> ps.DataFrame:
     """Prefilter nodes for negative sampling.
 
@@ -313,7 +312,7 @@ def create_model_input_nodes(
 @inject_object()
 def fit_transformers(
     data: pd.DataFrame,
-    transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
+    transformers: dict[str, dict[str, Union[_BaseImputer, list[str]]]],
     target_col_name: str = None,
 ) -> pd.DataFrame:
     """Function fit transformers to the data.
@@ -348,7 +347,7 @@ def fit_transformers(
 @inject_object()
 def apply_transformers(
     data: pd.DataFrame,
-    transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
+    transformers: dict[str, dict[str, Union[_BaseImputer, list[str]]]],
 ) -> pd.DataFrame:
     """Function apply fitted transformers to the data.
 
@@ -385,15 +384,15 @@ def apply_transformers(
 def tune_parameters(
     data: pd.DataFrame,
     tuner: Any,
-    features: List[str],
+    features: list[str],
     target_col_name: str,
-) -> Tuple[Dict,]:
+) -> tuple[dict,]:
     """Function to apply hyperparameter tuning.
 
     Args:
         data: Data to tune on.
         tuner: Tuner object.
-        features: List of features, may be regex specified.
+        features: list of features, may be regex specified.
         target_col_name: Target column name.
 
     Returns:
@@ -428,15 +427,15 @@ def tune_parameters(
 def train_model(
     data: pd.DataFrame,
     estimator: BaseEstimator,
-    features: List[str],
+    features: list[str],
     target_col_name: str,
-) -> Dict:
+) -> dict:
     """Function to train model on the given data.
 
     Args:
         data: Data to train on.
         estimator: sklearn compatible estimator.
-        features: List of features, may be regex specified.
+        features: list of features, may be regex specified.
         target_col_name: Target column name.
 
     Returns:
@@ -471,7 +470,7 @@ def create_model(agg_func: Callable, *estimators) -> ModelWrapper:
 def get_model_predictions(
     data: pd.DataFrame,
     model: ModelWrapper,
-    features: List[str],
+    features: list[str],
     target_col_name: str,
     prediction_suffix: str = "_pred",
 ) -> pd.DataFrame:
@@ -480,7 +479,7 @@ def get_model_predictions(
     Args:
         data: Data to predict on.
         model: Model making the predictions.
-        features: List of features, may be regex specified.
+        features: list of features, may be regex specified.
         target_col_name: Target column name.
         prediction_suffix: Suffix to add to the prediction column, defaults to '_pred'.
 
@@ -503,10 +502,10 @@ def combine_data(*predictions_all_folds: pd.DataFrame) -> pd.DataFrame:
 @inject_object()
 def check_model_performance(
     data: pd.DataFrame,
-    metrics: List[callable],
+    metrics: list[callable],
     target_col_name: str,
     prediction_suffix: str = "_pred",
-) -> Dict:
+) -> dict:
     """Function to evaluate model performance on the training data and ground truth test data.
 
     NOTE: This function only provides a partial indication of model performance,
@@ -516,7 +515,7 @@ def check_model_performance(
 
     Args:
         data: Data to evaluate.
-        metrics: List of callable metrics.
+        metrics: list of callable metrics.
         target_col_name: Target column name.
         prediction_suffix: Suffix to add to the prediction column, defaults to '_pred'.
 
