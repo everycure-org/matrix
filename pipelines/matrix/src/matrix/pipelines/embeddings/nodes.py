@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pyspark.sql as ps
+import pyspark.sql.functions as F
 import pyspark.sql.types as T
 import seaborn as sns
 from graphdatascience import GraphDataScience
@@ -285,6 +286,23 @@ def filter_edges_for_topological_embeddings(
     def _create_mapping(column: str):
         return nodes.alias(column).withColumn(column, ps.functions.col("id")).select(column, "all_categories")
 
+    drug_ids = [row["id"] for row in drugs.select("id").distinct().collect()]
+    drug_ids.extend([row["subject"] for row in ground_truth.select("subject").distinct().collect()])
+    disease_ids = [row["id"] for row in diseases.select("id").distinct().collect()]
+    disease_ids.extend([row["object"] for row in ground_truth.select("object").distinct().collect()])
+    nodes.withColumn(
+        "all_categories",
+        F.when(
+            (F.col("id").isin(drug_ids)) & ~F.array_contains(F.col("all_categories"), "biolink:Drug"),
+            F.array_union(F.col("all_categories"), F.array(F.lit("biolink:Drug"))),
+        ),
+    ).withColumn(
+        "all_categories",
+        F.when(
+            (F.col("id").isin(disease_ids)) & ~F.array_contains(F.col("all_categories"), "biolink:Disease"),
+            F.array_union(F.col("all_categories"), F.array(F.lit("biolink:Disease"))),
+        ),
+    )
     df = (
         edges.alias("edges")
         .join(_create_mapping("subject"), how="left", on="subject")
