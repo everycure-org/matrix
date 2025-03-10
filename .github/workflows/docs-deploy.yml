@@ -95,12 +95,11 @@ jobs:
         run: |
           mapfile -t VERSIONS < <(gcloud app versions list --service=default --format="value(version.id)" --sort-by="version.createTime")
           echo "Current versions: ${#VERSIONS[@]}"
-          KEEP_VERSIONS=10
+          KEEP_VERSIONS=120
           DELETE_VERSIONS=$((${#VERSIONS[@]} - KEEP_VERSIONS))
 
           if [ "$DELETE_VERSIONS" -le 0 ]; then
               echo "No versions to delete"
-              exit 0
           else
               echo "Deleting $DELETE_VERSIONS versions"
               OLD_VERSIONS=("${VERSIONS[@]:$KEEP_VERSIONS}")
