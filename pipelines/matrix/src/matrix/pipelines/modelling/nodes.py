@@ -48,14 +48,14 @@ def filter_valid_pairs(
     categories_array = f.array([f.lit(cat) for cat in categories])
 
     # Get list of nodes in the KG
-    valid_nodes_in_kg = nodes.select("id").distinct()
-    valid_nodes_with_categories = nodes.filter(
-        f.col("all_categories").isNotNull() & (f.size(f.array_intersect(f.col("all_categories"), categories_array)) > 0)
-    ).select("id")
+    valid_nodes_in_kg = nodes.select("id").distinct().cache()
+    valid_nodes_with_categories = (
+        nodes.filter(f.size(f.array_intersect(f.col("all_categories"), categories_array)) > 0).select("id").cache()
+    )
     # Divide edges_gt into positive and negative pairs to know ratio retained for each
     edges_gt = edges_gt.withColumnRenamed("subject", "source").withColumnRenamed("object", "target")
-    raw_tp = edges_gt.filter(f.col("y") == 1)
-    raw_tn = edges_gt.filter(f.col("y") == 0)
+    raw_tp = edges_gt.filter(f.col("y") == 1).cache()
+    raw_tn = edges_gt.filter(f.col("y") == 0).cache()
 
     # Filter out pairs where both source and target exist in nodes
     filtered_tp_in_kg = (
@@ -98,24 +98,21 @@ def filter_valid_pairs(
         .select(filtered_tn_categories["*"])
     )
     # Calculate retention percentages
+    rows_in_raw_tp, rows_in_raw_tn = raw_tp.count(), raw_tn.count()
     retention_stats = {
-        "positive_pairs_retained_in_kg_pct": (filtered_tp_in_kg.count() / raw_tp.count())
-        if raw_tp.count() > 0
+        "positive_pairs_retained_in_kg_pct": (filtered_tp_in_kg.count() / rows_in_raw_tp) if rows_in_raw_tp else 1.0,
+        "negative_pairs_retained_in_kg_pct": (filtered_tn_in_kg.count() / rows_in_raw_tn) if rows_in_raw_tn else 1.0,
+        "positive_pairs_retained_in_categories_pct": (filtered_tp_categories.count() / rows_in_raw_tp)
+        if rows_in_raw_tp
         else 1.0,
-        "negative_pairs_retained_in_kg_pct": (filtered_tn_in_kg.count() / raw_tn.count())
-        if raw_tn.count() > 0
+        "negative_pairs_retained_in_categories_pct": (filtered_tn_categories.count() / rows_in_raw_tn)
+        if rows_in_raw_tn
         else 1.0,
-        "positive_pairs_retained_in_categories_pct": (filtered_tp_categories.count() / raw_tp.count())
-        if raw_tp.count() > 0
+        "positive_pairs_retained_final_pct": (final_filtered_tp_categories.count() / rows_in_raw_tp)
+        if rows_in_raw_tp
         else 1.0,
-        "negative_pairs_retained_in_categories_pct": (filtered_tn_categories.count() / raw_tn.count())
-        if raw_tn.count() > 0
-        else 1.0,
-        "positive_pairs_retained_final_pct": (final_filtered_tp_categories.count() / raw_tp.count())
-        if raw_tp.count() > 0
-        else 1.0,
-        "negative_pairs_retained_final_pct": (final_filtered_tn_categories.count() / raw_tn.count())
-        if raw_tn.count() > 0
+        "negative_pairs_retained_final_pct": (final_filtered_tn_categories.count() / rows_in_raw_tn)
+        if rows_in_raw_tn
         else 1.0,
     }
 
