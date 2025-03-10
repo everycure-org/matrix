@@ -247,7 +247,7 @@ def get_pr_details_since(previous_tag: str, end_git_ref: str) -> List[PRInfo]:
     commit_messages = get_commit_logs(previous_tag, end_git_ref)
     pr_numbers = extract_pr_numbers(commit_messages)
     console.print(f"Found {len(pr_numbers)} PRs since {previous_tag}")
-    console.print(f"PR numbers:{pr_numbers}")
+    console.print(f"PR numbers:{sorted(pr_numbers)}")
     if not pr_numbers:
         typer.echo("No PRs found since the previous tag.")
         raise typer.Exit(1)
@@ -263,7 +263,7 @@ def get_commit_logs(previous_tag: str, end_git_ref: str) -> List[str]:
 def extract_pr_numbers(commit_messages: List[str]) -> List[int]:
     pr_numbers = []
     pattern = r"#(\d+)"
-
+    console.print(f"commit_messages: {commit_messages}")
     for message in commit_messages:
         matches = re.findall(pattern, message)
         pr_numbers.extend(int(num) for num in matches)
