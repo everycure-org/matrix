@@ -18,7 +18,7 @@ embeddings.node.caching.resolver:
 
 embeddings.node.caching.primary_key: *pkey
 embeddings.node.caching.api: "foo"
-embeddings.node.caching.new_col: lookup
+embeddings.node.caching.new_col: embedding
 
 embeddings.topological_estimator:
   iterations: 1
