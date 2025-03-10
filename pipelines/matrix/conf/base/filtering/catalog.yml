@@ -6,25 +6,20 @@ _spark_parquet_ds: &_spark_parquet
   save_args:
     mode: overwrite
 
-_layer_prm: &_layer_prm
-  metadata:
-    kedro-viz:
-      layer: primary
-
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
 # filtered KGs
 
 filtering.prm.filtered_edges:
-  <<: [*_spark_parquet, *_layer_prm]
+  <<: [*_spark_parquet]
   filepath: ${globals:paths.filtering}/prm/filtered/edges
 
 filtering.prm.prefiltered_nodes:
-  <<: [*_spark_parquet, *_layer_prm]
+  <<: [*_spark_parquet]
   filepath: ${globals:paths.filtering}/prm/prefiltered/nodes
 
 filtering.prm.filtered_nodes:
-  <<: [*_spark_parquet, *_layer_prm]
+  <<: [*_spark_parquet]
   filepath: ${globals:paths.filtering}/prm/filtered/nodes
 
