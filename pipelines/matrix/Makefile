@@ -63,13 +63,12 @@ install_compatibility: venv precommit-hooks
 	# versions for local machine limitations (e.g. newer pytorch on macos intel)
 	uv pip install -r requirements.txt --overrides requirements.overrides.txt
 
-setup-github-action-dependencies:
+install_argo:
 	curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
 	gunzip argo-linux-amd64.gz
 	chmod +x argo-linux-amd64
 	sudo mv argo-linux-amd64 /usr/local/bin/argo
 	argo version
-	pip install -r requirements.txt
 
 precommit: precommit-hooks
 	git fetch origin

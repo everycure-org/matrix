@@ -44,9 +44,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Set up kedro project dependencies
+      - name: Install Argo & Python dependencies
         working-directory: pipelines/matrix
-        run: make setup-github-action-dependencies
+        run: |
+          make install_argo
+          pip install -r requirements.txt
 
       - name: Authenticate with Google Cloud
         id: auth
