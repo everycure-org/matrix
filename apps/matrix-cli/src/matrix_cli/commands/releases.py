@@ -63,7 +63,7 @@ def write_release_article(
     since = select_release(headless)
     if until is None:
         until = get_current_branch()
-
+    console.print(f"[green]Generating release article for {since} to {until}")
     if notes_file:
         console.print("[green]Loading release notes")
         notes = Path(notes_file).read_text()
@@ -84,10 +84,11 @@ def write_release_article(
         focus_direction = console.input(
             "[bold green]Please provide guidance on what to focus on in the release article. Note 'Enter' will end the prompt: "
         )
-
+    console.print(f"release notes: {notes}")
     prompt = get_template("release_article.prompt.tmpl").render(
         notes=notes, code_summary=code_summary, previous_articles=previous_articles, focus_direction=focus_direction
     )
+    # console.print(f"[bold green]prompt to model: {prompt}")
     response = invoke_model(prompt, model=model)
 
     if output_file:
@@ -136,6 +137,7 @@ def get_release_notes(since: str, until: str, model: str) -> str:
     console.print("[bold green]Collecting PR details...")
     pr_details_df = get_pr_details_since(since, until)
     pr_details_dict = pr_details_df[["title", "number"]].sort_values(by="number").to_dict(orient="records")
+    console.print(f"[bold green]Found {len(pr_details_dict)} PRs since {since}")
     console.print("[bold green]Collecting git diff...")
     diff_output = get_code_diff(since, until)
 
@@ -149,6 +151,7 @@ def get_release_notes(since: str, until: str, model: str) -> str:
         pr_details_dict=yaml.dump(pr_details_dict),
         categories=categories,
     )
+    # console.print(f"[bold green]notes prompt to model: {prompt}")
     response = invoke_model(prompt, model)
 
     authors = pr_details_df["author"].unique()
@@ -243,6 +246,8 @@ def _read_modified_excel_file(output_file: str) -> "pd.DataFrame":
 def get_pr_details_since(previous_tag: str, end_git_ref: str) -> List[PRInfo]:
     commit_messages = get_commit_logs(previous_tag, end_git_ref)
     pr_numbers = extract_pr_numbers(commit_messages)
+    console.print(f"Found {len(pr_numbers)} PRs since {previous_tag}")
+    console.print(f"PR numbers:{pr_numbers}")
     if not pr_numbers:
         typer.echo("No PRs found since the previous tag.")
         raise typer.Exit(1)
@@ -251,6 +256,7 @@ def get_pr_details_since(previous_tag: str, end_git_ref: str) -> List[PRInfo]:
 
 def get_commit_logs(previous_tag: str, end_git_ref: str) -> List[str]:
     command = ["git", "log", f"{previous_tag}..{end_git_ref}", "--oneline"]
+    console.print(f"Running command: {' '.join(command)}")
     return run_command(command).split("\n")
 
 

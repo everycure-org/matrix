@@ -10,7 +10,7 @@ import typer
 from matrix_cli.components.cache import memory
 from matrix_cli.components.models import PRInfo
 from matrix_cli.components.settings import settings
-from matrix_cli.components.utils import get_git_root, run_command
+from matrix_cli.components.utils import console, get_git_root, run_command
 
 
 @memory.cache
@@ -102,6 +102,7 @@ def get_code_diff(since: str, until: str, file_patterns: List[str] = settings.in
     git_root = get_git_root()
     # allow also single ref which gets the diff just for that commit
     diff_ref = f"{from_ref}..{to_ref}" if to_ref is not None else from_ref
+    console.print(f"Running command git diff {diff_ref} -- {' '.join(file_patterns)}")
     return run_command(["git", "diff", diff_ref, "--", *file_patterns], cwd=git_root)
 
 
