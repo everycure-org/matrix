@@ -49,7 +49,7 @@ This release of the Matrix Platform focuses on enhanced pipeline control, improv
 
 * **Add GitHub release dataset for drug and disease list ingestion (#1050):** Drug and disease list ingestion is streamlined through automated retrieval from GitHub releases.
 
-* **Move de-duplication to integration from preprocessing (#1118):**  Pipeline efficiency is improved by shifting deduplication to the integration stage.
+* **Move de-duplication to integration from preprocessing (#1118):**  Pipeline efficiency is improved by shifting deduplication of custom datasets (provided by EC medical team) to the integration stage.
 
 * **Add upstream data source to Neo4j edges (#1131):** Data provenance tracking is enhanced within Neo4j by adding the upstream data source information to edges.
 
