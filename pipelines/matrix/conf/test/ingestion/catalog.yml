@@ -61,6 +61,24 @@ ingestion.raw.ec_ground_truth.negatives:
   save_args:
     sep: "\t"
 
+ingestion.raw.ec_ground_truth_downfilled.positives:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.kg_raw}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs_downfilled.txt
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"
+
+ingestion.raw.ec_ground_truth_downfilled.negatives:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.kg_raw}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs_downfilled.txt
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"
+
 ingestion.raw.drugmech.edges@spark:
   type: matrix.datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.raw}/drugmech/${globals:data_sources.drugmech.version}/indication_paths.json

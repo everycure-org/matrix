@@ -7,9 +7,11 @@ ground_truth:
     ec_ground_truth:
       transformer:
         _object: matrix.pipelines.ground_truth.transformers.ec_ground_truth.GroundTruthTransformer
+        upstream_source: matrix_indication_list
     ec_ground_truth_downfilled:
       transformer:
         _object: matrix.pipelines.ground_truth.transformers.ec_ground_truth.GroundTruthTransformer
+        upstream_source: matrix_indication_list_downfilled
     kgml_xdtd:
       transformer:
         _object: matrix.pipelines.ground_truth.transformers.kgml_xdtd_ground_truth.GroundTruthTransformer

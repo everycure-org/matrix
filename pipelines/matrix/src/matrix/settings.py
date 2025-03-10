@@ -58,7 +58,7 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             {"name": "ec_clinical_trails", "is_combined": True, "has_positives": False, "has_negatives": False},
             {"name": "kgml_xdtd", "is_combined": False, "has_positives": True, "has_negatives": True},
             {"name": "ec_ground_truth", "is_combined": False, "has_positives": True, "has_negatives": True},
-            # {"name": "ec_ground_truth_downfilled", "testing_only": False, "combined":True},
+            {"name": "ec_ground_truth_downfilled", "is_combined": False, "has_positives": True, "has_negatives": True},
         ],
         "modelling": {
             "model_name": "xg_ensemble",  # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth
