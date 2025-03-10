@@ -34,19 +34,15 @@ jobs:
       pull-requests: 'write'
  
     steps:
-      - name: Validate release version
-        run: |
-          if [ -z "${RELEASE_VERSION}" ]; then
-            echo "::error::release_version input is required"
-            exit 1
-          fi
-          echo "Using release version: ${RELEASE_VERSION}"
-
       - name: Checkout
         uses: actions/checkout@main
         with:
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
+
+      - name: Validate release version
+        working-directory: pipelines/matrix
+        run: make check_release_version_environment_variable
 
       - name: Remove unnecessary files
         # debug: remove unnecessary files to free up disk space for building and pushing docker images

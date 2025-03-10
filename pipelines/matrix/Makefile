@@ -78,6 +78,13 @@ precommit-hooks:
 	uv pip install pre-commit 
 	uv run pre-commit install --install-hooks
 
+check_release_version_environment_variable:
+	if [ -z "${RELEASE_VERSION}" ]; then
+	echo "::error::release_version input is required"
+	exit 1
+	fi
+	echo "Using release version: ${RELEASE_VERSION}"
+
 full_test:
 	# activate venv to ensure spark doesn't have python driver mismatches
 	uv run pytest -v tests/
