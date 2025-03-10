@@ -8,6 +8,8 @@ modelling.disease_types:
   - biolink:BehavioralFeature
   - biolink:DiseaseOrPhenotypicFeature
 
+modelling.ground_truth:
+  - kgml_xdtd # or: matrix_indication_list, matrix_indication_list_downfilled
 
 modelling.splitter:
 

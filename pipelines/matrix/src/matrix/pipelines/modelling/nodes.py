@@ -24,6 +24,18 @@ logger = logging.getLogger(__name__)
 plt.switch_backend("Agg")
 
 
+def select_ground_truth(master_df: ps.DataFrame, ground_truth_type: List[str]) -> ps.DataFrame:
+    """Select set(s) of ground truth pairs from master dataframe.
+
+    Args:
+        master_df: Master dataframe
+        ground_truth_type: Upstream sources of the ground truth to be selected.
+    Returns:
+        Filtered DataFrame with selected ground truth pairs
+    """
+    return master_df.filter(f.col("upstream_source").isin(ground_truth_type))
+
+
 def filter_valid_pairs(
     nodes: ps.DataFrame,
     edges_gt: ps.DataFrame,
