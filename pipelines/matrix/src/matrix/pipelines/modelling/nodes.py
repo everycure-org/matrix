@@ -164,7 +164,6 @@ def _add_embedding(df: ps.DataFrame, from_: ps.DataFrame, using: str) -> ps.Data
     )
 )
 def prefilter_nodes(
-    full_nodes: ps.DataFrame,
     nodes: ps.DataFrame,
     gt: ps.DataFrame,
     drug_types: list[str],
@@ -192,7 +191,7 @@ def prefilter_nodes(
     df = (
         nodes.withColumn("is_drug", f.arrays_overlap(f.col("all_categories"), f.lit(drug_types)))
         .withColumn("is_disease", f.arrays_overlap(f.col("all_categories"), f.lit(disease_types)))
-        .filter((f.col("is_disease")) | (f.col("is_drug")))
+        .filter(f.col("is_disease") | f.col("is_drug"))
         .select("id", "topological_embedding", "is_drug", "is_disease")
         # TODO: The integrated data product _should_ contain these nodes
         # TODO: Verify below does not have any undesired side effects
