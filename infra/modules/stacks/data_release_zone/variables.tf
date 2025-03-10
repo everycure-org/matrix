@@ -22,6 +22,11 @@ variable "dns_managed_zone_name" {
   type        = string
 }
 
+variable "dns_name" {
+  description = ""
+  type        = string
+}
+
 variable "enable_cdn" {
   description = "Whether to enable the CDN for the website"
   type        = bool
