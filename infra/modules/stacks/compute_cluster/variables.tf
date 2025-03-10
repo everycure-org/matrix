@@ -49,8 +49,3 @@ variable "k8s_secrets" {
 variable "bucket_name" {
   type = string
 }
-
-variable "dns_zone" {
-  type = string
-
-}
