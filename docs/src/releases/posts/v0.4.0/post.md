@@ -71,7 +71,6 @@ This release of the Matrix Platform focuses on enhanced pipeline control, improv
 
 * **Argo Release Trigger Fix (#936):** Resolved an issue related to the trigger release label in Argo workflows.
 
-* **Clinical Trial Preprocessing (#1039):**  Fixed preprocessing issues with clinical trial data.
 
 
 
