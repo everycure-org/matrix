@@ -41,11 +41,6 @@ resource "google_storage_bucket_iam_member" "public_read" {
   member = "allUsers"
 }
 
-# The rest of your load balancer configuration remains unchanged
-# data "google_dns_managed_zone" "dev_zone" {
-#   name = var.dns_managed_zone_name
-# }
-
 # Create a Google-managed SSL certificate
 resource "google_compute_managed_ssl_certificate" "default" {
   name    = "public-data-ssl-cert"
