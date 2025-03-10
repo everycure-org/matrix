@@ -73,7 +73,6 @@ This release of the Matrix Platform focuses on enhanced pipeline control, improv
 
 * **Clinical Trial Preprocessing (#1039):**  Fixed preprocessing issues with clinical trial data.
 
-* **Data Normalization Status (#1060):**  Ensured accurate reporting of the `normalization_success` status.
 
 * **MLflow Metric Tracking (#1075):**  Fixed an issue impacting MLflow metric tracking.
 
