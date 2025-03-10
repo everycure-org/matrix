@@ -50,6 +50,16 @@ variable "environment" {}
 variable "project_id" {}
 variable "billing_project" {}
 variable "storage_bucket_name" {}
+variable "network_name" {}
+variable "k8s_subnetwork" {}
+variable "k8s_pod_ip_range" {}
+variable "k8s_svc_ip_range" {}
+variable "gitops_repo_url" {}
+variable "gitops_repo_creds" {}
+variable "k8s_secrets" {
+  sensitive = true
+  type      = map(string)
+}
 EOF
 }
 
