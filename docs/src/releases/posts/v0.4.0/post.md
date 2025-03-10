@@ -28,7 +28,6 @@ This release of the Matrix Platform focuses on enhanced pipeline control, improv
 
 * **KGX Format for Data Releases (#743):** Data releases are now provided in the KGX format. This standardization simplifies downstream integration and interoperability but requires adjustments for any pipelines consuming these data releases.
 
-* **K-fold Cross-Validation (#683):** Model evaluation now utilizes k-fold cross-validation for a more robust performance assessment.  This change modifies the output structure for modeling and evaluation pipelines to accommodate results from each fold.
 
 ## Enhanced Pipeline Control and Monitoring
 
