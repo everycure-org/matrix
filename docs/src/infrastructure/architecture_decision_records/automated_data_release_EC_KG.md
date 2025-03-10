@@ -38,6 +38,7 @@ Once the repository dispatch is triggered:
 - The GitHub action executes:
   - **Tagging**: A tag referencing the commit from which the workflow was triggered.
   - **Generating release context**, including release context json file and an optional release article, which are added to the PR.
+  - **Deploying the KG dashboard**: The [KG dashboard](https://data.dev.everycure.org/versions/latest/evidence/) is deployed with the new release version.
 
 ## PR Handling
 
