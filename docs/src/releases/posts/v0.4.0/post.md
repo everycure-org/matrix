@@ -42,7 +42,7 @@ This release of the Matrix Platform focuses on enhanced pipeline control, improv
 * **Ability to specify mlflow experiment by name (#1093):** Workflow submission is simplified with the ability to specify MLflow experiments by name.
 
 * **Add --nodes to Kedro submit (#1142):**  Granular control over pipeline execution is now possible through the command line, allowing for the execution of specific nodes within a pipeline.
-
+* **Expose integration pipeline's datasets in BigQuery (#1076):**enable direct SQL querying in in BQ and monitoring in [KG dashboard](https://data.dev.everycure.org/versions/latest/evidence/) for better QC and debugging capabilities.
 ## Data Integration and Management
 
 * **Spoke KG Integration (#772):** The Spoke Knowledge Graph is now integrated, enriching the platform's knowledge base and analysis capabilities.
