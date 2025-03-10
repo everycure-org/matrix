@@ -102,9 +102,8 @@ jobs:
               echo "No versions to delete"
           else
               echo "Deleting $DELETE_VERSIONS versions"
-              OLD_VERSIONS=("${VERSIONS[@]:$KEEP_VERSIONS}")
+              OLD_VERSIONS=("${VERSIONS[@]:$DELETE_VERSIONS}")
               echo "Deleting versions: ${OLD_VERSIONS[*]}"
-              gcloud app versions delete "${OLD_VERSIONS[@]}" --service=default --quiet
           fi
 
       # # https://github.com/google-github-actions/deploy-appengine
