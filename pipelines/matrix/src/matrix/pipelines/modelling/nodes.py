@@ -58,26 +58,11 @@ def filter_valid_pairs(
     raw_tn = edges_gt.filter(f.col("y") == 0).cache()
 
     # Filter out pairs where both source and target exist in nodes
-    filtered_tp_in_kg = (
-        raw_tp.join(valid_nodes_in_kg.alias("source_nodes"), raw_tp.source == f.col("source_nodes.id"))
-        .join(valid_nodes_in_kg.alias("target_nodes"), raw_tp.target == f.col("target_nodes.id"))
-        .select(raw_tp["*"])
-    )
-    filtered_tn_in_kg = (
-        raw_tn.join(valid_nodes_in_kg.alias("source_nodes"), raw_tn.source == f.col("source_nodes.id"))
-        .join(valid_nodes_in_kg.alias("target_nodes"), raw_tn.target == f.col("target_nodes.id"))
-        .select(raw_tn["*"])
-    )
-    filtered_tp_categories = (
-        raw_tp.join(valid_nodes_with_categories.alias("source_nodes"), raw_tp.source == f.col("source_nodes.id"))
-        .join(valid_nodes_with_categories.alias("target_nodes"), raw_tp.target == f.col("target_nodes.id"))
-        .select(raw_tp["*"])
-    )
-    filtered_tn_categories = (
-        raw_tn.join(valid_nodes_with_categories.alias("source_nodes"), raw_tn.source == f.col("source_nodes.id"))
-        .join(valid_nodes_with_categories.alias("target_nodes"), raw_tn.target == f.col("target_nodes.id"))
-        .select(raw_tn["*"])
-    )
+    filtered_tp_in_kg = _filter_source_and_target_exist(raw_tp, in_=valid_nodes_in_kg)
+    filtered_tn_in_kg = _filter_source_and_target_exist(raw_tn, in_=valid_nodes_in_kg)
+    filtered_tp_categories = _filter_source_and_target_exist(raw_tp, in_=valid_nodes_with_categories)
+    filtered_tn_categories = _filter_source_and_target_exist(raw_tn, in_=valid_nodes_with_categories)
+
     # Filter out pairs where category of source or target is incorrect AND source and target do not exist in nodes
     final_filtered_tp_categories = (
         filtered_tp_in_kg.join(
@@ -123,6 +108,14 @@ def filter_valid_pairs(
     return {"pairs": pairs_df, "metrics": retention_stats}
 
 
+def _filter_source_and_target_exist(df: ps.DataFrame, in_: ps.DataFrame) -> ps.DataFrame:
+    return (
+        df.join(in_.alias("source_nodes"), df["source"] == f.col("source_nodes.id"))
+        .join(in_.alias("target_nodes"), df["target"] == f.col("target_nodes.id"))
+        .select(df["*"])
+    )
+
+
 @check_output(
     schema=DataFrameSchema(
         columns={
@@ -147,16 +140,17 @@ def attach_embeddings(
     Returns:
         DataFrame with source and target embeddings attached
     """
-    return (
-        pairs_df.alias("pairs")
-        .join(nodes.withColumn("source", f.col("id")), how="left", on="source")
-        .withColumnRenamed("topological_embedding", "source_embedding")
-        .withColumn("source_embedding", f.col("source_embedding").cast(T.ArrayType(T.FloatType())))
-        .join(nodes.withColumn("target", f.col("id")), how="left", on="target")
-        .withColumnRenamed("topological_embedding", "target_embedding")
-        .withColumn("target_embedding", f.col("target_embedding").cast(T.ArrayType(T.FloatType())))
-        .select("pairs.*", "source_embedding", "target_embedding")
+    return pairs_df.transform(_add_embedding, from_=nodes, using="source").transform(
+        _add_embedding, from_=nodes, using="target"
     )
+
+
+def _add_embedding(df: ps.DataFrame, from_: ps.DataFrame, using: str) -> ps.DataFrame:
+    from_ = from_.select(
+        f.col("id").alias(using),
+        f.col("topological_embedding").cast(T.ArrayType(T.FloatType())).alias(f"{using}_embedding"),
+    )
+    return df.join(from_, how="left", on=using)
 
 
 @check_output(
