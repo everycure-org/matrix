@@ -2,8 +2,9 @@
 # add themselves here to a specific path that they want to be responsible for
 # -------------------------------------------------------------------------------------------------
 
-* @lvijnck @pascalwhoop @piotrkan @JacquesVergine
+* @lvijnck @pascalwhoop @piotrkan @JacquesVergine @oliverw1
 docs/ @alexeistepa @leelancashire
-pipelines/matrix/** @alexeistepa @leelancashire
+pipelines/matrix/** @alexeistepa @leelancashire 
+infra/ @emil-k
 
 
