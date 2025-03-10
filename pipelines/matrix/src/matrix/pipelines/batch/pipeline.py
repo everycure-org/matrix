@@ -155,7 +155,7 @@ def cached_api_enrichment_pipeline(
             func=lookup_from_cache,
             inputs=common_inputs | {"cache": cache_reload, "new_col": new_col, "lineage_dummy": cache_out},
             outputs=output,
-            argo_config=ArgoResourceConfig(ephemeral_storage_limit=256),
+            argo_config=ArgoResourceConfig(ephemeral_storage_limit=1024, memory_limit=128),
         ),
     ]
 
