@@ -257,7 +257,7 @@ ingestion.int.disease_list.nodes:
   filepath: ${globals:paths.ingestion}/disease_list/translator/${globals:data_sources.disease_list.version}/disease_list_conflated
 
 # -------------------------------------------------------------------------
-# Ground truth
+# Ground truth KGML xDTD
 # -------------------------------------------------------------------------  
 # TODO: Remove raw suffix from all outputs of preprocessing pipeline once its in main
 ingestion.raw.kgml_xdtd.positives:
@@ -338,6 +338,10 @@ ingestion.int.kgml_xdtd.edges.negatives@pandas:
     index: false
     mode: overwrite
 
+# -------------------------------------------------------------------------
+# Ground truth EC
+# -------------------------------------------------------------------------  
+
 ingestion.raw.ec_ground_truth.positives:
   <<: [*_layer_raw]
   type: matrix.datasets.github.GitHubReleaseExcelDataset
@@ -401,8 +405,74 @@ ingestion.int.ec_ground_truth.edges.positives@spark:
     index: false
 
 # -------------------------------------------------------------------------
+# Ground truth EC downfilled
+# -------------------------------------------------------------------------
+ingestion.raw.ec_ground_truth_downfilled.positives:
+  <<: [*_layer_raw]
+  type: matrix.datasets.github.GitHubReleaseExcelDataset
+  repository_url: https://github.com/everycure-org/matrix-indication-list
+  release_name: ${globals:data_sources.ec_gt.version}
+  release_asset_name: indicationList_downfilled.xlsx
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: token ${globals:gh_token}
+  # load_args:
+  #   sep: "\t"
+
+ingestion.raw.ec_ground_truth_downfilled.negatives:
+  <<: [*_layer_raw]
+  type: matrix.datasets.github.GitHubReleaseExcelDataset
+  repository_url: https://github.com/everycure-org/matrix-indication-list
+  release_name: ${globals:data_sources.ec_gt.version}
+  release_asset_name: contraindicationList_downfilled.xlsx
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: token ${globals:gh_token}
+  # load_args:
+  #   sep: "\t"
+
+ingestion.int.ec_ground_truth_downfilled.edges.negatives@pandas:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs_downfilled.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
+
+ingestion.int.ec_ground_truth_downfilled.edges.negatives@spark:
+  <<: [*_layer_raw, *_spark_csv]
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs_downfilled.tsv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+
+ingestion.int.ec_ground_truth_downfilled.edges.positives@pandas:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs_downfilled.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
+
+ingestion.int.ec_ground_truth_downfilled.edges.positives@spark:
+  <<: [*_layer_raw, *_spark_csv]
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs_downfilled.tsv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+
+# -------------------------------------------------------------------------  
 # Robokop
 # -------------------------------------------------------------------------  
+
 ingestion.raw.robokop.nodes@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset

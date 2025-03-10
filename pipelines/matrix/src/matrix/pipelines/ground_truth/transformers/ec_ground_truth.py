@@ -13,10 +13,14 @@ logger = logging.getLogger(__name__)
 class GroundTruthTransformer(Transformer):
     """Transformer for ground truth data"""
 
+    def __init__(self, upstream_source: str = "matrix_indication_list", **kwargs):
+        super().__init__(**kwargs)
+        self.upstream_source = upstream_source
+
     def transform(self, positive_edges: DataFrame, negative_edges: DataFrame, **kwargs) -> dict[str, DataFrame]:
         pos_edges = self._extract_positives(positive_edges)
         neg_edges = self._extract_negatives(negative_edges)
-        edges = pos_edges.union(neg_edges).withColumn("upstream_source", f.lit("matrix_indication_list"))
+        edges = pos_edges.union(neg_edges).withColumn("upstream_source", f.lit(self.upstream_source))
         id_list = edges.select("subject").union(edges.select("object")).distinct().withColumnRenamed("subject", "id")
         return {"nodes": id_list, "edges": edges}
 

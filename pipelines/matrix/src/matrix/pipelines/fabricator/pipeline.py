@@ -245,6 +245,18 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_ec_gt_pairs",
             ),
             node(
+                func=_create_ec_gt_pairs,
+                inputs=[
+                    "ingestion.raw.drug_list",
+                    "ingestion.raw.disease_list",
+                ],
+                outputs=[
+                    "ingestion.raw.ec_ground_truth_downfilled.positives",
+                    "ingestion.raw.ec_ground_truth_downfilled.negatives",
+                ],
+                name="create_ec_gt_downfilled_pairs",
+            ),
+            node(
                 func=generate_paths,
                 inputs=[
                     "ingestion.raw.rtx_kg2.edges@pandas",
