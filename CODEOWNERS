@@ -2,8 +2,8 @@
 # add themselves here to a specific path that they want to be responsible for
 # -------------------------------------------------------------------------------------------------
 
-* lvijnck pascalwhoop piotrkan JacquesVergine
-docs/ alexeistepa leelancashire
-pipelines/matrix/** alexeistepa leelancashire
+* @lvijnck @pascalwhoop @piotrkan @JacquesVergine
+docs/ @alexeistepa @leelancashire
+pipelines/matrix/** @alexeistepa @leelancashire
 
 
