@@ -93,7 +93,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             for source in settings.DYNAMIC_PIPELINES_MAPPING.get("ground_truth")
                         ],
                     ],
-                    outputs="ground_truth.prm.unified_edges",
+                    outputs="ground_truth.prm.unified_edges@spark",
                     name="unify_ground_truth_datasets",
                 ),
             ]

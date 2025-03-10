@@ -48,7 +48,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "integration.prm.filtered_nodes",
                     "integration.prm.filtered_edges",
-                    "ground_truth.prm.unified_edges",
+                    "ground_truth.prm.unified_edges@spark",
                     "integration.int.drug_list.nodes.norm@spark",
                     "integration.int.disease_list.nodes.norm@spark",
                     "params:modelling.drug_types",

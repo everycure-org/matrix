@@ -69,14 +69,21 @@ def _add_flag_columns(
 
     # TODO: Need to make this dynamic
     # Flag clinical trials data
-    clinical_trials = clinical_trials.rename(columns={"subject": "source", "object": "target"})
-    matrix["trial_sig_better"] = create_flag_column(clinical_trials[clinical_trials["significantly_better"] == 1])
-    matrix["trial_non_sig_better"] = create_flag_column(
-        clinical_trials[clinical_trials["non_significantly_better"] == 1]
+    clinical_trials = (
+        clinical_trials.pivot(columns="type", values="y", index=["subject", "object"]).fillna(0).reset_index()
     )
-    matrix["trial_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["non_significantly_worse"] == 1])
-    matrix["trial_non_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["significantly_worse"] == 1])
-
+    clinical_trials = clinical_trials.rename(columns={"subject": "source", "object": "target"})
+    for key, value in {
+        "significantly_better": "trial_sig_better",
+        "significantly_worse": "trial_sig_worse",
+        "non_significantly_better": "trial_non_sig_better",
+        "non_significantly_worse": "trial_non_sig_worse",
+    }.items():
+        try:
+            matrix[value] = create_flag_column(clinical_trials[clinical_trials[key] == 1]).astype(bool)
+        except KeyError:
+            matrix[value] = False * len(matrix)  # .astype(bool)
+            matrix[value] = matrix[value].astype(bool)
     return matrix
 
 
@@ -145,7 +152,17 @@ def generate_pairs(
     is_in_train = matrix.apply(lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1)
     matrix = matrix[~is_in_train]
     # Add flag columns for known positives and negatives
-    matrix = _add_flag_columns(matrix, known_pairs, clinical_trials)
+    clinical_trials_filtered = clinical_trials.loc[
+        clinical_trials["type"].isin(
+            [
+                "significantly_better",
+                "significantly_worse",
+                "non_significantly_better",
+                "non_significantly_worse",
+            ]
+        )
+    ]
+    matrix = _add_flag_columns(matrix, known_pairs, clinical_trials_filtered)
 
     return matrix
 
