@@ -33,6 +33,10 @@ _model_output_ds: &_model_output_ds
     kedro-viz:
       layer: model_output
 
+modelling.int.ground_truth.edges:
+  <<: [*_spark_parquet, *_model_input_ds]
+  filepath: ${globals:paths.modelling}/ground_truth/translator/ground_truth_pairs_raw
+
 modelling.int.known_pairs@pandas:
   <<: [*_pandas_parquet, *_model_input_ds]
   filepath: ${globals:paths.modelling}/ground_truth/translator/ground_truth_embeddings

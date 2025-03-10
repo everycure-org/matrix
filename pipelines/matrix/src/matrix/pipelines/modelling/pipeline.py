@@ -218,10 +218,19 @@ def create_shared_pipeline() -> Pipeline:
         [
             # Construct ground_truth
             ArgoNode(
+                func=nodes.select_ground_truth,
+                inputs=[
+                    "ground_truth.prm.unified_edges",
+                    "params:modelling.ground_truth",
+                ],
+                outputs="modelling.int.ground_truth.edges",
+                name="select_ground_truth",
+            ),
+            ArgoNode(
                 func=nodes.filter_valid_pairs,
                 inputs=[
                     "integration.prm.filtered_nodes",
-                    "integration.int.ground_truth.edges.norm@spark",
+                    "modelling.int.ground_truth.edges",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                 ],
