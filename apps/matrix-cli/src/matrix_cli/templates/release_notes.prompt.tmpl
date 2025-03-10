@@ -1,24 +1,26 @@
-Please provide a concise summary of the following code changes.
-Focus on creating the content for the following release template following its categories:
+Please provide a clear and concise summary of the following code changes.
 
+### Instructions
+- Focus on summarizing the content according to the provided release template categories.
+- Only include PRs that are listed in the **PR details** section.
+- Organize the summary using markdown with each category as an H2 header (`##`).
+- List key contributions under each category in bullet points for clarity.
+
+### Release Template
 ```yaml
 {{ release_template }}
-```
 
-Code diff:
-
+### Code diff:
 ```diff
 {{ diff_output }}
 ```
 
-PR details:
-
+### PR details:
 ```yaml
 {{ pr_details_dict }}
 ```
 
-Please summarize the PRs only listed in the PR details section into the following categories, each category being a H2 header in markdown (##):
+### Categories
 {% for category in categories %}
 - ##{{ category }}
 {% endfor %}
-Format the output as markdown, with the category headers and the key contributions under each category.
