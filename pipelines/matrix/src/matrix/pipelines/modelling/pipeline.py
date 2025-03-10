@@ -220,7 +220,7 @@ def create_shared_pipeline() -> Pipeline:
             ArgoNode(
                 func=nodes.select_ground_truth,
                 inputs=[
-                    "ground_truth.prm.unified_edges",
+                    "ground_truth.prm.unified_edges@spark",
                     "params:modelling.ground_truth",
                 ],
                 outputs="modelling.int.ground_truth.edges",
