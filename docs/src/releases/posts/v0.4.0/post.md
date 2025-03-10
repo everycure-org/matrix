@@ -74,7 +74,6 @@ This release of the Matrix Platform focuses on enhanced pipeline control, improv
 * **Clinical Trial Preprocessing (#1039):**  Fixed preprocessing issues with clinical trial data.
 
 
-* **MLflow Metric Tracking (#1075):**  Fixed an issue impacting MLflow metric tracking.
 
 * **Fix integration pipeline error with missing interpolation key (#1123):** Corrected an error in the integration pipeline related to missing interpolation keys.
 
