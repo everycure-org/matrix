@@ -5,7 +5,7 @@ PROJECT_ID = $(shell gcloud config get-value project)
 EVIDENCE_BASE_PATH = gs://data.dev.everycure.org/versions
 
 # controls the release version of the KG used in the dashboard
-RELEASE_VERSION ?= v0.3.3
+RELEASE_VERSION ?= v0.3.6
 export EVIDENCE_VAR__release_version := $(RELEASE_VERSION)
 export EVIDENCE_VAR__bq_release_version := $(subst .,_,$(RELEASE_VERSION))
 export VITE_release_version := $(RELEASE_VERSION)
@@ -25,6 +25,8 @@ deploy:
 	# both rsyncs are set up to delete extra files. We use gcloud storage over gsutil because gsutil does not use github action authentication
 	gcloud storage rsync --recursive --delete-unmatched-destination-objects build/ $(EVIDENCE_BASE_PATH)/$(RELEASE_VERSION)/evidence
 	gcloud storage rsync --recursive --delete-unmatched-destination-objects $(EVIDENCE_BASE_PATH)/$(RELEASE_VERSION)/evidence $(EVIDENCE_BASE_PATH)/latest/evidence
+
+
 
 install:
 	npm install
