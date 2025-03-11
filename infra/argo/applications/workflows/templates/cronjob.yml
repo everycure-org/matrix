@@ -1,0 +1,100 @@
+# cron job that runs daily and cleans up the argo resources
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: argo-workflow-cleanup
+  labels:
+    app: argo-workflow-cleanup
+spec:
+  schedule: "0 1 * * *"  # Run at 1:00 AM every day
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: argo-cli
+            image: argoproj/argocli:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              argo delete --older 30d --completed --all-namespaces
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 200m
+                memory: 256Mi
+          restartPolicy: OnFailure
+          serviceAccountName: argo-workflow-cleanup
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: argo-workflowtemplate-cleanup
+  labels:
+    app: argo-workflowtemplate-cleanup
+spec:
+  schedule: "0 2 * * *"  # Run at 2:00 AM every day
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: argo-cli
+            image: argoproj/argocli:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              # Simply delete all workflow templates
+              echo "Deleting all workflow templates"
+              argo template delete --all --all-namespaces
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 200m
+                memory: 256Mi
+          restartPolicy: OnFailure
+          serviceAccountName: argo-workflow-cleanup
+---
+# Service account and RBAC for the cleanup jobs
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: argo-workflow-cleanup
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: argo-workflow-cleanup
+rules:
+- apiGroups: ["argoproj.io"]
+  resources: ["workflows", "workflowtemplates"]
+  verbs: ["get", "list", "delete"]
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: argo-workflow-cleanup
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-workflow-cleanup
+subjects:
+- kind: ServiceAccount
+  name: argo-workflow-cleanup
+  namespace: default
