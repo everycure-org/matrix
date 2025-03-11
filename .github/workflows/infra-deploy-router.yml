@@ -24,12 +24,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Check which deployments have changes
-  check-changes:
-    permissions: 
-      pull-requests: read
-      contents: 'read'
-    runs-on: ubuntu-latest
+  call_infra_deploy:
+    uses: ./.github/workflows/infra-deploy.yml
     strategy:
       matrix:
         deployment_path: [
@@ -38,21 +34,5 @@ jobs:
           'infra/deployments/wg2/dev'
         ]
       fail-fast: false #enables deployment of both of these environments, not aborting one if the other fails
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      # check if file has changed
-      - uses: dorny/paths-filter@v3
-        id: changes
-        with:
-          filters: |
-            src:
-              - ${{ matrix.deployment_path }}
-              - .github/workflows/infra-*.yml
-      #call respective infra-deploy workflow for each deployment path
-      - name: Call infra-deploy workflow for each deployment path
-        uses: ./.github/workflows/infra-deploy.yml
-        with:
-          deployment_path: ${{ matrix.deployment_path }}
+    with:
+      deployment_path: ${{ matrix.deployment_path }}
