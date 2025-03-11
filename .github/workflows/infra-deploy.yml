@@ -21,7 +21,23 @@ env:
 
 jobs:
   # Uncomment this for debugging the JWT tokens
+  paths_filter:
+    runs-on: 'ubuntu-latest'
+    permissions:
+      pull-requests: read
+      contents: 'read'
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            src:
+              - ${{ inputs.deployment_path }}
+              - .github/workflows/infra-*.yml
   debug:
+    needs: [paths_filter]
     runs-on: 'ubuntu-latest'
     environment: dev
     if: github.ref == 'refs/heads/infra'
