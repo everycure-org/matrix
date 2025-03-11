@@ -9,7 +9,8 @@ modelling.disease_types:
   - biolink:DiseaseOrPhenotypicFeature
 
 modelling.ground_truth:
-  - matrix_indication_list_downfilled #matrix_indication_list #kgml_xdtd, matrix_indication_list_downfilled
+  - matrix_indication_list #matrix_indication_list #kgml_xdtd, matrix_indication_list_downfilled
+  - kgml_xdtd
 
 modelling.splitter:
 
