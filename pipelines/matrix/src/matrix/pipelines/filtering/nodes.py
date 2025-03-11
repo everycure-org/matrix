@@ -11,31 +11,6 @@ from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 logger = logging.getLogger(__name__)
 
 
-@inject_object()
-@check_output(
-    DataFrameSchema(
-        columns={
-            "id": Column(T.StringType(), nullable=False),
-        },
-        unique=["id"],
-    ),
-    df_name="nodes",
-)
-@check_output(
-    DataFrameSchema(
-        columns={
-            "subject": Column(T.StringType(), nullable=False),
-            "predicate": Column(T.StringType(), nullable=False),
-            "object": Column(T.StringType(), nullable=False),
-        },
-    ),
-    df_name="edges",
-    raise_df_undefined=False,
-)
-def transform(transformer, **kwargs) -> Dict[str, ps.DataFrame]:
-    return transformer.transform(**kwargs)
-
-
 def _apply_transformations(
     df: ps.DataFrame, transformations: List[Tuple[Callable, Dict[str, Any]]], **kwargs
 ) -> ps.DataFrame:
