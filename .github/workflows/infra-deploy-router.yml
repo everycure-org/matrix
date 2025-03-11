@@ -29,6 +29,7 @@ jobs:
     permissions:
       pull-requests: read
       contents: 'read'
+      id-token: 'write'
     strategy:
       matrix:
         deployment_path: [
