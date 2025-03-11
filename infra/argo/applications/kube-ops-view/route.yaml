@@ -9,7 +9,7 @@ spec:
     namespace: gateway
     name: external-http
   hostnames:
-  - "kube-ops-view.platform.dev.everycure.org"
+  - "kube-ops-view.platform.{{ .Values.global.environment }}.everycure.org"
   rules:
   - backendRefs:
     - name: kube-ops-view

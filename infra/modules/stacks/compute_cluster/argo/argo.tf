@@ -66,7 +66,7 @@ resource "helm_release" "argo" {
 }
 
 resource "kubernetes_manifest" "app_of_apps" {
-  depends_on = [helm_release.argo]
+  depends_on = [helm_release.argo, module.gke]
   manifest = yamldecode(
     <<YAML
 apiVersion: argoproj.io/v1alpha1
@@ -82,6 +82,10 @@ spec:
     path: ${var.repo_path}/app-of-apps
     repoURL: ${var.repo_url}
     targetRevision: ${var.repo_revision}
+    helm:
+      values: |
+        global:
+          environment: ${var.environment}
   project: default
   syncPolicy:
     syncOptions:
