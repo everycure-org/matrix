@@ -35,7 +35,7 @@ def create_node_embeddings_pipeline() -> Pipeline:
         preprocessor="params:embeddings.node.caching.preprocessor",
         cache_miss_resolver="params:embeddings.node.caching.resolver",
         api="params:embeddings.node.caching.api",
-        new_col="params:embeddings.node.caching.new_col",
+        new_col="params:embeddings.node.caching.target_col",
         cache="embeddings.node.cache.read",
         primary_key="params:embeddings.node.caching.primary_key",
         batch_size="params:embeddings.node.caching.batch_size",
