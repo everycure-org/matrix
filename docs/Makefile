@@ -1,5 +1,5 @@
 # Makefile that builds or serves the docs.
-KEEP_VERSIONS := 108
+KEEP_VERSIONS := 10
 
 .PHONY: build serve
 
