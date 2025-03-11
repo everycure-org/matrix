@@ -18,91 +18,99 @@ authors:
   - matentzn
 ---
 
-# Matrix Platform `v0.4.0`: Enhanced Pipeline Control, Monitoring, and Data Integration
+# Matrix Platform `v0.4.0`: Evidence.dev dashboard, improved experiment tracking and 
 
-This release of the Matrix Platform focuses on enhanced pipeline control, improved monitoring capabilities, and streamlined data integration, alongside crucial bug fixes and technical enhancements.  Key changes include a more flexible pipeline submission process,  improved resource management within the Kubernetes cluster, and refined data integration workflows.
+This release of Matrix includes a new [data
+dashboard](https://data.dev.everycure.org/versions/latest/evidence) based on
+evidence.dev, a new pipeline submission process which groups experiment runs under their
+respective experiments and a scheduled daily run of the entire pipeline using a KG sample to get fast feedback on the stability of our pipeline with real data. 
 
 <!-- more -->
 
-## Enhanced Pipeline Control and Monitoring
+## KG Dashboard
 
-* **Sample Pipeline:**  A new sample pipeline enables running pipelines on a representative subset of real data. This facilitates faster development cycles and increased confidence in pipeline functionality before full data runs.  Scheduled sample data generation (#1105) further supports development workflows.
+## Pipeline Submission
 
-* **Ability to specify mlflow experiment by name (#1093):** Workflow submission is simplified with the ability to specify MLflow experiments by name.
-
-* **Add --nodes to Kedro submit (#1142):**  Granular control over pipeline execution is now possible through the command line, allowing for the execution of specific nodes within a pipeline.
-* **Expose integration pipeline's datasets in BigQuery (#1076):**enable direct SQL querying in in BQ and monitoring in [KG dashboard](https://data.dev.everycure.org/versions/latest/evidence/) for better QC and debugging capabilities.
-## Data Integration and Management
-
-* **Move de-duplication to integration from preprocessing (#1118):**  Pipeline efficiency is improved by shifting deduplication of custom datasets (provided by EC medical team) to the integration stage.
-
-* **Add upstream data source to Neo4j edges (#1131):** Data provenance tracking is enhanced within Neo4j by adding the upstream data source information to edges.
-
-## Bug Fixes
-
-* **Fix integration pipeline error with missing interpolation key (#1123):** Corrected an error in the integration pipeline related to missing interpolation keys.
-
-* **Fix writing to the gsheets for SILC sheet (#1193):** Ensured correct data reporting to Google Sheets for SILC.
-
-## Technical Enhancements
-
-* **'Infra 2 main sync: git-crypt replaced with script' (#1073):** Improved secrets management by replacing `git-crypt`.
-
-* **Modify the location of AI-generated notes file (#1129):** Improved organization of release-related files.
-
-* **Bug/add gh token for kedro submit step in GH Actions (#1132):** Ensured proper authentication for Kedro submissions in GitHub Actions.
-
-* **Correct BQ reporting table names and change tests to cover cloud catalog (#1133):**  Improved consistency and test coverage for BigQuery reporting.
-
-* **Disable stability metrics (temporarily) (#1126):**  Temporarily disabled stability metrics.
-
-* **Disable notes generation (#1137):** Temporarily disabled automated notes generation.
-
-* **Add repository_dispatch trigger to pipeline submission (#1138):**  Enabled remote triggering of pipeline submissions.
-
-* **Hotfix for evidence.dev deployment working in CI (#1143):**  Ensured correct deployment of Evidence.dev in the CI environment.
-
-* **Increasing the timeout to handle api overloading (#1146):**  Addressed potential API timeout issues.
-
-* **Add min max to reported aggregations (#1152):**  Provided more comprehensive statistics in aggregated reports.
-
-* **Improved sankey on evdev dashboard (#1153):**  Enhanced data flow visualization on the Evidence.dev dashboard.
-
-* **Update test configuration for topological embeddings to reduce integration test duration (#1161):** Optimized integration test execution time.
-
-* **'Fix modelling bug - modelling cloud catalog ' (#1165):**  Corrected a bug in the modeling cloud catalog.
-
-* **Comment out ingest_nodes_with_embeddings (#1175):**  Temporarily disabled a specific node in the pipeline.
-
-* **Fix catalog in ingestion (#1176):**  Corrected issues in the ingestion catalog.
-
-* **Debug/use git command instead of gh command (#1178):** Improved compatibility using Git commands directly.
-
-* **Resource allocation changes for embeddings pipeline (#1179):**  Optimized resource allocation.
-
-* **Only log mlflow dataset if it hasn't been logged before. (#1180):**  Improved MLflow logging efficiency.
-
-* **Feat/archive mlflow runs (#1181):**  Implemented MLflow run archiving.
-
-* **Revert window size to 10 for Node2Vec Embeddings (#1184):**  Restored a previous parameter value for Node2Vec.
-
-* **Add rank columns (#1186):** Added rank information for better result interpretation.
-
-* **Reduce resource requirements for edge and node ingestion into Neo4j. (#1195):**  Optimized Neo4j ingestion resource usage.
-
-* **Debug/expand mlflow hook logging (#1204):** Expanded MLflow hook logging for debugging.
+## Scheduled Pipeline Runs with sample data
 
 
-## Documentation Improvements
-
-* **Docs cleanup (#1150):** General documentation improvements.
-
-* **Format kedro experiment docs (#1159):** Improved experiment documentation formatting.
-
-* **Improve sampling documentation with release specific instructions (#1166):**  Enhanced sampling documentation clarity.
-
-* **Add documentation for explaining more tags over releases (#1209):** Improved documentation for disease list subset generation.
-
-* **Define process to fix a KG release (#1207):**  Added a process for handling corrupted KG releases.
+<!-- Notes 
 
 
+## What's Changed
+### Exciting New Features 🎉
+* Feat/run sampling pipeline on schedule by @emil-k in https://github.com/everycure-org/matrix/pull/1105
+* [Infra sync] Evidence.dev infrastructure  by @pascalwhoop in https://github.com/everycure-org/matrix/pull/1112
+* Quality control data for Evidence.dev by @JacquesVergine in https://github.com/everycure-org/matrix/pull/1076
+* Add --nodes to Kedro submit by @lvijnck in https://github.com/everycure-org/matrix/pull/1142
+* Add a summary page to Evidence with ARPA metrics by @JacquesVergine in https://github.com/everycure-org/matrix/pull/1194
+### Bugfixes 🐛
+* Correct the scope of information used to generate the release notes. by @Siyan-Luo in https://github.com/everycure-org/matrix/pull/1096
+* Bug/add gh token for kedro submit step in GH Actions by @Siyan-Luo in https://github.com/everycure-org/matrix/pull/1132
+* Modify the location of AI-generated notes file by @Siyan-Luo in https://github.com/everycure-org/matrix/pull/1129
+* Debug/use git command instead of gh command by @Siyan-Luo in https://github.com/everycure-org/matrix/pull/1178
+* Debug/allow bump type input from UI by @Siyan-Luo in https://github.com/everycure-org/matrix/pull/1223
+### Technical Enhancements 🧰
+* Remove hardcoded SILC config by @lvijnck in https://github.com/everycure-org/matrix/pull/973
+* Add GitHub release dataset for drug and disease list ingestion by @JacquesVergine in https://github.com/everycure-org/matrix/pull/1050
+* Create Slack notification when pipeline submission fails on GHAction by @Siyan-Luo in https://github.com/everycure-org/matrix/pull/1141
+* Setup IAP OAuth for use with MLFlow by @pascalwhoop in https://github.com/everycure-org/matrix/pull/897
+* Add ability to specify mlflow experiment by name by @amyford in https://github.com/everycure-org/matrix/pull/1093
+* Refactor preprocessing pipeline  by @piotrkan in https://github.com/everycure-org/matrix/pull/1088
+* Fix writing to the gsheets for SILC sheet by @piotrkan in https://github.com/everycure-org/matrix/pull/1193
+* Allow sample run to be manually triggered by @JacquesVergine in https://github.com/everycure-org/matrix/pull/1206
+* include drug and disease in release info by @emil-k in https://github.com/everycure-org/matrix/pull/1221
+### Documentation ✏️
+* Remove GOOGLE_CREDENTIALS env variable from installation documentation by @JacquesVergine in https://github.com/everycure-org/matrix/pull/1108
+* Add documentation for disease tagging / categorisation feature by @matentzn in https://github.com/everycure-org/matrix/pull/955
+* Improve sampling documentation with release specific instructions by @JacquesVergine in https://github.com/everycure-org/matrix/pull/1166
+* Define process to fix a KG release by @JacquesVergine in https://github.com/everycure-org/matrix/pull/1207
+* Add documentation for explaining more tags over releases by @Siyan-Luo in https://github.com/everycure-org/matrix/pull/1209
+### Newly onboarded colleagues 🚤
+* Create new-eKathleenCarter.asc by @eKathleenCarter in https://github.com/everycure-org/matrix/pull/1032
+### Other Changes
+* Fix clinical trial preprocessing nodes by @alexeistepa in https://github.com/everycure-org/matrix/pull/1039
+* Fix normalizer always returning `normalization_success=True` by @piotrkan in https://github.com/everycure-org/matrix/pull/1060
+* Feat/log datasets used to mlflow by @emil-k in https://github.com/everycure-org/matrix/pull/1048
+* Fix mlflow metric tracking by @piotrkan in https://github.com/everycure-org/matrix/pull/1075
+* Fix ec medical nodes in preprocessing by @alexeistepa in https://github.com/everycure-org/matrix/pull/1052
+* Fix schema check in preprocessing pipeline by @piotrkan in https://github.com/everycure-org/matrix/pull/1082
+* Update onboarding docs to include container registry auth by @amyford in https://github.com/everycure-org/matrix/pull/1081
+* Bump disease list and fix release list name  by @piotrkan in https://github.com/everycure-org/matrix/pull/1072
+* Better cli for quickly adding users to multiple teams by @pascalwhoop in https://github.com/everycure-org/matrix/pull/1040
+* Debug/Notes and articles generation by @Siyan-Luo in https://github.com/everycure-org/matrix/pull/1059
+* Fix deadlocking on subprocess calls by @oliverw1 in https://github.com/everycure-org/matrix/pull/1089
+* Feat/add custom argo prometheus metric on failed workflow status by @emil-k in https://github.com/everycure-org/matrix/pull/1098
+* pinned torch and re-generate requirements on mac by @oliverw1 in https://github.com/everycure-org/matrix/pull/1109
+* Update BigQuery table if it exists instead of creating it by @JacquesVergine in https://github.com/everycure-org/matrix/pull/1110
+* Hotfix - change version for GT in ingestion catalog by @piotrkan in https://github.com/everycure-org/matrix/pull/1116
+* Setup drugmech ingestion by @lvijnck in https://github.com/everycure-org/matrix/pull/1041
+* Fix integration pipeline error with missing interpolation key by @JacquesVergine in https://github.com/everycure-org/matrix/pull/1123
+* Disable stability metrics (temporarily) by @piotrkan in https://github.com/everycure-org/matrix/pull/1126
+* Move de-duplication to integration from preprocessing by @piotrkan in https://github.com/everycure-org/matrix/pull/1118
+* Evidence.dev code & deployment & CI by @pascalwhoop in https://github.com/everycure-org/matrix/pull/1085
+* Add upstream data source to Neo4j edges by @JacquesVergine in https://github.com/everycure-org/matrix/pull/1131
+* Correct BQ reporting table names and change tests to cover cloud catalog by @JacquesVergine in https://github.com/everycure-org/matrix/pull/1133
+* add min max to reported aggregations by @alexeistepa in https://github.com/everycure-org/matrix/pull/1152
+* increasing the timeout to handle api overloading by @emil-k in https://github.com/everycure-org/matrix/pull/1146
+* [mini] status badges in readme by @pascalwhoop in https://github.com/everycure-org/matrix/pull/1145
+* Improved sankey on evdev dashboard by @pascalwhoop in https://github.com/everycure-org/matrix/pull/1153
+* Format kedro experiment docs by @amyford in https://github.com/everycure-org/matrix/pull/1159
+* Update test configuration for topological embeddings to reduce integration test duration by @lvijnck in https://github.com/everycure-org/matrix/pull/1161
+* Fix/embeddins resources by @emil-k in https://github.com/everycure-org/matrix/pull/1170
+* Use OAuth secret from git crypt. Add docs by @amyford in https://github.com/everycure-org/matrix/pull/1168
+* Hotfix - fix make fetch_secrets missing variable and twice defined by @amyford in https://github.com/everycure-org/matrix/pull/1172
+* Fix modelling bug - modelling cloud catalog  by @alexeistepa in https://github.com/everycure-org/matrix/pull/1165
+* Fix catalog in ingestion by @piotrkan in https://github.com/everycure-org/matrix/pull/1176
+* Revert window size to 10 for Node2Vec Embeddings by @piotrkan in https://github.com/everycure-org/matrix/pull/1184
+* add rank columns by @alexeistepa in https://github.com/everycure-org/matrix/pull/1186
+* Test deploy evidence.dev 0.3.3 by @JacquesVergine in https://github.com/everycure-org/matrix/pull/1190
+* Resource allocation changes for embeddings pipeline by @emil-k in https://github.com/everycure-org/matrix/pull/1179
+* Feat/archive mlflow runs by @amyford in https://github.com/everycure-org/matrix/pull/1181
+* only log mlflow dataset if it hasn't been logged before. by @emil-k in https://github.com/everycure-org/matrix/pull/1180
+* Reduce resource requirements for edge and node ingestion into Neo4j. by @oliverw1 in https://github.com/everycure-org/matrix/pull/1195
+* Debug/expand mlflow hook logging by @emil-k in https://github.com/everycure-org/matrix/pull/1204
+
+
+**Full Changelog**: https://github.com/everycure-org/matrix/compare/v0.3.0...v0.4.0
+-->
