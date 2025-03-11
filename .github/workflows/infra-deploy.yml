@@ -20,6 +20,8 @@ jobs:
   # Uncomment this for debugging the JWT tokens
   paths_filter:
     runs-on: 'ubuntu-latest'
+    outputs: 
+      changed: ${{ steps.changes.outputs.src }}
     permissions:
       pull-requests: read
       contents: 'read'
@@ -70,6 +72,8 @@ jobs:
         run: 'gsutil ls gs://mtrx-us-central1-hub-dev-storage/'
 
   checks:
+    needs: [paths_filter]
+    if: needs.paths_filter.outputs.changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
