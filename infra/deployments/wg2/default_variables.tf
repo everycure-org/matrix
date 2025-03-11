@@ -3,3 +3,9 @@ variable "org_id" {}
 variable "billing_account" {}
 variable "default_region" {}
 variable "super_admins" {}
+variable "environment" {}
+variable "project_id" {}
+variable "billing_project" {}
+variable "storage_bucket_name" {}
+variable "gitops_repo_url" {}
+variable "gitops_repo_creds" {}

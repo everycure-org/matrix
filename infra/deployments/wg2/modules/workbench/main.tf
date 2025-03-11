@@ -46,6 +46,7 @@ resource "google_workbench_instance" "user_workbench" {
     ignore_changes = [
       create_time,
       update_time,
+      state,
       # desired_state,
       gce_setup[0].metadata.resource-url
     ]
