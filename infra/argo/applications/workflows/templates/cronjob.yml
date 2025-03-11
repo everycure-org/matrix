@@ -18,18 +18,20 @@ spec:
           containers:
           - name: argo-cli
             image: argoproj/argocli:latest
-            command:
-            - /bin/sh
-            - -c
-            - |
-              argo delete --older 30d --completed --all-namespaces
+            args:
+            - delete
+            - --older
+            - 30d
+            - --completed
+            - --namespace
+            - argo-workflows
             resources:
               requests:
                 cpu: 100m
                 memory: 128Mi
               limits:
                 cpu: 200m
-                memory: 256Mi
+                memory: 1Gi
           restartPolicy: OnFailure
           serviceAccountName: argo-workflow-cleanup
 ---
@@ -51,20 +53,20 @@ spec:
           containers:
           - name: argo-cli
             image: argoproj/argocli:latest
-            command:
-            - /bin/sh
-            - -c
-            - |
-              # Simply delete all workflow templates
-              echo "Deleting all workflow templates"
-              argo template delete --all --all-namespaces
+            args:
+            - template
+            - delete
+            - --all
+            - --namespace
+            - argo-workflows
+
             resources:
               requests:
                 cpu: 100m
                 memory: 128Mi
               limits:
                 cpu: 200m
-                memory: 256Mi
+                memory: 1Gi
           restartPolicy: OnFailure
           serviceAccountName: argo-workflow-cleanup
 ---
@@ -73,6 +75,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: argo-workflow-cleanup
+  namespace: argo-workflows
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -97,4 +100,4 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: argo-workflow-cleanup
-  namespace: default
+  namespace: argo-workflows
