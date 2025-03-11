@@ -253,7 +253,7 @@ def test_cached_api_enrichment_pipeline(
             "params:embeddings.node.caching.resolver": MemoryDataset(
                 {"_object": "matrix.pipelines.embeddings.encoders.DummyResolver"}
             ),
-            "params:embeddings.node.caching.new_col": MemoryDataset(sample_new_col),
+            "params:embeddings.node.caching.target_col": MemoryDataset(sample_new_col),
             "params:embeddings.node.caching.batch_size": MemoryDataset(2),
         }
     )
