@@ -3,7 +3,7 @@ select replace(category,'biolink:','') as category
 from bq.node_normalization
 where normalization_set = 'merged'
   and no_normalization_change = false
-union distinct 
+union 
 select replace(category,'biolink:','') as category
 from bq.edge_normalization
 where normalization_set = 'merged'
