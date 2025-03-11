@@ -10,7 +10,7 @@ spec:
     namespace: gateway
     name: external-http
   hostnames:
-  - "moa.platform.dev.everycure.org"
+  - "moa.platform.{{ .Values.global.environment }}.everycure.org"
   rules:
   - backendRefs:
     - name: moa-viewer-service

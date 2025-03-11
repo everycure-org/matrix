@@ -5,3 +5,6 @@ spec:
     repoURL: https://github.com/everycure-org/matrix.git
     targetRevision: infra
     repoPath: infra/argo/applications/
+    helm:
+      values: |
+        environment: {{ .Values.global.environment }}
