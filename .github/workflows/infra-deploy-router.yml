@@ -26,6 +26,9 @@ on:
 jobs:
   # Check which deployments have changes
   check-changes:
+    permissions: 
+      pull-requests: read
+      contents: 'read'
     runs-on: ubuntu-latest
     strategy:
       matrix:
