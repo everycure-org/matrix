@@ -60,7 +60,8 @@ def cached_api_enrichment_pipeline(
     cache_reload: str,
     cache_out: str,
 ) -> Pipeline:
-    """Define a Kedro Pipeline to enrich a Spark Dataframe using optionally cached API calls.
+    """
+    Define a Kedro Pipeline to enrich a Spark Dataframe using optionally cached API calls.
 
     The advantage to using this is that any identical API calls that have
     been made in other runs will have been cached, so that the enrichment
@@ -73,56 +74,64 @@ def cached_api_enrichment_pipeline(
     (meaning this subpipeline will complete faster, and thus saves the
     organization money).
 
-    input: Kedro reference to a Spark DataFrame where you want to add a column
-    `new_col` to.
+    Args:
+        source: data source name, in node normalization of integration pipeline,
+        there's several data sources, we need to distinguish the node names.
 
-    primary_key: name of the column that should be produced (or passed) by the
-    preprocessor function. It is this column of values that will be used to
-    check against the cache, or failing that, sent to the cache_miss_resolver.
+        input: Kedro reference to a Spark DataFrame where you want to add a column
+        `new_col` to.
 
-    cache_miss_resolver: Kedro reference to an object having an apply method,
-    which is an asynchronous callable that will be used to look up any cache misses.
+        primary_key: name of the column that should be produced (or passed) by the
+        preprocessor function. It is this column of values that will be used to
+        check against the cache, or failing that, sent to the cache_miss_resolver.
 
-    api: Kedro parameter to restrict the cache to use results from this
-    particular API. You will want to match this with the parameters of
-    the `cache_miss_resolver`.
+        cache_miss_resolver: Kedro reference to an object having an apply method,
+        which is an asynchronous callable that will be used to look up any cache misses.
 
-    preprocessor: Kedro reference to a callable that will preprocess the
-    `input` such that it has a column `primary_key` which is used in the
-    look-up process.
+        api: Kedro parameter to restrict the cache to use results from this
+        particular API. You will want to match this with the parameters of
+        the `cache_miss_resolver`.
 
-    output: Kedro reference to a dataset that is the input plus this new
-    `new_col` containing the results from the enrichment with the cache/API.
+        preprocessor: Kedro reference to a callable that will preprocess the
+        `input` such that it has a column `primary_key` which is used in the
+        look-up process.
 
-    new_col: name of the column in which the values associated with the
-    `primary_key` should appear.
+        output: Kedro reference to a dataset that is the input plus this new
+        `new_col` containing the results from the enrichment with the cache/API.
 
-    batch_size: the size of a batch that will be sent to the embedder. Keep in
-    mind that concurrent requests may be running, which means the API might be
-    getting more batches in parallel, which in turn can  have an affect
-    (positive or negative, it depends on the API) on the performance. This
-    argument is a determining factor of the size of the files produced by running
-    the cache miss resolver.
+        new_col: name of the column in which the values associated with the
+        `primary_key` should appear.
 
-    cache: Kedro reference to the Spark DataFrame that maps keys to values. The
-    keys will be compared to the `primary_key` column of the DataFrame
-    resulting from calling the `preprocessor` on the `input`. Aside from the
-    key and value column, it also has a third column, named api, linking the
-    keys to the API used at the time of the lookup.
+        batch_size: the size of a batch that will be sent to the embedder. Keep in
+        mind that concurrent requests may be running, which means the API might be
+        getting more batches in parallel, which in turn can  have an affect
+        (positive or negative, it depends on the API) on the performance. This
+        argument is a determining factor of the size of the files produced by running
+        the cache miss resolver.
 
-    cache_misses: a Kedro reference to a SparkDataset that is used for
-    temporary results.
-    This should refer to a **unique** storage location particular to the API
-    and the kedro node, to avoid concurrent overwrites. That is, for embeddings
-    and node normalization, these should be different paths.
+        cache: Kedro reference to the Spark DataFrame that maps keys to values. The
+        keys will be compared to the `primary_key` column of the DataFrame
+        resulting from calling the `preprocessor` on the `input`. Aside from the
+        key and value column, it also has a third column, named api, linking the
+        keys to the API used at the time of the lookup.
 
-    cache_reload: a Catalog entry that duplicates `cache`. There only to force
-    Kedro to re-load the cache, otherwise it will continue with the files it
-    found before the cache miss resolver modified the cache location.
+        cache_misses: a Kedro reference to a SparkDataset that is used for
+        temporary results.
+        This should refer to a **unique** storage location particular to the API
+        and the kedro node, to avoid concurrent overwrites. That is, for embeddings
+        and node normalization, these should be different paths.
 
-    cache_out: a Catalog entry that points to the same location as `cache`, and
-    `cache_reload`, but uses PartitionedAsyncParallelDatasets to append batches
-    of resolved misses to the already existing cache."""
+        cache_reload: a Catalog entry that duplicates `cache`. There only to force
+        Kedro to re-load the cache, otherwise it will continue with the files it
+        found before the cache miss resolver modified the cache location.
+
+        cache_out: a Catalog entry that points to the same location as `cache`, and
+        `cache_reload`, but uses PartitionedAsyncParallelDatasets to append batches
+        of resolved misses to the already existing cache.
+
+    Returns:
+        A Kedro Pipeline that will enrich the input DataFrame.
+    """
 
     nodes = [
         ArgoNode(
