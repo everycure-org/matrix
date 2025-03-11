@@ -118,7 +118,7 @@ integration.cache.read: &cache_in
         - _object: *_field
           name: api
           dataType:
-            _object: pyspark.sql.types.StringType
+            _object: *_stringtype
           nullable: False
 integration.{source}.cache.write:
     type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
