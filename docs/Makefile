@@ -1,5 +1,5 @@
 # Makefile that builds or serves the docs.
-KEEP_VERSIONS := 110
+KEEP_VERSIONS := 108
 
 .PHONY: build serve
 
@@ -31,5 +31,5 @@ clean_versions:
 		echo "No versions to delete"; \
 	else \
 		OLD_VERSIONS=$$(echo $$VERSIONS | cut -d' ' -f$$(($(KEEP_VERSIONS)+1))-); \
-		gcloud app versions delete "${OLD_VERSIONS[@]}" --service=default --quiet; \
+		gcloud app versions delete $$OLD_VERSIONS --service=default --quiet; \
 	fi
