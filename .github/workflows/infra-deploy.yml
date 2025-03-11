@@ -1,7 +1,4 @@
 name: Infrastructure Deploy
-
-# NOTE: This workflow was partially generated using AI assistance.
-
 on:
   workflow_call:
     inputs:
