@@ -124,12 +124,11 @@ def cached_api_enrichment_pipeline(
     `cache_reload`, but uses PartitionedAsyncParallelDatasets to append batches
     of resolved misses to the already existing cache."""
 
-    common_inputs = {"df": input, "cache": cache, "api": api, "primary_key": primary_key, "preprocessor": preprocessor}
     nodes = [
         ArgoNode(
             name=f"derive_{source}_cache_misses",
             func=derive_cache_misses,
-            inputs=common_inputs,
+            inputs={"df": input, "cache": cache, "api": api, "primary_key": primary_key, "preprocessor": preprocessor},
             outputs=cache_misses,
             argo_config=ArgoResourceConfig(
                 cpu_request=4,
@@ -153,7 +152,15 @@ def cached_api_enrichment_pipeline(
         ArgoNode(
             name=f"lookup_{source}_from_cache",
             func=lookup_from_cache,
-            inputs=common_inputs | {"cache": cache_reload, "new_col": new_col, "lineage_dummy": cache_out},
+            inputs={
+                "df": input,
+                "cache": cache_reload,
+                "api": api,
+                "primary_key": primary_key,
+                "preprocessor": preprocessor,
+                "new_col": new_col,
+                "lineage_dummy": cache_out,
+            },
             outputs=output,
             argo_config=ArgoResourceConfig(ephemeral_storage_limit=1024, memory_limit=128),
         ),
