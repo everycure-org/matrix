@@ -20,7 +20,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "knowledge_graph_edges": "integration.prm.original.unified_edges",
                     "ground_truth_edges": "integration.int.ground_truth.edges.norm@spark",
                 },
-                # TODO: Validate sample pulling from unified nodes and edges
                 outputs={
                     "nodes": "integration.prm.unified_nodes",
                     "edges": "integration.prm.unified_edges",
