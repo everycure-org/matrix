@@ -26,6 +26,9 @@ on:
 jobs:
   call_infra_deploy:
     uses: ./.github/workflows/infra-deploy.yml
+    permissions:
+      pull-requests: read
+      contents: 'read'
     strategy:
       matrix:
         deployment_path: [
