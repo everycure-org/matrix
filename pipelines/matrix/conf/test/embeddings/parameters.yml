@@ -10,15 +10,10 @@ embeddings.topological:
       embeddingDimension: 3
 
 
-embeddings.node.caching.preprocessor:
-  _object: matrix.pipelines.embeddings.nodes.embeddings_preprocessor
-  new_col: &pkey mykey
-embeddings.node.caching.resolver:
-  _object: matrix.pipelines.embeddings.encoders.DummyResolver
-
-embeddings.node.caching.primary_key: *pkey
-embeddings.node.caching.api: "foo"
-embeddings.node.caching.new_col: embedding
+embeddings.node.caching:
+  resolver:
+    _object: matrix.pipelines.embeddings.encoders.DummyResolver
+  api: "foo"
 
 embeddings.topological_estimator:
   iterations: 1
