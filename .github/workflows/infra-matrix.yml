@@ -1,0 +1,57 @@
+name: Infrastructure Matrix Deploy
+
+# NOTE: This workflow was partially generated using AI assistance.
+
+on:
+  pull_request:
+    # Sequence of patterns matched against refs/heads
+    branches:
+      - infra
+      - chunyuma-patch-1
+    paths:
+      - infra/**
+      - .github/workflows/infra-*.yml
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+  push:
+    branches:
+      - infra
+    paths:
+      - infra/**
+      - .github/workflows/infra-*.yml
+  # Allow manual triggering
+  workflow_dispatch:
+
+jobs:
+  # Check which deployments have changes
+  check-changes:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        deployment_path: [
+          'infra/deployments/hub/dev',
+        #   'infra/deployments/wg1/dev',
+          'infra/deployments/wg2/dev'
+        ]
+      fail-fast: false #enables deployment of both of these environments, not aborting one if the other fails
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # check if file has changed
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            src:
+              - ${{ matrix.deployment_path }}
+              - .github/workflows/infra-*.yml
+      #call respective infra-deploy workflow for each deployment path
+      - name: Call infra-deploy workflow for each deployment path
+        uses: ./.github/workflows/infra-deploy.yml
+        with:
+          deployment_path: ${{ matrix.deployment_path }}
