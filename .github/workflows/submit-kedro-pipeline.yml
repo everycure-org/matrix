@@ -80,19 +80,19 @@ jobs:
           service_account: ${{ env.service_account }}
           token_format: access_token  # Required for GAR and GKE
       
-      - name: Authenticate with Google Cloud (ID Token)
-        id: auth_id
-        uses: 'google-github-actions/auth@v2'
-        with:
-          project_id: ${{ env.project_id }}
-          workload_identity_provider: ${{ env.workload_identity_provider }}
-          service_account: ${{ env.service_account }}
-          token_format: id_token
-          id_token_audience: ${{ env.mlflow_tracking_uri }} 
+      # - name: Authenticate with Google Cloud (ID Token)
+      #   id: auth_id
+      #   uses: 'google-github-actions/auth@v2'
+      #   with:
+      #     project_id: ${{ env.project_id }}
+      #     workload_identity_provider: ${{ env.workload_identity_provider }}
+      #     service_account: ${{ env.service_account }}
+      #     token_format: id_token
+      #     id_token_audience: ${{ env.mlflow_tracking_uri }} 
     
-      - name: Export service account ID token
-        run: 
-          echo "id_token=${{ steps.auth_id.outputs.id_token }}" >> "$GITHUB_ENV"
+      # - name: Export service account ID token
+      #   run: 
+      #     echo "id_token=${{ steps.auth_id.outputs.id_token }}" >> "$GITHUB_ENV"
 
       - uses: google-github-actions/get-gke-credentials@v1 
       # configure authentication to a GKE cluster (configure kubectl)
