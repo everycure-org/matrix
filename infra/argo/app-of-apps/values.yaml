@@ -3,8 +3,8 @@ spec:
     server: https://kubernetes.default.svc
   source:
     repoURL: https://github.com/everycure-org/matrix.git
-    targetRevision: {{ .Values.global.targetRevision }}
+    targetRevision: "{{ .Values.global.targetRevision }}"
     repoPath: infra/argo/applications_prodtest
 
-environment: {{ .Values.global.environment }}
-project_id: {{ .Values.global.project_id }}
+environment: "{{ .Values.global.environment }}"
+project_id: "{{ .Values.global.project_id }}"
