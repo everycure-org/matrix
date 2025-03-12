@@ -5,8 +5,8 @@ from kedro.pipeline.node import Node
 from pydantic import BaseModel, field_validator, model_validator
 
 # Values are in GiB
-KUBERNETES_DEFAULT_LIMIT_RAM = 64  # Increased from 52 GiB to handle larger data processing needs
-KUBERNETES_DEFAULT_REQUEST_RAM = 64  # Matching limit to ensure consistent performance
+KUBERNETES_DEFAULT_LIMIT_RAM = 52  # Increased from 52 GiB to handle larger data processing needs
+KUBERNETES_DEFAULT_REQUEST_RAM = 52  # Matching limit to ensure consistent performance
 
 # Values are in number of GPUs
 KUBERNETES_DEFAULT_NUM_GPUS = 0

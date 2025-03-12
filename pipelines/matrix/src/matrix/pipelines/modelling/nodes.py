@@ -33,7 +33,12 @@ def select_ground_truth(master_df: ps.DataFrame, ground_truth_type: List[str]) -
     Returns:
         Filtered DataFrame with selected ground truth pairs
     """
-    return master_df.filter(f.col("upstream_source").isin(ground_truth_type)).dropDuplicates(["subject", "object"])
+    # NOTE: This function was partially generated using AI assistance.
+    filtered_df = master_df.filter(f.col("upstream_source").isin(ground_truth_type)).dropDuplicates(
+        ["subject", "object"]
+    )
+    # Take 90% of the data randomly
+    return filtered_df.sample(fraction=0.9, seed=42)
 
 
 def filter_valid_pairs(
