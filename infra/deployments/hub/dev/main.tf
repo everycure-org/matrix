@@ -11,6 +11,7 @@ module "compute_cluster" {
   gitops_repo_creds = var.gitops_repo_creds
   k8s_secrets       = var.k8s_secrets
   bucket_name       = var.storage_bucket_name
+  repo_revision     = var.repo_revision
 }
 
 
