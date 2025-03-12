@@ -8,7 +8,7 @@ from kedro.framework.cli.utils import split_string
 
 from matrix.cli_commands.submit import submit
 from matrix.git_utils import get_current_git_branch
-from matrix.utils.authentication import get_iap_token, get_sa_key, get_sa_token
+from matrix.utils.authentication import get_iap_token, get_sa_token
 from matrix.utils.mlflow_utils import (
     DeletedExperimentExistsWithName,
     ExperimentNotFound,
