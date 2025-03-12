@@ -35,19 +35,33 @@ AUTH_URI = "https://accounts.google.com/o/oauth2/auth"
 TOKEN_URI = "https://oauth2.googleapis.com/token"
 SCOPE = ["openid", "email"]
 LOCAL_PATH = "conf/local/"
-AUDIENCE = "https://mlflow.platform.dev.everycure.org"
 
 # FastAPI app for callback handling
 result_queue = Queue()
 
+import google
+from google.auth import impersonated_credentials
 
-def get_sa_key(service_account_file) -> service_account.IDTokenCredentials:
-    token_data = service_account.IDTokenCredentials.from_service_account_file(
-        service_account_file, target_audience=AUDIENCE
-    )
-    token_data.refresh(google_requests.Request())
 
-    return token_data
+def get_sa_token(audience: str) -> Credentials:
+    """Generate an ID token for IAP authentication using environment credentials."""
+    creds, _ = google.auth.default()
+
+    # Create impersonated credentials with ID token
+    iap_credentials = impersonated_credentials.IDTokenCredentials(target_credentials=creds, target_audience=audience)
+
+    iap_credentials.refresh(google_requests.Request())
+
+    return iap_credentials
+
+
+# def get_sa_key(service_account_file) -> service_account.IDTokenCredentials:
+#     token_data = service_account.IDTokenCredentials.from_service_account_file(
+#         service_account_file, target_audience=AUDIENCE
+#     )
+#     token_data.refresh(google_requests.Request())
+
+#     return token_data
 
 
 def get_iap_token() -> Credentials:
