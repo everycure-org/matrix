@@ -22,4 +22,4 @@ def log_metric(context, name, value: Union[int, float]):
     if not DISABlE_MLFLOW:
         mlflow.log_metric(f"{context}/{name}", value)
     else:
-        logger.debug("MLFlow logging is disabled via environment variables.")
+        logger.debug(f"{context}/{name}: {value}")
