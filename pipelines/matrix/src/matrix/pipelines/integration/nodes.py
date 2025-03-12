@@ -172,7 +172,6 @@ def filter_unified_kg_edges(
         .select("edges.*")
     )
     new_edges_count = edges.count()
-    logger.info(f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges")
     log_metric(f"integration", f"Number of edges after filtering", new_edges_count)
 
     return _apply_transformations(edges, transformations)
