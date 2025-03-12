@@ -27,9 +27,10 @@ def experiment():
         if os.getenv("GITHUB_ACTIONS"):
             # Running in GitHub Actions, use the IAP token from the secrets
             click.secho("Running in GitHub Actions, using service account IAP token", fg="yellow", bold=True)
-            sa_id_token = os.getenv("id_token")
+            sa_credential_file = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+            sa_id_token = get_sa_key(sa_credential_file)
             mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")
-            os.environ["MLFLOW_TRACKING_TOKEN"] = sa_id_token
+            os.environ["MLFLOW_TRACKING_TOKEN"] = sa_id_token.id_token
         else:
             token = get_iap_token()
             mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")
