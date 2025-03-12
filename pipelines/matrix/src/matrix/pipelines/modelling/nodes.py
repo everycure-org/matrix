@@ -38,7 +38,7 @@ def select_ground_truth(master_df: ps.DataFrame, ground_truth_type: List[str]) -
         ["subject", "object"]
     )
     # Take 90% of the data randomly
-    return filtered_df.sample(fraction=0.9, seed=42)
+    return filtered_df.sample(fraction=0.8, seed=42)
 
 
 def filter_valid_pairs(
