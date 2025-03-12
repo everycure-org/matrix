@@ -82,6 +82,10 @@ spec:
     path: ${var.repo_path}/app-of-apps
     repoURL: ${var.repo_url}
     targetRevision: ${var.repo_revision}
+    helm:
+      values: |
+        global:
+          environment: ${var.environment}
   project: default
   syncPolicy:
     syncOptions:

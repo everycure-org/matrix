@@ -23,17 +23,17 @@ locals {
     default_region  = "us-central1"
     super_admins    = ["gcp-admins@everycure.org"]
   }
-  root_directory = get_terragrunt_dir()
-  environment = basename(get_terragrunt_dir())   # dev or prod
+  root_directory  = get_terragrunt_dir()
+  environment     = basename(get_terragrunt_dir()) # dev or prod
   deployment_path = get_original_terragrunt_dir()
-  env_vars = read_terragrunt_config("${local.deployment_path}/env.hcl")
+  env_vars        = read_terragrunt_config("${local.deployment_path}/env.hcl")
 }
 
 # Configure root level variables that all resources can inherit. This is especially helpful with multi-account configs
 # where terraform_remote_state data sources are placed directly into the modules.
 inputs = merge(
   local.globals,
-  {"environment" = local.environment},
+  { "environment" = local.environment },
   local.env_vars.locals
 )
 
@@ -47,6 +47,7 @@ variable "billing_account" {}
 variable "default_region" {}
 variable "super_admins" {}
 variable "environment" {}
+variable "repo_revision" {}
 variable "project_id" {}
 variable "billing_project" {}
 variable "storage_bucket_name" {}
@@ -70,8 +71,8 @@ EOF
 remote_state {
   backend = "gcs"
   config = {
-    bucket  = local.env_vars.locals.storage_bucket_name
-    prefix  = "terragrunt/core/${path_relative_to_include()}/"
+    bucket               = local.env_vars.locals.storage_bucket_name
+    prefix               = "terragrunt/core/${path_relative_to_include()}/"
     skip_bucket_creation = true
   }
   generate = {
