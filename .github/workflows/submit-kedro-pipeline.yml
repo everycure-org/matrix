@@ -20,6 +20,7 @@ env:
   service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
   region: 'us-central1'
   cluster: 'compute-cluster'
+  mlflow_tracking_uri: 'https://mlflow.platform.dev.everycure.org'
 
 jobs:
 
@@ -77,7 +78,12 @@ jobs:
           project_id: ${{env.project_id}}
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
-          token_format: access_token
+          token_format: id_token
+          id_token_audience: ${{env.mlflow_tracking_uri}}
+    
+      - name: Export service account ID token
+        run: 
+          echo "id_token=${{ steps.auth.outputs.id_token }}" >> "$GITHUB_ENV"
 
       - uses: google-github-actions/get-gke-credentials@v1 
       # configure authentication to a GKE cluster (configure kubectl)
@@ -91,35 +97,36 @@ jobs:
         with:
           registry: ${{env.region}}-docker.pkg.dev
           username: oauth2accesstoken
-          password: ${{ steps.auth.outputs.access_token }}
+          password: ${{env.id_token}}
 
-      - name: Fetch latest tag
-        id: fetch_latest_tag
-        run: |
-          latest_tag=$(git tag --list --sort="v:refname" | tail -n 1)
-          echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
-          echo "Latest tag is ${latest_tag}"
+      # - name: Fetch latest tag
+      #   id: fetch_latest_tag
+      #   run: |
+      #     latest_tag=$(git tag --list --sort="v:refname" | tail -n 1)
+      #     echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
+      #     echo "Latest tag is ${latest_tag}"
 
-      - name: Get bump type
-        run: |
-          if [[ "${{ github.event_name == 'schedule' }}" == "true" ]]; then
-            # If it's the first of the month, it's a minor bump, even if it's Tuesday. On all other Tuesdays, it's a patch.
-            [[ $(date +%-d) -eq 1 ]] && BUMP_TYPE='minor' || BUMP_TYPE='patch'
-          else
-            BUMP_TYPE="${{ github.event.inputs.bump_type }}"
-          fi
-          echo "BUMP_TYPE=${BUMP_TYPE}" >> "$GITHUB_ENV"
+      # - name: Get bump type
+      #   run: |
+      #     if [[ "${{ github.event_name == 'schedule' }}" == "true" ]]; then
+      #       # If it's the first of the month, it's a minor bump, even if it's Tuesday. On all other Tuesdays, it's a patch.
+      #       [[ $(date +%-d) -eq 1 ]] && BUMP_TYPE='minor' || BUMP_TYPE='patch'
+      #     else
+      #       BUMP_TYPE="${{ github.event.inputs.bump_type }}"
+      #     fi
+      #     echo "BUMP_TYPE=${BUMP_TYPE}" >> "$GITHUB_ENV"
 
-      - name: Increment version
-        working-directory: docs/scripts
-        run: |
-          pip install semver
-          python bump_version.py --type="${{env.BUMP_TYPE}}" >> "$GITHUB_ENV"
+      # - name: Increment version
+      #   working-directory: docs/scripts
+      #   run: |
+      #     pip install semver
+      #     python bump_version.py --type="${{env.BUMP_TYPE}}" >> "$GITHUB_ENV"
 
       - name: Branch off
         run: |
-          git switch -C release/${{env.release_version}} "${{github.ref_name}}"
-          git push
+          # git switch -C release/${{env.release_version}} "${{github.ref_name}}"
+          # git push
+          git checkout siyanluo/ec-167-skip-browser-login-for-iap-token-in-github-actions
 
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
@@ -127,38 +134,47 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Submit the kedro pipeline"
-          if [ "${{ env.BUMP_TYPE }}" == "minor" ]; then
-            RELEASE_PIPELINE='kg_release'
-          else
-            RELEASE_PIPELINE='kg_release_patch'
-          fi
-          kedro submit \
+          # if [ "${{ env.BUMP_TYPE }}" == "minor" ]; then
+          #   RELEASE_PIPELINE='kg_release'
+          # else
+          #   RELEASE_PIPELINE='kg_release_patch'
+          # fi
+          # kedro submit \
+          #   --username GH-Actions-bot \
+          #   --namespace argo-workflows \
+          #   --run-name auto-kg-release \
+          #   --release-version "${{ env.release_version }}" \
+          #   --pipeline ${RELEASE_PIPELINE} \
+          #   --headless
+          kedro experiment run \
             --username GH-Actions-bot \
             --namespace argo-workflows \
+            --experiment-name scheduled-kg-release \
             --run-name auto-kg-release \
-            --release-version "${{ env.release_version }}" \
-            --pipeline ${RELEASE_PIPELINE} \
+            --release-version v0.2.5 \
+            --pipeline kg_release \
+            --is-test \
             --headless
 
-  notify_failure:
-    # This condition ensures it runs only if any previous job fails
-    # we notify on main branches only
-    needs: submit_data_release_periodically
-    if: failure()
-    runs-on: "self-hosted"
-    steps:
-      - name: Post to a Slack channel
-        id: slack
-        uses: slackapi/slack-github-action@v1.26.0
-        with:
-          # Slack channel id, channel name, or user id to post message.
-          # See also: https://api.slack.com/methods/chat.postMessage#channels
-          # You can pass in multiple channels to post to by providing a comma-delimited list of channel IDs.
-          channel-id: 'C07HU35MKAQ' #github-notifications
-          # For posting a simple plain text message
-          slack-message: |
-            Release pipeline submission failed in GitHub Actions! 🚨
+  # notify_failure:
+  #   # This condition ensures it runs only if any previous job fails
+  #   # we notify on main branches only
+  #   needs: submit_data_release_periodically
+  #   if: failure()
+  #   runs-on: "self-hosted"
+  #   steps:
+  #     - name: Post to a Slack channel
+  #       id: slack
+  #       uses: slackapi/slack-github-action@v1.26.0
+  #       with:
+  #         # Slack channel id, channel name, or user id to post message.
+  #         # See also: https://api.slack.com/methods/chat.postMessage#channels
+  #         # You can pass in multiple channels to post to by providing a comma-delimited list of channel IDs.
+  #         channel-id: 'C07HU35MKAQ' #github-notifications
+  #         # For posting a simple plain text message
+  #         slack-message: |
+  #           Release pipeline submission failed in GitHub Actions! 🚨
 
-            🚀 Action run link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+  #           🚀 Action run link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+  #       env:
+  #         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
