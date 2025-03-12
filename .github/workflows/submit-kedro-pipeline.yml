@@ -46,30 +46,30 @@ jobs:
           git config --global user.name "All of us at Every Cure"
           git config --global push.autosetupremote true
 
-      - name: Remove unnecessary files
-        # debug: remove unnecessary files to free up disk space for building and pushing docker images
-        # ref: https://github.com/actions/runner-images/issues/2840
-        run: |
-          sudo rm -rf \
-              /usr/local/.ghcup \
-              /usr/local/lib/android/sdk/ndk \
-              "$AGENT_TOOLSDIRECTORY" && \
-          df -h
+      # - name: Remove unnecessary files
+      #   # debug: remove unnecessary files to free up disk space for building and pushing docker images
+      #   # ref: https://github.com/actions/runner-images/issues/2840
+      #   run: |
+      #     sudo rm -rf \
+      #         /usr/local/.ghcup \
+      #         /usr/local/lib/android/sdk/ndk \
+      #         "$AGENT_TOOLSDIRECTORY" && \
+      #     df -h
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      # - name: Set up Python
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version: '3.11'
 
-      - name: Set up kedro project dependencies
-        working-directory: pipelines/matrix
-        run: |
-          curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
-          gunzip argo-linux-amd64.gz
-          chmod +x argo-linux-amd64
-          sudo mv argo-linux-amd64 /usr/local/bin/argo
-          argo version
-          pip install -r requirements.txt
+      # - name: Set up kedro project dependencies
+      #   working-directory: pipelines/matrix
+      #   run: |
+      #     curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
+      #     gunzip argo-linux-amd64.gz
+      #     chmod +x argo-linux-amd64
+      #     sudo mv argo-linux-amd64 /usr/local/bin/argo
+      #     argo version
+      #     pip install -r requirements.txt
 
       - name: Authenticate with Google Cloud
         id: auth
@@ -97,7 +97,7 @@ jobs:
         with:
           registry: ${{env.region}}-docker.pkg.dev
           username: oauth2accesstoken
-          password: ${{env.id_token}}
+          password: ${{ steps.auth.outputs.id_token }}
 
       # - name: Fetch latest tag
       #   id: fetch_latest_tag
@@ -127,6 +127,31 @@ jobs:
           # git switch -C release/${{env.release_version}} "${{github.ref_name}}"
           # git push
           git checkout siyanluo/ec-167-skip-browser-login-for-iap-token-in-github-actions
+
+      - name: Remove unnecessary files
+        # debug: remove unnecessary files to free up disk space for building and pushing docker images
+        # ref: https://github.com/actions/runner-images/issues/2840
+        run: |
+          sudo rm -rf \
+              /usr/local/.ghcup \
+              /usr/local/lib/android/sdk/ndk \
+              "$AGENT_TOOLSDIRECTORY" && \
+          df -h
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up kedro project dependencies
+        working-directory: pipelines/matrix
+        run: |
+          curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
+          gunzip argo-linux-amd64.gz
+          chmod +x argo-linux-amd64
+          sudo mv argo-linux-amd64 /usr/local/bin/argo
+          argo version
+          pip install -r requirements.txt
 
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
