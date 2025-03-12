@@ -12,3 +12,9 @@ resource "kubernetes_config_map" "parameters" {
     GCP_BUCKET     = var.bucket_name
   }
 }
+
+resource "kubernetes_namespace" "argo_workflows_ns" {
+  metadata {
+    name = "argo-workflows"
+  }
+}
