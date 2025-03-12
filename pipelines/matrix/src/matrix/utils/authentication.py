@@ -23,7 +23,7 @@ from urllib.parse import parse_qs, urlparse
 import click
 import requests
 from google.auth.transport import requests as google_requests
-from google.oauth2 import id_token
+from google.oauth2 import id_token, service_account
 from google.oauth2.credentials import Credentials
 from rich.console import Console
 
@@ -38,6 +38,12 @@ LOCAL_PATH = "conf/local/"
 
 # FastAPI app for callback handling
 result_queue = Queue()
+
+
+def get_sa_key(service_account_file) -> service_account.IDTokenCredentials:
+    token_data = Credentials.from_authorized_user_file(service_account_file)
+    token_data.refresh(google_requests.Request())
+    return token_data
 
 
 def get_iap_token() -> Credentials:
