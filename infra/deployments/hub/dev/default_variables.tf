@@ -17,3 +17,5 @@ variable "k8s_secrets" {
   sensitive = true
   type      = map(string)
 }
+variable "repo_revision" {}
+
