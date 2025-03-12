@@ -63,6 +63,13 @@ install_compatibility: venv precommit-hooks
 	# versions for local machine limitations (e.g. newer pytorch on macos intel)
 	uv pip install -r requirements.txt --overrides requirements.overrides.txt
 
+install_argo:
+	curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
+	gunzip argo-linux-amd64.gz
+	chmod +x argo-linux-amd64
+	sudo mv argo-linux-amd64 /usr/local/bin/argo
+	argo version
+
 precommit: precommit-hooks
 	git fetch origin
 	uv run pre-commit run --from-ref origin/main --to-ref HEAD
@@ -70,6 +77,13 @@ precommit: precommit-hooks
 precommit-hooks:
 	uv pip install pre-commit 
 	uv run pre-commit install --install-hooks
+
+check_release_version_environment_variable:
+	if [ -z "${RELEASE_VERSION}" ]; then
+	echo "::error::release_version input is required"
+	exit 1
+	fi
+	echo "Using release version: ${RELEASE_VERSION}"
 
 full_test:
 	# activate venv to ensure spark doesn't have python driver mismatches
