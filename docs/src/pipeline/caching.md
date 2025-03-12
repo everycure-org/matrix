@@ -1,4 +1,4 @@
-# Caching Approaches for Embeddings Enrichment
+# Caching Approaches for API Based Enrichments
 
 ![Embeddings Caching](../assets/img/embeddings_caching.svg)
 
@@ -9,11 +9,11 @@ using external APIs.
 
 The matrix's data processing pipelines use external APIs to enrich certain
 datasets. As an example, the node embeddings and node normalization steps send
-data to online APIs, and use the APIs' responses to enrich the data. 
+data to REST APIs, and use the APIs' responses to enrich the data.
 
 ## Problem statement 
 
-APIs usually have fair-use restrictions, such as the number of requests per
+REST APIs usually have fair-use restrictions, such as the number of requests per
 minute (RPM) that can be processed. Exceeding these limits typically results in
 throttling: the service ignoring, sometimes even blocking, your requests for a
 while. These restrictions, together with network latency cause steps in which a
@@ -59,8 +59,7 @@ The caching strategy consists of 3 steps:
 
 3. **Lookup from Cache**
 
-   - A final join operation retrieves embeddings from the enhanced cache,
-     ensuring minimal API calls and efficient processing.
+   - A final join operation retrieves embeddings from the updated cache.
 
 ### Advantages
 
@@ -69,23 +68,26 @@ The caching strategy consists of 3 steps:
 The first and third steps are more computationally demanding than the second,
 and as such are good cases for Apache Spark in the cases where we're processing
 large datasets. To add some numbers here: embeddings needed to be found for 12M
-strings of about 100 characters each in Feb 2025.
+strings of 100 characters each in Feb 2025.
 
 The second step however, is a poor case for Apache Spark's distributed
 computing: the process is inherently IO bound, so throwing more CPUs at the
 problem won't solve it. Instead, one can typically optimize this by going for
 less processes, even down to the single process level, where concurrency
-techniques like threading and asyncronous IO can truely shine. 
+techniques like threading and asynchronous IO can truly shine.
 
 The current implementation takes that into account by separating those 3 steps
 onto Kubernetes pods in Argo Workflows with different resource requirements:
 whereas steps 1 and 3 can benefit from many cores, step 2 gets far less.
+Each step also has different memory and possibly disk requirements, depending
+on the batch size, the API responses and the volume of cache misses. With 3
+separate ArgoResourceConfigs, one has this control.
 
 #### Easier control over concurrent API calls
 
 By having only a single process reaching out to the APIs, it becomes easier to
 limit the number of concurrent API calls to not get throttled. Had this been
-done with Spark, using the all too common UDF, then the number of Spark
+done with Spark, using user-defined-functions, then the number of Spark
 executors (and the allocated threads) have to be taken into account as well.
 With dynamic allocation (which is at the time of writing not enabled), this
 becomes even trickier. It would require interprocess communication (IPC).  Note
@@ -128,14 +130,14 @@ feature multiple workers (i.e. all of the Kedro SparkDatasets).
 
 There are multiple ways to tackle this:
 
-- locking There are some locking mechanisms available for object stores, e.g.
+- There are some **locking mechanisms** available for object stores, e.g.
   Google Cloud's "[Request
   Preconditions](https://cloud.google.com/storage/docs/request-preconditions)".
   The downside is that this is not built-in to Spark, so we'd be writing custom
   code.
-- use of a table format that supports ACID transactions, like Apache
+- use of a **table format** that supports ACID transactions, like Apache
   Iceberg/Databricks Delta/Apache Hudi.
-- resolving duplicates with a call to create unique values
+- resolving duplicates with a call to create **unique values**
 
 The latter is the simplest (single line of code), and has been chosen. The
 second option was rejected for now, as it would introduce a technology that the
@@ -158,11 +160,14 @@ case, it's considered to be a small cost, since it only needs to go over a
 single dataset, which isn't PiB large either. Additionally, care has been taken
 to only go over it one extra time, by using a single aggregator.
 
-## Future work
+## Past work
 
-### Removal of mapPartitions
+Previous iterations of the current pipeline are summarized in the graph above.
+Only one other iteration has has caching implemented.
 
-The cache miss resolver step is currently implemented using Spark's
+### The mapPartitions approach
+
+The cache miss resolver step was implemented using Spark's
 `mapPartitions` mechanisms. It requires a serializable callable. Objects
 keeping state, like locks and database connections, cannot be used for such
 purposes. The workaround is to instantiate those objects _inside_ the callable,
@@ -174,7 +179,7 @@ dependency injection is lost. However, since the function being passed to
 `mapPartitions` is a parameter, one could simply create multiple functions,
 each injecting its own dependency.
 
-At the moment, `mapPartitions` provides for a quick and elegant solution, since
+`mapPartitions` provides for a quick and elegant solution, since
 it immediately reuses Kedro's Dataset definitions that have already been made
 in the catalog for the other 2 steps in our 3-step caching mechanism. That
 means we don't need to add extra catalog entries to parse a Parquet dataset
@@ -182,11 +187,6 @@ using a different engine, like Pandas, thus keeping a lighter catalog. Note
 that the 2nd node (the cache miss resolver) will still use more workers if
 given them. In the committed design, we have explicitly given it only a single
 CPU to make best use of resources.
-
-An alternative to `mapPartitions` could be given by PyArrow, where one could
-iterate over the dataset as well. That introduces new tech again though.
-PyArrow, at the time of writing, does not seem to allow for appending to an
-existing dataset though.
 
 ## Conclusion
 

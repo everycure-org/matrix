@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Sequence, TypeAlias
+from typing import Any, Dict, List, Sequence
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -15,8 +15,6 @@ from matrix.inject import inject_object, unpack_params
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
 from .graph_algorithms import GDSGraphAlgorithm
-
-ResolvedEmbedding: TypeAlias = tuple[str, list[float]]
 
 
 class GraphDS(GraphDataScience):

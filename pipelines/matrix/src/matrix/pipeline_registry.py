@@ -37,7 +37,6 @@ def register_pipelines() -> Dict[str, Pipeline]:
         "evaluation": create_evaluation_pipeline(),
         "create_sample": create_create_sample_pipeline(),
         "caching": create_node_embeddings_pipeline(),
-        "cached_normalization": create_cached_normalization_pipeline(),
         "ingest_to_N4J": create_ingest_to_N4J_pipeline(),
         # "inference": create_inference_pipeline(),  # Run manually based on medical input
     }
