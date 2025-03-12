@@ -1,0 +1,14 @@
+apiVersion: v2
+name: Gateway
+description: Gateway deployment
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
+dependencies:
+- name: external-dns
+  version: 1.14.5
+  repository: https://kubernetes-sigs.github.io/external-dns/
+- name: cert-manager
+  version: 1.15.3
+  repository: https://charts.jetstack.io

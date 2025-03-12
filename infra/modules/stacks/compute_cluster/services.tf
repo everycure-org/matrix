@@ -8,4 +8,5 @@ module "argo" {
   repo_path     = "infra/argo/"
   environment   = var.environment
   repo_revision = var.repo_revision
+  project_id    = var.project_id
 }

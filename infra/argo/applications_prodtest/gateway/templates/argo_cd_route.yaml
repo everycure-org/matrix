@@ -1,0 +1,44 @@
+# This shows how to do cross namespace referencing. This gets deployed in argocd namespace but references the 
+# gateway below through the namespace
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: argo-cd-route
+  namespace: argocd
+spec:
+  parentRefs:
+  - kind: Gateway
+    sectionName: https
+    namespace: gateway
+    name: external-http
+  hostnames:
+  - "argocd.platform.{{ .Values.global.environment }}.everycure.org"
+  rules:
+  - backendRefs:
+    - name: argo-argocd-server
+      port: 80
+  
+---
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  name: argocd-health-check
+spec:
+  default:
+    checkIntervalSec: 10
+    timeoutSec: 5
+    healthyThreshold: 1
+    unhealthyThreshold: 2
+    logConfig:
+      enabled: true
+    config:
+      type: HTTP
+      httpHealthCheck:
+        portSpecification: USE_FIXED_PORT
+        port: 80
+        requestPath: /healthz
+        proxyHeader: NONE
+  targetRef:
+    group: ""
+    kind: Service
+    name: argo-argocd-server

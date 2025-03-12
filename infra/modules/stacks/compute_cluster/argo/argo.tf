@@ -86,6 +86,7 @@ spec:
       values: |
         global:
           environment: ${var.environment}
+          project_id: ${var.project_id}
   project: default
   syncPolicy:
     syncOptions:
