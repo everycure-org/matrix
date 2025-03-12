@@ -3,8 +3,8 @@
 # -------------------------------------------------------------------------------------------------
 
 * @lvijnck @pascalwhoop @piotrkan @JacquesVergine @oliverw1
-docs/ @alexeistepa @leelancashire
-pipelines/matrix/** @alexeistepa @leelancashire 
-infra/ @emil-k
+docs/ @alexeistepa @leelancashire @oliverw1
+pipelines/matrix/** @alexeistepa @leelancashire @oliverw1 @Siyan-Luo @emil-k
+infra/ @emil-k @oliverw1
 
 
