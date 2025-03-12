@@ -1,7 +1,6 @@
 import glob
 import os
 import re
-import warnings
 from pathlib import Path
 
 import pytest
@@ -19,6 +18,7 @@ _ALLOWED_LAYERS = [
     "models",
     "model_output",
     "reporting",
+    "cache",
 ]
 
 
@@ -47,7 +47,7 @@ def test_no_parameter_entries_from_catalog_unused(
     """Tests whether all parameter entries from the catalog are used in the pipeline."""
     kedro_context = request.getfixturevalue(kedro_context)
     used_conf_entries = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
-    used_params = [entry for entry in list(used_conf_entries) if "params:" in entry]
+    used_params = [entry for entry in used_conf_entries if "params:" in entry]
 
     declared_conf_entries = kedro_context.catalog.list()
 
@@ -61,10 +61,7 @@ def test_no_parameter_entries_from_catalog_unused(
         declared_param
         for declared_param in declared_params
         if not any(
-            [
-                declared_param.startswith(used_param) or used_param.startswith(declared_param)
-                for used_param in used_params
-            ]
+            declared_param.startswith(used_param) or used_param.startswith(declared_param) for used_param in used_params
         )
     ]
 
@@ -114,7 +111,7 @@ def test_memory_data_sets_absent(cloud_kedro_context: KedroContext) -> None:
     used_data_sets_wout_double_params = {x.replace("params:params:", "params:") for x in used_data_sets}
 
     # Matching data factories is really slow, therefore we're compiling each data factory name
-    # into a regex, that is subesequently used to determine whether it exists.
+    # into a regex, that is subsequently used to determine whether it exists.
     factories = [re.compile(parse_to_regex(pattern)) for pattern in cloud_kedro_context.catalog._dataset_patterns]
     catalog_datasets = set(cloud_kedro_context.catalog.list())
     memory_data_sets = [
@@ -124,7 +121,7 @@ def test_memory_data_sets_absent(cloud_kedro_context: KedroContext) -> None:
             dataset in catalog_datasets
             # Note, this is lazy loaded, we're only validating factory
             # if we could not find in plain catalog datasets
-            or any([factory.match(dataset) for factory in factories])
+            or any(factory.match(dataset) for factory in factories)
         )
     ]
 
@@ -163,7 +160,7 @@ def test_catalog_filepath_follows_conventions(
             _, pipeline, _ = os.path.relpath(file, conf_source).split(os.sep, 2)
 
             # Validate each entry
-            for entry, _ in entries.items():
+            for entry in entries:
                 # Ignore tmp. entries
                 if entry.startswith("_"):
                     continue
@@ -197,8 +194,6 @@ def test_parameters_filepath_follows_conventions(
         {pipeline}.{layer}.*
 
         {pipeline}.{namespace}.{layer}.*
-
-        cache.*
     """
 
     config_loader = request.getfixturevalue(config_loader)
@@ -228,7 +223,7 @@ def test_parameters_filepath_follows_conventions(
                 continue
 
             # Validate each entry
-            for entry, _ in entries.items():
+            for entry in entries:
                 # Ignore tmp. entries
                 if entry.startswith("_"):
                     continue

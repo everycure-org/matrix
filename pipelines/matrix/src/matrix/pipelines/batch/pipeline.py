@@ -11,7 +11,7 @@ import pyarrow as pa
 from kedro.pipeline import Pipeline, node, pipeline
 from matrix.inject import inject_object
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
-from matrix.pipelines.embeddings.encoders import AttributeEncoder, T
+from matrix.pipelines.embeddings.encoders import AttributeEncoder
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
@@ -41,40 +41,37 @@ def create_node_embeddings_pipeline() -> Pipeline:
     return cached_api_enrichment_pipeline(
         source="embeddings",
         input="integration.prm.filtered_nodes",
-        output="embeddings.fully_enriched",  # TODO: to be fixed by branch feat/embeddings_caching
-        preprocessor="params:embeddings.caching.preprocessor",
-        cache_miss_resolver="params:embeddings.caching.resolver",
-        api="params:embeddings.caching.api",
-        new_col="params:embeddings.caching.new_col",
-        primary_key="params:embeddings.caching.primary_key",
-        batch_size="params:embeddings.caching.batch_size",
-        cache="embeddings.cache.read",
-        cache_misses="embeddings.cache.misses",
-        cache_out="embeddings.cache_write",
-        cache_reload="embeddings.cache.reload",
-        value_type="params:embeddings.caching.cache_schema.value_type",
-        scope="params:embeddings.caching.cache_schema.scope",
+        output="embeddings.feat.graph.node_embeddings@spark",
+        preprocessor="params:embeddings.node.caching.preprocessor",
+        cache_miss_resolver="params:embeddings.node.caching.resolver",
+        api="params:embeddings.node.caching.api",
+        new_col="params:embeddings.node.caching.target_col",
+        cache="embeddings.node.cache.read",
+        primary_key="params:embeddings.node.caching.primary_key",
+        batch_size="params:embeddings.node.caching.batch_size",
+        cache_misses="embeddings.node.cache.misses",
+        cache_reload="embeddings.node.cache.reload",
+        cache_out="embeddings.node.cache.write",
     )
 
 
 def cached_api_enrichment_pipeline(
     source: str,
     input: str,
-    cache: str,
     primary_key: str,
-    cache_miss_resolver: str,  # Callable[[str], Callable[[Iterable[T]], Iterator[V]]]
+    cache_miss_resolver: str,  # Ref to [AttributeEncoder|Normalizer]
     api: str,
-    preprocessor: str,  # Callable[[DataFrame], DataFrame],
+    preprocessor: str,  # Ref to Callable[[DataFrame], DataFrame],
     output: str,
     new_col: str,
     batch_size: str,
+    cache: str,
     cache_misses: str,
-    cache_out: str,
     cache_reload: str,
-    value_type,
-    scope,
+    cache_out: str,
 ) -> Pipeline:
-    """Pipeline to enrich a dataframe using optionally cached API calls.
+    """
+    Define a Kedro Pipeline to enrich a Spark Dataframe using optionally cached API calls.
 
     The advantage to using this is that any identical API calls that have
     been made in other runs will have been cached, so that the enrichment
@@ -83,52 +80,73 @@ def cached_api_enrichment_pipeline(
     Note: ideally the preprocessor is a no-op, a simple pass-through (like
     `lambda x: x`). If you can shape your DataFrame in such a way that it
     doesn't need a custom preprocessor (e.g. by calling your own preprocessor
-    in the previous node, at the end), it'll be computationally more efficient
+    in the node just prior to this pipeline), it'll be computationally more efficient
     (meaning this subpipeline will complete faster, and thus saves the
     organization money).
 
-    input: Kedro reference to a Spark DataFrame where you want to add a column
-    `new_col` to.
+    Args:
+        source: data source name, in node normalization of integration pipeline,
+        there's several data sources, we need to distinguish the node names.
 
-    cache: Kedro reference to the Spark DataFrame that maps keys to values. The
-    keys will be compared to the `primary_key` column of the DataFrame
-    resulting from calling the `preprocessor` on the `input`. Aside from the
-    key and value column, it also has a third column, named api, linking the
-    keys to the API used at the time of the lookup.
+        input: Kedro reference to a Spark DataFrame where you want to add a column
+        `new_col` to.
 
-    cache_misses: a Kedro reference to a SparkDataset that is used for temporary results.
+        primary_key: name of the column that should be produced (or passed) by the
+        preprocessor function. It is this column of values that will be used to
+        check against the cache, or failing that, sent to the cache_miss_resolver.
 
-    primary_key: name of the column that should be produced (or passed) by the
-    preprocessor function. It is this column of values that will be used to
-    check against the cache, or failing that, sent to the cache_miss_resolver.
+        cache_miss_resolver: Kedro reference to an object having an apply method,
+        which is an asynchronous callable that will be used to look up any cache misses.
 
-    cache_miss_resolver: Kedro reference to a callable that will be used to
-    look up any cache misses.
+        api: Kedro parameter to restrict the cache to use results from this
+        particular API. You will want to match this with the parameters of
+        the `cache_miss_resolver`.
 
-    api: Kedro parameter to restrict the cache to use results from this
-    particular API
+        preprocessor: Kedro reference to a callable that will preprocess the
+        `input` such that it has a column `primary_key` which is used in the
+        look-up process.
 
-    preprocessor: Kedro reference to a callable that will preprocess the
-    `input` such that it has a column `primary_key` which is used in the
-    look-up process.
+        output: Kedro reference to a dataset that is the input plus this new
+        `new_col` containing the results from the enrichment with the cache/API.
 
-    output: Kedro reference to a dataset that is the input plus this new
-    `new_col` containing the results from the enrichment with the cache/API.
+        new_col: name of the column in which the values associated with the
+        `primary_key` should appear.
 
-    new_col: name of the column in which the values associated with the
-    primary_key should appear.
+        batch_size: the size of a batch that will be sent to the embedder. Keep in
+        mind that concurrent requests may be running, which means the API might be
+        getting more batches in parallel, which in turn can  have an affect
+        (positive or negative, it depends on the API) on the performance. This
+        argument is a determining factor of the size of the files produced by running
+        the cache miss resolver.
 
-    batch_size: the size of a batch that will be sent to the embedder. Keep in
-    mind that concurrent requests may be running, which means the API might be
-    getting more batches in parallel, which in turn can  have an affect
-    (positive or negative, it depends on the API) on the performance.
+        cache: Kedro reference to the Spark DataFrame that maps keys to values. The
+        keys will be compared to the `primary_key` column of the DataFrame
+        resulting from calling the `preprocessor` on the `input`. Aside from the
+        key and value column, it also has a third column, named api, linking the
+        keys to the API used at the time of the lookup.
+
+        cache_misses: a Kedro reference to a SparkDataset that is used for
+        temporary results.
+        This should refer to a **unique** storage location particular to the API
+        and the kedro node, to avoid concurrent overwrites. That is, for embeddings
+        and node normalization, these should be different paths.
+
+        cache_reload: a Catalog entry that duplicates `cache`. There only to force
+        Kedro to re-load the cache, otherwise it will continue with the files it
+        found before the cache miss resolver modified the cache location.
+
+        cache_out: a Catalog entry that points to the same location as `cache`, and
+        `cache_reload`, but uses PartitionedAsyncParallelDatasets to append batches
+        of resolved misses to the already existing cache.
+
+    Returns:
+        A Kedro Pipeline that will enrich the input DataFrame.
     """
-    common_inputs = {"df": input, "cache": cache, "api": api, "primary_key": primary_key, "preprocessor": preprocessor}
     nodes = [
         ArgoNode(
             name=f"derive_{source}_cache_misses",
             func=derive_cache_misses,
-            inputs=common_inputs,
+            inputs={"df": input, "cache": cache, "api": api, "primary_key": primary_key, "preprocessor": preprocessor},
             outputs=cache_misses,
             argo_config=ArgoResourceConfig(
                 cpu_request=4,
@@ -159,8 +177,17 @@ def cached_api_enrichment_pipeline(
         ArgoNode(
             name=f"lookup_{source}_from_cache",
             func=lookup_from_cache,
-            inputs=common_inputs | {"cache": cache_reload, "new_col": new_col, "lineage_dummy": cache_out},
+            inputs={
+                "df": input,
+                "cache": cache_reload,
+                "api": api,
+                "primary_key": primary_key,
+                "preprocessor": preprocessor,
+                "new_col": new_col,
+                "lineage_dummy": cache_out,
+            },
             outputs=output,
+            argo_config=ArgoResourceConfig(ephemeral_storage_limit=1024, memory_limit=128),
         ),
     ]
 
@@ -204,7 +231,7 @@ def cache_miss_resolver_wrapper(
         logger.info(f"embedding batch with key: {batch[0]}")
         transformed = await transformer.apply(batch)
         logger.info(f"received embedding for batch with key: {batch[0]}")
-        return pa.table([batch, transformed, [api] * len(batch)], schema=cache_schema).to_pandas()
+        return pa.table([batch, transformed, [api] * len(batch)], schema=CACHE_SCHEMA).to_pandas()
 
     def prep(
         batches: Iterable[Sequence[T]], api: str
@@ -255,14 +282,17 @@ def resolve_cache_duplicates(df: DataFrame, id_col: str) -> DataFrame:
     if keys != distinct_keys:
         # Warnings can be converted to errors, making them more ideal here.
         warnings.warn(
-            f"The cache contains duplicate keys. This is likely the result of a concurrent run and should be prevented. Continuing by non-discriminatory dropping duplicates…"
+            "The cache contains duplicate keys. This is likely the result of a "
+            "concurrent run and should be prevented. Continuing by non-"
+            "discriminatory dropping duplicates…"
         )
         df = df.drop_duplicates([id_col])
     return df
 
 
 def batched(iterable: Iterable[T], n: int, *, strict: bool = False) -> Iterator[tuple[T]]:
-    # Taken from the recipe at https://docs.python.org/3/library/itertools.html#itertools.batched , which is available by default in 3.12
+    # Taken from the recipe at https://docs.python.org/3/library/itertools.html#itertools.batched ,
+    # which is available by default in Python 3.12
     # batched('ABCDEFG', 3) → ABC DEF G
     if n < 1:
         raise ValueError("batch size must be at least one")

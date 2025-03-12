@@ -1,0 +1,48 @@
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+  metadata:
+    kedro-viz:
+      layer: embeddings
+
+_pandas_parquet: &_pandas_parquet
+  type: matrix.datasets.graph.PandasParquetDataset
+  save_args:
+    engine: pyarrow
+  load_args:
+    engine: pyarrow
+    as_type: str
+
+# -------------------------------------------------------------------------
+# Datasets
+# -------------------------------------------------------------------------
+
+batch.int.{source}.input_bucketized@spark:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.tmp}/batch/{source}/bucketized
+  save_args:
+    mode: overwrite
+    partitionBy:
+      - bucket
+
+batch.int.{source}.input_bucketized@partitioned:
+  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
+  path: ${globals:paths.tmp}/batch/{source}/bucketized
+  dataset: 
+    <<: *_pandas_parquet
+  filename_suffix: ".parquet"
+
+batch.int.{source}.{workers}.input_transformed@partitioned:
+  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
+  overwrite: True # NOTE: Very important to ensure every run clear out previous partitions
+  max_workers: "{workers}" # Used to enable API parallelization (note that filepath is not affected by this))
+  path: ${globals:paths.tmp}/batch/{source}/transformed
+  dataset: 
+    <<: *_pandas_parquet
+  filename_suffix: ".parquet"
+
+batch.int.{source}.{workers}.input_transformed@spark:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.tmp}/batch/{source}/transformed

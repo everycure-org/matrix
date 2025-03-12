@@ -22,8 +22,6 @@ _spark_parquet_ds: &_spark_parquet
 # Datasets
 # -------------------------------------------------------------------------
 
-# NOTE: Loads the full partitioned dataframe, i.e., all buckets
-# in single Spark dataframe for downstream processing
 embeddings.feat.graph.node_embeddings@spark:
   <<: *_spark_parquet
   filepath: ${globals:paths.tmp}/feat/tmp_nodes_with_embeddings
@@ -102,9 +100,9 @@ embeddings.reporting.topological_pca_plot:
 
 
 # cache:
-embeddings.cache.read: &cache_in
+embeddings.node.cache.read: &cache_in
   type: matrix.datasets.gcp.SparkWithSchemaDataset
-  filepath: &cache_location ${globals:paths.cache}/embeddings/embeddings_cache6
+  filepath: &cache_location ${globals:paths.cache}/embeddings/node
   provide_empty_if_not_present: true
   load_args:
     schema:
@@ -127,23 +125,16 @@ embeddings.cache.read: &cache_in
           dataType:
             _object: *_stringtype
           nullable: False
-embeddings.cache.write:
-    type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
-    path: *cache_location
-    dataset: kedro_datasets.pandas.ParquetDataset
-    timeout: 600  # if the batch size increases, you'll likely need to increase this too, as most APIs simply take longer to process larger batches.
-    filename_suffix: ".parquet"
-    max_workers: 20  # Affects the number of concurrent threads, so more = faster. But more also implies more memory needed, as more transformed batches are returned, prior to writing.
-embeddings.cache.reload:  # an easy way to force Kedro to reload a dataset that has been altered in a previous node, but which is not using the same reference (e.g. due to transcription)
+embeddings.node.cache.write:
+  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
+  path: *cache_location
+  dataset: kedro_datasets.pandas.ParquetDataset
+  timeout: 600  # if the batch size increases, you'll likely need to increase this too, as most APIs simply take longer to process larger batches.
+  filename_suffix: ".parquet"
+  max_workers: 20  # Affects the number of concurrent threads, so more = faster. But more also implies more memory needed, as more transformed batches are returned, prior to writing.
+embeddings.node.cache.reload:  # an easy way to force Kedro to reload a dataset that has been altered in a previous node, but which is not using the same reference (e.g. due to transcription)
   <<: *cache_in
-embeddings.cache.misses:
-    type: matrix.datasets.gcp.LazySparkDataset
-    filepath: ${globals:paths.cache}/embeddings/cache_misses6
-    save_args:
-      mode: overwrite
+embeddings.node.cache.misses:
+  <<: *_spark_parquet
+  filepath:  ${globals:paths.cache}/tmp/cache_misses/embeddings/node
 
-embeddings.fully_enriched:
-  type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.cache}/embeddings/embedded6
-  save_args:
-    mode: overwrite
