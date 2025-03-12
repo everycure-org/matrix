@@ -240,7 +240,6 @@ def create_shared_pipeline() -> Pipeline:
             ArgoNode(
                 func=nodes.prefilter_nodes,
                 inputs=[
-                    "filtering.prm.filtered_nodes",
                     "embeddings.feat.nodes",
                     "modelling.raw.known_pairs@spark",
                     "params:modelling.drug_types",
