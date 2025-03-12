@@ -8,7 +8,7 @@ from kedro.framework.cli.utils import split_string
 
 from matrix.cli_commands.submit import submit
 from matrix.git_utils import get_current_git_branch
-from matrix.utils.authentication import get_iap_token, get_sa_key
+from matrix.utils.authentication import get_iap_token, get_sa_key, get_sa_token
 from matrix.utils.mlflow_utils import (
     DeletedExperimentExistsWithName,
     ExperimentNotFound,
@@ -27,9 +27,10 @@ def experiment():
         if os.getenv("GITHUB_ACTIONS"):
             # Running in GitHub Actions, use the IAP token from the secrets
             click.secho("Running in GitHub Actions, using service account IAP token", fg="yellow", bold=True)
-            sa_credential_file = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-            sa_id_token = get_sa_key(sa_credential_file).token
+            # sa_credential_file = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+            # sa_id_token = get_sa_key(sa_credential_file).token
             # sa_id_token = os.getenv("id_token")
+            sa_id_token = get_sa_token("https://mlflow.platform.dev.everycure.org").token
             mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")
             os.environ["MLFLOW_TRACKING_TOKEN"] = sa_id_token
         else:
