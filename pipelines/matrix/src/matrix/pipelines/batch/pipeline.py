@@ -52,6 +52,8 @@ def create_node_embeddings_pipeline() -> Pipeline:
         cache_misses="embeddings.node.cache.misses",
         cache_reload="embeddings.node.cache.reload",
         cache_out="embeddings.node.cache.write",
+        value_type="params:embeddings.node.caching.cache_schema.value_type",
+        scope="params:embeddings.node.caching.cache_schema.scope",
     )
 
 
