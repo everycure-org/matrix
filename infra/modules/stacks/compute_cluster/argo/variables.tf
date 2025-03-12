@@ -21,3 +21,7 @@ variable "repo_revision" {
   description = "Revision to deploy by ArgoCD."
   type        = string
 }
+
+variable "environment" {
+  type = string
+}

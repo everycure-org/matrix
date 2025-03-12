@@ -4,6 +4,7 @@ variable "billing_account" {}
 variable "default_region" {}
 variable "super_admins" {}
 variable "environment" {}
+variable "repo_revision" {}
 variable "project_id" {}
 variable "billing_project" {}
 variable "storage_bucket_name" {}
