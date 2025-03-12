@@ -35,14 +35,18 @@ AUTH_URI = "https://accounts.google.com/o/oauth2/auth"
 TOKEN_URI = "https://oauth2.googleapis.com/token"
 SCOPE = ["openid", "email"]
 LOCAL_PATH = "conf/local/"
+AUDIENCE = "https://mlflow.platform.dev.everycure.org"
 
 # FastAPI app for callback handling
 result_queue = Queue()
 
 
 def get_sa_key(service_account_file) -> service_account.IDTokenCredentials:
-    token_data = Credentials.from_authorized_user_file(service_account_file)
+    token_data = service_account.IDTokenCredentials.from_service_account_file(
+        service_account_file, target_audience=AUDIENCE
+    )
     token_data.refresh(google_requests.Request())
+
     return token_data
 
 
