@@ -69,6 +69,8 @@ def cached_api_enrichment_pipeline(
     cache_misses: str,
     cache_reload: str,
     cache_out: str,
+    value_type: str,
+    scope: str,
 ) -> Pipeline:
     """
     Define a Kedro Pipeline to enrich a Spark Dataframe using optionally cached API calls.
