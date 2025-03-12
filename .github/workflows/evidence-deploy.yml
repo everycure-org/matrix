@@ -72,6 +72,11 @@ jobs:
       # setup runtime
       - name: 'Checkout'
         uses: actions/checkout@main
+
+      - name: Validate release version
+        working-directory: pipelines/matrix
+        run: make check_release_version_environment_variable
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20' 
@@ -86,7 +91,6 @@ jobs:
           service_account: ${{env.ro_sa}}
 
       # perform build & deploy
-      - run: printenv RELEASE_VERSION
       - run: make install
       - run: make run-sources
       - run: make build
