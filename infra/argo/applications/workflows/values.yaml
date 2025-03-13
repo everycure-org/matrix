@@ -7,7 +7,7 @@ argo-workflows:
   artifactRepository:
     archiveLogs: true
     gcs:
-      bucket: mtrx-us-central1-hub-dev-storage
+      bucket: dummy
       keyFormat: "{{ \"{{workflow.namespace}}/{{workflow.name}}/{{pod.name}}\" }}"
   
   controller:
