@@ -1,0 +1,4 @@
+app:
+  registry: dummy
+  config:
+    data_path: dummy
