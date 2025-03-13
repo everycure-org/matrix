@@ -1,10 +1,10 @@
+import itertools
 import json
 import logging
-from typing import Any, Callable, Dict, List, Tuple, Union
+from typing import Any, Callable, Iterable, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
-import pandera
 import pyspark.sql as ps
 import pyspark.sql.types as T
 from pyspark.sql import functions as f
@@ -27,57 +27,42 @@ plt.switch_backend("Agg")
 def filter_valid_pairs(
     nodes: ps.DataFrame,
     edges_gt: ps.DataFrame,
-    drug_categories: List[str],
-    disease_categories: List[str],
-) -> Tuple[ps.DataFrame, Dict[str, float]]:
+    drug_categories: Iterable[str],
+    disease_categories: Iterable[str],
+) -> tuple[ps.DataFrame, dict[str, float]]:
     """Filter GT pairs to only include nodes that 1) exist in the nodes DataFrame, 2) have the correct category.
 
     Args:
         nodes: Nodes dataframe
         edges_gt: DataFrame with ground truth pairs
-        drug_categories: List of drug categories to be filtered on
-        disease_categories: List of disease categories to be filtered on
+        drug_categories: list of drug categories to be filtered on
+        disease_categories: list of disease categories to be filtered on
 
     Returns:
-        Tuple containing:
+        tuple containing:
         - DataFrame with combined filtered positive and negative pairs
         - Dictionary with retention statistics
     """
     # Create set of categories to filter on
-    categories = drug_categories + disease_categories
+    categories = set(itertools.chain(drug_categories, disease_categories))
     categories_array = f.array([f.lit(cat) for cat in categories])
 
     # Get list of nodes in the KG
-    valid_nodes_in_kg = nodes.select("id").distinct()
-    valid_nodes_with_categories = nodes.filter(
-        f.col("all_categories").isNotNull() & (f.size(f.array_intersect(f.col("all_categories"), categories_array)) > 0)
-    ).select("id")
+    valid_nodes_in_kg = nodes.select("id").distinct().cache()
+    valid_nodes_with_categories = (
+        nodes.filter(f.size(f.array_intersect(f.col("all_categories"), categories_array)) > 0).select("id").cache()
+    )
     # Divide edges_gt into positive and negative pairs to know ratio retained for each
     edges_gt = edges_gt.withColumnRenamed("subject", "source").withColumnRenamed("object", "target")
-    raw_tp = edges_gt.filter(f.col("y") == 1)
-    raw_tn = edges_gt.filter(f.col("y") == 0)
+    raw_tp = edges_gt.filter(f.col("y") == 1).cache()
+    raw_tn = edges_gt.filter(f.col("y") == 0).cache()
 
     # Filter out pairs where both source and target exist in nodes
-    filtered_tp_in_kg = (
-        raw_tp.join(valid_nodes_in_kg.alias("source_nodes"), raw_tp.source == f.col("source_nodes.id"))
-        .join(valid_nodes_in_kg.alias("target_nodes"), raw_tp.target == f.col("target_nodes.id"))
-        .select(raw_tp["*"])
-    )
-    filtered_tn_in_kg = (
-        raw_tn.join(valid_nodes_in_kg.alias("source_nodes"), raw_tn.source == f.col("source_nodes.id"))
-        .join(valid_nodes_in_kg.alias("target_nodes"), raw_tn.target == f.col("target_nodes.id"))
-        .select(raw_tn["*"])
-    )
-    filtered_tp_categories = (
-        raw_tp.join(valid_nodes_with_categories.alias("source_nodes"), raw_tp.source == f.col("source_nodes.id"))
-        .join(valid_nodes_with_categories.alias("target_nodes"), raw_tp.target == f.col("target_nodes.id"))
-        .select(raw_tp["*"])
-    )
-    filtered_tn_categories = (
-        raw_tn.join(valid_nodes_with_categories.alias("source_nodes"), raw_tn.source == f.col("source_nodes.id"))
-        .join(valid_nodes_with_categories.alias("target_nodes"), raw_tn.target == f.col("target_nodes.id"))
-        .select(raw_tn["*"])
-    )
+    filtered_tp_in_kg = _filter_source_and_target_exist(raw_tp, in_=valid_nodes_in_kg)
+    filtered_tn_in_kg = _filter_source_and_target_exist(raw_tn, in_=valid_nodes_in_kg)
+    filtered_tp_categories = _filter_source_and_target_exist(raw_tp, in_=valid_nodes_with_categories)
+    filtered_tn_categories = _filter_source_and_target_exist(raw_tn, in_=valid_nodes_with_categories)
+
     # Filter out pairs where category of source or target is incorrect AND source and target do not exist in nodes
     final_filtered_tp_categories = (
         filtered_tp_in_kg.join(
@@ -98,24 +83,21 @@ def filter_valid_pairs(
         .select(filtered_tn_categories["*"])
     )
     # Calculate retention percentages
+    rows_in_raw_tp, rows_in_raw_tn = raw_tp.count(), raw_tn.count()
     retention_stats = {
-        "positive_pairs_retained_in_kg_pct": (filtered_tp_in_kg.count() / raw_tp.count())
-        if raw_tp.count() > 0
+        "positive_pairs_retained_in_kg_pct": (filtered_tp_in_kg.count() / rows_in_raw_tp) if rows_in_raw_tp else 1.0,
+        "negative_pairs_retained_in_kg_pct": (filtered_tn_in_kg.count() / rows_in_raw_tn) if rows_in_raw_tn else 1.0,
+        "positive_pairs_retained_in_categories_pct": (filtered_tp_categories.count() / rows_in_raw_tp)
+        if rows_in_raw_tp
         else 1.0,
-        "negative_pairs_retained_in_kg_pct": (filtered_tn_in_kg.count() / raw_tn.count())
-        if raw_tn.count() > 0
+        "negative_pairs_retained_in_categories_pct": (filtered_tn_categories.count() / rows_in_raw_tn)
+        if rows_in_raw_tn
         else 1.0,
-        "positive_pairs_retained_in_categories_pct": (filtered_tp_categories.count() / raw_tp.count())
-        if raw_tp.count() > 0
+        "positive_pairs_retained_final_pct": (final_filtered_tp_categories.count() / rows_in_raw_tp)
+        if rows_in_raw_tp
         else 1.0,
-        "negative_pairs_retained_in_categories_pct": (filtered_tn_categories.count() / raw_tn.count())
-        if raw_tn.count() > 0
-        else 1.0,
-        "positive_pairs_retained_final_pct": (final_filtered_tp_categories.count() / raw_tp.count())
-        if raw_tp.count() > 0
-        else 1.0,
-        "negative_pairs_retained_final_pct": (final_filtered_tn_categories.count() / raw_tn.count())
-        if raw_tn.count() > 0
+        "negative_pairs_retained_final_pct": (final_filtered_tn_categories.count() / rows_in_raw_tn)
+        if rows_in_raw_tn
         else 1.0,
     }
 
@@ -124,6 +106,14 @@ def filter_valid_pairs(
         final_filtered_tn_categories.withColumn("y", f.lit(0))
     )
     return {"pairs": pairs_df, "metrics": retention_stats}
+
+
+def _filter_source_and_target_exist(df: ps.DataFrame, in_: ps.DataFrame) -> ps.DataFrame:
+    return (
+        df.join(in_.alias("source_nodes"), df["source"] == f.col("source_nodes.id"))
+        .join(in_.alias("target_nodes"), df["target"] == f.col("target_nodes.id"))
+        .select(df["*"])
+    )
 
 
 @check_output(
@@ -150,16 +140,17 @@ def attach_embeddings(
     Returns:
         DataFrame with source and target embeddings attached
     """
-    return (
-        pairs_df.alias("pairs")
-        .join(nodes.withColumn("source", f.col("id")), how="left", on="source")
-        .withColumnRenamed("topological_embedding", "source_embedding")
-        .withColumn("source_embedding", f.col("source_embedding").cast(T.ArrayType(T.FloatType())))
-        .join(nodes.withColumn("target", f.col("id")), how="left", on="target")
-        .withColumnRenamed("topological_embedding", "target_embedding")
-        .withColumn("target_embedding", f.col("target_embedding").cast(T.ArrayType(T.FloatType())))
-        .select("pairs.*", "source_embedding", "target_embedding")
+    return pairs_df.transform(_add_embedding, from_=nodes, using="source").transform(
+        _add_embedding, from_=nodes, using="target"
     )
+
+
+def _add_embedding(df: ps.DataFrame, from_: ps.DataFrame, using: str) -> ps.DataFrame:
+    from_ = from_.select(
+        f.col("id").alias(using),
+        f.col("topological_embedding").cast(T.ArrayType(T.FloatType())).alias(f"{using}_embedding"),
+    )
+    return df.join(from_, how="left", on=using)
 
 
 @check_output(
@@ -173,11 +164,10 @@ def attach_embeddings(
     )
 )
 def prefilter_nodes(
-    full_nodes: ps.DataFrame,
     nodes: ps.DataFrame,
     gt: ps.DataFrame,
-    drug_types: List[str],
-    disease_types: List[str],
+    drug_types: list[str],
+    disease_types: list[str],
 ) -> ps.DataFrame:
     """Prefilter nodes for negative sampling.
 
@@ -201,7 +191,7 @@ def prefilter_nodes(
     df = (
         nodes.withColumn("is_drug", f.arrays_overlap(f.col("all_categories"), f.lit(drug_types)))
         .withColumn("is_disease", f.arrays_overlap(f.col("all_categories"), f.lit(disease_types)))
-        .filter((f.col("is_disease")) | (f.col("is_drug")))
+        .filter(f.col("is_disease") | f.col("is_drug"))
         .select("id", "topological_embedding", "is_drug", "is_disease")
         # TODO: The integrated data product _should_ contain these nodes
         # TODO: Verify below does not have any undesired side effects
@@ -226,7 +216,7 @@ def prefilter_nodes(
 )
 @inject_object()
 def make_folds(
-    data: ps.DataFrame,
+    data: pd.DataFrame,
     splitter: BaseCrossValidator,
     disease_list: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -324,7 +314,7 @@ def create_model_input_nodes(
 @inject_object()
 def fit_transformers(
     data: pd.DataFrame,
-    transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
+    transformers: dict[str, dict[str, Union[_BaseImputer, list[str]]]],
     target_col_name: str = None,
 ) -> pd.DataFrame:
     """Function fit transformers to the data.
@@ -359,7 +349,7 @@ def fit_transformers(
 @inject_object()
 def apply_transformers(
     data: pd.DataFrame,
-    transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
+    transformers: dict[str, dict[str, Union[_BaseImputer, list[str]]]],
 ) -> pd.DataFrame:
     """Function apply fitted transformers to the data.
 
@@ -396,15 +386,15 @@ def apply_transformers(
 def tune_parameters(
     data: pd.DataFrame,
     tuner: Any,
-    features: List[str],
+    features: list[str],
     target_col_name: str,
-) -> Tuple[Dict,]:
+) -> tuple[dict,]:
     """Function to apply hyperparameter tuning.
 
     Args:
         data: Data to tune on.
         tuner: Tuner object.
-        features: List of features, may be regex specified.
+        features: list of features, may be regex specified.
         target_col_name: Target column name.
 
     Returns:
@@ -439,15 +429,15 @@ def tune_parameters(
 def train_model(
     data: pd.DataFrame,
     estimator: BaseEstimator,
-    features: List[str],
+    features: list[str],
     target_col_name: str,
-) -> Dict:
+) -> dict:
     """Function to train model on the given data.
 
     Args:
         data: Data to train on.
         estimator: sklearn compatible estimator.
-        features: List of features, may be regex specified.
+        features: list of features, may be regex specified.
         target_col_name: Target column name.
 
     Returns:
@@ -482,7 +472,7 @@ def create_model(agg_func: Callable, *estimators) -> ModelWrapper:
 def get_model_predictions(
     data: pd.DataFrame,
     model: ModelWrapper,
-    features: List[str],
+    features: list[str],
     target_col_name: str,
     prediction_suffix: str = "_pred",
 ) -> pd.DataFrame:
@@ -491,7 +481,7 @@ def get_model_predictions(
     Args:
         data: Data to predict on.
         model: Model making the predictions.
-        features: List of features, may be regex specified.
+        features: list of features, may be regex specified.
         target_col_name: Target column name.
         prediction_suffix: Suffix to add to the prediction column, defaults to '_pred'.
 
@@ -514,10 +504,10 @@ def combine_data(*predictions_all_folds: pd.DataFrame) -> pd.DataFrame:
 @inject_object()
 def check_model_performance(
     data: pd.DataFrame,
-    metrics: List[callable],
+    metrics: list[callable],
     target_col_name: str,
     prediction_suffix: str = "_pred",
-) -> Dict:
+) -> dict:
     """Function to evaluate model performance on the training data and ground truth test data.
 
     NOTE: This function only provides a partial indication of model performance,
@@ -527,7 +517,7 @@ def check_model_performance(
 
     Args:
         data: Data to evaluate.
-        metrics: List of callable metrics.
+        metrics: list of callable metrics.
         target_col_name: Target column name.
         prediction_suffix: Suffix to add to the prediction column, defaults to '_pred'.
 
