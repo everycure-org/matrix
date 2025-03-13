@@ -3,11 +3,5 @@ spec:
     server: https://kubernetes.default.svc
   source:
     repoURL: https://github.com/everycure-org/matrix.git
-    targetRevision: {{ .Values.targetRevision }}
+    targetRevision: infra-prod-debug
     repoPath: infra/argo/applications_prodtest
-
-global:
-  environment: ""
-  project_id: ""
-  targetRevision: ""
-  sth: ""
