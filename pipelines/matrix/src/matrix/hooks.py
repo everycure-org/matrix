@@ -120,9 +120,9 @@ class MLFlowHooks:
             mlflow.start_run(run_id=cfg.tracking.run.id)
         else:
             experiment_id = self._create_experiment(cfg.tracking.experiment.name, globs.mlflow_artifact_root)
+
             if cfg.tracking.run.name:
                 run_id = self._create_run(cfg.tracking.run.name, experiment_id)
-                os.environ["MLFLOW_RUN_ID"] = run_id
 
                 # Update catalog
                 OmegaConf.update(cfg, "tracking.run.id", run_id)
