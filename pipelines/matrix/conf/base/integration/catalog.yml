@@ -52,6 +52,39 @@ integration.int.{source}.edges.norm@pandas:
   <<: [*_pandas_parquet, *_layer_int]
   filepath: ${globals:paths.integration}/int/{source}/edges.norm
 
+# HARD-CODED TIME_SPLIT DATASETS
+integration.int.drug_list.nodes.norm@spark:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.integration}/int/{source}/arax_drug_list.parquet
+
+integration.int.drug_list.nodes.norm@pandas:
+  <<: [*_pandas_parquet, *_layer_int]
+  filepath: ${globals:paths.integration}/int/{source}/arax_drug_list.parquet
+
+integration.int.disease_list.nodes.norm@spark:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.integration}/int/{source}/arax_disease_list.parquet
+
+integration.int.disease_list.nodes.norm@pandas:
+  <<: [*_pandas_parquet, *_layer_int]
+  filepath: ${globals:paths.integration}/int/{source}/arax_disease_list.parquet
+
+integration.int.ground_truth.edges.norm@spark:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.integration}/int/{source}/arax_ground_truth_edges.parquet
+
+integration.int.ground_truth.nodes.norm@pandas:
+  <<: [*_pandas_parquet, *_layer_int]
+  filepath: ${globals:paths.integration}/int/{source}/arax_ground_truth_nodes.parquet
+
+# integration.int.{source}.edges.norm@spark:
+#   <<: [*_spark_parquet, *_layer_int]
+#   filepath: ${globals:paths.integration}/int/{source}/edges.norm
+
+# integration.int.{source}.edges.norm@pandas:
+#   <<: [*_pandas_parquet, *_layer_int]
+#   filepath: ${globals:paths.integration}/int/{source}/edges.norm
+
 # mapping tables 
 integration.int.{source}.nodes_norm_mapping:
   <<: [*_spark_parquet, *_layer_int]
@@ -69,7 +102,7 @@ integration.prm.unified_edges:
 # filtered KGs
 integration.prm.filtered_edges:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/filtered/edges
+  filepath: ${globals:paths.integration}/prm/filtered/arax_rtx_273_edges.parquet
 
 # FUTURE more elegant: Apply all node filters, then all edge filters, then a "cleanup" final step that removes
 # 1. all edges where nodes were deleted
@@ -80,7 +113,7 @@ integration.prm.prefiltered_nodes:
 
 integration.prm.filtered_nodes:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/filtered/nodes
+  filepath: ${globals:paths.integration}/prm/filtered/arax_rtx_273_.parquet
 
 
 # ==============================
