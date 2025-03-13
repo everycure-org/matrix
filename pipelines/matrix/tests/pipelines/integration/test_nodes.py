@@ -263,7 +263,7 @@ def test_unify_edges(spark, sample_edges):
     edges2 = sample_edges.filter(sample_edges.subject != "CHEBI:119157")
 
     # Call the unify_edges function
-    result = nodes.union_and_deduplicate_edges(edges1, edges2)
+    result = nodes.union_edges(edges1, edges2)
 
     # Check the result
     assert isinstance(result, ps.DataFrame)
