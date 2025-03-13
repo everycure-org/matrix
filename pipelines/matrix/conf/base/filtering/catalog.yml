@@ -1,0 +1,25 @@
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  load_args:
+    header: True
+  save_args:
+    mode: overwrite
+
+# -------------------------------------------------------------------------
+# Datasets
+# -------------------------------------------------------------------------
+# filtered KGs
+
+filtering.prm.filtered_edges:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.filtering}/prm/filtered/edges
+
+filtering.prm.prefiltered_nodes:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.filtering}/prm/prefiltered/nodes
+
+filtering.prm.filtered_nodes:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.filtering}/prm/filtered/nodes
+
