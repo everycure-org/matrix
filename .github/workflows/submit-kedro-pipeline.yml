@@ -20,7 +20,6 @@ env:
   service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
   region: 'us-central1'
   cluster: 'compute-cluster'
-  mlflow_tracking_uri: 'https://mlflow.platform.dev.everycure.org'
 
 jobs:
 
@@ -166,6 +165,7 @@ jobs:
         working-directory: pipelines/matrix
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
         run: |
           echo "Submit the kedro pipeline"
           # if [ "${{ env.BUMP_TYPE }}" == "minor" ]; then
