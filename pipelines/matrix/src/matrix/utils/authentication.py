@@ -40,8 +40,8 @@ LOCAL_PATH = "conf/local/"
 result_queue = Queue()
 
 
-def get_sa_token(service_account_info: dict) -> service_account.IDTokenCredentials:
-    """Get the IAP token for service account."""
+def get_service_account_creds(service_account_info: dict) -> service_account.IDTokenCredentials:
+    """Get the IAP token credentials for service accounts."""
 
     token_data = service_account.IDTokenCredentials.from_service_account_info(
         service_account_info, target_audience=CLIENT_ID
@@ -51,8 +51,8 @@ def get_sa_token(service_account_info: dict) -> service_account.IDTokenCredentia
     return token_data
 
 
-def get_iap_token() -> Credentials:
-    """Gets the IAP token, either by using existing credentials or by requesting a new one through a browser OAuth flow."""
+def get_user_account_creds() -> Credentials:
+    """Gets the IAP token credentials for user accounts, either by using existing credentials or by requesting a new one through a browser OAuth flow."""
 
     # Try loading existing credentials
     if os.path.exists(f"{LOCAL_PATH}/oauth_token.json"):
