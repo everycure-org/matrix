@@ -118,8 +118,9 @@ jobs:
 
       - name: Branch off
         run: |
-          git switch -C release/${{env.release_version}} "${{github.ref_name}}"
-          git push
+          # git switch -C release/${{env.release_version}} "${{github.ref_name}}"
+          # git push
+          git checkout siyanluo/ec-167-skip-browser-login-for-iap-token-in-github-actions
 
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
@@ -140,6 +141,7 @@ jobs:
             --run-name auto-kg-release \
             --release-version "${{ env.release_version }}" \
             --pipeline ${RELEASE_PIPELINE} \
+            --skip-git-checks \
             --headless
 
   # notify_failure:
