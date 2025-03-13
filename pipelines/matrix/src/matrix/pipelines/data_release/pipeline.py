@@ -2,7 +2,7 @@ from kedro.pipeline import Pipeline, pipeline
 
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from matrix.pipelines.data_release import last_node_name
-from matrix.pipelines.data_release.nodes import filtered_edges_to_kgx, filtered_nodes_to_kgx
+from matrix.pipelines.data_release.nodes import unified_edges_to_kgx, unified_nodes_to_kgx
 
 # Last node is made explicit because there's a kedro hook after_node_run
 # being triggered after the completion of the last node of this pipeline.
@@ -25,26 +25,26 @@ def create_pipeline(**kwargs) -> Pipeline:
             # release to bigquery
             ArgoNode(
                 func=lambda x: x,
-                inputs=["integration.prm.filtered_edges"],
+                inputs=["integration.prm.unified_edges"],
                 outputs="data_release.prm.bigquery_edges",
                 name="release_edges_to_bigquery",
             ),
             ArgoNode(
                 func=lambda x: x,
-                inputs=["integration.prm.filtered_nodes"],
+                inputs=["integration.prm.unified_nodes"],
                 outputs="data_release.prm.bigquery_nodes",
                 name="release_nodes_to_bigquery",
             ),
             ArgoNode(
-                func=filtered_edges_to_kgx,
-                inputs=["integration.prm.filtered_edges"],
+                func=unified_edges_to_kgx,
+                inputs=["integration.prm.unified_edges"],
                 outputs="data_release.prm.kgx_edges",
                 name="write_edges_to_kgx",
                 tags=["kgx"],
             ),
             ArgoNode(
-                func=filtered_nodes_to_kgx,
-                inputs=["integration.prm.filtered_nodes"],
+                func=unified_nodes_to_kgx,
+                inputs=["integration.prm.unified_nodes"],
                 outputs="data_release.prm.kgx_nodes",
                 name="write_nodes_to_kgx",
                 tags=["kgx"],
