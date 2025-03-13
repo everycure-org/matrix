@@ -55,27 +55,27 @@ integration.int.{source}.edges.norm@pandas:
 # HARD-CODED TIME_SPLIT DATASETS
 integration.int.drug_list.nodes.norm@spark:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/int/{source}/arax_drug_list.parquet
+  filepath: ${globals:paths.integration}/int/drug_list/arax_drug_list.parquet
 
 integration.int.drug_list.nodes.norm@pandas:
   <<: [*_pandas_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/int/{source}/arax_drug_list.parquet
+  filepath: ${globals:paths.integration}/int/drug_list/arax_drug_list.parquet
 
 integration.int.disease_list.nodes.norm@spark:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/int/{source}/arax_disease_list.parquet
+  filepath: ${globals:paths.integration}/int/disease_list/arax_disease_list.parquet
 
 integration.int.disease_list.nodes.norm@pandas:
   <<: [*_pandas_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/int/{source}/arax_disease_list.parquet
+  filepath: ${globals:paths.integration}/int/disease_list/arax_disease_list.parquet
 
 integration.int.ground_truth.edges.norm@spark:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/int/{source}/arax_ground_truth_edges.parquet
+  filepath: ${globals:paths.integration}/int/ground_truth/arax_ground_truth_edges.parquet
 
 integration.int.ground_truth.nodes.norm@pandas:
   <<: [*_pandas_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/int/{source}/arax_ground_truth_nodes.parquet
+  filepath: ${globals:paths.integration}/int/ground_truth/arax_ground_truth_nodes.parquet
 
 # integration.int.{source}.edges.norm@spark:
 #   <<: [*_spark_parquet, *_layer_int]
