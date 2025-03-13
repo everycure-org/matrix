@@ -136,7 +136,7 @@ jobs:
             --run-name auto-kg-release \
             --release-version "${{ env.release_version }}" \
             --pipeline ${RELEASE_PIPELINE} \
-            --headless \
+            --headless
 
   notify_failure:
     # This condition ensures it runs only if any previous job fails
