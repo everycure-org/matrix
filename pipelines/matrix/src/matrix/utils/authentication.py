@@ -39,19 +39,10 @@ LOCAL_PATH = "conf/local/"
 # FastAPI app for callback handling
 result_queue = Queue()
 
-# def get_sa_token(audience: str) -> Credentials:
-#     """Generate an ID token for IAP authentication using environment credentials."""
-#     iap_credentials, _ = google.auth.default()
 
-#     # Create impersonated credentials with ID token
-#     token_data = impersonated_credentials.IDTokenCredentials(target_credentials=iap_credentials, target_audience=audience, include_email=True)
+def get_sa_token(service_account_info: dict) -> service_account.IDTokenCredentials:
+    """Get the IAP token for service account."""
 
-#     token_data.refresh(google_requests.Request())
-
-#     return token_data
-
-
-def get_sa_token(service_account_info) -> service_account.IDTokenCredentials:
     token_data = service_account.IDTokenCredentials.from_service_account_info(
         service_account_info, target_audience=CLIENT_ID
     )
