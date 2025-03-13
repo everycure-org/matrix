@@ -143,7 +143,7 @@ ORDER BY count DESC
 />
 
 Example parameterized dashboards:
- - <a href="/node/prefix/MONDO">Mondo Dashboard</a> 
+ - <a href="/node/prefix/MONDO">Mondo Dashboard</a>, <a href="/node/prefix/failed/MONDO">Mondo Failed Normalization Examples</a>
  - <a href="/node/category/Disease">Disease Dashboard</a> 
 
 To see additional node breakdowns by category or prefix, check out the <a href="/node/explore">Node Explore</a> page.
