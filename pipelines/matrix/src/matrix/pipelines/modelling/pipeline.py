@@ -251,10 +251,7 @@ def create_shared_pipeline() -> Pipeline:
             ),
             ArgoNode(
                 func=nodes.make_folds,
-                inputs=[
-                    "modelling.int.known_pairs@pandas",
-                    "params:modelling.splitter",
-                ],
+                inputs=["modelling.int.known_pairs@pandas", "params:modelling.splitter", "ingestion.raw.disease_list"],
                 outputs="modelling.model_input.splits",
                 name="create_splits",
             ),

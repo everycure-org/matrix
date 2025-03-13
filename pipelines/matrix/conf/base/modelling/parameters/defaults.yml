@@ -12,9 +12,22 @@ modelling.disease_types:
 modelling.splitter:
 
   # Defines strategy for cross validation. Can be a function from sklearn.model_selection
-  # or our custom DrugStratifiedSplit
+  # or our custom DrugStratifiedSplit or DiseaseAreaSplit
   # _object: matrix.pipelines.modelling.model_selection.DrugStratifiedSplit
-  _object: sklearn.model_selection.StratifiedShuffleSplit
+  # _object: sklearn.model_selection.StratifiedShuffleSplit
+  _object: matrix.pipelines.modelling.model_selection.DiseaseAreaSplit
+  disease_grouping_type: 'harrisons_view' # options: 'harrisons_view', 'mondo_top_grouping', 'mondo_txgnn', 'txgnn'
+  holdout_disease_types:
+    - 'cancer_or_benign_tumor'
+    - 'inflammatory_disease'
+    - 'hereditary_disease'
+    - 'syndromic_disease'
+    - 'metabolic_disease'
+  # Note:
+  # 'harrisons_view's holdout_disease_types: 'cancer_or_benign_tumor', 'inflammatory_disease', 'hereditary_disease', 'syndromic_disease', 'metabolic_disease'
+  # 'mondo_top_grouping's holdout_disease_types: 'infectious_disease', 'cardiovascular_disorder', 'nervous_system_disorder', 'respiratory_system_disorder', 'psychiatric_disorder'
+  # 'mondo_txgnn's holdout_disease_types: 'cancer_or_benign_tumor', 'infectious_disease', 'psychiatric_disorder', 'cardiovascular_disorder', 'autoimmune_disease'
+  # 'txgnn's holdout_disease_types: 'mental_health_disorder', 'cancer', 'cardiovascular_disorder', 'inflammatory_disease', 'neurodegenerative_disease' 
   test_size: 0.1
   random_state: ${globals:random_state}
   n_splits: ${setting:cross_validation.n_cross_val_folds}
