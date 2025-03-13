@@ -31,7 +31,7 @@ def experiment():
             sa_credential_info = json.loads(os.getenv("GCP_SA_KEY"))
             # sa_id_token = get_sa_key(sa_credential_file).token
             # sa_id_token = os.getenv("id_token")
-            sa_id_token = get_sa_token(sa_credential_info, "https://mlflow.platform.dev.everycure.org")
+            sa_id_token = get_sa_token(sa_credential_info)
             mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")
             os.environ["MLFLOW_TRACKING_TOKEN"] = sa_id_token.token
         else:
