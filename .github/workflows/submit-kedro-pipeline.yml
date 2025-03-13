@@ -188,7 +188,8 @@ jobs:
             --release-version v0.2.5 \
             --pipeline kg_release \
             --is-test \
-            --headless
+            --headless \
+            --skip-git-checks
 
   # notify_failure:
   #   # This condition ensures it runs only if any previous job fails
