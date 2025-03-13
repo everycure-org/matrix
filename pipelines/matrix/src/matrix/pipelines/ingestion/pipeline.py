@@ -17,8 +17,34 @@ def create_ground_truth_pipeline() -> list:
             },
             outputs="ingestion.raw.ground_truth.edges@pandas",
             name="concatenate_gt_dataframe",
-            tags=["ground-truth"],
-        )
+            tags=["kgml-xdtd-ground-truth"],
+        ),
+        node(
+            func=lambda x, y: [x, y],
+            inputs=[
+                "ingestion.raw.ec_ground_truth.positives",
+                "ingestion.raw.ec_ground_truth.negatives",
+            ],
+            outputs=[
+                "ingestion.int.ec_ground_truth.edges.positives@pandas",
+                "ingestion.int.ec_ground_truth.edges.negatives@pandas",
+            ],
+            name="write_ec_indications_list",
+            tags=["ec-ground-truth"],
+        ),
+        node(
+            func=lambda x, y: [x, y],
+            inputs=[
+                "ingestion.raw.ec_ground_truth_downfilled.positives",
+                "ingestion.raw.ec_ground_truth_downfilled.negatives",
+            ],
+            outputs=[
+                "ingestion.int.ec_ground_truth_downfilled.edges.positives@pandas",
+                "ingestion.int.ec_ground_truth_downfilled.edges.negatives@pandas",
+            ],
+            name="write_ec_indications_list_downfilled",
+            tags=["ec-ground-truth"],
+        ),
     ]
 
 
