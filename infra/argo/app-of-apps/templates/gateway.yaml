@@ -12,11 +12,11 @@ spec:
   source:
     parameters:
       - name: spec.source.targetRevision
-        value: {{ .Values.source.targetRevision}}
+        value: {{ .Values.spec.source.targetRevision}}
       - name: spec.source.environment
-        value: {{ .Values.source.environment}}
+        value: {{ .Values.spec.source.environment}}
       - name: spec.source.project_id
-        value: {{ .Values.source.project_id}}
+        value: {{ .Values.spec.source.project_id}}
     path: {{ .Values.spec.source.repoPath }}/gateway
     repoURL: {{ .Values.spec.source.repoURL }}
     targetRevision: {{ .Values.spec.source.targetRevision }}
