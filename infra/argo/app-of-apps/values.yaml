@@ -2,6 +2,7 @@ spec:
   destination:
     server: "https://kubernetes.default.svc"
   source:
-    repoURL: dummy-replaced-by-helm-in-tf
+    repoURL: https://github.com/everycure-org/matrix.git
     targetRevision: dummy-replaced-by-helm-in-tf
-    repoPath: dummy-replaced-by-helm-in-tf
+    repoPath: infra/argo/applications_prodtest
+
