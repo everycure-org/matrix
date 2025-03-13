@@ -57,6 +57,7 @@ variable "k8s_pod_ip_range" {}
 variable "k8s_svc_ip_range" {}
 variable "gitops_repo_url" {}
 variable "gitops_repo_creds" {}
+variable "docker_registry" {}
 variable "k8s_secrets" {
   sensitive = true
   type      = map(string)

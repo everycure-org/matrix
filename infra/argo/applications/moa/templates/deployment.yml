@@ -30,7 +30,7 @@ spec:
           - name: DATA_INPUT_PATH
             value: {{ .Values.app.config.data_path }}
           - name: GCP_PROJECT
-            value: "mtrx-hub-dev-3of"
+            value: {{ .Values.spec.source.project_id }}
           - name: MOA_DB_PATH
             value: "/data/moa_extraction.db"
           - name: MOA_INFO_IMG
@@ -47,7 +47,7 @@ spec:
           - name: DATA_INPUT_PATH
             value: {{ .Values.app.config.data_path }}
           - name: GCP_PROJECT
-            value: "mtrx-hub-dev-3of"
+            value: {{ .Values.spec.source.project_id }}
           - name: MOA_DB_PATH
             value: "/data/moa_extraction.db"
           - name: MOA_INFO_IMG

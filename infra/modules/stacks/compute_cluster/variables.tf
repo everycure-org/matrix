@@ -53,3 +53,7 @@ variable "bucket_name" {
 variable "repo_revision" {
   type = string
 }
+
+variable "docker_registry" {
+  type = string
+}
