@@ -114,8 +114,9 @@ jobs:
 
       - name: Branch off
         run: |
-          git switch -C release/${{env.release_version}} "${{github.ref_name}}"
-          git push
+          # git switch -C release/${{env.release_version}} "${{github.ref_name}}"
+          # git push
+          git checkout siyanluo/ec-167-skip-browser-login-for-iap-token-in-github-actions
 
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
@@ -136,27 +137,28 @@ jobs:
             --run-name auto-kg-release \
             --release-version "${{ env.release_version }}" \
             --pipeline ${RELEASE_PIPELINE} \
-            --headless
+            --headless \
+            --skip-git-checks
 
-  notify_failure:
-    # This condition ensures it runs only if any previous job fails
-    # we notify on main branches only
-    needs: submit_data_release_periodically
-    if: failure()
-    runs-on: "self-hosted"
-    steps:
-      - name: Post to a Slack channel
-        id: slack
-        uses: slackapi/slack-github-action@v1.26.0
-        with:
-          # Slack channel id, channel name, or user id to post message.
-          # See also: https://api.slack.com/methods/chat.postMessage#channels
-          # You can pass in multiple channels to post to by providing a comma-delimited list of channel IDs.
-          channel-id: 'C07HU35MKAQ' #github-notifications
-          # For posting a simple plain text message
-          slack-message: |
-            Release pipeline submission failed in GitHub Actions! 🚨
+  # notify_failure:
+  #   # This condition ensures it runs only if any previous job fails
+  #   # we notify on main branches only
+  #   needs: submit_data_release_periodically
+  #   if: failure()
+  #   runs-on: "self-hosted"
+  #   steps:
+  #     - name: Post to a Slack channel
+  #       id: slack
+  #       uses: slackapi/slack-github-action@v1.26.0
+  #       with:
+  #         # Slack channel id, channel name, or user id to post message.
+  #         # See also: https://api.slack.com/methods/chat.postMessage#channels
+  #         # You can pass in multiple channels to post to by providing a comma-delimited list of channel IDs.
+  #         channel-id: 'C07HU35MKAQ' #github-notifications
+  #         # For posting a simple plain text message
+  #         slack-message: |
+  #           Release pipeline submission failed in GitHub Actions! 🚨
 
-            🚀 Action run link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+  #           🚀 Action run link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+  #       env:
+  #         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
