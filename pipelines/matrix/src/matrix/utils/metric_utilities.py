@@ -13,12 +13,7 @@ DISABlE_MLFLOW = (
 )
 
 
-def log_metric(context, name, value: Union[int, float]):
-    logger.info(f"{name}: {value}")
-    # TODO: can we figure out context so we don't have to pass it.
-    # What kedro node am I running? Can I set this as my "context" variable
-    mlflow.log_metric(f"{context}/{name}", value)
-
+def log_metric(context: str, name: str, value: Union[int, float]):
     if not DISABlE_MLFLOW:
         mlflow.log_metric(f"{context}/{name}", value)
     else:
