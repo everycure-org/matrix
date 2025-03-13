@@ -53,13 +53,13 @@ integration.prm.prefiltered_nodes:
   filepath: ${globals:paths.integration}/prm/prefiltered/nodes
   table: nodes_prefiltered
 
-# Filtered nodes/edges
-integration.prm.filtered_nodes:
-  <<: *_bigquery_ds
-  filepath: ${globals:paths.integration}/prm/filtered/nodes
-  table: nodes
+# # Filtered nodes/edges
+# integration.prm.filtered_nodes:
+#   <<: *_bigquery_ds
+#   filepath: ${globals:paths.integration}/prm/filtered/nodes
+#   table: nodes
 
-integration.prm.filtered_edges:
-  <<: *_bigquery_ds
-  filepath: ${globals:paths.integration}/prm/filtered/edges
-  table: edges
+# integration.prm.filtered_edges:
+#   <<: *_bigquery_ds
+#   filepath: ${globals:paths.integration}/prm/filtered/edges
+#   table: edges

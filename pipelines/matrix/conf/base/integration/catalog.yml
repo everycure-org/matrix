@@ -102,7 +102,7 @@ integration.prm.unified_edges:
 # filtered KGs
 integration.prm.filtered_edges:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/filtered/arax_rtx_273_edges.parquet
+  filepath: ${globals:paths.integration}/prm/filtered/edges/arax_rtx_273_edges.parquet
 
 # FUTURE more elegant: Apply all node filters, then all edge filters, then a "cleanup" final step that removes
 # 1. all edges where nodes were deleted
@@ -113,7 +113,7 @@ integration.prm.prefiltered_nodes:
 
 integration.prm.filtered_nodes:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/filtered/arax_rtx_273_.parquet
+  filepath: ${globals:paths.integration}/prm/filtered/nodes/arax_rtx_273_nodes.parquet
 
 
 # ==============================
