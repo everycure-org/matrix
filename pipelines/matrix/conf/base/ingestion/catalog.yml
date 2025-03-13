@@ -272,7 +272,7 @@ ingestion.int.disease_list.nodes:
 ingestion.raw.ground_truth.positives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tp_pairs.txt
+  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tp_pairs.txt
   load_args:
     sep: "\t"
   save_args:
@@ -281,7 +281,7 @@ ingestion.raw.ground_truth.positives:
 ingestion.raw.ground_truth.negatives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tn_pairs.txt
+  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tn_pairs.txt
   load_args:
     sep: "\t"
   save_args:
@@ -290,7 +290,7 @@ ingestion.raw.ground_truth.negatives:
 ingestion.raw.ground_truth.edges@pandas:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_raw.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.kgml_xdtd_gt.version}/gt_pairs_raw.tsv
   save_args:
     sep: "\t"
     header: true
@@ -300,7 +300,7 @@ ingestion.raw.ground_truth.edges@pandas:
 
 ingestion.raw.ground_truth.edges@spark:
   <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_raw.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.kgml_xdtd_gt.version}/gt_pairs_raw.tsv
   load_args:
     sep: "\t"
     header: true
@@ -308,7 +308,7 @@ ingestion.raw.ground_truth.edges@spark:
 
 ingestion.int.ground_truth.edges:
   <<: [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/gt_ids_raw.tsv
   load_args:
     sep: "\t"
     header: true
@@ -318,6 +318,150 @@ ingestion.int.ground_truth.edges:
     header: true
     index: false
     mode: overwrite
+
+ingestion.int.kgml_xdtd_ground_truth.edges:
+  <<: [*_spark_csv, *_layer_int]
+  filepath: ${globals:paths.ingestion}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/gt_pairs.tsv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+    mode: overwrite
+
+# -------------------------------------------------------------------------
+# Ground truth EC
+# -------------------------------------------------------------------------  
+
+ingestion.raw.ec_ground_truth.positives:
+  <<: [*_layer_raw]
+  type: matrix.datasets.github.GitHubReleaseExcelDataset
+  repository_url: https://github.com/everycure-org/matrix-indication-list
+  release_name: ${globals:data_sources.ec_gt.version}
+  release_asset_name: indicationList.xlsx
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: token ${globals:gh_token}
+  # load_args:
+  #   sep: "\t"
+
+ingestion.raw.ec_ground_truth.negatives:
+  <<: [*_layer_raw]
+  type: matrix.datasets.github.GitHubReleaseExcelDataset
+  repository_url: https://github.com/everycure-org/matrix-indication-list
+  release_name: ${globals:data_sources.ec_gt.version}
+  release_asset_name: contraindicationList.xlsx
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: token ${globals:gh_token}
+  # load_args:
+  #   sep: "\t"
+
+ingestion.int.ec_ground_truth.edges.negatives@pandas:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
+
+ingestion.int.ec_ground_truth.edges.negatives@spark:
+  <<: [*_layer_raw, *_spark_csv]
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs.tsv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+
+ingestion.int.ec_ground_truth.edges.positives@pandas:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
+
+ingestion.int.ec_ground_truth.edges.positives@spark:
+  <<: [*_layer_raw, *_spark_csv]
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs.tsv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+
+# -------------------------------------------------------------------------
+# Ground truth EC downfilled
+# -------------------------------------------------------------------------
+ingestion.raw.ec_ground_truth_downfilled.positives:
+  <<: [*_layer_raw]
+  type: matrix.datasets.github.GitHubReleaseExcelDataset
+  repository_url: https://github.com/everycure-org/matrix-indication-list
+  release_name: ${globals:data_sources.ec_gt.version}
+  release_asset_name: indicationList_downfilled.xlsx
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: token ${globals:gh_token}
+  # load_args:
+  #   sep: "\t"
+
+ingestion.raw.ec_ground_truth_downfilled.negatives:
+  <<: [*_layer_raw]
+  type: matrix.datasets.github.GitHubReleaseExcelDataset
+  repository_url: https://github.com/everycure-org/matrix-indication-list
+  release_name: ${globals:data_sources.ec_gt.version}
+  release_asset_name: contraindicationList_downfilled.xlsx
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: token ${globals:gh_token}
+  # load_args:
+  #   sep: "\t"
+
+ingestion.int.ec_ground_truth_downfilled.edges.negatives@pandas:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs_downfilled.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
+
+ingestion.int.ec_ground_truth_downfilled.edges.negatives@spark:
+  <<: [*_layer_raw, *_spark_csv]
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs_downfilled.tsv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+
+ingestion.int.ec_ground_truth_downfilled.edges.positives@pandas:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs_downfilled.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
+
+ingestion.int.ec_ground_truth_downfilled.edges.positives@spark:
+  <<: [*_layer_raw, *_spark_csv]
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs_downfilled.tsv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
 
 # -------------------------------------------------------------------------
 # Robokop
