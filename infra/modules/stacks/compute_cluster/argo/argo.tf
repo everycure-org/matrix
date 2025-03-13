@@ -84,10 +84,9 @@ spec:
     targetRevision: ${var.repo_revision}
     helm:
       values: |
-        global:
-          environment: ${var.environment}
-          project_id: ${var.project_id}
-          targetRevision: ${var.repo_revision}
+        environment: ${var.environment}
+        project_id: ${var.project_id}
+        targetRevision: ${var.repo_revision}
   project: default
   syncPolicy:
     syncOptions:
