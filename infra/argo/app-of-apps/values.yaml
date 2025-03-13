@@ -1,6 +1,6 @@
 spec:
   destination:
-    server: dummy-replaced-by-helm-in-tf
+    server: "https://kubernetes.default.svc"
   source:
     repoURL: dummy-replaced-by-helm-in-tf
     targetRevision: dummy-replaced-by-helm-in-tf
