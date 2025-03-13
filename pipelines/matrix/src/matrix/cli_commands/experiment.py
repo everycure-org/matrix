@@ -24,31 +24,24 @@ EXPERIMENT_BRANCH_PREFIX = "experiment/"
 
 @click.group()
 def experiment():
-    try:
-        if os.getenv("GITHUB_ACTIONS"):
-            # Running in GitHub Actions, use the IAP token from the secrets
-            click.secho("Running in GitHub Actions, using service account IAP token", fg="yellow", bold=True)
-            sa_credential_info = json.loads(os.getenv("GCP_SA_KEY"))
-            # sa_id_token = get_sa_key(sa_credential_file).token
-            # sa_id_token = os.getenv("id_token")
-            sa_id_token = get_sa_token(sa_credential_info)
-            mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")
-            os.environ["MLFLOW_TRACKING_TOKEN"] = sa_id_token.token
-        else:
+    if os.getenv("GITHUB_ACTIONS"):
+        # Running in GitHub Actions, use the IAP token from the secrets
+        click.secho("Running in GitHub Actions, using service account IAP token", fg="yellow", bold=True)
+        sa_credential_info = json.loads(os.getenv("GCP_SA_KEY"))
+        # sa_id_token = get_sa_key(sa_credential_file).token
+        # sa_id_token = os.getenv("id_token")
+        sa_id_token = get_sa_token(sa_credential_info)
+        mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")
+        os.environ["MLFLOW_TRACKING_TOKEN"] = sa_id_token.token
+    else:
+        try:
             token = get_iap_token()
             mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")
             os.environ["MLFLOW_TRACKING_TOKEN"] = token.id_token
-    except FileNotFoundError as e:
-        click.secho("Error getting IAP token. Please run `make fetch_secrets` first", fg="yellow", bold=True)
-        raise
-    pass
-    # file_path = "src/matrix/cli_commands/mtrx-hub-dev-3of-a120960572b6.json"
-    # if not os.path.exists(file_path):
-    #     raise FileNotFoundError("File not found")
-    # sa_credential_info = json.loads(file_path)
-    # sa_id_token = get_sa_token(sa_credential_info, "https://mlflow.platform.dev.everycure.org")
-    # mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")
-    # os.environ["MLFLOW_TRACKING_TOKEN"] = sa_id_token.token
+        except FileNotFoundError as e:
+            click.secho("Error getting IAP token. Please run `make fetch_secrets` first", fg="yellow", bold=True)
+            raise
+        pass
 
 
 @experiment.command()
