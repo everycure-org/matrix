@@ -83,6 +83,9 @@ spec:
     repoURL: ${var.repo_url}
     targetRevision: ${var.repo_revision}
     helm:
+      parameters:
+      - name: global.targetRev
+        value: infra-prod-debug
       values: |
         environment: ${var.environment}
         project_id: ${var.project_id}
