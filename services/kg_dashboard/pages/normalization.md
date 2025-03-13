@@ -19,13 +19,15 @@ group by all
 ```sql node_failed_normalization
 select original_prefix, 
        prefix || ' ' as prefix,
-       normalization_set,      
+       normalization_set,
+       '/node/prefix/failed/' || prefix as link,
        sum(count) as count
 from bq.node_normalization
 where normalization_success = false
   and normalization_set <> 'merged'
   and replace(category, 'biolink:', '') in ${inputs.category.value}
 group by all
+order by count desc
 ```
 
 ```sql edge_merged_normalization
@@ -44,21 +46,19 @@ group by all
 select distinct normalization_set
 from bq.node_normalization
 where normalization_set <> 'merged'
-union distinct
-select distinct normalization_set
-from bq.edge_normalization
-where normalization_set <> 'merged'
 ```
 
 ```sql edge_failed_normalization
 select original_prefix, 
-       normalization_set,      
+       normalization_set,
+       '/node/prefix/failed/' || prefix as link,
        sum(count) as count
 from bq.edge_normalization
 where normalization_success = false
   and normalization_set <> 'merged'
   and replace(category, 'biolink:', '') in ${inputs.category.value}
 group by all
+order by count desc
 ```
 
 <Dropdown
@@ -86,14 +86,19 @@ group by all
         linkColor='gradient' 
         chartAreaHeight={800}
     />
-    <BarChart 
-      data={edge_failed_normalization}
-      x=original_prefix
-      y=count
-      series=normalization_set
+
+    <DataTable data={edge_failed_normalization}
       title="Normalization Failures"
-      swapXY=true
-    /> 
+      search=true
+      pagination=true
+      link=true
+      rows=20
+    >
+      <Column id="normalization_set" title="Upstream Data Source" />
+      <Column id="original_prefix" />
+      <Column id="count" contentType="bar"/>
+      <Column id="link" contentType="link" linkLabel="Examples ->" title=" " />
+    </DataTable>
   </Tab>
   <Tab label="Nodes">
 
@@ -108,14 +113,18 @@ group by all
       linkColor='gradient' 
       chartAreaHeight={800}
     />
-    <BarChart 
-      data={node_failed_normalization}
-      x=original_prefix
-      y=count
-      series=normalization_set
+    <DataTable data={node_failed_normalization}
       title="Normalization Failures"
-      swapXY=true
-    />
+      search=true
+      pagination=true
+      link=true
+      rows=20
+    >
+      <Column id="normalization_set" title="Upstream Data Source" />
+      <Column id="original_prefix" />
+      <Column id="count" contentType="bar"/>
+      <Column id="link" contentType="link" linkLabel="Examples ->" title=" " />
+    </DataTable>
   </Tab>
 
 </Tabs>
