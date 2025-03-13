@@ -47,7 +47,7 @@ jobs:
               sort -V | \
               tail -n1
             )
-            echo "RELEASE_VERSION=${LATEST_TAG}" >> $GITHUB_ENV
+            echo "RELEASE_VERSION=${LATEST_TAG}" >> "$GITHUB_ENV"
             echo "Setting RELEASE_VERSION to latest tag: ${LATEST_TAG}"
           else
             echo "Using provided RELEASE_VERSION: ${RELEASE_VERSION}"
@@ -104,9 +104,9 @@ jobs:
           kedro experiment run \
             -e sample \
             -p test_sample \
-            --exoepriment-name scheduled-sampled-test \
+            --experiment-name scheduled-sampled-test \
             --run-name scheduled-sampled-test \
             --username github_actions_bot \
-            --release-version ${RELEASE_VERSION} \
+            --release-version "${{ env.RELEASE_VERSION }}" \
             --headless \
             --quiet
