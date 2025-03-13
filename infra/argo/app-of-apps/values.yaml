@@ -6,6 +6,7 @@ spec:
     # targetRevision: {{ .Values.global.targetRevision }}
     repoPath: infra/argo/applications_prodtest
 
-environment: {{ .Values.global.environment }}
-project_id: {{ .Values.global.project_id }}
-targetRevision: {{ .Values.global.targetRevision }}
+global:
+  environment: ""
+  project_id: ""
+  targetRevision: ""
