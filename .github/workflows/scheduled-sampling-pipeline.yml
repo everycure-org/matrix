@@ -101,9 +101,10 @@ jobs:
         working-directory: pipelines/matrix
         run: |
           echo "Run the kedro sampling pipeline"
-          kedro submit \
+          kedro experiment run \
             -e sample \
             -p test_sample \
+            --exoepriment-name scheduled-sampled-test \
             --run-name scheduled-sampled-test \
             --username github_actions_bot \
             --release-version ${RELEASE_VERSION} \
