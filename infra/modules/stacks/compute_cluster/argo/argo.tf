@@ -81,8 +81,10 @@ spec:
   sources:
     - repoURL: ${var.repo_url}
       path: ${var.repo_path}/app-of-apps
+      targetRevision: infra-prod-debug
     - path: ${var.repo_path}/values_${var.environment}/
       repoURL: ${var.repo_url}
+      targetRevision: infra-prod-debug
   project: default
   syncPolicy:
     syncOptions:
