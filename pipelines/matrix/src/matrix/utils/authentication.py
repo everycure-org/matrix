@@ -51,9 +51,9 @@ result_queue = Queue()
 #     return token_data
 
 
-def get_sa_token(service_account_info, audience) -> service_account.IDTokenCredentials:
+def get_sa_token(service_account_info) -> service_account.IDTokenCredentials:
     token_data = service_account.IDTokenCredentials.from_service_account_info(
-        service_account_info, target_audience=audience
+        service_account_info, target_audience=CLIENT_ID
     )
     token_data.refresh(google_requests.Request())
 
