@@ -12,7 +12,7 @@ spec:
     namespace: gateway
     name: external-http
   hostnames:
-  - "argocd.platform.{{ .Values.global.environment }}.everycure.org"
+  - "argocd.platform.{{ .Values.source.environment }}.everycure.org"
   rules:
   - backendRefs:
     - name: argo-argocd-server
