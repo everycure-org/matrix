@@ -78,13 +78,18 @@ spec:
   destination:
     namespace: argocd
     server: "https://kubernetes.default.svc"
-  sources:
-    - repoURL: ${var.repo_url}
-      path: ${var.repo_path}/app-of-apps
-      targetRevision: infra-prod-debug
-    - path: ${var.repo_path}/values_${var.environment}/
-      repoURL: ${var.repo_url}
-      targetRevision: infra-prod-debug
+  source:
+    path: ${var.repo_path}/app-of-apps
+    repoURL: ${var.repo_url}
+    targetRevision: ${var.repo_revision}
+    helm:
+      parameters:
+      - name: spec.source.targetRevision
+        value:  ${var.repo_revision}
+      - name: spec.source.environment
+        value:  ${var.environment}
+      - name: spec.source.project_id
+        value: ${var.project_id}
   project: default
   syncPolicy:
     syncOptions:
