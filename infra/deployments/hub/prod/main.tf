@@ -12,6 +12,7 @@ module "compute_cluster" {
   k8s_secrets       = var.k8s_secrets
   bucket_name       = var.storage_bucket_name
   repo_revision     = var.repo_revision
+  docker_registry   = var.docker_registry
 
 }
 

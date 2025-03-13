@@ -91,6 +91,10 @@ spec:
         value:  ${var.environment}
       - name: spec.source.project_id
         value: ${var.project_id}
+      - name: spec.source.bucketname
+        value: ${var.bucket_name}
+      - name: spec.source.docker_registry
+        value: ${var.docker_registry}
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
