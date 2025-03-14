@@ -2,7 +2,6 @@ import numpy as np
 from sklearn.model_selection import BaseCrossValidator
 
 
-# NOTE: This file was partially generated using AI assistance.
 class DrugStratifiedSplit(BaseCrossValidator):
     """A cross-validator that provides train/test indices to split data in train/test sets.
 
@@ -70,7 +69,7 @@ class TemporalSplit(BaseCrossValidator):
     where pre-2014 data goes to training and post-2014 data goes to testing.
     """
 
-    def __init__(self, n_splits=1):
+    def __init__(self, n_splits=1, train_set="pre2014", test_set="post2014"):
         """Initialize the TemporalSplit cross-validator.
 
         Args:
@@ -78,6 +77,8 @@ class TemporalSplit(BaseCrossValidator):
                           since the split is deterministic based on the time cutoff.
         """
         self.n_splits = n_splits
+        self.train_set = train_set
+        self.test_set = test_set
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set based on temporal criteria.
@@ -98,11 +99,11 @@ class TemporalSplit(BaseCrossValidator):
             raise ValueError("Input DataFrame must contain a 'type' column")
 
         for _ in range(self.n_splits):
-            train_mask = X["type"] == "pre2014"
-            test_mask = X["type"] == "post2014"
+            train_mask = X["type"] == self.train_set
+            test_mask = X["type"] == self.test_set
 
             if not (train_mask.any() and test_mask.any()):
-                raise ValueError("Data must contain both 'pre2014' and 'post2014' samples")
+                raise ValueError("Data must contain one of the time flags ")
 
             train_indices = X[train_mask].index.tolist()
             test_indices = X[test_mask].index.tolist()
