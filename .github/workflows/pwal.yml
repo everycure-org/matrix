@@ -21,17 +21,7 @@ jobs:
     permissions:
       actions: write
     steps:
-      - name: Trigger KG dashboard deploy
-        uses: actions/github-script@v7
+      - name: Deploy KG dashboard
+        uses: ./.github/workflows/evidence-deploy.yml
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'evidence-deploy.yml',
-              ref: 'main',
-              inputs: {
-                "release_version": 'v0.4.2' 
-              }
-            })
+          release_version: 'v0.4.2'
