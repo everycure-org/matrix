@@ -25,6 +25,6 @@ spec:
     - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
     - ServerSideApply=true # to ensure CRDs are deployed
     - PruneLast=true
-    - Replace=true
+    - Replace=false
     automated: 
-      prune: false
+      prune: true
