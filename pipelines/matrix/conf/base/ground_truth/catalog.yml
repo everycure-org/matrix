@@ -51,11 +51,11 @@ ground_truth.int.{source}.nodes_norm_mapping:
 # Unified datasets
 ground_truth.prm.unified_edges@spark:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.ground_truth}/prm/unified/custom_gt.parquet
+  filepath: ${globals:paths.ground_truth}/prm/unified/edges_custom_gt_fixed.parquet #custom_gt.parquet
 
 ground_truth.prm.unified_edges@pandas:
   <<: [*_pandas_parquet, *_layer_prm]
-  filepath: ${globals:paths.ground_truth}/prm/unified/custom_gt.parquet
+  filepath: ${globals:paths.ground_truth}/prm/unified/edges_custom_gt_fixed.parquet #custom_gt.parquet
 
 ground_truth.prm.original.filtered_nodes:
   <<: [*_spark_parquet]
