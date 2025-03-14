@@ -20,7 +20,6 @@ spec:
           value: {{ .Values.spec.source.environment}}
         - name: spec.source.project_id
           value: {{ .Values.spec.source.project_id}}
-        - name: mlflow.tracking.args
       values: |
         mlflow:
           tracking:
