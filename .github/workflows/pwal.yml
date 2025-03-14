@@ -30,7 +30,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'evidence-deploy.yml',
-              ref: 'release/v0.4.2',
+              ref: 'main',
               inputs: {
                 "release_version": 'v0.4.2' 
               }
