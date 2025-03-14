@@ -19,7 +19,8 @@ jobs:
   trigger-deploy:
     runs-on: ubuntu-latest
     permissions:
-      actions: write
+      contents: 'read'
+      id-token: 'write'
     steps:
       - name: 'Checkout'
         uses: actions/checkout@main
