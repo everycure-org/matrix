@@ -27,5 +27,5 @@ spec:
     - PruneLast=true
     - Replace=true
     - ApplyOutOfSyncOnly=true
-    automated: 
+    automated:
       prune: true
