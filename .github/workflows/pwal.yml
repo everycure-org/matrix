@@ -16,15 +16,7 @@ env:
   BRANCH_REF: ${{ github.event.pull_request.head.ref }}
   
 jobs:
-  trigger-deploy:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: 'read'
-      id-token: 'write'
-    steps:
-      - name: 'Checkout'
-        uses: actions/checkout@main
-      - name: Deploy KG dashboard
-        uses: ./.github/workflows/evidence-deploy.yml
-        with:
-          release_version: 'v0.4.2'
+  deploy-kg-dashboard:
+    uses: ./.github/workflows/evidence-deploy.yml
+    with:
+      release_version: 'v0.4.2'
