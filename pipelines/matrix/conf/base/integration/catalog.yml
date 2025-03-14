@@ -71,7 +71,7 @@ integration.int.disease_list.nodes.norm@pandas:
 
 integration.int.ground_truth.edges.norm@spark:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/int/ground_truth/arax_ground_truth.parquet
+  filepath: ${globals:paths.integration}/int/ground_truth/timestamped_gt_arax.parquet
 
 
 # integration.int.{source}.edges.norm@spark:
