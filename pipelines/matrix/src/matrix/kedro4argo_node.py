@@ -128,4 +128,6 @@ class ArgoNode(Node):
         return ArgoNode(**params)  # type: ignore[arg-type]
 
 
-ARGO_GPU_NODE_MEDIUM = ArgoResourceConfig(num_gpus=0, memory_request=104, memory_limit=104)  # bump and increase memory
+ARGO_GPU_NODE_MEDIUM = ArgoResourceConfig(
+    num_gpus=1
+)  # , memory_request=104, memory_limit=104)  # bump and increase memory
