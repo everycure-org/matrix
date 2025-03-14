@@ -12,11 +12,12 @@ on:
       - reopened
       - synchronize
       - ready_for_review
-env:
-  BRANCH_REF: ${{ github.event.pull_request.head.ref }}
   
 jobs:
   deploy-kg-dashboard:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     uses: ./.github/workflows/evidence-deploy.yml
     with:
       release_version: 'v0.4.2'
