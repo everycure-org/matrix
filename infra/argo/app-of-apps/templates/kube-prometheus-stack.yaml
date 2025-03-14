@@ -26,5 +26,6 @@ spec:
     - ServerSideApply=true # to ensure CRDs are deployed
     - PruneLast=true
     - Replace=true
+    - ApplyOutOfSyncOnly=true
     automated: 
       prune: true
