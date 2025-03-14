@@ -4,5 +4,5 @@ spec:
   source:
     repoURL: https://github.com/everycure-org/matrix.git
     targetRevision: dummy-replaced-by-helm-in-tf
-    repoPath: infra/argo/applications_prodtest
+    repoPath: infra/argo/applications
 
