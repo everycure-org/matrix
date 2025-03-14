@@ -22,7 +22,7 @@ spec:
         - name: spec.source.project_id
           value: {{ .Values.spec.source.project_id }}
         - name: argo-workflows.artifactRepository.gcs.bucket
-          value: { { .Values.spec.source.bucketname } }
+          value: {{ .Values.spec.source.bucketname }}
   syncPolicy:
     syncOptions:     # Sync options which modifies sync behavior
     - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.

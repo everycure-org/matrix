@@ -17,3 +17,77 @@ This repo contains the infrastructure for the MATRIX project for drug repurposin
 ## Related Projects
 
 - [MATRIX disease list](https://github.com/everycure-org/matrix-disease-list) - Repo to manage the MATRIX disease list.
+
+# MLflow Deployment with ArgoCD
+
+This repository contains the necessary configuration to deploy Bitnami's MLflow Helm chart using ArgoCD.
+
+## Prerequisites
+
+- Kubernetes cluster
+- ArgoCD installed in your cluster
+- `kubectl` configured to communicate with your cluster
+- Appropriate permissions to create resources in your cluster
+
+## Deployment Instructions
+
+1. **Apply the ArgoCD Application manifest:**
+
+   ```bash
+   kubectl apply -f mlflow-application.yaml
+   ```
+
+2. **Verify the application is created in ArgoCD:**
+
+   ```bash
+   kubectl get applications -n argocd
+   ```
+
+3. **Check the sync status:**
+
+   ```bash
+   kubectl get applications mlflow -n argocd -o jsonpath='{.status.sync.status}'
+   ```
+
+## Configuration
+
+The `mlflow-application.yaml` file contains the ArgoCD Application definition that points to the Bitnami MLflow Helm chart. You should customize the following values before applying:
+
+- `spec.source.targetRevision`: Set to a specific chart version if needed
+- `spec.destination.namespace`: The namespace where MLflow will be deployed
+- Values under `spec.source.helm.values`:
+  - `tracking.host`: Set to your domain
+  - Database credentials
+  - Storage configuration (MinIO or external S3)
+
+## Accessing MLflow
+
+Once deployed, MLflow will be available at the configured host. If you're using a local setup, you may need to set up port forwarding:
+
+```bash
+kubectl port-forward svc/mlflow -n mlflow 5000:5000
+```
+
+Then access MLflow at: http://localhost:5000
+
+## Customization
+
+To further customize the MLflow deployment, refer to the [Bitnami MLflow chart documentation](https://github.com/bitnami/charts/tree/main/bitnami/mlflow) for all available configuration options.
+
+## Troubleshooting
+
+If the application fails to sync, check the ArgoCD UI or use:
+
+```bash
+kubectl describe application mlflow -n argocd
+```
+
+For issues with the MLflow pods:
+
+```bash
+kubectl get pods -n mlflow
+kubectl describe pod <pod-name> -n mlflow
+kubectl logs <pod-name> -n mlflow
+```
+
+# NOTE: This file was partially generated using AI assistance.
