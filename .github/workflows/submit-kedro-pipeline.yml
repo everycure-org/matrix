@@ -27,6 +27,7 @@ jobs:
     runs-on: 
       labels: ubuntu-24.04
     name: Submit the Kedro Pipeline Periodically
+    environment: dev
     permissions:
       contents: 'write'
       id-token: 'write'
