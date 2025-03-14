@@ -20,7 +20,7 @@ versions:
 
 data_sources:
   rtx_kg2:
-    version: &_rtx_kg_version v2.7.3 #when bumping to 2.10, we should stop to limit PMID for the semmed filtering
+    version: &_rtx_kg_version v2.10.0 #when bumping to 2.10, we should stop to limit PMID for the semmed filtering
   robokop:
     version: c5ec1f282158182f
   spoke:
@@ -40,7 +40,8 @@ data_sources:
     # check releases here: https://github.com/everycure-org/matrix-disease-list/releases
     version: "February 2025 release 5"
   gt:
-    version: *_rtx_kg_version # NOTE: This is the version of the GT dataset which was developed for rtx-kg2 as a part of KGML-xDTD pipeline
+    # This release is RTX v2.10.0 with GT 2.7.3
+    version: v2.7.3 # NOTE: This is the version of the GT dataset which was developed for rtx-kg2 as a part of KGML-xDTD pipeline
   drugmech:
     # check releases here: https://github.com/SuLab/DrugMechDB/releases/ 
     version: 2.0.1
