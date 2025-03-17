@@ -1,0 +1,62 @@
+---
+draft: false
+date: {{ date }}
+categories:
+  - Release
+authors:
+  {%- for author in authors %}
+  - {{ author }}
+  {%- endfor %}
+---
+Please write the article following the categories below, the related PR numbers are provided for each category.:
+
+-   Breaking Changes 🛠
+    {%- for label, pr in label_to_pr %}
+    {%- if label == 'breaking change' %}
+      - {{ pr }}
+    {%- endif %}
+    {%- endfor %}
+-   Exciting New Features 🎉
+    {%- for label, pr in label_to_pr %}
+    {%- if label == 'Feature' %}
+      - {{ pr }}
+    {%- endif %}
+    {%- endfor %}
+-   Experiments 🧪
+    {%- for label, pr in label_to_pr %}
+    {%- if label == 'experiment report' %}
+      - {{ pr }}
+    {%- endif %}
+    {%- endfor %}
+-   Bugfixes 🐛
+    {%- for label, pr in label_to_pr %}
+    {%- if label in ['Bug', 'bug'] %}
+      - {{ pr }}
+    {%- endif %}
+    {%- endfor %}
+-   Technical Enhancements 🧰
+    prs:
+    {%- for label, pr in label_to_pr %}
+    {%- if label in ['enhancement', 'Simplification', 'infrastructure'] %}
+      - {{ pr }}
+    {%- endif %}
+    {%- endfor %}
+-   Documentation ✏️
+    prs:
+      {%- for label, pr in label_to_pr %}
+      {%- if label == 'documentation' %}
+      - {{ pr }}
+      {%- endif %}
+      {%- endfor %}
+-   Newly onboarded colleagues 🚤
+      {%- for label, pr in label_to_pr %}
+      {%- if label == 'onboarding' %}
+      - {{ pr }}
+      {%- endif %}
+      {%- endfor %}
+-  Other Changes
+      {%- for label, pr in label_to_pr %}
+      {%- if label == '' %}
+      - {{ pr }}
+      {%- endif %}
+      {%- endfor %}
