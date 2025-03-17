@@ -78,7 +78,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + pipelines["ingest_to_N4J"]
     )
     pipelines["test_sample"] = (
-        + pipelines["filtering"]
+        pipelines["filtering"]
         + pipelines["embeddings"]
         + pipelines["modelling_run"]
     )
