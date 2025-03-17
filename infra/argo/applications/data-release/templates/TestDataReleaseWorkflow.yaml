@@ -1,19 +1,26 @@
-# This is a dummy workflow used only as a trigger for the build-data-release-eventsource.
+# This is a dummy workflow template used only as a blueprint for testing the data-release-eventsource.
 # It lets us quickly test our data-release feature with instant feedback loop.
 # It simulates the successful completion of the data release pipeline.
+# 
 # It can be triggered by:
-# argo submit TestDataReleaseWorkflow.yaml --labels git_sha=$(git rev-parse HEAD)
+# argo submit --from workflowtemplate/test-data-release-template --labels git_sha=$(git rev-parse HEAD)
+# 
+# This will automatically create a workflow with a unique name like "test-data-release-template-abcde",
+# so you don't need to delete previous workflows before running it again.
+#
 # Outcome - one PR will be created. When this PR is merged, a github action will run.
 # Once you are done testing, don't forget to remove the git tag, github release, git branch and revert the PR that was merged.
+
+# NOTE: This file was partially generated using AI assistance.
 apiVersion: argoproj.io/v1alpha1
-kind: Workflow
+kind: WorkflowTemplate
 metadata:
   namespace: argo-workflows
-  generateName: test-data-release-trigger-
+  name: test-data-release-template
   labels:
     release_version: v0.0.1-release-test
     git_sha: git_sha_placeholder
-    trigger_release: 'True'
+    trigger_release: 'False'
 spec:
   entrypoint: echo-hello
   templates:
