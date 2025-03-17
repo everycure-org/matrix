@@ -71,8 +71,6 @@ def write_article_template(
         for label in combined_labels.split(","):
             label_to_pr[label.strip()].append(pr)
 
-    label_to_pr = dict(label_to_pr)
-
     template = get_template("release_article.tmpl").render(
         date=date.today().isoformat(), authors=authors, label_to_pr=label_to_pr.items()
     )

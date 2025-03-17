@@ -8,7 +8,7 @@ authors:
   - {{ author }}
   {%- endfor %}
 ---
-Please write the article following the categories below, the related PR numbers are provided for each category.:
+Please write the article following the categories below. The relevant PR numbers, covering changes from the selected last release (or the most recent minor release in headless mode) to the current release, are provided for each category:
 
 -   Breaking Changes 🛠
     {%- for label, pr in label_to_pr %}
@@ -35,14 +35,12 @@ Please write the article following the categories below, the related PR numbers 
     {%- endif %}
     {%- endfor %}
 -   Technical Enhancements 🧰
-    prs:
     {%- for label, pr in label_to_pr %}
     {%- if label in ['enhancement', 'Simplification', 'infrastructure'] %}
       - {{ pr }}
     {%- endif %}
     {%- endfor %}
 -   Documentation ✏️
-    prs:
       {%- for label, pr in label_to_pr %}
       {%- if label == 'documentation' %}
       - {{ pr }}
