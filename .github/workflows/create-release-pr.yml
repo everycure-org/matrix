@@ -132,7 +132,7 @@ jobs:
           uv venv -p 3.11
           uv pip compile --quiet requirements.in --output-file requirements.txt
           uv pip install -r requirements.txt 
-          uv run scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" 
+          uv run scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
 
       - name: Create Release Article Template
         working-directory: apps/matrix-cli
@@ -156,10 +156,9 @@ jobs:
 
           # If these fail, you may have crossed the quotas. See 
           # https://cloud.google.com/vertex-ai/generative-ai/docs/quotas
-          uv run matrix releases article \
+          uv run matrix releases template \
             --headless \
             --output-file "${{env.release}}/post.md" \
-            --no-disable-rendering \
             --until ${{env.gitref}}
           
           mv "${{env.release}}" "${GITHUB_WORKSPACE}/${POSTS_DIR}"
@@ -200,7 +199,7 @@ jobs:
           This pull request was created because a release pipeline completed successfully. If this is a patch release (the release version does not end in 0, e.g. "v1.2.5") that was triggered as part of its weekly schedule, you may close this PR directly, unless you want it to [be logged on the website](https://docs.dev.everycure.org/releases/release_history/). A git tag was [created](https://github.com/everycure-org/matrix/tags) regardless, so people can check it out.
 
           Note: 
-          - for minor and major releases, release article should be written and added, meant as a kickstarter for the final release. Please refer to the [template](https://github.com/everycure-org/matrix/blob/main/.github/release.yml).
+          - for minor and major releases, release article should be written, meant as a kickstarter for the final release. The template is generated, please ask contributors to fill it out
           - release information file is used for updating the release history page
           EOM
           )" \
