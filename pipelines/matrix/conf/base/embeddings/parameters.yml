@@ -90,6 +90,8 @@ embeddings.topological_pca:
     k: 2
 
 embeddings.node.caching:
+  cache_schema:
+    _object: matrix.pipelines.batch.schemas.embeddings
   preprocessor:
     _object: matrix.pipelines.embeddings.nodes.embeddings_preprocessor
     key_length: 100

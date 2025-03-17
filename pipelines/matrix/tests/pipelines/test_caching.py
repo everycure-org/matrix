@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Callable, Sequence
 from unittest.mock import AsyncMock, patch
 
+import pyarrow as pa
 import pytest
 from kedro.framework.session import KedroSession
 from kedro.io import DataCatalog, MemoryDataset
@@ -60,6 +61,11 @@ def test_schema():
         }
     }
     return mock_schema
+
+
+@pytest.fixture
+def embeddings_schema() -> pa.lib.Schema:
+    return pa.schema({"key": pa.string(), "value": pa.list_(pa.float32()), "api": pa.string()})
 
 
 @pytest.fixture
@@ -148,7 +154,7 @@ def sample_new_col():
 
 
 def test_derive_cache_misses(
-    sample_input_df, sample_cache, sample_api1, sample_primary_key, sample_preprocessor, spark
+    sample_input_df, sample_cache, sample_api1, sample_primary_key, sample_preprocessor, embeddings_schema, spark
 ):
     expected = spark.createDataFrame(
         [
@@ -158,7 +164,14 @@ def test_derive_cache_misses(
         schema=("key",),
     )
 
-    result_df = derive_cache_misses(sample_input_df, sample_cache, sample_api1, sample_primary_key, sample_preprocessor)
+    result_df = derive_cache_misses(
+        df=sample_input_df,
+        cache=sample_cache,
+        api=sample_api1,
+        primary_key=sample_primary_key,
+        preprocessor=sample_preprocessor,
+        cache_schema=embeddings_schema,
+    )
 
     assertDataFrameEqual(result_df, expected)
 
@@ -208,6 +221,7 @@ def test_cached_api_enrichment_pipeline(
     sample_input_df: DataFrame,
     cache_schema: StructType,
     sample_api1: str,
+    embeddings_schema: pa.lib.Schema,
     sample_primary_key: str,
     sample_preprocessor: Callable,
     sample_new_col: str,
@@ -229,21 +243,21 @@ def test_cached_api_enrichment_pipeline(
     catalog = DataCatalog(
         {
             "integration.prm.filtered_nodes": MemoryDataset(sample_input_df),
-            "embeddings.node.cache.read": SparkWithSchemaDataset(
+            "batch.embeddings.cache.read": SparkWithSchemaDataset(
                 filepath=str(tmp_path / "cache_dataset"),
                 provide_empty_if_not_present=True,
                 load_args={"schema": cache_schema},
             ),
             output: LazySparkDataset(filepath=str(tmp_path / "enriched"), save_args={"mode": "overwrite"}),
-            "embeddings.node.cache_misses": LazySparkDataset(
+            "batch.embeddings.cache_misses": LazySparkDataset(
                 filepath=str(tmp_path / "cache_misses"), save_args={"mode": "overwrite"}
             ),
-            "embeddings.node.cache.write": PartitionedAsyncParallelDataset(
+            "batch.embeddings.20.cache.write": PartitionedAsyncParallelDataset(
                 path=cache_path,
                 dataset=ParquetDataset,
                 filename_suffix=".parquet",
             ),
-            "embeddings.node.cache.reload": SparkWithSchemaDataset(
+            "batch.embeddings.cache.reload": SparkWithSchemaDataset(
                 filepath=cache_path,
                 load_args={"schema": cache_schema},
             ),
@@ -255,6 +269,7 @@ def test_cached_api_enrichment_pipeline(
             ),
             "params:embeddings.node.caching.target_col": MemoryDataset(sample_new_col),
             "params:embeddings.node.caching.batch_size": MemoryDataset(2),
+            "params:embeddings.node.caching.cache_schema": MemoryDataset(embeddings_schema),
         }
     )
     pipeline_run = create_node_embeddings_pipeline()
@@ -293,6 +308,7 @@ def test_no_resolver_calls_on_empty_cache_miss(spark: SparkSession):
         transformer=AsyncMock(),
         api="foo",
         batch_size=1,
+        cache_schema=pa.schema({"foo": pa.string()}),
     )
 
     # That the encoder was not called, cannot be tested from here
