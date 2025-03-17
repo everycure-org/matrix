@@ -47,6 +47,7 @@ integration:
       drug_chemical_conflate: true
       description: false
 
+# TODO: Figure out whether to move to filtering or stay here
   deduplication:
     # choose if a node should have the most specific category. 
     # E.g. if a node has all_categories [biolink:ChemicalEntity, biolink:NamedThing],
@@ -86,9 +87,3 @@ integration:
           - biolink:Publication
           - biolink:Treatment
           # If you add anything here make sure the fabricator is not generating it, else we remove it
-    edge_filters:
-      # FUTURE: Ensure the semmed filter is moved here instead
-      filter_biolink_edges:
-        _object: matrix.pipelines.modelling.utils.partial_
-        func:
-          _object: matrix.pipelines.integration.filters.biolink_deduplicate_edges

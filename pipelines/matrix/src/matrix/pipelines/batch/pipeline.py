@@ -30,7 +30,7 @@ def create_node_embeddings_pipeline() -> Pipeline:
         source=source,
         cache=f"batch.{source}.cache.read",
         cache_out=f"batch.{source}.{workers}.cache.write",
-        input="integration.prm.filtered_nodes",
+        input="filtering.prm.filtered_nodes",
         output="embeddings.feat.graph.node_embeddings@spark",
         preprocessor="params:embeddings.node.caching.preprocessor",
         cache_miss_resolver="params:embeddings.node.caching.resolver",
