@@ -32,6 +32,71 @@ from
     <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="edges_per_node_without_most_connected_nodes" fmt="num1"/></span><br/>edges per node when excluding the top 1,000 most connected nodes</p>
 </Grid>
 
+## Upstream data sources 
+
+```sql upstream_data_sources_nodes
+select 
+    upstream_data_source as name
+    , n_nodes as value
+from 
+    bq.upstream_data_sources   
+```
+
+```sql upstream_data_sources_edges
+select 
+    upstream_data_source as name
+    , n_edges as value
+from 
+    bq.upstream_data_sources   
+```
+
+<Grid col=2>
+    <ECharts 
+        config={{
+            title: {
+                text: 'Nodes',
+                left: 'center',
+                top: 'center',
+                textStyle: {
+                    fontWeight: 'normal'
+                }
+            },
+            tooltip: {
+                formatter: function(params) {
+                    const count = params.data.value.toLocaleString();
+                    return `${params.name}: ${count} nodes (${params.percent}%)`;
+                }
+            },
+            series: [{
+                type: 'pie', 
+                data: [...upstream_data_sources_nodes],
+                radius: ['30%', '50%'],
+            }]
+        }}
+    />
+    <ECharts config={{
+        title: {
+            text: 'Edges',
+            left: 'center',
+            top: 'center',
+            textStyle: {
+                fontWeight: 'normal'
+            }
+        },
+        tooltip: {
+            formatter: function(params) {
+                const count = params.data.value.toLocaleString();
+                return `${params.name}: ${count} edges (${params.percent}%)`;
+            }
+        },
+        series: [{
+            type: 'pie', 
+            data: [...upstream_data_sources_edges],
+            radius: ['30%', '50%'],
+        }]
+    }}/>
+</Grid>
+
 ## Disease list nodes connections
 
 ```sql disease_list_connected_categories
