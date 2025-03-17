@@ -23,7 +23,7 @@ spec:
         - name: neo4j.config.server.default_advertised_address
           value: neo4j.{{ .Values.spec.source.environment }}.everycure.org
         - name: neo4j.config.server.bolt.advertised_address
-          value: neo4j.{{ .Values.spec.source.environment }}.everycure.org:7687
+          value: "neo4j.{{ .Values.spec.source.environment }}.everycure.org:7687"
   syncPolicy:
     syncOptions:     # Sync options which modifies sync behavior
     - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
