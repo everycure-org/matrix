@@ -52,7 +52,7 @@ def get_user_account_token() -> str:
 def experiment():
     if os.getenv("GITHUB_ACTIONS"):
         # Running in GitHub Actions, get the IAP token of service acccount from the secrets
-        click.secho("Running in GitHub Actions, using service account IAP token", fg="yellow", bold=True)
+        click.echo("Running in GitHub Actions, using service account IAP token")
         token = get_service_account_token()
     else:
         # Running locally, get the IAP token of user account
