@@ -27,6 +27,10 @@ the state of the [infra
 branch](https://github.com/everycure-org/matrix/tree/infra) of the matrix
 project and deploy the changes from the repo's top-level infra folder.
 
+Once these services have been deployed, ArgoCD comes into play, where the [app
+of apps](https://argo-cd.readthedocs.io/en/latest/operator-manual/cluster-bootstrapping/#app-of-apps-pattern)
+pattern is used to declaratively bootstrap other apps.
+
 As part of this environment, EC is hosting data that is public in nature:
 anyone can find the information online, the info is free of charge and
 unrestricted by licenses.
@@ -39,7 +43,9 @@ unrestricted by licenses.
   while protecting it with some form of access control so that it can only be
   read by Every Cure staff.
 - The state of the infrastructure is coupled to the state of the processing
-  code. As an example, some kubernetes pods are sized for processing certain
+  code, in the sense that the IaC codebase defines different node pools, while
+  the workloads define their resource requirements that should fit on these node
+   pools. As an example, some kubernetes pods are sized for processing certain
   datasets. As the processing code evolves, sometimes changes in the pod
   configuration are entered which might break the option of processing data.
 
@@ -79,7 +85,8 @@ Cloud authentication flow using SSO, rather than on per-app level.
      :warning: if subcontractors, who were meant not to work on prod (because
 	that's where we have the private data), start complaining that services are
 	sometimes not operational, then there should be even a 2nd non-prod
-	environment. Dev should be for making changes to infra and pipelines.
+	environment. Dev should be for making changes to infra and pipelines. This is
+	[deemed acceptable](https://github.com/everycure-org/matrix/pull/1189/files#r1967251696).
 
    Permission management: a group of users would be granted permission to the prod
    cluster. If there were only one cluster, that group of users would need to be
@@ -149,6 +156,7 @@ environments.
   the current cluster during the weekend.
 
 - Is the MVP clear? What are the Minimum Acceptance Criteria?
+  The following is a list of the acceptance criteria as laid out initially. The list is not exhaustive.
 
   > iii) Completion Criteria
   > A mirrored environment available under *.platform.everycure.org which has executed a pipeline run E2E successfully and is set to replace the existing dev environment for data release runs. 
@@ -161,7 +169,9 @@ environments.
   “production” environment (i.e. the Google Cloud project). There, they can
   inspect the protected datasets, together with the doubled public datasets.
 
-- Does the public data need to be duplicated, in order to facilitate using environment-agnostic code? Or de we add environment checks and modify pipeline?
+- Does the public data need to be duplicated, in order to facilitate using
+  environment-agnostic code? Or de we add environment checks and modify
+  pipeline?
 
   Duplicating the data makes for easier management, as no exceptions need to be
   entered in obscure corners. It comes with an extra storage cost for the
@@ -171,6 +181,9 @@ environments.
   that the datasets may grow out of sync (a new version of the public data needs
   to be in both environments). Something that can be solved with
   cross-bucket-replication.
+
+  As decided in PR 1189, production workloads will read public data from dev,
+  and private data from prod.
 
 
 - Should we create a different yml in the env folder, e.g. cloud-prod?
@@ -191,13 +204,19 @@ environments.
   ```
   An initial experiment shows this to be working.
   
-  An alternative is provided by warning on attempting to load datasets that cannot be found. However, this has a potential downside that it might raise a warning for a public dataset that should really be present (a false negative). 
+  An alternative is provided by warning on attempting to load datasets that
+  cannot be found. However, this has a potential downside that during the
+  processing a warning might be raised for a public dataset that should really
+  be present.
+
   
-  💡it’s probably a good idea to rename cloud to cloud-dev, early on. People joining later will miss the historical context why “cloud” seems to have been better treated than cloud-prod.
+  💡We'll rename the folders to _dev_ and _prd_, so that people joining later will
+  not be confused why “cloud” (dev) seems to have had preferential treatment
+  compared to prd.
 
 - Who is the handful of people that needs access to this private data?
 
-  All of Every Cure staff (sic Pascal)
+  engineering@everycure.org (sic Pascal)
 
 ## Decision
 
