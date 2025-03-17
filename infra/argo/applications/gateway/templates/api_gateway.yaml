@@ -31,7 +31,6 @@ kind: HTTPRoute
 apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: redirect
-  namespace: gateway-infra
 spec:
   parentRefs:
     name: external-http
