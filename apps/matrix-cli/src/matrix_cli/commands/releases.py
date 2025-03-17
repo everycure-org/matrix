@@ -57,6 +57,7 @@ def write_article_template(
     headless: bool = typer.Option(False, help="Don't ask interactive questions."),
 ):
     """Write a template for a release article."""
+    # In headless mode, the starting git sha is the lastest minor release
     since = select_release(headless)
     if until is None:
         until = get_current_branch()
