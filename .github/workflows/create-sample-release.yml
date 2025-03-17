@@ -7,12 +7,6 @@ on:
         description: 'Version to deploy in format vX.Y.Z'
         required: true
         type: string
-  workflow_call: 
-    inputs:
-      release_version:
-        description: 'Version to deploy in format vX.Y.Z'
-        required: true
-        type: string
 env:
   project_id: 'mtrx-hub-dev-3of'
   workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
