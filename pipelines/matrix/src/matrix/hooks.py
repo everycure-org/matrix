@@ -147,6 +147,9 @@ class MLFlowHooks:
 
         if not runs:
             logger.info("creating run")
+            # For some reason MLFLOW_RUN_ID is set to "None" rather than None, so it tries to find this run id
+            if os.environ.get("MLFLOW_RUN_ID") == "None":
+                del os.environ["MLFLOW_RUN_ID"]
             run = mlflow.start_run(run_name=run_name, experiment_id=experiment_id)
             mlflow.set_tag("created_by", "kedro")
             return run.info.run_id
