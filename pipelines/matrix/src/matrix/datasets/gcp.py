@@ -47,6 +47,7 @@ class LazySparkDataset(SparkDataset):
         version: Version | None = None,
         credentials: dict[str, Any] | None = None,
         metadata: dict[str, Any] | None = None,
+        provide_empty_if_not_present: bool = False,
     ) -> None:
         self._full_url = filepath
 
@@ -72,7 +73,19 @@ class LazySparkDataset(SparkDataset):
                     self._filepath = Path(name)
                     self._fs_prefix = "file://"
 
-        return super().load()
+        try:
+            return super().load()
+        except AnalysisException as e:
+            if self._provide_empty_if_not_present and ("PATH_NOT_FOUND" in e.desc):
+                logger.warning(
+                    """{"warning": "Dataset not found at '%s'.",  "Resolution": "providing empty dataset with unrelated schema."}""",
+                    self.filepath,
+                )
+                return ps.SparkSession.getActiveSession.createDataFrame(
+                    [], schema=ps.types.StructType().add("foo", ps.types.BooleanType())
+                )
+            else:
+                raise e
 
 
 class SparkWithSchemaDataset(SparkDataset):
@@ -124,7 +137,7 @@ class SparkWithSchemaDataset(SparkDataset):
         except AnalysisException as e:
             if self._provide_empty_if_not_present and ("PATH_NOT_FOUND" in e.desc):
                 logger.warning(
-                    """{"warning": "Dataset not found at '%s'.",  "Resolution": "providing empty dataset with identical schema."}""",
+                    """{"warning": "Dataset not found at '%s'.",  "Resolution": "providing empty dataset with same schema."}""",
                     load_path,
                 )
                 frame = spark.createDataFrame([], schema=schema)
