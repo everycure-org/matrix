@@ -17,6 +17,6 @@ spec:
     - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
     - ServerSideApply=true # to ensure CRDs are deployed
     - PruneLast=true
-    - Replace=true
+    - Replace=false # must be false or else https://github.com/argoproj/argo-cd/issues/13100
     automated: 
       prune: true
