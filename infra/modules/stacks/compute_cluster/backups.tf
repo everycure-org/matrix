@@ -1,6 +1,6 @@
 resource "google_gke_backup_backup_plan" "rpo_daily_window" {
   name     = "rpo-daily-window"
-  cluster  = module.gke.outputs.cluster_id
+  cluster  = module.gke.cluster_id
   location = "us-central1"
   retention_policy {
     backup_delete_lock_days = 7
