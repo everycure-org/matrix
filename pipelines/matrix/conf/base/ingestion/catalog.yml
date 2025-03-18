@@ -287,7 +287,7 @@ ingestion.raw.kgml_xdtd_ground_truth.negatives:
   save_args:
     sep: "\t"
 
-ingestion.raw.kgml_xdtd_ground_truth.positive_edges@pandas:
+ingestion.raw.kgml_xdtd_ground_truth.positive.edges@pandas:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
   filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/translator/${globals:data_sources.kgml_xdtd_gt.version}/tp_pairs_raw.tsv

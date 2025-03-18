@@ -54,18 +54,21 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             {"name": "disease_list", "integrate_in_kg": False, "has_edges": False},
             {
                 "name": "kgml_xdtd_ground_truth",
+                "has_nodes": False,
                 "integrate_in_kg": False,
                 "has_positive_edges": True,
                 "has_negative_edges": True,
             },
             {
                 "name": "ec_ground_truth",
+                "has_nodes": False,
                 "integrate_in_kg": False,
                 "has_positive_edges": True,
                 "has_negative_edges": True,
             },
             {
                 "name": "ec_ground_truth_downfilled",
+                "has_nodes": False,
                 "integrate_in_kg": False,
                 "has_positive_edges": True,
                 "has_negative_edges": True,
