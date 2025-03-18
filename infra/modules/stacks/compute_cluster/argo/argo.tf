@@ -33,6 +33,27 @@ resource "kubernetes_secret" "argo_secret" {
   }
   type = "Opaque"
 }
+
+resource "kubernetes_secret" "argo_secret_matrix_ui" {
+  depends_on = [kubernetes_namespace.argo_ns]
+  metadata {
+    name      = "matrix-ui-auth"
+    namespace = var.namespace
+    labels = {
+      "argocd.argoproj.io/secret-type" : "repository"
+    }
+  }
+  data = {
+    # type= base64encode("git")
+    # url= base64encode(var.repo_url)
+    # password= base64encode(var.repo_creds)
+    type     = "git"
+    url      = "https://github.com/everycure-org/matrix-ui.git"
+    password = var.repo_creds
+  }
+  type = "Opaque"
+}
+
 resource "helm_release" "argo" {
   depends_on = [kubernetes_namespace.argo_ns, kubernetes_secret.argo_secret]
   name       = "argo"
