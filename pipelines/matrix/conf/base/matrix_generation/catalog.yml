@@ -26,7 +26,6 @@ matrix_generation.feat.nodes@kg:
   filepath: ${globals:paths.matrix_generation}/feat/matrix_nodes_spark
 
 "matrix_generation.prm.fold_{fold}.matrix_pairs":
-  # <<: *_pandas_parquet
   <<: *_spark_parquet
   filepath: ${globals:paths.matrix_generation}/prm/fold_{fold}/matrix_pairs
 
