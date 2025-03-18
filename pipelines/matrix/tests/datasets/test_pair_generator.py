@@ -155,28 +155,41 @@ def test_ground_truth_test_pairs(matrix):
 
 
 def test_matrix_test_diseases(matrix):
-    # Given a matrix and a test data generator
-    generator = MatrixTestDiseases(
+    # Given a matrix and a test data generator with no removal columns
+    generator_1 = MatrixTestDiseases(
+        positive_columns=["is_positive_1", "is_positive_2"],
+    )
+
+    # When generating the test dataset
+    generated_data_1 = generator_1.generate(matrix)
+
+    # Then generated test data:
+    #   - has the expected number of rows (# test diseases x # drugs)
+    #   - has the expected number of positive pairs
+    #   - has the expected columns
+    positive_pairs = matrix[matrix["is_positive_1"] | matrix["is_positive_2"]]
+    positive_diseases = positive_pairs["target"].unique()
+
+    assert len(generated_data_1) == len(positive_diseases) * len(matrix["source"].unique())
+    assert generated_data_1["y"].sum() == len(positive_pairs)
+    assert set(generated_data_1.columns) == set(matrix.columns).union({"y"})
+
+    # Given a matrix and a test data generator with a removal columns
+    generator_2 = MatrixTestDiseases(
         positive_columns=["is_positive_1", "is_positive_2"],
         removal_columns=["is_negative_1"],
     )
 
     # When generating the test dataset
-    generated_data = generator.generate(matrix)
+    generated_data_2 = generator_2.generate(matrix)
 
     # Then generated test data:
     #   - contains all rows where the target is in the positive pairs set
-    #   - does not include rows marked for removal
-    #   - has the correct 'y' labels
-    positive_pairs = matrix[matrix["is_positive_1"] | matrix["is_positive_2"]]
-    positive_diseases = positive_pairs["target"].unique()
-    expected_data = matrix[matrix["target"].isin(positive_diseases) | ~matrix["is_negative_1"]]
-    expected_data["y"] = (expected_data["is_positive_1"] | expected_data["is_positive_2"]).astype(int)
+    negative_pairs = matrix[matrix["is_negative_1"]]
+    negative_pairs_set = set(zip(negative_pairs["source"], negative_pairs["target"]))
+    generated_data_set = set(zip(generated_data_2["source"], generated_data_2["target"]))
 
-    assert len(generated_data) == len(expected_data)
-    assert set(generated_data["target"]).issubset(set(positive_diseases))
-    assert (generated_data["y"] == expected_data["y"]).all()
-    assert set(generated_data.columns) == set(matrix.columns).union({"y"})
+    assert len(generated_data_set.intersection(negative_pairs_set)) == 0
 
 
 def test_full_matrix_positives(matrix):
