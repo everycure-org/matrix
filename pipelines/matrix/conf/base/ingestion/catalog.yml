@@ -360,24 +360,22 @@ ingestion.raw.ec_ground_truth.positives:
   type: matrix.datasets.github.GitHubReleaseExcelDataset
   repository_url: https://github.com/everycure-org/matrix-indication-list
   release_name: ${globals:data_sources.ec_gt.version}
-  release_asset_name: indicationList.xlsx
+  # NOTE: If you don't want to use downfilled version, use indicationList.xlsx
+  release_asset_name: indicationList_downfilled.xlsx 
   fs_args:
     Accept: application/octet-stream
     Authorization: token ${globals:gh_token}
-  # load_args:
-  #   sep: "\t"
 
 ingestion.raw.ec_ground_truth.negatives:
   <<: [*_layer_raw]
   type: matrix.datasets.github.GitHubReleaseExcelDataset
   repository_url: https://github.com/everycure-org/matrix-indication-list
   release_name: ${globals:data_sources.ec_gt.version}
-  release_asset_name: contraindicationList.xlsx
+  # NOTE: If you don't want to use downfilled version, use contraindicationList.xlsx
+  release_asset_name: contraindicationList_downfilled.xlsx
   fs_args:
     Accept: application/octet-stream
     Authorization: token ${globals:gh_token}
-  # load_args:
-  #   sep: "\t"
 
 ingestion.raw.ec_ground_truth.negative.edges@pandas:
   <<: [*_layer_raw]
@@ -434,97 +432,6 @@ ingestion.int.ec_ground_truth.negative.edges:
 ingestion.int.ec_ground_truth.positive.edges:
   <<: [*_layer_raw, *_spark_csv]
   filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-    mode: overwrite
-  
-# -------------------------------------------------------------------------
-# Ground truth EC downfilled
-# -------------------------------------------------------------------------
-ingestion.raw.ec_ground_truth_downfilled.positives:
-  <<: [*_layer_raw]
-  type: matrix.datasets.github.GitHubReleaseExcelDataset
-  repository_url: https://github.com/everycure-org/matrix-indication-list
-  release_name: ${globals:data_sources.ec_gt.version}
-  release_asset_name: indicationList_downfilled.xlsx
-  fs_args:
-    Accept: application/octet-stream
-    Authorization: token ${globals:gh_token}
-  # load_args:
-  #   sep: "\t"
-
-ingestion.raw.ec_ground_truth_downfilled.negatives:
-  <<: [*_layer_raw]
-  type: matrix.datasets.github.GitHubReleaseExcelDataset
-  repository_url: https://github.com/everycure-org/matrix-indication-list
-  release_name: ${globals:data_sources.ec_gt.version}
-  release_asset_name: contraindicationList_downfilled.xlsx
-  fs_args:
-    Accept: application/octet-stream
-    Authorization: token ${globals:gh_token}
-  # load_args:
-  #   sep: "\t"
-
-ingestion.raw.ec_ground_truth_downfilled.negative.edges@pandas:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs_downfilled_raw.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
-
-ingestion.raw.ec_ground_truth_downfilled.positive.edges@spark:
-  <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs_downfilled_raw.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
-
-ingestion.raw.ec_ground_truth_downfilled.negative.edges@spark:
-  <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs_downfilled_raw.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
-
-ingestion.raw.ec_ground_truth_downfilled.positive.edges@pandas:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs_downfilled_raw.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
-
-ingestion.int.ec_ground_truth_downfilled.negative.edges:
-  <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs_downfilled.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-    mode: overwrite
-  
-ingestion.int.ec_ground_truth_downfilled.positive.edges:
-  <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs_downfilled.tsv
   load_args:
     sep: "\t"
     header: true
