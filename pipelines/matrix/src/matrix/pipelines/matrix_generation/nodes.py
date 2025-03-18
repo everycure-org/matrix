@@ -1,7 +1,6 @@
 import logging
-import pickle
 from datetime import datetime
-from typing import Dict, Iterator, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 import pyspark.sql as ps
@@ -11,7 +10,6 @@ from matrix.datasets.graph import KnowledgeGraph
 from matrix.inject import _extract_elements_in_list, inject_object
 from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
-from pyspark import SparkContext as sc
 from pyspark.sql import Row, Window
 from sklearn.impute._base import _BaseImputer
 from tqdm import tqdm
@@ -187,7 +185,6 @@ def make_predictions_and_sort(
     # Collect embedding vectors
     data = data.withColumn("source_embedding", get_embedding_udf(F.col("source")))
     data = data.withColumn("target_embedding", get_embedding_udf(F.col("target")))
-
     # Retrieve rows with null embeddings
     # NOTE: This only happens in a rare scenario where the node synonymizer
     # provided an identifier for a node that does _not_ exist in our KG.
@@ -236,9 +233,7 @@ def make_predictions_and_sort(
 
     # Apply the function to each partition of the Spark DataFrame
     transformed = transformed.rdd.mapPartitions(predict_partition).toDF()
-    # print(f"transformed columns: {transformed.columns}")
     data = data.drop("source_embedding", "target_embedding")
-    # transformed = transformed.withColumn("__index_level_0__", F.monotonically_increasing_id())
     data = data.join(
         transformed.select("__index_level_0__", not_treat_score_col_name, treat_score_col_name, unknown_score_col_name),
         on="__index_level_0__",  # Use the correct join key
@@ -271,11 +266,9 @@ def apply_transformers(
     for transformer in transformers.values():
         # Extract features for transformation
         features = transformer["features"]  # Assuming this is a list of column names
-        # print(f"Transformer features: {features}")
         features_selected = data.select(*features).toPandas()
         # The transformer is inherited from sklearn.preprocessing.FunctionTransformer
         transformed_values = transformer["transformer"].transform(features_selected)
-        # print(f"transformed_values size: {transformed_values.shape}")
         spark_session: ps.SparkSession = ps.SparkSession.builder.getOrCreate()
 
         # Convert transformed values back to Spark DataFrame
