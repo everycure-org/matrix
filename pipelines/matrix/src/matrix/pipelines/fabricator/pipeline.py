@@ -67,8 +67,6 @@ def _create_kgml_xdtd_gtpairs(
 def _create_ec_gt_pairs(
     drug_list: pd.DataFrame,
     disease_list: pd.DataFrame,
-    bool_cols: list[str],
-    string_cols: list[str],
     num: int = 100,
     seed: int = 42,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -81,6 +79,24 @@ def _create_ec_gt_pairs(
     positives = df[:num]
     negatives = df[num : 2 * num]
 
+    BOOL_COLS = ["is_diagnostic_agent", "is_allergen", "llm_nameres_correct", "llm_nameres_correct_drug"]
+    STRING_COLS = [
+        "final normalized drug label",
+        "final normalized disease label",
+        "active ingredient",
+        "contraindications",
+        "disease contraindicated",
+        "disease id nameres",
+        "disease label nameres",
+        "llm_nameres_correct",
+        "llm disease id",
+        "drug id nameres",
+        "drug label nameres",
+        "final normalized disease id",
+        "final normalized disease label",
+        "final normalized drug label",
+        "llm drug id",
+    ]
     # Rename columns
     positives = positives.rename(
         columns={"source": "final normalized drug id", "target": "final normalized disease id"}
@@ -89,10 +105,10 @@ def _create_ec_gt_pairs(
         columns={"source": "final normalized drug id", "target": "final normalized disease id"}
     )
 
-    for col in string_cols:
+    for col in STRING_COLS:
         negatives[col] = np.random.choice(["string", "dummy"], len(negatives), p=[0.3, 0.7])
 
-    for col in bool_cols:
+    for col in BOOL_COLS:
         negatives[col] = np.random.choice([True, False], len(negatives), p=[0.3, 0.7])
 
     return positives, negatives
