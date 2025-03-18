@@ -13,7 +13,7 @@ concurrency:
 env:
   tf_version: '1.5.7'
   tg_version: '0.58.11'
-  deployment_path: ${{ inputs.deployment_path }}
+  deployment_path: infra/deployments/${{ inputs.deployment_path }}
 
 jobs:
   # Uncomment this for debugging the JWT tokens
@@ -32,7 +32,7 @@ jobs:
         with:
           filters: |
             src:
-              - ${{ inputs.deployment_path }}
+              - ${{ env.deployment_path }}
               - .github/workflows/infra-*.yml
               - infra/modules/**
   debug:
