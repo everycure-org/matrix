@@ -521,6 +521,7 @@ ingestion.int.ec_ground_truth_downfilled.negative.edges:
     header: true
     index: false
     mode: overwrite
+  
 ingestion.int.ec_ground_truth_downfilled.positive.edges:
   <<: [*_layer_raw, *_spark_csv]
   filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs_downfilled.tsv
