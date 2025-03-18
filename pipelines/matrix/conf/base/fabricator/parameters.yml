@@ -557,27 +557,3 @@ fabricator.spoke:
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 49494
-
-fabricator.ec_indication_list:
-  bool_cols:
-    - is_diagnostic_agent
-    - is_allergen
-    - llm_nameres_correct
-    - llm_nameres_correct_drug
-  string_cols:
-    - final normalized drug label
-    - final normalized disease label
-    - active ingredient
-    - contraindications
-    - disease contraindicated
-    - disease id nameres
-    - disease label nameres
-    - llm_nameres_correct
-    - llm disease id
-    - drug id nameres
-    - drug label nameres
-    - final normalized disease id
-    - final normalized disease label
-    - final normalized drug label
-    - llm drug id
-
