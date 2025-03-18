@@ -266,10 +266,10 @@ ingestion.int.disease_list.nodes:
   filepath: ${globals:paths.ingestion}/disease_list/translator/${globals:data_sources.disease_list.version}/disease_list_conflated
 
 # -------------------------------------------------------------------------
-# Ground truth
+# KGML-xdtd Ground truth
 # -------------------------------------------------------------------------  
 # TODO: Remove raw suffix from all outputs of preprocessing pipeline once its in main
-ingestion.raw.ground_truth.positives:
+ingestion.raw.kgml_xdtd_ground_truth.positives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
   filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tp_pairs.txt
@@ -278,7 +278,7 @@ ingestion.raw.ground_truth.positives:
   save_args:
     sep: "\t"
 
-ingestion.raw.ground_truth.negatives:
+ingestion.raw.kgml_xdtd_ground_truth.negatives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
   filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tn_pairs.txt
@@ -287,10 +287,10 @@ ingestion.raw.ground_truth.negatives:
   save_args:
     sep: "\t"
 
-ingestion.raw.ground_truth.edges@pandas:
+ingestion.raw.kgml_xdtd_ground_truth.edges@pandas:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.kgml_xdtd_gt.version}/gt_pairs_raw.tsv
+  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/translator/${globals:data_sources.kgml_xdtd_gt.version}/gt_pairs_raw.tsv
   save_args:
     sep: "\t"
     header: true
@@ -298,17 +298,17 @@ ingestion.raw.ground_truth.edges@pandas:
   load_args:
     sep: "\t"
 
-ingestion.raw.ground_truth.edges@spark:
+ingestion.raw.kgml_xdtd_ground_truth.edges@spark:
   <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.kgml_xdtd_gt.version}/gt_pairs_raw.tsv
+  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/translator/${globals:data_sources.kgml_xdtd_gt.version}/gt_pairs_raw.tsv
   load_args:
     sep: "\t"
     header: true
     index: false
 
-ingestion.int.ground_truth.edges:
+ingestion.int.kgml_xdtd_ground_truth.edges:
   <<: [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.ingestion}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/gt_ids_raw.tsv
+  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/gt_ids_raw.tsv
   load_args:
     sep: "\t"
     header: true

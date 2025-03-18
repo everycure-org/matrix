@@ -12,10 +12,10 @@ def create_ground_truth_pipeline() -> list:
         node(
             func=nodes.create_gt,
             inputs={
-                "pos_df": "ingestion.raw.ground_truth.positives",
-                "neg_df": "ingestion.raw.ground_truth.negatives",
+                "pos_df": "ingestion.raw.kgml_xdtd_ground_truth.positives",
+                "neg_df": "ingestion.raw.kgml_xdtd_ground_truth.negatives",
             },
-            outputs="ingestion.raw.ground_truth.edges@pandas",
+            outputs="ingestion.raw.kgml_xdtd_ground_truth.edges@pandas",
             name="concatenate_gt_dataframe",
             tags=["kgml-xdtd-ground-truth"],
         ),
