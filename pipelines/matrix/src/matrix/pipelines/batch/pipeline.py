@@ -118,7 +118,6 @@ def cached_api_enrichment_pipeline(
     Returns:
         Kedro Pipeline.
     """
-
     cache_misses = f"batch.{source}.cache.misses"
     cache_reload = f"batch.{source}.cache.reload"
 
@@ -254,14 +253,16 @@ def limit_cache_to_results_from_api(df: DataFrame, api: str) -> DataFrame:
 
     Note that the reason for filtering for results from the api is that
     you likely don't want to add results from a different API than the one
-    you use to resolve cache misses."""
+    you use to resolve cache misses.
+    """
     return df.filter(df["api"] == api).drop("api")
 
 
 def resolve_cache_duplicates(df: DataFrame, id_col: str) -> DataFrame:
     """Return a DataFrame where duplicates have been removed in a non-discriminatory fashion.
 
-    Duplicates are detected by their `id_col`."""
+    Duplicates are detected by their `id_col`.
+    """
     keys, distinct_keys = df.agg(F.count("*"), F.count_distinct(id_col)).first()
     if keys != distinct_keys:
         # Warnings can be converted to errors, making them more ideal here.
@@ -316,7 +317,6 @@ def _bucketize(df: DataFrame, bucket_size: int, columns: Optional[list[str]] = N
     Returns:
         Dataframe augmented with `bucket` column
     """
-
     if columns is None:
         columns = []
 
