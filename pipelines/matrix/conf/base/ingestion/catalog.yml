@@ -319,19 +319,6 @@ ingestion.int.ground_truth.edges:
     index: false
     mode: overwrite
 
-ingestion.int.ground_truth.edges:
-  <<: [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.ingestion}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/gt_pairs.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-    mode: overwrite
-
 # -------------------------------------------------------------------------
 # Ground truth EC
 # -------------------------------------------------------------------------  
