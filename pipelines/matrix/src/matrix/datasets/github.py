@@ -103,7 +103,7 @@ class GitHubReleaseCSVDataset(GitHubReleaseBaseDataset, CSVDataset):
         asset_url = f"{self.release_url}/assets/{asset_id}".removeprefix(f"{self._protocol}{PROTOCOL_DELIMITER}")
         self._filepath = asset_url
 
-        return CSVDataset.load()
+        return CSVDataset.load(self)
 
 
 class GitHubReleaseExcelDataset(GitHubReleaseBaseDataset, ExcelDataset):
@@ -141,4 +141,4 @@ class GitHubReleaseExcelDataset(GitHubReleaseBaseDataset, ExcelDataset):
         asset_url = f"{self.release_url}/assets/{asset_id}".removeprefix(f"{self._protocol}{PROTOCOL_DELIMITER}")
         self._filepath = asset_url
 
-        return ExcelDataset.load()
+        return ExcelDataset.load(self)
