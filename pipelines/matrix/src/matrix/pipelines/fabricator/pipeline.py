@@ -101,6 +101,8 @@ def _create_ec_gt_pairs(
     positives = positives.rename(
         columns={"source": "final normalized drug id", "target": "final normalized disease id"}
     )
+    positives["final normalized disease label"] = positives["final normalized disease id"]
+    positives["final normalized drug label"] = positives["final normalized drug id"]
     negatives = negatives.rename(
         columns={"source": "final normalized drug id", "target": "final normalized disease id"}
     )
