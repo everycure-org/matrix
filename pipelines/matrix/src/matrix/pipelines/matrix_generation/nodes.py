@@ -1,18 +1,18 @@
 import logging
 import pickle
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, Iterator, List, Optional, Tuple, Union
 
 import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.functions as F
+import pyspark.sql.types as T
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.inject import _extract_elements_in_list, inject_object
 from matrix.pipelines.modelling.model import ModelWrapper
-
-# from matrix.pipelines.modelling.nodes import apply_transformers
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark import SparkContext as sc
+from pyspark.sql import Row, Window
 from sklearn.impute._base import _BaseImputer
 from tqdm import tqdm
 
@@ -153,23 +153,17 @@ def generate_pairs(
     return matrix
 
 
-def make_batch_predictions(
+def make_predictions_and_sort(
     graph: KnowledgeGraph,
-    data: pd.DataFrame,
+    data: ps.DataFrame,
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     model: ModelWrapper,
     features: List[str],
     treat_score_col_name: str,
     not_treat_score_col_name: str,
     unknown_score_col_name: str,
-    batch_by: str = "target",
-) -> pd.DataFrame:
+) -> ps.DataFrame:
     """Generate probability scores for drug-disease dataset.
-
-    This function computes the scores in batches to avoid memory issues.
-
-    FUTURE: Experiment with PySpark for predictions where model is broadcasted.
-    https://dataking.hashnode.dev/making-predictions-on-a-pyspark-dataframe-with-a-scikit-learn-model-ckzzyrudn01lv25nv41i2ajjh
 
     Args:
         graph: Knowledge graph.
@@ -184,105 +178,121 @@ def make_batch_predictions(
         Pairs dataset with additional column containing the probability scores.
     """
 
-    def process_batch(batch: pd.DataFrame) -> pd.DataFrame:
-        # Collect embedding vectors
-        batch["source_embedding"] = batch.apply(lambda row: graph.get_embedding(row.source, default=pd.NA), axis=1)
-        batch["target_embedding"] = batch.apply(lambda row: graph.get_embedding(row.target, default=pd.NA), axis=1)
+    data = data.limit(1000)
 
-        # Retrieve rows with null embeddings
-        # NOTE: This only happens in a rare scenario where the node synonymizer
-        # provided an identifier for a node that does _not_ exist in our KG.
-        # https://github.com/everycure-org/matrix/issues/409
-        removed = batch[batch["source_embedding"].isna() | batch["target_embedding"].isna()]
-        if len(removed.index) > 0:
-            logger.warning(f"Dropped {len(removed.index)} pairs during generation!")
-            logger.warning(
-                "Dropped: %s",
-                ",".join([f"({r.source}, {r.target})" for _, r in removed.iterrows()]),
-            )
+    @F.pandas_udf(T.ArrayType(T.FloatType()))
+    def get_embedding_udf(column: pd.Series) -> pd.Series:
+        return column.apply(lambda x: graph.get_embedding(x, default=None))
 
-        # Drop rows without source/target embeddings
-        batch = batch.dropna(subset=["source_embedding", "target_embedding"])
+    # Collect embedding vectors
+    data = data.withColumn("source_embedding", get_embedding_udf(F.col("source")))
+    data = data.withColumn("target_embedding", get_embedding_udf(F.col("target")))
 
-        # Return empty dataframe if all rows are dropped
-        if len(batch) == 0:
-            return batch.drop(columns=["source_embedding", "target_embedding"])
+    # Retrieve rows with null embeddings
+    # NOTE: This only happens in a rare scenario where the node synonymizer
+    # provided an identifier for a node that does _not_ exist in our KG.
+    # https://github.com/everycure-org/matrix/issues/409
+    removed = data.filter(F.col("source_embedding").isNull() | F.col("target_embedding").isNull())
 
-        # Apply transformers to data
-        transformed = apply_transformers(batch, transformers)
+    if removed.count() > 0:
+        logger.warning(f"Dropped {removed.count()} pairs during generation!")
+        removed_pairs = (
+            removed.select("source", "target").rdd.map(lambda r: f"({r['source']}, {r['target']})").collect()
+        )
+        logger.warning("Dropped: %s", ",".join(removed_pairs))
 
-        # Extract features
-        batch_features = _extract_elements_in_list(transformed.columns, features, True)
+    # Drop rows without source/target embeddings
+    data = data.dropna(subset=["source_embedding", "target_embedding"])
 
-        # Generate model probability scores
-        preds = model.predict_proba(transformed[batch_features].values)
-        batch[not_treat_score_col_name] = preds[:, 0]
-        batch[treat_score_col_name] = preds[:, 1]
-        batch[unknown_score_col_name] = preds[:, 2]
-        batch = batch.drop(columns=["source_embedding", "target_embedding"])
-        return batch
+    # Return empty dataframe if all rows are dropped
+    if data.count() == 0:
+        return data.drop("source_embedding", "target_embedding")
 
-    grouped = data.groupby(batch_by)
+    # Apply transformers to data (assuming this can work with PySpark)
+    transformed = apply_transformers(data, transformers)
+    # Extract features
+    data_features = _extract_elements_in_list(transformed.columns, features, True)
 
-    result_parts = []
-    for _, batch in tqdm(grouped):
-        result_parts.append(process_batch(batch))
+    def predict_partition(partition):
+        # Convert the partition (list of Rows) to a Pandas DataFrame
+        partition_df = pd.DataFrame([row.asDict() for row in partition])
 
-    results = pd.concat(result_parts, axis=0)
+        # Extract the relevant columns for prediction
+        X = partition_df[data_features]
 
-    return results
+        # Make predictions
+        predictions = model.predict_proba(X)
+
+        # Create a new DataFrame with the predictions
+        predictions_df = pd.DataFrame(
+            predictions, columns=[not_treat_score_col_name, treat_score_col_name, unknown_score_col_name]
+        )
+
+        # Combine the original DataFrame with the predictions
+        result_df = pd.concat([partition_df, predictions_df], axis=1)
+
+        # Convert the result back to a list of Rows
+        return [Row(**row) for row in result_df.to_dict("records")]
+
+    # Apply the function to each partition of the Spark DataFrame
+    transformed = transformed.rdd.mapPartitions(predict_partition).toDF()
+
+    data = data.drop("source_embedding", "target_embedding")
+    transformed = transformed.withColumn("__index_level_0__", F.monotonically_increasing_id())
+    print(f"transformed columns: {transformed.columns}")
+    data = data.join(
+        transformed.select("__index_level_0__", not_treat_score_col_name, treat_score_col_name, unknown_score_col_name),
+        on="__index_level_0__",  # Use the correct join key
+        how="inner",
+    )
+    print(f"data columns: {data.columns}")
+    window_spec = Window.orderBy(F.desc(treat_score_col_name))
+    # Add rank column
+    data = data.withColumn("rank", F.row_number().over(window_spec))
+    row_count = data.count()
+    # Add quantile rank column
+    data = data.withColumn("quantile_rank", F.col("rank") / row_count)
+    data.show()
+    return data
 
 
-def make_predictions_and_sort(
-    graph: KnowledgeGraph,
-    data: pd.DataFrame,
-    transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
-    model: ModelWrapper,
-    features: List[str],
-    treat_score_col_name: str,
-    not_treat_score_col_name: str,
-    unknown_score_col_name: str,
-    batch_by: str,
-) -> pd.DataFrame:
-    """Generate and sort probability scores for a drug-disease dataset.
-
-    FUTURE: Perform parallelised computation instead of batching with a for loop.
+@inject_object()
+def apply_transformers(
+    data: ps.DataFrame,
+    transformers: dict[str, dict[str, Union[_BaseImputer, list[str]]]],
+) -> ps.DataFrame:
+    """Function to apply fitted transformers to the data.
 
     Args:
-        graph: Knowledge graph.
-        data: Data to predict scores for.
-        transformers: Dictionary of trained transformers.
-        model: Model making the predictions.
-        features: List of features, may be regex specified.
-        treat_score_col_name: Probability score column name.
-        not_treat_score_col_name: Probability score column name for not treat.
-        unknown_score_col_name: Probability score column name for unknown.
-        batch_by: Column to use for batching (e.g., "target" or "source").
+        data: Data to transform.
+        transformers: Dictionary of transformers.
 
     Returns:
-        Pairs dataset sorted by an additional column containing the probability scores.
+        Transformed data.
     """
-    # Generate scores
-    data = make_batch_predictions(
-        graph,
-        data,
-        transformers,
-        model,
-        features,
-        treat_score_col_name,
-        not_treat_score_col_name,
-        unknown_score_col_name,
-        batch_by=batch_by,
-    )
+    data = data.withColumnRenamed("__index_level_0__", "index")
+    for transformer in transformers.values():
+        # Extract features for transformation
+        features = transformer["features"]  # Assuming this is a list of column names
+        # print(f"Transformer features: {features}")
+        features_selected = data.select(*features).toPandas()
+        # The transformer is inherited from sklearn.preprocessing.FunctionTransformer
+        transformed_values = transformer["transformer"].transform(features_selected)
+        # print(f"transformed_values size: {transformed_values.shape}")
+        spark_session: ps.SparkSession = ps.SparkSession.builder.getOrCreate()
 
-    # Sort by the probability score
-    sorted_data = data.sort_values(by=treat_score_col_name, ascending=False)
+        # Convert transformed values back to Spark DataFrame
+        transformed_sdf = spark_session.createDataFrame(
+            pd.DataFrame(
+                transformed_values, columns=transformer["transformer"].get_feature_names_out(features_selected)
+            )
+        ).withColumn("index", F.monotonically_increasing_id())
+        # Join transformed data back to original DataFrame
+        data = data.drop(*features).join(transformed_sdf, on="index", how="inner")  # Drop old features
 
-    # Add rank and quantile rank columns
-    sorted_data["rank"] = range(1, len(sorted_data) + 1)
-    sorted_data["quantile_rank"] = sorted_data["rank"] / len(sorted_data)
+    data = data.drop("index")
 
-    return sorted_data
+    return data
 
 
 def generate_summary_metadata(matrix_parameters: Dict) -> pd.DataFrame:
