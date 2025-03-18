@@ -53,6 +53,8 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             {"name": "drug_list", "integrate_in_kg": False, "has_edges": False},
             {"name": "disease_list", "integrate_in_kg": False, "has_edges": False},
             {"name": "ground_truth", "integrate_in_kg": False, "has_nodes": False},
+            {"name": "ec_ground_truth", "integrate_in_kg": False, "has_nodes": False},
+            {"name": "ground_truth", "integrate_in_kg": False, "has_nodes": False},
             # {"name": "drugmech", "integrate_in_kg": False, "has_nodes": False},
             {"name": "ec_clinical_trails", "integrate_in_kg": False},
         ],

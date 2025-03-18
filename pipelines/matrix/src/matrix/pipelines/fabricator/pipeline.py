@@ -218,8 +218,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "ingestion.raw.drug_list",
                     "ingestion.raw.disease_list",
-                    "params:fabricator.ec_indication_list.bool_cols",
-                    "params:fabricator.ec_indication_list.string_cols",
                 ],
                 outputs=[
                     "ingestion.raw.ec_ground_truth.positives",
@@ -232,8 +230,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "ingestion.raw.drug_list",
                     "ingestion.raw.disease_list",
-                    "params:fabricator.ec_indication_list.bool_cols",
-                    "params:fabricator.ec_indication_list.string_cols",
                 ],
                 outputs=[
                     "ingestion.raw.ec_ground_truth_downfilled.positives",
