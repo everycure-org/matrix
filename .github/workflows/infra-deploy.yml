@@ -13,7 +13,6 @@ concurrency:
 env:
   tf_version: '1.5.7'
   tg_version: '0.58.11'
-  working_dir: 'infra/'
   deployment_path: ${{ inputs.deployment_path }}
 
 jobs:
@@ -90,10 +89,10 @@ jobs:
         with:
           tf_version: ${{ env.tf_version }}
           tg_version: ${{ env.tg_version }}
-          tg_dir: ${{ env.working_dir }}/deployments
+          tg_dir: ${{ env.deployment_path }}
           tg_command: 'hclfmt --terragrunt-check --terragrunt-diff'
       - name: check terraform files
-        run: terraform fmt -check -recursive ${{ env.working_dir }}
+        run: terraform fmt -check -recursive ${{ env.deployment_path }}
 
   plan:
     # runs under RO user
@@ -129,7 +128,7 @@ jobs:
         with:
           tf_version: ${{ env.tf_version }}
           tg_version: ${{ env.tg_version }}
-          tg_dir: ${{ env.working_dir }}/deployments/${{ env.deployment_path }}
+          tg_dir: ${{ env.deployment_path }}
           tg_command: 'plan -lock=false -refresh=false' #we do not check the remote state, this is a compromise that avoids giving read rights to secrets
 
   deploy:
@@ -169,7 +168,7 @@ jobs:
         with:
           tf_version: ${{ env.tf_version }}
           tg_version: ${{ env.tg_version }}
-          tg_dir: ${{ env.working_dir }}/deployments/${{ env.deployment_path }}
+          tg_dir: ${{ env.deployment_path }}
           tg_command: 'apply'
       
       - name: Post to a Slack channel
