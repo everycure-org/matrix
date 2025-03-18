@@ -1,0 +1,42 @@
+# this workflow routes to the correct infra folder and executes the infra-deploy workflow in that folder
+name: Infrastructure Deploy Router
+on:
+  pull_request:
+    # Sequence of patterns matched against refs/heads
+    branches:
+      - infra
+    paths:
+      - infra/**
+      - .github/workflows/infra-*.yml
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+  push:
+    branches:
+      - infra
+      - chunyuma-patch-1
+    paths:
+      - infra/**
+      - .github/workflows/infra-*.yml
+  # Allow manual triggering
+  workflow_dispatch:
+
+jobs:
+  call_infra_deploy:
+    uses: ./.github/workflows/infra-deploy.yml
+    permissions:
+      pull-requests: read
+      contents: 'read'
+      id-token: 'write'
+    strategy:
+      matrix:
+        deployment_path: [
+          'infra/deployments/hub/dev',
+        #   'infra/deployments/wg1/dev',
+          'infra/deployments/wg2/dev'
+        ]
+      fail-fast: false #enables deployment of both of these environments, not aborting one if the other fails
+    with:
+      deployment_path: ${{ matrix.deployment_path }}
