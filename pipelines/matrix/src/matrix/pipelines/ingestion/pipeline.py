@@ -10,37 +10,37 @@ def create_ground_truth_pipeline() -> list:
     """Create pipeline nodes for ground truth processing."""
     return [
         node(
-            func=nodes.create_gt,
-            inputs={
-                "pos_df": "ingestion.raw.kgml_xdtd_ground_truth.positives",
-                "neg_df": "ingestion.raw.kgml_xdtd_ground_truth.negatives",
-            },
-            outputs="ingestion.raw.kgml_xdtd_ground_truth.edges@pandas",
+            func=lambda x, y: [x, y],
+            inputs=["ingestion.raw.kgml_xdtd_ground_truth.positives", "ingestion.raw.kgml_xdtd_ground_truth.negatives"],
+            outputs=[
+                "ingestion.raw.kgml_xdtd_ground_truth.positive.edges@pandas",
+                "ingestion.raw.kgml_xdtd_ground_truth.negative.edges@pandas",
+            ],
             name="concatenate_gt_dataframe",
             tags=["kgml-xdtd-ground-truth"],
         ),
         node(
-            func=lambda x, y: [x, y],
+            func=nodes.create_ec_gt,
             inputs=[
                 "ingestion.raw.ec_ground_truth.positives",
                 "ingestion.raw.ec_ground_truth.negatives",
             ],
             outputs=[
-                "ingestion.int.ec_ground_truth.edges.positives@pandas",
-                "ingestion.int.ec_ground_truth.edges.negatives@pandas",
+                "ingestion.raw.ec_ground_truth.positive.edges@pandas",
+                "ingestion.raw.ec_ground_truth.negative.edges@pandas",
             ],
             name="write_ec_indications_list",
             tags=["ec-ground-truth"],
         ),
         node(
-            func=lambda x, y: [x, y],
+            func=nodes.create_ec_gt,
             inputs=[
                 "ingestion.raw.ec_ground_truth_downfilled.positives",
                 "ingestion.raw.ec_ground_truth_downfilled.negatives",
             ],
             outputs=[
-                "ingestion.int.ec_ground_truth_downfilled.edges.positives@pandas",
-                "ingestion.int.ec_ground_truth_downfilled.edges.negatives@pandas",
+                "ingestion.raw.ec_ground_truth_downfilled.positive.edges@pandas",
+                "ingestion.raw.ec_ground_truth_downfilled.negative.edges@pandas",
             ],
             name="write_ec_indications_list_downfilled",
             tags=["ec-ground-truth"],
@@ -99,8 +99,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                     tags=[f'{source["name"]}'],
                 )
             )
-
-        if source.get("has_edges", True):
+        if source.get("has_edges", True) and not (
+            source.get("has_positive_edges", False) or source.get("has_negative_edges", False)
+        ):
             nodes_lst.append(
                 node(
                     func=lambda x: x,
@@ -111,4 +112,24 @@ def create_pipeline(**kwargs) -> Pipeline:
                 )
             )
 
+        if source.get("has_positive_edges", False):
+            nodes_lst.append(
+                node(
+                    func=lambda x: x,
+                    inputs=f'ingestion.raw.{source["name"]}.positive.edges@spark',
+                    outputs=f'ingestion.int.{source["name"]}.positive.edges',
+                    name=f'write_{source["name"]}_positive_edges',
+                    tags=[f'{source["name"]}'],
+                ),
+            )
+        if source.get("has_negative_edges", False):
+            nodes_lst.append(
+                node(
+                    func=lambda x: x,
+                    inputs=f'ingestion.raw.{source["name"]}.negative.edges@spark',
+                    outputs=f'ingestion.int.{source["name"]}.negative.edges',
+                    name=f'write_{source["name"]}_negative_edges',
+                    tags=[f'{source["name"]}'],
+                )
+            )
     return pipeline(nodes_lst)

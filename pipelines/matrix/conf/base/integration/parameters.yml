@@ -29,6 +29,12 @@ integration:
     kgml_xdtd_ground_truth: 
       transformer:
         _object: matrix.pipelines.integration.transformers.kgml_xdtd_ground_truth.GroundTruthTransformer
+    ec_ground_truth: 
+      transformer:
+        _object: matrix.pipelines.integration.transformers.kgml_xdtd_ground_truth.GroundTruthTransformer
+    ec_ground_truth_downfilled: 
+      transformer:
+        _object: matrix.pipelines.integration.transformers.kgml_xdtd_ground_truth.GroundTruthTransformer
 
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:
