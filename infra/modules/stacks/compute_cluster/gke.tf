@@ -3,32 +3,25 @@ data "google_client_config" "default" {
 
 locals {
   default_node_locations = "us-central1-a,us-central1-c"
-  mem_node_pools = [for size in [8, 16] : {
-    name               = "e2-highmem-${size}-nodes"
-    machine_type       = "e2-highmem-${size}"
-    node_locations     = local.default_node_locations
-    min_count          = 0
-    max_count          = 20
-    local_ssd_count    = 0
-    disk_size_gb       = 200
-    enable_gcfs        = true
-    enable_gvnic       = true
-    initial_node_count = 0
-    spot               = false
-    }
-  ]
-  n2d_node_pools = [for size in [32, 48, 64] : {
-    name               = "n2d-highmem-${size}-nodes"
-    machine_type       = "n2d-highmem-${size}"
-    node_locations     = local.default_node_locations
-    min_count          = 0
-    max_count          = 5
-    local_ssd_count    = 0
-    disk_type          = "pd-ssd"
-    disk_size_gb       = 400
-    enable_gcfs        = true
-    enable_gvnic       = true
-    initial_node_count = 0
+
+  # NOTE: Debugging node group scaling can be done using the GCP cluster logs, we create
+  # node groups in 2 node locations, hence why the total amount of node groups.
+  # https://console.cloud.google.com/kubernetes/clusters/details/us-central1/compute-cluster/logs/autoscaler_logs?chat=true&inv=1&invt=Abp5KQ&project=mtrx-hub-dev-3of
+  n2d_node_pools = [for size in [8, 16, 32, 48, 64] : {
+    name           = "n2d-highmem-${size}-nodes"
+    machine_type   = "n2d-highmem-${size}"
+    node_locations = local.default_node_locations
+    min_count      = 0
+    max_count      = 10
+    # NOTE: Local SSDs are only available to certain node groups, and hence cannot be set for the
+    # reguluar n2 nodes. The statement below allocates 2 SSDs to the node, each having a capacity of 375G.
+    # https://cloud.google.com/compute/docs/general-purpose-machines#n2d-high-mem
+    local_ssd_ephemeral_storage_count = size < 64 ? 2 : 4
+    disk_type                         = "pd-ssd"
+    disk_size_gb                      = 200
+    enable_gcfs                       = true
+    enable_gvnic                      = true
+    initial_node_count                = 0
     }
   ]
 
@@ -64,13 +57,13 @@ locals {
       gpu_driver_version = "LATEST"
     },
   ]
-  node_pools_combined = concat(local.standard_node_pools, local.mem_node_pools, local.gpu_node_pools, local.n2d_node_pools)
+  node_pools_combined = concat(local.standard_node_pools, local.gpu_node_pools, local.n2d_node_pools)
 }
 
 # docs here https://registry.terraform.io/modules/terraform-google-modules/kubernetes-engine/google/latest/submodules/private-cluster
 module "gke" {
   source              = "terraform-google-modules/kubernetes-engine/google//modules/private-cluster"
-  version             = "31.0.0"
+  version             = "35.0.1"
   project_id          = var.project_id
   name                = var.name
   deletion_protection = var.environment == "dev" ? false : true
@@ -96,8 +89,10 @@ module "gke" {
   enable_private_endpoint         = false # FUTURE: switch this to true
   enable_vertical_pod_autoscaling = true
   create_service_account          = true
-  service_account_name            = "sa-k8s-node"
-  node_metadata                   = "UNSPECIFIED"
+  # see instructions here: https://cloud.google.com/kubernetes-engine/docs/how-to/google-groups-rbac
+  authenticator_security_group = "gke-security-groups@everycure.org"
+  service_account_name         = "sa-k8s-node"
+  node_metadata                = "UNSPECIFIED"
 
   # FUTURE: Refine node pools
   node_pools = local.node_pools_combined

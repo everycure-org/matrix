@@ -1,31 +1,35 @@
 integration:
-
   sources:
     rtx_kg2:
       transformer:
         _object: matrix.pipelines.integration.transformers.rtxkg2.RTXTransformer
-    # spoke:
-    #   transformer:
-    #     object: matrix.pipelines.integration.transformers.spoke.SpokeTransformer
-    # robokop:
-    #   transformer:
-    #     object: matrix.pipelines.integration.transformers.robokop.RobokopTransformer
-    # ec_medical_team:
-    #   transformer:
-    #     _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
-    ec_clinical_trails: 
+    spoke:
+      transformer:
+        _object: matrix.pipelines.integration.transformers.spoke.SpokeTransformer
+    robokop:
+      transformer:
+        _object: matrix.pipelines.integration.transformers.robokop.RobokopTransformer
+    ec_medical_team:
+      transformer:
+        _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
+    ec_clinical_trails:
       transformer:
         _object: matrix.pipelines.integration.transformers.clinical_trails.ClinicalTrialsTransformer
+        select_cols: false
+        drop_duplicates: true
     drug_list: 
       transformer:
         _object: matrix.pipelines.integration.transformers.drugs.DrugsTransformer
     disease_list: 
       transformer:
         _object: matrix.pipelines.integration.transformers.diseases.DiseasesTransformer
+    drugmech:
+      transformer:
+         _object: matrix.pipelines.integration.transformers.drugmech.DrugMechTransformer
     ground_truth: 
       transformer:
         _object: matrix.pipelines.integration.transformers.ground_truth.GroundTruthTransformer
-    
+
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:
     rtx:
@@ -43,6 +47,7 @@ integration:
       drug_chemical_conflate: true
       description: false
 
+# TODO: Figure out whether to move to filtering or stay here
   deduplication:
     # choose if a node should have the most specific category. 
     # E.g. if a node has all_categories [biolink:ChemicalEntity, biolink:NamedThing],
@@ -82,9 +87,3 @@ integration:
           - biolink:Publication
           - biolink:Treatment
           # If you add anything here make sure the fabricator is not generating it, else we remove it
-    edge_filters:
-      # FUTURE: Ensure the semmed filter is moved here instead
-      filter_biolink_edges:
-        _object: matrix.pipelines.modelling.utils.partial_
-        func:
-          _object: matrix.pipelines.integration.filters.biolink_deduplicate_edges

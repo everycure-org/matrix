@@ -1,20 +1,52 @@
-from typing import List, Tuple
+import logging
+import random
+import time
+from typing import Collection, Dict, List, Sequence
 
 import pandas as pd
 import requests
-from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
-from tenacity import retry, stop_after_attempt, wait_exponential
+from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
+from tenacity import Retrying, stop_after_attempt, wait_exponential
+
+logger = logging.getLogger(__name__)
 
 
-def coalesce(s: pd.Series, *series: List[pd.Series]):
-    """Coalesce the column information like a SQL coalesce."""
-    for other in series:
-        s = s.mask(pd.isnull, other)
-    return s
+def resolve_one_name_batch(names: Sequence[str], url: str) -> Dict[str, List[Dict]]:
+    """Batch resolve a list of names to their corresponding CURIEs."""
+    payload = {
+        "strings": names,
+        "autocomplete": True,
+        "highlighting": False,
+        "offset": 0,
+        "limit": 1,
+    }
+
+    for attempt in Retrying(
+        wait=wait_exponential(multiplier=2, min=2, max=120), stop=stop_after_attempt(5), reraise=True
+    ):
+        with attempt:
+            response = requests.post(url, json=payload)
+            logger.debug(f"Request time: {response.elapsed.total_seconds():.2f} seconds")
+            response.raise_for_status()
+            return response.json()
 
 
-@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
-def resolve_name(name: str, cols_to_get: List[str], url: str) -> dict:
+def parse_one_name_batch(
+    result: Dict[str, List[Dict[str, str]]], cols_to_get: Collection[str]
+) -> Dict[str, Dict[str, str | None]]:
+    """Parse API response to extract resolved names and corresponding attributes."""
+    resolved_data = {}
+
+    for name, attributes in result.items():
+        if attributes:
+            resolved_data[name] = {col: attributes[0].get(col) for col in cols_to_get}
+        else:
+            resolved_data[name] = dict.fromkeys(cols_to_get)
+
+    return resolved_data
+
+
+def resolve_names(names: Sequence[str], cols_to_get: Collection[str], url: str, batch_size: int) -> Dict[str, Dict]:
     """Function to retrieve the normalized identifier through the normalizer.
 
     Args:
@@ -24,29 +56,63 @@ def resolve_name(name: str, cols_to_get: List[str], url: str) -> dict:
         Name and corresponding curie
     """
 
-    if not name or pd.isna(name):
-        return {}
-    result = requests.get(url.format(name=name))
-    if len(result.json()) != 0:
-        element = result.json()[0]
-        print({col: element.get(col) for col in cols_to_get})
-        return {col: element.get(col) for col in cols_to_get}
+    resolved_data = {}
+    for i in range(0, len(names), batch_size):
+        batch = names[i : i + batch_size]
+        logger.info(f"Resolving batch {i} of {len(names)}")
+        # Waiting between requests drastically improves the API performance, as opposed to hitting a 5xx code
+        # and using retrying with backoff, which can render the API unresponsive for a long time (> 10 min).
+        time.sleep(random.randint(5, 10))
+        batch_response = resolve_one_name_batch(batch, url)
+        batch_parsed = parse_one_name_batch(batch_response, cols_to_get)
+        resolved_data.update(batch_parsed)
+    return resolved_data
 
-    return {}
 
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "normalized_curie": Column(str, nullable=False),
+            "label": Column(str, nullable=False),
+            "types": Column(List[str], nullable=False),
+            "category": Column(str, nullable=False),
+            "ID": Column(int, nullable=False),
+        },
+        # NOTE: We should re-enable when the medical team fixed the dataset
+        # unique=["normalized_curie"],
+    )
+)
+def process_medical_nodes(df: pd.DataFrame, resolver_url: str, batch_size: int) -> pd.DataFrame:
+    """Map medical nodes with name resolver.
 
-def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
+    Args:
+        df: raw medical nodes
+        resolver_url: url for name resolver
+
+    Returns:
+        Processed medical nodes
+    """
     # Normalize the name
-
-    enriched_data = df["name"].apply(resolve_name, cols_to_get=["curie", "label", "types"], url=resolver_url)
-
-    # Extract into df
-    enriched_df = pd.DataFrame(enriched_data.tolist())
-    df = pd.concat([df, enriched_df], axis=1)
+    names = df["name"].dropna().unique().tolist()
+    resolved_names = resolve_names(
+        names, cols_to_get=["curie", "label", "types"], url=resolver_url, batch_size=batch_size
+    )
+    extra_cols = df.name.map(resolved_names)
+    df = df.join(pd.json_normalize(extra_cols))
 
     # Coalesce id and new id to allow adding "new" nodes
-    df["normalized_curie"] = coalesce(df["new_id"], df["curie"])
+    df["normalized_curie"] = df["new_id"].fillna(df["curie"])
 
+    # Filter out nodes that are not resolved
+    is_resolved = df["normalized_curie"].notna()
+    df = df[is_resolved]
+    if not is_resolved.all():
+        logger.warning(f"{(~is_resolved).sum()} EC medical nodes have not been resolved.")
+
+    # Flag the number of duplicate IDs
+    is_unique = df["normalized_curie"].groupby(df["normalized_curie"]).transform("count") == 1
+    if not is_unique.all():
+        logger.warning(f"{(~is_unique).sum()} EC medical nodes are duplicated.")
     return df
 
 
@@ -55,52 +121,77 @@ def process_medical_nodes(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
         columns={
             "SourceId": Column(str, nullable=False),
             "TargetId": Column(str, nullable=False),
-        }
+            "Label": Column(str, nullable=False),
+        },
+        # NOTE: We should re-enable when the medical team fixed the dataset
+        # unique=["SourceId", "TargetId", "Label"],
     )
 )
-def process_medical_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.DataFrame:
+def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> pd.DataFrame:
     """Function to create int edges dataset.
 
     Function ensures edges dataset link curies in the KG.
-    """
-    index = int_nodes[int_nodes["normalized_curie"].notna()]
 
+    Args:
+        int_nodes: Processed medical nodes with normalized curies
+        raw_edges: Raw medical edges
+    """
+    df = int_nodes[["normalized_curie", "ID"]]
+    # Attach source and target curies. Drop edge un the case of a missing curies.
     res = (
-        int_edges.merge(
-            index.rename(columns={"normalized_curie": "SourceId"}),
+        raw_edges.merge(
+            df.rename(columns={"normalized_curie": "SourceId"}),
             left_on="Source",
             right_on="ID",
-            how="left",
+            how="inner",
         )
         .drop(columns="ID")
         .merge(
-            index.rename(columns={"normalized_curie": "TargetId"}),
+            df.rename(columns={"normalized_curie": "TargetId"}),
             left_on="Target",
             right_on="ID",
-            how="left",
+            how="inner",
         )
         .drop(columns="ID")
     )
-
-    res["Included"] = res.apply(lambda row: not (pd.isna(row["SourceId"]) or pd.isna(row["TargetId"])), axis=1)
-
     return res
 
 
-def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str) -> pd.DataFrame:
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "reason_for_rejection": Column(str, nullable=True),
+            "drug_name": Column(str, nullable=False),
+            "disease_name": Column(str, nullable=False),
+            "significantly_better": Column(float, nullable=True),
+            "non_significantly_better": Column(float, nullable=True),
+            "non_significantly_worse": Column(float, nullable=True),
+            "significantly_worse": Column(float, nullable=True),
+            "drug_curie": Column(str, nullable=True),
+            "disease_curie": Column(str, nullable=True),
+        },
+        # NOTE: We should re-enable when the medical team fixed the dataset
+        # unique=["drug_curie", "disease_curie"],
+    )
+)
+def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str, batch_size: int) -> pd.DataFrame:
     """Resolve names to curies for source and target columns in clinical trials data.
 
     Args:
         df: Clinical trial dataset
     """
-    # Normalize the name
-    drug_data = df["drug_name"].apply(resolve_name, cols_to_get=["curie"], url=resolver_url)
-    disease_data = df["disease_name"].apply(resolve_name, cols_to_get=["curie"], url=resolver_url)
 
-    # Concat dfs
-    drug_df = pd.DataFrame(drug_data.tolist()).rename(columns={"curie": "drug_curie"})
-    disease_df = pd.DataFrame(disease_data.tolist()).rename(columns={"curie": "disease_curie"})
-    df = pd.concat([df, drug_df, disease_df], axis=1)
+    drug_names = df["drug_name"].dropna().unique().tolist()
+    disease_names = df["disease_name"].dropna().unique().tolist()
+
+    drug_mapping = resolve_names(drug_names, cols_to_get=["curie"], url=resolver_url, batch_size=batch_size)
+    disease_mapping = resolve_names(disease_names, cols_to_get=["curie"], url=resolver_url, batch_size=batch_size)
+
+    drug_mapping_df = pd.DataFrame(drug_mapping).transpose()["curie"].rename("drug_curie")
+    disease_mapping_df = pd.DataFrame(disease_mapping).transpose()["curie"].rename("disease_curie")
+
+    df = pd.merge(df, drug_mapping_df, how="left", left_on="drug_name", right_index=True)
+    df = pd.merge(df, disease_mapping_df, how="left", left_on="disease_name", right_index=True)
 
     return df
 
@@ -111,7 +202,8 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
             "curie": Column(str, nullable=False),
             "name": Column(str, nullable=False),
         },
-        unique=["curie"],
+        # NOTE: We should re-enable when the medical team fixed the dataset
+        # unique=["curie"],
     ),
     df_name="nodes",
 )
@@ -131,7 +223,7 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
     ),
     df_name="edges",
 )
-def clean_clinical_trial_data(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def clean_clinical_trial_data(df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
     """Clean clinical trails data.
 
     Function to clean the mapped clinical trial dataset for use in time-split evaluation metrics.
@@ -185,38 +277,17 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFr
     # Extract nodes
     drugs = df.rename(columns={"drug_curie": "curie", "drug_name": "name"})[["curie", "name"]]
     diseases = df.rename(columns={"disease_curie": "curie", "disease_name": "name"})[["curie", "name"]]
-    nodes = pd.concat([drugs, diseases], ignore_index=True).drop_duplicates(subset="curie")
+    nodes = pd.concat([drugs, diseases], ignore_index=True)
     return {"nodes": nodes, "edges": edges}
 
 
-# -------------------------------------------------------------------------
-# Ground Truth Concatenation
-# -------------------------------------------------------------------------
+def report_to_gsheets(df: pd.DataFrame, sheet_df: pd.DataFrame, primary_key_col: str):
+    """Report medical nodes to gsheets.
 
-
-@check_output(
-    schema=DataFrameSchema(
-        columns={
-            "drug|disease": Column(str, nullable=False),
-            "y": Column(int, nullable=False),
-            # TODO: Piotr add
-        },
-        unique=["clinical_trial_id", "drug_kg_curie", "disease_kg_curie"],
-    )
-)
-def create_gt(pos_df: pd.DataFrame, neg_df: pd.DataFrame) -> pd.DataFrame:
-    """Converts the KGML-xDTD true positives and true negative dataframes into a singular dataframe compatible with EC format."""
-    pos_df["indication"], pos_df["contraindication"] = True, False
-    pos_df["y"] = 1
-    neg_df["indication"], neg_df["contraindication"] = False, True
-    neg_df["y"] = 0
-    gt_df = pd.concat([pos_df, neg_df], axis=0)
-    gt_df["drug|disease"] = gt_df["source"] + "|" + gt_df["target"]
-    return gt_df
-
-
-def create_gt_nodes_edges(edges: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    id_list = set(edges.source) | set(edges.target)
-    nodes = pd.DataFrame(id_list, columns=["id"])
-    edges.rename({"source": "subject", "target": "object"}, axis=1, inplace=True)
-    return nodes, edges
+    Args:
+        df: medical nodes
+        sheet_df: gsheets dataframe
+    """
+    # TODO: in the future remove drop_duplicates function
+    df = df.drop_duplicates(subset=primary_key_col, keep="first")
+    return sheet_df.merge(df, on=primary_key_col, how="left").fillna("Not resolved")

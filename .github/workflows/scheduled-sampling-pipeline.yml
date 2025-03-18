@@ -1,0 +1,112 @@
+name: Scheduled Sampling Pipeline
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # daily at 5am GMT
+  workflow_dispatch: 
+    inputs:
+      release_version:
+        description: 'Version to deploy in format vX.Y.Z'
+        required: true
+        type: string
+env:
+  project_id: 'mtrx-hub-dev-3of'
+  workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
+  service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
+  region: 'us-central1'
+  cluster: 'compute-cluster'
+  # release version from input
+  RELEASE_VERSION: ${{ inputs.release_version }}
+
+jobs:
+
+  submit_sampling_pipeline:
+    runs-on: 
+      labels: ubuntu-24.04
+    name: Submit the Sampling Pipeline Periodically
+    permissions:
+      contents: 'write'
+      id-token: 'write'
+      pull-requests: 'write'
+ 
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          fetch-tags: true
+          fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
+
+      - name: Set RELEASE_VERSION from latest tag if not set
+        run: |
+          if [ -z "${RELEASE_VERSION}" ]; then
+            git fetch --tags
+            LATEST_TAG=$(
+              git ls-remote --tags origin | \
+              grep -v '{}' | \
+              cut -d'/' -f3 | \
+              sort -V | \
+              tail -n1
+            )
+            echo "RELEASE_VERSION=${LATEST_TAG}" >> "$GITHUB_ENV"
+            echo "Setting RELEASE_VERSION to latest tag: ${LATEST_TAG}"
+          else
+            echo "Using provided RELEASE_VERSION: ${RELEASE_VERSION}"
+          fi
+
+      - name: Remove unnecessary files
+        # debug: remove unnecessary files to free up disk space for building and pushing docker images
+        # ref: https://github.com/actions/runner-images/issues/2840
+        run: |
+          sudo rm -rf \
+           /usr/local/.ghcup \
+           /usr/local/lib/android/sdk/ndk \
+           "$AGENT_TOOLSDIRECTORY" && \
+          df -h
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Argo & Python dependencies
+        working-directory: pipelines/matrix
+        run: |
+          make install_argo
+          pip install -r requirements.txt
+
+      - name: Authenticate with Google Cloud
+        id: auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{env.project_id}}
+          workload_identity_provider: ${{env.workload_identity_provider}}
+          service_account: ${{env.service_account}}
+          token_format: access_token
+
+      - uses: google-github-actions/get-gke-credentials@v1
+      # configure authentication to a GKE cluster (configure kubectl)
+        with:
+          cluster_name: ${{env.cluster}}
+          location: ${{env.region}}
+          project_id: ${{env.project_id}}
+
+      - name: Login to Google Artifact Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{env.region}}-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: Run the kedro sampling pipeline
+        working-directory: pipelines/matrix
+        run: |
+          echo "Run the kedro sampling pipeline"
+          kedro experiment run \
+            -e sample \
+            -p test_sample \
+            --experiment-name scheduled-sampled-test \
+            --run-name scheduled-sampled-test \
+            --username github_actions_bot \
+            --release-version "${{ env.RELEASE_VERSION }}" \
+            --headless \
+            --quiet

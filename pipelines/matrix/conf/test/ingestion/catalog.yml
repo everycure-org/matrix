@@ -1,0 +1,51 @@
+_layer_raw: &_layer_raw
+  metadata:
+    kedro-viz:
+      layer: raw
+      
+ingestion.raw.disease_list:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw}/disease_list/translator/${globals:data_sources.disease_list.version}/source_disease_list.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
+
+ingestion.raw.drug_list:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw}/drug_list/translator/${globals:data_sources.drug_list.version}/source_drug_list.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
+
+ingestion.raw.ground_truth.positives:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tp_pairs.txt
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"
+
+ingestion.raw.ground_truth.negatives:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tn_pairs.txt
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"
+
+ingestion.raw.drugmech.edges@spark:
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.raw}/drugmech/${globals:data_sources.drugmech.version}/indication_paths.json
+  file_format: json
+  load_args:
+    multiline: true

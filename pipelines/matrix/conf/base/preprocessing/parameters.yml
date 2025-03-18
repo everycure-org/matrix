@@ -1,46 +1,8 @@
 preprocessing.name_resolution:
-  url: https://name-resolution-sri.renci.org/lookup?string={name}&autocomplete=True&highlighting=False&offset=0&limit=1
-
-preprocessing.enrichment:
-
-  model:
-    _object: langchain_openai.chat_models.base.ChatOpenAI
-    model: gpt-4o-mini
-    temperature: 0.8
-
-  tags: []
-#     - _object: matrix.pipelines.preprocessing.tagging.Tag
-#       output_col: is_pathogen_caused
-#       prompt: "Is {label} a disease usually caused by a pathogen such as bacteria, viruses, parasites, or fungi? Return TRUE or FALSE only"
-#       output_parser: &_boolean_parser
-#         _object: langchain.output_parsers.boolean.BooleanOutputParser
-#         false_val: "FALSE"
-#         true_val: "TRUE"
-#     - _object: matrix.pipelines.preprocessing.tagging.Tag  
-#       output_col: is_cancer
-#       prompt: "Is {label} a disease that is classified as a cancer? Return TRUE or FALSE only"
-#       output_parser: 
-#         <<: *_boolean_parser
-#     - _object: matrix.pipelines.preprocessing.tagging.Tag  
-#       output_col: is_glucose_dysfunction
-#       prompt: "Is {label} a disease which is primarily a disease of glucose dysregulation such as diabetes mellitus? Return TRUE or FALSE only"
-#       output_parser: 
-#         <<: *_boolean_parser
-#     - _object: matrix.pipelines.preprocessing.tagging.Tag
-#       output_col: tag_existing_treatment
-#       prompt: "Are there existing efficacious treatments that cure, prevent, or treat the disease named {label} ? Return TRUE if efficacious treatments exist, otherwise return FALSE"
-#       output_parser:
-#         <<: *_boolean_parser
-#     - _object: matrix.pipelines.preprocessing.tagging.Tag  
-#       output_col: tag_QALY_lost
-#       prompt: "Output only 'VERY HIGH', 'HIGH', 'MEDIUM', 'LOW', or 'NONE'. Categorize the Quality-Adjusted Life Years (QALYs) lost for {label} into the categories above, based on morbidity, mortality, and quality adjusted life years lost. To help, the following list - {synonyms} - contains synonyms of the disease and the following list - {definition} - provides a definition of the disease. If you are unable to determine QALYs lost for a given disease, used similar diseases to make an estimation"
-#       output_parser: 
-#         _object: matrix.pipelines.preprocessing.tagging.SetOutputParser
-#         allowed_outputs:
-#           - "VERY HIGH"
-#           - "HIGH"
-#           - "MEDIUM"
-#           - "LOW"
-#           - "NONE"
+  url: https://name-resolution-sri.renci.org/bulk-lookup
+  batch_size: 50
 
 
+preprocessing.medical_kg_gsheets:
+  nodes: ['name']
+  edges: ['Source', 'Target']

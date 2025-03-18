@@ -58,7 +58,7 @@ fabricator.rtx_kg2:
         freq: M
 
   edges:
-    num_rows: 100
+    num_rows: 2000
     columns:
       # NOTE: This is a rather complex syntax, but is results in a "subject"
       # column that contains random values from the nodes table defined above.
@@ -226,6 +226,11 @@ fabricator.rtx_kg2:
           - VERY HIGH
           - HIGH
           - MODERATE
+      official_matrix_filter:
+        type: generate_values
+        sample_values:
+          - True
+          - False
         
 fabricator.clinical_trials:
   nodes:
@@ -287,7 +292,7 @@ fabricator.clinical_trials:
 fabricator.robokop:
   # robokop nodes definition
   nodes:
-    num_rows: 150
+    num_rows: 500
     columns:
       id:ID:
         type: generate_unique_id
@@ -440,10 +445,9 @@ fabricator.ec_medical_kg:
   nodes:
     num_rows: 30
     columns:
-      normalized_curie: 
+      normalized_curie:
         type: generate_unique_id
-        prefix: ec_medical_node_
-    
+        prefix: ec_medical_node_ 
       label:
         type: faker
         provider: name
@@ -453,22 +457,22 @@ fabricator.ec_medical_kg:
         provider: sentence
 
       type:
-          type: generate_values
-          sample_values:
-            - biolink:Drug
-            - biolink:Disease
-            - biolink:Gene
-            - biolink:ChemicalSubstance
-            - biolink:Protein
+        type: generate_values
+        sample_values:
+          - biolink:Drug
+          - biolink:Disease
+          - biolink:Gene
+          - biolink:ChemicalSubstance
+          - biolink:Protein
       types:
-          type: row_apply
-          list_of_values: [nodes.type]
-          # NOTE: This ensures the full path from root to child is added in the categories column
-          row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
-          row_func_kwargs:
-            delimiter: "\u01c2"
-          resize: True
-          seed: 590590
+        type: row_apply
+        list_of_values: [nodes.type]
+        # NOTE: This ensures the full path from root to child is added in the categories column
+        row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
+        row_func_kwargs:
+          delimiter: "\u01c2"
+        resize: True
+        seed: 590590
 
   edges:
     num_rows: 10
@@ -492,10 +496,9 @@ fabricator.ec_medical_kg:
         sample_values:
           - treats
           - interacts_with
-      
       knowledge_source:
-        type: faker
-        provider: name
+         type: faker
+         provider: name
 
 fabricator.spoke:
   # spoke nodes definition

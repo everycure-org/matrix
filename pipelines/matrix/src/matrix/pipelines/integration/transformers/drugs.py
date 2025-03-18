@@ -1,23 +1,18 @@
 import logging
+from typing import Dict
 
 import pyspark.sql.functions as f
 from pyspark.sql import DataFrame
 
-from .transformer import GraphTransformer
+from .transformer import Transformer
 
 logger = logging.getLogger(__name__)
 
 
-class DrugsTransformer(GraphTransformer):
-    def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
-        """Transform nodes to our target schema.
+class DrugsTransformer(Transformer):
+    """Transformer for drug input source."""
 
-        Args:
-            nodes_df: Nodes DataFrame.
-
-        Returns:
-            Transformed DataFrame.
-        """
+    def transform(self, nodes_df: DataFrame, **kwargs) -> Dict[str, DataFrame]:
         # fmt: off
         df = (
             nodes_df
@@ -25,8 +20,8 @@ class DrugsTransformer(GraphTransformer):
             .withColumn("name",                              f.col("curie_label"))
             .withColumn("category",                          f.lit("biolink:Drug"))
         )
-        return df
         # fmt: on
-
-    def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
-        raise NotImplementedError("Not implemented!")
+        filters = [f for f in nodes_df.columns if f.startswith("is_")]
+        for filter in filters:
+            df = df.withColumn(filter, f.col(filter).cast("boolean"))
+        return {"nodes": df}

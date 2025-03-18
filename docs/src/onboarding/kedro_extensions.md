@@ -158,10 +158,10 @@ class ArgoResourceConfig(BaseModel):
 
 #### Resource Defaults
 
-Our Argo Workflow as well as ArgoNode are configured to request default resources defined in `kedro4argo_node.py`:
+Our Argo Workflow as well as `ArgoNode` are configured to request default resources defined in `kedro4argo_node.py`:
 
 ```python
-# Values are in Gb
+# Values are in GiB
 KUBERNETES_DEFAULT_LIMIT_RAM = 52
 KUBERNETES_DEFAULT_REQUEST_RAM = 52
 
@@ -173,7 +173,10 @@ KUBERNETES_DEFAULT_LIMIT_CPU = 14
 KUBERNETES_DEFAULT_REQUEST_CPU = 4
 ```
 
-The defaults are configuerd to the experimentally determined optimal values close to full node sizes on the production cluster. This is because requesting exactly 64Gb of RAM would result in provisioning a node with 128Gb of RAM because of Kubernetes overheads, which is highly inefficient.
+The defaults are configured to the experimentally determined optimal values
+close to full node sizes on the production cluster. This is because requesting
+exactly 64GiB of RAM would result in provisioning a node with 128GiB of RAM
+because of Kubernetes overhead, which is highly inefficient.
 
 Together with defaults, we also provide a set of predefined `ArgoResourceConfig` instances such as `ARGO_GPU_NODE_MEDIUM`, which are defined [here](https://github.com/everycure-org/matrix/blob/main/pipelines/matrix/src/matrix/kedro4argo_node.py#L151). 
 
@@ -203,9 +206,6 @@ We're defining a single pipeline skeleton, which is instantiated multiple times,
 ![](../assets/img/dynamic_pipelines.gif)
 
 The above visualisation comes from [kedro viz](https://github.com/kedro-org/kedro-viz) which we greatly recommend trying out to get a sense of the entire pipeline. 
-
-
-[^1]: Kedro allows for fine-grained control over pipeline execution, through the [kedro run](https://docs.kedro.org/en/stable/nodes_and_pipelines/run_a_pipeline.html) command.
 
 ## Disabling hooks through environment variables
 
@@ -249,7 +249,7 @@ This is particularly useful when:
 ## End of the tutorial
 
 This is the end of our onboarding tutorial. We hope you've learned the basics of our project, and are ready to contribute!
-If you want to learn about some specific activities, please check the [walkthroughs](./walkthroughs/kedro_notebook_example.ipynb) section.
+If you want to learn about some specific activities, please check the [walkthroughs](./walkthroughs/custom_modelling.ipynb) section.
 
 
-[Specific walkthroughs :material-skip-next:](./walkthroughs/kedro_notebook_example.ipynb){ .md-button .md-button--primary }
+[Specific walkthroughs :material-skip-next:](./walkthroughs/custom_modelling.ipynb){ .md-button .md-button--primary }

@@ -25,7 +25,6 @@ _layer_int: &_layer_int
     kedro-viz:
       layer: integration
 
-
 # -------------------------------------------------------------------------
 # RTX-KG2
 # -------------------------------------------------------------------------  
@@ -106,36 +105,35 @@ ingestion.raw.ec_medical_team.nodes@pandas:
   <<: [*_layer_raw, *_pandas_csv]
   filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/nodes_conflated_raw.csv
 
-# ingestion.raw.ec_medical_team.nodes@spark:
-#   <<: [*_spark_csv, *_layer_raw]
-#   filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/nodes_conflated_raw.csv
-#   save_args:
-#     mode: overwrite
-#     header: True
-#   load_args:
-#     header: True
+ingestion.raw.ec_medical_team.nodes@spark:
+  <<: [*_spark_csv, *_layer_raw]
+  filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/nodes_conflated_raw.csv
+  save_args:
+    mode: overwrite
+    header: True
+  load_args:
+    header: True
 
 ingestion.raw.ec_medical_team.edges@pandas:
   <<: [ *_layer_int, *_pandas_csv]
   filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/edges_conflated_raw.csv
 
-# ingestion.raw.ec_medical_team.edges@spark:
-#   <<: [*_spark_csv, *_layer_int]
-#   filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/edges_conflated_raw.csv
-#   save_args:
-#     mode: overwrite
-#     header: True
-#   load_args:
-#     header: True
+ingestion.raw.ec_medical_team.edges@spark:
+  <<: [*_spark_csv, *_layer_int]
+  filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/edges_conflated_raw.csv
+  save_args:
+    mode: overwrite
+    header: True
+  load_args:
+    header: True
 
+ingestion.int.ec_medical_team.nodes:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/nodes_conflated_raw
 
-# ingestion.int.ec_medical_team.nodes:
-#   <<: [*_spark_parquet, *_layer_int]
-#   filepath: ${globals:paths.ingestion}/int/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/nodes_conflated_raw
-
-# ingestion.int.ec_medical_team.edges:
-#   <<: [*_spark_parquet, *_layer_int]
-#   filepath: ${globals:paths.ingestion}/int/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/edges_conflated_raw
+ingestion.int.ec_medical_team.edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/edges_conflated_raw
 
 
 # -------------------------------------------------------------------------
@@ -167,15 +165,44 @@ ingestion.int.ec_clinical_trails.edges:
   filepath: ${globals:paths.ingestion}/int/clinical_trials_data/translator/${globals:data_sources.ec_clinical_trials.version}/edges_conflated_raw
 
 
+# -------------------------------------------------------------------------
+# DrugMech
+# -------------------------------------------------------------------------  
+
+ingestion.raw.drugmech.edges@pandas:
+  type: json.JSONDataset
+  filepath: ${globals:paths.raw}/drugmech/${globals:data_sources.drugmech.version}/indication_paths.json
+
+# ingestion.raw.drugmech.edges@spark:
+#   type: matrix.datasets.gcp.LazySparkDataset
+#   filepath: https://raw.githubusercontent.com/SuLab/DrugMechDB/refs/tags/${globals:data_sources.drugmech.version}/indication_paths.json
+#   file_format: json
+#   load_args:
+#     multiline: true
+
+# ingestion.int.drugmech.edges:
+#   <<: [*_spark_parquet, *_layer_int]
+#   filepath: ${globals:paths.ingestion}/drugmech/${globals:data_sources.drugmech.version}/edges
 
 # -------------------------------------------------------------------------
 # Drug and disease lists
 # -------------------------------------------------------------------------  
 
+ingestion.raw.disease_list:
+  <<: [*_layer_raw]
+  type: matrix.datasets.github.GitHubReleaseCSVDataset
+  repository_url: https://github.com/everycure-org/matrix-disease-list
+  release_name: ${globals:data_sources.disease_list.version}
+  release_asset_name: matrix-disease-list-unfiltered-processed.tsv
+  fs_args:
+    Accept: application/octet-stream
+  load_args:
+    sep: "\t"
+
 ingestion.raw.disease_list.nodes@pandas:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/disease_list/translator/${globals:data_sources.disease_list.version}/disease_list_conflated.tsv
+  filepath: ${globals:paths.ingestion}/disease_list/translator/${globals:data_sources.disease_list.version}/raw_disease_list_conflated.tsv
   save_args:
     sep: "\t"
     header: true
@@ -185,7 +212,7 @@ ingestion.raw.disease_list.nodes@pandas:
 
 ingestion.raw.disease_list.nodes@spark:
   <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.raw}/disease_list/translator/${globals:data_sources.disease_list.version}/disease_list_conflated.tsv
+  filepath: ${globals:paths.ingestion}/disease_list/translator/${globals:data_sources.disease_list.version}/raw_disease_list_conflated.tsv
   load_args:
     sep: "\t"
     header: true
@@ -195,10 +222,22 @@ ingestion.raw.disease_list.nodes@spark:
      header: true
      index: false
 
+ingestion.raw.drug_list:
+  <<: [*_layer_raw]
+  type: matrix.datasets.github.GitHubReleaseCSVDataset
+  repository_url: https://github.com/everycure-org/matrix-drug-list
+  release_name: ${globals:data_sources.drug_list.version}
+  release_asset_name: drugList.tsv
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: token ${globals:gh_token}
+  load_args:
+    sep: "\t"
+
 ingestion.raw.drug_list.nodes@pandas:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/drug_list/translator/${globals:data_sources.drug_list.version}/drug_list_conflated.tsv
+  filepath: ${globals:paths.ingestion}/drug_list/translator/${globals:data_sources.drug_list.version}/raw_drug_list_conflated.tsv
   save_args:
     sep: "\t"
     header: true
@@ -208,7 +247,7 @@ ingestion.raw.drug_list.nodes@pandas:
 
 ingestion.raw.drug_list.nodes@spark:
   <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.raw}/drug_list/translator/${globals:data_sources.drug_list.version}/drug_list_conflated.tsv
+  filepath: ${globals:paths.ingestion}/drug_list/translator/${globals:data_sources.drug_list.version}/raw_drug_list_conflated.tsv
   load_args:
     sep: "\t"
     header: true
@@ -230,29 +269,28 @@ ingestion.int.disease_list.nodes:
 # Ground truth
 # -------------------------------------------------------------------------  
 # TODO: Remove raw suffix from all outputs of preprocessing pipeline once its in main
-ingestion.raw.ground_truth.nodes@pandas:
+ingestion.raw.ground_truth.positives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.disease_list.version}/gt_ids_raw.tsv
+  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tp_pairs.txt
+  load_args:
+    sep: "\t"
   save_args:
     sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
 
-ingestion.raw.ground_truth.nodes@spark:
-  <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.disease_list.version}/gt_ids_raw.tsv
+ingestion.raw.ground_truth.negatives:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tn_pairs.txt
   load_args:
     sep: "\t"
-    header: true
-    index: false
+  save_args:
+    sep: "\t"
 
 ingestion.raw.ground_truth.edges@pandas:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.disease_list.version}/gt_pairs_raw.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_raw.tsv
   save_args:
     sep: "\t"
     header: true
@@ -262,28 +300,15 @@ ingestion.raw.ground_truth.edges@pandas:
 
 ingestion.raw.ground_truth.edges@spark:
   <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.disease_list.version}/gt_pairs_raw.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_raw.tsv
   load_args:
     sep: "\t"
     header: true
     index: false
-
-ingestion.int.ground_truth.nodes:
-  <<: [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.disease_list.version}/gt_ids_raw.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-    mode: overwrite
 
 ingestion.int.ground_truth.edges:
   <<: [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.disease_list.version}/gt_pairs_raw.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs.tsv
   load_args:
     sep: "\t"
     header: true
@@ -297,15 +322,15 @@ ingestion.int.ground_truth.edges:
 # -------------------------------------------------------------------------
 # Robokop
 # -------------------------------------------------------------------------  
-# ingestion.raw.robokop.nodes@spark:
-#   <<: *_layer_raw
-#   type: matrix.datasets.gcp.LazySparkDataset
-#   filepath: ${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/nodes.orig.tsv
-#   file_format: csv
-#   load_args:
-#     sep: "\t"
-#     header: true
-#     index: false
+ingestion.raw.robokop.nodes@spark:
+  <<: *_layer_raw
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/nodes.orig.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
 
 ingestion.raw.robokop.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
@@ -317,15 +342,15 @@ ingestion.raw.robokop.nodes@pandas:
   load_args:
     sep: "\t"
 
-# ingestion.raw.robokop.edges@spark:
-#   <<: *_layer_raw
-#   type: matrix.datasets.gcp.LazySparkDataset
-#   filepath: ${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/edges.orig.tsv
-#   file_format: csv
-#   load_args:
-#     sep: "\t"
-#     header: true
-#     index: false
+ingestion.raw.robokop.edges@spark:
+  <<: *_layer_raw
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/edges.orig.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
 
 ingestion.raw.robokop.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
@@ -337,13 +362,13 @@ ingestion.raw.robokop.edges@pandas:
   load_args:
     sep: "\t"
 
-# ingestion.int.robokop.nodes:
-#    <<: [*_spark_parquet, *_layer_int]
-#    filepath: ${globals:paths.ingestion}/int/robokop-kg/${globals:data_sources.robokop.version}/nodes
+ingestion.int.robokop.nodes:
+   <<: [*_spark_parquet, *_layer_int]
+   filepath: ${globals:paths.ingestion}/int/robokop-kg/${globals:data_sources.robokop.version}/nodes
 
-# ingestion.int.robokop.edges:
-#    <<: [*_spark_parquet, *_layer_int]
-#    filepath: ${globals:paths.ingestion}/int/robokop-kg/${globals:data_sources.robokop.version}/edges
+ingestion.int.robokop.edges:
+   <<: [*_spark_parquet, *_layer_int]
+   filepath: ${globals:paths.ingestion}/int/robokop-kg/${globals:data_sources.robokop.version}/edges
 
 # -------------------------------------------------------------------------
 # SPOKE
@@ -395,4 +420,3 @@ ingestion.raw.spoke.edges@pandas:
 # ingestion.int.spoke.edges:
 #   <<: [*_spark_parquet, *_layer_int]
 #   filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/edges
-

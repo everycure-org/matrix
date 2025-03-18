@@ -3,7 +3,6 @@ from typing import List, Union
 from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
 from matrix.kedro4argo_node import ArgoNode
-from matrix.pipelines.modelling import nodes as modelling_nodes
 from matrix.pipelines.modelling.utils import partial_fold
 
 from . import nodes
@@ -122,7 +121,7 @@ def create_model_pipeline(evaluation_names: List[str], n_cross_val_folds: int) -
             pipeline(
                 [
                     ArgoNode(
-                        func=modelling_nodes.aggregate_metrics,
+                        func=nodes.aggregate_metrics,
                         inputs=[
                             "params:modelling.aggregation_functions",
                             *[

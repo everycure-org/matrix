@@ -11,8 +11,10 @@ from pyspark.sql.window import Window
 
 from matrix.inject import inject_object
 from matrix.pipelines.integration.filters import determine_most_specific_category
+
 from matrix.utils.metric_utilities import log_metric
-from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
+from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
+
 
 from .schema import BIOLINK_KG_EDGE_SCHEMA, BIOLINK_KG_NODE_SCHEMA
 
@@ -29,12 +31,8 @@ logger = logging.getLogger(__name__)
         },
         unique=["id"],
     ),
+    df_name="nodes",
 )
-def transform_nodes(transformer, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
-    return transformer.transform_nodes(nodes_df=nodes_df, **kwargs)
-
-
-@inject_object()
 @check_output(
     DataFrameSchema(
         columns={
@@ -42,20 +40,20 @@ def transform_nodes(transformer, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFra
             "predicate": Column(T.StringType(), nullable=False),
             "object": Column(T.StringType(), nullable=False),
         },
-        unique=["subject", "predicate", "object"],
     ),
+    df_name="edges",
+    raise_df_undefined=False,
 )
-def transform_edges(transformer, edges_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
-    return transformer.transform_edges(edges_df=edges_df, **kwargs)
+def transform(transformer, **kwargs) -> Dict[str, ps.DataFrame]:
+    return transformer.transform(**kwargs)
 
 
 @check_output(
     schema=BIOLINK_KG_EDGE_SCHEMA,
     pass_columns=True,
 )
-def union_and_deduplicate_edges(*edges, cols: List[str]) -> ps.DataFrame:
+def union_edges(*edges, cols: List[str]) -> ps.DataFrame:
     """Function to unify edges datasets."""
-
     # fmt: off
     return (
         _union_datasets(*edges)
@@ -99,13 +97,14 @@ def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, c
             F.flatten(F.collect_set("publications")).alias("publications"),
             F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
         )
-        )
+    )
     # next we need to apply a number of transformations to the nodes to ensure grouping by id did not select wrong information
     # this is especially important if we integrate multiple KGs
+
     if retrieve_most_specific_category:
         unioned_datasets = unioned_datasets.transform(determine_most_specific_category)
-    return unioned_datasets.select(*cols)
 
+    return unioned_datasets.select(*cols)
     # fmt: on
 
 
@@ -123,87 +122,6 @@ def _union_datasets(
         A unified and deduplicated DataFrame.
     """
     return reduce(partial(ps.DataFrame.unionByName, allowMissingColumns=True), datasets)
-
-
-def _apply_transformations(
-    df: ps.DataFrame, transformations: List[Tuple[Callable, Dict[str, Any]]], **kwargs
-) -> ps.DataFrame:
-    logger.info(f"Filtering dataframe with {len(transformations)} transformations")
-    last_count = df.count()
-    log_metric(f"integration", f"Number of edges before filtering", last_count)
-    for name, transformation in transformations.items():
-        logger.info(f"Applying transformation: {name}")
-        df = df.transform(transformation, **kwargs)
-        new_count = df.count()
-        log_metric(f"integration", f"Number of edges after transformation", new_count)
-        log_metric(f"integration", f"Number of edges removed after transformation", last_count - new_count)
-        last_count = new_count
-
-    return df
-
-
-@inject_object()
-def prefilter_unified_kg_nodes(
-    nodes: ps.DataFrame,
-    transformations: List[Tuple[Callable, Dict[str, Any]]],
-) -> ps.DataFrame:
-    return _apply_transformations(nodes, transformations)
-
-
-@inject_object()
-def filter_unified_kg_edges(
-    nodes: ps.DataFrame,
-    edges: ps.DataFrame,
-    transformations: List[Tuple[Callable, Dict[str, Any]]],
-) -> ps.DataFrame:
-    """Function to filter the knowledge graph edges.
-
-    We first apply a series for filter transformations, and then deduplicate the edges based on the nodes that we dropped.
-    No edge can exist without its nodes.
-    """
-
-    # filter down edges to only include those that are present in the filtered nodes
-    edges_count = edges.count()
-    log_metric(f"integration", f"Number of edges before filtering", edges_count)
-    edges = (
-        edges.alias("edges")
-        .join(nodes.alias("subject"), on=F.col("edges.subject") == F.col("subject.id"), how="inner")
-        .join(nodes.alias("object"), on=F.col("edges.object") == F.col("object.id"), how="inner")
-        .select("edges.*")
-    )
-    new_edges_count = edges.count()
-    log_metric(f"integration", f"Number of edges after filtering", new_edges_count)
-
-    return _apply_transformations(edges, transformations)
-
-
-def filter_nodes_without_edges(
-    nodes: ps.DataFrame,
-    edges: ps.DataFrame,
-) -> ps.DataFrame:
-    """Function to filter nodes without edges.
-
-    Args:
-        nodes: nodes df
-        edges: edge df
-    Returns"
-        Final dataframe of nodes with edges
-    """
-
-    # Construct list of edges
-    original_num_nodes = nodes.count()
-    log_metric(f"integration", f"Number of node before filtering", original_num_nodes)
-    edge_nodes = (
-        edges.withColumn("id", F.col("subject"))
-        .unionByName(edges.withColumn("id", F.col("object")))
-        .select("id")
-        .distinct()
-    )
-
-    nodes = nodes.alias("nodes").join(edge_nodes, on="id").select("nodes.*").persist()
-    log_metric(f"integration", f"Number of nodes after filtering", nodes.count())
-    log_metric(f"integration", f"Number of orphan nodes removed", original_num_nodes - nodes.count())
-    return nodes
 
 
 @check_output(
@@ -264,9 +182,8 @@ def normalize_edges(
     edges = edges.withColumnsRenamed({"subject": "original_subject", "object": "original_object"}).withColumnsRenamed(
         {"subject_normalized": "subject", "object_normalized": "object"}
     )
-    log_metric(f"integration", f"Number of edges after normalizing", edges.count())
 
-    return (
+    edges = (
         edges.withColumn(
             "_rn",
             F.row_number().over(
@@ -276,6 +193,11 @@ def normalize_edges(
         .filter(F.col("_rn") == 1)
         .drop("_rn")
     )
+    
+    log_metric(f"integration", f"Number of edges after deduplication and normalizing", edges.count())
+
+
+    return edges
 
 
 def normalize_nodes(
@@ -291,8 +213,10 @@ def normalize_nodes(
     """
     mapping_df = _format_mapping_df(mapping_df)
 
+    log_metric(f"integration", f"Number of nodes before normalization", nodes.count())
+    
     # add normalized_id to nodes
-    return (
+    nodes = (
         nodes.join(mapping_df, on="id", how="left")
         .withColumnsRenamed({"id": "original_id"})
         .withColumnsRenamed({"normalized_id": "id"})
@@ -301,3 +225,8 @@ def normalize_nodes(
         .filter(F.col("_rn") == 1)
         .drop("_rn")
     )
+    
+    log_metric(f"integration", f"Number of nodes after deduplication and normalizing", nodes.count())
+
+
+    return nodes
