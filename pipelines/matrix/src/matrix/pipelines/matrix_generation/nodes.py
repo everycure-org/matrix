@@ -211,32 +211,25 @@ def make_predictions_and_sort(
     data_features = _extract_elements_in_list(transformed.columns, features, True)
 
     def predict_partition(partition):
-        # Convert the partition (list of Rows) to a Pandas DataFrame
         partition_df = pd.DataFrame([row.asDict() for row in partition])
 
-        # Extract the relevant columns for prediction
         X = partition_df[data_features]
 
-        # Make predictions
         predictions = model.predict_proba(X)
 
-        # Create a new DataFrame with the predictions
         predictions_df = pd.DataFrame(
             predictions, columns=[not_treat_score_col_name, treat_score_col_name, unknown_score_col_name]
         )
 
-        # Combine the original DataFrame with the predictions
         result_df = pd.concat([partition_df, predictions_df], axis=1)
 
-        # Convert the result back to a list of Rows
         return [Row(**row) for row in result_df.to_dict("records")]
 
-    # Apply the function to each partition of the Spark DataFrame
     transformed = transformed.rdd.mapPartitions(predict_partition).toDF()
     data = data.drop("source_embedding", "target_embedding")
     data = data.join(
         transformed.select("__index_level_0__", not_treat_score_col_name, treat_score_col_name, unknown_score_col_name),
-        on="__index_level_0__",  # Use the correct join key
+        on="__index_level_0__",
         how="inner",
     )
     window_spec = Window.orderBy(F.desc(treat_score_col_name))
