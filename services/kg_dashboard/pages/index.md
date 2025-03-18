@@ -9,7 +9,7 @@ title: Matrix KG Dashboard
 
 ## Version: {release_version}
 
-<p class="text-gray-500 text-sm italic">Built on {build_time}</p>
+<p class="text-gray-500 text-sm italic">Last updated on {build_time}</p>
 
 Dashboard pages on the left side of the screen are for exploring the data in the Matrix Knowledge Graph. Select categories from the dropdowns below to filter the knowledge graph visualization.
 
