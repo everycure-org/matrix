@@ -28,9 +28,9 @@ class RTXTransformer(GraphTransformer):
             nodes_df
             .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
             .withColumn("labels",                            f.split(f.col(":LABEL"), RTX_SEPARATOR))
-            .withColumn("all_categories",                    f.split(f.col("all_categories:string[]"), RTX_SEPARATOR))
-            .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies:string[]"), RTX_SEPARATOR))
-            .withColumn("publications",                      f.split(f.col("publications:string[]"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
+            .withColumn("all_categories",                    f.split(f.col("all_categories"), RTX_SEPARATOR))
+            .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies"), RTX_SEPARATOR))
+            .withColumn("publications",                      f.split(f.col("publications"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
             .withColumn("international_resource_identifier", f.col("iri"))
             .withColumnRenamed("id:ID", "id")
         )
@@ -56,13 +56,14 @@ class RTXTransformer(GraphTransformer):
         return (
             edges_df
             .withColumn("aggregator_knowledge_source",   f.split(f.col("primary_knowledge_source"), RTX_SEPARATOR))
-            .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
+            .withColumn("publications",                  f.split(f.col("publications"), RTX_SEPARATOR))
             .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
             .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(0)) # RTX KG2 2.10 `primary_knowledge_source``
             .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+            # qualified_object_aspect
             .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .transform(filter_semmed, curie_to_pmids, **semmed_filters)
         )
