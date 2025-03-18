@@ -38,7 +38,7 @@ jobs:
         deployment_path: [
           'infra/deployments/hub/dev',
         #   'infra/deployments/wg1/dev',
-          'infra/deployments/wg2/dev'
+          'infra/deployments/wg2'
         ]
       fail-fast: false #enables deployment of both of these environments, not aborting one if the other fails
     with:
