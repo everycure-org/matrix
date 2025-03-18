@@ -39,7 +39,7 @@ inputs = merge(
 
 # generate a variables file for the above
 generate default_variables {
-  path      = "default_variables.tf"
+  path      = "default_variables.gen.tf"
   if_exists = "overwrite_terragrunt"
   contents  = <<EOF
 variable "org_id" {}
