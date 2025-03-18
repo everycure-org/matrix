@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Generator
 
@@ -27,11 +28,10 @@ def conf_source(matrix_root: Path) -> Path:
     return matrix_root / settings.CONF_SOURCE
 
 
-@pytest.fixture(scope="session")
-def config_loader(conf_source: Path) -> OmegaConfigLoader:
+def build_config_loader(env: str, conf_source: Path) -> OmegaConfigLoader:
     """Instantiate a config loader."""
     return OmegaConfigLoader(
-        env="base",
+        env=env,
         base_env="base",
         default_run_env="base",
         conf_source=conf_source,
@@ -55,8 +55,7 @@ def config_loader(conf_source: Path) -> OmegaConfigLoader:
     )
 
 
-@pytest.fixture(scope="session")
-def kedro_context(config_loader: OmegaConfigLoader) -> KedroContext:
+def build_kedro_context(config_loader: OmegaConfigLoader) -> KedroContext:
     """Instantiate a KedroContext."""
     return KedroContext(
         env="cloud",
@@ -68,12 +67,37 @@ def kedro_context(config_loader: OmegaConfigLoader) -> KedroContext:
 
 
 @pytest.fixture(scope="session")
+def cloud_config_loader(conf_source: Path) -> OmegaConfigLoader:
+    return build_config_loader("cloud", conf_source)
+
+
+@pytest.fixture(scope="session")
+def base_config_loader(conf_source: Path) -> OmegaConfigLoader:
+    return build_config_loader("base", conf_source)
+
+
+@pytest.fixture(scope="session")
+def cloud_kedro_context(conf_source: Path) -> KedroContext:
+    config_loader = build_config_loader("cloud", conf_source)
+    return build_kedro_context(config_loader)
+
+
+@pytest.fixture(scope="session")
+def base_kedro_context(conf_source: Path) -> KedroContext:
+    config_loader = build_config_loader("base", conf_source)
+    return build_kedro_context(config_loader)
+
+
+@pytest.fixture(scope="session")
 def spark() -> Generator[ps.SparkSession, None, None]:
     """Instantiate the Spark session."""
     spark = (
         ps.SparkSession.builder.config("spark.sql.shuffle.partitions", 1)
         .config("spark.executorEnv.PYTHONPATH", "src")
         .config("spark.driver.bindAddress", "127.0.0.1")
+        # For the spark session tests that don't involve `OmegaConfig`, which in turns uses `spark.yml`
+        # that takes care of adding the unit (`g`), we make sure that the raw env var has the correct unit added.
+        .config("spark.driver.memory", f"{os.environ['SPARK_DRIVER_MEMORY']}g")
         .master("local")
         .appName("tests")
         .getOrCreate()

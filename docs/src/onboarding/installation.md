@@ -50,9 +50,7 @@ This page assumes basic knowledge of the following technologies. We will provide
             # then following steps 2-9 on the Github tutorial on adding a new SSH key to your account listed above
             ```
 
-
 ### Python
-
 We advise managing your Python installation using [`pyenv`](https://github.com/pyenv/pyenv).
 
 === "MacOS"
@@ -70,26 +68,26 @@ We advise managing your Python installation using [`pyenv`](https://github.com/p
     libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncursesw5-dev xz-utils \
     tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
     ```
-    
+
     Then clone the pyenv repository:
 
     ```bash
     git clone https://github.com/pyenv/pyenv.git ~/.pyenv
     ```
-    
+
     Define the PYENV_ROOT environment variable:
 
     ```bash
     echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
     echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
     ```
-    
+
     Enable pyenv init:
 
     ```bash
     echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bashrc
     ```
-    
+
     Restart your shell so the changes take effect:
 
     ```bash
@@ -101,9 +99,9 @@ We advise managing your Python installation using [`pyenv`](https://github.com/p
     ```bash
     pyenv --version
     ```
-    
+
     This should print the version of pyenv that you have installed, for example: ```bash pyenv 2.3.6.```
-    
+
     After following these steps, you should have pyenv installed and ready to use on your WSL environment.
 
 
@@ -133,7 +131,8 @@ python
 ### uv installation
 
 We leverage [`uv`](https://github.com/astral-sh/uv) to manage/install our Python
-requirements. Note that while many may be used to Conda, UV and Conda cannot be used in parallel. Using Conda is hence at your own risk.
+requirements. Note that while many may be used to Conda, UV and Conda cannot be used in
+parallel. Using Conda is hence at your own risk.
 
 
 Python 3.11 is currently **required** to build the matrix pipeline. If you attempt to use Python 3.12, you will likely encounter errors with the recently-removed `distutils` package (see the common errors document for how to solve this) 
@@ -142,7 +141,6 @@ Python 3.11 is currently **required** to build the matrix pipeline. If you attem
     Don't forget to link your uv installation using the instructions prompted after the downloaded.
 
 === "MacOS"
-
     If you have installed Python 3.11 using `pyenv`, as recommended above, you just need to install `uv`:
 
     ```bash
@@ -154,6 +152,7 @@ Python 3.11 is currently **required** to build the matrix pipeline. If you attem
     ```bash
     brew install uv python@3.11
     ```
+
 
 === "Windows (WSL)"
 
@@ -215,7 +214,7 @@ Make sure you have [docker](https://www.docker.com/) and [docker-compose](https:
     # To re-check if your version is now updated
     docker-compose --version
     ```    
-    If you stumble upon `socket permission denied` error, you can find a potential solution within the [common errors section](../FAQ/common_errors.md)
+    If you stumble upon `socket permission denied` error, you can find a potential solution within the [common errors section](../references/common_errors.md)
 === "Linux"
 
     ```bash
@@ -287,17 +286,11 @@ gcloud auth login
 gcloud auth application-default login
 ```
 
-Set the GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your service account key file. You can find the file path in previous step's console output.
+We also need to configure Docker to use the Google Container Registry:
 
-=== "MacOS"
-
-    ```bash
-    # Add to your shell config
-    echo 'export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"' >> ~/.bashrc
-
-    # Reload
-    source ~/.bashrc
-    ```
+```bash
+gcloud auth configure-docker us-central1-docker.pkg.dev
+```
 
 ### GNU Make
 
@@ -324,8 +317,6 @@ We use `make` and `Makefile`s in a lot of places. If you want to [learn more abo
     sudo pacman -S make
     ```
 
-[Request access to the data :material-skip-next:](./git-crypt.md){ .md-button .md-button--primary }
-
 ### kubectl
 
 Kubectl is a CLI tool we use to interact with our Kubernetes cluster. It is required to submit workflows to the cloud environment.
@@ -344,17 +335,29 @@ Once installed, use the gcloud SDK to connect kubectl to the kubernetes cluster.
 
     ```bash
     gcloud components install gke-gcloud-auth-plugin
-    gcloud container clusters get-credentials compute-cluster --region {REGION} --project {PROJECT_ID}
+    gcloud container clusters get-credentials compute-cluster --region us-central1 --project mtrx-hub-dev-3of
     # ... test your installation. You should see a list of the cluster's namespaces.
     kubectl get namespaces
     ```
 
-### argo
+### Argo Workflows
 
-[ArgoCD](https://argo-cd.readthedocs.io/en/stable/) is our main tool to run jobs in kubernetes. Its CLI tool `argo` is required to submit workflows to the cloud environment.
+[Argo](https://argoproj.github.io/) is our main tool to run jobs in kubernetes. Its CLI tool `argo` is required to submit workflows to the cloud environment.
+
+!!! warning
+
+    Argo Workflows is not the same as ArgoCD. Argo is a family of tools operating on kubernetes. We use both but most people only need to care about Argo Workflows.
+
 
 === "MacOS"
 
     ```bash
     brew install argo
     ```
+
+=== "Linux"
+
+    Check the [official documentation from argo](https://github.com/argoproj/argo-workflows/releases/).
+
+
+[Now, you're ready to dive into kedro! :material-skip-next:](./kedro.md){ .md-button .md-button--primary }

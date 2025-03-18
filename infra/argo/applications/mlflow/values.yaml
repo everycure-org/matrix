@@ -14,7 +14,8 @@ mlflow:
         --no-serve-artifacts
         --backend-store-uri=postgresql://bn_mlflow:$(MLFLOW_DATABASE_PASSWORD)@mlflow-postgresql:5432/bitnami_mlflow
         --default-artifact-root gs://mtrx-us-central1-hub-dev-storage
-    resourcesPreset: large
+    # default is medium
+    # resourcesPreset: micro
     service:
       type: ClusterIP
     auth:

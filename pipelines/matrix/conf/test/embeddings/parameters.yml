@@ -11,8 +11,7 @@ embeddings.dimensionality_reduction:
   transformer:
     k: 2
 
-embeddings.topological:
-  estimator:
-    args:
-      batchSize: 20
-      embeddingDimension: 3
+embeddings.topological_estimator:
+  iterations: 1
+  embedding_dim: 3
+  walk_length: 2

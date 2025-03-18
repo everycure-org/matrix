@@ -34,22 +34,20 @@ data_sources:
   ec_clinical_trials:
     version: 20230309 # NOTE: Here 0309 is a period of time (here Mar to Sep 2023)
   drug_list:
-    # NOTE: This is currently the artifact id, as the GitHub API only
-    # allows for downloading an artifact by its id. Get the artifact id
-    # of the latest release as follows:
-    # curl -X GET -H "Content-Type: application/json" -H "Authorization: token PAT" -H "Accept: application/vnd.github.v3.raw" https://api.github.com/repos/everycure-org/matrix-drug-list/releases | jq ".[0].assets | map(select(.name == \"drugList.tsv\"))[0] | .id"
-    version: 214074059
+    # check releases here: https://github.com/everycure-org/matrix-drug-list/releases
+    version: "Release v2.0.0"
   disease_list:
-    # NOTE: This is currently the artifact id, as the GitHub API only
-    # allows for downloading an artifact by its id. Get the artifact id
-    # of the latest release as follows:
-    # curl -X GET -H "Content-Type: application/json" -H "Authorization: token PAT" -H "Accept: application/vnd.github.v3.raw" https://api.github.com/repos/everycure-org/matrix-disease-list/releases | jq ".[0].assets | map(select(.name == \"matrix-disease-list.tsv\"))[0] | .id"
-    version: 197752375
+    # check releases here: https://github.com/everycure-org/matrix-disease-list/releases
+    version: "February 2025 release 5"
   gt:
     version: *_rtx_kg_version # NOTE: This is the version of the GT dataset which was developed for rtx-kg2 as a part of KGML-xDTD pipeline
+  drugmech:
+    # check releases here: https://github.com/SuLab/DrugMechDB/releases/ 
+    version: 2.0.1
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation. Will make PR.
 mlflow_artifact_root: null
+mlflow_experiment_id: null
 
 mlflow_url: https://mlflow.platform.dev.everycure.org/
 
@@ -61,6 +59,7 @@ paths:
 
   # Release-based
   integration:        data/releases/${versions.release}/datasets/integration
+  filtering:          data/releases/${versions.release}/datasets/filtering
   embeddings:         data/releases/${versions.release}/datasets/embeddings
   release:            data/releases/${versions.release}/datasets/release
 

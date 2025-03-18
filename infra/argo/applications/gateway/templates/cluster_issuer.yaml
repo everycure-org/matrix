@@ -22,6 +22,7 @@ spec:
       - selector:
           dnsNames:
           - "neo4j.dev.everycure.org"
+          - "*.platform.dev.everycure.org"
         dns01:
           cloudDNS:
             project: mtrx-hub-dev-3of  # This should match your Google Cloud project ID

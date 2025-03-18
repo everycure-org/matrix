@@ -3,7 +3,7 @@ import logging
 import os
 import re
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Set
 
 import fsspec
 import mlflow
@@ -12,6 +12,7 @@ import pyspark.sql as ps
 import termplotlib as tpl
 from kedro.framework.context import KedroContext
 from kedro.framework.hooks import hook_impl
+from kedro.framework.project import pipelines
 from kedro.io.data_catalog import DataCatalog
 from kedro.pipeline.node import Node
 from kedro_datasets.spark import SparkDataset
@@ -36,6 +37,66 @@ class MLFlowHooks:
     https://github.com/Galileo-Galilei/kedro-mlflow/issues/579
     """
 
+    _kedro_context: Optional[KedroContext] = None
+    _input_datasets: Optional[Set] = None
+
+    @classmethod
+    def set_context(cls, context: KedroContext) -> None:
+        """Utility class method that stores context in class as singleton."""
+        cls._kedro_context = context
+
+    @classmethod
+    def get_pipeline_inputs(cls):
+        if cls._input_datasets is None:
+            pipeline_name = cls._kedro_context._extra_params["pipeline_name"]
+            pipeline_obj = pipelines[pipeline_name]
+            inputs = {input for input in pipeline_obj.all_inputs() if not input.startswith("params:")}
+            outputs = pipeline_obj.all_outputs()
+            inputs_only = inputs - outputs
+            cls._input_datasets = inputs_only
+
+    # @hook_impl disabled due to https://github.com/everycure-org/matrix/issues/1154
+    def after_dataset_loaded(self, dataset_name, data, node):
+        """In the v1 of this feature we only log the dataset names.
+        Logging actual datasets requires extra work, due to the fact that the data has to be first
+        converted to mlflow.data.dataset.Dataset class. This works for common formats like pandas and spark
+        where the from_ functions exist, e.g.:
+
+        dataset = mlflow.data.from_pandas(data, name=dataset_name)
+        mlflow.log_input(dataset)
+
+        but our datasets are too heterogenous and can't be always parsed, e.g. matrix.datasets.graph.KnowledgeGraph
+        or would need a lot of hard-coded logic and would make this code brittle.
+        One idea is to only log select certain dataset types - pandas and spark, for other keep logging names only.
+
+        Another improvement idea for v2 would be to additionally  log the dataset paths, e.g.:
+        path = self._kedro_context.catalog.datasets[dataset_name]._get_load_path()
+        or using the url for remote datasets:
+        path = self._kedro_context.catalog.datasets[dataset_name]._url
+        """
+        if dataset_name in MLFlowHooks._input_datasets:
+            logger.info(f"Processing dataset {dataset_name}")
+            if dataset_name not in self.fetch_logged_datasets():
+                logger.info(f"Dataset {dataset_name} is not in the already logged datasets. Logging it now:")
+                dataset = mlflow.data.from_pandas(pd.DataFrame(), name=dataset_name)
+                try:
+                    mlflow.log_input(dataset)
+                except Exception as ex:
+                    logger.error(f"Error encountered when logging dataset {dataset_name}: {ex}")
+                    raise
+            else:
+                logger.info(f"Dataset {dataset_name} has already been logged as input.")
+
+    @staticmethod
+    def fetch_logged_datasets() -> List[str]:
+        run_id = MLFlowHooks._kedro_context.mlflow.tracking.run.id
+        logger.info(f"Fetching already logged datasets for run id: {run_id}")
+        client = mlflow.tracking.MlflowClient()
+        logged_inputs = client.get_run(run_id).inputs
+        logged_names = [dataset.dataset.name for dataset in logged_inputs.dataset_inputs]
+        logger.info(f"These are dataset names that have already been logged: {logged_names}")
+        return logged_names
+
     @hook_impl
     def after_context_created(self, context) -> None:
         """Initialise MLFlow run.
@@ -43,21 +104,29 @@ class MLFlowHooks:
         Initialises a MLFlow run and passes it on for
         other hooks to consume.
         """
-
+        MLFlowHooks.set_context(context)
+        # MLFlowHooks.get_pipeline_inputs()
         cfg = OmegaConf.create(context.config_loader["mlflow"])
         globs = OmegaConf.create(context.config_loader["globals"])
         # Set tracking uri
         # NOTE: This piece of code ensures that every MLFlow experiment
         # is created by our Kedro pipeline with the right artifact root.
         mlflow.set_tracking_uri(cfg.server.mlflow_tracking_uri)
-        experiment_id = self._create_experiment(cfg.tracking.experiment.name, globs.mlflow_artifact_root)
 
-        if cfg.tracking.run.name:
-            run_id = self._create_run(cfg.tracking.run.name, experiment_id)
+        # Temporary - while we still support kedro submit alongside kedro experiment
+        # Once kedro submit is deprecated we can probably remove this entire hook
+        if globs.mlflow_experiment_id and globs.mlflow_experiment_id != "None":
+            experiment_id = globs.mlflow_experiment_id
+            mlflow.start_run(run_id=cfg.tracking.run.id)
+        else:
+            experiment_id = self._create_experiment(cfg.tracking.experiment.name, globs.mlflow_artifact_root)
 
-            # Update catalog
-            OmegaConf.update(cfg, "tracking.run.id", run_id)
-            context.config_loader["mlflow"] = cfg
+            if cfg.tracking.run.name:
+                run_id = self._create_run(cfg.tracking.run.name, experiment_id)
+
+                # Update catalog
+                OmegaConf.update(cfg, "tracking.run.id", run_id)
+                context.config_loader["mlflow"] = cfg
 
     @staticmethod
     def _create_run(run_name: str, experiment_id: str) -> str:
@@ -79,6 +148,9 @@ class MLFlowHooks:
 
         if not runs:
             logger.info("creating run")
+            # For some reason MLFLOW_RUN_ID is set to "None" rather than None, so it tries to find this run id
+            if os.environ.get("MLFLOW_RUN_ID") == "None":
+                del os.environ["MLFLOW_RUN_ID"]
             run = mlflow.start_run(run_name=run_name, experiment_id=experiment_id)
             mlflow.set_tag("created_by", "kedro")
             return run.info.run_id
@@ -203,6 +275,18 @@ class SparkHooks:
         """Initialize Spark if the dataset is a SparkDataset."""
         self._check_and_initialize_spark(dataset_name)
 
+    @hook_impl
+    def after_dataset_loaded(self):
+        """Print the current Spark configuration after each dataset is loaded.
+        Must be done after dataset is loaded, because we initialise spark only
+        for Spark dataset types."""
+        try:
+            msg = ["Current Spark Configuration:"]
+            msg.extend([f"{k}: {v}" for k, v in sorted(self._spark_session.sparkContext.getConf().getAll())])
+            logger.info("\n".join(msg))
+        except AttributeError:
+            logger.warning("SparkSession is not initialized.")
+
 
 class NodeTimerHooks:
     """Spark project hook."""
@@ -302,6 +386,12 @@ class ReleaseInfoHooks:
         return tmpl
 
     @staticmethod
+    def build_kg_dashboard_link() -> str:
+        version = ReleaseInfoHooks._globals["versions"]["release"]
+        tmpl = f"https://data.dev.everycure.org/versions/{version}/evidence/"
+        return tmpl
+
+    @staticmethod
     def build_mlflow_link() -> str:
         run_id = ReleaseInfoHooks._kedro_context.mlflow.tracking.run.id
         experiment_name = ReleaseInfoHooks._kedro_context.mlflow.tracking.experiment.name
@@ -347,6 +437,7 @@ class ReleaseInfoHooks:
             "Code Link": ReleaseInfoHooks.build_code_link(),
             "Neo4j Link": "coming soon!",
             "NodeNorm Endpoint Link": "https://nodenorm.transltr.io/1.5/get_normalized_nodes",
+            "KG dashboard link": ReleaseInfoHooks.build_kg_dashboard_link(),
         }
         return info
 
@@ -367,7 +458,7 @@ class ReleaseInfoHooks:
         # pipelines the (last) data release node is part of. With an
         # `after_node_run`, you can limit your filters easily.
         if node.name == last_data_release_node_name:
-            datasets_to_hide = frozenset(["disease_list", "drug_list", "ec_clinical_trials", "gt"])
+            datasets_to_hide = frozenset([])
             global_datasets = self.extract_all_global_datasets(datasets_to_hide)
             datasets_used = self.extract_datasets_used()
             self.mark_unused_datasets(global_datasets, datasets_used)

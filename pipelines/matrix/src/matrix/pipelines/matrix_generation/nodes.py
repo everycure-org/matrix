@@ -9,7 +9,7 @@ from matrix.datasets.graph import KnowledgeGraph
 from matrix.inject import _extract_elements_in_list, inject_object
 from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.nodes import apply_transformers
-from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
+from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 from sklearn.impute._base import _BaseImputer
 from tqdm import tqdm
 
@@ -274,6 +274,11 @@ def make_predictions_and_sort(
 
     # Sort by the probability score
     sorted_data = data.sort_values(by=treat_score_col_name, ascending=False)
+
+    # Add rank and quantile rank columns
+    sorted_data["rank"] = range(1, len(sorted_data) + 1)
+    sorted_data["quantile_rank"] = sorted_data["rank"] / len(sorted_data)
+
     return sorted_data
 
 

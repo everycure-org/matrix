@@ -5,12 +5,39 @@ export PYSPARK_PYTHON = .venv/bin/python
 export UV_PYTHON = .venv/bin/python
 export TQDM_DISABLE ?= 1
 TARGET_PLATFORM ?= linux/amd64
-PREREQUISITES := docker gcloud python3 java uv
+PREREQUISITES := docker gcloud python3 java uv kubectl
+
+# Add GCP project variables
+GCP_PROJECT ?= mtrx-hub-dev-3of
+SA_KEY_SECRET_NAME ?= storage-viewer-sa-key
+SA_KEY_PATH ?= conf/local/service-account.json
+OAUTH_CLIENT_SECRET_SECRET_NAME ?= oauth_client_secret
+OAUTH_CLIENT_SECRET_PATH ?= conf/local/oauth_client_secret.txt
+
+fetch_secrets:
+	echo "Fetching secrets from Secret Manager..."; \
+	mkdir -p conf/local; \
+	for pair in "$(SA_KEY_SECRET_NAME) $(SA_KEY_PATH)" "$(OAUTH_CLIENT_SECRET_SECRET_NAME) $(OAUTH_CLIENT_SECRET_PATH)"; do \
+		set -- $$pair; \
+		echo "Fetching secret $$1..."; \
+		gcloud secrets versions access latest --secret="$$1" --project=$(GCP_PROJECT) > "$$2"; \
+		chmod 600 "$$2"; \
+		echo "Secret $$1 saved to $$2"; \
+	done
 
 # ensures all make targets run in one shell (rather than line by line in new shell)
 .ONESHELL: 
 
-default: install fast_test compose_down integration_test
+default: prerequisites fetch_sa_key install fast_test integration_test
+
+.PHONY: always
+# steps here get run on _every_ make call, no matter the target. Make sure this is 100% idempotent and fast.
+always:
+	# never track notebooks in the pipeline subfolder
+	git update-index --assume-unchanged *.ipynb
+%: always
+	@:
+default: prerequisites fetch_secrets install fast_test integration_test
 	echo "done!"
 
 prerequisites:
@@ -18,18 +45,30 @@ prerequisites:
 	$(foreach exec,$(PREREQUISITES),\
         $(if $(shell command -v $(exec) 2>/dev/null),,$(error "$(exec) is not installed.")))
 	$(info All prerequisites are installed.)
+	$(info Checking gcloud auth...)
+	@if ! gcloud auth print-access-token >/dev/null 2>&1; then \
+		echo "Not logged into gcloud. Please run 'gcloud auth login' first."; \
+		exit 1; \
+	fi
 
-venv: prerequisites
+venv: 
 	if [ ! -d .venv ]; then uv venv -p 3.11; fi
 	uv run python -m ensurepip --upgrade || true
 
-install: venv precommit-hooks
+install: venv precommit-hooks 
 	uv pip install -r requirements.txt #force it to install in our venv
 
 install_compatibility: venv precommit-hooks
 	# expects the file requirements.overrides.txt to be present, allows devs to override
 	# versions for local machine limitations (e.g. newer pytorch on macos intel)
 	uv pip install -r requirements.txt --overrides requirements.overrides.txt
+
+install_argo:
+	curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
+	gunzip argo-linux-amd64.gz
+	chmod +x argo-linux-amd64
+	sudo mv argo-linux-amd64 /usr/local/bin/argo
+	argo version
 
 precommit: precommit-hooks
 	git fetch origin
@@ -38,6 +77,13 @@ precommit: precommit-hooks
 precommit-hooks:
 	uv pip install pre-commit 
 	uv run pre-commit install --install-hooks
+
+check_release_version_environment_variable:
+	if [ -z "${RELEASE_VERSION}" ]; then
+	echo "::error::release_version input is required"
+	exit 1
+	fi
+	echo "Using release version: ${RELEASE_VERSION}"
 
 full_test:
 	# activate venv to ensure spark doesn't have python driver mismatches
@@ -100,7 +146,10 @@ licenses_container: docker_build
 		-v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy  \
 		image --scanners license --severity UNKNOWN,CRITICAL $(dev_docker_image)
 
-clean:
+clean_sa_key:
+	rm -f $(SA_KEY_PATH)
+
+clean: clean_sa_key
 	@echo "cleaning various cache locations to ensure clean installation is possible"
 	@echo "this may be necessary e.g. when updating one of our local packages"
 	uv run pre-commit clean
@@ -126,6 +175,8 @@ diagnostics:
 	-uv --version || echo "UV is not installed."
 	echo "\nCheck Virtual Environment (if applicable):"
 	-uv run which python || echo "Python is not in PATH."
+	echo "\nKubectl permissions:"
+	-kubectl auth can-i --list
 	echo "\nPython Version:"
 	-uv run python3 --version || echo "Python is not installed."
 	echo "\nSystem Information:"
@@ -144,4 +195,4 @@ diagnostics:
 	-df -h
 	echo "\nDiagnostics complete."
 
-# NOTE: This Makefile target was partially generated using AI assistance.
+

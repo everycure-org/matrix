@@ -1,6 +1,5 @@
 import logging
 
-import pandera.pyspark as pa
 import pyspark.sql as ps
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
@@ -11,15 +10,13 @@ logger = logging.getLogger(__name__)
 
 
 class MedicalTransformer(GraphTransformer):
+    """Transformer for medical data."""
+
+    def __init__(self, select_cols: str = True, drop_duplicates: bool = True):
+        super().__init__(select_cols)
+        self._drop_duplicates = drop_duplicates
+
     def transform_nodes(self, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
-        """Transform nodes to our target schema.
-
-        Args:
-            nodes_df: Nodes DataFrame.
-
-        Returns:
-            Transformed DataFrame.
-        """
         # fmt: off
         df = (
             nodes_df
@@ -37,20 +34,15 @@ class MedicalTransformer(GraphTransformer):
             .filter(f.col("id").isNotNull())
         )
 
+        if self._drop_duplicates:
+            df = df.dropDuplicates(["id"])  # Drop any duplicate nodes
+            
         return df
         # fmt: on
 
     def transform_edges(self, edges_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
-        """Transform edges to our target schema.
-
-        Args:
-            edges_df: Edges DataFrame.
-            pubmed_mapping: pubmed mapping
-        Returns:
-            Transformed DataFrame.
-        """
         # fmt: off
-        edges = (
+        df = (
             edges_df
             .withColumn("subject",                       f.col("SourceId"))
             .withColumn("object",                        f.col("TargetId"))
@@ -69,4 +61,7 @@ class MedicalTransformer(GraphTransformer):
             .filter(f.col("subject").isNotNull() & f.col("object").isNotNull())
         )
 
-        return edges
+        if self._drop_duplicates:
+            df = df.dropDuplicates(["subject", "object", "predicate"])
+
+        return df

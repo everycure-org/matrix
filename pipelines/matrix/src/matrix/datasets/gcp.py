@@ -3,13 +3,16 @@ import logging
 import os
 import re
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Optional
 
+import fsspec
 import google.api_core.exceptions as exceptions
 import numpy as np
 import pandas as pd
 import pygsheets
 import pyspark.sql as ps
+import requests
 from google.cloud import bigquery, storage
 from kedro.io.core import (
     AbstractDataset,
@@ -19,10 +22,11 @@ from kedro.io.core import (
 )
 from kedro_datasets.partitions import PartitionedDataset
 from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
-from matrix.hooks import SparkHooks
-from matrix.inject import _parse_for_objects
 from pygsheets import Spreadsheet, Worksheet
 from tqdm import tqdm
+
+from matrix.hooks import SparkHooks
+from matrix.inject import _parse_for_objects
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +37,41 @@ class LazySparkDataset(SparkDataset):
     A trick that makes our spark loading lazy so we never initiate
     """
 
+    def __init__(  # noqa: PLR0913
+        self,
+        *,
+        filepath: str,
+        file_format: str = "parquet",
+        load_args: dict[str, Any] | None = None,
+        save_args: dict[str, Any] | None = None,
+        version: Version | None = None,
+        credentials: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        self._full_url = filepath
+
+        super().__init__(
+            filepath=filepath,
+            file_format=file_format,
+            save_args=save_args,
+            load_args=load_args,
+            credentials=credentials,
+            version=version,
+            metadata=metadata,
+        )
+
     def load(self):
         SparkHooks._initialize_spark()
+
+        # Spark cannot read http files directly
+        if self._fs_prefix in ["http://", "https://"]:
+            with fsspec.open(self._full_url, "rb") as remote_file:
+                name = f"/tmp/{Path(self._full_url).name}"
+                with open(name, "wb") as local_file:
+                    local_file.write(remote_file.read())
+                    self._filepath = Path(name)
+                    self._fs_prefix = "file://"
+
         return super().load()
 
 
@@ -159,7 +196,10 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         table = bigquery.Table(f"{self._dataset_id}.{self._table}")
         table.labels = self._labels
         table.external_data_configuration = external_config
-        table = self._client.create_table(table, exists_ok=True)
+        try:
+            self._client.create_table(table, exists_ok=False)
+        except exceptions.Conflict:
+            self._client.update_table(table, fields=["labels"])
 
     def _create_dataset(self) -> str:
         try:
@@ -434,7 +474,7 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
             fs_args=fs_args,
         )
 
-    def save(self, data: dict[str, Any], timeout: int = 60) -> None:
+    def save(self, data: dict[str, Any], timeout: int = 90) -> None:
         logger.info(f"saving with {self._max_workers} parallelism")
 
         if self._overwrite and self._filesystem.exists(self._normalized_path):

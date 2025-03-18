@@ -1,32 +1,28 @@
 import logging
+from typing import Dict
 
+import pyspark.sql as ps
 import pyspark.sql.functions as f
-from pyspark.sql import DataFrame
 
-from .transformer import GraphTransformer
+from .transformer import Transformer
 
 logger = logging.getLogger(__name__)
 
 
-class DiseasesTransformer(GraphTransformer):
-    def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
-        """Transform nodes to our target schema.
+class DiseasesTransformer(Transformer):
+    """Transformer for disease input source."""
 
-        Args:
-            nodes_df: Nodes DataFrame.
-
-        Returns:
-            Transformed DataFrame.
-        """
+    def transform(self, nodes_df: ps.DataFrame, **kwargs) -> Dict[str, ps.DataFrame]:
         # fmt: off
         df = (
             nodes_df
-            .withColumn("id",                                f.col("category_class"))
-            .withColumn("name",                              f.col("label"))
-            .withColumn("category",                          f.lit("biolink:Disease"))
+            .withColumn("id",       f.col("category_class"))
+            .withColumn("name",     f.col("label"))
+            .withColumn("category", f.lit("biolink:Disease"))
         )
-        return df
+        filters = [f for f in nodes_df.columns if f.startswith("is_")]
+        filters.append('official_matrix_filter') 
+        for filter in filters:
+            df = df.withColumn(filter, f.col(filter).cast("boolean"))
         # fmt: on
-
-    def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
-        raise NotImplementedError("Not implemented!")
+        return {"nodes": df}

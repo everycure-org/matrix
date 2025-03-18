@@ -19,6 +19,7 @@ def generate_argo_config(
     run_name: str,
     release_version: str,
     image_tag: str,
+    mlflow_experiment_id: int,
     namespace: str,
     username: str,
     pipeline: Pipeline,
@@ -26,6 +27,7 @@ def generate_argo_config(
     package_name: str,
     release_folder_name: str,
     default_execution_resources: Optional[ArgoResourceConfig] = None,
+    mlflow_run_id: Optional[str] = None,
 ) -> str:
     if default_execution_resources is None:
         default_execution_resources = ArgoResourceConfig()
@@ -44,6 +46,8 @@ def generate_argo_config(
         trigger_release=trigger_release,
         image=image,
         image_tag=image_tag,
+        mlflow_experiment_id=mlflow_experiment_id,
+        mlflow_run_id=mlflow_run_id,
         namespace=namespace,
         username=username,
         run_name=run_name,
@@ -288,4 +292,4 @@ def clean_name(name: str) -> str:
 
 
 def get_trigger_release_flag(pipeline: str) -> str:
-    return str(pipeline in ("data_release", "kg_release"))
+    return str(pipeline in ("data_release", "kg_release", "kg_release_patch"))
