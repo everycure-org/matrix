@@ -222,7 +222,7 @@ class SparkHooks:
             # DEBT ugly fix, ideally we overwrite this in the spark.yml config file but currently no
             # known way of doing so
             # if prod environment, remove all config keys that start with spark.hadoop.google.cloud.auth.service
-            if os.environ.get("ARGO_NODE_ID") is not None:
+            if "ARGO_NODE_ID" in os.environ:
                 logger.warning(
                     "We're manipulating the spark configuration now. This is done assuming this is a production execution in argo"
                 )
@@ -437,12 +437,12 @@ class ReleaseInfoHooks:
                 global_datasets[global_dataset] = "not included"
 
     @staticmethod
-    def extract_release_info(global_datasets: str) -> dict[str, str]:
+    def extract_release_info(global_datasets: dict[str, Any]) -> dict[str, str]:
         info = {
             "Release Name": ReleaseInfoHooks._globals["versions"]["release"],
             "Datasets": global_datasets,
             "Topological Estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["_object"],
-            "Embeddings Encoder": ReleaseInfoHooks._params["embeddings.node.caching.resolver"]["encoder"]["model"],
+            "Embeddings Encoder": ReleaseInfoHooks._params["embeddings.node.caching"]["resolver"]["encoder"]["model"],
             "BigQuery Link": ReleaseInfoHooks.build_bigquery_link(),
             "MLFlow Link": ReleaseInfoHooks.build_mlflow_link(),
             "Code Link": ReleaseInfoHooks.build_code_link(),
