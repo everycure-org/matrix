@@ -26,6 +26,7 @@ neo4j_db/
 **/.terraform/
 **/.terragrunt-cache/
 infra/**/*.zip
+**/*.gen.tf
 
 infra/argo/applications/**/charts
 
