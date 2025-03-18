@@ -32,19 +32,6 @@ def create_ground_truth_pipeline() -> list:
             name="write_ec_indications_list",
             tags=["ec-ground-truth"],
         ),
-        node(
-            func=lambda x, y: [x, y],
-            inputs=[
-                "ingestion.raw.ec_ground_truth_downfilled.positives",
-                "ingestion.raw.ec_ground_truth_downfilled.negatives",
-            ],
-            outputs=[
-                "ingestion.raw.ec_ground_truth_downfilled.positive.edges@pandas",
-                "ingestion.raw.ec_ground_truth_downfilled.negative.edges@pandas",
-            ],
-            name="write_ec_indications_list_downfilled",
-            tags=["ec-ground-truth"],
-        ),
     ]
 
 
