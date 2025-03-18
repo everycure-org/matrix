@@ -14,7 +14,7 @@ resource "google_gke_backup_backup_plan" "rpo_daily_window" {
   }
   backup_config {
     include_volume_data = true
-    include_secrets     = true
+    include_secrets     = false
     all_namespaces      = true
   }
 }
