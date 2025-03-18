@@ -44,11 +44,9 @@ resource "google_workbench_instance" "user_workbench" {
   instance_owners = [var.email]
   lifecycle {
     ignore_changes = [
-      create_time,
-      update_time,
-      state,
       desired_state,
-      gce_setup[0].metadata.resource-url
+      gce_setup[0].metadata.resource-url,
+      gce_setup[0].data_disks
     ]
   }
   # when we create, they are stopped, from this point onward, we ignore the state -> leave running ones running
