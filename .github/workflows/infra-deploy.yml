@@ -35,6 +35,7 @@ jobs:
             src:
               - ${{ inputs.deployment_path }}
               - .github/workflows/infra-*.yml
+              - infra/modules/**
   debug:
     needs: [paths_filter]
     runs-on: 'ubuntu-latest'
@@ -134,7 +135,6 @@ jobs:
   deploy:
     # runs under RW user
     runs-on: ubuntu-latest
-    # TODO fix
     if: github.ref == 'refs/heads/infra'
     environment: dev
     name: Apply Terraform
