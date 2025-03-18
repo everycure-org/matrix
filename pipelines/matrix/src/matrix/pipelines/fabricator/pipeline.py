@@ -208,8 +208,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "ingestion.raw.disease_list",
                 ],
                 outputs=[
-                    "ingestion.raw.ground_truth.positives",
-                    "ingestion.raw.ground_truth.negatives",
+                    "ingestion.raw.kgml_xdtd_ground_truth.positives",
+                    "ingestion.raw.kgml_xdtd_ground_truth.negatives",
                 ],
                 name="create_gt_pairs",
             ),
@@ -241,8 +241,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=generate_paths,
                 inputs=[
                     "ingestion.raw.rtx_kg2.edges@pandas",
-                    "ingestion.raw.ground_truth.positives",
-                    "ingestion.raw.ground_truth.negatives",
+                    "ingestion.raw.kgml_xdtd_ground_truth.positives",
+                    "ingestion.raw.kgml_xdtd_ground_truth.negatives",
                 ],
                 outputs="ingestion.raw.drugmech.edges@pandas",
                 name="create_drugmech_pairs",
