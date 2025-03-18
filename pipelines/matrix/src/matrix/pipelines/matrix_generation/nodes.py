@@ -236,23 +236,21 @@ def make_predictions_and_sort(
 
     # Apply the function to each partition of the Spark DataFrame
     transformed = transformed.rdd.mapPartitions(predict_partition).toDF()
-
+    # print(f"transformed columns: {transformed.columns}")
     data = data.drop("source_embedding", "target_embedding")
-    transformed = transformed.withColumn("__index_level_0__", F.monotonically_increasing_id())
-    print(f"transformed columns: {transformed.columns}")
+    # transformed = transformed.withColumn("__index_level_0__", F.monotonically_increasing_id())
     data = data.join(
         transformed.select("__index_level_0__", not_treat_score_col_name, treat_score_col_name, unknown_score_col_name),
         on="__index_level_0__",  # Use the correct join key
         how="inner",
     )
-    print(f"data columns: {data.columns}")
     window_spec = Window.orderBy(F.desc(treat_score_col_name))
     # Add rank column
     data = data.withColumn("rank", F.row_number().over(window_spec))
     row_count = data.count()
     # Add quantile rank column
     data = data.withColumn("quantile_rank", F.col("rank") / row_count)
-    data.show()
+
     return data
 
 
@@ -270,7 +268,6 @@ def apply_transformers(
     Returns:
         Transformed data.
     """
-    data = data.withColumnRenamed("__index_level_0__", "index")
     for transformer in transformers.values():
         # Extract features for transformation
         features = transformer["features"]  # Assuming this is a list of column names
@@ -286,11 +283,9 @@ def apply_transformers(
             pd.DataFrame(
                 transformed_values, columns=transformer["transformer"].get_feature_names_out(features_selected)
             )
-        ).withColumn("index", F.monotonically_increasing_id())
+        ).withColumn("__index_level_0__", F.monotonically_increasing_id())
         # Join transformed data back to original DataFrame
-        data = data.drop(*features).join(transformed_sdf, on="index", how="inner")  # Drop old features
-
-    data = data.drop("index")
+        data = data.drop(*features).join(transformed_sdf, on="__index_level_0__", how="inner")  # Drop old features
 
     return data
 
