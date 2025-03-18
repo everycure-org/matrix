@@ -319,7 +319,7 @@ ingestion.int.ground_truth.edges:
     index: false
     mode: overwrite
 
-ingestion.int.kgml_xdtd_ground_truth.edges:
+ingestion.int.ground_truth.edges:
   <<: [*_spark_csv, *_layer_int]
   filepath: ${globals:paths.ingestion}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/gt_pairs.tsv
   load_args:
