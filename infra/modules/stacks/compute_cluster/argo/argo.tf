@@ -20,7 +20,7 @@ resource "kubernetes_secret" "argo_secret" {
     name      = "basic-auth"
     namespace = var.namespace
     labels = {
-      "argocd.argoproj.io/secret-type" : "repository"
+      "argocd.argoproj.io/secret-type" : "repo-creds"
     }
   }
   data = {
