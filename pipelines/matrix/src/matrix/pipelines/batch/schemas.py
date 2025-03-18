@@ -2,10 +2,7 @@ import pyarrow as pa
 from pyspark.sql.pandas.types import from_arrow_type
 from pyspark.sql.types import StructType
 
-
-# For the dependency injection technique using the Every Cure inject decorator, one must wrap the objects in Callables.
-def embeddings() -> pa.lib.Schema:
-    return pa.schema({"key": pa.string(), "value": pa.list_(pa.float32()), "api": pa.string()})
+embeddings: pa.lib.Schema = pa.schema({"key": pa.string(), "value": pa.list_(pa.float32()), "api": pa.string()})
 
 
 def to_spark_schema(s: pa.lib.Schema) -> StructType:

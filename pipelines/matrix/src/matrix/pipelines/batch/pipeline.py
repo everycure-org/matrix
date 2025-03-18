@@ -62,56 +62,61 @@ def cached_api_enrichment_pipeline(
     been made in other runs will have been cached, so that the enrichment
     process will complete faster.
 
-    Note: ideally the preprocessor is a no-op, a simple pass-through (like
-    `lambda x: x`). If you can shape your DataFrame in such a way that it
-    doesn't need a custom preprocessor (e.g. by calling your own preprocessor
-    in the node just prior to this pipeline), it'll be computationally more efficient
-    (meaning this subpipeline will complete faster, and thus saves the
-    organization money).
+    Note:
+         ideally the preprocessor is a no-op, a simple pass-through (like
+         `lambda x: x`). If you can shape your DataFrame in such a way that it
+         doesn't need a custom preprocessor (e.g. by calling your own
+         preprocessor in the node just prior to this pipeline), it'll be
+         computationally more efficient (meaning this subpipeline will complete
+         faster, and thus saves the organization money).
 
-    input: Kedro reference to a Spark DataFrame where you want to add a column
-    `new_col` to.
+    Args:
+        input: Kedro reference to a Spark DataFrame where you want to add a column
+            `new_col` to.
 
-    primary_key: name of the column that should be produced (or passed) by the
-    preprocessor function. It is this column of values that will be used to
-    check against the cache, or failing that, sent to the cache_miss_resolver.
+        primary_key: Name of the column that should be produced (or passed) by the
+            preprocessor function. It is this column of values that will be used to
+            check against the cache, or failing that, sent to the `cache_miss_resolver`.
 
-    cache_miss_resolver: Kedro reference to an object having an apply method,
-    which is an asynchronous callable that will be used to look up any cache misses.
+        cache_miss_resolver: Kedro reference to an object having an apply method,
+            which is an asynchronous callable that will be used to look up any cache misses.
 
-    api: Kedro parameter to restrict the cache to use results from this
-    particular API. You will want to match this with the parameters of
-    the `cache_miss_resolver`.
+        api: Kedro parameter to restrict the cache to use results from this
+            particular API. You will want to match this with the parameters of
+            the `cache_miss_resolver`.
 
-    preprocessor: Kedro reference to a callable that will preprocess the
-    `input` such that it has a column `primary_key` which is used in the
-    look-up process.
+        preprocessor: Kedro reference to a callable that will preprocess the
+            `input` such that it has a column `primary_key` which is used in the
+            look-up process.
 
-    output: Kedro reference to a dataset that is the input plus this new
-    `new_col` containing the results from the enrichment with the cache/API.
+        output: Kedro reference to a dataset that is the input plus this new
+            `new_col` containing the results from the enrichment with the cache/API.
 
-    new_col: name of the column in which the values associated with the
-    `primary_key` should appear.
+        new_col: Name of the column in which the values associated with the
+        `primary_key` should appear.
 
-    batch_size: the size of a batch that will be sent to the embedder. Keep in
-    mind that concurrent requests may be running, which means the API might be
-    getting more batches in parallel, which in turn can  have an affect
-    (positive or negative, it depends on the API) on the performance. This
-    argument is a determining factor of the size of the files produced by running
-    the cache miss resolver.
+        batch_size: The size of a batch that will be sent to the embedder. Keep in
+            mind that concurrent requests may be running, which means the API might be
+            getting more batches in parallel, which in turn can  have an affect
+            (positive or negative, it depends on the API) on the performance. This
+            argument is a determining factor of the size of the files produced by running
+            the cache miss resolver.
 
-    cache: Kedro reference to the Spark DataFrame that maps keys to values. The
-    keys will be compared to the `primary_key` column of the DataFrame
-    resulting from calling the `preprocessor` on the `input`. Aside from the
-    key and value column, it also has a third column, named api, linking the
-    keys to the API used at the time of the lookup.
+        cache: Kedro reference to the Spark DataFrame that maps keys to values. The
+            keys will be compared to the `primary_key` column of the DataFrame
+            resulting from calling the `preprocessor` on the `input`. Aside from the
+            key and value column, it also has a third column, named api, linking the
+            keys to the API used at the time of the lookup.
 
-    cache_out: a Catalog entry that points to the same location as `cache`, and
-    `cache_reload`, but uses PartitionedAsyncParallelDatasets to append batches
-    of resolved misses to the already existing cache.
+        cache_out: A Catalog entry that points to the same location as `cache`,
+            but uses PartitionedAsyncParallelDatasets to append batches
+            of resolved misses to the already existing cache.
 
-    cache_schema: a parameters entry referencing a PyArrow schema that is
-    associated with the cache for this particular cached-lookup.
+        cache_schema: A parameters entry referencing a PyArrow schema that is
+            associated with the cache for this particular cached-lookup.
+
+    Returns:
+        Kedro Pipeline.
     """
 
     cache_misses = f"batch.{source}.cache.misses"
