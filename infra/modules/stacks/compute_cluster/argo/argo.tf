@@ -20,7 +20,7 @@ resource "kubernetes_secret" "argo_secret" {
     name      = "basic-auth"
     namespace = var.namespace
     labels = {
-      "argocd.argoproj.io/secret-type" : "repository"
+      "argocd.argoproj.io/secret-type" : "repo-creds"
     }
   }
   data = {
@@ -28,11 +28,12 @@ resource "kubernetes_secret" "argo_secret" {
     # url= base64encode(var.repo_url)
     # password= base64encode(var.repo_creds)
     type     = "git"
-    url      = var.repo_url
+    url      = "https://github.com/everycure-org/"
     password = var.repo_creds
   }
   type = "Opaque"
 }
+
 resource "helm_release" "argo" {
   depends_on = [kubernetes_namespace.argo_ns, kubernetes_secret.argo_secret]
   name       = "argo"
