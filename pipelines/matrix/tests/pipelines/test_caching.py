@@ -242,7 +242,7 @@ def test_cached_api_enrichment_pipeline(
     cache_path = str(tmp_path / "cache_dataset")
     catalog = DataCatalog(
         {
-            "integration.prm.filtered_nodes": MemoryDataset(sample_input_df),
+            "filtering.prm.filtered_nodes": MemoryDataset(sample_input_df),
             "batch.embeddings.cache.read": SparkWithSchemaDataset(
                 filepath=str(tmp_path / "cache_dataset"),
                 provide_empty_if_not_present=True,
