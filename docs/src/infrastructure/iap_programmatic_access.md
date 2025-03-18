@@ -21,6 +21,8 @@ rm SETTING_FILE
 
 ## Authentication Flow
 
+### Authenticate with User Accounts Locally
+
 The authentication process follows these steps:
 
 1. **OAuth2 Configuration**: Set up OAuth2 client credentials for authentication:
@@ -37,6 +39,28 @@ The authentication process follows these steps:
    - Exchange authorization code for access and ID tokens
    - Verify ID token to confirm user identity
    - Use ID token for MLFlow API requests
+
+### Authenticate with Service Accounts in GitHub Actions
+
+When we access IAP resouces in GitHub Actions, we need to set up the authentication using service accounts. The authentication process follows these steps:
+
+1. **OAuth2 Client Configuration**:
+   - Client ID and Secret are configured.
+
+2. **Create Service Account Key**:
+   - Create a new service account key for the desired service account.
+
+3. **Add IAM Role to the Service Account**:
+   - Assign the **IAP-secured Web App User** role to the service account. This role is required to access HTTPS resources that use IAP.
+
+4. **Add the Service Account Key to Repository Secrets**:
+   - Add service account key as a secret to the dev GitHub environment.
+
+5. **Expose the Service Account Key in GitHub Actions**:
+   - Expose the service account key in GitHub Actions
+
+6. **Retrieve the Service Account IAP Token**:
+   - Get the service account IAP token by reading the secret.
 
 ## Usage
 

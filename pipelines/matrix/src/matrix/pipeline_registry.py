@@ -49,7 +49,6 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines["kg_release_patch"] = (
         pipelines["data_engineering"]
         + pipelines["data_release"]
-        + pipelines["embeddings"]
     )
     pipelines["kg_release"] = (
         pipelines["kg_release_patch"]
@@ -78,7 +77,8 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + pipelines["ingest_to_N4J"]
     )
     pipelines["test_sample"] = (
-        pipelines["embeddings"]
+        pipelines["filtering"]
+        + pipelines["embeddings"]
         + pipelines["modelling_run"]
     )
     # fmt: on
