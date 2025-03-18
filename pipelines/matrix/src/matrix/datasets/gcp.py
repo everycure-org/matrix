@@ -50,6 +50,7 @@ class LazySparkDataset(SparkDataset):
         provide_empty_if_not_present: bool = False,
     ) -> None:
         self._full_url = filepath
+        self._provide_empty_if_not_present = provide_empty_if_not_present
 
         super().__init__(
             filepath=filepath,
@@ -75,13 +76,13 @@ class LazySparkDataset(SparkDataset):
 
         try:
             return super().load()
-        except AnalysisException as e:
-            if self._provide_empty_if_not_present and ("PATH_NOT_FOUND" in e.desc):
+        except DatasetError as e:
+            if self._provide_empty_if_not_present and ("PATH_NOT_FOUND" in str(e.args)):
                 logger.warning(
                     """{"warning": "Dataset not found at '%s'.",  "Resolution": "providing empty dataset with unrelated schema."}""",
-                    self.filepath,
+                    self._filepath,
                 )
-                return ps.SparkSession.getActiveSession.createDataFrame(
+                return ps.SparkSession.getActiveSession().createDataFrame(
                     [], schema=ps.types.StructType().add("foo", ps.types.BooleanType())
                 )
             else:
