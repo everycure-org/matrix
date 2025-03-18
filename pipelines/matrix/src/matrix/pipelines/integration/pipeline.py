@@ -7,7 +7,13 @@ from ...kedro4argo_node import ArgoNode, ArgoResourceConfig
 from . import nodes
 
 
-def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges: bool = True) -> Pipeline:
+def _create_integration_pipeline(
+    source: str,
+    has_nodes: bool = True,
+    has_edges: bool = True,
+    has_positive_edges: bool = False,
+    has_negative_edges: bool = False,
+) -> Pipeline:
     pipelines = []
 
     pipelines.append(
@@ -28,6 +34,16 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
                         # the transformer.
                         **({"nodes_df": f"ingestion.int.{source}.nodes"} if has_nodes else {}),
                         **({"edges_df": f"ingestion.int.{source}.edges"} if has_edges else {}),
+                        **(
+                            {"positive_edges_df": f"ingestion.int.{source}.positive.edges"}
+                            if has_positive_edges
+                            else {}
+                        ),
+                        **(
+                            {"negative_edges_df": f"ingestion.int.{source}.negative.edges"}
+                            if has_negative_edges
+                            else {}
+                        ),
                     },
                     outputs={
                         "nodes": f"integration.int.{source}.nodes",
@@ -96,6 +112,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                     source=source["name"],
                     has_nodes=source.get("has_nodes", True),
                     has_edges=source.get("has_edges", True),
+                    has_positive_edges=source.get("has_positive_edges", False),
+                    has_negative_edges=source.get("has_negative_edges", False),
                 ),
                 tags=[source["name"]],
             )
