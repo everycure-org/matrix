@@ -33,15 +33,19 @@ def _create_integration_pipeline(
                         # during node execution time, otherwise we could infer this based on
                         # the transformer.
                         **({"nodes_df": f"ingestion.int.{source}.nodes"} if has_nodes else {}),
-                        **({"edges_df": f"ingestion.int.{source}.edges"} if has_edges else {}),
                         **(
-                            {"positive_edges_df": f"ingestion.int.{source}.positive.edges"}
-                            if has_positive_edges
+                            {"edges_df": f"ingestion.int.{source}.edges"}
+                            if (has_edges and not (has_positive_edges | has_negative_edges))
                             else {}
                         ),
                         **(
-                            {"negative_edges_df": f"ingestion.int.{source}.negative.edges"}
-                            if has_negative_edges
+                            {"positive_edges": f"ingestion.int.{source}.positive.edges"}
+                            if (has_edges and (has_positive_edges | has_negative_edges))
+                            else {}
+                        ),
+                        **(
+                            {"negative_edges": f"ingestion.int.{source}.negative.edges"}
+                            if (has_edges and (has_positive_edges | has_negative_edges))
                             else {}
                         ),
                     },
@@ -118,7 +122,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=[source["name"]],
             )
         )
-
     # Add integration pipeline
     pipelines.append(
         pipeline(
@@ -151,5 +154,4 @@ def create_pipeline(**kwargs) -> Pipeline:
             ]
         )
     )
-
     return sum(pipelines)
