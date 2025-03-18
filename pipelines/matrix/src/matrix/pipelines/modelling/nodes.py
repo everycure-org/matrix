@@ -359,7 +359,6 @@ def apply_transformers(
             index=features_selected.index,
             columns=transformer["transformer"].get_feature_names_out(features_selected),
         )
-
         # Overwrite columns
         data = pd.concat(
             [data.drop(columns=features), transformed],
