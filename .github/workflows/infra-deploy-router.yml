@@ -26,6 +26,7 @@ on:
 jobs:
   call_infra_deploy:
     uses: ./.github/workflows/infra-deploy.yml
+    name: ${{ matrix.deployment_path }}
     secrets: inherit
     permissions:
       pull-requests: read
