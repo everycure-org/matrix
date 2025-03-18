@@ -93,6 +93,7 @@ module "gke" {
   authenticator_security_group = "gke-security-groups@everycure.org"
   service_account_name         = "sa-k8s-node"
   node_metadata                = "UNSPECIFIED"
+  gke_backup_agent_config      = true
 
   # FUTURE: Refine node pools
   node_pools = local.node_pools_combined
