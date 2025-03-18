@@ -26,6 +26,7 @@ on:
 jobs:
   call_infra_deploy:
     uses: ./.github/workflows/infra-deploy.yml
+    secrets: inherit
     permissions:
       pull-requests: read
       contents: 'read'
