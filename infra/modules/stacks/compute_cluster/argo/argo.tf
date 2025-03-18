@@ -28,27 +28,7 @@ resource "kubernetes_secret" "argo_secret" {
     # url= base64encode(var.repo_url)
     # password= base64encode(var.repo_creds)
     type     = "git"
-    url      = var.repo_url
-    password = var.repo_creds
-  }
-  type = "Opaque"
-}
-
-resource "kubernetes_secret" "argo_secret_matrix_ui" {
-  depends_on = [kubernetes_namespace.argo_ns]
-  metadata {
-    name      = "matrix-ui-auth"
-    namespace = var.namespace
-    labels = {
-      "argocd.argoproj.io/secret-type" : "repository"
-    }
-  }
-  data = {
-    # type= base64encode("git")
-    # url= base64encode(var.repo_url)
-    # password= base64encode(var.repo_creds)
-    type     = "git"
-    url      = "https://github.com/everycure-org/matrix-ui.git"
+    url      = "https://github.com/everycure-org/"
     password = var.repo_creds
   }
   type = "Opaque"
