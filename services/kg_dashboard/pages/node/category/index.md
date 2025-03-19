@@ -7,5 +7,6 @@
   group by all
   order by count desc  
 ```
+Click through to node categories in the table below to explore more detailed information about each of them.
 
 <DataTable data={nodes_by_category} link=link title='Nodes by Category' />
