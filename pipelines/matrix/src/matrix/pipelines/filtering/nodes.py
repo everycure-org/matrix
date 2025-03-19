@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Callable, Dict, List, Tuple
+from collections.abc import Callable
 
 import pyspark.sql as ps
 import pyspark.sql.functions as F
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def _apply_transformations(
-    df: ps.DataFrame, transformations: List[Tuple[Callable, Dict[str, Any]]], **kwargs
+    df: ps.DataFrame, transformations: dict[str, Callable[[ps.DataFrame], ps.DataFrame]], **kwargs
 ) -> ps.DataFrame:
     logger.info(f"Filtering dataframe with {len(transformations)} transformations")
     if logger.isEnabledFor(logging.INFO):
@@ -36,7 +36,7 @@ def _apply_transformations(
 @inject_object()
 def prefilter_unified_kg_nodes(
     nodes: ps.DataFrame,
-    transformations: List[Tuple[Callable, Dict[str, Any]]],
+    transformations: dict[str, Callable[[ps.DataFrame], ps.DataFrame]],
 ) -> ps.DataFrame:
     return _apply_transformations(nodes, transformations)
 
@@ -45,7 +45,7 @@ def prefilter_unified_kg_nodes(
 def filter_unified_kg_edges(
     nodes: ps.DataFrame,
     edges: ps.DataFrame,
-    transformations: List[Tuple[Callable, Dict[str, Any]]],
+    transformations: dict[str, Callable[[ps.DataFrame], ps.DataFrame]],
 ) -> ps.DataFrame:
     """Function to filter the knowledge graph edges.
 
