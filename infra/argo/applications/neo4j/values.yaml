@@ -1,0 +1,190 @@
+neo4j: # the name of the helm dependency
+  # see https://github.com/neo4j/helm-charts/issues/313
+  # and https://github.com/neo4j/helm-charts/blob/f19b4f9f18e99442bfdd50a2e67a779d7b56ff3d/neo4j/values.yaml#L11
+  disableLookups: true
+  neo4j: # config level
+    edition: "enterprise"
+    passwordFromSecret: neo4j-password
+    acceptLicenseAgreement: "yes"
+    name: neo4j
+    resources:
+      requests:
+        cpu: "0.5"
+        memory: "16Gi"
+      limits:
+        cpu: "16"
+        memory: "16Gi"
+  # configuration for neo4j services
+  # FUTURE do not expose as IP
+  services:
+    neo4j:
+      enabled: true
+      annotations:
+        external-dns.alpha.kubernetes.io/hostname: "neo4j.dev.everycure.org"
+        external-dns.alpha.kubernetes.io/ttl: "300"
+      spec:
+        type: LoadBalancer
+      ports:
+        # exposing via standard http port
+        http:
+          enabled: true
+          port: 80
+          targetPort: 7474
+          name: http
+        # exposing via standard https port
+        https:
+          enabled: true
+          port: 443
+          targetPort: 7473
+          name: https
+        bolt:
+          enabled: true
+          port: 7687
+          targetPort: 7687
+          name: bolt
+  # enables prometheus service monitor
+  serviceMonitor:
+    enabled: false
+  # configuration of ssl certificates for neo4j
+  ssl:
+    bolt:
+      privateKey:
+        secretName: neo4j-tls
+        subPath: tls.key
+      publicCertificate:
+        secretName: neo4j-tls
+        subPath: tls.crt
+    https:
+      privateKey:
+        secretName: neo4j-tls
+        subPath: tls.key
+      publicCertificate:
+        secretName: neo4j-tls
+        subPath: tls.crt
+    cluster:
+      privateKey:
+        secretName: neo4j-tls
+        subPath: tls.key
+      publicCertificate:
+        secretName: neo4j-tls
+        subPath: tls.crt
+  # configuration of volumes for neo4j
+  volumes:
+    data:
+      mode: "dynamic"
+      dynamic:
+        # In GKE;
+        # * premium-rwo provisions SSD disks (recommended)
+        # * standard-rwo provisions balanced SSD-backed disks
+        # * standard provisions HDD disks
+        storageClassName: premium-rwo
+        # storageClassName: hyperdisk-balanced
+        # https://neo4j.com/docs/operations-manual/current/kubernetes/persistent-volumes/#persistent-volumes-types
+        requests:
+          storage: 1500Gi
+    licenses:
+      mode: volume
+      disableSubPathExpr: true
+      volume:
+        secret:
+          secretName: neo4j-licenses
+          items:
+            - key: bloom.license
+              path: bloom.license
+  # FUTURE add env variables here to enable plugins for neo4j
+  # https://neo4j.com/docs/operations-manual/current/kubernetes/plugins/
+  env:
+    NEO4J_PLUGINS: '["apoc", "graph-data-science", "apoc-extended", "bloom"]'
+  config:
+    # NOTE: This block supports all the configuration options from the config file
+    # https://neo4j.com/docs/operations-manual/current/kubernetes/configuration/#_config
+    # https://neo4j.com/docs/operations-manual/current/configuration/configuration-settings/
+    dbms.security.procedures.unrestricted: "gds.*, apoc.*, bloom.*"
+    dbms.security.procedures.allowlist: "apoc.*, bloom.*"
+    dbms.security.procedures.whitelist: "gds.*, apoc.*"
+    dbms.security.allow_csv_import_from_file_urls: "true"
+    # server.directories.import: /var/lib/neo4j/import
+    server.default_advertised_address: dummy
+    server.bolt.advertised_address: dummy
+
+    # Enable SSL/TLS
+    # https://neo4j.com/developer/kb/how-do-i-enable-remote-https-access-with-neo4j-30x/
+    # dbms.connector.https.address: 0.0.0.0:7473
+    # dbms.ssl.policy.bolt.enabled: "true"
+    # dbms.ssl.policy.https.enabled: "true"
+    
+    # Configure client certificate authentication (optional)
+    # dbms.ssl.policy.bolt.client_auth: "NONE"
+    # dbms.ssl.policy.https.client_auth: "NONE"
+    dbms.ssl.policy.client_auth: "NONE"
+    
+    # Base directory for SSL/TLS certificates
+    # dbms.ssl.policy.bolt.base_directory: "/ssl/bolt"
+    # dbms.ssl.policy.https.base_directory: "/ssl/https"
+
+    server.unmanaged_extension_classes: "com.neo4j.bloom.server=/bloom,semantics.extension=/rdf"
+    dbms.security.http_auth_allowlist: "/,/browser.*,/bloom.*"
+    dbms.bloom.license_file: "/licenses/bloom.license"
+
+  apoc_config:
+    apoc.import.file.enabled: "true"
+    apoc.export.file.enabled: "true"
+    apoc.import.file.use_neo4j_config: "true"
+
+  logging:
+    serverLogsXml: |-
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!-- Example JSON logging configuration -->
+      <Configuration status="ERROR" monitorInterval="30" packages="org.neo4j.logging.log4j">
+          <Appenders>
+              <!-- Default debug.log, please keep -->
+              <RollingRandomAccessFile name="DebugLog" fileName="${config:server.directories.logs}/debug.log"
+                                       filePattern="$${config:server.directories.logs}/debug.log.%02i">
+                  <JsonTemplateLayout eventTemplateUri="classpath:org/neo4j/logging/StructuredLayoutWithMessage.json"/>
+                  <Policies>
+                      <SizeBasedTriggeringPolicy size="20 MB"/>
+                  </Policies>
+                  <DefaultRolloverStrategy fileIndex="min" max="7"/>
+              </RollingRandomAccessFile>
+
+              <RollingRandomAccessFile name="HttpLog" fileName="${config:server.directories.logs}/http.log"
+                                       filePattern="$${config:server.directories.logs}/http.log.%02i">
+                  <JsonTemplateLayout eventTemplateUri="classpath:org/neo4j/logging/StructuredLayoutWithMessage.json"/>
+                  <Policies>
+                      <SizeBasedTriggeringPolicy size="20 MB"/>
+                  </Policies>
+                  <DefaultRolloverStrategy fileIndex="min" max="5"/>
+              </RollingRandomAccessFile>
+
+              <RollingRandomAccessFile name="SecurityLog" fileName="${config:server.directories.logs}/security.log"
+                                       filePattern="$${config:server.directories.logs}/security.log.%02i">
+                  <JsonTemplateLayout eventTemplateUri="classpath:org/neo4j/logging/StructuredLayoutWithMessage.json"/>
+                  <Policies>
+                      <SizeBasedTriggeringPolicy size="20 MB"/>
+                  </Policies>
+                  <DefaultRolloverStrategy fileIndex="min" max="7"/>
+              </RollingRandomAccessFile>
+          </Appenders>
+
+          <Loggers>
+              <!-- Log levels. One of DEBUG, INFO, WARN, ERROR or OFF -->
+
+              <!-- The debug log is used as the root logger to catch everything -->
+              <Root level="INFO">
+                  <AppenderRef ref="DebugLog"/> <!-- Keep this -->
+              </Root>
+              <!-- The http request log, must be named "HttpLogger" -->
+              <Logger name="HttpLogger" level="INFO" additivity="false">
+                  <AppenderRef ref="HttpLog"/>
+              </Logger>
+              <!-- The security log, must be named "SecurityLogger" -->
+              <Logger name="SecurityLogger" level="INFO" additivity="false">
+                  <AppenderRef ref="SecurityLog"/>
+              </Logger>
+              <!-- The query log, must be named "QueryLogger" -->
+              <Logger name="QueryLogger" level="OFF" additivity="false">
+                  <AppenderRef ref="QueryLog"/>
+              </Logger>
+          </Loggers>
+      </Configuration>
+ 
