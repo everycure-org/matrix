@@ -7,6 +7,7 @@ locals {
     "serviceAccount:vertex-ai-workbench-sa@mtrx-wg1-data-dev-nb5.iam.gserviceaccount.com",
     "serviceAccount:vertex-ai-workbench-sa@mtrx-wg2-modeling-dev-9yj.iam.gserviceaccount.com"
   ]
+  github_actions_rw = ["serviceAccount:sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com"]
 }
 
 module "project_iam_bindings" {
@@ -36,7 +37,7 @@ module "project_iam_bindings" {
     "roles/bigquery.dataViewer"            = flatten([local.matrix_viewers_group, local.cross_account_sas])
     "roles/bigquery.studioUser"            = flatten([local.matrix_viewers_group, local.cross_account_sas])
     "roles/bigquery.user"                  = flatten([local.matrix_viewers_group, local.cross_account_sas])
-    "roles/iap.httpsResourceAccessor"      = local.matrix_viewers_group
+    "roles/iap.httpsResourceAccessor"      = flatten([local.matrix_viewers_group, local.github_actions_rw])
 
     "roles/compute.networkUser" = [local.matrix_all_group]
   }
