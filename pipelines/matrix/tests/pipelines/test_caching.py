@@ -9,7 +9,7 @@ from kedro.framework.session import KedroSession
 from kedro.io import DataCatalog, MemoryDataset
 from kedro.runner import SequentialRunner
 from kedro_datasets.pandas import ParquetDataset
-from matrix.datasets.gcp import LazySparkDataset, PartitionedAsyncParallelDataset, SparkWithSchemaDataset
+from matrix.datasets.gcp import LazySparkDataset, PartitionedAsyncParallelDataset
 from matrix.pipelines.batch.pipeline import (
     cache_miss_resolver_wrapper,
     derive_cache_misses,
@@ -252,14 +252,13 @@ def test_cached_api_enrichment_pipeline(
             "batch.embeddings.cache_misses": LazySparkDataset(
                 filepath=str(tmp_path / "cache_misses"), save_args={"mode": "overwrite"}
             ),
-            "batch.embeddings.20.cache.write": PartitionedAsyncParallelDataset(
+            f"batch.embeddings.20.cache.write": PartitionedAsyncParallelDataset(
                 path=cache_path,
                 dataset=ParquetDataset,
                 filename_suffix=".parquet",
             ),
-            "batch.embeddings.cache.reload": SparkWithSchemaDataset(
+            "batch.embeddings.cache.reload": LazySparkDataset(
                 filepath=cache_path,
-                load_args={"schema": cache_schema},
             ),
             "params:embeddings.node.api": MemoryDataset(sample_api1),
             "params:embeddings.node.primary_key": MemoryDataset(sample_primary_key),
@@ -273,6 +272,8 @@ def test_cached_api_enrichment_pipeline(
         }
     )
     pipeline_run = create_node_embeddings_pipeline()
+
+    # breakpoint()
 
     runner = SequentialRunner()
     # ...when running the Kedro pipeline a first time...

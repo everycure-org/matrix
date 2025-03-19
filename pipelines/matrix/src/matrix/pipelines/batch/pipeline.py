@@ -92,7 +92,8 @@ def cached_api_enrichment_pipeline(
             the cache miss resolver.
 
         cache_schema: A parameters entry referencing a PyArrow schema that is
-            associated with the cache for this particular cached-lookup.
+            associated with the cache for this particular cached-lookup. Used for
+            serialization purposes.
 
     Returns:
         Kedro Pipeline.
@@ -323,6 +324,7 @@ def _bucketize(df: DataFrame, bucket_size: int, columns: Optional[list[str]] = N
     )
 
 
+# NOTE: This will be deleted in next PR, when we consolidate the node normalizer step
 def create_pipeline(
     source: str,
     df: str,
