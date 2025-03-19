@@ -216,7 +216,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'create-sample-release.yml',
-              ref: 'release/${{ env.release }}',
+              ref: 'main',
               inputs: {
                 release_version: '${{ env.release }}'
               }
@@ -231,7 +231,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'evidence-deploy.yml',
-              ref: 'release/${{ env.release }}',
+              ref: 'main',
               inputs: {
                 "release_version": '${{ env.release }}' 
               }
