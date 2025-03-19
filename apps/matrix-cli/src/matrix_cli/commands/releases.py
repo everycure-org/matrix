@@ -66,12 +66,12 @@ def write_article_template(
     authors = pr_details_df["author"].unique()
     PR_numbers = pr_details_df["number"].tolist()
     labels = pr_details_df["current_labels"].tolist()
-
+    PR_urls = pr_details_df["url"].tolist()
+    PR_titles = pr_details_df["title"].tolist()
     label_to_pr = defaultdict(list)
-    for combined_labels, pr in zip(labels, PR_numbers):
+    for combined_labels, number, title, url in zip(labels, PR_numbers, PR_titles, PR_urls):
         for label in combined_labels.split(","):
-            label_to_pr[label.strip()].append(pr)
-
+            label_to_pr[label.strip()].append({"number": number, "title": title, "url": url})
     template = get_template("release_article.tmpl").render(
         date=date.today().isoformat(), authors=authors, label_to_pr=label_to_pr.items()
     )
