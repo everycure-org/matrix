@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, Iterable, Iterator, List, Optional, Tuple, Union
 
 import pandas as pd
 import pyspark.sql as ps
@@ -175,43 +175,61 @@ def make_predictions_and_sort(
     Returns:
         Pairs dataset with additional column containing the probability scores.
     """
+    # 1. convert the knowledgeGraph into a Spark DataFrame.
+    #    Use `data.sparkSession.createDataFrame` so you immediately have the SparkSession you need (and don't need to call it).
+    # 2. Replace graph.get_embedding with a simple Spark join.
+    logger.info(f"{tuple(graph._embeddings.items())[:3]}")
+    embeddings = data.sparkSession.createDataFrame(
+        graph._embeddings.items(), schema="id string, topological_embedding float"
+    ).cache()
+    data = (
+        data.join(
+            embeddings.withColumnsRenamed({"id": "source", "topological_embedding": "source_embedding"}),
+            on="source",
+            how="left",
+        )
+        .join(
+            embeddings.withColumnsRenamed({"id": "target", "topological_embedding": "target_embedding"}),
+            on="target",
+            how="left",
+        )
+        .cache()
+    )
 
-    data = data.limit(1000)
-
-    @F.pandas_udf(T.ArrayType(T.FloatType()))
-    def get_embedding_udf(column: pd.Series) -> pd.Series:
-        return column.apply(lambda x: graph.get_embedding(x, default=None))
-
-    # Collect embedding vectors
-    data = data.withColumn("source_embedding", get_embedding_udf(F.col("source")))
-    data = data.withColumn("target_embedding", get_embedding_udf(F.col("target")))
     # Retrieve rows with null embeddings
     # NOTE: This only happens in a rare scenario where the node synonymizer
     # provided an identifier for a node that does _not_ exist in our KG.
     # https://github.com/everycure-org/matrix/issues/409
-    removed = data.filter(F.col("source_embedding").isNull() | F.col("target_embedding").isNull())
-
-    if removed.count() > 0:
-        logger.warning(f"Dropped {removed.count()} pairs during generation!")
-        removed_pairs = (
-            removed.select("source", "target").rdd.map(lambda r: f"({r['source']}, {r['target']})").collect()
-        )
-        logger.warning("Dropped: %s", ",".join(removed_pairs))
+    removed = (
+        data.filter(F.col("source_embedding").isNull() | F.col("target_embedding").isNull())
+        .select("source", "target")
+        .cache()
+    )
+    if logger.isEnabledFor(logging.INFO):
+        removed_pairs = removed.take(50)  # Can be extended, but mind OOM.
+        if removed_pairs:
+            logger.warning(f"Dropped {removed.count()} pairs during generation!")
+            logger.warning("Dropped (subset of 50 shown): %s", ", ".join(f"({p[0]}, {p[1]})" for p in removed_pairs))
 
     # Drop rows without source/target embeddings
     data = data.dropna(subset=["source_embedding", "target_embedding"])
 
     # Return empty dataframe if all rows are dropped
-    if data.count() == 0:
+    if data.isEmpty():
         return data.drop("source_embedding", "target_embedding")
 
+    # 3.debug: validate the type of transformers: is the type annotation correct?
+    from pprint import pformat
+
+    logger.warning(pformat(transformers))
+    # 3. TODO: check apply_transformers function
     # Apply transformers to data (assuming this can work with PySpark)
-    transformed = apply_transformers(data, transformers)
+    transformed = apply_transformers(data, transformers.values())
     # Extract features
     data_features = _extract_elements_in_list(transformed.columns, features, True)
 
-    def predict_partition(partition):
-        partition_df = pd.DataFrame([row.asDict() for row in partition])
+    def predict_partition(partition: Iterable[Row]) -> Iterator[Row]:
+        partition_df = pd.DataFrame.from_records(row.asDict() for row in partition)
 
         X = partition_df[data_features]
 
@@ -222,8 +240,8 @@ def make_predictions_and_sort(
         )
 
         result_df = pd.concat([partition_df, predictions_df], axis=1)
-
-        return [Row(**row) for row in result_df.to_dict("records")]
+        for row in result_df.to_dict("records"):
+            yield Row(**row)
 
     transformed = transformed.rdd.mapPartitions(predict_partition).toDF()
     data = data.drop("source_embedding", "target_embedding")
@@ -232,6 +250,13 @@ def make_predictions_and_sort(
         on="__index_level_0__",
         how="inner",
     )
+
+    # 4. Validate the code at least reaches this point without OOM, as the next steps are a bit risky.
+    # Example:
+    data.show()
+    # As an alternative to the below: you could use monotonically_increasing_id,
+    # WITH a mapPartitionsWithIndex, so that for each partition, you extract the
+    # max value (based on the index**32 IIRC), and normalize wrt that value.
     window_spec = Window.orderBy(F.desc(treat_score_col_name))
     # Add rank column
     data = data.withColumn("rank", F.row_number().over(window_spec))
@@ -245,7 +270,7 @@ def make_predictions_and_sort(
 @inject_object()
 def apply_transformers(
     data: ps.DataFrame,
-    transformers: dict[str, dict[str, Union[_BaseImputer, list[str]]]],
+    transformers: Iterable[dict[str, Union[_BaseImputer, list[str]]]],
 ) -> ps.DataFrame:
     """Function to apply fitted transformers to the data.
 
@@ -256,7 +281,7 @@ def apply_transformers(
     Returns:
         Transformed data.
     """
-    for transformer in transformers.values():
+    for transformer in transformers:
         # Extract features for transformation
         features = transformer["features"]  # Assuming this is a list of column names
         features_selected = data.select(*features).toPandas()
