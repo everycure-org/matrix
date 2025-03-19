@@ -55,7 +55,7 @@ def biolink_deduplicate_edges(r_edges_df: ps.DataFrame) -> ps.DataFrame:
     # Enrich edges with path to predicates in biolink hierarchy
     edges_df = r_edges_df.withColumn(
         "parents", F.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))(F.col("predicate"))
-    )
+    ).cache()
     # Self join to find edges that are redundant
     duplicates = (
         edges_df.alias("A")
