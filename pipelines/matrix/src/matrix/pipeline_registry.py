@@ -2,7 +2,6 @@ from typing import Dict
 
 from kedro.pipeline import Pipeline
 
-from matrix.pipelines.batch.pipeline import create_node_embeddings_pipeline
 from matrix.pipelines.create_sample.pipeline import create_pipeline as create_create_sample_pipeline
 from matrix.pipelines.data_release.pipeline import create_pipeline as create_data_release_pipeline
 from matrix.pipelines.embeddings.pipeline import create_pipeline as create_embeddings_pipeline
@@ -37,7 +36,6 @@ def register_pipelines() -> Dict[str, Pipeline]:
         "matrix_generation": create_matrix_pipeline(),
         "evaluation": create_evaluation_pipeline(),
         "create_sample": create_create_sample_pipeline(),
-        "caching": create_node_embeddings_pipeline(),
         "ingest_to_N4J": create_ingest_to_N4J_pipeline(),
         # "inference": create_inference_pipeline(),  # Run manually based on medical input
     }

@@ -23,25 +23,6 @@ V = TypeVar("V")
 logger = logging.getLogger(__name__)
 
 
-def create_node_embeddings_pipeline() -> Pipeline:
-    source = "embeddings"
-    workers = 20
-    return cached_api_enrichment_pipeline(
-        source=source,
-        cache=f"batch.{source}.cache.read",
-        cache_out=f"batch.{source}.{workers}.cache.write",
-        input="filtering.prm.filtered_nodes",
-        output="embeddings.feat.graph.node_embeddings@spark",
-        preprocessor="params:embeddings.node.caching.preprocessor",
-        cache_miss_resolver="params:embeddings.node.caching.resolver",
-        api="params:embeddings.node.caching.api",
-        new_col="params:embeddings.node.caching.target_col",
-        primary_key="params:embeddings.node.caching.primary_key",
-        batch_size="params:embeddings.node.caching.batch_size",
-        cache_schema="params:embeddings.node.caching.cache_schema",
-    )
-
-
 def cached_api_enrichment_pipeline(
     source: str,
     input: str,

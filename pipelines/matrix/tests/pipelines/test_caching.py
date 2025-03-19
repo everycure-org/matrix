@@ -12,13 +12,13 @@ from kedro_datasets.pandas import ParquetDataset
 from matrix.datasets.gcp import LazySparkDataset, PartitionedAsyncParallelDataset, SparkWithSchemaDataset
 from matrix.pipelines.batch.pipeline import (
     cache_miss_resolver_wrapper,
-    create_node_embeddings_pipeline,
     derive_cache_misses,
     limit_cache_to_results_from_api,
     lookup_from_cache,
     resolve_cache_duplicates,
 )
 from matrix.pipelines.embeddings.nodes import pass_through
+from matrix.pipelines.embeddings.pipeline import create_node_embeddings_pipeline
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import ArrayType, FloatType, StringType, StructField, StructType
 from pyspark.testing import assertDataFrameEqual

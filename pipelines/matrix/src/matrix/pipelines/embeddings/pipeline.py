@@ -1,16 +1,15 @@
 from kedro.pipeline import Pipeline, pipeline
 
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
-from matrix.pipelines.batch import pipeline as batch_pipeline
-
-from . import nodes
+from matrix.pipelines.batch.pipeline import cached_api_enrichment_pipeline
+from matrix.pipelines.embeddings import nodes
 
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create embeddings pipeline."""
     return pipeline(
         [
-            *batch_pipeline.create_node_embeddings_pipeline().nodes,
+            *create_node_embeddings_pipeline().nodes,
             # Reduce dimension
             ArgoNode(
                 func=nodes.reduce_embeddings_dimension,
@@ -161,4 +160,23 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
             ),
         ],
+    )
+
+
+def create_node_embeddings_pipeline() -> Pipeline:
+    source = "embeddings"
+    workers = 20
+    return cached_api_enrichment_pipeline(
+        source=source,
+        cache=f"batch.{source}.cache.read",
+        cache_out=f"batch.{source}.{workers}.cache.write",
+        input="filtering.prm.filtered_nodes",
+        output="embeddings.feat.graph.node_embeddings@spark",
+        preprocessor="params:embeddings.node.caching.preprocessor",
+        cache_miss_resolver="params:embeddings.node.caching.resolver",
+        api="params:embeddings.node.caching.api",
+        new_col="params:embeddings.node.caching.target_col",
+        primary_key="params:embeddings.node.caching.primary_key",
+        batch_size="params:embeddings.node.caching.batch_size",
+        cache_schema="params:embeddings.node.caching.cache_schema",
     )
