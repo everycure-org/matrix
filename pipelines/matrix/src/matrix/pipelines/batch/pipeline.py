@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 def cached_api_enrichment_pipeline(
     source: str,
+    workers: str | int,
     input: str,
     primary_key: str,
     cache_miss_resolver: str,  # Ref to [AttributeEncoder|Normalizer]
@@ -33,9 +34,7 @@ def cached_api_enrichment_pipeline(
     output: str,
     new_col: str,
     batch_size: str,
-    cache: str,
     cache_schema: str,
-    cache_out: str,
 ) -> Pipeline:
     """Define a Kedro Pipeline to enrich a Spark Dataframe using optionally cached API calls.
 
@@ -52,6 +51,15 @@ def cached_api_enrichment_pipeline(
          faster, and thus saves the organization money).
 
     Args:
+        source: Any name that captures the context of the task, e.g. "embeddings".
+            Note that this will be used to signal which cache to use, so if e.g.
+            two embeddings steps require cached lookups but each lookup has a
+            different return type from the resolver, then you should use two
+            different source names.
+
+        workers: The number of asynchronous tasks you want to use to split up
+            the work given to the resolver.
+
         input: Kedro reference to a Spark DataFrame where you want to add a column
             `new_col` to.
 
@@ -83,22 +91,14 @@ def cached_api_enrichment_pipeline(
             argument is a determining factor of the size of the files produced by running
             the cache miss resolver.
 
-        cache: Kedro reference to the Spark DataFrame that maps keys to values. The
-            keys will be compared to the `primary_key` column of the DataFrame
-            resulting from calling the `preprocessor` on the `input`. Aside from the
-            key and value column, it also has a third column, named api, linking the
-            keys to the API used at the time of the lookup.
-
-        cache_out: A Catalog entry that points to the same location as `cache`,
-            but uses PartitionedAsyncParallelDatasets to append batches
-            of resolved misses to the already existing cache.
-
         cache_schema: A parameters entry referencing a PyArrow schema that is
             associated with the cache for this particular cached-lookup.
 
     Returns:
         Kedro Pipeline.
     """
+    cache = (f"batch.{source}.cache.read",)
+    cache_out = (f"batch.{source}.{workers}.cache.write",)
     cache_misses = f"batch.{source}.cache.misses"
     cache_reload = f"batch.{source}.cache.reload"
 
