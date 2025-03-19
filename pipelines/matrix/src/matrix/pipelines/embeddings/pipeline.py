@@ -1,7 +1,6 @@
 from kedro.pipeline import Pipeline, pipeline
 
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
-from matrix.pipelines.batch.pipeline import cached_api_enrichment_pipeline
 from matrix.pipelines.embeddings import nodes
 
 
@@ -164,6 +163,8 @@ def create_pipeline(**kwargs) -> Pipeline:
 
 
 def create_node_embeddings_pipeline() -> Pipeline:
+    from matrix.pipelines.batch.pipeline import cached_api_enrichment_pipeline  # resolve circular import
+
     source = "embeddings"
     workers = 20
     return cached_api_enrichment_pipeline(
