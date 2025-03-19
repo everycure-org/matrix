@@ -14,9 +14,9 @@ mlflow:
       type: ClusterIP
     auth:
       enabled: false
-    persistence:
-      annotations:
-        argocd.argoproj.io/sync-options: Delete=false
+#    persistence:
+#      annotations:
+#        argocd.argoproj.io/sync-options: Delete=false
     # FUTURE: Setup GCS when supported
     # https://github.com/bitnami/charts/pull/28938
 
