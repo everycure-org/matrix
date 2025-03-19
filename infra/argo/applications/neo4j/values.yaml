@@ -20,7 +20,7 @@ neo4j: # the name of the helm dependency
     neo4j:
       enabled: true
       annotations:
-        external-dns.alpha.kubernetes.io/hostname: "neo4j.dev.everycure.org"
+        external-dns.alpha.kubernetes.io/hostname: dummy
         external-dns.alpha.kubernetes.io/ttl: "300"
       spec:
         type: LoadBalancer
