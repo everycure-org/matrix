@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 from typing import Optional, Sequence, TypeAlias, TypeVar
 
 import numpy as np
-import pandas as pd
 import torch
 from langchain_openai import OpenAIEmbeddings
 from tenacity import retry, stop_after_attempt, wait_exponential
