@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from typing import List
@@ -8,7 +9,7 @@ from kedro.framework.cli.utils import split_string
 
 from matrix.cli_commands.submit import submit
 from matrix.git_utils import get_current_git_branch
-from matrix.utils.authentication import get_iap_token
+from matrix.utils.authentication import get_service_account_creds, get_user_account_creds
 from matrix.utils.mlflow_utils import (
     DeletedExperimentExistsWithName,
     ExperimentNotFound,
@@ -21,16 +22,42 @@ from matrix.utils.mlflow_utils import (
 EXPERIMENT_BRANCH_PREFIX = "experiment/"
 
 
-@click.group()
-def experiment():
+def configure_mlflow_tracking(token: str):
+    mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")
+    os.environ["MLFLOW_TRACKING_TOKEN"] = token
+
+
+def get_service_account_token() -> str:
     try:
-        token = get_iap_token()
-        mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")
-        os.environ["MLFLOW_TRACKING_TOKEN"] = token.id_token
+        sa_credential_info = json.loads(os.getenv("GCP_SA_KEY"))
+        return get_service_account_creds(sa_credential_info).token
+    except json.JSONDecodeError as e:
+        click.secho(
+            "Error decoding service account key. Please check the format and presence of the GCP_SA_KEY secret",
+            fg="yellow",
+            bold=True,
+        )
+        raise
+
+
+def get_user_account_token() -> str:
+    try:
+        return get_user_account_creds().id_token
     except FileNotFoundError as e:
         click.secho("Error getting IAP token. Please run `make fetch_secrets` first", fg="yellow", bold=True)
-        raise click.Abort()
-    pass
+        raise
+
+
+@click.group()
+def experiment():
+    if os.getenv("GITHUB_ACTIONS"):
+        # Running in GitHub Actions, get the IAP token of service acccount from the secrets
+        click.echo("Running in GitHub Actions, using service account IAP token")
+        token = get_service_account_token()
+    else:
+        # Running locally, get the IAP token of user account
+        token = get_user_account_token()
+    configure_mlflow_tracking(token)
 
 
 @experiment.command()
@@ -110,7 +137,9 @@ def run(
     if not experiment_name:
         current_branch = get_current_git_branch()
         sanitized_branch_name = re.sub(r"[^a-zA-Z0-9-]", "-", current_branch)
-        if click.confirm(f"Would you like to use the current branch '{sanitized_branch_name}' as the experiment name?"):
+        if headless or click.confirm(
+            f"Would you like to use the current branch '{sanitized_branch_name}' as the experiment name?"
+        ):
             experiment_name = sanitized_branch_name
         else:
             experiment_name = click.prompt("Please enter a name for your experiment", type=str)
@@ -118,15 +147,18 @@ def run(
     try:
         experiment_id = get_experiment_id_from_name(experiment_name=experiment_name)
     except ExperimentNotFound:
-        click.confirm(
-            f"Experiment '{experiment_name}' not found, would you like to create a new experiment?", abort=True
-        )
+        if not headless:
+            click.confirm(
+                f"Experiment '{experiment_name}' not found, would you like to create a new experiment?", abort=True
+            )
         experiment_id = ctx.invoke(create, experiment_name=experiment_name)
 
     if not run_name:
         run_name = click.prompt("Please define a name for your run")
 
-    click.confirm(f"Start a new run '{run_name}' on experiment '{experiment_name}', is that correct?", abort=True)
+    if not headless:
+        click.confirm(f"Start a new run '{run_name}' on experiment '{experiment_name}', is that correct?", abort=True)
+
     if not dry_run:
         run = mlflow.start_run(run_name=run_name, experiment_id=experiment_id)
         mlflow.set_tag("created_by", username)
