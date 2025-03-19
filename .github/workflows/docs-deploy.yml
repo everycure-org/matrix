@@ -89,7 +89,15 @@ jobs:
           project_id: ${{env.project_id}}
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
-      
+          
+      # To prevent hitting the limit of 210 versions on Google App Engine
+      - name: Limit the Number of Versions on Google App Engine
+        if: github.ref == 'refs/heads/main'
+        env:
+          MKDOCS_GIT_COMMITTERS_APIKEY: ${{ secrets.GITHUB_TOKEN }}
+        run: 
+          make clean_versions
+
       # https://github.com/google-github-actions/deploy-appengine
       - id: 'deploy'
         if: github.ref == 'refs/heads/main'
