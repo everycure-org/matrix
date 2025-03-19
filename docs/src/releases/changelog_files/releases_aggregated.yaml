@@ -23,6 +23,18 @@
   Code Link: '[Link](https://github.com/everycure-org/matrix/tree/v0.4.1)'
   Neo4j Link: '[Link](coming soon!)'
   NodeNorm Endpoint Link: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
+- Release Name: v0.4.0
+  Datasets: "\u2023 rtx_kg2: `v2.7.3`<br/>\u2023 robokop: `c5ec1f282158182f`<br/>\u2023\
+    \ spoke: `not included`<br/>\u2023 ec_medical_team: `20241031`<br/>\u2023 ec_clinical_trials:\
+    \ `not included`<br/>\u2023 drug_list: `not included`<br/>\u2023 disease_list:\
+    \ `not included`<br/>\u2023 gt: `not included`<br/>\u2023 drugmech: `not included`"
+  Topological Estimator: '`matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec`'
+  Embeddings Encoder: '`text-embedding-3-small`'
+  BigQuery Link: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_4_0)'
+  MLFlow Link: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/18678/runs/60f16dbd0c6a4c43935510ce8112a338)'
+  Code Link: '[Link](https://github.com/everycure-org/matrix/tree/v0.4.0)'
+  Neo4j Link: '[Link](coming soon!)'
+  NodeNorm Endpoint Link: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
 - Release Name: v0.3.6
   Datasets: "\u2023 rtx_kg2: `not included`<br/>\u2023 robokop: `c5ec1f282158182f`<br/>\u2023\
     \ spoke: `not included`<br/>\u2023 ec_medical_team: `20241031`<br/>\u2023 drugmech:\
