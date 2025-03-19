@@ -4,7 +4,6 @@ generate hub_variables {
   if_exists = "overwrite_terragrunt"
   contents  = <<EOF
 variable "network_name" {}
-variable "docker_registry" {}
 variable "repo_revision" {}
 variable "k8s_subnetwork" {}
 variable "k8s_pod_ip_range" {}

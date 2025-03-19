@@ -7,7 +7,6 @@ locals {
   k8s_subnetwork      = "sn-hub-prod-us"
   network_name        = "matrix-hub-prod-nw"
   repo_revision       = "infra-prod-debug"
-  docker_registry     = "us-central1-docker.pkg.prod/mtrx-hub-prod-3of"
 
 }
 
