@@ -60,6 +60,7 @@ batch.{source}.{workers}.cache.write:
   timeout: 600  # if the batch size increases, you'll likely need to increase this too, as most APIs simply take longer to process larger batches.
   filename_suffix: ".parquet"
   max_workers: "{workers}"  # Affects the number of concurrent threads, so more = faster. But more also implies more memory needed, as more transformed batches are returned, prior to writing.
+
 batch.{source}.cache.reload:  # an easy way to force Kedro to reload a dataset that has been altered in a previous node, but which is not using the same reference (e.g. due to transcription)
   <<: *cache_in
 
