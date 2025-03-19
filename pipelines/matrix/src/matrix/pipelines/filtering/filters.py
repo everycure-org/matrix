@@ -72,12 +72,10 @@ def biolink_deduplicate_edges(r_edges_df: ps.DataFrame) -> ps.DataFrame:
         .select("A.*")
         .select("subject", "object", "predicate")
         .distinct()
-        .withColumn("is_redundant", f.lit(True))
     )
     return (
         edges_df.alias("edges")
-        .join(duplicates, on=["subject", "object", "predicate"], how="left")
-        .filter(F.col("is_redundant").isNull())
+        .join(duplicates, on=["subject", "object", "predicate"], how="left_anti")
         .select("edges.*")
     )
 
