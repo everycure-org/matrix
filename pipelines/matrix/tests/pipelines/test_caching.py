@@ -253,7 +253,7 @@ def test_cached_api_enrichment_pipeline(
             "batch.embeddings.cache_misses": LazySparkDataset(
                 filepath=str(tmp_path / "cache_misses"), save_args={"mode": "overwrite"}
             ),
-            f"batch.embeddings.20.cache.write": PartitionedAsyncParallelDataset(
+            "batch.embeddings.20.cache.write": PartitionedAsyncParallelDataset(
                 path=cache_path,
                 dataset=ParquetDataset,
                 filename_suffix=".parquet",
@@ -273,8 +273,6 @@ def test_cached_api_enrichment_pipeline(
         }
     )
     pipeline_run = create_node_embeddings_pipeline()
-
-    # breakpoint()
 
     runner = SequentialRunner()
     # ...when running the Kedro pipeline a first time...
