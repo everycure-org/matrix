@@ -40,8 +40,8 @@ loggers:
   matrix:
     level: INFO
   matrix.pipelines.batch.pipeline:
-    level: INFO
-  matrix.pipelines.batch.pipeline:
     level: WARNING
+  matrix.hooks:
+    level: INFO
   matrix.pipelines.integration.pipeline:
     level: INFO

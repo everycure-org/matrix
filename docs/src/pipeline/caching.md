@@ -1,6 +1,6 @@
 # Caching Approaches for API Based Enrichments
 
-![Embeddings Caching](../assets/img/embeddings_caching.svg)
+![Embeddings Caching](../assets/img/embeddings_caching.excalidraw.svg)
 
 This document describes the current approach to optimizing data enrichment
 using external APIs.
@@ -29,11 +29,7 @@ datasets with millions of rows.
 ## Solution
 
 Since most API calls are idempotent, simply caching the results would result in
-a substantial reduction in computation time, thus saving costs. It would also
-contribute towards a goal of being able to run the end-to-end pipeline at a
-higher frequency, thereby supporting a main branch that is at most times
-guaranteed to provide a knowledge graph and/or a drug-disease matrix, without
-impromptu fixes.
+a substantial reduction in computation time, thus saving costs.
 
 ### Current implementation
 
@@ -62,6 +58,12 @@ The caching strategy consists of 3 steps:
    - A final join operation retrieves embeddings from the updated cache.
 
 ### Advantages
+
+#### Faster pipeline execution
+
+Caching network calls is a way to reduce computation time. Thus, it
+contributes towards a goal of being able to run the end-to-end pipeline at a
+higher frequency.
 
 #### Optimized resource usage
 
