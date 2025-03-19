@@ -245,7 +245,6 @@ def test_prefilter_excludes_non_drug_disease_nodes(
     base_test_data: ps.DataFrame, ground_truth_data: ps.DataFrame
 ) -> None:
     result = prefilter_nodes(
-        full_nodes=base_test_data,
         nodes=base_test_data,
         gt=ground_truth_data,
         drug_types=["drug_type1", "drug_type2"],
@@ -261,7 +260,6 @@ def test_prefilter_correctly_identifies_drug_nodes(
     base_test_data: ps.DataFrame, ground_truth_data: ps.DataFrame
 ) -> None:
     result = prefilter_nodes(
-        full_nodes=base_test_data,
         nodes=base_test_data,
         gt=ground_truth_data,
         drug_types=["drug_type1", "drug_type2"],
@@ -284,7 +282,6 @@ def test_prefilter_correctly_identifies_disease_nodes(
     base_test_data: ps.DataFrame, ground_truth_data: ps.DataFrame
 ) -> None:
     result = prefilter_nodes(
-        full_nodes=base_test_data,
         nodes=base_test_data,
         gt=ground_truth_data,
         drug_types=["drug_type1", "drug_type2"],
@@ -302,7 +299,6 @@ def test_prefilter_correctly_identifies_ground_truth_positives(
     base_test_data: ps.DataFrame, ground_truth_data: ps.DataFrame
 ) -> None:
     result = prefilter_nodes(
-        full_nodes=base_test_data,
         nodes=base_test_data,
         gt=ground_truth_data,
         drug_types=["drug_type1", "drug_type2"],
