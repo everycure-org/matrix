@@ -86,7 +86,7 @@ integration and modeling pipelines.
 
 <!-- TODO check the link after merging -->
 1. Create a pull request to [this
-   file](https://github.com/everycure-org/matrix/edit/infra/infra/deployments/wg2/workbenches.tf),
+   file](https://github.com/everycure-org/matrix/blob/infra/infra/deployments/wg2/workbenches.yaml),
    adding your name and email to the list of users for which we create a workbench. Please
    create the PR _to the infra branch_ and not main.
 2. After the PR was merged, navigate to [this
