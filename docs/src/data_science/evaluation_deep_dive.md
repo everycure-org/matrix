@@ -32,6 +32,8 @@ The following table summarises the evaluation metrics that comprise the current 
 | Recall@n, AUROC | Hit@k, MRR | Accuracy, F1 score |
 | Computed using the full matrix | Computed using diseases in the known positive test set  | Computed using the set of known positive and negative pairs |
 
+Additionally, our evaluation pipeline now also includes model stability metrics which compare the stability of output between models trained ondifferent k-folds of the data (as these are now a part of our pipeline by default). These metrics address issues such as: how stable is the output between different runss/folds.
+
 ## Time-split validation and recent clinical trials data
 
 Time-split validation is a technique where we divide our dataset based on a temporal cutoff, using older data for training and newer data for testing, to simulate real-world scenarios and assess our model's ability to predict future drug-disease associations.
@@ -140,6 +142,51 @@ Accuracy is the proportion of pairs in the dataset that are correctly classified
 #### F1 Score
 
 The F1 score is designed to take into account class imbalances and is defined as the harmonic mean of precision and recall (see [Wikipedia: F1 score](https://en.wikipedia.org/wiki/F1_score)). 
+
+### Stability metrics
+
+These metrics differ from the above as there is no specific 'ground truth' to compare against. Instead, we compare the output of the model between different folds (in the future, we might extract the stability evaluation suite into a separate pipeline, giving us ability to compare stability between different runs).
+
+All of these metrics are computed at a given rank $k$. 
+
+#### Commonality at k 
+
+Commonality at k essentially tells us about overlap of pairs in the top $k$ of two lists. Consider two ranked lists of drugs where $S_k$ is the number of common drug-disease pairs in the top $k$ of both lists. The minimum value of $S_k$ can be 0 while the maximum is 1.
+
+$$
+\text{S}_{k} = \frac{S}{k}
+$$
+
+We calculate commonality at k at several different k values however in the future we might expand it to a more continuous range of k values. 
+
+$$
+\text{S} = \frac{1}{k_{max}}\sum_{k=1}^{k_{max}}\frac{{S}_{k}}{k} 
+$$
+
+#### Spearman's rank at k
+
+[Spearman's rank correlation coefficient](https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient) is a measure of rank correlation, assessing statistical similarity between the rankings of two lists. It can range from -1 (inverse correlation) to +1 (direct correlation). 
+
+Note that to calculate Spearman's rank at k, we first need to only extract pairs which are overlapping between the two lists and only those are used for spearman's rank calculation. To complement the correlation score itself, we also compute the p-value for the null hypothesis that the two lists are uncorrelated.
+
+#### Hypergeometric test at k
+
+The [hypergeometric test](https://en.wikipedia.org/wiki/Hypergeometric_distribution#Hypergeometric_test) uses the hypergeometric distribution to determine if drug-disease ranking is occurring by chance. It calculates the probability of observing the exact order of drug-disease pairs purely by chance given the k. This test assesses the over-representation of success in the sample, with p-value as a result which indicates if the observed overlap is likely due to chance.
+
+Just like in case of Spearman's rank at k, we first need to only extract pairs which are overlapping between the two lists and only those are used for hypergeometric test calculation. 
+
+#### Rank-commonality at k 
+
+Rank-commonality at k is a custom stability metric we implemented which takes into account both commonality at k and Spearman's rank at k by calculating their geometric mean. 
+
+Consider the following equation:
+
+$$
+\text{RC}_{k} = \frac{C_{k} \times S_{k}}{C_{k} + |S_{k}|}
+$$
+
+where $C_{k}$ is the commonality at k and $S_{k}$ is the absolute value of Spearman's rank at k (for details on these, see sections below). Note that Rank-Commonality at K metric should be only interpreted together with p-value associated with Spearman's rank at K. 
+
 
 ## Kedro Implementation 
 
