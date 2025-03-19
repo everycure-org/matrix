@@ -31,8 +31,25 @@ respective experiments and a scheduled daily run of the entire pipeline using a 
 
 ## Pipeline Submission
 
+We updated the pipeline submission process to group experiment runs under their respective experiments. This should make it easier to track the evolution of the pipeline over time.
+
+
 ## Scheduled Pipeline Runs with sample data
 
+In an effort to increase our feedback velocity, we wanted to run the pipeline more
+regularly to know when integrated pieces may lead to issues. As with any complex system,
+a tradeoff needs to be found between the cost of running the pipeline and the benefits of
+the feedback. We decided to run the pipeline on a _sample_ of the KG to get fast feedback
+on the stability of our pipeline with real data while avoiding the cost of running the
+pipeline on the entirety of the KG. This should lead to ~ 90% lower costs per run while
+still providing a good indicator of the pipeline's stability.
+
+This includes two new workflows:
+
+1. the [creation of the sample data](https://github.com/everycure-org/matrix/blob/main/.github/workflows/create-sample-release.yml) whenever a new release is created.
+2. a [scheduled workflow](https://github.com/everycure-org/matrix/blob/main/.github/workflows/scheduled-sampling-pipeline.yml) that runs the pipeline on the sample data every day at 5am GMT.
+
+For more details, check the [documentation on the sample environment](../../../onboarding/sample_environment.md).
 
 <!-- Notes 
 
