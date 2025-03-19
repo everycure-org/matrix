@@ -168,8 +168,7 @@ def create_node_embeddings_pipeline() -> Pipeline:
     workers = 20
     return cached_api_enrichment_pipeline(
         source=source,
-        cache=f"batch.{source}.cache.read",
-        cache_out=f"batch.{source}.{workers}.cache.write",
+        workers=workers,
         input="filtering.prm.filtered_nodes",
         output="embeddings.feat.graph.node_embeddings@spark",
         preprocessor="params:embeddings.node.preprocessor",
