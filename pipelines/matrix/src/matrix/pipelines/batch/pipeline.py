@@ -74,7 +74,7 @@ def cached_api_enrichment_pipeline(
             `new_col` containing the results from the enrichment with the cache/API.
 
         new_col: Name of the column in which the values associated with the
-        `primary_key` should appear.
+            `primary_key` should appear.
 
         batch_size: The size of a batch that will be sent to the embedder. Keep in
             mind that concurrent requests may be running, which means the API might be
