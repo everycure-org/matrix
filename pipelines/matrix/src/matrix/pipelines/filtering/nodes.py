@@ -52,7 +52,6 @@ def filter_unified_kg_edges(
     We first apply a series for filter transformations, and then deduplicate the edges based on the nodes that we dropped.
     No edge can exist without its nodes.
     """
-
     # filter down edges to only include those that are present in the filtered nodes
     if logger.isEnabledFor(logging.INFO):
         edges_count = edges.count()
@@ -81,10 +80,9 @@ def filter_nodes_without_edges(
     Args:
         nodes: nodes df
         edges: edge df
-    Returns"
+    Returns:
         Final dataframe of nodes with edges
     """
-
     # Construct list of edges
     if logger.isEnabledFor(logging.INFO):
         logger.info("Nodes before filtering: %s", nodes.count())

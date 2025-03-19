@@ -17,9 +17,7 @@ def get_ancestors_for_category_delimited(category: str, mixin: bool = False) -> 
     https://biolink.github.io/biolink-model-toolkit/index.html#bmt.toolkit.Toolkit.get_ancestors
     Args:
         category: Category to get ancestors for
-        formatted: Whether to format element names as curies
         mixin: Whether to include mixins
-        reflexive: Whether to include query element in the list
     Returns:
         List of ancestors in a string format
     """
