@@ -220,7 +220,7 @@ def create_shared_pipeline() -> Pipeline:
             ArgoNode(
                 func=nodes.filter_valid_pairs,
                 inputs=[
-                    "integration.prm.filtered_nodes",
+                    "filtering.prm.filtered_nodes",
                     "integration.int.ground_truth.edges.norm@spark",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
@@ -240,7 +240,6 @@ def create_shared_pipeline() -> Pipeline:
             ArgoNode(
                 func=nodes.prefilter_nodes,
                 inputs=[
-                    "integration.prm.filtered_nodes",
                     "embeddings.feat.nodes",
                     "modelling.raw.known_pairs@spark",
                     "params:modelling.drug_types",
