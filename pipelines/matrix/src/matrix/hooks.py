@@ -442,7 +442,7 @@ class ReleaseInfoHooks:
             "Release Name": ReleaseInfoHooks._globals["versions"]["release"],
             "Datasets": global_datasets,
             "Topological Estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["_object"],
-            "Embeddings Encoder": ReleaseInfoHooks._params["embeddings.node.caching"]["resolver"]["encoder"]["model"],
+            "Embeddings Encoder": ReleaseInfoHooks._params["embeddings.node"]["resolver"]["encoder"]["model"],
             "BigQuery Link": ReleaseInfoHooks.build_bigquery_link(),
             "MLFlow Link": ReleaseInfoHooks.build_mlflow_link(),
             "Code Link": ReleaseInfoHooks.build_code_link(),

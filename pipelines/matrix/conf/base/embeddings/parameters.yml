@@ -89,14 +89,14 @@ embeddings.topological_pca:
     _object: pyspark.ml.feature.PCA
     k: 2
 
-embeddings.node.caching:
+embeddings.node:
   cache_schema:
     _object: matrix.pipelines.batch.schemas.embeddings
   preprocessor:
     _object: matrix.pipelines.embeddings.nodes.embeddings_preprocessor
     key_length: 100
     combine_cols: ["name", "category"]
-    new_col: &pkey mykey
+    new_col: &pkey text_to_embed
   resolver:
     _object: matrix.pipelines.embeddings.encoders.LangChainEncoder
     dimensions: 512

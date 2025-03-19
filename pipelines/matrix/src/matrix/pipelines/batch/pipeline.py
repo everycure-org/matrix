@@ -23,27 +23,9 @@ V = TypeVar("V")
 logger = logging.getLogger(__name__)
 
 
-def create_node_embeddings_pipeline() -> Pipeline:
-    source = "embeddings"
-    workers = 20
-    return cached_api_enrichment_pipeline(
-        source=source,
-        cache=f"batch.{source}.cache.read",
-        cache_out=f"batch.{source}.{workers}.cache.write",
-        input="filtering.prm.filtered_nodes",
-        output="embeddings.feat.graph.node_embeddings@spark",
-        preprocessor="params:embeddings.node.caching.preprocessor",
-        cache_miss_resolver="params:embeddings.node.caching.resolver",
-        api="params:embeddings.node.caching.api",
-        new_col="params:embeddings.node.caching.target_col",
-        primary_key="params:embeddings.node.caching.primary_key",
-        batch_size="params:embeddings.node.caching.batch_size",
-        cache_schema="params:embeddings.node.caching.cache_schema",
-    )
-
-
 def cached_api_enrichment_pipeline(
     source: str,
+    workers: str | int,
     input: str,
     primary_key: str,
     cache_miss_resolver: str,  # Ref to [AttributeEncoder|Normalizer]
@@ -52,9 +34,7 @@ def cached_api_enrichment_pipeline(
     output: str,
     new_col: str,
     batch_size: str,
-    cache: str,
     cache_schema: str,
-    cache_out: str,
 ) -> Pipeline:
     """Define a Kedro Pipeline to enrich a Spark Dataframe using optionally cached API calls.
 
@@ -71,8 +51,14 @@ def cached_api_enrichment_pipeline(
          faster, and thus saves the organization money).
 
     Args:
-        source: Data source name, in node normalization of integration pipeline,
-            there's several data sources, we need to distinguish the node names.
+        source: Any name that captures the context of the task, e.g. "embeddings".
+            Note that this will be used to signal which cache to use, so if e.g.
+            two embeddings steps require cached lookups but each lookup has a
+            different return type from the resolver, then you should use two
+            different source names.
+
+        workers: The number of asynchronous tasks you want to use to split up
+            the work given to the resolver.
 
         input: Kedro reference to a Spark DataFrame where you want to add a column
             `new_col` to.
@@ -96,7 +82,7 @@ def cached_api_enrichment_pipeline(
             `new_col` containing the results from the enrichment with the cache/API.
 
         new_col: Name of the column in which the values associated with the
-        `primary_key` should appear.
+            `primary_key` should appear.
 
         batch_size: The size of a batch that will be sent to the embedder. Keep in
             mind that concurrent requests may be running, which means the API might be
@@ -105,22 +91,15 @@ def cached_api_enrichment_pipeline(
             argument is a determining factor of the size of the files produced by running
             the cache miss resolver.
 
-        cache: Kedro reference to the Spark DataFrame that maps keys to values. The
-            keys will be compared to the `primary_key` column of the DataFrame
-            resulting from calling the `preprocessor` on the `input`. Aside from the
-            key and value column, it also has a third column, named api, linking the
-            keys to the API used at the time of the lookup.
-
-        cache_out: A Catalog entry that points to the same location as `cache`,
-            but uses PartitionedAsyncParallelDatasets to append batches
-            of resolved misses to the already existing cache.
-
         cache_schema: A parameters entry referencing a PyArrow schema that is
-            associated with the cache for this particular cached-lookup.
+            associated with the cache for this particular cached-lookup. Used for
+            serialization purposes.
 
     Returns:
         A Kedro Pipeline that will enrich the input DataFrame.
     """
+    cache = f"batch.{source}.cache.read"
+    cache_out = f"batch.{source}.{workers}.cache.write"
     cache_misses = f"batch.{source}.cache.misses"
     cache_reload = f"batch.{source}.cache.reload"
 
@@ -157,7 +136,7 @@ def cached_api_enrichment_pipeline(
             outputs=cache_out,
             argo_config=ArgoResourceConfig(
                 cpu_request=1,
-                cpu_limit=2,
+                cpu_limit=1,
                 memory_request=64,
                 memory_limit=64,
             ),
@@ -175,7 +154,9 @@ def cached_api_enrichment_pipeline(
                 "lineage_dummy": cache_out,
             },
             outputs=output,
-            argo_config=ArgoResourceConfig(ephemeral_storage_limit=1024, memory_limit=128),
+            argo_config=ArgoResourceConfig(
+                ephemeral_storage_limit=1024, ephemeral_storage_request=1024, memory_request=64, memory_limit=128
+            ),
         ),
     ]
 
@@ -343,6 +324,7 @@ def _bucketize(df: DataFrame, bucket_size: int, columns: Optional[list[str]] = N
     )
 
 
+# TODO: This will be deleted in next PR, when we consolidate the node normalizer step
 def create_pipeline(
     source: str,
     df: str,
