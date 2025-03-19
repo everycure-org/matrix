@@ -522,6 +522,9 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
                         partition_data = await partition_data()  # noqa: PLW2901
                 else:
                     raise RuntimeError("not callable")
+                # Improve the chances of starting the calculation of a new
+                # partition (which is the bottleneck, not the saving), or any
+                # other async task, by using cooperative multitasking -> sleep.
                 await asyncio.sleep(0.01)
 
                 # Save the partition data
