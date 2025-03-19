@@ -309,7 +309,7 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
             is_remove = pd.Series(False, index=matrix.index)
             for col_name in self.removal_columns:
                 is_remove = is_remove | matrix[col_name]
-            in_output = in_output | ~is_remove
+            in_output = in_output & ~is_remove
 
         # Apply boolean condition to matrix and return
         return matrix[in_output]
