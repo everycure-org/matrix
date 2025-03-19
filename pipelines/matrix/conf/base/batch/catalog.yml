@@ -53,9 +53,9 @@ batch.{source}.cache.read: &cache_in
   filepath: ${globals:paths.cache}/{source}
   provide_empty_if_not_present: true
 
-batch.{source}.{workers}.cache.write:
+batch.{source}.{workers}.{api}.cache.write:
   type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
-  path: ${globals:paths.cache}/{source}
+  path: ${globals:paths.cache}/{source}/api={api}
   dataset: kedro_datasets.pandas.ParquetDataset
   timeout: 600  # if the batch size increases, you'll likely need to increase this too, as most APIs simply take longer to process larger batches.
   filename_suffix: ".parquet"

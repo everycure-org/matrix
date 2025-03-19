@@ -166,10 +166,9 @@ def create_node_embeddings_pipeline() -> Pipeline:
     from matrix.pipelines.batch.pipeline import cached_api_enrichment_pipeline  # resolve circular import
 
     source = "embeddings"
-    workers = 20
     return cached_api_enrichment_pipeline(
         source=source,
-        workers=workers,
+        workers="params:embeddings.node.workers",
         input="filtering.prm.filtered_nodes",
         output="embeddings.feat.graph.node_embeddings@spark",
         preprocessor="params:embeddings.node.preprocessor",

@@ -4,15 +4,19 @@ import json
 import logging
 import warnings
 from functools import partial
+from pathlib import Path
 from typing import Any, Callable, Coroutine, Iterable, Iterator, Optional, Sequence, TypeVar
 
 import pandas as pd
 import pyarrow as pa
+from kedro.config import OmegaConfigLoader
 from kedro.pipeline import Pipeline, node, pipeline
+from matrix import settings
 from matrix.inject import inject_object
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from matrix.pipelines.batch.schemas import to_spark_schema
 from matrix.pipelines.embeddings.encoders import AttributeEncoder
+from omegaconf import OmegaConf
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
@@ -21,6 +25,10 @@ T = TypeVar("T")
 V = TypeVar("V")
 
 logger = logging.getLogger(__name__)
+
+
+def strip_param(param: str):
+    return param.replace("params:", "")
 
 
 def cached_api_enrichment_pipeline(
@@ -98,8 +106,16 @@ def cached_api_enrichment_pipeline(
     Returns:
         Kedro Pipeline.
     """
+
+    conf_loader = OmegaConfigLoader(
+        conf_source=Path(__file__).parent.parent.parent.parent.parent / "conf", **settings.CONFIG_LOADER_ARGS
+    )
+    params = OmegaConf.create(conf_loader["parameters"])
+    api_value = OmegaConf.select(params, strip_param(api))
+    workers_value = OmegaConf.select(params, strip_param(workers))
+
     cache = f"batch.{source}.cache.read"
-    cache_out = f"batch.{source}.{workers}.cache.write"
+    cache_out = f"batch.{source}.{workers_value}.{api_value}.cache.write"
     cache_misses = f"batch.{source}.cache.misses"
     cache_reload = f"batch.{source}.cache.reload"
 
