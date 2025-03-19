@@ -13,14 +13,22 @@ def _apply_transformations(
     df: ps.DataFrame, transformations: List[Tuple[Callable, Dict[str, Any]]], **kwargs
 ) -> ps.DataFrame:
     logger.info(f"Filtering dataframe with {len(transformations)} transformations")
-    last_count = df.count()
-    logger.info(f"Number of rows before filtering: {last_count}")
+    if logger.isEnabledFor(logging.INFO):
+        last_count = df.count()
+        logger.info(f"Number of rows before filtering: {last_count}")
     for name, transformation in transformations.items():
         logger.info(f"Applying transformation: {name}")
-        df = df.transform(transformation, **kwargs)
-        new_count = df.count()
-        logger.info(f"Number of rows after transformation: {new_count}, cut out {last_count - new_count} rows")
-        last_count = new_count
+        df_new = df.transform(transformation, **kwargs)
+        if logger.isEnabledFor(logging.INFO):
+            # Spark optimization with memory constraints:
+            # If you really want to log after every transformation,
+            # make sure to cache the new frame before the action.
+            # Also, unpersist any previous cached dataframes, so we keep the memory consumption lower.
+            new_count = df_new.cache().count()
+            df.unpersist()
+            logger.info(f"Number of rows after transformation: {new_count}, cut out {last_count - new_count} rows")
+            last_count = new_count
+        df = df_new
 
     return df
 
@@ -46,16 +54,20 @@ def filter_unified_kg_edges(
     """
 
     # filter down edges to only include those that are present in the filtered nodes
-    edges_count = edges.count()
-    logger.info(f"Number of edges before filtering: {edges_count}")
+    if logger.isEnabledFor(logging.INFO):
+        edges_count = edges.count()
+        logger.info(f"Number of edges before filtering: {edges_count}")
     edges = (
         edges.alias("edges")
         .join(nodes.alias("subject"), on=F.col("edges.subject") == F.col("subject.id"), how="inner")
         .join(nodes.alias("object"), on=F.col("edges.object") == F.col("object.id"), how="inner")
         .select("edges.*")
     )
-    new_edges_count = edges.count()
-    logger.info(f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges")
+    if logger.isEnabledFor(logging.INFO):
+        new_edges_count = edges.cache().count()
+        logger.info(
+            f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges"
+        )
 
     return _apply_transformations(edges, transformations)
 
@@ -74,7 +86,8 @@ def filter_nodes_without_edges(
     """
 
     # Construct list of edges
-    logger.info("Nodes before filtering: %s", nodes.count())
+    if logger.isEnabledFor(logging.INFO):
+        logger.info("Nodes before filtering: %s", nodes.count())
     edge_nodes = (
         edges.withColumn("id", F.col("subject"))
         .unionByName(edges.withColumn("id", F.col("object")))
@@ -82,6 +95,7 @@ def filter_nodes_without_edges(
         .distinct()
     )
 
-    nodes = nodes.alias("nodes").join(edge_nodes, on="id").select("nodes.*").persist()
-    logger.info("Nodes after filtering: %s", nodes.count())
+    nodes = nodes.alias("nodes").join(edge_nodes, on="id").select("nodes.*")
+    if logger.isEnabledFor(logging.INFO):
+        logger.info("Nodes after filtering: %s", nodes.cache().count())
     return nodes
