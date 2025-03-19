@@ -8,7 +8,12 @@ name: Evidence Dashboard Deployment
 
 on:
   # allows triggering the workflow from e.g. a data release
-  workflow_dispatch: {}
+  workflow_dispatch: 
+    inputs:
+      release_version:
+        description: 'Version to deploy in format vX.Y.Z'
+        required: true
+        type: string
   push:
     branches:
       - main
@@ -42,6 +47,8 @@ env:
   # for deploying to GCS, only works on main
   rw_wip: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
   rw_sa: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
+  # release version from input
+  RELEASE_VERSION: ${{ inputs.release_version || 'v0.4.0'}}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -59,6 +66,11 @@ jobs:
       # setup runtime
       - name: 'Checkout'
         uses: actions/checkout@main
+
+      - name: Validate release version
+        working-directory: pipelines/matrix
+        run: make check_release_version_environment_variable
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20' 

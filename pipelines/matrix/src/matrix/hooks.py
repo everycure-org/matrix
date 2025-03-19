@@ -148,6 +148,9 @@ class MLFlowHooks:
 
         if not runs:
             logger.info("creating run")
+            # For some reason MLFLOW_RUN_ID is set to "None" rather than None, so it tries to find this run id
+            if os.environ.get("MLFLOW_RUN_ID") == "None":
+                del os.environ["MLFLOW_RUN_ID"]
             run = mlflow.start_run(run_name=run_name, experiment_id=experiment_id)
             mlflow.set_tag("created_by", "kedro")
             return run.info.run_id
@@ -383,6 +386,12 @@ class ReleaseInfoHooks:
         return tmpl
 
     @staticmethod
+    def build_kg_dashboard_link() -> str:
+        version = ReleaseInfoHooks._globals["versions"]["release"]
+        tmpl = f"https://data.dev.everycure.org/versions/{version}/evidence/"
+        return tmpl
+
+    @staticmethod
     def build_mlflow_link() -> str:
         run_id = ReleaseInfoHooks._kedro_context.mlflow.tracking.run.id
         experiment_name = ReleaseInfoHooks._kedro_context.mlflow.tracking.experiment.name
@@ -428,6 +437,7 @@ class ReleaseInfoHooks:
             "Code Link": ReleaseInfoHooks.build_code_link(),
             "Neo4j Link": "coming soon!",
             "NodeNorm Endpoint Link": "https://nodenorm.transltr.io/1.5/get_normalized_nodes",
+            "KG dashboard link": ReleaseInfoHooks.build_kg_dashboard_link(),
         }
         return info
 

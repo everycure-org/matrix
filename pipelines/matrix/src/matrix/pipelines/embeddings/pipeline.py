@@ -14,7 +14,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 # Source to uniquely identify dataset
                 source="node_embeddings",
                 # Input and output datasets
-                df="integration.prm.filtered_nodes",
+                df="filtering.prm.filtered_nodes",
                 output="embeddings.feat.graph.node_embeddings@spark",
                 # Transformer
                 columns="params:embeddings.node.input_features",
@@ -46,8 +46,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             ArgoNode(
                 func=nodes.filter_edges_for_topological_embeddings,
                 inputs=[
-                    "integration.prm.filtered_nodes",
-                    "integration.prm.filtered_edges",
+                    "filtering.prm.filtered_nodes",
+                    "filtering.prm.filtered_edges",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                 ],
@@ -129,7 +129,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.extract_topological_embeddings,
                 inputs={
                     "embeddings": "embeddings.model_output.topological",
-                    "nodes": "integration.prm.filtered_nodes",
+                    "nodes": "filtering.prm.filtered_nodes",
                     "string_col": "params:embeddings.write_topological_col",
                 },
                 outputs="embeddings.feat.nodes",
