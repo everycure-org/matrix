@@ -8,5 +8,6 @@
     group by all
     order by count desc
 ```
+Click through to node prefixes in the table below to explore more detailed information about each of them.
 
 <DataTable data={nodes_by_prefix} link=link title='Nodes by Prefix' />
