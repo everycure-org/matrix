@@ -11,10 +11,8 @@ from pyspark.sql.window import Window
 
 from matrix.inject import inject_object
 from matrix.pipelines.integration.filters import determine_most_specific_category
-
 from matrix.utils.metric_utilities import log_metric
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
-
 
 from .schema import BIOLINK_KG_EDGE_SCHEMA, BIOLINK_KG_NODE_SCHEMA
 
@@ -193,9 +191,8 @@ def normalize_edges(
         .filter(F.col("_rn") == 1)
         .drop("_rn")
     )
-    
-    log_metric(f"integration", f"Number of edges after deduplication and normalizing", edges.count())
 
+    log_metric(f"integration", f"Number of edges after deduplication and normalizing", edges.count())
 
     return edges
 
@@ -214,7 +211,7 @@ def normalize_nodes(
     mapping_df = _format_mapping_df(mapping_df)
 
     log_metric(f"integration", f"Number of nodes before normalization", nodes.count())
-    
+
     # add normalized_id to nodes
     nodes = (
         nodes.join(mapping_df, on="id", how="left")
@@ -225,8 +222,7 @@ def normalize_nodes(
         .filter(F.col("_rn") == 1)
         .drop("_rn")
     )
-    
-    log_metric(f"integration", f"Number of nodes after deduplication and normalizing", nodes.count())
 
+    log_metric(f"integration", f"Number of nodes after deduplication and normalizing", nodes.count())
 
     return nodes
