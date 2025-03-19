@@ -97,8 +97,8 @@ def cached_api_enrichment_pipeline(
     Returns:
         Kedro Pipeline.
     """
-    cache = (f"batch.{source}.cache.read",)
-    cache_out = (f"batch.{source}.{workers}.cache.write",)
+    cache = f"batch.{source}.cache.read"
+    cache_out = f"batch.{source}.{workers}.cache.write"
     cache_misses = f"batch.{source}.cache.misses"
     cache_reload = f"batch.{source}.cache.reload"
 
