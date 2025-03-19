@@ -52,6 +52,7 @@ batch.{source}.cache.read: &cache_in
   type: matrix.datasets.gcp.LazySparkDataset
   filepath: &cache_location ${globals:paths.cache}/{source}
   provide_empty_if_not_present: true
+
 batch.{source}.{workers}.cache.write:
   type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
   path: *cache_location
