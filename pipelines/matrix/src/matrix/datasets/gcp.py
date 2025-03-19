@@ -485,6 +485,7 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
         load_args: dict[str, Any] | None = None,
         fs_args: dict[str, Any] | None = None,
         overwrite: bool = False,
+        metadata: dict[str, Any] | None = None,
         timeout: int = 90,
     ) -> None:
         self._max_workers = int(max_workers)
