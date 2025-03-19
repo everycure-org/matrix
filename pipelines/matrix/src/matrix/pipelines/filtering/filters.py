@@ -2,8 +2,7 @@ import logging
 from typing import List
 
 import pyspark.sql as ps
-import pyspark.sql.functions as F
-import pyspark.sql.functions as f
+import pyspark.sql.functions as sf
 from bmt import toolkit
 from pyspark.sql import types as T
 
@@ -54,7 +53,7 @@ def biolink_deduplicate_edges(r_edges_df: ps.DataFrame) -> ps.DataFrame:
     """
     # Enrich edges with path to predicates in biolink hierarchy
     edges_df = r_edges_df.withColumn(
-        "parents", F.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))(F.col("predicate"))
+        "parents", sf.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))(sf.col("predicate"))
     ).cache()
     # Self join to find edges that are redundant
     duplicates = (
@@ -62,15 +61,16 @@ def biolink_deduplicate_edges(r_edges_df: ps.DataFrame) -> ps.DataFrame:
         .join(
             edges_df.alias("B"),
             on=[
-                (f.col("A.subject") == f.col("B.subject"))
-                & ((f.col("A.object") == f.col("B.object")) & (f.col("A.predicate") != f.col("B.predicate")))
+                (sf.col("A.subject") == sf.col("B.subject"))
+                & (sf.col("A.object") == sf.col("B.object"))
+                & (sf.col("A.predicate") != sf.col("B.predicate"))
             ],
             how="left",
         )
         .withColumn(
-            "subpath", f.col("B.parents").isNotNull() & f.expr("forall(A.parents, x -> array_contains(B.parents, x))")
+            "subpath", sf.col("B.parents").isNotNull() & sf.expr("forall(A.parents, x -> array_contains(B.parents, x))")
         )
-        .filter(f.col("subpath"))
+        .filter(sf.col("subpath"))
         .select("A.*")
         .select("subject", "object", "predicate")
         .distinct()
@@ -91,6 +91,5 @@ def keep_rows_containing(
     **kwargs,
 ) -> ps.DataFrame:
     """Function to remove rows containing a category."""
-    keep_list_array = F.array([F.lit(x) for x in keep_list])
-
-    return input_df.filter(F.exists(F.col(column), lambda x: F.array_contains(keep_list_array, x)))
+    keep_list_array = sf.array([sf.lit(x) for x in keep_list])
+    return input_df.filter(sf.exists(column, lambda x: sf.array_contains(keep_list_array, x)))
