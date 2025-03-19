@@ -240,7 +240,7 @@ def generate_overlapping_dataset(generator: DrugDiseasePairGenerator, *matrices:
     return generator.generate(matrices)
 
 
-def calculate_rank_commonality(ranking_output: dict, commonality_output: dict) -> dict:
+def calculate_rank_commonality(ranking_output: dict, commonality_output: dict) -> Any:
     """Function to calculate rank commonality (custom metric).
 
     Args:
@@ -250,15 +250,19 @@ def calculate_rank_commonality(ranking_output: dict, commonality_output: dict) -
     Returns:
         rank commonality output
     """
+    # clean MLFlow names; if running in base, the names remain unchanged
+    commonality_output = {k.split("stability_overlap_")[-1]: v for k, v in commonality_output.items()}
+    ranking_output = {k.split("stability_ranking_")[-1]: v for k, v in ranking_output.items()}
+    # calculate
     rank_commonality_output = {}
-    ranking_output = {k: v for k, v in ranking_output.items() if "spearman" in k}
-    n_ranking_values = [int(n.split("_")[-1]) for n in ranking_output.keys() if n.split("_")[-1]]
+    ranking_output = {k: v for k, v in ranking_output.items() if ("spearman" in k)}
+    n_ranking_values = [int(n.split("_")[-2]) for n in ranking_output.keys() if "p_value" not in n]
     n_commonality_values = [int(n.split("_")[-1]) for n in commonality_output.keys() if n.split("_")[-1]]
     n_values = list(set(n_ranking_values) & set(n_commonality_values))
     # Compute harmonic mean between Commonality@n and Spearman-rank@n
     for i in n_values:
         # Spearman correlation is between -1 and 1, taking the absolute value to avoid division by small numbers
-        r_k = abs(ranking_output[f"spearman_at_{i}"]["correlation"])
+        r_k = abs(ranking_output[f"spearman_at_{i}_stat"])
         c_k = commonality_output[f"commonality_at_{i}"]
         if r_k + c_k == 0:
             s_f1 = None
@@ -266,8 +270,6 @@ def calculate_rank_commonality(ranking_output: dict, commonality_output: dict) -
             s_f1 = None
         else:
             s_f1 = (2 * r_k * c_k) / (r_k + c_k)
-        rank_commonality_output[f"rank_commonality_at_{i}"] = {
-            "score": s_f1,
-            "pvalue": ranking_output[f"spearman_at_{i}"]["pvalue"],
-        }
+        rank_commonality_output[f"rank_commonality_at_{i}_stat"] = s_f1
+        rank_commonality_output[f"rank_commonality_at_{i}_pvalue"] = ranking_output[f"spearman_at_{i}_pvalue"]
     return json.loads(json.dumps(rank_commonality_output, default=float))
