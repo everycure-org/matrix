@@ -8,7 +8,7 @@ import pytest
 import requests
 import responses
 from google.oauth2.credentials import Credentials
-from matrix.utils.authentication import TOKEN_URI, get_iap_token, request_new_iap_token
+from matrix.utils.authentication import TOKEN_URI, get_user_account_creds, request_new_iap_token
 
 
 @pytest.fixture
@@ -66,7 +66,7 @@ def test_oauth_flow(oauth2_token_response, tmpdir, monkeypatch):
 @pytest.mark.skip()
 def test_iap_flow():
     """Comment out the @pytest.mark.skip() to test the authentication flow locally"""
-    token = get_iap_token()
+    token = get_user_account_creds()
 
     assert token.token
     assert token.id_token
