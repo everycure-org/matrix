@@ -89,7 +89,7 @@ embeddings.topological_pca:
     _object: pyspark.ml.feature.PCA
     k: 2
 
-embeddings.node.caching:
+embeddings.node:
   cache_schema:
     _object: matrix.pipelines.batch.schemas.embeddings
   preprocessor:
