@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from collections.abc import Iterable
 
 import pyspark.sql as ps
 import pyspark.sql.functions as sf
@@ -12,7 +12,7 @@ tk = toolkit.Toolkit()
 logger = logging.getLogger(__name__)
 
 
-def get_ancestors_for_category_delimited(category: str, mixin: bool = False) -> List[str]:
+def get_ancestors_for_category_delimited(category: str, mixin: bool = False) -> list[str]:
     """Wrapper function to get ancestors for a category. The arguments were used to match the args used by Chunyu
     https://biolink.github.io/biolink-model-toolkit/index.html#bmt.toolkit.Toolkit.get_ancestors
     Args:
@@ -86,7 +86,7 @@ def biolink_deduplicate_edges(r_edges_df: ps.DataFrame) -> ps.DataFrame:
 
 def keep_rows_containing(
     input_df: ps.DataFrame,
-    keep_list: List[str],
+    keep_list: Iterable[str],
     column: str,
     **kwargs,
 ) -> ps.DataFrame:
