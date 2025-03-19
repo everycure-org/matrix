@@ -162,7 +162,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ),
                 # union edges
                 ArgoNode(
-                    func=nodes.union_and_deduplicate_edges,
+                    func=nodes.union_edges,
                     inputs=[
                         f'integration.int.{source["name"]}.edges.norm@spark'
                         for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
@@ -171,39 +171,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                     outputs="integration.prm.unified_edges",
                     name="create_prm_unified_edges",
                     argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
-                ),
-                # filter nodes given a set of filter stages
-                node(
-                    func=nodes.prefilter_unified_kg_nodes,
-                    inputs=[
-                        "integration.prm.unified_nodes",
-                        "params:integration.filtering.node_filters",
-                    ],
-                    outputs="integration.prm.prefiltered_nodes",
-                    name="prefilter_prm_knowledge_graph_nodes",
-                    tags=["filtering"],
-                ),
-                # filter edges given a set of filter stages
-                node(
-                    func=nodes.filter_unified_kg_edges,
-                    inputs=[
-                        "integration.prm.prefiltered_nodes",
-                        "integration.prm.unified_edges",
-                        "params:integration.filtering.edge_filters",
-                    ],
-                    outputs="integration.prm.filtered_edges",
-                    name="filter_prm_knowledge_graph_edges",
-                    tags=["filtering"],
-                ),
-                node(
-                    func=nodes.filter_nodes_without_edges,
-                    inputs=[
-                        "integration.prm.prefiltered_nodes",
-                        "integration.prm.filtered_edges",
-                    ],
-                    outputs="integration.prm.filtered_nodes",
-                    name="filter_nodes_without_edges",
-                    tags=["filtering"],
                 ),
             ]
         )

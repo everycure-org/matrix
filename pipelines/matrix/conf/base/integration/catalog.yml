@@ -66,33 +66,19 @@ integration.prm.unified_edges:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/unified/edges
 
-# filtered KGs
-integration.prm.filtered_edges:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/filtered/edges
-
-# FUTURE more elegant: Apply all node filters, then all edge filters, then a "cleanup" final step that removes
-# 1. all edges where nodes were deleted
-# 2. all nodes that have not one edge connected anymore
-integration.prm.prefiltered_nodes:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/prefiltered/nodes
-
-integration.prm.filtered_nodes:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/filtered/nodes
-
-
 # ==============================
 # Original sources: only used for sampling
 
-integration.prm.original.filtered_nodes:
+# The create_sample pipeline needs to pull data from the release, but write data in the sample environment
+# We need to define another entry in the base catalog, otherwise the sample environment integration.prm.unified_nodes will reference itself
+
+integration.prm.original.unified_nodes:
   <<: [*_spark_parquet]
-  filepath: ${globals:paths.integration}/prm/filtered/nodes
-  
-integration.prm.original.filtered_edges:
+  filepath: ${globals:paths.integration}/prm/unified/nodes
+
+integration.prm.original.unified_edges:
   <<: [*_spark_parquet]
-  filepath: ${globals:paths.integration}/prm/filtered/edges
+  filepath: ${globals:paths.integration}/prm/unified/edges
 
 # Caching strategy
 integration.cache.read: &cache_in
