@@ -135,7 +135,7 @@ def cached_api_enrichment_pipeline(
             outputs=cache_out,
             argo_config=ArgoResourceConfig(
                 cpu_request=1,
-                cpu_limit=2,
+                cpu_limit=1,
                 memory_request=64,
                 memory_limit=64,
             ),
@@ -153,7 +153,9 @@ def cached_api_enrichment_pipeline(
                 "lineage_dummy": cache_out,
             },
             outputs=output,
-            argo_config=ArgoResourceConfig(ephemeral_storage_limit=1024, memory_limit=128),
+            argo_config=ArgoResourceConfig(
+                ephemeral_storage_limit=1024, ephemeral_storage_request=1024, memory_request=64, memory_limit=128
+            ),
         ),
     ]
 
