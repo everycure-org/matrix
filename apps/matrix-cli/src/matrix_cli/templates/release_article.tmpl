@@ -36,7 +36,7 @@ Please write the article following the categories below. The relevant PR numbers
 {%- endfor %}
 ### Bugfixes 🐛
 {%- for label, prs in label_to_pr %}
-{%- if label in ['Bug', 'bug'] %}
+{%- if label in ['Bug', 'bug', 'Bugfix'] %}
 {%- for pr in prs %}
 - {{ pr.title }} [#{{ pr.number }}]({{ pr.url }})
 {%- endfor %}
@@ -58,17 +58,9 @@ Please write the article following the categories below. The relevant PR numbers
 {%- endfor %}
 {%- endif %}
 {%- endfor %}
-### Newly onboarded colleagues 🚤
-{%- for label, prs in label_to_pr %}
-{%- if label == 'onboarding' %}
-{%- for pr in prs %}
-- {{ pr.title }} [#{{ pr.number }}]({{ pr.url }})
-{%- endfor %}
-{%- endif %}
-{%- endfor %}
 ### Other Changes
 {%- for label, prs in label_to_pr %}
-{%- if label == '' %}
+{%- if label not in ['breaking change', 'Feature', 'experiment report','Bug', 'bug', 'Bugfix', 'enhancement', 'Simplification', 'infrastructure', 'documentation', 'onboarding', 'Release', 'hide-from-release'] %}
 {%- for pr in prs %}
 - {{ pr.title }} [#{{ pr.number }}]({{ pr.url }})
 {%- endfor %}
