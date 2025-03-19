@@ -4,6 +4,7 @@ date: 2025-03-06
 categories:
   - Release
 authors:
+  - oliverw1
   - emil-k
   - eKathleenCarter
   - Siyan-Luo
@@ -13,12 +14,10 @@ authors:
   - pascalwhoop
   - piotrkan
   - amyford
-  - app/github-actions
-  - oliverw1
   - matentzn
 ---
 
-# Matrix Platform `v0.4.0`: Evidence.dev dashboard, improved experiment tracking and 
+# `v0.4.0`: Evidence.dev dashboard, improved experiment tracking
 
 This release of Matrix includes a new [data
 dashboard](https://data.dev.everycure.org/versions/latest/evidence) based on
@@ -29,10 +28,30 @@ respective experiments and a scheduled daily run of the entire pipeline using a 
 
 ## KG Dashboard
 
+### Graph connectivity overview
+
+We added a new dashboard based on evidence.dev to enable us to share detailed insights
+into the makeup of our knowledge graphs. Each release of the KG is paired with a
+dashboard that shows metrics and visualisations about the structure of the KG.
+
+![](./attachments/sankey.png)
+
+### Quality Control Dashboard for our data releases
+
+We started collecting quality control metrics for our data releases. [Data build `v0.4.3` for example](https://data.dev.everycure.org/versions/v0.4.3/evidence/summary/) shows that the number of diseases connected to drugs in the KG drastically increased when we added ROBOKOP as a data source.
+
+![](./attachments/connections.png)
+
+
 ## Pipeline Submission
 
-We updated the pipeline submission process to group experiment runs under their respective experiments. This should make it easier to track the evolution of the pipeline over time.
+We updated the pipeline submission process to group experiment runs under their
+respective experiments. This should make it easier to track the evolution of the pipeline
+over time. All runs of one experiment are bundled together in a single experiment run
+in the MLFlow UI. This ensures iterative debugging does not impede the visibility of what
+experiments have been run.
 
+![](./attachments/mlflow.png)
 
 ## Scheduled Pipeline Runs with sample data
 
@@ -50,6 +69,12 @@ This includes two new workflows:
 2. a [scheduled workflow](https://github.com/everycure-org/matrix/blob/main/.github/workflows/scheduled-sampling-pipeline.yml) that runs the pipeline on the sample data every day at 5am GMT.
 
 For more details, check the [documentation on the sample environment](../../../onboarding/sample_environment.md).
+
+
+## Refactoring of the preprocessing pipeline
+
+TODO
+
 
 <!-- Notes 
 
