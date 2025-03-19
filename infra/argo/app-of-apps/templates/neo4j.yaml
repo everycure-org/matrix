@@ -34,5 +34,3 @@ spec:
     - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
     automated: 
       prune: true
-
-# NOTE: This file was partially generated using AI assistance.
