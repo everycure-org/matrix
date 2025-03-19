@@ -261,15 +261,15 @@ def test_cached_api_enrichment_pipeline(
                 filepath=cache_path,
                 load_args={"schema": cache_schema},
             ),
-            "params:embeddings.node.caching.api": MemoryDataset(sample_api1),
-            "params:embeddings.node.caching.primary_key": MemoryDataset(sample_primary_key),
-            "params:embeddings.node.caching.preprocessor": MemoryDataset(sample_preprocessor),
-            "params:embeddings.node.caching.resolver": MemoryDataset(
+            "params:embeddings.node.api": MemoryDataset(sample_api1),
+            "params:embeddings.node.primary_key": MemoryDataset(sample_primary_key),
+            "params:embeddings.node.preprocessor": MemoryDataset(sample_preprocessor),
+            "params:embeddings.node.resolver": MemoryDataset(
                 {"_object": "matrix.pipelines.embeddings.encoders.DummyResolver"}
             ),
-            "params:embeddings.node.caching.target_col": MemoryDataset(sample_new_col),
-            "params:embeddings.node.caching.batch_size": MemoryDataset(2),
-            "params:embeddings.node.caching.cache_schema": MemoryDataset(embeddings_schema),
+            "params:embeddings.node.target_col": MemoryDataset(sample_new_col),
+            "params:embeddings.node.batch_size": MemoryDataset(2),
+            "params:embeddings.node.cache_schema": MemoryDataset(embeddings_schema),
         }
     )
     pipeline_run = create_node_embeddings_pipeline()

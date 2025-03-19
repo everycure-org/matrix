@@ -10,7 +10,7 @@ embeddings.topological:
       embeddingDimension: 3
 
 
-embeddings.node.caching:
+embeddings.node:
   resolver:
     _object: matrix.pipelines.embeddings.encoders.DummyResolver
   api: "foo"
