@@ -4,18 +4,20 @@ date: 2025-03-06
 categories:
   - Release
 authors:
-  - oliverw1
-  - emil-k
-  - eKathleenCarter
+  - JacquesVergine
   - Siyan-Luo
   - alexeistepa
-  - JacquesVergine
+  - amyford
+  - eKathleenCarter
+  - emil-k
   - lvijnck
+  - matentzn
+  - oliverw1
   - pascalwhoop
   - piotrkan
-  - amyford
-  - matentzn
+
 ---
+
 
 # `v0.4.0`: Evidence.dev dashboard, improved experiment tracking
 
