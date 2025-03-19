@@ -89,64 +89,6 @@ class LazySparkDataset(SparkDataset):
                 raise e
 
 
-class SparkWithSchemaDataset(SparkDataset):
-    """Dataset to load BigQuery data.
-
-    Dataset extends the behaviour of the standard SparkDataset with
-    a schema load argument that can be specified in the Data catalog.
-    It also provides an empty DataFrame with this schema in case the
-    data doesn't exist yet, thus making it useful to bootstrap, e.g.
-    in the case of a cache.
-    """
-
-    def __init__(  # noqa: PLR0913
-        self,
-        *,
-        filepath: str,
-        file_format: str = "parquet",
-        load_args: dict[str, Any] | None = None,
-        save_args: dict[str, Any] | None = None,
-        version: Version | None = None,
-        credentials: dict[str, Any] | None = None,
-        metadata: dict[str, Any] | None = None,
-        provide_empty_if_not_present: bool = False,
-    ) -> None:
-        """Creates a new instance of ``SparkWithSchemaDataset``."""
-        self._load_args = deepcopy(load_args) or {}
-        self._df_schema = self._load_args.pop("schema")
-        self._provide_empty_if_not_present = provide_empty_if_not_present
-
-        super().__init__(
-            filepath=filepath,
-            file_format=file_format,
-            save_args=save_args,
-            load_args=self._load_args,
-            credentials=credentials,
-            version=version,
-            metadata=metadata,
-        )
-
-    def load(self) -> ps.DataFrame:
-        SparkHooks._initialize_spark()
-        load_path = (self._fs_prefix + str(self._get_load_path())).removeprefix("/dbfs")
-        spark = ps.SparkSession.builder.getOrCreate()
-        reader = spark.read
-
-        schema = _parse_for_objects(self._df_schema)
-        try:
-            frame = reader.schema(schema).load(load_path, self._file_format, **self._load_args)
-        except AnalysisException as e:
-            if self._provide_empty_if_not_present and ("PATH_NOT_FOUND" in e.desc):
-                logger.warning(
-                    """{"warning": "Dataset not found at '%s'.",  "Resolution": "providing empty dataset with same schema."}""",
-                    load_path,
-                )
-                frame = spark.createDataFrame([], schema=schema)
-            else:
-                raise e
-        return frame
-
-
 class SparkDatasetWithBQExternalTable(LazySparkDataset):
     """Spark Dataset that produces a BigQuery external table as a side output.
 
@@ -485,6 +427,7 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
         load_args: dict[str, Any] | None = None,
         fs_args: dict[str, Any] | None = None,
         overwrite: bool = False,
+        metadata: dict[str, Any] | None = None,
         timeout: int = 90,
     ) -> None:
         self._max_workers = int(max_workers)
@@ -499,6 +442,7 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
             load_args=load_args,
             overwrite=overwrite,
             fs_args=fs_args,
+            metadata=metadata,
         )
 
     def save(self, data: dict[str, Any]) -> None:
@@ -521,6 +465,9 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
                         partition_data = await partition_data()  # noqa: PLW2901
                 else:
                     raise RuntimeError("not callable")
+                # Improve the chances of starting the calculation of a new
+                # partition (which is the bottleneck, not the saving), or any
+                # other async task, by using cooperative multitasking -> sleep.
                 await asyncio.sleep(0.01)
 
                 # Save the partition data

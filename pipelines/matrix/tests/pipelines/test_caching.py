@@ -9,10 +9,9 @@ from kedro.framework.session import KedroSession
 from kedro.io import DataCatalog, MemoryDataset
 from kedro.runner import SequentialRunner
 from kedro_datasets.pandas import ParquetDataset
-from matrix.datasets.gcp import LazySparkDataset, PartitionedAsyncParallelDataset, SparkWithSchemaDataset
+from matrix.datasets.gcp import LazySparkDataset, PartitionedAsyncParallelDataset
 from matrix.pipelines.batch.pipeline import (
     cache_miss_resolver_wrapper,
-    create_node_embeddings_pipeline,
     derive_cache_misses,
     limit_cache_to_results_from_api,
     lookup_from_cache,
@@ -20,6 +19,7 @@ from matrix.pipelines.batch.pipeline import (
     resolve_cache_duplicates,
 )
 from matrix.pipelines.embeddings.nodes import pass_through
+from matrix.pipelines.embeddings.pipeline import create_node_embeddings_pipeline
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import ArrayType, FloatType, StringType, StructField, StructType
 from pyspark.testing import assertDataFrameEqual
@@ -253,27 +253,28 @@ def test_cached_api_enrichment_pipeline(
             "batch.embeddings.cache_misses": LazySparkDataset(
                 filepath=str(tmp_path / "cache_misses"), save_args={"mode": "overwrite"}
             ),
-            "batch.embeddings.20.cache.write": PartitionedAsyncParallelDataset(
+            f"batch.embeddings.20.cache.write": PartitionedAsyncParallelDataset(
                 path=cache_path,
                 dataset=ParquetDataset,
                 filename_suffix=".parquet",
             ),
-            "batch.embeddings.cache.reload": SparkWithSchemaDataset(
+            "batch.embeddings.cache.reload": LazySparkDataset(
                 filepath=cache_path,
-                load_args={"schema": cache_schema},
             ),
-            "params:embeddings.node.caching.api": MemoryDataset(sample_api1),
-            "params:embeddings.node.caching.primary_key": MemoryDataset(sample_primary_key),
-            "params:embeddings.node.caching.preprocessor": MemoryDataset(sample_preprocessor),
-            "params:embeddings.node.caching.resolver": MemoryDataset(
+            "params:embeddings.node.api": MemoryDataset(sample_api1),
+            "params:embeddings.node.primary_key": MemoryDataset(sample_primary_key),
+            "params:embeddings.node.preprocessor": MemoryDataset(sample_preprocessor),
+            "params:embeddings.node.resolver": MemoryDataset(
                 {"_object": "matrix.pipelines.embeddings.encoders.DummyResolver"}
             ),
-            "params:embeddings.node.caching.target_col": MemoryDataset(sample_new_col),
-            "params:embeddings.node.caching.batch_size": MemoryDataset(2),
-            "params:embeddings.node.caching.cache_schema": MemoryDataset(embeddings_schema),
+            "params:embeddings.node.target_col": MemoryDataset(sample_new_col),
+            "params:embeddings.node.batch_size": MemoryDataset(2),
+            "params:embeddings.node.cache_schema": MemoryDataset(embeddings_schema),
         }
     )
     pipeline_run = create_node_embeddings_pipeline()
+
+    # breakpoint()
 
     runner = SequentialRunner()
     # ...when running the Kedro pipeline a first time...
