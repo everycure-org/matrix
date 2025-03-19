@@ -72,6 +72,26 @@ WITH ranked_data AS (
             `mtrx-hub-dev-3of.release_${bq_release_version}.ground_truth_edges_normalized`        
             JOIN `mtrx-hub-dev-3of.release_${bq_release_version}.rtx_kg2_nodes_normalized` ON object = id
         WHERE object_normalization_success = false
+        UNION DISTINCT
+        SELECT 
+            id,
+            name,
+            SPLIT(id, ':')[OFFSET(0)] AS prefix,
+            '' AS category,
+            'drug_list' AS normalization_set,
+        FROM
+            `mtrx-hub-dev-3of.release_${bq_release_version}.drug_list_nodes_normalized`
+        WHERE normalization_success = false
+        UNION DISTINCT
+        SELECT 
+            id,
+            name,
+            SPLIT(id, ':')[OFFSET(0)] AS prefix,
+            '' AS category,
+            'disease_list' AS normalization_set,
+        FROM
+            `mtrx-hub-dev-3of.release_${bq_release_version}.disease_list_nodes_normalized`
+        WHERE normalization_success = false
     )    
 )
 SELECT 

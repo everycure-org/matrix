@@ -16,7 +16,7 @@ FROM (
   FROM 
     `mtrx-hub-dev-3of.release_${bq_release_version}.rtx_kg2_edges_normalized`
     JOIN `mtrx-hub-dev-3of.release_${bq_release_version}.rtx_kg2_nodes_normalized` ON subject = id
-  UNION ALL
+  UNION DISTINCT
   SELECT 
     object AS id,
     original_object AS original_id,
@@ -68,8 +68,8 @@ SELECT
   SPLIT(original_id, ':')[OFFSET(0)] AS original_prefix,
   SPLIT(id, ':')[OFFSET(0)] AS prefix,
   category,
-  normalization_success, 
-  no_normalization_change, 
+  normalization_success,
+  CASE WHEN original_id = id THEN true ELSE false END AS no_normalization_change,
   'ground_truth' AS normalization_set,
   count(*) AS count
 FROM (
@@ -91,6 +91,35 @@ FROM (
   FROM 
     `mtrx-hub-dev-3of.release_${bq_release_version}.ground_truth_edges_normalized`
 )
+GROUP BY ALL
+
+UNION ALL
+
+SELECT
+  SPLIT(original_id, ':')[OFFSET(0)] AS original_prefix,
+  SPLIT(id, ':')[OFFSET(0)] AS prefix,
+  category,
+  normalization_success, 
+  CASE WHEN original_id = id THEN true ELSE false END AS no_normalization_change,
+  'drug_list' AS normalization_set,
+  count(*) AS count
+  FROM 
+    `mtrx-hub-dev-3of.release_${bq_release_version}.drug_list_nodes_normalized`  
+  WHERE id <> "['Error']"
+GROUP BY ALL
+
+UNION ALL
+
+SELECT
+  SPLIT(original_id, ':')[OFFSET(0)] AS original_prefix,
+  SPLIT(id, ':')[OFFSET(0)] AS prefix,
+  category,
+  normalization_success, 
+  CASE WHEN original_id = id THEN true ELSE false END AS no_normalization_change,
+  'disease_list' AS normalization_set,
+  count(*) AS count
+  FROM 
+    `mtrx-hub-dev-3of.release_${bq_release_version}.disease_list_nodes_normalized`  
 GROUP BY ALL
 
 UNION ALL
@@ -161,5 +190,23 @@ FROM (
     CASE WHEN original_object = object THEN true ELSE false END AS no_normalization_change
   FROM 
     `mtrx-hub-dev-3of.release_${bq_release_version}.ground_truth_edges_normalized`        
+  UNION DISTINCT
+  SELECT
+    id,
+    original_id,
+    category,
+    normalization_success,
+    CASE WHEN original_id = id THEN true ELSE false END AS no_normalization_change
+  FROM
+    `mtrx-hub-dev-3of.release_${bq_release_version}.drug_list_nodes_normalized`
+  UNION DISTINCT
+  SELECT
+    id,
+    original_id,
+    category,
+    normalization_success,
+    CASE WHEN original_id = id THEN true ELSE false END AS no_normalization_change
+  FROM
+    `mtrx-hub-dev-3of.release_${bq_release_version}.disease_list_nodes_normalized`
 )
 GROUP BY ALL
