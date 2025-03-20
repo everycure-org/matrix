@@ -30,7 +30,7 @@ class NCATSNodeNormalizer(Normalizer):
         retry=retry_if_exception_type((aiohttp.ClientError, asyncio.TimeoutError)),
         before_sleep=print,
     )
-    async def apply(self, curies: list[str]) -> list[str]:
+    async def apply(self, curies: list[str]) -> list[str | None]:
         request_json = {
             "curies": curies,
             "conflate": self._conflate,
@@ -50,12 +50,12 @@ class NCATSNodeNormalizer(Normalizer):
 
                 resp.raise_for_status()
 
-        return [str(self._extract_id(curie, response_json, self._json_parser)) for curie in curies]
+        return [self._extract_id(curie, response_json, self._json_parser) for curie in curies]
 
     @staticmethod
-    def _extract_id(id: str, response: Dict[str, Any], json_parser: parse) -> Dict[str, Any]:
+    def _extract_id(id: str, response: Dict[str, Any], json_parser: parse) -> str | None:
         """Extract normalized IDs from the response using the json parser."""
         try:
-            return json_parser.find(response.get(id))[0].value
+            return str(json_parser.find(response.get(id))[0].value)
         except (IndexError, KeyError):
             logger.debug(f"Not able to normalize for {id}: {response.get(id)}, {json_parser}")
