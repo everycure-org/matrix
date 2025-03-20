@@ -11,6 +11,7 @@ from matrix.inject import _extract_elements_in_list, inject_object
 from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark.sql import Row, Window
+from pyspark.sql.types import ArrayType, FloatType, StringType, StructField, StructType
 from sklearn.impute._base import _BaseImputer
 from tqdm import tqdm
 
@@ -178,10 +179,16 @@ def make_predictions_and_sort(
     # 1. convert the knowledgeGraph into a Spark DataFrame.
     #    Use `data.sparkSession.createDataFrame` so you immediately have the SparkSession you need (and don't need to call it).
     # 2. Replace graph.get_embedding with a simple Spark join.
-    logger.info(f"{tuple(graph._embeddings.items())[:3]}")
+
+    data = data.limit(10)
+    schema = StructType(
+        [StructField("id", StringType(), True), StructField("topological_embedding", ArrayType(FloatType()), True)]
+    )
+
     embeddings = data.sparkSession.createDataFrame(
-        graph._embeddings.items(), schema="id string, topological_embedding float"
+        [(k, v.tolist()) for k, v in graph._embeddings.items()], schema=schema
     ).cache()
+
     data = (
         data.join(
             embeddings.withColumnsRenamed({"id": "source", "topological_embedding": "source_embedding"}),
@@ -230,7 +237,6 @@ def make_predictions_and_sort(
 
     def predict_partition(partition: Iterable[Row]) -> Iterator[Row]:
         partition_df = pd.DataFrame.from_records(row.asDict() for row in partition)
-
         X = partition_df[data_features]
 
         predictions = model.predict_proba(X)
@@ -243,6 +249,7 @@ def make_predictions_and_sort(
         for row in result_df.to_dict("records"):
             yield Row(**row)
 
+    transformed = transformed.repartition(2000)  # Adjust based on data size
     transformed = transformed.rdd.mapPartitions(predict_partition).toDF()
     data = data.drop("source_embedding", "target_embedding")
     data = data.join(
@@ -257,12 +264,14 @@ def make_predictions_and_sort(
     # As an alternative to the below: you could use monotonically_increasing_id,
     # WITH a mapPartitionsWithIndex, so that for each partition, you extract the
     # max value (based on the index**32 IIRC), and normalize wrt that value.
-    window_spec = Window.orderBy(F.desc(treat_score_col_name))
+    # window_spec = Window.orderBy(F.desc(treat_score_col_name))
+    # data = data.orderBy(F.desc(treat_score_col_name))
+    # Use row_number() for consistent sequential ranking
+    windowSpec = Window.orderBy(F.desc(treat_score_col_name))
     # Add rank column
-    data = data.withColumn("rank", F.row_number().over(window_spec))
-    row_count = data.count()
+    data = data.withColumn("rank", F.row_number().over(windowSpec))
     # Add quantile rank column
-    data = data.withColumn("quantile_rank", F.col("rank") / row_count)
+    data = data.withColumn("quantile_rank", F.percent_rank().over(windowSpec))
 
     return data
 
