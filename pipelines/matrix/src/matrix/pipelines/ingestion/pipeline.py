@@ -15,7 +15,7 @@ def create_ground_truth_pipeline() -> list:
                 "ingestion.raw.kgml_xdtd_ground_truth.negative.edges@pandas",
             ],
             name="write_kgml_xdtd_gt",
-            tags=["kgml-xdtd-ground-truth"],
+            tags=["kgml_xdtd_ground_truth"],
         ),
         node(
             func=lambda x, y: [x, y],
@@ -28,7 +28,7 @@ def create_ground_truth_pipeline() -> list:
                 "ingestion.raw.ec_ground_truth.negative.edges@pandas",
             ],
             name="write_ec_indications_list",
-            tags=["ec-ground-truth"],
+            tags=["ec_ground_truth"],
         ),
     ]
 
