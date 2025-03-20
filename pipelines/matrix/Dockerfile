@@ -34,6 +34,8 @@ RUN python maven-deps.py
 ARG GIT_SHA
 ENV GIT_SHA=$GIT_SHA
 
+ARG MLFLOW_URL
+ENV MLFLOW_URL=${MLFLOW_URL}
 ADD . .
 
 LABEL com.nvidia.volumes.needed="nvidia_driver"
