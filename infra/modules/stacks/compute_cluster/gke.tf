@@ -22,6 +22,15 @@ locals {
     enable_gcfs                       = true
     enable_gvnic                      = true
     initial_node_count                = 0
+    # Add taints to larger memory nodes
+    # Memory sizes: n2d-highmem-8: 64GB, n2d-highmem-16: 128GB, n2d-highmem-32: 256GB, etc.
+    taints = size >= 8 ? [
+      {
+        key    = "node-memory-size"
+        value  = "large"
+        effect = "NoSchedule"
+      }
+    ] : []
     }
   ]
 
@@ -37,6 +46,15 @@ locals {
     enable_gcfs        = true
     enable_gvnic       = true
     initial_node_count = 0
+    # Add taints to larger memory nodes
+    # Memory sizes: n2-standard-8: 32GB, n2-standard-16: 64GB, n2-standard-32: 128GB, etc.
+    taints = size >= 16 ? [
+      {
+        key    = "node-memory-size"
+        value  = "large"
+        effect = "NoSchedule"
+      }
+    ] : []
     }
   ]
   gpu_node_pools = [
@@ -55,6 +73,14 @@ locals {
       accelerator_count  = 1
       accelerator_type   = "nvidia-l4"
       gpu_driver_version = "LATEST"
+      # Add taints for GPU nodes
+      taints = [
+        {
+          key    = "nvidia.com/gpu"
+          value  = "present"
+          effect = "NoSchedule"
+        }
+      ]
     },
   ]
   node_pools_combined = concat(local.standard_node_pools, local.gpu_node_pools, local.n2d_node_pools)
