@@ -30,6 +30,7 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: changes
         with:
+          base: 'infra'
           filters: |
             src:
               - ${{ env.deployment_path }}
