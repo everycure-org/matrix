@@ -72,3 +72,6 @@ paths:
   inference:          data/releases/${versions.release}/runs/${run_name}/datasets/inference
  
   tmp:                data/tmp
+
+  # Embedding cache dataset
+  cache:              data/cache
