@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import re
 import secrets
 import subprocess
@@ -66,7 +67,7 @@ def cli():
 @click.option("--experiment_id", type=int, help="MLFlow experiment id")
 @click.option("--mlflow_run_id", type=str, help="MLFlow run id")
 @click.option("--skip-git-checks", is_flag=True, type=bool, default=False, help="Skip git checks")
-@click.option("--gcp-project", type=str, default='dev', help="prod/dev")
+@click.option("--gcp-env", type=str, default='dev', help="prod/dev")
 # fmt: on
 def submit(
     username: str,
@@ -84,7 +85,7 @@ def submit(
     skip_git_checks: bool,
     experiment_id: Optional[int],
     mlflow_run_id: Optional[str],
-    gcp_project: str,
+    gcp_env: str,
 
 ):
     """Submit the end-to-end workflow. """
@@ -135,7 +136,7 @@ def submit(
         allow_interactions=not headless,
         is_test=is_test,
         environment=environment,
-        gcp_project=gcp_project
+        gcp_env=gcp_env
 
     )
 
@@ -154,7 +155,7 @@ def _submit(
     mlflow_run_id: Optional[str] = None,
     allow_interactions: bool = True,
     is_test: bool = False,
-    gcp_project: str = 'dev',
+    gcp_env: str = 'dev',
 
 ) -> None:
     """Submit the end-to-end workflow.
@@ -184,11 +185,11 @@ def _submit(
     
     try:
         console.rule("[bold blue]Submitting Workflow")
-
-        if not can_talk_to_kubernetes():
+        gcp_project = os.getenv(f"{gcp_env.upper()}_PROJECT_ID")
+        if not can_talk_to_kubernetes(project=gcp_project):
             raise EnvironmentError("Cannot communicate with Kubernetes")
 
-        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, environment, gcp_project, mlflow_experiment_id, is_test=is_test, mlflow_run_id=mlflow_run_id)
+        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, environment, gcp_env, mlflow_experiment_id, is_test=is_test, mlflow_run_id=mlflow_run_id)
 
         file_path = save_argo_template(argo_template, template_directory)
 
@@ -197,7 +198,7 @@ def _submit(
         if dry_run:
             return
 
-        build_push_docker(run_name, gcp_project, verbose=verbose)
+        build_push_docker(run_name, gcp_env, verbose=verbose)
 
         ensure_namespace(namespace, verbose=verbose)
 
@@ -396,10 +397,11 @@ def can_talk_to_kubernetes(
     return True
 
 
-def build_push_docker(username: str, gcp_project: str,  verbose: bool):
+def build_push_docker(username: str, gcp_env: str,  verbose: bool):
     """Build and push Docker image."""
     console.print("Building Docker image...")
-    run_subprocess(f"make docker_push TAG={username} TARGET={gcp_project}", stream_output=verbose)
+    gcp_project = os.getenv(f"{gcp_env.upper()}_PROJECT_ID")
+    run_subprocess(f"make docker_push TAG={username} GCP_PROJECT={gcp_project}", stream_output=verbose)
     console.print("[green]✓[/green] Docker image built and pushed")
 
 
@@ -410,14 +412,16 @@ def build_argo_template(
     namespace: str,
     pipeline_obj: Pipeline,
     environment: str,
-    gcp_project: str,
+    gcp_env: str,
     mlflow_experiment_id: int,
     is_test: bool,
     default_execution_resources: Optional[ArgoResourceConfig] = None,
     mlflow_run_id: Optional[str] = None,
 ) -> str:
     """Build Argo workflow template."""
-    image_name = f"us-central1-docker.pkg.{gcp_project}/mtrx-hub-{gcp_project}-3of/matrix-images/matrix"
+
+    gcp_project = os.getenv(f"{gcp_env.upper()}_PROJECT_ID")
+    image_name = f"us-central1-docker.pkg.dev/{gcp_project}/matrix-images/matrix"
     matrix_root = Path(__file__).parent.parent.parent.parent
     metadata = bootstrap_project(matrix_root)
     package_name = metadata.package_name
