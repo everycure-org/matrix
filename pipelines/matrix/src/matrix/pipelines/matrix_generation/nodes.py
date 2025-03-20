@@ -205,21 +205,22 @@ def make_predictions_and_sort(
         )
         .cache()
     )
-
+    logger.info(f"data size: {data.count():_}x{len(data.columns):_}")
     # Retrieve rows with null embeddings
     # NOTE: This only happens in a rare scenario where the node synonymizer
     # provided an identifier for a node that does _not_ exist in our KG.
     # https://github.com/everycure-org/matrix/issues/409
-    removed = (
-        data.filter(F.col("source_embedding").isNull() | F.col("target_embedding").isNull())
-        .select("source", "target")
-        .cache()
-    )
     if logger.isEnabledFor(logging.INFO):
+        removed = (
+            data.filter(F.col("source_embedding").isNull() | F.col("target_embedding").isNull())
+            .select("source", "target")
+            .cache()
+        )
         removed_pairs = removed.take(50)  # Can be extended, but mind OOM.
         if removed_pairs:
             logger.warning(f"Dropped {removed.count()} pairs during generation!")
             logger.warning("Dropped (subset of 50 shown): %s", ", ".join(f"({p[0]}, {p[1]})" for p in removed_pairs))
+        removed.unpersist()
 
     # Drop rows without source/target embeddings
     data = data.dropna(subset=["source_embedding", "target_embedding"])
