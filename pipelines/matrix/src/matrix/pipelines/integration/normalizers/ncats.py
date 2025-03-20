@@ -1,10 +1,8 @@
 import asyncio
 import logging
-from abc import ABC
 from typing import Any, Dict
 
 import aiohttp
-import pandas as pd
 from jsonpath_ng import parse
 from tenacity import (
     retry,
@@ -32,7 +30,7 @@ class NCATSNodeNormalizer(Normalizer):
         retry=retry_if_exception_type((aiohttp.ClientError, asyncio.TimeoutError)),
         before_sleep=print,
     )
-    async def apply(self, curies: list[str]) -> list[Dict[str, Any]]:
+    async def apply(self, curies: list[str]) -> list[str]:
         request_json = {
             "curies": curies,
             "conflate": self._conflate,
