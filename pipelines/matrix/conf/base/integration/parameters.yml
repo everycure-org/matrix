@@ -40,6 +40,8 @@ integration:
 
   normalization:
     batch_size: 1000
+    cache_schema:
+      _object: matrix.pipelines.batch.schemas.node_normalizer
     normalizer:
       _object: matrix.pipelines.integration.normalizers.ncats.NCATSNodeNormalizer
       endpoint: &api ${oc.env:NODENORM_ENDPOINT, https://nodenorm.transltr.io/1.5/get_normalized_nodes}
@@ -49,12 +51,8 @@ integration:
     api: *api
     preprocessor: 
       _object: matrix.pipelines.batch.pipeline.pass_through
-    new_col: normalized_id
+    target_col: normalized_id
     primary_key: id
-    
-    cache_schema:
-      value_type: string
-      scope: normalization
 
 # TODO: Figure out whether to move to filtering or stay here
   deduplication:

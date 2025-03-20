@@ -1,4 +1,3 @@
-import pyarrow as pa
 from kedro.pipeline import Pipeline, node, pipeline
 
 from matrix import settings
@@ -19,21 +18,17 @@ def create_cached_normalization_pipeline(**kwargs) -> Pipeline:
         pipelines.append(
             pipeline(
                 batch_pipeline.cached_api_enrichment_pipeline(
-                    source=f"source_{source}",
+                    source=f"normalization_source_{source}",
+                    workers=20,
                     input=f"integration.int.{source}.nodes",
-                    cache="integration.cache.read",  # shouldn't be joined with the embeddings cache, because the value in key:value:api is of a different datatype (str instead of list[float])
-                    primary_key="params:integration.normalization.primary_key",
+                    output=f"integration.int.{source}.nodes_norm_mapping",
+                    preprocessor="params:integration.normalization.preprocessor",
                     cache_miss_resolver="params:integration.normalization.normalizer",
                     api="params:integration.normalization.api",
-                    preprocessor="params:integration.normalization.preprocessor",
-                    output=f"integration.int.{source}.nodes_norm_mapping",
-                    new_col="params:integration.normalization.new_col",
+                    new_col="params:integration.normalization.target_col",
+                    primary_key="params:integration.normalization.primary_key",
                     batch_size="params:integration.normalization.batch_size",
-                    cache_misses=f"integration.int.{source}.cache_misses",
-                    cache_out=f"integration.{source}.cache.write",
-                    cache_reload=f"integration.{source}.cache.reload",
-                    value_type="params:integration.normalization.cache_schema.value_type",
-                    scope="params:integration.normalization.cache_schema.scope",
+                    cache_schema="params:integration.normalization.cache_schema",
                 ),
             )
         )
@@ -74,21 +69,17 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
                     ),
                 ),
                 batch_pipeline.cached_api_enrichment_pipeline(
-                    source=f"source_{source}",
+                    source=f"normalization_source_{source}",
+                    workers=20,
                     input=f"integration.int.{source}.nodes",
-                    cache="integration.cache.read",  # shouldn't be joined with the embeddings cache, because the value in key:value:api is of a different datatype (str instead of list[float])
-                    primary_key="params:integration.normalization.primary_key",
+                    output=f"integration.int.{source}.nodes_norm_mapping",
+                    preprocessor="params:integration.normalization.preprocessor",
                     cache_miss_resolver="params:integration.normalization.normalizer",
                     api="params:integration.normalization.api",
-                    preprocessor="params:integration.normalization.preprocessor",
-                    output=f"integration.int.{source}.nodes.nodes_norm_mapping",
-                    new_col="params:integration.normalization.new_col",
+                    new_col="params:integration.normalization.target_col",
+                    primary_key="params:integration.normalization.primary_key",
                     batch_size="params:integration.normalization.batch_size",
-                    cache_misses=f"integration.int.{source}.cache_misses",
-                    cache_out=f"integration.{source}.cache.write",
-                    cache_reload=f"integration.{source}.cache.reload",
-                    value_type="params:integration.normalization.cache_schema.value_type",
-                    scope="params:integration.normalization.cache_schema.scope",
+                    cache_schema="params:integration.normalization.cache_schema",
                 ),
                 node(
                     func=nodes.normalize_nodes,
