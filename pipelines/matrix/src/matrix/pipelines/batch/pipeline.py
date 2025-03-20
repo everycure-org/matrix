@@ -395,3 +395,7 @@ def report_on_cache_misses(df: DataFrame, api: str) -> None:
         logger.info(
             json.dumps({"api": api, "cache size": f"{no_nulls+nulls:_}", "non null cache values": f"{no_nulls:_}"})
         )
+
+
+def pass_through(x):
+    return x
