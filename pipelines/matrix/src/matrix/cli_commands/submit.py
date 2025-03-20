@@ -22,6 +22,7 @@ from rich.logging import RichHandler
 from rich.panel import Panel
 
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
+from matrix.config_loader import load_env_vars
 from matrix.git_utils import (
     BRANCH_NAME_REGEX,
     get_latest_minor_release,
@@ -91,7 +92,7 @@ def submit(
     """Submit the end-to-end workflow. """
 
     click.secho("Warning - kedro submit will be deprecated soon. Please use kedro experiment run.", bg="yellow", fg="black")
-
+    load_env_vars(env=gcp_env)
     if not quiet:
         log.setLevel(logging.DEBUG)
 
