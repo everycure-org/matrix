@@ -160,38 +160,30 @@ evaluation.full_matrix_trials:
       quantile_func_lst: 
         - _object: matrix.pipelines.evaluation.named_metric_functions.AUROC
 
-# evaluation.stability_overlap:
-#   evaluation_options:
-#     generator:
-#       _object: matrix.datasets.pair_generator.NoGenerator
-#     stability:
-#       _object: matrix.pipelines.evaluation.evaluation.StabilityCommonalityAtN
-#       rank_func_lst: 
-#         - _object:  matrix.pipelines.evaluation.named_metric_functions.CommonalityAtN 
-#           n: 1000
-#         - _object:  matrix.pipelines.evaluation.named_metric_functions.CommonalityAtN
-#           n: 10000
-#         - _object:  matrix.pipelines.evaluation.named_metric_functions.CommonalityAtN
-#           n: 100000
-#         - _object:  matrix.pipelines.evaluation.named_metric_functions.CommonalityAtN
-#           n: 1000000
+evaluation.stability_overlap:
+  evaluation_options:
+    generator:
+      _object: matrix.datasets.pair_generator.NoGenerator
+    stability:
+      _object: matrix.pipelines.evaluation.evaluation.StabilityCommonalityAtN
+      rank_func_lst: 
+        - _object:  matrix.pipelines.evaluation.named_metric_functions.CommonalityAtN
+          n: 10000
+        - _object:  matrix.pipelines.evaluation.named_metric_functions.CommonalityAtN
+          n: 1000000
 
-# evaluation.stability_ranking:
-#    evaluation_options:
-#     generator:
-#       _object: matrix.datasets.pair_generator.OnlyOverlappingPairs
-#     stability:
-#       _object: matrix.pipelines.evaluation.evaluation.StabilityRankingMetrics 
-#       rank_func_lst: 
-#         - _object:  matrix.pipelines.evaluation.named_metric_functions.SpearmanAtN
-#           n: 10000
-#         - _object:  matrix.pipelines.evaluation.named_metric_functions.SpearmanAtN
-#           n: 100000
-#         - _object:  matrix.pipelines.evaluation.named_metric_functions.SpearmanAtN
-#           n: 1000000
-#         - _object:  matrix.pipelines.evaluation.named_metric_functions.HypergeomAtN
-#           n: 10000
-#         - _object:  matrix.pipelines.evaluation.named_metric_functions.HypergeomAtN
-#           n: 100000
-#         - _object:  matrix.pipelines.evaluation.named_metric_functions.HypergeomAtN
-#           n: 1000000
+evaluation.stability_ranking:
+   evaluation_options:
+    generator:
+      _object: matrix.datasets.pair_generator.OnlyOverlappingPairs
+    stability:
+      _object: matrix.pipelines.evaluation.evaluation.StabilityRankingMetrics 
+      rank_func_lst: 
+        - _object:  matrix.pipelines.evaluation.named_metric_functions.SpearmanAtN
+          n: 10000
+        - _object:  matrix.pipelines.evaluation.named_metric_functions.SpearmanAtN
+          n: 1000000
+        - _object:  matrix.pipelines.evaluation.named_metric_functions.HypergeomAtN
+          n: 10000
+        - _object:  matrix.pipelines.evaluation.named_metric_functions.HypergeomAtN
+          n: 1000000

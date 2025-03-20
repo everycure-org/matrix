@@ -3,7 +3,7 @@ import logging
 import os
 import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Collection, Dict, Optional, Set
 
 import fsspec
 import mlflow
@@ -88,13 +88,12 @@ class MLFlowHooks:
                 logger.info(f"Dataset {dataset_name} has already been logged as input.")
 
     @staticmethod
-    def fetch_logged_datasets() -> List[str]:
+    def fetch_logged_datasets() -> set[str]:
         run_id = MLFlowHooks._kedro_context.mlflow.tracking.run.id
-        logger.info(f"Fetching already logged datasets for run id: {run_id}")
         client = mlflow.tracking.MlflowClient()
         logged_inputs = client.get_run(run_id).inputs
-        logged_names = [dataset.dataset.name for dataset in logged_inputs.dataset_inputs]
-        logger.info(f"These are dataset names that have already been logged: {logged_names}")
+        logged_names = {dataset.dataset.name for dataset in logged_inputs.dataset_inputs}
+        logger.debug(f"These are dataset names that have already been logged for run id '{run_id}': {logged_names}")
         return logged_names
 
     @hook_impl
@@ -148,6 +147,9 @@ class MLFlowHooks:
 
         if not runs:
             logger.info("creating run")
+            # For some reason MLFLOW_RUN_ID is set to "None" rather than None, so it tries to find this run id
+            if os.environ.get("MLFLOW_RUN_ID") == "None":
+                del os.environ["MLFLOW_RUN_ID"]
             run = mlflow.start_run(run_name=run_name, experiment_id=experiment_id)
             mlflow.set_tag("created_by", "kedro")
             return run.info.run_id
@@ -201,6 +203,18 @@ class SparkHooks:
             # Clear any existing default session, we take control!
             sess = ps.SparkSession.getActiveSession()
             if sess is not None:
+                # Kedro integration tests (those using
+                # kedro.framework.session.KedroSession) that make use of this
+                # hook will make all tests using the SparkSession fail if the
+                # session started by the pytest fixture is stopped. We may
+                # consider to modify the configuration of the SparkSession fixture
+                # using the parameters from spark.yml (as is done below), but
+                # for the moment this is not needed in our test suite.
+                # In other words, referring to the previous comment: we do not
+                # take control in the case of a test suite.
+                if "PYTEST_CURRENT_TEST" in os.environ:
+                    cls._spark_session = sess
+                    return
                 logger.warning("we are killing spark to create a fresh one")
                 sess.stop()
             parameters = cls._kedro_context.config_loader["spark"]
@@ -208,7 +222,7 @@ class SparkHooks:
             # DEBT ugly fix, ideally we overwrite this in the spark.yml config file but currently no
             # known way of doing so
             # if prod environment, remove all config keys that start with spark.hadoop.google.cloud.auth.service
-            if os.environ.get("ARGO_NODE_ID") is not None:
+            if "ARGO_NODE_ID" in os.environ:
                 logger.warning(
                     "We're manipulating the spark configuration now. This is done assuming this is a production execution in argo"
                 )
@@ -220,7 +234,7 @@ class SparkHooks:
                 logger.info(f'With ARGO_POD_UID set to: {os.environ.get("ARGO_NODE_ID", "")}')
                 logger.info("Thus determined not to be in k8s cluster and executing with service-account.json file")
 
-            logging.info(f"starting spark session with the following parameters: {parameters}")
+            logger.info(f"starting spark session with the following parameters: {parameters}")
             spark_conf = SparkConf().setAll(parameters.items())
 
             # Create and set our configured session as the default
@@ -253,7 +267,7 @@ class SparkHooks:
 
     def _check_and_initialize_spark(self, dataset_name: str) -> None:
         """Check if dataset is SparkDataset and initialize Spark if needed."""
-        if self.__class__._already_initialized is True:
+        if self.__class__._already_initialized:
             return
 
         dataset = self.catalog._get_dataset(dataset_name)
@@ -280,7 +294,7 @@ class SparkHooks:
         try:
             msg = ["Current Spark Configuration:"]
             msg.extend([f"{k}: {v}" for k, v in sorted(self._spark_session.sparkContext.getConf().getAll())])
-            logger.info("\n".join(msg))
+            logger.debug("\n".join(msg))
         except AttributeError:
             logger.warning("SparkSession is not initialized.")
 
@@ -405,7 +419,7 @@ class ReleaseInfoHooks:
         return dataset_names
 
     @classmethod
-    def extract_all_global_datasets(cls, hidden_datasets: frozenset) -> dict:
+    def extract_all_global_datasets(cls, hidden_datasets: Collection) -> dict:
         datasources_to_versions = {
             k: v["version"] for k, v in ReleaseInfoHooks._globals["data_sources"].items() if k not in hidden_datasets
         }
@@ -423,12 +437,12 @@ class ReleaseInfoHooks:
                 global_datasets[global_dataset] = "not included"
 
     @staticmethod
-    def extract_release_info(global_datasets: str) -> dict[str, str]:
+    def extract_release_info(global_datasets: dict[str, Any]) -> dict[str, str]:
         info = {
             "Release Name": ReleaseInfoHooks._globals["versions"]["release"],
             "Datasets": global_datasets,
             "Topological Estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["_object"],
-            "Embeddings Encoder": ReleaseInfoHooks._params["embeddings.node"]["encoder"]["encoder"]["model"],
+            "Embeddings Encoder": ReleaseInfoHooks._params["embeddings.node"]["resolver"]["encoder"]["model"],
             "BigQuery Link": ReleaseInfoHooks.build_bigquery_link(),
             "MLFlow Link": ReleaseInfoHooks.build_mlflow_link(),
             "Code Link": ReleaseInfoHooks.build_code_link(),
