@@ -127,6 +127,18 @@ def create_pipeline(**kwargs) -> Pipeline:
         pipeline(
             [
                 node(
+                    func=nodes.unify_ground_truth,
+                    inputs=[
+                        *[
+                            f'integration.int.{source["name"]}.edges.norm@spark'
+                            for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
+                            if source.get("ground_truth", False)
+                        ],
+                    ],
+                    outputs="integration.prm.unified_ground_truth_edges",
+                    name="unify_ground_truth_edges",
+                ),
+                node(
                     func=nodes.union_and_deduplicate_nodes,
                     inputs=[
                         "params:integration.deduplication.retrieve_most_specific_category",

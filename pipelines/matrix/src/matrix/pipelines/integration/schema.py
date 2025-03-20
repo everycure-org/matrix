@@ -37,3 +37,19 @@ BIOLINK_KG_EDGE_SCHEMA = DataFrameSchema(
     unique=["subject", "predicate", "object"],
     strict=True,
 )
+
+GT_EDGE_SCHEMA = DataFrameSchema(
+    columns={
+        "id": Column(T.StringType(), nullable=False),
+        "object": Column(T.StringType(), nullable=False),
+        "subject": Column(T.StringType(), nullable=False),
+        "y": Column(T.IntegerType(), nullable=False),
+        "predicate": Column(T.StringType(), nullable=True),
+        "flag": Column(T.StringType(), nullable=True),
+        "upstream_source": Column(T.StringType(), nullable=False),
+        "object_label": Column(T.StringType(), nullable=True),
+        "subject_label": Column(T.StringType(), nullable=True),
+        "original_object": Column(T.StringType(), nullable=False),
+        "original_subject": Column(T.StringType(), nullable=False),
+    }
+)
