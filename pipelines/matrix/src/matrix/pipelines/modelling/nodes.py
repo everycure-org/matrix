@@ -18,6 +18,7 @@ from matrix.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
 from .model import ModelWrapper
+from .model_selection import DiseaseAreaSplit
 
 logger = logging.getLogger(__name__)
 
@@ -233,13 +234,10 @@ def make_folds(
         while fold k is the fold with full training data
     """
 
-    # Access the name of the splitter
-    splitter_name = splitter.__class__.__name__
-
     # Split data into folds
     all_data_frames = []
 
-    if splitter_name == "DiseaseAreaSplit":
+    if isinstance(splitter, DiseaseAreaSplit):
         split_iterator = splitter.split(data, disease_list)
     else:
         split_iterator = splitter.split(data, data["y"])

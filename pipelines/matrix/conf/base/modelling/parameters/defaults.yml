@@ -23,11 +23,6 @@ modelling.splitter:
     - 'hereditary_disease'
     - 'syndromic_disease'
     - 'metabolic_disease'
-  # Note:
-  # 'harrisons_view's holdout_disease_types: 'cancer_or_benign_tumor', 'inflammatory_disease', 'hereditary_disease', 'syndromic_disease', 'metabolic_disease'
-  # 'mondo_top_grouping's holdout_disease_types: 'infectious_disease', 'cardiovascular_disorder', 'nervous_system_disorder', 'respiratory_system_disorder', 'psychiatric_disorder'
-  # 'mondo_txgnn's holdout_disease_types: 'cancer_or_benign_tumor', 'infectious_disease', 'psychiatric_disorder', 'cardiovascular_disorder', 'autoimmune_disease'
-  # 'txgnn's holdout_disease_types: 'mental_health_disorder', 'cancer', 'cardiovascular_disorder', 'inflammatory_disease', 'neurodegenerative_disease' 
   test_size: 0.1
   random_state: ${globals:random_state}
   n_splits: ${setting:cross_validation.n_cross_val_folds}
