@@ -1,6 +1,7 @@
 import asyncio
 import logging
-from typing import Any, Dict
+from collections.abc import Collection
+from typing import Any
 
 import aiohttp
 from jsonpath_ng import parse
@@ -30,9 +31,9 @@ class NCATSNodeNormalizer(Normalizer):
         retry=retry_if_exception_type((aiohttp.ClientError, asyncio.TimeoutError)),
         before_sleep=print,
     )
-    async def apply(self, curies: list[str]) -> list[str | None]:
+    async def apply(self, curies: Collection[str]) -> list[str | None]:
         request_json = {
-            "curies": curies,
+            "curies": tuple(curies),  # must be json serializable
             "conflate": self._conflate,
             "drug_chemical_conflate": self._drug_chemical_conflate,
             "description": self._description,
@@ -53,7 +54,7 @@ class NCATSNodeNormalizer(Normalizer):
         return [self._extract_id(curie, response_json, self._json_parser) for curie in curies]
 
     @staticmethod
-    def _extract_id(id: str, response: Dict[str, Any], json_parser: parse) -> str | None:
+    def _extract_id(id: str, response: dict[str, Any], json_parser: parse) -> str | None:
         """Extract normalized IDs from the response using the json parser."""
         try:
             return str(json_parser.find(response.get(id))[0].value)
