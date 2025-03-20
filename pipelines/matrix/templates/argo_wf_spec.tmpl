@@ -63,11 +63,15 @@ spec:
               operator: NotIn
               values:
               - "true"
-    # Add tolerations for large memory nodes
+    # Add tolerations for large memory nodes and GPU nodes
     tolerations:
     - key: "node-memory-size"
       operator: "Equal"
       value: "large"
+      effect: "NoSchedule"
+    - key: "nvidia.com/gpu"
+      operator: "Equal" 
+      value: "present"
       effect: "NoSchedule"
     metadata:
       labels:

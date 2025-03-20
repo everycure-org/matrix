@@ -22,15 +22,6 @@ locals {
     enable_gcfs                       = true
     enable_gvnic                      = true
     initial_node_count                = 0
-    # Add taints to larger memory nodes
-    # Memory sizes: n2d-highmem-8: 64GB, n2d-highmem-16: 128GB, n2d-highmem-32: 256GB, etc.
-    taints = size >= 8 ? [
-      {
-        key    = "node-memory-size"
-        value  = "large"
-        effect = "NoSchedule"
-      }
-    ] : []
     }
   ]
 
@@ -46,17 +37,9 @@ locals {
     enable_gcfs        = true
     enable_gvnic       = true
     initial_node_count = 0
-    # Add taints to larger memory nodes
-    # Memory sizes: n2-standard-8: 32GB, n2-standard-16: 64GB, n2-standard-32: 128GB, etc.
-    taints = size >= 16 ? [
-      {
-        key    = "node-memory-size"
-        value  = "large"
-        effect = "NoSchedule"
-      }
-    ] : []
     }
   ]
+
   gpu_node_pools = [
     {
       name               = "g2-standard-16-l4-nodes" # 1 GPU, 16vCPUs, 64GB RAM
@@ -73,17 +56,52 @@ locals {
       accelerator_count  = 1
       accelerator_type   = "nvidia-l4"
       gpu_driver_version = "LATEST"
-      # Add taints for GPU nodes
-      taints = [
-        {
-          key    = "nvidia.com/gpu"
-          value  = "present"
-          effect = "NoSchedule"
-        }
-      ]
-    },
+    }
   ]
-  node_pools_combined = concat(local.standard_node_pools, local.gpu_node_pools, local.n2d_node_pools)
+
+  # Combine all node pools
+  node_pools_combined = concat(
+    local.standard_node_pools,
+    local.n2d_node_pools,
+    local.gpu_node_pools
+  )
+
+  # Define node pools that should have the large memory taint
+  large_memory_pools = concat(
+    [for size in [8, 16, 32, 48, 64] : "n2d-highmem-${size}-nodes"],
+    [for size in [16, 32, 48, 64] : "n2-standard-${size}-nodes"],
+    ["g2-standard-16-l4-nodes"]
+  )
+
+  # Create a map of node pool taints
+  node_pools_taints_map = {
+    # Default empty taints for all pools
+    all = []
+
+    # Add GPU taint to GPU node pool
+    "g2-standard-16-l4-nodes" = [
+      {
+        key    = "nvidia.com/gpu"
+        value  = "present"
+        effect = "NO_SCHEDULE"
+      }
+    ]
+  }
+
+  # Add large memory taints for the appropriate node pools
+  node_pools_taints = merge(
+    local.node_pools_taints_map,
+    {
+      for pool in local.large_memory_pools :
+      pool => [
+        {
+          key    = "node-memory-size"
+          value  = "large"
+          effect = "NO_SCHEDULE"
+        }
+      ] if !contains(keys(local.node_pools_taints_map), pool)
+    }
+  )
 }
 
 # docs here https://registry.terraform.io/modules/terraform-google-modules/kubernetes-engine/google/latest/submodules/private-cluster
@@ -121,8 +139,10 @@ module "gke" {
   node_metadata                = "UNSPECIFIED"
   gke_backup_agent_config      = true
 
-  # FUTURE: Refine node pools
   node_pools = local.node_pools_combined
+
+  # Apply taints through the node_pools_taints parameter
+  node_pools_taints = local.node_pools_taints
 
   node_pools_labels = {
     for pool in local.node_pools_combined : pool.name => {
@@ -138,5 +158,4 @@ module "gke" {
   #     "https://www.googleapis.com/auth/devstorage.read_write"
   #   ]
   # }
-
 }
