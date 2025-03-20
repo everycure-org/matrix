@@ -1,5 +1,6 @@
-# ./packages/data_fabricator
-git+https://github.com/everycure-org/matrix-legacy-proprietary-packages.git@main#egg=data_fabricator&subdirectory=data_fabricator
+# TODO remove fabricator package from default requirements.in
+# this needs to be commented out for those not having access to our legacy proprietary packages
+./packages/data_fabricator
 bmt # biolink model toolkit
 gcsfs==2024.3.1
 google-cloud-bigquery

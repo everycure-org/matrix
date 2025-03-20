@@ -87,6 +87,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: 
+          submodules: true # ensures packages are cloned as well
           sparse-checkout: |
             pipelines/matrix/
       - uses: 'google-github-actions/auth@v2'
