@@ -13,7 +13,7 @@ from matrix.inject import inject_object
 from matrix.pipelines.integration.filters import determine_most_specific_category
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
-from .schema import BIOLINK_KG_EDGE_SCHEMA, BIOLINK_KG_NODE_SCHEMA
+from .schema import BIOLINK_KG_EDGE_SCHEMA, BIOLINK_KG_NODE_SCHEMA, GT_EDGE_SCHEMA
 
 # TODO move these into config
 memory = Memory(location=".cache/nodenorm", verbose=0)
@@ -69,6 +69,16 @@ def union_edges(*edges, cols: List[str]) -> ps.DataFrame:
         )
         .select(*cols)
     )
+    # fmt: on
+
+
+@check_output(
+    schema=GT_EDGE_SCHEMA,
+)
+def unify_ground_truth(*edges) -> ps.DataFrame:
+    """Function to unify edges datasets."""
+    # fmt: off
+    return _union_datasets(*edges)
     # fmt: on
 
 

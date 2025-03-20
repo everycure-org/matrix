@@ -79,7 +79,13 @@ def _create_ec_gt_pairs(
     positives = df[:num]
     negatives = df[num : 2 * num]
 
-    BOOL_COLS = ["is_diagnostic_agent", "is_allergen", "llm_nameres_correct", "llm_nameres_correct_drug"]
+    BOOL_COLS = [
+        "is_diagnostic_agent",
+        "is_allergen",
+        "llm_nameres_correct",
+        "llm_nameres_correct_drug",
+        "downfilled from mondo",
+    ]
     STRING_COLS = [
         "final normalized drug label",
         "final normalized disease label",
@@ -103,6 +109,7 @@ def _create_ec_gt_pairs(
     )
     positives["final normalized disease label"] = positives["final normalized disease id"]
     positives["final normalized drug label"] = positives["final normalized drug id"]
+    positives["downfilled from mondo"] = np.random.choice([True, False], len(positives), p=[0.3, 0.7])
     negatives = negatives.rename(
         columns={"source": "final normalized drug id", "target": "final normalized disease id"}
     )
