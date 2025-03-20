@@ -1,5 +1,7 @@
 import pytest
+from kedro.framework.session import KedroSession
 from matrix.datasets.gcp import RemoteSparkJDBCDataset, SparkDatasetWithBQExternalTable
+from pyspark.sql.types import ArrayType, FloatType, StringType, StructType
 
 
 def test_remote_spark_dataset_split_path():
