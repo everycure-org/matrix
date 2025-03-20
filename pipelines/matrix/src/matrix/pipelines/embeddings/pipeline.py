@@ -1,29 +1,14 @@
 from kedro.pipeline import Pipeline, pipeline
 
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
-from matrix.pipelines.batch import pipeline as batch_pipeline
-
-from . import nodes
+from matrix.pipelines.embeddings import nodes
 
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create embeddings pipeline."""
     return pipeline(
         [
-            batch_pipeline.create_pipeline(
-                # Source to uniquely identify dataset
-                source="node_embeddings",
-                # Input and output datasets
-                df="filtering.prm.filtered_nodes",
-                output="embeddings.feat.graph.node_embeddings@spark",
-                # Transformer
-                columns="params:embeddings.node.input_features",
-                bucket_size="params:embeddings.node.batch_size",
-                transformer="params:embeddings.node.encoder",
-                # NOTE: These are kwargs
-                input_features="params:embeddings.node.input_features",
-                max_input_len="params:embeddings.node.max_input_len",
-            ),
+            *create_node_embeddings_pipeline().nodes,
             # Reduce dimension
             ArgoNode(
                 func=nodes.reduce_embeddings_dimension,
@@ -174,4 +159,24 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
             ),
         ],
+    )
+
+
+def create_node_embeddings_pipeline() -> Pipeline:
+    from matrix.pipelines.batch.pipeline import cached_api_enrichment_pipeline  # resolve circular import
+
+    source = "embeddings"
+    workers = 20
+    return cached_api_enrichment_pipeline(
+        source=source,
+        workers=workers,
+        input="filtering.prm.filtered_nodes",
+        output="embeddings.feat.graph.node_embeddings@spark",
+        preprocessor="params:embeddings.node.preprocessor",
+        cache_miss_resolver="params:embeddings.node.resolver",
+        api="params:embeddings.node.api",
+        new_col="params:embeddings.node.target_col",
+        primary_key="params:embeddings.node.primary_key",
+        batch_size="params:embeddings.node.batch_size",
+        cache_schema="params:embeddings.node.cache_schema",
     )
