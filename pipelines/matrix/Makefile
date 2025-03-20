@@ -1,5 +1,8 @@
 dev_docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
+prod_docker_image = us-central1-docker.pkg.prod/mtrx-hub-prod-sms/matrix-images/matrix
+
 TAG ?= ${USER}
+TARGET ?= dev
 GIT_SHA ?= $(shell git rev-parse --short HEAD)
 export PYSPARK_PYTHON = .venv/bin/python
 export UV_PYTHON = .venv/bin/python
@@ -107,11 +110,11 @@ docker_test: certificate docker_build
 		--exit-code-from matrix-pipeline
 
 docker_build:
-	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(dev_docker_image) --load ./
-	docker tag $(dev_docker_image) $(dev_docker_image):${TAG}
+	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(${TARGET}_docker_image) --load ./
+	docker tag $(${TARGET}_docker_image) $(${TARGET}_docker_image):${TAG}
 
 docker_push: docker_build
-	docker push $(dev_docker_image):${TAG}
+	$(${TARGET}_docker_image):${TAG}
 
 certificate:
 	@echo "Generating test SSL certificate for Neo4J."
