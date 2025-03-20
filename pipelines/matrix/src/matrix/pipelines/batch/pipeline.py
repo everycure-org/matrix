@@ -96,7 +96,7 @@ def cached_api_enrichment_pipeline(
             serialization purposes.
 
     Returns:
-        A Kedro Pipeline that will enrich the input DataFrame.
+        Kedro Pipeline.
     """
     cache = f"batch.{source}.cache.read"
     cache_out = f"batch.{source}.{workers}.cache.write"

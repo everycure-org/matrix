@@ -108,6 +108,3 @@ embeddings.node:
   api: *api
   target_col: embedding
   batch_size: 40000  # Bigger batch sizes result in larger Parquet files. +-250MB/file is a good rule of thumb on object stores like GCS. However, a bigger batch size also means you need to keep more elements in memory, so too big of a size will result in Out-Of-Memory errors.
-  cache_schema:
-    value_type: float32
-    scope: embeddings
