@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime
 from typing import Dict, Iterable, Iterator, List, Optional, Tuple, Union
 
@@ -176,11 +177,12 @@ def make_predictions_and_sort(
     Returns:
         Pairs dataset with additional column containing the probability scores.
     """
+
     # 1. convert the knowledgeGraph into a Spark DataFrame.
     #    Use `data.sparkSession.createDataFrame` so you immediately have the SparkSession you need (and don't need to call it).
     # 2. Replace graph.get_embedding with a simple Spark join.
-
-    data = data.limit(10)
+    if "ARGO_NODE_ID" not in os.environ:
+        data = data.limit(1000)
     schema = StructType(
         [StructField("id", StringType(), True), StructField("topological_embedding", ArrayType(FloatType()), True)]
     )
@@ -188,6 +190,7 @@ def make_predictions_and_sort(
     embeddings = data.sparkSession.createDataFrame(
         [(k, v.tolist()) for k, v in graph._embeddings.items()], schema=schema
     ).cache()
+    logger.info(f"rows in embeddings lookup table: {embeddings.count()}")
 
     data = (
         data.join(
@@ -235,8 +238,14 @@ def make_predictions_and_sort(
     # Extract features
     data_features = _extract_elements_in_list(transformed.columns, features, True)
 
-    def predict_partition(partition: Iterable[Row]) -> Iterator[Row]:
+    def predict_partition(partitionindex: int, partition: Iterable[Row]) -> Iterator[Row]:
         partition_df = pd.DataFrame.from_records(row.asDict() for row in partition)
+        if partition_df.empty:
+            logger.warning(f"partition with index {partitionindex} is empty")
+            return
+        else:
+            logger.info(f"non empty partition at {partitionindex}")
+        print(partition_df.head(3))
         X = partition_df[data_features]
 
         predictions = model.predict_proba(X)
@@ -246,17 +255,23 @@ def make_predictions_and_sort(
         )
 
         result_df = pd.concat([partition_df, predictions_df], axis=1)
+        print(result_df.head(3))
         for row in result_df.to_dict("records"):
             yield Row(**row)
 
-    transformed = transformed.repartition(2000)  # Adjust based on data size
-    transformed = transformed.rdd.mapPartitions(predict_partition).toDF()
+    if "ARGO_NODE_ID" not in os.environ:
+        transformed = transformed.repartition(
+            20
+        )  # Adjust based on data size - 20 is small, but okay for local development on subset of data
+    else:
+        logger.info(f"Number of rows remaining: {transformed.count()}")
+    transformed = transformed.rdd.mapPartitionsWithIndex(predict_partition).toDF()
     data = data.drop("source_embedding", "target_embedding")
     data = data.join(
         transformed.select("__index_level_0__", not_treat_score_col_name, treat_score_col_name, unknown_score_col_name),
         on="__index_level_0__",
         how="inner",
-    )
+    ).cache()
 
     # 4. Validate the code at least reaches this point without OOM, as the next steps are a bit risky.
     # Example:
