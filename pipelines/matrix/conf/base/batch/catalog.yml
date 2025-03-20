@@ -19,21 +19,6 @@ _pandas_parquet: &_pandas_parquet
 # Datasets
 # -------------------------------------------------------------------------
 
-batch.int.{source}.input_bucketized@spark:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/batch/{source}/bucketized
-  save_args:
-    mode: overwrite
-    partitionBy:
-      - bucket
-
-batch.int.{source}.input_bucketized@partitioned:
-  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
-  path: ${globals:paths.tmp}/batch/{source}/bucketized
-  dataset: 
-    <<: *_pandas_parquet
-  filename_suffix: ".parquet"
-
 batch.int.{source}.{workers}.input_transformed@partitioned:
   type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
   overwrite: True # NOTE: Very important to ensure every run clear out previous partitions
