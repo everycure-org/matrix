@@ -30,6 +30,8 @@ class ArgoResourceConfig(BaseModel):
         cpu_limit (float): Maximum CPU cores allowed for the pod.
         memory_request (float): Memory requested for the pod in GB.
         memory_limit (float): Maximum memory allowed for the pod in GB.
+        ephemeral_storage_request (float): Ephemeral storage requested for the pod in GB.
+        ephemeral_storage_limit (float): Maximum ephemeral storage allowed for the pod in GB.
     """
 
     num_gpus: int = KUBERNETES_DEFAULT_NUM_GPUS
