@@ -7,7 +7,7 @@ argo-workflows:
   artifactRepository:
     archiveLogs: true
     gcs:
-      bucket: dummy
+      bucket: dummy-replaced-by-helm-override-from-app-of-apps
       keyFormat: "{{ \"{{workflow.namespace}}/{{workflow.name}}/{{pod.name}}\" }}"
   
   controller:
