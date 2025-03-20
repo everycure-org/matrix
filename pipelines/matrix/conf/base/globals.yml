@@ -49,7 +49,7 @@ data_sources:
 mlflow_artifact_root: null
 mlflow_experiment_id: null
 
-mlflow_url: https://mlflow.platform.dev.everycure.org/
+mlflow_url: ${MLFLOW_URL}
 
 paths:
   # Upstream-source versioned
