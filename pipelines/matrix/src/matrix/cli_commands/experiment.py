@@ -114,6 +114,7 @@ def create(experiment_name):
 @click.option(
     "--experiment-name", type=str, help="Optional: specify the MLFlow experiment name to use. Defaults to branch name"
 )
+@click.option("--gcp-project", type=str, default="dev", help="prod/dev")
 @click.pass_context
 def run(
     ctx,
@@ -131,6 +132,7 @@ def run(
     environment: str,
     skip_git_checks: bool,
     experiment_name: str,
+    gcp_project: str,
 ):
     """Run an experiment."""
 
@@ -181,6 +183,7 @@ def run(
         experiment_id=experiment_id,
         mlflow_run_id=mlflow_run_id,
         skip_git_checks=skip_git_checks,
+        gcp_project=gcp_project,
     )
 
 
