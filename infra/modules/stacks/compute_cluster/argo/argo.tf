@@ -88,7 +88,7 @@ spec:
     syncOptions:
       - CreateNamespace=true
     automated:
-      prune: true
+      prune: false
       allowEmpty: true
 YAML
   )
