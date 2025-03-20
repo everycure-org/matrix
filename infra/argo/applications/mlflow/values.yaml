@@ -6,7 +6,7 @@ mlflow:
     # we see issues when uploading large files and this is a recommended workaround
     # https://github.com/mlflow/mlflow/issues/6331
     command: [ "/bin/sh", "-c" ]
-    args: dummy
+    args: dummy-replaced-by-helm-override-from-app-of-apps
 
     # default is medium
     # resourcesPreset: micro
