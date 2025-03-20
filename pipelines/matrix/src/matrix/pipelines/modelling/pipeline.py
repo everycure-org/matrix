@@ -224,6 +224,7 @@ def create_shared_pipeline() -> Pipeline:
                     "integration.int.kgml_xdtd_ground_truth.edges.norm@spark",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
+                    "params:modelling.training_gt_dataset",
                 ],
                 outputs={"pairs": "modelling.raw.known_pairs@spark", "metrics": "modelling.reporting.gt_present"},
                 name="filter_valid_pairs",
