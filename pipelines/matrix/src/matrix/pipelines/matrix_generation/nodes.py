@@ -192,18 +192,14 @@ def make_predictions_and_sort(
     ).cache()
     logger.info(f"rows in embeddings lookup table: {embeddings.count()}")
 
-    data = (
-        data.join(
-            embeddings.withColumnsRenamed({"id": "source", "topological_embedding": "source_embedding"}),
-            on="source",
-            how="left",
-        )
-        .join(
-            embeddings.withColumnsRenamed({"id": "target", "topological_embedding": "target_embedding"}),
-            on="target",
-            how="left",
-        )
-        .cache()
+    data = data.join(
+        embeddings.withColumnsRenamed({"id": "source", "topological_embedding": "source_embedding"}),
+        on="source",
+        how="left",
+    ).join(
+        embeddings.withColumnsRenamed({"id": "target", "topological_embedding": "target_embedding"}),
+        on="target",
+        how="left",
     )
     logger.info(f"data size: {data.count():_}x{len(data.columns):_}")
     # Retrieve rows with null embeddings
@@ -246,7 +242,7 @@ def make_predictions_and_sort(
             return
         else:
             logger.info(f"non empty partition at {partitionindex}")
-        print(partition_df.head(3))
+
         X = partition_df[data_features]
 
         predictions = model.predict_proba(X)
