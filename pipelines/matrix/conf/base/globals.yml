@@ -40,8 +40,7 @@ data_sources:
     # check releases here: https://github.com/everycure-org/matrix-disease-list/releases
     version: "February 2025 release 5"
   gt:
-    # This release is RTX v2.10.0 with GT 2.7.3
-    version: v2.7.3 # NOTE: This is the version of the GT dataset which was developed for rtx-kg2 as a part of KGML-xDTD pipeline
+    version: *_rtx_kg_version # NOTE: This is the version of the GT dataset which was developed for rtx-kg2 as a part of KGML-xDTD pipeline
   drugmech:
     # check releases here: https://github.com/SuLab/DrugMechDB/releases/ 
     version: 2.0.1
