@@ -49,3 +49,7 @@ variable "k8s_secrets" {
 variable "bucket_name" {
   type = string
 }
+
+variable "repo_revision" {
+  type = string
+}

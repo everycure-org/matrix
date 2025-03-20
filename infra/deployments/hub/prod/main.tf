@@ -11,19 +11,12 @@ module "compute_cluster" {
   gitops_repo_creds = var.gitops_repo_creds
   k8s_secrets       = var.k8s_secrets
   bucket_name       = var.storage_bucket_name
+  repo_revision     = var.repo_revision
+
 }
 
 
 module "dns" {
   source      = "../../../modules/components/dns"
   environment = var.environment
-}
-
-module "data_release_zone" {
-  source                = "../../../modules/stacks/data_release_zone"
-  project_id            = var.project_id
-  region                = var.default_region
-  dns_managed_zone_name = module.dns.dns_zone_name
-  dns_name              = module.dns.dns_name
-  environment           = var.environment
 }

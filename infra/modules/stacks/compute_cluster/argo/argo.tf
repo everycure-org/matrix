@@ -79,11 +79,21 @@ spec:
   destination:
     namespace: argocd
     server: "https://kubernetes.default.svc"
+  project: default
   source:
     path: ${var.repo_path}/app-of-apps
     repoURL: ${var.repo_url}
     targetRevision: ${var.repo_revision}
-  project: default
+    helm:
+      parameters:
+      - name: spec.source.targetRevision
+        value:  ${var.repo_revision}
+      - name: spec.source.environment
+        value:  ${var.environment}
+      - name: spec.source.project_id
+        value: ${var.project_id}
+      - name: spec.source.bucketname
+        value: ${var.bucket_name}
   syncPolicy:
     syncOptions:
       - CreateNamespace=true

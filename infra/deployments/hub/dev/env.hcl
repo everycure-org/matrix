@@ -6,4 +6,5 @@ locals {
   k8s_pod_ip_range    = "sn-hub-dev-us-pod-range"
   k8s_subnetwork      = "sn-hub-dev-us"
   network_name        = "matrix-hub-dev-nw"
+  repo_revision       = "infra"
 }
