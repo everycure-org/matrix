@@ -16,21 +16,19 @@ def create_cached_normalization_pipeline(**kwargs) -> Pipeline:
     for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration"):
         source = source["name"]
         pipelines.append(
-            pipeline(
-                batch_pipeline.cached_api_enrichment_pipeline(
-                    source=f"normalization_source_{source}",
-                    workers=20,
-                    input=f"integration.int.{source}.nodes",
-                    output=f"integration.int.{source}.nodes_norm_mapping",
-                    preprocessor="params:integration.normalization.preprocessor",
-                    cache_miss_resolver="params:integration.normalization.normalizer",
-                    api="params:integration.normalization.api",
-                    new_col="params:integration.normalization.target_col",
-                    primary_key="params:integration.normalization.primary_key",
-                    batch_size="params:integration.normalization.batch_size",
-                    cache_schema="params:integration.normalization.cache_schema",
-                ),
-            )
+            batch_pipeline.cached_api_enrichment_pipeline(
+                source=f"normalization_source_{source}",
+                workers=20,
+                input=f"integration.int.{source}.nodes",
+                output=f"integration.int.{source}.nodes_norm_mapping",
+                preprocessor="params:integration.normalization.preprocessor",
+                cache_miss_resolver="params:integration.normalization.normalizer",
+                api="params:integration.normalization.api",
+                new_col="params:integration.normalization.target_col",
+                primary_key="params:integration.normalization.primary_key",
+                batch_size="params:integration.normalization.batch_size",
+                cache_schema="params:integration.normalization.cache_schema",
+            ),
         )
     return sum(pipelines)
 
