@@ -1,4 +1,7 @@
+import functools
+import itertools
 import logging
+import operator
 import os
 from datetime import datetime
 from typing import Dict, Iterable, Iterator, List, Optional, Tuple, Union
@@ -6,7 +9,6 @@ from typing import Dict, Iterable, Iterator, List, Optional, Tuple, Union
 import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.functions as F
-import pyspark.sql.types as T
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.inject import _extract_elements_in_list, inject_object
 from matrix.pipelines.modelling.model import ModelWrapper
@@ -206,9 +208,13 @@ def make_predictions_and_sort(
     # NOTE: This only happens in a rare scenario where the node synonymizer
     # provided an identifier for a node that does _not_ exist in our KG.
     # https://github.com/everycure-org/matrix/issues/409
+
+    features: list[str] = list(itertools.chain(x["features"] for x in transformers.values()))
+
     if logger.isEnabledFor(logging.INFO):
+        logging.info(f"checking for dropped pairs because one of the features ({features}) is empty…")
         removed = (
-            data.filter(F.col("source_embedding").isNull() | F.col("target_embedding").isNull())
+            data.filter(functools.reduce(operator.or_, (F.col(colname).isNull() for colname in features)))
             .select("source", "target")
             .cache()
         )
@@ -219,21 +225,17 @@ def make_predictions_and_sort(
         removed.unpersist()
 
     # Drop rows without source/target embeddings
-    data = data.dropna(subset=["source_embedding", "target_embedding"])
+    data = data.dropna(subset=features)
 
-    # Return empty dataframe if all rows are dropped
-    if data.isEmpty():
-        return data.drop("source_embedding", "target_embedding")
+    # # Return empty dataframe if all rows are dropped
+    # if data.isEmpty():
+    #     return data.drop("source_embedding", "target_embedding")
 
-    # 3.debug: validate the type of transformers: is the type annotation correct?
-    from pprint import pformat
-
-    logger.warning(pformat(transformers))
-    # 3. TODO: check apply_transformers function
     # Apply transformers to data (assuming this can work with PySpark)
-    transformed = apply_transformers(data, transformers.values())
+    # transformed = apply_transformers(data, transformers.values())
+    transformed = data.withColumn("_source_and_target", F.concat(*features)).drop(*features)
     # Extract features
-    data_features = _extract_elements_in_list(transformed.columns, features, True)
+    # data_features = _extract_elements_in_list(transformed.columns, features, True)
 
     def predict_partition(partitionindex: int, partition: Iterable[Row]) -> Iterator[Row]:
         partition_df = pd.DataFrame.from_records(row.asDict() for row in partition)
@@ -243,16 +245,20 @@ def make_predictions_and_sort(
         else:
             logger.info(f"non empty partition at {partitionindex}")
 
-        X = partition_df[data_features]
+        s = partition_df["_source_and_target"]
+        logger.info(s.head(3))
+        X = pd.DataFrame.from_dict(dict(zip(s.index, s.values)))
+        logger.info(X.head())
+        logger.info(X.shape)
 
         predictions = model.predict_proba(X)
-
+        logger.info(predictions.shape)
         predictions_df = pd.DataFrame(
             predictions, columns=[not_treat_score_col_name, treat_score_col_name, unknown_score_col_name]
         )
+        logger.info(predictions_df.head(3))
 
         result_df = pd.concat([partition_df, predictions_df], axis=1)
-        print(result_df.head(3))
         for row in result_df.to_dict("records"):
             yield Row(**row)
 
@@ -262,13 +268,12 @@ def make_predictions_and_sort(
         )  # Adjust based on data size - 20 is small, but okay for local development on subset of data
     else:
         logger.info(f"Number of rows remaining: {transformed.count()}")
-    transformed = transformed.rdd.mapPartitionsWithIndex(predict_partition).toDF()
-    data = data.drop("source_embedding", "target_embedding")
-    data = data.join(
-        transformed.select("__index_level_0__", not_treat_score_col_name, treat_score_col_name, unknown_score_col_name),
-        on="__index_level_0__",
-        how="inner",
-    ).cache()
+    data = transformed.rdd.mapPartitionsWithIndex(predict_partition).toDF()
+    # data = data.join(
+    #     transformed.select("__index_level_0__", not_treat_score_col_name, treat_score_col_name, unknown_score_col_name),
+    #     on="__index_level_0__",
+    #     how="inner",
+    # ).cache()
 
     # 4. Validate the code at least reaches this point without OOM, as the next steps are a bit risky.
     # Example:
@@ -302,22 +307,9 @@ def apply_transformers(
     Returns:
         Transformed data.
     """
-    for transformer in transformers:
-        # Extract features for transformation
-        features = transformer["features"]  # Assuming this is a list of column names
-        features_selected = data.select(*features).toPandas()
-        # The transformer is inherited from sklearn.preprocessing.FunctionTransformer
-        transformed_values = transformer["transformer"].transform(features_selected)
-        spark_session: ps.SparkSession = ps.SparkSession.builder.getOrCreate()
 
-        # Convert transformed values back to Spark DataFrame
-        transformed_sdf = spark_session.createDataFrame(
-            pd.DataFrame(
-                transformed_values, columns=transformer["transformer"].get_feature_names_out(features_selected)
-            )
-        ).withColumn("__index_level_0__", F.monotonically_increasing_id())
-        # Join transformed data back to original DataFrame
-        data = data.drop(*features).join(transformed_sdf, on="__index_level_0__", how="inner")  # Drop old features
+    for transformer in transformers:
+        data = transformer(data)
 
     return data
 
