@@ -1,18 +1,20 @@
-import re
+from functools import partial
 from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
+import pyspark.sql as ps
 import pytest
 from matrix.datasets.graph import KnowledgeGraph
-from matrix.inject import _extract_elements_in_list
 from matrix.pipelines.matrix_generation.nodes import (
+    apply_transformers,
     generate_pairs,
     generate_report,
-    make_batch_predictions,
     make_predictions_and_sort,
 )
 from matrix.pipelines.modelling.transformers import FlatArrayTransformer
+from pyspark.sql import functions as sf
+from pyspark.testing import assertDataFrameEqual
 
 
 @pytest.fixture
@@ -227,7 +229,7 @@ def test_make_batch_predictions(
 ):
     # Given data, embeddings and a model
     # When we make batched predictions
-    result = make_batch_predictions(
+    result = make_predictions_and_sort(
         graph=sample_graph,
         data=sample_matrix_data,
         transformers=transformers,
@@ -236,9 +238,10 @@ def test_make_batch_predictions(
         treat_score_col_name="score",
         not_treat_score_col_name="not_treat_score",
         unknown_score_col_name="unknown_score",
-        batch_by="target",
+        # batch_by="target",
     )
 
+    # TODO: rewrite using the newer make_predictions_and_sort
     # Then the scores are added for all datapoints in a new column
     # and the model was called the correct number of times
     assert "score" in result.columns
@@ -389,3 +392,26 @@ def test_generate_report(sample_data):
     assert result["mean_all_per_disease"].tolist() == pytest.approx([0.8, 0.4, 0.3])
     assert result["mean_top_per_drug"].tolist() == pytest.approx([0.8, 0.6, 0.4])
     assert result["mean_all_per_drug"].tolist() == pytest.approx([0.8, 0.4, 0.4])
+
+
+def fun(df: ps.DataFrame, prefix: str, source_column: str) -> ps.DataFrame:
+    sf.array_size
+    sf.element_at
+    return df.select(sf.element_at(source_column, 0))
+
+
+def test_apply_transformers(spark: ps.SparkSession):
+    expected = spark.createDataFrame(
+        [
+            ([1, 2, 3], [4, 5], "a", 1, 2, 3),
+            ([4, 5, 6], [7, 8], "b", 4, 5, 6),
+        ],
+        schema=("a", "b", "c", "result_0", "result_1", "result_2"),
+    )
+
+    df = expected.drop(*expected.columns[-3:])
+
+    result = apply_transformers(data=df, transformers=[partial(fun, prefix="result_", source_column="a")])
+
+    result.show()
+    assertDataFrameEqual(result, expected.drop("a"))
