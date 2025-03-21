@@ -1,6 +1,6 @@
 _bigquery_ds: &_bigquery_ds
   type: matrix.datasets.gcp.SparkDatasetWithBQExternalTable
-  project_id: ${oc.env:GCP_PROJECT_ID}
+  project_id: ${oc.env:DEV_GCP_PROJECT_ID}
   dataset: release_${globals:versions.release}
   file_format: parquet
   save_args:

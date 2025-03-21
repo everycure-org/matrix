@@ -8,6 +8,7 @@ neo4j:
 
 # points at our central GCS_BUCKET where we store our ground truth data
 # Note: Overwrite with WG project ID & bucket if you want to write to a different project's BigQuery
+dev_gcs_bucket: gs://${oc.env:DEV_GCP_BUCKET}
 gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
 source_gcs_bucket: ${gcs_bucket}
 gcp_project: ${oc.env:GCP_PROJECT_ID, mtrx-hub-dev-3of}
@@ -52,8 +53,8 @@ mlflow_experiment_id: null
 mlflow_url: https://mlflow.platform.${oc.env:GCP_ENV}.everycure.org/
 paths:
   # Upstream-source versioned
-  raw:                ${source_gcs_bucket}/kedro/data/01_raw
-  kg_raw:             ${gcs_bucket}/data/01_RAW
+  raw:                ${dev_gcs_bucket}/kedro/data/01_raw
+  kg_raw:             ${dev_gcs_bucket}/data/01_RAW
   ingestion:          data/ingestion
 
   # Release-based
