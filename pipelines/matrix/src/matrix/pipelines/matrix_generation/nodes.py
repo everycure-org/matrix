@@ -212,7 +212,7 @@ def make_predictions_and_sort(
     features: list[str] = list(itertools.chain.from_iterable(x["features"] for x in transformers.values()))
     print(f"features: {features}")
     if logger.isEnabledFor(logging.INFO):
-        logging.info(f"checking for dropped pairs because one of the features ({features}) is empty…")
+        logging.info(f"Checking for dropped pairs because one of the features ({features}) is empty…")
         removed = (
             data.filter(functools.reduce(operator.or_, (F.col(colname).isNull() for colname in features)))
             .select("source", "target")
@@ -233,7 +233,8 @@ def make_predictions_and_sort(
 
     # Apply transformers to data (assuming this can work with PySpark)
     # transformed = apply_transformers(data, transformers.values())
-    transformed = data.withColumn("_source_and_target", F.concat(*features)).drop(*features)
+    feature_col = "_source_and_target"
+    transformed = data.withColumn(feature_col, F.concat(*features)).drop(*features)
     # Extract features
     # data_features = _extract_elements_in_list(transformed.columns, features, True)
 
@@ -242,10 +243,10 @@ def make_predictions_and_sort(
         if partition_df.empty:
             logger.warning(f"partition with index {partitionindex} is empty")
             return
-        else:
-            logger.info(f"non empty partition at {partitionindex}")
 
-        s = partition_df["_source_and_target"]
+        logger.info(f"cols before: {partition_df.columns}")
+        s = partition_df.pop(feature_col)
+        logger.info(f"cols after: {partition_df.columns}")
         logger.info(s.head(3))
         X = pd.DataFrame.from_dict(dict(zip(s.index, s.values))).transpose()
         logger.info(X.head())
@@ -268,16 +269,16 @@ def make_predictions_and_sort(
         )  # Adjust based on data size - 20 is small, but okay for local development on subset of data
     else:
         logger.info(f"Number of rows remaining: {transformed.count()}")
-    data = transformed.rdd.mapPartitionsWithIndex(predict_partition).toDF()
+    data = transformed.repartition(1000).rdd.mapPartitionsWithIndex(predict_partition).toDF().cache()
     # data = data.join(
     #     transformed.select("__index_level_0__", not_treat_score_col_name, treat_score_col_name, unknown_score_col_name),
     #     on="__index_level_0__",
     #     how="inner",
     # ).cache()
 
+    data.show()
     # 4. Validate the code at least reaches this point without OOM, as the next steps are a bit risky.
     # Example:
-    data.show()
     # As an alternative to the below: you could use monotonically_increasing_id,
     # WITH a mapPartitionsWithIndex, so that for each partition, you extract the
     # max value (based on the index**32 IIRC), and normalize wrt that value.
