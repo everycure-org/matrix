@@ -24,6 +24,7 @@ def generate_argo_config(
     username: str,
     pipeline: Pipeline,
     environment: str,
+    gcp_env: str,
     package_name: str,
     release_folder_name: str,
     default_execution_resources: Optional[ArgoResourceConfig] = None,
@@ -55,6 +56,7 @@ def generate_argo_config(
         release_folder_name=release_folder_name,
         git_sha=git_sha,
         environment=environment,
+        gcp_env=gcp_env,
         default_execution_resources=default_execution_resources.model_dump(),
     )
     yaml_data = yaml.safe_load(rendered_template)

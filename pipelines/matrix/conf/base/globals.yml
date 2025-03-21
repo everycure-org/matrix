@@ -49,8 +49,7 @@ data_sources:
 mlflow_artifact_root: null
 mlflow_experiment_id: null
 
-mlflow_url: ${MLFLOW_URL}
-
+mlflow_url: https://mlflow.platform.${oc.env:GCP_ENV}.everycure.org/
 paths:
   # Upstream-source versioned
   raw:                ${source_gcs_bucket}/kedro/data/01_raw

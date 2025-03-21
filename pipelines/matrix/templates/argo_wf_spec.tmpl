@@ -31,6 +31,8 @@ spec:
         value: "https://api.openai.com/v1"
       - name: env
         value: "{{ environment }}"
+      - name: gcp_env
+        value: "{{ gcp_env }}"
       - name: release_folder_name
         value: "{{ release_folder_name }}"
       - name: mlflow_experiment_id
@@ -112,7 +114,10 @@ spec:
           value: {% raw %} "{{workflow.parameters.run_name}}" 
           {% endraw %}
         - name: RELEASE_VERSION
-          value: "{{release_version}}" 
+          value: "{{release_version}}"
+        - name: GCP_ENV
+          value: {% raw %} "{{workflow.parameters.gcp_env}}"
+          {% endraw %}
         - name: RELEASE_FOLDER_NAME
           value: {% raw %} "{{workflow.parameters.release_folder_name}}" 
           {% endraw %}
