@@ -269,7 +269,7 @@ def make_predictions_and_sort(
         )  # Adjust based on data size - 20 is small, but okay for local development on subset of data
     else:
         logger.info(f"Number of rows remaining: {transformed.count()}")
-    data = transformed.repartition(1000).rdd.mapPartitionsWithIndex(predict_partition).toDF().cache()
+    data = transformed.repartition(1000).rdd.mapPartitionsWithIndex(predict_partition).toDF()
     # data = data.join(
     #     transformed.select("__index_level_0__", not_treat_score_col_name, treat_score_col_name, unknown_score_col_name),
     #     on="__index_level_0__",
