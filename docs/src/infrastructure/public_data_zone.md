@@ -84,7 +84,46 @@ Data in the public zone can be accessed through:
 
 ### Publishing Data
 
-TBD, we will need to create a process for publishing data to the public zone. We wil start with the evidence.dev static website for now.
+We use the `upload_release_to_public_bucket.sh` script to publish data from our internal storage to the public data zone. This script handles downloading data from our development bucket, compressing it, and uploading it to the public bucket.
+
+#### Script Features
+
+- Downloads specific version data from internal buckets
+- Compresses data using parallel gzip (pigz) for efficiency
+- Uploads the compressed data to the public bucket in a versioned directory structure
+- Includes error handling and dependency checks
+
+#### Prerequisites
+
+- `gcloud` CLI tool installed and authenticated
+- `pigz` parallel compression tool installed
+- Appropriate permissions to access both source and destination buckets
+
+#### Usage
+
+```bash
+./scripts/upload_release_to_public_bucket.sh [VERSION]
+```
+
+Where `[VERSION]` is the version tag in the format `vX.Y.Z` (e.g., `v0.4.4`). If not specified, the script defaults to `v0.4.4`.
+
+#### Example
+
+To publish data for version `v0.5.0`:
+
+```bash
+./scripts/upload_release_to_public_bucket.sh v0.4.4
+```
+
+This will:
+1. Download the data from `gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.4.4/datasets/release/prm/bigquery_edges/` and `bigquery_nodes/`
+2. Compress the data into a `data.tar.gz` file
+3. Upload it to `gs://data.dev.everycure.org/versions/v0.4.4/data/data.tar.gz`
+
+The data will then be accessible via:
+```
+https://data.dev.everycure.org/versions/v0.4.4/data/data.tar.gz
+```
 
 ### Hosting Static Websites
 
