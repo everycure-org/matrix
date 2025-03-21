@@ -34,3 +34,6 @@ paths:
 
   # Tmp. directory using k8s emph. storage
   tmp:           data/tmp
+
+  # Embedding cache dataset
+  cache:         ${gcs_bucket}/kedro/data/cache

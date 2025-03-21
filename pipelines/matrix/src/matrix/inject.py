@@ -1,5 +1,6 @@
 import functools
 import importlib
+import inspect
 import logging
 import re
 from copy import deepcopy
@@ -77,11 +78,13 @@ def _parse_for_objects(param, exclude_kwargs: List[str] = None) -> Dict:
                 instantiated_obj = obj
 
         # for classes
-        else:
+        elif inspect.isclass(obj):
             if instantiate is False:
                 instantiated_obj = obj
             else:
                 instantiated_obj = obj(**new_dict)
+        else:
+            return obj
 
         return instantiated_obj
 
