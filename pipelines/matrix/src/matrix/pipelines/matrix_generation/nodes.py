@@ -155,7 +155,7 @@ def generate_pairs(
     return matrix
 
 
-def make_predictions_and_sort(
+def make_predictions(
     graph: KnowledgeGraph,
     data: ps.DataFrame,
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
@@ -269,7 +269,7 @@ def make_predictions_and_sort(
         )  # Adjust based on data size - 20 is small, but okay for local development on subset of data
     else:
         logger.info(f"Number of rows remaining: {transformed.count()}")
-    data = transformed.repartition(1000).rdd.mapPartitionsWithIndex(predict_partition).toDF()
+    data = transformed.rdd.mapPartitionsWithIndex(predict_partition).toDF()
     # data = data.join(
     #     transformed.select("__index_level_0__", not_treat_score_col_name, treat_score_col_name, unknown_score_col_name),
     #     on="__index_level_0__",

@@ -7,7 +7,7 @@ from matrix.datasets.graph import KnowledgeGraph
 from matrix.pipelines.matrix_generation.nodes import (
     generate_pairs,
     generate_report,
-    make_predictions_and_sort,
+    make_predictions,
 )
 from matrix.pipelines.modelling.transformers import FlatArrayTransformer
 
@@ -217,7 +217,7 @@ def test_make_batch_predictions(
 ):
     # Given data, embeddings and a model
     # When we make batched predictions
-    result = make_predictions_and_sort(
+    result = make_predictions(
         graph=sample_graph,
         data=sample_matrix_data,
         transformers=transformers,
@@ -246,7 +246,7 @@ def test_make_predictions_and_sort(
 ):
     # Given a drug list, disease list and objects necessary for inference
     # When running inference and sorting
-    result = make_predictions_and_sort(
+    result = make_predictions(
         graph=sample_graph,
         data=sample_matrix_data,
         transformers=transformers,
