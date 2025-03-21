@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import secrets
 from typing import List
 
 import click
@@ -154,7 +155,10 @@ def run(
         experiment_id = ctx.invoke(create, experiment_name=experiment_name)
 
     if not run_name:
-        run_name = click.prompt("Please define a name for your run")
+        if headless:
+            run_name = secrets.token_hex(16).lower()
+        else:
+            run_name = click.prompt("Please define a name for your run")
 
     if not headless:
         click.confirm(f"Start a new run '{run_name}' on experiment '{experiment_name}', is that correct?", abort=True)
