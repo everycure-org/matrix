@@ -43,3 +43,7 @@ loggers:
     level: DEBUG
   matrix.pipelines.filtering.nodes:
     level: WARNING
+  matrix.pipelines.batch.pipeline:
+    level: WARNING
+  matrix.hooks:
+    level: INFO
