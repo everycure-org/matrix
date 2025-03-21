@@ -39,6 +39,10 @@ spec:
         value: {{ mlflow_experiment_id }}
       - name: mlflow_run_id
         value: "{{ mlflow_run_id }}"
+      - name: dev_gcp_project_id
+        value: "mtrx-hub-dev-3of"
+      - name: dev_gcp_bucket
+        value: "mtrx-us-central1-hub-dev-storage"
   templates:
   - &_kedro_template
     metrics:
@@ -172,6 +176,12 @@ spec:
             secretKeyRef:
               name: gh-password
               key: GH_CREDS
+        - name: DEV_GCP_PROJECT_ID
+          value: {% raw %} "{{workflow.parameters.dev_gcp_project_id}}"
+          {% endraw %}
+        - name: DEV_GCP_BUCKET
+          value: {% raw %} "{{workflow.parameters.dev_gcp_bucket}}"
+          {% endraw %}
       command: [kedro]
       args: ["run", "-p", "{{ pipeline_name }}", "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
 

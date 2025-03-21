@@ -38,7 +38,7 @@ ingestion.raw.rtx_kg2.curie_to_pmids@pandas:
 
 ingestion.raw.rtx_kg2.curie_to_pmids@spark:
   type: matrix.datasets.gcp.RemoteSparkJDBCDataset
-  project: ${oc.env:GCP_PROJECT_ID}
+  project: ${oc.env:DEV_GCP_PROJECT_ID}
   table: curie_to_pmids
   url: sqlite:${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/curie_to_pmids.sqlite
   load_args:
