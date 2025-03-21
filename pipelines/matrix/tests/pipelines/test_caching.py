@@ -185,21 +185,21 @@ def test_cached_api_enrichment_pipeline(
     catalog = DataCatalog(
         {
             "filtering.prm.filtered_nodes": MemoryDataset(sample_input_df),
-            "batch.embeddings.cache.read": LazySparkDataset(
+            "batch.node_embeddings.cache.read": LazySparkDataset(
                 filepath=str(tmp_path / "cache_dataset"),
                 provide_empty_if_not_present=True,
                 load_args={"schema": cache_schema},
             ),
             output: LazySparkDataset(filepath=str(tmp_path / "enriched"), save_args={"mode": "overwrite"}),
-            "batch.embeddings.cache_misses": LazySparkDataset(
+            "batch.node_embeddings.cache_misses": LazySparkDataset(
                 filepath=str(tmp_path / "cache_misses"), save_args={"mode": "overwrite"}
             ),
-            "batch.embeddings.20.cache.write": PartitionedAsyncParallelDataset(
+            "batch.node_embeddings.20.cache.write": PartitionedAsyncParallelDataset(
                 path=cache_path,
                 dataset=ParquetDataset,
                 filename_suffix=".parquet",
             ),
-            "batch.embeddings.cache.reload": LazySparkDataset(
+            "batch.node_embeddings.cache.reload": LazySparkDataset(
                 filepath=cache_path,
             ),
             "params:embeddings.node.api": MemoryDataset(sample_api1),
