@@ -9,6 +9,14 @@ resource "google_storage_bucket_iam_member" "object_user" {
   }
 }
 
+resource "google_storage_bucket_iam_binding" "prod_viewer_binding" {
+  bucket = var.storage_bucket_name
+  role   = "roles/storage.objectViewer"
+
+  members = [
+    "projectViewer:mtrx-hub-prod-sms",
+  ]
+}
 
 # ------ Permission for people to read from Storage via SA ------
 
