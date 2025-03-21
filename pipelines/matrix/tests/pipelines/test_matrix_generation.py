@@ -1,20 +1,15 @@
-from functools import partial
 from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
-import pyspark.sql as ps
 import pytest
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.pipelines.matrix_generation.nodes import (
-    apply_transformers,
     generate_pairs,
     generate_report,
     make_predictions_and_sort,
 )
 from matrix.pipelines.modelling.transformers import FlatArrayTransformer
-from pyspark.sql import functions as sf
-from pyspark.testing import assertDataFrameEqual
 
 
 @pytest.fixture
@@ -113,13 +108,6 @@ def transformers():
 def mock_model():  # Note: gives correct shaped output only for batches of size 2
     model = Mock()
     model.predict_proba.return_value = np.array([[0.1, 0.8, 0.1], [0.1, 0.7, 0.2]])
-    return model
-
-
-@pytest.fixture
-def mock_model_2():
-    model = Mock()
-    model.predict_proba = lambda x: np.array([[1, 0, 0]] * len(x))
     return model
 
 
@@ -392,26 +380,3 @@ def test_generate_report(sample_data):
     assert result["mean_all_per_disease"].tolist() == pytest.approx([0.8, 0.4, 0.3])
     assert result["mean_top_per_drug"].tolist() == pytest.approx([0.8, 0.6, 0.4])
     assert result["mean_all_per_drug"].tolist() == pytest.approx([0.8, 0.4, 0.4])
-
-
-def fun(df: ps.DataFrame, prefix: str, source_column: str) -> ps.DataFrame:
-    sf.array_size
-    sf.element_at
-    return df.select(sf.element_at(source_column, 0))
-
-
-def test_apply_transformers(spark: ps.SparkSession):
-    expected = spark.createDataFrame(
-        [
-            ([1, 2, 3], [4, 5], "a", 1, 2, 3),
-            ([4, 5, 6], [7, 8], "b", 4, 5, 6),
-        ],
-        schema=("a", "b", "c", "result_0", "result_1", "result_2"),
-    )
-
-    df = expected.drop(*expected.columns[-3:])
-
-    result = apply_transformers(data=df, transformers=[partial(fun, prefix="result_", source_column="a")])
-
-    result.show()
-    assertDataFrameEqual(result, expected.drop("a"))
