@@ -154,7 +154,6 @@ def normalize_edges(
     mapping_df = _format_mapping_df(mapping_df)
 
     # edges are a bit more complex, we need to map both the subject and object
-    log_metric(f"integration", f"Number of edges before normalizing", edges.count())
     edges = edges.join(
         mapping_df.withColumnsRenamed(
             {
@@ -181,7 +180,7 @@ def normalize_edges(
         {"subject_normalized": "subject", "object_normalized": "object"}
     )
 
-    edges = (
+    return (
         edges.withColumn(
             "_rn",
             F.row_number().over(
@@ -191,10 +190,6 @@ def normalize_edges(
         .filter(F.col("_rn") == 1)
         .drop("_rn")
     )
-
-    log_metric(f"integration", f"Number of edges after deduplication and normalizing", edges.count())
-
-    return edges
 
 
 def normalize_nodes(
@@ -210,10 +205,8 @@ def normalize_nodes(
     """
     mapping_df = _format_mapping_df(mapping_df)
 
-    log_metric(f"integration", f"Number of nodes before normalization", nodes.count())
-
     # add normalized_id to nodes
-    nodes = (
+    return (
         nodes.join(mapping_df, on="id", how="left")
         .withColumnsRenamed({"id": "original_id"})
         .withColumnsRenamed({"normalized_id": "id"})
@@ -222,7 +215,3 @@ def normalize_nodes(
         .filter(F.col("_rn") == 1)
         .drop("_rn")
     )
-
-    log_metric(f"integration", f"Number of nodes after deduplication and normalizing", nodes.count())
-
-    return nodes
