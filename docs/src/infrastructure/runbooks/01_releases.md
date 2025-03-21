@@ -23,7 +23,7 @@ This runbook outlines the steps to create a release in our GitHub repository, ei
 4. **Wait for pipeline to finish.**
     - Once the pipeline finishes, a new data release PR will be created with changelog and optional release article template (for major or minor bump). 
 5. **Review the PR that was auto-created.**
-    - Review the list and check the names of the PRs to ensure they read nicely. Consider reshuffling them so they tell a good story instead of just being a list of things.
+    - Review the generated article template and ask contributors to fill it out.
     - Manually check who has contributed and list the contributors of the month to encourage contributions through PRs (code, docs, experiment reports, etc.). See the cli command below for how to best do this
     - Upon merging the PR, the release will be publicized to the [Every Cure website](https://docs.dev.everycure.org/releases/) by another GitHub Action. It will then also be listed under the [GitHub releases](https://github.com/everycure-org/matrix/releases).
 6. **Create a sample release.**
@@ -46,7 +46,7 @@ To streamline the release process, we use GitHub Actions for periodic **patch** 
 3. **Review the Auto-Created PR**  
    - **For the weekly patch bump:** The primary goal is to verify the stability of the `main` branch after a week of new commits. Once reviewed, simply close the PR, as no further action is needed.  
    - **For the monthly minor bump:** Since this results in an official release, follow these steps:  
-        - Review the list and check the names of the PRs to ensure they read nicely. Consider reshuffling them so they tell a good story instead of just being a list of things. In the past, the person who takes ownership of this PR simply asked everyone on Slack to revise their PR titles, to make them more reflective of what they contribute towards Every Cure's goals.
+        - Review the auto-generated release article templare and ask contributors to fill it out. In the past, the person who takes ownership of this PR simply asked everyone on Slack to revise their PR titles, to make them more reflective of what they contribute towards Every Cure's goals.
         - Manually check who has contributed and list the contributors of the month to encourage contributions through PRs (code, docs, experiment reports, etc.). See the cli command below for how to best do this
         - Upon merging the PR, the release will be publicized to the [Every Cure website](https://docs.dev.everycure.org/releases/) by another GitHub Action. It will then also be listed under the [GitHub releases](https://github.com/everycure-org/matrix/releases).
 
@@ -84,12 +84,7 @@ This issue might be caused by a failure in the GitHub Actions workflow responsib
    - Enter the **release version** and **Git SHA** noted in step 4.  
    - Click **"Run workflow"** to initiate the process again. 
 
-   <p align="center">
-      <img src="../../assets/img/create-pr-input.png" alt="UI of triggering the PR creation workflow" width="600">
-   </p>
-   <p align="center">
-      <i>Figure 1: UI of triggering the PR creation workflow</i>
-   </p>
+   ![UI of triggering the PR creation](../../assets/img/create-pr-input.png)
 
 ### 3. **The scheduled time has passed, but the auto-submitted release pipeline is not running**  
 
@@ -107,17 +102,12 @@ This issue might be due to a failure in the GitHub Actions workflow responsible 
    - Select the version bump type (**patch** or **minor**).  
    - Click **"Run workflow"** to restart the process.  
 
-   <p align="center">
-      <img src="../../assets/img/version-bump-input.png" alt="UI of triggering the submission workflow" width="600">
-   </p>
-   <p align="center">
-      <i>Figure 2: UI of triggering the submission workflow</i>
-  </p>
+   ![UI of triggering the submission workflow](../../assets/img/version-bump-input.png)
 
 ## Best Practices
 
-- Ensure all PRs are labeled and titled correctly before generating the release notes.
-- Review and update the release notes draft to ensure clarity and completeness.
+- Ensure all PRs are labeled and titled correctly before generating the release article template.
+- Fill in the release article template to ensure clarity and completeness.
 - Acknowledge all contributors to foster a collaborative environment.
 
 ## Additional Resources
