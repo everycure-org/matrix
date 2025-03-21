@@ -14,7 +14,10 @@ def create_pipeline(**kwargs) -> Pipeline:
             ],
             outputs="filtering.prm.prefiltered_nodes",
             name="prefilter_prm_knowledge_graph_nodes",
-            tags=["filtering"],
+            tags=[
+                "argowf.fuse",
+                "argowf.fuse-group.filtering",
+            ],
         ),
         node(
             func=nodes.filter_unified_kg_edges,
@@ -25,7 +28,10 @@ def create_pipeline(**kwargs) -> Pipeline:
             ],
             outputs="filtering.prm.filtered_edges",
             name="filter_prm_knowledge_graph_edges",
-            tags=["filtering"],
+            tags=[
+                "argowf.fuse",
+                "argowf.fuse-group.filtering",
+            ],
         ),
         node(
             func=nodes.filter_nodes_without_edges,
@@ -35,7 +41,10 @@ def create_pipeline(**kwargs) -> Pipeline:
             ],
             outputs="filtering.prm.filtered_nodes",
             name="filter_nodes_without_edges",
-            tags=["filtering"],
+            tags=[
+                "argowf.fuse",
+                "argowf.fuse-group.filtering",
+            ],
         ),
     ]
 
