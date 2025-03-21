@@ -584,14 +584,20 @@ def generate_report(
         Dataframe with the top pairs and additional information for the drugs and diseases.
     """
     # Add tags and process top pairs
+    # Sort by the probability score
+    sorted_data = data.sort_values(by=score_col_name, ascending=False)
+    # Add rank and quantile rank columns
+    sorted_data["rank"] = range(1, len(sorted_data) + 1)
+    sorted_data["quantile_rank"] = sorted_data["rank"] / len(sorted_data)
+
     stats = matrix_params.get("stats_col_names")
     tags = matrix_params.get("tags")
-    top_pairs = _process_top_pairs(data, n_reporting, drugs, diseases, score_col_name)
-    top_pairs = _add_descriptive_stats(top_pairs, data, stats, score_col_name)
+    top_pairs = _process_top_pairs(sorted_data, n_reporting, drugs, diseases, score_col_name)
+    top_pairs = _add_descriptive_stats(top_pairs, sorted_data, stats, score_col_name)
     top_pairs = _flag_known_pairs(top_pairs)
     top_pairs = _add_tags(top_pairs, drugs, diseases, tags)
     top_pairs = _reorder_columns(top_pairs, score_col_name, matrix_params)
-    versions, stats, legends = generate_metadata(top_pairs, data, score_col_name, matrix_params, run_metadata)
+    versions, stats, legends = generate_metadata(top_pairs, sorted_data, score_col_name, matrix_params, run_metadata)
     return {
         "metadata": versions,
         "statistics": stats,
