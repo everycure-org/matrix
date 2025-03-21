@@ -209,8 +209,8 @@ def make_predictions_and_sort(
     # provided an identifier for a node that does _not_ exist in our KG.
     # https://github.com/everycure-org/matrix/issues/409
 
-    features: list[str] = list(itertools.chain(x["features"] for x in transformers.values()))
-
+    features: list[str] = list(itertools.chain.from_iterable(x["features"] for x in transformers.values()))
+    print(f"features: {features}")
     if logger.isEnabledFor(logging.INFO):
         logging.info(f"checking for dropped pairs because one of the features ({features}) is empty…")
         removed = (
@@ -247,7 +247,7 @@ def make_predictions_and_sort(
 
         s = partition_df["_source_and_target"]
         logger.info(s.head(3))
-        X = pd.DataFrame.from_dict(dict(zip(s.index, s.values)))
+        X = pd.DataFrame.from_dict(dict(zip(s.index, s.values))).transpose()
         logger.info(X.head())
         logger.info(X.shape)
 
@@ -284,11 +284,11 @@ def make_predictions_and_sort(
     # window_spec = Window.orderBy(F.desc(treat_score_col_name))
     # data = data.orderBy(F.desc(treat_score_col_name))
     # Use row_number() for consistent sequential ranking
-    windowSpec = Window.orderBy(F.desc(treat_score_col_name))
-    # Add rank column
-    data = data.withColumn("rank", F.row_number().over(windowSpec))
-    # Add quantile rank column
-    data = data.withColumn("quantile_rank", F.percent_rank().over(windowSpec))
+    # windowSpec = Window.orderBy(F.desc(treat_score_col_name))
+    # # Add rank column
+    # data = data.withColumn("rank", F.row_number().over(windowSpec))
+    # # Add quantile rank column
+    # data = data.withColumn("quantile_rank", F.percent_rank().over(windowSpec))
 
     return data
 
