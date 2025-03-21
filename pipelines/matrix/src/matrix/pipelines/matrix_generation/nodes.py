@@ -294,27 +294,6 @@ def make_predictions_and_sort(
     return data
 
 
-@inject_object()
-def apply_transformers(
-    data: ps.DataFrame,
-    transformers: Iterable[dict[str, Union[_BaseImputer, list[str]]]],
-) -> ps.DataFrame:
-    """Function to apply fitted transformers to the data.
-
-    Args:
-        data: Data to transform.
-        transformers: Dictionary of transformers.
-
-    Returns:
-        Transformed data.
-    """
-
-    for transformer in transformers:
-        data = transformer(data)
-
-    return data
-
-
 def generate_summary_metadata(matrix_parameters: Dict) -> pd.DataFrame:
     """
     Generate metadata for the output matrix.
