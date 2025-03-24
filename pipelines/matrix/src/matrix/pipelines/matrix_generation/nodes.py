@@ -545,9 +545,10 @@ def sort_and_generate_report(
     top_pairs = _add_tags(top_pairs, drugs, diseases, tags)
     top_pairs = _reorder_columns(top_pairs, score_col_name, matrix_params)
     versions, stats, legends = generate_metadata(top_pairs, sorted_data, score_col_name, matrix_params, run_metadata)
-    return {
+    report = {
         "metadata": versions,
         "statistics": stats,
         "legend": legends,
         "matrix": top_pairs,
     }
+    return sorted_data, report
