@@ -74,13 +74,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "params:matrix_generation.unknown_score_col_name",
                         ],
                         outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark",
-                        name=f"make_predictions_and_sort_fold_{fold}",
+                        name=f"make_predictions_fold_{fold}",
                         argo_config=ArgoResourceConfig(
                             cpu_limit=14, cpu_request=14, memory_limit=1024, memory_request=128
                         ),
                     ),
                     ArgoNode(
-                        func=nodes.generate_report,
+                        func=nodes.sort_and_generate_report,
                         inputs=[
                             f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
                             "params:matrix_generation.matrix_generation_options.n_reporting",
@@ -91,7 +91,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "params:matrix_generation.run",
                         ],
                         outputs=f"matrix_generation.fold_{fold}.reporting.matrix_report",
-                        name=f"generate_report_fold_{fold}",
+                        name=f"sort_and_generate_report_fold_{fold}",
                     ),
                 ],
             )
