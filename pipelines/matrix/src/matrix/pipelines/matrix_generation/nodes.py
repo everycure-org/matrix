@@ -10,10 +10,10 @@ import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.functions as F
 from matrix.datasets.graph import KnowledgeGraph
-from matrix.inject import _extract_elements_in_list, inject_object
+from matrix.inject import inject_object
 from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
-from pyspark.sql import Row, Window
+from pyspark.sql import Row
 from pyspark.sql.types import ArrayType, FloatType, StringType, StructField, StructType
 from sklearn.impute._base import _BaseImputer
 from tqdm import tqdm
@@ -174,7 +174,6 @@ def make_predictions(
         model: Model making the predictions.
         features: List of features, may be regex specified.
         score_col_name: Probability score column name.
-        batch_by: Column to use for batching (e.g., "target" or "source").
 
     Returns:
         Pairs dataset with additional column containing the probability scores.
@@ -183,8 +182,10 @@ def make_predictions(
     # 1. convert the knowledgeGraph into a Spark DataFrame.
     #    Use `data.sparkSession.createDataFrame` so you immediately have the SparkSession you need (and don't need to call it).
     # 2. Replace graph.get_embedding with a simple Spark join.
+    # limit the datasize for local testing
     if "ARGO_NODE_ID" not in os.environ:
         data = data.limit(1000)
+
     schema = StructType(
         [StructField("id", StringType(), True), StructField("topological_embedding", ArrayType(FloatType()), True)]
     )
@@ -227,12 +228,7 @@ def make_predictions(
     # Drop rows without source/target embeddings
     data = data.dropna(subset=features)
 
-    # # Return empty dataframe if all rows are dropped
-    # if data.isEmpty():
-    #     return data.drop("source_embedding", "target_embedding")
-
-    # Apply transformers to data (assuming this can work with PySpark)
-    # transformed = apply_transformers(data, transformers.values())
+    # Apply transformers to data
     feature_col = "_source_and_target"
     transformed = data.withColumn(feature_col, F.concat(*features)).drop(*features)
     # Extract features
@@ -270,26 +266,8 @@ def make_predictions(
     else:
         logger.info(f"Number of rows remaining: {transformed.count()}")
     data = transformed.rdd.mapPartitionsWithIndex(predict_partition).toDF()
-    # data = data.join(
-    #     transformed.select("__index_level_0__", not_treat_score_col_name, treat_score_col_name, unknown_score_col_name),
-    #     on="__index_level_0__",
-    #     how="inner",
-    # ).cache()
 
     data.show()
-    # 4. Validate the code at least reaches this point without OOM, as the next steps are a bit risky.
-    # Example:
-    # As an alternative to the below: you could use monotonically_increasing_id,
-    # WITH a mapPartitionsWithIndex, so that for each partition, you extract the
-    # max value (based on the index**32 IIRC), and normalize wrt that value.
-    # window_spec = Window.orderBy(F.desc(treat_score_col_name))
-    # data = data.orderBy(F.desc(treat_score_col_name))
-    # Use row_number() for consistent sequential ranking
-    # windowSpec = Window.orderBy(F.desc(treat_score_col_name))
-    # # Add rank column
-    # data = data.withColumn("rank", F.row_number().over(windowSpec))
-    # # Add quantile rank column
-    # data = data.withColumn("quantile_rank", F.percent_rank().over(windowSpec))
 
     return data
 
@@ -561,7 +539,7 @@ def generate_metadata(
     return version_df, pd.DataFrame(stats_dict), legends_df
 
 
-def generate_report(
+def sort_and_generate_report(
     data: pd.DataFrame,
     n_reporting: int,
     drugs: pd.DataFrame,
@@ -583,13 +561,14 @@ def generate_report(
     Returns:
         Dataframe with the top pairs and additional information for the drugs and diseases.
     """
-    # Add tags and process top pairs
+
     # Sort by the probability score
     sorted_data = data.sort_values(by=score_col_name, ascending=False)
     # Add rank and quantile rank columns
     sorted_data["rank"] = range(1, len(sorted_data) + 1)
     sorted_data["quantile_rank"] = sorted_data["rank"] / len(sorted_data)
 
+    # Add tags and process top pairs
     stats = matrix_params.get("stats_col_names")
     tags = matrix_params.get("tags")
     top_pairs = _process_top_pairs(sorted_data, n_reporting, drugs, diseases, score_col_name)
