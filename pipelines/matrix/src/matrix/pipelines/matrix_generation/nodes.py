@@ -186,13 +186,7 @@ def make_predictions(
     if "ARGO_NODE_ID" not in os.environ:
         data = data.limit(1000)
 
-    schema = StructType(
-        [StructField("id", StringType(), True), StructField("topological_embedding", ArrayType(FloatType()), True)]
-    )
-
-    embeddings = data.sparkSession.createDataFrame(
-        [(k, v.tolist()) for k, v in graph._embeddings.items()], schema=schema
-    ).cache()
+    embeddings = graph.select("id", "topological_embedding")
     logger.info(f"rows in embeddings lookup table: {embeddings.count()}")
 
     data = data.join(
@@ -231,8 +225,6 @@ def make_predictions(
     # Apply transformers to data
     feature_col = "_source_and_target"
     transformed = data.withColumn(feature_col, F.concat(*features)).drop(*features)
-    # Extract features
-    # data_features = _extract_elements_in_list(transformed.columns, features, True)
 
     def predict_partition(partitionindex: int, partition: Iterable[Row]) -> Iterator[Row]:
         partition_df = pd.DataFrame.from_records(row.asDict() for row in partition)
