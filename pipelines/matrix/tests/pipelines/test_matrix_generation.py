@@ -326,7 +326,9 @@ def test_sort_and_generate_report(sample_data):
     }
 
     # When generating the report
-    result = sort_and_generate_report(data, n_reporting, drugs, diseases, score_col_name, matrix_params, run_metadata)
+    sorted_data, result = sort_and_generate_report(
+        data, n_reporting, drugs, diseases, score_col_name, matrix_params, run_metadata
+    )
     full_stats = result["statistics"]
     # Check that the full matrix statistics are correct
     assert (
