@@ -15,6 +15,13 @@ resource "google_storage_bucket_iam_member" "prod_viewer_member" {
   member = "projectViewer:mtrx-hub-prod-sms"
 }
 
+# Add a new binding for the specific service account
+resource "google_storage_bucket_iam_member" "prod_sa_access" {
+  bucket = var.storage_bucket_name
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:sa-k8s-node@mtrx-hub-prod-sms.iam.gserviceaccount.com"
+}
+
 # ------ Permission for people to read from Storage via SA ------
 
 # Create the service account
