@@ -9,12 +9,6 @@ resource "google_storage_bucket_iam_member" "object_user" {
   }
 }
 
-resource "google_storage_bucket_iam_member" "prod_viewer_member" {
-  bucket = var.storage_bucket_name
-  role   = "roles/storage.objectViewer"
-  member = "projectViewer:mtrx-hub-prod-sms"
-}
-
 # Add a new binding for the specific service account
 resource "google_storage_bucket_iam_member" "prod_sa_access" {
   bucket = var.storage_bucket_name
