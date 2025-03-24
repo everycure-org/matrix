@@ -51,7 +51,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "graph": "matrix_generation.feat.nodes@kg",
                             "clinical_trials": "integration.int.ec_clinical_trails.edges.norm@pandas",
                         },
-                        outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs",
+                        outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs@pandas",
                         name=f"generate_matrix_pairs_fold_{fold}",
                     )
                 ]
@@ -65,7 +65,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         func=nodes.make_predictions,
                         inputs=[
                             "matrix_generation.feat.nodes@spark",
-                            f"matrix_generation.prm.fold_{fold}.matrix_pairs",
+                            f"matrix_generation.prm.fold_{fold}.matrix_pairs@spark",
                             f"modelling.fold_{fold}.model_input.transformers",
                             f"modelling.fold_{fold}.models.model",
                             f"params:modelling.{model_name}.model_options.model_tuning_args.features",
