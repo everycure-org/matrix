@@ -3,6 +3,9 @@
 # 2) override the images to avoid keeping state in CI (no data mount)
 # 3) add an execution of the matrix-pipeline in a container to execute against the services defined in the base compose file 
 services:
+  # not executing the node-synonymizer in CI
+  node-synonymizer: !reset null
+
   neo4j:
     # FUTURE: Newever container version gives issues, due to `apoc-extended`
     # and `gds` versions not being released yet. Update when released.
@@ -57,6 +60,7 @@ services:
       MLFLOW_EXPERIMENT_ID: 1
       MLFLOW_RUN_ID: null
       OPENAI_API_KEY: sk-proj-abc
+      SYNONYMIZER_ENDPOINT: http://node-synonymizer:8081
       GCP_PROJECT_ID: dummy
       KEDRO_DYNAMIC_PIPELINES_MAPPING_CROSS_VALIDATION_N_CROSS_VAL_FOLDS: 2
       KEDRO_DYNAMIC_PIPELINES_MAPPING_MODELLING_XG_ENSEMBLE_NUM_SHARDS: 2
