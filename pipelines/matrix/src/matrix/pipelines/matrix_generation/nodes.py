@@ -244,8 +244,6 @@ def make_predictions(
         transformed = transformed.repartition(
             20
         )  # Adjust based on data size - 20 is small, but okay for local development on subset of data
-    else:
-        logger.info(f"Number of rows remaining: {transformed.count()}")
 
     data = transformed.rdd.mapPartitionsWithIndex(predict_partition).toDF()
 
