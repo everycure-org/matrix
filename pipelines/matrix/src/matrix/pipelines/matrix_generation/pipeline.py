@@ -64,7 +64,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ArgoNode(
                         func=nodes.make_predictions,
                         inputs=[
-                            # "matrix_generation.feat.nodes@kg",
                             "matrix_generation.feat.nodes@spark",
                             f"matrix_generation.prm.fold_{fold}.matrix_pairs",
                             f"modelling.fold_{fold}.model_input.transformers",
