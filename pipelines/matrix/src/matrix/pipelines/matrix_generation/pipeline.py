@@ -1,6 +1,6 @@
 from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
-from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, ArgoNode, ArgoResourceConfig
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from matrix.pipelines.modelling.utils import partial_fold
 
 from . import nodes
@@ -64,7 +64,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ArgoNode(
                         func=nodes.make_predictions,
                         inputs=[
-                            "matrix_generation.feat.nodes@kg",
+                            # "matrix_generation.feat.nodes@kg",
+                            "matrix_generation.feat.nodes@spark",
                             f"matrix_generation.prm.fold_{fold}.matrix_pairs",
                             f"modelling.fold_{fold}.model_input.transformers",
                             f"modelling.fold_{fold}.models.model",
