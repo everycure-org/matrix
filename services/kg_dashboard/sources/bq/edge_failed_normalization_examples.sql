@@ -5,7 +5,7 @@ WITH ranked_data AS (
         prefix,
         category,
         normalization_set,
-        ROW_NUMBER() OVER (PARTITION BY prefix ORDER BY id) AS row_num
+        ROW_NUMBER() OVER (PARTITION BY normalization_set, prefix ORDER BY id) AS row_num
     FROM (
         SELECT 
             subject AS id,
