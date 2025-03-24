@@ -24,6 +24,7 @@ jobs:
     runs-on: 
       labels: ubuntu-24.04
     name: Submit the Sampling Pipeline Periodically
+    environment: dev
     permissions:
       contents: 'write'
       id-token: 'write'
@@ -47,7 +48,7 @@ jobs:
               sort -V | \
               tail -n1
             )
-            echo "RELEASE_VERSION=${LATEST_TAG}" >> $GITHUB_ENV
+            echo "RELEASE_VERSION=${LATEST_TAG}" >> "$GITHUB_ENV"
             echo "Setting RELEASE_VERSION to latest tag: ${LATEST_TAG}"
           else
             echo "Using provided RELEASE_VERSION: ${RELEASE_VERSION}"
@@ -99,13 +100,17 @@ jobs:
 
       - name: Run the kedro sampling pipeline
         working-directory: pipelines/matrix
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
         run: |
           echo "Run the kedro sampling pipeline"
-          kedro submit \
+          kedro experiment run \
             -e sample \
             -p test_sample \
+            --experiment-name scheduled-sampled-test \
             --run-name scheduled-sampled-test \
             --username github_actions_bot \
-            --release-version ${RELEASE_VERSION} \
+            --release-version "${{ env.RELEASE_VERSION }}" \
             --headless \
             --quiet

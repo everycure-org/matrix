@@ -4,9 +4,12 @@ title: Matrix KG Dashboard
 
 <script>
   const release_version = import.meta.env.VITE_release_version;
+  const build_time = import.meta.env.VITE_build_time;
 </script>
 
 ## Version: {release_version}
+
+<p class="text-gray-500 text-sm italic">Last updated on {build_time}</p>
 
 Dashboard pages on the left side of the screen are for exploring the data in the Matrix Knowledge Graph. Select categories from the dropdowns below to filter the knowledge graph visualization.
 
@@ -148,6 +151,5 @@ Example parameterized dashboards:
  - <a href="/normalization">Normalization Dashboard</a>
 
 
-To see additional node breakdowns by category or prefix, check out the <a href="/node/explore">Node Explore</a> page.
 
 <!-- NOTE: This file was partially generated using AI assistance. -->
