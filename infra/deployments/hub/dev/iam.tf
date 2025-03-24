@@ -53,14 +53,14 @@ module "project_iam_bindings" {
   ]
 }
 
-resource "google_project_iam_member" "prod_sa_bq_viewer" {
-  member  = "serviceAccount:sa-k8s-node@mtrx-hub-prod-sms.iam.gserviceaccount.com"
-  project = var.project_id
-  role    = "roles/bigquery.dataViewer"
-}
-
-resource "google_project_iam_member" "prod_sa_bq_job_user" {
-  member  = "serviceAccount:sa-k8s-node@mtrx-hub-prod-sms.iam.gserviceaccount.com"
-  project = var.project_id
-  role    = "roles/bigquery.jobUser"
-}
+# resource "google_project_iam_member" "prod_sa_bq_viewer" {
+#   member  = "serviceAccount:sa-k8s-node@mtrx-hub-prod-sms.iam.gserviceaccount.com"
+#   project = var.project_id
+#   role    = "roles/bigquery.dataViewer"
+# }
+#
+# resource "google_project_iam_member" "prod_sa_bq_job_user" {
+#   member  = "serviceAccount:sa-k8s-node@mtrx-hub-prod-sms.iam.gserviceaccount.com"
+#   project = var.project_id
+#   role    = "roles/bigquery.jobUser"
+# }
