@@ -26,6 +26,24 @@ Given that the latest minor release is v0.2.5:
     - New release: v0.1.8 (minor downgrade). This is forbidden and prevented from `kedro experiment run`. The same applies to major downgrades.
 The reason to forbid it is that is a bit weird: yes, the Python programming language allows it, but for good reasons. Whereas we might add bugfixes to older releases, all new feature development should continue from the latest official release. processing the commits and PRs that have lead to this intermediate release, while not taking into account features that were added "in the future" (relative to this intermediate release) is harder if a major or minor release would be created that isn't the latest, then the release notes and article of the already existing release would become unlogical, since they are written relative to the last official (major or minor) release. An intermediate (major or minor) release would need to mention contributions that were already included in the latest release, and would need to remove it from that one too.
 
+## Commands
+
+To generate the template manually, first activate the virtual environment by running 
+
+```bash
+source ./matrix/apps/matrix-cli/.venv/bin/activate
+```
+
+Then use the following command:
+
+```bash
+matrix releases template --output-file <OUTPUT_LOCATION> \
+    --since <GIT_SHA_START> \
+    --until <GIT_SHA_END> 
+```
+
+The `--since` and `--until` flags limit the scope of commits to be included in the template. If you use the `--headless` flag, the starting Git SHA will default to the latest minor release tag.
+
 ## Best Practices
 
 - Ensure all PRs are correctly labeled and titled before generating the article release template.
