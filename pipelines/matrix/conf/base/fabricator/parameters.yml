@@ -94,9 +94,9 @@ fabricator.rtx_kg2:
           - infores:ubergraph
           - infores:snpeff
       # For version 2.10
-      primary_knowledge_source:
-        type: faker
-        provider: name
+      # primary_knowledge_source:
+      #   type: faker
+      #   provider: name
       publications:string[]:
         type: generate_random_arrays
         delimiter: "\u01c2"
