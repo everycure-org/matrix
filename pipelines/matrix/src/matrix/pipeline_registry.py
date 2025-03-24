@@ -1,5 +1,3 @@
-from typing import Dict
-
 from kedro.pipeline import Pipeline
 
 from matrix.pipelines.create_sample.pipeline import create_pipeline as create_create_sample_pipeline
@@ -10,14 +8,13 @@ from matrix.pipelines.fabricator.pipeline import create_pipeline as create_fabri
 from matrix.pipelines.filtering.pipeline import create_pipeline as create_filtering_pipeline
 from matrix.pipelines.ingest_to_N4J.pipeline import create_pipeline as create_ingest_to_N4J_pipeline
 from matrix.pipelines.ingestion.pipeline import create_pipeline as create_ingestion_pipeline
-from matrix.pipelines.integration.pipeline import create_cached_normalization_pipeline
 from matrix.pipelines.integration.pipeline import create_pipeline as create_integration_pipeline
 from matrix.pipelines.matrix_generation.pipeline import create_pipeline as create_matrix_pipeline
 from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
 from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
 
 
-def register_pipelines() -> Dict[str, Pipeline]:
+def register_pipelines() -> dict[str, Pipeline]:
     """Register the project's pipelines.
 
     Returns:
@@ -38,7 +35,6 @@ def register_pipelines() -> Dict[str, Pipeline]:
         "evaluation": create_evaluation_pipeline(),
         "create_sample": create_create_sample_pipeline(),
         "ingest_to_N4J": create_ingest_to_N4J_pipeline(),
-        "cache_norm": create_cached_normalization_pipeline(),
         # "inference": create_inference_pipeline(),  # Run manually based on medical input
     }
 

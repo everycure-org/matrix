@@ -7,32 +7,6 @@ from ...kedro4argo_node import ArgoNode, ArgoResourceConfig
 from . import nodes
 
 
-# this pipeline is created here for faster debugging locally
-# `kedro run -p cached_normalization` will run this pipeline
-# TODO: clean it up, also delete it from the pipeline_registry
-def create_cached_normalization_pipeline(**kwargs) -> Pipeline:
-    pipelines = []
-    # Create pipeline per source
-    for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration"):
-        source = source["name"]
-        pipelines.append(
-            batch_pipeline.cached_api_enrichment_pipeline(
-                source=f"normalization_source_{source}",
-                workers=20,
-                input=f"integration.int.{source}.nodes",
-                output=f"integration.int.{source}.nodes.nodes_norm_mapping",
-                preprocessor="params:integration.normalization.preprocessor",
-                cache_miss_resolver="params:integration.normalization.normalizer",
-                api="params:integration.normalization.api",
-                new_col="params:integration.normalization.target_col",
-                primary_key="params:integration.normalization.primary_key",
-                batch_size="params:integration.normalization.batch_size",
-                cache_schema="params:integration.normalization.cache_schema",
-            ),
-        )
-    return sum(pipelines)
-
-
 def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges: bool = True) -> Pipeline:
     pipelines = []
 
