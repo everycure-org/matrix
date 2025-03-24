@@ -179,15 +179,11 @@ def make_predictions(
         Pairs dataset with additional column containing the probability scores.
     """
 
-    # 1. convert the knowledgeGraph into a Spark DataFrame.
-    #    Use `data.sparkSession.createDataFrame` so you immediately have the SparkSession you need (and don't need to call it).
-    # 2. Replace graph.get_embedding with a simple Spark join.
     # limit the datasize for local testing
     if "ARGO_NODE_ID" not in os.environ:
         data = data.limit(1000)
 
     embeddings = graph.select("id", "topological_embedding")
-    logger.info(f"rows in embeddings lookup table: {embeddings.count()}")
 
     data = data.join(
         embeddings.withColumnsRenamed({"id": "source", "topological_embedding": "source_embedding"}),
@@ -198,14 +194,14 @@ def make_predictions(
         on="target",
         how="left",
     )
-    logger.info(f"data size: {data.count():_}x{len(data.columns):_}")
+
     # Retrieve rows with null embeddings
     # NOTE: This only happens in a rare scenario where the node synonymizer
     # provided an identifier for a node that does _not_ exist in our KG.
     # https://github.com/everycure-org/matrix/issues/409
 
     features: list[str] = list(itertools.chain.from_iterable(x["features"] for x in transformers.values()))
-    print(f"features: {features}")
+
     if logger.isEnabledFor(logging.INFO):
         logging.info(f"Checking for dropped pairs because one of the features ({features}) is empty…")
         removed = (
@@ -232,20 +228,13 @@ def make_predictions(
             logger.warning(f"partition with index {partitionindex} is empty")
             return
 
-        logger.info(f"cols before: {partition_df.columns}")
         s = partition_df.pop(feature_col)
-        logger.info(f"cols after: {partition_df.columns}")
-        logger.info(s.head(3))
         X = pd.DataFrame.from_dict(dict(zip(s.index, s.values))).transpose()
-        logger.info(X.head())
-        logger.info(X.shape)
 
         predictions = model.predict_proba(X)
-        logger.info(predictions.shape)
         predictions_df = pd.DataFrame(
             predictions, columns=[not_treat_score_col_name, treat_score_col_name, unknown_score_col_name]
         )
-        logger.info(predictions_df.head(3))
 
         result_df = pd.concat([partition_df, predictions_df], axis=1)
         for row in result_df.to_dict("records"):
@@ -257,9 +246,8 @@ def make_predictions(
         )  # Adjust based on data size - 20 is small, but okay for local development on subset of data
     else:
         logger.info(f"Number of rows remaining: {transformed.count()}")
-    data = transformed.rdd.mapPartitionsWithIndex(predict_partition).toDF()
 
-    data.show()
+    data = transformed.rdd.mapPartitionsWithIndex(predict_partition).toDF()
 
     return data
 
