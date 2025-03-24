@@ -2,14 +2,17 @@ from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
+import pyspark.sql as ps
 import pytest
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.pipelines.matrix_generation.nodes import (
     generate_pairs,
-    generate_report,
     make_predictions,
+    sort_and_generate_report,
 )
 from matrix.pipelines.modelling.transformers import FlatArrayTransformer
+from pyspark.sql import SparkSession
+from pyspark.sql.types import ArrayType, BooleanType, FloatType, StringType, StructField, StructType
 
 
 @pytest.fixture
@@ -79,6 +82,28 @@ def sample_graph():
 
 
 @pytest.fixture
+def sample_graph_in_spark(spark: SparkSession):
+    """Fixture that provides a sample KnowledgeGraph for testing."""
+    data = [
+        ("drug_1", True, False, np.ones(3).tolist()),
+        ("drug_2", True, False, np.ones(3).tolist()),
+        ("disease_1", False, True, np.ones(3).tolist()),
+        ("disease_2", False, True, np.ones(3).tolist()),
+    ]
+
+    schema = StructType(
+        [
+            StructField("id", StringType(), False),
+            StructField("is_drug", BooleanType(), False),
+            StructField("is_disease", BooleanType(), False),
+            StructField("topological_embedding", ArrayType(FloatType()), False),
+        ]
+    )
+
+    return spark.createDataFrame(data, schema=schema)
+
+
+@pytest.fixture
 def sample_matrix_data():
     return pd.DataFrame(
         [
@@ -88,6 +113,20 @@ def sample_matrix_data():
             {"source": "drug_2", "target": "disease_2"},
         ]
     )
+
+
+@pytest.fixture
+def sample_matrix_data_in_spark(spark: SparkSession):
+    data = [
+        ("drug_1", "disease_1"),
+        ("drug_2", "disease_1"),
+        ("drug_1", "disease_2"),
+        ("drug_2", "disease_2"),
+    ]
+
+    schema = ["source", "target"]
+
+    return spark.createDataFrame(data, schema=schema)
 
 
 @pytest.fixture
@@ -209,64 +248,24 @@ def test_generate_pairs(sample_drugs, sample_diseases, sample_graph, sample_know
     )
 
 
-def test_make_batch_predictions(
-    sample_graph,
-    sample_matrix_data,
-    transformers,
-    mock_model,
-):
-    # Given data, embeddings and a model
-    # When we make batched predictions
+def test_make_predictions(sample_graph_in_spark, sample_matrix_data_in_spark, transformers, mock_model):
     result = make_predictions(
-        graph=sample_graph,
-        data=sample_matrix_data,
+        graph=sample_graph_in_spark,
+        data=sample_matrix_data_in_spark,
         transformers=transformers,
         model=mock_model,
         features=["source_+", "target_+"],
         treat_score_col_name="score",
         not_treat_score_col_name="not_treat_score",
         unknown_score_col_name="unknown_score",
-        # batch_by="target",
     )
-
-    # TODO: rewrite using the newer make_predictions_and_sort
-    # Then the scores are added for all datapoints in a new column
-    # and the model was called the correct number of times
     assert "score" in result.columns
-    assert isinstance(result, pd.DataFrame)
-    assert len(result) == 4
-    assert mock_model.predict_proba.call_count == 2  # Called 2x due to batching
+    assert isinstance(result, ps.DataFrame)
+    assert result.count() == 4
 
 
-def test_make_predictions_and_sort(
-    sample_graph,
-    sample_matrix_data,
-    transformers,
-    mock_model,
-):
-    # Given a drug list, disease list and objects necessary for inference
-    # When running inference and sorting
-    result = make_predictions(
-        graph=sample_graph,
-        data=sample_matrix_data,
-        transformers=transformers,
-        model=mock_model,
-        features=["source_+", "target_+"],
-        treat_score_col_name="score",
-        not_treat_score_col_name="not_treat_score",
-        unknown_score_col_name="unknown_score",
-        batch_by="target",
-    )
-
-    # Then the output is of the correct format and correctly sorted
-    assert "score" in result.columns
-    assert isinstance(result, pd.DataFrame)
-    assert len(result) == 4
-    assert result["score"].is_monotonic_decreasing
-
-
-def test_generate_report(sample_data):
-    """Test the generate_report function."""
+def test_sort_and_generate_report(sample_data):
+    """Test the sort_and_generate_report function."""
     # Given an input matrix, drug list and disease list
     drugs, diseases, known_pairs, _ = sample_data
 
@@ -327,7 +326,7 @@ def test_generate_report(sample_data):
     }
 
     # When generating the report
-    result = generate_report(data, n_reporting, drugs, diseases, score_col_name, matrix_params, run_metadata)
+    result = sort_and_generate_report(data, n_reporting, drugs, diseases, score_col_name, matrix_params, run_metadata)
     full_stats = result["statistics"]
     # Check that the full matrix statistics are correct
     assert (
@@ -380,3 +379,4 @@ def test_generate_report(sample_data):
     assert result["mean_all_per_disease"].tolist() == pytest.approx([0.8, 0.4, 0.3])
     assert result["mean_top_per_drug"].tolist() == pytest.approx([0.8, 0.6, 0.4])
     assert result["mean_all_per_drug"].tolist() == pytest.approx([0.8, 0.4, 0.4])
+    assert result[score_col_name].is_monotonic_decreasing

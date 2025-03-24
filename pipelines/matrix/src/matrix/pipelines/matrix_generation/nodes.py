@@ -14,7 +14,6 @@ from matrix.inject import inject_object
 from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark.sql import Row
-from pyspark.sql.types import ArrayType, FloatType, StringType, StructField, StructType
 from sklearn.impute._base import _BaseImputer
 from tqdm import tqdm
 
@@ -179,10 +178,6 @@ def make_predictions(
         Pairs dataset with additional column containing the probability scores.
     """
 
-    # limit the datasize for local testing
-    if "ARGO_NODE_ID" not in os.environ:
-        data = data.limit(1000)
-
     embeddings = graph.select("id", "topological_embedding")
 
     data = data.join(
@@ -239,11 +234,6 @@ def make_predictions(
         result_df = pd.concat([partition_df, predictions_df], axis=1)
         for row in result_df.to_dict("records"):
             yield Row(**row)
-
-    if "ARGO_NODE_ID" not in os.environ:
-        transformed = transformed.repartition(
-            20
-        )  # Adjust based on data size - 20 is small, but okay for local development on subset of data
 
     data = transformed.rdd.mapPartitionsWithIndex(predict_partition).toDF()
 
