@@ -2,13 +2,21 @@ name: Scheduled Sampling Pipeline
 
 on:
   schedule:
-    - cron: '0 5 * * *'  # daily at 5am GMT
+    - cron: '0 0 * * *'  # daily at 5am GMT
+  workflow_dispatch: 
+    inputs:
+      release_version:
+        description: 'Version to deploy in format vX.Y.Z'
+        required: true
+        type: string
 env:
   project_id: 'mtrx-hub-dev-3of'
   workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
   service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
   region: 'us-central1'
   cluster: 'compute-cluster'
+  # release version from input
+  RELEASE_VERSION: ${{ inputs.release_version }}
 
 jobs:
 
@@ -16,6 +24,7 @@ jobs:
     runs-on: 
       labels: ubuntu-24.04
     name: Submit the Sampling Pipeline Periodically
+    environment: dev
     permissions:
       contents: 'write'
       id-token: 'write'
@@ -27,6 +36,23 @@ jobs:
         with:
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
+
+      - name: Set RELEASE_VERSION from latest tag if not set
+        run: |
+          if [ -z "${RELEASE_VERSION}" ]; then
+            git fetch --tags
+            LATEST_TAG=$(
+              git ls-remote --tags origin | \
+              grep -v '{}' | \
+              cut -d'/' -f3 | \
+              sort -V | \
+              tail -n1
+            )
+            echo "RELEASE_VERSION=${LATEST_TAG}" >> "$GITHUB_ENV"
+            echo "Setting RELEASE_VERSION to latest tag: ${LATEST_TAG}"
+          else
+            echo "Using provided RELEASE_VERSION: ${RELEASE_VERSION}"
+          fi
 
       - name: Remove unnecessary files
         # debug: remove unnecessary files to free up disk space for building and pushing docker images
@@ -43,14 +69,10 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Set up kedro project dependencies
+      - name: Install Argo & Python dependencies
         working-directory: pipelines/matrix
         run: |
-          curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
-          gunzip argo-linux-amd64.gz
-          chmod +x argo-linux-amd64
-          sudo mv argo-linux-amd64 /usr/local/bin/argo
-          argo version
+          make install_argo
           pip install -r requirements.txt
 
       - name: Authenticate with Google Cloud
@@ -78,13 +100,17 @@ jobs:
 
       - name: Run the kedro sampling pipeline
         working-directory: pipelines/matrix
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
         run: |
           echo "Run the kedro sampling pipeline"
-          kedro submit \
+          kedro experiment run \
             -e sample \
             -p test_sample \
+            --experiment-name scheduled-sampled-test \
             --run-name scheduled-sampled-test \
             --username github_actions_bot \
-            --release-version v0.2.7 \
+            --release-version "${{ env.RELEASE_VERSION }}" \
             --headless \
             --quiet

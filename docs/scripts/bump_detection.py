@@ -6,7 +6,7 @@ import sys
 import semver
 
 
-def get_generate_notes_flag(latest_official_release, release):
+def get_generate_article_flag(latest_official_release, release):
     latest_official_release = latest_official_release.lstrip("v")
     tag_version = semver.Version.parse(latest_official_release)
 
@@ -18,16 +18,16 @@ def get_generate_notes_flag(latest_official_release, release):
 
     release_is_major_bump = tag_version.major < release_version.major
 
-    generate_notes = release_is_minor_bump or release_is_major_bump
+    generate_article = release_is_minor_bump or release_is_major_bump
 
     if (
         tag_version.major == release_version.major and tag_version.minor > release_version.minor
     ) or tag_version.major > release_version.major:
         raise ValueError("Cannot release a major/minor version lower than the latest official release")
 
-    print(f"generate_notes={generate_notes}")
-    return generate_notes
+    print(f"generate_article={generate_article}")
+    return generate_article
 
 
 if __name__ == "__main__":
-    get_generate_notes_flag(latest_official_release=sys.argv[1], release=sys.argv[2])
+    get_generate_article_flag(latest_official_release=sys.argv[1], release=sys.argv[2])

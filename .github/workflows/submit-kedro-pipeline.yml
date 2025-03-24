@@ -3,9 +3,17 @@ name: Periodically run kedro kg-release
 on:
   schedule:
     - cron: '20 14 1 * 2' # At 15:20 CET on the 1st day of the month and on Tuesday.
-  repository_dispatch:
-    types: [submit-kedro-pipeline]
-
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Type of version bump'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+    
 env:
   project_id: 'mtrx-hub-dev-3of'
   workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
@@ -19,6 +27,7 @@ jobs:
     runs-on: 
       labels: ubuntu-24.04
     name: Submit the Kedro Pipeline Periodically
+    environment: dev
     permissions:
       contents: 'write'
       id-token: 'write'
@@ -52,25 +61,21 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Set up kedro project dependencies
+      - name: Install Argo & Python dependencies
         working-directory: pipelines/matrix
         run: |
-          curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
-          gunzip argo-linux-amd64.gz
-          chmod +x argo-linux-amd64
-          sudo mv argo-linux-amd64 /usr/local/bin/argo
-          argo version
+          make install_argo
           pip install -r requirements.txt
 
       - name: Authenticate with Google Cloud
         id: auth
         uses: 'google-github-actions/auth@v2'
         with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.workload_identity_provider}}
-          service_account: ${{env.service_account}}
-          token_format: access_token
-
+          project_id: ${{ env.project_id }}
+          workload_identity_provider: ${{ env.workload_identity_provider }}
+          service_account: ${{ env.service_account }}
+          token_format: access_token 
+      
       - uses: google-github-actions/get-gke-credentials@v1 
       # configure authentication to a GKE cluster (configure kubectl)
         with:
@@ -92,14 +97,21 @@ jobs:
           echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
           echo "Latest tag is ${latest_tag}"
 
+      - name: Get bump type
+        run: |
+          if [[ "${{ github.event_name == 'schedule' }}" == "true" ]]; then
+            # If it's the first of the month, it's a minor bump, even if it's Tuesday. On all other Tuesdays, it's a patch.
+            [[ $(date +%-d) -eq 1 ]] && BUMP_TYPE='minor' || BUMP_TYPE='patch'
+          else
+            BUMP_TYPE="${{ github.event.inputs.bump_type }}"
+          fi
+          echo "BUMP_TYPE=${BUMP_TYPE}" >> "$GITHUB_ENV"
+
       - name: Increment version
         working-directory: docs/scripts
         run: |
           pip install semver
-          # If it's the first of the month, it's a minor bump, even if it's Tuesday. On all other Tuesdays, it's a patch.
-          [[ $(date +%-d) -eq 1 ]] && BUMP_TYPE='minor' || BUMP_TYPE='patch'
-          echo "Bumping version with type: ${BUMP_TYPE}"
-          python bump_version.py --type="${BUMP_TYPE}" >> "$GITHUB_ENV"
+          python bump_version.py --type="${{env.BUMP_TYPE}}" >> "$GITHUB_ENV"
 
       - name: Branch off
         run: |
@@ -110,14 +122,21 @@ jobs:
         working-directory: pipelines/matrix
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
         run: |
           echo "Submit the kedro pipeline"
-          kedro submit \
+          if [ "${{ env.BUMP_TYPE }}" == "minor" ]; then
+            RELEASE_PIPELINE='kg_release'
+          else
+            RELEASE_PIPELINE='kg_release_patch'
+          fi
+          kedro experiment run \
             --username GH-Actions-bot \
             --namespace argo-workflows \
+            --experiment-name scheduled-kg-release \
             --run-name auto-kg-release \
             --release-version "${{ env.release_version }}" \
-            --pipeline kg_release \
+            --pipeline ${RELEASE_PIPELINE} \
             --headless
 
   notify_failure:

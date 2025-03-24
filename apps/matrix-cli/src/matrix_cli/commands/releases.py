@@ -3,6 +3,7 @@ import platform
 import re
 import subprocess
 import tempfile
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 from pathlib import Path
@@ -48,6 +49,39 @@ def test():
     print(ask_for_release())
 
 
+@app.command(name="template")
+def write_article_template(
+    output_file: str = typer.Option(None, help="File to write the release article template to"),
+    since: str = typer.Option(None, help="Starting git reference for fetching PR"),
+    until: str = typer.Option(None, help="Ending git reference for fetching PR"),
+    headless: bool = typer.Option(False, help="Don't ask interactive questions."),
+):
+    """Write a template for a release article."""
+    # In headless mode, the starting git sha is the lastest minor release
+    since = select_release(headless)
+    if until is None:
+        until = get_current_branch()
+
+    pr_details_df = get_pr_details_since(since, until)
+    authors = pr_details_df["author"].unique()
+    PR_numbers = pr_details_df["number"].tolist()
+    labels = pr_details_df["current_labels"].tolist()
+    PR_urls = pr_details_df["url"].tolist()
+    PR_titles = pr_details_df["title"].tolist()
+    label_to_pr = defaultdict(list)
+    for combined_labels, number, title, url in zip(labels, PR_numbers, PR_titles, PR_urls):
+        for label in combined_labels.split(","):
+            label_to_pr[label.strip()].append({"number": number, "title": title, "url": url})
+    template = get_template("release_article.tmpl").render(
+        date=date.today().isoformat(), authors=authors, label_to_pr=label_to_pr.items()
+    )
+    if output_file:
+        Path(output_file).write_text(template)
+        console.print(f"Release article template written to: {output_file}")
+    else:
+        print(Markdown(template))
+
+
 @app.command(name="article")
 def write_release_article(
     output_file: str = typer.Option(None, help="File to write the release article to"),
@@ -70,7 +104,7 @@ def write_release_article(
         console.print(f"[green]Release notes loaded. Total length: {len(notes)} characters")
     else:
         console.print("[green]Collecting release notes...")
-        notes = get_release_notes(since, model=model)
+        notes = get_release_notes(since, until, model=model)
 
     console.print("[green]Collecting previous articles...")
     previous_articles = get_previous_articles()

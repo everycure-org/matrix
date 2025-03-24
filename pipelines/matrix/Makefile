@@ -11,13 +11,32 @@ PREREQUISITES := docker gcloud python3 java uv kubectl
 GCP_PROJECT ?= mtrx-hub-dev-3of
 SA_KEY_SECRET_NAME ?= storage-viewer-sa-key
 SA_KEY_PATH ?= conf/local/service-account.json
-# TODO: Update once we have the new secret created using terraform
-OAUTH_CLIENT_SECRET_SECRET_NAME ?= af_oauth_client_secret
+OAUTH_CLIENT_SECRET_SECRET_NAME ?= oauth_client_secret
 OAUTH_CLIENT_SECRET_PATH ?= conf/local/oauth_client_secret.txt
+
+fetch_secrets:
+	echo "Fetching secrets from Secret Manager..."; \
+	mkdir -p conf/local; \
+	for pair in "$(SA_KEY_SECRET_NAME) $(SA_KEY_PATH)" "$(OAUTH_CLIENT_SECRET_SECRET_NAME) $(OAUTH_CLIENT_SECRET_PATH)"; do \
+		set -- $$pair; \
+		echo "Fetching secret $$1..."; \
+		gcloud secrets versions access latest --secret="$$1" --project=$(GCP_PROJECT) > "$$2"; \
+		chmod 600 "$$2"; \
+		echo "Secret $$1 saved to $$2"; \
+	done
 
 # ensures all make targets run in one shell (rather than line by line in new shell)
 .ONESHELL: 
 
+default: prerequisites fetch_sa_key install fast_test integration_test
+
+.PHONY: always
+# steps here get run on _every_ make call, no matter the target. Make sure this is 100% idempotent and fast.
+always:
+	# never track notebooks in the pipeline subfolder
+	git update-index --assume-unchanged *.ipynb
+%: always
+	@:
 default: prerequisites fetch_secrets install fast_test integration_test
 	echo "done!"
 
@@ -32,25 +51,6 @@ prerequisites:
 		exit 1; \
 	fi
 
-fetch_secrets:
-	echo "Fetching service account key from Secret Manager..."; \
-	mkdir -p conf/local; \
-	gcloud secrets versions access latest \
-		--secret=$(SA_KEY_SECRET_NAME) \
-		--project=$(GCP_PROJECT) \
-		> $(SA_KEY_PATH); \
-	chmod 600 $(SA_KEY_PATH); \
-	echo "Service account key saved to $(SA_KEY_PATH)"; \
-
-	echo "Fetching OAuth client secret from Secret Manager..."; \
-	mkdir -p conf/local; \
-	gcloud secrets versions access latest \
-		--secret=$(OAUTH_CLIENT_SECRET_SECRET_NAME) \
-		--project=$(GCP_PROJECT) \
-		> $(OAUTH_CLIENT_SECRET_PATH); \
-	chmod 600 $(OAUTH_CLIENT_SECRET_PATH); \
-	echo "Service account key saved to $(OAUTH_CLIENT_SECRET_PATH)"; \
-
 venv: 
 	if [ ! -d .venv ]; then uv venv -p 3.11; fi
 	uv run python -m ensurepip --upgrade || true
@@ -63,6 +63,13 @@ install_compatibility: venv precommit-hooks
 	# versions for local machine limitations (e.g. newer pytorch on macos intel)
 	uv pip install -r requirements.txt --overrides requirements.overrides.txt
 
+install_argo:
+	curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
+	gunzip argo-linux-amd64.gz
+	chmod +x argo-linux-amd64
+	sudo mv argo-linux-amd64 /usr/local/bin/argo
+	argo version
+
 precommit: precommit-hooks
 	git fetch origin
 	uv run pre-commit run --from-ref origin/main --to-ref HEAD
@@ -70,6 +77,13 @@ precommit: precommit-hooks
 precommit-hooks:
 	uv pip install pre-commit 
 	uv run pre-commit install --install-hooks
+
+check_release_version_environment_variable:
+	if [ -z "${RELEASE_VERSION}" ]; then
+	echo "::error::release_version input is required"
+	exit 1
+	fi
+	echo "Using release version: ${RELEASE_VERSION}"
 
 full_test:
 	# activate venv to ensure spark doesn't have python driver mismatches
@@ -181,4 +195,4 @@ diagnostics:
 	-df -h
 	echo "\nDiagnostics complete."
 
-# NOTE: This Makefile target was partially generated using AI assistance.
+

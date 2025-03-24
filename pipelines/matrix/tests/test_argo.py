@@ -251,13 +251,15 @@ def test_get_dependencies_default_different_than_task(nodes_where_first_is_input
     )
     assert deps[0]["tags"] == {"argowf.fuse", "argowf.fuse-group.dummy"}
     assert deps[0]["resources"] == {
-        "cpu_limit": 2,
-        "cpu_request": 2,
-        "memory_limit": "64Gi",
-        "memory_request": "32Gi",
-        "num_gpus": 1,
         "ephemeral_storage_limit": "128Gi",
         "ephemeral_storage_request": "0Gi",
+        "cpu_limit": 2,
+        "cpu_request": 2,
+        "memory_limit": 64,
+        "memory_request": 32,
+        "num_gpus": 1,
+        "ephemeral_storage_limit": 128,
+        "ephemeral_storage_request": 0,
     }
 
 
@@ -566,7 +568,7 @@ def test_resources_of_argo_template_config_pipelines() -> None:
     # Verify default resource parameters for second task
     resource_params2 = {p["name"]: p["value"] for p in task2["arguments"]["parameters"]}
     assert resource_params2["num_gpus"] == 0
-    assert resource_params2["memory_request"] == f"{argo_default_resources.memory_request}Gi"
-    assert resource_params2["memory_limit"] == f"{argo_default_resources.memory_limit}Gi"
+    assert resource_params2["memory_request"] == argo_default_resources.memory_request
+    assert resource_params2["memory_limit"] == argo_default_resources.memory_limit
     assert resource_params2["cpu_request"] == argo_default_resources.cpu_request
     assert resource_params2["cpu_limit"] == argo_default_resources.cpu_limit

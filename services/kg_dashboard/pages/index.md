@@ -4,9 +4,12 @@ title: Matrix KG Dashboard
 
 <script>
   const release_version = import.meta.env.VITE_release_version;
+  const build_time = import.meta.env.VITE_build_time;
 </script>
 
 ## Version: {release_version}
+
+<p class="text-gray-500 text-sm italic">Last updated on {build_time}</p>
 
 Dashboard pages on the left side of the screen are for exploring the data in the Matrix Knowledge Graph. Select categories from the dropdowns below to filter the knowledge graph visualization.
 
@@ -86,7 +89,7 @@ ORDER BY sum(count) DESC
 ```sql combined_sankey
 -- First level: Subject Category to Predicate
 SELECT 
-    concat('Subject: ', replace(subject_category,'biolink:','')) as source,
+    concat('[S] ', replace(subject_category,'biolink:','')) as source,
     replace(predicate,'biolink:','') as target,
     sum(count) as count
 FROM bq.merged_kg_edges
@@ -99,7 +102,7 @@ UNION ALL
 -- Second level: Predicate to Object Category
 SELECT 
     replace(predicate,'biolink:','') as source,
-    concat('Object: ', replace(object_category,'biolink:','')) as target,
+    concat('[O] ', replace(object_category,'biolink:','')) as target,
     sum(count) as count
 FROM bq.merged_kg_edges
 WHERE replace(predicate,'biolink:','') IN ${inputs.selected_predicates.value}
@@ -146,6 +149,5 @@ Example parameterized dashboards:
  - <a href="/node/prefix/MONDO">Mondo Dashboard</a> 
  - <a href="/node/category/Disease">Disease Dashboard</a> 
 
-To see additional node breakdowns by category or prefix, check out the <a href="/node/explore">Node Explore</a> page.
 
 <!-- NOTE: This file was partially generated using AI assistance. -->

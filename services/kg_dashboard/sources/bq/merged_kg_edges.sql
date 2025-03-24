@@ -1,3 +1,4 @@
+-- TODO: rename source file to include groupby/count by category information
 SELECT SPLIT(subject, ':')[OFFSET(0)] AS subject_prefix,  
        subject_nodes.category AS subject_category,
        predicate, 
