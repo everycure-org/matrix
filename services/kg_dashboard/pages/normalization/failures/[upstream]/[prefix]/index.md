@@ -22,7 +22,7 @@ from bq.edge_failed_normalization_examples
 group by all
 ```
 
-These are examples of {params.prefix} identifiers from {params.upstream} that failed normalization, the > link will use bioregistry.io link expansion to provide more information about the idenfifier.
+These are examples of {params.prefix} identifiers from {params.upstream} that failed normalization, the > link will use bioregistry.io link expansion to provide more information about the identifier.
 
 {#if edge_failed_normalization_examples.length > 0}
 
