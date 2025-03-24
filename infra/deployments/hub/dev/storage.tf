@@ -9,7 +9,7 @@ resource "google_storage_bucket_iam_member" "object_user" {
   }
 }
 
-# Add a new binding for the specific service account
+# Add the permission to view dev bucket data for the prod k8s service account.
 resource "google_storage_bucket_iam_member" "prod_sa_access" {
   bucket = var.storage_bucket_name
   role   = "roles/storage.objectViewer"
