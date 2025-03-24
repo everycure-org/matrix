@@ -24,6 +24,7 @@ jobs:
     runs-on: 
       labels: ubuntu-24.04
     name: Submit the Sampling Pipeline Periodically
+    environment: dev
     permissions:
       contents: 'write'
       id-token: 'write'
@@ -99,6 +100,9 @@ jobs:
 
       - name: Run the kedro sampling pipeline
         working-directory: pipelines/matrix
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
         run: |
           echo "Run the kedro sampling pipeline"
           kedro experiment run \
