@@ -106,12 +106,15 @@ Cloud authentication flow using SSO, rather than on per-app level.
   
   PRO
 
-  - Quotas are [usually](https://cloud.google.com/docs/quotas/view-manage) linked to Google Project IDs (there are a few linked to the  organization-level), meaning there’s less chance of hitting quota limits.
+  - Quotas are [usually](https://cloud.google.com/docs/quotas/view-manage)
+    linked to Google Project IDs (there are a few linked to the
+    organization-level), meaning there’s less chance of hitting quota limits.
 
   CON:
 
   - it might slow down development.
-    - COUNTERARGUMENT: switching k8s context is a single command, as is switching a Google Project. Can be in the Makefile.
+    - COUNTERARGUMENT: switching k8s context is a single command, as is
+      switching a Google Project. Can be in the Makefile.
 
    For the same reason as above in what services the data must be made available,
    and the separate Kubernetes cluster considerations, it is _easier_ to continue
@@ -124,19 +127,25 @@ Cloud authentication flow using SSO, rather than on per-app level.
    be in other environments. This has the advantage that storing such secrets from
    Terraform is easy, as well as retrieving these programmatically, since users do
    not need to know different secret names.
+   This will be done by setting up a new git-crypt scope, that would encrypt the
+   _k8s_secrets_prd.yaml_. It would be decrypted in the CICD pipeline and its
+   contents pushed to the external secrets service of the prod account. See image below.
 
+ ![Diagram of the as-is and to-be situation of git-crypt scopes for populating external secret services with secrets](../../assets/img/git-crypt-prod.excalidraw.svg "Upcoming changes to the git-crypt scopes")
 
 - Should authorization be granted through Google project ids?
-	It seems so, as it makes it easier for granting access to MLFlow and Neo4J.
+  It seems so, as it makes it easier for granting access to MLFlow and Neo4J.
 
 - Shall we have infra-dev and infra-prod branches?  Yes, because we’re using
-ArgoCD and we want to avoid having a commit in the infra folder affecting both
-environments.  
+  ArgoCD and we want to avoid having a commit in the infra folder affecting both
+  environments.
 
-  Proposal: In order not to have long running branches main,
-  infra-dev and infra-prod, we will have ArgoCD on dev to monitor branch infra,
-  as is today, and ArgoCD on prod would monitor branch main. No changes should
-  happen to folder infra on main, unless it comes from a merge of branch infra.
+  Proposal: move infra, both the Terraform/Terragrunt parts, as well as ArgoCD,
+  to its own repo, _matrix-infra_.  
+
+  This would create less friction, as we'd need 2 infra branches for ArgoCD
+  now, and the current "merge main to infra, then infra to main" sequence is
+  already distracting from the main goal of having something simply deployed.
 
   Out of scope: whether there should be dev and prod branches for non-infra
   related development, such as triggering a release in the production
@@ -146,9 +155,11 @@ environments.
   solutions discussed so far.
 
 
-- If this is about dataset protection, what is the impact if it gets used by unauthorized people?
+- If this is about dataset protection, what is the impact if it gets used by
+  unauthorized people?
 
-  Depends on the contractual arrangements. Possibilities: loss of funding, lawsuit, reputation damage.
+  Depends on the contractual arrangements. Possibilities: loss of funding,
+  lawsuit, reputation damage.
 
 - What costs can be incurred?
 
@@ -174,45 +185,21 @@ environments.
   pipeline?
 
   Duplicating the data makes for easier management, as no exceptions need to be
-  entered in obscure corners. It comes with an extra storage cost for the
-  ingested data. By modifying pipelines to let them read data from a lower level
-  env, you’re adding environment-aware checks to the code, which deter from the
-  actual goals of the code. A downside to duplicating data aside from the cost is
-  that the datasets may grow out of sync (a new version of the public data needs
-  to be in both environments). Something that can be solved with
-  cross-bucket-replication.
+  made. A downside is that it comes with an extra storage cost for the ingested
+  data and that the public datasets in both envs may grow out of sync, though
+  that can be solved with cross-bucket repliccation
 
   As decided in PR 1189, production workloads will read public data from dev,
   and private data from prod.
 
-
 - Should we create a different yml in the env folder, e.g. cloud-prod?
 
-  Probably yes, as its catalog would reference the private datasets. However, as
-  Kedro catalogs only override the base environment, and do not seem to offer a
-  way of overriding e.g the current cloud catalog, it means all the entries from
-  env/cloud would need to be duplicated to env/cloud-prod. This is difficult for
-  maintenance. Can symlinks be used? E.g. 
-  
-  ```text
-  env
-  ├── cloud
-  │   └── catalog.yml
-  └── cloud-prod
-  	├── catalog-ext.yml
-  	└── catalog.yml -> ../cloud/catalog.yml
-  ```
-  An initial experiment shows this to be working.
-  
-  An alternative is provided by warning on attempting to load datasets that
-  cannot be found. However, this has a potential downside that during the
-  processing a warning might be raised for a public dataset that should really
-  be present.
-
-  
-  💡We'll rename the folders to _dev_ and _prd_, so that people joining later will
-  not be confused why “cloud” (dev) seems to have had preferential treatment
-  compared to prd.
+  It has been decided in PR 1189 not to do so: the private datasets will be
+  added to the existing catalog.yml files. The way it should be working then is
+  that environment variables or CLI flags will be used to enable/disable the
+  inclusion and processing of the private datasets, which is highly similar to
+  the current process of selectively disabling/enabling datasets by commenting
+  them out from the `DYNAMIC_PIPELINES_MAPPING` in the _settings.py_ file.
 
 - Who is the handful of people that needs access to this private data?
 
