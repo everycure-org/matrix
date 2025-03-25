@@ -47,3 +47,9 @@ pipelines/matrix/src/matrix/pipelines/matrix_generation/matrix.code-workspace
 # Having it would not allow us to trigger a release from GH Actions,
 # since the repo would be in a dirty state.
 gha-kubeconfig*
+/backend.tf
+/infra/deployments/hub/dev/default_variables.gen.tf
+/infra/deployments/hub/prod/default_variables.gen.tf
+/infra/deployments/hub/dev/hub_variables.gen.tf
+/infra/deployments/hub/prod/hub_variables.gen.tf
+/provider.tf
