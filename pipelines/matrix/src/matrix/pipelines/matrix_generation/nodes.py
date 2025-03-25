@@ -104,7 +104,7 @@ def generate_pairs(
     known_pairs: pd.DataFrame,
     drugs: pd.DataFrame,
     diseases: pd.DataFrame,
-    graph: KnowledgeGraph,
+    graph: ps.DataFrame,
     clinical_trials: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """Function to generate matrix dataset.
@@ -130,7 +130,7 @@ def generate_pairs(
     diseases_lst = list(set(diseases_lst))
 
     # Remove drugs and diseases without embeddings
-    nodes_with_embeddings = set(graph._nodes["id"])
+    nodes_with_embeddings = graph.select("id").toPandas()["id"].tolist()
     drugs_lst = [drug for drug in drugs_lst if drug in nodes_with_embeddings]
     diseases_lst = [disease for disease in diseases_lst if disease in nodes_with_embeddings]
 
