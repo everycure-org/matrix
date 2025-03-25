@@ -118,30 +118,6 @@ class SpecificRanking(Evaluation):
         self._specific_col = specific_col
         self._score_col_name = score_col_name
 
-
-class SpecificRanking(Evaluation):
-    """A class representing ranking metrics for specific axes of the matrix.
-
-    In particular, the class encompasses drug or diseases specific Hit@k and Mean Reciprocal Rank (MRR) metrics.
-
-    Note that, for each specific drug or disease, we compute the rank of each known positives only against negatives,
-    not including the other known positives.
-    """
-
-    def __init__(self, rank_func_lst: List[NamedFunction], specific_col: str, score_col_name: str) -> None:
-        """Initializes the SpecificRanking instance.
-
-        Args:
-            rank_func_lst: List of named functions.
-            specific_col: Column to rank over.
-                Set to "source" for drug-specific ranking.
-                Set to "target" for disease-specific ranking.
-            score_col_name: Probability score column name.
-        """
-        self._rank_func_lst = rank_func_lst
-        self._specific_col = specific_col
-        self._score_col_name = score_col_name
-
     def evaluate(
         self,
         data: pd.DataFrame,
