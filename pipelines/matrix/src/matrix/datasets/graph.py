@@ -91,7 +91,7 @@ class PandasParquetDataset(ParquetDataset):
         )
 
     def save(self, df: pd.DataFrame):
-        if "fold_0/matrix_predictions" in self._filepath:
+        if "fold_0/matrix_predictions" in str(self._filepath):
             logger.info("#" * 80)
             logger.info(f"Saving data to {self._filepath}")
             print(df.head())
