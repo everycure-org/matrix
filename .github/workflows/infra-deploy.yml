@@ -33,7 +33,7 @@ jobs:
           base: 'infra'
           filters: |
             src:
-              - ${{ env.deployment_path }}
+              - ${{ env.deployment_path }}/**
               - .github/workflows/infra-*.yml
               - infra/modules/**
   # Uncomment as necessary, avoiding this step when not needed as it takes 90s per CI run which adds up
