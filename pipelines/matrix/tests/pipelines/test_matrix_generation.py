@@ -382,3 +382,5 @@ def test_sort_and_generate_report(sample_data):
     assert result["mean_top_per_drug"].tolist() == pytest.approx([0.8, 0.6, 0.4])
     assert result["mean_all_per_drug"].tolist() == pytest.approx([0.8, 0.4, 0.4])
     assert result[score_col_name].is_monotonic_decreasing
+    assert sorted_data[score_col_name].is_monotonic_decreasing
+    assert sorted_data["rank"].is_monotonic_increasing
