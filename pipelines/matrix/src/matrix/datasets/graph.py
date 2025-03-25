@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from typing import Any, Dict, List
 
 import pandas as pd
@@ -99,7 +100,7 @@ class PandasParquetDataset(ParquetDataset):
 
         # Retrying due to a very flaky error, causing GCS not retrieving
         # parquet files on first try.
-        while attempt < 3:
+        while True:
             try:
                 # Attempt reading the object
                 # https://github.com/everycure-org/matrix/issues/71
@@ -109,11 +110,9 @@ class PandasParquetDataset(ParquetDataset):
                     return df.astype(self._as_type)
 
                 return df
-            except Exception:
+            except Exception as e:
                 attempt += 1
-                logger.warning(f"Parquet file `{self._filepath}` not found, retrying!")
-
-        raise DatasetError(f"Unable to find the Parquet file `{self._filepath}` underlying this dataset!")
+                _log_or_raise(self._filepath, attempt=attempt, error=e)
 
 
 class KnowledgeGraphDataset(ParquetDataset):
@@ -148,13 +147,17 @@ class KnowledgeGraphDataset(ParquetDataset):
 
         # Retrying due to a very flaky error, causing GCS not retrieving
         # parquet files on first try.
-        while attempt < 3:
+        while True:
             try:
                 # Attempt reading the object
                 # https://github.com/everycure-org/matrix/issues/71
                 return KnowledgeGraph(super().load())
-            except Exception:
+            except Exception as e:
                 attempt += 1
-                logger.warning(f"Parquet file `{self._filepath}` not found, retrying!")
+                _log_or_raise(self._filepath, attempt=attempt, error=e)
 
-        raise DatasetError(f"Unable to find the Parquet file `{self._filepath}` underlying this dataset!")
+
+def _log_or_raise(filepath: Path | str, error: Exception, attempt: int, max_attempts: int = 3) -> None:
+    if attempt >= max_attempts:
+        raise DatasetError(f"Unable to find the Parquet file `{filepath}` underlying this dataset!") from error
+    logger.warning(f"Parquet file `{filepath}` not found, retrying!")
