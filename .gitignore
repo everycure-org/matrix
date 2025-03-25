@@ -48,8 +48,5 @@ pipelines/matrix/src/matrix/pipelines/matrix_generation/matrix.code-workspace
 # since the repo would be in a dirty state.
 gha-kubeconfig*
 /backend.tf
-/infra/deployments/hub/dev/default_variables.gen.tf
-/infra/deployments/hub/prod/default_variables.gen.tf
-/infra/deployments/hub/dev/hub_variables.gen.tf
-/infra/deployments/hub/prod/hub_variables.gen.tf
+**/*.gen.tf
 /provider.tf
