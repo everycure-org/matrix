@@ -80,9 +80,18 @@ def create_pipeline(**kwargs) -> Pipeline:
                         ),
                     ),
                     ArgoNode(
-                        func=nodes.sort_and_generate_report,
+                        func=nodes.sort_predictions,
                         inputs=[
                             f"matrix_generation.fold_{fold}.model_output.matrix_predictions@pandas",
+                            "params:matrix_generation.treat_score_col_name",
+                        ],
+                        outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
+                        name=f"sort_predictions_fold_{fold}",
+                    ),
+                    ArgoNode(
+                        func=nodes.generate_report,
+                        inputs=[
+                            f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
                             "params:matrix_generation.matrix_generation_options.n_reporting",
                             "integration.int.drug_list.nodes.norm@pandas",
                             "integration.int.disease_list.nodes.norm@pandas",
@@ -90,11 +99,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "params:matrix_generation.matrix",
                             "params:matrix_generation.run",
                         ],
-                        outputs=[
-                            f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
-                            f"matrix_generation.fold_{fold}.reporting.matrix_report",
-                        ],
-                        name=f"sort_and_generate_report_fold_{fold}",
+                        outputs=f"matrix_generation.fold_{fold}.reporting.matrix_report",
+                        name=f"generate_report_fold_{fold}",
                     ),
                 ],
             )

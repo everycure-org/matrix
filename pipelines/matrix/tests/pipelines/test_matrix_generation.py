@@ -7,8 +7,9 @@ import pytest
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.pipelines.matrix_generation.nodes import (
     generate_pairs,
+    generate_report,
     make_predictions,
-    sort_and_generate_report,
+    sort_predictions,
 )
 from matrix.pipelines.modelling.transformers import FlatArrayTransformer
 from pyspark.sql import SparkSession
@@ -266,8 +267,8 @@ def test_make_predictions(sample_graph_in_spark, sample_matrix_data_in_spark, tr
     assert result.count() == 4
 
 
-def test_sort_and_generate_report(sample_data):
-    """Test the sort_and_generate_report function."""
+def test_generate_report(sample_data):
+    """Test the generate_report function."""
     # Given an input matrix, drug list and disease list
     drugs, diseases, known_pairs, _ = sample_data
 
@@ -328,9 +329,7 @@ def test_sort_and_generate_report(sample_data):
     }
 
     # When generating the report
-    sorted_data, result = sort_and_generate_report(
-        data, n_reporting, drugs, diseases, score_col_name, matrix_params, run_metadata
-    )
+    result = generate_report(data, n_reporting, drugs, diseases, score_col_name, matrix_params, run_metadata)
     full_stats = result["statistics"]
     # Check that the full matrix statistics are correct
     assert (
@@ -384,5 +383,23 @@ def test_sort_and_generate_report(sample_data):
     assert result["mean_top_per_drug"].tolist() == pytest.approx([0.8, 0.6, 0.4])
     assert result["mean_all_per_drug"].tolist() == pytest.approx([0.8, 0.4, 0.4])
     assert result[score_col_name].is_monotonic_decreasing
-    assert sorted_data[score_col_name].is_monotonic_decreasing
-    assert sorted_data["rank"].is_monotonic_increasing
+
+
+def test_sort_predictions():
+    data = pd.DataFrame(
+        {
+            "source": ["drug_1", "drug_2", "drug_3", "drug_4", "drug_2"],
+            "target": ["disease_1", "disease_2", "disease_3", "disease_3", "disease_2"],
+            "probability": [0.4, 0.6, 0.8, 0.1, 0.2],
+            "is_known_positive": [True, False, False, False, False],
+            "trial_sig_better": [False, False, False, False, False],
+            "trial_non_sig_better": [False, False, False, False, False],
+            "trial_sig_worse": [False, False, False, False, False],
+            "trial_non_sig_worse": [False, False, False, False, False],
+            "is_known_negative": [False, True, False, False, False],
+        }
+    )
+    score_col_name = "probability"
+    result = sort_predictions(data, score_col_name)
+    assert result[score_col_name].is_monotonic_decreasing
+    assert result["rank"].is_monotonic_increasing
