@@ -35,10 +35,10 @@ module "project_iam_bindings" {
     "roles/viewer"                         = flatten([local.matrix_viewers_group, local.cross_account_sas])
     "roles/bigquery.jobUser"               = flatten([local.matrix_viewers_group, local.cross_account_sas])
     # giving prod k8s cluster access to our dev data. 
-    "roles/bigquery.dataViewer"            = flatten([local.matrix_viewers_group, local.cross_account_sas, local.prod_sas])
-    "roles/bigquery.studioUser"            = flatten([local.matrix_viewers_group, local.cross_account_sas])
-    "roles/bigquery.user"                  = flatten([local.matrix_viewers_group, local.cross_account_sas])
-    "roles/iap.httpsResourceAccessor"      = flatten([local.matrix_viewers_group, local.github_actions_rw])
+    "roles/bigquery.dataViewer"       = flatten([local.matrix_viewers_group, local.cross_account_sas, local.prod_sas])
+    "roles/bigquery.studioUser"       = flatten([local.matrix_viewers_group, local.cross_account_sas])
+    "roles/bigquery.user"             = flatten([local.matrix_viewers_group, local.cross_account_sas])
+    "roles/iap.httpsResourceAccessor" = flatten([local.matrix_viewers_group, local.github_actions_rw])
 
     "roles/compute.networkUser" = [local.matrix_all_group]
   }
