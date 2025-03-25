@@ -91,6 +91,7 @@ class PandasParquetDataset(ParquetDataset):
         )
 
     def save(self, df: pd.DataFrame):
+        logger.info(f"Saving data to {self._filepath}")
         return super().save(df)
 
     def load(self) -> KnowledgeGraph:

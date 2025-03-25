@@ -191,14 +191,16 @@ def sample_data():
     return drugs, diseases, known_pairs, graph
 
 
-def test_generate_pairs(sample_drugs, sample_diseases, sample_graph, sample_known_pairs, sample_clinical_trials):
+def test_generate_pairs(
+    sample_drugs, sample_diseases, sample_graph_in_spark, sample_known_pairs, sample_clinical_trials
+):
     """Test the generate_pairs function."""
     # Given drug list, disease list and ground truth pairs
     # When generating the matrix dataset
     result = generate_pairs(
         drugs=sample_drugs,
         diseases=sample_diseases,
-        graph=sample_graph,
+        graph=sample_graph_in_spark,
         known_pairs=sample_known_pairs,
         clinical_trials=sample_clinical_trials,
     )
