@@ -85,10 +85,10 @@ def sample_graph():
 def sample_graph_in_spark(spark: SparkSession):
     """Fixture that provides a sample KnowledgeGraph for testing."""
     data = [
-        ("drug_1", True, False, np.ones(3).tolist()),
-        ("drug_2", True, False, np.ones(3).tolist()),
-        ("disease_1", False, True, np.ones(3).tolist()),
-        ("disease_2", False, True, np.ones(3).tolist()),
+        ("drug_1", True, False, [1.0, 1.0, 1.0]),
+        ("drug_2", True, False, [1.0, 1.0, 1.0]),
+        ("disease_1", False, True, [1.0, 1.0, 1.0]),
+        ("disease_2", False, True, [1.0, 1.0, 1.0]),
     ]
 
     schema = StructType(
