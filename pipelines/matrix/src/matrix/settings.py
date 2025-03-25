@@ -58,7 +58,7 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
         ],
         "modelling": {
             "model_name": "xg_ensemble",  # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth
-            "model_config": {"num_shards": 1},
+            "model_config": {"num_shards": 6},
         },
         "evaluation": [
             {"evaluation_name": "simple_classification"},
