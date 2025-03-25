@@ -48,7 +48,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "known_pairs": "modelling.model_input.splits",
                             "drugs": "integration.int.drug_list.nodes.norm@pandas",
                             "diseases": "integration.int.disease_list.nodes.norm@pandas",
-                            "graph": "matrix_generation.feat.nodes@kg",
+                            "graph": "matrix_generation.feat.nodes@spark",
                             "clinical_trials": "integration.int.ec_clinical_trails.edges.norm@pandas",
                         },
                         outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs@pandas",
