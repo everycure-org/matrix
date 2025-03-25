@@ -1,7 +1,8 @@
 import os
 
 import pytest
-from bump_detection import get_generate_notes_flag
+
+from scripts.bump_detection import get_generate_article_flag
 
 
 @pytest.mark.parametrize(
@@ -14,7 +15,7 @@ from bump_detection import get_generate_notes_flag
     ],
 )
 def test_get_generate_notes_flag(latest_official_release, release, expected_result):
-    assert get_generate_notes_flag(latest_official_release, release) == expected_result
+    assert get_generate_article_flag(latest_official_release, release) == expected_result
 
 
 @pytest.mark.parametrize(
@@ -27,4 +28,4 @@ def test_get_generate_notes_flag(latest_official_release, release, expected_resu
 def test_get_generate_notes_flag_invalid_release(latest_official_release, release):
     """Test that a ValueError is raised for invalid releases."""
     with pytest.raises(ValueError, match="Cannot release a major/minor version lower than the latest official release"):
-        get_generate_notes_flag(latest_official_release, release)
+        get_generate_article_flag(latest_official_release, release)
