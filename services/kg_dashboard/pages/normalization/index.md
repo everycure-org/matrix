@@ -8,8 +8,7 @@ where normalization_set = 'merged'
 
 ```sql edge_merged_normalization
 select original_prefix, 
-       prefix || ' ' as prefix, 
-       replace(category,'biolink:','') as category, 
+       prefix || ' ' as prefix,
        sum(count) as count
 from bq.normalization
 where normalization_set = 'merged'
