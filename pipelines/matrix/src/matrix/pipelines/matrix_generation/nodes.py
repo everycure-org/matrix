@@ -463,7 +463,7 @@ def generate_metadata(
     score_col_name: str,
     matrix_params: Dict,
     run_metadata: Dict,
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Generates a metadata report.
 
     Args:
@@ -476,6 +476,7 @@ def generate_metadata(
         Tuple containing:
         - Dataframe containing metadata such as data sources version, timestamp, run name etc.
         - Dataframe with metadata about the output matrix columns.
+        - @piotr to complete
     """
     meta_dict = {
         "timestamp": datetime.now().strftime("%Y-%m-%d"),
@@ -515,7 +516,7 @@ def sort_and_generate_report(
     score_col_name: str,
     matrix_params: Dict,
     run_metadata: Dict,
-) -> List[pd.DataFrame]:
+) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
     """Generates a report with the top pairs and metadata.
 
     Args:
