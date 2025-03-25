@@ -194,7 +194,7 @@ def cache_miss_resolver_wrapper(
     batches = batched(documents, batch_size)
 
     async def async_delegator(batch: Sequence[str]) -> pa.Table:
-        logger.info(f"looking up batch with key: {batch[0]}")
+        logger.info(f"Processing batch with key: {batch[0]}")
         transformed = await transformer.apply(batch)
         logger.info(f"received response for batch with key: {batch[0]}")
         return pa.table([batch, transformed, [api] * len(batch)], schema=cache_schema).to_pandas()
