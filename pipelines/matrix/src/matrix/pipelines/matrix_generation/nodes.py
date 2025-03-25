@@ -508,7 +508,19 @@ def generate_metadata(
     return version_df, pd.DataFrame(stats_dict), legends_df
 
 
-def sort_and_generate_report(
+def sort_predictions(
+    data: pd.DataFrame,
+    score_col_name: str,
+) -> pd.DataFrame:
+    # Sort by the probability score
+    sorted_data = data.sort_values(by=score_col_name, ascending=False)
+    # Add rank and quantile rank columns
+    sorted_data["rank"] = range(1, len(sorted_data) + 1)
+    sorted_data["quantile_rank"] = sorted_data["rank"] / len(sorted_data)
+    return sorted_data
+
+
+def generate_report(
     data: pd.DataFrame,
     n_reporting: int,
     drugs: pd.DataFrame,
@@ -516,7 +528,7 @@ def sort_and_generate_report(
     score_col_name: str,
     matrix_params: Dict,
     run_metadata: Dict,
-) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
+) -> dict[str, pd.DataFrame]:
     """Generates a report with the top pairs and metadata.
 
     Args:
@@ -531,25 +543,19 @@ def sort_and_generate_report(
         Dataframe with the top pairs and additional information for the drugs and diseases.
     """
 
-    # Sort by the probability score
-    sorted_data = data.sort_values(by=score_col_name, ascending=False)
-    # Add rank and quantile rank columns
-    sorted_data["rank"] = range(1, len(sorted_data) + 1)
-    sorted_data["quantile_rank"] = sorted_data["rank"] / len(sorted_data)
-
     # Add tags and process top pairs
     stats = matrix_params.get("stats_col_names")
     tags = matrix_params.get("tags")
-    top_pairs = _process_top_pairs(sorted_data, n_reporting, drugs, diseases, score_col_name)
-    top_pairs = _add_descriptive_stats(top_pairs, sorted_data, stats, score_col_name)
+    top_pairs = _process_top_pairs(data, n_reporting, drugs, diseases, score_col_name)
+    top_pairs = _add_descriptive_stats(top_pairs, data, stats, score_col_name)
     top_pairs = _flag_known_pairs(top_pairs)
     top_pairs = _add_tags(top_pairs, drugs, diseases, tags)
     top_pairs = _reorder_columns(top_pairs, score_col_name, matrix_params)
-    versions, stats, legends = generate_metadata(top_pairs, sorted_data, score_col_name, matrix_params, run_metadata)
-    report = {
+    versions, stats, legends = generate_metadata(top_pairs, data, score_col_name, matrix_params, run_metadata)
+
+    return {
         "metadata": versions,
         "statistics": stats,
         "legend": legends,
         "matrix": top_pairs,
     }
-    return sorted_data, report
