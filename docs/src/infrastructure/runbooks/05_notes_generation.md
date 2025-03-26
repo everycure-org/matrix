@@ -42,7 +42,7 @@ matrix releases template --output-file <OUTPUT_LOCATION> \
     --until <GIT_SHA_END> 
 ```
 
-The `--since` and `--until` flags define the range of commits to include in the template. When using the `--headless` flag, the starting Git SHA will default to the latest minor release tag. If the `--since` flag is omitted, you will be prompted to select a release from a list.
+The `--since` and `--until` flags define the range of commits to include in the template. When using the `--headless` flag, the starting Git SHA will default to the latest minor release tag, the ending Git SHA will default to the current branch. If the `--since` flag is omitted, you will be prompted to select a release from a list.
 
 ## Best Practices
 
