@@ -111,7 +111,7 @@ jobs:
         working-directory: docs/scripts
         run: |
           pip install semver
-          python bump_version.py --type="${{env.BUMP_TYPE}}" >> "$GITHUB_ENV"
+          python bump_version.py --type="${{env.BUMP_TYPE}}" --tag="${{env.latest_tag}}" >> "$GITHUB_ENV"
 
       - name: Branch off
         run: |
