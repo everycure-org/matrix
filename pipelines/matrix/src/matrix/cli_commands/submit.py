@@ -68,7 +68,6 @@ def cli():
 @click.option("--experiment_id", type=int, help="MLFlow experiment id")
 @click.option("--mlflow_run_id", type=str, help="MLFlow run id")
 @click.option("--skip-git-checks", is_flag=True, type=bool, default=False, help="Skip git checks")
-# @click.option("--gcp-env", type=str, default='dev', help="prod/dev")
 # fmt: on
 def submit(
     username: str,
@@ -131,11 +130,11 @@ def submit(
         dry_run=dry_run,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
         mlflow_experiment_id=experiment_id,
+        gcp_env=gcp_env,
         mlflow_run_id=mlflow_run_id,
         allow_interactions=not headless,
         is_test=is_test,
         environment=environment,
-        gcp_env=gcp_env
 
     )
 
@@ -151,10 +150,10 @@ def _submit(
     environment: str,
     template_directory: Path,
     mlflow_experiment_id: int,
+    gcp_env: str,
     mlflow_run_id: Optional[str] = None,
     allow_interactions: bool = True,
     is_test: bool = False,
-    gcp_env: str = 'dev',
 
 ) -> None:
     """Submit the end-to-end workflow.
@@ -184,7 +183,7 @@ def _submit(
     
     try:
 
-        gcp_project_id = GCP_PROJECT_IDS[os.environ['GCP_ENV'].lower()]
+        gcp_project_id = GCP_PROJECT_IDS[gcp_env.lower()]
 
         console.rule("[bold blue]Submitting Workflow")
         if not can_talk_to_kubernetes(project=gcp_project_id):
