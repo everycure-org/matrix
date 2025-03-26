@@ -108,15 +108,6 @@ This issue might be due to a failure in the GitHub Actions workflow responsible 
 
    ![UI of triggering the submission workflow](../../assets/img/version-bump-input.png)
 
-### 4. **The auto-submitted release overlaps with an intended manual release**
-
-There might be cases that someone is preparing a manual release and has pushed the branch `release/<INTENDED_VERSION>`, but no associated tag exists yet. The scheduled [GitHub Action](https://github.com/everycure-org/matrix/blob/main/.github/workflows/submit-kedro-pipeline.yml) increments the version based on latest remote tags. If it happens to bump the version to the intended one, the action will fail attempting to push the branch `release/<INTENDED_VERSION>` because it already exists in the remote git repository. The failure will trigger a slack notification. 
-
-Upon investigation, if you identify that the issue is due to a version overlap, follow these steps:
-- Rename the intended release branch to `release/<NEW_INTENDED_VERSION>`
-- Delete the remote branch `release/<INTENDED_VERSION>`
-- Manually trigger the GitHub Action to initiate the auto-release (refer to FAQ#3 for detailed steps).
-
 ## Best Practices
 
 - Ensure all PRs are labeled and titled correctly before generating the release article template.
