@@ -5,12 +5,7 @@ import pandas as pd
 import pyspark.sql as ps
 import pytest
 from matrix.datasets.graph import KnowledgeGraph
-from matrix.pipelines.matrix_generation.nodes import (
-    generate_pairs,
-    generate_report,
-    make_predictions,
-    sort_predictions,
-)
+from matrix.pipelines.matrix_generation.nodes import generate_pairs, generate_report, make_predictions_and_sort
 from matrix.pipelines.modelling.transformers import FlatArrayTransformer
 from pyspark.sql import SparkSession
 from pyspark.sql.types import ArrayType, BooleanType, FloatType, StringType, StructField, StructType
@@ -145,9 +140,9 @@ def transformers():
 
 
 @pytest.fixture
-def mock_model():  # Note: gives correct shaped output only for batches of size 2
+def mock_model():  # Note: gives correct shaped output only for a dataframe of size 4 rows
     model = Mock()
-    model.predict_proba.return_value = np.array([[0.1, 0.8, 0.1], [0.1, 0.7, 0.2]])
+    model.predict_proba.return_value = np.array([[0.1, 0.8, 0.1], [0.1, 0.7, 0.2], [0.2, 0.6, 0.2], [0.15, 0.65, 0.2]])
     return model
 
 
@@ -251,8 +246,8 @@ def test_generate_pairs(
     )
 
 
-def test_make_predictions(sample_graph_in_spark, sample_matrix_data_in_spark, transformers, mock_model):
-    result = make_predictions(
+def test_make_predictions_and_sort(sample_graph_in_spark, sample_matrix_data_in_spark, transformers, mock_model):
+    result = make_predictions_and_sort(
         graph=sample_graph_in_spark,
         data=sample_matrix_data_in_spark,
         transformers=transformers,
@@ -263,8 +258,10 @@ def test_make_predictions(sample_graph_in_spark, sample_matrix_data_in_spark, tr
         unknown_score_col_name="unknown_score",
     )
     assert "score" in result.columns
-    assert isinstance(result, ps.DataFrame)
-    assert result.count() == 4
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) == 4
+    assert result["score"].is_monotonic_decreasing
+    assert result["rank"].is_monotonic_increasing
 
 
 def test_generate_report(sample_data):
@@ -383,23 +380,3 @@ def test_generate_report(sample_data):
     assert result["mean_top_per_drug"].tolist() == pytest.approx([0.8, 0.6, 0.4])
     assert result["mean_all_per_drug"].tolist() == pytest.approx([0.8, 0.4, 0.4])
     assert result[score_col_name].is_monotonic_decreasing
-
-
-def test_sort_predictions():
-    data = pd.DataFrame(
-        {
-            "source": ["drug_1", "drug_2", "drug_3", "drug_4", "drug_2"],
-            "target": ["disease_1", "disease_2", "disease_3", "disease_3", "disease_2"],
-            "probability": [0.4, 0.6, 0.8, 0.1, 0.2],
-            "is_known_positive": [True, False, False, False, False],
-            "trial_sig_better": [False, False, False, False, False],
-            "trial_non_sig_better": [False, False, False, False, False],
-            "trial_sig_worse": [False, False, False, False, False],
-            "trial_non_sig_worse": [False, False, False, False, False],
-            "is_known_negative": [False, True, False, False, False],
-        }
-    )
-    score_col_name = "probability"
-    result = sort_predictions(data, score_col_name)
-    assert result[score_col_name].is_monotonic_decreasing
-    assert result["rank"].is_monotonic_increasing
