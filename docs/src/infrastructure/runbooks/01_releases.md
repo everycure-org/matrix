@@ -50,7 +50,7 @@ To streamline the release process, we use GitHub Actions for periodic **patch** 
 3. **Review the Auto-Created PR**  
    - **For the weekly patch bump:** The primary goal is to verify the stability of the `main` branch after a week of new commits. Once reviewed, simply close the PR, as no further action is needed.  
    - **For the monthly minor bump:** Since this results in an official release, follow these steps:  
-        - Review the auto-generated release article template and ask contributors to fill it out. In the past, the person who takes ownership of this PR simply asked everyone on Slack to revise their PR titles, to make them more reflective of what they contribute towards Every Cure's goals.
+- Review the auto-generated release article template and ask contributors to improve it. E.g. in the past, the person who takes ownership of this PR simply asked everyone on Slack to revise their PR titles, to make them more reflective of what they contribute towards Every Cure's goals.
         - Manually check who has contributed and list the contributors of the month to encourage contributions through PRs (code, docs, experiment reports, etc.). See the cli command below for how to best do this.
         - Upon merging the PR, the release will be publicized to the [Every Cure website](https://docs.dev.everycure.org/releases/) by another [GitHub Action](https://github.com/everycure-org/matrix/blob/main/.github/workflows/create-release-pr.yml). It will then also be listed under the [GitHub releases](https://github.com/everycure-org/matrix/releases).
 
