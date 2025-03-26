@@ -184,7 +184,7 @@ def _submit(
     
     try:
 
-        gcp_project_id = GCP_PROJECT_IDS[os.environ['GCP_ENV']]
+        gcp_project_id = GCP_PROJECT_IDS[os.environ['GCP_ENV'].lower()]
 
         console.rule("[bold blue]Submitting Workflow")
         if not can_talk_to_kubernetes(project=gcp_project_id):
