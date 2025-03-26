@@ -41,7 +41,7 @@ def _create_evaluation_fold_pipeline(evaluation: str, fold: Union[str, int]) -> 
                 name=f"create_{evaluation}_evaluation_fold_{fold}",
             ),
         ],
-        # tags=["argowf.fuse", f"argowf.fuse-group.{evaluation}.fold_{fold}"],
+        tags=["argowf.fuse", f"argowf.fuse-group.{evaluation}.fold_{fold}"],
     )
 
 
