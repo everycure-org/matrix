@@ -154,7 +154,7 @@ def generate_pairs(
     return matrix
 
 
-def make_predictions(
+def make_predictions_and_sort(
     graph: KnowledgeGraph,
     data: ps.DataFrame,
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
@@ -163,7 +163,7 @@ def make_predictions(
     treat_score_col_name: str,
     not_treat_score_col_name: str,
     unknown_score_col_name: str,
-) -> ps.DataFrame:
+) -> pd.DataFrame:
     """Generate probability scores for drug-disease dataset.
 
     Args:
@@ -236,8 +236,12 @@ def make_predictions(
             yield Row(**row)
 
     data = transformed.rdd.mapPartitionsWithIndex(predict_partition).toDF()
-
-    return data
+    data = data.toPandas()
+    sorted_data = data.sort_values(by=treat_score_col_name, ascending=False)
+    # Add rank and quantile rank columns
+    sorted_data["rank"] = range(1, len(sorted_data) + 1)
+    sorted_data["quantile_rank"] = sorted_data["rank"] / len(sorted_data)
+    return sorted_data
 
 
 def generate_summary_metadata(matrix_parameters: Dict) -> pd.DataFrame:
@@ -506,18 +510,6 @@ def generate_metadata(
         stats_dict["value"].append(getattr(data[score_col_name], main_key)())
     # Concatenate version and legends dfs
     return version_df, pd.DataFrame(stats_dict), legends_df
-
-
-def sort_predictions(
-    data: pd.DataFrame,
-    score_col_name: str,
-) -> pd.DataFrame:
-    # Sort by the probability score
-    sorted_data = data.sort_values(by=score_col_name, ascending=False)
-    # Add rank and quantile rank columns
-    sorted_data["rank"] = range(1, len(sorted_data) + 1)
-    sorted_data["quantile_rank"] = sorted_data["rank"] / len(sorted_data)
-    return sorted_data
 
 
 def generate_report(
