@@ -13,7 +13,6 @@ from typing import List, Optional
 import click
 import mlflow
 import semver
-from gcp_config import GCP_PROJECT_IDS
 from kedro.framework.cli.utils import CONTEXT_SETTINGS, split_string
 from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.framework.startup import bootstrap_project
@@ -23,7 +22,7 @@ from rich.logging import RichHandler
 from rich.panel import Panel
 
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
-from matrix.config_loader import load_env_vars
+from matrix.cli_commands.gcp_config import GCP_PROJECT_IDS
 from matrix.git_utils import (
     BRANCH_NAME_REGEX,
     get_latest_minor_release,
@@ -92,7 +91,6 @@ def submit(
     print("this is the env ", os.environ['GCP_ENV'])
     click.secho("Warning - kedro submit will be deprecated soon. Please use kedro experiment run.", bg="yellow", fg="black")
     gcp_env = os.environ['GCP_ENV']
-    load_env_vars(env=gcp_env)
     if not quiet:
         log.setLevel(logging.DEBUG)
 
