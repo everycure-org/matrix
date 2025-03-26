@@ -1,3 +1,4 @@
+import argparse
 import os
 import subprocess
 import sys
@@ -33,10 +34,10 @@ def bump_version(bump_type: str, latest_tag: str) -> None:
 
 if __name__ == "__main__":
     # Extract the type argument, which looks like "--type=**, --tag==**"
-    for arg in sys.argv[1:]:
-        if arg.startswith("--type="):
-            bump_type = arg.split("=", 1)[1]
-        elif arg.startswith("--tag="):
-            latest_tag = arg.split("=", 1)[1]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--type")
+    parser.add_argument("--tag")
 
-    bump_version(bump_type, latest_tag)
+    args = parser.parse_args()
+
+    bump_version(args.type, args.tag)
