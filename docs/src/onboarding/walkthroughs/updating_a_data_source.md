@@ -2,20 +2,20 @@
 
 ## Task
 
-Sometimes we need to update the version of a data source. This walkthrough shows updating RTX 2.7.3 to 2.10.0.
+Sometimes we need to update the version of a data source. This walkthrough shows updating RTX from version 2.7.3 to 2.10.0.
 
 ## Steps
 
 ### 1. Checking the raw data
 
-Identify the new version of the data source in GCS.
+Identify the new version of the data source in GCS. 
 It should follow this pattern:
 
 ```
 mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/{version}
 ```
 
-For example:
+For example, [RTX v2.10.0](https://console.cloud.google.com/storage/browser/mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/v2.10.0)
 
 ```
 mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/v2.10.0
@@ -61,7 +61,7 @@ ingestion.raw.robokop.nodes@spark:
     index: false
 ```
 
-Update the files (preferably) or catalog entry as appropriate. Make sure changes are backwards compatible.
+Make sure the files in the file path match with the catalog entry.
 
 ### 2. Update the parameters
 
@@ -88,8 +88,10 @@ Save and commit the changes. Push your branch to the remote repository.
 Run the pipeline to update the data source.
 
 ```
- kedro experiment run -p kg_release -e cloud --release-version=af_test_release_2.10.0 --username=amy --experiment-name rtx-2-10-0
+ kedro experiment run -p kg_release -e cloud --release-version=af_test_release_2.10.0 --is-test --username=amy --experiment-name rtx-2-10-0
 ```
+
+Make sure to use the `--is-test` flag to run the pipeline in test mode until we want to create an official release.
 
 kedro will prompt you to:
 
