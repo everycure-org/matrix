@@ -8,7 +8,7 @@ Sometimes we need to update the version of a data source. This walkthrough shows
 
 ### 1. Checking the raw data
 
-Identify the new version of the data source in BigQuery.
+Identify the new version of the data source in GCS.
 It should follow this pattern:
 
 ```
