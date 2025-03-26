@@ -17,23 +17,18 @@ def bump_version(bump_type: str, latest_tag: str) -> None:
     version = semver.Version.parse(latest_tag)
     while True:
         if bump_type == "minor":
-            new_version = version.bump_minor()
+            version = version.bump_minor()
         elif bump_type == "patch":
-            new_version = version.bump_patch()
+            version = version.bump_patch()
         else:
             raise NotImplementedError()
 
-        new_branch = f"release/v{new_version}"
+        new_branch = f"release/v{version}"
         if not branch_exists(new_branch):
-            print(f"Creating branch {new_branch}")
             break
-        else:
-            print(f"Branch {new_branch} already exists, incrementing version again.")
 
-        # Increment version again if branch exists
-        version = semver.Version.parse(str(new_version))
-
-    print(f"release_version=v{new_version}")
+    print(f"release_version=v{version}")
+    return f"v{version}"
 
 
 if __name__ == "__main__":
