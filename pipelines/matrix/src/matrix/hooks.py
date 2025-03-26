@@ -447,7 +447,9 @@ class ReleaseInfoHooks:
             "MLFlow Link": ReleaseInfoHooks.build_mlflow_link(),
             "Code Link": ReleaseInfoHooks.build_code_link(),
             "Neo4j Link": "coming soon!",
-            "NodeNorm Endpoint Link": "https://nodenorm.transltr.io/1.5/get_normalized_nodes",
+            "NodeNorm Endpoint Link": ReleaseInfoHooks._params["integration"]["normalization"]["normalizer"][
+                "endpoint"
+            ],
             "KG dashboard link": ReleaseInfoHooks.build_kg_dashboard_link(),
         }
         return info
@@ -462,13 +464,13 @@ class ReleaseInfoHooks:
             f.write(json.dumps(release_info).encode("utf-8"))
 
     @hook_impl
-    def after_node_run(self, node: Node) -> None:
+    def before_node_run(self, node: Node) -> None:
         """Runs after the last node of the data_release pipeline"""
         # We chose to add this using the `after_node_run` hook, rather than
         # `after_pipeline_run`, because one does not know a priori which
         # pipelines the (last) data release node is part of. With an
         # `after_node_run`, you can limit your filters easily.
-        if node.name == last_data_release_node_name:
+        if True:  # node.name == last_data_release_node_name:
             datasets_to_hide = frozenset([])
             global_datasets = self.extract_all_global_datasets(datasets_to_hide)
             datasets_used = self.extract_datasets_used()
