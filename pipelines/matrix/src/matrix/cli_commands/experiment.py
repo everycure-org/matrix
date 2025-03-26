@@ -114,7 +114,6 @@ def create(experiment_name):
 @click.option(
     "--experiment-name", type=str, help="Optional: specify the MLFlow experiment name to use. Defaults to branch name"
 )
-# @click.option("--gcp-env", type=str, default="dev", help="prod/dev")
 @click.pass_context
 def run(
     ctx,
@@ -182,7 +181,6 @@ def run(
         experiment_id=experiment_id,
         mlflow_run_id=mlflow_run_id,
         skip_git_checks=skip_git_checks,
-        # gcp_env=gcp_env,
     )
 
 
