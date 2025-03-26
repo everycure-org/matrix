@@ -13,6 +13,7 @@ from typing import List, Optional
 import click
 import mlflow
 import semver
+from gcp_config import GCP_PROJECT_IDS
 from kedro.framework.cli.utils import CONTEXT_SETTINGS, split_string
 from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.framework.startup import bootstrap_project
@@ -86,8 +87,6 @@ def submit(
     skip_git_checks: bool,
     experiment_id: Optional[int],
     mlflow_run_id: Optional[str],
-    # gcp_env: str,
-
 ):
     """Submit the end-to-end workflow. """
     print("this is the env ", os.environ['GCP_ENV'])
@@ -186,11 +185,11 @@ def _submit(
     """
     
     try:
-        gcp_project_id = os.environ['GCP_PROJECT_ID']
 
+        gcp_project_id = GCP_PROJECT_IDS[os.environ['GCP_ENV']]
 
         console.rule("[bold blue]Submitting Workflow")
-        if not can_talk_to_kubernetes(project=os.environ['GCP_PROJECT_ID']):
+        if not can_talk_to_kubernetes(project=gcp_project_id):
             raise EnvironmentError("Cannot communicate with Kubernetes")
 
         argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, environment, gcp_env, gcp_project_id, mlflow_experiment_id, is_test=is_test, mlflow_run_id=mlflow_run_id)
