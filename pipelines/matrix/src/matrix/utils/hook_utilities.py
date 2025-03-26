@@ -56,7 +56,7 @@ def generate_dynamic_pipeline_mapping(
         if path and path[-1] == "integration":
             # [-1] makes this work even if you nest this key deeper which [0] wouldn't
             if os.environ["GCP_ENV"].lower() == "dev":
-                integration_sources = [item for item in mapping if not item.get("private")]
+                integration_sources = [item for item in mapping if not item.get("is_private")]
                 return integration_sources
         else:
             return mapping
