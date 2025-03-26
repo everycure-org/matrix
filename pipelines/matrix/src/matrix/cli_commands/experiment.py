@@ -132,7 +132,6 @@ def run(
     environment: str,
     skip_git_checks: bool,
     experiment_name: str,
-    # gcp_env: str,
 ):
     """Run an experiment."""
 
