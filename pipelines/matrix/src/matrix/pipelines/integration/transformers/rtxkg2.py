@@ -28,11 +28,11 @@ class RTXTransformer(GraphTransformer):
             nodes_df
             .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
             .withColumn("labels",                            f.split(f.col(":LABEL"), RTX_SEPARATOR))
-            .withColumn("all_categories",                    f.split(f.col("all_categories:string[]"), RTX_SEPARATOR))
-            .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies:string[]"), RTX_SEPARATOR))
-            .withColumn("publications",                      f.split(f.col("publications:string[]"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
+            .withColumn("all_categories",                    f.split(f.col("all_categories"), RTX_SEPARATOR))
+            .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies"), RTX_SEPARATOR))
+            .withColumn("publications",                      f.split(f.col("publications"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
             .withColumn("international_resource_identifier", f.col("iri"))
-            .withColumnRenamed("id:ID", "id")
+            #.withColumnRenamed("id:ID", "id")
         )
         # fmt: on
 
