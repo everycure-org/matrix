@@ -56,7 +56,7 @@ class RTXTransformer(GraphTransformer):
         return (
             edges_df
             .withColumn("aggregator_knowledge_source",   f.split(f.col("primary_knowledge_source"), RTX_SEPARATOR))
-            .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
+            .withColumn("publications",                  f.split(f.col("publications"), RTX_SEPARATOR))
             .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
             .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(0)) # RTX KG2 2.10 `primary_knowledge_source``
