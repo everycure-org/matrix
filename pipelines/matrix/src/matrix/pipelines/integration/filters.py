@@ -69,7 +69,23 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
         .select("id", "category")
     )
 
-    return nodes.drop("category").join(mapping_table, on="id", how="left")
+    result = nodes.drop("category").join(mapping_table, on="id", how="left")
+
+    # 🚨 Check for rows where join failed to produce a category
+    unresolved = result.filter(F.col("category").isNull())
+
+    unresolved_count = unresolved.count()
+    if unresolved_count > 0:
+        print(f"\n❌ Found {unresolved_count} node(s) without resolved category after join:")
+        unresolved.select("id", "all_categories").show(truncate=False)
+
+        # Optionally collect to driver and raise a detailed exception
+        sample_ids = unresolved.select("id").limit(5).rdd.flatMap(lambda x: x).collect()
+        raise ValueError(
+            f"{unresolved_count} node(s) could not be assigned a most specific category. " f"Sample IDs: {sample_ids}"
+        )
+
+    return result  # nodes.drop("category").join(mapping_table, on="id", how="left")
 
 
 def remove_rows_containing_category(
