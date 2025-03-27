@@ -37,7 +37,6 @@ class RobokopTransformer(GraphTransformer):
             .withColumn("labels",                            F.col("all_categories"))
             .withColumn("publications",                      F.lit(None).cast(T.ArrayType(T.StringType())))
             .withColumn("international_resource_identifier", F.lit(None).cast(T.StringType()))
-            #.withColumnRenamed("id:ID", "id")
             .withColumnRenamed("name:string", "name")
             .withColumnRenamed("description:string", "description")
             # getting most specific category

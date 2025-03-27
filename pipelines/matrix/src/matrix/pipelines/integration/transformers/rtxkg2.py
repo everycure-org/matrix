@@ -32,7 +32,6 @@ class RTXTransformer(GraphTransformer):
             .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies"), RTX_SEPARATOR))
             .withColumn("publications",                      f.split(f.col("publications"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
             .withColumn("international_resource_identifier", f.col("iri"))
-            #.withColumnRenamed("id:ID", "id")
         )
         # fmt: on
 
