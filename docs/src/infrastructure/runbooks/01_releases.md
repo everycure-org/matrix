@@ -27,7 +27,7 @@ This runbook outlines the steps to create a release in our GitHub repository, ei
         - Activate the virtual environment `source ./matrix/apps/matrix-cli/.venv/bin/activate`
         - Run the command `matrix releases template --output-file docs/src/releases/posts/<INTENDED_RELEASE_VERSION>/post.md --until <THE_GIT_SHA_THAT_TRIGGERED_THE_RELEASE>` 
 5. **Review the PR that was auto-created.**
-- Review the generated article template and ask contributors to adjust. The PR titles may e.g. be clearer.
+- Review the generated article template and ask contributors to adjust. The auto-generated article template only includes the PR title, so make sure the titles are named explicitly and add detailed contents if needed
     - Manually check who has contributed and list the contributors of the month to encourage contributions through PRs (code, docs, experiment reports, etc.). See the cli command below for how to best do this.
     - Upon merging the PR, the release will be publicized to the [Every Cure website](https://docs.dev.everycure.org/releases/) by another [GitHub Action](https://github.com/everycure-org/matrix/blob/main/.github/workflows/create-release-pr.yml). It will then also be listed under the [GitHub releases](https://github.com/everycure-org/matrix/releases).
 6. **Create a sample release.**
