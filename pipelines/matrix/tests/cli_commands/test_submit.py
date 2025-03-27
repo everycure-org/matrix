@@ -82,6 +82,8 @@ def test_build_argo_template(mock_generate_argo_config: None) -> None:
         ArgoResourceConfig(),
         "cloud",
         is_test=True,
+        gcp_env="dev",
+        gcp_project_id="mtrx-hub-dev-3of",
         mlflow_experiment_id=1,
     )
     mock_generate_argo_config.assert_called_once()
@@ -239,6 +241,7 @@ def test_workflow_submission(
         pipeline_obj=pipeline_obj,
         verbose=True,
         dry_run=False,
+        gcp_env="dev",
         template_directory=temporary_directory,
         mlflow_experiment_id=1,
         allow_interactions=False,
