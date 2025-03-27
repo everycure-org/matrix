@@ -105,7 +105,8 @@ jobs:
       - run: uv run kedro catalog resolve --env test
       - run: make full_test
       - run: make compose_down # ensures containers & state are removed
-      - run: make docker_test GIT_SHA="${GITHUB_SHA:0:7}" #we overwrite the GIT_SHA in the Makefile
+      # TODO: set GCP_ENV as an env var in this action, based on what branch the PR is into, to allow CI in prod.
+      - run: GCP_ENV=dev make docker_test GIT_SHA="${GITHUB_SHA:0:7}" #we overwrite the GIT_SHA in the Makefile
         # only if PR is labelled with "ready" or if branch is main
         # if: contains(github.event.pull_request.labels.*.name, 'ready') || github.ref == 'refs/heads/main'
       # workaround as the `failure()` call did not work in downstream matrix_ci_check

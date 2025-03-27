@@ -10,6 +10,7 @@ PREREQUISITES := docker gcloud python3 java uv kubectl
 
 # Add GCP project variables
 GCP_PROJECT ?= mtrx-hub-dev-3of
+GCP_ENV ?= dev
 SA_KEY_SECRET_NAME ?= storage-viewer-sa-key
 SA_KEY_PATH ?= conf/local/service-account.json
 OAUTH_CLIENT_SECRET_SECRET_NAME ?= oauth_client_secret
@@ -100,7 +101,7 @@ format:
 
 # executes E2E integration test fully in docker. 
 docker_test: certificate docker_build
-	IMG="$(docker_image)" docker compose -f compose/docker-compose.yml \
+	IMG="$(docker_image)" GCP_ENV="$(GCP_ENV)" docker compose -f compose/docker-compose.yml \
 		-f compose/docker-compose.ci.yml \
 		up \
 		--force-recreate \
