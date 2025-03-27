@@ -10,7 +10,7 @@ from .transformer import GraphTransformer
 logger = logging.getLogger(__name__)
 
 
-RTX_SEPARATOR = "|"  # "\u01c2"
+RTX_SEPARATOR = r"\|"  # "\u01c2"
 
 
 class RTXTransformer(GraphTransformer):
