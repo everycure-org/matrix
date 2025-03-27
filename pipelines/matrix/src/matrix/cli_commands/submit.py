@@ -87,7 +87,6 @@ def submit(
     mlflow_run_id: Optional[str],
 ):
     """Submit the end-to-end workflow. """
-    print("this is the env ", os.environ['GCP_ENV'])
     click.secho("Warning - kedro submit will be deprecated soon. Please use kedro experiment run.", bg="yellow", fg="black")
     gcp_env = os.environ['GCP_ENV']
     if not quiet:
