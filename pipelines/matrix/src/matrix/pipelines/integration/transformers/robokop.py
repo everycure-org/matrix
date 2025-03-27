@@ -65,7 +65,7 @@ class RobokopTransformer(GraphTransformer):
             .withColumnRenamed("object_direction_qualifier:string", "object_direction_qualifier")
             .withColumn("upstream_data_source",                     F.array(F.lit("robokop")))
             .withColumn("publications",                             F.split(F.col("publications:string[]"), ROBOKOP_SEPARATOR))
-            .withColumn("aggregator_knowledge_source",              F.split(F.col("aggregator_knowledge_source:string[]"), ROBOKOP_SEPARATOR))
+            .withColumn("aggregator_knowledge_source",              F.split(F.col("aggregator_knowledge_source"), ROBOKOP_SEPARATOR))
             .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
             .withColumn("subject_direction_qualifier",              F.lit(None).cast(T.StringType()))
         )
