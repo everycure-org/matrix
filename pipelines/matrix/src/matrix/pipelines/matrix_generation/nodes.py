@@ -177,7 +177,7 @@ def make_predictions_and_sort(
     Returns:
         Pairs dataset with additional column containing the probability scores.
     """
-
+    data = data.drop("__index_level_0__")  # remnant from pyarrow/pandas conversion, not sure in which previous node
     embeddings = graph.select("id", "topological_embedding")
 
     data = data.join(
