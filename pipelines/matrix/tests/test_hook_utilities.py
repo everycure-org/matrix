@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 from matrix.utils.hook_utilities import generate_dynamic_pipeline_mapping
