@@ -6,7 +6,6 @@ Our cluster has a schedule enabled for [automatic backups](https://cloud.google.
 
 If the backup needs to be created on-demand, you should go to the [GKE backups page](https://console.cloud.google.com/kubernetes/backups/backupPlans) and Click the dropdown icon on "More Actions" and select "Start a backup". You can leave all values default, only give your backup a name.
 
-> TODO: Shall we limit backups to Grafana/MLFlow/Ledger namespaces?
 
 ## Defining a restore plan
 
