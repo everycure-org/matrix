@@ -1,0 +1,41 @@
+import pytest
+
+from matrix.utils.hook_utilities import generate_dynamic_pipeline_mapping
+
+
+@pytest.fixture
+def integration_mapping():
+    return {
+        "integration": [
+            {"name": "public_source_1", "integrate_in_kg": True, "is_private": False},
+            {"name": "private_source", "integrate_in_kg": True, "is_private": True},
+            {"name": "public_source_2", "integrate_in_kg": True, "is_private": False},
+        ]
+    }
+
+
+@pytest.mark.parametrize(
+    "gcp_env,expected_sources",
+    [
+        (
+            "dev",
+            [
+                {"name": "public_source_1", "integrate_in_kg": True, "is_private": False},
+                {"name": "public_source_2", "integrate_in_kg": True, "is_private": False},
+            ],
+        ),
+        (
+            "prod",
+            [
+                {"name": "public_source_1", "integrate_in_kg": True, "is_private": False},
+                {"name": "private_source", "integrate_in_kg": True, "is_private": True},
+                {"name": "public_source_2", "integrate_in_kg": True, "is_private": False},
+            ],
+        ),
+    ],
+    ids=["dev_environment", "prod_environment"],
+)
+def test_integration_sources_filtering(integration_mapping, monkeypatch, gcp_env, expected_sources):
+    monkeypatch.setenv("GCP_ENV", gcp_env)
+    result = generate_dynamic_pipeline_mapping(integration_mapping)
+    assert result["integration"] == expected_sources
