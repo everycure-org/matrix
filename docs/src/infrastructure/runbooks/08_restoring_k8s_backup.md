@@ -10,7 +10,6 @@ If the backup needs to be created on-demand, you should go to the [GKE backups p
 
 ## Defining a restore plan
 
-> TODO: Do we need to define these on beforehand? Should we TF?
 
 A [restore plan](https://cloud.google.com/kubernetes-engine/docs/add-on/backup-for-gke/how-to/restore-plan) defines how the backup is restored.
 
