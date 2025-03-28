@@ -4,6 +4,7 @@ import pytest
 import yaml
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
+
 from matrix.argo import FusedNode, clean_name, fuse, generate_argo_config, get_dependencies
 from matrix.kedro4argo_node import (
     KUBERNETES_DEFAULT_LIMIT_CPU,
