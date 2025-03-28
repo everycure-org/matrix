@@ -29,3 +29,4 @@ matrix_generation.feat.nodes@spark:
 
 "matrix_generation.fold_{fold}.reporting.matrix_report":
   filepath: ${globals:paths.matrix_generation}/fold_{fold}/matrix_report_${globals:run_name}.xlsx
+  type: pandas.ExcelDataset
