@@ -19,7 +19,7 @@ resource "google_gke_backup_backup_plan" "rpo_daily_window" {
   }
 }
 
-resource "google_gke_backup_restore_plan" "all_ns" {
+resource "google_gke_backup_restore_plan" "mlflow_and_neo4j" {
   name        = "restore-neo-mlflow-ns"
   location    = var.default_region
   backup_plan = google_gke_backup_backup_plan.rpo_daily_window.id
