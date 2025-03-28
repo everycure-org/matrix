@@ -54,12 +54,12 @@ def generate_dynamic_pipeline_mapping(
     # to ensure everything is specified as a dict.
     if isinstance(mapping, List):
         if path and path[-1] == "integration":
-            # Default to 'prod' behavior if GCP_ENV is not set
-            gcp_env = os.environ.get("GCP_ENV", "prod").lower()
-            if gcp_env == "dev":
+            # [-1] makes this work even if you nest this key deeper which [0] wouldn't
+            if os.environ["GCP_ENV"].lower() == "dev":
                 integration_sources = [item for item in mapping if not item.get("is_private")]
                 return integration_sources
-        return mapping
+        else:
+            return mapping
 
     if isinstance(mapping, Dict):
         result = {}
