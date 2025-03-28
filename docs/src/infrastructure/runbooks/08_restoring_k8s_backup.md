@@ -39,4 +39,4 @@ gcloud beta container backup-restore restores create restore-neo4j \
     --wait-for-completion
 ```
 
-> 🆘 For the backup to take effect, we had to run a `neo4j stop` in the Neo4j shell, otherwise the database remained in the `starting` state.
+> 🆘 For the backup to take effect, we had to run a `neo4j stop` in the Neo4j container, otherwise the database remained in the `starting` state.
