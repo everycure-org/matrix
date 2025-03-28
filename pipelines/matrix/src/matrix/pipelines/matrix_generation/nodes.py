@@ -2,7 +2,6 @@ import functools
 import itertools
 import logging
 import operator
-import os
 from datetime import datetime
 from typing import Dict, Iterable, Iterator, List, Optional, Tuple, Union
 
@@ -14,12 +13,24 @@ from matrix.inject import inject_object
 from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark.sql import Row
+from pyspark.sql.types import ArrayType, BooleanType, FloatType, StringType
 from sklearn.impute._base import _BaseImputer
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
 
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "id": Column(StringType(), nullable=False),
+            "topological_embedding": Column(ArrayType(FloatType()), nullable=False),
+            "is_drug": Column(BooleanType(), nullable=False),
+            "is_disease": Column(BooleanType(), nullable=False),
+        },
+        unique=["id"],
+    )
+)
 def enrich_embeddings(
     nodes: ps.DataFrame,
     drugs: ps.DataFrame,
@@ -37,8 +48,8 @@ def enrich_embeddings(
         .unionByName(diseases.withColumn("is_disease", F.lit(True)), allowMissingColumns=True)
         .join(nodes, on="id", how="inner")
         .select("is_drug", "is_disease", "id", "topological_embedding")
-        .withColumn("is_drug", F.coalesce(F.col("is_drug"), F.lit(False)))
-        .withColumn("is_disease", F.coalesce(F.col("is_disease"), F.lit(False)))
+        .fillna(False, subset=("is_drug", "is_disease"))
+        .drop_duplicates(("id",))
     )
 
 
