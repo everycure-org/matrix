@@ -39,6 +39,10 @@ loggers:
     level: INFO
   matrix:
     level: INFO
+  matrix.pipelines.preprocessing.nodes:
+    level: DEBUG
+  matrix.pipelines.filtering.nodes:
+    level: WARNING
   matrix.pipelines.batch.pipeline:
     level: WARNING
   matrix.hooks:
