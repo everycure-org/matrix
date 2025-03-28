@@ -2,6 +2,7 @@ import os
 from unittest.mock import patch
 
 import pytest
+
 from matrix.utils.hook_utilities import determine_hooks_to_execute
 
 
