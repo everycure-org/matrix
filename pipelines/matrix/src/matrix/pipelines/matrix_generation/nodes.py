@@ -49,7 +49,6 @@ def enrich_embeddings(
         .join(nodes, on="id", how="inner")
         .select("is_drug", "is_disease", "id", "topological_embedding")
         .fillna(False, subset=("is_drug", "is_disease"))
-        .drop_duplicates(("id",))
     )
 
 
