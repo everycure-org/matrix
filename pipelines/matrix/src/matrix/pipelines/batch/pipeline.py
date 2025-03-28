@@ -154,6 +154,7 @@ def cached_api_enrichment_pipeline(
                 "lineage_dummy": cache_out,
             },
             outputs=output,
+            tags=["argowf.fuse", f"argowf.fuse-group.{source}"],
             argo_config=ArgoResourceConfig(
                 ephemeral_storage_limit=1024, ephemeral_storage_request=1024, memory_request=64, memory_limit=128
             ),
