@@ -9,6 +9,7 @@ import yaml
 from click.testing import CliRunner
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
+
 from matrix.cli_commands.submit import (
     _submit,
     apply_argo_template,
