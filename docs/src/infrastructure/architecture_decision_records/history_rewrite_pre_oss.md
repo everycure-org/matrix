@@ -31,6 +31,10 @@ all comments. This library sends each comment on all issues and PRs to a Gemini 
 inspection. Critical comments are flagged to the user and can be manually reviewed and/or deleted
 until we see no further risks from our comments.
 
+All comments deemed problematic have been stored in [this sheet](https://docs.google.com/spreadsheets/d/1EWi0HTh5gSAawXcJFqnCo4GKIk4HaM-i/edit?usp=sharing&ouid=103803540614117230127&rtpof=true&sd=true) for the team to review and potentially mitigate.
+Generally, we only found some banter & jokes, but it is still a good idea to review and potentially
+tidy up our language before we open source. 
+
 ### Secret Extraction
 
 Most secrets have already been moved to GCP Secrets Manager. However something has to _bootstrap_
