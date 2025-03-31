@@ -56,9 +56,17 @@ class CommentEvaluation(BaseModel):
     def __hash__(self) -> int:
         return hash((self.link))
 
+    def __str__(self) -> str:
+        return json.dumps(self.model_dump(), indent=2)
+
+    def short_str(self) -> str:
+        j = self.model_dump()
+        del j["content"]
+        return json.dumps(j, indent=2)
+
 
 class CommentEvaluationSettings(BaseSettings):
-    prompt: str = """
+    first_pass_prompt: str = """
     Your objective is the detection of harmful comments on our github as we prepare for
     an open sourcing of the repository.
     Please identify each comment as "neutral", "concerning" or "identified risk".
@@ -90,7 +98,18 @@ class CommentEvaluationSettings(BaseSettings):
     programmers are trying to get stuff done, not giving a perfect speech. Thus, some
     banter is fine.
     """
+    second_pass_prompt: str = """
+    You are given a list of comments that a previous screening has classified as concerning or risk.
+    Please now go through this list and tell us which of these comments truly are a risk to our
+    reputation as a non profit organisation open sourcing code. Use standard code of conducts of
+    major open source projects to make your decision. Note that we do not care about any security
+    risk issues as these are just comments but we care about conduct, tone and professionalism.
+
+    Please return a list of comments that you think truly are a risk to our reputation. Return
+    a list of json objects with link & classification.
+    """
     model: str = cli_settings.base_model
+    advanced_model: str = "gemini-2.5-pro-exp-03-25"
 
 
 comment_settings = CommentEvaluationSettings()
@@ -103,7 +122,9 @@ def detect_risk(
     ),
     github_token: str = typer.Option(help="The Github token to use", envvar="GITHUB_TOKEN"),
     repo_id: str = typer.Option(help="The repo id to use", default="everycure-org/matrix"),
-    prompt: str = typer.Option(help="The prompt to use", default=comment_settings.prompt),
+    prompt: str = typer.Option(
+        help="The prompt to use", default=comment_settings.first_pass_prompt
+    ),
     limit: Optional[int] = typer.Option(help="The limit of comments to evaluate", default=None),
     excel_output: str = typer.Option(
         help="The path to the excel file to save the results", default=None
@@ -123,10 +144,20 @@ def detect_risk(
     processed_comments = Parallel(n_jobs=-2)(
         delayed(evaluate_comment)(comment, prompt) for comment in tqdm(comments_to_process)
     )
+
+    # second pass, only get the top problematic comments
+    concerning_comments = [
+        c
+        for c in processed_comments
+        if c.classification in set([Classification.CONCERNING, Classification.RISK])
+    ]
+    console.print(f"Running final pass evaluating {len(concerning_comments)} comments")
+    final_pass_comments = final_pass(set(concerning_comments))
+
+    print_results(final_pass_comments)
+    print_scoreboard(final_pass_comments)
     if excel_output:
-        print_results_to_excel(processed_comments, excel_output)
-    else:
-        print_results(processed_comments)
+        print_results_to_excel(final_pass_comments, excel_output)
 
 
 def print_results_to_excel(evaluations: List[CommentEvaluation], path: str) -> None:
@@ -134,6 +165,21 @@ def print_results_to_excel(evaluations: List[CommentEvaluation], path: str) -> N
     # ensure the folder exists
     os.makedirs(os.path.dirname(path), exist_ok=True)
     df.to_excel(path, index=False)
+
+
+def print_scoreboard(evaluations: List[CommentEvaluation]) -> None:
+    scoreboard = {}
+    for c in evaluations:
+        if c.author not in scoreboard:
+            scoreboard[c.author] = 0
+        scoreboard[c.author] += 1
+    scoreboard = sorted(scoreboard.items(), key=lambda x: x[1], reverse=True)
+    table = Table(title="Scoreboard")
+    table.add_column("Author")
+    table.add_column("Count")
+    for author, count in scoreboard:
+        table.add_row(author, str(count))
+    console.print(table)
 
 
 def print_results(evaluations: List[CommentEvaluation]) -> None:
@@ -259,3 +305,74 @@ def evaluate_comment(
         comment.classification = Classification.UNCLASSIFIED
 
     return comment
+
+
+@memory.cache()  # type: ignore
+def final_pass(comments: Set[CommentEvaluation]):
+    input_ = "\n".join([c.short_str() for c in list(comments)])
+    generate_content_config = types.GenerateContentConfig(
+        temperature=0.15,
+        top_p=0.95,
+        top_k=40,
+        max_output_tokens=65_000,
+        response_mime_type="application/json",
+        response_schema=genai.types.Schema(
+            type=genai.types.Type.OBJECT,
+            properties={
+                "comments": genai.types.Schema(
+                    type=genai.types.Type.ARRAY,
+                    items=genai.types.Schema(
+                        type=genai.types.Type.OBJECT,
+                        properties={
+                            "link": genai.types.Schema(
+                                type=genai.types.Type.STRING,
+                            ),
+                            "classification": genai.types.Schema(
+                                type=genai.types.Type.STRING,
+                                enum=[
+                                    x.value
+                                    for x in Classification
+                                    if x != Classification.UNCLASSIFIED
+                                    and x != Classification.NEUTRAL
+                                ],
+                            ),
+                        },
+                        required=["link", "classification"],
+                    ),
+                ),
+            },
+            required=["comments"],
+        ),
+        system_instruction=[
+            types.Part.from_text(text=comment_settings.second_pass_prompt),
+        ],
+    )
+
+    response = gemini.models.generate_content(
+        model=comment_settings.advanced_model,
+        contents=input_,
+        config=generate_content_config,
+    )
+    # quick lookup dict to map link to comment
+    link_to_comment = {c.link: c for c in comments}
+
+    # truly problematic comments
+    truly_problematic: List[CommentEvaluation] = []
+
+    # try parsing the response as json
+    try:
+        res = json.loads(response.text)
+        for r in res.get("comments", []):
+            comment = link_to_comment[r.get("link")]
+            comment.classification = Classification(
+                r.get("classification", Classification.UNCLASSIFIED)
+            )
+            truly_problematic.append(comment)
+    except json.JSONDecodeError:
+        logging.error(f"Failed to parse response as json: {response}")
+    except Exception as e:
+        logging.error(f"Failed to parse response: {e}")
+        logging.error(f"Response: {response}")
+        raise e
+
+    return truly_problematic
