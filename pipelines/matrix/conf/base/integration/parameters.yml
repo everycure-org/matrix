@@ -40,16 +40,30 @@ integration:
 
   normalization:
     batch_size: 1000
+    cache_schema:
+      _object: matrix.pipelines.batch.schemas.node_normalizer
     normalizer:
       _object: matrix.pipelines.integration.normalizers.ncats.NCATSNodeNormalizer
       endpoint: ${oc.env:NODENORM_ENDPOINT, https://nodenorm.transltr.io/1.5/get_normalized_nodes}
       conflate: true
       drug_chemical_conflate: true
       description: false
+    # If the data backing the results changes, so will the NodeNorm frontend
+    # version, which is listed here. Note that it can update as well for other
+    # reasons, but at least you have a guarantee. Probably easiest to just bump
+    # this anytime the NodeNorm frontend version changes too. Note however that
+    # it is not exposed in the endpoint so you might think you're pulling the
+    # latest data, but you are effectively returning whatever you had in the
+    # cache. Seehttps://github.com/everycure-org/matrix/pull/1269#issuecomment-2755674916
+    api: nodenorm-2.3.18
+    preprocessor:
+      _object: matrix.pipelines.batch.pipeline.pass_through
+    target_col: normalized_id
+    primary_key: id
 
 # TODO: Figure out whether to move to filtering or stay here
   deduplication:
-    # choose if a node should have the most specific category. 
+    # choose if a node should have the most specific category.
     # E.g. if a node has all_categories [biolink:ChemicalEntity, biolink:NamedThing],
     # then node will be assigned biolink:ChemicalEntity as most specific category.
     # For RTX-KG2 reproduction from KGML-xDTD, choose false

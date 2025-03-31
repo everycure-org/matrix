@@ -348,9 +348,5 @@ def visualise_pca(nodes: ps.DataFrame, column_name: str) -> plt.Figure:
     return fig
 
 
-def pass_through(x):
-    return x
-
-
 def embeddings_preprocessor(df: DataFrame, key_length: int, combine_cols: Sequence[str], new_col: str) -> DataFrame:
     return df.withColumn(new_col, F.concat_ws("", *combine_cols).substr(startPos=1, length=key_length))

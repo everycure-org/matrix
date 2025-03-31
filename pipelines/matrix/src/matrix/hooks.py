@@ -447,7 +447,9 @@ class ReleaseInfoHooks:
             "MLFlow Link": ReleaseInfoHooks.build_mlflow_link(),
             "Code Link": ReleaseInfoHooks.build_code_link(),
             "Neo4j Link": "coming soon!",
-            "NodeNorm Endpoint Link": "https://nodenorm.transltr.io/1.5/get_normalized_nodes",
+            "NodeNorm Endpoint Link": ReleaseInfoHooks._params["integration"]["normalization"]["normalizer"][
+                "endpoint"
+            ],
             "KG dashboard link": ReleaseInfoHooks.build_kg_dashboard_link(),
         }
         return info
