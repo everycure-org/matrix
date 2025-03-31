@@ -109,7 +109,7 @@ Where `[VERSION]` is the version tag in the format `vX.Y.Z` (e.g., `v0.4.4`). If
 
 #### Example
 
-To publish data for version `v0.5.0`:
+To publish data for version `v0.4.4`:
 
 ```bash
 ./scripts/upload_release_to_public_bucket.sh v0.4.4
