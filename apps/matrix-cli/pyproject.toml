@@ -38,3 +38,17 @@ python_files = ["test_*.py"]
 
 [project.scripts]
 matrix = "matrix_cli.main:app"
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "W", "I"]
+
+[tool.mypy]
+strict = true
+disallow_untyped_defs = true
+
+[dependency-groups]
+dev = [
+    "mypy>=1.15.0",
+    "ruff>=0.11.2",
+]
