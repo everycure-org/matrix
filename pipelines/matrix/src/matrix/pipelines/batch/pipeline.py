@@ -211,7 +211,7 @@ def cache_miss_resolver_wrapper(
             key = hashlib.sha256((head + api).encode("utf-8")).hexdigest()
             yield key, partial(async_delegator, batch=batch)
 
-    return {k: v for k, v in prep(batches, api)}
+    return {f"api={api}/{k}": v for k, v in prep(batches, api)}
 
 
 @inject_object()
