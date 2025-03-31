@@ -161,10 +161,27 @@ def detect_risk(
 
 
 def print_results_to_excel(evaluations: List[CommentEvaluation], path: str) -> None:
-    df = pd.DataFrame(evaluations)
-    # ensure the folder exists
+    """
+    Print the evaluation results to a well-formatted Excel file.
+
+    Args:
+        evaluations (List[CommentEvaluation]): List of comment evaluations.
+        path (str): Path to save the Excel file.
+    """
+    # Convert pydantic models to dictionaries
+    evaluations_dicts = [evaluation.dict() for evaluation in evaluations]
+
+    # Create a DataFrame from the list of dictionaries
+    df = pd.DataFrame(evaluations_dicts)
+
+    # Ensure the folder exists
     os.makedirs(os.path.dirname(path), exist_ok=True)
+
+    # Save the DataFrame to an Excel file with formatting
     df.to_excel(path, index=False)
+
+
+# NOTE: This function was partially generated using AI assistance.
 
 
 def print_scoreboard(evaluations: List[CommentEvaluation]) -> None:
