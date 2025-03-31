@@ -84,7 +84,13 @@ Data in the public zone can be accessed through:
 
 ### Publishing Data
 
-We use the `upload_release_to_public_bucket.sh` script to publish data from our internal storage to the public data zone. This script handles downloading data from our development bucket, compressing it, and uploading it to the public bucket.
+We use the `upload_release_to_public_bucket.sh` script to publish data from our internal
+storage to the public data zone. This script handles downloading data from our
+development bucket, compressing it, and uploading it to the public bucket. This is a very
+rudimentary script and the result is a single tar.gz file for each version. As we zip up
+parquet files, tarball files are an acceptable format, but future versions will likely 
+try to create more accessible releases. For now, the accessible approach to share our data
+is via bigquery, neo4j and kg dashboard.
 
 #### Script Features
 
