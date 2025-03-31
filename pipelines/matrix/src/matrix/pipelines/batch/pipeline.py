@@ -4,18 +4,16 @@ import json
 import logging
 import warnings
 from functools import partial
-from typing import Any, Callable, Coroutine, Iterable, Iterator, Optional, Sequence, TypeVar
+from typing import Any, Callable, Coroutine, Iterable, Iterator, Sequence, TypeVar
 
-import pandas as pd
 import pyarrow as pa
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Pipeline, pipeline
 from matrix.inject import inject_object
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from matrix.pipelines.batch.schemas import to_spark_schema
 from matrix.pipelines.embeddings.encoders import AttributeEncoder
-from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql import functions as F
-from pyspark.sql.window import Window
+from pyspark.sql import DataFrame
+from pyspark.sql.functions import col, count, count_distinct
 
 T = TypeVar("T")
 V = TypeVar("V")
@@ -180,7 +178,7 @@ def derive_cache_misses(
     cache = limit_cache_to_results_from_api(cache, api=api).select("key")
     return (
         df.transform(preprocessor)
-        .select(F.col(primary_key).alias("key"))
+        .select(col(primary_key).alias("key"))
         .join(cache, on="key", how="leftanti")
         .distinct()
     )
@@ -196,9 +194,9 @@ def cache_miss_resolver_wrapper(
     batches = batched(documents, batch_size)
 
     async def async_delegator(batch: Sequence[str]) -> pa.Table:
-        logger.info(f"embedding batch with key: {batch[0]}")
+        logger.info(f"Processing batch with key: {batch[0]}")
         transformed = await transformer.apply(batch)
-        logger.info(f"received embedding for batch with key: {batch[0]}")
+        logger.info(f"received response for batch with key: {batch[0]}")
         return pa.table([batch, transformed, [api] * len(batch)], schema=cache_schema).to_pandas()
 
     def prep(
@@ -248,7 +246,7 @@ def resolve_cache_duplicates(df: DataFrame, id_col: str) -> DataFrame:
 
     Duplicates are detected by their `id_col`.
     """
-    keys, distinct_keys = df.agg(F.count("*"), F.count_distinct(id_col)).first()
+    keys, distinct_keys = df.agg(count("*"), count_distinct(id_col)).first()
     if keys != distinct_keys:
         # Warnings can be converted to errors, making them more ideal here.
         warnings.warn(
@@ -273,109 +271,6 @@ def batched(iterable: Iterable[T], n: int, *, strict: bool = False) -> Iterator[
         yield batch
 
 
-@inject_object()
-def _transform(dfs: dict[str, Any], transformer, **transformer_kwargs):
-    """Function to bucketize input data.
-
-    Args:
-        dfs: mapping of paths to df load functions
-        encoder: encoder to run
-    """
-
-    def _func(dataframe: pd.DataFrame):
-        return lambda df=dataframe: transformer.apply(df(), **transformer_kwargs)
-
-    shards = {}
-    for path, df in dfs.items():
-        # Invoke function to compute embeddings
-        shards[path] = _func(df)
-
-    return shards
-
-
-def _bucketize(df: DataFrame, bucket_size: int, columns: Optional[list[str]] = None) -> pd.DataFrame:
-    """Function to bucketize df in given number of buckets.
-
-    Args:
-        df: dataframe to bucketize
-        bucket_size: size of the buckets
-    Returns:
-        Dataframe augmented with `bucket` column
-    """
-    if columns is None:
-        columns = []
-
-    # Retrieve number of elements
-    num_elements = df.count()
-    num_buckets = (num_elements + bucket_size - 1) // bucket_size
-
-    # Construct df to bucketize
-    spark_session: SparkSession = SparkSession.builder.getOrCreate()
-
-    # Bucketize df
-    buckets = spark_session.createDataFrame(
-        data=[(bucket, bucket * bucket_size, (bucket + 1) * bucket_size) for bucket in range(num_buckets)],
-        schema=["bucket", "min_range", "max_range"],
-    )
-
-    return (
-        df.withColumn("row_num", F.row_number().over(Window.orderBy("id")) - F.lit(1))
-        .join(buckets, on=[(F.col("row_num") >= (F.col("min_range"))) & (F.col("row_num") < F.col("max_range"))])
-        .select("id", *columns, "bucket")
-    )
-
-
-# NOTE: This will be deleted in next PR, when we consolidate the node normalizer step
-def create_pipeline(
-    source: str,
-    df: str,
-    output: str,
-    bucket_size: str,
-    transformer: str,
-    columns: list[str] = None,
-    max_workers: int = 10,
-    **transformer_kwargs,
-) -> Pipeline:
-    """Pipeline to transform dataframe."""
-    return pipeline(
-        [
-            ArgoNode(
-                func=_bucketize,
-                inputs={
-                    key: value
-                    for key, value in {"df": df, "bucket_size": bucket_size, "columns": columns}.items()
-                    if value is not None
-                },
-                outputs=f"batch.int.{source}.input_bucketized@spark",
-                name=f"bucketize_{source}_input",
-                # argo_config=ArgoResourceConfig(
-                #    cpu_request=48,
-                #    cpu_limit=48,
-                #    memory_limit=192,
-                #    memory_request=120,
-                # ),
-            ),
-            node(
-                func=_transform,
-                inputs={
-                    "dfs": f"batch.int.{source}.input_bucketized@partitioned",
-                    "transformer": transformer,
-                    **transformer_kwargs,
-                },
-                outputs=f"batch.int.{source}.{max_workers}.input_transformed@partitioned",
-                name=f"transform_{source}_input",
-            ),
-            node(
-                func=lambda x: x,
-                inputs=[f"batch.int.{source}.{max_workers}.input_transformed@spark"],
-                outputs=output,
-                name=f"extract_{source}_input",
-            ),
-        ],
-        tags=["argowf.fuse", f"argowf.fuse-group.{source}"],
-    )
-
-
 def report_on_cache_misses(df: DataFrame, api: str) -> None:
     if logger.isEnabledFor(logging.INFO):
         rows = sorted(df.filter(df["api"] == api).groupBy("value").count().collect())
@@ -396,3 +291,7 @@ def report_on_cache_misses(df: DataFrame, api: str) -> None:
         logger.info(
             json.dumps({"api": api, "cache size": f"{no_nulls+nulls:_}", "non null cache values": f"{no_nulls:_}"})
         )
+
+
+def pass_through(x):
+    return x
