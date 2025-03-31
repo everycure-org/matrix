@@ -56,7 +56,7 @@ integration:
     # latest data, but you are effectively returning whatever you had in the
     # cache. Seehttps://github.com/everycure-org/matrix/pull/1269#issuecomment-2755674916
     api: nodenorm-2.3.18
-    preprocessor: 
+    preprocessor:
       _object: matrix.pipelines.batch.pipeline.pass_through
     target_col: normalized_id
     primary_key: id
