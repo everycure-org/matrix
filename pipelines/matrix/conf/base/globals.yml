@@ -8,7 +8,8 @@ neo4j:
 
 # points at our central GCS_BUCKET where we store our ground truth data
 # Note: Overwrite with WG project ID & bucket if you want to write to a different project's BigQuery
-dev_gcs_bucket: gs://${oc.env:DEV_GCP_BUCKET}
+dev_gcs_bucket: gs://${oc.env:DEV_GCS_BUCKET}
+prod_gcs_bucket: gs://${oc.env:PROD_GCS_BUCKET}
 gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
 gcp_project: ${oc.env:GCP_PROJECT_ID, mtrx-hub-dev-3of}
 git_sha: ${oc.env:GIT_SHA, default-sha}
@@ -54,6 +55,7 @@ paths:
   # Upstream-source versioned
   raw:                ${dev_gcs_bucket}/kedro/data/01_raw
   kg_raw:             ${dev_gcs_bucket}/data/01_RAW
+  kg_raw_private:     ${prod_gcs_bucket}/data/01_RAW
   ingestion:          data/ingestion
 
   # Release-based
