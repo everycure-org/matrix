@@ -1,3 +1,6 @@
 infra/secrets/** filter=git-crypt diff=git-crypt
 infra/secrets/** filter=git-crypt diff=git-crypt
+infra/secrets_dev/** filter=git-crypt diff=git-crypt
+infra/secrets_prod/** filter=git-crypt-prod diff=git-crypt-prod
+
 
