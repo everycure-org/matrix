@@ -20,8 +20,11 @@ logger = logging.getLogger(__name__)
 class NCATSNodeNormalizer(Normalizer):
     """Class to represent normalizer from translator."""
 
-    def __init__(self, endpoint: str, conflate: bool, drug_chemical_conflate: bool, description: bool = False) -> None:
-        self._endpoint = endpoint
+    def __init__(
+        self, endpoint: str, version: str, conflate: bool, drug_chemical_conflate: bool, description: bool = False
+    ) -> None:
+        self._version = version
+        self._endpoint = endpoint.format(version=version)
         self._conflate = conflate
         self._drug_chemical_conflate = drug_chemical_conflate
         self._description = description
