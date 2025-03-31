@@ -47,3 +47,5 @@ loggers:
     level: WARNING
   matrix.hooks:
     level: INFO
+  matrix.pipelines.integration.pipeline:
+    level: INFO
