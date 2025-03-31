@@ -7,17 +7,27 @@ command -v gcloud >/dev/null 2>&1 || { echo >&2 "gcloud is required but it's not
 
 # downloads data from our bucket and uploads it to the public bucket as a zip file
 
-VERSION=${1:-v0.4.4}
-
-echo 'deleting old data, are you sure? (y/n)'
-read -r -p "Are you sure? [y/N] " response
-if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
-    echo "Deleting old data..."
-    rm -rf data/
-    rm -f data.tar.gz
-else
-    echo "Exiting..."
+# Validate VERSION parameter
+if [ $# -eq 0 ]; then
+    echo >&2 "Error: VERSION parameter is required"
+    echo >&2 "Usage: $0 VERSION"
     exit 1
+fi
+
+VERSION=$1
+
+# Only prompt for deletion if data directory or tar file exists
+if [ -d "data/" ] || [ -f "data.tar.gz" ]; then
+    echo 'Found existing data files that need to be deleted'
+    read -r -p "Do you want to proceed with deletion? [y/N] " response
+    if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+        echo "Deleting old data..."
+        [ -d "data/" ] && rm -rf data/
+        [ -f "data.tar.gz" ] && rm -f data.tar.gz
+    else
+        echo "Exiting..."
+        exit 1
+    fi
 fi
 
 mkdir -p data
