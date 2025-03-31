@@ -4,6 +4,8 @@ from pyspark.sql.types import StructType
 
 embeddings: pa.lib.Schema = pa.schema({"key": pa.string(), "value": pa.list_(pa.float32()), "api": pa.string()})
 
+node_normalizer: pa.lib.Schema = pa.schema({"key": pa.string(), "value": pa.string(), "api": pa.string()})
+
 
 def to_spark_schema(s: pa.lib.Schema) -> StructType:
     # to be removed when project used Spark4.x, which supports conversion

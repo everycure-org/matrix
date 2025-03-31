@@ -36,6 +36,7 @@ pyarrow>=14.0.2
 pygsheets==2.0.6
 pyspark==3.5.1
 pytest
+pytest-asyncio
 pytest-cov
 pytest-mock
 pytest-testmon

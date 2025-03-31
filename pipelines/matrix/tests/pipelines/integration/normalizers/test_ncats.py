@@ -1,7 +1,5 @@
-import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pandas as pd
 import pytest
 from matrix.pipelines.integration.normalizers.ncats import NCATSNodeNormalizer
 
@@ -19,14 +17,14 @@ class AsyncMock(MagicMock):
 @pytest.mark.parametrize(
     "input_df,expected_normalized_ids",
     [
-        # Given input dataframe with single element
-        (pd.DataFrame({"id": ["CHEBI:001"]}), ["CHEBI:normalized_001"]),
-        # Given input dataframe with non existing element
-        (pd.DataFrame({"id": ["CHEBI:foo"]}), [pd.NA]),
-        # Given input dataframe with randomized order and non defined
+        # Given input list with single element
+        (["CHEBI:001"], ["CHEBI:normalized_001"]),
+        # Given input list with non-existing element
+        (["CHEBI:foo"], [None]),
+        # Given input list with randomized order and non defined
         (
-            pd.DataFrame({"id": ["CHEBI:002", "CHEBI:001", "CHEBI:foo"]}),
-            ["CHEBI:normalized_002", "CHEBI:normalized_001", pd.NA],
+            ["CHEBI:002", "CHEBI:001", "CHEBI:foo"],
+            ["CHEBI:normalized_002", "CHEBI:normalized_001", None],
         ),
     ],
 )
@@ -39,9 +37,7 @@ async def test_apply(mock_post, input_df, expected_normalized_ids):
     mock_post.return_value.__aenter__.return_value = mock_response
 
     # When applying the apply
-    result_df = await normalizer.apply(input_df)
+    result = await normalizer.apply(input_df)
 
-    # Then output dataframe is of correct structured, and correct
-    # identifiers are normalized.
-    assert "normalized_id" in result_df.columns
-    assert result_df["normalized_id"].tolist() == expected_normalized_ids
+    # Then output is of correctly structured, and correct identifiers are normalized.
+    assert result == expected_normalized_ids
