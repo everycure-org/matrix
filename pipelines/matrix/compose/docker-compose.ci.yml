@@ -64,6 +64,7 @@ services:
       GCP_PROJECT_ID: dummy
       GCP_ENV: ${GCP_ENV}
       DEV_GCS_BUCKET: mtrx-us-central1-hub-dev-storage
+      PROD_GCS_BUCKET: mtrx-us-central1-hub-prod-storage
       DEV_GCP_PROJECT_ID: mtrx-hub-dev-3of
       KEDRO_DYNAMIC_PIPELINES_MAPPING_CROSS_VALIDATION_N_CROSS_VAL_FOLDS: 2
       KEDRO_DYNAMIC_PIPELINES_MAPPING_MODELLING_XG_ENSEMBLE_NUM_SHARDS: 2
