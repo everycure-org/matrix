@@ -7,7 +7,7 @@ spec:
     iap:
       enabled: true
       oauth2ClientSecret:
-        name: iap_oauth_client_secret
+        name: iap-oauth-client-secret
       clientID: {{ .Values.spec.source.aip_oauth_client_id }}
   targetRef:
     group: ""
