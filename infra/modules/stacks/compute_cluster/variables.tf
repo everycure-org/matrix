@@ -53,3 +53,7 @@ variable "bucket_name" {
 variable "repo_revision" {
   type = string
 }
+
+variable "aip_oauth_client_id" {
+  type = string
+}
