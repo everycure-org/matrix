@@ -11,5 +11,5 @@ spec:
       clientID: {{ .Values.spec.source.aip_oauth_client_id }}
   targetRef:
     group: ""
-    kind: Service
-    name: lb-service
+    kind: Namespace
+    name: gateway
