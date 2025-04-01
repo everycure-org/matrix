@@ -62,7 +62,6 @@ list of) services:
 
 - GCS (uses Google SSO)
 - BigQuery (uses Google SSO)
-- Neo4J (uses username, password credentials for authentication)
 - MlFlow (uses Google SSO)
 - Argo Workflows (uses Google SSO)
 - ArgoCD (uses Google SSO)
