@@ -12,6 +12,10 @@ dev_gcs_bucket: gs://${oc.env:DEV_GCS_BUCKET}
 prod_gcs_bucket: gs://${oc.env:PROD_GCS_BUCKET, mtrx-us-central1-hub-prod-storage}
 gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
 gcp_project: ${oc.env:GCP_PROJECT_ID, mtrx-hub-dev-3of}
+
+dev_gcp_project_id: mtrx-hub-dev-3of
+prod_gcp_project_id: mtrx-hub-prod-sms
+
 git_sha: ${oc.env:GIT_SHA, default-sha}
 gh_token: ${oc.env:GH_TOKEN, dummy}
 
