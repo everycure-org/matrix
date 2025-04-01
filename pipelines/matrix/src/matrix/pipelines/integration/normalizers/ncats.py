@@ -1,10 +1,9 @@
 import asyncio
 import logging
-from abc import ABC
-from typing import Any, Dict
+from collections.abc import Collection
+from typing import Any
 
 import aiohttp
-import pandas as pd
 from jsonpath_ng import parse
 from tenacity import (
     retry,
@@ -32,10 +31,9 @@ class NCATSNodeNormalizer(Normalizer):
         retry=retry_if_exception_type((aiohttp.ClientError, asyncio.TimeoutError)),
         before_sleep=print,
     )
-    async def apply(self, df: pd.DataFrame, **kwargs):
-        curies = df["id"].tolist()
+    async def apply(self, curies: Collection[str]) -> list[str | None]:
         request_json = {
-            "curies": curies,
+            "curies": tuple(curies),  # must be json serializable
             "conflate": self._conflate,
             "drug_chemical_conflate": self._drug_chemical_conflate,
             "description": self._description,
@@ -53,15 +51,12 @@ class NCATSNodeNormalizer(Normalizer):
 
                 resp.raise_for_status()
 
-        df["normalized_id"] = [self._extract_id(curie, response_json, self._json_parser) for curie in curies]
-        df["normalized_id"] = df["normalized_id"].astype(pd.StringDtype())
-        return df
+        return [self._extract_id(curie, response_json, self._json_parser) for curie in curies]
 
     @staticmethod
-    def _extract_id(id: str, response: Dict[str, Any], json_parser: parse) -> Dict[str, Any]:
+    def _extract_id(id: str, response: dict[str, Any], json_parser: parse) -> str | None:
         """Extract normalized IDs from the response using the json parser."""
         try:
-            return json_parser.find(response.get(id))[0].value
+            return str(json_parser.find(response.get(id))[0].value)
         except (IndexError, KeyError):
             logger.debug(f"Not able to normalize for {id}: {response.get(id)}, {json_parser}")
-            return None
