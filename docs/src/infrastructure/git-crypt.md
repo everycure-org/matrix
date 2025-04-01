@@ -152,10 +152,7 @@ Once the public key was added to the repo (i.e. the PR was merged and the team l
 ```bash
 git-crypt unlock
 ```
-Note: the above command will unlock the files for all the defined git-crypt scopes.
-This is not the case with git-crypt lock. You must lock it for every scope that is defined. That is, e.g.:
-git-crypt lock (this will encrypt credentials encrypted with the default scope)
-git-crypt lock --key-name=prod (this will encrypt credentials under the `prod` scope.)
+
 Re-enter the passphrase you used to create the public key to unlock. 
 
 You can lock the key by running 
