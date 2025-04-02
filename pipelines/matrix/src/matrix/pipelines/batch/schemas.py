@@ -2,9 +2,9 @@ import pyarrow as pa
 from pyspark.sql.pandas.types import from_arrow_type
 from pyspark.sql.types import StructType
 
-embeddings: pa.lib.Schema = pa.schema({"key": pa.string(), "value": pa.list_(pa.float32()), "api": pa.string()})
+embeddings: pa.lib.Schema = pa.schema({"key": pa.string(), "value": pa.list_(pa.float32())})
 
-node_normalizer: pa.lib.Schema = pa.schema({"key": pa.string(), "value": pa.string(), "api": pa.string()})
+node_normalizer: pa.lib.Schema = pa.schema({"key": pa.string(), "value": pa.string()})
 
 
 def to_spark_schema(s: pa.lib.Schema) -> StructType:
