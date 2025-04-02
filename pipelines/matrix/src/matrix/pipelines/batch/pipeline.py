@@ -197,7 +197,7 @@ def cache_miss_resolver_wrapper(
         logger.info(f"Processing batch with key: {batch[0]}")
         transformed = await transformer.apply(batch)
         logger.info(f"received response for batch with key: {batch[0]}")
-        return pa.table([batch, transformed], schema=cache_schema).to_pandas()
+        return pa.table([batch, transformed, [api] * len(batch)], schema=cache_schema).to_pandas()
 
     def prep(
         batches: Iterable[Sequence[T]], api: str
