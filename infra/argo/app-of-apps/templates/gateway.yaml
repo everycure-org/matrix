@@ -21,9 +21,6 @@ spec:
           value: {{ .Values.spec.source.environment}}
         - name: spec.source.project_id
           value: {{ .Values.spec.source.project_id}}
-        - name: spec.source.aip_oauth_client_id
-          value: {{ .Values.spec.source.aip_oauth_client_id }}
-
   syncPolicy:
     syncOptions:     # Sync options which modifies sync behavior
     - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
