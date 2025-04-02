@@ -48,7 +48,7 @@ ingestion.raw.rtx_kg2.curie_to_pmids@spark:
 
 ingestion.raw.rtx_kg2.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/experimental-time-split/v2.7.3/pre-2014-ts2_nodes_c.tsv
+  filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/v2.7.3/nodes_c.tsv
   load_args:
     sep: "\t"
   save_args:
@@ -59,7 +59,7 @@ ingestion.raw.rtx_kg2.nodes@pandas:
 ingestion.raw.rtx_kg2.nodes@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/experimental-time-split/v2.7.3/pre-2014-ts2_nodes_c.tsv
+  filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/v2.7.3/nodes_c.tsv
   file_format: csv
   load_args:
     sep: "\t"
@@ -67,7 +67,7 @@ ingestion.raw.rtx_kg2.nodes@spark:
 
 ingestion.raw.rtx_kg2.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/experimental-time-split/v2.7.3/pre-2014-ts2_edges_c.tsv
+  filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/v2.7.3/edges_c.tsv
   save_args:
     sep: "\t"
     header: true
@@ -78,7 +78,7 @@ ingestion.raw.rtx_kg2.edges@pandas:
 ingestion.raw.rtx_kg2.edges@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/experimental-time-split/v2.7.3/pre-2014-ts2_edges_c.tsv
+  filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/v2.7.3/edges_c.tsv
   file_format: csv
   load_args:
     sep: "\t"
