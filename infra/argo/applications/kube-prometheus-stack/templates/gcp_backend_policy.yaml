@@ -15,6 +15,23 @@ spec:
     name: kube-prometheus-stack-grafana
 
 ---
+apiVersion: networking.gke.io/v1
+kind: GCPBackendPolicy
+metadata:
+  name: backend-policy-prometheus
+spec:
+  default:
+    iap:
+      enabled: true
+      oauth2ClientSecret:
+        name: iap-oauth-client-secret
+      clientID: {{ .Values.spec.source.aip_oauth_client_id }}
+  targetRef:
+    group: ""
+    kind: Service
+    name: kube-prometheus-stack-prometheus
+
+---
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
