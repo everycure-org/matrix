@@ -243,7 +243,7 @@ def normalization_summary_nodes_and_edges(
             .join(nodes.select("id", "category"), on="id", how="left")
             .withColumn("source_role", F.lit("object"))
         )
-        .withColumn("normalization_set", F.lit(source))
+        .withColumn("upstream_data_source", F.lit(source))
     )
 
     return df
@@ -258,5 +258,5 @@ def normalization_summary_nodes_only(
     return (
         nodes.select("id", "original_id", "category", "normalization_success")
         .withColumn("source_role", F.lit("node"))
-        .withColumn("upstream_source", F.lit(source))
+        .withColumn("upstream_data_source", F.lit(source))
     )
