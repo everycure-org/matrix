@@ -58,6 +58,7 @@ class RTXTransformer(GraphTransformer):
             .withColumn("publications",                  f.split(f.col("publications"), RTX_SEPARATOR))
             .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
+            .withColumn("agent_type",                    f.lit(None).cast(T.StringType()))
             .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(0)) # RTX KG2 2.10 `primary_knowledge_source``
             .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time

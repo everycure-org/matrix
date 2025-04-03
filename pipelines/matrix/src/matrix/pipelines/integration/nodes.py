@@ -56,6 +56,7 @@ def union_edges(*edges, cols: list[str]) -> ps.DataFrame:
             F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
             # TODO: we shouldn't just take the first one but collect these values from multiple upstream sources
             F.first("knowledge_level", ignorenulls=True).alias("knowledge_level"),
+            F.first("agent_type", ignorenulls=True).alias("agent_type"),
             F.first("subject_aspect_qualifier", ignorenulls=True).alias("subject_aspect_qualifier"),
             F.first("subject_direction_qualifier", ignorenulls=True).alias("subject_direction_qualifier"),
             F.first("object_direction_qualifier", ignorenulls=True).alias("object_direction_qualifier"),
