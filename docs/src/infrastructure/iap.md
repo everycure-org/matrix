@@ -3,6 +3,7 @@
 ## Why IAP?
 
 At Every Cure, we don't have VPNs or intranets. But we want to protect all our applications without a lot of work. This is where the Google Identity Aware Proxy comes in:
+
 1. Protect all our applications from unauthorized access
 2. Optionally enable them for SSO
 3. Integrate seamlessly with our existing Google Workspace setup
@@ -35,8 +36,6 @@ We chose to manage IAP client secrets through External Secrets Operator because:
 - Centralizes secret management in Google Secret Manager
 - Enables audit trails for secret access and changes
 
-### 4. Programmatic Access Design
-
 ## Implementation Guidelines
 
 ### Deployment of IAP in the cluster
@@ -57,7 +56,9 @@ IAP is enabled via a semi-automated approach.
 
 ### Manual steps (continued):
 Once the above steps are applied, the IAP will be enabled for all the applications whose service was referrenced in the `GCPBackendPolicy` resource. One can check this [here](https://console.cloud.google.com/security/iap). The access will be denied to all users by default.
-1. To give access to users, you must click on each backend service in the above link, open the side pane in the UI and give the following principals the `IAP-secured Web App User ` role:
+
+To give access to users, you must click on each backend service in the above link, open the side pane in the UI and give the following principals the `IAP-secured Web App User ` role:
+
 - matrix-all@everycure.org
 - matrix-viewers@everycure.org
 - sa-github-actions-rw@<YOUR_GCP_PROJECT_ID>.iam.gserviceaccount.com
