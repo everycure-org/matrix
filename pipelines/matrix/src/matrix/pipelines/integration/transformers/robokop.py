@@ -60,7 +60,7 @@ class RobokopTransformer(GraphTransformer):
             .withColumnRenamed("predicate:TYPE",                    "predicate")
             .withColumnRenamed("object:END_ID",                     "object")
             .withColumnRenamed("knowledge_level",            "knowledge_level")
-            .withColumnRanamed("agent_type",                                     "agent_type")
+            .withColumnRenamed("agent_type",                                     "agent_type")
             .withColumnRenamed("primary_knowledge_source",   "primary_knowledge_source")
             .withColumnRenamed("object_aspect_qualifier:string",    "object_aspect_qualifier")
             .withColumnRenamed("object_direction_qualifier:string", "object_direction_qualifier")
