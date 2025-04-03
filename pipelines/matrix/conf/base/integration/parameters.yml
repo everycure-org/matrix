@@ -39,7 +39,7 @@ integration:
         limit_pmids: 50_000_000 # essentially unlimited, but allows for local clipping if local run is desired
 
   normalization:
-    batch_size: 1000
+    batch_size: 500000  # number of rows per cache file.
     cache_schema:
       _object: matrix.pipelines.batch.schemas.node_normalizer
     normalizer:
@@ -48,6 +48,7 @@ integration:
       conflate: true
       drug_chemical_conflate: true
       description: false
+      items_per_request: 10000  # The API can't handle 10M strings at once
     # If the data backing the results changes, so will the NodeNorm frontend
     # version, which is listed here. Note that it can update as well for other
     # reasons, but at least you have a guarantee. Probably easiest to just bump
