@@ -207,3 +207,56 @@ def normalize_nodes(
         .filter(F.col("_rn") == 1)
         .drop("_rn")
     )
+
+
+@check_output(
+    DataFrameSchema(
+        columns={
+            "id": Column(T.StringType(), nullable=False),
+            "original_id": Column(T.StringType(), nullable=False),
+            "category": Column(T.StringType(), nullable=True),
+            "normalization_success": Column(T.BooleanType(), nullable=True),
+            "upstream_data_source": Column(T.StringType(), nullable=False),
+            "source_role": Column(T.StringType(), nullable=False),
+        }
+    )
+)
+def normalization_summary_nodes_and_edges(
+    edges: ps.DataFrame,
+    nodes: ps.DataFrame,
+    source: str,
+) -> ps.DataFrame:
+    """Extract per-source flattened normalization info from normalized nodes + edges."""
+
+    df = (
+        edges.selectExpr(
+            "subject as id", "original_subject as original_id", "subject_normalization_success as normalization_success"
+        )
+        .join(nodes.select("id", "category"), on="id", how="left")
+        .withColumn("source_role", F.lit("subject"))
+        .unionByName(
+            edges.selectExpr(
+                "object as id",
+                "original_object as original_id",
+                "object_normalization_success as normalization_success",
+            )
+            .join(nodes.select("id", "category"), on="id", how="left")
+            .withColumn("source_role", F.lit("object"))
+        )
+        .withColumn("normalization_set", F.lit(source))
+    )
+
+    return df
+
+
+def normalization_summary_nodes_only(
+    nodes: ps.DataFrame,
+    source: str,
+) -> ps.DataFrame:
+    """Extract per-source flattened normalization info from normalized nodes + edges."""
+
+    return (
+        nodes.select("id", "original_id", "category", "normalization_success")
+        .withColumn("source_role", F.lit("node"))
+        .withColumn("upstream_source", F.lit(source))
+    )
