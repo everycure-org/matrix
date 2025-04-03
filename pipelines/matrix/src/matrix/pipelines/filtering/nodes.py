@@ -41,7 +41,7 @@ def _apply_transformations(
 def prefilter_unified_kg_nodes(
     nodes: ps.DataFrame,
     transformations: dict[str, Callable[[ps.DataFrame], ps.DataFrame]],
-) -> ps.DataFrame[ps.DataFrame, ps.DataFrame]:
+) -> tuple[ps.DataFrame, ps.DataFrame]:
     return _apply_transformations(nodes, transformations)
 
 
