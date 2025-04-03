@@ -62,7 +62,7 @@ services:
       OPENAI_API_KEY: sk-proj-abc
       SYNONYMIZER_ENDPOINT: http://node-synonymizer:8081
       GCP_PROJECT_ID: dummy
-      GCP_ENV: ${GCP_ENV}
+      GCP_ENV: dev
       DEV_GCS_BUCKET: mtrx-us-central1-hub-dev-storage
       PROD_GCS_BUCKET: mtrx-us-central1-hub-prod-storage
       DEV_GCP_PROJECT_ID: mtrx-hub-dev-3of
