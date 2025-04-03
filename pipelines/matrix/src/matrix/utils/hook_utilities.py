@@ -53,13 +53,7 @@ def generate_dynamic_pipeline_mapping(
     # NOTE: We're currently not touching lists, we should unify the settings format
     # to ensure everything is specified as a dict.
     if isinstance(mapping, List):
-        if path and path[-1] == "integration":
-            # [-1] makes this work even if you nest this key deeper which [0] wouldn't
-            if os.environ["GCP_ENV"].lower() == "dev":
-                integration_sources = [item for item in mapping if not item.get("is_private")]
-                return integration_sources
-        else:
-            return mapping
+        return mapping
 
     if isinstance(mapping, Dict):
         result = {}
@@ -69,3 +63,9 @@ def generate_dynamic_pipeline_mapping(
 
     env_var = f"KEDRO_DYNAMIC_PIPELINES_MAPPING_{'_'.join(path).upper()}"
     return string_to_native(os.getenv(env_var, mapping))
+
+
+def disable_private_datasets(config: dict) -> dict:
+    if os.environ["GCP_ENV"].lower() == "dev":
+        config["integration"] = [item for item in config["integration"] if not item.get("is_private")]
+    return config
