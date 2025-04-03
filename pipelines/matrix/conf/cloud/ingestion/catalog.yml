@@ -32,7 +32,7 @@ ingestion.int.robokop.nodes:
   filepath: ${globals:paths.ingestion}/int/robokop/${globals:data_sources.robokop.version}/nodes
   table: robokop_nodes_ingested_${globals:data_sources.robokop.version}
 
-  ingestion.int.robokop.edges:
-    <<: *_bigquery_ds
-    filepath: ${globals:paths.ingestion}/int/robokop/${globals:data_sources.robokop.version}/edges
-    table: robokop_edges_ingested_${globals:data_sources.robokop.version}
+ingestion.int.robokop.edges:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.ingestion}/int/robokop/${globals:data_sources.robokop.version}/edges
+  table: robokop_edges_ingested_${globals:data_sources.robokop.version}
