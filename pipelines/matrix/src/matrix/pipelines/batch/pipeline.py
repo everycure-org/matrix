@@ -280,7 +280,7 @@ def batched(iterable: Iterable[T], n: int, *, strict: bool = False) -> Iterator[
 
 def report_on_cache_misses(df: DataFrame, api: str) -> None:
     if logger.isEnabledFor(logging.INFO):
-        rows = sorted(df.filter(df["api"] == api).groupBy("value").count().collect())
+        rows = sorted(df.filter(df["api"] == api).groupBy(df["value"].isNull()).count().collect())
         if len(rows) > 1:
             no_nulls = rows[0][1]  # False sorts before True, so isNull->False comes first
             nulls = rows[1][1]
