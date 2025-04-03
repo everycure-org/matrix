@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 def _apply_transformations(
     df: ps.DataFrame, transformations: dict[str, Callable[[ps.DataFrame], ps.DataFrame]], **kwargs
-) -> ps.DataFrame:
+) -> tuple[ps.DataFrame, ps.DataFrame]:
     logger.info(f"Filtering dataframe with {len(transformations)} transformations")
     if logger.isEnabledFor(logging.INFO):
         last_count = df.count()
