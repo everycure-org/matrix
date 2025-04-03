@@ -6,5 +6,6 @@ nav:
     - observability.md
     - gcp.md
     - git-crypt.md
+    - iap.md
     - runbooks
     - architecture_decision_records
