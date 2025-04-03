@@ -228,11 +228,17 @@ def normalization_summary_nodes_and_edges(
 ) -> ps.DataFrame:
     """Extract per-source flattened normalization info from normalized nodes + edges."""
 
+    # Safe fallback for category column
+    if "category" in nodes.columns:
+        nodes_for_join = nodes.select("id", "category")
+    else:
+        nodes_for_join = nodes.select("id").withColumn("category", F.lit(None).cast("string"))
+
     df = (
         edges.selectExpr(
             "subject as id", "original_subject as original_id", "subject_normalization_success as normalization_success"
         )
-        .join(nodes.select("id", "category"), on="id", how="left")
+        .join(nodes_for_join, on="id", how="left")
         .withColumn("source_role", F.lit("subject"))
         .unionByName(
             edges.selectExpr(
@@ -240,7 +246,7 @@ def normalization_summary_nodes_and_edges(
                 "original_object as original_id",
                 "object_normalization_success as normalization_success",
             )
-            .join(nodes.select("id", "category"), on="id", how="left")
+            .join(nodes_for_join, on="id", how="left")
             .withColumn("source_role", F.lit("object"))
         )
         .withColumn("upstream_data_source", F.lit(source))
@@ -253,10 +259,13 @@ def normalization_summary_nodes_only(
     nodes: ps.DataFrame,
     source: str,
 ) -> ps.DataFrame:
-    """Extract per-source flattened normalization info from normalized nodes + edges."""
+    """Extract per-source flattened normalization info from normalized nodes only."""
 
-    return (
-        nodes.select("id", "original_id", "category", "normalization_success")
-        .withColumn("source_role", F.lit("node"))
-        .withColumn("upstream_data_source", F.lit(source))
-    )
+    if "category" in nodes.columns:
+        selected = nodes.select("id", "original_id", "category", "normalization_success")
+    else:
+        selected = nodes.select("id", "original_id", "normalization_success").withColumn(
+            "category", F.lit(None).cast("string")
+        )
+
+    return selected.withColumn("source_role", F.lit("node")).withColumn("upstream_data_source", F.lit(source))
