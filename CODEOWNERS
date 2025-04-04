@@ -5,12 +5,14 @@
 # note that a more precise matching path will override the more general path. 
 
 # catchall for everything not further specified below, owned by matrix engineering team 
-* @lvijnck @pascalwhoop @JacquesVergine @amyford 
+* @lvijnck @pascalwhoop @piotrkan @JacquesVergine @amyford @oliverw1
 # docs are owned by the whole team
 docs/ @alexeistepa @leelancashire @oliverw1 @lvijnck @pascalwhoop @piotrkan @JacquesVergine
 # pipelines are owned by the core contributors to pipeline and modelling
-pipelines/matrix/** @alexeistepa @lvijnck @piotrkan @JacquesVergine @amyford
+pipelines/matrix/** @alexeistepa @lvijnck @piotrkan @JacquesVergine @amyford @leelancashire @oliverw1 @Siyan-Luo @emil-k
 # infra is owned by the platform team
 infra/ @emil-k @oliverw1 @lvijnck @pascalwhoop @emil-k
+services/kg-dashboard/ @pascalwhoop @JacquesVergine @kevinschaper @eKathleenCarter
+
 
 
