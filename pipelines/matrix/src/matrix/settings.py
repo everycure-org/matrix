@@ -56,7 +56,7 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             # {"name": "ec_clinical_trails", "integrate_in_kg": False},
         ],
         "modelling": {
-            "model_name": "xg_synth",  # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth
+            "model_name": "rf",  # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth
             "model_config": {"num_shards": 3},
         },
         "evaluation": [
