@@ -23,7 +23,7 @@ EXPERIMENT_BRANCH_PREFIX = "experiment/"
 
 
 def configure_mlflow_tracking(token: str):
-    mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")
+    mlflow.set_tracking_uri(f"https://mlflow.platform.{os.environ['GCP_ENV']}.everycure.org")
     os.environ["MLFLOW_TRACKING_TOKEN"] = token
 
 

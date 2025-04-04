@@ -1,4 +1,7 @@
 import os
+
+# setting this before matrix.settings._load_setting is imported, which needs it
+os.environ.setdefault("GCP_ENV", "dev")
 from pathlib import Path
 from typing import Generator
 

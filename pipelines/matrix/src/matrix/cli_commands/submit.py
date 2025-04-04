@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import re
 import secrets
 import subprocess
@@ -21,6 +22,7 @@ from rich.logging import RichHandler
 from rich.panel import Panel
 
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
+from matrix.cli_commands.gcp_config import GCP_PROJECT_IDS
 from matrix.git_utils import (
     BRANCH_NAME_REGEX,
     get_latest_minor_release,
@@ -85,9 +87,8 @@ def submit(
     mlflow_run_id: Optional[str],
 ):
     """Submit the end-to-end workflow. """
-
     click.secho("Warning - kedro submit will be deprecated soon. Please use kedro experiment run.", bg="yellow", fg="black")
-
+    gcp_env = os.environ['GCP_ENV']
     if not quiet:
         log.setLevel(logging.DEBUG)
 
@@ -128,10 +129,12 @@ def submit(
         dry_run=dry_run,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
         mlflow_experiment_id=experiment_id,
+        gcp_env=gcp_env,
         mlflow_run_id=mlflow_run_id,
         allow_interactions=not headless,
         is_test=is_test,
         environment=environment,
+
     )
 
 
@@ -146,9 +149,11 @@ def _submit(
     environment: str,
     template_directory: Path,
     mlflow_experiment_id: int,
+    gcp_env: str,
     mlflow_run_id: Optional[str] = None,
     allow_interactions: bool = True,
     is_test: bool = False,
+
 ) -> None:
     """Submit the end-to-end workflow.
 
@@ -176,12 +181,14 @@ def _submit(
     """
     
     try:
-        console.rule("[bold blue]Submitting Workflow")
 
-        if not can_talk_to_kubernetes():
+        gcp_project_id = GCP_PROJECT_IDS[gcp_env.lower()]
+
+        console.rule("[bold blue]Submitting Workflow")
+        if not can_talk_to_kubernetes(project=gcp_project_id):
             raise EnvironmentError("Cannot communicate with Kubernetes")
 
-        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, environment, mlflow_experiment_id, is_test=is_test, mlflow_run_id=mlflow_run_id)
+        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, environment, gcp_env, gcp_project_id, mlflow_experiment_id, is_test=is_test, mlflow_run_id=mlflow_run_id)
 
         file_path = save_argo_template(argo_template, template_directory)
 
@@ -190,7 +197,7 @@ def _submit(
         if dry_run:
             return
 
-        build_push_docker(run_name, verbose=verbose)
+        build_push_docker(run_name, gcp_project_id, verbose=verbose)
 
         ensure_namespace(namespace, verbose=verbose)
 
@@ -389,10 +396,11 @@ def can_talk_to_kubernetes(
     return True
 
 
-def build_push_docker(username: str, verbose: bool):
+def build_push_docker(username: str,  gcp_project_id, verbose: bool):
     """Build and push Docker image."""
     console.print("Building Docker image...")
-    run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
+    docker_image = f"us-central1-docker.pkg.dev/{gcp_project_id}/matrix-images/matrix"
+    run_subprocess(f"make docker_push TAG={username} docker_image={docker_image}", stream_output=verbose)
     console.print("[green]✓[/green] Docker image built and pushed")
 
 
@@ -403,13 +411,16 @@ def build_argo_template(
     namespace: str,
     pipeline_obj: Pipeline,
     environment: str,
+    gcp_env: str,
+    gcp_project_id: str,
     mlflow_experiment_id: int,
     is_test: bool,
     default_execution_resources: Optional[ArgoResourceConfig] = None,
     mlflow_run_id: Optional[str] = None,
 ) -> str:
     """Build Argo workflow template."""
-    image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
+
+    image_name = f"us-central1-docker.pkg.dev/{gcp_project_id}/matrix-images/matrix"
     matrix_root = Path(__file__).parent.parent.parent.parent
     metadata = bootstrap_project(matrix_root)
     package_name = metadata.package_name
@@ -426,6 +437,7 @@ def build_argo_template(
         release_version=release_version,
         image_tag=run_name,
         mlflow_experiment_id=mlflow_experiment_id,
+        gcp_env=gcp_env,
         namespace=namespace,
         username=username,
         package_name=package_name,
@@ -500,7 +512,7 @@ def submit_workflow(run_name: str, namespace: str, verbose: bool):
         "-o json"
     ])
     console.print(f"Running submit command: [blue]{cmd}[/blue]")
-    console.print(f"\nSee your workflow in the ArgoCD UI here: [blue]https://argo.platform.dev.everycure.org/workflows/argo-workflows/{run_name}[/blue]")
+    console.print(f"\nSee your workflow in the ArgoCD UI here: [blue]https://argo.platform.{os.environ['GCP_ENV']}.everycure.org/workflows/argo-workflows/{run_name}[/blue]")
     result = run_subprocess(cmd)
     job_name = json.loads(result.stdout).get("metadata", {}).get("name")
 
