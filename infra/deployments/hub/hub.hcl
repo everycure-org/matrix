@@ -3,6 +3,7 @@ generate hub_variables {
   path      = "hub_variables.gen.tf"
   if_exists = "overwrite_terragrunt"
   contents  = <<EOF
+variable "aip_oauth_client_id" {}
 variable "network_name" {}
 variable "repo_revision" {}
 variable "k8s_subnetwork" {}

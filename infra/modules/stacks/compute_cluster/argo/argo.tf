@@ -94,6 +94,8 @@ spec:
         value: ${var.project_id}
       - name: spec.source.bucketname
         value: ${var.bucket_name}
+      - name: spec.source.aip_oauth_client_id
+        value: ${var.aip_oauth_client_id}
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
