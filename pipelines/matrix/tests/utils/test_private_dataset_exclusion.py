@@ -1,5 +1,6 @@
 import pytest
-from matrix.utils.hook_utilities import generate_dynamic_pipeline_mapping
+
+from matrix.utils.hook_utilities import disable_private_datasets, generate_dynamic_pipeline_mapping
 
 
 @pytest.fixture
@@ -36,5 +37,7 @@ def integration_mapping():
 )
 def test_integration_sources_filtering(integration_mapping, monkeypatch, gcp_env, expected_sources):
     monkeypatch.setenv("GCP_ENV", gcp_env)
-    result = generate_dynamic_pipeline_mapping(integration_mapping)
+    result = disable_private_datasets(integration_mapping)
+    result_nested = disable_private_datasets(generate_dynamic_pipeline_mapping(integration_mapping))
     assert result["integration"] == expected_sources
+    assert result_nested["integration"] == expected_sources
