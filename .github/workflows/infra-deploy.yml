@@ -181,7 +181,7 @@ jobs:
       
       - name: Post to a Slack channel
         # Only post to Slack if the deployment failed and we're on the infra branch
-        if: failure() && github.ref == 'refs/heads/infra'
+        if: failure() && (github.ref == 'refs/heads/infra' || github.ref == 'refs/heads/infra-prod-debug')
         id: slack
         uses: slackapi/slack-github-action@v1.26.0
         with:
