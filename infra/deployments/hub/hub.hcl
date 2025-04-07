@@ -9,6 +9,7 @@ variable "repo_revision" {}
 variable "k8s_subnetwork" {}
 variable "k8s_pod_ip_range" {}
 variable "k8s_svc_ip_range" {}
+variable "test_variable_delete_me" {}
 variable "k8s_secrets" {
   sensitive = true
   type      = map(string)
