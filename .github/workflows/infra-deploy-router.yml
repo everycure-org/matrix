@@ -1,5 +1,5 @@
 # this workflow routes to the correct infra folder and executes the infra-deploy workflow in that folder
-name: Infrastructure Deploy Router
+name: Infrastructure Deploy Router - prod test
 on:
   pull_request:
     # Sequence of patterns matched against refs/heads

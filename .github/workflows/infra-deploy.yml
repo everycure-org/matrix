@@ -1,4 +1,4 @@
-name: Infrastructure Deploy
+name: Infrastructure Deploy - prod test
 on:
   workflow_call:
     inputs:
