@@ -6,6 +6,10 @@ on:
         required: true
         type: string
         description: 'Path to the terragrunt module to deploy, relative to infra/deployments/'
+      environment:
+        required: true
+        type: string
+        description: 'Environment to deploy to (dev/prod)'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.deployment_path }}
@@ -14,6 +18,7 @@ env:
   tf_version: '1.5.7'
   tg_version: '0.58.11'
   deployment_path: infra/deployments/${{ inputs.deployment_path }}
+  environment: ${{ inputs.environment }}
 
 jobs:
   # Uncomment this for debugging the JWT tokens
@@ -30,7 +35,7 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: changes
         with:
-          base: 'infra'
+          base: ${{ (inputs.environment == 'prod') && 'infra-prod-debug' || 'infra' }}
           filters: |
             src:
               - ${{ env.deployment_path }}/**
@@ -101,6 +106,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Plan Terraform
     needs: [ checks ]
+    environment: ${{ inputs.environment }}
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -136,8 +142,8 @@ jobs:
   deploy:
     # runs under RW user
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/infra'
-    environment: dev
+    if: github.ref == 'refs/heads/infra' || github.ref == 'refs/heads/infra-prod-debug'
+    environment: ${{ inputs.environment }}
     name: Apply Terraform
     needs: [ checks, plan ]
     permissions:
