@@ -1,155 +1,193 @@
 ---
-title: Matrix KG Dashboard
+title: Matrix Knowledge Graph Summary
 ---
 
-<script>
-  const release_version = import.meta.env.VITE_release_version;
-  const build_time = import.meta.env.VITE_build_time;
-</script>
+This page provides key metrics about our knowledge graph (KG), including its size, density, and connectivity patterns, with a focus on how nodes from our disease and drug lists are connected within the graph.
 
-## Version: {release_version}
-
-<p class="text-gray-500 text-sm italic">Last updated on {build_time}</p>
-
-Dashboard pages on the left side of the screen are for exploring the data in the Matrix Knowledge Graph. Select categories from the dropdowns below to filter the knowledge graph visualization.
-
-## Filter Knowledge Graph Categories
-
-```sql subject_categories
-SELECT DISTINCT
-    replace(subject_category,'biolink:','') as category,
-    concat(replace(subject_category,'biolink:',''), ' (', sum(count), ' connections)') as label
-FROM bq.merged_kg_edges
-GROUP BY category
-ORDER BY sum(count) DESC
+```sql edges_per_node
+select 
+    n_nodes
+    , n_edges
+    , n_edges / n_nodes as edges_per_node
+    , n_edges_without_most_connected_nodes / n_nodes_without_most_connected_nodes as edges_per_node_without_most_connected_nodes
+    , n_edges_from_disease_list / n_nodes_from_disease_list as disease_edges_per_node
+    , n_edges_from_drug_list / n_nodes_from_drug_list as drug_edges_per_node
+from 
+    bq.overall_metrics
 ```
 
-```sql predicates
-SELECT DISTINCT
-    replace(predicate,'biolink:','') as predicate,
-    concat(replace(predicate,'biolink:',''), ' (', sum(count), ' connections)') as label
-FROM bq.merged_kg_edges
-GROUP BY predicate
-ORDER BY sum(count) DESC
-```
+## Graph size
 
-```sql object_categories
-SELECT DISTINCT
-    replace(object_category,'biolink:','') as category,
-    concat(replace(object_category,'biolink:',''), ' (', sum(count), ' connections)') as label
-FROM bq.merged_kg_edges
-GROUP BY category
-ORDER BY sum(count) DESC
-```
-
-<Grid columns=3>
-
-  <div>
-    <Dropdown
-      data={subject_categories}
-      name=selected_subjects
-      value=category
-      label=label
-      title="Filter Subject Categories"
-      multiple=true
-      selectAllByDefault=true
-      description="Filter knowledge graph by subject categories"
-    />
-  </div>
-
-  <div>
-    <Dropdown
-      data={predicates}
-      name=selected_predicates
-      value=predicate
-      label=label
-      title="Filter Predicates"
-      multiple=true
-      selectAllByDefault=true
-      description="Filter knowledge graph by predicates"
-    />
-  </div>
-
-  <div>
-    <Dropdown
-      data={object_categories}
-      name=selected_objects
-      value=category
-      label=label
-      title="Filter Object Categories"
-      multiple=true
-      selectAllByDefault=true
-      description="Filter knowledge graph by object categories"
-    />
-  </div>
+<Grid col=2>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="n_nodes" fmt="num2m"/></span><br/>nodes</p>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="n_edges" fmt="num2m"/></span><br/>edges</p>
 </Grid>
 
-## Knowledge Graph Overview
+<br/>
 
-```sql combined_sankey
--- First level: Subject Category to Predicate
-SELECT 
-    concat('[S] ', replace(subject_category,'biolink:','')) as source,
-    replace(predicate,'biolink:','') as target,
-    sum(count) as count
-FROM bq.merged_kg_edges
-WHERE replace(subject_category,'biolink:','') IN ${inputs.selected_subjects.value}
-  AND replace(predicate,'biolink:','') IN ${inputs.selected_predicates.value}
-GROUP BY all
+## Graph density
 
-UNION ALL
+<Grid col=2>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="edges_per_node" fmt="num1"/></span><br/>edges per node on average</p>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="edges_per_node_without_most_connected_nodes" fmt="num1"/></span><br/>edges per node when excluding the top 1,000 most connected nodes</p>
+</Grid>
 
--- Second level: Predicate to Object Category
-SELECT 
-    replace(predicate,'biolink:','') as source,
-    concat('[O] ', replace(object_category,'biolink:','')) as target,
-    sum(count) as count
-FROM bq.merged_kg_edges
-WHERE replace(predicate,'biolink:','') IN ${inputs.selected_predicates.value}
-  AND replace(object_category,'biolink:','') IN ${inputs.selected_objects.value}
-GROUP BY all
-ORDER BY count DESC
+## Upstream data sources 
+
+```sql upstream_data_sources_nodes
+select 
+    upstream_data_source as name
+    , n_nodes as value
+from 
+    bq.upstream_data_sources   
 ```
 
-<SankeyDiagram data={combined_sankey} 
-  sourceCol='source'
-  targetCol='target'
-  valueCol='count'
-  linkLabels='full'
-  linkColor='gradient'
-  title='Filtered Knowledge Graph Flow'
-  subtitle='Flow from Selected Subject Categories through Selected Predicates to Selected Object Categories'
-  chartAreaHeight={1400}
-/>
-
-```sql edge_stats
-SELECT 
-    replace(subject_category,'biolink:','') as subject_category,
-    replace(predicate,'biolink:','') as predicate,
-    replace(object_category,'biolink:','') as object_category,
-    primary_knowledge_source,
-    sum(count) as count
-FROM bq.merged_kg_edges
-WHERE replace(subject_category,'biolink:','') IN ${inputs.selected_subjects.value}
-  AND replace(predicate,'biolink:','') IN ${inputs.selected_predicates.value}
-  AND replace(object_category,'biolink:','') IN ${inputs.selected_objects.value}
-GROUP BY all
-ORDER BY count DESC
+```sql upstream_data_sources_edges
+select 
+    upstream_data_source as name
+    , n_edges as value
+from 
+    bq.upstream_data_sources   
 ```
 
-## Edge Statistics
+<Grid col=2>
+    <ECharts 
+        config={{
+            title: {
+                text: 'Nodes',
+                left: 'center',
+                top: 'center',
+                textStyle: {
+                    fontWeight: 'normal'
+                }
+            },
+            tooltip: {
+                formatter: function(params) {
+                    const count = params.data.value.toLocaleString();
+                    return `${params.name}: ${count} nodes (${params.percent}%)`;
+                }
+            },
+            series: [{
+                type: 'pie', 
+                data: [...upstream_data_sources_nodes],
+                radius: ['30%', '50%'],
+            }]
+        }}
+    />
+    <ECharts config={{
+        title: {
+            text: 'Edges',
+            left: 'center',
+            top: 'center',
+            textStyle: {
+                fontWeight: 'normal'
+            }
+        },
+        tooltip: {
+            formatter: function(params) {
+                const count = params.data.value.toLocaleString();
+                return `${params.name}: ${count} edges (${params.percent}%)`;
+            }
+        },
+        series: [{
+            type: 'pie', 
+            data: [...upstream_data_sources_edges],
+            radius: ['30%', '50%'],
+        }]
+    }}/>
+</Grid>
 
-<DataTable 
-    data={edge_stats} 
-    search=true
-    pagination=true 
+## Disease list nodes connections
+
+```sql disease_list_connected_categories
+with total as (
+    select 
+        sum(n_connections) as sum_n_connections
+    from 
+        bq.disease_list_connected_categories
+)
+
+, cumulative_sum as (
+    select 
+        category
+        , n_connections
+        , 100.0 * sum(n_connections) over (order by n_connections desc) / sum_n_connections as cumsum_percentage
+    from 
+        bq.disease_list_connected_categories
+        , total
+)
+
+select 
+    category
+    , (n_edges_from_disease_list / n_nodes_from_disease_list) * (n_connections / sum_n_connections) as number_of_connections
+from 
+    cumulative_sum
+    , total
+    , bq.overall_metrics
+where 
+    -- TODO: parameterize this 
+    cumsum_percentage <= 99.0
+order by 
+    n_connections desc
+```
+
+<br/>
+
+<p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="disease_edges_per_node" fmt="num1"/></span><br/>edges per disease node on average</p>
+
+<br/>
+
+<BarChart 
+    data={disease_list_connected_categories} 
+    x="category" 
+    y="number_of_connections" 
+    swapXY=true
+    title="Categories connected to disease list node on average"
 />
 
-Example parameterized dashboards:
- - <a href="/node/prefix/MONDO">Mondo Dashboard</a>
- - <a href="/node/category/Disease">Disease Dashboard</a>
- - <a href="/normalization">Normalization Dashboard</a>
+## Drug list nodes connections
 
+```sql drug_list_connected_categories
+with total as (
+    select 
+        sum(n_connections) as sum_n_connections
+    from 
+        bq.drug_list_connected_categories
+)
 
+, cumulative_sum as (
+    select 
+        category
+        , n_connections
+        , 100.0 * sum(n_connections) over (order by n_connections desc) / sum_n_connections as cumsum_percentage
+    from 
+        bq.drug_list_connected_categories, total
+)
 
-<!-- NOTE: This file was partially generated using AI assistance. -->
+select 
+    category
+    , (n_edges_from_drug_list / n_nodes_from_drug_list) * (n_connections / sum_n_connections) as number_of_connections
+from 
+    cumulative_sum
+    , total
+    , bq.overall_metrics
+where 
+    -- TODO: parameterize this 
+    cumsum_percentage <= 99.0
+order by 
+    n_connections desc
+```
+
+<br/>
+
+<p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="drug_edges_per_node" fmt="num1"/></span><br/>edges per drug node on average</p>
+
+<br/>
+
+<BarChart 
+    data={drug_list_connected_categories} 
+    x="category" 
+    y="number_of_connections" 
+    swapXY=true
+    title="Categories connected to drug list node on average"
+/>
