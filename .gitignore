@@ -15,6 +15,7 @@
 # Data
 data/
 neo4j_db/
+data.tar.gz
 
 # python
 **/.venv/
