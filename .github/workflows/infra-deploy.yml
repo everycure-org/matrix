@@ -76,7 +76,12 @@ jobs:
          version: '>= 363.0.0'
 
      - name: 'Use gcloud CLI'
-       run: 'gsutil ls gs://mtrx-us-central1-hub-dev-storage/'
+       run: |
+         if [ "${{ inputs.environment }}" = "prod" ]; then
+           gsutil ls gs://mtrx-us-central1-hub-prod-storage/
+         else
+           gsutil ls gs://mtrx-us-central1-hub-dev-storage/
+         fi
 
   checks:
     needs: [paths_filter]
