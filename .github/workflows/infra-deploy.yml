@@ -45,7 +45,7 @@ jobs:
   debug:
    needs: [paths_filter]
    runs-on: 'ubuntu-latest'
-   environment: dev
+   environment: ${{ inputs.environment }}
    if: github.ref == 'refs/heads/infra' || github.ref == 'refs/heads/infra-prod-debug'
    permissions:
      id-token: 'write'
