@@ -41,42 +41,42 @@ jobs:
               - ${{ env.deployment_path }}/**
               - .github/workflows/infra-*.yml
               - infra/modules/**
-  # Uncomment as necessary, avoiding this step when not needed as it takes 90s per CI run which adds up
-  # debug:
-  #   needs: [paths_filter]
-  #   runs-on: 'ubuntu-latest'
-  #   environment: dev
-  #   if: github.ref == 'refs/heads/infra'
-  #   permissions:
-  #     id-token: 'write'
-  #     contents: 'read'
-  #   steps:
-  #     - name: 'Checkout'
-  #       uses: actions/checkout@v4
-  #     # note this does NOT fail even if the credentials are invalid!
-  #     - name: Checkout actions-oidc-debugger
-  #       uses: actions/checkout@v3
-  #       with:
-  #         repository: github/actions-oidc-debugger
-  #         ref: main
-  #         path: ./.github/actions/actions-oidc-debugger
-  #     - name: Debug OIDC Claims
-  #       uses: ./.github/actions/actions-oidc-debugger
-  #       with:
-  #         audience: '${{ github.server_url }}/${{ github.repository_owner }}'
-  #     - uses: 'google-github-actions/auth@v2'
-  #       with:
-  #         project_id: ${{vars.project_id}}
-  #         workload_identity_provider: ${{vars.workload_identity_provider}}
-  #         service_account: ${{vars.service_account}}
-  #     - run: cat /home/runner/work/matrix/matrix/gha-creds*
-  #     - name: 'Set up Cloud SDK'
-  #       uses: 'google-github-actions/setup-gcloud@v2'
-  #       with:
-  #         version: '>= 363.0.0'
-  
-  #     - name: 'Use gcloud CLI'
-  #       run: 'gsutil ls gs://mtrx-us-central1-hub-dev-storage/'
+ #Uncomment as necessary, avoiding this step when not needed as it takes 90s per CI run which adds up
+  debug:
+   needs: [paths_filter]
+   runs-on: 'ubuntu-latest'
+   environment: dev
+   if: github.ref == 'refs/heads/infra'
+   permissions:
+     id-token: 'write'
+     contents: 'read'
+   steps:
+     - name: 'Checkout'
+       uses: actions/checkout@v4
+     # note this does NOT fail even if the credentials are invalid!
+     - name: Checkout actions-oidc-debugger
+       uses: actions/checkout@v3
+       with:
+         repository: github/actions-oidc-debugger
+         ref: main
+         path: ./.github/actions/actions-oidc-debugger
+     - name: Debug OIDC Claims
+       uses: ./.github/actions/actions-oidc-debugger
+       with:
+         audience: '${{ github.server_url }}/${{ github.repository_owner }}'
+     - uses: 'google-github-actions/auth@v2'
+       with:
+         project_id: ${{vars.project_id}}
+         workload_identity_provider: ${{vars.workload_identity_provider}}
+         service_account: ${{vars.service_account}}
+     - run: cat /home/runner/work/matrix/matrix/gha-creds*
+     - name: 'Set up Cloud SDK'
+       uses: 'google-github-actions/setup-gcloud@v2'
+       with:
+         version: '>= 363.0.0'
+
+     - name: 'Use gcloud CLI'
+       run: 'gsutil ls gs://mtrx-us-central1-hub-dev-storage/'
 
   checks:
     needs: [paths_filter]
