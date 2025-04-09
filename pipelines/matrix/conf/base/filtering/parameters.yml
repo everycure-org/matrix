@@ -5,7 +5,6 @@ filtering:
       column: upstream_data_source
       keep_list:
         - rtxkg2
-        - robokop
         - ec_medical
   
   edge_filters:
@@ -14,7 +13,6 @@ filtering:
       column: upstream_data_source
       keep_list:
         - rtxkg2
-        - robokop
         - ec_medical
     # FUTURE: Ensure the semmed filter is moved here instead
     filter_biolink_edges:
