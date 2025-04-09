@@ -83,9 +83,13 @@ To facilitate efficient reviews:
 - Being assigned means that you are expected to review the PR, if you cannot due to workload, please let the author know so they can find someone else
 
 !!! note
-    Note we had previously used `CODEOWNERS` to assign reviewers. We removed this because it created a lot of noise for people and being assigned as a reviewer stopped meaning anything.
-
-!!! tip
+    We have only one matrix core-maintainers group which is responsible for reviewing
+    PRs. Each PR gets auto assigned to 1 person but the creator of a PR is still expected
+    to manually assign someone who knows the codebase and can give proper feedback.
+    However, independent of what contribution, at least 1 core maintainer needs to
+    approve a PR before it can be merged.
+    
+    !!! tip
     Remember, code review is not about finding fault - it's about learning from each
     other and collectively improving our codebase. That said, if you spot a bug 🐛,
     please point it out 🙃.
