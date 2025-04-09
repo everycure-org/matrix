@@ -65,6 +65,7 @@ def cli():
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 @click.option("--headless", is_flag=True, default=False, help="Skip confirmation prompt")
 @click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
+@click.option("--gcp-env", type=click.Choice(["dev", "prod"]), help="GCP environment to execute in")
 @click.option("--experiment_id", type=int, help="MLFlow experiment id")
 @click.option("--mlflow_run_id", type=str, help="MLFlow run id")
 @click.option("--skip-git-checks", is_flag=True, type=bool, default=False, help="Skip git checks")
@@ -82,13 +83,13 @@ def submit(
     is_test: bool,
     headless: bool,
     environment: str,
+    gcp_env: str,
     skip_git_checks: bool,
     experiment_id: Optional[int],
     mlflow_run_id: Optional[str],
 ):
     """Submit the end-to-end workflow. """
     click.secho("Warning - kedro submit will be deprecated soon. Please use kedro experiment run.", bg="yellow", fg="black")
-    gcp_env = os.environ['GCP_ENV']
     if not quiet:
         log.setLevel(logging.DEBUG)
 

@@ -96,7 +96,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     pipelines = []
 
     # Create pipeline per source
-    for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration"):
+    for source in settings.get_dynamic_pipeline_mapping().get("integration"):
         pipelines.append(
             pipeline(
                 _create_integration_pipeline(
@@ -118,7 +118,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         "params:integration.deduplication.retrieve_most_specific_category",
                         *[
                             f'integration.int.{source["name"]}.nodes.norm@spark'
-                            for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
+                            for source in settings.get_dynamic_pipeline_mapping().get("integration")
                             if source.get("integrate_in_kg", True)
                         ],
                     ],
@@ -130,7 +130,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     func=nodes.union_edges,
                     inputs=[
                         f'integration.int.{source["name"]}.edges.norm@spark'
-                        for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
+                        for source in settings.get_dynamic_pipeline_mapping().get("integration")
                         if source.get("integrate_in_kg", True)
                     ],
                     outputs="integration.prm.unified_edges",
