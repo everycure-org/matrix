@@ -1,6 +1,6 @@
+from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
-from typing import Callable, Sequence
 from unittest.mock import AsyncMock, patch
 
 import pyarrow as pa
@@ -15,9 +15,9 @@ from matrix.pipelines.batch.pipeline import (
     derive_cache_misses,
     limit_cache_to_results_from_api,
     lookup_from_cache,
+    pass_through,
     resolve_cache_duplicates,
 )
-from matrix.pipelines.embeddings.nodes import pass_through
 from matrix.pipelines.embeddings.pipeline import create_node_embeddings_pipeline
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import ArrayType, FloatType, StringType, StructField, StructType
@@ -25,57 +25,8 @@ from pyspark.testing import assertDataFrameEqual
 
 
 @pytest.fixture
-def test_schema():
-    mock_schema = {
-        "schema": {
-            "_object": "pyspark.sql.types.StructType",
-            "fields": [
-                {
-                    "_object": "pyspark.sql.types.StructField",
-                    "name": "key",
-                    "dataType": {
-                        "_object": "pyspark.sql.types.StringType",
-                    },
-                    "nullable": False,
-                },
-                {
-                    "_object": "pyspark.sql.types.StructField",
-                    "name": "value",
-                    "dataType": {
-                        "_object": "pyspark.sql.types.ArrayType",
-                        "elementType": {
-                            "_object": "pyspark.sql.types.FloatType",
-                        },
-                    },
-                    "nullable": False,
-                },
-                {
-                    "_object": "pyspark.sql.types.StructField",
-                    "name": "api",
-                    "dataType": {
-                        "_object": "pyspark.sql.types.StringType",
-                    },
-                    "nullable": False,
-                },
-            ],
-        }
-    }
-    return mock_schema
-
-
-@pytest.fixture
 def embeddings_schema() -> pa.lib.Schema:
     return pa.schema({"key": pa.string(), "value": pa.list_(pa.float32()), "api": pa.string()})
-
-
-@pytest.fixture
-def input_df_schema():
-    return StructType(
-        [
-            StructField("to_resolve", StringType(), False),
-            StructField("category", StringType(), False),
-        ]
-    )
 
 
 @pytest.fixture
@@ -144,18 +95,11 @@ def sample_id_col():
 
 
 @pytest.fixture
-def sample_preprocessor():
-    return pass_through
-
-
-@pytest.fixture
 def sample_new_col():
     return "resolved"
 
 
-def test_derive_cache_misses(
-    sample_input_df, sample_cache, sample_api1, sample_primary_key, sample_preprocessor, embeddings_schema, spark
-):
+def test_derive_cache_misses(sample_input_df, sample_cache, sample_api1, sample_primary_key, embeddings_schema, spark):
     expected = spark.createDataFrame(
         [
             ("D",),
@@ -169,7 +113,7 @@ def test_derive_cache_misses(
         cache=sample_cache,
         api=sample_api1,
         primary_key=sample_primary_key,
-        preprocessor=sample_preprocessor,
+        preprocessor=pass_through,
         cache_schema=embeddings_schema,
     )
 
@@ -187,7 +131,6 @@ def test_enriched_keeps_same_size_with_cache_duplicates(
     sample_duplicate_cache,
     sample_api1,
     sample_primary_key,
-    sample_preprocessor,
     sample_new_col,
 ):
     enriched_df = lookup_from_cache(
@@ -195,7 +138,7 @@ def test_enriched_keeps_same_size_with_cache_duplicates(
         sample_duplicate_cache,
         sample_api1,
         sample_primary_key,
-        sample_preprocessor,
+        pass_through,
         sample_new_col,
         lineage_dummy="foo",
     )
@@ -223,7 +166,6 @@ def test_cached_api_enrichment_pipeline(
     sample_api1: str,
     embeddings_schema: pa.lib.Schema,
     sample_primary_key: str,
-    sample_preprocessor: Callable,
     sample_new_col: str,
     tmp_path: Path,
     kedro_session: KedroSession,
@@ -252,7 +194,7 @@ def test_cached_api_enrichment_pipeline(
             "batch.node_embeddings.cache_misses": LazySparkDataset(
                 filepath=str(tmp_path / "cache_misses"), save_args={"mode": "overwrite"}
             ),
-            f"batch.node_embeddings.20.cache.write": PartitionedAsyncParallelDataset(
+            "batch.node_embeddings.20.cache.write": PartitionedAsyncParallelDataset(
                 path=cache_path,
                 dataset=ParquetDataset,
                 filename_suffix=".parquet",
@@ -262,7 +204,7 @@ def test_cached_api_enrichment_pipeline(
             ),
             "params:embeddings.node.api": MemoryDataset(sample_api1),
             "params:embeddings.node.primary_key": MemoryDataset(sample_primary_key),
-            "params:embeddings.node.preprocessor": MemoryDataset(sample_preprocessor),
+            "params:embeddings.node.preprocessor": MemoryDataset(pass_through),
             "params:embeddings.node.resolver": MemoryDataset(
                 {"_object": "matrix.pipelines.embeddings.encoders.DummyResolver"}
             ),
@@ -272,8 +214,6 @@ def test_cached_api_enrichment_pipeline(
         }
     )
     pipeline_run = create_node_embeddings_pipeline()
-
-    # breakpoint()
 
     runner = SequentialRunner()
     # ...when running the Kedro pipeline a first time...

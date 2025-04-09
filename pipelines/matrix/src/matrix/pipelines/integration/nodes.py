@@ -1,8 +1,6 @@
 import logging
 from functools import partial, reduce
-from typing import Any, Callable, Dict, List, Tuple
 
-import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
@@ -41,7 +39,7 @@ logger = logging.getLogger(__name__)
     df_name="edges",
     raise_df_undefined=False,
 )
-def transform(transformer, **kwargs) -> Dict[str, ps.DataFrame]:
+def transform(transformer, **kwargs) -> dict[str, ps.DataFrame]:
     return transformer.transform(**kwargs)
 
 
@@ -49,9 +47,8 @@ def transform(transformer, **kwargs) -> Dict[str, ps.DataFrame]:
     schema=BIOLINK_KG_EDGE_SCHEMA,
     pass_columns=True,
 )
-def union_edges(*edges, cols: List[str]) -> ps.DataFrame:
+def union_edges(*edges, cols: list[str]) -> ps.DataFrame:
     """Function to unify edges datasets."""
-    # fmt: off
     return (
         _union_datasets(*edges)
         .groupBy(["subject", "predicate", "object"])
@@ -69,16 +66,14 @@ def union_edges(*edges, cols: List[str]) -> ps.DataFrame:
         )
         .select(*cols)
     )
-    # fmt: on
 
 
 @check_output(
     schema=BIOLINK_KG_NODE_SCHEMA,
     pass_columns=True,
 )
-def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, cols: List[str]) -> ps.DataFrame:
+def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, cols: list[str]) -> ps.DataFrame:
     """Function to unify nodes datasets."""
-    # fmt: off
     unioned_datasets = (
         _union_datasets(*nodes)
         # first we group the dataset by id to deduplicate
@@ -102,7 +97,6 @@ def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, c
         unioned_datasets = unioned_datasets.transform(determine_most_specific_category)
 
     return unioned_datasets.select(*cols)
-    # fmt: on
 
 
 def _union_datasets(
@@ -111,9 +105,7 @@ def _union_datasets(
     """
     Helper function to unify datasets and deduplicate them.
     Args:
-        datasets_to_union: List of dataset names to unify.
-        **datasets: Arbitrary number of DataFrame keyword arguments.
-        schema_group_by_id: Function to deduplicate the unified DataFrame.
+        datasets: List of dataset names to unify.
 
     Returns:
         A unified and deduplicated DataFrame.
@@ -130,7 +122,7 @@ def _union_datasets(
 )
 def _format_mapping_df(mapping_df: ps.DataFrame) -> ps.DataFrame:
     return (
-        mapping_df.drop("bucket")
+        mapping_df.select("id", "normalized_id")
         .withColumn(
             "normalization_success",
             F.when((F.col("normalized_id").isNotNull() | (F.col("normalized_id") != "None")), True).otherwise(False),
