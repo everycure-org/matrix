@@ -20,7 +20,7 @@ versions:
 
 data_sources:
   rtx_kg2:
-    version: &_rtx_kg_version v2.10.0
+    version: &_rtx_kg_version v2.10.0_validated
   robokop:
     version: 30fd1bfc18cd5ccb
   spoke:
