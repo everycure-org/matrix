@@ -297,12 +297,12 @@ fabricator.robokop:
       id:ID:
         type: generate_unique_id
         prefix: "ROBO:"
-      name:string:
+      name:
         type: generate_unique_id
         prefix: "rs"
-      category:LABEL:
+      category:
         type: generate_random_arrays
-        delimiter: "\x1F"
+        delimiter: r"\|"
         sample_values:
             - biolink:Entity
             - biolink:ThingWithTaxon
@@ -316,12 +316,12 @@ fabricator.robokop:
             - biolink:PhysicalEssenceOrOccurrent
             - biolink:GenomicEntity
             - biolink:OrganismTaxon
-      description:string:
+      description:
         type: faker
         provider: sentence
-      equivalent_identifiers:string[]:
+      equivalent_identifiers:
         type: generate_random_arrays
-        delimiter: "\x1F"
+        delimiter: r"\|"
         sample_values:
           - NCBITaxon:2
           - UMLS:C0004611
@@ -368,13 +368,13 @@ fabricator.robokop:
     columns:
       # NOTE: This is a rather complex syntax, but is results in a "subject"
       # column that contains random values from the nodes table defined above.
-      subject:START_ID:
+      subject:
         type: row_apply
         list_of_values: [ nodes.id:ID ]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 590590
-      predicate:TYPE:
+      predicate:
         type: generate_values
         sample_values:
           - biolink:treats
@@ -382,7 +382,7 @@ fabricator.robokop:
           - biolink:affects
           - biolink:subclass_of
           - biolink:is_nearby_variant_of
-      object:END_ID:
+      object:
         type: row_apply
         list_of_values: [ nodes.id:ID ]
         row_func: "lambda *args: args[0]"
@@ -407,7 +407,7 @@ fabricator.robokop:
           - manual_agent
       publications:string[]:
         type: generate_random_arrays
-        delimiter: "\u001f"
+        delimiter: r"\|"
         sample_values:
           - "PMID:12345678"
           - "DOI:10.1234/example.5678"
@@ -435,7 +435,7 @@ fabricator.robokop:
           - biolink:treats
       aggregator_knowledge_source:string[]:
         type: generate_random_arrays
-        delimiter: "\u001f"
+        delimiter: r"\|"
         sample_values:
           - infores:aggregator1
           - infores:aggregator2
