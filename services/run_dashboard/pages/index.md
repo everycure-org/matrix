@@ -1,19 +1,24 @@
 ---
-title: Matrix KG Dashboard
+title: Matrix Pair Prediction Run Dashboard
 ---
+
+<script>
+  const run_id = import.meta.env.EVIDENCE_VAR__run_id;
+</script>
+
 
 # Distribution
 <Image 
     url="https://storage.cloud.google.com/mtrx-us-central1-hub-dev-storage/dev_work/image.png"
-    description="Sample placeholder image"
-/>See the number of times each drug appears in the top n results
+    description="Matrix histogram"
+/>Distribution of treat scores, not treat scores, and unknown scores
+
 
 ```sql drug_scores
   select 
       *
     FROM bq.drug_scores_per_n
-```
-
+``` 
 # Drug Scores
 
 <DataTable data={drug_scores} search=true link=link title='Drug Scores per n (Frequent Flyers)'>
@@ -37,7 +42,7 @@ title: Matrix KG Dashboard
 
 # Disease Scores
 
-<DataTable data={disease_scores} search=true link=link title='Drug Scores per n (Frequent Flyers)'>
+<DataTable data={disease_scores} search=true link=link title='Disease Scores per n (Frequent Flyers)'>
 
 	<Column id='disease_id' />
 	<Column id=count_in_1000 title="In top 1000" contentType=bar/>
