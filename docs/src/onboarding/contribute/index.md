@@ -93,7 +93,11 @@ To facilitate efficient reviews:
     Remember, code review is not about finding fault - it's about learning from each
     other and collectively improving our codebase. That said, if you spot a bug 🐛,
     please point it out 🙃.
-    
+
+## Core Maintainers
+
+[This group](https://github.com/orgs/everycure-org/teams/core-maintainers/) is used to manage the matrix core maintainers. Please request access and let the team know if you need to be added. This enables you to approve PRs for the matrix monorepo.
+
 ## Project Organization
 
 - **Monorepo Approach**: We use a [monorepo](https://monorepo.tools/#what-is-a-monorepo) for MATRIX. This helps in maintaining a single repository for all parts, facilitating easier dependency management, and consistent development practices. It also encourages us all to look left and right and work together as a larger team rather than working in silos. If you want to understand the reason [why we went for this](https://monorepo.tools/#why-a-monorepo), the two links in this paragraph should give you an idea. 
