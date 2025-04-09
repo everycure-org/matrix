@@ -1,4 +1,3 @@
 SELECT
     *
-FROM `mtrx-hub-dev-3of.z_af_test.drugs_table_210`
-LIMIT 10000
+FROM `mtrx-hub-dev-3of.matrix_run_data.${run_id}_drug_scores_per_n`
