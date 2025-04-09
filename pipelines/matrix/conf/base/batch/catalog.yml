@@ -19,21 +19,6 @@ _pandas_parquet: &_pandas_parquet
 # Datasets
 # -------------------------------------------------------------------------
 
-batch.int.{source}.input_bucketized@spark:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/batch/{source}/bucketized
-  save_args:
-    mode: overwrite
-    partitionBy:
-      - bucket
-
-batch.int.{source}.input_bucketized@partitioned:
-  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
-  path: ${globals:paths.tmp}/batch/{source}/bucketized
-  dataset: 
-    <<: *_pandas_parquet
-  filename_suffix: ".parquet"
-
 batch.int.{source}.{workers}.input_transformed@partitioned:
   type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
   overwrite: True # NOTE: Very important to ensure every run clear out previous partitions
@@ -57,7 +42,7 @@ batch.{source}.{workers}.cache.write:
   type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
   path: ${globals:paths.cache}/{source}
   dataset: kedro_datasets.pandas.ParquetDataset
-  timeout: 600  # if the batch size increases, you'll likely need to increase this too, as most APIs simply take longer to process larger batches.
+  timeout: 1800  # if the batch size increases, you'll likely need to increase this too, as most APIs simply take longer to process larger batches.
   filename_suffix: ".parquet"
   max_workers: "{workers}"  # Affects the number of concurrent threads, so more = faster. But more also implies more memory needed, as more transformed batches are returned, prior to writing.
 
