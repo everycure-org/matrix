@@ -2,7 +2,7 @@ fabricator.rtx_kg2:
   nodes:
     num_rows: 500
     columns:
-      id:ID:
+      id:
         type: generate_unique_id
         prefix: "RTX:"
       name:
@@ -26,7 +26,7 @@ fabricator.rtx_kg2:
         # NOTE: This ensures the full path from root to child is added in the categories column
         row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
         row_func_kwargs:
-          delimiter: "\u01c2"
+          delimiter: r"\|"
         resize: True
         seed: 590590
       iri:
@@ -41,7 +41,7 @@ fabricator.rtx_kg2:
         provider: name
       publications:string[]:
         type: generate_random_arrays
-        delimiter: "\u01c2"
+        delimiter: r"\|"
         sample_values:
           - "PMID:12345678"
           - "DOI:10.1234/example.5678"
@@ -64,7 +64,7 @@ fabricator.rtx_kg2:
       # column that contains random values from the nodes table defined above.
       subject:
         type: row_apply
-        list_of_values: [ nodes.id:ID ]
+        list_of_values: [ nodes.id ]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 590590
@@ -72,7 +72,7 @@ fabricator.rtx_kg2:
       # column that contains random values from the nodes table defined above.
       object:
         type: row_apply
-        list_of_values: [ nodes.id:ID ]
+        list_of_values: [ nodes.id ]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 49494
@@ -87,7 +87,7 @@ fabricator.rtx_kg2:
           - biolink:ChemicalToChemicalDerivationAssociation
       knowledge_source:string[]:
         type: generate_random_arrays
-        delimiter: "\u001f"
+        delimiter: r"\|"
         sample_values:
           - infores:semmeddb
           - infores:gtex
@@ -99,7 +99,7 @@ fabricator.rtx_kg2:
         provider: name
       publications:string[]:
         type: generate_random_arrays
-        delimiter: "\u01c2"
+        delimiter: r"\|"
         sample_values:
           - "PMID:12345678"
           - "DOI:10.1234/example.5678"
@@ -126,7 +126,7 @@ fabricator.rtx_kg2:
     columns:
       curie:
           type: row_apply
-          list_of_values: [nodes.id:ID]
+          list_of_values: [nodes.id]
           row_func: "lambda *args: args[0]"
           resize: True
           seed: 590590
@@ -145,13 +145,13 @@ fabricator.rtx_kg2:
     columns:
       curie: 
         type: row_apply
-        list_of_values: [nodes.id:ID, nodes.name]
+        list_of_values: [nodes.id, nodes.name]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 6850
       curie_label: 
         type: row_apply
-        list_of_values: [nodes.id:ID, nodes.name]
+        list_of_values: [nodes.id, nodes.name]
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 6850
@@ -187,13 +187,13 @@ fabricator.rtx_kg2:
     columns:
       category_class: 
         type: row_apply
-        list_of_values: [nodes.id:ID, nodes.name]
+        list_of_values: [nodes.id, nodes.name]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 65690
       label: 
         type: row_apply
-        list_of_values: [nodes.id:ID, nodes.name]
+        list_of_values: [nodes.id, nodes.name]
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 65690
@@ -238,13 +238,13 @@ fabricator.clinical_trials:
     columns:
       curie:
         type: row_apply
-        list_of_values: [rtx_nodes.id:ID, rtx_nodes.name]
+        list_of_values: [rtx_nodes.id, rtx_nodes.name]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 40599
       name:
         type: row_apply
-        list_of_values: [rtx_nodes.id:ID, rtx_nodes.name]
+        list_of_values: [rtx_nodes.id, rtx_nodes.name]
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 40599
@@ -294,7 +294,7 @@ fabricator.robokop:
   nodes:
     num_rows: 500
     columns:
-      id:ID:
+      id:
         type: generate_unique_id
         prefix: "ROBO:"
       name:
@@ -370,7 +370,7 @@ fabricator.robokop:
       # column that contains random values from the nodes table defined above.
       subject:
         type: row_apply
-        list_of_values: [ nodes.id:ID ]
+        list_of_values: [ nodes.id ]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 590590
@@ -384,7 +384,7 @@ fabricator.robokop:
           - biolink:is_nearby_variant_of
       object:
         type: row_apply
-        list_of_values: [ nodes.id:ID ]
+        list_of_values: [ nodes.id ]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 49494
@@ -515,18 +515,11 @@ fabricator.spoke:
         type: generate_random_arrays
         delimiter: "\x1F"
         sample_values:
-          - biolink:Entity
-          - biolink:ThingWithTaxon
-          - biolink:BiologicalEntity
+          - biolink:NamedThing
           - biolink:Drug
           - biolink:Disease
-          - biolink:SequenceVariant
-          - biolink:NamedThing
-          - biolink:OntologyClass
-          - biolink:PhysicalEssence
-          - biolink:PhysicalEssenceOrOccurrent
-          - biolink:GenomicEntity
-          - biolink:OrganismTaxon
+          - biolink:Gene
+          - biolink:Protein
       description:
         type: faker
         provider: sentence
