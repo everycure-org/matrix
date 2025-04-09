@@ -59,8 +59,8 @@ embeddings.topological_estimator:
   initial_learning_rate: 0.025
   min_learning_rate: 0.000025
   negative_sampling_rate: 5
-  walk_length: 30
-  walks_per_node: 10
+  walk_length: 5
+  walks_per_node: 5
   window_size: 10
 
 # embeddings.topological_estimator:
