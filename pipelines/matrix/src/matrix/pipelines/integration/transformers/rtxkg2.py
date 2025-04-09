@@ -55,11 +55,11 @@ class RTXTransformer(GraphTransformer):
         # fmt: off
         return (
             edges_df
-            .withColumn("aggregator_knowledge_source",   f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR)) # RTX KG2 2.10 does not exist
+            .withColumn("aggregator_knowledge_source",   f.split(f.col("primary_knowledge_source"), RTX_SEPARATOR))
             .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
             .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
-            .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(0)) # RTX KG2 2.10 `primary_knowledge_source``
+            .withColumn("primary_knowledge_source",      f.col("primary_knowledge_source"))
             .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
