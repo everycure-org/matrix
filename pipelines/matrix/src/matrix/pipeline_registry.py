@@ -70,7 +70,7 @@ def register_pipelines() -> dict[str, Pipeline]:
     # Test pipelines
     pipelines["test"] = (
         pipelines["fabricator"]
-        + pipelines["__default__"]
+        + pipelines["wholepipe"]
         + pipelines["data_release"]
         + pipelines["ingest_to_N4J"]
     )
