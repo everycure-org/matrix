@@ -6,11 +6,14 @@ versions:
 release_folder_name: ${oc.env:RELEASE_FOLDER_NAME, releases}
 release_dir: ${gcs_bucket}/kedro/data/${release_folder_name}/${versions.release}
 run_dir: ${release_dir}/runs/${run_name}
-dev_gcs_bucket: gs://${oc.env:DEV_GCS_BUCKET}
-prod_gcs_bucket: gs://${oc.env:PROD_GCS_BUCKET, mtrx-us-central1-hub-prod-storage}
 
 gcs_bucket: gs://${oc.env:GCP_BUCKET}
 gcp_project: ${oc.env:GCP_PROJECT_ID}
+
+#TODO: why does this need to be duplicated in cloud/globals.yml if defined in base/globals.yml and should be
+# inherited from? Throws error otherwise: 'dev_gcs_bucket' not found. full_key: paths.raw
+dev_gcs_bucket: gs://${oc.env:DEV_GCP_BUCKET, mtrx-us-central1-hub-dev-storage} # defaults are used by cloud run where .env.defauts is dockerignored
+prod_gcs_bucket: gs://${oc.env:PROD_GCP_BUCKET, mtrx-us-central1-hub-prod-storage} # defaults are used by cloud run where .env.defauts is dockerignored
 
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation.
