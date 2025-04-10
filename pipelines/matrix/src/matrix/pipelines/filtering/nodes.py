@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def _apply_transformations(
-    df: ps.DataFrame, transformations: dict[str, Callable[[ps.DataFrame], ps.DataFrame]], **kwargs
+    df: ps.DataFrame, transformations: dict[str, Callable[[ps.DataFrame], ps.DataFrame]], key_cols: list[str], **kwargs
 ) -> tuple[ps.DataFrame, ps.DataFrame]:
     logger.info(f"Filtering dataframe with {len(transformations)} transformations")
     if logger.isEnabledFor(logging.INFO):
@@ -31,8 +31,9 @@ def _apply_transformations(
             last_count = new_count
         df = df_new
 
-    removed_df = original_df.select("id").subtract(df.select("id"))
-    removed_full = original_df.join(removed_df, on="id", how="left")
+    # Identify removed rows based on key columns
+    removed_df = original_df.select(*key_cols).subtract(df.select(*key_cols))
+    removed_full = original_df.join(removed_df, on=key_cols, how="inner")
 
     return df, removed_full
 
@@ -42,7 +43,7 @@ def prefilter_unified_kg_nodes(
     nodes: ps.DataFrame,
     transformations: dict[str, Callable[[ps.DataFrame], ps.DataFrame]],
 ) -> tuple[ps.DataFrame, ps.DataFrame]:
-    return _apply_transformations(nodes, transformations)
+    return _apply_transformations(nodes, transformations, key_cols=["id"])
 
 
 @inject_object()
@@ -73,7 +74,7 @@ def filter_unified_kg_edges(
             f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges"
         )
 
-    filtered, removed = _apply_transformations(edges, transformations)
+    filtered, removed = _apply_transformations(edges, transformations, key_cols=["subject", "predicate", "object"])
     return filtered, removed
 
 
