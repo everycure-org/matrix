@@ -6,6 +6,11 @@ from typing import Any, Dict, Optional
 from dotenv import find_dotenv, load_dotenv
 
 
+def load_env_specific_env_vars(gcp_env: str) -> None:
+    os.environ["GCP_BUCKET"] = os.environ[f"{gcp_env.upper()}_GCP_BUCKET"]
+    os.environ["GCP_PROJECT_ID"] = os.environ[f"{gcp_env.upper()}_GCP_PROJECT_ID"]
+
+
 def load_environment_variables():
     """Load environment variables from .env.defaults and .env files.
 

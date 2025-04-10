@@ -22,7 +22,6 @@ from rich.logging import RichHandler
 from rich.panel import Panel
 
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
-from matrix.cli_commands.gcp_config import GCP_PROJECT_IDS
 from matrix.git_utils import (
     BRANCH_NAME_REGEX,
     get_latest_minor_release,
@@ -33,6 +32,7 @@ from matrix.git_utils import (
     has_unpushed_commits,
 )
 from matrix.kedro4argo_node import ArgoResourceConfig
+from matrix.resolvers import load_env_specific_env_vars
 
 logging.basicConfig(
     level=logging.INFO,
@@ -102,7 +102,8 @@ def submit(
     
     if pipeline in ["fabricator", "test"]:
         raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
-    
+
+    load_env_specific_env_vars(gcp_env=gcp_env)
     if not headless and (from_nodes or nodes):
         if not click.confirm("Using 'from-nodes' or 'nodes' is highly experimental and may break due to MLFlow issues with tracking the right run. Are you sure you want to continue?", default=False):
             raise click.Abort()
@@ -183,7 +184,7 @@ def _submit(
     
     try:
 
-        gcp_project_id = GCP_PROJECT_IDS[gcp_env.lower()]
+        gcp_project_id = os.environ['GCP_PROJECT_ID']
 
         console.rule("[bold blue]Submitting Workflow")
         if not can_talk_to_kubernetes(project=gcp_project_id):
