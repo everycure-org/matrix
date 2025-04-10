@@ -27,7 +27,7 @@ class RTXTransformer(GraphTransformer):
         return (
             nodes_df
             .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
-            .withColumn("labels",                            f.split(f.col(":LABEL"), RTX_SEPARATOR))
+            .withColumn("labels",                            f.split(f.col("_LABEL"), RTX_SEPARATOR))
             .withColumn("all_categories",                    f.split(f.col("all_categories"), RTX_SEPARATOR))
             .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies"), RTX_SEPARATOR))
             .withColumn("publications",                      f.split(f.col("publications"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
@@ -54,7 +54,7 @@ class RTXTransformer(GraphTransformer):
         # fmt: off
         return (
             edges_df
-            .withColumn("aggregator_knowledge_source",   f.col("aggregator_knowledge_source")) #RTX KG2 2.10 has a column for aggregator knowledge source
+            .withColumn("aggregator_knowledge_source", f.split(f.col("aggregator_knowledge_source"), RTX_SEPARATOR)) #RTX KG2 2.10 has a column for aggregator knowledge source
             .withColumn("publications",                  f.split(f.col("publications"), RTX_SEPARATOR)) # RTX KG2 2.10 no longer has type annotation on publication column
             .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))

@@ -20,37 +20,54 @@ fabricator.rtx_kg2:
           - biolink:Gene
           - biolink:ChemicalSubstance
           - biolink:Protein
-      all_categories:string[]:
+      all_categories:
         type: row_apply
         list_of_values: [nodes.category]
         # NOTE: This ensures the full path from root to child is added in the categories column
         row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
         row_func_kwargs:
-          delimiter: r"\|"
+          delimiter: "|"
         resize: True
         seed: 590590
       iri:
         type: faker
         provider: url
-
       description:
         type: generate_unique_id
         prefix: description_
-      equivalent_curies:string[]:
-        type: faker
-        provider: name
-      publications:string[]:
+      equivalent_curies:
         type: generate_random_arrays
-        delimiter: r"\|"
+        delimiter: "|"
+        sample_values:
+          - "CHEMBL:CHEMBL25"
+          - "DRUGBANK:DB00316"
+          - "HGNC:1177"
+          - "UNIPROT:P00533"
+          - "NCBIGene:1956"
+          - "MESH:D009369"
+          - "OMIM:114480"
+          - "UMLS:C0017636"
+          - "DOID:14330"
+          - "CL:0000236"
+          - "MONDO:0005148"
+      publications:
+        type: generate_random_arrays
+        delimiter: "|"
         sample_values:
           - "PMID:12345678"
           - "DOI:10.1234/example.5678"
       international_resource_identifier:
         type: faker
         provider: url
-      :LABEL:
-        type: faker
-        provider: name
+      _LABEL:
+        type: generate_values
+        sample_values:
+          - biolink:ThingWithTaxon
+          - biolink:BiologicalProcess
+          - biolink:NamedThing
+          - biolink:OntologyClass
+#        type: faker
+#        provider: name
       date_discovered:
         type: generate_dates
         start_dt: 2010-01-01
@@ -85,9 +102,9 @@ fabricator.rtx_kg2:
           - biolink:subclass_of
           - biolink:is_nearby_variant_of
           - biolink:ChemicalToChemicalDerivationAssociation
-      knowledge_source:string[]:
+      aggregator_knowledge_source:
         type: generate_random_arrays
-        delimiter: r"\|"
+        delimiter: "|"
         sample_values:
           - infores:semmeddb
           - infores:gtex
@@ -97,9 +114,9 @@ fabricator.rtx_kg2:
       primary_knowledge_source:
         type: faker
         provider: name
-      publications:string[]:
+      publications:
         type: generate_random_arrays
-        delimiter: r"\|"
+        delimiter: "|"
         sample_values:
           - "PMID:12345678"
           - "DOI:10.1234/example.5678"
@@ -302,7 +319,7 @@ fabricator.robokop:
         prefix: "rs"
       category:
         type: generate_random_arrays
-        delimiter: r"\|"
+        delimiter: "|"
         sample_values:
             - biolink:Entity
             - biolink:ThingWithTaxon
@@ -321,7 +338,7 @@ fabricator.robokop:
         provider: sentence
       equivalent_identifiers:
         type: generate_random_arrays
-        delimiter: r"\|"
+        delimiter: "|"
         sample_values:
           - NCBITaxon:2
           - UMLS:C0004611
@@ -388,26 +405,26 @@ fabricator.robokop:
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 49494
-      primary_knowledge_source:string:
+      primary_knowledge_source:
         type: generate_values
         sample_values:
           - infores:semmeddb
           - infores:gtex
           - infores:ubergraph
           - infores:snpeff
-      knowledge_level:string:
+      knowledge_level:
         type: generate_values
         sample_values:
           - prediction
           - knowledge_assertion
-      agent_type:string:
+      agent_type:
         type: generate_values
         sample_values:
           - computational_model
           - manual_agent
       publications:string[]:
         type: generate_random_arrays
-        delimiter: r"\|"
+        delimiter: "|"
         sample_values:
           - "PMID:12345678"
           - "DOI:10.1234/example.5678"
@@ -420,10 +437,10 @@ fabricator.robokop:
       #    positive: True
       #    min_value: 0.000001
       #    max_value: 0.1
-      object_aspect_qualifier:string:
+      object_aspect_qualifier:
         type: faker
         provider: word
-      object_direction_qualifier:string:
+      object_direction_qualifier:
         type: generate_values
         sample_values:
           - increased
@@ -433,9 +450,9 @@ fabricator.robokop:
         sample_values:
           - biolink:causes
           - biolink:treats
-      aggregator_knowledge_source:string[]:
+      aggregator_knowledge_source:
         type: generate_random_arrays
-        delimiter: r"\|"
+        delimiter: "|"
         sample_values:
           - infores:aggregator1
           - infores:aggregator2
