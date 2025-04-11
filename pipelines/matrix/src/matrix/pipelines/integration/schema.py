@@ -25,6 +25,7 @@ BIOLINK_KG_EDGE_SCHEMA = DataFrameSchema(
         "predicate": Column(T.StringType(), nullable=False),
         "object": Column(T.StringType(), nullable=False),
         "knowledge_level": Column(T.StringType(), nullable=True),
+        "agent_type": Column(T.StringType(), nullable=True),
         "primary_knowledge_source": Column(T.StringType(), nullable=True),
         "aggregator_knowledge_source": Column(T.ArrayType(T.StringType()), nullable=True),
         "publications": Column(T.ArrayType(T.StringType()), nullable=True),
