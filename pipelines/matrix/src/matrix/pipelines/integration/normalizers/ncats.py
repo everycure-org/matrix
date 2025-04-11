@@ -1,10 +1,9 @@
 import asyncio
 import logging
-from abc import ABC
-from typing import Any, Dict
+from collections.abc import Collection
+from typing import Any
 
 import aiohttp
-import pandas as pd
 from jsonpath_ng import parse
 from tenacity import (
     retry,
@@ -12,6 +11,7 @@ from tenacity import (
     wait_exponential,
 )
 
+from ...batch.pipeline import batched
 from .normalizer import Normalizer
 
 logger = logging.getLogger(__name__)
@@ -20,22 +20,36 @@ logger = logging.getLogger(__name__)
 class NCATSNodeNormalizer(Normalizer):
     """Class to represent normalizer from translator."""
 
-    def __init__(self, endpoint: str, conflate: bool, drug_chemical_conflate: bool, description: bool = False) -> None:
+    def __init__(
+        self,
+        endpoint: str,
+        conflate: bool,
+        drug_chemical_conflate: bool,
+        description: bool = False,
+        items_per_request: int = 1000,
+    ) -> None:
         self._endpoint = endpoint
         self._conflate = conflate
         self._drug_chemical_conflate = drug_chemical_conflate
         self._description = description
         self._json_parser = parse("$.id.identifier")  # FUTURE: Ensure we can update
+        self._items_per_request = items_per_request
+
+    async def apply(self, strings: Collection[str], **kwargs) -> list[str | None]:
+        results = []
+        # The node normalizer doesn't deal well with large batch sizes, so we'll do the chunking on our side.
+        for batch in batched(strings, self._items_per_request):
+            results.extend(await self.normalize_batch(batch))
+        return results
 
     @retry(
         wait=wait_exponential(multiplier=2, min=1, max=60),
         retry=retry_if_exception_type((aiohttp.ClientError, asyncio.TimeoutError)),
         before_sleep=print,
     )
-    async def apply(self, df: pd.DataFrame, **kwargs):
-        curies = df["id"].tolist()
+    async def normalize_batch(self, batch: Collection[str]):
         request_json = {
-            "curies": curies,
+            "curies": tuple(batch),  # must be json serializable
             "conflate": self._conflate,
             "drug_chemical_conflate": self._drug_chemical_conflate,
             "description": self._description,
@@ -49,19 +63,16 @@ class NCATSNodeNormalizer(Normalizer):
                 else:
                     logger.warning(f"Node norm response code: {resp.status}")
                     resp_text = await resp.text()
-                    logger.debug(resp_text)
+                    logger.error(resp_text)  # To extract more info from the error
 
                 resp.raise_for_status()
 
-        df["normalized_id"] = [self._extract_id(curie, response_json, self._json_parser) for curie in curies]
-        df["normalized_id"] = df["normalized_id"].astype(pd.StringDtype())
-        return df
+        return [self._extract_id(curie, response_json, self._json_parser) for curie in batch]
 
     @staticmethod
-    def _extract_id(id: str, response: Dict[str, Any], json_parser: parse) -> Dict[str, Any]:
+    def _extract_id(id: str, response: dict[str, Any], json_parser: parse) -> str | None:
         """Extract normalized IDs from the response using the json parser."""
         try:
-            return json_parser.find(response.get(id))[0].value
+            return str(json_parser.find(response.get(id))[0].value)
         except (IndexError, KeyError):
             logger.debug(f"Not able to normalize for {id}: {response.get(id)}, {json_parser}")
-            return None
