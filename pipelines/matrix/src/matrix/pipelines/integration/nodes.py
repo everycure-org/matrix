@@ -56,6 +56,7 @@ def union_edges(*edges, cols: list[str]) -> ps.DataFrame:
             F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
             # TODO: we shouldn't just take the first one but collect these values from multiple upstream sources
             F.first("knowledge_level", ignorenulls=True).alias("knowledge_level"),
+            F.first("agent_type", ignorenulls=True).alias("agent_type"),
             F.first("subject_aspect_qualifier", ignorenulls=True).alias("subject_aspect_qualifier"),
             F.first("subject_direction_qualifier", ignorenulls=True).alias("subject_direction_qualifier"),
             F.first("object_direction_qualifier", ignorenulls=True).alias("object_direction_qualifier"),
@@ -206,3 +207,118 @@ def normalize_nodes(
         .filter(F.col("_rn") == 1)
         .drop("_rn")
     )
+
+
+@check_output(
+    DataFrameSchema(
+        columns={
+            "id": Column(T.StringType(), nullable=False),
+            "original_id": Column(T.StringType(), nullable=False),
+            "category": Column(T.StringType(), nullable=True),
+            "normalization_success": Column(T.BooleanType(), nullable=True),
+            "upstream_data_source": Column(T.StringType(), nullable=False),
+            "source_role": Column(T.StringType(), nullable=False),
+        }
+    )
+)
+def normalization_summary_nodes_and_edges(
+    edges: ps.DataFrame,
+    nodes: ps.DataFrame,
+    source: str,
+) -> ps.DataFrame:
+    """
+    Generate a flattened per-source summary of node normalization success for both subjects and objects in edges.
+
+    This function processes a set of normalized edges and nodes to extract normalization outcomes,
+    linking original IDs with their normalized equivalents, and annotating each entry with source roles
+    ("subject" or "object"), categories (if available), and the originating data source.
+
+    Parameters
+    ----------
+    edges : pyspark.sql.DataFrame
+        A DataFrame containing normalized edges, including columns such as
+        `subject`, `object`, `original_subject`, `original_object`,
+        `subject_normalization_success`, and `object_normalization_success`.
+    nodes : pyspark.sql.DataFrame
+        A DataFrame containing normalized nodes, including `id` and optionally `category`.
+    source : str
+        The name of the upstream data source providing the edges and nodes.
+
+    Returns
+    -------
+    pyspark.sql.DataFrame
+        A DataFrame summarizing normalization outcomes for all nodes referenced in the edge file.
+        Columns include:
+        - `id`: Normalized CURIE of the node
+        - `original_id`: Original (pre-normalization) CURIE
+        - `normalization_success`: Boolean or flag indicating whether normalization was successful
+        - `category`: Biolink category assigned to the node (if available)
+        - `source_role`: Indicates whether the node was a subject or object in the edge
+        - `upstream_data_source`: Name of the originating data source
+    """
+
+    # Safe fallback for category column
+    if "category" in nodes.columns:
+        nodes_for_join = nodes.select("id", "category")
+    else:
+        nodes_for_join = nodes.select("id").withColumn("category", F.lit(None).cast("string"))
+
+    return (
+        edges.selectExpr(
+            "subject as id", "original_subject as original_id", "subject_normalization_success as normalization_success"
+        )
+        .join(nodes_for_join, on="id", how="left")
+        .withColumn("source_role", F.lit("subject"))
+        .unionByName(
+            edges.selectExpr(
+                "object as id",
+                "original_object as original_id",
+                "object_normalization_success as normalization_success",
+            )
+            .join(nodes_for_join, on="id", how="left")
+            .withColumn("source_role", F.lit("object"))
+        )
+        .withColumn("upstream_data_source", F.lit(source))
+    )
+
+
+def normalization_summary_nodes_only(
+    nodes: ps.DataFrame,
+    source: str,
+) -> ps.DataFrame:
+    """
+    Generate a flattened per-source summary of node normalization success from a node-only dataset.
+
+    This function processes a set of normalized nodes and returns a summary table that includes
+    the normalized ID, original ID, category (if available), and normalization success flag,
+    along with source metadata for tracking.
+
+    Parameters
+    ----------
+    nodes : pyspark.sql.DataFrame
+        A DataFrame containing normalized nodes with at least `id`, `original_id`,
+        and `normalization_success` columns. The `category` column is optional.
+    source : str
+        The name of the upstream data source providing the nodes.
+
+    Returns
+    -------
+    pyspark.sql.DataFrame
+        A DataFrame summarizing normalization outcomes for all nodes.
+        Columns include:
+        - `id`: Normalized CURIE of the node
+        - `original_id`: Original (pre-normalization) CURIE
+        - `category`: Biolink category assigned to the node (if available)
+        - `normalization_success`: Boolean or flag indicating whether normalization was successful
+        - `source_role`: Fixed value "node" indicating the entity type
+        - `upstream_data_source`: Name of the originating data source
+    """
+
+    if "category" in nodes.columns:
+        selected = nodes.select("id", "original_id", "category", "normalization_success")
+    else:
+        selected = nodes.select("id", "original_id", "normalization_success").withColumn(
+            "category", F.lit(None).cast("string")
+        )
+
+    return selected.withColumn("source_role", F.lit("node")).withColumn("upstream_data_source", F.lit(source))
