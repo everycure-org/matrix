@@ -234,7 +234,7 @@ def normalization_summary_nodes_and_edges(
     else:
         nodes_for_join = nodes.select("id").withColumn("category", F.lit(None).cast("string"))
 
-    df = (
+    return (
         edges.selectExpr(
             "subject as id", "original_subject as original_id", "subject_normalization_success as normalization_success"
         )
@@ -251,8 +251,6 @@ def normalization_summary_nodes_and_edges(
         )
         .withColumn("upstream_data_source", F.lit(source))
     )
-
-    return df
 
 
 def normalization_summary_nodes_only(
