@@ -4,11 +4,11 @@ versions:
   release: ${oc.env:RELEASE_VERSION,v0.2.3}
 
 release_folder_name: ${oc.env:RELEASE_FOLDER_NAME, releases}
-release_dir: ${gcs_bucket}/kedro/data/${release_folder_name}/${versions.release}
+release_dir: ${runtime_gcs_bucket}/kedro/data/${release_folder_name}/${versions.release}
 run_dir: ${release_dir}/runs/${run_name}
 
-gcs_bucket: gs://${oc.env:GCP_BUCKET}
-gcp_project: ${oc.env:GCP_PROJECT_ID}
+runtime_gcs_bucket: gs://${oc.env:RUNTIME_GCP_BUCKET}
+runtime_gcp_project: ${oc.env:RUNTIME_GCP_PROJECT_ID}
 
 #TODO: why does this need to be duplicated in cloud/globals.yml if defined in base/globals.yml and should be
 # inherited from? Throws error otherwise: 'dev_gcs_bucket' not found. full_key: paths.raw
@@ -43,4 +43,4 @@ paths:
   tmp:           data/tmp
 
   # Embedding cache dataset
-  cache:         ${gcs_bucket}/kedro/data/cache
+  cache:         ${runtime_gcs_bucket}/kedro/data/cache
