@@ -20,7 +20,7 @@ versions:
 
 data_sources:
   rtx_kg2:
-    version: &_rtx_kg_version v2.7.3 #when bumping to 2.10, we should stop to limit PMID for the semmed filtering
+    version: &_rtx_kg_version v2.10.0
   robokop:
     version: c5ec1f282158182f
   spoke:
@@ -70,3 +70,6 @@ paths:
   inference:          data/releases/${versions.release}/runs/${run_name}/datasets/inference
  
   tmp:                data/tmp
+
+  # Embedding cache dataset
+  cache:              data/cache
