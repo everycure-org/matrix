@@ -24,7 +24,7 @@ spec:
         neo4j:
           config:
             server.default_advertised_address: "neo4j.{{ .Values.spec.source.environment }}.everycure.org"
-            bolt.advertised_address: "neo4j.{{ .Values.spec.source.environment }}.everycure.org:7687"
+            server.bolt.advertised_address: "neo4j.{{ .Values.spec.source.environment }}.everycure.org:7687"
           services:
             neo4j:
               annotations:
