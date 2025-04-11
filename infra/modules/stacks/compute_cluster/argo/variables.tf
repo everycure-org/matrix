@@ -33,3 +33,7 @@ variable "project_id" {
 variable "bucket_name" {
   type = string
 }
+
+variable "aip_oauth_client_id" {
+  type = string
+}
