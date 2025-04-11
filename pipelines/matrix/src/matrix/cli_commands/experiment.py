@@ -22,8 +22,8 @@ from matrix.utils.mlflow_utils import (
 EXPERIMENT_BRANCH_PREFIX = "experiment/"
 
 
-def configure_mlflow_tracking(token: str, gcp_env: Literal["dev", "prod"]) -> None:
-    mlflow.set_tracking_uri(f"https://mlflow.platform.{gcp_env}.everycure.org")
+def configure_mlflow_tracking(token: str) -> None:
+    mlflow.set_tracking_uri(os.environ["MLFLOW_URL"])
     os.environ["MLFLOW_TRACKING_TOKEN"] = token
 
 
@@ -61,7 +61,7 @@ def experiment(ctx, gcp_env):
     # https://click.palletsprojects.com/en/stable/commands/#nested-handling-and-contexts
     ctx.ensure_object(dict)
     ctx.obj["gcp_env"] = gcp_env
-    # env var needed by kedro catalog and hook_utilities.py
+    # env var needed by hook_utilities.py to exclude private datasets if dev
     os.environ["GCP_ENV"] = gcp_env
 
     if os.getenv("GITHUB_ACTIONS"):
@@ -71,7 +71,7 @@ def experiment(ctx, gcp_env):
     else:
         # Running locally, get the IAP token of user account
         token = get_user_account_token()
-    configure_mlflow_tracking(token, gcp_env)
+    configure_mlflow_tracking(token)
 
 
 @experiment.command()

@@ -66,6 +66,6 @@ def generate_dynamic_pipeline_mapping(
 
 
 def disable_private_datasets(config: dict) -> dict:
-    if os.environ["GCP_ENV"].lower() == "dev":
+    if "-dev-" in os.environ["GCP_PROJECT_ID"].lower():
         config["integration"] = [item for item in config["integration"] if not item.get("is_private")]
     return config

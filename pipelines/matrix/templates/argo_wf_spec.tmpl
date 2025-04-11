@@ -31,14 +31,14 @@ spec:
         value: "https://api.openai.com/v1"
       - name: env
         value: "{{ environment }}"
-      - name: gcp_env
-        value: "{{ gcp_env }}"
       - name: release_folder_name
         value: "{{ release_folder_name }}"
       - name: mlflow_experiment_id
         value: {{ mlflow_experiment_id }}
       - name: mlflow_run_id
         value: "{{ mlflow_run_id }}"
+      - name: mlflow_url
+        value: "{{ mlflow_url }}"
   templates:
   - &_kedro_template
     metrics:
@@ -115,9 +115,6 @@ spec:
           {% endraw %}
         - name: RELEASE_VERSION
           value: "{{release_version}}"
-        - name: GCP_ENV
-          value: {% raw %} "{{workflow.parameters.gcp_env}}"
-          {% endraw %}
         - name: RELEASE_FOLDER_NAME
           value: {% raw %} "{{workflow.parameters.release_folder_name}}" 
           {% endraw %}
@@ -132,6 +129,9 @@ spec:
           {% endraw %}
         - name: MLFLOW_RUN_ID
           value: {% raw %} "{{workflow.parameters.mlflow_run_id}}"
+          {% endraw %}
+        - name: MLFLOW_URL
+          value: {% raw %} "{{workflow.parameters.mlflow_url}}"
           {% endraw %}
         - name: NEO4J_USER
           valueFrom:
