@@ -66,8 +66,6 @@ fabricator.rtx_kg2:
           - biolink:BiologicalProcess
           - biolink:NamedThing
           - biolink:OntologyClass
-#        type: faker
-#        provider: name
       date_discovered:
         type: generate_dates
         start_dt: 2010-01-01

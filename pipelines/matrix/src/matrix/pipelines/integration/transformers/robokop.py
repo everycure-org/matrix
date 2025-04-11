@@ -14,7 +14,7 @@ from matrix.pipelines.integration.filters import determine_most_specific_categor
 
 from .transformer import GraphTransformer
 
-ROBOKOP_SEPARATOR = r"\|"  # "\x1f"
+ROBOKOP_SEPARATOR = r"\|"
 
 
 class RobokopTransformer(GraphTransformer):
