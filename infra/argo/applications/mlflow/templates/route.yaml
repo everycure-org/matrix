@@ -10,7 +10,7 @@ spec:
     namespace: gateway
     name: external-http
   hostnames:
-  - "mlflow.platform.dev.everycure.org"
+  - "mlflow.platform.{{ .Values.spec.source.environment }}.everycure.org"
   rules:
   - backendRefs:
     - name: mlflow-tracking

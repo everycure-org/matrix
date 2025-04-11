@@ -50,8 +50,9 @@ class SpokeTransformer(GraphTransformer):
             .withColumn("upstream_data_source",                     F.array(F.lit("spoke")))
             .withColumn("publications",                             F.lit(None).cast(T.ArrayType(T.StringType())))
             .withColumn("knowledge_level",                          F.lit(None).cast(T.StringType()))
+            .withColumn("agent_type",                               F.lit(None).cast(T.StringType()))
             .withColumn("primary_knowledge_source",                 F.lit(None).cast(T.StringType()))
-            .withColumn("aggregator_knowledge_source",              F.lit(None).cast(T.StringType()))
+            .withColumn("aggregator_knowledge_source",              F.lit(None).cast(T.StringType())) # Leaving this as a string for now but aggregator knowledge source can be a list
             .withColumn("object_aspect_qualifier",                  F.lit(None).cast(T.StringType()))
             .withColumn("object_direction_qualifier",               F.lit(None).cast(T.StringType()))
             .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
