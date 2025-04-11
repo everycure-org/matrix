@@ -32,6 +32,52 @@ from
     <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="edges_per_node_without_most_connected_nodes" fmt="num1"/></span><br/>edges per node when excluding the top 1,000 most connected nodes</p>
 </Grid>
 
+## Graph Trust
+
+<div class="text-center text-lg font-semibold mt-6 mb-2">
+    Knowledge Level
+</div>
+
+```sql overall_graph_trust
+SELECT * FROM bq.graph_trust_score
+```
+
+```sql knowledge_by_source
+SELECT * FROM bq.knowledge_level_distribution
+```
+
+<!-- First row: metrics side-by-side -->
+<Grid col=2>
+  <div class="text-center text-lg">
+    <p>
+      <span class="font-semibold text-2xl">
+        <Value data={overall_graph_trust} column="overall_graph_trust_score" fmt="num2" />
+      </span><br/>
+      average trust score
+    </p>
+  </div>
+  <div class="text-center text-lg">
+    <p>
+      <span class="font-semibold text-2xl">
+        <Value data={overall_graph_trust} column="included_edges" fmt="num2m" />
+      </span><br/>
+      edges used in calculation
+    </p>
+  </div>
+</Grid>
+
+<br/>
+
+<!-- Second row: full-width bar chart -->
+<BarChart 
+  data={knowledge_by_source}
+  x=knowledge_level
+  y=edge_count
+  series=upstream_data_source
+  swapXY=false
+  title="Knowledge Level by Upstream Data Source"
+/>
+
 ## Upstream data sources 
 
 ```sql upstream_data_sources_nodes
