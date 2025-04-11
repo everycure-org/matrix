@@ -44,14 +44,13 @@ resource "google_workbench_instance" "user_workbench" {
   instance_owners = [var.email]
   lifecycle {
     ignore_changes = [
-      create_time,
-      update_time,
-      # desired_state,
-      gce_setup[0].metadata.resource-url
+      desired_state,
+      gce_setup[0].metadata.resource-url,
+      gce_setup[0].data_disks
     ]
   }
-  # setting this to stopped turns off running instances upon updates which is not what we want, we rely on the idle timeout to stop the instances
-  # desired_state = "STOPPED"
+  # when we create, they are stopped, from this point onward, we ignore the state -> leave running ones running
+  desired_state = "STOPPED"
 
   labels = merge({
     consumer-project-id = var.project_id
