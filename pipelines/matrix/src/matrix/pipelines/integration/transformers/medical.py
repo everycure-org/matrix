@@ -49,6 +49,7 @@ class MedicalTransformer(GraphTransformer):
             .withColumn("predicate",                     f.concat(f.lit("biolink:"), f.lit(":"), f.col("Label")))
             .withColumn("upstream_data_source",          f.array(f.lit("ec_medical")))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
+            .withColumn("agent_type",                    f.lit(None).cast(T.StringType()))
             .withColumn("aggregator_knowledge_source",   f.array(f.lit('medical team')))
             .withColumn("primary_knowledge_source",      f.lit('medical team').cast(T.StringType()))
             .withColumn("publications",                  f.array(f.lit('medical team')))
