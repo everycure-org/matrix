@@ -110,7 +110,10 @@ docker_build:
 	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(dev_docker_image) --load ./
 	docker tag $(dev_docker_image) $(dev_docker_image):${TAG}
 
-docker_push: docker_build
+docker_auth:
+	gcloud auth configure-docker us-central1-docker.pkg.dev
+
+docker_push: docker_build docker_auth
 	docker push $(dev_docker_image):${TAG}
 
 certificate:
