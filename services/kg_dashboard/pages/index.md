@@ -2,19 +2,6 @@
 title: Matrix KG Dashboard
 ---
 
-<script>
-  const release_version = import.meta.env.VITE_release_version;
-  const build_time = import.meta.env.VITE_build_time;
-</script>
-
-## Version: {release_version}
-
-<p class="text-gray-500 text-sm italic">Last updated on {build_time}</p>
-
-Dashboard pages on the left side of the screen are for exploring the data in the Matrix Knowledge Graph. Select categories from the dropdowns below to filter the knowledge graph visualization.
-
-## Filter Knowledge Graph Categories
-
 ```sql subject_categories
 SELECT DISTINCT
     replace(subject_category,'biolink:','') as category,
@@ -41,6 +28,45 @@ FROM bq.merged_kg_edges
 GROUP BY category
 ORDER BY sum(count) DESC
 ```
+
+<script>
+  const release_version = import.meta.env.VITE_release_version;
+  const build_time = import.meta.env.VITE_build_time;
+
+  //This constructs a dictionary which sets the depth of each subject category value,
+  //predicate value, and object category value (as they're generated in combined_sankey
+  //below) to 0, 1, and 2 respectively. The one gotcha here is that the '[S] ' and '[O] '
+  //prefixes are added to the subject and object categories are added here as well as in
+  //the SQL query below. 
+  let depthOverrides = {}
+  
+  if (subject_categories && Array.isArray(subject_categories)) {    
+    subject_categories.forEach(sc => {
+      depthOverrides[('[S] ' + sc.category)] = 0;
+    });    
+  }
+
+  if (predicates && Array.isArray(predicates)) {
+    predicates.forEach(p => {
+      depthOverrides[p.predicate] = 1;
+    });
+  }
+
+  if (object_categories && Array.isArray(object_categories)) {
+    object_categories.forEach(oc => {
+      depthOverrides[('[O] ' + oc.category)] = 2;
+    });
+  }
+
+</script>
+
+## Version: {release_version}
+
+<p class="text-gray-500 text-sm italic">Last updated on {build_time}</p>
+
+Dashboard pages on the left side of the screen are for exploring the data in the Matrix Knowledge Graph. Select categories from the dropdowns below to filter the knowledge graph visualization.
+
+## Filter Knowledge Graph Categories
 
 <Grid columns=3>
 
@@ -120,6 +146,7 @@ ORDER BY count DESC
   title='Filtered Knowledge Graph Flow'
   subtitle='Flow from Selected Subject Categories through Selected Predicates to Selected Object Categories'
   chartAreaHeight={1400}
+  depthOverride={depthOverrides}
 />
 
 ```sql edge_stats
