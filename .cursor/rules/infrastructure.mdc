@@ -1,0 +1,8 @@
+---
+description: 
+globs: *.tf,infra/
+alwaysApply: false
+---
+
+- when editing terraform, use `terragrunt validate` to ensure the files are correct. Run it in the respective terraform folder. So if editing the `dev` run it in `infra/deployments/hub/dev/`
+- we use terragrunt in combination with terraform. Be mindful of the setup in [root.hcl](mdc:infra/root.hcl) 

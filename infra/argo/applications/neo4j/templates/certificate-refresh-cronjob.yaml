@@ -1,0 +1,67 @@
+# This CronJob addresses the issue of Neo4j not automatically reloading SSL certificates
+# after they are renewed by cert-manager. It performs a weekly restart of the Neo4j pod
+# every Sunday at 2:00 AM to ensure that any renewed certificates are properly loaded.
+# The job includes necessary RBAC permissions to execute commands within the Neo4j pod.
+#
+# Problem: Neo4j does not detect renewed SSL certificates without a restart
+# Solution: Weekly automated restart via CronJob to ensure certificate updates are applied
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: neo4j-certificate-refresh
+  namespace: {{ .Release.Namespace }}
+spec:
+  # Schedule for every Sunday at 2:00 AM
+  schedule: "0 2 * * 0"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ .Release.Name }}-sa
+          containers:
+          - name: kubectl
+            image: bitnami/kubectl:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Restarting Neo4j to refresh certificates at $(date)"
+              kubectl exec -n {{ .Release.Namespace }} {{ .Release.Name }}-0 -- neo4j restart
+              echo "Neo4j restart completed at $(date)"
+          restartPolicy: OnFailure
+---
+# Service account for the CronJob
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Release.Name }}-sa
+  namespace: {{ .Release.Namespace }}
+---
+# Role with permissions to exec into pods
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Release.Name }}-pod-exec-role
+  namespace: {{ .Release.Namespace }}
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/exec"]
+  verbs: ["get", "list", "create"]
+---
+# RoleBinding to link the service account to the role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Release.Name }}-pod-exec-binding
+  namespace: {{ .Release.Namespace }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Release.Name }}-sa
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: {{ .Release.Name }}-pod-exec-role
+  apiGroup: rbac.authorization.k8s.io 
