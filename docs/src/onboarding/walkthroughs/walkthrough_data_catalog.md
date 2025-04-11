@@ -94,24 +94,13 @@ ingestion.raw.rtx_kg2.nodes@pandas:
 
 ```yaml
 ingestion.raw.rtx_kg2.nodes@spark:
-  <<: *_layer_raw
-  type: matrix.datasets.gcp.SparkWithSchemaDataset
+  <<: [*_spark_csv, *_layer_raw]
   filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes_c.tsv
   file_format: csv
   load_args:
     sep: "\t"
     header: false
     index: false
-    schema:
-      object: pyspark.sql.types.StructType
-      fields:
-        - object: pyspark.sql.types.StructField
-          name: id
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-	      ... more schema fields follow
 	      
 	      
 ingestion.raw.rtx_kg2.edges@pandas:
@@ -120,8 +109,7 @@ ingestion.raw.rtx_kg2.edges@pandas:
 	...
 	
 ingestion.raw.rtx_kg2.edges@spark:
-  <<: *_layer_raw
-  type: matrix.datasets.gcp.SparkWithSchemaDataset
+  <<: [*_spark_csv, *_layer_raw]
   filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/edges_c.tsv
 	...
 	
