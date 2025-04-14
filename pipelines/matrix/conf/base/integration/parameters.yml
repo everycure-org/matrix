@@ -1,32 +1,41 @@
 integration:
   sources:
     rtx_kg2:
+      name: rtx-kg2
       transformer:
         _object: matrix.pipelines.integration.transformers.rtxkg2.RTXTransformer
     spoke:
+      name: spoke
       transformer:
         _object: matrix.pipelines.integration.transformers.spoke.SpokeTransformer
     robokop:
+      name: robokop
       transformer:
         _object: matrix.pipelines.integration.transformers.robokop.RobokopTransformer
     ec_medical_team:
+      name: ec_medical_team
       transformer:
         _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
     ec_clinical_trails:
+      name: ec_clinical_trials
       transformer:
         _object: matrix.pipelines.integration.transformers.clinical_trails.ClinicalTrialsTransformer
         select_cols: false
         drop_duplicates: true
-    drug_list: 
+    drug_list:
+      name: drug_list
       transformer:
         _object: matrix.pipelines.integration.transformers.drugs.DrugsTransformer
-    disease_list: 
+    disease_list:
+      name: disease_list
       transformer:
         _object: matrix.pipelines.integration.transformers.diseases.DiseasesTransformer
     drugmech:
+      name: drugmech
       transformer:
          _object: matrix.pipelines.integration.transformers.drugmech.DrugMechTransformer
-    ground_truth: 
+    ground_truth:
+      name: ground_truth
       transformer:
         _object: matrix.pipelines.integration.transformers.ground_truth.GroundTruthTransformer
 
@@ -39,7 +48,7 @@ integration:
         limit_pmids: 50_000_000 # essentially unlimited, but allows for local clipping if local run is desired
 
   normalization:
-    batch_size: 1000
+    batch_size: 500000  # number of rows per cache file.
     cache_schema:
       _object: matrix.pipelines.batch.schemas.node_normalizer
     normalizer:
@@ -48,6 +57,7 @@ integration:
       conflate: true
       drug_chemical_conflate: true
       description: false
+      items_per_request: 10000  # The API can't handle 10M strings at once
     # If the data backing the results changes, so will the NodeNorm frontend
     # version, which is listed here. Note that it can update as well for other
     # reasons, but at least you have a guarantee. Probably easiest to just bump

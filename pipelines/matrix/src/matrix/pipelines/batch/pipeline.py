@@ -4,14 +4,13 @@ import json
 import logging
 import warnings
 from functools import partial
-from typing import Any, Callable, Coroutine, Iterable, Iterator, Sequence, TypeVar
+from typing import Any, Callable, Collection, Coroutine, Iterable, Iterator, Protocol, Sequence, TypeVar
 
 import pyarrow as pa
 from kedro.pipeline import Pipeline, pipeline
 from matrix.inject import inject_object
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from matrix.pipelines.batch.schemas import to_spark_schema
-from matrix.pipelines.embeddings.encoders import AttributeEncoder
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import col, count, count_distinct
 
@@ -19,6 +18,10 @@ T = TypeVar("T")
 V = TypeVar("V")
 
 logger = logging.getLogger(__name__)
+
+
+class Transformer(Protocol):
+    async def apply(self, strings: Collection[str], **kwargs) -> list: ...
 
 
 def cached_api_enrichment_pipeline(
@@ -186,7 +189,7 @@ def derive_cache_misses(
 
 @inject_object()
 def cache_miss_resolver_wrapper(
-    df: DataFrame, transformer: AttributeEncoder, api: str, batch_size: int, cache_schema: pa.lib.Schema
+    df: DataFrame, transformer: Transformer, api: str, batch_size: int, cache_schema: pa.lib.Schema
 ) -> dict[str, Callable[[], Coroutine[Any, Any, pa.Table]]]:
     if logger.isEnabledFor(logging.INFO):
         logger.info(json.dumps({"number of cache misses": df.count()}))
@@ -197,7 +200,11 @@ def cache_miss_resolver_wrapper(
         logger.info(f"Processing batch with key: {batch[0]}")
         transformed = await transformer.apply(batch)
         logger.info(f"received response for batch with key: {batch[0]}")
-        return pa.table([batch, transformed, [api] * len(batch)], schema=cache_schema).to_pandas()
+        return pa.table(
+            [batch, transformed],
+            # Drop the api-field, since we're manually creating Hive partitions with that column.
+            schema=cache_schema.remove(cache_schema.get_field_index("api")),
+        ).to_pandas()
 
     def prep(
         batches: Iterable[Sequence[T]], api: str
@@ -273,7 +280,7 @@ def batched(iterable: Iterable[T], n: int, *, strict: bool = False) -> Iterator[
 
 def report_on_cache_misses(df: DataFrame, api: str) -> None:
     if logger.isEnabledFor(logging.INFO):
-        rows = sorted(df.filter(df["api"] == api).groupBy("value").count().collect())
+        rows = sorted(df.filter(df["api"] == api).groupBy(df["value"].isNull()).count().collect())
         if len(rows) > 1:
             no_nulls = rows[0][1]  # False sorts before True, so isNull->False comes first
             nulls = rows[1][1]
