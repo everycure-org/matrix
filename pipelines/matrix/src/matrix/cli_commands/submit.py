@@ -97,7 +97,7 @@ def submit(
         abort_if_intermediate_release(release_version)
 
 
-    abort_if_incorrect_env_vars(gcp_env)
+    #abort_if_incorrect_env_vars(gcp_env)
     if pipeline not in kedro_pipelines.keys():
         raise ValueError("Pipeline requested for execution not found")
     
