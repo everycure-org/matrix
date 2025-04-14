@@ -20,7 +20,7 @@ resource "kubernetes_secret" "argo_secret" {
     name      = "basic-auth"
     namespace = var.namespace
     labels = {
-      "argocd.argoproj.io/secret-type" : "repository"
+      "argocd.argoproj.io/secret-type" : "repo-creds"
     }
   }
   data = {
@@ -28,11 +28,12 @@ resource "kubernetes_secret" "argo_secret" {
     # url= base64encode(var.repo_url)
     # password= base64encode(var.repo_creds)
     type     = "git"
-    url      = var.repo_url
+    url      = "https://github.com/everycure-org/"
     password = var.repo_creds
   }
   type = "Opaque"
 }
+
 resource "helm_release" "argo" {
   depends_on = [kubernetes_namespace.argo_ns, kubernetes_secret.argo_secret]
   name       = "argo"
@@ -78,11 +79,23 @@ spec:
   destination:
     namespace: argocd
     server: "https://kubernetes.default.svc"
+  project: default
   source:
     path: ${var.repo_path}/app-of-apps
     repoURL: ${var.repo_url}
     targetRevision: ${var.repo_revision}
-  project: default
+    helm:
+      parameters:
+      - name: spec.source.targetRevision
+        value:  ${var.repo_revision}
+      - name: spec.source.environment
+        value:  ${var.environment}
+      - name: spec.source.project_id
+        value: ${var.project_id}
+      - name: spec.source.bucketname
+        value: ${var.bucket_name}
+      - name: spec.source.aip_oauth_client_id
+        value: ${var.aip_oauth_client_id}
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
