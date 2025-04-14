@@ -1,32 +1,41 @@
 integration:
   sources:
     rtx_kg2:
+      name: rtx-kg2
       transformer:
         _object: matrix.pipelines.integration.transformers.rtxkg2.RTXTransformer
     spoke:
+      name: spoke
       transformer:
         _object: matrix.pipelines.integration.transformers.spoke.SpokeTransformer
     robokop:
+      name: robokop
       transformer:
         _object: matrix.pipelines.integration.transformers.robokop.RobokopTransformer
     ec_medical_team:
+      name: ec_medical_team
       transformer:
         _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
     ec_clinical_trails:
+      name: ec_clinical_trials
       transformer:
         _object: matrix.pipelines.integration.transformers.clinical_trails.ClinicalTrialsTransformer
         select_cols: false
         drop_duplicates: true
-    drug_list: 
+    drug_list:
+      name: drug_list
       transformer:
         _object: matrix.pipelines.integration.transformers.drugs.DrugsTransformer
-    disease_list: 
+    disease_list:
+      name: disease_list
       transformer:
         _object: matrix.pipelines.integration.transformers.diseases.DiseasesTransformer
     drugmech:
+      name: drugmech
       transformer:
          _object: matrix.pipelines.integration.transformers.drugmech.DrugMechTransformer
-    ground_truth: 
+    ground_truth:
+      name: ground_truth
       transformer:
         _object: matrix.pipelines.integration.transformers.ground_truth.GroundTruthTransformer
 
