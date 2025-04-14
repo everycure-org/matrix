@@ -1,6 +1,0 @@
-transformers
-fastapi 
-uvicorn 
-torch
-joblib
-sentence-transformers
