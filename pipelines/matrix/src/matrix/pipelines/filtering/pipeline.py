@@ -12,7 +12,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "integration.prm.unified_nodes",
                 "params:filtering.node_filters",
             ],
-            outputs="filtering.prm.prefiltered_nodes",
+            outputs=["filtering.prm.prefiltered_nodes", "filtering.prm.removed_nodes_initial"],
             name="prefilter_prm_knowledge_graph_nodes",
             tags=[
                 "argowf.fuse",
@@ -26,7 +26,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "integration.prm.unified_edges",
                 "params:filtering.edge_filters",
             ],
-            outputs="filtering.prm.filtered_edges",
+            outputs=["filtering.prm.filtered_edges", "filtering.prm.removed_edges"],
             name="filter_prm_knowledge_graph_edges",
             tags=[
                 "argowf.fuse",
@@ -39,7 +39,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "filtering.prm.prefiltered_nodes",
                 "filtering.prm.filtered_edges",
             ],
-            outputs="filtering.prm.filtered_nodes",
+            outputs=["filtering.prm.filtered_nodes", "filtering.prm.removed_nodes_final"],
             name="filter_nodes_without_edges",
             tags=[
                 "argowf.fuse",
