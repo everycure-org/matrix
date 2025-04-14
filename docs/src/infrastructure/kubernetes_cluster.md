@@ -99,6 +99,22 @@ Our setup leverages these concepts to provide a flexible and powerful routing so
 [^1]: https://gateway-api.sigs.k8s.io/
 [^2]: https://gateway-api.sigs.k8s.io/guides/
 
+## Deploying applications to the cluster
+
+# Service Deployment Configuration
+
+Services are deployed to the cluster using Helm charts. The default configuration provisions services on nodes with a maximum capacity of 32 GB RAM, managed through taints and node selectors.
+
+For services requiring larger compute resources (e.g., >32 GB RAM), explicit taint tolerations must be configured in the Helm chart. This ensures proper scheduling on nodes with the required capacity.
+
+## Implementation Examples
+
+Reference implementations for high-memory workloads can be found in:
+- `gke.tf`: Infrastructure configuration
+- `pipelines/matrix/templates/argo_wf_spec.tmpl`: Pipeline node configuration
+
+For instance, our pipeline nodes require 64 GB RAM and demonstrate the necessary taint toleration configuration.
+
 ## Using the cluster for Spark processing
 
 !!! warning
