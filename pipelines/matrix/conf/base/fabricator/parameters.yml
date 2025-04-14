@@ -59,7 +59,7 @@ fabricator.rtx_kg2:
       international_resource_identifier:
         type: faker
         provider: url
-      _LABEL:
+      :LABEL:
         type: generate_values
         sample_values:
           - biolink:ThingWithTaxon
