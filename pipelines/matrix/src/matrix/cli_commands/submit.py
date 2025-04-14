@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from queue import Queue
 from threading import Thread
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 import click
 import mlflow
@@ -32,7 +32,6 @@ from matrix.git_utils import (
     has_unpushed_commits,
 )
 from matrix.kedro4argo_node import ArgoResourceConfig
-from matrix.resolvers import load_env_specific_env_vars
 
 logging.basicConfig(
     level=logging.INFO,
@@ -97,13 +96,14 @@ def submit(
         abort_if_unmet_git_requirements(release_version)
         abort_if_intermediate_release(release_version)
 
+
+    abort_if_incorrect_env_vars(gcp_env)
     if pipeline not in kedro_pipelines.keys():
         raise ValueError("Pipeline requested for execution not found")
     
     if pipeline in ["fabricator", "test"]:
         raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
 
-    load_env_specific_env_vars(gcp_env=gcp_env)
     if not headless and (from_nodes or nodes):
         if not click.confirm("Using 'from-nodes' or 'nodes' is highly experimental and may break due to MLFlow issues with tracking the right run. Are you sure you want to continue?", default=False):
             raise click.Abort()
@@ -131,7 +131,6 @@ def submit(
         dry_run=dry_run,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
         mlflow_experiment_id=experiment_id,
-        gcp_env=gcp_env,
         mlflow_run_id=mlflow_run_id,
         allow_interactions=not headless,
         is_test=is_test,
@@ -151,7 +150,6 @@ def _submit(
     environment: str,
     template_directory: Path,
     mlflow_experiment_id: int,
-    gcp_env: str,
     mlflow_run_id: Optional[str] = None,
     allow_interactions: bool = True,
     is_test: bool = False,
@@ -184,13 +182,14 @@ def _submit(
     
     try:
 
-        gcp_project_id = os.environ['GCP_PROJECT_ID']
+        runtime_gcp_project_id = os.environ['RUNTIME_GCP_PROJECT_ID']
+        mlflow_url = os.environ['MLFLOW_URL']
 
         console.rule("[bold blue]Submitting Workflow")
-        if not can_talk_to_kubernetes(project=gcp_project_id):
+        if not can_talk_to_kubernetes(project=runtime_gcp_project_id):
             raise EnvironmentError("Cannot communicate with Kubernetes")
 
-        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, environment, gcp_env, gcp_project_id, mlflow_experiment_id, is_test=is_test, mlflow_run_id=mlflow_run_id)
+        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, environment, runtime_gcp_project_id, mlflow_experiment_id, mlflow_url, is_test=is_test, mlflow_run_id=mlflow_run_id)
 
         file_path = save_argo_template(argo_template, template_directory)
 
@@ -199,7 +198,7 @@ def _submit(
         if dry_run:
             return
 
-        build_push_docker(run_name, gcp_project_id, verbose=verbose)
+        build_push_docker(run_name, runtime_gcp_project_id, verbose=verbose)
 
         ensure_namespace(namespace, verbose=verbose)
 
@@ -398,10 +397,10 @@ def can_talk_to_kubernetes(
     return True
 
 
-def build_push_docker(username: str,  gcp_project_id, verbose: bool):
+def build_push_docker(username: str,  runtime_gcp_project_id, verbose: bool):
     """Build and push Docker image."""
     console.print("Building Docker image...")
-    docker_image = f"us-central1-docker.pkg.dev/{gcp_project_id}/matrix-images/matrix"
+    docker_image = f"us-central1-docker.pkg.dev/{runtime_gcp_project_id}/matrix-images/matrix"
     run_subprocess(f"make docker_push TAG={username} docker_image={docker_image}", stream_output=verbose)
     console.print("[green]✓[/green] Docker image built and pushed")
 
@@ -413,16 +412,16 @@ def build_argo_template(
     namespace: str,
     pipeline_obj: Pipeline,
     environment: str,
-    gcp_env: str,
-    gcp_project_id: str,
+    runtime_gcp_project_id: str,
     mlflow_experiment_id: int,
+    mlflow_url: str,
     is_test: bool,
     default_execution_resources: Optional[ArgoResourceConfig] = None,
     mlflow_run_id: Optional[str] = None,
 ) -> str:
     """Build Argo workflow template."""
 
-    image_name = f"us-central1-docker.pkg.dev/{gcp_project_id}/matrix-images/matrix"
+    image_name = f"us-central1-docker.pkg.dev/{runtime_gcp_project_id}/matrix-images/matrix"
     matrix_root = Path(__file__).parent.parent.parent.parent
     metadata = bootstrap_project(matrix_root)
     package_name = metadata.package_name
@@ -439,7 +438,7 @@ def build_argo_template(
         release_version=release_version,
         image_tag=run_name,
         mlflow_experiment_id=mlflow_experiment_id,
-        gcp_env=gcp_env,
+        mlflow_url=mlflow_url,
         namespace=namespace,
         username=username,
         package_name=package_name,
@@ -589,3 +588,9 @@ def abort_if_intermediate_release(release_version: str) -> None:
     if ((release_version.major == latest_major and release_version.minor < latest_minor)
         or release_version.major < latest_major):
         raise ValueError("Cannot release a minor/major version lower than the latest official release")
+
+def abort_if_incorrect_env_vars(gcp_env: str):
+    env_vars = ['RUNTIME_GCP_PROJECT_ID', 'RUNTIME_GCP_BUCKET', 'MLFLOW_URL']
+    prod_vars = [gcp_env.lower().strip() in os.environ[var] for var in env_vars]
+    if False in prod_vars:
+        raise ValueError(f"Running in {gcp_env}, but some env vars don't point to a different env. Did you create/uncomment the vars in your .env?")

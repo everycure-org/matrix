@@ -57,8 +57,7 @@ services:
       MLFLOW_EXPERIMENT_ID: 1
       MLFLOW_RUN_ID: null
       OPENAI_API_KEY: sk-proj-abc
-      GCP_PROJECT_ID: dummy
-      GCP_ENV: dev
+      RUNTIME_GCP_PROJECT_ID: dummy
       DEV_GCS_BUCKET: mtrx-us-central1-hub-dev-storage
       PROD_GCS_BUCKET: mtrx-us-central1-hub-prod-storage
       DEV_GCP_PROJECT_ID: mtrx-hub-dev-3of
