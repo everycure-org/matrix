@@ -396,12 +396,19 @@ def can_talk_to_kubernetes(
     return True
 
 
-def build_push_docker(username: str,  runtime_gcp_project_id, verbose: bool):
-    """Build and push Docker image."""
+def build_push_docker(username: str, runtime_gcp_project_id: str, verbose: bool):
+    """Build the docker image once, push it to dev registry, and if running in gcp-env prod, also to prod registry.
+    """
     console.print("Building Docker image...")
-    docker_image = f"us-central1-docker.pkg.dev/{runtime_gcp_project_id}/matrix-images/matrix"
-    run_subprocess(f"make docker_push TAG={username} docker_image={docker_image}", stream_output=verbose)
-    console.print("[green]✓[/green] Docker image built and pushed")
+    dev_image = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
+    run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
+    console.print("[green]✓[/green] Docker image built and pushed to dev repository")
+    
+    if "-prod-" in runtime_gcp_project_id.lower():
+        prod_image = f"us-central1-docker.pkg.dev/mtrx-hub-prod-sms/matrix-images/matrix"
+        run_subprocess(f"docker tag {dev_image}:{username} {prod_image}:{username}", stream_output=verbose)
+        run_subprocess(f"docker push {prod_image}:{username}", stream_output=verbose)
+        console.print("[green]✓[/green] Docker image also pushed to prod repository")
 
 
 def build_argo_template(
