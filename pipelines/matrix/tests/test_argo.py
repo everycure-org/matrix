@@ -4,6 +4,7 @@ import pytest
 import yaml
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
+
 from matrix.argo import FusedNode, clean_name, fuse, generate_argo_config, get_dependencies
 from matrix.kedro4argo_node import (
     KUBERNETES_DEFAULT_LIMIT_CPU,
@@ -437,6 +438,7 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
     mlflow_experiment_id = 1
     namespace = "test_namespace"
     username = "test_user"
+    mlflow_url = "https://mlflow.platform.dev.everycure.org/"
     pipeline_obj = Pipeline(
         nodes=[
             ArgoNode(
@@ -471,10 +473,10 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
         username=username,
         pipeline=pipeline_obj,
         package_name="matrix",
-        gcp_env="dev",
         release_folder_name="releases",
         environment="cloud",
         default_execution_resources=argo_default_resources,
+        mlflow_url=mlflow_url,
     )
 
     argo_config = yaml.safe_load(argo_config_yaml)
