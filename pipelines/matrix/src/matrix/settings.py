@@ -57,7 +57,7 @@ def get_dynamic_pipeline_mapping():
                 "integration": [
                     {"name": "rtx_kg2", "integrate_in_kg": True, "is_private": False},
                     {"name": "spoke", "integrate_in_kg": True, "is_private": True},
-                    {"name": "robokop", "integrate_in_kg": True, "is_private":False},
+                    {"name": "robokop", "integrate_in_kg": True, "is_private": False},
                     {"name": "ec_medical_team", "integrate_in_kg": True},
                     {"name": "drug_list", "integrate_in_kg": False, "has_edges": False},
                     {"name": "disease_list", "integrate_in_kg": False, "has_edges": False},
