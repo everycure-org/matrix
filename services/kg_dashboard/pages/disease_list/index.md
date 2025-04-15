@@ -10,4 +10,5 @@ select *, '/disease_list/' || id as link from bq.disease_list
   link=link
 >
   <Column id="name" title="Disease" />
+  <Column id="edge_count" contentType="bar" title="Edge Count" />
 </DataTable>
