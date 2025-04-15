@@ -14,6 +14,7 @@ _bigquery_ds: &_bigquery_ds
 
 # Overwriting the base catalog to use the bigquery datasets
 
+#TODO how do we make this lke the integration catalog that depends on {source} rather than hardcoding the name
 # Ingested RTX KG2 nodes/edges
 ingestion.int.rtx_kg2.nodes:
   <<: *_bigquery_ds
@@ -24,3 +25,14 @@ ingestion.int.rtx_kg2.edges:
   <<: *_bigquery_ds
   filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx_kg2.version}/edges
   table: rtx_kg2_edges_ingested_${globals:data_sources.rtx_kg2.version}
+
+# Ingested Robokop nodes/edges
+ingestion.int.robokop.nodes:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.ingestion}/int/robokop/${globals:data_sources.robokop.version}/nodes
+  table: robokop_nodes_ingested_${globals:data_sources.robokop.version}
+
+ingestion.int.robokop.edges:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.ingestion}/int/robokop/${globals:data_sources.robokop.version}/edges
+  table: robokop_edges_ingested_${globals:data_sources.robokop.version}

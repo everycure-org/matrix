@@ -1,12 +1,13 @@
 locals {
-  matrix_all_group = "group:matrix-all@everycure.org"
-
+  matrix_all_group     = "group:matrix-all@everycure.org"
+  prod_sas             = ["serviceAccount:sa-k8s-node@mtrx-hub-prod-sms.iam.gserviceaccount.com"]
   matrix_viewers_group = [local.matrix_all_group, "group:matrix-viewers@everycure.org"]
   tech_team_group      = ["group:techteam@everycure.org", "group:ext.tech.dataminded@everycure.org"]
   cross_account_sas = [
     "serviceAccount:vertex-ai-workbench-sa@mtrx-wg1-data-dev-nb5.iam.gserviceaccount.com",
     "serviceAccount:vertex-ai-workbench-sa@mtrx-wg2-modeling-dev-9yj.iam.gserviceaccount.com"
   ]
+  github_actions_rw = ["serviceAccount:sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com"]
 }
 
 module "project_iam_bindings" {
@@ -33,10 +34,11 @@ module "project_iam_bindings" {
     "roles/artifactregistry.writer"        = flatten([local.tech_team_group, [local.matrix_all_group]]) # enables people to run kedro submit
     "roles/viewer"                         = flatten([local.matrix_viewers_group, local.cross_account_sas])
     "roles/bigquery.jobUser"               = flatten([local.matrix_viewers_group, local.cross_account_sas])
-    "roles/bigquery.dataViewer"            = flatten([local.matrix_viewers_group, local.cross_account_sas])
-    "roles/bigquery.studioUser"            = flatten([local.matrix_viewers_group, local.cross_account_sas])
-    "roles/bigquery.user"                  = flatten([local.matrix_viewers_group, local.cross_account_sas])
-    "roles/iap.httpsResourceAccessor"      = local.matrix_viewers_group
+    # giving prod k8s cluster access to our dev data. 
+    "roles/bigquery.dataViewer"       = flatten([local.matrix_viewers_group, local.cross_account_sas, local.prod_sas])
+    "roles/bigquery.studioUser"       = flatten([local.matrix_viewers_group, local.cross_account_sas])
+    "roles/bigquery.user"             = flatten([local.matrix_viewers_group, local.cross_account_sas])
+    "roles/iap.httpsResourceAccessor" = flatten([local.matrix_viewers_group, local.github_actions_rw])
 
     "roles/compute.networkUser" = [local.matrix_all_group]
   }
