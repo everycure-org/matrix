@@ -96,6 +96,7 @@ def submit(
         abort_if_unmet_git_requirements(release_version)
         abort_if_intermediate_release(release_version)
 
+    abort_if_incorrect_env_vars(gcp_env)
 
     if pipeline not in kedro_pipelines.keys():
         raise ValueError("Pipeline requested for execution not found")
@@ -134,6 +135,7 @@ def submit(
         allow_interactions=not headless,
         is_test=is_test,
         environment=environment,
+        gcp_env=gcp_env,
 
     )
 
@@ -147,6 +149,7 @@ def _submit(
     verbose: bool,
     dry_run: bool,
     environment: str,
+    gcp_env: str,
     template_directory: Path,
     mlflow_experiment_id: int,
     mlflow_run_id: Optional[str] = None,
@@ -197,7 +200,7 @@ def _submit(
         if dry_run:
             return
 
-        build_push_docker(run_name, runtime_gcp_project_id, verbose=verbose)
+        build_push_docker(run_name, gcp_env, verbose=verbose)
 
         ensure_namespace(namespace, verbose=verbose)
 
@@ -396,15 +399,15 @@ def can_talk_to_kubernetes(
     return True
 
 
-def build_push_docker(username: str, runtime_gcp_project_id: str, verbose: bool):
-    """Build the docker image once, push it to dev registry, and if running in gcp-env prod, also to prod registry.
+def build_push_docker(username: str, gcp_env: str, verbose: bool):
+    """Build the docker image only once, push it to dev registry, and if running in gcp-env prod, also to prod registry.
     """
     console.print("Building Docker image...")
     dev_image = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
     console.print("[green]✓[/green] Docker image built and pushed to dev repository")
     
-    if "-prod-" in runtime_gcp_project_id.lower():
+    if gcp_env == "prod":
         prod_image = f"us-central1-docker.pkg.dev/mtrx-hub-prod-sms/matrix-images/matrix"
         run_subprocess(f"docker tag {dev_image}:{username} {prod_image}:{username}", stream_output=verbose)
         run_subprocess(f"docker push {prod_image}:{username}", stream_output=verbose)
@@ -595,8 +598,8 @@ def abort_if_intermediate_release(release_version: str) -> None:
         or release_version.major < latest_major):
         raise ValueError("Cannot release a minor/major version lower than the latest official release")
 
-def abort_if_incorrect_env_vars(gcp_env: str):
+def abort_if_incorrect_env_vars(gcp_env: str) -> None:
     env_vars = ['RUNTIME_GCP_PROJECT_ID', 'RUNTIME_GCP_BUCKET', 'MLFLOW_URL']
-    prod_vars = [gcp_env.lower().strip() in os.environ[var] for var in env_vars]
-    if False in prod_vars:
+    correct_vars = [gcp_env.lower().strip() in os.environ[var] for var in env_vars]
+    if False in correct_vars:
         raise ValueError(f"Running in {gcp_env}, but some env vars don't point to a different env. Did you create/uncomment the vars in your .env?")
