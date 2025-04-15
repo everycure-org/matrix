@@ -25,9 +25,9 @@ versions:
 
 data_sources:
   rtx_kg2:
-    version: &_rtx_kg_version v2.10.0
+    version: &_rtx_kg_version v2.10.0_validated
   robokop:
-    version: c5ec1f282158182f
+    version: 30fd1bfc18cd5ccb
   spoke:
     version: V5.2
 # Dataset with node and edge proposals by the
