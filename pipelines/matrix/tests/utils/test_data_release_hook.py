@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from kedro.framework.context import KedroContext
 from kedro.framework.hooks import _create_hook_manager
+
 from matrix.hooks import ReleaseInfoHooks
 
 
@@ -12,7 +13,7 @@ def mock_context():
     mock_context.config_loader = {
         "globals": {
             "versions": {"release": "1.0.0"},
-            "gcp_project": "test-project",
+            "runtime_gcp_project": "test-project",
             "data_sources": {
                 "robokop": {"version": "v1"},
                 "spoke": {"version": "v2"},
