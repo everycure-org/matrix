@@ -56,8 +56,10 @@ services:
       MLFLOW_ENDPOINT: http://mlflow:5000
       MLFLOW_EXPERIMENT_ID: 1
       MLFLOW_RUN_ID: null
+      MLFLOW_URL: https://mlflow.platform.dev.everycure.org/
       OPENAI_API_KEY: sk-proj-abc
       RUNTIME_GCP_PROJECT_ID: dummy
+      RUNTIME_GCP_BUCKET: mtrx-us-central1-hub-dev-storage
       DEV_GCS_BUCKET: mtrx-us-central1-hub-dev-storage
       PROD_GCS_BUCKET: mtrx-us-central1-hub-prod-storage
       DEV_GCP_PROJECT_ID: mtrx-hub-dev-3of
