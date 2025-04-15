@@ -62,9 +62,10 @@ list of) services:
 
 - GCS (uses Google SSO)
 - BigQuery (uses Google SSO)
-- Neo4J (uses username, password credentials for authentication)
-- MlFlow
-- Argo Workflows
+- MlFlow (uses Google SSO)
+- Argo Workflows (uses Google SSO)
+- ArgoCD (uses Google SSO)
+- Neo4j (username, password)
 
 For the latter, access to unauthorized staff should be prohibited, so that they
 cannot read logs, nor trigger workflows. That is, the URL
@@ -209,7 +210,6 @@ Cloud authentication flow using SSO, rather than on per-app level.
 
 We create a Google Project for prod (it already exists) and redeploy the
 currently existing infrastructure there.  We add a catalog entry for the
-private datasets in a conf/cloud-prod folder, next to a symlinked file pointing
-to the conf/cloud catalog.
+private datasets in an already existing conf/cloud folder.
 
 
