@@ -28,9 +28,9 @@ class RTXTransformer(GraphTransformer):
             nodes_df
             .withColumnRenamed("id:ID", "id")
             .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
+            .withColumn("labels",                            f.lit(None).cast(T.ArrayType(T.StringType()))) # TODO: replace this with _LABEL once updated rtx-kg2 is available
             .withColumn("all_categories",                    f.split(f.col("all_categories"), RTX_SEPARATOR))
             .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies"), RTX_SEPARATOR))
-            .withColumn("labels",                            f.split(f.col(":LABEL"), RTX_SEPARATOR))
             .withColumn("publications",                      f.split(f.col("publications"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
             .withColumn("international_resource_identifier", f.col("iri"))
         )
