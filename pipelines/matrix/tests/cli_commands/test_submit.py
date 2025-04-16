@@ -9,6 +9,7 @@ import yaml
 from click.testing import CliRunner
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
+
 from matrix.cli_commands.submit import (
     _submit,
     apply_argo_template,
@@ -141,7 +142,7 @@ def test_apply_argo_template(mock_run_subprocess: None) -> None:
 
 def test_submit_workflow(mock_run_subprocess: None) -> None:
     mock_run_subprocess.return_value.stdout = '{"metadata": {"name": "test-job"}}'
-    submit_workflow("test_run", "test_namespace", verbose=True)
+    submit_workflow("test_run", "test_namespace", gcp_env="dev", verbose=True)
     assert mock_run_subprocess.call_count == 1
 
 
