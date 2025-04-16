@@ -413,10 +413,9 @@ class ReleaseInfoHooks:
     @classmethod
     def extract_datasets_used(cls) -> list:
         # Using lazy import to prevent circular import error
-        from matrix.settings import get_dynamic_pipeline_mapping
+        from matrix.settings import DYNAMIC_PIPELINES_MAPPING
 
-        dynamic_pipeline_mapping = get_dynamic_pipeline_mapping()
-        dataset_names = [item["name"] for item in dynamic_pipeline_mapping["integration"] if item["integrate_in_kg"]]
+        dataset_names = [item["name"] for item in DYNAMIC_PIPELINES_MAPPING["integration"] if item["integrate_in_kg"]]
         return dataset_names
 
     @classmethod

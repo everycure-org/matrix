@@ -45,8 +45,7 @@ SESSION_STORE_ARGS = {"path": str(Path(__file__).parents[2])}
 
 
 # https://getindata.com/blog/kedro-dynamic-pipelines/
-# Moved to a function, so it doesn't get executed directly upon its import when kedro module is being loaded,
-# as it relies on GCP_ENV variable, which is created by parsing the click command at a later stage.
+
 DYNAMIC_PIPELINES_MAPPING = disable_private_datasets(
     generate_dynamic_pipeline_mapping(
         {
