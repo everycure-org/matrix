@@ -1,4 +1,5 @@
 from kedro.pipeline import Pipeline, pipeline
+
 from matrix import settings
 from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, ArgoNode
 from matrix.pipelines.modelling.utils import partial_fold
@@ -9,10 +10,10 @@ from . import nodes
 def create_pipeline(**kwargs) -> Pipeline:
     """Create matrix generation pipeline."""
 
-    model_name = settings.get_dynamic_pipeline_mapping().get("modelling")["model_name"]
+    model_name = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")["model_name"]
 
     # Load cross-validation information
-    cross_validation_settings = settings.get_dynamic_pipeline_mapping().get("cross_validation")
+    cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
     n_cross_val_folds = cross_validation_settings.get("n_cross_val_folds")
 
     # Initial nodes computing matrix pairs and flags

@@ -1,6 +1,7 @@
 from typing import List, Union
 
 from kedro.pipeline import Pipeline, pipeline
+
 from matrix import settings
 from matrix.kedro4argo_node import ArgoNode
 from matrix.pipelines.modelling.utils import partial_fold
@@ -160,10 +161,10 @@ def create_pipeline(**kwargs) -> Pipeline:
     """
 
     # Unpack number of splits
-    n_cross_val_folds = settings.get_dynamic_pipeline_mapping().get("cross_validation").get("n_cross_val_folds")
+    n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_cross_val_folds")
 
     # Unpack evaluation names
-    evaluation_names = [ev["evaluation_name"] for ev in settings.get_dynamic_pipeline_mapping().get("evaluation")]
+    evaluation_names = [ev["evaluation_name"] for ev in settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation")]
 
     # Generate pipelines for each model
     pipelines = []
@@ -195,7 +196,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         )
     )
     # Calculate stability between folds
-    for stability in settings.get_dynamic_pipeline_mapping().get("stability"):
+    for stability in settings.DYNAMIC_PIPELINES_MAPPING.get("stability"):
         for fold_main in range(n_cross_val_folds + 1):
             for fold_to_compare in range(
                 n_cross_val_folds + 1

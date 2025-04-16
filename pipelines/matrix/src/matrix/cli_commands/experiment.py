@@ -61,8 +61,6 @@ def experiment(ctx, gcp_env):
     # https://click.palletsprojects.com/en/stable/commands/#nested-handling-and-contexts
     ctx.ensure_object(dict)
     ctx.obj["gcp_env"] = gcp_env
-    # env var needed by hook_utilities.py to exclude private datasets if dev
-    os.environ["GCP_ENV"] = gcp_env
 
     if os.getenv("GITHUB_ACTIONS"):
         # Running in GitHub Actions, get the IAP token of service acccount from the secrets

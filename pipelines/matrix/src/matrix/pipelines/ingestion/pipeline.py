@@ -62,7 +62,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     )
 
     # Add ingestion pipeline for each source
-    for source in settings.get_dynamic_pipeline_mapping().get("integration"):
+    for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration"):
         if source.get("has_nodes", True):
             nodes_lst.append(
                 node(
