@@ -8,6 +8,7 @@ WITH mapped AS (
       WHEN agent_type = 'data_analysis_pipeline' THEN 0.5
       WHEN agent_type = 'computational_model' THEN 0.5
       WHEN agent_type = 'text_mining_agent' THEN 0.3
+      WHEN agent_type = 'not_provided' THEN 0.25
     END AS agent_type_score
   FROM `mtrx-hub-dev-3of.release_${bq_release_version}.edges`
   WHERE agent_type IS NOT NULL AND agent_type != ''

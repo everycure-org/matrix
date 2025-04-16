@@ -124,10 +124,152 @@ SELECT * FROM bq.agent_type_score
 SELECT * FROM bq.knowledge_level_distribution
 ```
 
-
 ```sql agent_type_by_source
 SELECT * FROM bq.agent_type_distribution
 ```
+
+```sql epistemic_score
+SELECT * FROM bq.epistemic_score
+```
+
+```sql epistemic_heatmap
+SELECT * FROM bq.epistemic_heatmap
+```
+
+<div class="text-center text-lg font-semibold mt-6 mb-2">
+    Epistemic Score
+    <div class="text-sm font-normal mt-1">
+        The Epistemic Score summarizes provenance quality across the graph by averaging values assigned to each edge's
+        knowledge level and agent type.
+    </div>
+    <div class="text-sm font-normal mt-1">
+        A higher average reflects stronger provenance overall, indicating a greater proportion of high-confidence, 
+        human-curated knowledge in the graph.
+    </div>
+</div>
+
+
+<!-- Metric row: Epistemic Score -->
+<Grid col=2>
+  <div class="text-center text-lg">
+    <p>
+      <span class="font-semibold text-2xl">
+        <Value data={epistemic_score} column="average_epistemic_score" fmt="num2" />
+      </span><br/>
+      Epistemic Score
+    </p>
+  </div>
+  <div class="text-center text-lg">
+    <p>
+      <span class="font-semibold text-2xl">
+        <Value data={epistemic_score} column="included_edges" fmt="num2m" />
+      </span><br/>
+      edges used in calculation
+    </p>
+  </div>
+</Grid>
+
+<!-- Spacer -->
+<div class="mb-6"></div>
+
+<!-- heatmap -->
+<ECharts
+  style={{ width: '100%', height: '800px' }}
+  config={{
+    title: {
+      text: 'Epistemic Provenance',
+      left: 'center'
+    },
+    tooltip: {
+      formatter: function (params) {
+        const [x, y, count, score] = params.value;
+        return `
+          Knowledge Level: ${x}<br/>
+          Agent Type: ${y}<br/>
+          Edges: ${count.toLocaleString()}<br/>
+          Score: ${score.toFixed(2)}
+        `;
+      }
+    },
+    grid: {
+      top: 20,
+      bottom: 0,
+      left: 5,
+      right: 80,
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: [
+        "Knowledge Assertion",
+        "Logical Entailment",
+        "Prediction",
+        "Statistical Association",
+        "Observation",
+        "Not Provided"
+      ],
+      axisLabel: {
+        rotate: 30,
+        fontSize: 10
+      }
+    },
+    yAxis: {
+      type: 'category',
+      data: [
+        "Not Provided", 
+        "Text Mining Agent",
+        "Computational Model",
+        "Data Analysis Pipeline",
+        "Automated Agent",
+        "Manual Validation of\nAutomated Agent",
+        "Manual Agent"
+      ],
+      axisLabel: {
+        fontSize: 10
+      }
+    },
+    visualMap: {
+      min: 0.0,
+      max: 1.0,
+      orient: 'vertical',
+      right: 10,
+      top: 'middle',
+      inRange: {
+        color: ['#d73027', '#ffffbf', '#1a9850']
+      },
+      text: ['High', 'Low']
+    },
+    series: [{
+      type: 'heatmap',
+      label: {
+        show: true,
+        formatter: function (param) {
+          const count = param.value[2];
+          return count >= 1e6
+            ? (count / 1e6).toFixed(1) + 'M'
+            : count >= 1e3
+            ? (count / 1e3).toFixed(0) + 'K'
+            : count.toString();
+        },
+        fontSize: 10,
+        color: '#000'
+      },
+      data: epistemic_heatmap.map(d => [
+        d.knowledge_level_label,
+        d.agent_type_label,
+        d.edge_count,
+        d.average_score
+      ]),
+      emphasis: {
+        itemStyle: {
+          borderColor: '#333',
+          borderWidth: 1
+        }
+      }
+    }]
+  }}
+/>
+
 
 <div class="text-center text-lg font-semibold mt-6 mb-2">
     Knowledge Level
@@ -201,7 +343,8 @@ SELECT * FROM bq.agent_type_distribution
         "null"
       ],
       axisLabel: {
-        rotate: 45
+        rotate: 30,
+        fontSize: 10
       }
     },
     yAxis: {
@@ -276,7 +419,7 @@ SELECT * FROM bq.agent_type_distribution
 
 <!-- Second row: full-width bar chart -->
 <ECharts 
-  style={{ height: '700px' }}
+  style={{ height: '750px' }}
   config={{
     title: {
       text: 'Agent Type by Upstream Data Source',
@@ -311,7 +454,8 @@ SELECT * FROM bq.agent_type_distribution
         "null"
       ],
       axisLabel: {
-        rotate: 45
+        rotate: 30,
+        fontSize: 10
       }
     },
     yAxis: {
