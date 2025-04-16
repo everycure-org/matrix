@@ -10,10 +10,9 @@ from kedro.framework.hooks import _create_hook_manager
 from kedro.framework.project import configure_project, settings
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import bootstrap_project
-from omegaconf.resolvers import oc
-
 from matrix.resolvers import cast_to_int, if_null, merge_dicts
 from matrix.settings import _load_setting
+from omegaconf.resolvers import oc
 
 
 @pytest.fixture(scope="session")
