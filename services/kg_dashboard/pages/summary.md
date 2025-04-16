@@ -1,6 +1,16 @@
 ---
 title: Summary
 ---
+<script>
+  function groupBy(arr, key) {
+    return arr.reduce((acc, item) => {
+      const group = item[key];
+      acc[group] = acc[group] || [];
+      acc[group].push(item);
+      return acc;
+    }, {});
+  }
+</script>
 
 This page provides key metrics about our knowledge graph (KG), including its size, density, and connectivity patterns, with a focus on how nodes from our disease and drug lists are connected within the graph.
 
@@ -32,51 +42,6 @@ from
     <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="edges_per_node_without_most_connected_nodes" fmt="num1"/></span><br/>edges per node when excluding the top 1,000 most connected nodes</p>
 </Grid>
 
-## Graph Trust
-
-<div class="text-center text-lg font-semibold mt-6 mb-2">
-    Knowledge Level
-</div>
-
-```sql overall_graph_trust
-SELECT * FROM bq.graph_trust_score
-```
-
-```sql knowledge_by_source
-SELECT * FROM bq.knowledge_level_distribution
-```
-
-<!-- First row: metrics side-by-side -->
-<Grid col=2>
-  <div class="text-center text-lg">
-    <p>
-      <span class="font-semibold text-2xl">
-        <Value data={overall_graph_trust} column="overall_graph_trust_score" fmt="num2" />
-      </span><br/>
-      average trust score
-    </p>
-  </div>
-  <div class="text-center text-lg">
-    <p>
-      <span class="font-semibold text-2xl">
-        <Value data={overall_graph_trust} column="included_edges" fmt="num2m" />
-      </span><br/>
-      edges used in calculation
-    </p>
-  </div>
-</Grid>
-
-<br/>
-
-<!-- Second row: full-width bar chart -->
-<BarChart 
-  data={knowledge_by_source}
-  x=knowledge_level
-  y=edge_count
-  series=upstream_data_source
-  swapXY=false
-  title="Knowledge Level by Upstream Data Source"
-/>
 
 ## Upstream data sources 
 
@@ -142,6 +107,245 @@ from
         }]
     }}/>
 </Grid>
+
+
+
+## Epistemic Robustness
+
+```sql knowledge_level_score
+SELECT * FROM bq.knowledge_level_score
+```
+
+```sql agent_type_score
+SELECT * FROM bq.agent_type_score
+```
+
+```sql knowledge_level_by_source
+SELECT * FROM bq.knowledge_level_distribution
+```
+
+
+```sql agent_type_by_source
+SELECT * FROM bq.agent_type_distribution
+```
+
+<div class="text-center text-lg font-semibold mt-6 mb-2">
+    Knowledge Level
+    <div class="text-sm font-normal mt-1">
+        Indicates how strong or certain a statement is—ranging from direct assertions and logical entailments to 
+        predictions and statistical associations.
+    </div>
+    <div class="text-sm font-normal mt-1">
+       A higher average reflects greater epistemic confidence across edges.
+    </div>
+</div>
+
+<!-- Spacer -->
+<div class="mb-6"></div>
+
+<!-- First row: metrics side-by-side -->
+<Grid col=2>
+  <div class="text-center text-lg">
+    <p>
+      <span class="font-semibold text-2xl">
+        <Value data={knowledge_level_score} column="average_knowledge_level" fmt="num2" />
+      </span><br/>
+      Average Knowledge Level
+    </p>
+  </div>
+  <div class="text-center text-lg">
+    <p>
+      <span class="font-semibold text-2xl">
+        <Value data={knowledge_level_score} column="included_edges" fmt="num2m" />
+      </span><br/>
+      edges used in calculation
+    </p>
+  </div>
+</Grid>
+
+<br/>
+
+<!-- Second row: full-width bar chart -->
+<ECharts 
+  style={{ height: '700px' }}
+  config={{
+    title: {
+      text: 'Knowledge Level by Upstream Data Source',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      }
+    },
+    legend: {
+      top: 20
+    },
+    grid: {
+      top: 50,
+      left: '3%',
+      right: '4%',
+      bottom: '15%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: [
+        "Knowledge Assertion",
+        "Logical Entailment",
+        "Prediction",
+        "Statistical Association",
+        "Observation",
+        "Not Provided",
+        "null"
+      ],
+      axisLabel: {
+        rotate: 45
+      }
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: {
+        formatter: function (value) {
+          return (value / 1000).toLocaleString() + 'k';
+    }
+  }
+    },
+    series: Object.entries(groupBy(knowledge_level_by_source, 'upstream_data_source')).map(([source, values]) => ({
+      name: source,
+      type: 'bar',
+      stack: 'total',
+      emphasis: {
+        focus: 'series'
+      },
+      data: [
+        "Knowledge Assertion",
+        "Logical Entailment",
+        "Prediction",
+        "Statistical Association",
+        "Observation",
+        "Not Provided",
+        "null"
+      ].map(k => {
+        const entry = values.find(v => v.knowledge_level === k);
+        return entry ? entry.edge_count : 0;
+      })
+    }))
+  }}
+/>
+
+
+<div class="text-center text-lg font-semibold mt-6 mb-2">
+    Agent Type
+    <div class="text-sm font-normal mt-1">
+        Agent Type describes the origin of an edge in terms of how the knowledge was generated—ranging 
+        from direct human assertions to automated text mining.
+    </div>
+    <div class="text-sm font-normal mt-1">
+        A higher average reflects greater human involvement in knowledge generation, 
+        indicating higher trust and interpretability.
+    </div>
+</div>
+
+<!-- Spacer -->
+<div class="mb-6"></div>
+
+
+<!-- First row: metrics side-by-side -->
+<Grid col=2>
+  <div class="text-center text-lg">
+    <p>
+      <span class="font-semibold text-2xl">
+        <Value data={agent_type_score} column="average_agent_type" fmt="num2" />
+      </span><br/>
+      Average Agent Type
+    </p>
+  </div>
+  <div class="text-center text-lg">
+    <p>
+      <span class="font-semibold text-2xl">
+        <Value data={agent_type_score} column="included_edges" fmt="num2m" />
+      </span><br/>
+      edges used in calculation
+    </p>
+  </div>
+</Grid>
+
+<br/>
+
+<!-- Second row: full-width bar chart -->
+<ECharts 
+  style={{ height: '700px' }}
+  config={{
+    title: {
+      text: 'Agent Type by Upstream Data Source',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      }
+    },
+    legend: {
+      top: 20
+    },
+    grid: {
+      top: 50,
+      left: '3%',
+      right: '4%',
+      bottom: '15%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: [
+        "Manual Agent",
+        "Manual Validation\nof Automated Agent",
+        "Automated Agent",
+        "Data Analysis Pipeline",
+        "Computational Model",
+        "Text-Mining Agent",
+        "Not Provided",
+        "null"
+      ],
+      axisLabel: {
+        rotate: 45
+      }
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: {
+        formatter: function (value) {
+          return (value / 1000).toLocaleString() + 'k';
+    }
+  }
+    },
+    series: Object.entries(groupBy(agent_type_by_source, 'upstream_data_source')).map(([source, values]) => ({
+      name: source,
+      type: 'bar',
+      stack: 'total',
+      emphasis: {
+        focus: 'series'
+      },
+      data: [
+        "Manual Agent",
+        "Manual Validation of Automated Agent",
+        "Automated Agent",
+        "Data Analysis Pipeline",
+        "Computational Model",
+        "Text-Mining Agent",
+        "Not Provided",
+        "null"
+      ].map(k => {
+        const entry = values.find(v => v.agent_type === k);
+        return entry ? entry.edge_count : 0;
+      })
+    }))
+  }}
+/>
+
 
 ## Disease list nodes connections
 
