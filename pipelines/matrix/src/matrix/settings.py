@@ -43,7 +43,7 @@ SESSION_STORE_ARGS = {"path": str(Path(__file__).parents[2])}
 DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
     {
         "cross_validation": {
-            "n_cross_val_folds": 3,
+            "n_cross_val_folds": 1,
         },
         "integration": [
             {"name": "rtx_kg2", "integrate_in_kg": True},
