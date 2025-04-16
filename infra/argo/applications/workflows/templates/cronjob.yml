@@ -56,10 +56,10 @@ spec:
             args:
             - template
             - delete
-            - --all
+            - --older
+            - 30d
             - --namespace
             - argo-workflows
-
             resources:
               requests:
                 cpu: 100m
