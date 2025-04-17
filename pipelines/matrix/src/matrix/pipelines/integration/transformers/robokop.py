@@ -30,7 +30,6 @@ class RobokopTransformer(GraphTransformer):
         # fmt: off
         return (
             nodes_df
-            .withColumnRenamed("id:ID", "id")
             .withColumnRenamed("name:string", "name")
             .withColumnRenamed("description:string", "description")
             .withColumn("upstream_data_source",              F.array(F.lit("robokop")))
@@ -56,9 +55,6 @@ class RobokopTransformer(GraphTransformer):
         # fmt: off
         return (
             edges_df
-            .withColumnRenamed("subject:START_ID",                  "subject")
-            .withColumnRenamed("predicate:TYPE",                    "predicate")
-            .withColumnRenamed("object:END_ID",                     "object")
             .withColumn("aggregator_knowledge_source",              F.split(F.col("aggregator_knowledge_source"), ROBOKOP_SEPARATOR))
             .withColumn("publications",                             F.split(F.col("publications:string[]"), ROBOKOP_SEPARATOR))
             .withColumn("upstream_data_source",                     F.array(F.lit("robokop")))
