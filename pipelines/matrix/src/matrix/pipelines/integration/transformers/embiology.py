@@ -21,14 +21,16 @@ class EmbiologyTransformer(GraphTransformer):
             Transformed DataFrame.
         """
         # fmt: off
+        SEPARATOR = r"\|"
         return (
             nodes_df
             .withColumn("upstream_data_source",              f.array(f.lit("embiology")))
             .withColumn("labels",                            f.lit(None).cast(T.ArrayType(T.StringType())))
-            .withColumn("all_categories",                    f.col("all_categories"))
+            .withColumn("all_categories",                    f.split(f.col("all_categories") , SEPARATOR).cast(T.ArrayType(T.StringType())))
             .withColumn("equivalent_identifiers",            f.lit(None).cast(T.ArrayType(T.StringType()))) # TODO: add equivalent identifiers
             .withColumn("publications",                      f.lit(None).cast(T.ArrayType(T.StringType())))
             .withColumn("international_resource_identifier", f.lit(None).cast(T.StringType())) # TODO: add international resource identifier
+            .withColumn("description",                       f.lit(None).cast(T.StringType()))
         )
         # fmt: on
 
@@ -50,7 +52,7 @@ class EmbiologyTransformer(GraphTransformer):
         return (
             edges_df
             .withColumn("upstream_data_source",          f.array(f.lit("embiology")))
-            .withColumn("aggregator_knowledge_source",   f.lit(None).cast(T.StringType())) #Embiology 2.10 has a column for aggregator knowledge source
+            .withColumn("aggregator_knowledge_source",   f.lit(None).cast(T.ArrayType(T.StringType()))) #Embiology 2.10 has a column for aggregator knowledge source
             .withColumn("publications",                  f.lit(None).cast(T.ArrayType(T.StringType())))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
             .withColumn("agent_type",                    f.lit(None).cast(T.StringType()))
