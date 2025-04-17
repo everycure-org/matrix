@@ -383,7 +383,7 @@ class ReleaseInfoHooks:
         version_formatted = "release_" + re.sub(r"[.-]", "_", version)
         tmpl = (
             f"https://console.cloud.google.com/bigquery?"
-            f"project={ReleaseInfoHooks._globals['gcp_project']}"
+            f"project={ReleaseInfoHooks._globals['runtime_gcp_project']}"
             f"&ws=!1m4!1m3!3m2!1s"
             f"mtrx-hub-dev-3of!2s"
             f"{version_formatted}"

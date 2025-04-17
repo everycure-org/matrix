@@ -37,6 +37,8 @@ spec:
         value: {{ mlflow_experiment_id }}
       - name: mlflow_run_id
         value: "{{ mlflow_run_id }}"
+      - name: mlflow_url
+        value: "{{ mlflow_url }}"
   templates:
   - &_kedro_template
     metrics:
@@ -122,7 +124,7 @@ spec:
           value: {% raw %} "{{workflow.parameters.run_name}}" 
           {% endraw %}
         - name: RELEASE_VERSION
-          value: "{{release_version}}" 
+          value: "{{release_version}}"
         - name: RELEASE_FOLDER_NAME
           value: {% raw %} "{{workflow.parameters.release_folder_name}}" 
           {% endraw %}
@@ -137,6 +139,9 @@ spec:
           {% endraw %}
         - name: MLFLOW_RUN_ID
           value: {% raw %} "{{workflow.parameters.mlflow_run_id}}"
+          {% endraw %}
+        - name: MLFLOW_URL
+          value: {% raw %} "{{workflow.parameters.mlflow_url}}"
           {% endraw %}
         - name: NEO4J_USER
           valueFrom:
@@ -156,12 +161,12 @@ spec:
             secretKeyRef:
               name: matrix-secrets
               key: OPENAI_API_KEY
-        - name: GCP_PROJECT_ID
+        - name: RUNTIME_GCP_PROJECT_ID
           valueFrom:
             configMapKeyRef:
               name: matrix-config
               key: GCP_PROJECT_ID
-        - name: GCP_BUCKET
+        - name: RUNTIME_GCP_BUCKET
           valueFrom:
             configMapKeyRef:
               name: matrix-config

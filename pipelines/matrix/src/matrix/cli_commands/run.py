@@ -1,4 +1,4 @@
-from typing import Any, Collection, Dict, List, NamedTuple, Optional, Set
+from typing import Any, Collection, Dict, List, Literal, NamedTuple, Optional, Set
 
 import click
 from kedro.framework.cli.project import (
@@ -29,6 +29,7 @@ from kedro.io import DataCatalog
 from kedro.pipeline.pipeline import Pipeline
 from kedro.utils import load_obj
 
+from matrix.cli_commands.submit import abort_if_incorrect_env_vars
 from matrix.session import KedroSessionWithFromCatalog
 
 
@@ -68,6 +69,7 @@ class RunConfig(NamedTuple):
 @click.option( "--conf-source",   type=click.Path(exists=True, file_okay=False, resolve_path=True), help=CONF_SOURCE_HELP,)
 @click.option( "--params",        type=click.UNPROCESSED, default="", help=PARAMS_ARG_HELP, callback=_split_params,)
 @click.option( "--from-env",      type=str, default=None, help="Custom env to read from, if specified will read from the `--from-env` and write to the `--env`",)
+
 # fmt: on
 def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async: bool, node_names: list[str], to_nodes: list[str], from_nodes: list[str], from_inputs: list[str], to_outputs: list[str], load_versions: list[str], pipeline: str, conf_source: str, params: dict[str, Any], from_env: Optional[str]=None):
     """Run the pipeline."""
@@ -97,7 +99,6 @@ def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async
 
 
 def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
-    
     if config.pipeline_name in ["test", "fabricator"] and config.env in [None, "base"]:
         raise RuntimeError(
             "Running the fabricator in the base environment might overwrite production data! Use the test env `-e test` instead."
