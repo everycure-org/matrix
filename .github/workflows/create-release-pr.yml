@@ -13,13 +13,9 @@ on:
         description: 'The git sha that triggered the kg_release'
         required: true
 
-env:
-  project_id: 'mtrx-hub-dev-3of'
-  workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
-  service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
-
 jobs:
   create_release_notes_draft:
+    environment: dev
     runs-on: ubuntu-latest
     name: Create Draft of the Release Notes
     permissions:
@@ -94,14 +90,14 @@ jobs:
       - name: Authenticate with Google Cloud
         uses: 'google-github-actions/auth@v2'
         with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.workload_identity_provider}}
-          service_account: ${{env.service_account}}
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider_rw}}
+          service_account: ${{vars.service_account_rw}}
 
       - name: Download & commit release info file
         working-directory: docs/src/releases/changelog_files
         env:
-          RELEASE_DIR_GCS: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
+          RELEASE_DIR_GCS: gs://${{ env.GCS_BUCKET }}/kedro/data/releases
           FILENAME: ${{env.release}}_info.json
         run: |
           set -eux
