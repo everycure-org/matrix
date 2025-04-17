@@ -424,15 +424,15 @@ ingestion.raw.spoke.edges@pandas:
 # -------------------------------------------------------------------------
 # Embiology
 # -------------------------------------------------------------------------
-# ingestion.raw.embiology.nodes@spark:
-#   <<: *_layer_raw
-#   type: matrix.datasets.gcp.LazySparkDataset
-#   filepath: ${globals:paths.kg_raw}/KGs/embiology/${globals:data_sources.embiology.version}/nodes.tsv
-#   file_format: csv
-#   load_args:
-#     sep: "\t"
-#     header: true
-#     index: false
+ingestion.raw.embiology.nodes@spark:
+  <<: *_layer_raw
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.kg_raw}/KGs/embiology/${globals:data_sources.embiology.version}/nodes.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
 
 ingestion.raw.embiology.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
@@ -444,15 +444,15 @@ ingestion.raw.embiology.nodes@pandas:
   load_args:
     sep: "\t"
 
-# ingestion.raw.embiology.edges@spark:
-#   <<: *_layer_raw
-#   type: matrix.datasets.gcp.LazySparkDataset
-#   filepath: ${globals:paths.kg_raw}/KGs/embiology/${globals:data_sources.embiology.version}/edges.tsv
-#   file_format: csv
-#   load_args:
-#     sep: "\t"
-#     header: true
-#     index: false
+ingestion.raw.embiology.edges@spark:
+  <<: *_layer_raw
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.kg_raw}/KGs/embiology/${globals:data_sources.embiology.version}/edges.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
 
 ingestion.raw.embiology.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
@@ -464,10 +464,10 @@ ingestion.raw.embiology.edges@pandas:
   load_args:
     sep: "\t"
 
-# ingestion.int.embiology.nodes:
-#   <<: [*_spark_parquet, *_layer_int]
-#   filepath: ${globals:paths.ingestion}/int/embiology/${globals:data_sources.embiology.version}/nodes
+ingestion.int.embiology.nodes:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/embiology/${globals:data_sources.embiology.version}/nodes
 
-# ingestion.int.embiology.edges:
-#   <<: [*_spark_parquet, *_layer_int]
-#   filepath: ${globals:paths.ingestion}/int/embiology/${globals:data_sources.embiology.version}/edges
+ingestion.int.embiology.edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/embiology/${globals:data_sources.embiology.version}/edges
