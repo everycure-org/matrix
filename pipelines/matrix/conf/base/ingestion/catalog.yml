@@ -1,6 +1,13 @@
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
+_pandas_parquet_ds: &_pandas_parquet
+  type: matrix.datasets.graph.PandasParquetDataset
+  save_args:
+    engine: pyarrow
+  load_args:
+    engine: pyarrow
+
 _spark_parquet_ds: &_spark_parquet
   type: matrix.datasets.gcp.LazySparkDataset
   file_format: parquet
@@ -425,44 +432,22 @@ ingestion.raw.spoke.edges@pandas:
 # Embiology
 # -------------------------------------------------------------------------
 ingestion.raw.embiology.nodes@spark:
-  <<: *_layer_raw
+  <<: [*_spark_parquet, *_layer_raw]
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.kg_raw}/KGs/embiology/${globals:data_sources.embiology.version}/nodes.tsv
-  file_format: csv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
+  filepath: ${globals:paths.kg_raw}/KGs/embiology/${globals:data_sources.embiology.version}/nodes.parquet
 
 ingestion.raw.embiology.nodes@pandas:
-  <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.kg_raw}/KGs/embiology/${globals:data_sources.embiology.version}/nodes.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
+  <<: [*_pandas_parquet, *_layer_raw]
+  filepath: ${globals:paths.kg_raw}/KGs/embiology/${globals:data_sources.embiology.version}/nodes.parquet
 
 ingestion.raw.embiology.edges@spark:
-  <<: *_layer_raw
+  <<: [*_spark_parquet, *_layer_raw]
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.kg_raw}/KGs/embiology/${globals:data_sources.embiology.version}/edges.tsv
-  file_format: csv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
+  filepath: ${globals:paths.kg_raw}/KGs/embiology/${globals:data_sources.embiology.version}/edges.parquet
 
 ingestion.raw.embiology.edges@pandas:
-  <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.kg_raw}/KGs/embiology/${globals:data_sources.embiology.version}/edges.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
+  <<: [*_pandas_parquet, *_layer_raw]
+  filepath: ${globals:paths.kg_raw}/KGs/embiology/${globals:data_sources.embiology.version}/edges.parquet
 
 ingestion.int.embiology.nodes:
   <<: [*_spark_parquet, *_layer_int]
