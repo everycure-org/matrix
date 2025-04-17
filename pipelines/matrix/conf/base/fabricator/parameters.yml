@@ -632,8 +632,9 @@ fabricator.embiology:
           - biolink:interacts_with
           - biolink:affects
           - biolink:subclass_of
-          - biolink:is_nearby_variant_of
-          - biolink:ChemicalToChemicalDerivationAssociation
+          - biolink:disrupts
+          - biolink:produces
+          - biolink:subclass_of
       original_id:
         type: generate_unique_id
         seed: 40294
