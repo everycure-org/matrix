@@ -434,20 +434,20 @@ ingestion.int.spoke.edges:
 ingestion.raw.embiology.nodes@spark:
   <<: [*_spark_parquet, *_layer_raw]
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.kg_raw}/KGs/embiology/${globals:data_sources.embiology.version}/nodes.parquet
+  filepath: ${globals:paths.kg_raw_private}/KGs/embiology/${globals:data_sources.embiology.version}/nodes.parquet
 
 ingestion.raw.embiology.nodes@pandas:
   <<: [*_pandas_parquet, *_layer_raw]
-  filepath: ${globals:paths.kg_raw}/KGs/embiology/${globals:data_sources.embiology.version}/nodes.parquet
+  filepath: ${globals:paths.kg_raw_private}/KGs/embiology/${globals:data_sources.embiology.version}/nodes.parquet
 
 ingestion.raw.embiology.edges@spark:
   <<: [*_spark_parquet, *_layer_raw]
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.kg_raw}/KGs/embiology/${globals:data_sources.embiology.version}/edges.parquet
+  filepath: ${globals:paths.kg_raw_private}/KGs/embiology/${globals:data_sources.embiology.version}/edges.parquet
 
 ingestion.raw.embiology.edges@pandas:
   <<: [*_pandas_parquet, *_layer_raw]
-  filepath: ${globals:paths.kg_raw}/KGs/embiology/${globals:data_sources.embiology.version}/edges.parquet
+  filepath: ${globals:paths.kg_raw_private}/KGs/embiology/${globals:data_sources.embiology.version}/edges.parquet
 
 ingestion.int.embiology.nodes:
   <<: [*_spark_parquet, *_layer_int]
