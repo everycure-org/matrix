@@ -1,6 +1,7 @@
+import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 import yaml
 from jinja2 import Environment, FileSystemLoader
@@ -20,6 +21,7 @@ def generate_argo_config(
     release_version: str,
     image_tag: str,
     mlflow_experiment_id: int,
+    mlflow_url: str,
     namespace: str,
     username: str,
     pipeline: Pipeline,
@@ -47,6 +49,7 @@ def generate_argo_config(
         image=image,
         image_tag=image_tag,
         mlflow_experiment_id=mlflow_experiment_id,
+        mlflow_url=mlflow_url,
         mlflow_run_id=mlflow_run_id,
         namespace=namespace,
         username=username,
@@ -292,4 +295,6 @@ def clean_name(name: str) -> str:
 
 
 def get_trigger_release_flag(pipeline: str) -> str:
-    return str(pipeline in ("data_release", "kg_release", "kg_release_patch"))
+    pipeline_correct = pipeline in ("data_release", "kg_release", "kg_release_patch")
+    env_correct = "-dev-" in os.environ["RUNTIME_GCP_PROJECT_ID"].lower()
+    return str(pipeline_correct and env_correct)

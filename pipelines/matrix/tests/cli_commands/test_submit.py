@@ -82,7 +82,9 @@ def test_build_argo_template(mock_generate_argo_config: None) -> None:
         ArgoResourceConfig(),
         "cloud",
         is_test=True,
+        runtime_gcp_project_id="mtrx-hub-dev-3of",
         mlflow_experiment_id=1,
+        mlflow_url="https://mlflow.platform.dev.everycure.org/",
     )
     mock_generate_argo_config.assert_called_once()
 
@@ -139,7 +141,7 @@ def test_apply_argo_template(mock_run_subprocess: None) -> None:
 
 def test_submit_workflow(mock_run_subprocess: None) -> None:
     mock_run_subprocess.return_value.stdout = '{"metadata": {"name": "test-job"}}'
-    submit_workflow("test_run", "test_namespace", verbose=True)
+    submit_workflow("test_run", "test_namespace", gcp_env="dev", verbose=True)
     assert mock_run_subprocess.call_count == 1
 
 
@@ -239,6 +241,7 @@ def test_workflow_submission(
         pipeline_obj=pipeline_obj,
         verbose=True,
         dry_run=False,
+        gcp_env="dev",
         template_directory=temporary_directory,
         mlflow_experiment_id=1,
         allow_interactions=False,
