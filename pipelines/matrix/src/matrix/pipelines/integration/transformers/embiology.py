@@ -21,13 +21,13 @@ class EmbiologyTransformer(GraphTransformer):
             Transformed DataFrame.
         """
         # fmt: off
-        SEPARATOR = r"\|"
+        EMBIOLOGY_SEPARATOR = r"\|"
         return (
             nodes_df
             .withColumn("upstream_data_source",              f.array(f.lit("embiology")))
             .withColumn("labels",                            f.lit(None).cast(T.ArrayType(T.StringType())))
-            .withColumn("all_categories",                    f.split(f.col("all_categories") , SEPARATOR).cast(T.ArrayType(T.StringType())))
-            .withColumn("equivalent_identifiers",            f.lit(None).cast(T.ArrayType(T.StringType()))) # TODO: add equivalent identifiers
+            .withColumn("all_categories",                    f.split(f.col("all_categories") , EMBIOLOGY_SEPARATOR).cast(T.ArrayType(T.StringType())))
+            .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_identifiers"), EMBIOLOGY_SEPARATOR))
             .withColumn("publications",                      f.lit(None).cast(T.ArrayType(T.StringType())))
             .withColumn("international_resource_identifier", f.lit(None).cast(T.StringType())) # TODO: add international resource identifier
             .withColumn("description",                       f.lit(None).cast(T.StringType()))
