@@ -1,4 +1,4 @@
-# Drug Repurposing Experiment Report
+# Disease split vs random split for MATRIX models
 
 ## 1. Experiment Title
 Comparing random cross-validation against disease-area split
