@@ -16,16 +16,20 @@ This runbook outlines the steps to create a release in our GitHub repository, ei
 2. **Determine which pipeline to run.**
     - A data release is created by running a kedro pipeline. You can run a dedicated pipeline called `data_release` or other pipeline, which contains it.
     - Consult the [pipeline registry](https://github.com/everycure-org/matrix/blob/main/pipelines/matrix/src/matrix/pipeline_registry.py) for the current pipeline definitions.
-    - Currently, data release will be triggered if one of the following pipelines are run: `data_release`, `kg_release`.
+    - Currently, data release will be triggered if one of the following pipelines are run: `data_release`, `kg_release`, `kg_release_patch`. (note: `kg_release_patch` is triggered only in weekly patch bumps, as releasing to Neo4J is not necessary and removed from `kg_release_patch`)
 3. **Trigger the pipeline.**
     - Activate the virtual environment, `source ./matrix/pipelines/matrix/.venv/bin/activate`
-    - Build and run a kedro submit command, e.g.: `kedro submit --username <YOUR_NAME> --release-version <INTENDED_RELEASE_VERSION> --pipeline kg_release`
+    - Build and run a kedro experiment run command, e.g.: `kedro experiment run --username <YOUR_NAME> --release-version <INTENDED_RELEASE_VERSION> --pipeline kg_release --experiment-name <YOUR_EXPERIMENT_NAME> --run-name <YOUR_RUN_NAME>`
 4. **Wait for pipeline to finish.**
-    - Once the pipeline finishes, a new data release PR will be created with release article and changelog. 
+    - Once the pipeline finishes, a new data release PR will be created with changelog and an optional release article template (for major or minor bumps).
+    - If the intended release verion is a patch bump and the release article is still expected, please follow the steps to generate the template:
+        - Switch to the release branch.
+        - Activate the virtual environment `source ./matrix/apps/matrix-cli/.venv/bin/activate`
+        - Run the command `matrix releases template --output-file docs/src/releases/posts/<INTENDED_RELEASE_VERSION>/post.md --until <THE_GIT_SHA_THAT_TRIGGERED_THE_RELEASE>` 
 5. **Review the PR that was auto-created.**
-    - Review the list and check the names of the PRs to ensure they read nicely. Consider reshuffling them so they tell a good story instead of just being a list of things.
-    - Manually check who has contributed and list the contributors of the month to encourage contributions through PRs (code, docs, experiment reports, etc.). See the cli command below for how to best do this
-    - Upon merging the PR, the release will be publicized to the [Every Cure website](https://docs.dev.everycure.org/releases/) by another GitHub Action. It will then also be listed under the [GitHub releases](https://github.com/everycure-org/matrix/releases).
+- Review the generated article template and ask contributors to adjust. The auto-generated article template only includes the PR title, so make sure the titles are named explicitly and add detailed contents if needed
+    - Manually check who has contributed and list the contributors of the month to encourage contributions through PRs (code, docs, experiment reports, etc.). See the cli command below for how to best do this.
+    - Upon merging the PR, the release will be publicized to the [Every Cure website](https://docs.dev.everycure.org/releases/) by another [GitHub Action](https://github.com/everycure-org/matrix/blob/main/.github/workflows/create-release-pr.yml). It will then also be listed under the [GitHub releases](https://github.com/everycure-org/matrix/releases).
 6. **Create a sample release.**
     - Create a sample release as a subset of the KG release, which will be used for tests.
 7. **Check the KG dashboard.**
@@ -37,18 +41,18 @@ This runbook outlines the steps to create a release in our GitHub repository, ei
 
 To streamline the release process, we use GitHub Actions for periodic **patch** and **minor** version bumps. This workflow consists of three steps:  
 
-1. **Run Kedro kg-release via GitHub Actions.**  
+1. **Run Kedro kg-release via [GitHub Actions](https://github.com/everycure-org/matrix/blob/main/.github/workflows/submit-kedro-pipeline.yml).**  
     - A **weekly patch bump** and a **monthly minor bump** are scheduled to automatically trigger the Kedro pipeline submission.  
 
 2. **Wait for pipeline to finish.**
-    - Once the pipeline finishes, a new data release PR will be created with optional release article and changelog. 
+    - Once the pipeline finishes, a new data release PR will be created with an optional release article template and changelog.
 
 3. **Review the Auto-Created PR**  
    - **For the weekly patch bump:** The primary goal is to verify the stability of the `main` branch after a week of new commits. Once reviewed, simply close the PR, as no further action is needed.  
    - **For the monthly minor bump:** Since this results in an official release, follow these steps:  
-        - Review the list and check the names of the PRs to ensure they read nicely. Consider reshuffling them so they tell a good story instead of just being a list of things. In the past, the person who takes ownership of this PR simply asked everyone on Slack to revise their PR titles, to make them more reflective of what they contribute towards Every Cure's goals.
-        - Manually check who has contributed and list the contributors of the month to encourage contributions through PRs (code, docs, experiment reports, etc.). See the cli command below for how to best do this
-        - Upon merging the PR, the release will be publicized to the [Every Cure website](https://docs.dev.everycure.org/releases/) by another GitHub Action. It will then also be listed under the [GitHub releases](https://github.com/everycure-org/matrix/releases).
+- Review the auto-generated release article template and ask contributors to improve it. E.g. in the past, the person who takes ownership of this PR simply asked everyone on Slack to revise their PR titles, to make them more reflective of what they contribute towards Every Cure's goals.
+        - Manually check who has contributed and list the contributors of the month to encourage contributions through PRs (code, docs, experiment reports, etc.). See the cli command below for how to best do this.
+        - Upon merging the PR, the release will be publicized to the [Every Cure website](https://docs.dev.everycure.org/releases/) by another [GitHub Action](https://github.com/everycure-org/matrix/blob/main/.github/workflows/create-release-pr.yml). It will then also be listed under the [GitHub releases](https://github.com/everycure-org/matrix/releases).
 
 ## Commands
 
@@ -76,7 +80,7 @@ This issue might be caused by a failure in the GitHub Actions workflow responsib
 1. Navigate to the [**Actions**](https://github.com/everycure-org/matrix/actions) tab in the GitHub repository.  
 2. Open the [**"Create Pull Request to Verify AI Summary of Release Notes"**](https://github.com/everycure-org/matrix/actions/workflows/create-release-pr.yml) workflow.  
 3. Locate the workflow run for the release you triggered (it should be the most recent one).  
-4. Inside the workflow, find the step **"Print Variables"**, and note down the printed **release version** and **Git SHA (gitref)**—these will be needed later for re-triggering.  
+4. Inside the workflow, find the step **"Print Release Version and Git SHA"**, and note down the printed **release version** and **Git SHA (gitref)**—these will be needed later for re-triggering.  
 5. Report the failure for further investigation.  
 6. Once the issue is resolved, re-trigger the workflow:  
    - Return to the UI in [**Step 2**](https://github.com/everycure-org/matrix/actions/workflows/create-release-pr.yml).
@@ -84,12 +88,7 @@ This issue might be caused by a failure in the GitHub Actions workflow responsib
    - Enter the **release version** and **Git SHA** noted in step 4.  
    - Click **"Run workflow"** to initiate the process again. 
 
-   <p align="center">
-      <img src="../../assets/img/create-pr-input.png" alt="UI of triggering the PR creation workflow" width="600">
-   </p>
-   <p align="center">
-      <i>Figure 1: UI of triggering the PR creation workflow</i>
-   </p>
+   ![UI of triggering the PR creation](../../assets/img/create-pr-input.png)
 
 ### 3. **The scheduled time has passed, but the auto-submitted release pipeline is not running**  
 
@@ -107,17 +106,12 @@ This issue might be due to a failure in the GitHub Actions workflow responsible 
    - Select the version bump type (**patch** or **minor**).  
    - Click **"Run workflow"** to restart the process.  
 
-   <p align="center">
-      <img src="../../assets/img/version-bump-input.png" alt="UI of triggering the submission workflow" width="600">
-   </p>
-   <p align="center">
-      <i>Figure 2: UI of triggering the submission workflow</i>
-  </p>
+   ![UI of triggering the submission workflow](../../assets/img/version-bump-input.png)
 
 ## Best Practices
 
-- Ensure all PRs are labeled and titled correctly before generating the release notes.
-- Review and update the release notes draft to ensure clarity and completeness.
+- Ensure all PRs are labeled and titled correctly before generating the release article template.
+- Fill in the release article template to ensure clarity and completeness.
 - Acknowledge all contributors to foster a collaborative environment.
 
 ## Additional Resources

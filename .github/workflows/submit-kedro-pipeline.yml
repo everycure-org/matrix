@@ -111,7 +111,7 @@ jobs:
         working-directory: docs/scripts
         run: |
           pip install semver
-          python bump_version.py --type="${{env.BUMP_TYPE}}" >> "$GITHUB_ENV"
+          python bump_version.py --type="${{env.BUMP_TYPE}}" --tag="${{env.latest_tag}}" >> "$GITHUB_ENV"
 
       - name: Branch off
         run: |
@@ -134,7 +134,7 @@ jobs:
             --username GH-Actions-bot \
             --namespace argo-workflows \
             --experiment-name scheduled-kg-release \
-            --run-name auto-kg-release \
+            --run-name auto-kg-release-${{ env.release_version }} \
             --release-version "${{ env.release_version }}" \
             --pipeline ${RELEASE_PIPELINE} \
             --headless
