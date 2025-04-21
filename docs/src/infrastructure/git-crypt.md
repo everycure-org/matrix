@@ -158,17 +158,22 @@ Re-enter the passphrase you used to create the public key to unlock.
 You can lock the key by running 
 ```
 git-crypt lock -a
-``` 
+```
 
 ## General setup
 
-We have 1 key in the repository:
+We have 2 keys in the repository:
 
-- `default` key: used to decrypt infra secrets used to set up the infrastructure. Not shared with everyone
+- `default`
+- `prod`
+
+Both keys are used to encrypt/decrypt infra secrets used to set up the
+infrastructure, the first being for non-production environments, the latter for
+the production environment. Not everyone will get access to these.
 
 Most people should not need to decrypt the `default` key. In fact most people no longer need git-crypt at all. We have moved to using [Secret Manager](https://cloud.google.com/secret-manager) to manage secrets.
 
-The CD system uses the `default` key to decrypt the secrets needed to deploy the
+The CD system will use the relevant key to decrypt the secrets needed to deploy the
 infrastructure.
 
 
