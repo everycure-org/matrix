@@ -120,7 +120,8 @@ def reduce_dimension(df: ps.DataFrame, transformer, input: str, output: str, ski
                    embeddings, depending on the 'skip' parameter.
     """
     if skip:
-        return df.withColumn(output, ps.functions.col(input).cast("array<float>"))
+        return df.withColumn("output", F.expr("transform(input, x -> rand())").cast(ArrayType(FloatType())))
+        # return df.withColumn(output, ps.functions.col(input).cast("array<float>"))
 
     # Convert into correct type
     df = df.withColumn("features", array_to_vector(ps.functions.col(input).cast("array<float>")))
