@@ -89,9 +89,9 @@ MLFLOW_URL=https://mlflow.platform.prod.everycure.org/
 
 ### Data Access
 
-- **Private Datasets**: In development, private datasets are automatically excluded from pipelines
-- **Storage Locations**: Different GCP buckets are used for `dev` vs `prod` pipeline outputs
-- **Public Datasets**: When running in production, public datasets are still ingested from the bucket in the dev GCP project
+- **Private Datasets**: In development gcp-env, private datasets are automatically excluded from pipelines
+- **Storage Locations**: Different GCP buckets are used for `dev` vs `prod` gcp-env pipeline outputs
+- **Public Datasets**: When running in production gcp-env, public datasets are still ingested from the bucket in the dev GCP project
 
 
 ### CI/CD Considerations
@@ -119,7 +119,7 @@ MLFLOW_URL=https://mlflow.platform.prod.everycure.org/
 
 ### In Production Pipeline
 
-Private datasets are automatically included when running in the production environment:
+Private datasets are automatically included when running in the production gcp-env:
 
 ```bash
 # Submit a pipeline with private datasets in production (admin-only)
