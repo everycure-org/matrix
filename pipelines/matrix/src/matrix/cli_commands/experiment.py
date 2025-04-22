@@ -106,6 +106,8 @@ def create(experiment_name):
     return mlflow_id
 
 
+# These are all copied directly from submit. If we want to maintain kedro submit functionality I think we need to
+# keep the duplication for now. Then we can just rename submit to run and add the extra mlflow steps.
 @experiment.command()
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
