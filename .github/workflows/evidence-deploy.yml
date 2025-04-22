@@ -39,15 +39,6 @@ defaults:
   run: 
     working-directory: services/kg_dashboard/
 env:
-  # log into gcp
-  project_id: 'mtrx-hub-dev-3of'
-  # for querying BQ even on branches
-  ro_wip: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-ro/providers/matrix-gh-provider-ro'
-  ro_sa: 'sa-github-actions-ro@mtrx-hub-dev-3of.iam.gserviceaccount.com'
-  # for deploying to GCS, only works on main
-  rw_wip: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
-  rw_sa: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
-  # release version from input
   RELEASE_VERSION: ${{ inputs.release_version || 'v0.4.0'}}
 
 concurrency:
@@ -56,6 +47,7 @@ concurrency:
 
 jobs:
   build_and_deploy:
+    environment: dev
     runs-on: ubuntu-latest
     name: Build Dashboard
     permissions:
@@ -80,9 +72,9 @@ jobs:
       # authenticate with GCP as read only user to query BQ
       - uses: 'google-github-actions/auth@v2'
         with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.ro_wip}}
-          service_account: ${{env.ro_sa}}
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider_ro}}
+          service_account: ${{vars.service_account_ro}}
 
       # perform build & deploy
       - run: make install
@@ -93,9 +85,9 @@ jobs:
       - uses: 'google-github-actions/auth@v2'
         if: github.ref == 'refs/heads/main'
         with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.rw_wip}}
-          service_account: ${{env.rw_sa}}
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider_rw}}
+          service_account: ${{vars.service_account_rw}}
 
       - run: make deploy
         if: github.ref == 'refs/heads/main'

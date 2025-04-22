@@ -70,6 +70,7 @@ jobs:
               - .github/workflows/matrix-ci.yml
 
   ci:
+    environment: dev
     runs-on:  'self-hosted'
     needs: [paths_filter]
     if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
@@ -92,8 +93,8 @@ jobs:
       - uses: 'google-github-actions/auth@v2'
         with:
           project_id: ${{vars.project_id}}
-          workload_identity_provider: ${{vars.workload_identity_provider}}
-          service_account: ${{vars.service_account}}
+          workload_identity_provider: ${{vars.workload_identity_provider_ro}}
+          service_account: ${{vars.service_account_ro}}
 
       # On every PR
       - run: env | sort # prints out all env variables, helpful for debugging
@@ -141,8 +142,8 @@ jobs:
       - uses: 'google-github-actions/auth@v2'
         with:
           project_id: ${{vars.project_id}}
-          workload_identity_provider: ${{vars.workload_identity_provider}}
-          service_account: ${{vars.service_account}}
+          workload_identity_provider: ${{vars.workload_identity_provider_rw}}
+          service_account: ${{vars.service_account_rw}}
 
       - name: "Set up Cloud SDK"
         uses: "google-github-actions/setup-gcloud@v1"
