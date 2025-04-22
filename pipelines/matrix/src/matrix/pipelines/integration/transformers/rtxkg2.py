@@ -64,6 +64,8 @@ class RTXTransformer(GraphTransformer):
             .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+            .withColumn("num_references",                f.lit(None).cast(T.IntegerType()))
+            .withColumn("num_sentences",                 f.lit(None).cast(T.IntegerType()))
             .transform(filter_semmed, curie_to_pmids, **semmed_filters)
         )
         # fmt: on

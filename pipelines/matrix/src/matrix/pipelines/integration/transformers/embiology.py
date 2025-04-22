@@ -56,10 +56,12 @@ class EmbiologyTransformer(GraphTransformer):
             .withColumn("publications",                  f.lit(None).cast(T.ArrayType(T.StringType())))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
             .withColumn("agent_type",                    f.lit(None).cast(T.StringType()))
-            .withColumn("primary_knowledge_source",      f.lit(None).cast(T.StringType())) #not present in Embiology at this time
-            .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in Embiology at this time
-            .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in Embiology at this time
-            .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in Embiology at this time
-            .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in Embiology at this time
+            .withColumn("primary_knowledge_source",      f.lit(None).cast(T.StringType()))
+            .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType()))
+            .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType()))
+            .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType()))
+            .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType()))
+            .withColumn("num_references",                f.cast(T.IntegerType(), f.col("num_references")))
+            .withColumn("num_sentences",                 f.cast(T.IntegerType(), f.col("num_sentences")))
         )
         # fmt: on
