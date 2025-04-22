@@ -705,7 +705,7 @@ fabricator.embiology:
           - desumoylation
         prob_null: 0.8
         seed: 39294
-      num_ref:
+      num_references:
         type: faker
         provider: pyint
         provider_args:

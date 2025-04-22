@@ -57,5 +57,7 @@ class SpokeTransformer(GraphTransformer):
             .withColumn("object_direction_qualifier",               F.lit(None).cast(T.StringType()))
             .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
             .withColumn("subject_direction_qualifier",              F.lit(None).cast(T.StringType()))
+            .withColumn("num_references",                           F.lit(None).cast(T.IntegerType()))
+            .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType()))
         )
         # fmt: on

@@ -34,6 +34,8 @@ BIOLINK_KG_EDGE_SCHEMA = DataFrameSchema(
         "object_aspect_qualifier": Column(T.StringType(), nullable=True),
         "object_direction_qualifier": Column(T.StringType(), nullable=True),
         "upstream_data_source": Column(T.ArrayType(T.StringType()), nullable=False),
+        "num_references": Column(T.IntegerType(), nullable=True),
+        "num_sentences": Column(T.IntegerType(), nullable=True),
     },
     unique=["subject", "predicate", "object"],
     strict=True,
