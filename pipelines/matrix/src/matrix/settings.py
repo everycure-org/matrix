@@ -43,7 +43,7 @@ SESSION_STORE_ARGS = {"path": str(Path(__file__).parents[2])}
 DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
     {
         "cross_validation": {
-            "n_cross_val_folds": 3,
+            "n_cross_val_folds": 1,
         },
         "integration": [
             {"name": "rtx_kg2", "integrate_in_kg": True},
@@ -56,7 +56,7 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             # {"name": "ec_clinical_trails", "integrate_in_kg": False},
         ],
         "modelling": {
-            "model_name": "rf",  # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth
+            "model_name": "xg_ensemble",  # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth
             "model_config": {"num_shards": 3},
         },
         "evaluation": [
