@@ -134,7 +134,7 @@ jobs:
             --username GH-Actions-bot \
             --namespace argo-workflows \
             --experiment-name scheduled-kg-release \
-            --run-name auto-kg-release \
+            --run-name auto-kg-release-${{ env.release_version }} \
             --release-version "${{ env.release_version }}" \
             --pipeline ${RELEASE_PIPELINE} \
             --headless
