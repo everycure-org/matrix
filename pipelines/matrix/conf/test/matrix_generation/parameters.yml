@@ -26,14 +26,14 @@ matrix_generation.reporting_node:
       n_reporting: *n_reporting
       score_col : *score-col-unknown
 
-    - object : matrix.pipelines.matrix_generation.reporting_tables.RankToScore # TODO: implement - don't forget raise if max ranks_lst too large
+    - object : matrix.pipelines.matrix_generation.reporting_tables.RankToScore 
       name : "rank_to_score"
       ranks_lst :
         - 10
         - 20
       score_col : *score-col-unknown
 
-    - object : matrix.pipelines.matrix_generation.reporting_tables.TopFrequentFlyers # TODO: implement - don't forget raise if sort_by_n_count not in n_count_lst
+    - object : matrix.pipelines.matrix_generation.reporting_tables.TopFrequentFlyers
       name : "top_frequent_flyer_drugs" 
       specific_col : "source"
       specific_entity_name : "Drug"
@@ -45,7 +45,7 @@ matrix_generation.reporting_node:
       sort_by_col: "count_in_10" 
       score_col : *score-col
 
-    - object : matrix.pipelines.matrix_generation.reporting_tables.TopFrequentFlyers # TODO: implement - don't forget raise if sort_by_n_count not in n_count_lst
+    - object : matrix.pipelines.matrix_generation.reporting_tables.TopFrequentFlyers
       name : "top_frequent_flyer_diseases" 
       specific_col : "target"
       specific_entity_name : "Disease"
