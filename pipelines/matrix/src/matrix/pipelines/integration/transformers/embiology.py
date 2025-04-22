@@ -52,7 +52,7 @@ class EmbiologyTransformer(GraphTransformer):
         return (
             edges_df
             .withColumn("upstream_data_source",          f.array(f.lit("embiology")))
-            .withColumn("aggregator_knowledge_source",   f.lit(None).cast(T.ArrayType(T.StringType()))) #Embiology 2.10 has a column for aggregator knowledge source
+            .withColumn("aggregator_knowledge_source",   f.lit(None).cast(T.ArrayType(T.StringType())))
             .withColumn("publications",                  f.lit(None).cast(T.ArrayType(T.StringType())))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
             .withColumn("agent_type",                    f.lit(None).cast(T.StringType()))
