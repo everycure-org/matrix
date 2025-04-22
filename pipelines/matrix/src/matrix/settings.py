@@ -43,7 +43,6 @@ SESSION_STORE_CLASS = SQLiteStore
 # Keyword arguments to pass to the `SESSION_STORE_CLASS` constructor.
 SESSION_STORE_ARGS = {"path": str(Path(__file__).parents[2])}
 
-
 # https://getindata.com/blog/kedro-dynamic-pipelines/
 
 DYNAMIC_PIPELINES_MAPPING = disable_private_datasets(
@@ -91,7 +90,6 @@ DYNAMIC_PIPELINES_MAPPING = disable_private_datasets(
 def _load_setting(path):
     """Utility function to load a settings value from the data catalog."""
     path = path.split(".")
-
     obj = DYNAMIC_PIPELINES_MAPPING
     for p in path:
         obj = obj[p]
