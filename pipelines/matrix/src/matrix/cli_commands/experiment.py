@@ -52,11 +52,11 @@ def get_user_account_token() -> str:
 @click.option(
     "--gcp-env",
     type=click.Choice(["dev", "prod"]),
-    default="dev",  # remove the default?
+    default="dev",
     help="GCP environment to run the experiment in",
 )
 @click.pass_context
-def experiment(ctx, gcp_env):
+def experiment(ctx: "click.core.Context", gcp_env: Literal["dev", "prod"]) -> None:
     """Experiment management commands."""
     # https://click.palletsprojects.com/en/stable/commands/#nested-handling-and-contexts
     ctx.ensure_object(dict)
