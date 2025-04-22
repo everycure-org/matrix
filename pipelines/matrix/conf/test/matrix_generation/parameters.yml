@@ -2,7 +2,7 @@ matrix_generation.n_reporting: 10 &n_reporting # Number of items "top pairs" rep
 
 matrix_generation.reporting_node:
   tables:
-    - object : matrix.pipelines.matrix_generation.reporting_tables.MatrixRunInfo  # TODO: implement
+    - object : matrix.pipelines.matrix_generation.reporting_tables.MatrixRunInfo  
       name : "matrix_run_info" 
       workflow_id: ${oc.env:WORKFLOW_ID, local}
       run_name: ${globals:run_name}
@@ -11,7 +11,7 @@ matrix_generation.reporting_node:
       release_version: ${globals:versions.release}
       versions: ${globals:data_sources}
 
-    - object : matrix.pipelines.matrix_generation.reporting_tables.TopPairs # TODO: implement - don't forget raise if n_reporting too large
+    - object : matrix.pipelines.matrix_generation.reporting_tables.TopPairs
       name : "top_pairs_treat_score" 
       n_reporting: *n_reporting
       score_col : *score-col
