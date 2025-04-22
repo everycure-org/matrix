@@ -46,6 +46,16 @@ ingestion.raw.rtx_kg2.curie_to_pmids@spark:
     properties:
       driver: org.sqlite.JDBC
 
+ingestion.raw.rtx_kg2.gt_testpool@pandas:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/experimental-time-split/v2.7.3/ground_truth/gt_pair_ts-post2014.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    header: true
+    index: false
+    sep: "\t"
+
 ingestion.raw.rtx_kg2.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
   filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/v2.7.3/nodes_c.tsv
