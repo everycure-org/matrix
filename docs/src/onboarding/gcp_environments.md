@@ -3,6 +3,36 @@
 
 This guide explains how to use development and production GCP environments with Kedro in the matrix project.
 
+## Terminology
+
+### Kedro environments
+
+Refers to kedro environments (e.g. `base`, `test`, `cloud`) as defined by [kedro documentation here](https://docs.kedro.org/en/stable/configuration/configuration_basics.html#configuration-environments).
+Primarily, they have an influence on the location and type of inputs and outputs of your data pipeline, controlled by the data catalog.
+
+### GCP environments
+
+Takes two values - `dev` and `prod `and determines the GCP project the data pipeline is submitted to (via `kedro experiment run`).
+Pipelines running in the production GCP project are able to access private datasets.
+
+Using the `prod` gcp environment when running a pipeline locally (via `kedro run`), will ingest the private dataset from the production GCP project into your machine.
+
+### Runtime variables
+
+Not an environment, but a related concept. 
+Variables such as `RUNTIME_GCP_BUCKET` or `RUNTIME_GCP_PROJECT` refer to the bucket or project corresponding to the GCP environment you want to run the pipeline in.
+
+Example 1: You want to run the pipeline in prod, so your `.env` file has:
+
+`RUNTIME_GCP_PROJECT_ID=mtrx-hub-prod-sms`
+
+Example 2: You want to run the pipeline in dev, so your `.env` file has the following (commented out):
+`# RUNTIME_GCP_PROJECT_ID=mtrx-hub-prod-sms`
+
+and your `.env.defaults` file has:
+
+`RUNTIME_GCP_PROJECT_ID=mtrx-hub-dev-3of`
+
 ## Understanding GCP Environments
 
 In our project, we have two distinct GCP environments:
