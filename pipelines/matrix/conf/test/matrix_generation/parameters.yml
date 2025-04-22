@@ -1,2 +1,58 @@
-matrix_generation.matrix_generation_options:
-  n_reporting: 10
+matrix_generation.n_reporting: 10 &n_reporting # Number of items "top pairs" reporting table
+
+matrix_generation.reporting_node:
+  tables:
+    - object : matrix.pipelines.matrix_generation.reporting_tables.MatrixRunInfo  # TODO: implement
+      name : "matrix_run_info" 
+      workflow_id: ${oc.env:WORKFLOW_ID, local}
+      run_name: ${globals:run_name}
+      mlflow_link: ${globals:mlflow_url}
+      git_sha: ${globals:git_sha}
+      release_version: ${globals:versions.release}
+      versions: ${globals:data_sources}
+
+    - object : matrix.pipelines.matrix_generation.reporting_tables.TopPairs # TODO: implement - don't forget raise if n_reporting too large
+      name : "top_pairs_treat_score" 
+      n_reporting: *n_reporting
+      score_col : *score-col
+
+    - object : matrix.pipelines.matrix_generation.reporting_tables.TopPairs
+      name : "top_pairs_not_treat_score" 
+      n_reporting: *n_reporting
+      score_col : *score-col-not-treat
+
+    - object : matrix.pipelines.matrix_generation.reporting_tables.TopPairs 
+      name : "top_pairs_unknown_score" 
+      n_reporting: *n_reporting
+      score_col : *score-col-unknown
+
+    - object : matrix.pipelines.matrix_generation.reporting_tables.RankToScore # TODO: implement - don't forget raise if max ranks_lst too large
+      name : "rank_to_score"
+      ranks_lst :
+        - 10
+        - 20
+      score_col : *score-col-unknown
+
+    - object : matrix.pipelines.matrix_generation.reporting_tables.TopFrequentFlyers # TODO: implement - don't forget raise if sort_by_n_count not in n_count_lst
+      name : "top_frequent_flyer_drugs" 
+      specific_col : "source"
+      specific_entity_name : "Drug"
+      count_in_n_lst : # Count occurrence in top n for these values of n
+        - 10
+        - 20
+      # Statistic to sort by. 
+      # Choose from: "count_in_{n}" for value of n  in count_in_n_lst, "mean", "root_mean_squared" or "median"
+      sort_by_col: "count_in_10" 
+      score_col : *score-col
+
+    - object : matrix.pipelines.matrix_generation.reporting_tables.TopFrequentFlyers # TODO: implement - don't forget raise if sort_by_n_count not in n_count_lst
+      name : "top_frequent_flyer_diseases" 
+      specific_col : "target"
+      specific_entity_name : "Disease"
+      count_in_n_lst : # Count occurrence in top n for these values of n
+        - 10
+        - 20
+      # Statistic to sort by. 
+      # Choose from: "count_in_{n}" for value of n  in count_in_n_lst, "mean", "root_mean_squared" or "median"
+      sort_by_col: "count_in_10" 
+      score_col : *score-col
