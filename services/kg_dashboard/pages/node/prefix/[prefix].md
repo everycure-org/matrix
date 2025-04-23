@@ -84,17 +84,6 @@ order by count desc
     <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={number_of_nodes} column="count" fmt="integer"/></span><br/>edges</p>
 </Grid>
 
-<!-- <BigValue 
-  data={number_of_nodes} 
-  value=count
-  fmt="integer"
-  title="{params.prefix} Nodes" />
-<BigValue 
-  data={number_of_edges}   
-  value=count
-  fmt="integer" 
-  title="Edges connected to {params.prefix} Nodes" /> -->
-
 {#if node_categories_by_upstream_data_source.length !== 0}
 
 <BarChart 
