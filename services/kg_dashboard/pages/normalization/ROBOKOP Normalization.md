@@ -5,8 +5,20 @@ title: ROBOKOP Normalization
 <script>
   // Build funnel-style data with dropped counts and tooltips
   function buildFunnelData(data) {
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      // Return dummy data if no data is available
+      return [
+        { name: 'Ingested', value: 0, tooltipText: 'No data available' },
+        { name: 'Transformed', value: 0, tooltipText: 'No data available' },
+        { name: 'Normalized', value: 0, tooltipText: 'No data available' }
+      ];
+    }
+
     const stageOrder = ['Ingested', 'Transformed', 'Normalized'];
-    const stages = stageOrder.map(stage => data.find(d => d.name === stage));
+    const stages = stageOrder.map(stage => {
+      const found = data.find(d => d.name === stage);
+      return found || { name: stage, value: 0 };
+    });
     const total = stages[0]?.value || 1;
 
     return stages.map((stage, i) => {
@@ -31,7 +43,7 @@ title: ROBOKOP Normalization
   // Compute the maximum value in a dataset (fallback to 1)
   function getMaxValue(data) {
     if (!data || !data.length) return 1;
-    return Math.max(...data.map(d => d.value), 1);
+    return Math.max(...data.map(d => d.value || 0), 1);
   }
 </script>
 
@@ -39,14 +51,14 @@ title: ROBOKOP Normalization
 SELECT
 name,
 value
-FROM bq.rtx_kg2_node_summary
+FROM bq.robokop_node_summary
 ```
 
 ```sql robokop_edge_summary
 SELECT
 name,
 value
-FROM bq.rtx_kg2_edge_summary
+FROM bq.robokop_edge_summary
 ```
 
 <Grid col=2>
@@ -67,7 +79,15 @@ FROM bq.rtx_kg2_edge_summary
     style={{ height: '500px' }}
     config={{
       title: { text: 'ROBOKOP Node Normalization', left: 'center' },
-      tooltip: { trigger: 'item', formatter: p => p.data.tooltipText },
+      tooltip: { 
+        trigger: 'item', 
+        formatter: function(params) {
+          if (!params.data || !params.data.tooltipText) {
+            return 'Loading...';
+          }
+          return params.data.tooltipText;
+        }
+      },
       legend: {
         show: true,
         orient: 'horizontal',
@@ -83,7 +103,8 @@ FROM bq.rtx_kg2_edge_summary
           bottom: 10,
           width: '80%',
           min: 0,
-          max: getMaxValue(robokop_node_summary),
+          max: robokop_node_summary && robokop_node_summary.length ? 
+               Math.max(...robokop_node_summary.map(d => d.value || 0)) : 1,
           minSize: '30%',
           maxSize: '90%',
           gap: 2,
@@ -93,7 +114,13 @@ FROM bq.rtx_kg2_edge_summary
           labelLine: { length: 10, lineStyle: { width: 1, type: 'solid' } },
           emphasis: { focus: 'series' },
           labelLayout: { hideOverlap: true },
-          data: buildFunnelData(robokop_node_summary)
+          data: robokop_node_summary && robokop_node_summary.length ? 
+                buildFunnelData(robokop_node_summary) : 
+                [
+                  { name: 'Ingested', value: 0, tooltipText: 'Loading...' },
+                  { name: 'Transformed', value: 0, tooltipText: 'Loading...' },
+                  { name: 'Normalized', value: 0, tooltipText: 'Loading...' }
+                ]
         }
       ]
     }}
@@ -103,7 +130,15 @@ FROM bq.rtx_kg2_edge_summary
     style={{ height: '500px' }}
     config={{
       title: { text: 'ROBOKOP Edge Normalization', left: 'center' },
-      tooltip: { trigger: 'item', formatter: p => p.data.tooltipText },
+      tooltip: { 
+        trigger: 'item', 
+        formatter: function(params) {
+          if (!params.data || !params.data.tooltipText) {
+            return 'Loading...';
+          }
+          return params.data.tooltipText;
+        }
+      },
       legend: {
         show: true,
         orient: 'horizontal',
@@ -119,7 +154,8 @@ FROM bq.rtx_kg2_edge_summary
           bottom: 10,
           width: '80%',
           min: 0,
-          max: getMaxValue(robokop_edge_summary),
+          max: robokop_edge_summary && robokop_edge_summary.length ? 
+               Math.max(...robokop_edge_summary.map(d => d.value || 0)) : 1,
           minSize: '30%',
           maxSize: '90%',
           gap: 2,
@@ -129,7 +165,13 @@ FROM bq.rtx_kg2_edge_summary
           labelLine: { length: 10, lineStyle: { width: 1, type: 'solid' } },
           emphasis: { focus: 'series' },
           labelLayout: { hideOverlap: true },
-          data: buildFunnelData(robokop_edge_summary)
+          data: robokop_edge_summary && robokop_edge_summary.length ? 
+                buildFunnelData(robokop_edge_summary) : 
+                [
+                  { name: 'Ingested', value: 0, tooltipText: 'Loading...' },
+                  { name: 'Transformed', value: 0, tooltipText: 'Loading...' },
+                  { name: 'Normalized', value: 0, tooltipText: 'Loading...' }
+                ]
         }
       ]
     }}
