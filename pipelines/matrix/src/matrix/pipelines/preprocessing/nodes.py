@@ -4,11 +4,192 @@ import time
 from typing import Collection, Dict, List, Sequence
 
 import pandas as pd
+import pyspark.sql.functions as f
 import requests
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 from tenacity import Retrying, stop_after_attempt, wait_exponential
 
 logger = logging.getLogger(__name__)
+
+import asyncio
+from typing import Dict, List
+
+import aiohttp
+import nest_asyncio
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, explode, from_json, struct, to_json
+from pyspark.sql.types import ArrayType, StringType, StructField, StructType
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+from tqdm import tqdm
+
+nest_asyncio.apply()
+
+
+@retry(
+    wait=wait_exponential(multiplier=1, min=4, max=60),
+    stop=stop_after_attempt(3),
+    retry=retry_if_exception_type((aiohttp.ClientError, asyncio.TimeoutError)),
+)
+async def process_batch(batch: List[str], session: aiohttp.ClientSession, pbar: tqdm) -> Dict:
+    """Process a single batch of IDs with retry logic"""
+    url = "https://nodenorm.test.transltr.io/1.5/get_normalized_nodes"
+    results = {}
+
+    # Filter out any empty or None values
+    batch = [x for x in batch if x and isinstance(x, str)]
+
+    payload = {"curies": batch, "conflate": True, "description": False, "drug_chemical_conflate": False}
+
+    try:
+        async with session.post(url, json=payload) as response:
+            if response.status == 200:
+                result = await response.json()
+                for curie, node_data in result.items():
+                    if node_data:
+                        results[curie] = {
+                            "id": node_data["id"]["identifier"] if node_data.get("id") else None,
+                            "label": node_data["id"].get("label", None) if node_data.get("id") else None,
+                            "all_categories": node_data.get("type", None),
+                            "original_id": curie,
+                        }
+                    else:
+                        results[curie] = {"id": None, "label": None, "all_categories": None, "original_id": curie}
+            elif response.status == 502:
+                print(f"Server overloaded (502). Retrying batch after delay...")
+                await asyncio.sleep(10)  # Longer delay for server errors
+                raise aiohttp.ClientError("Server overloaded")
+            elif response.status == 422:
+                print(f"Invalid data in batch (422). Skipping problematic IDs...")
+                print(f"Problematic batch: {batch}")
+                return {}
+            else:
+                print(f"Error status {response.status}")
+
+    except Exception as e:
+        print(f"Error processing batch: {e}")
+        raise
+
+    pbar.update(1)
+    return results
+
+
+async def resolve_ids_batch_async(curies: List[str], batch_size: int = 250, max_concurrent: int = 10) -> Dict:
+    """
+    Resolve IDs using concurrent async POST requests with improved error handling
+    """
+    all_results = {}
+
+    # Clean input data
+    curies = [str(x) for x in curies if x is not None]
+
+    # Split into batches
+    batches = [curies[i : i + batch_size] for i in range(0, len(curies), batch_size)]
+    total_batches = len(batches)
+
+    pbar = tqdm(total=total_batches, desc="Processing batches")
+
+    connector = aiohttp.TCPConnector(
+        limit=max_concurrent, force_close=False, enable_cleanup_closed=True, ttl_dns_cache=300
+    )
+
+    timeout = aiohttp.ClientTimeout(total=60)
+
+    async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
+        semaphore = asyncio.Semaphore(max_concurrent)
+
+        async def process_with_semaphore(batch):
+            async with semaphore:
+                try:
+                    return await process_batch(batch, session, pbar)
+                except Exception as e:
+                    print(f"Batch failed: {e}")
+                    return {}
+
+        for i in range(0, len(batches), max_concurrent):
+            batch_group = batches[i : i + max_concurrent]
+            tasks = [process_with_semaphore(batch) for batch in batch_group]
+
+            batch_results = await asyncio.gather(*tasks, return_exceptions=True)
+
+            for result in batch_results:
+                if isinstance(result, dict):
+                    all_results.update(result)
+
+            await asyncio.sleep(1)
+
+    pbar.close()
+    return all_results
+
+
+def normalize_identifiers(attr: pd.DataFrame, identifiers_mapping: Dict[str, str]) -> pd.DataFrame:
+    """Normalize identifiers in embiology attributes using NCATS normalizer.
+
+    Args:
+        attr: embiology attributes
+        identifiers_mapping: mapping of identifiers
+
+    Returns:
+        pd.DataFrame: DataFrame with normalized identifiers
+    """
+    # Get values list from attribute DataFrame
+    ids_to_resolve = attr["value"].tolist()
+
+    # Run async resolution
+    results = asyncio.run(resolve_ids_batch_async(curies=ids_to_resolve, batch_size=10000, max_concurrent=10))
+
+    # Convert results to pandas DataFrame
+    results_df = pd.DataFrame(
+        [
+            {
+                "curie": k,
+                "id": v["id"],
+                "label": v["label"],
+                "all_categories": v["all_categories"],
+                "original_id": v["original_id"],
+            }
+            for k, v in results.items()
+        ]
+    )
+
+    return results_df
+
+
+def prepare_normalized_identifiers(attr: pd.DataFrame, identifiers_mapping: Dict[str, str]) -> pd.DataFrame:
+    """Prepare identifiers for embiology nodes & normalize using NCATS normalizer.
+
+    Args:
+        attr: embiology attributes
+        identifiers_mapping: mapping of identifiers
+    """
+    df = attr.withColumn(
+        "value",
+        f.when(
+            f.col("name").isin(list(identifiers_mapping.keys())),
+            f.concat(
+                f.coalesce(
+                    f.map_from_arrays(
+                        f.array(*[f.lit(x) for x in identifiers_mapping.keys()]),
+                        f.array(*[f.lit(x) for x in identifiers_mapping.values()]),
+                    )[f.col("name")],
+                    f.lit(""),
+                ),
+                f.split(f.col("value"), "\\.").getItem(0),
+            ),
+        ).otherwise(f.col("value")),
+    )
+    mapping_df = normalize_identifiers(df, identifiers_mapping)
+
+    return mapping_df
+
+
+def prepare_nodes(nodes, attr, identifiers_mapping):
+    """Prepare nodes for embiology nodes.
+
+    Args:
+        nodes: embiology nodes
+        identifiers_mapping: mapping of identifiers
+    """
+    return nodes
 
 
 def resolve_one_name_batch(names: Sequence[str], url: str) -> Dict[str, List[Dict]]:

@@ -9,6 +9,37 @@ def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             # -------------------------------------------------------------------------
+            # Embiology cleaning and preprocessing
+            # -------------------------------------------------------------------------
+            node(
+                func=lambda x: x,
+                inputs="preprocessing.raw.embiology.attr",
+                outputs="preprocessing.int.embiology.attr@pandas",
+                name="write_embiology_attr",
+                tags=["embiology-kg"],
+            ),
+            node(
+                func=nodes.prepare_normalized_identifiers,
+                inputs=[
+                    "preprocessing.int.embiology.attr@spark",
+                    "params:preprocessing.embiology.attr.identifiers_mapping",  # ,
+                    # "params:preprocessing.embiology.normalization",
+                ],
+                outputs="preprocessing.int.embiology.identifiers",
+                name="prepare_normalized_identifiers",
+                tags=["embiology-kg"],
+            ),
+            # node(
+            #     func=nodes.prepare_nodes,
+            #     inputs=[
+            #         "preprocessing.int.embiology.nodes@spark",
+            #         "params:preprocessing.embiology.attr.identifiers_mapping",
+            #     ],
+            #     outputs="preprocessing.int.embiology.identifiers",
+            #     name="prepare_identifiers",
+            #     tags=["embiology-kg"],
+            # ),
+            # -------------------------------------------------------------------------
             # EC Clinical Data ingestion and name->id mapping
             # -------------------------------------------------------------------------
             node(
