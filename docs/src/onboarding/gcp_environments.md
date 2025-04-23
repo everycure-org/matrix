@@ -52,8 +52,8 @@ The GCP environment controls:
 - Whether private datasets are included in pipeline runs
 - Security and access controls
 
-⚠️
-Be aware that production contains strictly confidential, private datasets.
+!!! note 
+    Be aware that production contains strictly confidential, private datasets.
 ## Using GCP Environments with Kedro
 
 ### Setting the GCP Environment
@@ -61,7 +61,7 @@ Be aware that production contains strictly confidential, private datasets.
 When using `kedro experiment run` you can specify the GCP environment using the `--gcp-env` flag.
 
 ```bash
-# Run in development environment (default)
+# Run in development environment (by default)
 kedro experiment run --gcp-env dev --username <your-username> --release-version <version>
 
 # Run in production environment (admin-only)
