@@ -123,7 +123,7 @@ MLFLOW_URL=https://mlflow.platform.prod.everycure.org/
 To run the pipeline locally with private datasets:
 
 1. Use the regular `kedro run` command
-2. Add the `--include-private-datasets` flag in the `kedro run` command.
+2. Add the `--include-private-datasets true` flag in the `kedro run` command.
 3. Add your personal GCP credentials to your `.env` file, so that it looks like this:
 
 ```bash
