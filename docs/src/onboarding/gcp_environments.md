@@ -99,25 +99,9 @@ MLFLOW_URL=https://mlflow.platform.prod.everycure.org/
 - The CI pipeline is not extended to prod - testing is done in the same way in both environments
 - Currently, releases are only triggered in the dev environment (this will change to prod in the future)
 
-## Changing GCP Environment
-
-### For Regular Kedro Run
-
-For regular `kedro run` commands (not experiments run in Argo), the GCP environment is determined by your `.env` file settings:
-
-1. Create a `.env` file (if it doesn't exist) based on `.env.defaults`
-2. Set the appropriate environment variables for your target environment:
-
-```bash
-# For production
-RUNTIME_GCP_PROJECT_ID=mtrx-hub-prod-sms
-RUNTIME_GCP_BUCKET=mtrx-us-central1-hub-prod-storage
-MLFLOW_URL=https://mlflow.platform.prod.everycure.org/
-```
-
 ## Running With Private Datasets
 
-### In Production Pipeline
+### In the production cluster
 
 Private datasets are automatically included when running in the production gcp-env:
 
@@ -126,7 +110,7 @@ Private datasets are automatically included when running in the production gcp-e
 kedro experiment --gcp-env prod run -p kg_release
 ```
 
-Make sure your `.env` file has the correct production settings:
+Make sure your `.env` file has the correct production settings set, and uncommented:
 
 ```bash
 RUNTIME_GCP_PROJECT_ID=mtrx-hub-prod-sms
@@ -134,15 +118,29 @@ RUNTIME_GCP_BUCKET=mtrx-us-central1-hub-prod-storage
 MLFLOW_URL=https://mlflow.platform.prod.everycure.org/
 ```
 
-### Locally With Private Datasets
+### Locally
 
 To run the pipeline locally with private datasets:
 
 1. Use the regular `kedro run` command
-2. Add your personal GCP credentials to your `.env` file:
+2. Add the `--include-private-datasets` flag in the `kedro run` command.
+3. Add your personal GCP credentials to your `.env` file, so that it looks like this:
 
 ```bash
+RUNTIME_GCP_PROJECT_ID=mtrx-hub-prod-sms
+RUNTIME_GCP_BUCKET=mtrx-us-central1-hub-prod-storage
+MLFLOW_URL=https://mlflow.platform.prod.everycure.org/
 # Your personal credentials for accessing private datasets
 GOOGLE_APPLICATION_CREDENTIALS=/Users/<username>/.config/gcloud/application_default_credentials.json
 ```
 
+## Running With Public Datasets only.
+
+### In the dev cluster
+
+1. Comment out the prod values from `.env` file, so that `.env.defaults` are picked up (which always points to dev).
+2. Use `kedro experiment --gcp-env dev' 
+
+### Locally
+1. Comment out the prod values from `.env` file, so that `.env.defaults` are picked up (which always points to dev).
+2. Use `kedro run` without the `--include-private-datasets` flag.
