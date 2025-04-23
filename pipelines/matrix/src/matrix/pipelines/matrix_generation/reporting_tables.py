@@ -5,8 +5,8 @@ from datetime import datetime
 
 import pandas as pd
 import pyspark.sql as ps
+import pyspark.sql.functions as F
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col
 from pyspark.sql.types import StringType, StructField, StructType
 
 
@@ -143,17 +143,17 @@ class TopPairs(ReportingTableGenerator):
             sorted_matrix_df.orderBy(self.score_col, ascending=False)
             .limit(self.n_reporting)
             .select(
-                col("source").alias("drug_id"),
-                col("target").alias("disease_id"),
+                F.col("source").alias("drug_id"),
+                F.col("target").alias("disease_id"),
                 *self.columns_to_keep,
             )
             .join(
-                drugs_df.select(col("curie").alias("drug_id"), col("name").alias("drug_name")),
+                drugs_df.select(F.col("curie").alias("drug_id"), F.col("name").alias("drug_name")),
                 how="left",
                 on="drug_id",
             )
             .join(
-                diseases_df.select(col("category_class").alias("disease_id"), col("label").alias("disease_name")),
+                diseases_df.select(F.col("category_class").alias("disease_id"), F.col("label").alias("disease_name")),
                 how="left",
                 on="disease_id",
             )
@@ -174,6 +174,14 @@ class RankToScore(ReportingTableGenerator):
         ranks_lst: list[int],
         score_col: str,
     ) -> None:
+        """Initializes a RankToScore instance.
+
+        Args:
+            name: Name assigned to the table
+            ranks_lst: List of ranks to show in the table
+            score_col: Score column
+
+        """
         super().__init__(name)
         self.ranks_lst = ranks_lst
         self.score_col = score_col
@@ -188,10 +196,8 @@ class RankToScore(ReportingTableGenerator):
 
         Args:
             sorted_matrix_df: DataFrame containing the sorted matrix
-            drugs_df: DataFrame containing the drugs list
-            diseases_df: DataFrame containing the diseases list
-            ranks_lst: List of ranks
-            score_col: Score column
+            drugs_df: DataFrame containing the drugs list (not used)
+            diseases_df: DataFrame containing the diseases list (not used)
 
         Returns:
             Spark DataFrame containing the table
@@ -199,41 +205,94 @@ class RankToScore(ReportingTableGenerator):
         if max(self.ranks_lst) > sorted_matrix_df.count():
             raise ValueError(f"max ranks_lst is too large: {max(self.ranks_lst)} > {sorted_matrix_df.count()}")
 
-        return sorted_matrix_df.filter(col("rank").isin(self.ranks_lst)).select("rank", self.score_col).toPandas()
+        return sorted_matrix_df.filter(F.col("rank").isin(self.ranks_lst)).select("rank", self.score_col).toPandas()
 
 
 class TopFrequentFlyers(ReportingTableGenerator):
     """Class for generating a table containing the top frequent flyers."""
 
-    def __init__(self, name: str) -> None:
+    def __init__(
+        self,
+        name: str,
+        is_drug_mode: bool,
+        count_in_n_lst: list[int],
+        sort_by_col: str,
+        score_col: str,
+    ) -> None:
+        """Initializes a TopFrequentFlyers instance.
+
+        Args:
+            name: Name assigned to the table
+            is_drug_mode: True for drug frequent flyers, False for disease frequent flyers
+            count_in_n_lst: List of counts to count frequency in
+            sort_by_col: Column to sort by
+            score_col: Score column
+        """
         super().__init__(name)
+        self.is_drug_mode = is_drug_mode
+        self.count_in_n_lst = count_in_n_lst
+        self.sort_by_col = sort_by_col
+        self.score_col = score_col
 
     def generate(
         self,
         sorted_matrix_df: ps.DataFrame,
         drugs_df: ps.DataFrame,
         diseases_df: ps.DataFrame,
-        specific_col: str,
-        specific_entity_name: str,
-        count_in_n_lst: list[int],
-        sort_by_col: str,
-        score_col: str,
-    ) -> ps.DataFrame:
+    ) -> pd.DataFrame:
         """Generate a table.
-
-        TODO don't forget raise if sort_by_col not valid
 
         Args:
             sorted_matrix_df: DataFrame containing the sorted matrix
             drugs_df: DataFrame containing the drugs list
             diseases_df: DataFrame containing the diseases list
-            specific_col: Column to count frequency in
-            specific_entity_name: Name of the specific entity
-            count_in_n_lst: List of counts to count frequency in
-            sort_by_col: Column to sort by
-            score_col: Score column
 
         Returns:
             Spark DataFrame containing the table
         """
-        return  # TODO: Implement
+        # Raise error if sort_by_col not valid
+        valid_sort_by_cols = [f"count_in_{n}" for n in self.count_in_n_lst] + [
+            "mean",
+            "root_mean_squared",
+            "median",
+            "max",
+        ]
+        if self.sort_by_col not in valid_sort_by_cols:
+            raise ValueError(f"sort_by_col must be one of the following: {valid_sort_by_cols}")
+
+        # Set up drug or disease mode
+        if self.is_drug_mode:
+            entity_df = drugs_df.select(F.col("curie").alias("id"), F.col("name").alias("name"))
+            specific_col = "source"
+        else:
+            entity_df = diseases_df.select(F.col("category_class").alias("id"), F.col("label").alias("name"))
+            specific_col = "target"
+
+        # Create table with mean and max scores for each entity
+        frequent_flyer_table = entity_df.join(
+            sorted_matrix_df.groupBy(specific_col)
+            .agg(F.mean(self.score_col).alias("mean"))
+            .withColumnRenamed(specific_col, "id"),
+            on="id",
+            how="left",
+        ).join(
+            sorted_matrix_df.groupBy(specific_col)
+            .agg(F.max(self.score_col).alias("max"))
+            .withColumnRenamed(specific_col, "id"),
+            on="id",
+            how="left",
+        )
+
+        # Count frequency in top n
+        for n in self.count_in_n_lst:
+            frequent_flyer_table = frequent_flyer_table.join(
+                sorted_matrix_df.limit(n)
+                .groupBy(specific_col)
+                .agg(F.count(specific_col).alias(f"count_in_{n}"))
+                .withColumnRenamed(specific_col, "id"),
+                on="id",
+                how="left",
+            ).fillna(0)
+
+        # Return table sorted by chosen column
+        return frequent_flyer_table.orderBy(F.col(self.sort_by_col).desc()).toPandas()

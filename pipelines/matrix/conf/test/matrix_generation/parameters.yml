@@ -68,26 +68,24 @@ matrix_generation.reporting_nodes:
         - 10
       score_col : *score-col
 
-#     - object : matrix.pipelines.matrix_generation.reporting_tables.TopFrequentFlyers
-#       name : "top_frequent_flyer_drugs" 
-#       specific_col : "source"
-#       specific_entity_name : "Drug"
-#       count_in_n_lst : # Count occurrence in top n for these values of n
-#         - 10
-#         - 20
-#       # Statistic to sort by. 
-#       # Choose from: "count_in_{n}" for value of n  in count_in_n_lst, "mean", "root_mean_squared" or "median"
-#       sort_by_col: "count_in_10" 
-#       score_col : *score-col
+    - _object : matrix.pipelines.matrix_generation.reporting_tables.TopFrequentFlyers
+      name : "top_frequent_flyer_drugs" 
+      is_drug_mode : True # True for drug frequent flyers, False for disease frequent flyers
+      count_in_n_lst : # Count occurrence in top n for these values of n
+        - 10
+        - 20
+      # Statistic to sort by. 
+      # Choose from: "count_in_{n}" for value of n  in count_in_n_lst, "mean", "root_mean_squared" or "median"
+      sort_by_col: "count_in_10" 
+      score_col : *score-col
 
-#     - object : matrix.pipelines.matrix_generation.reporting_tables.TopFrequentFlyers
-#       name : "top_frequent_flyer_diseases" 
-#       specific_col : "target"
-#       specific_entity_name : "Disease"
-#       count_in_n_lst : # Count occurrence in top n for these values of n
-#         - 10
-#         - 20
-#       # Statistic to sort by. 
-#       # Choose from: "count_in_{n}" for value of n  in count_in_n_lst, "mean", "root_mean_squared" or "median"
-#       sort_by_col: "count_in_10" 
-#       score_col : *score-col
+    - _object : matrix.pipelines.matrix_generation.reporting_tables.TopFrequentFlyers
+      name : "top_frequent_flyer_diseases" 
+      is_drug_mode : False # True for drug frequent flyers, False for disease frequent flyers
+      count_in_n_lst : # Count occurrence in top n for these values of n
+        - 10
+        - 20
+      # Statistic to sort by. 
+      # Choose from: "count_in_{n}" for value of n  in count_in_n_lst, "mean", "root_mean_squared" or "median"
+      sort_by_col: "count_in_10" 
+      score_col : *score-col
