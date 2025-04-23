@@ -1,3 +1,4 @@
+import os
 from typing import Any, Collection, Dict, List, Literal, NamedTuple, Optional, Set
 
 import click
@@ -69,10 +70,17 @@ class RunConfig(NamedTuple):
 @click.option( "--conf-source",   type=click.Path(exists=True, file_okay=False, resolve_path=True), help=CONF_SOURCE_HELP,)
 @click.option( "--params",        type=click.UNPROCESSED, default="", help=PARAMS_ARG_HELP, callback=_split_params,)
 @click.option( "--from-env",      type=str, default=None, help="Custom env to read from, if specified will read from the `--from-env` and write to the `--env`",)
-
+@click.option( "--include-private-datasets", is_flag=True, default=False, help="Include private datasets from prod",)
 # fmt: on
-def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async: bool, node_names: list[str], to_nodes: list[str], from_nodes: list[str], from_inputs: list[str], to_outputs: list[str], load_versions: list[str], pipeline: str, conf_source: str, params: dict[str, Any], from_env: Optional[str]=None):
+def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async: bool, node_names: list[str], to_nodes: list[str], from_nodes: list[str], from_inputs: list[str], to_outputs: list[str], load_versions: list[str], pipeline: str, conf_source: str, params: dict[str, Any], from_env: Optional[str]=None, include_private_datasets: bool = False):
     """Run the pipeline."""
+
+    if include_private_datasets:
+        _validate_env_vars("prod")
+        os.environ['INCLUDE_PRIVATE_DATASETS'] = "1"
+    else:
+        _validate_env_vars("dev")
+
     pipeline_name = pipeline
     pipeline_obj = pipelines[pipeline_name]
 
@@ -96,6 +104,20 @@ def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async
     )
 
     _run(config, KedroSessionWithFromCatalog)
+
+
+def _validate_env_vars(gcp_env: Literal['prod', 'dev']) -> None:
+    env_vars = {
+        "RUNTIME_GCP_PROJECT_ID": os.environ["RUNTIME_GCP_PROJECT_ID"],
+        "RUNTIME_GCP_BUCKET": os.environ["RUNTIME_GCP_BUCKET"],
+        "MLFLOW_URL": os.environ["MLFLOW_URL"],
+    }
+
+    for var_name, var_value in env_vars.items():
+        if gcp_env not in var_value.lower():
+            raise RuntimeError(
+                f"Environment variable {var_name} must point to requested env '{gcp_env}'. Current value: {var_value}"
+            )
 
 
 def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
