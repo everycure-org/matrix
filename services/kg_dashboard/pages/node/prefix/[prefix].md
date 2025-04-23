@@ -52,7 +52,6 @@ group by all
 order by count desc
 ```
 
-
 ```sql edge_types
   select 
       replace(subject_category,'biolink:','') || ' ' ||
@@ -80,12 +79,11 @@ order by count desc
 
 
 <Grid col=2>
-    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={number_of_edges} column="count" fmt="integer"/></span><br/>nodes</p>
-    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={number_of_nodes} column="count" fmt="integer"/></span><br/>edges</p>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={number_of_edges} column="count" fmt="integer"/></span><br/>edges</p>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={number_of_nodes} column="count" fmt="integer"/></span><br/>nodes</p>
 </Grid>
 
 {#if node_categories_by_upstream_data_source.length !== 0}
-
 <BarChart 
     data={node_categories_by_upstream_data_source}
     x=category
@@ -96,10 +94,21 @@ order by count desc
 />
 {/if}
 
+{#if primary_knowledge_source_counts.length !== 0}
+<BarChart
+    data={primary_knowledge_source_counts}
+    x=primary_knowledge_source
+    y=count
+    split=upstream_data_source
+    title="Edge Counts by Primary Knowledge Source"
+/>
+{/if}
+
+
 {#if edge_type_with_connected_category.length !== 0}
 <DataTable
     data={edge_type_with_connected_category}
-    title="Connections to {params.prefix} Nodes"
+    title="Edge Types Connectected to {params.prefix} Nodes"
     groupBy=connected_category
     subtotals=true
     totalRow=true
@@ -111,36 +120,4 @@ order by count desc
 </DataTable>
 {/if}
 
-{#if edge_types.length !== 0}
-<DataTable
-    data={edge_types}
-    title="Edge Types"
-    search=true
-    pagination=true
-    rows=20>
-    <Column id="edge_type" title="Edge Type" />
-    <Column id="count" contentType="bar"/>
-</DataTable>
 
-{/if}
-
-{#if primary_knowledge_source_counts.length !== 0}
-<DataTable
-    data={primary_knowledge_source_counts}
-    title="Edge Counts by Primary Knowledge Source"
-    search=true
-    pagination=true
-    rows=20>
-    <Column id="primary_knowledge_source" title="Primary Knowledge Source" />
-    <Column id="count" contentType="bar"/>
-</DataTable>
-
-<!-- <BarChart
-    data={primary_knowledge_source_counts}
-    x=primary_knowledge_source
-    y=count
-    split=upstream_data_source
-    title="Edge Counts by Primary Knowledge Source"
-    swapXY=true
-/> -->
-{/if}
