@@ -46,20 +46,20 @@ matrix_generation.reporting_nodes:
       release_version: ${globals:versions.release}
       versions: ${globals:data_sources}
 
-#     - object : matrix.pipelines.matrix_generation.reporting_tables.TopPairs
-#       name : "top_pairs_treat_score" 
-#       n_reporting: *n_reporting
-#       score_col : *score-col
+    - _object : matrix.pipelines.matrix_generation.reporting_tables.TopPairs
+      name : "top_pairs_treat_score" 
+      n_reporting: *n_reporting
+      score_col : *score-col
 
-#     - object : matrix.pipelines.matrix_generation.reporting_tables.TopPairs
-#       name : "top_pairs_not_treat_score" 
-#       n_reporting: *n_reporting
-#       score_col : *score-col-not-treat
+    - _object : matrix.pipelines.matrix_generation.reporting_tables.TopPairs
+      name : "top_pairs_not_treat_score" 
+      n_reporting: *n_reporting
+      score_col : *score-col-not-treat
 
-#     - object : matrix.pipelines.matrix_generation.reporting_tables.TopPairs 
-#       name : "top_pairs_unknown_score" 
-#       n_reporting: *n_reporting
-#       score_col : *score-col-unknown
+    - _object : matrix.pipelines.matrix_generation.reporting_tables.TopPairs 
+      name : "top_pairs_unknown_score" 
+      n_reporting: *n_reporting
+      score_col : *score-col-unknown
 
 #     - object : matrix.pipelines.matrix_generation.reporting_tables.RankToScore 
 #       name : "rank_to_score"

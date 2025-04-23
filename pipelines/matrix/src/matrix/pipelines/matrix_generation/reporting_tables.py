@@ -94,7 +94,7 @@ class MatrixRunInfo(ReportingTableGenerator):
 
 
 class TopPairs(ReportingTableGenerator):
-    """Class for generating a table containing the top pairs."""
+    """Class for generating a table containing the top pairs according to a score column."""
 
     def __init__(
         self,
@@ -136,14 +136,15 @@ class TopPairs(ReportingTableGenerator):
 
         # Extract top pairs and join names
         top_pairs = (
-            sorted_matrix_df.limit(self.n_reporting)
+            sorted_matrix_df.orderBy(self.score_col, ascending=False)
+            .limit(self.n_reporting)
             .select(
                 col("source").alias("drug_id"),
                 col("target").alias("disease_id"),
                 *self.columns_to_keep,
             )
             .join(
-                drugs_df.select(col("curie").alias("drug_id"), "drug_name"),
+                drugs_df.select(col("curie").alias("drug_id"), col("name").alias("drug_name")),
                 how="left",
                 on="drug_id",
             )
@@ -172,7 +173,6 @@ class RankToScore(ReportingTableGenerator):
         drugs_df: ps.DataFrame,
         diseases_df: ps.DataFrame,
         ranks_lst: list[int],
-        score_col: str,
     ) -> ps.DataFrame:
         """Generate a table.
 
