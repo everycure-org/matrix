@@ -23,9 +23,37 @@ _medical_kg_sheets_dataset: &_medical_kg_sheets_dataset
   key: 1LMtOmA10t7a3lcKeTP7zmptOPIcCBIPFVJt9J7jZ2bQ
   service_file: conf/local/service-account.json
 
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+_pandas_parquet_ds: &_pandas_parquet
+  type: matrix.datasets.graph.PandasParquetDataset
+  save_args:
+    engine: pyarrow
+  load_args:
+    engine: pyarrow
+
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
+preprocessing.raw.embiology.attr:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.kg_raw_private}/embiology/csv/attr.csv.gz
+
+preprocessing.int.embiology.attr@pandas:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.tmp}/embiology/raw/attr
+
+preprocessing.int.embiology.attr@spark:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.tmp}/embiology/raw/attr
+
+preprocessing.int.embiology.identifiers:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.tmp}/embiology/int/identifiers
 
 preprocessing.raw.clinical_trials_data:
   <<: *_medical_clinical_trials_sheet_dataset
