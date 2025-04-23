@@ -1,8 +1,11 @@
 """Module containing strategies for reporting tables node"""
 
 import abc
+from datetime import datetime
 
 import pyspark.sql as ps
+from pyspark.sql import SparkSession
+from pyspark.sql.types import StringType, StructField, StructType
 
 
 class ReportingTableGenerator(abc.ABC):
@@ -36,38 +39,52 @@ class ReportingTableGenerator(abc.ABC):
 class MatrixRunInfo(ReportingTableGenerator):
     """Class for generating a table containing information about the matrix run."""
 
-    def __init__(self, name: str) -> None:
+    def __init__(
+        self,
+        name: str,
+        versions: dict,
+        **kwargs,
+    ) -> None:
         super().__init__(name)
+        self.versions = versions
+        self.kwargs = kwargs
 
     def generate(
         self,
         sorted_matrix_df: ps.DataFrame,
         drugs_df: ps.DataFrame,
         diseases_df: ps.DataFrame,
-        workflow_id: str,
-        run_name: str,
-        mlflow_link: str,
-        git_sha: str,
-        release_version: str,
-        versions: dict,
     ) -> ps.DataFrame:
         """Generate a table.
 
         Args:
-            sorted_matrix_df: DataFrame containing the sorted matrix
-            drugs_df: DataFrame containing the drugs list
-            diseases_df: DataFrame containing the diseases list
-            workflow_id: Workflow ID
-            run_name: Run name
-            mlflow_link: MLflow link
-            git_sha: Git SHA
-            release_version: Release version
+            sorted_matrix_df: DataFrame containing the sorted matrix (not used)
+            drugs_df: DataFrame containing the drugs list (not used)
+            diseases_df: DataFrame containing the diseases list (not used)
             versions: Versions of the data sources
+            kwargs: All other information. Injected through parameter config.
 
         Returns:
             Spark DataFrame containing the table
         """
-        return  # TODO: Implement
+        # Create Spark session
+        spark = SparkSession.builder.getOrCreate()
+
+        # Create list of key-value pairs
+        metadata_list = [
+            ("timestamp", datetime.now().strftime("%Y-%m-%d")),
+        ]
+        metadata_list.extend([(f"{key}_version", value["version"]) for key, value in self.versions.items()])
+        metadata_list.extend([(k, str(v)) for k, v in self.kwargs.items()])
+
+        # Return Spark DataFrame
+        schema = StructType(
+            [
+                StructField("key", StringType(), True),
+                StructField("value", StringType(), True),
+            ]
+        )
+        return spark.createDataFrame(metadata_list, schema=schema)
 
 
 class TopPairs(ReportingTableGenerator):
