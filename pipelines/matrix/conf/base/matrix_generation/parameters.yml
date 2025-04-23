@@ -81,28 +81,26 @@ matrix_generation.reporting_nodes:
         - 1000000
       score_col : *score-col
 
-    # - object : matrix.pipelines.matrix_generation.reporting_tables.TopFrequentFlyers
-    #   name : "top_frequent_flyer_drugs" 
-    #   specific_col : "source"
-    #   specific_entity_name : "Drug"
-    #   count_in_n_lst : # Count occurrence in top n for these values of n
-    #     - 1000
-    #     - 10000
-    #     - 100000
-    #   # Statistic to sort by. 
-    #   # Choose from: "count_in_{n}" for value of n  in count_in_n_lst, "mean", "root_mean_squared" or "median"
-    #   sort_by_col: "count_in_10000" 
-    #   score_col : *score-col
+    - _object : matrix.pipelines.matrix_generation.reporting_tables.TopFrequentFlyers
+      name : "top_frequent_flyer_drugs" 
+      specific_col : "source" # Must be "source" (drug freqent flyers) or "target" (disease frequent flyers)
+      count_in_n_lst : # Count occurrence in top n for these values of n
+        - 1000
+        - 10000
+        - 100000
+      # Statistic to sort by. 
+      # Choose from: "count_in_{n}" for value of n  in count_in_n_lst, "mean", "root_mean_squared" or "median"
+      sort_by_col: "count_in_10000" 
+      score_col : *score-col
 
-    # - object : matrix.pipelines.matrix_generation.reporting_tables.TopFrequentFlyers
-    #   name : "top_frequent_flyer_diseases" 
-    #   specific_col : "target"
-    #   specific_entity_name : "Disease"
-    #   count_in_n_lst : # Count occurrence in top n for these values of n
-    #     - 1000
-    #     - 10000
-    #     - 100000
-    #   # Statistic to sort by. 
-    #   # Choose from: "count_in_{n}" for value of n  in count_in_n_lst, "mean", "root_mean_squared" or "median"
-    #   sort_by_col: "count_in_10000" 
-    #   score_col : *score-col
+    - _object : matrix.pipelines.matrix_generation.reporting_tables.TopFrequentFlyers
+      name : "top_frequent_flyer_diseases" 
+      specific_col : "target" # Must be "source" (drug freqent flyers) or "target" (disease frequent flyers)
+      count_in_n_lst : # Count occurrence in top n for these values of n
+        - 1000
+        - 10000
+        - 100000
+      # Statistic to sort by. 
+      # Choose from: "count_in_{n}" for value of n  in count_in_n_lst, "mean", "root_mean_squared" or "median"
+      sort_by_col: "count_in_10000" 
+      score_col : *score-col
