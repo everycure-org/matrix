@@ -42,7 +42,7 @@ In our project, we have two distinct GCP environments:
 
 These environments are separate from Kedro environments (base, cloud, test, etc.) which control pipeline configurations.
 
-⚠️
+!!! note 
     Only administrators have access to the production environment.
 
 The GCP environment controls:
