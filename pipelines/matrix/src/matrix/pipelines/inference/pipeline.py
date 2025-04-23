@@ -1,4 +1,5 @@
 from kedro.pipeline import Pipeline, pipeline
+
 from matrix import settings
 from matrix.kedro4argo_node import ArgoNode
 
@@ -46,7 +47,7 @@ def _create_resolution_pipeline() -> Pipeline:
 def _create_inference_pipeline() -> Pipeline:
     """Matrix generation pipeline adjusted for running inference with models of choice."""
 
-    n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_cross_val_folds")
+    n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING().get("cross_validation").get("n_cross_val_folds")
 
     mg_pipeline = matrix_generation_pipeline()
     inference_nodes = pipeline(

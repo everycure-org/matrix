@@ -7,6 +7,7 @@ import click
 import mlflow
 from kedro.framework.cli.utils import split_string
 
+from matrix.cli_commands.run import _validate_env_vars
 from matrix.cli_commands.submit import submit
 from matrix.git_utils import get_current_git_branch
 from matrix.utils.authentication import get_service_account_creds, get_user_account_creds
@@ -61,6 +62,10 @@ def experiment(ctx: "click.core.Context", gcp_env: Literal["dev", "prod"]) -> No
     # https://click.palletsprojects.com/en/stable/commands/#nested-handling-and-contexts
     ctx.ensure_object(dict)
     ctx.obj["gcp_env"] = gcp_env
+
+    _validate_env_vars(gcp_env)
+    if gcp_env == "prod":
+        os.environ["INCLUDE_PRIVATE_DATASETS"] = "1"
 
     if os.getenv("GITHUB_ACTIONS"):
         # Running in GitHub Actions, get the IAP token of service acccount from the secrets
