@@ -3,6 +3,7 @@
 import abc
 from datetime import datetime
 
+import pandas as pd
 import pyspark.sql as ps
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
@@ -10,7 +11,10 @@ from pyspark.sql.types import StringType, StructField, StructType
 
 
 class ReportingTableGenerator(abc.ABC):
-    """Class representing generators outputting tables for the matrix generation pipeline."""
+    """Class representing generators outputting tables for the matrix generation pipeline.
+
+    The generate method receives spark dataframes for fast computation and returns a pandas dataframe for easy-to-view output.
+    """
 
     def __init__(self, name: str) -> None:
         """Initializes a ReportingTableGenerator instance.
@@ -23,7 +27,7 @@ class ReportingTableGenerator(abc.ABC):
     @abc.abstractmethod
     def generate(
         self, sorted_matrix_df: ps.DataFrame, drugs_df: ps.DataFrame, diseases_df: ps.DataFrame
-    ) -> ps.DataFrame:
+    ) -> pd.DataFrame:
         """Generate a table.
 
         Args:
@@ -62,7 +66,7 @@ class MatrixRunInfo(ReportingTableGenerator):
         sorted_matrix_df: ps.DataFrame,
         drugs_df: ps.DataFrame,
         diseases_df: ps.DataFrame,
-    ) -> ps.DataFrame:
+    ) -> pd.DataFrame:
         """Generate a table.
 
         Args:
@@ -90,7 +94,7 @@ class MatrixRunInfo(ReportingTableGenerator):
                 StructField("value", StringType(), True),
             ]
         )
-        return spark.createDataFrame(metadata_list, schema=schema)
+        return spark.createDataFrame(metadata_list, schema=schema).toPandas()
 
 
 class TopPairs(ReportingTableGenerator):
@@ -120,7 +124,7 @@ class TopPairs(ReportingTableGenerator):
         sorted_matrix_df: ps.DataFrame,
         drugs_df: ps.DataFrame,
         diseases_df: ps.DataFrame,
-    ) -> ps.DataFrame:
+    ) -> pd.DataFrame:
         """Generate a table.
 
         Args:
@@ -158,7 +162,7 @@ class TopPairs(ReportingTableGenerator):
         # Reorder columns and return
         return top_pairs.select(
             "drug_name", "disease_name", *[col for col in top_pairs.columns if col not in ["drug_name", "disease_name"]]
-        )
+        ).toPandas()
 
 
 class RankToScore(ReportingTableGenerator):
@@ -173,7 +177,7 @@ class RankToScore(ReportingTableGenerator):
         drugs_df: ps.DataFrame,
         diseases_df: ps.DataFrame,
         ranks_lst: list[int],
-    ) -> ps.DataFrame:
+    ) -> pd.DataFrame:
         """Generate a table.
 
         TODO don't forget raise if max ranks_lst too large
