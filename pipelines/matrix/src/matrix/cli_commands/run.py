@@ -78,8 +78,6 @@ def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async
     if include_private_datasets:
         _validate_env_vars("prod")
         os.environ['INCLUDE_PRIVATE_DATASETS'] = "1"
-    else:
-        _validate_env_vars("dev")
 
     pipeline_name = pipeline
     pipeline_obj = pipelines[pipeline_name]
