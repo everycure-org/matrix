@@ -82,7 +82,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                         func=nodes.generate_reports,
                         inputs=[
                             f"matrix_generation.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@pandas",
-                            "params:matrix_generation.reporting_node.plots",
+                            "params:matrix_generation.reporting_nodes.plots",
+                            "params:matrix_generation.reporting_nodes.plots_file_suffix",
                         ],
                         outputs="matrix_generation.reporting.plots",
                         name="generate_reporting_plots",
@@ -91,7 +92,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                         func=nodes.generate_reports,
                         inputs={
                             "sorted_matrix_df": f"matrix_generation.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@spark",
-                            "strategies": "params:matrix_generation.reporting_node.tables",
+                            "strategies": "params:matrix_generation.reporting_nodes.tables",
+                            "file_suffix": "params:matrix_generation.reporting_nodes.tables_file_suffix",
                             "drugs_df": "integration.int.drug_list.nodes.norm@spark",
                             "diseases_df": "integration.int.disease_list.nodes.norm@spark",
                         },

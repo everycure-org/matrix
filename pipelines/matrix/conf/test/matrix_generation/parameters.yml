@@ -6,8 +6,7 @@ matrix_generation.unknown_score_col_name:  &score-col-unknown "unknown score"
 matrix_generation.n_reporting: &n_reporting 10 # Number of items "top pairs" reporting table
 matrix_generation.n_sample_scatter: &n-sample-scatter 10 # Number of sample pairs to take for the scatter plot
 
-# Strategies for reporting nodes
-matrix_generation.reporting_node:
+matrix_generation.reporting_nodes:
   plots:
     - _object : matrix.pipelines.matrix_generation.reporting_plots.SingleScoreHistogram
       name : "log_histogram_treat_score"

@@ -7,13 +7,17 @@ matrix_generation.matrix_generation_options:
     - target 
 
 
-# Repeated parameters for reporting nodes
-matrix_generation.n_reporting: &n_reporting 10000 # Number of items "top pairs" reporting table
-matrix_generation.n_sample_scatter: &n-sample-scatter 1000000 # Number of sample pairs to take for the scatter plot
+
 
 # Strategies for reporting nodes
 # NOTE: Please ensure that all strategies for reporting nodes are also present in the test environment
-matrix_generation.reporting_node:
+
+matrix_generation.n_reporting: &n_reporting 10000 # Number of items "top pairs" reporting table
+matrix_generation.n_sample_scatter: &n-sample-scatter 1000000 # Number of sample pairs to take for the scatter plot
+
+matrix_generation.reporting_nodes:
+  plots_file_suffix: ".png"
+  tables_file_suffix: ".csv"
   plots:
     - _object : matrix.pipelines.matrix_generation.reporting_plots.SingleScoreHistogram
       name : "log_histogram_treat_score"

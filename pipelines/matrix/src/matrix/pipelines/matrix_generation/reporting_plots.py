@@ -208,7 +208,6 @@ class SingleScoreScatterPlot(ReportingPlotGenerator):
         fig, ax = plt.subplots(1, 1, figsize=self.figsize)
         df_sample = sorted_matrix_df.sample(self.n_sample)
         ax.scatter(df_sample["rank"], df_sample[self.score_col], alpha=self.points_alpha, s=self.points_s)
-        ax.plot(sorted_matrix_df[self.score_col])
         ax.set_ylabel(self.score_col)
         ax.set_xlabel("Rank")
         ax.set_title(f"Scatter plot of {self.score_col} against rank")
