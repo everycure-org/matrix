@@ -1,7 +1,6 @@
 from typing import List, Union
 
 from kedro.pipeline import Pipeline, pipeline
-
 from matrix import settings
 from matrix.kedro4argo_node import ArgoNode
 from matrix.pipelines.modelling.utils import partial_fold

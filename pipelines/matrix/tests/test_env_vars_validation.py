@@ -1,5 +1,4 @@
 import pytest
-
 from matrix.cli_commands.run import _validate_env_vars
 
 
