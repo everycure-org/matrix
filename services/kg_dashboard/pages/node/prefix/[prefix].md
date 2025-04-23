@@ -46,8 +46,9 @@ select
            else replace(subject_category,'biolink:','') end as connected_category,
       sum(count) as count   
 from bq.merged_kg_edges
-where subject_prefix = '${params.prefix}'
-   or object_prefix = '${params.prefix}'    
+where (subject_prefix = '${params.prefix}'
+   or object_prefix = '${params.prefix}')
+   and ('${inputs.pks_filter.value}' = 'All' or primary_knowledge_source = '${inputs.pks_filter.value}')
 group by all
 order by count desc
 ```
@@ -105,7 +106,17 @@ order by count desc
 {/if}
 
 
-{#if edge_type_with_connected_category.length !== 0}
+
+<div>
+    <Dropdown 
+        data={primary_knowledge_source_counts}
+        name=pks_filter
+        value=primary_knowledge_source
+        title="Filter by Primary Knowledge Source"
+        defaultValue="All">
+        <DropdownOption value="All">All</DropdownOption>
+    </Dropdown>
+</div>
 <DataTable
     data={edge_type_with_connected_category}
     title="Edge Types Connectected to {params.prefix} Nodes"
@@ -118,6 +129,6 @@ order by count desc
     <Column id="edge_type" title="Edge Type" />
     <Column id="count" contentType="bar"/>
 </DataTable>
-{/if}
+
 
 
