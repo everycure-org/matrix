@@ -183,7 +183,7 @@ spec:
               name: gh-password
               key: GH_CREDS
       command: [kedro]
-      args: ["run", "-p", "{{ pipeline_name }}", "{{ include_private_datasets_flag }}", "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
+      args: ["run", "-p", "{{ pipeline_name }}", "--include-private-datasets", "{{ include_private_datasets_flag }}", "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
 
   - <<: *_kedro_template
     name: neo4j
@@ -232,7 +232,7 @@ spec:
               sleep 5
             done
             echo "Neo4j is ready. Starting main application..."
-            kedro run -p {{ pipeline_name }} {{ include_private_datasets_flag }} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
+            kedro run -p {{ pipeline_name }} --include-private-datasets {{ include_private_datasets_flag }} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
     
     volumes:
       - name: gds-key

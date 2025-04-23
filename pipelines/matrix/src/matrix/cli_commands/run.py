@@ -69,12 +69,12 @@ class RunConfig(NamedTuple):
 @click.option( "--conf-source",   type=click.Path(exists=True, file_okay=False, resolve_path=True), help=CONF_SOURCE_HELP,)
 @click.option( "--params",        type=click.UNPROCESSED, default="", help=PARAMS_ARG_HELP, callback=_split_params,)
 @click.option( "--from-env",      type=str, default=None, help="Custom env to read from, if specified will read from the `--from-env` and write to the `--env`",)
-@click.option( "--include-private-datasets", is_flag=True, default=False, help="Include private datasets from prod",)
+@click.option( "--include-private-datasets", type=click.Choice(["true", "false"]), default="false", help="Include private datasets from prod",)
 # fmt: on
 def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async: bool, node_names: list[str], to_nodes: list[str], from_nodes: list[str], from_inputs: list[str], to_outputs: list[str], load_versions: list[str], pipeline: str, conf_source: str, params: dict[str, Any], from_env: Optional[str]=None, include_private_datasets: bool = False):
     """Run the pipeline."""
 
-    if include_private_datasets:
+    if include_private_datasets == "true":
         _validate_env_vars("prod")
         os.environ['INCLUDE_PRIVATE_DATASETS'] = "1"
 

@@ -40,9 +40,7 @@ def generate_argo_config(
     pipeline_tasks = get_dependencies(fuse(pipeline), default_execution_resources)
     git_sha = get_git_sha()
     trigger_release = get_trigger_release_flag(pipeline.name)
-    include_private_datasets_flag = (
-        "--include-private-datasets" if os.getenv("INCLUDE_PRIVATE_DATASETS", "") == "1" else ""
-    )
+    include_private_datasets_flag = "true" if os.getenv("INCLUDE_PRIVATE_DATASETS", "") == "1" else "false"
 
     rendered_template = template.render(
         package_name=package_name,
