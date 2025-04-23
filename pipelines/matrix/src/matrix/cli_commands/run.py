@@ -30,7 +30,6 @@ from kedro.io import DataCatalog
 from kedro.pipeline.pipeline import Pipeline
 from kedro.utils import load_obj
 
-from matrix.cli_commands.submit import abort_if_incorrect_env_vars
 from matrix.session import KedroSessionWithFromCatalog
 
 

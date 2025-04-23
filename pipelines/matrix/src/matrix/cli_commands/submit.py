@@ -96,8 +96,6 @@ def submit(
         abort_if_unmet_git_requirements(release_version)
         abort_if_intermediate_release(release_version)
 
-    abort_if_incorrect_env_vars(gcp_env)
-
     if pipeline not in kedro_pipelines.keys():
         raise ValueError("Pipeline requested for execution not found")
     
@@ -216,7 +214,7 @@ def _submit(
         ))
 
         if allow_interactions and click.confirm("Do you want to open the workflow in your browser?", default=False):
-            workflow_url = f"https://argo.platform.dev.everycure.org/workflows/{namespace}/{run_name}"
+            workflow_url = f"https://argo.platform.{gcp_env}.everycure.org/workflows/{namespace}/{run_name}"
             click.launch(workflow_url)
             console.print(f"[blue]Opened workflow in browser: {workflow_url}[/blue]")
     except Exception as e:
@@ -597,9 +595,3 @@ def abort_if_intermediate_release(release_version: str) -> None:
     if ((release_version.major == latest_major and release_version.minor < latest_minor)
         or release_version.major < latest_major):
         raise ValueError("Cannot release a minor/major version lower than the latest official release")
-
-def abort_if_incorrect_env_vars(gcp_env: str) -> None:
-    env_vars = ['RUNTIME_GCP_PROJECT_ID', 'RUNTIME_GCP_BUCKET', 'MLFLOW_URL']
-    correct_vars = [gcp_env.lower().strip() in os.environ[var] for var in env_vars]
-    if False in correct_vars:
-        raise ValueError(f"Running in {gcp_env}, but some env vars don't point to a different env. Did you create/uncomment the vars in your .env?")
