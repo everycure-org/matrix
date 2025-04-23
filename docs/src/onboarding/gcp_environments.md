@@ -15,7 +15,7 @@ Primarily, they have an influence on the location and type of inputs and outputs
 Takes two values - `dev` and `prod `and determines the GCP project the data pipeline is submitted to (via `kedro experiment run`).
 Pipelines running in the production GCP project are able to access private datasets.
 
-Using the `prod` gcp environment when running a pipeline locally (via `kedro run`), will ingest the private dataset from the production GCP project into your machine.
+> 💡 Using the `prod` gcp environment when running a pipeline locally (via `kedro run`), will ingest the private dataset from the production GCP project into your machine.
 
 ### Runtime variables
 
