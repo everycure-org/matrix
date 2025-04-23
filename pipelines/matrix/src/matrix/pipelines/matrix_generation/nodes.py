@@ -284,19 +284,18 @@ def make_predictions_and_sort(
     return sorted_data
 
 
+@inject_object()
 def generate_reports(
-    sorted_matrix_df: ps.DataFrame,
-    drugs_df: ps.DataFrame,
-    diseases_df: ps.DataFrame,
+    sorted_matrix_df: pd.DataFrame | ps.DataFrame,
     strategies: list[ReportingPlotGenerator | ReportingTableGenerator],
+    **kwargs,
 ) -> dict[str, Figure | ps.DataFrame]:
     """Generate reporting plots.
 
     Args:
         sorted_matrix_df: DataFrame containing the sorted matrix
-        drugs_df: DataFrame containing the drugs list
-        diseases_df: DataFrame containing the diseases list
         strategies: List of reporting plot or table strategies
+        kwargs: Extra arguments such as the drug and disease lists for tables
 
     Returns:
         Dictionary of plots or tables with strategy name as key
@@ -308,6 +307,6 @@ def generate_reports(
 
     reports_dict = {}
     for strategy in strategies:
-        reports_dict[strategy.name] = strategy.generate(sorted_matrix_df, drugs_df, diseases_df)
+        reports_dict[strategy.name] = strategy.generate(sorted_matrix_df, **kwargs)
 
     return reports_dict
