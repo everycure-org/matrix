@@ -168,19 +168,23 @@ class TopPairs(ReportingTableGenerator):
 class RankToScore(ReportingTableGenerator):
     """Class for generating a table containing the rank to score."""
 
-    def __init__(self, name: str) -> None:
+    def __init__(
+        self,
+        name: str,
+        ranks_lst: list[int],
+        score_col: str,
+    ) -> None:
         super().__init__(name)
+        self.ranks_lst = ranks_lst
+        self.score_col = score_col
 
     def generate(
         self,
         sorted_matrix_df: ps.DataFrame,
         drugs_df: ps.DataFrame,
         diseases_df: ps.DataFrame,
-        ranks_lst: list[int],
     ) -> pd.DataFrame:
         """Generate a table.
-
-        TODO don't forget raise if max ranks_lst too large
 
         Args:
             sorted_matrix_df: DataFrame containing the sorted matrix
@@ -192,7 +196,10 @@ class RankToScore(ReportingTableGenerator):
         Returns:
             Spark DataFrame containing the table
         """
-        return  # TODO: Implement
+        if max(self.ranks_lst) > sorted_matrix_df.count():
+            raise ValueError(f"max ranks_lst is too large: {max(self.ranks_lst)} > {sorted_matrix_df.count()}")
+
+        return sorted_matrix_df.filter(col("rank").isin(self.ranks_lst)).select("rank", self.score_col).toPandas()
 
 
 class TopFrequentFlyers(ReportingTableGenerator):

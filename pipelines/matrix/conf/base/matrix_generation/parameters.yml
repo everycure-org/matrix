@@ -72,14 +72,14 @@ matrix_generation.reporting_nodes:
       n_reporting: *n_reporting
       score_col : *score-col-unknown
 
-    # - object : matrix.pipelines.matrix_generation.reporting_tables.RankToScore
-    #   name : "rank_to_score"
-    #   ranks_lst :
-    #     - 1000
-    #     - 10000
-    #     - 100000
-    #     - 1000000
-    #   score_col : *score-col-unknown
+    - _object : matrix.pipelines.matrix_generation.reporting_tables.RankToScore
+      name : "rank_to_treat_score"
+      ranks_lst :
+        - 1000
+        - 10000
+        - 100000
+        - 1000000
+      score_col : *score-col
 
     # - object : matrix.pipelines.matrix_generation.reporting_tables.TopFrequentFlyers
     #   name : "top_frequent_flyer_drugs" 
