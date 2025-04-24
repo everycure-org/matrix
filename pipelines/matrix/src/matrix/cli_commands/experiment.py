@@ -7,7 +7,7 @@ import click
 import mlflow
 from kedro.framework.cli.utils import split_string
 
-from matrix.cli_commands.run import _validate_env_vars
+from matrix.cli_commands.run import _validate_env_vars_for_private_data
 from matrix.cli_commands.submit import submit
 from matrix.git_utils import get_current_git_branch
 from matrix.utils.authentication import get_service_account_creds, get_user_account_creds
@@ -50,23 +50,12 @@ def get_user_account_token() -> str:
 
 
 @click.group()
-@click.option(
-    "--gcp-env",
-    type=click.Choice(["dev", "prod"]),
-    default="dev",
-    help="GCP environment to run the experiment in",
-)
 @click.pass_context
-def experiment(ctx: "click.core.Context", gcp_env: Literal["dev", "prod"]) -> None:
+def experiment(ctx: "click.core.Context") -> None:
     """Experiment management commands."""
+
     # https://click.palletsprojects.com/en/stable/commands/#nested-handling-and-contexts
-    ctx.ensure_object(dict)
-    ctx.obj["gcp_env"] = gcp_env
-
-    _validate_env_vars(gcp_env)
-    if gcp_env == "prod":
-        os.environ["INCLUDE_PRIVATE_DATASETS"] = "1"
-
+    _validate_env_vars_for_private_data()
     if os.getenv("GITHUB_ACTIONS"):
         # Running in GitHub Actions, get the IAP token of service acccount from the secrets
         click.echo("Running in GitHub Actions, using service account IAP token")
@@ -149,8 +138,6 @@ def run(
     experiment_name: str,
 ):
     """Run an experiment."""
-    gcp_env = ctx.obj["gcp_env"]
-    click.echo(f"Running experiment in GCP {gcp_env} environment")
 
     if not experiment_name:
         current_branch = get_current_git_branch()
@@ -196,7 +183,6 @@ def run(
         is_test=is_test,
         headless=headless,
         environment=environment,
-        gcp_env=gcp_env,
         experiment_id=experiment_id,
         mlflow_run_id=mlflow_run_id,
         skip_git_checks=skip_git_checks,

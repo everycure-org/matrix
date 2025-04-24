@@ -39,6 +39,8 @@ spec:
         value: "{{ mlflow_run_id }}"
       - name: mlflow_url
         value: "{{ mlflow_url }}"
+      - name: include_private_datasets
+        value: "{{ include_private_datasets }}"
   templates:
   - &_kedro_template
     metrics:
@@ -143,6 +145,9 @@ spec:
         - name: MLFLOW_URL
           value: {% raw %} "{{workflow.parameters.mlflow_url}}"
           {% endraw %}
+        - name: INCLUDE_PRIVATE_DATASETS
+          value: {% raw %} "{{workflow.parameters.include_private_datasets}}"
+          {% endraw %}
         - name: NEO4J_USER
           valueFrom:
             secretKeyRef:
@@ -183,7 +188,7 @@ spec:
               name: gh-password
               key: GH_CREDS
       command: [kedro]
-      args: ["run", "-p", "{{ pipeline_name }}", "--include-private-datasets", "{{ include_private_datasets_flag }}", "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
+      args: ["run", "-p", "{{ pipeline_name }}", "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
 
   - <<: *_kedro_template
     name: neo4j
@@ -232,7 +237,7 @@ spec:
               sleep 5
             done
             echo "Neo4j is ready. Starting main application..."
-            kedro run -p {{ pipeline_name }} --include-private-datasets {{ include_private_datasets_flag }} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
+            kedro run -p {{ pipeline_name }} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
     
     volumes:
       - name: gds-key
@@ -298,8 +303,6 @@ spec:
           parameters:
           - name: pipeline
             value: {{ pipeline_name }}
-          - name: include_private_datasets_flag
-            value: {{ include_private_datasets_flag }}
           - name: kedro_nodes
             value: {{ task.nodes }}
           - name: num_gpus
