@@ -20,7 +20,8 @@ def sample_matrix_data():
             "source": ["drug_1", "drug_2", "drug_3", "drug_4"],
             "target": ["disease_1", "disease_2", "disease_3", "disease_4"],
             "score_1": [0.9, 0.7, 0.5, 0.3],
-            "score_2": [0.85, 0.65, 0.45, 0.25],
+            "score_2": [0.1, 0.2, 0.3, 0.4],
+            "rank": [1, 2, 3, 4],
         }
     )
 
@@ -48,7 +49,7 @@ def test_plot_generator(sample_matrix_data):
         SingleScoreScatterPlot(
             name="name",
             score_col="score_1",
-            n_sample=1000000,
+            n_sample=2,
             figsize=(10, 6),
             points_alpha=0.03,
             points_s=0.5,
