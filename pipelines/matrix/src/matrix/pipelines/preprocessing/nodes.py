@@ -101,19 +101,22 @@ def prepare_nodes(nodes, id_mapping, biolink_mapping):
     norm_nodes = (
         nodes.withColumn("attributes", f.split(f.regexp_replace("attributes", "[{}]", ""), ","))
         .withColumn("attributes", f.explode(f.col("attributes")))
+        .withColumnRenamed("attributes", "attribute_id")
         .join(
-            id_mapping.withColumn("normalization_success", f.col("id").isNotNull())
-            .filter(f.col("normalization_success") == True)
-            .withColumn("final_id", f.col("id").cast(StringType())),
-            left_on="attributes",
-            right_on="attribute_id",
+            id_mapping.drop("id")
+            .withColumnRenamed("curie", "normalized_id")
+            .withColumn("normalization_success", f.col("normalized_id").isNotNull())
+            .filter(f.col("normalization_success") == True),
+            on="attribute_id",
             how="left",
-            suffix="_att",
         )
-        .groupBy("id", "urn", "name", "nodetype")
-        .dropNulls()
-        .agg(f.first("final_id").alias("final_id"))
-        .withColumn("final_id", f.coalesce(f.col("final_id"), f.col("urn")))
+        .groupBy(["id", "urn", "name", "nodetype", "normalization_success"])
+        .agg(
+            f.first(f.col("normalized_id"), ignorenulls=True).alias("normalized_id"),
+            f.first(f.col("equivalent_identifiers"), ignorenulls=True).alias("equivalent_identifiers"),
+            f.first(f.col("all_categories"), ignorenulls=True).alias("all_categories"),
+        )
+        .withColumn("final_id", f.coalesce(f.col("normalized_id"), f.col("urn")))
     )
 
     # Biolink fix
@@ -121,34 +124,48 @@ def prepare_nodes(nodes, id_mapping, biolink_mapping):
         return biolink_mapping.get(name, "")
 
     lookup_udf = udf(lookup_mapping, StringType())
-    norm_nodes = norm_nodes.withColumn("manual_category", lookup_udf(f.col("nodetype")))
+    norm_nodes = norm_nodes.withColumn("category", lookup_udf(f.col("nodetype")))
     return norm_nodes
 
 
-# def prepare_edges(control, biolink_mapping):
-#     """Prepare edges for embiology nodes.
+def prepare_edges(control, biolink_mapping):
+    """Prepare edges for embiology nodes.
 
-#     Args:
-#         nodes: embiology nodes
-#         identifiers_mapping: mapping of identifiers
-#     """
-#     # Fix directed and undirected edges
-#     control_directed = control.filter((f.col('inkey')!='') & (f.col('inoutkey')=='{}'))
-#     control_undirected = control.filter((f.col('inkey')=='') & (f.col('inoutkey')!='{}'))
-#     control_undirec = (
-#         control_undirected
-#         .withColumn(f.col('inoutkey').str.strip_chars('{}')
-#         .str.split(', ').list.to_struct(n_field_strategy="max_width"))).unnest("inoutkey").rename({'field_0':'source', 'field_1':'target'})
+    Args:
+        nodes: embiology nodes
+        identifiers_mapping: mapping of identifiers
+    """
+    # Fix directed and undirected edges
+    control_directed = control.filter((f.col("inkey") != "") & (f.col("inoutkey") == "{}"))
+    control_undirected = control.filter((f.col("inkey") == "") & (f.col("inoutkey") != "{}"))
+    control_undirected = (
+        (
+            control_undirected.withColumn(
+                f.col("inoutkey").str.strip_chars("{}").str.split(", ").list.to_struct(n_field_strategy="max_width")
+            )
+        )
+        .unnest("inoutkey")
+        .rename({"field_0": "source", "field_1": "target"})
+    )
 
-#     columns = temp.columns
+    columns = temp.columns
 
-#     control_undirected_fixed = pl.concat([temp,
-#             temp.rename({'source':'target', 'target':'source'}).select(columns)])
-#     control_undirected_fixed = control_undirected_fixed.drop(['inkey','outkey']).rename({'source':'inkey','target':'outkey'})
-#     # Biolink Mapping
-#     modify_categories_to_biolink(control_undirected_fixed, biolink_mapping, col='controltype')
+    control_undirected_fixed = pl.concat([temp, temp.rename({"source": "target", "target": "source"}).select(columns)])
+    control_undirected_fixed = control_undirected_fixed.drop(["inkey", "outkey"]).rename(
+        {"source": "inkey", "target": "outkey"}
+    )
 
-#     return modify_categories_to_biolink(control_undirected_fixed, biolink_mapping, col='controltype')
+    # Union directed and undirected edges
+    edges = control_undirected_fixed.union(control_directed)
+
+    # Biolink fix
+    def lookup_mapping(name):
+        return biolink_mapping.get(name, "")
+
+    lookup_udf = udf(lookup_mapping, StringType())
+    edges = edges.withColumn("predicate", lookup_udf(f.col("nodetype")))
+    return edges
+
 
 # def add_edge_attributes(edges, references):
 #     """Prepare edges for embiology nodes.
