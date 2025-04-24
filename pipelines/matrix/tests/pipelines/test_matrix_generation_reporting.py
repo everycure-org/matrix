@@ -47,7 +47,7 @@ def sample_matrix_data_spark(spark_session):
             ("drug_1", "disease_1", 0.9, 0.1, 1),
             ("drug_2", "disease_1", 0.7, 0.2, 2),
             ("drug_2", "disease_2", 0.5, 0.3, 3),
-            ("drug_3", "disease_2", 0.3, 0.4, 4),
+            ("drug_3", "disease_3", 0.3, 0.4, 4),
         ],
         schema=["source", "target", "score_1", "score_2", "rank"],
     )
@@ -172,10 +172,10 @@ def test_rank_to_score(sample_matrix_data_spark, sample_drugs_list, sample_disea
 def test_top_frequent_flyers(sample_matrix_data_spark, sample_drugs_list, sample_diseases_list):
     # Given the top frequent flyers generator for drugs and diseases
     generator_drugs = TopFrequentFlyers(
-        name="name", is_drug_mode=True, count_in_n_lst=[3], sort_by_col="score_1", score_col="score_1"
+        name="name", is_drug_mode=True, count_in_n_lst=[3], sort_by_col="mean", score_col="score_1"
     )
     generator_diseases = TopFrequentFlyers(
-        name="name", is_drug_mode=False, count_in_n_lst=[3], sort_by_col="score_1", score_col="score_1"
+        name="name", is_drug_mode=False, count_in_n_lst=[3], sort_by_col="count_in_3", score_col="score_1"
     )
 
     # When generating the table
@@ -187,7 +187,7 @@ def test_top_frequent_flyers(sample_matrix_data_spark, sample_drugs_list, sample
     assert isinstance(table_drugs, pd.DataFrame)
     assert isinstance(table_diseases, pd.DataFrame)
     # The tables have the correct columns
-    columns = {"id", "name", "mean", "max", "count_in_1", "count_in_2"}
+    columns = {"id", "name", "mean", "max", "count_in_3"}
     assert set(table_drugs.columns.tolist()) == columns
     assert set(table_diseases.columns.tolist()) == columns
     # The tables have the correct values for drugs
@@ -199,6 +199,6 @@ def test_top_frequent_flyers(sample_matrix_data_spark, sample_drugs_list, sample
     # The tables have the correct values for diseases
     assert table_diseases["id"].tolist() == ["disease_1", "disease_2", "disease_3"]
     assert table_diseases["name"].tolist() == ["name_1", "name_2", "name_3"]
-    assert table_diseases["mean"].tolist() == [0.9, 0.6, 0.3]
-    assert table_diseases["max"].tolist() == [0.9, 0.7, 0.3]
+    assert table_diseases["mean"].tolist() == [0.8, 0.5, 0.3]
+    assert table_diseases["max"].tolist() == [0.9, 0.5, 0.3]
     assert table_diseases["count_in_3"].tolist() == [2, 1, 0]
