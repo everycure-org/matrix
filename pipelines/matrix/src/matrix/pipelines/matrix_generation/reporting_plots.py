@@ -159,7 +159,7 @@ class SingleScoreLinePlot(ReportingPlotGenerator):
             matplotlib Figure object containing the plot
         """
         fig, ax = plt.subplots(1, 1, figsize=self.figsize)
-        ax.plot(sorted_matrix_df[self.score_col])
+        ax.plot(sorted_matrix_df["rank"], sorted_matrix_df[self.score_col])
         ax.set_ylabel(self.score_col)
         ax.set_xlabel("Rank")
         ax.set_title(f"Line plot of {self.score_col} against rank")

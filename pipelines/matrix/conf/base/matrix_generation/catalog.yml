@@ -45,12 +45,27 @@ matrix_generation.feat.nodes@kg:
   <<: *_spark_parquet
   filepath: ${globals:paths.matrix_generation}/model_output/fold_{fold}/matrix_predictions
 
-matrix_generation.reporting.tables:
-  type: partitions.PartitionedDataset
-  path: ${globals:paths.matrix_generation}/reporting/tables
-  dataset: kedro_datasets.pandas.CSVDataset # *_spark_csv
+# matrix_generation.reporting.tables:
+#   type: partitions.PartitionedDataset
+#   path: ${globals:paths.matrix_generation}/reporting/tables
+#   dataset: kedro_datasets.pandas.CSVDataset
+
+# matrix_generation.reporting.plots@matplotlib:
+#   type: partitions.PartitionedDataset
+#   path: ${globals:paths.matrix_generation}/reporting/plots
+#   dataset: matplotlib.MatplotlibWriter
+
 
 matrix_generation.reporting.plots:
-  type: partitions.PartitionedDataset
-  path: ${globals:paths.matrix_generation}/reporting/plots
-  dataset: kedro_datasets.matplotlib.MatplotlibWriter
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  dataset:
+    type: partitions.PartitionedDataset
+    path: ${globals:paths.matrix_generation}/reporting/plots
+    dataset: matplotlib.MatplotlibWriter
+
+matrix_generation.reporting.tables:
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  dataset:
+    type: partitions.PartitionedDataset
+    path: ${globals:paths.matrix_generation}/reporting/tables
+    dataset: kedro_datasets.pandas.CSVDataset
