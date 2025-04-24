@@ -34,11 +34,13 @@ matrix_generation.reporting_nodes:
       name : "scatter_plot_not_treat"
       score_col : *score-col-not-treat
       n_sample : *n-sample-scatter
+      points_s: 1
 
     - _object: matrix.pipelines.matrix_generation.reporting_plots.SingleScoreScatterPlot
       name : "scatter_plot_unknown"
       score_col : *score-col-unknown
       n_sample : *n-sample-scatter
+      points_s: 1
 
   tables:
     - _object : matrix.pipelines.matrix_generation.reporting_tables.MatrixRunInfo 
