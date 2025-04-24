@@ -312,7 +312,7 @@ fabricator.robokop:
       id:
         type: generate_unique_id
         prefix: "ROBO:"
-      name:
+      "name:string":
         type: generate_unique_id
         prefix: "rs"
       category:
@@ -331,7 +331,7 @@ fabricator.robokop:
             - biolink:PhysicalEssenceOrOccurrent
             - biolink:GenomicEntity
             - biolink:OrganismTaxon
-      description:
+      "description:string":
         type: faker
         provider: sentence
       equivalent_identifiers:
