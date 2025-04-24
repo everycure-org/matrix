@@ -120,11 +120,15 @@ preprocessing.embiology:
         StateChange_positive: biolink:enables
         StateChange_resistance: biolink:associated_with_resistance_to
         miRNAEffect_negative: biolink:decreases_amount_or_activity_of
+  normalization:
+    url: "https://nodenorm.test.transltr.io/1.5/get_normalized_nodes"
+    batch_size: 10000
+    max_concurrent: 10
+
 
 preprocessing.name_resolution:
   url: https://name-resolution-sri.renci.org/bulk-lookup
   batch_size: 50
-
 
 preprocessing.medical_kg_gsheets:
   nodes: ['name']
