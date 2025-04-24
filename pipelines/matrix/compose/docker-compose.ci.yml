@@ -58,7 +58,7 @@ services:
       MLFLOW_RUN_ID: null
       MLFLOW_URL: https://mlflow.platform.dev.everycure.org/
       OPENAI_API_KEY: sk-proj-abc
-      RUNTIME_GCP_PROJECT_ID: mtrx-hub-dev-3of # Use -prod- is to enable testing of private datasets, -dev- to disable it.
+      RUNTIME_GCP_PROJECT_ID: mtrx-hub-dev-3of
       RUNTIME_GCP_BUCKET: mtrx-us-central1-hub-dev-storage
       INCLUDE_PRIVATE_DATASETS: 1
       KEDRO_DYNAMIC_PIPELINES_MAPPING_CROSS_VALIDATION_N_CROSS_VAL_FOLDS: 2
