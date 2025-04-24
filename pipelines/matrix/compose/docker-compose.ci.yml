@@ -56,10 +56,10 @@ services:
       MLFLOW_ENDPOINT: http://mlflow:5000
       MLFLOW_EXPERIMENT_ID: 1
       MLFLOW_RUN_ID: null
-      MLFLOW_URL: https://mlflow.platform.dev.everycure.org/
+      MLFLOW_URL: https://mlflow.platform.prod.everycure.org/
       OPENAI_API_KEY: sk-proj-abc
-      RUNTIME_GCP_PROJECT_ID: mtrx-hub-dev-3of
-      RUNTIME_GCP_BUCKET: mtrx-us-central1-hub-dev-storage
+      RUNTIME_GCP_PROJECT_ID: mtrx-hub-prod-sms
+      RUNTIME_GCP_BUCKET: mtrx-us-central1-hub-prod-storage
       INCLUDE_PRIVATE_DATASETS: 1
       KEDRO_DYNAMIC_PIPELINES_MAPPING_CROSS_VALIDATION_N_CROSS_VAL_FOLDS: 2
       KEDRO_DYNAMIC_PIPELINES_MAPPING_MODELLING_XG_ENSEMBLE_NUM_SHARDS: 2
