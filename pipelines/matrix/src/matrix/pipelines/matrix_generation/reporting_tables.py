@@ -253,8 +253,6 @@ class TopFrequentFlyers(ReportingTableGenerator):
         # Raise error if sort_by_col not valid
         valid_sort_by_cols = [f"count_in_{n}" for n in self.count_in_n_lst] + [
             "mean",
-            "root_mean_squared",
-            "median",
             "max",
         ]
         if self.sort_by_col not in valid_sort_by_cols:
