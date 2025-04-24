@@ -30,8 +30,8 @@ def sample_matrix_data_pandas():
     """Fixture that provides sample matrix data with multiple scores for testing."""
     return pd.DataFrame(
         {
-            "source": ["drug_1", "drug_2", "drug_3", "drug_4"],
-            "target": ["disease_1", "disease_2", "disease_3", "disease_4"],
+            "source": ["drug_1", "drug_2", "drug_2", "drug_3"],
+            "target": ["disease_1", "disease_1", "disease_2", "disease_3"],
             "score_1": [0.9, 0.7, 0.5, 0.3],
             "score_2": [0.1, 0.2, 0.3, 0.4],
             "rank": [1, 2, 3, 4],
@@ -45,9 +45,9 @@ def sample_matrix_data_spark(spark_session):
     return spark_session.createDataFrame(
         [
             ("drug_1", "disease_1", 0.9, 0.1, 1),
-            ("drug_2", "disease_2", 0.7, 0.2, 2),
-            ("drug_3", "disease_3", 0.5, 0.3, 3),
-            ("drug_4", "disease_4", 0.3, 0.4, 4),
+            ("drug_2", "disease_1", 0.7, 0.2, 2),
+            ("drug_2", "disease_2", 0.5, 0.3, 3),
+            ("drug_3", "disease_2", 0.3, 0.4, 4),
         ],
         schema=["source", "target", "score_1", "score_2", "rank"],
     )
@@ -57,7 +57,7 @@ def sample_matrix_data_spark(spark_session):
 def sample_drugs_list(spark_session):
     """Fixture that provides sample drugs list with id and name"""
     return spark_session.createDataFrame(
-        [("drug_1", "name_1"), ("drug_2", "name_2"), ("drug_3", "name_3"), ("drug_4", "name_4")],
+        [("drug_1", "name_1"), ("drug_2", "name_2"), ("drug_3", "name_3")],
         schema=["curie", "name"],
     )
 
@@ -66,7 +66,7 @@ def sample_drugs_list(spark_session):
 def sample_diseases_list(spark_session):
     """Fixture that provides sample diseases list with id and name"""
     return spark_session.createDataFrame(
-        [("disease_1", "label_1"), ("disease_2", "label_2"), ("disease_3", "label_3"), ("disease_4", "label_4")],
+        [("disease_1", "name_1"), ("disease_2", "name_2"), ("disease_3", "name_3")],
         schema=["category_class", "label"],
     )
 
@@ -149,7 +149,7 @@ def test_top_pairs(sample_matrix_data_spark, sample_drugs_list, sample_diseases_
     )
     # The table has the correct values
     assert table["drug_id"].tolist() == ["drug_1", "drug_2"]
-    assert table["disease_id"].tolist() == ["disease_1", "disease_2"]
+    assert table["disease_id"].tolist() == ["disease_1", "disease_1"]
 
 
 def test_rank_to_score(sample_matrix_data_spark, sample_drugs_list, sample_diseases_list):
@@ -167,3 +167,38 @@ def test_rank_to_score(sample_matrix_data_spark, sample_drugs_list, sample_disea
     # The table has the correct values
     assert table["rank"].tolist() == [1, 2]
     assert table["score_1"].tolist() == [0.9, 0.7]
+
+
+def test_top_frequent_flyers(sample_matrix_data_spark, sample_drugs_list, sample_diseases_list):
+    # Given the top frequent flyers generator for drugs and diseases
+    generator_drugs = TopFrequentFlyers(
+        name="name", is_drug_mode=True, count_in_n_lst=[3], sort_by_col="score_1", score_col="score_1"
+    )
+    generator_diseases = TopFrequentFlyers(
+        name="name", is_drug_mode=False, count_in_n_lst=[3], sort_by_col="score_1", score_col="score_1"
+    )
+
+    # When generating the table
+    table_drugs = generator_drugs.generate(sample_matrix_data_spark, sample_drugs_list, sample_diseases_list)
+    table_diseases = generator_diseases.generate(sample_matrix_data_spark, sample_drugs_list, sample_diseases_list)
+
+    # Then:
+    # The tables are pandas dataframes
+    assert isinstance(table_drugs, pd.DataFrame)
+    assert isinstance(table_diseases, pd.DataFrame)
+    # The tables have the correct columns
+    columns = {"id", "name", "mean", "max", "count_in_1", "count_in_2"}
+    assert set(table_drugs.columns.tolist()) == columns
+    assert set(table_diseases.columns.tolist()) == columns
+    # The tables have the correct values for drugs
+    assert table_drugs["id"].tolist() == ["drug_1", "drug_2", "drug_3"]
+    assert table_drugs["name"].tolist() == ["name_1", "name_2", "name_3"]
+    assert table_drugs["mean"].tolist() == [0.9, 0.6, 0.3]
+    assert table_drugs["max"].tolist() == [0.9, 0.7, 0.3]
+    assert table_drugs["count_in_3"].tolist() == [1, 2, 0]
+    # The tables have the correct values for diseases
+    assert table_diseases["id"].tolist() == ["disease_1", "disease_2", "disease_3"]
+    assert table_diseases["name"].tolist() == ["name_1", "name_2", "name_3"]
+    assert table_diseases["mean"].tolist() == [0.9, 0.6, 0.3]
+    assert table_diseases["max"].tolist() == [0.9, 0.7, 0.3]
+    assert table_diseases["count_in_3"].tolist() == [2, 1, 0]
