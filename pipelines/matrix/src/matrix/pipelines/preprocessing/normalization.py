@@ -40,10 +40,21 @@ async def process_batch(batch: List[str], session: aiohttp.ClientSession, pbar: 
                             "id": node_data["id"]["identifier"] if node_data.get("id") else None,
                             "label": node_data["id"].get("label", None) if node_data.get("id") else None,
                             "all_categories": node_data.get("type", None),
+                            "equivalent_identifiers": [
+                                id["identifier"]
+                                for id in node_data.get("equivalent_identifiers", [])
+                                if id.get("identifier")
+                            ],
                             "original_id": curie,
                         }
                     else:
-                        results[curie] = {"id": None, "label": None, "all_categories": None, "original_id": curie}
+                        results[curie] = {
+                            "id": None,
+                            "label": None,
+                            "all_categories": None,
+                            "equivalent_identifiers": None,
+                            "original_id": curie,
+                        }
             elif response.status == 502:
                 print(f"Server overloaded (502). Retrying batch after delay...")
                 await asyncio.sleep(10)  # Longer delay for server errors
