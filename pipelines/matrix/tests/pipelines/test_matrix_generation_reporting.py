@@ -10,10 +10,20 @@ from matrix.pipelines.matrix_generation.reporting_plots import (
     SingleScoreLinePlot,
     SingleScoreScatterPlot,
 )
+from matrix.pipelines.matrix_generation.reporting_tables import (
+    MatrixRunInfo,
+)
+from pyspark.sql import SparkSession
 
 
-@pytest.fixture
-def sample_matrix_data():
+@pytest.fixture()
+def spark_session():
+    """Fixture that provides a Spark session for testing."""
+    return SparkSession.builder.config("spark.driver.memory", "1g").getOrCreate()
+
+
+@pytest.fixture()
+def sample_matrix_data_pandas():
     """Fixture that provides sample matrix data with multiple scores for testing."""
     return pd.DataFrame(
         {
@@ -26,7 +36,39 @@ def sample_matrix_data():
     )
 
 
-def test_plot_generator(sample_matrix_data):
+@pytest.fixture()
+def sample_matrix_data_spark(spark_session):
+    """Fixture that provides sample matrix data with multiple scores for testing."""
+    return spark_session.createDataFrame(
+        [
+            ("drug_1", "disease_1", 0.9, 0.1, 1),
+            ("drug_2", "disease_2", 0.7, 0.2, 2),
+            ("drug_3", "disease_3", 0.5, 0.3, 3),
+            ("drug_4", "disease_4", 0.3, 0.4, 4),
+        ],
+        schema=["source", "target", "score_1", "score_2", "rank"],
+    )
+
+
+@pytest.fixture()
+def sample_drugs_list(spark_session):
+    """Fixture that provides sample drugs list with id and name"""
+    return spark_session.createDataFrame(
+        [("drug_1", "name_1"), ("drug_2", "name_2"), ("drug_3", "name_3"), ("drug_4", "name_4")],
+        schema=["curie", "name"],
+    )
+
+
+@pytest.fixture()
+def sample_diseases_list(spark_session):
+    """Fixture that provides sample diseases list with id and name"""
+    return spark_session.createDataFrame(
+        [("disease_1", "label_1"), ("disease_2", "label_2"), ("disease_3", "label_3"), ("disease_4", "label_4")],
+        schema=["category_class", "label"],
+    )
+
+
+def test_plot_generator(sample_matrix_data_pandas):
     """This test all plotting strategies."""
     # Given any plotting strategy
     generators = [
@@ -58,9 +100,32 @@ def test_plot_generator(sample_matrix_data):
 
     for generator in generators:
         # When generating the plot
-        plot = generator.generate(sample_matrix_data)
+        plot = generator.generate(sample_matrix_data_pandas)
         # Then:
         # The plot is a matplotlib figure
         assert isinstance(plot, plt.Figure)
         # The generator has the correct name
         assert generator.name == "name"
+
+
+def test_matrix_run_info(sample_matrix_data_spark, sample_drugs_list, sample_diseases_list):
+    """This test the MatrixRunInfo table generator."""
+    # Given the matrix run info generator
+    generator = MatrixRunInfo(
+        name="name", versions={"matrix": {"version": "1.0.0"}, "drugs": {"version": "2.0.0"}}, release="0.1"
+    )
+
+    # When generating the table
+    table = generator.generate(sample_matrix_data_spark, sample_drugs_list, sample_diseases_list)
+
+    # Then:
+    # The table is a pandas dataframe
+    assert isinstance(table, pd.DataFrame)
+    # The table has the correct columns
+    assert table.columns.tolist() == ["key", "value"]
+    # The table has the correct row information
+    timestamp = table[table["key"] == "timestamp"]["value"].iloc[0]
+    assert timestamp[:2] == "20" and len(timestamp) == 10
+    assert table[table["key"] == "matrix_version"]["value"].iloc[0] == "1.0.0"
+    assert table[table["key"] == "drugs_version"]["value"].iloc[0] == "2.0.0"
+    assert table[table["key"] == "release"]["value"].iloc[0] == "0.1"
