@@ -51,6 +51,35 @@ preprocessing.int.embiology.attr@spark:
   <<: *_spark_parquet
   filepath: ${globals:paths.tmp}/embiology/raw/attr
 
+preprocessing.raw.embiology.nodes:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.kg_raw_private}/embiology/csv/node.csv.gz
+
+preprocessing.int.embiology.nodes@pandas:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.tmp}/embiology/raw/nodes
+
+preprocessing.int.embiology.nodes@spark:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.tmp}/embiology/raw/nodes
+
+preprocessing.prm.embiology.nodes@pandas:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.tmp}/embiology/prm/nodes
+
+preprocessing.raw.embiology.edges:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.kg_raw_private}/embiology/csv/control.csv.gz
+
+preprocessing.int.embiology.edges@pandas:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.tmp}/embiology/raw/edges
+
+preprocessing.int.embiology.edges@spark:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.tmp}/embiology/raw/edges
+
+
 preprocessing.int.embiology.identifiers:
   <<: *_spark_parquet
   filepath: ${globals:paths.tmp}/embiology/int/identifiers
