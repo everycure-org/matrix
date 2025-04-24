@@ -1,5 +1,6 @@
 import pytest
-from matrix.cli_commands.run import _validate_env_vars
+
+from matrix.cli_commands.run import _validate_env_vars_for_private_data
 
 
 @pytest.mark.parametrize(
@@ -50,6 +51,6 @@ def test_validate_env_vars(monkeypatch, env, env_vars, should_raise_error):
 
     if should_raise_error:
         with pytest.raises(RuntimeError):
-            _validate_env_vars(env)
+            _validate_env_vars_for_private_data(env)
     else:
-        _validate_env_vars(env)
+        _validate_env_vars_for_private_data(env)
