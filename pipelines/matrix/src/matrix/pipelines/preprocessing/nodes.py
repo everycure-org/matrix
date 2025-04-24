@@ -9,7 +9,7 @@ import requests
 from matrix.pipelines.preprocessing.normalization import resolve_ids_batch_async
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark.sql.functions import udf
-from pyspark.sql.types import StringType
+from pyspark.sql.types import ArrayType, IntegerType, StringType
 from tenacity import Retrying, stop_after_attempt, wait_exponential
 
 logger = logging.getLogger(__name__)
@@ -32,13 +32,12 @@ def normalize_identifiers(attr: pd.DataFrame, norm_params: Dict[str, str]) -> pd
     Returns:
         pd.DataFrame: DataFrame with normalized identifiers
     """
-
     # Get values list from attribute DataFrame
-    ids_to_resolve = attr.select("value").distinct().rdd.map(lambda x: x.value).collect()
+    ids_to_resolve = attr.select("value", "id").distinct().rdd.map(lambda x: (x.value, x.id)).collectAsMap()
     # Run async resolution
     results = asyncio.run(
         resolve_ids_batch_async(
-            curies=ids_to_resolve,
+            curies=list(ids_to_resolve.keys()),
             batch_size=norm_params["batch_size"],
             max_concurrent=norm_params["max_concurrent"],
             url=norm_params["url"],
@@ -52,12 +51,13 @@ def normalize_identifiers(attr: pd.DataFrame, norm_params: Dict[str, str]) -> pd
                 "id": v["id"],
                 "label": v["label"],
                 "all_categories": v["all_categories"],
+                "equivalent_identifiers": v["equivalent_identifiers"],
                 "original_id": v["original_id"],
             }
             for k, v in results.items()
         ]
     )
-
+    results_df["attribute_id"] = results_df["original_id"].map(ids_to_resolve)
     return results_df
 
 
@@ -90,18 +90,6 @@ def prepare_normalized_identifiers(
     return normalize_identifiers(df, norm_params)
 
 
-def _attach_biolink_mapping(nodes, biolink_mapping):
-    def lookup_mapping(name):
-        return biolink_mapping.get(name, "")
-
-    lookup_udf = udf(lookup_mapping, StringType())
-    return (
-        nodes.withColumn("category", lookup_udf(f.col("nodetype")))
-        .withColumn("id", f.col("translator_id").fill_null(f.col("name")))
-        .select("id", "name", "category", "original_id", "nodetype", "translator_id")
-    )
-
-
 def prepare_nodes(nodes, id_mapping, biolink_mapping):
     """Prepare nodes for embiology nodes.
 
@@ -110,42 +98,31 @@ def prepare_nodes(nodes, id_mapping, biolink_mapping):
         identifiers_mapping: mapping of identifiers
     """
     # Normalize identifier
-    # merge only using attributes for which normalization status was TRUE
-    temp = (
-        raw_nodes.with_columns(
-            pl.col("attributes").str.strip_chars("{}").str.split(", ").cast(pl.List(pl.Int64)).alias("attributes")
-        )
-        .explode("attributes")
+    norm_nodes = (
+        nodes.withColumn("attributes", f.split(f.regexp_replace("attributes", "[{}]", ""), ","))
+        .withColumn("attributes", f.explode(f.col("attributes")))
         .join(
-            attr_normalized.select("id", "final_id", "normalization_status")
-            .filter(pl.col("normalization_status") == True)
-            .with_columns(pl.col("final_id").cast(pl.String)),
+            id_mapping.withColumn("normalization_success", f.col("id").isNotNull())
+            .filter(f.col("normalization_success") == True)
+            .withColumn("final_id", f.col("id").cast(StringType())),
             left_on="attributes",
-            right_on="id",
+            right_on="attribute_id",
             how="left",
             suffix="_att",
         )
-    )  # .drop('attributes','normalization_status').pivot('name',
-
-    norm_nodes = temp.group_by("id", "urn", "name", "nodetype").agg(
-        pl.col("final_id").drop_nulls().first().alias("final_id")
+        .groupBy("id", "urn", "name", "nodetype")
+        .dropNulls()
+        .agg(f.first("final_id").alias("final_id"))
+        .withColumn("final_id", f.coalesce(f.col("final_id"), f.col("urn")))
     )
 
     # Biolink fix
-
     def lookup_mapping(name):
         return biolink_mapping.get(name, "")
 
     lookup_udf = udf(lookup_mapping, StringType())
-
-    attr_normalized = attr.join(
-        results_df.rename({"original_id": "value", "id": "final_id"}), on="value", how="left"
-    ).with_columns(pl.col("final_id").is_not_null().alias("normalization_status"))
-    attr_normalized
-
-    return nodes.withColumn("manual_category", lookup_udf(f.col("nodetype"))).withColumn(
-        "id", f.col("translator_id").fill_null(f.col("name"))
-    )
+    norm_nodes = norm_nodes.withColumn("manual_category", lookup_udf(f.col("nodetype")))
+    return norm_nodes
 
 
 # def prepare_edges(control, biolink_mapping):

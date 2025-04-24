@@ -80,7 +80,11 @@ preprocessing.int.embiology.edges@spark:
   filepath: ${globals:paths.tmp}/embiology/raw/edges
 
 
-preprocessing.int.embiology.identifiers:
+preprocessing.int.embiology.identifiers@pandas:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.tmp}/embiology/int/identifiers
+
+preprocessing.int.embiology.identifiers@spark:
   <<: *_spark_parquet
   filepath: ${globals:paths.tmp}/embiology/int/identifiers
 
