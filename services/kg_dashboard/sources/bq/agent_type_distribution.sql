@@ -7,6 +7,7 @@ WITH prepared AS (
       WHEN LOWER(TRIM(agent_type)) = 'data_analysis_pipeline' THEN 'Data Analysis Pipeline'
       WHEN LOWER(TRIM(agent_type)) = 'computational_model' THEN 'Computational Model'
       WHEN LOWER(TRIM(agent_type)) = 'text_mining_agent' THEN 'Text-Mining Agent'
+      WHEN LOWER(TRIM(agent_type)) = 'image_processing_agent' THEN 'Image-Processing Agent'
       WHEN LOWER(TRIM(agent_type)) = 'not_provided' THEN 'Not Provided'
       WHEN agent_type IS NULL OR agent_type = '' THEN 'null'
       ELSE 'null'
