@@ -12,6 +12,9 @@ from matrix.pipelines.matrix_generation.reporting_plots import (
 )
 from matrix.pipelines.matrix_generation.reporting_tables import (
     MatrixRunInfo,
+    RankToScore,
+    TopFrequentFlyers,
+    TopPairs,
 )
 from pyspark.sql import SparkSession
 
@@ -69,7 +72,7 @@ def sample_diseases_list(spark_session):
 
 
 def test_plot_generator(sample_matrix_data_pandas):
-    """This test all plotting strategies."""
+    """Tests all plotting strategies."""
     # Given any plotting strategy
     generators = [
         SingleScoreHistogram(
@@ -109,7 +112,6 @@ def test_plot_generator(sample_matrix_data_pandas):
 
 
 def test_matrix_run_info(sample_matrix_data_spark, sample_drugs_list, sample_diseases_list):
-    """This test the MatrixRunInfo table generator."""
     # Given the matrix run info generator
     generator = MatrixRunInfo(
         name="name", versions={"matrix": {"version": "1.0.0"}, "drugs": {"version": "2.0.0"}}, release="0.1"
@@ -129,3 +131,39 @@ def test_matrix_run_info(sample_matrix_data_spark, sample_drugs_list, sample_dis
     assert table[table["key"] == "matrix_version"]["value"].iloc[0] == "1.0.0"
     assert table[table["key"] == "drugs_version"]["value"].iloc[0] == "2.0.0"
     assert table[table["key"] == "release"]["value"].iloc[0] == "0.1"
+
+
+def test_top_pairs(sample_matrix_data_spark, sample_drugs_list, sample_diseases_list):
+    # Given the top pairs generator
+    generator = TopPairs(name="name", n_reporting=2, score_col="score_1", columns_to_keep=["score_1", "score_2"])
+
+    # When generating the table
+    table = generator.generate(sample_matrix_data_spark, sample_drugs_list, sample_diseases_list)
+
+    # Then:
+    # The table is a pandas dataframe
+    assert isinstance(table, pd.DataFrame)
+    # The table has the correct columns
+    assert set(table.columns.tolist()) == set(
+        ["drug_id", "drug_name", "disease_id", "disease_name", "score_1", "score_2"]
+    )
+    # The table has the correct values
+    assert table["drug_id"].tolist() == ["drug_1", "drug_2"]
+    assert table["disease_id"].tolist() == ["disease_1", "disease_2"]
+
+
+def test_rank_to_score(sample_matrix_data_spark, sample_drugs_list, sample_diseases_list):
+    # Given the rank to score generator
+    generator = RankToScore(name="name", ranks_lst=[1, 2], score_col="score_1")
+
+    # When generating the table
+    table = generator.generate(sample_matrix_data_spark, sample_drugs_list, sample_diseases_list)
+
+    # Then:
+    # The table is a pandas dataframe
+    assert isinstance(table, pd.DataFrame)
+    # The table has the correct columns
+    assert set(table.columns.tolist()) == set(["rank", "score_1"])
+    # The table has the correct values
+    assert table["rank"].tolist() == [1, 2]
+    assert table["score_1"].tolist() == [0.9, 0.7]
