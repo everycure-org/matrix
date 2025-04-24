@@ -1,13 +1,13 @@
 # {params.category}
 
 ```sql number_of_nodes
-select sum(count) as count
+select coalesce(sum(count), 0) as count
 from bq.merged_kg_nodes
 where category = 'biolink:${params.category}'
 ```
 
 ```sql number_of_edges
-select sum(count) as count
+select coalesce(sum(count), 0) as count
 from bq.merged_kg_edges
 where subject_category = 'biolink:${params.category}'
    or object_category = 'biolink:${params.category}'    
@@ -17,7 +17,7 @@ where subject_category = 'biolink:${params.category}'
   select 
       prefix,
       '/node/prefix/' || prefix as link,
-      sum(count) as count
+      coalesce(sum(count), 0) as count
   from bq.merged_kg_nodes
   where category = 'biolink:${params.category}'
   group by all
@@ -27,10 +27,11 @@ where subject_category = 'biolink:${params.category}'
 ```sql node_prefixes_by_upstream_data_source
 select prefix, 
        upstream_data_source, 
-       sum(count) as count 
+       coalesce(sum(count), 0) as count 
 from bq.merged_kg_nodes
 where category = 'biolink:${params.category}'
 group by all
+having count > 0
 order by count desc
 limit 50
 ```
@@ -49,6 +50,7 @@ where (subject_category = 'biolink:${params.category}'
    or object_category = 'biolink:${params.category}')
    and ('${inputs.pks_filter.value}' = 'All' or primary_knowledge_source = '${inputs.pks_filter.value}')
 group by all
+having count > 0
 order by count desc
 ```
 
@@ -77,10 +79,12 @@ order by count desc
   order by count desc
 ```
 
+{#if number_of_edges.length > 0 && number_of_nodes.length > 0}
 <Grid col=2>
     <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={number_of_edges} column="count" fmt="integer"/></span><br/>edges</p>
     <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={number_of_nodes} column="count" fmt="integer"/></span><br/>nodes</p>
 </Grid>
+{/if}
 
 {#if node_prefixes_by_upstream_data_source.length !== 0}
 <BarChart 
@@ -102,6 +106,7 @@ order by count desc
 />
 {/if}
 
+{#if primary_knowledge_source_counts.length !== 0}
 <div>
     <Dropdown 
         data={primary_knowledge_source_counts}
@@ -112,9 +117,12 @@ order by count desc
         <DropdownOption value="All">All</DropdownOption>
     </Dropdown>
 </div>
+{/if}
+
+{#if edge_type_with_connected_prefix.length !== 0}
 <DataTable
     data={edge_type_with_connected_prefix}
-    title="Edge Types Connectected to {params.category} Nodes"
+    title="Edge Types Connected to {params.category} Nodes"
     groupBy=connected_prefix
     subtotals=true
     totalRow=true
@@ -124,3 +132,4 @@ order by count desc
     <Column id="edge_type" title="Edge Type" />
     <Column id="count" contentType="bar"/>
 </DataTable>
+{/if}
