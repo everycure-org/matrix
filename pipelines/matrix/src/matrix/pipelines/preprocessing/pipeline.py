@@ -19,6 +19,20 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["embiology-kg"],
             ),
             node(
+                func=lambda x: x,
+                inputs="preprocessing.raw.embiology.nodes",
+                outputs="preprocessing.int.embiology.nodes@pandas",
+                name="write_embiology_nodes",
+                tags=["embiology-kg"],
+            ),
+            node(
+                func=lambda x: x,
+                inputs="preprocessing.raw.embiology.edges",
+                outputs="preprocessing.int.embiology.edges@pandas",
+                name="write_embiology_edges",
+                tags=["embiology-kg"],
+            ),
+            node(
                 func=nodes.prepare_normalized_identifiers,
                 inputs=[
                     "preprocessing.int.embiology.attr@spark",
@@ -32,10 +46,11 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.prepare_nodes,
                 inputs=[
-                    "preprocessing.raw.embiology.nodes@spark",
-                    "preprocessing.int.embiology.identifiers" "params:preprocessing.embiology.attr.identifiers_mapping",
+                    "preprocessing.int.embiology.nodes@spark",
+                    "preprocessing.int.embiology.identifiers",
+                    "params:preprocessing.embiology.nodes.biolink_mapping",
                 ],
-                outputs="preprocessing.int.embiology.nodes",
+                outputs="preprocessing.prm.embiology.nodes",
                 name="prepare_identifiers",
                 tags=["embiology-kg"],
             ),
