@@ -22,21 +22,34 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.prepare_normalized_identifiers,
                 inputs=[
                     "preprocessing.int.embiology.attr@spark",
-                    "params:preprocessing.embiology.attr.identifiers_mapping",  # ,
-                    # "params:preprocessing.embiology.normalization",
+                    "params:preprocessing.embiology.attr.identifiers_mapping",
+                    "params:preprocessing.embiology.normalization",
                 ],
                 outputs="preprocessing.int.embiology.identifiers",
                 name="prepare_normalized_identifiers",
                 tags=["embiology-kg"],
             ),
+            node(
+                func=nodes.prepare_nodes,
+                inputs=[
+                    "preprocessing.raw.embiology.nodes@spark",
+                    "preprocessing.int.embiology.identifiers" "params:preprocessing.embiology.attr.identifiers_mapping",
+                ],
+                outputs="preprocessing.int.embiology.nodes",
+                name="prepare_identifiers",
+                tags=["embiology-kg"],
+            ),
             # node(
-            #     func=nodes.prepare_nodes,
+            #     func=nodes.deduplicate_and_clean,
             #     inputs=[
-            #         "preprocessing.int.embiology.nodes@spark",
-            #         "params:preprocessing.embiology.attr.identifiers_mapping",
+            #         "preprocessing.int.embiology.nodes",
+            #         "preprocessing.int.embiology.edges",
             #     ],
-            #     outputs="preprocessing.int.embiology.identifiers",
-            #     name="prepare_identifiers",
+            #     outputs=[
+            #         "preprocessing.prm.embiology.nodes",
+            #         "preprocessing.prm.embiology.edges",
+            #     ],
+            #     name="final_clean_embiology_kg",
             #     tags=["embiology-kg"],
             # ),
             # -------------------------------------------------------------------------
