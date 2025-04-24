@@ -160,9 +160,7 @@ class TopPairs(ReportingTableGenerator):
         )
 
         # Reorder columns and return
-        return top_pairs.select(
-            "drug_name", "disease_name", *[col for col in top_pairs.columns if col not in ["drug_name", "disease_name"]]
-        ).toPandas()
+        return top_pairs.select("drug_name", "disease_name", "drug_id", "disease_id", *self.columns_to_keep).toPandas()
 
 
 class RankToScore(ReportingTableGenerator):
