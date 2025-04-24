@@ -1,6 +1,6 @@
-import re
 from unittest.mock import Mock
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
@@ -8,6 +8,7 @@ from matrix.datasets.graph import KnowledgeGraph
 from matrix.inject import _extract_elements_in_list
 from matrix.pipelines.matrix_generation.nodes import (
     generate_pairs,
+    generate_reports,
     make_batch_predictions,
     make_predictions_and_sort,
 )
@@ -271,3 +272,51 @@ def test_make_predictions_and_sort(
     assert isinstance(result, pd.DataFrame)
     assert len(result) == 4
     assert result["score"].is_monotonic_decreasing
+
+
+@pytest.fixture
+def mock_reporting_plot_strategies():
+    names = ["strategy_1", "strategy_2"]
+    generators = [Mock() for _ in names]
+    for name, generator in zip(names, generators):
+        generator.name = name
+        generator.generate.return_value = plt.Figure()
+    return generators
+
+
+@pytest.fixture
+def mock_reporting_table_strategies():
+    names = ["strategy_1", "strategy_2"]
+    generators = [Mock() for _ in names]
+    for name, generator in zip(names, generators):
+        generator.name = name
+        generator.generate.return_value = pd.DataFrame()
+    return generators
+
+
+def test_generate_report_plot(
+    sample_matrix_data,
+    mock_reporting_plot_strategies,
+):
+    # Given a list of reporting plot generator and a matrix dataframe
+    # When generating the report plot
+    reports_dict = generate_reports(sample_matrix_data, mock_reporting_plot_strategies, ".png")
+    # Then:
+    # The keys of the dictionary are the names of the reporting plot generator and have the correct suffix
+    assert list(reports_dict.keys()) == ["strategy_1.png", "strategy_2.png"]
+    # The values are the reporting plot generator's generate method's output
+    assert all(isinstance(value, plt.Figure) for value in reports_dict.values())
+
+
+def test_generate_report_table(
+    sample_matrix_data,
+    mock_reporting_table_strategies,
+):
+    # Given a list of reporting table generator and a matrix dataframe
+    # When generating the report table
+    reports_dict = generate_reports(sample_matrix_data, mock_reporting_table_strategies, ".csv")
+    # Then:
+    # The keys of the dictionary are the names of the reporting table generator and have the correct suffix
+    assert list(reports_dict.keys()) == ["strategy_1.csv", "strategy_2.csv"]
+    # The values are the reporting table generator's generate method's output
+    assert all(isinstance(value, pd.DataFrame) for value in reports_dict.values())
