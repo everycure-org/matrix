@@ -50,11 +50,7 @@ def get_user_account_token() -> str:
 
 
 @click.group()
-@click.pass_context
-def experiment(ctx: "click.core.Context") -> None:
-    """Experiment management commands."""
-
-    # https://click.palletsprojects.com/en/stable/commands/#nested-handling-and-contexts
+def experiment() -> None:
     _validate_env_vars_for_private_data()
     if os.getenv("GITHUB_ACTIONS"):
         # Running in GitHub Actions, get the IAP token of service acccount from the secrets

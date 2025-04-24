@@ -300,7 +300,3 @@ def get_trigger_release_flag(pipeline: str) -> str:
     pipeline_correct = pipeline in ("data_release", "kg_release", "kg_release_patch")
     env_correct = "-dev-" in os.environ["RUNTIME_GCP_PROJECT_ID"].lower()
     return str(pipeline_correct and env_correct)
-
-
-# def get_include_private_datasets_flag() -> str:
-#     return "true" if os.getenv("INCLUDE_PRIVATE_DATASETS", "") == "1" else "false"

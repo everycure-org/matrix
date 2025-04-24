@@ -69,16 +69,11 @@ class RunConfig(NamedTuple):
 @click.option( "--conf-source",   type=click.Path(exists=True, file_okay=False, resolve_path=True), help=CONF_SOURCE_HELP,)
 @click.option( "--params",        type=click.UNPROCESSED, default="", help=PARAMS_ARG_HELP, callback=_split_params,)
 @click.option( "--from-env",      type=str, default=None, help="Custom env to read from, if specified will read from the `--from-env` and write to the `--env`",)
-#@click.option( "--include-private-datasets", type=click.Choice(["true", "false"]), default="false", help="Include private datasets from prod",)
 # fmt: on
-def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async: bool, node_names: list[str], to_nodes: list[str], from_nodes: list[str], from_inputs: list[str], to_outputs: list[str], load_versions: list[str], pipeline: str, conf_source: str, params: dict[str, Any], from_env: Optional[str]=None):#, include_private_datasets: str = "false"):
+def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async: bool, node_names: list[str], to_nodes: list[str], from_nodes: list[str], from_inputs: list[str], to_outputs: list[str], load_versions: list[str], pipeline: str, conf_source: str, params: dict[str, Any], from_env: Optional[str]=None):
     """Run the pipeline."""
 
     _validate_env_vars_for_private_data()
-
-    # if include_private_datasets == "true":
-    #     _validate_env_vars_for_private_data("prod")
-    #     os.environ['INCLUDE_PRIVATE_DATASETS'] = "1"
 
     pipeline_name = pipeline
     pipeline_obj = pipelines[pipeline_name]
