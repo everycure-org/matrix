@@ -56,7 +56,7 @@ The GCP environment controls:
 
 ### Setting the GCP Environment
 
-When using `kedro experiment run` or `kedro run` you can specify the GCP environment using the values in your `.env` file (for prod), or have those commented out, in which case `.env.defaults` will be applied, which always point to `dev`.
+When using `kedro experiment run` or `kedro run` you can specify the GCP environment using the values in your `.env` file (for `prod`), or have those commented out, in which case `.env.defaults` will be applied, which always point to `dev`.
 
 
 ### Environment Variables
@@ -71,7 +71,7 @@ GOOGLE_APPLICATION_CREDENTIALS=/Users/<YOUR_USERNAME>/.config/gcloud/application
 INCLUDE_PRIVATE_DATASETS=1
 ```
 
-To run pipelines in development (only public datasets) (whether locally or in the cluster),  the above values in your `.env` should be commented out.
+To run pipelines in development (only public datasets),  the above values in your `.env` should be commented out.
 
 Commands `kedro experiment run` and `kedro run` are environment agnostic.
 
