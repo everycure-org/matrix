@@ -3,7 +3,6 @@ import logging
 import pyspark.sql as ps
 import pyspark.sql.functions as f
 from pyspark.sql import DataFrame
-
 from .transformer import Transformer
 
 logger = logging.getLogger(__name__)

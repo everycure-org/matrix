@@ -3,7 +3,6 @@ import logging
 import pyspark.sql as ps
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
-
 from .transformer import GraphTransformer
 
 logger = logging.getLogger(__name__)

@@ -1,5 +1,4 @@
 from kedro.pipeline import Pipeline, node
-
 from . import nodes
 
 

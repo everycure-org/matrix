@@ -10,7 +10,6 @@ from tenacity import (
     retry_if_exception_type,
     wait_exponential,
 )
-
 from ...batch.pipeline import batched
 from .normalizer import Normalizer
 

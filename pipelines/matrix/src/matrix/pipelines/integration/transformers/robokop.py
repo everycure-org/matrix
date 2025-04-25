@@ -2,7 +2,6 @@ import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
-
 # FUTURE: We should likely not need to rename these columns as we do below
 # However, KGX is currently not as performant as we need it to be thus
 # we do it manually with spark. This ought to be improved, e.g. by
@@ -11,7 +10,6 @@ import pyspark.sql.types as T
 # https://github.com/everycure-org/matrix/issues/474
 from matrix.pipelines.integration import schema
 from matrix.pipelines.integration.filters import determine_most_specific_category
-
 from .transformer import GraphTransformer
 
 ROBOKOP_SEPARATOR = r"\|"

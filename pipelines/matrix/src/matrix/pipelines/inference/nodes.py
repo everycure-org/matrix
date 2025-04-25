@@ -4,7 +4,6 @@ from typing import Dict, Tuple
 # from jsonpath_ng import parse
 import pandas as pd
 from matplotlib.figure import Figure
-
 from . import visualisers
 
 # @has_schema(

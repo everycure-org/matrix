@@ -3,7 +3,6 @@ from typing import Dict
 
 import pyspark.sql as ps
 import pyspark.sql.functions as f
-
 from .transformer import Transformer
 
 logger = logging.getLogger(__name__)
