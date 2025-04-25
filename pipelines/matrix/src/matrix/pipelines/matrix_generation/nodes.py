@@ -303,12 +303,13 @@ def generate_reports(
         Dictionary of plots or tables with strategy name as key
     """
     # Check that the names of the reporting strategies are unique
-    names = [strategy.name for strategy in strategies]
+    names = [strategy.name for strategy in strategies.values()]
     if len(names) != len(set(names)):
         raise ValueError("Reporting strategy names must be unique.")
 
     reports_dict = {}
-    for strategy in strategies:
+    for strategy in strategies.values():
         reports_dict[strategy.name + file_suffix] = strategy.generate(sorted_matrix_df, **kwargs)
+        print(strategy.name + file_suffix)
 
     return reports_dict

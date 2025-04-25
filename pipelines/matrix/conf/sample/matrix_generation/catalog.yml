@@ -1,0 +1,13 @@
+matrix_generation.reporting.plots:
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  dataset:
+    type: partitions.PartitionedDataset
+    path: data/mlflow/reporting/plots
+    dataset: matplotlib.MatplotlibWriter
+
+matrix_generation.reporting.tables:
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  dataset:
+    type: partitions.PartitionedDataset
+    path: data/mlflow/reporting/tables
+    dataset: kedro_datasets.pandas.CSVDataset
