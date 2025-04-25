@@ -277,8 +277,8 @@ def test_make_predictions_and_sort(
 @pytest.fixture
 def mock_reporting_plot_strategies():
     names = ["strategy_1", "strategy_2"]
-    generators = [Mock() for _ in names]
-    for name, generator in zip(names, generators):
+    generators = {name: Mock() for name in names}
+    for name, generator in generators.items():
         generator.name = name
         generator.generate.return_value = plt.Figure()
     return generators
@@ -287,8 +287,8 @@ def mock_reporting_plot_strategies():
 @pytest.fixture
 def mock_reporting_table_strategies():
     names = ["strategy_1", "strategy_2"]
-    generators = [Mock() for _ in names]
-    for name, generator in zip(names, generators):
+    generators = {name: Mock() for name in names}
+    for name, generator in generators.items():
         generator.name = name
         generator.generate.return_value = pd.DataFrame()
     return generators
