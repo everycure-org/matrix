@@ -135,9 +135,6 @@ class TopPairs(ReportingTableGenerator):
         Returns:
             Spark DataFrame containing the table
         """
-        if self.n_reporting > sorted_matrix_df.count():
-            raise ValueError(f"n_reporting is too large: {self.n_reporting} > {sorted_matrix_df.count()}")
-
         # Extract top pairs and join names
         top_pairs = (
             sorted_matrix_df.orderBy(self.score_col, ascending=False)
