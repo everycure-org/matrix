@@ -36,6 +36,7 @@ SELECT
       WHEN 'data_analysis_pipeline' THEN 0.5
       WHEN 'computational_model' THEN 0.5
       WHEN 'text_mining_agent' THEN 0.3
+      WHEN 'image_processing_agent' THEN 0.3
       WHEN 'not_provided' THEN 0.25
       ELSE 0.0
     END
