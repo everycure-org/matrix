@@ -9,10 +9,10 @@ from . import nodes
 def create_pipeline(**kwargs) -> Pipeline:
     """Create matrix generation pipeline."""
 
-    model_name = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")["model_name"]
+    model_name = settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")["model_name"]
 
     # Load cross-validation information
-    cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
+    cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING().get("cross_validation")
     n_cross_val_folds = cross_validation_settings.get("n_cross_val_folds")
 
     # Initial nodes computing matrix pairs and flags

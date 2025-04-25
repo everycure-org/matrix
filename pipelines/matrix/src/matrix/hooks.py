@@ -383,7 +383,7 @@ class ReleaseInfoHooks:
         version_formatted = "release_" + re.sub(r"[.-]", "_", version)
         tmpl = (
             f"https://console.cloud.google.com/bigquery?"
-            f"project={ReleaseInfoHooks._globals['gcp_project']}"
+            f"project={ReleaseInfoHooks._globals['runtime_gcp_project']}"
             f"&ws=!1m4!1m3!3m2!1s"
             f"mtrx-hub-dev-3of!2s"
             f"{version_formatted}"
@@ -415,7 +415,7 @@ class ReleaseInfoHooks:
         # Using lazy import to prevent circular import error
         from matrix.settings import DYNAMIC_PIPELINES_MAPPING
 
-        dataset_names = [item["name"] for item in DYNAMIC_PIPELINES_MAPPING["integration"] if item["integrate_in_kg"]]
+        dataset_names = [item["name"] for item in DYNAMIC_PIPELINES_MAPPING()["integration"] if item["integrate_in_kg"]]
         return dataset_names
 
     @classmethod
