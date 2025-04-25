@@ -77,24 +77,12 @@ class MatrixRunInfo(ReportingTableGenerator):
         Returns:
             Spark DataFrame containing the table
         """
-        # Create Spark session
-        spark = SparkSession.builder.getOrCreate()
-
-        # Create list of key-value pairs
         metadata_list = [
             ("timestamp", datetime.now().strftime("%Y-%m-%d")),
         ]
         metadata_list.extend([(f"{key}_version", value["version"]) for key, value in self.versions.items()])
         metadata_list.extend([(k, str(v)) for k, v in self.kwargs.items()])
-
-        # Return Spark DataFrame
-        schema = StructType(
-            [
-                StructField("key", StringType(), True),
-                StructField("value", StringType(), True),
-            ]
-        )
-        return spark.createDataFrame(metadata_list, schema=schema).toPandas()
+        return pd.DataFrame(metadata_list, columns=["key", "value"])
 
 
 class TopPairs(ReportingTableGenerator):
