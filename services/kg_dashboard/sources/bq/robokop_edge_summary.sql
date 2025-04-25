@@ -1,12 +1,18 @@
-SELECT 'Ingested' AS name, COUNT(*) AS value
-FROM `mtrx-hub-dev-3of.release_${bq_release_version}.robokop_edges_ingested_${robokop_version}`
+WITH summary AS (
+  SELECT 'Ingested' AS name, COUNT(*) AS value, 1 as sort_order
+  FROM `mtrx-hub-dev-3of.release_${bq_release_version}.robokop_edges_ingested_${robokop_version}`
 
-UNION ALL
+  UNION ALL
 
-SELECT 'Transformed', COUNT(*) AS value
-FROM `mtrx-hub-dev-3of.release_${bq_release_version}.robokop_edges_transformed`
+  SELECT 'Transformed' AS name, COUNT(*) AS value, 2 as sort_order
+  FROM `mtrx-hub-dev-3of.release_${bq_release_version}.robokop_edges_transformed`
 
-UNION ALL
+  UNION ALL
 
-SELECT 'Normalized', COUNT(*) AS value
-FROM `mtrx-hub-dev-3of.release_${bq_release_version}.robokop_edges_normalized`
+  SELECT 'Normalized' AS name, COUNT(*) AS value, 3 as sort_order
+  FROM `mtrx-hub-dev-3of.release_${bq_release_version}.robokop_edges_normalized`
+)
+
+SELECT name, value, sort_order
+FROM summary
+

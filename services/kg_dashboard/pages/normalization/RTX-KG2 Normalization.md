@@ -52,6 +52,7 @@ SELECT
 name,
 value
 FROM bq.rtx_kg2_node_summary
+ORDER BY sort_order asc
 ```
 
 ```sql rtx_kg2_edge_summary
@@ -59,6 +60,7 @@ SELECT
 name,
 value
 FROM bq.rtx_kg2_edge_summary
+ORDER BY sort_order asc
 ```
 
 
