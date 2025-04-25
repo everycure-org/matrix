@@ -1,12 +1,14 @@
 from kedro.pipeline import Pipeline, node
 
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
+
 from . import nodes
 
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
     pipeline_nodes = [
-        node(
+        ArgoNode(
             func=nodes.prefilter_unified_kg_nodes,
             inputs=[
                 "integration.prm.unified_nodes",
@@ -18,6 +20,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "argowf.fuse",
                 "argowf.fuse-group.filtering",
             ],
+            argo_config=ArgoResourceConfig(
+                memory_limit=75,
+                memory_request=75,
+            ),
         ),
         node(
             func=nodes.filter_unified_kg_edges,
