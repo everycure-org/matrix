@@ -1,7 +1,6 @@
 import click
 import pytest
 from click.testing import CliRunner
-
 from matrix.cli_commands.run import _validate_env_vars_for_private_data
 
 
