@@ -1,12 +1,18 @@
-SELECT 'Ingested' AS name, COUNT(*) AS value
-FROM `mtrx-hub-dev-3of.release_${bq_release_version}.rtx_kg2_nodes_ingested_${rtx_kg2_version}`
+WITH summary AS (
+  SELECT 'Ingested' AS name, COUNT(*) AS value, 1 as sort_order
+  FROM `mtrx-hub-dev-3of.release_${bq_release_version}.rtx_kg2_nodes_ingested_${rtx_kg2_version}`
 
-UNION ALL
+  UNION ALL
 
-SELECT 'Transformed', COUNT(*) AS value
-FROM `mtrx-hub-dev-3of.release_${bq_release_version}.rtx_kg2_nodes_transformed`
+  SELECT 'Transformed' AS name, COUNT(*) AS value, 2 as sort_order
+  FROM `mtrx-hub-dev-3of.release_${bq_release_version}.rtx_kg2_nodes_transformed`
 
-UNION ALL
+  UNION ALL
 
-SELECT 'Normalized', COUNT(*) AS value
-FROM `mtrx-hub-dev-3of.release_${bq_release_version}.rtx_kg2_nodes_normalized`
+  SELECT 'Normalized' AS name, COUNT(*) AS value, 3 as sort_order
+  FROM `mtrx-hub-dev-3of.release_${bq_release_version}.rtx_kg2_nodes_normalized`
+)
+
+SELECT name, value, sort_order
+FROM summary
+

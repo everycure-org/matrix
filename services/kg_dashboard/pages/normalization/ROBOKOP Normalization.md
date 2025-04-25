@@ -52,6 +52,7 @@ SELECT
 name,
 value
 FROM bq.robokop_node_summary
+ORDER BY sort_order asc
 ```
 
 ```sql robokop_edge_summary
@@ -59,6 +60,7 @@ SELECT
 name,
 value
 FROM bq.robokop_edge_summary
+ORDER BY sort_order asc
 ```
 
 <Grid col=2>
