@@ -17,6 +17,7 @@ WITH scored_edges AS (
       WHEN agent_type = 'data_analysis_pipeline' THEN 0.5
       WHEN agent_type = 'computational_model' THEN 0.5
       WHEN agent_type = 'text_mining_agent' THEN 0.3
+      WHEN agent_type = 'image_processing_agent' THEN 0.3
       WHEN agent_type = 'not_provided' THEN 0.25
     END AS at_score
   FROM `mtrx-hub-dev-3of.release_${bq_release_version}.edges`
