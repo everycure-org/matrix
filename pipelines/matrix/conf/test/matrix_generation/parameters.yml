@@ -1,6 +1,6 @@
-matrix_generation.treat_score_col_name: &score-col "treat score"
-matrix_generation.not_treat_score_col_name: &score-col-not-treat "not treat score"
-matrix_generation.unknown_score_col_name:  &score-col-unknown "unknown score"
+# matrix_generation.treat_score_col_name: &score-col "treat score"
+# matrix_generation.not_treat_score_col_name: &score-col-not-treat "not treat score"
+# matrix_generation.unknown_score_col_name:  &score-col-unknown "unknown score"
 
 # Strategies for reporting nodes
 
