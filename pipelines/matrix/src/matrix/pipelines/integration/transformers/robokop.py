@@ -11,7 +11,6 @@ import pyspark.sql.types as T
 # https://github.com/everycure-org/matrix/issues/474
 from matrix.pipelines.integration import schema
 from matrix.pipelines.integration.filters import determine_most_specific_category
-
 from .transformer import GraphTransformer
 
 ROBOKOP_SEPARATOR = r"\|"

@@ -4,7 +4,6 @@ import pyspark.sql.functions as F
 import pyspark.sql.types as T
 
 from matrix.pipelines.integration.filters import determine_most_specific_category
-
 from .transformer import GraphTransformer
 
 SEPARATOR = "\x1f"

@@ -5,10 +5,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING, List
 
 import typer
+from tqdm.rich import tqdm
+
 from matrix_cli.components.git import fetch_pr_detail
 from matrix_cli.components.settings import settings
 from matrix_cli.components.utils import console, run_command
-from tqdm.rich import tqdm
 
 if TYPE_CHECKING:
     from pandas import pd
@@ -31,11 +32,15 @@ def get_pr_details(pr_numbers: List[int]) -> "pd.DataFrame":
 
         # Process completed tasks with progress bar
         results = []
-        for future in tqdm(as_completed(future_to_pr), total=len(pr_numbers), desc="Fetching PR details", unit="PR"):
+        for future in tqdm(
+            as_completed(future_to_pr), total=len(pr_numbers), desc="Fetching PR details", unit="PR"
+        ):
             exception = future.exception()
             pr_info = future.result()
             if exception:
-                console.print(f"[bold red]Error fetching PR details for PR #{future_to_pr[future]}: {exception}")
+                console.print(
+                    f"[bold red]Error fetching PR details for PR #{future_to_pr[future]}: {exception}"
+                )
             if pr_info:
                 results.append(pr_info.to_dict())
 
@@ -68,14 +73,25 @@ def update_prs(df: "pd.DataFrame"):
 
             if labels_to_add:
                 try:
-                    run_command(["gh", "pr", "edit", str(pr_number), "--add-label", ",".join(labels_to_add)])
+                    run_command(
+                        ["gh", "pr", "edit", str(pr_number), "--add-label", ",".join(labels_to_add)]
+                    )
                     typer.echo(f"\nAdded labels to PR #{pr_number}: {labels_to_add}")
                 except subprocess.CalledProcessError:
                     typer.echo(f"\nFailed to add labels to PR #{pr_number}", err=True)
 
             if labels_to_remove:
                 try:
-                    run_command(["gh", "pr", "edit", str(pr_number), "--remove-label", ",".join(labels_to_remove)])
+                    run_command(
+                        [
+                            "gh",
+                            "pr",
+                            "edit",
+                            str(pr_number),
+                            "--remove-label",
+                            ",".join(labels_to_remove),
+                        ]
+                    )
                     typer.echo(f"\nRemoved labels from PR #{pr_number}: {labels_to_remove}")
                 except subprocess.CalledProcessError:
                     typer.echo(f"\nFailed to remove labels from PR #{pr_number}", err=True)

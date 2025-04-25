@@ -17,7 +17,6 @@ from matrix.utils.hook_utilities import (
     disable_private_datasets,
     generate_dynamic_pipeline_mapping,
 )
-
 from .resolvers import cast_to_int, env, if_null, merge_dicts
 
 hooks = {

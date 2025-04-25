@@ -7,6 +7,7 @@ import subprocess
 from typing import List, Optional, Tuple
 
 import typer
+
 from matrix_cli.components.cache import memory
 from matrix_cli.components.models import PRInfo
 from matrix_cli.components.settings import settings
@@ -19,7 +20,14 @@ def fetch_pr_detail(pr_number: int) -> PRInfo:
     Fetches PR details including merge commit.
     """
     # Fetch PR details including merge commit
-    command = ["gh", "pr", "view", str(pr_number), "--json", "number,title,author,labels,url,mergeCommit,headRefName"]
+    command = [
+        "gh",
+        "pr",
+        "view",
+        str(pr_number),
+        "--json",
+        "number,title,author,labels,url,mergeCommit,headRefName",
+    ]
 
     try:
         pr_json = run_command(command)
@@ -31,7 +39,9 @@ def fetch_pr_detail(pr_number: int) -> PRInfo:
 
     # Extract only the login from the author field
     if "author" in pr_info and isinstance(pr_info["author"], dict):
-        pr_info["author"] = pr_info["author"].get("login", "unknown")  # Default to "unknown" if login is missing
+        pr_info["author"] = pr_info["author"].get(
+            "login", "unknown"
+        )  # Default to "unknown" if login is missing
 
     # Fetch diff if merge commit exists
     diff = ""
@@ -86,7 +96,9 @@ def parse_diff_input(since: str, until: str) -> Tuple[str, str]:
     return from_ref, until
 
 
-def get_code_diff(since: str, until: str, file_patterns: List[str] = settings.inclusion_patterns) -> Optional[str]:
+def get_code_diff(
+    since: str, until: str, file_patterns: List[str] = settings.inclusion_patterns
+) -> Optional[str]:
     """Get code differences between two git references or time periods.
 
     Defaults to all files until latest main
@@ -105,7 +117,9 @@ def get_code_diff(since: str, until: str, file_patterns: List[str] = settings.in
     return run_command(["git", "diff", diff_ref, "--", *file_patterns], cwd=git_root)
 
 
-def get_code_from_commit(commit: str, file_patterns: List[str] = settings.inclusion_patterns) -> Optional[str]:
+def get_code_from_commit(
+    commit: str, file_patterns: List[str] = settings.inclusion_patterns
+) -> Optional[str]:
     git_root = get_git_root()
     command = ["git", "diff", f"{commit}^!", "--", *file_patterns]
     print(command)

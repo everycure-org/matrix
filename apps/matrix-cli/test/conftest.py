@@ -2,6 +2,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+
 from matrix_cli.components.cache import memory
 
 

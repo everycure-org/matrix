@@ -11,6 +11,7 @@ repos:
           (?x)^(
             pipelines/matrix/packages|
             services/synonymizer/api/modules/synonymize
+            apps/matrix-cli|
           )
       # Run the formatter.
       - id: ruff-format

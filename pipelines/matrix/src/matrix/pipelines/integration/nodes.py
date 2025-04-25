@@ -10,7 +10,6 @@ from pyspark.sql.window import Window
 from matrix.inject import inject_object
 from matrix.pipelines.integration.filters import determine_most_specific_category
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
-
 from .schema import BIOLINK_KG_EDGE_SCHEMA, BIOLINK_KG_NODE_SCHEMA
 
 # TODO move these into config
