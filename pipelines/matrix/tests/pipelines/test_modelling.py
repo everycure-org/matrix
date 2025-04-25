@@ -19,6 +19,7 @@ from sklearn.impute._base import _BaseImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV, KFold
 from xgboost import XGBClassifier
+
 # Local imports
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator

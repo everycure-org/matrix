@@ -2,7 +2,6 @@ import logging
 import sys
 
 from fastapi import FastAPI
-
 from api.modules.synonymize.routers import router as synonimze_router
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)

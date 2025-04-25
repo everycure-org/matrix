@@ -1,7 +1,6 @@
 from unittest.mock import patch
 
 import pytest
-
 from scripts.bump_version import bump_version
 
 

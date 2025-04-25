@@ -1,4 +1,5 @@
 import pytest
+
 from matrix_cli.components.utils import get_latest_minor_release
 
 

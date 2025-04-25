@@ -7,9 +7,10 @@ import questionary
 import semver
 import typer
 from google.auth import default
-from matrix_cli.components.cache import memory
 from rich.console import Console
 from tenacity import retry, stop_after_attempt, wait_exponential
+
+from matrix_cli.components.cache import memory
 
 console = Console()
 
@@ -89,7 +90,11 @@ def get_latest_minor_release(releases_list: List[str]) -> str:
     latest_major_minor = max(parsed_versions)
     # Find the earliest release in the latest major-minor series.
     latest_minor_release = min(
-        [v for v in parsed_versions if v.major == latest_major_minor.major and v.minor == latest_major_minor.minor]
+        [
+            v
+            for v in parsed_versions
+            if v.major == latest_major_minor.major and v.minor == latest_major_minor.minor
+        ]
     )
 
     return original_to_mapped[f"v{latest_minor_release}"]
@@ -105,6 +110,6 @@ def correct_non_semver_compliant_release_names(releases_list: List[str]) -> dict
 def get_releases() -> List[str]:
     # Sort releases by version using semantic versioning
     # Remark: repo should be fully checked out for this to work!
-    return run_command(["gh", "release", "list", "--json", "tagName", "--jq", ".[].tagName"], cwd=get_git_root()).split(
-        "\n"
-    )
+    return run_command(
+        ["gh", "release", "list", "--json", "tagName", "--jq", ".[].tagName"], cwd=get_git_root()
+    ).split("\n")

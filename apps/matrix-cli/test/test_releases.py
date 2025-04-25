@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
+
 from matrix_cli.commands.releases import (
     get_pr_details_since,
     get_release_notes,
@@ -155,7 +156,9 @@ def test_suggest_pr_title(mock_vertex_model):
     mock_vertex_model.assert_called_once()
 
 
-def test_get_release_notes_error_handling(mock_subprocess_run, mock_get_pr_details, mock_vertex_model, tmp_path):
+def test_get_release_notes_error_handling(
+    mock_subprocess_run, mock_get_pr_details, mock_vertex_model, tmp_path
+):
     """Test error handling in release notes generation.
 
     Given:

@@ -9,7 +9,8 @@ from matrix_cli.components.settings import settings
 from matrix_cli.components.utils import console
 
 data_app = typer.Typer(
-    help="Data-related utility commands, inspired by the kaggle dataset download CLI", no_args_is_help=True
+    help="Data-related utility commands, inspired by the kaggle dataset download CLI",
+    no_args_is_help=True,
 )
 
 
