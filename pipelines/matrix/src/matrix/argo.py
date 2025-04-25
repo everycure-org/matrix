@@ -40,6 +40,7 @@ def generate_argo_config(
     pipeline_tasks = get_dependencies(fuse(pipeline), default_execution_resources)
     git_sha = get_git_sha()
     trigger_release = get_trigger_release_flag(pipeline.name)
+    include_private_datasets = os.getenv("INCLUDE_PRIVATE_DATASETS", "0")
 
     rendered_template = template.render(
         package_name=package_name,
@@ -59,6 +60,7 @@ def generate_argo_config(
         git_sha=git_sha,
         environment=environment,
         default_execution_resources=default_execution_resources.model_dump(),
+        include_private_datasets=include_private_datasets,
     )
     yaml_data = yaml.safe_load(rendered_template)
     yaml_without_anchors = yaml.dump(yaml_data, sort_keys=False, default_flow_style=False)
