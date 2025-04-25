@@ -38,7 +38,7 @@ ingestion.raw.rtx_kg2.curie_to_pmids@pandas:
 
 ingestion.raw.rtx_kg2.curie_to_pmids@spark:
   type: matrix.datasets.gcp.RemoteSparkJDBCDataset
-  project: ${oc.env:GCP_PROJECT_ID}
+  project: ${globals:dev_gcp_project_id}
   table: curie_to_pmids
   url: sqlite:${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/curie_to_pmids.sqlite
   load_args:
@@ -374,18 +374,18 @@ ingestion.int.robokop.edges:
 # SPOKE
 # -------------------------------------------------------------------------
 ingestion.raw.spoke.nodes@spark:
-  <<: *_layer_raw
-  type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.kg_raw}/KGs/spoke/${globals:data_sources.spoke.version}/nodes.tsv
-  file_format: csv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
+ <<: *_layer_raw
+ type: matrix.datasets.gcp.LazySparkDataset
+ filepath: ${globals:paths.kg_raw_private}/KGs/spoke/${globals:data_sources.spoke.version}/nodes.tsv
+ file_format: csv
+ load_args:
+   sep: "\t"
+   header: true
+   index: false
 
 ingestion.raw.spoke.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.kg_raw}/KGs/spoke/${globals:data_sources.spoke.version}/nodes.tsv
+  filepath: ${globals:paths.kg_raw_private}/KGs/spoke/${globals:data_sources.spoke.version}/nodes.tsv
   save_args:
     sep: "\t"
     header: true
@@ -394,18 +394,18 @@ ingestion.raw.spoke.nodes@pandas:
     sep: "\t"
 
 ingestion.raw.spoke.edges@spark:
-  <<: *_layer_raw
-  type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.kg_raw}/KGs/spoke/${globals:data_sources.spoke.version}/edges.tsv
-  file_format: csv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
+ <<: *_layer_raw
+ type: matrix.datasets.gcp.LazySparkDataset
+ filepath: ${globals:paths.kg_raw_private}/KGs/spoke/${globals:data_sources.spoke.version}/edges.tsv
+ file_format: csv
+ load_args:
+   sep: "\t"
+   header: true
+   index: false
 
 ingestion.raw.spoke.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.kg_raw}/KGs/spoke/${globals:data_sources.spoke.version}/edges.tsv
+  filepath: ${globals:paths.kg_raw_private}/KGs/spoke/${globals:data_sources.spoke.version}/edges.tsv
   save_args:
     sep: "\t"
     header: true
@@ -414,9 +414,9 @@ ingestion.raw.spoke.edges@pandas:
     sep: "\t"
 
 ingestion.int.spoke.nodes:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/nodes
+ <<: [*_spark_parquet, *_layer_int]
+ filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/nodes
 
 ingestion.int.spoke.edges:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/edges
+ <<: [*_spark_parquet, *_layer_int]
+ filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/edges
