@@ -12,7 +12,7 @@ def mock_context():
     mock_context.config_loader = {
         "globals": {
             "versions": {"release": "1.0.0"},
-            "gcp_project": "test-project",
+            "runtime_gcp_project": "test-project",
             "data_sources": {
                 "robokop": {"version": "v1"},
                 "spoke": {"version": "v2"},
