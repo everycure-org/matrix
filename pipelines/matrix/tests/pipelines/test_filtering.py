@@ -1,9 +1,9 @@
 import pandas as pd
 import pytest
-from matrix.pipelines.filtering import filters
 from pandera.errors import SchemaError
 from pyspark.sql.types import ArrayType, StringType, StructField, StructType
 from pyspark.testing import assertDataFrameEqual
+from matrix.pipelines.filtering import filters
 
 
 @pytest.fixture

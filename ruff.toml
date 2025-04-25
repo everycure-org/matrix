@@ -10,8 +10,13 @@ ignore = []
 pydocstyle.convention = "google"
 fixable = ["ALL"]
 
+[lint.isort]
+no-lines-before = ["first-party", ]
+section-order = [ "future", "standard-library", "third-party", "first-party", "local-folder"]
+known-first-party = ["matrix"]
+
 [lint.per-file-ignores]
-"tests/*/**" = ["D"]
+"tests/**" = ["D"]
 "scripts/**" = ["D"]
 
 [format]

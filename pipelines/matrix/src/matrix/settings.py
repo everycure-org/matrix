@@ -10,7 +10,6 @@ https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
 # Class that manages how configuration is loaded.
 from kedro.config import OmegaConfigLoader  # noqa: E402
 from kedro_mlflow.framework.hooks import MlflowHook
-
 import matrix.hooks as matrix_hooks
 from matrix.utils.hook_utilities import (
     determine_hooks_to_execute,

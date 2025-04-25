@@ -8,11 +8,11 @@ from typing import Any, Callable, Collection, Coroutine, Iterable, Iterator, Pro
 
 import pyarrow as pa
 from kedro.pipeline import Pipeline, pipeline
+from pyspark.sql import DataFrame
+from pyspark.sql.functions import col, count, count_distinct
 from matrix.inject import inject_object
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from matrix.pipelines.batch.schemas import to_spark_schema
-from pyspark.sql import DataFrame
-from pyspark.sql.functions import col, count, count_distinct
 
 T = TypeVar("T")
 V = TypeVar("V")

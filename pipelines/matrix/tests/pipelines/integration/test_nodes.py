@@ -2,7 +2,6 @@ from typing import Any, Dict
 
 import pyspark.sql as ps
 import pytest
-from matrix.pipelines.integration import nodes
 from pyspark.sql import functions as F
 from pyspark.sql.types import (
     ArrayType,
@@ -10,6 +9,7 @@ from pyspark.sql.types import (
     StructField,
     StructType,
 )
+from matrix.pipelines.integration import nodes
 
 
 @pytest.fixture

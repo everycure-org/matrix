@@ -1,13 +1,13 @@
 import numpy as np
 import pyspark.sql as ps
 import pytest
+from pyspark.ml.feature import PCA
+from pyspark.testing import assertDataFrameEqual
 from matrix.pipelines.embeddings.nodes import (
     _cast_to_array,
     ingest_nodes,
     reduce_embeddings_dimension,
 )
-from pyspark.ml.feature import PCA
-from pyspark.testing import assertDataFrameEqual
 
 
 @pytest.fixture

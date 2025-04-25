@@ -6,7 +6,6 @@ from typing import List, Literal
 import click
 import mlflow
 from kedro.framework.cli.utils import split_string
-
 from matrix.cli_commands.run import _validate_env_vars_for_private_data
 from matrix.cli_commands.submit import submit
 from matrix.git_utils import get_current_git_branch

@@ -1,6 +1,6 @@
 import numpy as np
-from matrix.pipelines.modelling.tuning import NopTuner
 from sklearn.base import BaseEstimator
+from matrix.pipelines.modelling.tuning import NopTuner
 
 
 class DummyEstimator(BaseEstimator):

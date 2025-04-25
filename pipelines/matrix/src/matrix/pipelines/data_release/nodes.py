@@ -3,7 +3,6 @@ from typing import Collection, List, Type
 import pyspark.sql as ps
 from pyspark.sql import types as T
 from pyspark.sql.functions import array_join
-
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
 SEPARATOR = "\x1f"

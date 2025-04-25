@@ -20,7 +20,6 @@ from kedro.pipeline import Pipeline
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
-
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
 from matrix.git_utils import (
     BRANCH_NAME_REGEX,

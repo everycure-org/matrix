@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+from sklearn.metrics import accuracy_score, roc_auc_score
 from matrix.datasets.pair_generator import DrugDiseasePairGenerator
 from matrix.pipelines.evaluation.evaluation import (
     ContinuousMetrics,
@@ -19,7 +20,6 @@ from matrix.pipelines.evaluation.named_metric_functions import (
 )
 from matrix.pipelines.evaluation.named_metric_functions import RecallAtN as RecallAtN_
 from matrix.pipelines.evaluation.nodes import generate_test_dataset
-from sklearn.metrics import accuracy_score, roc_auc_score
 
 
 @pytest.fixture

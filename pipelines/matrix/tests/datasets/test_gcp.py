@@ -1,8 +1,8 @@
 import kedro.io.core
 import pytest
 from kedro.framework.session import KedroSession
-from matrix.datasets.gcp import LazySparkDataset, RemoteSparkJDBCDataset, SparkDatasetWithBQExternalTable
 from pyspark.sql.types import BooleanType, StructType
+from matrix.datasets.gcp import LazySparkDataset, RemoteSparkJDBCDataset, SparkDatasetWithBQExternalTable
 
 
 def test_remote_spark_dataset_split_path():

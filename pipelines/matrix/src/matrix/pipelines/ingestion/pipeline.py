@@ -1,6 +1,5 @@
 import pyspark.sql.functions as F
 from kedro.pipeline import Pipeline, node, pipeline
-
 from matrix import settings
 
 from . import nodes

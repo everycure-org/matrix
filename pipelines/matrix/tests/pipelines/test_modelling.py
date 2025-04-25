@@ -13,6 +13,13 @@ import pandera
 import pyspark.sql as ps
 import pytest
 
+# Machine learning imports
+from sklearn.base import BaseEstimator
+from sklearn.impute._base import _BaseImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV, KFold
+from xgboost import XGBClassifier
+
 # Local imports
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
@@ -27,13 +34,6 @@ from matrix.pipelines.modelling.nodes import (
     tune_parameters,
 )
 from matrix.pipelines.modelling.tuning import NopTuner
-
-# Machine learning imports
-from sklearn.base import BaseEstimator
-from sklearn.impute._base import _BaseImputer
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import GridSearchCV, KFold
-from xgboost import XGBClassifier
 
 
 @pytest.fixture(scope="module")

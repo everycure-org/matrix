@@ -4,7 +4,6 @@ from typing import List, Set, Tuple, Union
 
 import pandas as pd
 from tqdm import tqdm
-
 from matrix.datasets.graph import KnowledgeGraph
 
 

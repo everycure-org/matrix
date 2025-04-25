@@ -24,7 +24,6 @@ from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
 from pygsheets import Spreadsheet, Worksheet
 from pyspark.errors.exceptions.captured import AnalysisException
 from tqdm import tqdm
-
 from matrix.hooks import SparkHooks
 from matrix.inject import _parse_for_objects
 

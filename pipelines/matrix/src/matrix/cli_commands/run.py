@@ -29,7 +29,6 @@ from kedro.framework.project import pipelines, settings
 from kedro.io import DataCatalog
 from kedro.pipeline.pipeline import Pipeline
 from kedro.utils import load_obj
-
 from matrix.session import KedroSessionWithFromCatalog
 
 

@@ -3,7 +3,6 @@ from collections.abc import Callable
 
 import pyspark.sql as ps
 import pyspark.sql.functions as F
-
 from matrix.inject import inject_object
 
 logger = logging.getLogger(__name__)

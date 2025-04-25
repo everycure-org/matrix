@@ -1,5 +1,4 @@
 from kedro.pipeline import Pipeline, pipeline
-
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from matrix.pipelines.data_release import last_node_name
 from matrix.pipelines.data_release.nodes import unified_edges_to_kgx, unified_nodes_to_kgx

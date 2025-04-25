@@ -9,6 +9,9 @@ from kedro.framework.session import KedroSession
 from kedro.io import DataCatalog, MemoryDataset
 from kedro.runner import SequentialRunner
 from kedro_datasets.pandas import ParquetDataset
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.types import ArrayType, FloatType, StringType, StructField, StructType
+from pyspark.testing import assertDataFrameEqual
 from matrix.datasets.gcp import LazySparkDataset, PartitionedAsyncParallelDataset
 from matrix.pipelines.batch.pipeline import (
     cache_miss_resolver_wrapper,
@@ -19,9 +22,6 @@ from matrix.pipelines.batch.pipeline import (
     resolve_cache_duplicates,
 )
 from matrix.pipelines.embeddings.pipeline import create_node_embeddings_pipeline
-from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.types import ArrayType, FloatType, StringType, StructField, StructType
-from pyspark.testing import assertDataFrameEqual
 
 
 @pytest.fixture

@@ -1,7 +1,6 @@
 import logging
 
 from kedro.pipeline import Pipeline, pipeline
-
 from matrix.kedro4argo_node import ArgoNode
 
 from . import nodes

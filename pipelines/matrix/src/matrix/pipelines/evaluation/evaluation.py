@@ -5,9 +5,9 @@ from typing import Dict, List
 
 import numpy as np
 import pandas as pd
-from matrix.pipelines.evaluation.named_metric_functions import NamedFunction
 from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
+from matrix.pipelines.evaluation.named_metric_functions import NamedFunction
 
 
 class Evaluation(abc.ABC):

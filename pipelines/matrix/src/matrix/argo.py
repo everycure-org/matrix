@@ -7,7 +7,6 @@ import yaml
 from jinja2 import Environment, FileSystemLoader
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
-
 from matrix.git_utils import get_git_sha
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 

@@ -10,7 +10,6 @@ from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 from pyspark.sql.functions import concat_ws
 from pyspark.sql.types import ArrayType, FloatType, StringType
-
 from matrix.inject import inject_object, unpack_params
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 

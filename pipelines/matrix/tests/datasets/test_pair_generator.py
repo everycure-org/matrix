@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+from sklearn.model_selection import ShuffleSplit
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import (
     FullMatrixPositives,
@@ -10,7 +11,6 @@ from matrix.datasets.pair_generator import (
     ReplacementDrugDiseasePairGenerator,
 )
 from matrix.pipelines.modelling.nodes import make_folds
-from sklearn.model_selection import ShuffleSplit
 
 ## Test negative sampling pair generators
 

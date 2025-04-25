@@ -19,7 +19,6 @@ from kedro_datasets.spark import SparkDataset
 from mlflow.exceptions import RestException
 from omegaconf import OmegaConf
 from pyspark import SparkConf
-
 from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
 
 logger = logging.getLogger(__name__)

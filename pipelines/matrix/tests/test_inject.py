@@ -5,6 +5,9 @@ import pandas as pd
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 import pytest
+from sklearn.impute import SimpleImputer
+from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import MinMaxScaler
 from matrix.inject import (
     _inject_object,
     _parse_for_objects,
@@ -13,9 +16,6 @@ from matrix.inject import (
     make_list_regexable,
     unpack_params,
 )
-from sklearn.impute import SimpleImputer
-from sklearn.model_selection import GridSearchCV
-from sklearn.preprocessing import MinMaxScaler
 
 
 def dummy_func(x):

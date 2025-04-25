@@ -2,7 +2,6 @@ import logging
 from typing import Dict
 
 import pyspark.sql as ps
-
 from matrix.inject import inject_object
 from matrix.pipelines.create_sample.samplers import Sampler
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output

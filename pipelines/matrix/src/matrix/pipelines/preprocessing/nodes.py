@@ -5,8 +5,8 @@ from typing import Collection, Dict, List, Sequence
 
 import pandas as pd
 import requests
-from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 from tenacity import Retrying, stop_after_attempt, wait_exponential
+from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
 logger = logging.getLogger(__name__)
 

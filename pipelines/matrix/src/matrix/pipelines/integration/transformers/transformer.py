@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from typing import Dict, List
 
 import pyspark.sql as ps
-
 from matrix.pipelines.integration.schema import BIOLINK_KG_EDGE_SCHEMA, BIOLINK_KG_NODE_SCHEMA
 
 

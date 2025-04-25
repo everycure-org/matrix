@@ -1,5 +1,4 @@
 from kedro.pipeline import Pipeline
-
 from matrix.pipelines.create_sample.pipeline import create_pipeline as create_create_sample_pipeline
 from matrix.pipelines.data_release.pipeline import create_pipeline as create_data_release_pipeline
 from matrix.pipelines.embeddings.pipeline import create_pipeline as create_embeddings_pipeline
