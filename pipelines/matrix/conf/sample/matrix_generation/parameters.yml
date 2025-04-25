@@ -9,89 +9,42 @@ matrix_generation.n_reporting: &n_reporting 100 # Number of items "top pairs" re
 matrix_generation.n_sample_scatter: &n-sample-scatter 1000 # Number of sample pairs to take for the scatter plot
 
 matrix_generation.reporting_nodes:
-  plots_file_suffix: ".png"
-  tables_file_suffix: ".csv"
   plots:
-    - _object : matrix.pipelines.matrix_generation.reporting_plots.SingleScoreHistogram
-      name : "log_histogram_treat_score"
-      score_col : *score-col
-      is_log_y_scale : True
-
-    - _object : matrix.pipelines.matrix_generation.reporting_plots.MultiScoreHistogram
-      name : "log_histograms_all_scores"
-      score_cols_lst :
-        - *score-col
-        - *score-col-not-treat
-        - *score-col-unknown
-      is_log_y_scale : True
-
-    - _object: matrix.pipelines.matrix_generation.reporting_plots.SingleScoreLinePlot
-      name : "log_line_plot_treat_score"
-      score_col : *score-col
-      is_log_y_scale : True
-
-    - _object: matrix.pipelines.matrix_generation.reporting_plots.SingleScoreScatterPlot
-      name : "scatter_plot_not_treat"
-      score_col : *score-col-not-treat
+    scatter_plot_not_treat:
       n_sample : *n-sample-scatter
       points_s: 1
 
-    - _object: matrix.pipelines.matrix_generation.reporting_plots.SingleScoreScatterPlot
-      name : "scatter_plot_unknown"
-      score_col : *score-col-unknown
+    scatter_plot_unknown:
       n_sample : *n-sample-scatter
       points_s: 1
 
   tables:
-    - _object : matrix.pipelines.matrix_generation.reporting_tables.MatrixRunInfo 
-      name : "matrix_run_info" 
-      workflow_id: ${oc.env:WORKFLOW_ID, local}
-      run_name: ${globals:run_name}
-      mlflow_link: ${globals:mlflow_url}
-      git_sha: ${globals:git_sha}
-      release_version: ${globals:versions.release}
-      versions: ${globals:data_sources}
-
-    - _object : matrix.pipelines.matrix_generation.reporting_tables.TopPairs
-      name : "top_pairs_treat_score" 
+    top_pairs_treat:
       n_reporting: *n_reporting
-      score_col : *score-col
 
-    - _object : matrix.pipelines.matrix_generation.reporting_tables.TopPairs
-      name : "top_pairs_not_treat_score" 
+    top_pairs_not_treat:
       n_reporting: *n_reporting
-      score_col : *score-col-not-treat
 
-    - _object : matrix.pipelines.matrix_generation.reporting_tables.TopPairs 
-      name : "top_pairs_unknown_score" 
+    top_pairs_unknown:
       n_reporting: *n_reporting
-      score_col : *score-col-unknown
 
-    - _object : matrix.pipelines.matrix_generation.reporting_tables.RankToScore
-      name : "rank_to_treat_score"
+    rank_to_treat:
       ranks_lst :
         - 10
         - 100
-      score_col : *score-col
 
-    - _object : matrix.pipelines.matrix_generation.reporting_tables.TopFrequentFlyers
-      name : "top_frequent_flyer_drugs" 
-      is_drug_mode : True # True for drug frequent flyers, False for disease frequent flyers
+    frequent_flyer_drugs:
       count_in_n_lst : # Count occurrence in top n for these values of n
         - 10
         - 100
       # Statistic to sort by. 
       # Choose from: "count_in_{n}" for value of n  in count_in_n_lst, "mean", "max"
       sort_by_col: "count_in_10" 
-      score_col : *score-col
 
-    - _object : matrix.pipelines.matrix_generation.reporting_tables.TopFrequentFlyers
-      name : "top_frequent_flyer_diseases" 
-      is_drug_mode : False # True for drug freqent flyers, False for disease frequent flyers
+    frequent_flyer_diseases:
       count_in_n_lst : # Count occurrence in top n for these values of n
         - 10
         - 100
       # Statistic to sort by. 
       # Choose from: "count_in_{n}" for value of n  in count_in_n_lst, "mean", "max"
       sort_by_col: "count_in_10" 
-      score_col : *score-col
