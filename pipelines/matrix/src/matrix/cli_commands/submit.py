@@ -216,7 +216,7 @@ def _submit(
         ))
 
         if allow_interactions and click.confirm("Do you want to open the workflow in your browser?", default=False):
-            workflow_url = f"https://argo.platform.dev.everycure.org/workflows/{namespace}/{run_name}"
+            workflow_url = f"{os.environ['ARGO_PLATFORM_URL']}/workflows/{namespace}/{run_name}"
             click.launch(workflow_url)
             console.print(f"[blue]Opened workflow in browser: {workflow_url}[/blue]")
     except Exception as e:
@@ -399,15 +399,15 @@ def can_talk_to_kubernetes(
     return True
 
 
-def build_push_docker(username: str, gcp_env: str, verbose: bool):
-    """Build the docker image only once, push it to dev registry, and if running in gcp-env prod, also to prod registry.
+def build_push_docker(username: str, verbose: bool):
+    """Build the docker image only once, push it to dev registry, and if running in prod, also to prod registry.
     """
     console.print("Building Docker image...")
     dev_image = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
     console.print("[green]✓[/green] Docker image built and pushed to dev repository")
     
-    if gcp_env == "prod":
+    if "-prod-" in os.environ['RUNTIME_GCP_PROJECT_ID']:
         prod_image = f"us-central1-docker.pkg.dev/mtrx-hub-prod-sms/matrix-images/matrix"
         run_subprocess(f"docker tag {dev_image}:{username} {prod_image}:{username}", stream_output=verbose)
         run_subprocess(f"docker push {prod_image}:{username}", stream_output=verbose)
@@ -522,7 +522,7 @@ def submit_workflow(run_name: str, namespace: str, gcp_env: str, verbose: bool):
         "-o json"
     ])
     console.print(f"Running submit command: [blue]{cmd}[/blue]")
-    console.print(f"\nSee your workflow in the ArgoCD UI here: [blue]https://argo.platform.{gcp_env}.everycure.org/workflows/argo-workflows/{run_name}[/blue]")
+    console.print(f"\nSee your workflow in the ArgoCD UI here: [blue]{os.environ['ARGO_PLATFORM_URL']}/workflows/argo-workflows/{run_name}[/blue]")
     result = run_subprocess(cmd)
     job_name = json.loads(result.stdout).get("metadata", {}).get("name")
 
