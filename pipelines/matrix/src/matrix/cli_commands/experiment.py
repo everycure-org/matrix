@@ -134,8 +134,6 @@ def run(
     experiment_name: str,
 ):
     """Run an experiment."""
-    gcp_env = ctx.obj["gcp_env"]
-    click.echo(f"Running experiment in GCP {gcp_env} environment")
 
     if not experiment_name:
         current_branch = get_current_git_branch()
@@ -181,7 +179,6 @@ def run(
         is_test=is_test,
         headless=headless,
         environment=environment,
-        gcp_env=gcp_env,
         experiment_id=experiment_id,
         mlflow_run_id=mlflow_run_id,
         skip_git_checks=skip_git_checks,
