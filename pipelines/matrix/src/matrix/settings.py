@@ -94,7 +94,7 @@ def _load_setting(path):
     """Utility function to load a settings value from the data catalog."""
     path = path.split(".")
 
-    obj = DYNAMIC_PIPELINES_MAPPING
+    obj = DYNAMIC_PIPELINES_MAPPING()
     for p in path:
         obj = obj[p]
 
