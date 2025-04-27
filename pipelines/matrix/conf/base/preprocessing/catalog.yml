@@ -43,6 +43,18 @@ preprocessing.raw.embiology.attr:
   type: pandas.CSVDataset
   filepath: ${globals:paths.kg_raw_private}/embiology/csv/attr.csv.gz
 
+# NOTE: references.csv.gz is a very large dataframe which cant be easily loaded into memory
+# so only load columns that are needed.
+preprocessing.raw.embiology.ref_pub:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.kg_raw_private}/embiology/csv/reference.csv.gz
+  load_args:
+    usecols:
+      - "id"
+      - "unique_ref"
+      - "pmid"
+      - "doi"
+
 preprocessing.int.embiology.attr@pandas:
   <<: *_pandas_parquet
   filepath: ${globals:paths.tmp}/embiology/raw/attr
@@ -50,6 +62,14 @@ preprocessing.int.embiology.attr@pandas:
 preprocessing.int.embiology.attr@spark:
   <<: *_spark_parquet
   filepath: ${globals:paths.tmp}/embiology/raw/attr
+
+preprocessing.int.embiology.ref_pub@pandas:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.tmp}/embiology/raw/ref_pub
+
+preprocessing.int.embiology.ref_pub@spark:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.tmp}/embiology/raw/ref_pub
 
 preprocessing.raw.embiology.nodes:
   type: pandas.CSVDataset

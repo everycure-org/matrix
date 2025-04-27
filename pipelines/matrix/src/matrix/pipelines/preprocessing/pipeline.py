@@ -20,6 +20,13 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=lambda x: x,
+                inputs="preprocessing.raw.embiology.ref_pub",
+                outputs="preprocessing.int.embiology.ref_pub@pandas",
+                name="write_embiology_ref_pub",
+                tags=["embiology-kg"],
+            ),
+            node(
+                func=lambda x: x,
                 inputs="preprocessing.raw.embiology.nodes",
                 outputs="preprocessing.int.embiology.nodes@pandas",
                 name="write_embiology_nodes",
@@ -54,6 +61,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="prepare_nodes",
                 tags=["embiology-kg"],
             ),
+            # node(
+            #     func=nodes.prepare_literature_attributes,
+            #     inputs=[
+            #         "preprocessing.int.embiology.edges@spark",
+            #     ],
+            #     outputs="preprocessing.int.embiology.attributes",
+            #     name="prepare_edges_attributes",
+            #     tags=["embiology-kg"],
+            # ),
             # node(
             #     func=nodes.deduplicate_and_clean,
             #     inputs=[
