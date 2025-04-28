@@ -128,7 +128,7 @@ def prepare_nodes(nodes, id_mapping, biolink_mapping):
     return norm_nodes
 
 
-def prepare_edges(control, biolink_mapping):
+def prepare_edges(control, attributes, biolink_mapping):
     """Prepare edges for embiology nodes.
 
     Args:
@@ -136,47 +136,52 @@ def prepare_edges(control, biolink_mapping):
         identifiers_mapping: mapping of identifiers
     """
     # Fix directed and undirected edges
-    control_directed = control.filter((f.col("inkey") != "") & (f.col("inoutkey") == "{}"))
-    control_undirected = control.filter((f.col("inkey") == "") & (f.col("inoutkey") != "{}"))
+    control_directed = control.filter((f.col("inkey") != "{}") & (f.col("inoutkey") == "{}"))
+    control_undirected = control.filter((f.col("inkey") == "{}") & (f.col("inoutkey") != "{}"))
     control_undirected = (
-        (
-            control_undirected.withColumn(
-                f.col("inoutkey").str.strip_chars("{}").str.split(", ").list.to_struct(n_field_strategy="max_width")
-            )
-        )
-        .unnest("inoutkey")
-        .rename({"field_0": "source", "field_1": "target"})
+        control_undirected.withColumn("inoutkey", f.split(f.regexp_replace("inoutkey", "[{}]", ""), ","))
+        .withColumn("inkey", f.col("inoutkey").getItem(0))
+        .withColumn("outkey", f.col("inoutkey").getItem(1))
     )
-
-    columns = temp.columns
-
-    control_undirected_fixed = pl.concat([temp, temp.rename({"source": "target", "target": "source"}).select(columns)])
-    control_undirected_fixed = control_undirected_fixed.drop(["inkey", "outkey"]).rename(
-        {"source": "inkey", "target": "outkey"}
-    )
-
     # Union directed and undirected edges
-    edges = control_undirected_fixed.union(control_directed)
+    edges = control_directed.withColumn("inoutkey", f.split(f.regexp_replace("inoutkey", "[{}]", ""), ",")).union(
+        control_undirected
+    )
 
     # Biolink fix
     def lookup_mapping(name):
         return biolink_mapping.get(name, "")
 
     lookup_udf = udf(lookup_mapping, StringType())
-    edges = edges.withColumn("predicate", lookup_udf(f.col("nodetype")))
+    edges = edges.withColumn("predicate", lookup_udf(f.col("controltype")))
     return edges
 
 
-# def add_edge_attributes(edges, references):
-#     """Prepare edges for embiology nodes.
+def add_edge_attributes(references):
+    """Prepare edges for embiology nodes.
 
-#     Args:
-#         nodes: embiology nodes
-#         identifiers_mapping: mapping of identifiers
-#     """
-#     # Add Num_sentences & Num_references
+    Args:
+        nodes: embiology nodes
+        identifiers_mapping: mapping of identifiers
+    """
+    # Add Num_sentences & Num_references
+    return (
+        references.withColumn(
+            "pmid",
+            f.udf(lambda x: [f"PMID:{str(x)}"] if x is not None else None, ArrayType(StringType()))(f.col("pmid")),
+        )
+        .withColumn(
+            "doi", f.udf(lambda x: [f"DOI:{str(x)}"] if x is not None else None, ArrayType(StringType()))(f.col("doi"))
+        )
+        .groupby("id")
+        .agg(
+            f.count("id").alias("num_sentences"),
+            f.count_distinct("unique_ref").alias("num_references"),
+            f.flatten(f.collect_set("pmid")).alias("pmid"),
+            f.flatten(f.collect_set("doi")).alias("doi"),
+        )
+    )
 
-#     return edges
 
 # def deduplicate_and_clean(nodes, edges:)
 #     """Deduplicate edges.
