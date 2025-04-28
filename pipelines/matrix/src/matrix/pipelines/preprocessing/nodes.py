@@ -144,8 +144,11 @@ def prepare_edges(control, attributes, biolink_mapping):
         .withColumn("outkey", f.col("inoutkey").getItem(1))
     )
     # Union directed and undirected edges
-    edges = control_directed.withColumn("inoutkey", f.split(f.regexp_replace("inoutkey", "[{}]", ""), ",")).union(
-        control_undirected
+    edges = (
+        control_directed.withColumn("inoutkey", f.split(f.regexp_replace("inoutkey", "[{}]", ""), ","))
+        .withColumn("inkey", f.regexp_replace("inkey", "[{}]", ""))
+        .withColumn("outkey", f.regexp_replace("outkey", "[{}]", ""))
+        .union(control_undirected)
     )
 
     # Biolink fix
