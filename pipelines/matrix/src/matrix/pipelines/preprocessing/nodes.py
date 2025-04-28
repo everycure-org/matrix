@@ -103,8 +103,7 @@ def prepare_nodes(nodes, id_mapping, biolink_mapping):
         .withColumn("attributes", f.explode(f.col("attributes")))
         .withColumnRenamed("attributes", "attribute_id")
         .join(
-            id_mapping.drop("id")
-            .withColumnRenamed("curie", "normalized_id")
+            id_mapping.withColumnRenamed("id", "normalized_id")
             .withColumn("normalization_success", f.col("normalized_id").isNotNull())
             .filter(f.col("normalization_success") == True),
             on="attribute_id",
@@ -143,6 +142,15 @@ def prepare_edges(control, attributes, biolink_mapping):
         .withColumn("inkey", f.col("inoutkey").getItem(0))
         .withColumn("outkey", f.col("inoutkey").getItem(1))
     )
+    # Divide each undirected edge into two directed edges
+    control_undirected = control_undirected.union(
+        control_undirected.withColumnRenamed("inkey", "outkey_new")
+        .withColumnRenamed("outkey", "inkey_new")
+        .withColumnRenamed("outkey_new", "outkey")
+        .withColumnRenamed("inkey_new", "inkey")
+        .drop("outkey_new", "inkey_new")
+        .select(control_undirected.columns)
+    )
     # Union directed and undirected edges
     edges = (
         control_directed.withColumn("inoutkey", f.split(f.regexp_replace("inoutkey", "[{}]", ""), ","))
@@ -157,6 +165,9 @@ def prepare_edges(control, attributes, biolink_mapping):
 
     lookup_udf = udf(lookup_mapping, StringType())
     edges = edges.withColumn("predicate", lookup_udf(f.col("controltype")))
+
+    # Add attributes
+    edges = edges.join(attributes.withColumnRenamed("id", "attributes"), on="attributes", how="left")
     return edges
 
 
@@ -183,16 +194,50 @@ def add_edge_attributes(references):
             f.flatten(f.collect_set("pmid")).alias("pmid"),
             f.flatten(f.collect_set("doi")).alias("doi"),
         )
+        .withColumn("publications", f.array(f.col("pmid"), f.col("doi")))
+        .drop("pmid", "doi")
     )
 
 
-# def deduplicate_and_clean(nodes, edges:)
-#     """Deduplicate edges.
+def deduplicate_and_clean(nodes, edges):
+    """Deduplicate edges.
 
-#     Args:
-#         edges: edges
-#     """
-#     return nodes, edges
+    Args:
+        edges: edges
+    """
+
+    nodes = (
+        nodes.dropDuplicates(["id"])
+        .withColumn("original_identifier", f.col("id").cast(StringType()))
+        .withColumnRenamed("urn", "original_urn")
+        .withColumnRenamed("nodetype", "original_nodetype")
+        .withColumnRenamed("final_id", "normalized_id")
+        .select(
+            "id",
+            "name",
+            "category",
+            "equivalent_identifiers",
+            "all_categories",
+            "original_identifier",
+            "original_urn",
+            "original_nodetype",
+        )
+    )
+    # Get unique keys from edges using a union of inkey and outkey to ensure there are no duplicates
+    edge_keys = (
+        edges.select("inkey").union(edges.select("outkey")).distinct().withColumnRenamed("inkey", "original_identifier")
+    )
+    f_nodes = nodes.join(edge_keys, "original_identifier", "inner")
+    f_nodes = f_nodes.dropDuplicates(["id"])
+
+    # Modify edge schema
+    edges = (
+        edges.withColumnRenamed("original_id", "id")
+        .withColumnRenamed("original_subject", "inkey")
+        .withColumnRenamed("original_object", "outkey")
+    )
+    return f_nodes, edges
+
 
 # -------------------------------------------------------------------------
 # EC Clinical Data

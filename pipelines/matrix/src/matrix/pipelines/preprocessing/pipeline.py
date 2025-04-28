@@ -61,6 +61,17 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="prepare_nodes",
                 tags=["embiology-kg"],
             ),
+            # node(
+            #     func=nodes.map_additional_identifiers,
+            #     inputs=[
+            #         "preprocessing.int.embiology.nodes@spark",
+            #         "preprocessing.int.embiology.identifiers@spark",
+            #         "params:preprocessing.embiology.nodes.biolink_mapping",
+            #     ],
+            #     outputs="preprocessing.prm.embiology.nodes",
+            #     name="prepare_nodes",
+            #     tags=["embiology-kg"],
+            # ),
             node(
                 func=nodes.add_edge_attributes,
                 inputs=[
@@ -81,19 +92,19 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="prepare_edges",
                 tags=["embiology-kg"],
             ),
-            # node(
-            #     func=nodes.deduplicate_and_clean,
-            #     inputs=[
-            #         "preprocessing.int.embiology.nodes",
-            #         "preprocessing.int.embiology.edges",
-            #     ],
-            #     outputs=[
-            #         "preprocessing.prm.embiology.nodes",
-            #         "preprocessing.prm.embiology.edges",
-            #     ],
-            #     name="final_clean_embiology_kg",
-            #     tags=["embiology-kg"],
-            # ),
+            node(
+                func=nodes.deduplicate_and_clean,
+                inputs=[
+                    "preprocessing.prm.embiology.nodes",
+                    "preprocessing.prm.embiology.edges",
+                ],
+                outputs=[
+                    "preprocessing.prm.embiology.nodes_final",
+                    "preprocessing.prm.embiology.edges_final",
+                ],
+                name="final_clean_embiology_kg",
+                tags=["embiology-kg"],
+            ),
             # -------------------------------------------------------------------------
             # EC Clinical Data ingestion and name->id mapping
             # -------------------------------------------------------------------------
