@@ -64,8 +64,7 @@ def union_edges(*edges, cols: list[str]) -> ps.DataFrame:
             F.first("primary_knowledge_source", ignorenulls=True).alias("primary_knowledge_source"),
             F.flatten(F.collect_set("aggregator_knowledge_source")).alias("aggregator_knowledge_source"),
             F.flatten(F.collect_set("publications")).alias("publications"),
-            # Calculate exact number of unique references by collecting all references and counting distinct ones
-            F.size(F.flatten(F.collect_set("references"))).cast(T.IntegerType()).alias("num_references"),
+            F.max("num_references").cast(T.IntegerType()).alias("num_references"),
             F.max("num_sentences").cast(T.IntegerType()).alias("num_sentences"),
         )
         .select(*cols)
