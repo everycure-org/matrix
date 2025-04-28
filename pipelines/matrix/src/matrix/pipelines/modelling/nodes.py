@@ -219,7 +219,7 @@ def prefilter_nodes(
 def make_folds(
     data: pd.DataFrame,
     splitter: BaseCrossValidator,
-    disease_list: pd.DataFrame,
+    disease_list: pd.DataFrame = None,
 ) -> pd.DataFrame:
     """Function to split data.
 
