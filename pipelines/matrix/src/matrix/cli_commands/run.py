@@ -1,3 +1,4 @@
+import os
 from typing import Any, Collection, Dict, List, Literal, NamedTuple, Optional, Set
 
 import click
@@ -29,7 +30,6 @@ from kedro.io import DataCatalog
 from kedro.pipeline.pipeline import Pipeline
 from kedro.utils import load_obj
 
-from matrix.cli_commands.submit import abort_if_incorrect_env_vars
 from matrix.session import KedroSessionWithFromCatalog
 
 
@@ -69,10 +69,12 @@ class RunConfig(NamedTuple):
 @click.option( "--conf-source",   type=click.Path(exists=True, file_okay=False, resolve_path=True), help=CONF_SOURCE_HELP,)
 @click.option( "--params",        type=click.UNPROCESSED, default="", help=PARAMS_ARG_HELP, callback=_split_params,)
 @click.option( "--from-env",      type=str, default=None, help="Custom env to read from, if specified will read from the `--from-env` and write to the `--env`",)
-
 # fmt: on
 def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async: bool, node_names: list[str], to_nodes: list[str], from_nodes: list[str], from_inputs: list[str], to_outputs: list[str], load_versions: list[str], pipeline: str, conf_source: str, params: dict[str, Any], from_env: Optional[str]=None):
     """Run the pipeline."""
+
+    _validate_env_vars_for_private_data()
+
     pipeline_name = pipeline
     pipeline_obj = pipelines[pipeline_name]
 
@@ -96,6 +98,26 @@ def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async
     )
 
     _run(config, KedroSessionWithFromCatalog)
+
+
+def _validate_env_vars_for_private_data() -> None:
+    """ Short-circuit if a user is requesting private datasets but their project or bucket point to dev. """
+    env_vars = {
+        "RUNTIME_GCP_PROJECT_ID": os.environ["RUNTIME_GCP_PROJECT_ID"],
+        "RUNTIME_GCP_BUCKET": os.environ["RUNTIME_GCP_BUCKET"],
+        "MLFLOW_URL": os.environ["MLFLOW_URL"],
+    }
+
+    if os.getenv("INCLUDE_PRIVATE_DATASETS", "") == "1":
+        for var_name, var_value in env_vars.items():
+            if "prod" not in var_value.lower() or "dev" in var_value.lower():
+                click.confirm(
+                    f"You requested private datasets, yet the value of env var {var_name} - {var_value } does not point to a production resource. "
+                    f"Doing so runs the risk of exposing private datasets to the public, which can have legal consequences. "
+                    f"Are you aware of this, and want to continue with your current settings nevertheless?",
+                    abort=True,
+                    err=True
+                )
 
 
 def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:

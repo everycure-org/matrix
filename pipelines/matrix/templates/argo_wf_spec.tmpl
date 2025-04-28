@@ -39,6 +39,8 @@ spec:
         value: "{{ mlflow_run_id }}"
       - name: mlflow_url
         value: "{{ mlflow_url }}"
+      - name: include_private_datasets
+        value: "{{ include_private_datasets }}"
   templates:
   - &_kedro_template
     metrics:
@@ -142,6 +144,9 @@ spec:
           {% endraw %}
         - name: MLFLOW_URL
           value: {% raw %} "{{workflow.parameters.mlflow_url}}"
+          {% endraw %}
+        - name: INCLUDE_PRIVATE_DATASETS
+          value: {% raw %} "{{workflow.parameters.include_private_datasets}}"
           {% endraw %}
         - name: NEO4J_USER
           valueFrom:
