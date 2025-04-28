@@ -32,7 +32,7 @@ data_sources:
   spoke:
     version: V5.2
   embiology:
-    version: v0.1
+    version: 03032025
 # Dataset with node and edge proposals by the
 # EveryCure medical team.
   ec_medical_team:
