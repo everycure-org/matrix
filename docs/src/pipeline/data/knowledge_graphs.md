@@ -6,7 +6,8 @@ The Knowledge Graphs ingested in our pipeline are compliant with KGX format.
 ## Public KGs
 
 ### RTX-KG2
-RTX-KG2 is a Biomedical Knowledge Graph created by [] in. For more information, see: 
+[RTX-KG2](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-022-04932-3) is a an open-source Biomedical Knowledge Graph created by [] that is a part of ARAX reasoning system. It integrates UMLS, SemMedDB, ChemBL, DrugBank, Reactome, SMPDB, and 64 additional knowledge sources conforming to the Biolink Standard for its semantic layer and schema. The version created and maintained by the authors can be queries through [API](arax.rtx.ai/api/rtxkg2/v1.2/openapi.json)
+For information on the build systeml, see [GitHub page](https://github.com/RTXteam/RTX-KG2)
 
 Versions within our system: 
   * v2.7.3
@@ -14,8 +15,9 @@ Versions within our system:
   * v2.10-validated
 
 ### Robokop
-ROBOKOP is a Biomedical Knowledge Graph created by []. For more information, see: 
-Versions within our system: 
+[ROBOKOP](https://pubs.acs.org/doi/abs/10.1021/acs.jcim.9b00683) is an open-source Biomedical Knowledge Graph created by the RENCI team at UNC Chapel Hill. It integrates over 30 biomedical data sources including DrugBank, UniProt, MONDO, GO, and HPO into a unified knowledge graph following the Biolink Model standard. ROBOKOP provides a powerful query interface through its [web application](https://robokop.renci.org/) and [API](https://robokop.renci.org/api/). The knowledge graph supports complex reasoning and question-answering over biomedical relationships.
+
+Versions within our system:
   * 30fd1bfc18cd5ccb
 
 ## Proprietary KGs
