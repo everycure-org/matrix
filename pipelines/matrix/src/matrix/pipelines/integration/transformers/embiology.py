@@ -53,7 +53,7 @@ class EmbiologyTransformer(GraphTransformer):
             edges_df
             .withColumn("upstream_data_source",          f.array(f.lit("embiology")))
             .withColumn("aggregator_knowledge_source",   f.lit(None).cast(T.ArrayType(T.StringType())))
-            .withColumn("publications",                  f.lit(None).cast(T.ArrayType(T.StringType())))
+            .withColumn("publications",                  f.split(f.col("publications"), EMBIOLOGY_SEPARATOR).cast(T.ArrayType(T.StringType())))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
             .withColumn("agent_type",                    f.lit(None).cast(T.StringType()))
             .withColumn("primary_knowledge_source",      f.lit(None).cast(T.StringType()))

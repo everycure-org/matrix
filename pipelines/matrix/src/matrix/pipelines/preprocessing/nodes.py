@@ -212,6 +212,8 @@ def deduplicate_and_clean(nodes, edges):
         .withColumnRenamed("urn", "original_urn")
         .withColumnRenamed("nodetype", "original_nodetype")
         .withColumnRenamed("final_id", "normalized_id")
+        .withColumn("equivalent_identifiers", f.array_join(f.col("equivalent_identifiers"), "|"))
+        .withColumn("all_categories", f.array_join(f.col("all_categories"), "|"))
         .select(
             "id",
             "name",
