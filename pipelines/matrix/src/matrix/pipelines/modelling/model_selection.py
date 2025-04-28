@@ -8,13 +8,13 @@ class DrugStratifiedSplit(BaseCrossValidator):
     This cross-validator ensures each drug is represented in both training and test sets.
     """
 
-    def __init__(self, n_splits=1, test_size=0.1, random_state=None):
+    def __init__(self, n_splits: int = 1, test_size: float = 0.1, random_state: int = None):
         """Initialize the DrugStratifiedSplit cross-validator.
 
         Args:
-            n_splits (int): Number of re-shuffling & splitting iterations.
-            test_size (float): Proportion of the dataset to include in the test split.
-            random_state (int): Controls the randomness of the training and testing indices produced.
+            n_splits: Number of re-shuffling & splitting iterations.
+            test_size: Proportion of the dataset to include in the test split.
+            random_state: Controls the randomness of the training and testing indices produced.
         """
         self.n_splits = n_splits
         self.test_size = test_size
@@ -71,13 +71,13 @@ class DrugCVSplit(BaseCrossValidator):
 
     """
 
-    def __init__(self, n_splits=1, test_size=0.1, random_state=None):
+    def __init__(self, n_splits: int = 1, test_size: float = 0.1, random_state: int = None):
         """Initialize the DrugCVSplit cross-validator.
 
         Args:
-            n_splits (int): Number of re-shuffling & splitting iterations.
-            test_size (float): Proportion of drugs to include in the test split.
-            random_state (int): Controls the randomness of the training and testing indices produced.
+            n_splits: Number of re-shuffling & splitting iterations.
+            test_size: Proportion of drugs to include in the test split.
+            random_state: Controls the randomness of the training and testing indices produced.
         """
         self.n_splits = n_splits
         self.test_size = test_size
