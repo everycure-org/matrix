@@ -20,26 +20,26 @@ SELECT
   END AS agent_type_label,
   COUNT(*) AS edge_count,
   ROUND(AVG((
-    CASE knowledge_level
+    (2 * CASE knowledge_level
       WHEN 'knowledge_assertion' THEN 1.0
-      WHEN 'logical_entailment' THEN 0.99
-      WHEN 'prediction' THEN 0.5
-      WHEN 'statistical_association' THEN 0.5
-      WHEN 'observation' THEN 0.5
-      WHEN 'not_provided' THEN 0.25
-      ELSE 0.0
-    END +
-    CASE agent_type
+      WHEN 'logical_entailment' THEN 0.85
+      WHEN 'statistical_association' THEN 0.65
+      WHEN 'observation' THEN 0.4
+      WHEN 'prediction' THEN 0.2
+      WHEN 'not_provided' THEN 0.5
+      ELSE 0.5
+    END - 1) +
+    (2 * CASE agent_type
       WHEN 'manual_agent' THEN 1.0
-      WHEN 'manual_validation_of_automated_agent' THEN 1.0
-      WHEN 'automated_agent' THEN 0.75
-      WHEN 'data_analysis_pipeline' THEN 0.5
+      WHEN 'manual_validation_of_automated_agent' THEN 0.95
+      WHEN 'data_analysis_pipeline' THEN 0.7
+      WHEN 'automated_agent' THEN 0.6
       WHEN 'computational_model' THEN 0.5
-      WHEN 'text_mining_agent' THEN 0.3
-      WHEN 'image_processing_agent' THEN 0.3
-      WHEN 'not_provided' THEN 0.25
-      ELSE 0.0
-    END
+      WHEN 'text_mining_agent' THEN 0.35
+      WHEN 'image_processing_agent' THEN 0.35
+      WHEN 'not_provided' THEN 0.5
+      ELSE 0.5
+    END - 1)
   ) / 2), 3) AS average_score
 FROM `mtrx-hub-dev-3of.release_${bq_release_version}.edges`
 WHERE knowledge_level IS NOT NULL AND agent_type IS NOT NULL
