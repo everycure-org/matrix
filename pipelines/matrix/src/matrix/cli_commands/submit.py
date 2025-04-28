@@ -64,7 +64,6 @@ def cli():
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 @click.option("--headless", is_flag=True, default=False, help="Skip confirmation prompt")
 @click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
-@click.option("--gcp-env", type=click.Choice(["dev", "prod"]), help="GCP environment to execute in")
 @click.option("--experiment_id", type=int, help="MLFlow experiment id")
 @click.option("--mlflow_run_id", type=str, help="MLFlow run id")
 @click.option("--skip-git-checks", is_flag=True, type=bool, default=False, help="Skip git checks")
@@ -82,7 +81,6 @@ def submit(
     is_test: bool,
     headless: bool,
     environment: str,
-    gcp_env: str,
     skip_git_checks: bool,
     experiment_id: Optional[int],
     mlflow_run_id: Optional[str],
@@ -95,8 +93,6 @@ def submit(
     if pipeline in ('data_release', 'kg_release') and not skip_git_checks:
         abort_if_unmet_git_requirements(release_version)
         abort_if_intermediate_release(release_version)
-
-    abort_if_incorrect_env_vars(gcp_env)
 
     if pipeline not in kedro_pipelines.keys():
         raise ValueError("Pipeline requested for execution not found")
@@ -134,9 +130,7 @@ def submit(
         mlflow_run_id=mlflow_run_id,
         allow_interactions=not headless,
         is_test=is_test,
-        environment=environment,
-        gcp_env=gcp_env,
-
+        environment=environment
     )
 
 
@@ -149,7 +143,6 @@ def _submit(
     verbose: bool,
     dry_run: bool,
     environment: str,
-    gcp_env: str,
     template_directory: Path,
     mlflow_experiment_id: int,
     mlflow_run_id: Optional[str] = None,
@@ -200,13 +193,13 @@ def _submit(
         if dry_run:
             return
 
-        build_push_docker(run_name, gcp_env, verbose=verbose)
+        build_push_docker(run_name, verbose=verbose)
 
         ensure_namespace(namespace, verbose=verbose)
 
         apply_argo_template(namespace, file_path, verbose=verbose)
 
-        submit_workflow(run_name, namespace, gcp_env=gcp_env, verbose=verbose)
+        submit_workflow(run_name, namespace, verbose=verbose)
 
         console.print(Panel.fit(
             f"[bold green]Workflow {'prepared' if dry_run else 'submitted'} successfully![/bold green]\n"
@@ -216,7 +209,7 @@ def _submit(
         ))
 
         if allow_interactions and click.confirm("Do you want to open the workflow in your browser?", default=False):
-            workflow_url = f"https://argo.platform.dev.everycure.org/workflows/{namespace}/{run_name}"
+            workflow_url = f"{os.environ['ARGO_PLATFORM_URL']}/workflows/{namespace}/{run_name}"
             click.launch(workflow_url)
             console.print(f"[blue]Opened workflow in browser: {workflow_url}[/blue]")
     except Exception as e:
@@ -399,15 +392,15 @@ def can_talk_to_kubernetes(
     return True
 
 
-def build_push_docker(username: str, gcp_env: str, verbose: bool):
-    """Build the docker image only once, push it to dev registry, and if running in gcp-env prod, also to prod registry.
+def build_push_docker(username: str, verbose: bool):
+    """Build the docker image only once, push it to dev registry, and if running in prod, also to prod registry.
     """
     console.print("Building Docker image...")
     dev_image = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
     console.print("[green]✓[/green] Docker image built and pushed to dev repository")
     
-    if gcp_env == "prod":
+    if "-prod-" in os.environ['RUNTIME_GCP_PROJECT_ID']:
         prod_image = f"us-central1-docker.pkg.dev/mtrx-hub-prod-sms/matrix-images/matrix"
         run_subprocess(f"docker tag {dev_image}:{username} {prod_image}:{username}", stream_output=verbose)
         run_subprocess(f"docker push {prod_image}:{username}", stream_output=verbose)
@@ -508,7 +501,7 @@ def apply_argo_template(namespace, file_path: Path, verbose: bool):
     console.print("[green]✓[/green] Argo template applied")
 
 
-def submit_workflow(run_name: str, namespace: str, gcp_env: str, verbose: bool):
+def submit_workflow(run_name: str, namespace: str, verbose: bool):
     """Submit the Argo workflow and provide instructions for watching."""
     console.print("Submitting workflow for pipeline...")
 
@@ -522,7 +515,7 @@ def submit_workflow(run_name: str, namespace: str, gcp_env: str, verbose: bool):
         "-o json"
     ])
     console.print(f"Running submit command: [blue]{cmd}[/blue]")
-    console.print(f"\nSee your workflow in the ArgoCD UI here: [blue]https://argo.platform.{gcp_env}.everycure.org/workflows/argo-workflows/{run_name}[/blue]")
+    console.print(f"\nSee your workflow in the ArgoCD UI here: [blue]{os.environ['ARGO_PLATFORM_URL']}/workflows/argo-workflows/{run_name}[/blue]")
     result = run_subprocess(cmd)
     job_name = json.loads(result.stdout).get("metadata", {}).get("name")
 
@@ -597,9 +590,3 @@ def abort_if_intermediate_release(release_version: str) -> None:
     if ((release_version.major == latest_major and release_version.minor < latest_minor)
         or release_version.major < latest_major):
         raise ValueError("Cannot release a minor/major version lower than the latest official release")
-
-def abort_if_incorrect_env_vars(gcp_env: str) -> None:
-    env_vars = ['RUNTIME_GCP_PROJECT_ID', 'RUNTIME_GCP_BUCKET', 'MLFLOW_URL']
-    correct_vars = [gcp_env.lower().strip() in os.environ[var] for var in env_vars]
-    if False in correct_vars:
-        raise ValueError(f"Running in {gcp_env}, but some env vars don't point to a different env. Did you create/uncomment the vars in your .env?")

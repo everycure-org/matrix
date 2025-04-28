@@ -46,7 +46,8 @@ SESSION_STORE_ARGS = {"path": str(Path(__file__).parents[2])}
 
 # https://getindata.com/blog/kedro-dynamic-pipelines/
 
-DYNAMIC_PIPELINES_MAPPING = disable_private_datasets(
+# Using lambda to delay the evaluation until the INCLUDE_PRIVATE_DATASETS env var is set, parsed from a cli option.
+DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
     generate_dynamic_pipeline_mapping(
         {
             "cross_validation": {
@@ -54,7 +55,7 @@ DYNAMIC_PIPELINES_MAPPING = disable_private_datasets(
             },
             "integration": [
                 {"name": "rtx_kg2", "integrate_in_kg": True, "is_private": False},
-                # {"name": "spoke", "integrate_in_kg": True, "is_private": True},
+                {"name": "spoke", "integrate_in_kg": True, "is_private": True},
                 {"name": "embiology", "integrate_in_kg": True, "is_private": True},
                 {"name": "robokop", "integrate_in_kg": True, "is_private": False},
                 {"name": "ec_medical_team", "integrate_in_kg": True},
@@ -93,7 +94,7 @@ def _load_setting(path):
     """Utility function to load a settings value from the data catalog."""
     path = path.split(".")
 
-    obj = DYNAMIC_PIPELINES_MAPPING
+    obj = DYNAMIC_PIPELINES_MAPPING()
     for p in path:
         obj = obj[p]
 
