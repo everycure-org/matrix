@@ -89,3 +89,12 @@ def keep_rows_containing(
     """Function to remove rows containing a category."""
     keep_list_array = sf.array([sf.lit(x) for x in keep_list])
     return input_df.filter(sf.exists(column, lambda x: sf.array_contains(keep_list_array, x)))
+
+
+def filter_out(
+    input_df: ps.DataFrame,
+    exclude_list: Iterable[str],
+    column: str,
+    **kwargs,
+) -> ps.DataFrame:
+    """Function to remove rows containing a category."""

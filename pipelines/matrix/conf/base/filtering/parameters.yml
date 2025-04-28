@@ -6,6 +6,12 @@ filtering:
       keep_list:
         - rtxkg2
         - ec_medical
+
+    filter_out_node_types:
+      _object: matrix.pipelines.filtering.filters.filter_out
+      column: category
+      exclude_list:
+        - OrganismTaxon
   
   edge_filters:
     filter_sources:
