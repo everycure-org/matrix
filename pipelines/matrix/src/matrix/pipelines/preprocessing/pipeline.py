@@ -61,15 +61,26 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="prepare_nodes",
                 tags=["embiology-kg"],
             ),
-            # node(
-            #     func=nodes.prepare_literature_attributes,
-            #     inputs=[
-            #         "preprocessing.int.embiology.edges@spark",
-            #     ],
-            #     outputs="preprocessing.int.embiology.attributes",
-            #     name="prepare_edges_attributes",
-            #     tags=["embiology-kg"],
-            # ),
+            node(
+                func=nodes.add_edge_attributes,
+                inputs=[
+                    "preprocessing.int.embiology.ref_pub@spark",
+                ],
+                outputs="preprocessing.int.embiology.attributes",
+                name="prepare_edges_attributes",
+                tags=["embiology-kg"],
+            ),
+            node(
+                func=nodes.prepare_edges,
+                inputs=[
+                    "preprocessing.int.embiology.edges@spark",
+                    "preprocessing.int.embiology.attributes",
+                    "params:preprocessing.embiology.edges.biolink_mapping",
+                ],
+                outputs="preprocessing.prm.embiology.edges",
+                name="prepare_edges",
+                tags=["embiology-kg"],
+            ),
             # node(
             #     func=nodes.deduplicate_and_clean,
             #     inputs=[
