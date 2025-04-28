@@ -55,8 +55,8 @@ class SpokeTransformer(GraphTransformer):
             .withColumn("primary_knowledge_source",                 F.lit(None).cast(T.StringType()))
             .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
             .withColumn("subject_direction_qualifier",              F.lit(None).cast(T.StringType()))
-            .withColumn("num_references",                           F.lit(None).cast(T.IntegerType()))
-            .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType()))
+            .withColumn("num_references",                           F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
+            .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
             .withColumn("object_aspect_qualifier",                  F.lit(None).cast(T.StringType()))
             .withColumn("object_direction_qualifier",               F.lit(None).cast(T.StringType()))
         )
