@@ -1,4 +1,5 @@
-dev_docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
+docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
+
 TAG ?= ${USER}
 GIT_SHA ?= $(shell git rev-parse --short HEAD)
 export PYSPARK_PYTHON = .venv/bin/python
@@ -99,7 +100,7 @@ format:
 
 # executes E2E integration test fully in docker. 
 docker_test: certificate docker_build
-	IMG="$(dev_docker_image)" docker compose -f compose/docker-compose.yml \
+	IMG="$(docker_image)" docker compose -f compose/docker-compose.yml \
 		-f compose/docker-compose.ci.yml \
 		up \
 		--force-recreate \
@@ -107,14 +108,14 @@ docker_test: certificate docker_build
 		--exit-code-from matrix-pipeline
 
 docker_build:
-	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(dev_docker_image) --load ./
-	docker tag $(dev_docker_image) $(dev_docker_image):${TAG}
+	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(docker_image) --load ./
+	docker tag $(docker_image) $(docker_image):${TAG}
 
 docker_auth:
 	gcloud auth configure-docker us-central1-docker.pkg.dev
 
-docker_push: docker_build docker_auth
-	docker push $(dev_docker_image):${TAG}
+docker_push: docker_build
+	docker push $(docker_image):${TAG}
 
 certificate:
 	@echo "Generating test SSL certificate for Neo4J."
@@ -147,7 +148,7 @@ licenses_container: docker_build
 	docker run \
 		-v $(PWD)/trivy.yaml:/trivy.yaml \
 		-v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy  \
-		image --scanners license --severity UNKNOWN,CRITICAL $(dev_docker_image)
+		image --scanners license --severity UNKNOWN,CRITICAL $(docker_image)
 
 clean_sa_key:
 	rm -f $(SA_KEY_PATH)

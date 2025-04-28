@@ -27,7 +27,7 @@ class RTXTransformer(GraphTransformer):
         return (
             nodes_df
             .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
-            .withColumn("labels",                            f.split(f.col("_LABEL"), RTX_SEPARATOR))
+            .withColumn("labels",                            f.lit(None).cast(T.ArrayType(T.StringType()))) # TODO: replace this with _LABEL once updated rtx-kg2 is available
             .withColumn("all_categories",                    f.split(f.col("all_categories"), RTX_SEPARATOR))
             .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies"), RTX_SEPARATOR))
             .withColumn("publications",                      f.split(f.col("publications"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
@@ -36,17 +36,12 @@ class RTXTransformer(GraphTransformer):
         # fmt: on
 
     def transform_edges(
-        self,
-        edges_df: ps.DataFrame,
-        curie_to_pmids: ps.DataFrame,
-        semmed_filters: Dict[str, str],
-        **kwargs,
+        self, edges_df: ps.DataFrame, curie_to_pmids: ps.DataFrame, semmed_filters: Dict[str, str], **kwargs
     ) -> ps.DataFrame:
         """Transform RTX KG2 edges to our target schema.
 
         Args:
             edges_df: Edges DataFrame.
-            pubmed_mapping: pubmed mapping
         Returns:
             Transformed DataFrame.
         """
@@ -54,12 +49,11 @@ class RTXTransformer(GraphTransformer):
         # fmt: off
         return (
             edges_df
+            .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
+            .withColumn("agent_type",                    f.lit(None).cast(T.StringType()))
             .withColumn("aggregator_knowledge_source", f.split(f.col("aggregator_knowledge_source"), RTX_SEPARATOR)) #RTX KG2 2.10 has a column for aggregator knowledge source
             .withColumn("publications",                  f.split(f.col("publications"), RTX_SEPARATOR)) # RTX KG2 2.10 no longer has type annotation on publication column
             .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
-            .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
-            .withColumn("agent_type",                    f.lit(None).cast(T.StringType()))
-            .withColumn("primary_knowledge_source",      f.col("primary_knowledge_source"))
             .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
