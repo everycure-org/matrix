@@ -143,11 +143,13 @@ SELECT * FROM bq.epistemic_heatmap
         knowledge level and agent type.
     </div>
     <div class="text-sm font-normal mt-1">
-        A higher average reflects stronger provenance overall, indicating a greater proportion of high-confidence, 
-        human-curated knowledge in the graph.
+        A more positive average reflects stronger overall provenance, while a more negative average indicates weaker 
+        or more speculative knowledge across the graph.
     </div>
 </div>
 
+<!-- Spacer -->
+<div class="mb-6"></div>
 
 <!-- Metric row: Epistemic Score -->
 <Grid col=2>
@@ -174,11 +176,12 @@ SELECT * FROM bq.epistemic_heatmap
 
 <!-- heatmap -->
 <ECharts
-  style={{ width: '100%', height: '800px' }}
+  style={{ width: '100%', height: '2000px' }}
   config={{
     title: {
       text: 'Epistemic Provenance',
-      left: 'center'
+      left: 'center',
+      top: 10
     },
     tooltip: {
       formatter: function (params) {
@@ -192,21 +195,21 @@ SELECT * FROM bq.epistemic_heatmap
       }
     },
     grid: {
-      top: 20,
-      bottom: 0,
-      left: 5,
-      right: 80,
-      containLabel: true
+      top: 30,
+      bottom: 100,
+      left: 120,
+      right: 120,
+      containLabel: false
     },
     xAxis: {
       type: 'category',
       data: [
+        "Prediction", 
+        "Observation", 
+        "Not Provided", 
+        "Statistical Association", 
+        "Logical Entailment", 
         "Knowledge Assertion",
-        "Logical Entailment",
-        "Prediction",
-        "Statistical Association",
-        "Observation",
-        "Not Provided"
       ],
       axisLabel: {
         rotate: 30,
@@ -216,8 +219,9 @@ SELECT * FROM bq.epistemic_heatmap
     yAxis: {
       type: 'category',
       data: [
-        "Not Provided", 
         "Text Mining Agent",
+        "Image Processing\nAgent",
+        "Not Provided", 
         "Computational Model",
         "Data Analysis Pipeline",
         "Automated Agent",
@@ -229,15 +233,18 @@ SELECT * FROM bq.epistemic_heatmap
       }
     },
     visualMap: {
-      min: 0.0,
+      min: -1.0,
       max: 1.0,
-      orient: 'vertical',
-      right: 10,
-      top: 'middle',
+      orient: 'horizontal',
+      left: 'center',
+      bottom: 0,
+      itemHeight: 400,
+      itemWidth: 10,
+      precision: 2,
       inRange: {
-        color: ['#d73027', '#ffffbf', '#1a9850']
+        color: ['#bd93f9', '#8be9fd', '#50fa7b']
       },
-      text: ['High', 'Low']
+      text: ['Stronger Provenance', 'Weaker Provenance']
     },
     series: [{
       type: 'heatmap',
@@ -270,6 +277,8 @@ SELECT * FROM bq.epistemic_heatmap
   }}
 />
 
+<!-- Spacer -->
+<div class="mb-6"></div>
 
 <div class="text-center text-lg font-semibold mt-6 mb-2">
     Knowledge Level
@@ -278,7 +287,8 @@ SELECT * FROM bq.epistemic_heatmap
         predictions and statistical associations.
     </div>
     <div class="text-sm font-normal mt-1">
-       A higher average reflects greater epistemic confidence across edges.
+      A more positive average reflects greater epistemic confidence, while a more negative average indicates weaker 
+      or more speculative knowledge.
     </div>
 </div>
 
@@ -336,9 +346,9 @@ SELECT * FROM bq.epistemic_heatmap
       data: [
         "Knowledge Assertion",
         "Logical Entailment",
-        "Prediction",
         "Statistical Association",
         "Observation",
+        "Prediction",
         "Not Provided",
         "null"
       ],
@@ -365,9 +375,9 @@ SELECT * FROM bq.epistemic_heatmap
       data: [
         "Knowledge Assertion",
         "Logical Entailment",
-        "Prediction",
         "Statistical Association",
         "Observation",
+        "Prediction",
         "Not Provided",
         "null"
       ].map(k => {
@@ -386,8 +396,8 @@ SELECT * FROM bq.epistemic_heatmap
         from direct human assertions to automated text mining.
     </div>
     <div class="text-sm font-normal mt-1">
-        A higher average reflects greater human involvement in knowledge generation, 
-        indicating higher trust and interpretability.
+        A more positive average reflects greater human involvement, while a more negative average indicates greater 
+        reliance on automated or speculative sources.
     </div>
 </div>
 
@@ -446,10 +456,11 @@ SELECT * FROM bq.epistemic_heatmap
       data: [
         "Manual Agent",
         "Manual Validation\nof Automated Agent",
-        "Automated Agent",
         "Data Analysis Pipeline",
+        "Automated Agent",
         "Computational Model",
         "Text-Mining Agent",
+        "Image Processing\nAgent",
         "Not Provided",
         "null"
       ],
@@ -475,11 +486,12 @@ SELECT * FROM bq.epistemic_heatmap
       },
       data: [
         "Manual Agent",
-        "Manual Validation of Automated Agent",
-        "Automated Agent",
+        "Manual Validation\nof Automated Agent",
         "Data Analysis Pipeline",
+        "Automated Agent",
         "Computational Model",
         "Text-Mining Agent",
+        "Image Processing\nAgent",
         "Not Provided",
         "null"
       ].map(k => {
