@@ -59,7 +59,7 @@ fabricator.rtx_kg2:
       international_resource_identifier:
         type: faker
         provider: url
-      _LABEL:
+      :LABEL:
         type: generate_values
         sample_values:
           - biolink:ThingWithTaxon
@@ -312,7 +312,7 @@ fabricator.robokop:
       id:
         type: generate_unique_id
         prefix: "ROBO:"
-      name:
+      "name:string":
         type: generate_unique_id
         prefix: "rs"
       category:
@@ -331,7 +331,7 @@ fabricator.robokop:
             - biolink:PhysicalEssenceOrOccurrent
             - biolink:GenomicEntity
             - biolink:OrganismTaxon
-      description:
+      "description:string":
         type: faker
         provider: sentence
       equivalent_identifiers:

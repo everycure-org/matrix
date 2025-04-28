@@ -85,7 +85,7 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
         pipelines.append(
             pipeline(
                 [
-                    node(
+                    ArgoNode(
                         func=nodes.normalize_edges,
                         inputs={
                             "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
@@ -94,6 +94,7 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
                         outputs=f"integration.int.{source}.edges.norm@spark",
                         name=f"normalize_{source}_edges",
                         tags=["argowf.fuse", f"argowf.fuse-group.{source}"],
+                        argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
                     ),
                 ],
                 tags=source,
@@ -109,7 +110,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     pipelines = []
 
     # Create pipeline per source
-    for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration"):
+    for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration"):
         pipelines.append(
             pipeline(
                 _create_integration_pipeline(
@@ -131,7 +132,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         "params:integration.deduplication.retrieve_most_specific_category",
                         *[
                             f'integration.int.{source["name"]}.nodes.norm@spark'
-                            for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
+                            for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
                             if source.get("integrate_in_kg", True)
                         ],
                     ],
@@ -143,7 +144,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     func=nodes.union_edges,
                     inputs=[
                         f'integration.int.{source["name"]}.edges.norm@spark'
-                        for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
+                        for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
                         if source.get("integrate_in_kg", True)
                     ],
                     outputs="integration.prm.unified_edges",
