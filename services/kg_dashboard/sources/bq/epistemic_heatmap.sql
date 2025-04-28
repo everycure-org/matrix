@@ -15,6 +15,7 @@ SELECT
     WHEN agent_type = 'data_analysis_pipeline' THEN 'Data Analysis Pipeline'
     WHEN agent_type = 'computational_model' THEN 'Computational Model'
     WHEN agent_type = 'text_mining_agent' THEN 'Text Mining Agent'
+    WHEN agent_type = 'image_processing_agent' THEN 'Image Processing Agent'
     WHEN agent_type = 'not_provided' THEN 'Not Provided'
     ELSE 'Other'
   END AS agent_type_label,
