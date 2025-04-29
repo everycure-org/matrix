@@ -425,7 +425,7 @@ kedro-telemetry==0.6.2
     #   -r requirements.in
     #   kedro
     #   kedro-viz
-kedro-viz==10.2.0
+kedro-viz==11.0.1
     # via -r requirements.in
 kiwisolver==1.4.8
     # via matplotlib
