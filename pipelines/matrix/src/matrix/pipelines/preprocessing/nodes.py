@@ -109,11 +109,13 @@ def prepare_nodes(nodes, id_mapping, biolink_mapping):
             on="attribute_id",
             how="left",
         )
-        .groupBy(["id", "urn", "name", "nodetype", "normalization_success"])
+        .orderBy("normalization_success", ascending=False)
+        .groupBy(["id", "urn", "name", "nodetype"])
         .agg(
             f.first(f.col("normalized_id"), ignorenulls=True).alias("normalized_id"),
             f.first(f.col("equivalent_identifiers"), ignorenulls=True).alias("equivalent_identifiers"),
             f.first(f.col("all_categories"), ignorenulls=True).alias("all_categories"),
+            f.first(f.col("normalization_success"), ignorenulls=True).alias("normalization_success"),
         )
         .withColumn("final_id", f.coalesce(f.col("normalized_id"), f.col("urn")))
     )
@@ -194,7 +196,7 @@ def add_edge_attributes(references):
             f.flatten(f.collect_set("pmid")).alias("pmid"),
             f.flatten(f.collect_set("doi")).alias("doi"),
         )
-        .withColumn("publications", f.array(f.col("pmid"), f.col("doi")))
+        .withColumn("publications", f.flatten(f.array(f.col("pmid"), f.col("doi"))))
         .drop("pmid", "doi")
     )
 
@@ -205,13 +207,12 @@ def deduplicate_and_clean(nodes, edges):
     Args:
         edges: edges
     """
-
     nodes = (
-        nodes.dropDuplicates(["id"])
-        .withColumn("original_identifier", f.col("id").cast(StringType()))
+        nodes.withColumn("original_identifier", f.col("id").cast(StringType()))
+        .drop("id")
         .withColumnRenamed("urn", "original_urn")
         .withColumnRenamed("nodetype", "original_nodetype")
-        .withColumnRenamed("final_id", "normalized_id")
+        .withColumnRenamed("final_id", "id")
         .withColumn("equivalent_identifiers", f.array_join(f.col("equivalent_identifiers"), "|"))
         .withColumn("all_categories", f.array_join(f.col("all_categories"), "|"))
         .select(
@@ -229,16 +230,38 @@ def deduplicate_and_clean(nodes, edges):
     edge_keys = (
         edges.select("inkey").union(edges.select("outkey")).distinct().withColumnRenamed("inkey", "original_identifier")
     )
+    # Filter nodes to only keep those that appear in edges
     f_nodes = nodes.join(edge_keys, "original_identifier", "inner")
     f_nodes = f_nodes.dropDuplicates(["id"])
+    f_nodes = nodes
+    # Filter edges to only keep those where both subject and object nodes exist
+    valid_identifiers = f_nodes.select("original_identifier").distinct()
+    f_edges = edges.join(
+        valid_identifiers.withColumnRenamed("original_identifier", "inkey"), on="inkey", how="inner"
+    ).join(valid_identifiers.withColumnRenamed("original_identifier", "outkey"), on="outkey", how="inner")
 
     # Modify edge schema
-    edges = (
-        edges.withColumnRenamed("original_id", "id")
-        .withColumnRenamed("original_subject", "inkey")
-        .withColumnRenamed("original_object", "outkey")
+    f_edges = (
+        edges.withColumnRenamed("id", "original_id")
+        .withColumn("original_subject", f.trim(f.col("inkey")))
+        .withColumn("original_object", f.trim(f.col("outkey")))
+        .withColumn("publications", f.array_join(f.col("publications"), "|"))
+        .join(
+            f_nodes.select("id", "original_identifier")
+            .withColumnRenamed("original_identifier", "original_subject")
+            .withColumnRenamed("id", "subject"),
+            on="original_subject",
+            how="left",
+        )
+        .join(
+            f_nodes.select("id", "original_identifier")
+            .withColumnRenamed("original_identifier", "original_object")
+            .withColumnRenamed("id", "object"),
+            on="original_object",
+            how="left",
+        )
     )
-    return f_nodes, edges
+    return f_nodes.dropDuplicates(["id"]), f_edges.dropDuplicates(["subject", "object", "predicate"])
 
 
 # -------------------------------------------------------------------------

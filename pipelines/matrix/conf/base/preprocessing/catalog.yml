@@ -92,6 +92,14 @@ preprocessing.prm.embiology.nodes:
   <<: *_spark_parquet
   filepath: ${globals:paths.tmp}/embiology/prm/nodes
 
+# preprocessing.prm.embiology.manual_id_mapping:
+#   <<: *_spark_parquet
+#   filepath: ${globals:paths.tmp}/embiology/prm/manual_id_mapping
+
+# preprocessing.prm.embiology.manual_name_mapping:
+#   <<: *_spark_parquet
+#   filepath: ${globals:paths.tmp}/embiology/prm/manual_id_mapping
+
 preprocessing.prm.embiology.edges:
   <<: *_spark_parquet
   filepath: ${globals:paths.tmp}/embiology/prm/edges
