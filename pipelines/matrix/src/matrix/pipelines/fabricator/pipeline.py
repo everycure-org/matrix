@@ -5,8 +5,6 @@ import pandas as pd
 from data_fabricator.v0.nodes.fabrication import fabricate_datasets
 from kedro.pipeline import Pipeline, node, pipeline
 
-from matrix.kedro4argo_node import ArgoNode
-
 logger = logging.getLogger(__name__)
 
 
@@ -40,7 +38,7 @@ def _create_pairs(
         # Note: overlapping ids were possible due to the way the fabricator sources its ids.
         overlap = random_drugs.intersection(random_diseases)
         random_drugs = random_drugs.difference(overlap)
-        random_diseases = random_diseases.difference(overlap)
+        # random_diseases = random_diseases.difference(overlap)
 
         df = pd.DataFrame(
             data=[[drug, disease, f"{drug}|{disease}"] for drug, disease in zip(random_drugs, random_diseases)],
@@ -56,7 +54,33 @@ def _create_pairs(
     if attempt > 100:
         logger.warning("Less drug-disease pairs were generated than expected")
 
+    breakpoint()
     return df[:num], df[num : 2 * num]
+
+
+def remove_overlap(disease_list: pd.DataFrame, drug_list: pd.DataFrame):
+    """Function to ensure no overlap between drug and disease lists.
+    
+    Due to our generator setup, it's possible our drug and disease sets
+    are not disjoint.
+
+    Args:
+        drug_list: Dataframe containing the list of drugs.
+        disease_list: Dataframe containing the list of diseases.
+
+    Returns:
+        Two dataframes, clean drug and disease lists respectively.
+    """
+    overlap = set(disease_list["category_class"]).intersection(set(drug_list["curie"]))
+    overlap_mask_drug = (drug_list["curie"].isin(overlap))
+    overlap_mask_disease = (disease_list["category_class"].isin(overlap))
+    drug_list = drug_list[~overlap_mask_drug]
+    disease_list = disease_list[~overlap_mask_disease]
+
+    return {
+        "disease_list": disease_list,
+        "drug_list": drug_list
+    }
 
 
 def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.DataFrame):
@@ -95,19 +119,30 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create fabricator pipeline."""
     return pipeline(
         [
-            ArgoNode(
+            node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.rtx_kg2"},
                 outputs={
                     "nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                     "edges": "ingestion.raw.rtx_kg2.edges@pandas",
-                    "disease_list": "ingestion.raw.disease_list",
-                    "drug_list": "ingestion.raw.drug_list",
+                    "disease_list": "ingestion.pre.disease_list",
+                    "drug_list": "ingestion.pre.drug_list",
                     "pubmed_ids_mapping": "ingestion.raw.rtx_kg2.curie_to_pmids@pandas",
                 },
                 name="fabricate_kg2_datasets",
             ),
-            ArgoNode(
+            node(
+                func=remove_overlap,
+                inputs={
+                    "disease_list": "ingestion.pre.disease_list",
+                    "drug_list": "ingestion.pre.drug_list",
+                },
+                outputs={
+                    "disease_list": "ingestion.raw.disease_list",
+                    "drug_list": "ingestion.raw.drug_list",
+                }
+            ),
+            node(
                 func=fabricate_datasets,
                 inputs={
                     "fabrication_params": "params:fabricator.clinical_trials",
@@ -128,7 +163,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_ec_medical_datasets",
             ),
-            ArgoNode(
+            node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.robokop"},
                 outputs={
