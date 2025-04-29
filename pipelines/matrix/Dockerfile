@@ -20,6 +20,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ADD requirements.txt .
 
 # Install Python dependencies
+ARG GITHUB_TOKEN
 ADD packages/ ./packages/
 RUN --mount=type=cache,target=/root/.cache uv venv -p 3.11 && \
     uv pip install -r requirements.txt
