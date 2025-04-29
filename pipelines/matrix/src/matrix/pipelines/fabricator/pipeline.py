@@ -1,66 +1,60 @@
-import logging
+import itertools
+import random
 
 import networkx as nx
 import pandas as pd
 from data_fabricator.v0.nodes.fabrication import fabricate_datasets
 from kedro.pipeline import Pipeline, node, pipeline
 
-logger = logging.getLogger(__name__)
-
 
 def _create_pairs(
     drug_list: pd.DataFrame,
     disease_list: pd.DataFrame,
-    num: int = 100,
+    num: int,
     seed: int = 42,
 ) -> pd.DataFrame:
-    """Create 2 sets of random drug-disease pairs. Ensures no duplicate pairs.
+    """Creates 2 sets of random drug-disease pairs. Ensures no duplicate pairs.
 
     Args:
         drug_list: Dataframe containing the list of drugs.
         disease_list: Dataframe containing the list of diseases.
-        num: Size of each set of random pairs. Defaults to 100.
-        seed: Random seed. Defaults to 42.
+        num: Size of each set of random pairs.
+        seed: Random seed.
 
     Returns:
         Two dataframes, each containing 'num' unique drug-disease pairs.
     """
-    is_enough_generated = False
+    random.seed(seed)
 
-    attempt = 0
+    # Convert lists to sets of unique ids
+    drug_set = set(drug_list["curie"])
+    disease_set = set(disease_list["category_class"])
 
-    while not is_enough_generated:
-        # Sample random pairs (we sample more than the required amount in case duplicates are removed)
-        random_drugs = set(drug_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=seed))
-        random_diseases = set(
-            disease_list["category_class"].sample(num * 4, replace=True, ignore_index=True, random_state=2 * seed)
-        )
-        # Note: overlapping ids were possible due to the way the fabricator sources its ids.
-        overlap = random_drugs.intersection(random_diseases)
-        random_drugs = random_drugs.difference(overlap)
-        # random_diseases = random_diseases.difference(overlap)
+    # Do not include overlapping ids
+    overlap = drug_set.intersection(disease_set)
+    drug_list_restricted = list(drug_set.difference(overlap))
+    disease_list_restricted = list(disease_set.difference(overlap))
 
-        df = pd.DataFrame(
-            data=[[drug, disease, f"{drug}|{disease}"] for drug, disease in zip(random_drugs, random_diseases)],
-            columns=["source", "target", "drug|disease"],
-        )
+    # Check that we have enough pairs
+    if not len(drug_list_restricted) * len(disease_list_restricted) >= num:
+        raise ValueError("Drug and disease lists are too small to generate the required number of pairs")
 
-        # Remove duplicate pairs
-        df = df.drop_duplicates()
+    # Subsample the lists to reduce memory usage
+    for entity_list in [drug_list_restricted, disease_list_restricted]:
+        if len(entity_list) > num:
+            entity_list = random.sample(entity_list, num)
 
-        # Check that we still have enough fabricated pairs
-        is_enough_generated = len(df) >= num or attempt > 100
-        attempt += 1
-    if attempt > 100:
-        logger.warning("Less drug-disease pairs were generated than expected")
+    # Create pairs and sample without replacement to ensure no duplicates
+    pairs = list(itertools.product(drug_list_restricted, disease_list_restricted))
+    df_sample = pd.DataFrame(random.sample(pairs, num), columns=["source", "target"])
 
-    breakpoint()
-    return df[:num], df[num : 2 * num]
+    # Split into positives and negatives
+    return df_sample[:num], df_sample[num:]
 
 
 def remove_overlap(disease_list: pd.DataFrame, drug_list: pd.DataFrame):
     """Function to ensure no overlap between drug and disease lists.
-    
+
     Due to our generator setup, it's possible our drug and disease sets
     are not disjoint.
 
@@ -72,15 +66,12 @@ def remove_overlap(disease_list: pd.DataFrame, drug_list: pd.DataFrame):
         Two dataframes, clean drug and disease lists respectively.
     """
     overlap = set(disease_list["category_class"]).intersection(set(drug_list["curie"]))
-    overlap_mask_drug = (drug_list["curie"].isin(overlap))
-    overlap_mask_disease = (disease_list["category_class"].isin(overlap))
+    overlap_mask_drug = drug_list["curie"].isin(overlap)
+    overlap_mask_disease = disease_list["category_class"].isin(overlap)
     drug_list = drug_list[~overlap_mask_drug]
     disease_list = disease_list[~overlap_mask_disease]
 
-    return {
-        "disease_list": disease_list,
-        "drug_list": drug_list
-    }
+    return {"disease_list": disease_list, "drug_list": drug_list}
 
 
 def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.DataFrame):
@@ -140,7 +131,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs={
                     "disease_list": "ingestion.raw.disease_list",
                     "drug_list": "ingestion.raw.drug_list",
-                }
+                },
             ),
             node(
                 func=fabricate_datasets,
