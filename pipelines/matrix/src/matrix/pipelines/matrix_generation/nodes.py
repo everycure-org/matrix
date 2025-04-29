@@ -9,8 +9,9 @@ import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.functions as F
 from matrix.datasets.graph import KnowledgeGraph
-from matrix.inject import inject_object
+from matrix.inject import _extract_elements_in_list, inject_object
 from matrix.pipelines.modelling.model import ModelWrapper
+from matrix.pipelines.modelling.nodes import apply_transformers
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark.sql import Row
 from pyspark.sql.types import ArrayType, BooleanType, FloatType, StringType
@@ -140,6 +141,7 @@ def generate_pairs(
     diseases_lst = list(set(diseases_lst))
 
     # Remove drugs and diseases without embeddings
+    # NOTE: Ensures we load only the id column before moving to pandas world
     nodes_with_embeddings = set(graph.select("id").toPandas()["id"].tolist())
     drugs_lst = [drug for drug in drugs_lst if drug in nodes_with_embeddings]
     diseases_lst = [disease for disease in diseases_lst if disease in nodes_with_embeddings]
@@ -200,11 +202,42 @@ def make_predictions_and_sort(
         how="left",
     )
 
-    # Retrieve rows with null embeddings
+    # Drop rows without source/target embeddings
+    # data = drop_rows_with_empty_feature_values(data, transformers)
+
+    def predict_partition(partitionindex: int, partition: Iterable[Row]) -> Iterator[Row]:
+        partition_df = pd.DataFrame.from_records(row.asDict() for row in partition)
+        if partition_df.empty:
+            logger.warning(f"partition with index {partitionindex} is empty")
+            return
+
+        transformed = apply_transformers(partition_df, transformers)
+        batch_features = _extract_elements_in_list(transformed.columns, features, True)
+
+        predictions = model.predict_proba(transformed[batch_features].values)
+        predictions_df = pd.DataFrame(
+            predictions, columns=[not_treat_score_col_name, treat_score_col_name, unknown_score_col_name]
+        )
+
+        result_df = pd.concat([partition_df, predictions_df], axis=1)
+        for row in result_df.to_dict("records"):
+            yield Row(**row)
+
+    data = data.rdd.mapPartitionsWithIndex(predict_partition).toDF()
+    data = data.toPandas()
+    sorted_data = data.sort_values(by=treat_score_col_name, ascending=False)
+    # Add rank and quantile rank columns
+    sorted_data["rank"] = range(1, len(sorted_data) + 1)
+    sorted_data["quantile_rank"] = sorted_data["rank"] / len(sorted_data)
+    return sorted_data
+
+
+def drop_rows_with_empty_feature_values(data: ps.DataFrame, transformers):
+
+    # Retrieve rows where feature columns are null
     # NOTE: This only happens in a rare scenario where the node synonymizer
     # provided an identifier for a node that does _not_ exist in our KG.
     # https://github.com/everycure-org/matrix/issues/409
-
     features: list[str] = list(itertools.chain.from_iterable(x["features"] for x in transformers.values()))
 
     if logger.isEnabledFor(logging.INFO):
@@ -220,38 +253,7 @@ def make_predictions_and_sort(
             logger.warning("Dropped (subset of 50 shown): %s", ", ".join(f"({p[0]}, {p[1]})" for p in removed_pairs))
         removed.unpersist()
 
-    # Drop rows without source/target embeddings
-    data = data.dropna(subset=features)
-
-    # Apply transformers to data
-    feature_col = "_source_and_target"
-    transformed = data.withColumn(feature_col, F.concat(*features)).drop(*features)
-
-    def predict_partition(partitionindex: int, partition: Iterable[Row]) -> Iterator[Row]:
-        partition_df = pd.DataFrame.from_records(row.asDict() for row in partition)
-        if partition_df.empty:
-            logger.warning(f"partition with index {partitionindex} is empty")
-            return
-
-        s = partition_df.pop(feature_col)
-        X = pd.DataFrame.from_dict(dict(zip(s.index, s.values))).transpose()
-
-        predictions = model.predict_proba(X)
-        predictions_df = pd.DataFrame(
-            predictions, columns=[not_treat_score_col_name, treat_score_col_name, unknown_score_col_name]
-        )
-
-        result_df = pd.concat([partition_df, predictions_df], axis=1)
-        for row in result_df.to_dict("records"):
-            yield Row(**row)
-
-    data = transformed.rdd.mapPartitionsWithIndex(predict_partition).toDF()
-    data = data.toPandas()
-    sorted_data = data.sort_values(by=treat_score_col_name, ascending=False)
-    # Add rank and quantile rank columns
-    sorted_data["rank"] = range(1, len(sorted_data) + 1)
-    sorted_data["quantile_rank"] = sorted_data["rank"] / len(sorted_data)
-    return sorted_data
+    return data.dropna(subset=features, how="any")
 
 
 def generate_summary_metadata(matrix_parameters: Dict) -> pd.DataFrame:

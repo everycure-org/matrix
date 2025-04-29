@@ -1,0 +1,27 @@
+_pandas_csv: &_pandas_csv
+  type:  pandas.CSVDataset
+
+_layer_raw: &_layer_raw
+  metadata:
+    kedro-viz:
+      layer: raw
+
+ingestion.pre.disease_list:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw}/pre/disease_list
+  load_args:
+    sep: "\t"
+  save_args:
+    header: true
+    index: false
+    sep: "\t"
+
+ingestion.pre.drug_list:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw}/pre/drug_list
+  load_args:
+    sep: "\t"
+  save_args:
+    header: true
+    index: false
+    sep: "\t"
