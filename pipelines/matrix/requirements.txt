@@ -64,7 +64,7 @@ bmt==1.4.4
     # via -r requirements.in
 botocore==1.37.1
     # via aiobotocore
-brix-data-fabricator @ git+https://github.com/everycure-org/matrix-legacy-proprietary-packages.git@0e2435567d3e972484360a3962e1aa8a36474c43#egg=data_fabricator&subdirectory=data_fabricator
+brix-data-fabricator @ git+https://${GITHUB_TOKEN}@github.com/everycure-org/matrix-legacy-proprietary-packages.git@0e2435567d3e972484360a3962e1aa8a36474c43#egg=data_fabricator&subdirectory=data_fabricator
     # via -r requirements.in
 build==1.2.2.post1
     # via kedro
