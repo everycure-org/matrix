@@ -13,16 +13,6 @@ data_release.feat.nodes_with_embeddings:
   filepath: ${globals:paths.release}/prm/nodes_with_embeddings
   table: nodes_with_embeddings
 
-data_release.prm.bigquery_edges:
-  <<: *_bigquery_ds
-  filepath: ${globals:paths.release}/prm/bigquery_edges
-  table: edges
-
-data_release.prm.bigquery_nodes:
-  <<: *_bigquery_ds
-  filepath: ${globals:paths.release}/prm/bigquery_nodes
-  table: nodes
-
 data_release.dummy:
   type: yaml.YAMLDataset
   filepath: ${globals:paths.tmp}/foo.yaml
