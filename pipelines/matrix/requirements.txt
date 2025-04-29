@@ -6,7 +6,7 @@ aiofiles==24.1.0
     # via kedro-viz
 aiohappyeyeballs==2.6.1
     # via aiohttp
-aiohttp==3.11.13
+aiohttp==3.11.18
     # via
     #   aiobotocore
     #   gcsfs
@@ -15,13 +15,13 @@ aioitertools==0.12.0
     # via aiobotocore
 aiosignal==1.3.2
     # via aiohttp
-alembic==1.15.1
+alembic==1.15.2
     # via mlflow
 annotated-types==0.7.0
     # via pydantic
 antlr4-python3-runtime==4.9.3
     # via omegaconf
-anyio==4.8.0
+anyio==4.9.0
     # via
     #   httpx
     #   jupyter-server
@@ -42,9 +42,9 @@ arrow==1.3.0
     #   isoduration
 asttokens==3.0.0
     # via stack-data
-async-lru==2.0.4
+async-lru==2.0.5
     # via jupyterlab
-attrs==25.1.0
+attrs==25.3.0
     # via
     #   aiohttp
     #   jsonschema
@@ -52,7 +52,7 @@ attrs==25.1.0
     #   referencing
 babel==2.17.0
     # via jupyterlab-server
-beautifulsoup4==4.13.3
+beautifulsoup4==4.13.4
     # via nbconvert
 binaryornot==0.4.4
     # via cookiecutter
@@ -64,7 +64,7 @@ bmt==1.4.4
     # via -r requirements.in
 botocore==1.37.1
     # via aiobotocore
-brix-data-fabricator @ git+https://github.com/everycure-org/matrix-legacy-proprietary-packages.git@0e2435567d3e972484360a3962e1aa8a36474c43#egg=data_fabricator&subdirectory=data_fabricator
+./packages/data_fabricator
     # via -r requirements.in
 build==1.2.2.post1
     # via kedro
@@ -73,7 +73,7 @@ cachetools==5.5.2
     #   google-auth
     #   kedro
     #   mlflow-skinny
-certifi==2025.1.31
+certifi==2025.4.26
     # via
     #   httpcore
     #   httpx
@@ -104,25 +104,25 @@ comm==0.2.2
     # via
     #   ipykernel
     #   ipywidgets
-contourpy==1.3.1
+contourpy==1.3.2
     # via matplotlib
 cookiecutter==2.6.0
     # via kedro
-coverage==7.6.12
+coverage==7.8.0
     # via
     #   pytest-cov
     #   pytest-testmon
-curies==0.10.6
+curies==0.10.14
     # via
     #   linkml-runtime
     #   prefixmaps
 cycler==0.12.1
     # via matplotlib
-databricks-sdk==0.46.0
+databricks-sdk==0.50.0
     # via mlflow-skinny
 db-dtypes==1.4.2
     # via -r requirements.in
-debugpy==1.8.13
+debugpy==1.8.14
     # via ipykernel
 decorator==5.2.1
     # via
@@ -153,22 +153,22 @@ executing==2.2.0
     # via stack-data
 faker==4.18.0
     # via brix-data-fabricator
-fastapi==0.115.11
+fastapi==0.115.12
     # via kedro-viz
 fastjsonschema==2.21.1
     # via nbformat
-filelock==3.17.0
+filelock==3.18.0
     # via
     #   huggingface-hub
     #   torch
     #   transformers
 flask==3.1.0
     # via mlflow
-fonttools==4.56.0
+fonttools==4.57.0
     # via matplotlib
 fqdn==1.5.1
     # via jsonschema
-frozenlist==1.5.0
+frozenlist==1.6.0
     # via
     #   aiohttp
     #   aiosignal
@@ -196,9 +196,9 @@ google-api-core==2.24.2
     #   google-cloud-core
     #   google-cloud-iam
     #   google-cloud-storage
-google-api-python-client==2.163.0
+google-api-python-client==2.168.0
     # via pygsheets
-google-auth==2.38.0
+google-auth==2.39.0
     # via
     #   databricks-sdk
     #   gcsfs
@@ -213,23 +213,23 @@ google-auth==2.38.0
     #   google-cloud-storage
 google-auth-httplib2==0.2.0
     # via google-api-python-client
-google-auth-oauthlib==1.2.1
+google-auth-oauthlib==1.2.2
     # via
     #   gcsfs
     #   pygsheets
-google-cloud-bigquery==3.30.0
+google-cloud-bigquery==3.31.0
     # via -r requirements.in
-google-cloud-bigquery-storage==2.29.0
+google-cloud-bigquery-storage==2.31.0
     # via -r requirements.in
 google-cloud-core==2.4.3
     # via
     #   google-cloud-bigquery
     #   google-cloud-storage
-google-cloud-iam==2.18.1
+google-cloud-iam==2.19.0
     # via -r requirements.in
 google-cloud-storage==3.1.0
     # via gcsfs
-google-crc32c==1.6.0
+google-crc32c==1.7.1
     # via
     #   google-cloud-storage
     #   google-resumable-media
@@ -237,7 +237,7 @@ google-resumable-media==2.7.2
     # via
     #   google-cloud-bigquery
     #   google-cloud-storage
-googleapis-common-protos==1.69.1
+googleapis-common-protos==1.70.0
     # via
     #   google-api-core
     #   grpc-google-iam-v1
@@ -253,7 +253,7 @@ graphql-core==3.2.6
     #   strawberry-graphql
 graphql-relay==3.2.0
     # via graphene
-grpc-google-iam-v1==0.14.1
+grpc-google-iam-v1==0.14.2
     # via google-cloud-iam
 grpcio==1.71.0
     # via
@@ -265,7 +265,7 @@ grpcio-status==1.62.3
     # via google-api-core
 gunicorn==22.0.0
     # via mlflow
-h11==0.14.0
+h11==0.16.0
     # via
     #   httpcore
     #   uvicorn
@@ -275,7 +275,7 @@ hbreader==0.9.1
     #   linkml-runtime
 hdfs==2.7.3
     # via -r requirements.in
-httpcore==1.0.7
+httpcore==1.0.9
     # via httpx
 httplib2==0.22.0
     # via
@@ -288,7 +288,7 @@ httpx==0.28.1
     #   jupyterlab
     #   langsmith
     #   openai
-huggingface-hub==0.29.3
+huggingface-hub==0.30.2
     # via
     #   tokenizers
     #   transformers
@@ -306,18 +306,20 @@ importlib-metadata==7.2.1
     #   opentelemetry-api
 importlib-resources==6.5.2
     # via kedro
-iniconfig==2.0.0
+iniconfig==2.1.0
     # via pytest
 ipykernel==6.29.5
     # via jupyterlab
-ipython==8.34.0
+ipython==8.36.0
     # via
     #   -r requirements.in
     #   ipykernel
     #   ipywidgets
     #   kedro-viz
-ipywidgets==8.1.5
+ipywidgets==8.1.6
     # via -r requirements.in
+isodate==0.7.2
+    # via linkml-runtime
 isoduration==20.11.0
     # via jsonschema
 itsdangerous==2.2.0
@@ -346,7 +348,7 @@ joblib==1.4.2
     #   scikit-optimize
 json-flattener==0.1.9
     # via linkml-runtime
-json5==0.10.0
+json5==0.12.0
     # via jupyterlab-server
 jsonasobj2==1.0.4
     # via linkml-runtime
@@ -364,7 +366,7 @@ jsonschema==4.23.0
     #   jupyterlab-server
     #   linkml-runtime
     #   nbformat
-jsonschema-specifications==2024.10.1
+jsonschema-specifications==2025.4.1
     # via jsonschema
 jupyter-client==8.6.3
     # via
@@ -393,7 +395,7 @@ jupyter-server==2.15.0
     #   notebook-shim
 jupyter-server-terminals==0.5.3
     # via jupyter-server
-jupyterlab==4.3.5
+jupyterlab==4.4.1
     # via
     #   -r requirements.in
     #   notebook
@@ -403,7 +405,7 @@ jupyterlab-server==2.27.3
     # via
     #   jupyterlab
     #   notebook
-jupyterlab-widgets==3.0.13
+jupyterlab-widgets==3.0.14
     # via ipywidgets
 kedro==0.19.7
     # via
@@ -412,7 +414,7 @@ kedro==0.19.7
     #   kedro-mlflow
     #   kedro-telemetry
     #   kedro-viz
-kedro-datasets==6.0.0
+kedro-datasets==7.0.0
     # via
     #   -r requirements.in
     #   kedro-mlflow
@@ -427,28 +429,28 @@ kedro-viz==10.2.0
     # via -r requirements.in
 kiwisolver==1.4.8
     # via matplotlib
-langchain==0.3.20
+langchain==0.3.24
     # via -r requirements.in
-langchain-core==0.3.44
+langchain-core==0.3.56
     # via
     #   langchain
     #   langchain-openai
     #   langchain-text-splitters
-langchain-openai==0.3.8
+langchain-openai==0.3.14
     # via -r requirements.in
-langchain-text-splitters==0.3.6
+langchain-text-splitters==0.3.8
     # via langchain
-langsmith==0.3.13
+langsmith==0.3.38
     # via
     #   langchain
     #   langchain-core
 lazy-loader==0.4
     # via kedro-datasets
-linkml-runtime==1.8.3
+linkml-runtime==1.9.1
     # via bmt
-mako==1.3.9
+mako==1.3.10
     # via alembic
-markdown==3.7
+markdown==3.8
     # via mlflow
 markdown-it-py==3.0.0
     # via rich
@@ -469,7 +471,7 @@ matplotlib-inline==0.1.7
     #   ipython
 mdurl==0.1.2
     # via markdown-it-py
-mistune==3.1.2
+mistune==3.1.3
     # via nbconvert
 mlflow==2.15.0
     # via
@@ -477,20 +479,20 @@ mlflow==2.15.0
     #   kedro-mlflow
 mlflow-skinny==2.15.0
     # via mlflow
-more-itertools==10.6.0
+more-itertools==10.7.0
     # via kedro
 mpmath==1.3.0
     # via sympy
-multidict==6.1.0
+multidict==6.4.3
     # via
     #   aiobotocore
     #   aiohttp
     #   yarl
 multimethod==1.12
     # via graphdatascience
-mypy-extensions==1.0.0
+mypy-extensions==1.1.0
     # via typing-inspect
-narwhals==1.30.0
+narwhals==1.37.0
     # via plotly
 nbclient==0.10.2
     # via nbconvert
@@ -511,7 +513,7 @@ networkx==3.4.2
     # via
     #   kedro-viz
     #   torch
-notebook==7.3.2
+notebook==7.4.1
     # via -r requirements.in
 notebook-shim==0.2.4
     # via
@@ -539,22 +541,22 @@ oauthlib==3.2.2
     # via requests-oauthlib
 omegaconf==2.3.0
     # via kedro
-openai==1.66.2
+openai==1.76.0
     # via
     #   -r requirements.in
     #   langchain-openai
 openpyxl==3.1.5
     # via -r requirements.in
-opentelemetry-api==1.30.0
+opentelemetry-api==1.32.1
     # via
     #   mlflow-skinny
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
-opentelemetry-sdk==1.30.0
+opentelemetry-sdk==1.32.1
     # via mlflow-skinny
-opentelemetry-semantic-conventions==0.51b0
+opentelemetry-semantic-conventions==0.53b1
     # via opentelemetry-sdk
-orjson==3.10.15
+orjson==3.10.16
     # via
     #   kedro-viz
     #   langsmith
@@ -585,6 +587,7 @@ packaging==24.2
     #   pytest
     #   pytoolconfig
     #   scikit-optimize
+    #   strawberry-graphql
     #   transformers
 pandas==1.5.3
     # via
@@ -607,13 +610,13 @@ pathspec==0.12.1
     # via kedro-viz
 pexpect==4.9.0
     # via ipython
-pillow==11.1.0
+pillow==11.2.1
     # via matplotlib
-platformdirs==4.3.6
+platformdirs==4.3.7
     # via
     #   jupyter-core
     #   pytoolconfig
-plotly==6.0.0
+plotly==6.0.1
     # via kedro-viz
 pluggy==1.5.0
     # via
@@ -629,11 +632,11 @@ prefixmaps==0.2.6
     # via linkml-runtime
 prometheus-client==0.21.1
     # via jupyter-server
-prompt-toolkit==3.0.50
+prompt-toolkit==3.0.51
     # via
     #   ipython
     #   python-cypher
-propcache==0.3.0
+propcache==0.3.1
     # via
     #   aiohttp
     #   yarl
@@ -643,7 +646,7 @@ proto-plus==1.24.0.dev1
     #   google-api-core
     #   google-cloud-bigquery-storage
     #   google-cloud-iam
-protobuf==4.25.6
+protobuf==4.25.7
     # via
     #   google-api-core
     #   google-cloud-bigquery-storage
@@ -675,11 +678,11 @@ pyasn1==0.6.1
     # via
     #   pyasn1-modules
     #   rsa
-pyasn1-modules==0.4.1
+pyasn1-modules==0.4.2
     # via google-auth
 pycparser==2.22
     # via cffi
-pydantic==2.10.6
+pydantic==2.11.3
     # via
     #   curies
     #   fastapi
@@ -691,7 +694,7 @@ pydantic==2.10.6
     #   linkml-runtime
     #   openai
     #   pandera
-pydantic-core==2.27.2
+pydantic-core==2.33.1
     # via pydantic
 pygments==2.19.1
     # via
@@ -700,7 +703,7 @@ pygments==2.19.1
     #   rich
 pygsheets==2.0.6
     # via -r requirements.in
-pyparsing==3.2.1
+pyparsing==3.2.3
     # via
     #   httplib2
     #   matplotlib
@@ -718,9 +721,9 @@ pytest==8.3.5
     #   pytest-mock
     #   pytest-testmon
     #   pytest-timeout
-pytest-asyncio==0.25.3
+pytest-asyncio==0.26.0
     # via -r requirements.in
-pytest-cov==6.0.0
+pytest-cov==6.1.1
     # via -r requirements.in
 pytest-logging==2015.11.4
     # via prefixcommons
@@ -744,7 +747,7 @@ python-dateutil==2.9.0.post0
     #   matplotlib
     #   pandas
     #   strawberry-graphql
-python-dotenv==1.0.1
+python-dotenv==1.1.0
     # via uvicorn
 python-json-logger==3.3.0
     # via jupyter-events
@@ -777,14 +780,14 @@ pyyaml==6.0.2
     #   responses
     #   transformers
     #   uvicorn
-pyzmq==26.3.0
+pyzmq==26.4.0
     # via
     #   ipykernel
     #   jupyter-client
     #   jupyter-server
 querystring-parser==1.2.4
     # via mlflow
-rdflib==7.1.3
+rdflib==7.1.4
     # via linkml-runtime
 referencing==0.36.2
     # via
@@ -841,11 +844,11 @@ rich==13.9.4
     #   typer
 rope==1.13.0
     # via kedro
-rpds-py==0.23.1
+rpds-py==0.24.0
     # via
     #   jsonschema
     #   referencing
-rsa==4.9
+rsa==4.9.1
     # via google-auth
 ruamel-yaml==0.18.10
     # via pre-commit-hooks
@@ -878,7 +881,7 @@ semver==3.0.2
     # via -r requirements.in
 send2trash==1.8.3
     # via jupyter-server
-setuptools==76.0.0
+setuptools==80.0.0
     # via jupyterlab
 shellingham==1.5.4
     # via typer
@@ -897,9 +900,9 @@ sniffio==1.3.1
     #   openai
 sortedcontainers==2.4.0
     # via pytrie
-soupsieve==2.6
+soupsieve==2.7
     # via beautifulsoup4
-sqlalchemy==2.0.39
+sqlalchemy==2.0.40
     # via
     #   alembic
     #   kedro-viz
@@ -909,15 +912,15 @@ sqlparse==0.5.3
     # via mlflow-skinny
 stack-data==0.6.3
     # via ipython
-starlette==0.46.1
+starlette==0.46.2
     # via fastapi
-strawberry-graphql==0.262.1
+strawberry-graphql==0.266.0
     # via kedro-viz
 stringcase==1.2.0
     # via bmt
 sympy==1.13.1
     # via torch
-tenacity==9.0.0
+tenacity==9.1.2
     # via
     #   -r requirements.in
     #   graphdatascience
@@ -934,13 +937,13 @@ text-unidecode==1.3
     #   python-slugify
 textdistance==4.6.3
     # via graphdatascience
-threadpoolctl==3.5.0
+threadpoolctl==3.6.0
     # via scikit-learn
 tiktoken==0.9.0
     # via langchain-openai
 tinycss2==1.4.0
     # via bleach
-tokenizers==0.21.0
+tokenizers==0.21.1
     # via transformers
 toml==0.10.2
     # via kedro
@@ -975,15 +978,15 @@ traitlets==5.14.3
     #   nbclient
     #   nbconvert
     #   nbformat
-transformers==4.49.0
+transformers==4.51.3
     # via -r requirements.in
 typeguard==4.4.2
     # via pandera
-typer==0.15.2
+typer==0.15.3
     # via -r requirements.in
 types-python-dateutil==2.9.0.20241206
     # via arrow
-typing-extensions==4.12.2
+typing-extensions==4.13.2
     # via
     #   alembic
     #   anyio
@@ -1007,23 +1010,26 @@ typing-extensions==4.12.2
     #   typeguard
     #   typer
     #   typing-inspect
+    #   typing-inspection
 typing-inspect==0.9.0
     # via pandera
+typing-inspection==0.4.0
+    # via pydantic
 uri-template==1.3.0
     # via jsonschema
 uritemplate==4.1.1
     # via google-api-python-client
-urllib3==2.3.0
+urllib3==2.4.0
     # via
     #   botocore
     #   docker
     #   requests
     #   responses
-uvicorn==0.34.0
+uvicorn==0.34.2
     # via kedro-viz
 uvloop==0.21.0
     # via uvicorn
-watchfiles==1.0.4
+watchfiles==1.0.5
     # via
     #   kedro-viz
     #   uvicorn
@@ -1041,15 +1047,15 @@ websockets==15.0.1
     # via uvicorn
 werkzeug==3.1.3
     # via flask
-widgetsnbextension==4.0.13
+widgetsnbextension==4.0.14
     # via ipywidgets
 wrapt==1.17.2
     # via
     #   aiobotocore
     #   deprecated
-xgboost==2.1.4
+xgboost==3.0.0
     # via -r requirements.in
-yarl==1.18.3
+yarl==1.20.0
     # via aiohttp
 zipp==3.21.0
     # via importlib-metadata
