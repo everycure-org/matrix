@@ -1,5 +1,4 @@
 import pytest
-
 from matrix.utils.hook_utilities import disable_private_datasets, generate_dynamic_pipeline_mapping
 
 
@@ -42,5 +41,3 @@ def test_integration_sources_filtering(integration_mapping, monkeypatch, include
     assert result["integration"] == expected_sources
     assert result_nested["integration"] == expected_sources
 
-
-s = "hii"
