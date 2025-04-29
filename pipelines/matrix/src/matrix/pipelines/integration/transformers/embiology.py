@@ -13,12 +13,12 @@ logger = logging.getLogger(__name__)
 class EmbiologyTransformer(GraphTransformer):
     def transform_nodes(self, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
         """Transform Embiology nodes to our target schema.
+        exi
+                Args:
+                    nodes_df: Nodes DataFrame.
 
-        Args:
-            nodes_df: Nodes DataFrame.
-
-        Returns:
-            Transformed DataFrame.
+                Returns:
+                    Transformed DataFrame.
         """
         # fmt: off
         EMBIOLOGY_SEPARATOR = r"\|"
@@ -47,7 +47,7 @@ class EmbiologyTransformer(GraphTransformer):
         Returns:
             Transformed DataFrame.
         """
-
+        EMBIOLOGY_SEPARATOR = r"\|"
         # fmt: off
         return (
             edges_df

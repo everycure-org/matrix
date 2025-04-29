@@ -16,33 +16,35 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs="preprocessing.raw.embiology.attr",
                 outputs="preprocessing.int.embiology.attr@pandas",
                 name="write_embiology_attr",
-                tags=["embiology-kg"],
+                tags=["ingest-embiology-kg"],
             ),
             node(
                 func=lambda x: x,
                 inputs="preprocessing.raw.embiology.ref_pub",
                 outputs="preprocessing.int.embiology.ref_pub@pandas",
                 name="write_embiology_ref_pub",
-                tags=["embiology-kg"],
+                tags=["ingest-embiology-kg"],
             ),
             node(
                 func=lambda x: x,
                 inputs="preprocessing.raw.embiology.nodes",
                 outputs="preprocessing.int.embiology.nodes@pandas",
                 name="write_embiology_nodes",
-                tags=["embiology-kg"],
+                tags=["ingest-embiology-kg"],
             ),
             node(
                 func=lambda x: x,
                 inputs="preprocessing.raw.embiology.edges",
                 outputs="preprocessing.int.embiology.edges@pandas",
                 name="write_embiology_edges",
-                tags=["embiology-kg"],
+                tags=["ingest-embiology-kg"],
             ),
             node(
                 func=nodes.prepare_normalized_identifiers,
                 inputs=[
                     "preprocessing.int.embiology.attr@spark",
+                    "preprocessing.int.embiology.manual_id_mapping"
+                    "preprocessing.int.embiology.manual_name_mapping"
                     "params:preprocessing.embiology.attr.identifiers_mapping",
                     "params:preprocessing.embiology.normalization",
                 ],
@@ -61,17 +63,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="prepare_nodes",
                 tags=["embiology-kg"],
             ),
-            # node(
-            #     func=nodes.map_additional_identifiers,
-            #     inputs=[
-            #         "preprocessing.int.embiology.nodes@spark",
-            #         "preprocessing.int.embiology.identifiers@spark",
-            #         "params:preprocessing.embiology.nodes.biolink_mapping",
-            #     ],
-            #     outputs="preprocessing.prm.embiology.nodes",
-            #     name="prepare_nodes",
-            #     tags=["embiology-kg"],
-            # ),
             node(
                 func=nodes.add_edge_attributes,
                 inputs=[
