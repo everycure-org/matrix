@@ -62,7 +62,12 @@ def normalize_identifiers(attr: pd.DataFrame, norm_params: Dict[str, str]) -> pd
 
 
 def prepare_normalized_identifiers(
-    attr: pd.DataFrame, identifiers_mapping: Dict[str, str], norm_params: Dict[str, str]
+    attr: pd.DataFrame,
+    nodes: pd.DataFrame,
+    manual_id_mapping: pd.DataFrame,
+    manual_name_mapping: pd.DataFrame,
+    identifiers_mapping: Dict[str, str],
+    norm_params: Dict[str, str],
 ) -> pd.DataFrame:
     """Prepare identifiers for embiology nodes & normalize using NCATS normalizer.
 
@@ -87,7 +92,39 @@ def prepare_normalized_identifiers(
             ),
         ).otherwise(f.col("value")),
     )
-    return normalize_identifiers(df, norm_params)
+    df = df.withColumn(
+        "normalized_id",
+        f.when(f.col("name").isin(list(identifiers_mapping.keys())), f.lit(None)).otherwise(f.col("value")),
+    )
+    # Add manual ID mapping
+    df_v0 = (
+        attr.filter(f.col("name") == "MedScan ID")
+        .join(
+            manual_id_mapping.select("id", "identifier")
+            .withColumnRenamed("identifier", "value")
+            .withColumnRenamed("id", "curie"),
+            on="value",
+            how="inner",
+        )
+        .dropDuplicates()
+        .withColumn("normalized_id", f.coalesce(f.col("curie"), f.col("value")))
+        .select("id", "name", "value", "normalized_id")
+    )
+    df_v1 = (
+        manual_name_mapping.join(nodes.select("name", "attributes"), on="name", how="inner")
+        .withColumn("attributes", f.split(f.regexp_replace("attributes", "[{}]", ""), ","))
+        .withColumn("attributes", f.explode(f.col("attributes")))
+        .select("attributes", "id")
+        .withColumn("name", f.lit("Manual ID"))
+        .withColumn("value", f.col("id"))
+        .select("attributes", "name", "value", "id")
+    )
+    df_concat = (
+        df.filter(~f.col("id").isin(df_v0.select("id").rdd.map(lambda x: x.id).collect())).union(df_v0).union(df_v1)
+    )
+    output_df = normalize_identifiers(df_concat, norm_params)
+
+    return output_df
 
 
 def prepare_nodes(nodes, id_mapping, biolink_mapping):

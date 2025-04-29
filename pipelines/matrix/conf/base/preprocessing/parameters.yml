@@ -17,6 +17,7 @@ preprocessing.embiology:
        Tax ID: "NCBI.TAXON:" 
        MGI ID: ""
        Orphanet ID: "ORPHANET:"
+       Manual ID: ""
   nodes:
     biolink_mapping:
       CellObject: "biolink:CellularComponent"
