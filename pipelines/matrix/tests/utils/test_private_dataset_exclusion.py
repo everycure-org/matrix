@@ -40,4 +40,3 @@ def test_integration_sources_filtering(integration_mapping, monkeypatch, include
     result_nested = disable_private_datasets(generate_dynamic_pipeline_mapping(integration_mapping))
     assert result["integration"] == expected_sources
     assert result_nested["integration"] == expected_sources
-
