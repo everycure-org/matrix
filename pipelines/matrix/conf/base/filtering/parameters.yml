@@ -6,7 +6,8 @@ filtering:
       keep_list:
         - rtxkg2
         - ec_medical
-        # - robokop
+        - robokop
+        - spoke
   
   edge_filters:
     filter_sources:
@@ -15,7 +16,8 @@ filtering:
       keep_list:
         - rtxkg2
         - ec_medical
-        # - robokop
+        - robokop
+        - spoke
     # FUTURE: Ensure the semmed filter is moved here instead
     filter_biolink_edges:
       _object: matrix.pipelines.filtering.filters.biolink_deduplicate_edges
