@@ -1,5 +1,5 @@
 ```sql disease_list
-select *, '/disease_list/' || id as link from bq.disease_list
+select *, '/disease_list/' || id as link from bq.disease_list order by edge_count desc
 ```
 
 <DataTable data={disease_list}
