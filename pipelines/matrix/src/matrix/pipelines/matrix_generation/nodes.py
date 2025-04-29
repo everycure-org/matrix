@@ -288,7 +288,6 @@ def make_predictions_and_sort(
 def generate_reports(
     sorted_matrix_df: pd.DataFrame | ps.DataFrame,
     strategies: list[ReportingPlotGenerator | ReportingTableGenerator],
-    file_suffix: str,
     **kwargs,
 ) -> dict[str, Figure | ps.DataFrame]:
     """Generate reporting plots.
@@ -309,7 +308,6 @@ def generate_reports(
 
     reports_dict = {}
     for strategy in strategies.values():
-        reports_dict[strategy.name + file_suffix] = strategy.generate(sorted_matrix_df, **kwargs)
-        print(strategy.name + file_suffix)
+        reports_dict[strategy.name] = strategy.generate(sorted_matrix_df, **kwargs)
 
     return reports_dict

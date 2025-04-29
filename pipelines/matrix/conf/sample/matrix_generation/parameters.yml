@@ -17,29 +17,29 @@ matrix_generation.reporting_nodes:
     top_pairs_treat:
       n_reporting: *n_reporting
 
-    top_pairs_not_treat:
-      n_reporting: *n_reporting
+    # top_pairs_not_treat:
+    #   n_reporting: *n_reporting
 
-    top_pairs_unknown:
-      n_reporting: *n_reporting
+    # top_pairs_unknown:
+    #   n_reporting: *n_reporting
 
-    rank_to_treat:
-      ranks_lst :
-        - 10
-        - 100
+    # rank_to_treat:
+    #   ranks_lst :
+    #     - 10
+    #     - 100
 
-    frequent_flyer_drugs:
-      count_in_n_lst : # Count occurrence in top n for these values of n
-        - 10
-        - 100
-      # Statistic to sort by. 
-      # Choose from: "count_in_{n}" for value of n  in count_in_n_lst, "mean", "max"
-      sort_by_col: "count_in_10" 
+    # frequent_flyer_drugs:
+    #   count_in_n_lst : # Count occurrence in top n for these values of n
+    #     - 10
+    #     - 100
+    #   # Statistic to sort by. 
+    #   # Choose from: "count_in_{n}" for value of n  in count_in_n_lst, "mean", "max"
+    #   sort_by_col: "count_in_10" 
 
-    frequent_flyer_diseases:
-      count_in_n_lst : # Count occurrence in top n for these values of n
-        - 10
-        - 100
-      # Statistic to sort by. 
-      # Choose from: "count_in_{n}" for value of n  in count_in_n_lst, "mean", "max"
-      sort_by_col: "count_in_10" 
+    # frequent_flyer_diseases:
+    #   count_in_n_lst : # Count occurrence in top n for these values of n
+    #     - 10
+    #     - 100
+    #   # Statistic to sort by. 
+    #   # Choose from: "count_in_{n}" for value of n  in count_in_n_lst, "mean", "max"
+    #   sort_by_col: "count_in_10" 

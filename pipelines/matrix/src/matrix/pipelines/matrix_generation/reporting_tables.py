@@ -66,7 +66,7 @@ class MatrixRunInfo(ReportingTableGenerator):
         sorted_matrix_df: ps.DataFrame,
         drugs_df: ps.DataFrame,
         diseases_df: ps.DataFrame,
-    ) -> pd.DataFrame:
+    ) -> ps.DataFrame:
         """Generate a table.
 
         Args:
@@ -112,7 +112,7 @@ class TopPairs(ReportingTableGenerator):
         sorted_matrix_df: ps.DataFrame,
         drugs_df: ps.DataFrame,
         diseases_df: ps.DataFrame,
-    ) -> pd.DataFrame:
+    ) -> ps.DataFrame:
         """Generate a table.
 
         Args:
@@ -145,7 +145,9 @@ class TopPairs(ReportingTableGenerator):
         )
 
         # Reorder columns and return
-        return top_pairs.select("drug_name", "disease_name", "drug_id", "disease_id", *self.columns_to_keep).toPandas()
+        return top_pairs.select(
+            "drug_name", "disease_name", "drug_id", "disease_id", *self.columns_to_keep
+        ).repartition(1)
 
 
 class RankToScore(ReportingTableGenerator):
