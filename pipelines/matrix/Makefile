@@ -106,9 +106,14 @@ docker_test: certificate docker_build
 		--force-recreate \
 		--abort-on-container-exit \
 		--exit-code-from matrix-pipeline
-
 docker_build:
-	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(docker_image) --load ./
+	docker buildx build \
+		--build-arg GITHUB_TOKEN="$(GITHUB_TOKEN)" \
+		--progress=plain \
+		--build-arg GIT_SHA=${GIT_SHA} \
+		--platform $(TARGET_PLATFORM) \
+		-t $(docker_image) \
+		--load ./
 	docker tag $(docker_image) $(docker_image):${TAG}
 
 docker_auth:
