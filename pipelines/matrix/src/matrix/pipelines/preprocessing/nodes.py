@@ -208,8 +208,22 @@ def prepare_edges(control, attributes, biolink_mapping):
         return biolink_mapping.get(name, "")
 
     lookup_udf = udf(lookup_mapping, StringType())
-    edges = edges.withColumn("predicate", lookup_udf(f.col("controltype")))
-
+    # NOTE: we are making predicate more granular by adding ontology, relationship, effect, mechanism
+    edges = edges.withColumn(
+        "predicate",
+        lookup_udf(
+            f.trim(
+                f.concat_ws(
+                    "_",
+                    f.col("controltype"),
+                    f.col("ontology"),
+                    f.col("relationship"),
+                    f.col("effect"),
+                    f.col("mechanism"),
+                )
+            )
+        ),
+    )
     # Add attributes
     edges = edges.join(attributes.withColumnRenamed("id", "attributes"), on="attributes", how="left")
     return edges
