@@ -25,6 +25,9 @@ from typing import Dict, List
 def normalize_identifiers(attr: pd.DataFrame, norm_params: Dict[str, str]) -> pd.DataFrame:
     """Normalize identifiers in embiology attributes using NCATS normalizer.
 
+    The function is accepting a list of identifiers present in attr file and resolving them using NCATS normalizer.
+    Note: we cannot really use batch pipeline normalization as this one also returns 1. equivalent identifiers and 2. all categories
+
     Args:
         attr: embiology attributes
         identifiers_mapping: mapping of identifiers
@@ -71,17 +74,19 @@ def prepare_normalized_identifiers(
 ) -> pd.DataFrame:
     """Prepare identifiers for embiology nodes & normalize using NCATS normalizer.
 
+    The function is creating a list of curies which will then go through NCATs normalizer.
+    Note: we cannot really use batch pipeline normalization as this one also returns 1. equivalent identifiers and 2. all categories
+
     Args:
         attr: embiology attributes
         identifiers_mapping: mapping of identifiers
     """
 
-    # Create a UDF for the mapping lookup
+    # Create a UDF for the mapping lookup - we need to 'create' CURIEs for the NCATs normalizer, these are specified in params
     def lookup_mapping(name):
         return identifiers_mapping.get(name, "")
 
     lookup_udf = udf(lookup_mapping, StringType())
-
     df = attr.withColumn(
         "value",
         f.when(
@@ -96,7 +101,7 @@ def prepare_normalized_identifiers(
         "normalized_id",
         f.when(f.col("name").isin(list(identifiers_mapping.keys())), f.lit(None)).otherwise(f.col("value")),
     )
-    # Add manual ID mapping
+    # Add manual ID mapping for Medscan ID and names
     df_v0 = (
         attr.filter(f.col("name") == "MedScan ID")
         .join(
