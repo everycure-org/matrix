@@ -40,11 +40,26 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["ingest-embiology-kg"],
             ),
             node(
+                func=lambda x: x,
+                inputs="preprocessing.raw.embiology.manual_id_mapping",
+                outputs="preprocessing.int.embiology.manual_id_mapping@pandas",
+                name="write_embiology_id_mapping",
+                tags=["ingest-embiology-kg"],
+            ),
+            node(
+                func=lambda x: x,
+                inputs="preprocessing.raw.embiology.manual_name_mapping",
+                outputs="preprocessing.int.embiology.manual_name_mapping@pandas",
+                name="write_embiology_name_mapping",
+                tags=["ingest-embiology-kg"],
+            ),
+            node(
                 func=nodes.prepare_normalized_identifiers,
                 inputs=[
                     "preprocessing.int.embiology.attr@spark",
-                    "preprocessing.int.embiology.manual_id_mapping"
-                    "preprocessing.int.embiology.manual_name_mapping"
+                    "preprocessing.int.embiology.nodes@spark",
+                    "preprocessing.int.embiology.manual_id_mapping@spark",
+                    "preprocessing.int.embiology.manual_name_mapping@spark",
                     "params:preprocessing.embiology.attr.identifiers_mapping",
                     "params:preprocessing.embiology.normalization",
                 ],
