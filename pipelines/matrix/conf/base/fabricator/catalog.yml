@@ -6,7 +6,7 @@ _layer_raw: &_layer_raw
     kedro-viz:
       layer: raw
 
-ingestion.pre.disease_list:
+fabricator.int.disease_list:
   <<: [*_pandas_csv, *_layer_raw]
   filepath: ${globals:paths.raw}/pre/disease_list
   load_args:
@@ -16,7 +16,7 @@ ingestion.pre.disease_list:
     index: false
     sep: "\t"
 
-ingestion.pre.drug_list:
+fabricator.int.drug_list:
   <<: [*_pandas_csv, *_layer_raw]
   filepath: ${globals:paths.raw}/pre/drug_list
   load_args:
@@ -25,3 +25,7 @@ ingestion.pre.drug_list:
     header: true
     index: false
     sep: "\t"
+
+fabricator.int.ec_clinical_trails.edges:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw}/pre/ec_clinical_trails/edges

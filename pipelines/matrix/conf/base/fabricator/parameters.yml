@@ -1,5 +1,5 @@
 fabricator.ground_truth:
-  num_rows_per_category: 10
+  num_rows_per_category: 100
 
 fabricator.rtx_kg2:
   nodes:
@@ -234,63 +234,71 @@ fabricator.rtx_kg2:
         sample_values:
           - True
           - False
-        
-fabricator.clinical_trials:
-  nodes:
-    num_rows: 50
-    columns:
-      curie:
-        type: row_apply
-        list_of_values: [rtx_nodes.id:ID, rtx_nodes.name]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 40599
-      name:
-        type: row_apply
-        list_of_values: [rtx_nodes.id:ID, rtx_nodes.name]
-        row_func: "lambda *args: args[1]"
-        resize: True
-        seed: 40599
 
-  edges:
-    num_rows: 10
-    columns:
-      drug_curie:
-        type: row_apply
-        list_of_values: [nodes.curie, nodes.name]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 40599
-      drug_name:
-        type: row_apply
-        list_of_values: [nodes.curie, nodes.name]
-        row_func: "lambda *args: args[1]"
-        resize: True
-        seed: 40599
-      disease_curie:
-        type: row_apply
-        list_of_values: [nodes.curie, nodes.name]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 30599
-      disease_name:
-        type: row_apply
-        list_of_values: [nodes.curie, nodes.name]
-        row_func: "lambda *args: args[1]"
-        resize: True
-        seed: 30599
-      significantly_better: # NOTE: Unlike the real data, the fabricated data can have value 1 in more than one column.  
-        type: generate_values
-        sample_values: [1, 0]
-      non_significantly_better:
-        type: generate_values
-        sample_values: [1, 0]
-      non_significantly_worse:
-        type: generate_values
-        sample_values: [1, 0]
-      significantly_worse:
-        type: generate_values
-        sample_values: [1, 0]
+
+fabricator.clinical_trials:
+  pos_cols:
+    - significantly_better
+    - non_significantly_better
+  neg_cols:
+    - significantly_worse
+    - non_significantly_worse
+  graph:
+    nodes:
+      num_rows: 50
+      columns:
+        curie:
+          type: row_apply
+          list_of_values: [rtx_nodes.id:ID, rtx_nodes.name]
+          row_func: "lambda *args: args[0]"
+          resize: True
+          seed: 40599
+        name:
+          type: row_apply
+          list_of_values: [rtx_nodes.id:ID, rtx_nodes.name]
+          row_func: "lambda *args: args[1]"
+          resize: True
+          seed: 40599
+
+    edges:
+      num_rows: 10
+      columns:
+        drug_curie:
+          type: row_apply
+          list_of_values: [nodes.curie, nodes.name]
+          row_func: "lambda *args: args[0]"
+          resize: True
+          seed: 40599
+        drug_name:
+          type: row_apply
+          list_of_values: [nodes.curie, nodes.name]
+          row_func: "lambda *args: args[1]"
+          resize: True
+          seed: 40599
+        disease_curie:
+          type: row_apply
+          list_of_values: [nodes.curie, nodes.name]
+          row_func: "lambda *args: args[0]"
+          resize: True
+          seed: 30599
+        disease_name:
+          type: row_apply
+          list_of_values: [nodes.curie, nodes.name]
+          row_func: "lambda *args: args[1]"
+          resize: True
+          seed: 30599
+        significantly_better: # NOTE: Unlike the real data, the fabricated data can have value 1 in more than one column.  
+          type: generate_values
+          sample_values: [1, 0]
+        non_significantly_better:
+          type: generate_values
+          sample_values: [1, 0]
+        non_significantly_worse:
+          type: generate_values
+          sample_values: [1, 0]
+        significantly_worse:
+          type: generate_values
+          sample_values: [1, 0]
 
 fabricator.robokop:
   # robokop nodes definition

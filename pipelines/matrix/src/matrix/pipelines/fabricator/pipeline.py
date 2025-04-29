@@ -69,36 +69,63 @@ def remove_overlap(disease_list: pd.DataFrame, drug_list: pd.DataFrame):
     return {"disease_list": disease_list, "drug_list": drug_list}
 
 
-# def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.DataFrame):
-#     def find_path(graph, start, end):
-#         try:
-#             # Find the shortest path between start and end
-#             path = nx.shortest_path(graph, source=start, target=end)
-#             return [
-#                 {
-#                     "source": path[i],
-#                     "target": path[i + 1],
-#                     "key": graph.get_edge_data(path[i], path[i + 1])["predicate"],
-#                 }
-#                 for i in range(len(path) - 1)
-#             ]
-#         except Exception:
-#             return None
+def rectify_contradictory_edges(
+    edges: pd.DataFrame,
+    pos_cols: list[str],
+    neg_cols: list[str],
+    seed: int = 42,
+) -> pd.DataFrame:
+    """Function to rectify contradictory pairs by modifying the flag columns.
 
-#     graph = nx.DiGraph()
+    Args:
+        edges: Dataframe containing the edges.
+        pos_cols: List of positive flag columns (value 1 or 0).
+        neg_cols: List of negative flag columns (value 1 or 0).
 
-#     # Fill graph
-#     for _, row in edges.iterrows():
-#         graph.add_edge(row["subject"], row["object"], predicate=row["predicate"])
+    Returns:
+        Dataframe containing the edges.
+    """
+    random.seed(seed)
+    for n, row in edges.iterrows():
+        if any(row[pos_cols]) and any(row[neg_cols]):
+            coin_flip = random.random()
+            if coin_flip < 0.5:
+                edges.loc[n, pos_cols] = 0
+            else:
+                edges.loc[n, neg_cols] = 0
+    return edges
 
-#     # Generate paths for GT
-#     rows = []
-#     ground_truth = pd.concat([positives, negatives])
-#     for idx, row in ground_truth.iterrows():
-#         if path := find_path(graph, row["source"], row["target"]):
-#             rows.append({"graph": {"_id": str(idx)}, "links": path})
 
-#     return rows
+def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.DataFrame):
+    def find_path(graph, start, end):
+        try:
+            # Find the shortest path between start and end
+            path = nx.shortest_path(graph, source=start, target=end)
+            return [
+                {
+                    "source": path[i],
+                    "target": path[i + 1],
+                    "key": graph.get_edge_data(path[i], path[i + 1])["predicate"],
+                }
+                for i in range(len(path) - 1)
+            ]
+        except Exception:
+            return None
+
+    graph = nx.DiGraph()
+
+    # Fill graph
+    for _, row in edges.iterrows():
+        graph.add_edge(row["subject"], row["object"], predicate=row["predicate"])
+
+    # Generate paths for GT
+    rows = []
+    ground_truth = pd.concat([positives, negatives])
+    for idx, row in ground_truth.iterrows():
+        if path := find_path(graph, row["source"], row["target"]):
+            rows.append({"graph": {"_id": str(idx)}, "links": path})
+
+    return rows
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -111,8 +138,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs={
                     "nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                     "edges": "ingestion.raw.rtx_kg2.edges@pandas",
-                    "disease_list": "ingestion.pre.disease_list",
-                    "drug_list": "ingestion.pre.drug_list",
+                    "disease_list": "fabricator.int.disease_list",
+                    "drug_list": "fabricator.int.drug_list",
                     "pubmed_ids_mapping": "ingestion.raw.rtx_kg2.curie_to_pmids@pandas",
                 },
                 name="fabricate_kg2_datasets",
@@ -120,8 +147,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=remove_overlap,
                 inputs={
-                    "disease_list": "ingestion.pre.disease_list",
-                    "drug_list": "ingestion.pre.drug_list",
+                    "disease_list": "fabricator.int.disease_list",
+                    "drug_list": "fabricator.int.drug_list",
                 },
                 outputs={
                     "disease_list": "ingestion.raw.disease_list",
@@ -131,14 +158,24 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=fabricate_datasets,
                 inputs={
-                    "fabrication_params": "params:fabricator.clinical_trials",
+                    "fabrication_params": "params:fabricator.clinical_trials.graph",
                     "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                 },
                 outputs={
                     "nodes": "ingestion.raw.ec_clinical_trails.nodes@pandas",
-                    "edges": "ingestion.raw.ec_clinical_trails.edges@pandas",
+                    "edges": "fabricator.int.ec_clinical_trails.edges",
                 },
                 name="fabricate_clinical_trails_datasets",
+            ),
+            node(
+                func=rectify_contradictory_edges,
+                inputs={
+                    "edges": "fabricator.int.ec_clinical_trails.edges",
+                    "pos_cols": "params:fabricator.clinical_trials.pos_cols",
+                    "neg_cols": "params:fabricator.clinical_trials.neg_cols",
+                },
+                outputs="ingestion.raw.ec_clinical_trails.edges@pandas",
+                name="rectify_contradictory_clinical_trails_pairs",
             ),
             node(
                 func=fabricate_datasets,
@@ -180,15 +217,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 name="create_gt_pairs",
             ),
-            # node(
-            #     func=generate_paths,
-            #     inputs=[
-            #         "ingestion.raw.rtx_kg2.edges@pandas",
-            #         "ingestion.raw.ground_truth.positives",
-            #         "ingestion.raw.ground_truth.negatives",
-            #     ],
-            #     outputs="ingestion.raw.drugmech.edges@pandas",
-            #     name="create_drugmech_pairs",
-            # ),
+            node(
+                func=generate_paths,
+                inputs=[
+                    "ingestion.raw.rtx_kg2.edges@pandas",
+                    "ingestion.raw.ground_truth.positives",
+                    "ingestion.raw.ground_truth.negatives",
+                ],
+                outputs="ingestion.raw.drugmech.edges@pandas",
+                name="create_drugmech_pairs",
+            ),
         ]
     )
