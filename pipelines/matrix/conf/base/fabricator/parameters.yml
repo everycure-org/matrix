@@ -717,3 +717,9 @@ fabricator.embiology:
         provider_args:
           min_value: 1
           max_value: 1000
+      publications:string[]:
+        type: generate_random_arrays
+        delimiter: "\u001f"
+        sample_values:
+          - "PMID:12345678"
+          - "DOI:10.1234/example.5678"
