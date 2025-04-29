@@ -176,6 +176,8 @@ Example parameterized dashboards:
  - <a href="/node/prefix/MONDO">Mondo Dashboard</a>
  - <a href="/node/category/Disease">Disease Dashboard</a>
  - <a href="/normalization">Normalization Dashboard</a>
+ - <a href="/disease_list">Disease List</a>
+ - <a href="/drug_list">Drug List</a>
 
 
 
