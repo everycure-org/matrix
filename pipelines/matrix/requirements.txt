@@ -196,7 +196,7 @@ google-api-core==2.24.2
     #   google-cloud-core
     #   google-cloud-iam
     #   google-cloud-storage
-google-api-python-client==2.168.0
+google-api-python-client==2.169.0
     # via pygsheets
 google-auth==2.39.0
     # via
@@ -492,7 +492,7 @@ multimethod==1.12
     # via graphdatascience
 mypy-extensions==1.1.0
     # via typing-inspect
-narwhals==1.37.0
+narwhals==1.37.1
     # via plotly
 nbclient==0.10.2
     # via nbconvert
@@ -556,7 +556,7 @@ opentelemetry-sdk==1.32.1
     # via mlflow-skinny
 opentelemetry-semantic-conventions==0.53b1
     # via opentelemetry-sdk
-orjson==3.10.16
+orjson==3.10.17
     # via
     #   kedro-viz
     #   langsmith
