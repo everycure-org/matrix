@@ -177,6 +177,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "ingestion.raw.drug_list",
                     "ingestion.raw.disease_list",
+                    "params:fabricator.ground_truth.num_rows_per_category",
                 ],
                 outputs=[
                     "ingestion.raw.ground_truth.positives",

@@ -1,3 +1,6 @@
+fabricator.ground_truth:
+  num_rows_per_category: 10
+
 fabricator.rtx_kg2:
   nodes:
     num_rows: 500
