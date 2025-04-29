@@ -92,9 +92,7 @@ jobs:
           persist-credentials: true
       - name: checkout submodule
         run: |
-          find . -type d -name "packages"
           git submodule update --init --recursive
-          find . -type d -name "packages"
       - uses: 'google-github-actions/auth@v2'
         with:
           project_id: ${{vars.project_id}}
