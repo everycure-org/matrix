@@ -27,26 +27,21 @@ def _create_pairs(
     random.seed(seed)
 
     # Convert lists to sets of unique ids
-    drug_set = set(drug_list["curie"])
-    disease_set = set(disease_list["category_class"])
-
-    # Do not include overlapping ids
-    overlap = drug_set.intersection(disease_set)
-    drug_list_restricted = list(drug_set.difference(overlap))
-    disease_list_restricted = list(disease_set.difference(overlap))
+    drug_ids = list(drug_list["curie"].unique())
+    disease_ids = list(disease_list["category_class"].unique())
 
     # Check that we have enough pairs
-    if not len(drug_list_restricted) * len(disease_list_restricted) >= num:
+    if not len(drug_ids) * len(disease_ids) >= 2 * num:
         raise ValueError("Drug and disease lists are too small to generate the required number of pairs")
 
     # Subsample the lists to reduce memory usage
-    for entity_list in [drug_list_restricted, disease_list_restricted]:
-        if len(entity_list) > num:
-            entity_list = random.sample(entity_list, num)
+    for entity_list in [drug_ids, disease_ids]:
+        if len(entity_list) > 2 * num:
+            entity_list = random.sample(entity_list, 2 * num)
 
     # Create pairs and sample without replacement to ensure no duplicates
-    pairs = list(itertools.product(drug_list_restricted, disease_list_restricted))
-    df_sample = pd.DataFrame(random.sample(pairs, num), columns=["source", "target"])
+    pairs = list(itertools.product(drug_ids, disease_ids))
+    df_sample = pd.DataFrame(random.sample(pairs, 2 * num), columns=["source", "target"])
 
     # Split into positives and negatives
     return df_sample[:num], df_sample[num:]
@@ -74,36 +69,36 @@ def remove_overlap(disease_list: pd.DataFrame, drug_list: pd.DataFrame):
     return {"disease_list": disease_list, "drug_list": drug_list}
 
 
-def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.DataFrame):
-    def find_path(graph, start, end):
-        try:
-            # Find the shortest path between start and end
-            path = nx.shortest_path(graph, source=start, target=end)
-            return [
-                {
-                    "source": path[i],
-                    "target": path[i + 1],
-                    "key": graph.get_edge_data(path[i], path[i + 1])["predicate"],
-                }
-                for i in range(len(path) - 1)
-            ]
-        except Exception:
-            return None
+# def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.DataFrame):
+#     def find_path(graph, start, end):
+#         try:
+#             # Find the shortest path between start and end
+#             path = nx.shortest_path(graph, source=start, target=end)
+#             return [
+#                 {
+#                     "source": path[i],
+#                     "target": path[i + 1],
+#                     "key": graph.get_edge_data(path[i], path[i + 1])["predicate"],
+#                 }
+#                 for i in range(len(path) - 1)
+#             ]
+#         except Exception:
+#             return None
 
-    graph = nx.DiGraph()
+#     graph = nx.DiGraph()
 
-    # Fill graph
-    for _, row in edges.iterrows():
-        graph.add_edge(row["subject"], row["object"], predicate=row["predicate"])
+#     # Fill graph
+#     for _, row in edges.iterrows():
+#         graph.add_edge(row["subject"], row["object"], predicate=row["predicate"])
 
-    # Generate paths for GT
-    rows = []
-    ground_truth = pd.concat([positives, negatives])
-    for idx, row in ground_truth.iterrows():
-        if path := find_path(graph, row["source"], row["target"]):
-            rows.append({"graph": {"_id": str(idx)}, "links": path})
+#     # Generate paths for GT
+#     rows = []
+#     ground_truth = pd.concat([positives, negatives])
+#     for idx, row in ground_truth.iterrows():
+#         if path := find_path(graph, row["source"], row["target"]):
+#             rows.append({"graph": {"_id": str(idx)}, "links": path})
 
-    return rows
+#     return rows
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -185,15 +180,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 name="create_gt_pairs",
             ),
-            node(
-                func=generate_paths,
-                inputs=[
-                    "ingestion.raw.rtx_kg2.edges@pandas",
-                    "ingestion.raw.ground_truth.positives",
-                    "ingestion.raw.ground_truth.negatives",
-                ],
-                outputs="ingestion.raw.drugmech.edges@pandas",
-                name="create_drugmech_pairs",
-            ),
+            # node(
+            #     func=generate_paths,
+            #     inputs=[
+            #         "ingestion.raw.rtx_kg2.edges@pandas",
+            #         "ingestion.raw.ground_truth.positives",
+            #         "ingestion.raw.ground_truth.negatives",
+            #     ],
+            #     outputs="ingestion.raw.drugmech.edges@pandas",
+            #     name="create_drugmech_pairs",
+            # ),
         ]
     )
