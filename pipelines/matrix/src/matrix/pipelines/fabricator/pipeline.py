@@ -15,7 +15,7 @@ def _create_pairs(
     num: int,
     seed: int = 42,
 ) -> pd.DataFrame:
-    """Create 2 sets of random drug-disease pairs. Ensures no duplicate pairs.
+    """Creates 2 sets of random drug-disease pairs. Ensures no duplicate pairs.
 
     Args:
         drug_list: Dataframe containing the list of drugs.

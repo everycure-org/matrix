@@ -24,7 +24,6 @@
 
 
 from typing import Any, Dict, List, Union
-import logging
 
 import pandas as pd
 import pyspark
@@ -35,7 +34,6 @@ from ..core.fabricator import MockDataGenerator
 # persisted since it is only used as a temporary dataframe to generate the output
 # dataframes.
 _IGNORE_DATAFRAMES_WITH_PREFIX = ["_TEMP_", "_CATALOG_"]
-logger = logging.getLogger(__name__)
 
 def fabricate_datasets(
     fabrication_params: Dict[str, Any],
@@ -74,19 +72,5 @@ def fabricate_datasets(
         for name in fabrication_params
         if not any(name.startswith(prefix) for prefix in ignore_prefix)
     }
-    
-    # For fabricating kg2 datasets, remove the overlap in disease_list[category_class] and drug_list[curie]
-    # to avoid having the same id in the following datasets
-    if "disease_list" in output and "drug_list" in output:
-        disease_list = output["disease_list"]
-        drug_list = output["drug_list"]
-        overlap = set(disease_list["category_class"]).intersection(set(drug_list["curie"]))
-        overlap_mask_drug = (drug_list["curie"].isin(overlap))
-        overlap_mask_disease = (disease_list["category_class"].isin(overlap))
-        drug_list = drug_list[~overlap_mask_drug]
-        disease_list = disease_list[~overlap_mask_disease]
-        output["disease_list"] = disease_list
-        output["drug_list"] = drug_list
-        return output
 
     return output
