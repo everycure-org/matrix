@@ -251,6 +251,8 @@ def test_get_dependencies_default_different_than_task(nodes_where_first_is_input
     )
     assert deps[0]["tags"] == {"argowf.fuse", "argowf.fuse-group.dummy"}
     assert deps[0]["resources"] == {
+        "ephemeral_storage_limit": "128Gi",
+        "ephemeral_storage_request": "0Gi",
         "cpu_limit": 2,
         "cpu_request": 2,
         "memory_limit": 64,

@@ -1,5 +1,3 @@
-from typing import Dict
-
 from kedro.pipeline import Pipeline
 
 from matrix.pipelines.create_sample.pipeline import create_pipeline as create_create_sample_pipeline
@@ -16,7 +14,7 @@ from matrix.pipelines.modelling.pipeline import create_pipeline as create_modell
 from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
 
 
-def register_pipelines() -> Dict[str, Pipeline]:
+def register_pipelines() -> dict[str, Pipeline]:
     """Register the project's pipelines.
 
     Returns:
