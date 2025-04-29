@@ -37,12 +37,6 @@ DISABLE_HOOKS_FOR_PLUGINS = ("kedro-mlflow",)
 # Class that manages storing KedroSession data.
 from pathlib import Path  # noqa: E402
 
-from kedro_viz.integrations.kedro.sqlite_store import SQLiteStore  # noqa: E402
-
-SESSION_STORE_CLASS = SQLiteStore
-# Keyword arguments to pass to the `SESSION_STORE_CLASS` constructor.
-SESSION_STORE_ARGS = {"path": str(Path(__file__).parents[2])}
-
 # https://getindata.com/blog/kedro-dynamic-pipelines/
 
 # Using lambda to delay the evaluation until the INCLUDE_PRIVATE_DATASETS env var is set, parsed from a cli option.
