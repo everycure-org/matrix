@@ -8,7 +8,8 @@ fabricator.rtx_kg2:
       name:
         type: generate_unique_id
         prefix: name_
-        prob_null: 0.2
+        inject_nulls:
+          probability: 0.2
       all_names:string[]:
         type: faker
         provider: name
@@ -22,8 +23,7 @@ fabricator.rtx_kg2:
           - biolink:Protein
       all_categories:
         type: row_apply
-        list_of_values: [nodes.category]
-        # NOTE: This ensures the full path from root to child is added in the categories column
+        input_columns: [ "nodes.category" ]
         row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
         row_func_kwargs:
           delimiter: "|"
@@ -75,22 +75,18 @@ fabricator.rtx_kg2:
   edges:
     num_rows: 2000
     columns:
-      # NOTE: This is a rather complex syntax, but is results in a "subject"
-      # column that contains random values from the nodes table defined above.
       subject:
-        type: row_apply
-        list_of_values: [ nodes.id ]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 590590
-      # NOTE: This is a rather complex syntax, but is results in an "object"
-      # column that contains random values from the nodes table defined above.
+        type: copy_column
+        source_column: "nodes.id"
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 590590
       object:
-        type: row_apply
-        list_of_values: [ nodes.id ]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 49494
+        type: copy_column
+        source_column: "nodes.id"
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 49494
       predicate:
         type: generate_values
         sample_values:
@@ -108,7 +104,6 @@ fabricator.rtx_kg2:
           - infores:gtex
           - infores:ubergraph
           - infores:snpeff
-      # For version 2.10
       primary_knowledge_source:
         type: faker
         provider: name
@@ -135,106 +130,104 @@ fabricator.rtx_kg2:
           - "increased"
           - "decreased"
 
-  # NOTE: Lets see if this is needed later on
   pubmed_ids_mapping:
     num_rows: 50
     columns:
       curie:
-          type: row_apply
-          list_of_values: [nodes.id]
-          row_func: "lambda *args: args[0]"
-          resize: True
+        type: copy_column
+        source_column: "nodes.id"
+        sample:
+          num_rows: "@pubmed_ids_mapping.num_rows"
           seed: 590590
       pmids:
-          type: generate_random_arrays
-          to_json: True
-          sample_values:
-            - 12345678
-            - 678
-            - 195959
-            - 5059595
+        type: generate_random_arrays
+        to_json: True
+        sample_values:
+          - 12345678
+          - 678
+          - 195959
+          - 5059595
 
-  # NOTE: Fabricated drug and disease lists can contain nodes which are not in the drug and disease categories resp.
   drug_list:
     num_rows: 20
     columns:
-      curie: 
-        type: row_apply
-        list_of_values: [nodes.id, nodes.name]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 6850
-      curie_label: 
-        type: row_apply
-        list_of_values: [nodes.id, nodes.name]
-        row_func: "lambda *args: args[1]"
-        resize: True
-        seed: 6850
-      is_steroid: 
+      curie:
+        type: copy_column
+        source_column: "nodes.id"
+        sample:
+          num_rows: "@drug_list.num_rows"
+          seed: 6850
+      curie_label:
+        type: copy_column
+        source_column: "nodes.name"
+        sample:
+          num_rows: "@drug_list.num_rows"
+          seed: 6850
+      is_steroid:
         type: generate_values
-        sample_values: 
+        sample_values:
           - True
           - False
-      is_antimicrobial: 
+      is_antimicrobial:
         type: generate_values
-        sample_values: 
+        sample_values:
           - True
           - False
-      is_glucose_regulator: 
+      is_glucose_regulator:
         type: generate_values
-        sample_values: 
+        sample_values:
           - True
           - False
-      is_chemotherapy: 
+      is_chemotherapy:
         type: generate_values
-        sample_values: 
+        sample_values:
           - True
           - False
       available_USA:
         type: generate_values
-        sample_values: 
+        sample_values:
           - DISCONTINUED
           - RX
           - AVAILABLE
-      
+
   disease_list:
     num_rows: 30
     columns:
-      category_class: 
-        type: row_apply
-        list_of_values: [nodes.id, nodes.name]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 65690
-      label: 
-        type: row_apply
-        list_of_values: [nodes.id, nodes.name]
-        row_func: "lambda *args: args[1]"
-        resize: True
-        seed: 65690
-      is_cancer: 
+      category_class:
+        type: copy_column
+        source_column: "nodes.id"
+        sample:
+          num_rows: "@disease_list.num_rows"
+          seed: 65690
+      label:
+        type: copy_column
+        source_column: "nodes.name"
+        sample:
+          num_rows: "@disease_list.num_rows"
+          seed: 65690
+      is_cancer:
         type: generate_values
-        sample_values: 
+        sample_values:
           - True
           - False
-      is_pathogen_caused: 
+      is_pathogen_caused:
         type: generate_values
-        sample_values: 
+        sample_values:
           - True
           - False
-      is_glucose_dysfunction: 
+      is_glucose_dysfunction:
         type: generate_values
-        sample_values: 
+        sample_values:
           - True
           - False
-      tag_existing_treatment: 
+      tag_existing_treatment:
         type: generate_values
-        sample_values: 
+        sample_values:
           - True
           - False
-      tag_QALY_lost: 
+      tag_QALY_lost:
         type: generate_values
-        sample_values: 
+        sample_values:
           - LOW
           - MEDIUM
           - NONE
@@ -246,52 +239,54 @@ fabricator.rtx_kg2:
         sample_values:
           - True
           - False
-        
+
 fabricator.clinical_trials:
   nodes:
     num_rows: 50
     columns:
       curie:
-        type: row_apply
-        list_of_values: [rtx_nodes.id, rtx_nodes.name]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 40599
+        type: copy_column
+        # Reference the source_dfs key directly
+        source_column: "rtx_nodes.id"
+        sample:
+          num_rows: "@nodes.num_rows"
+          seed: 40599
       name:
-        type: row_apply
-        list_of_values: [rtx_nodes.id, rtx_nodes.name]
-        row_func: "lambda *args: args[1]"
-        resize: True
-        seed: 40599
+        type: copy_column
+        # Reference the source_dfs key directly
+        source_column: "rtx_nodes.name"
+        sample:
+          num_rows: "@nodes.num_rows"
+          seed: 40599
 
   edges:
     num_rows: 10
     columns:
       drug_curie:
-        type: row_apply
-        list_of_values: [nodes.curie, nodes.name]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 40599
+        type: copy_column
+        source_column: "nodes.curie"
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 40599
       drug_name:
-        type: row_apply
-        list_of_values: [nodes.curie, nodes.name]
-        row_func: "lambda *args: args[1]"
-        resize: True
-        seed: 40599
+        type: copy_column
+        source_column: "nodes.name"
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 40599
       disease_curie:
-        type: row_apply
-        list_of_values: [nodes.curie, nodes.name]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 30599
+        type: copy_column
+        source_column: "nodes.curie"
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 30599
       disease_name:
-        type: row_apply
-        list_of_values: [nodes.curie, nodes.name]
-        row_func: "lambda *args: args[1]"
-        resize: True
-        seed: 30599
-      significantly_better: # NOTE: Unlike the real data, the fabricated data can have value 1 in more than one column.  
+        type: copy_column
+        source_column: "nodes.name"
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 30599
+      significantly_better:
         type: generate_values
         sample_values: [1, 0]
       non_significantly_better:
@@ -305,7 +300,6 @@ fabricator.clinical_trials:
         sample_values: [1, 0]
 
 fabricator.robokop:
-  # robokop nodes definition
   nodes:
     num_rows: 500
     columns:
@@ -361,34 +355,16 @@ fabricator.robokop:
         sample_values:
           - "PMID:12345678"
           - "DOI:10.1234/example.5678"
-      #all_categories:
-      #  type: generate_random_arrays
-      #  delimiter: "\u001f"
-      #  sample_values:
-      #    - "biolink:Entity"
-      #    - "biolink:ThingWithTaxon"
-      #    - "biolink:BiologicalEntity"
-      #    - "biolink:SequenceVariant"
-      #label:
-      #  type: generate_random_arrays
-      #  delimiter: "\u001f"
-      #  sample_values:
-      #    - "biolink:NucleicAcidEntity"
-      #    - "biolink:MolecularEntity"
-      #    - "biolink:ChemicalOrDrugOrTreatment"
 
-  # robokop edges definition
   edges:
     num_rows: 500
     columns:
-      # NOTE: This is a rather complex syntax, but is results in a "subject"
-      # column that contains random values from the nodes table defined above.
       subject:
-        type: row_apply
-        list_of_values: [ nodes.id ]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 590590
+        type: copy_column
+        source_column: "nodes.id"
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 590590
       predicate:
         type: generate_values
         sample_values:
@@ -398,11 +374,11 @@ fabricator.robokop:
           - biolink:subclass_of
           - biolink:is_nearby_variant_of
       object:
-        type: row_apply
-        list_of_values: [ nodes.id ]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 49494
+        type: copy_column
+        source_column: "nodes.id"
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 49494
       primary_knowledge_source:
         type: generate_values
         sample_values:
@@ -426,15 +402,6 @@ fabricator.robokop:
         sample_values:
           - "PMID:12345678"
           - "DOI:10.1234/example.5678"
-      #p_value:float[]:
-      #  type: faker
-      #  provider: pyfloat
-      #  provider_args:
-      #    left_digits: 1
-      #    right_digits: 6
-      #    positive: True
-      #    min_value: 0.000001
-      #    max_value: 0.1
       object_aspect_qualifier:
         type: faker
         provider: word
@@ -462,15 +429,13 @@ fabricator.ec_medical_kg:
     columns:
       normalized_curie:
         type: generate_unique_id
-        prefix: ec_medical_node_ 
+        prefix: ec_medical_node_
       label:
         type: faker
         provider: name
-
       description:
         type: faker
         provider: sentence
-
       type:
         type: generate_values
         sample_values:
@@ -481,8 +446,7 @@ fabricator.ec_medical_kg:
           - biolink:Protein
       types:
         type: row_apply
-        list_of_values: [nodes.type]
-        # NOTE: This ensures the full path from root to child is added in the categories column
+        input_columns: [ "nodes.type" ]
         row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
         row_func_kwargs:
           delimiter: "\u01c2"
@@ -493,19 +457,19 @@ fabricator.ec_medical_kg:
     num_rows: 10
     columns:
       SourceId:
-        type: row_apply
-        list_of_values: [nodes.normalized_curie]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 340590
-      
+        type: copy_column
+        source_column: "nodes.normalized_curie"
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 340590
+
       TargetId:
-        type: row_apply
-        list_of_values: [nodes.normalized_curie]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 57000
-      
+        type: copy_column
+        source_column: "nodes.normalized_curie"
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 57000
+
       Label:
         type: generate_values
         sample_values:
@@ -516,7 +480,6 @@ fabricator.ec_medical_kg:
          provider: name
 
 fabricator.spoke:
-  # spoke nodes definition
   nodes:
     num_rows: 150
     columns:
@@ -539,18 +502,15 @@ fabricator.spoke:
         type: faker
         provider: sentence
 
-  # spoke edges definition
   edges:
     num_rows: 500
     columns:
-      # NOTE: This is a rather complex syntax, but is results in a "subject"
-      # column that contains random values from the nodes table defined above.
       subject:
-        type: row_apply
-        list_of_values: [ nodes.id ]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 590590
+        type: copy_column
+        source_column: "nodes.id"
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 590590
       predicate:
         type: generate_values
         sample_values:
@@ -560,166 +520,8 @@ fabricator.spoke:
           - biolink:subclass_of
           - biolink:is_nearby_variant_of
       object:
-        type: row_apply
-        list_of_values: [ nodes.id ]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 49494
-
-fabricator.embiology:
-  nodes:
-    num_rows: 500
-    columns:
-      id:
-        type: generate_unique_id
-        prefix: "EMBLG:"
-      name:
-        type: generate_unique_id
-        prefix: name_
-        prob_null: 0.2
-      category:
-        type: generate_values
-        sample_values:
-          - biolink:Drug
-          - biolink:Disease
-          - biolink:Gene
-          - biolink:ChemicalSubstance
-          - biolink:Protein
-      all_categories:
-        type: row_apply
-        list_of_values: [nodes.category]
-        # NOTE: This ensures the full path from root to child is added in the categories column
-        row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
-        row_func_kwargs:
-          delimiter: "|"
-        resize: True
-        seed: 590790
-      equivalent_identifiers:
-        type: generate_random_arrays
-        delimiter: "|"
-        sample_values:
-          - NCBITaxon:2
-          - UMLS:C0004611
-          - MESH:D001419
-          - HGVS:NG_029620.1:g.16582A>G
-          - HGVS:CM000669.1:g.149423729A>G
-          - ROBO_VARIANT:HG38|7|149726637|149726638|A|G
-          - HGVS:CM000669.2:g.149726638A>G
-          - HGVS:NC_000007.12:g.149054662A>G
-      original_id:
-        type: generate_unique_id
-      nodetype:
-        type: generate_values
-        sample_values:
-          - SmallMol
-          - GeneticVariant
-          - Disease
-          - SemanticConcept
-          - Virus
-      
-
-  edges:
-    num_rows: 2000
-    columns:
-      # NOTE: This is a rather complex syntax, but is results in a "subject"
-      # column that contains random values from the nodes table defined above.
-      subject:
-        type: row_apply
-        list_of_values: [ nodes.id ]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 590790
-      # NOTE: This is a rather complex syntax, but is results in an "object"
-      # column that contains random values from the nodes table defined above.
-      object:
-        type: row_apply
-        list_of_values: [ nodes.id ]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 49294
-      predicate:
-        type: generate_values
-        sample_values:
-          - biolink:treats
-          - biolink:interacts_with
-          - biolink:affects
-          - biolink:subclass_of
-          - biolink:disrupts
-          - biolink:produces
-          - biolink:subclass_of
-      original_id:
-        type: generate_unique_id
-        seed: 40294
-      original_subject:
-        type: generate_unique_id
-        seed: 24294
-      original_object:
-        type: generate_unique_id
-        seed: 39294
-      controltype:
-        type: generate_values
-        sample_values:
-          - MemberOf
-          - Regulation
-          - FunctionalAssociation
-          - CellExpression
-          - Binding
-          - MemberOf
-          - Expression
-          - ClinicalTrial
-          - DirectRegulation
-          - QuantitativeChange
-          - MolTransport
-          - MolSynthesis
-          - Biomarker
-          - StateChange
-          - miRNAEffect
-          - ProtModification
-          - ChemicalReaction
-          - PromoterBinding
-        seed: 39294
-      ontology:
-        type: generate_values
-        sample_values:
-          - Gene Ontology
-        prob_null: 0.8
-        seed: 39294
-      relationship:
-        type: generate_values
-        sample_values:
-          - is-a
-        prob_null: 0.8
-        seed: 39294
-      effect:
-        type: generate_values
-        sample_values:
-          - positive
-          - negative
-        prob_null: 0.8
-        seed: 39294
-      mechanism:
-        type: generate_values
-        sample_values:
-          - resistance
-          - sumoylation
-          - desumoylation
-        prob_null: 0.8
-        seed: 39294
-      num_references:
-        type: faker
-        provider: pyint
-        provider_args:
-          min_value: 1
-          max_value: 1000
-      num_sentences:
-        type: faker
-        provider: pyint
-        provider_args:
-          min_value: 1
-          max_value: 1000
-      publications:
-        type: generate_random_arrays
-        delimiter: "|"
-        sample_values:
-          - "PMID:12345678"
-          - "DOI:10.1234/example.5678"
+        type: copy_column
+        source_column: "nodes.id"
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 49494
