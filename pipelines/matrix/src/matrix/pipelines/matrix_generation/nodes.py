@@ -233,7 +233,6 @@ def make_predictions_and_sort(
 
 
 def drop_rows_with_empty_feature_values(data: ps.DataFrame, transformers):
-
     # Retrieve rows where feature columns are null
     # NOTE: This only happens in a rare scenario where the node synonymizer
     # provided an identifier for a node that does _not_ exist in our KG.
