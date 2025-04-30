@@ -100,7 +100,7 @@ class TopPairs(ReportingTableGenerator):
         Args:
             name: Name assigned to the table
             n_reporting: Number of pairs to report
-            score_col: Score column
+            score_col: Score column to sort by
         """
         super().__init__(name)
         self.n_reporting = n_reporting
@@ -109,14 +109,14 @@ class TopPairs(ReportingTableGenerator):
 
     def generate(
         self,
-        sorted_matrix_df: ps.DataFrame,
+        matrix_df: ps.DataFrame,
         drugs_df: ps.DataFrame,
         diseases_df: ps.DataFrame,
     ) -> pd.DataFrame:
         """Generate a table.
 
         Args:
-            sorted_matrix_df: DataFrame containing the sorted matrix
+            matrix_df: DataFrame containing the drug-disease pair scores
             drugs_df: DataFrame containing the drugs list
             diseases_df: DataFrame containing the diseases list
 
@@ -125,7 +125,7 @@ class TopPairs(ReportingTableGenerator):
         """
         # Extract top pairs and join names
         top_pairs = (
-            sorted_matrix_df.orderBy(self.score_col, ascending=False)
+            matrix_df.orderBy(self.score_col, ascending=False)
             .limit(self.n_reporting)
             .select(
                 F.col("source").alias("drug_id"),
