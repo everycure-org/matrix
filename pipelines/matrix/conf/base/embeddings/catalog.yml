@@ -87,17 +87,13 @@ embeddings.feat.nodes:
   filepath: ${globals:paths.embeddings}/feat/nodes_with_embeddings
 
 embeddings.reporting.loss:
-  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
-  dataset:
-    type: matplotlib.MatplotlibWriter
-    filepath: ${globals:paths.embeddings}/reporting/convergence_plot.png
+  type: matplotlib.MatplotlibDataset
+  filepath: ${globals:paths.embeddings}/reporting/convergence_plot.png
 
 embeddings.reporting.topological_pca:
   <<: *_spark_parquet
   filepath: ${globals:paths.embeddings}/reporting/topological_pca
 
 embeddings.reporting.topological_pca_plot:
-  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
-  dataset:
-    type: matplotlib.MatplotlibWriter
-    filepath: ${globals:paths.embeddings}/reporting/pca_plot.png
+  type: matplotlib.MatplotlibDataset
+  filepath: ${globals:paths.embeddings}/reporting/pca_plot.png
