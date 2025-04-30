@@ -89,10 +89,9 @@ jobs:
         with: 
           sparse-checkout: |
             pipelines/matrix/
+          token: ${{ secrets.PAT }}
+          submodules: recursive
           persist-credentials: true
-      - name: checkout submodule
-        run: |
-          git submodule update --init --recursive
       - uses: 'google-github-actions/auth@v2'
         with:
           project_id: ${{vars.project_id}}
