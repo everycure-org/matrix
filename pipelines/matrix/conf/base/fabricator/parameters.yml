@@ -263,13 +263,13 @@ fabricator.clinical_trials:
       columns:
         curie:
           type: row_apply
-          list_of_values: [rtx_nodes.id:ID, rtx_nodes.name]
+          list_of_values: [rtx_nodes.id, rtx_nodes.name]
           row_func: "lambda *args: args[0]"
           resize: True
           seed: 40599
         name:
           type: row_apply
-          list_of_values: [rtx_nodes.id:ID, rtx_nodes.name]
+          list_of_values: [rtx_nodes.id, rtx_nodes.name]
           row_func: "lambda *args: args[1]"
           resize: True
           seed: 40599
