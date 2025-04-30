@@ -26,7 +26,6 @@ env:
   cluster: 'compute-cluster'
 
 jobs:
-
   submit_data_release_periodically:
     runs-on: 
       labels: ubuntu-24.04
@@ -73,77 +72,77 @@ jobs:
           make install_argo
           pip install -r requirements.txt
 
-      - name: Authenticate with Google Cloud
-        id: auth
-        uses: 'google-github-actions/auth@v2'
-        with:
-          project_id: ${{ env.project_id }}
-          workload_identity_provider: ${{ env.workload_identity_provider }}
-          service_account: ${{ env.service_account }}
-          token_format: access_token 
+      # - name: Authenticate with Google Cloud
+      #   id: auth
+      #   uses: 'google-github-actions/auth@v2'
+      #   with:
+      #     project_id: ${{ env.project_id }}
+      #     workload_identity_provider: ${{ env.workload_identity_provider }}
+      #     service_account: ${{ env.service_account }}
+      #     token_format: access_token 
       
-      - uses: google-github-actions/get-gke-credentials@v1 
-      # configure authentication to a GKE cluster (configure kubectl)
-        with:
-          cluster_name: ${{env.cluster}}
-          location: ${{env.region}}
-          project_id: ${{env.project_id}}
+      # - uses: google-github-actions/get-gke-credentials@v1 
+      # # configure authentication to a GKE cluster (configure kubectl)
+      #   with:
+      #     cluster_name: ${{env.cluster}}
+      #     location: ${{env.region}}
+      #     project_id: ${{env.project_id}}
 
-      - name: Login to Google Artifact Registry 
-        uses: docker/login-action@v3
-        with:
-          registry: ${{env.region}}-docker.pkg.dev
-          username: oauth2accesstoken
-          password: ${{ steps.auth.outputs.access_token }}
+      # - name: Login to Google Artifact Registry 
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: ${{env.region}}-docker.pkg.dev
+      #     username: oauth2accesstoken
+      #     password: ${{ steps.auth.outputs.access_token }}
 
-      - name: Fetch latest tag
-        id: fetch_latest_tag
-        run: |
-          latest_tag=$(git tag --list --sort="v:refname" | tail -n 1)
-          echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
-          echo "Latest tag is ${latest_tag}"
+      # - name: Fetch latest tag
+      #   id: fetch_latest_tag
+      #   run: |
+      #     latest_tag=$(git tag --list --sort="v:refname" | tail -n 1)
+      #     echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
+      #     echo "Latest tag is ${latest_tag}"
 
-      - name: Get bump type
-        run: |
-          if [[ "${{ github.event_name == 'schedule' }}" == "true" ]]; then
-            # If it's the first of the month, it's a minor bump, even if it's Tuesday. On all other Tuesdays, it's a patch.
-            [[ $(date +%-d) -eq 1 ]] && BUMP_TYPE='minor' || BUMP_TYPE='patch'
-          else
-            BUMP_TYPE="${{ github.event.inputs.bump_type }}"
-          fi
-          echo "BUMP_TYPE=${BUMP_TYPE}" >> "$GITHUB_ENV"
+      # - name: Get bump type
+      #   run: |
+      #     if [[ "${{ github.event_name == 'schedule' }}" == "true" ]]; then
+      #       # If it's the first of the month, it's a minor bump, even if it's Tuesday. On all other Tuesdays, it's a patch.
+      #       [[ $(date +%-d) -eq 1 ]] && BUMP_TYPE='minor' || BUMP_TYPE='patch'
+      #     else
+      #       BUMP_TYPE="${{ github.event.inputs.bump_type }}"
+      #     fi
+      #     echo "BUMP_TYPE=${BUMP_TYPE}" >> "$GITHUB_ENV"
 
-      - name: Increment version
-        working-directory: docs/scripts
-        run: |
-          pip install semver
-          python bump_version.py --type="${{env.BUMP_TYPE}}" --tag="${{env.latest_tag}}" >> "$GITHUB_ENV"
+      # - name: Increment version
+      #   working-directory: docs/scripts
+      #   run: |
+      #     pip install semver
+      #     python bump_version.py --type="${{env.BUMP_TYPE}}" --tag="${{env.latest_tag}}" >> "$GITHUB_ENV"
 
-      - name: Branch off
-        run: |
-          git switch -C release/${{env.release_version}} "${{github.ref_name}}"
-          git push
+      # - name: Branch off
+      #   run: |
+      #     git switch -C release/${{env.release_version}} "${{github.ref_name}}"
+      #     git push
 
-      - name: Submit the kedro pipeline
-        working-directory: pipelines/matrix
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-        run: |
-          echo "Submit the kedro pipeline"
-          if [ "${{ env.BUMP_TYPE }}" == "minor" ]; then
-            RELEASE_PIPELINE='kg_release'
-          else
-            RELEASE_PIPELINE='kg_release_patch'
-          fi
-          kedro experiment run \
-            --username GH-Actions-bot \
-            --namespace argo-workflows \
-            --experiment-name scheduled-kg-release \
-            --run-name auto-kg-release-${{ env.release_version }} \
-            --release-version "${{ env.release_version }}" \
-            --pipeline ${RELEASE_PIPELINE} \
-            --headless
+      # - name: Submit the kedro pipeline
+      #   working-directory: pipelines/matrix
+      #   env:
+      #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+      #   run: |
+      #     echo "Submit the kedro pipeline"
+      #     if [ "${{ env.BUMP_TYPE }}" == "minor" ]; then
+      #       RELEASE_PIPELINE='kg_release'
+      #     else
+      #       RELEASE_PIPELINE='kg_release_patch'
+      #     fi
+      #     kedro experiment run \
+      #       --username GH-Actions-bot \
+      #       --namespace argo-workflows \
+      #       --experiment-name scheduled-kg-release \
+      #       --run-name auto-kg-release-${{ env.release_version }} \
+      #       --release-version "${{ env.release_version }}" \
+      #       --pipeline ${RELEASE_PIPELINE} \
+      #       --headless
 
   notify_failure:
     # This condition ensures it runs only if any previous job fails
