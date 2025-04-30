@@ -60,6 +60,8 @@ class RobokopTransformer(GraphTransformer):
             .withColumn("upstream_data_source",                     F.array(F.lit("robokop")))
             .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
             .withColumn("subject_direction_qualifier",              F.lit(None).cast(T.StringType()))
+            .withColumn("num_references",                           F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
+            .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
             .withColumnRenamed("object_aspect_qualifier:string",    "object_aspect_qualifier")
             .withColumnRenamed("object_direction_qualifier:string", "object_direction_qualifier")
         )
