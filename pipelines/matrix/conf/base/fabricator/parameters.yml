@@ -565,3 +565,161 @@ fabricator.spoke:
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 49494
+
+fabricator.embiology:
+  nodes:
+    num_rows: 500
+    columns:
+      id:
+        type: generate_unique_id
+        prefix: "EMBLG:"
+      name:
+        type: generate_unique_id
+        prefix: name_
+        prob_null: 0.2
+      category:
+        type: generate_values
+        sample_values:
+          - biolink:Drug
+          - biolink:Disease
+          - biolink:Gene
+          - biolink:ChemicalSubstance
+          - biolink:Protein
+      all_categories:
+        type: row_apply
+        list_of_values: [nodes.category]
+        # NOTE: This ensures the full path from root to child is added in the categories column
+        row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
+        row_func_kwargs:
+          delimiter: "|"
+        resize: True
+        seed: 590790
+      equivalent_identifiers:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
+          - NCBITaxon:2
+          - UMLS:C0004611
+          - MESH:D001419
+          - HGVS:NG_029620.1:g.16582A>G
+          - HGVS:CM000669.1:g.149423729A>G
+          - ROBO_VARIANT:HG38|7|149726637|149726638|A|G
+          - HGVS:CM000669.2:g.149726638A>G
+          - HGVS:NC_000007.12:g.149054662A>G
+      original_id:
+        type: generate_unique_id
+      nodetype:
+        type: generate_values
+        sample_values:
+          - SmallMol
+          - GeneticVariant
+          - Disease
+          - SemanticConcept
+          - Virus
+      
+
+  edges:
+    num_rows: 2000
+    columns:
+      # NOTE: This is a rather complex syntax, but is results in a "subject"
+      # column that contains random values from the nodes table defined above.
+      subject:
+        type: row_apply
+        list_of_values: [ nodes.id ]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 590790
+      # NOTE: This is a rather complex syntax, but is results in an "object"
+      # column that contains random values from the nodes table defined above.
+      object:
+        type: row_apply
+        list_of_values: [ nodes.id ]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 49294
+      predicate:
+        type: generate_values
+        sample_values:
+          - biolink:treats
+          - biolink:interacts_with
+          - biolink:affects
+          - biolink:subclass_of
+          - biolink:disrupts
+          - biolink:produces
+          - biolink:subclass_of
+      original_id:
+        type: generate_unique_id
+        seed: 40294
+      original_subject:
+        type: generate_unique_id
+        seed: 24294
+      original_object:
+        type: generate_unique_id
+        seed: 39294
+      controltype:
+        type: generate_values
+        sample_values:
+          - MemberOf
+          - Regulation
+          - FunctionalAssociation
+          - CellExpression
+          - Binding
+          - MemberOf
+          - Expression
+          - ClinicalTrial
+          - DirectRegulation
+          - QuantitativeChange
+          - MolTransport
+          - MolSynthesis
+          - Biomarker
+          - StateChange
+          - miRNAEffect
+          - ProtModification
+          - ChemicalReaction
+          - PromoterBinding
+        seed: 39294
+      ontology:
+        type: generate_values
+        sample_values:
+          - Gene Ontology
+        prob_null: 0.8
+        seed: 39294
+      relationship:
+        type: generate_values
+        sample_values:
+          - is-a
+        prob_null: 0.8
+        seed: 39294
+      effect:
+        type: generate_values
+        sample_values:
+          - positive
+          - negative
+        prob_null: 0.8
+        seed: 39294
+      mechanism:
+        type: generate_values
+        sample_values:
+          - resistance
+          - sumoylation
+          - desumoylation
+        prob_null: 0.8
+        seed: 39294
+      num_references:
+        type: faker
+        provider: pyint
+        provider_args:
+          min_value: 1
+          max_value: 1000
+      num_sentences:
+        type: faker
+        provider: pyint
+        provider_args:
+          min_value: 1
+          max_value: 1000
+      publications:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
+          - "PMID:12345678"
+          - "DOI:10.1234/example.5678"
