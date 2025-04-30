@@ -249,24 +249,6 @@ fabricator.rtx_kg2:
         sample_values:
           - True
           - False
-        
-fabricator.clinical_trials:
-  nodes:
-    num_rows: 50
-    columns:
-      curie:
-        type: row_apply
-        list_of_values: [rtx_nodes.id, rtx_nodes.name]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 40599
-      name:
-        type: row_apply
-        list_of_values: [rtx_nodes.id, rtx_nodes.name]
-        row_func: "lambda *args: args[1]"
-        resize: True
-        seed: 40599
-
 
 fabricator.clinical_trials:
   pos_cols:
