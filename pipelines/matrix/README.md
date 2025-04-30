@@ -34,7 +34,7 @@ ERROR: Invalid requirement: './packages/data_fabricator': Expected package name 
 Hint: It looks like a path. File './packages/data_fabricator' does not exist.
 ```
 
-you would need to run this command
+you would need to run the command below. The command might fail if your `packages` folder already exists, in this case delete it.
 
 ```bash
 git submodule update --init --recursive
