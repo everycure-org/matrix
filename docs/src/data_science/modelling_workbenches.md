@@ -110,7 +110,7 @@ Example query:
 ```sql
 %%bigquery nodes_upstream_sources_count
 SELECT upstream_data_source, count(*) as count 
-FROM `mtrx-hub-dev-3of.release_v0_3_0.nodes` 
+FROM `mtrx-hub-dev-3of.release_v0_3_0.nodes_unified` 
 GROUP BY upstream_data_source
 ```
 
