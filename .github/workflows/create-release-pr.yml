@@ -1,10 +1,6 @@
 name: Create Pull Request to Add Release Info
 
 on:
-  pull_request:
-  # we remove this later. Just for testing
-      branches:
-        - main
   repository_dispatch:
     types: distribute-release
   workflow_dispatch:
@@ -36,15 +32,13 @@ jobs:
       - name: store variables
         run: |
           if [[ "${{ github.event_name == 'repository_dispatch' }}" == "true" ]]; then
-            # release='${{ github.event.client_payload.release_version }}'
-            release='v0.5.3'
+            release='${{ github.event.client_payload.release_version }}'
             gitref='${{ github.event.client_payload.git_fingerprint }}'
           elif [[ "${{ github.event_name == 'workflow_dispatch' }}" == "true" ]]; then
-            # release='${{ github.event.inputs.release_version }}'
-            release='v0.5.3'
+            release='${{ github.event.inputs.release_version }}'
             gitref='${{ github.event.inputs.git_fingerprint }}'
           else
-            release="v0.5.3"
+            release="debug-dont-release"
             gitref=${{github.ref_name}}
           fi
           echo "release=${release}" >> "$GITHUB_ENV"
