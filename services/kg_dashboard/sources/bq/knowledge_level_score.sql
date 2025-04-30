@@ -9,6 +9,7 @@ WITH mapped AS (
       WHEN knowledge_level = 'prediction' THEN 0.2
       WHEN knowledge_level = 'not_provided' THEN 0.5
       WHEN knowledge_level IS NULL OR knowledge_level = '' THEN 0.5
+      ELSE 0.5
     END) - 1 AS knowledge_level_score
   FROM `mtrx-hub-dev-3of.release_${bq_release_version}.edges_unified`
 )
