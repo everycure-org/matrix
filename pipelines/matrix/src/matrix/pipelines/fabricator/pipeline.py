@@ -1,66 +1,55 @@
-import logging
+import itertools
+import random
 
 import networkx as nx
 import pandas as pd
 from data_fabricator.v0.nodes.fabrication import fabricate_datasets
 from kedro.pipeline import Pipeline, node, pipeline
 
-logger = logging.getLogger(__name__)
-
 
 def _create_pairs(
     drug_list: pd.DataFrame,
     disease_list: pd.DataFrame,
-    num: int = 100,
+    num: int,
     seed: int = 42,
 ) -> pd.DataFrame:
-    """Create 2 sets of random drug-disease pairs. Ensures no duplicate pairs.
+    """Creates 2 sets of random drug-disease pairs. Ensures no duplicate pairs.
 
     Args:
         drug_list: Dataframe containing the list of drugs.
         disease_list: Dataframe containing the list of diseases.
-        num: Size of each set of random pairs. Defaults to 100.
-        seed: Random seed. Defaults to 42.
+        num: Size of each set of random pairs.
+        seed: Random seed.
 
     Returns:
         Two dataframes, each containing 'num' unique drug-disease pairs.
     """
-    is_enough_generated = False
+    random.seed(seed)
 
-    attempt = 0
+    # Convert lists to sets of unique ids
+    drug_ids = list(drug_list["curie"].unique())
+    disease_ids = list(disease_list["category_class"].unique())
 
-    while not is_enough_generated:
-        # Sample random pairs (we sample more than the required amount in case duplicates are removed)
-        random_drugs = set(drug_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=seed))
-        random_diseases = set(
-            disease_list["category_class"].sample(num * 4, replace=True, ignore_index=True, random_state=2 * seed)
-        )
-        # Note: overlapping ids were possible due to the way the fabricator sources its ids.
-        overlap = random_drugs.intersection(random_diseases)
-        random_drugs = random_drugs.difference(overlap)
-        # random_diseases = random_diseases.difference(overlap)
+    # Check that we have enough pairs
+    if not len(drug_ids) * len(disease_ids) >= 2 * num:
+        raise ValueError("Drug and disease lists are too small to generate the required number of pairs")
 
-        df = pd.DataFrame(
-            data=[[drug, disease, f"{drug}|{disease}"] for drug, disease in zip(random_drugs, random_diseases)],
-            columns=["source", "target", "drug|disease"],
-        )
+    # Subsample the lists to reduce memory usage
+    for entity_list in [drug_ids, disease_ids]:
+        if len(entity_list) > 2 * num:
+            entity_list = random.sample(entity_list, 2 * num)
 
-        # Remove duplicate pairs
-        df = df.drop_duplicates()
+    # Create pairs and sample without replacement to ensure no duplicates
+    pairs = list(itertools.product(drug_ids, disease_ids))
+    df_sample = pd.DataFrame(random.sample(pairs, 2 * num), columns=["source", "target"])
 
-        # Check that we still have enough fabricated pairs
-        is_enough_generated = len(df) >= num or attempt > 100
-        attempt += 1
-    if attempt > 100:
-        logger.warning("Less drug-disease pairs were generated than expected")
-
-    breakpoint()
-    return df[:num], df[num : 2 * num]
+    # Split into positives and negatives
+    return df_sample[:num], df_sample[num:]
 
 
 def remove_overlap(disease_list: pd.DataFrame, drug_list: pd.DataFrame):
     """Function to ensure no overlap between drug and disease lists.
-    
+
     Due to our generator setup, it's possible our drug and disease sets
     are not disjoint.
 
@@ -72,15 +61,39 @@ def remove_overlap(disease_list: pd.DataFrame, drug_list: pd.DataFrame):
         Two dataframes, clean drug and disease lists respectively.
     """
     overlap = set(disease_list["category_class"]).intersection(set(drug_list["curie"]))
-    overlap_mask_drug = (drug_list["curie"].isin(overlap))
-    overlap_mask_disease = (disease_list["category_class"].isin(overlap))
+    overlap_mask_drug = drug_list["curie"].isin(overlap)
+    overlap_mask_disease = disease_list["category_class"].isin(overlap)
     drug_list = drug_list[~overlap_mask_drug]
     disease_list = disease_list[~overlap_mask_disease]
 
-    return {
-        "disease_list": disease_list,
-        "drug_list": drug_list
-    }
+    return {"disease_list": disease_list, "drug_list": drug_list}
+
+
+def rectify_contradictory_edges(
+    edges: pd.DataFrame,
+    pos_cols: list[str],
+    neg_cols: list[str],
+    seed: int = 42,
+) -> pd.DataFrame:
+    """Function to rectify contradictory pairs by modifying the flag columns.
+
+    Args:
+        edges: Dataframe containing the edges.
+        pos_cols: List of positive flag columns (value 1 or 0).
+        neg_cols: List of negative flag columns (value 1 or 0).
+
+    Returns:
+        Dataframe containing the edges.
+    """
+    random.seed(seed)
+    for n, row in edges.iterrows():
+        if any(row[pos_cols]) and any(row[neg_cols]):
+            coin_flip = random.random()
+            if coin_flip < 0.5:
+                edges.loc[n, pos_cols] = 0
+            else:
+                edges.loc[n, neg_cols] = 0
+    return edges
 
 
 def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.DataFrame):
@@ -125,8 +138,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs={
                     "nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                     "edges": "ingestion.raw.rtx_kg2.edges@pandas",
-                    "disease_list": "ingestion.pre.disease_list",
-                    "drug_list": "ingestion.pre.drug_list",
+                    "disease_list": "fabricator.int.disease_list",
+                    "drug_list": "fabricator.int.drug_list",
                     "pubmed_ids_mapping": "ingestion.raw.rtx_kg2.curie_to_pmids@pandas",
                 },
                 name="fabricate_kg2_datasets",
@@ -134,25 +147,35 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=remove_overlap,
                 inputs={
-                    "disease_list": "ingestion.pre.disease_list",
-                    "drug_list": "ingestion.pre.drug_list",
+                    "disease_list": "fabricator.int.disease_list",
+                    "drug_list": "fabricator.int.drug_list",
                 },
                 outputs={
                     "disease_list": "ingestion.raw.disease_list",
                     "drug_list": "ingestion.raw.drug_list",
-                }
+                },
             ),
             node(
                 func=fabricate_datasets,
                 inputs={
-                    "fabrication_params": "params:fabricator.clinical_trials",
+                    "fabrication_params": "params:fabricator.clinical_trials.graph",
                     "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                 },
                 outputs={
                     "nodes": "ingestion.raw.ec_clinical_trails.nodes@pandas",
-                    "edges": "ingestion.raw.ec_clinical_trails.edges@pandas",
+                    "edges": "fabricator.int.ec_clinical_trails.edges",
                 },
                 name="fabricate_clinical_trails_datasets",
+            ),
+            node(
+                func=rectify_contradictory_edges,
+                inputs={
+                    "edges": "fabricator.int.ec_clinical_trails.edges",
+                    "pos_cols": "params:fabricator.clinical_trials.pos_cols",
+                    "neg_cols": "params:fabricator.clinical_trials.neg_cols",
+                },
+                outputs="ingestion.raw.ec_clinical_trails.edges@pandas",
+                name="rectify_contradictory_clinical_trails_pairs",
             ),
             node(
                 func=fabricate_datasets,
@@ -186,6 +209,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "ingestion.raw.drug_list",
                     "ingestion.raw.disease_list",
+                    "params:fabricator.ground_truth.num_rows_per_category",
                 ],
                 outputs=[
                     "ingestion.raw.ground_truth.positives",
