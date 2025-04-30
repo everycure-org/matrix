@@ -300,10 +300,10 @@ def test_generate_report_plot(
 ):
     # Given a list of reporting plot generator and a matrix dataframe
     # When generating the report plot
-    reports_dict = generate_reports(sample_matrix_data, mock_reporting_plot_strategies, ".png")
+    reports_dict = generate_reports(sample_matrix_data, mock_reporting_plot_strategies)
     # Then:
     # The keys of the dictionary are the names of the reporting plot generator and have the correct suffix
-    assert list(reports_dict.keys()) == ["strategy_1.png", "strategy_2.png"]
+    assert list(reports_dict.keys()) == ["strategy_1", "strategy_2"]
     # The values are the reporting plot generator's generate method's output
     assert all(isinstance(value, plt.Figure) for value in reports_dict.values())
 
@@ -314,9 +314,9 @@ def test_generate_report_table(
 ):
     # Given a list of reporting table generator and a matrix dataframe
     # When generating the report table
-    reports_dict = generate_reports(sample_matrix_data, mock_reporting_table_strategies, ".csv")
+    reports_dict = generate_reports(sample_matrix_data, mock_reporting_table_strategies)
     # Then:
     # The keys of the dictionary are the names of the reporting table generator and have the correct suffix
-    assert list(reports_dict.keys()) == ["strategy_1.csv", "strategy_2.csv"]
+    assert list(reports_dict.keys()) == ["strategy_1", "strategy_2"]
     # The values are the reporting table generator's generate method's output
     assert all(isinstance(value, pd.DataFrame) for value in reports_dict.values())
