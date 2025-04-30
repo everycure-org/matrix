@@ -6,7 +6,7 @@ matrix_generation.n_sample_scatter: &n-sample-scatter 1000 # Number of sample pa
 matrix_generation.reporting_nodes:
   plots:
     scatter_plot_not_treat:
-      n_sample : *n-sample-scatter
+      n_sample: *n-sample-scatter
       points_s: 1
 
     scatter_plot_unknown:
@@ -24,12 +24,12 @@ matrix_generation.reporting_nodes:
       n_reporting: *n_reporting
 
     rank_to_treat:
-      ranks_lst :
+      ranks_lst:
         - 10
         - 100
 
     frequent_flyer_drugs:
-      count_in_n_lst : # Count occurrence in top n for these values of n
+      count_in_n_lst: # Count occurrence in top n for these values of n
         - 10
         - 100
       # Statistic to sort by. 
@@ -37,7 +37,7 @@ matrix_generation.reporting_nodes:
       sort_by_col: "count_in_10" 
 
     frequent_flyer_diseases:
-      count_in_n_lst : # Count occurrence in top n for these values of n
+      count_in_n_lst: # Count occurrence in top n for these values of n
         - 10
         - 100
       # Statistic to sort by. 
