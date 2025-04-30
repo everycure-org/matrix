@@ -4,6 +4,7 @@ matrix_generation.reporting.plots:
     type: partitions.PartitionedDataset
     path: plots
     dataset: matplotlib.MatplotlibWriter
+    filename_suffix: .png
 
 matrix_generation.reporting.tables:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
@@ -11,3 +12,4 @@ matrix_generation.reporting.tables:
     type: partitions.PartitionedDataset
     path: tables
     dataset: kedro_datasets.pandas.CSVDataset
+    filename_suffix: .csv
