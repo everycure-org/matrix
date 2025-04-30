@@ -130,7 +130,7 @@ def submit(
         mlflow_run_id=mlflow_run_id,
         allow_interactions=not headless,
         is_test=is_test,
-        environment=environment,
+        environment=environment
     )
 
 
