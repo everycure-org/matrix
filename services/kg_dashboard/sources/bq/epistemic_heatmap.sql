@@ -42,6 +42,6 @@ SELECT
       ELSE 0.5
     END - 1)
   ) / 2), 3) AS average_score
-FROM `mtrx-hub-dev-3of.release_${bq_release_version}.edges`
+FROM `mtrx-hub-dev-3of.release_${bq_release_version}.edges_unified`
 WHERE knowledge_level IS NOT NULL AND agent_type IS NOT NULL
 GROUP BY knowledge_level_label, agent_type_label
