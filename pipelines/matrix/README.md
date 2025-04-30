@@ -25,6 +25,24 @@ To install them, run:
 pip install -r requirements.txt
 ```
 
+if you run into this error 
+
+```bash
+ERROR: Invalid requirement: './packages/data_fabricator': Expected package name at the start of dependency specifier
+    ./packages/data_fabricator
+    ^ (from line XX of requirements.txt)
+Hint: It looks like a path. File './packages/data_fabricator' does not exist.
+```
+
+you would need to run the command below. The command might fail if your `packages` folder already exists, in this case delete it. 
+
+```bash
+git submodule update --init --recursive
+```
+
+P.S: After running the above command, a browser would open to authenticate with Github. This is normal. If nothing happens (incase of using PyCharm IDE), suggestion would be run this through the shell (terminal).
+
+
 ## How to run your Kedro pipeline
 
 You can run your Kedro project with:

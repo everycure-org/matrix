@@ -65,7 +65,7 @@ jobs:
     steps:
       # setup runtime
       - name: 'Checkout'
-        uses: actions/checkout@main
+        uses: actions/checkout@v4
 
       - name: Validate release version
         working-directory: pipelines/matrix
