@@ -40,10 +40,11 @@ jobs:
             release='v0.5.4'
             gitref='${{ github.event.client_payload.git_fingerprint }}'
           elif [[ "${{ github.event_name == 'workflow_dispatch' }}" == "true" ]]; then
-            release='${{ github.event.inputs.release_version }}'
+            # release='${{ github.event.inputs.release_version }}'
+            release='v0.5.4'
             gitref='${{ github.event.inputs.git_fingerprint }}'
           else
-            release="debug-dont-release"
+            release="v0.5.4"
             gitref=${{github.ref_name}}
           fi
           echo "release=${release}" >> "$GITHUB_ENV"
