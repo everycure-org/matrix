@@ -1,6 +1,10 @@
 name: Create Pull Request to Add Release Info
 
 on:
+  pull_request:
+  # we remove this later. Just for testing
+    branches:
+      - main
   repository_dispatch:
     types: distribute-release
   workflow_dispatch:
