@@ -57,6 +57,8 @@ class MedicalTransformer(GraphTransformer):
             .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present
             .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present
             .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present
+            .withColumn("num_references",                f.lit(None).cast(T.IntegerType()))
+            .withColumn("num_sentences",                 f.lit(None).cast(T.IntegerType()))
             
             # Filter edges we could not correctly resolve
             .filter(f.col("subject").isNotNull() & f.col("object").isNotNull())
