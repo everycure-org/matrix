@@ -10,6 +10,7 @@ WITH scored_edges AS (
       WHEN knowledge_level = 'prediction' THEN 0.2
       WHEN knowledge_level = 'not_provided' THEN 0.5
       WHEN knowledge_level IS NULL OR knowledge_level = '' THEN 0.5
+      ELSE 0.5
     END) - 1 AS kl_score,
     (2 * CASE
       WHEN agent_type = 'manual_agent' THEN 1.0
@@ -21,11 +22,16 @@ WITH scored_edges AS (
       WHEN agent_type = 'image_processing_agent' THEN 0.35
       WHEN agent_type = 'not_provided' THEN 0.5
       WHEN agent_type IS NULL OR agent_type = '' THEN 0.5
+      ELSE 0.5
     END) - 1 AS at_score
   FROM `mtrx-hub-dev-3of.release_${bq_release_version}.edges_unified`
 )
 
 SELECT
-    COUNT(*) AS included_edges,
-    ROUND(AVG((kl_score + at_score) / 2), 4) AS average_epistemic_score
-FROM scored_edges
+  COUNT(*) AS included_edges,
+  ROUND(AVG((kl_score + at_score) / 2), 4) AS average_epistemic_score,
+  COUNTIF(
+    (knowledge_level IS NULL OR knowledge_level = 'not_provided' OR knowledge_level = '') AND
+    (agent_type IS NULL OR agent_type = 'not_provided' OR agent_type = '')
+  ) AS null_or_not_provided_both
+FROM scored_edges;
