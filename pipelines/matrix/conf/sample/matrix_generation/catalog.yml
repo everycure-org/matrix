@@ -1,14 +1,3 @@
-_spark_csv: &_spark_csv # Double check this
-  type: spark.SparkDataset
-  file_format: csv
-  load_args:
-    header: true
-    inferSchema: true
-  save_args:
-    header: true
-    mode: overwrite
-
-
 matrix_generation.reporting.plots:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
   dataset:
@@ -21,4 +10,4 @@ matrix_generation.reporting.tables:
   dataset:
     type: partitions.PartitionedDataset
     path: data/mlflow/reporting/tables
-    dataset: *_spark_csv
+    dataset: kedro_datasets.pandas.CSVDataset

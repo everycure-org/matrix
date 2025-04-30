@@ -47,4 +47,3 @@ matrix_generation.reporting.tables:
   type: partitions.PartitionedDataset
   path: ${globals:paths.matrix_generation}/reporting/tables
   dataset: kedro_datasets.pandas.CSVDataset
-    # <<: *_spark_parquet 

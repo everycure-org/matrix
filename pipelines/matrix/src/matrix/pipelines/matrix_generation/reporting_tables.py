@@ -112,7 +112,7 @@ class TopPairs(ReportingTableGenerator):
         sorted_matrix_df: ps.DataFrame,
         drugs_df: ps.DataFrame,
         diseases_df: ps.DataFrame,
-    ) -> ps.DataFrame:
+    ) -> pd.DataFrame:
         """Generate a table.
 
         Args:
@@ -121,7 +121,7 @@ class TopPairs(ReportingTableGenerator):
             diseases_df: DataFrame containing the diseases list
 
         Returns:
-            Spark DataFrame containing the table
+            Pandas DataFrame containing the table
         """
         # Extract top pairs and join names
         top_pairs = (
@@ -145,9 +145,7 @@ class TopPairs(ReportingTableGenerator):
         )
 
         # Reorder columns and return
-        return top_pairs.select(
-            "drug_name", "disease_name", "drug_id", "disease_id", *self.columns_to_keep
-        ).repartition(1)
+        return top_pairs.select("drug_name", "disease_name", "drug_id", "disease_id", *self.columns_to_keep).toPandas()
 
 
 class RankToScore(ReportingTableGenerator):
