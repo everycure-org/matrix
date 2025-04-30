@@ -12,6 +12,10 @@ integration:
       name: robokop
       transformer:
         _object: matrix.pipelines.integration.transformers.robokop.RobokopTransformer
+    embiology:
+      name: embiology
+      transformer:
+        _object: matrix.pipelines.integration.transformers.embiology.EmbiologyTransformer
     ec_medical_team:
       name: ec_medical_team
       transformer:
