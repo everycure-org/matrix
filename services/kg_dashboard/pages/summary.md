@@ -152,15 +152,16 @@ SELECT * FROM bq.epistemic_heatmap
 <div class="mb-6"></div>
 
 <!-- Metric row: Epistemic Score -->
+
+<div class="text-center text-lg">
+  <p>
+    <span class="font-semibold text-2xl">
+      <Value data={epistemic_score} column="average_epistemic_score" fmt="num2" />
+    </span><br/>
+    Epistemic Score
+  </p>
+</div>
 <Grid col=2>
-  <div class="text-center text-lg">
-    <p>
-      <span class="font-semibold text-2xl">
-        <Value data={epistemic_score} column="average_epistemic_score" fmt="num2" />
-      </span><br/>
-      Epistemic Score
-    </p>
-  </div>
   <div class="text-center text-lg">
     <p>
       <span class="font-semibold text-2xl">
@@ -168,6 +169,17 @@ SELECT * FROM bq.epistemic_heatmap
       </span><br/>
       edges used in calculation
     </p>
+  </div>
+  <div class="text-center text-lg">
+    <div>
+      <span class="font-semibold text-2xl">
+        <Value data={epistemic_score} column="null_or_not_provided_both" fmt="num2m" />
+      </span><br/>
+      edges with missing provenance
+      <div class="text-sm font-normal mt-1">
+        “Missing provenance” includes edges where both Knowledge Level and Agent Type are "Not Provided" or not present.
+      </div>
+     </div>
   </div>
 </Grid>
 
