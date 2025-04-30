@@ -205,6 +205,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="fabricate_spoke_datasets",
             ),
             node(
+                func=fabricate_datasets,
+                inputs={"fabrication_params": "params:fabricator.embiology"},
+                outputs={
+                    "nodes": "ingestion.raw.embiology.nodes@pandas",
+                    "edges": "ingestion.raw.embiology.edges@pandas",
+                },
+                name="fabricate_embiology_datasets",
+            ),
+            node(
                 func=_create_pairs,
                 inputs=[
                     "ingestion.raw.drug_list",
