@@ -144,6 +144,7 @@ jobs:
           echo ${{ secrets.GIT_CRYPT_KEY_PROD_v2 }} | base64 -d > TMP_KEY
           git-crypt unlock TMP_KEY
           rm -rf TMP_KEY
+
       - uses: 'google-github-actions/auth@v2'
         with:
           project_id: ${{vars.project_id}}
