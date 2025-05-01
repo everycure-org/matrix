@@ -29,10 +29,11 @@ jobs:
  
     steps:
       - name: Checkout
-        uses: actions/checkout@main
+        uses: actions/checkout@v4
         with:
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
+          submodules: recursive
 
       - name: Validate release version
         working-directory: pipelines/matrix

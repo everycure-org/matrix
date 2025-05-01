@@ -25,6 +25,17 @@ To execute the pipeline directly on your local machine, you'll need to set up yo
 
 -->
 
+### Updating the Submodules
+
+The codebase contain submodules that references other respository in Github. To be able to clone them please run:
+
+```bash
+git submodule update --init --recursive
+```
+
+!!! help "Encountering issues?"
+    If you're experiencing any problems running the `git submodule update --init --recursive`, please run the command outside your IDE (through the shell or terminal), as the command would need to open a browser to authenticate with Github, something that doesn't work in certain IDE (PyCharm) command line.
+
 ### Virtual environment for python dependencies
 
 To execute the codebase, you need to set up a virtual environment for the python dependencies. This can be done by running the following command in the `pipelines/matrix` directory:
