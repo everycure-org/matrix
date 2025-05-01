@@ -77,7 +77,6 @@ jobs:
     # Map a step output to a job output
     outputs:
       status: ${{ steps.finally.outputs.status }}
-
     permissions:
      contents: 'read'
      id-token: 'write'
