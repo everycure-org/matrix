@@ -92,7 +92,7 @@ modelling.model_input.splits:
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/03_version_datasets.html#how-to-version-data-in-a-kedro-project
 "modelling.{shard}.fold_{fold}.reporting.tuning_convergence_plot":
   <<: *_reporting_ds
-  type: matplotlib.MatplotlibWriter
+  type: matplotlib.MatplotlibDataset
   filepath: ${globals:paths.tmp}/reporting/{shard}/fold_{fold}/convergence_plot.png
 
 # NOTE: Tracking a model, other serialization formats possible.

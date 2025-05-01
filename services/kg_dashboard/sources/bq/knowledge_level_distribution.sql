@@ -12,7 +12,7 @@ WITH prepared AS (
     END AS knowledge_level,
     src_element.element AS upstream_data_source
   FROM `mtrx-hub-dev-3of.release_${bq_release_version}.edges_unified`,
-  UNNEST(upstream_data_source.list) AS src_element
+    UNNEST(upstream_data_source.list) AS src_element
 )
 
 SELECT
@@ -21,4 +21,4 @@ SELECT
   COUNT(*) AS edge_count
 FROM prepared
 GROUP BY knowledge_level, upstream_data_source
-HAVING COUNT(*) > 0;
+HAVING COUNT(*) > 0
