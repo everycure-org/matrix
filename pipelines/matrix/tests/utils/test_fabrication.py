@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import yaml
+import random
 
 from matrix.utils.fabrication import (
     MockDataGenerator,
@@ -18,6 +19,12 @@ from matrix.utils.fabrication import (
 
 # pylint: skip-file
 # flake8: noqa
+
+
+@pytest.fixture(autouse=True)
+def reset_seed():
+    random.seed(1)
+    np.random.seed(1)
 
 
 def test_generate_unique_id():
@@ -691,7 +698,7 @@ def test_parse_column_reference_for_single_dt():
             patients[patients["id"] == pat_id]["admission_date"]
             - encounters[encounters["patient_id"] == pat_id]["encounter_date"]
         )
-        assert list(date_diff.dt.days) <= [14]
+        assert all(dd.days <= 14 for dd in date_diff)
 
 
 def test_parse_column_reference_for_drop_filtered_condition_rows():
@@ -1057,9 +1064,9 @@ def test_forced_columns_dtypes():
     mock_generator.generate_all()
     output_dicts = mock_generator.all_dataframes
     assert output_dicts["default_fabrication.patient_data"]["gdt_01_str"].iloc[0] == "None"
-    assert output_dicts["default_fabrication.patient_data"]["gdt_01_str"].iloc[1] == "2019-02-28 00:00:00"
-    assert isinstance(output_dicts["default_fabrication.patient_data"]["gdt_01_str"].dtype, object)
-    assert output_dicts["default_fabrication.patient_data"]["gvl_01_float"].iloc[0] == 0.0
+    assert output_dicts["default_fabrication.patient_data"]["gdt_01_str"].iloc[1] == "2019-01-31 00:00:00"
     assert output_dicts["default_fabrication.patient_data"]["gvl_01_float"].dtype == np.float64
+    assert output_dicts["default_fabrication.patient_data"]["gvl_01_float"].iloc[0] == 0.0
+    # When converting booleans to str dtype, pandas currently uses object dtype
+    assert output_dicts["default_fabrication.patient_data"]["gvl_02_str"].dtype == object
     assert output_dicts["default_fabrication.patient_data"]["gvl_02_str"].iloc[0] == "True"
-    assert isinstance(output_dicts["default_fabrication.patient_data"]["gvl_02_str"].dtype, object)
