@@ -43,6 +43,8 @@ def register_pipelines() -> dict[str, Pipeline]:
     pipelines["data_engineering"] = (
           pipelines["ingestion"]
         + pipelines["integration"]
+        + pipelines["filtering"]
+        + pipelines["embeddings"]
     )
     pipelines["kg_release_patch"] = (
         pipelines["data_engineering"]

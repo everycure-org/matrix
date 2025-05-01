@@ -6,6 +6,7 @@ filtering:
       keep_list:
         - rtxkg2
         - ec_medical
+        - embiology
         # - robokop
   
   edge_filters:
@@ -15,6 +16,7 @@ filtering:
       keep_list:
         - rtxkg2
         - ec_medical
+        - embiology
         # - robokop
     # FUTURE: Ensure the semmed filter is moved here instead
     filter_biolink_edges:
