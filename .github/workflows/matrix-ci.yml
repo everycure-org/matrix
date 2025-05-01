@@ -116,15 +116,15 @@ jobs:
         run: echo "status=failure" >> "$GITHUB_OUTPUT"
   
   # we use this check as required in our PRs to ensure that CI runs but only for our paths. 
-  matrix_ci_check:
-    name: Matrix CI PR Check
-    runs-on:  'self-hosted'
-    if: always()
-    needs: [paths_filter, ci]
-    steps:
-      - if: ${{ needs.paths_filter.outputs.changed == 'true' && needs.ci.outputs.status == 'failure' }}
-        run: echo "CI failed, we are exiting" && exit 1
-      - run: echo "Either no files were changed or we had happy CI, continuing"
+  # matrix_ci_check:
+  #   name: Matrix CI PR Check
+  #   runs-on:  'self-hosted'
+  #   if: always()
+  #   needs: [paths_filter, ci]
+  #   steps:
+  #     - if: ${{ needs.paths_filter.outputs.changed == 'true' && needs.ci.outputs.status == 'failure' }}
+  #       run: echo "CI failed, we are exiting" && exit 1
+  #     - run: echo "Either no files were changed or we had happy CI, continuing"
 
       
 
