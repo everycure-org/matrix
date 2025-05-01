@@ -49,7 +49,7 @@ def transform(transformer, **kwargs) -> dict[str, ps.DataFrame]:
 )
 def union_edges(*edges, cols: list[str]) -> ps.DataFrame:
     """Function to unify edges datasets."""
-    return (
+    unioned_dataset = (
         _union_datasets(*edges)
         .groupBy(["subject", "predicate", "object"])
         .agg(
@@ -64,9 +64,12 @@ def union_edges(*edges, cols: list[str]) -> ps.DataFrame:
             F.first("primary_knowledge_source", ignorenulls=True).alias("primary_knowledge_source"),
             F.flatten(F.collect_set("aggregator_knowledge_source")).alias("aggregator_knowledge_source"),
             F.flatten(F.collect_set("publications")).alias("publications"),
+            F.max("num_references").cast(T.IntegerType()).alias("num_references"),
+            F.max("num_sentences").cast(T.IntegerType()).alias("num_sentences"),
         )
         .select(*cols)
     )
+    return unioned_dataset
 
 
 @check_output(
@@ -144,44 +147,33 @@ def normalize_edges(
     It returns the datasets with normalized IDs.
     """
     mapping_df = _format_mapping_df(mapping_df)
-
     # edges are a bit more complex, we need to map both the subject and object
-    edges = edges.join(
-        mapping_df.withColumnsRenamed(
-            {
-                "id": "subject",
-                "normalized_id": "subject_normalized",
-                "normalization_success": "subject_normalization_success",
-            }
-        ),
-        on="subject",
-        how="left",
+    subject_normalized_mapping_df = mapping_df.withColumnsRenamed(
+        {
+            "id": "subject",
+            "normalized_id": "subject_normalized",
+            "normalization_success": "subject_normalization_success",
+        }
     )
-    edges = edges.join(
-        mapping_df.withColumnsRenamed(
-            {
-                "id": "object",
-                "normalized_id": "object_normalized",
-                "normalization_success": "object_normalization_success",
-            }
-        ),
-        on="object",
-        how="left",
-    )
-    edges = edges.withColumnsRenamed({"subject": "original_subject", "object": "original_object"}).withColumnsRenamed(
-        {"subject_normalized": "subject", "object_normalized": "object"}
-    )
+    edges = edges.join(subject_normalized_mapping_df, on="subject", how="left")
+    edges = edges.withColumn("subject_normalized", F.coalesce("subject", "subject_normalized"))
 
-    return (
-        edges.withColumn(
-            "_rn",
-            F.row_number().over(
-                Window.partitionBy(["subject", "object", "predicate"]).orderBy(F.col("original_subject"))
-            ),
-        )
-        .filter(F.col("_rn") == 1)
-        .drop("_rn")
+    object_normalized_mapping_df = mapping_df.withColumnsRenamed(
+        {
+            "id": "object",
+            "normalized_id": "object_normalized",
+            "normalization_success": "object_normalization_success",
+        }
     )
+    edges = edges.join(object_normalized_mapping_df, on="object", how="left")
+    edges = edges.withColumn("object_normalized", F.coalesce("object", "object_normalized"))
+
+    edges = edges.withColumnsRenamed({"subject": "original_subject", "object": "original_object"})
+    edges = edges.withColumnsRenamed({"subject_normalized": "subject", "object_normalized": "object"})
+
+    edges = edges.dropDuplicates(subset=["subject", "predicate", "object"])
+
+    return edges
 
 
 def normalize_nodes(

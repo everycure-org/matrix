@@ -12,7 +12,11 @@ from kedro.config import OmegaConfigLoader  # noqa: E402
 from kedro_mlflow.framework.hooks import MlflowHook
 
 import matrix.hooks as matrix_hooks
-from matrix.utils.hook_utilities import determine_hooks_to_execute, generate_dynamic_pipeline_mapping
+from matrix.utils.hook_utilities import (
+    determine_hooks_to_execute,
+    disable_private_datasets,
+    generate_dynamic_pipeline_mapping,
+)
 
 from .resolvers import cast_to_int, env, if_null, merge_dicts
 
@@ -33,13 +37,8 @@ DISABLE_HOOKS_FOR_PLUGINS = ("kedro-mlflow",)
 # Class that manages storing KedroSession data.
 from pathlib import Path  # noqa: E402
 
-from kedro_viz.integrations.kedro.sqlite_store import SQLiteStore  # noqa: E402
-
-SESSION_STORE_CLASS = SQLiteStore
-# Keyword arguments to pass to the `SESSION_STORE_CLASS` constructor.
-SESSION_STORE_ARGS = {"path": str(Path(__file__).parents[2])}
-
 # https://getindata.com/blog/kedro-dynamic-pipelines/
+
 DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
     {
         "cross_validation": {
@@ -77,13 +76,15 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             },  # note - rank_commonality will be only used if you have a shared commonality@k and spearman@k metrics
         ],
     }
+main
 )
 
 
 def _load_setting(path):
     """Utility function to load a settings value from the data catalog."""
     path = path.split(".")
-    obj = DYNAMIC_PIPELINES_MAPPING
+
+    obj = DYNAMIC_PIPELINES_MAPPING()
     for p in path:
         obj = obj[p]
 

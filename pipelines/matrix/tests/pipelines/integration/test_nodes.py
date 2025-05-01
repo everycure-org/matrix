@@ -6,6 +6,7 @@ from matrix.pipelines.integration import nodes
 from pyspark.sql import functions as F
 from pyspark.sql.types import (
     ArrayType,
+    IntegerType,
     StringType,
     StructField,
     StructType,
@@ -86,6 +87,8 @@ def sample_edges(spark):
             StructField("object_aspect_qualifier", StringType(), True),
             StructField("object_direction_qualifier", StringType(), True),
             StructField("upstream_data_source", ArrayType(StringType()), False),
+            StructField("num_references", IntegerType(), True),
+            StructField("num_sentences", IntegerType(), True),
         ]
     )
     data = [
@@ -103,6 +106,8 @@ def sample_edges(spark):
             "aspect2",
             "decreased",
             ["source1"],
+            10,
+            10,
         ),
         (
             "CHEBI:120688",
@@ -118,6 +123,8 @@ def sample_edges(spark):
             "aspect4",
             "increased",
             ["source2"],
+            10,
+            10,
         ),
         (
             "CHEBI:119157",
@@ -133,6 +140,8 @@ def sample_edges(spark):
             "aspect6",
             "decreased",
             ["source3"],
+            10,
+            10,
         ),
     ]
     return spark.createDataFrame(data, schema)
