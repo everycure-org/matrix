@@ -201,9 +201,9 @@ The primary mechanism through which we execute our pipelines in `ArgoCD` templat
 
 Matrix uses Jinja2 templating to generate a dynamic argo template as per user request, which is being submitted to the K8s cluster.
 
-Argo schema is generated using custom function `kedro submit -- ...`, that parametrizes it with use-case specific requests.
+Argo schema is generated using custom function `kedro experiment run -- ...`, that parametrizes it with use-case specific requests.
 
-The `submit` command does the following:
+The `experiment run` command does the following:
 
 1. Retrieve the run name.
 2. Verify that dependencies - `gcloud`, `kubectl` are installed.
@@ -213,4 +213,4 @@ The `submit` command does the following:
 6. Apply the Argo Workflow Template, and deploy it to Argo / K8s `kubectl apply -f templates/argo-workflow-template.yml`
 7. Submit workflow to Argo.
 
-See `pipelines/matrix/src/matrix/cli_commands/submit.py` for more details.
+See `pipelines/matrix/src/matrix/cli_commands/experiment.py` for more details.

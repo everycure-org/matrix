@@ -87,7 +87,7 @@ jobs:
         working-directory: pipelines/matrix
         run: |
           echo "Run the kedro sampling pipeline"
-          kedro submit \
+          kedro experiment run \
             -e sample \
             -p create_sample \
             --run-name create-sample-release \
