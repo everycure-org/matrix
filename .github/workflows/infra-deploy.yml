@@ -135,6 +135,7 @@ jobs:
           echo ${{ secrets.GIT_CRYPT_KEY_DEV_v2 }} | base64 -d > TMP_KEY
           git-crypt unlock TMP_KEY
           rm -rf TMP_KEY
+
       - name: Setup git-crypt (prod)
         id: git-crypt-prod
         working-directory: infra/secrets
