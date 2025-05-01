@@ -287,7 +287,7 @@ def make_predictions_and_sort(
 @inject_object()
 def generate_reports(
     sorted_matrix_df: pd.DataFrame | ps.DataFrame,
-    strategies: list[ReportingPlotGenerator | ReportingTableGenerator],
+    strategies: dict[str, ReportingPlotGenerator | ReportingTableGenerator],
     **kwargs,
 ) -> dict[str, Figure | ps.DataFrame]:
     """Generate reporting plots.
