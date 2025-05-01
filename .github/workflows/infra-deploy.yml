@@ -118,6 +118,9 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: true
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -165,6 +168,9 @@ jobs:
       # FUTURE avoid duplicate boilerplate somehow on checkout/auth/crypt
       - name: 'Checkout'
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: true
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
