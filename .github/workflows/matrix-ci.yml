@@ -21,18 +21,18 @@ on:
       - develop
       - infra
     # from https://github.com/reviewdog/action-eslint/issues/29#issuecomment-985939887
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - ready_for_review
+    # types:
+    #   - opened
+    #   - reopened
+    #   - synchronize
+    #   - ready_for_review
 
   push:
     branches:
       - main
-    # paths: 
-    #   - pipelines/matrix/**
-    #   - .github/workflows/matrix-ci.yml
+    paths: 
+      - pipelines/matrix/**
+      - .github/workflows/matrix-ci.yml
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
