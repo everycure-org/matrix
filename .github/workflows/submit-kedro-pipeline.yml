@@ -7,6 +7,11 @@ on:
       - main
       - develop
       - infra
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
   schedule:
     - cron: '20 14 1 * 2' # At 15:20 CET on the 1st day of the month and on Tuesday.
   workflow_dispatch:
