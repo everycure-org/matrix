@@ -76,7 +76,6 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             },  # note - rank_commonality will be only used if you have a shared commonality@k and spearman@k metrics
         ],
     }
-main
 )
 
 
