@@ -14,14 +14,13 @@ import click
 import mlflow
 import semver
 from kedro.framework.cli.utils import CONTEXT_SETTINGS, split_string
-from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.framework.startup import bootstrap_project
 from kedro.pipeline import Pipeline
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
 
-from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
+from matrix.argo import generate_argo_config
 from matrix.git_utils import (
     BRANCH_NAME_REGEX,
     get_latest_minor_release,
@@ -50,88 +49,11 @@ def cli():
     """Command line tools for manipulating a Kedro project."""
 
 
-# fmt: off
 @cli.command()
-@click.option("--username", type=str, required=True, help="Specify the username to use")
-@click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
-@click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
-@click.option("--release-version", type=str, required=True, help="Specify a custom release name")
-@click.option("--pipeline", "-p", type=str, default="modelling_run", help="Specify which pipeline to execute")
-@click.option("--quiet", "-q", is_flag=True, default=False, help="Disable verbose output")
-@click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
-@click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
-@click.option("--nodes", "-n", type=str, default="", help="Specify nodes to run", callback=split_string)
-@click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
-@click.option("--headless", is_flag=True, default=False, help="Skip confirmation prompt")
-@click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
-@click.option("--experiment_id", type=int, help="MLFlow experiment id")
-@click.option("--mlflow_run_id", type=str, help="MLFlow run id")
-@click.option("--skip-git-checks", is_flag=True, type=bool, default=False, help="Skip git checks")
-# fmt: on
-def submit(
-    username: str,
-    namespace: str,
-    run_name: str,
-    release_version: str,
-    pipeline: str,
-    quiet: bool,
-    dry_run: bool,
-    nodes: List[str],
-    from_nodes: List[str],
-    is_test: bool,
-    headless: bool,
-    environment: str,
-    skip_git_checks: bool,
-    experiment_id: Optional[int],
-    mlflow_run_id: Optional[str],
-):
-    """Submit the end-to-end workflow. """
-    click.secho("Warning - kedro submit will be deprecated soon. Please use kedro experiment run.", bg="yellow", fg="black")
-    if not quiet:
-        log.setLevel(logging.DEBUG)
-
-    if pipeline in ('data_release', 'kg_release') and not skip_git_checks:
-        abort_if_unmet_git_requirements(release_version)
-        abort_if_intermediate_release(release_version)
-
-    if pipeline not in kedro_pipelines.keys():
-        raise ValueError("Pipeline requested for execution not found")
-    
-    if pipeline in ["fabricator", "test"]:
-        raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
-
-    if not headless and (from_nodes or nodes):
-        if not click.confirm("Using 'from-nodes' or 'nodes' is highly experimental and may break due to MLFlow issues with tracking the right run. Are you sure you want to continue?", default=False):
-            raise click.Abort()
-
-    pipeline_obj = kedro_pipelines[pipeline]
-    if from_nodes:
-        pipeline_obj = pipeline_obj.from_nodes(*from_nodes)
-
-    if nodes:
-        pipeline_obj = pipeline_obj.filter(node_names=nodes)
-
-    run_name = get_run_name(run_name)
-    pipeline_obj.name = pipeline
-
-    if not dry_run:
-        summarize_submission(experiment_id, run_name, namespace, pipeline, environment, is_test, release_version, headless)
-
-    _submit(
-        username=username,
-        namespace=namespace,
-        run_name=run_name,
-        release_version=release_version,
-        pipeline_obj=pipeline_obj,
-        verbose=not quiet,
-        dry_run=dry_run,
-        template_directory=ARGO_TEMPLATES_DIR_PATH,
-        mlflow_experiment_id=experiment_id,
-        mlflow_run_id=mlflow_run_id,
-        allow_interactions=not headless,
-        is_test=is_test,
-        environment=environment
-    )
+def submit():
+    """Submit the end-to-end workflow."""
+    click.secho("kedro submit has been deprecated. Please use `kedro experiment run`.", bg="red", fg="black")
+    click.Abort()
 
 
 def _submit(
@@ -148,7 +70,6 @@ def _submit(
     mlflow_run_id: Optional[str] = None,
     allow_interactions: bool = True,
     is_test: bool = False,
-
 ) -> None:
     """Submit the end-to-end workflow.
 
@@ -156,11 +77,11 @@ def _submit(
 
     The original logic of this function was:
     1. Create & Apply (push to k8s) Argo template, containing the entire pipeline registry. This part of the function makes use of pipelines_for_workflow, which will be included in the template.
-    2. When submitting the workflow, via `__entrypoint__`, a pipeline for execution is selected. 
+    2. When submitting the workflow, via `__entrypoint__`, a pipeline for execution is selected.
         It defaults to `__default__`, but can be configured via pipeline_for_execution.
 
     In the future, we expect plan not to have any template at all, but go straight from Kedro to Argo Workflow.
-    
+
     This meant that it was possible to submit the workflows for other pipelines in Argo CI.
 
     Args:
@@ -174,17 +95,28 @@ def _submit(
         allow_interactions (bool): If True, allow prompts for confirmation.
         is_test (bool): If True, submit to test folder, not release folder.
     """
-    
-    try:
 
-        runtime_gcp_project_id = os.environ['RUNTIME_GCP_PROJECT_ID']
-        mlflow_url = os.environ['MLFLOW_URL']
+    try:
+        runtime_gcp_project_id = os.environ["RUNTIME_GCP_PROJECT_ID"]
+        mlflow_url = os.environ["MLFLOW_URL"]
 
         console.rule("[bold blue]Submitting Workflow")
         if not can_talk_to_kubernetes(project=runtime_gcp_project_id):
             raise EnvironmentError("Cannot communicate with Kubernetes")
 
-        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, environment, runtime_gcp_project_id, mlflow_experiment_id, mlflow_url, is_test=is_test, mlflow_run_id=mlflow_run_id)
+        argo_template = build_argo_template(
+            run_name,
+            release_version,
+            username,
+            namespace,
+            pipeline_obj,
+            environment,
+            runtime_gcp_project_id,
+            mlflow_experiment_id,
+            mlflow_url,
+            is_test=is_test,
+            mlflow_run_id=mlflow_run_id,
+        )
 
         file_path = save_argo_template(argo_template, template_directory)
 
@@ -201,12 +133,14 @@ def _submit(
 
         submit_workflow(run_name, namespace, verbose=verbose)
 
-        console.print(Panel.fit(
-            f"[bold green]Workflow {'prepared' if dry_run else 'submitted'} successfully![/bold green]\n"
-            f"Run Name: {run_name}\n"
-            f"Namespace: {namespace}",
-            title="Submission Summary"
-        ))
+        console.print(
+            Panel.fit(
+                f"[bold green]Workflow {'prepared' if dry_run else 'submitted'} successfully![/bold green]\n"
+                f"Run Name: {run_name}\n"
+                f"Namespace: {namespace}",
+                title="Submission Summary",
+            )
+        )
 
         if allow_interactions and click.confirm("Do you want to open the workflow in your browser?", default=False):
             workflow_url = f"{os.environ['ARGO_PLATFORM_URL']}/workflows/{namespace}/{run_name}"
@@ -219,22 +153,34 @@ def _submit(
         sys.exit(1)
 
 
-
-def summarize_submission(experiment_id: int, run_name: str, namespace: str, pipeline: str, environment: str, is_test: bool, release_version: str, headless:bool):
-    console.print(Panel.fit(
-        f"[bold green]About to submit workflow:[/bold green]\n"
-        f"MLFlow Experiment: {mlflow.get_tracking_uri()}/#/experiments/{experiment_id}\n"
-        f"Run Name: {run_name}\n"
-        f"Namespace: {namespace}\n"
-        f"Pipeline: {pipeline}\n"
-        f"Environment: {environment}\n"
-        f"Writing to test folder: {is_test}\n"
-        f"Data Release Version: {release_version}\n",
-        title="Submission Summary"
-    ))
-    console.print("Reminder: A data release should only be submitted once and not overwritten.\n"
-                  "If you need to make changes, please make this part of the next release.\n"
-                  "Experiments (modelling pipeline) are nested under the release and can be overwritten.\n\n")
+def summarize_submission(
+    experiment_id: int,
+    run_name: str,
+    namespace: str,
+    pipeline: str,
+    environment: str,
+    is_test: bool,
+    release_version: str,
+    headless: bool,
+):
+    console.print(
+        Panel.fit(
+            f"[bold green]About to submit workflow:[/bold green]\n"
+            f"MLFlow Experiment: {mlflow.get_tracking_uri()}/#/experiments/{experiment_id}\n"
+            f"Run Name: {run_name}\n"
+            f"Namespace: {namespace}\n"
+            f"Pipeline: {pipeline}\n"
+            f"Environment: {environment}\n"
+            f"Writing to test folder: {is_test}\n"
+            f"Data Release Version: {release_version}\n",
+            title="Submission Summary",
+        )
+    )
+    console.print(
+        "Reminder: A data release should only be submitted once and not overwritten.\n"
+        "If you need to make changes, please make this part of the next release.\n"
+        "Experiments (modelling pipeline) are nested under the release and can be overwritten.\n\n"
+    )
 
     if not headless:
         if not click.confirm("Are you sure you want to submit the workflow?", default=False):
@@ -271,10 +217,8 @@ def run_subprocess(
     stdout, stderr = [], []
 
     if stream_output:
-        tout = Thread(
-            target=read_output, args=(process.stdout, [q.put, stdout.append]))
-        terr = Thread(
-            target=read_output, args=(process.stderr, [q.put, stderr.append]))
+        tout = Thread(target=read_output, args=(process.stdout, [q.put, stdout.append]))
+        terr = Thread(target=read_output, args=(process.stderr, [q.put, stderr.append]))
         twrite = Thread(target=write_output, args=(q.get,))
         for t in (tout, terr, twrite):
             t.daemon = True
@@ -286,24 +230,21 @@ def run_subprocess(
     process.wait()
     if check and process.returncode != 0:
         raise subprocess.CalledProcessError(
-            process.returncode, cmd,
-            ''.join(stdout) if stdout else None,
-            ''.join(stderr) if stderr else None
+            process.returncode, cmd, "".join(stdout) if stdout else None, "".join(stderr) if stderr else None
         )
 
     return subprocess.CompletedProcess(
-        cmd, process.returncode,
-        ''.join(stdout) if stdout else None,
-        ''.join(stderr) if stderr else None
+        cmd, process.returncode, "".join(stdout) if stdout else None, "".join(stderr) if stderr else None
     )
 
 
 def read_output(pipe, funcs):
-    for line in iter(pipe.readline, ''):
+    for line in iter(pipe.readline, ""):
         for func in funcs:
             func(line)
             # time.sleep(1)
     pipe.close()
+
 
 def write_output(get):
     for line in iter(get, None):
@@ -317,7 +258,7 @@ def command_exists(command: str) -> bool:
 
 def can_talk_to_kubernetes(
     project: str = "mtrx-hub-dev-3of",
-    region:  str = "us-central1",
+    region: str = "us-central1",
     cluster_name: str = "compute-cluster",
 ) -> bool:
     """Check if one can communicate with the Kubernetes cluster, using the kubectl CLI.
@@ -338,7 +279,8 @@ def can_talk_to_kubernetes(
         except subprocess.CalledProcessError as e:
             if b"You do not currently have an active account selected" in e.stderr:
                 log.warning(
-                    "You're not using an authenticated account to interact with the gcloud CLI. Attempting to log you in…")
+                    "You're not using an authenticated account to interact with the gcloud CLI. Attempting to log you in…"
+                )
                 run_gcloud_cmd("gcloud auth login")
                 log.info("Logged in to GCS.")
                 subprocess.check_output(s, shell=True, stderr=subprocess.PIPE, timeout=timeout)
@@ -348,7 +290,8 @@ def can_talk_to_kubernetes(
     def refresh_kube_credentials() -> None:
         log.debug("Refreshing kubectl credentials…")
         run_gcloud_cmd(
-            f"gcloud container clusters get-credentials {cluster_name} --project {project} --region {region}")
+            f"gcloud container clusters get-credentials {cluster_name} --project {project} --region {region}"
+        )
 
     def get_kubernetes_context() -> str:
         return subprocess.check_output(["kubectl", "config", "current-context"], text=True).strip()
@@ -393,14 +336,13 @@ def can_talk_to_kubernetes(
 
 
 def build_push_docker(username: str, verbose: bool):
-    """Build the docker image only once, push it to dev registry, and if running in prod, also to prod registry.
-    """
+    """Build the docker image only once, push it to dev registry, and if running in prod, also to prod registry."""
     console.print("Building Docker image...")
     dev_image = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
     console.print("[green]✓[/green] Docker image built and pushed to dev repository")
-    
-    if "-prod-" in os.environ['RUNTIME_GCP_PROJECT_ID']:
+
+    if "-prod-" in os.environ["RUNTIME_GCP_PROJECT_ID"]:
         prod_image = f"us-central1-docker.pkg.dev/mtrx-hub-prod-sms/matrix-images/matrix"
         run_subprocess(f"docker tag {dev_image}:{username} {prod_image}:{username}", stream_output=verbose)
         run_subprocess(f"docker push {prod_image}:{username}", stream_output=verbose)
@@ -505,17 +447,21 @@ def submit_workflow(run_name: str, namespace: str, verbose: bool):
     """Submit the Argo workflow and provide instructions for watching."""
     console.print("Submitting workflow for pipeline...")
 
-    cmd = " ".join([
-        "argo submit",
-        f"--name {run_name}",
-        f"-n {namespace}",
-        f"--from wftmpl/{run_name}", # name of the template resource (created in previous step)
-        f"-p run_name={run_name}",
-        "-l submit-from-ui=false",
-        "-o json"
-    ])
+    cmd = " ".join(
+        [
+            "argo submit",
+            f"--name {run_name}",
+            f"-n {namespace}",
+            f"--from wftmpl/{run_name}",  # name of the template resource (created in previous step)
+            f"-p run_name={run_name}",
+            "-l submit-from-ui=false",
+            "-o json",
+        ]
+    )
     console.print(f"Running submit command: [blue]{cmd}[/blue]")
-    console.print(f"\nSee your workflow in the ArgoCD UI here: [blue]{os.environ['ARGO_PLATFORM_URL']}/workflows/argo-workflows/{run_name}[/blue]")
+    console.print(
+        f"\nSee your workflow in the ArgoCD UI here: [blue]{os.environ['ARGO_PLATFORM_URL']}/workflows/argo-workflows/{run_name}[/blue]"
+    )
     result = run_subprocess(cmd)
     job_name = json.loads(result.stdout).get("metadata", {}).get("name")
 
@@ -544,15 +490,14 @@ def get_run_name(run_name: Optional[str]) -> str:
     """
     # If no run_name is provided, use the current Git branch name
     if not run_name:
-        run_name = run_subprocess(
-            "git rev-parse --abbrev-ref HEAD", stream_output=True
-        ).stdout.strip()
+        run_name = run_subprocess("git rev-parse --abbrev-ref HEAD", stream_output=True).stdout.strip()
 
     # Add a random suffix to the run_name
     random_sfx = str.lower(secrets.token_hex(4))
     unsanitized_name = f"{run_name}-{random_sfx}".rstrip("-")
     sanitized_name = re.sub(r"[^a-zA-Z0-9-]", "-", unsanitized_name)
     return sanitized_name
+
 
 def abort_if_unmet_git_requirements(release_version: str) -> None:
     """
@@ -581,12 +526,14 @@ def abort_if_unmet_git_requirements(release_version: str) -> None:
         error_list = "\n".join(errors)
         raise RuntimeError(f"Submission failed due to the following issues:\n\n{error_list}")
 
+
 def abort_if_intermediate_release(release_version: str) -> None:
     release_version = semver.Version.parse(release_version.lstrip("v"))
     tags_list = get_tags()
     latest_minor_release = (get_latest_minor_release(tags_list)).lstrip("v").split(".")
     latest_major = int(latest_minor_release[0])
     latest_minor = int(latest_minor_release[1])
-    if ((release_version.major == latest_major and release_version.minor < latest_minor)
-        or release_version.major < latest_major):
+    if (
+        release_version.major == latest_major and release_version.minor < latest_minor
+    ) or release_version.major < latest_major:
         raise ValueError("Cannot release a minor/major version lower than the latest official release")

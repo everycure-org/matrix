@@ -114,6 +114,7 @@ class MLFlowHooks:
 
         # Temporary - while we still support kedro submit alongside kedro experiment
         # Once kedro submit is deprecated we can probably remove this entire hook
+        # TODO: test this
         if globs.mlflow_experiment_id and globs.mlflow_experiment_id != "None":
             experiment_id = globs.mlflow_experiment_id
             mlflow.start_run(run_id=cfg.tracking.run.id)
