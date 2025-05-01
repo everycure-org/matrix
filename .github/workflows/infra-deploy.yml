@@ -121,7 +121,6 @@ jobs:
         with:
           submodules: recursive
           token: ${{ secrets.PAT }}
-          persist-credentials: true
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -173,7 +172,6 @@ jobs:
         with:
           submodules: recursive
           token: ${{ secrets.PAT }}
-          persist-credentials: true
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
