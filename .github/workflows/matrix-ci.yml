@@ -30,10 +30,9 @@ on:
   push:
     branches:
       - main
-    paths: 
-      - pipelines/matrix/**
-      - .github/workflows/matrix-ci.yml
-      
+    # paths: 
+    #   - pipelines/matrix/**
+    #   - .github/workflows/matrix-ci.yml
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
