@@ -43,12 +43,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          sparse-checkout: pipelines/matrix/
-          persist-credentials: true
-          fetch-tags: true
-          fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
+          fetch-depth: 0
           submodules: recursive
-
+          persist-credentials: true
+          
       - name: Configure Git
         run: |
           git config --global user.email "releasebot@everycure.org"
