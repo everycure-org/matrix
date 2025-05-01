@@ -37,13 +37,6 @@ DISABLE_HOOKS_FOR_PLUGINS = ("kedro-mlflow",)
 # Class that manages storing KedroSession data.
 from pathlib import Path  # noqa: E402
 
-from kedro_viz.integrations.kedro.sqlite_store import SQLiteStore  # noqa: E402
-
-SESSION_STORE_CLASS = SQLiteStore
-# Keyword arguments to pass to the `SESSION_STORE_CLASS` constructor.
-SESSION_STORE_ARGS = {"path": str(Path(__file__).parents[2])}
-
-
 # https://getindata.com/blog/kedro-dynamic-pipelines/
 
 # Using lambda to delay the evaluation until the INCLUDE_PRIVATE_DATASETS env var is set, parsed from a cli option.
@@ -54,12 +47,12 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 "n_cross_val_folds": 3,
             },
             "integration": [
-                # {"name": "rtx_kg2", "integrate_in_kg": True, "is_private": False},
-                # {"name": "spoke", "integrate_in_kg": True, "is_private": True},
+                {"name": "rtx_kg2", "integrate_in_kg": True, "is_private": False},
+                {"name": "spoke", "integrate_in_kg": True, "is_private": True},
                 {"name": "embiology", "integrate_in_kg": True, "is_private": True},
-                # {"name": "robokop", "integrate_in_kg": True, "is_private": False},
-                # {"name": "ec_medical_team", "integrate_in_kg": True},
-                # {"name": "drug_list", "integrate_in_kg": False, "has_edges": False},
+                {"name": "robokop", "integrate_in_kg": True, "is_private": False},
+                {"name": "ec_medical_team", "integrate_in_kg": True},
+                {"name": "drug_list", "integrate_in_kg": False, "has_edges": False},
                 {"name": "disease_list", "integrate_in_kg": False, "has_edges": False},
                 {"name": "ground_truth", "integrate_in_kg": False, "has_nodes": False},
                 # {"name": "drugmech", "integrate_in_kg": False, "has_nodes": False},
