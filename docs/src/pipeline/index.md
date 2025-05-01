@@ -134,6 +134,52 @@ DYNAMIC_PIPELINES_MAPPING = {
 }
 ```
 
+### Filtering
+
+The filtering pipeline step enables selective processing of the knowledge graph by focusing on specific subsets of nodes and edges. Common use cases include:
+
+- Focusing on specific node or edge types
+- Including only data from particular sources
+- Removing redundant or unwanted data
+
+The filter functions are defined [here](https://github.com/everycure-org/matrix/blob/main/pipelines/matrix/src/matrix/pipelines/filtering/filters.py) and the parameters [here](https://github.com/everycure-org/matrix/blob/main/pipelines/matrix/conf/base/filtering/parameters.yml)
+
+#### Example - filter rows from a list of upstream data sources
+
+[`keep_rows_containing`](https://github.com/everycure-org/matrix/blob/main/pipelines/matrix/src/matrix/pipelines/filtering/filters.py#L83): Retains rows where a specified column contains any of the values in a provided list
+```python
+def keep_rows_containing(
+    input_df: ps.DataFrame,
+    keep_list: Iterable[str],
+    column: str,
+    **kwargs,
+) -> ps.DataFrame:
+    """Function to only keep rows containing a category."""
+    keep_list_array = sf.array([sf.lit(x) for x in keep_list])
+    return input_df.filter(sf.exists(column, lambda x: sf.array_contains(keep_list_array, x)))
+```
+
+Filters are configured in the parameters file (`conf/base/filtering/parameters.yml`). You can define both node and edge filters:
+
+```yaml
+filtering:
+  node_filters:
+    filter_sources:
+      _object: matrix.pipelines.filtering.filters.keep_rows_containing
+      column: upstream_data_source
+      keep_list:
+        - rtxkg2
+        - ec_medical
+```
+
+This example demonstrates filtering using the `keep_rows_containing` function on the `upstream_data_source` column, which must include either `rtxkg2` or `ec_medical`.
+
+For instance, rows with `upstream_data_sources = ['rtxkg2']` or `['rtxkg2', 'robokop']` are retained, while rows with only `['robokop']` are excluded.
+
+To create a new filter, implement a new function and reference it in the parameters file.
+
+All filters defined under `node_filters` or `edge_filters` will be applied during processing.
+
 ### Embeddings
 
 Our embeddings pipeline computes vectorized representations of the entities in the knowledge graph in two stages:
