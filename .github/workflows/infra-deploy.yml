@@ -118,23 +118,27 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: true
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
            terraform_version: "^1.5.7"
            terraform_wrapper: false
+
       - name: Setup git-crypt (dev)
         id: git-crypt-dev
         run: |
           sudo apt-get install git-crypt -y
-          echo ${{ secrets.GIT_CRYPT_KEY }} | base64 -d > TMP_KEY
+          echo ${{ secrets.GIT_CRYPT_KEY_DEV_v2 }} | base64 -d > TMP_KEY
           git-crypt unlock TMP_KEY
           rm -rf TMP_KEY
       - name: Setup git-crypt (prod)
         id: git-crypt-prod
         if: inputs.environment == 'prod'
         run: |
-          echo ${{ secrets.GIT_CRYPT_KEY_PROD }} | base64 -d > TMP_KEY
+          echo ${{ secrets.GIT_CRYPT_KEY_PROD_v2 }} | base64 -d > TMP_KEY
           git-crypt unlock TMP_KEY
           rm -rf TMP_KEY
       - uses: 'google-github-actions/auth@v2'
@@ -165,6 +169,9 @@ jobs:
       # FUTURE avoid duplicate boilerplate somehow on checkout/auth/crypt
       - name: 'Checkout'
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: true
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
