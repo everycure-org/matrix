@@ -71,8 +71,8 @@ def register_pipelines() -> dict[str, Pipeline]:
     pipelines["test"] = (
         pipelines["fabricator"]
         + pipelines["__default__"]
-        # + pipelines["data_release"]
-        # + pipelines["ingest_to_N4J"]
+        + pipelines["data_release"]
+        + pipelines["ingest_to_N4J"]
     )
     pipelines["test_sample"] = (
         pipelines["filtering"]
