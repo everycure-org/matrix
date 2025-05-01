@@ -185,7 +185,7 @@ jobs:
         id: git-crypt-dev
         run: |
           sudo apt-get install git-crypt -y
-          echo ${{ secrets.GIT_CRYPT_KEY }} | base64 -d > TMP_KEY
+          echo ${{ secrets.GIT_CRYPT_KEY_DEV_v2 }} | base64 -d > TMP_KEY
           git-crypt unlock TMP_KEY
           rm -rf TMP_KEY
       - name: Setup git-crypt (prod)
@@ -193,7 +193,7 @@ jobs:
         working-directory: infra/secrets
         if: inputs.environment == 'prod'
         run: |
-          echo ${{ secrets.GIT_CRYPT_KEY_PROD }} | base64 -d > TMP_KEY
+          echo ${{ secrets.GIT_CRYPT_KEY_PROD_v2 }} | base64 -d > TMP_KEY
           git-crypt unlock TMP_KEY
           rm -rf TMP_KEY
       - uses: 'google-github-actions/auth@v2'
