@@ -1,23 +1,29 @@
 from kedro.pipeline import Pipeline, node
 
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
+
 from . import nodes
 
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
     pipeline_nodes = [
-        node(
+        ArgoNode(
             func=nodes.prefilter_unified_kg_nodes,
             inputs=[
                 "integration.prm.unified_nodes",
                 "params:filtering.node_filters",
             ],
-            outputs="filtering.prm.prefiltered_nodes",
+            outputs=["filtering.prm.prefiltered_nodes", "filtering.prm.removed_nodes_initial"],
             name="prefilter_prm_knowledge_graph_nodes",
             tags=[
                 "argowf.fuse",
                 "argowf.fuse-group.filtering",
             ],
+            argo_config=ArgoResourceConfig(
+                memory_limit=75,
+                memory_request=75,
+            ),
         ),
         node(
             func=nodes.filter_unified_kg_edges,
@@ -26,7 +32,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "integration.prm.unified_edges",
                 "params:filtering.edge_filters",
             ],
-            outputs="filtering.prm.filtered_edges",
+            outputs=["filtering.prm.filtered_edges", "filtering.prm.removed_edges"],
             name="filter_prm_knowledge_graph_edges",
             tags=[
                 "argowf.fuse",
@@ -39,7 +45,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "filtering.prm.prefiltered_nodes",
                 "filtering.prm.filtered_edges",
             ],
-            outputs="filtering.prm.filtered_nodes",
+            outputs=["filtering.prm.filtered_nodes", "filtering.prm.removed_nodes_final"],
             name="filter_nodes_without_edges",
             tags=[
                 "argowf.fuse",

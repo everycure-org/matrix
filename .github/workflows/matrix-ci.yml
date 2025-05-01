@@ -89,6 +89,8 @@ jobs:
         with: 
           sparse-checkout: |
             pipelines/matrix/
+          submodules: recursive
+          persist-credentials: true
       - uses: 'google-github-actions/auth@v2'
         with:
           project_id: ${{vars.project_id}}
