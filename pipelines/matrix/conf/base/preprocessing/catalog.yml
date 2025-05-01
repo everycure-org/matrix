@@ -49,7 +49,6 @@ preprocessing.raw.embiology.ref_pub:
   type: pandas.CSVDataset
   filepath: ${globals:paths.kg_raw_private}/embiology/csv/reference.csv.gz
   load_args:
-    nrows: 10000000
     usecols:
       - "id"
       - "unique_ref"
