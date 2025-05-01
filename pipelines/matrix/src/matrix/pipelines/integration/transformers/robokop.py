@@ -14,7 +14,7 @@ from matrix.pipelines.integration.filters import determine_most_specific_categor
 
 from .transformer import GraphTransformer
 
-ROBOKOP_SEPARATOR = "\x1f"
+ROBOKOP_SEPARATOR = r"\|"
 
 
 class RobokopTransformer(GraphTransformer):
@@ -23,7 +23,6 @@ class RobokopTransformer(GraphTransformer):
 
         Args:
             nodes_df: Nodes DataFrame.
-            biolink_categories_df: Biolink categories DataFrame.
 
         Returns:
             Transformed DataFrame.
@@ -31,15 +30,14 @@ class RobokopTransformer(GraphTransformer):
         # fmt: off
         return (
             nodes_df
+            .withColumnRenamed("name:string", "name")
+            .withColumnRenamed("description:string", "description")
             .withColumn("upstream_data_source",              F.array(F.lit("robokop")))
-            .withColumn("all_categories",                    F.split(F.col("category:LABEL"), ROBOKOP_SEPARATOR))
-            .withColumn("equivalent_identifiers",            F.split(F.col("equivalent_identifiers:string[]"), ROBOKOP_SEPARATOR))
+            .withColumn("all_categories",                    F.split(F.col("category"), ROBOKOP_SEPARATOR))
+            .withColumn("equivalent_identifiers",            F.split(F.col("equivalent_identifiers"), ROBOKOP_SEPARATOR))
             .withColumn("labels",                            F.col("all_categories"))
             .withColumn("publications",                      F.lit(None).cast(T.ArrayType(T.StringType())))
             .withColumn("international_resource_identifier", F.lit(None).cast(T.StringType()))
-            .withColumnRenamed("id:ID", "id")
-            .withColumnRenamed("name:string", "name")
-            .withColumnRenamed("description:string", "description")
             # getting most specific category
             .transform(determine_most_specific_category)
         )
@@ -57,17 +55,14 @@ class RobokopTransformer(GraphTransformer):
         # fmt: off
         return (
             edges_df
-            .withColumnRenamed("subject:START_ID",                  "subject")
-            .withColumnRenamed("predicate:TYPE",                    "predicate")
-            .withColumnRenamed("object:END_ID",                      "object")
-            .withColumnRenamed("knowledge_level:string",            "knowledge_level")
-            .withColumnRenamed("primary_knowledge_source:string",   "primary_knowledge_source")
-            .withColumnRenamed("object_aspect_qualifier:string",    "object_aspect_qualifier")
-            .withColumnRenamed("object_direction_qualifier:string", "object_direction_qualifier")
-            .withColumn("upstream_data_source",                     F.array(F.lit("robokop")))
+            .withColumn("aggregator_knowledge_source",              F.split(F.col("aggregator_knowledge_source"), ROBOKOP_SEPARATOR))
             .withColumn("publications",                             F.split(F.col("publications:string[]"), ROBOKOP_SEPARATOR))
-            .withColumn("aggregator_knowledge_source",              F.split(F.col("aggregator_knowledge_source:string[]"), ROBOKOP_SEPARATOR))
+            .withColumn("upstream_data_source",                     F.array(F.lit("robokop")))
             .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
             .withColumn("subject_direction_qualifier",              F.lit(None).cast(T.StringType()))
+            .withColumn("num_references",                           F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
+            .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
+            .withColumnRenamed("object_aspect_qualifier:string",    "object_aspect_qualifier")
+            .withColumnRenamed("object_direction_qualifier:string", "object_direction_qualifier")
         )
         # fmt: on

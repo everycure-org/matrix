@@ -22,19 +22,6 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create release pipeline."""
     return pipeline(
         [
-            # release to bigquery
-            ArgoNode(
-                func=lambda x: x,
-                inputs=["integration.prm.unified_edges"],
-                outputs="data_release.prm.bigquery_edges",
-                name="release_edges_to_bigquery",
-            ),
-            ArgoNode(
-                func=lambda x: x,
-                inputs=["integration.prm.unified_nodes"],
-                outputs="data_release.prm.bigquery_nodes",
-                name="release_nodes_to_bigquery",
-            ),
             ArgoNode(
                 func=unified_edges_to_kgx,
                 inputs=["integration.prm.unified_edges"],
@@ -50,7 +37,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["kgx"],
             ),
             last_node,
-            # NOTE: Enable when the embeddings pipeline worked piror to this pipeline
+            # NOTE: Enable when the embeddings pipeline worked prior to this pipeline
             # # release to neo4j
             # ArgoNode(
             #     func=lambda x: x,
