@@ -1,4 +1,47 @@
-# NOTE: This file was partially generated using AI assistance.
+"""Generate synthetic data declaratively using YAML configurations.
+
+This module provides a framework for generating synthetic data in a declarative way using YAML
+configurations. It is designed to work with kedro pipelines and supports various data generation
+strategies including:
+
+- Unique IDs with customizable prefixes and formats
+- Realistic fake data using the Faker library
+- Random numbers from various statistical distributions
+- Date sequences and ranges
+- Cross products and row-wise operations
+- Column references and dependencies between tables
+
+The main workflow involves:
+1. Define your data structure in YAML
+2. Use the MockDataGenerator class to process the YAML
+3. Get pandas DataFrames as output
+
+Example YAML configuration:
+```yaml
+patients:
+    num_rows: 100
+    columns:
+        id:
+            type: generate_unique_id
+            prefix: PAT_
+            id_length: 8
+        name:
+            type: faker
+            provider: name
+        admission_date:
+            type: generate_dates
+            start_dt: 2023-01-01
+            end_dt: 2023-12-31
+            freq: D
+```
+
+Notes:
+    - All generated data is deterministic when using seeds
+    - Column references (e.g., table.column) are resolved automatically
+    - Supports null injection with configurable probabilities
+    - Handles type conversion and validation
+"""
+
 import datetime
 import hashlib
 import importlib
@@ -27,9 +70,27 @@ _DEFAULT_OBJ_PATH = __name__
 
 
 def load_obj(obj_path: str, default_obj_path: str = _DEFAULT_OBJ_PATH) -> Any:
-    """
-    Extract an object from a given path.
-    Dynamically imports modules if necessary.
+    """Extract an object from a given path.
+
+    Dynamically imports modules and extracts objects (functions, classes, etc.) from them.
+    Used internally to load custom functions referenced in the YAML configuration.
+
+    Args:
+        obj_path: Path to an object to be extracted, including the object name.
+            Format: "module.submodule.object" or just "object" if in default path.
+        default_obj_path: Default module path to look in if obj_path doesn't specify one.
+            Defaults to this module.
+
+    Returns:
+        The extracted object (function, class, etc.)
+
+    Raises:
+        ImportError: If the module cannot be imported
+        AttributeError: If the object doesn't exist in the module
+
+    Example:
+        >>> func = load_obj("numpy.random.normal")  # Loads numpy's normal distribution
+        >>> local_func = load_obj("my_function")  # Loads from current module
     """
     try:
         obj_path_list = obj_path.rsplit(".", 1)
@@ -49,10 +110,32 @@ def load_obj(obj_path: str, default_obj_path: str = _DEFAULT_OBJ_PATH) -> Any:
 
 
 def load_callable_with_libraries(function_string: str) -> Callable:
-    """
-    Evaluates a string function (like a lambda) to convert into a callable.
-    Imports libraries mentioned in the string (e.g., 'math.sqrt').
-    WARNING: Uses eval(), which can be a security risk if the input string is untrusted.
+    """Convert a string function definition into a callable, importing needed libraries.
+
+    Takes a string containing a function definition (typically a lambda) and converts it
+    into a callable Python object. Automatically imports any libraries referenced in the
+    function string.
+
+    Args:
+        function_string: String containing a function definition, typically a lambda.
+            Example: "lambda x: math.sqrt(x)" or "lambda x, y: random.randint(x, y)"
+
+    Returns:
+        A callable function object
+
+    Raises:
+        ValueError: If the string contains import statements (security measure)
+        TypeError: If the evaluated string doesn't produce a callable
+        ImportError: If referenced libraries can't be imported
+
+    Example:
+        >>> func = load_callable_with_libraries("lambda x: math.sqrt(x)")
+        >>> func(4)
+        2.0
+
+    Warning:
+        This function uses eval() internally. Only use with trusted input strings.
+        Never expose this directly to user input in production without strict validation.
     """
     logger.debug(f"Attempting to load callable: {function_string}")
     # Basic check for safety, disallow imports within the lambda for now
@@ -86,16 +169,27 @@ def load_callable_with_libraries(function_string: str) -> Callable:
 def _apply_null_injection(
     data: List[Any], null_config: Optional[Dict[str, Any]], base_seed: Optional[int] = None
 ) -> List[Any]:
-    """
-    Injects null values into a list based on configuration.
+    """Inject null values into a list based on configuration.
+
+    Internal helper function that handles null value injection based on probability.
+    Used by column generators to implement the 'inject_nulls' configuration option.
 
     Args:
-        data: The list of data to process.
-        null_config: Dictionary with 'probability', optional 'value', optional 'seed'.
-        base_seed: An optional base seed for the random number generator.
+        data: The list of data to process
+        null_config: Dictionary containing:
+            - probability: float between 0 and 1
+            - value: value to use for nulls (optional, defaults to None)
+            - seed: specific seed for this injection (optional)
+        base_seed: Fallback seed if null_config doesn't specify one
 
     Returns:
-        The list with nulls potentially injected.
+        The list with nulls potentially injected according to configuration
+
+    Example:
+        >>> data = [1, 2, 3, 4, 5]
+        >>> config = {"probability": 0.4, "value": -999, "seed": 42}
+        >>> _apply_null_injection(data, config)
+        [1, -999, 3, -999, 5]
     """
     if not null_config or not isinstance(null_config, dict):
         return data
@@ -128,29 +222,35 @@ def generate_unique_id(
     num_rows: int,
     prefix: str = "",
     id_length: Optional[int] = None,
-    seed: Optional[int] = None,  # Add seed parameter for reproducibility
+    seed: Optional[int] = None,
 ) -> List[str]:
-    # NOTE: This function was partially generated using AI assistance.
-    """Generate a list of unique-ish random numeric IDs.
+    """Generate unique-ish random numeric IDs with optional prefix and fixed length.
 
-    Generates random numeric strings, applies a prefix, and adjusts to a fixed
-    length if specified. Uniqueness is highly probable due to large random
-    number generation but not strictly guaranteed for all possible inputs.
-    The `id_start_range` and `id_end_range` parameters are no longer supported.
+    Creates a list of IDs by generating large random numbers, optionally prefixing them,
+    and adjusting to a fixed length if specified. While uniqueness is highly probable due
+    to the large number space, it's not guaranteed for very large num_rows.
 
     Args:
         num_rows: The number of IDs to generate.
-        prefix: A string to prepend to each ID.
-        id_length: The total desired length of the final ID string (prefix + number).
-                   If specified, numeric parts are zero-padded or truncated to fit.
-        seed: An optional seed for the random number generator.
+        prefix: Optional string to prepend to each ID (e.g., "USER_", "PAT_").
+        id_length: If provided, ensures each ID (including prefix) is exactly this length
+                  by zero-padding or truncating the numeric part as needed.
+        seed: Optional seed for reproducible ID generation.
 
     Returns:
-        A list of generated ID strings.
+        A list of string IDs.
 
     Raises:
-        ValueError: If `id_length` is specified and is not long enough to
-                    accommodate the prefix plus at least one digit.
+        ValueError: If id_length is specified but too short for prefix + at least one digit.
+
+    Example:
+        >>> # In YAML config:
+        >>> # patient_id:
+        >>> #   type: generate_unique_id
+        >>> #   prefix: PAT_
+        >>> #   id_length: 10
+        >>> #   seed: 42
+        >>> # Would generate: ['PAT_0000123', 'PAT_0000456', ...]
     """
     if num_rows <= 0:
         return []
@@ -159,9 +259,6 @@ def generate_unique_id(
     rng = np.random.default_rng(seed)
 
     # Generate large random integers to maximize uniqueness
-    # Using a large upper bound (e.g., 10**18)
-    # Note: For extremely high num_rows, collisions are still possible, though unlikely.
-    # True uniqueness guarantee would require checking and regenerating, adding complexity.
     random_numbers = rng.integers(low=0, high=int(1e18), size=num_rows)
     numeric_strings = [str(n) for n in random_numbers]
 
@@ -203,23 +300,51 @@ def faker(
     faker_seed: Optional[int] = None,
     seed: Optional[int] = None,  # Derived column seed
 ) -> List[Any]:
-    """Thin wrapper for accessing Faker properties."""
+    """Generate realistic fake data using the Faker library.
+
+    Provides access to Faker's extensive collection of data providers for generating
+    realistic synthetic data like names, addresses, phone numbers, etc. Supports
+    localization for international data formats.
+
+    Args:
+        num_rows: Number of fake data entries to generate.
+        provider: The Faker provider to use (e.g., 'name', 'address', 'company').
+                 See Faker docs for all available providers.
+        localisation: Optional locale(s) for data generation. Can be a single locale
+                     (e.g., 'en_US') or a list of locales (['en_US', 'ja_JP']).
+        provider_args: Optional dict of arguments to pass to the Faker provider.
+        faker_seed: Specific seed for this Faker instance. Takes precedence over seed.
+        seed: General column seed, used if faker_seed isn't provided.
+
+    Returns:
+        A list containing the generated fake data.
+
+    Example:
+        >>> # In YAML config:
+        >>> # person_name:
+        >>> #   type: faker
+        >>> #   provider: name
+        >>> #   localisation: en_US
+        >>> #   faker_seed: 42
+        >>> # phone:
+        >>> #   type: faker
+        >>> #   provider: phone_number
+        >>> #   localisation: ja_JP
+        >>> #   provider_args:
+        >>> #     country_code: true
+    """
     if num_rows <= 0:
         return []
 
     # Use specific faker_seed if provided, otherwise use derived column seed
     effective_seed = faker_seed if faker_seed is not None else seed
 
-    # Create a unique Faker instance for each call to isolate seeding if needed
-    # NOTE: Using locale might still share some global state depending on Faker version
+    # Create a unique Faker instance for each call to isolate seeding
     faker_obj = Faker(localisation)
 
     if effective_seed is not None:
-        # Seed the specific instance. Seeding global Faker is less reliable.
         faker_obj.seed_instance(effective_seed)
         logger.debug(f"Seeding Faker instance with seed: {effective_seed} for provider {provider}")
-    # else: # Removed global seeding fallback
-    # logger.warning(f"Using unseeded Faker instance for provider {provider}.")
 
     provider_args = provider_args or {}
     try:
@@ -234,14 +359,54 @@ def faker(
         raise
 
 
-def numpy_random(num_rows: int, distribution: str, numpy_seed: Optional[int] = None, **kwargs) -> List[Any]:
-    """Wrapper for numpy.random distributions."""
+def numpy_random(
+    num_rows: int,
+    distribution: str,
+    numpy_seed: Optional[int] = None,
+    seed: Optional[int] = None,  # Derived column seed
+    **kwargs,
+) -> List[Any]:
+    """Generate random numbers using NumPy's probability distributions.
+
+    Provides access to NumPy's extensive collection of probability distributions
+    for generating synthetic numerical data. Useful for creating realistic
+    statistical distributions in your synthetic datasets.
+
+    Args:
+        num_rows: Number of random samples to generate.
+        distribution: Name of the NumPy random distribution to use (e.g., 'normal',
+                     'uniform', 'poisson', 'exponential'). Must match a method in
+                     numpy.random.Generator.
+        numpy_seed: Specific seed for this NumPy generation. Takes precedence over seed.
+        seed: General column seed, used if numpy_seed isn't provided.
+        **kwargs: Additional arguments passed directly to the NumPy distribution function.
+                 See NumPy docs for distribution-specific parameters.
+
+    Returns:
+        A list containing the generated random numbers.
+
+    Example:
+        >>> # In YAML config:
+        >>> # ages:
+        >>> #   type: numpy_random
+        >>> #   distribution: normal
+        >>> #   loc: 35    # mean
+        >>> #   scale: 10  # standard deviation
+        >>> #   numpy_seed: 42
+        >>> # counts:
+        >>> #   type: numpy_random
+        >>> #   distribution: poisson
+        >>> #   lam: 5     # mean rate
+    """
     if num_rows <= 0:
         return []
-    # Use a dedicated Generator for seeded runs
-    if numpy_seed is not None:
-        rng = np.random.Generator(np.random.PCG64(numpy_seed))
-        logger.debug(f"Using numpy seeded generator with seed: {numpy_seed}")
+
+    # Use specific numpy_seed if provided, otherwise use derived column seed
+    effective_seed = numpy_seed if numpy_seed is not None else seed
+
+    if effective_seed is not None:
+        rng = np.random.Generator(np.random.PCG64(effective_seed))
+        logger.debug(f"Using numpy seeded generator with seed: {effective_seed}")
     else:
         # Fallback to legacy global random state if no seed
         rng = np.random
@@ -270,7 +435,50 @@ def generate_random_arrays(
     max_length: Optional[int] = None,
     seed: Optional[int] = None,
 ) -> List[Union[List[Any], str]]:
-    """Generate random arrays (lists) with elements from sample_values."""
+    """Generate random arrays (lists) by sampling from provided values.
+
+    Creates a list where each element is itself a randomly generated array/list
+    containing elements from sample_values. Offers flexible output formats and
+    length control.
+
+    Args:
+        num_rows: Number of arrays to generate.
+        sample_values: Pool of values to sample from when creating arrays.
+        allow_duplicates: If True, same value can appear multiple times in one array.
+        to_json: If True, each array is JSON-serialized to a string.
+        delimiter: If provided, joins array elements with this delimiter into a string.
+                 Ignored if to_json=True.
+        length: If provided, all arrays will have exactly this length.
+                Overrides min_length and max_length.
+        min_length: Minimum length for generated arrays. Used if length not specified.
+        max_length: Maximum length for generated arrays. Defaults to len(sample_values)
+                   if not specified and allow_duplicates=False.
+        seed: Optional seed for reproducible generation.
+
+    Returns:
+        If to_json=True: List[str] containing JSON arrays
+        If delimiter: List[str] containing delimited strings
+        Otherwise: List[List[Any]] containing the generated arrays
+
+    Raises:
+        ValueError: If min_length > max_length after adjustments
+        ValueError: If allow_duplicates=False and requested length exceeds unique values
+
+    Example:
+        >>> # In YAML config:
+        >>> # tags:
+        >>> #   type: generate_random_arrays
+        >>> #   sample_values: ["urgent", "review", "approved"]
+        >>> #   min_length: 1
+        >>> #   max_length: 2
+        >>> #   allow_duplicates: false
+        >>> #   delimiter: "|"  # Results like: "urgent|review"
+        >>> # json_data:
+        >>> #   type: generate_random_arrays
+        >>> #   sample_values: [1, 2, 3, 4]
+        >>> #   length: 2
+        >>> #   to_json: true  # Results like: "[1, 4]"
+    """
     if num_rows <= 0:
         return []
     if not sample_values:
@@ -332,9 +540,42 @@ def generate_values(
     sort_values: bool = False,
     seed: Optional[int] = None,
 ) -> List[Any]:
-    """
-    Generate values by sampling from a list or using weighted choice from a dict.
-    Handles up/down sampling based on num_rows vs available unique values.
+    """Generate values by sampling from a list or using weighted choice.
+
+    Provides two main modes of operation:
+    1. List mode: Samples values from a list, handling up/down sampling automatically
+    2. Dict mode: Uses weighted random choice where dict values are weights
+
+    Args:
+        num_rows: Number of values to generate.
+        sample_values: Either:
+            - A list of values to sample from
+            - A dict mapping values to their weights (e.g., {"A": 0.7, "B": 0.3})
+        sort_values: If True and using list mode, sorts the output values.
+        seed: Optional seed for reproducible generation.
+
+    Returns:
+        A list containing the sampled/generated values.
+
+    Raises:
+        TypeError: If sample_values is neither a list nor a dict.
+        ValueError: If using dict mode and any weight is negative.
+
+    Example:
+        >>> # In YAML config:
+        >>> # status:  # Simple sampling
+        >>> #   type: generate_values
+        >>> #   sample_values: ["active", "inactive", "pending"]
+        >>> #   sort_values: true
+        >>> # priority:  # Weighted sampling
+        >>> #   type: generate_values
+        >>> #   sample_values:
+        >>> #     high: 1    # 10% chance
+        >>> #     medium: 4  # 40% chance
+        >>> #     low: 5     # 50% chance
+        >>> # referenced:  # Sample from another column
+        >>> #   type: generate_values
+        >>> #   sample_values: other_table.status_column
     """
     if num_rows <= 0:
         return []
@@ -409,7 +650,39 @@ def map_values(
     mapping: Dict[Any, Any],
     default_value: Any = None,
 ) -> List[Any]:
-    """Maps values from input_column based on the provided mapping dictionary."""
+    """Map values from input_column to new values using a mapping dictionary.
+
+    Transforms each value in the input list by looking it up in the mapping
+    dictionary. Values not found in the mapping are replaced with default_value.
+    Useful for converting codes to labels, IDs to names, etc.
+
+    Args:
+        input_column: List of values to transform.
+        mapping: Dictionary defining the value mappings.
+        default_value: Value to use when input value isn't in mapping.
+
+    Returns:
+        A list containing the mapped values.
+
+    Example:
+        >>> # In YAML config:
+        >>> # status_label:
+        >>> #   type: map_values
+        >>> #   input_column: my_table.status_code
+        >>> #   mapping:
+        >>> #     1: "Active"
+        >>> #     2: "Inactive"
+        >>> #     3: "Pending"
+        >>> #   default_value: "Unknown"
+        >>> # severity:
+        >>> #   type: map_values
+        >>> #   input_column: my_table.error_code
+        >>> #   mapping:
+        >>> #     E001: "Critical"
+        >>> #     E002: "High"
+        >>> #     W001: "Medium"
+        >>> #     W002: "Low"
+    """
     return [mapping.get(key, default_value) for key in input_column]
 
 
@@ -417,7 +690,39 @@ def hash_map(
     input_column: List[Any],
     buckets: List[Any],
 ) -> List[Any]:
-    """Hashes values from input_column to one of the provided buckets."""
+    """Hash values from input_column to deterministically assign them to buckets.
+
+    Uses MD5 hashing to consistently map input values to buckets. The same input
+    value will always map to the same bucket, making this useful for creating
+    stable assignments or partitions.
+
+    Args:
+        input_column: List of values to hash and map.
+        buckets: List of possible values to map into. Order matters as it affects
+                which inputs map to which buckets.
+
+    Returns:
+        A list where each input value has been replaced by its assigned bucket value.
+
+    Raises:
+        ValueError: If buckets list is empty.
+
+    Example:
+        >>> # In YAML config:
+        >>> # user_cohort:  # Stable user assignment to test groups
+        >>> #   type: hash_map
+        >>> #   input_column: my_table.user_id
+        >>> #   buckets: ["control", "treatment_a", "treatment_b"]
+        >>> # region:  # Consistent territory assignment
+        >>> #   type: hash_map
+        >>> #   input_column: my_table.postal_code
+        >>> #   buckets: ["North", "South", "East", "West"]
+
+    Note:
+        The mapping is deterministic but not uniform. If you need uniform
+        distribution across buckets, consider using generate_values with
+        equal weights instead.
+    """
     if not buckets:
         raise ValueError("Bucket list cannot be empty for hash_map.")
 
@@ -440,7 +745,51 @@ def generate_dates(
     sort_dates: bool = True,
     date_format: Optional[str] = None,
 ) -> List[Union[datetime.datetime, str]]:
-    """Generates a range of dates, with up/down sampling."""
+    """Generate a sequence of dates within a specified range.
+
+    Uses pandas date_range to create a sequence of dates, then samples from this
+    sequence to match the requested number of rows. Handles both upsampling
+    (with replacement) and downsampling (without replacement).
+
+    Args:
+        num_rows: Number of dates to generate.
+        start_dt: Start date of the range. Can be string ('2023-01-01') or datetime.
+        end_dt: End date of the range (inclusive).
+        freq: Frequency string for pandas date_range. Common options:
+            - 'D': Calendar day
+            - 'B': Business day
+            - 'W': Weekly
+            - 'M': Month end
+            - 'Q': Quarter end
+            - 'Y': Year end
+            - 'H': Hourly
+            See pandas documentation for full list of frequency aliases.
+        sort_dates: If True, sorts the output dates chronologically.
+        date_format: If provided, formats dates to strings using this format.
+                    Example: '%Y-%m-%d' for '2023-01-01'.
+
+    Returns:
+        If date_format is None: List of pandas Timestamps
+        If date_format is provided: List of formatted date strings
+
+    Raises:
+        ValueError: If date_range creation fails (e.g., invalid freq)
+
+    Example:
+        >>> # In YAML config:
+        >>> # admission_date:  # Random business days
+        >>> #   type: generate_dates
+        >>> #   start_dt: 2023-01-01
+        >>> #   end_dt: 2023-12-31
+        >>> #   freq: B
+        >>> #   sort_dates: true
+        >>> # report_timestamp:  # Hourly timestamps as strings
+        >>> #   type: generate_dates
+        >>> #   start_dt: 2023-01-01 00:00:00
+        >>> #   end_dt: 2023-01-02 23:59:59
+        >>> #   freq: H
+        >>> #   date_format: "%Y-%m-%d %H:%M:%S"
+    """
     if num_rows <= 0:
         return []
     try:
@@ -476,7 +825,47 @@ def cross_product(
     *input_columns: List[Any],
     position: int = 0,
 ) -> List[Any]:
-    """Generates the Cartesian product of the input lists, returns the column at 'position'."""
+    """Generate the Cartesian product of multiple columns and extract one dimension.
+
+    Takes multiple input columns and computes their Cartesian product (all possible
+    combinations). Returns the values from the specified position in each combination.
+    Commonly used within column_apply to create exhaustive combinations of values.
+
+    Args:
+        *input_columns: Variable number of input lists to compute product of.
+        position: Which position (0-based) to extract from each combination tuple.
+                 For example, with position=0, returns elements from first input
+                 repeated according to product structure.
+
+    Returns:
+        List containing elements from the specified position of each combination
+        in the Cartesian product.
+
+    Raises:
+        ValueError: If position is out of range for the number of input columns.
+
+    Example:
+        >>> # In YAML config:
+        >>> # Given:
+        >>> #   regions = ['North', 'South']
+        >>> #   products = ['A', 'B', 'C']
+        >>> # region_repeated:  # ['North', 'North', 'North', 'South', 'South', 'South']
+        >>> #   type: column_apply
+        >>> #   input_columns: [my_table.regions, my_table.products]
+        >>> #   column_func: cross_product
+        >>> #   column_func_kwargs:
+        >>> #     position: 0
+        >>> # product_repeated:  # ['A', 'B', 'C', 'A', 'B', 'C']
+        >>> #   type: column_apply
+        >>> #   input_columns: [my_table.regions, my_table.products]
+        >>> #   column_func: cross_product
+        >>> #   column_func_kwargs:
+        >>> #     position: 1
+
+    Note:
+        Typically used with column_apply and check_all_inputs_same_length=False
+        since input columns can have different lengths.
+    """
     if not input_columns:
         return []
 
@@ -495,7 +884,51 @@ def column_apply(
     check_all_inputs_same_length: bool = True,
     resize: bool = False,
 ) -> List[Any]:
-    """Applies a function to the entire list(s) representing column(s)."""
+    """Apply a function to entire columns at once.
+
+    Takes one or more input columns and passes them as separate arguments to
+    column_func. The function operates on the entire columns simultaneously,
+    rather than row by row. Useful for operations that need to see all values
+    at once (e.g., cumulative calculations, cross products).
+
+    Args:
+        input_columns: List of input columns (each a list) to pass to column_func.
+        column_func: Function to apply. Can be:
+            - A callable object
+            - Import path as string (e.g., 'numpy.cumsum')
+            - Lambda expression as string (use with caution)
+        column_func_kwargs: Optional kwargs to pass to column_func.
+        num_rows: If provided, verifies output length matches this value.
+                 Required if resize=True.
+        check_all_inputs_same_length: If True, verifies all input columns have
+                                    same length. Set False for operations like
+                                    cross_product that handle varying lengths.
+        resize: If True and num_rows provided, resizes output to match num_rows
+               via sampling.
+
+    Returns:
+        List containing the results of applying column_func.
+
+    Raises:
+        ValueError: If check_all_inputs_same_length=True and lengths differ
+        ValueError: If num_rows provided and output length doesn't match
+        TypeError: If column_func string can't be converted to callable
+        Exception: Any exception raised by column_func
+
+    Example:
+        >>> # In YAML config:
+        >>> # cumulative_sum:
+        >>> #   type: column_apply
+        >>> #   input_columns: [my_table.value]
+        >>> #   column_func: numpy.cumsum
+        >>> # all_combinations:
+        >>> #   type: column_apply
+        >>> #   input_columns: [my_table.users, my_table.products]
+        >>> #   column_func: matrix.utils.fabrication.cross_product
+        >>> #   check_all_inputs_same_length: false
+        >>> #   column_func_kwargs:
+        >>> #     position: 0
+    """
     if not input_columns:
         return []
 
@@ -556,7 +989,53 @@ def row_apply(
     resize: bool = False,
     seed: Optional[int] = None,
 ) -> List[Any]:
-    """Applies a function element-wise to rows formed by zipping input columns."""
+    """Apply a function row-wise to values from input columns.
+
+    Takes one or more input columns, conceptually 'zips' them together to form
+    rows, and applies row_func to each row tuple. Useful for operations that
+    compute new values based on corresponding elements from multiple columns.
+
+    Args:
+        input_columns: List of input columns (each a list) to process row-wise.
+                      All columns must have the same length.
+        row_func: Function to apply to each row. Can be:
+            - A callable object
+            - Import path as string (e.g., 'math.sqrt')
+            - Lambda expression as string (e.g., 'lambda x, y: x + y')
+            The function should accept arguments matching the number of input columns.
+        row_func_kwargs: Optional kwargs passed to row_func on each call.
+        num_rows: If provided, verifies output length matches this value.
+                 Required if resize=True.
+        resize: If True and num_rows provided, resizes input rows to match
+               num_rows via sampling BEFORE applying row_func.
+
+    Returns:
+        List containing results of applying row_func to each row.
+
+    Raises:
+        ValueError: If input columns have different lengths
+        ValueError: If num_rows provided and output length doesn't match
+        TypeError: If row_func string can't be converted to callable
+
+    Example:
+        >>> # In YAML config:
+        >>> # full_name:  # Combining first and last names
+        >>> #   type: row_apply
+        >>> #   input_columns: [my_table.first_name, my_table.last_name]
+        >>> #   row_func: "lambda f, l: f'{f} {l}'"
+        >>> # bmi:  # Computing BMI from height and weight
+        >>> #   type: row_apply
+        >>> #   input_columns: [my_table.weight_kg, my_table.height_m]
+        >>> #   row_func: "lambda w, h: w / (h * h)"
+        >>> # age_group:  # Categorizing ages
+        >>> #   type: row_apply
+        >>> #   input_columns: [my_table.age]
+        >>> #   row_func: "lambda x: 'child' if x < 18 else 'adult'"
+
+    Note:
+        If row_func raises an exception for a row, that row gets None in the
+        output and the error is logged, but processing continues.
+    """
     if not input_columns:
         return []
 
@@ -672,7 +1151,84 @@ def copy_column(
 
 
 class MockDataGenerator:
-    """Generates fabricated data based on declarative instructions."""
+    """Generate synthetic data based on declarative YAML configurations.
+
+    This class orchestrates the generation of synthetic pandas DataFrames based on
+    YAML configuration. It handles column dependencies, references between tables,
+    and provides deterministic data generation when seeded.
+
+    The configuration structure supports:
+    - Multiple namespaces for organizing related tables
+    - Column references across tables (e.g., 'other_table.column')
+    - Null value injection with configurable probabilities
+    - Type inference and explicit type casting
+
+    Configuration Structure:
+        ```yaml
+        namespace1:  # Optional namespace (defaults to 'default_fabrication')
+            table1:
+                num_rows: 100  # Optional if can be inferred from first column
+                columns:
+                    column1:
+                        type: generate_unique_id  # Generator function to use
+                        prefix: "ID_"            # Generator-specific args
+                        id_length: 8
+                        inject_nulls:            # Optional null injection
+                            probability: 0.1
+                            value: "MISSING"
+                        dtype: string            # Optional type casting
+                    column2:
+                        type: faker
+                        provider: name
+                        localisation: en_US
+                    column3:
+                        type: row_apply
+                        input_columns: [table1.column1, table1.column2]
+                        row_func: "lambda x, y: f'{x}_{y}'"
+            table2:
+                num_rows: "@table1.num_rows"  # Reference other table's size
+                columns:
+                    column1:
+                        type: copy_column
+                        source_column: table1.column1
+                        sample:
+                            num_rows: "@table2.num_rows"
+        ```
+
+    Attributes:
+        all_instructions (Dict[str, Any]): The parsed YAML instructions.
+        seed (Optional[int]): Global seed for reproducible generation.
+        all_dataframes (Dict[str, pd.DataFrame]): Generated DataFrames, keyed by
+            'namespace.table_name'.
+
+    Example:
+        >>> # Basic usage
+        >>> config = {
+        ...     "patients": {
+        ...         "num_rows": 100,
+        ...         "columns": {
+        ...             "id": {"type": "generate_unique_id", "prefix": "PAT_"},
+        ...             "name": {"type": "faker", "provider": "name"},
+        ...             "age": {
+        ...                 "type": "numpy_random",
+        ...                 "distribution": "normal",
+        ...                 "loc": 45,
+        ...                 "scale": 15
+        ...             }
+        ...         }
+        ...     }
+        ... }
+        >>> generator = MockDataGenerator(instructions=config, seed=42)
+        >>> dfs = generator.generate_all()
+        >>> patients_df = dfs["default_fabrication.patients"]
+
+    Notes:
+        - Column generation order follows YAML definition order
+        - Tables are generated in YAML definition order
+        - References must point to already generated columns/tables
+        - Seeding behavior cascades from global seed to column-specific seeds
+        - Type inference follows pandas rules unless explicitly overridden
+    """
 
     def __init__(self, instructions: Dict[str, Any], seed: Optional[int] = None):
         """
@@ -949,7 +1505,7 @@ class MockDataGenerator:
             return pd.array(generated_data, dtype="object")
 
     def _resolve_potential_reference(self, value: Any, current_namespace: str) -> Any:
-        """Resolves a value if it's a column reference string or list of references."""
+        """Resolves a value if it's a column reference string or a list of references."""
         if isinstance(value, str) and re.match(r"^[a-zA-Z0-9_.]+\.[a-zA-Z0-9_:]+$", value):
             # Single reference string like "table.column" or "namespace.table.column"
             return self._resolve_column_reference(value, current_namespace)
