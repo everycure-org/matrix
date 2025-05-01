@@ -15,6 +15,11 @@ from matrix.utils.fabrication import (
     generate_unique_id,
     generate_values,
     load_callable_with_libraries,
+    map_values,
+    hash_map,
+    generate_weighted_choice,
+    numpy_random,
+    fabricate_datasets,
 )
 
 # pylint: skip-file
@@ -1070,3 +1075,232 @@ def test_forced_columns_dtypes():
     # When converting booleans to str dtype, pandas currently uses object dtype
     assert output_dicts["default_fabrication.patient_data"]["gvl_02_str"].dtype == object
     assert output_dicts["default_fabrication.patient_data"]["gvl_02_str"].iloc[0] == "True"
+
+
+def test_map_values():
+    """Test the map_values function for transforming values using a mapping dictionary."""
+    input_values = ["category_a", "category_b", "category_a", "category_c", "unknown"]
+    mapping = {
+        "category_a": "Group 1",
+        "category_b": "Group 2",
+        "category_c": "Group 1",
+    }
+
+    result = map_values(input_column=input_values, mapping=mapping, default_value="Other")
+
+    assert len(result) == len(input_values)
+    assert result == ["Group 1", "Group 2", "Group 1", "Group 1", "Other"]
+
+
+def test_map_values_with_null_inputs():
+    """Test that map_values handles null values appropriately."""
+    input_values = ["category_a", None, "category_b", None, "unknown"]
+    mapping = {
+        "category_a": "Group 1",
+        "category_b": "Group 2",
+    }
+
+    result = map_values(input_column=input_values, mapping=mapping, default_value="Other")
+
+    assert len(result) == len(input_values)
+    # The map_values function treats None inputs as unmapped values, applying the default_value
+    assert result == ["Group 1", "Other", "Group 2", "Other", "Other"]
+
+
+def test_hash_map():
+    """Test the hash_map function for deterministic mapping of values to buckets."""
+    input_values = ["user_1", "user_2", "user_3", "user_1", "user_4"]
+    buckets = ["North", "South", "East", "West"]
+
+    result = hash_map(input_column=input_values, buckets=buckets)
+
+    assert len(result) == len(input_values)
+    # Same input should map to the same bucket
+    assert result[0] == result[3]
+    # All values should be in the bucket list
+    assert set(result).issubset(set(buckets))
+
+
+def test_generate_weighted_choice():
+    """Test the generate_weighted_choice function for weighted random sampling."""
+    from matrix.utils.fabrication import generate_weighted_choice
+
+    weights = {"option_a": 10, "option_b": 1}
+    num_rows = 1000
+
+    result = generate_weighted_choice(num_rows=num_rows, weights_dict=weights, seed=42)
+
+    assert len(result) == num_rows
+    # With 10:1 weights, expect approximately 10x more option_a than option_b
+    count_a = result.count("option_a")
+    count_b = result.count("option_b")
+    assert 8 <= (count_a / count_b) <= 12
+
+
+def test_numpy_random_distributions():
+    """Test the numpy_random function with different distribution types."""
+    from matrix.utils.fabrication import numpy_random
+
+    # Normal distribution
+    normal_values = numpy_random(
+        num_rows=100,
+        distribution="normal",
+        loc=50,  # mean
+        scale=10,  # std dev
+        numpy_seed=42,
+    )
+
+    assert len(normal_values) == 100
+    # Check that values roughly follow a normal distribution with given parameters
+    assert 40 <= np.mean(normal_values) <= 60
+
+    # Binomial distribution
+    binomial_values = numpy_random(
+        num_rows=100,
+        distribution="binomial",
+        n=10,  # number of trials
+        p=0.3,  # probability of success
+        numpy_seed=42,
+    )
+
+    assert len(binomial_values) == 100
+    # Binomial values should be integers between 0 and n
+    assert all(isinstance(v, (int, np.integer)) for v in binomial_values)
+    assert min(binomial_values) >= 0
+    assert max(binomial_values) <= 10
+
+
+def test_fabricate_datasets():
+    """Test the fabricate_datasets function, which is the main entry point for the fabricator."""
+    from matrix.utils.fabrication import fabricate_datasets
+    import pandas as pd
+
+    # Create a simple fabrication configuration
+    fabrication_params = {
+        "test_namespace": {
+            "test_table": {
+                "num_rows": 10,
+                "columns": {
+                    "id": {"type": "generate_unique_id", "prefix": "ID_"},
+                    "name": {"type": "faker", "provider": "name"},
+                },
+            }
+        }
+    }
+
+    # Test with basic parameters
+    result = fabricate_datasets(fabrication_params=fabrication_params, seed=42)
+
+    assert isinstance(result, dict)
+    # The key format doesn't include the namespace in the actual implementation
+    assert "test_table" in result
+    assert isinstance(result["test_table"], pd.DataFrame)
+    assert result["test_table"].shape == (10, 2)
+
+    # Test with an existing dataframe provided
+    existing_df = pd.DataFrame({"external_id": ["EXT_1", "EXT_2"], "value": [100, 200]})
+
+    fabrication_params["test_namespace"]["test_table_2"] = {
+        "columns": {
+            "id": {"type": "copy_column", "source_column": "external.external_id"},
+            "doubled_value": {"type": "row_apply", "input_columns": ["external.value"], "row_func": "lambda x: x * 2"},
+        }
+    }
+
+    result_with_external = fabricate_datasets(fabrication_params=fabrication_params, external=existing_df, seed=42)
+
+    # Again, check for keys without namespace prefix
+    assert "test_table_2" in result_with_external
+    assert result_with_external["test_table_2"].shape == (2, 2)
+
+
+def test_error_handling_and_logging():
+    """Test error handling in the fabricator with invalid configurations."""
+    from matrix.utils.fabrication import MockDataGenerator
+    import logging
+    import io
+
+    # Set up logging capture
+    log_capture = io.StringIO()
+    handler = logging.StreamHandler(log_capture)
+    logger = logging.getLogger("matrix.utils.fabrication")
+    logger.addHandler(handler)
+    original_level = logger.level
+    logger.setLevel(logging.DEBUG)
+
+    try:
+        # Invalid configuration - position out of range
+        invalid_instructions = {
+            "test": {
+                "table1": {"num_rows": 5, "columns": {"id": {"type": "generate_unique_id"}}},
+                "table2": {
+                    "columns": {
+                        "value": {
+                            "type": "column_apply",
+                            "input_columns": ["test.table1.id"],
+                            "column_func": "cross_product",
+                            "column_func_kwargs": {
+                                "position": 5  # Invalid position
+                            },
+                        }
+                    }
+                },
+            }
+        }
+
+        generator = MockDataGenerator(instructions=invalid_instructions)
+
+        # This should raise a ValueError
+        with pytest.raises(ValueError):
+            generator.generate_all()
+
+        # Check that an error was logged
+        log_content = log_capture.getvalue()
+        assert "error" in log_content.lower() or "invalid" in log_content.lower()
+
+    finally:
+        # Clean up
+        logger.removeHandler(handler)
+        logger.setLevel(original_level)
+
+
+def test_custom_dtypes():
+    """Test explicitly setting dtypes in the fabrication configuration."""
+    from matrix.utils.fabrication import MockDataGenerator
+    import pandas as pd
+
+    instructions = {
+        "test": {
+            "table1": {
+                "num_rows": 20,
+                "columns": {
+                    # String ID with leading zeros preserved
+                    "id": {"type": "generate_unique_id", "id_length": 5, "dtype": "string"},
+                    # Boolean stored as Int64 (0/1)
+                    "flag": {"type": "generate_values", "sample_values": [True, False], "dtype": "Int64"},
+                    # String value with nullable integers
+                    "code": {
+                        "type": "generate_values",
+                        "sample_values": ["A", "B", "C"],
+                        "inject_nulls": {"probability": 0.2},
+                        "dtype": "string",
+                    },
+                },
+            }
+        }
+    }
+
+    generator = MockDataGenerator(instructions=instructions, seed=1)
+    generator.generate_all()
+
+    result_df = generator.all_dataframes["test.table1"]
+
+    # Check dtypes
+    assert pd.api.types.is_string_dtype(result_df["id"].dtype)
+    assert pd.api.types.is_integer_dtype(result_df["flag"].dtype)
+    assert pd.api.types.is_string_dtype(result_df["code"].dtype)
+
+    # Check values
+    assert all(len(id_val) == 5 for id_val in result_df["id"])
+    assert set(result_df["flag"]).issubset({0, 1})
+    assert result_df["code"].isna().sum() > 0
