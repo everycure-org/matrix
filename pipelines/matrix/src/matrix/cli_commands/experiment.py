@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 from typing import List, Literal
@@ -6,9 +7,19 @@ from typing import List, Literal
 import click
 import mlflow
 from kedro.framework.cli.utils import split_string
+from kedro.framework.project import pipelines as kedro_pipelines
+from rich.console import Console
+from rich.logging import RichHandler
 
+from matrix.argo import ARGO_TEMPLATES_DIR_PATH
 from matrix.cli_commands.run import _validate_env_vars_for_private_data
-from matrix.cli_commands.submit import submit
+from matrix.cli_commands.submit import (
+    _submit,
+    abort_if_intermediate_release,
+    abort_if_unmet_git_requirements,
+    get_run_name,
+    summarize_submission,
+)
 from matrix.git_utils import get_current_git_branch
 from matrix.utils.authentication import get_service_account_creds, get_user_account_creds
 from matrix.utils.mlflow_utils import (
@@ -19,6 +30,14 @@ from matrix.utils.mlflow_utils import (
     get_experiment_id_from_name,
     rename_soft_deleted_experiment,
 )
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s",
+    datefmt="[%X]",
+    handlers=[RichHandler(rich_tracebacks=True)],
+)
+log = logging.getLogger("rich")
 
 EXPERIMENT_BRANCH_PREFIX = "experiment/"
 
@@ -96,8 +115,6 @@ def create(experiment_name):
     return mlflow_id
 
 
-# These are all copied directly from submit. If we want to maintain kedro submit functionality I think we need to
-# keep the duplication for now. Then we can just rename submit to run and add the extra mlflow steps.
 @experiment.command()
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
@@ -165,24 +182,75 @@ def run(
         mlflow.set_tag("created_by", username)
         mlflow_run_id = run.info.run_id
 
-    ctx.invoke(
-        submit,
+    if not quiet:
+        log.setLevel(logging.DEBUG)
+
+    if pipeline in ("data_release", "kg_release") and not skip_git_checks:
+        abort_if_unmet_git_requirements(release_version)
+        abort_if_intermediate_release(release_version)
+
+    if pipeline not in kedro_pipelines.keys():
+        raise ValueError("Pipeline requested for execution not found")
+
+    if pipeline in ["fabricator", "test"]:
+        raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
+
+    if not headless and (from_nodes or nodes):
+        if not click.confirm(
+            "Using 'from-nodes' or 'nodes' is highly experimental and may break due to MLFlow issues with tracking the right run. Are you sure you want to continue?",
+            default=False,
+        ):
+            raise click.Abort()
+
+    pipeline_obj = kedro_pipelines[pipeline]
+    if from_nodes:
+        pipeline_obj = pipeline_obj.from_nodes(*from_nodes)
+
+    if nodes:
+        pipeline_obj = pipeline_obj.filter(node_names=nodes)
+
+    run_name = get_run_name(run_name)
+    pipeline_obj.name = pipeline
+
+    if not dry_run:
+        summarize_submission(
+            experiment_id, run_name, namespace, pipeline, environment, is_test, release_version, headless
+        )
+
+    _submit(
         username=username,
         namespace=namespace,
         run_name=run_name,
         release_version=release_version,
-        pipeline=pipeline,
-        quiet=quiet,
+        pipeline_obj=pipeline_obj,
+        verbose=not quiet,
         dry_run=dry_run,
-        from_nodes=from_nodes,
-        nodes=nodes,
-        is_test=is_test,
-        headless=headless,
-        environment=environment,
-        experiment_id=experiment_id,
+        template_directory=ARGO_TEMPLATES_DIR_PATH,
+        mlflow_experiment_id=experiment_id,
         mlflow_run_id=mlflow_run_id,
-        skip_git_checks=skip_git_checks,
+        allow_interactions=not headless,
+        is_test=is_test,
+        environment=environment,
     )
+
+    # ctx.invoke(
+    #     submit,
+    #     username=username,
+    #     namespace=namespace,
+    #     run_name=run_name,
+    #     release_version=release_version,
+    #     pipeline=pipeline,
+    #     quiet=quiet,
+    #     dry_run=dry_run,
+    #     from_nodes=from_nodes,
+    #     nodes=nodes,
+    #     is_test=is_test,
+    #     headless=headless,
+    #     environment=environment,
+    #     experiment_id=experiment_id,
+    #     mlflow_run_id=mlflow_run_id,
+    #     skip_git_checks=skip_git_checks,
+    # )
 
 
 @experiment.command()
