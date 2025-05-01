@@ -1,3 +1,0 @@
-[submodule "pipelines/matrix/packages"]
-	path = pipelines/matrix/packages
-	url = https://github.com/everycure-org/matrix-legacy-proprietary-packages.git
