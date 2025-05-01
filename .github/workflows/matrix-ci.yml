@@ -21,11 +21,11 @@ on:
       - develop
       - infra
     # from https://github.com/reviewdog/action-eslint/issues/29#issuecomment-985939887
-    # types:
-    #   - opened
-    #   - reopened
-    #   - synchronize
-    #   - ready_for_review
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
 
   push:
     branches:
@@ -77,6 +77,7 @@ jobs:
     # Map a step output to a job output
     outputs:
       status: ${{ steps.finally.outputs.status }}
+
     permissions:
      contents: 'read'
      id-token: 'write'
@@ -116,15 +117,15 @@ jobs:
         run: echo "status=failure" >> "$GITHUB_OUTPUT"
   
   # we use this check as required in our PRs to ensure that CI runs but only for our paths. 
-  # matrix_ci_check:
-  #   name: Matrix CI PR Check
-  #   runs-on:  'self-hosted'
-  #   if: always()
-  #   needs: [paths_filter, ci]
-  #   steps:
-  #     - if: ${{ needs.paths_filter.outputs.changed == 'true' && needs.ci.outputs.status == 'failure' }}
-  #       run: echo "CI failed, we are exiting" && exit 1
-  #     - run: echo "Either no files were changed or we had happy CI, continuing"
+  matrix_ci_check:
+    name: Matrix CI PR Check
+    runs-on:  'self-hosted'
+    if: always()
+    needs: [paths_filter, ci]
+    steps:
+      - if: ${{ needs.paths_filter.outputs.changed == 'true' && needs.ci.outputs.status == 'failure' }}
+        run: echo "CI failed, we are exiting" && exit 1
+      - run: echo "Either no files were changed or we had happy CI, continuing"
 
       
 
