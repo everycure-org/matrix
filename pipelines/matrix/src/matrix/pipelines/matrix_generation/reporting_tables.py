@@ -20,7 +20,7 @@ class ReportingTableGenerator(abc.ABC):
         """Initializes a ReportingTableGenerator instance.
 
         Args:
-            name: Name assigned to the table
+            name: Name assigned to the table (used as filename)
         """
         self.name = name
 
@@ -30,13 +30,15 @@ class ReportingTableGenerator(abc.ABC):
     ) -> pd.DataFrame:
         """Generate a table.
 
+        This output is a pandas dataframe for easy-to-view output in MLFlow.
+
         Args:
             sorted_matrix_df: DataFrame containing the sorted matrix
             drugs_df: DataFrame containing the drugs list
             diseases_df: DataFrame containing the diseases list
 
         Returns:
-            Spark DataFrame containing the table
+            Pandas DataFrame containing the table
         """
         pass
 

@@ -15,7 +15,7 @@ class ReportingPlotGenerator(abc.ABC):
         """Initializes a ReportingPlotGenerator instance.
 
         Args:
-            name: Name assigned to the plot
+            name: Name assigned to the plot (used as filename)
         """
         self.name = name
 
