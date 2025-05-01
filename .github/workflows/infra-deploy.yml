@@ -128,6 +128,7 @@ jobs:
            terraform_wrapper: false
 
       - name: Setup git-crypt (dev)
+        working-directory: infra/secrets
         id: git-crypt-dev
         run: |
           sudo apt-get install git-crypt -y
@@ -136,6 +137,7 @@ jobs:
           rm -rf TMP_KEY
       - name: Setup git-crypt (prod)
         id: git-crypt-prod
+        working-directory: infra/secrets
         if: inputs.environment == 'prod'
         run: |
           echo ${{ secrets.GIT_CRYPT_KEY_PROD_v2 }} | base64 -d > TMP_KEY
@@ -178,6 +180,7 @@ jobs:
            terraform_version: "^1.5.7"
            terraform_wrapper: false
       - name: Setup git-crypt (dev)
+        working-directory: infra/secrets
         id: git-crypt-dev
         run: |
           sudo apt-get install git-crypt -y
@@ -186,6 +189,7 @@ jobs:
           rm -rf TMP_KEY
       - name: Setup git-crypt (prod)
         id: git-crypt-prod
+        working-directory: infra/secrets
         if: inputs.environment == 'prod'
         run: |
           echo ${{ secrets.GIT_CRYPT_KEY_PROD }} | base64 -d > TMP_KEY
