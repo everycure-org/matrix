@@ -1,13 +1,13 @@
 # {params.prefix}
 
 ```sql number_of_nodes
-select sum(count) as count
+select COALESCE(sum(count), 0) as count
 from bq.merged_kg_nodes
 where prefix = '${params.prefix}'
 ```
 
 ```sql number_of_edges
-select sum(count) as count
+select COALESCE(sum(count), 0) as count
 from bq.merged_kg_edges
 where subject_prefix = '${params.prefix}'
    or object_prefix = '${params.prefix}'    
@@ -106,7 +106,7 @@ order by count desc
 {/if}
 
 
-
+{#if primary_knowledge_source_counts.length !== 0}
 <div>
     <Dropdown 
         data={primary_knowledge_source_counts}
@@ -117,6 +117,8 @@ order by count desc
         <DropdownOption value="All">All</DropdownOption>
     </Dropdown>
 </div>
+{/if}
+{#if edge_type_with_connected_category.length !== 0}
 <DataTable
     data={edge_type_with_connected_category}
     title="Edge Types Connectected to {params.prefix} Nodes"
@@ -129,6 +131,6 @@ order by count desc
     <Column id="edge_type" title="Edge Type" />
     <Column id="count" contentType="bar"/>
 </DataTable>
-
+{/if}
 
 
