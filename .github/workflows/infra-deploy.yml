@@ -121,11 +121,14 @@ jobs:
         with:
           submodules: recursive
           persist-credentials: true
+      - name: Setup secrets module
+        run: make secrets
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
            terraform_version: "^1.5.7"
            terraform_wrapper: false
+
       - name: Setup git-crypt (dev)
         id: git-crypt-dev
         run: |
@@ -171,6 +174,8 @@ jobs:
         with:
           submodules: recursive
           persist-credentials: true
+      - name: Setup secrets module
+        run: make secrets
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
