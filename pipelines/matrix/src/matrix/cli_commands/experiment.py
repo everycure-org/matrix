@@ -217,40 +217,21 @@ def run(
             experiment_id, run_name, namespace, pipeline, environment, is_test, release_version, headless
         )
 
-    _submit(
-        username=username,
-        namespace=namespace,
-        run_name=run_name,
-        release_version=release_version,
-        pipeline_obj=pipeline_obj,
-        verbose=not quiet,
-        dry_run=dry_run,
-        template_directory=ARGO_TEMPLATES_DIR_PATH,
-        mlflow_experiment_id=experiment_id,
-        mlflow_run_id=mlflow_run_id,
-        allow_interactions=not headless,
-        is_test=is_test,
-        environment=environment,
-    )
-
-    # ctx.invoke(
-    #     submit,
-    #     username=username,
-    #     namespace=namespace,
-    #     run_name=run_name,
-    #     release_version=release_version,
-    #     pipeline=pipeline,
-    #     quiet=quiet,
-    #     dry_run=dry_run,
-    #     from_nodes=from_nodes,
-    #     nodes=nodes,
-    #     is_test=is_test,
-    #     headless=headless,
-    #     environment=environment,
-    #     experiment_id=experiment_id,
-    #     mlflow_run_id=mlflow_run_id,
-    #     skip_git_checks=skip_git_checks,
-    # )
+        _submit(
+            username=username,
+            namespace=namespace,
+            run_name=run_name,
+            release_version=release_version,
+            pipeline_obj=pipeline_obj,
+            verbose=not quiet,
+            dry_run=dry_run,
+            template_directory=ARGO_TEMPLATES_DIR_PATH,
+            mlflow_experiment_id=experiment_id,
+            mlflow_run_id=mlflow_run_id,
+            allow_interactions=not headless,
+            is_test=is_test,
+            environment=environment,
+        )
 
 
 @experiment.command()
