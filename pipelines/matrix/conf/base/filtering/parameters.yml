@@ -4,8 +4,8 @@ filtering:
       _object: matrix.pipelines.filtering.filters.keep_rows_containing
       column: upstream_data_source
       keep_list:
-        - rtxkg2
-        - ec_medical
+        - spoke
+        #- ec_medical
         # - robokop
   
   edge_filters:
@@ -13,8 +13,8 @@ filtering:
       _object: matrix.pipelines.filtering.filters.keep_rows_containing
       column: upstream_data_source
       keep_list:
-        - rtxkg2
-        - ec_medical
+        - spoke
+        #- ec_medical
         # - robokop
     # FUTURE: Ensure the semmed filter is moved here instead
     filter_biolink_edges:
