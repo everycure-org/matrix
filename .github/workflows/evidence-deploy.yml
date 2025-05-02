@@ -14,12 +14,6 @@ on:
         description: 'Version to deploy in format vX.Y.Z'
         required: true
         type: string
-  workflow_call: 
-    inputs:
-      release_version:
-        description: 'Version to deploy in format vX.Y.Z'
-        required: true
-        type: string
   push:
     branches:
       - main
@@ -54,7 +48,7 @@ env:
   rw_wip: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
   rw_sa: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
   # release version from input
-  RELEASE_VERSION: ${{ inputs.release_version || 'v0.4.0'}}
+  RELEASE_VERSION: ${{ inputs.release_version || 'v0.5.3'}}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -71,7 +65,7 @@ jobs:
     steps:
       # setup runtime
       - name: 'Checkout'
-        uses: actions/checkout@main
+        uses: actions/checkout@v4
 
       - name: Validate release version
         working-directory: pipelines/matrix

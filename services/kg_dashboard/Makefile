@@ -5,10 +5,13 @@ PROJECT_ID = $(shell gcloud config get-value project)
 EVIDENCE_BASE_PATH = gs://data.dev.everycure.org/versions
 
 # controls the release version of the KG used in the dashboard
-RELEASE_VERSION ?= v0.3.6
+RELEASE_VERSION ?= v0.5.3
 export EVIDENCE_VAR__release_version := $(RELEASE_VERSION)
 export EVIDENCE_VAR__bq_release_version := $(subst .,_,$(RELEASE_VERSION))
 export VITE_release_version := $(RELEASE_VERSION)
+export VITE_build_time := $(shell date -u '+%B %d, %Y at %H:%M:%S UTC')
+export EVIDENCE_VAR__robokop_version=30fd1bfc18cd5ccb
+export EVIDENCE_VAR__rtx_kg2_version=v2_10_0_validated
 
 .ONESHELL:
 

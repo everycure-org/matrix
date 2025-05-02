@@ -12,7 +12,7 @@ def mock_context():
     mock_context.config_loader = {
         "globals": {
             "versions": {"release": "1.0.0"},
-            "gcp_project": "test-project",
+            "runtime_gcp_project": "test-project",
             "data_sources": {
                 "robokop": {"version": "v1"},
                 "spoke": {"version": "v2"},
@@ -21,7 +21,10 @@ def mock_context():
         },
         "parameters": {
             "embeddings.topological_estimator": {"_object": "topological_estimator_v1"},
-            "embeddings.node": {"encoder": {"encoder": {"model": "node_encoder_v1"}}},
+            "embeddings.node": {"resolver": {"encoder": {"model": "node_encoder_v1"}}},
+            "integration": {
+                "normalization": {"normalizer": {"endpoint": "https://nodenorm.transltr.io/1.5/get_normalized_nodes"}}
+            },
         },
     }
     mock_mlflow = MagicMock()

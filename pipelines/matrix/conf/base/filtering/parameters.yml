@@ -1,28 +1,22 @@
 filtering:
   node_filters:
     filter_sources:
-      _object: matrix.pipelines.modelling.utils.partial_
-      func:
-        _object: matrix.pipelines.filtering.filters.keep_rows_containing
+      _object: matrix.pipelines.filtering.filters.keep_rows_containing
       column: upstream_data_source
       keep_list:
         - rtxkg2
-        - robokop
         - ec_medical
+        # - robokop
   
   edge_filters:
     filter_sources:
-      _object: matrix.pipelines.modelling.utils.partial_
-      func:
-        _object: matrix.pipelines.filtering.filters.keep_rows_containing
+      _object: matrix.pipelines.filtering.filters.keep_rows_containing
       column: upstream_data_source
       keep_list:
         - rtxkg2
-        - robokop
         - ec_medical
+        # - robokop
     # FUTURE: Ensure the semmed filter is moved here instead
     filter_biolink_edges:
-      _object: matrix.pipelines.modelling.utils.partial_
-      func:
-        _object: matrix.pipelines.filtering.filters.biolink_deduplicate_edges
+      _object: matrix.pipelines.filtering.filters.biolink_deduplicate_edges
     

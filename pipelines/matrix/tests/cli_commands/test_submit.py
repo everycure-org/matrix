@@ -82,7 +82,9 @@ def test_build_argo_template(mock_generate_argo_config: None) -> None:
         ArgoResourceConfig(),
         "cloud",
         is_test=True,
+        runtime_gcp_project_id="mtrx-hub-dev-3of",
         mlflow_experiment_id=1,
+        mlflow_url="https://mlflow.platform.dev.everycure.org/",
     )
     mock_generate_argo_config.assert_called_once()
 

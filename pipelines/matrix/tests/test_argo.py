@@ -251,6 +251,8 @@ def test_get_dependencies_default_different_than_task(nodes_where_first_is_input
     )
     assert deps[0]["tags"] == {"argowf.fuse", "argowf.fuse-group.dummy"}
     assert deps[0]["resources"] == {
+        "ephemeral_storage_limit": "128Gi",
+        "ephemeral_storage_request": "0Gi",
         "cpu_limit": 2,
         "cpu_request": 2,
         "memory_limit": 64,
@@ -435,6 +437,7 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
     mlflow_experiment_id = 1
     namespace = "test_namespace"
     username = "test_user"
+    mlflow_url = "https://mlflow.platform.dev.everycure.org/"
     pipeline_obj = Pipeline(
         nodes=[
             ArgoNode(
@@ -472,6 +475,7 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
         release_folder_name="releases",
         environment="cloud",
         default_execution_resources=argo_default_resources,
+        mlflow_url=mlflow_url,
     )
 
     argo_config = yaml.safe_load(argo_config_yaml)

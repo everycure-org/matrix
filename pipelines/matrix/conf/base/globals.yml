@@ -8,9 +8,15 @@ neo4j:
 
 # points at our central GCS_BUCKET where we store our ground truth data
 # Note: Overwrite with WG project ID & bucket if you want to write to a different project's BigQuery
-gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
-source_gcs_bucket: ${gcs_bucket}
-gcp_project: ${oc.env:GCP_PROJECT_ID, mtrx-hub-dev-3of}
+# We always ingest public datasets from the dev bucket, to avoid having to keep it in sync between prod and dev bucket.
+dev_gcs_bucket: gs://mtrx-us-central1-hub-dev-storage
+prod_gcs_bucket: gs://mtrx-us-central1-hub-prod-storage
+
+runtime_gcs_bucket: gs://${oc.env:RUNTIME_GCP_BUCKET}
+runtime_gcp_project: ${oc.env:RUNTIME_GCP_PROJECT_ID}
+
+dev_gcp_project_id: mtrx-hub-dev-3of
+
 git_sha: ${oc.env:GIT_SHA, default-sha}
 gh_token: ${oc.env:GH_TOKEN, dummy}
 
@@ -20,11 +26,13 @@ versions:
 
 data_sources:
   rtx_kg2:
-    version: &_rtx_kg_version v2.7.3 #when bumping to 2.10, we should stop to limit PMID for the semmed filtering
+    version: &_rtx_kg_version v2.10.0_validated
   robokop:
-    version: c5ec1f282158182f
+    version: 30fd1bfc18cd5ccb
   spoke:
     version: V5.2
+  embiology:
+    version: "03032025"
 # Dataset with node and edge proposals by the
 # EveryCure medical team.
   ec_medical_team:
@@ -49,12 +57,12 @@ data_sources:
 mlflow_artifact_root: null
 mlflow_experiment_id: null
 
-mlflow_url: https://mlflow.platform.dev.everycure.org/
-
+mlflow_url: ${oc.env:MLFLOW_URL}
 paths:
   # Upstream-source versioned
-  raw:                ${source_gcs_bucket}/kedro/data/01_raw
-  kg_raw:             ${gcs_bucket}/data/01_RAW
+  raw:                ${dev_gcs_bucket}/kedro/data/01_raw
+  kg_raw:             ${dev_gcs_bucket}/data/01_RAW
+  kg_raw_private:     ${prod_gcs_bucket}/data/01_RAW
   ingestion:          data/ingestion
 
   # Release-based
@@ -70,3 +78,6 @@ paths:
   inference:          data/releases/${versions.release}/runs/${run_name}/datasets/inference
  
   tmp:                data/tmp
+
+  # Embedding cache dataset
+  cache:              data/cache

@@ -1,14 +1,16 @@
+import json
 import os
 import re
-from typing import List
+from typing import List, Literal
 
 import click
 import mlflow
 from kedro.framework.cli.utils import split_string
 
+from matrix.cli_commands.run import _validate_env_vars_for_private_data
 from matrix.cli_commands.submit import submit
 from matrix.git_utils import get_current_git_branch
-from matrix.utils.authentication import get_iap_token
+from matrix.utils.authentication import get_service_account_creds, get_user_account_creds
 from matrix.utils.mlflow_utils import (
     DeletedExperimentExistsWithName,
     ExperimentNotFound,
@@ -21,16 +23,43 @@ from matrix.utils.mlflow_utils import (
 EXPERIMENT_BRANCH_PREFIX = "experiment/"
 
 
-@click.group()
-def experiment():
+def configure_mlflow_tracking(token: str) -> None:
+    mlflow.set_tracking_uri(os.environ["MLFLOW_URL"])
+    os.environ["MLFLOW_TRACKING_TOKEN"] = token
+
+
+def get_service_account_token() -> str:
     try:
-        token = get_iap_token()
-        mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")
-        os.environ["MLFLOW_TRACKING_TOKEN"] = token.id_token
+        sa_credential_info = json.loads(os.getenv("GCP_SA_KEY"))
+        return get_service_account_creds(sa_credential_info).token
+    except json.JSONDecodeError as e:
+        click.secho(
+            "Error decoding service account key. Please check the format and presence of the GCP_SA_KEY secret",
+            fg="yellow",
+            bold=True,
+        )
+        raise
+
+
+def get_user_account_token() -> str:
+    try:
+        return get_user_account_creds().id_token
     except FileNotFoundError as e:
         click.secho("Error getting IAP token. Please run `make fetch_secrets` first", fg="yellow", bold=True)
         raise
-    pass
+
+
+@click.group()
+def experiment() -> None:
+    _validate_env_vars_for_private_data()
+    if os.getenv("GITHUB_ACTIONS"):
+        # Running in GitHub Actions, get the IAP token of service acccount from the secrets
+        click.echo("Running in GitHub Actions, using service account IAP token")
+        token = get_service_account_token()
+    else:
+        # Running locally, get the IAP token of user account
+        token = get_user_account_token()
+    configure_mlflow_tracking(token)
 
 
 @experiment.command()
@@ -67,10 +96,9 @@ def create(experiment_name):
     return mlflow_id
 
 
-@experiment.command()
 # These are all copied directly from submit. If we want to maintain kedro submit functionality I think we need to
 # keep the duplication for now. Then we can just rename submit to run and add the extra mlflow steps.
-
+@experiment.command()
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")

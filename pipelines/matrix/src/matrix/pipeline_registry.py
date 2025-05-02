@@ -1,5 +1,3 @@
-from typing import Dict
-
 from kedro.pipeline import Pipeline
 
 from matrix.pipelines.create_sample.pipeline import create_pipeline as create_create_sample_pipeline
@@ -16,7 +14,7 @@ from matrix.pipelines.modelling.pipeline import create_pipeline as create_modell
 from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
 
 
-def register_pipelines() -> Dict[str, Pipeline]:
+def register_pipelines() -> dict[str, Pipeline]:
     """Register the project's pipelines.
 
     Returns:
@@ -49,7 +47,6 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines["kg_release_patch"] = (
         pipelines["data_engineering"]
         + pipelines["data_release"]
-        + pipelines["embeddings"]
     )
     pipelines["kg_release"] = (
         pipelines["kg_release_patch"]
@@ -78,7 +75,8 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + pipelines["ingest_to_N4J"]
     )
     pipelines["test_sample"] = (
-        pipelines["embeddings"]
+        pipelines["filtering"]
+        + pipelines["embeddings"]
         + pipelines["modelling_run"]
     )
     # fmt: on

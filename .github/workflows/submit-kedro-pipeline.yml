@@ -27,6 +27,7 @@ jobs:
     runs-on: 
       labels: ubuntu-24.04
     name: Submit the Kedro Pipeline Periodically
+    environment: dev
     permissions:
       contents: 'write'
       id-token: 'write'
@@ -34,10 +35,12 @@ jobs:
  
     steps:
       - name: Checkout
-        uses: actions/checkout@main
+        uses: actions/checkout@v4
         with:
+          token: ${{ secrets.PAT }}
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
+          submodules: recursive
 
       - name: Configure Git
         run: |
@@ -70,11 +73,11 @@ jobs:
         id: auth
         uses: 'google-github-actions/auth@v2'
         with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.workload_identity_provider}}
-          service_account: ${{env.service_account}}
-          token_format: access_token
-
+          project_id: ${{ env.project_id }}
+          workload_identity_provider: ${{ env.workload_identity_provider }}
+          service_account: ${{ env.service_account }}
+          token_format: access_token 
+      
       - uses: google-github-actions/get-gke-credentials@v1 
       # configure authentication to a GKE cluster (configure kubectl)
         with:
@@ -110,7 +113,7 @@ jobs:
         working-directory: docs/scripts
         run: |
           pip install semver
-          python bump_version.py --type="${{env.BUMP_TYPE}}" >> "$GITHUB_ENV"
+          python bump_version.py --type="${{env.BUMP_TYPE}}" --tag="${{env.latest_tag}}" >> "$GITHUB_ENV"
 
       - name: Branch off
         run: |
@@ -121,6 +124,7 @@ jobs:
         working-directory: pipelines/matrix
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
         run: |
           echo "Submit the kedro pipeline"
           if [ "${{ env.BUMP_TYPE }}" == "minor" ]; then
@@ -128,10 +132,11 @@ jobs:
           else
             RELEASE_PIPELINE='kg_release_patch'
           fi
-          kedro submit \
+          kedro experiment run \
             --username GH-Actions-bot \
             --namespace argo-workflows \
-            --run-name auto-kg-release \
+            --experiment-name scheduled-kg-release \
+            --run-name auto-kg-release-${{ env.release_version }} \
             --release-version "${{ env.release_version }}" \
             --pipeline ${RELEASE_PIPELINE} \
             --headless

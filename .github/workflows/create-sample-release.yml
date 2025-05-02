@@ -7,12 +7,6 @@ on:
         description: 'Version to deploy in format vX.Y.Z'
         required: true
         type: string
-  workflow_call: 
-    inputs:
-      release_version:
-        description: 'Version to deploy in format vX.Y.Z'
-        required: true
-        type: string
 env:
   project_id: 'mtrx-hub-dev-3of'
   workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
@@ -35,10 +29,12 @@ jobs:
  
     steps:
       - name: Checkout
-        uses: actions/checkout@main
+        uses: actions/checkout@v4
         with:
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
+          submodules: recursive
+          token: ${{ secrets.PAT }}
 
       - name: Validate release version
         working-directory: pipelines/matrix
