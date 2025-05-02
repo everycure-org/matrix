@@ -89,9 +89,10 @@ jobs:
         with: 
           sparse-checkout: |
             pipelines/matrix/
-          token: ${{ secrets.PAT }}
           submodules: recursive
+          token: ${{ secrets.PAT }}
           persist-credentials: true
+
       - uses: 'google-github-actions/auth@v2'
         with:
           project_id: ${{vars.project_id}}

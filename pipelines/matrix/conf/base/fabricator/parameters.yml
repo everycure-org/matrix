@@ -726,7 +726,6 @@ fabricator.embiology:
         provider: pyint
         provider_args:
           min_value: 1
-          max_value: 1000
       publications:
         type: generate_random_arrays
         delimiter: "|"

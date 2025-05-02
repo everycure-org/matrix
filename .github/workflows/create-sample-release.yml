@@ -33,8 +33,8 @@ jobs:
         with:
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
-          token: ${{ secrets.PAT }}
           submodules: recursive
+          token: ${{ secrets.PAT }}
 
       - name: Validate release version
         working-directory: pipelines/matrix
