@@ -101,4 +101,6 @@ integration:
           - biolink:Procedure
           - biolink:Publication
           - biolink:Treatment
+          - biolink:OrganismTaxon
+      
           # If you add anything here make sure the fabricator is not generating it, else we remove it
