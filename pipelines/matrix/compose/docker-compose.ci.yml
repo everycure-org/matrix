@@ -54,8 +54,6 @@ services:
       NEO4J_PASSWORD: admin
       OPENAI_ENDPOINT: http://mockserver:1080/v1
       MLFLOW_ENDPOINT: http://mlflow:5000
-      MLFLOW_EXPERIMENT_ID: 1
-      MLFLOW_RUN_ID: null
       MLFLOW_URL: https://mlflow.platform.prod.everycure.org/
       OPENAI_API_KEY: sk-proj-abc
       RUNTIME_GCP_PROJECT_ID: mtrx-hub-prod-sms
