@@ -2,13 +2,12 @@ import json
 import logging
 import os
 import re
-from typing import List, Literal
+from typing import List
 
 import click
 import mlflow
 from kedro.framework.cli.utils import split_string
 from kedro.framework.project import pipelines as kedro_pipelines
-from rich.console import Console
 from rich.logging import RichHandler
 
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH
