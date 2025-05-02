@@ -236,7 +236,7 @@ def make_folds(
 
     # Split data into folds
     all_data_frames = []
-
+    # FUTURE: Ensure fields are reflected in GT dataset for future splitters
     if isinstance(splitter, DiseaseAreaSplit):
         split_iterator = splitter.split(data, disease_list)
     else:
