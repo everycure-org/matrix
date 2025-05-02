@@ -29,7 +29,7 @@ class SingleLabelPairGenerator(DrugDiseasePairGenerator):
     """Class representing generators outputting drug-disease pairs with a single label."""
 
     def __init__(self, y_label: int, random_state: int) -> None:
-        """Initializes the SingleLabelPairGenerator instance.
+        """Initializes a SingleLabelPairGenerator instance.
 
         Args:
             y_label: label to assign to generated pairs.

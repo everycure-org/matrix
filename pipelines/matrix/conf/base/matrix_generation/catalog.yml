@@ -27,6 +27,18 @@ matrix_generation.feat.nodes@spark:
   <<: *_pandas_parquet
   filepath: ${globals:paths.matrix_generation}/model_output/fold_{fold}/matrix_predictions
 
-"matrix_generation.fold_{fold}.reporting.matrix_report":
-  filepath: ${globals:paths.matrix_generation}/fold_{fold}/matrix_report_${globals:run_name}.xlsx
-  type: pandas.ExcelDataset
+"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark":
+  <<: *_spark_parquet
+  filepath: ${globals:paths.matrix_generation}/model_output/fold_{fold}/matrix_predictions
+
+matrix_generation.reporting.plots:
+  type: partitions.PartitionedDataset
+  path: ${globals:paths.matrix_generation}/reporting/plots
+  dataset: matplotlib.MatplotlibWriter
+  filename_suffix: .png
+
+matrix_generation.reporting.tables:
+  type: partitions.PartitionedDataset
+  path: ${globals:paths.matrix_generation}/reporting/tables
+  dataset: kedro_datasets.pandas.CSVDataset
+  filename_suffix: .csv

@@ -149,8 +149,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create evaluation pipeline.
 
     Pipeline is created dynamically, based on the following dimensions:
-        - Models, i.e., type of model, e.g. random forst
-        - Folds, i.e., number of folds to train/evaluation
+        - Folds, i.e., number of folds to train/evaluate
         - Evaluations, i.e., type evaluation suite to run
     """
 
