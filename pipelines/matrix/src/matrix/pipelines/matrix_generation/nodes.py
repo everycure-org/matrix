@@ -491,7 +491,6 @@ def generate_metadata(
         Tuple containing:
         - Dataframe containing metadata such as data sources version, timestamp, run name etc.
         - Dataframe with metadata about the output matrix columns.
-        - @piotr to complete
     """
     meta_dict = {
         "timestamp": datetime.now().strftime("%Y-%m-%d"),
