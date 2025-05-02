@@ -141,6 +141,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           POSTS_DIR: docs/src/releases/posts
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         # only create release notes for minor, major, and intermediate bumps
         if: env.generate_article == 'True'
         run: |
