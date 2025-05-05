@@ -233,8 +233,8 @@ def run(
 
     # construct description for mlflow run which we'll use to add some useful links
     description = f"""
-    - Argo Workflow: {argo_url}
-    - Codebase: https://github.com/everycure-org/matrix/tree/{get_current_git_sha()}
+- [Argo Workflow]({argo_url})
+- [Codebase](https://github.com/everycure-org/matrix/tree/{get_current_git_sha()})
     """
 
     # see https://stackoverflow.com/questions/73320708/set-run-description-programmatically-in-mlflow
