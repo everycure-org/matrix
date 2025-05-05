@@ -22,6 +22,10 @@ def get_current_git_branch() -> str:
     return branch
 
 
+def get_current_git_sha() -> str:
+    return subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+
+
 def has_dirty_git() -> bool:
     """Checks for uncommitted or untracked files. Empty string return means no such files were found"""
     is_dirty = subprocess.check_output(["git", "status", "--porcelain"], text=True).strip()

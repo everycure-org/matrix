@@ -87,11 +87,13 @@ jobs:
       - name: Run the kedro sampling pipeline
         working-directory: pipelines/matrix
         run: |
+          DATE=$(date +%Y%m%d)
           echo "Run the kedro sampling pipeline"
           kedro experiment run \
             -e sample \
+            --experiment-name sample-run \
             -p create_sample \
-            --run-name create-sample-release \
+            --run-name create-sample-release-${DATE} \
             --username github_actions_bot \
             --release-version ${RELEASE_VERSION} \
             --headless \

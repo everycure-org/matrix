@@ -23,6 +23,7 @@ from matrix.git_utils import (
     BRANCH_NAME_REGEX,
     abort_if_intermediate_release,
     get_current_git_branch,
+    get_current_git_sha,
     git_tag_exists,
     has_dirty_git,
     has_legal_branch_name,
@@ -58,19 +59,6 @@ def configure_mlflow_tracking(token: str) -> None:
     os.environ["MLFLOW_TRACKING_TOKEN"] = token
 
 
-def get_service_account_token() -> str:
-    try:
-        sa_credential_info = json.loads(os.getenv("GCP_SA_KEY"))
-        return get_service_account_creds(sa_credential_info).token
-    except json.JSONDecodeError as e:
-        click.secho(
-            "Error decoding service account key. Please check the format and presence of the GCP_SA_KEY secret",
-            fg="yellow",
-            bold=True,
-        )
-        raise
-
-
 def get_user_account_token() -> str:
     try:
         return get_user_account_creds().id_token
@@ -82,10 +70,10 @@ def get_user_account_token() -> str:
 @click.group()
 def experiment() -> None:
     _validate_env_vars_for_private_data()
-    if os.getenv("GITHUB_ACTIONS"):
+    if os.getenv("GITHUB_ACTIONS") and os.getenv("GCP_SA_KEY"):
         # Running in GitHub Actions, get the IAP token of service acccount from the secrets
         click.echo("Running in GitHub Actions, using service account IAP token")
-        token = get_service_account_token()
+        token = json.loads(str(os.getenv("GCP_SA_KEY"))).token
     else:
         # Running locally, get the IAP token of user account
         token = get_user_account_token()
@@ -227,7 +215,7 @@ def run(
             experiment_id, run_name, namespace, pipeline, environment, is_test, release_version, headless
         )
 
-    _submit(
+    argo_url = _submit(
         username=username,
         namespace=namespace,
         run_name=run_name,
@@ -242,6 +230,16 @@ def run(
         is_test=is_test,
         environment=environment,
     )
+
+    # construct description for mlflow run which we'll use to add some useful links
+    description = f"""
+    - Argo Workflow: {argo_url}
+    - Codebase: https://github.com/everycure-org/matrix/tree/{get_current_git_sha()}
+    """
+
+    # see https://stackoverflow.com/questions/73320708/set-run-description-programmatically-in-mlflow
+    # or https://mlflow.org/docs/latest/api_reference/python_api/mlflow.html
+    mlflow.set_tag("mlflow.note.content", description)
 
 
 @experiment.command()
@@ -268,7 +266,7 @@ def _submit(
     mlflow_run_id: Optional[str] = None,
     allow_interactions: bool = True,
     is_test: bool = False,
-) -> None:
+) -> str:
     """Submit the end-to-end workflow.
 
     This function contains redundancy.
@@ -345,9 +343,8 @@ def _submit(
 
         console.print("Submitting workflow for pipeline...")
         job_name = submit_workflow(run_name, namespace, verbose=verbose)
-        console.print(
-            f"\nSee your workflow in the ArgoCD UI here: [blue]{os.environ['ARGO_PLATFORM_URL']}/workflows/argo-workflows/{run_name}[/blue]"
-        )
+        argo_url = f"{os.environ['ARGO_PLATFORM_URL']}/workflows/argo-workflows/{run_name}"
+        console.print(f"\nSee your workflow in the ArgoCD UI here: [blue]{argo_url}[/blue]")
         console.print(f"Workflow submitted successfully with job name: {job_name}")
         console.print("\nTo watch the workflow progress, run the following command:")
         console.print(f"argo watch -n {namespace} {job_name}")
@@ -368,6 +365,9 @@ def _submit(
             workflow_url = f"{os.environ['ARGO_PLATFORM_URL']}/workflows/{namespace}/{run_name}"
             click.launch(workflow_url)
             console.print(f"[blue]Opened workflow in browser: {workflow_url}[/blue]")
+
+        return argo_url
+
     except Exception as e:
         console.print(f"[bold red]Error during submission:[/bold red] {str(e)}")
         if verbose:
