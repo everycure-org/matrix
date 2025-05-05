@@ -2,25 +2,35 @@ import json
 import logging
 import os
 import re
-from typing import List
+import secrets
+import sys
+from pathlib import Path
+from typing import List, Optional
 
 import click
 import mlflow
 from kedro.framework.cli.utils import split_string
 from kedro.framework.project import pipelines as kedro_pipelines
+from kedro.framework.startup import bootstrap_project
+from kedro.pipeline import Pipeline
+from rich.console import Console
 from rich.logging import RichHandler
+from rich.panel import Panel
 
-from matrix.argo import ARGO_TEMPLATES_DIR_PATH
+from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
 from matrix.cli_commands.run import _validate_env_vars_for_private_data
-from matrix.cli_commands.submit import (
-    _submit,
+from matrix.git_utils import (
+    BRANCH_NAME_REGEX,
     abort_if_intermediate_release,
-    abort_if_unmet_git_requirements,
-    get_run_name,
-    summarize_submission,
+    get_current_git_branch,
+    git_tag_exists,
+    has_dirty_git,
+    has_legal_branch_name,
+    has_unpushed_commits,
 )
-from matrix.git_utils import get_current_git_branch
+from matrix.utils.argo import argo_template_lint, submit_workflow
 from matrix.utils.authentication import get_service_account_creds, get_user_account_creds
+from matrix.utils.kubernetes import apply, can_talk_to_kubernetes, create_namespace, namespace_exists
 from matrix.utils.mlflow_utils import (
     DeletedExperimentExistsWithName,
     ExperimentNotFound,
@@ -29,6 +39,7 @@ from matrix.utils.mlflow_utils import (
     get_experiment_id_from_name,
     rename_soft_deleted_experiment,
 )
+from matrix.utils.system import run_subprocess
 
 logging.basicConfig(
     level=logging.INFO,
@@ -37,6 +48,7 @@ logging.basicConfig(
     handlers=[RichHandler(rich_tracebacks=True)],
 )
 log = logging.getLogger("rich")
+console = Console()
 
 EXPERIMENT_BRANCH_PREFIX = "experiment/"
 
@@ -241,3 +253,270 @@ def archive(dry_run: bool):
         archive_runs_and_experiments(dry_run=dry_run)
     elif click.confirm("Are you sure you want to archive all runs and experiments?", abort=True):
         archive_runs_and_experiments(dry_run=dry_run)
+
+
+def _submit(
+    username: str,
+    namespace: str,
+    run_name: str,
+    release_version: str,
+    pipeline_obj: Pipeline,
+    verbose: bool,
+    dry_run: bool,
+    environment: str,
+    template_directory: Path,
+    mlflow_experiment_id: int,
+    mlflow_run_id: Optional[str] = None,
+    allow_interactions: bool = True,
+    is_test: bool = False,
+) -> None:
+    """Submit the end-to-end workflow.
+
+    This function contains redundancy.
+
+    The original logic of this function was:
+    1. Create & Apply (push to k8s) Argo template, containing the entire pipeline registry. This part of the function makes use of pipelines_for_workflow, which will be included in the template.
+    2. When submitting the workflow, via `__entrypoint__`, a pipeline for execution is selected.
+        It defaults to `__default__`, but can be configured via pipeline_for_execution.
+
+    In the future, we expect plan not to have any template at all, but go straight from Kedro to Argo Workflow.
+
+    This meant that it was possible to submit the workflows for other pipelines in Argo CI.
+
+    Args:
+        username (str): The username to use for the workflow.
+        namespace (str): The namespace to use for the workflow.
+        run_name (str): The name of the run.
+        pipeline_obj (Pipeline): Pipeline to execute.
+        verbose (bool): If True, enable verbose output.
+        dry_run (bool): If True, do not submit the workflow.
+        template_directory (Path): The directory containing the Argo template.
+        allow_interactions (bool): If True, allow prompts for confirmation.
+        is_test (bool): If True, submit to test folder, not release folder.
+    """
+
+    try:
+        runtime_gcp_project_id = os.environ["RUNTIME_GCP_PROJECT_ID"]
+        mlflow_url = os.environ["MLFLOW_URL"]
+        image = f"us-central1-docker.pkg.dev/{runtime_gcp_project_id}/matrix-images/matrix"
+
+        console.rule("[bold blue]Submitting Workflow")
+        if not can_talk_to_kubernetes(
+            project=runtime_gcp_project_id, region="us-central1", cluster_name="compute-cluster"
+        ):
+            raise EnvironmentError("Cannot communicate with Kubernetes")
+        else:
+            console.print("[green]✓[/green] kubectl authenticated")
+
+        argo_template = build_argo_template(
+            f"{image}:{run_name}",
+            run_name,
+            release_version,
+            username,
+            namespace,
+            pipeline_obj,
+            environment,
+            runtime_gcp_project_id,
+            mlflow_experiment_id,
+            mlflow_url,
+            is_test=is_test,
+            mlflow_run_id=mlflow_run_id,
+        )
+
+        file_path = save_argo_template(argo_template, template_directory)
+        console.print("Linting Argo template...")
+        argo_template_lint(file_path, verbose=verbose)
+        console.print("[green]✓[/green] Argo template linted")
+
+        if dry_run:
+            return
+
+        console.print("Building Docker image...")
+        build_push_docker(image, run_name, verbose=verbose)
+        console.print("[green]✓[/green] Docker image built and pushed to dev repository")
+
+        console.print("Ensuring Kubernetes namespace...")
+        if not namespace_exists(namespace):
+            console.print(f"Namespace {namespace} does not exist. Creating it...")
+            create_namespace(namespace, verbose=verbose)
+        else:
+            console.print("[green]✓[/green] Namespace exists")
+
+        apply(namespace, file_path, verbose=verbose)
+        console.print("[green]✓[/green] Argo template applied")
+
+        console.print("Submitting workflow for pipeline...")
+        job_name = submit_workflow(run_name, namespace, verbose=verbose)
+        console.print(
+            f"\nSee your workflow in the ArgoCD UI here: [blue]{os.environ['ARGO_PLATFORM_URL']}/workflows/argo-workflows/{run_name}[/blue]"
+        )
+        console.print(f"Workflow submitted successfully with job name: {job_name}")
+        console.print("\nTo watch the workflow progress, run the following command:")
+        console.print(f"argo watch -n {namespace} {job_name}")
+        console.print("\nTo view the workflow in the Argo UI, run:")
+        console.print(f"argo get -n {namespace} {job_name}")
+        console.print("[green]✓[/green] Workflow submitted")
+
+        console.print(
+            Panel.fit(
+                f"[bold green]Workflow {'prepared' if dry_run else 'submitted'} successfully![/bold green]\n"
+                f"Run Name: {run_name}\n"
+                f"Namespace: {namespace}",
+                title="Submission Summary",
+            )
+        )
+
+        if allow_interactions and click.confirm("Do you want to open the workflow in your browser?", default=False):
+            workflow_url = f"{os.environ['ARGO_PLATFORM_URL']}/workflows/{namespace}/{run_name}"
+            click.launch(workflow_url)
+            console.print(f"[blue]Opened workflow in browser: {workflow_url}[/blue]")
+    except Exception as e:
+        console.print(f"[bold red]Error during submission:[/bold red] {str(e)}")
+        if verbose:
+            console.print_exception()
+        sys.exit(1)
+
+
+def summarize_submission(
+    experiment_id: int,
+    run_name: str,
+    namespace: str,
+    pipeline: str,
+    environment: str,
+    is_test: bool,
+    release_version: str,
+    headless: bool,
+):
+    console.print(
+        Panel.fit(
+            f"[bold green]About to submit workflow:[/bold green]\n"
+            f"MLFlow Experiment: {mlflow.get_tracking_uri()}/#/experiments/{experiment_id}\n"
+            f"Run Name: {run_name}\n"
+            f"Namespace: {namespace}\n"
+            f"Pipeline: {pipeline}\n"
+            f"Environment: {environment}\n"
+            f"Writing to test folder: {is_test}\n"
+            f"Data Release Version: {release_version}\n",
+            title="Submission Summary",
+        )
+    )
+    console.print(
+        "Reminder: A data release should only be submitted once and not overwritten.\n"
+        "If you need to make changes, please make this part of the next release.\n"
+        "Experiments (modelling pipeline) are nested under the release and can be overwritten.\n\n"
+    )
+
+    if not headless:
+        if not click.confirm("Are you sure you want to submit the workflow?", default=False):
+            raise click.Abort()
+
+
+def build_push_docker(image: str, username: str, verbose: bool):
+    """Build the docker image only once, push it to dev registry, and if running in prod, also to prod registry."""
+    run_subprocess(f"make docker_push TAG={username} docker_image={image}", stream_output=verbose)
+
+
+def build_argo_template(
+    image_name: str,
+    run_name: str,
+    release_version: str,
+    username: str,
+    namespace: str,
+    pipeline_obj: Pipeline,
+    environment: str,
+    runtime_gcp_project_id: str,
+    mlflow_experiment_id: int,
+    mlflow_url: str,
+    is_test: bool,
+    default_execution_resources: Optional[ArgoResourceConfig] = None,
+    mlflow_run_id: Optional[str] = None,
+) -> str:
+    """Build Argo workflow template."""
+    matrix_root = Path(__file__).parent.parent.parent.parent
+    metadata = bootstrap_project(matrix_root)
+    package_name = metadata.package_name
+
+    if is_test:
+        release_folder_name = "tests"
+    else:
+        release_folder_name = "releases"
+
+    console.print("Building Argo template...")
+    generated_template = generate_argo_config(
+        image=image_name,
+        run_name=run_name,
+        release_version=release_version,
+        mlflow_experiment_id=mlflow_experiment_id,
+        mlflow_url=mlflow_url,
+        namespace=namespace,
+        username=username,
+        package_name=package_name,
+        release_folder_name=release_folder_name,
+        pipeline=pipeline_obj,
+        environment=environment,
+        default_execution_resources=default_execution_resources,
+        mlflow_run_id=mlflow_run_id,
+    )
+    console.print("[green]✓[/green] Argo template built")
+
+    return generated_template
+
+
+def save_argo_template(argo_template: str, template_directory: Path) -> str:
+    console.print("Writing Argo template...")
+    file_path = template_directory / "argo-workflow-template.yml"
+    with open(file_path, "w") as f:
+        f.write(argo_template)
+    console.print(f"[green]✓[/green] Argo template saved to {file_path}")
+    return str(file_path)
+
+
+def get_run_name(run_name: Optional[str]) -> str:
+    """Get the experiment name based on input or Git branch.
+
+    If a run_name is provided, it is returned sanitized as-is. Otherwise, a name is generated
+    based on the current Git branch name with a random suffix.
+
+    Args:
+        run_name (Optional[str]): A custom run name provided by the user.
+
+    Returns:
+        str: The final run name to be used for the workflow.
+    """
+    # If no run_name is provided, use the current Git branch name
+    if not run_name:
+        run_name = run_subprocess("git rev-parse --abbrev-ref HEAD", stream_output=True).stdout.strip()
+
+    # Add a random suffix to the run_name
+    random_sfx = str.lower(secrets.token_hex(4))
+    unsanitized_name = f"{run_name}-{random_sfx}".rstrip("-")
+    sanitized_name = re.sub(r"[^a-zA-Z0-9-]", "-", unsanitized_name)
+    return sanitized_name
+
+
+def abort_if_unmet_git_requirements(release_version: str) -> None:
+    """
+    Validates the current Git repository:
+    1. The current Git branch must be either 'main' or 'master'.
+    2. The Git repository must be clean (no uncommitted changes or untracked files).
+
+    Raises:
+        ValueError
+    """
+    errors = []
+
+    if has_dirty_git():
+        errors.append("Repository has uncommitted changes or untracked files.")
+
+    if not has_legal_branch_name():
+        errors.append(f"Your branch name doesn't match the regex: {BRANCH_NAME_REGEX}")
+
+    if has_unpushed_commits():
+        errors.append(f"You have commits not pushed to remote.")
+
+    if git_tag_exists(release_version):
+        errors.append(f"The git tag for the release version you specified already exists.")
+
+    if errors:
+        error_list = "\n".join(errors)
+        raise RuntimeError(f"Submission failed due to the following issues:\n\n{error_list}")
