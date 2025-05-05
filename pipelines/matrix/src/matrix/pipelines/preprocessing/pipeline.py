@@ -9,6 +9,109 @@ def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             # -------------------------------------------------------------------------
+            # Embiology cleaning and preprocessing
+            # -------------------------------------------------------------------------
+            node(
+                func=lambda x: x,
+                inputs="preprocessing.raw.embiology.attr",
+                outputs="preprocessing.int.embiology.attr@pandas",
+                name="write_embiology_attr",
+                tags=["ingest-embiology-kg"],
+            ),
+            node(
+                func=lambda x: x,
+                inputs="preprocessing.raw.embiology.ref_pub",
+                outputs="preprocessing.int.embiology.ref_pub@pandas",
+                name="write_embiology_ref_pub",
+                tags=["ingest-embiology-kg"],
+            ),
+            node(
+                func=lambda x: x,
+                inputs="preprocessing.raw.embiology.nodes",
+                outputs="preprocessing.int.embiology.nodes@pandas",
+                name="write_embiology_nodes",
+                tags=["ingest-embiology-kg"],
+            ),
+            node(
+                func=lambda x: x,
+                inputs="preprocessing.raw.embiology.edges",
+                outputs="preprocessing.int.embiology.edges@pandas",
+                name="write_embiology_edges",
+                tags=["ingest-embiology-kg"],
+            ),
+            node(
+                func=lambda x: x,
+                inputs="preprocessing.raw.embiology.manual_id_mapping",
+                outputs="preprocessing.int.embiology.manual_id_mapping@pandas",
+                name="write_embiology_id_mapping",
+                tags=["ingest-embiology-kg"],
+            ),
+            node(
+                func=lambda x: x,
+                inputs="preprocessing.raw.embiology.manual_name_mapping",
+                outputs="preprocessing.int.embiology.manual_name_mapping@pandas",
+                name="write_embiology_name_mapping",
+                tags=["ingest-embiology-kg"],
+            ),
+            node(
+                func=nodes.prepare_normalized_identifiers,
+                inputs=[
+                    "preprocessing.int.embiology.attr@spark",
+                    "preprocessing.int.embiology.nodes@spark",
+                    "preprocessing.int.embiology.manual_id_mapping@spark",
+                    "preprocessing.int.embiology.manual_name_mapping@spark",
+                    "params:preprocessing.embiology.attr.identifiers_mapping",
+                    "params:preprocessing.embiology.normalization",
+                ],
+                outputs="preprocessing.int.embiology.identifiers@pandas",
+                name="prepare_normalized_identifiers",
+                tags=["embiology-kg"],
+            ),
+            node(
+                func=nodes.prepare_nodes,
+                inputs=[
+                    "preprocessing.int.embiology.nodes@spark",
+                    "preprocessing.int.embiology.identifiers@spark",
+                    "params:preprocessing.embiology.nodes.biolink_mapping",
+                ],
+                outputs="preprocessing.prm.embiology.nodes",
+                name="prepare_nodes",
+                tags=["embiology-kg"],
+            ),
+            node(
+                func=nodes.add_edge_attributes,
+                inputs=[
+                    "preprocessing.int.embiology.ref_pub@spark",
+                ],
+                outputs="preprocessing.int.embiology.attributes",
+                name="prepare_edges_attributes",
+                tags=["embiology-kg"],
+            ),
+            node(
+                func=nodes.prepare_edges,
+                inputs=[
+                    "preprocessing.int.embiology.edges@spark",
+                    "preprocessing.int.embiology.attributes",
+                    "params:preprocessing.embiology.edges.biolink_mapping",
+                ],
+                outputs="preprocessing.prm.embiology.edges",
+                name="prepare_edges",
+                tags=["embiology-kg"],
+            ),
+            node(
+                func=nodes.deduplicate_and_clean,
+                inputs=[
+                    "preprocessing.prm.embiology.nodes",
+                    "preprocessing.prm.embiology.edges",
+                ],
+                outputs=[
+                    "preprocessing.prm.embiology.nodes_final",
+                    "preprocessing.prm.embiology.edges_final",
+                ],
+                name="final_clean_embiology_kg",
+                tags=["embiology-kg"],
+            ),
+            # -------------------------------------------------------------------------
             # EC Clinical Data ingestion and name->id mapping
             # -------------------------------------------------------------------------
             node(
