@@ -1,3 +1,6 @@
+fabricator.ground_truth:
+  num_rows_per_category: 100
+
 fabricator.rtx_kg2:
   nodes:
     num_rows: 500
@@ -74,7 +77,7 @@ fabricator.rtx_kg2:
         freq: M
 
   edges:
-    num_rows: 2000
+    num_rows: 5000
     columns:
       subject:
         type: copy_column
@@ -150,7 +153,7 @@ fabricator.rtx_kg2:
           - 5059595
 
   drug_list:
-    num_rows: 20
+    num_rows: 100
     columns:
       curie:
         type: copy_column
@@ -192,7 +195,7 @@ fabricator.rtx_kg2:
           - AVAILABLE
 
   disease_list:
-    num_rows: 30
+    num_rows: 100
     columns:
       category_class:
         type: copy_column
@@ -242,83 +245,90 @@ fabricator.rtx_kg2:
           - False
 
 fabricator.clinical_trials:
-  nodes:
-    num_rows: 50
-    columns:
-      curie:
-        type: copy_column
-        # Reference the source_dfs key directly
-        source_column: "rtx_nodes.id"
-        sample:
-          num_rows: "@nodes.num_rows"
-          seed: 40599
-      name:
-        type: copy_column
-        # Reference the source_dfs key directly
-        source_column: "rtx_nodes.name"
-        sample:
-          num_rows: "@nodes.num_rows"
-          seed: 40599
+  pos_cols:
+    - significantly_better
+    - non_significantly_better
+  neg_cols:
+    - significantly_worse
+    - non_significantly_worse
+  graph:
+    nodes:
+      num_rows: 50
+      columns:
+        curie:
+          type: copy_column
+          source_column: rtx_nodes.id
+          sample:
+            num_rows: "@nodes.num_rows"
+            seed: 40599
+        name:
+          type: copy_column
+          source_column: rtx_nodes.name
+          sample:
+            num_rows: "@nodes.num_rows"
+            seed: 40599
 
-  edges:
-    num_rows: 10
-    columns:
-      drug_curie:
-        type: copy_column
-        source_column: "nodes.curie"
-        sample:
-          num_rows: "@edges.num_rows"
-          seed: 40599
-      drug_name:
-        type: copy_column
-        source_column: "nodes.name"
-        sample:
-          num_rows: "@edges.num_rows"
-          seed: 40599
-      disease_curie:
-        type: copy_column
-        source_column: "nodes.curie"
-        sample:
-          num_rows: "@edges.num_rows"
-          seed: 30599
-      disease_name:
-        type: copy_column
-        source_column: "nodes.name"
-        sample:
-          num_rows: "@edges.num_rows"
-          seed: 30599
+    edges:
+      num_rows: 10
+      columns:
+        drug_curie:
+          type: copy_column
+          source_column: nodes.curie
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 40599
+        drug_name:
+          type: copy_column
+          source_column: nodes.name
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 40599
+        disease_curie:
+          type: copy_column
+          source_column: nodes.curie
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 30599
+        disease_name:
+          type: copy_column
+          source_column: nodes.name
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 30599
+        # 1. Generate a single outcome category first
+        _outcome:
+          type: generate_values
+          sample_values:
+            - sig_better
+            - non_sig_better
+            - non_sig_worse
+            - sig_worse
 
-      # 1. Generate a single outcome category first
-      _outcome: # Using underscore convention for intermediate columns
-        type: generate_values
-        # Ensures exactly one outcome category per row
-        sample_values:
-          - sig_better
-          - non_sig_better
-          - non_sig_worse
-          - sig_worse
-
-      # 2. Derive binary flags from the outcome category
-      significantly_better:
-        type: row_apply
-        input_columns: ["edges._outcome"]
-        row_func: "lambda outcome: 1 if outcome == 'sig_better' else 0"
-        resize: True
-      non_significantly_better:
-        type: row_apply
-        input_columns: ["edges._outcome"]
-        row_func: "lambda outcome: 1 if outcome == 'non_sig_better' else 0"
-        resize: True
-      non_significantly_worse:
-        type: row_apply
-        input_columns: ["edges._outcome"]
-        row_func: "lambda outcome: 1 if outcome == 'non_sig_worse' else 0"
-        resize: True
-      significantly_worse:
-        type: row_apply
-        input_columns: ["edges._outcome"]
-        row_func: "lambda outcome: 1 if outcome == 'sig_worse' else 0"
-        resize: True
+        # 2. Derive binary flags from the outcome category
+        significantly_better:
+          type: row_apply
+          input_columns: ["edges._outcome"]
+          row_func: "lambda outcome: 1 if outcome == 'sig_better' else 0"
+          resize: True
+          seed: 50001
+        non_significantly_better:
+          type: row_apply
+          input_columns: ["edges._outcome"]
+          row_func: "lambda outcome: 1 if outcome == 'non_sig_better' else 0"
+          resize: True
+          seed: 50002
+        non_significantly_worse:
+          type: row_apply
+          input_columns: ["edges._outcome"]
+          row_func: "lambda outcome: 1 if outcome == 'non_sig_worse' else 0"
+          resize: True
+          seed: 50003
+        significantly_worse:
+          type: row_apply
+          input_columns: ["edges._outcome"]
+          row_func: "lambda outcome: 1 if outcome == 'sig_worse' else 0"
+          resize: True
+          seed: 50004
 
 fabricator.robokop:
   nodes:
@@ -574,7 +584,6 @@ fabricator.embiology:
       all_categories:
         type: row_apply
         input_columns: [ "nodes.category" ]
-        # NOTE: This ensures the full path from root to child is added in the categories column
         row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
         row_func_kwargs:
           delimiter: "|"

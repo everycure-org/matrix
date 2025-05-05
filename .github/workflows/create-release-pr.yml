@@ -56,6 +56,7 @@ jobs:
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
           submodules: recursive
+          token: ${{ secrets.PAT }}
 
       - name: Configure Git
         run: |
@@ -140,6 +141,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           POSTS_DIR: docs/src/releases/posts
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         # only create release notes for minor, major, and intermediate bumps
         if: env.generate_article == 'True'
         run: |
