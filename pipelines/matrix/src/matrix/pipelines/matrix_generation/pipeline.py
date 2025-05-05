@@ -1,6 +1,6 @@
 from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
-from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, ArgoNode
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from matrix.pipelines.modelling.utils import partial_fold
 
 from . import nodes
@@ -48,10 +48,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "known_pairs": "modelling.model_input.splits",
                             "drugs": "integration.int.drug_list.nodes.norm@pandas",
                             "diseases": "integration.int.disease_list.nodes.norm@pandas",
-                            "graph": "matrix_generation.feat.nodes@kg",
+                            "graph": "matrix_generation.feat.nodes@spark",
                             "clinical_trials": "integration.int.ec_clinical_trails.edges.norm@pandas",
                         },
-                        outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs",
+                        outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs@pandas",
                         name=f"generate_matrix_pairs_fold_{fold}",
                     )
                 ]
@@ -64,19 +64,20 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ArgoNode(
                         func=nodes.make_predictions_and_sort,
                         inputs=[
-                            "matrix_generation.feat.nodes@kg",
-                            f"matrix_generation.prm.fold_{fold}.matrix_pairs",
+                            "matrix_generation.feat.nodes@spark",
+                            f"matrix_generation.prm.fold_{fold}.matrix_pairs@spark",
                             f"modelling.fold_{fold}.model_input.transformers",
                             f"modelling.fold_{fold}.models.model",
                             f"params:modelling.{model_name}.model_options.model_tuning_args.features",
                             "params:matrix_generation.treat_score_col_name",
                             "params:matrix_generation.not_treat_score_col_name",
                             "params:matrix_generation.unknown_score_col_name",
-                            "params:matrix_generation.matrix_generation_options.batch_by",
                         ],
                         outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
                         name=f"make_predictions_and_sort_fold_{fold}",
-                        argo_config=ARGO_GPU_NODE_MEDIUM,
+                        argo_config=ArgoResourceConfig(
+                            cpu_limit=14, cpu_request=14, memory_limit=310, memory_request=155
+                        ),
                     ),
                     ArgoNode(
                         func=nodes.generate_reports,
