@@ -3,10 +3,11 @@ import importlib
 import inspect
 import logging
 import re
+from collections.abc import Collection
 from copy import deepcopy
 from inspect import getfullargspec
 from types import BuiltinFunctionType, FunctionType
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple
 
 OBJECT_KW = "_object"
 INSTANTIATE_KW = "instantiate"
@@ -217,10 +218,10 @@ def unpack_params():  # pylint: disable=missing-return-type-doc
 
 
 def _extract_elements_in_list(
-    full_list_of_columns: List[str],
-    list_of_regexes: List[str],
+    full_list_of_columns: Iterable[str],
+    list_of_regexes: Collection[str],
     raise_exc,
-) -> List[str]:
+) -> list[str]:
     """Use regex to extract elements in a list."""
     results = []
     for regex in list_of_regexes:
