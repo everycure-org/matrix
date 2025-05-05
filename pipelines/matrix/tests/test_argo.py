@@ -466,7 +466,6 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
         image=image_name,
         run_name=run_name,
         release_version=release_version,
-        image_tag=image_tag,
         mlflow_experiment_id=mlflow_experiment_id,
         namespace=namespace,
         username=username,
