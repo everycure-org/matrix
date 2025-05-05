@@ -47,6 +47,13 @@ def mock_can_talk_to_kubernetes():
         yield mock
 
 
+@pytest.fixture
+def mock_argo_template_lint():
+    with patch("matrix.cli_commands.experiment.argo_template_lint") as mock:
+        mock.return_value = True
+        yield mock
+
+
 @pytest.fixture(scope="function")
 def mock_pipelines():
     pipeline_dict = {
@@ -153,6 +160,7 @@ def test_pipeline_not_found(mock_multiple_pipelines):
 @pytest.mark.parametrize("pipeline_for_execution", ["__default__", "test_pipeline"])
 def test_workflow_submission(
     mock_run_subprocess: None,
+    mock_argo_template_lint,
     mock_namespace_exists,
     mock_apply,
     mock_can_talk_to_kubernetes,
@@ -208,6 +216,7 @@ def test_workflow_submission(
         tasks = pipeline.get("dag", {}).get("tasks", [])
         assert len(tasks) > 0, f"Expected at least one task in the {pipeline['name']} pipeline"
 
+    mock_argo_template_lint.assert_called_with(str(yaml_file), verbose=True)
     mock_can_talk_to_kubernetes.assert_called_once()
     mock_namespace_exists.assert_called_with("test_namespace")
     mock_apply.assert_called_with("test_namespace", str(yaml_file), verbose=True)
