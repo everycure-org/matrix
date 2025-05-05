@@ -190,27 +190,8 @@ def test_biolink_deduplicate(spark, sample_edges):
     assertDataFrameEqual(result.select(*expected.columns), expected)
 
 
-# @pytest.fixture
-# def sample_nodes_for_triple_filtering(spark):
-#     return spark.createDataFrame(
-#         [
-#             ("CHEBI:001", "Drug"),
-#             ("CHEBI:002", "Drug"),
-#             ("CHEBI:003", "Disease"),
-#             ("CHEBI:004", "Small Molecule"),
-#         ],
-#         schema=StructType(
-#             [
-#                 StructField("id", StringType(), False),
-#                 StructField("category", StringType(), False),
-#             ]
-#         ),
-#     )
-
-
-@pytest.fixture
-def sample_edges_for_triple_filtering(spark):
-    return spark.createDataFrame(
+def test_filter_triples(spark):
+    test_edges = spark.createDataFrame(
         [
             (
                 "CHEBI:001",
@@ -237,11 +218,8 @@ def sample_edges_for_triple_filtering(spark):
             ]
         ),
     )
-
-
-def test_filter_triples(spark, sample_edges_for_triple_filtering):
     result = filters.filter_triples(
-        edges_df=sample_edges_for_triple_filtering,
+        edges_df=test_edges,
         triples_to_exclude=[["biolink:Drug", "biolink:physically_interacts_with", "biolink:Drug"]],
     )
     expected = spark.createDataFrame(
@@ -261,6 +239,38 @@ def test_filter_triples(spark, sample_edges_for_triple_filtering):
                 StructField("predicate", StringType(), False),
                 StructField("object", StringType(), False),
                 StructField("object_category", StringType(), False),
+            ]
+        ),
+    )
+    assertDataFrameEqual(result, expected)
+
+
+def test_remove_rows_by_column(spark):
+    test_nodes = spark.createDataFrame(
+        [
+            ("CHEBI:001", "biolink:Drug"),
+            ("OT:001", "biolink:OrganismTaxon"),
+        ],
+        schema=StructType(
+            [
+                StructField("id", StringType(), False),
+                StructField("category", StringType(), False),
+            ]
+        ),
+    )
+    result = filters.remove_rows_by_column(
+        input_df=test_nodes,
+        column="category",
+        remove_list=["biolink:OrganismTaxon"],
+    )
+    expected = spark.createDataFrame(
+        [
+            ("CHEBI:001", "biolink:Drug"),
+        ],
+        schema=StructType(
+            [
+                StructField("id", StringType(), False),
+                StructField("category", StringType(), False),
             ]
         ),
     )
