@@ -1,4 +1,3 @@
-import subprocess
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -9,36 +8,50 @@ import yaml
 from click.testing import CliRunner
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
-from matrix.cli_commands.submit import (
-    _submit,
-    apply_argo_template,
-    build_argo_template,
-    command_exists,
-    ensure_namespace,
-    get_run_name,
-    run_subprocess,
-    save_argo_template,
-    submit,
-    submit_workflow,
-)
+from matrix.cli_commands.experiment import _submit, build_argo_template, get_run_name, run, save_argo_template
 from matrix.kedro4argo_node import ArgoResourceConfig
 
 
 @pytest.fixture
 def mock_run_subprocess():
-    with patch("matrix.cli_commands.submit.run_subprocess") as mock:
+    with patch("matrix.cli_commands.experiment.run_subprocess") as mock:
         mock.return_value = MagicMock(stdout='{"metadata": {"name": "mocked-job-name"}}')
         yield mock
 
 
 @pytest.fixture
-def mock_dependencies():
-    with patch("matrix.cli_commands.submit.can_talk_to_kubernetes") as _, patch(
-        "matrix.cli_commands.submit.build_push_docker"
-    ) as _, patch("matrix.cli_commands.submit.apply_argo_template") as _, patch(
-        "matrix.cli_commands.submit.ensure_namespace"
-    ):
-        yield
+def mock_namespace_exists():
+    with patch("matrix.cli_commands.experiment.namespace_exists") as mock:
+        mock.return_value = True
+        yield mock
+
+
+@pytest.fixture
+def mock_apply():
+    with patch("matrix.cli_commands.experiment.apply") as mock:
+        mock.return_value = True
+        yield mock
+
+
+@pytest.fixture
+def mock_submit_workflow():
+    with patch("matrix.cli_commands.experiment.submit_workflow") as mock:
+        mock.return_value = "dummy_workflow_name"
+        yield mock
+
+
+@pytest.fixture
+def mock_can_talk_to_kubernetes():
+    with patch("matrix.cli_commands.experiment.can_talk_to_kubernetes") as mock:
+        mock.return_value = True
+        yield mock
+
+
+@pytest.fixture
+def mock_argo_template_lint():
+    with patch("matrix.cli_commands.experiment.argo_template_lint") as mock:
+        mock.return_value = True
+        yield mock
 
 
 @pytest.fixture(scope="function")
@@ -50,13 +63,13 @@ def mock_pipelines():
         "mock_pipeline3": MagicMock(),
     }
 
-    with patch("matrix.cli_commands.submit.kedro_pipelines", new=pipeline_dict) as mock:
+    with patch("matrix.cli_commands.experiment.kedro_pipelines", new=pipeline_dict) as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_submit_internal():
-    with patch("matrix.cli_commands.submit._submit") as mock:
+    with patch("matrix.cli_commands.experiment._submit") as mock:
         yield mock
 
 
@@ -68,13 +81,14 @@ def mock_multiple_pipelines():
         "mock_pipeline3": MagicMock(),
     }
 
-    with patch("matrix.cli_commands.submit.kedro_pipelines", new=pipeline_dict) as mock:
+    with patch("matrix.cli_commands.experiment.kedro_pipelines", new=pipeline_dict) as mock:
         yield mock
 
 
-@patch("matrix.cli_commands.submit.generate_argo_config")
+@patch("matrix.cli_commands.experiment.generate_argo_config")
 def test_build_argo_template(mock_generate_argo_config: None) -> None:
     build_argo_template(
+        "image",
         "test_run",
         "testuser",
         "test_namespace",
@@ -82,23 +96,10 @@ def test_build_argo_template(mock_generate_argo_config: None) -> None:
         ArgoResourceConfig(),
         "cloud",
         is_test=True,
-        runtime_gcp_project_id="mtrx-hub-dev-3of",
         mlflow_experiment_id=1,
         mlflow_url="https://mlflow.platform.dev.everycure.org/",
     )
     mock_generate_argo_config.assert_called_once()
-
-
-def test_ensure_namespace_existing(mock_run_subprocess: None) -> None:
-    mock_run_subprocess.return_value.returncode = 0
-    ensure_namespace("existing_namespace", verbose=True)
-    assert mock_run_subprocess.call_count == 1
-
-
-def test_ensure_namespace_new(mock_run_subprocess: None) -> None:
-    mock_run_subprocess.side_effect = [MagicMock(returncode=1), MagicMock(returncode=0)]
-    ensure_namespace("new_namespace", verbose=True)
-    assert mock_run_subprocess.call_count == 2
 
 
 @pytest.fixture()
@@ -134,17 +135,6 @@ def test_save_argo_template_returns_string(temporary_directory: Path) -> None:
     assert isinstance(result, str)
 
 
-def test_apply_argo_template(mock_run_subprocess: None) -> None:
-    apply_argo_template("test_namespace", Path("sample_template.yml"), verbose=True)
-    mock_run_subprocess.assert_called_once()
-
-
-def test_submit_workflow(mock_run_subprocess: None) -> None:
-    mock_run_subprocess.return_value.stdout = '{"metadata": {"name": "test-job"}}'
-    submit_workflow("test_run", "test_namespace", verbose=True)
-    assert mock_run_subprocess.call_count == 1
-
-
 @pytest.mark.parametrize(
     "input_name,expected_name",
     [
@@ -164,65 +154,19 @@ def test_pipeline_not_found(mock_multiple_pipelines):
         runner = CliRunner()
 
         # When invoking with non existing pipeline
-        runner.invoke(submit, ["--username", "testuser", "--run-name", "test-run", "--pipeline", "not_exists"])
-
-
-def test_command_exists(mock_run_subprocess: None) -> None:
-    mock_run_subprocess.return_value.returncode = 0
-    assert command_exists("existing_command") is True
-
-    mock_run_subprocess.return_value.returncode = 1
-    assert command_exists("non_existing_command") is False
-
-
-def test_run_subprocess_error() -> None:
-    with pytest.raises(subprocess.CalledProcessError) as exc_info:
-        run_subprocess("invalid_command", stream_output=True)
-
-    assert exc_info.value.returncode == 127
-    assert exc_info.value.stdout is None
-
-
-def test_run_subprocess_streaming() -> None:
-    result = run_subprocess('echo "test"', stream_output=True)
-
-    assert result.returncode == 0
-    assert result.stdout == "test\n"
-    assert result.stderr is None
-
-
-def test_run_subprocess_no_streaming_2() -> None:
-    result = run_subprocess('echo "test"', stream_output=False)
-
-    assert result.returncode == 0
-    assert result.stdout is None
-    assert result.stderr is None
-
-
-def test_run_subprocess_no_streaming_error() -> None:
-    with pytest.raises(subprocess.CalledProcessError) as exc_info:
-        run_subprocess("invalid_command", stream_output=False)
-
-    assert exc_info.value.returncode == 127
-    assert exc_info.value.stderr is None
-    assert exc_info.value.stdout is None
-
-
-@pytest.mark.parametrize("stream", ("/dev/stdout", "/dev/stderr"))
-@pytest.mark.timeout(15)
-def test_run_subprocess_no_deadlock(stream: str) -> None:
-    """Reproduces an annoying deadlocking issue with the way run_subprocess in streaming mode was written up to c0f2f3f."""
-    # Put "lots" of output in one of stdout or stderr.
-    big_number = 100_000  # big enough to fill a process pipe, though that is platform dependant
-    cmd = f"yes | head -n {big_number} > {stream}"
-    finished_process = run_subprocess(cmd, stream_output=True, check=True, shell=True)
-    channel = finished_process.stdout if stream == "/dev/stdout" else finished_process.stderr
-    assert len(channel) == big_number * len("y\n")
+        runner.invoke(run, ["--username", "testuser", "--run-name", "test-run", "--pipeline", "not_exists"])
 
 
 @pytest.mark.parametrize("pipeline_for_execution", ["__default__", "test_pipeline"])
 def test_workflow_submission(
-    mock_run_subprocess: None, mock_dependencies: None, temporary_directory: Path, pipeline_for_execution: str
+    mock_run_subprocess: None,
+    mock_argo_template_lint,
+    mock_namespace_exists,
+    mock_apply,
+    mock_can_talk_to_kubernetes,
+    mock_submit_workflow,
+    temporary_directory: Path,
+    pipeline_for_execution: str,
 ) -> None:
     def dummy_func(*args):
         """Dummy function for testing purposes."""
@@ -271,16 +215,9 @@ def test_workflow_submission(
     for pipeline in pipeline_templates:
         tasks = pipeline.get("dag", {}).get("tasks", [])
         assert len(tasks) > 0, f"Expected at least one task in the {pipeline['name']} pipeline"
-    submit_cmd = " ".join(
-        [
-            "argo submit",
-            "--name test-run",
-            "-n test_namespace",
-            "--from wftmpl/test-run",
-            "-p run_name=test-run",
-            "-l submit-from-ui=false",
-            "-o json",
-        ]
-    )
 
-    mock_run_subprocess.assert_called_with(submit_cmd)
+    mock_argo_template_lint.assert_called_with(str(yaml_file), verbose=True)
+    mock_can_talk_to_kubernetes.assert_called_once()
+    mock_namespace_exists.assert_called_with("test_namespace")
+    mock_apply.assert_called_with("test_namespace", str(yaml_file), verbose=True)
+    mock_submit_workflow.assert_called_with("test-run", "test_namespace", verbose=True)
