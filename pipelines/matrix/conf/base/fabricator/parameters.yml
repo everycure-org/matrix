@@ -301,18 +301,42 @@ fabricator.clinical_trials:
           row_func: "lambda *args: args[1]"
           resize: True
           seed: 30599
-        significantly_better: # NOTE: Unlike the real data, the fabricated data can have value 1 in more than one column.  
+        # 1. Generate a single outcome category first
+        _outcome: # Using underscore convention for intermediate columns
           type: generate_values
-          sample_values: [1, 0]
+          # Ensures exactly one outcome category per row
+          sample_values:
+            - sig_better
+            - non_sig_better
+            - non_sig_worse
+            - sig_worse
+            # - no_diff # Optional: uncomment to add a state where neither is better/worse
+
+        # 2. Derive binary flags from the outcome category
+        significantly_better:
+          type: row_apply
+          list_of_values: [_outcome]
+          row_func: "lambda outcome: 1 if outcome == 'sig_better' else 0"
+          resize: True # Ensure it matches num_rows
+          seed: 50001 # Use different seeds if desired, or reuse
         non_significantly_better:
-          type: generate_values
-          sample_values: [1, 0]
+          type: row_apply
+          list_of_values: [_outcome]
+          row_func: "lambda outcome: 1 if outcome == 'non_sig_better' else 0"
+          resize: True
+          seed: 50002
         non_significantly_worse:
-          type: generate_values
-          sample_values: [1, 0]
+          type: row_apply
+          list_of_values: [_outcome]
+          row_func: "lambda outcome: 1 if outcome == 'non_sig_worse' else 0"
+          resize: True
+          seed: 50003
         significantly_worse:
-          type: generate_values
-          sample_values: [1, 0]
+          type: row_apply
+          list_of_values: [_outcome]
+          row_func: "lambda outcome: 1 if outcome == 'sig_worse' else 0"
+          resize: True
+          seed: 50004
 
 fabricator.robokop:
   # robokop nodes definition

@@ -69,33 +69,6 @@ def remove_overlap(disease_list: pd.DataFrame, drug_list: pd.DataFrame):
     return {"disease_list": disease_list, "drug_list": drug_list}
 
 
-def rectify_contradictory_edges(
-    edges: pd.DataFrame,
-    pos_cols: list[str],
-    neg_cols: list[str],
-    seed: int = 42,
-) -> pd.DataFrame:
-    """Function to rectify contradictory pairs by modifying the flag columns.
-
-    Args:
-        edges: Dataframe containing the edges.
-        pos_cols: List of positive flag columns (value 1 or 0).
-        neg_cols: List of negative flag columns (value 1 or 0).
-
-    Returns:
-        Dataframe containing the edges.
-    """
-    random.seed(seed)
-    for n, row in edges.iterrows():
-        if any(row[pos_cols]) and any(row[neg_cols]):
-            coin_flip = random.random()
-            if coin_flip < 0.5:
-                edges.loc[n, pos_cols] = 0
-            else:
-                edges.loc[n, neg_cols] = 0
-    return edges
-
-
 def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.DataFrame):
     def find_path(graph, start, end):
         try:
@@ -163,19 +136,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 outputs={
                     "nodes": "ingestion.raw.ec_clinical_trails.nodes@pandas",
-                    "edges": "fabricator.int.ec_clinical_trails.edges",
+                    "edges": "ingestion.raw.ec_clinical_trails.edges@pandas",
                 },
                 name="fabricate_clinical_trails_datasets",
-            ),
-            node(
-                func=rectify_contradictory_edges,
-                inputs={
-                    "edges": "fabricator.int.ec_clinical_trails.edges",
-                    "pos_cols": "params:fabricator.clinical_trials.pos_cols",
-                    "neg_cols": "params:fabricator.clinical_trials.neg_cols",
-                },
-                outputs="ingestion.raw.ec_clinical_trails.edges@pandas",
-                name="rectify_contradictory_clinical_trails_pairs",
             ),
             node(
                 func=fabricate_datasets,

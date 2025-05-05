@@ -25,7 +25,3 @@ fabricator.int.drug_list:
     header: true
     index: false
     sep: "\t"
-
-fabricator.int.ec_clinical_trails.edges:
-  <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/pre/ec_clinical_trails/edges
