@@ -104,81 +104,9 @@ class MLFlowHooks:
         other hooks to consume.
         """
         MLFlowHooks.set_context(context)
-        # MLFlowHooks.get_pipeline_inputs()
         cfg = OmegaConf.create(context.config_loader["mlflow"])
-        globs = OmegaConf.create(context.config_loader["globals"])
-        # Set tracking uri
-        # NOTE: This piece of code ensures that every MLFlow experiment
-        # is created by our Kedro pipeline with the right artifact root.
         mlflow.set_tracking_uri(cfg.server.mlflow_tracking_uri)
-
-        # Temporary - while we still support kedro submit alongside kedro experiment
-        # Once kedro submit is deprecated we can probably remove this entire hook
-        if globs.mlflow_experiment_id and globs.mlflow_experiment_id != "None":
-            experiment_id = globs.mlflow_experiment_id
-            mlflow.start_run(run_id=cfg.tracking.run.id)
-        else:
-            experiment_id = self._create_experiment(cfg.tracking.experiment.name, globs.mlflow_artifact_root)
-
-            if cfg.tracking.run.name:
-                run_id = self._create_run(cfg.tracking.run.name, experiment_id)
-
-                # Update catalog
-                OmegaConf.update(cfg, "tracking.run.id", run_id)
-                context.config_loader["mlflow"] = cfg
-
-    @staticmethod
-    def _create_run(run_name: str, experiment_id: str) -> str:
-        """Function to create run for given run_name.
-
-        Args:
-            run_name: name of the run
-            experiment_id: id of the experiment
-        Returns:
-            Identifier of created run
-        """
-        # Retrieve run
-        runs = mlflow.search_runs(
-            experiment_ids=[experiment_id],
-            filter_string=f"run_name='{run_name}'",
-            order_by=["start_time DESC"],
-            output_format="list",
-        )
-
-        if not runs:
-            logger.info("creating run")
-            # For some reason MLFLOW_RUN_ID is set to "None" rather than None, so it tries to find this run id
-            if os.environ.get("MLFLOW_RUN_ID") == "None":
-                del os.environ["MLFLOW_RUN_ID"]
-            run = mlflow.start_run(run_name=run_name, experiment_id=experiment_id)
-            mlflow.set_tag("created_by", "kedro")
-            return run.info.run_id
-        else:
-            mlflow.start_run(run_id=runs[0].info.run_id, nested=True)
-            logger.info("run already exists, re-using")
-
-        return runs[0].info.run_id
-
-    @staticmethod
-    def _create_experiment(experiment_name: str, artifact_location: str) -> str:
-        """Function to create experiment.
-
-        Args:
-            experiment_name: name of the experiment
-            artifact_location: artifact location of experiment
-        Returns:
-            Identifier of experiment
-        """
-        try:
-            return mlflow.create_experiment(experiment_name, artifact_location=artifact_location)
-        except RestException as e:
-            experiments = mlflow.search_experiments(filter_string=f"name = '{experiment_name}'")
-
-            if len(experiments) == 0:
-                raise Exception("unable to create MLFlow experiment") from e
-
-            logger.info("experiment already exists, re-using")
-            return experiments[0].experiment_id
+        mlflow.start_run(run_id=cfg.tracking.run.id, nested=True)
 
 
 class SparkHooks:
