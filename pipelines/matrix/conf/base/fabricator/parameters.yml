@@ -1,3 +1,6 @@
+fabricator.ground_truth:
+  num_rows_per_category: 100
+
 fabricator.rtx_kg2:
   nodes:
     num_rows: 500
@@ -73,7 +76,7 @@ fabricator.rtx_kg2:
         freq: M
 
   edges:
-    num_rows: 2000
+    num_rows: 5000
     columns:
       # NOTE: This is a rather complex syntax, but is results in a "subject"
       # column that contains random values from the nodes table defined above.
@@ -156,7 +159,7 @@ fabricator.rtx_kg2:
 
   # NOTE: Fabricated drug and disease lists can contain nodes which are not in the drug and disease categories resp.
   drug_list:
-    num_rows: 20
+    num_rows: 100
     columns:
       curie: 
         type: row_apply
@@ -198,7 +201,7 @@ fabricator.rtx_kg2:
           - AVAILABLE
       
   disease_list:
-    num_rows: 30
+    num_rows: 100
     columns:
       category_class: 
         type: row_apply
@@ -246,63 +249,94 @@ fabricator.rtx_kg2:
         sample_values:
           - True
           - False
-        
-fabricator.clinical_trials:
-  nodes:
-    num_rows: 50
-    columns:
-      curie:
-        type: row_apply
-        list_of_values: [rtx_nodes.id, rtx_nodes.name]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 40599
-      name:
-        type: row_apply
-        list_of_values: [rtx_nodes.id, rtx_nodes.name]
-        row_func: "lambda *args: args[1]"
-        resize: True
-        seed: 40599
 
-  edges:
-    num_rows: 10
-    columns:
-      drug_curie:
-        type: row_apply
-        list_of_values: [nodes.curie, nodes.name]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 40599
-      drug_name:
-        type: row_apply
-        list_of_values: [nodes.curie, nodes.name]
-        row_func: "lambda *args: args[1]"
-        resize: True
-        seed: 40599
-      disease_curie:
-        type: row_apply
-        list_of_values: [nodes.curie, nodes.name]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 30599
-      disease_name:
-        type: row_apply
-        list_of_values: [nodes.curie, nodes.name]
-        row_func: "lambda *args: args[1]"
-        resize: True
-        seed: 30599
-      significantly_better: # NOTE: Unlike the real data, the fabricated data can have value 1 in more than one column.  
-        type: generate_values
-        sample_values: [1, 0]
-      non_significantly_better:
-        type: generate_values
-        sample_values: [1, 0]
-      non_significantly_worse:
-        type: generate_values
-        sample_values: [1, 0]
-      significantly_worse:
-        type: generate_values
-        sample_values: [1, 0]
+fabricator.clinical_trials:
+  pos_cols:
+    - significantly_better
+    - non_significantly_better
+  neg_cols:
+    - significantly_worse
+    - non_significantly_worse
+  graph:
+    nodes:
+      num_rows: 50
+      columns:
+        curie:
+          type: row_apply
+          list_of_values: [rtx_nodes.id, rtx_nodes.name]
+          row_func: "lambda *args: args[0]"
+          resize: True
+          seed: 40599
+        name:
+          type: row_apply
+          list_of_values: [rtx_nodes.id, rtx_nodes.name]
+          row_func: "lambda *args: args[1]"
+          resize: True
+          seed: 40599
+
+    edges:
+      num_rows: 10
+      columns:
+        drug_curie:
+          type: row_apply
+          list_of_values: [nodes.curie, nodes.name]
+          row_func: "lambda *args: args[0]"
+          resize: True
+          seed: 40599
+        drug_name:
+          type: row_apply
+          list_of_values: [nodes.curie, nodes.name]
+          row_func: "lambda *args: args[1]"
+          resize: True
+          seed: 40599
+        disease_curie:
+          type: row_apply
+          list_of_values: [nodes.curie, nodes.name]
+          row_func: "lambda *args: args[0]"
+          resize: True
+          seed: 30599
+        disease_name:
+          type: row_apply
+          list_of_values: [nodes.curie, nodes.name]
+          row_func: "lambda *args: args[1]"
+          resize: True
+          seed: 30599
+        # 1. Generate a single outcome category first
+        _outcome: # Using underscore convention for intermediate columns
+          type: generate_values
+          # Ensures exactly one outcome category per row
+          sample_values:
+            - sig_better
+            - non_sig_better
+            - non_sig_worse
+            - sig_worse
+            # - no_diff # Optional: uncomment to add a state where neither is better/worse
+
+        # 2. Derive binary flags from the outcome category
+        significantly_better:
+          type: row_apply
+          list_of_values: [_outcome]
+          row_func: "lambda outcome: 1 if outcome == 'sig_better' else 0"
+          resize: True # Ensure it matches num_rows
+          seed: 50001 # Use different seeds if desired, or reuse
+        non_significantly_better:
+          type: row_apply
+          list_of_values: [_outcome]
+          row_func: "lambda outcome: 1 if outcome == 'non_sig_better' else 0"
+          resize: True
+          seed: 50002
+        non_significantly_worse:
+          type: row_apply
+          list_of_values: [_outcome]
+          row_func: "lambda outcome: 1 if outcome == 'non_sig_worse' else 0"
+          resize: True
+          seed: 50003
+        significantly_worse:
+          type: row_apply
+          list_of_values: [_outcome]
+          row_func: "lambda outcome: 1 if outcome == 'sig_worse' else 0"
+          resize: True
+          seed: 50004
 
 fabricator.robokop:
   # robokop nodes definition
@@ -716,6 +750,7 @@ fabricator.embiology:
         provider: pyint
         provider_args:
           min_value: 1
+          max_value: 1000
       publications:
         type: generate_random_arrays
         delimiter: "|"
