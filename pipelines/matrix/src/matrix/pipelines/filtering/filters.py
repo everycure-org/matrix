@@ -91,6 +91,26 @@ def keep_rows_containing(
     return input_df.filter(sf.exists(column, lambda x: sf.array_contains(keep_list_array, x)))
 
 
+def remove_rows_by_column(
+    input_df: ps.DataFrame,
+    column: str,
+    remove_list: Iterable[str],
+    **kwargs,
+) -> ps.DataFrame:
+    """Function to remove rows where a column value is in a list of values to remove.
+
+    Args:
+        input_df: dataframe to filter
+        column: name of the column to check
+        remove_list: list of values to remove
+    Returns:
+        dataframe with rows containing any of the remove_list values filtered out
+    """
+    # Create a filter condition that excludes any rows where the column value is in remove_list
+    filter_condition = ~sf.col(column).isin(remove_list)
+    return input_df.filter(filter_condition)
+
+
 def filter_triples(
     edges_df: ps.DataFrame,
     triples_to_exclude: Iterable[list[str]],
