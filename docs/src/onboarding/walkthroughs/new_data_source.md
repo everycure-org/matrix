@@ -1,4 +1,4 @@
-# Walkthrough: New Data Source
+# New Data Source
 
 This use case follows the journey of a dataset through the Kedro workflow, from raw data to its use in model training. The dataset was added by the user persona Data Scientist Dominic.
 
