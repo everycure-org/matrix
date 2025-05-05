@@ -20,3 +20,10 @@ filtering:
     filter_biolink_edges:
       _object: matrix.pipelines.filtering.filters.biolink_deduplicate_edges
     
+    filter_triples:
+      _object: matrix.pipelines.filtering.filters.filter_triples
+      triples_to_exclude:
+        - ["biolink:Drug", "biolink:physically_interacts_with", "biolink:Drug"]
+        - ["biolink:Drug", "biolink:physically_interacts_with", "biolink:Small Molecule"]
+        - ["biolink:MolecularMixture", "biolink:has_part", "biolink:Small Molecule"]
+        - ["biolink:SmallMolecule", "biolink:subclass_of", "biolink:ChemicalEntity"]
