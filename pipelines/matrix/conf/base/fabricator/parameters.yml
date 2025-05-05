@@ -5,6 +5,7 @@ fabricator.rtx_kg2:
       id:
         type: generate_unique_id
         prefix: "RTX:"
+        id_length: 8
       name:
         type: generate_unique_id
         prefix: name_
@@ -286,18 +287,38 @@ fabricator.clinical_trials:
         sample:
           num_rows: "@edges.num_rows"
           seed: 30599
+
+      # 1. Generate a single outcome category first
+      _outcome: # Using underscore convention for intermediate columns
+        type: generate_values
+        # Ensures exactly one outcome category per row
+        sample_values:
+          - sig_better
+          - non_sig_better
+          - non_sig_worse
+          - sig_worse
+
+      # 2. Derive binary flags from the outcome category
       significantly_better:
-        type: generate_values
-        sample_values: [1, 0]
+        type: row_apply
+        input_columns: ["edges._outcome"]
+        row_func: "lambda outcome: 1 if outcome == 'sig_better' else 0"
+        resize: True
       non_significantly_better:
-        type: generate_values
-        sample_values: [1, 0]
+        type: row_apply
+        input_columns: ["edges._outcome"]
+        row_func: "lambda outcome: 1 if outcome == 'non_sig_better' else 0"
+        resize: True
       non_significantly_worse:
-        type: generate_values
-        sample_values: [1, 0]
+        type: row_apply
+        input_columns: ["edges._outcome"]
+        row_func: "lambda outcome: 1 if outcome == 'non_sig_worse' else 0"
+        resize: True
       significantly_worse:
-        type: generate_values
-        sample_values: [1, 0]
+        type: row_apply
+        input_columns: ["edges._outcome"]
+        row_func: "lambda outcome: 1 if outcome == 'sig_worse' else 0"
+        resize: True
 
 fabricator.robokop:
   nodes:
@@ -306,6 +327,7 @@ fabricator.robokop:
       id:
         type: generate_unique_id
         prefix: "ROBO:"
+        id_length: 8
       "name:string":
         type: generate_unique_id
         prefix: "rs"
@@ -430,6 +452,7 @@ fabricator.ec_medical_kg:
       normalized_curie:
         type: generate_unique_id
         prefix: ec_medical_node_
+        id_length: 20
       label:
         type: faker
         provider: name
@@ -486,6 +509,7 @@ fabricator.spoke:
       id:
         type: generate_unique_id
         prefix: "SPK:"
+        id_length: 8
       name:
         type: generate_unique_id
         prefix: "rs"
@@ -533,6 +557,7 @@ fabricator.embiology:
       id:
         type: generate_unique_id
         prefix: "EMBLG:"
+        id_length: 8
       name:
         type: generate_unique_id
         prefix: name_
@@ -569,6 +594,7 @@ fabricator.embiology:
           - HGVS:NC_000007.12:g.149054662A>G
       original_id:
         type: generate_unique_id
+        id_length: 8
       nodetype:
         type: generate_values
         sample_values:
