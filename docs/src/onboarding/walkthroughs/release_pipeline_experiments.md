@@ -1,8 +1,10 @@
-# Walkthrough: Updating a Data Source
+# Walkthrough: Testing a change in the release pipeline
+
+All releases are run in an automated way. **Manual releases should never be run.**
 
 ## Task
 
-Sometimes we need to update the version of a data source. This walkthrough shows updating RTX from version 2.7.3 to 2.10.0.
+This walkthrough shows an experiment updating RTX from version 2.7.3 to 2.10.0.
 
 ## Steps
 
@@ -63,7 +65,18 @@ ingestion.raw.robokop.nodes@spark:
 
 Make sure the files in the file path match with the catalog entry.
 
-### 2. Update the parameters
+### 2. Make required code changes
+
+Checkout a new branch. The branch name should reflect the name of the experiment. 
+
+!!! info
+    Do NOT checkout a branch with the desired release version (e.g. `release/v0.4.8`) as previously advised. The actual release logic will be handled by automation.
+
+```
+git checkout main
+git pull origin main
+git checkout -b <your-branch-name>
+```
 
 Update the parameters in the `globals.yml` file.
 
@@ -88,10 +101,13 @@ Save and commit the changes. Push your branch to the remote repository.
 Run the pipeline to update the data source.
 
 ```
- kedro experiment run -p kg_release -e cloud --release-version=af_test_release_2.10.0 --is-test --username=amy --experiment-name rtx-2-10-0
+ kedro experiment run -p kg_release -e cloud --release-version=experiment_rtx_2.10.0 --is-test --username=amy --experiment-name rtx-2-10-0
 ```
 
-Make sure to use the `--is-test` flag to run the pipeline in test mode until we want to create an official release.
+**Make sure to use the `--is-test` flag to run the pipeline in test mode** until we want to create an official release.
+
+!!!info
+    **Make sure that the --release-version is set to a test name, NOT an official release version such as v0.6.1**
 
 kedro will prompt you to:
 
@@ -106,4 +122,11 @@ kedro will prompt you to:
 Open the Argo CD link to follow the run.
 
 
+### 5. Merging the changes for the next release
+
+* Open a PR with your desired changes and get approval from an Every Cure team member
+* Merge to main
+* Our automation will run according to the release cadence and your changes will be applied in the next release. Releases are scheduled for:
+  ** Every Tuesday - patch version bump
+  ** Every month - minor version bump
 
