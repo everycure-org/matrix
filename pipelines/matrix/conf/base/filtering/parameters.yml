@@ -7,6 +7,12 @@ filtering:
         - rtxkg2
         - ec_medical
         # - robokop
+
+    remove_rows_by_column:
+      _object: matrix.pipelines.filtering.filters.remove_rows_by_column
+      column: category
+      remove_list:
+        - biolink:OrganismTaxon
   
   edge_filters:
     filter_sources:
