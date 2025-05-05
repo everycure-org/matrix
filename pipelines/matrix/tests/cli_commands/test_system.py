@@ -7,7 +7,7 @@ from matrix.utils.system import command_exists, run_subprocess
 
 @pytest.fixture
 def mock_run_subprocess():
-    with patch("matrix.cli_commands.submit.run_subprocess") as mock:
+    with patch("matrix.utils.system.run_subprocess") as mock:
         mock.return_value = MagicMock(stdout='{"metadata": {"name": "mocked-job-name"}}')
         yield mock
 
