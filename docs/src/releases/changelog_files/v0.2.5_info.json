@@ -1,7 +1,9 @@
 {"Release Name": "v0.2.5",
-  "Robokop Version": "c5ec1f282158182f",
-  "RTX-KG2 Version": "v2.7.3",
-  "EC Medical Team Version": 20241031,
+  "Datasets": {
+    "rtx_kg2": "v2.7.3",
+    "robokop": "c5ec1f282158182f",
+    "ec_medical_team": 20241031
+  },
   "NodeNorm Endpoint Link": "https://nodenorm.transltr.io/1.5/get_normalized_nodes",
   "Embeddings Encoder": "text-embedding-3-small",
   "Topological Estimator": "matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage",

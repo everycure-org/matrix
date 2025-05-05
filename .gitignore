@@ -15,6 +15,7 @@
 # Data
 data/
 neo4j_db/
+data.tar.gz
 
 # python
 **/.venv/
@@ -25,6 +26,8 @@ neo4j_db/
 # terraform
 **/.terraform/
 **/.terragrunt-cache/
+infra/**/*.zip
+**/*.gen.tf
 
 infra/argo/applications/**/charts
 
@@ -40,3 +43,11 @@ infra/**/Chart.lock
 gha-creds-*.json
 
 pipelines/matrix/src/matrix/pipelines/matrix_generation/matrix.code-workspace
+
+# Artifact from the google-github-actions/get-gke-credentials@v1
+# Having it would not allow us to trigger a release from GH Actions,
+# since the repo would be in a dirty state.
+gha-kubeconfig*
+/backend.tf
+**/*.gen.tf
+/provider.tf

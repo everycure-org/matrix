@@ -79,12 +79,24 @@ Similarly, we encourage code authors to:
 - View feedback as a chance to improve and learn
 
 To facilitate efficient reviews:
-- We use round-robin assignment within teams
-- Code ownership is defined in our `CODEOWNERS` file at the root of the repository
-- We have several teams organized on [Github Teams](https://github.com/orgs/everycure-org/teams)
-- We expect proactive engagement from both authors and reviewers
+- Please assign reviewers to your PRs
+- Being assigned means that you are expected to review the PR, if you cannot due to workload, please let the author know so they can find someone else
 
-Remember: Code review is not about finding fault - it's about learning from each other and collectively improving our codebase. That said, if you spot a bug 🐛, please point it out 🙃.
+!!! note
+    We have only one matrix core-maintainers group which is responsible for reviewing
+    PRs. Each PR gets auto assigned to 1 person but the creator of a PR is still expected
+    to manually assign someone who knows the codebase and can give proper feedback.
+    However, independent of what contribution, at least 1 core maintainer needs to
+    approve a PR before it can be merged.
+    
+    !!! tip
+    Remember, code review is not about finding fault - it's about learning from each
+    other and collectively improving our codebase. That said, if you spot a bug 🐛,
+    please point it out 🙃.
+
+## Core Maintainers
+
+[This group](https://github.com/orgs/everycure-org/teams/core-maintainers/) is used to manage the matrix core maintainers. Please request access and let the team know if you need to be added. This enables you to approve PRs for the matrix monorepo.
 
 ## Project Organization
 

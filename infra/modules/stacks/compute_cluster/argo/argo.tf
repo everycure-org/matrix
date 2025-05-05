@@ -20,7 +20,7 @@ resource "kubernetes_secret" "argo_secret" {
     name      = "basic-auth"
     namespace = var.namespace
     labels = {
-      "argocd.argoproj.io/secret-type" : "repository"
+      "argocd.argoproj.io/secret-type" : "repo-creds"
     }
   }
   data = {
@@ -28,11 +28,12 @@ resource "kubernetes_secret" "argo_secret" {
     # url= base64encode(var.repo_url)
     # password= base64encode(var.repo_creds)
     type     = "git"
-    url      = var.repo_url
+    url      = "https://github.com/everycure-org/"
     password = var.repo_creds
   }
   type = "Opaque"
 }
+
 resource "helm_release" "argo" {
   depends_on = [kubernetes_namespace.argo_ns, kubernetes_secret.argo_secret]
   name       = "argo"
@@ -43,22 +44,26 @@ resource "helm_release" "argo" {
   # pass through ssl to enable grpc/https for argocd CLI, see
   # https://argoproj.github.io/argo-cd/operator-manual/ingress/#kubernetesingress-nginx
 
-  values = [
-    # config that goes into the declarative config of argocd
-    # https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/#repositories
-    yamlencode({
-      "server.ingress.annotations" : {
-        "kubernetes.io/ingress.class" : "nginx",
-        "nginx.ingress.kubernetes.io/force-ssl-redirect" : "true",
-        "nginx.ingress.kubernetes.io/ssl-passthrough" : "true",
-      },
-      # disables ssl for argocd server since we do SSL termination at the gateway
-      "configs.params" : {
-        "server.insecure" : true,
-        "server.basehref" : "/"
-      }
-    })
-  ]
+  set {
+    name  = "server.ingress.annotations.kubernetes.io/ingress.class"
+    value = "nginx"
+  }
+  set {
+    name  = "server.ingress.annotations.nginx.ingress.kubernetes.io/force-ssl-redirect"
+    value = "true"
+  }
+  set {
+    name  = "server.ingress.annotations.nginx.ingress.kubernetes.io/ssl-passthrough"
+    value = "true"
+  }
+  set {
+    name  = "configs.params.server\\.insecure"
+    value = "true"
+  }
+  set {
+    name  = "configs.params.server.basehref"
+    value = "/"
+  }
 }
 
 resource "kubernetes_manifest" "app_of_apps" {
@@ -74,11 +79,23 @@ spec:
   destination:
     namespace: argocd
     server: "https://kubernetes.default.svc"
+  project: default
   source:
     path: ${var.repo_path}/app-of-apps
     repoURL: ${var.repo_url}
     targetRevision: ${var.repo_revision}
-  project: default
+    helm:
+      parameters:
+      - name: spec.source.targetRevision
+        value:  ${var.repo_revision}
+      - name: spec.source.environment
+        value:  ${var.environment}
+      - name: spec.source.project_id
+        value: ${var.project_id}
+      - name: spec.source.bucketname
+        value: ${var.bucket_name}
+      - name: spec.source.aip_oauth_client_id
+        value: ${var.aip_oauth_client_id}
   syncPolicy:
     syncOptions:
       - CreateNamespace=true

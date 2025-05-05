@@ -1,16 +1,44 @@
-dev_docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
+docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
+
 TAG ?= ${USER}
 GIT_SHA ?= $(shell git rev-parse --short HEAD)
 export PYSPARK_PYTHON = .venv/bin/python
 export UV_PYTHON = .venv/bin/python
 export TQDM_DISABLE ?= 1
 TARGET_PLATFORM ?= linux/amd64
-PREREQUISITES := docker gcloud python3 java uv
+PREREQUISITES := docker gcloud python3 java uv kubectl
+
+# Add GCP project variables
+GCP_PROJECT ?= mtrx-hub-dev-3of
+SA_KEY_SECRET_NAME ?= storage-viewer-sa-key
+SA_KEY_PATH ?= conf/local/service-account.json
+OAUTH_CLIENT_SECRET_SECRET_NAME ?= oauth_client_secret
+OAUTH_CLIENT_SECRET_PATH ?= conf/local/oauth_client_secret.txt
+
+fetch_secrets:
+	echo "Fetching secrets from Secret Manager..."; \
+	mkdir -p conf/local; \
+	for pair in "$(SA_KEY_SECRET_NAME) $(SA_KEY_PATH)" "$(OAUTH_CLIENT_SECRET_SECRET_NAME) $(OAUTH_CLIENT_SECRET_PATH)"; do \
+		set -- $$pair; \
+		echo "Fetching secret $$1..."; \
+		gcloud secrets versions access latest --secret="$$1" --project=$(GCP_PROJECT) > "$$2"; \
+		chmod 600 "$$2"; \
+		echo "Secret $$1 saved to $$2"; \
+	done
 
 # ensures all make targets run in one shell (rather than line by line in new shell)
 .ONESHELL: 
 
-default: install fast_test compose_down integration_test
+default: prerequisites fetch_sa_key install fast_test integration_test
+
+.PHONY: always
+# steps here get run on _every_ make call, no matter the target. Make sure this is 100% idempotent and fast.
+always:
+	# never track notebooks in the pipeline subfolder
+	git update-index --assume-unchanged *.ipynb
+%: always
+	@:
+default: prerequisites fetch_secrets install fast_test integration_test
 	echo "done!"
 
 prerequisites:
@@ -18,13 +46,30 @@ prerequisites:
 	$(foreach exec,$(PREREQUISITES),\
         $(if $(shell command -v $(exec) 2>/dev/null),,$(error "$(exec) is not installed.")))
 	$(info All prerequisites are installed.)
+	$(info Checking gcloud auth...)
+	@if ! gcloud auth print-access-token >/dev/null 2>&1; then \
+		echo "Not logged into gcloud. Please run 'gcloud auth login' first."; \
+		exit 1; \
+	fi
 
-venv: prerequisites
+venv: 
 	if [ ! -d .venv ]; then uv venv -p 3.11; fi
 	uv run python -m ensurepip --upgrade || true
 
-install: venv precommit-hooks
+install: venv precommit-hooks 
 	uv pip install -r requirements.txt #force it to install in our venv
+
+install_compatibility: venv precommit-hooks
+	# expects the file requirements.overrides.txt to be present, allows devs to override
+	# versions for local machine limitations (e.g. newer pytorch on macos intel)
+	uv pip install -r requirements.txt --overrides requirements.overrides.txt
+
+install_argo:
+	curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
+	gunzip argo-linux-amd64.gz
+	chmod +x argo-linux-amd64
+	sudo mv argo-linux-amd64 /usr/local/bin/argo
+	argo version
 
 precommit: precommit-hooks
 	git fetch origin
@@ -33,6 +78,13 @@ precommit: precommit-hooks
 precommit-hooks:
 	uv pip install pre-commit 
 	uv run pre-commit install --install-hooks
+
+check_release_version_environment_variable:
+	if [ -z "${RELEASE_VERSION}" ]; then
+	echo "::error::release_version input is required"
+	exit 1
+	fi
+	echo "Using release version: ${RELEASE_VERSION}"
 
 full_test:
 	# activate venv to ensure spark doesn't have python driver mismatches
@@ -48,7 +100,7 @@ format:
 
 # executes E2E integration test fully in docker. 
 docker_test: certificate docker_build
-	IMG="$(dev_docker_image)" docker compose -f compose/docker-compose.yml \
+	IMG="$(docker_image)" docker compose -f compose/docker-compose.yml \
 		-f compose/docker-compose.ci.yml \
 		up \
 		--force-recreate \
@@ -56,11 +108,14 @@ docker_test: certificate docker_build
 		--exit-code-from matrix-pipeline
 
 docker_build:
-	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(dev_docker_image) --load ./
-	docker tag $(dev_docker_image) $(dev_docker_image):${TAG}
+	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(docker_image) --load ./
+	docker tag $(docker_image) $(docker_image):${TAG}
+
+docker_auth:
+	gcloud auth configure-docker us-central1-docker.pkg.dev
 
 docker_push: docker_build
-	docker push $(dev_docker_image):${TAG}
+	docker push $(docker_image):${TAG}
 
 certificate:
 	@echo "Generating test SSL certificate for Neo4J."
@@ -84,7 +139,7 @@ wipe_neo:
 integration_test: compose_up wipe_neo
 	# NOTE: We are running without xgc due to its long runtime. 
 	ulimit -n 10000
-	uv run kedro run --env test -p test --runner ThreadRunner --without-tags xgc,not-shared
+	uv run kedro run --env test -p test --without-tags xgc,not-shared
 
 fabricate:
 	uv run kedro run -p fabricator --env test
@@ -93,9 +148,12 @@ licenses_container: docker_build
 	docker run \
 		-v $(PWD)/trivy.yaml:/trivy.yaml \
 		-v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy  \
-		image --scanners license --severity UNKNOWN,CRITICAL $(dev_docker_image)
+		image --scanners license --severity UNKNOWN,CRITICAL $(docker_image)
 
-clean:
+clean_sa_key:
+	rm -f $(SA_KEY_PATH)
+
+clean: clean_sa_key
 	@echo "cleaning various cache locations to ensure clean installation is possible"
 	@echo "this may be necessary e.g. when updating one of our local packages"
 	uv run pre-commit clean
@@ -121,6 +179,8 @@ diagnostics:
 	-uv --version || echo "UV is not installed."
 	echo "\nCheck Virtual Environment (if applicable):"
 	-uv run which python || echo "Python is not in PATH."
+	echo "\nKubectl permissions:"
+	-kubectl auth can-i --list
 	echo "\nPython Version:"
 	-uv run python3 --version || echo "Python is not installed."
 	echo "\nSystem Information:"
@@ -139,4 +199,4 @@ diagnostics:
 	-df -h
 	echo "\nDiagnostics complete."
 
-# NOTE: This Makefile target was partially generated using AI assistance.
+

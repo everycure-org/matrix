@@ -4,7 +4,7 @@ website."""
 
 import json
 from pathlib import Path
-from typing import Iterable, Iterator
+from typing import Dict, Iterable, Iterator, List
 
 import yaml
 
@@ -49,7 +49,7 @@ def create_semver_sortkey(release_name: str) -> list[int]:
 
 
 def sort_releases(releases: Iterable[dict]) -> list[dict]:
-    sorted_list = sorted(releases, key=lambda x: create_semver_sortkey(x["Release Name"]))
+    sorted_list = sorted(releases, key=lambda x: create_semver_sortkey(x["Release Name"]), reverse=True)
     return sorted_list
 
 
@@ -64,6 +64,13 @@ def save_yaml(yaml_data: str, changelog_abs_path: Path) -> None:
     (changelog_abs_path / "releases_aggregated.yaml").write_text(yaml_data)
 
 
+def stringify_datasources(files: List[Dict]) -> List[Dict]:
+    """Formats the dictionary to be rendered correctly using read_yaml of mkdocs."""
+    for release_data in files:
+        release_data["Datasets"] = "<br/>".join(f"‣ {k}: `{v}`" for k, v in release_data["Datasets"].items())
+    return files
+
+
 def main() -> None:
     """Extracts json files from the changelog_files directory, aggregates them and saves as one yaml file"""
     changelog_abs_path = locate_releases_path()
@@ -73,6 +80,7 @@ def main() -> None:
     if not sorted_releases:
         raise ValueError(f"No release info found in {changelog_abs_path}")
     formatted_files = format_values(sorted_releases)
+    formatted_files = stringify_datasources(formatted_files)
     yaml_aggr = dump_to_yaml(formatted_files)
     save_yaml(yaml_aggr, changelog_abs_path)
 

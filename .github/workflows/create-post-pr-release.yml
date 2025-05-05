@@ -42,6 +42,8 @@ jobs:
           echo "intended_tag=${intended_release}" >> "$GITHUB_ENV"  
 
       - name: Discover Latest Official Release on GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           latest_official_release=$(gh release list --jq '.[0].tagName' --json tagName --order desc)
           echo "latest_official_release=${latest_official_release}" >> "$GITHUB_ENV"  
@@ -49,15 +51,14 @@ jobs:
       - name: Create GitHub release
         env:
             GH_TOKEN: ${{ github.token }}
-            POSTS_DIR: docs/src/releases/posts
         run: |
           set -euxo pipefail
           echo "Creating release"
           # If intended release comes after latest_official_release, flag it with --latest. Otherwise, don't.
           highest_version=$(echo -e "${{env.intended_tag}}\n${{env.latest_official_release}}" | sort --version-sort | tail -n1)
-          if [ "${{ env.intended_tag }}" = "${highest_version}" ]; then ARGS=" --latest"; else ARGS=""; fi
-          
+          if [ "${{ env.intended_tag }}" = "${highest_version}" ]; then ARG_LATEST=(--latest); else ARG_LATEST=( ); fi
+
           gh release create "${{ env.intended_tag }}" \
-            --notes-file "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.intended_tag }}/notes.md" \
             --title "${{ env.intended_tag }}" \
-            "${ARGS}"
+            --generate-notes \
+            "${ARG_LATEST[@]}"

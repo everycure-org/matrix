@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: explorer
+  namespace: argocd
+spec:
+  destination:
+    namespace: explorer
+    server: {{ .Values.spec.destination.server }}
+  project: default
+  source:
+    path: infra/argo/applications/explorer
+    repoURL: https://github.com/everycure-org/matrix-ui.git
+    targetRevision: main
+    helm:
+      parameters:
+        - name: spec.source.targetRevision
+          value: {{ .Values.spec.source.targetRevision }}
+        - name: spec.source.environment
+          value: {{ .Values.spec.source.environment }}
+        - name: spec.source.project_id
+          value: {{ .Values.spec.source.project_id }}
+  syncPolicy:
+    syncOptions:     # Sync options which modifies sync behavior
+    - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
+    automated: 
+      prune: true

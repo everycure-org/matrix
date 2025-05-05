@@ -1,0 +1,10 @@
+# Reducing dimensionality reduction to speed up runtime
+embeddings.dimensionality_reduction:
+  transformer:
+    k: 2
+
+embeddings.topological:
+  estimator:
+    args:
+      batchSize: 20
+      embeddingDimension: 3

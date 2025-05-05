@@ -12,7 +12,10 @@ from matrix.pipelines.evaluation.evaluation import (
 from matrix.pipelines.evaluation.named_metric_functions import (
     AUROC,
     MRR,
+    CommonalityAtN,
     HitK,
+    HypergeomAtN,
+    SpearmanAtN,
 )
 from matrix.pipelines.evaluation.named_metric_functions import RecallAtN as RecallAtN_
 from matrix.pipelines.evaluation.nodes import generate_test_dataset
@@ -197,3 +200,64 @@ def test_generate_test_dataset_injection():
         generate_test_dataset(
             matrix=sample_df, generator={"object": "matrix.datasets.pair_generator.DrugDiseasePairGenerator"}
         )
+
+
+@pytest.fixture
+def sample_rank_sets():
+    """Fixture that provides sample rank sets for testing."""
+    return (
+        pd.DataFrame({"pair_id": [1, 2, 3, 4, 5], "rank": [12, 522, 33, 14, 1]}),
+        pd.DataFrame({"pair_id": [1, 2, 3, 5, 6], "rank": [1, 2, 3, 4, 5]}),
+    )
+
+
+@pytest.fixture
+def sample_hypergeom_sets():
+    """Fixture that provides sample rank sets for testing."""
+    return (
+        pd.DataFrame({"pair_id": [1, 2, 3, 4, 5, 6], "rank": [1, 2, 3, 4, 5, 6]}),  # Increased to 6 items
+        pd.DataFrame({"pair_id": [3, 4, 5, 7, 8, 9], "rank": [1, 2, 3, 4, 5, 6]}),  # Keep 5 items to ensure overlap
+    )
+
+
+@pytest.fixture
+def sample_commonality_matrices():
+    """Fixture that provides sample matrices for testing commonality."""
+    return [pd.DataFrame({"pair_id": [1, 2, 3]}), pd.DataFrame({"pair_id": [1, 3, 5]})]
+
+
+def test_hypergeom_at_n(sample_hypergeom_sets):
+    """Test the HypergeomAtN class."""
+    n = 5
+    hypergeom_evaluator = HypergeomAtN(n)
+    result = hypergeom_evaluator.generate()(sample_hypergeom_sets, common_items=pd.DataFrame({"pair_id": [3, 4, 5]}))
+
+    result_same = hypergeom_evaluator.generate()(
+        (sample_hypergeom_sets[0], sample_hypergeom_sets[0]), common_items=pd.DataFrame({"pair_id": [3, 4, 5]})
+    )
+    assert result["pvalue"] > 0.05
+
+
+def test_spearman_at_n(sample_rank_sets):
+    """Test the SpearmanAtN class."""
+    n = 4
+    spearman_evaluator = SpearmanAtN(n)
+
+    # First one is testing the pvalue
+    result = spearman_evaluator.generate()(sample_rank_sets, common_items=pd.DataFrame({"pair_id": [1, 2, 3, 4]}))
+
+    # Second one is testing correlation
+    result_same = spearman_evaluator.generate()(
+        (sample_rank_sets[0], sample_rank_sets[0]), common_items=pd.DataFrame({"pair_id": [1, 2, 3, 4]})
+    )
+    assert result["pvalue"] > 0.05
+    assert round(result_same["stat"]) == 1.0
+    assert result_same["pvalue"] < 0.05
+
+
+def test_commonality_at_n(sample_commonality_matrices):
+    """Test the CommonalityAtN class."""
+    n = 3
+    commonality_evaluator = CommonalityAtN(n)
+    result = commonality_evaluator.generate()(sample_commonality_matrices)
+    assert round(result, 2) == 0.67

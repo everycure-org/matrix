@@ -11,10 +11,12 @@ openai:
 paths:
   raw:                data/test/raw
   kg_raw:             data/test/raw
+  kg_raw_private:     data/test/raw
   # Upstream version-based
   ingestion:          data/test/ingestion
   # Release-based
   integration:        data/test/releases/${versions.release}/datasets/integration
+  filtering:          data/test/releases/${versions.release}/datasets/filtering
   embeddings:         data/test/releases/${versions.release}/datasets/embeddings
 
   # Run-based
@@ -24,3 +26,4 @@ paths:
   inference:          data/test/releases/${versions.release}/runs/${run_name}/datasets/inference
 
   tmp:                data/test/tmp
+  cache:              data/test/cache

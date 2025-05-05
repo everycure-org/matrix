@@ -1,32 +1,48 @@
 integration:
-
   sources:
     rtx_kg2:
+      name: rtx-kg2
       transformer:
-        _object: matrix.pipelines.integration.rtxkg2.RTXTransformer
-    # spoke:
-    #   transformer:
-    #     object: matrix.pipelines.integration.spoke.SpokeTransformer
-    # robokop:
-    #   transformer:
-    #     object: matrix.pipelines.integration.robokop.RobokopTransformer
+        _object: matrix.pipelines.integration.transformers.rtxkg2.RTXTransformer
+    spoke:
+      name: spoke
+      transformer:
+        _object: matrix.pipelines.integration.transformers.spoke.SpokeTransformer
+    robokop:
+      name: robokop
+      transformer:
+        _object: matrix.pipelines.integration.transformers.robokop.RobokopTransformer
+    embiology:
+      name: embiology
+      transformer:
+        _object: matrix.pipelines.integration.transformers.embiology.EmbiologyTransformer
     ec_medical_team:
+      name: ec_medical_team
       transformer:
-        _object: matrix.pipelines.integration.medical.MedicalTransformer
-    ec_clinical_trails: 
+        _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
+    ec_clinical_trails:
+      name: ec_clinical_trials
       transformer:
-        _object: matrix.pipelines.integration.clinical_trails.ClinicalTrialsTransformer
-    drug_list: 
+        _object: matrix.pipelines.integration.transformers.clinical_trails.ClinicalTrialsTransformer
+        select_cols: false
+        drop_duplicates: true
+    drug_list:
+      name: drug_list
       transformer:
-        _object: matrix.pipelines.integration.drugs.DrugsTransformer
-    disease_list: 
+        _object: matrix.pipelines.integration.transformers.drugs.DrugsTransformer
+    disease_list:
+      name: disease_list
       transformer:
-        _object: matrix.pipelines.integration.diseases.DiseasesTransformer
-    ground_truth: 
+        _object: matrix.pipelines.integration.transformers.diseases.DiseasesTransformer
+    drugmech:
+      name: drugmech
       transformer:
-        _object: matrix.pipelines.integration.ground_truth.GroundTruthTransformer
-    #     _object: matrix.pipelines.integration.spoke.SpokeTransformer
-    
+         _object: matrix.pipelines.integration.transformers.drugmech.DrugMechTransformer
+    ground_truth:
+      name: ground_truth
+      transformer:
+        _object: matrix.pipelines.integration.transformers.ground_truth.GroundTruthTransformer
+
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:
     rtx:
@@ -36,13 +52,36 @@ integration:
         limit_pmids: 50_000_000 # essentially unlimited, but allows for local clipping if local run is desired
 
   normalization:
-    batch_size: 1000 # Should we do more?
+    batch_size: 500000  # number of rows per cache file.
+    cache_schema:
+      _object: matrix.pipelines.batch.schemas.node_normalizer
     normalizer:
-      _object: matrix.pipelines.integration.normalizer.NCATSNodeNormalizer
+      _object: matrix.pipelines.integration.normalizers.ncats.NCATSNodeNormalizer
       endpoint: ${oc.env:NODENORM_ENDPOINT, https://nodenorm.transltr.io/1.5/get_normalized_nodes}
       conflate: true
       drug_chemical_conflate: true
       description: false
+      items_per_request: 10000  # The API can't handle 10M strings at once
+    # If the data backing the results changes, so will the NodeNorm frontend
+    # version, which is listed here. Note that it can update as well for other
+    # reasons, but at least you have a guarantee. Probably easiest to just bump
+    # this anytime the NodeNorm frontend version changes too. Note however that
+    # it is not exposed in the endpoint so you might think you're pulling the
+    # latest data, but you are effectively returning whatever you had in the
+    # cache. Seehttps://github.com/everycure-org/matrix/pull/1269#issuecomment-2755674916
+    api: nodenorm-2.3.18
+    preprocessor:
+      _object: matrix.pipelines.batch.pipeline.pass_through
+    target_col: normalized_id
+    primary_key: id
+
+# TODO: Figure out whether to move to filtering or stay here
+  deduplication:
+    # choose if a node should have the most specific category.
+    # E.g. if a node has all_categories [biolink:ChemicalEntity, biolink:NamedThing],
+    # then node will be assigned biolink:ChemicalEntity as most specific category.
+    # For RTX-KG2 reproduction from KGML-xDTD, choose false
+    retrieve_most_specific_category: false
 
   filtering:
     node_filters:
@@ -50,6 +89,7 @@ integration:
         _object: matrix.pipelines.modelling.utils.partial_
         func:
           _object: matrix.pipelines.integration.filters.remove_rows_containing_category
+        exclude_sources: ["ec_medical"]
         column: category
         categories:
         # TODO: We should likely not remove these before our data release stage but afterwards in the modelling pipeline (if the model so desires)
@@ -75,9 +115,3 @@ integration:
           - biolink:Publication
           - biolink:Treatment
           # If you add anything here make sure the fabricator is not generating it, else we remove it
-    edge_filters:
-      # FUTURE: Ensure the semmed filter is moved here instead
-      filter_biolink_edges:
-        _object: matrix.pipelines.modelling.utils.partial_
-        func:
-          _object: matrix.pipelines.integration.filters.biolink_deduplicate_edges

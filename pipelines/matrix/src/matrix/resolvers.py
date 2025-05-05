@@ -1,7 +1,7 @@
 import os
 from copy import deepcopy
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from dotenv import find_dotenv, load_dotenv
 
@@ -77,3 +77,8 @@ def env(key: str, default: str = None, allow_null: str = False) -> Optional[str]
         return value
     except KeyError:
         raise KeyError(f"Environment variable '{key}' not found or default value {default} is None")
+
+
+def if_null(val: Optional[Any], if_null_val: str, else_val: str):
+    """Resolver to conditionally load a configuration entry."""
+    return if_null_val if val is None else else_val

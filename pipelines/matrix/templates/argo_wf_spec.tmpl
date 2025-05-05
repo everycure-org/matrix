@@ -19,10 +19,8 @@ spec:
     parameters:
       - name: image
         value: "{{ image }}"
-      - name: image_tag
-        value: "{{ image_tag }}"
       - name: run_name
-        value: "{{ image_tag }}"
+        value: "{{ run_name }}"
       - name: neo4j_host
         value: "bolt+ssc://neo4j.neo4j.svc.cluster.local:7687"
       - name: mlflow_endpoint
@@ -30,11 +28,32 @@ spec:
       - name: openai_endpoint
         value: "https://api.openai.com/v1"
       - name: env
-        value: "cloud"
+        value: "{{ environment }}"
       - name: release_folder_name
         value: "{{ release_folder_name }}"
+      - name: mlflow_experiment_id
+        value: {{ mlflow_experiment_id }}
+      - name: mlflow_run_id
+        value: "{{ mlflow_run_id }}"
+      - name: mlflow_url
+        value: "{{ mlflow_url }}"
+      - name: include_private_datasets
+        value: "{{ include_private_datasets }}"
   templates:
   - &_kedro_template
+    metrics:
+        prometheus:
+          - name: "argo_custom_workflow_error_counter"
+            help: "Total number of failed workflows"
+            labels:
+              - key: pipeline_name
+                value: "{{ pipeline_name }}"
+            when: {% raw %}"{{ status }}  == Failed"
+            {% endraw %}
+            # Note that this should be 'workflow.status' not 'status' if docs are followed, but it doesn't work.
+            # https://argo-workflows.readthedocs.io/en/latest/variables/#exit-handler
+            counter:
+              value: "1"
     name: kedro
     affinity:
       nodeAffinity:
@@ -46,6 +65,12 @@ spec:
               operator: NotIn
               values:
               - "true"
+    # Add tolerations for large memory nodes and GPU nodes
+    tolerations:
+    - key: "node-memory-size"
+      operator: "Equal"
+      value: "large"
+      effect: "NoSchedule"
     metadata:
       labels:
         {# Add label to have an ability to remove Kedro Pods easily #}
@@ -58,27 +83,33 @@ spec:
       - name: memory_request
       - name: cpu_limit
       - name: cpu_request
+      - name: ephemeral_storage_request
+      - name: ephemeral_storage_limit
     podSpecPatch: |
       containers:
         - name: main
           resources:
             requests:
-              memory: {% raw %} "{{inputs.parameters.memory_request}}"
+              memory: {% raw %} "{{inputs.parameters.memory_request}}Gi"
               {% endraw %}
               cpu: {% raw %} "{{inputs.parameters.cpu_request}}"
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
+              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_request}}Gi"
+              {% endraw %}
             limits:
-              memory: {% raw %} "{{inputs.parameters.memory_limit}}"
+              memory: {% raw %} "{{inputs.parameters.memory_limit}}Gi"
               {% endraw %}
               cpu: {% raw %} "{{inputs.parameters.cpu_limit}}"
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
+              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_limit}}Gi"
+              {% endraw %}
     container: &_kedro_container
       imagePullPolicy: Always
-      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
+      image: {% raw %} "{{workflow.parameters.image}}"
       {% endraw %}
       env:
         - name: WORKFLOW_ID
@@ -89,16 +120,27 @@ spec:
           value: {% raw %} "{{workflow.parameters.run_name}}" 
           {% endraw %}
         - name: RELEASE_VERSION
-          value: "{{release_version}}" 
+          value: "{{release_version}}"
         - name: RELEASE_FOLDER_NAME
           value: {% raw %} "{{workflow.parameters.release_folder_name}}" 
           {% endraw %}
-
         - name: NEO4J_HOST
           value: {% raw %} "{{workflow.parameters.neo4j_host}}" 
           {% endraw %}
         - name: MLFLOW_ENDPOINT
           value: {% raw %} "{{workflow.parameters.mlflow_endpoint}}" 
+          {% endraw %}
+        - name: MLFLOW_EXPERIMENT_ID
+          value: {% raw %} "{{workflow.parameters.mlflow_experiment_id}}"
+          {% endraw %}
+        - name: MLFLOW_RUN_ID
+          value: {% raw %} "{{workflow.parameters.mlflow_run_id}}"
+          {% endraw %}
+        - name: MLFLOW_URL
+          value: {% raw %} "{{workflow.parameters.mlflow_url}}"
+          {% endraw %}
+        - name: INCLUDE_PRIVATE_DATASETS
+          value: {% raw %} "{{workflow.parameters.include_private_datasets}}"
           {% endraw %}
         - name: NEO4J_USER
           valueFrom:
@@ -118,12 +160,12 @@ spec:
             secretKeyRef:
               name: matrix-secrets
               key: OPENAI_API_KEY
-        - name: GCP_PROJECT_ID
+        - name: RUNTIME_GCP_PROJECT_ID
           valueFrom:
             configMapKeyRef:
               name: matrix-config
               key: GCP_PROJECT_ID
-        - name: GCP_BUCKET
+        - name: RUNTIME_GCP_BUCKET
           valueFrom:
             configMapKeyRef:
               name: matrix-config
@@ -131,6 +173,14 @@ spec:
         - name: NUM_CPU
           value: {% raw %} "{{inputs.parameters.cpu_limit}}"
           {% endraw %}
+        - name: SPARK_DRIVER_MEMORY
+          value: {% raw %} "{{inputs.parameters.memory_limit}}"
+          {% endraw %}
+        - name: GH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: gh-password
+              key: GH_CREDS
       command: [kedro]
       args: ["run", "-p", "{{ pipeline_name }}", "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
 
@@ -141,24 +191,34 @@ spec:
         - name: main
           resources:
             requests:
-              memory: 50Gi
+              memory: 100Gi
             limits:
-              memory: 50Gi
+              memory: 100Gi
+          env:
+            - name: SPARK_DRIVER_MEMORY
+              value: "60"
+            # NOTE: We're passing in a regular bolt connection as emphemeral Neo4J has no SSL
+            - name: NEO4J_HOST
+              value: "bolt://127.0.0.1:7687"
         - name: neo4j
           resources:
             requests:
-              memory: {% raw %} "{{inputs.parameters.memory_request}}"
+              memory: {% raw %} "{{inputs.parameters.memory_request}}Gi"
               {% endraw %}
               cpu: {% raw %} "{{inputs.parameters.cpu_request}}"
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
+              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_request}}Gi"
+              {% endraw %}
             limits:
-              memory: {% raw %} "{{inputs.parameters.memory_limit}}"
+              memory: {% raw %} "{{inputs.parameters.memory_limit}}Gi"
               {% endraw %}
               cpu: {% raw %} "{{inputs.parameters.cpu_limit}}"
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
+              {% endraw %}
+              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_limit}}Gi"
               {% endraw %}
     container: 
       <<: *_kedro_container
@@ -171,8 +231,7 @@ spec:
               sleep 5
             done
             echo "Neo4j is ready. Starting main application..."
-            # NOTE: We're passing in a regular bolt connection as emphemeral Neo4J has no SSL
-            NEO4J_HOST="bolt://127.0.0.1:7687" kedro run -p {{ pipeline_name }} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
+            kedro run -p {{ pipeline_name }} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
     
     volumes:
       - name: gds-key
@@ -216,9 +275,11 @@ spec:
         - name: NEO4J_ACCEPT_LICENSE_AGREEMENT
           value: "yes"
         - name: NEO4J_dbms_memory_heap_initial__size
-          value: "100G"
+          value: {% raw %} "{{= sprig.int(inputs.parameters.memory_limit) * 0.7 }}G"
+          {% endraw %}
         - name: NEO4J_dbms_memory_heap_max__size
-          value: "120G" # TODO: How do we pass this in w/o Gi
+          value: {% raw %} "{{= sprig.int(inputs.parameters.memory_limit) * 0.7 }}G"
+          {% endraw %}
 
   - name: pipeline
     dag:
@@ -248,5 +309,9 @@ spec:
             value: {{ task.resources.cpu_request }}
           - name: cpu_limit
             value: {{ task.resources.cpu_limit }}
+          - name: ephemeral_storage_request
+            value: {{ task.resources.ephemeral_storage_request }}
+          - name: ephemeral_storage_limit
+            value: {{ task.resources.ephemeral_storage_limit }}
 
       {% endfor %}

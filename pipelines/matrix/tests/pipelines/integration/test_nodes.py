@@ -3,10 +3,10 @@ from typing import Any, Dict
 import pyspark.sql as ps
 import pytest
 from matrix.pipelines.integration import nodes
-from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema
 from pyspark.sql import functions as F
 from pyspark.sql.types import (
     ArrayType,
+    IntegerType,
     StringType,
     StructField,
     StructType,
@@ -78,6 +78,7 @@ def sample_edges(spark):
             StructField("predicate", StringType(), False),
             StructField("object", StringType(), False),
             StructField("knowledge_level", StringType(), True),
+            StructField("agent_type", StringType(), True),
             StructField("primary_knowledge_source", StringType(), True),
             StructField("aggregator_knowledge_source", ArrayType(StringType()), True),
             StructField("publications", ArrayType(StringType()), True),
@@ -86,6 +87,8 @@ def sample_edges(spark):
             StructField("object_aspect_qualifier", StringType(), True),
             StructField("object_direction_qualifier", StringType(), True),
             StructField("upstream_data_source", ArrayType(StringType()), False),
+            StructField("num_references", IntegerType(), True),
+            StructField("num_sentences", IntegerType(), True),
         ]
     )
     data = [
@@ -94,6 +97,7 @@ def sample_edges(spark):
             "biolink:treats",
             "MONDO:0005148",
             "knowledge_assertion",
+            "manual_agent",
             "infores:semmeddb",
             ["infores:aggregator1"],
             ["PMID:12345678"],
@@ -102,12 +106,15 @@ def sample_edges(spark):
             "aspect2",
             "decreased",
             ["source1"],
+            10,
+            10,
         ),
         (
             "CHEBI:120688",
             "biolink:interacts_with",
             "CHEBI:119157",
             "prediction",
+            "computational_model",
             "infores:gtex",
             ["infores:aggregator2"],
             ["PMID:23456789"],
@@ -116,12 +123,15 @@ def sample_edges(spark):
             "aspect4",
             "increased",
             ["source2"],
+            10,
+            10,
         ),
         (
             "CHEBI:119157",
             "biolink:treats",
             "MONDO:0005148",
             "knowledge_assertion",
+            "manual_agent",
             "infores:ubergraph",
             ["infores:aggregator3"],
             ["PMID:34567890"],
@@ -130,6 +140,8 @@ def sample_edges(spark):
             "aspect6",
             "decreased",
             ["source3"],
+            10,
+            10,
         ),
     ]
     return spark.createDataFrame(data, schema)
@@ -232,7 +244,6 @@ def test_unify_nodes(spark, sample_nodes, sample_biolink_category_hierarchy):
     # Check the result
     assert isinstance(result, ps.DataFrame)
     assert result.count() == 2  # Should have deduplicated
-    assert set(result.columns) == set(KGNodeSchema.to_schema().columns)
 
     # Check if the properties are combined correctly for the duplicated node
     drug_node = result.filter(result.id == "CHEBI:119157").collect()[0]
@@ -265,16 +276,16 @@ def test_unify_edges(spark, sample_edges):
     edges2 = sample_edges.filter(sample_edges.subject != "CHEBI:119157")
 
     # Call the unify_edges function
-    result = nodes.union_and_deduplicate_edges(edges1, edges2)
+    result = nodes.union_edges(edges1, edges2)
 
     # Check the result
     assert isinstance(result, ps.DataFrame)
     assert result.count() == 2  # Should have deduplicated
-    assert set(result.columns) == set(KGEdgeSchema.to_schema().columns)
 
     # Check if the properties are combined correctly for the duplicated edge
     treat_edge = result.filter((result.subject == "CHEBI:119157") & (result.object == "MONDO:0005148")).collect()[0]
     assert treat_edge.knowledge_level == "knowledge_assertion"
+    assert treat_edge.agent_type == "manual_agent"
     assert treat_edge.primary_knowledge_source == "infores:semmeddb"
     assert set(treat_edge.aggregator_knowledge_source) == {"infores:aggregator1", "infores:aggregator3"}
     assert set(treat_edge.publications) == {"PMID:12345678", "PMID:34567890"}

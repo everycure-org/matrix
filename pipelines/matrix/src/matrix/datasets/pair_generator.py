@@ -1,10 +1,11 @@
 import abc
 import random
-from typing import List, Set, Union
+from typing import List, Set, Tuple, Union
 
 import pandas as pd
-from matrix.datasets.graph import KnowledgeGraph
 from tqdm import tqdm
+
+from matrix.datasets.graph import KnowledgeGraph
 
 
 class DrugDiseasePairGenerator(abc.ABC):
@@ -28,7 +29,7 @@ class SingleLabelPairGenerator(DrugDiseasePairGenerator):
     """Class representing generators outputting drug-disease pairs with a single label."""
 
     def __init__(self, y_label: int, random_state: int) -> None:
-        """Initializes the SingleLabelPairGenerator instance.
+        """Initializes a SingleLabelPairGenerator instance.
 
         Args:
             y_label: label to assign to generated pairs.
@@ -249,15 +250,19 @@ class GroundTruthTestPairs(DrugDiseasePairGenerator):
         # Extract and label positive data
         positive_data_lst = []
         for col_name in self.positive_columns:
-            positive_data_lst.append(matrix[matrix[col_name]].assign(y=1))
+            positive_data_lst.append(matrix[matrix[col_name]][["source", "target"]].assign(y=1))
+        positive_df = pd.concat(positive_data_lst, ignore_index=True).drop_duplicates()
 
         # Extract and label negative data
         negative_data_lst = []
         for col_name in self.negative_columns:
-            negative_data_lst.append(matrix[matrix[col_name]].assign(y=0))
+            negative_data_lst.append(matrix[matrix[col_name]][["source", "target"]].assign(y=0))
+        negative_df = pd.concat(negative_data_lst, ignore_index=True).drop_duplicates()
 
-        # Combine data
-        data = pd.concat(positive_data_lst + negative_data_lst, ignore_index=True)
+        # Combine data and add matrix columns
+        data = pd.concat([positive_df, negative_df], ignore_index=True).merge(
+            matrix, on=["source", "target"], how="left"
+        )
 
         # Return selected pairs
         return data
@@ -308,7 +313,7 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
             is_remove = pd.Series(False, index=matrix.index)
             for col_name in self.removal_columns:
                 is_remove = is_remove | matrix[col_name]
-            in_output = in_output | ~is_remove
+            in_output = in_output & ~is_remove
 
         # Apply boolean condition to matrix and return
         return matrix[in_output]
@@ -346,7 +351,8 @@ class FullMatrixPositives(DrugDiseasePairGenerator):
         Returns:
             Labelled drug-disease pairs dataset.
         """
-        # Remove flagged pairs
+        # Remove flagged pairs; ensure index is reset
+        matrix = matrix.reset_index(drop=True)
         if self.removal_columns is not None:
             is_remove = pd.Series(False, index=matrix.index)
             for col_name in self.removal_columns:
@@ -359,13 +365,78 @@ class FullMatrixPositives(DrugDiseasePairGenerator):
             is_positive = is_positive | matrix[col_name]
         positive_pairs = matrix[is_positive].assign(y=1)
 
-        ## Add ranks columns.
-        # Rank against all pairs including known positives
+        # Remove contribution from known positives to compute the rank against non-positive pairs
         positive_pairs["rank"] = positive_pairs.index + 1
         positive_pairs = positive_pairs.reset_index(drop=True)
-        # Remove contribution from known positives to compute the rank against non-positive pairs
         positive_pairs["non_pos_rank"] = positive_pairs["rank"] - positive_pairs.index
+
         # Compute the quantile rank against non-positive pairs
         num_non_pos = len(matrix[~is_positive])
         positive_pairs["non_pos_quantile_rank"] = (positive_pairs["non_pos_rank"] - 1) / num_non_pos
         return positive_pairs
+
+
+class OnlyOverlappingPairs(DrugDiseasePairGenerator):
+    """Class to generate pairs that overlap across all matrices for top n.
+
+    Required for spearman rank, hypergeometric test and rank-commonality metrics."""
+
+    def __init__(self, top_n: int = 1000) -> None:
+        """Initialises an instance of the class.
+
+        Args:
+            top_n: Number of top pairs to be used for stability comparison.
+        """
+        self.top_n = top_n
+
+    def _modify_matrices(self, matrices: Tuple[pd.DataFrame]) -> List[pd.DataFrame]:
+        """Modify matrices to create id column and sort by treat score.
+
+        Args:
+            matrices: DataFrames to be used for stability comparison.
+        Returns:
+            List of modified matrices.
+        """
+        new_matrices = []
+        for matrix in matrices:
+            matrix = matrix.sort_values(by="treat score", ascending=False).head(self.top_n)
+            matrix["pair_id"] = matrix["source"] + "|" + matrix["target"]
+            new_matrices.append(matrix)
+        return new_matrices
+
+    def _get_overlapping_pairs(self, matrices: Tuple[pd.DataFrame]) -> Set:
+        """Get pairs that overlap across all matrices for top n.
+
+        Args:
+            matrices: DataFrames to be used for stability comparison.
+        Returns:
+            Set containing overlapping ids from all matrices.
+        """
+        overlapping_ids = set(matrices[0]["pair_id"])
+        for matrix in matrices[1:]:
+            overlapping_ids.intersection_update(set(matrix["pair_id"]))
+        return overlapping_ids
+
+    def generate(self, matrices) -> List[pd.DataFrame]:
+        """Generates a dataframes of pairs that overlap across all matrices for top n."""
+        matrices = self._modify_matrices(matrices)
+        overlapping_pairs = self._get_overlapping_pairs(matrices)
+        return pd.DataFrame(overlapping_pairs, columns=["pair_id"])
+
+
+class NoGenerator(DrugDiseasePairGenerator):
+    """Class to generate no pairs.
+
+    Dummy class as for commonality@k calculation we want our matrix output for top n to remain unchanged."""
+
+    def __init__(self, top_n: int = 1000) -> None:
+        """Initialises an instance of the class.
+
+        Args:
+            top_n: Number of top pairs to be used for stability comparison.
+        """
+        self.top_n = top_n
+
+    def generate(self, matrices) -> List[pd.DataFrame]:
+        """Generates an empty dataframe as we are not using a list of common pairs for commonality@k"""
+        return pd.DataFrame({}, columns=["pair_id"])

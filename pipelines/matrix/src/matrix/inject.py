@@ -1,11 +1,13 @@
 import functools
 import importlib
+import inspect
 import logging
 import re
+from collections.abc import Collection
 from copy import deepcopy
 from inspect import getfullargspec
 from types import BuiltinFunctionType, FunctionType
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple
 
 OBJECT_KW = "_object"
 INSTANTIATE_KW = "instantiate"
@@ -67,16 +69,23 @@ def _parse_for_objects(param, exclude_kwargs: List[str] = None) -> Dict:
         # for functions
         if isinstance(obj, (BuiltinFunctionType, FunctionType)):
             if new_dict or instantiate:
-                instantiated_obj = obj(**new_dict)
+                instantiated_obj = functools.partial(obj, **new_dict)
+                try:
+                    # backwards compatibility check where some invocations of inject_object expect the function to be fully called
+                    instantiated_obj = instantiated_obj()
+                except TypeError:
+                    pass  # keep it as partial
             else:
                 instantiated_obj = obj
 
         # for classes
-        else:
+        elif inspect.isclass(obj):
             if instantiate is False:
                 instantiated_obj = obj
             else:
                 instantiated_obj = obj(**new_dict)
+        else:
+            return obj
 
         return instantiated_obj
 
@@ -209,10 +218,10 @@ def unpack_params():  # pylint: disable=missing-return-type-doc
 
 
 def _extract_elements_in_list(
-    full_list_of_columns: List[str],
-    list_of_regexes: List[str],
+    full_list_of_columns: Iterable[str],
+    list_of_regexes: Collection[str],
     raise_exc,
-) -> List[str]:
+) -> list[str]:
     """Use regex to extract elements in a list."""
     results = []
     for regex in list_of_regexes:

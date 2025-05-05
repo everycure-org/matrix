@@ -3,7 +3,6 @@ from typing import List, Union
 from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
 from matrix.kedro4argo_node import ArgoNode
-from matrix.pipelines.modelling import nodes as modelling_nodes
 from matrix.pipelines.modelling.utils import partial_fold
 
 from . import nodes
@@ -46,6 +45,48 @@ def _create_evaluation_fold_pipeline(evaluation: str, fold: Union[str, int]) -> 
     )
 
 
+def _create_core_stability_pipeline(fold_main: str, fold_to_compare: str, evaluation: str) -> Pipeline:
+    if evaluation != "rank_commonality":
+        sorted_matrix_predictions = "matrix_generation.fold_{}.model_output.sorted_matrix_predictions@pandas"
+        pipeline_nodes = [
+            ArgoNode(
+                func=nodes.generate_overlapping_dataset,
+                inputs=[
+                    f"params:evaluation.{evaluation}.evaluation_options.generator",
+                    sorted_matrix_predictions.format(fold_main),
+                    sorted_matrix_predictions.format(fold_to_compare),
+                ],
+                outputs=f"evaluation.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.model_stability_output.pairs@pandas",
+                name=f"create_{fold_main}_{fold_to_compare}_{evaluation}_evaluation_pairs",
+            ),
+            ArgoNode(
+                func=nodes.evaluate_stability_predictions,
+                inputs=[
+                    f"evaluation.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.model_stability_output.pairs@pandas",
+                    f"params:evaluation.{evaluation}.evaluation_options.stability",
+                    sorted_matrix_predictions.format(fold_main),
+                    sorted_matrix_predictions.format(fold_to_compare),
+                ],
+                outputs=f"evaluation.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.model_stability_output.result",
+                name=f"calculate_{fold_main}_{fold_to_compare}_{evaluation}",
+            ),
+        ]
+    else:
+        pipeline_nodes = [
+            ArgoNode(
+                func=nodes.calculate_rank_commonality,
+                inputs=[
+                    f"evaluation.fold_{fold_main}.fold_{fold_to_compare}.stability_ranking.model_stability_output.result",
+                    f"evaluation.fold_{fold_main}.fold_{fold_to_compare}.stability_overlap.model_stability_output.result",
+                ],
+                outputs=f"evaluation.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.model_stability_output.result",
+                name=f"calculate_{fold_main}_{fold_to_compare}_{evaluation}",
+            ),
+        ]
+    return pipeline(pipeline_nodes, tags=["stability-metrics"])
+
+
+# def create_model_pipeline(model: str, evaluation_names: List[str], n_cross_val_folds: int) -> Pipeline:
 def create_model_pipeline(evaluation_names: List[str], n_cross_val_folds: int) -> Pipeline:
     """Create pipeline to evaluate a single model.
 
@@ -75,7 +116,7 @@ def create_model_pipeline(evaluation_names: List[str], n_cross_val_folds: int) -
             pipeline(
                 [
                     ArgoNode(
-                        func=modelling_nodes.aggregate_metrics,
+                        func=nodes.aggregate_metrics,
                         inputs=[
                             "params:modelling.aggregation_functions",
                             *[
@@ -101,7 +142,6 @@ def create_model_pipeline(evaluation_names: List[str], n_cross_val_folds: int) -
                 ]
             )
         )
-
     return sum(pipelines)
 
 
@@ -109,16 +149,15 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create evaluation pipeline.
 
     Pipeline is created dynamically, based on the following dimensions:
-        - Models, i.e., type of model, e.g. random forst
-        - Folds, i.e., number of folds to train/evaluation
+        - Folds, i.e., number of folds to train/evaluate
         - Evaluations, i.e., type evaluation suite to run
     """
 
     # Unpack number of splits
-    n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_cross_val_folds")
+    n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING().get("cross_validation").get("n_cross_val_folds")
 
     # Unpack evaluation names
-    evaluation_names = [ev["evaluation_name"] for ev in settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation")]
+    evaluation_names = [ev["evaluation_name"] for ev in settings.DYNAMIC_PIPELINES_MAPPING().get("evaluation")]
 
     # Generate pipelines for each model
     pipelines = []
@@ -149,5 +188,18 @@ def create_pipeline(**kwargs) -> Pipeline:
             ]
         )
     )
+    # Calculate stability between folds
+    for stability in settings.DYNAMIC_PIPELINES_MAPPING().get("stability"):
+        for fold_main in range(n_cross_val_folds + 1):
+            for fold_to_compare in range(
+                n_cross_val_folds + 1
+            ):  # If we dont want to inclue the full training data, remove +1
+                if fold_main == fold_to_compare:
+                    continue
+                pipelines.append(
+                    pipeline(
+                        _create_core_stability_pipeline(fold_main, fold_to_compare, stability["stability_name"]),
+                    )
+                )
 
     return sum(pipelines)

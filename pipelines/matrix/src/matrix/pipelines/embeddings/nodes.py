@@ -1,23 +1,20 @@
-import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Sequence
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-import pandera
 import pyspark.sql as ps
 import seaborn as sns
 from graphdatascience import GraphDataScience
-from pandera.pyspark import DataFrameModel, Field
 from pyspark.ml.functions import array_to_vector, vector_to_array
-from tenacity import retry, stop_after_attempt, wait_exponential
+from pyspark.sql import DataFrame
+from pyspark.sql import functions as F
+from pyspark.sql.functions import concat_ws
+from pyspark.sql.types import ArrayType, FloatType, StringType
 
 from matrix.inject import inject_object, unpack_params
+from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
-from .encoders import AttributeEncoder
 from .graph_algorithms import GDSGraphAlgorithm
-
-logger = logging.getLogger(__name__)
 
 
 class GraphDS(GraphDataScience):
@@ -40,16 +37,18 @@ class GraphDS(GraphDataScience):
         self.set_database(database)
 
 
-class IngestedNodesSchema(DataFrameModel):
-    id: ps.types.StringType
-    label: ps.types.StringType
-    name: ps.types.StringType = Field(nullable=True)
-    property_keys: ps.types.ArrayType(ps.types.StringType())  # type: ignore
-    property_values: ps.types.ArrayType(ps.types.StringType())  # type: ignore
-    upstream_data_source: ps.types.ArrayType(ps.types.StringType())  # type: ignore
-
-
-@pandera.check_output(IngestedNodesSchema)
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "id": Column(StringType(), nullable=False),
+            "label": Column(StringType(), nullable=False),
+            "name": Column(StringType(), nullable=True),
+            "property_keys": Column(ArrayType(StringType()), nullable=False),
+            "property_values": Column(ArrayType(StringType()), nullable=False),
+            "upstream_data_source": Column(ArrayType(StringType()), nullable=False),
+        }
+    )
+)
 def ingest_nodes(df: ps.DataFrame) -> ps.DataFrame:
     """Function to create Neo4J nodes.
 
@@ -86,128 +85,17 @@ def ingest_nodes(df: ps.DataFrame) -> ps.DataFrame:
     )
 
 
-def bucketize_df(df: ps.DataFrame, bucket_size: int, input_features: List[str], max_input_len: int) -> ps.DataFrame:
-    """Function to bucketize input dataframe.
-
-    Function bucketizes the input dataframe in N buckets, each of size `bucket_size`
-    elements. Moreover, it concatenates the `features` into a single column and limits the
-    length to `max_input_len`.
-
-    Args:
-        df: Dataframe to bucketize
-        attributes: to keep
-        bucket_size: size of the buckets
-    """
-
-    # Order and bucketize elements
-    return (
-        df.transform(_bucketize, bucket_size=bucket_size)
-        .withColumn(
-            "text_to_embed",
-            ps.functions.concat(
-                *[ps.functions.coalesce(ps.functions.col(feature), ps.functions.lit("")) for feature in input_features]
-            ),
-        )
-        .withColumn("text_to_embed", ps.functions.substring(ps.functions.col("text_to_embed"), 1, max_input_len))
-        .select("id", "text_to_embed", "bucket")
-    )
-
-
-def _bucketize(df: ps.DataFrame, bucket_size: int) -> ps.DataFrame:
-    """Function to bucketize df in given number of buckets.
-
-    Args:
-        df: dataframe to bucketize
-        bucket_size: size of the buckets
-    Returns:
-        Dataframe augmented with `bucket` column
-    """
-
-    # Retrieve number of elements
-    num_elements = df.count()
-    num_buckets = (num_elements + bucket_size - 1) // bucket_size
-
-    # Construct df to bucketize
-    spark_session: ps.SparkSession = ps.SparkSession.builder.getOrCreate()
-
-    # Bucketize df
-    buckets = spark_session.createDataFrame(
-        data=[(bucket, bucket * bucket_size, (bucket + 1) * bucket_size) for bucket in range(num_buckets)],
-        schema=["bucket", "min_range", "max_range"],
-    )
-
-    return df.withColumn(
-        "row_num", ps.functions.row_number().over(ps.window.Window.orderBy("id")) - ps.functions.lit(1)
-    ).join(
-        buckets,
-        on=[
-            (ps.functions.col("row_num") >= (ps.functions.col("min_range")))
-            & (ps.functions.col("row_num") < ps.functions.col("max_range"))
-        ],
-    )
-
-
-@inject_object()
-def compute_embeddings(
-    dfs: Dict[str, Any],
-    encoder: AttributeEncoder,
-) -> Dict[str, Any]:
-    """Function to bucketize input data.
-
-    Args:
-        dfs: mapping of paths to df load functions
-        encoder: encoder to run
-    """
-
-    # NOTE: Inner function to avoid reference issues on unpacking
-    # the dataframe, therefore leading to only the latest shard
-    # being processed n times.
-    def _func(dataframe: pd.DataFrame):
-        return lambda df=dataframe: encoder.encode(df())
-
-    shards = {}
-    for path, df in dfs.items():
-        # Little bit hacky, but extracting batch from hive partitioning for input path
-        # As we know the input paths to this dataset are of the format /shard={num}
-        bucket = path.split("/")[0].split("=")[1]
-
-        # Invoke function to compute embeddings
-        shard_path = f"bucket={bucket}/shard"
-        shards[shard_path] = _func(df)
-
-    return shards
-
-
-@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
-async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.DataFrame:
-    try:
-        # Embed entities in batch mode
-        combined_texts = df["text_to_embed"].tolist()
-        df["embedding"] = await embedding_model.aembed_documents(combined_texts)
-
-        # Ensure floats
-        df["embedding"] = df["embedding"].apply(lambda emb: np.array(emb, dtype=np.float32))
-    except Exception as e:
-        print(f"Exception occurred: {e}")
-        raise e
-
-    # Drop added column
-    df = df.drop(columns=["text_to_embed"])
-    return df
-
-
-class EmbeddingSchema(DataFrameModel):
-    id: ps.types.StringType
-    embedding: ps.types.ArrayType(ps.types.FloatType(), True)  # type: ignore
-    pca_embedding: ps.types.ArrayType(ps.types.FloatType(), True)  # type: ignore
-
-    class Config:
-        strict = False
-        unique = ["id"]
-
-
-@pandera.check_output(EmbeddingSchema)
 @unpack_params()
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "id": Column(StringType(), nullable=False),
+            "embedding": Column(ArrayType(FloatType()), nullable=False),
+            "pca_embedding": Column(ArrayType(FloatType()), nullable=False),
+        },
+        unique=["id"],
+    )
+)
 def reduce_embeddings_dimension(df: ps.DataFrame, transformer, input: str, output: str, skip: bool) -> ps.DataFrame:
     return reduce_dimension(df, transformer, input, output, skip)
 
@@ -404,37 +292,39 @@ def write_topological_embeddings(
     return {"success": "true"}
 
 
-class ExtractedTopologicalEmbeddingSchema(DataFrameModel):
-    id: ps.types.StringType
-    topological_embedding: ps.types.ArrayType(ps.types.FloatType(), True) = Field(nullable=True)  # type: ignore
-    pca_embedding: ps.types.ArrayType(ps.types.FloatType(), True) = Field(nullable=True)  # type: ignore
+def _cast_to_array(df, col: str) -> ps.DataFrame:
+    if isinstance(df.schema[col].dataType, ps.types.StringType):
+        return df.withColumn(
+            col, ps.functions.from_json(ps.functions.col(col), ps.types.ArrayType(ps.types.FloatType()))
+        )
 
-    class Config:
-        strict = False
-        unique = ["id"]
+    return df
 
 
-@pandera.check_output(ExtractedTopologicalEmbeddingSchema)
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "id": Column(StringType(), nullable=False),
+            "topological_embedding": Column(ArrayType(FloatType()), nullable=False),
+            "pca_embedding": Column(ArrayType(FloatType()), nullable=False),
+        },
+        unique=["id"],
+    )
+)
 def extract_topological_embeddings(embeddings: ps.DataFrame, nodes: ps.DataFrame, string_col: str) -> ps.DataFrame:
     """Extract topological embeddings from Neo4j and write into BQ.
 
     Need a conditional statement due to Node2Vec writing topological embeddings as string. Raised issue in GDS client:
     https://github.com/neo4j/graph-data-science-client/issues/742#issuecomment-2324737372.
     """
-
-    if isinstance(embeddings.schema[string_col].dataType, ps.types.StringType):
-        print("converting embeddings to float")
-        embeddings = embeddings.withColumn(
-            string_col, ps.functions.from_json(ps.functions.col(string_col), ps.types.ArrayType(ps.types.FloatType()))
-        )
-
     x = (
         nodes.alias("nodes")
-        .join(embeddings.alias("embeddings"), on="id", how="left")
+        .join(embeddings.transform(_cast_to_array, string_col).alias("embeddings"), on="id", how="left")
         .select("nodes.*", "embeddings.pca_embedding", "embeddings.topological_embedding")
         .withColumn("pca_embedding", ps.functions.col("pca_embedding").cast("array<float>"))
         .withColumn("topological_embedding", ps.functions.col("topological_embedding").cast("array<float>"))
     )
+
     return x
 
 
@@ -456,3 +346,7 @@ def visualise_pca(nodes: ps.DataFrame, column_name: str) -> plt.Figure:
     plt.tight_layout(rect=[0, 0, 0.85, 1])
 
     return fig
+
+
+def embeddings_preprocessor(df: DataFrame, key_length: int, combine_cols: Sequence[str], new_col: str) -> DataFrame:
+    return df.withColumn(new_col, F.concat_ws("", *combine_cols).substr(startPos=1, length=key_length))

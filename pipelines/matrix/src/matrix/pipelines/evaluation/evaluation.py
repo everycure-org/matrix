@@ -127,29 +127,23 @@ class SpecificRanking(Evaluation):
         Args:
             data: Labelled drug-disease dataset with probability scores.
         """
-        # Get items to loop over
-        items_lst = list(data[self._specific_col].unique())
-
-        # Compute ranks of known positives for each item
+        grouped = data.groupby(self._specific_col)
         ranks_lst = []
-        for item in tqdm(items_lst):
-            pairs_for_item = data[data[self._specific_col] == item]
+        for _, pairs_for_item in tqdm(grouped):
             is_pos = pairs_for_item["y"].eq(1)
             pos_preds = list(pairs_for_item[is_pos][self._score_col_name])
             neg_preds = list(pairs_for_item[~is_pos][self._score_col_name])
             neg_preds.sort()
 
-            for prob in pos_preds:
-                rank = len(neg_preds) - bisect.bisect_left(neg_preds, prob) + 1
-                ranks_lst.append(rank)
+            ranks = len(neg_preds) - np.searchsorted(neg_preds, pos_preds, side="left") + 1
+            ranks_lst.extend(ranks)
 
-        # Compute average of rank functions and report metrics
-        report = {}
-        for rank_func_generator in self._rank_func_lst:
-            rank_func = rank_func_generator.generate()
-            ranks_arr = np.array(ranks_lst)
-            transformed_rank_lst = rank_func(ranks_arr)
-            report[f"{rank_func_generator.name()}"] = np.mean(transformed_rank_lst)
+        ranks_arr = np.array(ranks_lst)
+        report = {
+            rank_func_generator.name(): np.mean(rank_func_generator.generate()(ranks_arr))
+            for rank_func_generator in self._rank_func_lst
+        }
+
         return json.loads(json.dumps(report, default=float))
 
 
@@ -249,3 +243,83 @@ class RecallAtN(Evaluation):
             results[f"recall_at_{n}"] = recall
 
         return results
+
+
+class StabilityMetricsMixin:
+    """A mixin class to introduce ids for stability calculations."""
+
+    def _modify_matrices(self, matrices: List[pd.DataFrame]) -> List[pd.DataFrame]:
+        """Modify matrices to create id column and sort by treat score.
+
+        Args:
+            matrices: DataFrames to be used for stability comparison.
+
+        Returns:
+            List of modified matrices.
+        """
+        new_matrices = []
+        for matrix in matrices:
+            matrix = matrix.sort_values(by="treat score", ascending=False).reset_index(drop=True)
+            matrix["pair_id"] = matrix["source"] + "|" + matrix["target"]
+            matrix["rank"] = matrix.index
+            new_matrices.append(matrix)
+        return new_matrices
+
+
+class StabilityCommonalityAtN(Evaluation, StabilityMetricsMixin):
+    """A class representing Commonality at K metric to evaluate overlapping stability between two matrix outputs."""
+
+    def __init__(
+        self,
+        rank_func_lst: List[NamedFunction] = None,
+    ):
+        """Initializes the RecallAtN instance.
+
+        Args:
+            rank_func_lst: List of named functions.
+        """
+        self._rank_func_lst = rank_func_lst or []
+
+    def evaluate(self, pair_ids: pd.DataFrame, matrices: List[pd.DataFrame]) -> Dict:
+        """Evaluates StabilityCommonalityAtN on a dataset.
+
+        Args:
+            pair_ids: Pair ids to evaluate. Dummy variable for commonality at k
+            matrices: DataFrames to evaluate.
+        """
+        matrices = self._modify_matrices(matrices)
+        report = {}
+        for rank_func_generator in self._rank_func_lst:
+            rank_func = rank_func_generator.generate()
+            report[f"{rank_func_generator.name()}"] = rank_func(matrices)
+        return json.loads(json.dumps(report, default=float))
+
+
+class StabilityRankingMetrics(Evaluation, StabilityMetricsMixin):
+    """A class representing Ranking metrics evaluating ranking stability between two matrix outputs"""
+
+    def __init__(self, rank_func_lst: List[NamedFunction] = None):
+        """Initializes the RecallAtN instance.
+
+        Args:
+            rank_func_lst: List of named functions.
+        """
+        self._rank_func_lst = rank_func_lst or []
+
+    def evaluate(self, pair_ids: pd.DataFrame, matrices: List[pd.DataFrame]) -> Dict:
+        """Evaluates StabilityCommonalityAtN on a dataset.
+
+        Args:
+            pair_ids: Pair ids to evaluate.
+            matrices: DataFrames to evaluate.
+        """
+        matrices = self._modify_matrices(matrices)
+        rank_sets_1 = matrices[0]
+        rank_sets_2 = matrices[1]
+        report = {}
+        for rank_func_generator in self._rank_func_lst:
+            rank_func = rank_func_generator.generate()
+            output = rank_func((rank_sets_1, rank_sets_2), pair_ids)
+            report[f"{rank_func_generator.name()}_stat"] = output["stat"]
+            report[f"{rank_func_generator.name()}_pvalue"] = output["pvalue"]
+        return json.loads(json.dumps(report, default=float))

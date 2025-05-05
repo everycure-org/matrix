@@ -6,7 +6,10 @@ Our codebase is structured around the `Makefile`. This allows for a quick and ea
 
 <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;"><iframe src="https://us06web.zoom.us/clips/embed/ghxELqxMExaMh96j_58dMq8UnXaXEcEtSTRVxXf7zXNd5l4OSgdvC5xwANUE1ydp7afd-M42UkQNe_eUJQkCrXIZ.SAPUAWjHFb-sh7Pj" frameborder="0" allowfullscreen="allowfullscreen" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; "></iframe></div>
 
-At the end of this section, we will show you how you can set up your entire local environment by using a single `make` command however prior to that, we will explain the set-up on a step-by-step basis.
+
+!!! tip 
+    For the impatient ones, just run `make`. No errors? Great you're all set! It is probably still worth reading this page
+    to understand everything that's happening though. 
 
 <!--
 TODO wrong place
@@ -21,6 +24,17 @@ To execute the pipeline directly on your local machine, you'll need to set up yo
     Start by reviewing `.env.defaults` to understand available configuration options. In most cases, for local executions no overrides are needed. If you do want to override a variable, create the `.env` file and override the necessary variables.
 
 -->
+
+### Updating the Submodules
+
+The codebase contain submodules that references other respository in Github. To be able to clone them please run:
+
+```bash
+git submodule update --init --recursive
+```
+
+!!! help "Encountering issues?"
+    If you're experiencing any problems running the `git submodule update --init --recursive`, please run the command outside your IDE (through the shell or terminal), as the command would need to open a browser to authenticate with Github, something that doesn't work in certain IDE (PyCharm) command line.
 
 ### Virtual environment for python dependencies
 
@@ -52,6 +66,14 @@ make precommit
 ```
 
 These hooks were also installed at the time you called `make` so whenever you try to push something to the repository, the hooks will run automatically. We ensure a minimum level of code quality this way.
+
+
+### Secrets
+We need to fetch the secrets for the local environment such as fetching a storage service account and and OAuth client secret. This can be done by running the following command:
+
+```bash
+make fetch_secrets
+```
 
 ### Fast tests
 To ensure that the codebase is working as expected, you can run the following command to execute the fast tests:
@@ -109,7 +131,7 @@ This command will kick off our kedro pipeline in a test environment using a fabr
 Generally, the `Makefile` is a good place to refer to when you need to re-set your environment. Once the command runs successfully, you should be able to run the pipeline end-to-end locally!
 
 !!! help "Encountering issues?"
-    If you're experiencing any problems running the `MakeFile`, please refer to our [Common Errors FAQ](../FAQ/common_errors.md) for troubleshooting guidance. This resource contains solutions to frequently encountered issues and may help resolve your problem quickly.
+    If you're experiencing any problems running the `MakeFile`, please refer to our [Common Errors FAQ](../references/common_errors.md) for troubleshooting guidance. This resource contains solutions to frequently encountered issues and may help resolve your problem quickly.
 
 
 ??? note "Understanding and troubleshooting your `make` run"

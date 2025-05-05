@@ -1,9 +1,11 @@
 
 nav:
     - index.md
-    - compute_cluster.md
+    - kubernetes_cluster.md
+    - public_data_zone.md
     - observability.md
     - gcp.md
+    - git-crypt.md
+    - iap.md
     - runbooks
-    - argo_workflows_locally.md
-    - glossary.md
+    - architecture_decision_records

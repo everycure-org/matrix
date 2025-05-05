@@ -10,8 +10,18 @@ The matrix pipeline is our main codebase in the Every Cure organization. Its goa
 
 ### Preprocessing
 
-The current pre-processing pipeline is highly preliminary and is used to ingest experimental nodes and edges proposed by our medical team. The pipeline is integrated with a Google
-sheet for rapid hypothesis testing.
+The current pre-processing pipeline is highly preliminary and is ONLY used to ingest experimental nodes to our GCS bucket. The pipeline is integrated with a Google sheet for rapid hypothesis testing.
+
+The preprocessing pipeline is mapping the names assigned by our medical team to specific IDs using name-resolver service. If you want to run the full pre-processing pipeline, you can do so by running the following command or specifying tags for a specific source:
+
+```bash
+kedro run -p preprocessing 
+# or the following tags for specific sources
+kedro run -p preprocessing --tag ec-clinical-trials-data
+kedro run -p preprocessing --tag ec-medical-kg
+```
+
+This will then read the data from Google Sheets, normalize it, and save it to GCP under specific version specified in `globals.yaml`. Note that you don't need to re-run preprocesing every time you run e2e pipeline; you only need to re-run it if there has been any changes to the experimental data provided by the medical team.
 
 ### Ingestion
 
@@ -47,7 +57,7 @@ Finally, catalog entries should be defined to ensure the correct linkage of the 
 ```yaml
 # catalog.yml
 integration.raw.rtx_kg2.edges:
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/edges.tsv
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/edges.tsv
   ... # Remaining configuration here
 ```
 
@@ -124,6 +134,52 @@ DYNAMIC_PIPELINES_MAPPING = {
 }
 ```
 
+### Filtering
+
+The filtering pipeline step enables selective processing of the knowledge graph by focusing on specific subsets of nodes and edges. Common use cases include:
+
+- Focusing on specific node or edge types
+- Including only data from particular sources
+- Removing redundant or unwanted data
+
+The filter functions are defined [here](https://github.com/everycure-org/matrix/blob/main/pipelines/matrix/src/matrix/pipelines/filtering/filters.py) and the parameters [here](https://github.com/everycure-org/matrix/blob/main/pipelines/matrix/conf/base/filtering/parameters.yml)
+
+#### Example - filter rows from a list of upstream data sources
+
+[`keep_rows_containing`](https://github.com/everycure-org/matrix/blob/main/pipelines/matrix/src/matrix/pipelines/filtering/filters.py#L83): Retains rows where a specified column contains any of the values in a provided list
+```python
+def keep_rows_containing(
+    input_df: ps.DataFrame,
+    keep_list: Iterable[str],
+    column: str,
+    **kwargs,
+) -> ps.DataFrame:
+    """Function to only keep rows containing a category."""
+    keep_list_array = sf.array([sf.lit(x) for x in keep_list])
+    return input_df.filter(sf.exists(column, lambda x: sf.array_contains(keep_list_array, x)))
+```
+
+Filters are configured in the parameters file (`conf/base/filtering/parameters.yml`). You can define both node and edge filters:
+
+```yaml
+filtering:
+  node_filters:
+    filter_sources:
+      _object: matrix.pipelines.filtering.filters.keep_rows_containing
+      column: upstream_data_source
+      keep_list:
+        - rtxkg2
+        - ec_medical
+```
+
+This example demonstrates filtering using the `keep_rows_containing` function on the `upstream_data_source` column, which must include either `rtxkg2` or `ec_medical`.
+
+For instance, rows with `upstream_data_sources = ['rtxkg2']` or `['rtxkg2', 'robokop']` are retained, while rows with only `['robokop']` are excluded.
+
+To create a new filter, implement a new function and reference it in the parameters file.
+
+All filters defined under `node_filters` or `edge_filters` will be applied during processing.
+
 ### Embeddings
 
 Our embeddings pipeline computes vectorized representations of the entities in the knowledge graph in two stages:
@@ -152,9 +208,11 @@ Key steps implemented include:
 
 ### Matrix Generation 
 
-The matrix generation pipeline scores all drug-disease pairs using trained models. The process includes flags for known positives and negatives, exclusion of training data for unbiased scoring, and outputs are enriched with metadata and statistics, all exported in an Excel-ready format.
+The matrix generation pipeline scores all drug-disease pairs using trained models. The process includes flags for known positives and negatives, exclusion of training data for unbiased scoring during evaluation. 
 
-Note that the matrix generation is performed for each fold, as well as the full split.
+Note that the matrix generation is performed for each fold, as well as the "full split", where the entirety of available ground truth is used for training.
+
+The matrix generation pipeline also outputs several plots and tables giving a global description of the output predictions. 
 
 ### Evaluation
 
@@ -166,11 +224,7 @@ Computed metrics generally fall into three categories:
 2. **Disease-specific ranking metrics**: These metrics assess ranking precision for each specific disease (e.g. Hit@k).
 3. **Ground truth classification metrics**: These metrics examine the model's ability to distinguish between known positive and known negative drug-disease pairs (e.g. accuracy, F1 score).
 
-To further enhance the pipeline, we have implemented **time-split validation** using clinical trial data curated after the publication date of our knowledge graph. This approach ensures that model predictions are assessed on future data, simulating real-world application scenarios and testing the model's predictive power on unseen, temporally shifted information. By evaluating with post-publication clinical trial data, this process validates the model's effectiveness and stability in longitudinal, real-world contexts.
-
 The evaluation pipeline utilises k-fold cross-validation, where by the metrics are computed for each fold, and then aggregated across folds for a more robust estimate of the model's performance.
-
-Additionally, to address biases, we have been experimenting with matrix transformation and normalization techniques to counteract the effect of "frequent flyer" diseases and drugs—those that appear frequently and can skew results. By normalizing these high-occurrence entities, we are able to reduce their disproportionate influence on the model, allowing for a more balanced representation across all drug-disease pairs.
 
 More details on the metrics computed in each category can be found in the [evaluation deep-dive](../data_science/evaluation_deep_dive.md)
 
