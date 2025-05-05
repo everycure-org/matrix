@@ -1,4 +1,3 @@
-import subprocess
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -9,16 +8,11 @@ import yaml
 from click.testing import CliRunner
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
-from matrix.cli_commands.submit import (
+from matrix.cli_commands.experiment import (
     _submit,
-    apply_argo_template,
     build_argo_template,
-    command_exists,
-    ensure_namespace,
     get_run_name,
-    run_subprocess,
     save_argo_template,
-    submit,
     submit_workflow,
 )
 from matrix.kedro4argo_node import ArgoResourceConfig
@@ -89,18 +83,6 @@ def test_build_argo_template(mock_generate_argo_config: None) -> None:
     mock_generate_argo_config.assert_called_once()
 
 
-def test_ensure_namespace_existing(mock_run_subprocess: None) -> None:
-    mock_run_subprocess.return_value.returncode = 0
-    ensure_namespace("existing_namespace", verbose=True)
-    assert mock_run_subprocess.call_count == 1
-
-
-def test_ensure_namespace_new(mock_run_subprocess: None) -> None:
-    mock_run_subprocess.side_effect = [MagicMock(returncode=1), MagicMock(returncode=0)]
-    ensure_namespace("new_namespace", verbose=True)
-    assert mock_run_subprocess.call_count == 2
-
-
 @pytest.fixture()
 def temporary_directory():
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -134,17 +116,6 @@ def test_save_argo_template_returns_string(temporary_directory: Path) -> None:
     assert isinstance(result, str)
 
 
-def test_apply_argo_template(mock_run_subprocess: None) -> None:
-    apply_argo_template("test_namespace", Path("sample_template.yml"), verbose=True)
-    mock_run_subprocess.assert_called_once()
-
-
-def test_submit_workflow(mock_run_subprocess: None) -> None:
-    mock_run_subprocess.return_value.stdout = '{"metadata": {"name": "test-job"}}'
-    submit_workflow("test_run", "test_namespace", verbose=True)
-    assert mock_run_subprocess.call_count == 1
-
-
 @pytest.mark.parametrize(
     "input_name,expected_name",
     [
@@ -165,59 +136,6 @@ def test_pipeline_not_found(mock_multiple_pipelines):
 
         # When invoking with non existing pipeline
         runner.invoke(submit, ["--username", "testuser", "--run-name", "test-run", "--pipeline", "not_exists"])
-
-
-def test_command_exists(mock_run_subprocess: None) -> None:
-    mock_run_subprocess.return_value.returncode = 0
-    assert command_exists("existing_command") is True
-
-    mock_run_subprocess.return_value.returncode = 1
-    assert command_exists("non_existing_command") is False
-
-
-def test_run_subprocess_error() -> None:
-    with pytest.raises(subprocess.CalledProcessError) as exc_info:
-        run_subprocess("invalid_command", stream_output=True)
-
-    assert exc_info.value.returncode == 127
-    assert exc_info.value.stdout is None
-
-
-def test_run_subprocess_streaming() -> None:
-    result = run_subprocess('echo "test"', stream_output=True)
-
-    assert result.returncode == 0
-    assert result.stdout == "test\n"
-    assert result.stderr is None
-
-
-def test_run_subprocess_no_streaming_2() -> None:
-    result = run_subprocess('echo "test"', stream_output=False)
-
-    assert result.returncode == 0
-    assert result.stdout is None
-    assert result.stderr is None
-
-
-def test_run_subprocess_no_streaming_error() -> None:
-    with pytest.raises(subprocess.CalledProcessError) as exc_info:
-        run_subprocess("invalid_command", stream_output=False)
-
-    assert exc_info.value.returncode == 127
-    assert exc_info.value.stderr is None
-    assert exc_info.value.stdout is None
-
-
-@pytest.mark.parametrize("stream", ("/dev/stdout", "/dev/stderr"))
-@pytest.mark.timeout(15)
-def test_run_subprocess_no_deadlock(stream: str) -> None:
-    """Reproduces an annoying deadlocking issue with the way run_subprocess in streaming mode was written up to c0f2f3f."""
-    # Put "lots" of output in one of stdout or stderr.
-    big_number = 100_000  # big enough to fill a process pipe, though that is platform dependant
-    cmd = f"yes | head -n {big_number} > {stream}"
-    finished_process = run_subprocess(cmd, stream_output=True, check=True, shell=True)
-    channel = finished_process.stdout if stream == "/dev/stdout" else finished_process.stderr
-    assert len(channel) == big_number * len("y\n")
 
 
 @pytest.mark.parametrize("pipeline_for_execution", ["__default__", "test_pipeline"])
