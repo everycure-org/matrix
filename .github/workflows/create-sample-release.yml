@@ -91,9 +91,9 @@ jobs:
           echo "Run the kedro sampling pipeline"
           kedro experiment run \
             -e sample \
-            --experiment-name sample-run \
+            --experiment-name create-sample-for-release \
             -p create_sample \
-            --run-name create-sample-release-${DATE} \
+            --run-name sample-release-${DATE} \
             --username github_actions_bot \
             --release-version ${RELEASE_VERSION} \
             --headless \
