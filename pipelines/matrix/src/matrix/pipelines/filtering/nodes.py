@@ -66,7 +66,11 @@ def filter_unified_kg_edges(
         edges.alias("edges")
         .join(nodes.alias("subject"), on=F.col("edges.subject") == F.col("subject.id"), how="inner")
         .join(nodes.alias("object"), on=F.col("edges.object") == F.col("object.id"), how="inner")
-        .select("edges.*")
+        .select(
+            "edges.*",
+            F.col("subject.category").alias("subject_category"),
+            F.col("object.category").alias("object_category"),
+        )
     )
     if logger.isEnabledFor(logging.INFO):
         new_edges_count = edges.cache().count()
@@ -75,6 +79,8 @@ def filter_unified_kg_edges(
         )
 
     filtered, removed = _apply_transformations(edges, transformations, key_cols=["subject", "predicate", "object"])
+    # Remove new fields from schema
+    filtered = filtered.drop("subject_category", "object_category")
     return filtered, removed
 
 

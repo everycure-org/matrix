@@ -89,3 +89,33 @@ def keep_rows_containing(
     """Function to only keep rows containing a category."""
     keep_list_array = sf.array([sf.lit(x) for x in keep_list])
     return input_df.filter(sf.exists(column, lambda x: sf.array_contains(keep_list_array, x)))
+
+
+def filter_triples(
+    edges_df: ps.DataFrame,
+    triples_to_exclude: Iterable[list[str]],
+    **kwargs,
+) -> ps.DataFrame:
+    """Filter out edges that match the specified subject-predicate-object patterns.
+
+    Args:
+        edges_df: dataframe with edges containing subject_category and object_category columns
+        triples_to_exclude: list of triples to exclude, where each triple is [subject_category, predicate, object_category]
+    Returns:
+        dataframe with matching edges filtered out
+
+    For example, triples_to_exclude can be:
+        - ["Drug", "physically_interacts_with", "Drug"]
+        - ["Drug", "treats", "Disease"]
+    """
+    # Create a filter condition that checks against each triple to exclude
+    filter_condition = sf.lit(True)
+    for subject_cat, predicate, object_cat in triples_to_exclude:
+        filter_condition = filter_condition & ~(
+            (sf.col("subject_category") == subject_cat)
+            & (sf.col("predicate") == predicate)
+            & (sf.col("object_category") == object_cat)
+        )
+
+    # Apply the filter
+    return edges_df.filter(filter_condition)

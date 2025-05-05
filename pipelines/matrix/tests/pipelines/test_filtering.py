@@ -188,3 +188,80 @@ def test_biolink_deduplicate(spark, sample_edges):
         ),
     )
     assertDataFrameEqual(result.select(*expected.columns), expected)
+
+
+# @pytest.fixture
+# def sample_nodes_for_triple_filtering(spark):
+#     return spark.createDataFrame(
+#         [
+#             ("CHEBI:001", "Drug"),
+#             ("CHEBI:002", "Drug"),
+#             ("CHEBI:003", "Disease"),
+#             ("CHEBI:004", "Small Molecule"),
+#         ],
+#         schema=StructType(
+#             [
+#                 StructField("id", StringType(), False),
+#                 StructField("category", StringType(), False),
+#             ]
+#         ),
+#     )
+
+
+@pytest.fixture
+def sample_edges_for_triple_filtering(spark):
+    return spark.createDataFrame(
+        [
+            (
+                "CHEBI:001",
+                "biolink:Drug",
+                "biolink:physically_interacts_with",
+                "CHEBI:002",
+                "biolink:Drug",
+            ),
+            (
+                "CHEBI:001",
+                "biolink:Drug",
+                "biolink:treats",
+                "UMLS:001",
+                "biolink:Disease",
+            ),
+        ],
+        schema=StructType(
+            [
+                StructField("subject", StringType(), False),
+                StructField("subject_category", StringType(), False),
+                StructField("predicate", StringType(), False),
+                StructField("object", StringType(), False),
+                StructField("object_category", StringType(), False),
+            ]
+        ),
+    )
+
+
+def test_filter_triples(spark, sample_edges_for_triple_filtering):
+    result = filters.filter_triples(
+        edges_df=sample_edges_for_triple_filtering,
+        triples_to_exclude=[["biolink:Drug", "biolink:physically_interacts_with", "biolink:Drug"]],
+    )
+    expected = spark.createDataFrame(
+        [
+            (
+                "CHEBI:001",
+                "biolink:Drug",
+                "biolink:treats",
+                "UMLS:001",
+                "biolink:Disease",
+            ),
+        ],
+        schema=StructType(
+            [
+                StructField("subject", StringType(), False),
+                StructField("subject_category", StringType(), False),
+                StructField("predicate", StringType(), False),
+                StructField("object", StringType(), False),
+                StructField("object_category", StringType(), False),
+            ]
+        ),
+    )
+    assertDataFrameEqual(result, expected)
