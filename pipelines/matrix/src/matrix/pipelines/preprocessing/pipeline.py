@@ -2,15 +2,13 @@ from kedro.pipeline import Pipeline, node, pipeline
 
 from . import nodes
 
-
 # NOTE: Preprocessing pipeline is not well optimized and thus might take a while to run.
-def create_pipeline(**kwargs) -> Pipeline:
-    """Create preprocessing pipeline."""
+
+
+def create_embiology_pipeline() -> Pipeline:
+    """Embiology cleaning and preprocessing"""
     return pipeline(
         [
-            # -------------------------------------------------------------------------
-            # Embiology cleaning and preprocessing
-            # -------------------------------------------------------------------------
             node(
                 func=lambda x: x,
                 inputs="preprocessing.raw.embiology.attr",
@@ -111,9 +109,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="final_clean_embiology_kg",
                 tags=["embiology-kg"],
             ),
-            # -------------------------------------------------------------------------
-            # EC Clinical Data ingestion and name->id mapping
-            # -------------------------------------------------------------------------
+        ]
+    )
+
+
+def create_ec_clinical_data_pipeline() -> Pipeline:
+    """EC Clinical Data ingestion and name->id mapping"""
+    return pipeline(
+        [
             node(
                 func=nodes.add_source_and_target_to_clinical_trails,
                 inputs={
@@ -142,9 +145,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="report_clinical_trial_data",
                 tags=["ec-clinical-trials-data"],
             ),
-            # -------------------------------------------------------------------------
-            # EC Medical Team ingestion and name-> id mapping
-            # -------------------------------------------------------------------------
+        ]
+    )
+
+
+def create_ec_medical_team_pipeline() -> Pipeline:
+    """EC Medical Team ingestion and name-> id mapping"""
+    return pipeline(
+        [
             node(
                 func=nodes.process_medical_nodes,
                 inputs={
@@ -189,4 +197,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["ec-medical-kg"],
             ),
         ]
+    )
+
+
+def create_pipeline() -> Pipeline:
+    """Create preprocessing pipeline."""
+    return pipeline(
+        create_embiology_pipeline(),
+        create_ec_clinical_data_pipeline(),
+        create_ec_medical_team_pipeline(),
     )
