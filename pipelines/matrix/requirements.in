@@ -1,6 +1,4 @@
-# TODO remove fabricator package from default requirements.in
-# this needs to be commented out for those not having access to our legacy proprietary packages
-./packages/data_fabricator
+faker
 bmt # biolink model toolkit
 gcsfs==2024.3.1
 google-cloud-bigquery

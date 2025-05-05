@@ -1,4 +1,4 @@
-# Walkthrough: Updating a Data Source
+# Updating a Data Source
 
 ## Task
 
