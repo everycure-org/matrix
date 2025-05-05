@@ -197,7 +197,7 @@ This will use data catalog from `cloud` environment, and trigger `ingestion` pip
 ## Cloud
 ### Argo Workflows
 
-The primary mechanism through which we execute our pipelines in `ArgoCD` templates. ArgoCD template contains information about services that need to be deployed on our K8s cluster; resources requests and scheduling information.
+The primary mechanism through which we execute our pipelines is Argo Workflows. Our kedro pipeline is translated into an Argo Workflow template that contains the tasks to execute, their lineage, and there resource requests.
 
 Matrix uses Jinja2 templating to generate a dynamic argo template as per user request, which is being submitted to the K8s cluster.
 
