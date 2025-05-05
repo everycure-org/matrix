@@ -78,6 +78,7 @@ paths:
   inference:          data/releases/${versions.release}/runs/${run_name}/datasets/inference
  
   tmp:                data/tmp
+  tmp_private:        ${prod_gcs_bucket}/data/tmp
 
   # Embedding cache dataset
   cache:              data/cache

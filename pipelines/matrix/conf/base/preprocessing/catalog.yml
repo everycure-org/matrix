@@ -93,11 +93,11 @@ preprocessing.prm.embiology.nodes:
 
 preprocessing.raw.embiology.manual_id_mapping:
   type: pandas.CSVDataset
-  filepath: gs://mtrx-us-central1-hub-prod-storage/data/temp/embiology/prm/id_curie_mapping.csv
+  filepath: ${globals:paths.tmp_private}/embiology/prm/id_curie_mapping.csv
 
 preprocessing.raw.embiology.manual_name_mapping:
   type: pandas.CSVDataset
-  filepath: gs://mtrx-us-central1-hub-prod-storage/data/temp/embiology/prm/name_curie_mapping.csv
+  filepath: ${globals:paths.tmp_private}/embiology/prm/name_curie_mapping.csv
 
 preprocessing.int.embiology.manual_name_mapping@pandas:
   <<: *_pandas_parquet
