@@ -188,10 +188,9 @@ def run(
     if not headless:
         click.confirm(f"Start a new run '{run_name}' on experiment '{experiment_name}', is that correct?", abort=True)
 
-    if not dry_run:
-        run = mlflow.start_run(run_name=run_name, experiment_id=experiment_id)
-        mlflow.set_tag("created_by", username)
-        mlflow_run_id = run.info.run_id
+    run = mlflow.start_run(run_name=run_name, experiment_id=experiment_id)
+    mlflow.set_tag("created_by", username)
+    mlflow_run_id = run.info.run_id
 
     if not quiet:
         log.setLevel(logging.DEBUG)
@@ -228,21 +227,21 @@ def run(
             experiment_id, run_name, namespace, pipeline, environment, is_test, release_version, headless
         )
 
-        _submit(
-            username=username,
-            namespace=namespace,
-            run_name=run_name,
-            release_version=release_version,
-            pipeline_obj=pipeline_obj,
-            verbose=not quiet,
-            dry_run=dry_run,
-            template_directory=ARGO_TEMPLATES_DIR_PATH,
-            mlflow_experiment_id=experiment_id,
-            mlflow_run_id=mlflow_run_id,
-            allow_interactions=not headless,
-            is_test=is_test,
-            environment=environment,
-        )
+    _submit(
+        username=username,
+        namespace=namespace,
+        run_name=run_name,
+        release_version=release_version,
+        pipeline_obj=pipeline_obj,
+        verbose=not quiet,
+        dry_run=dry_run,
+        template_directory=ARGO_TEMPLATES_DIR_PATH,
+        mlflow_experiment_id=experiment_id,
+        mlflow_run_id=mlflow_run_id,
+        allow_interactions=not headless,
+        is_test=is_test,
+        environment=environment,
+    )
 
 
 @experiment.command()
@@ -428,7 +427,6 @@ def build_argo_template(
     mlflow_experiment_id: int,
     mlflow_url: str,
     is_test: bool,
-    default_execution_resources: Optional[ArgoResourceConfig] = None,
     mlflow_run_id: Optional[str] = None,
 ) -> str:
     """Build Argo workflow template."""
@@ -454,7 +452,6 @@ def build_argo_template(
         release_folder_name=release_folder_name,
         pipeline=pipeline_obj,
         environment=environment,
-        default_execution_resources=default_execution_resources,
         mlflow_run_id=mlflow_run_id,
     )
     console.print("[green]✓[/green] Argo template built")
