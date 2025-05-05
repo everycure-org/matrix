@@ -9,46 +9,47 @@ def create_embiology_pipeline() -> Pipeline:
     """Embiology cleaning and preprocessing"""
     return pipeline(
         [
+            # Copying these data sources locally improves performance in the later steps.
             node(
                 func=lambda x: x,
                 inputs="preprocessing.raw.embiology.attr",
                 outputs="preprocessing.int.embiology.attr@pandas",
-                name="write_embiology_attr",
+                name="copy_embiology_attr_to_tmp",
                 tags=["ingest-embiology-kg"],
             ),
             node(
                 func=lambda x: x,
                 inputs="preprocessing.raw.embiology.ref_pub",
                 outputs="preprocessing.int.embiology.ref_pub@pandas",
-                name="write_embiology_ref_pub",
+                name="copy_embiology_ref_pub_to_tmp",
                 tags=["ingest-embiology-kg"],
             ),
             node(
                 func=lambda x: x,
                 inputs="preprocessing.raw.embiology.nodes",
                 outputs="preprocessing.int.embiology.nodes@pandas",
-                name="write_embiology_nodes",
+                name="copy_embiology_nodes_to_tmp",
                 tags=["ingest-embiology-kg"],
             ),
             node(
                 func=lambda x: x,
                 inputs="preprocessing.raw.embiology.edges",
                 outputs="preprocessing.int.embiology.edges@pandas",
-                name="write_embiology_edges",
+                name="copy_embiology_edges_to_tmp",
                 tags=["ingest-embiology-kg"],
             ),
             node(
                 func=lambda x: x,
                 inputs="preprocessing.raw.embiology.manual_id_mapping",
                 outputs="preprocessing.int.embiology.manual_id_mapping@pandas",
-                name="write_embiology_id_mapping",
+                name="copy_embiology_id_mapping_to_tmp",
                 tags=["ingest-embiology-kg"],
             ),
             node(
                 func=lambda x: x,
                 inputs="preprocessing.raw.embiology.manual_name_mapping",
                 outputs="preprocessing.int.embiology.manual_name_mapping@pandas",
-                name="write_embiology_name_mapping",
+                name="copy_embiology_name_mapping_to_tmp",
                 tags=["ingest-embiology-kg"],
             ),
             node(
