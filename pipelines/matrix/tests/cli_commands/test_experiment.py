@@ -40,6 +40,13 @@ def mock_submit_workflow():
         yield mock
 
 
+@pytest.fixture
+def mock_can_talk_to_kubernetes():
+    with patch("matrix.cli_commands.experiment.can_talk_to_kubernetes") as mock:
+        mock.return_value = True
+        yield mock
+
+
 @pytest.fixture(scope="function")
 def mock_pipelines():
     pipeline_dict = {
@@ -148,6 +155,7 @@ def test_workflow_submission(
     mock_run_subprocess: None,
     mock_namespace_exists,
     mock_apply,
+    mock_can_talk_to_kubernetes,
     mock_submit_workflow,
     temporary_directory: Path,
     pipeline_for_execution: str,
@@ -200,6 +208,7 @@ def test_workflow_submission(
         tasks = pipeline.get("dag", {}).get("tasks", [])
         assert len(tasks) > 0, f"Expected at least one task in the {pipeline['name']} pipeline"
 
+    mock_can_talk_to_kubernetes.assert_called_once()
     mock_namespace_exists.assert_called_with("test_namespace")
     mock_apply.assert_called_with("test_namespace", str(yaml_file), verbose=True)
     mock_submit_workflow.assert_called_with("test-run", "test_namespace", verbose=True)
