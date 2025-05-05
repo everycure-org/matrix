@@ -22,18 +22,18 @@ gcloud auth configure-docker us-central1-docker.pkg.dev
 
 ## Submitting a Pipeline Run
 
-To submit a pipeline run, use the `kedro submit` command. This command builds a Docker image, creates an Argo workflow template, and submits the workflow to the Kubernetes cluster.
+To submit a pipeline run, use the `kedro experiment run` command. This command builds a Docker image, creates an Argo workflow template, and submits the workflow to the Kubernetes cluster.
 
 ### Basic Usage
 
 ```bash
-kedro submit --username <your-name>
+kedro experiment run --username <your-name>
 ```
 
 Use the `--help` flag to see all available options:
 
 ```bash
-kedro submit --help
+kedro experiment run --help
 ```
 
 ### Submitting to the tests folder
@@ -41,7 +41,7 @@ kedro submit --help
 To submit a pipeline run to the tests folder instead of the releases folder, use the `--is-test` flag:
 
 ```bash
-kedro submit --username <your-name> --is-test
+kedro experiment run --username <your-name> --is-test
 ```
 
 This will store all pipeline outputs under `gs://<bucket>/kedro/data/tests/<version>` instead of the default releases folder. This is useful for:
