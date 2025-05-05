@@ -3,8 +3,10 @@ import random
 
 import networkx as nx
 import pandas as pd
-from data_fabricator.v0.nodes.fabrication import fabricate_datasets
 from kedro.pipeline import Pipeline, node, pipeline
+
+from matrix.kedro4argo_node import ArgoNode
+from matrix.utils.fabrication import fabricate_datasets
 
 
 def _create_pairs(
