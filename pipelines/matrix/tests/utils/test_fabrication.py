@@ -51,7 +51,7 @@ def test_generate_unique_id_prefix():
     assert set(has_prefix) == {True}
 
 
-def test_generate_unique_id_prefix_id_length():
+def test_generate_unique_id_embiology_example():
     ids = generate_unique_id(
         num_rows=400,
         prefix="EMBLG:",
@@ -62,6 +62,20 @@ def test_generate_unique_id_prefix_id_length():
 
     assert len(ids) == 400
     assert len(set(ids)) == 400
+    assert set(has_prefix) == {True}
+
+
+def test_generate_unique_id_robokop_example():
+    ids = generate_unique_id(
+        num_rows=500,
+        prefix="ROBO:",
+        id_length=8,
+    )
+
+    has_prefix = [x.startswith("ROBO:") for x in ids]
+
+    assert len(ids) == 500
+    assert len(set(ids)) == 500
     assert set(has_prefix) == {True}
 
 
