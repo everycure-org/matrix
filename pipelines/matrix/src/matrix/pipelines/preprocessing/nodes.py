@@ -210,37 +210,42 @@ def normalise_embiology_nodes(
     return norm_nodes
 
 
-def prepare_edges(control, attributes, biolink_mapping):
-    """Prepare edges for embiology nodes.
+def prepare_edges(edges: ps.DataFrame, edges_attributes: ps.DataFrame, biolink_mapping: Dict[str, str]):
+    """
 
     Args:
-        nodes: embiology nodes
-        identifiers_mapping: mapping of identifiers
+        edges: embiology edges
+        edges_attributes: embiology edges attributes
+        biolink_mapping: biolink mapping
     """
-    # Fix directed and undirected edges
-    control_directed = control.filter((sf.col("inkey") != "{}") & (sf.col("inoutkey") == "{}"))
-    control_undirected = control.filter((sf.col("inkey") == "{}") & (sf.col("inoutkey") != "{}"))
-    control_undirected = (
-        control_undirected.withColumn("inoutkey", sf.split(sf.regexp_replace("inoutkey", "[{}]", ""), ","))
+
+    # 1. Prepare directed edges
+    edges_directed = (
+        edges.filter((sf.col("inkey") != "{}") & (sf.col("inoutkey") == "{}"))
+        .withColumn("inoutkey", sf.split(sf.regexp_replace("inoutkey", "[{}]", ""), ","))
+        .withColumn("inkey", sf.regexp_replace("inkey", "[{}]", ""))
+        .withColumn("outkey", sf.regexp_replace("outkey", "[{}]", ""))
+    )
+
+    # 2. Split undirected edges into two directed edges
+    edges_undirected = (
+        edges.filter((sf.col("inkey") == "{}") & (sf.col("inoutkey") != "{}"))
+        .withColumn("inoutkey", sf.split(sf.regexp_replace("inoutkey", "[{}]", ""), ","))
         .withColumn("inkey", sf.col("inoutkey").getItem(0))
         .withColumn("outkey", sf.col("inoutkey").getItem(1))
     )
-    # Divide each undirected edge into two directed edges
-    control_undirected = control_undirected.union(
-        control_undirected.withColumnRenamed("inkey", "outkey_new")
+
+    edges_undirected_corrected = edges_undirected.union(
+        edges_undirected.select(sf.col("inkey").alias("outkey"), sf.col("outkey").alias("inkey"))
+        .withColumnRenamed("inkey", "outkey_new")
         .withColumnRenamed("outkey", "inkey_new")
         .withColumnRenamed("outkey_new", "outkey")
         .withColumnRenamed("inkey_new", "inkey")
         .drop("outkey_new", "inkey_new")
-        .select(control_undirected.columns)
+        .select(edges_undirected.columns)
     )
     # Union directed and undirected edges
-    edges = (
-        control_directed.withColumn("inoutkey", sf.split(sf.regexp_replace("inoutkey", "[{}]", ""), ","))
-        .withColumn("inkey", sf.regexp_replace("inkey", "[{}]", ""))
-        .withColumn("outkey", sf.regexp_replace("outkey", "[{}]", ""))
-        .union(control_undirected)
-    )
+    edges = edges_directed.union(edges_undirected_corrected)
 
     # Biolink fix
     def lookup_mapping(name):
@@ -264,33 +269,32 @@ def prepare_edges(control, attributes, biolink_mapping):
         ),
     )
     # Add attributes
-    edges = edges.join(attributes.withColumnRenamed("id", "attributes"), on="attributes", how="left")
+    edges = edges.join(edges_attributes.withColumnRenamed("id", "attributes"), on="attributes", how="left")
     return edges
 
 
-def add_edge_attributes(references):
-    """Prepare edges for embiology nodes.
+def generate_embiology_edge_attributes(references: ps.DataFrame):
+    """
+    Generate embiology edge attributes from references, the output attributes are num_sentences, num_references, pmid and doi.
 
     Args:
-        nodes: embiology nodes
-        identifiers_mapping: mapping of identifiers
+        references: embiology references
     """
-    # Add Num_sentences & Num_references
+
     return (
         references.withColumn(
             "pmid",
-            sf.udf(lambda x: [f"PMID:{str(x)}"] if x is not None else None, ArrayType(StringType()))(sf.col("pmid")),
+            sf.when(
+                sf.col("pmid").isNotNull(), sf.concat(sf.lit("PMID:"), sf.format_string("%.0f", sf.col("pmid")))
+            ).otherwise(None),
         )
-        .withColumn(
-            "doi",
-            sf.udf(lambda x: [f"DOI:{str(x)}"] if x is not None else None, ArrayType(StringType()))(sf.col("doi")),
-        )
+        .withColumn("doi", sf.when(sf.col("doi").isNotNull(), sf.concat(sf.lit("DOI:"), sf.col("doi"))).otherwise(None))
         .groupby("id")
         .agg(
             sf.count("id").alias("num_sentences"),
             sf.count_distinct("unique_ref").alias("num_references"),
-            sf.flatten(sf.collect_set("pmid")).alias("pmid"),
-            sf.flatten(sf.collect_set("doi")).alias("doi"),
+            sf.collect_set("pmid").alias("pmid"),
+            sf.collect_set("doi").alias("doi"),
         )
         .withColumn("publications", sf.flatten(sf.array(sf.col("pmid"), sf.col("doi"))))
         .drop("pmid", "doi")
