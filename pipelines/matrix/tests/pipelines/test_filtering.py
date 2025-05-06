@@ -123,8 +123,8 @@ def test_source_filter_edges(spark, sample_edges):
     """Test KeepRowsContainingFilter on edges DataFrame.
 
     Given a DataFrame with edges containing knowledge graph sources
-    When we apply KeepRowsContainingFilter to keep only edges from specific sources
-    Then only edges from those sources should remain
+    When we apply KeepRowsContainingFilter to keep only edges from rtxkg2
+    Then only edges from rtxkg2 should remain
     """
     result = filters.KeepRowsContainingFilter(column="kg_sources", keep_list=["rtxkg2"]).filter(sample_edges)
 
@@ -203,6 +203,12 @@ def test_biolink_deduplicate(spark, sample_edges):
 
 
 def test_remove_rows_by_column_filter(spark):
+    """Test RemoveRowsByColumnFilter functionality.
+
+    Given a DataFrame with nodes containing specific categories
+    When we apply RemoveRowsByColumnFilter to remove those categories
+    Then only nodes with the remaining categories should remain
+    """
     test_nodes = spark.createDataFrame(
         [
             ("CHEBI:001", "biolink:Drug"),
@@ -242,7 +248,6 @@ def test_triple_pattern_filter(spark):
     When we apply TriplePatternFilter to exclude specific patterns
     Then only edges not matching the excluded patterns should remain
     """
-    # Given
     test_edges = spark.createDataFrame(
         [
             (
@@ -305,7 +310,6 @@ def test_triple_pattern_filter_multiple_patterns(spark):
     When we apply TriplePatternFilter to exclude multiple patterns
     Then only edges not matching any of the excluded patterns should remain
     """
-    # Given
     test_edges = spark.createDataFrame(
         [
             (

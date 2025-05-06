@@ -12,8 +12,6 @@ from matrix.pipelines.filtering.filters import Filter, RemoveRowsByColumnFilter,
 
 logger = logging.getLogger(__name__)
 
-T_co = TypeVar("T_co", bound=Filter, covariant=True)
-
 
 def _create_filter_from_params(filter_name: str, filter_params: dict[str, Any]) -> Filter:
     """Create a filter instance from parameters.
@@ -69,26 +67,6 @@ def _apply_transformations(
 
     Returns:
         Tuple of (filtered DataFrame, DataFrame containing removed rows)
-
-    Example:
-        ```python
-        filters = {
-            "remove_drugs": RemoveRowsByColumnFilter(
-                column="category",
-                remove_list=["biolink:Drug"]
-            ),
-            "remove_drug_drug_interactions": TriplePatternFilter(
-                triples_to_exclude=[
-                    ["biolink:Drug", "biolink:physically_interacts_with", "biolink:Drug"]
-                ]
-            )
-        }
-        filtered_df, removed_df = _apply_transformations(
-            df=edges_df,
-            filters=filters,
-            key_cols=["subject", "object", "predicate"]
-        )
-        ```
     """
     logger.info(f"Filtering dataframe with {len(filters)} filters")
     if logger.isEnabledFor(logging.INFO):
@@ -102,10 +80,14 @@ def _apply_transformations(
 
         if logger.isEnabledFor(logging.INFO):
             # Spark optimization with memory constraints:
-            # Cache the new frame before the action and unpersist the old one
+            # If you really want to log after every transformation,
+            # make sure to cache the new frame before the action.
+            # Also, unpersist any previous cached dataframes, so we keep the memory consumption lower.
             new_count = df_new.cache().count()
             df.unpersist()
-            logger.info(f"Number of rows after filter '{name}': {new_count}, " f"removed {last_count - new_count} rows")
+            logger.info(
+                f"Number of rows after transformation '{name}': {new_count}, " f"removed {last_count - new_count} rows"
+            )
             last_count = new_count
         df = df_new
 
@@ -130,22 +112,13 @@ def prefilter_unified_kg_nodes(
     Returns:
         Tuple of (filtered nodes DataFrame, removed nodes DataFrame)
     """
-    if transformations:
-        logger.info(f"Applying {len(transformations)} node filters")
-        try:
-            filters = _create_filters_from_params(transformations)
-            filtered, removed = _apply_transformations(nodes, filters, key_cols=["id"])
 
-            if logger.isEnabledFor(logging.INFO):
-                logger.info("Sample of filtered nodes:")
-                logger.info(filtered.select("id", "name", "category").head(10))
-                logger.info("Sample of removed nodes:")
-                logger.info(removed.select("id", "name", "category").head(10))
+    print(transformations)
 
-            return filtered, removed
-        except Exception as e:
-            logger.error(f"Error applying filters: {str(e)}")
-            raise
+    logger.info(f"Applying {len(transformations)} node filters")
+
+    filters = _create_filters_from_params(transformations)
+    return _apply_transformations(nodes, filters, key_cols=["id"])
 
 
 @inject_object()
@@ -184,22 +157,8 @@ def filter_unified_kg_edges(
     )
 
     logger.info(f"Applying {len(transformations)} edge filters")
-    try:
-        filters = _create_filters_from_params(transformations)
-        filtered, removed = _apply_transformations(edges, filters, key_cols=["subject", "predicate", "object"])
-        # Remove new fields from schema
-        filtered = filtered.drop("subject_category", "object_category")
-
-        if logger.isEnabledFor(logging.INFO):
-            new_edges_count = edges.cache().count()
-            logger.info(
-                f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges"
-            )
-
-        return filtered, removed
-    except Exception as e:
-        logger.error(f"Error applying filters: {str(e)}")
-        raise
+    filters = _create_filters_from_params(transformations)
+    return _apply_transformations(edges, filters, key_cols=["subject", "predicate", "object"])
 
 
 def filter_nodes_without_edges(
