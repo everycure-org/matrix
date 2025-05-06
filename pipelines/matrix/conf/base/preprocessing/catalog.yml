@@ -55,15 +55,15 @@ preprocessing.raw.embiology.ref_pub:
       - "pmid"
       - "doi"
 
-preprocessing.int.embiology.attributes:
+preprocessing.int.embiology.edge_attributes:
   <<: *_spark_parquet
   filepath: ${globals:paths.tmp}/embiology/int/edge_attributes
 
-preprocessing.int.embiology.attr@pandas:
+preprocessing.int.embiology.node_attributes@pandas:
   <<: *_pandas_parquet
   filepath: ${globals:paths.tmp}/embiology/raw/attr
 
-preprocessing.int.embiology.attr@spark:
+preprocessing.int.embiology.node_attributes@spark:
   <<: *_spark_parquet
   filepath: ${globals:paths.tmp}/embiology/raw/attr
 
@@ -140,13 +140,13 @@ preprocessing.int.embiology.edges@spark:
   <<: *_spark_parquet
   filepath: ${globals:paths.tmp}/embiology/raw/edges
 
-preprocessing.int.embiology.identifiers@pandas:
+preprocessing.int.embiology.node_attributes_normalised_ids@pandas:
   <<: *_pandas_parquet
-  filepath: ${globals:paths.tmp}/embiology/int/identifiers
+  filepath: ${globals:paths.tmp}/embiology/int/node_attributes_normalised_ids
 
-preprocessing.int.embiology.identifiers@spark:
+preprocessing.int.embiology.node_attributes_normalised_ids@spark:
   <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/embiology/int/identifiers
+  filepath: ${globals:paths.tmp}/embiology/int/node_attributes_normalised_ids
 
 preprocessing.raw.clinical_trials_data:
   <<: *_medical_clinical_trials_sheet_dataset

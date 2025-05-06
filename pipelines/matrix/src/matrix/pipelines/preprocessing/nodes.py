@@ -76,7 +76,7 @@ def normalize_identifiers(node_attributes: ps.DataFrame, norm_params: Dict[str, 
     return results_df
 
 
-def get_embiology_normalised_ids(
+def get_embiology_node_attributes_normalised_ids(
     nodes_attr: ps.DataFrame,
     nodes: ps.DataFrame,
     manual_id_mapping: ps.DataFrame,
@@ -162,25 +162,32 @@ def get_embiology_normalised_ids(
     return normalised_ids
 
 
-def prepare_nodes(nodes, id_mapping, biolink_mapping):
-    """Prepare nodes for embiology nodes.
+def normalise_embiology_nodes(
+    nodes: ps.DataFrame, normalised_attributes: ps.DataFrame, biolink_mapping: Dict[str, str]
+) -> ps.DataFrame:
+    """
+    Normalise embiology nodes based on their attributes, and maps the node type to Biolink categories.
 
     Args:
         nodes: embiology nodes
-        identifiers_mapping: mapping of identifiers
+        normalised_attributes: embiology nodes' attributes with normalized ids
     """
-    # Normalize identifier
+
+    # 1. Keep one normalised_id per node
     norm_nodes = (
+        # Explode node attributes into separate rows
         nodes.withColumn("attributes", sf.split(sf.regexp_replace("attributes", "[{}]", ""), ","))
         .withColumn("attributes", sf.explode(sf.col("attributes")))
         .withColumnRenamed("attributes", "attribute_id")
+        # Join with normalised ids
         .join(
-            id_mapping.withColumnRenamed("id", "normalized_id")
+            normalised_attributes.withColumnRenamed("id", "normalized_id")
             .withColumn("normalization_success", sf.col("normalized_id").isNotNull())
             .filter(sf.col("normalization_success") == True),
             on="attribute_id",
             how="left",
         )
+        # For each node id, get one normalisation result (id, categories, ...)
         .orderBy("normalization_success", ascending=False)
         .groupBy(["id", "urn", "name", "nodetype"])
         .agg(
@@ -189,15 +196,17 @@ def prepare_nodes(nodes, id_mapping, biolink_mapping):
             sf.first(sf.col("all_categories"), ignorenulls=True).alias("all_categories"),
             sf.first(sf.col("normalization_success"), ignorenulls=True).alias("normalization_success"),
         )
+        # Define final_id as either the normalised id or the urn if it wasn't normalised
         .withColumn("final_id", sf.coalesce(sf.col("normalized_id"), sf.col("urn")))
     )
 
-    # Biolink fix
+    # 2. Map Embiology node types to biolink categories
     def lookup_mapping(name):
         return biolink_mapping.get(name, "")
 
     lookup_udf = udf(lookup_mapping, StringType())
     norm_nodes = norm_nodes.withColumn("category", lookup_udf(sf.col("nodetype")))
+
     return norm_nodes
 
 

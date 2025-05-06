@@ -12,8 +12,8 @@ def create_embiology_pipeline() -> Pipeline:
             # Copying these data sources locally improves performance in the later steps.
             node(
                 func=lambda x: x,
-                inputs="preprocessing.raw.embiology.attr",
-                outputs="preprocessing.int.embiology.attr@pandas",
+                inputs="preprocessing.raw.embiology.node_attributes",
+                outputs="preprocessing.int.embiology.node_attributes@pandas",
                 name="copy_embiology_attr_to_tmp",
                 tags=["ingest-embiology-kg"],
             ),
@@ -53,28 +53,28 @@ def create_embiology_pipeline() -> Pipeline:
                 tags=["ingest-embiology-kg"],
             ),
             node(
-                func=nodes.get_embiology_normalised_ids,
+                func=nodes.get_embiology_node_attributes_normalised_ids,
                 inputs=[
-                    "preprocessing.int.embiology.attr@spark",
+                    "preprocessing.int.embiology.node_attributes@spark",
                     "preprocessing.int.embiology.nodes@spark",
                     "preprocessing.int.embiology.manual_id_mapping@spark",
                     "preprocessing.int.embiology.manual_name_mapping@spark",
                     "params:preprocessing.embiology.attr.identifiers_mapping",
                     "params:preprocessing.embiology.normalization",
                 ],
-                outputs="preprocessing.int.embiology.identifiers@pandas",
-                name="get_embiology_normalised_ids",
+                outputs="preprocessing.int.embiology.node_attributes_normalised_ids@pandas",
+                name="get_embiology_node_attributes_normalised_ids",
                 tags=["embiology-kg"],
             ),
             node(
-                func=nodes.prepare_nodes,
+                func=nodes.normalise_embiology_nodes,
                 inputs=[
                     "preprocessing.int.embiology.nodes@spark",
-                    "preprocessing.int.embiology.identifiers@spark",
+                    "preprocessing.int.embiology.node_attributes_normalised_ids@spark",
                     "params:preprocessing.embiology.nodes.biolink_mapping",
                 ],
                 outputs="preprocessing.prm.embiology.nodes",
-                name="prepare_nodes",
+                name="normalise_embiology_nodes",
                 tags=["embiology-kg"],
             ),
             node(
@@ -82,7 +82,7 @@ def create_embiology_pipeline() -> Pipeline:
                 inputs=[
                     "preprocessing.int.embiology.ref_pub@spark",
                 ],
-                outputs="preprocessing.int.embiology.attributes",
+                outputs="preprocessing.int.embiology.edge_attributes",
                 name="prepare_edges_attributes",
                 tags=["embiology-kg"],
             ),
@@ -90,7 +90,7 @@ def create_embiology_pipeline() -> Pipeline:
                 func=nodes.prepare_edges,
                 inputs=[
                     "preprocessing.int.embiology.edges@spark",
-                    "preprocessing.int.embiology.attributes",
+                    "preprocessing.int.embiology.edge_attributes",
                     "params:preprocessing.embiology.edges.biolink_mapping",
                 ],
                 outputs="preprocessing.prm.embiology.edges",
