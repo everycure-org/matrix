@@ -46,71 +46,106 @@ def get_ancestors_for_category_delimited(category: str, mixin: bool = False) -> 
     return tk.get_ancestors(category, mixin=mixin, formatted=True, reflexive=True)
 
 
-@check_output(
-    DataFrameSchema(
-        columns={
-            "subject": Column(T.StringType(), nullable=False),
-            "predicate": Column(T.StringType(), nullable=False),
-            "object": Column(T.StringType(), nullable=False),
-        },
-        unique=["subject", "object", "predicate"],
-    ),
-)
-def biolink_deduplicate_edges(r_edges_df: ps.DataFrame) -> ps.DataFrame:
-    """Function to deduplicate biolink edges.
+class BiolinkDeduplicateEdgesFilter(Filter):
+    """Filter that deduplicates biolink edges.
+
     Knowledge graphs in biolink format may contain multiple edges between nodes. Where
-    edges might represent predicates at various depths in the hierarchy. This function
+    edges might represent predicates at various depths in the hierarchy. This filter
     deduplicates redundant edges.
+
     The logic leverages the path to the predicate in the hierarchy, and removes edges
     for which "deeper" paths in the hierarchy are specified. For example: there exists
     the following edges (a)-[regulates]-(b), and (a)-[negatively-regulates]-(b). Regulates
     is on the path (regulates) whereas (regulates, negatively-regulates). In this case
     negatively-regulates is "deeper" than regulates and hence (a)-[regulates]-(b) is removed.
-    Args:
-        edges_df: dataframe with biolink edges
-    Returns:
-        Deduplicated dataframe
     """
-    # Enrich edges with path to predicates in biolink hierarchy
-    edges_df = r_edges_df.withColumn(
-        "parents", sf.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))(sf.col("predicate"))
-    ).cache()
-    # Self join to find edges that are redundant
-    duplicates = (
-        edges_df.alias("A")
-        .join(
-            edges_df.alias("B"),
-            on=[
-                (sf.col("A.subject") == sf.col("B.subject"))
-                & (sf.col("A.object") == sf.col("B.object"))
-                & (sf.col("A.predicate") != sf.col("B.predicate"))
-            ],
-            how="left",
-        )
-        .withColumn(
-            "subpath", sf.col("B.parents").isNotNull() & sf.expr("forall(A.parents, x -> array_contains(B.parents, x))")
-        )
-        .filter(sf.col("subpath"))
-        .select("A.*")
-        .select("subject", "object", "predicate")
-        .distinct()
+
+    @check_output(
+        DataFrameSchema(
+            columns={
+                "subject": Column(T.StringType(), nullable=False),
+                "predicate": Column(T.StringType(), nullable=False),
+                "object": Column(T.StringType(), nullable=False),
+            },
+            unique=["subject", "object", "predicate"],
+        ),
     )
-    return (
-        edges_df.alias("edges")
-        .join(duplicates, on=["subject", "object", "predicate"], how="left_anti")
-        .select("edges.*")
-    )
+    def filter(self, df: ps.DataFrame) -> ps.DataFrame:
+        """Deduplicate biolink edges.
+
+        Args:
+            df: DataFrame with biolink edges
+
+        Returns:
+            Deduplicated DataFrame
+        """
+        # Enrich edges with path to predicates in biolink hierarchy
+        edges_df = df.withColumn(
+            "parents", sf.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))(sf.col("predicate"))
+        ).cache()
+
+        # Self join to find edges that are redundant
+        duplicates = (
+            edges_df.alias("A")
+            .join(
+                edges_df.alias("B"),
+                on=[
+                    (sf.col("A.subject") == sf.col("B.subject"))
+                    & (sf.col("A.object") == sf.col("B.object"))
+                    & (sf.col("A.predicate") != sf.col("B.predicate"))
+                ],
+                how="left",
+            )
+            .withColumn(
+                "subpath",
+                sf.col("B.parents").isNotNull() & sf.expr("forall(A.parents, x -> array_contains(B.parents, x))"),
+            )
+            .filter(sf.col("subpath"))
+            .select("A.*")
+            .select("subject", "object", "predicate")
+            .distinct()
+        )
+
+        return (
+            edges_df.alias("edges")
+            .join(duplicates, on=["subject", "object", "predicate"], how="left_anti")
+            .select("edges.*")
+        )
 
 
-def keep_rows_containing(
-    input_df: ps.DataFrame,
-    keep_list: Iterable[str],
-    column: str,
-    **kwargs,
-) -> ps.DataFrame:
-    """Function to only keep rows containing a category."""
-    keep_list_array = sf.array([sf.lit(x) for x in keep_list])
-    return input_df.filter(sf.exists(column, lambda x: sf.array_contains(keep_list_array, x)))
+class KeepRowsContainingFilter(Filter):
+    """Filter that keeps only rows containing specified values in a column.
+
+    This filter implements the logic to keep only rows where a specific column
+    contains any of the values in the provided keep_list. For string columns,
+    it checks if any of the keep_list values are contained within the delimited string.
+    """
+
+    def __init__(self, column: str, keep_list: Iterable[str]):
+        """Initialize the filter with column and values to keep.
+
+        Args:
+            column: Name of the column to check
+            keep_list: List of values to keep
+        """
+        self.column = column
+        self.keep_list = keep_list
+
+    def filter(self, df: ps.DataFrame) -> ps.DataFrame:
+        """Keep only rows where the specified column contains any value from keep_list.
+
+        Args:
+            df: Input DataFrame to filter
+
+        Returns:
+            DataFrame with only matching rows kept
+        """
+        # Build OR condition for each value in keep_list
+        filter_condition = sf.lit(False)
+        for value in self.keep_list:
+            filter_condition = filter_condition | sf.col(self.column).contains(value)
+
+        return df.filter(filter_condition)
 
 
 class RemoveRowsByColumnFilter(Filter):
