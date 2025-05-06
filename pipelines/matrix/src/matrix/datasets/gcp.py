@@ -12,8 +12,6 @@ import numpy as np
 import pandas as pd
 import pygsheets
 import pyspark.sql as ps
-import pyspark.sql.functions as F
-import pyspark.sql.types as T
 from google.cloud import bigquery, storage
 from kedro.io.core import (
     AbstractDataset,
@@ -89,33 +87,6 @@ class LazySparkDataset(SparkDataset):
                 )
             else:
                 raise e
-
-
-class LazySparkCSVDataset(LazySparkDataset):
-    """Lazy loading spark dataset that handles array columns for CSV output.
-
-    This dataset extends LazySparkDataset to automatically convert array columns
-    to pipe-delimited strings when saving to CSV format.
-    """
-
-    def save(self, data: ps.DataFrame) -> None:
-        """Save the DataFrame to CSV, converting array columns to strings.
-
-        Args:
-            data: DataFrame to save
-        """
-        if self._file_format == "csv":
-            # Get array columns from save_args or detect from schema
-            array_columns = self._save_args.get("array_columns", [])
-            if not array_columns:
-                array_columns = [field.name for field in data.schema.fields if isinstance(field.dataType, T.ArrayType)]
-
-            # Convert array columns to pipe-delimited strings
-            for col in array_columns:
-                if col in data.columns:
-                    data = data.withColumn(col, F.array_join(F.col(col), "|"))
-
-        super().save(data)
 
 
 class SparkDatasetWithBQExternalTable(LazySparkDataset):

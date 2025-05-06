@@ -15,78 +15,44 @@ _spark_csv_ds: &_spark_csv_ds
 
 
 filtering.prm.prefiltered_nodes:
-  <<: [*_spark_csv_ds]
+  type: matrix.datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.filtering}/prm/prefiltered/nodes
+  file_format: json
   save_args:
-    header: true
     mode: overwrite
-    array_columns:
-      - equivalent_identifiers
-      - all_categories
-      - publications
-      - labels
-      - upstream_data_source
+
 
 filtering.prm.removed_nodes_initial:
-  <<: [*_spark_csv_ds]
+  type: matrix.datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.filtering}/prm/prefiltered/removed_nodes_initial
+  file_format: json
   save_args:
-    header: true
     mode: overwrite
-    array_columns:
-      - equivalent_identifiers
-      - all_categories
-      - publications
-      - labels
-      - upstream_data_source
 
 filtering.prm.filtered_edges:
-  <<: [*_spark_csv_ds]
+  type: matrix.datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.filtering}/prm/filtered/edges
+  file_format: json
   save_args:
-    header: true
     mode: overwrite
-    array_columns:
-      - aggregator_knowledge_source
-      - publications
-      - upstream_data_source
-      - parents
 
 filtering.prm.removed_edges:
-  <<: [*_spark_csv_ds]
+  type: matrix.datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.filtering}/prm/filtered/removed_edges
+  file_format: json
   save_args:
-    header: true
     mode: overwrite
-    array_columns:
-      - aggregator_knowledge_source
-      - publications
-      - upstream_data_source
-      - parents
 
 filtering.prm.filtered_nodes:
-  <<: [*_spark_csv_ds]
+  type: matrix.datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.filtering}/prm/filtered/nodes
+  file_format: json
   save_args:
-    header: true
     mode: overwrite
-    array_columns:
-      - equivalent_identifiers
-      - all_categories
-      - publications
-      - labels
-      - upstream_data_source
 
 filtering.prm.removed_nodes_final:
-  <<: [*_spark_csv_ds]
+  type: matrix.datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.filtering}/prm/filtered/removed_nodes_final
+  file_format: json
   save_args:
-    header: true
     mode: overwrite
-    array_columns:
-      - equivalent_identifiers
-      - all_categories
-      - publications
-      - labels
-      - upstream_data_source
-
