@@ -1,4 +1,5 @@
 import logging
+from abc import ABC, abstractmethod
 from collections.abc import Iterable
 
 import pyspark.sql as ps
@@ -10,6 +11,27 @@ from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
 tk = toolkit.Toolkit()
 logger = logging.getLogger(__name__)
+
+
+class Filter(ABC):
+    """Base class for all filters in the matrix pipeline.
+
+    This abstract class defines the interface that all filters must implement.
+    Each filter should implement the filter() method to transform a DataFrame
+    according to its specific filtering logic.
+    """
+
+    @abstractmethod
+    def filter(self, df: ps.DataFrame) -> ps.DataFrame:
+        """Apply the filter to the input DataFrame.
+
+        Args:
+            df: Input DataFrame to filter
+
+        Returns:
+            Filtered DataFrame
+        """
+        pass
 
 
 def get_ancestors_for_category_delimited(category: str, mixin: bool = False) -> list[str]:
@@ -91,51 +113,66 @@ def keep_rows_containing(
     return input_df.filter(sf.exists(column, lambda x: sf.array_contains(keep_list_array, x)))
 
 
-def remove_rows_by_column(
-    input_df: ps.DataFrame,
-    column: str,
-    remove_list: Iterable[str],
-    **kwargs,
-) -> ps.DataFrame:
-    """Function to remove rows where a column value is in a list of values to remove.
+class RemoveRowsByColumnFilter(Filter):
+    """Filter that removes rows where a column value is in a specified list.
 
-    Args:
-        input_df: dataframe to filter
-        column: name of the column to check
-        remove_list: list of values to remove
-    Returns:
-        dataframe with rows containing any of the remove_list values filtered out
+    This filter implements the logic to remove rows where a specific column
+    contains any of the values in the provided remove_list.
     """
-    # Create a filter condition that excludes any rows where the column value is in remove_list
-    filter_condition = ~sf.col(column).isin(remove_list)
-    return input_df.filter(filter_condition)
+
+    def __init__(self, column: str, remove_list: Iterable[str]):
+        """Initialize the filter with column and values to remove.
+
+        Args:
+            column: Name of the column to check
+            remove_list: List of values to remove
+        """
+        self.column = column
+        self.remove_list = remove_list
+
+    def filter(self, df: ps.DataFrame) -> ps.DataFrame:
+        """Remove rows where the specified column contains any value from remove_list.
+
+        Args:
+            df: Input DataFrame to filter
+
+        Returns:
+            DataFrame with matching rows removed
+        """
+        filter_condition = ~sf.col(self.column).isin(self.remove_list)
+        return df.filter(filter_condition)
 
 
-def filter_triples(
-    edges_df: ps.DataFrame,
-    triples_to_exclude: Iterable[list[str]],
-    **kwargs,
-) -> ps.DataFrame:
-    """Filter out edges that match the specified subject-predicate-object patterns.
+class TriplePatternFilter(Filter):
+    """Filter that removes edges matching specific subject-predicate-object patterns.
 
-    Args:
-        edges_df: dataframe with edges containing subject_category and object_category columns
-        triples_to_exclude: list of triples to exclude, where each triple is [subject_category, predicate, object_category]
-    Returns:
-        dataframe with matching edges filtered out
-
-    For example, triples_to_exclude can be:
-        - ["Drug", "physically_interacts_with", "Drug"]
-        - ["Drug", "treats", "Disease"]
+    This filter implements the logic to remove edges that match any of the
+    specified triple patterns.
     """
-    # Create a filter condition that checks against each triple to exclude
-    filter_condition = sf.lit(True)
-    for subject_cat, predicate, object_cat in triples_to_exclude:
-        filter_condition = filter_condition & ~(
-            (sf.col("subject_category") == subject_cat)
-            & (sf.col("predicate") == predicate)
-            & (sf.col("object_category") == object_cat)
-        )
 
-    # Apply the filter
-    return edges_df.filter(filter_condition)
+    def __init__(self, triples_to_exclude: Iterable[list[str]]):
+        """Initialize the filter with triple patterns to exclude.
+
+        Args:
+            triples_to_exclude: List of triples to exclude, where each triple is
+                [subject_category, predicate, object_category]
+        """
+        self.triples_to_exclude = triples_to_exclude
+
+    def filter(self, df: ps.DataFrame) -> ps.DataFrame:
+        """Remove edges that match any of the specified triple patterns.
+
+        Args:
+            df: Input DataFrame to filter
+
+        Returns:
+            DataFrame with matching edges removed
+        """
+        filter_condition = sf.lit(True)
+        for subject_cat, predicate, object_cat in self.triples_to_exclude:
+            filter_condition = filter_condition & ~(
+                (sf.col("subject_category") == subject_cat)
+                & (sf.col("predicate") == predicate)
+                & (sf.col("object_category") == object_cat)
+            )
+        return df.filter(filter_condition)
