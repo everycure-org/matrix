@@ -223,26 +223,23 @@ def generate_unique_id(
     num_rows: int,
     prefix: str = "",
     id_length: Optional[int] = None,
-    seed: Optional[int] = None,
 ) -> List[str]:
-    """Generate unique-ish random numeric IDs with optional prefix and fixed length.
+    """Generate unique numeric IDs with optional prefix and fixed length.
 
-    Creates a list of IDs by generating large random numbers, optionally prefixing them,
-    and adjusting to a fixed length if specified. While uniqueness is highly probable due
-    to the large number space, it's not guaranteed for very large num_rows.
+    Creates a range of IDs by incrementing from 1, optionally prefixing them,
+    and adjusting to a fixed length if specified.
 
     Args:
         num_rows: The number of IDs to generate.
         prefix: Optional string to prepend to each ID (e.g., "USER_", "PAT_").
         id_length: If provided, ensures each ID (including prefix) is exactly this length
                   by zero-padding or truncating the numeric part as needed.
-        seed: Optional seed for reproducible ID generation.
 
     Returns:
         A list of string IDs.
 
     Raises:
-        ValueError: If id_length is specified but too short for prefix + at least one digit.
+        ValueError: If id_length is specified but too short for prefix + enough digits to certify uniqueness.
 
     Example:
         >>> # In YAML config:
@@ -250,7 +247,6 @@ def generate_unique_id(
         >>> #   type: generate_unique_id
         >>> #   prefix: PAT_
         >>> #   id_length: 10
-        >>> #   seed: 42
         >>> # Would generate: ['PAT_0000123', 'PAT_0000456', ...]
     """
     if num_rows <= 0:
