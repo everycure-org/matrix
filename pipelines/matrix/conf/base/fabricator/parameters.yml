@@ -641,13 +641,10 @@ fabricator.embiology:
           - biolink:subclass_of
       original_id:
         type: generate_unique_id
-        seed: 40294
       original_subject:
         type: generate_unique_id
-        seed: 24294
       original_object:
         type: generate_unique_id
-        seed: 39294
       controltype:
         type: generate_values
         sample_values:

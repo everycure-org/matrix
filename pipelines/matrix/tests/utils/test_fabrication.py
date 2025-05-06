@@ -99,7 +99,7 @@ def test_generate_unique_id_null():
                     "ids": {
                         "type": "generate_unique_id",
                         "prefix": "id",
-                        "inject_nulls": {"probability": 0.5, "seed": 1},
+                        "inject_nulls": {"probability": 0.5},
                     }
                 },
             }
@@ -124,7 +124,7 @@ def test_generate_unique_id_replace_null():
                     "ids": {
                         "type": "generate_unique_id",
                         "prefix": "id",
-                        "inject_nulls": {"probability": 0.5, "value": "unknown", "seed": 1},
+                        "inject_nulls": {"probability": 0.5, "value": "unknown"},
                     }
                 },
             }
@@ -174,7 +174,7 @@ def test_generate_random_arrays_integers():
 
 
 def test_generate_random_arrays_integers_seed():
-    random_arrays = generate_random_arrays(num_rows=10, sample_values=[10, 100, 1000], seed=1)
+    random_arrays = generate_random_arrays(num_rows=10, sample_values=[10, 100, 1000])
 
     assert random_arrays == [
         [1000],
