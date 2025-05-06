@@ -183,7 +183,7 @@ All filters defined under `node_filters` or `edge_filters` will be applied durin
 #### Note - filters outside the pipeline
 
 - Some filtering operations are performed outside the dedicated filtering pipeline, specifically during the integration phase before knowledge graph release. These filters represent core transformations that should be applied consistently across all graph releases.
-- For instance, node deduplication is handled in the integration pipeline. When multiple nodes share the same identifier but have different types (e.g., a node appearing as both ChemicalEntity and SmallMolecule), we consolidate them into a single node.
+- For instance, node deduplication is handled in the integration pipeline. When multiple nodes share the same identifier but have different types (e.g., a node appearing as both `ChemicalEntity` and `SmallMolecule`), we consolidate them into a single node.
 - Edge deduplication, however, follows a different approach. We implement hierarchical deduplication where more specific relationships take precedence over general ones. For example, given two edges `A - related_to -> B` and `A - treats -> B`, we retain the more specific `treats` relationship. Since this is an opinionated design choice that may require experimentation, we've moved edge deduplication to the filtering pipeline, allowing for easier testing of alternative deduplication strategies post-release.
 
 ![](../assets/img/integration_filtering_pipelines.png)
