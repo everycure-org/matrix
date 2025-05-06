@@ -36,3 +36,4 @@ ENV GIT_SHA=$GIT_SHA
 ADD . .
 
 LABEL com.nvidia.volumes.needed="nvidia_driver"
+ADD foo /foo # test delete me

@@ -1,6 +1,3 @@
-# ensures multi step commands are exiting if any one step fails
-SHELL := /bin/bash -e
-
 docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
 
 TAG ?= ${USER}
@@ -111,7 +108,8 @@ docker_test: certificate docker_build
 		--exit-code-from matrix-pipeline
 
 docker_build:
-	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(docker_image) --load ./
+	# note the && operator is essential to catch docker buildx errors on linux systems
+	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(docker_image) --load ./ && \
 	docker tag $(docker_image) $(docker_image):${TAG}
 
 docker_auth:
