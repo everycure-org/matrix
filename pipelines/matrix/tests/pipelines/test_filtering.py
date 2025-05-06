@@ -190,7 +190,47 @@ def test_biolink_deduplicate(spark, sample_edges):
     assertDataFrameEqual(result.select(*expected.columns), expected)
 
 
-def test_filter_triples(spark):
+def test_remove_rows_by_column_filter(spark):
+    test_nodes = spark.createDataFrame(
+        [
+            ("CHEBI:001", "biolink:Drug"),
+            ("OT:001", "biolink:OrganismTaxon"),
+            ("CHEBI:002", "biolink:ChemicalEntity"),
+        ],
+        schema=StructType(
+            [
+                StructField("id", StringType(), False),
+                StructField("category", StringType(), False),
+            ]
+        ),
+    )
+
+    result = filters.RemoveRowsByColumnFilter(
+        column="category", remove_list=["biolink:OrganismTaxon", "biolink:ChemicalEntity"]
+    ).filter(test_nodes)
+
+    expected = spark.createDataFrame(
+        [
+            ("CHEBI:001", "biolink:Drug"),
+        ],
+        schema=StructType(
+            [
+                StructField("id", StringType(), False),
+                StructField("category", StringType(), False),
+            ]
+        ),
+    )
+    assertDataFrameEqual(result, expected)
+
+
+def test_triple_pattern_filter(spark):
+    """Test TriplePatternFilter functionality.
+
+    Given a DataFrame with edges containing subject-predicate-object patterns
+    When we apply TriplePatternFilter to exclude specific patterns
+    Then only edges not matching the excluded patterns should remain
+    """
+    # Given
     test_edges = spark.createDataFrame(
         [
             (
@@ -218,10 +258,11 @@ def test_filter_triples(spark):
             ]
         ),
     )
-    result = filters.filter_triples(
-        edges_df=test_edges,
-        triples_to_exclude=[["biolink:Drug", "biolink:physically_interacts_with", "biolink:Drug"]],
-    )
+
+    result = filters.TriplePatternFilter(
+        triples_to_exclude=[["biolink:Drug", "biolink:physically_interacts_with", "biolink:Drug"]]
+    ).filter(test_edges)
+
     expected = spark.createDataFrame(
         [
             (
@@ -245,32 +286,73 @@ def test_filter_triples(spark):
     assertDataFrameEqual(result, expected)
 
 
-def test_remove_rows_by_column(spark):
-    test_nodes = spark.createDataFrame(
+def test_triple_pattern_filter_multiple_patterns(spark):
+    """Test TriplePatternFilter with multiple patterns to exclude.
+
+    Given a DataFrame with edges containing various subject-predicate-object patterns
+    When we apply TriplePatternFilter to exclude multiple patterns
+    Then only edges not matching any of the excluded patterns should remain
+    """
+    # Given
+    test_edges = spark.createDataFrame(
         [
-            ("CHEBI:001", "biolink:Drug"),
-            ("OT:001", "biolink:OrganismTaxon"),
+            (
+                "CHEBI:001",
+                "biolink:Drug",
+                "biolink:physically_interacts_with",
+                "CHEBI:002",
+                "biolink:Drug",
+            ),
+            (
+                "CHEBI:001",
+                "biolink:Drug",
+                "biolink:treats",
+                "UMLS:001",
+                "biolink:Disease",
+            ),
+            (
+                "CHEBI:003",
+                "biolink:Drug",
+                "biolink:chemically_similar_to",
+                "CHEBI:004",
+                "biolink:Drug",
+            ),
         ],
         schema=StructType(
             [
-                StructField("id", StringType(), False),
-                StructField("category", StringType(), False),
+                StructField("subject", StringType(), False),
+                StructField("subject_category", StringType(), False),
+                StructField("predicate", StringType(), False),
+                StructField("object", StringType(), False),
+                StructField("object_category", StringType(), False),
             ]
         ),
     )
-    result = filters.remove_rows_by_column(
-        input_df=test_nodes,
-        column="category",
-        remove_list=["biolink:OrganismTaxon"],
-    )
+
+    result = filters.TriplePatternFilter(
+        triples_to_exclude=[
+            ["biolink:Drug", "biolink:physically_interacts_with", "biolink:Drug"],
+            ["biolink:Drug", "biolink:chemically_similar_to", "biolink:Drug"],
+        ]
+    ).filter(test_edges)
+
     expected = spark.createDataFrame(
         [
-            ("CHEBI:001", "biolink:Drug"),
+            (
+                "CHEBI:001",
+                "biolink:Drug",
+                "biolink:treats",
+                "UMLS:001",
+                "biolink:Disease",
+            ),
         ],
         schema=StructType(
             [
-                StructField("id", StringType(), False),
-                StructField("category", StringType(), False),
+                StructField("subject", StringType(), False),
+                StructField("subject_category", StringType(), False),
+                StructField("predicate", StringType(), False),
+                StructField("object", StringType(), False),
+                StructField("object_category", StringType(), False),
             ]
         ),
     )
