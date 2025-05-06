@@ -117,8 +117,8 @@ class KeepRowsContainingFilter(Filter):
     """Filter that keeps only rows containing specified values in a column.
 
     This filter implements the logic to keep only rows where a specific column
-    contains any of the values in the provided keep_list. For string columns,
-    it checks if any of the keep_list values are contained within the delimited string.
+    contains any of the values in the provided keep_list. If the column is a string,
+    it will be split into an array before filtering.
     """
 
     def __init__(self, column: str, keep_list: Iterable[str]):
@@ -140,12 +140,8 @@ class KeepRowsContainingFilter(Filter):
         Returns:
             DataFrame with only matching rows kept
         """
-        # Build OR condition for each value in keep_list
-        filter_condition = sf.lit(False)
-        for value in self.keep_list:
-            filter_condition = filter_condition | sf.col(self.column).contains(value)
-
-        return df.filter(filter_condition)
+        keep_list_array = sf.array([sf.lit(x) for x in self.keep_list])
+        return df.filter(sf.exists(self.column, lambda x: sf.array_contains(keep_list_array, x)))
 
 
 class RemoveRowsByColumnFilter(Filter):

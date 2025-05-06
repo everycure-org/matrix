@@ -82,11 +82,14 @@ def sample_edges(spark):
 
 
 def test_source_filter_nodes(spark, sample_nodes):
-    result = filters.keep_rows_containing(
-        input_df=sample_nodes,
-        column="upstream_data_source",
-        keep_list=["rtxkg2"],
-    )
+    """Test KeepRowsContainingFilter on nodes DataFrame.
+
+    Given a DataFrame with nodes containing upstream data sources
+    When we apply KeepRowsContainingFilter to keep only nodes from specific sources
+    Then only nodes from those sources should remain
+    """
+    result = filters.KeepRowsContainingFilter(column="upstream_data_source", keep_list=["rtxkg2"]).filter(sample_nodes)
+
     expected = spark.createDataFrame(
         [
             (
@@ -117,11 +120,14 @@ def test_source_filter_nodes(spark, sample_nodes):
 
 
 def test_source_filter_edges(spark, sample_edges):
-    result = filters.keep_rows_containing(
-        input_df=sample_edges,
-        column="kg_sources",
-        keep_list=["rtxkg2"],
-    )
+    """Test KeepRowsContainingFilter on edges DataFrame.
+
+    Given a DataFrame with edges containing knowledge graph sources
+    When we apply KeepRowsContainingFilter to keep only edges from specific sources
+    Then only edges from those sources should remain
+    """
+    result = filters.KeepRowsContainingFilter(column="kg_sources", keep_list=["rtxkg2"]).filter(sample_edges)
+
     expected = spark.createDataFrame(
         [
             (
@@ -156,7 +162,13 @@ def test_source_filter_edges(spark, sample_edges):
 
 
 def test_biolink_deduplicate(spark, sample_edges):
-    result = filters.biolink_deduplicate_edges(sample_edges)
+    """Test BiolinkDeduplicateEdgesFilter functionality.
+
+    Given a DataFrame with edges that may have redundant biolink predicates
+    When we apply BiolinkDeduplicateEdgesFilter
+    Then redundant edges should be removed while keeping the most specific predicates
+    """
+    result = filters.BiolinkDeduplicateEdgesFilter().filter(sample_edges)
     expected = spark.createDataFrame(
         [
             (
