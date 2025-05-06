@@ -4,7 +4,8 @@ import time
 from typing import Collection, Dict, List, Sequence
 
 import pandas as pd
-import pyspark.sql.functions as f
+import pyspark.sql as ps
+import pyspark.sql.functions as sf
 import requests
 from matrix.pipelines.preprocessing.normalization import resolve_ids_batch_async
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
@@ -22,7 +23,7 @@ from typing import Dict, List
 # -------------------------------------------------------------------------
 
 
-def normalize_identifiers(attr: pd.DataFrame, norm_params: Dict[str, str]) -> pd.DataFrame:
+def normalize_identifiers(attr: ps.DataFrame, norm_params: Dict[str, str]) -> pd.DataFrame:
     """Normalize identifiers in embiology attributes using NCATS normalizer.
 
     The function is accepting a list of identifiers present in attr file and resolving them using NCATS normalizer.
@@ -65,45 +66,57 @@ def normalize_identifiers(attr: pd.DataFrame, norm_params: Dict[str, str]) -> pd
 
 
 def prepare_normalized_identifiers(
-    attr: pd.DataFrame,
-    nodes: pd.DataFrame,
-    manual_id_mapping: pd.DataFrame,
-    manual_name_mapping: pd.DataFrame,
-    identifiers_mapping: Dict[str, str],
+    nodes_attr: ps.DataFrame,
+    nodes: ps.DataFrame,
+    manual_id_mapping: ps.DataFrame,
+    manual_name_mapping: ps.DataFrame,
+    source_identifiers_mapping: Dict[str, str],
     norm_params: Dict[str, str],
 ) -> pd.DataFrame:
-    """Prepare identifiers for embiology nodes & normalize using NCATS normalizer.
+    """
+    Prepare identifiers for embiology nodes & normalize using NCATS normalizer.
 
     The function is creating a list of curies which will then go through NCATs normalizer.
     Note: we cannot really use batch pipeline normalization as this one also returns 1. equivalent identifiers and 2. all categories
 
     Args:
-        attr: embiology attributes
-        identifiers_mapping: mapping of identifiers
+        attr: embiology nodes' attributes
+        nodes: embiology nodes
+        manual_id_mapping: mapping from embiology id to MEDSCAN ids and CURIE id for our drug/disease list
+        manual_name_mapping: mapping from embiology node's name to CURIE on robokop graph
+        source_identifiers_mapping: prefixes of identifiers mapping from embiology way to our way
     """
 
+    # 1. Find a compatible node identifier in nodes' attributes
     # Create a UDF for the mapping lookup - we need to 'create' CURIEs for the NCATs normalizer, these are specified in params
-    def lookup_mapping(name):
-        return identifiers_mapping.get(name, "")
+    def find_source_identifier(prefix):
+        return source_identifiers_mapping.get(prefix, "")
 
-    lookup_udf = udf(lookup_mapping, StringType())
-    df = attr.withColumn(
-        "value",
-        f.when(
-            f.col("name").isin(list(identifiers_mapping.keys())),
-            f.concat(
-                lookup_udf(f.col("name")),
-                f.split(f.col("value"), "\.").getItem(0),
+    find_source_identifier_udf = udf(find_source_identifier, StringType())
+
+    attr_source_identifiers = (
+        nodes_attr.withColumn(
+            "value",
+            sf.when(
+                sf.col("name").isin(list(source_identifiers_mapping.keys())),
+                sf.concat(
+                    find_source_identifier_udf(sf.col("name")),
+                    sf.split(sf.col("value"), "\.").getItem(0),
+                ),
+            ).otherwise(sf.col("value")),
+        )
+        .withColumn(
+            "normalized_id",
+            sf.when(sf.col("name").isin(list(source_identifiers_mapping.keys())), sf.lit(None)).otherwise(
+                sf.col("value")
             ),
-        ).otherwise(f.col("value")),
+        )
+        .select(sf.col("id").alias("attribute_id"), "name", "value", "normalized_id")
     )
-    df = df.withColumn(
-        "normalized_id",
-        f.when(f.col("name").isin(list(identifiers_mapping.keys())), f.lit(None)).otherwise(f.col("value")),
-    )
-    # Add manual ID mapping for Medscan ID and names
-    df_v0 = (
-        attr.filter(f.col("name") == "MedScan ID")
+
+    # 2. Use Elsevier's manual file to normalise MEDSCAN using ids
+    attr_medscan_manual = (
+        nodes_attr.filter(sf.col("name") == "MedScan ID")
         .join(
             manual_id_mapping.select("id", "identifier")
             .withColumnRenamed("identifier", "value")
@@ -112,22 +125,31 @@ def prepare_normalized_identifiers(
             how="inner",
         )
         .dropDuplicates()
-        .withColumn("normalized_id", f.coalesce(f.col("curie"), f.col("value")))
-        .select("id", "name", "value", "normalized_id")
+        .withColumn("normalized_id", sf.coalesce(sf.col("curie"), sf.col("value")))
+        .select(sf.col("id").alias("attribute_id"), "name", "value", "normalized_id")
     )
-    df_v1 = (
+
+    # 3. Use Elsevier's manual file to normalise nodes using their names
+    attr_name_manual = (
         manual_name_mapping.join(nodes.select("name", "attributes"), on="name", how="inner")
-        .withColumn("attributes", f.split(f.regexp_replace("attributes", "[{}]", ""), ","))
-        .withColumn("attributes", f.explode(f.col("attributes")))
-        .select("attributes", "id")
-        .withColumn("name", f.lit("Manual ID"))
-        .withColumn("value", f.col("id"))
-        .select("attributes", "name", "value", "id")
+        # Get each node's attribute ids and explode it in separate rows
+        .withColumn("attribute", sf.split(sf.regexp_replace("attributes", "[{}]", ""), ","))
+        .withColumn("attributes", sf.explode(sf.col("attributes")))
+        .select(sf.col("attributes").alias("attribute_id"), sf.col("id").alias("normalized_id"))
+        .withColumn("name", sf.lit("Manual ID"))
+        .withColumn("value", sf.col("id"))
+        .select("attribute_id", "name", "value", "normalized_id")
     )
-    df_concat = (
-        df.filter(~f.col("id").isin(df_v0.select("id").rdd.map(lambda x: x.id).collect())).union(df_v0).union(df_v1)
+
+    # 4. Concatenate all attributes before normalization
+    attr_prepared = (
+        attr_source_identifiers.join(attr_medscan_manual, on="attribute_id", how="left_anti")
+        .join(attr_name_manual, on="attribute_id", how="left_anti")
+        .union(attr_medscan_manual)
+        .union(attr_name_manual)
     )
-    output_df = normalize_identifiers(df_concat, norm_params)
+
+    output_df = normalize_identifiers(attr_prepared, norm_params)
 
     return output_df
 
@@ -141,25 +163,25 @@ def prepare_nodes(nodes, id_mapping, biolink_mapping):
     """
     # Normalize identifier
     norm_nodes = (
-        nodes.withColumn("attributes", f.split(f.regexp_replace("attributes", "[{}]", ""), ","))
-        .withColumn("attributes", f.explode(f.col("attributes")))
+        nodes.withColumn("attributes", sf.split(sf.regexp_replace("attributes", "[{}]", ""), ","))
+        .withColumn("attributes", sf.explode(sf.col("attributes")))
         .withColumnRenamed("attributes", "attribute_id")
         .join(
             id_mapping.withColumnRenamed("id", "normalized_id")
-            .withColumn("normalization_success", f.col("normalized_id").isNotNull())
-            .filter(f.col("normalization_success") == True),
+            .withColumn("normalization_success", sf.col("normalized_id").isNotNull())
+            .filter(sf.col("normalization_success") == True),
             on="attribute_id",
             how="left",
         )
         .orderBy("normalization_success", ascending=False)
         .groupBy(["id", "urn", "name", "nodetype"])
         .agg(
-            f.first(f.col("normalized_id"), ignorenulls=True).alias("normalized_id"),
-            f.first(f.col("equivalent_identifiers"), ignorenulls=True).alias("equivalent_identifiers"),
-            f.first(f.col("all_categories"), ignorenulls=True).alias("all_categories"),
-            f.first(f.col("normalization_success"), ignorenulls=True).alias("normalization_success"),
+            sf.first(sf.col("normalized_id"), ignorenulls=True).alias("normalized_id"),
+            sf.first(sf.col("equivalent_identifiers"), ignorenulls=True).alias("equivalent_identifiers"),
+            sf.first(sf.col("all_categories"), ignorenulls=True).alias("all_categories"),
+            sf.first(sf.col("normalization_success"), ignorenulls=True).alias("normalization_success"),
         )
-        .withColumn("final_id", f.coalesce(f.col("normalized_id"), f.col("urn")))
+        .withColumn("final_id", sf.coalesce(sf.col("normalized_id"), sf.col("urn")))
     )
 
     # Biolink fix
@@ -167,7 +189,7 @@ def prepare_nodes(nodes, id_mapping, biolink_mapping):
         return biolink_mapping.get(name, "")
 
     lookup_udf = udf(lookup_mapping, StringType())
-    norm_nodes = norm_nodes.withColumn("category", lookup_udf(f.col("nodetype")))
+    norm_nodes = norm_nodes.withColumn("category", lookup_udf(sf.col("nodetype")))
     return norm_nodes
 
 
@@ -179,12 +201,12 @@ def prepare_edges(control, attributes, biolink_mapping):
         identifiers_mapping: mapping of identifiers
     """
     # Fix directed and undirected edges
-    control_directed = control.filter((f.col("inkey") != "{}") & (f.col("inoutkey") == "{}"))
-    control_undirected = control.filter((f.col("inkey") == "{}") & (f.col("inoutkey") != "{}"))
+    control_directed = control.filter((sf.col("inkey") != "{}") & (sf.col("inoutkey") == "{}"))
+    control_undirected = control.filter((sf.col("inkey") == "{}") & (sf.col("inoutkey") != "{}"))
     control_undirected = (
-        control_undirected.withColumn("inoutkey", f.split(f.regexp_replace("inoutkey", "[{}]", ""), ","))
-        .withColumn("inkey", f.col("inoutkey").getItem(0))
-        .withColumn("outkey", f.col("inoutkey").getItem(1))
+        control_undirected.withColumn("inoutkey", sf.split(sf.regexp_replace("inoutkey", "[{}]", ""), ","))
+        .withColumn("inkey", sf.col("inoutkey").getItem(0))
+        .withColumn("outkey", sf.col("inoutkey").getItem(1))
     )
     # Divide each undirected edge into two directed edges
     control_undirected = control_undirected.union(
@@ -197,9 +219,9 @@ def prepare_edges(control, attributes, biolink_mapping):
     )
     # Union directed and undirected edges
     edges = (
-        control_directed.withColumn("inoutkey", f.split(f.regexp_replace("inoutkey", "[{}]", ""), ","))
-        .withColumn("inkey", f.regexp_replace("inkey", "[{}]", ""))
-        .withColumn("outkey", f.regexp_replace("outkey", "[{}]", ""))
+        control_directed.withColumn("inoutkey", sf.split(sf.regexp_replace("inoutkey", "[{}]", ""), ","))
+        .withColumn("inkey", sf.regexp_replace("inkey", "[{}]", ""))
+        .withColumn("outkey", sf.regexp_replace("outkey", "[{}]", ""))
         .union(control_undirected)
     )
 
@@ -212,14 +234,14 @@ def prepare_edges(control, attributes, biolink_mapping):
     edges = edges.withColumn(
         "predicate",
         lookup_udf(
-            f.trim(
-                f.concat_ws(
+            sf.trim(
+                sf.concat_ws(
                     "_",
-                    f.col("controltype"),
-                    f.col("ontology"),
-                    f.col("relationship"),
-                    f.col("effect"),
-                    f.col("mechanism"),
+                    sf.col("controltype"),
+                    sf.col("ontology"),
+                    sf.col("relationship"),
+                    sf.col("effect"),
+                    sf.col("mechanism"),
                 )
             )
         ),
@@ -240,19 +262,20 @@ def add_edge_attributes(references):
     return (
         references.withColumn(
             "pmid",
-            f.udf(lambda x: [f"PMID:{str(x)}"] if x is not None else None, ArrayType(StringType()))(f.col("pmid")),
+            sf.udf(lambda x: [f"PMID:{str(x)}"] if x is not None else None, ArrayType(StringType()))(sf.col("pmid")),
         )
         .withColumn(
-            "doi", f.udf(lambda x: [f"DOI:{str(x)}"] if x is not None else None, ArrayType(StringType()))(f.col("doi"))
+            "doi",
+            sf.udf(lambda x: [f"DOI:{str(x)}"] if x is not None else None, ArrayType(StringType()))(sf.col("doi")),
         )
         .groupby("id")
         .agg(
-            f.count("id").alias("num_sentences"),
-            f.count_distinct("unique_ref").alias("num_references"),
-            f.flatten(f.collect_set("pmid")).alias("pmid"),
-            f.flatten(f.collect_set("doi")).alias("doi"),
+            sf.count("id").alias("num_sentences"),
+            sf.count_distinct("unique_ref").alias("num_references"),
+            sf.flatten(sf.collect_set("pmid")).alias("pmid"),
+            sf.flatten(sf.collect_set("doi")).alias("doi"),
         )
-        .withColumn("publications", f.flatten(f.array(f.col("pmid"), f.col("doi"))))
+        .withColumn("publications", sf.flatten(sf.array(sf.col("pmid"), sf.col("doi"))))
         .drop("pmid", "doi")
     )
 
@@ -264,13 +287,13 @@ def deduplicate_and_clean(nodes, edges):
         edges: edges
     """
     nodes = (
-        nodes.withColumn("original_identifier", f.col("id").cast(StringType()))
+        nodes.withColumn("original_identifier", sf.col("id").cast(StringType()))
         .drop("id")
         .withColumnRenamed("urn", "original_urn")
         .withColumnRenamed("nodetype", "original_nodetype")
         .withColumnRenamed("final_id", "id")
-        .withColumn("equivalent_identifiers", f.array_join(f.col("equivalent_identifiers"), "|"))
-        .withColumn("all_categories", f.array_join(f.col("all_categories"), "|"))
+        .withColumn("equivalent_identifiers", sf.array_join(sf.col("equivalent_identifiers"), "|"))
+        .withColumn("all_categories", sf.array_join(sf.col("all_categories"), "|"))
         .select(
             "id",
             "name",
@@ -299,9 +322,9 @@ def deduplicate_and_clean(nodes, edges):
     # Modify edge schema
     f_edges = (
         edges.withColumnRenamed("id", "original_id")
-        .withColumn("original_subject", f.trim(f.col("inkey")))
-        .withColumn("original_object", f.trim(f.col("outkey")))
-        .withColumn("publications", f.array_join(f.col("publications"), "|"))
+        .withColumn("original_subject", sf.trim(sf.col("inkey")))
+        .withColumn("original_object", sf.trim(sf.col("outkey")))
+        .withColumn("publications", sf.array_join(sf.col("publications"), "|"))
         .join(
             f_nodes.select("id", "original_identifier")
             .withColumnRenamed("original_identifier", "original_subject")
