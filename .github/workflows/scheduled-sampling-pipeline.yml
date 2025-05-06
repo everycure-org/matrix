@@ -103,7 +103,7 @@ jobs:
       - name: Run the kedro sampling pipeline
         working-directory: pipelines/matrix
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT }}
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
         run: |
           
