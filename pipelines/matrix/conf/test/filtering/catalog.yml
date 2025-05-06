@@ -1,4 +1,3 @@
-
 _spark_csv: &_spark_csv
   type: spark.SparkDataset
   file_format: csv
@@ -8,30 +7,86 @@ _spark_csv: &_spark_csv
     mode: overwrite
     header: True
 
+_spark_csv_ds: &_spark_csv_ds
+  type: matrix.datasets.gcp.LazySparkCSVDataset
+  file_format: csv
+  load_args:
+    header: true
+
 
 filtering.prm.prefiltered_nodes:
-  <<: [*_spark_csv]
+  <<: [*_spark_csv_ds]
   filepath: ${globals:paths.filtering}/prm/prefiltered/nodes
+  save_args:
+    header: true
+    mode: overwrite
+    array_columns:
+      - equivalent_identifiers
+      - all_categories
+      - publications
+      - labels
+      - upstream_data_source
 
 filtering.prm.removed_nodes_initial:
-  <<: [*_spark_csv]
+  <<: [*_spark_csv_ds]
   filepath: ${globals:paths.filtering}/prm/prefiltered/removed_nodes_initial
-
+  save_args:
+    header: true
+    mode: overwrite
+    array_columns:
+      - equivalent_identifiers
+      - all_categories
+      - publications
+      - labels
+      - upstream_data_source
 
 filtering.prm.filtered_edges:
-  <<: [*_spark_csv]
+  <<: [*_spark_csv_ds]
   filepath: ${globals:paths.filtering}/prm/filtered/edges
+  save_args:
+    header: true
+    mode: overwrite
+    array_columns:
+      - aggregator_knowledge_source
+      - publications
+      - upstream_data_source
+      - parents
 
 filtering.prm.removed_edges:
-  <<: [*_spark_csv]
+  <<: [*_spark_csv_ds]
   filepath: ${globals:paths.filtering}/prm/filtered/removed_edges
+  save_args:
+    header: true
+    mode: overwrite
+    array_columns:
+      - aggregator_knowledge_source
+      - publications
+      - upstream_data_source
+      - parents
 
 filtering.prm.filtered_nodes:
-  <<: [*_spark_csv]
+  <<: [*_spark_csv_ds]
   filepath: ${globals:paths.filtering}/prm/filtered/nodes
+  save_args:
+    header: true
+    mode: overwrite
+    array_columns:
+      - equivalent_identifiers
+      - all_categories
+      - publications
+      - labels
+      - upstream_data_source
 
 filtering.prm.removed_nodes_final:
-  <<: [*_spark_csv]
+  <<: [*_spark_csv_ds]
   filepath: ${globals:paths.filtering}/prm/filtered/removed_nodes_final
-
+  save_args:
+    header: true
+    mode: overwrite
+    array_columns:
+      - equivalent_identifiers
+      - all_categories
+      - publications
+      - labels
+      - upstream_data_source
 
