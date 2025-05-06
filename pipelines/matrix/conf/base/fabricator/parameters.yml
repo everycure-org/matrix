@@ -567,7 +567,7 @@ fabricator.embiology:
       id:
         type: generate_unique_id
         prefix: "EMBLG:"
-        id_length: 8
+        id_length: 9
       name:
         type: generate_unique_id
         prefix: name_
