@@ -23,3 +23,11 @@ filtering.prm.filtered_nodes:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.filtering}/prm/filtered/nodes
 
+filtering.prm.removed_edges:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.filtering}/prm/filtered/removed_edges
+
+filtering.prm.removed_nodes_final:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.filtering}/prm/filtered/removed_nodes_final
+
