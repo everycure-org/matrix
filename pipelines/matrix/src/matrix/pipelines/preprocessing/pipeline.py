@@ -204,7 +204,9 @@ def create_ec_medical_team_pipeline() -> Pipeline:
 def create_pipeline() -> Pipeline:
     """Create preprocessing pipeline."""
     return pipeline(
-        create_embiology_pipeline(),
-        create_ec_clinical_data_pipeline(),
-        create_ec_medical_team_pipeline(),
+        [
+            create_embiology_pipeline(),
+            create_ec_clinical_data_pipeline(),
+            create_ec_medical_team_pipeline(),
+        ]
     )
