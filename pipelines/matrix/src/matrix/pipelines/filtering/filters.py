@@ -58,6 +58,12 @@ class BiolinkDeduplicateEdgesFilter(Filter):
     the following edges (a)-[regulates]-(b), and (a)-[negatively-regulates]-(b). Regulates
     is on the path (regulates) whereas (regulates, negatively-regulates). In this case
     negatively-regulates is "deeper" than regulates and hence (a)-[regulates]-(b) is removed.
+
+    Args:
+        df: DataFrame with biolink edges
+
+    Returns:
+        Deduplicated DataFrame
     """
 
     @check_output(
@@ -117,8 +123,9 @@ class KeepRowsContainingFilter(Filter):
     """Filter that keeps only rows containing specified values in a column.
 
     This filter implements the logic to keep only rows where a specific column
-    contains any of the values in the provided keep_list. If the column is a string,
-    it will be split into an array before filtering.
+    contains any of the values in the provided keep_list.
+
+    The column is expected to be an array column.
     """
 
     def __init__(self, column: str, keep_list: Iterable[str]):
