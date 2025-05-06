@@ -9,8 +9,6 @@ from typing import List, Optional
 
 import click
 import mlflow
-from google.auth.transport.requests import Request
-from google.oauth2 import service_account
 from kedro.framework.cli.utils import split_string
 from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.framework.startup import bootstrap_project
@@ -75,13 +73,8 @@ def experiment() -> None:
     if os.getenv("GITHUB_ACTIONS") and os.getenv("GCP_SA_KEY"):
         # Running in GitHub Actions, get the IAP token of service acccount from the secrets
         click.echo("Running in GitHub Actions, using service account IAP token")
-        # Create credentials object
-        service_account_info = json.loads(os.environ["GCP_SA_KEY"])
-        credentials = service_account.Credentials.from_service_account_info(service_account_info)
-        # Refresh the credentials to obtain a valid access token
-        credentials.refresh(Request())
         # Access the token
-        token = credentials.token
+        token = os.getenv("GCP_TOKEN")
     else:
         # Running locally, get the IAP token of user account
         token = get_user_account_token()
