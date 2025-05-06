@@ -15,4 +15,23 @@ filtering.prm.prefiltered_nodes:
 
 filtering.prm.removed_nodes_initial:
   <<: [*_spark_csv]
-  filepath: ${globals:paths.filtering}/prm/prefiltered/removed_nodes
+  filepath: ${globals:paths.filtering}/prm/prefiltered/removed_nodes_initial
+
+
+filtering.prm.filtered_edges:
+  <<: [*_spark_csv]
+  filepath: ${globals:paths.filtering}/prm/filtered/edges
+
+filtering.prm.removed_edges:
+  <<: [*_spark_csv]
+  filepath: ${globals:paths.filtering}/prm/filtered/removed_edges
+
+filtering.prm.filtered_nodes:
+  <<: [*_spark_csv]
+  filepath: ${globals:paths.filtering}/prm/filtered/nodes
+
+filtering.prm.removed_nodes_final:
+  <<: [*_spark_csv]
+  filepath: ${globals:paths.filtering}/prm/filtered/removed_nodes_final
+
+

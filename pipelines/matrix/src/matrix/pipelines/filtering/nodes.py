@@ -7,6 +7,7 @@ import pyspark.sql.functions as F
 from pyspark.sql import types as T
 
 from matrix.inject import inject_object
+from matrix.pipelines.filtering import filters
 from matrix.pipelines.filtering.filters import Filter, RemoveRowsByColumnFilter, TriplePatternFilter
 
 logger = logging.getLogger(__name__)
@@ -25,18 +26,18 @@ def _create_filter_from_params(filter_name: str, filter_params: dict[str, Any]) 
         Instantiated filter object
 
     Raises:
-        ValueError: If filter_name is not recognized
+        ValueError: If filter_name is not recognized or filter class cannot be instantiated
     """
     # Make a copy of the parameters to avoid modifying the original
     params = dict(filter_params)
     filter_type = params.pop("filter")
 
-    if filter_type == "RemoveRowsByColumnFilter":
-        return RemoveRowsByColumnFilter(**params)
-    elif filter_type == "TriplePatternFilter":
-        return TriplePatternFilter(**params)
-    else:
-        raise ValueError(f"Unknown filter type: {filter_type}")
+    try:
+        # Get the filter class from the filters module
+        filter_class = getattr(filters, filter_type)
+        return filter_class(**params)
+    except (AttributeError, TypeError) as e:
+        raise ValueError(f"Failed to create filter of type {filter_type}: {str(e)}")
 
 
 def _create_filters_from_params(filters_config: dict[str, dict[str, Any]]) -> dict[str, Filter]:
@@ -52,46 +53,6 @@ def _create_filters_from_params(filters_config: dict[str, dict[str, Any]]) -> di
 
 
 def _apply_transformations(
-    df: ps.DataFrame, transformations: dict[str, Callable[[ps.DataFrame], ps.DataFrame]], key_cols: list[str], **kwargs
-) -> tuple[ps.DataFrame, ps.DataFrame]:
-    """Apply a series of transformations to a DataFrame and track removed rows.
-
-    Args:
-        df: Input DataFrame to transform
-        transformations: Dictionary of transformation functions to apply
-        key_cols: List of columns to use for identifying removed rows
-        **kwargs: Additional arguments to pass to transformations
-
-    Returns:
-        Tuple of (transformed DataFrame, DataFrame containing removed rows)
-    """
-    logger.info(f"Filtering dataframe with {len(transformations)} transformations")
-    if logger.isEnabledFor(logging.INFO):
-        last_count = df.count()
-        logger.info(f"Number of rows before filtering: {last_count}")
-    original_df = df
-    for name, transformation in transformations.items():
-        logger.info(f"Applying transformation: {name}")
-        df_new = df.transform(transformation, **kwargs)
-        if logger.isEnabledFor(logging.INFO):
-            # Spark optimization with memory constraints:
-            # If you really want to log after every transformation,
-            # make sure to cache the new frame before the action.
-            # Also, unpersist any previous cached dataframes, so we keep the memory consumption lower.
-            new_count = df_new.cache().count()
-            df.unpersist()
-            logger.info(f"Number of rows after transformation: {new_count}, cut out {last_count - new_count} rows")
-            last_count = new_count
-        df = df_new
-
-    # Identify removed rows based on key columns
-    removed_df = original_df.select(*key_cols).subtract(df.select(*key_cols))
-    removed_full = original_df.join(removed_df, on=key_cols, how="inner")
-
-    return df, removed_full
-
-
-def apply_filter_transformations(
     df: ps.DataFrame, filters: dict[str, Filter], key_cols: list[str]
 ) -> tuple[ps.DataFrame, ps.DataFrame]:
     """Apply a series of filters to a DataFrame and track removed rows.
@@ -122,7 +83,7 @@ def apply_filter_transformations(
                 ]
             )
         }
-        filtered_df, removed_df = apply_filter_transformations(
+        filtered_df, removed_df = _apply_transformations(
             df=edges_df,
             filters=filters,
             key_cols=["subject", "object", "predicate"]
@@ -172,8 +133,12 @@ def prefilter_unified_kg_nodes(
     if transformations:
         logger.info(f"Applying {len(transformations)} node filters")
         try:
+            # Convert upstream_data_source array to delimited string if it exists
+            if "upstream_data_source" in nodes.columns:
+                nodes = nodes.withColumn("upstream_data_source", F.array_join(F.col("upstream_data_source"), "|"))
+
             filters = _create_filters_from_params(transformations)
-            filtered, removed = apply_filter_transformations(nodes, filters, key_cols=["id"])
+            filtered, removed = _apply_transformations(nodes, filters, key_cols=["id"])
 
             if logger.isEnabledFor(logging.INFO):
                 logger.info("Sample of filtered nodes:")
@@ -181,26 +146,32 @@ def prefilter_unified_kg_nodes(
                 logger.info("Sample of removed nodes:")
                 logger.info(removed.select("id", "name", "category").head(10))
 
-            return filtered.select("id", "name", "category"), removed.select("id", "name", "category")
+            return filtered.select("id", "name", "category", "upstream_data_source"), removed.select(
+                "id", "name", "category", "upstream_data_source"
+            )
         except Exception as e:
             logger.error(f"Error applying filters: {str(e)}")
             raise
-    else:
-        # Fallback to old style transformations if no filters are configured
-        logger.info("No node filters configured, using legacy transformation")
-        return _apply_transformations(nodes, transformations, key_cols=["id"])
 
 
 @inject_object()
 def filter_unified_kg_edges(
     nodes: ps.DataFrame,
     edges: ps.DataFrame,
-    transformations: dict[str, Callable[[ps.DataFrame], ps.DataFrame]],
+    transformations: dict[str, Any],
 ) -> tuple[ps.DataFrame, ps.DataFrame]:
     """Function to filter the knowledge graph edges.
 
     We first apply a series for filter transformations, and then deduplicate the edges based on the nodes that we dropped.
     No edge can exist without its nodes.
+
+    Args:
+        nodes: DataFrame containing node data
+        edges: DataFrame containing edge data
+        transformations: Dictionary containing filter configurations
+
+    Returns:
+        Tuple of (filtered edges DataFrame, removed edges DataFrame)
     """
     # filter down edges to only include those that are present in the filtered nodes
     if logger.isEnabledFor(logging.INFO):
@@ -217,16 +188,32 @@ def filter_unified_kg_edges(
             F.col("object.category").alias("object_category"),
         )
     )
-    if logger.isEnabledFor(logging.INFO):
-        new_edges_count = edges.cache().count()
-        logger.info(
-            f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges"
-        )
 
-    filtered, removed = _apply_transformations(edges, transformations, key_cols=["subject", "predicate", "object"])
-    # Remove new fields from schema
-    filtered = filtered.drop("subject_category", "object_category")
-    return filtered, removed
+    # Convert upstream_data_source array to delimited string if it exists
+    if "upstream_data_source" in edges.columns:
+        edges = edges.withColumn("upstream_data_source", F.array_join(F.col("upstream_data_source"), "|"))
+
+    logger.info(f"Applying {len(transformations)} edge filters")
+    try:
+        filters = _create_filters_from_params(transformations)
+        filtered, removed = _apply_transformations(edges, filters, key_cols=["subject", "predicate", "object"])
+        # Remove new fields from schema
+        # filtered = filtered.drop("subject_category", "object_category")
+
+        if logger.isEnabledFor(logging.INFO):
+            new_edges_count = edges.cache().count()
+            logger.info(
+                f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges"
+            )
+
+        return filtered.select(
+            "subject", "subject_category", "predicate", "object", "object_category", "upstream_data_source"
+        ), removed.select(
+            "subject", "subject_category", "predicate", "object", "object_category", "upstream_data_source"
+        )
+    except Exception as e:
+        logger.error(f"Error applying filters: {str(e)}")
+        raise
 
 
 def filter_nodes_without_edges(

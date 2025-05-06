@@ -1,5 +1,12 @@
 filtering:
   node_filters:
+    filter_sources:
+      filter: KeepRowsContainingFilter
+      column: upstream_data_source
+      keep_list:
+        - rtxkg2
+        - ec_medical
+        # - robokop
 
     remove_rows_by_category:
       filter: RemoveRowsByColumnFilter
@@ -7,35 +14,23 @@ filtering:
       remove_list:
         - biolink:OrganismTaxon
 
-  
   edge_filters:
     filter_sources:
-      _object: matrix.pipelines.filtering.filters.keep_rows_containing
+      filter: KeepRowsContainingFilter
       column: upstream_data_source
       keep_list:
         - rtxkg2
         - ec_medical
         # - robokop
-    # FUTURE: Ensure the semmed filter is moved here instead
+
     filter_biolink_edges:
-      _object: matrix.pipelines.filtering.filters.biolink_deduplicate_edges
-    
-    # filter_triples:
-    #   _object: matrix.pipelines.filtering.filters.TriplePatternFilter
-    #   triples_to_exclude:
-    #     - ["biolink:Drug", "biolink:physically_interacts_with", "biolink:Drug"]
-    #     - ["biolink:Drug", "biolink:physically_interacts_with", "biolink:Small Molecule"]
-    #     - ["biolink:MolecularMixture", "biolink:has_part", "biolink:Small Molecule"]
-    #     - ["biolink:SmallMolecule", "biolink:subclass_of", "biolink:ChemicalEntity"]
+      filter: BiolinkDeduplicateEdgesFilter
 
-
-
-
-
-    # filter_sources:
-    #   _object: matrix.pipelines.filtering.filters.keep_rows_containing
-    #   column: upstream_data_source
-    #   keep_list:
-    #     - rtxkg2
-    #     - ec_medical
-    #     # - robokop
+    filter_triples:
+      filter: TriplePatternFilter
+      triples_to_exclude:
+        - ["biolink:Drug", "biolink:physically_interacts_with", "biolink:Drug"]
+        - ["biolink:Drug", "biolink:physically_interacts_with", "biolink:Small Molecule"]
+        - ["biolink:MolecularMixture", "biolink:has_part", "biolink:Small Molecule"]
+        - ["biolink:SmallMolecule", "biolink:subclass_of", "biolink:ChemicalEntity"]
+        - ["biolink:Protein", "biolink:interacts_with", "biolink:ChemicalSubstance"]
