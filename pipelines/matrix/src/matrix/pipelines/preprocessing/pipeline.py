@@ -53,7 +53,7 @@ def create_embiology_pipeline() -> Pipeline:
                 tags=["ingest-embiology-kg"],
             ),
             node(
-                func=nodes.prepare_normalized_identifiers,
+                func=nodes.get_embiology_normalised_ids,
                 inputs=[
                     "preprocessing.int.embiology.attr@spark",
                     "preprocessing.int.embiology.nodes@spark",
@@ -63,7 +63,7 @@ def create_embiology_pipeline() -> Pipeline:
                     "params:preprocessing.embiology.normalization",
                 ],
                 outputs="preprocessing.int.embiology.identifiers@pandas",
-                name="prepare_normalized_identifiers",
+                name="get_embiology_normalised_ids",
                 tags=["embiology-kg"],
             ),
             node(

@@ -10,7 +10,7 @@ import requests
 from matrix.pipelines.preprocessing.normalization import resolve_ids_batch_async
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark.sql.functions import udf
-from pyspark.sql.types import ArrayType, IntegerType, StringType
+from pyspark.sql.types import ArrayType, StringType
 from tenacity import Retrying, stop_after_attempt, wait_exponential
 
 logger = logging.getLogger(__name__)
@@ -23,22 +23,29 @@ from typing import Dict, List
 # -------------------------------------------------------------------------
 
 
-def normalize_identifiers(attr: ps.DataFrame, norm_params: Dict[str, str]) -> pd.DataFrame:
+def normalize_identifiers(node_attributes: ps.DataFrame, norm_params: Dict[str, str]) -> pd.DataFrame:
     """Normalize identifiers in embiology attributes using NCATS normalizer.
 
     The function is accepting a list of identifiers present in attr file and resolving them using NCATS normalizer.
     Note: we cannot really use batch pipeline normalization as this one also returns 1. equivalent identifiers and 2. all categories
 
     Args:
-        attr: embiology attributes
-        identifiers_mapping: mapping of identifiers
+        node_attributes: embiology prepared node attributes
+        norm_params: normalization parameters
 
     Returns:
-        pd.DataFrame: DataFrame with normalized identifiers
+        pd.DataFrame with normalized identifiers
     """
-    # Get values list from attribute DataFrame
-    ids_to_resolve = attr.select("value", "id").distinct().rdd.map(lambda x: (x.value, x.id)).collectAsMap()
-    # Run async resolution
+
+    # 1. For each normalized_id, get the attribute_ids that Embiology provides
+    ids_to_resolve = (
+        node_attributes.select("value", "normalized_id")
+        .distinct()
+        .rdd.map(lambda x: (x.value, x.normalized_id))
+        .collectAsMap()
+    )
+
+    # 2. Run async resolution with nodenorm
     results = asyncio.run(
         resolve_ids_batch_async(
             curies=list(ids_to_resolve.keys()),
@@ -47,7 +54,8 @@ def normalize_identifiers(attr: ps.DataFrame, norm_params: Dict[str, str]) -> pd
             url=norm_params["url"],
         )
     )
-    # Convert results to pandas DataFrame
+
+    # 3. Convert results to a pandas DataFrame
     results_df = pd.DataFrame(
         [
             {
@@ -61,34 +69,34 @@ def normalize_identifiers(attr: ps.DataFrame, norm_params: Dict[str, str]) -> pd
             for k, v in results.items()
         ]
     )
+
+    # 4. Get attribute_ids from input data
     results_df["attribute_id"] = results_df["original_id"].map(ids_to_resolve)
+
     return results_df
 
 
-def prepare_normalized_identifiers(
+def get_embiology_normalised_ids(
     nodes_attr: ps.DataFrame,
     nodes: ps.DataFrame,
     manual_id_mapping: ps.DataFrame,
     manual_name_mapping: ps.DataFrame,
     source_identifiers_mapping: Dict[str, str],
-    norm_params: Dict[str, str],
+    normalization_params: Dict[str, str],
 ) -> pd.DataFrame:
     """
-    Prepare identifiers for embiology nodes & normalize using NCATS normalizer.
-
-    The function is creating a list of curies which will then go through NCATs normalizer.
-    Note: we cannot really use batch pipeline normalization as this one also returns 1. equivalent identifiers and 2. all categories
+    Normalise embiology nodes based on their attributes using NCATS normalizer and manual file mapping. We are first creating a list of curies to pass to the NCATs normalizer.
+    Note: we cannot really use batch pipeline normalization as the normalized returns 1. equivalent identifiers and 2. all categories
 
     Args:
-        attr: embiology nodes' attributes
+        nodes_attr: embiology nodes' attributes
         nodes: embiology nodes
         manual_id_mapping: mapping from embiology id to MEDSCAN ids and CURIE id for our drug/disease list
         manual_name_mapping: mapping from embiology node's name to CURIE on robokop graph
         source_identifiers_mapping: prefixes of identifiers mapping from embiology way to our way
     """
 
-    # 1. Find a compatible node identifier in nodes' attributes
-    # Create a UDF for the mapping lookup - we need to 'create' CURIEs for the NCATs normalizer, these are specified in params
+    # 1. Find compatible node identifiers in nodes' attributes
     def find_source_identifier(prefix):
         return source_identifiers_mapping.get(prefix, "")
 
@@ -133,12 +141,11 @@ def prepare_normalized_identifiers(
     attr_name_manual = (
         manual_name_mapping.join(nodes.select("name", "attributes"), on="name", how="inner")
         # Get each node's attribute ids and explode it in separate rows
-        .withColumn("attribute", sf.split(sf.regexp_replace("attributes", "[{}]", ""), ","))
+        .withColumn("attributes", sf.split(sf.regexp_replace("attributes", "[{}]", ""), ","))
         .withColumn("attributes", sf.explode(sf.col("attributes")))
-        .select(sf.col("attributes").alias("attribute_id"), sf.col("id").alias("normalized_id"))
         .withColumn("name", sf.lit("Manual ID"))
         .withColumn("value", sf.col("id"))
-        .select("attribute_id", "name", "value", "normalized_id")
+        .select(sf.col("attributes").alias("attribute_id"), "name", "value", sf.col("id").alias("normalized_id"))
     )
 
     # 4. Concatenate all attributes before normalization
@@ -149,9 +156,10 @@ def prepare_normalized_identifiers(
         .union(attr_name_manual)
     )
 
-    output_df = normalize_identifiers(attr_prepared, norm_params)
+    # 5. Normalize identifiers using node norm
+    normalised_ids = normalize_identifiers(attr_prepared, normalization_params)
 
-    return output_df
+    return normalised_ids
 
 
 def prepare_nodes(nodes, id_mapping, biolink_mapping):
