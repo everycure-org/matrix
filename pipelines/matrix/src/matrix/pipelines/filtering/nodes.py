@@ -133,10 +133,6 @@ def prefilter_unified_kg_nodes(
     if transformations:
         logger.info(f"Applying {len(transformations)} node filters")
         try:
-            # Convert upstream_data_source array to delimited string if it exists
-            if "upstream_data_source" in nodes.columns:
-                nodes = nodes.withColumn("upstream_data_source", F.array_join(F.col("upstream_data_source"), "|"))
-
             filters = _create_filters_from_params(transformations)
             filtered, removed = _apply_transformations(nodes, filters, key_cols=["id"])
 
@@ -146,9 +142,7 @@ def prefilter_unified_kg_nodes(
                 logger.info("Sample of removed nodes:")
                 logger.info(removed.select("id", "name", "category").head(10))
 
-            return filtered.select("id", "name", "category", "upstream_data_source"), removed.select(
-                "id", "name", "category", "upstream_data_source"
-            )
+            return filtered, removed
         except Exception as e:
             logger.error(f"Error applying filters: {str(e)}")
             raise
@@ -189,16 +183,12 @@ def filter_unified_kg_edges(
         )
     )
 
-    # Convert upstream_data_source array to delimited string if it exists
-    if "upstream_data_source" in edges.columns:
-        edges = edges.withColumn("upstream_data_source", F.array_join(F.col("upstream_data_source"), "|"))
-
     logger.info(f"Applying {len(transformations)} edge filters")
     try:
         filters = _create_filters_from_params(transformations)
         filtered, removed = _apply_transformations(edges, filters, key_cols=["subject", "predicate", "object"])
         # Remove new fields from schema
-        # filtered = filtered.drop("subject_category", "object_category")
+        filtered = filtered.drop("subject_category", "object_category")
 
         if logger.isEnabledFor(logging.INFO):
             new_edges_count = edges.cache().count()
@@ -206,11 +196,7 @@ def filter_unified_kg_edges(
                 f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges"
             )
 
-        return filtered.select(
-            "subject", "subject_category", "predicate", "object", "object_category", "upstream_data_source"
-        ), removed.select(
-            "subject", "subject_category", "predicate", "object", "object_category", "upstream_data_source"
-        )
+        return filtered, removed
     except Exception as e:
         logger.error(f"Error applying filters: {str(e)}")
         raise
