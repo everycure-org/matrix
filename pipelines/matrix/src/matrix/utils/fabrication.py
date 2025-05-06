@@ -48,6 +48,7 @@ import importlib
 import itertools
 import json
 import logging
+import math
 import random
 import re
 from copy import deepcopy
@@ -255,12 +256,7 @@ def generate_unique_id(
     if num_rows <= 0:
         return []
 
-    # Use a seeded random number generator if a seed is provided
-    rng = np.random.default_rng(seed)
-
-    # Generate large random integers to maximize uniqueness
-    random_numbers = rng.integers(low=0, high=int(1e18), size=num_rows)
-    numeric_strings = [str(n) for n in random_numbers]
+    numeric_strings = [str(n + 1) for n in range(num_rows)]
 
     final_ids = []
 
@@ -274,13 +270,18 @@ def generate_unique_id(
                 f"id_length ({id_length}) is too short for the prefix ('{prefix}'). "
                 f"It must be longer than the prefix length ({len(prefix)})."
             )
+        elif 10**numeric_part_length < num_rows:
+            raise ValueError(
+                f"The numeric part of the id does not have enough digits ({numeric_part_length}) to generate {num_rows} unique IDs. "
+                f"The id_length is currently {id_length} and must be at least {math.ceil(math.log10(num_rows)) + len(prefix)} digits long."
+            )
 
         for num_str in numeric_strings:
             if len(num_str) < numeric_part_length:
                 # Pad with leading zeros
                 padded_num_str = num_str.zfill(numeric_part_length)
             elif len(num_str) > numeric_part_length:
-                # Truncate (take the end part to preserve randomness)
+                # Truncate (take the end part)
                 padded_num_str = num_str[-numeric_part_length:]
             else:
                 padded_num_str = num_str

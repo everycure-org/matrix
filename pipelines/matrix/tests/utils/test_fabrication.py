@@ -38,6 +38,7 @@ def test_generate_unique_id():
     )
 
     assert len(ids) == 200
+    assert len(set(ids)) == 200
 
 
 def test_generate_unique_id_prefix():
@@ -46,6 +47,21 @@ def test_generate_unique_id_prefix():
     has_prefix = [x.startswith("id") for x in ids]
 
     assert len(ids) == 400
+    assert len(set(ids)) == 400
+    assert set(has_prefix) == {True}
+
+
+def test_generate_unique_id_prefix_id_length():
+    ids = generate_unique_id(
+        num_rows=400,
+        prefix="EMBLG:",
+        id_length=9,
+    )
+
+    has_prefix = [x.startswith("EMBLG:") for x in ids]
+
+    assert len(ids) == 400
+    assert len(set(ids)) == 400
     assert set(has_prefix) == {True}
 
 
@@ -55,6 +71,8 @@ def test_generate_unique_id_length():
     id_length = list(set([len(x) for x in ids]))
 
     assert id_length == [10]
+    assert len(ids) == 400
+    assert len(set(ids)) == 400
 
 
 def test_generate_unique_id_null():
@@ -107,17 +125,6 @@ def test_generate_unique_id_replace_null():
     assert 0.45 <= (ids == "unknown").mean() <= 0.55
 
 
-def test_generate_unique_id_min():
-    ids = generate_unique_id(
-        num_rows=1000,
-        id_length=10,
-    )
-
-    minimum_id = ids[0]
-
-    assert len(ids) == 1000
-
-
 def test_generate_unique_id_down_sampled():
     ids = generate_unique_id(
         num_rows=100,
@@ -127,7 +134,6 @@ def test_generate_unique_id_down_sampled():
     ids_as_integers = [int(x) for x in ids]
 
     assert len(ids) == 100
-    assert len(set(ids)) <= 1 + 1000
     assert len(set(ids)) == 100
     assert min(ids_as_integers) >= 1
 
@@ -141,7 +147,7 @@ def test_generate_unique_id_up_sampled():
     ids_as_integers = [int(x) for x in ids]
 
     assert len(ids) == 10000
-    assert min(ids_as_integers) >= 1
+    assert len(set(ids)) == 10000
 
 
 def test_generate_random_arrays_integers():
@@ -620,7 +626,7 @@ def test_parse_column_reference_for_generate_values():
         id:
           type: generate_unique_id
           prefix: enc_
-          id_length: 5
+          id_length: 7
         treatment_code:
           type: generate_values
           sample_values: treatments.id
