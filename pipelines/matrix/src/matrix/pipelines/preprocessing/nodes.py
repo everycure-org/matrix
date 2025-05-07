@@ -310,67 +310,64 @@ def generate_embiology_edge_attributes(references: ps.DataFrame):
     )
 
 
-def deduplicate_and_clean(nodes, edges):
-    """Deduplicate edges.
+def deduplicate_and_clean_embiology_kg(nodes: ps.DataFrame, edges: ps.DataFrame):
+    """
 
     Args:
-        edges: edges
+        nodes: EmBiology prepared nodes
+        edges: EmBiology prepared edges
     """
-    nodes = (
-        nodes.withColumn("original_identifier", sf.col("id").cast(StringType()))
-        .drop("id")
-        .withColumnRenamed("urn", "original_urn")
-        .withColumnRenamed("nodetype", "original_nodetype")
-        .withColumnRenamed("final_id", "id")
-        .withColumn("equivalent_identifiers", sf.array_join(sf.col("equivalent_identifiers"), "|"))
-        .withColumn("all_categories", sf.array_join(sf.col("all_categories"), "|"))
-        .select(
-            "id",
-            "name",
-            "category",
-            "equivalent_identifiers",
-            "all_categories",
-            "original_identifier",
-            "original_urn",
-            "original_nodetype",
-        )
+
+    # 1. Transform nodes to KGX format
+    nodes_kgx = nodes.select(
+        sf.col("final_id").alias("id"),
+        "name",
+        "category",
+        sf.array_join(sf.col("equivalent_identifiers"), "|").alias("equivalent_identifiers"),
+        sf.array_join(sf.col("all_categories"), "|").alias("all_categories"),
+        sf.col("id").cast(StringType()).alias("original_identifier"),
+        sf.col("urn").alias("original_urn"),
+        sf.col("nodetype").alias("original_nodetype"),
     )
-    # Get unique keys from edges using a union of inkey and outkey to ensure there are no duplicates
-    edge_keys = (
+
+    # 2. Remove nodes that are not connected to any edge
+    node_ids_connected_to_edges = (
         edges.select("inkey").union(edges.select("outkey")).distinct().withColumnRenamed("inkey", "original_identifier")
     )
-    # Filter nodes to only keep those that appear in edges
-    f_nodes = nodes.join(edge_keys, "original_identifier", "inner")
-    f_nodes = f_nodes.dropDuplicates(["id"])
-    f_nodes = nodes
-    # Filter edges to only keep those where both subject and object nodes exist
-    valid_identifiers = f_nodes.select("original_identifier").distinct()
-    f_edges = edges.join(
-        valid_identifiers.withColumnRenamed("original_identifier", "inkey"), on="inkey", how="inner"
-    ).join(valid_identifiers.withColumnRenamed("original_identifier", "outkey"), on="outkey", how="inner")
+    nodes_connected_to_edges = nodes_kgx.join(
+        node_ids_connected_to_edges, "original_identifier", "inner"
+    ).dropDuplicates(["id"])
 
-    # Modify edge schema
-    f_edges = (
-        edges.withColumnRenamed("id", "original_id")
+    # # 3. Remove edges that have one end not connected to any node
+    node_ids = nodes_connected_to_edges.select("original_identifier").distinct()
+    edges_connected_to_nodes = edges.join(
+        node_ids.withColumnRenamed("original_identifier", "inkey"), on="inkey", how="inner"
+    ).join(node_ids.withColumnRenamed("original_identifier", "outkey"), on="outkey", how="inner")
+
+    # # 4. Transform edges to KGX format
+    edges_kgx = (
+        edges_connected_to_nodes.withColumnRenamed("id", "original_id")
         .withColumn("original_subject", sf.trim(sf.col("inkey")))
         .withColumn("original_object", sf.trim(sf.col("outkey")))
         .withColumn("publications", sf.array_join(sf.col("publications"), "|"))
         .join(
-            f_nodes.select("id", "original_identifier")
-            .withColumnRenamed("original_identifier", "original_subject")
-            .withColumnRenamed("id", "subject"),
+            nodes_connected_to_edges.select(
+                sf.col("id").alias("subject"), sf.col("original_identifier").alias("original_subject")
+            ),
             on="original_subject",
             how="left",
         )
         .join(
-            f_nodes.select("id", "original_identifier")
-            .withColumnRenamed("original_identifier", "original_object")
-            .withColumnRenamed("id", "object"),
+            nodes_connected_to_edges.select(
+                sf.col("id").alias("object"), sf.col("original_identifier").alias("original_object")
+            ),
             on="original_object",
             how="left",
         )
+        .dropDuplicates(["subject", "object", "predicate"])
     )
-    return f_nodes.dropDuplicates(["id"]), f_edges.dropDuplicates(["subject", "object", "predicate"])
+
+    return nodes_connected_to_edges, edges_kgx
 
 
 # -------------------------------------------------------------------------

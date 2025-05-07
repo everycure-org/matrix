@@ -98,7 +98,7 @@ def create_embiology_pipeline() -> Pipeline:
                 tags=["embiology-kg"],
             ),
             node(
-                func=nodes.deduplicate_and_clean,
+                func=nodes.deduplicate_and_clean_embiology_kg,
                 inputs=[
                     "preprocessing.prm.embiology.nodes",
                     "preprocessing.prm.embiology.edges",
@@ -107,7 +107,7 @@ def create_embiology_pipeline() -> Pipeline:
                     "preprocessing.prm.embiology.nodes_final",
                     "preprocessing.prm.embiology.edges_final",
                 ],
-                name="final_clean_embiology_kg",
+                name="deduplicate_and_clean_embiology_kg",
                 tags=["embiology-kg"],
             ),
         ]
