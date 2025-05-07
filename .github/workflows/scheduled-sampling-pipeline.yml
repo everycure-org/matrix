@@ -77,7 +77,7 @@ jobs:
           make install_argo
           pip install -r requirements.txt
 
-      - name: Authenticate with Google Cloud
+      - name: Authenticate with Google Cloud for access_token
         id: auth
         uses: 'google-github-actions/auth@v2'
         with:
@@ -100,11 +100,24 @@ jobs:
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
 
+      - name: Authenticate with Google Cloud for ID token
+        id: id_auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{env.project_id}}
+          workload_identity_provider: ${{env.workload_identity_provider}}
+          service_account: ${{env.service_account}}
+          token_format: id_token
+          id_token_audience: ${{ secrets.GCP_ID_TOKEN_AUDIENCE }}
+          id_token_include_email: true
+
+
       - name: Run the kedro sampling pipeline
         working-directory: pipelines/matrix
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT }}
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          GCP_TOKEN: ${{ steps.id_auth.outputs.id_token }}
         run: |
           
           DATE=$(date +%Y%m%d)

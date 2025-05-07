@@ -78,7 +78,7 @@ jobs:
       # build Docs
       - name: Build Docs
         env:
-          MKDOCS_GIT_COMMITTERS_APIKEY: ${{ secrets.GITHUB_TOKEN }}
+          MKDOCS_GIT_COMMITTERS_APIKEY: ${{ secrets.PAT }}
         run: |
           pip install uv
           make build #builds the static files in site/
@@ -94,7 +94,7 @@ jobs:
       - name: Limit the Number of Versions on Google App Engine
         if: github.ref == 'refs/heads/main'
         env:
-          MKDOCS_GIT_COMMITTERS_APIKEY: ${{ secrets.GITHUB_TOKEN }}
+          MKDOCS_GIT_COMMITTERS_APIKEY: ${{ secrets.PAT }}
         run: 
           make clean_versions
 
