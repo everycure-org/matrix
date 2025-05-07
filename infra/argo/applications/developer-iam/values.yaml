@@ -18,5 +18,6 @@ argo:
   rbac:
     users:
       # add new people here that should be able to submit workflows
+      - jchung@renci.org
     groups:
       - matrix-all@everycure.org
