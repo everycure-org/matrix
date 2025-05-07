@@ -12,7 +12,7 @@ def create_embiology_pipeline() -> Pipeline:
             # Copying these data sources locally improves performance in the later steps.
             node(
                 func=lambda x: x,
-                inputs="preprocessing.raw.embiology.node_attributes",
+                inputs="preprocessing.raw.embiology.attr",
                 outputs="preprocessing.int.embiology.node_attributes@pandas",
                 name="copy_embiology_attr_to_tmp",
                 tags=["ingest-embiology-kg"],
