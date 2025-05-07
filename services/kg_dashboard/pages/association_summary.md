@@ -30,9 +30,6 @@ ORDER BY sum(count) DESC
 ```
 
 <script>
-  const release_version = import.meta.env.VITE_release_version;
-  const build_time = import.meta.env.VITE_build_time;
-
   //This constructs a dictionary which sets the depth of each subject category value,
   //predicate value, and object category value (as they're generated in combined_sankey
   //below) to 0, 1, and 2 respectively. The one gotcha here is that the '[S] ' and '[O] '
@@ -59,10 +56,6 @@ ORDER BY sum(count) DESC
   }
 
 </script>
-
-## Version: {release_version}
-
-<p class="text-gray-500 text-sm italic">Last updated on {build_time}</p>
 
 Dashboard pages on the left side of the screen are for exploring the data in the Matrix Knowledge Graph. Select categories from the dropdowns below to filter the knowledge graph visualization.
 
