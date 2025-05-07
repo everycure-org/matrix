@@ -1,7 +1,10 @@
 ---
-title: Summary
+title: KG Dashboard
 ---
 <script>
+  const release_version = import.meta.env.VITE_release_version;
+  const build_time = import.meta.env.VITE_build_time;
+  
   function groupBy(arr, key) {
     return arr.reduce((acc, item) => {
       const group = item[key];
@@ -11,6 +14,10 @@ title: Summary
     }, {});
   }
 </script>
+
+## Version: {release_version}
+
+<p class="text-gray-500 text-sm italic">Last updated on {build_time}</p>
 
 This page provides key metrics about our knowledge graph (KG), including its size, density, and connectivity patterns, with a focus on how nodes from our disease and drug lists are connected within the graph.
 
