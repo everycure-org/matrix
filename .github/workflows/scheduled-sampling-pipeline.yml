@@ -71,11 +71,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      # - name: Install Argo & Python dependencies
-      #   working-directory: pipelines/matrix
-      #   run: |
-      #     make install_argo
-      #     pip install -r requirements.txt
+      - name: Install Argo & Python dependencies
+        working-directory: pipelines/matrix
+        run: |
+          make install_argo
+          pip install -r requirements.txt
 
       - name: Authenticate with Google Cloud for access_token
         id: auth
