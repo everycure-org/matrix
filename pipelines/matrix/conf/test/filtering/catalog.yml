@@ -1,58 +1,30 @@
-_spark_csv: &_spark_csv
-  type: spark.SparkDataset
-  file_format: csv
-  load_args:
-    header: True
+_spark_json: &_spark_json
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: json
   save_args:
     mode: overwrite
-    header: True
-
-_spark_csv_ds: &_spark_csv_ds
-  type: matrix.datasets.gcp.LazySparkCSVDataset
-  file_format: csv
-  load_args:
-    header: true
-
+    
 
 filtering.prm.prefiltered_nodes:
-  type: matrix.datasets.gcp.LazySparkDataset
+  <<: *_spark_json
   filepath: ${globals:paths.filtering}/prm/prefiltered/nodes
-  file_format: json
-  save_args:
-    mode: overwrite
-
 
 filtering.prm.removed_nodes_initial:
-  type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.filtering}/prm/prefiltered/removed_nodes_initial
-  file_format: json
-  save_args:
-    mode: overwrite
+  <<: *_spark_json
+  filepath: ${globals:paths.filtering}/prm/prefiltered/removed_nodes_initial  
 
 filtering.prm.filtered_edges:
-  type: matrix.datasets.gcp.LazySparkDataset
+  <<: *_spark_json
   filepath: ${globals:paths.filtering}/prm/filtered/edges
-  file_format: json
-  save_args:
-    mode: overwrite
 
 filtering.prm.removed_edges:
-  type: matrix.datasets.gcp.LazySparkDataset
+  <<: *_spark_json
   filepath: ${globals:paths.filtering}/prm/filtered/removed_edges
-  file_format: json
-  save_args:
-    mode: overwrite
 
 filtering.prm.filtered_nodes:
-  type: matrix.datasets.gcp.LazySparkDataset
+  <<: *_spark_json
   filepath: ${globals:paths.filtering}/prm/filtered/nodes
-  file_format: json
-  save_args:
-    mode: overwrite
 
 filtering.prm.removed_nodes_final:
-  type: matrix.datasets.gcp.LazySparkDataset
+  <<: *_spark_json
   filepath: ${globals:paths.filtering}/prm/filtered/removed_nodes_final
-  file_format: json
-  save_args:
-    mode: overwrite
