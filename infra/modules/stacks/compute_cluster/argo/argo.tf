@@ -68,7 +68,7 @@ resource "helm_release" "argo" {
   # Disable Git submodule initialization
   set {
     name  = "repoServer.env[0].name"
-    value = "GIT_MODULES_ENABLED"
+    value = "ARGOCD_GIT_MODULES_ENABLED"
   }
 
   set {
