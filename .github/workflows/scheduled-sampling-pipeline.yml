@@ -105,6 +105,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PAT }}
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          GCP_TOKEN: ${{ steps.auth.outputs.access_token }}
         run: |
           
           DATE=$(date +%Y%m%d)
