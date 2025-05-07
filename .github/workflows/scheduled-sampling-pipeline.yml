@@ -109,6 +109,7 @@ jobs:
           service_account: ${{env.service_account}}
           token_format: id_token
           id_token_audience: ${{ secrets.GCP_ID_TOKEN_AUDIENCE }}
+          id_token_include_email: true
 
 
       - name: Run the kedro sampling pipeline
