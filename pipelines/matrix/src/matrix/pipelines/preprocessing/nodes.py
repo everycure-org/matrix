@@ -210,7 +210,7 @@ def normalise_embiology_nodes(
     return norm_nodes
 
 
-def prepare_edges(edges: ps.DataFrame, edges_attributes: ps.DataFrame, biolink_mapping: Dict[str, str]):
+def prepare_embiology_edges(edges: ps.DataFrame, edges_attributes: ps.DataFrame, biolink_mapping: Dict[str, str]):
     """
 
     Args:
@@ -219,7 +219,7 @@ def prepare_edges(edges: ps.DataFrame, edges_attributes: ps.DataFrame, biolink_m
         biolink_mapping: biolink mapping
     """
 
-    # 1. Prepare directed edges
+    # 1. Transform directed edges
     edges_directed = (
         edges.filter((sf.col("inkey") != "{}") & (sf.col("inoutkey") == "{}"))
         .withColumn("inoutkey", sf.split(sf.regexp_replace("inoutkey", "[{}]", ""), ","))
@@ -234,26 +234,31 @@ def prepare_edges(edges: ps.DataFrame, edges_attributes: ps.DataFrame, biolink_m
         .withColumn("inkey", sf.col("inoutkey").getItem(0))
         .withColumn("outkey", sf.col("inoutkey").getItem(1))
     )
-
-    edges_undirected_corrected = edges_undirected.union(
-        edges_undirected.select(sf.col("inkey").alias("outkey"), sf.col("outkey").alias("inkey"))
-        .withColumnRenamed("inkey", "outkey_new")
-        .withColumnRenamed("outkey", "inkey_new")
-        .withColumnRenamed("outkey_new", "outkey")
-        .withColumnRenamed("inkey_new", "inkey")
-        .drop("outkey_new", "inkey_new")
-        .select(edges_undirected.columns)
+    edges_undirected_reversed = edges_undirected.select(
+        "id",
+        sf.col("outkey").alias("inkey"),
+        "inoutkey",
+        sf.col("inkey").alias("outkey"),
+        "controltype",
+        "ontology",
+        "relationship",
+        "effect",
+        "mechanism",
+        "attributes",
     )
-    # Union directed and undirected edges
-    edges = edges_directed.union(edges_undirected_corrected)
+    edges_undirected_splitted = edges_undirected.union(edges_undirected_reversed)
 
-    # Biolink fix
+    # 3. Union directed and undirected splitted edges
+    edges_prepared = edges_directed.union(edges_undirected_splitted)
+
+    # 4. Map current edge properties to biolink categories
     def lookup_mapping(name):
         return biolink_mapping.get(name, "")
 
     lookup_udf = udf(lookup_mapping, StringType())
+
     # NOTE: we are making predicate more granular by adding ontology, relationship, effect, mechanism
-    edges = edges.withColumn(
+    edges_with_predicate = edges_prepared.withColumn(
         "predicate",
         lookup_udf(
             sf.trim(
@@ -268,9 +273,13 @@ def prepare_edges(edges: ps.DataFrame, edges_attributes: ps.DataFrame, biolink_m
             )
         ),
     )
-    # Add attributes
-    edges = edges.join(edges_attributes.withColumnRenamed("id", "attributes"), on="attributes", how="left")
-    return edges
+
+    # 5. Add edge attributes
+    edges_with_attributes = edges_with_predicate.join(
+        edges_attributes.withColumnRenamed("id", "attributes"), on="attributes", how="left"
+    )
+
+    return edges_with_attributes
 
 
 def generate_embiology_edge_attributes(references: ps.DataFrame):

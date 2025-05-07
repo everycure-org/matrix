@@ -87,14 +87,14 @@ def create_embiology_pipeline() -> Pipeline:
                 tags=["embiology-kg"],
             ),
             node(
-                func=nodes.prepare_edges,
+                func=nodes.prepare_embiology_edges,
                 inputs=[
                     "preprocessing.int.embiology.edges@spark",
                     "preprocessing.int.embiology.edge_attributes",
                     "params:preprocessing.embiology.edges.biolink_mapping",
                 ],
                 outputs="preprocessing.prm.embiology.edges",
-                name="prepare_edges",
+                name="prepare_embiology_edges",
                 tags=["embiology-kg"],
             ),
             node(
