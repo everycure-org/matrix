@@ -52,6 +52,10 @@ variable "billing_project" {}
 variable "storage_bucket_name" {}
 variable "gitops_repo_url" {}
 variable "gitops_repo_creds" {}
+variable "github_app_installation_id" {}
+variable "github_repo_owner" {}
+variable "github_repo_name" {}
+variable "github_branch_to_run_on" {}
 EOF
 }
 

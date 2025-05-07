@@ -8,29 +8,27 @@ variable "github_app_installation_id" {
   type        = string
 }
 
-variable "repo_owner" {
+variable "github_repo_owner" {
   description = "The owner of the GitHub repository."
   type        = string
 }
 
-variable "repo_name" {
+variable "github_repo_name" {
   description = "The name of the GitHub repository."
   type        = string
 }
 
-variable "PAT" {
+variable "github_repo_token" {
   description = "The Personal Access Token."
   type        = string
-  default     = ""
 }
 
-variable "repo_branch_to_run_on" {
+variable "github_repo_branch_to_run_on" {
   description = "The branch to run the trigger on."
   type        = string
 }
 
-variable "repo_filename" {
-  description = "The filename of the trigger."
+variable "github_repo_path_to_folder" {
+  description = "The path to the folder where the terraform files are located."
   type        = string
-  default     = "./infra/cloudbuild.yaml"
 }
