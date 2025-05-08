@@ -13,13 +13,13 @@ authors:
   - lvijnck
   - drhodesbrc
   - oliverw1
-  - kevinschaper
   - JacquesVergine
   - eKathleenCarter
   - eding36
   - amyford
   - redst4r
   - piotrkan
+  - kevinschaper
   - Dashing-Nelson
 ---
 
