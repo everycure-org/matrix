@@ -31,6 +31,12 @@ authors:
 - Create run dashboard [#1377](https://github.com/everycure-org/matrix/pull/1377)
 - Improve Integration and Filtering Pipelines with Normalization Summaries and Enhanced Edge Tracking [#1379](https://github.com/everycure-org/matrix/pull/1379)
 ### Experiments 🧪
+- Diseases split [#1410](https://github.com/everycure-org/matrix/pull/1410)
+- Drug split [#1420](https://github.com/everycure-org/matrix/pull/1420)
+- Matrix transformation reports [report](https://github.com/everycure-org/lab-notebooks/blob/main/alexei/8_matrix_normalisation_refined_analysis/report/matrix_transformation_refined.md)
+- Run existing modelling pipeline on RTX 2.10.0 (bump from 2.7.3) [report](https://github.com/everycure-org/lab-notebooks/blob/main/amy/rtx-2.10.0-report.ipynb)
+- UAB PubMed Embeddings Drug Repurposing Experiment [report](https://github.com/everycure-org/lab-notebooks/blob/1029a7b70fb921690ed5842adbeb8fe2313ffd9a/uab-pubmed-embeddings/experiment-april-2025/UAB_PubMed_Embeddings_Drug_Repurposing_Experiment_Report.ipynb)
+- Exploring a matrix transformation for contraindications [report](https://github.com/everycure-org/lab-notebooks/blob/main/alexei/a_contraindications_research/report/transformation_approach.md)
 - add diseases split and matrix transformation reports [#1410](https://github.com/everycure-org/matrix/pull/1410)
 ### Bugfixes 🐛
 - Avoid overwriting raw data with fabricator pipeline [#554](https://github.com/everycure-org/matrix/pull/554)
