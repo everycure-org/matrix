@@ -17,7 +17,6 @@ authors:
   - JacquesVergine
   - eKathleenCarter
   - eding36
-  - app/github-actions
   - amyford
   - redst4r
   - piotrkan
