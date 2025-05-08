@@ -109,7 +109,6 @@ authors:
 - try out more memory for the OOM spoke node - normalize-spoke-edges [#1391](https://github.com/everycure-org/matrix/pull/1391)
 - Hotfix: update labels attribute with null array [#1393](https://github.com/everycure-org/matrix/pull/1393)
 - mini improvement in run names [#1402](https://github.com/everycure-org/matrix/pull/1402)
-- add diseases split and matrix transformation reports [#1410](https://github.com/everycure-org/matrix/pull/1410)
 - Fix remove spoke from settings [#1414](https://github.com/everycure-org/matrix/pull/1414)
 - increase k8s memory allocation for filtering pipeline [#1413](https://github.com/everycure-org/matrix/pull/1413)
 - Add data cleaning & preprocessing for Embiology KG [#1431](https://github.com/everycure-org/matrix/pull/1431)
