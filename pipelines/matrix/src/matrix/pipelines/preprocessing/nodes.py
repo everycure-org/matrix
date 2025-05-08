@@ -338,7 +338,7 @@ def deduplicate_and_clean_embiology_kg(nodes: ps.DataFrame, edges: ps.DataFrame)
         node_ids_connected_to_edges, "original_identifier", "inner"
     ).dropDuplicates(["id"])
 
-    # # 3. Remove edges that have one end not connected to any node
+    # 3. Remove edges that have one end not connected to any node
     node_ids = nodes_connected_to_edges.select("original_identifier").distinct()
     edges_connected_to_nodes = edges.join(
         node_ids.withColumnRenamed("original_identifier", "inkey"), on="inkey", how="inner"
