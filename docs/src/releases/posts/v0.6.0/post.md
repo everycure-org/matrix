@@ -31,6 +31,7 @@ authors:
 - Create run dashboard [#1377](https://github.com/everycure-org/matrix/pull/1377)
 - Improve Integration and Filtering Pipelines with Normalization Summaries and Enhanced Edge Tracking [#1379](https://github.com/everycure-org/matrix/pull/1379)
 ### Experiments 🧪
+- add diseases split and matrix transformation reports [#1410](https://github.com/everycure-org/matrix/pull/1410)
 ### Bugfixes 🐛
 - Avoid overwriting raw data with fabricator pipeline [#554](https://github.com/everycure-org/matrix/pull/554)
 - Bugfix/gpu resources [#621](https://github.com/everycure-org/matrix/pull/621)
