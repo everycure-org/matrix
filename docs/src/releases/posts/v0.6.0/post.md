@@ -19,7 +19,6 @@ authors:
   - amyford
   - redst4r
   - piotrkan
-  - kevinschaper
   - Dashing-Nelson
 ---
 
