@@ -211,7 +211,7 @@ def normalise_embiology_nodes(
 
 
 def prepare_embiology_edges(edges: ps.DataFrame, edges_attributes: ps.DataFrame, biolink_mapping: Dict[str, str]):
-    """
+    """Transforms undirected edges into directed edges and maps edge types to biolink predicate types
 
     Args:
         edges: embiology edges
