@@ -3,7 +3,7 @@ matrix_generation.reporting.plots:
   dataset:
     type: partitions.PartitionedDataset
     path: plots
-    dataset: matplotlib.MatplotlibWriter
+    dataset: matplotlib.MatplotlibDataset
     filename_suffix: .png
 
 matrix_generation.reporting.tables:
