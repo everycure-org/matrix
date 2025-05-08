@@ -70,10 +70,10 @@ def get_user_account_token() -> str:
 @click.group()
 def experiment() -> None:
     _validate_env_vars_for_private_data()
-    if os.getenv("GITHUB_ACTIONS") and os.getenv("GCP_TOKEN"):
+    if os.getenv("GITHUB_ACTIONS") and os.getenv("GCP_SA_KEY"):
         # Running in GitHub Actions, get the IAP token of service acccount from the secrets
         click.echo("Running in GitHub Actions, using service account IAP token")
-        token = os.getenv("GCP_TOKEN")
+        token = json.loads(str(os.getenv("GCP_SA_KEY"))).token
     else:
         # Running locally, get the IAP token of user account
         token = get_user_account_token()
