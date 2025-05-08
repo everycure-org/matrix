@@ -18,6 +18,7 @@ from matrix.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
 from .model import ModelWrapper
+from .model_selection import DiseaseAreaSplit
 
 logger = logging.getLogger(__name__)
 
@@ -218,12 +219,14 @@ def prefilter_nodes(
 def make_folds(
     data: pd.DataFrame,
     splitter: BaseCrossValidator,
+    disease_list: pd.DataFrame = None,
 ) -> pd.DataFrame:
     """Function to split data.
 
     Args:
         data: Data to split.
         splitter: sklearn splitter object (BaseCrossValidator or its subclasses).
+        disease_list: disease list from https://github.com/everycure-org/matrix-disease-list/
 
     Returns:
         Dataframe with test-train split for all folds.
@@ -233,7 +236,13 @@ def make_folds(
 
     # Split data into folds
     all_data_frames = []
-    for fold, (train_index, test_index) in enumerate(splitter.split(data, data["y"])):
+    # FUTURE: Ensure fields are reflected in GT dataset for future splitters
+    if isinstance(splitter, DiseaseAreaSplit):
+        split_iterator = splitter.split(data, disease_list)
+    else:
+        split_iterator = splitter.split(data, data["y"])
+
+    for fold, (train_index, test_index) in enumerate(split_iterator):
         all_indices_in_this_fold = list(set(train_index).union(test_index))
         fold_data = data.loc[all_indices_in_this_fold, :].copy()
         fold_data.loc[train_index, "split"] = "TRAIN"
