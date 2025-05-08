@@ -22,7 +22,6 @@ authors:
   - piotrkan
   - Dashing-Nelson
 ---
-Please write the article following the categories below. The relevant PR numbers, covering changes from the selected last release (or the most recent minor release in headless mode) to the current release, are provided for each category:
 
 ### Breaking Changes 🛠
 ### Exciting New Features 🎉
