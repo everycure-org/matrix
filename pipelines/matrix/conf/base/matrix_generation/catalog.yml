@@ -34,7 +34,7 @@ matrix_generation.feat.nodes@spark:
 matrix_generation.reporting.plots:
   type: partitions.PartitionedDataset
   path: ${globals:paths.matrix_generation}/reporting/plots
-  dataset: matplotlib.MatplotlibWriter
+  dataset: matplotlib.MatplotlibDataset
   filename_suffix: .png
 
 matrix_generation.reporting.tables:
