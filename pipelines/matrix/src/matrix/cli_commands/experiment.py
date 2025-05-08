@@ -30,7 +30,7 @@ from matrix.git_utils import (
     has_unpushed_commits,
 )
 from matrix.utils.argo import argo_template_lint, submit_workflow
-from matrix.utils.authentication import get_user_account_creds
+from matrix.utils.authentication import get_service_account_creds, get_user_account_creds
 from matrix.utils.kubernetes import apply, can_talk_to_kubernetes, create_namespace, namespace_exists
 from matrix.utils.mlflow_utils import (
     DeletedExperimentExistsWithName,
@@ -73,7 +73,8 @@ def experiment() -> None:
     if os.getenv("GITHUB_ACTIONS") and os.getenv("GCP_SA_KEY"):
         # Running in GitHub Actions, get the IAP token of service acccount from the secrets
         click.echo("Running in GitHub Actions, using service account IAP token")
-        token = json.loads(str(os.getenv("GCP_SA_KEY"))).token
+        sa_key = json.loads(str(os.getenv("GCP_SA_KEY")))
+        token = get_service_account_creds(sa_key).token
     else:
         # Running locally, get the IAP token of user account
         token = get_user_account_token()
