@@ -88,7 +88,7 @@ def test_source_filter_nodes(spark, sample_nodes):
     When we apply KeepRowsContainingFilter to keep only nodes from specific sources
     Then only nodes from those sources should remain
     """
-    result = filters.KeepRowsContainingFilter(column="upstream_data_source", keep_list=["rtxkg2"]).filter(sample_nodes)
+    result = filters.KeepRowsContainingFilter(column="upstream_data_source", keep_list=["rtxkg2"]).apply(sample_nodes)
 
     expected = spark.createDataFrame(
         [
@@ -126,7 +126,7 @@ def test_source_filter_edges(spark, sample_edges):
     When we apply KeepRowsContainingFilter to keep only edges from rtxkg2
     Then only edges from rtxkg2 should remain
     """
-    result = filters.KeepRowsContainingFilter(column="kg_sources", keep_list=["rtxkg2"]).filter(sample_edges)
+    result = filters.KeepRowsContainingFilter(column="kg_sources", keep_list=["rtxkg2"]).apply(sample_edges)
 
     expected = spark.createDataFrame(
         [
@@ -168,7 +168,7 @@ def test_biolink_deduplicate(spark, sample_edges):
     When we apply BiolinkDeduplicateEdgesFilter
     Then redundant edges should be removed while keeping the most specific predicates
     """
-    result = filters.BiolinkDeduplicateEdgesFilter().filter(sample_edges)
+    result = filters.BiolinkDeduplicateEdgesFilter().apply(sample_edges)
     expected = spark.createDataFrame(
         [
             (
@@ -225,7 +225,7 @@ def test_remove_rows_by_column_filter(spark):
 
     result = filters.RemoveRowsByColumnFilter(
         column="category", remove_list=["biolink:OrganismTaxon", "biolink:ChemicalEntity"]
-    ).filter(test_nodes)
+    ).apply(test_nodes)
 
     expected = spark.createDataFrame(
         [
@@ -278,7 +278,7 @@ def test_triple_pattern_filter(spark):
 
     result = filters.TriplePatternFilter(
         triples_to_exclude=[["biolink:Drug", "biolink:physically_interacts_with", "biolink:Drug"]]
-    ).filter(test_edges)
+    ).apply(test_edges)
 
     expected = spark.createDataFrame(
         [
@@ -350,7 +350,7 @@ def test_triple_pattern_filter_multiple_patterns(spark):
             ["biolink:Drug", "biolink:physically_interacts_with", "biolink:Drug"],
             ["biolink:Drug", "biolink:chemically_similar_to", "biolink:Drug"],
         ]
-    ).filter(test_edges)
+    ).apply(test_edges)
 
     expected = spark.createDataFrame(
         [
