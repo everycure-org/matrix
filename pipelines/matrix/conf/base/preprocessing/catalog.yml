@@ -39,7 +39,7 @@ _pandas_parquet_ds: &_pandas_parquet
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
-preprocessing.raw.embiology.attr:
+preprocessing.raw.embiology.node_attributes:
   type: pandas.CSVDataset
   filepath: ${globals:paths.kg_raw_private}/embiology/csv/attr.csv.gz
 
