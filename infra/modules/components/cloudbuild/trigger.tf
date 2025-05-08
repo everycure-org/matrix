@@ -30,7 +30,7 @@ resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
       name       = "alpine/terragrunt:1.11.4"
       entrypoint = "terragrunt"
       args       = ["run-all", "init", "-reconfigure"]
-      dir        = _TERRAGRUNT_DIR
+      dir        = "$${_TERRAGRUNT_DIR}"
       id         = "terragrunt-init-reconfigure"
       wait_for   = ["pull-terragrunt"]
     }
@@ -39,7 +39,7 @@ resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
       name       = "alpine/terragrunt:1.11.4"
       entrypoint = "terragrunt"
       args       = ["run-all", "plan", "-out=plan.tfplan", "-no-color"]
-      dir        = _TERRAGRUNT_DIR
+      dir        = "$${_TERRAGRUNT_DIR}"
       id         = "terragrunt-plan"
       wait_for   = ["terragrunt-init-reconfigure"]
     }
@@ -61,14 +61,15 @@ resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
         fi
         EOF
       ]
-      dir      = _TERRAGRUNT_DIR
+      dir      = "$${_TERRAGRUNT_DIR}"
       id       = "terragrunt-apply"
       wait_for = ["terragrunt-plan"]
     }
   }
-
+  // The trigger will only run if there is any changes in the respective folder. (e.g. infra/deployments/hub/dev)
+  // This is to avoid running the trigger for any changes in the other folders.
   included_files = [
-    "${_TERRAGRUNT_DIR}/**",
+    "$${_TERRAGRUNT_DIR}/**}"
   ]
 
   substitutions = {
