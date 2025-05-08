@@ -13,6 +13,7 @@ authors:
   - lvijnck
   - drhodesbrc
   - oliverw1
+  - kevinschaper
   - JacquesVergine
   - eKathleenCarter
   - eding36
