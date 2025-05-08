@@ -22,7 +22,7 @@ class Filter(ABC):
     """
 
     @abstractmethod
-    def filter(self, df: ps.DataFrame) -> ps.DataFrame:
+    def apply(self, df: ps.DataFrame) -> ps.DataFrame:
         """Apply the filter to the input DataFrame.
 
         Args:
@@ -76,7 +76,7 @@ class BiolinkDeduplicateEdgesFilter(Filter):
             unique=["subject", "object", "predicate"],
         ),
     )
-    def filter(self, df: ps.DataFrame) -> ps.DataFrame:
+    def apply(self, df: ps.DataFrame) -> ps.DataFrame:
         """Deduplicate biolink edges.
 
         Args:
@@ -138,7 +138,7 @@ class KeepRowsContainingFilter(Filter):
         self.column = column
         self.keep_list = keep_list
 
-    def filter(self, df: ps.DataFrame) -> ps.DataFrame:
+    def apply(self, df: ps.DataFrame) -> ps.DataFrame:
         """Keep only rows where the specified column contains any value from keep_list.
 
         Args:
@@ -168,7 +168,7 @@ class RemoveRowsByColumnFilter(Filter):
         self.column = column
         self.remove_list = remove_list
 
-    def filter(self, df: ps.DataFrame) -> ps.DataFrame:
+    def apply(self, df: ps.DataFrame) -> ps.DataFrame:
         """Remove rows where the specified column contains any value from remove_list.
 
         Args:
@@ -197,7 +197,7 @@ class TriplePatternFilter(Filter):
         """
         self.triples_to_exclude = triples_to_exclude
 
-    def filter(self, df: ps.DataFrame) -> ps.DataFrame:
+    def apply(self, df: ps.DataFrame) -> ps.DataFrame:
         """Remove edges that match any of the specified triple patterns.
 
         Args:

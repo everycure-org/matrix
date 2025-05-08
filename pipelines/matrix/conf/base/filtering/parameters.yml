@@ -1,7 +1,7 @@
 filtering:
   node_filters:
     filter_sources:
-      filter: KeepRowsContainingFilter
+      _object: matrix.pipelines.filtering.filters.KeepRowsContainingFilter
       column: upstream_data_source
       keep_list:
         - rtxkg2
@@ -9,14 +9,14 @@ filtering:
         # - robokop
 
     remove_rows_by_category:
-      filter: RemoveRowsByColumnFilter
+      _object: matrix.pipelines.filtering.filters.RemoveRowsByColumnFilter
       column: "category"
       remove_list:
         - biolink:OrganismTaxon
 
   edge_filters:
     filter_sources:
-      filter: KeepRowsContainingFilter
+      _object: matrix.pipelines.filtering.filters.KeepRowsContainingFilter
       column: upstream_data_source
       keep_list:
         - rtxkg2
@@ -24,10 +24,10 @@ filtering:
         # - robokop
 
     filter_biolink_edges:
-      filter: BiolinkDeduplicateEdgesFilter
+      _object: matrix.pipelines.filtering.filters.BiolinkDeduplicateEdgesFilter
 
     filter_triples:
-      filter: TriplePatternFilter
+      _object: matrix.pipelines.filtering.filters.TriplePatternFilter
       triples_to_exclude:
         - ["biolink:Drug", "biolink:physically_interacts_with", "biolink:Drug"]
         - ["biolink:Drug", "biolink:physically_interacts_with", "biolink:Small Molecule"]

@@ -1,53 +1,13 @@
 import logging
-from collections.abc import Callable, Iterable
-from typing import Any, Generic, TypeVar
+from typing import Any
 
 import pyspark.sql as ps
 import pyspark.sql.functions as F
-from pyspark.sql import types as T
 
 from matrix.inject import inject_object
-from matrix.pipelines.filtering import filters
-from matrix.pipelines.filtering.filters import Filter, RemoveRowsByColumnFilter, TriplePatternFilter
+from matrix.pipelines.filtering.filters import Filter
 
 logger = logging.getLogger(__name__)
-
-
-def _create_filter_from_params(filter_name: str, filter_params: dict[str, Any]) -> Filter:
-    """Create a filter instance from parameters.
-
-    Args:
-        filter_name: Name of the filter to create
-        filter_params: Dictionary of parameters for the filter
-
-    Returns:
-        Instantiated filter object
-
-    Raises:
-        ValueError: If filter_name is not recognized or filter class cannot be instantiated
-    """
-    # Make a copy of the parameters to avoid modifying the original
-    params = dict(filter_params)
-    filter_type = params.pop("filter")
-
-    try:
-        # Get the filter class from the filters module
-        filter_class = getattr(filters, filter_type)
-        return filter_class(**params)
-    except (AttributeError, TypeError) as e:
-        raise ValueError(f"Failed to create filter of type {filter_type}: {str(e)}")
-
-
-def _create_filters_from_params(filters_config: dict[str, dict[str, Any]]) -> dict[str, Filter]:
-    """Create filter instances from configuration.
-
-    Args:
-        filters_config: Dictionary of filter configurations
-
-    Returns:
-        Dictionary of instantiated filters
-    """
-    return {name: _create_filter_from_params(name, params) for name, params in filters_config.items()}
 
 
 def _apply_transformations(
@@ -76,7 +36,7 @@ def _apply_transformations(
     original_df = df
     for name, filter_instance in filters.items():
         logger.info(f"Applying filter: {name}")
-        df_new = filter_instance.filter(df)
+        df_new = filter_instance.apply(df)
 
         if logger.isEnabledFor(logging.INFO):
             # Spark optimization with memory constraints:
@@ -112,13 +72,8 @@ def prefilter_unified_kg_nodes(
     Returns:
         Tuple of (filtered nodes DataFrame, removed nodes DataFrame)
     """
-
-    print(transformations)
-
     logger.info(f"Applying {len(transformations)} node filters")
-
-    filters = _create_filters_from_params(transformations)
-    return _apply_transformations(nodes, filters, key_cols=["id"])
+    return _apply_transformations(nodes, transformations, key_cols=["id"])
 
 
 @inject_object()
@@ -157,8 +112,7 @@ def filter_unified_kg_edges(
     )
 
     logger.info(f"Applying {len(transformations)} edge filters")
-    filters = _create_filters_from_params(transformations)
-    return _apply_transformations(edges, filters, key_cols=["subject", "predicate", "object"])
+    return _apply_transformations(edges, transformations, key_cols=["subject", "predicate", "object"])
 
 
 def filter_nodes_without_edges(
