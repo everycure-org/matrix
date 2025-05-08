@@ -332,7 +332,7 @@ ingestion.int.ground_truth.edges:
 ingestion.raw.robokop.nodes@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccd_filtered_primary_sources_6/robokop_30fd_baseline2_group2_with_ubergraph_string_nodes.tsv
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccd_filtered_primary_sources_6/baseline2_30fd1bfc18cd5ccd_filtered_primary_sources_6/robokop_30fd_baseline2_group2_with_ubergraph_string_nodes.tsv
   #${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
   file_format: csv
   load_args:
@@ -342,7 +342,7 @@ ingestion.raw.robokop.nodes@spark:
 
 ingestion.raw.robokop.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccd_filtered_primary_sources_6/robokop_30fd_baseline2_group2_with_ubergraph_string_nodes.tsv
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccd_filtered_primary_sources_6/baseline2_30fd1bfc18cd5ccd_filtered_primary_sources_6/robokop_30fd_baseline2_group2_with_ubergraph_string_nodes.tsv
   #${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
   save_args:
     sep: "\t"
@@ -354,7 +354,8 @@ ingestion.raw.robokop.nodes@pandas:
 ingestion.raw.robokop.edges@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccd_filtered_primary_sources_6/robokop_30fd_baseline2_group2_with_ubergraph_string_edges.tsv
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccd_filtered_primary_sources_6/baseline2_30fd1bfc18cd5ccd_filtered_primary_sources_6/robokop_30fd_baseline2_group2_with_ubergraph_string_edges.tsv
+  #gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccd_filtered_primary_sources_6/robokop_30fd_baseline2_group2_with_ubergraph_string_edges.tsv
   #${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
   file_format: csv
   load_args:
@@ -364,7 +365,8 @@ ingestion.raw.robokop.edges@spark:
 
 ingestion.raw.robokop.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccd_filtered_primary_sources_6/robokop_30fd_baseline2_group2_with_ubergraph_string_edges.tsv
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccd_filtered_primary_sources_6/baseline2_30fd1bfc18cd5ccd_filtered_primary_sources_6/robokop_30fd_baseline2_group2_with_ubergraph_string_edges.tsv
+  #gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccd_filtered_primary_sources_6/robokop_30fd_baseline2_group2_with_ubergraph_string_edges.tsv
   #${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
   save_args:
     sep: "\t"
