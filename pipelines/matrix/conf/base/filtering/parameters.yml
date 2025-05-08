@@ -8,11 +8,11 @@ filtering:
         - ec_medical
         # - robokop
 
-    remove_rows_by_category:
-      _object: matrix.pipelines.filtering.filters.RemoveRowsByColumnFilter
-      column: "category"
-      remove_list:
-        - biolink:OrganismTaxon
+    # remove_rows_by_category:
+    #   _object: matrix.pipelines.filtering.filters.RemoveRowsByColumnFilter
+    #   column: "category"
+    #   remove_list:
+    #     - biolink:OrganismTaxon
 
   edge_filters:
     filter_sources:
@@ -26,11 +26,12 @@ filtering:
     filter_biolink_edges:
       _object: matrix.pipelines.filtering.filters.BiolinkDeduplicateEdgesFilter
 
-    filter_triples:
-      _object: matrix.pipelines.filtering.filters.TriplePatternFilter
-      triples_to_exclude:
-        - ["biolink:Drug", "biolink:physically_interacts_with", "biolink:Drug"]
-        - ["biolink:Drug", "biolink:physically_interacts_with", "biolink:Small Molecule"]
-        - ["biolink:MolecularMixture", "biolink:has_part", "biolink:Small Molecule"]
-        - ["biolink:SmallMolecule", "biolink:subclass_of", "biolink:ChemicalEntity"]
-        - ["biolink:Protein", "biolink:interacts_with", "biolink:ChemicalSubstance"]
+    # filter_triples:
+    #   _object: matrix.pipelines.filtering.filters.TriplePatternFilter
+    #   triples_to_exclude:
+    #     - ["biolink:Drug", "biolink:interacts_with", "biolink:Drug"]
+    #     - ["biolink:Drug", "biolink:subclass_of", "biolink:Drug"]
+    #     - ["biolink:Drug", "biolink:has_part", "biolink:Drug"]
+    #     - ["biolink:Drug", "biolink:related_to", "biolink:Drug"]
+    #     - ["biolink:Drug", "biolink:close_match", "biolink:Drug"]
+    #     - ["biolink:Drug", "biolink:coexists_with", "biolink:Drug"]
