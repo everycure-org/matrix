@@ -77,6 +77,7 @@ Below is a curated list of useful links to various EveryCure resources and tools
 - **[Neo4j](https://neo4j.platform.dev.everycure.org/)** – Graph database for storing and querying data.
 - **[Bloom](https://neo4j.platform.dev.everycure.org/bloom)** – Bloom is a graph extension for Neo4j that provides a set of tools for graph exploration.
 - **[Grafana](https://grafana.platform.dev.everycure.org/)** – Monitoring and observability platform for the platform.
+- **[KG Dashboard](https://data.dev.everycure.org/versions/latest/evidence/index.html)** - Knowledge Graph Dashboard providing key metrics about our Knowledge Graph.
 
 ## Repositories & Issue Tracking
 
