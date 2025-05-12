@@ -48,6 +48,7 @@ import importlib
 import itertools
 import json
 import logging
+import math
 import random
 import re
 from copy import deepcopy
@@ -222,26 +223,23 @@ def generate_unique_id(
     num_rows: int,
     prefix: str = "",
     id_length: Optional[int] = None,
-    seed: Optional[int] = None,
 ) -> List[str]:
-    """Generate unique-ish random numeric IDs with optional prefix and fixed length.
+    """Generate unique numeric IDs with optional prefix and fixed length.
 
-    Creates a list of IDs by generating large random numbers, optionally prefixing them,
-    and adjusting to a fixed length if specified. While uniqueness is highly probable due
-    to the large number space, it's not guaranteed for very large num_rows.
+    Creates a range of IDs by incrementing from 1, optionally prefixing them,
+    and adjusting to a fixed length if specified.
 
     Args:
         num_rows: The number of IDs to generate.
         prefix: Optional string to prepend to each ID (e.g., "USER_", "PAT_").
         id_length: If provided, ensures each ID (including prefix) is exactly this length
                   by zero-padding or truncating the numeric part as needed.
-        seed: Optional seed for reproducible ID generation.
 
     Returns:
         A list of string IDs.
 
     Raises:
-        ValueError: If id_length is specified but too short for prefix + at least one digit.
+        ValueError: If id_length is specified but too short for prefix + enough digits to certify uniqueness.
 
     Example:
         >>> # In YAML config:
@@ -249,18 +247,12 @@ def generate_unique_id(
         >>> #   type: generate_unique_id
         >>> #   prefix: PAT_
         >>> #   id_length: 10
-        >>> #   seed: 42
         >>> # Would generate: ['PAT_0000123', 'PAT_0000456', ...]
     """
     if num_rows <= 0:
         return []
 
-    # Use a seeded random number generator if a seed is provided
-    rng = np.random.default_rng(seed)
-
-    # Generate large random integers to maximize uniqueness
-    random_numbers = rng.integers(low=0, high=int(1e18), size=num_rows)
-    numeric_strings = [str(n) for n in random_numbers]
+    numeric_strings = [str(n + 1) for n in range(num_rows)]
 
     final_ids = []
 
@@ -274,13 +266,18 @@ def generate_unique_id(
                 f"id_length ({id_length}) is too short for the prefix ('{prefix}'). "
                 f"It must be longer than the prefix length ({len(prefix)})."
             )
+        elif 10**numeric_part_length < num_rows:
+            raise ValueError(
+                f"The numeric part of the id does not have enough digits ({numeric_part_length}) to generate {num_rows} unique IDs. "
+                f"The id_length is currently {id_length} and must be at least {math.ceil(math.log10(num_rows)) + len(prefix)} digits long."
+            )
 
         for num_str in numeric_strings:
             if len(num_str) < numeric_part_length:
                 # Pad with leading zeros
                 padded_num_str = num_str.zfill(numeric_part_length)
             elif len(num_str) > numeric_part_length:
-                # Truncate (take the end part to preserve randomness)
+                # Truncate (take the end part)
                 padded_num_str = num_str[-numeric_part_length:]
             else:
                 padded_num_str = num_str
