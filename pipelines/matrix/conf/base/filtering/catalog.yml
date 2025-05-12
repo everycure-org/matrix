@@ -22,4 +22,3 @@ filtering.prm.prefiltered_nodes:
 filtering.prm.filtered_nodes:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.filtering}/prm/filtered/nodes
-
