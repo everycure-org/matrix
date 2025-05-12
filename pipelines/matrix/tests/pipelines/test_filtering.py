@@ -82,11 +82,14 @@ def sample_edges(spark):
 
 
 def test_source_filter_nodes(spark, sample_nodes):
-    result = filters.keep_rows_containing(
-        input_df=sample_nodes,
-        column="upstream_data_source",
-        keep_list=["rtxkg2"],
-    )
+    """Test KeepRowsContainingFilter on nodes DataFrame.
+
+    Given a DataFrame with nodes containing upstream data sources
+    When we apply KeepRowsContainingFilter to keep only nodes from specific sources
+    Then only nodes from those sources should remain
+    """
+    result = filters.KeepRowsContainingFilter(column="upstream_data_source", keep_list=["rtxkg2"]).apply(sample_nodes)
+
     expected = spark.createDataFrame(
         [
             (
@@ -117,11 +120,14 @@ def test_source_filter_nodes(spark, sample_nodes):
 
 
 def test_source_filter_edges(spark, sample_edges):
-    result = filters.keep_rows_containing(
-        input_df=sample_edges,
-        column="kg_sources",
-        keep_list=["rtxkg2"],
-    )
+    """Test KeepRowsContainingFilter on edges DataFrame.
+
+    Given a DataFrame with edges containing knowledge graph sources
+    When we apply KeepRowsContainingFilter to keep only edges from rtxkg2
+    Then only edges from rtxkg2 should remain
+    """
+    result = filters.KeepRowsContainingFilter(column="kg_sources", keep_list=["rtxkg2"]).apply(sample_edges)
+
     expected = spark.createDataFrame(
         [
             (
@@ -156,7 +162,13 @@ def test_source_filter_edges(spark, sample_edges):
 
 
 def test_biolink_deduplicate(spark, sample_edges):
-    result = filters.biolink_deduplicate_edges(sample_edges)
+    """Test BiolinkDeduplicateEdgesFilter functionality.
+
+    Given a DataFrame with edges that may have redundant biolink predicates
+    When we apply BiolinkDeduplicateEdgesFilter
+    Then redundant edges should be removed while keeping the most specific predicates
+    """
+    result = filters.BiolinkDeduplicateEdgesFilter().apply(sample_edges)
     expected = spark.createDataFrame(
         [
             (
@@ -188,3 +200,176 @@ def test_biolink_deduplicate(spark, sample_edges):
         ),
     )
     assertDataFrameEqual(result.select(*expected.columns), expected)
+
+
+def test_remove_rows_by_column_filter(spark):
+    """Test RemoveRowsByColumnFilter functionality.
+
+    Given a DataFrame with nodes containing specific categories
+    When we apply RemoveRowsByColumnFilter to remove those categories
+    Then only nodes with the remaining categories should remain
+    """
+    test_nodes = spark.createDataFrame(
+        [
+            ("CHEBI:001", "biolink:Drug"),
+            ("OT:001", "biolink:OrganismTaxon"),
+            ("CHEBI:002", "biolink:ChemicalEntity"),
+        ],
+        schema=StructType(
+            [
+                StructField("id", StringType(), False),
+                StructField("category", StringType(), False),
+            ]
+        ),
+    )
+
+    result = filters.RemoveRowsByColumnFilter(
+        column="category", remove_list=["biolink:OrganismTaxon", "biolink:ChemicalEntity"]
+    ).apply(test_nodes)
+
+    expected = spark.createDataFrame(
+        [
+            ("CHEBI:001", "biolink:Drug"),
+        ],
+        schema=StructType(
+            [
+                StructField("id", StringType(), False),
+                StructField("category", StringType(), False),
+            ]
+        ),
+    )
+    assertDataFrameEqual(result, expected)
+
+
+def test_triple_pattern_filter(spark):
+    """Test TriplePatternFilter functionality.
+
+    Given a DataFrame with edges containing subject-predicate-object patterns
+    When we apply TriplePatternFilter to exclude specific patterns
+    Then only edges not matching the excluded patterns should remain
+    """
+    test_edges = spark.createDataFrame(
+        [
+            (
+                "CHEBI:001",
+                "biolink:Drug",
+                "biolink:physically_interacts_with",
+                "CHEBI:002",
+                "biolink:Drug",
+            ),
+            (
+                "CHEBI:001",
+                "biolink:Drug",
+                "biolink:treats",
+                "UMLS:001",
+                "biolink:Disease",
+            ),
+        ],
+        schema=StructType(
+            [
+                StructField("subject", StringType(), False),
+                StructField("subject_category", StringType(), False),
+                StructField("predicate", StringType(), False),
+                StructField("object", StringType(), False),
+                StructField("object_category", StringType(), False),
+            ]
+        ),
+    )
+
+    result = filters.TriplePatternFilter(
+        triples_to_exclude=[["biolink:Drug", "biolink:physically_interacts_with", "biolink:Drug"]]
+    ).apply(test_edges)
+
+    expected = spark.createDataFrame(
+        [
+            (
+                "CHEBI:001",
+                "biolink:Drug",
+                "biolink:treats",
+                "UMLS:001",
+                "biolink:Disease",
+            ),
+        ],
+        schema=StructType(
+            [
+                StructField("subject", StringType(), False),
+                StructField("subject_category", StringType(), False),
+                StructField("predicate", StringType(), False),
+                StructField("object", StringType(), False),
+                StructField("object_category", StringType(), False),
+            ]
+        ),
+    )
+    assertDataFrameEqual(result, expected)
+
+
+def test_triple_pattern_filter_multiple_patterns(spark):
+    """Test TriplePatternFilter with multiple patterns to exclude.
+
+    Given a DataFrame with edges containing various subject-predicate-object patterns
+    When we apply TriplePatternFilter to exclude multiple patterns
+    Then only edges not matching any of the excluded patterns should remain
+    """
+    test_edges = spark.createDataFrame(
+        [
+            (
+                "CHEBI:001",
+                "biolink:Drug",
+                "biolink:physically_interacts_with",
+                "CHEBI:002",
+                "biolink:Drug",
+            ),
+            (
+                "CHEBI:001",
+                "biolink:Drug",
+                "biolink:treats",
+                "UMLS:001",
+                "biolink:Disease",
+            ),
+            (
+                "CHEBI:003",
+                "biolink:Drug",
+                "biolink:chemically_similar_to",
+                "CHEBI:004",
+                "biolink:Drug",
+            ),
+        ],
+        schema=StructType(
+            [
+                StructField("subject", StringType(), False),
+                StructField("subject_category", StringType(), False),
+                StructField("predicate", StringType(), False),
+                StructField("object", StringType(), False),
+                StructField("object_category", StringType(), False),
+            ]
+        ),
+    )
+
+    result = filters.TriplePatternFilter(
+        triples_to_exclude=[
+            ["biolink:Drug", "biolink:physically_interacts_with", "biolink:Drug"],
+            ["biolink:Drug", "biolink:chemically_similar_to", "biolink:Drug"],
+        ]
+    ).apply(test_edges)
+
+    expected = spark.createDataFrame(
+        [
+            (
+                "CHEBI:001",
+                "biolink:Drug",
+                "biolink:treats",
+                "UMLS:001",
+                "biolink:Disease",
+            ),
+        ],
+        schema=StructType(
+            [
+                StructField("subject", StringType(), False),
+                StructField("subject_category", StringType(), False),
+                StructField("predicate", StringType(), False),
+                StructField("object", StringType(), False),
+                StructField("object_category", StringType(), False),
+            ]
+        ),
+    )
+    assertDataFrameEqual(result, expected)
