@@ -39,7 +39,7 @@ jobs:
           filters: |
             src:
               - ${{ env.deployment_path }}/**
-              - .github/workflows/infra-*.yml
+              - .github/workflows/infra-**.yml
               - infra/modules/**
  #Uncomment as necessary, avoiding this step when not needed as it takes 90s per CI run which adds up
 #  debug:
@@ -111,7 +111,6 @@ jobs:
     runs-on: ubuntu-latest
     name: Plan Terraform
     needs: [ checks ]
-    environment: ${{ inputs.environment }}
     permissions:
       contents: 'read'
       id-token: 'write'

@@ -21,7 +21,7 @@ on:
       - chunyuma-patch-1
     paths:
       - infra/**
-      - .github/workflows/infra-*.yml
+      - .github/workflows/infra-**.yml
   # Allow manual triggering
   workflow_dispatch:
 
