@@ -294,10 +294,18 @@ def generate_embiology_edge_attributes(references: ps.DataFrame):
         references.withColumn(
             "pmid",
             sf.when(
-                sf.col("pmid").isNotNull(), sf.concat(sf.lit("PMID:"), sf.format_string("%.0f", sf.col("pmid")))
+                sf.col("pmid").isNotNull(),
+                sf.concat(sf.lit("PMID:"), sf.udf(lambda x: str(x), StringType())(sf.col("pmid"))),
             ).otherwise(None),
         )
-        .withColumn("doi", sf.when(sf.col("doi").isNotNull(), sf.concat(sf.lit("DOI:"), sf.col("doi"))).otherwise(None))
+        .withColumn(
+            "doi",
+            sf.when(
+                sf.col("doi").isNotNull(),
+                sf.concat(sf.lit("DOI:"), sf.udf(lambda x: str(x), StringType())(sf.col("doi"))),
+            ).otherwise(None),
+        )
+        .orderBy("id", "pmid", "doi")
         .groupby("id")
         .agg(
             sf.count("id").alias("num_sentences"),
