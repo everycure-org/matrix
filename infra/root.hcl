@@ -56,6 +56,7 @@ variable "github_app_installation_id" {}
 variable "github_repo_owner" {}
 variable "github_repo_name" {}
 variable "github_branch_to_run_on" {}
+variable "infra_bucket_name" {}
 EOF
 }
 
@@ -66,8 +67,7 @@ EOF
 remote_state {
   backend = "gcs"
   config = {
-    bucket               = local.env_vars.locals.storage_bucket_name
-    prefix               = "terragrunt/core/${path_relative_to_include()}/"
+    bucket               = local.env_vars.locals.infra_bucket_name
     skip_bucket_creation = true
   }
   generate = {
