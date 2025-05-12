@@ -27,7 +27,8 @@ on:
 
 jobs:
   call_infra_deploy_dev:
-    if: github.ref == 'refs/heads/infra'
+    # This job is triggered by a pull request to the infra branch or a push to the infra branch.
+    if: (github.event_name == 'pull_request' && github.base_ref == 'infra') || github.ref == 'refs/heads/infra'
     uses: ./.github/workflows/infra-deploy.yml
     name: ${{ matrix.deployment_path }}
     secrets: inherit
@@ -49,7 +50,8 @@ jobs:
       environment: 'dev'
 
   call_infra_deploy_prod:
-    if: github.ref == 'refs/heads/infra-prod-debug'
+    # This job is triggered by a pull request to the infra-prod-debug branch or a push to the infra-prod-debug branch.
+    if: (github.event_name == 'pull_request' && github.base_ref == 'infra-prod-debug') || github.ref == 'refs/heads/infra-prod-debug'
     uses: ./.github/workflows/infra-deploy.yml
     name: ${{ matrix.deployment_path }}
     secrets: inherit
