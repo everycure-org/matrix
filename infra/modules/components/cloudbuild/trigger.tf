@@ -1,21 +1,13 @@
 resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
   project  = var.project_id
-  name     = "terragrunt-on-${var.github_repo_branch_to_run_on}-push"
+  name     = "terragrunt-on-${var.github_repo_deploy_branch}-push"
   location = "global"
-
-  source_to_build {
-    ref       = "refs/heads/${var.github_repo_branch_to_run_on}"
-    repo_type = "GITHUB"
-  }
 
   github {
     owner = var.github_repo_owner
     name  = var.github_repo_name
-    pull_request {
-      branch = "^${var.github_repo_branch_to_run_on}$"
-    }
     push {
-      branch = "^${var.github_repo_branch_to_run_on}$"
+      branch = ".*" # This will trigger on any branch.
     }
   }
 
@@ -51,7 +43,7 @@ resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
         "-c",
         <<-EOF
         echo "Checking condition: Branch='$BRANCH_NAME'"
-        if [ "$BRANCH_NAME" = "${var.github_repo_branch_to_run_on}" ]; then
+        if [ "$BRANCH_NAME" = "${var.github_repo_deploy_branch}" ]; then
           echo "Condition met (Branch=$BRANCH_NAME). Running 'terragrunt apply'..."
           terragrunt run-all apply --terragrunt-non-interactive plan.tfplan
         else
