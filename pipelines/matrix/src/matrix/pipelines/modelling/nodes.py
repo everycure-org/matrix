@@ -1,7 +1,7 @@
 import itertools
 import json
 import logging
-from typing import Any, Callable, Iterable, Union
+from typing import Any, Callable, Iterable, Optional, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -19,6 +19,7 @@ from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
 from .model import ModelWrapper
 from .model_selection import DiseaseAreaSplit
+from .transformers import WeightingTransformer
 
 logger = logging.getLogger(__name__)
 
@@ -421,6 +422,37 @@ def tune_parameters(
     ), tuner.convergence_plot if hasattr(tuner, "convergence_plot") else plt.figure()
 
 
+# @unpack_params()
+# @inject_object()
+# @make_list_regexable(source_df="data", make_regexable_kwarg="features")
+# def train_model(
+#     data: pd.DataFrame,
+#     estimator: BaseEstimator,
+#     features: list[str],
+#     target_col_name: str,
+# ) -> dict:
+#     """Function to train model on the given data.
+
+#     Args:
+#         data: Data to train on.
+#         estimator: sklearn compatible estimator.
+#         features: list of features, may be regex specified.
+#         target_col_name: Target column name.
+
+#     Returns:
+#         Trained model.
+#     """
+#     mask = data["split"].eq("TRAIN")
+
+#     X_train = data.loc[mask, features]
+#     y_train = data.loc[mask, target_col_name]
+
+#     logger.info(f"Starting model: {estimator} training...")
+#     estimator_fit = estimator.fit(X_train.values, y_train.values)
+#     logger.info("Model training completed...")
+#     return estimator_fit
+
+
 @unpack_params()
 @inject_object()
 @make_list_regexable(source_df="data", make_regexable_kwarg="features")
@@ -429,26 +461,26 @@ def train_model(
     estimator: BaseEstimator,
     features: list[str],
     target_col_name: str,
+    weighting: WeightingTransformer | None = None,
 ) -> dict:
-    """Function to train model on the given data.
+    """Fit the final classifier on one fold (TRAIN split only)."""
 
-    Args:
-        data: Data to train on.
-        estimator: sklearn compatible estimator.
-        features: list of features, may be regex specified.
-        target_col_name: Target column name.
-
-    Returns:
-        Trained model.
-    """
-    mask = data["split"].eq("TRAIN")
-
+    mask = data["split"].eq("TRAIN")  # rows for *this* fold only
     X_train = data.loc[mask, features]
     y_train = data.loc[mask, target_col_name]
 
-    logger.info(f"Starting model: {estimator} training...")
-    estimator_fit = estimator.fit(X_train.values, y_train.values)
-    logger.info("Model training completed...")
+    # ── compute per‑row sample weights ────────────────────────────────
+    sample_weight = None
+    if weighting is not None:  # allow weighting to be absent
+        sample_weight = weighting.transform(data.loc[mask])
+
+    logger.info(f"Training model ({type(estimator).__name__}) ...")
+    estimator_fit = estimator.fit(
+        X_train.values,
+        y_train.values,
+        sample_weight=sample_weight,  # XGBoost ignores None
+    )
+    logger.info("Model training completed.")
     return estimator_fit
 
 

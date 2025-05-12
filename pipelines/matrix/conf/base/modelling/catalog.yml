@@ -87,7 +87,7 @@ modelling.model_input.splits:
 "modelling.fold_{fold}.model_output.predictions":
   <<: [*_pandas_parquet, *_model_output_ds]
   filepath: ${globals:paths.modelling}/model_output/fold_{fold}/predictions
-  
+
 # NOTE: Saving an artifact, saving both locally and in MLFlow
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/03_version_datasets.html#how-to-version-data-in-a-kedro-project
 "modelling.{shard}.fold_{fold}.reporting.tuning_convergence_plot":
@@ -113,4 +113,6 @@ modelling.model_input.splits:
 
 modelling.reporting.gt_present:
   filepath: ${globals:paths.modelling}/reporting/gt_present_metrics.yml
-  type:  yaml.YAMLDataset
+  type: yaml.YAMLDataset
+
+

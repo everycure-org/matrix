@@ -97,6 +97,11 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
             weights = self._weights_auto_cv(node_degrees)
         else:
             raise ValueError(f"Unknown weighting strategy: {self.strategy}")
+        print(
+            f"*****************************************************************************\n[Weighting] strategy={self.strategy} "
+            f"mean={weights.mean():.3f}  min={weights.min():.3f}  "
+            f"max={weights.max():.3f}\n******************************************************************************"
+        )
 
         return weights
 
