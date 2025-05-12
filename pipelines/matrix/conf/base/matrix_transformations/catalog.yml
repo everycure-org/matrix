@@ -1,0 +1,28 @@
+_pandas_parquet: &_pandas_parquet
+  type: matrix.datasets.graph.PandasParquetDataset
+  save_args:
+    engine: pyarrow
+  load_args:
+    engine: pyarrow
+
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+
+_spark_json: &_spark_json
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: json
+  save_args:
+    mode: overwrite
+
+"matrix_transformations.shuffled_matrix@spark":
+  <<: *_spark_json
+  filepath: ${globals:paths.matrix_transformations}/shuffled_matrix
+
+"matrix_transformations.full_matrix_transformed@spark":
+  <<: *_spark_json
+  filepath: ${globals:paths.matrix_transformations}/full_matrix_transformed
+
