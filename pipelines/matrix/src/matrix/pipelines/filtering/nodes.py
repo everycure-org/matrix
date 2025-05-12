@@ -1,25 +1,43 @@
 import logging
-from collections.abc import Callable
+from typing import Any
 
 import pyspark.sql as ps
 import pyspark.sql.functions as F
 
 from matrix.inject import inject_object
+from matrix.pipelines.filtering.filters import Filter
 
 logger = logging.getLogger(__name__)
 
 
 def _apply_transformations(
-    df: ps.DataFrame, transformations: dict[str, Callable[[ps.DataFrame], ps.DataFrame]], key_cols: list[str], **kwargs
+    df: ps.DataFrame, filters: dict[str, Filter], key_cols: list[str]
 ) -> tuple[ps.DataFrame, ps.DataFrame]:
-    logger.info(f"Filtering dataframe with {len(transformations)} transformations")
+    """Apply a series of filters to a DataFrame and track removed rows.
+
+    This function applies a sequence of filters to a DataFrame while maintaining
+    logging information about the number of rows removed at each step. It also
+    tracks which rows were removed by comparing the original and final DataFrames
+    using the specified key columns.
+
+    Args:
+        df: Input DataFrame to filter
+        filters: Dictionary of filter instances to apply, where the key is the filter name
+        key_cols: List of columns to use for identifying removed rows
+
+    Returns:
+        Tuple of (filtered DataFrame, DataFrame containing removed rows)
+    """
+    logger.info(f"Filtering dataframe with {len(filters)} filters")
     if logger.isEnabledFor(logging.INFO):
         last_count = df.count()
         logger.info(f"Number of rows before filtering: {last_count}")
+
     original_df = df
-    for name, transformation in transformations.items():
-        logger.info(f"Applying transformation: {name}")
-        df_new = df.transform(transformation, **kwargs)
+    for name, filter_instance in filters.items():
+        logger.info(f"Applying filter: {name}")
+        df_new = filter_instance.apply(df)
+
         if logger.isEnabledFor(logging.INFO):
             # Spark optimization with memory constraints:
             # If you really want to log after every transformation,
@@ -27,7 +45,9 @@ def _apply_transformations(
             # Also, unpersist any previous cached dataframes, so we keep the memory consumption lower.
             new_count = df_new.cache().count()
             df.unpersist()
-            logger.info(f"Number of rows after transformation: {new_count}, cut out {last_count - new_count} rows")
+            logger.info(
+                f"Number of rows after transformation '{name}': {new_count}, " f"removed {last_count - new_count} rows"
+            )
             last_count = new_count
         df = df_new
 
@@ -41,8 +61,18 @@ def _apply_transformations(
 @inject_object()
 def prefilter_unified_kg_nodes(
     nodes: ps.DataFrame,
-    transformations: dict[str, Callable[[ps.DataFrame], ps.DataFrame]],
+    transformations: dict[str, Any],
 ) -> tuple[ps.DataFrame, ps.DataFrame]:
+    """Filter nodes using the configured filters.
+
+    Args:
+        nodes: DataFrame containing node data
+        transformations: Dictionary containing filter configurations
+
+    Returns:
+        Tuple of (filtered nodes DataFrame, removed nodes DataFrame)
+    """
+    logger.info(f"Applying {len(transformations)} node filters")
     return _apply_transformations(nodes, transformations, key_cols=["id"])
 
 
@@ -50,12 +80,20 @@ def prefilter_unified_kg_nodes(
 def filter_unified_kg_edges(
     nodes: ps.DataFrame,
     edges: ps.DataFrame,
-    transformations: dict[str, Callable[[ps.DataFrame], ps.DataFrame]],
+    transformations: dict[str, Any],
 ) -> tuple[ps.DataFrame, ps.DataFrame]:
     """Function to filter the knowledge graph edges.
 
     We first apply a series for filter transformations, and then deduplicate the edges based on the nodes that we dropped.
     No edge can exist without its nodes.
+
+    Args:
+        nodes: DataFrame containing node data
+        edges: DataFrame containing edge data
+        transformations: Dictionary containing filter configurations
+
+    Returns:
+        Tuple of (filtered edges DataFrame, removed edges DataFrame)
     """
     # filter down edges to only include those that are present in the filtered nodes
     if logger.isEnabledFor(logging.INFO):
@@ -66,16 +104,15 @@ def filter_unified_kg_edges(
         edges.alias("edges")
         .join(nodes.alias("subject"), on=F.col("edges.subject") == F.col("subject.id"), how="inner")
         .join(nodes.alias("object"), on=F.col("edges.object") == F.col("object.id"), how="inner")
-        .select("edges.*")
-    )
-    if logger.isEnabledFor(logging.INFO):
-        new_edges_count = edges.cache().count()
-        logger.info(
-            f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges"
+        .select(
+            "edges.*",
+            F.col("subject.category").alias("subject_category"),
+            F.col("object.category").alias("object_category"),
         )
+    )
 
-    filtered, removed = _apply_transformations(edges, transformations, key_cols=["subject", "predicate", "object"])
-    return filtered, removed
+    logger.info(f"Applying {len(transformations)} edge filters")
+    return _apply_transformations(edges, transformations, key_cols=["subject", "predicate", "object"])
 
 
 def filter_nodes_without_edges(
