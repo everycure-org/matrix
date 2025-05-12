@@ -39,7 +39,7 @@ jobs:
           filters: |
             src:
               - ${{ env.deployment_path }}/**
-              - .github/workflows/infra-**.yml
+              - .github/workflows/infra-*.yml
               - infra/modules/**
  #Uncomment as necessary, avoiding this step when not needed as it takes 90s per CI run which adds up
 #  debug:
@@ -203,13 +203,13 @@ jobs:
           workload_identity_provider: ${{vars.workload_identity_provider_rw}}
           service_account: ${{vars.service_account_rw}}
 
-      # - name: Deploy
-      #   uses: gruntwork-io/terragrunt-action@v2
-      #   with:
-      #     tf_version: ${{ env.tf_version }}
-      #     tg_version: ${{ env.tg_version }}
-      #     tg_dir: ${{ env.deployment_path }}
-      #     tg_command: 'apply'
+      - name: Deploy
+        uses: gruntwork-io/terragrunt-action@v2
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ env.deployment_path }}
+          tg_command: 'apply'
       
       - name: Post to a Slack channel
         # Only post to Slack if the deployment failed and we're on the infra branch
