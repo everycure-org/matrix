@@ -11,6 +11,17 @@ modelling.xg_ensemble_weighted:
       disease_flags:
         - is_disease
 
+    weighting:
+      _object: matrix.pipelines.modelling.transformers.WeightingTransformer
+      head_col: "source"
+      strategy: "auto_cv" # or inverse / shomer / none
+      eta: 40
+      mix_k: 5
+      mix_beta: 1.0
+      eps: 1.0e-6
+      w_min: 1.0e-3
+      w_max: 20.0
+
     model_tuning_args:
       tuner:
         _object: matrix.pipelines.modelling.tuning.GaussianSearch
