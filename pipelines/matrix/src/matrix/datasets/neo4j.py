@@ -119,6 +119,24 @@ class Neo4JSparkDataset(SparkDataset):
             metadata=metadata,
         )
 
+    def _get_timeout_configuration(self, timeout_in_seconds=60) -> dict[str, Any]:
+        """Get the timeout configuration for the Neo4J connection. See: https://neo4j.com/docs/spark/current/configuration/ for more details.
+        Args:
+            timeout_in_seconds: Timeout in seconds. Defaults to 60 seconds.
+
+        Returns:
+            dict: Dictionary with the timeout configuration.
+        """
+
+        seconds_to_msecs = str(timeout_in_seconds * 1000)
+
+        return {
+            "connection.timeout.msecs": seconds_to_msecs,  # Connection timeout in milliseconds
+            "db.transaction.timeout": seconds_to_msecs,  # Transaction timeout in milliseconds
+            "connection.liveness.timeout.msecs": seconds_to_msecs,  # Liveness timeout in milliseconds
+            "connection.acquisition.timeout.msecs": seconds_to_msecs,  # Acquisition timeout in milliseconds
+        }
+
     @staticmethod
     def _create_db(url: str, database: str, overwrite: bool, credentials: dict[str, Any] = None):
         """Function to create database.
@@ -167,6 +185,7 @@ class Neo4JSparkDataset(SparkDataset):
             .option("url", self._url)
             .options(**self._credentials)
             .options(**self._load_args)
+            .options(**self._get_timeout_configuration())
         )
 
         if self._df_schema:
@@ -191,6 +210,7 @@ class Neo4JSparkDataset(SparkDataset):
                     .option("url", self._url)
                     .options(**self._credentials)
                     .options(**self._save_args)
+                    .options(**self._get_timeout_configuration())
                     .save(**{"mode": "overwrite"})
                 )
         except Exception as e:
