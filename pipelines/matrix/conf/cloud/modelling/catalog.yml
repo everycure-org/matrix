@@ -10,7 +10,7 @@ _reporting_ds: &_reporting_ds
   artifact_path: "{shard}.fold_{fold}"
   dataset:
     <<: *_reporting_ds
-    type: matplotlib.MatplotlibWriter
+    type: matplotlib.MatplotlibDataset
     filepath: ${globals:paths.tmp}/{shard}/fold_{fold}/convergence_plot.png
 
 # NOTE: Saving a metric, more elaborate strategies possible, e.g., MlflowMetricHistoryDataset
