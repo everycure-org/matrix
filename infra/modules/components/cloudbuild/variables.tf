@@ -23,8 +23,8 @@ variable "github_repo_token" {
   type        = string
 }
 
-variable "github_repo_branch_to_run_on" {
-  description = "The branch to run the trigger on."
+variable "github_repo_deploy_branch" {
+  description = "The branch to listen to for deployment."
   type        = string
 }
 
