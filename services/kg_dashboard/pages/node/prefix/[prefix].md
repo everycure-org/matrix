@@ -53,19 +53,6 @@ group by all
 order by count desc
 ```
 
-```sql edge_types
-  select 
-      replace(subject_category,'biolink:','') || ' ' ||
-      replace(predicate,'biolink:','') || ' ' || 
-      replace(object_category,'biolink:','') as edge_type,      
-      sum(count) as count
-  from bq.merged_kg_edges
-  where subject_prefix = '${params.prefix}'
-    or object_prefix = '${params.prefix}'    
-  group by all
-  order by count desc
-```  
-
 ```sql primary_knowledge_source_counts
   select
       primary_knowledge_source,
