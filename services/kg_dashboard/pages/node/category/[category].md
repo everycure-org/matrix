@@ -50,22 +50,8 @@ where (subject_category = 'biolink:${params.category}'
    or object_category = 'biolink:${params.category}')
    and ('${inputs.pks_filter.value}' = 'All' or primary_knowledge_source = '${inputs.pks_filter.value}')
 group by all
-having count > 0
 order by count desc
 ```
-
-```sql edge_types
-  select 
-      replace(subject_category,'biolink:','') || ' ' ||
-      replace(predicate,'biolink:','') || ' ' || 
-      replace(object_category,'biolink:','') as edge_type,      
-      sum(count) as count
-  from bq.merged_kg_edges
-  where subject_category = 'biolink:${params.category}'
-    or object_category = 'biolink:${params.category}'    
-  group by all
-  order by count desc
-```  
 
 ```sql primary_knowledge_source_counts
   select
