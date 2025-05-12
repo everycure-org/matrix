@@ -111,6 +111,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Plan Terraform
     needs: [ checks ]
+    environment: ${{ inputs.environment }}
     permissions:
       contents: 'read'
       id-token: 'write'
