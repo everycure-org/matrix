@@ -223,6 +223,11 @@ spec:
     container: 
       <<: *_kedro_container
       command: ["/bin/sh", "-c"]
+      resources:
+        requests:
+          memory: "32Mi"
+        limits:
+          memory: "64Mi"
       args:
         - |
             echo "Waiting for Neo4j to be ready..."
