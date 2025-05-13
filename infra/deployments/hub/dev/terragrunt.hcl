@@ -17,4 +17,5 @@ inputs = {
   github_repo_owner                   = yamldecode(file("${dirname(find_in_parent_folders("root.hcl"))}/secrets/dev/matrix/github.yaml")).repo_owner
   github_repo_name                    = yamldecode(file("${dirname(find_in_parent_folders("root.hcl"))}/secrets/dev/matrix/github.yaml")).repo_name
   github_branch_to_run_on             = "infra"
+  github_repo_path_to_folder          = get_path_from_repo_root()
 }

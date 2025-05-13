@@ -24,7 +24,7 @@ module "dns" {
 
 module "cloudbuild" {
   source                     = "../../../modules/components/cloudbuild"
-  github_repo_path_to_folder = path.module
+  github_repo_path_to_folder = var.github_repo_path_to_folder
   project_id                 = var.project_id
   github_app_installation_id = var.github_app_installation_id
   github_repo_owner          = var.github_repo_owner
