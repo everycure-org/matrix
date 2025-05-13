@@ -32,3 +32,7 @@ variable "github_repo_path_to_folder" {
   description = "The path to the folder where the terraform files are located."
   type        = string
 }
+
+variable "location" {
+  default = "us-central1"
+}

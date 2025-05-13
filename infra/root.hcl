@@ -57,6 +57,7 @@ variable "github_repo_owner" {}
 variable "github_repo_name" {}
 variable "github_branch_to_run_on" {}
 variable "infra_bucket_name" {}
+variable "github_classic_token_for_cloudbuild" {}
 EOF
 }
 

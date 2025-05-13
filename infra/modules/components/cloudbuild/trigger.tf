@@ -1,7 +1,8 @@
 resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
-  project  = var.project_id
-  name     = "terragrunt-on-${var.github_repo_deploy_branch}-push"
-  location = "global"
+  project     = var.project_id
+  name        = "terragrunt-on-${var.github_repo_deploy_branch}-push"
+  location    = var.location
+  description = "Trigger for terragrunt apply on push to ${var.github_repo_deploy_branch} branch"
 
   github {
     owner = var.github_repo_owner

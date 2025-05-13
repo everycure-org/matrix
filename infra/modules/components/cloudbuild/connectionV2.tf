@@ -1,6 +1,7 @@
-resource "google_cloudbuildv2_connection" "github" {
+resource "google_cloudbuildv2_connection" "github_connection" {
   name     = "github-connection"
-  location = "global"
+  location = var.location
+  project  = var.project_id
 
   github_config {
     app_installation_id = var.github_app_installation_id
@@ -8,4 +9,13 @@ resource "google_cloudbuildv2_connection" "github" {
       oauth_token_secret_version = google_secret_manager_secret_version.github_token_version.id
     }
   }
+  depends_on = [google_secret_manager_secret_iam_policy.policy]
+}
+
+resource "google_cloudbuildv2_repository" "my_repository" {
+  project           = var.project_id
+  location          = var.location
+  name              = var.github_repo_name
+  parent_connection = google_cloudbuildv2_connection.github_connection.name
+  remote_uri        = "https://github.com/${var.github_repo_owner}/${var.github_repo_name}.git"
 }
