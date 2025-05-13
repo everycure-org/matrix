@@ -46,15 +46,3 @@ def apply_matrix_transformations(
     """
 
     return _apply_transformations(matrix, transformations)
-
-
-def shuffle_and_limit_matrix(
-    matrix: ps.DataFrame,
-) -> ps.DataFrame:
-    """Function to shuffle and limit the matrix to a subset of rows.
-
-    Args:
-        matrix: Dataframe with matrix scores
-    """
-    logger.info("Shuffling and limiting matrix")
-    return matrix.orderBy(rand()).limit(10).orderBy("rank")

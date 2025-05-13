@@ -16,17 +16,9 @@ def create_pipeline(**kwargs) -> Pipeline:
         pipeline(
             [
                 ArgoNode(
-                    func=nodes.shuffle_and_limit_matrix,
-                    inputs=[
-                        f"matrix_generation.fold_{max_fold}.model_output.sorted_matrix_predictions@spark",
-                    ],
-                    outputs="matrix_transformations.shuffled_matrix@spark",
-                    name="shuffle_and_limit_matrix",
-                ),
-                ArgoNode(
                     func=nodes.apply_matrix_transformations,
                     inputs={
-                        "matrix": "matrix_transformations.shuffled_matrix@spark",
+                        "matrix": f"matrix_generation.fold_{max_fold}.model_output.sorted_matrix_predictions@spark",
                         "transformations": "params:matrix_transformations.transformations",
                     },
                     outputs="matrix_transformations.full_matrix_transformed@spark",
