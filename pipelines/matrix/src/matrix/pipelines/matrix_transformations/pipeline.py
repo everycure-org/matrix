@@ -1,7 +1,6 @@
 from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
-from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
-from matrix.pipelines.modelling.utils import partial_fold
+from matrix.kedro4argo_node import ArgoNode
 
 from . import nodes
 
@@ -15,7 +14,6 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     pipelines = [
         pipeline(
-            # TEMP: this node is just for testing some files locally
             [
                 ArgoNode(
                     func=nodes.shuffle_and_limit_matrix,
@@ -26,12 +24,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="shuffle_and_limit_matrix",
                 ),
                 ArgoNode(
-                    func=nodes.frequent_flyer_transformation,
-                    inputs=[
-                        "matrix_transformations.shuffled_matrix@spark",
-                    ],
+                    func=nodes.apply_matrix_transformations,
+                    inputs={
+                        "matrix": "matrix_transformations.shuffled_matrix@spark",
+                        "transformations": "params:matrix_transformations.transformations",
+                    },
                     outputs="matrix_transformations.full_matrix_transformed@spark",
-                    name="frequent_flyer_transformation",
+                    name="apply_matrix_transformations",
                 ),
             ]
         )

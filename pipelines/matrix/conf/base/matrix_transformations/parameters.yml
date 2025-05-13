@@ -1,0 +1,13 @@
+matrix_transformations:
+  transformations:
+    frequent_flyer:
+      _object: matrix.pipelines.matrix_transformations.transformations.FrequentFlyerTransformation
+      matrix_weight: 0.001
+      drug_weight: 1.0
+      disease_weight: 1.0
+      decay_matrix: 0.05
+      decay_drug: 0.05
+      decay_disease: 0.05
+      score_col: "treat score"
+      output_col: "transformed_score"
+      perform_sort: True
