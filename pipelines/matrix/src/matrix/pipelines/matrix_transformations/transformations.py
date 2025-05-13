@@ -1,17 +1,28 @@
+from abc import ABC, abstractmethod
+
 import pyspark.sql as ps
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
 
-# class Transformation(ABC):
-#     def __init__(self, matrix_df):
-#         self.matrix_df = matrix_df
 
-#     @abstractmethod
-#     def apply(self):
-#         pass
+class Transformation(ABC):
+    def __init__(self, matrix_df):
+        self.matrix_df = matrix_df
+
+    @abstractmethod
+    def apply(self):
+        pass
 
 
-def give_almost_pure_transformation(
+class FrequentFlyerTransformation(Transformation):
+    def __init__(self, matrix_df):
+        super().__init__(matrix_df)
+
+    def apply(self):
+        return frequent_flyer_transformation(self.matrix_df)
+
+
+def frequent_flyer_transformation(
     matrix_df: ps.DataFrame,
     gamma: float = 0.05,
     epsilon: float = 0.001,
