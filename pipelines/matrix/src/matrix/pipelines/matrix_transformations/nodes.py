@@ -2,7 +2,7 @@ import logging
 
 import polars as pl
 import pyspark.sql as ps
-from matrix.pipelines.matrix_transformations.transformations.frequent_flyers import give_almost_pure_transformation
+from matrix.pipelines.matrix_transformations.transformations import FrequentFlyerTransformation
 from pyspark.sql.functions import rand
 
 logger = logging.getLogger(__name__)
@@ -42,16 +42,5 @@ def frequent_flyer_transformation(
 
     print("Frequent flyer transformation")
 
-    # Drop __index_level_0__ column if it exists
-    if "__index_level_0__" in matrix.columns:
-        matrix = matrix.drop("__index_level_0__")
-
     # Apply the transformation
-    return give_almost_pure_transformation(
-        matrix,
-        gamma=0.05,
-        epsilon=0.001,
-        score_col="treat score",
-        output_col="transformed_score",
-        perform_sort=True,
-    )
+    return FrequentFlyerTransformation(matrix_df=matrix).apply()
