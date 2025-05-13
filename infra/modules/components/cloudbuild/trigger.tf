@@ -4,13 +4,13 @@ resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
   location    = var.location
   description = "Trigger for terragrunt apply on push to ${var.github_repo_deploy_branch} branch"
 
-  github {
-    owner = var.github_repo_owner
-    name  = var.github_repo_name
+  repository_event_config {
+    repository = google_cloudbuildv2_repository.my_repository.id
     push {
-      branch = ".*" # This will trigger on any branch.
+      branch = ".*"
     }
   }
+
 
   build {
     step {
@@ -61,12 +61,12 @@ resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
   // The trigger will only run if there is any changes in the respective folder. (e.g. infra/deployments/hub/dev)
   // This is to avoid running the trigger for any changes in the other folders.
   included_files = [
-    "$${_TERRAGRUNT_DIR}/**}"
+    "$${_TERRAGRUNT_DIR}/**"
   ]
 
   substitutions = {
-    _TERRAGRUNT_DIR = "./infra/${var.github_repo_path_to_folder}"
+    _TERRAGRUNT_DIR = "${var.github_repo_path_to_folder}"
   }
 
-  service_account = google_service_account.cloudbuild_sa.email
+  service_account = google_service_account.cloudbuild_sa.id
 }
