@@ -129,6 +129,9 @@ def create(experiment_name):
 @click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
 @click.option("--skip-git-checks", is_flag=True, type=bool, default=False, help="Skip git checks")
 @click.option(
+    "--confirm-release", is_flag=True, type=bool, default=False, help="Confirm that we want to submit a release"
+)
+@click.option(
     "--experiment-name", type=str, help="Optional: specify the MLFlow experiment name to use. Defaults to branch name"
 )
 @click.pass_context
@@ -147,6 +150,7 @@ def run(
     headless: bool,
     environment: str,
     skip_git_checks: bool,
+    confirm_release: bool,
     experiment_name: str,
 ):
     """Run an experiment."""
@@ -183,9 +187,17 @@ def run(
     if not quiet:
         log.setLevel(logging.DEBUG)
 
-    if pipeline in ("data_release", "kg_release") and not skip_git_checks:
-        abort_if_unmet_git_requirements(release_version)
-        abort_if_intermediate_release(release_version)
+    if pipeline in ("data_release", "kg_release"):
+        if not headless and not confirm_release:
+            if not click.confirm(
+                "Manual release submission detected, releases must be submitted via the release pipeline. Are you sure you want to create a manual release?",
+                default=False,
+            ):
+                raise click.Abort()
+
+        if not skip_git_checks:
+            abort_if_unmet_git_requirements(release_version)
+            abort_if_intermediate_release(release_version)
 
     if pipeline not in kedro_pipelines.keys():
         raise ValueError("Pipeline requested for execution not found")
