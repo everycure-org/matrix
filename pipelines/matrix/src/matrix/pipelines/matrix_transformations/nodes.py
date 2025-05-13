@@ -1,46 +1,60 @@
 import logging
+from typing import Any
 
-import polars as pl
 import pyspark.sql as ps
-from matrix.pipelines.matrix_transformations.transformations import FrequentFlyerTransformation
+from matrix.inject import inject_object
 from pyspark.sql.functions import rand
 
 logger = logging.getLogger(__name__)
 
 
-# TODO: Move this to params
-# Call any numbr of transformations
+def _apply_transformations(df: ps.DataFrame, transformations: dict[str, Any]) -> ps.DataFrame:
+    """Apply a series of transformations to a DataFrame.
+
+    This function applies a sequence of transformations to a DataFrame while maintaining
+    logging information about the transformations being applied.
+
+    Args:
+        df: Input DataFrame to transform
+        transformations: Dictionary of transformation instances to apply, where the key is the transformation name
+
+    Returns:
+        Transformed DataFrame
+    """
+    logger.info(f"Applying {len(transformations)} transformations")
+
+    for name, transform_instance in transformations.items():
+        logger.info(f"Applying transformation: {name}")
+        df = transform_instance.apply(df)
+
+    return df
+
+
+@inject_object()
+def apply_matrix_transformations(
+    matrix: ps.DataFrame,
+    transformations: dict[str, Any],
+) -> ps.DataFrame:
+    """Apply configured transformations to the matrix.
+
+    Args:
+        matrix: DataFrame containing matrix data
+        transformations: Dictionary containing transformation configurations
+
+    Returns:
+        Transformed matrix DataFrame
+    """
+
+    return _apply_transformations(matrix, transformations)
+
+
 def shuffle_and_limit_matrix(
     matrix: ps.DataFrame,
 ) -> ps.DataFrame:
-    """Function to transform matrix to reduce the prevalence of frequent flyer drugs and diseases appreaing in top n.
+    """Function to shuffle and limit the matrix to a subset of rows.
 
     Args:
-        matrix: Dataframe with untransformed matrix scores
+        matrix: Dataframe with matrix scores
     """
-
-    print("Shuffle and limit matrix")
-
-    # Drop __index_level_0__ column if it exists
-    if "__index_level_0__" in matrix.columns:
-        matrix = matrix.drop("__index_level_0__")
-
-    # Return first 10 rows as a Spark DataFrame
+    logger.info("Shuffling and limiting matrix")
     return matrix.orderBy(rand()).limit(10).orderBy("rank")
-
-
-# TODO: Move this to params
-# Call any numbr of transformations
-def frequent_flyer_transformation(
-    matrix: ps.DataFrame,
-) -> ps.DataFrame:
-    """Function to transform matrix to reduce the prevalence of frequent flyer drugs and diseases appreaing in top n.
-
-    Args:
-        matrix: Dataframe with untransformed matrix scores
-    """
-
-    print("Frequent flyer transformation")
-
-    # Apply the transformation
-    return FrequentFlyerTransformation(matrix_df=matrix).apply()
