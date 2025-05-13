@@ -188,7 +188,7 @@ def run(
         log.setLevel(logging.DEBUG)
 
     if pipeline in ("data_release", "kg_release"):
-        if not headless or not confirm_release:
+        if not headless and not confirm_release:
             if not click.confirm(
                 "Manual release submission detected, releases must be submitted via the release pipeline. Are you sure you want to create a manual release?",
                 default=False,
