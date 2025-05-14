@@ -16,4 +16,5 @@ inputs = {
   github_branch_to_run_on             = "infra-prod-debug"
   github_classic_token_for_cloudbuild = yamldecode(file("${dirname(find_in_parent_folders("root.hcl"))}/secrets/prod/matrix/github.yaml")).github_classic_token_for_cloudbuild
   github_repo_path_to_folder          = get_path_from_repo_root()
+  gitcrypt_key                        = filebase64("${dirname(find_in_parent_folders("root.hcl"))}/secrets/dev/git-crypt.key")
 }
