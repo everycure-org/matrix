@@ -61,7 +61,7 @@ resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
   // The trigger will only run if there is any changes in the respective folder. (e.g. infra/deployments/hub/dev)
   // This is to avoid running the trigger for any changes in the other folders.
   included_files = [
-    "$${_TERRAGRUNT_DIR}/**"
+    "${var.github_repo_path_to_folder}/**"
   ]
 
   substitutions = {
