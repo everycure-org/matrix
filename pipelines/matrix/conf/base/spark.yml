@@ -3,7 +3,7 @@ spark.scheduler.mode: FAIR
 spark.driver.memory: ${oc.env:SPARK_DRIVER_MEMORY}g
 # only using this due to 
 # https://github.com/fsspec/gcsfs/issues/632
-spark.driver.maxResultSize: 18g
+spark.driver.maxResultSize: 30g
 # only using this due to failures in the past. Default is 3
 spark.task.maxFailures: 5
 
