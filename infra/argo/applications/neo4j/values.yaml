@@ -4,10 +4,10 @@ neo4j: # the name of the helm dependency
   disableLookups: true
   podSpec:
     tolerations:
-      - key: "node-memory-size"
-        operator: "Equal"
-        value: "large"
-        effect: "NoSchedule"
+    - key: "node-memory-size"
+      operator: "Equal"
+      value: "large"
+      effect: "NoSchedule"
 neo4j: # config level
     edition: "enterprise"
     passwordFromSecret: neo4j-password
