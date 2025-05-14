@@ -1,6 +1,3 @@
-import itertools
-import random
-
 import networkx as nx
 import pandas as pd
 from kedro.pipeline import Pipeline, node, pipeline
@@ -12,63 +9,44 @@ from matrix.utils.fabrication import fabricate_datasets
 def _create_pairs(
     drug_list: pd.DataFrame,
     disease_list: pd.DataFrame,
-    num: int,
+    num: int = 100,
     seed: int = 42,
 ) -> pd.DataFrame:
-    """Creates 2 sets of random drug-disease pairs. Ensures no duplicate pairs.
+    """Create 2 sets of random drug-disease pairs. Ensures no duplicate pairs.
 
     Args:
         drug_list: Dataframe containing the list of drugs.
         disease_list: Dataframe containing the list of diseases.
-        num: Size of each set of random pairs.
-        seed: Random seed.
+        num: Size of each set of random pairs. Defaults to 100.
+        seed: Random seed. Defaults to 42.
 
     Returns:
         Two dataframes, each containing 'num' unique drug-disease pairs.
     """
-    random.seed(seed)
+    is_enough_generated = False
 
-    # Convert lists to sets of unique ids
-    drug_ids = list(drug_list["curie"].unique())
-    disease_ids = list(disease_list["category_class"].unique())
+    attempt = 0
 
-    # Check that we have enough pairs
-    if not len(drug_ids) * len(disease_ids) >= 2 * num:
-        raise ValueError("Drug and disease lists are too small to generate the required number of pairs")
+    while not is_enough_generated:
+        # Sample random pairs (we sample twice the required amount in case duplicates are removed)
+        random_drugs = drug_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=seed)
+        random_diseases = disease_list["category_class"].sample(
+            num * 4, replace=True, ignore_index=True, random_state=2 * seed
+        )
 
-    # Subsample the lists to reduce memory usage
-    for entity_list in [drug_ids, disease_ids]:
-        if len(entity_list) > 2 * num:
-            entity_list = random.sample(entity_list, 2 * num)
+        df = pd.DataFrame(
+            data=[[drug, disease, f"{drug}|{disease}"] for drug, disease in zip(random_drugs, random_diseases)],
+            columns=["source", "target", "drug|disease"],
+        )
 
-    # Create pairs and sample without replacement to ensure no duplicates
-    pairs = list(itertools.product(drug_ids, disease_ids))
-    df_sample = pd.DataFrame(random.sample(pairs, 2 * num), columns=["source", "target"])
+        # Remove duplicate pairs
+        df = df.drop_duplicates()
 
-    # Split into positives and negatives
-    return df_sample[:num], df_sample[num:]
+        # Check that we still have enough fabricated pairs
+        is_enough_generated = len(df) >= num or attempt > 100
+        attempt += 1
 
-
-def remove_overlap(disease_list: pd.DataFrame, drug_list: pd.DataFrame):
-    """Function to ensure no overlap between drug and disease lists.
-
-    Due to our generator setup, it's possible our drug and disease sets
-    are not disjoint.
-
-    Args:
-        drug_list: Dataframe containing the list of drugs.
-        disease_list: Dataframe containing the list of diseases.
-
-    Returns:
-        Two dataframes, clean drug and disease lists respectively.
-    """
-    overlap = set(disease_list["category_class"]).intersection(set(drug_list["curie"]))
-    overlap_mask_drug = drug_list["curie"].isin(overlap)
-    overlap_mask_disease = disease_list["category_class"].isin(overlap)
-    drug_list = drug_list[~overlap_mask_drug]
-    disease_list = disease_list[~overlap_mask_disease]
-
-    return {"disease_list": disease_list, "drug_list": drug_list}
+    return df[:num], df[num : 2 * num]
 
 
 def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.DataFrame):
@@ -107,33 +85,22 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create fabricator pipeline."""
     return pipeline(
         [
-            node(
+            ArgoNode(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.rtx_kg2"},
                 outputs={
                     "nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                     "edges": "ingestion.raw.rtx_kg2.edges@pandas",
-                    "disease_list": "fabricator.int.disease_list",
-                    "drug_list": "fabricator.int.drug_list",
+                    "disease_list": "ingestion.raw.disease_list",
+                    "drug_list": "ingestion.raw.drug_list",
                     "pubmed_ids_mapping": "ingestion.raw.rtx_kg2.curie_to_pmids@pandas",
                 },
                 name="fabricate_kg2_datasets",
             ),
-            node(
-                func=remove_overlap,
-                inputs={
-                    "disease_list": "fabricator.int.disease_list",
-                    "drug_list": "fabricator.int.drug_list",
-                },
-                outputs={
-                    "disease_list": "ingestion.raw.disease_list",
-                    "drug_list": "ingestion.raw.drug_list",
-                },
-            ),
-            node(
+            ArgoNode(
                 func=fabricate_datasets,
                 inputs={
-                    "fabrication_params": "params:fabricator.clinical_trials.graph",
+                    "fabrication_params": "params:fabricator.clinical_trials",
                     "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                 },
                 outputs={
@@ -151,7 +118,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_ec_medical_datasets",
             ),
-            node(
+            ArgoNode(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.robokop"},
                 outputs={
@@ -183,7 +150,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "ingestion.raw.drug_list",
                     "ingestion.raw.disease_list",
-                    "params:fabricator.ground_truth.num_rows_per_category",
                 ],
                 outputs=[
                     "ingestion.raw.ground_truth.positives",
