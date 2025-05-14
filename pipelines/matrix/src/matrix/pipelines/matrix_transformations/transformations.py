@@ -81,22 +81,18 @@ class FrequentFlyerTransformation(Transformation):
         # Define windows for ranking
         drug_window = Window.partitionBy("source").orderBy(F.col(self.score_col).desc())
         disease_window = Window.partitionBy("target").orderBy(F.col(self.score_col).desc())
-        matrix_window = Window.orderBy(F.col(self.score_col).desc())
 
-        # Compute ranks
-        matrix_df = matrix_df.withColumn("rank_drug", F.rank().over(drug_window))
-        matrix_df = matrix_df.withColumn("rank_disease", F.rank().over(disease_window))
-        matrix_df = matrix_df.withColumn("rank_matrix", F.rank().over(matrix_window))
-
-        # Compute quantile ranks
-        matrix_df = matrix_df.withColumn("quantile_drug", F.col("rank_drug") / N_drug)
-        matrix_df = matrix_df.withColumn("quantile_disease", F.col("rank_disease") / N_disease)
-        matrix_df = matrix_df.withColumn("quantile_matrix", F.col("rank_matrix") / N_matrix)
+        matrix_df = (
+            matrix_df.withColumn("rank_drug", F.rank().over(drug_window))
+            .withColumn("quantile_drug", F.col("rank_drug") / N_drug)
+            .withColumn("rank_disease", F.rank().over(disease_window))
+            .withColumn("quantile_disease", F.col("rank_disease") / N_disease)
+        )
 
         # Compute transformed score
         matrix_df = matrix_df.withColumn(
             self.output_col,
-            F.pow(F.col("quantile_matrix"), -self.decay_matrix) * self.matrix_weight
+            F.pow(F.col("quantile_rank"), -self.decay_matrix) * self.matrix_weight
             + F.pow(F.col("quantile_drug"), -self.decay_drug) * self.drug_weight
             + F.pow(F.col("quantile_disease"), -self.decay_disease) * self.disease_weight,
         )
