@@ -13,7 +13,7 @@ neo4j: # the name of the helm dependency
         memory: "32Gi"
       limits:
         cpu: "16"
-        memory: "32Gi"
+        memory: "64Gi"
   # configuration for neo4j services
   # FUTURE do not expose as IP
   services:
