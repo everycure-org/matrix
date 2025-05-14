@@ -216,11 +216,12 @@ ingestion.raw.drugmech.edges@pandas:
 ingestion.raw.disease_list:
   <<: [*_layer_raw]
   type: matrix.datasets.github.GitHubReleaseCSVDataset
-  repository_url: https://github.com/everycure-org/matrix-disease-list
+  repository_url: https://github.com/everycure-org/core-entities
   release_name: ${globals:data_sources.disease_list.version}
-  release_asset_name: matrix-disease-list-unfiltered-processed.tsv
+  release_asset_name: ec-disease-list.tsv
   fs_args:
     Accept: application/octet-stream
+    Authorization: token ${globals:gh_token}
   load_args:
     sep: "\t"
 
@@ -250,9 +251,9 @@ ingestion.raw.disease_list.nodes@spark:
 ingestion.raw.drug_list:
   <<: [*_layer_raw]
   type: matrix.datasets.github.GitHubReleaseCSVDataset
-  repository_url: https://github.com/everycure-org/matrix-drug-list
+  repository_url: https://github.com/everycure-org/core-entities
   release_name: ${globals:data_sources.drug_list.version}
-  release_asset_name: drugList.tsv
+  release_asset_name: ec-drug-list.tsv
   fs_args:
     Accept: application/octet-stream
     Authorization: token ${globals:gh_token}
