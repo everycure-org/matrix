@@ -49,3 +49,11 @@ ingestion.raw.drugmech.edges@spark:
   file_format: json
   load_args:
     multiline: true
+
+ingestion.raw.off_label.nodes@pandas:
+  type:  pandas.CSVDataset
+  filepath: ${globals:paths.raw}/off_label_data/translator/${globals:data_sources.off_label.version}/nodes_raw.tsv
+
+ingestion.raw.off_label.nodes@spark:
+  type:  pandas.CSVDataset
+  filepath: ${globals:paths.raw}/off_label_data/translator/${globals:data_sources.off_label.version}/nodes_raw.tsv
