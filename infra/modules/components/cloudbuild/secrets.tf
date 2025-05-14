@@ -17,3 +17,22 @@ resource "google_secret_manager_secret_iam_member" "github_token_reader" {
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.cloudbuild_sa.email}"
 }
+
+resource "google_secret_manager_secret" "gitcrypt_key" {
+  secret_id = "gitcrypt-key-cloudbuild"
+  project   = var.project_id
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "gitcrypt_key_version" {
+  secret         = google_secret_manager_secret.gitcrypt_key.id
+  secret_data_wo = var.gitcrypt_key
+}
+
+resource "google_secret_manager_secret_iam_member" "gitcrypt_key_reader" {
+  secret_id = google_secret_manager_secret.gitcrypt_key.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.cloudbuild_sa.email}"
+}

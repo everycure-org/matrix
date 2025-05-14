@@ -36,3 +36,8 @@ variable "github_repo_path_to_folder" {
 variable "location" {
   default = "us-central1"
 }
+
+variable "gitcrypt_key" {
+  description = "The gitcrypt key used to unlock the secrets repository."
+  type        = string
+}
