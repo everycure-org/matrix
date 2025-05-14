@@ -20,6 +20,8 @@ neo4j: # the name of the helm dependency
       limits:
         cpu: "16"
         memory: "64Gi"
+  # configuration for neo4j services
+  # FUTURE do not expose as IP
   services:
     neo4j:
       enabled: true
