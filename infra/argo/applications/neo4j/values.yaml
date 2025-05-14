@@ -4,6 +4,12 @@ neo4j: # the name of the helm dependency
   disableLookups: true
   neo4j: # config level
     edition: "enterprise"
+    podSpec:
+      tolerations:
+        - key: "node-memory-size"
+          operator: "Equal"
+          value: "large"
+          effect: "NoSchedule"
     passwordFromSecret: neo4j-password
     acceptLicenseAgreement: "yes"
     name: neo4j
@@ -14,11 +20,6 @@ neo4j: # the name of the helm dependency
       limits:
         cpu: "16"
         memory: "64Gi"
-    tolerations:
-      - key: "node-memory-size"
-        operator: "Equal"
-        value: "large"
-        effect: "NoSchedule"
   services:
     neo4j:
       enabled: true
