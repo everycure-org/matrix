@@ -330,6 +330,50 @@ fabricator.clinical_trials:
           resize: True
           seed: 50004
 
+fabricator.off_label:
+  graph:
+    nodes:
+      num_rows: 50
+      columns:
+        curie:
+          type: copy_column
+          source_column: rtx_nodes.id
+          sample:
+            num_rows: "@nodes.num_rows"
+            seed: 40589
+        name:
+          type: copy_column
+          source_column: rtx_nodes.name
+          sample:
+            num_rows: "@nodes.num_rows"
+            seed: 40589
+
+    edges:
+      num_rows: 10
+      columns:
+        curie_drug:
+          type: copy_column
+          source_column: nodes.curie
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 40589
+        drug_name:
+          type: copy_column
+          source_column: nodes.name
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 40589
+        curie_disease:
+          type: copy_column
+          source_column: nodes.curie
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 30589
+        relation:
+          type: generate_values
+          sample_values:
+            - off-label use
+
 fabricator.robokop:
   nodes:
     num_rows: 500
