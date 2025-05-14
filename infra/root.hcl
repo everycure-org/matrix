@@ -59,6 +59,7 @@ variable "github_branch_to_run_on" {}
 variable "infra_bucket_name" {}
 variable "github_classic_token_for_cloudbuild" {}
 variable "github_repo_path_to_folder" {}
+variable "infra_bucket_name" {}
 EOF
 }
 
