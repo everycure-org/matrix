@@ -42,11 +42,11 @@ data_sources:
   ec_clinical_trials:
     version: 20230309 # NOTE: Here 0309 is a period of time (here Mar to Sep 2023)
   drug_list:
-    # check releases here: https://github.com/everycure-org/matrix-drug-list/releases
-    version: "Release v2.0.0"
+    # check releases here: https://github.com/everycure-org/core-entities/releases
+    version: v0.1.0
   disease_list:
-    # check releases here: https://github.com/everycure-org/matrix-disease-list/releases
-    version: "February 2025 release 5"
+    # check releases here: https://github.com/everycure-org/core-entities/releases
+    version: v0.1.0
   gt:
     version: *_rtx_kg_version # NOTE: This is the version of the GT dataset which was developed for rtx-kg2 as a part of KGML-xDTD pipeline
   drugmech:
