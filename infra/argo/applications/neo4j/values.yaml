@@ -14,19 +14,17 @@ neo4j: # the name of the helm dependency
       limits:
         cpu: "16"
         memory: "64Gi"
-  # configuration for neo4j services
-  # FUTURE do not expose as IP
+    tolerations:
+      - key: "node-memory-size"
+        operator: "Equal"
+        value: "large"
+        effect: "NoSchedule"
   services:
     neo4j:
       enabled: true
       annotations:
         external-dns.alpha.kubernetes.io/hostname: dummy-replaced-by-helm-override-from-app-of-apps
         external-dns.alpha.kubernetes.io/ttl: "300"
-      tolerations:
-        - key: "node-memory-size"
-          operator: "Equal"
-          value: "large"
-          effect: "NoSchedule"
       spec:
         type: LoadBalancer
       ports:
