@@ -60,7 +60,7 @@ def create_mlflow_experiment(experiment_name: str) -> str:
                 f"❌ Error: Experiment '{experiment_name}' already exists at {mlflow.get_tracking_uri()}/#/experiments/{existing_exp.experiment_id}"
             )
 
-    artifact_location = f"gs://{os.environ['GCP_BUCKET']}/kedro/mlflow/{experiment_name}"
+    artifact_location = f"gs://{os.environ['RUNTIME_GCP_BUCKET']}/kedro/mlflow/{experiment_name}"
     console.print(f"Creating new experiment: '{experiment_name}'")
     experiment_id = mlflow.create_experiment(name=experiment_name, artifact_location=artifact_location)
     console.print(f"✅ Experiment '{experiment_name}' created with ID {experiment_id}.")

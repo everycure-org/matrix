@@ -1,0 +1,44 @@
+_bigquery_ds: &_bigquery_ds
+  type: matrix.datasets.gcp.SparkDatasetWithBQExternalTable
+  project_id: ${oc.env:RUNTIME_GCP_PROJECT_ID}
+  dataset: release_${globals:versions.release}
+  file_format: parquet
+  save_args:
+    mode: overwrite
+    labels:
+      git_sha: ${globals:git_sha}
+
+# -------------------------------------------------------------------------
+# Datasets
+# -------------------------------------------------------------------------
+
+# Overwriting the base catalog to use the bigquery datasets
+
+
+# Removed nodes after initial filter step
+filtering.prm.removed_nodes_initial:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.filtering}/prm/removed/nodes_initial
+  table: nodes_removed
+
+# Removed edges due to filtering or missing nodes
+filtering.prm.removed_edges:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.filtering}/prm/removed/edges
+  table: edges_removed
+
+# Filtered PRM nodes/edges written to BigQuery
+filtering.prm.filtered_nodes:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.filtering}/prm/filtered/nodes
+  table: nodes_filtered
+
+filtering.prm.filtered_edges:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.filtering}/prm/filtered/edges
+  table: edges_filtered
+
+filtering.prm.removed_nodes_final:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.filtering}/prm/removed/nodes_final
+  table: nodes_removed_final
