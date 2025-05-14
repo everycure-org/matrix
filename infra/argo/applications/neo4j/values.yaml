@@ -22,6 +22,11 @@ neo4j: # the name of the helm dependency
       annotations:
         external-dns.alpha.kubernetes.io/hostname: dummy-replaced-by-helm-override-from-app-of-apps
         external-dns.alpha.kubernetes.io/ttl: "300"
+      tolerations:
+        - key: "node-memory-size"
+          operator: "Equal"
+          value: "large"
+          effect: "NoSchedule"
       spec:
         type: LoadBalancer
       ports:
