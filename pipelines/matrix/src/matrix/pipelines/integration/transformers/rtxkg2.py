@@ -10,7 +10,7 @@ from .transformer import GraphTransformer
 logger = logging.getLogger(__name__)
 
 
-RTX_SEPARATOR = "\u01c2"
+RTX_SEPARATOR = r"\|"
 
 
 class RTXTransformer(GraphTransformer):
@@ -27,27 +27,21 @@ class RTXTransformer(GraphTransformer):
         return (
             nodes_df
             .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
-            .withColumn("labels",                            f.split(f.col(":LABEL"), RTX_SEPARATOR))
-            .withColumn("all_categories",                    f.split(f.col("all_categories:string[]"), RTX_SEPARATOR))
-            .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies:string[]"), RTX_SEPARATOR))
-            .withColumn("publications",                      f.split(f.col("publications:string[]"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
+            .withColumn("labels",                            f.lit(None).cast(T.ArrayType(T.StringType()))) # TODO: replace this with _LABEL once updated rtx-kg2 is available
+            .withColumn("all_categories",                    f.split(f.col("all_categories"), RTX_SEPARATOR))
+            .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies"), RTX_SEPARATOR))
+            .withColumn("publications",                      f.split(f.col("publications"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
             .withColumn("international_resource_identifier", f.col("iri"))
-            .withColumnRenamed("id:ID", "id")
         )
         # fmt: on
 
     def transform_edges(
-        self,
-        edges_df: ps.DataFrame,
-        curie_to_pmids: ps.DataFrame,
-        semmed_filters: Dict[str, str],
-        **kwargs,
+        self, edges_df: ps.DataFrame, curie_to_pmids: ps.DataFrame, semmed_filters: Dict[str, str], **kwargs
     ) -> ps.DataFrame:
         """Transform RTX KG2 edges to our target schema.
 
         Args:
             edges_df: Edges DataFrame.
-            pubmed_mapping: pubmed mapping
         Returns:
             Transformed DataFrame.
         """
@@ -55,15 +49,17 @@ class RTXTransformer(GraphTransformer):
         # fmt: off
         return (
             edges_df
-            .withColumn("aggregator_knowledge_source",   f.split(f.col("primary_knowledge_source"), RTX_SEPARATOR))
-            .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
-            .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
-            .withColumn("primary_knowledge_source",      f.col("primary_knowledge_source"))
+            .withColumn("agent_type",                    f.lit(None).cast(T.StringType()))
+            .withColumn("aggregator_knowledge_source", f.split(f.col("aggregator_knowledge_source"), RTX_SEPARATOR)) #RTX KG2 2.10 has a column for aggregator knowledge source
+            .withColumn("publications",                  f.split(f.col("publications"), RTX_SEPARATOR)) # RTX KG2 2.10 no longer has type annotation on publication column
+            .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
             .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+            .withColumn("num_references",                f.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
+            .withColumn("num_sentences",                 f.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
             .transform(filter_semmed, curie_to_pmids, **semmed_filters)
         )
         # fmt: on

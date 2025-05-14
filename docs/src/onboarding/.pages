@@ -4,6 +4,7 @@ nav:
     - kedro.md
     - local-setup.md
     - environments_overview.md
+    - gcp_environments.md
     - kedro_extensions.md
     - walkthroughs
     - contribute

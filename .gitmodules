@@ -1,0 +1,4 @@
+[submodule "infra/secrets"]
+	path = infra/secrets
+	url = https://github.com/everycure-org/secrets/
+	branch = main
