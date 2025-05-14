@@ -363,6 +363,12 @@ fabricator.off_label:
           sample:
             num_rows: "@edges.num_rows"
             seed: 40589
+        disease_name:
+          type: copy_column
+          source_column: nodes.name
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 30589
         curie_disease:
           type: copy_column
           source_column: nodes.curie
