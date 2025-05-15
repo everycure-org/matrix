@@ -12,12 +12,6 @@ resource "google_secret_manager_secret_version" "github_token_version" {
   secret_data_wo = var.github_repo_token
 }
 
-resource "google_secret_manager_secret_iam_member" "github_token_reader" {
-  secret_id = google_secret_manager_secret.github_token.id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.cloudbuild_sa.email}"
-}
-
 resource "google_secret_manager_secret" "gitcrypt_key" {
   secret_id = "gitcrypt-key-cloudbuild"
   project   = var.project_id
@@ -29,10 +23,7 @@ resource "google_secret_manager_secret" "gitcrypt_key" {
 resource "google_secret_manager_secret_version" "gitcrypt_key_version" {
   secret         = google_secret_manager_secret.gitcrypt_key.id
   secret_data_wo = var.gitcrypt_key
-}
-
-resource "google_secret_manager_secret_iam_member" "gitcrypt_key_reader" {
-  secret_id = google_secret_manager_secret.gitcrypt_key.id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.cloudbuild_sa.email}"
+  // The gitcrypt key is base64 encoded, and we store it as a base64 string in the secret manager.
+  // This is a workaround for the fact that the secret manager does not support binary data.
+  is_secret_data_base64 = false
 }

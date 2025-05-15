@@ -12,7 +12,7 @@ resource "google_cloudbuildv2_connection" "github_connection" {
   depends_on = [google_secret_manager_secret_iam_policy.policy]
 }
 
-resource "google_cloudbuildv2_repository" "my_repository" {
+resource "google_cloudbuildv2_repository" "matrix_repo" {
   project           = var.project_id
   location          = var.location
   name              = var.github_repo_name
