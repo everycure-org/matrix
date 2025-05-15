@@ -4,6 +4,6 @@ _spark_parquet_ds: &_spark_parquet
   save_args:
     mode: overwrite
 
-matrix_transformations.full_matrix_transformed@spark:
+"matrix_transformations.fold_{fold}.transformed_matrix@spark":
   <<: *_spark_parquet
-  filepath: ${globals:paths.matrix_transformations}/full_matrix_transformed
+  filepath: ${globals:paths.matrix_transformations}/fold_{fold}/transformed_matrix
