@@ -1,4 +1,5 @@
 locals {
+  matrix_all_group          = "group:matrix-all@everycure.org"
   internal_data_science     = "group:data-science@everycure.org"
   external_subcon_standard  = "group:ext.subcontractors@everycure.org"
   external_subcon_embiology = "group:ext.subcontractors@everycure.org"
@@ -36,9 +37,9 @@ module "project_iam_bindings" {
       title       = "external_subcons_gcs_except_embiology"
       description = "Allow standard contractors to view GCS objects, excluding the embiology folder."
       expression  = <<-EOT
-        resource.name.startsWith("projects/_/buckets/${local.storage_bucket_name}/objects/") &&
-        !resource.name.startsWith("projects/_/buckets/${local.storage_bucket_name}/objects/${local.embiology_path_processed}") &&
-        !resource.name.startsWith("projects/_/buckets/${local.storage_bucket_name}/objects/${local.embiology_path_raw}")
+        resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/") &&
+        !resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/${local.embiology_path_processed}") &&
+        !resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/${local.embiology_path_raw}")
       EOT
       members     = [local.external_subcon_standard]
     },
@@ -47,10 +48,10 @@ module "project_iam_bindings" {
       title       = "external_subcons_gcs_access_embiology"
       description = "Allow specific contractors to view GCS objects only in the embiology folder."
       expression  = <<-EOT
-        resource.name.startsWith("projects/_/buckets/${local.storage_bucket_name}/objects/") &&
+        resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/") &&
         (
-          resource.name.startsWith("projects/_/buckets/${local.storage_bucket_name}/objects/${local.embiology_path_processed}") ||
-          resource.name.startsWith("projects/_/buckets/${local.storage_bucket_name}/objects/${local.embiology_path_raw}")
+          resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/${local.embiology_path_processed}") ||
+          resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/${local.embiology_path_raw}")
         )
       EOT
       members     = [local.external_subcon_embiology]
