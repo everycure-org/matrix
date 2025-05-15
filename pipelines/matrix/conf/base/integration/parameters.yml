@@ -41,7 +41,7 @@ integration:
     ground_truth:
       name: ground_truth
       transformer:
-        _object: matrix.pipelines.integration.transformers.ground_truth.GroundTruthTransformer
+        _object: matrix.pipelines.integration.transformers.ground_truth.KGMLGroundTruthTransformer
     off_label:
       name: off_label
       transformer:
