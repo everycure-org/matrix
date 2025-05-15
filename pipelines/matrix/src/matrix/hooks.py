@@ -408,3 +408,15 @@ class ReleaseInfoHooks:
                 self.upload_to_storage(release_info)
             except KeyError:
                 logger.warning("Could not upload release info after running Kedro node.", exc_info=True)
+
+
+class NodeNameEnv:
+    VAR = "KEDRO_NODE_NAME"
+
+    @hook_impl
+    def before_node_run(self, node, *_):
+        os.environ[self.VAR] = node.name
+
+    @hook_impl
+    def after_node_run(self, node, *_):
+        os.environ.pop(self.VAR, None)

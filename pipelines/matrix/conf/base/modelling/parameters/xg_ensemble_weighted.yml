@@ -11,26 +11,46 @@ modelling.xg_ensemble_weighted:
       disease_flags:
         - is_disease
 
-    weighting:
-      _object: matrix.pipelines.modelling.transformers.WeightingTransformer
-      head_col: "source"
-      strategy: "auto_cv" # or inverse / shomer / none
-      eta: 40
-      mix_k: 5
-      mix_beta: 1.0
-      eps: 1.0e-6
-      w_min: 1.0e-3
-      w_max: 20.0
+    transformers:
+      weighting:
+        features:
+          - source
+        transformer:
+          _object: matrix.pipelines.modelling.transformers.WeightingTransformer
+          head_col: source
+          # inverse / shomer / auto_cv
+          strategy: auto_cv
+          enabled: true
+          eta: 40
+          mix_k: 5
+          mix_beta: 1.0
+          eps: 1.0e-6
+          w_min: 1.0e-3
+          w_max: 20.0
+          keep_original: true
+          plot: true
+      flat_source_embedding:
+        transformer:
+          _object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
+          prefix: source_
+        features:
+          - source_embedding # becomes n columns, named source_0, source_1, etc
+      flat_target_embedding:
+        transformer:
+          _object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
+          prefix: target_
+        features:
+          - target_embedding # becomes n columns, named target_0, target_1, etc
 
     model_tuning_args:
       tuner:
         _object: matrix.pipelines.modelling.tuning.GaussianSearch
         estimator:
           _object: matrix.pipelines.modelling.model.XGBClassifierWeighted
-          n_jobs: 16
+          n_jobs: 32
           random_state: ${globals:random_state}
           tree_method: hist
-          device: cuda
+          device: cpu
         n_calls: 20
         dimensions:
           - _object: skopt.space.Real

@@ -1,7 +1,7 @@
 import itertools
 import json
 import logging
-from typing import Any, Callable, Iterable, Optional, Union
+from typing import Any, Callable, Iterable, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -19,7 +19,6 @@ from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
 from .model import ModelWrapper
 from .model_selection import DiseaseAreaSplit
-from .transformers import WeightingTransformer
 
 logger = logging.getLogger(__name__)
 
@@ -401,17 +400,18 @@ def tune_parameters(
     """
     mask = data["split"].eq("TRAIN")
 
+    sample_weight = data.loc[mask, "weight"].values.ravel() if "weight" in data.columns else None
+    data.drop(columns=["weight"], inplace=True, errors="ignore")
     X_train = data.loc[mask, features]
     y_train = data.loc[mask, target_col_name]
 
-    # Fit tuner
-    tuner.fit(X_train.values, y_train.values)
+    tuner.fit(X_train.values, y_train.values, sample_weight=sample_weight)
 
     estimator = getattr(tuner, "estimator", None)
     if estimator is None:
         raise ValueError("Tuner must have 'estimator' attribute")
 
-    return json.loads(
+    best_params = json.loads(
         json.dumps(
             {
                 OBJECT_KW: f"{type(estimator).__module__}.{type(estimator).__name__}",
@@ -419,38 +419,11 @@ def tune_parameters(
             },
             default=int,
         )
-    ), tuner.convergence_plot if hasattr(tuner, "convergence_plot") else plt.figure()
+    )
 
+    convergence_plot = tuner.convergence_plot if hasattr(tuner, "convergence_plot") else plt.figure()
 
-# @unpack_params()
-# @inject_object()
-# @make_list_regexable(source_df="data", make_regexable_kwarg="features")
-# def train_model(
-#     data: pd.DataFrame,
-#     estimator: BaseEstimator,
-#     features: list[str],
-#     target_col_name: str,
-# ) -> dict:
-#     """Function to train model on the given data.
-
-#     Args:
-#         data: Data to train on.
-#         estimator: sklearn compatible estimator.
-#         features: list of features, may be regex specified.
-#         target_col_name: Target column name.
-
-#     Returns:
-#         Trained model.
-#     """
-#     mask = data["split"].eq("TRAIN")
-
-#     X_train = data.loc[mask, features]
-#     y_train = data.loc[mask, target_col_name]
-
-#     logger.info(f"Starting model: {estimator} training...")
-#     estimator_fit = estimator.fit(X_train.values, y_train.values)
-#     logger.info("Model training completed...")
-#     return estimator_fit
+    return best_params, convergence_plot
 
 
 @unpack_params()
@@ -461,26 +434,26 @@ def train_model(
     estimator: BaseEstimator,
     features: list[str],
     target_col_name: str,
-    weighting: WeightingTransformer | None = None,
 ) -> dict:
-    """Fit the final classifier on one fold (TRAIN split only)."""
+    """Function to train model on the given data.
 
-    mask = data["split"].eq("TRAIN")  # rows for *this* fold only
+    Args:
+        data: Data to train on.
+        estimator: sklearn compatible estimator.
+        features: list of features, may be regex specified.
+        target_col_name: Target column name.
+
+    Returns:
+        Trained model.
+    """
+    mask = data["split"].eq("TRAIN")
+
     X_train = data.loc[mask, features]
     y_train = data.loc[mask, target_col_name]
 
-    # ── compute per‑row sample weights ────────────────────────────────
-    sample_weight = None
-    if weighting is not None:  # allow weighting to be absent
-        sample_weight = weighting.transform(data.loc[mask])
-
-    logger.info(f"Training model ({type(estimator).__name__}) ...")
-    estimator_fit = estimator.fit(
-        X_train.values,
-        y_train.values,
-        sample_weight=sample_weight,  # XGBoost ignores None
-    )
-    logger.info("Model training completed.")
+    logger.info(f"Starting model: {estimator} training...")
+    estimator_fit = estimator.fit(X_train.values, y_train.values)
+    logger.info("Model training completed...")
     return estimator_fit
 
 
