@@ -4,7 +4,7 @@ disable_existing_loggers: True
 # formatters:
 #   simple:
 #     format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-  
+
 root:
   # by default only show warning level and above
   level: WARNING

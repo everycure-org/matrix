@@ -50,7 +50,6 @@ def _create_model_shard_pipeline(model_name: str, shard: int, fold: Union[str, i
                     f"modelling.{shard}.fold_{fold}.models.model_params",
                     f"params:modelling.{model_name}.model_options.model_tuning_args.features",
                     f"params:modelling.{model_name}.model_options.model_tuning_args.target_col_name",
-                    f"params:modelling.{model_name}.model_options.weighting",
                 ],
                 outputs=f"modelling.{shard}.fold_{fold}.models.model",
                 name=f"train_{shard}_model_fold_{fold}",
