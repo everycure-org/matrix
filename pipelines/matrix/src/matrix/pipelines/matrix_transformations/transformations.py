@@ -8,7 +8,7 @@ from pyspark.sql.window import Window
 logger = logging.getLogger(__name__)
 
 
-class Transformation(ABC):
+class MatrixTransformation(ABC):
     """
     Base class for all matrix transformations in the pipeline.
     """
@@ -26,7 +26,7 @@ class Transformation(ABC):
         pass
 
 
-class FrequentFlyerTransformation(Transformation):
+class RankBasedFrequentFlyerTransformation(MatrixTransformation):
     def __init__(
         self,
         matrix_weight: float = 0.001,
@@ -36,7 +36,6 @@ class FrequentFlyerTransformation(Transformation):
         decay_drug: float = 0.05,
         decay_disease: float = 0.05,
         score_col: str = "treat score",
-        output_col: str = "transformed_score",
         perform_sort: bool = True,
     ):
         """Initialize the frequent flyer transformation.
@@ -49,7 +48,6 @@ class FrequentFlyerTransformation(Transformation):
             decay_drug: The negative power applied to the drug-specific quantile
             decay_disease: The negative power applied to the disease-specific quantile
             score_col: Column in the input dataframe containing the treat score
-            output_col: Name of the column in the output dataframe
             perform_sort: Whether to sort the output dataframe by the transformed score
         """
         self.matrix_weight = matrix_weight
@@ -59,7 +57,6 @@ class FrequentFlyerTransformation(Transformation):
         self.decay_drug = decay_drug
         self.decay_disease = decay_disease
         self.score_col = score_col
-        self.output_col = output_col
         self.perform_sort = perform_sort
 
     def apply(self, matrix_df: ps.DataFrame) -> ps.DataFrame:
@@ -90,8 +87,8 @@ class FrequentFlyerTransformation(Transformation):
         )
 
         # Compute transformed score
-        matrix_df = matrix_df.withColumn(
-            self.output_col,
+        matrix_df = matrix_df.withColumn(f"untransformed_{self.score_col}", F.col(self.score_col)).withColumn(
+            self.score_col,
             F.pow(F.col("quantile_rank"), -self.decay_matrix) * self.matrix_weight
             + F.pow(F.col("quantile_drug"), -self.decay_drug) * self.drug_weight
             + F.pow(F.col("quantile_disease"), -self.decay_disease) * self.disease_weight,
@@ -99,6 +96,46 @@ class FrequentFlyerTransformation(Transformation):
 
         # Sort if requested
         if self.perform_sort:
-            matrix_df = matrix_df.orderBy(F.col(self.output_col).desc())
+            matrix_df = matrix_df.orderBy(F.col(self.score_col).desc())
 
         return matrix_df
+
+
+class AlmostPureRankBasedFrequentFlyerTransformation(MatrixTransformation):
+    def __init__(
+        self,
+        decay: float,
+        score_col: str = "treat score",
+        perform_sort: bool = True,
+    ):
+        """Initialize the frequent flyer transformation.
+
+        Args:
+            decay: The negative power applied to the all component scores
+            score_col: Column in the input dataframe containing the treat score
+            perform_sort: Whether to sort the output dataframe by the transformed score
+        """
+        self.decay = decay
+        self.score_col = score_col
+        self.perform_sort = perform_sort
+
+    def apply(self, matrix_df: ps.DataFrame) -> ps.DataFrame:
+        """Apply the frequent flyer transformation to the matrix.
+
+        Args:
+            matrix_df: Input DataFrame to transform
+
+        Returns:
+            Transformed DataFrame
+        """
+
+        return RankBasedFrequentFlyerTransformation(
+            matrix_weight=0.001,
+            drug_weight=1.0,
+            disease_weight=1.0,
+            decay_matrix=self.decay,
+            decay_drug=self.decay,
+            decay_disease=self.decay,
+            score_col=self.score_col,
+            perform_sort=self.perform_sort,
+        ).apply(matrix_df)
