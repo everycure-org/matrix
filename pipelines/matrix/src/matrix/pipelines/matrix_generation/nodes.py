@@ -18,6 +18,7 @@ from matrix.pipelines.modelling.nodes import apply_transformers
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark.sql import Row
 from pyspark.sql.types import ArrayType, BooleanType, FloatType, StringType
+from pyspark.sql.window import Window
 from sklearn.impute._base import _BaseImputer
 from tqdm import tqdm
 
@@ -226,12 +227,15 @@ def make_predictions_and_sort(
         for row in result_df.to_dict("records"):
             yield Row(**row)
 
+    # TODO: experiment with Spark vectorized UDFs instead of using the RDD API, it should provide better performance
     data = data.rdd.mapPartitionsWithIndex(predict_partition).toDF()
-    data = data.toPandas()
-    sorted_data = data.sort_values(by=treat_score_col_name, ascending=False)
-    # Add rank and quantile rank columns
-    sorted_data["rank"] = range(1, len(sorted_data) + 1)
-    sorted_data["quantile_rank"] = sorted_data["rank"] / len(sorted_data)
+    # Sort by treat score in descending order
+    sorted_data = data.orderBy(F.col(treat_score_col_name).desc())
+    # Add rank and quantile rank columns using window functions
+    window_spec = Window.orderBy(F.col(treat_score_col_name).desc())
+    sorted_data = sorted_data.withColumn("rank", F.row_number().over(window_spec))
+    total_rows = sorted_data.count()
+    sorted_data = sorted_data.withColumn("quantile_rank", F.col("rank") / F.lit(total_rows))
     return sorted_data
 
 

@@ -1,6 +1,6 @@
 run_name: sample-run
 versions:
-  release: ${oc.env:RELEASE_VERSION,v0.3.2}
+  release: ${oc.env:RELEASE_VERSION,v0.6.3}
 
 runtime_gcs_bucket: gs://${oc.env:RUNTIME_GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
 

@@ -263,10 +263,11 @@ def test_make_predictions_and_sort(sample_graph_in_spark, sample_matrix_data_in_
         unknown_score_col_name="unknown_score",
     )
     assert "score" in result.columns
-    assert isinstance(result, pd.DataFrame)
-    assert len(result) == 4
-    assert result["score"].is_monotonic_decreasing
-    assert result["rank"].is_monotonic_increasing
+    assert isinstance(result, ps.DataFrame)
+    result_pandas = result.toPandas()
+    assert len(result_pandas) == 4
+    assert result_pandas["score"].is_monotonic_decreasing
+    assert result_pandas["rank"].is_monotonic_increasing
 
 
 @pytest.fixture
