@@ -22,8 +22,6 @@ class OffLabelTransformer(Transformer):
         return (
             edges_df.withColumnRenamed("curie_drug", "subject")
             .withColumnRenamed("curie_disease", "object")
-            .withColumn("source", f.col("subject"))
-            .withColumn("target", f.col("object"))
             .withColumn("y", f.lit(1))  # all pairs are positive
             .withColumn("predicate", f.lit("off_label"))
         )
