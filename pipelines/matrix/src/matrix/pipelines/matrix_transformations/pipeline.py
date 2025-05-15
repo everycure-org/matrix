@@ -8,24 +8,24 @@ from . import nodes
 def create_pipeline(**kwargs) -> Pipeline:
     """Create matrix transformations pipeline."""
 
-    # Is this the correct way to get the max fold?
-    # Long term - sort out how to store fold data and full matrix data reproducibly regadless of number of folds
-    max_fold = settings.DYNAMIC_PIPELINES_MAPPING().get("cross_validation")["n_cross_val_folds"]
+    n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING().get("cross_validation")["n_cross_val_folds"]
 
-    pipelines = [
-        pipeline(
-            [
-                ArgoNode(
-                    func=nodes.apply_matrix_transformations,
-                    inputs={
-                        "matrix": f"matrix_generation.fold_{max_fold}.model_output.sorted_matrix_predictions@spark",
-                        "transformations": "params:matrix_transformations.transformations",
-                    },
-                    outputs="matrix_transformations.full_matrix_transformed@spark",
-                    name="apply_matrix_transformations",
-                ),
-            ]
+    pipelines = []
+    for fold in range(n_cross_val_folds + 1):  # NOTE: final fold is full training data
+        pipelines.append(
+            pipeline(
+                [
+                    ArgoNode(
+                        func=nodes.apply_matrix_transformations,
+                        inputs={
+                            "matrix": f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark",
+                            "transformations": "params:matrix_transformations.transformations",
+                        },
+                        outputs=f"matrix_transformations.fold_{fold}.transformed_matrix@spark",
+                        name=f"apply_matrix_transformations_fold_{fold}",
+                    ),
+                ]
+            )
         )
-    ]
 
     return sum(pipelines)
