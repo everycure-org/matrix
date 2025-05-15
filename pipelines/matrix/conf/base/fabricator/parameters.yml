@@ -1,3 +1,6 @@
+fabricator.ground_truth:
+  num_rows_per_category: 100
+
 fabricator.rtx_kg2:
   nodes:
     num_rows: 500
@@ -74,7 +77,7 @@ fabricator.rtx_kg2:
         freq: M
 
   edges:
-    num_rows: 2000
+    num_rows: 5000
     columns:
       subject:
         type: copy_column
@@ -150,7 +153,7 @@ fabricator.rtx_kg2:
           - 5059595
 
   drug_list:
-    num_rows: 20
+    num_rows: 100
     columns:
       curie:
         type: copy_column
@@ -192,7 +195,7 @@ fabricator.rtx_kg2:
           - AVAILABLE
 
   disease_list:
-    num_rows: 30
+    num_rows: 100
     columns:
       category_class:
         type: copy_column
@@ -240,7 +243,7 @@ fabricator.rtx_kg2:
         sample_values:
           - True
           - False
-        
+
 fabricator.clinical_trials:
   pos_cols:
     - significantly_better
