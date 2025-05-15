@@ -4,6 +4,6 @@ _spark_json: &_spark_json
   save_args:
     mode: overwrite
 
-"matrix_transformations.fold_{fold}.transformed_matrix@spark":
+matrix_transformations.fold_{fold}.transformed_matrix@spark:
   <<: *_spark_json
   filepath: ${globals:paths.matrix_transformations}/fold_{fold}/transformed_matrix

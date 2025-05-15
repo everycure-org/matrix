@@ -94,9 +94,15 @@ class RankBasedFrequentFlyerTransformation(MatrixTransformation):
             + F.pow(F.col("quantile_disease"), -self.decay_disease) * self.disease_weight,
         )
 
+        # Recalculate rank and quantile_rank based on the new score
+        score_window = Window.orderBy(F.col(self.score_col).desc())
+        matrix_df = matrix_df.withColumn("rank", F.rank().over(score_window)).withColumn(
+            "quantile_rank", F.col("rank") / N_matrix
+        )
+
         # Sort if requested
         if self.perform_sort:
-            matrix_df = matrix_df.orderBy(F.col(self.score_col).desc())
+            matrix_df = matrix_df.orderBy(F.col("rank").desc())
 
         return matrix_df
 
