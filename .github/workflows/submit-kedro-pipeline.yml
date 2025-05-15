@@ -35,10 +35,12 @@ jobs:
  
     steps:
       - name: Checkout
-        uses: actions/checkout@main
+        uses: actions/checkout@v4
         with:
+          token: ${{ secrets.PAT }}
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
+          submodules: recursive
 
       - name: Configure Git
         run: |
@@ -111,18 +113,30 @@ jobs:
         working-directory: docs/scripts
         run: |
           pip install semver
-          python bump_version.py --type="${{env.BUMP_TYPE}}" >> "$GITHUB_ENV"
+          python bump_version.py --type="${{env.BUMP_TYPE}}" --tag="${{env.latest_tag}}" >> "$GITHUB_ENV"
 
       - name: Branch off
         run: |
           git switch -C release/${{env.release_version}} "${{github.ref_name}}"
           git push
+      
+      - name: Authenticate with Google Cloud for ID token
+        id: id_auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{env.project_id}}
+          workload_identity_provider: ${{env.workload_identity_provider}}
+          service_account: ${{env.service_account}}
+          token_format: id_token
+          id_token_audience: ${{ secrets.GCP_ID_TOKEN_AUDIENCE }}
+          id_token_include_email: true
 
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT }}
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          GCP_TOKEN: ${{ steps.id_auth.outputs.id_token }}
         run: |
           echo "Submit the kedro pipeline"
           if [ "${{ env.BUMP_TYPE }}" == "minor" ]; then
@@ -134,7 +148,7 @@ jobs:
             --username GH-Actions-bot \
             --namespace argo-workflows \
             --experiment-name scheduled-kg-release \
-            --run-name auto-kg-release \
+            --run-name auto-kg-release-${{ env.release_version }} \
             --release-version "${{ env.release_version }}" \
             --pipeline ${RELEASE_PIPELINE} \
             --headless

@@ -1,16 +1,21 @@
+# NOTE: This file was partially generated using AI assistance.
+
+import itertools
+import random
+
 import networkx as nx
 import numpy as np
 import pandas as pd
-from data_fabricator.v0.nodes.fabrication import fabricate_datasets
 from kedro.pipeline import Pipeline, node, pipeline
 
 from matrix.kedro4argo_node import ArgoNode
+from matrix.utils.fabrication import fabricate_datasets
 
 
 def _create_random_pairs(
     drug_list: pd.DataFrame,
     disease_list: pd.DataFrame,
-    num: int = 100,
+    num: int,
     seed: int = 42,
 ) -> pd.DataFrame:
     """Create random drug-disease pairs. Ensures no duplicate pairs.
@@ -18,50 +23,55 @@ def _create_random_pairs(
     Args:
         drug_list: Dataframe containing the list of drugs.
         disease_list: Dataframe containing the list of diseases.
-        num: Size of each set of random pairs. Defaults to 100.
-        seed: Random seed. Defaults to 42.
+        num: Size of each set of random pairs.
+        seed: Random seed.
 
     Returns:
         Dataframe containing unique drug-disease pairs.
     """
-    is_enough_generated = False
-    attempt = 0
+    random.seed(seed)
 
-    while not is_enough_generated:
-        # Sample random pairs (we sample twice the required amount in case duplicates are removed)
-        random_drugs = drug_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=seed)
-        random_diseases = disease_list["category_class"].sample(
-            num * 4, replace=True, ignore_index=True, random_state=2 * seed
-        )
+    # Convert lists to sets of unique ids
+    drug_ids = list(drug_list["curie"].unique())
+    disease_ids = list(disease_list["category_class"].unique())
 
-        df = pd.DataFrame(
-            data=[[drug, disease, f"{drug}|{disease}"] for drug, disease in zip(random_drugs, random_diseases)],
-            columns=["source", "target", "drug|disease"],
-        )
+    # Check that we have enough pairs
+    if not len(drug_ids) * len(disease_ids) >= 2 * num:
+        raise ValueError("Drug and disease lists are too small to generate the required number of pairs")
 
-        # Remove duplicate pairs
-        df = df.drop_duplicates()
+    # Subsample the lists to reduce memory usage
+    for entity_list in [drug_ids, disease_ids]:
+        if len(entity_list) > 2 * num:
+            entity_list = random.sample(entity_list, 2 * num)
 
-        # Check that we still have enough fabricated pairs
-        is_enough_generated = len(df) >= 2 * num or attempt > 100
-        attempt += 1
+    # Create pairs and sample without replacement to ensure no duplicates
+    pairs = list(itertools.product(drug_ids, disease_ids))
+    df_sample = pd.DataFrame(random.sample(pairs, 2 * num), columns=["source", "target"])
 
-    return df[: 2 * num]
+    # Split into positives and negatives
+    return df_sample[:num], df_sample[num:]
 
 
-def _create_kgml_xdtd_gtpairs(
-    drug_list: pd.DataFrame,
-    disease_list: pd.DataFrame,
-    num: int = 100,
-    seed: int = 42,
-) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Create 2 sets of random drug-disease pairs. Wrapper for _create_random_pairs.
+def remove_overlap(disease_list: pd.DataFrame, drug_list: pd.DataFrame):
+    """Function to ensure no overlap between drug and disease lists.
+
+    Due to our generator setup, it's possible our drug and disease sets
+    are not disjoint.
+
+    Args:
+        drug_list: Dataframe containing the list of drugs.
+        disease_list: Dataframe containing the list of diseases.
 
     Returns:
-        Two dataframes, each containing 'num' unique drug-disease pairs.
+        Two dataframes, clean drug and disease lists respectively.
     """
-    df = _create_random_pairs(drug_list, disease_list, num, seed)
-    return df[:num], df[num : 2 * num]
+    overlap = set(disease_list["category_class"]).intersection(set(drug_list["curie"]))
+    overlap_mask_drug = drug_list["curie"].isin(overlap)
+    overlap_mask_disease = disease_list["category_class"].isin(overlap)
+    drug_list = drug_list[~overlap_mask_drug]
+    disease_list = disease_list[~overlap_mask_disease]
+
+    return {"disease_list": disease_list, "drug_list": drug_list}
 
 
 def _create_ec_gt_pairs(
@@ -75,9 +85,7 @@ def _create_ec_gt_pairs(
     Returns:
         Two dataframes containing unique drug-disease pairs with metadata.
     """
-    df = _create_random_pairs(drug_list, disease_list, num, seed)
-    positives = df[:num]
-    negatives = df[num : 2 * num]
+    positives, negatives = _create_random_pairs(drug_list, disease_list, num, seed)
 
     BOOL_COLS = [
         "is_diagnostic_agent",
@@ -113,6 +121,8 @@ def _create_ec_gt_pairs(
     negatives = negatives.rename(
         columns={"source": "final normalized drug id", "target": "final normalized disease id"}
     )
+    positives["id"] = positives["final normalized drug id"] + "|" + positives["final normalized disease id"]
+    negatives["id"] = negatives["final normalized drug id"] + "|" + negatives["final normalized disease id"]
 
     for col in STRING_COLS:
         negatives[col] = np.random.choice(["string", "dummy"], len(negatives), p=[0.3, 0.7])
@@ -159,22 +169,33 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create fabricator pipeline."""
     return pipeline(
         [
-            ArgoNode(
+            node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.rtx_kg2"},
                 outputs={
                     "nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                     "edges": "ingestion.raw.rtx_kg2.edges@pandas",
-                    "disease_list": "ingestion.raw.disease_list",
-                    "drug_list": "ingestion.raw.drug_list",
+                    "disease_list": "fabricator.int.disease_list",
+                    "drug_list": "fabricator.int.drug_list",
                     "pubmed_ids_mapping": "ingestion.raw.rtx_kg2.curie_to_pmids@pandas",
                 },
                 name="fabricate_kg2_datasets",
             ),
-            ArgoNode(
+            node(
+                func=remove_overlap,
+                inputs={
+                    "disease_list": "fabricator.int.disease_list",
+                    "drug_list": "fabricator.int.drug_list",
+                },
+                outputs={
+                    "disease_list": "ingestion.raw.disease_list",
+                    "drug_list": "ingestion.raw.drug_list",
+                },
+            ),
+            node(
                 func=fabricate_datasets,
                 inputs={
-                    "fabrication_params": "params:fabricator.clinical_trials",
+                    "fabrication_params": "params:fabricator.clinical_trials.graph",
                     "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                 },
                 outputs={
@@ -185,6 +206,18 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=fabricate_datasets,
+                inputs={
+                    "fabrication_params": "params:fabricator.off_label.graph",
+                    "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                },
+                outputs={
+                    "nodes": "ingestion.raw.off_label.nodes@pandas",
+                    "edges": "ingestion.raw.off_label.edges@pandas",
+                },
+                name="fabricate_off_label_datasets",
+            ),
+            node(
+                func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.ec_medical_kg"},
                 outputs={
                     "nodes": "ingestion.raw.ec_medical_team.nodes@pandas",
@@ -192,7 +225,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_ec_medical_datasets",
             ),
-            ArgoNode(
+            node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.robokop"},
                 outputs={
@@ -211,10 +244,20 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="fabricate_spoke_datasets",
             ),
             node(
-                func=_create_kgml_xdtd_gtpairs,
+                func=fabricate_datasets,
+                inputs={"fabrication_params": "params:fabricator.embiology"},
+                outputs={
+                    "nodes": "ingestion.raw.embiology.nodes@pandas",
+                    "edges": "ingestion.raw.embiology.edges@pandas",
+                },
+                name="fabricate_embiology_datasets",
+            ),
+            node(
+                func=_create_random_pairs,
                 inputs=[
                     "ingestion.raw.drug_list",
                     "ingestion.raw.disease_list",
+                    "params:fabricator.ground_truth.num_rows_per_category",
                 ],
                 outputs=[
                     "ingestion.raw.kgml_xdtd_ground_truth.positives",

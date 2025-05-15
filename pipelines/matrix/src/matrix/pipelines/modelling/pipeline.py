@@ -251,10 +251,7 @@ def create_shared_pipeline() -> Pipeline:
             ),
             ArgoNode(
                 func=nodes.make_folds,
-                inputs=[
-                    "modelling.int.known_pairs@pandas",
-                    "params:modelling.splitter",
-                ],
+                inputs=["modelling.int.known_pairs@pandas", "params:modelling.splitter", "ingestion.raw.disease_list"],
                 outputs="modelling.model_input.splits",
                 name="create_splits",
             ),
@@ -274,12 +271,12 @@ def create_pipeline(**kwargs) -> Pipeline:
         - Shards, i.e., defined for ensemble models, non-ensemble models have shards = 1
     """
     # Unpack model
-    model = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
+    model = settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")
     model_name = model["model_name"]
     model_config = model["model_config"]
 
     # Unpack Folds
-    n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_cross_val_folds")
+    n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING().get("cross_validation").get("n_cross_val_folds")
 
     # Add shared nodes
     pipelines = []

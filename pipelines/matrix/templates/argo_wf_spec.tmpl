@@ -19,10 +19,8 @@ spec:
     parameters:
       - name: image
         value: "{{ image }}"
-      - name: image_tag
-        value: "{{ image_tag }}"
       - name: run_name
-        value: "{{ image_tag }}"
+        value: "{{ run_name }}"
       - name: neo4j_host
         value: "bolt+ssc://neo4j.neo4j.svc.cluster.local:7687"
       - name: mlflow_endpoint
@@ -37,6 +35,10 @@ spec:
         value: {{ mlflow_experiment_id }}
       - name: mlflow_run_id
         value: "{{ mlflow_run_id }}"
+      - name: mlflow_url
+        value: "{{ mlflow_url }}"
+      - name: include_private_datasets
+        value: "{{ include_private_datasets }}"
   templates:
   - &_kedro_template
     metrics:
@@ -63,6 +65,12 @@ spec:
               operator: NotIn
               values:
               - "true"
+    # Add tolerations for large memory nodes and GPU nodes
+    tolerations:
+    - key: "node-memory-size"
+      operator: "Equal"
+      value: "large"
+      effect: "NoSchedule"
     metadata:
       labels:
         {# Add label to have an ability to remove Kedro Pods easily #}
@@ -101,7 +109,7 @@ spec:
               {% endraw %}
     container: &_kedro_container
       imagePullPolicy: Always
-      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
+      image: {% raw %} "{{workflow.parameters.image}}"
       {% endraw %}
       env:
         - name: WORKFLOW_ID
@@ -112,7 +120,7 @@ spec:
           value: {% raw %} "{{workflow.parameters.run_name}}" 
           {% endraw %}
         - name: RELEASE_VERSION
-          value: "{{release_version}}" 
+          value: "{{release_version}}"
         - name: RELEASE_FOLDER_NAME
           value: {% raw %} "{{workflow.parameters.release_folder_name}}" 
           {% endraw %}
@@ -127,6 +135,12 @@ spec:
           {% endraw %}
         - name: MLFLOW_RUN_ID
           value: {% raw %} "{{workflow.parameters.mlflow_run_id}}"
+          {% endraw %}
+        - name: MLFLOW_URL
+          value: {% raw %} "{{workflow.parameters.mlflow_url}}"
+          {% endraw %}
+        - name: INCLUDE_PRIVATE_DATASETS
+          value: {% raw %} "{{workflow.parameters.include_private_datasets}}"
           {% endraw %}
         - name: NEO4J_USER
           valueFrom:
@@ -146,12 +160,12 @@ spec:
             secretKeyRef:
               name: matrix-secrets
               key: OPENAI_API_KEY
-        - name: GCP_PROJECT_ID
+        - name: RUNTIME_GCP_PROJECT_ID
           valueFrom:
             configMapKeyRef:
               name: matrix-config
               key: GCP_PROJECT_ID
-        - name: GCP_BUCKET
+        - name: RUNTIME_GCP_BUCKET
           valueFrom:
             configMapKeyRef:
               name: matrix-config

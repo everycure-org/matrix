@@ -49,6 +49,7 @@ class MedicalTransformer(GraphTransformer):
             .withColumn("predicate",                     f.concat(f.lit("biolink:"), f.lit(":"), f.col("Label")))
             .withColumn("upstream_data_source",          f.array(f.lit("ec_medical")))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
+            .withColumn("agent_type",                    f.lit(None).cast(T.StringType()))
             .withColumn("aggregator_knowledge_source",   f.array(f.lit('medical team')))
             .withColumn("primary_knowledge_source",      f.lit('medical team').cast(T.StringType()))
             .withColumn("publications",                  f.array(f.lit('medical team')))
@@ -56,6 +57,8 @@ class MedicalTransformer(GraphTransformer):
             .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present
             .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present
             .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present
+            .withColumn("num_references",                f.lit(None).cast(T.IntegerType()))
+            .withColumn("num_sentences",                 f.lit(None).cast(T.IntegerType()))
             
             # Filter edges we could not correctly resolve
             .filter(f.col("subject").isNotNull() & f.col("object").isNotNull())
