@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Any, Dict, List
 
 import pandas as pd
@@ -6,6 +7,8 @@ from matrix.datasets.pair_generator import DrugDiseasePairGenerator
 from matrix.inject import inject_object
 from matrix.pipelines.evaluation.evaluation import Evaluation
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
+
+logger = logging.getLogger(__name__)
 
 
 def check_no_train(data: pd.DataFrame, known_pairs: pd.DataFrame) -> None:
@@ -109,6 +112,8 @@ def evaluate_test_predictions(data: pd.DataFrame, evaluation: Evaluation) -> Any
     Returns:
         Evaluation report
     """
+    logger.info(f"Evaluation data size: {data.shape}")
+    logger.info(f"Evaluation is: {evaluation}")
     return evaluation.evaluate(data)
 
 

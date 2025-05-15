@@ -75,7 +75,7 @@ There are 4 main steps in the integration pipeline:
 1. **Normalize** the source data to a common format.
 2. **Synonimize** the nodes, to ensure that nodes that describe the same concept have the same ID
 3. **Union & Deduplicate**: Brings all KGs together and deduplicates nodes and edges
-4. **Filtering**: Applies a series of filtering steps to remove nodes and edges based on custom "business logic"
+4. **Filtering**: Applies a series of filtering steps, for example, node deduplication. For any custom filtering of the graph, see the filtering pipeline.
 
 
 ![](../assets/img/kg_integration_approach.excalidraw.svg)
@@ -134,6 +134,74 @@ DYNAMIC_PIPELINES_MAPPING = {
 }
 ```
 
+### Filtering
+
+The filtering pipeline step enables selective processing of the knowledge graph by focusing on specific subsets of nodes and edges. Common use cases include:
+
+- Focusing on specific node or edge types
+- Including only data from particular sources
+- Removing redundant or unwanted data
+
+The filters are defined [here](https://github.com/everycure-org/matrix/blob/main/pipelines/matrix/src/matrix/pipelines/filtering/filters.py) and the parameters [here](https://github.com/everycure-org/matrix/blob/main/pipelines/matrix/conf/base/filtering/parameters.yml)
+
+Every filter is a class that inherits from the abstract base class `Filter()`. Each filter must implement an `apply()` method that takes a PySpark DataFrame as input and returns a filtered DataFrame. Filters can accept any number of arguments in their constructor to configure their behavior.
+
+
+To create a new filter, implement a new function and reference it in the parameters file. Here's an example:
+
+```python
+class MyCustomFilter(Filter):
+    """Filter that implements custom filtering logic.
+    
+    This filter demonstrates how to create a new filter by inheriting from the base Filter class.
+    """
+
+    def __init__(self, column: str, threshold: float):
+        """Initialize the filter with configuration parameters.
+        
+        Args:
+            column: Name of the column to filter on
+            threshold: Value to compare against
+        """
+        self.column = column
+        self.threshold = threshold
+
+    def apply(self, df: ps.DataFrame) -> ps.DataFrame:
+        """Apply the custom filtering logic.
+        
+        Args:
+            df: Input DataFrame to filter
+            
+        Returns:
+            Filtered DataFrame
+        """
+        return df.filter(sf.col(self.column) > self.threshold)
+```
+
+To use this filter, you would add it to your parameters file:
+
+```yaml
+filtering:
+  node_filters:
+    my_custom_filter:
+      _object: matrix.pipelines.filtering.filters.MyCustomFilter
+      column: score
+      threshold: 0.5
+```
+
+
+All filters defined under `node_filters` or `edge_filters` will be applied during processing.
+
+#### Note - filters outside the pipeline
+
+- Some filtering operations are performed outside the dedicated filtering pipeline, specifically during the integration phase before knowledge graph release. These filters represent core transformations that should be applied consistently across all graph releases.
+- For instance, node deduplication is handled in the integration pipeline. When multiple nodes share the same identifier but have different types (e.g., a node appearing as both `ChemicalEntity` and `SmallMolecule`), we consolidate them into a single node.
+- Edge deduplication, however, follows a different approach. We implement hierarchical deduplication where more specific relationships take precedence over general ones. For example, given two edges `A - related_to -> B` and `A - treats -> B`, we retain the more specific `treats` relationship. Since this is an opinionated design choice that may require experimentation, we've moved edge deduplication to the filtering pipeline, allowing for easier testing of alternative deduplication strategies post-release.
+
+![](../assets/img/integration_and_filtering_pipeline.drawio.png)
+
+
+
 ### Embeddings
 
 Our embeddings pipeline computes vectorized representations of the entities in the knowledge graph in two stages:
@@ -162,9 +230,11 @@ Key steps implemented include:
 
 ### Matrix Generation 
 
-The matrix generation pipeline scores all drug-disease pairs using trained models. The process includes flags for known positives and negatives, exclusion of training data for unbiased scoring, and outputs are enriched with metadata and statistics, all exported in an Excel-ready format.
+The matrix generation pipeline scores all drug-disease pairs using trained models. The process includes flags for known positives and negatives, exclusion of training data for unbiased scoring during evaluation. 
 
-Note that the matrix generation is performed for each fold, as well as the full split.
+Note that the matrix generation is performed for each fold, as well as the "full split", where the entirety of available ground truth is used for training.
+
+The matrix generation pipeline also outputs several plots and tables giving a global description of the output predictions. 
 
 ### Evaluation
 
@@ -176,11 +246,7 @@ Computed metrics generally fall into three categories:
 2. **Disease-specific ranking metrics**: These metrics assess ranking precision for each specific disease (e.g. Hit@k).
 3. **Ground truth classification metrics**: These metrics examine the model's ability to distinguish between known positive and known negative drug-disease pairs (e.g. accuracy, F1 score).
 
-To further enhance the pipeline, we have implemented **time-split validation** using clinical trial data curated after the publication date of our knowledge graph. This approach ensures that model predictions are assessed on future data, simulating real-world application scenarios and testing the model's predictive power on unseen, temporally shifted information. By evaluating with post-publication clinical trial data, this process validates the model's effectiveness and stability in longitudinal, real-world contexts.
-
 The evaluation pipeline utilises k-fold cross-validation, where by the metrics are computed for each fold, and then aggregated across folds for a more robust estimate of the model's performance.
-
-Additionally, to address biases, we have been experimenting with matrix transformation and normalization techniques to counteract the effect of "frequent flyer" diseases and drugs—those that appear frequently and can skew results. By normalizing these high-occurrence entities, we are able to reduce their disproportionate influence on the model, allowing for a more balanced representation across all drug-disease pairs.
 
 More details on the metrics computed in each category can be found in the [evaluation deep-dive](../data_science/evaluation_deep_dive.md)
 

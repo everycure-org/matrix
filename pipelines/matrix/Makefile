@@ -1,4 +1,5 @@
-dev_docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
+docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
+
 TAG ?= ${USER}
 GIT_SHA ?= $(shell git rev-parse --short HEAD)
 export PYSPARK_PYTHON = .venv/bin/python
@@ -99,7 +100,7 @@ format:
 
 # executes E2E integration test fully in docker. 
 docker_test: certificate docker_build
-	IMG="$(dev_docker_image)" docker compose -f compose/docker-compose.yml \
+	IMG="$(docker_image)" docker compose -f compose/docker-compose.yml \
 		-f compose/docker-compose.ci.yml \
 		up \
 		--force-recreate \
@@ -107,11 +108,15 @@ docker_test: certificate docker_build
 		--exit-code-from matrix-pipeline
 
 docker_build:
-	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(dev_docker_image) --load ./
-	docker tag $(dev_docker_image) $(dev_docker_image):${TAG}
+	# note the && operator is essential to catch docker buildx errors on linux systems
+	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(docker_image) --load ./ && \
+	docker tag $(docker_image) $(docker_image):${TAG}
+
+docker_auth:
+	gcloud auth configure-docker us-central1-docker.pkg.dev
 
 docker_push: docker_build
-	docker push $(dev_docker_image):${TAG}
+	docker push $(docker_image):${TAG}
 
 certificate:
 	@echo "Generating test SSL certificate for Neo4J."
@@ -144,7 +149,7 @@ licenses_container: docker_build
 	docker run \
 		-v $(PWD)/trivy.yaml:/trivy.yaml \
 		-v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy  \
-		image --scanners license --severity UNKNOWN,CRITICAL $(dev_docker_image)
+		image --scanners license --severity UNKNOWN,CRITICAL $(docker_image)
 
 clean_sa_key:
 	rm -f $(SA_KEY_PATH)
@@ -162,31 +167,31 @@ diagnostics:
 	echo "Operating System:"
 	-uname -a
 	echo "\nDocker Version:"
-	-docker --version || echo "Docker is not installed."
+	-if ! docker --version >/dev/null 2>&1; then echo "Docker is not installed."; fi
 	echo "\nDocker Disk Usage:"
-	-docker system df || echo "Docker is not installed or not running."
+	-if ! docker system df >/dev/null 2>&1; then echo "Docker is not installed or not running."; else docker system df; fi
 	echo "\nDocker Memory and CPU Usage:"
-	-docker stats --no-stream || echo "Docker is not installed or not running."
+	-if ! docker stats --no-stream >/dev/null 2>&1; then echo "Docker is not installed or not running."; else docker stats --no-stream; fi
 	echo "\nGCloud Version:"
-	-gcloud --version || echo "GCloud is not installed."
+	-if ! gcloud --version >/dev/null 2>&1; then echo "GCloud is not installed."; fi
 	echo "\nJava Version:"
-	-java -version || echo "Java is not installed."
+	-if ! java -version >/dev/null 2>&1; then echo "Java is not installed."; fi
 	echo "\nUV Version:"
-	-uv --version || echo "UV is not installed."
+	-if ! uv --version >/dev/null 2>&1; then echo "UV is not installed."; fi
 	echo "\nCheck Virtual Environment (if applicable):"
-	-uv run which python || echo "Python is not in PATH."
+	-if ! uv run which python >/dev/null 2>&1; then echo "Python is not in PATH."; fi
 	echo "\nKubectl permissions:"
 	-kubectl auth can-i --list
 	echo "\nPython Version:"
-	-uv run python3 --version || echo "Python is not installed."
+	-if ! uv run python3 --version >/dev/null 2>&1; then echo "Python is not installed."; fi
 	echo "\nSystem Information:"
 	-uv run python -c "import platform; print(platform.uname())"
 	echo "\nInstalled Python Packages:"
-	-uv run pip freeze || echo "pip is not installed or no packages found."
+	-if ! uv run pip freeze >/dev/null 2>&1; then echo "pip is not installed or no packages found."; else uv run pip freeze; fi
 	echo "\nEnvironment Variables (related to Python):"
-	-uv run printenv | grep PYTHON || echo "No Python-related environment variables found."
+	-if ! uv run printenv | grep -q PYTHON; then echo "No Python-related environment variables found."; else uv run printenv | grep PYTHON; fi
 	echo "\nMemory & CPU Usage:"
-	-uv run python -c "import psutil; print(psutil.virtual_memory(), psutil.cpu_percent())" || echo "psutil is not installed."
+	-if ! uv run python -c "import psutil; print(psutil.virtual_memory(), psutil.cpu_percent())" >/dev/null 2>&1; then echo "psutil is not installed."; else uv run python -c "import psutil; print(psutil.virtual_memory(), psutil.cpu_percent())"; fi
 	echo "\nJAVA_HOME"
 	-printenv JAVA_HOME
 	echo "\nSPARK_HOME"

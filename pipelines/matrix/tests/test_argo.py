@@ -437,6 +437,7 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
     mlflow_experiment_id = 1
     namespace = "test_namespace"
     username = "test_user"
+    mlflow_url = "https://mlflow.platform.dev.everycure.org/"
     pipeline_obj = Pipeline(
         nodes=[
             ArgoNode(
@@ -465,7 +466,6 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
         image=image_name,
         run_name=run_name,
         release_version=release_version,
-        image_tag=image_tag,
         mlflow_experiment_id=mlflow_experiment_id,
         namespace=namespace,
         username=username,
@@ -474,6 +474,7 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
         release_folder_name="releases",
         environment="cloud",
         default_execution_resources=argo_default_resources,
+        mlflow_url=mlflow_url,
     )
 
     argo_config = yaml.safe_load(argo_config_yaml)
