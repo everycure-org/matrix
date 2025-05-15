@@ -162,22 +162,7 @@ evaluation.full_matrix_trials:
 
 ## Off Label Datasets evaluation
 
-# Threshold-based classification metrics for ground truth data (clinical trials version)
-evaluation.simple_classification_off_label:
-  evaluation_options:
-    generator:
-      _object: matrix.datasets.pair_generator.GroundTruthTestPairs
-      positive_columns: 
-        - "off_label"
-    evaluation:
-      _object: matrix.pipelines.evaluation.evaluation.DiscreteMetrics
-      metrics:
-        - _object: sklearn.metrics.accuracy_score
-        - _object: sklearn.metrics.f1_score
-      score_col_name: *score-col
-      threshold: 0.5
-
-# Disease-specific ranking (clinical trials version)
+# Disease-specific ranking (off-label version)
 evaluation.disease_specific_off_label:
   evaluation_options:
     generator:
