@@ -51,7 +51,6 @@ def filter_valid_pairs(
     """
     # only include ground truth pairs that are specified in source_filter
     edges_gt = edges_gt.filter(f.col("upstream_source").isin(source_filter)).dropDuplicates(["subject", "object"])
-
     # Create set of categories to filter on
     categories = set(itertools.chain(drug_categories, disease_categories))
     categories_array = f.array([f.lit(cat) for cat in categories])
