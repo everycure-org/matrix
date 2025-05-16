@@ -171,6 +171,32 @@ ingestion.int.ec_clinical_trails.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/int/clinical_trials_data/translator/${globals:data_sources.ec_clinical_trials.version}/edges_conflated_raw
 
+# -------------------------------------------------------------------------
+# Off-Label Data
+# ------------------------------------------------------------------------- 
+ingestion.raw.off_label.nodes@pandas:
+  <<: [*_layer_int, *_pandas_csv]
+  filepath: ${globals:paths.raw}/off_label_data/translator/${globals:data_sources.off_label.version}/nodes_raw.csv
+
+ingestion.raw.off_label.nodes@spark:
+  <<: [*_layer_int, *_pandas_csv]
+  filepath: ${globals:paths.raw}/off_label_data/translator/${globals:data_sources.off_label.version}/nodes_raw.csv
+
+ingestion.raw.off_label.edges@pandas:
+  <<: [*_layer_int, *_pandas_csv]
+  filepath: ${globals:paths.raw}/off_label_data/translator/${globals:data_sources.off_label.version}/edges_raw.csv
+
+ingestion.raw.off_label.edges@spark:
+  <<: [*_layer_int, *_spark_csv]
+  filepath: ${globals:paths.raw}/off_label_data/translator/${globals:data_sources.off_label.version}/edges_raw.csv
+
+ingestion.int.off_label.nodes:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/off_label_data/translator/${globals:data_sources.off_label.version}/nodes_conflated_raw
+
+ingestion.int.off_label.edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/off_label_data/translator/${globals:data_sources.off_label.version}/edges_conflated_raw
 
 # -------------------------------------------------------------------------
 # DrugMech
@@ -198,11 +224,12 @@ ingestion.raw.drugmech.edges@pandas:
 ingestion.raw.disease_list:
   <<: [*_layer_raw]
   type: matrix.datasets.github.GitHubReleaseCSVDataset
-  repository_url: https://github.com/everycure-org/matrix-disease-list
+  repository_url: https://github.com/everycure-org/core-entities
   release_name: ${globals:data_sources.disease_list.version}
-  release_asset_name: matrix-disease-list-unfiltered-processed.tsv
+  release_asset_name: ec-disease-list.tsv
   fs_args:
     Accept: application/octet-stream
+    Authorization: token ${globals:gh_token}
   load_args:
     sep: "\t"
 
@@ -232,9 +259,9 @@ ingestion.raw.disease_list.nodes@spark:
 ingestion.raw.drug_list:
   <<: [*_layer_raw]
   type: matrix.datasets.github.GitHubReleaseCSVDataset
-  repository_url: https://github.com/everycure-org/matrix-drug-list
+  repository_url: https://github.com/everycure-org/core-entities
   release_name: ${globals:data_sources.drug_list.version}
-  release_asset_name: drugList.tsv
+  release_asset_name: ec-drug-list.tsv
   fs_args:
     Accept: application/octet-stream
     Authorization: token ${globals:gh_token}
