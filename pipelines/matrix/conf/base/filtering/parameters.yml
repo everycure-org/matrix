@@ -6,7 +6,7 @@ filtering:
       keep_list:
         - rtxkg2
         - ec_medical
-        # - robokop
+        - robokop
 
     # remove_rows_by_category:
     #   _object: matrix.pipelines.filtering.filters.RemoveRowsByColumnFilter
@@ -21,7 +21,7 @@ filtering:
       keep_list:
         - rtxkg2
         - ec_medical
-        # - robokop
+        - robokop
 
     filter_biolink_edges:
       _object: matrix.pipelines.filtering.filters.BiolinkDeduplicateEdgesFilter
