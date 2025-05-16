@@ -37,7 +37,6 @@ class ArgoResourceConfig(BaseModel):
         ephemeral-storage-local-ssd parameter on the Node Pools (1st or 2nd gen) - refer to gke.tf for how it's applied.
         More information here: https://cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/local-ssd#1st-or-2nd-generation_1
         and here: https://cloud.google.com/compute/docs/general-purpose-machines#n2d-high-mem
-        I
     """
 
     num_gpus: int = KUBERNETES_DEFAULT_NUM_GPUS
