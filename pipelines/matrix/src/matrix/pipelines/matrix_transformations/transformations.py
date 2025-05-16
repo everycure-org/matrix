@@ -87,11 +87,15 @@ class RankBasedFrequentFlyerTransformation(MatrixTransformation):
         )
 
         # Compute transformed score
-        matrix_df = matrix_df.withColumn(f"untransformed_{self.score_col}", F.col(self.score_col)).withColumn(
-            self.score_col,
-            F.pow(F.col("quantile_rank"), -self.decay_matrix) * self.matrix_weight
-            + F.pow(F.col("quantile_drug"), -self.decay_drug) * self.drug_weight
-            + F.pow(F.col("quantile_disease"), -self.decay_disease) * self.disease_weight,
+        matrix_df = (
+            matrix_df.withColumn(f"untransformed_{self.score_col}", F.col(self.score_col))
+            .withColumn(f"untransformed_rank", F.col("rank"))
+            .withColumn(
+                self.score_col,
+                F.pow(F.col("quantile_rank"), -self.decay_matrix) * self.matrix_weight
+                + F.pow(F.col("quantile_drug"), -self.decay_drug) * self.drug_weight
+                + F.pow(F.col("quantile_disease"), -self.decay_disease) * self.disease_weight,
+            )
         )
 
         # Recalculate rank and quantile_rank based on the new score
