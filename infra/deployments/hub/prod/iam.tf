@@ -1,10 +1,23 @@
+variable "embiology_approved_ext_users" {
+  description = "List of individual users approved for embiology data access (max 10)"
+  type        = list(string)
+  default = [
+    "user:contractor1@example.com",
+    "user:contractor2@example.com"
+  ]
+
+  validation {
+    condition     = length(var.embiology_approved_ext_users) <= 10
+    error_message = "ERROR: Embiology access is limited to a maximum of 10 users."
+  }
+}
+
 locals {
-  matrix_all_group          = "group:matrix-all@everycure.org"
-  internal_data_science     = "group:data-science@everycure.org"
-  external_subcon_standard  = "group:ext.subcontractors@everycure.org"
-  external_subcon_embiology = "group:ext.subcontractors@everycure.org"
-  embiology_path_processed  = "data/01_RAW/KGs/embiology"
-  embiology_path_raw        = "data/01_RAW/embiology"
+  matrix_all_group         = "group:matrix-all@everycure.org"
+  internal_data_science    = "group:data-science@everycure.org"
+  external_subcon_standard = "group:ext.subcontractors@everycure.org"
+  embiology_path_processed = "data/01_RAW/KGs/embiology"
+  embiology_path_raw       = "data/01_RAW/embiology"
 }
 
 module "project_iam_bindings" {
@@ -19,7 +32,7 @@ module "project_iam_bindings" {
     "roles/container.clusterViewer" = flatten([local.internal_data_science, local.external_subcon_standard])
     "roles/artifactregistry.writer" = flatten([local.internal_data_science, local.external_subcon_standard])
     "roles/storage.objectViewer"    = [local.internal_data_science]
-    "roles/bigquery.dataViewer"     = [local.internal_data_science]
+    "roles/bigquery.dataViewer"     = flatten([local.internal_data_science, local.external_subcon_standard])
 
   }
 
@@ -45,8 +58,8 @@ module "project_iam_bindings" {
     },
     {
       role        = "roles/storage.objectViewer"
-      title       = "external_subcons_gcs_access_embiology"
-      description = "Allow specific contractors to view GCS objects only in the embiology folder."
+      title       = "individual_users_embiology_access"
+      description = "Allow up to 10 specific contractors to view GCS objects only in the embiology folders."
       expression  = <<-EOT
         resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/") &&
         (
@@ -54,7 +67,7 @@ module "project_iam_bindings" {
           resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/${local.embiology_path_raw}")
         )
       EOT
-      members     = [local.external_subcon_embiology]
+      members     = var.embiology_approved_ext_users
     }
   ]
 }
