@@ -76,9 +76,9 @@ async def process_batch(batch: List[str], session: aiohttp.ClientSession, pbar: 
 
 async def resolve_ids_batch_async(
     curies: List[str],
-    batch_size: int = 250,
-    max_concurrent: int = 10,
-    url: str = "https://nodenorm.test.transltr.io/1.5/get_normalized_nodes",
+    batch_size: int,
+    max_concurrent: int,
+    url: str,
 ) -> Dict:
     """
     Resolve IDs using concurrent async POST requests with improved error handling
