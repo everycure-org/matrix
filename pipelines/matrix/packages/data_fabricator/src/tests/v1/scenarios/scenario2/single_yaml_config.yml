@@ -1,0 +1,49 @@
+tables:
+  - _target_: data_fabricator.v1.core.mock_generator.create_table
+    name: classes
+    columns:
+      student_id:
+        _metadata_:
+          foreign_key: True
+        _target_: data_fabricator.v1.core.mock_generator.RowApply
+        list_of_values: "students.student_id"
+        row_func: "lambda x:x"
+      course:
+        _target_: data_fabricator.v1.core.mock_generator.RowApply
+        list_of_values: "faculty.course"
+        row_func: "lambda x:x"
+        resize: True
+
+  - _target_: data_fabricator.v1.core.mock_generator.create_table
+    name: faculty
+    num_rows: 5
+    columns:
+      faculty_id:
+        _metadata_:
+          primary_key: True
+        _target_: data_fabricator.v1.core.mock_generator.UniqueId
+      name:
+        _target_: data_fabricator.v1.core.mock_generator.Faker
+        provider: name
+        faker_seed: 1
+      course:
+        _target_: data_fabricator.v1.core.mock_generator.ValuesFromSamples
+        sample_values: ["engineering", "computer science", "mathematics"]
+
+  - _target_: data_fabricator.v1.core.mock_generator.create_table
+    name: students
+    num_rows: 10
+    columns:
+      enrollment_date:
+        end_dt: "2022-12-31"
+        freq: M
+        _target_: data_fabricator.v1.core.mock_generator.Date
+        start_dt: "2021-01-01"
+      name:
+        _target_: data_fabricator.v1.core.mock_generator.Faker
+        provider: name
+        faker_seed: 1
+      student_id:
+        _metadata_:
+          primary_key: True
+        _target_: data_fabricator.v1.core.mock_generator.UniqueId

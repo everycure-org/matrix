@@ -1,0 +1,15 @@
+###
+# This file contains the python configuration for the entire package. This should be kept at the root of the directory.
+# It can also be used to configure the default behaviour of alloy at a toolkit level. For examples of this,
+# see https://protocol.quantumblack.com/docs/alloy/docs/source/02_structure/02_config.html
+# For more information regarding TOML file format, see https://toml.io/en/
+###
+[build-system]
+requires = [
+    "setuptools>=42",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[tool.alloy]
+pipeline = false

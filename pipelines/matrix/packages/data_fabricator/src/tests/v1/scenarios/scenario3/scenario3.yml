@@ -1,0 +1,35 @@
+tables:
+  - _target_: data_fabricator.v1.core.mock_generator.create_table
+    name: patient
+    num_rows: 10
+    columns:
+      patient_id:
+        _target_: data_fabricator.v1.core.mock_generator.UniqueId
+      patient_gender:
+        _target_: data_fabricator.v1.core.mock_generator.ValuesFromSamples
+        sample_values: ["female", "male", "unknown"]
+  - _target_: data_fabricator.v1.core.mock_generator.create_table
+    name: events
+    num_rows: 100
+    columns:
+      date:
+        end_dt: "2022-12-31"
+        freq: M
+        _target_: data_fabricator.v1.core.mock_generator.Date
+        start_dt: "2021-01-01"
+      patient_id:
+        _target_: data_fabricator.v1.core.mock_generator.ForeignKey
+        foreign_key_cols:
+          - patient.patient_id
+          - patient.patient_gender
+        position: 0
+        resize: True
+      patient_gender:
+        _metadata_:
+          description: Patient gender has much what is defined in the patient table.
+        _target_: data_fabricator.v1.core.mock_generator.ForeignKey
+        foreign_key_cols:
+          - patient.patient_id
+          - patient.patient_gender
+        position: 1
+        resize: True
