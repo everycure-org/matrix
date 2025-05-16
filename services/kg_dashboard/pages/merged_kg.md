@@ -20,7 +20,6 @@ limit ${inputs.node_category_limit.value}
 select prefix, upstream_data_source, sum(count) as count
 from bq.merged_kg_nodes
 group by all
-having count > 0
 order by count desc
 limit ${inputs.node_prefix_limit.value}
 ```
@@ -46,7 +45,6 @@ from bq.merged_kg_edges
     and predicate in ${inputs.predicate.value}
     and primary_knowledge_source in ${inputs.primary_knowledge_source.value}
 group by all
-having count > 0
 order by count desc
 limit ${inputs.edge_limit.value}
 ```
@@ -67,7 +65,6 @@ limit ${inputs.edge_limit.value}
     and predicate in ${inputs.predicate.value}
     and primary_knowledge_source in ${inputs.primary_knowledge_source.value}
   group by all
-  having count > 0
   order by count desc
   limit ${inputs.edge_limit.value}  
 ```
@@ -86,7 +83,6 @@ from bq.merged_kg_edges
         and predicate in ${inputs.predicate.value}
         and primary_knowledge_source in ${inputs.primary_knowledge_source.value}
     group by all
-    having count > 0
     order by count desc    
     limit ${inputs.edge_limit.value}  
 ```
@@ -104,7 +100,6 @@ from bq.merged_kg_edges
     and upstream_data_source in ${inputs.upstream_data_source.value}
     and predicate in ${inputs.predicate.value}
   group by all
-  having count > 0
   order by count desc  
   limit ${inputs.edge_limit.value}  
 ```
