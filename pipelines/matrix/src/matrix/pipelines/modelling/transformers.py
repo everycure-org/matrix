@@ -425,7 +425,7 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         # resolve node name for file path
         node_name = os.getenv("KEDRO_NODE_NAME", "unknown_node")
         safe_name = node_name.replace(" ", "_")
-        out_dir = Path("data/reports/figures/weights")
+        out_dir = Path("datasets/reports/figures/weights")
         out_dir.mkdir(parents=True, exist_ok=True)
         plt.savefig(out_dir / f"{safe_name}.png")
         plt.close()
