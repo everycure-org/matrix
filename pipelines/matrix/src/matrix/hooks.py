@@ -420,3 +420,21 @@ class NodeNameEnv:
     @hook_impl
     def after_node_run(self, node, *_):
         os.environ.pop(self.VAR, None)
+
+
+class GlobalsToEnvHook:
+    """
+    Copies a parameter from ``globals.yml`` into an OS environment variable
+    as soon as the Kedro Context is ready.
+
+    Set ``PARAM`` to the key in ``globals.yml`` and ``ENV`` to the env-var
+    name you want to create.
+    """
+
+    PARAM = "release_dir"  # <-- key in globals.yml
+    ENV = "release_dir"  # <-- exported env-var name
+
+    @hook_impl
+    def after_context_created(self, context):
+        value = context.params[self.PARAM]
+        os.environ[self.ENV] = str(value)
