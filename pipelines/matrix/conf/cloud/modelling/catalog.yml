@@ -47,6 +47,6 @@ weight_diagnostic_plot:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
   artifact_path: "weights"
   dataset:
+    <<: *_reporting_ds
     type: kedro_datasets.matplotlib.MatplotlibDataset
-    backend: "Agg"
     filepath: ${globals:paths.tmp}/weights/{node_name}.png
