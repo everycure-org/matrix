@@ -32,7 +32,7 @@ modelling.reporting.gt_present:
 # Save a Matplotlib figure directly to Google Cloud Storage
 # ──────────────────────────────────────────────────────────────
 weight_plot:
-  type: kedro.extras.datasets.matplotlib.MatplotlibWriter
+  type: kedro_datasets.matplotlib.MatplotlibWriter
   filepath: >
     gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.4.5/datasets/reports/figures/weights/{node_name}.png
   backend: "Agg" # non-GUI backend (safe in headless pods)
