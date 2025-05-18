@@ -423,11 +423,12 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         plt.tight_layout()
 
         # resolve node name for file path
-        node_name = os.getenv("KEDRO_NODE_NAME", "unknown_node")
+        # node_name = os.getenv("KEDRO_NODE_NAME", "unknown_node")
         # save_path = os.getenv("release_dir", "unknown")
-        safe_name = node_name.replace(" ", "_")
+        # safe_name = node_name.replace(" ", "_")
         # out_dir = Path(f"{save_path}/datasets/reports/figures/weights")
-        out_dir = Path("gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.4.5/datasets/reports/figures/weights")
-        out_dir.mkdir(parents=True, exist_ok=True)
+        # out_dir = Path("gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.4.5/datasets/reports/figures/weights")
+        # out_dir.mkdir(parents=True, exist_ok=True)
+        catalog.save("weight_plot", plt.gcf(), node_name=os.getenv("KEDRO_NODE_NAME").replace(" ", "_"))
         plt.savefig(out_dir / f"{safe_name}.png")
         plt.close()
