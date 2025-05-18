@@ -429,6 +429,16 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         # out_dir = Path(f"{save_path}/datasets/reports/figures/weights")
         # out_dir = Path("gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.4.5/datasets/reports/figures/weights")
         # out_dir.mkdir(parents=True, exist_ok=True)
-        catalog.save("weight_diagnostic_plot", plt.gcf(), node_name=os.getenv("KEDRO_NODE_NAME").replace(" ", "_"))
+        # catalog.save("weight_diagnostic_plot", plt.gcf(), node_name=os.getenv("KEDRO_NODE_NAME").replace(" ", "_"))
+
+        from kedro.framework.context import get_current_context
+
+        catalog = get_current_context().catalog
+        catalog.save(  # fills both local writer and MLflow upload
+            "modelling.{shard}.fold_{fold}.reporting.weight_plot",
+            shard=os.getenv("SHARD_ID"),  # env variables you already export
+            fold=os.getenv("FOLD_ID"),
+        )
+
         # plt.savefig(out_dir / f"{safe_name}.png")
         # plt.close()
