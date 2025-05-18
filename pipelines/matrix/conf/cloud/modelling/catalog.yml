@@ -28,17 +28,25 @@ modelling.reporting.gt_present:
   type: matrix.datasets.mlflow.MlflowMetricsDataset
   key_prefix: "gt_present"
 
-# ──────────────────────────────────────────────────────────────
-# Save a Matplotlib figure directly to Google Cloud Storage
-# ──────────────────────────────────────────────────────────────
-weight_plot:
-  type: kedro_datasets.matplotlib.MatplotlibWriter
-  filepath: >
-    gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.4.5/datasets/reports/figures/weights/{node_name}.png
-  # backend: "Agg" # non-GUI backend (safe in headless pods)
-  # fs_args:
-  # project: mtrx-us-central1-hub-dev          # GCP project ID  (needed by gcsfs)
-  # credentials: gcs_creds
-  # save_args:                    # any plt.savefig(**kwargs)
-  # dpi: 110
-  # bbox_inches: tight
+# # ──────────────────────────────────────────────────────────────
+# # Save a Matplotlib figure directly to Google Cloud Storage
+# # ──────────────────────────────────────────────────────────────
+# weight_plot:
+#   type: kedro_datasets.matplotlib.MatplotlibDataset
+#   filepath: >
+#     gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.4.5/datasets/reports/figures/weights/{node_name}.png
+#   # backend: "Agg" # non-GUI backend (safe in headless pods)
+#   # fs_args:
+#   # project: mtrx-us-central1-hub-dev          # GCP project ID  (needed by gcsfs)
+#   # credentials: gcs_creds
+#   # save_args:                    # any plt.savefig(**kwargs)
+#   # dpi: 110
+#   # bbox_inches: tight
+
+weight_diagnostic_plot:
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  artifact_path: "weights"
+  dataset:
+    type: kedro_datasets.matplotlib.MatplotlibDataset
+    backend: "Agg"
+    filepath: ${globals:paths.tmp}/weights/{node_name}.png
