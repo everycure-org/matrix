@@ -296,6 +296,8 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        shard = os.getenv("SHARD_ID")
+        fold = os.getenv("FOLD_ID")
         check_is_fitted(self, "n_features_in_")
         X = self._to_dataframe(X)
 
@@ -326,6 +328,8 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
                 self._plot_raw_vs_weighted(
                     raw_cnt=freq.to_numpy(),
                     w_cnt=(weights * freq.to_numpy()),
+                    shard=shard,
+                    fold=fold,
                 )
 
         return pd.DataFrame({"weight": weights}, index=X.index)
@@ -369,7 +373,9 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         return (w / w.mean()).to_numpy()
 
     # ---------- plotting ------------------------------ #
-    def _plot_raw_vs_weighted(self, raw_cnt: np.ndarray, w_cnt: np.ndarray):
+    def _plot_raw_vs_weighted(self, raw_cnt: np.ndarray, w_cnt: np.ndarray, shard: str, fold: str):
+        # shard = os.getenv("SHARD_ID")
+        # fold = os.getenv("FOLD_ID")
         bins = max(10, int(np.sqrt(raw_cnt.size)))
 
         fig, ax = plt.subplots(1, 2, figsize=(12, 6), dpi=110)
@@ -432,8 +438,7 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         # catalog.save("weight_diagnostic_plot", plt.gcf(), node_name=os.getenv("KEDRO_NODE_NAME").replace(" ", "_"))
 
         # from kedro.framework.context import get_current_context
-        shard = os.getenv("SHARD_ID")
-        fold = os.getenv("FOLD_ID")
+
         # catalog = get_current_context().catalog
         catalog.save(  # fills both local writer and MLflow upload
             f"modelling.{shard}.fold_{fold}.reporting.weight_plot",
