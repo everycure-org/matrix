@@ -58,8 +58,8 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                     "name": "kgml_xdtd_ground_truth",
                     "has_nodes": False,
                     "integrate_in_kg": False,
-                    "has_positive_edges": False,
-                    "has_negative_edges": False,
+                    "has_positive_edges": True,
+                    "has_negative_edges": True,
                     "ground_truth": False,
                 },
                 {

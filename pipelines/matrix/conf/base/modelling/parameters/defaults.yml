@@ -1,6 +1,7 @@
 modelling.drug_types:
   - biolink:Drug
   - biolink:SmallMolecule
+  - biolink:ChemicalOrDrugOrTreatment
 
 modelling.disease_types:
   - biolink:Disease

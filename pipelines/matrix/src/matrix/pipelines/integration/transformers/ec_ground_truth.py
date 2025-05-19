@@ -40,5 +40,6 @@ class GroundTruthTransformer(Transformer):
             .withColumnRenamed("final normalized disease label", "object_label")
             .withColumnRenamed("downfilled from mondo", "flag")
             .withColumnRenamed("drug|disease", "id")
+            .filter(~edges_df["flag"])
             .select("subject", "object", "subject_label", "object_label", "id", "flag")
         )
