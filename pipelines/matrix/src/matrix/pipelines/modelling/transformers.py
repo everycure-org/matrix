@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import re
-from pathlib import Path
 from typing import Any, Optional
 
 # import matplotlib.pyplot as plt
@@ -126,8 +125,6 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        # shard = os.getenv("SHARD_ID")
-        # fold = os.getenv("FOLD_ID")
         check_is_fitted(self, "n_features_in_")
         X = self._to_dataframe(X)
 
@@ -154,8 +151,8 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
                     raise ValueError(f"Unknown strategy: {self.strategy}")
 
             # optional diagnostic plot
-            if self.plot:
-                self._plot_raw_vs_weighted(raw_cnt=freq.to_numpy(), w_cnt=(weights * freq.to_numpy()))
+            # if self.plot:
+            #     self._plot_raw_vs_weighted(raw_cnt=freq.to_numpy(), w_cnt=(weights * freq.to_numpy()))
 
         return pd.DataFrame({"weight": weights}, index=X.index)
 

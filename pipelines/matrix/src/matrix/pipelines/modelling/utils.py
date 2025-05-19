@@ -99,7 +99,7 @@ def plot_raw_vs_weighted(data: pd.DataFrame):
     # tbl.set_fontsize(8)
     # fig.subplots_adjust(bottom=0.30)
     # plt.tight_layout()
-
+    head_col = "source"
     degrees = data.groupby(head_col).size()
     freq = data[head_col].map(degrees).to_numpy()
     weights = data["weight"].to_numpy()
@@ -119,7 +119,7 @@ def plot_raw_vs_weighted(data: pd.DataFrame):
     ax[1].legend()
     plt.tight_layout()
 
-    return plt.close(fig)
+    return plt.gca()
 
     # resolve node name for file path
     # node_name = os.getenv("KEDRO_NODE_NAME", "unknown_node")
