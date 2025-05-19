@@ -19,6 +19,7 @@ from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
 from .model import ModelWrapper
 from .model_selection import DiseaseAreaSplit
+from .utils import plot_raw_vs_weighted
 
 logger = logging.getLogger(__name__)
 
@@ -374,8 +375,8 @@ def apply_transformers(
             [data.drop(columns=features), transformed],
             axis="columns",
         )
-
-    return data
+    weight_plot = plot_raw_vs_weighted(data)
+    return data, weight_plot
 
 
 @unpack_params()
