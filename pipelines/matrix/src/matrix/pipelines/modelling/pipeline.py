@@ -111,7 +111,10 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                             "data": "modelling.model_input.splits",
                             "transformers": f"modelling.fold_{fold}.model_input.transformers",
                         },
-                        outputs=f"modelling.fold_{fold}.model_input.transformed_splits",
+                        outputs=[
+                            f"modelling.fold_{fold}.model_input.transformed_splits",
+                            f"modelling.fold_{fold}.reporting.weight_plot",
+                        ],
                         name=f"transform_data_fold_{fold}",
                     ),
                     ArgoNode(

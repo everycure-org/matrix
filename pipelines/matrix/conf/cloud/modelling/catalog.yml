@@ -35,3 +35,11 @@ modelling.reporting.gt_present:
     <<: *_reporting_ds
     type: matplotlib.MatplotlibDataset
     filepath: ${globals:paths.tmp}/reporting/{shard}/fold_{fold}/weights.png
+
+"modelling.fold_{fold}.reporting.weight_plot":
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  artifact_path: "fold_{fold}"
+  dataset:
+    <<: *_reporting_ds
+    type: matplotlib.MatplotlibDataset
+    filepath: ${globals:paths.tmp}/reporting/fold_{fold}/weights.png

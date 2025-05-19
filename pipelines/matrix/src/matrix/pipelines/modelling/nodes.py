@@ -345,38 +345,77 @@ def fit_transformers(
     return fitted_transformers
 
 
+from matrix.pipelines.modelling.transformers import WeightingTransformer
+
+
 @inject_object()
 def apply_transformers(
     data: pd.DataFrame,
     transformers: dict[str, dict[str, Union[_BaseImputer, list[str]]]],
 ) -> pd.DataFrame:
-    """Function apply fitted transformers to the data.
+    for meta in transformers.values():
+        feats = meta["features"]
+        tr = meta["transformer"]
 
-    Args:
-        data: Data to transform.
-        transformers: Dictionary of transformers.
-
-    Returns:
-        Transformed data.
-    """
-    for transformer in transformers.values():
-        # Apply transformer
-        features = transformer["features"]
-        features_selected = data[features]
-
-        transformed = pd.DataFrame(
-            transformer["transformer"].transform(features_selected),
-            index=features_selected.index,
-            columns=transformer["transformer"].get_feature_names_out(features_selected),
-        )
-
-        # Overwrite columns
-        data = pd.concat(
-            [data.drop(columns=features), transformed],
-            axis="columns",
-        )
+        # 2) if this is the weighting transformer, keep its "weight" column
+        if isinstance(tr, WeightingTransformer):
+            mask = data["split"].eq("TRAIN")
+            data = data.loc[mask].copy()
+            out = pd.DataFrame(
+                tr.transform(data[feats]),
+                index=data.index,
+                columns=tr.get_feature_names_out(feats),
+            )
+            data = pd.concat([data, out], axis=1)
+            # optionally drop the original head_col if keep_original is False
+            if not tr.keep_original:
+                data = data.drop(columns=feats, errors="ignore")
+        else:
+            out = pd.DataFrame(
+                tr.transform(data[feats]),
+                index=data.index,
+                columns=tr.get_feature_names_out(feats),
+            )
+            data = pd.concat(
+                [data.drop(columns=feats, errors="ignore"), out],
+                axis=1,
+            )
     weight_plot = plot_raw_vs_weighted(data)
     return data, weight_plot
+
+
+# @inject_object()
+# def apply_transformers(
+#     data: pd.DataFrame,
+#     transformers: dict[str, dict[str, Union[_BaseImputer, list[str]]]],
+# ) -> pd.DataFrame:
+#     """Function apply fitted transformers to the data.
+
+#     Args:
+#         data: Data to transform.
+#         transformers: Dictionary of transformers.
+
+#     Returns:
+#         Transformed data.
+#     """
+#     for transformer in transformers.values():
+#         # Apply transformer
+#         features = transformer["features"]
+#         features_selected = data[features]
+
+#         transformed = pd.DataFrame(
+#             transformer["transformer"].transform(features_selected),
+#             index=features_selected.index,
+#             columns=transformer["transformer"].get_feature_names_out(features_selected),
+#         )
+
+#         # Overwrite columns
+#         data = pd.concat(
+#             [data.drop(columns=features), transformed],
+#             axis="columns",
+#         )
+#     weight_plot = plot_raw_vs_weighted(data)
+#     return data, weight_plot
 
 
 @unpack_params()
@@ -427,34 +466,51 @@ def tune_parameters(
     return best_params, convergence_plot
 
 
+# @unpack_params()
+# @inject_object()
+# @make_list_regexable(source_df="data", make_regexable_kwarg="features")
+# def train_model(
+#     data: pd.DataFrame,
+#     estimator: BaseEstimator,
+#     features: list[str],
+#     target_col_name: str,
+# ) -> dict:
+#     """Function to train model on the given data.
+
+#     Args:
+#         data: Data to train on.
+#         estimator: sklearn compatible estimator.
+#         features: list of features, may be regex specified.
+#         target_col_name: Target column name.
+
+#     Returns:
+#         Trained model.
+#     """
+#     mask = data["split"].eq("TRAIN")
+
+#     X_train = data.loc[mask, features]
+#     y_train = data.loc[mask, target_col_name]
+
+#     logger.info(f"Starting model: {estimator} training...")
+#     estimator_fit = estimator.fit(X_train.values, y_train.values)
+#     logger.info("Model training completed...")
+#     return estimator_fit
+
+
 @unpack_params()
 @inject_object()
 @make_list_regexable(source_df="data", make_regexable_kwarg="features")
-def train_model(
-    data: pd.DataFrame,
-    estimator: BaseEstimator,
-    features: list[str],
-    target_col_name: str,
-) -> dict:
-    """Function to train model on the given data.
+def train_model(data: pd.DataFrame, estimator: BaseEstimator, features: list[str], target_col_name: str) -> dict:
+    """Fit the final classifier on one fold (TRAIN split only)."""
 
-    Args:
-        data: Data to train on.
-        estimator: sklearn compatible estimator.
-        features: list of features, may be regex specified.
-        target_col_name: Target column name.
-
-    Returns:
-        Trained model.
-    """
     mask = data["split"].eq("TRAIN")
-
     X_train = data.loc[mask, features]
     y_train = data.loc[mask, target_col_name]
+    sample_weight = data.loc[mask, "weight"].values.ravel() if "weight" in data.columns else None
 
-    logger.info(f"Starting model: {estimator} training...")
-    estimator_fit = estimator.fit(X_train.values, y_train.values)
-    logger.info("Model training completed...")
+    logger.info(f"Training model ({type(estimator).__name__}) ...")
+    estimator_fit = estimator.fit(X_train.values, y_train.values, sample_weight=sample_weight)
+    logger.info("Model training completed.")
     return estimator_fit
 
 
