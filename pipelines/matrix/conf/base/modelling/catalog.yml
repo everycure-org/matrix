@@ -116,3 +116,7 @@ modelling.reporting.gt_present:
   type: yaml.YAMLDataset
 
 
+"modelling.{shard}.fold_{fold}.reporting.weight_plot":
+  <<: *_reporting_ds
+  type: matplotlib.MatplotlibDataset
+  filepath: ${globals:paths.tmp}/reporting/{shard}/fold_{fold}/weights.png

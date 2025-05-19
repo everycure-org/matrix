@@ -34,4 +34,4 @@ modelling.reporting.gt_present:
   dataset:
     <<: *_reporting_ds
     type: matplotlib.MatplotlibDataset
-    filepath: ${globals:paths.raw}/{shard}/fold_{fold}/weights.png
+    filepath: ${globals:paths.tmp}/reporting/{shard}/fold_{fold}/weights.png
