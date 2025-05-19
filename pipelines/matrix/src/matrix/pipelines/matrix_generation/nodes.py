@@ -41,7 +41,10 @@ def enrich_embeddings(
 
 
 def _add_flag_columns(
-    matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_trials: Optional[pd.DataFrame] = None
+    matrix: pd.DataFrame,
+    known_pairs: pd.DataFrame,
+    clinical_trials: Optional[pd.DataFrame] = None,
+    off_label: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """Adds boolean columns flagging known positives and known negatives.
 
@@ -49,6 +52,7 @@ def _add_flag_columns(
         matrix: Drug-disease pairs dataset.
         known_pairs: Labelled ground truth drug-disease pairs dataset.
         clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
+        off_label: Pairs dataset representing off label usage.
 
     Returns:
         Pairs dataset with flag columns.
@@ -79,6 +83,9 @@ def _add_flag_columns(
     matrix["trial_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["non_significantly_worse"] == 1])
     matrix["trial_non_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["significantly_worse"] == 1])
 
+    # Flag off label data
+    off_label = off_label.rename(columns={"subject": "source", "object": "target"})
+    matrix["off_label"] = create_flag_column(off_label)  # all pairs are positive
     return matrix
 
 
@@ -104,6 +111,7 @@ def generate_pairs(
     diseases: pd.DataFrame,
     graph: KnowledgeGraph,
     clinical_trials: Optional[pd.DataFrame] = None,
+    off_label: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """Function to generate matrix dataset.
 
@@ -115,6 +123,7 @@ def generate_pairs(
         diseases: Dataframe containing IDs for the list of diseases.
         graph: Object containing node embeddings.
         clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
+        off_label: Pairs dataset representing off label drug disease uses.
 
     Returns:
         Pairs dataframe containing all combinations of drugs and diseases that do not lie in the training set.
@@ -147,8 +156,7 @@ def generate_pairs(
     is_in_train = matrix.apply(lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1)
     matrix = matrix[~is_in_train]
     # Add flag columns for known positives and negatives
-    matrix = _add_flag_columns(matrix, known_pairs, clinical_trials)
-
+    matrix = _add_flag_columns(matrix, known_pairs, clinical_trials, off_label)
     return matrix
 
 
