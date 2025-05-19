@@ -86,6 +86,8 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 {"evaluation_name": "simple_classification_trials"},
                 {"evaluation_name": "disease_specific_trials"},
                 {"evaluation_name": "full_matrix_trials"},
+                {"evaluation_name": "disease_specific_off_label"},
+                {"evaluation_name": "full_matrix_off_label"},
             ],
             "stability": [
                 {"stability_name": "stability_overlap"},
