@@ -43,10 +43,10 @@ modelling.reporting.gt_present:
 #   # dpi: 110
 #   # bbox_inches: tight
 
-weight_diagnostic_plot:
+"modelling.{shard}.fold_{fold}.reporting.weight_plot":
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
-  artifact_path: "weights"
+  artifact_path: "{shard}.fold_{fold}"
   dataset:
     <<: *_reporting_ds
     type: kedro_datasets.matplotlib.MatplotlibDataset
-    filepath: ${globals:paths.tmp}/weights/{node_name}.png
+    filepath: ${globals:paths.tmp}/{shard}/fold_{fold}/weights.png
