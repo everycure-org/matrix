@@ -29,6 +29,7 @@ class GroundTruthTransformer(Transformer):
             .withColumn("y", f.lit(0))
         )
         edges = pos_edges.union(neg_edges).withColumn("upstream_source", f.lit(self.upstream_source))
+        edges = edges.filter(~(f.col("subject").isNull() | f.col("object").isNull()))  # drop any nulls
         id_list = edges.select("subject").union(edges.select("object")).distinct().withColumnRenamed("subject", "id")
         return {"nodes": id_list, "edges": edges}
 
