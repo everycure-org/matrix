@@ -44,7 +44,7 @@ def partial_fold(func: callable, fold: int, arg_name: str = "data"):
 
 
 # ---------- plotting ------------------------------ #
-def plot_raw_vs_weighted(X: pd.DataFrame):
+def plot_raw_vs_weighted(data: pd.DataFrame):
     # raw_cnt = X["source"].map(degrees).to_numpy()
     # w_cnt = (X["weight"] * raw_cnt)
     # plot_raw_vs_weighted(X)
