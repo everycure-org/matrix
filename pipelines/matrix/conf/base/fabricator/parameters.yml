@@ -349,32 +349,32 @@ fabricator.off_label:
             seed: 40589
 
     edges:
-      num_rows: 10
+      num_rows: 100
       columns:
         curie_drug:
           type: copy_column
           source_column: nodes.curie
           sample:
             num_rows: "@edges.num_rows"
-            seed: 40589
+            seed: 40599
         drug_name:
           type: copy_column
           source_column: nodes.name
           sample:
             num_rows: "@edges.num_rows"
-            seed: 40589
+            seed: 40599
         disease_name:
           type: copy_column
           source_column: nodes.name
           sample:
             num_rows: "@edges.num_rows"
-            seed: 30589
+            seed: 30599
         curie_disease:
           type: copy_column
           source_column: nodes.curie
           sample:
             num_rows: "@edges.num_rows"
-            seed: 30589
+            seed: 30599
         relation:
           type: generate_values
           sample_values:
