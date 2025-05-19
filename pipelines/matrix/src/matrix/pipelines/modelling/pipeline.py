@@ -27,7 +27,10 @@ def _create_model_shard_pipeline(model_name: str, shard: int, fold: Union[str, i
                     "data": f"modelling.{shard}.model_input.enriched_splits",
                     "transformers": f"modelling.fold_{fold}.model_input.transformers",
                 },
-                outputs=f"modelling.{shard}.fold_{fold}.model_input.transformed_splits",
+                outputs=[
+                    f"modelling.{shard}.fold_{fold}.model_input.transformed_splits",
+                    f"modelling.{shard}.fold_{fold}.reporting.weight_plot",
+                ],
                 name=f"transform_{shard}_data_fold_{fold}",
             ),
             ArgoNode(

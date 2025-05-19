@@ -422,26 +422,26 @@ class NodeNameEnv:
         os.environ.pop(self.VAR, None)
 
 
-class GlobalsToEnvHook:
-    """
-    Copies a parameter from ``globals.yml`` into an OS environment variable
-    as soon as the Kedro Context is ready.
+# class GlobalsToEnvHook:
+#     """
+#     Copies a parameter from ``globals.yml`` into an OS environment variable
+#     as soon as the Kedro Context is ready.
 
-    Set ``PARAM`` to the key in ``globals.yml`` and ``ENV`` to the env-var
-    name you want to create.
-    """
+#     Set ``PARAM`` to the key in ``globals.yml`` and ``ENV`` to the env-var
+#     name you want to create.
+#     """
 
-    PARAM = "release_dir"  # <-- key in globals.yml
-    ENV = "release_dir"  # <-- exported env-var name
+#     PARAM = "release_dir"  # <-- key in globals.yml
+#     ENV = "release_dir"  # <-- exported env-var name
 
-    @hook_impl
-    def after_context_created(self, context):
-        value = context.params[self.PARAM]
-        os.environ[self.ENV] = str(value)
+#     @hook_impl
+#     def after_context_created(self, context):
+#         value = context.params[self.PARAM]
+#         os.environ[self.ENV] = str(value)
 
-    @hook_impl
-    def before_node_run(self, node, *args):
-        os.environ["KEDRO_NODE_NAME"] = node.name
-        # crude parse: transform_0_data_fold_2 → shard=0, fold=2
-        if match := re.search(r"_(\d+)_data_fold_(\d+)$", node.name):
-            os.environ.update(SHARD_ID=match.group(1), FOLD_ID=match.group(2))
+#     @hook_impl
+#     def before_node_run(self, node, *args):
+#         os.environ["KEDRO_NODE_NAME"] = node.name
+#         # crude parse: transform_0_data_fold_2 → shard=0, fold=2
+#         if match := re.search(r"_(\d+)_data_fold_(\d+)$", node.name):
+#             os.environ.update(SHARD_ID=match.group(1), FOLD_ID=match.group(2))

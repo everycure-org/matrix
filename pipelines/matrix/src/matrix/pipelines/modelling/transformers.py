@@ -5,10 +5,11 @@ import re
 from pathlib import Path
 from typing import Any, Optional
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
+
+# import seaborn as sns
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils.validation import check_is_fitted
@@ -125,8 +126,8 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        shard = os.getenv("SHARD_ID")
-        fold = os.getenv("FOLD_ID")
+        # shard = os.getenv("SHARD_ID")
+        # fold = os.getenv("FOLD_ID")
         check_is_fitted(self, "n_features_in_")
         X = self._to_dataframe(X)
 
@@ -154,12 +155,7 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
 
             # optional diagnostic plot
             if self.plot:
-                self._plot_raw_vs_weighted(
-                    raw_cnt=freq.to_numpy(),
-                    w_cnt=(weights * freq.to_numpy()),
-                    shard=shard,
-                    fold=fold,
-                )
+                self._plot_raw_vs_weighted(raw_cnt=freq.to_numpy(), w_cnt=(weights * freq.to_numpy()))
 
         return pd.DataFrame({"weight": weights}, index=X.index)
 
@@ -200,81 +196,3 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
     def _weights_beta(self, cnt, beta):
         w = np.clip((cnt + self.eps) ** (-beta), self.w_min, self.w_max)
         return (w / w.mean()).to_numpy()
-
-    # ---------- plotting ------------------------------ #
-    def _plot_raw_vs_weighted(self, raw_cnt: np.ndarray, w_cnt: np.ndarray, shard: str, fold: str):
-        # shard = os.getenv("SHARD_ID")
-        # fold = os.getenv("FOLD_ID")
-        bins = max(10, int(np.sqrt(raw_cnt.size)))
-
-        fig, ax = plt.subplots(1, 2, figsize=(12, 6), dpi=110)
-        ax[0].scatter(raw_cnt, w_cnt, s=18, alpha=0.6, ec="none")
-        ax[0].set(
-            xlabel="raw degree",
-            ylabel="weighted degree",
-            title=f"{self.strategy} – mapping",
-        )
-
-        for vec, col, lab in [
-            (raw_cnt, "tab:blue", "raw"),
-            (w_cnt, "tab:orange", "weighted"),
-        ]:
-            sns.histplot(
-                vec,
-                bins=bins,
-                ax=ax[1],
-                color=col,
-                edgecolor="black",
-                alpha=0.30,
-                stat="count",
-                label=f"{lab} (hist)",
-            )
-            sns.kdeplot(vec, ax=ax[1], color=col, bw_adjust=1.2, linewidth=2, fill=False, label=f"{lab} KDE")
-
-        ax[1].set(
-            xlabel="degree",
-            ylabel="entity count",
-            title=f"{self.strategy} – distribution",
-        )
-        ax[1].legend()
-
-        # summary stats table
-        def _stats(v):
-            m = v.mean()
-            sd = v.std(ddof=1)
-            return [m, np.median(v), sd, sd / m]
-
-        rows = np.vstack([_stats(raw_cnt), _stats(w_cnt)])
-        tbl = plt.table(
-            cellText=np.round(rows, 3),
-            colLabels=["mean", "median", "std", "RSD"],
-            rowLabels=["raw", "weighted"],
-            loc="bottom",
-            bbox=[0.35, -0.32, 0.65, 0.18],
-        )
-        tbl.auto_set_font_size(False)
-        tbl.set_fontsize(8)
-        fig.subplots_adjust(bottom=0.30)
-        plt.tight_layout()
-
-        # resolve node name for file path
-        # node_name = os.getenv("KEDRO_NODE_NAME", "unknown_node")
-        # save_path = os.getenv("release_dir", "unknown")
-        # safe_name = node_name.replace(" ", "_")
-        # out_dir = Path(f"{save_path}/datasets/reports/figures/weights")
-        # out_dir = Path("gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.4.5/datasets/reports/figures/weights")
-        # out_dir.mkdir(parents=True, exist_ok=True)
-        # catalog.save("weight_diagnostic_plot", plt.gcf(), node_name=os.getenv("KEDRO_NODE_NAME").replace(" ", "_"))
-
-        # from kedro.framework.context import get_current_context
-
-        # catalog = get_current_context().catalog
-        catalog.save(
-            f"modelling.{shard}.fold_{fold}.reporting.weight_plot",
-            plt.gcf(),
-            shard=shard,
-            fold=fold,
-        )
-
-        # plt.savefig(out_dir / f"{safe_name}.png")
-        # plt.close()
