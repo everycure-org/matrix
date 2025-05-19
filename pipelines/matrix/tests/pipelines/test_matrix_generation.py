@@ -69,6 +69,18 @@ def sample_clinical_trials():
 
 
 @pytest.fixture
+def sample_off_label():
+    """Fixture that provides sample off label data for testing."""
+    return pd.DataFrame(
+        {
+            "source": ["drug_1"],
+            "target": ["disease_2"],
+            "off_label": [1],
+        }
+    )
+
+
+@pytest.fixture
 def sample_graph():
     """Fixture that provides a sample KnowledgeGraph for testing."""
     nodes = pd.DataFrame(
@@ -193,7 +205,7 @@ def sample_data():
 
 
 def test_generate_pairs(
-    sample_drugs, sample_diseases, sample_graph_in_spark, sample_known_pairs, sample_clinical_trials
+    sample_drugs, sample_diseases, sample_graph_in_spark, sample_known_pairs, sample_clinical_trials, sample_off_label
 ):
     """Test the generate_pairs function."""
     # Given drug list, disease list and ground truth pairs
@@ -204,6 +216,7 @@ def test_generate_pairs(
         graph=sample_graph_in_spark,
         known_pairs=sample_known_pairs,
         clinical_trials=sample_clinical_trials,
+        off_label=sample_off_label,
     )
 
     # Then the output is of the correct format and shape

@@ -40,6 +40,12 @@ Time-split validation is a technique where we divide our dataset based on a temp
 
 We implement time-split validation in our pipeline by using an additional ground truth test set coming from the results of recent clinical trials. 
 
+## Off-label validation
+
+Off-label validation is a technique where we evaluate our model's performance on a dataset of known off-label drug uses - cases where drugs are prescribed for conditions different from their original FDA-approved indications. This provides valuable insights into our model's ability to generalize to drug-disease associations that may follow different patterns than traditional approved uses. We implement off-label validation by using a separate test set derived from PrimeKG
+
+The off-label validation metrics are computed using the same methodology as our other test sets, however they only contain positive ground truth (as there are no 'negative' off label uses).
+
 ## The performance metrics in detail
 ![Matrix with flags for ground truth pairs](../assets/deep_dive/matrix_GT.jpg)
 
