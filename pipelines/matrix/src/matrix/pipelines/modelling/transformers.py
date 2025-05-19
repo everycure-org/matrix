@@ -440,9 +440,10 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         # from kedro.framework.context import get_current_context
 
         # catalog = get_current_context().catalog
-        catalog.save(  # fills both local writer and MLflow upload
+        catalog.save(
             f"modelling.{shard}.fold_{fold}.reporting.weight_plot",
-            shard=shard,  # env variables you already export
+            plt.gcf(),
+            shard=shard,
             fold=fold,
         )
 

@@ -33,5 +33,5 @@ modelling.reporting.gt_present:
   artifact_path: "{shard}.fold_{fold}"
   dataset:
     <<: *_reporting_ds
-    type: kedro_datasets.matplotlib.MatplotlibDataset
+    type: matplotlib.MatplotlibDataset
     filepath: ${globals:paths.tmp}/{shard}/fold_{fold}/weights.png
