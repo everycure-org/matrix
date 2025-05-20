@@ -358,8 +358,8 @@ def apply_transformers(
         tr = meta["transformer"]
 
         if isinstance(tr, WeightingTransformer):
-            mask = data["split"].eq("TRAIN")
-            data = data.loc[mask].copy()
+            # mask = data["split"].eq("TRAIN")
+            # data = data.loc[mask].copy()
             out = pd.DataFrame(
                 tr.transform(data[feats]),
                 index=data.index,
