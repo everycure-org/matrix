@@ -18,9 +18,5 @@ class DiseasesTransformer(Transformer):
             nodes_df
             .withColumn("category", f.lit("biolink:Disease"))
         )
-        filters = [f for f in nodes_df.columns if f.startswith("is_")]
-        filters.append('official_matrix_filter') 
-        for filter in filters:
-            df = df.withColumn(filter, f.col(filter).cast("boolean"))
         # fmt: on
         return {"nodes": df}
