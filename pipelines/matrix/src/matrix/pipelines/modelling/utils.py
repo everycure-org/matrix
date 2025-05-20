@@ -119,7 +119,7 @@ def plot_raw_vs_weighted(data: pd.DataFrame):
     ax[1].legend()
     plt.tight_layout()
 
-    return plt.gca()
+    return plt.gcf()
 
     # resolve node name for file path
     # node_name = os.getenv("KEDRO_NODE_NAME", "unknown_node")

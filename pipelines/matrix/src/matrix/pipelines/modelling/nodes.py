@@ -364,7 +364,7 @@ def apply_transformers(
             out = pd.DataFrame(
                 tr.transform(data[feats]),
                 index=data.index,
-                columns=tr.get_feature_names_out(feats),
+                columns=tr.get_feature_names_out(data[feats]),
             )
             data = pd.concat([data, out], axis=1)
             # optionally drop the original head_col if keep_original is False
@@ -374,7 +374,7 @@ def apply_transformers(
             out = pd.DataFrame(
                 tr.transform(data[feats]),
                 index=data.index,
-                columns=tr.get_feature_names_out(feats),
+                columns=tr.get_feature_names_out(data[feats]),
             )
             data = pd.concat(
                 [data.drop(columns=feats, errors="ignore"), out],
