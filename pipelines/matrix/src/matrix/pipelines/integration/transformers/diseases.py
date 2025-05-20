@@ -16,8 +16,6 @@ class DiseasesTransformer(Transformer):
         # fmt: off
         df = (
             nodes_df
-            .withColumn("id",       f.col("category_class"))
-            .withColumn("name",     f.col("label"))
             .withColumn("category", f.lit("biolink:Disease"))
         )
         filters = [f for f in nodes_df.columns if f.startswith("is_")]
