@@ -170,18 +170,18 @@ fabricator.rtx_kg2:
       default_med_view_filter_to_exclude:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       is_combination_therapy:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       approved_japan:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       marketing_status_europe:
         type: generate_values
         sample_values:
@@ -191,8 +191,8 @@ fabricator.rtx_kg2:
       approved_eu:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       marketing_status_usa:
         type: generate_values
         sample_values:
@@ -202,53 +202,53 @@ fabricator.rtx_kg2:
       approved_usa:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       approved_russia:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       approved_india:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       is_metallic_salt:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       is_steroid:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       is_antimicrobial:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       is_chemotherapy:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       is_glucose_regulator:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       is_vaccine_or_antigen:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       is_no_therapeutic_value:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       atc_main:
         type: faker
         provider: word
@@ -285,8 +285,8 @@ fabricator.rtx_kg2:
       is_psychiatric_drug:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
 
   disease_list:
     num_rows: 100
@@ -306,43 +306,43 @@ fabricator.rtx_kg2:
       default_med_view_filter_to_exclude:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       contains_nonactionaable_prefix:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       contains_itis:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       is_malignant_cancer:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       is_benign_tumour:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       is_infectious_disease:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       is_psychiatric_disease:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       is_glucose_dysfunction:
         type: generate_values
         sample_values:
-          - "true"
-          - "false"
+          - True
+          - False
       unmet_medical_need:
         type: generate_values
         sample_values:
