@@ -81,9 +81,6 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         The transformer itself never uses it.
     """
 
-    # -------------------------------------------------- #
-    # construction
-    # -------------------------------------------------- #
     def __init__(
         self,
         head_col: str,
@@ -110,16 +107,12 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         self.plot = plot
         self.keep_original = keep_original
 
-    # -------------------------------------------------- #
-    # sklearn API
-    # -------------------------------------------------- #
     def fit(self, X: pd.DataFrame, y: Optional[Any] = None):
         X = self._to_dataframe(X)
 
         if self.head_col not in X.columns:
             raise ValueError(f"`head_col='{self.head_col}'` not in columns {list(X.columns)}")
 
-        # minimal metadata sklearn expects
         self.n_features_in_ = X.shape[1]
         self.feature_names_in_ = np.asarray(X.columns, dtype=object)
         return self
@@ -150,23 +143,15 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
                 case _:
                     raise ValueError(f"Unknown strategy: {self.strategy}")
 
-            # optional diagnostic plot
-            # if self.plot:
-            #     self._plot_raw_vs_weighted(raw_cnt=freq.to_numpy(), w_cnt=(weights * freq.to_numpy()))
-
         return pd.DataFrame({"weight": weights}, index=X.index)
 
     def get_feature_names_out(self, input_features=None):
         return np.array(["weight"])
 
-    # -------------------------------------------------- #
-    # internal helpers
-    # -------------------------------------------------- #
     @staticmethod
     def _to_dataframe(X):
         return X if isinstance(X, pd.DataFrame) else pd.DataFrame(X)
 
-    # ---------- weighting rules ----------------------- #
     def _weights_shomer(self, cnt):
         w = np.where(cnt < self.eta, 1.0 + self.mix_beta * self.mix_k, 1.0)
         w = np.clip(w, self.w_min, self.w_max)
@@ -179,7 +164,7 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
 
     def _weights_auto_cv(self, cnt):
         raw_cv = cnt.std() / cnt.mean()
-        target = raw_cv * 1e-3  # fixed tiny CV
+        target = raw_cv * 1e-3
 
         lo, hi = 0.0, 1.0
         for _ in range(300):
