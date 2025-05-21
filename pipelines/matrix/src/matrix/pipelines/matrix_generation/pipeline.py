@@ -75,7 +75,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "params:matrix_generation.unknown_score_col_name",
                             "params:matrix_generation.matrix_generation_options.batch_by",
                         ],
-                        outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
+                        outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark",
                         name=f"make_predictions_and_sort_fold_{fold}",
                         # argo_config=ArgoResourceConfig(
                         #     cpu_limit=14, cpu_request=14, memory_limit=310, memory_request=310
