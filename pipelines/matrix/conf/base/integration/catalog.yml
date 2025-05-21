@@ -84,3 +84,7 @@ integration.prm.original.unified_nodes:
 integration.prm.original.unified_edges:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.integration}/prm/unified/edges
+
+integration.prm.unified_ground_truth_edges_custom:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/prm/unified/concat_augmented_gt.parquet'

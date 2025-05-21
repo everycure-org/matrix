@@ -221,7 +221,7 @@ def create_shared_pipeline() -> Pipeline:
                 func=nodes.filter_valid_pairs,
                 inputs=[
                     "filtering.prm.filtered_nodes",
-                    "integration.prm.unified_ground_truth_edges",
+                    "integration.prm.unified_ground_truth_edges_custom",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                     "params:modelling.training_gt_dataset",
