@@ -248,7 +248,6 @@ def make_folds(
         split_iterator = splitter.split(data, disease_list)
     else:
         split_iterator = splitter.split(data, data["y"])
-
     for fold, (train_index, test_index) in enumerate(split_iterator):
         all_indices_in_this_fold = list(set(train_index).union(test_index))
         fold_data = data.loc[all_indices_in_this_fold, :].copy()
@@ -262,7 +261,6 @@ def make_folds(
     full_fold_data["split"] = "TRAIN"
     full_fold_data["fold"] = splitter.n_splits
     all_data_frames.append(full_fold_data)
-
     return pd.concat(all_data_frames, ignore_index=True)
 
 
