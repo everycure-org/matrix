@@ -87,4 +87,4 @@ integration.prm.original.unified_edges:
 
 integration.prm.unified_ground_truth_edges_custom:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/prm/unified/concat_augmented_gt.parquet'
+  filepath: gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.4.1-rtx-gt-exp/datasets/ground_truth/prm/unified/concat_augmented_gt.parquet
