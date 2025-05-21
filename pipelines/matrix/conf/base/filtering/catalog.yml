@@ -13,7 +13,7 @@ _spark_parquet_ds: &_spark_parquet
 
 filtering.prm.filtered_edges:
   <<: [*_spark_parquet]
-  filepath: ${globals:paths.filtering}/prm/filtered/edges
+  filepath: ${globals:paths.integration}/prm/filtered/edges
 
 filtering.prm.prefiltered_nodes:
   <<: [*_spark_parquet]
@@ -21,4 +21,4 @@ filtering.prm.prefiltered_nodes:
 
 filtering.prm.filtered_nodes:
   <<: [*_spark_parquet]
-  filepath: ${globals:paths.filtering}/prm/filtered/nodes
+  filepath: ${globals:paths.integration}/prm/filtered/nodes
