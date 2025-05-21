@@ -75,17 +75,19 @@ def _add_flag_columns(
 
     # TODO: Need to make this dynamic
     # Flag clinical trials data
-    clinical_trials = clinical_trials.rename(columns={"subject": "source", "object": "target"})
-    matrix["trial_sig_better"] = create_flag_column(clinical_trials[clinical_trials["significantly_better"] == 1])
-    matrix["trial_non_sig_better"] = create_flag_column(
-        clinical_trials[clinical_trials["non_significantly_better"] == 1]
-    )
-    matrix["trial_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["non_significantly_worse"] == 1])
-    matrix["trial_non_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["significantly_worse"] == 1])
+    if clinical_trials is not None:
+        clinical_trials = clinical_trials.rename(columns={"subject": "source", "object": "target"})
+        matrix["trial_sig_better"] = create_flag_column(clinical_trials[clinical_trials["significantly_better"] == 1])
+        matrix["trial_non_sig_better"] = create_flag_column(
+            clinical_trials[clinical_trials["non_significantly_better"] == 1]
+        )
+        matrix["trial_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["non_significantly_worse"] == 1])
+        matrix["trial_non_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["significantly_worse"] == 1])
 
     # Flag off label data
-    off_label = off_label.rename(columns={"subject": "source", "object": "target"})
-    matrix["off_label"] = create_flag_column(off_label)  # all pairs are positive
+    if off_label is not None:
+        off_label = off_label.rename(columns={"subject": "source", "object": "target"})
+        matrix["off_label"] = create_flag_column(off_label)  # all pairs are positive
     return matrix
 
 
