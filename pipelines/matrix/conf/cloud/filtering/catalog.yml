@@ -28,17 +28,17 @@ filtering.prm.removed_edges:
   table: edges_removed
 
 # # Filtered PRM nodes/edges written to BigQuery
-# filtering.prm.filtered_nodes:
-#   <<: *_bigquery_ds
-#   filepath: ${globals:paths.filtering}/prm/filtered/nodes
-#   table: nodes_filtered
+filtering.prm.filtered_nodes:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.filtering}/prm/filtered/nodes
+  table: nodes_filtered
 
-# filtering.prm.filtered_edges:
-#   <<: *_bigquery_ds
-#   filepath: ${globals:paths.filtering}/prm/filtered/edges
-#   table: edges_filtered
+filtering.prm.filtered_edges:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.filtering}/prm/filtered/edges
+  table: edges_filtered
 
-# filtering.prm.removed_nodes_final:
-#   <<: *_bigquery_ds
-#   filepath: ${globals:paths.filtering}/prm/removed/nodes_final
-#   table: nodes_removed_final
+filtering.prm.removed_nodes_final:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.filtering}/prm/removed/nodes_final
+  table: nodes_removed_final
