@@ -250,19 +250,15 @@ class GroundTruthTestPairs(DrugDiseasePairGenerator):
         # Extract and label positive data
         positive_data_lst = []
         for col_name in self.positive_columns:
-            positive_data_lst.append(matrix[matrix[col_name]][["source", "target"]].assign(y=1))
-        positive_df = pd.concat(positive_data_lst, ignore_index=True).drop_duplicates()
+            positive_data_lst.append(matrix[matrix[col_name]].assign(y=1))
 
         # Extract and label negative data
         negative_data_lst = []
         for col_name in self.negative_columns:
-            negative_data_lst.append(matrix[matrix[col_name]][["source", "target"]].assign(y=0))
-        negative_df = pd.concat(negative_data_lst, ignore_index=True).drop_duplicates()
+            negative_data_lst.append(matrix[matrix[col_name]].assign(y=0))
 
-        # Combine data and add matrix columns
-        data = pd.concat([positive_df, negative_df], ignore_index=True).merge(
-            matrix, on=["source", "target"], how="left"
-        )
+        # Combine data
+        data = pd.concat(positive_data_lst + negative_data_lst, ignore_index=True)
 
         # Return selected pairs
         return data
