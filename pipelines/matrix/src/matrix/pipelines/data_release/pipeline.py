@@ -6,13 +6,12 @@ from matrix.pipelines.data_release.nodes import unified_edges_to_kgx, unified_no
 
 # Last node is made explicit because there's a kedro hook after_node_run
 # being triggered after the completion of the last node of this pipeline.
-
 # This node is monitored by the data release workflow for successful completion.
 # It's a sentinel indicating all data-delivering nodes are really done executing.
 # It _must_ be the very last node in this pipeline.
 last_node = ArgoNode(
-    func=lambda x, y: True,
-    inputs=["data_release.prm.kgx_edges", "data_release.prm.kgx_nodes"],
+    func=lambda x, y, z: True,
+    inputs=["data_release.prm.kgx_edges", "data_release.prm.kgx_nodes", "data_release.prm.kg_edges"],
     outputs="data_release.dummy",
     name=last_node_name,
 )
