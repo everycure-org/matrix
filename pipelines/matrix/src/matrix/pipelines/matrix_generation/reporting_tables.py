@@ -135,12 +135,12 @@ class TopPairs(ReportingTableGenerator):
                 *self.columns_to_keep,
             )
             .join(
-                drugs_df.select(F.col("curie").alias("drug_id"), F.col("name").alias("drug_name")),
+                drugs_df.select(F.col("id").alias("drug_id"), F.col("name").alias("drug_name")),
                 how="left",
                 on="drug_id",
             )
             .join(
-                diseases_df.select(F.col("category_class").alias("disease_id"), F.col("label").alias("disease_name")),
+                diseases_df.select(F.col("id").alias("disease_id"), F.col("name").alias("disease_name")),
                 how="left",
                 on="disease_id",
             )
@@ -245,10 +245,10 @@ class TopFrequentFlyers(ReportingTableGenerator):
 
         # Set up drug or disease mode
         if self.is_drug_mode:
-            entity_df = drugs_df.select(F.col("curie").alias("id"), F.col("name").alias("name"))
+            entity_df = drugs_df.select(F.col("id").alias("id"), F.col("name").alias("name"))
             specific_col = "source"
         else:
-            entity_df = diseases_df.select(F.col("category_class").alias("id"), F.col("label").alias("name"))
+            entity_df = diseases_df.select(F.col("id").alias("id"), F.col("name").alias("name"))
             specific_col = "target"
 
         # Create table with mean and max scores for each entity

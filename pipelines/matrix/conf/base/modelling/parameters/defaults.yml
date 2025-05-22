@@ -11,7 +11,7 @@ modelling.disease_types:
 
 # Select Ground Truth for training
 modelling.training_gt_dataset:
-  - kgml_xdtd
+  - matrix_indication_list # kgml_xdtd
 
 modelling.splitter:
 
