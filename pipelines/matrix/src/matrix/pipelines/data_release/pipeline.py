@@ -6,7 +6,6 @@ from matrix.pipelines.data_release.nodes import unified_edges_to_kgx, unified_no
 
 # Last node is made explicit because there's a kedro hook after_node_run
 # being triggered after the completion of the last node of this pipeline.
-
 # This node is monitored by the data release workflow for successful completion.
 # It's a sentinel indicating all data-delivering nodes are really done executing.
 # It _must_ be the very last node in this pipeline.
