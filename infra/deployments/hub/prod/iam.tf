@@ -1,23 +1,10 @@
-variable "embiology_approved_ext_users" {
-  description = "List of individual users approved for embiology data access (max 10)"
-  type        = list(string)
-  default = [
-    "user:contractor1@example.com",
-    "user:contractor2@example.com"
-  ]
-
-  validation {
-    condition     = length(var.embiology_approved_ext_users) <= 10
-    error_message = "ERROR: Embiology access is limited to a maximum of 10 users."
-  }
-}
-
 locals {
-  matrix_all_group         = "group:matrix-all@everycure.org"
-  internal_data_science    = "group:data-science@everycure.org"
-  external_subcon_standard = "group:ext.subcontractors@everycure.org"
-  embiology_path_processed = "data/01_RAW/KGs/embiology"
-  embiology_path_raw       = "data/01_RAW/embiology"
+  matrix_all_group          = "group:matrix-all@everycure.org"
+  internal_data_science     = "group:data-science@everycure.org"
+  external_subcon_standard  = "group:ext.subcontractors.standard@everycure.org"
+  external_subcon_embiology = "group:ext.subcontractors.embiology@everycure.org"
+  embiology_path_processed  = "data/01_RAW/KGs/embiology"
+  embiology_path_raw        = "data/01_RAW/embiology"
 }
 
 module "project_iam_bindings" {
@@ -41,7 +28,7 @@ module "project_iam_bindings" {
       role        = "roles/storage.objectCreator"
       title       = "matrix_raw_data_access"
       description = "Allow matrix-all group to create objects only in RAW data folder"
-      expression  = "resource.name.startsWith(\"projects/_/buckets/mtrx-us-central1-hub-prod-storage/objects/data/01_RAW\")"
+      expression  = "resource.name.startsWith(\"projects/_/buckets/${var.storage_bucket_name}/objects/data/01_RAW\")"
       members     = [local.matrix_all_group]
     },
 
@@ -67,7 +54,7 @@ module "project_iam_bindings" {
           resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/${local.embiology_path_raw}")
         )
       EOT
-      members     = var.embiology_approved_ext_users
+      members     = [local.external_subcon_embiology]
     }
   ]
 }
