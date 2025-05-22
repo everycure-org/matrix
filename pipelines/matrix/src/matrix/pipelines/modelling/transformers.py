@@ -50,50 +50,8 @@ class FlatArrayTransformer(FunctionTransformer):
 
 
 class WeightingTransformer(BaseEstimator, TransformerMixin):
-    """
-    Compute per-row sample weights from the degree of *head_col* and
-    expose them as a 1-column DataFrame called ``weight``.
-
-    Works out-of-the-box with Kedro pipelines that:
-      • call ``fit`` on TRAIN rows only
-      • call ``transform`` on any split
-      • concatenate the returned DataFrame into the main table
-      • optionally pass ``data['weight']`` to ``sample_weight``
-
-    Parameters
-    ----------
-    head_col : str
-        Column in *X* that identifies the head entity.
-    strategy : {'inverse', 'shomer', 'auto_cv', 'simple_eta'}, default='auto_cv'
-        Weighting rule.
-    enabled : bool, default=True
-        Disable to return 1.0 everywhere.
-    eta, mix_k, mix_beta, eps, w_min, w_max : float, optional
-        Hyper-parameters used by the different strategies.
-    plot : bool, default=False
-        If *True*, save a diagnostic figure for each `transform()` call.
-        The file name is ``data/reports/figures/weights/<node_name>.png`` where
-        *node_name* comes from the env-var ``KEDRO_NODE_NAME`` (set in a
-        `before_node_run` Kedro hook) or `"unknown_node"` if unset.
-    keep_original : bool, default=True
-        Convenience flag that outside code (e.g. ``apply_transformers``)
-        can inspect to decide whether to drop *head_col* after weighting.
-        The transformer itself never uses it.
-    """
-
     def __init__(
-        self,
-        head_col: str,
-        strategy: str = "auto_cv",
-        enabled: bool = True,
-        eta: float = 40.0,
-        mix_k: int = 5,
-        mix_beta: float = 1.0,
-        eps: float = 1e-6,
-        w_min: float = 1e-3,
-        w_max: float = 20.0,
-        plot: bool = True,
-        keep_original: bool = True,
+        self, head_col, strategy="auto_cv", enabled=True, eta=40, mix_k=5, mix_beta=1.0, eps=1e-6, w_min=1e-3, w_max=20
     ):
         self.head_col = head_col
         self.strategy = strategy
@@ -104,46 +62,40 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         self.eps = eps
         self.w_min = w_min
         self.w_max = w_max
-        self.plot = plot
-        self.keep_original = keep_original
 
-    def fit(self, X: pd.DataFrame, y: Optional[Any] = None):
-        X = self._to_dataframe(X)
-
-        if self.head_col not in X.columns:
-            raise ValueError(f"`head_col='{self.head_col}'` not in columns {list(X.columns)}")
-
-        self.n_features_in_ = X.shape[1]
-        self.feature_names_in_ = np.asarray(X.columns, dtype=object)
-        return self
-
-    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        check_is_fitted(self, "n_features_in_")
-        X = self._to_dataframe(X)
-
-        if X.shape[1] != self.n_features_in_:
-            raise ValueError(f"Expected {self.n_features_in_} features, got {X.shape[1]}")
+    def fit(self, X, y=None):
+        X = pd.DataFrame(X) if not isinstance(X, pd.DataFrame) else X
+        counts = X[self.head_col].value_counts()
+        freq = counts.reindex(X[self.head_col])
 
         if not self.enabled:
-            weights = np.ones(len(X), dtype=float)
+            w = np.ones_like(freq, dtype=float)
         else:
-            degrees = X.groupby(self.head_col).size()
-            freq = X[self.head_col].map(degrees)
-
             match self.strategy:
                 case "inverse":
-                    weights = self._weights_inverse(freq)
+                    w = 1.0 / (freq + self.eps)
                 case "shomer":
-                    weights = self._weights_shomer(freq)
+                    w = np.where(freq < self.eta, 1 + self.mix_beta * self.mix_k, 1)
                 case "auto_cv":
-                    weights = self._weights_auto_cv(freq)
+                    w = self._weights_auto_cv(freq)
                 case "simple_eta":
-                    weights = np.clip(self.eta / (freq + self.eps), self.w_min, self.w_max)
-                    weights /= weights.mean()
+                    w = np.clip(self.eta / (freq + self.eps), self.w_min, self.w_max)
                 case _:
-                    raise ValueError(f"Unknown strategy: {self.strategy}")
+                    raise ValueError
 
-        return pd.DataFrame({"weight": weights}, index=X.index)
+        w = np.clip(w, self.w_min, self.w_max)
+        w = w / w.mean()
+
+        self.weight_map_ = dict(zip(X[self.head_col], w))
+        self.default_weight_ = 1.0
+        self.n_features_in_ = X.shape[1]
+        return self
+
+    def transform(self, X):
+        check_is_fitted(self, "weight_map_")
+        X = pd.DataFrame(X) if not isinstance(X, pd.DataFrame) else X
+        w = X[self.head_col].map(self.weight_map_).fillna(self.default_weight_)
+        return pd.DataFrame({"weight": w.values}, index=X.index)
 
     def get_feature_names_out(self, input_features=None):
         return np.array(["weight"])
