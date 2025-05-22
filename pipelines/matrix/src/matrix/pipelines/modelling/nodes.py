@@ -15,11 +15,12 @@ from sklearn.model_selection import BaseCrossValidator
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from matrix.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
+from matrix.pipelines.modelling.transformers import WeightingTransformer
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
 from .model import ModelWrapper
 from .model_selection import DiseaseAreaSplit
-from .utils import plot_raw_vs_weighted
+from .utils import plot_gt_weights
 
 logger = logging.getLogger(__name__)
 
@@ -271,7 +272,7 @@ def make_folds(
             "split": Column(str, nullable=False),
             "fold": Column(int, nullable=False),
         },
-        # unique=["fold", "source", "target"] TODO: Why is this?
+        # unique=["fold", "source", "target"] TODO: Why is this? - prevent duplicate pairs within folds, unknown if observed issue?
     )
 )
 def create_model_input_nodes(
@@ -326,26 +327,20 @@ def fit_transformers(
     Returns:
         Fitted transformers.
     """
-    # Ensure transformer only fit on training data
     mask = data["split"].eq("TRAIN")
+    target = data.loc[mask, target_col_name] if target_col_name else None
 
-    # Grab target data
-    target_data = data.loc[mask, target_col_name] if target_col_name is not None else None
+    fitted, weight_fig = {}, None
+    for name, meta in transformers.items():
+        feats = meta["features"]
+        tr = meta["transformer"].fit(data.loc[mask, feats], target)
 
-    # Iterate transformers
-    fitted_transformers = {}
-    for name, transform in transformers.items():
-        # Fit transformer
-        features = transform["features"]
+        if weight_fig is None and isinstance(tr, WeightingTransformer):
+            weight_fig = plot_gt_weights(tr, data.loc[mask])
 
-        transformer = transform["transformer"].fit(data.loc[mask, features], target_data)
+        fitted[name] = {"transformer": tr, "features": feats}
 
-        fitted_transformers[name] = {"transformer": transformer, "features": features}
-
-    return fitted_transformers
-
-
-from matrix.pipelines.modelling.transformers import WeightingTransformer
+    return fitted, weight_fig
 
 
 @inject_object()
@@ -353,33 +348,33 @@ def apply_transformers(
     data: pd.DataFrame,
     transformers: dict[str, dict[str, Union[_BaseImputer, list[str]]]],
 ) -> pd.DataFrame:
-    for meta in transformers.values():
-        feats = meta["features"]
-        tr = meta["transformer"]
+    """Function apply fitted transformers to the data.
 
-        if isinstance(tr, WeightingTransformer):
-            # mask = data["split"].eq("TRAIN")
-            # data = data.loc[mask].copy()
-            out = pd.DataFrame(
-                tr.transform(data[feats]),
-                index=data.index,
-                columns=tr.get_feature_names_out(data[feats]),
-            )
-            data = pd.concat([data, out], axis=1)
-            if not tr.keep_original:
-                data = data.drop(columns=feats, errors="ignore")
-        else:
-            out = pd.DataFrame(
-                tr.transform(data[feats]),
-                index=data.index,
-                columns=tr.get_feature_names_out(data[feats]),
-            )
-            data = pd.concat(
-                [data.drop(columns=feats, errors="ignore"), out],
-                axis=1,
-            )
-    weight_plot = plot_raw_vs_weighted(data)
-    return data, weight_plot
+    Args:
+        data: Data to transform.
+        transformers: Dictionary of transformers.
+
+    Returns:
+        Transformed data.
+    """
+    for transformer in transformers.values():
+        # Apply transformer
+        features = transformer["features"]
+        features_selected = data[features]
+
+        transformed = pd.DataFrame(
+            transformer["transformer"].transform(features_selected),
+            index=features_selected.index,
+            columns=transformer["transformer"].get_feature_names_out(features_selected),
+        )
+
+        # Overwrite columns
+        data = pd.concat(
+            [data.drop(columns=features), transformed],
+            axis="columns",
+        )
+
+    return data
 
 
 @unpack_params()
@@ -404,18 +399,17 @@ def tune_parameters(
     """
     mask = data["split"].eq("TRAIN")
 
-    sample_weight = data.loc[mask, "weight"].values.ravel() if "weight" in data.columns else None
-    data.drop(columns=["weight"], inplace=True, errors="ignore")
     X_train = data.loc[mask, features]
     y_train = data.loc[mask, target_col_name]
 
-    tuner.fit(X_train.values, y_train.values, sample_weight=sample_weight)
+    # Fit tuner
+    tuner.fit(X_train.values, y_train.values)
 
     estimator = getattr(tuner, "estimator", None)
     if estimator is None:
         raise ValueError("Tuner must have 'estimator' attribute")
 
-    best_params = json.loads(
+    return json.loads(
         json.dumps(
             {
                 OBJECT_KW: f"{type(estimator).__module__}.{type(estimator).__name__}",
@@ -423,11 +417,7 @@ def tune_parameters(
             },
             default=int,
         )
-    )
-
-    convergence_plot = tuner.convergence_plot if hasattr(tuner, "convergence_plot") else plt.figure()
-
-    return best_params, convergence_plot
+    ), tuner.convergence_plot if hasattr(tuner, "convergence_plot") else plt.figure()
 
 
 @unpack_params()

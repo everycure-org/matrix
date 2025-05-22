@@ -27,10 +27,7 @@ def _create_model_shard_pipeline(model_name: str, shard: int, fold: Union[str, i
                     "data": f"modelling.{shard}.model_input.enriched_splits",
                     "transformers": f"modelling.fold_{fold}.model_input.transformers",
                 },
-                outputs=[
-                    f"modelling.{shard}.fold_{fold}.model_input.transformed_splits",
-                    f"modelling.{shard}.fold_{fold}.reporting.weight_plot",
-                ],
+                outputs=f"modelling.{shard}.fold_{fold}.model_input.transformed_splits",
                 name=f"transform_{shard}_data_fold_{fold}",
             ),
             ArgoNode(
@@ -83,7 +80,10 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                             "data": "modelling.model_input.splits",
                             "transformers": f"params:modelling.{model_name}.model_options.transformers",
                         },
-                        outputs=f"modelling.fold_{fold}.model_input.transformers",
+                        outputs=[
+                            f"modelling.fold_{fold}.model_input.transformers",
+                            f"modelling.fold_{fold}.reporting.weight_plot",
+                        ],
                         name=f"fit_transformers_fold_{fold}",
                         argo_config=ARGO_GPU_NODE_MEDIUM,
                     )
@@ -111,10 +111,7 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                             "data": "modelling.model_input.splits",
                             "transformers": f"modelling.fold_{fold}.model_input.transformers",
                         },
-                        outputs=[
-                            f"modelling.fold_{fold}.model_input.transformed_splits",
-                            f"modelling.fold_{fold}.reporting.weight_plot",
-                        ],
+                        outputs=f"modelling.fold_{fold}.model_input.transformed_splits",
                         name=f"transform_data_fold_{fold}",
                     ),
                     ArgoNode(

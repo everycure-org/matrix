@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+from matrix.pipelines.modelling.transformers import WeightingTransformer
+
 
 def partial_(func: callable, **kwargs):
     """Function to wrap partial to enable partial function creation with kwargs.
@@ -43,15 +45,34 @@ def partial_fold(func: callable, fold: int, arg_name: str = "data"):
     return func_with_full_splits
 
 
-def plot_raw_vs_weighted(data: pd.DataFrame):
-    head_col = "source"
-    degrees = data.groupby(head_col).size()
-    weights = data["weight"].to_numpy()
+def plot_gt_weights(
+    fitted_tr: WeightingTransformer,
+    train_df: pd.DataFrame,
+):
+    """
+    Build a diagnostic plot for a *fitted* WeightingTransformer.
 
-    raw_cnt = data[head_col].map(degrees).to_numpy()
+    Parameters
+    ----------
+    fitted_tr : WeightingTransformer
+        Must already be fitted (weight_map_ exists).
+    train_df : pd.DataFrame
+        The TRAIN rows used in `.fit()`. Must contain `fitted_tr.head_col`.
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+    """
+    head_col = fitted_tr.head_col
+
+    degrees = train_df.groupby(head_col).size()
+    raw_cnt = train_df[head_col].map(degrees).to_numpy()
+
+    weights = train_df[head_col].map(fitted_tr.weight_map_).fillna(fitted_tr.default_weight_).to_numpy()
     w_cnt = raw_cnt * weights
+
     bins = max(10, int(np.sqrt(raw_cnt.size)))
-    strategy = "auto cv"
+    strategy = fitted_tr.strategy
 
     fig, ax = plt.subplots(1, 2, figsize=(12, 6), dpi=110)
     ax[0].scatter(raw_cnt, w_cnt, s=18, alpha=0.6, ec="none")
@@ -75,7 +96,15 @@ def plot_raw_vs_weighted(data: pd.DataFrame):
             stat="count",
             label=f"{lab} (hist)",
         )
-        sns.kdeplot(vec, ax=ax[1], color=col, bw_adjust=1.2, linewidth=2, fill=False, label=f"{lab} KDE")
+        sns.kdeplot(
+            vec,
+            ax=ax[1],
+            color=col,
+            bw_adjust=1.2,
+            linewidth=2,
+            fill=False,
+            label=f"{lab} KDE",
+        )
 
     ax[1].set(
         xlabel="degree",
