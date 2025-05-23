@@ -4,8 +4,8 @@ on:
   pull_request:
     # Sequence of patterns matched against refs/heads
     branches:
-      - infra
-      - infra-prod-debug # temporary branch to use for prod deploymentsm TODO: to be changed
+      - infra-dev
+      - infra-prod
     paths:
       - infra/**
       - .github/workflows/infra-*.yml
@@ -16,8 +16,8 @@ on:
       - ready_for_review
   push:
     branches:
-      - infra
-      - infra-prod-debug # temporary branch to use for prod deployments TODO: to be changed
+      - infra-dev
+      - infra-prod
       - chunyuma-patch-1
     paths:
       - infra/**
@@ -27,7 +27,7 @@ on:
 
 jobs:
   call_infra_deploy_dev:
-    if: github.ref == 'refs/heads/infra'
+    if: github.ref == 'refs/heads/infra-dev'
     uses: ./.github/workflows/infra-deploy.yml
     name: ${{ matrix.deployment_path }}
     secrets: inherit
@@ -49,7 +49,7 @@ jobs:
       environment: 'dev'
 
   call_infra_deploy_prod:
-    if: github.ref == 'refs/heads/infra-prod-debug'
+    if: github.ref == 'refs/heads/infra-prod'
     uses: ./.github/workflows/infra-deploy.yml
     name: ${{ matrix.deployment_path }}
     secrets: inherit
