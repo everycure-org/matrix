@@ -35,7 +35,7 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: changes
         with:
-          base: ${{ (inputs.environment == 'prod') && 'infra-prod-debug' || 'infra' }}
+          base: ${{ (inputs.environment == 'prod') && 'infra-prod' || 'infra-dev' }}
           filters: |
             src:
               - ${{ env.deployment_path }}/**
@@ -46,7 +46,7 @@ jobs:
 #   needs: [paths_filter]
 #   runs-on: 'ubuntu-latest'
 #   environment: ${{ inputs.environment }}
-#   if: github.ref == 'refs/heads/infra' || github.ref == 'refs/heads/infra-prod-debug'
+#   if: github.ref == 'refs/heads/infra' || github.ref == 'refs/heads/infra-prod'
 #   permissions:
 #     id-token: 'write'
 #     contents: 'read'
@@ -162,7 +162,7 @@ jobs:
   deploy:
     # runs under RW user
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/infra' || github.ref == 'refs/heads/infra-prod-debug'
+    if: github.ref == 'refs/heads/infra-dev' || github.ref == 'refs/heads/infra-prod'
     environment: ${{ inputs.environment }}
     name: Apply Terraform
     needs: [ checks, plan ]
@@ -213,7 +213,7 @@ jobs:
       
       - name: Post to a Slack channel
         # Only post to Slack if the deployment failed and we're on the infra branch
-        if: failure() && (github.ref == 'refs/heads/infra' || github.ref == 'refs/heads/infra-prod-debug')
+        if: failure() && (github.ref == 'refs/heads/infra-dev' || github.ref == 'refs/heads/infra-prod')
         id: slack
         uses: slackapi/slack-github-action@v1.26.0
         with:
