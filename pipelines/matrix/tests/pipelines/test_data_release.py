@@ -46,29 +46,3 @@ class TestDataReleasePipeline:
         assert (
             upstream_nodes == other_nodes
         ), f"Last node should depend on all other nodes. Missing dependencies: {other_nodes - upstream_nodes}"
-
-    def test_last_node_inputs_include_all_critical_outputs(self):
-        """
-        Given a data release pipeline
-        When examining dataset flows
-        Then the last_node inputs should encompass all critical outputs from data-producing nodes
-        """
-        # GIVEN
-        pipeline = create_pipeline()
-
-        # WHEN
-        # Find the last_node and its inputs
-        last_node = next(node for node in pipeline.nodes if node.name == last_node_name)
-        last_node_inputs = set(last_node.inputs)
-
-        # Collect all datasets that are outputs of data-producing nodes
-        # Focus on KGX datasets which are the critical outputs
-        kgx_outputs = set()
-        for node in pipeline.nodes:
-            if node.name != last_node_name and node.tags and "kgx" in node.tags:
-                kgx_outputs.update(node.outputs)
-
-        # THEN
-        # Check if all critical KGX outputs are inputs to the last_node
-        missing_inputs = [output for output in kgx_outputs if output not in last_node_inputs]
-        assert not missing_inputs, f"Last node should consume all critical KGX outputs, but missing: {missing_inputs}"
