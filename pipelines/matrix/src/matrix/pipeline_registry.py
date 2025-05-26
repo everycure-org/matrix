@@ -12,10 +12,7 @@ from matrix.pipelines.integration.pipeline import create_pipeline as create_inte
 from matrix.pipelines.matrix_generation.pipeline import create_pipeline as create_matrix_pipeline
 from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
 from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
-from matrix.pipelines.sentinel.pipeline import (
-    create_sentinel_pipeline_kg_release,
-    create_sentinel_pipeline_kg_release_patch,
-)
+from matrix.pipelines.sentinel.pipeline import create_pipeline as create_sentinel_pipeline
 
 
 def register_pipelines() -> dict[str, Pipeline]:
@@ -39,8 +36,8 @@ def register_pipelines() -> dict[str, Pipeline]:
         "evaluation": create_evaluation_pipeline(),
         "create_sample": create_create_sample_pipeline(),
         "ingest_to_N4J": create_ingest_to_N4J_pipeline(),
-        "sentinel_kg_release_patch": create_sentinel_pipeline_kg_release_patch(),
-        "sentinel_kg_release": create_sentinel_pipeline_kg_release(),
+        "sentinel_kg_release_patch": create_sentinel_pipeline(is_patch=True),
+        "sentinel_kg_release": create_sentinel_pipeline(is_patch=False),
         # "inference": create_inference_pipeline(),  # Run manually based on medical input
     }
 
