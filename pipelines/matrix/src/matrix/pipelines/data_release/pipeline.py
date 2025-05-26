@@ -10,8 +10,8 @@ from matrix.pipelines.data_release.nodes import unified_edges_to_kgx, unified_no
 # It's a sentinel indicating all data-delivering nodes are really done executing.
 # It _must_ be the very last node in this pipeline.
 last_node = ArgoNode(
-    func=lambda x, y, z: True,
-    inputs=["data_release.prm.kgx_edges", "data_release.prm.kgx_nodes", "data_release.prm.kg_edges"],
+    func=lambda x, y: True,
+    inputs=["data_release.prm.kgx_edges", "data_release.prm.kgx_nodes"],
     outputs="data_release.dummy",
     name=last_node_name,
 )
