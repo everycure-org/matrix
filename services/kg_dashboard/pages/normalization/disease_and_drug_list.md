@@ -10,7 +10,6 @@ SELECT * FROM bq.disease_list_normalization
 SELECT * FROM bq.disease_list_success
 ```
 
-
 <div class="text-center text-lg font-semibold mt-6 mb-2">
     Disease List Normalization
 </div>
@@ -96,7 +95,7 @@ SELECT * FROM bq.drug_list_normalization
 SELECT * FROM bq.drug_list_success
 ```
 
-<div class="text-center text-lg font-semibold mt-6 mb-2">
+<div class="text-center text-lg font-semibold mb-2">
     Drug List Normalization
 </div>
 
