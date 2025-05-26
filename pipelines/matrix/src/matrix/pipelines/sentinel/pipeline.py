@@ -20,25 +20,13 @@ def sentinel_function(*args):
     return True
 
 
-def create_sentinel_pipeline_kg_release_patch(**kwargs) -> Pipeline:
+def create_pipeline(is_patch: bool, **kwargs) -> Pipeline:
+    sentinel_inputs = kg_release_patch_outputs if is_patch else kg_release_outputs
     return pipeline(
         [
             ArgoNode(
                 func=sentinel_function,
-                inputs=kg_release_patch_outputs,
-                outputs="data_release.dummy",
-                name=last_node_name,
-            )
-        ]
-    )
-
-
-def create_sentinel_pipeline_kg_release(**kwargs) -> Pipeline:
-    return pipeline(
-        [
-            ArgoNode(
-                func=sentinel_function,
-                inputs=kg_release_outputs,
+                inputs=sentinel_inputs,
                 outputs="data_release.dummy",
                 name=last_node_name,
             )
