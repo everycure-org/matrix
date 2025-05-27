@@ -45,7 +45,7 @@ modelling.xg_ensemble_weighted:
         _object: matrix.pipelines.modelling.tuning.GaussianSearch
         estimator:
           _object: matrix.pipelines.modelling.model.XGBClassifierWeighted
-          n_jobs: 32
+          n_jobs: 16
           random_state: ${globals:random_state}
           tree_method: hist
           device: cuda
