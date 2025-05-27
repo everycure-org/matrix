@@ -29,8 +29,8 @@ def _create_pairs(
     random.seed(seed)
 
     # Convert lists to sets of unique ids
-    drug_ids = list(drug_list["curie"].unique())
-    disease_ids = list(disease_list["category_class"].unique())
+    drug_ids = list(drug_list["id"].unique())
+    disease_ids = list(disease_list["id"].unique())
 
     # Check that we have enough pairs
     if not len(drug_ids) * len(disease_ids) >= 2 * num:
@@ -62,9 +62,9 @@ def remove_overlap(disease_list: pd.DataFrame, drug_list: pd.DataFrame):
     Returns:
         Two dataframes, clean drug and disease lists respectively.
     """
-    overlap = set(disease_list["category_class"]).intersection(set(drug_list["curie"]))
-    overlap_mask_drug = drug_list["curie"].isin(overlap)
-    overlap_mask_disease = disease_list["category_class"].isin(overlap)
+    overlap = set(disease_list["id"]).intersection(set(drug_list["id"]))
+    overlap_mask_drug = drug_list["id"].isin(overlap)
+    overlap_mask_disease = disease_list["id"].isin(overlap)
     drug_list = drug_list[~overlap_mask_drug]
     disease_list = disease_list[~overlap_mask_disease]
 
@@ -141,6 +141,18 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "edges": "ingestion.raw.ec_clinical_trails.edges@pandas",
                 },
                 name="fabricate_clinical_trails_datasets",
+            ),
+            node(
+                func=fabricate_datasets,
+                inputs={
+                    "fabrication_params": "params:fabricator.off_label.graph",
+                    "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                },
+                outputs={
+                    "nodes": "ingestion.raw.off_label.nodes@pandas",
+                    "edges": "ingestion.raw.off_label.edges@pandas",
+                },
+                name="fabricate_off_label_datasets",
             ),
             node(
                 func=fabricate_datasets,
