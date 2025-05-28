@@ -5,7 +5,7 @@ import pyspark.sql as ps
 
 from matrix.inject import inject_object
 from matrix.pipelines.create_sample.samplers import Sampler
-from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
+from matrix.utils.pandera_utils import DataFrameSchema, check_output
 
 logger = logging.getLogger(__name__)
 

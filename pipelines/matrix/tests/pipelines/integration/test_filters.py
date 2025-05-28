@@ -1,4 +1,3 @@
-import pandas as pd
 import pytest
 from matrix.pipelines.integration import filters
 from pandera.errors import SchemaError
