@@ -292,6 +292,58 @@ def make_predictions_and_sort(
     return sorted_data
 
 
+def make_predictions_and_sort_fast(
+    graph: KnowledgeGraph,
+    data: pd.DataFrame,
+    transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
+    model: ModelWrapper,
+    features: List[str],
+    treat_score_col_name: str,
+    not_treat_score_col_name: str,
+    unknown_score_col_name: str,
+    batch_by: str,
+) -> pd.DataFrame:
+    """Generate and sort probability scores for a drug-disease dataset.
+
+    FUTURE: Perform parallelised computation instead of batching with a for loop.
+
+    Args:
+        graph: Knowledge graph.
+        data: Data to predict scores for.
+        transformers: Dictionary of trained transformers.
+        model: Model making the predictions.
+        features: List of features, may be regex specified.
+        treat_score_col_name: Probability score column name.
+        not_treat_score_col_name: Probability score column name for not treat.
+        unknown_score_col_name: Probability score column name for unknown.
+        batch_by: Column to use for batching (e.g., "target" or "source").
+
+    Returns:
+        Pairs dataset sorted by an additional column containing the probability scores.
+    """
+    # Generate scores
+    data = make_batch_predictions(
+        graph,
+        data,
+        transformers,
+        model,
+        features,
+        treat_score_col_name,
+        not_treat_score_col_name,
+        unknown_score_col_name,
+        batch_by=batch_by,
+    )
+
+    # Sort by the probability score
+    sorted_data = data.sort_values(by=treat_score_col_name, ascending=False)
+
+    # Add rank and quantile rank columns
+    sorted_data["rank"] = range(1, len(sorted_data) + 1)
+    sorted_data["quantile_rank"] = sorted_data["rank"] / len(sorted_data)
+
+    return sorted_data
+
+
 @inject_object()
 def generate_reports(
     sorted_matrix_df: pd.DataFrame | ps.DataFrame,
