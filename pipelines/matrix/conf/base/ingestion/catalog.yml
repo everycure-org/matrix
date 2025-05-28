@@ -206,16 +206,16 @@ ingestion.raw.drugmech.edges@pandas:
   type: json.JSONDataset
   filepath: ${globals:paths.raw}/drugmech/${globals:data_sources.drugmech.version}/indication_paths.json
 
-# ingestion.raw.drugmech.edges@spark:
-#   type: matrix.datasets.gcp.LazySparkDataset
-#   filepath: https://raw.githubusercontent.com/SuLab/DrugMechDB/refs/tags/${globals:data_sources.drugmech.version}/indication_paths.json
-#   file_format: json
-#   load_args:
-#     multiline: true
+ingestion.raw.drugmech.edges@spark:
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: https://raw.githubusercontent.com/SuLab/DrugMechDB/refs/tags/${globals:data_sources.drugmech.version}/indication_paths.json
+  file_format: json
+  load_args:
+    multiline: true
 
-# ingestion.int.drugmech.edges:
-#   <<: [*_spark_parquet, *_layer_int]
-#   filepath: ${globals:paths.ingestion}/drugmech/${globals:data_sources.drugmech.version}/edges
+ingestion.int.drugmech.edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/drugmech/${globals:data_sources.drugmech.version}/edges
 
 # -------------------------------------------------------------------------
 # Drug and disease lists
