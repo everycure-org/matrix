@@ -33,8 +33,8 @@ data_sources:
     version: V5.2
   embiology:
     version: 03032025
-# Dataset with node and edge proposals by the
-# EveryCure medical team.
+  # Dataset with node and edge proposals by the
+  # EveryCure medical team.
   ec_medical_team:
     version: 20241031
   # Cleaned clinical trial data from the
@@ -50,10 +50,10 @@ data_sources:
   gt:
     version: *_rtx_kg_version # NOTE: This is the version of the GT dataset which was developed for rtx-kg2 as a part of KGML-xDTD pipeline
   drugmech:
-    # check releases here: https://github.com/SuLab/DrugMechDB/releases/ 
+    # check releases here: https://github.com/SuLab/DrugMechDB/releases/
     version: 2.0.1
-  off_label:
-    version: v0.1
+  # off_label:
+  #   version: v0.1
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation. Will make PR.
 mlflow_artifact_root: null
@@ -62,24 +62,24 @@ mlflow_experiment_id: null
 mlflow_url: ${oc.env:MLFLOW_URL}
 paths:
   # Upstream-source versioned
-  raw:                ${dev_gcs_bucket}/kedro/data/01_raw
-  kg_raw:             ${dev_gcs_bucket}/data/01_RAW
-  kg_raw_private:     ${prod_gcs_bucket}/data/01_RAW
-  ingestion:          data/ingestion
+  raw: ${dev_gcs_bucket}/kedro/data/01_raw
+  kg_raw: ${dev_gcs_bucket}/data/01_RAW
+  kg_raw_private: ${prod_gcs_bucket}/data/01_RAW
+  ingestion: data/ingestion
 
   # Release-based
-  integration:        data/releases/${versions.release}/datasets/integration
-  filtering:          data/releases/${versions.release}/datasets/filtering
-  embeddings:         data/releases/${versions.release}/datasets/embeddings
-  release:            data/releases/${versions.release}/datasets/release
+  integration: data/releases/${versions.release}/datasets/integration
+  filtering: data/releases/${versions.release}/datasets/filtering
+  embeddings: data/releases/${versions.release}/datasets/embeddings
+  release: data/releases/${versions.release}/datasets/release
 
   # Run-based
-  modelling:          data/releases/${versions.release}/runs/${run_name}/datasets/modelling
-  evaluation:         data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
-  matrix_generation:  data/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
-  inference:          data/releases/${versions.release}/runs/${run_name}/datasets/inference
- 
-  tmp:                data/tmp
+  modelling: data/releases/${versions.release}/runs/${run_name}/datasets/modelling
+  evaluation: data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
+  matrix_generation: data/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
+  inference: data/releases/${versions.release}/runs/${run_name}/datasets/inference
+
+  tmp: data/tmp
 
   # Embedding cache dataset
-  cache:              data/cache
+  cache: data/cache
