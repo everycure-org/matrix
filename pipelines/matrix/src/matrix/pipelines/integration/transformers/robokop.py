@@ -1,4 +1,3 @@
-import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
@@ -9,7 +8,6 @@ import pyspark.sql.types as T
 # adding parquet support to KGX.
 # or implementing a custom KGX version that leverages spark for higher performance
 # https://github.com/everycure-org/matrix/issues/474
-from matrix.pipelines.integration import schema
 from matrix.pipelines.integration.filters import determine_most_specific_category
 
 from .transformer import GraphTransformer

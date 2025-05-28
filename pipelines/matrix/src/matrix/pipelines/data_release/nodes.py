@@ -1,4 +1,4 @@
-from typing import Collection, List, Type
+from typing import List
 
 import pyspark.sql as ps
 from pyspark.sql import types as T
