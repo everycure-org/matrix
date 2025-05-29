@@ -3,7 +3,6 @@ locals {
   internal_data_science     = "group:data-science@everycure.org"
   external_subcon_standard  = "group:ext.subcontractors.standard@everycure.org"
   external_subcon_embiology = "group:ext.subcontractors.embiology@everycure.org"
-  embiology_path_processed  = "data/01_RAW/KGs/embiology"
   embiology_path_raw        = "data/01_RAW/embiology"
 }
 
@@ -39,7 +38,6 @@ module "project_iam_bindings" {
       description = "Allow standard contractors to view GCS objects, excluding the embiology folder."
       expression  = <<-EOT
         resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/") &&
-        !resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/${local.embiology_path_processed}") &&
         !resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/${local.embiology_path_raw}")
       EOT
       members     = [local.external_subcon_standard]
@@ -50,10 +48,7 @@ module "project_iam_bindings" {
       description = "Allow up to 10 specific contractors to view GCS objects only in the embiology folders."
       expression  = <<-EOT
         resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/") &&
-        (
-          resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/${local.embiology_path_processed}") ||
-          resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/${local.embiology_path_raw}")
-        )
+        resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/${local.embiology_path_raw}")
       EOT
       members     = [local.external_subcon_embiology]
     }
