@@ -69,6 +69,7 @@ resource "google_storage_bucket_iam_binding" "external_subcons_gcs_except_embiol
     expression  = <<-EOT
       resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/data/") &&
       resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/data_releases/") &&
+      resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/kedro/data/") &&
       !resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/${local.embiology_path_raw}")
     EOT
   }
