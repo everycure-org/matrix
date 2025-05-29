@@ -1,8 +1,6 @@
 locals {
-  internal_data_science     = "group:data-science@everycure.org"
-  external_subcon_standard  = "group:ext.subcontractors.standard@everycure.org"
-  external_subcon_embiology = "group:ext.subcontractors.embiology@everycure.org"
-  embiology_path_raw        = "data/01_RAW/embiology"
+  embiology_path_raw = "data/01_RAW/embiology"
+  dev_bucket_name    = "mtrx-us-central1-hub-dev-storage"
 
   allowed_paths = [
     "projects/_/buckets/${var.storage_bucket_name}/objects/data/",
@@ -24,7 +22,11 @@ locals {
   path_or_include_embiology = join(" || ", concat(local.allowed_paths, [local.embiology_path]))
 
   # Flatten the members for IAM bindings
-  binding_members = [local.internal_data_science, local.external_subcon_standard, local.external_subcon_embiology]
+  binding_members = [
+    "serviceAccount:${resource.google_service_account.sa["external_subcon_standard"].email}",
+    "serviceAccount:${resource.google_service_account.sa["internal_data_science"].email}",
+    "serviceAccount:${resource.google_service_account.sa["external_subcon_embiology"].email}"
+  ]
 }
 
 module "project_iam_bindings" {
@@ -43,23 +45,41 @@ module "project_iam_bindings" {
   }
 }
 
-// Needed as due to the conditional expression, if any object (e.g., those in the embiology folder) is excluded by the condition, listing operations may be hindered.
-// This binding allows external subcontractors to list all objects in the bucket.
-resource "google_storage_bucket_iam_binding" "external_subcons_bucket_list" {
-  bucket = var.storage_bucket_name
-  role   = "roles/storage.legacyBucketReader"
-  members = [
-    local.external_subcon_standard, local.internal_data_science, local.external_subcon_embiology
+resource "google_project_iam_custom_role" "custom_storage_role" {
+  project     = var.project_id
+  role_id     = "customStorageAccess"
+  title       = "Custom Storage Access"
+  description = "Custom role with fine-grained storage and metadata permissions"
+
+  permissions = [
+    "storage.folders.create",
+    "storage.folders.list",
+    "storage.folders.get",
+    "storage.managedFolders.create",
+    "storage.managedFolders.list",
+    "storage.managedFolders.get",
+    "storage.multipartUploads.create",
+    "storage.multipartUploads.abort",
+    "storage.multipartUploads.listParts",
+    "storage.multipartUploads.list",
+    "storage.objects.create",
+    "storage.objects.get",
+    "storage.objects.list",
+    "storage.buckets.get",
+    "storage.objects.list",
+    "storage.managedFolders.get",
+    "storage.managedFolders.list",
+    "storage.multipartUploads.list",
   ]
 }
 
 # Binding for standard contractors (excludes embiology)
 resource "google_storage_bucket_iam_binding" "object_user_standard" {
   bucket = var.storage_bucket_name
-  role   = "roles/storage.objectCreator"
+  role   = google_project_iam_custom_role.custom_storage_role.id
 
   members = [
-    local.external_subcon_standard
+    "serviceAccount:${resource.google_service_account.sa["external_subcon_standard"].email}"
   ]
 
   condition {
@@ -72,11 +92,11 @@ resource "google_storage_bucket_iam_binding" "object_user_standard" {
 # Binding for embiology contractors and internal team (includes embiology)
 resource "google_storage_bucket_iam_binding" "object_user_embiology_and_internal" {
   bucket = var.storage_bucket_name
-  role   = "roles/storage.objectCreator"
+  role   = google_project_iam_custom_role.custom_storage_role.id
 
   members = [
-    local.external_subcon_embiology,
-    local.internal_data_science
+    "serviceAccount:${resource.google_service_account.sa["external_subcon_embiology"].email}",
+    "serviceAccount:${resource.google_service_account.sa["internal_data_science"].email}"
   ]
 
   condition {
@@ -107,9 +127,22 @@ resource "google_project_iam_custom_role" "bigquery_read_write_no_delete" {
   ]
 }
 
-resource "google_project_iam_member" "assign_custom_bq_role" {
+resource "google_project_iam_member" "bigquery_read_write_no_delete" {
   for_each = toset(local.binding_members)
   project  = var.project_id
   role     = google_project_iam_custom_role.bigquery_read_write_no_delete.id
-  member   = each.key
+  member   = each.value
+}
+
+resource "google_storage_bucket_iam_binding" "dev_bucket_access" {
+  bucket = var.storage_bucket_name
+  role   = "roles/storage.objectViewer"
+
+  members = local.binding_members
+
+  condition {
+    title       = "access_dev_bucket"
+    description = "Allows access to read dev only."
+    expression  = "resource.name.startsWith(\"projects/_/buckets/mtrx-us-central1-hub-dev-storage/objects/data/01_RAW\")"
+  }
 }
