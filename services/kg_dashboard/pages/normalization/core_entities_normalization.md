@@ -1,5 +1,5 @@
 ---
-title: Disease and Drug List Normalization
+title: Core entities
 ---
 
 ```sql disease_list_normalization
