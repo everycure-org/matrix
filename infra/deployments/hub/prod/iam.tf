@@ -33,17 +33,7 @@ module "project_iam_bindings" {
     },
 
     {
-      role        = "roles/storage.objectCreator"
-      title       = "external_subcons_gcs_except_embiology"
-      description = "Allow standard contractors to list, read, and write GCS objects, excluding the embiology folder."
-      expression  = <<-EOT
-        resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/") &&
-        !resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/${local.embiology_path_raw}")
-      EOT
-      members     = [local.external_subcon_standard]
-    },
-    {
-      role        = "roles/storage.objectCreator"
+      role        = "roles/storage.objectUser"
       title       = "individual_users_embiology_access"
       description = "Allow up to 10 specific contractors to list, read, and write GCS objects, excluding the embiology folder."
       expression  = <<-EOT
@@ -52,4 +42,34 @@ module "project_iam_bindings" {
       members     = [local.external_subcon_embiology]
     }
   ]
+}
+
+// Needed as due to the conditional expression, if any object (e.g., those in the embiology folder) is excluded by the condition, listing operations may be hindered.
+// This binding allows external subcontractors to list all objects in the bucket.
+resource "google_storage_bucket_iam_binding" "external_subcons_bucket_list" {
+  bucket = var.storage_bucket_name
+  role   = "roles/storage.legacyBucketReader"
+  members = [
+    local.external_subcon_standard
+  ]
+}
+
+resource "google_storage_bucket_iam_binding" "external_subcons_gcs_except_embiology" {
+  bucket = var.storage_bucket_name
+
+  role = "roles/storage.objectUser"
+
+  members = [
+    local.external_subcon_standard
+  ]
+
+  condition {
+    title       = "external_subcons_gcs_except_embiology"
+    description = "Allow standard contractors to list, read, and write GCS objects, excluding the embiology folder."
+    expression  = <<-EOT
+      resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/data/") &&
+      resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/data_releases/") &&
+      !resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/${local.embiology_path_raw}")
+    EOT
+  }
 }
