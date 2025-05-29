@@ -1,6 +1,6 @@
 from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
-from matrix.kedro4argo_node import ArgoNode
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 from . import nodes
 
@@ -23,6 +23,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         },
                         outputs=f"matrix_transformations.fold_{fold}.transformed_matrix@spark",
                         name=f"apply_matrix_transformations_fold_{fold}",
+                        argo_config=ArgoResourceConfig(cpu_request=8, memory_request=64, memory_limit=64),
                     ),
                 ]
             )

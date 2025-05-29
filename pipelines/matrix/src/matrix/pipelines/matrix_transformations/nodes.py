@@ -18,7 +18,7 @@ def apply_matrix_transformations(
     logging information about the transformations being applied.
 
     Args:
-        df: Input DataFrame to transform
+        matrix: Input DataFrame to transform
         transformations: Dictionary of transformation instances to apply, where the key is the transformation name
 
     Returns:

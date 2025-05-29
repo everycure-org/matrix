@@ -5,5 +5,5 @@ matrix_transformations:
     frequent_flyer:
       _object: matrix.pipelines.matrix_transformations.transformations.AlmostPureRankBasedFrequentFlyerTransformation
       decay: 0.05
+      epsilon: 0.001
       score_col: "treat score"
-      perform_sort: True
