@@ -43,7 +43,6 @@ class RankBasedFrequentFlyerTransformation(MatrixTransformation):
         decay_drug: float = 0.05,
         decay_disease: float = 0.05,
         score_col: str = "treat score",
-        perform_sort: bool = True,
     ):
         """Initialize the frequent flyer transformation.
 
@@ -55,7 +54,6 @@ class RankBasedFrequentFlyerTransformation(MatrixTransformation):
             decay_drug: The negative power applied to the drug-specific quantile
             decay_disease: The negative power applied to the disease-specific quantile
             score_col: Column in the input dataframe containing the treat score
-            perform_sort: Whether to sort the output dataframe by the transformed score
         """
         self.matrix_weight = matrix_weight
         self.drug_weight = drug_weight
@@ -64,7 +62,6 @@ class RankBasedFrequentFlyerTransformation(MatrixTransformation):
         self.decay_drug = decay_drug
         self.decay_disease = decay_disease
         self.score_col = score_col
-        self.perform_sort = perform_sort
 
     def apply(self, matrix_df: ps.DataFrame) -> ps.DataFrame:
         """Apply the frequent flyer transformation to the matrix.
@@ -75,6 +72,9 @@ class RankBasedFrequentFlyerTransformation(MatrixTransformation):
         Returns:
             Transformed DataFrame
         """
+        # Ensure matrix is ordered by score
+        matrix_df = matrix_df.orderBy(F.col(self.score_col).desc())
+
         # Count entities
         N_drug = matrix_df.select("source").distinct().count()
         N_disease = matrix_df.select("target").distinct().count()
@@ -91,12 +91,8 @@ class RankBasedFrequentFlyerTransformation(MatrixTransformation):
             .withColumn("quantile_drug", F.col("rank_drug") / N_drug)
             .withColumn("rank_disease", F.rank().over(disease_window))
             .withColumn("quantile_disease", F.col("rank_disease") / N_disease)
-        )
-
-        # Compute transformed score
-        matrix_df = (
-            matrix_df.withColumn(f"untransformed_{self.score_col}", F.col(self.score_col))
-            .withColumn(f"untransformed_rank", F.col("rank"))
+            .withColumn(f"untransformed_{self.score_col}", F.col(self.score_col))
+            .withColumn(f"untransformed_rank", F.col("rank").cast("integer"))
             .withColumn(
                 self.score_col,
                 F.pow(F.col("quantile_rank"), -self.decay_matrix) * self.matrix_weight
@@ -110,31 +106,32 @@ class RankBasedFrequentFlyerTransformation(MatrixTransformation):
         matrix_df = matrix_df.withColumn("rank", F.rank().over(score_window)).withColumn(
             "quantile_rank", F.col("rank") / N_matrix
         )
-
-        # # Sort if requested
-        # if self.perform_sort:
-        #     matrix_df = matrix_df.orderBy(F.col("rank").desc())
-
         return matrix_df
 
 
-class AlmostPureRankBasedFrequentFlyerTransformation(MatrixTransformation):
+class AlmostPureRankBasedFrequentFlyerTransformation(RankBasedFrequentFlyerTransformation):
     def __init__(
         self,
         decay: float,
         score_col: str = "treat score",
-        perform_sort: bool = True,
+        epsilon: float = 0.001,
     ):
         """Initialize the frequent flyer transformation.
 
         Args:
             decay: The negative power applied to the all component scores
             score_col: Column in the input dataframe containing the treat score
-            perform_sort: Whether to sort the output dataframe by the transformed score
+            epsilon: The epsilon value for the matrix weight
         """
-        self.decay = decay
-        self.score_col = score_col
-        self.perform_sort = perform_sort
+        super().__init__(
+            matrix_weight=epsilon,
+            drug_weight=1.0,
+            disease_weight=1.0,
+            decay_matrix=decay,
+            decay_drug=decay,
+            decay_disease=decay,
+            score_col=score_col,
+        )
 
     def apply(self, matrix_df: ps.DataFrame) -> ps.DataFrame:
         """Apply the frequent flyer transformation to the matrix.
@@ -145,14 +142,4 @@ class AlmostPureRankBasedFrequentFlyerTransformation(MatrixTransformation):
         Returns:
             Transformed DataFrame
         """
-
-        return RankBasedFrequentFlyerTransformation(
-            matrix_weight=0.001,
-            drug_weight=1.0,
-            disease_weight=1.0,
-            decay_matrix=self.decay,
-            decay_drug=self.decay,
-            decay_disease=self.decay,
-            score_col=self.score_col,
-            perform_sort=self.perform_sort,
-        ).apply(matrix_df)
+        return super().apply(matrix_df)
