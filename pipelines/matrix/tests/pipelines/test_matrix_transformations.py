@@ -12,12 +12,12 @@ def sample_matrix(spark: SparkSession):
     """Fixture that provides sample drugs data for testing."""
     return spark.createDataFrame(
         data=[
-            ("drug_1", "disease_1", 0.9, 0.25),
-            ("drug_1", "disease_2", 0.8, 0.5),
-            ("drug_2", "disease_1", 0.2, 0.75),
-            ("drug_2", "disease_2", 0.1, 1.0),
+            ("drug_1", "disease_1", 0.9, 0.25, 1),
+            ("drug_1", "disease_2", 0.8, 0.5, 2),
+            ("drug_2", "disease_1", 0.2, 0.75, 3),
+            ("drug_2", "disease_2", 0.1, 1.0, 4),
         ],
-        schema=["source", "target", "treat score", "quantile_rank"],
+        schema=["source", "target", "treat score", "quantile_rank", "rank"],
     )
 
 
@@ -40,27 +40,77 @@ def test_frequent_flyer_transformation(spark, sample_matrix):
     result = result.withColumn("treat score", F.round(F.col("treat score"), 3))
 
     # Then the transformed matrix should be returned
-    expected = spark.createDataFrame(
-        data=[
-            ("drug_1", "disease_1", 2.072, 0.25, 1, 0.5, 1, 0.5, 0.9, 1),
-            ("drug_1", "disease_2", 2.036, 0.5, 2, 1.0, 1, 0.5, 0.8, 2),
-            ("drug_2", "disease_1", 2.036, 0.75, 1, 0.5, 2, 1.0, 0.2, 3),
-            ("drug_2", "disease_2", 2.001, 1.0, 2, 1.0, 2, 1.0, 0.1, 4),
-        ],
-        schema=StructType(
-            [
-                StructField("source", StringType(), True),
-                StructField("target", StringType(), True),
-                StructField("treat score", DoubleType(), True),
-                StructField("quantile_rank", DoubleType(), True),
-                StructField("rank_drug", IntegerType(), False),
-                StructField("quantile_drug", DoubleType(), True),
-                StructField("rank_disease", IntegerType(), False),
-                StructField("quantile_disease", DoubleType(), True),
-                StructField("untransformed_treat score", DoubleType(), True),
-                StructField("rank", IntegerType(), False),
-            ]
-        ),
+    data = [
+        {
+            "source": "drug_1",
+            "target": "disease_1",
+            "treat score": 2.072,
+            "quantile_rank": 0.25,
+            "rank_drug": 1,
+            "quantile_drug": 0.5,
+            "rank_disease": 1,
+            "quantile_disease": 0.5,
+            "untransformed_treat score": 0.9,
+            "rank": 1,
+            "untransformed_rank": 1,
+        },
+        {
+            "source": "drug_1",
+            "target": "disease_2",
+            "treat score": 2.036,
+            "quantile_rank": 0.5,
+            "rank_drug": 2,
+            "quantile_drug": 1.0,
+            "rank_disease": 1,
+            "quantile_disease": 0.5,
+            "untransformed_treat score": 0.8,
+            "rank": 2,
+            "untransformed_rank": 2,
+        },
+        {
+            "source": "drug_2",
+            "target": "disease_1",
+            "treat score": 2.036,
+            "quantile_rank": 0.75,
+            "rank_drug": 1,
+            "quantile_drug": 0.5,
+            "rank_disease": 2,
+            "quantile_disease": 1.0,
+            "untransformed_treat score": 0.2,
+            "rank": 3,
+            "untransformed_rank": 3,
+        },
+        {
+            "source": "drug_2",
+            "target": "disease_2",
+            "treat score": 2.001,
+            "quantile_rank": 1.0,
+            "rank_drug": 2,
+            "quantile_drug": 1.0,
+            "rank_disease": 2,
+            "quantile_disease": 1.0,
+            "untransformed_treat score": 0.1,
+            "rank": 4,
+            "untransformed_rank": 4,
+        },
+    ]
+
+    schema = StructType(
+        [
+            StructField("source", StringType(), True),
+            StructField("target", StringType(), True),
+            StructField("treat score", DoubleType(), True),
+            StructField("quantile_rank", DoubleType(), True),
+            StructField("rank", IntegerType(), False),
+            StructField("rank_drug", IntegerType(), False),
+            StructField("quantile_drug", DoubleType(), True),
+            StructField("rank_disease", IntegerType(), False),
+            StructField("quantile_disease", DoubleType(), True),
+            StructField("untransformed_treat score", DoubleType(), True),
+            StructField("untransformed_rank", IntegerType(), False),
+        ]
     )
+
+    expected = spark.createDataFrame(data, schema)
 
     assertDataFrameEqual(result, expected)

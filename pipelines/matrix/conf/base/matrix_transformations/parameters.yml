@@ -1,5 +1,7 @@
 matrix_transformations:
   transformations:
+    no_transformation:
+      _object: matrix.pipelines.matrix_transformations.transformations.NoTransformation
     frequent_flyer:
       _object: matrix.pipelines.matrix_transformations.transformations.AlmostPureRankBasedFrequentFlyerTransformation
       decay: 0.05
