@@ -36,13 +36,21 @@ def create_pipeline(**kwargs) -> Pipeline:
         )
     )
 
+    # TODO: test with Spark dataframes to make it scalable
     def compare_df(previous_df, current_df):
-        comparison_1 = previous_df.subtract(current_df)
-        comparison_2 = current_df.subtract(previous_df)
-        assert comparison_1.count() == 0, "Previous dataframe has more rows than current dataframe"
-        assert comparison_2.count() == 0, "Current dataframe has more rows than previous dataframe"
+        previous_df = previous_df.reset_index(drop=True)
+        current_df = current_df.reset_index(drop=True)
 
-        return False
+        try:
+            assert len(previous_df) == len(current_df), "Previous dataframe has different rows than current dataframe"
+            assert (
+                (previous_df == current_df).eq(True).all().all()
+            ), "Previous dataframe has different values than current dataframe"
+        except AssertionError:
+            # breakpoint()
+            return False
+
+        return True
 
     # Nodes generating scores for each fold and model
     for fold in range(n_cross_val_folds + 1):  # NOTE: final fold is full training data
@@ -60,7 +68,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "clinical_trials": "integration.int.ec_clinical_trails.edges.norm@pandas",
                             "off_label": "integration.int.off_label.edges.norm@pandas",
                         },
-                        outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs",
+                        outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs@pandas",
                         name=f"generate_matrix_pairs_fold_{fold}",
                     )
                 ]
@@ -74,7 +82,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         func=nodes.make_predictions_and_sort,
                         inputs=[
                             "matrix_generation.feat.nodes@kg",
-                            f"matrix_generation.prm.fold_{fold}.matrix_pairs",
+                            f"matrix_generation.prm.fold_{fold}.matrix_pairs@pandas",
                             f"modelling.fold_{fold}.model_input.transformers",
                             f"modelling.fold_{fold}.models.model",
                             f"params:modelling.{model_name}.model_options.model_tuning_args.features",
@@ -93,15 +101,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ArgoNode(
                         func=nodes.make_predictions_and_sort_fast,
                         inputs=[
-                            "matrix_generation.feat.nodes@kg",
-                            f"matrix_generation.prm.fold_{fold}.matrix_pairs",
+                            "matrix_generation.feat.nodes@spark",
+                            f"matrix_generation.prm.fold_{fold}.matrix_pairs@spark",
                             f"modelling.fold_{fold}.model_input.transformers",
                             f"modelling.fold_{fold}.models.model",
                             f"params:modelling.{model_name}.model_options.model_tuning_args.features",
                             "params:matrix_generation.treat_score_col_name",
                             "params:matrix_generation.not_treat_score_col_name",
                             "params:matrix_generation.unknown_score_col_name",
-                            "params:matrix_generation.matrix_generation_options.batch_by",
                         ],
                         outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions_fast@pandas",
                         name=f"make_predictions_and_sort_fast_fold_{fold}",
@@ -113,8 +120,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ArgoNode(
                         func=compare_df,
                         inputs=[
-                            f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark",
-                            f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions_fast@spark",
+                            f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
+                            f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions_fast@pandas",
                         ],
                         outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions_same_flag",
                         name=f"compare_matrix_predictions_fold_{fold}",
