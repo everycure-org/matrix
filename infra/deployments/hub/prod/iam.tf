@@ -17,8 +17,7 @@ module "project_iam_bindings" {
 
     "roles/container.clusterViewer" = flatten([local.internal_data_science, local.external_subcon_standard])
     "roles/artifactregistry.writer" = flatten([local.internal_data_science, local.external_subcon_standard])
-    "roles/storage.objectViewer"    = [local.internal_data_science]
-    "roles/bigquery.dataViewer"     = flatten([local.internal_data_science, local.external_subcon_standard])
+    "roles/bigquery.user"           = flatten([local.internal_data_science, local.external_subcon_standard])
     "roles/container.developer"     = flatten([local.internal_data_science, local.external_subcon_standard])
 
   }
