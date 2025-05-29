@@ -1,6 +1,7 @@
 import pytest
 from matrix.pipelines.matrix_transformations.transformations import (
     AlmostPureRankBasedFrequentFlyerTransformation,
+    NoTransformation,
     RankBasedFrequentFlyerTransformation,
 )
 from pyspark.sql import SparkSession
@@ -217,3 +218,18 @@ def test_almost_pure_frequent_flyer_transformation(spark, sample_matrix):
     expected = spark.createDataFrame(data, schema)
 
     assertDataFrameEqual(result, expected)
+
+
+def test_no_transformation(spark, sample_matrix):
+    """
+    Given a sample matrix, when the no transformation is applied,
+    then the input matrix should be returned unchanged.
+    """
+    # Given sample matrix
+    matrix = sample_matrix
+
+    # When the no transformation is applied
+    result = NoTransformation().apply(matrix)
+
+    # Then the input matrix should be returned unchanged
+    assertDataFrameEqual(result, matrix)
