@@ -33,22 +33,21 @@ module "project_iam_bindings" {
     },
 
     {
-      role        = "roles/storage.objectViewer"
+      role        = "roles/storage.objectCreator"
       title       = "external_subcons_gcs_except_embiology"
-      description = "Allow standard contractors to view GCS objects, excluding the embiology folder."
+      description = "Allow standard contractors to list, read, and write GCS objects, excluding the embiology folder."
       expression  = <<-EOT
-        resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/") &&
+        resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/") &&
         !resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/${local.embiology_path_raw}")
       EOT
       members     = [local.external_subcon_standard]
     },
     {
-      role        = "roles/storage.objectViewer"
+      role        = "roles/storage.objectCreator"
       title       = "individual_users_embiology_access"
-      description = "Allow up to 10 specific contractors to view GCS objects only in the embiology folders."
+      description = "Allow up to 10 specific contractors to list, read, and write GCS objects, excluding the embiology folder."
       expression  = <<-EOT
-        resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/") &&
-        resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/${local.embiology_path_raw}")
+        resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/")
       EOT
       members     = [local.external_subcon_embiology]
     }
