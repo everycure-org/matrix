@@ -21,26 +21,6 @@ module "project_iam_bindings" {
     "roles/container.developer"     = flatten([local.internal_data_science, local.external_subcon_standard])
 
   }
-
-  conditional_bindings = [
-    {
-      role        = "roles/storage.objectCreator"
-      title       = "matrix_raw_data_access"
-      description = "Allow matrix-all group to create objects only in RAW data folder"
-      expression  = "resource.name.startsWith(\"projects/_/buckets/${var.storage_bucket_name}/objects/data/01_RAW\")"
-      members     = [local.matrix_all_group]
-    },
-
-    {
-      role        = "roles/storage.objectUser"
-      title       = "individual_users_embiology_access"
-      description = "Allow up to 10 specific contractors to list, read, and write GCS objects, excluding the embiology folder."
-      expression  = <<-EOT
-        resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/")
-      EOT
-      members     = [local.external_subcon_embiology]
-    }
-  ]
 }
 
 // Needed as due to the conditional expression, if any object (e.g., those in the embiology folder) is excluded by the condition, listing operations may be hindered.
