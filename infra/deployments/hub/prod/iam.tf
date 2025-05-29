@@ -1,34 +1,6 @@
-locals {
-  embiology_path_raw = "data/01_RAW/embiology"
-  dev_bucket_name    = "mtrx-us-central1-hub-dev-storage"
+// This file contains IAM bindings for the production environment of the hub project.
 
-  allowed_paths = [
-    "projects/_/buckets/${var.storage_bucket_name}/objects/data/",
-    "projects/_/buckets/${var.storage_bucket_name}/objects/data_releases/",
-    "projects/_/buckets/${var.storage_bucket_name}/objects/kedro/data/",
-  ]
-
-  embiology_path = "projects/_/buckets/${var.storage_bucket_name}/objects/${local.embiology_path_raw}/"
-
-  # Helper to build a logical OR expression for paths
-  path_or_expression = join(" || ", [
-    for p in local.allowed_paths : "resource.name.startsWith(\"${p}\")"
-  ])
-
-  # Same as above, but excludes embiology
-  path_or_exclude_embiology = "( ${local.path_or_expression} ) && !resource.name.startsWith(\"${local.embiology_path}\")"
-
-  # All allowed paths including embiology
-  path_or_include_embiology = join(" || ", concat(local.allowed_paths, [local.embiology_path]))
-
-  # Flatten the members for IAM bindings
-  binding_members = [
-    "serviceAccount:${resource.google_service_account.sa["external_subcon_standard"].email}",
-    "serviceAccount:${resource.google_service_account.sa["internal_data_science"].email}",
-    "serviceAccount:${resource.google_service_account.sa["external_subcon_embiology"].email}"
-  ]
-}
-
+# This module sets up IAM roles and permissions for various service accounts.
 module "project_iam_bindings" {
   source   = "terraform-google-modules/iam/google//modules/projects_iam"
   projects = [var.project_id]
@@ -43,34 +15,6 @@ module "project_iam_bindings" {
     "roles/container.developer"     = local.binding_members
 
   }
-}
-
-resource "google_project_iam_custom_role" "custom_storage_role" {
-  project     = var.project_id
-  role_id     = "customStorageAccess"
-  title       = "Custom Storage Access"
-  description = "Custom role with fine-grained storage and metadata permissions"
-
-  permissions = [
-    "storage.folders.create",
-    "storage.folders.list",
-    "storage.folders.get",
-    "storage.managedFolders.create",
-    "storage.managedFolders.list",
-    "storage.managedFolders.get",
-    "storage.multipartUploads.create",
-    "storage.multipartUploads.abort",
-    "storage.multipartUploads.listParts",
-    "storage.multipartUploads.list",
-    "storage.objects.create",
-    "storage.objects.get",
-    "storage.objects.list",
-    "storage.buckets.get",
-    "storage.objects.list",
-    "storage.managedFolders.get",
-    "storage.managedFolders.list",
-    "storage.multipartUploads.list",
-  ]
 }
 
 # Binding for standard contractors (excludes embiology)
@@ -109,23 +53,7 @@ resource "google_storage_bucket_iam_binding" "object_user_embiology_and_internal
   }
 }
 
-resource "google_project_iam_custom_role" "bigquery_read_write_no_delete" {
-  role_id     = "bigQueryReadWriteNoDelete"
-  title       = "BigQuery Read/Write Without Delete"
-  description = "Allows read and insert access to BigQuery tables without delete/overwrite."
-  project     = var.project_id
 
-  permissions = [
-    "bigquery.datasets.get",
-    "bigquery.tables.get",
-    "bigquery.tables.list",
-    "bigquery.tables.create",
-    "bigquery.tables.updateData",
-    "bigquery.jobs.create",
-    "bigquery.readsessions.create",
-    "bigquery.tables.getData"
-  ]
-}
 
 resource "google_project_iam_member" "bigquery_read_write_no_delete" {
   for_each = toset(local.binding_members)
