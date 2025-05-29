@@ -26,8 +26,9 @@ def apply_matrix_transformations(
     """
     logger.info(f"Applying {len(transformations)} transformations")
 
+    df = matrix
     for name, transform_instance in transformations.items():
         logger.info(f"Applying transformation: {name}")
-        df = transform_instance.apply(matrix)
+        df = transform_instance.apply(df)
 
     return df

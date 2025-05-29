@@ -26,6 +26,13 @@ class MatrixTransformation(ABC):
         pass
 
 
+class NoTransformation(MatrixTransformation):
+    """No transformation applied to the matrix."""
+
+    def apply(self, matrix_df: ps.DataFrame) -> ps.DataFrame:
+        return matrix_df
+
+
 class RankBasedFrequentFlyerTransformation(MatrixTransformation):
     def __init__(
         self,
@@ -104,9 +111,9 @@ class RankBasedFrequentFlyerTransformation(MatrixTransformation):
             "quantile_rank", F.col("rank") / N_matrix
         )
 
-        # Sort if requested
-        if self.perform_sort:
-            matrix_df = matrix_df.orderBy(F.col("rank").desc())
+        # # Sort if requested
+        # if self.perform_sort:
+        #     matrix_df = matrix_df.orderBy(F.col("rank").desc())
 
         return matrix_df
 
