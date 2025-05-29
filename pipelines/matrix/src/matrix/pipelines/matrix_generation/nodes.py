@@ -86,7 +86,7 @@ def _add_flag_columns(
     # Flag off label data
     # off_label = off_label.rename(columns={"subject": "source", "object": "target"})
     # matrix["off_label"] = create_flag_column(off_label)  # all pairs are positive
-    matrix["off_label"] = create_flag_column()
+    # matrix["off_label"] = create_flag_column()
     return matrix
 
 
