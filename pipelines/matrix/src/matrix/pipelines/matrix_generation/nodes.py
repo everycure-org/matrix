@@ -86,6 +86,7 @@ def _add_flag_columns(
     # Flag off label data
     # off_label = off_label.rename(columns={"subject": "source", "object": "target"})
     # matrix["off_label"] = create_flag_column(off_label)  # all pairs are positive
+    matrix["off_label"] = create_flag_column()
     return matrix
 
 
@@ -157,6 +158,7 @@ def generate_pairs(
     matrix = matrix[~is_in_train]
     # Add flag columns for known positives and negatives
     # matrix = _add_flag_columns(matrix, known_pairs, clinical_trials, off_label)
+    matrix = _add_flag_columns(matrix, known_pairs, clinical_trials, off_label)
     return matrix
 
 
