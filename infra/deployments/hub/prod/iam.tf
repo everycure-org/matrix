@@ -67,10 +67,15 @@ resource "google_storage_bucket_iam_binding" "external_subcons_gcs_except_embiol
     title       = "external_subcons_gcs_except_embiology"
     description = "Allow standard contractors to list, read, and write GCS objects, excluding the embiology folder."
     expression  = <<-EOT
-      resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/data/") &&
-      resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/data_releases/") &&
-      resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/kedro/data/") &&
-      !resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/${local.embiology_path_raw}")
+      (
+      resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/data/") 
+      ||
+      resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/data_releases/") 
+      ||
+      resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/kedro/data/")
+      )
+      &&
+      !resource.name.startsWith("projects/_/buckets/${var.storage_bucket_name}/objects/${local.embiology_path_raw}/")
     EOT
   }
 }
