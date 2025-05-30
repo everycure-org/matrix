@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 def apply_matrix_transformations(
     matrix: ps.DataFrame,
     transformations: dict[str, Any],
+    score_col: str,
 ) -> ps.DataFrame:
     """Apply a series of transformations to a DataFrame.
 
@@ -29,6 +30,6 @@ def apply_matrix_transformations(
     df = matrix
     for name, transform_instance in transformations.items():
         logger.info(f"Applying transformation: {name}")
-        df = transform_instance.apply(df)
+        df = transform_instance.apply(df, score_col)
 
     return df

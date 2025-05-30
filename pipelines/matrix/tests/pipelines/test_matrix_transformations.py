@@ -40,8 +40,7 @@ def test_rank_based_frequent_flyer_transformation(spark, sample_matrix):
         decay_matrix=0.1,
         decay_drug=0.05,
         decay_disease=0.05,
-        score_col="treat score",
-    ).apply(matrix)
+    ).apply(matrix_df=matrix, score_col="treat score")
 
     # Round the transformed score to 3 decimal places
     result = result.withColumn("treat score", F.round(F.col("treat score"), 3))
@@ -135,9 +134,7 @@ def test_almost_pure_frequent_flyer_transformation(spark, sample_matrix):
     # When the frequent flyer transformation is applied
     result = AlmostPureRankBasedFrequentFlyerTransformation(
         decay=0.05,
-        epsilon=0.001,
-        score_col="treat score",
-    ).apply(matrix)
+    ).apply(matrix_df=matrix, score_col="treat score")
 
     # Round the transformed score to 3 decimal places
     result = result.withColumn("treat score", F.round(F.col("treat score"), 3))
@@ -229,7 +226,7 @@ def test_no_transformation(spark, sample_matrix):
     matrix = sample_matrix
 
     # When the no transformation is applied
-    result = NoTransformation().apply(matrix)
+    result = NoTransformation().apply(matrix_df=matrix, score_col="treat score")
 
     # Then the input matrix should be returned unchanged
     assertDataFrameEqual(result, matrix)
