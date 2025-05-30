@@ -1,7 +1,4 @@
-from unittest.mock import Mock
-
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import pytest
 from matrix.pipelines.matrix_generation.reporting_plots import (
