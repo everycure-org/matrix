@@ -108,11 +108,7 @@ class RankBasedFrequentFlyerTransformation(MatrixTransformation):
 
 
 class AlmostPureRankBasedFrequentFlyerTransformation(RankBasedFrequentFlyerTransformation):
-    def __init__(
-        self,
-        decay: float,
-        epsilon: float = 0.001
-    ):
+    def __init__(self, decay: float, epsilon: float = 0.001):
         """Initialize the frequent flyer transformation.
 
         Args:
