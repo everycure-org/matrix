@@ -295,8 +295,8 @@ def make_predictions_and_sort(
 
 
 def make_predictions_and_sort_fast(
-    graph: KnowledgeGraph,
-    data: ps.DataFrame,
+    node_embeddings: ps.DataFrame,
+    matrix_pairs: ps.DataFrame,
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     model: ModelWrapper,
     features: List[str],
@@ -309,8 +309,8 @@ def make_predictions_and_sort_fast(
     FUTURE: Perform parallelised computation instead of batching with a for loop.
 
     Args:
-        graph: Knowledge graph.
-        data: Data to predict scores for.
+        node_embeddings: Dataframe with node embeddings.
+        matrix_pairs: Matrix pairs to predict scores for.
         transformers: Dictionary of trained transformers.
         model: Model making the predictions.
         features: List of features, may be regex specified.
@@ -323,11 +323,12 @@ def make_predictions_and_sort_fast(
         Pairs dataset sorted by an additional column containing the probability scores.
     """
 
-    embeddings = graph.select("id", "topological_embedding")
+    embeddings = node_embeddings.select("id", "topological_embedding")
 
-    # TODO: remnant from pyarrow/pandas conversion, find in which node it is created
-    data = (
-        data.drop("__index_level_0__")
+    matrix_pairs_with_embeddings = (
+        matrix_pairs.drop(
+            "__index_level_0__"
+        )  # TODO: remnant from pyarrow/pandas conversion, find in which node it is created
         .join(
             embeddings.withColumnsRenamed({"id": "target", "topological_embedding": "target_embedding"}),
             on="target",
@@ -377,17 +378,16 @@ def make_predictions_and_sort_fast(
             StructField(unknown_score_col_name, DoubleType(), True),
         ]
     )
-    data = data.groupBy("target").applyInPandas(predict_partition, schema)
-    data_pandas = data.toPandas()
+    matrix_pairs_with_scores = matrix_pairs_with_embeddings.groupBy("target").applyInPandas(predict_partition, schema)
 
     # Sort by the probability score
-    sorted_data_pandas = data_pandas.sort_values(by=treat_score_col_name, ascending=False)
+    matrix_pairs_sorted = matrix_pairs_with_scores.orderBy(treat_score_col_name, ascending=False)
 
     # Add rank and quantile rank columns
-    sorted_data_pandas["rank"] = range(1, len(sorted_data_pandas) + 1)
-    sorted_data_pandas["quantile_rank"] = sorted_data_pandas["rank"] / len(sorted_data_pandas)
-
-    return sorted_data_pandas
+    matrix_pairs_sorted_count = matrix_pairs_sorted.count()
+    return matrix_pairs_sorted.withColumn(
+        "rank", F.dense_rank().over(ps.Window.orderBy(F.desc(treat_score_col_name)))
+    ).withColumn("quantile_rank", F.col("rank") / matrix_pairs_sorted_count)
 
 
 @inject_object()

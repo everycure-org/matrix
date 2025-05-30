@@ -102,12 +102,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                             f"matrix_generation.prm.fold_{fold}.matrix_pairs@spark",
                             f"modelling.fold_{fold}.model_input.transformers",
                             f"modelling.fold_{fold}.models.model",
+                            # TODO: can we get features from transformers directly?
                             f"params:modelling.{model_name}.model_options.model_tuning_args.features",
                             "params:matrix_generation.treat_score_col_name",
                             "params:matrix_generation.not_treat_score_col_name",
                             "params:matrix_generation.unknown_score_col_name",
                         ],
-                        outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions_fast@pandas",
+                        outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions_fast@spark",
                         name=f"make_predictions_and_sort_fast_fold_{fold}",
                         # argo_config=ArgoResourceConfig(
                         #     cpu_limit=14, cpu_request=14, memory_limit=310, memory_request=310
