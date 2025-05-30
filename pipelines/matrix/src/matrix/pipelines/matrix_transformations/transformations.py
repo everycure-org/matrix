@@ -111,13 +111,13 @@ class AlmostPureRankBasedFrequentFlyerTransformation(RankBasedFrequentFlyerTrans
     def __init__(
         self,
         decay: float,
+        epsilon: float = 0.001
     ):
         """Initialize the frequent flyer transformation.
 
         Args:
             decay: The negative power applied to the all component scores
         """
-        epsilon = 0.001
         super().__init__(
             matrix_weight=epsilon,
             drug_weight=1.0,
