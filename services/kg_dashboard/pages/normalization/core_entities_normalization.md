@@ -35,7 +35,7 @@ where
       <p class="text-red-500">❌ Some errors require your attention</p>
 
       {#if core_entities_re_normalization_errors.length > 0}
-        <p class="font-bold">{core_entities_re_normalization_errors.length} nodes were re-normalized</p>
+        <p class="font-bold">{core_entities_re_normalization_errors.length} IDs changed during normalization</p>
         <DataTable
           data={core_entities_re_normalization_errors}
           columns={['source', 'original_id', 'id', 'category', 'name']}
