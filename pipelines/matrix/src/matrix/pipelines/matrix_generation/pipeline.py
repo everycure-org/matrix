@@ -1,6 +1,6 @@
 from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
-from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, ArgoNode
+from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, ArgoNode, ArgoResourceConfig
 from matrix.pipelines.modelling.utils import partial_fold
 
 from . import nodes
@@ -97,10 +97,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                         ],
                         outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions_fast@spark",
                         name=f"make_predictions_and_sort_fast_fold_{fold}",
-                        # argo_config=ArgoResourceConfig(
-                        #     cpu_limit=14, cpu_request=14, memory_limit=310, memory_request=310
-                        # ),
-                        argo_config=ARGO_GPU_NODE_MEDIUM,
+                        argo_config=ArgoResourceConfig(
+                            cpu_limit=48, cpu_request=48, memory_limit=310, memory_request=310
+                        ),
                     ),
                     ArgoNode(
                         func=nodes.compare_df,
