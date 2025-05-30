@@ -19,8 +19,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                         func=nodes.apply_matrix_transformations,
                         inputs={
                             "matrix": f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark",
-                            "transformations": "params:matrix_transformations",
-                            "score_col": "params:score_col",
+                            "transformations": "params:matrix_transformations.transformations",
+                            "score_col": "params:matrix_transformations.score_col",
                         },
                         outputs=f"matrix_transformations.fold_{fold}.transformed_matrix@spark",
                         name=f"apply_matrix_transformations_fold_{fold}",
