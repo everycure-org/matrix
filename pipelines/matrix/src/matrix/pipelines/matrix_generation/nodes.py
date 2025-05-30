@@ -306,8 +306,6 @@ def make_predictions_and_sort_fast(
 ) -> pd.DataFrame:
     """Generate and sort probability scores for a drug-disease dataset.
 
-    FUTURE: Perform parallelised computation instead of batching with a for loop.
-
     Args:
         node_embeddings: Dataframe with node embeddings.
         matrix_pairs: Matrix pairs to predict scores for.
@@ -317,10 +315,9 @@ def make_predictions_and_sort_fast(
         treat_score_col_name: Probability score column name.
         not_treat_score_col_name: Probability score column name for not treat.
         unknown_score_col_name: Probability score column name for unknown.
-        batch_by: Column to use for batching (e.g., "target" or "source").
 
     Returns:
-        Pairs dataset sorted by an additional column containing the probability scores.
+        Pairs dataset sorted by score with their rank and quantile rank
     """
 
     embeddings = node_embeddings.select("id", "topological_embedding")
@@ -339,30 +336,24 @@ def make_predictions_and_sort_fast(
             on="source",
             how="left",
         )
+        .filter(F.col("source_embedding").isNotNull() & F.col("target_embedding").isNotNull())
     )
 
-    def predict_partition(partition_df: pd.DataFrame) -> pd.DataFrame:
-        # Drop rows without source/target embeddings
-        partition_df = partition_df.dropna(subset=["source_embedding", "target_embedding"])
-
-        # Apply transformers to data
+    def model_predict(partition_df: pd.DataFrame) -> pd.DataFrame:
         transformed = apply_transformers(partition_df, transformers)
 
-        # TODO: get columns from transformers directly
-        batch_features = _extract_elements_in_list(transformed.columns, features, True)
+        # TODO: can we get columns from transformers directly?
+        model_features = _extract_elements_in_list(transformed.columns, features, True)
 
-        # Generate model probability scores
-        preds = model.predict_proba(transformed[batch_features].values)
-        partition_df[not_treat_score_col_name] = preds[:, 0]
-        partition_df[treat_score_col_name] = preds[:, 1]
-        partition_df[unknown_score_col_name] = preds[:, 2]
+        model_predictions = model.predict_proba(transformed[model_features].values)
+        # TODO: assign scores in one pass?
+        partition_df[not_treat_score_col_name] = model_predictions[:, 0]
+        partition_df[treat_score_col_name] = model_predictions[:, 1]
+        partition_df[unknown_score_col_name] = model_predictions[:, 2]
 
-        # Drop source/target embeddings
-        partition_df = partition_df.drop(columns=["source_embedding", "target_embedding"])
+        return partition_df.drop(columns=["source_embedding", "target_embedding"])
 
-        return partition_df
-
-    schema = StructType(
+    model_predict_schema = StructType(
         [
             StructField("source", StringType(), True),
             StructField("target", StringType(), True),
@@ -378,16 +369,19 @@ def make_predictions_and_sort_fast(
             StructField(unknown_score_col_name, DoubleType(), True),
         ]
     )
-    matrix_pairs_with_scores = matrix_pairs_with_embeddings.groupBy("target").applyInPandas(predict_partition, schema)
+    matrix_pairs_with_scores = matrix_pairs_with_embeddings.groupBy("target").applyInPandas(
+        model_predict, model_predict_schema
+    )
 
-    # Sort by the probability score
     matrix_pairs_sorted = matrix_pairs_with_scores.orderBy(treat_score_col_name, ascending=False)
 
-    # Add rank and quantile rank columns
-    matrix_pairs_sorted_count = matrix_pairs_sorted.count()
-    return matrix_pairs_sorted.withColumn(
-        "rank", F.dense_rank().over(ps.Window.orderBy(F.desc(treat_score_col_name)))
-    ).withColumn("quantile_rank", F.col("rank") / matrix_pairs_sorted_count)
+    # We are using the RDD.zipWithIndex function here, as getting it with through the DataFrame API would involve a Window function without partition, effectively pulling all data into one single partition
+    matrix_pairs_ranked = (
+        matrix_pairs_sorted.rdd.zipWithIndex().toDF().select(F.col("_1.*"), (F.col("_2") + 1).alias("rank"))
+    )
+
+    matrix_pairs_ranked_count = matrix_pairs_sorted.count()
+    return matrix_pairs_ranked.withColumn("quantile_rank", F.col("rank") / matrix_pairs_ranked_count)
 
 
 def compare_df(previous_df, current_df):
@@ -397,10 +391,9 @@ def compare_df(previous_df, current_df):
     comparison_2 = current_df.subtract(previous_df)
 
     try:
-        assert comparison_1.count() == 0, "Previous dataframe has more rows than current dataframe"
-        assert comparison_2.count() == 0, "Current dataframe has more rows than previous dataframe"
+        assert comparison_1.count() == 0
+        assert comparison_2.count() == 0
     except Exception as e:
-        logger.error(f"Not same dataframe: {e}")
         logger.error(f"=== Comparison 1 ===")
         comparison_1.show()
         logger.error(f"=== Comparison 2 ===")
@@ -409,6 +402,7 @@ def compare_df(previous_df, current_df):
         previous_df.show()
         logger.error(f"=== Current dataframe ===")
         current_df.show()
+        raise Exception(f"Not same dataframe: {e}")
     return True
 
 
