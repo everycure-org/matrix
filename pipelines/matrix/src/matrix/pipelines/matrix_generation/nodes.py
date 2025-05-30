@@ -390,6 +390,28 @@ def make_predictions_and_sort_fast(
     ).withColumn("quantile_rank", F.col("rank") / matrix_pairs_sorted_count)
 
 
+def compare_df(previous_df, current_df):
+    previous_df = previous_df.drop("__index_level_0__")
+    current_df = current_df.drop("__index_level_0__")
+    comparison_1 = previous_df.subtract(current_df)
+    comparison_2 = current_df.subtract(previous_df)
+
+    try:
+        assert comparison_1.count() == 0, "Previous dataframe has more rows than current dataframe"
+        assert comparison_2.count() == 0, "Current dataframe has more rows than previous dataframe"
+    except Exception as e:
+        logger.error(f"Not same dataframe: {e}")
+        logger.error(f"=== Comparison 1 ===")
+        comparison_1.show()
+        logger.error(f"=== Comparison 2 ===")
+        comparison_2.show()
+        logger.error(f"=== Previous dataframe ===")
+        previous_df.show()
+        logger.error(f"=== Current dataframe ===")
+        current_df.show()
+    return True
+
+
 @inject_object()
 def generate_reports(
     sorted_matrix_df: pd.DataFrame | ps.DataFrame,
