@@ -19,6 +19,9 @@ MAX_CORE_ENTITIES_NORMALIZATION_ERRORS = 1000
 export EVIDENCE_VAR__max_core_entities_normalization_errors := $(MAX_CORE_ENTITIES_NORMALIZATION_ERRORS)
 export VITE_max_core_entities_normalization_errors := $(MAX_CORE_ENTITIES_NORMALIZATION_ERRORS)
 
+MAX_EDGE_FAILED_NORMALIZATION_BY_NORMALIZATION_SET_PREFIX = 100
+export EVIDENCE_VAR__max_edge_failed_normalization_by_normalization_set_prefix := $(MAX_EDGE_FAILED_NORMALIZATION_BY_NORMALIZATION_SET_PREFIX)
+
 .ONESHELL:
 
 .PHONY: clean install bump_basepath run-dev
