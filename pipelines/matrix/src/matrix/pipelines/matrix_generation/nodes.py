@@ -1,6 +1,5 @@
-import itertools
 import logging
-from typing import Dict, Iterable, Iterator, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import pandas as pd
 import pyspark.sql as ps
