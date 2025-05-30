@@ -36,16 +36,13 @@ def create_pipeline(**kwargs) -> Pipeline:
         )
     )
 
-    # TODO: test with Spark dataframes to make it scalable
     def compare_df(previous_df, current_df):
-        previous_df = previous_df.reset_index(drop=True)
-        current_df = current_df.reset_index(drop=True)
+        comparison_1 = previous_df.subtract(current_df)
+        comparison_2 = current_df.subtract(previous_df)
 
         try:
-            assert len(previous_df) == len(current_df), "Previous dataframe has different rows than current dataframe"
-            assert (
-                (previous_df == current_df).eq(True).all().all()
-            ), "Previous dataframe has different values than current dataframe"
+            assert comparison_1.count() == 0, "Previous dataframe has more rows than current dataframe"
+            assert comparison_2.count() == 0, "Current dataframe has more rows than previous dataframe"
         except AssertionError:
             # breakpoint()
             return False
@@ -120,8 +117,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ArgoNode(
                         func=compare_df,
                         inputs=[
-                            f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
-                            f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions_fast@pandas",
+                            f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark",
+                            f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions_fast@spark",
                         ],
                         outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions_same_flag",
                         name=f"compare_matrix_predictions_fold_{fold}",
