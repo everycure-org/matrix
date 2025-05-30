@@ -13,6 +13,7 @@ from matrix.pipelines.matrix_generation.reporting_tables import ReportingTableGe
 from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.nodes import apply_transformers
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
+from pyspark.sql.types import BooleanType, DoubleType, StringType, StructField, StructType
 from sklearn.impute._base import _BaseImputer
 from tqdm import tqdm
 
@@ -322,37 +323,31 @@ def make_predictions_and_sort_fast(
         Pairs dataset sorted by an additional column containing the probability scores.
     """
 
-    # TODO: remnant from pyarrow/pandas conversion, find in which node it is created
-    data = data.drop("__index_level_0__")
     embeddings = graph.select("id", "topological_embedding")
 
-    data = data.join(
-        embeddings.withColumnsRenamed({"id": "target", "topological_embedding": "target_embedding"}),
-        on="target",
-        how="left",
-    ).join(
-        embeddings.withColumnsRenamed({"id": "source", "topological_embedding": "source_embedding"}),
-        on="source",
-        how="left",
+    # TODO: remnant from pyarrow/pandas conversion, find in which node it is created
+    data = (
+        data.drop("__index_level_0__")
+        .join(
+            embeddings.withColumnsRenamed({"id": "target", "topological_embedding": "target_embedding"}),
+            on="target",
+            how="left",
+        )
+        .join(
+            embeddings.withColumnsRenamed({"id": "source", "topological_embedding": "source_embedding"}),
+            on="source",
+            how="left",
+        )
     )
 
-    def predict_partition(partitionindex: int, partition: Iterable[ps.Row]) -> Iterator[ps.Row]:
-        partition_df = pd.DataFrame.from_records(row.asDict() for row in partition)
-        if partition_df.empty:
-            logger.warning(f"partition with index {partitionindex} is empty")
-            return
-
+    def predict_partition(partition_df: pd.DataFrame) -> pd.DataFrame:
         # Drop rows without source/target embeddings
         partition_df = partition_df.dropna(subset=["source_embedding", "target_embedding"])
-
-        # Return empty dataframe if all rows are dropped
-        if len(partition_df) == 0:
-            return partition_df.drop(columns=["source_embedding", "target_embedding"])
 
         # Apply transformers to data
         transformed = apply_transformers(partition_df, transformers)
 
-        # TODO: get from transformers directly
+        # TODO: get columns from transformers directly
         batch_features = _extract_elements_in_list(transformed.columns, features, True)
 
         # Generate model probability scores
@@ -360,22 +355,39 @@ def make_predictions_and_sort_fast(
         partition_df[not_treat_score_col_name] = preds[:, 0]
         partition_df[treat_score_col_name] = preds[:, 1]
         partition_df[unknown_score_col_name] = preds[:, 2]
+
+        # Drop source/target embeddings
         partition_df = partition_df.drop(columns=["source_embedding", "target_embedding"])
 
-        for row in partition_df.to_dict("records"):
-            yield ps.Row(**row)
+        return partition_df
 
-    data = data.rdd.mapPartitionsWithIndex(predict_partition).toDF()
-    data = data.toPandas()
+    schema = StructType(
+        [
+            StructField("source", StringType(), True),
+            StructField("target", StringType(), True),
+            StructField("is_known_positive", BooleanType(), True),
+            StructField("is_known_negative", BooleanType(), True),
+            StructField("trial_sig_better", BooleanType(), True),
+            StructField("trial_non_sig_better", BooleanType(), True),
+            StructField("trial_sig_worse", BooleanType(), True),
+            StructField("trial_non_sig_worse", BooleanType(), True),
+            StructField("off_label", BooleanType(), True),
+            StructField(not_treat_score_col_name, DoubleType(), True),
+            StructField(treat_score_col_name, DoubleType(), True),
+            StructField(unknown_score_col_name, DoubleType(), True),
+        ]
+    )
+    data = data.groupBy("target").applyInPandas(predict_partition, schema)
+    data_pandas = data.toPandas()
 
     # Sort by the probability score
-    sorted_data = data.sort_values(by=treat_score_col_name, ascending=False)
+    sorted_data_pandas = data_pandas.sort_values(by=treat_score_col_name, ascending=False)
 
     # Add rank and quantile rank columns
-    sorted_data["rank"] = range(1, len(sorted_data) + 1)
-    sorted_data["quantile_rank"] = sorted_data["rank"] / len(sorted_data)
+    sorted_data_pandas["rank"] = range(1, len(sorted_data_pandas) + 1)
+    sorted_data_pandas["quantile_rank"] = sorted_data_pandas["rank"] / len(sorted_data_pandas)
 
-    return sorted_data
+    return sorted_data_pandas
 
 
 @inject_object()
