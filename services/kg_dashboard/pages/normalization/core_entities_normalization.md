@@ -1,6 +1,9 @@
 ---
 title: Core entities
 ---
+<script>
+  const max_core_entities_normalization_errors = import.meta.env.VITE_max_core_entities_normalization_errors;
+</script>
 
 # Summary
 
@@ -33,9 +36,13 @@ where
     {#if core_entities_re_normalization_errors.length > 0 || core_entities_normalization_failure_errors.length > 0}
 
       <p class="text-red-500">❌ Some errors require your attention</p>
-
+      
       {#if core_entities_re_normalization_errors.length > 0}
-        <p class="font-bold">{core_entities_re_normalization_errors.length} IDs changed during normalization</p>
+        {#if core_entities_re_normalization_errors.length === max_core_entities_normalization_errors}
+          <p class="font-bold">At least {max_core_entities_normalization_errors} IDs changed during normalization</p>
+        {:else}
+          <p class="font-bold">{core_entities_re_normalization_errors.length} IDs changed during normalization</p>
+        {/if}
         <DataTable
           data={core_entities_re_normalization_errors}
           columns={['source', 'original_id', 'id', 'category', 'name']}
@@ -44,7 +51,11 @@ where
       {/if}
 
       {#if core_entities_normalization_failure_errors.length > 0}
-        <p class="font-bold">{core_entities_normalization_failure_errors.length} nodes were not normalized</p>
+        {#if core_entities_normalization_failure_errors.length === max_core_entities_normalization_errors}
+          <p class="font-bold">At least {max_core_entities_normalization_errors} nodes were not normalized</p>
+        {:else}
+          <p class="font-bold">{core_entities_normalization_failure_errors.length} nodes were not normalized</p>
+        {/if}
         <DataTable
           data={core_entities_normalization_failure_errors}
           columns={['source', 'original_id', 'id', 'category', 'name']}

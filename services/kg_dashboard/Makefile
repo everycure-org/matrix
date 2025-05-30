@@ -9,9 +9,15 @@ RELEASE_VERSION ?= v0.5.3
 export EVIDENCE_VAR__release_version := $(RELEASE_VERSION)
 export EVIDENCE_VAR__bq_release_version := $(subst .,_,$(RELEASE_VERSION))
 export VITE_release_version := $(RELEASE_VERSION)
+
 export VITE_build_time := $(shell date -u '+%B %d, %Y at %H:%M:%S UTC')
+
 export EVIDENCE_VAR__robokop_version=30fd1bfc18cd5ccb
 export EVIDENCE_VAR__rtx_kg2_version=v2_10_0_validated
+
+MAX_CORE_ENTITIES_NORMALIZATION_ERRORS = 1000
+export EVIDENCE_VAR__max_core_entities_normalization_errors := $(MAX_CORE_ENTITIES_NORMALIZATION_ERRORS)
+export VITE_max_core_entities_normalization_errors := $(MAX_CORE_ENTITIES_NORMALIZATION_ERRORS)
 
 .ONESHELL:
 
