@@ -36,19 +36,6 @@ def create_pipeline(**kwargs) -> Pipeline:
         )
     )
 
-    def compare_df(previous_df, current_df):
-        previous_df = previous_df.drop("__index_level_0__")
-        current_df = current_df.drop("__index_level_0__")
-        comparison_1 = previous_df.subtract(current_df)
-        comparison_2 = current_df.subtract(previous_df)
-
-        try:
-            assert comparison_1.count() == 0, "Previous dataframe has more rows than current dataframe"
-            assert comparison_2.count() == 0, "Current dataframe has more rows than previous dataframe"
-        except Exception as e:
-            raise Exception(f"Not same dataframe: {e}")
-        return True
-
     # Nodes generating scores for each fold and model
     for fold in range(n_cross_val_folds + 1):  # NOTE: final fold is full training data
         # For each fold, generate the pairs
@@ -116,7 +103,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         argo_config=ARGO_GPU_NODE_MEDIUM,
                     ),
                     ArgoNode(
-                        func=compare_df,
+                        func=nodes.compare_df,
                         inputs=[
                             f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark",
                             f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions_fast@spark",
