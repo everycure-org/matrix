@@ -1,0 +1,10 @@
+modelling.xg_ensemble_weighted:
+  _overrides:
+    model_tuning_args:
+      tuner:
+        estimator:
+          device: cuda
+
+  # NOTE: This leverages the custom `merge` resolver to override
+  # the base options with the override block above.
+  model_options: ${merge:${.._model_options},${._overrides}}
