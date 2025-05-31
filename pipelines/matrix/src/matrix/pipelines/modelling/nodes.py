@@ -339,7 +339,9 @@ def fit_transformers(
             weight_fig = plot_gt_weights(tr, data.loc[mask])
 
         fitted[name] = {"transformer": tr, "features": feats}
-
+    if weight_fig is None:
+        weight_fig = plt.figure()
+        plt.text(0.5, 0.5, "No WeightingTransformer fitted", horizontalalignment="center", verticalalignment="center")
     return fitted, weight_fig
 
 
