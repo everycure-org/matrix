@@ -103,4 +103,4 @@ SELECT
 FROM 
     ranked_data
 WHERE 
-    row_num <= 100
+    row_num <= ${max_edge_failed_normalization_by_normalization_set_prefix}
