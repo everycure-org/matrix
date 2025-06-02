@@ -196,7 +196,9 @@ The matrix transformations contain several parameters, which we can optimise for
 We consider the following objective function:
 
 $$
+
 \text{max}_{\text{parameters}} \bigg( \frac{1}{J} \sum_{j = 1}^{J} \mathbb{E}_{\text{folds}}\big( a \,\text{drug-entropy}@n_j + b\, \text{disease-entropy}@n_j + c\,\text{recall}@n_j+ d\,\text{hit}@k_j \big) \bigg)
+
 $$
 
 where $J$ is the number of different values for $n$ and $k$ considered, $\text{recall}@n$ measures the full-matrix ranking performance, $\text{hit}@k$ measures the disease-specific ranking performance and $a, b, c, d$ are positive weights adding up to 1. 
