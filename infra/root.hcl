@@ -60,6 +60,7 @@ variable "infra_bucket_name" {}
 variable "github_classic_token_for_cloudbuild" {}
 variable "github_repo_path_to_folder" {}
 variable "gitcrypt_key" {}
+variable "slack_webhook_url" {}
 EOF
 }
 
