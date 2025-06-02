@@ -8,75 +8,11 @@ To grant production access, users must be added to the appropriate Google Group 
 
 ## Step 2: Service Accounts and Permissions
 
-### 1. Internal Data Science Service Account
-
-#### Google Group:
-
-```
-data-science@everycure.org
-```
-
-#### Service Account:
-
-```bash
-sa-internal-data-science@mtrx-hub-prod-sms.iam.gserviceaccount.com
-```
-
-#### Permissions:
-
-- Access to embiology and other allowed paths
-- BigQuery read/write access (no delete operations)
-- Access to `dev` datasets.
-- View Kubernetes clusters (roles/container.clusterViewer)
-- Write to Artifact Registry (roles/artifactregistry.writer)
-- Develop and manage containers (roles/container.developer)
-
-### 2. External Subcontractor (Embiology)
-
-#### Google Group:
-
-```
-ext.subcontractors.embiology@everycure.org
-```
-
-#### Service Account:
-
-```bash
-sa-subcon-embiology@mtrx-hub-prod-sms.iam.gserviceaccount.com
-```
-
-#### Permissions:
-
-- Access to embiology and other allowed paths
-- BigQuery read/write access (no delete operations)
-- Access to `dev` datasets.
-- View Kubernetes clusters (roles/container.clusterViewer)
-- Write to Artifact Registry (roles/artifactregistry.writer)
-- Develop and manage containers (roles/container.developer)
-
-### 3. External Subcontractor (Standard)
-
-#### Google Group:
-
-```
-ext.subcontractors.standard@everycure.org
-```
-
-#### Service Account:
-
-```bash
-sa-subcon-standard@mtrx-hub-prod-sms.iam.gserviceaccount.com
-```
-
-#### Permissions:
-
-- Restricted from accessing embiology folder
-- General access to permitted Cloud Storage paths
-- BigQuery read/write access (no delete operations)
-- Access to `dev` datasets.
-- View Kubernetes clusters (roles/container.clusterViewer)
-- Write to Artifact Registry (roles/artifactregistry.writer)
-- Develop and manage containers (roles/container.developer)
+| **Role**                             | **Google Group**                                      | **Service Account**                                                           | **Permissions**                                                                                                                                                                 |
+|--------------------------------------|--------------------------------------------------------|--------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Internal Data Science**            | data-science@everycure.org                             | sa-internal-data-science@mtrx-hub-prod-sms.iam.gserviceaccount.com            | - Access to embiology and other allowed paths  <br> - BigQuery read/write (no delete) <br> - Access to dev datasets <br> - View Kubernetes clusters (`roles/container.clusterViewer`) <br> - Write to Artifact Registry (`roles/artifactregistry.writer`) <br> - Manage containers (`roles/container.developer`) |
+| **External Subcontractor (Embiology)** | ext.subcontractors.embiology@everycure.org             | sa-subcon-embiology@mtrx-hub-prod-sms.iam.gserviceaccount.com                 | - Access to embiology and other allowed paths <br> - BigQuery read/write (no delete) <br> - Access to dev datasets <br> - View Kubernetes clusters (`roles/container.clusterViewer`) <br> - Write to Artifact Registry (`roles/artifactregistry.writer`) <br> - Manage containers (`roles/container.developer`) |
+| **External Subcontractor (Standard)** | ext.subcontractors.standard@everycure.org              | sa-subcon-standard@mtrx-hub-prod-sms.iam.gserviceaccount.com                  | - **Restricted from embiology folder** <br> - General access to permitted Cloud Storage paths <br> - BigQuery read/write (no delete) <br> - Access to dev datasets <br> - View Kubernetes clusters (`roles/container.clusterViewer`) <br> - Write to Artifact Registry (`roles/artifactregistry.writer`) <br> - Manage containers (`roles/container.developer`) |
 
 ## Step 3: Impersonating a Service Account
 
