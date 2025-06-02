@@ -33,6 +33,10 @@ resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
         env          = "GITHUB_TOKEN"
         version_name = google_secret_manager_secret_version.github_token_version.id
       }
+      secret_manager {
+        env          = "SLACK_WEBHOOK_URL"
+        version_name = google_secret_manager_secret_version.slack_webhook_url_version.id
+      }
     }
 
     step {
@@ -111,9 +115,35 @@ resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
       args = [
         "-c",
         <<-EOF
-        if [ "$$BUILD_STATUS" != "SUCCESS" ]; then
-          echo "Build failed. Sending Slack notification..."
+        # Check if the previous step failed. If not, exit gracefully.
+        if [ "$?" -eq 0 ]; then
+          echo "Build succeeded, skipping failure notification."
+          exit 0
         fi
+
+        echo "Build failed, sending Slack notification..."
+
+        # Retrieve the secret webhook URL
+        SLACK_WEBHOOK_URL=$$${SLACK_WEBHOOK_URL}
+
+        # Construct the commit URL (adjust if you use a different Git provider)
+        COMMIT_URL="https://github.com/$${REPO_OWNER}/$${REPO_NAME}/commit/$${SHORT_SHA}"
+
+        # Construct the logs URL (recommended to set _LOGS_URL in the trigger)
+        # Using a fallback if the custom substitution isn't set
+        ACTION_RUN_LINK="$${_LOGS_URL:-https://console.cloud.google.com/cloud-build/builds/$${BUILD_ID}?project=$${PROJECT_ID}}"
+
+        # Prepare the multi-line message. The `printf` command helps with formatting.
+        MESSAGE=$(printf "🚧 *Terraform Deployment Failed!* 🚨\n👩‍💻 *Code URL:* %s\n🚀 *Action run link:* %s\n📂 *Deployment path:* %s" \
+          "$$${COMMIT_URL}" \
+          "$$${ACTION_RUN_LINK}" \
+          "$$${_DEPLOYMENT_PATH:-Not Set}")
+
+        # Format the JSON payload, escaping special characters
+        JSON_PAYLOAD=$(printf '{"text": "%s"}' "$MESSAGE")
+
+        # Send the notification using curl
+        curl -X POST -H 'Content-type: application/json' --data "$JSON_PAYLOAD" "$SLACK_WEBHOOK_URL"
         EOF
       ]
       id = "slack-notification"
@@ -122,7 +152,8 @@ resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
       // However, we can check the build status using the $$BUILD_STATUS variable.
       // The $$BUILD_STATUS variable is set to "SUCCESS" if the build was successful,
       // and "FAILURE" if it failed.
-      wait_for = ["-"]
+      wait_for   = ["-"]
+      secret_env = ["SLACK_WEBHOOK_URL"]
     }
 
   }

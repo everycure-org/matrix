@@ -41,3 +41,8 @@ variable "gitcrypt_key" {
   description = "The gitcrypt key used to unlock the secrets repository."
   type        = string
 }
+
+variable "slack_webhook_url" {
+  description = "The Slack webhook URL for notifications."
+  type        = string
+}

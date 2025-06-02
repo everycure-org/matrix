@@ -18,4 +18,5 @@ inputs = {
   github_branch_to_run_on             = "infra"
   github_repo_path_to_folder          = get_path_from_repo_root()
   gitcrypt_key                        = filebase64("${dirname(find_in_parent_folders("root.hcl"))}/secrets/dev/git-crypt.key")
+  slack_webhook_url                   = file("${dirname(find_in_parent_folders("root.hcl"))}/secrets/slack_webhook_url.txt")
 }
