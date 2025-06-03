@@ -1,3 +1,4 @@
+// This module creates a Google Cloud Build connection to a GitHub repository using the Cloud Build API v2.
 resource "google_cloudbuildv2_connection" "github_connection" {
   name     = "github-connection"
   location = var.location
