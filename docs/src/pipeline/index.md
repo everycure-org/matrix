@@ -247,7 +247,7 @@ The matrix transformation pipeline applies changes to the full matrix after itâ€
 Frequent flyers are drugs or diseases that often appear at the top of the matrix because they have unusually high treat scores. This can skew results, making it harder to find less obvious but important pairs.
 Ranking-based matrix normalization helps fix this by adjusting scores to reduce the influence of these frequent flyers, giving a fairer ranking to all pairs.
 
-See experiment details [here](https://github.com/everycure-org/lab-notebooks/blob/main/alexei/3_frequent_flyers_eval_and_normalisation/report.md)
+See experiment details [here](https://docs.dev.everycure.org/experiments/2025/matrix_transformation_refined/)
 
 
 ##### Rank based frequent flyer transformation
