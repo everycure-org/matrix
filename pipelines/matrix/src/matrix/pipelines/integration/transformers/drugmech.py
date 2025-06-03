@@ -11,6 +11,10 @@ logger = logging.getLogger(__name__)
 
 
 class DrugMechTransformer(Transformer):
+    def __init__(self, version: str):
+        super().__init__()
+        self._version = version
+
     def transform(self, edges_df: ps.DataFrame, **kwargs) -> Dict[str, ps.DataFrame]:
         edges = self._extract_edges(edges_df)
         nodes = (
