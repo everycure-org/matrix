@@ -65,14 +65,14 @@ class RankBasedFrequentFlyerTransformation(MatrixTransformation):
         """Apply the frequent flyer transformation to the matrix.
 
         Args:
-            matrix_df: Input DataFrame to transform
+            matrix_df: Input DataFrame to transform. Must contain the following columns:
+                - source: The source entity (e.g. drug)
+                - target: The target entity (e.g. disease)
+                - quantile_rank: The quantile rank of the score
 
         Returns:
             Transformed DataFrame
         """
-        # Ensure matrix is ordered by score
-        matrix_df = matrix_df.orderBy(F.col(score_col).desc())
-
         # Count entities
         N_drug = matrix_df.select("source").distinct().count()
         N_disease = matrix_df.select("target").distinct().count()
