@@ -120,10 +120,10 @@ class DiseaseAreaSplit(BaseCrossValidator):
         """
 
         if self.disease_grouping_type in disease_list.columns:
-            disease_list_copy = disease_list[["category_class", self.disease_grouping_type]]
+            disease_list_copy = disease_list[["id", self.disease_grouping_type]]
             # merge disease list with data
             X_copy = X.copy()
-            X_copy = X_copy.merge(disease_list_copy, left_on="target", right_on="category_class", how="left")
+            X_copy = X_copy.merge(disease_list_copy, left_on="target", right_on="id", how="left")
             X_copy = X_copy[~X_copy.category_class.isna()]
         else:
             raise ValueError(f"Disease grouping type {self.disease_grouping_type} not found in disease_list")
