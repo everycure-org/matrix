@@ -34,7 +34,8 @@ resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
         version_name = google_secret_manager_secret_version.github_token_version.id
       }
     }
-
+    // The following steps are executed in the order they are defined.
+    // The first step initializes the git submodules
     step {
       name       = "ghcr.io/devops-infra/docker-terragrunt:aws-gcp-tf-1.11.4-tg-0.78.4"
       entrypoint = "bash"
@@ -48,7 +49,7 @@ resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
       id         = "git-submodule-init"
       secret_env = ["GITHUB_TOKEN"]
     }
-
+    // The second step unlocks the git-crypt key
     step {
       name       = "ghcr.io/devops-infra/docker-terragrunt:aws-gcp-tf-1.11.4-tg-0.78.4"
       entrypoint = "bash"
@@ -65,7 +66,8 @@ resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
       secret_env = ["GIT_CRYPT_KEY"]
       wait_for   = ["git-submodule-init"]
     }
-
+    // The third step initializes the terragrunt configuration
+    // and reconfigures it to ensure that the latest changes are applied.
     step {
       name       = "ghcr.io/devops-infra/docker-terragrunt:aws-gcp-tf-1.11.4-tg-0.78.4"
       entrypoint = "terragrunt"
@@ -74,7 +76,7 @@ resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
       id         = "terragrunt-init-reconfigure"
       wait_for   = ["git-crypt-unlock"]
     }
-
+    // The fourth step runs the terragrunt plan command
     step {
       name       = "ghcr.io/devops-infra/docker-terragrunt:aws-gcp-tf-1.11.4-tg-0.78.4"
       entrypoint = "terragrunt"
@@ -83,7 +85,7 @@ resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
       id         = "terragrunt-plan"
       wait_for   = ["terragrunt-init-reconfigure"]
     }
-
+    // The fifth step checks the branch condition and runs the terragrunt apply command if the condition is met.
     step {
       name       = "ghcr.io/devops-infra/docker-terragrunt:aws-gcp-tf-1.11.4-tg-0.78.4"
       entrypoint = "bash"
