@@ -36,12 +36,12 @@ class NoTransformation(MatrixTransformation):
 class RankBasedFrequentFlyerTransformation(MatrixTransformation):
     def __init__(
         self,
-        matrix_weight: float = 0.001,
-        drug_weight: float = 1.0,
-        disease_weight: float = 1.0,
-        decay_matrix: float = 0.05,
-        decay_drug: float = 0.05,
-        decay_disease: float = 0.05,
+        matrix_weight: float,
+        drug_weight: float,
+        disease_weight: float,
+        decay_matrix: float,
+        decay_drug: float,
+        decay_disease: float,
     ):
         """Initialize the frequent flyer transformation.
 
