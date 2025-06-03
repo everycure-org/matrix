@@ -10,6 +10,7 @@ from matrix.pipelines.ingest_to_N4J.pipeline import create_pipeline as create_in
 from matrix.pipelines.ingestion.pipeline import create_pipeline as create_ingestion_pipeline
 from matrix.pipelines.integration.pipeline import create_pipeline as create_integration_pipeline
 from matrix.pipelines.matrix_generation.pipeline import create_pipeline as create_matrix_pipeline
+from matrix.pipelines.matrix_transformations.pipeline import create_pipeline as create_matrix_transformations_pipeline
 from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
 from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
 from matrix.pipelines.sentinel.pipeline import create_pipeline as create_sentinel_pipeline
@@ -34,6 +35,7 @@ def register_pipelines() -> dict[str, Pipeline]:
         "modelling": create_modelling_pipeline(),
         "matrix_generation": create_matrix_pipeline(),
         "evaluation": create_evaluation_pipeline(),
+        "matrix_transformations": create_matrix_transformations_pipeline(),
         "create_sample": create_create_sample_pipeline(),
         "ingest_to_N4J": create_ingest_to_N4J_pipeline(),
         "sentinel_kg_release_patch": create_sentinel_pipeline(is_patch=True),
@@ -62,6 +64,7 @@ def register_pipelines() -> dict[str, Pipeline]:
           pipelines["modelling"]
         + pipelines["matrix_generation"]
         + pipelines["evaluation"]
+        + pipelines["matrix_transformations"]
     )
     pipelines["feature"] = (
         pipelines["filtering"]
