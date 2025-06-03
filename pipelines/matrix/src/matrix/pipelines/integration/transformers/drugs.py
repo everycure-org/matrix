@@ -12,6 +12,10 @@ logger = logging.getLogger(__name__)
 class DrugsTransformer(Transformer):
     """Transformer for drug input source."""
 
+    def __init__(self, version: str):
+        super().__init__()
+        self._version = version
+
     def transform(self, nodes_df: DataFrame, **kwargs) -> Dict[str, DataFrame]:
         # fmt: off
         df = (
