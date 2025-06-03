@@ -111,11 +111,44 @@ class AlmostPureRankBasedFrequentFlyerTransformation(RankBasedFrequentFlyerTrans
     def __init__(self, decay: float, epsilon: float = 0.001):
         """Initialize the frequent flyer transformation.
 
+        This transformation is a special case of the frequent flyer transformation where the matrix weight is an arbitrarily small number, epsilon
+
         Args:
             decay: The negative power applied to the all component scores
         """
         super().__init__(
             matrix_weight=epsilon,
+            drug_weight=1.0,
+            disease_weight=1.0,
+            decay_matrix=decay,
+            decay_drug=decay,
+            decay_disease=decay,
+        )
+
+    def apply(self, matrix_df: ps.DataFrame, score_col: str) -> ps.DataFrame:
+        """Apply the frequent flyer transformation to the matrix.
+
+        Args:
+            matrix_df: Input DataFrame to transform
+            score_col: Column in the input dataframe containing the treat score
+
+        Returns:
+            Transformed DataFrame
+        """
+        return super().apply(matrix_df, score_col)
+
+
+class UniformRankBasedFrequentFlyerTransformation(RankBasedFrequentFlyerTransformation):
+    def __init__(self, decay: float, epsilon: float = 0.001):
+        """Initialize the uniform frequent flyer transformation.
+
+        This transformation is a special case of the frequent flyer transformation where the matrix weight = drug weight = disease weight = 1.0
+
+        Args:
+            decay: The negative power applied to the all component scores
+        """
+        super().__init__(
+            matrix_weight=1.0,
             drug_weight=1.0,
             disease_weight=1.0,
             decay_matrix=decay,
