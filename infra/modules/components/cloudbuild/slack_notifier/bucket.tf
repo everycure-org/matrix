@@ -16,14 +16,17 @@ locals {
 }
 
 resource "google_storage_bucket_object" "slack_template" {
-  name    = "${local.base_name}-slack.json"
-  bucket  = google_storage_bucket.cloud_build_notifier.name
-  content = local.slack_template_json
+  name          = "${local.base_name}-slack.json"
+  bucket        = google_storage_bucket.cloud_build_notifier.name
+  content       = local.slack_template_json
+  storage_class = "NEARLINE"
 }
 
 resource "google_storage_bucket_object" "cloud_build_notifier_config" {
   name   = "${local.base_name}-config.yaml"
   bucket = google_storage_bucket.cloud_build_notifier.name
+
+  storage_class = "NEARLINE"
 
   content = jsonencode({
     apiVersion = "cloud-build-notifiers/v1"
