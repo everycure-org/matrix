@@ -12,6 +12,10 @@ logger = logging.getLogger(__name__)
 class DiseasesTransformer(Transformer):
     """Transformer for disease input source."""
 
+    def __init__(self, version: str):
+        super().__init__()
+        self._version = version
+
     def transform(self, nodes_df: ps.DataFrame, **kwargs) -> Dict[str, ps.DataFrame]:
         # fmt: off
         df = (
