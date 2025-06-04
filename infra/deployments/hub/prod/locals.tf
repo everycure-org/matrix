@@ -4,29 +4,25 @@ locals {
   embiology_path     = "projects/_/buckets/${var.storage_bucket_name}/objects/${local.embiology_path_raw}/"
   dev_bucket_name    = "mtrx-us-central1-hub-dev-storage"
 
-  # Allowlisted path prefixes
+  # Allowed path prefixes for access
   allowed_paths = [
     "projects/_/buckets/${var.storage_bucket_name}/objects/data/",
     "projects/_/buckets/${var.storage_bucket_name}/objects/data_releases/",
     "projects/_/buckets/${var.storage_bucket_name}/objects/kedro/data/",
   ]
 
-  # OR expressions for IAM Conditions
+  # OR condition for IAM expression (allowed prefixes)
   path_or_expression = join(" || ", [
     for p in local.allowed_paths : "resource.name.startsWith(\"${p}\")"
   ])
 
-  path_or_exclude_embiology = "( ${local.path_or_expression} ) && !resource.name.startsWith(\"${local.embiology_path}\")"
+  # Expression: allow all except embiology
+  path_or_exclude_embiology = "(${local.path_or_expression}) && !resource.name.startsWith(\"${local.embiology_path}\")"
+
+  # Expression: include allowed + embiology
   path_or_include_embiology = join(" || ", concat(local.allowed_paths, [local.embiology_path]))
 
-  # Common binding members
-  binding_members = [
-    "serviceAccount:${resource.google_service_account.sa["external_subcon_standard"].email}",
-    "serviceAccount:${resource.google_service_account.sa["internal_data_science"].email}",
-    "serviceAccount:${resource.google_service_account.sa["external_subcon_embiology"].email}"
-  ]
-
-  # Service Account to Group mapping
+  # Service Account to Group Mapping
   # This map defines the service accounts and their corresponding groups
   group_sa_map = {
     internal_data_science = {
@@ -42,4 +38,11 @@ locals {
       account_id = "sa-subcon-embiology"
     }
   }
+
+  # Common binding members (dynamically resolved in usage)
+  binding_members = [
+    "serviceAccount:${google_service_account.sa[local.group_sa_map.external_subcon_standard.account_id].email}",
+    "serviceAccount:${google_service_account.sa[local.group_sa_map.internal_data_science.account_id].email}",
+    "serviceAccount:${google_service_account.sa[local.group_sa_map.external_subcon_embiology.account_id].email}",
+  ]
 }
