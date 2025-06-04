@@ -56,14 +56,15 @@ The variables required to terraform the module `cloudbuild` is:
 
 ### 2. **Slack Notifications**
 - **Purpose**: Sends deployment status updates to Slack channels.
-We could not implement the Slack Webhook as an additional step in Cloud Build because there is no native way to conditionally run a step only when a previous step fails. Instead, we implemented a Pub/Sub-based notification model, as recommended in the official Cloud Build documentation: [Configure Slack Notifications](https://cloud.google.com/build/docs/configuring-notifications/configure-slack)
+We could not implement the Slack Webhook as an additional step in Cloud Build because there is no native way to conditionally run a step only when a previous step fails. Instead, we implemented a Pub/Sub-based notification model, as recommended in the official Cloud Build documentation: [Configure Slack Notifications](https://cloud.google.com/build/docs/configuring-notifications/configure-slack).
 - **Implementation**:
+  - We are using an offical image for the Cloud Run Slack Notifier. The image is: `us-east1-docker.pkg.dev/gcb-release/cloud-build-notifiers/slack:latest`.  (Modifiable through `slack_notifier/rvariables.tf`).
   - Added `slack_webhook_url` inputs in `terragrunt.hcl` files.
-  - Ensures notifications are sent for deployment failures or timeouts. (Modifiable through variables).
+  - Ensures notifications are sent for deployment failures or timeouts. (Modifiable through `slack_notifier/rvariables.tf`).
 - **Resources Created**
   - Bucket to store the config yaml and slack JSON file. (bucket.tf)
-  - Cloud Run to send the notifications to slack, it listens for messages from Pub/Sub (cloud_run.tf)
-  - Pub/Sub Topic that listens to cloud build status and cloud run as it's subscriber (pub_sub.tf)
+  - Cloud Run to send the notifications to slack, it listens for messages from Pub/Sub (`slack_notifier/cloud_run.tf`)
+  - Pub/Sub Topic that listens to cloud build status and cloud run as it's subscriber (`slack_notifier/pub_sub.tf`)
   - Service Account and permissions for cloud run to access secret (sa.tf)
   - Slack Webhook URL stored in secrets (secret.tf)
 
