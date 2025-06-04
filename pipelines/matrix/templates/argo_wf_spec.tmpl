@@ -88,6 +88,12 @@ spec:
     podSpecPatch: |
       containers:
         - name: main
+        # Add tolerations for large memory nodes and GPU nodes
+          tolerations:
+          - key: "node-memory-size"
+            operator: "Equal"
+            value: "large"
+            effect: "NoSchedule"
           resources:
             requests:
               memory: {% raw %} "{{inputs.parameters.memory_request}}Gi"
