@@ -6,6 +6,10 @@ This document outlines the working of GCP CloudBuild in our project. We introduc
 
 ---
 
+## Special Note
+
+We would need to run `terragrunt run-all apply` the first time, as this would require boostraping the SA etc as we are using gitcrypt and it would be needed to be stored in Google Secret Manager.
+
 ## GCP Projects invovled:
 
 At the time of writting, these GCP projects are invovled:

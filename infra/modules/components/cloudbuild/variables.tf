@@ -46,3 +46,9 @@ variable "slack_webhook_url" {
   description = "The Slack webhook URL for notifications."
   type        = string
 }
+
+variable "terragrunt_container_image" {
+  description = "The Docker image to use for the Terragrunt container."
+  type        = string
+  default     = "ghcr.io/devops-infra/docker-terragrunt:aws-gcp-tf-1.11.4-tg-0.78.4"
+}
