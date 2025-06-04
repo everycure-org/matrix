@@ -1,8 +1,8 @@
-resource "google_project_iam_custom_role" "custom_storage_role" {
+resource "google_project_iam_custom_role" "read_and_no_delete_or_overwrite_storage_role" {
   project     = var.project_id
-  role_id     = "customStorageAccess"
-  title       = "Custom Storage Access"
-  description = "Custom role with fine-grained storage and metadata permissions"
+  role_id     = "ReadAndNoDeleteOrOverwriteStorageRole"
+  title       = "Read and No Delete or Overwrite Storage Role"
+  description = "Custom role with read access to storage and metadata, without delete or overwrite permissions."
 
   permissions = [
     "storage.folders.create",

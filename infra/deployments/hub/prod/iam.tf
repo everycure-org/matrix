@@ -19,7 +19,7 @@ module "project_iam_bindings" {
 # Binding for standard contractors (excludes embiology)
 resource "google_storage_bucket_iam_binding" "object_user_standard" {
   bucket = var.storage_bucket_name
-  role   = google_project_iam_custom_role.custom_storage_role.id
+  role   = google_project_iam_custom_role.read_and_no_delete_or_overwrite_storage_role.id
 
   members = [
     "serviceAccount:${resource.google_service_account.sa["external_subcon_standard"].email}"
@@ -35,7 +35,7 @@ resource "google_storage_bucket_iam_binding" "object_user_standard" {
 # Binding for embiology contractors and internal team (includes embiology)
 resource "google_storage_bucket_iam_binding" "object_user_embiology_and_internal" {
   bucket = var.storage_bucket_name
-  role   = google_project_iam_custom_role.custom_storage_role.id
+  role   = google_project_iam_custom_role.read_and_no_delete_or_overwrite_storage_role.id
 
   members = [
     "serviceAccount:${resource.google_service_account.sa["external_subcon_embiology"].email}",
