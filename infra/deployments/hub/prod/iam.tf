@@ -1,4 +1,3 @@
-// This file contains IAM bindings for the production environment of the hub project.
 
 # This module sets up IAM roles and permissions for various service accounts.
 module "project_iam_bindings" {
