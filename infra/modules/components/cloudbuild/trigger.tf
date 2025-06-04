@@ -37,7 +37,7 @@ resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
     // The following steps are executed in the order they are defined.
     // The first step initializes the git submodules
     step {
-      name       = "ghcr.io/devops-infra/docker-terragrunt:aws-gcp-tf-1.11.4-tg-0.78.4"
+      name       = var.terragrunt_container_image
       entrypoint = "bash"
       args = [
         "-c",
@@ -51,7 +51,7 @@ resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
     }
     // The second step unlocks the git-crypt key
     step {
-      name       = "ghcr.io/devops-infra/docker-terragrunt:aws-gcp-tf-1.11.4-tg-0.78.4"
+      name       = var.terragrunt_container_image
       entrypoint = "bash"
       args = [
         "-c",
@@ -69,7 +69,7 @@ resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
     // The third step initializes the terragrunt configuration
     // and reconfigures it to ensure that the latest changes are applied.
     step {
-      name       = "ghcr.io/devops-infra/docker-terragrunt:aws-gcp-tf-1.11.4-tg-0.78.4"
+      name       = var.terragrunt_container_image
       entrypoint = "terragrunt"
       args       = ["run-all", "init", "-reconfigure"]
       dir        = "$${_TERRAGRUNT_DIR}"
@@ -78,7 +78,7 @@ resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
     }
     // The fourth step runs the terragrunt plan command
     step {
-      name       = "ghcr.io/devops-infra/docker-terragrunt:aws-gcp-tf-1.11.4-tg-0.78.4"
+      name       = var.terragrunt_container_image
       entrypoint = "terragrunt"
       args       = ["run-all", "plan", "-out=plan.tfplan", "-no-color"]
       dir        = "$${_TERRAGRUNT_DIR}"
@@ -87,7 +87,7 @@ resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
     }
     // The fifth step checks the branch condition and runs the terragrunt apply command if the condition is met.
     step {
-      name       = "ghcr.io/devops-infra/docker-terragrunt:aws-gcp-tf-1.11.4-tg-0.78.4"
+      name       = var.terragrunt_container_image
       entrypoint = "bash"
       args = [
         "-c",
