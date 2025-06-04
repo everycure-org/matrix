@@ -139,8 +139,8 @@ ARGO_GPU_NODE_MEDIUM = ArgoResourceConfig(num_gpus=1)
 ARGO_NODE_MEDIUM_MATRIX_GENERATION = ArgoResourceConfig(
     cpu_limit=48,
     cpu_request=48,
-    ephemeral_storage_limit=256,
-    ephemeral_storage_request=256,
-    memory_limit=512,
-    memory_request=512,
+    ephemeral_storage_limit=512,
+    ephemeral_storage_request=512,
+    memory_limit=256,
+    memory_request=256,
 )
