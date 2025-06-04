@@ -6,6 +6,41 @@ This document outlines the working of GCP CloudBuild in our project. We introduc
 
 ---
 
+## GCP Projects invovled:
+
+At the time of writting, these GCP projects are invovled:
+
+1. Matrix Hub Dev (mtrx-hub-dev project)
+2. Matrix Hub Prod (mtrx-hub-prod project)
+3. Workbench 2 (mtrx-wg2-modeling-dev)
+
+---
+
+## Deployment Flow
+
+GCP Cloud Build runs when the following conditions are met. This is detailed in the Workflow Diagram.
+
+![alt text](./assets/gcp_cloud_build_deployment_workflow.png "GCP CloudBuild Deployment Flow")
+
+---
+
+## Important Variables
+
+The variables required to terraform the module `cloudbuild` is:
+
+| Name                         | Description                                                                                                                                                                                                                      | Type   | Example                                 |
+|------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|----------------------------------------|
+| `project_id`                 | The GCP project ID.                                                                                                                                                                                                              | string | `"my-gcp-project"`                      |
+| `github_app_installation_id`| The GitHub App installation ID. More info: [Google Cloud Docs](https://cloud.google.com/build/docs/automating-builds/github/connect-repo-github?generation=2nd-gen)                                                               | string | `"12345678"`                            |
+| `github_repo_owner`          | The owner of the GitHub repository.                                                                                                                                                                                              | string | `"my-org"`                              |
+| `github_repo_name`           | The name of the GitHub repository.                                                                                                                                                                                               | string | `"my-repo"`                             |
+| `github_repo_token`          | The Personal Access Token.                                                                                                                                                                                                       | string | `"ghp_xxxxxxxxxxxxxxxxxxxxxx"`          |
+| `github_repo_deploy_branch`  | The branch to listen to for deployment.                                                                                                                                                                                          | string | `"main"`                                |
+| `github_repo_path_to_folder` | Path to folder with Terraform files.                                                                                                                                                                                             | string | `"infrastructure/environments/prod"`    |
+| `location`                   | GCP region to deploy resources in.                                                                                                                                                                                               | string | `"us-central1"`                         |
+| `gitcrypt_key`               | The gitcrypt key to unlock the secrets repository.                                                                                                                                                                               | string | `"BASE64_ENCODED_KEY"`                  |
+| `slack_webhook_url`          | Slack webhook URL for notifications.                                                                                                                                                                                             | string | `"https://hooks.slack.com/services/..."`|
+
 ## Key Features Introduced
 
 ### 1. **CloudBuild Integration**
@@ -21,6 +56,7 @@ This document outlines the working of GCP CloudBuild in our project. We introduc
 
 ### 2. **Slack Notifications**
 - **Purpose**: Sends deployment status updates to Slack channels.
+We could not implement the Slack Webhook as an additional step in Cloud Build because there is no native way to conditionally run a step only when a previous step fails. Instead, we implemented a Pub/Sub-based notification model, as recommended in the official Cloud Build documentation: [Configure Slack Notifications](https://cloud.google.com/build/docs/configuring-notifications/configure-slack)
 - **Implementation**:
   - Added `slack_webhook_url` inputs in `terragrunt.hcl` files.
   - Ensures notifications are sent for deployment failures or timeouts. (Modifiable through variables).
