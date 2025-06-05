@@ -42,7 +42,7 @@ resource "google_secret_manager_secret" "storage_viewer_key" {
 resource "google_secret_manager_secret_version" "storage_viewer_key" {
   secret                = google_secret_manager_secret.storage_viewer_key.id
   secret_data_wo        = base64decode(google_service_account_key.storage_viewer_key.private_key)
-  is_secret_data_base64 = true
+  is_secret_data_base64 = false
 }
 
 # Grant access to the secret to matrix-all group
