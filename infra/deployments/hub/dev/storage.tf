@@ -40,8 +40,9 @@ resource "google_secret_manager_secret" "storage_viewer_key" {
 }
 
 resource "google_secret_manager_secret_version" "storage_viewer_key" {
-  secret      = google_secret_manager_secret.storage_viewer_key.id
-  secret_data = base64decode(google_service_account_key.storage_viewer_key.private_key)
+  secret                = google_secret_manager_secret.storage_viewer_key.id
+  secret_data_wo        = base64decode(google_service_account_key.storage_viewer_key.private_key)
+  is_secret_data_base64 = true
 }
 
 # Grant access to the secret to matrix-all group
@@ -64,12 +65,12 @@ resource "google_secret_manager_secret_iam_member" "storage_viewer_key_access_wg
   member    = "serviceAccount:vertex-ai-workbench-sa@mtrx-wg2-modeling-dev-9yj.iam.gserviceaccount.com"
 }
 
-
 resource "google_project_iam_member" "storage_viewer_iam" {
   project = var.project_id
   role    = "roles/storage.objectViewer"
   member  = "serviceAccount:${google_service_account.storage_viewer_sa.email}"
 }
+
 resource "google_project_iam_member" "bq_data_viewer" {
   project = var.project_id
   role    = "roles/bigquery.dataViewer"
