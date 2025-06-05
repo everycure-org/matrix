@@ -41,8 +41,8 @@ locals {
 
   # Common binding members (dynamically resolved in usage)
   binding_members = [
-    "serviceAccount:${google_service_account.sa[local.group_sa_map.external_subcon_standard.account_id].email}",
-    "serviceAccount:${google_service_account.sa[local.group_sa_map.internal_data_science.account_id].email}",
-    "serviceAccount:${google_service_account.sa[local.group_sa_map.external_subcon_embiology.account_id].email}",
+    google_service_account.sa["internal_data_science"].member,
+    google_service_account.sa["external_subcon_standard"].member,
+    google_service_account.sa["external_subcon_embiology"].member,
   ]
 }
