@@ -31,6 +31,8 @@ data_sources:
     version: 30fd1bfc18cd5ccb
   spoke:
     version: V5.2
+  monarch:
+    version: 2025-03-10.1
   embiology:
     version: 03032025
 # Dataset with node and edge proposals by the
