@@ -8,5 +8,5 @@
 PATHS=$(cat scripts/cleanup_files.txt | grep -v -E '^(#|$)')
 for path in $PATHS; do
     echo "Deleting $path"
-    gsutil rm -rf $path
+    gsutil -m rm -rf $path
 done
