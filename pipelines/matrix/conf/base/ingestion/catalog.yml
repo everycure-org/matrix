@@ -483,3 +483,54 @@ ingestion.int.embiology.nodes:
 ingestion.int.embiology.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/int/embiology/${globals:data_sources.embiology.version}/edges
+
+# -------------------------------------------------------------------------
+# Monarch Initiative KG
+# -------------------------------------------------------------------------
+ingestion.raw.monarch.nodes@spark:
+  <<: *_layer_raw
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.kg_raw}/KGs/monarch-kg/${globals:data_sources.monarch.version}/monarch-kg-${globals:data_sources.monarch.version}_nodes.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+
+ingestion.raw.monarch.nodes@pandas:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.kg_raw}/KGs/monarch-kg/${globals:data_sources.robokop.version}/monarch-kg-${globals:data_sources.monarch.version}_nodes.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
+
+ingestion.raw.monarch.edges@spark:
+  <<: *_layer_raw
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.kg_raw}/KGs/monarch-kg/${globals:data_sources.monarch.version}/monarch-kg-${globals:data_sources.monarch.version}_edges.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+
+ingestion.raw.monarch.edges@pandas:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.kg_raw}/KGs/monarch-kg/${globals:data_sources.monarch.version}/monarch-kg-${globals:data_sources.monarch.version}_edges.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
+
+ingestion.int.monarch.nodes:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/monarch/${globals:data_sources.monarch.version}/nodes
+
+ingestion.int.monarch.edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/monarch/${globals:data_sources.monarch.version}/edges
