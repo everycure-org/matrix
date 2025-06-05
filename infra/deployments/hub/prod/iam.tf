@@ -1,4 +1,3 @@
-
 # This module sets up IAM roles and permissions for various service accounts.
 module "project_iam_bindings" {
   source   = "terraform-google-modules/iam/google//modules/projects_iam"
@@ -14,6 +13,7 @@ module "project_iam_bindings" {
     "roles/container.developer"     = local.binding_members
 
   }
+  depends_on = [google_service_account.sa]
 }
 
 # Binding for standard contractors (excludes embiology)
