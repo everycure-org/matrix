@@ -1,7 +1,7 @@
 import os
 import secrets
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Optional
 
 import mlflow
 from mlflow.entities import Run, ViewType
