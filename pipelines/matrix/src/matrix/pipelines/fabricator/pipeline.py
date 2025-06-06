@@ -173,6 +173,15 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=fabricate_datasets,
+                inputs={"fabrication_params": "params:fabricator.monarch"},
+                outputs={
+                    "nodes": "ingestion.raw.monarch.nodes@pandas",
+                    "edges": "ingestion.raw.monarch.edges@pandas",
+                },
+                name="fabricate_monarch_datasets",
+            ),
+            node(
+                func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.spoke"},
                 outputs={
                     "nodes": "ingestion.raw.spoke.nodes@pandas",
