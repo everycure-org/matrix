@@ -29,21 +29,11 @@ class RTXTransformer(GraphTransformer):
         """
         match self._version:
             case "v2.7.3":
-                # fmt: off
-                df = (nodes_df
-                      .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
-                      .withColumn("labels",                            f.split(f.col(":LABEL"), RTX_SEPARATOR))
-                      .withColumn("all_categories",                    f.split(f.col("all_categories:string[]"), RTX_SEPARATOR))
-                      .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies:string[]"), RTX_SEPARATOR))
-                      .withColumn("publications",                      f.split(f.col("publications:string[]"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
-                      .withColumn("international_resource_identifier", f.col("iri"))
-                      .withColumnRenamed("id:ID", "id")
-                )
-                # fmt: on
+                df = transform_nodes_v2_7_3(nodes_df)
             case "v2.10.0_validated":
-                df = latest_nodes_dataframe(nodes_df)
+                df = transform_nodes_v2_10_0_validated(nodes_df)
             case _:
-                df = latest_nodes_dataframe(nodes_df)
+                raise NotImplementedError(f"No nodes transformer code implemented for version: {self._version}")
         return df
 
     def transform_edges(
@@ -58,29 +48,31 @@ class RTXTransformer(GraphTransformer):
         """
         match self._version:
             case "v2.7.3":
-                # fmt: off
-                df = (edges_df
-                    .withColumn("aggregator_knowledge_source",   f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR)) # RTX KG2 2.10 does not exist
-                    .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
-                    .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
-                    .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
-                    .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(0)) # RTX KG2 2.10 `primary_knowledge_source``
-                    .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-                    .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-                    .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-                    .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-                    .transform(filter_semmed, curie_to_pmids, **semmed_filters)
-                )
-                # fmt: on
+                df = transform_edges_v2_7_3(edges_df, curie_to_pmids, semmed_filters)
             case "v2.10.0_validated":
-                df = latest_edges_dataframe(edges_df, curie_to_pmids, semmed_filters)
+                df = transform_edges_v2_10_0_validated(edges_df, curie_to_pmids, semmed_filters)
             case _:
-                df = latest_edges_dataframe(edges_df, curie_to_pmids, semmed_filters)
+                raise NotImplementedError(f"No edges transformer code implemented for version: {self._version}")
 
         return df
 
 
-def latest_nodes_dataframe(nodes_df: ps.DataFrame):
+def transform_nodes_v2_7_3(nodes_df: ps.DataFrame):
+    # fmt: off
+    df = (nodes_df
+          .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
+          .withColumn("labels",                            f.split(f.col(":LABEL"), RTX_SEPARATOR))
+          .withColumn("all_categories",                    f.split(f.col("all_categories:string[]"), RTX_SEPARATOR))
+          .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies:string[]"), RTX_SEPARATOR))
+          .withColumn("publications",                      f.split(f.col("publications:string[]"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
+          .withColumn("international_resource_identifier", f.col("iri"))
+          .withColumnRenamed("id:ID", "id")
+    )
+    # fmt: on
+    return df
+
+
+def transform_nodes_v2_10_0_validated(nodes_df: ps.DataFrame):
     # fmt: off
     df = (
         nodes_df
@@ -95,7 +87,27 @@ def latest_nodes_dataframe(nodes_df: ps.DataFrame):
     return df
 
 
-def latest_edges_dataframe(edges_df: ps.DataFrame, curie_to_pmids: ps.DataFrame, semmed_filters: Dict[str, str]):
+def transform_edges_v2_7_3(edges_df: ps.DataFrame, curie_to_pmids: ps.DataFrame, semmed_filters: Dict[str, str]):
+    # fmt: off
+    df = (edges_df
+          .withColumn("aggregator_knowledge_source",   f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR)) # RTX KG2 2.10 does not exist
+          .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
+          .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
+          .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
+          .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(0)) # RTX KG2 2.10 `primary_knowledge_source``
+          .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+          .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+          .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+          .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+          .transform(filter_semmed, curie_to_pmids, **semmed_filters)
+    )
+    # fmt: on
+    return df
+
+
+def transform_edges_v2_10_0_validated(
+    edges_df: ps.DataFrame, curie_to_pmids: ps.DataFrame, semmed_filters: Dict[str, str]
+):
     # fmt: off
     df = (edges_df
           .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
