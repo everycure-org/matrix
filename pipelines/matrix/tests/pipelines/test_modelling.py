@@ -605,7 +605,8 @@ def disease_list():
         {
             "id": ["X", "Y", "Z", "W", "V", "U"],  # Match the target values in sample_data
             "harrisons_view": ["type1", "type2", "type3", "type1", "type2", "type3"],
-        }
+        },
+        index=range(6),  # Add explicit index to match sample_data
     )
 
 
@@ -621,6 +622,10 @@ def disease_area_splitter():
 
 def test_make_folds_with_disease_area_split(sample_data, disease_area_splitter, disease_list):
     """Test make_folds with DiseaseAreaSplit."""
+    # Ensure disease_list has the correct format
+    assert "harrisons_view" in disease_list.columns
+    assert set(disease_list["id"]) == set(sample_data["target"])
+
     result = make_folds(data=sample_data, splitter=disease_area_splitter, disease_list=disease_list)
 
     # Check that all required columns are present
