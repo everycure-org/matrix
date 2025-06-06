@@ -26,9 +26,9 @@ class SpokeTransformer(GraphTransformer):
         """
         match self._version:
             case "V5.2":
-                df = latest_nodes_dataframe(nodes_df)
+                df = transform_nodes_V5_2(nodes_df)
             case _:
-                df = latest_nodes_dataframe(nodes_df)
+                raise NotImplementedError(f"No nodes transformer code implemented for version: {self._version}")
         return df
 
     def transform_edges(self, edges_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
@@ -42,13 +42,13 @@ class SpokeTransformer(GraphTransformer):
         """
         match self._version:
             case "V5.2":
-                df = latest_edges_dataframe(edges_df)
+                df = transform_edges_V5_2(edges_df)
             case _:
-                df = latest_edges_dataframe(edges_df)
+                raise NotImplementedError(f"No edges transformer code implemented for version: {self._version}")
         return df
 
 
-def latest_nodes_dataframe(nodes_df: ps.DataFrame):
+def transform_nodes_V5_2(nodes_df: ps.DataFrame):
     # fmt: off
     df = (
         nodes_df
@@ -65,7 +65,7 @@ def latest_nodes_dataframe(nodes_df: ps.DataFrame):
     return df
 
 
-def latest_edges_dataframe(edges_df: ps.DataFrame):
+def transform_edges_V5_2(edges_df: ps.DataFrame):
     # fmt: off
     df = (edges_df
           .withColumn("knowledge_level",                          F.lit(None).cast(T.StringType()))
