@@ -74,10 +74,11 @@ paths:
   release:            data/releases/${versions.release}/datasets/release
 
   # Run-based
-  modelling:          data/releases/${versions.release}/runs/${run_name}/datasets/modelling
-  evaluation:         data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
+  modelling:                  data/releases/${versions.release}/runs/${run_name}/datasets/modelling
   matrix_generation:  data/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
+  pre_transformed_evaluation:   data/releases/${versions.release}/runs/${run_name}/datasets/pre_transformed_evaluation
   matrix_transformations:  data/releases/${versions.release}/runs/${run_name}/datasets/matrix_transformations
+  evaluation:         data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
   inference:          data/releases/${versions.release}/runs/${run_name}/datasets/inference
  
   tmp:                data/tmp
