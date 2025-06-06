@@ -499,7 +499,7 @@ ingestion.raw.monarch.nodes@spark:
 
 ingestion.raw.monarch.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.kg_raw}/KGs/monarch-kg/${globals:data_sources.robokop.version}/monarch-kg-${globals:data_sources.monarch.version}_nodes.tsv
+  filepath: ${globals:paths.kg_raw}/KGs/monarch-kg/${globals:data_sources.monarch.version}/monarch-kg-${globals:data_sources.monarch.version}_nodes.tsv
   save_args:
     sep: "\t"
     header: true
