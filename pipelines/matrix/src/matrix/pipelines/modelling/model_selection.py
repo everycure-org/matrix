@@ -134,10 +134,10 @@ class DiseaseAreaSplit(BaseCrossValidator):
             # This ensures that any disease containing the selected type anywhere in the string
             # will be included in the test set for that split.
             mask = X_copy[self.disease_grouping_type].fillna("").str.contains(selected_disease_types, na=False)
-            holdout_indices = X_copy[mask].index.tolist()
+            test_indices = X_copy[mask].index.tolist()
             train_indices = X_copy[~mask].index.tolist()
 
-            yield train_indices, holdout_indices
+            yield train_indices, test_indices
 
     def get_n_splits(self, X=None, disease_list=None):
         """Returns the number of splitting iterations in the cross-validator.

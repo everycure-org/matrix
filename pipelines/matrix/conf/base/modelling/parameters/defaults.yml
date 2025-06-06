@@ -26,7 +26,7 @@ modelling.splitter:
   # _object: sklearn.model_selection.StratifiedShuffleSplit
   # test_size: 0.1
   # random_state: ${globals:random_state}
-  # n_splits: ${setting:cross_validation.n_cross_val_folds}
+  n_splits: ${setting:cross_validation.n_cross_val_folds}
 
 # Aggregation functions for cross-validation
 modelling.aggregation_functions:

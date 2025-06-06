@@ -20,6 +20,30 @@ from matrix.utils.hook_utilities import (
 
 from .resolvers import cast_to_int, env, if_null, merge_dicts
 
+
+def validate_disease_split_folds(parameters):
+    """Validate that n_cross_val_folds matches the length of holdout_disease_types when using DiseaseAreaSplit.
+
+    Args:
+        parameters: The parameters dictionary containing splitter configuration
+
+    Returns:
+        The validated n_cross_val_folds value
+
+    Raises:
+        ValueError: If using DiseaseAreaSplit and n_cross_val_folds doesn't match holdout_disease_types length
+    """
+    if parameters.get("_object", "").endswith("DiseaseAreaSplit"):
+        n_folds = parameters.get("n_splits", 1)
+        n_disease_types = len(parameters.get("holdout_disease_types", []))
+        if n_folds != n_disease_types:
+            raise ValueError(
+                f"When using DiseaseAreaSplit, n_cross_val_folds ({n_folds}) must match "
+                f"the number of holdout_disease_types ({n_disease_types})"
+            )
+    return parameters.get("n_splits", 1)
+
+
 hooks = {
     "node_timer": matrix_hooks.NodeTimerHooks(),
     "mlflow": MlflowHook(),
@@ -44,7 +68,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
     generate_dynamic_pipeline_mapping(
         {
             "cross_validation": {
-                "n_cross_val_folds": 1,
+                "n_cross_val_folds": 3,
             },
             "integration": [
                 {"name": "rtx_kg2", "integrate_in_kg": True, "is_private": False},
@@ -121,6 +145,7 @@ CONFIG_LOADER_ARGS = {
         "oc.int": cast_to_int,
         "setting": _load_setting,
         "if_null": if_null,
+        "validate_disease_split": validate_disease_split_folds,
     },
 }
 
