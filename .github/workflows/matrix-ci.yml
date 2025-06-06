@@ -93,6 +93,12 @@ jobs:
           token: ${{ secrets.PAT }}
           persist-credentials: true
 
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider}}
+          service_account: ${{vars.service_account}}
+
       # On every PR
       - run: env | sort # prints out all env variables, helpful for debugging
       - run: make install
