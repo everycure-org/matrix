@@ -110,7 +110,8 @@ def sample_data():
             "target": ["X", "Y", "Z", "W", "V", "U"],
             "target_embedding": [np.array([3, 4])] * 6,
             "y": [1, 0, 1, 0, 1, 0],
-        }
+        },
+        index=range(6),  # Add explicit index
     )
 
 
@@ -595,3 +596,42 @@ def test_model_wrapper():
     proba_mean = model_mean.predict_proba([])
     # then median computed correctly
     assert np.all(proba_mean == [1.5, 2.5, 4.0])
+
+
+@pytest.fixture
+def disease_list():
+    """Create a sample disease list for testing."""
+    return pd.DataFrame(
+        {
+            "id": ["X", "Y", "Z", "W", "V", "U"],  # Match the target values in sample_data
+            "harrisons_view": ["type1", "type2", "type3", "type1", "type2", "type3"],
+        }
+    )
+
+
+@pytest.fixture
+def disease_area_splitter():
+    """Create a DiseaseAreaSplit splitter for testing."""
+    from matrix.pipelines.modelling.model_selection import DiseaseAreaSplit
+
+    return DiseaseAreaSplit(
+        n_splits=3, disease_grouping_type="harrisons_view", holdout_disease_types=["type1", "type2", "type3"]
+    )
+
+
+def test_make_folds_with_disease_area_split(sample_data, disease_area_splitter, disease_list):
+    """Test make_folds with DiseaseAreaSplit."""
+    result = make_folds(data=sample_data, splitter=disease_area_splitter, disease_list=disease_list)
+
+    # Check that all required columns are present
+    required_columns = ["source", "source_embedding", "target", "target_embedding", "split", "fold"]
+    assert all(col in result.columns for col in required_columns)
+
+    # Check that we have the same number of rows as input
+    assert len(result) == len(sample_data) * 4  # 3 folds + 1 full training set
+
+    # Check that splits are properly labeled
+    assert set(result["split"].unique()) == {"TRAIN", "TEST"}
+
+    # Check that the folds column has the correct range
+    assert set(result["fold"].unique()) == {0, 1, 2, 3}
