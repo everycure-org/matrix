@@ -617,6 +617,185 @@ fabricator.robokop:
           - infores:aggregator2
           - infores:aggregator3
 
+fabricator.monarch:
+  nodes:
+    num_rows: 500
+    columns:
+      id:
+        type: generate_unique_id
+        prefix: "MONARCH:"
+        id_length: 12
+      name:
+        type: generate_unique_id
+        prefix: "rs"
+      category:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
+          - biolink:Entity
+          - biolink:ThingWithTaxon
+          - biolink:BiologicalEntity
+          - biolink:Drug
+          - biolink:Disease
+          - biolink:SequenceVariant
+          - biolink:NamedThing
+          - biolink:OntologyClass
+          - biolink:PhysicalEssence
+          - biolink:PhysicalEssenceOrOccurrent
+          - biolink:GenomicEntity
+          - biolink:OrganismTaxon
+      description:
+        type: faker
+        provider: sentence
+      _provided_by:
+        type: generate_values
+        sample_values:
+          - alliance_gene_nodes
+          - alliance_genotype_nodes
+          - clingen_variant_nodes
+          - dictybase_gene_nodes
+          - hgnc_gene_nodes
+          - ncbi_gene_227321_nodes
+          - ncbi_gene_9031_nodes
+          - ncbi_gene_9615_nodes
+          - ncbi_gene_9823_nodes
+          - ncbi_gene_9913_nodes
+          - phenio_nodes
+          - pombase_gene_nodes
+          - reactome_pathway_nodes
+      _full_name:
+        type: generate_values
+        sample_values:
+          - mitochondrial ribosomal protein L22
+          - mitochondrial ribosomal protein L52
+          - tumor necrosis factor
+          - tyrosine kinase 2
+      _symbol:
+        type: generate_values
+        sample_values:
+          - IL10RB
+          - MRPL22
+          - MRPL52
+          - TNF
+          - TYK2
+      _xref:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
+          - ZFIN:ZDB-GENE-070912-274
+          - PANTHER:PTHR44057
+          - UniProtKB:B7SW26
+          - ENSEMBL:ENSDARG00000077403
+          - NCBIGene:557795
+      _synonym:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
+          - zgc:77062
+          - zgc:55377
+          - wu:fe38c12
+          - wu:fi22e10
+          - 14-3-3 epsilon
+          - wu:fb48f06
+          - fe38c12
+          - ywhae
+      _iri:
+        type: generate_values
+        sample_values:
+          - http://purl.obolibrary.org/obo/ZP_0009665
+          - http://purl.obolibrary.org/obo/ZP_0009722
+          - http://purl.obolibrary.org/obo/ZP_0012041
+          - http://purl.obolibrary.org/obo/ZP_0013406
+          - http://purl.obolibrary.org/obo/ZP_0013808
+          - http://purl.obolibrary.org/obo/ZP_0014860
+          - http://purl.obolibrary.org/obo/ZP_0015330
+
+  edges:
+    num_rows: 500
+    columns:
+      id:
+        type: generate_unique_id
+        prefix: "uuid:"
+        id_length: 8
+      subject:
+        type: copy_column
+        source_column: "nodes.id"
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 590590
+      predicate:
+        type: generate_values
+        sample_values:
+          - biolink:treats
+          - biolink:interacts_with
+          - biolink:affects
+          - biolink:subclass_of
+          - biolink:is_nearby_variant_of
+      object:
+        type: copy_column
+        source_column: "nodes.id"
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 49494
+      knowledge_level:
+        type: generate_values
+        sample_values:
+          - prediction
+          - knowledge_assertion
+      agent_type:
+        type: generate_values
+        sample_values:
+          - computational_model
+          - manual_agent
+      primary_knowledge_source:
+        type: generate_values
+        sample_values:
+          - infores:semmeddb
+          - infores:gtex
+          - infores:ubergraph
+          - infores:snpeff
+      publications:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
+          - "PMID:12345678"
+          - "DOI:10.1234/example.5678"
+      original_subject:
+        type: copy_column
+        source_column: "edges.subject"
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 49494
+      original_object:
+        type: copy_column
+        source_column: "edges.object"
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 49494
+      aggregator_knowledge_source:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
+          - infores:aggregator1
+          - infores:aggregator2
+          - infores:aggregator3
+      category:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
+          - biolink:Entity
+          - biolink:ThingWithTaxon
+          - biolink:BiologicalEntity
+          - biolink:Drug
+          - biolink:Disease
+          - biolink:SequenceVariant
+          - biolink:NamedThing
+          - biolink:OntologyClass
+          - biolink:PhysicalEssence
+          - biolink:PhysicalEssenceOrOccurrent
+          - biolink:GenomicEntity
+          - biolink:OrganismTaxon
+
 fabricator.ec_medical_kg:
   nodes:
     num_rows: 30
