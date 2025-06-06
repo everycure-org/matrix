@@ -219,14 +219,15 @@ def prefilter_nodes(
 def make_folds(
     data: pd.DataFrame,
     splitter: BaseCrossValidator,
-    disease_list: pd.DataFrame,
+    disease_list: pd.DataFrame = None,
 ) -> pd.DataFrame:
     """Function to split data.
 
     Args:
         data: Data to split.
         splitter: sklearn splitter object (BaseCrossValidator or its subclasses).
-        disease_list: disease list from https://github.com/everycure-org/matrix-disease-list/
+        disease_list: disease list from https://github.com/everycure-org/matrix-disease-list/.
+            Required only when using DiseaseAreaSplit.
 
     Returns:
         Dataframe with test-train split for all folds.
@@ -238,6 +239,8 @@ def make_folds(
     all_data_frames = []
     # FUTURE: Ensure fields are reflected in GT dataset for future splitters
     if isinstance(splitter, DiseaseAreaSplit):
+        if disease_list is None:
+            raise ValueError("disease_list is required when using DiseaseAreaSplit")
         split_iterator = splitter.split(data, disease_list)
     else:
         split_iterator = splitter.split(data, data["y"])
