@@ -190,9 +190,8 @@ def make_predictions_and_sort(
     embeddings = node_embeddings.select("id", "topological_embedding")
 
     matrix_pairs_with_embeddings = (
-        matrix_pairs.drop(
-            "__index_level_0__"
-        )  # TODO: remnant from pyarrow/pandas conversion, find in which node it is created
+        # TODO: remnant from pyarrow/pandas conversion, find in which node it is created
+        matrix_pairs.drop("__index_level_0__")
         .join(
             embeddings.withColumnsRenamed({"id": "target", "topological_embedding": "target_embedding"}),
             on="target",
