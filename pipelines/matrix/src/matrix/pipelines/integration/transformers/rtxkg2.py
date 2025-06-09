@@ -49,8 +49,6 @@ class RTXTransformer(GraphTransformer):
         # fmt: off
         return (
             edges_df
-            .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
-            .withColumn("agent_type",                    f.lit(None).cast(T.StringType()))
             .withColumn("aggregator_knowledge_source", f.split(f.col("aggregator_knowledge_source"), RTX_SEPARATOR)) #RTX KG2 2.10 has a column for aggregator knowledge source
             .withColumn("publications",                  f.split(f.col("publications"), RTX_SEPARATOR)) # RTX KG2 2.10 no longer has type annotation on publication column
             .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
