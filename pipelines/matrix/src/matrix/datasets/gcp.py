@@ -154,6 +154,7 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         # Ensure dataset exists
         self._create_dataset()
 
+        # TODO: implement overwrite mode
         if save_args.get("mode") == "overwrite":
             # Update table
             pass
