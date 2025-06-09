@@ -31,6 +31,10 @@ def catalog() -> DataCatalog:
     )
 
 
+# Use all_outputs() to get all outputs, including intermediate nodes
+# outputs() only returns terminal nodes
+
+
 def test_all_post_release_paths_namespaced(catalog: DataCatalog, pipelines: Dict[str, Pipeline]):
     # ensures all paths past the unified nodes and edges datasets are namespaced in a `runs` subfolder
     pipe = pipelines["__default__"]
@@ -39,7 +43,7 @@ def test_all_post_release_paths_namespaced(catalog: DataCatalog, pipelines: Dict
 
     outputs = from_nodes_pipeline.only_nodes(
         *[x.name for x in from_nodes_pipeline.nodes if x.name not in release_nodes]
-    ).outputs()
+    ).all_outputs()
 
     # Catalog does not contain dynamically generated outputs
 
@@ -50,21 +54,3 @@ def test_all_post_release_paths_namespaced(catalog: DataCatalog, pipelines: Dict
                 print("Full url matches pattern")
             else:
                 print(f"{catalog._datasets[ds]._full_url} does not match pattern")
-
-    # Issues when running in workbench:
-    # - outputs from filtering:
-    #     (filtered_outputs = {x for x in outputs if x.startswith("filtering")})
-    #   Only contains 3 outputs:
-    # 'filtering.prm.removed_nodes_initial',
-    # 'filtering.prm.removed_nodes_final',
-    # 'filtering.prm.removed_edges'
-    #  - But the catalog contains 6
-    # 'filtering.prm.filtered_edges',
-    # 'filtering.prm.prefiltered_nodes',
-    # 'filtering.prm.filtered_nodes',
-    # 'filtering.prm.removed_nodes_initial',
-    # 'filtering.prm.removed_edges',
-    # 'filtering.prm.removed_nodes_final',
-
-    # The 3 outputs are not used further down in the pipeline - they are terminal nodes
-    # Does outputs definitely contain all the downstream nodes, including intermediate nodes??
