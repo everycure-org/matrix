@@ -77,6 +77,7 @@ paths:
   modelling:          data/releases/${versions.release}/runs/${run_name}/datasets/modelling
   evaluation:         data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
   matrix_generation:  data/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
+  matrix_transformations:  data/releases/${versions.release}/runs/${run_name}/datasets/matrix_transformations
   inference:          data/releases/${versions.release}/runs/${run_name}/datasets/inference
  
   tmp:                data/tmp
