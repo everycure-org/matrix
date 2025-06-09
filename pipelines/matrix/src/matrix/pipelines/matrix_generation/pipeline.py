@@ -1,7 +1,6 @@
 from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
 from matrix.kedro4argo_node import (
-    ARGO_GPU_NODE_MEDIUM,
     ARGO_NODE_MEDIUM_MATRIX_GENERATION,
     ArgoNode,
 )
@@ -69,23 +68,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ArgoNode(
                         func=nodes.make_predictions_and_sort,
                         inputs=[
-                            "matrix_generation.feat.nodes@kg",
-                            f"matrix_generation.prm.fold_{fold}.matrix_pairs@pandas",
-                            f"modelling.fold_{fold}.model_input.transformers",
-                            f"modelling.fold_{fold}.models.model",
-                            f"params:modelling.{model_name}.model_options.model_tuning_args.features",
-                            "params:matrix_generation.treat_score_col_name",
-                            "params:matrix_generation.not_treat_score_col_name",
-                            "params:matrix_generation.unknown_score_col_name",
-                            "params:matrix_generation.matrix_generation_options.batch_by",
-                        ],
-                        outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
-                        name=f"make_predictions_and_sort_fold_{fold}",
-                        argo_config=ARGO_GPU_NODE_MEDIUM,
-                    ),
-                    ArgoNode(
-                        func=nodes.make_predictions_and_sort_fast,
-                        inputs=[
                             "matrix_generation.feat.nodes@spark",
                             f"matrix_generation.prm.fold_{fold}.matrix_pairs@spark",
                             f"modelling.fold_{fold}.model_input.transformers",
@@ -99,16 +81,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions_fast@spark",
                         name=f"make_predictions_and_sort_fast_fold_{fold}",
                         argo_config=ARGO_NODE_MEDIUM_MATRIX_GENERATION,
-                    ),
-                    ArgoNode(
-                        func=nodes.compare_df,
-                        inputs=[
-                            f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark",
-                            f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions_fast@spark",
-                        ],
-                        outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions_same_flag",
-                        name=f"compare_matrix_predictions_fold_{fold}",
-                    ),
+                    )
                 ],
             )
         )
