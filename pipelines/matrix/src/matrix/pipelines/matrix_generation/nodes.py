@@ -12,7 +12,7 @@ from matrix.pipelines.matrix_generation.reporting_tables import ReportingTableGe
 from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.nodes import apply_transformers
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
-from pyspark.sql.types import BooleanType, DoubleType, StringType, StructField, StructType
+from pyspark.sql.types import DoubleType, StructField, StructType
 from sklearn.impute._base import _BaseImputer
 from tqdm import tqdm
 
@@ -352,22 +352,18 @@ def make_predictions_and_sort_fast(
 
         return partition_df.drop(columns=["source_embedding", "target_embedding"])
 
+    structfields_to_keep = [
+        col for col in matrix_pairs_with_embeddings.schema if col.name not in ["target_embedding", "source_embedding"]
+    ]
     model_predict_schema = StructType(
-        [
-            StructField("source", StringType(), True),
-            StructField("target", StringType(), True),
-            StructField("is_known_positive", BooleanType(), True),
-            StructField("is_known_negative", BooleanType(), True),
-            StructField("trial_sig_better", BooleanType(), True),
-            StructField("trial_non_sig_better", BooleanType(), True),
-            StructField("trial_sig_worse", BooleanType(), True),
-            StructField("trial_non_sig_worse", BooleanType(), True),
-            StructField("off_label", BooleanType(), True),
+        structfields_to_keep
+        + [
             StructField(not_treat_score_col_name, DoubleType(), True),
             StructField(treat_score_col_name, DoubleType(), True),
             StructField(unknown_score_col_name, DoubleType(), True),
         ]
     )
+
     matrix_pairs_with_scores = matrix_pairs_with_embeddings.groupBy("target").applyInPandas(
         model_predict, model_predict_schema
     )
