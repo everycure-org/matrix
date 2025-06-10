@@ -226,7 +226,7 @@ def create_shared_pipeline() -> Pipeline:
             ArgoNode(
                 func=nodes.attach_embeddings,
                 inputs=[
-                    "modelling.raw.known_pairs@spark",
+                    "modelling.raw.known_pairs_temp@spark",
                     "embeddings.feat.nodes",
                 ],
                 outputs="modelling.int.known_pairs@spark",

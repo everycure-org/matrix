@@ -37,6 +37,10 @@ modelling.int.known_pairs@pandas:
   <<: [*_pandas_parquet, *_model_input_ds]
   filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth_embeddings
 
+modelling.raw.known_pairs_temp@spark:
+  <<: [*_spark_parquet, *_model_input_ds]
+  filepath: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.5.3/runs/modelling-run-9bffaff9/datasets/modelling/ground_truth/translator/v2.10.0_validated/ground_truth_pairs
+
 modelling.raw.known_pairs@spark:
   <<: [*_spark_parquet, *_model_input_ds]
   filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth_pairs
