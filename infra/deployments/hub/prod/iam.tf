@@ -68,3 +68,11 @@ resource "google_storage_bucket_iam_member" "dev_bucket_read_access_for_prod" {
   role     = "roles/storage.objectViewer"
   member   = each.value
 }
+
+// Granting read access to the dev bucket for prod service accounts.
+resource "google_storage_bucket_iam_member" "dev_bucket_read_access_for_prod" {
+  for_each = toset(local.binding_members)
+  bucket   = local.dev_bucket_name
+  role     = "roles/storage.legacyBucketReader"
+  member   = each.value
+}
