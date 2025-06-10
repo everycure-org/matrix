@@ -162,7 +162,7 @@ class SparkHooks:
                 logger.info("Thus determined not to be in k8s cluster and executing with service-account.json file")
 
             # When running `kedro run`, the SparkSession is created with the impersonation service account.
-            if os.environ.get("SPARK_IMPERSONATION_SERVICE_ACCOUNT"):
+            if os.environ.get("SPARK_IMPERSONATION_SERVICE_ACCOUNT") is not None:
                 service_account = os.environ["SPARK_IMPERSONATION_SERVICE_ACCOUNT"]
                 parameters["spark.hadoop.fs.gs.auth.impersonation.service.account"] = service_account
                 logger.info(f"Using service account: {service_account} for spark impersonation")
