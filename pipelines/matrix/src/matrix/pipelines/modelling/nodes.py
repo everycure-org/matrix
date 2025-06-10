@@ -141,6 +141,25 @@ def attach_embeddings(
     Returns:
         DataFrame with source and target embeddings attached
     """
+    # remove pairs which have the following diseases/drugs
+    diseases = [
+        "MONDO:0004235",
+        "MONDO:0005184",
+        "MONDO:0006804",
+        "MONDO:0008635",
+        "MONDO:0010916",
+        "MONDO:0044915",
+        "MONDO:0054842",
+    ]
+    drugs = [
+        "CHEBI:32246",
+        "CHEBI:6443",
+        "CHEMBL.COMPOUND:CHEMBL1201585",
+        "PUBCHEM.COMPOUND:131750181",
+        "PUBCHEM.COMPOUND:132508503",
+        "PUBCHEM.COMPOUND:6918670",
+    ]
+    pairs_df = pairs_df.filter(~((f.col("disease").isin(diseases)) & (f.col("drug").isin(drugs))))
     return pairs_df.transform(_add_embedding, from_=nodes, using="source").transform(
         _add_embedding, from_=nodes, using="target"
     )
