@@ -109,13 +109,61 @@ class RankBasedFrequentFlyerTransformation(MatrixTransformation):
 
 class AlmostPureRankBasedFrequentFlyerTransformation(RankBasedFrequentFlyerTransformation):
     def __init__(self, decay: float, epsilon: float = 0.001):
-        """Initialize the frequent flyer transformation.
+        """Initialize the almost pure rank-based frequent flyer transformation.
+
+        This transformation is a special case of the frequent flyer transformation where:
+            - Matrix weight is set to a small epsilon value (default: 0.001)
+            - Decay factor is constant across all components (matrix, drug, and disease)
+            - Drug and disease weights are equal (both set to 1.0)
+
+        This configuration emphasizes the importance of drug and disease-specific rankings
+        while minimizing the influence of the overall matrix ranking.
+
+        Args:
+            decay: The negative power applied to all component scores (matrix, drug, and disease)
+            epsilon: Small value used for the matrix weight (default: 0.001)
+
+        Returns:
+            None
+        """
+        super().__init__(
+            matrix_weight=epsilon,
+            drug_weight=1.0,
+            disease_weight=1.0,
+            decay_matrix=decay,
+            decay_drug=decay,
+            decay_disease=decay,
+        )
+
+    def apply(self, matrix_df: ps.DataFrame, score_col: str) -> ps.DataFrame:
+        """Apply the frequent flyer transformation to the matrix.
+
+        Args:
+            matrix_df: Input DataFrame to transform
+            score_col: Column in the input dataframe containing the treat score
+
+        Returns:
+            Transformed DataFrame
+        """
+        return super().apply(matrix_df, score_col)
+
+
+class UniformRankBasedFrequentFlyerTransformation(RankBasedFrequentFlyerTransformation):
+    def __init__(self, decay: float, epsilon: float = 0.001):
+        """Initialize the uniform rank-based frequent flyer transformation.
+
+        This transformation is a special case of the frequent flyer transformation where:
+            - All weights are equal (matrix, drug, and disease weights = 1.0)
+            - Decay factor is constant across all components (matrix, drug, and disease)
+
+        This configuration treats all ranking components (matrix-wide, drug-specific, and disease-specific)
+        with equal importance in the final score calculation.
 
         Args:
             decay: The negative power applied to the all component scores
         """
         super().__init__(
-            matrix_weight=epsilon,
+            matrix_weight=1.0,
             drug_weight=1.0,
             disease_weight=1.0,
             decay_matrix=decay,
