@@ -52,6 +52,23 @@ integration.int.{source}.edges.norm@pandas:
   <<: [*_pandas_parquet, *_layer_int]
   filepath: ${globals:paths.integration}/int/{source}/edges.norm
 
+# temporary datasets for benchmark
+integration.int.drug_list.nodes.norm@spark:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.5.3/datasets/integration/int/drug_list/nodes.norm
+
+integration.int.drug_list.nodes.norm@pandas:
+  <<: [*_pandas_parquet, *_layer_int]
+  filepath: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.5.3/datasets/integration/int/drug_list/nodes.norm
+
+integration.int.disease_list.nodes.norm@spark:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.5.3/datasets/integration/int/disease_list/nodes.norm
+
+integration.int.disease_list.nodes.norm@pandas:
+  <<: [*_pandas_parquet, *_layer_int]
+  filepath: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.5.3/datasets/integration/int/disease_list/nodes.norm
+
 # mapping tables 
 integration.int.{source}.nodes_norm_mapping:
   <<: [*_spark_parquet, *_layer_int]
