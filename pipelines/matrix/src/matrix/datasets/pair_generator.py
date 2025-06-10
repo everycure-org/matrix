@@ -219,6 +219,83 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
         return unknown_data
 
 
+class DiseaseSplitDrugDiseasePairGenerator(SingleLabelPairGenerator):
+    """A pair generator that ensures negative sampling respects disease area splits.
+
+    This generator ensures that diseases in the test set are never used for negative sampling
+    during training, maintaining the integrity of disease area splits. This is important for
+    proper evaluation of model performance on unseen disease areas.
+    """
+
+    def __init__(
+        self,
+        y_label: int,
+        random_state: int,
+        n_unknown: int,
+        drug_flags: List[str],
+        disease_flags: List[str],
+    ) -> None:
+        """Initializes the DiseaseSplitDrugDiseasePairGenerator instance.
+
+        Args:
+            y_label: label to assign to generated pairs.
+            random_state: Random seed.
+            n_unknown: Number of unknown drug-disease pairs to generate.
+            drug_flags: List of knowledge graph flags defining drugs sample set.
+            disease_flags: List of knowledge graph flags defining diseases sample set.
+        """
+        self._n_unknown = n_unknown
+        self._drug_flags = drug_flags
+        self._disease_flags = disease_flags
+        super().__init__(y_label, random_state)
+
+    def generate(self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        """Function to generate drug-disease pairs according to the strategy.
+
+        Args:
+            graph: KnowledgeGraph instance.
+            known_pairs: DataFrame with known drug-disease pairs.
+            kwargs: additional kwargs to use
+        Returns:
+            DataFrame with unknown drug-disease pairs.
+        """
+        # Define ground truth dataset
+        known_data_set = {(drug, disease) for drug, disease in zip(known_pairs["source"], known_pairs["target"])}
+
+        # Get only training diseases
+        train_diseases = set(known_pairs[known_pairs["split"] == "TRAIN"]["target"])
+
+        # Defining list of node id's to sample from
+        drug_samp_ids = graph.flags_to_ids(self._drug_flags)
+        # Filter disease_samp_ids to only include training diseases
+        disease_samp_ids = [d for d in graph.flags_to_ids(self._disease_flags) if d in train_diseases]
+
+        if not disease_samp_ids:
+            raise ValueError("No training diseases found in the knowledge graph")
+
+        # Sample pairs
+        unknown_data = []
+        while len(unknown_data) < self._n_unknown:
+            drug = random.choice(drug_samp_ids)
+            disease = random.choice(disease_samp_ids)
+
+            if (drug, disease) not in known_data_set:
+                unknown_data.append(
+                    [
+                        drug,
+                        graph._embeddings[drug],
+                        disease,
+                        graph._embeddings[disease],
+                        self._y_label,
+                    ]
+                )
+
+        return pd.DataFrame(
+            columns=["source", "source_embedding", "target", "target_embedding", "y"],
+            data=unknown_data,
+        )
+
+
 ## Generators for evaluation datasets
 
 
