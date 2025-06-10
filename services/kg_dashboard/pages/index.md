@@ -29,6 +29,8 @@ select
     , n_edges_without_most_connected_nodes / n_nodes_without_most_connected_nodes as edges_per_node_without_most_connected_nodes
     , n_edges_from_disease_list / n_nodes_from_disease_list as disease_edges_per_node
     , n_edges_from_drug_list / n_nodes_from_drug_list as drug_edges_per_node
+    , median_drug_node_degree
+    , median_disease_node_degree
 from 
     bq.overall_metrics
 ```
@@ -118,22 +120,6 @@ from
 
 
 ## Epistemic Robustness
-
-```sql knowledge_level_score
-SELECT * FROM bq.knowledge_level_score
-```
-
-```sql agent_type_score
-SELECT * FROM bq.agent_type_score
-```
-
-```sql knowledge_level_by_source
-SELECT * FROM bq.knowledge_level_distribution
-```
-
-```sql agent_type_by_source
-SELECT * FROM bq.agent_type_distribution
-```
 
 ```sql epistemic_score
 SELECT * FROM bq.epistemic_score
@@ -299,230 +285,18 @@ SELECT * FROM bq.epistemic_heatmap
 <!-- Spacer -->
 <div class="mb-6"></div>
 
-<div class="text-center text-lg font-semibold mt-6 mb-2">
-    Knowledge Level
-    <div class="text-sm font-normal mt-1">
-        Indicates how strong or certain a statement is—ranging from direct assertions and logical entailments to 
-        predictions and statistical associations.
-    </div>
-    <div class="text-sm font-normal mt-1">
-      A more positive average reflects greater epistemic confidence, while a more negative average indicates weaker 
-      or more speculative knowledge.
-    </div>
-</div>
-
-<!-- Spacer -->
-<div class="mb-6"></div>
-
-<!-- First row: metrics side-by-side -->
-<Grid col=2>
-  <div class="text-center text-lg">
-    <p>
-      <span class="font-semibold text-2xl">
-        <Value data={knowledge_level_score} column="average_knowledge_level" fmt="num2" />
-      </span><br/>
-      Average Knowledge Level
-    </p>
-  </div>
-  <div class="text-center text-lg">
-    <p>
-      <span class="font-semibold text-2xl">
-        <Value data={knowledge_level_score} column="included_edges" fmt="num2m" />
-      </span><br/>
-      edges used in calculation
-    </p>
-  </div>
-</Grid>
-
-<br/>
-
-<!-- Second row: full-width bar chart -->
-<ECharts 
-  style={{ height: '700px' }}
-  config={{
-    title: {
-      text: 'Knowledge Level by Upstream Data Source',
-      left: 'center'
-    },
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'shadow'
-      }
-    },
-    legend: {
-      top: 20
-    },
-    grid: {
-      top: 50,
-      left: '3%',
-      right: '4%',
-      bottom: '15%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category',
-      data: [
-        "Knowledge Assertion",
-        "Logical Entailment",
-        "Statistical Association",
-        "Observation",
-        "Prediction",
-        "Not Provided",
-        "null"
-      ],
-      axisLabel: {
-        rotate: 30,
-        fontSize: 10
-      }
-    },
-    yAxis: {
-      type: 'value',
-      axisLabel: {
-        formatter: function (value) {
-          return (value / 1000).toLocaleString() + 'k';
-    }
-  }
-    },
-    series: Object.entries(groupBy(knowledge_level_by_source, 'upstream_data_source')).map(([source, values]) => ({
-      name: source,
-      type: 'bar',
-      stack: 'total',
-      emphasis: {
-        focus: 'series'
-      },
-      data: [
-        "Knowledge Assertion",
-        "Logical Entailment",
-        "Statistical Association",
-        "Observation",
-        "Prediction",
-        "Not Provided",
-        "null"
-      ].map(k => {
-        const entry = values.find(v => v.knowledge_level === k);
-        return entry ? entry.edge_count : 0;
-      })
-    }))
-  }}
-/>
-
-
-<div class="text-center text-lg font-semibold mt-6 mb-2">
-    Agent Type
-    <div class="text-sm font-normal mt-1">
-        Agent Type describes the origin of an edge in terms of how the knowledge was generated—ranging 
-        from direct human assertions to automated text mining.
-    </div>
-    <div class="text-sm font-normal mt-1">
-        A more positive average reflects greater human involvement, while a more negative average indicates greater 
-        reliance on automated or speculative sources.
-    </div>
-</div>
-
-<!-- Spacer -->
-<div class="mb-6"></div>
-
-
-<!-- First row: metrics side-by-side -->
-<Grid col=2>
-  <div class="text-center text-lg">
-    <p>
-      <span class="font-semibold text-2xl">
-        <Value data={agent_type_score} column="average_agent_type" fmt="num2" />
-      </span><br/>
-      Average Agent Type
-    </p>
-  </div>
-  <div class="text-center text-lg">
-    <p>
-      <span class="font-semibold text-2xl">
-        <Value data={agent_type_score} column="included_edges" fmt="num2m" />
-      </span><br/>
-      edges used in calculation
-    </p>
-  </div>
-</Grid>
-
-<br/>
-
-<!-- Second row: full-width bar chart -->
-<ECharts 
-  style={{ height: '750px' }}
-  config={{
-    title: {
-      text: 'Agent Type by Upstream Data Source',
-      left: 'center'
-    },
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'shadow'
-      }
-    },
-    legend: {
-      top: 20
-    },
-    grid: {
-      top: 50,
-      left: '3%',
-      right: '4%',
-      bottom: '15%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category',
-      data: [
-        "Manual Agent",
-        "Manual Validation\nof Automated Agent",
-        "Data Analysis Pipeline",
-        "Automated Agent",
-        "Computational Model",
-        "Text-Mining Agent",
-        "Image Processing\nAgent",
-        "Not Provided",
-        "null"
-      ],
-      axisLabel: {
-        rotate: 30,
-        fontSize: 10
-      }
-    },
-    yAxis: {
-      type: 'value',
-      axisLabel: {
-        formatter: function (value) {
-          return (value / 1000).toLocaleString() + 'k';
-    }
-  }
-    },
-    series: Object.entries(groupBy(agent_type_by_source, 'upstream_data_source')).map(([source, values]) => ({
-      name: source,
-      type: 'bar',
-      stack: 'total',
-      emphasis: {
-        focus: 'series'
-      },
-      data: [
-        "Manual Agent",
-        "Manual Validation\nof Automated Agent",
-        "Data Analysis Pipeline",
-        "Automated Agent",
-        "Computational Model",
-        "Text-Mining Agent",
-        "Image Processing\nAgent",
-        "Not Provided",
-        "null"
-      ].map(k => {
-        const entry = values.find(v => v.agent_type === k);
-        return entry ? entry.edge_count : 0;
-      })
-    }))
-  }}
-/>
-
 
 ## Disease list nodes connections
+
+<br/>
+
+<Grid col=2>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="disease_edges_per_node" fmt="num1"/></span><br/>average edges per disease node</p>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="median_disease_node_degree" fmt="num0"/></span><br/>median edges per disease node</p>
+</Grid>
+
+<br/>
+
 
 ```sql disease_list_connected_categories
 with total as (
@@ -551,16 +325,10 @@ from
     , bq.overall_metrics
 where 
     -- TODO: parameterize this 
-    cumsum_percentage <= 99.0
+    cumsum_percentage <= 90.0
 order by 
     n_connections desc
 ```
-
-<br/>
-
-<p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="disease_edges_per_node" fmt="num1"/></span><br/>edges per disease node on average</p>
-
-<br/>
 
 <BarChart 
     data={disease_list_connected_categories} 
@@ -571,6 +339,16 @@ order by
 />
 
 ## Drug list nodes connections
+
+<br/>
+
+<Grid col=2>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="drug_edges_per_node" fmt="num1"/></span><br/>average edges per drug node</p>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="median_drug_node_degree" fmt="num0"/></span><br/>median edges per drug node</p>
+</Grid>
+
+<br/>
+
 
 ```sql drug_list_connected_categories
 with total as (
@@ -598,16 +376,10 @@ from
     , bq.overall_metrics
 where 
     -- TODO: parameterize this 
-    cumsum_percentage <= 99.0
+    cumsum_percentage <= 90.0
 order by 
     n_connections desc
 ```
-
-<br/>
-
-<p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="drug_edges_per_node" fmt="num1"/></span><br/>edges per drug node on average</p>
-
-<br/>
 
 <BarChart 
     data={drug_list_connected_categories} 
