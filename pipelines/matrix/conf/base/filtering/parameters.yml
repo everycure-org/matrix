@@ -4,9 +4,9 @@ filtering:
       _object: matrix.pipelines.filtering.filters.KeepRowsContainingFilter
       column: upstream_data_source
       keep_list:
-        - rtxkg2
-        - ec_medical
-        # - robokop
+        #- rtxkg2
+        #- ec_medical
+        - robokop
 
     # remove_rows_by_category:
     #   _object: matrix.pipelines.filtering.filters.RemoveRowsByColumnFilter
@@ -19,9 +19,9 @@ filtering:
       _object: matrix.pipelines.filtering.filters.KeepRowsContainingFilter
       column: upstream_data_source
       keep_list:
-        - rtxkg2
-        - ec_medical
-        # - robokop
+        #- rtxkg2
+        #- ec_medical
+        - robokop
 
     filter_biolink_edges:
       _object: matrix.pipelines.filtering.filters.BiolinkDeduplicateEdgesFilter
