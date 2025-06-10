@@ -21,8 +21,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "argowf.fuse-group.filtering",
             ],
             argo_config=ArgoResourceConfig(
-                memory_limit=75,
-                memory_request=75,
+                memory_limit=150,
+                memory_request=150,
             ),
         ),
         node(
