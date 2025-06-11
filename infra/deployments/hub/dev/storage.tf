@@ -87,3 +87,10 @@ resource "google_project_iam_member" "bq_read_session" {
   role    = "roles/bigquery.readSessionUser"
   member  = "serviceAccount:${google_service_account.storage_viewer_sa.email}"
 }
+
+# Add a new binding for the matrix-all group to allow object listering
+resource "google_storage_bucket_iam_member" "object_lister" {
+  bucket = var.storage_bucket_name
+  role   = "roles/storage.objectViewer"
+  member = "group:matrix-all@everycure.org"
+}
