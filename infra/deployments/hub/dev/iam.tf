@@ -44,14 +44,4 @@ module "project_iam_bindings" {
 
     "roles/compute.networkUser" = [local.matrix_all_group]
   }
-
-  conditional_bindings = [
-    {
-      role        = "roles/storage.objectCreator"
-      title       = "matrix_raw_data_access"
-      description = "Allow matrix-all group to create objects only in RAW data folder"
-      expression  = "resource.name.startsWith(\"projects/_/buckets/mtrx-us-central1-hub-dev-storage/objects/data/01_RAW\")"
-      members     = [local.matrix_all_group]
-    }
-  ]
 }
