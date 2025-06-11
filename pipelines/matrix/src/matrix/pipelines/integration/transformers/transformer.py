@@ -9,6 +9,10 @@ from matrix.pipelines.integration.schema import BIOLINK_KG_EDGE_SCHEMA, BIOLINK_
 class Transformer(ABC):
     """Data source transformer."""
 
+    def __init__(self, version: str):
+        super().__init__()
+        self._version = version
+
     @abstractmethod
     def transform(self, **kwargs) -> Dict[str, ps.DataFrame]: ...
 
@@ -23,9 +27,9 @@ def select_if(df: ps.DataFrame, cols: List[str], cond: bool):
 class GraphTransformer(Transformer):
     """Transformer for graph input sources."""
 
-    def __init__(self, select_cols: str = True) -> None:
+    def __init__(self, version: str, select_cols: str = True) -> None:
         self._select_cols = select_cols
-        super().__init__()
+        super().__init__(version)
 
     def transform(self, nodes_df: ps.DataFrame, edges_df: ps.DataFrame, **kwargs) -> Dict[str, ps.DataFrame]:
         return {
