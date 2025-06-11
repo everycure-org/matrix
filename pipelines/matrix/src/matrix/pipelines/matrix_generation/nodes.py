@@ -161,6 +161,27 @@ def generate_pairs(
     return matrix
 
 
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "source": Column(str, nullable=False),
+            "target": Column(str, nullable=False),
+            "is_known_positive": Column(bool, nullable=False),
+            "is_known_negative": Column(bool, nullable=False),
+            "trial_sig_better": Column(bool, nullable=False),
+            "trial_non_sig_better": Column(bool, nullable=False),
+            "trial_sig_worse": Column(bool, nullable=False),
+            "trial_non_sig_worse": Column(bool, nullable=False),
+            "off_label": Column(bool, nullable=False),
+            "not_treat_score": Column(float, nullable=False),
+            "treat_score": Column(float, nullable=False),
+            "unknown_score": Column(float, nullable=False),
+            "rank": Column(int, nullable=False),
+            "quantile_rank": Column(float, nullable=False),
+        },
+        unique=["source", "target"],
+    )
+)
 def make_predictions_and_sort(
     node_embeddings: ps.DataFrame,
     pairs: ps.DataFrame,
