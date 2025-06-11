@@ -235,7 +235,11 @@ def make_predictions_and_sort(
 
     pairs_sorted = pairs_with_scores.orderBy(treat_score_col_name, ascending=False)
 
-    # We are using the RDD.zipWithIndex function here, as getting it with through the DataFrame API would involve a Window function without partition, effectively pulling all data into one single partition
+    # We are using the RDD.zipWithIndex function here. Getting it through the DataFrame API would involve a Window function without partition, effectively pulling all data into one single partition.
+    # Here is what happens in the next line:
+    # 1. zipWithIndex creates a tuple with the shape (row, index)
+    # 2. When moving from RDD to DataFrame, the column names are named after the Scala tuple fields: _1 for the row and _2 for the index
+    # 3. We're adding 1 to the rank so that it is not zero indexed
     pairs_ranked = pairs_sorted.rdd.zipWithIndex().toDF().select(F.col("_1.*"), (F.col("_2") + 1).alias("rank"))
 
     pairs_ranked_count = pairs_ranked.count()
