@@ -110,19 +110,17 @@ def transform_edges_v2_10_0_validated(
 ):
     # fmt: off
     df = (edges_df
-          .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
-          .withColumn("agent_type",                    f.lit(None).cast(T.StringType()))
-          .withColumn("aggregator_knowledge_source", f.split(f.col("aggregator_knowledge_source"), RTX_SEPARATOR)) #RTX KG2 2.10 has a column for aggregator knowledge source
-          .withColumn("publications",                  f.split(f.col("publications"), RTX_SEPARATOR)) # RTX KG2 2.10 no longer has type annotation on publication column
-          .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
-          .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-          .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-          .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-          .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-          .withColumn("num_references",                f.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
-          .withColumn("num_sentences",                 f.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
-          .transform(filter_semmed, curie_to_pmids, **semmed_filters)
-          )
+            .withColumn("aggregator_knowledge_source",   f.split(f.col("aggregator_knowledge_source"), RTX_SEPARATOR)) #RTX KG2 2.10 has a column for aggregator knowledge source
+            .withColumn("publications",                  f.split(f.col("publications"), RTX_SEPARATOR)) # RTX KG2 2.10 no longer has type annotation on publication column
+            .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
+            .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+            .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+            .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+            .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+            .withColumn("num_references",                f.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
+            .withColumn("num_sentences",                 f.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
+            .transform(filter_semmed, curie_to_pmids, **semmed_filters)
+    )
     # fmt: on
     return df
 
