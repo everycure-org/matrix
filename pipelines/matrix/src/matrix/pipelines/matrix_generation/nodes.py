@@ -163,7 +163,7 @@ def generate_pairs(
 
 def make_predictions_and_sort(
     node_embeddings: ps.DataFrame,
-    matrix_pairs: ps.DataFrame,
+    pairs: ps.DataFrame,
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     model: ModelWrapper,
     features: List[str],
@@ -175,7 +175,7 @@ def make_predictions_and_sort(
 
     Args:
         node_embeddings: Dataframe with node embeddings.
-        matrix_pairs: Matrix pairs to predict scores for.
+        pairs: drug disease pairs to predict scores for.
         transformers: Dictionary of trained transformers.
         model: Model making the predictions.
         features: List of features, may be regex specified.
@@ -189,9 +189,9 @@ def make_predictions_and_sort(
 
     embeddings = node_embeddings.select("id", "topological_embedding")
 
-    matrix_pairs_with_embeddings = (
+    pairs_with_embeddings = (
         # TODO: remnant from pyarrow/pandas conversion, find in which node it is created
-        matrix_pairs.drop("__index_level_0__")
+        pairs.drop("__index_level_0__")
         .join(
             embeddings.withColumnsRenamed({"id": "target", "topological_embedding": "target_embedding"}),
             on="target",
@@ -220,7 +220,7 @@ def make_predictions_and_sort(
         return partition_df.drop(columns=["source_embedding", "target_embedding"])
 
     structfields_to_keep = [
-        col for col in matrix_pairs_with_embeddings.schema if col.name not in ["target_embedding", "source_embedding"]
+        col for col in pairs_with_embeddings.schema if col.name not in ["target_embedding", "source_embedding"]
     ]
     model_predict_schema = StructType(
         structfields_to_keep
@@ -231,19 +231,15 @@ def make_predictions_and_sort(
         ]
     )
 
-    matrix_pairs_with_scores = matrix_pairs_with_embeddings.groupBy("target").applyInPandas(
-        model_predict, model_predict_schema
-    )
+    pairs_with_scores = pairs_with_embeddings.groupBy("target").applyInPandas(model_predict, model_predict_schema)
 
-    matrix_pairs_sorted = matrix_pairs_with_scores.orderBy(treat_score_col_name, ascending=False)
+    pairs_sorted = pairs_with_scores.orderBy(treat_score_col_name, ascending=False)
 
     # We are using the RDD.zipWithIndex function here, as getting it with through the DataFrame API would involve a Window function without partition, effectively pulling all data into one single partition
-    matrix_pairs_ranked = (
-        matrix_pairs_sorted.rdd.zipWithIndex().toDF().select(F.col("_1.*"), (F.col("_2") + 1).alias("rank"))
-    )
+    pairs_ranked = pairs_sorted.rdd.zipWithIndex().toDF().select(F.col("_1.*"), (F.col("_2") + 1).alias("rank"))
 
-    matrix_pairs_ranked_count = matrix_pairs_sorted.count()
-    return matrix_pairs_ranked.withColumn("quantile_rank", F.col("rank") / matrix_pairs_ranked_count)
+    pairs_ranked_count = pairs_ranked.count()
+    return pairs_ranked.withColumn("quantile_rank", F.col("rank") / pairs_ranked_count)
 
 
 @inject_object()
