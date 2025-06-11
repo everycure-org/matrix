@@ -61,15 +61,18 @@ resource "google_project_iam_member" "bigquery_read_write_no_delete" {
   member   = each.value
 }
 
-resource "google_storage_bucket_iam_binding" "dev_bucket_access" {
-  bucket = var.storage_bucket_name
-  role   = "roles/storage.objectViewer"
+// Granting read access to the dev bucket for prod service accounts.
+resource "google_storage_bucket_iam_member" "dev_bucket_read_access_for_prod" {
+  for_each = toset(local.binding_members)
+  bucket   = local.dev_bucket_name
+  role     = "roles/storage.objectViewer"
+  member   = each.value
+}
 
-  members = local.binding_members
-
-  condition {
-    title       = "access_dev_bucket"
-    description = "Allows access to read dev only."
-    expression  = "resource.name.startsWith(\"projects/_/buckets/mtrx-us-central1-hub-dev-storage/objects/data/01_RAW\")"
-  }
+// Granting read access to the dev bucket for prod service accounts.
+resource "google_storage_bucket_iam_member" "dev_bucket_read_access_for_prod" {
+  for_each = toset(local.binding_members)
+  bucket   = local.dev_bucket_name
+  role     = "roles/storage.legacyBucketReader"
+  member   = each.value
 }
