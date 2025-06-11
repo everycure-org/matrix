@@ -1,7 +1,7 @@
 from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
 from matrix.kedro4argo_node import (
-    ARGO_CPU_ONLY_NODE_MEDIUM_MATRIX_GENERATION,
+    ARGO_NODE_MEDIUM_MATRIX_GENERATION,
     ArgoNode,
 )
 from matrix.pipelines.modelling.utils import partial_fold
@@ -80,7 +80,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         ],
                         outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark",
                         name=f"make_predictions_and_sort_fold_{fold}",
-                        argo_config=ARGO_CPU_ONLY_NODE_MEDIUM_MATRIX_GENERATION,
+                        argo_config=ARGO_NODE_MEDIUM_MATRIX_GENERATION,
                     ),
                 ],
             )
