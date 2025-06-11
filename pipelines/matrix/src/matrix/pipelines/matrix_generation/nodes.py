@@ -4,6 +4,7 @@ from typing import Dict, List, Optional, Union
 import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.functions as F
+import pyspark.sql.types as T
 from matplotlib.figure import Figure
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.inject import _extract_elements_in_list, inject_object
@@ -164,21 +165,14 @@ def generate_pairs(
 @check_output(
     schema=DataFrameSchema(
         columns={
-            "source": Column(str, nullable=False),
-            "target": Column(str, nullable=False),
-            "is_known_positive": Column(bool, nullable=False),
-            "is_known_negative": Column(bool, nullable=False),
-            "trial_sig_better": Column(bool, nullable=False),
-            "trial_non_sig_better": Column(bool, nullable=False),
-            "trial_sig_worse": Column(bool, nullable=False),
-            "trial_non_sig_worse": Column(bool, nullable=False),
-            "off_label": Column(bool, nullable=False),
+            "source": Column(T.StringType(), nullable=False),
+            "target": Column(T.StringType(), nullable=False),
             # The three score columns are passed as parameters of the function
-            "not_treat_score": Column(float, nullable=False),
-            "treat_score": Column(float, nullable=False),
-            "unknown_score": Column(float, nullable=False),
-            "rank": Column(int, nullable=False),
-            "quantile_rank": Column(float, nullable=False),
+            "not_treat_score": Column(T.DoubleType(), nullable=False),
+            "treat_score": Column(T.DoubleType(), nullable=False),
+            "unknown_score": Column(T.DoubleType(), nullable=False),
+            "rank": Column(T.LongType(), nullable=False),
+            "quantile_rank": Column(T.DoubleType(), nullable=False),
         },
         unique=["source", "target"],
     )
@@ -192,7 +186,7 @@ def make_predictions_and_sort(
     treat_score_col_name: str,
     not_treat_score_col_name: str,
     unknown_score_col_name: str,
-) -> pd.DataFrame:
+) -> ps.DataFrame:
     """Generate and sort probability scores for a drug-disease dataset.
 
     Args:

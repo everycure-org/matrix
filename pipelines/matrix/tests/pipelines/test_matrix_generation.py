@@ -245,25 +245,22 @@ def test_make_predictions_and_sort(
     transformers,
     mock_model,
 ):
-    # Given a drug list, disease list and objects necessary for inference
-    # When running inference and sorting
     result = make_predictions_and_sort(
         node_embeddings=spark.createDataFrame(sample_node_embeddings),
         pairs=spark.createDataFrame(sample_matrix_data),
         transformers=transformers,
         model=mock_model,
         features=["source_+", "target_+"],
-        treat_score_col_name="score",
+        treat_score_col_name="treat_score",
         not_treat_score_col_name="not_treat_score",
         unknown_score_col_name="unknown_score",
     )
 
-    # Then the output is of the correct format and correctly sorted
     assert isinstance(result, ps.DataFrame)
     result_pandas = result.toPandas()
-    assert "score" in result_pandas.columns
+    assert "treat_score" in result_pandas.columns
     assert len(result_pandas) == 4
-    assert result_pandas["score"].is_monotonic_decreasing
+    assert result_pandas["treat_score"].is_monotonic_decreasing
 
 
 @pytest.fixture
