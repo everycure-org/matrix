@@ -235,7 +235,7 @@ jobs:
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'evidence-deploy.yml',
+              workflow_id: 'kg-dashboard-deploy.yml',
               ref: 'main',
               inputs: {
                 "release_version": '${{ env.release }}' 
