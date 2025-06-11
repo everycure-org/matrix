@@ -3,7 +3,7 @@ from typing import Union
 from kedro.pipeline import Pipeline, pipeline
 
 from matrix import settings
-from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, ArgoNode
+from matrix.kedro4argo_node import ARGO_CPU_ONLY_NODE_MEDIUM, ARGO_GPU_NODE_MEDIUM, ArgoNode
 
 from . import nodes
 from .utils import partial_fold
@@ -82,7 +82,7 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                         },
                         outputs=f"modelling.fold_{fold}.model_input.transformers",
                         name=f"fit_transformers_fold_{fold}",
-                        argo_config=ARGO_GPU_NODE_MEDIUM,
+                        argo_config=ARGO_CPU_ONLY_NODE_MEDIUM,
                     )
                 ]
             ),
@@ -100,7 +100,7 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                         + [f"modelling.{shard}.fold_{fold}.models.model" for shard in range(num_shards)],
                         outputs=f"modelling.fold_{fold}.models.model",
                         name=f"create_model_fold_{fold}",
-                        argo_config=ARGO_GPU_NODE_MEDIUM,
+                        argo_config=ARGO_CPU_ONLY_NODE_MEDIUM,
                     ),
                     ArgoNode(
                         func=partial_fold(nodes.apply_transformers, fold),
@@ -121,7 +121,7 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                         },
                         outputs=f"modelling.fold_{fold}.model_output.predictions",
                         name=f"get_model_predictions_fold_{fold}",
-                        argo_config=ARGO_GPU_NODE_MEDIUM,
+                        argo_config=ARGO_CPU_ONLY_NODE_MEDIUM,
                     ),
                 ],
                 tags=["argowf.fuse", f"argowf.fuse-group.fold-{fold}"],
