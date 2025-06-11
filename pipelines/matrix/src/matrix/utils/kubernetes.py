@@ -53,7 +53,6 @@ def can_talk_to_kubernetes(
         refresh_command = (
             f"gcloud container clusters get-credentials {cluster_name} --project {project} --region {region}"
         )
-        refresh_command = add_impersonation_flag(refresh_command)
         run_gcloud_cmd(refresh_command)
 
     def get_kubernetes_context() -> str:
@@ -68,6 +67,9 @@ def can_talk_to_kubernetes(
             raise EnvironmentError(f"Calling '{e.cmd}' failed, with stderr: '{e.stderr}'") from e
         except EnvironmentError:
             raise
+
+    # Refresh credentials before running the test command.
+    refresh_kube_credentials()
 
     right_kube_context = "_".join(("gke", project, region, cluster_name))
     try:
@@ -84,8 +86,6 @@ def can_talk_to_kubernetes(
     test_cmd = "kubectl get nodes"
     # Drop the stdout of the test_cmd, but track any errors, so they can be logged
     try:
-        # Refresh credentials before running the test command.
-        refresh_kube_credentials()
         subprocess.run(test_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=True)
     except subprocess.CalledProcessError as e:
         logger.debug(f"'{test_cmd}' failed. Reason: {e.stderr}")
