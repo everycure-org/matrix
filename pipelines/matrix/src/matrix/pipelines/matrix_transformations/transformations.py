@@ -85,9 +85,9 @@ class RankBasedFrequentFlyerTransformation(MatrixTransformation):
         disease_window = Window.partitionBy("target").orderBy(F.col(score_col).desc())
 
         matrix_df = (
-            matrix_df.withColumn("rank_drug", F.rank().over(drug_window))
+            matrix_df.withColumn("rank_drug", F.rank().over(disease_window))
             .withColumn("quantile_drug", F.col("rank_drug") / N_drug)
-            .withColumn("rank_disease", F.rank().over(disease_window))
+            .withColumn("rank_disease", F.rank().over(drug_window))
             .withColumn("quantile_disease", F.col("rank_disease") / N_disease)
             .withColumn(f"untransformed_{score_col}", F.col(score_col))
             .withColumn(f"untransformed_rank", F.col("rank").cast("integer"))
@@ -101,7 +101,7 @@ class RankBasedFrequentFlyerTransformation(MatrixTransformation):
 
         # Recalculate rank and quantile_rank based on the new score
         score_window = Window.orderBy(F.col(score_col).desc())
-        matrix_df = matrix_df.withColumn("rank", F.rank().over(score_window)).withColumn(
+        matrix_df = matrix_df.withColumn("rank", F.row_number().over(score_window)).withColumn(
             "quantile_rank", F.col("rank") / N_matrix
         )
         return matrix_df
