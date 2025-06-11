@@ -88,9 +88,7 @@ def register_pipelines() -> dict[str, Pipeline]:
         + pipelines["ingest_to_N4J"]
     )
     pipelines["test_sample"] = (
-        pipelines["filtering"]
-        + pipelines["embeddings"]
-        + pipelines["modelling_run"]
+        pipelines["feature_and_modelling_run"]
     )
     # fmt: on
 
