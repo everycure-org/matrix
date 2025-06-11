@@ -249,7 +249,7 @@ def test_make_predictions_and_sort(
     # When running inference and sorting
     result = make_predictions_and_sort(
         node_embeddings=spark.createDataFrame(sample_node_embeddings),
-        matrix_pairs=spark.createDataFrame(sample_matrix_data),
+        pairs=spark.createDataFrame(sample_matrix_data),
         transformers=transformers,
         model=mock_model,
         features=["source_+", "target_+"],
