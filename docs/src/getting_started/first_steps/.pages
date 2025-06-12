@@ -1,0 +1,7 @@
+nav:
+    - index.md
+    - tech_stack.md
+    - installation.md
+    - local-setup.md
+    - environments_overview.md
+    - sample_environment.md

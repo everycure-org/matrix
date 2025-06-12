@@ -1,6 +1,6 @@
 nav:
     - index.md
-    - onboarding
+    - getting_started
     - pipeline
     - data_science
     - infrastructure

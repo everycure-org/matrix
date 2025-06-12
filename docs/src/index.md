@@ -5,17 +5,27 @@ hide:
   - navigation
 ---
 
+Welcome to the Matrix Project! This documentation provides an introduction to the project and the codebase, and guides you through the process of setting up your local environment.
+
 <div class="grid cards" markdown>
 
--   :material-clock-fast:{ .lg .middle } __Onboarding Manual__ 
+-   :material-book-open-page-variant:{ .lg .middle } __Getting Started__ 
 
     ---
 
     Follow our onboarding document on how to get started developing and contributing code to the Every Cure MATRIX Pipeline
 
-    [:octicons-arrow-right-24: Onboarding](./onboarding/index.md)
+    [:octicons-arrow-right-24: Getting Started](./getting_started/index.md)
 
 -   :material-book-open-page-variant:{ .lg .middle } __Useful Links__ 
+
+    ---
+
+    Curated list of links that are useful for various EveryCure resources
+
+    [:octicons-arrow-right-24: Resources](./resources.md)
+
+-   :material-book-open-page-variant:{ .lg .middle } __Infrastructure__ 
 
     ---
 
@@ -31,7 +41,7 @@ hide:
 
     [:octicons-arrow-right-24: Data API](#)
 
--   :material-matrix:{ .lg .middle } __MATRIX project specific documentation__
+-   :material-matrix:{ .lg .middle } __MATRIX Project Documentation__
 
     ---
 
@@ -57,57 +67,20 @@ hide:
 
 </div>
 
+[Every Cure](https://everycure.org/about/) is a non-profit organization on a mission to unlock the full potential of existing medicines to treat every disease and every patient we possibly can. We are leveraging our AI Platform MATRIX to find new applicatiions of existing medicine. 
 
-## Useful Links to our resources
+### _Why Every Cure?_
 
-Below is a curated list of useful links to various EveryCure resources and tools.
+<iframe width="640" height="390" src="https://www.youtube.com/embed/3ElaCVvDZfI?si=lk3b1rSMutyiierm" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
-## Infrastructure
+### _Why MATRIX?_
 
-- **[EveryCure GCP Dashboard](https://console.cloud.google.com/home/dashboard)**
-- **[EveryCure GCP Vertex AI](https://console.cloud.google.com/vertex-ai)**
-- **[EveryCure GCP BigQuery](https://console.cloud.google.com/bigquery)**
-- **[EveryCure GKE Cluster Dashboard](https://console.cloud.google.com/kubernetes/clusters/details/us-central1/compute-cluster/details?project=mtrx-hub-dev-3of)** – Kubernetes Engine Cluster management for the Matrix platform.
+<iframe width="640" height="390" src="https://www.youtube.com/embed/67_Z40Ap1pU?si=XlCu7fBHxxkBTchH" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
-## Tools & Platforms
+<details> <summary> Podcast summary before you dive in </summary>
 
-- **[GitHub Actions](https://github.com/everycure-org/matrix/actions)** – Continuous integration and delivery pipelines.
-- **[ArgoCD](https://argo.platform.dev.everycure.org/workflows/)** – Manage and deploy Kubernetes applications.
-- **[MLFlow](https://mlflow.platform.dev.everycure.org/)** – Experiment tracking and model management for machine learning projects.
-- **[Neo4j](https://neo4j.platform.dev.everycure.org/)** – Graph database for storing and querying data.
-- **[Bloom](https://neo4j.platform.dev.everycure.org/bloom)** – Bloom is a graph extension for Neo4j that provides a set of tools for graph exploration.
-- **[Grafana](https://grafana.platform.dev.everycure.org/)** – Monitoring and observability platform for the platform.
-- **[KG Dashboard](https://data.dev.everycure.org/versions/latest/evidence/index.html)** - Knowledge Graph Dashboard providing key metrics about our Knowledge Graph.
+  In this episode of "Infinite Loops," Dr. Grant Mitchell, a medical doctor with numerous qualifications, discusses his company Every Cure and its mission to utilize AI for drug repurposing. He explains that many existing drugs, particularly off-patent ones, have the potential to treat a vast number of diseases, but traditional pharmaceutical companies lack the incentive to explore these possibilities. Mitchell shares the motivating story of how he and his co-founder, David Fagenbaum, who survived a rare disease through drug repurposing, founded Every Cure to systematically unlock the potential of existing drugs using artificial intelligence.
 
-## Repositories & Issue Tracking
-
-- **[Matrix Repository](https://github.com/everycure-org/matrix)** – Core project repository for EveryCure's Matrix platform.
-- **[Matrix Issues](https://github.com/everycure-org/matrix/issues)** – Current issues and backlog for the Matrix project.
-- **[Good First Issues Board](https://github.com/everycure-org/matrix/labels/good%20first%20issue)** – Ideal starting issues for new contributors.
-
-
-## Resources - learning
-- **[What is GitOps?](https://www.youtube.com/watch?v=f5EpcWp0THw)**
-- **[ArgoCD Tutorial](https://www.youtube.com/watch?v=MeU5_k9ssrs)**
-- **[Awesome Argo - Argo resources collection](https://github.com/akuity/awesome-argo)**
-- **[Demystifying Argo Workflows: An Architectural Deep Dive](https://www.youtube.com/watch?v=FBRMURQYbgw)**
-
-<!--
-Our technology stack below (1):
-{ .annotate }
-
-1.   *(if you see nothing, try hitting F5, the drawio integration is still a bit flaky)*
-
-![](./assets/img/mtrx_tech_stack.drawio)
-
-Our shared end to end vision of the pipeline is visualised below:
-
-???+ info
-
-    This is an interactive diagram. Feel free to click the controls in the top to change the visibility of different layers. 
-  
-
-![](./assets/img/mtrx_arch.drawio)
-
--->
+  The conversation delves into the innovations and strategies employed by Every Cure, including constructing a comprehensive biomedical knowledge graph and using AI to identify repurposing opportunities. Mitchell emphasizes the importance of combining AI with clinical expertise to efficiently repurpose drugs and help patients quickly. He also highlights Every Cure's nonprofit model, which facilitates collaboration and open data sharing to maximize the impact of their research. Through significant philanthropic support and a strategic agreement with ARPA-H, Every Cure aims to save millions of lives by bringing effective treatments to neglected diseases, demonstrating a powerful intersection of technology, medicine, and altruism.
+</details>
 
