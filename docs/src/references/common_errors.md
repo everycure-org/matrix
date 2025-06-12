@@ -484,3 +484,23 @@ To install it on MacOS, run:
 ```bash
 brew install libomp
 ```
+
+### Invalid requirement for './packages/data_fabricator': Expected package name at the start of dependency specifier
+
+The error above can occur if you set up MATRIX repo back when we were using data_fabricator package for fabricating data; we are no longer relying on this package however if you only recently made a change, you might encounter the .
+
+```bash
+ERROR: Invalid requirement: './packages/data_fabricator': Expected package name at the start of dependency specifier
+    ./packages/data_fabricator
+    ^ (from line XX of requirements.txt)
+Hint: It looks like a path. File './packages/data_fabricator' does not exist.
+```
+
+you would need to run the command below. The command might fail if your `packages` folder already exists, in this case delete it. 
+
+```bash
+git submodule update --init --recursive
+```
+
+P.S: After running the above command, a browser would open to authenticate with Github. This is normal. If nothing happens (incase of using PyCharm IDE), suggestion would be run this through the shell (terminal).
+
