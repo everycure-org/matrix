@@ -360,4 +360,4 @@ Once installed, use the gcloud SDK to connect kubectl to the kubernetes cluster.
     Check the [official documentation from argo](https://github.com/argoproj/argo-workflows/releases/).
 
 
-[Now, you're ready to dive into kedro! :material-skip-next:](./kedro.md){ .md-button .md-button--primary }
+[Now, you are ready to dive into our tech stack! :material-skip-next:](./tech-stack.md){ .md-button .md-button--primary }
