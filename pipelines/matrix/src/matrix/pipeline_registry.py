@@ -34,10 +34,9 @@ def register_pipelines() -> dict[str, Pipeline]:
         "data_release": create_data_release_pipeline(),
         "modelling": create_modelling_pipeline(),
         "matrix_generation": create_matrix_pipeline(),
-        "pre_transformed_evaluation": create_evaluation_pipeline(matrix_evaluation="pre_transformed_evaluation"),
         "matrix_transformations": create_matrix_transformations_pipeline(),
-        # Maybe keep old name (evaluation) for final
-        "transformed_evaluation": create_evaluation_pipeline(matrix_evaluation="evaluation"),
+        "pre_transformed_evaluation": create_evaluation_pipeline(matrix_input="matrix_generation"),
+        "transformed_evaluation": create_evaluation_pipeline(matrix_input="matrix_transformations"),
         "create_sample": create_create_sample_pipeline(),
         "ingest_to_N4J": create_ingest_to_N4J_pipeline(),
         "sentinel_kg_release_patch": create_sentinel_pipeline(is_patch=True),
