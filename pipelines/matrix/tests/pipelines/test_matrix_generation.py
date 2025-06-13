@@ -1,14 +1,13 @@
-import re
 from unittest.mock import Mock
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
 from matrix.datasets.graph import KnowledgeGraph
-from matrix.inject import _extract_elements_in_list
 from matrix.pipelines.matrix_generation.nodes import (
     generate_pairs,
-    generate_report,
+    generate_reports,
     make_batch_predictions,
     make_predictions_and_sort,
 )
@@ -63,6 +62,18 @@ def sample_clinical_trials():
             "non_significantly_better": [0],
             "non_significantly_worse": [0],
             "significantly_worse": [0],
+        }
+    )
+
+
+@pytest.fixture
+def sample_off_label():
+    """Fixture that provides sample off label data for testing."""
+    return pd.DataFrame(
+        {
+            "source": ["drug_1"],
+            "target": ["disease_2"],
+            "off_label": [1],
         }
     )
 
@@ -162,7 +173,9 @@ def sample_data():
     return drugs, diseases, known_pairs, graph
 
 
-def test_generate_pairs(sample_drugs, sample_diseases, sample_graph, sample_known_pairs, sample_clinical_trials):
+def test_generate_pairs(
+    sample_drugs, sample_diseases, sample_graph, sample_known_pairs, sample_clinical_trials, sample_off_label
+):
     """Test the generate_pairs function."""
     # Given drug list, disease list and ground truth pairs
     # When generating the matrix dataset
@@ -172,6 +185,7 @@ def test_generate_pairs(sample_drugs, sample_diseases, sample_graph, sample_know
         graph=sample_graph,
         known_pairs=sample_known_pairs,
         clinical_trials=sample_clinical_trials,
+        off_label=sample_off_label,
     )
 
     # Then the output is of the correct format and shape
@@ -274,118 +288,49 @@ def test_make_predictions_and_sort(
     assert result["score"].is_monotonic_decreasing
 
 
-def test_generate_report(sample_data):
-    """Test the generate_report function."""
-    # Given an input matrix, drug list and disease list
-    drugs, diseases, known_pairs, _ = sample_data
+@pytest.fixture
+def mock_reporting_plot_strategies():
+    names = ["strategy_1", "strategy_2"]
+    generators = {name: Mock() for name in names}
+    for name, generator in generators.items():
+        generator.name = name
+        generator.generate.return_value = plt.Figure()
+    return generators
 
-    # Update the sample data to include the new required columns
 
-    data = pd.DataFrame(
-        {
-            "source": ["drug_1", "drug_2", "drug_3", "drug_4", "drug_2"],
-            "target": ["disease_1", "disease_2", "disease_3", "disease_3", "disease_2"],
-            "probability": [0.8, 0.6, 0.4, 0.2, 0.2],
-            "is_known_positive": [True, False, False, False, False],
-            "trial_sig_better": [False, False, False, False, False],
-            "trial_non_sig_better": [False, False, False, False, False],
-            "trial_sig_worse": [False, False, False, False, False],
-            "trial_non_sig_worse": [False, False, False, False, False],
-            "is_known_negative": [False, True, False, False, False],
-        }
-    )
+@pytest.fixture
+def mock_reporting_table_strategies():
+    names = ["strategy_1", "strategy_2"]
+    generators = {name: Mock() for name in names}
+    for name, generator in generators.items():
+        generator.name = name
+        generator.generate.return_value = pd.DataFrame()
+    return generators
 
-    n_reporting = 3
-    score_col_name = "probability"
 
-    # Mock the stats_col_names and meta_col_names dictionaries
-    matrix_params = {
-        "metadata": {
-            "drug_list": {"drug_id": "Drug ID", "drug_name": "Drug Name"},
-            "disease_list": {"disease_id": "Disease ID", "disease_name": "Disease Name"},
-            "kg_data": {
-                "pair_id": "Unique identifier for each pair",
-                "kg_drug_id": "KG Drug ID",
-                "kg_disease_id": "KG Disease ID",
-                "kg_drug_name": "KG Drug Name",
-                "kg_disease_name": "KG Disease Name",
-            },
-        },
-        "stats_col_names": {
-            "per_disease": {"top": {"mean": "Mean score"}, "all": {"mean": "Mean score"}},
-            "per_drug": {"top": {"mean": "Mean score"}, "all": {"mean": "Mean score"}},
-            "full": {"mean": "Mean score", "median": "Median score"},
-        },
-        "tags": {
-            "drugs": {"is_steroid": "Whether drug is a steroid"},
-            "pairs": {
-                "is_known_positive": "Whether the pair is a known positive, based on literature and clinical trials",
-                "is_known_negative": "Whether the pair is a known negative, based on literature and clinical trials",
-            },
-            "diseases": {"is_cancer": "Whether disease is a cancer"},
-            "master": {
-                "legend": "Excludes any pairs where the following conditions are met: xyz",
-                "conditions": [["is_known_positive"], ["is_known_negative"], ["is_steroid"]],
-            },
-        },
-    }
-    run_metadata = {
-        "run_name": "test_run",
-        "git_sha": "test_sha",
-        "data_version": "test_data_version",
-    }
+def test_generate_report_plot(
+    sample_matrix_data,
+    mock_reporting_plot_strategies,
+):
+    # Given a list of reporting plot generator and a matrix dataframe
+    # When generating the report plot
+    reports_dict = generate_reports(sample_matrix_data, mock_reporting_plot_strategies)
+    # Then:
+    # The keys of the dictionary are the names of the reporting plot generator and have the correct suffix
+    assert list(reports_dict.keys()) == ["strategy_1", "strategy_2"]
+    # The values are the reporting plot generator's generate method's output
+    assert all(isinstance(value, plt.Figure) for value in reports_dict.values())
 
-    # When generating the report
-    result = generate_report(data, n_reporting, drugs, diseases, score_col_name, matrix_params, run_metadata)
-    full_stats = result["statistics"]
-    # Check that the full matrix statistics are correct
-    assert (
-        full_stats["stats_type"]
-        .isin(
-            [
-                "mean_full_matrix",
-                "mean_top_n",
-                "median_full_matrix",
-                "median_top_n",
-            ]
-        )
-        .all()
-    )
 
-    result = result["matrix"]
-    # Then the report is of the correct structure
-    assert isinstance(result, pd.DataFrame)
-    assert len(result) == n_reporting
-
-    expected_columns = {
-        "drug_id",
-        "drug_name",
-        "disease_id",
-        "disease_name",
-        "probability",
-        "pair_id",
-        "kg_drug_id",
-        "kg_disease_id",
-        "kg_drug_name",
-        "kg_disease_name",
-        "master_filter",
-        "is_steroid",
-        "is_known_positive",
-        "is_known_negative",
-        "is_cancer",
-        "mean_top_per_disease",
-        "mean_all_per_disease",
-        "mean_top_per_drug",
-        "mean_all_per_drug",
-    }
-    assert set(result.columns) == expected_columns
-
-    assert result["drug_name"].tolist() == ["Drug 1", "Drug 2", "Drug 3"]
-    assert result["disease_name"].tolist() == ["Disease 1", "Disease 2", "Disease 3"]
-    assert result["kg_drug_name"].tolist() == ["Drug 1", "Drug 2", "Drug 3"]
-    assert result["kg_disease_name"].tolist() == ["Disease 1", "Disease 2", "Disease 3"]
-    assert result["probability"].tolist() == pytest.approx([0.8, 0.6, 0.4])
-    assert result["mean_top_per_disease"].tolist() == pytest.approx([0.8, 0.6, 0.4])
-    assert result["mean_all_per_disease"].tolist() == pytest.approx([0.8, 0.4, 0.3])
-    assert result["mean_top_per_drug"].tolist() == pytest.approx([0.8, 0.6, 0.4])
-    assert result["mean_all_per_drug"].tolist() == pytest.approx([0.8, 0.4, 0.4])
+def test_generate_report_table(
+    sample_matrix_data,
+    mock_reporting_table_strategies,
+):
+    # Given a list of reporting table generator and a matrix dataframe
+    # When generating the report table
+    reports_dict = generate_reports(sample_matrix_data, mock_reporting_table_strategies)
+    # Then:
+    # The keys of the dictionary are the names of the reporting table generator and have the correct suffix
+    assert list(reports_dict.keys()) == ["strategy_1", "strategy_2"]
+    # The values are the reporting table generator's generate method's output
+    assert all(isinstance(value, pd.DataFrame) for value in reports_dict.values())

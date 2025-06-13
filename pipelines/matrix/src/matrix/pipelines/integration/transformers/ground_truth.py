@@ -9,7 +9,7 @@ from .transformer import Transformer
 logger = logging.getLogger(__name__)
 
 
-class GroundTruthTransformer(Transformer):
+class KGMLGroundTruthTransformer(Transformer):
     """Transformer for ground truth data"""
 
     def transform(self, edges_df: DataFrame, **kwargs) -> dict[str, DataFrame]:

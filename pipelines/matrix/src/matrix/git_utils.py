@@ -22,6 +22,10 @@ def get_current_git_branch() -> str:
     return branch
 
 
+def get_current_git_sha() -> str:
+    return subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+
+
 def has_dirty_git() -> bool:
     """Checks for uncommitted or untracked files. Empty string return means no such files were found"""
     is_dirty = subprocess.check_output(["git", "status", "--porcelain"], text=True).strip()
@@ -81,3 +85,15 @@ def correct_non_semver_compliant_release_names(releases_list: List[str]) -> dict
     mapper = {"v0.1": "v0.1.0", "v0.2": "v0.2.0"}
     original_to_mapped = {mapper.get(release, release): release for release in releases_list}
     return original_to_mapped
+
+
+def abort_if_intermediate_release(release_version: str) -> None:
+    release_version = semver.Version.parse(release_version.lstrip("v"))
+    tags_list = get_tags()
+    latest_minor_release = (get_latest_minor_release(tags_list)).lstrip("v").split(".")
+    latest_major = int(latest_minor_release[0])
+    latest_minor = int(latest_minor_release[1])
+    if (
+        release_version.major == latest_major and release_version.minor < latest_minor
+    ) or release_version.major < latest_major:
+        raise ValueError("Cannot release a minor/major version lower than the latest official release")
