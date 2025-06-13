@@ -70,6 +70,3 @@ The input data contained 3.7M nodes, 18.8M edges and 53k ground truth edges.
 4. Define the sampled edges as all the edges between the sampled nodes.
 
 ![](../assets/img/groundtruthsampler_illustration.svg)
-
-Well done, you've just run the pipeline with a (sample of) real data! You can proceed to the next section now
-[Deep Dive :material-skip-next:](../deep_dive/index.md){ .md-button .md-button--primary }
