@@ -94,3 +94,10 @@ resource "google_storage_bucket_iam_member" "object_lister" {
   role   = "roles/storage.objectViewer"
   member = "group:matrix-all@everycure.org"
 }
+
+# add a new binding for the compute engine default service account
+resource "google_storage_bucket_iam_member" "compute_engine_default" {
+  bucket = var.storage_bucket_name
+  role   = "roles/storage.bucketViewer"
+  member = local.orchard_prod_compute_service_account
+}
