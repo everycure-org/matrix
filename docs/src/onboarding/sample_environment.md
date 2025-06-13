@@ -28,7 +28,7 @@ kedro run -e sample -p test_sample
 Alternatively, you can run the pipeline in kubernetes.
 
 ```bash
-kedro submit -e sample -p test_sample --username {your-username} --release-version {your-release-version}
+kedro experiment run -e sample -p test_sample --username {your-username} --release-version {your-release-version}
 ```
 
 ## Update sample data
@@ -41,7 +41,7 @@ Make sure to use your own service account key file to get write access to the GC
     There is only one version of the sample data per release in GCS. Updating it means deleting the previous release's sample.
 
 ```bash
-kedro submit -e sample -p create_sample --username {your-username} --release-version {your-release-version}
+kedro experiment run -e sample -p create_sample --username {your-username} --release-version {your-release-version}
 ```
 
 # Sampling strategies

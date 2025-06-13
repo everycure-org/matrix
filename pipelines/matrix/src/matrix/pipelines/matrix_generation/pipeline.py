@@ -1,6 +1,9 @@
 from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
-from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, ArgoNode
+from matrix.kedro4argo_node import (
+    ARGO_CPU_ONLY_NODE_MEDIUM_MATRIX_GENERATION,
+    ArgoNode,
+)
 from matrix.pipelines.modelling.utils import partial_fold
 
 from . import nodes
@@ -50,6 +53,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "diseases": "integration.int.disease_list.nodes.norm@pandas",
                             "graph": "matrix_generation.feat.nodes@kg",
                             "clinical_trials": "integration.int.ec_clinical_trails.edges.norm@pandas",
+                            "off_label": "integration.int.off_label.edges.norm@pandas",
                         },
                         outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs",
                         name=f"generate_matrix_pairs_fold_{fold}",
@@ -76,24 +80,40 @@ def create_pipeline(**kwargs) -> Pipeline:
                         ],
                         outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
                         name=f"make_predictions_and_sort_fold_{fold}",
-                        argo_config=ARGO_GPU_NODE_MEDIUM,
-                    ),
-                    ArgoNode(
-                        func=nodes.generate_report,
-                        inputs=[
-                            f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
-                            "params:matrix_generation.matrix_generation_options.n_reporting",
-                            "integration.int.drug_list.nodes.norm@pandas",
-                            "integration.int.disease_list.nodes.norm@pandas",
-                            "params:matrix_generation.treat_score_col_name",
-                            "params:matrix_generation.matrix",
-                            "params:matrix_generation.run",
-                        ],
-                        outputs=f"matrix_generation.fold_{fold}.reporting.matrix_report",
-                        name=f"generate_report_fold_{fold}",
+                        # argo_config=ArgoResourceConfig(
+                        #     cpu_limit=14, cpu_request=14, memory_limit=310, memory_request=310
+                        # ),
+                        argo_config=ARGO_CPU_ONLY_NODE_MEDIUM_MATRIX_GENERATION,
                     ),
                 ],
             )
         )
+
+    pipelines.append(
+        pipeline(
+            [
+                ArgoNode(
+                    func=nodes.generate_reports,
+                    inputs=[
+                        f"matrix_generation.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@pandas",
+                        "params:matrix_generation.reporting_nodes.plots",
+                    ],
+                    outputs="matrix_generation.reporting.plots",
+                    name="generate_reporting_plots",
+                ),
+                ArgoNode(
+                    func=nodes.generate_reports,
+                    inputs={
+                        "sorted_matrix_df": f"matrix_generation.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@spark",
+                        "strategies": "params:matrix_generation.reporting_nodes.tables",
+                        "drugs_df": "integration.int.drug_list.nodes.norm@spark",
+                        "diseases_df": "integration.int.disease_list.nodes.norm@spark",
+                    },
+                    outputs="matrix_generation.reporting.tables",
+                    name="generate_reporting_tables",
+                ),
+            ]
+        )
+    )
 
     return sum(pipelines)

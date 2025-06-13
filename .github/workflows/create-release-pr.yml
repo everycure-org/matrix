@@ -56,6 +56,7 @@ jobs:
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
           submodules: recursive
+          token: ${{ secrets.PAT }}
 
       - name: Configure Git
         run: |
@@ -140,6 +141,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           POSTS_DIR: docs/src/releases/posts
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         # only create release notes for minor, major, and intermediate bumps
         if: env.generate_article == 'True'
         run: |
@@ -199,6 +201,8 @@ jobs:
             --body "$(cat <<EOM
           This pull request was created because a release pipeline completed successfully. If this is a patch release (the release version does not end in 0, e.g. "v1.2.5") that was triggered as part of its weekly schedule, you may close this PR directly, unless you want it to [be logged on the website](https://docs.dev.everycure.org/releases/release_history/). A git tag was [created](https://github.com/everycure-org/matrix/tags) regardless, so people can check it out.
 
+          Please check the KG dashboard for this release [here](https://data.dev.everycure.org/versions/${{ github.event.inputs.release_version }}/evidence/)
+
           Note: 
           - for minor and major releases, the release article should be created, meant as a kickstarter for the final release. The template is generated, please ask contributors to fill it out
           - release information file is used for updating the release history page
@@ -211,7 +215,7 @@ jobs:
       - name: Trigger creation of sample release
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.PAT }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
@@ -226,12 +230,12 @@ jobs:
       - name: Trigger KG dashboard deploy
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.PAT }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'evidence-deploy.yml',
+              workflow_id: 'kg-dashboard-deploy.yml',
               ref: 'main',
               inputs: {
                 "release_version": '${{ env.release }}' 
