@@ -1,5 +1,5 @@
 nav:
-    - data
     - index.md
+    - data
     - data_science
     - runbooks

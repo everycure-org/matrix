@@ -1,30 +1,19 @@
 # Matrix Pipeline
 
-The Matrix pipeline is Every Cure's core data science pipeline for drug repurposing predictions. At a high level, it:
+The Matrix pipeline is Every Cure's core data science pipeline for drug repurposing predictions. It utilizes Biomedical Knowledge Graphs and Machine Learning to identify most promising candidates for drug repurposing. Below you can find a schematic representation of the pipeline
 
-1. Ingests and integrates knowledge graph data from multiple biomedical sources
+![Matrix Pipeline](../../assets/getting_started/matrix_overview.png)
 
-2. Computes embeddings for the graph entities using:
-   - Node attribute embeddings from language models
-   - Topological embeddings capturing graph structure
+At a high level, it's composed of three stages:
 
-3. Trains ML models to predict drug-disease treatment relationships using:
-   - Ground truth positive/negative drug-disease pairs
-   - Cross-validation with stratified splits
-   - Synthesized additional training data for better generalization
-   - Multiple model architectures (XGBoost, Random Forest, Ensembles)
+1. Data Engineering Stage - this is where data sources such as multiple biomedical knowledge graphs get ingested, integrated, and released as a unified biomedical KG. It includes ingestion, integration, and release steps.
 
-4. Generates an "all vs all" matrix of predictions for every drug-disease combination
+2. Feature Engineering Stage - this is where we apply custom filters and generate topological embeddings from the knowledge graph. 
 
-5. Applies transformations to handle "frequent flyer" effects where certain drugs/diseases dominate predictions
+3. Modelling Stage - this is where we train and evaluate ML models to predict drug-disease treatment relationships. This is also the step where we produce our **matrix** which is essentially "all vs all" matrix of predictions for every drug-disease combination in our system. 
 
-6. Evaluates performance using multiple metrics:
-   - Full matrix ranking (AUROC, MRR)
-   - Disease-specific ranking (Hit@k)
-   - Classification metrics (Accuracy, F1)
+The pipeline enables systematic drug repurposing by scoring the potential of drugs to treat diseases based on patterns learned from biomedical knowledge graphs and known drug-disease relationships.
 
-The pipeline enables systematic drug repurposing by scoring the potential of drugs to treat diseases based on patterns learned from biomedical knowledge graphs and known drug-disease relationships. For an in-depth understanding of each pipeline stage, see the [pipeline documentation](../pipeline/index.md).
-
-All of these steps are reflected in our kedro pipeline which you will learn more about in our tech-stack section.
+For an in-depth understanding of each pipeline stage and modular steps, please see the [pipeline documentation](../pipeline/index.md) - this is where we describe our methods in more detail. All of the steps described above are reflected in our kedro pipeline which you will learn more about in the next section.
 
 [Learn about our tech stack! :material-skip-next:](./tech_stack.md){ .md-button .md-button--primary }
