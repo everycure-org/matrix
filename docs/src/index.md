@@ -7,6 +7,9 @@ hide:
 
 Welcome to the Matrix Project! This documentation provides an introduction to the project and the codebase, and guides you through the process of setting up your local environment.
 
+!!! info
+    Please note that MATRIX project is still work in progress; whilst we already actively use the pipeline for finding promising repurposing candidates, . Therefore, if you discover any typos, bugs, tech debts, please let us know throguh issues (TODO: add link to create an issue) or through PRs - we appreciate all contributions and believe that by open-sourcing this not-yet finished repo, we can create a really great drug repurposing platform. 
+
 <div class="grid cards" markdown>
 
 -   :material-book-open-page-variant:{ .lg .middle } __Getting Started__ 
@@ -41,21 +44,13 @@ Welcome to the Matrix Project! This documentation provides an introduction to th
 
     [:octicons-arrow-right-24: Data API](#)
 
--   :material-matrix:{ .lg .middle } __MATRIX Project Documentation__
+-   :material-matrix:{ .lg .middle } __MATRIX Pipeline Documentation__
 
     ---
 
-    To find documentation specific to the MATRIX project, check this link!
+    To find documentation specific to the MATRIX project and pipeline, check this link!
 
     [:octicons-arrow-right-24: MATRIX](./pipeline/index.md)
-
--   :material-matrix:{ .lg .middle } __Experiment Log__
-
-    ---
-
-    A collection of our executed experiments and insights generated from them can be found here:
-
-    [:octicons-arrow-right-24: Experiments](./experiments/index.md)
 
 -   :material-book-open-page-variant:{ .lg .middle } __Documentation__
 
