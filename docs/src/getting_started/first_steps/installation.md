@@ -4,7 +4,7 @@ title: Installation
 
 # Installation
 
-This page assumes basic knowledge of the following technologies. We will provide instructions how to install them but as a quick reference, below are the necessary tools:
+In this page we are installing tools related to the technology stack which we introduced (earlier)[./tech_stack.md]:
 
 !!! info "Support on Windows, MacOS and Linux"
     We are mostly using MacOS but try our best to provide an onboarding for all
@@ -244,7 +244,35 @@ Our pipeline uses [Spark](https://spark.apache.org/) for distributed computation
     pacman -S jdk17-openjdk
     ```
 
-### gcloud SDK
+### GNU Make
+
+We use `make` and `Makefile`s in a lot of places. If you want to [learn more about makefiles](https://makefiletutorial.com) feel free to do so. The essentials as a user are that you have it installed and can call it via CLI. 
+
+
+=== "MacOS"
+
+    ```bash
+    # nothing to do here, make comes pre-installed with MacOS
+    ```
+
+=== "Windows (WSL)"
+
+    ```bash
+    sudo apt install build-essential
+    ```
+
+=== "Linux"
+    ```bash
+    # Debian based
+    sudo apt install build-essential
+    # for arch/manjaro
+    sudo pacman -S make
+    ```
+
+### Cloud-related tools
+The following tools are related to technologies which link to cloud services (Google Cloud in our case). Although it is possible to run our pipeline without any dependencies on the cloud, we are utilizing Google Cloud Platform Storage and its resources heavily in our day-to-day work and therefore recommend installing them as well. Regular contributors are encouraged to also onboard to some of our GCP functionalities through service account - we get into more detail on this in the deep dive section (TODO). Note that without service account, you will not be able to install the following tools successfully (which is totally fine for local development but blocking for cloud development).
+
+#### gcloud SDK
 
 We leverage Google (GCP) as our Cloud provider, the following cask installation provides CLI access to GCP, following this [Google tutorial](https://cloud.google.com/sdk/docs/install)
 
@@ -280,32 +308,7 @@ We also need to configure Docker to use the Google Container Registry:
 gcloud auth configure-docker us-central1-docker.pkg.dev
 ```
 
-### GNU Make
-
-We use `make` and `Makefile`s in a lot of places. If you want to [learn more about makefiles](https://makefiletutorial.com) feel free to do so. The essentials as a user are that you have it installed and can call it via CLI. 
-
-
-=== "MacOS"
-
-    ```bash
-    # nothing to do here, make comes pre-installed with MacOS
-    ```
-
-=== "Windows (WSL)"
-
-    ```bash
-    sudo apt install build-essential
-    ```
-
-=== "Linux"
-    ```bash
-    # Debian based
-    sudo apt install build-essential
-    # for arch/manjaro
-    sudo pacman -S make
-    ```
-
-### kubectl
+#### kubectl
 
 Kubectl is a CLI tool we use to interact with our Kubernetes cluster. It is required to submit workflows to the cloud environment.
 
@@ -328,7 +331,7 @@ Once installed, use the gcloud SDK to connect kubectl to the kubernetes cluster.
     kubectl get namespaces
     ```
 
-### Argo Workflows
+#### Argo Workflows
 
 [Argo](https://argoproj.github.io/) is our main tool to run jobs in kubernetes. Its CLI tool `argo` is required to submit workflows to the cloud environment.
 
