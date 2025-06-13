@@ -33,9 +33,10 @@ app = typer.Typer(help="Github comment-related utility commands", no_args_is_hel
 logging.basicConfig(level=logging.WARNING)
 memory = Memory(location=".cache", verbose=0)
 console = Console()
+gemini_api_key = os.environ["GEMINI_API_KEY"]
 
 gemini = genai.Client(
-    api_key=os.environ.get("GEMINI_API_KEY"),
+    api_key=gemini_api_key,
 )
 
 
