@@ -5,19 +5,17 @@ We have 4 environments declared in the kedro project for `MATRIX`:
 
 - `base`: Contains the base environment which reads the real data from GCS and operates in your local compute environment
 - `cloud`: Contains the cloud environment with real data. All data is read and written to a GCP project as configured (see below). Assumes fully stateless local machine operations (e.g. in docker containers)
-- `test`: Fully local and contains parameters that "break" the meaning of algorithms in the pipeline (e.g. 2 dimensions PCA). This is useful for running an integration test with mock data to validate the programming of the pipeline is correct to a large degree. 
+- `test`: Fully local and contains parameters that "break" the meaning of algorithms in the pipeline (parameters we use don't make sense; e.g. we use 2 dimensions PCA instead of 100). This is useful for running an integration test with mock data to validate the programming of the pipeline is correct to a large degree. 
 - `local`: A default environment which you can use for local adjustments and tweaks. Changes to this repo are not usually committed to git as they are unique for every developer. 
 - `sample`: Contains a sample of the data and is useful for fast iterations on the pipeline from the embeddings pipeline and on.
 
 !!! info
-    Our `cloud` environment is equipped with environment variables that allows for configuring the GCP project to use. This is especially relevant to switch between the `hub` and `wg` projects as desired.
+    Remember the `.env.default` and `.env` mentioned in the [repository structure](./repo_structure.md)? Our `cloud` environment is equipped with environment variables that allow for controlling your credentials (e.g. github token) or configuring the GCP project to use (more about this in deep dive TODO) 
 
-    The source code contains a `.env.tmpl` configuration template file. To configure the `cloud` environment, create your own `.env` file from the template and uncomment variables relevant to your configuration. 
-
-You can run any of the environments using the `--env` flag. For example, to run the pipeline in the `cloud` environment, you can use the following command:
+You can run any of the environments using the `--env` flag. For example, to run the pipeline in the `cloud` environment, you will  use the following command:
 
 ```bash
-kedro run --env cloud
+kedro run --env cloud # NOTE: this is just an example; do not run it
 ```
 
 !!! info
@@ -35,7 +33,7 @@ To run the full pipeline locally with fake data, you can use the following comma
 kedro run --env test -p test 
 ```
 
-This runs the full pipeline with fake data.
+This runs the full pipeline with fake data. This is exactly what we did as a part of `make integration_test` in the previous section but now we are not using make wrapper.
 
 ### Run with real data locally
 
@@ -50,7 +48,7 @@ Hereafter, you can run the default pipeline.
 
 ```bash
 # Default pipeline in default environment
-kedro run
+kedro run -p data_engineering
 ```
 
 ### Run with sample data locally
