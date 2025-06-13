@@ -1,7 +1,5 @@
 nav:
-    - index.md
-    - important_files.md
-    - local-development.md
-    - ci.md
     - data
-    - pandera_validation.md
+    - index.md
+    - data_science
+    - runbooks
