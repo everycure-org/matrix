@@ -103,4 +103,5 @@ from matrix.pipelines.modelling.nodes import train_model
 
 Further information may be found [here](https://docs.kedro.org/en/stable/notebooks_and_ipython/kedro_and_notebooks.html). 
 
-[Next up, we can set up our environment and load our pipeline in test environment :material-skip-next:](./sample_environment.md){ .md-button .md-button--primary }
+Well done, you've just run the pipeline with a (sample of) real data! You can proceed to the next section now
+[Deep Dive :material-skip-next:](../deep_dive/index.md){ .md-button .md-button--primary }
