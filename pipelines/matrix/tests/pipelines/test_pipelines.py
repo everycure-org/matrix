@@ -94,38 +94,42 @@ def test_no_non_parameter_entries_from_catalog_unused(
     assert unused_entries == set(), f"The following entries are not used: {unused_entries}"
 
 
+# Global reference (must be accessible for multiprocessing)
+_global_catalog = None
+
+
+def init_worker(catalog):
+    global _global_catalog
+    _global_catalog = catalog
+
+
+def check_dataset_resolvable(dataset_name: str) -> Optional[str]:
+    """Check if a dataset can be resolved by the global catalog."""
+    try:
+        _global_catalog._get_dataset(dataset_name)
+        return None
+    except Exception:
+        return dataset_name
+
+
 @pytest.mark.integration
 def test_memory_data_sets_absent(cloud_kedro_context: KedroContext) -> None:
     """Tests that no MemoryDataSets are created by verifying all datasets can be resolved."""
 
-    # Extracted as a top-level function for pickling in ProcessPoolExecutor
-    def check_dataset_resolvable(dataset_name: str, catalog_data: dict) -> Optional[str]:
-        """Check if a dataset can be resolved by the catalog data."""
-        try:
-            catalog = catalog_data["catalog"]
-            catalog._get_dataset(dataset_name)
-            return None
-        except Exception:
-            return dataset_name
-
-    # Extract necessary data for resolving datasets
     used_data_sets = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
     used_data_sets_wout_double_params = {x.replace("params:params:", "params:") for x in used_data_sets}
 
     catalog_datasets = set(cloud_kedro_context.catalog.list())
     datasets_to_check = [dataset for dataset in used_data_sets_wout_double_params if dataset not in catalog_datasets]
 
-    # Avoid passing full KedroContext to child processes; extract only what's needed
-    catalog_data = {"catalog": cloud_kedro_context.catalog}
+    # Set global catalog for multiprocessing
+    global _global_catalog
+    _global_catalog = cloud_kedro_context.catalog
 
-    # Use ProcessPoolExecutor for better CPU parallelism
     memory_data_sets = []
     with ProcessPoolExecutor(max_workers=min(len(datasets_to_check), os.cpu_count() or 4)) as executor:
-        future_to_dataset = {
-            executor.submit(check_dataset_resolvable, dataset, catalog_data): dataset for dataset in datasets_to_check
-        }
-
-        for future in as_completed(future_to_dataset):
+        futures = {executor.submit(check_dataset_resolvable, ds): ds for ds in datasets_to_check}
+        for future in as_completed(futures):
             result = future.result()
             if result is not None:
                 memory_data_sets.append(result)
