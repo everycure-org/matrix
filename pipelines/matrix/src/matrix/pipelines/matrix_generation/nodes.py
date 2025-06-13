@@ -168,9 +168,9 @@ def generate_pairs(
             "source": Column(T.StringType(), nullable=False),
             "target": Column(T.StringType(), nullable=False),
             # The three score columns are passed as parameters of the function
-            "not_treat_score": Column(T.DoubleType(), nullable=False),
-            "treat_score": Column(T.DoubleType(), nullable=False),
-            "unknown_score": Column(T.DoubleType(), nullable=False),
+            "not treat score": Column(T.DoubleType(), nullable=False),
+            "treat score": Column(T.DoubleType(), nullable=False),
+            "unknown score": Column(T.DoubleType(), nullable=False),
             "rank": Column(T.LongType(), nullable=False),
             "quantile_rank": Column(T.DoubleType(), nullable=False),
         },
