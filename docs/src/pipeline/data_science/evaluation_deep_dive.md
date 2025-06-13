@@ -47,7 +47,7 @@ Off-label validation is a technique where we evaluate our model's performance on
 The off-label validation metrics are computed using the same methodology as our other test sets, however they only contain positive ground truth (as there are no 'negative' off label uses).
 
 ## The performance metrics in detail
-![Matrix with flags for ground truth pairs](../assets/deep_dive/matrix_GT.jpg)
+![Matrix with flags for ground truth pairs](../../assets/deep_dive/matrix_GT.jpg)
 
 The input to the evaluation pipeline consists of the matrix pairs dataset with the following information:
 - Flags for pairs in the standard ground truth positive and negative test sets 
@@ -204,7 +204,7 @@ The processed dataset is then used to compute the evaluation metric.
 
 This process is summarised by the following high-level diagram:
 
-![Evaluation Pipeline](../assets/deep_dive/evaluation_simple.drawio.svg)
+![Evaluation Pipeline](../../assets/deep_dive/evaluation_simple.drawio.svg)
 
 Notably, inference is not performed within the evaluation pipeline since the treat scores are provided in the input matrix.
 
@@ -212,7 +212,7 @@ Notably, inference is not performed within the evaluation pipeline since the tre
 
 The following diagram gives a more detailed overview of how the evaluation pipeline fits into the wider MATRIX system. 
 
-![Evaluation Pipeline Full](../assets/deep_dive/evaluation_full_matrix_docs.drawio.svg)
+![Evaluation Pipeline Full](../../assets/deep_dive/evaluation_full_matrix_docs.drawio.svg)
 
 
 ### Parameters configuration file 

@@ -14,7 +14,12 @@ Let's get started! This guide provides an introduction to the MATRIX repository,
 4. [Environments Overview](./environments_overview.md) - Understand our different environments
 5. [Sample Environment](./sample_environment.md) - Get started with sample data
 
-!!! success "Create an Onboarding Issue"
-    As you are walking through the Getting Started guide, please create an [onboarding issue](https://github.com/everycure-org/matrix/issues/new?assignees=&labels=onboarding&projects=&template=onboarding.md&title=%3Cfirstname%3E+%3Clastname%3E) in the codebase for visibility by the codeowners. Then continue through this onboarding journey.
+Therefore, after this section you should have:
+- Gained a High-Level Understanding of our Drug Repurposing pipeline,
+- Successfully ran the pipeline locally with a fabricated data,
+- Successfully ran the pipeline locally with a sample of real data.
+
+!!! info "Found a bug?"
+    We tried to accommodate for the most common OS whilst writing this guide however we might have missed something. If at any point you encounter a bug/error, please let us know by creating an [issue](https://github.com/everycure-org/matrix/issues/new?template=bug_report.md)! We are constantly aiming to make this repository better.
 
 [Start with Tech Stack :material-arrow-right:](./tech_stack.md){ .md-button .md-button--primary }
