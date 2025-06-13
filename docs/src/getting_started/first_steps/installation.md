@@ -159,18 +159,6 @@ Python 3.11 is currently **required** to build the matrix pipeline. If you attem
     ```bash
     # install uv
     curl -LsSf https://astral.sh/uv/install.sh | sh
-    # create virtual environment
-    uv venv
-    # activate virtual environment
-    source .venv/bin/activate
-    # Install the requirements.txt file that is in the matrix repository. First navigate to the repo
-    cd matrix/pipelines/matrix
-    # lists files that are hidden, you should see requirements.txt in line
-    ls -a
-    # installs the requirements in the activated uv virtual environment
-    uv pip install -r requirements.txt'
-    # deactivate the virtual environment
-    deactivate
     
     ```
 
