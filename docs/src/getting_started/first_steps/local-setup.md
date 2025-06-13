@@ -180,5 +180,6 @@ kedro run --from-env cloud --nodes preprocessing_node_name
     ```dotenv
     MLFLOW_ENDPOINT=http://127.0.0.1:5002
     ```
+Now you've successfully run the pipeline locally with a fabricated data. In the deep-dive we will explain exactly how the fabricator works but now, we will explain to you how to run the pipeline in different environments:
 
-[Now, we can try to run the pipeline with real data :material-skip-next:](./sample_environment.md){ .md-button .md-button--primary }
+[Check our environment overview :material-skip-next:](./environments_overview.md){ .md-button .md-button--primary }
