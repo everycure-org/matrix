@@ -16,13 +16,14 @@ paths:
   ingestion:          data/test/ingestion
   # Release-based
   integration:        data/test/releases/${versions.release}/datasets/integration
-  filtering:          data/test/releases/${versions.release}/datasets/filtering
-  embeddings:         data/test/releases/${versions.release}/datasets/embeddings
 
   # Run-based
+  filtering:          data/test/releases/${versions.release}/runs/${run_name}/datasets/filtering
+  embeddings:         data/test/releases/${versions.release}/runs/${run_name}/datasets/embeddings
   modelling:          data/test/releases/${versions.release}/runs/${run_name}/datasets/modelling
   evaluation:         data/test/releases/${versions.release}/runs/${run_name}/datasets/evaluation
   matrix_generation:  data/test/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
+  matrix_transformations:  data/test/releases/${versions.release}/runs/${run_name}/datasets/matrix_transformations
   inference:          data/test/releases/${versions.release}/runs/${run_name}/datasets/inference
 
   tmp:                data/test/tmp

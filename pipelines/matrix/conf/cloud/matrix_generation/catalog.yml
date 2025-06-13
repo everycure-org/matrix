@@ -1,0 +1,15 @@
+matrix_generation.reporting.plots:
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  dataset:
+    type: partitions.PartitionedDataset
+    path: plots
+    dataset: matplotlib.MatplotlibDataset
+    filename_suffix: .png
+
+matrix_generation.reporting.tables:
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  dataset:
+    type: partitions.PartitionedDataset
+    path: tables
+    dataset: kedro_datasets.pandas.CSVDataset
+    filename_suffix: .csv
