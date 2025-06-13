@@ -1,9 +1,9 @@
-import concurrent.futures
 import glob
 import os
 import re
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
+from typing import Optional
 
 import pytest
 import yaml
@@ -96,32 +96,36 @@ def test_no_non_parameter_entries_from_catalog_unused(
 
 @pytest.mark.integration
 def test_memory_data_sets_absent(cloud_kedro_context: KedroContext) -> None:
-    """Tests no MemoryDataSets are created."""
+    """Tests that no MemoryDataSets are created by verifying all datasets can be resolved."""
 
-    def check_dataset_resolvable(dataset_name):
-        """Check if a dataset can be resolved by factory patterns."""
+    # Extracted as a top-level function for pickling in ProcessPoolExecutor
+    def check_dataset_resolvable(dataset_name: str, catalog_data: dict) -> Optional[str]:
+        """Check if a dataset can be resolved by the catalog data."""
         try:
-            cloud_kedro_context.catalog._get_dataset(dataset_name)
-            return None  # Resolvable, not a memory dataset
+            catalog = catalog_data["catalog"]
+            catalog._get_dataset(dataset_name)
+            return None
         except Exception:
-            return dataset_name  # Not resolvable, would be a memory dataset
+            return dataset_name
 
+    # Extract necessary data for resolving datasets
     used_data_sets = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
     used_data_sets_wout_double_params = {x.replace("params:params:", "params:") for x in used_data_sets}
 
     catalog_datasets = set(cloud_kedro_context.catalog.list())
     datasets_to_check = [dataset for dataset in used_data_sets_wout_double_params if dataset not in catalog_datasets]
 
-    # Use ThreadPoolExecutor for concurrent checking
+    # Avoid passing full KedroContext to child processes; extract only what's needed
+    catalog_data = {"catalog": cloud_kedro_context.catalog}
+
+    # Use ProcessPoolExecutor for better CPU parallelism
     memory_data_sets = []
-    with ThreadPoolExecutor(max_workers=min(len(datasets_to_check), 1000)) as executor:
-        # Submit all tasks
+    with ProcessPoolExecutor(max_workers=min(len(datasets_to_check), os.cpu_count() or 4)) as executor:
         future_to_dataset = {
-            executor.submit(check_dataset_resolvable, dataset): dataset for dataset in datasets_to_check
+            executor.submit(check_dataset_resolvable, dataset, catalog_data): dataset for dataset in datasets_to_check
         }
 
-        # Collect results
-        for future in concurrent.futures.as_completed(future_to_dataset):
+        for future in as_completed(future_to_dataset):
             result = future.result()
             if result is not None:
                 memory_data_sets.append(result)
