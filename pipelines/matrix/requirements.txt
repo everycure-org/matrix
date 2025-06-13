@@ -943,7 +943,7 @@ toml==0.10.2
     # via kedro
 torch==2.5.1
     # via -r requirements.in
-tornado==6.4.2
+tornado==6.5
     # via
     #   ipykernel
     #   jupyter-client
