@@ -50,7 +50,7 @@ scikit-optimize
 seaborn
 tenacity
 termplotlib
-torch==2.5.1
+torch==2.7.1
 transformers
 # used for convenience libraries, to be moved to a dev requirements eventually
 typer
