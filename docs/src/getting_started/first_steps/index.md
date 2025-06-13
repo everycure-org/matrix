@@ -7,12 +7,13 @@ title: First Steps
 Let's get started! This guide provides an introduction to the MATRIX repository, its tech stack, and how to set up your environment so that you can run our pipeline locally on your machine.
 
 ## What's in this section?
-
-1. [Tech Stack](./tech_stack.md) - Learn about the technologies we use
-2. [Installation](./installation.md) - Set up your development environment
-3. [Local Setup](./local-setup.md) - Configure your local environment
-4. [Environments Overview](./environments_overview.md) - Understand our different environments
-5. [Sample Environment](./sample_environment.md) - Get started with sample data
+1. [Our MATRIX Pipeline](./matrix_pipeline.md) - Learn about our pipeline on a high-level
+2. [Tech Stack](./tech_stack.md) - Learn about the technologies we used to build the pipeline
+3. [Structure of the pipeline](./repo_structure.md) - Learn how the structure of the pipeline is reflected in the repository
+4. [Installation](./installation.md) - Set up your development environment
+5. [Local Setup](./local-setup.md) - Configure your local environment
+6. [Environments Overview](./environments_overview.md) - Understand our different environments
+7. [Sample Environment](./sample_environment.md) - Get started with sample data
 
 Therefore, after this section you should have:
 - Gained a High-Level Understanding of our Drug Repurposing pipeline,
@@ -22,4 +23,4 @@ Therefore, after this section you should have:
 !!! info "Found a bug?"
     We tried to accommodate for the most common OS whilst writing this guide however we might have missed something. If at any point you encounter a bug/error, please let us know by creating an [issue](https://github.com/everycure-org/matrix/issues/new?template=bug_report.md)! We are constantly aiming to make this repository better.
 
-[Start with Tech Stack :material-arrow-right:](./tech_stack.md){ .md-button .md-button--primary }
+[Start with Matrix Pipeline Overview! :material-arrow-right:](./matrix_pipeline.md){ .md-button .md-button--primary }

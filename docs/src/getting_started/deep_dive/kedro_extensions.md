@@ -251,5 +251,4 @@ This is particularly useful when:
 This is the end of our onboarding tutorial. We hope you've learned the basics of our project, and are ready to contribute!
 If you want to learn about some specific activities, please check the [walkthroughs](./walkthroughs/custom_modelling.ipynb) section.
 
-
 [Specific walkthroughs :material-skip-next:](./walkthroughs/custom_modelling.ipynb){ .md-button .md-button--primary }
