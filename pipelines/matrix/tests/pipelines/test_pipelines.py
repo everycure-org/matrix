@@ -1,6 +1,8 @@
+import concurrent.futures
 import glob
 import os
 import re
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
@@ -96,21 +98,33 @@ def test_no_non_parameter_entries_from_catalog_unused(
 def test_memory_data_sets_absent(cloud_kedro_context: KedroContext) -> None:
     """Tests no MemoryDataSets are created."""
 
+    def check_dataset_resolvable(dataset_name):
+        """Check if a dataset can be resolved by factory patterns."""
+        try:
+            cloud_kedro_context.catalog._get_dataset(dataset_name)
+            return None  # Resolvable, not a memory dataset
+        except Exception:
+            return dataset_name  # Not resolvable, would be a memory dataset
+
     used_data_sets = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
     used_data_sets_wout_double_params = {x.replace("params:params:", "params:") for x in used_data_sets}
 
     catalog_datasets = set(cloud_kedro_context.catalog.list())
-    memory_data_sets = []
+    datasets_to_check = [dataset for dataset in used_data_sets_wout_double_params if dataset not in catalog_datasets]
 
-    for dataset in used_data_sets_wout_double_params:
-        if dataset not in catalog_datasets:
-            # Check if the dataset can be resolved by factory patterns
-            try:
-                # This internally handles pattern matching and dataset creation
-                cloud_kedro_context.catalog._get_dataset(dataset)
-            except Exception:
-                # If it can't be resolved, it would be a MemoryDataset
-                memory_data_sets.append(dataset)
+    # Use ThreadPoolExecutor for concurrent checking
+    memory_data_sets = []
+    with ThreadPoolExecutor(max_workers=min(len(datasets_to_check), 1000)) as executor:
+        # Submit all tasks
+        future_to_dataset = {
+            executor.submit(check_dataset_resolvable, dataset): dataset for dataset in datasets_to_check
+        }
+
+        # Collect results
+        for future in concurrent.futures.as_completed(future_to_dataset):
+            result = future.result()
+            if result is not None:
+                memory_data_sets.append(result)
 
     assert len(memory_data_sets) == 0, f"{memory_data_sets}"
 
