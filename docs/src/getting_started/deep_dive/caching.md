@@ -1,6 +1,6 @@
 # Caching Approaches for API Based Enrichments
 
-![Embeddings Caching](../assets/img/embeddings_caching.excalidraw.svg)
+![Embeddings Caching](../../assets/img/embeddings_caching.excalidraw.svg)
 
 This document describes the current approach to optimizing data enrichment
 using external APIs.

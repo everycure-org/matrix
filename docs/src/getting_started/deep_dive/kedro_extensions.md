@@ -203,7 +203,7 @@ Given the experimental nature of our project, we aim to produce different model 
 
 We're defining a single pipeline skeleton, which is instantiated multiple times, with different parameters. The power here lies in the fact that our compute infrastructure now executes all these nodes in isolation from each other, allowing us to train dozens of models in parallel without having to think about compute infrastructure. We simply execute the pipeline and compute instances get provisioned and removed dynamically as we need them, greatly reducing our compute operational and maintenance overhead. 
 
-![](../assets/img/dynamic_pipelines.gif)
+![](../../assets/img/dynamic_pipelines.gif)
 
 The above visualisation comes from [kedro viz](https://github.com/kedro-org/kedro-viz) which we greatly recommend trying out to get a sense of the entire pipeline. 
 
