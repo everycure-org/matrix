@@ -1,4 +1,4 @@
-# Setting Up Your Matrix Environment with GCP
+# GCP Set-up
 
 Now that you understand how to run different parts of the pipeline and have seen how the data flows through the system, let's set up your environment to work with GCP. This will allow you to access the full range of data and compute resources available in the Matrix platform.
 
