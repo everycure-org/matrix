@@ -5,10 +5,10 @@ hide:
   - navigation
 ---
 
-Welcome to the Matrix Project! This documentation provides an introduction to the project and the codebase, and guides you through the process of setting up your local environment.
-
 !!! info
-    Please note that MATRIX project is still work in progress; whilst we already actively use the pipeline for finding promising repurposing candidates, . Therefore, if you discover any typos, bugs, tech debts, please let us know throguh issues (TODO: add link to create an issue) or through PRs - we appreciate all contributions and believe that by open-sourcing this not-yet finished repo, we can create a really great drug repurposing platform. 
+    Please note that the MATRIX project is still a work in progress. While we already actively use the pipeline for finding promising repurposing candidates, we are continuously improving it. If you discover any typos, bugs, or technical debt, please let us know through [issues](https://github.com/everycure-org/matrix/issues/new?template=bug_report.md) or through PRs. We appreciate all contributions and believe that by open-sourcing this work-in-progress repository, we can create a truly great drug repurposing platform.
+
+Welcome to the Matrix Project! This documentation provides an introduction to the project and the codebase, and guides you through the process of setting up your local environment.
 
 <div class="grid cards" markdown>
 
@@ -64,11 +64,9 @@ Welcome to the Matrix Project! This documentation provides an introduction to th
 
 [Every Cure](https://everycure.org/about/) is a non-profit organization on a mission to unlock the full potential of existing medicines to treat every disease and every patient we possibly can. We are leveraging our AI Platform MATRIX to find new applicatiions of existing medicine. 
 
-### _Why Every Cure?_
+### _Why Every Cure or Matrix?_
 
 <iframe width="640" height="390" src="https://www.youtube.com/embed/3ElaCVvDZfI?si=lk3b1rSMutyiierm" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-
-### _Why MATRIX?_
 
 <iframe width="640" height="390" src="https://www.youtube.com/embed/67_Z40Ap1pU?si=XlCu7fBHxxkBTchH" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
