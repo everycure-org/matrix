@@ -2,7 +2,6 @@ import glob
 import os
 import re
 from pathlib import Path
-from typing import Optional
 
 import pytest
 import yaml
@@ -97,37 +96,62 @@ def test_no_non_parameter_entries_from_catalog_unused(
 _global_catalog = None
 
 
-def init_worker(catalog):
-    global _global_catalog
-    _global_catalog = catalog
+import re
 
 
-def check_dataset_resolvable(dataset_name: str) -> Optional[str]:
-    """Check if a dataset can be resolved by the global catalog."""
-    try:
-        _global_catalog._get_dataset(dataset_name)
-        return None
-    except Exception:
-        return dataset_name
+def get_dataset_patterns_from_config_resolver(catalog):
+    """Extract dataset patterns from the catalog's config resolver"""
+    if hasattr(catalog, "config_resolver") and catalog.config_resolver:
+        config_resolver = catalog.config_resolver
+
+        # Try to access pattern information through the config resolver
+        if hasattr(config_resolver, "dataset_patterns"):
+            return config_resolver.dataset_patterns
+
+        # Alternative: try to access through resolver attributes
+        if hasattr(config_resolver, "_dataset_patterns"):
+            return config_resolver._dataset_patterns
+
+    return None
+
+
+def parse_to_regex(parse_pattern):
+    """Convert a `parse`-style pattern to a regex pattern."""
+    escaped_pattern = re.escape(parse_pattern)
+    regex_pattern = re.sub(r"\\{(.*?)\\}", r"(?P<\1>.*?)", escaped_pattern)
+    return f"^{regex_pattern}$"
 
 
 @pytest.mark.integration
 def test_memory_data_sets_absent(cloud_kedro_context: KedroContext) -> None:
     """Tests that no MemoryDataSets are created by verifying all datasets can be resolved."""
-
     used_data_sets = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
     used_data_sets_wout_double_params = {x.replace("params:params:", "params:") for x in used_data_sets}
 
     catalog_datasets = set(cloud_kedro_context.catalog.list())
-    datasets_to_check = [dataset for dataset in used_data_sets_wout_double_params if dataset not in catalog_datasets]
 
-    # Check datasets sequentially instead of using multiprocessing
-    memory_data_sets = []
-    for dataset in datasets_to_check:
-        try:
-            cloud_kedro_context.catalog._get_dataset(dataset)
-        except Exception:
-            memory_data_sets.append(dataset)
+    # Try to get dataset patterns from config resolver
+    dataset_patterns = get_dataset_patterns_from_config_resolver(cloud_kedro_context.catalog)
+
+    if dataset_patterns:
+        # Use the fast pattern matching approach (like your original code)
+        factories = [re.compile(parse_to_regex(pattern)) for pattern in dataset_patterns]
+
+        memory_data_sets = [
+            dataset
+            for dataset in used_data_sets_wout_double_params
+            if not (dataset in catalog_datasets or any(factory.match(dataset) for factory in factories))
+        ]
+    else:
+        # Fall back to checking existence via the DataCatalog API
+        datasets_to_check = [ds for ds in used_data_sets_wout_double_params if ds not in catalog_datasets]
+
+        memory_data_sets = []
+        for dataset_name in datasets_to_check:
+            try:
+                cloud_kedro_context.catalog._get_dataset(dataset_name)
+            except Exception:
+                memory_data_sets.append(dataset_name)
 
     assert len(memory_data_sets) == 0, f"{memory_data_sets}"
 
