@@ -262,16 +262,21 @@ class DiseaseSplitDrugDiseasePairGenerator(SingleLabelPairGenerator):
         # Define ground truth dataset
         known_data_set = {(drug, disease) for drug, disease in zip(known_pairs["source"], known_pairs["target"])}
 
-        # Get only training diseases
+        # Get training and test diseases for this fold
         train_diseases = set(known_pairs[known_pairs["split"] == "TRAIN"]["target"])
+        test_diseases = set(known_pairs[known_pairs["split"] == "TEST"]["target"])
 
-        # Defining list of node id's to sample from
-        drug_samp_ids = graph.flags_to_ids(self._drug_flags)
-        # Filter disease_samp_ids to only include training diseases
-        disease_samp_ids = [d for d in graph.flags_to_ids(self._disease_flags) if d in train_diseases]
+        # Get all diseases from graph that match disease flags
+        all_diseases = set(graph.flags_to_ids(self._disease_flags))
+
+        # Get training diseases that are in the graph and not in test set
+        disease_samp_ids = [d for d in train_diseases if d in all_diseases and d not in test_diseases]
 
         if not disease_samp_ids:
             raise ValueError("No training diseases found in the knowledge graph")
+
+        # Get drugs from graph that match drug flags
+        drug_samp_ids = graph.flags_to_ids(self._drug_flags)
 
         # Sample pairs
         unknown_data = []
@@ -290,10 +295,22 @@ class DiseaseSplitDrugDiseasePairGenerator(SingleLabelPairGenerator):
                     ]
                 )
 
-        return pd.DataFrame(
+        # Create DataFrame with generated pairs
+        unknown_df = pd.DataFrame(
             columns=["source", "source_embedding", "target", "target_embedding", "y"],
             data=unknown_data,
         )
+
+        # Verify no test diseases appear in negative samples
+        negative_diseases = set(unknown_df[unknown_df["y"] == self._y_label]["target"])
+        test_diseases_in_negatives = test_diseases.intersection(negative_diseases)
+        if test_diseases_in_negatives:
+            raise ValueError(
+                f"Test diseases found in negative samples: {test_diseases_in_negatives}. "
+                "This indicates a potential data leakage issue."
+            )
+
+        return unknown_df
 
 
 ## Generators for evaluation datasets
