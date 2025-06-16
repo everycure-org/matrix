@@ -8,6 +8,5 @@ locals {
   network_name        = "matrix-hub-prod-nw"
   repo_revision       = "infra-prod-debug"
   aip_oauth_client_id = "864737999815-il01aht59rcsg9nal2bcik66mujd8hv5.apps.googleusercontent.com"
-
+  infra_bucket_name   = "mtrx-hub-prod-infra"
 }
-
