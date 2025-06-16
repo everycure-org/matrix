@@ -16,7 +16,7 @@
   "type": "module",
   "dependencies": {
     "@evidence-dev/bigquery": "^2.0.8",
-    "@evidence-dev/core-components": "^5.1.0",
+    "@evidence-dev/core-components": "^5.2.2",
     "@evidence-dev/csv": "^1.0.13",
     "@evidence-dev/databricks": "^1.0.7",
     "@evidence-dev/duckdb": "^1.0.12",
