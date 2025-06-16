@@ -1,5 +1,7 @@
 # Using Kedro to process datasets in batches asynchronously (Network bound operations?)
 
+In this section you will deep-dive into how we optimized our embedding generation whilst leveraging PySpark and Kedro functionalities. 
+
 ## Preliminaries
 
 Our organisation has been focussing on large-scale data enrichment. One of the problems we've ran into at multiple occasions is using an external API to enrich elements in a huge dataset in batched manner, i.e., millions of rows. The problem becomes more prevalent whenever the upstream API has rate limiting enabled, e.g., OpenAI for computing embeddings.
@@ -343,3 +345,5 @@ def create_pipeline(**kwargs) -> Pipeline:
         ]
     )
 ```
+
+[Caching :material-skip-next:](./caching.md){ .md-button .md-button--primary }

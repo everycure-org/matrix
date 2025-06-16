@@ -246,9 +246,14 @@ This is particularly useful when:
 !!! note
     The value of the environment variable doesn't matter - its mere presence is enough to disable the hook. You can use any value like `1`, `true`, or even an empty string.
 
-## End of the tutorial
+## End of the kedro extensions tutorial
 
-This is the end of our onboarding tutorial. We hope you've learned the basics of our project, and are ready to contribute!
+We hope you've learned the basics of kedro extensions in our project, and are ready to contribute!
 If you want to learn about some specific activities, please check the [walkthroughs](./walkthroughs/custom_modelling.ipynb) section.
 
-[Specific walkthroughs :material-skip-next:](./walkthroughs/custom_modelling.ipynb){ .md-button .md-button--primary }
+Now that you have a good understanding of kedro extensions, we recommend diving into some of the walkthroughs to get a good understanding of those extensions:
+- [Fabricator](./walkthroughs/fabricator.md)
+- [Data Catalog & Transcoding](./walkthroughs/walkthrough_data_catalog.md) 
+- [Kedro Dataset workflow - Deep Dive](./walkthroughs/new_data_source.md) 
+
+[Running the Pipeline on the Kubernetes Cluster :material-skip-next:](./kedro_experiment.md){ .md-button .md-button--primary }
