@@ -14,6 +14,7 @@ authors:
   - kevinschaper
   - piotrkan
   - emil-k
+- leelancashire
 ---
 
 ### Exciting New Features 🎉
