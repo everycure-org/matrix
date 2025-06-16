@@ -49,11 +49,13 @@ def can_talk_to_kubernetes(
                 pretty_report_on_error(e)
 
     def refresh_kube_credentials() -> None:
-        logger.debug("Refreshing kubectl credentials…")
-        refresh_command = (
-            f"gcloud container clusters get-credentials {cluster_name} --project {project} --region {region}"
-        )
-        run_gcloud_cmd(refresh_command)
+        if not environ.get("GITHUB_ACTIONS"):
+            # In GitHub Actions, we use the GCP_TOKEN environment variable to authenticate.
+            logger.debug("Refreshing kubectl credentials…")
+            refresh_command = (
+                f"gcloud container clusters get-credentials {cluster_name} --project {project} --region {region}"
+            )
+            run_gcloud_cmd(refresh_command)
 
     def get_kubernetes_context() -> str:
         return subprocess.check_output(["kubectl", "config", "current-context"], text=True).strip()
