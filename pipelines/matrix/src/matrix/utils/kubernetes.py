@@ -49,11 +49,15 @@ def can_talk_to_kubernetes(
                 pretty_report_on_error(e)
 
     def refresh_kube_credentials() -> None:
-        logger.debug("Refreshing kubectl credentials…")
-        refresh_command = (
-            f"gcloud container clusters get-credentials {cluster_name} --project {project} --region {region}"
-        )
-        run_gcloud_cmd(refresh_command)
+        """Refresh kubectl credentials for the specified GKE cluster."""
+        # We do not want to refresh credentials if running in GitHub Actions, as it is not needed there.
+        # In GitHub Actions, the credentials are already set up by the action.
+        if not environ.get("GITHUB_ACTIONS"):
+            logger.debug("Refreshing kubectl credentials…")
+            refresh_command = (
+                f"gcloud container clusters get-credentials {cluster_name} --project {project} --region {region}"
+            )
+            run_gcloud_cmd(refresh_command)
 
     def get_kubernetes_context() -> str:
         return subprocess.check_output(["kubectl", "config", "current-context"], text=True).strip()
