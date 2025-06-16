@@ -118,9 +118,6 @@ mlflow_artifact_root: ${gcs_bucket}/runs/${run_name}/mlflow
 
 paths:
   # hard coded against our central data location for raw
-
-  # TODO Need to re-work our approach between what is a "run" and what is a "release"
-  # TODO(mateusz.wasilewski): Change this to use a variable
   raw: gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
   int: ${gcs_bucket}/runs/${run_name}/02_intermediate
   prm: ${gcs_bucket}/runs/${run_name}/03_primary

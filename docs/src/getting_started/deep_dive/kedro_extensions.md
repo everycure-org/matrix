@@ -20,9 +20,6 @@ my_dataframe@pandas:
 
 ## Data fabrication
 
-!!! tip
-    For more information regarding the fabricator, navigate to `pipelines/matrix/packages/data_fabricator`.
-
 Our pipeline operates on large datasets, as a result the pipeline may take several hours the complete. Unfortunately, large iteration time leads to decreased developer productivity. For this reason, we've established a data fabricator to enable test runs on synthetic data.
 
 To seamlessly run the same codebase on both the fabricated and the production data, we leverage [Kedro configuration environments](https://docs.kedro.org/en/stable/configuration/configuration_basics.html#configuration-environments).

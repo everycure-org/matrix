@@ -57,15 +57,21 @@ This structure allows us to adhere to an organized structure for storing data pr
 
 ### Configuration
 We use Kedro's configuration system to manage our pipeline settings and data catalog. It's located within the `conf` directory: 
+
   - `base/` - Core configuration shared across all environments:
     - `catalog.yml` - Defines how data is loaded and saved for each pipeline stage
     - `parameters.yml` - Contains configurable parameters used across pipelines (e.g., model hyperparameters, filtering thresholds)
+
   - `local/` - Settings for local development that override base configs
+
   - `cloud/` - Environment for cloud development on our GCP cluster
+
   - `test/` - Test environment settings, typically using smaller datasets
   
 You will learn more about these different environments in the [overview section](./environments_overview.md). The most important thing to know is that the configuration system allows us to:
+
 - Define data inputs/outputs for each pipeline stage in a centralized catalog
+
 - Adjust parameters without changing code
 
 !!! info

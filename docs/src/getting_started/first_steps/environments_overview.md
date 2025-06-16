@@ -10,7 +10,7 @@ We have 4 environments declared in the kedro project for `MATRIX`:
 - `sample`: Contains a sample of the data and is useful for fast iterations on the pipeline from the embeddings pipeline and on.
 
 !!! info
-    Remember the `.env.default` and `.env` mentioned in the [repository structure](./repo_structure.md)? Our `cloud` environment is equipped with environment variables that allow for controlling your credentials (e.g. github token) or configuring the GCP project to use (more about this in deep dive TODO) 
+    Remember the `.env.default` and `.env` mentioned in the [repository structure](./repo_structure.md)? Our `cloud` environment is equipped with environment variables that allow for controlling your credentials (e.g. github token) or configuring the GCP project to use ([more about this in deep dive](../deep_dive/gcp_setup.md)) 
 
 You can run any of the environments using the `--env` flag. For example, to run the pipeline in the `cloud` environment, you will  use the following command:
 
@@ -64,5 +64,6 @@ For more details on sampling environment, see the [Sample Environment Guide](./s
 
 ![](../assets/img/environments.drawio.svg)
 
-Now that you have a good understanding of different environments, we can run the pipeline with a sample of real data
+Now that you have a good understanding of different environments, we can run the pipeline with a sample of real data.
+
 [Running the pipeline :material-skip-next:](./run_pipeline.md){ .md-button .md-button--primary }
