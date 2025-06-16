@@ -1,4 +1,4 @@
-# Using Kedro to process datasets in batches asynchronously (Network bound operations?)
+# Using Kedro to process datasets in batches asynchronously
 
 In this section you will deep-dive into how we optimized our embedding generation whilst leveraging PySpark and Kedro functionalities. 
 
