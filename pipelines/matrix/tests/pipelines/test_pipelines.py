@@ -1,7 +1,6 @@
 import glob
 import os
 import re
-from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 from typing import Optional
 
@@ -122,17 +121,13 @@ def test_memory_data_sets_absent(cloud_kedro_context: KedroContext) -> None:
     catalog_datasets = set(cloud_kedro_context.catalog.list())
     datasets_to_check = [dataset for dataset in used_data_sets_wout_double_params if dataset not in catalog_datasets]
 
-    # Set global catalog for multiprocessing
-    global _global_catalog
-    _global_catalog = cloud_kedro_context.catalog
-
+    # Check datasets sequentially instead of using multiprocessing
     memory_data_sets = []
-    with ProcessPoolExecutor(max_workers=min(len(datasets_to_check), os.cpu_count() or 4)) as executor:
-        futures = {executor.submit(check_dataset_resolvable, ds): ds for ds in datasets_to_check}
-        for future in as_completed(futures):
-            result = future.result()
-            if result is not None:
-                memory_data_sets.append(result)
+    for dataset in datasets_to_check:
+        try:
+            cloud_kedro_context.catalog._get_dataset(dataset)
+        except Exception:
+            memory_data_sets.append(dataset)
 
     assert len(memory_data_sets) == 0, f"{memory_data_sets}"
 

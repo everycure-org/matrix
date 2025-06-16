@@ -406,7 +406,7 @@ jupyterlab-server==2.27.3
     #   notebook
 jupyterlab-widgets==3.0.15
     # via ipywidgets
-kedro==0.19.9
+kedro==0.19.13
     # via
     #   -r requirements.in
     #   kedro-datasets
