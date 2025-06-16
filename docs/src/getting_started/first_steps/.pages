@@ -6,4 +6,4 @@ nav:
     - installation.md
     - local-setup.md
     - environments_overview.md
-    - sample_environment.md
+    - run_pipeline.md
