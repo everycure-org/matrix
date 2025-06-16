@@ -34,6 +34,14 @@ select
 from 
     bq.overall_metrics
 ```
+```sql neighbours_per_drug_node
+select 
+    mean(unique_neighbours) as mean,
+    median(unique_neighbours) as median
+from 
+    bq.drug_list_neighbour_counts
+```
+
 
 ## Graph size
 
@@ -290,12 +298,30 @@ SELECT * FROM bq.epistemic_heatmap
 
 <br/>
 
+```sql disease_list_neighbour_counts_stats
+select 
+    mean(unique_neighbours) as mean,
+    median(unique_neighbours) as median
+from 
+    bq.disease_list_neighbour_counts
+```
+
 <Grid col=2>
-    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="disease_edges_per_node" fmt="num1"/></span><br/>average edges per disease node</p>
-    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="median_disease_node_degree" fmt="num0"/></span><br/>median edges per disease node</p>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={disease_list_neighbour_counts_stats} column="mean" fmt="num1"/></span><br/>mean neighbours per disease node</p>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={disease_list_neighbour_counts_stats} column="median" fmt="num0"/></span><br/>median neighbours per disease node</p>
 </Grid>
 
 <br/>
+
+```sql disease_list_neighbour_counts
+select * from bq.disease_list_neighbour_counts
+
+```
+<Histogram
+    data={disease_list_neighbour_counts}
+    x=unique_neighbours
+    xAxisTitle="Disease node neighbours"
+/>
 
 
 ```sql disease_list_connected_categories
@@ -342,12 +368,35 @@ order by
 
 <br/>
 
+
+```sql drug_list_neighbour_counts_stats
+select 
+    mean(unique_neighbours) as mean,
+    median(unique_neighbours) as median
+from 
+    bq.drug_list_neighbour_counts
+```
+
 <Grid col=2>
-    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="drug_edges_per_node" fmt="num1"/></span><br/>average edges per drug node</p>
-    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="median_drug_node_degree" fmt="num0"/></span><br/>median edges per drug node</p>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={drug_list_neighbour_counts_stats} column="mean" fmt="num1"/></span><br/>mean neighbours per drug node</p>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={drug_list_neighbour_counts_stats} column="median" fmt="num0"/></span><br/>median neighbours per drug node</p>
 </Grid>
 
 <br/>
+
+```sql drug_list_neighbour_counts
+select * 
+from bq.drug_list_neighbour_counts
+```
+
+
+<Histogram data={drug_list_neighbour_counts} x=unique_neighbours bins={1000} xAxisTitle="Drug node neighbours">
+    <ReferenceLine data={drug_list_neighbour_counts_stats} x=median label="Median" />
+    <ReferenceLine data={drug_list_neighbour_counts_stats} x=mean label="Mean" />
+</Histogram>
+    
+
+
 
 
 ```sql drug_list_connected_categories
