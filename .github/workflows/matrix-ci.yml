@@ -70,7 +70,7 @@ jobs:
               - .github/workflows/matrix-ci.yml
 
   ci:
-    runs-on: 'self-hosted'
+    runs-on: ubuntu-latest
     needs: [paths_filter]
     if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
     # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#concurrency
