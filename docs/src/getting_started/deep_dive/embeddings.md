@@ -93,7 +93,6 @@ def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max
 
     # Order and bucketize elements
     return (
-        # TODO: How bad is this really? for our use case it looked ok.
         df.withColumn("row_num", F.row_number().over(Window.orderBy("id")) - F.lit(1))
         .join(buckets, on=[(F.col("row_num") >= (F.col("min_range"))) & (F.col("row_num") < F.col("max_range"))])
         # Concat input
@@ -129,7 +128,7 @@ Next, we wish to process the dataframe in shards, we will be using Kedro's `Part
 
 ```yaml
 embeddings.feat.bucketized_nodes@partitioned:
-  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset # TODO: Hide this at first and include later?
+  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset 
   path: ${globals:paths.tmp}/feat/bucketized_nodes
   dataset: 
     # NOTE: Switching between spark/pandas thanks to underlying parquet structure
@@ -154,7 +153,6 @@ embeddings.node:
   input_features: ["category", "name"]
 
   model:
-    # TODO: Should we add in that this is object injected? Or maybe omit for blog post to avoid complexity?
     object: langchain_openai.OpenAIEmbeddings
     model: text-embedding-3-small
     openai_api_key: ${oc.env:OPENAI_API_KEY}
@@ -185,7 +183,7 @@ We've now setup the a Kedro dataset to load the hive partitioned dataset as a Ke
 
 ```yaml
 embeddings.feat.graph.node_embeddings@partitioned:
-  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset  # TODO: Hide this at first and include later?
+  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset 
   overwrite: True # important otherwise not properly reset on rerun
   path: ${globals:paths.tmp}/feat/tmp_nodes_with_embeddings
   dataset: 

@@ -246,7 +246,7 @@ The output contains several variables, such as `{folds}` for cross-validation fo
 Now that you understand how to run different parts of the pipeline, let's try to run the pipeline with _real_ data. The real KG is large and requires plenty of compute/time however we can run the pipeline with a subset of real data if you follow next steps.
 
 ```
-TODO: instructions
+TODO:
 ```
 
 Remember that the pipeline is modular by design, allowing you to run and test components independently. It's very rare that we run the pipeline with real data e2e; we usually first run data_engineering pipeline to examine the generated KG, then we extract features and only after that's complete, we would start modelling.

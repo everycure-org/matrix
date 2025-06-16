@@ -133,3 +133,5 @@ From the [Pandera documentation](https://pandera.readthedocs.io/en/stable/pyspar
 5. Add schema validation tests for critical data pipelines
 6. Use full import names (`pandera`, not `pa`) for clarity
 7. Consider DataFrame type when choosing validation approach
+
+[Contribute :material-skip-next:](./../contribute/index.md){ .md-button .md-button--primary }

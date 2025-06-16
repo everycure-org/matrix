@@ -17,6 +17,7 @@ kedro experiment run --pipeline=embeddings --release-version v0.2.7 --environmen
 ```
 
 When you run this:
+
 * If an `--experiment-name` is provided, it will use this as an experiment name for MLFlow experiment. Otherwise, it will attempt to use the current branch name, without the `experiment/` prefix. 
 * Next, it will look up this experiment name in MLFlow. If it doesn't exist, it will create a new experiment with this name.
 * If you have not defined a `--run-name`, you will be prompted to enter one.
