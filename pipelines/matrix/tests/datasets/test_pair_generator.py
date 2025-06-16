@@ -201,7 +201,9 @@ def test_disease_split_drug_disease_pair_generator_no_train_diseases(graph: Know
 def test_disease_split_drug_disease_pair_generator_disease_distribution(
     graph: KnowledgeGraph, known_pairs: pd.DataFrame
 ):
-    """Test that DiseaseSplitDrugDiseasePairGenerator maintains disease distribution in negative samples."""
+    """Test that DiseaseSplitDrugDiseasePairGenerator maintains disease distribution in negative samples
+    and ensures no test diseases appear in the training set.
+    """
     # Given a train-test split and the generator
     splitter = ShuffleSplit(n_splits=1, test_size=0.5, random_state=111)
     known_pairs_split = make_folds(known_pairs, splitter)
@@ -221,15 +223,40 @@ def test_disease_split_drug_disease_pair_generator_disease_distribution(
     # Then:
     # 1. All diseases in the generated pairs are from training set
     train_diseases = set(known_pairs_split[known_pairs_split["split"] == "TRAIN"]["target"])
-    assert set(unknown["target"]).issubset(train_diseases)
+    test_diseases = set(known_pairs_split[known_pairs_split["split"] == "TEST"]["target"])
+    assert set(unknown["target"]).issubset(train_diseases), "Test diseases found in generated pairs"
 
     # 2. Each training disease appears in the generated pairs
     disease_counts = unknown["target"].value_counts()
-    assert set(disease_counts.index) == train_diseases
+    assert set(disease_counts.index) == train_diseases, "Not all training diseases are represented"
 
     # 3. The distribution is roughly uniform (allowing for some randomness)
     expected_count = len(unknown) / len(train_diseases)
-    assert all(abs(count - expected_count) < expected_count * 0.5 for count in disease_counts)
+    assert all(
+        abs(count - expected_count) < expected_count * 0.5 for count in disease_counts
+    ), "Disease distribution is not roughly uniform"
+
+    # 4. Create a simulated training set by combining positives and negatives
+    training_positives = known_pairs_split[known_pairs_split["split"] == "TRAIN"]
+    training_set = pd.concat([training_positives, unknown], ignore_index=True)
+
+    # 5. Verify no test diseases in any part of the training set
+    all_training_diseases = set(training_set["target"])
+    test_diseases_in_training = test_diseases.intersection(all_training_diseases)
+    assert not test_diseases_in_training, f"Test diseases found in training set: {test_diseases_in_training}"
+
+    # 6. Verify no test diseases in negative samples specifically
+    negative_training_diseases = set(training_set[training_set["y"] == 2]["target"])
+    test_diseases_in_negatives = test_diseases.intersection(negative_training_diseases)
+    assert not test_diseases_in_negatives, f"Test diseases found in negative samples: {test_diseases_in_negatives}"
+
+    # 7. Print distribution information for debugging
+    print("\nDisease Distribution in Training Set:")
+    print(f"Total training diseases: {len(train_diseases)}")
+    print(f"Total test diseases: {len(test_diseases)}")
+    print(f"Training diseases in negatives: {len(negative_training_diseases)}")
+    print("\nDisease counts in negative samples:")
+    print(disease_counts)
 
 
 ## Test evaluation dataset generators
