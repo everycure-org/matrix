@@ -7,6 +7,7 @@ title: Deep Dive
 After completing first steps, you should be able to:
 - Understand our on a high level Tech Stack
 - Set up MATRIX environment on your machine
+- Understand how config and kedro parameters work well together
 - Run the Repurposing Pipeline with both fabricated data and sample of real data
 
 !!! info
@@ -26,4 +27,4 @@ Once we've walked through the entire pipeline e2e, we will touch on **infrastruc
 
 We realize that this section is rather long and our pipeline is quite complicated. However after completing this section, you should have a comprehensive understanding of the MATRIX system and be able to utilize the codebase effectively, develop, and contribute!
 
-[Start with Important FilesKedro Extensions :material-arrow-right:](./kedro_extensions.md){ .md-button .md-button--primary }
+[Start with Kedro Extensions :material-arrow-right:](./kedro_extensions.md){ .md-button .md-button--primary }
