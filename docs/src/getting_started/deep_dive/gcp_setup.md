@@ -1,57 +1,67 @@
-### Updating the Submodules
+# Setting Up Your Matrix Environment with GCP
 
-The codebase contain submodules that references other respository in Github. To be able to clone them please run:
+Now that you understand how to run different parts of the pipeline and have seen how the data flows through the system, let's set up your environment to work with GCP. This will allow you to access the full range of data and compute resources available in the Matrix platform.
+
+## Prerequisites
+
+!!! Prerequisited
+    Before proceeding, ensure you have:
+    1. A Google Cloud account with access to the Matrix project (if you don't have that, please [create an onboarding issue](https://github.com/everycure-org/matrix/issues/new?template=onboarding.md))
+    2. The Google Cloud SDK installed [see this section of installation](../first_steps/installation.md#cloud-related-tools)
+    3. Basic knowledge of Kubernetes and Docker
+
+## Environment Setup
+
+### 1. Authentication and Access
+
+First, authenticate with Google Cloud:
 
 ```bash
-git submodule update --init --recursive
+gcloud auth login
 ```
 
-!!! help "Encountering issues?"
-    If you're experiencing any problems running the `git submodule update --init --recursive`, please run the command outside your IDE (through the shell or terminal), as the command would need to open a browser to authenticate with Github, something that doesn't work in certain IDE (PyCharm) command line.
+Then, set up your application default credentials:
 
-### Secrets
-We need to fetch the secrets for the local environment such as fetching a storage service account and and OAuth client secret. This can be done by running the following command:
+```bash
+gcloud auth application-default login
+```
+
+### 2. Fetching Required Secrets
+
+The Matrix platform requires certain secrets for operation. Fetch them using:
 
 ```bash
 make fetch_secrets
 ```
 
-### Plugging into cloud outputs
+This will:
+- Create a `conf/local` directory
+- Fetch the storage service account key
+- Fetch the OAuth client secret
+- Set appropriate permissions on the secret files
 
-As you might have noticed, local setup is mainly focusing on the local execution of the pipeline with the fabricated data. However, we also run our full pipeline on production data in the `cloud` environment. Our pipeline is orchestrated using Argo Workflows, and may take several hours to complete. Given our current test process, that solely executes end-to-end tests on synthetic data, it is possible that the pipeline runs into an error due to a node handling data edge cases unsuccesfully.
+### 3. Accessing Cluster Services
 
-Troubleshooting such issues is tedious, and validating a fix requires the entire pipeline to be re-executed. This is where the `--from-env` flag comes in.
+To interact with the Kubernetes cluster:
 
-The figure below visualizes the same pipeline, with the environment distinguishing source/destination systems.
-
-![](../assets/img/from-env-pipeline.drawio.svg)
-
-Now imagine that a node in the pipeline fails. Debugging is hard, due to the remote execution environment. The `--from-env` flag allows for executing a step in the pipeline, in a given environment, while consuming the _input_ datasets from another environment.
-
-![](../assets/img/from-env-run.drawio.svg)
-
-In order to run against the `cloud` environment it's important to set the `RUN_NAME` variable in the `.env` file, as this determines the run for which datasets are pulled. You can find the `RUN_NAME` on the labels of the Argo Workflow.
-
-The following command can be used to re-run the node locally, while consuming data from `cloud`:
-
+1. Install `k9s` for cluster management:
 ```bash
-# NOTE: You can specify multiple nodes to rerun, using a comma-separated list
-kedro run --from-env cloud --nodes preprocessing_node_name
+brew install k9s
 ```
 
-!!! note 
+2. Get cluster credentials:
+```bash
+gcloud container clusters get-credentials compute-cluster --region us-central1
+```
 
-    !!! warning
-        Make sure to disable port forwarding once you're done and remove the environment variables from the .env file, otherwise this might result in you pushing local runs to our cloud MLFlow instance.
-    
-    If you wish to pull data from MLFlow it's currently required to setup [port-forwarding](https://emmer.dev/blog/port-forwarding-to-kubernetes/) into the MLFlow tracking container on the cluster. You can do this as follows:
+3. Launch `k9s` to access services:
+```bash
+k9s
+```
 
-    ```bash
-    kubectl port-forward -n mlflow svc/mlflow-tracking 5002:80
-    ```
+Use `shift + f` in `k9s` to set up port-forwarding for services.
 
-    Next, add the following entry to your `.env` file.
+!!! More Resources
+    To learn more about [GCP](../../infrastructure/gcp.md) or [Kubernetes](../../infrastructure/kubernetes_cluster.md) within Matrix, go to [Infrastructure section](../../infrastructure/index.md).
 
-    ```dotenv
-    MLFLOW_ENDPOINT=http://127.0.0.1:5002
-    ```
+[Go to GCP Envirnoment Section  :material-skip-next:](../deep_dive/gcp_environments.md){ .md-button .md-button--primary }

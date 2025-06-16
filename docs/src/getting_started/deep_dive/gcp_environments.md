@@ -13,7 +13,7 @@ Primarily, they have an influence on the location and type of inputs and outputs
 ### GCP environments
 
 It is abstracted away from the user (you don't set it, it's determined automatically). It is used as a shorthand for  GCP project a pipeline is sent to for execution.
-As such, gcp environment `prod` refers to GCP project `mtrx-hub-prod-sms` and `dev` to `mtrx-hub-dev-3of`.
+As such, gcp environment `prod` refers to GCP project `mtrx-hub-prod-sms` and `dev` to `mtrx-hub-dev-3of`. Note that prod environment is only available to a restrictred group of users at the moment.
 
 ### Runtime variables
 
@@ -83,8 +83,7 @@ Commands `kedro experiment run` and `kedro run` are environment agnostic.
 - **Storage Locations**: Different GCP buckets are used for `dev` vs `prod` gcp-env pipeline outputs
 - **Public Datasets**: When running in production gcp-env, public datasets are still ingested from the bucket in the dev GCP project
 
+!!! info
+    The CI pipeline is not extended to prod - testing is done in the same way in both environments. Currently, releases are only triggered in the dev environment (this will change to prod in the future)
 
-### CI/CD Considerations
-
-- The CI pipeline is not extended to prod - testing is done in the same way in both environments
-- Currently, releases are only triggered in the dev environment (this will change to prod in the future)
+[CI/CD:](./ci.md){ .md-button .md-button--primary }

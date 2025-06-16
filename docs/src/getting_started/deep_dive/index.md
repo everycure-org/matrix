@@ -25,6 +25,6 @@ We will then briefly revisit our modelling pipeline as an example to explain **h
 
 Once we've walked through the entire pipeline e2e, we will touch on **infrastructure**, how we are utilizing **Continuous Integration Pipeline** and how to go about **kubernetes development** 
 
-We realize that this section is rather long and our pipeline is quite complicated. However after completing this section, you should have a comprehensive understanding of the MATRIX system and be able to utilize the codebase effectively, develop, and contribute!
+We realize that this section is rather long and our pipeline is quite complicated. However after completing this section, you should have a comprehensive understanding of the MATRIX system and be able to utilize the codebase and GCP effectively, develop, and contribute!
 
-[Start with Kedro Extensions :material-arrow-right:](./kedro_extensions.md){ .md-button .md-button--primary }
+[Start with GCP Setup :material-arrow-right:](./gcp_setup.md){ .md-button .md-button--primary }

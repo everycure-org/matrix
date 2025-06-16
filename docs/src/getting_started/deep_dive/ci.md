@@ -21,12 +21,4 @@ To make sure we do not use any software that gets us into trouble later on, we h
 in our CI. This will have to be added to our release pipeline when we build it. For now,
 the Makefile in our `matrix` pipeline holds the command to scan for licenses.
 
-## Secrets files
-
-As mentioned in the [GCP Foundations](../infrastructure/gcp.md) page, we use
-`git-crypt`. Because the CI doesn't have a public-private GPG key to share with us, we
-exported the symmetric key and added it to github actions' secrets. 
-
-```
-git-crypt export-key /tmp/key && cat /tmp/key | base64 && rm /tmp/key
-```
+[Kedro Extensions:](./kedro_extensions.md){ .md-button .md-button--primary }

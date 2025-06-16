@@ -69,4 +69,6 @@ The input data contained 3.7M nodes, 18.8M edges and 53k ground truth edges.
 3. Define the sampled nodes as the union of the ground truth nodes and the knowledge graph nodes.
 4. Define the sampled edges as all the edges between the sampled nodes.
 
-![](../assets/img/groundtruthsampler_illustration.svg)
+![](../../assets/img/groundtruthsampler_illustration.svg)
+
+[Plugging into Cloud Env Locally :material-skip-next:](./cross_environments.md){ .md-button .md-button--primary }
