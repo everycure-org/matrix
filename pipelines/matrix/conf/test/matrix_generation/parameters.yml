@@ -1,7 +1,3 @@
-# matrix_generation.treat_score_col_name: &score-col "treat score"
-# matrix_generation.not_treat_score_col_name: &score-col-not-treat "not treat score"
-# matrix_generation.unknown_score_col_name:  &score-col-unknown "unknown score"
-
 # Strategies for reporting nodes
 
 matrix_generation.n_reporting: &n_reporting 10 # Number of items "top pairs" reporting table
