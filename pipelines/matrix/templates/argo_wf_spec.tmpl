@@ -41,6 +41,29 @@ spec:
         value: "{{ include_private_datasets }}"
   templates:
   - &_kedro_template
+    {% raw %}{{if gt (toInt inputs.parameters.num_gpus) 0}}{% endraw %}
+    sidecars:
+      - name: dcgm-exporter
+        image: nvidia/dcgm-exporter:3.3.0-3.2.0-ubuntu20.04
+        ports:
+        - containerPort: 9400
+          name: gpu-metrics
+        env:
+        - name: DCGM_EXPORTER_LISTEN
+          value: ":9400"
+        - name: DCGM_EXPORTER_KUBERNETES
+          value: "true"
+        resources:
+          requests:
+            memory: "50Mi"
+            cpu: "50m"
+          limits:
+            memory: "100Mi"
+            cpu: "100m"
+        securityContext:
+          capabilities:
+            add: ["SYS_ADMIN"]
+    {% raw %}{{end}}{% endraw %}
     metrics:
         prometheus:
           - name: "argo_custom_workflow_error_counter"
@@ -54,6 +77,32 @@ spec:
             # https://argo-workflows.readthedocs.io/en/latest/variables/#exit-handler
             counter:
               value: "1"
+            # Add GPU-specific metrics
+          - name: "argo_workflow_gpu_allocated"
+            help: "Number of GPUs allocated for this workflow task"
+            labels:
+              - key: pipeline_name
+                value: "{{ pipeline_name }}"
+              - key: task_name
+                value: "{{inputs.parameters.kedro_nodes}}"
+              - key: gpu_type
+                value: "nvidia-l4"
+            when: {% raw %}"{{inputs.parameters.num_gpus}} > 0"{% endraw %}
+            gauge:
+              value: {% raw %}"{{inputs.parameters.num_gpus}}"{% endraw %}
+          - name: "argo_workflow_gpu_task_duration_seconds"
+            help: "Duration of GPU-enabled tasks"
+            labels:
+              - key: pipeline_name
+                value: "{{ pipeline_name }}"
+              - key: task_name
+                value: {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
+              - key: gpu_count
+                value: {% raw %}"{{inputs.parameters.num_gpus}}"{% endraw %}
+            when: {% raw %}"{{inputs.parameters.num_gpus}} > 0"{% endraw %}
+            histogram:
+              buckets: [30, 60, 120, 300, 600, 1800, 3600]
+              value: {% raw %}"{{workflow.duration}}"{% endraw %}
     name: kedro
     affinity:
       nodeAffinity:
