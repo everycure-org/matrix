@@ -70,17 +70,33 @@ jobs:
               - .github/workflows/matrix-ci.yml
 
   ci:
-    runs-on:  'self-hosted'
+    runs-on: 'self-hosted'
     needs: [paths_filter]
     if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
     # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#concurrency
+    strategy:
+      matrix:
+        task:
+          - name: "catalog-base"
+            command: "uv run kedro catalog resolve --env base"
+          - name: "catalog-cloud"
+            command: "uv run kedro catalog resolve --env cloud"
+          - name: "catalog-test"
+            command: "uv run kedro catalog resolve --env test"
+          - name: "full-test"
+            command: "make full_test"
+          - name: "docker-test"
+            command: "make compose_down && make docker_test GIT_SHA=\"${GITHUB_SHA:0:7}\""
+      fail-fast: true # stop running other tasks if one fails
+    # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idruns-on
+    
     # Map a step output to a job output
     outputs:
       status: ${{ steps.finally.outputs.status }}
 
     permissions:
-     contents: 'read'
-     id-token: 'write'
+      contents: 'read'
+      id-token: 'write'
     defaults:
       run:
         working-directory: ./pipelines/matrix
@@ -99,35 +115,21 @@ jobs:
           workload_identity_provider: ${{vars.workload_identity_provider}}
           service_account: ${{vars.service_account}}
 
-      # On every PR
+      # Setup steps
       - run: env | sort # prints out all env variables, helpful for debugging
       - run: make install
       - run: make precommit
       - run: make fetch_secrets
-      - run: uv run kedro catalog resolve --env base
-      - run: uv run kedro catalog resolve --env cloud
-      - run: uv run kedro catalog resolve --env test
-      - run: make full_test
-      - run: make compose_down # ensures containers & state are removed
-      - run: make docker_test GIT_SHA="${GITHUB_SHA:0:7}" #we overwrite the GIT_SHA in the Makefile
-        # only if PR is labelled with "ready" or if branch is main
-        # if: contains(github.event.pull_request.labels.*.name, 'ready') || github.ref == 'refs/heads/main'
-      # workaround as the `failure()` call did not work in downstream matrix_ci_check
+      
+      # Run the matrix task
+      - name: Run ${{ matrix.task.name }}
+        run: ${{ matrix.task.command }}
+      
+      # Cleanup
       - run: docker volume prune -f #avoid running out of disk space
       - id: finally
         if: failure()
         run: echo "status=failure" >> "$GITHUB_OUTPUT"
-  
-  # we use this check as required in our PRs to ensure that CI runs but only for our paths. 
-  matrix_ci_check:
-    name: Matrix CI PR Check
-    runs-on:  'self-hosted'
-    if: always()
-    needs: [paths_filter, ci]
-    steps:
-      - if: ${{ needs.paths_filter.outputs.changed == 'true' && needs.ci.outputs.status == 'failure' }}
-        run: echo "CI failed, we are exiting" && exit 1
-      - run: echo "Either no files were changed or we had happy CI, continuing"
 
       
 
