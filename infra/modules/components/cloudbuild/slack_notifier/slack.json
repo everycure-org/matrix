@@ -1,0 +1,50 @@
+[
+  {
+    "type": "header",
+    "text": {
+      "type": "plain_text",
+      "text": "🚧 Terraform Deployment Failed! 🚨",
+      "emoji": true
+    }
+  },
+  {
+    "type": "section",
+    "fields": [
+      {
+        "type": "mrkdwn",
+        "text": "*📂 Deployment Path:*\n`{{.Build.Substitutions._TERRAGRUNT_DIR}}`"
+      },
+      {
+        "type": "mrkdwn",
+        "text": "*📄 Commit:*\n<https://github.com/{{.Build.Substitutions.REPO_FULL_NAME}}/commit/{{.Build.Substitutions.COMMIT_SHA}}|{{.Build.Substitutions.SHORT_SHA}}>"
+      },
+      {
+        "type": "mrkdwn",
+        "text": "*🔀 Branch:*\n{{.Build.Substitutions.BRANCH_NAME}}"
+      },
+      {
+        "type": "mrkdwn",
+        "text": "*📛 Status:*\n`{{.Build.Status}}`"
+      }
+    ]
+  },
+  {
+    "type": "divider"
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "View the full build logs and failure details below:"
+    },
+    "accessory": {
+      "type": "button",
+      "text": {
+        "type": "plain_text",
+        "text": "View Logs"
+      },
+      "url": "{{.Build.LogUrl}}",
+      "action_id": "view-logs-button"
+    }
+  }
+]
