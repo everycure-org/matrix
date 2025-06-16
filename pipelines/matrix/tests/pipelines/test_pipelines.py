@@ -92,13 +92,6 @@ def test_no_non_parameter_entries_from_catalog_unused(
     assert unused_entries == set(), f"The following entries are not used: {unused_entries}"
 
 
-# Global reference (must be accessible for multiprocessing)
-_global_catalog = None
-
-
-import re
-
-
 def get_dataset_patterns_from_config_resolver(catalog):
     """Extract dataset patterns from the catalog's config resolver"""
     if hasattr(catalog, "config_resolver") and catalog.config_resolver:
