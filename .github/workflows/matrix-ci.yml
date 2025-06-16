@@ -92,7 +92,7 @@ jobs:
           submodules: recursive
           token: ${{ secrets.PAT }}
           persist-credentials: true
-
+      # this is needed to ensure that the `uv run kedro catalog resolve --env cloud` command works.
       - uses: 'google-github-actions/auth@v2'
         with:
           project_id: ${{vars.project_id}}
