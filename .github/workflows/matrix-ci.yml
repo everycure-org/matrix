@@ -68,35 +68,10 @@ jobs:
             src:
               - pipelines/matrix/**
               - .github/workflows/matrix-ci.yml
-
-  ci:
+  setup:
     runs-on: ubuntu-latest
     needs: [paths_filter]
     if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
-    # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#concurrency
-    strategy:
-      matrix:
-        task:
-          - name: "catalog-base"
-            command: "uv run kedro catalog resolve --env base"
-          - name: "catalog-cloud"
-            command: "uv run kedro catalog resolve --env cloud"
-          - name: "catalog-test"
-            command: "uv run kedro catalog resolve --env test"
-          - name: "full-test"
-            command: "make full_test"
-          - name: "docker-test"
-            command: "make compose_down && make docker_test GIT_SHA=\"${GITHUB_SHA:0:7}\""
-      fail-fast: true # stop running other tasks if one fails
-    # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idruns-on
-    
-    # Map a step output to a job output
-    outputs:
-      status: ${{ steps.finally.outputs.status }}
-
-    permissions:
-      contents: 'read'
-      id-token: 'write'
     defaults:
       run:
         working-directory: ./pipelines/matrix
@@ -112,17 +87,81 @@ jobs:
           submodules: recursive
           token: ${{ secrets.PAT }}
           persist-credentials: true
-      # this is needed to ensure that the `uv run kedro catalog resolve --env cloud` command works.
+      
+      # Cache uv dependencies
+      - name: Cache uv dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/uv
+            .venv
+          key: uv-${{ runner.os }}-${{ hashFiles('**/requirements.txt', '**/pyproject.toml') }}
+          restore-keys: |
+            uv-${{ runner.os }}-
+
       - uses: 'google-github-actions/auth@v2'
         with:
           project_id: ${{vars.project_id}}
           workload_identity_provider: ${{vars.workload_identity_provider}}
           service_account: ${{vars.service_account}}
 
-      # Setup steps
-      - run: env | sort # prints out all env variables, helpful for debugging
       - run: make install
       - run: make precommit
+      - run: make fetch_secrets
+
+  ci:
+    runs-on: ubuntu-latest
+    needs: [setup]
+    strategy:
+      matrix:
+        task:
+          - name: "catalog-base"
+            command: "uv run kedro catalog resolve --env base"
+          - name: "catalog-cloud"
+            command: "uv run kedro catalog resolve --env cloud"
+          - name: "catalog-test"
+            command: "uv run kedro catalog resolve --env test"
+          - name: "full-test"
+            command: "make full_test"
+          - name: "docker-test"
+            command: "make compose_down && make docker_test GIT_SHA=\"${GITHUB_SHA:0:7}\""
+      fail-fast: true
+    outputs:
+      status: ${{ steps.finally.outputs.status }}
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    defaults:
+      run:
+        working-directory: ./pipelines/matrix
+    steps:
+      - uses: actions/checkout@v4
+        with: 
+          sparse-checkout: |
+            pipelines/matrix/
+          submodules: recursive
+          token: ${{ secrets.PAT }}
+          persist-credentials: true
+
+      # Restore cached dependencies
+      - name: Cache uv dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/uv
+            .venv
+          key: uv-${{ runner.os }}-${{ hashFiles('**/requirements.txt', '**/pyproject.toml') }}
+          restore-keys: |
+            uv-${{ runner.os }}-
+
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider}}
+          service_account: ${{vars.service_account}}
+
+      # Quick install (should be cached)
+      - run: make install
       - run: make fetch_secrets
       
       # Run the matrix task
@@ -130,7 +169,7 @@ jobs:
         run: ${{ matrix.task.command }}
       
       # Cleanup
-      - run: docker volume prune -f #avoid running out of disk space
+      - run: docker volume prune -f
       - id: finally
         if: failure()
         run: echo "status=failure" >> "$GITHUB_OUTPUT"
