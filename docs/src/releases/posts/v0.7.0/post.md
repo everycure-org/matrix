@@ -26,6 +26,13 @@ authors:
 - Add median edge number for drug and disease nodes to KG Dashboard [#1562](https://github.com/everycure-org/matrix/pull/1562)
 - Add Metrics section to KG Dashboard [#1564](https://github.com/everycure-org/matrix/pull/1564)
 ### Experiments 🧪
+- Timesplit subset testing to investigate impact on model training [report](https://github.com/everycure-org/lab-notebooks/blob/malanjary/timesplit/malanjary-timesplit/5_experimental_evaluation_suite_v0_1/TimesplitReport_April2024.ipynb)
+- Investigating the number of shards parameter in negative resampling ensembles [report](https://github.com/everycure-org/lab-notebooks/blob/main/alexei/9_pipeline_experiments_2025/3_n_shards/report/n_shards.md)
+- Compare how first integrated Embiology KG is performing in our pipeline [report](https://github.com/everycure-org/lab-notebooks/blob/main/embiology/reports/may_report_embiology_exp1.ipynb)
+- Compare how integrating ec indication and contraindications list into our KGML-xDTD ground truth for KG 2 10 affect our model performance [report](https://github.com/everycure-org/lab-notebooks/blob/main/gt_experiments_march2025/hybrid_ground_truth_report.ipynb)
+- Implement enrichment analysis as an additional threshold free evaluation metric [report](https://github.com/everycure-org/lab-notebooks/blob/7a54cbf43dc01b927e383cd81708b6ee9f2fa6da/lee/enrichment/rtx-2.10.0-enrichment.ipynb)
+- Implement almost pure rank based frequent flyers matrix transformation in pipeline [report](https://github.com/everycure-org/lab-notebooks/blob/main/amy/frequent_flyers_evaluation.ipynb)
+- Implement uniform rank based frequent flyers matrix transformation in pipeline [report](https://github.com/everycure-org/lab-notebooks/blob/main/amy/frequent_flyers_evaluation.ipynb)
 ### Bugfixes 🐛
 - Fix production ADR metadata [#1538](https://github.com/everycure-org/matrix/pull/1538)
 - Added code to get token from google via SA File [#1460](https://github.com/everycure-org/matrix/pull/1460)
