@@ -6,7 +6,8 @@ locals {
   cross_account_sas = [
     "serviceAccount:vertex-ai-workbench-sa@mtrx-wg1-data-dev-nb5.iam.gserviceaccount.com",
     "serviceAccount:vertex-ai-workbench-sa@mtrx-wg2-modeling-dev-9yj.iam.gserviceaccount.com",
-    "serviceAccount:299386668624-compute@developer.gserviceaccount.com"
+    "serviceAccount:299386668624-compute@developer.gserviceaccount.com", # orchard dev
+    "serviceAccount:342224594736-compute@developer.gserviceaccount.com"  # orchard prod
   ]
   github_actions_rw = ["serviceAccount:sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com"]
 }
@@ -43,14 +44,4 @@ module "project_iam_bindings" {
 
     "roles/compute.networkUser" = [local.matrix_all_group]
   }
-
-  conditional_bindings = [
-    {
-      role        = "roles/storage.objectCreator"
-      title       = "matrix_raw_data_access"
-      description = "Allow matrix-all group to create objects only in RAW data folder"
-      expression  = "resource.name.startsWith(\"projects/_/buckets/mtrx-us-central1-hub-dev-storage/objects/data/01_RAW\")"
-      members     = [local.matrix_all_group]
-    }
-  ]
 }
