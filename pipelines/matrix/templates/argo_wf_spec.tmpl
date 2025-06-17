@@ -44,7 +44,7 @@ spec:
     {% raw %}{{if gt (toInt inputs.parameters.num_gpus) 0}}{% endraw %}
     sidecars:
       - name: dcgm-exporter
-        image: nvidia/dcgm-exporter:3.3.0-3.2.0-ubuntu20.04
+        image: nvidia/dcgm-exporter:4.2.3-4.1.3-ubuntu22.04
         ports:
         - containerPort: 9400
           name: gpu-metrics
