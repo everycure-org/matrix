@@ -48,7 +48,7 @@ env:
   rw_wip: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
   rw_sa: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
   # release version from input
-  RELEASE_VERSION: ${{ inputs.release_version || 'v0.5.3'}}
+  RELEASE_VERSION: ${{ inputs.release_version }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
