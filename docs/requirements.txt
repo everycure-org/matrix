@@ -28,7 +28,7 @@ beautifulsoup4==4.13.3
     # via
     #   mkdocs-drawio
     #   nbconvert
-bleach==6.2.0
+bleach[css]==6.2.0
     # via nbconvert
 bracex==2.5.post1
     # via wcmatch
@@ -72,9 +72,9 @@ gitpython==3.1.44
     #   mkdocs-blogging-plugin
     #   mkdocs-git-committers-plugin-2
     #   mkdocs-git-revision-date-localized-plugin
-h11==0.14.0
+h11==0.16.0
     # via httpcore
-httpcore==1.0.7
+httpcore==1.0.9
     # via httpx
 httpx==0.28.1
     # via jupyterlab
@@ -117,7 +117,7 @@ json5==0.10.0
     # via jupyterlab-server
 jsonpointer==3.0.0
     # via jsonschema
-jsonschema==4.23.0
+jsonschema[format-nongpl]==4.23.0
     # via
     #   jupyter-events
     #   jupyterlab-server
@@ -367,7 +367,7 @@ referencing==0.36.2
     #   jupyter-events
 regex==2024.11.6
     # via mkdocs-material
-requests==2.32.3
+requests==2.32.4
     # via
     #   jupyterlab-server
     #   mkdocs-drawio
@@ -389,8 +389,6 @@ semver==3.0.4
     # via -r requirements.in
 send2trash==1.8.3
     # via jupyter-server
-setuptools==75.8.0
-    # via jupyterlab
 six==1.17.0
     # via
     #   python-dateutil
@@ -411,7 +409,7 @@ terminado==0.18.1
     #   jupyter-server-terminals
 tinycss2==1.4.0
     # via bleach
-tornado==6.4.2
+tornado==6.5
     # via
     #   ipykernel
     #   jupyter-client
