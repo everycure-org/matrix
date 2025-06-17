@@ -13,7 +13,7 @@ WITH mapped AS (
       WHEN agent_type IS NULL OR agent_type = '' THEN 0.5
       ELSE 0.5
     END) - 1 AS agent_type_score
-  FROM `mtrx-hub-dev-3of.release_${bq_release_version}.edges_unified`
+  FROM `${project_id}.release_${bq_release_version}.edges_unified`
 )
 
 SELECT

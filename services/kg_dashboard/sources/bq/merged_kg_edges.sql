@@ -7,8 +7,8 @@ SELECT SPLIT(subject, ':')[OFFSET(0)] AS subject_prefix,
        primary_knowledge_source,       
        STRING_AGG(DISTINCT edges.upstream_data_source.list[SAFE_OFFSET(0)].element, ',' ORDER BY edges.upstream_data_source.list[SAFE_OFFSET(0)].element) AS upstream_data_source,
        count(*) AS count
-FROM `mtrx-hub-dev-3of.release_${bq_release_version}.edges_unified` AS edges
-  JOIN `mtrx-hub-dev-3of.release_${bq_release_version}.nodes_unified` AS subject_nodes ON edges.subject = subject_nodes.id
-  JOIN `mtrx-hub-dev-3of.release_${bq_release_version}.nodes_unified` AS object_nodes ON edges.object = object_nodes.id
+FROM `${project_id}.release_${bq_release_version}.edges_unified` AS edges
+  JOIN `${project_id}.release_${bq_release_version}.nodes_unified` AS subject_nodes ON edges.subject = subject_nodes.id
+  JOIN `${project_id}.release_${bq_release_version}.nodes_unified` AS object_nodes ON edges.object = object_nodes.id
 GROUP BY all
 
