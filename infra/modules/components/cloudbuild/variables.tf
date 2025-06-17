@@ -52,3 +52,9 @@ variable "terragrunt_container_image" {
   type        = string
   default     = "ghcr.io/devops-infra/docker-terragrunt:aws-gcp-tf-1.11.4-tg-0.78.4"
 }
+
+variable "require_manual_approval" {
+  description = "Whether manual approval is required for the Cloud Build trigger."
+  type        = bool
+  default     = false
+}

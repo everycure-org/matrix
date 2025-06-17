@@ -33,4 +33,5 @@ module "cloudbuild" {
   github_repo_deploy_branch  = var.github_branch_to_run_on
   slack_webhook_url          = var.slack_webhook_url
   gitcrypt_key               = var.gitcrypt_key
+  require_manual_approval    = true
 }
