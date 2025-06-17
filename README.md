@@ -5,7 +5,7 @@
 [![Documentation Page Deployment](https://github.com/everycure-org/matrix/actions/workflows/docs-deploy.yml/badge.svg)](https://github.com/everycure-org/matrix/actions/workflows/docs-deploy.yml)
 [![KG Dashboard Deployment](https://github.com/everycure-org/matrix/actions/workflows/kg-dashboard-deploy.yml/badge.svg)](https://github.com/everycure-org/matrix/actions/workflows/kg-dashboard-deploy.yml)
 
-Welcome to MATRIX! This repository contains infrastructure for our drug repurposing platform which includes data science pipeline, documentation, data base configuration
+Welcome to MATRIX! This repository contains infrastructure for our drug repurposing platform which includes data science pipeline, documentation.
 
 MATRIX is organized as a monorepo containing infrastructure, machine learning pipelines, applications and services. Each component resides in a dedicated directory with its own README providing detailed setup and usage instructions.
 

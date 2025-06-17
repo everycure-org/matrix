@@ -2,9 +2,9 @@
 title: Kedro Cloud run on the Cluster
 ---
 
-In the first onboarding section you were shown how to run the pipeline with a fabricated & sampled data. In this section we will show you how to run matrix pipeline on the kubernetes cluster using `kedro experiment run` command. To learn about the submissions to the cluster and argo please go to [infrastructure section](../../infrastructure/runbooks/03_run_pipeline_from_branch.md). 
-
 # How to run an experiment using kedro
+
+In the first onboarding section you were shown how to run the pipeline with a fabricated & sampled data. In this section we will show you how to run matrix pipeline on the kubernetes cluster using `kedro experiment run` command. To learn about the submissions to the cluster and argo please go to [infrastructure section](../../infrastructure/runbooks/03_run_pipeline_from_branch.md). 
 
 Running an experiment in the Matrix Project is done by running the `kedro experiment run` command. 
 

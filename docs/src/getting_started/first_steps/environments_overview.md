@@ -17,7 +17,7 @@ You can run any of the environments using the `--env` flag. For example, to run 
 ```bash
 kedro run --env cloud # NOTE: this is just an example; do not run it
 ```
-!!! GCP info
+!!! Google Cloud Platform
     Note that our cloud environment both reads and writes all intermediate data products to our Google Cloud Storage. In general, it should be only used for pipeline runs which are being executed on our kubernetes cluster. 
  
 ### Run with fake data locally
@@ -55,14 +55,14 @@ To run the the pipeline from the embeddings step onwards with a smaller dataset 
 # Run pipeline with sample data
 kedro run -e sample -p test_sample
 ```
-For more details on sampling environment, see the [Sample Environment Guide](./sample_environment.md).
+For more details on sampling environment, see the [Sample Environment Guide](../deep_dive/sample_environment.md).
 
 !!! info
     Environments are abstracted away by Kedro's data catalog which is, in turn, defined as configuration in YAML. The catalog is dynamic, in the sense that it can combine the `base` environment with another environment during execution. This allows for overriding some of the configuration in `base` such that data can flow into different systems according to the selected _environment_. 
 
     The image below represents a pipeline configuration across three environments, `base`, `cloud` and `test`. By default the pipeline reads from Google Cloud Storage (GCS) and writes to the local filesystem. The `cloud` environment redefines the output dataset to write to `BigQuery` (as opposed to local). The `test` environment redefines the input dataset to read the output from the fabricator pipeline, thereby having the effect that the pipeline runs on synthetic data.
 
-![](../assets/img/environments.drawio.svg)
+![](../../assets/img/environments.drawio.svg)
 
 Now that you have a good understanding of different environments, we can run the pipeline with a sample of real data.
 

@@ -3,32 +3,32 @@ title: Tech Stack
 ---
 Our drug repurposing pipeline relies on many libraries and components but some of the most critical ones are:
 
-* Python - Our primary programming language, used throughout the codebase for data processing, analysis and machine learning
-* Docker - Containerization platform that ensures consistent environments across development and production
-* uv - Modern Python package installer and resolver that we use instead of pip for faster, more reliable dependency management
-* Java - Required for Apache Spark operations which we use for distributed data processing
-* gcloud SDK - Google Cloud Platform tools that enable interaction with our cloud infrastructure and services
-* Argo Workflows - Kubernetes-native workflow engine that orchestrates our pipeline execution in production
-* Kubernetes - Container orchestration platform where our pipeline runs in production environments
+* **Python** - Our primary programming language, used throughout the codebase for data processing, analysis and machine learning
+* **Docker** - Containerization platform that ensures consistent environments across development and production
+* **uv** - Modern Python package installer and resolver that we use instead of pip for faster, more reliable dependency management
+* **Java Virtual Machines** - Required for Apache Spark operations which we use for distributed data processing
+* **gcloud SDK** - Google Cloud Platform tools that enable interaction with our cloud infrastructure and services
+* **Argo Workflows** - Kubernetes-native workflow engine that orchestrates our pipeline execution in production
+* **Kubernetes** - Container orchestration platform where our pipeline runs in production environments
 
 !!! Google Cloud
-    Our platform leverages Google Cloud Platform as Cloud provider. Many parts of the onboarding guide or documentation will depend on or refer to GCP - these will be marked appropriately.
+    Our platform leverages Google Cloud Platform as Cloud provider. Many parts of the onboarding deep-dive guide or documentation will depend on or refer to GCP - these will be marked appropriately.
 
 Whilst it's not essential to understand each part of the stack to contribute or run the pipeline, we encourage everyone to learn more about these useful technologies. 
 
 ## Pipeline framework: Kedro
 
-Another essential part of our pipeline is kedro framework which we use for codifying our pipeline. It provides crucial structure and modularity to our codebase, enabling reproducible data science workflows and making our pipeline maintainable and scalable.
+One of the most essential parts of our pipeline is [Kedro framework](https://kedro.org) which we use as our data pipeleining framework. It provides crucial structure and modularity to our codebase, enabling reproducible data science workflows and making our pipeline maintainable and scalable.
 
 !!! info
     Kedro is an open-source framework to write modular data science code. We recommend
-    checking out the Kedro documentation website as well as deep-dive into kedro and custom extensions we produced in the [deep dive section](../deep_dive/kedro_extensions.md).
+    checking out the [Kedro documentation](https://docs.kedro.org/en/stable/) website as well as deep-dive into kedro and custom extensions we produced in the [deep dive section](../deep_dive/kedro_extensions.md).
     
-Below is an 5 minutes intro video to Kedro
+Below is a 5 minutes intro video to Kedro
 
 <iframe width="800" height="480" src="https://www.youtube.com/embed/PdNkECqvI58?si=_luhLzYsI3F7dQ2w&amp;start=70" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
-We're using [Kedro](https://kedro.org/) as our data pipelining framework. Kedro is a rather light framework, that comes with the following [key concepts](https://docs.kedro.org/en/stable/get_started/kedro_concepts.html#):
+As mentioned in the video, kedro is a rather light framework, that comes with the following [key concepts](https://docs.kedro.org/en/stable/get_started/kedro_concepts.html#):
 
 1. __Project template__: Standard directory structure to streamline project layout, i.e., configuration, data, and pipelines.
 1. __Data catalog__: A lightweight abstraction for datasets, abstracting references to the file system, in a compact configuration file.
