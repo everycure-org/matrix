@@ -64,6 +64,12 @@ resource "helm_release" "argo" {
     name  = "configs.params.server.basehref"
     value = "/"
   }
+
+  # Disable Git submodule initialization
+  set {
+    name  = "configs.params.reposerver\\.enable\\.git\\.submodule"
+    value = "false"
+  }
 }
 
 resource "kubernetes_manifest" "app_of_apps" {
