@@ -36,7 +36,7 @@ Google recommends the below diagram for separating a foundation pipeline, infras
 - **MATRIX working groups**: This layer allows any member in the MATRIX org to create resources in their GCP project as well as deploy pipelines to the shared compute cluster. This maps to the top layer in the below graphic. 
 
 
-![](../assets/img/responsibility_layers.drawio.svg)
+![](../../assets/img/responsibility_layers.drawio.svg)
 
 ## Key architectural principles
 *Our architectural principles are heavily inspired by the [enterprise foundations blueprint](https://cloud.google.com/architecture/security-foundations) and adapted to our needs. All changes from Googles recommended defaults are highlighted below:*
@@ -72,7 +72,7 @@ The networking layer of our software engineering project is designed to strike a
 To ensure segregation of development and production environments, we maintain two separate networks for each. This allows for effective isolation and management of our infrastructure.
 
 The below graphic visualizes this hub/spoke setup
-![](../assets/img/mtrx_network.drawio.svg)
+![](../../assets/img/mtrx_network.drawio.svg)
 
 ### Firewall Configuration
 
@@ -102,7 +102,7 @@ The high level flow of the DNS setup is visualized below:
 browsers make DNS lookup calls to their configured DNS server which points their browser
 at the correct IP address for the given domain they try to access.
 
-![](../assets/img/mtrx_dns.drawio.svg)
+![](../../assets/img/mtrx_dns.drawio.svg)
 
 ??? info "Primer video on DNS"
     If you need a primer on DNS, this short video may help:
@@ -121,7 +121,7 @@ on how to set up AppEngine with SSL and DNS for a custom domain.
 We have the following top level structure
 
 <!-- TODO update image with latest folder structure -->
-![](../assets/img/gcp_folders.png){ width=500" }
+![](../../assets/img/gcp_folders.png){ width=500" }
 
 where the `fldr-` folders contain foundations blueprint artifacts (e.g. shared logging, encryption keys, bootstrap project) and the `pre-foundation-projects` contain a range of projects we had already created before setting up the blueprint.
 

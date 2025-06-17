@@ -13,7 +13,7 @@ In contrast, we use a simpler approach of extracting paths using a supervised bi
 
 The main component of the MOA extraction system is a binary classifier that predicts whether a given path in the knowledge graph is likely to represent a mechanism of action for a given drug-disease pair. This is illustrated in the following diagram:
 
-![Path classifier](../assets/img/MOA_extraction/path_classifier.svg)
+![Path classifier](../../assets/img/MOA_extraction/path_classifier.svg)
 
 An example of such a binary classifier is a transformer model (encoder only) with a linear output layer. In this case, the input path needs to be embedded as a sequence of vectors. More details on the embedding process are provided in the [configuration details section](#configuration-details).
 
@@ -26,7 +26,7 @@ Now, fix the number of hops to be $n$. To use the binary classier to predict $n$
 
 Furthermore, our system supports explicit filters to be applied to the paths extracted in step 1, for instance, remove any path containing a drug-disease edge (more on this in the [path extraction rules section](#path-extraction-rules)). The prediction process is illustrated by the following diagram:
 
-![Inference process](../assets/img/MOA_extraction/path_inference.svg)
+![Inference process](../../assets/img/MOA_extraction/path_inference.svg)
 
 The training dataset set for the binary classifier consists of positive (MOA) and negative (non-MOA) paths. 
 
@@ -35,7 +35,7 @@ The training dataset set for the binary classifier consists of positive (MOA) an
 
 The training process is illustrated by the following diagram:
 
-![Training process](../assets/img/MOA_extraction/path_training.svg)
+![Training process](../../assets/img/MOA_extraction/path_training.svg)
 
 ## Implementation
 
@@ -43,7 +43,7 @@ The training process is illustrated by the following diagram:
 
 The following diagram illustrates the overall MOA extraction pipeline:
 
-![MOA pipeline overview](../assets/img/MOA_extraction/MOA_pipeline_overview.svg)
+![MOA pipeline overview](../../assets/img/MOA_extraction/MOA_pipeline_overview.svg)
 
 Currently, there are two separate pipelines which must be run in sequence:
 
@@ -82,9 +82,9 @@ Next, we give further details about the individual components of the pipeline, i
 
 The DrugMechDB database consists of a knowledge graph for each drug-disease indication pair. The knowledge graph includes nodes for the source drug and target disease, as well as a set of intermediate nodes. Here is an example of a DrugMechDB entry for a given drug-disease indication pair:
 
-<!-- ![DrugMechDB entry](../assets/img/MOA_extraction/drugmechdb_entry.png) -->
+<!-- ![DrugMechDB entry](../../assets/img/MOA_extraction/drugmechdb_entry.png) -->
 
-![DrugMechDB entry](../assets/img/MOA_extraction/drugmechdb_entry.png)
+![DrugMechDB entry](../../assets/img/MOA_extraction/drugmechdb_entry.png)
 
 The database takes the form of a yaml file with the following structure for each entry
 ```yaml
@@ -111,7 +111,7 @@ The database takes the form of a yaml file with the following structure for each
 
 A knowledge graph path is a primary notion in the MOA pipeline. We allow for the edges in the paths to have varying directionality. The following diagram represents an example of a 3-hop path according to this convention:
 
-![Path example](../assets/img/MOA_extraction/path_example.svg)
+![Path example](../../assets/img/MOA_extraction/path_example.svg)
 
 The `matrix.datasets.paths.KGPaths` object is our main tool for encoding lists of paths in the knowledge graph. Essentially, this object represents a list of paths as a dataframe with information about:
 - Source and target node information

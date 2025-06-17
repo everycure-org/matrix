@@ -70,7 +70,7 @@ on the intended use, i.e.,
 2. The `docker-compose.ci` file adds in the pipeline container for integration testing
     - This file is used by our CI/CD setup and can be ignored for local development.
 
-![](../assets/img/docker-compose.drawio.svg)
+![](../../assets/img/docker-compose.drawio.svg)
 
 Run the following `Makefile` command in the `pipelines/matrix` directory to bring up the services
 which are required by the pipeline. This way, you can develop the pipeline locally while
@@ -100,7 +100,7 @@ This command will kick off our kedro pipeline in a test environment using a fabr
 Generally, the `Makefile` is a good place to refer to when you need to re-set your environment. Once the command runs successfully, you should be able to run the pipeline end-to-end locally!
 
 !!! help "Encountering issues?"
-    If you're experiencing any problems running the `MakeFile`, please refer to our [Common Errors FAQ](../references/common_errors.md) for troubleshooting guidance. This resource contains solutions to frequently encountered issues and may help resolve your problem quickly.
+    If you're experiencing any problems running the `MakeFile`, please refer to our [Common Errors FAQ](../../references/common_errors.md) for troubleshooting guidance. This resource contains solutions to frequently encountered issues and may help resolve your problem quickly.
 
 Congrats on successfully running the MATRIX pipeline with fabricated data! In the deep-dive we will explain exactly how the fabricator works and what happened in detail but now, we will explain to you how to run the pipeline in different environments before running it with a real (but sampled) data.
 
