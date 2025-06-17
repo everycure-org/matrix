@@ -45,7 +45,7 @@ authors:
 - Added missing variables to github actions [#1494](https://github.com/everycure-org/matrix/pull/1494)
 - Clean up extra duplicate counts on merged_kg dashboard page [#1486](https://github.com/everycure-org/matrix/pull/1486)
 - (Dashboard) Fix duplicated edge types (and remove unused queries) [#1465](https://github.com/everycure-org/matrix/pull/1465)
-- bugfix - make sentinel data release the last node. [#1517](https://github.com/everycure-org/matrix/pull/1517)
+- Make sentinel data release the last node. [#1517](https://github.com/everycure-org/matrix/pull/1517)
 - Hotfix: Revert "Model prediction on spark dataframe instead of pandas dataframe" [#1507](https://github.com/everycure-org/matrix/pull/1507)
 - Hotfix, update disease and drug list transformer [#1518](https://github.com/everycure-org/matrix/pull/1518)
 - Update core entities' version to v0.1.1 [#1525](https://github.com/everycure-org/matrix/pull/1525)
