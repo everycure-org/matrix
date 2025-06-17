@@ -26,7 +26,7 @@ provider "registry.terraform.io/gavinbunney/kubectl" {
 
 provider "registry.terraform.io/hashicorp/google" {
   version     = "6.37.0"
-  constraints = ">= 3.53.0, >= 6.11.0, < 7.0.0"
+  constraints = ">= 6.11.0, < 7.0.0"
   hashes = [
     "h1:2x1x5lhrMLOUoQRPQw7fZ/NsJ/aRVJAPr+Tg6F8wUV0=",
     "zh:0527880f838690bc32bf3d4bba42b3adefdf81e6614a169b09def759f341e11e",
