@@ -21,11 +21,10 @@ Because debugging this can be painful, here is the JWT token sent from GH Action
   "head_ref": "",
   "iat": 1725377367,
   "iss": "https://token.actions.githubusercontent.com",
-  "job_workflow_ref": "everycure-org/matrix/.github/workflows/infra-deploy.yml@refs/heads/infra",
   "job_workflow_sha": "e75edcc5b6cb88fc32f8d65d1da2655576b905ca",
   "jti": "3fb4ff7d-3582-4a13-b419-5727d5d94efa",
   "nbf": 1725376767,
-  "ref": "refs/heads/infra",
+  "ref": "refs/heads/main",
   "ref_protected": "true",
   "ref_type": "branch",
   "repository": "everycure-org/matrix",
@@ -38,9 +37,9 @@ Because debugging this can be painful, here is the JWT token sent from GH Action
   "run_number": "154",
   "runner_environment": "github-hosted",
   "sha": "e75edcc5b6cb88fc32f8d65d1da2655576b905ca",
-  "sub": "repo:everycure-org/matrix:ref:refs/heads/infra",
+  "sub": "repo:everycure-org/matrix:ref:refs/heads/main",
   "workflow": "Infrastructure Deploy",
-  "workflow_ref": "everycure-org/matrix/.github/workflows/infra-deploy.yml@refs/heads/infra",
+  "workflow_ref": "everycure-org/matrix/.github/workflows/main-deploy.yml@refs/heads/main",
   "workflow_sha": "e75edcc5b6cb88fc32f8d65d1da2655576b905ca"
 }
 ```
