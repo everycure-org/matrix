@@ -115,7 +115,7 @@ def evaluate_test_predictions(data: pd.DataFrame, evaluation: Evaluation, score_
     """
     logger.info(f"Evaluation data size: {data.shape}")
     logger.info(f"Evaluation is: {evaluation}")
-    return evaluation(score_col_name=score_col_name).evaluate(data)
+    return evaluation.evaluate(data, score_col_name)
 
 
 @inject_object()
