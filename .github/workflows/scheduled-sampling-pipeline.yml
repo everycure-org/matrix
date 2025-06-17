@@ -2,12 +2,12 @@ name: Scheduled Sampling Pipeline
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # daily at 5am GMT
+    - cron: '0 0 * * *'  # every day at midnight GMT
   workflow_dispatch: 
     inputs:
       release_version:
-        description: 'Version to deploy in format vX.Y.Z'
-        required: true
+        description: 'Version to deploy in format vX.Y.Z. If not provided, the latest tag will be used.'
+        required: false
         type: string
 env:
   project_id: 'mtrx-hub-dev-3of'

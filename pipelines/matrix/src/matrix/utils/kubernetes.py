@@ -1,5 +1,6 @@
 import logging
 import subprocess
+from os import environ
 from pathlib import Path
 
 from matrix.utils.system import run_subprocess
@@ -20,7 +21,16 @@ def can_talk_to_kubernetes(
         EnvironmentError: If gcloud is not installed or kubectl cannot be configured.
     """
 
+    def add_impersonation_flag(s: str) -> str:
+        """Add impersonation flag to gcloud command if SPARK_IMPERSONATION_SERVICE_ACCOUNT is set."""
+        sa = environ.get("SPARK_IMPERSONATION_SERVICE_ACCOUNT")
+        if sa and "gcloud" in s and "--impersonate-service-account" not in s:
+            return s.replace("gcloud", f"gcloud --impersonate-service-account={sa}")
+        return s
+
     def run_gcloud_cmd(s: str, timeout: int = 300) -> None:
+        s = add_impersonation_flag(s)
+
         try:
             subprocess.check_output(s, shell=True, stderr=subprocess.PIPE, timeout=timeout)
         except FileNotFoundError as e:
@@ -39,10 +49,15 @@ def can_talk_to_kubernetes(
                 pretty_report_on_error(e)
 
     def refresh_kube_credentials() -> None:
-        logger.debug("Refreshing kubectl credentials…")
-        run_gcloud_cmd(
-            f"gcloud container clusters get-credentials {cluster_name} --project {project} --region {region}"
-        )
+        """Refresh kubectl credentials for the specified GKE cluster."""
+        # We do not want to refresh credentials if running in GitHub Actions, as it is not needed there.
+        # In GitHub Actions, the credentials are already set up by the action.
+        if not environ.get("GITHUB_ACTIONS"):
+            logger.debug("Refreshing kubectl credentials…")
+            refresh_command = (
+                f"gcloud container clusters get-credentials {cluster_name} --project {project} --region {region}"
+            )
+            run_gcloud_cmd(refresh_command)
 
     def get_kubernetes_context() -> str:
         return subprocess.check_output(["kubectl", "config", "current-context"], text=True).strip()
@@ -56,6 +71,9 @@ def can_talk_to_kubernetes(
             raise EnvironmentError(f"Calling '{e.cmd}' failed, with stderr: '{e.stderr}'") from e
         except EnvironmentError:
             raise
+
+    # Refresh credentials before running the test command.
+    refresh_kube_credentials()
 
     right_kube_context = "_".join(("gke", project, region, cluster_name))
     try:
@@ -75,11 +93,7 @@ def can_talk_to_kubernetes(
         subprocess.run(test_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=True)
     except subprocess.CalledProcessError as e:
         logger.debug(f"'{test_cmd}' failed. Reason: {e.stderr}")
-        if b"Unauthorized" in e.stderr:
-            refresh_kube_credentials()
-            subprocess.run(test_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=True)
-        else:
-            pretty_report_on_error(e)
+        pretty_report_on_error(e)
 
     return True
 
