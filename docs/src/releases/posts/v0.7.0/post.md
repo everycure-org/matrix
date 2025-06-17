@@ -47,7 +47,7 @@ authors:
 - (Dashboard) Fix duplicated edge types (and remove unused queries) [#1465](https://github.com/everycure-org/matrix/pull/1465)
 - Make sentinel data release the last node. [#1517](https://github.com/everycure-org/matrix/pull/1517)
 - Revert "Model prediction on spark dataframe instead of pandas dataframe" [#1507](https://github.com/everycure-org/matrix/pull/1507)
-- Hotfix, update disease and drug list transformer [#1518](https://github.com/everycure-org/matrix/pull/1518)
+- Update disease and drug list transformer [#1518](https://github.com/everycure-org/matrix/pull/1518)
 - Update core entities' version to v0.1.1 [#1525](https://github.com/everycure-org/matrix/pull/1525)
 - [EC-237] Docker build fails after fabrication extraction [#1456](https://github.com/everycure-org/matrix/pull/1456)
 ### Technical Enhancements 🧰
