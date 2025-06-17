@@ -70,7 +70,7 @@ authors:
 - Add Maria to workbench access [#1536](https://github.com/everycure-org/matrix/pull/1536)
 - Create workbench for Jane [#1458](https://github.com/everycure-org/matrix/pull/1458)
 - Added getting IAP token from actions [#1469](https://github.com/everycure-org/matrix/pull/1469)
-- add unit tests whether the sentinel data release node runs last [#1523](https://github.com/everycure-org/matrix/pull/1523)
+- Add unit tests whether the sentinel data release node runs last [#1523](https://github.com/everycure-org/matrix/pull/1523)
 - Add echo in Kedro release action  [#1568](https://github.com/everycure-org/matrix/pull/1568)
 - Sample less edges in sampling environment [#1510](https://github.com/everycure-org/matrix/pull/1510)
 - Remove unused imports via ruff [#1531](https://github.com/everycure-org/matrix/pull/1531)
