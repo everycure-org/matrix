@@ -2,9 +2,9 @@
 
 The matrix pipeline is our main codebase in the Every Cure organization. Its goal is the generation of high accuracy predictions of drug-disease pairs in an "all vs all" approach. For this, we ingest and integrate a number of data sources, build models and make predictions on the ingested data. Of course there is a lot more to this but the below illustration aims to sketch the high level flow of the pipeline.
 
-<!-- ![](../assets/img/e2e_flow_simple.excalidraw.svg) -->
+<!-- ![](../../assets/img/e2e_flow_simple.excalidraw.svg) -->
 
-![](../assets/img/pipeline_stages.drawio.svg)
+![](../../assets/img/pipeline_stages.drawio.svg)
 
 
 
@@ -78,7 +78,7 @@ There are 4 main steps in the integration pipeline:
 4. **Filtering**: Applies a series of filtering steps, for example, node deduplication. For any custom filtering of the graph, see the filtering pipeline.
 
 
-![](../assets/img/kg_integration_approach.excalidraw.svg)
+![](../../assets/img/kg_integration_approach.excalidraw.svg)
 
 
 #### Normalizing data from sources
@@ -198,7 +198,7 @@ All filters defined under `node_filters` or `edge_filters` will be applied durin
 - For instance, node deduplication is handled in the integration pipeline. When multiple nodes share the same identifier but have different types (e.g., a node appearing as both `ChemicalEntity` and `SmallMolecule`), we consolidate them into a single node.
 - Edge deduplication, however, follows a different approach. We implement hierarchical deduplication where more specific relationships take precedence over general ones. For example, given two edges `A - related_to -> B` and `A - treats -> B`, we retain the more specific `treats` relationship. Since this is an opinionated design choice that may require experimentation, we've moved edge deduplication to the filtering pipeline, allowing for easier testing of alternative deduplication strategies post-release.
 
-![](../assets/img/integration_and_filtering_pipeline.drawio.png)
+![](../../assets/img/integration_and_filtering_pipeline.drawio.png)
 
 
 
@@ -306,7 +306,7 @@ More details on the metrics computed in each category can be found in the [evalu
 
 Our inference pipeline can be used for running ad-hoc on-demand predictions for specific drugs, diseases, or drug-disease pairs requested by the medical team or other stakeholders.  This uses versioned (in the .env file) drug and disease lists and relies on either single or several trained models stored as artifacts in MLFlow. This ensures consistency with the training data version for reliable and reproducible predictions. 
 
-![](../assets/img/inference.drawio.png)
+![](../../assets/img/inference.drawio.png)
 
 You can find the sheet [here](https://docs.google.com/spreadsheets/d/1CioSCCQxUdACn1NfWU9XRyC-9j_ERc2hmZzaDd8XgcQ/edit?gid=0#gid=0). At the moment we don't execute this as a part of the default pipeline. Also note that in order to use the trained models which are stored in the MLFlow (i.e. models trained using e2e pipeline) you will need to execute the inference pipeline from `cloud` environment.
 

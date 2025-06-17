@@ -62,7 +62,7 @@ Data used by our pipeline is registered in the _data catalog_. To add additional
 
     `<pipeline>.<layer>.<name>`
 
-![](../assets/img/convention.png)
+![](../../assets/img/convention.png)
 
 -->
 

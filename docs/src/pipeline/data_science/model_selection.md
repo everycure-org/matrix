@@ -32,7 +32,7 @@ Advantages:
 Disadvantages:
 - Can be computationally expensive for large datasets or complex models, especially if we are also performing hyperparameter optimisation
 
-![Knowledge Graph Embedding by EdoardoRamalli, licensed under CC BY-SA 4.0](../assets/img/K-fold_cross_validation_EN.jpg)
+![Knowledge Graph Embedding by EdoardoRamalli, licensed under CC BY-SA 4.0](../../assets/img/K-fold_cross_validation_EN.jpg)
 
 *Source: [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:K-fold_cross_validation_EN.jpg).*
 

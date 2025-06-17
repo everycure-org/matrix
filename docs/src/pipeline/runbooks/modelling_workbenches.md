@@ -10,7 +10,7 @@ We had the objective of creating a workbench, which makes it easier for people t
 contribute to the MATRIX project without needing to fully understand the different
 technology layers leveraged.
 
-![](../assets/img/workbench_changes.excalidraw.svg)
+![](../../assets/img/workbench_changes.excalidraw.svg)
 
 ## Approach
 
@@ -18,7 +18,7 @@ We decided to decouple the baseline pipeline from the experimental model develop
 
 If we find a new model significantly outperforms the baseline, we will help integrate it into the baseline pipeline.
 
-![](../assets/img/workbench_changes_pipeline_cutout.excalidraw.svg)
+![](../../assets/img/workbench_changes_pipeline_cutout.excalidraw.svg)
 
 
 ## Overview
@@ -121,7 +121,7 @@ GROUP BY upstream_data_source
     
     If you want to see the list of all releases easily, you can easily see them in [BigQuery](https://console.cloud.google.com/bigquery?inv=1&invt=Abo2vQ&project=mtrx-hub-dev-3of&ws=!1m0).
     
-![](../assets/img/bq_datasets.png)
+![](../../assets/img/bq_datasets.png)
 
 ### Option 2: Matrix Repository
 
