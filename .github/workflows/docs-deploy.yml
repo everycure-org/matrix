@@ -78,7 +78,7 @@ jobs:
       # build Docs
       - name: Build Docs
         env:
-          MKDOCS_GIT_COMMITTERS_APIKEY: ${{ secrets.PAT }}
+          MKDOCS_GIT_COMMITTERS_APIKEY: ${{ github.actor == 'dependabot[bot]' && secrets.GITHUB_TOKEN || secrets.PAT }}
         run: |
           pip install uv
           make build #builds the static files in site/
