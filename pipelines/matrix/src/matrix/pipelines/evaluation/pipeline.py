@@ -1,3 +1,4 @@
+from functools import partial
 from typing import List, Union
 
 from kedro.pipeline import Pipeline, pipeline
@@ -25,23 +26,23 @@ def _create_evaluation_fold_pipeline(
     return pipeline(
         [
             ArgoNode(
-                func=partial_fold(nodes.generate_test_dataset, fold, arg_name="known_pairs"),
+                func=partial_fold(
+                    partial(nodes.generate_test_dataset, score_col_name=score_col_name), fold, arg_name="known_pairs"
+                ),
                 inputs={
                     "known_pairs": "modelling.model_input.splits",
                     "matrix": f"{matrix_input}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
                     "generator": f"params:evaluation.{evaluation}.evaluation_options.generator",
-                    "score_col_name": score_col_name,
                 },
                 outputs=f"evaluation.{matrix_input}.fold_{fold}.{evaluation}.model_output.pairs",
                 # Otherwise kedro gives error that node names are not unique
                 name=f"{matrix_input}.create_{evaluation}_evaluation_pairs_fold_{fold}",
             ),
             ArgoNode(
-                func=nodes.evaluate_test_predictions,
+                func=partial(nodes.evaluate_test_predictions, score_col_name=score_col_name),
                 inputs=[
                     f"evaluation.{matrix_input}.fold_{fold}.{evaluation}.model_output.pairs",
                     f"params:evaluation.{evaluation}.evaluation_options.evaluation",
-                    score_col_name,
                 ],
                 outputs=f"evaluation.{matrix_input}.fold_{fold}.{evaluation}.reporting.result",
                 name=f"{matrix_input}.create_{evaluation}_evaluation_fold_{fold}",
