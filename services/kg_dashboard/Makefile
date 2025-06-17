@@ -5,7 +5,7 @@ PROJECT_ID = $(shell gcloud config get-value project)
 EVIDENCE_BASE_PATH = gs://data.dev.everycure.org/versions
 
 # controls the release version of the KG used in the dashboard
-RELEASE_VERSION ?= v0.5.3
+RELEASE_VERSION ?= v0.7.0
 export EVIDENCE_VAR__release_version := $(RELEASE_VERSION)
 export EVIDENCE_VAR__bq_release_version := $(subst .,_,$(RELEASE_VERSION))
 export VITE_release_version := $(RELEASE_VERSION)
@@ -29,7 +29,7 @@ export EVIDENCE_VAR__max_edge_failed_normalization_by_normalization_set_prefix :
 bump_basepath:
 	node ./scripts/update-basepath.cjs $(RELEASE_VERSION)
 
-build: bump_basepath 
+build: # bump_basepath 
 	@echo "Building with EVIDENCE_VAR__release_version=$(EVIDENCE_VAR__release_version)"
 	npm run build:strict
 
