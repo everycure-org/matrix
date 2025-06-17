@@ -27,12 +27,16 @@
     "@evidence-dev/postgres": "^1.0.6",
     "@evidence-dev/snowflake": "^1.2.1",
     "@evidence-dev/sqlite": "^2.0.6",
-    "@evidence-dev/trino": "^1.0.8"
+    "@evidence-dev/trino": "^1.0.8",
+    "@tailwindcss/vite": "^4.1.10"
   },
   "overrides": {
     "jsonwebtoken": "9.0.0",
     "trim@<0.0.3": ">0.0.3",
     "sqlite3": "5.1.5",
     "axios": "^1.7.4"
+  },
+  "devDependencies": {
+    "tailwindcss": "^4.1.10"
   }
 }
