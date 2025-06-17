@@ -35,7 +35,7 @@ matrix = "matrix.__main__:main"
 [tool.kedro]
 package_name = "matrix"
 project_name = "matrix"
-kedro_init_version = "0.19.5"
+kedro_init_version = "0.19.13"
 tools = [ "Data Structure", "Kedro Viz",]
 example_pipeline = "False"
 source_dir = "src"
