@@ -2,7 +2,7 @@ This page provides an overview of a few advanced Kedro features and customizatio
 
 ## Dataset transcoding
 
-Our pipeline uses Spark and Pandas interchangeably. To avoid having to manually convert datasets from one type into another, Kedro supports [dataset transcoding](https://github.com/kedro-org/kedro-training/blob/master/training_docs/12_transcoding.md).
+Whilst we haven't customly implemented transcoding in our pipeline, we use it extensively across the codebase. Our pipeline uses Spark and Pandas interchangeably. To avoid having to manually convert datasets from one type into another, Kedro supports [dataset transcoding](https://github.com/kedro-org/kedro-training/blob/master/training_docs/12_transcoding.md).
 
 In short, this feature allows for defining multiple flavors of a dataset in the catalog, using the syntax below. The advantage of this is that Kedro is aware that `my_dataframe@spark` and `my_dataframe@pandas` refer to the same data, and hence pipeline runtime dependencies are respected.
 
@@ -41,7 +41,7 @@ kedro run -p test -e test
 kedro --env cloud
 ```
 
-![](../assets/img/fabrication.drawio.svg)
+![](../../assets/img/fabrication.drawio.svg)
 
 ## Dependency injection
 

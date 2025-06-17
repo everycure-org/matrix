@@ -42,6 +42,7 @@ from matrix.pipelines.modelling.nodes import train_model
 Some of the walkthrough notebooks integrate jupyter functionality with kedro well. If you want to learn more about kedro & jupyter integration, more information may be found [here](https://docs.kedro.org/en/stable/notebooks_and_ipython/kedro_and_notebooks.html). 
 
 Below you can find some walkthroughs which utilise jupyter functionality within matrix & kedro project:
+
 - [Implementing Custom Modelling](./walkthroughs/custom_modelling.ipynb)
 
 [Embeddings Parallelization :material-skip-next:](./embeddings.md){ .md-button .md-button--primary }

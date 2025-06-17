@@ -2,20 +2,20 @@
 title: First Steps
 ---
 
-# Getting Started with MATRIX
+# First Steps
 
 Let's get started! This guide provides an introduction to the MATRIX repository, its tech stack, and how to set up your environment so that you can run our pipeline locally on your machine.
 
 ## What's in this section?
 1. [Our MATRIX Pipeline](./matrix_pipeline.md) - Learn about our pipeline on a high-level
 2. [Tech Stack](./tech_stack.md) - Learn about the technologies we used to build the pipeline
-3. [Structure of the pipeline](./repo_structure.md) - Learn how the structure of the pipeline is reflected in the repository
+3. [Structure of the repo](./repo_structure.md) - Learn how the structure of the pipeline is reflected in the repository
 4. [Installation](./installation.md) - Set up your development environment
 5. [Local Setup](./local-setup.md) - Configure your local environment
 6. [Environments Overview](./environments_overview.md) - Understand our different environments
-7. [Sample Environment](./sample_environment.md) - Get started with sample data
 
-Therefore, after this section you should have:
+After finishing this section you should have:
+
 - Gained a High-Level Understanding of our Drug Repurposing pipeline,
 - Successfully ran the pipeline locally with a fabricated data,
 - Successfully ran the pipeline locally with a sample of real data.

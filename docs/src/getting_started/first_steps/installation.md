@@ -4,7 +4,7 @@ title: Installation
 
 # Installation
 
-In this page we are installing tools related to the technology stack which we introduced (earlier)[./tech_stack.md]:
+In this page we are installing tools related to the technology stack which we introduced [earlier](./tech_stack.md):
 
 !!! info "Support on Windows, MacOS and Linux"
     We are mostly using MacOS but try our best to provide an onboarding for all
@@ -270,7 +270,13 @@ We use `make` and `Makefile`s in a lot of places. If you want to [learn more abo
     ```
 
 ### Cloud-related tools
-The following tools are related to technologies which link to cloud services (Google Cloud in our case). Although it is possible to run our pipeline without any dependencies on the cloud, we are utilizing Google Cloud Platform Storage and its resources heavily in our day-to-day work and therefore recommend installing them as well. Regular contributors are encouraged to also onboard to some of our GCP functionalities through service account - we get into more detail on this in the deep dive section (TODO). Note that without service account, you will not be able to install the following tools successfully (which is totally fine for local development but blocking for cloud development).
+The following tools are related to technologies which link to cloud services (Google Cloud in our case). Although it is possible to run our pipeline without any dependencies on the cloud, we are utilizing Google Cloud Platform Storage and its resources heavily in our day-to-day work and therefore recommend installing them as well. 
+
+Regular contributors are encouraged to also onboard to some of our GCP functionalities through service account - we get into more detail on this in the [deep dive section](../deep_dive/gcp_setup.md). Note that without service account, you will not be able to install the following tools successfully (which is totally fine for local development but blocking for cloud development).
+
+!!! GCP onboarding
+    Do you want to utilize our MATRIX system efficiently with real data & GCP? Please create [onboarding issue](https://github.com/everycure-org/matrix/issues/new?assignees=&labels=onboarding&projects=&template=onboarding.md&title=%3Cfirstname%3E+%3Clastname%3E) so that we can assist you in the best possible way.
+
 
 #### gcloud SDK
 

@@ -11,3 +11,4 @@ nav:
     - embeddings.md
     - caching.md
     - pandera_validation.md
+    - walkthroughs

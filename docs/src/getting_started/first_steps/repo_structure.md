@@ -2,21 +2,27 @@
 
 After getting familiar with the high-level overview of MATRIX and kedro, let's explore the key files and folders in our codebase. Understanding these will help you navigate the repository more effectively.
 
+!!! info
+    As MATRIX is a monorepo, it contains codebase for the data science platform (`pipelines/matrix`) but also infrastructure (`infra`) , documentation (`docs`), and supplementary apps (`services`). Majority of this onboarding document refers to the sections within `pipelines/matrix`
+
 ## Core Project Files
 On a high-level, our pipeline repo management relies on the following files for environment configuration:
 
-The most useful commands (such as creating and setting-up `.venv`, running pre-commits or tests) are conveniently handles by `Makefiles`. `Makefile` contains standardized commands for common operations; to see available clommands, run: `make help`. [You can learn more about Makefiles here](https://makefiletutorial.com/)
+- The most useful commands (such as creating and setting-up `.venv`, running pre-commits or tests) are conveniently handles by `Makefiles`. `Makefile` contains standardized commands for common operations; to see available clommands, run: `make help`. [You can learn more about Makefiles here](https://makefiletutorial.com/)
 
-We also utilize `.env.defaults` for sharing default environment variables for running the project. This version-controlled file serves as both default configuration and documentation. For local environment variables, we use a git ignored copy of that file which is called `.env` - this way you can store your personal credentials and variables without risk of commiting them.
+!!! Makefiles
+    Note that our `Makefile` script contains _very many_ commands, many are designed for GCP usage or facilitated debugging. You don't need to have an understanding of of every command there - we will show you the most relevant ones over this guide.
 
-Lastly, the environment set-up relies on `requirements.txt` and related files - these define Python dependencies, we manage them through `uv` for quick & reproducible builds.
+- We also utilize `.env.defaults` for sharing default environment variables for running the project. This version-controlled file serves as both default configuration and documentation. For local environment variables, we use a git ignored copy of that file which is called `.env` - this way you can store your personal credentials and variables without risk of commiting them.
+
+- Lastly, the environment set-up relies on `requirements.txt` and related files - these define Python dependencies, we manage them through `uv` for quick & reproducible builds.
 
 ## Key Directories
 ### Source Code
 
-As mentioned in our [tech stack overview](./tech-stack.md) our project is built using Kedro pipelines, which provide a modular and maintainable way to organize our data science workflows. These pipelines are organized into distinct stages that reflect our drug repurposing workflow.
+As mentioned in our [tech stack overview](./tech_stack.md) our project is built using Kedro pipelines, which provide a modular and maintainable way to organize our data science workflows. These pipelines are organized into distinct stages that reflect our drug repurposing workflow.
 
-Each pipeline is a collection of nodes (Python functions) that are connected through data dependencies, making it easy to manage complex data processing tasks. The pipelines are organized into distinct stages that reflect our drug repurposing workflow.
+Each pipeline is a collection of kedro nodes (Python functions) that are connected through data dependencies, making it easy to manage complex data processing tasks. The pipelines are organized into distinct stages that reflect our drug repurposing workflow.
 
 Our codebase is mainly located in the following locations:
 
@@ -35,7 +41,7 @@ Our codebase is mainly located in the following locations:
   - `tests/` - Corresponding test files following pytest conventions
   - `settings.py` - Project-wide settings and configuration parameters for kedro pipelines.
 
-Note that the files/directories listed above are not exhaustive and will likely evolve but these are the most important from drug repurposing perspective. There will also be some code outside `src/` directory - e.g. `scripts/` - which are helper scripts and utilities which are not part of the main pipeline
+Note that the files/directories listed above are not exhaustive and will likely evolve but these are the most important from drug repurposing perspective. There will also be some code outside `src/` directory - e.g. `scripts/` - which are helper scripts and utilities which are not part of the main pipeline.
 
 ### Data
 We organize our data pipeline into clear directories stages which correspond to both the pipeline stage as well as `maturity` of the data:
@@ -64,9 +70,9 @@ We use Kedro's configuration system to manage our pipeline settings and data cat
 
   - `local/` - Settings for local development that override base configs
 
-  - `cloud/` - Environment for cloud development on our GCP cluster
+  - `cloud/` - Environment for cloud development on our GCP cluster. Overwrites base environment with `-e cloud` or `--environment cloud` flags.
 
-  - `test/` - Test environment settings, typically using smaller datasets
+  - `test/` - Test environment settings, typically using smaller datasets. Overwrites base environment with `-e test` or `--environment test` flags.
   
 You will learn more about these different environments in the [overview section](./environments_overview.md). The most important thing to know is that the configuration system allows us to:
 

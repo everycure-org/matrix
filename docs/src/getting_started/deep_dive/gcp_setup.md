@@ -35,6 +35,7 @@ make fetch_secrets
 ```
 
 This will:
+
 - Create a `conf/local` directory
 - Fetch the storage service account key
 - Fetch the OAuth client secret
