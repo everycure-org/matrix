@@ -22,7 +22,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "transformations": "params:matrix_transformations.transformations",
                             "score_col": "params:matrix_transformations.score_col",
                         },
-                        outputs=f"matrix_transformations.fold_{fold}.model_output.transformed_matrix@spark",
+                        # Needs to match matrix generation output catalog path
+                        outputs=f"matrix_transformations.fold_{fold}.model_output.sorted_matrix_predictions@spark",
                         name=f"apply_matrix_transformations_fold_{fold}",
                         argo_config=ArgoResourceConfig(cpu_request=8, memory_request=64, memory_limit=64),
                     ),

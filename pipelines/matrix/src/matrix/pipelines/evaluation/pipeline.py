@@ -7,15 +7,17 @@ from matrix.pipelines.modelling.utils import partial_fold
 
 from . import nodes
 
-# TODO: pass in the correct matrix
 
-
-def _create_evaluation_fold_pipeline(evaluation: str, fold: Union[str, int], matrix_input: str) -> Pipeline:
+def _create_evaluation_fold_pipeline(
+    evaluation: str, fold: Union[str, int], matrix_input: str, score_col_name: str
+) -> Pipeline:
     """Create pipeline for single model, evaluation and fold.
 
     Args:
         evaluation: name of evaluation suite to generate
         fold: fold to generate
+        matrix_input: name of the matrix input
+        score_col_name: name of the score column to use
 
     Returns:
         Pipeline with nodes for given model, evaluation and fold
@@ -28,10 +30,10 @@ def _create_evaluation_fold_pipeline(evaluation: str, fold: Union[str, int], mat
                     "known_pairs": "modelling.model_input.splits",
                     "matrix": f"{matrix_input}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
                     "generator": f"params:evaluation.{evaluation}.evaluation_options.generator",
-                    "score_col_name": "params:matrix_generation.treat_score_col_name",
+                    "score_col_name": score_col_name,
                 },
                 outputs=f"evaluation.{matrix_input}.fold_{fold}.{evaluation}.model_output.pairs",
-                # Otherwise kedro give error that node names are not unique
+                # Otherwise kedro gives error that node names are not unique
                 name=f"{matrix_input}.create_{evaluation}_evaluation_pairs_fold_{fold}",
             ),
             ArgoNode(
@@ -39,6 +41,7 @@ def _create_evaluation_fold_pipeline(evaluation: str, fold: Union[str, int], mat
                 inputs=[
                     f"evaluation.{matrix_input}.fold_{fold}.{evaluation}.model_output.pairs",
                     f"params:evaluation.{evaluation}.evaluation_options.evaluation",
+                    score_col_name,
                 ],
                 outputs=f"evaluation.{matrix_input}.fold_{fold}.{evaluation}.reporting.result",
                 name=f"{matrix_input}.create_{evaluation}_evaluation_fold_{fold}",
@@ -91,7 +94,9 @@ def _create_core_stability_pipeline(
 
 
 # def create_model_pipeline(model: str, evaluation_names: List[str], n_cross_val_folds: int) -> Pipeline:
-def create_model_pipeline(evaluation_names: List[str], n_cross_val_folds: int, matrix_input: str) -> Pipeline:
+def create_model_pipeline(
+    evaluation_names: List[str], n_cross_val_folds: int, matrix_input: str, score_col_name: str
+) -> Pipeline:
     """Create pipeline to evaluate a single model.
 
     Args:
@@ -109,7 +114,7 @@ def create_model_pipeline(evaluation_names: List[str], n_cross_val_folds: int, m
         for evaluation in evaluation_names:
             pipelines.append(
                 pipeline(
-                    _create_evaluation_fold_pipeline(evaluation, fold, matrix_input),
+                    _create_evaluation_fold_pipeline(evaluation, fold, matrix_input, score_col_name),
                     tags=[evaluation],
                 )
             )
@@ -149,7 +154,7 @@ def create_model_pipeline(evaluation_names: List[str], n_cross_val_folds: int, m
     return sum(pipelines)
 
 
-def create_pipeline(matrix_input: str, **kwargs) -> Pipeline:
+def create_pipeline(matrix_input: str, score_col_name: str) -> Pipeline:
     """Create evaluation pipeline.
 
     Pipeline is created dynamically, based on the following dimensions:
@@ -165,7 +170,9 @@ def create_pipeline(matrix_input: str, **kwargs) -> Pipeline:
 
     # Generate pipelines for each model
     pipelines = []
-    pipelines.append(create_model_pipeline(evaluation_names, n_cross_val_folds, matrix_input))
+    pipelines.append(
+        create_model_pipeline(evaluation_names, n_cross_val_folds, matrix_input, score_col_name=score_col_name)
+    )
 
     # Consolidate metrics across models and folds
     pipelines.append(
