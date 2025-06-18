@@ -1,7 +1,3 @@
-# NOTE: This docker-compose.yml was partially generated using AI assistance.
-
-version: '3.8'
-
 services:
   kg-dashboard:
     build: .
