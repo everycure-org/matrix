@@ -1,4 +1,4 @@
-name: Evidence Dashboard Deployment
+name: KG Dashboard Deployment
 
 # FUTURE
 # This will eventually need to be turned into a call'able workflow_call version where we
@@ -20,7 +20,7 @@ on:
     # allows re-building the dashboard by merging to main
     paths: 
       - services/kg_dashboard/**
-      - .github/workflows/evidence-deploy.yml
+      - .github/workflows/kg-dashboard-deploy.yml
   pull_request:
     # Sequence of patterns matched against refs/heads
     branches:
@@ -33,7 +33,7 @@ on:
       - ready_for_review
     paths: 
       - services/kg_dashboard/**
-      - .github/workflows/evidence-deploy.yml
+      - .github/workflows/kg-dashboard-deploy.yml
 
 defaults:
   run: 
@@ -48,7 +48,7 @@ env:
   rw_wip: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
   rw_sa: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
   # release version from input
-  RELEASE_VERSION: ${{ inputs.release_version || 'v0.5.3'}}
+  RELEASE_VERSION: ${{ inputs.release_version }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -66,6 +66,23 @@ jobs:
       # setup runtime
       - name: 'Checkout'
         uses: actions/checkout@v4
+
+      - name: Set RELEASE_VERSION from latest tag if not set
+        run: |
+          if [ -z "${RELEASE_VERSION}" ]; then
+            git fetch --tags
+            LATEST_TAG=$(
+              git ls-remote --tags origin | \
+              grep -v '{}' | \
+              grep '^.*refs/tags/v[0-9]*\.[0-9]*\.[0-9]*$' | cut -d'/' -f3 | \
+              sort -V | \
+              tail -n1
+            )
+            echo "RELEASE_VERSION=${LATEST_TAG}" >> "$GITHUB_ENV"
+            echo "Setting RELEASE_VERSION to latest tag: ${LATEST_TAG}"
+          else
+            echo "Using provided RELEASE_VERSION: ${RELEASE_VERSION}"
+          fi
 
       - name: Validate release version
         working-directory: pipelines/matrix

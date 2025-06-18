@@ -1,8 +1,3 @@
----
-title: Production environment: usage and rollout
-status: proposed
----
-
 ## Status
 
 Under review
