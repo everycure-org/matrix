@@ -2,7 +2,5 @@ nav:
     - index.md
     - gcp_setup.md
     - gcp_environments.md
-    - ci.md
     - kedro_extensions.md
     - kedro_experiment.md
-    - sample_environment.md

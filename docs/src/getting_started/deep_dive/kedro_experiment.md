@@ -59,4 +59,4 @@ kedro experiment create --experiment-name={EXPERIMENT_NAME}
 
 Note that running the pipeline with real data requires a lot of time. If you want to check if your pipeline will even work (e.g. let's assume you developed a new feature which works with fabricated data but you are unsure about real data) you can test it using `sample` environment as described in [first steps section](./../first_steps/environments_overview.md)
 
-[Sampling Environment :material-skip-next:](../deep_dive/sample_environment.md){ .md-button .md-button--primary }
+[Jupyter Setup :material-skip-next:](../jupyter_setup/index.md){ .md-button .md-button--primary }
