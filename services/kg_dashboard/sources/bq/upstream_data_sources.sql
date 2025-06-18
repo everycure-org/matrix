@@ -3,7 +3,7 @@ with nodes_per_source as (
      sources.element as upstream_data_source
     , count(*) as c 
   from 
-    `mtrx-hub-dev-3of.release_${bq_release_version}.nodes_unified` n
+    `${project_id}.release_${bq_release_version}.nodes_unified` n
     , unnest(upstream_data_source.list) as sources
   group by 1 
   order by 2 desc
@@ -14,7 +14,7 @@ with nodes_per_source as (
      sources.element as upstream_data_source
     , count(*) as c 
   from 
-    `mtrx-hub-dev-3of.release_${bq_release_version}.edges_unified` n
+    `${project_id}.release_${bq_release_version}.edges_unified` n
     , unnest(upstream_data_source.list) as sources
   group by 1 
   order by 2 desc
