@@ -259,7 +259,7 @@ grpcio==1.71.0
     #   grpcio-status
 grpcio-status==1.62.3
     # via google-api-core
-gunicorn==22.0.0
+gunicorn==23.0.0
     # via mlflow
 h11==0.16.0
     # via

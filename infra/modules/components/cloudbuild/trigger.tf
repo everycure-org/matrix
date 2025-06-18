@@ -1,8 +1,12 @@
 resource "google_cloudbuild_trigger" "terrgrunt_trigger" {
   project     = var.project_id
-  name        = "terragrunt-on-${var.github_repo_deploy_branch}-push"
+  name        = "terragrunt-on-${var.github_repo_deploy_branch}-push-for-${var.project_id}"
   location    = var.location
-  description = "Trigger for terragrunt apply on push to ${var.github_repo_deploy_branch} branch"
+  description = "Trigger for terragrunt apply on push to ${var.github_repo_deploy_branch} branch for project ${var.project_id}."
+
+  approval_config {
+    approval_required = var.require_manual_approval
+  }
 
   repository_event_config {
     repository = google_cloudbuildv2_repository.matrix_repo.id
