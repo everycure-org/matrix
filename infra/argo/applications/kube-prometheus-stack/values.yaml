@@ -33,10 +33,8 @@ kube-prometheus-stack:
           endpoints:
             - port: metrics
               path: /metrics
-        # Add GPU monitoring for workflows. This scrape config collects GPU metrics exposed by Kedro-Argo applications.
-        # Uses DCGM exporter sidecar to expose GPU metrics including temperature, utilization, memory usage, etc.
-        # Documentation: https://github.com/NVIDIA/dcgm-exporter
-        - name: gpu-metrics
+        # Updated GPU monitoring for workflows with DCGM sidecar
+        - name: gpu-metrics-kedro-argo
           selector:
             matchLabels:
               app: kedro-argo
@@ -46,19 +44,56 @@ kube-prometheus-stack:
           endpoints:
             - port: gpu-metrics
               path: /metrics
+              interval: 15s
+              scrapeTimeout: 10s
         
-        # Add GPU monitoring DaemonSet. This monitors GPU nodes continuously.
-        - name: dcgm-exporter-daemonset
+        # Add pod monitor for direct pod scraping (alternative approach)
+      additionalPodMonitors:
+        - name: dcgm-sidecar-pods
           selector:
             matchLabels:
-              app.kubernetes.io/name: dcgm-exporter
+              app: kedro-argo
           namespaceSelector:
             matchNames:
-              - kube-system
-          endpoints:
+              - argo-workflows
+          podMetricsEndpoints:
             - port: gpu-metrics
               path: /metrics
               interval: 15s
+              scrapeTimeout: 10s
+      
+      # Allow scraping of pods directly (needed for sidecar containers)
+      additionalScrapeConfigs:
+        - job_name: 'dcgm-exporter-sidecars'
+          kubernetes_sd_configs:
+            - role: pod
+              namespaces:
+                names:
+                  - argo-workflows
+          relabel_configs:
+            - source_labels: [__meta_kubernetes_pod_label_app]
+              action: keep
+              regex: kedro-argo
+            - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+              action: keep
+              regex: true
+            - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+              action: replace
+              target_label: __metrics_path__
+              regex: (.+)
+            - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+              action: replace
+              regex: ([^:]+)(?::\d+)?;(\d+)
+              replacement: $1:$2
+              target_label: __address__
+            - action: labelmap
+              regex: __meta_kubernetes_pod_label_(.+)
+            - source_labels: [__meta_kubernetes_namespace]
+              action: replace
+              target_label: kubernetes_namespace
+            - source_labels: [__meta_kubernetes_pod_name]
+              action: replace
+              target_label: kubernetes_pod_name
   grafana:
     persistence:
       enabled: true
