@@ -84,7 +84,6 @@ jobs:
       - name: Set RELEASE_VERSION from latest tag if not set
         run: |
           if [ -z "${RELEASE_VERSION}" ]; then
-            git fetch --tags
             LATEST_TAG=$(
               git ls-remote --tags origin | \
               grep -v '{}' | \
