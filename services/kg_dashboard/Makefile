@@ -1,8 +1,12 @@
 # Define the image name
 IMAGE_NAME = kg-dashboard
 REPO_NAME = matrix-images
-PROJECT_ID = $(shell gcloud config get-value project)
 EVIDENCE_BASE_PATH = gs://data.dev.everycure.org/versions
+
+
+# controls the project id, useful for BQ queries
+PROJECT_ID ?= $(shell gcloud config get-value project)
+export EVIDENCE_VAR__project_id := $(PROJECT_ID)
 
 # controls the release version of the KG used in the dashboard
 RELEASE_VERSION ?= v0.5.3
