@@ -69,12 +69,12 @@ paths:
 
   # Release-based
   integration:        data/releases/${versions.release}/datasets/integration
-  filtering:          data/releases/${versions.release}/datasets/filtering
-  embeddings:         data/releases/${versions.release}/datasets/embeddings
   release:            data/releases/${versions.release}/datasets/release
 
   # Run-based
-  modelling:                  data/releases/${versions.release}/runs/${run_name}/datasets/modelling
+  filtering:          data/releases/${versions.release}/runs/${run_name}/datasets/filtering
+  embeddings:         data/releases/${versions.release}/runs/${run_name}/datasets/embeddings
+  modelling:          data/releases/${versions.release}/runs/${run_name}/datasets/modelling
   matrix_generation:  data/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
   pre_transformed_evaluation:   data/releases/${versions.release}/runs/${run_name}/datasets/pre_transformed_evaluation
   matrix_transformations:  data/releases/${versions.release}/runs/${run_name}/datasets/matrix_transformations
