@@ -3,7 +3,7 @@ SELECT
   'prefix' AS dimension,
   SPLIT(id, ':')[OFFSET(0)] AS name,
   COUNT(*) AS count
-FROM `mtrx-hub-dev-3of.release_${bq_release_version}.disease_list_normalization_summary`
+FROM `${project_id}.release_${bq_release_version}.disease_list_normalization_summary`
 GROUP BY
   normalization_success,
   name
@@ -15,7 +15,7 @@ SELECT
   'category' AS dimension,
   category AS name,
   COUNT(*) AS count
-FROM `mtrx-hub-dev-3of.release_${bq_release_version}.disease_list_normalization_summary`
+FROM `${project_id}.release_${bq_release_version}.disease_list_normalization_summary`
 GROUP BY
   normalization_success,
   category
