@@ -11,7 +11,7 @@ WITH prepared AS (
       ELSE 'null'
     END AS knowledge_level,
     src_element.element AS upstream_data_source
-  FROM `mtrx-hub-dev-3of.release_${bq_release_version}.edges_unified`,
+  FROM `${project_id}.release_${bq_release_version}.edges_unified`,
     UNNEST(upstream_data_source.list) AS src_element
 )
 
