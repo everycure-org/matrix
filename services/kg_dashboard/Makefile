@@ -29,7 +29,7 @@ export EVIDENCE_VAR__max_edge_failed_normalization_by_normalization_set_prefix :
 bump_basepath:
 	node ./scripts/update-basepath.cjs $(RELEASE_VERSION)
 
-build: # bump_basepath 
+build: bump_basepath 
 	@echo "Building with EVIDENCE_VAR__release_version=$(EVIDENCE_VAR__release_version)"
 	npm run build:strict
 
