@@ -1,8 +1,5 @@
 ---
 title: Home
-hide: 
-  - toc
-  - navigation
 ---
 
 # Useful Links to our resources
