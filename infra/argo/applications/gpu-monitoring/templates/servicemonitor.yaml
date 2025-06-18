@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: dcgm-exporter-daemonset
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: dcgm-exporter
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: dcgm-exporter
+  endpoints:
+  - port: gpu-metrics
+    path: /metrics
+    interval: 15s

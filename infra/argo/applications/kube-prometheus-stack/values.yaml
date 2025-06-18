@@ -33,7 +33,9 @@ kube-prometheus-stack:
           endpoints:
             - port: metrics
               path: /metrics
-        # Add GPU monitoring for workflows using Kedro-Argo. This scrape config collects GPU metrics exposed by Kedro-Argo applications.
+        # Add GPU monitoring for workflows. This scrape config collects GPU metrics exposed by Kedro-Argo applications.
+        # Uses DCGM exporter sidecar to expose GPU metrics including temperature, utilization, memory usage, etc.
+        # Documentation: https://github.com/NVIDIA/dcgm-exporter
         - name: gpu-metrics
           selector:
             matchLabels:
@@ -44,19 +46,19 @@ kube-prometheus-stack:
           endpoints:
             - port: gpu-metrics
               path: /metrics
-
-        # Add GPU monitoring for DCGM exporter. This scrape config collects GPU metrics from the NVIDIA DCGM exporter.
-        # Documentation: https://github.com/NVIDIA/dcgm-exporter
-        - name: dcgm-exporter
+        
+        # Add GPU monitoring DaemonSet. This monitors GPU nodes continuously.
+        - name: dcgm-exporter-daemonset
           selector:
             matchLabels:
               app.kubernetes.io/name: dcgm-exporter
           namespaceSelector:
             matchNames:
-              - gpu-operator-resources
+              - kube-system
           endpoints:
             - port: gpu-metrics
               path: /metrics
+              interval: 15s
   grafana:
     persistence:
       enabled: true
