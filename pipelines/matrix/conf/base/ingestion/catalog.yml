@@ -306,7 +306,7 @@ ingestion.int.disease_list.nodes:
 ingestion.raw.ground_truth.positives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/ground_truth_ec/tp_medi_overlap.txt # ${globals:paths.kg_raw}/ground_truth/ec/tp_medi_pairs_pd.txt
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/ground_truth_ec/tp_medi_dedup.txt # ${globals:paths.kg_raw}/ground_truth/ec/tp_medi_pairs_pd.txt
   load_args:
     sep: "\t"
   save_args:
@@ -315,7 +315,7 @@ ingestion.raw.ground_truth.positives:
 ingestion.raw.ground_truth.negatives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/ground_truth_ec/tn_medi_overlap.txt # ${globals:paths.kg_raw}/ground_truth/ec/tn_medi_pairs_pd.txt
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/ground_truth_ec/tn_medi_dedup.txt # ${globals:paths.kg_raw}/ground_truth/ec/tn_medi_pairs_pd.txt
   load_args:
     sep: "\t"
   save_args:
