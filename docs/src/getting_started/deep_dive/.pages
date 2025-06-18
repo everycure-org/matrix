@@ -6,9 +6,3 @@ nav:
     - kedro_extensions.md
     - kedro_experiment.md
     - sample_environment.md
-    - cross_environments.md
-    - kedro_jupyter.md
-    - embeddings.md
-    - caching.md
-    - pandera_validation.md
-    - walkthroughs

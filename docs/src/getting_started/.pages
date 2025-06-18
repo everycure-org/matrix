@@ -2,4 +2,5 @@ nav:
     - index.md
     - first_steps
     - deep_dive
+    - development_setup
     - contribute

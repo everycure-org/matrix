@@ -86,4 +86,4 @@ Commands `kedro experiment run` and `kedro run` are environment agnostic.
 !!! info
     The CI pipeline is not extended to prod - testing is done in the same way in both environments. Currently, releases are only triggered in the dev environment (this will change to prod in the future)
 
-[CI/CD:](./ci.md){ .md-button .md-button--primary }
+[Kedro Extensions:](./kedro_extensions.md){ .md-button .md-button--primary }

@@ -1,5 +1,7 @@
 nav:
     - index.md
+    - embeddings.md
+    - caching.md
     - data
     - data_science
-    - runbooks
+    - debugging
