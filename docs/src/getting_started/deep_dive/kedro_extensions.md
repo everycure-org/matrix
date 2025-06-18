@@ -248,9 +248,7 @@ This is particularly useful when:
 We hope you've learned the basics of kedro extensions in our project, and are ready to contribute!
 If you want to learn about some specific activities, please check the [walkthroughs](./walkthroughs/custom_modelling.ipynb) section.
 
-Now that you have a good understanding of kedro extensions, we recommend diving into some of the walkthroughs to get a good understanding of those extensions:
-- [Fabricator](./walkthroughs/fabricator.md)
-- [Data Catalog & Transcoding](./walkthroughs/walkthrough_data_catalog.md) 
-- [Kedro Dataset workflow - Deep Dive](./walkthroughs/new_data_source.md) 
+!!! info 
+    If you are interested in learning more about those extensions, you can check our walkthrough for the [fabricator](./walkthroughs/fabricator.md), [data catalog & transcoding](./walkthroughs/walkthrough_data_catalog.md) or a deep dive into [Kedro Dataset workflow - Deep Dive](./walkthroughs/new_data_source.md). We are covering it more in-depth within the [development setup section](../development_setup/index.md).
 
 [Running the Pipeline on the Kubernetes Cluster :material-skip-next:](./kedro_experiment.md){ .md-button .md-button--primary }
