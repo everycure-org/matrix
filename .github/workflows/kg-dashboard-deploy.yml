@@ -61,7 +61,7 @@ jobs:
       id-token: 'write'
 
     env:
-      PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      project_id: ${{ vars.GCP_PROJECT_ID }}
       EC_DATA_DOMAIN: ${{ vars.EC_DATA_DOMAIN }}
       RELEASE_VERSION: ${{ inputs.release_version }}
       # for querying BQ even on branches
@@ -78,7 +78,7 @@ jobs:
 
       - name: Log environment variables
         run: |
-          echo "PROJECT_ID: ${PROJECT_ID}"
+          echo "project_id: ${project_id}"
           echo "EC_DATA_DOMAIN: ${EC_DATA_DOMAIN}"
 
       - name: Set RELEASE_VERSION from latest tag if not set
