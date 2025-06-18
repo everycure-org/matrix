@@ -64,6 +64,7 @@ jobs:
       project_id: ${{ vars.GCP_PROJECT_ID }}
       EC_DATA_DOMAIN: ${{ vars.EC_DATA_DOMAIN }}
       RELEASE_VERSION: ${{ inputs.release_version }}
+      environment: ${{ inputs.environment }}
       # for querying BQ even on branches
       ro_wip: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-ro/providers/matrix-gh-provider-ro'
       ro_sa: 'sa-github-actions-ro@mtrx-hub-dev-3of.iam.gserviceaccount.com'
@@ -78,6 +79,7 @@ jobs:
 
       - name: Log environment variables
         run: |
+          echo "environment: ${environment}"
           echo "project_id: ${project_id}"
           echo "EC_DATA_DOMAIN: ${EC_DATA_DOMAIN}"
 
