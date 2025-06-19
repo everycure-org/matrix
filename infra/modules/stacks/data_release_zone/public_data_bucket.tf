@@ -36,9 +36,10 @@ resource "google_storage_bucket" "website" {
 
 # Make bucket public
 resource "google_storage_bucket_iam_member" "public_read" {
-  bucket = google_storage_bucket.website.name
-  role   = "roles/storage.objectViewer"
-  member = "allUsers"
+  bucket     = google_storage_bucket.website.name
+  role       = "roles/storage.objectViewer"
+  member     = "allUsers"
+  depends_on = [time_sleep.wait_for_org_policies]
 }
 
 # Create a Google-managed SSL certificate
@@ -112,4 +113,12 @@ resource "google_dns_record_set" "website" {
   type         = "A"
   ttl          = 300
   rrdatas      = [google_compute_global_address.static_website.address]
+}
+
+# Add a dummy index.html file for testing
+resource "google_storage_bucket_object" "hello_world" {
+  name         = "test/hello/index.html"
+  content      = "<html><body><h1>Hello, World!</h1></body></html>"
+  bucket       = google_storage_bucket.website.name
+  content_type = "text/html"
 }
