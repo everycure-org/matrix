@@ -1,6 +1,5 @@
 nav:
     - Data release:
-        - preprocessing.md
         - ingestion.md
         - integration.md
     - Features:
@@ -14,6 +13,7 @@ nav:
         - evaluation.md
 
     - Other:
+        - preprocessing.md
         - inference.md
 
     # Data team - you may want to incorporate these old pages into the data engineering section
