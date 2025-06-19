@@ -22,6 +22,16 @@ module "dns" {
   environment = var.environment
 }
 
+module "data_release_zone" {
+  source                = "../../../modules/stacks/data_release_zone"
+  project_id            = var.project_id
+  region                = var.default_region
+  dns_managed_zone_name = module.dns.dns_zone_name
+  dns_name              = module.dns.dns_name
+  environment           = var.environment
+}
+
+
 module "cloudbuild" {
   source                     = "../../../modules/components/cloudbuild"
   github_repo_path_to_folder = var.github_repo_path_to_folder
