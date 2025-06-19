@@ -35,7 +35,6 @@ def _create_evaluation_fold_pipeline(
                     "generator": f"params:evaluation.{evaluation}.evaluation_options.generator",
                 },
                 outputs=f"evaluation.{matrix_input}.fold_{fold}.{evaluation}.model_output.pairs",
-                # Otherwise kedro gives error that node names are not unique
                 name=f"{matrix_input}.create_{evaluation}_evaluation_pairs_fold_{fold}",
             ),
             ArgoNode(
