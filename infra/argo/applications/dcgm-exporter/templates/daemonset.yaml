@@ -23,6 +23,9 @@ spec:
     spec:
       hostNetwork: {{ .Values.daemonSet.hostNetwork }}
       hostPID: {{ .Values.daemonSet.hostPID }}
+      {{- if .Values.daemonSet.runtimeClassName }}
+      runtimeClassName: {{ .Values.daemonSet.runtimeClassName }}
+      {{- end }}
       {{- with .Values.nodeAffinity }}
       affinity:
         nodeAffinity:
@@ -34,19 +37,21 @@ spec:
       {{- end }}
       containers:
       - name: {{ .Values.containerNames.hostEngine }}
-        image: "{{ .Values.hostEngine.image.repository }}:{{ .Values.hostEngine.image.tag }}"
+        image: "{{ .Values.hostEngine.image.repository }}:{{ .Values.hostEngine.image.tag | default (index .Chart.Annotations "dcgm-hostengine-tag") }}"
         imagePullPolicy: {{ .Values.hostEngine.image.pullPolicy }}
-        command: ["nv-hostengine", "-n", "-b", "ALL"]
+        command: {{ .Values.hostEngine.command | toJson }}
         ports:
         - containerPort: {{ .Values.hostEngine.port }}
           name: dcgm
           protocol: TCP
         securityContext:
-          privileged: true
+          {{- toYaml .Values.hostEngine.securityContext | nindent 12 }}
         volumeMounts:
-        - name: nvidia-install-dir
-          mountPath: /usr/local/nvidia
-          readOnly: true
+        {{- range .Values.hostVolumes }}
+        - name: {{ .name }}
+          mountPath: {{ .mountPath }}
+          readOnly: {{ .readOnly }}
+        {{- end }}
         resources:
           {{- toYaml .Values.hostEngine.resources | nindent 12 }}
         livenessProbe:
@@ -60,10 +65,12 @@ spec:
           initialDelaySeconds: {{ .Values.hostEngine.probes.readiness.initialDelaySeconds }}
           periodSeconds: {{ .Values.hostEngine.probes.readiness.periodSeconds }}
       volumes:
-      - name: nvidia-install-dir
+      {{- range .Values.hostVolumes }}
+      - name: {{ .name }}
         hostPath:
-          path: {{ .Values.paths.nvidiaDriverPath }}
-          type: Directory
+          path: {{ .hostPath }}
+          type: DirectoryOrCreate
+      {{- end }}
 ---
 # DCGM Exporter DaemonSet (connects to host engine for process monitoring)
 apiVersion: apps/v1
@@ -93,6 +100,9 @@ spec:
     spec:
       hostNetwork: {{ .Values.daemonSet.hostNetwork }}
       hostPID: {{ .Values.daemonSet.hostPID }}
+      {{- if .Values.daemonSet.runtimeClassName }}
+      runtimeClassName: {{ .Values.daemonSet.runtimeClassName }}
+      {{- end }}
       {{- with .Values.nodeAffinity }}
       affinity:
         nodeAffinity:
@@ -104,7 +114,7 @@ spec:
       {{- end }}
       containers:
       - name: {{ .Values.containerNames.exporter }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default (index .Chart.Annotations "dcgm-exporter-tag") }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         command: ["/bin/bash", "-c"]
         args:
