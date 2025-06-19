@@ -47,7 +47,7 @@ def _create_evaluation_fold_pipeline(
                 name=f"{matrix_input}.create_{evaluation}_evaluation_fold_{fold}",
             ),
         ],
-        tags=["argowf.fuse", f"argowf.fuse-group.{evaluation}.fold_{fold}"],
+        tags=["argowf.fuse", f"argowf.fuse-group.{matrix_input}.{evaluation}.fold_{fold}"],
     )
 
 
