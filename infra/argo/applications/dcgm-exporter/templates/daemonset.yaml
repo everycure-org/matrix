@@ -1,5 +1,7 @@
-# DCGM Host Engine DaemonSet (Google's approach - ESSENTIAL for process monitoring)
-# https://cloud.google.com/stackdriver/docs/managed-prometheus/exporters/nvidia-dcgm
+# DCGM Exporter DaemonSet
+# Supports both embedded mode (DCGM 4.x recommended) and remote mode (DCGM 3.x compatible)
+{{- if eq .Values.exporter.mode "remote" }}
+# DCGM Host Engine DaemonSet (only for remote mode)
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -72,7 +74,8 @@ spec:
           type: DirectoryOrCreate
       {{- end }}
 ---
-# DCGM Exporter DaemonSet (connects to host engine for process monitoring)
+{{- end }}
+# DCGM Exporter DaemonSet (embedded mode includes host engine, remote mode connects to separate host engine)
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -118,7 +121,13 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         command: ["/bin/bash", "-c"]
         args:
+        {{- if eq .Values.exporter.mode "embedded" }}
+        # Embedded mode: exporter runs its own host engine internally
+        - hostname $NODE_NAME; dcgm-exporter --collectors /etc/dcgm-exporter/counters.csv
+        {{- else }}
+        # Remote mode: exporter connects to separate host engine
         - hostname $NODE_NAME; dcgm-exporter --remote-hostengine-info {{ .Values.exporter.hostEngineAddress }} --collectors /etc/dcgm-exporter/counters.csv
+        {{- end }}
         ports:
         - name: metrics
           containerPort: {{ .Values.exporter.port }}
@@ -139,7 +148,13 @@ spec:
         - name: LD_LIBRARY_PATH
           value: {{ .Values.paths.nvidiaLibPath }}
         securityContext:
+          {{- if eq .Values.exporter.mode "embedded" }}
+          # Embedded mode requires elevated privileges to run host engine
+          {{- toYaml .Values.hostEngine.securityContext | nindent 12 }}
+          {{- else }}
+          # Remote mode requires fewer privileges
           {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- end }}
         resources:
           {{- toYaml .Values.resources | nindent 12 }}
         volumeMounts:
@@ -225,7 +240,7 @@ spec:
     - sourceLabels: [{{ .Values.serviceMonitor.metricRelabelings.workflowNameExtraction.sourceLabel }}]
       regex: '{{ .Values.serviceMonitor.metricRelabelings.workflowNameExtraction.regex }}'
       targetLabel: {{ .Values.serviceMonitor.metricRelabelings.workflowNameExtraction.targetLabel }}
-      replacement: '${1}'
+      replacement: '{{ .Values.serviceMonitor.metricRelabelings.workflowNameExtraction.replacement | default "${1}" }}'
     {{- end }}
     {{- end }}
 {{- end }}
