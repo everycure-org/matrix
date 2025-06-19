@@ -2,5 +2,5 @@ apiVersion: v2
 name: dcgm-exporter
 description: NVIDIA DCGM Exporter for GPU metrics in Argo Workflows
 type: application
-version: 0.1.0
+version: 4.1.3
 appVersion: "4.1.3"
