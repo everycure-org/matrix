@@ -8,7 +8,7 @@ locals {
     "serviceAccount:vertex-ai-workbench-sa@mtrx-wg1-data-dev-nb5.iam.gserviceaccount.com",
     "serviceAccount:vertex-ai-workbench-sa@mtrx-wg2-modeling-dev-9yj.iam.gserviceaccount.com",
     "serviceAccount:299386668624-compute@developer.gserviceaccount.com", # orchard dev
-    orchard_prod_compute_service_account                                 # orchard prod
+    local.orchard_prod_compute_service_account                           # orchard prod
   ]
   github_actions_rw = ["serviceAccount:sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com"]
 }
