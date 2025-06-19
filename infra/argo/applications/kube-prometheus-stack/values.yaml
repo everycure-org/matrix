@@ -1,16 +1,4 @@
 kube-prometheus-stack:
-  # Configure kubelet ServiceMonitor to extract workflow names from container metrics
-  kubelet:
-    serviceMonitor:
-      # Add workflow name extraction to container metrics (CPU, memory, disk)
-      metricRelabelings:
-        # Extract workflow name from Argo workflow pod names for container metrics
-        - action: replace
-          regex: '^(.+[a-f0-9]{8})(?:-[a-zA-Z]+-[0-9]+)?$'
-          replacement: '${1}'
-          sourceLabels:
-          - pod
-          targetLabel: workflow_name
   prometheus:
     prometheusSpec:
       retention: 180d
