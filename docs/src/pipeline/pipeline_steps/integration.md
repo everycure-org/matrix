@@ -1,4 +1,3 @@
-
 ### Integration
 
 The integration stage aims to produce our internal knowledge-graph, in [biolink](https://biolink.github.io/biolink-model/) format. As we ingest data from different sources, entity resolution becomes a prevalent topic. The integration step consolidates entities across sources to avoid data duplication in the knowledge graph.
@@ -11,7 +10,7 @@ There are 4 main steps in the integration pipeline:
 4. **Filtering**: Applies a series of filtering steps, for example, node deduplication. For any custom filtering of the graph, see the filtering pipeline.
 
 
-![](../assets/img/kg_integration_approach.excalidraw.svg)
+![](../../assets/img/kg_integration_approach.excalidraw.svg)
 
 
 #### Normalizing data from sources
