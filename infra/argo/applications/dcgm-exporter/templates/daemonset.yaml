@@ -1,4 +1,5 @@
 # DCGM Host Engine DaemonSet (Google's approach - ESSENTIAL for process monitoring)
+# https://cloud.google.com/stackdriver/docs/managed-prometheus/exporters/nvidia-dcgm
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
