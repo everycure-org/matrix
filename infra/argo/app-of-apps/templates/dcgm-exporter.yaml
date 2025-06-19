@@ -14,10 +14,6 @@ spec:
     path: infra/argo/applications/dcgm-exporter
     repoURL: {{ .Values.spec.source.repoURL }}
     targetRevision: {{ .Values.spec.source.targetRevision }}
-    helm:
-      parameters:
-        - name: nodeSelector."cloud\.google\.com/gke-accelerator"
-          value: nvidia-l4
   destination:
     server: {{ .Values.spec.destination.server }}
     namespace: monitoring
