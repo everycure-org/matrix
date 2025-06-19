@@ -4,7 +4,7 @@ on:
     pull_request:
       # Sequence of patterns matched against refs/heads
       branches:
-        - infra
+        - main
       types:
         - opened
         - reopened
@@ -16,7 +16,7 @@ on:
   
     push:
       branches:
-        - infra
+        - main
       paths: 
         - services/moa_visualizer/**
         - .github/workflows/moa-ci.yml
@@ -28,7 +28,7 @@ jobs:
   # FUTURE eventually github will likely fix this
   # https://github.com/orgs/community/discussions/26698
   paths_filter:
-    if: github.event.pull_request.draft == false || github.ref == 'refs/heads/infra'
+    if: github.event.pull_request.draft == false || github.ref == 'refs/heads/main'
     runs-on: 'ubuntu-latest'
     permissions: 
       pull-requests: read
@@ -53,7 +53,7 @@ jobs:
   ci:
     runs-on:  'self-hosted'
     needs: [paths_filter]
-    if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/infra')
+    if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
     defaults:
       run:
         working-directory: ./services/moa_visualizer
@@ -67,7 +67,7 @@ jobs:
 
   push_image:
       needs: [ci]
-      if: github.ref == 'refs/heads/infra'
+      if: github.ref == 'refs/heads/main'
       runs-on: 'self-hosted'
       environment: dev
       permissions: write-all
