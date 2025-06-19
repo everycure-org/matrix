@@ -14,6 +14,14 @@ on:
         description: 'Version to deploy in format vX.Y.Z'
         required: true
         type: string
+      environment:
+        description: 'Environment to build from and deploy to'
+        required: true
+        type: choice
+        default: 'dev'
+        options:
+          - dev
+          - prod
   push:
     branches:
       - main
@@ -38,17 +46,6 @@ on:
 defaults:
   run: 
     working-directory: services/kg_dashboard/
-env:
-  # log into gcp
-  project_id: 'mtrx-hub-dev-3of'
-  # for querying BQ even on branches
-  ro_wip: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-ro/providers/matrix-gh-provider-ro'
-  ro_sa: 'sa-github-actions-ro@mtrx-hub-dev-3of.iam.gserviceaccount.com'
-  # for deploying to GCS, only works on main
-  rw_wip: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
-  rw_sa: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
-  # release version from input
-  RELEASE_VERSION: ${{ inputs.release_version }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -58,19 +55,37 @@ jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     name: Build Dashboard
+    environment: ${{ inputs.environment }}
     permissions:
       contents: 'read'
       id-token: 'write'
+
+    env:
+      project_id: ${{ vars.GCP_PROJECT_ID }}
+      EC_DATA_DOMAIN: ${{ vars.EC_DATA_DOMAIN }}
+      RELEASE_VERSION: ${{ inputs.release_version }}
+      environment: ${{ inputs.environment }}
+      # for querying BQ even on branches
+      ro_wip: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-ro/providers/matrix-gh-provider-ro'
+      ro_sa: 'sa-github-actions-ro@mtrx-hub-dev-3of.iam.gserviceaccount.com'
+      # for deploying to GCS, only works on main
+      rw_wip: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
+      rw_sa: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
 
     steps:
       # setup runtime
       - name: 'Checkout'
         uses: actions/checkout@v4
 
+      - name: Log environment variables
+        run: |
+          echo "environment: ${environment}"
+          echo "project_id: ${project_id}"
+          echo "EC_DATA_DOMAIN: ${EC_DATA_DOMAIN}"
+
       - name: Set RELEASE_VERSION from latest tag if not set
         run: |
           if [ -z "${RELEASE_VERSION}" ]; then
-            git fetch --tags
             LATEST_TAG=$(
               git ls-remote --tags origin | \
               grep -v '{}' | \
