@@ -9,7 +9,7 @@ PROJECT_ID ?= $(shell gcloud config get-value project)
 export EVIDENCE_VAR__project_id := $(PROJECT_ID)
 
 # controls the release version of the KG used in the dashboard
-RELEASE_VERSION ?= v0.5.3
+RELEASE_VERSION ?= v0.7.0
 export EVIDENCE_VAR__release_version := $(RELEASE_VERSION)
 export EVIDENCE_VAR__bq_release_version := $(subst .,_,$(RELEASE_VERSION))
 export VITE_release_version := $(RELEASE_VERSION)
