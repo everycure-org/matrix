@@ -14,15 +14,15 @@ spec:
       {{- include "dcgm-exporter.selectorLabels" . | nindent 6 }}
       component: hostengine
   updateStrategy:
-    type: RollingUpdate
+    type: {{ .Values.daemonSet.updateStrategy.type }}
   template:
     metadata:
       labels:
         {{- include "dcgm-exporter.selectorLabels" . | nindent 8 }}
         component: hostengine
     spec:
-      hostNetwork: true
-      hostPID: true
+      hostNetwork: {{ .Values.daemonSet.hostNetwork }}
+      hostPID: {{ .Values.daemonSet.hostPID }}
       {{- with .Values.nodeAffinity }}
       affinity:
         nodeAffinity:
@@ -33,11 +33,12 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-      - name: nvidia-dcgm
-        image: "nvcr.io/nvidia/cloud-native/dcgm:3.3.0-1-ubuntu22.04"
+      - name: {{ .Values.containerNames.hostEngine }}
+        image: "{{ .Values.hostEngine.image.repository }}:{{ .Values.hostEngine.image.tag }}"
+        imagePullPolicy: {{ .Values.hostEngine.image.pullPolicy }}
         command: ["nv-hostengine", "-n", "-b", "ALL"]
         ports:
-        - containerPort: 5555
+        - containerPort: {{ .Values.hostEngine.port }}
           name: dcgm
           protocol: TCP
         securityContext:
@@ -47,26 +48,21 @@ spec:
           mountPath: /usr/local/nvidia
           readOnly: true
         resources:
-          requests:
-            memory: 512Mi
-            cpu: 50m
-          limits:
-            memory: 1Gi
-            cpu: 200m
+          {{- toYaml .Values.hostEngine.resources | nindent 12 }}
         livenessProbe:
           tcpSocket:
             port: dcgm
-          initialDelaySeconds: 30
-          periodSeconds: 30
+          initialDelaySeconds: {{ .Values.hostEngine.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.hostEngine.probes.liveness.periodSeconds }}
         readinessProbe:
           tcpSocket:
             port: dcgm
-          initialDelaySeconds: 5
-          periodSeconds: 10
+          initialDelaySeconds: {{ .Values.hostEngine.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.hostEngine.probes.readiness.periodSeconds }}
       volumes:
       - name: nvidia-install-dir
         hostPath:
-          path: /home/kubernetes/bin/nvidia
+          path: {{ .Values.paths.nvidiaDriverPath }}
           type: Directory
 ---
 # DCGM Exporter DaemonSet (connects to host engine for process monitoring)
@@ -82,7 +78,7 @@ spec:
     matchLabels:
       {{- include "dcgm-exporter.selectorLabels" . | nindent 6 }}
   updateStrategy:
-    type: RollingUpdate
+    type: {{ .Values.daemonSet.updateStrategy.type }}
   template:
     metadata:
       labels:
@@ -95,8 +91,8 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      hostNetwork: true
-      hostPID: true
+      hostNetwork: {{ .Values.daemonSet.hostNetwork }}
+      hostPID: {{ .Values.daemonSet.hostPID }}
       {{- with .Values.nodeAffinity }}
       affinity:
         nodeAffinity:
@@ -107,15 +103,15 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-      - name: dcgm-exporter
-        image: "nvcr.io/nvidia/k8s/dcgm-exporter:3.3.0-3.2.0-ubuntu22.04"
+      - name: {{ .Values.containerNames.exporter }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         command: ["/bin/bash", "-c"]
         args:
-        - hostname $NODE_NAME; dcgm-exporter --remote-hostengine-info 127.0.0.1:5555 --collectors /etc/dcgm-exporter/counters.csv
+        - hostname $NODE_NAME; dcgm-exporter --remote-hostengine-info {{ .Values.exporter.hostEngineAddress }} --collectors /etc/dcgm-exporter/counters.csv
         ports:
         - name: metrics
-          containerPort: 9400
+          containerPort: {{ .Values.exporter.port }}
           protocol: TCP
         env:
         {{- range $key, $value := .Values.env }}
@@ -131,7 +127,7 @@ spec:
             fieldRef:
               fieldPath: status.hostIP
         - name: LD_LIBRARY_PATH
-          value: /usr/local/nvidia/lib64
+          value: {{ .Values.paths.nvidiaLibPath }}
         securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
         resources:
@@ -149,16 +145,16 @@ spec:
         {{- end }}
         livenessProbe:
           httpGet:
-            path: /metrics
+            path: {{ .Values.exporter.probes.liveness.path }}
             port: metrics
-          initialDelaySeconds: 60
-          periodSeconds: 30
+          initialDelaySeconds: {{ .Values.exporter.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.exporter.probes.liveness.periodSeconds }}
         readinessProbe:
           httpGet:
-            path: /metrics
+            path: {{ .Values.exporter.probes.readiness.path }}
             port: metrics
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: {{ .Values.exporter.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.exporter.probes.readiness.periodSeconds }}
       volumes:
       {{- if .Values.configMap.enabled }}
       - name: dcgm-exporter-metrics
@@ -212,4 +208,14 @@ spec:
     interval: {{ .Values.serviceMonitor.interval }}
     scrapeTimeout: {{ .Values.serviceMonitor.scrapeTimeout }}
     honorLabels: true
+    {{- if .Values.serviceMonitor.metricRelabelings.enabled }}
+    metricRelabelings:
+    {{- if .Values.serviceMonitor.metricRelabelings.workflowNameExtraction.enabled }}
+    # Extract workflow name from pod name for Argo workflows
+    - sourceLabels: [{{ .Values.serviceMonitor.metricRelabelings.workflowNameExtraction.sourceLabel }}]
+      regex: '{{ .Values.serviceMonitor.metricRelabelings.workflowNameExtraction.regex }}'
+      targetLabel: {{ .Values.serviceMonitor.metricRelabelings.workflowNameExtraction.targetLabel }}
+      replacement: '${1}'
+    {{- end }}
+    {{- end }}
 {{- end }}
