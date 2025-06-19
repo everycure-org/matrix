@@ -1,80 +1,79 @@
-dcgm-exporter:
-  # DCGM Exporter configuration for comprehensive GPU monitoring
-  image:
-    repository: nvcr.io/nvidia/k8s/dcgm-exporter
-    tag: "4.2.3-4.1.3-ubuntu22.04"
-    pullPolicy: IfNotPresent
+# DCGM Exporter configuration for comprehensive GPU monitoring
+image:
+  repository: nvcr.io/nvidia/k8s/dcgm-exporter
+  tag: "4.2.3-4.1.3-ubuntu22.04"
+  pullPolicy: IfNotPresent
 
-  # Run on all GPU nodes
-  nodeSelector:
-    cloud.google.com/gke-accelerator: "nvidia-l4"
+# Run on all GPU nodes
+nodeSelector:
+  cloud.google.com/gke-accelerator: "nvidia-l4"
 
-  # Tolerations for GPU nodes
-  tolerations:
-    - key: nvidia.com/gpu
-      operator: Exists
-      effect: NoSchedule
-    - key: cloud.google.com/gke-accelerator
-      operator: Exists
-      effect: NoSchedule
-    - key: node-memory-size
-      operator: Equal
-      value: large
-      effect: NoSchedule
+# Tolerations for GPU nodes
+tolerations:
+  - key: nvidia.com/gpu
+    operator: Exists
+    effect: NoSchedule
+  - key: cloud.google.com/gke-accelerator
+    operator: Exists
+    effect: NoSchedule
+  - key: node-memory-size
+    operator: Equal
+    value: large
+    effect: NoSchedule
 
-  # Resource requirements
-  resources:
-    requests:
-      memory: 1Gi
-      cpu: 100m
-    limits:
-      memory: 1Gi
-      cpu: 200m
+# Resource requirements
+resources:
+  requests:
+    memory: 1Gi
+    cpu: 100m
+  limits:
+    memory: 1Gi
+    cpu: 200m
 
-  # Security context
-  securityContext:
-    privileged: true
-    capabilities:
-      add: ["SYS_ADMIN"]
+# Security context
+securityContext:
+  privileged: true
+  capabilities:
+    add: ["SYS_ADMIN"]
 
-  # Service configuration
-  service:
-    enable: true
-    port: 9400
-    type: ClusterIP
+# Service configuration
+service:
+  enable: true
+  port: 9400
+  type: ClusterIP
 
-  # ServiceMonitor for Prometheus
-  serviceMonitor:
-    enabled: true
-    interval: 15s
-    scrapeTimeout: 10s
-    labels:
-      release: prometheus
+# ServiceMonitor for Prometheus
+serviceMonitor:
+  enabled: true
+  interval: 15s
+  scrapeTimeout: 10s
+  labels:
+    release: kube-prometheus-stack
 
-  # Environment variables
-  env:
-    DCGM_EXPORTER_KUBERNETES: "true"
-    DCGM_EXPORTER_LISTEN: ":9400"
-    DCGM_EXPORTER_KUBERNETES_GPU_ID_TYPE: "device-name"
+# Environment variables
+env:
+  DCGM_EXPORTER_KUBERNETES: "true"
+  DCGM_EXPORTER_LISTEN: ":9400"
+  DCGM_EXPORTER_KUBERNETES_GPU_ID_TYPE: "device-name"
 
-  # Host volumes for GPU access
-  hostVolumes:
-    - name: nvidia-install-dir
-      hostPath: /home/kubernetes/bin/nvidia
-      mountPath: /usr/local/nvidia
-      readOnly: true
-    - name: pod-resources
-      hostPath: /var/lib/kubelet/pod-resources
-      mountPath: /var/lib/kubelet/pod-resources
-      readOnly: true
+# Host volumes for GPU access
+hostVolumes:
+  - name: nvidia-install-dir
+    hostPath: /home/kubernetes/bin/nvidia
+    mountPath: /usr/local/nvidia
+    readOnly: true
+  - name: pod-resources
+    hostPath: /var/lib/kubelet/pod-resources
+    mountPath: /var/lib/kubelet/pod-resources
+    readOnly: true
 
-  # Additional labels for pods
-  podLabels:
-    app: dcgm-exporter
-    component: gpu-monitoring
+# Additional labels for pods
+podLabels:
+  app: dcgm-exporter
+  component: gpu-monitoring
 
-  # Pod annotations
-  podAnnotations:
-    prometheus.io/scrape: "true"
-    prometheus.io/port: "9400"
-    prometheus.io/path: "/metrics"
+# Pod annotations
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9400"
+  prometheus.io/path: "/metrics"
