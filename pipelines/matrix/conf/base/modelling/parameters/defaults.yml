@@ -75,17 +75,44 @@ _model_options:
   # Defines estimator used during model training, features can be
   # defined using a regex strategy.
   model_tuning_args:
-    tuner:
-      _object: matrix.pipelines.modelling.tuning.NopTuner
-      estimator:
-        _object: xgboost.XGBClassifier
-        tree_method: hist
-        max_depth: 10
-        device: cuda
-    features: # Features use regex, source_0, source_1, .., target_0, target_1
-      - source_+
-      - target_+
-    target_col_name: y
+        tuner:
+          _object: matrix.pipelines.modelling.tuning.GaussianSearch
+          estimator:
+            _object: sklearn.ensemble.RandomForestClassifier
+            n_jobs: 16
+            random_state: ${globals:random_state}
+          n_calls: 20
+          dimensions:
+            - _object: skopt.space.Integer
+              name: n_estimators
+              low: 50
+              high: 2500
+            - _object: skopt.space.Integer
+              name: max_depth
+              low: 5
+              high: 100
+            - _object: skopt.space.Integer
+              name: min_samples_leaf
+              low: 1
+              high: 10
+            - _object: skopt.space.Integer
+              name: min_samples_split
+              low: 2
+              high: 10
+          scoring: 
+              _object: matrix.pipelines.modelling.utils.partial_
+              func:
+                _object: sklearn.metrics.f1_score
+              average: macro
+          splitter:
+            _object: sklearn.model_selection.StratifiedShuffleSplit
+            n_splits: 1 
+            test_size: 0.1
+            random_state: ${globals:random_state}
+        features: # Features use regex, source_0, source_1, .., target_0, target_1
+          - source_+
+          - target_+
+        target_col_name: y
 
   # Define metrics to be used for check of performance 
   metrics:
