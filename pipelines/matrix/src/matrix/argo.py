@@ -29,12 +29,15 @@ def generate_argo_config(
     release_folder_name: str,
     default_execution_resources: Optional[ArgoResourceConfig] = None,
     mlflow_run_id: Optional[str] = None,
+    stress_test: bool = True,
 ) -> str:
     if default_execution_resources is None:
         default_execution_resources = ArgoResourceConfig()
 
     loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
+    if stress_test:
+        ARGO_TEMPLATE_FILE = "argo_wf_spec_stress_test.tmpl"
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
     pipeline_tasks = get_dependencies(fuse(pipeline), default_execution_resources)
     git_sha = get_git_sha()

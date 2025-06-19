@@ -86,7 +86,14 @@ spec:
         - |
           echo "NODE_IP: $NODE_IP"
           echo "NODE_NAME: $NODE_NAME"
-          dcgm-exporter || true
+          echo "GPU_COUNT: {% raw %}{{inputs.parameters.num_gpus}}{% endraw %}"
+          # Only start DCGM exporter if GPUs are allocated
+          if [ "{% raw %}{{inputs.parameters.num_gpus}}{% endraw %}" != "0" ]; then
+            dcgm-exporter
+          else
+            echo "No GPUs allocated, sleeping..."
+            sleep infinity
+          fi
       lifecycle:
         preStop:
           exec:
@@ -96,6 +103,8 @@ spec:
           containerPort: 9400
       securityContext:
         privileged: true
+        capabilities:
+          add: ["SYS_ADMIN"]
       env:
         - name: NODE_NAME
           valueFrom:
@@ -113,11 +122,17 @@ spec:
           value: 'true'
         - name: DCGM_EXPORTER_LISTEN
           value: ':9400'
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: "all"
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: "all"
       volumeMounts:
         - name: nvidia-install-dir-host
           mountPath: /usr/local/nvidia
+          readOnly: true
         - name: pod-resources
           mountPath: /var/lib/kubelet/pod-resources
+          readOnly: true
     volumes:
       - name: nvidia-install-dir-host
         hostPath:
@@ -126,21 +141,33 @@ spec:
       - name: pod-resources
         hostPath:
           path: /var/lib/kubelet/pod-resources
+          type: DirectoryOrCreate
     affinity:
       nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: cloud.google.com/gke-accelerator
+              operator: Exists
+            when: {% raw %}"{{inputs.parameters.num_gpus}}" != "0"{% endraw %}
         preferredDuringSchedulingIgnoredDuringExecution:
         - weight: 100
           preference:
             matchExpressions:
             - key: gpu_node
-              operator: NotIn
+              operator: In
               values:
               - "true"
+          when: {% raw %}"{{inputs.parameters.num_gpus}}" != "0"{% endraw %}
     # Add tolerations for large memory nodes and GPU nodes
     tolerations:
     - key: "node-memory-size"
       operator: "Equal"
       value: "large"
+      effect: "NoSchedule"
+    - key: "nvidia.com/gpu"
+      operator: "Equal"
+      value: "present"
       effect: "NoSchedule"
     metadata:
       labels:
