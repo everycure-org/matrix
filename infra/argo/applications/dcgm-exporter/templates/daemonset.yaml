@@ -34,7 +34,7 @@ spec:
       containers:
       - name: nvidia-dcgm
         image: "nvcr.io/nvidia/cloud-native/dcgm:3.3.0-1-ubuntu22.04"
-        command: ["nv-hostengine", "-n", "-b", "0.0.0.0:5555"]
+        command: ["nv-hostengine", "-n", "-b", "ALL"]
         ports:
         - containerPort: 5555
           name: dcgm
