@@ -79,6 +79,7 @@ jobs:
 
       - name: Log environment variables
         run: |
+          echo "pwal"
           echo "environment: ${environment}"
           echo "project_id: ${project_id}"
           echo "EC_DATA_DOMAIN: ${EC_DATA_DOMAIN}"
