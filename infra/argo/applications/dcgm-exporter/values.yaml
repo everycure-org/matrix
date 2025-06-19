@@ -2,14 +2,14 @@
 image:
   # DCGM Exporter image (connects to host engine)
   repository: nvcr.io/nvidia/k8s/dcgm-exporter
-  tag: "4.2.3-4.1.3-ubuntu22.04"
+  tag: ""  # Set from Chart.yaml annotations
   pullPolicy: IfNotPresent
 
 hostEngine:
   # DCGM Host Engine image (privileged container for GPU access)
   image:
     repository: nvcr.io/nvidia/cloud-native/dcgm
-    tag: "3.3.0-1-ubuntu22.04"
+    tag: ""  # Set from Chart.yaml annotations
     pullPolicy: IfNotPresent
   # Resource requirements for host engine
   resources:
@@ -29,6 +29,14 @@ hostEngine:
     readiness:
       initialDelaySeconds: 5
       periodSeconds: 10
+  # Security context for DCGM 4.x host engine
+  securityContext:
+    privileged: true
+    allowPrivilegeEscalation: true
+    capabilities:
+      add: ["SYS_ADMIN", "SYS_PTRACE", "DAC_OVERRIDE"]
+  # Host engine command (DCGM 4.x may need additional flags)
+  command: ["nv-hostengine", "-n", "-b", "ALL", "--log-level", "INFO"]
 
 # Exporter configuration
 exporter:
@@ -71,8 +79,9 @@ resources:
 # Security context
 securityContext:
   privileged: true
+  allowPrivilegeEscalation: true
   capabilities:
-    add: ["SYS_ADMIN"]
+    add: ["SYS_ADMIN", "SYS_PTRACE"]
 
 # Service configuration
 service:
@@ -105,6 +114,7 @@ env:
   DCGM_EXPORTER_KUBERNETES: "true"
   DCGM_EXPORTER_LISTEN: ":9400"  # Should match exporter.port
   DCGM_EXPORTER_KUBERNETES_GPU_ID_TYPE: "device-name"
+  NVML_NO_UNLOAD: "1"  # Prevents NVML library unloading issues in DCGM 4.x
 
 # Host volumes for GPU access
 hostVolumes:
@@ -116,6 +126,19 @@ hostVolumes:
     hostPath: /var/lib/kubelet/pod-resources
     mountPath: /var/lib/kubelet/pod-resources
     readOnly: true
+  # Additional volumes for DCGM 4.x
+  - name: proc
+    hostPath: /proc
+    mountPath: /proc
+    readOnly: true
+  - name: sys
+    hostPath: /sys
+    mountPath: /sys
+    readOnly: true
+  - name: dev
+    hostPath: /dev
+    mountPath: /dev
+    readOnly: false
 
 # Additional labels for pods
 podLabels:
@@ -171,6 +194,8 @@ daemonSet:
   # Host configuration
   hostNetwork: true
   hostPID: true
+  # Runtime class for GPU access (optional, uncomment if needed)
+  # runtimeClassName: nvidia
 
 # Path configurations for GKE
 paths:
