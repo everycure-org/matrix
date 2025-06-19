@@ -47,6 +47,18 @@ defaults:
   run: 
     working-directory: services/kg_dashboard/
 
+env:
+  project_id: ${{ vars.GCP_PROJECT_ID }}
+  EC_DATA_DOMAIN: ${{ vars.EC_DATA_DOMAIN }}
+  RELEASE_VERSION: ${{ inputs.release_version }}
+  environment: ${{ inputs.environment }}
+  # for querying BQ even on branches
+  ro_wip: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-ro/providers/matrix-gh-provider-ro'
+  ro_sa: 'sa-github-actions-ro@mtrx-hub-dev-3of.iam.gserviceaccount.com'
+  # for deploying to GCS, only works on main
+  rw_wip: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
+  rw_sa: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
+  
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
@@ -60,18 +72,6 @@ jobs:
       contents: 'read'
       id-token: 'write'
 
-    env:
-      project_id: ${{ vars.GCP_PROJECT_ID }}
-      EC_DATA_DOMAIN: ${{ vars.EC_DATA_DOMAIN }}
-      RELEASE_VERSION: ${{ inputs.release_version }}
-      environment: ${{ inputs.environment }}
-      # for querying BQ even on branches
-      ro_wip: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-ro/providers/matrix-gh-provider-ro'
-      ro_sa: 'sa-github-actions-ro@mtrx-hub-dev-3of.iam.gserviceaccount.com'
-      # for deploying to GCS, only works on main
-      rw_wip: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
-      rw_sa: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
-
     steps:
       # setup runtime
       - name: 'Checkout'
@@ -79,7 +79,6 @@ jobs:
 
       - name: Log environment variables
         run: |
-          echo "pwal"
           echo "environment: ${{ env.environment }}"
           echo "project_id: ${{ env.project_id }}"
           echo "EC_DATA_DOMAIN: ${{ env.EC_DATA_DOMAIN }}"
