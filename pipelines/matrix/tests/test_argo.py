@@ -573,26 +573,3 @@ def test_resources_of_argo_template_config_pipelines() -> None:
     assert resource_params2["memory_limit"] == argo_default_resources.memory_limit
     assert resource_params2["cpu_request"] == argo_default_resources.cpu_request
     assert resource_params2["cpu_limit"] == argo_default_resources.cpu_limit
-
-
-def test_argo_template_gpu_config(argo_gpu_resources: ArgoResourceConfig) -> None:
-    """Test GPU-specific configuration in Argo template."""
-    if argo_gpu_resources.num_gpus > 0:
-        # Verify GPU node selection
-        assert "requiredDuringSchedulingIgnoredDuringExecution" in kedro_template["affinity"]["nodeAffinity"]
-        kedro_template = next(t for t in argo_config["spec"]["templates"] if t["name"] == "kedro")
-        # Verify GPU tolerations
-        tolerations = kedro_template["tolerations"]
-        gpu_toleration = next((t for t in tolerations if t["key"] == "nvidia.com/gpu"), None)
-        assert gpu_toleration is not None
-        # Verify DCGM sidecar when GPUs are requested
-        assert "sidecars" in kedro_template
-        dcgm_sidecar = next((s for s in kedro_template["sidecars"] if s["name"] == "dcgm-exporter"), None)
-        assert dcgm_sidecar is not None
-    else:
-        # Verify GPU-specific configurations are omitted
-        assert "requiredDuringSchedulingIgnoredDuringExecution" not in kedro_template["affinity"]["nodeAffinity"]
-        tolerations = kedro_template.get("tolerations", [])
-        gpu_toleration = next((t for t in tolerations if t["key"] == "nvidia.com/gpu"), None)
-        assert gpu_toleration is None
-        assert "sidecars" not in kedro_template

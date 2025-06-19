@@ -54,29 +54,6 @@ spec:
             # https://argo-workflows.readthedocs.io/en/latest/variables/#exit-handler
             counter:
               value: "1"
-            # Add GPU-specific metrics
-          - name: "argo_workflow_gpu_allocated"
-            help: "Number of GPUs allocated for this workflow task"
-            labels:
-              - key: pipeline_name
-                value: "{{ pipeline_name }}"
-              - key: gpu_type
-                value: "nvidia-l4"
-            gauge:
-              value: {% raw %}"{{inputs.parameters.num_gpus}}"
-              {% endraw %}
-          - name: "argo_workflow_gpu_task_duration_seconds"
-            help: "Duration of GPU-enabled tasks"
-            labels:
-              - key: pipeline_name
-                value: "{{ pipeline_name }}"
-              - key: gpu_count
-                value: {% raw %}"{{inputs.parameters.num_gpus}}"
-                {% endraw %}
-            histogram:
-              buckets: [30, 60, 120, 300, 600, 1800, 3600]
-              value: {% raw %}"{{workflow.duration}}"
-            {% endraw %}
     name: kedro
     sidecars:
     - name: nvidia-dcgm-exporter
@@ -144,40 +121,24 @@ spec:
           type: DirectoryOrCreate
     affinity:
       nodeAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: cloud.google.com/gke-accelerator
-              operator: Exists
-            when: {% raw %}"{{inputs.parameters.num_gpus}}" != "0"{% endraw %}
         preferredDuringSchedulingIgnoredDuringExecution:
         - weight: 100
           preference:
             matchExpressions:
             - key: gpu_node
-              operator: In
+              operator: NotIn
               values:
               - "true"
-          when: {% raw %}"{{inputs.parameters.num_gpus}}" != "0"{% endraw %}
     # Add tolerations for large memory nodes and GPU nodes
     tolerations:
     - key: "node-memory-size"
       operator: "Equal"
       value: "large"
       effect: "NoSchedule"
-    - key: "nvidia.com/gpu"
-      operator: "Equal"
-      value: "present"
-      effect: "NoSchedule"
     metadata:
       labels:
         {# Add label to have an ability to remove Kedro Pods easily #}
         app: kedro-argo
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "9400"
-        prometheus.io/path: "/metrics"
-        prometheus.io/scheme: "http"
     inputs:
       parameters:
       - name: kedro_nodes
@@ -348,47 +309,6 @@ spec:
           items:
             - key: gds_key
               path: gds-key
-    sidecars:
-      # Neo4j enterprise sidecar
-      - name: neo4j
-        image: neo4j:5.21.0-enterprise
-        volumeMounts:
-          - name: gds-key
-            mountPath: /licences
-            readOnly: true
-        env:
-        - name: NEO4J_AUTH
-          valueFrom:
-            secretKeyRef:
-              name: matrix-secrets
-              key: NEO4J_AUTH
-        - name: NEO4J_gds_enterprise_license__file
-          value: "/licences/gds-key"
-        - name: NEO4J_apoc_export_file_enabled
-          value: "true"
-        - name: NEO4J_apoc_import_file_enabled
-          value: "true"
-        - name: NEO4J_apoc_import_file_use__neo4j__config
-          value: "true"
-        - name: NEO4J_PLUGINS
-          value: '["apoc", "graph-data-science", "apoc-extended"]'
-        - name: NEO4J_dbms_security_auth__minimum__password__length
-          value: "4"
-        - name: NEO4J_dbms_security_procedures_whitelist
-          value: "gds.*, apoc.*"
-        - name: NEO4J_dbms_security_procedures_unrestricted
-          value: "gds.*, apoc.*"
-        - name: NEO4J_db_logs_query_enabled
-          value: "OFF"
-        - name: NEO4J_ACCEPT_LICENSE_AGREEMENT
-          value: "yes"
-        - name: NEO4J_dbms_memory_heap_initial__size
-          value: {% raw %} "{{= sprig.int(inputs.parameters.memory_limit) * 0.7 }}G"
-          {% endraw %}
-        - name: NEO4J_dbms_memory_heap_max__size
-          value: {% raw %} "{{= sprig.int(inputs.parameters.memory_limit) * 0.7 }}G"
-          {% endraw %}
-
   - name: pipeline
     dag:
       tasks:
