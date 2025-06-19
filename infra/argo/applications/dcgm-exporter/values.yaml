@@ -42,7 +42,11 @@ hostEngine:
 exporter:
   # Port configuration for metrics
   port: 9400
-  # Host engine connection
+  # DCGM 4.x mode: "embedded" or "remote"
+  # embedded: exporter runs its own host engine (recommended for DCGM 4.x)
+  # remote: exporter connects to separate host engine
+  mode: "embedded"
+  # Host engine connection (only used in remote mode)
   hostEngineAddress: "127.0.0.1:5555"
   # Probe configuration
   probes:
@@ -101,13 +105,15 @@ serviceMonitor:
     enabled: true
     # Extract workflow name from Argo workflow pod names
     workflowNameExtraction:
-      # Pattern for full workflow name: {workflow-name}-{template-name}-{random-id}
       enabled: true
       sourceLabel: pod
-      # Regex to match: graph-filter-pks-b2-run1-83f979e6-kedro-2157018018
-      # Extracts: graph-filter-pks-b2-run1-83f979e6
-      regex: '([^-]+-[^-]+-[^-]+-[^-]+-[a-f0-9]+)-.*'
+      # Handles Argo workflow pod naming patterns:
+      # Pattern 1: "gpu-run-7b521828" -> "gpu-run-7b521828" (keep full workflow name with hash)
+      # Pattern 2: "graph-filter-pks-b2-run1-83f979e6-kedro-2123462780" -> "graph-filter-pks-b2-run1-83f979e6" (workflow name with hash, exclude template part)
+      # Strategy: If has template pattern at end, extract workflow+hash, otherwise keep the whole name
+      regex: '^(.+-[a-f0-9]{8})-[a-zA-Z]+-[0-9]+$|^(.+-[a-f0-9]{8})$'
       targetLabel: workflow_name
+      replacement: '${1}${2}'
 
 # Environment variables
 env:
