@@ -62,8 +62,6 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 "model_name": "xg_ensemble",  # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth
                 "model_config": {"num_shards": 3},
             },
-            # An error has occurred: Unable to find the Parquet file `/Users/aford/matrix/pipelines/matrix/data/test/releases/test-release/runs/test-run/datasets/evaluation/matrix_transformations/model_output/fold_0/disease_specific/pairs/model_output.parquet` underlying this dataset!
-            # What do we do about disease specific?
             "evaluation": [
                 {"evaluation_name": "simple_classification"},
                 {"evaluation_name": "disease_specific"},
@@ -72,8 +70,8 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 {"evaluation_name": "simple_classification_trials"},
                 {"evaluation_name": "disease_specific_trials"},
                 {"evaluation_name": "full_matrix_trials"},
-                # {"evaluation_name": "disease_specific_off_label"},
-                # {"evaluation_name": "full_matrix_off_label"},
+                {"evaluation_name": "disease_specific_off_label"},
+                {"evaluation_name": "full_matrix_off_label"},
             ],
             "stability": [
                 {"stability_name": "stability_overlap"},
