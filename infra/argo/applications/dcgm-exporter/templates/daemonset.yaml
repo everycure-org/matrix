@@ -23,9 +23,10 @@ spec:
     spec:
       hostNetwork: true
       hostPID: true
-      {{- with .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
+      {{- with .Values.nodeAffinity }}
+      affinity:
+        nodeAffinity:
+          {{- toYaml . | nindent 10 }}
       {{- end }}
       {{- with .Values.tolerations }}
       tolerations:
@@ -35,6 +36,11 @@ spec:
       - name: dcgm-exporter
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
+        {{- if .Values.configMap.enabled }}
+        command: ["/bin/bash", "-c"]
+        args:
+        - hostname $NODE_NAME; dcgm-exporter --collectors /etc/dcgm-exporter/counters.csv
+        {{- end }}
         ports:
         - name: metrics
           containerPort: 9400
@@ -68,6 +74,11 @@ spec:
           mountPath: {{ .mountPath }}
           readOnly: {{ .readOnly }}
         {{- end }}
+        {{- if .Values.configMap.enabled }}
+        - name: dcgm-exporter-metrics
+          mountPath: "/etc/dcgm-exporter"
+          readOnly: true
+        {{- end }}
         livenessProbe:
           httpGet:
             path: /metrics
@@ -86,6 +97,11 @@ spec:
         hostPath:
           path: {{ .hostPath }}
           type: DirectoryOrCreate
+      {{- end }}
+      {{- if .Values.configMap.enabled }}
+      - name: dcgm-exporter-metrics
+        configMap:
+          name: {{ include "dcgm-exporter.fullname" . }}-metrics
       {{- end }}
 ---
 {{- if .Values.service.enable }}
