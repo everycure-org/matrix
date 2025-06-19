@@ -1,282 +1,345 @@
-# DCGM GPU Monitoring Setup for ArgoCD
+# DCGM GPU Monitoring Setup for GKE
 
-This setup provides comprehensive GPU monitoring for all pods and Argo workflows using NVIDIA DCGM exporter.
+This setup provides comprehensive GPU monitoring for all Argo workflows using NVIDIA DCGM exporter, following Google Cloud's recommended two-DaemonSet architecture for optimal GPU process monitoring and container attribution.
 
 ## Architecture Overview
 
-The monitoring solution consists of:
+The monitoring solution follows Google Cloud's best practices and consists of:
 
-1. **DCGM DaemonSet**: Runs on all GPU nodes for cluster-wide monitoring
-2. **DCGM Sidecars**: Added to Argo workflow pods for per-workflow monitoring
-3. **Prometheus Integration**: Collects metrics from both DaemonSet and sidecars
-4. **Grafana Dashboard**: Visualizes GPU metrics
+1. **DCGM Host Engine DaemonSet**: Provides privileged GPU access and process visibility
+2. **DCGM Exporter DaemonSet**: Connects to host engine and exposes Prometheus metrics
+3. **Prometheus Integration**: Scrapes metrics via ServiceMonitor
+4. **Grafana Dashboard**: Visualizes GPU metrics with container/pod attribution
+
+This two-container approach is **essential** for proper GPU process monitoring in GKE environments, enabling accurate attribution of GPU usage to specific containers, pods, and namespaces.
+
+## Why Two DaemonSets?
+
+Google Cloud recommends the two-DaemonSet approach because:
+
+- **Process Visibility**: Only the privileged host engine can see GPU processes across all containers
+- **Container Attribution**: Enables proper mapping of GPU usage to specific pods/containers/namespaces
+- **Security Isolation**: Separates privileged GPU access from metric export functionality
+- **GKE Compatibility**: Works around GKE's security restrictions on GPU access
+
+Single-container (embedded) approaches fail to provide accurate GPU utilization metrics in containerized environments.
 
 ## Components
 
-### 1. DCGM DaemonSet (Cluster-wide monitoring)
+### 1. DCGM Host Engine DaemonSet
 
-**Location**: `infra/argo/applications/dcgm-exporter/`
+**Location**: `infra/argo/applications/dcgm-exporter/templates/daemonset.yaml`
 
-- **DaemonSet**: Deploys DCGM exporter on all GPU nodes
-- **Service**: Exposes metrics endpoint
-- **ServiceMonitor**: Configures Prometheus scraping
-- **ArgoCD Application**: Manages deployment lifecycle
-
-**Key Features**:
-- Runs on all nodes with GPU label `cloud.google.com/gke-accelerator=nvidia-l4`
-- Provides cluster-wide GPU visibility
-- Monitors idle and active GPUs
-- Survives workflow pod restarts
-
-### 2. Workflow Sidecars (Per-workflow monitoring)
-
-**Location**: `pipelines/matrix/templates/argo_wf_spec*.tmpl`
-
-- **DCGM Sidecar**: Primary GPU metrics exporter
-- **nvidia-smi Sidecar**: Fallback for GKE-restricted metrics
+```yaml
+# Privileged container for GPU process access
+image: nvcr.io/nvidia/cloud-native/dcgm:3.3.0-1-ubuntu22.04
+command: ["nv-hostengine", "-n", "-b", "ALL"]
+port: 5555 (DCGM communication)
+```
 
 **Key Features**:
-- Per-workflow GPU metrics
-- Detailed workflow-specific monitoring
-- Works with GKE restrictions
-- Provides both DCGM and nvidia-smi metrics
+- Runs privileged with full GPU driver access
+- Provides DCGM host engine on port 5555
+- Monitors all GPU processes across containers
+- Essential for process-level attribution
 
-### 3. Prometheus Configuration
+### 2. DCGM Exporter DaemonSet
 
-**Location**: `infra/argo/applications/kube-prometheus-stack/values.yaml`
+**Location**: `infra/argo/applications/dcgm-exporter/templates/daemonset.yaml`
 
-**ServiceMonitors**:
-- `dcgm-exporter-daemonset`: Scrapes DaemonSet metrics
-- `dcgm-exporter-pods`: Scrapes generic DCGM pods
-- `gpu-metrics-kedro-argo`: Scrapes workflow sidecars
+```yaml
+# Metrics exporter connecting to host engine
+image: nvcr.io/nvidia/k8s/dcgm-exporter:3.3.0-3.2.0-ubuntu22.04
+args: ["dcgm-exporter", "--remote-hostengine-info", "127.0.0.1:5555", "--collectors", "/etc/dcgm-exporter/counters.csv"]
+port: 9400 (Prometheus metrics)
+```
 
-**Additional Scrape Configs**:
-- Direct pod scraping for sidecar containers
-- Automatic service discovery for GPU pods
+**Key Features**:
+- Connects to local host engine via 127.0.0.1:5555
+- Exports Prometheus-compatible metrics
+- Uses Google's recommended metrics configuration
+- Provides container/pod attribution
 
-### 4. Grafana Dashboard
+### 3. Prometheus Integration
 
-**Location**: `infra/argo/applications/dcgm-exporter/templates/grafana-dashboard.yaml`
+**ServiceMonitor Configuration**:
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: dcgm-exporter
+  labels:
+    release: kube-prometheus-stack  # Required for Prometheus discovery
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: dcgm-exporter
+  endpoints:
+  - port: metrics
+    interval: 15s
+    scrapeTimeout: 10s
+```
 
-**Metrics Visualized**:
-- GPU Temperature
-- Power Usage
-- GPU Utilization (DCGM + nvidia-smi)
-- Memory Utilization
-- Memory Usage
-- Clock Speeds
-- Exporter Status
+## Available Metrics (Google's Recommended Set)
 
-## Available Metrics
-
-### DCGM Metrics (Primary)
+### Core GPU Metrics
+- `DCGM_FI_DEV_GPU_UTIL`: GPU utilization (%) with container attribution
+- `DCGM_FI_DEV_MEM_COPY_UTIL`: Memory utilization (%)
 - `DCGM_FI_DEV_GPU_TEMP`: GPU temperature (°C)
 - `DCGM_FI_DEV_POWER_USAGE`: Power consumption (W)
-- `DCGM_FI_DEV_GPU_UTIL`: GPU utilization (%) - Limited in GKE
-- `DCGM_FI_DEV_MEM_COPY_UTIL`: Memory utilization (%)
-- `DCGM_FI_DEV_FB_USED`: Memory used (MB)
-- `DCGM_FI_DEV_SM_CLOCK`: SM clock speed (MHz)
-- `DCGM_FI_DEV_MEM_CLOCK`: Memory clock speed (MHz)
 
-### nvidia-smi Metrics (Fallback)
-- `nvidia_smi_gpu_utilization_percent`: GPU utilization (%)
-- `nvidia_smi_memory_utilization_percent`: Memory utilization (%)
-- `nvidia_smi_memory_used_bytes`: Memory used (bytes)
-- `nvidia_smi_temperature_celsius`: GPU temperature (°C)
-- `nvidia_smi_power_usage_watts`: Power usage (W)
+### Memory Metrics
+- `DCGM_FI_DEV_FB_FREE`: Framebuffer memory free (MiB)
+- `DCGM_FI_DEV_FB_USED`: Framebuffer memory used (MiB)
+- `DCGM_FI_DEV_FB_TOTAL`: Total framebuffer memory (MB)
 
-## Deployment Instructions
+### Performance Metrics
+- `DCGM_FI_PROF_SM_ACTIVE`: SM active cycles ratio
+- `DCGM_FI_PROF_SM_OCCUPANCY`: SM occupancy fraction
+- `DCGM_FI_PROF_PIPE_TENSOR_ACTIVE`: Tensor pipe activity
+- `DCGM_FI_PROF_PIPE_FP32_ACTIVE`: FP32 pipe activity
+- `DCGM_FI_PROF_PIPE_FP16_ACTIVE`: FP16 pipe activity
+
+### I/O Metrics
+- `DCGM_FI_PROF_PCIE_TX_BYTES`: PCIe TX bytes
+- `DCGM_FI_PROF_PCIE_RX_BYTES`: PCIe RX bytes
+- `DCGM_FI_PROF_NVLINK_TX_BYTES`: NVLink TX bytes
+- `DCGM_FI_PROF_NVLINK_RX_BYTES`: NVLink RX bytes
+
+All metrics include labels for container, namespace, and pod attribution:
+```
+DCGM_FI_DEV_GPU_UTIL{gpu="0",UUID="GPU-...",container="main",namespace="argo-workflows",pod="workflow-pod-123"} 85
+```
+
+## Deployment
 
 ### Prerequisites
 
-1. **GPU Node Pool**: Ensure you have GPU nodes in your GKE cluster
-2. **ArgoCD**: ArgoCD must be installed and running
-3. **Prometheus Stack**: kube-prometheus-stack should be deployed
+1. **GKE Cluster** with GPU node pools
+2. **ArgoCD** installed and configured
+3. **kube-prometheus-stack** deployed with `release: kube-prometheus-stack` label
 
-### Deployment Steps
+### Deployment via ArgoCD
 
-1. **Deploy via ArgoCD** (Recommended):
-   ```bash
-   # Run the deployment script
-   ./scripts/deploy_dcgm_monitoring.sh
-   ```
+The DCGM exporter is deployed via ArgoCD using the app-of-apps pattern:
 
-2. **Manual Deployment**:
-   ```bash
-   # Sync app-of-apps to pick up dcgm-exporter
-   kubectl patch application app-of-apps -n argocd --type merge -p '{"operation":{"sync":{"revision":"HEAD"}}}'
-   
-   # Sync dcgm-exporter application
-   kubectl patch application dcgm-exporter -n argocd --type merge -p '{"operation":{"sync":{"revision":"HEAD"}}}'
-   ```
+```bash
+# Configuration location
+ls infra/argo/applications/dcgm-exporter/
+├── Chart.yaml           # Helm chart metadata
+├── values.yaml          # Configuration values
+├── templates/
+│   ├── daemonset.yaml   # Two DaemonSets + Service + ServiceMonitor
+│   └── configmap.yaml   # Google's metrics configuration
 
-3. **Verification**:
-   ```bash
-   # Run the verification script
-   ./scripts/verify_dcgm_monitoring.sh
-   ```
-
-## GKE-Specific Considerations
-
-### Limited Metrics in GKE
-Google Cloud restricts some DCGM metrics for security reasons:
-- GPU utilization may show as 0
-- Some performance counters are disabled
-- Temperature and power metrics are usually available
-
-### Node Affinity
-The DaemonSet uses node selector `cloud.google.com/gke-accelerator=nvidia-l4`.
-Update this in `values.yaml` if using different GPU types:
-```yaml
-nodeSelector:
-  cloud.google.com/gke-accelerator: "nvidia-a100"  # Change as needed
+# Deployment managed by app-of-apps
+cat infra/argo/app-of-apps/templates/dcgm-exporter.yaml
 ```
 
-### Node Pool Scaling
-- DCGM pods will only run when GPU nodes are available
-- Pods will start automatically when nodes scale up
-- Use cluster autoscaler for dynamic scaling
+### Manual Sync
+
+```bash
+# Sync dcgm-exporter application
+kubectl patch application dcgm-exporter -n argocd --type merge -p '{"operation":{"sync":{"revision":"HEAD"}}}'
+```
+
+## Verification
+
+### Check Pod Status
+
+```bash
+# Verify both DaemonSets are running
+kubectl get pods -n monitoring -l app.kubernetes.io/name=dcgm-exporter
+
+# Expected output:
+NAME                             READY   STATUS    RESTARTS   AGE
+dcgm-exporter-xxxxx              1/1     Running   0          5m   # Exporter pods
+dcgm-exporter-hostengine-xxxxx   1/1     Running   0          5m   # Host engine pods
+```
+
+### Check Logs
+
+```bash
+# Host engine logs
+kubectl logs -n monitoring -l component=hostengine
+# Expected: "Started host engine version 3.3.0 using port number: 5555"
+
+# Exporter logs  
+kubectl logs -n monitoring dcgm-exporter-xxxxx
+# Expected: "Attemping to connect to remote hostengine at 127.0.0.1:5555"
+# Expected: "DCGM successfully initialized!"
+```
+
+### Test Metrics
+
+```bash
+# Port-forward to metrics endpoint
+kubectl port-forward -n monitoring svc/dcgm-exporter 9400:9400 &
+
+# Check GPU utilization metrics with container attribution
+curl -s http://localhost:9400/metrics | grep DCGM_FI_DEV_GPU_UTIL
+
+# Expected output with container labels:
+# DCGM_FI_DEV_GPU_UTIL{gpu="0",UUID="GPU-...",container="main",namespace="argo-workflows",pod="..."} 75
+```
+
+### Verify Prometheus Scraping
+
+```bash
+# Check ServiceMonitor
+kubectl get servicemonitor -n monitoring dcgm-exporter -o yaml
+
+# Port-forward to Prometheus
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090 &
+
+# Check targets in Prometheus UI: http://localhost:9090/targets
+# Look for dcgm-exporter targets with status "UP"
+```
+
+## GKE-Specific Configuration
+
+### Node Affinity
+
+The DaemonSets target GPU nodes using Google's node affinity pattern:
+
+```yaml
+nodeAffinity:
+  requiredDuringSchedulingIgnoredDuringExecution:
+    nodeSelectorTerms:
+    - matchExpressions:
+      - key: cloud.google.com/gke-accelerator
+        operator: Exists  # Works with any GPU type
+```
+
+### Tolerations
+
+```yaml
+tolerations:
+  - operator: "Exists"  # Tolerates any taint (Google's approach)
+```
+
+### Host Volumes
+
+Required for GPU driver access:
+
+```yaml
+hostVolumes:
+  - name: nvidia-install-dir
+    hostPath: /home/kubernetes/bin/nvidia  # GKE GPU driver location
+    mountPath: /usr/local/nvidia
+```
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **No DCGM Pods Running**:
-   ```bash
-   # Check GPU nodes
-   kubectl get nodes -l cloud.google.com/gke-accelerator --show-labels
-   
-   # Check node selector in values.yaml
-   # Ensure it matches your GPU node labels
-   ```
+#### 1. Host Engine Connection Failed
 
-2. **Metrics Showing 0**:
-   ```bash
-   # Check if this is GKE limitation
-   kubectl exec -n monitoring <dcgm-pod> -- curl -s http://localhost:9400/metrics | grep UTIL
-   
-   # Use nvidia-smi exporter as fallback
-   # Check workflow sidecar logs
-   ```
-
-3. **Prometheus Not Scraping**:
-   ```bash
-   # Check ServiceMonitors
-   kubectl get servicemonitor -n monitoring | grep dcgm
-   
-   # Check Prometheus targets
-   kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090
-   # Visit: http://localhost:9090/targets
-   ```
-
-4. **DaemonSet Not Scheduling**:
-   ```bash
-   # Check tolerations and node affinity
-   kubectl describe daemonset dcgm-exporter -n monitoring
-   
-   # Check node taints
-   kubectl describe nodes | grep -A5 "Taints:"
-   ```
-
-### Debugging Commands
-
-```bash
-# Check DCGM pod logs
-kubectl logs -n monitoring -l app.kubernetes.io/name=dcgm-exporter
-
-# Test metrics manually
-kubectl exec -n monitoring <dcgm-pod> -- curl -s http://localhost:9400/metrics
-
-# Check application status
-kubectl describe application dcgm-exporter -n argocd
-
-# Check DaemonSet status
-kubectl describe daemonset dcgm-exporter -n monitoring
-
-# Port-forward for direct access
-kubectl port-forward -n monitoring svc/dcgm-exporter 9400:9400
-curl http://localhost:9400/metrics
+**Symptoms**: 
+```
+"Host engine connection invalid/disconnected"
+"Not collecting GPU metrics; The requested function was not found"
 ```
 
-## Monitoring Workflow GPU Usage
+**Solution**: Verify both DaemonSets are running and host engine is accessible:
+```bash
+kubectl get pods -n monitoring -l component=hostengine
+kubectl logs -n monitoring dcgm-exporter-hostengine-xxxxx
+```
 
-### Running GPU Workflows
+#### 2. Zero GPU Utilization
 
-1. **Use Argo Workflow Templates**: The existing templates include DCGM sidecars
-2. **Check Metrics During Execution**:
-   ```bash
-   # List running workflow pods
-   kubectl get pods -n argo-workflows -l app=kedro-argo
-   
-   # Check metrics from sidecar
-   kubectl exec -n argo-workflows <pod> -c nvidia-dcgm-exporter -- curl -s http://localhost:9400/metrics
-   ```
+**Root Cause**: Single-container embedded approach doesn't provide process attribution.
 
-3. **Grafana Visualization**: Access the GPU monitoring dashboard in Grafana
+**Solution**: Ensure using two-DaemonSet approach as configured.
 
-### Stress Testing
+#### 3. Version Compatibility Issues
 
-Use the stress test workflow template to generate GPU load and verify monitoring:
-- Template includes both DCGM and nvidia-smi exporters
-- Runs GPU stress tests to generate measurable load
-- Provides detailed metrics verification
+**Symptoms**: API version mismatch errors
 
-## Grafana Dashboard Access
+**Solution**: Ensure matching DCGM versions:
+- Host Engine: `3.3.0-1-ubuntu22.04`
+- Exporter: `3.3.0-3.2.0-ubuntu22.04`
+
+#### 4. Prometheus Not Discovering Targets
+
+**Symptoms**: No targets in Prometheus UI
+
+**Solution**: Verify ServiceMonitor labels:
+```bash
+kubectl get servicemonitor -n monitoring dcgm-exporter -o yaml | grep -A5 labels:
+# Must include: release: kube-prometheus-stack
+```
+
+### Debug Commands
+
+```bash
+# Check DaemonSet status
+kubectl describe daemonset -n monitoring dcgm-exporter
+kubectl describe daemonset -n monitoring dcgm-exporter-hostengine
+
+# Test host engine connectivity
+kubectl exec -n monitoring dcgm-exporter-xxxxx -- netstat -an | grep 5555
+
+# Check metrics endpoint
+kubectl exec -n monitoring dcgm-exporter-xxxxx -- wget -qO- http://localhost:9400/metrics | head -20
+
+# Check node GPU labels
+kubectl get nodes -l cloud.google.com/gke-accelerator --show-labels
+```
+
+## Grafana Integration
+
+### Accessing GPU Metrics
 
 1. **Port-forward to Grafana**:
    ```bash
    kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
    ```
 
-2. **Login**: Default credentials are usually `admin/prom-operator`
+2. **Login**: Use admin credentials from secret
 
-3. **Find Dashboard**: Look for "GPU Monitoring (DCGM)" in the dashboards
+3. **Query Examples**:
+   ```promql
+   # GPU utilization by container
+   DCGM_FI_DEV_GPU_UTIL{container!=""}
+   
+   # Power usage across all GPUs
+   sum(DCGM_FI_DEV_POWER_USAGE)
+   
+   # Memory utilization by namespace
+   DCGM_FI_DEV_MEM_COPY_UTIL{namespace!=""}
+   ```
 
-## Metrics Retention
+## Monitoring Argo Workflows
 
-Prometheus retains metrics for 180 days (configured in `values.yaml`).
-Adjust the retention period based on your needs:
+### GPU Usage Attribution
 
-```yaml
-prometheus:
-  prometheusSpec:
-    retention: 180d  # Adjust as needed
+With the two-DaemonSet approach, Argo workflow GPU usage is properly attributed:
+
+```promql
+# GPU utilization for specific workflow
+DCGM_FI_DEV_GPU_UTIL{namespace="argo-workflows",pod=~"workflow-name-.*"}
+
+# Power consumption by workflow namespace
+sum(DCGM_FI_DEV_POWER_USAGE{namespace="argo-workflows"})
 ```
 
-## Scaling and Performance
+### Workflow Pod Visibility
 
-### Resource Usage
-- **DCGM DaemonSet**: ~128Mi memory, 100m CPU per node
-- **Workflow Sidecars**: ~64Mi memory, 50m CPU per pod
-- **Metrics Volume**: ~1KB per metric per scrape interval
+Metrics automatically include workflow pod information:
+```
+DCGM_FI_DEV_GPU_UTIL{
+  gpu="0",
+  UUID="GPU-a417d268-4f39-29be-5b03-4aa9d6ca052c",
+  container="main",
+  namespace="argo-workflows", 
+  pod="graph-filter-pks-b2-run1-83f979e6-kedro-2173795637"
+} 85
+```
 
-### Scaling Considerations
-- DaemonSet automatically scales with GPU nodes
-- Workflow sidecars scale with workflow pods
-- Prometheus storage requirements scale with node count and workflow frequency
+## References
 
-## Security
-
-### Privileged Access
-DCGM requires privileged access to read GPU metrics:
-- DaemonSet runs with `privileged: true`
-- Required for hardware-level GPU access
-- Limited to monitoring namespace
-
-### Network Policies
-Consider implementing network policies to restrict metric endpoint access:
-- Allow Prometheus to scrape DCGM pods
-- Restrict external access to metric endpoints
-
-## Future Enhancements
-
-### Possible Improvements
-1. **Custom Metrics**: Add application-specific GPU metrics
-2. **Alerting**: Set up Prometheus alerts for GPU issues
-3. **Multi-GPU Support**: Enhanced support for multi-GPU nodes
-4. **Historical Analysis**: Long-term GPU usage trending
-
-### Integration Options
-1. **MLflow Integration**: Track GPU metrics with ML experiments
-2. **Cost Monitoring**: Correlate GPU usage with cloud costs
-3. **Autoscaling**: Use GPU metrics for intelligent cluster scaling
+- [Google Cloud DCGM Documentation](https://cloud.google.com/stackdriver/docs/managed-prometheus/exporters/nvidia-dcgm)
+- [NVIDIA DCGM Exporter](https://github.com/NVIDIA/dcgm-exporter)
+- [DCGM API Field Reference](https://docs.nvidia.com/datacenter/dcgm/latest/dcgm-api/dcgm-api-field-ids.html)
