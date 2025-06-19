@@ -1,35 +1,37 @@
-WITH disease_list AS (
-
+WITH Diseases AS (
   SELECT 
-    category_class AS disease_id,
-    label AS disease_name
-  FROM `mtrx-hub-dev-3of.release_${bq_release_version}.disease_list_nodes_normalized`
+    id
+  FROM 
+    `mtrx-hub-dev-3of.release_${bq_release_version}.disease_list_nodes_normalized`
+)
 
-),
-
-joined_list AS (
+, Diseases_Neighbours AS (
   SELECT
-    disease_list.*,
-    object AS neighbour_id
-  FROM disease_list
-  LEFT JOIN `mtrx-hub-dev-3of.release_${bq_release_version}.edges` disease_is_subject_edges
-  ON disease_is_subject_edges.subject = disease_list.disease_id
+    Diseases.*
+    , object AS neighbour_id
+  FROM 
+    Diseases
+    LEFT JOIN `mtrx-hub-dev-3of.release_${bq_release_version}.edges_unified` disease_is_subject_edges ON disease_is_subject_edges.subject = Diseases.id
 
   UNION ALL
 
   SELECT
-    disease_list.*,
-    subject AS neighbour_id
-  FROM disease_list
-  LEFT JOIN `mtrx-hub-dev-3of.release_${bq_release_version}.edges` disease_is_object_edges
-  ON disease_is_object_edges.object = disease_list.disease_id
+    Diseases.*
+    , subject AS neighbour_id
+  FROM 
+    Diseases
+    LEFT JOIN `mtrx-hub-dev-3of.release_${bq_release_version}.edges_unified` disease_is_object_edges ON disease_is_object_edges.object = Diseases.id
 
 )
 
 SELECT
-  disease_id,
-  disease_name,
-  COUNT(DISTINCT neighbour_id) AS unique_neighbours
-FROM joined_list
-WHERE disease_id != neighbour_id
-GROUP BY disease_id, disease_name ORDER BY unique_neighbours;
+  id
+  , COUNT(DISTINCT neighbour_id) AS unique_neighbours
+FROM 
+  Diseases_Neighbours
+WHERE 
+  id != neighbour_id
+GROUP BY 
+  id
+ORDER BY 
+  unique_neighbours
