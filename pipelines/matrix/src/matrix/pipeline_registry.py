@@ -39,7 +39,7 @@ def register_pipelines() -> dict[str, Pipeline]:
             matrix_input="matrix_generation", score_col_name="treat score"
         ),
         "transformed_evaluation": create_evaluation_pipeline(
-            matrix_input="matrix_transformations", score_col_name="treat score"
+            matrix_input="matrix_transformations", score_col_name="transformed_treat_score"
         ),
         "create_sample": create_create_sample_pipeline(),
         "ingest_to_N4J": create_ingest_to_N4J_pipeline(),
