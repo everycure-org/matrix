@@ -74,6 +74,11 @@ resource "helm_release" "argo" {
 
 resource "kubernetes_manifest" "app_of_apps" {
   depends_on = [helm_release.argo]
+
+  field_manager {
+    force_conflicts = true
+  }
+
   manifest = yamldecode(
     <<YAML
 apiVersion: argoproj.io/v1alpha1
