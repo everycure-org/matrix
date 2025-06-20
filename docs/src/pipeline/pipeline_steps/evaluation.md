@@ -10,4 +10,4 @@ Computed metrics generally fall into three categories:
 
 The evaluation pipeline utilises k-fold cross-validation, where by the metrics are computed for each fold, and then aggregated across folds for a more robust estimate of the model's performance.
 
-More details on the metrics computed in each category can be found in the [evaluation deep-dive](../../data_science/evaluation_deep_dive.md)
+More details on the metrics computed in each category can be found in the [evaluation deep-dive](../data_science/evaluation_deep_dive.md)

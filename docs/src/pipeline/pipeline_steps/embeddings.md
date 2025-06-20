@@ -1,4 +1,3 @@
-
 ### Embeddings
 
 Our embeddings pipeline computes vectorized representations of the entities in the knowledge graph in two stages:
@@ -11,6 +10,6 @@ Our embeddings pipeline computes vectorized representations of the entities in t
 
 
 !!! note "Want more?"
-    Are you interested in how we implemented caching of our encoding processes? Check out [Caching Approaches for API Based Enrichments](./caching.md).
+    Are you interested in how we implemented caching of our encoding processes? Check out [Caching Approaches for API Based Enrichments](../data_engineering/caching.md).
 
-    Or are you in general interested how we orchestrated processing of large imbalanced datasets such as KGs? Check out: [Using Kedro to process datasets in batches asynchronously](./batching.md). 
+    Or are you in general interested how we orchestrated processing of large imbalanced datasets such as KGs? Check out: [Using Kedro to process datasets in batches asynchronously](../data_engineering/batching.md). 

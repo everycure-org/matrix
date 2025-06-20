@@ -157,7 +157,7 @@ ingestion.raw.rtx_kg2.nodes@spark:
 
 ## As visible in Kedro-Viz
 
-![Screenshot 2024-09-26 at 12.02.52.png](../../assets/img/kedro_dominic_pipeline.png)
+![Screenshot 2024-09-26 at 12.02.52.png](../../../assets/img/kedro_dominic_pipeline.png)
 
 
 ### Kedro Run
