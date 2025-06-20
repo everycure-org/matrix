@@ -1,7 +1,6 @@
 nav:
     - index.md
-    - important_files.md
-    - local-development.md
-    - ci.md
-    - data
-    - pandera_validation.md
+    - pipeline_steps
+    # Not deleting these files - just removing from the pipeline section until we decide where to add coding information
+    # - important_files.md
+    # - pandera_validation.md
