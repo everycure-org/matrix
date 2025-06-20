@@ -1,5 +1,3 @@
-### Modelling 
-
 The modelling pipeline trains prediction models using drug-disease pairs and knowledge graph embeddings. 
 
 Key steps implemented include: 
