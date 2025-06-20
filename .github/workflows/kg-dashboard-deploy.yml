@@ -93,12 +93,6 @@ jobs:
           cache: 'npm'
           cache-dependency-path: services/kg_dashboard/package-lock.json
 
-      - name: Debug token
-        run: |
-          echo "Repository: ${{ github.repository }}"
-          echo "Ref: ${{ github.ref }}"
-          echo "Actor: ${{ github.actor }}"
-
       # authenticate with GCP as read only user to query BQ
       - uses: 'google-github-actions/auth@v2'
         with:
