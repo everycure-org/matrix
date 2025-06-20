@@ -11,8 +11,9 @@ on:
         description: 'Environment to build from and deploy to'
         required: true
         type: choice
-        default: 'dev'
+        default: 'pwal'
         options:
+          - 'pwal'
           - 'dev'
           - 'prod'
   push:
@@ -53,7 +54,7 @@ jobs:
 
     env:
       environment: ${{ inputs.environment }}
-      project_id: 'pwal' # ${{ vars.GCP_PROJECT_ID }}
+      project_id: ${{ vars.GCP_PROJECT_ID }}
       EC_DATA_DOMAIN: ${{ vars.EC_DATA_DOMAIN }}
       RELEASE_VERSION: ${{ inputs.release_version }}
       # for querying BQ even on branches
