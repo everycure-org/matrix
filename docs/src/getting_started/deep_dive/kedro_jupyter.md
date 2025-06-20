@@ -45,4 +45,4 @@ Below you can find some walkthroughs which utilise jupyter functionality within 
 
 - [Implementing Custom Modelling](./walkthroughs/custom_modelling.ipynb)
 
-[Embeddings Parallelization :material-skip-next:](./embeddings.md){ .md-button .md-button--primary }
+[Plugging into cloud Environment from Jupyter :material-skip-next:](./cross_environments.md){ .md-button .md-button--primary }

@@ -66,4 +66,8 @@ For more details on sampling environment, see the [Sample Environment Guide](../
 
 Now that you have a good understanding of different environments, we can run the pipeline with a sample of real data.
 
+!!! info
+    If you want to learn more about each environment, there is a dedicated session for [test](../deep_dive/test_environment.md), [sample](../deep_dive/sample_environment.md), [base](../deep_dive/sample_environment.md) and [cloud](../deep_dive/cloud_environment.md) environments in the deep dive section.
+
+
 [Running the pipeline :material-skip-next:](./run_pipeline.md){ .md-button .md-button--primary }
