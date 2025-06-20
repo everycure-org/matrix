@@ -23,7 +23,7 @@ Please visit our [Documentation Page](http://docs.dev.everycure.org) for all det
 
 ## Contributing
 
-We welcome and encourage all external contributions! Here's how to get started:
+We welcome and encourage all external contributions! Please see [this page to get started](./docs/src/getting_started/index.md).
 
 ## 🔗 Related Projects
 
