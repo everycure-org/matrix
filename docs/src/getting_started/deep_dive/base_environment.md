@@ -4,7 +4,7 @@ title: Base Environment
 
 # Base Environment Guide
 
-The base environment serves as the foundation configuration for any kedro project.. It contains shared configuration that is common across all environments and defines the core data paths, data source versions, and default settings. To get a good understanding of the pipeline, you need to have a good understanding of the base environment
+The base environment serves as the foundation configuration for any kedro project. It contains shared configuration that is common across all environments and defines the core data paths, data source versions, and default settings. To get a good understanding of the pipeline, you need to have a good understanding of the base environment.
 
 ## Key Configuration Files
 
