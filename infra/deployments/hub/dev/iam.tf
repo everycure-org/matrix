@@ -45,7 +45,8 @@ module "project_iam_bindings" {
     "roles/iap.httpsResourceAccessor" = flatten([local.matrix_viewers_group, local.github_actions_rw])
     # Grant Cloud Build service account necessary permissions for storage operations
     "roles/storage.admin" = local.custom_cloud_build_sa
-    # Grant Cloud Build service account org policy admin permissions
+    # roles/owner does _not_ have org policy edit rights. the SA needs it though if we want to edit org policies (e.g. for overrides)
+    # TODO: https://linear.app/everycure/issue/SEC-3
     # "roles/orgpolicy.policyAdmin" = local.custom_cloud_build_sa
 
     "roles/compute.networkUser" = [local.matrix_all_group]
