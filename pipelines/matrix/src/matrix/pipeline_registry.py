@@ -6,7 +6,6 @@ from matrix.pipelines.embeddings.pipeline import create_pipeline as create_embed
 from matrix.pipelines.evaluation.pipeline import create_pipeline as create_evaluation_pipeline
 from matrix.pipelines.fabricator.pipeline import create_pipeline as create_fabricator_pipeline
 from matrix.pipelines.filtering.pipeline import create_pipeline as create_filtering_pipeline
-from matrix.pipelines.fuse.pipeline import create_pipeline as create_fuse_pipeline
 from matrix.pipelines.ingest_to_N4J.pipeline import create_pipeline as create_ingest_to_N4J_pipeline
 from matrix.pipelines.ingestion.pipeline import create_pipeline as create_ingestion_pipeline
 from matrix.pipelines.integration.pipeline import create_pipeline as create_integration_pipeline
@@ -26,7 +25,6 @@ def register_pipelines() -> dict[str, Pipeline]:
     # Define pipeline combinations
     pipelines = {
         # Individual pipelines
-        "fuse": create_fuse_pipeline(),
         "preprocessing": create_preprocessing_pipeline(),  # Run manually for clinical trials and medical KG artifacts
         "fabricator": create_fabricator_pipeline(),
         "ingestion": create_ingestion_pipeline(),
