@@ -36,7 +36,7 @@ Google recommends the below diagram for separating a foundation pipeline, infras
 - **MATRIX working groups**: This layer allows any member in the MATRIX org to create resources in their GCP project as well as deploy pipelines to the shared compute cluster. This maps to the top layer in the below graphic. 
 
 
-![](../../assets/img/responsibility_layers.drawio.svg)
+![](../assets/img/responsibility_layers.drawio.svg)
 
 ## Key architectural principles
 *Our architectural principles are heavily inspired by the [enterprise foundations blueprint](https://cloud.google.com/architecture/security-foundations) and adapted to our needs. All changes from Googles recommended defaults are highlighted below:*
@@ -72,7 +72,7 @@ The networking layer of our software engineering project is designed to strike a
 To ensure segregation of development and production environments, we maintain two separate networks for each. This allows for effective isolation and management of our infrastructure.
 
 The below graphic visualizes this hub/spoke setup
-![](../../assets/img/mtrx_network.drawio.svg)
+![](../assets/img/mtrx_network.drawio.svg)
 
 ### Firewall Configuration
 
@@ -102,7 +102,7 @@ The high level flow of the DNS setup is visualized below:
 browsers make DNS lookup calls to their configured DNS server which points their browser
 at the correct IP address for the given domain they try to access.
 
-![](../../assets/img/mtrx_dns.drawio.svg)
+![](../assets/img/mtrx_dns.drawio.svg)
 
 ??? info "Primer video on DNS"
     If you need a primer on DNS, this short video may help:
@@ -121,7 +121,7 @@ on how to set up AppEngine with SSL and DNS for a custom domain.
 We have the following top level structure
 
 <!-- TODO update image with latest folder structure -->
-![](../../assets/img/gcp_folders.png){ width=500" }
+![](../assets/img/gcp_folders.png){ width=500" }
 
 where the `fldr-` folders contain foundations blueprint artifacts (e.g. shared logging, encryption keys, bootstrap project) and the `pre-foundation-projects` contain a range of projects we had already created before setting up the blueprint.
 
@@ -185,52 +185,3 @@ The blueprint comes with a helper tool that rolls out all layers in one process.
     which is not set by default. To learn how to set your quota project, see
     https://cloud.google.com/docs/authentication/adc-troubleshooting/user-creds .
     ```
-
-  - setting the quota project in the gcloud config did not fix the issue though.
-  - resolution?
-
-     ```bash
-     export GOOGLE_IMPERSONATE_SERVICE_ACCOUNT=sa-terraform-proj@prj-b-seed-77e7.iam.gserviceaccount.com
-     ```
-
-- Decided to swap the entire "projects" layer out for a new one using terragrunt. this whole tf-wrapper.sh is just too much of a home baked solution. Bad Google! Bad!
-
-### Using Terragrunt
-
-Switching over to terragrunt
-
-```bash
-## create root
-touch terragrunt.hcl
-## create folders
-mkdir -p matrix/{hub,data_wg,modelling_wg,validation_wg}/{development,production}/
-touch matrix/initiative.hcl
-touch  matrix/{hub,data_wg,modelling_wg,validation_wg}//workinggroup.hcl
-touch  matrix/{hub,data_wg,modelling_wg,validation_wg}/{development,production}/terragrunt.hcl
-
-## Define the multiline string using a here document
-multiline_string=$(cat <<EOF
-## Include the root `terragrunt.hcl` configuration. The root configuration contains settings that are common across all
-## components and environments, such as how to configure remote state.
-include "root" {
- path = find_in_parent_folders("root.hcl")
-}
-EOF
-)
-
-## Use brace expansion to generate file paths and append the multiline string to each one
-for file in matrix/{hub,data_wg,modelling_wg,validation_wg}/{development,production}/terragrunt.hcl; do
-    # Append the multiline string to each generated file path
-    cat <<EOF >> "$file"
-$multiline_string
-EOF
-done
-
-```
-
-Rolling out groups, folders, projects, and budgets using terragrunt. Way easier!
-
-#### Remove networking & environments layers
-
-- We really don't want to deal with networking and the folders were also not what we want.
-- create hub/spoke setup in the projects created through terragrunt instead

@@ -111,7 +111,7 @@ You can see how these nodes fit together with other parts of the pipeline by che
 
 ## Modifying parameters in the feature pipeline
 
-The exact details on integration and ingestion pipeline can be found in [the pipeline section](../pipeline/index.md). In short however, running the following command:
+The exact details on integration and ingestion pipeline can be found in [the pipeline section](../../pipeline/index.md). In short however, running the following command:
 ```
 kedro run -p data_engineering -e test
 ```

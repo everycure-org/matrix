@@ -224,7 +224,7 @@ hooks = {
 
 ### Usage examples
 
-To disable specific hooks, set the corresponding environment variable before running your Kedro pipeline, e.g. in the [`.env` file](./local-setup.md):
+To disable specific hooks, set the corresponding environment variable before running your Kedro pipeline, e.g. in the [`.env` file](../first_steps//local-setup.md):
 
 ```bash
 # Disable multiple hooks
@@ -249,6 +249,6 @@ We hope you've learned the basics of kedro extensions in our project, and are re
 If you want to learn about some specific activities, please check the [walkthroughs](./walkthroughs/custom_modelling.ipynb) section.
 
 !!! info 
-    If you are interested in learning more about those extensions, you can check our walkthrough for the [fabricator](./walkthroughs/fabricator.md), [data catalog & transcoding](./walkthroughs/walkthrough_data_catalog.md) or a deep dive into [Kedro Dataset workflow - Deep Dive](./walkthroughs/new_data_source.md). We are covering it more in-depth within the [development setup section](../development_setup/index.md).
+    If you are interested in learning more about those extensions, you can check our walkthrough for the [fabricator](./walkthroughs/fabricator.md), [data catalog & transcoding](./walkthroughs/walkthrough_data_catalog.md) or a deep dive into [Kedro Dataset workflow - Deep Dive](./walkthroughs/new_data_source.md)..
 
 [Running the Pipeline on the Kubernetes Cluster :material-skip-next:](./kedro_experiment.md){ .md-button .md-button--primary }

@@ -126,7 +126,7 @@ GROUP BY upstream_data_source
 ### Option 2: Matrix Repository
 
 1. :white_check_mark: clone repo
-2. :white_check_mark: cd to `matrix/pipelines/matrix` and follow the [installation instructions](../onboarding/local-setup.md)
+2. :white_check_mark: cd to `matrix/pipelines/matrix` and follow the [installation instructions](../getting_started/first_steps/local-setup.md)
 3. Open the notebook `example_notebook.ipynb` and follow the instructions in the notebook.
 
 
@@ -137,8 +137,8 @@ This is how you to connect to a Vertex AI workbench from your VSCode or Cursor c
 1. Install the Remote - SSH extension. 
 2. Open your SSH config file. An easy way to do this is:
     1. Press Cmd-Shift-p (on Mac) to open the command palette  
-    2. Select “SSH-Remote: Open SSH Configuration File” command
-    3. Select your SSH file, which should be listed. For instance, the directory of mine is “Users.alexei/.ssh/config"
+    2. Select "SSH-Remote: Open SSH Configuration File" command
+    3. Select your SSH file, which should be listed. For instance, the directory of mine is "Users.alexei/.ssh/config"
 3. Modify the config file as follows, making the appropriate changes to the config file:
     
     ```coffeescript
@@ -162,11 +162,11 @@ This is how you to connect to a Vertex AI workbench from your VSCode or Cursor c
     
     Note that this is specific to Mac, hence the homebrew directories for the packages for the ProxyCommand. For this to work, you need to check that the Python and google-cloud-sdk version you have installed matches up to those listed in the config. If you find that there is no directory `google-cloud-sdk` in `/opt/homebrew/Caskroom,` run the command `brew install google-cloud-sdk` . 
     
-4. Run the command “Remote-SSH: connect to a Host” in the command palette. You should see the host specified in the config file in my case alexei-dev-workbench. Select it. 
+4. Run the command "Remote-SSH: connect to a Host" in the command palette. You should see the host specified in the config file in my case alexei-dev-workbench. Select it. 
 5. Congratulations, you should be connected to your machine!
 Couple notes:
     1. The `home`  directory contains two user directories `jupyter` and `<your User name>`. You will not have rights make modifications in the `jupyter`  directory so work in the other one. 
-    2. To work with Jupyter notebooks, you have to find the Jupyter extension in the Marketplace and “Install in SSH:  <your host name>”.
+    2. To work with Jupyter notebooks, you have to find the Jupyter extension in the Marketplace and "Install in SSH:  <your host name>".
 <!-- 
 FUTURE: May build this out better in the future. Then we can document how we built this, potentially in a separate page.
 ---

@@ -202,7 +202,7 @@ Make sure you have [docker](https://www.docker.com/) and [docker-compose](https:
     # To re-check if your version is now updated
     docker-compose --version
     ```    
-    If you stumble upon `socket permission denied` error, you can find a potential solution within the [common errors section](../references/common_errors.md)
+    If you stumble upon `socket permission denied` error, you can find a potential solution within the [common errors section](../../references/common_errors.md)
 === "Linux"
 
     ```bash
