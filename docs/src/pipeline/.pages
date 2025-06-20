@@ -1,9 +1,7 @@
 nav:
     - index.md
     - pipeline_steps
-    - embeddings.md
-    - caching.md
-    - sample_environment.md
     - data
     - data_science
+    - data_engineering
     - debugging

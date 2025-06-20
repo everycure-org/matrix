@@ -194,5 +194,3 @@ CPU to make best use of resources.
 
 Using a three-stage caching mechanism allows optimizing compute resources, and
 reducing the time of consecutive runs substantially.
-
-[Pandera Validation :material-skip-next:](./pandera_validation.md){ .md-button .md-button--primary }
