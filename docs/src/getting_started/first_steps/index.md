@@ -21,6 +21,6 @@ After finishing this section you should have:
 - Successfully ran the pipeline locally with a sample of real data.
 
 !!! info "Found a bug?"
-    We tried to accommodate for the most common OS whilst writing this guide however we might have missed something. If at any point you encounter a bug/error, please let us know by creating an [issue](https://github.com/everycure-org/matrix/issues/new?template=bug_report.md)! We are constantly aiming to make this repository better.
+    Please let us know by creating an [issue](https://github.com/everycure-org/matrix/issues/new?template=bug_report.md)! We tried to accommodate for the most common OS whilst writing this guide however we might have missed something.
 
 [Start with Matrix Pipeline Overview! :material-arrow-right:](./matrix_pipeline.md){ .md-button .md-button--primary }
