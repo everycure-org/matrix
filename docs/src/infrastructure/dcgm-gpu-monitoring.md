@@ -1,6 +1,6 @@
-# DCGM GPU Monitoring Setup for GKE
+# DCGM GPU Monitoring Setup for GKE with Workflow Attribution
 
-This setup provides comprehensive GPU monitoring for all Argo workflows using NVIDIA DCGM exporter, following Google Cloud's recommended two-DaemonSet architecture for optimal GPU process monitoring and container attribution.
+This setup provides comprehensive GPU monitoring for all Argo workflows using NVIDIA DCGM exporter, following Google Cloud's recommended two-DaemonSet architecture for optimal GPU process monitoring and container attribution. **Updated with robust workflow attribution using kube-state-metrics join queries.**
 
 ## Architecture Overview
 
@@ -8,10 +8,11 @@ The monitoring solution follows Google Cloud's best practices and consists of:
 
 1. **DCGM Host Engine DaemonSet**: Provides privileged GPU access and process visibility
 2. **DCGM Exporter DaemonSet**: Connects to host engine and exposes Prometheus metrics
-3. **Prometheus Integration**: Scrapes metrics via ServiceMonitor
-4. **Grafana Dashboard**: Visualizes GPU metrics with container/pod attribution
+3. **kube-state-metrics**: Exposes pod labels including `workflow_name` for metric joins
+4. **Prometheus Integration**: Scrapes metrics via ServiceMonitor with workflow attribution
+5. **Grafana Dashboard**: Visualizes GPU, CPU, and memory metrics with workflow attribution
 
-This two-container approach is **essential** for proper GPU process monitoring in GKE environments, enabling accurate attribution of GPU usage to specific containers, pods, and namespaces.
+This approach provides **robust workflow attribution** without relying on regex parsing of pod names, using Prometheus join queries to combine container metrics with workflow metadata.
 
 ## Why Two DaemonSets?
 
@@ -60,9 +61,9 @@ port: 9400 (Prometheus metrics)
 - Uses Google's recommended metrics configuration
 - Provides container/pod attribution
 
-### 3. Prometheus Integration
+### 3. Prometheus Integration with Workflow Attribution
 
-**ServiceMonitor Configuration**:
+**ServiceMonitor Configuration** (Updated):
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -80,11 +81,56 @@ spec:
     scrapeTimeout: 10s
 ```
 
-## Available Metrics (Google's Recommended Set)
+**kube-state-metrics Configuration** (Added for workflow attribution):
+```yaml
+kube-state-metrics:
+  metricLabelsAllowlist:
+    - pods=[*]  # Expose all pod labels including workflow_name
+  collectors:
+    - pods
+  extraArgs:
+    - --metric-labels-allowlist=pods=[*]
+```
 
+This configuration enables `kube_pod_labels` metrics that include workflow metadata:
+```
+kube_pod_labels{
+  namespace="argo-workflows",
+  pod="gpu-run-abc123",
+  label_workflow_name="gpu-run-abc123",
+  label_test_type="gpu-stress-test",
+  label_app="kedro-argo"
+} 1
+```
+
+## Workflow Attribution Approach
+
+### Problem with Traditional Approaches
+- **cAdvisor limitations**: Container metrics (`container_memory_usage_bytes`, `container_cpu_usage_seconds_total`) are scraped at the kubelet/node level and don't have access to pod labels during scrape time
+- **Regex fragility**: Extracting workflow names from pod names using regex is brittle and not maintainable
+- **Direct pod labeling**: Attempting to add pod labels to container metrics through relabeling doesn't work for cAdvisor
+
+### Solution: kube-state-metrics Join Queries
+Our robust solution uses Prometheus join queries to combine container metrics with workflow metadata:
+
+1. **kube-state-metrics** exposes pod labels as `kube_pod_labels` metrics
+2. **Prometheus join queries** combine container metrics with workflow labels
+3. **Grafana dashboards** use these joined metrics for workflow attribution
+
+### Workflow Label Configuration
+Workflows must include the `workflow_name` label in pod templates:
+```yaml
+# In Argo workflow templates
+metadata:
+  labels:
+    app: kedro-argo
+    workflow_name: "{{workflow.name}}"
+    test_type: gpu-stress-test
+```
+
+## Available Metrics (Google's Recommended Set)
 ### Core GPU Metrics
 - `DCGM_FI_DEV_GPU_UTIL`: GPU utilization (%) with container attribution
-- `DCGM_FI_DEV_MEM_COPY_UTIL`: Memory utilization (%)
 - `DCGM_FI_DEV_GPU_TEMP`: GPU temperature (°C)
 - `DCGM_FI_DEV_POWER_USAGE`: Power consumption (W)
 
@@ -109,6 +155,31 @@ spec:
 All metrics include labels for container, namespace, and pod attribution:
 ```
 DCGM_FI_DEV_GPU_UTIL{gpu="0",UUID="GPU-...",container="main",namespace="argo-workflows",pod="workflow-pod-123"} 85
+```
+
+### Workflow Attribution Metrics
+To get workflow attribution, use Prometheus join queries with `kube_pod_labels`:
+
+```promql
+# GPU utilization by workflow
+DCGM_FI_DEV_GPU_UTIL{namespace="argo-workflows"} 
+* on(namespace, pod) group_left(label_workflow_name) 
+kube_pod_labels{label_workflow_name!=""}
+
+# Container memory usage by workflow  
+container_memory_usage_bytes{namespace="argo-workflows", container!="POD", container!=""} 
+* on(namespace, pod) group_left(label_workflow_name) 
+kube_pod_labels{label_workflow_name!=""}
+
+# Container CPU usage by workflow
+rate(container_cpu_usage_seconds_total{namespace="argo-workflows", container!="POD", container!=""}[5m]) 
+* on(namespace, pod) group_left(label_workflow_name) 
+kube_pod_labels{label_workflow_name!=""}
+```
+
+These queries result in metrics with workflow labels:
+```
+DCGM_FI_DEV_GPU_UTIL{gpu="0",UUID="GPU-...",container="main",namespace="argo-workflows",pod="gpu-run-abc123",label_workflow_name="gpu-run-abc123"} 85
 ```
 
 ## Deployment
@@ -141,6 +212,9 @@ cat infra/argo/app-of-apps/templates/dcgm-exporter.yaml
 ```bash
 # Sync dcgm-exporter application
 kubectl patch application dcgm-exporter -n argocd --type merge -p '{"operation":{"sync":{"revision":"HEAD"}}}'
+
+# Sync kube-prometheus-stack (for kube-state-metrics configuration)
+kubectl patch application kube-prometheus-stack -n argocd --type merge -p '{"operation":{"sync":{"revision":"HEAD"}}}'
 ```
 
 ## Verification
@@ -170,7 +244,7 @@ kubectl logs -n monitoring dcgm-exporter-xxxxx
 # Expected: "DCGM successfully initialized!"
 ```
 
-### Test Metrics
+### Test Metrics with Workflow Attribution
 
 ```bash
 # Port-forward to metrics endpoint
@@ -181,6 +255,13 @@ curl -s http://localhost:9400/metrics | grep DCGM_FI_DEV_GPU_UTIL
 
 # Expected output with container labels:
 # DCGM_FI_DEV_GPU_UTIL{gpu="0",UUID="GPU-...",container="main",namespace="argo-workflows",pod="..."} 75
+
+# Test kube_pod_labels for workflow attribution
+kubectl port-forward -n observability svc/kube-prometheus-stack-prometheus 9090:9090 &
+# Query: kube_pod_labels{namespace="argo-workflows",label_workflow_name!=""}
+
+# Test join query for workflow attribution
+# Query: DCGM_FI_DEV_GPU_UTIL{namespace="argo-workflows"} * on(namespace, pod) group_left(label_workflow_name) kube_pod_labels{label_workflow_name!=""}
 ```
 
 ### Verify Prometheus Scraping
@@ -288,58 +369,165 @@ kubectl exec -n monitoring dcgm-exporter-xxxxx -- wget -qO- http://localhost:940
 kubectl get nodes -l cloud.google.com/gke-accelerator --show-labels
 ```
 
-## Grafana Integration
+## Grafana Integration with Workflow Attribution
+
+### Importing the Workflow Monitoring Dashboard
+
+1. **Use the pre-built dashboard**:
+   ```bash
+   # Dashboard location
+   cat workflow-monitoring-dashboard.json
+   ```
+
+2. **Import in Grafana**:
+   - Go to **Dashboards** → **Import**
+   - Copy and paste the JSON content
+   - Verify Prometheus data source is correct
+   - Click **Import**
+
+### Dashboard Features
+
+The dashboard provides comprehensive workflow attribution:
+
+- **Memory Usage by Workflow**: Shows container memory usage with workflow attribution
+- **CPU Usage by Workflow**: Shows container CPU usage with workflow attribution  
+- **GPU Utilization by Workflow**: Shows GPU compute and memory utilization
+- **GPU Memory Usage by Workflow**: Shows GPU memory consumption
+- **Current Resource Usage Table**: Tabular view of current resource usage
+- **Workflow Filter**: Dropdown to select specific workflows or view all
 
 ### Accessing GPU Metrics
 
 1. **Port-forward to Grafana**:
    ```bash
-   kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
+   kubectl port-forward -n observability svc/kube-prometheus-stack-grafana 3000:80
    ```
 
 2. **Login**: Use admin credentials from secret
 
-3. **Query Examples**:
+3. **Query Examples for Workflow Attribution**:
    ```promql
-   # GPU utilization by container
-   DCGM_FI_DEV_GPU_UTIL{container!=""}
+   # GPU utilization by workflow
+   sum by (label_workflow_name) (
+     DCGM_FI_DEV_GPU_UTIL{namespace="argo-workflows"} 
+     * on(namespace, pod) group_left(label_workflow_name) 
+     kube_pod_labels{label_workflow_name!=""}
+   )
    
-   # Power usage across all GPUs
-   sum(DCGM_FI_DEV_POWER_USAGE)
+   # Memory usage by workflow
+   sum by (label_workflow_name) (
+     container_memory_usage_bytes{namespace="argo-workflows", container!="POD", container!=""} 
+     * on(namespace, pod) group_left(label_workflow_name) 
+     kube_pod_labels{label_workflow_name!=""}
+   )
    
-   # Memory utilization by namespace
-   DCGM_FI_DEV_MEM_COPY_UTIL{namespace!=""}
+   # CPU usage by workflow
+   sum by (label_workflow_name) (
+     rate(container_cpu_usage_seconds_total{namespace="argo-workflows", container!="POD", container!=""}[5m]) 
+     * on(namespace, pod) group_left(label_workflow_name) 
+     kube_pod_labels{label_workflow_name!=""}
+   )
    ```
 
-## Monitoring Argo Workflows
+4. **Pod-level granularity** (shows individual pods within workflows):
+   ```promql
+   # Memory usage by workflow and pod
+   sum by (label_workflow_name, pod) (
+     container_memory_usage_bytes{namespace="argo-workflows", container!="POD", container!=""} 
+     * on(namespace, pod) group_left(label_workflow_name) 
+     kube_pod_labels{label_workflow_name!=""}
+   )
+   ```
 
-### GPU Usage Attribution
+## Monitoring Argo Workflows with Robust Attribution
 
-With the two-DaemonSet approach, Argo workflow GPU usage is properly attributed:
+### Workflow Requirements
 
+Ensure workflow pod templates include the `workflow_name` label:
+
+```yaml
+# In Argo workflow templates (argo_wf_spec.tmpl)
+metadata:
+  labels:
+    app: kedro-argo
+    workflow_name: "{{workflow.name}}"
+    test_type: gpu-stress-test
+```
+
+### GPU Usage Attribution with Join Queries
+
+**Basic GPU metrics by workflow**:
 ```promql
 # GPU utilization for specific workflow
-DCGM_FI_DEV_GPU_UTIL{namespace="argo-workflows",pod=~"workflow-name-.*"}
+sum by (label_workflow_name) (
+  DCGM_FI_DEV_GPU_UTIL{namespace="argo-workflows"} 
+  * on(namespace, pod) group_left(label_workflow_name) 
+  kube_pod_labels{label_workflow_name=~"gpu-run-.*"}
+)
 
-# Power consumption by workflow namespace
-sum(DCGM_FI_DEV_POWER_USAGE{namespace="argo-workflows"})
+# Power consumption by workflow
+sum by (label_workflow_name) (
+  DCGM_FI_DEV_POWER_USAGE{namespace="argo-workflows"} 
+  * on(namespace, pod) group_left(label_workflow_name) 
+  kube_pod_labels{label_workflow_name!=""}
+)
 ```
 
-### Workflow Pod Visibility
+**Container resource attribution**:
+```promql
+# Container memory usage by workflow
+sum by (label_workflow_name) (
+  container_memory_usage_bytes{namespace="argo-workflows", container!="POD", container!=""} 
+  * on(namespace, pod) group_left(label_workflow_name) 
+  kube_pod_labels{label_workflow_name!=""}
+)
 
-Metrics automatically include workflow pod information:
+# Container CPU usage by workflow
+sum by (label_workflow_name) (
+  rate(container_cpu_usage_seconds_total{namespace="argo-workflows", container!="POD", container!=""}[5m]) 
+  * on(namespace, pod) group_left(label_workflow_name) 
+  kube_pod_labels{label_workflow_name!=""}
+)
 ```
+
+### Workflow Pod Visibility with Full Attribution
+
+Join queries provide complete workflow metadata:
+```
+# Resulting metrics include workflow labels:
 DCGM_FI_DEV_GPU_UTIL{
   gpu="0",
   UUID="GPU-a417d268-4f39-29be-5b03-4aa9d6ca052c",
   container="main",
   namespace="argo-workflows", 
-  pod="graph-filter-pks-b2-run1-83f979e6-kedro-2173795637"
+  pod="gpu-run-abc123",
+  label_workflow_name="gpu-run-abc123",
+  label_test_type="gpu-stress-test",
+  label_app="kedro-argo"
 } 85
+
+container_memory_usage_bytes{
+  container="main",
+  namespace="argo-workflows",
+  pod="gpu-run-abc123", 
+  label_workflow_name="gpu-run-abc123",
+  label_test_type="gpu-stress-test"
+} 2147483648
 ```
+
+### Benefits of Join Query Approach
+
+✅ **Maintainable**: No regex parsing of pod names  
+✅ **Robust**: Works with any workflow naming convention  
+✅ **Comprehensive**: Covers GPU, CPU, memory, and disk metrics  
+✅ **GitOps-compatible**: Configuration managed through ArgoCD  
+✅ **Multi-label support**: Access to all workflow labels (test_type, app, etc.)  
+✅ **Pod-level granularity**: Can drill down to individual pods within workflows
 
 ## References
 
 - [Google Cloud DCGM Documentation](https://cloud.google.com/stackdriver/docs/managed-prometheus/exporters/nvidia-dcgm)
 - [NVIDIA DCGM Exporter](https://github.com/NVIDIA/dcgm-exporter)
 - [DCGM API Field Reference](https://docs.nvidia.com/datacenter/dcgm/latest/dcgm-api/dcgm-api-field-ids.html)
+- [Prometheus Join Queries](https://prometheus.io/docs/prometheus/latest/querying/operators/#vector-matching)
+- [kube-state-metrics Configuration](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/cli-arguments.md)
