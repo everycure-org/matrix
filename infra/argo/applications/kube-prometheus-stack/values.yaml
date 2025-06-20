@@ -1,4 +1,45 @@
 kube-prometheus-stack:
+  # Configure kubelet ServiceMonitor to add workflow name extraction
+  kubelet:
+    serviceMonitor:
+      # Add relabeling to extract workflow name from pod labels (before scraping)
+      cAdvisorRelabelings:
+        # Default metrics_path relabeling (required)
+        - action: replace
+          sourceLabels: [__metrics_path__]
+          targetLabel: metrics_path
+        # Extract all pod labels with prefix
+        - action: labelmap
+          regex: __meta_kubernetes_pod_label_(.+)
+          replacement: pod_${1}
+      # Add metric relabeling to extract workflow name from pod name for cAdvisor metrics
+      cAdvisorMetricRelabelings:
+        # Default drop rules from upstream (preserving them)
+        - sourceLabels: [__name__]
+          action: drop
+          regex: 'container_cpu_(cfs_throttled_seconds_total|load_average_10s|system_seconds_total|user_seconds_total)'
+        - sourceLabels: [__name__]
+          action: drop
+          regex: 'container_fs_(io_current|io_time_seconds_total|io_time_weighted_seconds_total|reads_merged_total|sector_reads_total|sector_writes_total|writes_merged_total)'
+        - sourceLabels: [__name__]
+          action: drop
+          regex: 'container_memory_(mapped_file|swap)'
+        - sourceLabels: [__name__]
+          action: drop
+          regex: 'container_(file_descriptors|tasks_state|threads_max)'
+        - sourceLabels: [__name__, scope]
+          action: drop
+          regex: 'container_memory_failures_total;hierarchy'
+        - sourceLabels: [__name__, interface]
+          action: drop
+          regex: 'container_network_.*;(cali|cilium|cni|lxc|nodelocaldns|tunl).*'
+        - sourceLabels: [__name__]
+          action: drop
+          regex: 'container_spec.*'
+        - sourceLabels: [id, pod]
+          action: drop
+          regex: '.+;'
+  
   prometheus:
     prometheusSpec:
       retention: 180d
@@ -23,6 +64,11 @@ kube-prometheus-stack:
           endpoints:
             - port: metrics
               path: /metrics
+              relabelings:
+                # Extract all pod labels with prefix
+                - action: labelmap
+                  regex: __meta_kubernetes_pod_label_(.+)
+                  replacement: pod_${1}
         - name: argo-workflows-controller
           selector:
             matchLabels:
@@ -33,6 +79,11 @@ kube-prometheus-stack:
           endpoints:
             - port: metrics
               path: /metrics
+              relabelings:
+                # Extract all pod labels with prefix
+                - action: labelmap
+                  regex: __meta_kubernetes_pod_label_(.+)
+                  replacement: pod_${1}
         # Updated GPU monitoring for workflows with DCGM sidecar
         - name: gpu-metrics-kedro-argo
           selector:
@@ -46,6 +97,11 @@ kube-prometheus-stack:
               path: /metrics
               interval: 15s
               scrapeTimeout: 10s
+              relabelings:
+                # Extract all pod labels with prefix
+                - action: labelmap
+                  regex: __meta_kubernetes_pod_label_(.+)
+                  replacement: pod_${1}
         
         # DCGM DaemonSet monitoring (cluster-wide GPU monitoring)
         - name: dcgm-exporter-daemonset
@@ -61,6 +117,11 @@ kube-prometheus-stack:
               interval: 15s
               scrapeTimeout: 10s
               honorLabels: true
+              relabelings:
+                # Extract all pod labels with prefix
+                - action: labelmap
+                  regex: __meta_kubernetes_pod_label_(.+)
+                  replacement: pod_${1}
         
         # Generic DCGM monitoring for any pods with dcgm-exporter label
         - name: dcgm-exporter-pods
@@ -75,6 +136,11 @@ kube-prometheus-stack:
               interval: 15s
               scrapeTimeout: 10s
               honorLabels: true
+              relabelings:
+                # Extract all pod labels with prefix
+                - action: labelmap
+                  regex: __meta_kubernetes_pod_label_(.+)
+                  replacement: pod_${1}
         
         # Add pod monitor for direct pod scraping (alternative approach)
       additionalPodMonitors:
@@ -90,39 +156,16 @@ kube-prometheus-stack:
               path: /metrics
               interval: 15s
               scrapeTimeout: 10s
+              relabelings:
+                # Extract all pod labels with prefix
+                - action: labelmap
+                  regex: __meta_kubernetes_pod_label_(.+)
+                  replacement: pod_${1}
       
       # Allow scraping of pods directly (needed for sidecar containers)
-      additionalScrapeConfigs:
-        - job_name: 'dcgm-exporter-sidecars'
-          kubernetes_sd_configs:
-            - role: pod
-              namespaces:
-                names:
-                  - argo-workflows
-          relabel_configs:
-            - source_labels: [__meta_kubernetes_pod_label_app]
-              action: keep
-              regex: kedro-argo
-            - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-              action: keep
-              regex: true
-            - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
-              action: replace
-              target_label: __metrics_path__
-              regex: (.+)
-            - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
-              action: replace
-              regex: ([^:]+)(?::\d+)?;(\d+)
-              replacement: $1:$2
-              target_label: __address__
-            - action: labelmap
-              regex: __meta_kubernetes_pod_label_(.+)
-            - source_labels: [__meta_kubernetes_namespace]
-              action: replace
-              target_label: kubernetes_namespace
-            - source_labels: [__meta_kubernetes_pod_name]
-              action: replace
-              target_label: kubernetes_pod_name
+      additionalScrapeConfigs: []
+        # Additional scrape configs can be added here if needed
+        # Currently using ServiceMonitors for all monitoring configuration
   grafana:
     persistence:
       enabled: true
