@@ -16,6 +16,8 @@ spec:
       trigger_release: "{{ trigger_release }}"
       release_version: "{{ release_version }}"
       git_sha: "{{ git_sha }}"
+      kedro_nodes: {% raw %}'{{inputs.parameters.kedro_nodes}}'
+      {% endraw %}
   entrypoint: "pipeline"
   arguments:
     parameters:
