@@ -23,11 +23,6 @@ kube-prometheus-stack:
           endpoints:
             - port: metrics
               path: /metrics
-              relabelings:
-                # Extract all pod labels with prefix
-                - action: labelmap
-                  regex: __meta_kubernetes_pod_label_(.+)
-                  replacement: pod_${1}
         - name: argo-workflows-controller
           selector:
             matchLabels:
@@ -38,11 +33,6 @@ kube-prometheus-stack:
           endpoints:
             - port: metrics
               path: /metrics
-              relabelings:
-                # Extract all pod labels with prefix
-                - action: labelmap
-                  regex: __meta_kubernetes_pod_label_(.+)
-                  replacement: pod_${1}
         # DCGM DaemonSet monitoring (cluster-wide GPU monitoring)
         - name: dcgm-exporter-daemonset
           selector:
@@ -57,11 +47,6 @@ kube-prometheus-stack:
               interval: 15s
               scrapeTimeout: 10s
               honorLabels: true
-              relabelings:
-                # Extract all pod labels with prefix
-                - action: labelmap
-                  regex: __meta_kubernetes_pod_label_(.+)
-                  replacement: pod_${1}
         
         # Generic DCGM monitoring for any pods with dcgm-exporter label
         - name: dcgm-exporter-pods
@@ -76,11 +61,6 @@ kube-prometheus-stack:
               interval: 15s
               scrapeTimeout: 10s
               honorLabels: true
-              relabelings:
-                # Extract all pod labels with prefix
-                - action: labelmap
-                  regex: __meta_kubernetes_pod_label_(.+)
-                  replacement: pod_${1}
         
         # Add pod monitor for direct pod scraping (alternative approach)
       additionalPodMonitors:
@@ -96,16 +76,6 @@ kube-prometheus-stack:
               path: /metrics
               interval: 15s
               scrapeTimeout: 10s
-              relabelings:
-                # Extract all pod labels with prefix
-                - action: labelmap
-                  regex: __meta_kubernetes_pod_label_(.+)
-                  replacement: pod_${1}
-      
-      # Allow scraping of pods directly (needed for sidecar containers)
-      additionalScrapeConfigs: []
-        # Additional scrape configs can be added here if needed
-        # Currently using ServiceMonitors for all monitoring configuration
   grafana:
     persistence:
       enabled: true
