@@ -2,5 +2,4 @@ nav:
     - index.md
     - first_steps
     - deep_dive
-    - jupyter_setup
     - contribute
