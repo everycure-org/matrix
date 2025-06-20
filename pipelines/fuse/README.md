@@ -203,7 +203,8 @@ class FusedPipeline(Pipeline):
 
 From Kedro's perspective, there is now a single `FusedNode` that contains the nodes within the fusing boundary, and the respective inputs and outputs are set correctly.
 
-> 💡 __Bonus__: this shows a single `kedro viz` node for each `FusedNode`, thereby simplifying the graphical representation.
+> 💡 __Bonus__: this shows a single `kedro viz` node for each `FusedNode`, thereby simplifying the graphical representation a shown by the image below.
+> ![fused-kedro-viz.png](fused-kedro-viz.png)
 
 #### Generating the Argo Workflow spec
 
