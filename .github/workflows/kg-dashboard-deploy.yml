@@ -43,13 +43,13 @@ jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     name: Build Dashboard
-    environment: ${{ inputs.environment }}
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
     permissions:
       contents: 'read'
       id-token: 'write'
 
     env:
-      environment: ${{ inputs.environment }}
+      environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
       project_id: ${{ vars.GCP_PROJECT_ID }}
       EC_DATA_DOMAIN: ${{ vars.EC_DATA_DOMAIN }}
       RELEASE_VERSION: ${{ inputs.release_version }}
