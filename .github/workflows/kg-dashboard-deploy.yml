@@ -10,8 +10,11 @@ on:
       environment:
         description: 'Environment to build from and deploy to'
         required: true
-        type: string
-        default: 'dev'
+        type: choice
+        default: dev
+        options:
+          - dev
+          - prod
   push:
     branches:
       - main
