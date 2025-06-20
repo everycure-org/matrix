@@ -25,11 +25,11 @@ MATRIX is Every Cure's main pipeline for generating high-accuracy predictions of
 
 We envision there are three types of users and contributors who might be interested in this repository:
 
-* **Pipeline Contributors** - These are users like researchers, data scientists, or developers interested in utilizing our drug repurposing pipeline, either locally or on their own research infrastructure. They may want to utilize our pipeline to experiment with different embedding models or ML architectures or apply our pipeline to their own data sources. 
+* **Pipeline Contributors** - Researchers or data scientists who want to use our drug repurposing pipeline locally or on their own infrastructure to experiment with different models or with their own data sources.
 
-* **Project Contributors** - These are community members who want to improve the core project itself and support Every Cure. Their contributions might focus on enhancing prediction accuracy through novel algorithms, improving code quality and test coverage, or adding new features and capabilities. Simi
+* **Project Contributors** - Community members who want to improve the core project and support Every Cure through novel algorithms, better code quality, test coverage, or new features and capabilities.
 
-* **System Adapters** - These are typically organizations or teams looking to adapt our infrastructure to their own cloud or on-premise environments. They may be interested in deploying the pipeline on different cloud providers (AWS, GCP, etc.) and customizing infrastructure for specific compliance requirements
+* **System Adapters** - Organizations or teams looking to adapt our infrastructure to their own cloud or on-premise environments, deploying on different cloud providers and customizing for specific compliance requirements.
 
 We welcome all contributors however this guide is primarily designed for pipeline and project contributors. If you are interested in the infrastructure side, we would recommend completing this guide but focusing mainly on the [infrastructure](../infrastructure/index.md) part of the documentation.
 
