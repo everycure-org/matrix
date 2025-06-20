@@ -134,10 +134,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     )
 ```
 
-Unfortunately, Kedro's scheduling execution mechanism flatmaps nested pipeline objects, i.e., the entrypoint to the runner
-is a flat list of nodes to execute. To solve for this, we have to create or own `Pipeline implementation`. The key idea
-here is that the `nodes` propery of this pipeline does not return the list of nodes, but rather a custom `FusedNode` that
-wraps the fused nodes.
+Unfortunately, Kedro's scheduling execution mechanism flatmaps nested pipeline objects, i.e., the entrypoint to the runner is a flat list of nodes to execute. To solve for this, we have to create or own `Pipeline implementation`. The key idea here is that the `nodes` propery of this pipeline does not return the list of nodes, but rather a custom `FusedNode` that wraps the fused nodes.
 
 
 ```python
