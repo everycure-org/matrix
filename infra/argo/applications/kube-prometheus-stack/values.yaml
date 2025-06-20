@@ -186,3 +186,11 @@ kube-prometheus-stack:
       searchNamespace: ALL
       provider:
         foldersFromFilesStructure: true
+  # Configure kube-state-metrics to expose pod labels
+  kube-state-metrics:
+    metricLabelsAllowlist:
+      - pods=[*]
+    collectors:
+      - pods
+    extraArgs:
+      - --metric-labels-allowlist=pods=[*]
