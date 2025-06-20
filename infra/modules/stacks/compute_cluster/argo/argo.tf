@@ -89,11 +89,11 @@ spec:
   source:
     path: ${var.repo_path}/app-of-apps
     repoURL: ${var.repo_url}
-    targetRevision: "nelson/aip-354-map-out-our-current-observability"
+    targetRevision: ${var.repo_revision}
     helm:
       parameters:
       - name: spec.source.targetRevision
-        value:  "nelson/aip-354-map-out-our-current-observability"
+        value:  ${var.repo_revision}
       - name: spec.source.environment
         value:  ${var.environment}
       - name: spec.source.project_id

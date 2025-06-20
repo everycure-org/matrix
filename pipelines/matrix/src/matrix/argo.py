@@ -28,7 +28,7 @@ def generate_argo_config(
     release_folder_name: str,
     default_execution_resources: Optional[ArgoResourceConfig] = None,
     mlflow_run_id: Optional[str] = None,
-    stress_test: bool = True,
+    stress_test: bool = False,
 ) -> str:
     if default_execution_resources is None:
         default_execution_resources = ArgoResourceConfig()
