@@ -126,7 +126,7 @@ GROUP BY upstream_data_source
 ### Option 2: Matrix Repository
 
 1. :white_check_mark: clone repo
-2. :white_check_mark: cd to `matrix/pipelines/matrix` and follow the [installation instructions](../getting_started/first_steps/local-setup.md)
+2. :white_check_mark: cd to `matrix/pipelines/matrix` and follow the [installation instructions](../../getting_started/first_steps/local-setup.md)
 3. Open the notebook `example_notebook.ipynb` and follow the instructions in the notebook.
 
 
