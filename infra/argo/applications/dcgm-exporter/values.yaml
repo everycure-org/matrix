@@ -100,20 +100,6 @@ serviceMonitor:
   scrapeTimeout: 10s
   labels:
     release: kube-prometheus-stack
-  # Metric relabeling to extract workflow information
-  metricRelabelings:
-    enabled: true
-    # Extract workflow name from Argo workflow pod names
-    workflowNameExtraction:
-      enabled: true
-      sourceLabel: pod
-      # Handles Argo workflow pod naming patterns:
-      # Pattern 1: "gpu-run-7b521828" -> "gpu-run-7b521828" (keep full workflow name with hash)
-      # Pattern 2: "graph-filter-pks-b2-run1-83f979e6-kedro-2123462780" -> "graph-filter-pks-b2-run1-83f979e6" (workflow name with hash, exclude template part)
-      # Strategy: Extract everything up to and including the 8-char hex hash, stop before any template parts
-      regex: '^(.+[a-f0-9]{8})(?:-[a-zA-Z]+-[0-9]+)?$'
-      targetLabel: workflow_name
-      replacement: '${1}'
 
 # Environment variables
 env:
