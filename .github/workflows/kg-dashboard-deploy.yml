@@ -53,7 +53,7 @@ jobs:
 
     env:
       environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
-      project_id: ${{ vars.GCP_PROJECT_ID }}
+      project_id: ${{ vars.PROJECT_ID }}
       EC_DATA_DOMAIN: ${{ vars.EC_DATA_DOMAIN }}
       RELEASE_VERSION: ${{ inputs.release_version }}
       # for querying BQ even on branches
