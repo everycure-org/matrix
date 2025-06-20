@@ -14,6 +14,6 @@ At a high level, it's composed of three stages:
 
 The pipeline enables systematic drug repurposing by scoring the potential of drugs to treat diseases based on patterns learned from biomedical knowledge graphs and known drug-disease relationships.
 
-For an in-depth understanding of each pipeline stage and modular steps, please see the [pipeline documentation](../../pipeline/index.md) - this is where we describe our methods in more detail. All of the steps described above are reflected in our kedro pipeline which you will learn more about in the next section.
+For an in-depth understanding of each pipeline stage and modular steps, please see the [pipeline documentation](../../pipeline/index.md) - this is where we describe our methods and code in more detail. All of the steps described above are reflected in our kedro pipeline which you will learn more about in the next section.
 
 [Learn about our tech stack! :material-skip-next:](./tech_stack.md){ .md-button .md-button--primary }

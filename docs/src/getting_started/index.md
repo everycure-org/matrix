@@ -25,26 +25,16 @@ MATRIX is Every Cure's main pipeline for generating high-accuracy predictions of
 
 We envision there are three types of users and contributors who might be interested in this repository:
 
-* Pipeline Contributors - These are researchers, data scientists, or developers interested in utilizing our drug repurposing pipeline, either locally or on their own research infrastructure. They may want to:
-    * Experiment with different embedding models or ML architectures
-    * Add new data sources to enhance predictions
-    * Customize pipeline components for their specific use cases
-    * Validate our approach on their own datasets
+* **Pipeline Contributors** - These are users like researchers, data scientists, or developers interested in utilizing our drug repurposing pipeline, either locally or on their own research infrastructure. They may want to utilize our pipeline to experiment with different embedding models or ML architectures or apply our pipeline to their own data sources. 
 
-* System Adapters - These are typically organizations or teams looking to adapt our infrastructure to their own cloud or on-premise environments. They may be interested in:
-    * Deploying the pipeline on different cloud providers (AWS, Azure, etc.)
-    * Integrating with existing enterprise systems
-    * Customizing infrastructure for specific compliance requirements
-    * Optimizing resource utilization and costs
+* **Project Contributors** - These are community members who want to improve the core project itself and support Every Cure. Their contributions might focus on enhancing prediction accuracy through novel algorithms, improving code quality and test coverage, or adding new features and capabilities. Simi
 
-* Project Contributors - These are community members who want to improve the core project itself. Their contributions might include:
-    * Enhancing prediction accuracy through novel algorithms
-    * Improving code quality and test coverage
-    * Adding new features and capabilities
-    * Fixing bugs and addressing technical debt
-    * Enhancing documentation and examples
-    * Contributing domain expertise in pharmacology or medicine
+* **System Adapters** - These are typically organizations or teams looking to adapt our infrastructure to their own cloud or on-premise environments. They may be interested in deploying the pipeline on different cloud providers (AWS, GCP, etc.) and customizing infrastructure for specific compliance requirements
 
+We welcome all contributors however this guide is primarily designed for pipeline and project contributors. If you are interested in the infrastructure side, we would recommend completing this guide but focusing mainly on the [infrastructure](../infrastructure/index.md) part of the documentation.
+
+As you onboard, we really recommend creating an [onboarding issue](https://github.com/everycure-org/matrix/issues/new?assignees=&labels=onboarding&projects=&template=onboarding.md&title=%3Cfirstname%3E+%3Clastname%3E) to help you navigate your progress. This way we can also support you in case of any bottlenecks or errors.
+    
 
 [Get Started with First Steps :material-arrow-right:](./first_steps/){ .md-button .md-button--primary }
      
