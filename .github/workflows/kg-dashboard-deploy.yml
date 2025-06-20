@@ -57,11 +57,11 @@ jobs:
       EC_DATA_DOMAIN: ${{ vars.EC_DATA_DOMAIN }}
       RELEASE_VERSION: ${{ inputs.release_version }}
       # for querying BQ even on branches
-      ro_wip: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-ro/providers/matrix-gh-provider-ro'
-      ro_sa: 'sa-github-actions-ro@mtrx-hub-dev-3of.iam.gserviceaccount.com'
+      ro_wip: ${{ vars.WORKLOAD_IDENTITY_PROVIDER_RO}}
+      ro_sa: ${{ vars.SERVICE_ACCOUNT_RO}}
       # for deploying to GCS, only works on main
-      rw_wip: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
-      rw_sa: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
+      rw_wip: ${{ vars.WORKLOAD_IDENTITY_PROVIDER_RW}}
+      rw_sa: ${{ vars.SERVICE_ACCOUNT_RW}}
       
     steps:
       - name: 'Checkout'
