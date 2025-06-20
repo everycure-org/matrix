@@ -8,6 +8,8 @@ spec:
     labels:
       run: {% raw %}'{{ workflow.parameters.run_name }}'
       {% endraw %}
+      workflow_name: {% raw %}'{{ workflow.parameters.run_name }}'
+      {% endraw %}
       username: "{{ username }}"
       test_type: "gpu_stress_test"
       gpu_type: "nvidia-l4"
@@ -62,6 +64,8 @@ spec:
       labels:
         app: kedro-argo  # Changed to match Prometheus service monitor
         test_type: gpu-stress-test
+        workflow_name: {% raw %}'{{ workflow.parameters.run_name }}'
+        {% endraw %}
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9400"
