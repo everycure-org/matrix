@@ -179,9 +179,7 @@ class FusedPipeline(Pipeline):
     """Fused pipeline allows for wrapping nodes for execution by the underlying
     pipeline execution framework.
 
-    This is needed, as Kedro immediately translates a pipeline to a list of nodes
-    to execute, where any pipeline structure is flatmapped. The FusedPipeline produces
-    a _single_ FusedNode that contains the wrapped nodes."""
+    This is needed, as Kedro immediately translates a pipeline to a list of nodes to execute, where any pipeline structure is flatmapped. The FusedPipeline produces a _single_ FusedNode that contains the wrapped nodes."""
 
     def __init__(
         self,
@@ -205,18 +203,15 @@ From Kedro's perspective, there is now a single `FusedNode` that contains the no
 
 #### Generating the Argo Workflow spec
 
-Since the entire Kedro pipeline is now represented by a set of nodes, with some optional `FusedNode` objects, the process of converting the Kedro pipeline to an Argo Workflow DAG became very straight-forward Concretely, the fusing of nodes can be ignored during the DAG generation, as it is inherently embedded in the resulting `Pipeline` object.
+Since the entire Kedro pipeline is now represented by a set of nodes, with some optional `FusedNode` objects, the process of converting the Kedro pipeline to an Argo Workflow DAG became very straight-forward. Specifcally, the fusing of nodes can be ignored during the DAG generation, as it is inherently embedded in the resulting `Pipeline` object.
 
 ```python
 def get_argo_dag(pipeline: Pipeline) -> List[Dict[str, Any]]:
-    """Function to convert the Kedro pipeline into Argo Tasks. The function
-    iterates the nodes of the pipeline and generates Argo tasks with dependencies.
-    These dependencies are inferred based on the input and output datasets for
-    each node.
+    """Function to convert the Kedro pipeline into Argo Tasks.
+    
+    The function iterates the nodes of the pipeline and generates Argo tasks with dependencies. These dependencies are inferred based on the input and output datasets for each node.
 
-    NOTE: This function is now agnostic to the fact that nodes might be fused. The nodes
-    returned as part of the pipeline may optionally contain FusedNodes, which have correct
-    inputs and outputs for the perspective of the Argo Task.
+    NOTE: This function is now agnostic to the fact that nodes might be fused. The nodes returned as part of the pipeline may optionally contain FusedNodes, which have correct inputs and outputs for the perspective of the Argo Task.
     """
     tasks = {}
 
