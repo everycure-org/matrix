@@ -10,12 +10,8 @@ on:
       environment:
         description: 'Environment to build from and deploy to'
         required: true
-        type: choice
-        default: 'pwal'
-        options:
-          - 'pwal'
-          - 'dev'
-          - 'prod'
+        type: string
+        default: 'dev'
   push:
     branches:
       - main
