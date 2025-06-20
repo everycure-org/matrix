@@ -85,4 +85,4 @@ You will learn more about these different environments in the [overview section]
 
 Now that you understand our codebase structure and configuration approach, let's get started with the setup!
 
-[Next: Installation :material-arrow-right:](./installation.md){ .md-button .md-button--primary }
+[Next: Installation  :material-skip-next:](./installation.md){ .md-button .md-button--primary }
