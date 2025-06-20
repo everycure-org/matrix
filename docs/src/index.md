@@ -5,8 +5,6 @@ hide:
   - navigation
 ---
 # Matrix Project
-!!! note "Every Cure"
-    [Every Cure](https://everycure.org/about/) is a non-profit organization on a mission to unlock the full potential of existing medicines to treat every disease and every patient we possibly can. We are leveraging our AI Platform MATRIX to find new applicatiions of existing medicine. Here you can learn more about [AI Drug Repurposing](https://www.youtube.com/embed/67_Z40Ap1pU?si=XlCu7fBHxxkBTchH) and [Matrix Project](https://www.youtube.com/embed/3ElaCVvDZfI?si=lk3b1rSMutyiierm). 
 
 Welcome! This documentation provides an introduction to the project and the codebase, and guides you through the process of setting up your local environment.
 
@@ -34,3 +32,10 @@ Welcome! This documentation provides an introduction to the project and the code
         <img src="../../assets/getting_started/matrix_overview.png" alt="Matrix Pipeline Overview" style="width: 100%;">
     </div>
 </div>
+
+??? info "Learn more about Every Cure"
+    Matrix is a part of Every Cure pipeline. [Every Cure](https://everycure.org/about/) is a non-profit organization on a mission to unlock the full potential of existing medicines to treat every disease and every patient we possibly can. Below we post some resources where you can learn more about the Every Cure, Matrix Project and AI Drug Repurposing in Every Cure.
+
+    <iframe width="640" height="390" src="https://www.youtube.com/embed/3ElaCVvDZfI?si=lk3b1rSMutyiierm" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+    <iframe width="640" height="390" src="https://www.youtube.com/embed/67_Z40Ap1pU?si=XlCu7fBHxxkBTchH" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
