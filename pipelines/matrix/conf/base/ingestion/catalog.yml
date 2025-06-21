@@ -218,6 +218,22 @@ ingestion.raw.drugmech.edges@pandas:
 #   filepath: ${globals:paths.ingestion}/drugmech/${globals:data_sources.drugmech.version}/edges
 
 # -------------------------------------------------------------------------
+# valid edge type list from matrix-schema
+# -------------------------------------------------------------------------
+ingestion.raw.valid_edge_types:
+  <<: [*_pandas_csv, *_layer_raw]
+  type: matrix.datasets.github.GitHubReleaseCSVDataset
+  repository_url: https://github.com/everycure-org/matrix-schema
+  release_name: ${globals:data_sources.matrix_scehma.version}
+  release_asset_name: valid_edge_types.tsv
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: token ${globals:gh_token}
+  load_args:
+    sep: "\t"
+
+
+# -------------------------------------------------------------------------
 # Drug and disease lists
 # -------------------------------------------------------------------------  
 
