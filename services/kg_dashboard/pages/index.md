@@ -403,20 +403,6 @@ SELECT * FROM bq.epistemic_heatmap
 
 <br/>
 
-```sql disease_list_neighbour_counts
-select 
-  * 
-from 
-  bq.disease_list_neighbour_counts
-```
-
-### Disease nodes neighbours
-
-<ECharts
-    style={{ height: '400px' }}
-    config={getHistogramEchartsOptions(disease_list_neighbour_counts, "disease", "unique_neighbours", 10)}
-/>
-
 
 ```sql disease_list_connected_categories
 with total as (
@@ -458,6 +444,22 @@ order by
     title="Categories connected to disease list node on average"
 />
 
+### Disease nodes neighbours
+
+```sql disease_list_neighbour_counts
+select 
+  * 
+from 
+  bq.disease_list_neighbour_counts
+```
+
+<ECharts
+    style={{ height: '400px' }}
+    config={getHistogramEchartsOptions(disease_list_neighbour_counts, "disease", "unique_neighbours", 10)}
+/>
+
+<br/>
+
 ## Drug list nodes connections
 
 <br/>
@@ -468,21 +470,6 @@ order by
 </Grid>
 
 <br/>
-
-```sql drug_list_neighbour_counts
-select 
-  * 
-from 
-  bq.drug_list_neighbour_counts
-```
-
-### Drug nodes neighbours
-
-<ECharts
-    style={{ height: '400px' }}
-    config={getHistogramEchartsOptions(drug_list_neighbour_counts, "drug", "unique_neighbours", 50)}
-/>
-
 
 ```sql drug_list_connected_categories
 with total as (
@@ -521,4 +508,18 @@ order by
     y="number_of_connections" 
     swapXY=true
     title="Categories connected to drug list node on average"
+/>
+
+### Drug nodes neighbours
+
+```sql drug_list_neighbour_counts
+select 
+  * 
+from 
+  bq.drug_list_neighbour_counts
+```
+
+<ECharts
+    style={{ height: '400px' }}
+    config={getHistogramEchartsOptions(drug_list_neighbour_counts, "drug", "unique_neighbours", 50)}
 />
