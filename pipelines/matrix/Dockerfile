@@ -27,7 +27,7 @@ ENV PATH=/app/.venv/bin:$PATH
 # Cache drivers as part of image
 COPY conf/base/spark.yml conf/base/spark.yml
 COPY scripts/maven-deps.py maven-deps.py
-RUN python maven-deps.py
+RUN python maven-deps.py && rm -rf /root/.ivy2/cache
 
 # Set git commit sha as env variable, useful for tracing back code to data
 ARG GIT_SHA
