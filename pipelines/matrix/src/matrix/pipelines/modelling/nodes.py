@@ -49,9 +49,14 @@ def filter_valid_pairs(
     categories_array = f.array([f.lit(cat) for cat in categories])
 
     # Get list of nodes in the KG
-    valid_nodes_in_kg = nodes.select("id").distinct().cache()
+    valid_nodes_in_kg = (
+        nodes.filter(f.array_contains(f.col("upstream_data_source"), "robokop")).select("id").distinct().cache()
+    )
     valid_nodes_with_categories = (
-        nodes.filter(f.size(f.array_intersect(f.col("all_categories"), categories_array)) > 0).select("id").cache()
+        nodes.filter(f.array_contains(f.col("upstream_data_source"), "robokop"))
+        .filter(f.size(f.array_intersect(f.col("all_categories"), categories_array)) > 0)
+        .select("id")
+        .cache()
     )
     # Divide edges_gt into positive and negative pairs to know ratio retained for each
     edges_gt = edges_gt.withColumnRenamed("subject", "source").withColumnRenamed("object", "target")
