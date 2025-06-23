@@ -23,7 +23,7 @@ title: KG Dashboard
     if (values.length === 0) return [];
     
     // Calculate min and max if not provided
-    const min = Math.min(...values);
+    const min = 0;
     const max = Math.max(...values);
     
     // Calculate number of bins based on width
@@ -35,7 +35,7 @@ title: KG Dashboard
       const binEnd = min + ((i + 1) * binWidth);
       const binLabel = i === binCount - 1 
         ? `${Math.round(binStart)}+` 
-        : `${Math.round(binStart)}-${Math.round(binEnd)}`;
+        : `${Math.round(binStart)}-${Math.round(binEnd - 1)}`;
       
       const count = values.filter(value => 
         value >= binStart && (i === binCount - 1 ? value <= binEnd : value < binEnd)
@@ -52,32 +52,20 @@ title: KG Dashboard
     return bins;
   }
 
-
-  function print(x) {
-    if(!x || !Array.isArray(x) || x.length === 0) {
-      console.log("Empty")
-      console.log(x)
-      return []
-    }
-    console.log('Oh, nice')
-    console.log(x.slice(0, 5))
-    console.log(x.slice(0, 5).map(d => d.unique_neighbours))
-    console.log("Bins")
-    console.log(createHistogramBins(x.map(d => d.unique_neighbours), 5, 0, 600))
-    return x
-  }
-
-  function getHistogramEchartsOptions(data) {
-    const bins = !data || !Array.isArray(data) || data.length === 0 ? [] : createHistogramBins(data.map(d => d.unique_neighbours), 10)
-    const binValues = bins.map(d => d.count)
-    const binLabels = bins.map(d => d.bin)
+  function getHistogramEchartsOptions(data, data_name, data_key, binWidth) {
+    const bins = !data || !Array.isArray(data) || data.length === 0 ? [] : createHistogramBins(data.map(d => d[data_key]), binWidth)
     const xAxis = bins.map(d => d.start)
+    
+    // Create series data with bin labels included
+    const seriesData = bins.map(bin => ({
+      value: bin.count,
+      binStart: bin.start,
+      binEnd: bin.end,
+    }))
+    
     return {
-      title: {
-        text: 'Disease list neighbour counts',
-        left: 'center'
-      },
       grid: {
+        top: '2%',
         bottom: '20%',
       },
       xAxis: {
@@ -99,24 +87,32 @@ title: KG Dashboard
         trigger: 'axis',
         axisPointer: {
           type: 'shadow'
+        },
+        formatter: function(params) {
+          const binStart = params[0].data.binStart;
+          const binEnd = params[0].data.binEnd;
+          const count = params[0].value;
+          return `${count} ${data_name}s have between ${binStart} and ${binEnd} neighbours`;
         }
       },
       dataZoom: [
         {
           type: 'inside',
           start: 0,
-          end: 3
+          end: 2,
+          minValueSpan: 30
         },
         {
           type: 'slider',
           start: 0,
-          end: 3
+          end: 2,
+          minValueSpan: 30
         }
       ],
       series: [
         {
           type: 'bar',
-          data: binValues
+          data: seriesData
         }
       ]
     }
@@ -124,19 +120,6 @@ title: KG Dashboard
 
   
 </script>
-
-
-```sql pwal
-select 
-  * 
-from 
-  bq.disease_list_neighbour_counts
-```
-
-<ECharts
-    style={{ height: '400px' }}
-    config={getHistogramEchartsOptions(pwal)}
-/>
 
 ## Version: {release_version}
 
@@ -425,13 +408,13 @@ select
   * 
 from 
   bq.disease_list_neighbour_counts
-where 
-  unique_neighbours < 1000
 ```
-<Histogram
-    data={disease_list_neighbour_counts}
-    x=unique_neighbours
-    xAxisTitle="Disease node neighbours"
+
+### Disease nodes neighbours
+
+<ECharts
+    style={{ height: '400px' }}
+    config={getHistogramEchartsOptions(disease_list_neighbour_counts, "disease", "unique_neighbours", 10)}
 />
 
 
@@ -491,10 +474,14 @@ select
   * 
 from 
   bq.drug_list_neighbour_counts
-where 
-  unique_neighbours < 1000
 ```
 
+### Drug nodes neighbours
+
+<ECharts
+    style={{ height: '400px' }}
+    config={getHistogramEchartsOptions(drug_list_neighbour_counts, "drug", "unique_neighbours", 50)}
+/>
 
 
 ```sql drug_list_connected_categories
