@@ -288,7 +288,7 @@ matrix exited with code 1
 ```
 You might encounter this when running integration tests within the docker container. This is a [kedro-related ThreadRunner error](https://github.com/kedro-org/kedro/issues/4191) and should be now fixed within the MATRIX pipeline by pinning a specific kedro version)[]. In case you stumble upon this error during your development, you solve this issue by specifying the following in the requirements.in
 ```
-kedro==0.19.6
+kedro==0.19.13
 ```
 
 ## MLFlow exception error when running the pipeline

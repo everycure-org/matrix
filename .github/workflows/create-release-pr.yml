@@ -15,8 +15,8 @@ on:
 
 env:
   project_id: 'mtrx-hub-dev-3of'
-  workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
-  service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
+  workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-ro/providers/matrix-gh-provider-ro'
+  service_account: 'sa-github-actions-ro@mtrx-hub-dev-3of.iam.gserviceaccount.com'
 
 jobs:
   create_release_notes_draft:
