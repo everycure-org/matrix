@@ -467,24 +467,6 @@ brew services stop neo4j
 ```
 
 
-### libomp for LLMs
-
-The [libomp](https://openmp.llvm.org/index.html) library might be required as a local runtime for LLMs. If not installed it will trigger an error containing the following:
-
-```
-* OpenMP runtime is not installed
-  - vcomp140.dll or libgomp-1.dll for Windows
-  - libomp.dylib for Mac OSX
-  - libgomp.so for Linux and other UNIX-like OSes
-  Mac OSX users: Run `brew install libomp` to install OpenMP runtime.
-```
-
-To install it on MacOS, run:
-
-```bash
-brew install libomp
-```
-
 ### Invalid requirement for './packages/data_fabricator': Expected package name at the start of dependency specifier
 
 The error above can occur if you set up MATRIX repo back when we were using data_fabricator package for fabricating data; we are no longer relying on this package however if you only recently made a change, you might encounter the .
@@ -504,3 +486,18 @@ git submodule update --init --recursive
 
 P.S: After running the above command, a browser would open to authenticate with Github. This is normal. If nothing happens (incase of using PyCharm IDE), suggestion would be run this through the shell (terminal).
 
+
+### Error: Permission Denied When Deleting RAW Data Files
+
+If you attempt to delete files directly from the RAW data bucket, you may encounter a permission denied error or find that you do not have the necessary rights to perform deletions. This is intentional: to protect the integrity of our RAW data, direct delete permissions are not granted to individual users.
+
+**Why:**
+- RAW data is critical and must not be accidentally or maliciously deleted.
+- We enforce a "four eyes" principle for deletions to ensure all removals are reviewed.
+
+**Solution:**
+- If you need to delete files from the RAW bucket, do **not** attempt to do so manually.
+- Instead, add the paths you wish to delete to `scripts/cleanup_files.txt` and submit a PR.
+- Once reviewed and merged, the automated cleanup process (see `.github/workflows/cleanup_raw_bucket.yml`) will safely delete the files using a controlled, auditable workflow.
+
+This process ensures data safety and compliance with our data governance policies.
