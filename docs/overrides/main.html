@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+<!-- NOTE: This file was partially generated using AI assistance. -->
+
+{% block extrahead %}
+  {{ super() }}
+  <!-- Custom donate button styling -->
+  <style>
+    .md-header__donate {
+      display: flex;
+      align-items: center;
+      margin-left: 0.5rem;
+    }
+    
+    .md-header__donate .md-button {
+      background-color: #ff6b35;
+      border: none;
+      color: white;
+      padding: 0.4rem 0.8rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border-radius: 0.1rem;
+      transition: all 0.25s ease;
+      white-space: nowrap;
+    }
+    
+    .md-header__donate .md-button:hover {
+      background-color: #e55a2e;
+      color: white;
+      text-decoration: none;
+      transform: translateY(-0.05rem);
+    }
+    
+    .md-header__donate .md-button:focus {
+      outline: 2px solid #ff6b35;
+      outline-offset: 2px;
+    }
+    
+    /* Responsive design */
+    @media screen and (max-width: 76.1875em) {
+      .md-header__donate {
+        margin-left: 0.2rem;
+      }
+      
+      .md-header__donate .md-button {
+        padding: 0.35rem 0.6rem;
+        font-size: 0.7rem;
+      }
+    }
+    
+    @media screen and (max-width: 44.9375em) {
+      .md-header__donate .md-button {
+        padding: 0.3rem 0.5rem;
+        font-size: 0.65rem;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block header %}
+  <header class="md-header" data-md-component="header">
+    <nav class="md-header__inner md-grid" aria-label="Header">
+      <a href="{{ config.site_url | default(nav.homepage.url, true) | url }}" title="{{ config.site_name }}" class="md-header__button md-logo" aria-label="{{ config.site_name }}" data-md-component="logo">
+        {% include "partials/logo.html" %}
+      </a>
+      <label class="md-header__button md-icon" for="__drawer">
+        {% set icon = config.theme.icon.menu or "material/menu" %}
+        {% include ".icons/" ~ icon ~ ".svg" %}
+      </label>
+      <div class="md-header__title" data-md-component="header-title">
+        <div class="md-header__ellipsis">
+          <div class="md-header__topic">
+            <span class="md-ellipsis">
+              {{ config.site_name }}
+            </span>
+          </div>
+          <div class="md-header__topic" data-md-component="header-topic">
+            <span class="md-ellipsis">
+              {% if page.meta and page.meta.title %}
+                {{ page.meta.title }}
+              {% else %}
+                {{ page.title }}
+              {% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Add donate button here -->
+      <div class="md-header__donate">
+        <a href="https://everycure.org/donate" target="_blank" class="md-button" title="Support Every Cure's mission">
+          💝 Donate
+        </a>
+      </div>
+      
+      {% if config.repo_url %}
+        <div class="md-header__source">
+          {% include "partials/source.html" %}
+        </div>
+      {% endif %}
+      {% include "partials/search.html" %}
+    </nav>
+  </header>
+{% endblock %}
