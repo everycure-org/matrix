@@ -1,5 +1,3 @@
-### Embeddings
-
 Our embeddings pipeline computes vectorized representations of the entities in the knowledge graph in two stages:
 
 1. Node Attribute Embedding Computation - We use GenAI models (e.g. OpenAI's `text-embedding-3-small` embedding API, and domain specific models such as PubMedBERT), for efficient node embedding, leveraging batch processing to reduce runtime and integrating error handling for API limits. 
