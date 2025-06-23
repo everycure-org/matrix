@@ -10,7 +10,8 @@ locals {
     "serviceAccount:299386668624-compute@developer.gserviceaccount.com", # orchard dev
     local.orchard_prod_compute_service_account                           # orchard prod
   ]
-  github_actions_rw = ["serviceAccount:sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com"]
+  github_actions_rw     = ["serviceAccount:sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com"]
+  custom_cloud_build_sa = ["serviceAccount:custom-cloud-build-sa@mtrx-hub-prod-sms.iam.gserviceaccount.com"]
 }
 
 module "project_iam_bindings" {
@@ -35,13 +36,18 @@ module "project_iam_bindings" {
     "roles/storage.objectUser"             = local.tech_team_group
     "roles/storage.objectViewer"           = local.cross_account_sas
     "roles/artifactregistry.writer"        = flatten([local.tech_team_group, [local.matrix_all_group]]) # enables people to run kedro submit
-    "roles/viewer"                         = flatten([local.matrix_viewers_group, local.cross_account_sas])
+    "roles/viewer"                         = flatten([local.matrix_viewers_group, local.cross_account_sas, local.custom_cloud_build_sa])
     "roles/bigquery.jobUser"               = flatten([local.matrix_viewers_group, local.cross_account_sas])
     # giving prod k8s cluster access to our dev data. 
     "roles/bigquery.dataViewer"       = flatten([local.matrix_viewers_group, local.cross_account_sas, local.prod_sas])
     "roles/bigquery.studioUser"       = flatten([local.matrix_viewers_group, local.cross_account_sas])
     "roles/bigquery.user"             = flatten([local.matrix_viewers_group, local.cross_account_sas])
     "roles/iap.httpsResourceAccessor" = flatten([local.matrix_viewers_group, local.github_actions_rw])
+    # Grant Cloud Build service account necessary permissions for storage operations
+    "roles/storage.admin" = local.custom_cloud_build_sa
+    # roles/owner does _not_ have org policy edit rights. the SA needs it though if we want to edit org policies (e.g. for overrides)
+    # TODO: https://linear.app/everycure/issue/SEC-3
+    # "roles/orgpolicy.policyAdmin" = local.custom_cloud_build_sa
 
     "roles/compute.networkUser" = [local.matrix_all_group]
   }
