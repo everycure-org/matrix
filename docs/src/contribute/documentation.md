@@ -1,3 +1,9 @@
+---
+title: Documentation
+---
+
+If you think there is something missing or that you could improve our documentation, please contribute!
+
 ## MKDocs
 
 We use MKDocs for documenting our technology.

@@ -2,6 +2,7 @@ nav:
     - index.md
     - getting_started
     - pipeline
+    - contribute
     - infrastructure
     - releases
     - references

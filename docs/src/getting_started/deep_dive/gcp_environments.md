@@ -3,6 +3,9 @@
 
 This guide explains how to use development and production GCP environments with Kedro in the matrix project.
 
+!!! warning
+    Note that project names presented here are related to the Matrix Project & Matrix GCP infrastructure. If you have set up MATRIX codebase on your own cloud platform, these instructions might not be directly applicable for you and might vary.
+
 ## Terminology
 
 ### Kedro environments
