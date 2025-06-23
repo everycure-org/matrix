@@ -1,0 +1,84 @@
+{
+  "id": "37a8af47-1e74-48d8-ad66-5d19d7c646b9",
+  "status": "FAILURE",
+  "source": {
+    "gitSource": {
+      "url": "https://github.com/everycure-org/matrix.git",
+      "revision": "d4c21799ee3c0d225b0bb74462d15df7c04e9fac"
+    }
+  },
+  "createTime": "2025-06-03T08:55:33.575573Z",
+  "startTime": "2025-06-03T08:55:34.018850675Z",
+  "finishTime": "2025-06-03T08:57:03.867830731Z",
+  "results": {
+    "buildStepImages": ["sha256:b12c37ff5e75cdb5842c4a60e06cf1c86351d31857ab6c7d70d9f0ac6a2ab1f6", ""],
+    "buildStepOutputs": ["", ""]
+  },
+  "steps": [{
+    "name": "ghcr.io/devops-infra/docker-terragrunt:aws-gcp-tf-1.11.4-tg-0.78.4",
+    "args": ["-c", "exit 1 # This step is intentionally failing to test the Slack notification.\n"],
+    "entrypoint": "bash",
+    "timing": {
+      "startTime": "2025-06-03T08:55:51.093994060Z",
+      "endTime": "2025-06-03T08:57:03.610300208Z"
+    },
+    "status": "FAILURE",
+    "pullTiming": {
+      "startTime": "2025-06-03T08:55:51.093994060Z",
+      "endTime": "2025-06-03T08:57:02.702889071Z"
+    },
+    "exitCode": 1
+  }, {
+    "name": "ghcr.io/devops-infra/docker-terragrunt:aws-gcp-tf-1.11.4-tg-0.78.4",
+    "args": ["-c", "exit 0 # This step is intentionally failing to test the Slack notification.\n"],
+    "entrypoint": "bash",
+    "status": "QUEUED"
+  }],
+  "timeout": "600s",
+  "projectId": "mtrx-wg2-modeling-dev-9yj",
+  "sourceProvenance": {
+    "resolvedGitSource": {
+      "url": "https://github.com/everycure-org/matrix.git",
+      "revision": "d4c21799ee3c0d225b0bb74462d15df7c04e9fac"
+    }
+  },
+  "buildTriggerId": "0e1d9666-ed29-43b7-9bb6-70bf0d658f77",
+  "options": {
+    "substitutionOption": "ALLOW_LOOSE",
+    "logging": "CLOUD_LOGGING_ONLY",
+    "dynamicSubstitutions": true,
+    "pool": {
+    }
+  },
+  "logUrl": "https://console.cloud.google.com/cloud-build/builds;region\u003dus-central1/37a8af47-1e74-48d8-ad66-5d19d7c646b9?project\u003d246181886303",
+  "substitutions": {
+    "SHORT_SHA": "d4c2179",
+    "REF_NAME": "infra",
+    "_TERRAGRUNT_DIR": "infra/deployments/wg2",
+    "BRANCH_NAME": "infra",
+    "COMMIT_SHA": "d4c21799ee3c0d225b0bb74462d15df7c04e9fac",
+    "REPO_NAME": "matrix",
+    "REVISION_ID": "d4c21799ee3c0d225b0bb74462d15df7c04e9fac",
+    "TRIGGER_BUILD_CONFIG_PATH": "",
+    "TRIGGER_NAME": "terragrunt-on-infra-push",
+    "REPO_FULL_NAME": "everycure-org/matrix"
+  },
+  "tags": ["trigger-0e1d9666-ed29-43b7-9bb6-70bf0d658f77"],
+  "timing": {
+    "BUILD": {
+      "startTime": "2025-06-03T08:55:50.161741803Z",
+      "endTime": "2025-06-03T08:57:03.610373061Z"
+    },
+    "FETCHSOURCE": {
+      "startTime": "2025-06-03T08:55:35.935660116Z",
+      "endTime": "2025-06-03T08:55:50.161642507Z"
+    }
+  },
+  "queueTtl": "3600s",
+  "serviceAccount": "projects/mtrx-wg2-modeling-dev-9yj/serviceAccounts/custom-cloud-build-sa@mtrx-wg2-modeling-dev-9yj.iam.gserviceaccount.com",
+  "name": "projects/246181886303/locations/us-central1/builds/37a8af47-1e74-48d8-ad66-5d19d7c646b9",
+  "failureInfo": {
+    "type": "USER_BUILD_STEP",
+    "detail": "Build step failure: build step 0 \"ghcr.io/devops-infra/docker-terragrunt:aws-gcp-tf-1.11.4-tg-0.78.4\" failed: step exited with non-zero status: 1"
+  }
+}

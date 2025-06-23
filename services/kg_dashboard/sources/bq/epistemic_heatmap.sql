@@ -23,7 +23,7 @@ WITH base AS (
       WHEN agent_type = 'not_provided' OR agent_type IS NULL OR agent_type = '' THEN 'Not Provided'
       ELSE 'Other'
     END AS agent_type_label
-  FROM `mtrx-hub-dev-3of.release_${bq_release_version}.edges_unified`
+  FROM `${project_id}.release_${bq_release_version}.edges_unified`
 ),
 
 scored AS (
