@@ -34,7 +34,7 @@ The pipeline starts by mapping ground truth data to the knowledge graph:
 
 ### Split Generation
 
-The `make_folds` function creates cross-validation splits:
+The `make_folds` function creates cross-validation splits using [StratifiedShuffleSplit](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedShuffleSplit.html) from scikit-learn:
 
 - Generates train/test splits for folds 0-2 using the specified splitter strategy
     - Train 90%
@@ -47,6 +47,8 @@ The `make_folds` function creates cross-validation splits:
 To address class imbalance and reduce bias, the pipeline implements a negative sampling approach:
 
 1. **Sharding**: Creates 3 shards, each with a different randomly sampled set of negative examples
+2. **Unknown Category**: Generates "unknown" drug-disease pairs by randomly sampling from the space of possible combinations
+3. **Bias Reduction**: Multiple shards help reduce the impact of random sampling bias on model performance
 
 ## Model Training Process
 
@@ -56,7 +58,7 @@ For each fold and shard combination, the pipeline:
 
 1. **Data Transformation**: Applies fitted transformers to the enriched splits
 2. **Hyperparameter Tuning**: Uses the training data to tune model parameters
-3. **Model Training**: Trains an XGBoost classifier on the transformed data
+3. **Model Training**: Trains an [XGBoost](https://xgboost.readthedocs.io/en/stable/) classifier on the transformed data
 
 ### Ensemble Creation
 
