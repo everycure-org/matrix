@@ -13,7 +13,130 @@ title: KG Dashboard
       return acc;
     }, {});
   }
+
+  // NOTE: This function was partially generated using AI assistance.
+  function createHistogramBins(data, binWidth) {
+    if (!data || !Array.isArray(data) || data.length === 0) return [];
+    
+    // Extract the column values
+    const values = data.filter(v => v !== null && v !== undefined);
+    if (values.length === 0) return [];
+    
+    // Calculate min and max if not provided
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    
+    // Calculate number of bins based on width
+    const binCount = Math.ceil((max - min) / binWidth);
+    const bins = [];
+    
+    for (let i = 0; i < binCount; i++) {
+      const binStart = min + (i * binWidth);
+      const binEnd = min + ((i + 1) * binWidth);
+      const binLabel = i === binCount - 1 
+        ? `${Math.round(binStart)}+` 
+        : `${Math.round(binStart)}-${Math.round(binEnd)}`;
+      
+      const count = values.filter(value => 
+        value >= binStart && (i === binCount - 1 ? value <= binEnd : value < binEnd)
+      ).length;
+      
+      bins.push({
+        bin: binLabel,
+        count: count,
+        start: binStart,
+        end: binEnd
+      });
+    }
+    
+    return bins;
+  }
+
+
+  function print(x) {
+    if(!x || !Array.isArray(x) || x.length === 0) {
+      console.log("Empty")
+      console.log(x)
+      return []
+    }
+    console.log('Oh, nice')
+    console.log(x.slice(0, 5))
+    console.log(x.slice(0, 5).map(d => d.unique_neighbours))
+    console.log("Bins")
+    console.log(createHistogramBins(x.map(d => d.unique_neighbours), 5, 0, 600))
+    return x
+  }
+
+  function getHistogramEchartsOptions(data) {
+    const bins = !data || !Array.isArray(data) || data.length === 0 ? [] : createHistogramBins(data.map(d => d.unique_neighbours), 10)
+    const binValues = bins.map(d => d.count)
+    const binLabels = bins.map(d => d.bin)
+    const xAxis = bins.map(d => d.start)
+    return {
+      title: {
+        text: 'Disease list neighbour counts',
+        left: 'center'
+      },
+      grid: {
+        bottom: '20%',
+      },
+      xAxis: {
+        data: xAxis,
+        silent: false,
+        splitLine: {
+          show: false
+        },
+        splitArea: {
+          show: false
+        }
+      },
+      yAxis: {
+        splitArea: {
+          show: false
+        }
+      },
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        }
+      },
+      dataZoom: [
+        {
+          type: 'inside',
+          start: 0,
+          end: 3
+        },
+        {
+          type: 'slider',
+          start: 0,
+          end: 3
+        }
+      ],
+      series: [
+        {
+          type: 'bar',
+          data: binValues
+        }
+      ]
+    }
+  }
+
+  
 </script>
+
+
+```sql pwal
+select 
+  * 
+from 
+  bq.disease_list_neighbour_counts
+```
+
+<ECharts
+    style={{ height: '400px' }}
+    config={getHistogramEchartsOptions(pwal)}
+/>
 
 ## Version: {release_version}
 
@@ -170,7 +293,7 @@ SELECT * FROM bq.epistemic_heatmap
       </span><br/>
       edges with missing provenance
       <div class="text-sm font-normal mt-1">
-        “Missing provenance” includes edges where both Knowledge Level and Agent Type are "Not Provided" or not present.
+        "Missing provenance" includes edges where both Knowledge Level and Agent Type are "Not Provided" or not present.
       </div>
      </div>
   </div>
@@ -372,10 +495,7 @@ where
   unique_neighbours < 1000
 ```
 
-<Histogram data={drug_list_neighbour_counts} x=unique_neighbours xAxisTitle="Drug node neighbours">
-    <ReferenceLine data={edges_per_node} x=median_drug_node_degree label="Median" />
-    <ReferenceLine data={edges_per_node} x=drug_edges_per_node label="Mean" />
-</Histogram>
+
 
 ```sql drug_list_connected_categories
 with total as (
