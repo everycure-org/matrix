@@ -4,9 +4,38 @@ hide:
   - toc
   - navigation
 ---
+<!-- NOTE: This file was partially generated using AI assistance. -->
 # Matrix Project
 
 Welcome! This documentation provides an introduction to the project and the codebase, and guides you through the process of setting up your local environment.
+
+<div class="grid cards" markdown>
+
+-   ![Developer](assets/img/hero.svg){: style="float: right; width: 150px; margin-left: 1em;" }
+
+    __I'm a Developer__
+
+    I want to contribute to the codebase.
+
+    [:octicons-arrow-right-24: Get started locally](./getting_started/)
+
+-   ![Researcher](assets/img/researcher.svg){: style="float: right; width: 150px; margin-left: 1em;" }
+
+    __I'm a Researcher__
+
+    I want to run the pipeline with real data.
+
+    [:octicons-arrow-right-24: Access the data](./contribute/get_access_to_data/)
+
+-   ![Engineer](assets/img/engineer.svg){: style="float: right; width: 150px; margin-left: 1em;" }
+
+    __I'm an Engineer__
+
+    I want to build a new platform based on this work.
+
+    [:octicons-arrow-right-24: See infrastructure](./infrastructure/)
+
+</div>
 
 ## What is Matrix?
 
@@ -38,5 +67,3 @@ Matrix is a part of the Every Cure pipeline. [Every Cure](https://everycure.org/
 
 ??? info "Every Cure videos"
     <iframe width="640" height="390" src="https://www.youtube.com/embed/3ElaCVvDZfI?si=lk3b1rSMutyiierm" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-
-    <iframe width="640" height="390" src="https://www.youtube.com/embed/67_Z40Ap1pU?si=XlCu7fBHxxkBTchH" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>

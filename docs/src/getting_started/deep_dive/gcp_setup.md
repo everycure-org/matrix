@@ -2,6 +2,9 @@
 
 Now that you understand how to run different parts of the pipeline and have seen how the data flows through the system, let's set up your environment to work with GCP. This will allow you to access the full range of data and compute resources available in the Matrix platform.
 
+!!! warning
+    Note that this section is only applicable for users who are part of Matrix Project & Matrix GCP infrastructure; if you have set up MATRIX codebase on your own cloud platform, these instructions might not be directly applicable for you
+
 ## Prerequisites
 
 !!! Prerequisited

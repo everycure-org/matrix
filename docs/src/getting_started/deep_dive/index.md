@@ -4,13 +4,6 @@ title: Deep Dive
 
 # Deep Dive into MATRIX
 
-After completing first steps, you should be able to:
-
-- Understand our Tech Stack on a high level
-- Set up MATRIX environment on your machine
-- Understand how config and kedro parameters work well together
-- Run the Repurposing Pipeline with both fabricated data and sample of real data
-
 !!! info
     To utilize our MATRIX system efficiently with real data, you will need get access to some of our internal tools such as Kubernetes Cluster and GCS Storage. In order to do that please create [onboarding issue](https://github.com/everycure-org/matrix/issues/new?assignees=&labels=onboarding&projects=&template=onboarding.md&title=%3Cfirstname%3E+%3Clastname%3E) so that we can assist you in the best possible way
 
