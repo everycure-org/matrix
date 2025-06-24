@@ -15,4 +15,4 @@ You can find more details about the pipeline stages here:
 
 Of course there is a lot more to this but the below illustration aims to sketch the high level flow of the pipeline:
 
-![Matrix Pipeline](../../assets/getting_started/matrix_overview.png)
+![Matrix Pipeline](../assets/getting_started/matrix_overview.png)
