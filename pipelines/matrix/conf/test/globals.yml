@@ -18,7 +18,11 @@ paths:
   integration:        data/test/releases/${versions.release}/datasets/integration
 
   # Run-based
-  filtering:          data/test/releases/${versions.release}/runs/${run_name}/datasets/filtering
+
+  # data/test/releases/test-release/runs/other-run/datasets/filtering
+
+  # Allow custom input of filtered graph
+  filtering:          ${oc.env:FILTERING}
   embeddings:         data/test/releases/${versions.release}/runs/${run_name}/datasets/embeddings
   modelling:          data/test/releases/${versions.release}/runs/${run_name}/datasets/modelling
   evaluation:         data/test/releases/${versions.release}/runs/${run_name}/datasets/evaluation

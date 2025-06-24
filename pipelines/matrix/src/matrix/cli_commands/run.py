@@ -69,8 +69,9 @@ class RunConfig(NamedTuple):
 @click.option( "--conf-source",   type=click.Path(exists=True, file_okay=False, resolve_path=True), help=CONF_SOURCE_HELP,)
 @click.option( "--params",        type=click.UNPROCESSED, default="", help=PARAMS_ARG_HELP, callback=_split_params,)
 @click.option( "--from-env",      type=str, default=None, help="Custom env to read from, if specified will read from the `--from-env` and write to the `--env`",)
+@click.option( "--filtering-run",      type=str, default=None, help="Custom filtering run to read from, if specified will read from the `--filtering-run`")
 # fmt: on
-def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async: bool, node_names: list[str], to_nodes: list[str], from_nodes: list[str], from_inputs: list[str], to_outputs: list[str], load_versions: list[str], pipeline: str, conf_source: str, params: dict[str, Any], from_env: Optional[str]=None):
+def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async: bool, node_names: list[str], to_nodes: list[str], from_nodes: list[str], from_inputs: list[str], to_outputs: list[str], load_versions: list[str], pipeline: str, conf_source: str, params: dict[str, Any], from_env: Optional[str]=None, filtering_run: Optional[str]=None):
     """Run the pipeline."""
 
     _validate_env_vars_for_private_data()
@@ -95,6 +96,7 @@ def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async
         conf_source=conf_source,
         params=params,
         from_env=from_env,
+        filtering_run=filtering_run,
     )
 
     _run(config, KedroSessionWithFromCatalog)
@@ -141,6 +143,10 @@ def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
         )
 
         from_catalog = _extract_config(config, session)
+
+        os.environ["FILTERING"] = f"data/test/releases/test-release/runs/{config.filtering_run}/datasets/filtering"
+
+        # breakpoint()
 
         session.run(
             from_catalog=from_catalog,

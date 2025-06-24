@@ -11,6 +11,8 @@ _spark_parquet_ds: &_spark_parquet
 # -------------------------------------------------------------------------
 # filtered KGs
 
+
+# Allow custom input of filtered graph
 filtering.prm.filtered_edges:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.filtering}/prm/filtered/edges
