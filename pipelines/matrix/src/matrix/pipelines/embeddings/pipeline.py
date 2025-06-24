@@ -165,6 +165,7 @@ def create_pipeline(**kwargs) -> Pipeline:
 def create_node_embeddings_pipeline() -> Pipeline:
     from matrix.pipelines.batch.pipeline import cached_api_enrichment_pipeline  # resolve circular import
 
+    # breakpoint()
     source = "node_embeddings"
     workers = 20
     return cached_api_enrichment_pipeline(
