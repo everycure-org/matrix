@@ -42,4 +42,4 @@ kedro run --from-env cloud --nodes preprocessing_node_name
     MLFLOW_ENDPOINT=http://127.0.0.1:5002
     ```
 
-[Contribute :material-skip-next:](../contribute/index.md){ .md-button .md-button--primary }
+[Contribute :material-skip-next:](../../contribute/index.md){ .md-button .md-button--primary }

@@ -7,7 +7,7 @@ You can find more details about the pipeline stages here:
 - [Ingestion](./pipeline_steps/ingestion.md)
 - [Integration](./pipeline_steps/integration.md)
 - [Filtering](./pipeline_steps/filtering.md)
-- [Embedding](./pipeline_steps/embedding.md)
+- [Embedding](./pipeline_steps/embeddings.md)
 - [Modelling](./pipeline_steps/modelling.md)
 - [Matrix generation](./pipeline_steps/matrix_generation.md)
 - [Matrix transformation](./pipeline_steps/matrix_transformation.md)
