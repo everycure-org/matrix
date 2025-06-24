@@ -288,7 +288,7 @@ matrix exited with code 1
 ```
 You might encounter this when running integration tests within the docker container. This is a [kedro-related ThreadRunner error](https://github.com/kedro-org/kedro/issues/4191) and should be now fixed within the MATRIX pipeline by pinning a specific kedro version)[]. In case you stumble upon this error during your development, you solve this issue by specifying the following in the requirements.in
 ```
-kedro==0.19.6
+kedro==0.19.13
 ```
 
 ## MLFlow exception error when running the pipeline
@@ -484,3 +484,18 @@ To install it on MacOS, run:
 ```bash
 brew install libomp
 ```
+
+## Error: Permission Denied When Deleting RAW Data Files
+
+If you attempt to delete files directly from the RAW data bucket, you may encounter a permission denied error or find that you do not have the necessary rights to perform deletions. This is intentional: to protect the integrity of our RAW data, direct delete permissions are not granted to individual users.
+
+**Why:**
+- RAW data is critical and must not be accidentally or maliciously deleted.
+- We enforce a "four eyes" principle for deletions to ensure all removals are reviewed.
+
+**Solution:**
+- If you need to delete files from the RAW bucket, do **not** attempt to do so manually.
+- Instead, add the paths you wish to delete to `scripts/cleanup_files.txt` and submit a PR.
+- Once reviewed and merged, the automated cleanup process (see `.github/workflows/cleanup_raw_bucket.yml`) will safely delete the files using a controlled, auditable workflow.
+
+This process ensures data safety and compliance with our data governance policies.
