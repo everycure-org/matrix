@@ -102,19 +102,20 @@ def generate_test_dataset(
 
 
 @inject_object()
-def evaluate_test_predictions(data: pd.DataFrame, evaluation: Evaluation) -> Any:
+def evaluate_test_predictions(data: pd.DataFrame, evaluation: Evaluation, score_col_name: str) -> Any:
     """Function to apply evaluation.
 
     Args:
         data: predictions to evaluate on
         evaluation: metric to evaluate.
+        score_col_name: name of the score column to use
 
     Returns:
         Evaluation report
     """
     logger.info(f"Evaluation data size: {data.shape}")
     logger.info(f"Evaluation is: {evaluation}")
-    return evaluation.evaluate(data)
+    return evaluation.evaluate(data, score_col_name)
 
 
 @inject_object()
