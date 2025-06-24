@@ -1,0 +1,11 @@
+# mohammad time-split files cleanup 
+gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/experimental-time-split/v2.7.3/failed_ts3_edges_c.tsv
+gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/experimental-time-split/v2.7.3/pre-2014-ts3_edges_c.tsv
+gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/experimental-time-split/v2.7.3/ts2-pre2014_edges_c.tsv
+gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/experimental-time-split/v2.7.3/ts2-pre2014_nodes_c.tsv
+gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/experimental-time-split/v2.7.3/ts3-pre2014_edges_c.tsv
+gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/experimental-time-split/v2.7.3/ts3-pre2014_nodes_c.tsv
+gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/experimental-time-split/v2.7.3/ts3_edges_c.tsv
+gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/experimental-time-split/v2.7.3/ts_edges_c.tsv
+gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/experimental-time-split/v2.7.3/ts_nodes_c.tsv
+gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/experimental-time-split/v2.7.3/unused/
