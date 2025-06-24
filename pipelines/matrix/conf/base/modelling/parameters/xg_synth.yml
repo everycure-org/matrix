@@ -1,14 +1,14 @@
 modelling.xg_synth:
     _overrides:
-      # generator:
-      #   _object: matrix.datasets.pair_generator.ReplacementDrugDiseasePairGenerator
-      #   random_state: ${globals:random_state}
-      #   y_label: 2
-      #   n_replacements: 5
-      #   drug_flags:
-      #     - is_drug
-      #   disease_flags:
-      #     - is_disease
+      generator:
+        _object: matrix.datasets.pair_generator.ReplacementDrugDiseasePairGenerator
+        random_state: ${globals:random_state}
+        y_label: 2
+        n_replacements: 5
+        drug_flags:
+          - is_drug
+        disease_flags:
+          - is_disease
 
       model_tuning_args:
         tuner:
