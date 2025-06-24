@@ -17,7 +17,7 @@ $$\text{treat_score} + \text{not_treat_score} + \text{unknown_score} = 1$$
 
 The modelling pipeline follows a systematic approach to train robust prediction models:
 
-1. **Cross-Validation Setup**: Create 4 folds total:
+1. **Cross-Validation Setup**:
     - Folds 0, 1, 2: Training folds with different test/train splits (90%/10%) for known positives and negatives
     - Fold 3: Full training data fold (no test split) for final model production
 
