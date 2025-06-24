@@ -1,10 +1,12 @@
-The modelling pipeline trains prediction models using drug-disease pairs and knowledge graph embeddings to predict treats relationships between drugs and diseases.
+The modelling pipeline trains drug-disease treatment prediction models using indication/contraindication data and knowledge graph embeddings.
 
 ## Overview
 
 The modelling pipeline implements a robust cross-validation strategy with ensemble learning to predict whether a drug treats a disease. The pipeline classifies three categories of drug-disease relationships:
 
-- **Treat**: relationships where a drug treats a disease
+- **Treat**: Positive relationships where a drug treats disease. Represented by known indications. 
+- **Not Treat**: Negative relationship represented by known contraindications.
+- **Unknown**: Negative relationship represented by random drug-disease pairs where the drug is not related to the disease.
 - **Not Treat**: negative relationships where a drug does not treat a disease. These are often contraindications
 - **Unknown**: pairs where the relationship is unknown 
 
