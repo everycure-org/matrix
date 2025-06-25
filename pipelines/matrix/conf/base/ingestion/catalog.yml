@@ -225,7 +225,7 @@ ingestion.raw.valid_edge_types:
   type: matrix.datasets.github.GitHubReleaseCSVDataset
   repository_url: https://github.com/everycure-org/matrix-schema
   release_name: ${globals:data_sources.matrix_schema.version}
-  release_asset_name: valid_edge_types.tsv
+  release_asset_name: valid_biolink_edge_types.tsv
   fs_args:
     Accept: application/octet-stream
     Authorization: token ${globals:gh_token}
@@ -233,7 +233,7 @@ ingestion.raw.valid_edge_types:
     sep: "\t"
 
 ingestion.int.valid_edge_types:
-  <<: [*_spark_parquet, *_layer_int]
+  <<: [*_pandas_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/int/valid_edge_types/${globals:data_sources.matrix_schema.version}/valid_edge_types
 
 # -------------------------------------------------------------------------
