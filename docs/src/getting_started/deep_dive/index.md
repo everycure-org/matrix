@@ -5,23 +5,22 @@ title: Deep Dive
 # Deep Dive into MATRIX
 
 !!! info
-    To utilize our MATRIX system efficiently with real data, you will need get access to some of our internal tools such as Kubernetes Cluster and GCS Storage. In order to do that please create [onboarding issue](https://github.com/everycure-org/matrix/issues/new?assignees=&labels=onboarding&projects=&template=onboarding.md&title=%3Cfirstname%3E+%3Clastname%3E) so that we can assist you in the best possible way
+    To contribute to the MATRIX project and utilize our MATRIX system efficiently with real data, with our deployed infrastructure, you will need get access to some of our internal tools such as Kubernetes Cluster and GCS Storage. In order to do that please create [onboarding issue](https://github.com/everycure-org/matrix/issues/new?assignees=&labels=onboarding&projects=&template=onboarding.md&title=%3Cfirstname%3E+%3Clastname%3E) so that we can assist you in the best possible way
 
-In this section, we will walk through our tech stack, infrastructure, and pipeline in more detail. 
+This section covers:
 
-First we will start with **GCP Setup** to understand how to configure your environment for cloud operations, then explore **GCP Environments** to learn about our cloud infrastructure and deployment strategies.
+- **GCP Setup & Environments**: Configure cloud environment and understand infrastructure
+- **Kedro Extensions**: Custom pipeline components and framework enhancements
+- **Kedro Experiment**: Tracking and reproducing experiments
+- **Environment Types**:
+    * **Base**: Shared foundation configuration
+    * **Test**: Fast testing with synthetic data
+    * **Sample**: Development with smaller real datasets  
+    * **Cloud**: Production-scale GCP execution
+- **Jupyter Integration**: Interactive development with Kedro in a notebook
+- **Cross Environment Workflows**: Debug and troubleshoot across environments
+- **Practical Walkthroughs**: Real-world usage patterns and best practices
 
-Then we will dive into **Kedro Extensions** to understand our custom pipeline components and how they enhance the standard Kedro framework. Learn about **Kedro Experiment** management for tracking and reproducing your work. There is also an optional section which builds on environment overview in )_first steps_ where we will cover our comprehensive environment system:
-- **Base Environment**: Foundation configuration shared across all environments
-- **Test Environment**: Fast testing with synthetic data and optimized parameters
-- **Sample Environment**: Development with smaller real datasets
-- **Cloud Environment**: Production-scale execution on GCP
-
-
-At the end of the section we will learn how to use **Jupyter** with Kedro for interactive development and data exploration. Understand **Cross Environment** workflows for debugging and troubleshooting production issues.
-
-The section has links to practical **walkthroughs** that demonstrate real-world usage patterns and best practices for working with the MATRIX pipeline.
-
-We realize that this section is comprehensive and our pipeline is quite sophisticated. However, after completing this section, you should have a thorough understanding of the MATRIX system and be able to utilize the codebase and GCP effectively, develop, and contribute!
+We recommend starting with GCP Setup to establish your cloud environment.
 
 [Start with GCP Setup :material-arrow-right:](./gcp_setup.md){ .md-button .md-button--primary }

@@ -2,9 +2,8 @@
 title: Onboard to Matrix Platform
 ---
 
-!!! "Prerequisites"
+!!! Prerequisites
     Before onboarding to the Matrix Platform, we highly recommedn completing the first steps and first full run sections of getting started guide to get a full understanding of the pipeline.
-    
     You can use this [onboarding issue](https://github.com/everycure-org/matrix/issues/new?assignees=&labels=onboarding&projects=&template=onboarding.md&title=%3Cfirstname%3E+%3Clastname%3E) to help you navigate the onboardingset-up.
 
 In order to run Matrix pipeline using our platform and cluster, you will need to onboard onto the Matrix Project. For this, get in touch with us _via_ GitHub Issues.
