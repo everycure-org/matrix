@@ -224,7 +224,7 @@ ingestion.raw.valid_edge_types:
   <<: [*_pandas_csv, *_layer_raw]
   type: matrix.datasets.github.GitHubReleaseCSVDataset
   repository_url: https://github.com/everycure-org/matrix-schema
-  release_name: ${globals:data_sources.matrix_scehma.version}
+  release_name: ${globals:data_sources.matrix_schema.version}
   release_asset_name: valid_edge_types.tsv
   fs_args:
     Accept: application/octet-stream
