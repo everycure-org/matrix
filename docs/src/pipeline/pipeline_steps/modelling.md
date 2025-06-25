@@ -9,13 +9,13 @@ The modelling pipeline implements a robust cross-validation strategy with ensemb
 - **Unknown**: Negative relationship, represented by random drug-disease pairs where the drug is not related to the disease.
 
 
-For every drug disease pair, we compute scores for all 3 classes. The scores should add up to 1. 
+For every drug disease pair, we compute scores for all 3 classes. The scores add up to 1. 
 
 $$\text{treat_score} + \text{not_treat_score} + \text{unknown_score} = 1$$
 
 
 ### Pipeline overview
-The modelling pipeline follows a systematic approach to train robust prediction models:
+The modelling pipeline follows a systematic approach to train robust prediction models. This is described as follows where we fix several concrete hyperparameters for simplicity.
 
 1. **Cross-Validation Setup**:
     - Folds 0, 1, 2: Training folds with different test/train splits (90%/10%) for known positives and negatives
@@ -98,7 +98,7 @@ Negative sampling is implemented by:
 This approach ensures that the negative samples maintain realistic drug and disease entities while creating pairs that are unlikely to have treatment relationships.
 
 !!! note
-    Negative samples serve as the sole source of data for the "unknown class". They are essential to ensure that the training dataset represents the vast majority of pairs, which are unrelated to each other. The sampling typically generates many more negative samples than known positives (e.g., 4 times more in xg_ensemble).
+    Negative samples serve as the sole source of data for the "unknown class". They are essential to ensure that the training dataset represents the vast majority of pairs, which are unrelated to each other. 
 ### 3. Model Training
 
 For each shard in each fold, the pipeline trains a classifier on the transformed feature data. The pipeline supports any scikit-learn [BaseEstimator](https://scikit-learn.org/stable/modules/generated/sklearn.base.BaseEstimator.html) object including Random Forest, XGBoost, and Fully Connected Neural Networks (FCNN).
