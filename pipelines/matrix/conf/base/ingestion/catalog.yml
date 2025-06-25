@@ -234,7 +234,7 @@ ingestion.raw.valid_edge_types:
 
 ingestion.int.valid_edge_types:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/valid_edge_types/${globals:data_sources.matrix_scehma.version}/valid_edge_types
+  filepath: ${globals:paths.ingestion}/int/valid_edge_types/${globals:data_sources.matrix_schama.version}/valid_edge_types
 
 # -------------------------------------------------------------------------
 # Drug and disease lists
