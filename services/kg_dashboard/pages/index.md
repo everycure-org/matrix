@@ -33,16 +33,12 @@ title: KG Dashboard
     for (let i = 0; i < binCount; i++) {
       const binStart = min + (i * binWidth);
       const binEnd = min + ((i + 1) * binWidth);
-      const binLabel = i === binCount - 1 
-        ? `${Math.round(binStart)}+` 
-        : `${Math.round(binStart)}-${Math.round(binEnd - 1)}`;
       
       const count = values.filter(value => 
         value >= binStart && (i === binCount - 1 ? value <= binEnd : value < binEnd)
       ).length;
       
       bins.push({
-        bin: binLabel,
         count: count,
         start: binStart,
         end: binEnd
@@ -60,7 +56,7 @@ title: KG Dashboard
     const seriesData = bins.map(bin => ({
       value: bin.count,
       binStart: bin.start,
-      binEnd: bin.end,
+      binEnd: bin.end - 1,
     }))
     
     return {
