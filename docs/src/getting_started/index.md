@@ -25,11 +25,11 @@ MATRIX is Every Cure's main pipeline for generating high-accuracy predictions of
 
 We envision there are three types of users and contributors who might be interested in this repository:
 
-* **Pipeline Contributors** - Researchers or data scientists who want to use our drug repurposing pipeline locally or on their own infrastructure to experiment with different models or with their own data sources.
+* **Researchers** - Researchers or data scientists who want to use our data and drug repurposing pipeline locally or on their own infrastructure to experiment with different models or with their own data sources.
 
-* **Project Contributors** - Community members who want to improve the core project and support Every Cure through novel algorithms, better code quality, test coverage, or new features and capabilities.
+* **Developers/ Pipeline Contributors** - Community members who want to improve the core project and support Every Cure through novel algorithms, better code quality, test coverage, or new features and capabilities.
 
-* **System Adapters** - Organizations or teams looking to adapt our infrastructure to their own cloud or on-premise environments, deploying on different cloud providers and customizing for specific compliance requirements.
+* **Engineers / System Adapters** - Organizations or teams looking to adapt our infrastructure to their own cloud or on-premise environments, deploying on different cloud providers and customizing for specific compliance requirements.
 
 We welcome all contributors however this guide is primarily designed for pipeline and project contributors. If you are interested in the infrastructure side, we would recommend completing this guide but focusing mainly on the [infrastructure](../infrastructure/index.md) part of the documentation.
 

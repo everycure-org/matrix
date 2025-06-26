@@ -25,14 +25,11 @@ make install
 
     This command wraps the following commands:
 
-    1. **Environment Setup**: Creates and configures your Python development environment with all necessary dependencies
-    2. **Code Validation**: Runs various unit tests to ensure your local setup is working correctly
-    3. **Spins up docker services**: Spins up several dependent services we need for the execution of the pipeline
-    4. **Integration Test**: Runs an end-to-end test of the pipeline using fabricated data to verify the pipeline is working as expected
+    1. **Virtual Environment Creation**: Creates a virtual environment using `uv`
+    2. **Pre-commit setup**: Installs pre-commit hooks and executes pre-commits check on the repo
+    3. **Installs Dependencies**: Installs all dependencies from requirements.txt using uv
 
-    This single command gets you from a fresh checkout to a fully functional local development environment. After it completes successfully, you'll be ready to start developing!
-    
-    We do encourage you to read through the `Makefile` to get a sense of how the codebase is structured.
+    We do encourage you to read through the `Makefile` to get a sense of how the codebase is structured. There are many commands (some are for diagnostics, others for GCP setup) there therefore we recommend focusing on the ones you are interested in running them!
 
 
 ### Pre-commit hooks
