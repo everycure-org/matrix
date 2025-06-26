@@ -289,3 +289,16 @@ def generate_reports(
         reports_dict[strategy.name] = strategy.generate(sorted_matrix_df, **kwargs)
 
     return reports_dict
+
+
+def store_full_model_predictions(
+    sorted_matrix_df: ps.DataFrame,
+) -> ps.DataFrame:
+    """Store the full model predictions.
+
+    Args:
+        sorted_matrix_df: DataFrame containing the sorted matrix
+        **kwargs: Extra arguments such as the drug and disease lists for tables
+    """
+
+    return sorted_matrix_df

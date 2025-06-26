@@ -1,3 +1,14 @@
+_bigquery_ds: &_bigquery_ds
+  type: matrix.datasets.gcp.SparkDatasetWithBQExternalTable
+  project_id: ${oc.env:RUNTIME_GCP_PROJECT_ID}
+  dataset: run_${globals:run_name}
+  file_format: parquet
+  save_args:
+    mode: overwrite
+    labels:
+      git_sha: ${globals:git_sha}
+
+
 matrix_generation.reporting.plots:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
   dataset:
@@ -13,3 +24,9 @@ matrix_generation.reporting.tables:
     path: data/mlflow/reporting/tables
     dataset: kedro_datasets.pandas.CSVDataset
     filename_suffix: .csv
+
+
+matrix_generation.full_model_predictions@spark:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.matrix_generation}/model_output/full_model_predictions
+  table: model_output
