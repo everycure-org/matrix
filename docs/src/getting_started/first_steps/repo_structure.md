@@ -44,7 +44,7 @@ Our codebase is mainly located in the following locations:
 Note that the files/directories listed above are not exhaustive and will likely evolve but these are the most important from drug repurposing perspective. There will also be some code outside `src/` directory - e.g. `scripts/` - which are helper scripts and utilities which are not part of the main pipeline.
 
 ### Data
-We organize our data pipeline into clear directories stages which correspond to both the pipeline stage as well as `maturity` of the data:
+We organize our data pipeline into clear directories stages which correspond to both the pipeline stage as well as *maturity* of the data:
 
 - `data/`
   - `{pipeline_name}/` - Each pipeline has its own directory (e.g., `ingestion/`, `integration/`, etc.) as well as some of the following sub-directories
