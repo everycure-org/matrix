@@ -86,7 +86,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             )
         )
 
-    # Store full model predictions so we can write just the final fold to BQ
+    # Persist the final fold predictions (trained on complete dataset) for BigQuery export
     pipelines.append(
         pipeline(
             [
