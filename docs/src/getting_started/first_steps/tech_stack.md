@@ -66,4 +66,4 @@ Data used by our pipeline is registered in the _data catalog_. To add additional
 
 -->
 
-[Let's understand now how kedro fits our repo structure :material-skip-next:](./repo_structure.md){ .md-button .md-button--primary }
+[Let's now understand how Kedro fits in our repo structure :material-skip-next:](./repo_structure.md){ .md-button .md-button--primary }
