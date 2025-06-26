@@ -1,16 +1,16 @@
 modelling.xg_ensemble:
     _overrides:
       
-      # generator:
-      #   _object: matrix.datasets.pair_generator.ReplacementDrugDiseasePairGenerator
-      #   random_state: ${globals:random_state}
-      #   y_label: 2
-      #   n_replacements: 2
-      #   drug_flags:
-      #     - is_drug
-      #     - in_ground_pos
-      #   disease_flags:
-      #     - is_disease
+      generator:
+        _object: matrix.datasets.pair_generator.ReplacementDrugDiseasePairGenerator
+        random_state: ${globals:random_state}
+        y_label: 2
+        n_replacements: 2
+        drug_flags:
+          - is_drug
+          - in_ground_pos
+        disease_flags:
+          - is_disease
 
 
       model_tuning_args:
