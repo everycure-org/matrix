@@ -10,7 +10,7 @@ At a high level, it's composed of three stages:
 
 2. **Feature Engineering Stage** - this is where take the unified biomedical KG, apply custom filters for optimized performance, and generate topological embeddings from the knowledge graph which can be then used as input for ML models. 
 
-3. **Modelling Stage** - this is where we train and evaluate ML models to predict drug-disease treatment relationships. This is also the step where we produce our **matrix** which is essentially "all vs all" matrix of predictions for every drug-disease combination in our system. 
+3. **Modelling Stage** - this is where we train and evaluate ML models to predict drug-disease treatment relationships. Here, we produce our matrix - a comprehensive "all-vs-all" prediction matrix containing treatment probability scores for every possible drug-disease combination in our system.
 
 The pipeline enables systematic drug repurposing by scoring the potential of drugs to treat diseases based on patterns learned from biomedical knowledge graphs and known drug-disease relationships.
 
