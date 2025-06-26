@@ -201,7 +201,7 @@ jobs:
             --body "$(cat <<EOM
           This pull request was created because a release pipeline completed successfully. If this is a patch release (the release version does not end in 0, e.g. "v1.2.5") that was triggered as part of its weekly schedule, you may close this PR directly, unless you want it to [be logged on the website](https://docs.dev.everycure.org/releases/release_history/). A git tag was [created](https://github.com/everycure-org/matrix/tags) regardless, so people can check it out.
 
-          Please check the KG dashboard for this release [here](https://data.dev.everycure.org/versions/${{ github.event.inputs.release_version }}/evidence/)
+          Please check the KG dashboard for this release [here](https://data.dev.everycure.org/versions/${{ env.release }}/evidence/)
 
           Note: 
           - for minor and major releases, the release article should be created, meant as a kickstarter for the final release. The template is generated, please ask contributors to fill it out
