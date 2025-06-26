@@ -59,7 +59,7 @@ We organize our data pipeline into clear directories stages which correspond to 
 
 Note that each pipeline produces different data products and so not all directories might be there - eg `ingestion` pipeline only ingests the KGs int our system so there will be no `model` directory.
 
-This structure allows us to adhere to an organized structure for storing data products which is essnetial for a healthy project and kedro configuration.
+This structure allows us to adhere to an organized structure for storing data products which is essential for a healthy project and kedro configuration.
 
 ### Configuration
 We use Kedro's configuration system to manage our pipeline settings and data catalog. It's located within the `conf` directory: 
