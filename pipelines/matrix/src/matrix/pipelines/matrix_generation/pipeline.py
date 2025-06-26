@@ -86,6 +86,22 @@ def create_pipeline(**kwargs) -> Pipeline:
             )
         )
 
+    # Store full model predictions so we can write just the final fold to BQ
+    pipelines.append(
+        pipeline(
+            [
+                ArgoNode(
+                    func=nodes.store_full_model_predictions,
+                    inputs=[
+                        f"matrix_generation.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@spark",
+                    ],
+                    outputs=f"matrix_generation.full_model_predictions@spark",
+                    name=f"store_full_model_predictions",
+                ),
+            ]
+        )
+    )
+
     pipelines.append(
         pipeline(
             [

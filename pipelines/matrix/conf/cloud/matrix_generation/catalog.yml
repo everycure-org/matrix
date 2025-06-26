@@ -30,3 +30,9 @@ matrix_generation.reporting.tables:
   <<: *_bigquery_ds
   filepath: ${globals:paths.matrix_generation}/model_output/fold_{fold}/matrix_predictions
   table: model_output_fold_{fold}
+
+
+matrix_generation.full_model_predictions@spark:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.matrix_generation}/model_output/full_model_predictions
+  table: model_output
