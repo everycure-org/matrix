@@ -291,7 +291,7 @@ def generate_reports(
     return reports_dict
 
 
-def store_full_model_predictions(
+def return_predictions(
     sorted_matrix_df: ps.DataFrame,
 ) -> ps.DataFrame:
     """Store the full model predictions.

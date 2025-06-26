@@ -91,7 +91,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         pipeline(
             [
                 ArgoNode(
-                    func=nodes.store_full_model_predictions,
+                    func=nodes.return_predictions,
                     inputs=[
                         f"matrix_generation.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@spark",
                     ],

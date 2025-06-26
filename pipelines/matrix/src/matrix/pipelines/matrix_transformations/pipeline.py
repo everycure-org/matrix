@@ -1,6 +1,7 @@
 from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
+from matrix.pipelines.matrix_generation.nodes import return_predictions
 
 from . import nodes
 
@@ -29,5 +30,21 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ]
             )
         )
+
+    # Persist the final fold predictions (trained on complete dataset) for BigQuery export
+    pipelines.append(
+        pipeline(
+            [
+                ArgoNode(
+                    func=return_predictions,
+                    inputs=[
+                        f"matrix_transformations.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@spark",
+                    ],
+                    outputs=f"matrix_transformations.full_model_predictions@spark",
+                    name="store_transformed_predictions",
+                ),
+            ]
+        )
+    )
 
     return sum(pipelines)
