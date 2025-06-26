@@ -18,7 +18,7 @@ Whilst it's not essential to understand each part of the stack to contribute or 
 
 ## Pipeline framework: Kedro
 
-One of the most essential parts of our pipeline is [Kedro framework](https://kedro.org) which we use as our data pipeleining framework. It provides crucial structure and modularity to our codebase, enabling reproducible data science workflows and making our pipeline maintainable and scalable.
+The most essential library for our pipeline is [Kedro](https://kedro.org) which is used as our data pipelining framework. It provides crucial structure and modularity to our codebase, enabling reproducible data science workflows and making our pipeline maintainable and scalable.
 
 !!! info
     Kedro is an open-source framework to write modular data science code. We recommend
