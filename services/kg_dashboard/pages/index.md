@@ -13,6 +13,108 @@ title: KG Dashboard
       return acc;
     }, {});
   }
+
+  // NOTE: This function was partially generated using AI assistance.
+  function createHistogramBins(data, binWidth) {
+    if (!data || !Array.isArray(data) || data.length === 0) return [];
+    
+    // Extract the column values
+    const values = data.filter(v => v !== null && v !== undefined);
+    if (values.length === 0) return [];
+    
+    // Calculate min and max if not provided
+    const min = 0;
+    const max = Math.max(...values);
+    
+    // Calculate number of bins based on width
+    const binCount = Math.ceil((max - min) / binWidth);
+    const bins = [];
+    
+    for (let i = 0; i < binCount; i++) {
+      const binStart = min + (i * binWidth);
+      const binEnd = min + ((i + 1) * binWidth);
+      
+      const count = values.filter(value => 
+        value >= binStart && (i === binCount - 1 ? value <= binEnd : value < binEnd)
+      ).length;
+      
+      bins.push({
+        count: count,
+        start: binStart,
+        end: binEnd
+      });
+    }
+    
+    return bins;
+  }
+
+  function getHistogramEchartsOptions(data, data_name, data_key, binWidth) {
+    const bins = !data || !Array.isArray(data) || data.length === 0 ? [] : createHistogramBins(data.map(d => d[data_key]), binWidth)
+    const xAxis = bins.map(d => d.start)
+    
+    // Create series data with bin labels included
+    const seriesData = bins.map(bin => ({
+      value: bin.count,
+      binStart: bin.start,
+      binEnd: bin.end - 1,
+    }))
+    
+    return {
+      grid: {
+        top: '2%',
+        bottom: '20%',
+      },
+      xAxis: {
+        data: xAxis,
+        silent: false,
+        splitLine: {
+          show: false
+        },
+        splitArea: {
+          show: false
+        }
+      },
+      yAxis: {
+        splitArea: {
+          show: false
+        }
+      },
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        },
+        formatter: function(params) {
+          const binStart = params[0].data.binStart;
+          const binEnd = params[0].data.binEnd;
+          const count = params[0].value;
+          return `${count} ${data_name}s have between ${binStart} and ${binEnd} neighbours`;
+        }
+      },
+      dataZoom: [
+        {
+          type: 'inside',
+          start: 0,
+          end: 2,
+          minValueSpan: 30
+        },
+        {
+          type: 'slider',
+          start: 0,
+          end: 2,
+          minValueSpan: 30
+        }
+      ],
+      series: [
+        {
+          type: 'bar',
+          data: seriesData
+        }
+      ]
+    }
+  }
+
+  
 </script>
 
 ## Version: {release_version}
@@ -170,7 +272,7 @@ SELECT * FROM bq.epistemic_heatmap
       </span><br/>
       edges with missing provenance
       <div class="text-sm font-normal mt-1">
-        “Missing provenance” includes edges where both Knowledge Level and Agent Type are "Not Provided" or not present.
+        "Missing provenance" includes edges where both Knowledge Level and Agent Type are "Not Provided" or not present.
       </div>
      </div>
   </div>
@@ -291,8 +393,8 @@ SELECT * FROM bq.epistemic_heatmap
 <br/>
 
 <Grid col=2>
-    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="disease_edges_per_node" fmt="num1"/></span><br/>average edges per disease node</p>
-    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="median_disease_node_degree" fmt="num0"/></span><br/>median edges per disease node</p>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="disease_edges_per_node" fmt="num1"/></span><br/>mean neighbours per disease node</p>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="median_disease_node_degree" fmt="num0"/></span><br/>median neighbours per disease node</p>
 </Grid>
 
 <br/>
@@ -338,17 +440,32 @@ order by
     title="Categories connected to disease list node on average"
 />
 
+### Disease nodes neighbours
+
+```sql disease_list_neighbour_counts
+select 
+  * 
+from 
+  bq.disease_list_neighbour_counts
+```
+
+<ECharts
+    style={{ height: '400px' }}
+    config={getHistogramEchartsOptions(disease_list_neighbour_counts, "disease", "unique_neighbours", 10)}
+/>
+
+<br/>
+
 ## Drug list nodes connections
 
 <br/>
 
 <Grid col=2>
-    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="drug_edges_per_node" fmt="num1"/></span><br/>average edges per drug node</p>
-    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="median_drug_node_degree" fmt="num0"/></span><br/>median edges per drug node</p>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="drug_edges_per_node" fmt="num1"/></span><br/>mean neighbours per drug node</p>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="median_drug_node_degree" fmt="num0"/></span><br/>median neighbours per drug node</p>
 </Grid>
 
 <br/>
-
 
 ```sql drug_list_connected_categories
 with total as (
@@ -387,4 +504,18 @@ order by
     y="number_of_connections" 
     swapXY=true
     title="Categories connected to drug list node on average"
+/>
+
+### Drug nodes neighbours
+
+```sql drug_list_neighbour_counts
+select 
+  * 
+from 
+  bq.drug_list_neighbour_counts
+```
+
+<ECharts
+    style={{ height: '400px' }}
+    config={getHistogramEchartsOptions(drug_list_neighbour_counts, "drug", "unique_neighbours", 50)}
 />
