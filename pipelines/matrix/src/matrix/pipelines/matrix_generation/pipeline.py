@@ -78,9 +78,17 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "params:matrix_generation.not_treat_score_col_name",
                             "params:matrix_generation.unknown_score_col_name",
                         ],
-                        outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark",
+                        outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions_with_train_data@spark",
                         name=f"make_predictions_and_sort_fold_{fold}",
                         argo_config=ARGO_NODE_MEDIUM_MATRIX_GENERATION,
+                    ),
+                    # Is it posisble to keep both datasets and then pass the correct one to the reporting?
+                    ArgoNode(
+                        func=nodes.filter_out_known_pairs,
+                        inputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions_with_train_data@pandas",
+                        # This is the original output
+                        outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
+                        name=f"filter_out_known_pairs_fold_{fold}",
                     ),
                 ],
             )
