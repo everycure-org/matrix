@@ -8,7 +8,7 @@ At a high level, it's composed of three stages:
 
 1. **Data Engineering Stage** - this is where data sources such as multiple biomedical knowledge graphs get ingested, integrated, and released as a unified biomedical KG. It includes ingestion, integration, and release steps of KGs as well as supplementary datasets for inference/testing.
 
-2. **Feature Engineering Stage** - this is where we unify the biomedical KGs, apply custom filters for optimized performance, and generate topological embeddings from the knowledge graph which can be then used as input for ML models. 
+2. **Feature Engineering Stage** - this is where custom filters are applied to the unified biomedical KG for optimized performance, and topological embeddings are generated to be used as input for ML models. 
 
 3. **Modelling Stage** - this is where we train and evaluate ML models to predict drug-disease treatment relationships. Here, we produce our matrix - a comprehensive "all-vs-all" prediction matrix containing treatment probability scores for every possible drug-disease combination in our system.
 
