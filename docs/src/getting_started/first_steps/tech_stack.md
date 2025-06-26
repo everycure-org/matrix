@@ -24,7 +24,7 @@ The most essential library for our pipeline is [Kedro](https://kedro.org) which 
     Kedro is an open-source framework to write modular data science code. We recommend
     checking out the [Kedro documentation](https://docs.kedro.org/en/stable/) website as well as deep-dive into kedro and custom extensions we produced in the [deep dive section](../deep_dive/kedro_extensions.md).
     
-Below is a 5 minutes intro video to Kedro
+Below is a 5 minutes intro video to Kedro:
 
 <iframe width="800" height="480" src="https://www.youtube.com/embed/PdNkECqvI58?si=_luhLzYsI3F7dQ2w&amp;start=70" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
