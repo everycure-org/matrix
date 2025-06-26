@@ -68,8 +68,6 @@ We use Kedro's configuration system to manage our pipeline settings and data cat
     - `catalog.yml` - Defines how data is loaded and saved for each pipeline stage
     - `parameters.yml` - Contains configurable parameters used across pipelines (e.g., model hyperparameters, filtering thresholds)
 
-  - `local/` - Settings for local development that override base configs
-
   - `cloud/` - Environment for cloud development on our GCP cluster. Overwrites base environment with `-e cloud` or `--environment cloud` flags.
 
   - `test/` - Test environment settings, typically using smaller datasets. Overwrites base environment with `-e test` or `--environment test` flags.
