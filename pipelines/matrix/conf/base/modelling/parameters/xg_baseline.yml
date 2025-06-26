@@ -1,15 +1,15 @@
 modelling.xg_baseline:
     _overrides:
-      # generator:
-      #   _object: matrix.datasets.pair_generator.RandomDrugDiseasePairGenerator
-      #   y_label: 2
-      #   random_state: ${globals:random_state}
-      #   n_unknown: 40000
-      #   drug_flags:
-      #     - is_drug
-      #     - in_ground_pos
-      #   disease_flags:
-      #     - is_disease
+      generator:
+        _object: matrix.datasets.pair_generator.RandomDrugDiseasePairGenerator
+        y_label: 2
+        random_state: ${globals:random_state}
+        n_unknown: 40000
+        drug_flags:
+          - is_drug
+          - in_ground_pos
+        disease_flags:
+          - is_disease
 
       model_tuning_args:
         tuner:
