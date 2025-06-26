@@ -49,7 +49,7 @@ MATRIX is Every Cure's main pipeline for generating high-accuracy predictions of
 
 The output of our pipeline is a so-called matrix of approx <strong>60 million drug-disease pairs</strong> with corresponding treat scores which are then examined by our team of physicians.
 
-We provide extensive documentation about both the pipeline itself and the infrastructure that powers it, from local development to production deployment on cloud architecture.
+We provide extensive documentation about both the pipeline itself and the infrastructure that powers it, from local development to production deployment in the cloud.
 
 Sounds interesting? Here are instructions on [how to get started](./getting_started/index.md).
 
