@@ -54,11 +54,6 @@ def register_pipelines() -> dict[str, Pipeline]:
           pipelines["ingestion"]
         + pipelines["integration"]
     )
-    pipelines["kg_release_patch"] = (
-        pipelines["data_engineering"]
-        + pipelines["data_release"]
-        + pipelines["sentinel_kg_release_patch"]
-    )
     pipelines["kg_release"] = (
         pipelines["data_engineering"]
         + pipelines["data_release"]
@@ -85,6 +80,13 @@ def register_pipelines() -> dict[str, Pipeline]:
     )
     pipelines["__default__"] = (
           pipelines["data_engineering"]
+        + pipelines["feature_and_modelling_run"]
+    )
+
+    pipelines["kg_release_patch_full_run"] = (
+        pipelines["data_engineering"]
+        + pipelines["data_release"]
+        + pipelines["sentinel_kg_release_patch"]
         + pipelines["feature_and_modelling_run"]
     )
 
