@@ -34,8 +34,13 @@ def register_pipelines() -> dict[str, Pipeline]:
         "data_release": create_data_release_pipeline(),
         "modelling": create_modelling_pipeline(),
         "matrix_generation": create_matrix_pipeline(),
-        "evaluation": create_evaluation_pipeline(),
         "matrix_transformations": create_matrix_transformations_pipeline(),
+        "pre_transformed_evaluation": create_evaluation_pipeline(
+            matrix_input="matrix_generation", score_col_name="treat score"
+        ),
+        "transformed_evaluation": create_evaluation_pipeline(
+            matrix_input="matrix_transformations", score_col_name="transformed_treat_score"
+        ),
         "create_sample": create_create_sample_pipeline(),
         "ingest_to_N4J": create_ingest_to_N4J_pipeline(),
         "sentinel_kg_release_patch": create_sentinel_pipeline(is_patch=True),
@@ -60,20 +65,27 @@ def register_pipelines() -> dict[str, Pipeline]:
         + pipelines["ingest_to_N4J"]
         + pipelines["sentinel_kg_release"]
     )
-    pipelines["modelling_run"] = (
-          pipelines["modelling"]
-        + pipelines["matrix_generation"]
-        + pipelines["evaluation"]
-        + pipelines["matrix_transformations"]
-    )
     pipelines["feature"] = (
         pipelines["filtering"]
         + pipelines["embeddings"]
     )
+    pipelines["evaluation"] = (
+        pipelines["pre_transformed_evaluation"] 
+        + pipelines["transformed_evaluation"]
+    )
+    pipelines["modelling_run"] = (
+          pipelines["modelling"]
+        + pipelines["matrix_generation"]
+        + pipelines["matrix_transformations"]
+        + pipelines["evaluation"]
+    )
+    pipelines["feature_and_modelling_run"] = (
+        pipelines["feature"]
+        + pipelines["modelling_run"]
+    )
     pipelines["__default__"] = (
           pipelines["data_engineering"]
-        + pipelines['feature']
-        + pipelines["modelling_run"]
+        + pipelines["feature_and_modelling_run"]
     )
 
     # Test pipelines
@@ -84,9 +96,7 @@ def register_pipelines() -> dict[str, Pipeline]:
         + pipelines["ingest_to_N4J"]
     )
     pipelines["test_sample"] = (
-        pipelines["filtering"]
-        + pipelines["embeddings"]
-        + pipelines["modelling_run"]
+        pipelines["feature_and_modelling_run"]
     )
     # fmt: on
 
