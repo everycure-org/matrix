@@ -4,6 +4,7 @@ from typing import Dict, List, Optional, Union
 import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.functions as F
+import pyspark.sql.types as T
 from matplotlib.figure import Figure
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.inject import _extract_elements_in_list, inject_object
@@ -12,6 +13,7 @@ from matrix.pipelines.matrix_generation.reporting_tables import ReportingTableGe
 from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.nodes import apply_transformers
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
+from pyspark.sql.types import DoubleType, StructField, StructType
 from sklearn.impute._base import _BaseImputer
 from tqdm import tqdm
 
@@ -160,136 +162,104 @@ def generate_pairs(
     return matrix
 
 
-def make_batch_predictions(
-    graph: KnowledgeGraph,
-    data: pd.DataFrame,
-    transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
-    model: ModelWrapper,
-    features: List[str],
-    treat_score_col_name: str,
-    not_treat_score_col_name: str,
-    unknown_score_col_name: str,
-    batch_by: str = "target",
-) -> pd.DataFrame:
-    """Generate probability scores for drug-disease dataset.
-
-    This function computes the scores in batches to avoid memory issues.
-
-    FUTURE: Experiment with PySpark for predictions where model is broadcasted.
-    https://dataking.hashnode.dev/making-predictions-on-a-pyspark-dataframe-with-a-scikit-learn-model-ckzzyrudn01lv25nv41i2ajjh
-
-    Args:
-        graph: Knowledge graph.
-        data: Data to predict scores for.
-        transformers: Dictionary of trained transformers.
-        model: Model making the predictions.
-        features: List of features, may be regex specified.
-        score_col_name: Probability score column name.
-        batch_by: Column to use for batching (e.g., "target" or "source").
-
-    Returns:
-        Pairs dataset with additional column containing the probability scores.
-    """
-
-    def process_batch(batch: pd.DataFrame) -> pd.DataFrame:
-        # Collect embedding vectors
-        batch["source_embedding"] = batch.apply(lambda row: graph.get_embedding(row.source, default=pd.NA), axis=1)
-        batch["target_embedding"] = batch.apply(lambda row: graph.get_embedding(row.target, default=pd.NA), axis=1)
-
-        # Retrieve rows with null embeddings
-        # NOTE: This only happens in a rare scenario where the node synonymizer
-        # provided an identifier for a node that does _not_ exist in our KG.
-        # https://github.com/everycure-org/matrix/issues/409
-        removed = batch[batch["source_embedding"].isna() | batch["target_embedding"].isna()]
-        if len(removed.index) > 0:
-            logger.warning(f"Dropped {len(removed.index)} pairs during generation!")
-            logger.warning(
-                "Dropped: %s",
-                ",".join([f"({r.source}, {r.target})" for _, r in removed.iterrows()]),
-            )
-
-        # Drop rows without source/target embeddings
-        batch = batch.dropna(subset=["source_embedding", "target_embedding"])
-
-        # Return empty dataframe if all rows are dropped
-        if len(batch) == 0:
-            return batch.drop(columns=["source_embedding", "target_embedding"])
-
-        # Apply transformers to data
-        transformed = apply_transformers(batch, transformers)
-
-        # Extract features
-        batch_features = _extract_elements_in_list(transformed.columns, features, True)
-
-        # Generate model probability scores
-        preds = model.predict_proba(transformed[batch_features].values)
-        batch[not_treat_score_col_name] = preds[:, 0]
-        batch[treat_score_col_name] = preds[:, 1]
-        batch[unknown_score_col_name] = preds[:, 2]
-        batch = batch.drop(columns=["source_embedding", "target_embedding"])
-        return batch
-
-    grouped = data.groupby(batch_by)
-
-    result_parts = []
-    for _, batch in tqdm(grouped):
-        result_parts.append(process_batch(batch))
-
-    results = pd.concat(result_parts, axis=0)
-
-    return results
-
-
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "source": Column(T.StringType(), nullable=False),
+            "target": Column(T.StringType(), nullable=False),
+            # The three score columns are passed as parameters of the function
+            "not treat score": Column(T.DoubleType(), nullable=False),
+            "treat score": Column(T.DoubleType(), nullable=False),
+            "unknown score": Column(T.DoubleType(), nullable=False),
+            "rank": Column(T.LongType(), nullable=False),
+            "quantile_rank": Column(T.DoubleType(), nullable=False),
+        },
+        unique=["source", "target"],
+    )
+)
 def make_predictions_and_sort(
-    graph: KnowledgeGraph,
-    data: pd.DataFrame,
+    node_embeddings: ps.DataFrame,
+    pairs: ps.DataFrame,
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     model: ModelWrapper,
     features: List[str],
     treat_score_col_name: str,
     not_treat_score_col_name: str,
     unknown_score_col_name: str,
-    batch_by: str,
-) -> pd.DataFrame:
+) -> ps.DataFrame:
     """Generate and sort probability scores for a drug-disease dataset.
 
-    FUTURE: Perform parallelised computation instead of batching with a for loop.
-
     Args:
-        graph: Knowledge graph.
-        data: Data to predict scores for.
+        node_embeddings: Dataframe with node embeddings.
+        pairs: drug disease pairs to predict scores for.
         transformers: Dictionary of trained transformers.
         model: Model making the predictions.
         features: List of features, may be regex specified.
         treat_score_col_name: Probability score column name.
         not_treat_score_col_name: Probability score column name for not treat.
         unknown_score_col_name: Probability score column name for unknown.
-        batch_by: Column to use for batching (e.g., "target" or "source").
 
     Returns:
-        Pairs dataset sorted by an additional column containing the probability scores.
+        Pairs dataset sorted by score with their rank and quantile rank
     """
-    # Generate scores
-    data = make_batch_predictions(
-        graph,
-        data,
-        transformers,
-        model,
-        features,
-        treat_score_col_name,
-        not_treat_score_col_name,
-        unknown_score_col_name,
-        batch_by=batch_by,
+
+    embeddings = node_embeddings.select("id", "topological_embedding")
+
+    pairs_with_embeddings = (
+        # TODO: remnant from pyarrow/pandas conversion, find in which node it is created
+        pairs.drop("__index_level_0__")
+        .join(
+            embeddings.withColumnsRenamed({"id": "target", "topological_embedding": "target_embedding"}),
+            on="target",
+            how="left",
+        )
+        .join(
+            embeddings.withColumnsRenamed({"id": "source", "topological_embedding": "source_embedding"}),
+            on="source",
+            how="left",
+        )
+        .filter(F.col("source_embedding").isNotNull() & F.col("target_embedding").isNotNull())
     )
 
-    # Sort by the probability score
-    sorted_data = data.sort_values(by=treat_score_col_name, ascending=False)
+    def model_predict(partition_df: pd.DataFrame) -> pd.DataFrame:
+        transformed = apply_transformers(partition_df, transformers)
 
-    # Add rank and quantile rank columns
-    sorted_data["rank"] = range(1, len(sorted_data) + 1)
-    sorted_data["quantile_rank"] = sorted_data["rank"] / len(sorted_data)
+        # TODO: can we get columns from transformers directly?
+        model_features = _extract_elements_in_list(transformed.columns, features, True)
 
-    return sorted_data
+        model_predictions = model.predict_proba(transformed[model_features].values)
+        # TODO: assign scores in one pass?
+        partition_df[not_treat_score_col_name] = model_predictions[:, 0]
+        partition_df[treat_score_col_name] = model_predictions[:, 1]
+        partition_df[unknown_score_col_name] = model_predictions[:, 2]
+
+        return partition_df.drop(columns=["source_embedding", "target_embedding"])
+
+    structfields_to_keep = [
+        col for col in pairs_with_embeddings.schema if col.name not in ["target_embedding", "source_embedding"]
+    ]
+    model_predict_schema = StructType(
+        structfields_to_keep
+        + [
+            StructField(not_treat_score_col_name, DoubleType(), True),
+            StructField(treat_score_col_name, DoubleType(), True),
+            StructField(unknown_score_col_name, DoubleType(), True),
+        ]
+    )
+
+    pairs_with_scores = pairs_with_embeddings.groupBy("target").applyInPandas(model_predict, model_predict_schema)
+
+    pairs_sorted = pairs_with_scores.orderBy(treat_score_col_name, ascending=False)
+
+    # We are using the RDD.zipWithIndex function here. Getting it through the DataFrame API would involve a Window function without partition, effectively pulling all data into one single partition.
+    # Here is what happens in the next line:
+    # 1. zipWithIndex creates a tuple with the shape (row, index)
+    # 2. When moving from RDD to DataFrame, the column names are named after the Scala tuple fields: _1 for the row and _2 for the index
+    # 3. We're adding 1 to the rank so that it is not zero indexed
+    pairs_ranked = pairs_sorted.rdd.zipWithIndex().toDF().select(F.col("_1.*"), (F.col("_2") + 1).alias("rank"))
+
+    pairs_ranked_count = pairs_ranked.count()
+    return pairs_ranked.withColumn("quantile_rank", F.col("rank") / pairs_ranked_count)
 
 
 @inject_object()
