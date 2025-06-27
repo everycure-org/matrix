@@ -200,9 +200,16 @@ def cache_miss_resolver_wrapper(
         logger.info(f"Processing batch with key: {batch[0]}")
         transformed = await transformer.apply(batch)
         logger.info(f"received response for batch with key: {batch[0]}")
+
+        value_struct_type = cache_schema.field("value").type
+
+        # Create arrays explicitly
+        key_array = pa.array(batch, type=pa.string())
+        value_array = pa.array(transformed, type=value_struct_type)
+
+        # Drop the api-field, since we're manually creating Hive partitions with that column.
         return pa.table(
-            [batch, transformed],
-            # Drop the api-field, since we're manually creating Hive partitions with that column.
+            {"key": key_array, "value": value_array},
             schema=cache_schema.remove(cache_schema.get_field_index("api")),
         ).to_pandas()
 
@@ -233,6 +240,9 @@ def lookup_from_cache(
     cache = (
         limit_cache_to_results_from_api(cache, api=api)
         .transform(resolve_cache_duplicates, id_col="key")
+        .withColumn("normalized_id", col("value.normalized_id"))
+        .withColumn("normalized_categories", col("value.normalized_categories"))
+        .drop("value")
         .withColumnsRenamed({"key": primary_key, "value": new_col})
     )
     return df.transform(preprocessor).join(cache, how="left", on=primary_key)
