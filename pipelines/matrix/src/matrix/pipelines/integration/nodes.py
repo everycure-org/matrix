@@ -97,14 +97,8 @@ def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, c
     # next we need to apply a number of transformations to the nodes to ensure grouping by id did not select wrong information
     # this is especially important if we integrate multiple KGs
 
-    print("=== Sample of unioned_datasets ===")
-    unioned_datasets.show(20, truncate=False)
-
     if retrieve_most_specific_category:
         unioned_datasets = unioned_datasets.transform(determine_most_specific_category)
-
-    print("=== Sample of unioned_datasets ===")
-    unioned_datasets.show(20, truncate=False)
 
     return unioned_datasets.select(*cols)
 
