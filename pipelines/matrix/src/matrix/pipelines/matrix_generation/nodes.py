@@ -68,14 +68,6 @@ def _add_flag_columns(
         return result.astype(bool)
 
     # Flag known positives and negatives
-    # test_pairs = known_pairs[known_pairs["split"].eq("TEST")]
-    # We should assign this now for both TRAIN and TEST so that we know:
-    # Known pos in train
-    # Known neg in train
-    # Known pos in test
-    # Known neg in test
-    # This is no longer just test pairs, so we should apply to al known pairs and change naming
-    # test_pairs = known_pairs
     known_pair_is_pos = known_pairs["y"].eq(1)
     known_pos_pairs = known_pairs[known_pair_is_pos]
     known_neg_pairs = known_pairs[~known_pair_is_pos]
@@ -159,11 +151,9 @@ def generate_pairs(
     # Concatenate all slices at once
     matrix = pd.concat(matrix_slices, ignore_index=True)
 
-    # Create split column based on known_pairs
+    # Keep the training set in. Create "split" column based on known_pairs
     known_pairs_dict = dict(zip(zip(known_pairs["source"], known_pairs["target"]), known_pairs["split"]))
     matrix["split"] = matrix.apply(lambda row: known_pairs_dict.get((row["source"], row["target"]), None), axis=1)
-    # Keep the training set in
-    # matrix = matrix[~matrix["is_in_train"]]
 
     # Add flag columns for known positives and negatives
     matrix = _add_flag_columns(matrix, known_pairs, clinical_trials, off_label)

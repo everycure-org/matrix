@@ -1,6 +1,7 @@
 from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
+from matrix.pipelines.matrix_generation.nodes import filter_out_known_pairs
 
 from . import nodes
 
@@ -22,9 +23,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "transformations": "params:matrix_transformations.transformations",
                             "score_col": "params:matrix_transformations.score_col",
                         },
-                        outputs=f"matrix_transformations.fold_{fold}.model_output.sorted_matrix_predictions@spark",
+                        outputs=f"matrix_transformations.fold_{fold}.model_output.sorted_matrix_predictions_with_train_data@spark",
                         name=f"apply_matrix_transformations_fold_{fold}",
                         argo_config=ArgoResourceConfig(cpu_request=8, memory_request=64, memory_limit=64),
+                    ),
+                    ArgoNode(
+                        func=filter_out_known_pairs,
+                        inputs=f"matrix_transformations.fold_{fold}.model_output.sorted_matrix_predictions_with_train_data@spark",
+                        outputs=f"matrix_transformations.fold_{fold}.model_output.sorted_matrix_predictions@spark",
+                        name=f"filter_out_known_transformed_pairs_fold_{fold}",
                     ),
                 ]
             )
