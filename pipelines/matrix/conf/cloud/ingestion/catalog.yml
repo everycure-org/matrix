@@ -36,3 +36,9 @@ ingestion.int.robokop.edges:
   <<: *_bigquery_ds
   filepath: ${globals:paths.ingestion}/int/robokop/${globals:data_sources.robokop.version}/edges
   table: robokop_edges_ingested_${globals:data_sources.robokop.version}
+
+# Information Resource Registry catalog
+ingestion.int.infores_catalog:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.ingestion}/int/infores_catalog/${globals:data_sources.information_resource_registry.version}/infores_catalog
+  table: infores_catalog
