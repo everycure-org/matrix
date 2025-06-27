@@ -12,7 +12,7 @@ from tqdm import tqdm
 class Evaluation(abc.ABC):
     """An abstract class representing evaluation methods for labelled test data."""
 
-    def evaluate(self, data: pd.DataFrame):
+    def evaluate(self, data: pd.DataFrame, score_col_name: str):
         """Performs evaluation on a dataset.
 
         Args:
@@ -247,7 +247,7 @@ class RecallAtN(Evaluation):
 class StabilityMetricsMixin:
     """A mixin class to introduce ids for stability calculations."""
 
-    def _modify_matrices(self, matrices: List[pd.DataFrame]) -> List[pd.DataFrame]:
+    def _modify_matrices(self, matrices: List[pd.DataFrame], score_col_name: str) -> List[pd.DataFrame]:
         """Modify matrices to create id column and sort by treat score.
 
         Args:
@@ -258,7 +258,7 @@ class StabilityMetricsMixin:
         """
         new_matrices = []
         for matrix in matrices:
-            matrix = matrix.sort_values(by="treat score", ascending=False).reset_index(drop=True)
+            matrix = matrix.sort_values(by=score_col_name, ascending=False).reset_index(drop=True)
             matrix["pair_id"] = matrix["source"] + "|" + matrix["target"]
             matrix["rank"] = matrix.index
             new_matrices.append(matrix)
@@ -279,14 +279,15 @@ class StabilityCommonalityAtN(Evaluation, StabilityMetricsMixin):
         """
         self._rank_func_lst = rank_func_lst or []
 
-    def evaluate(self, pair_ids: pd.DataFrame, matrices: List[pd.DataFrame]) -> Dict:
+    def evaluate(self, pair_ids: pd.DataFrame, matrices: List[pd.DataFrame], score_col_name: str) -> Dict:
         """Evaluates StabilityCommonalityAtN on a dataset.
 
         Args:
-            pair_ids: Pair ids to evaluate. Dummy variable for commonality at k
+            pair_ids: Pair ids to evaluate.
             matrices: DataFrames to evaluate.
+            score_col_name: Name of the score column to use for sorting.
         """
-        matrices = self._modify_matrices(matrices)
+        matrices = self._modify_matrices(matrices, score_col_name)
         report = {}
         for rank_func_generator in self._rank_func_lst:
             rank_func = rank_func_generator.generate()
@@ -305,14 +306,15 @@ class StabilityRankingMetrics(Evaluation, StabilityMetricsMixin):
         """
         self._rank_func_lst = rank_func_lst or []
 
-    def evaluate(self, pair_ids: pd.DataFrame, matrices: List[pd.DataFrame]) -> Dict:
+    def evaluate(self, pair_ids: pd.DataFrame, matrices: List[pd.DataFrame], score_col_name: str) -> Dict:
         """Evaluates StabilityCommonalityAtN on a dataset.
 
         Args:
             pair_ids: Pair ids to evaluate.
             matrices: DataFrames to evaluate.
+            score_col_name: Name of the score column to use for sorting.
         """
-        matrices = self._modify_matrices(matrices)
+        matrices = self._modify_matrices(matrices, score_col_name)
         rank_sets_1 = matrices[0]
         rank_sets_2 = matrices[1]
         report = {}

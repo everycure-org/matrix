@@ -14,10 +14,6 @@ RTX_SEPARATOR = r"\|"
 
 
 class RTXTransformer(GraphTransformer):
-    def __init__(self, version: str, select_cols: str = True):
-        super().__init__(select_cols)
-        self._version = version
-
     def transform_nodes(self, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
         """Transform RTX KG2 nodes to our target schema.
 
