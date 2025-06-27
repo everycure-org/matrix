@@ -21,6 +21,19 @@ def create_ground_truth_pipeline() -> list:
     ]
 
 
+def create_infores_catalog_pipeline() -> list:
+    """Create pipeline nodes for infores catalog processing."""
+    return [
+        node(
+            func=lambda x: x,
+            inputs=["ingestion.raw.infores_catalog"],
+            outputs="ingestion.int.infores_catalog",
+            name="write_infores_catalog",
+            tags=["infores-catalog"],
+        )
+    ]
+
+
 def create_pipeline(**kwargs) -> Pipeline:
     """Create ingestion pipeline."""
     # Create pipeline per source
@@ -28,6 +41,7 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # Ground truth
     nodes_lst.extend(create_ground_truth_pipeline())
+    nodes_lst.extend(create_infores_catalog_pipeline())
 
     # Drug list and disease list
     nodes_lst.extend(
