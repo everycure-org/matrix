@@ -295,6 +295,23 @@ ingestion.int.drug_list.nodes:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/drug_list/translator/${globals:data_sources.drug_list.version}/drug_list_conflated
 
+# -------------------------------------------------------------------------
+# Information Resource Registry catalog from biolink
+# -------------------------------------------------------------------------
+ingestion.raw.infores_catalog:
+  <<: [*_pandas_csv, *_layer_raw]
+  type: matrix.datasets.github.GitHubReleaseJSONLDataset
+  repository_url: https://github.com/biolink/information-resource-registry
+  release_name: ${globals:data_sources.information_resource_registry.version}
+  release_asset_name: infores_catalog.jsonl
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: token ${globals:gh_token}
+
+ingestion.int.infores_catalog:
+  <<: [*_pandas_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/infores_catalog/${globals:data_sources.information_resource_registry.version}/infores_catalog
+
 ingestion.int.disease_list.nodes:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/disease_list/translator/${globals:data_sources.disease_list.version}/disease_list_conflated

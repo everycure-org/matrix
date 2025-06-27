@@ -54,6 +54,8 @@ data_sources:
     version: 2.0.1
   off_label:
     version: v0.1
+  information_resource_registry:
+    version: v1.1.1
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation. Will make PR.
 mlflow_artifact_root: null
