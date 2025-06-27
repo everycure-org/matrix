@@ -36,3 +36,9 @@ ingestion.int.robokop.edges:
   <<: *_bigquery_ds
   filepath: ${globals:paths.ingestion}/int/robokop/${globals:data_sources.robokop.version}/edges
   table: robokop_edges_ingested_${globals:data_sources.robokop.version}
+
+# Valid edge types from matrix-schema
+ingestion.int.valid_edge_types:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.ingestion}/int/valid_edge_types/${globals:data_sources.matrix_schema.version}/valid_edge_types
+  table: valid_edge_types
