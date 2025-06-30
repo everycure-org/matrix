@@ -284,7 +284,7 @@ def normalization_summary_nodes_and_edges(
         formatted_mapping, on="id", how="left"
     )
 
-    def summarize_role(role: str):
+    def summarize_role(role_edges: ps.DataFrame, role_nodes_to_join: ps.DataFrame, role: str):
         return (
             edges.selectExpr(
                 f"{role} as id",
