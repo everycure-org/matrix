@@ -306,7 +306,7 @@ ingestion.int.disease_list.nodes:
 ingestion.raw.ground_truth.positives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/gt_ec_for_filtering_baseline2_for_nodetype/CCDD/tp_medi_nodetype_CCDD.txt # ${globals:paths.kg_raw}/ground_truth/ec/tp_medi_pairs_pd.txt
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/gt_ec_for_filtering_baseline2/tp_medi_filter_baseline2.txt # ${globals:paths.kg_raw}/ground_truth/ec/tp_medi_pairs_pd.txt
   load_args:
     sep: "\t"
   save_args:
@@ -315,7 +315,7 @@ ingestion.raw.ground_truth.positives:
 ingestion.raw.ground_truth.negatives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/gt_ec_for_filtering_baseline2_for_nodetype/CCDD/tn_medi_nodetype_CCDD.txt # ${globals:paths.kg_raw}/ground_truth/ec/tn_medi_pairs_pd.txt
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/gt_ec_for_filtering_baseline2/tn_medi_filter_baseline2.txt # ${globals:paths.kg_raw}/ground_truth/ec/tn_medi_pairs_pd.txt
   load_args:
     sep: "\t"
   save_args:
