@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.types as T
+from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark.sql import functions as f
 from sklearn.base import BaseEstimator
 from sklearn.impute._base import _BaseImputer
@@ -15,7 +16,6 @@ from sklearn.model_selection import BaseCrossValidator
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from matrix.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
-from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
 from .model import ModelWrapper
 from .model_selection import DiseaseAreaSplit
