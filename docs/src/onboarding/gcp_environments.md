@@ -18,18 +18,18 @@ As such, gcp environment `prod` refers to GCP project `mtrx-hub-prod-sms` and `d
 ### Runtime variables
 
 Not an environment, but a related concept. 
-Variables such as `RUNTIME_GCP_BUCKET` or `RUNTIME_GCP_PROJECT` refer to the bucket or project corresponding to the GCP project you want to run the pipeline in.
+Variables such as `RUNTIME_GCP_BUCKET` or `RUNTIME_GCP_PROJECT_ID` refer to the bucket or project used for pipeline execution.
 
-Example 1: You want to run the pipeline in prod, so your `.env` file has:
+**Important**: As of the latest update, the GCP project ID is automatically detected from:
+1. GCP metadata server (when running in GKE/GCP environments)
+2. gcloud CLI configuration (for local development)
 
-`RUNTIME_GCP_PROJECT_ID=mtrx-hub-prod-sms`
+The system no longer falls back to environment variables for project detection. The `RUNTIME_GCP_PROJECT_ID` environment variable is now set automatically by the system based on the detected project.
 
-Example 2: You want to run the pipeline in dev, so your `.env` file has the following (commented out):
-`# RUNTIME_GCP_PROJECT_ID=mtrx-hub-prod-sms`
-
-and your `.env.defaults` file has:
-
-`RUNTIME_GCP_PROJECT_ID=mtrx-hub-dev-3of`
+Example: When you run a pipeline, the system will:
+- Auto-detect your GCP project (e.g., `mtrx-hub-prod-sms` for prod or `mtrx-hub-dev-3of` for dev)
+- Set `RUNTIME_GCP_PROJECT_ID` environment variable to this detected value
+- Use this for all downstream operations
 
 ## Understanding GCP Environments
 
@@ -56,22 +56,41 @@ The GCP environment controls:
 
 ### Setting the GCP Environment
 
-When using `kedro experiment run` or `kedro run` you can specify the GCP environment using the values in your `.env` file (for `prod`), or have those commented out, in which case `.env.defaults` will be applied, which always point to `dev`.
+**Auto-Detection**: The system now automatically detects which GCP environment to use based on:
+1. GCP metadata server (when running in GKE/GCP environments)
+2. Your active gcloud configuration (for local development)
+
+To switch between environments locally:
+- For development: `gcloud config set project mtrx-hub-dev-3of`
+- For production: `gcloud config set project mtrx-hub-prod-sms` (admin access required)
+
+When using `kedro experiment run` or `kedro run`, the system will automatically use the detected project.
 
 
 ### Environment Variables
 
-To run pipelines in production (with private datasets), your `.env` file should contain:
+**Auto-Detection**: The system now automatically detects and sets most runtime variables. You only need to explicitly set variables that cannot be auto-detected.
+
+For production access (with private datasets), ensure your gcloud is configured correctly:
 ```bash
-RUNTIME_GCP_PROJECT_ID=mtrx-hub-prod-sms
-RUNTIME_GCP_BUCKET=mtrx-us-central1-hub-prod-storage
-MLFLOW_URL=https://mlflow.platform.prod.everycure.org/
-ARGO_PLATFORM_URL=https://argo.platform.prod.everycure.org
+# Set your active project to production
+gcloud config set project mtrx-hub-prod-sms
+
+# Optional: Set remaining variables in .env if needed
 GOOGLE_APPLICATION_CREDENTIALS=/Users/<YOUR_USERNAME>/.config/gcloud/application_default_credentials.json
 INCLUDE_PRIVATE_DATASETS=1
 ```
 
-To run pipelines in development (only public datasets),  the above values in your `.env` should be commented out.
+For development, ensure your gcloud is configured correctly:
+```bash
+# Set your active project to development  
+gcloud config set project mtrx-hub-dev-3of
+```
+
+**Note**: The following variables are now auto-detected and set by the system:
+- `RUNTIME_GCP_PROJECT_ID` (auto-detected from GCP metadata or gcloud config)
+- `RUNTIME_GCP_BUCKET` (auto-determined based on project environment)
+- `MLFLOW_URL` (auto-determined based on project environment)
 
 Commands `kedro experiment run` and `kedro run` are environment agnostic.
 

@@ -10,6 +10,7 @@ from kedro.pipeline.node import Node
 
 from matrix.git_utils import get_git_sha
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
+from matrix.utils.kubernetes import get_runtime_gcp_project_id
 
 ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
@@ -296,5 +297,6 @@ def clean_name(name: str) -> str:
 
 def get_trigger_release_flag(pipeline: str) -> str:
     pipeline_correct = pipeline in ("data_release", "kg_release", "kg_release_patch")
-    env_correct = "-dev-" in os.environ["RUNTIME_GCP_PROJECT_ID"].lower()
+    project_id = get_runtime_gcp_project_id()
+    env_correct = "-dev-" in project_id.lower()
     return str(pipeline_correct and env_correct)

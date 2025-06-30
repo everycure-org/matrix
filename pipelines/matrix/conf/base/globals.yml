@@ -13,7 +13,6 @@ dev_gcs_bucket: gs://mtrx-us-central1-hub-dev-storage
 prod_gcs_bucket: gs://mtrx-us-central1-hub-prod-storage
 
 runtime_gcs_bucket: gs://${oc.env:RUNTIME_GCP_BUCKET}
-runtime_gcp_project: ${oc.env:RUNTIME_GCP_PROJECT_ID}
 
 dev_gcp_project_id: mtrx-hub-dev-3of
 
