@@ -31,6 +31,7 @@ from kedro.pipeline.pipeline import Pipeline
 from kedro.utils import load_obj
 
 from matrix.session import KedroSessionWithFromCatalog
+from matrix.utils.kubernetes import get_runtime_gcp_bucket, get_runtime_gcp_project_id, get_runtime_mlflow_url
 
 
 class RunConfig(NamedTuple):
@@ -102,10 +103,15 @@ def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async
 
 def _validate_env_vars_for_private_data() -> None:
     """ Short-circuit if a user is requesting private datasets but their project or bucket point to dev. """
+    # Get runtime values using auto-detection with fallback to environment variables
+    runtime_project_id = get_runtime_gcp_project_id()
+    runtime_bucket = get_runtime_gcp_bucket(runtime_project_id)
+    mlflow_url = get_runtime_mlflow_url(runtime_project_id)
+    
     env_vars = {
-        "RUNTIME_GCP_PROJECT_ID": os.environ["RUNTIME_GCP_PROJECT_ID"],
-        "RUNTIME_GCP_BUCKET": os.environ["RUNTIME_GCP_BUCKET"],
-        "MLFLOW_URL": os.environ["MLFLOW_URL"],
+        "RUNTIME_GCP_PROJECT_ID": runtime_project_id,
+        "RUNTIME_GCP_BUCKET": runtime_bucket,
+        "MLFLOW_URL": mlflow_url,
     }
 
     if os.getenv("INCLUDE_PRIVATE_DATASETS", "") == "1":

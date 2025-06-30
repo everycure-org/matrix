@@ -8,7 +8,6 @@ release_dir: ${runtime_gcs_bucket}/kedro/data/${release_folder_name}/${versions.
 run_dir: ${release_dir}/runs/${run_name}
 
 runtime_gcs_bucket: gs://${oc.env:RUNTIME_GCP_BUCKET}
-runtime_gcp_project: ${oc.env:RUNTIME_GCP_PROJECT_ID}
 
 # These need to be duplicated in cloud/globals.yml even if defined in base/globals.yml because `paths` below references them.
 dev_gcs_bucket: gs://mtrx-us-central1-hub-dev-storage

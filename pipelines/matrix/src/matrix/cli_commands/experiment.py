@@ -30,7 +30,14 @@ from matrix.git_utils import (
 )
 from matrix.utils.argo import argo_template_lint, submit_workflow
 from matrix.utils.authentication import get_user_account_creds
-from matrix.utils.kubernetes import apply, can_talk_to_kubernetes, create_namespace, namespace_exists
+from matrix.utils.kubernetes import (
+    apply,
+    can_talk_to_kubernetes,
+    create_namespace,
+    get_runtime_gcp_project_id,
+    get_runtime_mlflow_url,
+    namespace_exists,
+)
 from matrix.utils.mlflow_utils import (
     DeletedExperimentExistsWithName,
     ExperimentNotFound,
@@ -54,7 +61,8 @@ EXPERIMENT_BRANCH_PREFIX = "experiment/"
 
 
 def configure_mlflow_tracking(token: str) -> None:
-    mlflow.set_tracking_uri(os.environ["MLFLOW_URL"])
+    mlflow_url = get_runtime_mlflow_url()
+    mlflow.set_tracking_uri(mlflow_url)
     os.environ["MLFLOW_TRACKING_TOKEN"] = token
 
 
@@ -304,14 +312,13 @@ def _submit(
     """
 
     try:
-        runtime_gcp_project_id = os.environ["RUNTIME_GCP_PROJECT_ID"]
-        mlflow_url = os.environ["MLFLOW_URL"]
+        # Auto-detect project ID from gcloud config, with fallback to environment variable
+        runtime_gcp_project_id = get_runtime_gcp_project_id()
+        mlflow_url = get_runtime_mlflow_url(runtime_gcp_project_id)
         image = f"us-central1-docker.pkg.dev/{runtime_gcp_project_id}/matrix-images/matrix"
 
         console.rule("[bold blue]Submitting Workflow")
-        if not can_talk_to_kubernetes(
-            project=runtime_gcp_project_id, region="us-central1", cluster_name="compute-cluster"
-        ):
+        if not can_talk_to_kubernetes(region="us-central1", cluster_name="compute-cluster"):
             raise EnvironmentError("Cannot communicate with Kubernetes")
         else:
             console.print("[green]✓[/green] kubectl authenticated")

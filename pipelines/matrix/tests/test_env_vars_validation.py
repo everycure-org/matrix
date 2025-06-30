@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import click
 import pytest
 from click.testing import CliRunner
@@ -65,15 +67,25 @@ def test_validate_env_vars(monkeypatch, env_vars, should_prompt):
     # This is why you must explicitly delete it, before potentially setting it via monkeypatch, if you want to
     # test the scenario where that value is absent as part of the test requirements:
     monkeypatch.delenv("INCLUDE_PRIVATE_DATASETS", raising=False)
-    for key, value in env_vars.items():
-        monkeypatch.setenv(key, value)
 
-    runner = CliRunner()
+    # Set INCLUDE_PRIVATE_DATASETS if it's in the test parameters
+    if "INCLUDE_PRIVATE_DATASETS" in env_vars:
+        monkeypatch.setenv("INCLUDE_PRIVATE_DATASETS", env_vars["INCLUDE_PRIVATE_DATASETS"])
 
-    if should_prompt:
-        with runner.isolation(input="n\n"):
-            with pytest.raises(click.exceptions.Abort):
-                _validate_env_vars_for_private_data()
-    else:
-        with runner.isolation():
-            _validate_env_vars_for_private_data()  # Should complete without prompting
+    # Mock the runtime functions to return the test values
+    with patch("matrix.cli_commands.run.get_runtime_gcp_project_id") as mock_project, patch(
+        "matrix.cli_commands.run.get_runtime_gcp_bucket"
+    ) as mock_bucket, patch("matrix.cli_commands.run.get_runtime_mlflow_url") as mock_mlflow:
+        mock_project.return_value = env_vars["RUNTIME_GCP_PROJECT_ID"]
+        mock_bucket.return_value = env_vars["RUNTIME_GCP_BUCKET"]
+        mock_mlflow.return_value = env_vars["MLFLOW_URL"]
+
+        runner = CliRunner()
+
+        if should_prompt:
+            with runner.isolation(input="n\n"):
+                with pytest.raises(click.exceptions.Abort):
+                    _validate_env_vars_for_private_data()
+        else:
+            with runner.isolation():
+                _validate_env_vars_for_private_data()  # Should complete without prompting
