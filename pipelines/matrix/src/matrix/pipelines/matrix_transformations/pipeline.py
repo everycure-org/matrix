@@ -36,9 +36,10 @@ def create_pipeline(**kwargs) -> Pipeline:
             [
                 ArgoNode(
                     func=nodes.return_predictions,
-                    inputs=[
-                        f"matrix_transformations.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@spark",
-                    ],
+                    inputs={
+                        "sorted_matrix_df": f"matrix_transformations.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@spark",
+                        "known_pairs": "modelling.model_input.splits",
+                    },
                     outputs=f"matrix_transformations.full_matrix_output@spark",
                     name="store_transformed_predictions",
                 ),
