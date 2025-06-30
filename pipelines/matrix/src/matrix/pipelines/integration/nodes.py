@@ -291,7 +291,7 @@ def normalization_summary_nodes_and_edges(
                 f"original_{role} as original_id",
                 f"{role}_normalization_success as normalization_success",
             )
-            .join(nodes_for_join, on="id", how="left")
+            .join(role_nodes_for_join, on="id", how="left")
             .withColumn("source_role", F.lit(role))
         )
 
