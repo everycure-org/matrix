@@ -18,26 +18,27 @@ In this section we will break them down in test environment to teach you how to 
 As explained earlier in the section, data engineering pipeline is responsible for ingesting and integrating data from various biomedical knowledge graphs and datasets. 
 The data engineering pipeline consists of two main stages:
 
-1. **Ingestion Stage** (`ingestion`):
-   ```bash
-   kedro run --pipeline=ingestion # also can do kedro run -p ingestion
-   ```
-   This stage:
-   - Loads raw data from each source
-   - Performs initial data validation
-   - Converts data into a standardized format
-   - Stores intermediate results in Parquet format for efficient processing
-   ```
+**Ingestion Stage** (`ingestion`):
+```bash
+kedro run --pipeline=ingestion # also can do kedro run -p ingestion
+```
+This stage:
 
-2. **Integration Stage** (`integration`):
-   ```bash
-   kedro run --pipeline=integration
-   ```
-   This stage:
-   - Normalizes data from different sources to a common format (Biolink)
-   - Resolves entity synonyms to ensure consistent node IDs
-   - Unions and deduplicates nodes and edges
-   - Produces a unified knowledge graph
+1. Loads raw data from each source
+1. Performs initial data validation
+1. Converts data into a standardized format
+1. Stores intermediate results in Parquet format for efficient processing
+
+**Integration Stage** (`integration`):
+```bash
+kedro run --pipeline=integration
+```
+This stage:
+
+1. Normalizes data from different sources to a common format (Biolink)
+1. Resolves entity synonyms to ensure consistent node IDs
+1. Unions and deduplicates nodes and edges
+1. Produces a unified knowledge graph
 
 The pipeline is highly configurable, allowing you to enable or disable different data sources based on your needs. These sources are configured in `settings.py`:
 
