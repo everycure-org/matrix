@@ -117,6 +117,7 @@ The exact details on integration and ingestion pipeline can be found in [the pip
 kedro run -p data_engineering -e test
 ```
 Will create a unified knowledge graph. Such KG can then be used by the feature pipeline for generating embeddings and the modeling pipeline for training ML models. The `feature `pipeline consists of:
+
 - `filtering`: Applies custom filters to the knowledge graph
 - `embeddings`: Generates topological embeddings for nodes
 
@@ -147,6 +148,9 @@ filtering:
         # - robokop
 
 ```
+
+You might have noticed that `_object` parameter occurs quite frequently across different environment and config files. This is because we leverage the [dependency injection](https://www.geeksforgeeks.org/dependency-injectiondi-design-pattern/) pattern to ensure clean configuration and re-usability. We will dig into the details of this custom kedro extension in the [kedro extension section](../deep_dive/kedro_extensions.md).
+
 
 For example, to include ROBOKOP data in your pipeline:
 1. Uncomment the `robokop` line in the `keep_list`
@@ -197,6 +201,7 @@ kedro run --pipeline=modelling_run
 ```
 
 This pipeline includes:
+
 - `modelling`: Trains the ML models
 - `matrix_generation`: Produces the drug-disease prediction matrix
 - `evaluation`: Evaluates model performance
