@@ -1,5 +1,5 @@
 faker
-matrix-schema @ git+https://github.com/everycure-org/matrix-schema.git@pandera-schema-update
+matrix-schema==0.3.0
 bmt # biolink model toolkit
 gcsfs==2024.3.1
 google-cloud-bigquery
