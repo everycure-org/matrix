@@ -286,7 +286,7 @@ def normalization_summary_nodes_and_edges(
 
     def summarize_role(role_edges: ps.DataFrame, role_nodes_to_join: ps.DataFrame, role: str):
         return (
-            edges.selectExpr(
+            role_edges.selectExpr(
                 f"{role} as id",
                 f"original_{role} as original_id",
                 f"{role}_normalization_success as normalization_success",
