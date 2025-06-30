@@ -2,8 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List
 
 import pyspark.sql as ps
-
-from matrix.pipelines.integration.schema import BIOLINK_KG_EDGE_SCHEMA, BIOLINK_KG_NODE_SCHEMA
+from matrix_schema.datamodel.pandera import MATRIX_EDGE_SCHEMA, MATRIX_NODE_SCHEMA
 
 
 class Transformer(ABC):
@@ -34,10 +33,10 @@ class GraphTransformer(Transformer):
     def transform(self, nodes_df: ps.DataFrame, edges_df: ps.DataFrame, **kwargs) -> Dict[str, ps.DataFrame]:
         return {
             "nodes": self.transform_nodes(nodes_df, **kwargs).transform(
-                select_if, cols=BIOLINK_KG_NODE_SCHEMA.columns.keys(), cond=self._select_cols
+                select_if, cols=MATRIX_NODE_SCHEMA.columns.keys(), cond=self._select_cols
             ),
             "edges": self.transform_edges(edges_df, **kwargs).transform(
-                select_if, cols=BIOLINK_KG_EDGE_SCHEMA.columns.keys(), cond=self._select_cols
+                select_if, cols=MATRIX_EDGE_SCHEMA.columns.keys(), cond=self._select_cols
             ),
         }
 
