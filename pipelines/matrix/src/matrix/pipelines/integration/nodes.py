@@ -296,8 +296,8 @@ def normalization_summary_nodes_and_edges(
         )
 
     return (
-        summarize_role("subject")
-        .unionByName(summarize_role("object"))
+        summarize_role(edges, nodes_for_join, "subject")
+        .unionByName(summarize_role(edges, nodes_for_join, "object"))
         .withColumn("upstream_data_source", F.lit(source))
         .select(
             "id",
