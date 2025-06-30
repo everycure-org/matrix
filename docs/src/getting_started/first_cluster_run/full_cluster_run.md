@@ -20,8 +20,6 @@ The `kedro experiment` command is our custom extension that enables running pipe
 
 You can find the details on `kedro experiment` and how to utilize it successfully within the [deep dive section](../deep_dive/kedro_experiment.md)
 
-
-
 ### Monitoring the workflow
 
 You can monitor the workflow through the web interface however you can also do it through k9s or Argo CLI: 
