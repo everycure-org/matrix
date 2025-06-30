@@ -108,3 +108,31 @@ resource "google_storage_bucket_iam_member" "custom_cloud_build_sa_access" {
   role   = "roles/storage.admin"
   member = "serviceAccount:custom-cloud-build-sa@mtrx-hub-prod-sms.iam.gserviceaccount.com"
 }
+
+# Create a public bucket for public access
+resource "google_storage_bucket" "public_bucket" {
+  name                        = "${var.storage_bucket_name}-public"
+  location                    = var.default_region
+  uniform_bucket_level_access = true
+  force_destroy               = true
+
+  labels = {
+    environment = "dev"
+    type        = "public"
+    project     = "matrix"
+  }
+}
+
+# Make the public bucket contents publicly accessible
+resource "google_storage_bucket_iam_member" "public_bucket_public_access" {
+  bucket = google_storage_bucket.public_bucket.name
+  role   = "roles/storage.objectViewer"
+  member = "allUsers"
+}
+
+# Also allow public listing of objects in the bucket
+resource "google_storage_bucket_iam_member" "public_bucket_public_listing" {
+  bucket = google_storage_bucket.public_bucket.name
+  role   = "roles/storage.legacyBucketReader"
+  member = "allUsers"
+}
