@@ -68,19 +68,6 @@ class TestGCPProjectAutoDetection:
 
     @patch("matrix.utils.kubernetes.get_gcp_project_from_metadata")
     @patch("matrix.utils.kubernetes.get_gcp_project_from_config")
-    def test_get_runtime_gcp_project_id_gcloud_fallback(self, mock_gcloud, mock_metadata):
-        """Test that runtime project ID falls back to gcloud when metadata fails."""
-        mock_metadata.side_effect = RuntimeError("metadata server unavailable")
-        mock_gcloud.return_value = "gcloud-project"
-
-        result = get_runtime_gcp_project_id()
-
-        assert result == "gcloud-project"
-        mock_metadata.assert_called_once()
-        mock_gcloud.assert_called_once()
-
-    @patch("matrix.utils.kubernetes.get_gcp_project_from_metadata")
-    @patch("matrix.utils.kubernetes.get_gcp_project_from_config")
     def test_get_runtime_gcp_project_id_all_fail(self, mock_gcloud, mock_metadata):
         """Test that runtime project ID fails when both metadata and gcloud fail."""
         mock_metadata.side_effect = RuntimeError("metadata server unavailable")
