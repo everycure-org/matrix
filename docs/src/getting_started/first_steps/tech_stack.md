@@ -8,8 +8,6 @@ Our drug repurposing pipeline relies on many libraries and components but some o
 * **uv** - Modern Python package installer and resolver that we use instead of pip for faster, more reliable dependency management
 * **Java Virtual Machines** - Required for Apache Spark operations which we use for distributed data processing
 * **gcloud SDK** - Google Cloud Platform tools that enable interaction with our cloud infrastructure and services
-* **Argo Workflows** - Kubernetes-native workflow engine that orchestrates our pipeline execution in production
-* **Kubernetes** - Container orchestration platform where our pipeline runs in production environments
 
 !!! Google Cloud
     Our platform leverages Google Cloud Platform as Cloud provider. Many parts of the onboarding deep-dive guide or documentation will depend on or refer to GCP - these will be marked appropriately.

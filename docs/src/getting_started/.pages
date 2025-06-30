@@ -2,5 +2,5 @@ nav:
     - index.md
     - first_steps
     - first_full_run
-    - debugging
+    - first_cluster_run
     - deep_dive
