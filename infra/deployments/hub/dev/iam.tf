@@ -46,7 +46,8 @@ module "project_iam_bindings" {
     # Grant Cloud Build service account necessary permissions for storage operations
     "roles/storage.admin" = local.custom_cloud_build_sa
     # roles/owner does _not_ have org policy edit rights. the SA needs it though if we want to edit org policies (e.g. for overrides)
-    "roles/orgpolicy.policyAdmin" = local.custom_cloud_build_sa
+    # TODO: https://linear.app/everycure/issue/SEC-3
+    # "roles/orgpolicy.policyAdmin" = local.custom_cloud_build_sa
 
     "roles/compute.networkUser" = [local.matrix_all_group]
   }
