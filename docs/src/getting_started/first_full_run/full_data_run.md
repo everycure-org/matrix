@@ -13,41 +13,9 @@ Note that even though feature/modelling pipeline takes less time, both approache
 
 ## Option 1: Full e2e run
 
-The first part is to run the data engineering pipeline with desired data sources. You can customize which sources to include by modifying the configuration:
-
-### 1. Configure Data Sources in Settings
-
-Update your `conf/base/globals.yml` to specify which versions of data sources to include and `settings.py` to specify which datasets should be processed:
-
-```yaml
-# conf/base/globals.yml
-data_sources:
-  rtx_kg2:
-    version: v2.10.0_validated
-  robokop:
-    version: 30fd1bfc18cd5ccb
-  spoke:
-    version: V5.2
-  embiology:
-    version: 03032025
-  ec_medical_team:
-    version: 20241031
-  ec_clinical_trials:
-    version: 20230309
-  drug_list:
-    version: v0.1.1
-  disease_list:
-    version: v0.1.1
-  gt:
-    version: v2.10.0_validated
-  drugmech:
-    version: 2.0.1
-  off_label:
-    version: v0.1
-```
+The first part is to run the data engineering pipeline with desired raw data sources. By default all raw data sources which are non-proprietary are enabled in our pipeline:
 
 ```python 
-#
 DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
     generate_dynamic_pipeline_mapping(
         {
@@ -56,14 +24,32 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
             },
             "integration": [
                 {"name": "rtx_kg2", "integrate_in_kg": True, "is_private": False},
-                # Following is commented out to disable it
-                # {"name": "robokop", "integrate_in_kg": True, "is_private": False},
-                # ... other sources
+                {"name": "spoke", "integrate_in_kg": True, "is_private": True}, # NOTE: will only be ingested by users who are part of matrix project & have granted access to proprietary datasets
+                {"name": "embiology", "integrate_in_kg": True, "is_private": True}, # NOTE: will only be ingested by users who are part of matrix project & have granted access to proprietary datasets
+                {"name": "robokop", "integrate_in_kg": True, "is_private": False},
+                {"name": "ec_medical_team", "integrate_in_kg": True},
                 {"name": "drug_list", "integrate_in_kg": False, "has_edges": False},
                 {"name": "disease_list", "integrate_in_kg": False, "has_edges": False},
+                {"name": "ground_truth", "integrate_in_kg": False, "has_nodes": False},
+                # {"name": "drugmech", "integrate_in_kg": False, "has_nodes": False},
+                {"name": "ec_clinical_trails", "integrate_in_kg": False},
+                {"name": "off_label", "integrate_in_kg": False, "has_nodes": False},
             ],
+            ],
+        }
+    )
+)
 ```
-Note that you need to enable drug list/disease list/ground truth to enable matrix generation and model evaluation.
+Therefore, all non-private datasets will be ingested and processed. If you don't want to process a specific dataset, you can comment out that specific line of code or set `integrated_in_kg` as `False`. Note however that to successfully run the pipeline e2e, you will need to ingest, normalize and process:
+
+- A Knowledge Graph - to be used to calculate topological embeddings for drugs & diseases
+- A Ground Truth Set - to train a predictive ML model 
+- Drugs List & Disease List - to run inference on combination of 60m drug-disease pairs
+- Evaluation sets (e.g. clinical trials & off label) - to run tests evaluating performance
+
+!!! info "Modifying data versions"
+    It's also possible to modify which exact version you want to ingest - if you are interested in this, please go to the [walkthrough](../deep_dive/walkthroughs/modify_data_versions.md) 
+
 
 ### 2. Kick off the run
 Once you disabled/enabled datasets of interest, you can kick off the Matrix pipeline simply by running
