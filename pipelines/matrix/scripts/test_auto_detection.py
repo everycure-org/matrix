@@ -12,7 +12,6 @@ from matrix.utils.kubernetes import (
     can_talk_to_kubernetes,
     get_gcp_project_from_config,
     get_runtime_gcp_bucket,
-    get_runtime_gcp_project_id,
     get_runtime_mlflow_url,
 )
 
@@ -27,22 +26,17 @@ def main():
         project_id = get_gcp_project_from_config()
         print(f"   ✅ Active project: {project_id}")
 
-        # 2. Get runtime project ID (with fallback to environment)
-        print("\n2. Getting runtime project ID (with env fallback)...")
-        runtime_project = get_runtime_gcp_project_id()
-        print(f"   ✅ Runtime project: {runtime_project}")
-
-        # 3. Auto-detect MLflow URL
+        # 2. Auto-detect MLflow URL
         print("\n3. Auto-detecting MLflow URL...")
         mlflow_url = get_runtime_mlflow_url(runtime_project)
         print(f"   ✅ MLflow URL: {mlflow_url}")
 
-        # 4. Auto-detect GCP bucket
+        # 3. Auto-detect GCP bucket
         print("\n4. Auto-detecting GCP bucket...")
         bucket = get_runtime_gcp_bucket(runtime_project)
         print(f"   ✅ GCP bucket: {bucket}")
 
-        # 5. Environment variables (if set)
+        # 4. Environment variables (if set)
         print("\n5. Environment variable overrides:")
         env_vars = ["RUNTIME_GCP_PROJECT_ID", "RUNTIME_GCP_BUCKET", "MLFLOW_URL"]
 
@@ -53,7 +47,7 @@ def main():
             else:
                 print(f"   ⭕ {var}: (not set - using auto-detection)")
 
-        # 6. Test Kubernetes connectivity
+        # 5. Test Kubernetes connectivity
         print("\n6. Testing Kubernetes connectivity...")
         try:
             can_connect = can_talk_to_kubernetes()

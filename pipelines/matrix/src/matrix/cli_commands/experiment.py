@@ -312,7 +312,7 @@ def _submit(
     """
 
     try:
-        # Auto-detect project ID from gcloud config, with fallback to environment variable
+        # Auto-detect project ID from gcloud config
         runtime_gcp_project_id = get_runtime_gcp_project_id()
         mlflow_url = get_runtime_mlflow_url(runtime_gcp_project_id)
         image = f"us-central1-docker.pkg.dev/{runtime_gcp_project_id}/matrix-images/matrix"
