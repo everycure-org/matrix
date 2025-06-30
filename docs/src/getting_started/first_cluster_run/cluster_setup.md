@@ -1,19 +1,18 @@
 # Cluster Set-up
 
-Now that you understand how to run different parts of the pipeline and have seen how the data flows through the system, let's set up your environment to work with GCP. This will allow you to access the full range of data and compute resources available in the Matrix platform.
+Now that you understand how to run different parts of the pipeline and have seen how the data flows through the system, let's set up your environment to work with infrastructure and kubernetes cluster. This will allow you to leverage the pipeline in a parallelized and resource-efficient manner.
 
 !!! warning
     Note that this section is only applicable for users who are part of Matrix Project & Matrix GCP infrastructure; if you have set up MATRIX codebase on your own cloud platform, these instructions might not be directly applicable for you
 
-## Prerequisites
+## Tech Stack
 
-To understand the cluster set up, you will need to have a basic understanding of the following two technologies:
+To understand the cluster set-up, you will need to have a basic understanding of the following two technologies:
 
 * **Argo Workflows** - Kubernetes-native workflow engine that orchestrates our pipeline execution in production
 * **Kubernetes** - Container orchestration platform where our pipeline runs in production environments
 
 ## Installation
-
 ### Docker Configuration
 
 First, configure Docker to use the Google Container Registry:
@@ -41,7 +40,8 @@ Once installed, use the gcloud SDK to connect kubectl to the kubernetes cluster.
     ```bash
     gcloud components install gke-gcloud-auth-plugin
     gcloud container clusters get-credentials compute-cluster --region us-central1 --project mtrx-hub-dev-3of
-    # ... test your installation. You should see a list of the cluster's namespaces.
+    
+    # You can test your installation by running the following command; you should see a list of the cluster's namespaces as output.
     kubectl get namespaces
     ```
 
@@ -72,6 +72,8 @@ brew install k9s
 ```
 
 ## Environment Setup
+
+Once you installed the tech stack, you can proceed to the environment setup.
 
 ### 1. Authentication and Access
 
