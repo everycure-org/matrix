@@ -1,7 +1,9 @@
 import logging
 from typing import Any
 
+import pandas as pd
 import pyspark.sql as ps
+from matrix import settings
 from matrix.inject import inject_object
 
 logger = logging.getLogger(__name__)
@@ -37,12 +39,31 @@ def apply_matrix_transformations(
 
 def return_predictions(
     sorted_matrix_df: ps.DataFrame,
+    known_pairs: pd.DataFrame,
 ) -> ps.DataFrame:
-    """Store the full model predictions.
+    """Store the full model predictions including training data.
+
+    This function adds training data rows from the known_pairs DataFrame to the sorted matrix.
+    The training data rows are added at the bottom of the matrix and have no scores.
+    They are flagged with the is_known_positive and is_known_negative flags.
 
     Args:
-        sorted_matrix_df: DataFrame containing the sorted matrix
-        **kwargs: Extra arguments such as the drug and disease lists for tables
+        sorted_matrix_df: DataFrame containing the sorted matrix with predictions
+        known_pairs: DataFrame containing known drug-disease pairs with fold and split information
+
+    Returns:
+        DataFrame with training data rows appended to the sorted matrix
     """
 
-    return sorted_matrix_df
+    n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING().get("cross_validation")["n_cross_val_folds"]
+
+    train_data = known_pairs[(known_pairs["fold"] == n_cross_val_folds) & (known_pairs["split"] == "TRAIN")]
+    train_data = train_data[["source", "target", "y"]]
+    train_data["is_known_positive"] = train_data["y"] == 1
+    train_data["is_known_negative"] = train_data["y"] == 0
+
+    train_data_spark = sorted_matrix_df.sparkSession.createDataFrame(train_data)
+
+    result_df = sorted_matrix_df.unionByName(train_data_spark, allowMissingColumns=True)
+
+    return result_df
