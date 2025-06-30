@@ -306,7 +306,7 @@ ingestion.int.disease_list.nodes:
 ingestion.raw.ground_truth.positives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/ground_truth_ec_for_filtered_graphs_primary_source/tp_medi_pks_g1.txt # ${globals:paths.kg_raw}/ground_truth/ec/tp_medi_pairs_pd.txt
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/gt_ec_for_nodetype_filter_CCDD/tp_medi_nodetype_CCDD.txt # ${globals:paths.kg_raw}/ground_truth/ec/tp_medi_pairs_pd.txt
   load_args:
     sep: "\t"
   save_args:
@@ -315,7 +315,7 @@ ingestion.raw.ground_truth.positives:
 ingestion.raw.ground_truth.negatives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/ground_truth_ec_for_filtered_graphs_primary_source/tn_medi_pks_g1.txt # ${globals:paths.kg_raw}/ground_truth/ec/tn_medi_pairs_pd.txt
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/gt_ec_for_nodetype_filter_CCDD/tn_medi_nodetype_CCDD.txt # ${globals:paths.kg_raw}/ground_truth/ec/tn_medi_pairs_pd.txt
   load_args:
     sep: "\t"
   save_args:
@@ -359,7 +359,7 @@ ingestion.int.ground_truth.edges:
 ingestion.raw.robokop.nodes@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccd_filtered_primary_sources_1/robokop_30fd_baseline2_group1_only_nodes.tsv #${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccb/robokop_30fd_baseline2_nodes.tsv #${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
   file_format: csv
   load_args:
     sep: "\t"
@@ -368,7 +368,7 @@ ingestion.raw.robokop.nodes@spark:
 
 ingestion.raw.robokop.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccd_filtered_primary_sources_1/robokop_30fd_baseline2_group1_only_nodes.tsv #${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccb/robokop_30fd_baseline2_nodes.tsv #${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
   save_args:
     sep: "\t"
     header: true
@@ -379,7 +379,7 @@ ingestion.raw.robokop.nodes@pandas:
 ingestion.raw.robokop.edges@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccd_filtered_primary_sources_1/robokop_30fd_baseline2_group1_only_edges.tsv #${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccb/robokop_30fd_baseline2_edges.tsv #${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
   file_format: csv
   load_args:
     sep: "\t"
@@ -388,7 +388,7 @@ ingestion.raw.robokop.edges@spark:
 
 ingestion.raw.robokop.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccd_filtered_primary_sources_1/robokop_30fd_baseline2_group1_only_edges.tsv #${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccb/robokop_30fd_baseline2_edges.tsv #${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
   save_args:
     sep: "\t"
     header: true
