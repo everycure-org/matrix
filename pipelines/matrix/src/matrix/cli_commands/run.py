@@ -103,7 +103,7 @@ def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async
 
 def _validate_env_vars_for_private_data() -> None:
     """ Short-circuit if a user is requesting private datasets but their project or bucket point to dev. """
-    # Get runtime values using auto-detection with fallback to environment variables
+    # Get runtime values using auto-detection
     runtime_project_id = get_runtime_gcp_project_id()
     runtime_bucket = get_runtime_gcp_bucket(runtime_project_id)
     mlflow_url = get_runtime_mlflow_url(runtime_project_id)
