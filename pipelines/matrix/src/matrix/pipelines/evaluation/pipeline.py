@@ -52,12 +52,12 @@ def _create_evaluation_fold_pipeline(
 
 
 def _create_core_stability_pipeline(
-    fold_main: str, fold_to_compare: str, evaluation: str, matrix_input: str
+    fold_main: str, fold_to_compare: str, evaluation: str, matrix_input: str, score_col_name: str
 ) -> Pipeline:
     if evaluation != "rank_commonality":
         pipeline_nodes = [
             ArgoNode(
-                func=nodes.generate_overlapping_dataset,
+                func=partial(nodes.generate_overlapping_dataset, score_col_name=score_col_name),
                 inputs=[
                     f"params:evaluation.{evaluation}.evaluation_options.generator",
                     f"{matrix_input}.fold_{fold_main}.model_output.sorted_matrix_predictions@pandas",
@@ -67,7 +67,7 @@ def _create_core_stability_pipeline(
                 name=f"{matrix_input}.create_{fold_main}_{fold_to_compare}_{evaluation}_evaluation_pairs",
             ),
             ArgoNode(
-                func=nodes.evaluate_stability_predictions,
+                func=partial(nodes.evaluate_stability_predictions, score_col_name=score_col_name),
                 inputs=[
                     f"evaluation.{matrix_input}.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.model_stability_output.pairs@pandas",
                     f"params:evaluation.{evaluation}.evaluation_options.stability",
@@ -215,6 +215,7 @@ def create_pipeline(matrix_input: str, score_col_name: str) -> Pipeline:
                             fold_to_compare,
                             stability["stability_name"],
                             matrix_input=matrix_input,
+                            score_col_name=score_col_name,
                         ),
                     )
                 )
