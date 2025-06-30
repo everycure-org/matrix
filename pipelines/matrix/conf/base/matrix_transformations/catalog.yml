@@ -19,6 +19,6 @@ matrix_transformations.fold_{fold}.model_output.sorted_matrix_predictions@pandas
   <<: *_pandas_parquet
   filepath: ${globals:paths.matrix_transformations}/fold_{fold}/transformed_matrix
 
-matrix_transformations.full_model_predictions@spark:
+matrix_transformations.full_matrix_output@spark:
   <<: *_spark_parquet
-  filepath: ${globals:paths.matrix_transformations}/full_model_predictions
+  filepath: ${globals:paths.matrix_transformations}/full_matrix_output
