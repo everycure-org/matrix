@@ -35,7 +35,7 @@ class NCATSNodeNormalizer(Normalizer):
         self._json_parser = {
             "id": parse("$.id.identifier"),
             "category": parse("$.type.[*]"),  # category list from NN
-        }  # FUTURE: Ensure we can update
+        }
         self._items_per_request = items_per_request
 
     async def apply(self, strings: Collection[str], **kwargs) -> list[str | None]:
@@ -70,18 +70,22 @@ class NCATSNodeNormalizer(Normalizer):
 
                 resp.raise_for_status()
 
-        return [self._extract_id(curie, response_json, self._json_parser) for curie in batch]
+        return [self._extract(curie, response_json, self._json_parser) for curie in batch]
 
     @staticmethod
-    def _extract_id(id: str, response: dict[str, Any], json_parser: parse) -> dict[str, Any] | None:
+    def _extract(
+        id: str, response: dict[str, Any], json_parser: parse, default_normalizer_category: str = "biolink:NamedThing"
+    ) -> dict[str, Any] | None:
         """Extract normalized IDs from the response using the json parser."""
         try:
             curie_info = response.get(id)
             if curie_info is None:
                 return {"normalized_id": None, "normalized_categories": []}
             normalized_id = str(json_parser["id"].find(curie_info)[0].value)
-            # Find categories for CURIE in NN. If no categories are present, default to "biolink:NamedThing"
-            categories = [match.value for match in json_parser["category"].find(curie_info)] or ["biolink:NamedThing"]
+            # Find categories for CURIE in NN. If no categories are present, use default
+            categories = [match.value for match in json_parser["category"].find(curie_info)] or [
+                default_normalizer_category
+            ]
 
             return {"normalized_id": normalized_id, "normalized_categories": categories}
         except (IndexError, KeyError):
