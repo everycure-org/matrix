@@ -151,10 +151,12 @@ filtering:
 
 ```
 
-You might have noticed that `_object` parameter occurs quite frequently across different environment and config files. This is because we leverage the [dependency injection](https://www.geeksforgeeks.org/dependency-injectiondi-design-pattern/) pattern to ensure clean configuration and re-usability. We will dig into the details of this custom kedro extension in the [kedro extension section](../deep_dive/kedro_extensions.md).
+!!! warning "Important: Dependency Injection"
+    You might have noticed that `_object` parameter occurs quite frequently across different environment and config files. This is a critical concept in our codebase - we leverage the [dependency injection](https://www.geeksforgeeks.org/dependency-injectiondi-design-pattern/) pattern to ensure clean configuration and re-usability. This design pattern is fundamental to how we structure our code and configuration. We will dig into the details of this custom kedro extension in the [kedro extension section](../deep_dive/kedro_extensions.md).
 
 
 For example, to include ROBOKOP data in your pipeline:
+
 1. Uncomment the `robokop` line in the `keep_list`
 2. Run the filtering pipeline: 
 ```bash
