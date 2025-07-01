@@ -148,3 +148,6 @@ kube-prometheus-stack:
         operator: Equal
         value: compute
         effect: NoSchedule
+    # Allow node-exporter to be evicted during node scale-down
+    podAnnotations:
+      cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
