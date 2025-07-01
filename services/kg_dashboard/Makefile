@@ -46,7 +46,10 @@ deploy:
 install:
 	npm install
 
-run-sources:
+populate-infores-source:
+	node ./scripts/load-infores.cjs
+
+run-sources: populate-infores-source
 	npm run sources
 
 run-dev:
