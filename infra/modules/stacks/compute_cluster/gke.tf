@@ -64,9 +64,9 @@ locals {
     {
       name               = "management-nodes"
       machine_type       = "n2-standard-16" # 16 vCPUs, 64GB RAM
-      node_locations     = local.default_node_locations
-      min_count          = 1 # Always have at least 1 for management services
-      max_count          = 3 # Allow scaling for HA and load distribution
+      node_locations     = "us-central1-a"
+      min_count          = 1 # Single instance, no HA
+      max_count          = 1 # Single instance, no HA
       local_ssd_count    = 0
       disk_type          = "pd-standard" # Cost-effective for management workloads
       disk_size_gb       = 200
