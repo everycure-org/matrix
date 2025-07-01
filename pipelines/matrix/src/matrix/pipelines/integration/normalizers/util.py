@@ -36,6 +36,6 @@ def get_node_normalization_parts(source: str):
     return protocol_and_domain, get_normalized_nodes_path, openapi_path
 
 
-NODE_NORM_ENPOINT = get_node_normalization_get_normalized_nodes_url()
+NODE_NORM_ENDPOINT = get_node_normalization_get_normalized_nodes_url()
 
 NODE_NORM_VERSION = get_node_normalization_version()
