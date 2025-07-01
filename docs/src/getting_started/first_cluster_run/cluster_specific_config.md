@@ -15,7 +15,7 @@ This guide covers running the complete Matrix pipeline on the Kubernetes cluster
 
 Before running on the cluster, ensure you have:
 
-1. **Cluster Access**: Completed [cluster setup](../deep_dive/cluster_setup.md)
+1. **Cluster Access**: Completed [cluster setup](./cluster_setup.md)
 2. **Authentication**: Valid GCP credentials and cluster access
 3. **Environment Variables**: Proper `.env` configuration for your target environment
 4. **Resource Understanding**: Knowledge of [Argo resource configuration](../deep_dive/kedro_extensions.md#how-to-request-resource-availability-for-a-node)
