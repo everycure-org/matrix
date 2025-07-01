@@ -17,7 +17,7 @@ Welcome! This documentation provides an introduction to the project and the code
 
     I want to contribute to the codebase.
 
-    [:octicons-arrow-right-24: Get started locally](./getting_started/)
+    [:octicons-arrow-right-24: Get started locally](./getting_started/index.md)
 
 -   ![Researcher](assets/img/researcher.svg){: style="float: right; width: 150px; margin-left: 1em;" }
 
@@ -25,7 +25,7 @@ Welcome! This documentation provides an introduction to the project and the code
 
     I want to run the pipeline with real data.
 
-    [:octicons-arrow-right-24: Access the data](./contribute/get_access_to_data/)
+    [:octicons-arrow-right-24: Access the data](./contribute/get_access_to_data.md)
 
 -   ![Engineer](assets/img/engineer.svg){: style="float: right; width: 150px; margin-left: 1em;" }
 
@@ -33,7 +33,7 @@ Welcome! This documentation provides an introduction to the project and the code
 
     I want to build a new platform based on this work.
 
-    [:octicons-arrow-right-24: See infrastructure](./infrastructure/)
+    [:octicons-arrow-right-24: See infrastructure](./infrastructure/index.md)
 
 </div>
 

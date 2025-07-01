@@ -36,5 +36,5 @@ We welcome all contributors however this guide is primarily designed for pipelin
 As you onboard, we really recommend creating an [onboarding issue](https://github.com/everycure-org/matrix/issues/new?assignees=&labels=onboarding&projects=&template=onboarding.md&title=%3Cfirstname%3E+%3Clastname%3E) to help you navigate your progress. This way we can also support you in case of any bottlenecks or errors.
     
 
-[Get Started with First Steps :material-arrow-right:](./first_steps/){ .md-button .md-button--primary }
+[Get Started with First Steps :material-arrow-right:](./first_steps/index.md){ .md-button .md-button--primary }
      

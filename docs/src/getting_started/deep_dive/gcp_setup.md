@@ -27,6 +27,6 @@ Then, set up your application default credentials:
 gcloud auth application-default login
 ```
 !!! More Resources
-    To learn more about [GCP](../../infrastructure/gcp.md) or [Kubernetes](../../infrastructure/kubernetes_cluster.md) within Matrix, go to [Infrastructure section](../../infrastructure/index.md). Note that this part is also a pre-requisite for a [cluster setup](./cluster_setup.md)
+    To learn more about [GCP](../../infrastructure/gcp.md) or [Kubernetes](../../infrastructure/kubernetes_cluster.md) within Matrix, go to [Infrastructure section](../../infrastructure/index.md). Note that this part is also a pre-requisite for a [cluster setup](../first_cluster_run/cluster_setup.md)
 
 [Go to GCP Envirnoment Section  :material-skip-next:](../deep_dive/gcp_environments.md){ .md-button .md-button--primary }
