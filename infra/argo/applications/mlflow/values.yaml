@@ -72,3 +72,20 @@ mlflow:
 
   minio:
     enabled: false
+
+  # Schedule MLflow run component on management nodes
+  run:
+    nodeSelector:
+      workload-type: management
+    tolerations:
+      - key: workload-type
+        operator: Equal
+        value: management
+        effect: NoSchedule
+    # Add billing labels to MLflow run pods
+    podLabels:
+      cost-center: infrastructure-management
+      workload-category: platform-services
+      service-tier: management
+      billing-category: infrastructure
+      component: mlflow-run
