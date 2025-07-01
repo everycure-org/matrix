@@ -1,4 +1,4 @@
-# Walkthrough: Testing a change in the release pipeline
+# Testing a change in the release pipeline
 
 All releases are run in an automated way. **Manual releases should never be run.**
 
