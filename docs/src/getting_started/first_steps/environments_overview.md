@@ -5,7 +5,7 @@ We have 4 environments declared in the kedro project for `MATRIX`:
 
 - `base`: Contains the base environment which reads the real data from GCS and operates in your local compute environment
 - `cloud`: Contains the cloud environment with real data. All data is read and written to a GCP project as configured (see below). Assumes fully stateless local machine operations (e.g. in docker containers)
-- `test`: Fully local and contains parameters that "break" the meaning of algorithms in the pipeline (parameters we use don't make sense; e.g. we use 2 dimensions PCA instead of 100). This is useful for running an integration test with mock data to validate the programming of the pipeline is correct to a large degree. 
+- `test`: Fully local environment that executes an end-to-end [smoke test](https://en.wikipedia.org/wiki/Smoke_testing_(software)) of the pipeline using mock data and simplified parameters (e.g. 2 dimensions PCA instead of 100) to test the pipeline lineage quickly and without computationally expensive operations.
 - `local`: A default environment which you can use for local adjustments and tweaks. Changes to this repo are not usually committed to git as they are unique for every developer. 
 - `sample`: Contains a sample of the data and is useful for fast iterations on the pipeline from the embeddings pipeline and on.
 
