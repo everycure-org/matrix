@@ -58,9 +58,11 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
             ],
 ```
 
-The settings reflect the Knowledge Graphs (eg RTX-KG2, SPOKE, ROBOKOP, and Embiology) which get ingested as well as other core datasets which are essential for Matrix (Drug List, Disease List, Ground Truth, Clinical Trials and Medical Team data)
+In the Matrix project, we use [dynamic pipelines](https://getindata.com/blog/kedro-dynamic-pipelines/) to handle multiple data sources, model variants, and evaluation types. The `DYNAMIC_PIPELINES_MAPPING` in `settings.py` defines which data sources to include, which models to train, and which evaluations to run. This allows us to easily enable/disable different components without modifying the core pipeline code. Note that the dynamic pipelines are not natively supported by kedro and it is our own custom implementation.
 
-Try running the following command first:
+Therefore, the settings above reflect the Knowledge Graphs (eg RTX-KG2, SPOKE, ROBOKOP, and Embiology) which get ingested as well as other core datasets which are essential for Matrix (Drug List, Disease List, Ground Truth, Clinical Trials and Medical Team data). Thanks to `settings.py` and dynamic pipelines, they are not statically defined/hard-coded but configured through settings
+
+Now let's get back to running the pipeline. Try running the following command first:
 ```bash
 kedro run -p data_engineering
 ```
