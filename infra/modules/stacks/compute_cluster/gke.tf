@@ -59,11 +59,29 @@ locals {
     }
   ]
 
+  # Dedicated management node pool for ArgoCD, Prometheus, MLflow, etc.
+  management_node_pools = [
+    {
+      name               = "management-nodes"
+      machine_type       = "n2-standard-16" # 16 vCPUs, 64GB RAM
+      node_locations     = local.default_node_locations
+      min_count          = 1 # Always have at least 1 for management services
+      max_count          = 3 # Allow scaling for HA and load distribution
+      local_ssd_count    = 0
+      disk_type          = "pd-standard" # Cost-effective for management workloads
+      disk_size_gb       = 100
+      enable_gcfs        = true
+      enable_gvnic       = true
+      initial_node_count = 1
+    }
+  ]
+
   # Combine all node pools
   node_pools_combined = concat(
     local.standard_node_pools,
     local.n2d_node_pools,
-    local.gpu_node_pools
+    local.gpu_node_pools,
+    local.management_node_pools
   )
 
   # Define node pools that should have the large memory taint
@@ -83,6 +101,15 @@ locals {
       {
         key    = "nvidia.com/gpu"
         value  = "present"
+        effect = "NO_SCHEDULE"
+      }
+    ]
+
+    # Add management taint to management node pool
+    "management-nodes" = [
+      {
+        key    = "workload-type"
+        value  = "management"
         effect = "NO_SCHEDULE"
       }
     ]
@@ -145,9 +172,26 @@ module "gke" {
   node_pools_taints = local.node_pools_taints
 
   node_pools_labels = {
-    for pool in local.node_pools_combined : pool.name => {
-      gpu_node = can(pool.accelerator_count) ? "true" : "false"
-    }
+    for pool in local.node_pools_combined : pool.name => merge(
+      {
+        gpu_node = can(pool.accelerator_count) ? "true" : "false"
+        # Billing labels for cost tracking
+        cost-center       = pool.name == "management-nodes" ? "infrastructure-management" : "compute-workloads"
+        workload-category = pool.name == "management-nodes" ? "platform-services" : "data-science"
+        environment       = var.environment
+      },
+      pool.name == "management-nodes" ? {
+        workload-type    = "management"
+        service-tier     = "management"
+        billing-category = "infrastructure"
+        } : can(pool.accelerator_count) ? {
+        billing-category = "gpu-compute"
+        service-tier     = "compute"
+        } : {
+        billing-category = "cpu-compute"
+        service-tier     = "compute"
+      }
+    )
   }
   # https://cloud.google.com/artifact-registry/docs/access-control#gke
   # node_pools_oauth_scopes = {
