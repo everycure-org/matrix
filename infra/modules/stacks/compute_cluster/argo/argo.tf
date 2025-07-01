@@ -249,11 +249,11 @@ spec:
   source:
     path: ${var.repo_path}/app-of-apps
     repoURL: ${var.repo_url}
-    targetRevision: ${var.repo_revision}
+    targetRevision: nelson/aip-400-transfer-all-argo-releated-workloads-to-a-dedicated-instance
     helm:
       parameters:
       - name: spec.source.targetRevision
-        value:  ${var.repo_revision}
+        value:  nelson/aip-400-transfer-all-argo-releated-workloads-to-a-dedicated-instance
       - name: spec.source.environment
         value:  ${var.environment}
       - name: spec.source.project_id

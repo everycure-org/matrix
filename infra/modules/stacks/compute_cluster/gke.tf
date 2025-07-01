@@ -69,7 +69,7 @@ locals {
       max_count          = 3 # Allow scaling for HA and load distribution
       local_ssd_count    = 0
       disk_type          = "pd-standard" # Cost-effective for management workloads
-      disk_size_gb       = 100
+      disk_size_gb       = 200
       enable_gcfs        = true
       enable_gvnic       = true
       initial_node_count = 1

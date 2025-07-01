@@ -78,7 +78,7 @@ kube-prometheus-stack:
       storageClassName: standard-rwo
       accessModes:
         - ReadWriteOnce
-      size: 20Gi
+      size: 30Gi
       finalizers:
         - kubernetes.io/pvc-protection
       # Add billing labels to Grafana storage
