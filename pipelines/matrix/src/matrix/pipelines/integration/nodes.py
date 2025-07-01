@@ -251,29 +251,27 @@ def normalization_summary_nodes_and_edges(
     """
     Summarize normalization outcomes for all nodes referenced in an edge set.
 
-    Parameters
-    ----------
-    edges : pyspark.sql.DataFrame
-        Normalized edge data including subject/object and original IDs.
-    nodes : pyspark.sql.DataFrame
-        Normalized node data, including original and final category assignments.
-    mapping_df : pyspark.sql.DataFrame
-        Mapping output containing normalized_categories per node ID.
-    source : str
-        Name of the upstream data source.
+    Args:
+        edges (pyspark.sql.DataFrame):
+            Normalized edge data including subject/object and original IDs.
+        nodes (pyspark.sql.DataFrame):
+            Normalized node data, including original and final category assignments.
+        mapping_df (pyspark.sql.DataFrame):
+            Mapping output containing normalized_categories per node ID.
+        source (str):
+            Name of the upstream data source.
 
-    Returns
-    -------
-    pyspark.sql.DataFrame
-        Flattened summary with columns:
-        - id: Normalized node ID
-        - original_id: Original node ID
-        - normalization_success: Whether normalization succeeded
-        - original_categories: Pre-normalization categories
-        - normalized_categories: Categories returned by the normalizer
-        - all_categories: Final categories used
-        - source_role: 'subject' or 'object'
-        - upstream_data_source: Name of the data source
+    Returns:
+        pyspark.sql.DataFrame:
+            Flattened summary DataFrame with columns:
+                - id: Normalized node ID
+                - original_id: Original node ID
+                - normalization_success: Whether normalization succeeded
+                - original_categories: Pre-normalization categories
+                - normalized_categories: Categories returned by the normalizer
+                - all_categories: Final categories used
+                - source_role: 'subject' or 'object'
+                - upstream_data_source: Name of the data source
     """
 
     formatted_mapping = mapping_df.select(
@@ -334,27 +332,20 @@ def normalization_summary_nodes_only(
     """
     Summarize normalization outcomes for a node-only dataset.
 
-    Parameters
-    ----------
-    nodes : pyspark.sql.DataFrame
-        Normalized nodes, including original and final category assignments.
-    mapping_df : pyspark.sql.DataFrame
-        Mapping output containing normalized_categories per node ID.
-    source : str
-        Name of the upstream data source.
+    Args:
+        nodes (pyspark.sql.DataFrame):
+            Normalized nodes, including original and final category assignments.
+        mapping_df (pyspark.sql.DataFrame):
+            Mapping output containing normalized_categories per node ID.
+        source (str):
+            Name of the upstream data source.
 
-    Returns
-    -------
-    pyspark.sql.DataFrame
-        Summary with columns:
-        - id: Normalized node ID
-        - original_id: Original node ID
-        - normalization_success: Whether normalization succeeded
-        - original_categories: Pre-normalization categories
-        - normalized_categories: Categories from the normalizer
-        - all_categories: Final categories used
-        - source_role: Fixed value "node"
-        - upstream_data_source: Data source name
+    Returns:
+        pyspark.sql.DataFrame:
+            Summary DataFrame with the following columns:
+                - id: Normalized node ID
+                - original_id: Original node ID
+                ...
     """
 
     formatted_mapping = mapping_df.select(
