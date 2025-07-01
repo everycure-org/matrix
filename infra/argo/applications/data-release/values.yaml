@@ -1,0 +1,48 @@
+# Schedule all data-release components on management nodes
+argo-events:
+  # Controller
+  controller:
+    nodeSelector:
+      workload-type: management
+    tolerations:
+      - key: workload-type
+        operator: Equal
+        value: management
+        effect: NoSchedule
+    podLabels:
+      cost-center: infrastructure-management
+      workload-category: platform-services
+      service-tier: management
+      billing-category: infrastructure
+      component: data-release-controller
+
+  # Event Bus (NATS)
+  configs:
+    nats:
+      nodeSelector:
+        workload-type: management
+      tolerations:
+        - key: workload-type
+          operator: Equal
+          value: management
+          effect: NoSchedule
+
+  # Event Sources
+  eventSourceDeployment:
+    nodeSelector:
+      workload-type: management
+    tolerations:
+      - key: workload-type
+        operator: Equal
+        value: management
+        effect: NoSchedule
+
+  # Sensors  
+  sensorDeployment:
+    nodeSelector:
+      workload-type: management
+    tolerations:
+      - key: workload-type
+        operator: Equal
+        value: management
+        effect: NoSchedule
