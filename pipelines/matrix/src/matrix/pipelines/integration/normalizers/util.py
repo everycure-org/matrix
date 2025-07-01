@@ -7,9 +7,15 @@ import requests
 @functools.cache
 def get_node_normalization_version():
     """Function to get the NodeNormalization version."""
-    source = os.getenv("NODE_NORM_SOURCE", "RENCI")
-    protocol_and_domain, get_normalized_nodes_path, openapi_path = get_node_normalization_parts(source)
-    json_response = requests.get(f"{protocol_and_domain}{openapi_path}").json()
+    nn_protocol_and_domain = os.getenv("NODE_NORM_PROTOCOL_AND_DOMAIN", "https://nodenormalization-sri.renci.org")
+    if "renci" in nn_protocol_and_domain:
+        source = "RENCI"
+    elif "transltr" in nn_protocol_and_domain:
+        source = "NCATS"
+    else:
+        source = "RENCI"
+    nn_openapi_json_url = os.getenv("NODE_NORM_OPENAPI_JSON_URL", f"{nn_protocol_and_domain}/openapi.json")
+    json_response = requests.get(f"{nn_openapi_json_url}").json()
     version = json_response["info"]["version"]
     return f"nodenorm-{source.lower()}-{version}"
 
@@ -17,23 +23,18 @@ def get_node_normalization_version():
 @functools.cache
 def get_node_normalization_get_normalized_nodes_url():
     """Function to get the NodeNormalization endpoint url."""
-    source = os.getenv("NODE_NORM_SOURCE", "RENCI")
-    protocol_and_domain, get_normalized_nodes_path, openapi_path = get_node_normalization_parts(source)
-    return f"{protocol_and_domain}{get_normalized_nodes_path}"
+    nn_protocol_and_domain = os.getenv("NODE_NORM_PROTOCOL_AND_DOMAIN", "https://nodenormalization-sri.renci.org")
+    nn_openapi_get_normalized_nodes_url = os.getenv(
+        "NODE_NORM_OPENAPI_JSON_URL", f"{nn_protocol_and_domain}/1.5/get_normalized_nodes"
+    )
+    return nn_openapi_get_normalized_nodes_url
 
 
 def get_node_normalization_parts(source: str):
     """Function to get the NodeNormalization url parts."""
-    match source:
-        case "NCATS":
-            protocol_and_domain = "https://nodenorm.transltr.io"
-        case "RENCI":
-            protocol_and_domain = "https://nodenormalization-sri.renci.org"
-        case _:
-            protocol_and_domain = "https://nodenormalization-sri.renci.org"
-    get_normalized_nodes_path = "/1.5/get_normalized_nodes"
-    openapi_path = "/openapi.json"
-    return protocol_and_domain, get_normalized_nodes_path, openapi_path
+    nn_protocol_and_domain = os.getenv("NODE_NORM_PROTOCOL_AND_DOMAIN", "https://nodenormalization-sri.renci.org")
+    nn_openapi_json_url = os.getenv("NODE_NORM_OPENAPI_JSON_URL", f"{nn_protocol_and_domain}/openapi.json")
+    return nn_openapi_json_url
 
 
 NODE_NORM_ENDPOINT = get_node_normalization_get_normalized_nodes_url()
