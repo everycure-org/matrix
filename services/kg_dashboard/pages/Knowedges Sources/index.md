@@ -1,5 +1,5 @@
 ---
-title: Primary Knowledge Source
+title: Knowledge Sources
 ---
 
 This page presents the primary knowledge sources ingested into the Matrix graph, offering an overview of the individual sources that compose the graph, along with key metrics and detailed insights for each source.
@@ -33,7 +33,6 @@ group by source
 
 order by count desc
 ```
-
 ## Knowledge Source Flow
 
 <SankeyDiagram 
