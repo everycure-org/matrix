@@ -102,6 +102,11 @@ locals {
         key    = "nvidia.com/gpu"
         value  = "present"
         effect = "NO_SCHEDULE"
+      },
+      {
+        key    = "workload-type"
+        value  = "compute"
+        effect = "NO_SCHEDULE"
       }
     ]
 
@@ -115,9 +120,22 @@ locals {
     ]
   }
 
+  # Add compute taints to all compute node pools (everything except management)
+  compute_node_pools_taints = {
+    for pool in concat(local.standard_node_pools, local.n2d_node_pools) :
+    pool.name => [
+      {
+        key    = "workload-type"
+        value  = "compute"
+        effect = "NO_SCHEDULE"
+      }
+    ]
+  }
+
   # Add large memory taints for the appropriate node pools
   node_pools_taints = merge(
     local.node_pools_taints_map,
+    local.compute_node_pools_taints,
     {
       for pool in local.large_memory_pools :
       pool => [
@@ -126,7 +144,7 @@ locals {
           value  = "large"
           effect = "NO_SCHEDULE"
         }
-      ] if !contains(keys(local.node_pools_taints_map), pool)
+      ] if !contains(keys(merge(local.node_pools_taints_map, local.compute_node_pools_taints)), pool)
     }
   )
 }
@@ -185,9 +203,11 @@ module "gke" {
         service-tier     = "management"
         billing-category = "infrastructure"
         } : can(pool.accelerator_count) ? {
+        workload-type    = "compute"
         billing-category = "gpu-compute"
         service-tier     = "compute"
         } : {
+        workload-type    = "compute"
         billing-category = "cpu-compute"
         service-tier     = "compute"
       }
