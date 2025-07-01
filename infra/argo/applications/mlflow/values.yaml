@@ -49,6 +49,9 @@ mlflow:
   postgresql:
     # Schedule PostgreSQL on management nodes
     primary:
+      annotations:
+        # Force replacement of StatefulSet to update nodeSelector/tolerations
+        argocd.argoproj.io/sync-options: Replace=true
       nodeSelector:
         workload-type: management
       tolerations:
