@@ -259,25 +259,29 @@ rtx_kg2:  # Knowledge Graph Data
 
 Common issues and solutions:
 
-1. **Column Reference Errors**
-   - Ensure referenced tables/columns are generated first
-   - Check namespace prefixes if using multiple namespaces
-   - Verify column names match exactly
+**Column Reference Errors:**
 
-2. **Type Mismatches**
-   - Set explicit dtypes when needed
-   - Check format of date strings
-   - Use appropriate nullable types (Int64, string, etc.)
+- Ensure referenced tables/columns are generated first
+- Check namespace prefixes if using multiple namespaces
+- Verify column names match exactly
 
-3. **Size Mismatches**
-   - Use resize=True when needed
-   - Check num_rows references
-   - Verify sample configurations
+**Type Mismatches:**
 
-4. **Seeding Issues**
-   - Set global seed for overall reproducibility
-   - Use column-specific seeds for fine control
-   - Document seed values used
+- Set explicit dtypes when needed
+- Check format of date strings
+- Use appropriate nullable types (Int64, string, etc.)
+
+**Size Mismatches:**
+
+- Use resize=True when needed
+- Check num_rows references
+- Verify sample configurations
+
+**Seeding Issues:**
+
+- Set global seed for overall reproducibility
+- Use column-specific seeds for fine control
+- Document seed values used
 
 ## Further Reading
 
