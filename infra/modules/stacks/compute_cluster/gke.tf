@@ -2,7 +2,7 @@ data "google_client_config" "default" {
 }
 
 locals {
-  default_node_locations = "us-central1-a,us-central1-c"
+  default_node_locations = "us-central1-a" # Single location for simplicity, can be expanded to multiple zones if needed
 
   # NOTE: Debugging node group scaling can be done using the GCP cluster logs, we create
   # node groups in 2 node locations, hence why the total amount of node groups.
@@ -63,8 +63,8 @@ locals {
   management_node_pools = [
     {
       name               = "management-nodes"
-      machine_type       = "n2-standard-16" # 16 vCPUs, 64GB RAM
-      node_locations     = "us-central1-a"
+      machine_type       = "n2-standard-8" # 8 vCPUs, 32GB RAM
+      node_locations     = local.default_node_locations
       min_count          = 1 # Single instance, no HA
       max_count          = 1 # Single instance, no HA
       local_ssd_count    = 0
@@ -103,11 +103,6 @@ locals {
         value  = "present"
         effect = "NO_SCHEDULE"
       },
-      {
-        key    = "workload-type"
-        value  = "compute"
-        effect = "NO_SCHEDULE"
-      }
     ]
 
     # Add management taint to management node pool
@@ -120,22 +115,9 @@ locals {
     ]
   }
 
-  # Add compute taints to all compute node pools (everything except management)
-  compute_node_pools_taints = {
-    for pool in concat(local.standard_node_pools, local.n2d_node_pools) :
-    pool.name => [
-      {
-        key    = "workload-type"
-        value  = "compute"
-        effect = "NO_SCHEDULE"
-      }
-    ]
-  }
-
   # Add large memory taints for the appropriate node pools
   node_pools_taints = merge(
     local.node_pools_taints_map,
-    local.compute_node_pools_taints,
     {
       for pool in local.large_memory_pools :
       pool => [
@@ -144,7 +126,7 @@ locals {
           value  = "large"
           effect = "NO_SCHEDULE"
         }
-      ] if !contains(keys(merge(local.node_pools_taints_map, local.compute_node_pools_taints)), pool)
+      ] if !contains(keys(merge(local.node_pools_taints_map)), pool)
     }
   )
 }
