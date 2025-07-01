@@ -50,12 +50,6 @@ def union_edges(*edges, cols: list[str]) -> ps.DataFrame:
     """Function to unify edges datasets."""
     unioned_dataset = (
         _union_datasets(*edges)
-        # Fix malformed biolink predicates, TODO: this needs to be fixed in the upstream dataset
-        .withColumn("predicate", F.regexp_replace("predicate", "biolink::", "biolink:"))
-        .withColumn(
-            "predicate",
-            F.regexp_replace("predicate", "biolink:ChemicalToChemicalDerivationAssociation", "biolink:derives_into"),
-        )
         .groupBy(["subject", "predicate", "object"])
         .agg(
             F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
@@ -85,19 +79,6 @@ def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, c
     """Function to unify nodes datasets."""
     unioned_datasets = (
         _union_datasets(*nodes)
-        # TODO: remove this, a workaround for invalid biolink categories in the dataset
-        .withColumn(
-            "category",
-            F.when(F.col("category") == "category", "biolink:NamedThing")
-            .when(F.col("category") == "biolink:ChemicalSubstance", "biolink:NamedThing")
-            .when(F.col("category") == "biolink:Entity", "biolink:NamedThing")
-            .when(F.col("category") == "biolink:GenomicEntity", "biolink:NamedThing")
-            .when(F.col("category") == "biolink:OntologyClass", "biolink:NamedThing")
-            .when(F.col("category") == "biolink:PhysicalEssence", "biolink:NamedThing")
-            .when(F.col("category") == "biolink:PhysicalEssenceOrOccurrent", "biolink:NamedThing")
-            .when(F.col("category") == "biolink:ThingWithTaxon", "biolink:NamedThing")
-            .otherwise(F.col("category")),
-        )
         # first we group the dataset by id to deduplicate
         .groupBy("id")
         .agg(
