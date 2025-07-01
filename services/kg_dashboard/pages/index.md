@@ -4,7 +4,9 @@ title: KG Dashboard
 <script>
   const release_version = import.meta.env.VITE_release_version;
   const build_time = import.meta.env.VITE_build_time;
-  
+  const robokop_version = import.meta.env.VITE_robokop_version;
+  const rtx_kg2_version = import.meta.env.VITE_rtx_kg2_version;
+
   function groupBy(arr, key) {
     return arr.reduce((acc, item) => {
       const group = item[key];
@@ -117,11 +119,11 @@ title: KG Dashboard
   
 </script>
 
+This dashboard provides an overview of our integrated knowledge graph (KG), detailing its size, connectivity patterns, and provenance quality. 
+It also examines how nodes from our curated disease and drug lists link to other entities within the graph.
 ## Version: {release_version}
 
 <p class="text-gray-500 text-sm italic">Last updated on {build_time}</p>
-
-This page provides key metrics about our knowledge graph (KG), including its size, density, and connectivity patterns, with a focus on how nodes from our disease and drug lists are connected within the graph.
 
 ```sql edges_per_node
 select 
@@ -171,6 +173,12 @@ select
 from 
     bq.upstream_data_sources   
 ```
+### Source versions
+
+<p class="text-center text-md mt-2 mb-6">
+  <span class="font-semibold">ROBOKOP KG:</span> <span class="font-mono">{robokop_version}</span> &nbsp; | &nbsp; 
+  <span class="font-semibold">RTX-KG2:</span> <span class="font-mono">{rtx_kg2_version}</span>
+</p>
 
 <Grid col=2>
     <ECharts 
@@ -219,8 +227,6 @@ from
     }}/>
 </Grid>
 
-
-
 ## Epistemic Robustness
 
 ```sql epistemic_score
@@ -231,57 +237,38 @@ SELECT * FROM bq.epistemic_score
 SELECT * FROM bq.epistemic_heatmap
 ```
 
-<div class="text-center text-lg font-semibold mt-6 mb-2">
-    Epistemic Score
-    <div class="text-sm font-normal mt-1">
-        The Epistemic Score summarizes provenance quality across the graph by averaging values assigned to each edge's
-        knowledge level and agent type.
-    </div>
-    <div class="text-sm font-normal mt-1">
-        A more positive average reflects stronger overall provenance, while a more negative average indicates weaker 
-        or more speculative knowledge across the graph.
-    </div>
+<div class="text-center text-md mt-6 mb-4">
+  This section summarizes the overall provenance quality of the knowledge graph by averaging each edge’s knowledge level and agent type.
+  Higher scores indicate stronger evidence and manual curation, while lower scores reflect weaker or more speculative data.
+  For a detailed breakdown, visit 
+  <a class="underline text-blue-600" href="./Metrics/epistemic-robustness" target="_blank">Epistemic Robustness</a>.
 </div>
 
-<!-- Spacer -->
-<div class="mb-6"></div>
-
-<!-- Metric row: Epistemic Score -->
-
-<div class="text-center text-lg">
-  <p>
+<Grid col=3>
+  <div class="text-center">
     <span class="font-semibold text-2xl">
       <Value data={epistemic_score} column="average_epistemic_score" fmt="num2" />
     </span><br/>
     Epistemic Score
-  </p>
-</div>
-<Grid col=2>
-  <div class="text-center text-lg">
-    <p>
-      <span class="font-semibold text-2xl">
-        <Value data={epistemic_score} column="included_edges" fmt="num2m" />
-      </span><br/>
-      edges used in calculation
-    </p>
   </div>
-  <div class="text-center text-lg">
-    <div>
-      <span class="font-semibold text-2xl">
-        <Value data={epistemic_score} column="null_or_not_provided_both" fmt="num2m" />
-      </span><br/>
-      edges with missing provenance
-      <div class="text-sm font-normal mt-1">
-        "Missing provenance" includes edges where both Knowledge Level and Agent Type are "Not Provided" or not present.
-      </div>
-     </div>
+  <div class="text-center">
+    <span class="font-semibold text-2xl">
+      <Value data={epistemic_score} column="included_edges" fmt="num2m" />
+    </span><br/>
+    edges included
+  </div>
+  <div class="text-center">
+    <span class="font-semibold text-2xl">
+      <Value data={epistemic_score} column="null_or_not_provided_both" fmt="num2m" />
+    </span><br/>
+    edges with missing provenance
+    <div class="text-sm font-normal mt-1">
+      Includes edges where both Knowledge Level and Agent Type are not provided.
+    </div>
   </div>
 </Grid>
 
-<!-- Spacer -->
-<div class="mb-6"></div>
-
-<!-- heatmap -->
+<div class="mt-8 mb-6">
 <ECharts
   style={{ width: '100%', height: '2000px' }}
   config={{
@@ -311,33 +298,19 @@ SELECT * FROM bq.epistemic_heatmap
     xAxis: {
       type: 'category',
       data: [
-        "Prediction", 
-        "Observation", 
-        "Not Provided", 
-        "Statistical Association", 
-        "Logical Entailment", 
-        "Knowledge Assertion",
+        "Prediction", "Observation", "Not Provided",
+        "Statistical Association", "Logical Entailment", "Knowledge Assertion"
       ],
-      axisLabel: {
-        rotate: 30,
-        fontSize: 10
-      }
+      axisLabel: { rotate: 30, fontSize: 10 }
     },
     yAxis: {
       type: 'category',
       data: [
-        "Text Mining Agent",
-        "Image Processing\nAgent",
-        "Not Provided", 
-        "Computational Model",
-        "Data Analysis Pipeline",
-        "Automated Agent",
-        "Manual Validation of\nAutomated Agent",
-        "Manual Agent"
+        "Text Mining Agent", "Image Processing\nAgent", "Not Provided",
+        "Computational Model", "Data Analysis Pipeline", "Automated Agent",
+        "Manual Validation of\nAutomated Agent", "Manual Agent"
       ],
-      axisLabel: {
-        fontSize: 10
-      }
+      axisLabel: { fontSize: 10 }
     },
     visualMap: {
       min: -1.0,
@@ -383,10 +356,7 @@ SELECT * FROM bq.epistemic_heatmap
     }]
   }}
 />
-
-<!-- Spacer -->
-<div class="mb-6"></div>
-
+</div>
 
 ## Disease list nodes connections
 
@@ -508,6 +478,7 @@ order by
 
 ### Drug nodes neighbours
 
+\
 ```sql drug_list_neighbour_counts
 select 
   * 
