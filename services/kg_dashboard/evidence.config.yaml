@@ -28,43 +28,48 @@ appearance:
   default: system
   switcher: true
 
-# Dracula theme, see https://draculatheme.com/
+# Modified Dracula theme
+# for the original Dracula theme, see https://draculatheme.com/
 theme:
   colorPalettes:
     default:
-      - "#bd93f9"  # Purple
-      - "#8be9fd"  # Cyan
-      - "#ff79c6"  # Pink
-      - "#50fa7b"  # Green
-      - "#ffb86c"  # Orange
-      - "#ff5555"  # Red
-      - "#f1fa8c"  # Yellow
-      - "#6272a4"  # Comment
-      
+      - "#8a6bff"  # Deeper, more saturated purple
+      - "#79dae8"  # Slightly warmer cyan
+      - "#ff6bb3"  # More vibrant pink with better contrast
+      - "#5af78e"  # Slightly brighter green
+      - "#e67e22"  # Deeper, more distinct orange
+      - "#ff4757"  # Slightly different red
+      - "#f1c40f"  # Brighter, more golden yellow
+      - "#4c566a"  # More blue dark gray
+      - "#9c88ff"  # Lighter purple variant
+      - "#55a3ff"  # Medium blue
+      - "#ff9ff3"  # Light pink/magenta
+      - "#7fdbca"  # Mint green
+
   colorScales:
     default:
-      - "#bd93f9"  # Purple
-      - "#ff79c6" # Pink
-      
+      - "#8a6bff"  # Updated to match new purple
+      - "#ff6bb3"  # Updated to match new pink
+
   colors:
     primary:
-      light: "#bd93f9"  # Purple
-      dark: "#bd93f9"  # Purple
+      light: "#8a6bff"  # Updated to match new purple
+      dark: "#8a6bff"   # Updated to match new purple
     accent:
-      light: "#ff79c6"  # Pink
-      dark: "#ff79c6"  # Pink
+      light: "#ff6bb3"  # Updated to match new pink
+      dark: "#ff6bb3"   # Updated to match new pink
     base:
-      light: "#f8f8f2"  # Foreground
-      dark: "#282a36"  # Background
+      light: "#f8f8f2"  # Foreground (keeping same)
+      dark: "#282a36"   # Background (keeping same)
     info:
-      light: "#8be9fd"  # Cyan
-      dark: "#8be9fd"  # Cyan
+      light: "#79dae8"  # Updated cyan
+      dark: "#79dae8"   # Updated cyan
     warning:
-      light: "#ffb86c"  # Orange
-      dark: "#ffb86c"  # Orange
+      light: "#e67e22"  # Updated to match new orange
+      dark: "#e67e22"   # Updated to match new orange
     negative:
-      light: "#ff5555"  # Red
-      dark: "#ff5555"  # Red
+      light: "#ff4757"  # Updated red
+      dark: "#ff4757"   # Updated red
     positive:
-      light: "#50fa7b"  # Green
-      dark: "#50fa7b"  # Green
+      light: "#5af78e"  # Updated green
+      dark: "#5af78e"   # Updated green
