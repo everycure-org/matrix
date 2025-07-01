@@ -300,14 +300,6 @@ def create_model_input_nodes(
     if splits.empty:
         raise ValueError("Splits dataframe must be non-empty")
 
-    # If using DiseaseAreaSplit, ensure we're using DiseaseSplitDrugDiseasePairGenerator
-    if isinstance(splitter, DiseaseAreaSplit):
-        if not isinstance(generator, DiseaseSplitDrugDiseasePairGenerator):
-            raise ValueError(
-                "When using DiseaseAreaSplit, you must use DiseaseSplitDrugDiseasePairGenerator "
-                "to ensure proper handling of disease area splits"
-            )
-
     all_generated = []
 
     # Enrich splits for all folds
