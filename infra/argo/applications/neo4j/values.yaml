@@ -6,7 +6,7 @@ neo4j: # the name of the helm dependency
     # Force replacement of StatefulSet to update nodeSelector/tolerations
     annotations:
       argocd.argoproj.io/sync-options: Replace=true
-    # Schedule Neo4j on management nodes (has sufficient memory: 64GB)
+    # Schedule Neo4j on management nodes (has sufficient memory: 24Gi)
     nodeSelector:
       workload-type: management
     tolerations:
@@ -29,10 +29,10 @@ neo4j: # the name of the helm dependency
     resources:
       requests:
         cpu: "0.5"
-        memory: "32Gi"
+        memory: "24Gi"
       limits:
         cpu: "16"
-        memory: "64Gi"
+        memory: "24Gi"
   # configuration for neo4j services
   # FUTURE do not expose as IP
   services:
