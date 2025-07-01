@@ -3,6 +3,8 @@ title: Epistemic Robustness
 ---
 
 <script>
+  import { sourceColorMap } from '../../_lib/colors';
+  
   function groupBy(arr, key) {
     return arr.reduce((acc, item) => {
       const group = item[key];
@@ -10,6 +12,13 @@ title: Epistemic Robustness
       acc[group].push(item);
       return acc;
     }, {});
+  }
+  
+  // Function to get colors for ECharts series
+  function getEChartsColors(dataSourceGroups) {
+    return Object.keys(dataSourceGroups).map(source => 
+      sourceColorMap[source] || "#6b7280"
+    );
   }
 </script>
 
@@ -93,6 +102,7 @@ SELECT * FROM bq.agent_type_distribution
       bottom: '15%',
       containLabel: true
     },
+    color: getEChartsColors(groupBy(knowledge_level_by_source, 'upstream_data_source')),
     xAxis: {
       type: 'category',
       data: [
@@ -203,6 +213,7 @@ SELECT * FROM bq.agent_type_distribution
       bottom: '15%',
       containLabel: true
     },
+    color: getEChartsColors(groupBy(agent_type_by_source, 'upstream_data_source')),
     xAxis: {
       type: 'category',
       data: [

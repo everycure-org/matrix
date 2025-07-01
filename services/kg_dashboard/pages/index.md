@@ -1,6 +1,32 @@
 ---
 title: KG Dashboard
 ---
+
+<script context="module">
+  import { sourceColorMap } from './_lib/colors';
+  
+  // Function to get colors for pie chart data
+  export function getPieColors(data) {
+    return data.map(item => sourceColorMap[item.name] || "#6b7280");
+  }
+
+  // Create explicit series color mapping
+  export function getSeriesColors(data, seriesColumn) {
+    const uniqueSources = [...new Set(data.map(row => row[seriesColumn]))];
+    
+    const seriesColors = {};
+    uniqueSources.forEach(source => {
+      seriesColors[source] = sourceColorMap[source] || "#6272a4";
+    });
+    
+    return seriesColors;
+  }
+  
+  export function sortBySeries(data, seriesColumn) {
+    return data;
+  }
+</script>
+
 <script>
   const release_version = import.meta.env.VITE_release_version;
   const build_time = import.meta.env.VITE_build_time;
@@ -183,6 +209,7 @@ from
                     fontWeight: 'normal'
                 }
             },
+            color: getPieColors(upstream_data_sources_nodes),
             tooltip: {
                 formatter: function(params) {
                     const count = params.data.value.toLocaleString();
@@ -205,6 +232,7 @@ from
                 fontWeight: 'normal'
             }
         },
+        color: getPieColors(upstream_data_sources_edges),
         tooltip: {
             formatter: function(params) {
                 const count = params.data.value.toLocaleString();
