@@ -137,3 +137,14 @@ kube-prometheus-stack:
         operator: Equal
         value: management
         effect: NoSchedule
+
+  # Configure Node Exporter to run on compute nodes only (scales with compute nodes)
+  # This allows monitoring when compute nodes are active, and scales to zero when they're not
+  nodeExporter:
+    nodeSelector:
+      workload-type: compute
+    tolerations:
+      - key: workload-type
+        operator: Equal
+        value: compute
+        effect: NoSchedule
