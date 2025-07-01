@@ -2,8 +2,31 @@ kube-prometheus-stack:
   prometheus:
     prometheusSpec:
       retention: 180d
+      # Schedule Prometheus on management nodes
+      nodeSelector:
+        workload-type: management
+      tolerations:
+        - key: workload-type
+          operator: Equal
+          value: management
+          effect: NoSchedule
+      # Add billing labels to Prometheus pods
+      podMetadata:
+        labels:
+          cost-center: infrastructure-management
+          workload-category: platform-services
+          service-tier: management
+          billing-category: infrastructure
+          component: prometheus
       storageSpec:
         volumeClaimTemplate:
+          metadata:
+            labels:
+              cost-center: infrastructure-management
+              workload-category: platform-services
+              service-tier: management
+              billing-category: infrastructure-storage
+              component: prometheus
           spec:
             # by default prometheus uses a local storage, which is not persistent
             storageClassName: standard-rwo # balanced 
@@ -34,6 +57,21 @@ kube-prometheus-stack:
             - port: metrics
               path: /metrics
   grafana:
+    # Schedule Grafana on management nodes
+    nodeSelector:
+      workload-type: management
+    tolerations:
+      - key: workload-type
+        operator: Equal
+        value: management
+        effect: NoSchedule
+    # Add billing labels to Grafana pods
+    podLabels:
+      cost-center: infrastructure-management
+      workload-category: platform-services
+      service-tier: management
+      billing-category: infrastructure
+      component: grafana
     persistence:
       enabled: true
       type: sts
@@ -43,6 +81,13 @@ kube-prometheus-stack:
       size: 20Gi
       finalizers:
         - kubernetes.io/pvc-protection
+      # Add billing labels to Grafana storage
+      labels:
+        cost-center: infrastructure-management
+        workload-category: platform-services
+        service-tier: management
+        billing-category: infrastructure-storage
+        component: grafana
     sidecar:
       dashboards:
         enabled: true
@@ -53,3 +98,42 @@ kube-prometheus-stack:
       searchNamespace: ALL
       provider:
         foldersFromFilesStructure: true
+
+  # Schedule AlertManager on management nodes
+  alertmanager:
+    alertmanagerSpec:
+      nodeSelector:
+        workload-type: management
+      tolerations:
+        - key: workload-type
+          operator: Equal
+          value: management
+          effect: NoSchedule
+      # Add billing labels to AlertManager pods
+      podMetadata:
+        labels:
+          cost-center: infrastructure-management
+          workload-category: platform-services
+          service-tier: management
+          billing-category: infrastructure
+          component: alertmanager
+
+  # Schedule Prometheus Operator on management nodes
+  prometheusOperator:
+    nodeSelector:
+      workload-type: management
+    tolerations:
+      - key: workload-type
+        operator: Equal
+        value: management
+        effect: NoSchedule
+
+  # Schedule Kube State Metrics on management nodes
+  kubeStateMetrics:
+    nodeSelector:
+      workload-type: management
+    tolerations:
+      - key: workload-type
+        operator: Equal
+        value: management
+        effect: NoSchedule
