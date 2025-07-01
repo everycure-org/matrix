@@ -106,19 +106,7 @@ This will:
 
 ### 3. Accessing Cluster Services
 
-To interact with the Kubernetes cluster:
-
-1. Get cluster credentials:
-```bash
-gcloud container clusters get-credentials compute-cluster --region us-central1
-```
-
-2. Launch `k9s` to access services:
-```bash
-k9s
-```
-
-Use `shift + f` in `k9s` to set up port-forwarding for services.
+Thanks to Argo UI, you can access cluster services and workflows through deployed webpages: for instance, the following [Argo Workflows Page](https://argo.platform.dev.everycure.org/workflows) will show you the list of workflows executed on our cluster. You can find those and other useful links [on reference page](../../references/index.md)
 
 [Go to Full Cluster Run Section  :material-skip-next:](../first_cluster_run/full_cluster_run.md){ .md-button .md-button--primary }
 
