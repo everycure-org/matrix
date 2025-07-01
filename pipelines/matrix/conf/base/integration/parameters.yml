@@ -73,7 +73,7 @@ integration:
     normalizer:
       _object: matrix.pipelines.integration.normalizers.ncats.NCATSNodeNormalizer
       endpoint:
-        _object: matrix.pipelines.integration.normalizers.util.NODE_NORM_ENPOINT
+        _object: matrix.pipelines.integration.normalizers.util.NODE_NORM_ENDPOINT
       conflate: true
       drug_chemical_conflate: true
       description: false
