@@ -28,19 +28,6 @@ title: EC Core Components
 </script>
 
 <script>
-  const release_version = import.meta.env.VITE_release_version;
-  const build_time = import.meta.env.VITE_build_time;
-  const robokop_version = import.meta.env.VITE_robokop_version;
-  const rtx_kg2_version = import.meta.env.VITE_rtx_kg2_version;
-
-  function groupBy(arr, key) {
-    return arr.reduce((acc, item) => {
-      const group = item[key];
-      acc[group] = acc[group] || [];
-      acc[group].push(item);
-      return acc;
-    }, {});
-  }
 
   // NOTE: This function was partially generated using AI assistance.
   function createHistogramBins(data, binWidth) {
@@ -76,17 +63,16 @@ title: EC Core Components
     return bins;
   }
 
-  function getHistogramEchartsOptions(data, data_name, data_key, binWidth) {
+  function getHistogramEchartsOptions(data, data_name, data_key, binWidth, color) {
     const bins = !data || !Array.isArray(data) || data.length === 0 ? [] : createHistogramBins(data.map(d => d[data_key]), binWidth)
     const xAxis = bins.map(d => d.start)
-    
+
     // Create series data with bin labels included
     const seriesData = bins.map(bin => ({
       value: bin.count,
       binStart: bin.start,
       binEnd: bin.end - 1,
     }))
-    
     return {
       grid: {
         top: '2%',
@@ -118,25 +104,29 @@ title: EC Core Components
           const count = params[0].value;
           return `${count} ${data_name}s have between ${binStart} and ${binEnd} neighbours`;
         }
-      },
-      dataZoom: [
+     },
+     toolbox: {
+       feature: { restore: {} }
+     },
+     dataZoom: [
         {
           type: 'inside',
           start: 0,
           end: 2,
-          minValueSpan: 30
+          minValueSpan: 50
         },
         {
           type: 'slider',
           start: 0,
           end: 2,
-          minValueSpan: 30
+          minValueSpan: 50
         }
       ],
       series: [
         {
           type: 'bar',
-          data: seriesData
+          data: seriesData,
+          itemStyle: {color: color}
         }
       ]
     }
@@ -225,7 +215,7 @@ from
 
 <ECharts
     style={{ height: '400px' }}
-    config={getHistogramEchartsOptions(disease_list_neighbour_counts, "disease", "unique_neighbours", 10)}
+    config={getHistogramEchartsOptions(disease_list_neighbour_counts, "disease", "unique_neighbours", 10, "#8a6bff")}
 />
 
 <br/>
@@ -276,6 +266,9 @@ order by
     data={drug_list_connected_categories} 
     x="category" 
     y="number_of_connections" 
+    colorPalette={[
+        "#79dae8",
+        ]}
     swapXY=true
     title="Categories connected to drug list node on average"
 />
@@ -291,5 +284,5 @@ from
 
 <ECharts
     style={{ height: '400px' }}
-    config={getHistogramEchartsOptions(drug_list_neighbour_counts, "drug", "unique_neighbours", 50)}
+    config={getHistogramEchartsOptions(drug_list_neighbour_counts, "drug", "unique_neighbours", 50, "#79dae8")}
 />
