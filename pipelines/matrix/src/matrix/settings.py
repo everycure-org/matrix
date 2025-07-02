@@ -44,7 +44,12 @@ nn_source, nn_protocol_and_domain, nn_get_normalized_nodes_path, nn_openapi_path
     "/1.5/get_normalized_nodes",
     "/openapi.json",
 )
-# nn_source, nn_protocol_and_domain, nn_get_normalized_nodes_path, nn_openapi_path = ("NCATS", "https://nodenorm.transltr.io", "/1.5/get_normalized_nodes", "/openapi.json")
+# nn_source, nn_protocol_and_domain, nn_get_normalized_nodes_path, nn_openapi_path = (
+#     "NCATS",
+#     "https://nodenorm.transltr.io",
+#     "/1.5/get_normalized_nodes",
+#     "/openapi.json",
+# )
 
 
 @functools.cache
