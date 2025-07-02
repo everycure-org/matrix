@@ -1,5 +1,10 @@
 -- Extra elements in drug list not in nodes_unified
-SELECT 
+SELECT
+  CASE
+    WHEN nu.id IS NULL THEN 'Missing'
+    ELSE 'Included'
+  END AS status,
+  COUNT(*) AS count,
   dl.id,
   dl.name
 FROM
@@ -7,5 +12,5 @@ FROM
 LEFT JOIN
   `mtrx-hub-dev-3of.release_${bq_release_version}.nodes_unified` nu
   ON dl.id = nu.id
-WHERE
-  nu.id IS NULL
+GROUP BY status, dl.id, dl.name
+ORDER BY status, id

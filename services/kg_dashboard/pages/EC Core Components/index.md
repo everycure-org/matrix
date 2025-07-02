@@ -63,7 +63,7 @@ title: EC Core Components
     return bins;
   }
 
-  function getHistogramEchartsOptions(data, data_name, data_key, binWidth, color) {
+  function getHistogramEchartsOptions(data, data_name, data_key, binWidth, color, title) {
     const bins = !data || !Array.isArray(data) || data.length === 0 ? [] : createHistogramBins(data.map(d => d[data_key]), binWidth)
     const xAxis = bins.map(d => d.start)
 
@@ -75,9 +75,18 @@ title: EC Core Components
     }))
     return {
       grid: {
-        top: '2%',
-        bottom: '20%',
+        top: '15%',
+        bottom: '18%',
       },
+      title: {
+          text: title,
+          left: 'left',
+          top: '0',
+          textStyle: {
+            fontSize: 14,
+            fontWeight: 'bold'
+          }
+        },
       xAxis: {
         data: xAxis,
         silent: false,
@@ -151,8 +160,15 @@ from
 ```
 
 
-This page provides the count of EC Core Components from the disease list and drug list, compared with the unified nodes table.
-## Disease list nodes connections
+This page summarizes the connectivity of EC Core Components by examining two key lists: the disease list and the drug list. 
+  For each list, we report the mean and median number of direct neighbors (connections) per node, 
+  providing a view into how densely linked these entities are within the broader knowledge graph. 
+  Additional charts break down the typical categories connected to each node type, 
+  helping highlight which biological or clinical concepts most frequently co-occur. 
+  This analysis offers insight into the network structure surrounding diseases and drugs of interest, 
+  supporting downstream interpretations such as enrichment patterns or pathway overlaps.
+
+## Disease list connections
 
 <br/>
 
@@ -204,7 +220,6 @@ order by
     title="Categories connected to disease list node on average"
 />
 
-### Disease nodes neighbours
 
 ```sql disease_list_neighbour_counts
 select 
@@ -215,12 +230,13 @@ from
 
 <ECharts
     style={{ height: '400px' }}
-    config={getHistogramEchartsOptions(disease_list_neighbour_counts, "disease", "unique_neighbours", 10, "#8a6bff")}
+    config={getHistogramEchartsOptions(disease_list_neighbour_counts, "disease", "unique_neighbours", 10, "#8a6bff",
+         "Disease nodes neighbours")}
 />
 
 <br/>
 
-## Drug list nodes connections
+## Drug list connections
 
 <br/>
 
@@ -273,8 +289,6 @@ order by
     title="Categories connected to drug list node on average"
 />
 
-### Drug nodes neighbours
-
 ```sql drug_list_neighbour_counts
 select 
   * 
@@ -283,6 +297,7 @@ from
 ```
 
 <ECharts
-    style={{ height: '400px' }}
-    config={getHistogramEchartsOptions(drug_list_neighbour_counts, "drug", "unique_neighbours", 50, "#79dae8")}
+    style={{ height: '500px' }}
+    config={getHistogramEchartsOptions(drug_list_neighbour_counts, "drug", "unique_neighbours", 50, "#79dae8" , 
+    "Drug nodes neighbours")}
 />
