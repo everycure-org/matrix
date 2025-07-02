@@ -199,12 +199,16 @@ select
 from 
     bq.upstream_data_sources   
 ```
-### Source versions
-
-<p class="text-center text-md mt-2 mb-6">
-  <span class="font-semibold">ROBOKOP KG:</span> <span class="font-mono">{robokop_version}</span> &nbsp; | &nbsp; 
-  <span class="font-semibold">RTX-KG2:</span> <span class="font-mono">{rtx_kg2_version}</span>
-</p>
+<Details title="Source details">
+  <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mt-2">
+    This release integrates nodes and edges from multiple upstream sources, shown in the charts below. 
+    The versions listed indicate the specific snapshots used for this build of the knowledge graph.<br/>
+    <br><strong>Knowledge Graph Versions:</strong><br/>
+    • <strong>ROBOKOP:</strong> <span class="font-mono">{robokop_version}</span> <br/>
+    • <strong>RTX-KG2:</strong> <span class="font-mono">{rtx_kg2_version}</span> <br/>
+   
+  </div>
+</Details>
 
 <Grid col=2>
     <ECharts 
@@ -255,7 +259,17 @@ from
     }}/>
 </Grid>
 
-## Disease list nodes connections
+## Disease list connections
+
+<Details title="Details">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+  This section summarizes the connectivity of nodes in the disease list, measured by their number of direct neighbors in the 
+  knowledge graph. The mean and median values reflect how many other entities (such as drugs, genes, or phenotypes) 
+  each drug node is linked to. This helps characterize the typical network context for diseases of interest, and highlights 
+  how densely or sparsely connected different parts of the graph may be. For more details visit 
+  <a class="underline text-blue-600" href="./EC%20Core%20Components ">EC Core Components</a>. 
+</div>
+</Details>
 
 <br/>
 
@@ -307,23 +321,17 @@ order by
     title="Categories connected to disease list node on average"
 />
 
-### Disease nodes neighbours
+## Drug list connections
 
-```sql disease_list_neighbour_counts
-select 
-  * 
-from 
-  bq.disease_list_neighbour_counts
-```
-
-<ECharts
-    style={{ height: '400px' }}
-    config={getHistogramEchartsOptions(disease_list_neighbour_counts, "disease", "unique_neighbours", 10)}
-/>
-
-<br/>
-
-## Drug list nodes connections
+<Details title="Details">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+  This section summarizes the connectivity of nodes in the drug list, measured by their number of direct neighbors in the 
+  knowledge graph. The mean and median values reflect how many other entities (such as disease, genes, or phenotypes) 
+  each drug node is linked to. This helps characterize the typical network context for drug of interest, and highlights 
+  how densely or sparsely connected different parts of the graph may be. For more details visit 
+  <a class="underline text-blue-600" href="./EC%20Core%20Components ">EC Core Components</a>. 
+</div>
+</Details>
 
 <br/>
 
@@ -369,21 +377,9 @@ order by
     data={drug_list_connected_categories} 
     x="category" 
     y="number_of_connections" 
+    colorPalette={[
+        "#79dae8",
+        ]}
     swapXY=true
     title="Categories connected to drug list node on average"
-/>
-
-### Drug nodes neighbours
-
-\
-```sql drug_list_neighbour_counts
-select 
-  * 
-from 
-  bq.drug_list_neighbour_counts
-```
-
-<ECharts
-    style={{ height: '400px' }}
-    config={getHistogramEchartsOptions(drug_list_neighbour_counts, "drug", "unique_neighbours", 50)}
 />
