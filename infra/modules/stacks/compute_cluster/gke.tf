@@ -103,11 +103,6 @@ locals {
         value  = "present"
         effect = "NO_SCHEDULE"
       },
-      {
-        key    = "scale-to-zero"
-        value  = "true"
-        effect = "NO_SCHEDULE"
-      },
     ]
 
     # Add management taint to management node pool
