@@ -207,8 +207,8 @@ module "gke" {
       },
       pool.name == "management-nodes" ? {
         workload-type    = "management"
-        service-tier     = "management"
         billing-category = "infrastructure"
+        service-tier     = "management"
         } : can(pool.accelerator_count) ? {
         workload-type    = "compute"
         billing-category = "gpu-compute"
