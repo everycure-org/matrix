@@ -7,6 +7,29 @@ title: Merged KG Dashboard
   This page can be found in your project at `/pages/index.md`. Make a change to the markdown file and save it to see the change take effect in your browser.
 </Details> -->
 
+<script context="module">
+  import { sourceColorMap } from '../_lib/colors';
+  
+  // Create explicit series color mapping
+  export function getSeriesColors(data, seriesColumn) {
+    const uniqueSources = [...new Set(data.map(row => row[seriesColumn]))];
+    
+    // Create an object mapping each series name to its color
+    const seriesColors = {};
+    uniqueSources.forEach(source => {
+      seriesColors[source] = sourceColorMap[source] || "#6272a4";
+    });
+    
+    console.log('Series color mapping:', seriesColors);
+    return seriesColors;
+  }
+  
+  export function sortBySeries(data, seriesColumn) {
+    return data;
+  }
+</script>
+
+
 <!-- Node Queries -->
 
 ```sql node_categories_by_upstream_data_source
@@ -109,12 +132,12 @@ from bq.merged_kg_edges
 
 <Tabs>
     <Tab label="Nodes">
-        
         <BarChart 
-            data={node_categories_by_upstream_data_source}
+            data={sortBySeries(node_categories_by_upstream_data_source, 'upstream_data_source')}
             x=category
             y=count
             series=upstream_data_source
+            seriesColors={getSeriesColors(node_categories_by_upstream_data_source, 'upstream_data_source')}
             swapXY=true    
             title="Node Categories by Upstream Data Source"
         />
@@ -125,10 +148,11 @@ from bq.merged_kg_edges
             <DropdownOption value=50>50</DropdownOption>
         </Dropdown> 
         <BarChart 
-            data={node_prefix_by_upstream_data_source}
+            data={sortBySeries(node_prefix_by_upstream_data_source, 'upstream_data_source')}
             x=prefix
             y=count
             series=upstream_data_source
+            seriesColors={getSeriesColors(node_prefix_by_upstream_data_source, 'upstream_data_source')}
             swapXY=true
             title="Node Prefix by Upstream Data Source"
         />
@@ -140,8 +164,7 @@ from bq.merged_kg_edges
             <DropdownOption value=100>200</DropdownOption>
         </Dropdown> 
     </Tab>
-    <Tab label="Edges">    
-
+    <Tab label="Edges">
         <div>
             <Dropdown data={edges}
                     name=subject_prefix
@@ -215,6 +238,7 @@ from bq.merged_kg_edges
             x=predicate
             y=count
             series=upstream_data_source
+            seriesColors={getSeriesColors(predicates_by_upstream_data_source, 'upstream_data_source')} 
             swapXY=true
             title="Predicates by Upstream Data Source"    
         />
@@ -225,6 +249,7 @@ from bq.merged_kg_edges
             x=edge_type
             y=count 
             series=upstream_data_source
+            seriesColors={getSeriesColors(edge_types_by_upstream_data_source, 'upstream_data_source')}
             swapXY=true
             title="Edge Types by Upstream Data Source"
         />
