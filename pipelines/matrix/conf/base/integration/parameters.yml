@@ -72,8 +72,7 @@ integration:
       _object: matrix.pipelines.batch.schemas.node_normalizer
     normalizer:
       _object: matrix.pipelines.integration.normalizers.ncats.NCATSNodeNormalizer
-      endpoint:
-        _object: matrix.pipelines.integration.normalizers.util.NODE_NORM_ENDPOINT
+      endpoint: ${setting:node_norm.endpoint}
       conflate: true
       drug_chemical_conflate: true
       description: false
@@ -85,8 +84,7 @@ integration:
     # it is not exposed in the endpoint so you might think you're pulling the
     # latest data, but you are effectively returning whatever you had in the
     # cache. Seehttps://github.com/everycure-org/matrix/pull/1269#issuecomment-2755674916
-    api:
-      _object: matrix.pipelines.integration.normalizers.util.NODE_NORM_VERSION
+    api: ${setting:node_norm.version}
     preprocessor:
       _object: matrix.pipelines.batch.pipeline.pass_through
     target_col: normalized_id
