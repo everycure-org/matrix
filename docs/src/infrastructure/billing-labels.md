@@ -24,6 +24,8 @@ This document describes the billing labels applied to all infrastructure resourc
 | `billing-category` | Storage type | `infrastructure-storage`, `infrastructure-storage-premium` |
 | `component` | Specific service | `prometheus`, `grafana`, `neo4j-database`, etc. |
 
+**Note**: Storage billing categories distinguish between standard (`infrastructure-storage`) and premium SSD storage (`infrastructure-storage-premium`) for accurate cost tracking of high-performance storage requirements.
+
 ### Pod Labels (Applied to running workloads)
 
 | Label | Purpose | Values |
@@ -33,6 +35,36 @@ This document describes the billing labels applied to all infrastructure resourc
 | `service-tier` | Infrastructure tier | `management` |
 | `billing-category` | Billing grouping | `infrastructure` |
 | `component` | Specific service | `prometheus`, `grafana`, `argo-workflows-server`, etc. |
+
+## Implementation Examples
+
+### Neo4j Database Service
+
+The Neo4j database deployment demonstrates comprehensive billing label implementation:
+
+**Pod Labels**:
+```yaml
+labels:
+  cost-center: infrastructure-management
+  workload-category: platform-services
+  service-tier: management
+  billing-category: infrastructure
+  component: neo4j-database
+```
+
+**Storage Labels** (for 1.5TB premium SSD volume):
+```yaml
+volumeClaimTemplate:
+  metadata:
+    labels:
+      cost-center: infrastructure-management
+      workload-category: platform-services
+      service-tier: management
+      billing-category: infrastructure-storage-premium
+      component: neo4j-database
+```
+
+This labeling strategy enables precise cost tracking of both compute and storage resources for the Neo4j service.
 
 ## Cost Tracking Queries
 
@@ -65,6 +97,12 @@ To track management infrastructure costs in GCP Billing:
    labels.component="grafana"
    ```
 
+5. **Premium Storage Costs**:
+   ```
+   service.description="Compute Engine" AND
+   labels.billing-category="infrastructure-storage-premium"
+   ```
+
 ### Expected Cost Allocation
 
 After implementation, you should see costs categorized as:
@@ -72,6 +110,8 @@ After implementation, you should see costs categorized as:
 - **Infrastructure Management** (~$500-1500/month)
   - Management node pool compute
   - Management storage (Prometheus, Grafana, MLflow, Neo4j)
+    - Standard storage: `infrastructure-storage`
+    - Premium SSD storage: `infrastructure-storage-premium` (e.g., Neo4j 1.5TB)
   - Management networking
 
 - **Compute Workloads** (variable, scales to zero)
@@ -92,6 +132,7 @@ After implementation, you should see costs categorized as:
 Set up GCP Budget Alerts for:
 - Total infrastructure-management costs > $2000/month
 - Individual component costs (e.g., Neo4j storage > $500/month)
+- Premium storage costs (`billing-category="infrastructure-storage-premium"`)
 - Unexpected growth in management infrastructure costs
 
 ## Future Enhancements
