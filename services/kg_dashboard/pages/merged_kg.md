@@ -1,11 +1,10 @@
 ---
-title: Merged KG Dashboard
+title: Merged KG Composition
 ---
-
-<!-- <Details title='How to edit this page'>
-
-  This page can be found in your project at `/pages/index.md`. Make a change to the markdown file and save it to see the change take effect in your browser.
-</Details> -->
+<p class="text-md mt-2 mb-6">
+  This dashboard provides an overview of the merged knowledge graph, integrating multiple upstream data sources.
+  It highlights how different biological entities and relationships are represented across these sources.
+</p>
 
 <script context="module">
   import { sourceColorMap } from '../_lib/colors';
@@ -132,6 +131,14 @@ from bq.merged_kg_edges
 
 <Tabs>
     <Tab label="Nodes">
+        <p class="text-sm mb-4">
+          The charts below show how various biological categories and identifier prefixes are distributed across data sources in the graph.
+          This helps assess the composition and provenance of nodes.
+          See the <a class="underline text-blue-600" href="https://biolink.github.io/biolink-model/" target="_blank">Biolink Model documentation</a> 
+          for more on  <a class="underline text-blue-600" href="https://biolink.github.io/biolink-model/#classes-visualization" target="_blank">categories</a> and 
+          their associated Valid ID Prefixes.
+        </p>
+        
         <BarChart 
             data={sortBySeries(node_categories_by_upstream_data_source, 'upstream_data_source')}
             x=category
@@ -164,7 +171,16 @@ from bq.merged_kg_edges
             <DropdownOption value=100>200</DropdownOption>
         </Dropdown> 
     </Tab>
-    <Tab label="Edges">
+    <Tab label="Edges"> 
+        
+        <p class="text-sm mb-4">
+          These plots explore edge relationships in the graph, including the frequency of predicates, 
+          biological edge types, and the knowledge sources contributing to each. 
+          See the <a class="underline text-blue-600" href="https://biolink.github.io/biolink-model/" target="_blank">Biolink Model documentation</a> 
+          for more on <a class="underline text-blue-600" href="https://biolink.github.io/biolink-model/#predicates-visualization" target="_blank">predicates</a> and 
+          <a class="underline text-blue-600" href="https://biolink.github.io/biolink-model/#classes-visualization" target="_blank">categories</a>
+        </p>
+
         <div>
             <Dropdown data={edges}
                     name=subject_prefix
