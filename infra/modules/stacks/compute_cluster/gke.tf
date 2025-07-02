@@ -103,6 +103,11 @@ locals {
         value  = "present"
         effect = "NO_SCHEDULE"
       },
+      {
+        key    = "scale-to-zero"
+        value  = "true"
+        effect = "NO_SCHEDULE"
+      },
     ]
 
     # Add management taint to management node pool
@@ -125,7 +130,12 @@ locals {
           key    = "node-memory-size"
           value  = "large"
           effect = "NO_SCHEDULE"
-        }
+        },
+        {
+          key    = "scale-to-zero"
+          value  = "true"
+          effect = "NO_SCHEDULE"
+        },
       ] if !contains(keys(merge(local.node_pools_taints_map)), pool)
     }
   )
