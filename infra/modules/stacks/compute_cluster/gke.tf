@@ -103,13 +103,33 @@ locals {
         value  = "present"
         effect = "NO_SCHEDULE"
       },
+      {
+        key    = "workload"
+        value  = "true"
+        effect = "NO_SCHEDULE"
+      }
+    ],
+    # Small standard and highmem pools (restrict general scheduling)
+    "n2-standard-4-nodes" = [
+      {
+        key    = "workload"
+        value  = "true"
+        effect = "NO_SCHEDULE"
+      }
     ]
 
-    # Add management taint to management node pool
-    "management-nodes" = [
+    "n2-standard-8-nodes" = [
       {
-        key    = "workload-type"
-        value  = "management"
+        key    = "workload"
+        value  = "true"
+        effect = "NO_SCHEDULE"
+      }
+    ]
+
+    "n2d-highmem-8-nodes" = [
+      {
+        key    = "workload"
+        value  = "true"
         effect = "NO_SCHEDULE"
       }
     ]
@@ -127,10 +147,10 @@ locals {
           effect = "NO_SCHEDULE"
         },
         {
-          key    = "scale-to-zero"
+          key    = "workload"
           value  = "true"
           effect = "NO_SCHEDULE"
-        },
+        }
       ] if !contains(keys(merge(local.node_pools_taints_map)), pool)
     }
   )

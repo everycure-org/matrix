@@ -11,12 +11,6 @@ mlflow:
     # Schedule MLflow tracking on management nodes
     nodeSelector:
       workload-type: management
-    tolerations:
-      - key: workload-type
-        operator: Equal
-        value: management
-        effect: NoSchedule
-
     # Add billing labels to MLflow tracking pods
     podLabels:
       cost-center: infrastructure-management
@@ -77,11 +71,6 @@ mlflow:
   run:
     nodeSelector:
       workload-type: management
-    tolerations:
-      - key: workload-type
-        operator: Equal
-        value: management
-        effect: NoSchedule
     # Add billing labels to MLflow run pods
     podLabels:
       cost-center: infrastructure-management

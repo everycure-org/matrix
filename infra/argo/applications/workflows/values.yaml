@@ -6,11 +6,6 @@ argo-workflows:
     # Schedule server on management nodes
     nodeSelector:
       workload-type: management
-    tolerations:
-      - key: workload-type
-        operator: Equal
-        value: management
-        effect: NoSchedule
     # Add billing labels to Argo Workflows server pods
     podLabels:
       cost-center: infrastructure-management
@@ -31,15 +26,10 @@ argo-workflows:
     # Schedule controller on management nodes
     nodeSelector:
       workload-type: management
-    tolerations:
-      - key: workload-type
-        operator: Equal
-        value: management
-        effect: NoSchedule
+
     # Add billing labels to Argo Workflows controller pods
     podLabels:
-      cost-center: infrastructure-management
-      workload-category: platform-services
+      cost-center: infrastructure-management      workload-category: platform-services
       service-tier: management
       billing-category: infrastructure
       component: argo-workflows-controller

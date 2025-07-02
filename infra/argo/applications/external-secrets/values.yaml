@@ -20,11 +20,6 @@ external-secrets:
   webhook:
     nodeSelector:
       workload-type: management
-    tolerations:
-      - key: workload-type
-        operator: Equal
-        value: management
-        effect: NoSchedule
     podLabels:
       cost-center: infrastructure-management
       workload-category: platform-services
@@ -36,11 +31,6 @@ external-secrets:
   certController:
     nodeSelector:
       workload-type: management
-    tolerations:
-      - key: workload-type
-        operator: Equal
-        value: management
-        effect: NoSchedule
     podLabels:
       cost-center: infrastructure-management
       workload-category: platform-services

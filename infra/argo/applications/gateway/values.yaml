@@ -50,11 +50,6 @@ cert-manager:
   webhook:
     nodeSelector:
       workload-type: management
-    tolerations:
-      - key: workload-type
-        operator: Equal
-        value: management
-        effect: NoSchedule
     podLabels:
       cost-center: infrastructure-management
       workload-category: platform-services
@@ -65,11 +60,6 @@ cert-manager:
   cainjector:
     nodeSelector:
       workload-type: management
-    tolerations:
-      - key: workload-type
-        operator: Equal
-        value: management
-        effect: NoSchedule
     podLabels:
       cost-center: infrastructure-management
       workload-category: platform-services
