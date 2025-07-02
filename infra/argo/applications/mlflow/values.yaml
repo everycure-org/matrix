@@ -48,11 +48,6 @@ mlflow:
         argocd.argoproj.io/sync-options: Replace=true
       nodeSelector:
         workload-type: management
-      tolerations:
-        - key: workload-type
-          operator: Equal
-          value: management
-          effect: NoSchedule
       persistence:
         # Keep existing storage class to avoid data loss
         labels:

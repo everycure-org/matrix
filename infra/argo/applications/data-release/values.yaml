@@ -16,12 +16,6 @@ argo-events:
     nats:
       nodeSelector:
         workload-type: management
-      tolerations:
-        - key: workload-type
-          operator: Equal
-          value: management
-          effect: NoSchedule
-
   # Event Sources
   eventSourceDeployment:
     nodeSelector:

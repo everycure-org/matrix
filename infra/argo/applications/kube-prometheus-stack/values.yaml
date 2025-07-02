@@ -5,11 +5,6 @@ kube-prometheus-stack:
       # Schedule Prometheus on management nodes
       nodeSelector:
         workload-type: management
-      tolerations:
-        - key: workload-type
-          operator: Equal
-          value: management
-          effect: NoSchedule
       # Add billing labels to Prometheus pods
       podMetadata:
         labels:
@@ -99,11 +94,6 @@ kube-prometheus-stack:
     alertmanagerSpec:
       nodeSelector:
         workload-type: management
-      tolerations:
-        - key: workload-type
-          operator: Equal
-          value: management
-          effect: NoSchedule
       # Add billing labels to AlertManager pods
       podMetadata:
         labels:
@@ -128,11 +118,6 @@ kube-prometheus-stack:
   nodeExporter:
     nodeSelector:
       workload-type: compute
-    tolerations:
-      - key: workload-type
-        operator: Equal
-        value: compute
-        effect: NoSchedule
     # Allow node-exporter to be evicted during node scale-down
     podAnnotations:
       cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
