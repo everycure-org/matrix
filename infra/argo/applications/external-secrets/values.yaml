@@ -2,11 +2,6 @@ external-secrets:
   # Schedule External Secrets Operator on management nodes
   nodeSelector:
     workload-type: management
-  tolerations:
-    - key: workload-type
-      operator: Equal
-      value: management
-      effect: NoSchedule
   
   # Add billing labels
   podLabels:

@@ -3,11 +3,6 @@ external-dns:
   # Schedule External DNS on management nodes
   nodeSelector:
     workload-type: management
-  tolerations:
-    - key: workload-type
-      operator: Equal
-      value: management
-      effect: NoSchedule
   podLabels:
     cost-center: infrastructure-management
     workload-category: platform-services
@@ -35,11 +30,6 @@ cert-manager:
   # Schedule cert-manager on management nodes
   nodeSelector:
     workload-type: management
-  tolerations:
-    - key: workload-type
-      operator: Equal
-      value: management
-      effect: NoSchedule
   podLabels:
     cost-center: infrastructure-management
     workload-category: platform-services
