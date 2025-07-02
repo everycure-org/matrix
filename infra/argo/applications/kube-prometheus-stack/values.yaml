@@ -60,11 +60,6 @@ kube-prometheus-stack:
     # Schedule Grafana on management nodes
     nodeSelector:
       workload-type: management
-    tolerations:
-      - key: workload-type
-        operator: Equal
-        value: management
-        effect: NoSchedule
     # Add billing labels to Grafana pods
     podLabels:
       cost-center: infrastructure-management
@@ -122,21 +117,11 @@ kube-prometheus-stack:
   prometheusOperator:
     nodeSelector:
       workload-type: management
-    tolerations:
-      - key: workload-type
-        operator: Equal
-        value: management
-        effect: NoSchedule
 
   # Schedule Kube State Metrics on management nodes
   kubeStateMetrics:
     nodeSelector:
       workload-type: management
-    tolerations:
-      - key: workload-type
-        operator: Equal
-        value: management
-        effect: NoSchedule
 
   # Configure Node Exporter to run on compute nodes only (scales with compute nodes)
   # This allows monitoring when compute nodes are active, and scales to zero when they're not

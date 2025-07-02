@@ -4,11 +4,6 @@ argo-events:
   controller:
     nodeSelector:
       workload-type: management
-    tolerations:
-      - key: workload-type
-        operator: Equal
-        value: management
-        effect: NoSchedule
     podLabels:
       cost-center: infrastructure-management
       workload-category: platform-services
@@ -31,18 +26,7 @@ argo-events:
   eventSourceDeployment:
     nodeSelector:
       workload-type: management
-    tolerations:
-      - key: workload-type
-        operator: Equal
-        value: management
-        effect: NoSchedule
-
   # Sensors  
   sensorDeployment:
     nodeSelector:
       workload-type: management
-    tolerations:
-      - key: workload-type
-        operator: Equal
-        value: management
-        effect: NoSchedule
