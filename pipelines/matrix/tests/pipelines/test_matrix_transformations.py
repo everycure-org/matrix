@@ -1,4 +1,3 @@
-import pandas as pd
 import pytest
 from matrix.pipelines.matrix_transformations.nodes import return_predictions
 from matrix.pipelines.matrix_transformations.transformations import (
@@ -352,9 +351,10 @@ def test_no_transformation(spark, sample_matrix):
 
 
 @pytest.fixture
-def sample_known_pairs():
+def sample_known_pairs(spark: SparkSession):
     """Fixture that provides sample known pairs data for testing."""
-    return pd.DataFrame(
+
+    return spark.createDataFrame(
         data=[
             # Known positives
             {

@@ -1,10 +1,10 @@
 import logging
 from typing import Any
 
-import pandas as pd
 import pyspark.sql as ps
 from matrix import settings
 from matrix.inject import inject_object
+from pyspark.sql import functions as F
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ def apply_matrix_transformations(
 
 def return_predictions(
     sorted_matrix_df: ps.DataFrame,
-    known_pairs: pd.DataFrame,
+    known_pairs: ps.DataFrame,
 ) -> ps.DataFrame:
     """Store the full model predictions including training data.
 
@@ -57,13 +57,15 @@ def return_predictions(
 
     n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING().get("cross_validation")["n_cross_val_folds"]
 
-    train_data = known_pairs[(known_pairs["fold"] == n_cross_val_folds) & (known_pairs["split"] == "TRAIN")]
-    train_data = train_data[["source", "target", "y"]]
-    train_data["is_known_positive"] = train_data["y"] == 1
-    train_data["is_known_negative"] = train_data["y"] == 0
+    # Filter known_pairs to get training data from the specified fold using PySpark operations
+    train_data = known_pairs.filter((F.col("fold") == n_cross_val_folds) & (F.col("split") == "TRAIN")).select(
+        "source", "target", "y"
+    )
 
-    train_data_spark = sorted_matrix_df.sparkSession.createDataFrame(train_data)
+    # Add is_known_positive and is_known_negative flags using PySpark column operations
+    train_data = train_data.withColumn("is_known_positive", F.col("y") == 1)
+    train_data = train_data.withColumn("is_known_negative", F.col("y") == 0)
 
-    result_df = sorted_matrix_df.unionByName(train_data_spark, allowMissingColumns=True)
+    result_df = sorted_matrix_df.unionByName(train_data, allowMissingColumns=True)
 
     return result_df
