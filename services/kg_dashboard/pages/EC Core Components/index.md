@@ -1,9 +1,9 @@
 ---
-title: KG Dashboard
+title: EC Core Components
 ---
 
 <script context="module">
-  import { sourceColorMap } from './_lib/colors';
+  import { sourceColorMap } from '../_lib/colors';
   
   // Function to get colors for pie chart data
   export function getPieColors(data) {
@@ -145,11 +145,6 @@ title: KG Dashboard
   
 </script>
 
-This dashboard provides an overview of our integrated knowledge graph (KG), detailing its size, connectivity patterns, and provenance quality. 
-It also examines how nodes from our curated disease and drug lists link to other entities within the graph.
-## Version: {release_version}
-
-<p class="text-gray-500 text-sm italic">Last updated on {build_time}</p>
 
 ```sql edges_per_node
 select 
@@ -165,96 +160,8 @@ from
     bq.overall_metrics
 ```
 
-## Graph size
 
-<Grid col=2>
-    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="n_nodes" fmt="num2m"/></span><br/>nodes</p>
-    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="n_edges" fmt="num2m"/></span><br/>edges</p>
-</Grid>
-
-<br/>
-
-## Graph density
-
-<Grid col=2>
-    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="edges_per_node" fmt="num1"/></span><br/>edges per node on average</p>
-    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="edges_per_node_without_most_connected_nodes" fmt="num1"/></span><br/>edges per node when excluding the top 1,000 most connected nodes</p>
-</Grid>
-
-
-## Upstream data sources 
-
-```sql upstream_data_sources_nodes
-select 
-    upstream_data_source as name
-    , n_nodes as value
-from 
-    bq.upstream_data_sources   
-```
-
-```sql upstream_data_sources_edges
-select 
-    upstream_data_source as name
-    , n_edges as value
-from 
-    bq.upstream_data_sources   
-```
-### Source versions
-
-<p class="text-center text-md mt-2 mb-6">
-  <span class="font-semibold">ROBOKOP KG:</span> <span class="font-mono">{robokop_version}</span> &nbsp; | &nbsp; 
-  <span class="font-semibold">RTX-KG2:</span> <span class="font-mono">{rtx_kg2_version}</span>
-</p>
-
-<Grid col=2>
-    <ECharts 
-        config={{
-            title: {
-                text: 'Nodes',
-                left: 'center',
-                top: 'center',
-                textStyle: {
-                    fontWeight: 'normal'
-                }
-            },
-            color: getPieColors(upstream_data_sources_nodes),
-            tooltip: {
-                formatter: function(params) {
-                    const count = params.data.value.toLocaleString();
-                    return `${params.name}: ${count} nodes (${params.percent}%)`;
-                }
-            },
-            series: [{
-                type: 'pie', 
-                data: [...upstream_data_sources_nodes],
-                radius: ['30%', '50%'],
-            }]
-        }}
-    />
-    <ECharts config={{
-        title: {
-            text: 'Edges',
-            left: 'center',
-            top: 'center',
-            textStyle: {
-                fontWeight: 'normal'
-            }
-        },
-        color: getPieColors(upstream_data_sources_edges),
-        tooltip: {
-            formatter: function(params) {
-                const count = params.data.value.toLocaleString();
-                return `${params.name}: ${count} edges (${params.percent}%)`;
-            }
-        },
-        series: [{
-            type: 'pie', 
-            data: [...upstream_data_sources_edges],
-            radius: ['30%', '50%'],
-        }]
-    }}/>
-</Grid>
-
+This page provides the count of EC Core Components from the disease list and drug list, compared with the unified nodes table.
 ## Disease list nodes connections
 
 <br/>
@@ -375,7 +282,6 @@ order by
 
 ### Drug nodes neighbours
 
-\
 ```sql drug_list_neighbour_counts
 select 
   * 
