@@ -38,9 +38,7 @@ class SpokeTransformer(GraphTransformer):
         """
         match self._version:
             case "V5.2":
-                df = transform_edges_V5_2(edges_df).dropDuplicates(
-                    "subject", "object", "predicate"
-                )  # TODO: Remove this once we have a proper version of Spoke
+                df = transform_edges_V5_2(edges_df)
             case _:
                 raise NotImplementedError(f"No edges transformer code implemented for version: {self._version}")
         return df
@@ -65,7 +63,7 @@ def transform_nodes_V5_2(nodes_df: ps.DataFrame):
 
 def transform_edges_V5_2(edges_df: ps.DataFrame):
     # fmt: off
-    df = (edges_df
+    df = (edges_df.dropDuplicates(subset=["subject", "object", "predicate"])  # TODO: Remove this once we have a proper version of Spoke
           .withColumn("knowledge_level",                          F.lit(None).cast(T.StringType()))
           .withColumn("agent_type",                               F.lit(None).cast(T.StringType()))
           .withColumn("aggregator_knowledge_source",              F.lit(None).cast(T.ArrayType(T.StringType())))
