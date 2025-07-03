@@ -9,7 +9,7 @@ integration:
       name: spoke
       transformer:
         _object: matrix.pipelines.integration.transformers.spoke.SpokeTransformer
-        version: ${globals:data_sources.spoke.version}
+        version: V5_2 #${globals:data_sources.spoke.version}
     robokop:
       name: robokop
       transformer:
