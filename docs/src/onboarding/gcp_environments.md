@@ -60,7 +60,7 @@ The GCP environment controls:
 
 To switch between environments locally:
 - For development: `gcloud config set project mtrx-hub-dev-3of`
-- For production: `gcloud config set project mtrx-hub-prod-sms` (admin access required)
+- For production: `gcloud config set project mtrx-hub-prod-sms`
 
 When using `kedro experiment run` or `kedro run`, the system will automatically use the detected project.
 
