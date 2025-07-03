@@ -236,3 +236,78 @@ SELECT * FROM bq.ec_core_components_drug_list_missing
         </Tab>
     </Tabs>
 </Grid>
+
+## Drug List Connection Overview
+
+<Details title="Details">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+This section visualizes how entities from the drug list connect to other categories in the knowledge graph.
+The Sankey diagram shows the flow from incoming connection categories (left) through the drug list entities (center) 
+to outgoing connection categories (right), providing insight into the types of knowledge graph relationships 
+involving drug list entities.
+</div>
+</Details>
+
+```sql drug_connections_sankey
+-- Incoming connections: Subject Categories to Drug List
+SELECT 
+    concat('[IN] ', replace(subject_category,'biolink:','')) as source,
+    'Drug' as target,
+    sum(count) as count
+FROM bq.drug_list_edges
+WHERE direction = 'incoming'
+GROUP BY subject_category
+HAVING sum(count) > 20000
+
+UNION ALL
+
+-- Outgoing connections: Drug List to Object Categories
+SELECT 
+    'Drug' as source,
+    concat('[OUT] ', replace(object_category,'biolink:','')) as target,
+    sum(count) as count
+FROM bq.drug_list_edges
+WHERE direction = 'outgoing'
+GROUP BY object_category
+HAVING sum(count) > 20000
+ORDER BY count DESC
+```
+
+<SankeyDiagram data={drug_connections_sankey} 
+  sourceCol='source'
+  targetCol='target'
+  valueCol='count'
+  linkLabels='full'
+  linkColor='gradient'
+  title='Drug List Connection Flow'
+  subtitle='Flow from Incoming Categories through Drug List to Outgoing Categories (>20k connections)'
+  chartAreaHeight={400}
+/>
+
+## Drug List Contents
+
+<Details title="Details">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+This table shows all entities in the drug list with their connectivity information. The Edge Count column displays 
+the total number of connections each drug has in the knowledge graph, providing insight into how well-connected 
+each drug is within the broader network of biomedical knowledge. Click on any ID to access detailed information 
+about that drug through the identifiers.org ID resolver.
+</div>
+</Details>
+
+```sql drug_list_contents
+SELECT id, name, edge_count, '<a href="http://identifiers.org/' || id || '" target="_blank">' || id || '</a>' as curie_link FROM bq.drug_list_nodes 
+ORDER BY edge_count DESC
+```
+
+<DataTable 
+    data={drug_list_contents} 
+    search=true
+    pagination=true
+    title="Drug List Entities"
+    link=url>
+    
+    <Column id="name" title="Name" />
+    <Column id="curie_link" title="ID" contentType=html/>
+    <Column id="edge_count" title="Edge Count" contentType="bar" />
+</DataTable>
