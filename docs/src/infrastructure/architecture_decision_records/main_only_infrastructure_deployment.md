@@ -289,6 +289,7 @@ This main-only approach was introduced to:
 
 ## Additional Resources
 
+- [GCP CloudBuild Documentation](../../../../infra/modules/components/cloudbuild/README.md)
 - [ArgoCD Configuration](../index.md#argocd)
 - [Infrastructure Overview](../index.md)
 - [Release Process for Data Pipelines](../runbooks/01_releases.md)
