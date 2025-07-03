@@ -283,3 +283,31 @@ ORDER BY count DESC
   subtitle='Flow from Incoming Categories through Drug List to Outgoing Categories (>20k connections)'
   chartAreaHeight={400}
 />
+
+## Drug List Contents
+
+<Details title="Details">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+This table shows all entities in the drug list with their connectivity information. The Edge Count column displays 
+the total number of connections each drug has in the knowledge graph, providing insight into how well-connected 
+each drug is within the broader network of biomedical knowledge. Click on any ID to access detailed information 
+about that drug through the identifiers.org ID resolver.
+</div>
+</Details>
+
+```sql drug_list_contents
+SELECT id, name, edge_count, '<a href="http://identifiers.org/' || id || '" target="_blank">' || id || '</a>' as curie_link FROM bq.drug_list_nodes 
+ORDER BY edge_count DESC
+```
+
+<DataTable 
+    data={drug_list_contents} 
+    search=true
+    pagination=true
+    title="Drug List Entities"
+    link=url>
+    
+    <Column id="name" title="Name" />
+    <Column id="curie_link" title="ID" contentType=html/>
+    <Column id="edge_count" title="Edge Count" contentType="bar" />
+</DataTable>
