@@ -30,7 +30,7 @@ data_sources:
   robokop:
     version: 30fd1bfc18cd5ccb
   spoke:
-    version: V5.7
+    version: v5.7
   embiology:
     version: 03032025
 # Dataset with node and edge proposals by the
