@@ -22,9 +22,7 @@ class SpokeTransformer(GraphTransformer):
         """
         match self._version:
             case "V5.2":
-                df = transform_nodes_V5_2(nodes_df).dropDuplicates(
-                    "id"
-                )  # TODO: Remove this once we have a proper version of Spoke
+                df = transform_nodes_V5_2(nodes_df)  # TODO: Remove this once we have a proper version of Spoke
             case _:
                 raise NotImplementedError(f"No nodes transformer code implemented for version: {self._version}")
         return df
@@ -51,7 +49,7 @@ class SpokeTransformer(GraphTransformer):
 def transform_nodes_V5_2(nodes_df: ps.DataFrame):
     # fmt: off
     df = (
-        nodes_df
+        nodes_df.dropDuplicates(subset=["id"])
         .withColumn("upstream_data_source",              F.array(F.lit("spoke")))
         .withColumn("all_categories",                    F.split(F.col("category"), SEPARATOR))
         .withColumn("equivalent_identifiers",            F.lit(None).cast(T.ArrayType(T.StringType())))
