@@ -9,3 +9,4 @@ nav:
     - iap.md
     - runbooks
     - architecture_decision_records
+    - gcp_cloudbuild.md
