@@ -24,8 +24,6 @@ Variables such as `RUNTIME_GCP_BUCKET` or `RUNTIME_GCP_PROJECT_ID` refer to the 
 1. GCP metadata server (when running in GKE/GCP environments)
 2. gcloud CLI configuration (for local development)
 
-The system no longer falls back to environment variables for project detection. The `RUNTIME_GCP_PROJECT_ID` environment variable is now set automatically by the system based on the detected project.
-
 Example: When you run a pipeline, the system will:
 - Auto-detect your GCP project (e.g., `mtrx-hub-prod-sms` for prod or `mtrx-hub-dev-3of` for dev)
 - Set `RUNTIME_GCP_PROJECT_ID` environment variable to this detected value
