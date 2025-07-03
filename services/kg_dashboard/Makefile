@@ -51,7 +51,10 @@ install:
 populate-infores-source:
 	node ./scripts/load-infores.cjs
 
-run-sources: populate-infores-source
+populate-valid-edge-types-source:
+	node ./scripts/load-valid-edge-types.cjs
+
+run-sources: populate-infores-source populate-valid-edge-types-source
 	npm run sources
 
 run-dev:
