@@ -76,7 +76,7 @@ gcloud config set project mtrx-hub-prod-sms
 
 # Optional: Set remaining variables in .env if needed
 GOOGLE_APPLICATION_CREDENTIALS=/Users/<YOUR_USERNAME>/.config/gcloud/application_default_credentials.json
-INCLUDE_PRIVATE_DATASETS=1
+INCLUDE_PRIVATE_DATASETS=1 # this is important if you want to include private datasets.
 ```
 
 For development, ensure your gcloud is configured correctly:
