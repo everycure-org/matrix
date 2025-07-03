@@ -33,3 +33,16 @@ def apply_matrix_transformations(
         df = transform_instance.apply(df, score_col)
 
     return df
+
+
+def return_predictions(
+    sorted_matrix_df: ps.DataFrame,
+) -> ps.DataFrame:
+    """Store the full model predictions.
+
+    Args:
+        sorted_matrix_df: DataFrame containing the sorted matrix
+        **kwargs: Extra arguments such as the drug and disease lists for tables
+    """
+
+    return sorted_matrix_df
