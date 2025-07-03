@@ -22,7 +22,9 @@ class SpokeTransformer(GraphTransformer):
         """
         match self._version:
             case "V5.2":
-                df = transform_nodes_V5_2(nodes_df)
+                df = transform_nodes_V5_2(nodes_df).dropDuplicates(
+                    "id"
+                )  # TODO: Remove this once we have a proper version of Spoke
             case _:
                 raise NotImplementedError(f"No nodes transformer code implemented for version: {self._version}")
         return df
@@ -38,7 +40,9 @@ class SpokeTransformer(GraphTransformer):
         """
         match self._version:
             case "V5.2":
-                df = transform_edges_V5_2(edges_df)
+                df = transform_edges_V5_2(edges_df).dropDuplicates(
+                    "subject", "object", "predicate"
+                )  # TODO: Remove this once we have a proper version of Spoke
             case _:
                 raise NotImplementedError(f"No edges transformer code implemented for version: {self._version}")
         return df
