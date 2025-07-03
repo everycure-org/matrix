@@ -249,3 +249,77 @@ SELECT * FROM bq.ec_core_components_disease_list_missing
         </Tab>
     </Tabs>
 </Grid>
+
+## Disease List Connection Overview
+
+<Details title="Details">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+This section visualizes how entities from the disease list connect to other categories in the knowledge graph.
+The Sankey diagram shows the flow from incoming connection categories (left) through the disease list entities (center) 
+to outgoing connection categories (right), providing insight into the types of knowledge graph relationships 
+involving disease list entities.
+</div>
+</Details>
+
+```sql disease_connections_sankey
+-- Incoming connections: Subject Categories to Disease List
+SELECT 
+    concat('[IN] ', replace(subject_category,'biolink:','')) as source,
+    'Disease' as target,
+    sum(count) as count
+FROM bq.disease_list_edges
+WHERE direction = 'incoming'
+GROUP BY subject_category
+HAVING sum(count) > 20000
+
+UNION ALL
+
+-- Outgoing connections: Disease List to Object Categories
+SELECT 
+    'Disease' as source,
+    concat('[OUT] ', replace(object_category,'biolink:','')) as target,
+    sum(count) as count
+FROM bq.disease_list_edges
+WHERE direction = 'outgoing'
+GROUP BY object_category
+HAVING sum(count) > 20000
+ORDER BY count DESC
+```
+
+<SankeyDiagram data={disease_connections_sankey} 
+  sourceCol='source'
+  targetCol='target'
+  valueCol='count'
+  linkLabels='full'
+  linkColor='gradient'
+  title='Disease List Connection Flow'
+  subtitle='Flow from Incoming Categories through Disease List to Outgoing Categories (>20k connections)'
+  chartAreaHeight={400}
+/>
+
+## Disease List Contents
+
+<Details title="Details">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+This table shows all entities in the disease list with their connectivity information. The Edge Count column displays 
+the total number of connections each disease has in the knowledge graph, providing insight into how well-connected 
+each disease is within the broader network of biomedical knowledge. Click on any ID to access detailed information 
+about that disease through the identifiers.org ID resolver.
+</div>
+</Details>
+
+```sql disease_list_contents
+SELECT id, name, edge_count, '<a href="http://identifiers.org/' || id || '" target="_blank">' || id || '</a>' as curie_link FROM bq.disease_list_nodes
+ORDER BY edge_count DESC
+```
+
+<DataTable 
+    data={disease_list_contents} 
+    search=true
+    pagination=true
+    title="Disease List Entities">
+    
+    <Column id="name" title="Name" />
+    <Column id="curie_link" title="ID" contentType=html/>
+    <Column id="edge_count" title="Edge Count" contentType="bar" />
+</DataTable>
