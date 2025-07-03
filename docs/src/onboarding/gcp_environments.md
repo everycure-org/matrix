@@ -18,7 +18,7 @@ As such, gcp environment `prod` refers to GCP project `mtrx-hub-prod-sms` and `d
 ### Runtime variables
 
 Not an environment, but a related concept. 
-Variables such as `RUNTIME_GCP_BUCKET` or `RUNTIME_GCP_PROJECT_ID` refer to the bucket or project used for pipeline execution.
+Variables such as `RUNTIME_GCP_BUCKET` refer to the bucket used for pipeline execution.
 
 **Important**: As of the latest update, the GCP project ID is automatically detected from:
 1. GCP metadata server (when running in GKE/GCP environments)
