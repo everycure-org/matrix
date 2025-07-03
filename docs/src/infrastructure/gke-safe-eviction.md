@@ -6,6 +6,74 @@ This document contains the commands needed to configure safe eviction annotation
 
 For GKE cluster autoscaler to scale compute node pools to zero, all pods running on compute nodes must have the `cluster-autoscaler.kubernetes.io/safe-to-evict: "true"` annotation. This includes system DaemonSets and Deployments managed by GKE.
 
+## Cleanup Commands
+
+To clean up completed jobs that don't have safe-to-evict annotations:
+
+```bash
+# Clean up completed argo-workflow cleanup jobs
+kubectl get jobs -n argo-workflows --field-selector status.successful=1 -o name | xargs kubectl delete -n argo-workflows
+
+# Clean up completed neo4j certificate refresh jobs
+kubectl get jobs -n neo4j --field-selector status.successful=1 -o name | xargs kubectl delete -n neo4j
+```
+
+## Verification Commands
+
+To verify that pods have the safe-to-evict annotation:
+
+```bash
+# Check all pods on a specific compute node
+kubectl get pods --all-namespaces --field-selector spec.nodeName=NODE_NAME -o jsonpath='{range .items[*]}{.metadata.namespace}{"\t"}{.metadata.name}{"\t"}{.metadata.annotations.cluster-autoscaler\.kubernetes\.io/safe-to-evict}{"\n"}{end}' | column -t
+
+# Check for nodes marked for deletion
+kubectl describe nodes | grep -A 5 -B 2 "ToBeDeletedByClusterAutoscaler\|DeletionCandidateOfClusterAutoscaler"
+
+# Check cluster autoscaler events
+kubectl get events --all-namespaces --sort-by='.lastTimestamp' | grep -i "scale\|delete\|autoscaler"
+```
+
+## Important Notes
+
+1. **Timing**: After applying patches, the cluster autoscaler may take 10-20 minutes to recognize nodes as safe to evict and scale them down.
+
+1. **System Pod Scheduling**: Some system pods (like CoreDNS, konnectivity-agent) may have multiple replicas that need to be distributed across available nodes for high availability.
+
+1. **Node Taints**: Nodes marked for deletion will have taints like:
+
+   - `DeletionCandidateOfClusterAutoscaler=TIMESTAMP:PreferNoSchedule`
+   - `ToBeDeletedByClusterAutoscaler=TIMESTAMP:NoSchedule`
+
+1. **Resource Requirements**: Ensure the management node pool has sufficient resources to handle any system pods that might need to be rescheduled from compute nodes.
+
+## Troubleshooting
+
+If compute nodes are not scaling down:
+
+1. Check for pods without safe-to-evict annotations
+1. Look for completed jobs that should be cleaned up
+1. Verify that no application workloads are scheduled on compute nodes
+1. Check cluster autoscaler logs in GCP Console
+1. Ensure node pools have `min_count = 0` in Terraform configuration
+1. **Check for orphaned Pod Disruption Budgets (PDBs)**
+
+### Orphaned Pod Disruption Budgets
+
+PDBs left behind by deleted ArgoCD applications can block node eviction even if the associated pods are failing:
+
+```bash
+# Check for PDBs that might be blocking eviction
+kubectl get pdb --all-namespaces
+
+# Check PDB status - look for DisruptionAllowed: False
+kubectl describe pdb PDB_NAME -n NAMESPACE
+
+# If a PDB is orphaned (no corresponding ArgoCD application), delete it
+kubectl delete pdb PDB_NAME -n NAMESPACE
+
+# Also clean up any associated failing deployments
+kubectl delete deployment DEPLOYMENT_NAME -n NAMESPACE
+```
 ## System Pods Safe Eviction Commands
 
 ### Core System Components
@@ -95,75 +163,6 @@ kubectl rollout restart deployment konnectivity-agent-autoscaler -n kube-system
 kubectl rollout restart deployment kube-dns-autoscaler -n kube-system
 kubectl rollout restart deployment l7-default-backend -n kube-system
 kubectl rollout restart deployment metrics-server -n kube-system
-```
-
-## Cleanup Commands
-
-To clean up completed jobs that don't have safe-to-evict annotations:
-
-```bash
-# Clean up completed argo-workflow cleanup jobs
-kubectl get jobs -n argo-workflows --field-selector status.successful=1 -o name | xargs kubectl delete -n argo-workflows
-
-# Clean up completed neo4j certificate refresh jobs
-kubectl get jobs -n neo4j --field-selector status.successful=1 -o name | xargs kubectl delete -n neo4j
-```
-
-## Verification Commands
-
-To verify that pods have the safe-to-evict annotation:
-
-```bash
-# Check all pods on a specific compute node
-kubectl get pods --all-namespaces --field-selector spec.nodeName=NODE_NAME -o jsonpath='{range .items[*]}{.metadata.namespace}{"\t"}{.metadata.name}{"\t"}{.metadata.annotations.cluster-autoscaler\.kubernetes\.io/safe-to-evict}{"\n"}{end}' | column -t
-
-# Check for nodes marked for deletion
-kubectl describe nodes | grep -A 5 -B 2 "ToBeDeletedByClusterAutoscaler\|DeletionCandidateOfClusterAutoscaler"
-
-# Check cluster autoscaler events
-kubectl get events --all-namespaces --sort-by='.lastTimestamp' | grep -i "scale\|delete\|autoscaler"
-```
-
-## Important Notes
-
-1. **Timing**: After applying patches, the cluster autoscaler may take 10-20 minutes to recognize nodes as safe to evict and scale them down.
-
-1. **System Pod Scheduling**: Some system pods (like CoreDNS, konnectivity-agent) may have multiple replicas that need to be distributed across available nodes for high availability.
-
-1. **Node Taints**: Nodes marked for deletion will have taints like:
-
-   - `DeletionCandidateOfClusterAutoscaler=TIMESTAMP:PreferNoSchedule`
-   - `ToBeDeletedByClusterAutoscaler=TIMESTAMP:NoSchedule`
-
-1. **Resource Requirements**: Ensure the management node pool has sufficient resources to handle any system pods that might need to be rescheduled from compute nodes.
-
-## Troubleshooting
-
-If compute nodes are not scaling down:
-
-1. Check for pods without safe-to-evict annotations
-1. Look for completed jobs that should be cleaned up
-1. Verify that no application workloads are scheduled on compute nodes
-1. Check cluster autoscaler logs in GCP Console
-1. Ensure node pools have `min_count = 0` in Terraform configuration
-1. **Check for orphaned Pod Disruption Budgets (PDBs)**
-
-### Orphaned Pod Disruption Budgets
-
-PDBs left behind by deleted ArgoCD applications can block node eviction even if the associated pods are failing:
-
-```bash
-# Check for PDBs that might be blocking eviction
-kubectl get pdb --all-namespaces
-
-# Check PDB status - look for DisruptionAllowed: False
-kubectl describe pdb PDB_NAME -n NAMESPACE
-
-# If a PDB is orphaned (no corresponding ArgoCD application), delete it
-kubectl delete pdb PDB_NAME -n NAMESPACE
-
-# Also clean up any associated failing deployments
-kubectl delete deployment DEPLOYMENT_NAME -n NAMESPACE
 ```
 
 **Warning**: Only delete PDBs for applications that are confirmed to be unused or have been intentionally removed.
