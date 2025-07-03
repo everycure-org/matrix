@@ -171,5 +171,4 @@ kubectl rollout restart deployment metrics-server -n kube-system
 
 - [GKE Cluster Autoscaler](https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-autoscaler)
 - [Pod Disruption Budgets](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)
-- [Node Pool Management](./node-pool-management.md)
 - [Billing Labels](./billing-labels.md)
