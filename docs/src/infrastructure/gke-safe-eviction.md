@@ -128,24 +128,25 @@ kubectl get events --all-namespaces --sort-by='.lastTimestamp' | grep -i "scale\
 
 1. **Timing**: After applying patches, the cluster autoscaler may take 10-20 minutes to recognize nodes as safe to evict and scale them down.
 
-2. **System Pod Scheduling**: Some system pods (like CoreDNS, konnectivity-agent) may have multiple replicas that need to be distributed across available nodes for high availability.
+1. **System Pod Scheduling**: Some system pods (like CoreDNS, konnectivity-agent) may have multiple replicas that need to be distributed across available nodes for high availability.
 
-3. **Node Taints**: Nodes marked for deletion will have taints like:
+1. **Node Taints**: Nodes marked for deletion will have taints like:
+
    - `DeletionCandidateOfClusterAutoscaler=TIMESTAMP:PreferNoSchedule`
    - `ToBeDeletedByClusterAutoscaler=TIMESTAMP:NoSchedule`
 
-4. **Resource Requirements**: Ensure the management node pool has sufficient resources to handle any system pods that might need to be rescheduled from compute nodes.
+1. **Resource Requirements**: Ensure the management node pool has sufficient resources to handle any system pods that might need to be rescheduled from compute nodes.
 
 ## Troubleshooting
 
 If compute nodes are not scaling down:
 
 1. Check for pods without safe-to-evict annotations
-2. Look for completed jobs that should be cleaned up
-3. Verify that no application workloads are scheduled on compute nodes
-4. Check cluster autoscaler logs in GCP Console
-5. Ensure node pools have `min_count = 0` in Terraform configuration
-6. **Check for orphaned Pod Disruption Budgets (PDBs)**
+1. Look for completed jobs that should be cleaned up
+1. Verify that no application workloads are scheduled on compute nodes
+1. Check cluster autoscaler logs in GCP Console
+1. Ensure node pools have `min_count = 0` in Terraform configuration
+1. **Check for orphaned Pod Disruption Budgets (PDBs)**
 
 ### Orphaned Pod Disruption Budgets
 
