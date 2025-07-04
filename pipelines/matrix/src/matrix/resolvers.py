@@ -86,39 +86,6 @@ def if_null(val: Optional[Any], if_null_val: str, else_val: str):
     return if_null_val if val is None else else_val
 
 
-def get_bucket_for_source(source_name: str, dev_bucket: str, public_bucket: str) -> str:
-    """Get the appropriate bucket path for a data source based on its configuration.
-
-    Args:
-        source_name: Name of the data source (e.g., 'rtx_kg2')
-        dev_bucket: Development bucket path
-        public_bucket: Public bucket path
-
-    Returns:
-        str: The bucket path to use for the data source
-    """
-
-    try:
-        pipeline_mapping = DYNAMIC_PIPELINES_MAPPING()
-        integration_sources = pipeline_mapping.get("integration", [])
-
-        # Find the source configuration
-        for source_config in integration_sources:
-            if source_config.get("name") == source_name:
-                # If is_public is True, use public bucket
-                if source_config.get("is_public", False):
-                    return public_bucket
-                # Otherwise, use dev bucket (default behavior)
-                return dev_bucket
-
-        # If source not found, default to dev bucket
-        return dev_bucket
-
-    except Exception:
-        # If there's any error accessing the configuration, default to dev bucket
-        return dev_bucket
-
-
 def get_kg_raw_path_for_source(source_name: str) -> str:
     """Get the appropriate kg_raw path for any data source dynamically.
 

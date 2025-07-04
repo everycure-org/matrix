@@ -4,7 +4,7 @@
 import os
 from unittest.mock import patch
 
-from pipelines.matrix.src.matrix.resolvers import get_bucket_for_source, get_kg_raw_path_for_source
+from pipelines.matrix.src.matrix.resolvers import get_kg_raw_path_for_source
 
 
 def test_dynamic_bucket_selection():
@@ -34,17 +34,21 @@ def test_dynamic_bucket_selection():
         os.environ, env_vars, clear=False
     ):
         test_cases = [
-            ("rtx_kg2", "gs://data.dev.everycure.org/data/01_RAW", "Public (is_public=True)"),
-            ("robokop", "gs://data.dev.everycure.org/data/01_RAW", "Public (is_public=True)"),
-            ("spoke", "gs://mtrx-us-central1-hub-prod-storage/data/01_RAW", "Prod (is_private=True)"),
-            ("embiology", "gs://mtrx-us-central1-hub-prod-storage/data/01_RAW", "Prod (is_private=True)"),
-            ("ec_medical_team", "gs://mtrx-hub-dev-3of/data/01_RAW", "Dev (no flags)"),
-            ("unknown_source", "gs://mtrx-hub-dev-3of/data/01_RAW", "Dev (not found)"),
-            ("both_flags", "gs://data.dev.everycure.org/data/01_RAW", "Both flags True (public takes precedence)"),
-            ("explicit_false", "gs://mtrx-hub-dev-3of/data/01_RAW", "Both flags False (dev)"),
-            ("", "gs://mtrx-hub-dev-3of/data/01_RAW", "Empty string as source name"),
-            (None, "gs://mtrx-hub-dev-3of/data/01_RAW", "None as source name"),
-            ("RTX_KG2", "gs://mtrx-hub-dev-3of/data/01_RAW", "Case sensitivity (should not match)"),
+            ("rtx_kg2", f"${env_vars['PUBLIC_GCS_BUCKET']}/data/01_RAW", "Public (is_public=True)"),
+            ("robokop", f"${env_vars['PUBLIC_GCS_BUCKET']}/data/01_RAW", "Public (is_public=True)"),
+            ("spoke", f"${env_vars['PROD_GCS_BUCKET']}/data/01_RAW", "Prod (is_private=True)"),
+            ("embiology", f"${env_vars['PROD_GCS_BUCKET']}/data/01_RAW", "Prod (is_private=True)"),
+            ("ec_medical_team", f"${env_vars['DEV_GCS_BUCKET']}/data/01_RAW", "Dev (no flags)"),
+            ("unknown_source", f"${env_vars['DEV_GCS_BUCKET']}/data/01_RAW", "Dev (not found)"),
+            (
+                "both_flags",
+                f"${env_vars['PUBLIC_GCS_BUCKET']}/data/01_RAW",
+                "Both flags True (public takes precedence)",
+            ),
+            ("explicit_false", f"${env_vars['DEV_GCS_BUCKET']}/data/01_RAW", "Both flags False (dev)"),
+            ("", f"${env_vars['DEV_GCS_BUCKET']}/data/01_RAW", "Empty string as source name"),
+            (None, f"${env_vars['DEV_GCS_BUCKET']}/data/01_RAW", "None as source name"),
+            ("RTX_KG2", f"${env_vars['DEV_GCS_BUCKET']}/data/01_RAW", "Case sensitivity (should not match)"),
         ]
 
         for source_name, expected_path, description in test_cases:
@@ -70,35 +74,4 @@ def test_dynamic_bucket_selection():
         os.environ, env_vars, clear=False
     ):
         result = get_kg_raw_path_for_source("rtx_kg2")
-        assert result == "gs://mtrx-hub-dev-3of/data/01_RAW", "Empty mapping should fallback to dev bucket"
-
-    print("Testing legacy get_bucket_for_source function:")
-    with patch("matrix.resolvers.DYNAMIC_PIPELINES_MAPPING", return_value=mock_mapping):
-        dev_bucket = "gs://mtrx-hub-dev-3of"
-        public_bucket = "gs://data.dev.everycure.org"
-
-        legacy_test_cases = [
-            ("rtx_kg2", public_bucket, "Public (is_public=True)"),
-            ("robokop", public_bucket, "Public (is_public=True)"),
-            ("spoke", dev_bucket, "Dev (is_private=True, but legacy function only handles public)"),
-            ("embiology", dev_bucket, "Dev (is_private=True, but legacy function only handles public)"),
-            ("ec_medical_team", dev_bucket, "Dev (no flags)"),
-            ("both_flags", public_bucket, "Both flags True (public takes precedence)"),
-            ("explicit_false", dev_bucket, "Both flags False (dev)"),
-            ("", dev_bucket, "Empty string as source name"),
-            (None, dev_bucket, "None as source name"),
-        ]
-
-        for source_name, expected_bucket, description in legacy_test_cases:
-            if source_name is None:
-                result = get_bucket_for_source(None, dev_bucket, public_bucket)
-            else:
-                result = get_bucket_for_source(source_name, dev_bucket, public_bucket)
-            assert (
-                result == expected_bucket
-            ), f"Failed for {source_name}: expected {expected_bucket}, got {result} ({description})"
-
-        # Both buckets the same
-        same_bucket = "gs://same-bucket"
-        result = get_bucket_for_source("rtx_kg2", same_bucket, same_bucket)
-        assert result == same_bucket, "Legacy: both buckets same should return the same bucket"
+        assert result == f"${env_vars['DEV_GCS_BUCKET']}/data/01_RAW", "Empty mapping should fallback to dev bucket"
