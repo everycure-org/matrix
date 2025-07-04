@@ -52,6 +52,7 @@ def transform_nodes_V5_7(nodes_df: ps.DataFrame):
     # FUTURE: need to fix de-duplication and null 
     df = (
         nodes_df.dropDuplicates(subset=["id"])
+        .withColumn("name", F.col("id").cast(T.StringType()))
         .withColumn("upstream_data_source",              F.array(F.lit("spoke")))
         .withColumn("all_categories",                    F.split(F.col("category"), SEPARATOR_V5_7))
         .withColumn("equivalent_identifiers",            F.lit(None).cast(T.ArrayType(T.StringType())))
