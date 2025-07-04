@@ -42,6 +42,8 @@ class SpokeTransformer(GraphTransformer):
         match self._version:
             case "V5.2":
                 df = transform_edges_V5_2(edges_df)
+            case "V5.7":
+                df = transform_nodes_V5_7(nodes_df)
             case _:
                 raise NotImplementedError(f"No edges transformer code implemented for version: {self._version}")
         return df
