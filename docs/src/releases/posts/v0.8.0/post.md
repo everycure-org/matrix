@@ -46,7 +46,6 @@ authors:
 - Grant Orchard Production Project to access Dev Bucket [#1593](https://github.com/everycure-org/matrix/pull/1593)
 - Change Initial Desired state and Idle Timeout for Workbench [#1635](https://github.com/everycure-org/matrix/pull/1635)
 - Checked and Modified nodes that don't need GPU [#1563](https://github.com/everycure-org/matrix/pull/1563)
-- changed create-release-pr.yml github oidc from rw to ro [#1578](https://github.com/everycure-org/matrix/pull/1578)
 - Infra into main [#1583](https://github.com/everycure-org/matrix/pull/1583)
 - Resolve Critical Vulnerabilities in Packages and their sub-dependencies as of 13th June 2025 [#1588](https://github.com/everycure-org/matrix/pull/1588)
 - Grant Orchard Production Project to access Dev Bucket [#1593](https://github.com/everycure-org/matrix/pull/1593)
