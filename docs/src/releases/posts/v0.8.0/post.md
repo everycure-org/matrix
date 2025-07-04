@@ -63,7 +63,7 @@ authors:
 ### Other Changes
 - Do not refresh Credentials for GCP SA if it is a Github Action [#1594](https://github.com/everycure-org/matrix/pull/1594)
 - Removed orgPolicyAdmin from build [#1617](https://github.com/everycure-org/matrix/pull/1617)
-- changed create-release-pr.yml github oidc from rw to ro [#1578](https://github.com/everycure-org/matrix/pull/1578)
+- Change permissions to `read only` for create-release-pr.yml github oidc [#1578](https://github.com/everycure-org/matrix/pull/1578)
 - Production Infra Branch Merge into Main branch [#1596](https://github.com/everycure-org/matrix/pull/1596)
 - Upgraded gunicorn to version 23.0.0 [#1601](https://github.com/everycure-org/matrix/pull/1601)
 - Infrastructure/deploy main changes [#1607](https://github.com/everycure-org/matrix/pull/1607)
