@@ -51,7 +51,7 @@ authors:
 - Grant Orchard Production Project to access Dev Bucket [#1593](https://github.com/everycure-org/matrix/pull/1593)
 - Production Infra Branch Merge into Main branch [#1596](https://github.com/everycure-org/matrix/pull/1596)
 - Infrastructure/deploy main changes [#1607](https://github.com/everycure-org/matrix/pull/1607)
-- [ECDATA-252] Add prod data release zone bucket & infra [#1612](https://github.com/everycure-org/matrix/pull/1612)
+- Add prod data release zone bucket & infra [#1612](https://github.com/everycure-org/matrix/pull/1612)
 - Added missing permission for production GCP CloudBuild SA  [#1616](https://github.com/everycure-org/matrix/pull/1616)
 - Add KG Dashboard docker configuration [#1609](https://github.com/everycure-org/matrix/pull/1609)
 - [KG Dashboard] Refactor project-id to environment variable [#1608](https://github.com/everycure-org/matrix/pull/1608)
