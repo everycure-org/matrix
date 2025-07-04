@@ -19,7 +19,7 @@ authors:
 - Added impersonation of Spark Service Account through hooks. [#1575](https://github.com/everycure-org/matrix/pull/1575)
 - Write matrix outputs to BQ [#1620](https://github.com/everycure-org/matrix/pull/1620)
 - Cleanup script for raw data cleanup [#1519](https://github.com/everycure-org/matrix/pull/1519)
-- Feat/add transformer versions [#1551](https://github.com/everycure-org/matrix/pull/1551)
+- Implement versioning of transformers class in the integration pipeline [#1551](https://github.com/everycure-org/matrix/pull/1551)
 - Pipeline for each evaluation of matrix [#1559](https://github.com/everycure-org/matrix/pull/1559)
 - Change infra branches to main [#1595](https://github.com/everycure-org/matrix/pull/1595)
 - Improve model prediction performance with Spark Pandas UDFs [#1540](https://github.com/everycure-org/matrix/pull/1540)
