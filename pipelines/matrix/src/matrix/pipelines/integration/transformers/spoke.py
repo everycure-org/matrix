@@ -59,6 +59,7 @@ def transform_nodes_V5_7(nodes_df: ps.DataFrame):
         .withColumn("labels",                            F.lit(None).cast(T.ArrayType(T.StringType())))
         .withColumn("publications",                      F.lit(None).cast(T.ArrayType(T.StringType())))
         .withColumn("international_resource_identifier", F.lit(None).cast(T.StringType()))
+        .withColumn("description", F.lit(None).cast(T.StringType()))
         # getting most specific category
         .transform(determine_most_specific_category)
     )
@@ -82,6 +83,8 @@ def transform_edges_V5_7(edges_df: ps.DataFrame):
           .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
           .withColumn("object_aspect_qualifier",                  F.lit(None).cast(T.StringType()))
           .withColumn("object_direction_qualifier",               F.lit(None).cast(T.StringType()))
+          .withColumn("num_references",                           F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
+          .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
           )
     # fmt: on
     return df
