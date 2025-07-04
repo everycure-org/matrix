@@ -467,25 +467,27 @@ brew services stop neo4j
 ```
 
 
-### libomp for LLMs
+### Invalid requirement for './packages/data_fabricator': Expected package name at the start of dependency specifier
 
-The [libomp](https://openmp.llvm.org/index.html) library might be required as a local runtime for LLMs. If not installed it will trigger an error containing the following:
-
-```
-* OpenMP runtime is not installed
-  - vcomp140.dll or libgomp-1.dll for Windows
-  - libomp.dylib for Mac OSX
-  - libgomp.so for Linux and other UNIX-like OSes
-  Mac OSX users: Run `brew install libomp` to install OpenMP runtime.
-```
-
-To install it on MacOS, run:
+The error above can occur if you set up MATRIX repo back when we were using data_fabricator package for fabricating data; we are no longer relying on this package however if you only recently made a change, you might encounter the .
 
 ```bash
-brew install libomp
+ERROR: Invalid requirement: './packages/data_fabricator': Expected package name at the start of dependency specifier
+    ./packages/data_fabricator
+    ^ (from line XX of requirements.txt)
+Hint: It looks like a path. File './packages/data_fabricator' does not exist.
 ```
 
-## Error: Permission Denied When Deleting RAW Data Files
+you would need to run the command below. The command might fail if your `packages` folder already exists, in this case delete it. 
+
+```bash
+git submodule update --init --recursive
+```
+
+P.S: After running the above command, a browser would open to authenticate with Github. This is normal. If nothing happens (incase of using PyCharm IDE), suggestion would be run this through the shell (terminal).
+
+
+### Error: Permission Denied When Deleting RAW Data Files
 
 If you attempt to delete files directly from the RAW data bucket, you may encounter a permission denied error or find that you do not have the necessary rights to perform deletions. This is intentional: to protect the integrity of our RAW data, direct delete permissions are not granted to individual users.
 
