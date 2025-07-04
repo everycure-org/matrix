@@ -10,8 +10,6 @@ authors:
   - JacquesVergine
   - jdr0887
   - eKathleenCarter
-  - app/github-actions
-  - app/dependabot
   - piotrkan
   - leelancashire
 ---
