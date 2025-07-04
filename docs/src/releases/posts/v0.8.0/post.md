@@ -27,7 +27,7 @@ authors:
 ### Experiments 🧪
 - Run experiment comparing different versions of ROBOKOP in a standalone and integrated KG [#151](https://github.com/everycure-org/lab-notebooks/pull/151) and [#156](https://github.com/everycure-org/lab-notebooks/pull/156) in Lab Notebooks Repo
 ### Bugfixes 🐛
-- Filtering paths [#1567](https://github.com/everycure-org/matrix/pull/1567)
+- Change pathways for filtering pipeline [#1567](https://github.com/everycure-org/matrix/pull/1567)
 - Fix KG dashboard deploy action name in release action [#1570](https://github.com/everycure-org/matrix/pull/1570)
 - Remove KG Dashboard deployment action default release version [#1603](https://github.com/everycure-org/matrix/pull/1603)
 - Fixed broken css on evidence dashboard [#1605](https://github.com/everycure-org/matrix/pull/1605)
