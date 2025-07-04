@@ -36,8 +36,8 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
                     name=f"transform_{source}_nodes",
                     tags=["standardize"],
                     argo_config=ArgoResourceConfig(
-                        memory_request=128,
-                        memory_limit=128,
+                        memory_request=256,  # 128,
+                        memory_limit=256,  # 128,
                     ),
                 ),
                 batch_pipeline.cached_api_enrichment_pipeline(
