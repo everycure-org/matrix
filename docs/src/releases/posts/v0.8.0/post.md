@@ -25,6 +25,7 @@ authors:
 - Improve model prediction performance with Spark Pandas UDFs [#1540](https://github.com/everycure-org/matrix/pull/1540)
 - Add drug and disease neighbours histograms [#1613](https://github.com/everycure-org/matrix/pull/1613)
 ### Experiments 🧪
+- Run experiment comparing different versions of ROBOKOP in a standalone and integrated KG [#151](https://github.com/everycure-org/lab-notebooks/pull/151) and [#156](https://github.com/everycure-org/lab-notebooks/pull/156) in Lab Notebooks Repo
 ### Bugfixes 🐛
 - Filtering paths [#1567](https://github.com/everycure-org/matrix/pull/1567)
 - Fix KG dashboard deploy action name in release action [#1570](https://github.com/everycure-org/matrix/pull/1570)
