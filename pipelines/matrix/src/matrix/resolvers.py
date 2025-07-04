@@ -114,7 +114,7 @@ def get_kg_raw_path_for_source(source_name: str) -> str:
                 # Priority: is_public > is_private > default (dev)
                 if source_config.get("is_public", False):
                     return f"{public_bucket}/data/01_RAW"
-                elif source_config.get("is_private", False):
+                elif source_config.get("is_private", False) and os.getenv("INCLUDE_PRIVATE_DATASETS", "0") == "1":
                     return f"{prod_bucket}/data/01_RAW"
                 else:
                     return f"{dev_bucket}/data/01_RAW"

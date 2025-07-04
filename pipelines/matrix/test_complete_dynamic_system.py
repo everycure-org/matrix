@@ -39,14 +39,14 @@ def test_dynamic_bucket_selection_all_sources():
         public_sources = [x["name"] for x in mock_mapping["integration"] if x.get("is_public", False)]
         for source in public_sources:
             result = get_kg_raw_path_for_source(source)
-            expected = "gs://data.dev.everycure.org/data/01_RAW"
+            expected = f"${env_vars['PUBLIC_GCS_BUCKET']}/data/01_RAW"
             assert result == expected
 
         # Test cases that should use PROD bucket
         private_sources = [x["name"] for x in mock_mapping["integration"] if x.get("is_private", False)]
         for source in private_sources:
             result = get_kg_raw_path_for_source(source)
-            expected = "gs://mtrx-us-central1-hub-prod-storage/data/01_RAW"
+            expected = f"${env_vars['PROD_GCS_BUCKET']}/data/01_RAW"
             assert result == expected
 
         # Test cases that should use DEV bucket (default)
@@ -57,7 +57,7 @@ def test_dynamic_bucket_selection_all_sources():
         ]
         for source in dev_sources:
             result = get_kg_raw_path_for_source(source)
-            expected = "gs://mtrx-hub-dev-3of/data/01_RAW"
+            expected = f"${env_vars['DEV_GCS_BUCKET']}/data/01_RAW"
             assert result == expected
 
         # Test adding a new source with is_public flag
@@ -73,20 +73,20 @@ def test_dynamic_bucket_selection_all_sources():
         with patch("matrix.settings.DYNAMIC_PIPELINES_MAPPING", return_value=new_mapping):
             # New public source should automatically use public bucket
             result = get_kg_raw_path_for_source("new_public_source")
-            expected = "gs://data.dev.everycure.org/data/01_RAW"
+            expected = f"${env_vars['PUBLIC_GCS_BUCKET']}/data/01_RAW"
             assert result == expected
 
             # New private source should automatically use prod bucket
             result = get_kg_raw_path_for_source("new_private_source")
-            expected = "gs://mtrx-us-central1-hub-prod-storage/data/01_RAW"
+            expected = f"${env_vars['PROD_GCS_BUCKET']}/data/01_RAW"
             assert result == expected
 
             # New default source should automatically use dev bucket
             result = get_kg_raw_path_for_source("new_default_source")
-            expected = "gs://mtrx-hub-dev-3of/data/01_RAW"
+            expected = f"${env_vars['DEV_GCS_BUCKET']}/data/01_RAW"
             assert result == expected
 
             # New default source should automatically use dev bucket
             result = get_kg_raw_path_for_source("new_default_source")
-            expected = "gs://mtrx-hub-dev-3of/data/01_RAW"
+            expected = f"${env_vars['DEV_GCS_BUCKET']}/data/01_RAW"
             assert result == expected
