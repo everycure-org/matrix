@@ -68,4 +68,3 @@ authors:
 - Infrastructure/deploy main changes [#1607](https://github.com/everycure-org/matrix/pull/1607)
 - Bump the npm_and_yarn group across 2 directories with 5 updates [#1597](https://github.com/everycure-org/matrix/pull/1597)
 - Bump the pip group across 1 directory with 3 updates [#1598](https://github.com/everycure-org/matrix/pull/1598)
-- Change Initial Desired state and Idle Timeout for Workbench [#1635](https://github.com/everycure-org/matrix/pull/1635)
