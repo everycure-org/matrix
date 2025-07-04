@@ -56,7 +56,7 @@ authors:
 - [KG Dashboard] Refactor project-id to environment variable [#1608](https://github.com/everycure-org/matrix/pull/1608)
 - Refactor KG Dashboard deploy action parameters to environment [#1610](https://github.com/everycure-org/matrix/pull/1610)
 ### Documentation ✏️
-- Docs/modelling [#1622](https://github.com/everycure-org/matrix/pull/1622)
+- Expand Modelling pipeline documentation [#1622](https://github.com/everycure-org/matrix/pull/1622)
 - Refactor Pipeline documentation to individual sections [#1611](https://github.com/everycure-org/matrix/pull/1611)
 - Create LICENSE [#1543](https://github.com/everycure-org/matrix/pull/1543)
 ### Other Changes
