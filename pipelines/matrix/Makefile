@@ -31,6 +31,8 @@ fetch_secrets:
 
 default: prerequisites fetch_sa_key install fast_test integration_test
 
+local_test: install fast_test integration_test
+
 .PHONY: always
 # steps here get run on _every_ make call, no matter the target. Make sure this is 100% idempotent and fast.
 always:

@@ -81,7 +81,7 @@ on the cluster.
 
 We can split our Matrix pipeline in two major stages, i.e., the process that produces a data
 release, i.e., an integrated knowledge graph, and the stage that trains the model. For each data
-release, we're now keeping track of data versions [on our micro site](/releases/release_history/).
+release, we're now keeping track of data versions [on our micro site](../../release_history.md).
 
 We will continue to expand this page to include more information about the data releases.
 We are also looking for a more standardized approach to publish (internal) datasets in
