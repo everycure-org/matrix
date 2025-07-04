@@ -13,6 +13,7 @@ authors:
   - app/github-actions
   - app/dependabot
   - piotrkan
+  - leelancashire
 ---
 
 ### Exciting New Features 🎉
