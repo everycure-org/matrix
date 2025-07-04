@@ -9,7 +9,7 @@ neo4j:
 # points at our central GCS_BUCKET where we store our ground truth data
 # Note: Overwrite with WG project ID & bucket if you want to write to a different project's BigQuery
 # We always ingest public datasets from the dev bucket, to avoid having to keep it in sync between prod and dev bucket.
-dev_gcs_bucket: gs://mtrx-hub-dev-3of
+dev_gcs_bucket: gs://mtrx-us-central1-hub-dev-storage
 prod_gcs_bucket: gs://mtrx-us-central1-hub-prod-storage
 public_gcs_bucket: gs://data.dev.everycure.org
 
