@@ -56,7 +56,7 @@ def transform_nodes_V5_2(nodes_df: ps.DataFrame):
         .withColumn("international_resource_identifier", F.lit(None).cast(T.StringType()))
         # getting most specific category
         .transform(determine_most_specific_category)
-    )
+    ).fillna('null',subset=["id","name","category"])
     # fmt: on
     return df
 
@@ -76,6 +76,6 @@ def transform_edges_V5_2(edges_df: ps.DataFrame):
           .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
           .withColumn("object_aspect_qualifier",                  F.lit(None).cast(T.StringType()))
           .withColumn("object_direction_qualifier",               F.lit(None).cast(T.StringType()))
-          )
+          ).fillna('null',subset=["subject","object","predicate"])
     # fmt: on
     return df
