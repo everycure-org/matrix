@@ -37,7 +37,6 @@ authors:
 - Fix EC clinical trials transformers to use select_cols [#1625](https://github.com/everycure-org/matrix/pull/1625)
 - Update rtxkg2 transformer code [#1566](https://github.com/everycure-org/matrix/pull/1566)
 - Fix drug and disease ranks [#1572](https://github.com/everycure-org/matrix/pull/1572)
-- Resolve Critical Vulnerabilities in Packages and their sub-dependencies as of 13th June 2025 [#1588](https://github.com/everycure-org/matrix/pull/1588)
 ### Technical Enhancements 🧰
 - Add uniform rank based FF transform [#1550](https://github.com/everycure-org/matrix/pull/1550)
 - Added tolerations to main pod so that large instances could be tolerated [#1552](https://github.com/everycure-org/matrix/pull/1552)
