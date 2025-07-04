@@ -5,6 +5,8 @@ from typing import Any, Dict, Optional
 
 from dotenv import find_dotenv, load_dotenv
 
+from matrix.settings import DYNAMIC_PIPELINES_MAPPING
+
 
 def load_environment_variables():
     """Load environment variables from .env.defaults and .env files.
@@ -82,3 +84,78 @@ def env(key: str, default: str = None, allow_null: str = False) -> Optional[str]
 def if_null(val: Optional[Any], if_null_val: str, else_val: str):
     """Resolver to conditionally load a configuration entry."""
     return if_null_val if val is None else else_val
+
+
+def get_bucket_for_source(source_name: str, dev_bucket: str, public_bucket: str) -> str:
+    """Get the appropriate bucket path for a data source based on its configuration.
+
+    Args:
+        source_name: Name of the data source (e.g., 'rtx_kg2')
+        dev_bucket: Development bucket path
+        public_bucket: Public bucket path
+
+    Returns:
+        str: The bucket path to use for the data source
+    """
+
+    try:
+        pipeline_mapping = DYNAMIC_PIPELINES_MAPPING()
+        integration_sources = pipeline_mapping.get("integration", [])
+
+        # Find the source configuration
+        for source_config in integration_sources:
+            if source_config.get("name") == source_name:
+                # If is_public is True, use public bucket
+                if source_config.get("is_public", False):
+                    return public_bucket
+                # Otherwise, use dev bucket (default behavior)
+                return dev_bucket
+
+        # If source not found, default to dev bucket
+        return dev_bucket
+
+    except Exception:
+        # If there's any error accessing the configuration, default to dev bucket
+        return dev_bucket
+
+
+def get_kg_raw_path_for_source(source_name: str) -> str:
+    """Get the appropriate kg_raw path for any data source dynamically.
+
+    This resolver automatically selects between dev, prod, or public buckets
+    based on the source configuration (is_private, is_public flags).
+
+    Args:
+        source_name: Name of the data source (e.g., 'rtx_kg2', 'robokop')
+
+    Returns:
+        str: The complete kg_raw path for the data source
+    """
+
+    try:
+        # Get bucket configurations from environment/globals
+        dev_bucket = os.getenv("DEV_GCS_BUCKET", "gs://mtrx-hub-dev-3of")
+        prod_bucket = os.getenv("PROD_GCS_BUCKET", "gs://mtrx-us-central1-hub-prod-storage")
+        public_bucket = os.getenv("PUBLIC_GCS_BUCKET", "gs://data.dev.everycure.org")
+
+        pipeline_mapping = DYNAMIC_PIPELINES_MAPPING()
+        integration_sources = pipeline_mapping.get("integration", [])
+
+        # Find the source configuration
+        for source_config in integration_sources:
+            if source_config.get("name") == source_name:
+                # Priority: is_public > is_private > default (dev)
+                if source_config.get("is_public", False):
+                    return f"{public_bucket}/data/01_RAW"
+                elif source_config.get("is_private", False):
+                    return f"{prod_bucket}/data/01_RAW"
+                else:
+                    return f"{dev_bucket}/data/01_RAW"
+
+        # If source not found, default to dev bucket
+        return f"{dev_bucket}/data/01_RAW"
+
+    except Exception:
+        # If there's any error, default to dev bucket
+        dev_bucket = os.getenv("DEV_GCS_BUCKET", "gs://mtrx-hub-dev-3of")
+        return f"{dev_bucket}/data/01_RAW"
