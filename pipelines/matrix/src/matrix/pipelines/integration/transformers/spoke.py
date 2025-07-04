@@ -55,8 +55,9 @@ def transform_nodes_V5_2(nodes_df: ps.DataFrame):
         .withColumn("publications",                      F.lit(None).cast(T.ArrayType(T.StringType())))
         .withColumn("international_resource_identifier", F.lit(None).cast(T.StringType()))
         # getting most specific category
+        .fillna('null',subset=["id","name","category"])
         .transform(determine_most_specific_category)
-    ).fillna('null',subset=["id","name","category"])
+    )
     # fmt: on
     return df
 
