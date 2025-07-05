@@ -204,7 +204,13 @@ def ingest_edges(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFrame:
             "object",
             "upstream_data_source",
         )
-        .withColumn("label", ps.functions.split(ps.functions.col("predicate"), ":", limit=2).getItem(1))
+        .withColumn(
+            "label",
+            ps.functions.when(
+                ps.functions.col("predicate").contains(":"),
+                ps.functions.split(ps.functions.col("predicate"), ":", limit=2).getItem(1),
+            ).otherwise(ps.functions.col("predicate")),
+        )
         # we repartition to 1 partition here to avoid deadlocks in the edges insertion of neo4j.
         # FUTURE potentially we should repartition in the future to avoid deadlocks. However
         # with edges, this is harder to do than with nodes (as they are distinct but edges have 2 nodes)
