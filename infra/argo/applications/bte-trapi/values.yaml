@@ -33,9 +33,28 @@ resources:
 
 redis:
   enabled: true
+  # Schedule Redis on management nodes
+  master:
+    nodeSelector:
+      workload-type: management
+  replica:
+    nodeSelector:
+      workload-type: management
   resources:
     limits:
       memory: "500Mi"
     requests:
       cpu: "100m"
       memory: "100Mi"
+
+# Schedule BTE-TRAPI on management nodes
+nodeSelector:
+  workload-type: management
+
+# Add billing labels
+podLabels:
+  cost-center: infrastructure-management
+  workload-category: platform-services
+  service-tier: management
+  billing-category: infrastructure
+  component: bte-trapi
