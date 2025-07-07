@@ -193,7 +193,7 @@ def normalize_nodes(
     """
     mapping_df = _format_mapping_df(mapping_df)
 
-    joined_df = (
+    nodes_normalized = (
         nodes.join(
             mapping_df.select("id", "normalized_id", "normalized_categories", "normalization_success"),
             on="id",
@@ -203,16 +203,19 @@ def normalize_nodes(
         .withColumnRenamed("normalized_id", "id")
     )
 
-    # Handle original_categories column
-    if "all_categories" in joined_df.columns:
-        joined_df = joined_df.withColumnRenamed("all_categories", "original_categories")
+    # Keep original_categories information if it is provided by the source KG
+    if "all_categories" in nodes_normalized.columns:
+        nodes_normalized = nodes_normalized.withColumnRenamed("all_categories", "original_categories")
     else:
-        joined_df = joined_df.withColumn("original_categories", F.lit([]).cast(T.ArrayType(T.StringType())))
+        nodes_normalized = nodes_normalized.withColumn(
+            "original_categories", F.lit([]).cast(T.ArrayType(T.StringType()))
+        )
+
     # Determine the value of `all_categories` based on normalization results:
     # - If `normalized_categories` is non-null and non-empty, use it.
     # - Otherwise, if `original_categories` exists, fall back to it.
     # - If neither is available, use an empty list as the default.
-    joined_df = joined_df.withColumn(
+    nodes_normalized = nodes_normalized.withColumn(
         "all_categories",
         F.when(
             (F.col("normalized_categories").isNotNull()) & (F.size(F.col("normalized_categories")) > 0),
@@ -224,7 +227,7 @@ def normalize_nodes(
 
     # Deduplicate rows by id
     return (
-        joined_df.withColumn("_rn", F.row_number().over(Window.partitionBy("id").orderBy("original_id")))
+        nodes_normalized.withColumn("_rn", F.row_number().over(Window.partitionBy("id").orderBy("original_id")))
         .filter(F.col("_rn") == 1)
         .drop("_rn")
     )
