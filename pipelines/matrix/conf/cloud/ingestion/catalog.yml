@@ -36,3 +36,25 @@ ingestion.int.robokop.edges:
   <<: *_bigquery_ds
   filepath: ${globals:paths.ingestion}/int/robokop/${globals:data_sources.robokop.version}/edges
   table: robokop_edges_ingested_${globals:data_sources.robokop.version}
+
+# Ingested Spoke nodes/edges
+ingestion.int.spoke.nodes:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/nodes
+  table: spoke_nodes_ingested_${globals:data_sources.spoke.version}
+
+ingestion.int.spoke.edges:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/edges
+  table: spoke_edges_ingested_${globals:data_sources.spoke.version}
+
+# Ingested Embiology nodes/edges
+ingestion.int.embiology.nodes:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.ingestion}/int/embiology/${globals:data_sources.embiology.version}/nodes
+  table: embiology_nodes_ingested_${globals:data_sources.embiology.version}
+
+ingestion.int.embiology.edges:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.ingestion}/int/embiology/${globals:data_sources.embiology.version}/edges
+  table: embiology_edges_ingested_${globals:data_sources.embiology.version}

@@ -73,6 +73,7 @@ def transform_edges_V5_7(edges_df: ps.DataFrame):
     # fmt: off
     # FUTURE: need to fix de-duplication
     df = (edges_df.dropDuplicates(subset=["subject", "object", "predicate"])  # TODO: Remove this once we have a proper version of Spoke
+          .withColumn('predicate', F.concat(F.lit('biolink:'), F.col('predicate')))
           .withColumn("knowledge_level",                          F.lit(None).cast(T.StringType()))
           .withColumn("agent_type",                               F.lit(None).cast(T.StringType()))
           .withColumn("aggregator_knowledge_source",              F.lit(None).cast(T.ArrayType(T.StringType())))
@@ -81,8 +82,6 @@ def transform_edges_V5_7(edges_df: ps.DataFrame):
           .withColumn("primary_knowledge_source",                 F.lit(None).cast(T.StringType()))
           .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
           .withColumn("subject_direction_qualifier",              F.lit(None).cast(T.StringType()))
-          .withColumn("num_references",                           F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
-          .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
           .withColumn("object_aspect_qualifier",                  F.lit(None).cast(T.StringType()))
           .withColumn("object_direction_qualifier",               F.lit(None).cast(T.StringType()))
           .withColumn("num_references",                           F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
