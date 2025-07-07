@@ -37,7 +37,7 @@ resource "google_workbench_instance" "user_workbench" {
     }
     disable_public_ip = true
     metadata = {
-      idle-timeout-seconds = "1200" # 20 minutes
+      idle-timeout-seconds = "3600" # 60 minutes
       post-startup-script  = var.post_startup_script
     }
   }
