@@ -13,6 +13,108 @@ title: KG Dashboard
       return acc;
     }, {});
   }
+
+  // NOTE: This function was partially generated using AI assistance.
+  function createHistogramBins(data, binWidth) {
+    if (!data || !Array.isArray(data) || data.length === 0) return [];
+    
+    // Extract the column values
+    const values = data.filter(v => v !== null && v !== undefined);
+    if (values.length === 0) return [];
+    
+    // Calculate min and max if not provided
+    const min = 0;
+    const max = Math.max(...values);
+    
+    // Calculate number of bins based on width
+    const binCount = Math.ceil((max - min) / binWidth);
+    const bins = [];
+    
+    for (let i = 0; i < binCount; i++) {
+      const binStart = min + (i * binWidth);
+      const binEnd = min + ((i + 1) * binWidth);
+      
+      const count = values.filter(value => 
+        value >= binStart && (i === binCount - 1 ? value <= binEnd : value < binEnd)
+      ).length;
+      
+      bins.push({
+        count: count,
+        start: binStart,
+        end: binEnd
+      });
+    }
+    
+    return bins;
+  }
+
+  function getHistogramEchartsOptions(data, data_name, data_key, binWidth) {
+    const bins = !data || !Array.isArray(data) || data.length === 0 ? [] : createHistogramBins(data.map(d => d[data_key]), binWidth)
+    const xAxis = bins.map(d => d.start)
+    
+    // Create series data with bin labels included
+    const seriesData = bins.map(bin => ({
+      value: bin.count,
+      binStart: bin.start,
+      binEnd: bin.end - 1,
+    }))
+    
+    return {
+      grid: {
+        top: '2%',
+        bottom: '20%',
+      },
+      xAxis: {
+        data: xAxis,
+        silent: false,
+        splitLine: {
+          show: false
+        },
+        splitArea: {
+          show: false
+        }
+      },
+      yAxis: {
+        splitArea: {
+          show: false
+        }
+      },
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        },
+        formatter: function(params) {
+          const binStart = params[0].data.binStart;
+          const binEnd = params[0].data.binEnd;
+          const count = params[0].value;
+          return `${count} ${data_name}s have between ${binStart} and ${binEnd} neighbours`;
+        }
+      },
+      dataZoom: [
+        {
+          type: 'inside',
+          start: 0,
+          end: 2,
+          minValueSpan: 30
+        },
+        {
+          type: 'slider',
+          start: 0,
+          end: 2,
+          minValueSpan: 30
+        }
+      ],
+      series: [
+        {
+          type: 'bar',
+          data: seriesData
+        }
+      ]
+    }
+  }
+
+  
 </script>
 
 ## Version: {release_version}
@@ -29,6 +131,8 @@ select
     , n_edges_without_most_connected_nodes / n_nodes_without_most_connected_nodes as edges_per_node_without_most_connected_nodes
     , n_edges_from_disease_list / n_nodes_from_disease_list as disease_edges_per_node
     , n_edges_from_drug_list / n_nodes_from_drug_list as drug_edges_per_node
+    , median_drug_node_degree
+    , median_disease_node_degree
 from 
     bq.overall_metrics
 ```
@@ -119,22 +223,6 @@ from
 
 ## Epistemic Robustness
 
-```sql knowledge_level_score
-SELECT * FROM bq.knowledge_level_score
-```
-
-```sql agent_type_score
-SELECT * FROM bq.agent_type_score
-```
-
-```sql knowledge_level_by_source
-SELECT * FROM bq.knowledge_level_distribution
-```
-
-```sql agent_type_by_source
-SELECT * FROM bq.agent_type_distribution
-```
-
 ```sql epistemic_score
 SELECT * FROM bq.epistemic_score
 ```
@@ -184,7 +272,7 @@ SELECT * FROM bq.epistemic_heatmap
       </span><br/>
       edges with missing provenance
       <div class="text-sm font-normal mt-1">
-        “Missing provenance” includes edges where both Knowledge Level and Agent Type are "Not Provided" or not present.
+        "Missing provenance" includes edges where both Knowledge Level and Agent Type are "Not Provided" or not present.
       </div>
      </div>
   </div>
@@ -299,230 +387,18 @@ SELECT * FROM bq.epistemic_heatmap
 <!-- Spacer -->
 <div class="mb-6"></div>
 
-<div class="text-center text-lg font-semibold mt-6 mb-2">
-    Knowledge Level
-    <div class="text-sm font-normal mt-1">
-        Indicates how strong or certain a statement is—ranging from direct assertions and logical entailments to 
-        predictions and statistical associations.
-    </div>
-    <div class="text-sm font-normal mt-1">
-      A more positive average reflects greater epistemic confidence, while a more negative average indicates weaker 
-      or more speculative knowledge.
-    </div>
-</div>
-
-<!-- Spacer -->
-<div class="mb-6"></div>
-
-<!-- First row: metrics side-by-side -->
-<Grid col=2>
-  <div class="text-center text-lg">
-    <p>
-      <span class="font-semibold text-2xl">
-        <Value data={knowledge_level_score} column="average_knowledge_level" fmt="num2" />
-      </span><br/>
-      Average Knowledge Level
-    </p>
-  </div>
-  <div class="text-center text-lg">
-    <p>
-      <span class="font-semibold text-2xl">
-        <Value data={knowledge_level_score} column="included_edges" fmt="num2m" />
-      </span><br/>
-      edges used in calculation
-    </p>
-  </div>
-</Grid>
-
-<br/>
-
-<!-- Second row: full-width bar chart -->
-<ECharts 
-  style={{ height: '700px' }}
-  config={{
-    title: {
-      text: 'Knowledge Level by Upstream Data Source',
-      left: 'center'
-    },
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'shadow'
-      }
-    },
-    legend: {
-      top: 20
-    },
-    grid: {
-      top: 50,
-      left: '3%',
-      right: '4%',
-      bottom: '15%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category',
-      data: [
-        "Knowledge Assertion",
-        "Logical Entailment",
-        "Statistical Association",
-        "Observation",
-        "Prediction",
-        "Not Provided",
-        "null"
-      ],
-      axisLabel: {
-        rotate: 30,
-        fontSize: 10
-      }
-    },
-    yAxis: {
-      type: 'value',
-      axisLabel: {
-        formatter: function (value) {
-          return (value / 1000).toLocaleString() + 'k';
-    }
-  }
-    },
-    series: Object.entries(groupBy(knowledge_level_by_source, 'upstream_data_source')).map(([source, values]) => ({
-      name: source,
-      type: 'bar',
-      stack: 'total',
-      emphasis: {
-        focus: 'series'
-      },
-      data: [
-        "Knowledge Assertion",
-        "Logical Entailment",
-        "Statistical Association",
-        "Observation",
-        "Prediction",
-        "Not Provided",
-        "null"
-      ].map(k => {
-        const entry = values.find(v => v.knowledge_level === k);
-        return entry ? entry.edge_count : 0;
-      })
-    }))
-  }}
-/>
-
-
-<div class="text-center text-lg font-semibold mt-6 mb-2">
-    Agent Type
-    <div class="text-sm font-normal mt-1">
-        Agent Type describes the origin of an edge in terms of how the knowledge was generated—ranging 
-        from direct human assertions to automated text mining.
-    </div>
-    <div class="text-sm font-normal mt-1">
-        A more positive average reflects greater human involvement, while a more negative average indicates greater 
-        reliance on automated or speculative sources.
-    </div>
-</div>
-
-<!-- Spacer -->
-<div class="mb-6"></div>
-
-
-<!-- First row: metrics side-by-side -->
-<Grid col=2>
-  <div class="text-center text-lg">
-    <p>
-      <span class="font-semibold text-2xl">
-        <Value data={agent_type_score} column="average_agent_type" fmt="num2" />
-      </span><br/>
-      Average Agent Type
-    </p>
-  </div>
-  <div class="text-center text-lg">
-    <p>
-      <span class="font-semibold text-2xl">
-        <Value data={agent_type_score} column="included_edges" fmt="num2m" />
-      </span><br/>
-      edges used in calculation
-    </p>
-  </div>
-</Grid>
-
-<br/>
-
-<!-- Second row: full-width bar chart -->
-<ECharts 
-  style={{ height: '750px' }}
-  config={{
-    title: {
-      text: 'Agent Type by Upstream Data Source',
-      left: 'center'
-    },
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'shadow'
-      }
-    },
-    legend: {
-      top: 20
-    },
-    grid: {
-      top: 50,
-      left: '3%',
-      right: '4%',
-      bottom: '15%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category',
-      data: [
-        "Manual Agent",
-        "Manual Validation\nof Automated Agent",
-        "Data Analysis Pipeline",
-        "Automated Agent",
-        "Computational Model",
-        "Text-Mining Agent",
-        "Image Processing\nAgent",
-        "Not Provided",
-        "null"
-      ],
-      axisLabel: {
-        rotate: 30,
-        fontSize: 10
-      }
-    },
-    yAxis: {
-      type: 'value',
-      axisLabel: {
-        formatter: function (value) {
-          return (value / 1000).toLocaleString() + 'k';
-    }
-  }
-    },
-    series: Object.entries(groupBy(agent_type_by_source, 'upstream_data_source')).map(([source, values]) => ({
-      name: source,
-      type: 'bar',
-      stack: 'total',
-      emphasis: {
-        focus: 'series'
-      },
-      data: [
-        "Manual Agent",
-        "Manual Validation\nof Automated Agent",
-        "Data Analysis Pipeline",
-        "Automated Agent",
-        "Computational Model",
-        "Text-Mining Agent",
-        "Image Processing\nAgent",
-        "Not Provided",
-        "null"
-      ].map(k => {
-        const entry = values.find(v => v.agent_type === k);
-        return entry ? entry.edge_count : 0;
-      })
-    }))
-  }}
-/>
-
 
 ## Disease list nodes connections
+
+<br/>
+
+<Grid col=2>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="disease_edges_per_node" fmt="num1"/></span><br/>mean neighbours per disease node</p>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="median_disease_node_degree" fmt="num0"/></span><br/>median neighbours per disease node</p>
+</Grid>
+
+<br/>
+
 
 ```sql disease_list_connected_categories
 with total as (
@@ -551,16 +427,10 @@ from
     , bq.overall_metrics
 where 
     -- TODO: parameterize this 
-    cumsum_percentage <= 99.0
+    cumsum_percentage <= 90.0
 order by 
     n_connections desc
 ```
-
-<br/>
-
-<p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="disease_edges_per_node" fmt="num1"/></span><br/>edges per disease node on average</p>
-
-<br/>
 
 <BarChart 
     data={disease_list_connected_categories} 
@@ -570,7 +440,32 @@ order by
     title="Categories connected to disease list node on average"
 />
 
+### Disease nodes neighbours
+
+```sql disease_list_neighbour_counts
+select 
+  * 
+from 
+  bq.disease_list_neighbour_counts
+```
+
+<ECharts
+    style={{ height: '400px' }}
+    config={getHistogramEchartsOptions(disease_list_neighbour_counts, "disease", "unique_neighbours", 10)}
+/>
+
+<br/>
+
 ## Drug list nodes connections
+
+<br/>
+
+<Grid col=2>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="drug_edges_per_node" fmt="num1"/></span><br/>mean neighbours per drug node</p>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="median_drug_node_degree" fmt="num0"/></span><br/>median neighbours per drug node</p>
+</Grid>
+
+<br/>
 
 ```sql drug_list_connected_categories
 with total as (
@@ -598,16 +493,10 @@ from
     , bq.overall_metrics
 where 
     -- TODO: parameterize this 
-    cumsum_percentage <= 99.0
+    cumsum_percentage <= 90.0
 order by 
     n_connections desc
 ```
-
-<br/>
-
-<p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="drug_edges_per_node" fmt="num1"/></span><br/>edges per drug node on average</p>
-
-<br/>
 
 <BarChart 
     data={drug_list_connected_categories} 
@@ -615,4 +504,18 @@ order by
     y="number_of_connections" 
     swapXY=true
     title="Categories connected to drug list node on average"
+/>
+
+### Drug nodes neighbours
+
+```sql drug_list_neighbour_counts
+select 
+  * 
+from 
+  bq.drug_list_neighbour_counts
+```
+
+<ECharts
+    style={{ height: '400px' }}
+    config={getHistogramEchartsOptions(drug_list_neighbour_counts, "drug", "unique_neighbours", 50)}
 />

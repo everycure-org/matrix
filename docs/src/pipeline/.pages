@@ -1,7 +1,7 @@
 nav:
     - index.md
-    - important_files.md
-    - local-development.md
-    - ci.md
+    - pipeline_steps
     - data
-    - pandera_validation.md
+    - data_science
+    - data_engineering
+    - debugging

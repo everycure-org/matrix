@@ -479,7 +479,7 @@ class OnlyOverlappingPairs(DrugDiseasePairGenerator):
         """
         self.top_n = top_n
 
-    def _modify_matrices(self, matrices: Tuple[pd.DataFrame]) -> List[pd.DataFrame]:
+    def _modify_matrices(self, matrices: Tuple[pd.DataFrame], score_col_name: str) -> List[pd.DataFrame]:
         """Modify matrices to create id column and sort by treat score.
 
         Args:
@@ -489,7 +489,7 @@ class OnlyOverlappingPairs(DrugDiseasePairGenerator):
         """
         new_matrices = []
         for matrix in matrices:
-            matrix = matrix.sort_values(by="treat score", ascending=False).head(self.top_n)
+            matrix = matrix.sort_values(by=score_col_name, ascending=False).head(self.top_n)
             matrix["pair_id"] = matrix["source"] + "|" + matrix["target"]
             new_matrices.append(matrix)
         return new_matrices
@@ -507,9 +507,9 @@ class OnlyOverlappingPairs(DrugDiseasePairGenerator):
             overlapping_ids.intersection_update(set(matrix["pair_id"]))
         return overlapping_ids
 
-    def generate(self, matrices) -> List[pd.DataFrame]:
+    def generate(self, matrices, score_col_name: str) -> List[pd.DataFrame]:
         """Generates a dataframes of pairs that overlap across all matrices for top n."""
-        matrices = self._modify_matrices(matrices)
+        matrices = self._modify_matrices(matrices, score_col_name)
         overlapping_pairs = self._get_overlapping_pairs(matrices)
         return pd.DataFrame(overlapping_pairs, columns=["pair_id"])
 
@@ -527,6 +527,6 @@ class NoGenerator(DrugDiseasePairGenerator):
         """
         self.top_n = top_n
 
-    def generate(self, matrices) -> List[pd.DataFrame]:
+    def generate(self, matrices, score_col_name: str = None) -> List[pd.DataFrame]:
         """Generates an empty dataframe as we are not using a list of common pairs for commonality@k"""
         return pd.DataFrame({}, columns=["pair_id"])

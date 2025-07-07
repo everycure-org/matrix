@@ -1,7 +1,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Optional
 
 import yaml
 from jinja2 import Environment, FileSystemLoader
@@ -11,7 +11,6 @@ from kedro.pipeline.node import Node
 from matrix.git_utils import get_git_sha
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
-ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
 
 
@@ -29,12 +28,17 @@ def generate_argo_config(
     release_folder_name: str,
     default_execution_resources: Optional[ArgoResourceConfig] = None,
     mlflow_run_id: Optional[str] = None,
+    stress_test: bool = False,
 ) -> str:
     if default_execution_resources is None:
         default_execution_resources = ArgoResourceConfig()
 
     loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
+
+    ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
+    if stress_test:
+        ARGO_TEMPLATE_FILE = "argo_wf_spec_stress_test.tmpl"
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
     pipeline_tasks = get_dependencies(fuse(pipeline), default_execution_resources)
     git_sha = get_git_sha()
