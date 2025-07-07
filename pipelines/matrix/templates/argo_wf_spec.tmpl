@@ -71,6 +71,10 @@ spec:
               - "true"
     # Add tolerations for large memory nodes and GPU nodes
     tolerations:
+    - key: "workload"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"
     - key: "node-memory-size"
       operator: "Equal"
       value: "large"
@@ -96,6 +100,10 @@ spec:
         - key: "node-memory-size"
           operator: "Equal"
           value: "large"
+          effect: "NoSchedule"
+        - key: "workload"
+          operator: "Equal"
+          value: "true"
           effect: "NoSchedule"
       containers:
         - name: main

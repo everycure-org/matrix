@@ -2,7 +2,7 @@ locals {
   matrix_all_group                     = "group:matrix-all@everycure.org"
   prod_sas                             = ["serviceAccount:sa-k8s-node@mtrx-hub-prod-sms.iam.gserviceaccount.com"]
   matrix_viewers_group                 = [local.matrix_all_group, "group:matrix-viewers@everycure.org"]
-  tech_team_group                      = ["group:techteam@everycure.org", "group:ext.tech.dataminded@everycure.org"]
+  tech_team_group                      = ["group:techteam@everycure.org"]
   orchard_prod_compute_service_account = "serviceAccount:342224594736-compute@developer.gserviceaccount.com"
   cross_account_sas = [
     "serviceAccount:vertex-ai-workbench-sa@mtrx-wg1-data-dev-nb5.iam.gserviceaccount.com",
