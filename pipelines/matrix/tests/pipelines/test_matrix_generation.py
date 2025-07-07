@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import pytest
 from matrix.datasets.graph import KnowledgeGraph
-from matrix.inject import _extract_elements_in_list
 from matrix.pipelines.matrix_generation.nodes import (
     generate_pairs,
     generate_reports,

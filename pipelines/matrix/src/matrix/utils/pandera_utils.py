@@ -14,7 +14,6 @@ import pandas as pd
 import pandera as pa
 import pandera.pyspark as pas
 import pyspark.sql as ps
-import pyspark.sql.types as T
 from pandera.decorators import _handle_schema_error
 
 

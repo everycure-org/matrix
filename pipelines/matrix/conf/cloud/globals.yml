@@ -35,6 +35,7 @@ paths:
   modelling:          ${run_dir}/datasets/modelling
   evaluation:         ${run_dir}/datasets/evaluation
   matrix_generation:  ${run_dir}/datasets/matrix_generation
+  matrix_transformations:  ${run_dir}/datasets/matrix_transformations
   inference:          ${run_dir}/datasets/inference
   
   # Tmp. directory using k8s emph. storage

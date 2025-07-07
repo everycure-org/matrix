@@ -1,5 +1,5 @@
 import os
-from typing import Any, Collection, Dict, List, Literal, NamedTuple, Optional, Set
+from typing import Any, Collection, Dict, List, NamedTuple, Optional, Set
 
 import click
 from kedro.framework.cli.project import (

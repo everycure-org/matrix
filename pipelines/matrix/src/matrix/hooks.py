@@ -16,7 +16,6 @@ from kedro.framework.project import pipelines
 from kedro.io.data_catalog import DataCatalog
 from kedro.pipeline.node import Node
 from kedro_datasets.spark import SparkDataset
-from mlflow.exceptions import RestException
 from omegaconf import OmegaConf
 from pyspark import SparkConf
 

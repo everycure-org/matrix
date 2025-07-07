@@ -115,7 +115,10 @@ There is a zoo of possible matrix transformations, therefore it is desirable to 
 
 >Let $q_{\text{matrix}}$, $q_{\text{drug}}$ and $q_{\text{disease}}$ denote the full matrix, drug-specific and disease-specific quantile ranks* respectively. We consider the family of matrix transformation for which the transformed score is given for any drug-disease pair $(d, i)$ by
 >
->    $$ t(d, i) = a \, q_{\text{matrix}}(d, i)^{-\gamma} + q_{\text{drug}}(d, i)^{-\gamma} + q_{\text{disease}}(d, i)^{-\gamma  },$$
+>$$
+>t(d, i) = a \, q_{\text{matrix}}(d, i)^{-\gamma} + q_{\text{drug}}(d, i)^{-\gamma} + q_{\text{disease}}(d, i)^{-\gamma  },
+>$$
+>
 > where $a\geq0$ is referred to as the _matrix weight parameter_ and $\gamma >0$ is referred to as the _decay parameter_. 
 
 The three terms in the  above formula for $t(d,i)$ may be understood as giving "points" to a pair for having a good full-matrix, drug-specific and disease-specific rank respectively. We use the quantile rank in place of the rank in order to balance  
@@ -179,8 +182,9 @@ As before, let $q_{\text{matrix}}$, $q_{\text{drug}}$ and $q_{\text{disease}}$ d
 The _rank-transformed score_ is defined as
 
 $$
-t(d, i) = w_{\text{matrix}} q_{\text{matrix}}(d, i)^{-\alpha} + w_{\text{drug}} q_{\text{drug}}(d, i)^{-\beta} + w_{\text{disease}} q_{\text{disease}}(d, i)^{-\gamma  }
+t(d, i) = w_{\text{matrix}} q_{\text{matrix}}(d, i)^{-\alpha} + w_{\text{drug}} q_{\text{drug}}(d, i)^{-\beta} + w_{\text{disease}} q_{\text{disease}}(d, i)^{-\gamma}
 $$
+
 where
 -  $w_{\text{matrix}}$, $w_{\text{drug}}$, $w_{\text{disease}} \geq 0$ are the weights assigned to the matrix-wide, drug-specific and disease-specific ranks respectively
 - $\alpha, \beta, \gamma >0$ are the decay parameters controlling the emphasis on the top ranks for matrix-wide, drug-specific and disease-specific rankings respectively (the larger they are, the more emphasis on the top ranks).
@@ -192,8 +196,9 @@ The matrix transformations contain several parameters, which we can optimise for
 We consider the following objective function:
 
 $$
-\text{max}_{\text{parameters}} \bigg( \frac{1}{J} \sum_{j = 1}^{J} \mathbb{E}_{\text{folds}}\big( a \,\text{drug-entropy}@n_j + b\, \text{disease-entropy}@n_j + c\,\text{recall}@n_j + d\,\text{hit}@k_j \big) \bigg)
+\text{max}\frac{1}{J} \sum_{j = 1}^{J} \mathbb{E}_{\text{folds}}(a\text{drug-entropy}@n_j + b\text{disease-entropy}@n_j + c\text{recall}@n_j + d\text{hit}@k_j)
 $$
+
 where $J$ is the number of different values for $n$ and $k$ considered, $\text{recall}@n$ measures the full-matrix ranking performance, $\text{hit}@k$ measures the disease-specific ranking performance and $a, b, c, d$ are positive weights adding up to 1. 
 
 This objective function is optimise using a Bayesian optimisation approach, employing the `skopt` library.

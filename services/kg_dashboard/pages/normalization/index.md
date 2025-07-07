@@ -38,5 +38,5 @@ The normalization statistics count distinct normalizations (any individual ID be
     title="Normalization"
     linkLabels='full'  
     linkColor='gradient' 
-    chartAreaHeight={800}
+    chartAreaHeight={300}
 />

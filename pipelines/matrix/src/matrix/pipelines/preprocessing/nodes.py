@@ -10,7 +10,7 @@ import requests
 from matrix.pipelines.preprocessing.normalization import resolve_ids_batch_async
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark.sql.functions import udf
-from pyspark.sql.types import ArrayType, StringType
+from pyspark.sql.types import StringType
 from tenacity import Retrying, stop_after_attempt, wait_exponential
 
 logger = logging.getLogger(__name__)

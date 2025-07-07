@@ -29,6 +29,8 @@ select
     , n_edges_without_most_connected_nodes / n_nodes_without_most_connected_nodes as edges_per_node_without_most_connected_nodes
     , n_edges_from_disease_list / n_nodes_from_disease_list as disease_edges_per_node
     , n_edges_from_drug_list / n_nodes_from_drug_list as drug_edges_per_node
+    , median_drug_node_degree
+    , median_disease_node_degree
 from 
     bq.overall_metrics
 ```
@@ -524,6 +526,16 @@ SELECT * FROM bq.epistemic_heatmap
 
 ## Disease list nodes connections
 
+<br/>
+
+<Grid col=2>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="disease_edges_per_node" fmt="num1"/></span><br/>average edges per disease node</p>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="median_disease_node_degree" fmt="num0"/></span><br/>median edges per disease node</p>
+</Grid>
+
+<br/>
+
+
 ```sql disease_list_connected_categories
 with total as (
     select 
@@ -551,16 +563,10 @@ from
     , bq.overall_metrics
 where 
     -- TODO: parameterize this 
-    cumsum_percentage <= 99.0
+    cumsum_percentage <= 90.0
 order by 
     n_connections desc
 ```
-
-<br/>
-
-<p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="disease_edges_per_node" fmt="num1"/></span><br/>edges per disease node on average</p>
-
-<br/>
 
 <BarChart 
     data={disease_list_connected_categories} 
@@ -571,6 +577,16 @@ order by
 />
 
 ## Drug list nodes connections
+
+<br/>
+
+<Grid col=2>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="drug_edges_per_node" fmt="num1"/></span><br/>average edges per drug node</p>
+    <p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="median_drug_node_degree" fmt="num0"/></span><br/>median edges per drug node</p>
+</Grid>
+
+<br/>
+
 
 ```sql drug_list_connected_categories
 with total as (
@@ -598,16 +614,10 @@ from
     , bq.overall_metrics
 where 
     -- TODO: parameterize this 
-    cumsum_percentage <= 99.0
+    cumsum_percentage <= 90.0
 order by 
     n_connections desc
 ```
-
-<br/>
-
-<p class="text-center text-lg"><span class="font-semibold text-2xl"><Value data={edges_per_node} column="drug_edges_per_node" fmt="num1"/></span><br/>edges per drug node on average</p>
-
-<br/>
 
 <BarChart 
     data={drug_list_connected_categories} 

@@ -4,7 +4,6 @@ import abc
 
 import matplotlib.pyplot as plt
 import pandas as pd
-import pyspark.sql as ps
 from matplotlib.figure import Figure
 
 

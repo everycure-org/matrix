@@ -2,7 +2,6 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Dict
 
-import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.functions as f
 

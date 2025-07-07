@@ -16,7 +16,6 @@ Typical usage:
 import os
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from pathlib import Path
 from queue import Queue
 from urllib.parse import parse_qs, urlparse
 

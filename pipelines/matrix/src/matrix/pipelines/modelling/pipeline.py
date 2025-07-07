@@ -164,12 +164,7 @@ def create_model_pipeline(model_name: str, num_shards: int, n_cross_val_folds: i
 
     # Generate pipeline to predict folds (NOTE: final fold is full training data)
     for fold in range(n_cross_val_folds + 1):
-        pipelines.append(
-            pipeline(
-                _create_fold_pipeline(model_name, num_shards, fold),
-                tags=["not-shared"],
-            )
-        )
+        pipelines.append(pipeline(_create_fold_pipeline(model_name, num_shards, fold)))
 
     # Gather all test set predictions from the different folds for the
     # model, and combine all the predictions.

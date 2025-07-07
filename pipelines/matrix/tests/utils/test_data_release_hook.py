@@ -2,7 +2,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from kedro.framework.context import KedroContext
-from kedro.framework.hooks import _create_hook_manager
 from matrix.hooks import ReleaseInfoHooks
 
 

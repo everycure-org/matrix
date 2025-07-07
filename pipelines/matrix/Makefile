@@ -138,9 +138,8 @@ wipe_neo:
 	uv run python scripts/wipe_neo4j.py 'everycure-test'
 
 integration_test: compose_up wipe_neo
-	# NOTE: We are running without xgc due to its long runtime. 
 	ulimit -n 10000
-	uv run kedro run --env test -p test --without-tags xgc,not-shared
+	uv run kedro run --env test -p test
 
 fabricate:
 	uv run kedro run -p fabricator --env test
