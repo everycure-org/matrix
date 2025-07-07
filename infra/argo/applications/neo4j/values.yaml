@@ -3,11 +3,24 @@ neo4j: # the name of the helm dependency
   # and https://github.com/neo4j/helm-charts/blob/f19b4f9f18e99442bfdd50a2e67a779d7b56ff3d/neo4j/values.yaml#L11
   disableLookups: true
   podSpec:
+    # Force replacement of StatefulSet to update nodeSelector/tolerations
+    annotations:
+      argocd.argoproj.io/sync-options: Replace=true
+    # Schedule Neo4j on management nodes (has sufficient memory: 12Gi)
+    nodeSelector:
+      workload-type: management
     tolerations:
-      - key: "node-memory-size"
+      - key: "workload-type"
         operator: "Equal"
-        value: "large"
+        value: "management"
         effect: "NoSchedule"
+    # Add billing labels to Neo4j pods
+    labels:
+      cost-center: infrastructure-management
+      workload-category: platform-services
+      service-tier: management
+      billing-category: infrastructure
+      component: neo4j-database
   neo4j: # config level
     edition: "enterprise"
     passwordFromSecret: neo4j-password
@@ -16,10 +29,10 @@ neo4j: # the name of the helm dependency
     resources:
       requests:
         cpu: "0.5"
-        memory: "32Gi"
+        memory: "12Gi"
       limits:
         cpu: "16"
-        memory: "64Gi"
+        memory: "12Gi"
   # configuration for neo4j services
   # FUTURE do not expose as IP
   services:
@@ -84,10 +97,18 @@ neo4j: # the name of the helm dependency
         # * standard-rwo provisions balanced SSD-backed disks
         # * standard provisions HDD disks
         storageClassName: premium-rwo
-        # storageClassName: hyperdisk-balanced
         # https://neo4j.com/docs/operations-manual/current/kubernetes/persistent-volumes/#persistent-volumes-types
         requests:
           storage: 1500Gi
+        # Add billing labels for cost tracking (new PVCs only)
+        volumeClaimTemplate:
+          metadata:
+            labels:
+              cost-center: infrastructure-management
+              workload-category: platform-services
+              service-tier: management
+              billing-category: infrastructure-storage-premium
+              component: neo4j-database
     licenses:
       mode: volume
       disableSubPathExpr: true
