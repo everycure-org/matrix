@@ -23,7 +23,7 @@ matplotlib
 mlflow==2.20.3
 neo4j>=5.5.0
 notebook
-numpy==1.23.5 # This was pinned during refit refactor; fabricator pipeline fails on 1.26.4
+numpy==1.24.4 # This was pinned during refit refactor; fabricator pipeline fails on 1.26.4
 openai
 openpyxl
 pandera>=0.21.1
