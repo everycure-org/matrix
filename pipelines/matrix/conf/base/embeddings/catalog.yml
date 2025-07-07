@@ -84,7 +84,7 @@ embeddings.model_output.topological:
 
 embeddings.feat.nodes:
   <<: *_spark_parquet
-  filepath: ${globals:paths.embeddings}/feat/nodes_with_embeddings
+  filepath: gs://mtrx-us-central1-wg2-modeling-dev-storage/Alexei/lab-notebooks/c_txgnn_embedding_sharing_initial # ${globals:paths.embeddings}/feat/nodes_with_embeddings
 
 embeddings.reporting.loss:
   type: matplotlib.MatplotlibDataset
