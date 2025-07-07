@@ -34,4 +34,4 @@ class FlatArrayTransformer(FunctionTransformer):
         if input_features.shape[1] > 1:
             raise ValueError("Only one input column is supported.")
 
-        return [f"{self.prefix}{i}" for i in range(len(input_features.iloc[0][0]))]
+        return [f"{self.prefix}{i}" for i in range(len(input_features.iloc[0].iloc[0]))]

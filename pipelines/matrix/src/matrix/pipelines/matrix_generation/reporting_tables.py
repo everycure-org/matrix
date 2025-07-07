@@ -6,8 +6,6 @@ from datetime import datetime
 import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.functions as F
-from pyspark.sql import SparkSession
-from pyspark.sql.types import StringType, StructField, StructType
 
 
 class ReportingTableGenerator(abc.ABC):

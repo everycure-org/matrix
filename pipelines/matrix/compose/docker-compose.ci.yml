@@ -45,7 +45,7 @@ services:
       - "/bin/sh"
       - -ecx
       - |
-          kedro run -e test -p test --without-tags xg_ensemble,not-shared
+          kedro run -e test -p test
     environment:
       TQDM_DISABLE: 1
       NODENORM_ENDPOINT: http://mockserver:1080/1.5/get_normalized_nodes

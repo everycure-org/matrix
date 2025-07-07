@@ -1,3 +1,4 @@
+# When changing the score columns below, please change the panderas check for node make_predictions_and_sort to match the new schema
 matrix_generation.treat_score_col_name: &score-col "treat score"
 matrix_generation.not_treat_score_col_name: &score-col-not-treat "not treat score"
 matrix_generation.unknown_score_col_name:  &score-col-unknown "unknown score"
