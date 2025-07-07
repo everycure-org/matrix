@@ -37,14 +37,20 @@ with edge_count_per_subject as (
 )
 
 -- sum the number of edges of each node to obtain its degree
-, most_connected_nodes as (
+, nodes_degrees as (
   select 
     id
     , sum(n_edges) as degree
   from 
     edge_count
-  group by 
-    id
+  group by 1
+)
+
+, most_connected_nodes as (
+  select 
+    *
+  from 
+    nodes_degrees
   order by 
     degree desc 
   -- We only want to remove the top 1000 most connected nodes. This number was chosen after analysis of the KG nodes' degrees distribution.
@@ -52,9 +58,28 @@ with edge_count_per_subject as (
   limit 1000
 )
 
+, median_drug_node_degree as (
+  select 
+    PERCENTILE_CONT(n.degree, 0.5) OVER() as median
+  from 
+    nodes_degrees n
+    inner join `mtrx-hub-dev-3of.release_${bq_release_version}.drug_list_nodes_normalized` dr on n.id = dr.id
+  limit 1
+)
+
+, median_disease_node_degree as (
+  select 
+    PERCENTILE_CONT(n.degree, 0.5) OVER() as median
+  from 
+    nodes_degrees n
+    inner join `mtrx-hub-dev-3of.release_${bq_release_version}.disease_list_nodes_normalized` di on n.id = di.id
+  limit 1
+)
+
 -- =====
 -- Count nodes and edges 
 -- =====
+
 , n_nodes as (
   select 
     count(*) as n_nodes
@@ -94,9 +119,13 @@ with edge_count_per_subject as (
     , n_edges.n_edges_without_most_connected_nodes
     , n_edges.n_edges_from_disease_list
     , n_edges.n_edges_from_drug_list
+    , median_drug_node_degree.median as median_drug_node_degree
+    , median_disease_node_degree.median as median_disease_node_degree
   from 
     n_nodes 
     cross join n_edges
+    cross join median_drug_node_degree
+    cross join median_disease_node_degree
 )
 
 select 

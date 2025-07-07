@@ -59,7 +59,6 @@ HOOKS = determine_hooks_to_execute(hooks)
 DISABLE_HOOKS_FOR_PLUGINS = ("kedro-mlflow",)
 
 # Class that manages storing KedroSession data.
-from pathlib import Path  # noqa: E402
 
 # https://getindata.com/blog/kedro-dynamic-pipelines/
 

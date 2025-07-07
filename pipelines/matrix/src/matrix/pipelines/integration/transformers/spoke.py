@@ -1,4 +1,3 @@
-import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T

@@ -1,4 +1,4 @@
-name: Evidence Dashboard Deployment
+name: KG Dashboard Deployment
 
 # FUTURE
 # This will eventually need to be turned into a call'able workflow_call version where we
@@ -20,7 +20,7 @@ on:
     # allows re-building the dashboard by merging to main
     paths: 
       - services/kg_dashboard/**
-      - .github/workflows/evidence-deploy.yml
+      - .github/workflows/kg-dashboard-deploy.yml
   pull_request:
     # Sequence of patterns matched against refs/heads
     branches:
@@ -33,7 +33,7 @@ on:
       - ready_for_review
     paths: 
       - services/kg_dashboard/**
-      - .github/workflows/evidence-deploy.yml
+      - .github/workflows/kg-dashboard-deploy.yml
 
 defaults:
   run: 
