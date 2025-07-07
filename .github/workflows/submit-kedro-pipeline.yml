@@ -107,6 +107,7 @@ jobs:
           else
             BUMP_TYPE="${{ github.event.inputs.bump_type }}"
           fi
+          echo "Bump type is ${BUMP_TYPE}"
           echo "BUMP_TYPE=${BUMP_TYPE}" >> "$GITHUB_ENV"
 
       - name: Increment version
@@ -114,6 +115,7 @@ jobs:
         run: |
           pip install semver
           python bump_version.py --type="${{env.BUMP_TYPE}}" --tag="${{env.latest_tag}}" >> "$GITHUB_ENV"
+          echo "Release version is ${release_version}"
 
       - name: Branch off
         run: |
@@ -135,7 +137,6 @@ jobs:
         working-directory: pipelines/matrix
         env:
           GH_TOKEN: ${{ secrets.PAT }}
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
           GCP_TOKEN: ${{ steps.id_auth.outputs.id_token }}
         run: |
           echo "Submit the kedro pipeline"

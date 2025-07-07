@@ -4,48 +4,59 @@ integration:
       name: rtx-kg2
       transformer:
         _object: matrix.pipelines.integration.transformers.rtxkg2.RTXTransformer
+        version: ${globals:data_sources.rtx_kg2.version}
     spoke:
       name: spoke
       transformer:
         _object: matrix.pipelines.integration.transformers.spoke.SpokeTransformer
+        version: ${globals:data_sources.spoke.version}
     robokop:
       name: robokop
       transformer:
         _object: matrix.pipelines.integration.transformers.robokop.RobokopTransformer
+        version: ${globals:data_sources.robokop.version}
     embiology:
       name: embiology
       transformer:
         _object: matrix.pipelines.integration.transformers.embiology.EmbiologyTransformer
+        version: ${globals:data_sources.embiology.version}
     ec_medical_team:
       name: ec_medical_team
       transformer:
         _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
+        version: ${globals:data_sources.ec_medical_team.version}
     ec_clinical_trails:
       name: ec_clinical_trials
       transformer:
         _object: matrix.pipelines.integration.transformers.clinical_trails.ClinicalTrialsTransformer
+        version: ${globals:data_sources.ec_clinical_trials.version}
         select_cols: false
         drop_duplicates: true
     drug_list:
       name: drug_list
       transformer:
         _object: matrix.pipelines.integration.transformers.drugs.DrugsTransformer
+        version: ${globals:data_sources.drug_list.version}
     disease_list:
       name: disease_list
       transformer:
         _object: matrix.pipelines.integration.transformers.diseases.DiseasesTransformer
+        version: ${globals:data_sources.disease_list.version}
     drugmech:
       name: drugmech
       transformer:
          _object: matrix.pipelines.integration.transformers.drugmech.DrugMechTransformer
+         version: ${globals:data_sources.drugmech.version}
     ground_truth:
       name: ground_truth
       transformer:
         _object: matrix.pipelines.integration.transformers.ground_truth.KGMLGroundTruthTransformer
+        version: ${globals:data_sources.gt.version}
     off_label:
       name: off_label
       transformer:
         _object: matrix.pipelines.integration.transformers.off_label.OffLabelTransformer
+        version: ${globals:data_sources.off_label.version}
 
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:

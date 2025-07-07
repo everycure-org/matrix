@@ -1,0 +1,5 @@
+nav:
+    - index.md
+    - data_access.md
+    - docker_compose.md
+    - full_data_run.md

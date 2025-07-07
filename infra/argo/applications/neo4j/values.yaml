@@ -2,6 +2,12 @@ neo4j: # the name of the helm dependency
   # see https://github.com/neo4j/helm-charts/issues/313
   # and https://github.com/neo4j/helm-charts/blob/f19b4f9f18e99442bfdd50a2e67a779d7b56ff3d/neo4j/values.yaml#L11
   disableLookups: true
+  podSpec:
+    tolerations:
+      - key: "node-memory-size"
+        operator: "Equal"
+        value: "large"
+        effect: "NoSchedule"
   neo4j: # config level
     edition: "enterprise"
     passwordFromSecret: neo4j-password
@@ -10,10 +16,10 @@ neo4j: # the name of the helm dependency
     resources:
       requests:
         cpu: "0.5"
-        memory: "16Gi"
+        memory: "32Gi"
       limits:
         cpu: "16"
-        memory: "16Gi"
+        memory: "64Gi"
   # configuration for neo4j services
   # FUTURE do not expose as IP
   services:

@@ -64,10 +64,21 @@ resource "helm_release" "argo" {
     name  = "configs.params.server.basehref"
     value = "/"
   }
+
+  # Disable Git submodule initialization
+  set {
+    name  = "configs.params.reposerver\\.enable\\.git\\.submodule"
+    value = "false"
+  }
 }
 
 resource "kubernetes_manifest" "app_of_apps" {
   depends_on = [helm_release.argo]
+
+  field_manager {
+    force_conflicts = true
+  }
+
   manifest = yamldecode(
     <<YAML
 apiVersion: argoproj.io/v1alpha1

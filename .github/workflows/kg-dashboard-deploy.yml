@@ -1,28 +1,27 @@
 name: KG Dashboard Deployment
 
-# FUTURE
-# This will eventually need to be turned into a call'able workflow_call version where we
-# call this for each terragrunt module that should be deployed depending on the path
-# changed in the repo or the branch we're on. For now it's hard-coded to `hub/dev`
-
-
 on:
-  # allows triggering the workflow from e.g. a data release
   workflow_dispatch: 
     inputs:
       release_version:
         description: 'Version to deploy in format vX.Y.Z'
         required: true
         type: string
+      environment:
+        description: 'Environment to build from and deploy to'
+        required: true
+        type: choice
+        default: dev
+        options:
+          - dev
+          - prod
   push:
     branches:
       - main
-    # allows re-building the dashboard by merging to main
     paths: 
       - services/kg_dashboard/**
       - .github/workflows/kg-dashboard-deploy.yml
   pull_request:
-    # Sequence of patterns matched against refs/heads
     branches:
       - main
     # from https://github.com/reviewdog/action-eslint/issues/29#issuecomment-985939887
@@ -38,17 +37,6 @@ on:
 defaults:
   run: 
     working-directory: services/kg_dashboard/
-env:
-  # log into gcp
-  project_id: 'mtrx-hub-dev-3of'
-  # for querying BQ even on branches
-  ro_wip: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-ro/providers/matrix-gh-provider-ro'
-  ro_sa: 'sa-github-actions-ro@mtrx-hub-dev-3of.iam.gserviceaccount.com'
-  # for deploying to GCS, only works on main
-  rw_wip: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
-  rw_sa: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
-  # release version from input
-  RELEASE_VERSION: ${{ inputs.release_version || 'v0.5.3'}}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -58,14 +46,42 @@ jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     name: Build Dashboard
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
     permissions:
       contents: 'read'
       id-token: 'write'
 
+    env:
+      environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
+      project_id: ${{ vars.PROJECT_ID }}
+      EC_DATA_DOMAIN: ${{ vars.EC_DATA_DOMAIN }}
+      RELEASE_VERSION: ${{ inputs.release_version }}
+      # for querying BQ even on branches
+      ro_wip: ${{ vars.WORKLOAD_IDENTITY_PROVIDER_RO}}
+      ro_sa: ${{ vars.SERVICE_ACCOUNT_RO}}
+      # for deploying to GCS, only works on main
+      rw_wip: ${{ vars.WORKLOAD_IDENTITY_PROVIDER_RW}}
+      rw_sa: ${{ vars.SERVICE_ACCOUNT_RW}}
+      
     steps:
-      # setup runtime
       - name: 'Checkout'
         uses: actions/checkout@v4
+
+      - name: Set release version from latest tag if not set
+        run: |
+          if [ -z "${RELEASE_VERSION}" ]; then
+            LATEST_TAG=$(
+              git ls-remote --tags origin | \
+              grep -v '{}' | \
+              grep '^.*refs/tags/v[0-9]*\.[0-9]*\.[0-9]*$' | cut -d'/' -f3 | \
+              sort -V | \
+              tail -n1
+            )
+            echo "RELEASE_VERSION=${LATEST_TAG}" >> "$GITHUB_ENV"
+            echo "Setting RELEASE_VERSION to latest tag: ${LATEST_TAG}"
+          else
+            echo "Using provided RELEASE_VERSION: ${RELEASE_VERSION}"
+          fi
 
       - name: Validate release version
         working-directory: pipelines/matrix
@@ -80,11 +96,11 @@ jobs:
       # authenticate with GCP as read only user to query BQ
       - uses: 'google-github-actions/auth@v2'
         with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.ro_wip}}
-          service_account: ${{env.ro_sa}}
+          project_id: ${{ env.project_id }}
+          workload_identity_provider: ${{ env.ro_wip }}
+          service_account: ${{ env.ro_sa }}
 
-      # perform build & deploy
+      # build
       - run: make install
       - run: make run-sources
       - run: make build
@@ -93,9 +109,10 @@ jobs:
       - uses: 'google-github-actions/auth@v2'
         if: github.ref == 'refs/heads/main'
         with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.rw_wip}}
-          service_account: ${{env.rw_sa}}
+          project_id: ${{ env.project_id }}
+          workload_identity_provider: ${{ env.rw_wip }}
+          service_account: ${{ env.rw_sa }}
 
+      # deploy
       - run: make deploy
         if: github.ref == 'refs/heads/main'
