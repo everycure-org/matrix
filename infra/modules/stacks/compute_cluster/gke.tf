@@ -2,7 +2,7 @@ data "google_client_config" "default" {
 }
 
 locals {
-  default_node_locations = "us-central1-a" # Single location for simplicity, can be expanded to multiple zones if needed
+  default_node_locations = "us-central1-c" # Single location for simplicity, can be expanded to multiple zones if needed
 
   # NOTE: Debugging node group scaling can be done using the GCP cluster logs, we create
   # node groups in 2 node locations, hence why the total amount of node groups.
