@@ -4,8 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from dotenv import find_dotenv, load_dotenv
-
-from matrix.settings import DYNAMIC_PIPELINES_MAPPING
+from omegaconf import OmegaConf
 
 
 def load_environment_variables():
@@ -100,10 +99,18 @@ def get_kg_raw_path_for_source(source_name: str) -> str:
     """
 
     try:
-        # Get bucket configurations from environment/globals
-        dev_bucket = os.getenv("DEV_GCS_BUCKET", "gs://mtrx-hub-dev-3of")
-        prod_bucket = os.getenv("PROD_GCS_BUCKET", "gs://mtrx-us-central1-hub-prod-storage")
-        public_bucket = os.getenv("PUBLIC_GCS_BUCKET", "gs://data.dev.everycure.org")
+        # Load globals.yml directly with the registered resolvers
+        globals_path = Path("conf/base/globals.yml")
+        if globals_path.exists():
+            globals_config = OmegaConf.load(globals_path)
+
+            # Extract bucket configurations from globals
+            dev_bucket = globals_config.get("dev_gcs_bucket", "gs://mtrx-us-central1-hub-dev-storage")
+            prod_bucket = globals_config.get("prod_gcs_bucket", "gs://mtrx-us-central1-hub-prod-storage")
+            public_bucket = globals_config.get("public_gcs_bucket", "gs://data.dev.everycure.org")
+
+        # Importing here to avoid circular import
+        from matrix.settings import DYNAMIC_PIPELINES_MAPPING
 
         pipeline_mapping = DYNAMIC_PIPELINES_MAPPING()
         integration_sources = pipeline_mapping.get("integration", [])
