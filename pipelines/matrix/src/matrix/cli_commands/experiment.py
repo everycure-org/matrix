@@ -18,6 +18,11 @@ from rich.panel import Panel
 
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
 from matrix.cli_commands.run import _validate_env_vars_for_private_data
+from matrix.resolvers import load_environment_variables
+
+# Load environment variables from .env.defaults and .env
+load_environment_variables()
+
 from matrix.git_utils import (
     BRANCH_NAME_REGEX,
     abort_if_intermediate_release,
