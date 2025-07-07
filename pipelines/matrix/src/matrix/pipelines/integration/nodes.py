@@ -126,7 +126,10 @@ def _union_datasets(
 )
 def _format_mapping_df(mapping_df: ps.DataFrame) -> ps.DataFrame:
     return (
-        mapping_df.select("id", "normalized_id", "normalized_categories")
+        mapping_df.withColumn("normalized_id", F.col("normalization_struct.normalized_id"))
+        .withColumn("normalized_categories", F.col("normalization_struct.normalized_categories"))
+        .drop("normalization_struct")
+        .select("id", "normalized_id", "normalized_categories")
         .withColumn(
             "normalization_success",
             F.when((F.col("normalized_id").isNotNull() | (F.col("normalized_id") != "None")), True).otherwise(False),
@@ -146,7 +149,6 @@ def normalize_edges(
     an external API to map the nodes to their normalized IDs.
     It returns the datasets with normalized IDs.
     """
-
     mapping_df = _format_mapping_df(mapping_df).select("id", "normalized_id", "normalization_success")
 
     # edges are a bit more complex, we need to map both the subject and object
