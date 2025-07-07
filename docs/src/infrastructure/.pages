@@ -10,4 +10,5 @@ nav:
     - setup.md
     - runbooks
     - architecture_decision_records
-    
+    - billing-labels.md
+    - gke-safe-eviction.md
