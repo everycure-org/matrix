@@ -35,11 +35,14 @@ resource "kubernetes_secret" "argo_secret" {
 }
 
 resource "helm_release" "argo" {
-  depends_on = [kubernetes_namespace.argo_ns, kubernetes_secret.argo_secret]
-  name       = "argo"
-  repository = "https://argoproj.github.io/argo-helm"
-  chart      = "argo-cd"
-  namespace  = var.namespace
+  depends_on    = [kubernetes_namespace.argo_ns, kubernetes_secret.argo_secret]
+  name          = "argo"
+  repository    = "https://argoproj.github.io/argo-helm"
+  chart         = "argo-cd"
+  namespace     = var.namespace
+  timeout       = 600
+  atomic        = true
+  recreate_pods = true
 
   # pass through ssl to enable grpc/https for argocd CLI, see
   # https://argoproj.github.io/argo-cd/operator-manual/ingress/#kubernetesingress-nginx
