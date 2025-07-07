@@ -2,6 +2,20 @@
 
 We currently have a self-hosted-runner active on GCP which is not codified in terraform but executes our CI tests. This should likely be replaced with a more efficient setp
 
+## Testing
+
+We leverage Github Actions to test and build the pipeline. For testing, we leverage a mix
+of unit and integration tests. The integration tests leverage a set of fabricated
+datasets to test the end-to-end pipeline without the need to access real data. 
+
+Check the `.github/workflows/matrix-ci.yml` folder for details on how we test our pipeline.
+
+## Building executables
+
+We execute our pipeline on Kubernetes. For this we build container images with github
+actions and push them to the artifact registry of GCP. See the Github actions pipeline
+for how this is implemented. 
+
 ## OIDC setup for GitHub Actions
 
 We leverage OIDC to authenticate GitHub actions to deploy to our environment
@@ -43,3 +57,10 @@ Because debugging this can be painful, here is the JWT token sent from GH Action
   "workflow_sha": "e75edcc5b6cb88fc32f8d65d1da2655576b905ca"
 }
 ```
+
+## License handling
+
+To make sure we do not use any software that gets us into trouble later on, we have
+`trivy` scan for licenses of software we use. However, we don't yet have this implemented
+in our CI. This will have to be added to our release pipeline when we build it. For now,
+the Makefile in our `matrix` pipeline holds the command to scan for licenses.

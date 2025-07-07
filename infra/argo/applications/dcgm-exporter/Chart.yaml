@@ -1,0 +1,11 @@
+apiVersion: v2
+name: dcgm-exporter
+description: NVIDIA DCGM Exporter for GPU metrics in Argo Workflows
+type: application
+version: 3.3.5
+appVersion: "3.3.5"
+
+# DCGM Image versions
+annotations:
+  dcgm-hostengine-tag: "3.3.5-1-ubuntu22.04"
+  dcgm-exporter-tag: "3.3.5-3.4.0-ubuntu22.04"

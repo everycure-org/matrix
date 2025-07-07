@@ -9,11 +9,15 @@ spec:
     labels:
       run: {% raw %}'{{ workflow.parameters.run_name }}'
       {% endraw %}
+      workflow_name: {% raw %}'{{ workflow.parameters.run_name }}'
+      {% endraw %}
       username: "{{ username }}"
       pipeline_name: "{{ pipeline_name }}"
       trigger_release: "{{ trigger_release }}"
       release_version: "{{ release_version }}"
       git_sha: "{{ git_sha }}"
+      kedro_nodes: {% raw %}'{{inputs.parameters.kedro_nodes}}'
+      {% endraw %}
   entrypoint: "pipeline"
   arguments:
     parameters:
@@ -79,6 +83,8 @@ spec:
       labels:
         {# Add label to have an ability to remove Kedro Pods easily #}
         app: kedro-argo
+        workflow_name: {% raw %}'{{ workflow.parameters.run_name }}'
+        {% endraw %}
     inputs:
       parameters:
       - name: kedro_nodes

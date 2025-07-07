@@ -51,6 +51,49 @@ kube-prometheus-stack:
           endpoints:
             - port: metrics
               path: /metrics
+        # DCGM DaemonSet monitoring (cluster-wide GPU monitoring)
+        - name: dcgm-exporter-daemonset
+          selector:
+            matchLabels:
+              app.kubernetes.io/name: dcgm-exporter
+          namespaceSelector:
+            matchNames:
+              - monitoring
+          endpoints:
+            - port: metrics
+              path: /metrics
+              interval: 15s
+              scrapeTimeout: 10s
+              honorLabels: true
+        
+        # Generic DCGM monitoring for any pods with dcgm-exporter label
+        - name: dcgm-exporter-pods
+          selector:
+            matchLabels:
+              app: dcgm-exporter
+          namespaceSelector:
+            any: true
+          endpoints:
+            - port: metrics
+              path: /metrics
+              interval: 15s
+              scrapeTimeout: 10s
+              honorLabels: true
+        
+        # Add pod monitor for direct pod scraping (alternative approach)
+      additionalPodMonitors:
+        - name: dcgm-sidecar-pods
+          selector:
+            matchLabels:
+              app: kedro-argo
+          namespaceSelector:
+            matchNames:
+              - argo-workflows
+          podMetricsEndpoints:
+            - port: gpu-metrics
+              path: /metrics
+              interval: 15s
+              scrapeTimeout: 10s
   grafana:
     # Schedule Grafana on management nodes
     nodeSelector:
@@ -121,3 +164,12 @@ kube-prometheus-stack:
     # Allow node-exporter to be evicted during node scale-down
     podAnnotations:
       cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+
+  # Configure kube-state-metrics to expose pod labels
+  kube-state-metrics:
+    metricLabelsAllowlist:
+      - pods=[*]
+    collectors:
+      - pods
+    extraArgs:
+      - --metric-labels-allowlist=pods=[*]
