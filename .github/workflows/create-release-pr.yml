@@ -162,7 +162,8 @@ jobs:
           uv run matrix releases template \
             --headless \
             --output-file "${{env.release}}/post.md" \
-            --until ${{env.gitref}}
+            --until ${{env.gitref}} \
+            --version ${{env.release}}
           
           mv "${{env.release}}" "${GITHUB_WORKSPACE}/${POSTS_DIR}"
           git add "$TARGET_DIR" && \
