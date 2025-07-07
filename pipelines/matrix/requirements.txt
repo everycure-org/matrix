@@ -118,7 +118,7 @@ cycler==0.12.1
     # via matplotlib
 databricks-sdk==0.57.0
     # via mlflow-skinny
-db-dtypes==1.4.2
+db-dtypes==1.4.3
     # via -r requirements.in
 debugpy==1.8.14
     # via ipykernel
@@ -146,7 +146,7 @@ executing==2.2.0
     # via stack-data
 faker==37.4.0
     # via -r requirements.in
-fastapi==0.115.14
+fastapi==0.116.0
     # via kedro-viz
 fastjsonschema==2.21.1
     # via nbformat
@@ -486,7 +486,7 @@ multimethod==2.0
     # via graphdatascience
 mypy-extensions==1.1.0
     # via typing-inspect
-narwhals==1.45.0
+narwhals==1.46.0
     # via plotly
 nbclient==0.10.2
     # via nbconvert
@@ -513,7 +513,7 @@ notebook-shim==0.2.4
     # via
     #   jupyterlab
     #   notebook
-numpy==1.23.5
+numpy==1.24.4
     # via
     #   -r requirements.in
     #   contourpy
