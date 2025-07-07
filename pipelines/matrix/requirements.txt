@@ -220,7 +220,7 @@ google-cloud-core==2.4.3
     #   google-cloud-storage
 google-cloud-iam==2.19.1
     # via -r requirements.in
-google-cloud-storage==3.1.1
+google-cloud-storage==3.2.0
     # via gcsfs
 google-crc32c==1.7.1
     # via
@@ -972,7 +972,7 @@ typer==0.16.0
     # via -r requirements.in
 types-python-dateutil==2.9.0.20250516
     # via arrow
-typing-extensions==4.14.0
+typing-extensions==4.14.1
     # via
     #   aiosignal
     #   alembic
