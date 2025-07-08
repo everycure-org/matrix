@@ -65,7 +65,7 @@ LEFT JOIN (
 ORDER BY n_edges DESC
 ```
 
-<DataTable data={knowledge_source_table} link=link>
+<DataTable data={knowledge_source_table} link=link search=true>
   <Column id="source" title="Knowledge Source ID" />
   <Column id="name" title="Name" />
   <Column id="n_edges" title="Edges" fmt="num0" />
