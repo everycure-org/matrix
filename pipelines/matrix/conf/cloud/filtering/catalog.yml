@@ -27,11 +27,11 @@ filtering.prm.removed_edges:
   filepath: ${globals:paths.filtering}/prm/removed/edges
   table: edges_removed
 
-# Filtered PRM nodes/edges written to BigQuery
-filtering.prm.filtered_nodes:
-  <<: *_bigquery_ds
-  filepath: ${globals:paths.filtering}/prm/filtered/nodes
-  table: nodes_filtered
+# # Filtered PRM nodes/edges written to BigQuery
+# filtering.prm.filtered_nodes:
+#   <<: *_bigquery_ds
+#   filepath: ${globals:paths.filtering}/prm/filtered/nodes
+#   table: nodes_filtered
 
 filtering.prm.filtered_edges:
   <<: *_bigquery_ds
