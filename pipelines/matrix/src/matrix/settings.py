@@ -4,10 +4,6 @@ from the Kedro defaults. For further information, including these default values
 https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
 """
 
-import functools
-
-import requests
-
 # Instantiated project hooks.
 # For example, after creating a hooks.py and defining a ProjectHooks class there, do
 # from pandas_viz.hooks import ProjectHooks
@@ -21,6 +17,7 @@ from matrix.utils.hook_utilities import (
     disable_private_datasets,
     generate_dynamic_pipeline_mapping,
 )
+from matrix.utils.node_normalizer import get_node_normalization_settings
 
 from .resolvers import cast_to_int, env, if_null, merge_dicts
 
@@ -38,29 +35,6 @@ HOOKS = determine_hooks_to_execute(hooks)
 # Installed plugins for which to disable hook auto-registration.
 DISABLE_HOOKS_FOR_PLUGINS = ("kedro-mlflow",)
 
-nn_source, nn_protocol_and_domain, nn_get_normalized_nodes_path, nn_openapi_path = (
-    "RENCI",
-    "https://nodenormalization-sri.renci.org",
-    "/1.5/get_normalized_nodes",
-    "/openapi.json",
-)
-# nn_source, nn_protocol_and_domain, nn_get_normalized_nodes_path, nn_openapi_path = (
-#     "NCATS",
-#     "https://nodenorm.transltr.io",
-#     "/1.5/get_normalized_nodes",
-#     "/openapi.json",
-# )
-
-
-@functools.cache
-def get_node_normalization_version():
-    """Function to get the NodeNormalization version."""
-    nn_openapi_json_url = f"{nn_protocol_and_domain}/openapi.json"
-    json_response = requests.get(f"{nn_openapi_json_url}").json()
-    version = json_response["info"]["version"]
-    return f"nodenorm-{nn_source.lower()}-{version}"
-
-
 # Class that manages storing KedroSession data.
 
 # https://getindata.com/blog/kedro-dynamic-pipelines/
@@ -69,10 +43,7 @@ def get_node_normalization_version():
 DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
     generate_dynamic_pipeline_mapping(
         {
-            "node_norm": {
-                "endpoint": f"{nn_protocol_and_domain}{nn_get_normalized_nodes_path}",
-                "version": get_node_normalization_version(),
-            },
+            "node_norm": get_node_normalization_settings("RENCI"),  # could also be NCATS
             "cross_validation": {
                 "n_cross_val_folds": 3,
             },
