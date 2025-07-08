@@ -33,8 +33,6 @@ We envision there are three types of users and contributors who might be interes
 
 We welcome all contributors however this guide is primarily designed for pipeline and project contributors. If you are interested in the infrastructure side, we would recommend completing this guide but focusing mainly on the [infrastructure](../infrastructure/index.md) part of the documentation.
 
-As you onboard, we really recommend creating an [onboarding issue](https://github.com/everycure-org/matrix/issues/new?assignees=&labels=onboarding&projects=&template=onboarding.md&title=%3Cfirstname%3E+%3Clastname%3E) to help you navigate your progress. This way we can also support you in case of any bottlenecks or errors.
-    
 
 [Get Started with First Steps :material-arrow-right:](./first_steps/index.md){ .md-button .md-button--primary }
      
