@@ -51,6 +51,8 @@ plugins:
      blog_dir: releases
      categories: false
       
+extra_css:
+  - assets/css/home.css
 
 extra:
   # https://squidfunk.github.io/mkdocs-material/setup/setting-up-site-analytics/

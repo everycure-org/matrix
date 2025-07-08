@@ -100,6 +100,16 @@ fabricator.rtx_kg2:
           - biolink:subclass_of
           - biolink:is_nearby_variant_of
           - biolink:ChemicalToChemicalDerivationAssociation
+      knowledge_level:
+        type: generate_values
+        sample_values:
+          - prediction
+          - knowledge_assertion
+      agent_type:
+        type: generate_values
+        sample_values:
+          - computational_model
+          - manual_agent
       aggregator_knowledge_source:
         type: generate_random_arrays
         delimiter: "|"
