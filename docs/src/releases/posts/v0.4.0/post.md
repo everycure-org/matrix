@@ -1,4 +1,5 @@
 ---
+title: v0.4.0
 draft: false
 date: 2025-03-06
 categories:
