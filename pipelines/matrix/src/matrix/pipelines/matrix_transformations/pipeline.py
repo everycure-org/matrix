@@ -22,12 +22,28 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "transformations": "params:matrix_transformations.transformations",
                             "score_col": "params:matrix_transformations.score_col",
                         },
-                        outputs=f"matrix_transformations.fold_{fold}.transformed_matrix@spark",
+                        outputs=f"matrix_transformations.fold_{fold}.model_output.sorted_matrix_predictions@spark",
                         name=f"apply_matrix_transformations_fold_{fold}",
                         argo_config=ArgoResourceConfig(cpu_request=8, memory_request=64, memory_limit=64),
                     ),
                 ]
             )
         )
+
+    # Persist the final fold predictions (trained on complete dataset) for BigQuery export
+    pipelines.append(
+        pipeline(
+            [
+                ArgoNode(
+                    func=nodes.return_predictions,
+                    inputs=[
+                        f"matrix_transformations.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@spark",
+                    ],
+                    outputs=f"matrix_transformations.full_matrix_output@spark",
+                    name="store_transformed_predictions",
+                ),
+            ]
+        )
+    )
 
     return sum(pipelines)

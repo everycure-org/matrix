@@ -1,0 +1,5 @@
+nav:
+    - index.md
+    - cluster_setup.md
+    - cluster_specific_config.md
+    - full_cluster_run.md

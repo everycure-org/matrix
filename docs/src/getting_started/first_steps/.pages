@@ -1,0 +1,9 @@
+nav:
+    - index.md
+    - matrix_pipeline.md
+    - tech_stack.md
+    - repo_structure.md
+    - installation.md
+    - local-setup.md
+    - environments_overview.md
+    - run_pipeline.md

@@ -70,7 +70,7 @@ This includes two new workflows:
 1. the [creation of the sample data](https://github.com/everycure-org/matrix/blob/main/.github/workflows/create-sample-release.yml) whenever a new release is created.
 2. a [scheduled workflow](https://github.com/everycure-org/matrix/blob/main/.github/workflows/scheduled-sampling-pipeline.yml) that runs the pipeline on the sample data every day at 5am GMT.
 
-For more details, check the [documentation on the sample environment](../../../onboarding/sample_environment.md).
+For more details, check the [documentation on the sample environment](../../../getting_started/deep_dive/sample_environment.md).
 
 
 ## Full Changelog

@@ -1,0 +1,34 @@
+external-secrets:
+  # Schedule External Secrets Operator on management nodes
+  nodeSelector:
+    workload-type: management
+  
+  # Add billing labels
+  podLabels:
+    cost-center: infrastructure-management
+    workload-category: platform-services
+    service-tier: management
+    billing-category: infrastructure
+    component: external-secrets
+
+  # Schedule webhook on management nodes
+  webhook:
+    nodeSelector:
+      workload-type: management
+    podLabels:
+      cost-center: infrastructure-management
+      workload-category: platform-services
+      service-tier: management
+      billing-category: infrastructure
+      component: external-secrets-webhook
+
+  # Schedule cert controller on management nodes  
+  certController:
+    nodeSelector:
+      workload-type: management
+    podLabels:
+      cost-center: infrastructure-management
+      workload-category: platform-services
+      service-tier: management
+      billing-category: infrastructure
+      component: external-secrets-cert-controller

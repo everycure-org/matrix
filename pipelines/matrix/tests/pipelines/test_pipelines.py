@@ -92,38 +92,59 @@ def test_no_non_parameter_entries_from_catalog_unused(
     assert unused_entries == set(), f"The following entries are not used: {unused_entries}"
 
 
+def get_dataset_patterns_from_config_resolver(catalog):
+    """Extract dataset patterns from the catalog's config resolver"""
+    if hasattr(catalog, "config_resolver") and catalog.config_resolver:
+        config_resolver = catalog.config_resolver
+
+        # Try to access pattern information through the config resolver
+        if hasattr(config_resolver, "dataset_patterns"):
+            return config_resolver.dataset_patterns
+
+        # Alternative: try to access through resolver attributes
+        if hasattr(config_resolver, "_dataset_patterns"):
+            return config_resolver._dataset_patterns
+
+    return None
+
+
+def parse_to_regex(parse_pattern):
+    """Convert a `parse`-style pattern to a regex pattern."""
+    escaped_pattern = re.escape(parse_pattern)
+    regex_pattern = re.sub(r"\\{(.*?)\\}", r"(?P<\1>.*?)", escaped_pattern)
+    return f"^{regex_pattern}$"
+
+
 @pytest.mark.integration
 def test_memory_data_sets_absent(cloud_kedro_context: KedroContext) -> None:
-    """Tests no MemoryDataSets are created."""
-
-    def parse_to_regex(parse_pattern):
-        """
-        Convert a `parse`-style pattern to a regex pattern.
-        For simplicity, this assumes placeholders like `{name}` can be replaced with `.*?`.
-        """
-        # Escape special regex characters in the fixed parts of the pattern
-        escaped_pattern = re.escape(parse_pattern)
-        # Replace `{variable}` placeholders with regex groups
-        regex_pattern = re.sub(r"\\{(.*?)\\}", r"(?P<\1>.*?)", escaped_pattern)
-        return f"^{regex_pattern}$"
-
+    """Tests that no MemoryDataSets are created by verifying all datasets can be resolved."""
     used_data_sets = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
     used_data_sets_wout_double_params = {x.replace("params:params:", "params:") for x in used_data_sets}
 
-    # Matching data factories is really slow, therefore we're compiling each data factory name
-    # into a regex, that is subsequently used to determine whether it exists.
-    factories = [re.compile(parse_to_regex(pattern)) for pattern in cloud_kedro_context.catalog._dataset_patterns]
     catalog_datasets = set(cloud_kedro_context.catalog.list())
-    memory_data_sets = [
-        dataset
-        for dataset in used_data_sets_wout_double_params
-        if not (
-            dataset in catalog_datasets
-            # Note, this is lazy loaded, we're only validating factory
-            # if we could not find in plain catalog datasets
-            or any(factory.match(dataset) for factory in factories)
-        )
-    ]
+
+    # Try to get dataset patterns from config resolver
+    dataset_patterns = get_dataset_patterns_from_config_resolver(cloud_kedro_context.catalog)
+
+    if dataset_patterns:
+        # Use the fast pattern matching approach (like your original code)
+        factories = [re.compile(parse_to_regex(pattern)) for pattern in dataset_patterns]
+
+        memory_data_sets = [
+            dataset
+            for dataset in used_data_sets_wout_double_params
+            if not (dataset in catalog_datasets or any(factory.match(dataset) for factory in factories))
+        ]
+    else:
+        # Fall back to checking existence via the DataCatalog API
+        datasets_to_check = [ds for ds in used_data_sets_wout_double_params if ds not in catalog_datasets]
+
+        memory_data_sets = []
+        for dataset_name in datasets_to_check:
+            try:
+                cloud_kedro_context.catalog._get_dataset(dataset_name)
+            except Exception:
+                memory_data_sets.append(dataset_name)
 
     assert len(memory_data_sets) == 0, f"{memory_data_sets}"
 

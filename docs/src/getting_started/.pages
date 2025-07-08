@@ -1,0 +1,6 @@
+nav:
+    - index.md
+    - first_steps
+    - first_full_run
+    - first_cluster_run
+    - deep_dive
