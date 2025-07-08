@@ -23,7 +23,7 @@ class SpokeTransformer(GraphTransformer):
         """
         match self._version:
             case "V5.2":
-                df = transform_nodes_V5_2(nodes_df)  # TODO: Remove this once we have a proper version of Spoke
+                df = transform_nodes_V5_2(nodes_df)
             case "V5.7":
                 df = transform_nodes_V5_7(nodes_df)
             case _:
@@ -51,7 +51,7 @@ class SpokeTransformer(GraphTransformer):
 
 def transform_nodes_V5_7(nodes_df: ps.DataFrame):
     # fmt: off
-    # FUTURE: need to fix de-duplication and null 
+    # FUTURE: need to fix de-duplication in a raw SPOKE
     df = (
         nodes_df.dropDuplicates(subset=["id"])
         .withColumn("name", F.col("id").cast(T.StringType()))
@@ -71,8 +71,8 @@ def transform_nodes_V5_7(nodes_df: ps.DataFrame):
 
 def transform_edges_V5_7(edges_df: ps.DataFrame):
     # fmt: off
-    # FUTURE: need to fix de-duplication
-    df = (edges_df.dropDuplicates(subset=["subject", "object", "predicate"])  # TODO: Remove this once we have a proper version of Spoke
+    # FUTURE: need to fix de-duplication in a raw SPOKE
+    df = (edges_df.dropDuplicates(subset=["subject", "object", "predicate"])
           .withColumn('predicate', F.concat(F.lit('biolink:'), F.col('predicate')))
           .withColumn("knowledge_level",                          F.lit(None).cast(T.StringType()))
           .withColumn("agent_type",                               F.lit(None).cast(T.StringType()))
