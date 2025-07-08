@@ -11,12 +11,9 @@ from functools import wraps
 from typing import Dict, List, Optional
 
 import pandas as pd
-import pandera.pandas as pa
+import pandera as pa
+import pandera.pyspark as pas
 import pyspark.sql as ps
-from pandera.api.pandas.components import Column as PandasColumn
-from pandera.api.pandas.container import DataFrameSchema as PandasDataFrameSchema
-from pandera.api.pyspark.components import Column as PySparkColumn
-from pandera.api.pyspark.container import DataFrameSchema as PySparkDataFrameSchema
 from pandera.decorators import _handle_schema_error
 
 
@@ -37,12 +34,12 @@ class DataFrameSchema:
     unique: Optional[List] = None
     strict: bool = False
 
-    def build_for_type(self, type_) -> typing.Union[PySparkDataFrameSchema, PandasDataFrameSchema]:
+    def build_for_type(self, type_) -> typing.Union[pas.DataFrameSchema, pa.DataFrameSchema]:
         # Build pandas version
         if type_ is pd.DataFrame:
-            return PandasDataFrameSchema(
+            return pa.DataFrameSchema(
                 columns={
-                    name: PandasColumn(col.type_, checks=col.checks, nullable=col.nullable)
+                    name: pa.Column(col.type_, checks=col.checks, nullable=col.nullable)
                     for name, col in self.columns.items()
                 },
                 unique=self.unique,
@@ -51,9 +48,9 @@ class DataFrameSchema:
 
         # Build pyspark version
         if type_ is ps.DataFrame:
-            return PySparkDataFrameSchema(
+            return pas.DataFrameSchema(
                 columns={
-                    name: PySparkColumn(col.type_, checks=col.checks, nullable=col.nullable)
+                    name: pas.Column(col.type_, checks=col.checks, nullable=col.nullable)
                     for name, col in self.columns.items()
                 },
                 unique=self.unique,
