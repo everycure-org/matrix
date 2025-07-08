@@ -21,4 +21,4 @@ filtering.prm.prefiltered_nodes:
 
 filtering.prm.filtered_nodes:
   <<: [*_spark_parquet]
-  filepath: ${globals:paths.filtering}/prm/filtered/nodes
+  filepath: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.6.8/datasets/filtering/prm/filtered/nodes # ${globals:paths.filtering}/prm/filtered/nodes
