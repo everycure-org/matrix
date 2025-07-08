@@ -6,6 +6,7 @@ filtering:
       keep_list:
         - rtxkg2
         - ec_medical
+        - monarch
         # - robokop
 
     # remove_rows_by_category:
@@ -21,6 +22,7 @@ filtering:
       keep_list:
         - rtxkg2
         - ec_medical
+        - monarch
         # - robokop
 
     filter_biolink_edges:
