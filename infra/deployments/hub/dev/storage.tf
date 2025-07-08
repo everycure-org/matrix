@@ -95,8 +95,8 @@ resource "google_storage_bucket_iam_member" "object_lister" {
   member = "group:matrix-all@everycure.org"
 }
 
-# add a new binding for the compute engine default service account
-resource "google_storage_bucket_iam_member" "compute_engine_default" {
+# add a new binding for the compute engine default service account for Orchard prod
+resource "google_storage_bucket_iam_member" "compute_engine_default_ordchard_prod" {
   bucket = var.storage_bucket_name
   role   = "roles/storage.bucketViewer"
   member = local.orchard_prod_compute_service_account
@@ -107,4 +107,11 @@ resource "google_storage_bucket_iam_member" "custom_cloud_build_sa_access" {
   bucket = var.storage_bucket_name
   role   = "roles/storage.admin"
   member = "serviceAccount:custom-cloud-build-sa@mtrx-hub-prod-sms.iam.gserviceaccount.com"
+}
+
+# add a new binding for the compute engine default service account for Orchard dev
+resource "google_storage_bucket_iam_member" "compute_engine_default_ordchard_dev" {
+  bucket = var.storage_bucket_name
+  role   = "roles/storage.bucketViewer"
+  member = local.orchard_dev_compute_service_account
 }
