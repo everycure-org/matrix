@@ -43,7 +43,7 @@ def transform(transformer, **kwargs) -> dict[str, ps.DataFrame]:
 
 
 @check_output(
-    schema=get_matrix_edge_schema(),
+    schema=get_matrix_edge_schema(validate_enumeration_values=False),
     pass_columns=True,
 )
 def union_edges(*edges, cols: list[str]) -> ps.DataFrame:
@@ -72,7 +72,7 @@ def union_edges(*edges, cols: list[str]) -> ps.DataFrame:
 
 
 @check_output(
-    schema=get_matrix_node_schema(),
+    schema=get_matrix_node_schema(validate_enumeration_values=False),
     pass_columns=True,
 )
 def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, cols: list[str]) -> ps.DataFrame:
