@@ -15,7 +15,7 @@ aioitertools==0.12.0
     # via aiobotocore
 aiosignal==1.4.0
     # via aiohttp
-alembic==1.16.2
+alembic==1.16.3
     # via mlflow
 annotated-types==0.7.0
     # via pydantic
@@ -71,7 +71,7 @@ cachetools==5.5.2
     #   google-auth
     #   kedro
     #   mlflow-skinny
-certifi==2025.6.15
+certifi==2025.7.9
     # via
     #   httpcore
     #   httpx
@@ -116,7 +116,7 @@ curies==0.10.19
     #   prefixmaps
 cycler==0.12.1
     # via matplotlib
-databricks-sdk==0.57.0
+databricks-sdk==0.58.0
     # via mlflow-skinny
 db-dtypes==1.4.3
     # via -r requirements.in
@@ -189,7 +189,7 @@ google-api-core==2.25.1
     #   google-cloud-core
     #   google-cloud-iam
     #   google-cloud-storage
-google-api-python-client==2.175.0
+google-api-python-client==2.176.0
     # via pygsheets
 google-auth==2.40.3
     # via
@@ -418,7 +418,7 @@ kedro-telemetry==0.6.3
     #   -r requirements.in
     #   kedro
     #   kedro-viz
-kedro-viz==11.0.2
+kedro-viz==11.1.0
     # via -r requirements.in
 kiwisolver==1.4.8
     # via matplotlib
@@ -522,7 +522,6 @@ numpy==1.24.4
     #   matplotlib
     #   mlflow
     #   pandas
-    #   pandera
     #   scikit-learn
     #   scikit-optimize
     #   scipy
@@ -534,7 +533,7 @@ oauthlib==3.3.1
     # via requests-oauthlib
 omegaconf==2.3.0
     # via kedro
-openai==1.93.1
+openai==1.93.2
     # via
     #   -r requirements.in
     #   langchain-openai
@@ -588,9 +587,8 @@ pandas==2.3.1
     #   graphdatascience
     #   kedro-viz
     #   mlflow
-    #   pandera
     #   seaborn
-pandera==0.23.1
+pandera==0.24.0
     # via -r requirements.in
 pandocfilters==1.5.1
     # via nbconvert
@@ -993,6 +991,7 @@ typing-extensions==4.14.1
     #   opentelemetry-api
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
+    #   pandera
     #   pydantic
     #   pydantic-core
     #   referencing
