@@ -221,13 +221,14 @@ def check_nodes_and_edges_matching(edges: ps.DataFrame, nodes: ps.DataFrame):
     -------
     Nothing returned; error is thrown if mismatching
     """
-    match_edges_shape = (
-        edges.join(nodes.withColumnRenamed({"id": "subject"}), on="subject", how="inner").join(
-            nodes.withColumnRenamed({"id": "object"}), on="object", how="inner"
-        )
-    ).shape
-    if edges.shape == match_edges_shape:
+    match_count = (
+        edges.join(nodes.withColumnRenamed("id", "subject"), on="subject", how="inner")
+        .join(nodes.withColumnRenamed("id", "object"), on="object", how="inner")
+        .count()
+    )
+    if edges.count() != match_count:
         raise Exception("Nodes and Edges are mismatching post-normalization; please investigate")
+    return None
 
 
 @check_output(
