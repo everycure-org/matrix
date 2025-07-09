@@ -94,10 +94,16 @@ def get_kg_raw_path_for_source(source_name: str) -> str:
             logging.warning(f"Globals configuration file not found at {globals_path}. Using default values.")
             globals_config = {}
 
-            # Extract bucket configurations from globals
-            dev_bucket = globals_config.get("dev_gcs_bucket", "gs://mtrx-us-central1-hub-dev-storage")
-            prod_bucket = globals_config.get("prod_gcs_bucket", "gs://mtrx-us-central1-hub-prod-storage")
-            public_bucket = globals_config.get("public_gcs_bucket", "gs://data.dev.everycure.org")
+        # Extract bucket configurations from globals or environment variables
+        dev_bucket = globals_config.get("dev_gcs_bucket") or os.getenv(
+            "DEV_GCS_BUCKET", "gs://mtrx-us-central1-hub-dev-storage"
+        )
+        prod_bucket = globals_config.get("prod_gcs_bucket") or os.getenv(
+            "PROD_GCS_BUCKET", "gs://mtrx-us-central1-hub-prod-storage"
+        )
+        public_bucket = globals_config.get("public_gcs_bucket") or os.getenv(
+            "PUBLIC_GCS_BUCKET", "gs://data.dev.everycure.org"
+        )
 
         # Importing here to avoid circular import
         # TODO: Refactor to avoid circular import
@@ -131,5 +137,5 @@ def get_kg_raw_path_for_source(source_name: str) -> str:
     except Exception as e:
         logging.error(f"Error resolving kg_raw path for source '{source_name}': {e}")
         # If there's any error, default to dev bucket
-        dev_bucket = os.getenv("DEV_GCS_BUCKET", "gs://mtrx-hub-dev-3of")
+        dev_bucket = os.getenv("DEV_GCS_BUCKET", "gs://mtrx-us-central1-hub-dev-storage")
         return f"{dev_bucket}/data/01_RAW"
