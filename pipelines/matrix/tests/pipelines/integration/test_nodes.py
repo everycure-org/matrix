@@ -148,6 +148,164 @@ def sample_edges(spark):
 
 
 @pytest.fixture
+def sample_nodes_norm(spark):
+    schema = StructType(
+        [
+            StructField("original_id", StringType(), False),
+            StructField("name", StringType(), True),
+            StructField("category", StringType(), False),
+            StructField("description", StringType(), True),
+            StructField("equivalent_identifiers", ArrayType(StringType()), True),
+            StructField("all_categories", ArrayType(StringType()), True),
+            StructField("publications", ArrayType(StringType()), True),
+            StructField("labels", ArrayType(StringType()), True),
+            StructField("international_resource_identifier", StringType(), True),
+            StructField("upstream_data_source", ArrayType(StringType()), False),
+            StructField("id", StringType(), False),
+            StructField("normalization_success", StringType(), False),
+        ]
+    )
+    data = [
+        (
+            "Chembl:119157",
+            "Drug1",
+            "biolink:Drug",
+            "Description1",
+            ["CHEBI:119157"],
+            ["biolink:Drug", "biolink:ChemicalEntity"],
+            ["PMID:12345678"],
+            ["Label1"],
+            "http://example.com/1",
+            ["source1"],
+            "CHEBI:119157",
+            True,
+        ),
+        (
+            "EFO:1234",
+            "Disease1",
+            "biolink:Disease",
+            "Description2",
+            ["MONDO:0005148"],
+            ["biolink:Disease"],
+            ["PMID:23456789"],
+            ["Label2"],
+            "http://example.com/2",
+            ["source2"],
+            "MONDO:0005148",
+            True,
+        ),
+        (
+            "DRUGBANK:119157",
+            "Drug1",
+            "biolink:Drug",
+            "Description3",
+            ["CHEBI:119157"],
+            ["biolink:Drug", "biolink:SmallMolecule"],
+            ["PMID:34567890"],
+            ["Label3"],
+            "http://example.com/3",
+            ["source3"],
+            "DRUGBANK:119157",
+            True,
+        ),
+    ]
+    return spark.createDataFrame(data, schema)
+
+
+@pytest.fixture
+def sample_norm_edges(spark):
+    schema = StructType(
+        [
+            StructField("original_subject", StringType(), False),
+            StructField("predicate", StringType(), False),
+            StructField("original_object", StringType(), False),
+            StructField("knowledge_level", StringType(), True),
+            StructField("agent_type", StringType(), True),
+            StructField("primary_knowledge_source", StringType(), True),
+            StructField("aggregator_knowledge_source", ArrayType(StringType()), True),
+            StructField("publications", ArrayType(StringType()), True),
+            StructField("subject_aspect_qualifier", StringType(), True),
+            StructField("subject_direction_qualifier", StringType(), True),
+            StructField("object_aspect_qualifier", StringType(), True),
+            StructField("object_direction_qualifier", StringType(), True),
+            StructField("upstream_data_source", ArrayType(StringType()), False),
+            StructField("num_references", IntegerType(), True),
+            StructField("num_sentences", IntegerType(), True),
+            StructField("object", StringType(), False),
+            StructField("object_normalization_success", StringType(), False),
+            StructField("subject", StringType(), False),
+            StructField("subject_normalization_success", StringType(), False),
+        ]
+    )
+    data = [
+        (
+            "Chembl:119157",
+            "biolink:treats",
+            "EFO:1234",
+            "knowledge_assertion",
+            "manual_agent",
+            "infores:semmeddb",
+            ["infores:aggregator1"],
+            ["PMID:12345678"],
+            "aspect1",
+            "increased",
+            "aspect2",
+            "decreased",
+            ["source1"],
+            10,
+            10,
+            "CHEBI:119157",
+            True,
+            "MONDO:0005148",
+            True,
+        ),
+        (
+            "Chembl:119157",
+            "biolink:interacts_with",
+            "DRUGBANK:119157",
+            "prediction",
+            "computational_model",
+            "infores:gtex",
+            ["infores:aggregator2"],
+            ["PMID:23456789"],
+            "aspect3",
+            "decreased",
+            "aspect4",
+            "increased",
+            ["source2"],
+            10,
+            10,
+            "CHEBI:119157",
+            True,
+            "DRUGBANK:119157",
+            True,
+        ),
+        (
+            "DRUGBANK:119157",
+            "biolink:treats",
+            "EFO:1234",
+            "knowledge_assertion",
+            "manual_agent",
+            "infores:ubergraph",
+            ["infores:aggregator3"],
+            ["PMID:34567890"],
+            "aspect5",
+            "increased",
+            "aspect6",
+            "decreased",
+            ["source3"],
+            10,
+            10,
+            "DRUGBANK:119157",
+            True,
+            "MONDO:0005148",
+            True,
+        ),
+    ]
+    return spark.createDataFrame(data, schema)
+
+
+@pytest.fixture
 def sample_biolink_predicates():
     return [
         {
@@ -228,6 +386,28 @@ def sample_biolink_category_hierarchy():
             ],
         }
     ]
+
+
+@pytest.mark.spark(
+    help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
+)
+def test_normalization_summary(spark, sample_norm_nodes, sample_norm_edges):
+    # Create two node datasets
+    nodes1 = sample_nodes.filter(sample_nodes.id != "MONDO:0005148")
+    nodes2 = sample_nodes.filter(sample_nodes.id != "CHEBI:119157")
+
+    # Call the unify_nodes function
+    result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, nodes1, nodes2)
+
+    # Check the result
+    assert isinstance(result, ps.DataFrame)
+    assert result.count() == 2  # Should have deduplicated
+
+    # Check if the properties are combined correctly for the duplicated node
+    drug_node = result.filter(result.id == "CHEBI:119157").collect()[0]
+    assert set(drug_node.all_categories) == {"biolink:Drug", "biolink:ChemicalEntity", "biolink:SmallMolecule"}
+    assert set(drug_node.publications) == {"PMID:12345678", "PMID:34567890"}
+    assert set(drug_node.upstream_data_source) == {"source1", "source3"}
 
 
 @pytest.mark.spark(
