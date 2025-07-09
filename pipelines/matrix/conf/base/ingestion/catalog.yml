@@ -449,11 +449,11 @@ ingestion.raw.spoke.edges@pandas:
 
 ingestion.int.spoke.nodes:
  <<: [*_spark_parquet, *_layer_int]
- filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/nodes
+ filepath: ${globals:paths.kg_raw_private}/int/spoke/${globals:data_sources.spoke.version}/nodes
 
 ingestion.int.spoke.edges:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/edges
+  filepath: ${globals:paths.kg_raw_private}/int/spoke/${globals:data_sources.spoke.version}/edges
 
 # -------------------------------------------------------------------------
 # Embiology
@@ -478,8 +478,8 @@ ingestion.raw.embiology.edges@pandas:
 
 ingestion.int.embiology.nodes:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/embiology/${globals:data_sources.embiology.version}/nodes
+  filepath: ${globals:paths.kg_raw_private}/int/embiology/${globals:data_sources.embiology.version}/nodes
 
 ingestion.int.embiology.edges:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/embiology/${globals:data_sources.embiology.version}/edges
+  filepath: ${globals:paths.kg_raw_private}/int/embiology/${globals:data_sources.embiology.version}/edges
