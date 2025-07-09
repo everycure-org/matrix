@@ -1,56 +1,53 @@
-# matrix
+# MATRIX Kedro Project
 
-## Overview
+This directory is a codebase for data processing and ML modelling for our drug repurposing platform. Our pipeline is built using [Kedro documentation](https://docs.kedro.org) so we encourage you to get familiar with this library to utilize kedro to its full potential within MATRIX
 
-This is your new Kedro project with Kedro-Viz setup, which was generated using `kedro 0.19.5`.
+## How to install dependencies & run the pipeline? 
+More detailed instructions on setting up your MATRIX project can be found here however below we also provide quick & simple instructions for Mac OS (instructions for other OS can be found within documentation).
 
-Take a look at the [Kedro documentation](https://docs.kedro.org) to get started.
+0. Install dependencies required for our pipeline
+```bash
+# Install pyenv - for python version management
+brew install pyenv 
+pyenv install 3.11 
+
+# Install uv - for library management
+brew install uv python@3.11
+
+# Install docker - required for Neo4j set-up
+brew install --cask docker #installs docker desktop
+brew install docker docker-compose #installs CLI commands
+
+# Install Java - required for PySpark operations
+brew install openjdk@17
+brew link --overwrite openjdk@17
+```
+
+1. Create Virtual Enviroment & Install Dependencies
+```
+make install
+```
+2. M
+TODO:
+
+
+Declare any dependencies in `requirements.in` for `pip` installation.
+
+To install them, run the following within your virtual environment (we recommend using [uv](https://docs.astral.sh/uv/) & Python 3.11):
+
+```
+uv pip install -r requirements.txt
+```
+
 
 ## Rules and guidelines
 
-In order to get the best out of the template:
+In order to get the best out of the kedro project template:
 
 * Don't remove any lines from the `.gitignore` file we provide
 * Make sure your results can be reproduced by following a [data engineering convention](https://docs.kedro.org/en/stable/faq/faq.html#what-is-data-engineering-convention)
 * Don't commit data to your repository
 * Don't commit any credentials or your local configuration to your repository. Keep all your credentials and local configuration in `conf/local/`
-
-## How to install dependencies
-
-Declare any dependencies in `requirements.in` for `pip` installation.
-
-To install them, run:
-
-```
-pip install -r requirements.txt
-```
-
-if you run into this error 
-
-```bash
-ERROR: Invalid requirement: './packages/data_fabricator': Expected package name at the start of dependency specifier
-    ./packages/data_fabricator
-    ^ (from line XX of requirements.txt)
-Hint: It looks like a path. File './packages/data_fabricator' does not exist.
-```
-
-you would need to run the command below. The command might fail if your `packages` folder already exists, in this case delete it. 
-
-```bash
-git submodule update --init --recursive
-```
-
-P.S: After running the above command, a browser would open to authenticate with Github. This is normal. If nothing happens (incase of using PyCharm IDE), suggestion would be run this through the shell (terminal).
-
-
-## How to run your Kedro pipeline
-
-You can run your Kedro project with:
-
-```
-kedro run
-```
-
 ## How to test your Kedro project
 
 Have a look at the files `src/tests/test_run.py` and `src/tests/pipelines/data_science/test_pipeline.py` for instructions on how to write your tests. Run the tests as follows:
@@ -112,6 +109,7 @@ To automatically strip out all output cell contents before committing to `git`, 
 > *Note:* Your output cells will be retained locally.
 
 [Further information about using notebooks for experiments within Kedro projects](https://docs.kedro.org/en/develop/notebooks_and_ipython/kedro_and_notebooks.html).
+
 ## Package your Kedro project
 
 [Further information about building project documentation and packaging your project](https://docs.kedro.org/en/stable/tutorial/package_a_project.html).
