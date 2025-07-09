@@ -211,3 +211,31 @@ The `experiment run` command does the following:
 7. Submit workflow to Argo.
 
 See `pipelines/matrix/src/matrix/cli_commands/experiment.py` for more details.
+
+## Dynamic Bucket Selection for Data Sources
+
+Matrix uses dynamic resolvers to select the correct Google Cloud Storage (GCS) bucket for each data source, based on its privacy and environment flags. This ensures that public, private, and development data are always read from and written to the appropriate location, without hardcoding bucket paths in your configuration files.
+
+### How it works
+- Each data source in the pipeline configuration can be marked with `is_public` or `is_private` in the `settings.py` file.
+- The resolver `get_kg_raw_path_for_source(source_name)` will automatically select the correct bucket path for you:
+    - Public sources → public bucket
+    - Private sources → prod bucket
+    - Others → dev bucket (default)
+- This logic is defined in `pipelines/matrix/src/matrix/resolvers.py` and registered in `settings.py`.
+
+### Example usage in catalog.yml
+```yaml
+ingestion.raw.rtx_kg2.nodes@pandas:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${get_kg_raw_path_for_source:rtx_kg2}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes.tsv
+```
+
+This replaces older patterns like `${globals:paths.kg_raw}` and ensures the correct bucket is always used, even as source privacy flags or environment variables change.
+
+**Required environment variables:**
+- `DEV_GCS_BUCKET`
+- `PROD_GCS_BUCKET`
+- `PUBLIC_GCS_BUCKET`
+
+See also the main README for a summary and the code in `resolvers.py` for details.
