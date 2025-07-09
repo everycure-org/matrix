@@ -103,10 +103,10 @@ jobs:
       - run: make fetch_secrets
       
       # Run commands in parallel
-      # - run: uv run kedro catalog resolve --env base
-      # - run: uv run kedro catalog resolve --env cloud
-      # - run: uv run kedro catalog resolve --env test
-      # - run: make full_test
+      - run: uv run kedro catalog resolve --env base
+      - run: uv run kedro catalog resolve --env cloud
+      - run: uv run kedro catalog resolve --env test
+      - run: make full_test
       - run: make compose_down # ensures containers & state are removed
       - run: make docker_test GIT_SHA="${GITHUB_SHA:0:7}" #we overwrite the GIT_SHA in the Makefile
         # only if PR is labelled with "ready" or if branch is main
