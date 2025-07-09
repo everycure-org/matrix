@@ -18,7 +18,7 @@ from matrix.utils.hook_utilities import (
     generate_dynamic_pipeline_mapping,
 )
 
-from .resolvers import cast_to_int, env, if_null, merge_dicts
+from .resolvers import cast_to_int, env, get_kg_raw_path_for_source, if_null, merge_dicts
 
 
 def validate_disease_split_folds(parameters):
@@ -70,11 +70,12 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 "n_cross_val_folds": 3,
             },
             "integration": [
-                {"name": "rtx_kg2", "integrate_in_kg": True, "is_private": False},
+                {"name": "rtx_kg2", "integrate_in_kg": True, "is_private": False, "is_public": True},
                 {"name": "spoke", "integrate_in_kg": True, "is_private": True},
                 {"name": "embiology", "integrate_in_kg": True, "is_private": True},
-                {"name": "robokop", "integrate_in_kg": True, "is_private": False},
+                {"name": "robokop", "integrate_in_kg": True, "is_private": False, "is_public": True},
                 {"name": "ec_medical_team", "integrate_in_kg": True},
+                # {"name": "ec_medical_team", "integrate_in_kg": True},
                 {"name": "drug_list", "integrate_in_kg": False, "has_edges": False},
                 {"name": "disease_list", "integrate_in_kg": False, "has_edges": False},
                 {"name": "ground_truth", "integrate_in_kg": False, "has_nodes": False},
@@ -145,6 +146,7 @@ CONFIG_LOADER_ARGS = {
         "setting": _load_setting,
         "if_null": if_null,
         "validate_disease_split": validate_disease_split_folds,
+        "get_kg_raw_path_for_source": get_kg_raw_path_for_source,
     },
 }
 
