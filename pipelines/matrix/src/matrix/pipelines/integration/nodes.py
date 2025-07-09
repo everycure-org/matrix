@@ -160,7 +160,7 @@ def normalize_edges(
         }
     )
     edges = edges.join(subject_normalized_mapping_df, on="subject", how="left")
-    edges = edges.withColumn("subject_normalized", F.coalesce("subject", "subject_normalized"))
+    edges = edges.withColumn("subject_normalized", F.coalesce("subject_normalized", "subject"))
 
     object_normalized_mapping_df = mapping_df.withColumnsRenamed(
         {
@@ -170,7 +170,7 @@ def normalize_edges(
         }
     )
     edges = edges.join(object_normalized_mapping_df, on="object", how="left")
-    edges = edges.withColumn("object_normalized", F.coalesce("object", "object_normalized"))
+    edges = edges.withColumn("object_normalized", F.coalesce("object_normalized", "object"))
 
     edges = edges.withColumnsRenamed({"subject": "original_subject", "object": "original_object"})
     edges = edges.withColumnsRenamed({"subject_normalized": "subject", "object_normalized": "object"})
