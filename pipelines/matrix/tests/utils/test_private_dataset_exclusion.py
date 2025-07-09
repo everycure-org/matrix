@@ -2,9 +2,8 @@ import os
 from unittest.mock import patch
 
 import pytest
+from matrix.resolvers import get_kg_raw_path_for_source
 from matrix.utils.hook_utilities import disable_private_datasets, generate_dynamic_pipeline_mapping
-
-from pipelines.matrix.src.matrix.resolvers import get_kg_raw_path_for_source
 
 
 @pytest.fixture
