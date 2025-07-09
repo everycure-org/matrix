@@ -80,7 +80,7 @@ class NCATSNodeNormalizer(Normalizer):
         try:
             curie_info = response.get(id)
             if curie_info is None:
-                return {"normalized_id": None, "normalized_categories": []}
+                return {"normalized_id": None, "normalized_categories": [default_normalizer_category]}
             normalized_id = str(json_parser["id"].find(curie_info)[0].value)
             # Find categories for CURIE in NN. If no categories are present, use default
             categories = [match.value for match in json_parser["category"].find(curie_info)] or [
