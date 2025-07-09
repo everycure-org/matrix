@@ -119,7 +119,7 @@ def get_kg_raw_path_for_source(source_name: str) -> str:
                     bucket = dev_bucket
                     bucket_type = "development"
 
-                logging.warning(f"Using {bucket_type} bucket for source: {source_name}: {bucket}{path_suffix}")
+                logging.info(f"Using {bucket_type} bucket for source: {source_name}: {bucket}{path_suffix}")
                 return f"{bucket}{path_suffix}"
 
         # Default to development bucket if source not found
