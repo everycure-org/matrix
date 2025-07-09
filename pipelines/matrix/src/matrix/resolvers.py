@@ -1,25 +1,12 @@
+import logging
 import os
 from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from dotenv import find_dotenv, load_dotenv
 from omegaconf import OmegaConf
 
-
-def load_environment_variables():
-    """Load environment variables from .env.defaults and .env files.
-
-    .env.defaults is loaded first, then .env overwrites any existing values.
-    """
-    defaults_path = Path(".env.defaults")
-    if defaults_path.exists():
-        load_dotenv(dotenv_path=defaults_path, override=False)
-
-    env_path = find_dotenv(usecwd=True)
-    if env_path:
-        load_dotenv(dotenv_path=env_path, override=True)
-
+from matrix.utils.environment import load_environment_variables
 
 # This ensures that environment variables are loaded at module import and thus
 # before the pipeline is run or any data is loaded.
@@ -110,24 +97,33 @@ def get_kg_raw_path_for_source(source_name: str) -> str:
             public_bucket = globals_config.get("public_gcs_bucket", "gs://data.dev.everycure.org")
 
         # Importing here to avoid circular import
+        # TODO: Refactor to avoid circular import
         from matrix.settings import DYNAMIC_PIPELINES_MAPPING
 
         pipeline_mapping = DYNAMIC_PIPELINES_MAPPING()
         integration_sources = pipeline_mapping.get("integration", [])
 
         # Find the source configuration
+        path_suffix = "/data/01_RAW"
+        include_private = os.getenv("INCLUDE_PRIVATE_DATASETS", "0") == "1"
+
         for source_config in integration_sources:
             if source_config.get("name") == source_name:
-                # Priority: is_public > is_private > default (dev)
                 if source_config.get("is_public", False):
-                    return f"{public_bucket}/data/01_RAW"
-                elif source_config.get("is_private", False) and os.getenv("INCLUDE_PRIVATE_DATASETS", "0") == "1":
-                    return f"{prod_bucket}/data/01_RAW"
+                    bucket = public_bucket
+                    bucket_type = "public"
+                elif source_config.get("is_private", False) and include_private:
+                    bucket = prod_bucket
+                    bucket_type = "private"
                 else:
-                    return f"{dev_bucket}/data/01_RAW"
+                    bucket = dev_bucket
+                    bucket_type = "development"
 
-        # If source not found, default to dev bucket
-        return f"{dev_bucket}/data/01_RAW"
+                logging.warning(f"Using {bucket_type} bucket for source: {source_name}: {bucket}{path_suffix}")
+                return f"{bucket}{path_suffix}"
+
+        # Default to development bucket if source not found
+        return f"{dev_bucket}{path_suffix}"
 
     except Exception:
         # If there's any error, default to dev bucket
