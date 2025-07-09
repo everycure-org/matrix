@@ -1,7 +1,36 @@
+_pandas_csv: &_pandas_csv
+  type:  pandas.CSVDataset
+
+_pandas_parquet_ds: &_pandas_parquet
+  type: matrix.datasets.graph.PandasParquetDataset
+  save_args:
+    engine: pyarrow
+  load_args:
+    engine: pyarrow
+
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+_spark_csv: &_spark_csv
+  type: spark.SparkDataset
+  file_format: csv
+  load_args:
+    header: True
+  save_args:
+    mode: overwrite
+
 _layer_raw: &_layer_raw
   metadata:
     kedro-viz:
       layer: raw
+
+_layer_int: &_layer_int
+  metadata:
+    kedro-viz:
+      layer: integration
       
 ingestion.raw.disease_list:
   <<: [*_layer_raw]
