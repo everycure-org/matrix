@@ -30,7 +30,7 @@ from kedro.io import DataCatalog
 from kedro.pipeline.pipeline import Pipeline
 from kedro.utils import load_obj
 
-from matrix.resolvers import load_environment_variables
+from matrix.utils.environment import load_environment_variables
 
 # Load environment variables from .env.defaults and .env
 load_environment_variables()
