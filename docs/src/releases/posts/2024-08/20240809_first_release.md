@@ -1,4 +1,5 @@
 ---
+title: v0.1
 draft: false 
 date: 2024-08-09 
 categories:

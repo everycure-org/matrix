@@ -58,6 +58,9 @@ mlflow:
           component: mlflow-postgresql
     auth:
       existingSecret: pgsql-creds
+    # Global PostgreSQL configuration with nodeSelector
+    nodeSelector:
+      workload-type: management
 
   minio:
     enabled: false
