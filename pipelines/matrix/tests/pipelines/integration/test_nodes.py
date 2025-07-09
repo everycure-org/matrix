@@ -391,14 +391,30 @@ def sample_biolink_category_hierarchy():
 @pytest.mark.spark(
     help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
 )
-def test_normalization_summary(spark, sample_norm_nodes, sample_norm_edges):
+def test_normalization_summary_nodes_and_edges(spark, sample_nodes_norm, sample_norm_edges):
+    normalization_summary = nodes.normalization_summary_nodes_and_edges(
+        sample_nodes_norm, sample_norm_edges, "source_kg"
+    )
+    pass
+
+    # result = nodes.normalization_summary(sample_nodes_norm, sample_norm_edges)
+    # assert isinstance(result, ps.DataFrame)
+    # assert result.count() == 3
+    # assert result.filter(result.normalization_success == False).count() == 0
+    # assert result.filter(result.normalization_success == True).count() == 3
+    # assert result.filter(result.normalization_success == True).count() == 3
+
+
+@pytest.mark.spark(
+    help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
+)
+def test_unification_and_deduplication(spark, sample_nodes, sample_biolink_category_hierarchy):
     # Create two node datasets
     nodes1 = sample_nodes.filter(sample_nodes.id != "MONDO:0005148")
     nodes2 = sample_nodes.filter(sample_nodes.id != "CHEBI:119157")
 
     # Call the unify_nodes function
     result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, nodes1, nodes2)
-
     # Check the result
     assert isinstance(result, ps.DataFrame)
     assert result.count() == 2  # Should have deduplicated
