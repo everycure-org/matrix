@@ -18,7 +18,14 @@ logger = logging.getLogger(__name__)
 
 
 class NCATSNodeNormalizer(Normalizer):
-    """Class to represent normalizer from translator."""
+    """Represents the NCATS Node Normalizer from Translator.
+
+    This class provides an interface to the Node Normalization service:
+    https://github.com/TranslatorSRI/NodeNormalization/blob/0c0d8fd0c49d87d86d8e2e6780f782a6f9c7d766/documentation/API.md#get_normalized_nodes
+
+    It supports batch normalization of CURIE identifiers, category extraction,
+    and optional conflation settings for drugs and chemicals.
+    """
 
     def __init__(
         self,
