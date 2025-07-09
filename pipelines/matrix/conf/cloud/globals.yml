@@ -24,6 +24,7 @@ paths:
   raw:                ${dev_gcs_bucket}/kedro/data/01_raw
   kg_raw:             ${dev_gcs_bucket}/data/01_RAW
   kg_raw_private:     ${prod_gcs_bucket}/data/01_RAW
+  kg_public_raw:      ${public_gcs_bucket}/data/01_RAW
 
   # Release-based
   ingestion:          ${release_dir}/datasets/ingestion
