@@ -1,0 +1,9 @@
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshot
+metadata:
+  name: mlflow-pg-snap
+  namespace: mlflow
+spec:
+  volumeSnapshotClassName: standard-snapclass
+  source:
+    persistentVolumeClaimName: data-mlflow-postgresql-0
