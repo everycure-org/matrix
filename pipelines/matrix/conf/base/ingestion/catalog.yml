@@ -36,7 +36,7 @@ _layer_int: &_layer_int
 # RTX-KG2
 # -------------------------------------------------------------------------  
 
-ingestion.raw.rtx_kg2.curie_to_pmids@pandas:
+kg@pandas:
   type: pandas.SQLTableDataset
   table_name: curie_to_pmids  
   credentials: sqlite_credentials
