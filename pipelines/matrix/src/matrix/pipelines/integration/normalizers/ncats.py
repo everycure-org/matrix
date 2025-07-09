@@ -90,4 +90,4 @@ class NCATSNodeNormalizer(Normalizer):
             return {"normalized_id": normalized_id, "normalized_categories": categories}
         except (IndexError, KeyError):
             logger.debug(f"Not able to normalize for {id}: {response.get(id)}, {json_parser}")
-            return {"normalized_id": None, "normalized_categories": []}
+            return {"normalized_id": None, "normalized_categories": [default_normalizer_category]}
