@@ -57,4 +57,4 @@ ingestion.int.embiology.nodes:
 ingestion.int.embiology.edges:
   <<: *_bigquery_ds
   filepath: ${globals:paths.ingestion}/int/embiology/${globals:data_sources.embiology.version}/edges
-  table: embiology_edges_ingested_${globals:data_sources.embiology.version}
+  table: embiology_edges_ingested
