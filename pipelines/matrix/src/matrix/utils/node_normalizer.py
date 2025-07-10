@@ -18,16 +18,12 @@ NODE_NORMALIZER_CONFIGURATIONS = {
 }
 
 
-def _get_node_normalization_endpoint(config: dict[str, str]):
-    return f"{config['protocol_and_domain']}{config['get_normalized_nodes_path']}"
-
-
 @functools.cache
-def _get_node_normalization_version(config: dict[str, str]):
-    nn_openapi_json_url = f"{config['protocol_and_domain']}{config['openapi_path']}"
+def _get_node_normalization_version(protocol_and_domain: str, openapi_path: str, source: str):
+    nn_openapi_json_url = f"{protocol_and_domain}{openapi_path}"
     json_response = requests.get(f"{nn_openapi_json_url}").json()
     version = json_response["info"]["version"]
-    return f"nodenorm-{config['source'].lower()}-{version}"
+    return f"nodenorm-{source.lower()}-{version}"
 
 
 def get_node_normalization_settings(config_name: str):
@@ -36,6 +32,8 @@ def get_node_normalization_settings(config_name: str):
 
     config = NODE_NORMALIZER_CONFIGURATIONS[config_name]
     return {
-        "endpoint": _get_node_normalization_endpoint(config),
-        "version": _get_node_normalization_version(config),
+        "endpoint": f"{config['protocol_and_domain']}{config['get_normalized_nodes_path']}",
+        "version": _get_node_normalization_version(
+            config["protocol_and_domain"], config["openapi_path"], config["source"]
+        ),
     }
