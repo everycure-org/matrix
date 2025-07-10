@@ -4,13 +4,7 @@ import pyspark.sql as ps
 import pytest
 from matrix.pipelines.integration import nodes
 from pyspark.sql import functions as F
-from pyspark.sql.types import (
-    ArrayType,
-    IntegerType,
-    StringType,
-    StructField,
-    StructType,
-)
+from pyspark.sql.types import ArrayType, BooleanType, IntegerType, StringType, StructField, StructType
 
 
 @pytest.fixture
@@ -162,7 +156,7 @@ def sample_nodes_norm(spark):
             StructField("international_resource_identifier", StringType(), True),
             StructField("upstream_data_source", ArrayType(StringType()), False),
             StructField("id", StringType(), False),
-            StructField("normalization_success", StringType(), False),
+            StructField("normalization_success", BooleanType, False),
         ]
     )
     data = [
@@ -232,9 +226,9 @@ def sample_edges_norm(spark):
             StructField("num_references", IntegerType(), True),
             StructField("num_sentences", IntegerType(), True),
             StructField("object", StringType(), False),
-            StructField("object_normalization_success", StringType(), False),
+            StructField("object_normalization_success", BooleanType(), False),
             StructField("subject", StringType(), False),
-            StructField("subject_normalization_success", StringType(), False),
+            StructField("subject_normalization_success", BooleanType(), False),
         ]
     )
     data = [
