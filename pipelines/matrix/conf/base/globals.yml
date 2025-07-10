@@ -11,6 +11,7 @@ neo4j:
 # We always ingest public datasets from the dev bucket, to avoid having to keep it in sync between prod and dev bucket.
 dev_gcs_bucket: gs://mtrx-us-central1-hub-dev-storage
 prod_gcs_bucket: gs://mtrx-us-central1-hub-prod-storage
+public_gcs_bucket: gs://data.dev.everycure.org
 
 runtime_gcs_bucket: gs://${oc.env:RUNTIME_GCP_BUCKET}
 runtime_gcp_project: ${oc.env:RUNTIME_GCP_PROJECT_ID}
@@ -65,6 +66,7 @@ paths:
   raw:                ${dev_gcs_bucket}/kedro/data/01_raw
   kg_raw:             ${dev_gcs_bucket}/data/01_RAW
   kg_raw_private:     ${prod_gcs_bucket}/data/01_RAW
+  public_kg_raw:      ${public_gcs_bucket}/data/01_RAW
   ingestion:          data/ingestion
 
   # Release-based
