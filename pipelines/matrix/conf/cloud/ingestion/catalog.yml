@@ -41,7 +41,7 @@ ingestion.int.robokop.edges:
 ingestion.int.spoke.nodes:
   <<: *_bigquery_ds
   filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/nodes
-  table: spoke_nodes_ingested_${globals:data_sources.spoke.version}
+  table: spoke_nodes_ingested
 
 ingestion.int.spoke.edges:
   <<: *_bigquery_ds
