@@ -398,15 +398,12 @@ def test_normalization_summary_nodes_and_edges(spark, sample_nodes_norm, sample_
     assert result.count() == sample_edges_norm.count() * 2
 
     # Check whether error handling works in case of nodes-edges mismatch
-    try:
+    with pytest.raises(Exception) as e_info:
         nodes.normalization_summary_nodes_and_edges(
             sample_edges_norm,
             sample_nodes_norm.withColumns("id", F.regexp_replace("id", "DRUGBANK", "wrong_id")),
             "source_kg",
         )
-        assert False
-    except Exception:
-        assert True
 
 
 @pytest.mark.spark(
