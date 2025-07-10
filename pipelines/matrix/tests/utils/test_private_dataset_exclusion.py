@@ -2,9 +2,8 @@ import os
 from unittest.mock import patch
 
 import pytest
+from matrix.resolvers import get_kg_raw_path_for_source
 from matrix.utils.hook_utilities import disable_private_datasets, generate_dynamic_pipeline_mapping
-
-from pipelines.matrix.src.matrix.resolvers import get_kg_raw_path_for_source
 
 
 @pytest.fixture
@@ -66,6 +65,7 @@ def test_get_kg_raw_path_for_source_resolver():
         "DEV_GCS_BUCKET": "gs://mtrx-hub-dev-3of",
         "PROD_GCS_BUCKET": "gs://mtrx-us-central1-hub-prod-storage",
         "PUBLIC_GCS_BUCKET": "gs://data.dev.everycure.org",
+        "INCLUDE_PRIVATE_DATASETS": "1",  # Simulate prod environment
     }
 
     with patch("matrix.settings.DYNAMIC_PIPELINES_MAPPING", return_value=mock_mapping), patch.dict(
@@ -87,8 +87,8 @@ def test_get_kg_raw_path_for_source_resolver():
 
         # Standard sources (neither private nor public) should use dev bucket
         result = get_kg_raw_path_for_source("standard_source")
-        assert result == "gs://mtrx-hub-dev-3of/data/01_RAW"
+        assert result == "gs://mtrx-us-central1-hub-dev-storage/data/01_RAW"
 
         # Unknown source should default to dev bucket
         result = get_kg_raw_path_for_source("unknown_source")
-        assert result == "gs://mtrx-hub-dev-3of/data/01_RAW"
+        assert result == "gs://mtrx-us-central1-hub-dev-storage/data/01_RAW"
