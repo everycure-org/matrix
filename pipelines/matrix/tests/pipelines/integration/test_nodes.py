@@ -386,10 +386,16 @@ def sample_biolink_category_hierarchy():
     help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
 )
 def test_normalization_summary_nodes_and_edges(spark, sample_nodes_norm, sample_edges_norm):
-    normalization_summary = nodes.normalization_summary_nodes_and_edges(
-        sample_edges_norm, sample_nodes_norm, "source_kg"
-    )
-    pass
+    # test whether exception throwing works when the ids between nodes and edges are mismatching
+    try:
+        nodes.normalization_summary_nodes_and_edges(
+            sample_edges_norm,
+            sample_nodes_norm.withColumns("id", F.regexp_replace("id", "DRUGBANK", "wrong_id")),
+            "source_kg",
+        )
+        assert False
+    except Exception:
+        assert True
 
     # result = nodes.normalization_summary(sample_nodes_norm, sample_norm_edges)
     # assert isinstance(result, ps.DataFrame)
