@@ -200,7 +200,7 @@ def sample_nodes_norm(spark):
             "http://example.com/3",
             ["source3"],
             "DRUGBANK:119157",
-            True,
+            False,
         ),
     ]
     return spark.createDataFrame(data, schema)
@@ -225,10 +225,10 @@ def sample_edges_norm(spark):
             StructField("upstream_data_source", ArrayType(StringType()), False),
             StructField("num_references", IntegerType(), True),
             StructField("num_sentences", IntegerType(), True),
-            StructField("object", StringType(), False),
-            StructField("object_normalization_success", BooleanType(), False),
             StructField("subject", StringType(), False),
             StructField("subject_normalization_success", BooleanType(), False),
+            StructField("object", StringType(), False),
+            StructField("object_normalization_success", BooleanType(), False),
         ]
     )
     data = [
@@ -272,7 +272,7 @@ def sample_edges_norm(spark):
             "CHEBI:119157",
             True,
             "DRUGBANK:119157",
-            True,
+            False,
         ),
         (
             "DRUGBANK:119157",
@@ -291,7 +291,7 @@ def sample_edges_norm(spark):
             10,
             10,
             "DRUGBANK:119157",
-            True,
+            False,
             "MONDO:0005148",
             True,
         ),
@@ -386,7 +386,18 @@ def sample_biolink_category_hierarchy():
     help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
 )
 def test_normalization_summary_nodes_and_edges(spark, sample_nodes_norm, sample_edges_norm):
-    # test whether exception throwing works when the ids between nodes and edges are mismatching
+    # Call the normalization summary function
+    result = nodes.normalization_summary_nodes_and_edges(
+        sample_edges_norm,
+        sample_nodes_norm,
+        "source_kg",
+    )
+
+    # Check if result column has correct summary data
+    assert result.filter(result.normalization_success == False).count() == 2
+    assert result.count() == sample_edges_norm.count() * 2
+
+    # Check whether error handling works in case of nodes-edges mismatch
     try:
         nodes.normalization_summary_nodes_and_edges(
             sample_edges_norm,
@@ -396,13 +407,6 @@ def test_normalization_summary_nodes_and_edges(spark, sample_nodes_norm, sample_
         assert False
     except Exception:
         assert True
-
-    # result = nodes.normalization_summary(sample_nodes_norm, sample_norm_edges)
-    # assert isinstance(result, ps.DataFrame)
-    # assert result.count() == 3
-    # assert result.filter(result.normalization_success == False).count() == 0
-    # assert result.filter(result.normalization_success == True).count() == 3
-    # assert result.filter(result.normalization_success == True).count() == 3
 
 
 @pytest.mark.spark(
