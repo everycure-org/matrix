@@ -213,7 +213,7 @@ def sample_nodes_norm(spark):
 
 
 @pytest.fixture
-def sample_norm_edges(spark):
+def sample_edges_norm(spark):
     schema = StructType(
         [
             StructField("original_subject", StringType(), False),
@@ -391,9 +391,9 @@ def sample_biolink_category_hierarchy():
 @pytest.mark.spark(
     help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
 )
-def test_normalization_summary_nodes_and_edges(spark, sample_nodes_norm, sample_norm_edges):
+def test_normalization_summary_nodes_and_edges(spark, sample_nodes_norm, sample_edges_norm):
     normalization_summary = nodes.normalization_summary_nodes_and_edges(
-        sample_nodes_norm, sample_norm_edges, "source_kg"
+        sample_edges_norm, sample_nodes_norm, "source_kg"
     )
     pass
 
