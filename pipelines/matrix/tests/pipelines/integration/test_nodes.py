@@ -408,27 +408,6 @@ def test_normalization_summary_nodes_and_edges(spark, sample_nodes_norm, sample_
 @pytest.mark.spark(
     help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
 )
-def test_unification_and_deduplication(spark, sample_nodes, sample_biolink_category_hierarchy):
-    # Create two node datasets
-    nodes1 = sample_nodes.filter(sample_nodes.id != "MONDO:0005148")
-    nodes2 = sample_nodes.filter(sample_nodes.id != "CHEBI:119157")
-
-    # Call the unify_nodes function
-    result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, nodes1, nodes2)
-    # Check the result
-    assert isinstance(result, ps.DataFrame)
-    assert result.count() == 2  # Should have deduplicated
-
-    # Check if the properties are combined correctly for the duplicated node
-    drug_node = result.filter(result.id == "CHEBI:119157").collect()[0]
-    assert set(drug_node.all_categories) == {"biolink:Drug", "biolink:ChemicalEntity", "biolink:SmallMolecule"}
-    assert set(drug_node.publications) == {"PMID:12345678", "PMID:34567890"}
-    assert set(drug_node.upstream_data_source) == {"source1", "source3"}
-
-
-@pytest.mark.spark(
-    help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
-)
 def test_unify_nodes(spark, sample_nodes, sample_biolink_category_hierarchy):
     # Create two node datasets
     nodes1 = sample_nodes.filter(sample_nodes.id != "MONDO:0005148")
