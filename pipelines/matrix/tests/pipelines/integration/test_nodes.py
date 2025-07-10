@@ -156,7 +156,7 @@ def sample_nodes_norm(spark):
             StructField("international_resource_identifier", StringType(), True),
             StructField("upstream_data_source", ArrayType(StringType()), False),
             StructField("id", StringType(), False),
-            StructField("normalization_success", BooleanType, False),
+            StructField("normalization_success", BooleanType(), False),
         ]
     )
     data = [
