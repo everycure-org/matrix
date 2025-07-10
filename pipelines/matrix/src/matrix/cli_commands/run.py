@@ -30,6 +30,11 @@ from kedro.io import DataCatalog
 from kedro.pipeline.pipeline import Pipeline
 from kedro.utils import load_obj
 
+from matrix.utils.environment import load_environment_variables
+
+# Load environment variables from .env.defaults and .env
+load_environment_variables()
+
 from matrix.session import KedroSessionWithFromCatalog
 
 
@@ -72,6 +77,7 @@ class RunConfig(NamedTuple):
 # fmt: on
 def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async: bool, node_names: list[str], to_nodes: list[str], from_nodes: list[str], from_inputs: list[str], to_outputs: list[str], load_versions: list[str], pipeline: str, conf_source: str, params: dict[str, Any], from_env: Optional[str]=None):
     """Run the pipeline."""
+    
 
     _validate_env_vars_for_private_data()
 
