@@ -46,7 +46,7 @@ ingestion.int.spoke.nodes:
 ingestion.int.spoke.edges:
   <<: *_bigquery_ds
   filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/edges
-  table: spoke_edges_ingested_${globals:data_sources.spoke.version}
+  table: spoke_edges_ingested
 
 # Ingested Embiology nodes/edges
 ingestion.int.embiology.nodes:
