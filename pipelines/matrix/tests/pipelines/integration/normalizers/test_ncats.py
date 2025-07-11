@@ -11,7 +11,18 @@ class AsyncMock(MagicMock):
                 "id": {"identifier": "CHEBI:normalized_001"},
                 "type": ["biolink:ChemicalEntity", "biolink:NamedThing"],
             },
-            "CHEBI:002": {"id": {"identifier": "CHEBI:normalized_002"}, "type": ["biolink:ChemicalEntity"]},
+            "CHEBI:002": {
+                "id": {"identifier": "CHEBI:normalized_002"},
+                "type": [
+                    "biolink:SmallMolecule",
+                    "biolink:MolecularEntity",
+                    "biolink:ChemicalEntity",
+                    "biolink:NamedThing",
+                ],
+            },
+            "CHEBI:003": {
+                "id": {"identifier": "CHEBI:normalized_003"},
+            },
         }
 
 
@@ -52,6 +63,16 @@ class AsyncMock(MagicMock):
                 {"normalized_id": None, "normalized_categories": ["biolink:NamedThing"]},
             ],
         ),
+        # Test node with missing 'type'
+        (
+            ["CHEBI:003"],
+            [
+                {
+                    "normalized_id": "CHEBI:normalized_003",
+                    "normalized_categories": ["biolink:NamedThing"],
+                }
+            ],
+        ),
     ],
 )
 async def test_apply(mock_post, input_df, expected_normalized_results):
@@ -67,19 +88,3 @@ async def test_apply(mock_post, input_df, expected_normalized_results):
 
     # Then output is of correctly structured, and correct identifiers are normalized.
     assert result == expected_normalized_results
-
-
-@pytest.mark.asyncio
-@patch("aiohttp.ClientSession.post", new_callable=AsyncMock)
-async def test_missing_categories(mock_post):
-    # Returns no 'type' to simulate missing categories
-    # Note that this should never happen in NN but a precaution
-    mock_post.return_value.__aenter__.return_value.json = AsyncMock(
-        return_value={"CHEBI:003": {"id": {"identifier": "CHEBI:normalized_003"}}}
-    )
-    mock_post.return_value.__aenter__.return_value.status = 200
-
-    normalizer = NCATSNodeNormalizer("http://mock-endpoint.com", True, True)
-    result = await normalizer.apply(["CHEBI:001"])
-    # Should fallback to biolink:NamedThing
-    assert result == [{"normalized_id": "CHEBI:normalized_003", "normalized_categories": ["biolink:NamedThing"]}]
