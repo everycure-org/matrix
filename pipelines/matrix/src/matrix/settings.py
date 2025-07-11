@@ -43,7 +43,6 @@ DISABLE_HOOKS_FOR_PLUGINS = ("kedro-mlflow",)
 DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
     generate_dynamic_pipeline_mapping(
         {
-            "node_norm": get_node_normalization_settings("RENCI"),  # could also be NCATS
             "cross_validation": {
                 "n_cross_val_folds": 3,
             },
@@ -83,9 +82,25 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                     "stability_name": "rank_commonality"
                 },  # note - rank_commonality will be only used if you have a shared commonality@k and spearman@k metrics
             ],
+            "node_norm": get_node_normalization_settings("RENCI"),  # could also be NCATS
         }
     )
 )
+
+NODE_NORMALIZER_CONFIGURATIONS = {
+    "RENCI": {
+        "source": "RENCI",
+        "protocol_and_domain": "https://nodenormalization-sri.renci.org",
+        "get_normalized_nodes_path": "/1.5/get_normalized_nodes",
+        "openapi_path": "/openapi.json",
+    },
+    "NCATS": {
+        "source": "NCATS",
+        "protocol_and_domain": "https://nodenorm.transltr.io",
+        "get_normalized_nodes_path": "/1.5/get_normalized_nodes",
+        "openapi_path": "/openapi.json",
+    },
+}
 
 
 def _load_setting(path):

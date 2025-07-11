@@ -2,20 +2,7 @@ import functools
 
 import requests
 
-NODE_NORMALIZER_CONFIGURATIONS = {
-    "RENCI": {
-        "source": "RENCI",
-        "protocol_and_domain": "https://nodenormalization-sri.renci.org",
-        "get_normalized_nodes_path": "/1.5/get_normalized_nodes",
-        "openapi_path": "/openapi.json",
-    },
-    "NCATS": {
-        "source": "NCATS",
-        "protocol_and_domain": "https://nodenorm.transltr.io",
-        "get_normalized_nodes_path": "/1.5/get_normalized_nodes",
-        "openapi_path": "/openapi.json",
-    },
-}
+from matrix.settings import NODE_NORMALIZER_CONFIGURATIONS
 
 
 @functools.cache
