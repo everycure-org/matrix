@@ -233,6 +233,36 @@ def normalize_nodes(
     )
 
 
+def check_nodes_and_edges_matching(edges: ps.DataFrame, nodes: ps.DataFrame):
+    """
+    Function examining if all nodes and edges are matching post-normalization.
+
+    All subjects/objects within edges dataframe should be found in nodes dataframe. If there are subject/object
+    identifiers which are not matching with nodes dataframe, error will be thrown.
+
+    Parameters
+    ----------
+    edges : pyspark.sql.DataFrame
+        A DataFrame containing normalized edges, including columns such as
+        `subject`, `object`, `original_subject`, `original_object`,
+        `subject_normalization_success`, and `object_normalization_success`.
+    nodes : pyspark.sql.DataFrame
+        A DataFrame containing normalized nodes, including `id` and optionally `category`.
+
+    Returns
+    -------
+    Nothing returned; error is thrown if mismatching
+    """
+    match_count = (
+        edges.join(nodes.withColumnRenamed("id", "subject"), on="subject", how="inner")
+        .join(nodes.withColumnRenamed("id", "object"), on="object", how="inner")
+        .count()
+    )
+    if edges.count() != match_count:
+        raise Exception("Nodes and Edges are mismatching post-normalization; please investigate")
+    return None
+
+
 @check_output(
     DataFrameSchema(
         columns={
@@ -279,12 +309,16 @@ def normalization_summary_nodes_and_edges(
                 - upstream_data_source: Name of the data source
     """
 
+
     formatted_mapping = mapping_df.select(
         "id",
         F.col("normalization_struct.normalized_categories")
         .cast(T.ArrayType(T.StringType()))
         .alias("normalized_categories"),
     )
+
+    # Check nodes and edges matching post-normalization
+    check_nodes_and_edges_matching(edges, nodes)
 
     nodes_for_join = nodes.select("id", "original_categories", "all_categories").join(
         formatted_mapping, on="id", how="left"
