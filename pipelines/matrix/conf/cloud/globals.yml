@@ -34,8 +34,8 @@ paths:
   release:            ${release_dir}/datasets/release
 
   # Run-based
-  filtering:          ${run_dir}/datasets/filtering
-  embeddings:         ${run_dir}/datasets/embeddings
+  filtering:          ${release_dir}/datasets/filtering
+  embeddings:         ${release_dir}/datasets/embeddings
   modelling:          ${run_dir}/datasets/modelling
   evaluation:         ${run_dir}/datasets/evaluation
   matrix_generation:  ${run_dir}/datasets/matrix_generation
