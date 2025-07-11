@@ -69,7 +69,7 @@ integration.prm.unified_edges:
 # Unified Ground Truth
 integration.prm.unified_ground_truth_edges:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/unified/ground_truth
+  filepath: ${globals:paths.integration}/prm/unified/ground_truth_v2_unified.parquet
 
 # ==============================
 # Original sources: only used for sampling
