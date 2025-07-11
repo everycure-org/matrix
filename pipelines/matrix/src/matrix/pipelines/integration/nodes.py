@@ -390,7 +390,10 @@ def normalization_summary_nodes_only(
     """
 
     formatted_mapping = mapping_df.select(
-        "id", F.col("normalized_categories").cast(T.ArrayType(T.StringType())).alias("normalized_categories")
+        "id",
+        F.col("normalization_struct.normalized_categories")
+        .cast(T.ArrayType(T.StringType()))
+        .alias("normalized_categories"),
     )
 
     nodes_for_join = nodes.select(
