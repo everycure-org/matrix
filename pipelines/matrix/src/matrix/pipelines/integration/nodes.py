@@ -309,7 +309,6 @@ def normalization_summary_nodes_and_edges(
                 - upstream_data_source: Name of the data source
     """
 
-
     formatted_mapping = mapping_df.select(
         "id",
         F.col("normalization_struct.normalized_categories")
