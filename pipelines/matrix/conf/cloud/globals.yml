@@ -34,7 +34,7 @@ paths:
   ingestion:          ${release_dir}/datasets/ingestion
   integration:        ${release_dir}/datasets/integration
   release:            ${release_dir}/datasets/release
-  public_ingestion:   ${pubic_release_dir}/datasets/ingestion
+  public_ingestion:   ${public_release_dir}/datasets/ingestion
 
   # Run-based
   filtering:          ${run_dir}/datasets/filtering
