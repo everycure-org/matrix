@@ -6,7 +6,7 @@ versions:
 release_folder_name: ${oc.env:RELEASE_FOLDER_NAME, releases}
 release_dir: ${runtime_gcs_bucket}/kedro/data/${release_folder_name}/${versions.release}
 # Public GCS bucket for public datasets
-pubic_release_dir: ${public_gcs_bucket}/data/${release_folder_name}/${versions.release}
+public_release_dir: ${public_gcs_bucket}/data/${release_folder_name}/${versions.release}
 run_dir: ${release_dir}/runs/${run_name}
 
 runtime_gcs_bucket: gs://${oc.env:RUNTIME_GCP_BUCKET}
