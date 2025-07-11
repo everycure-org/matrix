@@ -18,7 +18,7 @@ from matrix.utils.hook_utilities import (
     generate_dynamic_pipeline_mapping,
 )
 
-from .resolvers import cast_to_int, env, if_null, merge_dicts
+from .resolvers import cast_to_int, env, get_kg_raw_path_for_source, if_null, merge_dicts
 
 hooks = {
     "node_timer": matrix_hooks.NodeTimerHooks(),
@@ -35,7 +35,6 @@ HOOKS = determine_hooks_to_execute(hooks)
 DISABLE_HOOKS_FOR_PLUGINS = ("kedro-mlflow",)
 
 # Class that manages storing KedroSession data.
-from pathlib import Path  # noqa: E402
 
 # https://getindata.com/blog/kedro-dynamic-pipelines/
 
@@ -52,6 +51,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 {"name": "embiology", "integrate_in_kg": True, "is_private": True},
                 {"name": "robokop", "integrate_in_kg": True, "is_private": False},
                 {"name": "ec_medical_team", "integrate_in_kg": True},
+                # {"name": "ec_medical_team", "integrate_in_kg": True},
                 {"name": "drug_list", "integrate_in_kg": False, "has_edges": False},
                 {"name": "disease_list", "integrate_in_kg": False, "has_edges": False},
                 {
@@ -86,6 +86,8 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 {"evaluation_name": "simple_classification_trials"},
                 {"evaluation_name": "disease_specific_trials"},
                 {"evaluation_name": "full_matrix_trials"},
+                {"evaluation_name": "disease_specific_off_label"},
+                {"evaluation_name": "full_matrix_off_label"},
             ],
             "stability": [
                 {"stability_name": "stability_overlap"},
@@ -132,6 +134,7 @@ CONFIG_LOADER_ARGS = {
         "oc.int": cast_to_int,
         "setting": _load_setting,
         "if_null": if_null,
+        "get_kg_raw_path_for_source": get_kg_raw_path_for_source,
     },
 }
 

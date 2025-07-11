@@ -1,7 +1,4 @@
-from unittest.mock import Mock
-
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import pytest
 from matrix.pipelines.matrix_generation.reporting_plots import (
@@ -58,7 +55,7 @@ def sample_drugs_list(spark_session):
     """Fixture that provides sample drugs list with id and name"""
     return spark_session.createDataFrame(
         [("drug_1", "name_1"), ("drug_2", "name_2"), ("drug_3", "name_3")],
-        schema=["curie", "name"],
+        schema=["id", "name"],
     )
 
 
@@ -67,7 +64,7 @@ def sample_diseases_list(spark_session):
     """Fixture that provides sample diseases list with id and name"""
     return spark_session.createDataFrame(
         [("disease_1", "name_1"), ("disease_2", "name_2"), ("disease_3", "name_3")],
-        schema=["category_class", "label"],
+        schema=["id", "name"],
     )
 
 

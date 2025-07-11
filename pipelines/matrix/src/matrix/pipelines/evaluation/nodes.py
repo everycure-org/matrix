@@ -102,19 +102,20 @@ def generate_test_dataset(
 
 
 @inject_object()
-def evaluate_test_predictions(data: pd.DataFrame, evaluation: Evaluation) -> Any:
+def evaluate_test_predictions(data: pd.DataFrame, evaluation: Evaluation, score_col_name: str) -> Any:
     """Function to apply evaluation.
 
     Args:
         data: predictions to evaluate on
         evaluation: metric to evaluate.
+        score_col_name: name of the score column to use
 
     Returns:
         Evaluation report
     """
     logger.info(f"Evaluation data size: {data.shape}")
     logger.info(f"Evaluation is: {evaluation}")
-    return evaluation.evaluate(data)
+    return evaluation.evaluate(data, score_col_name)
 
 
 @inject_object()
@@ -217,7 +218,7 @@ def consolidate_evaluation_reports(**reports) -> dict:
 
 @inject_object()
 def evaluate_stability_predictions(
-    overlapping_pairs: pd.DataFrame, evaluation: Evaluation, *matrices: pd.DataFrame
+    overlapping_pairs: pd.DataFrame, evaluation: Evaluation, *matrices: pd.DataFrame, score_col_name: str
 ) -> Any:
     """Function to apply stability evaluation.
 
@@ -229,20 +230,23 @@ def evaluate_stability_predictions(
     Returns:
         Evaluation report
     """
-    return evaluation.evaluate(overlapping_pairs, matrices)
+    return evaluation.evaluate(overlapping_pairs, matrices, score_col_name)
 
 
 @inject_object()
-def generate_overlapping_dataset(generator: DrugDiseasePairGenerator, *matrices: pd.DataFrame) -> pd.DataFrame:
+def generate_overlapping_dataset(
+    generator: DrugDiseasePairGenerator, *matrices: pd.DataFrame, score_col_name: str
+) -> pd.DataFrame:
     """Function to generate overlapping dataset.
 
     Args:
         generator: generator strategy
         matrices: DataFrames coming from different models to compare against
+        score_col_name: name of the score column to use
     Returns:
         Evaluation report
     """
-    return generator.generate(matrices)
+    return generator.generate(matrices, score_col_name)
 
 
 def calculate_rank_commonality(ranking_output: dict, commonality_output: dict) -> Any:

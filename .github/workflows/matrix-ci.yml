@@ -19,7 +19,6 @@ on:
     branches:
       - main
       - develop
-      - infra
     # from https://github.com/reviewdog/action-eslint/issues/29#issuecomment-985939887
     types:
       - opened
@@ -70,17 +69,16 @@ jobs:
               - .github/workflows/matrix-ci.yml
 
   ci:
-    runs-on:  'self-hosted'
+    runs-on: 'self-hosted'
     needs: [paths_filter]
     if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
-    # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#concurrency
-    # Map a step output to a job output
+    
     outputs:
       status: ${{ steps.finally.outputs.status }}
 
     permissions:
-     contents: 'read'
-     id-token: 'write'
+      contents: 'read'
+      id-token: 'write'
     defaults:
       run:
         working-directory: ./pipelines/matrix
@@ -92,18 +90,19 @@ jobs:
           submodules: recursive
           token: ${{ secrets.PAT }}
           persist-credentials: true
-
       - uses: 'google-github-actions/auth@v2'
         with:
           project_id: ${{vars.project_id}}
           workload_identity_provider: ${{vars.workload_identity_provider}}
           service_account: ${{vars.service_account}}
 
-      # On every PR
-      - run: env | sort # prints out all env variables, helpful for debugging
+      # Setup steps
+      - run: env | sort
       - run: make install
       - run: make precommit
       - run: make fetch_secrets
+      
+      # Run commands in parallel
       - run: uv run kedro catalog resolve --env base
       - run: uv run kedro catalog resolve --env cloud
       - run: uv run kedro catalog resolve --env test
@@ -114,10 +113,11 @@ jobs:
         # if: contains(github.event.pull_request.labels.*.name, 'ready') || github.ref == 'refs/heads/main'
       # workaround as the `failure()` call did not work in downstream matrix_ci_check
       - run: docker volume prune -f #avoid running out of disk space
+      # Cleanup
+      - run: docker volume prune -f
       - id: finally
         if: failure()
         run: echo "status=failure" >> "$GITHUB_OUTPUT"
-  
   # we use this check as required in our PRs to ensure that CI runs but only for our paths. 
   matrix_ci_check:
     name: Matrix CI PR Check
