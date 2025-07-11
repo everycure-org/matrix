@@ -136,7 +136,7 @@ gs://<bucket>
 
 ```
 
-Separately, all data in our "landing zone" or "raw data" is stored at `gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/`. Our release runs get stored at `gs://mtrx-us-central1-hub-dev-storage/releases/<version>`.
+Separately, all data in our "landing zone" or "raw data" is stored at `gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/`. Public KG data sources (like RTX-KG2 and Robokop) are stored in our public data bucket `gs://data.dev.everycure.org/data/01_RAW/`. Our release runs get stored at `gs://mtrx-us-central1-hub-dev-storage/releases/<version>`.
 
 #### Kubernetes
 

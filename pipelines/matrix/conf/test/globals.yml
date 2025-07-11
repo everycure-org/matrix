@@ -16,6 +16,8 @@ paths:
   kg_raw_private:     data/test/raw
   # Upstream version-based
   ingestion:          data/test/ingestion
+  # public data sources
+  public_ingestion:   data/test/ingestion
   # Release-based
   integration:        data/test/releases/${versions.release}/datasets/integration
 

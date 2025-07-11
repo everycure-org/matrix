@@ -24,6 +24,8 @@ data_sources:
 # Default GCS bucket configuration
 dev_gcs_bucket: gs://mtrx-us-central1-hub-dev-storage
 prod_gcs_bucket: gs://mtrx-us-central1-hub-prod-storage
+# Public GCS bucket for public datasets
+public_gcs_bucket: gs://data.dev.everycure.org
 
 # Environment variable defaults for local development
 neo4j:
@@ -35,6 +37,25 @@ neo4j:
 ## Data Catalog Pathways
 
 As you probably noticed, the base catalog is almost fully local. The only non-local dependency is reading the raw data which is stored in our GCS bucket - all other intermediate and final data products are stored within respective directories in the `data` directory. This means that you can easily reproduce base matrix pipeline on your local system.
+
+## Data Path Structure
+
+The matrix project uses different data paths depending on the type and accessibility of the data:
+
+### Raw Data Paths
+
+- **`kg_raw`**: Points to the dev bucket (`gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/`) for general raw KG data
+- **`kg_raw_private`**: Points to the prod bucket (`gs://mtrx-us-central1-hub-prod-storage/data/01_RAW/`) for private datasets (e.g., SPOKE, Embiology)
+- **`public_kg_raw`**: Points to the public bucket (`gs://data.dev.everycure.org/data/01_RAW/`) for publicly accessible KG data sources (e.g., RTX-KG2, Robokop)
+
+This separation ensures that:
+- Public KG data sources are available through the public data zone
+- Private datasets remain secure in the production environment
+- Development datasets can be accessed without production credentials
+
+### Path Configuration
+
+All paths are configured in `globals.yml` and referenced throughout the data catalog using template variables like `${globals:paths.public_kg_raw}`.
 
 ## MLFlow and Spark
 

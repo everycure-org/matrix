@@ -70,6 +70,7 @@ paths:
   ingestion:          data/ingestion
   # public data sources
   public_kg_raw:      ${public_gcs_bucket}/data/01_RAW
+  public_ingestion:   data/ingestion
 
   # Release-based
   integration:        data/releases/${versions.release}/datasets/integration
