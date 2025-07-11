@@ -32,6 +32,11 @@ class ArgoResourceConfig(BaseModel):
         memory_limit (float): Maximum memory allowed for the pod in GB.
         ephemeral_storage_request (float): Ephemeral storage requested for the pod in GB.
         ephemeral_storage_limit (float): Maximum ephemeral storage allowed for the pod in GB.
+
+        The above ephemeral storage parameters are related to, and work in conjunction with
+        ephemeral-storage-local-ssd parameter on the Node Pools (1st or 2nd gen) - refer to gke.tf for how it's applied.
+        More information here: https://cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/local-ssd#1st-or-2nd-generation_1
+        and here: https://cloud.google.com/compute/docs/general-purpose-machines#n2d-high-mem
     """
 
     num_gpus: int = KUBERNETES_DEFAULT_NUM_GPUS
@@ -131,3 +136,13 @@ class ArgoNode(Node):
 
 
 ARGO_GPU_NODE_MEDIUM = ArgoResourceConfig(num_gpus=1)
+ARGO_NODE_MEDIUM_MATRIX_GENERATION = ArgoResourceConfig(
+    cpu_limit=48,
+    cpu_request=48,
+    ephemeral_storage_limit=512,
+    ephemeral_storage_request=512,
+    memory_limit=256,
+    memory_request=256,
+)
+
+ARGO_CPU_ONLY_NODE_MEDIUM = ArgoResourceConfig()

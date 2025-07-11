@@ -8,6 +8,17 @@ mlflow:
     command: [ "/bin/sh", "-c" ]
     args: dummy-replaced-by-helm-override-from-app-of-apps
 
+    # Schedule MLflow tracking on management nodes
+    nodeSelector:
+      workload-type: management
+    # Add billing labels to MLflow tracking pods
+    podLabels:
+      cost-center: infrastructure-management
+      workload-category: platform-services
+      service-tier: management
+      billing-category: infrastructure
+      component: mlflow-tracking
+
     # default is medium
     # resourcesPreset: micro
     service:
@@ -17,14 +28,51 @@ mlflow:
     persistence:
       annotations:
         argocd.argoproj.io/sync-options: Delete=false
+      # Add billing labels (keep existing storage class to avoid data loss)
+      labels:
+        cost-center: infrastructure-management
+        workload-category: platform-services
+        service-tier: management
+        billing-category: infrastructure-storage
+        component: mlflow-tracking
     # FUTURE: Setup GCS when supported
     # https://github.com/bitnami/charts/pull/28938
 
   # Use our own PGSQL Secret
   # https://github.com/bitnami/charts/issues/28893
   postgresql:
+    # Schedule PostgreSQL on management nodes
+    primary:
+      annotations:
+        # Force replacement of StatefulSet to update nodeSelector/tolerations
+        argocd.argoproj.io/sync-options: Replace=true
+      nodeSelector:
+        workload-type: management
+      persistence:
+        # Keep existing storage class to avoid data loss
+        labels:
+          cost-center: infrastructure-management
+          workload-category: platform-services
+          service-tier: management
+          billing-category: infrastructure-storage
+          component: mlflow-postgresql
     auth:
       existingSecret: pgsql-creds
+    # Global PostgreSQL configuration with nodeSelector
+    nodeSelector:
+      workload-type: management
 
   minio:
     enabled: false
+
+  # Schedule MLflow run component on management nodes
+  run:
+    nodeSelector:
+      workload-type: management
+    # Add billing labels to MLflow run pods
+    podLabels:
+      cost-center: infrastructure-management
+      workload-category: platform-services
+      service-tier: management
+      billing-category: infrastructure
+      component: mlflow-run

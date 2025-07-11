@@ -100,6 +100,16 @@ fabricator.rtx_kg2:
           - biolink:subclass_of
           - biolink:is_nearby_variant_of
           - biolink:ChemicalToChemicalDerivationAssociation
+      knowledge_level:
+        type: generate_values
+        sample_values:
+          - prediction
+          - knowledge_assertion
+      agent_type:
+        type: generate_values
+        sample_values:
+          - computational_model
+          - manual_agent
       aggregator_knowledge_source:
         type: generate_random_arrays
         delimiter: "|"
@@ -155,18 +165,70 @@ fabricator.rtx_kg2:
   drug_list:
     num_rows: 100
     columns:
-      curie:
+      id:
         type: copy_column
         source_column: "nodes.id"
         sample:
           num_rows: "@drug_list.num_rows"
           seed: 6850
-      curie_label:
+      name:
         type: copy_column
         source_column: "nodes.name"
         sample:
           num_rows: "@drug_list.num_rows"
           seed: 6850
+      default_med_view_filter_to_exclude:
+        type: generate_values
+        sample_values:
+          - True
+          - False
+      is_combination_therapy:
+        type: generate_values
+        sample_values:
+          - True
+          - False
+      approved_japan:
+        type: generate_values
+        sample_values:
+          - True
+          - False
+      marketing_status_europe:
+        type: generate_values
+        sample_values:
+          - "APPROVED"
+          - "WITHDRAWN"
+          - "PENDING"
+      approved_eu:
+        type: generate_values
+        sample_values:
+          - True
+          - False
+      marketing_status_usa:
+        type: generate_values
+        sample_values:
+          - "APPROVED"
+          - "WITHDRAWN"
+          - "PENDING"
+      approved_usa:
+        type: generate_values
+        sample_values:
+          - True
+          - False
+      approved_russia:
+        type: generate_values
+        sample_values:
+          - True
+          - False
+      approved_india:
+        type: generate_values
+        sample_values:
+          - True
+          - False
+      is_metallic_salt:
+        type: generate_values
+        sample_values:
+          - True
+          - False
       is_steroid:
         type: generate_values
         sample_values:
@@ -177,44 +239,111 @@ fabricator.rtx_kg2:
         sample_values:
           - True
           - False
-      is_glucose_regulator:
-        type: generate_values
-        sample_values:
-          - True
-          - False
       is_chemotherapy:
         type: generate_values
         sample_values:
           - True
           - False
-      available_USA:
+      is_glucose_regulator:
         type: generate_values
         sample_values:
-          - DISCONTINUED
-          - RX
-          - AVAILABLE
+          - True
+          - False
+      is_vaccine_or_antigen:
+        type: generate_values
+        sample_values:
+          - True
+          - False
+      is_no_therapeutic_value:
+        type: generate_values
+        sample_values:
+          - True
+          - False
+      atc_main:
+        type: faker
+        provider: word
+      atc_level1:
+        type: faker
+        provider: word
+      atc_level2:
+        type: faker
+        provider: word
+      atc_level3:
+        type: faker
+        provider: word
+      atc_level4:
+        type: faker
+        provider: word
+      atc_level5:
+        type: faker
+        provider: word
+      l1_label:
+        type: faker
+        provider: word
+      l2_label:
+        type: faker
+        provider: word
+      atc_l3_drug_type:
+        type: faker
+        provider: word
+      atc_l4_drug_class:
+        type: faker
+        provider: word
+      l5_label:
+        type: faker
+        provider: word
+      is_psychiatric_drug:
+        type: generate_values
+        sample_values:
+          - True
+          - False
 
   disease_list:
     num_rows: 100
     columns:
-      category_class:
+      id:
         type: copy_column
         source_column: "nodes.id"
         sample:
           num_rows: "@disease_list.num_rows"
           seed: 65690
-      label:
+      name:
         type: copy_column
         source_column: "nodes.name"
         sample:
           num_rows: "@disease_list.num_rows"
           seed: 65690
-      is_cancer:
+      default_med_view_filter_to_exclude:
         type: generate_values
         sample_values:
           - True
           - False
-      is_pathogen_caused:
+      contains_nonactionaable_prefix:
+        type: generate_values
+        sample_values:
+          - True
+          - False
+      contains_itis:
+        type: generate_values
+        sample_values:
+          - True
+          - False
+      is_malignant_cancer:
+        type: generate_values
+        sample_values:
+          - True
+          - False
+      is_benign_tumour:
+        type: generate_values
+        sample_values:
+          - True
+          - False
+      is_infectious_disease:
+        type: generate_values
+        sample_values:
+          - True
+          - False
+      is_psychiatric_disease:
         type: generate_values
         sample_values:
           - True
@@ -224,25 +353,18 @@ fabricator.rtx_kg2:
         sample_values:
           - True
           - False
-      tag_existing_treatment:
+      unmet_medical_need:
         type: generate_values
         sample_values:
-          - True
-          - False
-      tag_QALY_lost:
+          - "LOW"
+          - "MEDIUM"
+          - "HIGH"
+      prevalence:
         type: generate_values
         sample_values:
-          - LOW
-          - MEDIUM
-          - NONE
-          - VERY HIGH
-          - HIGH
-          - MODERATE
-      official_matrix_filter:
-        type: generate_values
-        sample_values:
-          - True
-          - False
+          - "RARE"
+          - "UNCOMMON"
+          - "COMMON"
 
 fabricator.clinical_trials:
   pos_cols:
@@ -349,32 +471,32 @@ fabricator.off_label:
             seed: 40589
 
     edges:
-      num_rows: 10
+      num_rows: 100
       columns:
         curie_drug:
           type: copy_column
           source_column: nodes.curie
           sample:
             num_rows: "@edges.num_rows"
-            seed: 40589
+            seed: 40599
         drug_name:
           type: copy_column
           source_column: nodes.name
           sample:
             num_rows: "@edges.num_rows"
-            seed: 40589
+            seed: 40599
         disease_name:
           type: copy_column
           source_column: nodes.name
           sample:
             num_rows: "@edges.num_rows"
-            seed: 30589
+            seed: 30599
         curie_disease:
           type: copy_column
           source_column: nodes.curie
           sample:
             num_rows: "@edges.num_rows"
-            seed: 30589
+            seed: 30599
         relation:
           type: generate_values
           sample_values:
@@ -575,7 +697,7 @@ fabricator.spoke:
         prefix: "rs"
       category:
         type: generate_random_arrays
-        delimiter: "\x1F"
+        delimiter: "|"
         sample_values:
           - biolink:NamedThing
           - biolink:Drug

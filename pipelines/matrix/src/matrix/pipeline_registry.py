@@ -10,8 +10,10 @@ from matrix.pipelines.ingest_to_N4J.pipeline import create_pipeline as create_in
 from matrix.pipelines.ingestion.pipeline import create_pipeline as create_ingestion_pipeline
 from matrix.pipelines.integration.pipeline import create_pipeline as create_integration_pipeline
 from matrix.pipelines.matrix_generation.pipeline import create_pipeline as create_matrix_pipeline
+from matrix.pipelines.matrix_transformations.pipeline import create_pipeline as create_matrix_transformations_pipeline
 from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
 from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
+from matrix.pipelines.sentinel.pipeline import create_pipeline as create_sentinel_pipeline
 
 
 def register_pipelines() -> dict[str, Pipeline]:
@@ -32,9 +34,17 @@ def register_pipelines() -> dict[str, Pipeline]:
         "data_release": create_data_release_pipeline(),
         "modelling": create_modelling_pipeline(),
         "matrix_generation": create_matrix_pipeline(),
-        "evaluation": create_evaluation_pipeline(),
+        "matrix_transformations": create_matrix_transformations_pipeline(),
+        "pre_transformed_evaluation": create_evaluation_pipeline(
+            matrix_input="matrix_generation", score_col_name="treat score"
+        ),
+        "transformed_evaluation": create_evaluation_pipeline(
+            matrix_input="matrix_transformations", score_col_name="transformed_treat_score"
+        ),
         "create_sample": create_create_sample_pipeline(),
         "ingest_to_N4J": create_ingest_to_N4J_pipeline(),
+        "sentinel_kg_release_patch": create_sentinel_pipeline(is_patch=True),
+        "sentinel_kg_release": create_sentinel_pipeline(is_patch=False),
         # "inference": create_inference_pipeline(),  # Run manually based on medical input
     }
 
@@ -47,24 +57,35 @@ def register_pipelines() -> dict[str, Pipeline]:
     pipelines["kg_release_patch"] = (
         pipelines["data_engineering"]
         + pipelines["data_release"]
+        + pipelines["sentinel_kg_release_patch"]
     )
     pipelines["kg_release"] = (
-        pipelines["kg_release_patch"]
+        pipelines["data_engineering"]
+        + pipelines["data_release"]
         + pipelines["ingest_to_N4J"]
-    )
-    pipelines["modelling_run"] = (
-          pipelines["modelling"]
-        + pipelines["matrix_generation"]
-        + pipelines["evaluation"]
+        + pipelines["sentinel_kg_release"]
     )
     pipelines["feature"] = (
         pipelines["filtering"]
         + pipelines["embeddings"]
     )
+    pipelines["evaluation"] = (
+        pipelines["pre_transformed_evaluation"] 
+        + pipelines["transformed_evaluation"]
+    )
+    pipelines["modelling_run"] = (
+          pipelines["modelling"]
+        + pipelines["matrix_generation"]
+        + pipelines["matrix_transformations"]
+        + pipelines["evaluation"]
+    )
+    pipelines["feature_and_modelling_run"] = (
+        pipelines["feature"]
+        + pipelines["modelling_run"]
+    )
     pipelines["__default__"] = (
           pipelines["data_engineering"]
-        + pipelines['feature']
-        + pipelines["modelling_run"]
+        + pipelines["feature_and_modelling_run"]
     )
 
     # Test pipelines
@@ -75,9 +96,7 @@ def register_pipelines() -> dict[str, Pipeline]:
         + pipelines["ingest_to_N4J"]
     )
     pipelines["test_sample"] = (
-        pipelines["filtering"]
-        + pipelines["embeddings"]
-        + pipelines["modelling_run"]
+        pipelines["feature_and_modelling_run"]
     )
     # fmt: on
 

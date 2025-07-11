@@ -1,13 +1,10 @@
-import functools
-import itertools
 import logging
-import operator
-from datetime import datetime
-from typing import Dict, Iterable, Iterator, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Union
 
 import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.functions as F
+import pyspark.sql.types as T
 from matplotlib.figure import Figure
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.inject import _extract_elements_in_list, inject_object
@@ -16,25 +13,13 @@ from matrix.pipelines.matrix_generation.reporting_tables import ReportingTableGe
 from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.nodes import apply_transformers
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
-from pyspark.sql import Row
-from pyspark.sql.types import ArrayType, BooleanType, FloatType, StringType
+from pyspark.sql.types import DoubleType, StructField, StructType
 from sklearn.impute._base import _BaseImputer
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
 
-@check_output(
-    schema=DataFrameSchema(
-        columns={
-            "id": Column(StringType(), nullable=False),
-            "topological_embedding": Column(ArrayType(FloatType()), nullable=False),
-            "is_drug": Column(BooleanType(), nullable=False),
-            "is_disease": Column(BooleanType(), nullable=False),
-        },
-        unique=["id"],
-    )
-)
 def enrich_embeddings(
     nodes: ps.DataFrame,
     drugs: ps.DataFrame,
@@ -52,12 +37,16 @@ def enrich_embeddings(
         .unionByName(diseases.withColumn("is_disease", F.lit(True)), allowMissingColumns=True)
         .join(nodes, on="id", how="inner")
         .select("is_drug", "is_disease", "id", "topological_embedding")
-        .fillna(False, subset=("is_drug", "is_disease"))
+        .withColumn("is_drug", F.coalesce(F.col("is_drug"), F.lit(False)))
+        .withColumn("is_disease", F.coalesce(F.col("is_disease"), F.lit(False)))
     )
 
 
 def _add_flag_columns(
-    matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_trials: Optional[pd.DataFrame] = None
+    matrix: pd.DataFrame,
+    known_pairs: pd.DataFrame,
+    clinical_trials: Optional[pd.DataFrame] = None,
+    off_label: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """Adds boolean columns flagging known positives and known negatives.
 
@@ -65,6 +54,7 @@ def _add_flag_columns(
         matrix: Drug-disease pairs dataset.
         known_pairs: Labelled ground truth drug-disease pairs dataset.
         clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
+        off_label: Pairs dataset representing off label usage.
 
     Returns:
         Pairs dataset with flag columns.
@@ -95,6 +85,9 @@ def _add_flag_columns(
     matrix["trial_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["non_significantly_worse"] == 1])
     matrix["trial_non_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["significantly_worse"] == 1])
 
+    # Flag off label data
+    off_label = off_label.rename(columns={"subject": "source", "object": "target"})
+    matrix["off_label"] = create_flag_column(off_label)  # all pairs are positive
     return matrix
 
 
@@ -118,8 +111,9 @@ def generate_pairs(
     known_pairs: pd.DataFrame,
     drugs: pd.DataFrame,
     diseases: pd.DataFrame,
-    graph: ps.DataFrame,
+    graph: KnowledgeGraph,
     clinical_trials: Optional[pd.DataFrame] = None,
+    off_label: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """Function to generate matrix dataset.
 
@@ -131,6 +125,7 @@ def generate_pairs(
         diseases: Dataframe containing IDs for the list of diseases.
         graph: Object containing node embeddings.
         clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
+        off_label: Pairs dataset representing off label drug disease uses.
 
     Returns:
         Pairs dataframe containing all combinations of drugs and diseases that do not lie in the training set.
@@ -144,8 +139,7 @@ def generate_pairs(
     diseases_lst = list(set(diseases_lst))
 
     # Remove drugs and diseases without embeddings
-    # NOTE: Ensures we load only the id column before moving to pandas world
-    nodes_with_embeddings = set(graph.select("id").toPandas()["id"].tolist())
+    nodes_with_embeddings = set(graph._nodes["id"])
     drugs_lst = [drug for drug in drugs_lst if drug in nodes_with_embeddings]
     diseases_lst = [disease for disease in diseases_lst if disease in nodes_with_embeddings]
 
@@ -164,98 +158,108 @@ def generate_pairs(
     is_in_train = matrix.apply(lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1)
     matrix = matrix[~is_in_train]
     # Add flag columns for known positives and negatives
-    matrix = _add_flag_columns(matrix, known_pairs, clinical_trials)
-
+    matrix = _add_flag_columns(matrix, known_pairs, clinical_trials, off_label)
     return matrix
 
 
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "source": Column(T.StringType(), nullable=False),
+            "target": Column(T.StringType(), nullable=False),
+            # The three score columns are passed as parameters of the function
+            "not treat score": Column(T.DoubleType(), nullable=False),
+            "treat score": Column(T.DoubleType(), nullable=False),
+            "unknown score": Column(T.DoubleType(), nullable=False),
+            "rank": Column(T.LongType(), nullable=False),
+            "quantile_rank": Column(T.DoubleType(), nullable=False),
+        },
+        unique=["source", "target"],
+    )
+)
 def make_predictions_and_sort(
-    graph: KnowledgeGraph,
-    data: ps.DataFrame,
+    node_embeddings: ps.DataFrame,
+    pairs: ps.DataFrame,
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     model: ModelWrapper,
     features: List[str],
     treat_score_col_name: str,
     not_treat_score_col_name: str,
     unknown_score_col_name: str,
-) -> pd.DataFrame:
-    """Generate probability scores for drug-disease dataset.
+) -> ps.DataFrame:
+    """Generate and sort probability scores for a drug-disease dataset.
 
     Args:
-        graph: Knowledge graph.
-        data: Data to predict scores for.
+        node_embeddings: Dataframe with node embeddings.
+        pairs: drug disease pairs to predict scores for.
         transformers: Dictionary of trained transformers.
         model: Model making the predictions.
         features: List of features, may be regex specified.
-        score_col_name: Probability score column name.
+        treat_score_col_name: Probability score column name.
+        not_treat_score_col_name: Probability score column name for not treat.
+        unknown_score_col_name: Probability score column name for unknown.
 
     Returns:
-        Pairs dataset with additional column containing the probability scores.
+        Pairs dataset sorted by score with their rank and quantile rank
     """
-    data = data.drop("__index_level_0__")  # remnant from pyarrow/pandas conversion, not sure in which previous node
-    embeddings = graph.select("id", "topological_embedding")
 
-    data = data.join(
-        embeddings.withColumnsRenamed({"id": "source", "topological_embedding": "source_embedding"}),
-        on="source",
-        how="left",
-    ).join(
-        embeddings.withColumnsRenamed({"id": "target", "topological_embedding": "target_embedding"}),
-        on="target",
-        how="left",
+    embeddings = node_embeddings.select("id", "topological_embedding")
+
+    pairs_with_embeddings = (
+        # TODO: remnant from pyarrow/pandas conversion, find in which node it is created
+        pairs.drop("__index_level_0__")
+        .join(
+            embeddings.withColumnsRenamed({"id": "target", "topological_embedding": "target_embedding"}),
+            on="target",
+            how="left",
+        )
+        .join(
+            embeddings.withColumnsRenamed({"id": "source", "topological_embedding": "source_embedding"}),
+            on="source",
+            how="left",
+        )
+        .filter(F.col("source_embedding").isNotNull() & F.col("target_embedding").isNotNull())
     )
 
-    # Drop rows without source/target embeddings
-    # data = drop_rows_with_empty_feature_values(data, transformers)
-
-    def predict_partition(partitionindex: int, partition: Iterable[Row]) -> Iterator[Row]:
-        partition_df = pd.DataFrame.from_records(row.asDict() for row in partition)
-        if partition_df.empty:
-            logger.warning(f"partition with index {partitionindex} is empty")
-            return
-
+    def model_predict(partition_df: pd.DataFrame) -> pd.DataFrame:
         transformed = apply_transformers(partition_df, transformers)
-        batch_features = _extract_elements_in_list(transformed.columns, features, True)
 
-        predictions = model.predict_proba(transformed[batch_features].values)
-        predictions_df = pd.DataFrame(
-            predictions, columns=[not_treat_score_col_name, treat_score_col_name, unknown_score_col_name]
-        )
+        # TODO: can we get columns from transformers directly?
+        model_features = _extract_elements_in_list(transformed.columns, features, True)
 
-        result_df = pd.concat([partition_df, predictions_df], axis=1)
-        for row in result_df.to_dict("records"):
-            yield Row(**row)
+        model_predictions = model.predict_proba(transformed[model_features].values)
+        # TODO: assign scores in one pass?
+        partition_df[not_treat_score_col_name] = model_predictions[:, 0]
+        partition_df[treat_score_col_name] = model_predictions[:, 1]
+        partition_df[unknown_score_col_name] = model_predictions[:, 2]
 
-    data = data.rdd.mapPartitionsWithIndex(predict_partition).toDF()
-    data = data.toPandas()
-    sorted_data = data.sort_values(by=treat_score_col_name, ascending=False)
-    # Add rank and quantile rank columns
-    sorted_data["rank"] = range(1, len(sorted_data) + 1)
-    sorted_data["quantile_rank"] = sorted_data["rank"] / len(sorted_data)
-    return sorted_data
+        return partition_df.drop(columns=["source_embedding", "target_embedding"])
 
+    structfields_to_keep = [
+        col for col in pairs_with_embeddings.schema if col.name not in ["target_embedding", "source_embedding"]
+    ]
+    model_predict_schema = StructType(
+        structfields_to_keep
+        + [
+            StructField(not_treat_score_col_name, DoubleType(), True),
+            StructField(treat_score_col_name, DoubleType(), True),
+            StructField(unknown_score_col_name, DoubleType(), True),
+        ]
+    )
 
-def drop_rows_with_empty_feature_values(data: ps.DataFrame, transformers):
-    # Retrieve rows where feature columns are null
-    # NOTE: This only happens in a rare scenario where the node synonymizer
-    # provided an identifier for a node that does _not_ exist in our KG.
-    # https://github.com/everycure-org/matrix/issues/409
-    features: list[str] = list(itertools.chain.from_iterable(x["features"] for x in transformers.values()))
+    pairs_with_scores = pairs_with_embeddings.groupBy("target").applyInPandas(model_predict, model_predict_schema)
 
-    if logger.isEnabledFor(logging.INFO):
-        logging.info(f"Checking for dropped pairs because one of the features ({features}) is empty…")
-        removed = (
-            data.filter(functools.reduce(operator.or_, (F.col(colname).isNull() for colname in features)))
-            .select("source", "target")
-            .cache()
-        )
-        removed_pairs = removed.take(50)  # Can be extended, but mind OOM.
-        if removed_pairs:
-            logger.warning(f"Dropped {removed.count()} pairs during generation!")
-            logger.warning("Dropped (subset of 50 shown): %s", ", ".join(f"({p[0]}, {p[1]})" for p in removed_pairs))
-        removed.unpersist()
+    pairs_sorted = pairs_with_scores.orderBy(treat_score_col_name, ascending=False)
 
-    return data.dropna(subset=features, how="any")
+    # We are using the RDD.zipWithIndex function here. Getting it through the DataFrame API would involve a Window function without partition, effectively pulling all data into one single partition.
+    # Here is what happens in the next line:
+    # 1. zipWithIndex creates a tuple with the shape (row, index)
+    # 2. When moving from RDD to DataFrame, the column names are named after the Scala tuple fields: _1 for the row and _2 for the index
+    # 3. We're adding 1 to the rank so that it is not zero indexed
+    pairs_ranked = pairs_sorted.rdd.zipWithIndex().toDF().select(F.col("_1.*"), (F.col("_2") + 1).alias("rank"))
+
+    pairs_ranked_count = pairs_ranked.count()
+    return pairs_ranked.withColumn("quantile_rank", F.col("rank") / pairs_ranked_count)
 
 
 @inject_object()
@@ -283,4 +287,5 @@ def generate_reports(
     reports_dict = {}
     for strategy in strategies.values():
         reports_dict[strategy.name] = strategy.generate(sorted_matrix_df, **kwargs)
+
     return reports_dict
