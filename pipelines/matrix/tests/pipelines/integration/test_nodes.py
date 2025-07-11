@@ -382,6 +382,30 @@ def sample_biolink_category_hierarchy():
     ]
 
 
+@pytest.fixture
+def sample_mapping_df(spark):
+    from pyspark.sql import Row
+
+    data = [
+        Row(
+            id="CHEBI:119157",
+            normalization_struct=Row(
+                normalized_id="CHEBI:119157", normalized_categories=["biolink:Drug", "biolink:ChemicalEntity"]
+            ),
+        ),
+        Row(
+            id="MONDO:0005148",
+            normalization_struct=Row(normalized_id="MONDO:0005148", normalized_categories=["biolink:Disease"]),
+        ),
+        Row(
+            id="DRUGBANK:119157",
+            normalization_struct=Row(normalized_id="DRUGBANK:119157", normalized_categories=["biolink:SmallMolecule"]),
+        ),
+    ]
+
+    return spark.createDataFrame(data)
+
+
 @pytest.mark.spark(
     help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
 )
@@ -390,6 +414,7 @@ def test_normalization_summary_nodes_and_edges(spark, sample_nodes_norm, sample_
     result = nodes.normalization_summary_nodes_and_edges(
         sample_edges_norm,
         sample_nodes_norm,
+        sample_mapping_df,
         "source_kg",
     )
 
