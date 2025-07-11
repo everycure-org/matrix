@@ -11,6 +11,7 @@ openai:
 paths:
   raw:                data/test/raw
   kg_raw:             data/test/raw
+  # Public data sources
   public_kg_raw:      data/test/raw
   kg_raw_private:     data/test/raw
   # Upstream version-based
