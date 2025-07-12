@@ -1,6 +1,7 @@
 nav:
     - index.md
     - pipeline_steps
-    # Not deleting these files - just removing from the pipeline section until we decide where to add coding information
-    # - important_files.md
-    # - pandera_validation.md
+    - data
+    - data_science
+    - data_engineering
+    - debugging

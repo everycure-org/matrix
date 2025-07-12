@@ -467,25 +467,27 @@ brew services stop neo4j
 ```
 
 
-### libomp for LLMs
+### Invalid requirement for './packages/data_fabricator': Expected package name at the start of dependency specifier
 
-The [libomp](https://openmp.llvm.org/index.html) library might be required as a local runtime for LLMs. If not installed it will trigger an error containing the following:
-
-```
-* OpenMP runtime is not installed
-  - vcomp140.dll or libgomp-1.dll for Windows
-  - libomp.dylib for Mac OSX
-  - libgomp.so for Linux and other UNIX-like OSes
-  Mac OSX users: Run `brew install libomp` to install OpenMP runtime.
-```
-
-To install it on MacOS, run:
+The error above can occur if you set up MATRIX repo back when we were using data_fabricator package for fabricating data; we are no longer relying on this package however if you only recently made a change, you might encounter the .
 
 ```bash
-brew install libomp
+ERROR: Invalid requirement: './packages/data_fabricator': Expected package name at the start of dependency specifier
+    ./packages/data_fabricator
+    ^ (from line XX of requirements.txt)
+Hint: It looks like a path. File './packages/data_fabricator' does not exist.
 ```
 
-## Error: Permission Denied When Deleting RAW Data Files
+you would need to run the command below. The command might fail if your `packages` folder already exists, in this case delete it. 
+
+```bash
+git submodule update --init --recursive
+```
+
+P.S: After running the above command, a browser would open to authenticate with Github. This is normal. If nothing happens (incase of using PyCharm IDE), suggestion would be run this through the shell (terminal).
+
+
+### Error: Permission Denied When Deleting RAW Data Files
 
 If you attempt to delete files directly from the RAW data bucket, you may encounter a permission denied error or find that you do not have the necessary rights to perform deletions. This is intentional: to protect the integrity of our RAW data, direct delete permissions are not granted to individual users.
 
@@ -499,3 +501,14 @@ If you attempt to delete files directly from the RAW data bucket, you may encoun
 - Once reviewed and merged, the automated cleanup process (see `.github/workflows/cleanup_raw_bucket.yml`) will safely delete the files using a controlled, auditable workflow.
 
 This process ensures data safety and compliance with our data governance policies.
+
+
+### Cache Error within the Integration Pipeline
+If you encounter an error like the following during normalization process (below shown for disease list):
+```
+Py4JJavaError: An error occurred while calling o624.collectToPython.: org.apache.spark.SparkException: Job aborted due to stage failure: Task 1 in stage 3.0 failed 1 times, most recent failure: Lost task 1.0 in stage 3.0 (TID 4) (normalized-run-v5-4dacb3a2-kedro-3393464924 executor driver): org.apache.spark.SparkException: Parquet column cannot be converted in file gs://mtrx-us-central1-hub-prod-storage/kedro/data/cache/normalization_source_disease_list/api=nodenorm-2.3.18/3067e5f8f9b5d0d1b5ab6205102ed243359cd0376b6d54240005b3d4439a993d.parquet. Column: [value], Expected: string, Found: INT32.
+```
+It most likely indicates that cache directory in our GCS bucket for this dataset got corrupted or was overwritten with different schema data. A quick fix is to remove the directory in question and re-run the workflow (can be done manually using Argo Workflows UI). In the example above, you would remove `cache/normalization_source_disease_list` directory (e.g. via `gsutil rm -rf gs://mtrx-us-central1-hub-prod-storage/kedro/data/cache/normalization_source_disease_list/`). If you don't have permissions for deletion, please consult EC team.
+
+
+

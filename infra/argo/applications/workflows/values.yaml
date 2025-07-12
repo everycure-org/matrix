@@ -3,6 +3,16 @@ argo-workflows:
   server: 
     extraArgs:
       - --auth-mode=server
+    # Schedule server on management nodes
+    nodeSelector:
+      workload-type: management
+    # Add billing labels to Argo Workflows server pods
+    podLabels:
+      cost-center: infrastructure-management
+      workload-category: platform-services
+      service-tier: management
+      billing-category: infrastructure
+      component: argo-workflows-server
 
   artifactRepository:
     archiveLogs: true
@@ -13,3 +23,13 @@ argo-workflows:
   controller:
     metricsConfig:
       enabled: true
+    # Schedule controller on management nodes
+    nodeSelector:
+      workload-type: management
+
+    # Add billing labels to Argo Workflows controller pods
+    podLabels:
+      cost-center: infrastructure-management      workload-category: platform-services
+      service-tier: management
+      billing-category: infrastructure
+      component: argo-workflows-controller

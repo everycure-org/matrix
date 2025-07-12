@@ -1,6 +1,3 @@
-
-### Ingestion
-
 The ingestion pipeline ingests all input data into the workspace of the pipeline. Data from different sources is assigned metadata for lineage tracking.
 
 We've established a lightweight data versioning system to ensure we can easily revert to

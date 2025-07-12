@@ -1,5 +1,3 @@
-### Preprocessing
-
 The current pre-processing pipeline is highly preliminary and is ONLY used to ingest experimental nodes to our GCS bucket. The pipeline is integrated with a Google sheet for rapid hypothesis testing.
 
 The preprocessing pipeline is mapping the names assigned by our medical team to specific IDs using name-resolver service. If you want to run the full pre-processing pipeline, you can do so by running the following command or specifying tags for a specific source:

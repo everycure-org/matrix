@@ -30,4 +30,20 @@ def create_pipeline(**kwargs) -> Pipeline:
             )
         )
 
+    # Persist the final fold predictions (trained on complete dataset) for BigQuery export
+    pipelines.append(
+        pipeline(
+            [
+                ArgoNode(
+                    func=nodes.return_predictions,
+                    inputs=[
+                        f"matrix_transformations.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@spark",
+                    ],
+                    outputs=f"matrix_transformations.full_matrix_output@spark",
+                    name="store_transformed_predictions",
+                ),
+            ]
+        )
+    )
+
     return sum(pipelines)

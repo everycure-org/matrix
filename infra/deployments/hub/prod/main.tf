@@ -29,6 +29,7 @@ module "data_release_zone" {
   dns_managed_zone_name = module.dns.dns_zone_name
   dns_name              = module.dns.dns_name
   environment           = var.environment
+  enable_cdn            = false # Set to false for dev environment to avoid CDN costs
 }
 
 

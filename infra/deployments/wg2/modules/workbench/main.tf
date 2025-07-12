@@ -30,13 +30,14 @@ resource "google_workbench_instance" "user_workbench" {
       project = "cloud-notebooks-managed"
       family  = "workbench-instances"
     }
+
     network_interfaces {
       network = var.network
       subnet  = var.subnet
     }
     disable_public_ip = true
     metadata = {
-      idle-timeout-seconds = "10800"
+      idle-timeout-seconds = "3600" # 60 minutes
       post-startup-script  = var.post_startup_script
     }
   }
@@ -51,10 +52,11 @@ resource "google_workbench_instance" "user_workbench" {
       gce_setup[0].data_disks,
       gce_setup[0].machine_type,
       gce_setup[0].accelerator_configs,
+      gce_setup[0].boot_disk[0].disk_size_gb,
     ]
   }
-  # when we create, they are stopped, from this point onward, we ignore the state -> leave running ones running
-  desired_state = "STOPPED"
+  # when we create, they are started, from this point onward, we ignore the state -> leave running ones running
+  desired_state = "ACTIVE"
 
   labels = merge({
     consumer-project-id = var.project_id
