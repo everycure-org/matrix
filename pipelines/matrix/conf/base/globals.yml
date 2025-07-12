@@ -11,6 +11,8 @@ neo4j:
 # We always ingest public datasets from the dev bucket, to avoid having to keep it in sync between prod and dev bucket.
 dev_gcs_bucket: gs://mtrx-us-central1-hub-dev-storage
 prod_gcs_bucket: gs://mtrx-us-central1-hub-prod-storage
+# Public GCS bucket for public datasets
+public_gcs_bucket: gs://data.dev.everycure.org
 
 runtime_gcs_bucket: gs://${oc.env:RUNTIME_GCP_BUCKET}
 runtime_gcp_project: ${oc.env:RUNTIME_GCP_PROJECT_ID}
@@ -30,7 +32,7 @@ data_sources:
   robokop:
     version: 30fd1bfc18cd5ccb
   spoke:
-    version: V5.2
+    version: V5.7
   embiology:
     version: 03032025
 # Dataset with node and edge proposals by the
@@ -68,6 +70,8 @@ paths:
   kg_raw:             ${dev_gcs_bucket}/data/01_RAW
   kg_raw_private:     ${prod_gcs_bucket}/data/01_RAW
   ingestion:          data/ingestion
+  # public data sources
+  public_kg_raw:      ${public_gcs_bucket}/data/01_RAW
 
   # Release-based
   integration:        data/releases/${versions.release}/datasets/integration
