@@ -4,7 +4,7 @@
 import os
 from unittest.mock import patch
 
-from pipelines.matrix.src.matrix.resolvers import get_kg_raw_path_for_source
+from matrix.resolvers import get_kg_raw_path_for_source
 
 env_vars = {
     "DEV_GCS_BUCKET": "gs://mtrx-hub-dev-3of",

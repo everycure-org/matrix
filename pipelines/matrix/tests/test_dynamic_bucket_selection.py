@@ -4,7 +4,7 @@
 import os
 from unittest.mock import patch
 
-from pipelines.matrix.src.matrix.resolvers import get_kg_raw_path_for_source
+from matrix.resolvers import get_kg_raw_path_for_source
 
 
 def test_dynamic_bucket_selection():
