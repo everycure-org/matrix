@@ -30,7 +30,7 @@ Finally, catalog entries should be defined to ensure the correct linkage of the 
 ```yaml
 # catalog.yml
 integration.raw.rtx_kg2.edges:
-  filepath: ${globals:paths.public_kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_edges_v2-2.tsv
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/edges_c.tsv
   ... # Remaining configuration here
 ```
 

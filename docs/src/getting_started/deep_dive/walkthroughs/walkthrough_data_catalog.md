@@ -105,12 +105,12 @@ ingestion.raw.rtx_kg2.nodes@spark:
 	      
 ingestion.raw.rtx_kg2.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.public_kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_edges_v2-2.tsv
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/edges_c.tsv
 	...
 	
 ingestion.raw.rtx_kg2.edges@spark:
   <<: [*_spark_csv, *_layer_raw]
-  filepath: ${globals:paths.public_kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_edges_v2-2.tsv
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/edges_c.tsv
 	...
 	
 ingestion.int.rtx_kg2.nodes:
