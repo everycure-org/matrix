@@ -168,6 +168,7 @@ module "gke" {
   enable_private_nodes            = true
   enable_private_endpoint         = false # FUTURE: switch this to true
   enable_vertical_pod_autoscaling = true
+  enable_cost_allocation          = true
   create_service_account          = true
   # see instructions here: https://cloud.google.com/kubernetes-engine/docs/how-to/google-groups-rbac
   authenticator_security_group = "gke-security-groups@everycure.org"
