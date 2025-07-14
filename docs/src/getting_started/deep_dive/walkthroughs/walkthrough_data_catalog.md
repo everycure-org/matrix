@@ -62,7 +62,7 @@ _layer_int: &_layer_int
 
 ingestion.raw.rtx_kg2.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.public_kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_nodes_v2-2.tsv
+  filepath: ${globals:paths.public_kg_raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes_c.tsv
   load_args:
     sep: "\t"
   save_args:
@@ -95,7 +95,7 @@ ingestion.raw.rtx_kg2.nodes@pandas:
 ```yaml
 ingestion.raw.rtx_kg2.nodes@spark:
   <<: [*_spark_csv, *_layer_raw]
-  filepath: ${globals:paths.public_kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_nodes_v2-2.tsv
+  filepath: ${globals:paths.public_kg_raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes_c.tsv
   file_format: csv
   load_args:
     sep: "\t"
