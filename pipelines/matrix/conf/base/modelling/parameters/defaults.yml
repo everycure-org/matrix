@@ -10,7 +10,7 @@ modelling.disease_types:
 
 # Select Ground Truth for training
 modelling.training_gt_dataset:
-  - drugbank
+  - ec
   - kgml_xdtd
 
 modelling.splitter:
