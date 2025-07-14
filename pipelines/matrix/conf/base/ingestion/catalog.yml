@@ -324,7 +324,7 @@ ingestion.raw.ground_truth.negatives:
 ingestion.raw.ground_truth.edges@pandas:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.public_kg_raw}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_raw.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_raw.tsv
   save_args:
     sep: "\t"
     header: true
@@ -334,7 +334,7 @@ ingestion.raw.ground_truth.edges@pandas:
 
 ingestion.raw.ground_truth.edges@spark:
   <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.public_kg_raw}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_raw.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_raw.tsv
   load_args:
     sep: "\t"
     header: true
