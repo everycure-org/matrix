@@ -73,7 +73,7 @@ ingestion.raw.rtx_kg2.nodes@spark:
 
 ingestion.raw.rtx_kg2.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_edges_v2-2.tsv
+  filepath: ${globals:paths.public_kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_edges_v2-2.tsv
   save_args:
     sep: "\t"
     header: true
@@ -84,7 +84,7 @@ ingestion.raw.rtx_kg2.edges@pandas:
 ingestion.raw.rtx_kg2.edges@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_edges_v2-2.tsv
+  filepath: ${globals:paths.public_kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_edges_v2-2.tsv
   file_format: csv
   load_args:
     sep: "\t"
