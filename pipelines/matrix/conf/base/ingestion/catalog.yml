@@ -94,15 +94,15 @@ ingestion.raw.rtx_kg2.edges@spark:
 
 ingestion.int.rtx_kg2.nodes:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.public_ingestion}/int/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes
+  filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes
 
 ingestion.int.rtx_kg2.edges:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.public_ingestion}/int/rtx_kg2/${globals:data_sources.rtx_kg2.version}/edges
+  filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx_kg2.version}/edges
 
 ingestion.int.rtx_kg2.curie_to_pmids:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.public_ingestion}/int/rtx_kg2/${globals:data_sources.rtx_kg2.version}/curie_to_pmids
+  filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx_kg2.version}/curie_to_pmids
 
 # -------------------------------------------------------------------------
 # EveryCure Medical
@@ -236,7 +236,7 @@ ingestion.raw.disease_list:
 ingestion.raw.disease_list.nodes@pandas:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.public_ingestion}/disease_list/translator/${globals:data_sources.disease_list.version}/raw_disease_list_conflated.tsv
+  filepath: ${globals:paths.ingestion}/disease_list/translator/${globals:data_sources.disease_list.version}/raw_disease_list_conflated.tsv
   save_args:
     sep: "\t"
     header: true
@@ -246,7 +246,7 @@ ingestion.raw.disease_list.nodes@pandas:
 
 ingestion.raw.disease_list.nodes@spark:
   <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.public_ingestion}/disease_list/translator/${globals:data_sources.disease_list.version}/raw_disease_list_conflated.tsv
+  filepath: ${globals:paths.ingestion}/disease_list/translator/${globals:data_sources.disease_list.version}/raw_disease_list_conflated.tsv
   load_args:
     sep: "\t"
     header: true
@@ -271,7 +271,7 @@ ingestion.raw.drug_list:
 ingestion.raw.drug_list.nodes@pandas:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.public_ingestion}/drug_list/translator/${globals:data_sources.drug_list.version}/raw_drug_list_conflated.tsv
+  filepath: ${globals:paths.ingestion}/drug_list/translator/${globals:data_sources.drug_list.version}/raw_drug_list_conflated.tsv
   save_args:
     sep: "\t"
     header: true
@@ -281,7 +281,7 @@ ingestion.raw.drug_list.nodes@pandas:
 
 ingestion.raw.drug_list.nodes@spark:
   <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.public_ingestion}/drug_list/translator/${globals:data_sources.drug_list.version}/raw_drug_list_conflated.tsv
+  filepath: ${globals:paths.ingestion}/drug_list/translator/${globals:data_sources.drug_list.version}/raw_drug_list_conflated.tsv
   load_args:
     sep: "\t"
     header: true
@@ -293,11 +293,11 @@ ingestion.raw.drug_list.nodes@spark:
 
 ingestion.int.drug_list.nodes:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.public_ingestion}/drug_list/translator/${globals:data_sources.drug_list.version}/drug_list_conflated
+  filepath: ${globals:paths.ingestion}/drug_list/translator/${globals:data_sources.drug_list.version}/drug_list_conflated
 
 ingestion.int.disease_list.nodes:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.public_ingestion}/disease_list/translator/${globals:data_sources.disease_list.version}/disease_list_conflated
+  filepath: ${globals:paths.ingestion}/disease_list/translator/${globals:data_sources.disease_list.version}/disease_list_conflated
 
 # -------------------------------------------------------------------------
 # Ground truth
@@ -324,7 +324,7 @@ ingestion.raw.ground_truth.negatives:
 ingestion.raw.ground_truth.edges@pandas:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.public_ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_raw.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_raw.tsv
   save_args:
     sep: "\t"
     header: true
@@ -334,7 +334,7 @@ ingestion.raw.ground_truth.edges@pandas:
 
 ingestion.raw.ground_truth.edges@spark:
   <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.public_ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_raw.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_raw.tsv
   load_args:
     sep: "\t"
     header: true
@@ -342,7 +342,7 @@ ingestion.raw.ground_truth.edges@spark:
 
 ingestion.int.ground_truth.edges:
   <<: [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.public_ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs.tsv
+  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs.tsv
   load_args:
     sep: "\t"
     header: true
@@ -398,11 +398,11 @@ ingestion.raw.robokop.edges@pandas:
 
 ingestion.int.robokop.nodes:
    <<: [*_spark_parquet, *_layer_int]
-   filepath: ${globals:paths.public_ingestion}/int/robokop/${globals:data_sources.robokop.version}/nodes
+   filepath: ${globals:paths.ingestion}/int/robokop/${globals:data_sources.robokop.version}/nodes
 
 ingestion.int.robokop.edges:
    <<: [*_spark_parquet, *_layer_int]
-   filepath: ${globals:paths.public_ingestion}/int/robokop/${globals:data_sources.robokop.version}/edges
+   filepath: ${globals:paths.ingestion}/int/robokop/${globals:data_sources.robokop.version}/edges
 
 # -------------------------------------------------------------------------
 # SPOKE
