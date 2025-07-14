@@ -1,6 +1,5 @@
 modelling.xg_ensemble:
     _overrides:
-      
       generator:
         _object: matrix.datasets.pair_generator.ReplacementDrugDiseasePairGenerator
         random_state: ${globals:random_state}
@@ -12,44 +11,15 @@ modelling.xg_ensemble:
         disease_flags:
           - is_disease
 
-
       model_tuning_args:
         tuner:
-          _object: matrix.pipelines.modelling.tuning.GaussianSearch
+          _object: matrix.pipelines.modelling.tuning.NopTuner
           estimator:
             _object: xgboost.XGBClassifier
             n_jobs: 16
             random_state: ${globals:random_state}
             tree_method: hist
             device: cuda
-          n_calls: 20
-          dimensions:
-            - _object: skopt.space.Real
-              name: learning_rate
-              low: 0.01
-              high: 0.5
-            - _object: skopt.space.Integer
-              name: max_depth
-              low: 3
-              high: 10
-            - _object: skopt.space.Real
-              name: lambda
-              low: 0
-              high: 1
-            - _object: skopt.space.Integer
-              name: n_estimators
-              low: 50
-              high: 2500
-          scoring: 
-              _object: matrix.pipelines.modelling.utils.partial_
-              func:
-                _object: sklearn.metrics.f1_score
-              average: macro
-          splitter:
-            _object: sklearn.model_selection.StratifiedShuffleSplit
-            n_splits: 1 
-            test_size: 0.1
-            random_state: ${globals:random_state}
         features: # Features use regex, source_0, source_1, .., target_0, target_1
           - source_+
           - target_+
