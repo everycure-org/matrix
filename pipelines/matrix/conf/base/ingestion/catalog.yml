@@ -359,7 +359,7 @@ ingestion.int.ground_truth.edges:
 ingestion.raw.robokop.nodes@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.public_kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
+  filepath: ${globals:paths.public_kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/nodes.orig.tsv
   file_format: csv
   load_args:
     sep: "\t"
@@ -368,7 +368,7 @@ ingestion.raw.robokop.nodes@spark:
 
 ingestion.raw.robokop.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.public_kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
+  filepath: ${globals:paths.public_kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/nodes.orig.tsv
   save_args:
     sep: "\t"
     header: true
