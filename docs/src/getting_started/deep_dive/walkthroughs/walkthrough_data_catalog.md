@@ -77,7 +77,7 @@ ingestion.raw.rtx_kg2.nodes@pandas:
         - `_pandas_csv` defines the use of the pandas.CSVDataset, so this dataset will use Pandas for reading and writing.
         - `_layer_raw` includes metadata specifying that this dataset belongs to the “raw” layer for visualization purposes.
     - By merging these, you avoid redefining the type: pandas.CSVDataset and the layer metadata here.
-- `filepath: ${globals:paths.public_kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes_c.tsv`
+- `filepath: ${globals:paths.public_kg_raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes_c.tsv`
     - The filepath points to the location of the file that this dataset will load or save.
     - It uses variables from the globals section of the catalog.yml file, which is a common Kedro practice to centralize configuration values:
         - `${globals:paths.public_kg_raw}` refers to the base path for public raw KG data files from the public bucket.
