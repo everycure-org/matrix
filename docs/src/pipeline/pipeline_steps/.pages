@@ -1,0 +1,23 @@
+nav:
+    - Data release:
+        - ingestion.md
+        - integration.md
+    - Features:
+        - filtering.md
+        - embeddings.md
+
+    - Modelling and matrix generation:
+        - modelling.md
+        - matrix_generation.md
+        - matrix_transformation.md
+        - evaluation.md
+
+    - Other:
+        - preprocessing.md
+        - inference.md
+
+    # Data team - you may want to incorporate these old pages into the data engineering section
+    # - Data:
+    #     - data/data_api.md
+    #     - data/drug_disease_lists.md
+    #     - data/ground_truth.md

@@ -6,11 +6,6 @@ dev_namespaces:
     laurens@everycure.org: dev-laurens
     ahuebschen@scripps.edu: dev-alan
   
-    # Data Minded folks
-    emil.krause@dataminded.com: dev-emil
-    siyan.luo@dataminded.com: dev-siyan
-    oliver.willekens@dataminded.com: dev-oliver
-  
     Pascal.Brokmeier@gmail.com: dev-pascal-test
   
 argo:
@@ -20,3 +15,8 @@ argo:
       # add new people here that should be able to submit workflows
     groups:
       - matrix-all@everycure.org
+      - data-science@everycure.org
+      - ext.subcontractors@everycure.org
+      - data-science@everycure.org
+      - ext.subcontractors.standard@everycure.org
+      - ext.subcontractors.embiology@everycure.org
