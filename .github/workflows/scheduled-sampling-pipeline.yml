@@ -11,7 +11,6 @@ on:
         type: string
 env:
   # release version from input
-  # Set the default release version to an empty string
   RELEASE_VERSION: ${{ inputs.release_version }}
 
 jobs:
