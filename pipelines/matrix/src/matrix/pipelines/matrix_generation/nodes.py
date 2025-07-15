@@ -86,9 +86,8 @@ def _add_flag_columns(
     matrix["trial_non_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["significantly_worse"] == 1])
 
     # Flag off label data
-    # off_label = off_label.rename(columns={"subject": "source", "object": "target"})
-    # matrix["off_label"] = create_flag_column(off_label)  # all pairs are positive
-    # matrix["off_label"] = create_flag_column()
+    off_label = off_label.rename(columns={"subject": "source", "object": "target"})
+    matrix["off_label"] = create_flag_column(off_label)  # all pairs are positive
     return matrix
 
 
@@ -159,7 +158,6 @@ def generate_pairs(
     is_in_train = matrix.apply(lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1)
     matrix = matrix[~is_in_train]
     # Add flag columns for known positives and negatives
-    # matrix = _add_flag_columns(matrix, known_pairs, clinical_trials, off_label)
     matrix = _add_flag_columns(matrix, known_pairs, clinical_trials, off_label)
     return matrix
 
