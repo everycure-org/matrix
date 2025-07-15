@@ -255,9 +255,31 @@ The output contains several variables, such as `{folds}` for cross-validation fo
 
 Now that you understand how to run different parts of the pipeline, let's try to run the pipeline with _real_ data. The real KG is large and requires plenty of compute/time however we can run the pipeline with a subset of real data if you follow next steps.
 
-```
-TODO add instructions on runnign the sampled pipeline e2e with public data thats in GCS:
-```
+### Using Public Datasets
+
+The Matrix pipeline now supports public datasets that are available through our public GCS bucket at `gs://data.dev.everycure.org/data/01_RAW/`. This includes public knowledge graphs like RTX-KG2 and Robokop, as well as supporting datasets like ground truth data that don't require special access permissions.
+
+To run the pipeline with public data sources:
+
+1. **Enable public data sources** in your `globals.yml` by ensuring the data sources you want are uncommented:
+   ```yaml
+   data_sources:
+     rtx_kg2:
+       version: v2.7.3
+     robokop:
+       version: v1.5.0
+     gt:  # ground truth data
+       version: v2.10.0_validated
+   ```
+
+2. **Use the base environment** which is already configured to read from the public bucket for these data sources via the `public_kg_raw` path.
+
+3. **Run the data engineering pipeline** to process public datasets:
+   ```bash
+   kedro run --pipeline=data_engineering --tags=rtx_kg2,robokop
+   ```
+
+This approach allows you to work with real, production-quality data without needing access to private datasets or development buckets.
 
 After approximately 20-30 mins, the pipeline should have finished all stages. If that's the case - well done! You can now repeat the entire process with real data if you would like however note that it will take a very long time - without parallelization, you can expect it to run for +24hrs for KGs such as RTX-KG2. Smaller Graphs might be easier.
 
