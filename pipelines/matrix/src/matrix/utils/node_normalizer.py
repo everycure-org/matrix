@@ -1,9 +1,12 @@
+import functools
+
 import requests
 
 
+@functools.cache
 def _get_node_normalization_version(protocol_and_domain: str, openapi_path: str, source: str):
     nn_openapi_json_url = f"{protocol_and_domain}{openapi_path}"
-    response = requests.get(f"{nn_openapi_json_url}")
+    response = requests.get(nn_openapi_json_url, timeout=5)
 
     if not response.ok:
         return "nodenorm-test"
