@@ -26,7 +26,6 @@ hooks = {
     "mlflow_kedro": matrix_hooks.MLFlowHooks(),
     "spark": matrix_hooks.SparkHooks(),
     "release": matrix_hooks.ReleaseInfoHooks(),
-    "node_name": matrix_hooks.NodeNameEnv(),
 }
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
@@ -58,7 +57,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 {"name": "ground_truth", "integrate_in_kg": False, "has_nodes": False},
                 # {"name": "drugmech", "integrate_in_kg": False, "has_nodes": False},
                 {"name": "ec_clinical_trails", "integrate_in_kg": False},
-                # {"name": "off_label", "integrate_in_kg": False, "has_nodes": False},
+                {"name": "off_label", "integrate_in_kg": False, "has_nodes": False},
             ],
             "modelling": {
                 "model_name": "xg_ensemble",  # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth
@@ -72,8 +71,8 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 {"evaluation_name": "simple_classification_trials"},
                 {"evaluation_name": "disease_specific_trials"},
                 {"evaluation_name": "full_matrix_trials"},
-                # {"evaluation_name": "disease_specific_off_label"},
-                # {"evaluation_name": "full_matrix_off_label"},
+                {"evaluation_name": "disease_specific_off_label"},
+                {"evaluation_name": "full_matrix_off_label"},
             ],
             "stability": [
                 {"stability_name": "stability_overlap"},

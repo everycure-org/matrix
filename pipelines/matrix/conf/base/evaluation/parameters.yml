@@ -177,6 +177,27 @@ evaluation.disease_specific_off_label:
         - _object:  matrix.pipelines.evaluation.named_metric_functions.HitK
           k: 100
 
+# Off label rankings
+evaluation.full_matrix_off_label:
+  evaluation_options:
+    generator:
+      _object: matrix.datasets.pair_generator.FullMatrixPositives
+      positive_columns:
+        - "off_label"
+    evaluation:
+      _object: matrix.pipelines.evaluation.evaluation.FullMatrixRanking 
+      rank_func_lst: 
+        - _object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN 
+          n: 1000
+        - _object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
+          n: 10000
+        - _object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
+          n: 100000
+        - _object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
+          n: 1000000
+      quantile_func_lst: 
+        - _object: matrix.pipelines.evaluation.named_metric_functions.AUROC
+
 evaluation.stability_overlap:
   evaluation_options:
     generator:
