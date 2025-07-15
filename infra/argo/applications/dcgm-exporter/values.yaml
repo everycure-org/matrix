@@ -1,0 +1,206 @@
+# DCGM Exporter configuration for comprehensive GPU monitoring
+image:
+  # DCGM Exporter image (connects to host engine)
+  repository: nvcr.io/nvidia/k8s/dcgm-exporter
+  tag: ""  # Set from Chart.yaml annotations
+  pullPolicy: IfNotPresent
+
+hostEngine:
+  # DCGM Host Engine image (privileged container for GPU access)
+  image:
+    repository: nvcr.io/nvidia/cloud-native/dcgm
+    tag: ""  # Set from Chart.yaml annotations
+    pullPolicy: IfNotPresent
+  # Resource requirements for host engine
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 50m
+    limits:
+      memory: 1Gi
+      cpu: 200m
+  # Host engine port configuration
+  port: 5555
+  # Host engine probe configuration
+  probes:
+    liveness:
+      initialDelaySeconds: 30
+      periodSeconds: 30
+    readiness:
+      initialDelaySeconds: 5
+      periodSeconds: 10
+  # Security context for DCGM 4.x host engine
+  securityContext:
+    privileged: true
+    allowPrivilegeEscalation: true
+    capabilities:
+      add: ["SYS_ADMIN", "SYS_PTRACE", "DAC_OVERRIDE"]
+  # Host engine command (DCGM 4.x may need additional flags)
+  command: ["nv-hostengine", "-n", "-b", "ALL", "--log-level", "INFO"]
+
+# Exporter configuration
+exporter:
+  # Port configuration for metrics
+  port: 9400
+  # DCGM 4.x mode: "embedded" or "remote"
+  # embedded: exporter runs its own host engine (recommended for DCGM 4.x)
+  # remote: exporter connects to separate host engine
+  mode: "embedded"
+  # Host engine connection (only used in remote mode)
+  hostEngineAddress: "127.0.0.1:5555"
+  # Probe configuration
+  probes:
+    liveness:
+      initialDelaySeconds: 60
+      periodSeconds: 30
+      path: /metrics
+    readiness:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      path: /metrics
+
+# Node affinity for GPU nodes (Google recommended approach)
+nodeAffinity:
+  requiredDuringSchedulingIgnoredDuringExecution:
+    nodeSelectorTerms:
+    - matchExpressions:
+      - key: cloud.google.com/gke-accelerator
+        operator: Exists
+
+# Tolerations for GPU nodes (Google recommended approach)
+tolerations:
+  - operator: "Exists"
+
+# Resource requirements
+resources:
+  requests:
+    memory: 1Gi
+    cpu: 100m
+  limits:
+    memory: 1Gi
+    cpu: 200m
+
+# Security context
+securityContext:
+  privileged: true
+  allowPrivilegeEscalation: true
+  capabilities:
+    add: ["SYS_ADMIN", "SYS_PTRACE"]
+
+# Service configuration
+service:
+  enable: true
+  port: 9400  # Should match exporter.port
+  type: ClusterIP
+
+# ServiceMonitor for Prometheus
+serviceMonitor:
+  enabled: true
+  interval: 15s
+  scrapeTimeout: 10s
+  labels:
+    release: kube-prometheus-stack
+  metricRelabelings:
+    enabled: false
+  relabelings:
+    enabled: false
+
+# Environment variables
+env:
+  DCGM_EXPORTER_KUBERNETES: "true"
+  DCGM_EXPORTER_LISTEN: ":9400"  # Should match exporter.port
+  DCGM_EXPORTER_KUBERNETES_GPU_ID_TYPE: "device-name"
+  NVML_NO_UNLOAD: "1"  # Prevents NVML library unloading issues in DCGM 4.x
+
+# Host volumes for GPU access
+hostVolumes:
+  - name: nvidia-install-dir
+    hostPath: /home/kubernetes/bin/nvidia
+    mountPath: /usr/local/nvidia
+    readOnly: true
+  - name: pod-resources
+    hostPath: /var/lib/kubelet/pod-resources
+    mountPath: /var/lib/kubelet/pod-resources
+    readOnly: true
+  # Additional volumes for DCGM 4.x
+  - name: proc
+    hostPath: /proc
+    mountPath: /proc
+    readOnly: true
+  - name: sys
+    hostPath: /sys
+    mountPath: /sys
+    readOnly: true
+  - name: dev
+    hostPath: /dev
+    mountPath: /dev
+    readOnly: false
+
+# Additional labels for pods
+podLabels:
+  app: dcgm-exporter
+  component: gpu-monitoring
+
+# ConfigMap for DCGM metrics (Google recommended)
+configMap:
+  enabled: true
+  data:
+    counters.csv: |
+      # Utilization (the sample period varies depending on the product),,
+      DCGM_FI_DEV_GPU_UTIL, gauge, GPU utilization (in %).
+      DCGM_FI_DEV_MEM_COPY_UTIL, gauge, Memory utilization (in %).
+      
+      # Temperature and power usage,,
+      DCGM_FI_DEV_GPU_TEMP, gauge, Current temperature readings for the device in degrees C.
+      DCGM_FI_DEV_MEMORY_TEMP, gauge, Memory temperature for the device.
+      DCGM_FI_DEV_POWER_USAGE, gauge, Power usage for the device in Watts.
+      
+      # Utilization of IP blocks,,
+      DCGM_FI_PROF_SM_ACTIVE, gauge, The ratio of cycles an SM has at least 1 warp assigned
+      DCGM_FI_PROF_SM_OCCUPANCY, gauge, The fraction of resident warps on a multiprocessor
+      DCGM_FI_PROF_PIPE_TENSOR_ACTIVE, gauge, The ratio of cycles the tensor (HMMA) pipe is active
+      DCGM_FI_PROF_PIPE_FP64_ACTIVE, gauge, The fraction of cycles the FP64 (double precision) pipe was active.
+      DCGM_FI_PROF_PIPE_FP32_ACTIVE, gauge, The fraction of cycles the FP32 (single precision) pipe was active.
+      DCGM_FI_PROF_PIPE_FP16_ACTIVE, gauge, The fraction of cycles the FP16 (half precision) pipe was active.
+      
+      # Memory usage,,
+      DCGM_FI_DEV_FB_FREE, gauge, Framebuffer memory free (in MiB).
+      DCGM_FI_DEV_FB_USED, gauge, Framebuffer memory used (in MiB).
+      DCGM_FI_DEV_FB_TOTAL, gauge, Total Frame Buffer of the GPU in MB.
+      
+      # PCIE,,
+      DCGM_FI_PROF_PCIE_TX_BYTES, gauge, Total number of bytes transmitted through PCIe TX
+      DCGM_FI_PROF_PCIE_RX_BYTES, gauge, Total number of bytes received through PCIe RX
+      
+      # NVLink,,
+      DCGM_FI_PROF_NVLINK_TX_BYTES, gauge, The number of bytes of active NvLink tx (transmit) data including both header and payload.
+      DCGM_FI_PROF_NVLINK_RX_BYTES, gauge, The number of bytes of active NvLink rx (read) data including both header and payload.
+
+# Pod annotations
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9400"
+  prometheus.io/path: "/metrics"
+
+# DaemonSet configuration
+daemonSet:
+  # Update strategy
+  updateStrategy:
+    type: RollingUpdate
+  # Host configuration
+  hostNetwork: true
+  hostPID: true
+  # Runtime class for GPU access (optional, uncomment if needed)
+  # runtimeClassName: nvidia
+
+# Path configurations for GKE
+paths:
+  # NVIDIA driver installation directory
+  nvidiaDriverPath: /home/kubernetes/bin/nvidia
+  # NVIDIA library path
+  nvidiaLibPath: /usr/local/nvidia/lib64
+
+# Container names (for customization)
+containerNames:
+  hostEngine: nvidia-dcgm
+  exporter: dcgm-exporter

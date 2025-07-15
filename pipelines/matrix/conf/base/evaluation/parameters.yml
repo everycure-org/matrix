@@ -20,7 +20,6 @@ evaluation.simple_classification:
       metrics:
         - _object: sklearn.metrics.accuracy_score
         - _object: sklearn.metrics.f1_score
-      score_col_name: &score-col "treat score"
       threshold: 0.5
 
 # Disease-specific ranking
@@ -44,7 +43,6 @@ evaluation.disease_specific:
           k: 10
         - _object:  matrix.pipelines.evaluation.named_metric_functions.HitK
           k: 100
-      score_col_name: *score-col
 
 # Full matrix ranking 
 evaluation.full_matrix:
@@ -110,7 +108,6 @@ evaluation.simple_classification_trials:
       metrics:
         - _object: sklearn.metrics.accuracy_score
         - _object: sklearn.metrics.f1_score
-      score_col_name: *score-col
       threshold: 0.5
 
 # Disease-specific ranking (clinical trials version)
@@ -134,7 +131,6 @@ evaluation.disease_specific_trials:
           k: 10
         - _object:  matrix.pipelines.evaluation.named_metric_functions.HitK
           k: 100
-      score_col_name: *score-col
 
 # Full matrix ranking (clinical trials version)
 evaluation.full_matrix_trials:
@@ -162,46 +158,24 @@ evaluation.full_matrix_trials:
 
 ## Off Label Datasets evaluation
 
-# # Disease-specific ranking (off-label version)
-# evaluation.disease_specific_off_label:
-#   evaluation_options:
-#     generator:
-#       _object: matrix.datasets.pair_generator.MatrixTestDiseases
-#       positive_columns: 
-#         - "off_label"
-#     evaluation:
-#       _object: matrix.pipelines.evaluation.evaluation.SpecificRanking
-#       specific_col: "target"
-#       rank_func_lst: 
-#         - _object: matrix.pipelines.evaluation.named_metric_functions.MRR
-#         - _object:  matrix.pipelines.evaluation.named_metric_functions.HitK
-#           k: 2
-#         - _object:  matrix.pipelines.evaluation.named_metric_functions.HitK
-#           k: 10
-#         - _object:  matrix.pipelines.evaluation.named_metric_functions.HitK
-#           k: 100
-#       score_col_name: *score-col
-
-# Off label rankings
-# evaluation.full_matrix_off_label:
-#   evaluation_options:
-#     generator:
-#       _object: matrix.datasets.pair_generator.FullMatrixPositives
-#       positive_columns:
-#         - "off_label"
-#     evaluation:
-#       _object: matrix.pipelines.evaluation.evaluation.FullMatrixRanking 
-#       rank_func_lst: 
-#         - _object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN 
-#           n: 1000
-#         - _object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
-#           n: 10000
-#         - _object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
-#           n: 100000
-#         - _object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
-#           n: 1000000
-#       quantile_func_lst: 
-#         - _object: matrix.pipelines.evaluation.named_metric_functions.AUROC
+# Disease-specific ranking (off-label version)
+evaluation.disease_specific_off_label:
+  evaluation_options:
+    generator:
+      _object: matrix.datasets.pair_generator.MatrixTestDiseases
+      positive_columns: 
+        - "off_label"
+    evaluation:
+      _object: matrix.pipelines.evaluation.evaluation.SpecificRanking
+      specific_col: "target"
+      rank_func_lst: 
+        - _object: matrix.pipelines.evaluation.named_metric_functions.MRR
+        - _object:  matrix.pipelines.evaluation.named_metric_functions.HitK
+          k: 2
+        - _object:  matrix.pipelines.evaluation.named_metric_functions.HitK
+          k: 10
+        - _object:  matrix.pipelines.evaluation.named_metric_functions.HitK
+          k: 100
 
 evaluation.stability_overlap:
   evaluation_options:

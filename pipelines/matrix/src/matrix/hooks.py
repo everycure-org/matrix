@@ -161,6 +161,12 @@ class SparkHooks:
                 logger.info(f'With ARGO_POD_UID set to: {os.environ.get("ARGO_NODE_ID", "")}')
                 logger.info("Thus determined not to be in k8s cluster and executing with service-account.json file")
 
+            # When running `kedro run`, the SparkSession is created with the impersonation service account.
+            if os.environ.get("SPARK_IMPERSONATION_SERVICE_ACCOUNT") is not None:
+                service_account = os.environ["SPARK_IMPERSONATION_SERVICE_ACCOUNT"]
+                parameters["spark.hadoop.fs.gs.auth.impersonation.service.account"] = service_account
+                logger.info(f"Using service account: {service_account} for spark impersonation")
+
             logger.info(f"starting spark session with the following parameters: {parameters}")
             spark_conf = SparkConf().setAll(parameters.items())
 
@@ -338,7 +344,7 @@ class ReleaseInfoHooks:
         return tmpl
 
     @classmethod
-    def extract_datasets_used(cls) -> list:
+    def extract_used_dataset_names(cls) -> list:
         # Using lazy import to prevent circular import error
         from matrix.settings import DYNAMIC_PIPELINES_MAPPING
 
@@ -352,32 +358,16 @@ class ReleaseInfoHooks:
         }
         return datasources_to_versions
 
-    @classmethod
-    def mark_unused_datasets(cls, global_datasets: dict, datasets_used: list) -> None:
-        """Takes a list of globally defined datasets (and their versions) and compares it against datasets
-        actually used, as dictated by the settings.py file responsible for the generation of dynamic pipelines.
-        For global datasets that were excluded in the settings.py, a note is placed in the dict value that otherwise
-        features the version number."""
-
-        for global_dataset in global_datasets:
-            if not global_dataset in datasets_used:
-                global_datasets[global_dataset] = "not included"
-
     @staticmethod
     def extract_release_info(global_datasets: dict[str, Any]) -> dict[str, str]:
         info = {
             "Release Name": ReleaseInfoHooks._globals["versions"]["release"],
             "Datasets": global_datasets,
-            "Topological Estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["_object"],
-            "Embeddings Encoder": ReleaseInfoHooks._params["embeddings.node"]["resolver"]["encoder"]["model"],
-            "BigQuery Link": ReleaseInfoHooks.build_bigquery_link(),
-            "MLFlow Link": ReleaseInfoHooks.build_mlflow_link(),
-            "Code Link": ReleaseInfoHooks.build_code_link(),
-            "Neo4j Link": "coming soon!",
-            "NodeNorm Endpoint Link": ReleaseInfoHooks._params["integration"]["normalization"]["normalizer"][
-                "endpoint"
-            ],
-            "KG dashboard link": ReleaseInfoHooks.build_kg_dashboard_link(),
+            "BigQuery": ReleaseInfoHooks.build_bigquery_link(),
+            "KG dashboard": ReleaseInfoHooks.build_kg_dashboard_link(),
+            "MLFlow": ReleaseInfoHooks.build_mlflow_link(),
+            "Code": ReleaseInfoHooks.build_code_link(),
+            "NodeNorm Endpoint": ReleaseInfoHooks._params["integration"]["normalization"]["normalizer"]["endpoint"],
         }
         return info
 
@@ -400,9 +390,9 @@ class ReleaseInfoHooks:
         if node.name == last_data_release_node_name:
             datasets_to_hide = frozenset([])
             global_datasets = self.extract_all_global_datasets(datasets_to_hide)
-            datasets_used = self.extract_datasets_used()
-            self.mark_unused_datasets(global_datasets, datasets_used)
-            release_info = self.extract_release_info(global_datasets)
+            used_dataset_names = self.extract_used_dataset_names()
+            used_datasets = {k: v for k, v in global_datasets.items() if k in used_dataset_names}
+            release_info = self.extract_release_info(used_datasets)
             try:
                 self.upload_to_storage(release_info)
             except KeyError:
