@@ -1,7 +1,7 @@
 export default {
     sidebarOrder: [
         "Home",
-        "EC Core Components",
+        "EC Core Entities",
         "Metrics",
         "Node",
         "Normalization"
