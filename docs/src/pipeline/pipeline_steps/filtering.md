@@ -1,6 +1,3 @@
-
-### Filtering
-
 The filtering pipeline step enables selective processing of the knowledge graph by focusing on specific subsets of nodes and edges. Common use cases include:
 
 - Focusing on specific node or edge types

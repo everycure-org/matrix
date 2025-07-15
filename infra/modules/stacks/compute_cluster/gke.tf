@@ -2,7 +2,7 @@ data "google_client_config" "default" {
 }
 
 locals {
-  default_node_locations = "us-central1-a,us-central1-c"
+  default_node_locations = "us-central1-c" # Single location for simplicity, can be expanded to multiple zones if needed
 
   # NOTE: Debugging node group scaling can be done using the GCP cluster logs, we create
   # node groups in 2 node locations, hence why the total amount of node groups.
@@ -25,21 +25,6 @@ locals {
     }
   ]
 
-  standard_node_pools = [for size in [4, 8, 16, 32, 48, 64] : {
-    name               = "n2-standard-${size}-nodes"
-    machine_type       = "n2-standard-${size}"
-    node_locations     = local.default_node_locations
-    min_count          = 0
-    max_count          = 20
-    local_ssd_count    = 0
-    disk_type          = size > 32 ? "pd-ssd" : "pd-standard"
-    disk_size_gb       = 200
-    enable_gcfs        = true
-    enable_gvnic       = true
-    initial_node_count = 0
-    }
-  ]
-
   gpu_node_pools = [
     {
       name               = "g2-standard-16-l4-nodes" # 1 GPU, 16vCPUs, 64GB RAM
@@ -59,11 +44,28 @@ locals {
     }
   ]
 
+  # Dedicated management node pool for ArgoCD, Prometheus, MLflow, etc.
+  management_node_pools = [
+    {
+      name               = "management-nodes"
+      machine_type       = "n2-standard-8" # 8 vCPUs, 32GB RAM
+      node_locations     = local.default_node_locations
+      min_count          = 1 # Single instance, no HA
+      max_count          = 1 # Single instance, no HA
+      local_ssd_count    = 0
+      disk_type          = "pd-standard" # Cost-effective for management workloads
+      disk_size_gb       = 200
+      enable_gcfs        = true
+      enable_gvnic       = true
+      initial_node_count = 1
+    }
+  ]
+
   # Combine all node pools
   node_pools_combined = concat(
-    local.standard_node_pools,
     local.n2d_node_pools,
-    local.gpu_node_pools
+    local.gpu_node_pools,
+    local.management_node_pools
   )
 
   # Define node pools that should have the large memory taint
@@ -84,6 +86,35 @@ locals {
         key    = "nvidia.com/gpu"
         value  = "present"
         effect = "NO_SCHEDULE"
+      },
+      {
+        key    = "workload"
+        value  = "true"
+        effect = "NO_SCHEDULE"
+      }
+    ],
+    # Small standard and highmem pools (restrict general scheduling)
+    "n2-standard-4-nodes" = [
+      {
+        key    = "workload"
+        value  = "true"
+        effect = "NO_SCHEDULE"
+      }
+    ]
+
+    "n2-standard-8-nodes" = [
+      {
+        key    = "workload"
+        value  = "true"
+        effect = "NO_SCHEDULE"
+      }
+    ]
+
+    "n2d-highmem-8-nodes" = [
+      {
+        key    = "workload"
+        value  = "true"
+        effect = "NO_SCHEDULE"
       }
     ]
   }
@@ -98,8 +129,13 @@ locals {
           key    = "node-memory-size"
           value  = "large"
           effect = "NO_SCHEDULE"
+        },
+        {
+          key    = "workload"
+          value  = "true"
+          effect = "NO_SCHEDULE"
         }
-      ] if !contains(keys(local.node_pools_taints_map), pool)
+      ] if !contains(keys(merge(local.node_pools_taints_map)), pool)
     }
   )
 }
@@ -132,6 +168,7 @@ module "gke" {
   enable_private_nodes            = true
   enable_private_endpoint         = false # FUTURE: switch this to true
   enable_vertical_pod_autoscaling = true
+  enable_cost_allocation          = true
   create_service_account          = true
   # see instructions here: https://cloud.google.com/kubernetes-engine/docs/how-to/google-groups-rbac
   authenticator_security_group = "gke-security-groups@everycure.org"
@@ -145,9 +182,28 @@ module "gke" {
   node_pools_taints = local.node_pools_taints
 
   node_pools_labels = {
-    for pool in local.node_pools_combined : pool.name => {
-      gpu_node = can(pool.accelerator_count) ? "true" : "false"
-    }
+    for pool in local.node_pools_combined : pool.name => merge(
+      {
+        gpu_node = can(pool.accelerator_count) ? "true" : "false"
+        # Billing labels for cost tracking
+        cost-center       = pool.name == "management-nodes" ? "infrastructure-management" : "compute-workloads"
+        workload-category = pool.name == "management-nodes" ? "platform-services" : "data-science"
+        environment       = var.environment
+      },
+      pool.name == "management-nodes" ? {
+        workload-type    = "management"
+        billing-category = "infrastructure"
+        service-tier     = "management"
+        } : can(pool.accelerator_count) ? {
+        workload-type    = "compute"
+        billing-category = "gpu-compute"
+        service-tier     = "compute"
+        } : {
+        workload-type    = "compute"
+        billing-category = "cpu-compute"
+        service-tier     = "compute"
+      }
+    )
   }
   # https://cloud.google.com/artifact-registry/docs/access-control#gke
   # node_pools_oauth_scopes = {
