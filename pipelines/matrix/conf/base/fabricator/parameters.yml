@@ -27,7 +27,7 @@ fabricator.rtx_kg2:
           - biolink:Protein
       all_categories:
         type: row_apply
-        input_columns: ["nodes.category"]
+        input_columns: [ "nodes.category" ]
         row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
         row_func_kwargs:
           delimiter: "|"
@@ -517,18 +517,18 @@ fabricator.robokop:
         type: generate_random_arrays
         delimiter: "|"
         sample_values:
-          - biolink:Entity
-          - biolink:ThingWithTaxon
-          - biolink:BiologicalEntity
-          - biolink:Drug
-          - biolink:Disease
-          - biolink:SequenceVariant
-          - biolink:NamedThing
-          - biolink:OntologyClass
-          - biolink:PhysicalEssence
-          - biolink:PhysicalEssenceOrOccurrent
-          - biolink:GenomicEntity
-          - biolink:OrganismTaxon
+            - biolink:Entity
+            - biolink:ThingWithTaxon
+            - biolink:BiologicalEntity
+            - biolink:Drug
+            - biolink:Disease
+            - biolink:SequenceVariant
+            - biolink:NamedThing
+            - biolink:OntologyClass
+            - biolink:PhysicalEssence
+            - biolink:PhysicalEssenceOrOccurrent
+            - biolink:GenomicEntity
+            - biolink:OrganismTaxon
       "description:string":
         type: faker
         provider: sentence
@@ -651,7 +651,7 @@ fabricator.ec_medical_kg:
           - biolink:Protein
       types:
         type: row_apply
-        input_columns: ["nodes.type"]
+        input_columns: [ "nodes.type" ]
         row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
         row_func_kwargs:
           delimiter: "\u01c2"
@@ -681,8 +681,8 @@ fabricator.ec_medical_kg:
           - treats
           - interacts_with
       knowledge_source:
-        type: faker
-        provider: name
+         type: faker
+         provider: name
 
 fabricator.spoke:
   nodes:
@@ -755,7 +755,7 @@ fabricator.embiology:
           - biolink:Protein
       all_categories:
         type: row_apply
-        input_columns: ["nodes.category"]
+        input_columns: [ "nodes.category" ]
         row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
         row_func_kwargs:
           delimiter: "|"
@@ -784,6 +784,7 @@ fabricator.embiology:
           - Disease
           - SemanticConcept
           - Virus
+
 
   edges:
     num_rows: 2000
