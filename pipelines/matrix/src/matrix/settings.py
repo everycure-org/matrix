@@ -82,7 +82,9 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                     "stability_name": "rank_commonality"
                 },  # note - rank_commonality will be only used if you have a shared commonality@k and spearman@k metrics
             ],
-            "node_norm": get_node_normalization_settings("RENCI"),  # could also be NCATS
+            "node_norm": get_node_normalization_settings(
+                NODE_NORMALIZER_CONFIGURATIONS["RENCI"]
+            ),  # could also be NCATS
         }
     )
 )
