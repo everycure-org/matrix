@@ -3,13 +3,12 @@ from unittest.mock import Mock
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import pyspark.sql as ps
 import pytest
 from matrix.datasets.graph import KnowledgeGraph
-from matrix.inject import _extract_elements_in_list
 from matrix.pipelines.matrix_generation.nodes import (
     generate_pairs,
     generate_reports,
-    make_batch_predictions,
     make_predictions_and_sort,
 )
 from matrix.pipelines.modelling.transformers import FlatArrayTransformer
@@ -80,17 +79,22 @@ def sample_off_label():
 
 
 @pytest.fixture
-def sample_graph():
+def sample_node_embeddings():
     """Fixture that provides a sample KnowledgeGraph for testing."""
     nodes = pd.DataFrame(
         {
             "id": ["drug_1", "drug_2", "disease_1", "disease_2"],
             "is_drug": [True, True, False, False],
             "is_disease": [False, False, True, True],
-            "topological_embedding": [np.ones(3) * n for n in range(4)],
+            "topological_embedding": [np.ones(3).tolist() * n for n in range(4)],
         }
     )
-    return KnowledgeGraph(nodes)
+    return nodes
+
+
+@pytest.fixture
+def sample_graph(sample_node_embeddings):
+    return KnowledgeGraph(sample_node_embeddings)
 
 
 @pytest.fixture
@@ -234,59 +238,29 @@ def test_generate_pairs(
     )
 
 
-def test_make_batch_predictions(
-    sample_graph,
-    sample_matrix_data,
-    transformers,
-    mock_model,
-):
-    # Given data, embeddings and a model
-    # When we make batched predictions
-    result = make_batch_predictions(
-        graph=sample_graph,
-        data=sample_matrix_data,
-        transformers=transformers,
-        model=mock_model,
-        features=["source_+", "target_+"],
-        treat_score_col_name="score",
-        not_treat_score_col_name="not_treat_score",
-        unknown_score_col_name="unknown_score",
-        batch_by="target",
-    )
-
-    # Then the scores are added for all datapoints in a new column
-    # and the model was called the correct number of times
-    assert "score" in result.columns
-    assert isinstance(result, pd.DataFrame)
-    assert len(result) == 4
-    assert mock_model.predict_proba.call_count == 2  # Called 2x due to batching
-
-
 def test_make_predictions_and_sort(
-    sample_graph,
+    spark,
+    sample_node_embeddings,
     sample_matrix_data,
     transformers,
     mock_model,
 ):
-    # Given a drug list, disease list and objects necessary for inference
-    # When running inference and sorting
     result = make_predictions_and_sort(
-        graph=sample_graph,
-        data=sample_matrix_data,
+        node_embeddings=spark.createDataFrame(sample_node_embeddings),
+        pairs=spark.createDataFrame(sample_matrix_data),
         transformers=transformers,
         model=mock_model,
         features=["source_+", "target_+"],
-        treat_score_col_name="score",
-        not_treat_score_col_name="not_treat_score",
-        unknown_score_col_name="unknown_score",
-        batch_by="target",
+        treat_score_col_name="treat score",
+        not_treat_score_col_name="not treat score",
+        unknown_score_col_name="unknown score",
     )
 
-    # Then the output is of the correct format and correctly sorted
-    assert "score" in result.columns
-    assert isinstance(result, pd.DataFrame)
-    assert len(result) == 4
-    assert result["score"].is_monotonic_decreasing
+    assert isinstance(result, ps.DataFrame)
+    result_pandas = result.toPandas()
+    assert "treat score" in result_pandas.columns
+    assert len(result_pandas) == 4
+    assert result_pandas["treat score"].is_monotonic_decreasing
 
 
 @pytest.fixture

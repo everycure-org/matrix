@@ -1,8 +1,37 @@
+_pandas_csv: &_pandas_csv
+  type:  pandas.CSVDataset
+
+_pandas_parquet_ds: &_pandas_parquet
+  type: matrix.datasets.graph.PandasParquetDataset
+  save_args:
+    engine: pyarrow
+  load_args:
+    engine: pyarrow
+
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+_spark_csv: &_spark_csv
+  type: spark.SparkDataset
+  file_format: csv
+  load_args:
+    header: True
+  save_args:
+    mode: overwrite
+
 _layer_raw: &_layer_raw
   metadata:
     kedro-viz:
       layer: raw
-      
+
+_layer_int: &_layer_int
+  metadata:
+    kedro-viz:
+      layer: integration
+
 ingestion.raw.disease_list:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
@@ -49,3 +78,68 @@ ingestion.raw.drugmech.edges@spark:
   file_format: json
   load_args:
     multiline: true
+
+# -------------------------------------------------------------------------
+# RTX-KG2
+# -------------------------------------------------------------------------  
+ingestion.raw.rtx_kg2.curie_to_pmids@pandas:
+  type: pandas.SQLTableDataset
+  table_name: curie_to_pmids  
+  credentials: sqlite_credentials
+  save_args:
+    if_exists: replace
+ingestion.raw.rtx_kg2.curie_to_pmids@spark:
+  type: matrix.datasets.gcp.RemoteSparkJDBCDataset
+  project: ${globals:dev_gcp_project_id}
+  table: curie_to_pmids
+  url: sqlite:${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/curie_to_pmids.sqlite
+  load_args:
+    properties:
+      driver: org.sqlite.JDBC
+
+ingestion.raw.rtx_kg2.nodes@pandas:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_nodes_v2-2.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    header: true
+    index: false
+    sep: "\t"
+ingestion.raw.rtx_kg2.nodes@spark:
+  <<: *_layer_raw
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_nodes_v2-2.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+
+ingestion.raw.rtx_kg2.edges@pandas:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_edges_v2-2.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
+ingestion.raw.rtx_kg2.edges@spark:
+  <<: *_layer_raw
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_edges_v2-2.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+  save_args:
+    header: true
+ingestion.int.rtx_kg2.nodes:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes
+ingestion.int.rtx_kg2.edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx_kg2.version}/edges
+ingestion.int.rtx_kg2.curie_to_pmids:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx_kg2.version}/curie_to_pmids

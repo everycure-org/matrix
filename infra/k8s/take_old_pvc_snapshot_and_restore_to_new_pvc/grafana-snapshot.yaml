@@ -1,0 +1,9 @@
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshot
+metadata:
+  name: grafana-snap
+  namespace: observability
+spec:
+  source:
+    persistentVolumeClaimName: storage-kube-prometheus-stack-grafana-0
+  volumeSnapshotClassName: standard-snapclass

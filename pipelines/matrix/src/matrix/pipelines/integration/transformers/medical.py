@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 class MedicalTransformer(GraphTransformer):
     """Transformer for medical data."""
 
-    def __init__(self, select_cols: str = True, drop_duplicates: bool = True):
-        super().__init__(select_cols)
+    def __init__(self, version: str, select_cols: str = True, drop_duplicates: bool = True):
+        super().__init__(version, select_cols)
         self._drop_duplicates = drop_duplicates
 
     def transform_nodes(self, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
@@ -33,12 +33,12 @@ class MedicalTransformer(GraphTransformer):
             # Filter nodes we could not correctly resolve
             .filter(f.col("id").isNotNull())
         )
+        # fmt: on
 
         if self._drop_duplicates:
             df = df.dropDuplicates(["id"])  # Drop any duplicate nodes
-            
+
         return df
-        # fmt: on
 
     def transform_edges(self, edges_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
         # fmt: off
@@ -59,10 +59,10 @@ class MedicalTransformer(GraphTransformer):
             .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present
             .withColumn("num_references",                f.lit(None).cast(T.IntegerType()))
             .withColumn("num_sentences",                 f.lit(None).cast(T.IntegerType()))
-            
             # Filter edges we could not correctly resolve
             .filter(f.col("subject").isNotNull() & f.col("object").isNotNull())
         )
+        # fmt: on
 
         if self._drop_duplicates:
             df = df.dropDuplicates(["subject", "object", "predicate"])
