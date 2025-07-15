@@ -1,26 +1,28 @@
-import functools
-
 import requests
 
-from matrix.settings import NODE_NORMALIZER_CONFIGURATIONS
 
-
-@functools.cache
 def _get_node_normalization_version(protocol_and_domain: str, openapi_path: str, source: str):
     nn_openapi_json_url = f"{protocol_and_domain}{openapi_path}"
-    json_response = requests.get(f"{nn_openapi_json_url}").json()
+    response = requests.get(f"{nn_openapi_json_url}")
+
+    if not response.ok:
+        return "nodenorm-test"
+
+    json_response = response.json()
     version = json_response["info"]["version"]
     return f"nodenorm-{source.lower()}-{version}"
 
 
-def get_node_normalization_settings(config_name: str):
-    if config_name not in NODE_NORMALIZER_CONFIGURATIONS:
-        raise ValueError(f"Node normalization configuration must be one of: {NODE_NORMALIZER_CONFIGURATIONS.keys()}")
+def get_node_normalization_settings(config: dict):
+    if "protocol_and_domain" not in config or "get_normalized_nodes_path" not in config or "openapi_path" not in config:
+        raise ValueError(f"Misconfigured Node Normalization settings")
 
-    config = NODE_NORMALIZER_CONFIGURATIONS[config_name]
-    return {
-        "endpoint": f"{config['protocol_and_domain']}{config['get_normalized_nodes_path']}",
-        "version": _get_node_normalization_version(
-            config["protocol_and_domain"], config["openapi_path"], config["source"]
-        ),
-    }
+    source = config["source"]
+    protocol_and_domain = config["protocol_and_domain"]
+    get_normalized_nodes_path = config["get_normalized_nodes_path"]
+    openapi_path = config["openapi_path"]
+
+    endpoint = f"{protocol_and_domain}{get_normalized_nodes_path}"
+    version = (_get_node_normalization_version(protocol_and_domain, openapi_path, source),)
+
+    return {"endpoint": endpoint, "version": version}
