@@ -31,6 +31,8 @@ fetch_secrets:
 
 default: prerequisites fetch_sa_key install fast_test integration_test
 
+local_test: install fast_test integration_test
+
 .PHONY: always
 # steps here get run on _every_ make call, no matter the target. Make sure this is 100% idempotent and fast.
 always:
@@ -138,9 +140,8 @@ wipe_neo:
 	uv run python scripts/wipe_neo4j.py 'everycure-test'
 
 integration_test: compose_up wipe_neo
-	# NOTE: We are running without xgc due to its long runtime. 
 	ulimit -n 10000
-	uv run kedro run --env test -p test --without-tags xgc,not-shared
+	uv run kedro run --env test -p test
 
 fabricate:
 	uv run kedro run -p fabricator --env test

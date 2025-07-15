@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-mlflow-postgresql-0
+  namespace: mlflow
+spec:
+  storageClassName: standard-us-central1-c
+  dataSource:
+    name: mlflow-pg-snap
+    kind: VolumeSnapshot
+    apiGroup: snapshot.storage.k8s.io
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi

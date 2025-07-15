@@ -1,5 +1,14 @@
 
 external-dns:
+  # Schedule External DNS on management nodes
+  nodeSelector:
+    workload-type: management
+  podLabels:
+    cost-center: infrastructure-management
+    workload-category: platform-services
+    service-tier: management
+    billing-category: infrastructure
+    component: external-dns
   provider:
     name: google
   extraArgs:
@@ -18,6 +27,35 @@ external-dns:
         verbs: ["get","watch","list"]
 
 cert-manager:
+  # Schedule cert-manager on management nodes
+  nodeSelector:
+    workload-type: management
+  podLabels:
+    cost-center: infrastructure-management
+    workload-category: platform-services
+    service-tier: management
+    billing-category: infrastructure
+    component: cert-manager
+  # Schedule webhook on management nodes
+  webhook:
+    nodeSelector:
+      workload-type: management
+    podLabels:
+      cost-center: infrastructure-management
+      workload-category: platform-services
+      service-tier: management
+      billing-category: infrastructure
+      component: cert-manager-webhook
+  # Schedule cainjector on management nodes
+  cainjector:
+    nodeSelector:
+      workload-type: management
+    podLabels:
+      cost-center: infrastructure-management
+      workload-category: platform-services
+      service-tier: management
+      billing-category: infrastructure
+      component: cert-manager-cainjector
   crds:
     enabled: true
     keep: false # potentially dangerous to remove them but for now trying to keep ArgoCD fully owning this

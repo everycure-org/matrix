@@ -18,7 +18,14 @@ logger = logging.getLogger(__name__)
 
 
 class NCATSNodeNormalizer(Normalizer):
-    """Class to represent normalizer from translator."""
+    """Represents the NCATS Node Normalizer from Translator.
+
+    This class provides an interface to the Node Normalization service:
+    https://github.com/TranslatorSRI/NodeNormalization/blob/0c0d8fd0c49d87d86d8e2e6780f782a6f9c7d766/documentation/API.md#get_normalized_nodes
+
+    It supports batch normalization of CURIE identifiers, category extraction,
+    and optional conflation settings for drugs and chemicals.
+    """
 
     def __init__(
         self,
@@ -32,7 +39,10 @@ class NCATSNodeNormalizer(Normalizer):
         self._conflate = conflate
         self._drug_chemical_conflate = drug_chemical_conflate
         self._description = description
-        self._json_parser = parse("$.id.identifier")  # FUTURE: Ensure we can update
+        self._json_parser = {
+            "id": parse("$.id.identifier"),
+            "category": parse("$.type.[*]"),  # category list from NN
+        }
         self._items_per_request = items_per_request
 
     async def apply(self, strings: Collection[str], **kwargs) -> list[str | None]:
@@ -67,12 +77,24 @@ class NCATSNodeNormalizer(Normalizer):
 
                 resp.raise_for_status()
 
-        return [self._extract_id(curie, response_json, self._json_parser) for curie in batch]
+        return [self._extract(curie, response_json, self._json_parser) for curie in batch]
 
     @staticmethod
-    def _extract_id(id: str, response: dict[str, Any], json_parser: parse) -> str | None:
+    def _extract(
+        id: str, response: dict[str, Any], json_parser: parse, default_normalizer_category: str = "biolink:NamedThing"
+    ) -> dict[str, Any] | None:
         """Extract normalized IDs from the response using the json parser."""
         try:
-            return str(json_parser.find(response.get(id))[0].value)
+            curie_info = response.get(id)
+            if curie_info is None:
+                return {"normalized_id": None, "normalized_categories": [default_normalizer_category]}
+            normalized_id = str(json_parser["id"].find(curie_info)[0].value)
+            # Find categories for CURIE in NN. If no categories are present, use default
+            categories = [match.value for match in json_parser["category"].find(curie_info)] or [
+                default_normalizer_category
+            ]
+
+            return {"normalized_id": normalized_id, "normalized_categories": categories}
         except (IndexError, KeyError):
             logger.debug(f"Not able to normalize for {id}: {response.get(id)}, {json_parser}")
+            return {"normalized_id": None, "normalized_categories": [default_normalizer_category]}

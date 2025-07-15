@@ -1,0 +1,5 @@
+modelling.drug_types:
+  - biolink:NamedThing
+
+modelling.disease_types:
+    - biolink:NamedThing

@@ -1,0 +1,14 @@
+matrix_transformations:
+  transformations:
+    # no_transformation:
+    #   _object: matrix.pipelines.matrix_transformations.transformations.NoTransformation
+
+    # almost_pure_frequent_flyer:
+    #   _object: matrix.pipelines.matrix_transformations.transformations.AlmostPureRankBasedFrequentFlyerTransformation
+    #   decay: 0.05
+
+    uniform_frequent_flyer:
+      _object: matrix.pipelines.matrix_transformations.transformations.UniformRankBasedFrequentFlyerTransformation
+      decay: 0.05
+
+  score_col: "treat score"

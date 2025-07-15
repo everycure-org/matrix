@@ -23,17 +23,14 @@ class RTXTransformer(GraphTransformer):
         Returns:
             Transformed DataFrame.
         """
-        # fmt: off
-        return (
-            nodes_df
-            .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
-            .withColumn("labels",                            f.lit(None).cast(T.ArrayType(T.StringType()))) # TODO: replace this with _LABEL once updated rtx-kg2 is available
-            .withColumn("all_categories",                    f.split(f.col("all_categories"), RTX_SEPARATOR))
-            .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies"), RTX_SEPARATOR))
-            .withColumn("publications",                      f.split(f.col("publications"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
-            .withColumn("international_resource_identifier", f.col("iri"))
-        )
-        # fmt: on
+        match self._version:
+            case "v2.7.3":
+                df = transform_nodes_v2_7_3(nodes_df)
+            case "v2.10.0_validated":
+                df = transform_nodes_v2_10_0_validated(nodes_df)
+            case _:
+                raise NotImplementedError(f"No nodes transformer code implemented for version: {self._version}")
+        return df
 
     def transform_edges(
         self, edges_df: ps.DataFrame, curie_to_pmids: ps.DataFrame, semmed_filters: Dict[str, str], **kwargs
@@ -45,13 +42,71 @@ class RTXTransformer(GraphTransformer):
         Returns:
             Transformed DataFrame.
         """
+        match self._version:
+            case "v2.7.3":
+                df = transform_edges_v2_7_3(edges_df, curie_to_pmids, semmed_filters)
+            case "v2.10.0_validated":
+                df = transform_edges_v2_10_0_validated(edges_df, curie_to_pmids, semmed_filters)
+            case _:
+                raise NotImplementedError(f"No edges transformer code implemented for version: {self._version}")
 
-        # fmt: off
-        return (
-            edges_df
-            .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
-            .withColumn("agent_type",                    f.lit(None).cast(T.StringType()))
-            .withColumn("aggregator_knowledge_source", f.split(f.col("aggregator_knowledge_source"), RTX_SEPARATOR)) #RTX KG2 2.10 has a column for aggregator knowledge source
+        return df
+
+
+def transform_nodes_v2_7_3(nodes_df: ps.DataFrame):
+    # fmt: off
+    df = (nodes_df
+          .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
+          .withColumn("labels",                            f.split(f.col(":LABEL"), RTX_SEPARATOR))
+          .withColumn("all_categories",                    f.split(f.col("all_categories:string[]"), RTX_SEPARATOR))
+          .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies:string[]"), RTX_SEPARATOR))
+          .withColumn("publications",                      f.split(f.col("publications:string[]"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
+          .withColumn("international_resource_identifier", f.col("iri"))
+          .withColumnRenamed("id:ID", "id")
+    )
+    # fmt: on
+    return df
+
+
+def transform_nodes_v2_10_0_validated(nodes_df: ps.DataFrame):
+    # fmt: off
+    df = (
+        nodes_df
+        .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
+        .withColumn("labels",                            f.lit(None).cast(T.ArrayType(T.StringType()))) # TODO: replace this with _LABEL once updated rtx-kg2 is available
+        .withColumn("all_categories",                    f.split(f.col("all_categories"), RTX_SEPARATOR))
+        .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies"), RTX_SEPARATOR))
+        .withColumn("publications",                      f.split(f.col("publications"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
+        .withColumn("international_resource_identifier", f.col("iri"))
+    )
+    # fmt: on
+    return df
+
+
+def transform_edges_v2_7_3(edges_df: ps.DataFrame, curie_to_pmids: ps.DataFrame, semmed_filters: Dict[str, str]):
+    # fmt: off
+    df = (edges_df
+          .withColumn("aggregator_knowledge_source",   f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR)) # RTX KG2 2.10 does not exist
+          .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
+          .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
+          .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
+          .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(0)) # RTX KG2 2.10 `primary_knowledge_source``
+          .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+          .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+          .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+          .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+          .transform(filter_semmed, curie_to_pmids, **semmed_filters)
+    )
+    # fmt: on
+    return df
+
+
+def transform_edges_v2_10_0_validated(
+    edges_df: ps.DataFrame, curie_to_pmids: ps.DataFrame, semmed_filters: Dict[str, str]
+):
+    # fmt: off
+    df = (edges_df
+            .withColumn("aggregator_knowledge_source",   f.split(f.col("aggregator_knowledge_source"), RTX_SEPARATOR)) #RTX KG2 2.10 has a column for aggregator knowledge source
             .withColumn("publications",                  f.split(f.col("publications"), RTX_SEPARATOR)) # RTX KG2 2.10 no longer has type annotation on publication column
             .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
             .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
@@ -61,8 +116,9 @@ class RTXTransformer(GraphTransformer):
             .withColumn("num_references",                f.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
             .withColumn("num_sentences",                 f.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
             .transform(filter_semmed, curie_to_pmids, **semmed_filters)
-        )
-        # fmt: on
+    )
+    # fmt: on
+    return df
 
 
 def filter_semmed(

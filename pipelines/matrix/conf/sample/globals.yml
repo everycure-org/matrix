@@ -22,5 +22,6 @@ paths:
   modelling:          ${sample_temporary_base_path}/datasets/modelling
   evaluation:         ${sample_temporary_base_path}/datasets/evaluation
   matrix_generation:  ${sample_temporary_base_path}/datasets/matrix_generation
+  matrix_transformations:  ${sample_temporary_base_path}/datasets/matrix_transformations
   inference:          ${sample_temporary_base_path}/datasets/inference
   cache:              ${sample_temporary_base_path}/datasets/cache

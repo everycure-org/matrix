@@ -1,166 +1,115 @@
+- Release Name: v0.8.0
+  Datasets: "\u2023 rtx_kg2: `v2.10.0_validated`<br/>\u2023 robokop: `30fd1bfc18cd5ccb`<br/>\u2023\
+    \ ec_medical_team: `20241031`"
+  BigQuery: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_8_0)'
+  KG dashboard: '[Link](https://data.dev.everycure.org/versions/v0.8.0/evidence/)'
+  MLFlow: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/18925/runs/a346e54e8f884b598b1489427807692a)'
+  Code: '[Link](https://github.com/everycure-org/matrix/tree/v0.8.0)'
+  NodeNorm Endpoint: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
+- Release Name: v0.7.0
+  Datasets: "\u2023 rtx_kg2: `v2.10.0_validated`<br/>\u2023 robokop: `30fd1bfc18cd5ccb`<br/>\u2023\
+    \ ec_medical_team: `20241031`"
+  BigQuery: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_7_0)'
+  KG dashboard: '[Link](https://data.dev.everycure.org/versions/v0.7.0/evidence/)'
+  MLFlow: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/18925/runs/fcfa60aeac13405295df07cef5f67fce)'
+  Code: '[Link](https://github.com/everycure-org/matrix/tree/v0.7.0)'
+  NodeNorm Endpoint: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
 - Release Name: v0.6.0
   Datasets: "\u2023 rtx_kg2: `v2.10.0_validated`<br/>\u2023 robokop: `30fd1bfc18cd5ccb`<br/>\u2023\
-    \ spoke: `not included`<br/>\u2023 embiology: `not included`<br/>\u2023 ec_medical_team:\
-    \ `20241031`<br/>\u2023 ec_clinical_trials: `not included`<br/>\u2023 drug_list:\
-    \ `not included`<br/>\u2023 disease_list: `not included`<br/>\u2023 gt: `not included`<br/>\u2023\
-    \ drugmech: `not included`"
-  Topological Estimator: '`matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec`'
-  Embeddings Encoder: '`text-embedding-3-small`'
-  BigQuery Link: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_6_0)'
-  MLFlow Link: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/18925/runs/0fc667d72cff4e36817a35e8fb9a21dd)'
-  Code Link: '[Link](https://github.com/everycure-org/matrix/tree/v0.6.0)'
-  Neo4j Link: '[Link](coming soon!)'
-  NodeNorm Endpoint Link: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
-  KG dashboard link: '[Link](https://data.dev.everycure.org/versions/v0.6.0/evidence/)'
+    \ ec_medical_team: `20241031`"
+  BigQuery: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_6_0)'
+  KG dashboard: '[Link](https://data.dev.everycure.org/versions/v0.6.0/evidence/)'
+  MLFlow: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/18925/runs/0fc667d72cff4e36817a35e8fb9a21dd)'
+  Code: '[Link](https://github.com/everycure-org/matrix/tree/v0.6.0)'
+  NodeNorm Endpoint: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
 - Release Name: v0.5.3
   Datasets: "\u2023 rtx_kg2: `v2.10.0_validated`<br/>\u2023 robokop: `30fd1bfc18cd5ccb`<br/>\u2023\
-    \ spoke: `not included`<br/>\u2023 ec_medical_team: `20241031`<br/>\u2023 ec_clinical_trials:\
-    \ `not included`<br/>\u2023 drug_list: `not included`<br/>\u2023 disease_list:\
-    \ `not included`<br/>\u2023 gt: `not included`<br/>\u2023 drugmech: `not included`"
-  Topological Estimator: '`matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec`'
-  Embeddings Encoder: '`text-embedding-3-small`'
-  BigQuery Link: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_5_3)'
-  MLFlow Link: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/18925/runs/49a93008ff4142d182d5927e31f226f7)'
-  Code Link: '[Link](https://github.com/everycure-org/matrix/tree/v0.5.3)'
-  Neo4j Link: '[Link](coming soon!)'
-  NodeNorm Endpoint Link: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
-  KG dashboard link: '[Link](https://data.dev.everycure.org/versions/v0.5.3/evidence/)'
+    \ ec_medical_team: `20241031`"
+  BigQuery: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_5_3)'
+  KG dashboard: '[Link](https://data.dev.everycure.org/versions/v0.5.3/evidence/)'
+  MLFlow: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/18925/runs/49a93008ff4142d182d5927e31f226f7)'
+  Code: '[Link](https://github.com/everycure-org/matrix/tree/v0.5.3)'
+  NodeNorm Endpoint: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
 - Release Name: v0.5.2
   Datasets: "\u2023 rtx_kg2: `v2.10.0`<br/>\u2023 robokop: `c5ec1f282158182f`<br/>\u2023\
-    \ spoke: `not included`<br/>\u2023 ec_medical_team: `20241031`<br/>\u2023 ec_clinical_trials:\
-    \ `not included`<br/>\u2023 drug_list: `not included`<br/>\u2023 disease_list:\
-    \ `not included`<br/>\u2023 gt: `not included`<br/>\u2023 drugmech: `not included`"
-  Topological Estimator: '`matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec`'
-  Embeddings Encoder: '`text-embedding-3-small`'
-  BigQuery Link: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_5_2)'
-  MLFlow Link: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/18925/runs/8b4f3b8e6199408384160c32b03764b2)'
-  Code Link: '[Link](https://github.com/everycure-org/matrix/tree/v0.5.2)'
-  Neo4j Link: '[Link](coming soon!)'
-  NodeNorm Endpoint Link: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
-  KG dashboard link: '[Link](https://data.dev.everycure.org/versions/v0.5.2/evidence/)'
+    \ ec_medical_team: `20241031`"
+  BigQuery: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_5_2)'
+  KG dashboard: '[Link](https://data.dev.everycure.org/versions/v0.5.2/evidence/)'
+  MLFlow: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/18925/runs/8b4f3b8e6199408384160c32b03764b2)'
+  Code: '[Link](https://github.com/everycure-org/matrix/tree/v0.5.2)'
+  NodeNorm Endpoint: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
 - Release Name: v0.4.5
-  Datasets: "\u2023 rtx_kg2: `v2.10.0`<br/>\u2023 robokop: `not included`<br/>\u2023\
-    \ spoke: `not included`<br/>\u2023 ec_medical_team: `20241031`<br/>\u2023 ec_clinical_trials:\
-    \ `not included`<br/>\u2023 drug_list: `not included`<br/>\u2023 disease_list:\
-    \ `not included`<br/>\u2023 gt: `not included`<br/>\u2023 drugmech: `not included`"
-  Topological Estimator: '`matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec`'
-  Embeddings Encoder: '`text-embedding-3-small`'
-  BigQuery Link: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_4_5)'
-  MLFlow Link: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/20032/runs/0c34da8d4c3c42edacf215c6a2e6492c)'
-  Code Link: '[Link](https://github.com/everycure-org/matrix/tree/v0.4.5)'
-  Neo4j Link: '[Link](coming soon!)'
-  NodeNorm Endpoint Link: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
-  KG dashboard link: '[Link](https://data.dev.everycure.org/versions/v0.4.5/evidence/)'
+  Datasets: "\u2023 rtx_kg2: `v2.10.0`<br/>\u2023 ec_medical_team: `20241031`"
+  BigQuery: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_4_5)'
+  MLFlow: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/20032/runs/0c34da8d4c3c42edacf215c6a2e6492c)'
+  Code: '[Link](https://github.com/everycure-org/matrix/tree/v0.4.5)'
+  NodeNorm Endpoint: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
+  KG dashboard: '[Link](https://data.dev.everycure.org/versions/v0.4.5/evidence/)'
 - Release Name: v0.4.4
-  Datasets: "\u2023 rtx_kg2: `v2.10.0`<br/>\u2023 robokop: `not included`<br/>\u2023\
-    \ spoke: `not included`<br/>\u2023 ec_medical_team: `20241031`<br/>\u2023 ec_clinical_trials:\
-    \ `not included`<br/>\u2023 drug_list: `not included`<br/>\u2023 disease_list:\
-    \ `not included`<br/>\u2023 gt: `not included`<br/>\u2023 drugmech: `not included`"
-  Topological Estimator: '`matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec`'
-  Embeddings Encoder: '`text-embedding-3-small`'
-  BigQuery Link: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_4_4)'
-  MLFlow Link: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/19730/runs/16750d42311045f782dfd4ccbde5fd99)'
-  Code Link: '[Link](https://github.com/everycure-org/matrix/tree/v0.4.4)'
-  Neo4j Link: '[Link](coming soon!)'
-  NodeNorm Endpoint Link: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
-  KG dashboard link: '[Link](https://data.dev.everycure.org/versions/v0.4.4/evidence/)'
+  Datasets: "\u2023 rtx_kg2: `v2.10.0`<br/>\u2023 ec_medical_team: `20241031`"
+  BigQuery: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_4_4)'
+  MLFlow: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/19730/runs/16750d42311045f782dfd4ccbde5fd99)'
+  Code: '[Link](https://github.com/everycure-org/matrix/tree/v0.4.4)'
+  NodeNorm Endpoint: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
+  KG dashboard: '[Link](https://data.dev.everycure.org/versions/v0.4.4/evidence/)'
 - Release Name: v0.4.3
   Datasets: "\u2023 rtx_kg2: `v2.7.3`<br/>\u2023 robokop: `c5ec1f282158182f`<br/>\u2023\
-    \ spoke: `not included`<br/>\u2023 ec_medical_team: `20241031`<br/>\u2023 ec_clinical_trials:\
-    \ `not included`<br/>\u2023 drug_list: `not included`<br/>\u2023 disease_list:\
-    \ `not included`<br/>\u2023 gt: `not included`<br/>\u2023 drugmech: `not included`"
-  Topological Estimator: '`matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec`'
-  Embeddings Encoder: '`text-embedding-3-small`'
-  BigQuery Link: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_4_3)'
-  MLFlow Link: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/18925/runs/bb5c1fe7e13b4206a23861feb671ae41)'
-  Code Link: '[Link](https://github.com/everycure-org/matrix/tree/v0.4.3)'
-  Neo4j Link: '[Link](coming soon!)'
-  NodeNorm Endpoint Link: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
-  KG dashboard link: '[Link](https://data.dev.everycure.org/versions/v0.4.3/evidence/)'
+    \ ec_medical_team: `20241031`"
+  BigQuery: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_4_3)'
+  MLFlow: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/18925/runs/bb5c1fe7e13b4206a23861feb671ae41)'
+  Code: '[Link](https://github.com/everycure-org/matrix/tree/v0.4.3)'
+  NodeNorm Endpoint: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
+  KG dashboard: '[Link](https://data.dev.everycure.org/versions/v0.4.3/evidence/)'
 - Release Name: v0.4.1
-  Datasets: "\u2023 rtx_kg2: `v2.7.3`<br/>\u2023 robokop: `not included`<br/>\u2023\
-    \ spoke: `not included`<br/>\u2023 ec_medical_team: `20241031`<br/>\u2023 ec_clinical_trials:\
-    \ `not included`<br/>\u2023 drug_list: `not included`<br/>\u2023 disease_list:\
-    \ `not included`<br/>\u2023 gt: `not included`<br/>\u2023 drugmech: `not included`"
-  Topological Estimator: '`matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec`'
-  Embeddings Encoder: '`text-embedding-3-small`'
-  BigQuery Link: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_4_1)'
-  MLFlow Link: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/18732/runs/f44035c29f2e4fd19589faad4b48bd82)'
-  Code Link: '[Link](https://github.com/everycure-org/matrix/tree/v0.4.1)'
-  Neo4j Link: '[Link](coming soon!)'
-  NodeNorm Endpoint Link: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
+  Datasets: "\u2023 rtx_kg2: `v2.7.3`<br/>\u2023 ec_medical_team: `20241031`"
+  BigQuery: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_4_1)'
+  MLFlow: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/18732/runs/f44035c29f2e4fd19589faad4b48bd82)'
+  Code: '[Link](https://github.com/everycure-org/matrix/tree/v0.4.1)'
+  NodeNorm Endpoint: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
 - Release Name: v0.4.0
   Datasets: "\u2023 rtx_kg2: `v2.7.3`<br/>\u2023 robokop: `c5ec1f282158182f`<br/>\u2023\
-    \ spoke: `not included`<br/>\u2023 ec_medical_team: `20241031`<br/>\u2023 ec_clinical_trials:\
-    \ `not included`<br/>\u2023 drug_list: `not included`<br/>\u2023 disease_list:\
-    \ `not included`<br/>\u2023 gt: `not included`<br/>\u2023 drugmech: `not included`"
-  Topological Estimator: '`matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec`'
-  Embeddings Encoder: '`text-embedding-3-small`'
-  BigQuery Link: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_4_0)'
-  MLFlow Link: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/18678/runs/60f16dbd0c6a4c43935510ce8112a338)'
-  Code Link: '[Link](https://github.com/everycure-org/matrix/tree/v0.4.0)'
-  Neo4j Link: '[Link](coming soon!)'
-  NodeNorm Endpoint Link: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
+    \ ec_medical_team: `20241031`"
+  BigQuery: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_4_0)'
+  MLFlow: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/18678/runs/60f16dbd0c6a4c43935510ce8112a338)'
+  Code: '[Link](https://github.com/everycure-org/matrix/tree/v0.4.0)'
+  NodeNorm Endpoint: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
 - Release Name: v0.3.6
-  Datasets: "\u2023 rtx_kg2: `not included`<br/>\u2023 robokop: `c5ec1f282158182f`<br/>\u2023\
-    \ spoke: `not included`<br/>\u2023 ec_medical_team: `20241031`<br/>\u2023 drugmech:\
-    \ `not included`"
-  Topological Estimator: '`matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec`'
-  Embeddings Encoder: '`text-embedding-3-small`'
-  BigQuery Link: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_3_6)'
-  MLFlow Link: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/17938/runs/855f04b2ae2543baa024e6f77c118ced)'
-  Code Link: '[Link](https://github.com/everycure-org/matrix/tree/v0.3.6)'
-  Neo4j Link: '[Link](coming soon!)'
-  NodeNorm Endpoint Link: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
+  Datasets: "\u2023 robokop: `c5ec1f282158182f`<br/>\u2023\
+    \ ec_medical_team: `20241031`"
+  BigQuery: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_3_6)'
+  MLFlow: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/17938/runs/855f04b2ae2543baa024e6f77c118ced)'
+  Code: '[Link](https://github.com/everycure-org/matrix/tree/v0.3.6)'
+  NodeNorm Endpoint: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
 - Release Name: v0.3.5
-  Datasets: "\u2023 rtx_kg2: `v2.7.3`<br/>\u2023 robokop: `not included`<br/>\u2023\
-    \ spoke: `not included`<br/>\u2023 ec_medical_team: `20241031`<br/>\u2023 drugmech:\
-    \ `not included`"
-  Topological Estimator: '`matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec`'
-  Embeddings Encoder: '`text-embedding-3-small`'
-  BigQuery Link: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_3_5)'
-  MLFlow Link: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/17772/runs/b9836a192d984963a7d93f426174561d)'
-  Code Link: '[Link](https://github.com/everycure-org/matrix/tree/v0.3.5)'
-  Neo4j Link: '[Link](coming soon!)'
-  NodeNorm Endpoint Link: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
+  Datasets: "\u2023 rtx_kg2: `v2.7.3`<br/>\u2023 ec_medical_team: `20241031`"
+  BigQuery: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_3_5)'
+  MLFlow: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/17772/runs/b9836a192d984963a7d93f426174561d)'
+  Code: '[Link](https://github.com/everycure-org/matrix/tree/v0.3.5)'
+  NodeNorm Endpoint: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
 - Release Name: v0.3.4
   Datasets: "\u2023 rtx_kg2: `v2.7.3`<br/>\u2023 robokop: `c5ec1f282158182f`<br/>\u2023\
-    \ spoke: `not included`<br/>\u2023 ec_medical_team: `20241031`<br/>\u2023 drugmech:\
-    \ `not included`"
-  Topological Estimator: '`matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec`'
-  Embeddings Encoder: '`text-embedding-3-small`'
-  BigQuery Link: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_3_4)'
-  MLFlow Link: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/17727/runs/cff19c72d1284511af6364c019abcc71)'
-  Code Link: '[Link](https://github.com/everycure-org/matrix/tree/v0.3.4)'
-  Neo4j Link: '[Link](coming soon!)'
-  NodeNorm Endpoint Link: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
+    \ ec_medical_team: `20241031`"
+  BigQuery: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_3_4)'
+  MLFlow: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/17727/runs/cff19c72d1284511af6364c019abcc71)'
+  Code: '[Link](https://github.com/everycure-org/matrix/tree/v0.3.4)'
+  NodeNorm Endpoint: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
 - Release Name: v0.3.0
-  Datasets: "\u2023 rtx_kg2: `v2.7.3`<br/>\u2023 robokop: `c5ec1f282158182f`<br/>\u2023\
-    \ spoke: `not included`<br/>\u2023 ec_medical_team: `not included`"
-  Topological Estimator: '`matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec`'
-  Embeddings Encoder: '`text-embedding-3-small`'
-  BigQuery Link: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_3_0)'
-  MLFlow Link: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/13754/runs/0f46e1ba8e6743f5a55c4dc140429373)'
-  Code Link: '[Link](https://github.com/everycure-org/matrix/tree/v0.3.0)'
-  Neo4j Link: '[Link](coming soon!)'
-  NodeNorm Endpoint Link: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
+  Datasets: "\u2023 rtx_kg2: `v2.7.3`<br/>\u2023 robokop: `c5ec1f282158182f`"
+  BigQuery: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_3_0)'
+  MLFlow: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/13754/runs/0f46e1ba8e6743f5a55c4dc140429373)'
+  Code: '[Link](https://github.com/everycure-org/matrix/tree/v0.3.0)'
+  NodeNorm Endpoint: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
 - Release Name: v0.2.5
   Datasets: "\u2023 rtx_kg2: `v2.7.3`<br/>\u2023 robokop: `c5ec1f282158182f`<br/>\u2023\
     \ ec_medical_team: `20241031`"
-  NodeNorm Endpoint Link: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
-  Embeddings Encoder: '`text-embedding-3-small`'
-  Topological Estimator: '`matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage`'
-  MLFlow Link: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/4750/runs/767f3ff5e1f94a62a543cb8e5ddde2d5)'
-  Code Link: '[Link](https://github.com/everycure-org/matrix/tree/v0.2.5)'
-  BigQuery Link: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_2_5)'
-  Neo4j Link: '[Link](coming soon!)'
+  NodeNorm Endpoint: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
+  MLFlow: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/4750/runs/767f3ff5e1f94a62a543cb8e5ddde2d5)'
+  Code: '[Link](https://github.com/everycure-org/matrix/tree/v0.2.5)'
+  BigQuery: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_2_5)'
 - Release Name: v0.2.3
   Datasets: "\u2023 rtx_kg2: `v2.7.3`<br/>\u2023 robokop: `c5ec1f282158182f`<br/>\u2023\
     \ ec_medical_team: `20241031`"
-  Topological Estimator: '`matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec`'
-  Embeddings Encoder: '`text-embedding-3-small`'
-  BigQuery Link: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_2_3)'
-  MLFlow Link: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/10804/runs/d71c046bf3fa49b9818a101be830e6f8)'
-  Code Link: '[Link](https://github.com/everycure-org/matrix/tree/v0.2.3)'
-  Neo4j Link: '[Link](coming soon!)'
-  NodeNorm Endpoint Link: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'
+  BigQuery: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_2_3)'
+  MLFlow: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/10804/runs/d71c046bf3fa49b9818a101be830e6f8)'
+  Code: '[Link](https://github.com/everycure-org/matrix/tree/v0.2.3)'
+  NodeNorm Endpoint: '[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)'

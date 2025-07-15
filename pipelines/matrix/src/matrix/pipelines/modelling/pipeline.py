@@ -3,7 +3,7 @@ from typing import Union
 from kedro.pipeline import Pipeline, pipeline
 
 from matrix import settings
-from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, ArgoNode
+from matrix.kedro4argo_node import ARGO_CPU_ONLY_NODE_MEDIUM, ARGO_GPU_NODE_MEDIUM, ArgoNode
 
 from . import nodes
 from .utils import partial_fold
@@ -85,7 +85,7 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                             f"modelling.fold_{fold}.reporting.weight_plot",
                         ],
                         name=f"fit_transformers_fold_{fold}",
-                        argo_config=ARGO_GPU_NODE_MEDIUM,
+                        argo_config=ARGO_CPU_ONLY_NODE_MEDIUM,
                     )
                 ]
             ),
@@ -103,7 +103,7 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                         + [f"modelling.{shard}.fold_{fold}.models.model" for shard in range(num_shards)],
                         outputs=f"modelling.fold_{fold}.models.model",
                         name=f"create_model_fold_{fold}",
-                        argo_config=ARGO_GPU_NODE_MEDIUM,
+                        argo_config=ARGO_CPU_ONLY_NODE_MEDIUM,
                     ),
                     ArgoNode(
                         func=partial_fold(nodes.apply_transformers, fold),
@@ -124,7 +124,7 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                         },
                         outputs=f"modelling.fold_{fold}.model_output.predictions",
                         name=f"get_model_predictions_fold_{fold}",
-                        argo_config=ARGO_GPU_NODE_MEDIUM,
+                        argo_config=ARGO_CPU_ONLY_NODE_MEDIUM,
                     ),
                 ],
                 tags=["argowf.fuse", f"argowf.fuse-group.fold-{fold}"],
@@ -166,12 +166,7 @@ def create_model_pipeline(model_name: str, num_shards: int, n_cross_val_folds: i
 
     # Generate pipeline to predict folds (NOTE: final fold is full training data)
     for fold in range(n_cross_val_folds + 1):
-        pipelines.append(
-            pipeline(
-                _create_fold_pipeline(model_name, num_shards, fold),
-                tags=["not-shared"],
-            )
-        )
+        pipelines.append(pipeline(_create_fold_pipeline(model_name, num_shards, fold)))
 
     # Gather all test set predictions from the different folds for the
     # model, and combine all the predictions.
@@ -253,7 +248,11 @@ def create_shared_pipeline() -> Pipeline:
             ),
             ArgoNode(
                 func=nodes.make_folds,
-                inputs=["modelling.int.known_pairs@pandas", "params:modelling.splitter", "ingestion.raw.disease_list"],
+                inputs=[
+                    "modelling.int.known_pairs@pandas",
+                    "params:modelling.splitter",
+                    "integration.int.disease_list.nodes.norm@pandas",
+                ],
                 outputs="modelling.model_input.splits",
                 name="create_splits",
             ),

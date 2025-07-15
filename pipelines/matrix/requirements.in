@@ -16,17 +16,17 @@ kedro-datasets>=6.0.0
 kedro-mlflow==0.13.4
 kedro-telemetry>=0.3.1
 kedro-viz>=11.0.0
-kedro==0.19.7
+kedro==0.19.13
 langchain
 langchain-openai
 matplotlib
-mlflow==2.15.0
+mlflow==2.20.3
 neo4j>=5.5.0
 notebook
-numpy==1.23.5 # This was pinned during refit refactor; fabricator pipeline fails on 1.26.4
+numpy==1.24.4 # This was pinned during refit refactor; fabricator pipeline fails on 1.26.4
 openai
 openpyxl
-pandera>=0.21.1
+pandera==0.24.0
 # Temp. fix for the gcloud cli
 # https://github.com/googleapis/python-bigquery/issues/1908
 proto-plus==1.24.0.dev1
@@ -45,12 +45,12 @@ rich
 ruff==0.6.8 # Matches pre-commit version
 s3fs
 semver==3.0.2
-scikit-learn==1.4.0
+scikit-learn==1.5.0
 scikit-optimize
 seaborn
 tenacity
 termplotlib
-torch==2.5.1
+torch==2.7.1
 transformers
 # used for convenience libraries, to be moved to a dev requirements eventually
 typer

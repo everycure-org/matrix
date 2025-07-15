@@ -2,8 +2,26 @@ kube-prometheus-stack:
   prometheus:
     prometheusSpec:
       retention: 180d
+      # Schedule Prometheus on management nodes
+      nodeSelector:
+        workload-type: management
+      # Add billing labels to Prometheus pods
+      podMetadata:
+        labels:
+          cost-center: infrastructure-management
+          workload-category: platform-services
+          service-tier: management
+          billing-category: infrastructure
+          component: prometheus
       storageSpec:
         volumeClaimTemplate:
+          metadata:
+            labels:
+              cost-center: infrastructure-management
+              workload-category: platform-services
+              service-tier: management
+              billing-category: infrastructure-storage
+              component: prometheus
           spec:
             # by default prometheus uses a local storage, which is not persistent
             storageClassName: standard-rwo # balanced 
@@ -33,16 +51,76 @@ kube-prometheus-stack:
           endpoints:
             - port: metrics
               path: /metrics
+        # DCGM DaemonSet monitoring (cluster-wide GPU monitoring)
+        - name: dcgm-exporter-daemonset
+          selector:
+            matchLabels:
+              app.kubernetes.io/name: dcgm-exporter
+          namespaceSelector:
+            matchNames:
+              - monitoring
+          endpoints:
+            - port: metrics
+              path: /metrics
+              interval: 15s
+              scrapeTimeout: 10s
+              honorLabels: true
+        
+        # Generic DCGM monitoring for any pods with dcgm-exporter label
+        - name: dcgm-exporter-pods
+          selector:
+            matchLabels:
+              app: dcgm-exporter
+          namespaceSelector:
+            any: true
+          endpoints:
+            - port: metrics
+              path: /metrics
+              interval: 15s
+              scrapeTimeout: 10s
+              honorLabels: true
+        
+        # Add pod monitor for direct pod scraping (alternative approach)
+      additionalPodMonitors:
+        - name: dcgm-sidecar-pods
+          selector:
+            matchLabels:
+              app: kedro-argo
+          namespaceSelector:
+            matchNames:
+              - argo-workflows
+          podMetricsEndpoints:
+            - port: gpu-metrics
+              path: /metrics
+              interval: 15s
+              scrapeTimeout: 10s
   grafana:
+    # Schedule Grafana on management nodes
+    nodeSelector:
+      workload-type: management
+    # Add billing labels to Grafana pods
+    podLabels:
+      cost-center: infrastructure-management
+      workload-category: platform-services
+      service-tier: management
+      billing-category: infrastructure
+      component: grafana
     persistence:
       enabled: true
       type: sts
       storageClassName: standard-rwo
       accessModes:
         - ReadWriteOnce
-      size: 20Gi
+      size: 30Gi
       finalizers:
         - kubernetes.io/pvc-protection
+      # Add billing labels to Grafana storage
+      labels:
+        cost-center: infrastructure-management
+        workload-category: platform-services
+        service-tier: management
+        billing-category: infrastructure-storage
+        component: grafana
     sidecar:
       dashboards:
         enabled: true
@@ -53,3 +131,45 @@ kube-prometheus-stack:
       searchNamespace: ALL
       provider:
         foldersFromFilesStructure: true
+
+  # Schedule AlertManager on management nodes
+  alertmanager:
+    alertmanagerSpec:
+      nodeSelector:
+        workload-type: management
+      # Add billing labels to AlertManager pods
+      podMetadata:
+        labels:
+          cost-center: infrastructure-management
+          workload-category: platform-services
+          service-tier: management
+          billing-category: infrastructure
+          component: alertmanager
+
+  # Schedule Prometheus Operator on management nodes
+  prometheusOperator:
+    nodeSelector:
+      workload-type: management
+
+  # Schedule Kube State Metrics on management nodes
+  kubeStateMetrics:
+    nodeSelector:
+      workload-type: management
+
+  # Configure Node Exporter to run on compute nodes only (scales with compute nodes)
+  # This allows monitoring when compute nodes are active, and scales to zero when they're not
+  nodeExporter:
+    nodeSelector:
+      workload-type: compute
+    # Allow node-exporter to be evicted during node scale-down
+    podAnnotations:
+      cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+
+  # Configure kube-state-metrics to expose pod labels
+  kube-state-metrics:
+    metricLabelsAllowlist:
+      - pods=[*]
+    collectors:
+      - pods
+    extraArgs:
+      - --metric-labels-allowlist=pods=[*]
