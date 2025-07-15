@@ -156,7 +156,7 @@ def normalize_edges(
         }
     )
     edges = edges.join(subject_normalized_mapping_df, on="subject", how="left")
-    edges = edges.withColumn("subject_normalized", F.coalesce("subject", "subject_normalized"))
+    edges = edges.withColumn("subject_normalized", F.coalesce("subject_normalized", "subject"))
 
     object_normalized_mapping_df = mapping_df.withColumnsRenamed(
         {
@@ -166,7 +166,7 @@ def normalize_edges(
         }
     )
     edges = edges.join(object_normalized_mapping_df, on="object", how="left")
-    edges = edges.withColumn("object_normalized", F.coalesce("object", "object_normalized"))
+    edges = edges.withColumn("object_normalized", F.coalesce("object_normalized", "object"))
 
     edges = edges.withColumnsRenamed({"subject": "original_subject", "object": "original_object"})
     edges = edges.withColumnsRenamed({"subject_normalized": "subject", "object_normalized": "object"})
@@ -199,6 +199,36 @@ def normalize_nodes(
         .filter(F.col("_rn") == 1)
         .drop("_rn")
     )
+
+
+def check_nodes_and_edges_matching(edges: ps.DataFrame, nodes: ps.DataFrame):
+    """
+    Function examining if all nodes and edges are matching post-normalization.
+
+    All subjects/objects within edges dataframe should be found in nodes dataframe. If there are subject/object
+    identifiers which are not matching with nodes dataframe, error will be thrown.
+
+    Parameters
+    ----------
+    edges : pyspark.sql.DataFrame
+        A DataFrame containing normalized edges, including columns such as
+        `subject`, `object`, `original_subject`, `original_object`,
+        `subject_normalization_success`, and `object_normalization_success`.
+    nodes : pyspark.sql.DataFrame
+        A DataFrame containing normalized nodes, including `id` and optionally `category`.
+
+    Returns
+    -------
+    Nothing returned; error is thrown if mismatching
+    """
+    match_count = (
+        edges.join(nodes.withColumnRenamed("id", "subject"), on="subject", how="inner")
+        .join(nodes.withColumnRenamed("id", "object"), on="object", how="inner")
+        .count()
+    )
+    if edges.count() != match_count:
+        raise Exception("Nodes and Edges are mismatching post-normalization; please investigate")
+    return None
 
 
 @check_output(
@@ -248,6 +278,9 @@ def normalization_summary_nodes_and_edges(
         - `source_role`: Indicates whether the node was a subject or object in the edge
         - `upstream_data_source`: Name of the originating data source
     """
+
+    # Check nodes and edges matching post-normalization
+    check_nodes_and_edges_matching(edges, nodes)
 
     # Safe fallback for category column
     if "category" in nodes.columns:
