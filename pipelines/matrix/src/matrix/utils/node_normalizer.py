@@ -23,6 +23,6 @@ def get_node_normalization_settings(config: dict):
     openapi_path = config["openapi_path"]
 
     endpoint = f"{protocol_and_domain}{get_normalized_nodes_path}"
-    version = (_get_node_normalization_version(protocol_and_domain, openapi_path, source),)
+    version = _get_node_normalization_version(protocol_and_domain, openapi_path, source)
 
     return {"endpoint": endpoint, "version": version}
