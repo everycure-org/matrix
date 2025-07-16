@@ -13,7 +13,7 @@ from sklearn.impute._base import _BaseImputer
 from sklearn.model_selection import BaseCrossValidator
 
 from matrix.datasets.graph import KnowledgeGraph
-from matrix.datasets.pair_generator import DiseaseSplitDrugDiseasePairGenerator, SingleLabelPairGenerator
+from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from matrix.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
