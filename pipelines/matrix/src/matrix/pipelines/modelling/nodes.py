@@ -226,7 +226,7 @@ def make_folds(
     Args:
         data: Data to split.
         splitter: sklearn splitter object (BaseCrossValidator or its subclasses).
-        disease_list: disease list from https://github.com/everycure-org/matrix-disease-list/.
+        disease_list: disease list from https://github.com/everycure-org/core-entities/
             Required only when using DiseaseAreaSplit.
 
     Returns:
