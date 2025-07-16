@@ -58,7 +58,6 @@ class GitHubReleaseCSVDataset(CSVDataset):
             fs_args=fs_args,
             load_args=load_args,
             metadata=metadata,
-            version=None,  # Versioning not supported for GitHub releases
         )
 
     def _build_api_url(self, repository_url: str) -> str:
