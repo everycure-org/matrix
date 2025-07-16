@@ -75,7 +75,7 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
                         "source": f"params:integration.sources.{source}.name",
                     },
                     outputs=f"integration.int.{source}.normalization_summary",
-                    name=f"create_{source}_normalization_summary",
+                    name=f"create_{source}_norm_summary",
                     tags=["normalization", f"argowf.fuse-group.{source}"],
                 ),
             ],

@@ -8,6 +8,8 @@ import yaml
 from kedro.config import OmegaConfigLoader
 from kedro.framework.context import KedroContext
 from kedro.framework.project import configure_project, pipelines
+from matrix.argo import generate_argo_config
+from matrix.kedro4argo_node import ArgoResourceConfig
 
 _ALLOWED_LAYERS = [
     "raw",
@@ -20,6 +22,11 @@ _ALLOWED_LAYERS = [
     "reporting",
     "cache",
 ]
+
+_MAX_ARGO_LABEL_LENGTH = 63
+
+# Local copy to avoid computing the one above every
+local_pipelines = pipelines
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -81,7 +88,7 @@ def test_no_non_parameter_entries_from_catalog_unused(
     request: pytest.FixtureRequest,
 ) -> None:
     kedro_context = request.getfixturevalue(kedro_context)
-    used_conf_entries = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
+    used_conf_entries = set.union(*[_pipeline_datasets(p) for p in local_pipelines.values()])
     used_entries = {entry for entry in used_conf_entries if "params:" not in entry}
     declared_entries = {entry for entry in kedro_context.catalog.list() if not entry.startswith("params:")}
 
@@ -118,7 +125,7 @@ def parse_to_regex(parse_pattern):
 @pytest.mark.integration
 def test_memory_data_sets_absent(cloud_kedro_context: KedroContext) -> None:
     """Tests that no MemoryDataSets are created by verifying all datasets can be resolved."""
-    used_data_sets = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
+    used_data_sets = set.union(*[_pipeline_datasets(p) for p in local_pipelines.values()])
     used_data_sets_wout_double_params = {x.replace("params:params:", "params:") for x in used_data_sets}
 
     catalog_datasets = set(cloud_kedro_context.catalog.list())
@@ -261,3 +268,65 @@ def test_parameters_filepath_follows_conventions(
                     )
 
     assert failed_results == [], f"Entries that failed conventions: {failed_results}"
+
+
+def test_argo_label_length() -> None:
+    """Test that the Argo labels are less than 63 characters."""
+    pipeline_obj = local_pipelines["__default__"]
+    pipeline_obj.name = "default_pipeline"
+
+    image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
+    run_name = "test_run"
+    release_version = "test_release"
+    mlflow_experiment_id = 1
+    namespace = "test_namespace"
+    username = "test_user"
+    mlflow_url = "https://mlflow.platform.dev.everycure.org/"
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=0,
+        cpu_request=4,
+        cpu_limit=16,
+        memory_request=64,
+        memory_limit=64,
+    )
+
+    argo_config_yaml = generate_argo_config(
+        image=image_name,
+        run_name=run_name,
+        release_version=release_version,
+        mlflow_experiment_id=mlflow_experiment_id,
+        namespace=namespace,
+        username=username,
+        pipeline=pipeline_obj,
+        package_name="matrix",
+        release_folder_name="releases",
+        environment="cloud",
+        default_execution_resources=argo_default_resources,
+        mlflow_url=mlflow_url,
+    )
+
+    argo_config = yaml.safe_load(argo_config_yaml)
+    pipeline_config = argo_config["spec"]["templates"][
+        2
+    ]  # 2 since pipeline is the 3rd template in the argo_wf_spec.tmpl file
+
+    def get_argo_task_kedro_nodes(argo_task_config: dict) -> list[str]:
+        parameters = argo_task_config["arguments"]["parameters"]
+        kedro_nodes_parameter = next(
+            (parameter for parameter in parameters if parameter["name"] == "kedro_nodes"), None
+        )
+
+        if kedro_nodes_parameter is None:
+            raise ValueError(f"kedro_nodes parameter not found in argo task config {argo_task_config}")
+        kedro_nodes = kedro_nodes_parameter["value"]
+
+        return kedro_nodes
+
+    pipeline_kedro_nodes = [
+        get_argo_task_kedro_nodes(argo_task_config) for argo_task_config in pipeline_config["dag"]["tasks"]
+    ]
+
+    failed_labels = [kedro_nodes for kedro_nodes in pipeline_kedro_nodes if len(kedro_nodes) > _MAX_ARGO_LABEL_LENGTH]
+    assert (
+        len(failed_labels) == 0
+    ), f"Some Argo Kedro node labels have more than {_MAX_ARGO_LABEL_LENGTH} characters: {failed_labels}"
