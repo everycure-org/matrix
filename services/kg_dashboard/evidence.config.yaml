@@ -28,48 +28,47 @@ appearance:
   default: system
   switcher: true
 
-# Modified Dracula theme
-# for the original Dracula theme, see https://draculatheme.com/
+
 theme:
   colorPalettes:
     default:
-      - "#8a6bff"  # Deeper, more saturated purple
-      - "#79dae8"  # Slightly warmer cyan
-      - "#ff6bb3"  # More vibrant pink with better contrast
-      - "#5af78e"  # Slightly brighter green
-      - "#e67e22"  # Deeper, more distinct orange
-      - "#ff4757"  # Slightly different red
-      - "#f1c40f"  # Brighter, more golden yellow
-      - "#4c566a"  # More blue dark gray
-      - "#9c88ff"  # Lighter purple variant
-      - "#55a3ff"  # Medium blue
-      - "#ff9ff3"  # Light pink/magenta
-      - "#7fdbca"  # Mint green
+      - "#88C0D0"  # Soft cyan blue
+      - "#9D79D6"  # Medium lavender
+      - "#7FADDB"  # sky blue
+      - "#5E81AC"  # Desaturated navy
+      - "#C586C0"  # Light magenta
+      - "#D08770"  # Warm terracotta
+      - "#EBCB8B"  # Pale amber
+      - "#6FAF8C"  # Muted teal green
+      - "#73C991"  # Bright mint green
+      - "#1b3e66"  # Deep navy
+      - "#BF616A"  # Muted crimson
+      - "#7AA2F7"  # Soft cornflower blue
 
   colorScales:
     default:
-      - "#8a6bff"  # Updated to match new purple
-      - "#ff6bb3"  # Updated to match new pink
+      - "#AD8AE2"  # Updated to match new purple
+      - "#E88EE"  # Updated to match new pink
 
   colors:
     primary:
-      light: "#8a6bff"  # Updated to match new purple
-      dark: "#8a6bff"   # Updated to match new purple
+      light: "#9D79D6"  # Medium lavender
+      dark: "#9D79D6"   # Medium lavender
     accent:
-      light: "#ff6bb3"  # Updated to match new pink
-      dark: "#ff6bb3"   # Updated to match new pink
+      light: "#C586C0"  # Light magenta
+      dark: "#C586C0"   # Light magenta
     base:
       light: "#f8f8f2"  # Foreground (keeping same)
       dark: "#282a36"   # Background (keeping same)
     info:
-      light: "#79dae8"  # Updated cyan
-      dark: "#79dae8"   # Updated cyan
+      light: "#88C0D0"  # Soft cyan blue
+      dark: "#88C0D0"   # Soft cyan blue
     warning:
-      light: "#e67e22"  # Updated to match new orange
-      dark: "#e67e22"   # Updated to match new orange
+      light: "#D08770"  # Warm terracotta
+      dark: "#D08770"   # Warm terracotta
     negative:
-      light: "#ff4757"  # Updated red
-      dark: "#ff4757"   # Updated red
+      light: "#BF616A"  # Muted crimson
+      dark: "#BF616A"   # Muted crimson
     positive:
-      light: "#5af78e"  # Updated green
-      dark: "#5af78e"   # Updated green
+      light: "#6FAF8C"  # Muted teal green
+      dark: "#6FAF8C"   # Muted teal green
