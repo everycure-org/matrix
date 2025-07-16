@@ -1,5 +1,5 @@
 ---
-title: EC Core Components
+title: EC Core Entities
 ---
 
 <script context="module">
@@ -160,7 +160,7 @@ from
 ```
 
 
-This page summarizes the connectivity of EC Core Components by examining two key lists: the disease list and the drug list. 
+This page summarizes the connectivity of EC Core Entities by examining two key lists: the disease list and the drug list. 
   For each list, we report the mean and median number of direct neighbors (connections) per node, 
   providing a view into how densely linked these entities are within the broader knowledge graph. 
   Additional charts break down the typical categories connected to each node type, 
