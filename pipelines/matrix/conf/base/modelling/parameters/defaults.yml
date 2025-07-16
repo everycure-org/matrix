@@ -2,11 +2,13 @@ modelling.drug_types:
   - biolink:Drug
   - biolink:SmallMolecule
 
+
 modelling.disease_types:
   - biolink:Disease
   - biolink:PhenotypicFeature
   - biolink:BehavioralFeature
   - biolink:DiseaseOrPhenotypicFeature
+
 
 
 modelling.splitter:

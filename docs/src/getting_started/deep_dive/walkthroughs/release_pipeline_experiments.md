@@ -11,16 +11,16 @@ This walkthrough shows an experiment updating RTX from version 2.7.3 to 2.10.0.
 ### 1. Checking the raw data
 
 Identify the new version of the data source in GCS. 
-It should follow this pattern:
+For public KG data sources like RTX-KG2, it should follow this pattern:
 
 ```
-mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/{version}
+data.dev.everycure.org/data/01_RAW/KGs/rtx_kg2/{version}
 ```
 
-For example, [RTX v2.10.0](https://console.cloud.google.com/storage/browser/mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/v2.10.0)
+For example, [RTX v2.10.0](https://console.cloud.google.com/storage/browser/data.dev.everycure.org/data/01_RAW/KGs/rtx_kg2/v2.10.0)
 
 ```
-mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/v2.10.0
+data.dev.everycure.org/data/01_RAW/KGs/rtx_kg2/v2.10.0
 ```
 
 
@@ -43,7 +43,7 @@ RTX nodes:
 ingestion.raw.rtx_kg2.nodes@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes_c.tsv
+  filepath: ${globals:paths.public_kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes_c.tsv
   file_format: csv
   load_args:
     sep: "\t"
@@ -55,7 +55,7 @@ This would be the corresponding catalog entry for ROBOKOP:
 ingestion.raw.robokop.nodes@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/nodes.orig.tsv
+  filepath: ${globals:paths.public_kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/nodes.orig.tsv
   file_format: csv
   load_args:
     sep: "\t"

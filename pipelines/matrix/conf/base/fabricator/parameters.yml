@@ -876,7 +876,7 @@ fabricator.spoke:
         prefix: "rs"
       category:
         type: generate_random_arrays
-        delimiter: "\x1F"
+        delimiter: "|"
         sample_values:
           - biolink:NamedThing
           - biolink:Drug

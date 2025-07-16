@@ -103,65 +103,16 @@ jobs:
       - run: make fetch_secrets
       
       # Run commands in parallel
-      - name: Run parallel tests
-        run: |
-          # Create logs directory
-          mkdir -p logs
-          
-          # Start all commands in background with error handling
-          (uv run kedro catalog resolve --env base || echo "FAILED: catalog base") > logs/catalog_base.log 2>&1 &
-          PID1=$!
-          
-          (uv run kedro catalog resolve --env cloud || echo "FAILED: catalog cloud") > logs/catalog_cloud.log 2>&1 &
-          PID2=$!
-          
-          (uv run kedro catalog resolve --env test || echo "FAILED: catalog test") > logs/catalog_test.log 2>&1 &
-          PID3=$!
-          
-          (make full_test || echo "FAILED: full_test") > logs/full_test.log 2>&1 &
-          PID4=$!
-          
-          (make compose_down && make docker_test GIT_SHA="${GITHUB_SHA:0:7}" || echo "FAILED: docker_test") > logs/docker_test.log 2>&1 &
-          PID5=$!
-          
-          # Wait for all processes
-          wait $PID1; EXIT1=$?
-          wait $PID2; EXIT2=$?
-          wait $PID3; EXIT3=$?
-          wait $PID4; EXIT4=$?
-          wait $PID5; EXIT5=$?
-          
-          # Always show logs regardless of success/failure
-          echo "=== Catalog Base Results (Exit: $EXIT1) ==="
-          cat logs/catalog_base.log || echo "No log file found"
-          
-          echo "=== Catalog Cloud Results (Exit: $EXIT2) ==="
-          cat logs/catalog_cloud.log || echo "No log file found"
-          
-          echo "=== Catalog Test Results (Exit: $EXIT3) ==="
-          cat logs/catalog_test.log || echo "No log file found"
-          
-          echo "=== Full Test Results (Exit: $EXIT4) ==="
-          cat logs/full_test.log || echo "No log file found"
-          
-          echo "=== Docker Test Results (Exit: $EXIT5) ==="
-          cat logs/docker_test.log || echo "No log file found"
-          
-          # Report which tests failed
-          FAILED_TESTS=""
-          [ $EXIT1 -ne 0 ] && FAILED_TESTS="$FAILED_TESTS catalog_base($EXIT1)"
-          [ $EXIT2 -ne 0 ] && FAILED_TESTS="$FAILED_TESTS catalog_cloud($EXIT2)"
-          [ $EXIT3 -ne 0 ] && FAILED_TESTS="$FAILED_TESTS catalog_test($EXIT3)"
-          [ $EXIT4 -ne 0 ] && FAILED_TESTS="$FAILED_TESTS full_test($EXIT4)"
-          [ $EXIT5 -ne 0 ] && FAILED_TESTS="$FAILED_TESTS docker_test($EXIT5)"
-          
-          if [ -n "$FAILED_TESTS" ]; then
-            echo "❌ Failed tests:$FAILED_TESTS"
-            exit 1
-          else
-            echo "✅ All tests passed!"
-          fi
-      
+      - run: uv run kedro catalog resolve --env base
+      - run: uv run kedro catalog resolve --env cloud
+      - run: uv run kedro catalog resolve --env test
+      - run: make full_test
+      - run: make compose_down # ensures containers & state are removed
+      - run: make docker_test GIT_SHA="${GITHUB_SHA:0:7}" #we overwrite the GIT_SHA in the Makefile
+        # only if PR is labelled with "ready" or if branch is main
+        # if: contains(github.event.pull_request.labels.*.name, 'ready') || github.ref == 'refs/heads/main'
+      # workaround as the `failure()` call did not work in downstream matrix_ci_check
+      - run: docker volume prune -f #avoid running out of disk space
       # Cleanup
       - run: docker volume prune -f
       - id: finally

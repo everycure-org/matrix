@@ -8,7 +8,7 @@ TODO: Add link to comprehensive data dictionary explaining each data source and 
 
 ### Configuring Data Sources in `globals.yaml`
 
-The data sources to be used are specified in the `globals.yaml` file. These reflect the actual versions of the datasets AND how they are saved in our google cloud storage bucket as versions are encoded within a filepath. For example, see the following pathway for raw ROBOKOP `${globals:paths.raw}/robokop2/${globals:data_sources.robokop.version}/nodes_c.tsv` - the version is extracted from globals.yaml automatically within our kedro pipeline.
+The data sources to be used are specified in the `globals.yaml` file. These reflect the actual versions of the datasets AND how they are saved in our google cloud storage bucket as versions are encoded within a filepath. For example, see the following pathway for public KG data like ROBOKOP `${globals:paths.public_kg_raw}/robokop2/${globals:data_sources.robokop.version}/nodes_c.tsv` - the version is extracted from globals.yaml automatically within our kedro pipeline.
 ```yaml
 # conf/base/globals.yml
 data_sources:

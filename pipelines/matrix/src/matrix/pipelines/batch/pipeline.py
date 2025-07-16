@@ -200,9 +200,10 @@ def cache_miss_resolver_wrapper(
         logger.info(f"Processing batch with key: {batch[0]}")
         transformed = await transformer.apply(batch)
         logger.info(f"received response for batch with key: {batch[0]}")
+
+        # Drop the api-field, since we're manually creating Hive partitions with that column.
         return pa.table(
             [batch, transformed],
-            # Drop the api-field, since we're manually creating Hive partitions with that column.
             schema=cache_schema.remove(cache_schema.get_field_index("api")),
         ).to_pandas()
 

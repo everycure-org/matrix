@@ -12,7 +12,7 @@ Dominic has integrated a new knowledge graph into Matrix and implemented a machi
 
 Dominic has integrated a new biomedical graph, **RTX-KG2**, which is a knowledge graph consisting of node and edge data.
 
-The data can be found at `gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/v2.10.0/.` It includes two `.tsv` files (`edges_c.tsv` and `nodes_c.tsv`) and a database file (`node_synonymizer_v1.0_KG2.10.0.sqlite`) used for node synonymization process.
+The data can be found at `gs://data.dev.everycure.org/data/01_RAW/KGs/rtx_kg2/v2.10.0/.` It includes two `.tsv` files (`edges_c.tsv` and `nodes_c.tsv`) and a database file (`node_synonymizer_v1.0_KG2.10.0.sqlite`) used for node synonymization process.
 
 Dominic manually added this data to Google Cloud Storage (GCS), as there is currently no automated ingestion system. However, multiple versions of these graphs are maintained.
 
@@ -90,7 +90,7 @@ Below is an in-depth investigation into the Kedro Data Catalog:
 
 The node `write_rtx_kg2_nodes` reads the raw `ingestion.raw.rtx_kg2.nodes` dataset from Spark and writes it to `ingestion.int.rtx_kg2.nodes`, casting columns to literals. Variables are defined in `globals.yml`.
 
-- **Read**: `gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw/rtx_kg2/v2.7.3/nodes_c.tsv`
+- **Read**: `gs://data.dev.everycure.org/data/01_RAW/KGs/rtx_kg2/v2.7.3/nodes_c.tsv`
 - **Write**: `gs://mtrx-us-central1-hub-dev-storage/runs/run-sept-first-node2vec-e5962a18/02_intermediate/rtx_kg2/nodes/nodes_c.tsv`
 
 Importantly, the **version** is defined statically in the `.yml` file. On the other hand, `RUN_NAME` is pulled from enviornment variables via `run_name: ${oc.env:RUN_NAME}`. 
@@ -141,7 +141,7 @@ node(
 
 ingestion.raw.rtx_kg2.nodes@spark:
   <<: *_spark_csv
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes_c.tsv
+  filepath: ${globals:paths.public_kg_raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes_c.tsv
   file_format: csv
   load_args:
     sep: "\t"

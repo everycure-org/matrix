@@ -53,7 +53,7 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
                     batch_size="params:integration.normalization.batch_size",
                     cache_schema="params:integration.normalization.cache_schema",
                 ),
-                node(
+                ArgoNode(
                     func=nodes.normalize_nodes,
                     inputs={
                         "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
@@ -62,6 +62,7 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
                     outputs=f"integration.int.{source}.nodes.norm@spark",
                     name=f"normalize_{source}_nodes",
                     tags=["argowf.fuse", f"argowf.fuse-group.{source}"],
+                    argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
                 ),
                 node(
                     func=nodes.normalization_summary_nodes_and_edges
@@ -69,6 +70,7 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
                     else nodes.normalization_summary_nodes_only,
                     inputs={
                         "nodes": f"integration.int.{source}.nodes.norm@spark",
+                        "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
                         **({"edges": f"integration.int.{source}.edges.norm@spark"} if has_edges else {}),
                         "source": f"params:integration.sources.{source}.name",
                     },
