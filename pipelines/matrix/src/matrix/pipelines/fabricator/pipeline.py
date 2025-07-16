@@ -141,18 +141,18 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_clinical_trails_datasets",
             ),
-            # node(
-            #     func=fabricate_datasets,
-            #     inputs={
-            #         "fabrication_params": "params:fabricator.off_label.graph",
-            #         "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
-            #     },
-            #     outputs={
-            #         "nodes": "ingestion.raw.off_label.nodes@pandas",
-            #         "edges": "ingestion.raw.off_label.edges@pandas",
-            #     },
-            #     name="fabricate_off_label_datasets",
-            # ),
+            node(
+                func=fabricate_datasets,
+                inputs={
+                    "fabrication_params": "params:fabricator.off_label.graph",
+                    "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                },
+                outputs={
+                    "nodes": "ingestion.raw.off_label.nodes@pandas",
+                    "edges": "ingestion.raw.off_label.edges@pandas",
+                },
+                name="fabricate_off_label_datasets",
+            ),
             node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.ec_medical_kg"},
