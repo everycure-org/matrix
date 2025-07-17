@@ -82,7 +82,7 @@ def sample_duplicate_cache(spark: SparkSession, cache_schema, sample_api1) -> Da
 
 @pytest.fixture
 def sample_api1():
-    return DummyNodeNormalizer(True, True)
+    return "gpt-4"
 
 
 @pytest.fixture
@@ -112,7 +112,7 @@ def test_derive_cache_misses(sample_input_df, sample_cache, sample_api1, sample_
     result_df = derive_cache_misses(
         df=sample_input_df,
         cache=sample_cache,
-        transformer=sample_api1,
+        transformer=DummyNodeNormalizer(sample_api1),
         primary_key=sample_primary_key,
         preprocessor=pass_through,
         cache_schema=embeddings_schema,
@@ -137,7 +137,7 @@ def test_enriched_keeps_same_size_with_cache_duplicates(
     enriched_df = lookup_from_cache(
         sample_input_df,
         sample_duplicate_cache,
-        sample_api1,
+        DummyNodeNormalizer(sample_api1),
         sample_primary_key,
         pass_through,
         sample_new_col,
