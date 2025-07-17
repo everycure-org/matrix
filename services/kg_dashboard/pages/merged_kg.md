@@ -7,27 +7,29 @@ title: Merged KG Composition
 </p>
 
 <script context="module">
-  import { sourceColorMap } from '../_lib/colors';
+import { getSeriesColors, getOrderedColors } from '../_lib/colors';
   
-  // Create explicit series color mapping
-  export function getSeriesColors(data, seriesColumn) {
+  // function that uses the color ordering
+  export function sortBySeriesOrdered(data, seriesColumn) {
     const uniqueSources = [...new Set(data.map(row => row[seriesColumn]))];
+    const orderedColors = getOrderedColors(uniqueSources);
     
-    // Create an object mapping each series name to its color
-    const seriesColors = {};
-    uniqueSources.forEach(source => {
-      seriesColors[source] = sourceColorMap[source] || "#6272a4";
+    // Create a mapping of source to its priority order
+    const sourceOrder = {};
+    uniqueSources.forEach((source, index) => {
+      const aIndex = ['ec_medical', 'robokop', 'rtxkg2', 'disease_list', 'drug_list'].indexOf(source);
+      sourceOrder[source] = aIndex !== -1 ? aIndex : 1000 + index; // Put unknown sources after known ones
     });
     
-    console.log('Series color mapping:', seriesColors);
-    return seriesColors;
-  }
-  
-  export function sortBySeries(data, seriesColumn) {
-    return data;
+    // Sort the data based on the source order
+    return data.sort((a, b) => {
+      const aOrder = sourceOrder[a[seriesColumn]] || 9999;
+      const bOrder = sourceOrder[b[seriesColumn]] || 9999;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return a[seriesColumn].localeCompare(b[seriesColumn]);
+    });
   }
 </script>
-
 
 <!-- Node Queries -->
 
@@ -45,7 +47,6 @@ group by all
 order by count desc
 limit ${inputs.node_prefix_limit.value}
 ```
-
 
 <!-- Edge Queries -->
 
@@ -126,9 +127,6 @@ from bq.merged_kg_edges
   limit ${inputs.edge_limit.value}  
 ```
 
-
-
-
 <Tabs>
     <Tab label="Nodes">
         <p class="text-sm mb-4">
@@ -140,7 +138,7 @@ from bq.merged_kg_edges
         </p>
         
         <BarChart 
-            data={sortBySeries(node_categories_by_upstream_data_source, 'upstream_data_source')}
+            data={sortBySeriesOrdered(node_categories_by_upstream_data_source, 'upstream_data_source')}
             x=category
             y=count
             series=upstream_data_source
@@ -154,8 +152,9 @@ from bq.merged_kg_edges
             <DropdownOption value=20>20</DropdownOption>
             <DropdownOption value=50>50</DropdownOption>
         </Dropdown> 
+        
         <BarChart 
-            data={sortBySeries(node_prefix_by_upstream_data_source, 'upstream_data_source')}
+            data={sortBySeriesOrdered(node_prefix_by_upstream_data_source, 'upstream_data_source')}
             x=prefix
             y=count
             series=upstream_data_source
@@ -250,7 +249,7 @@ from bq.merged_kg_edges
         </div>
 
         <BarChart 
-            data={predicates_by_upstream_data_source}
+            data={sortBySeriesOrdered(predicates_by_upstream_data_source, 'upstream_data_source')}
             x=predicate
             y=count
             series=upstream_data_source
@@ -259,9 +258,8 @@ from bq.merged_kg_edges
             title="Predicates by Upstream Data Source"    
         />
 
-
         <BarChart 
-            data={edge_types_by_upstream_data_source}
+            data={sortBySeriesOrdered(edge_types_by_upstream_data_source, 'upstream_data_source')}
             x=edge_type
             y=count 
             series=upstream_data_source
@@ -289,7 +287,4 @@ from bq.merged_kg_edges
         />
     </Tab>
 </Tabs>
-
-
-
 
