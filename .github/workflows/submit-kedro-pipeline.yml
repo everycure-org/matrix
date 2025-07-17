@@ -66,9 +66,9 @@ jobs:
         id: auth
         uses: 'google-github-actions/auth@v2'
         with:
-          project_id: ${{ vars.project_id }}
-          workload_identity_provider: ${{ vars.workload_identity_provider }}
-          service_account: ${{ vars.service_account }}
+          project_id: ${{ vars.PROJECT_ID }}
+          workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.SERVICE_ACCOUNT }}
           token_format: access_token
 
       - uses: google-github-actions/get-gke-credentials@v1
