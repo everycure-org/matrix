@@ -100,11 +100,11 @@ embeddings.node:
   resolver:
     _object: matrix.pipelines.embeddings.encoders.LangChainEncoder
     dimensions: 512
+    version: &api text-embedding-3-small
     encoder:
       _object: langchain_openai.OpenAIEmbeddings
-      model: &api text-embedding-3-small
+      model: *api
       timeout: 10
   primary_key: *pkey
-  api: *api
   target_col: embedding
   batch_size: 40000  # Bigger batch sizes result in larger Parquet files. +-250MB/file is a good rule of thumb on object stores like GCS. However, a bigger batch size also means you need to keep more elements in memory, so too big of a size will result in Out-Of-Memory errors.
