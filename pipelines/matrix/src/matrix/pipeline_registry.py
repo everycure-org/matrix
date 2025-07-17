@@ -19,7 +19,7 @@ from matrix.pipelines.sentinel.pipeline import create_pipeline as create_sentine
 def register_pipelines() -> dict[str, Pipeline]:
     """Register the project's pipelines.
 
-    Returns:
+    Returns :
         Mapping from a pipeline name to a ``Pipeline`` object.
     """
     # Define pipeline combinations
