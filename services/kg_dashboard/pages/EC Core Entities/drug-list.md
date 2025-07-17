@@ -2,6 +2,13 @@
 
 <script>
   const max_core_entities_normalization_errors = import.meta.env.VITE_max_core_entities_normalization_errors;
+
+  function getCSSColor(varName) {
+    return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  }
+
+  const positiveColor = getCSSColor('--color-positive');
+  const negativeColor = getCSSColor('--color-negative');
 </script>
 
 <Details title="Core entities' IDs should not change during normalization — click to learn why">
@@ -43,7 +50,7 @@ where
 <div class="text-center text-lg mt-6 mb-6 space-y-4">
     {#if core_entities_re_normalization_errors.length > 0 || core_entities_normalization_failure_errors.length > 0}
 
-      <p class="text-red-500">❌ Some errors require your attention</p>
+      <p style="color: {negativeColor}">❌ Some errors require your attention</p>
       
       {#if core_entities_re_normalization_errors.length > 0}
         {#if core_entities_re_normalization_errors.length === max_core_entities_normalization_errors}
@@ -72,7 +79,7 @@ where
       {/if}
 
     {:else}
-      <p class="text-lg text-green-500">✅ All good</p>
+      <p style="color: {positiveColor}">✅ All good</p>
     {/if}
 </div>
 
@@ -110,7 +117,7 @@ by prefix and category.
                 data: drug_list_normalization.map(d => ({
                     ...d,
                     itemStyle: {
-                      color: d.name === 'Success' ? '#50fa7b' : '#ff5555' 
+                      color: d.name === 'Success' ? positiveColor : negativeColor
                     }
                 }))
             }]
@@ -205,7 +212,7 @@ SELECT * FROM bq.ec_core_components_drug_list_missing
                         name: status,
                         value: count,
                         itemStyle: {
-                            color: status === 'Included' ? '#50fa7b' : '#ff5555'
+                            color: status === 'Included' ? positiveColor : negativeColor
                         }
                     }));
                 })()
