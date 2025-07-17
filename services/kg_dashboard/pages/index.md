@@ -267,7 +267,7 @@ from
   knowledge graph. The mean and median values reflect how many other entities (such as drugs, genes, or phenotypes) 
   each drug node is linked to. This helps characterize the typical network context for diseases of interest, and highlights 
   how densely or sparsely connected different parts of the graph may be. For more details visit 
-  <a class="underline text-blue-600" href="./EC%20Core%20Components ">EC Core Components</a>. 
+  <a class="underline text-blue-600" href="./EC%20Core%20Entities ">EC Core Entities</a>. 
 </div>
 </Details>
 
@@ -329,7 +329,7 @@ order by
   knowledge graph. The mean and median values reflect how many other entities (such as disease, genes, or phenotypes) 
   each drug node is linked to. This helps characterize the typical network context for drug of interest, and highlights 
   how densely or sparsely connected different parts of the graph may be. For more details visit 
-  <a class="underline text-blue-600" href="./EC%20Core%20Components ">EC Core Components</a>. 
+  <a class="underline text-blue-600" href="./EC%20Core%20Entities ">EC Core Entities</a>. 
 </div>
 </Details>
 
