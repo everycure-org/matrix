@@ -30,7 +30,6 @@ def cached_api_enrichment_pipeline(
     input: str,
     primary_key: str,
     cache_miss_resolver: str,  # Ref to [AttributeEncoder|Normalizer]
-    api: str,
     preprocessor: str,  # Ref to Callable[[DataFrame], DataFrame],
     output: str,
     new_col: str,
@@ -111,7 +110,7 @@ def cached_api_enrichment_pipeline(
             inputs={
                 "df": input,
                 "cache": cache,
-                "api": api,
+                "transformer": cache_miss_resolver,
                 "primary_key": primary_key,
                 "preprocessor": preprocessor,
                 "cache_schema": cache_schema,
@@ -130,7 +129,6 @@ def cached_api_enrichment_pipeline(
             inputs={
                 "df": cache_misses,
                 "transformer": cache_miss_resolver,
-                "api": api,
                 "batch_size": batch_size,
                 "cache_schema": cache_schema,
             },
@@ -148,7 +146,7 @@ def cached_api_enrichment_pipeline(
             inputs={
                 "df": input,
                 "cache": cache_reload,
-                "api": api,
+                "transformer": cache_miss_resolver,
                 "primary_key": primary_key,
                 "preprocessor": preprocessor,
                 "new_col": new_col,
@@ -169,11 +167,12 @@ def cached_api_enrichment_pipeline(
 def derive_cache_misses(
     df: DataFrame,
     cache: DataFrame,
-    api: str,
+    transformer: Transformer,
     primary_key: str,
     cache_schema: pa.lib.Schema,
     preprocessor: Callable[[DataFrame], DataFrame],
 ) -> DataFrame:
+    api = transformer.version()
     if cache.isEmpty():
         # Replace the Kedro-loaded empty dataframe with meaningless schema by smt useful.
         cache = cache.sparkSession.createDataFrame([], to_spark_schema(cache_schema))
@@ -189,7 +188,7 @@ def derive_cache_misses(
 
 @inject_object()
 def cache_miss_resolver_wrapper(
-    df: DataFrame, transformer: Transformer, api: str, batch_size: int, cache_schema: pa.lib.Schema
+    df: DataFrame, transformer: Transformer, batch_size: int, cache_schema: pa.lib.Schema
 ) -> dict[str, Callable[[], Coroutine[Any, Any, pa.Table]]]:
     if logger.isEnabledFor(logging.INFO):
         logger.info(json.dumps({"number of cache misses": df.count()}))
@@ -216,6 +215,7 @@ def cache_miss_resolver_wrapper(
             key = hashlib.sha256((head + api).encode("utf-8")).hexdigest()
             yield key, partial(async_delegator, batch=batch)
 
+    api = transformer.version()
     return {f"api={api}/{k}": v for k, v in prep(batches, api)}
 
 
@@ -223,12 +223,13 @@ def cache_miss_resolver_wrapper(
 def lookup_from_cache(
     df: DataFrame,
     cache: DataFrame,
-    api: str,
+    transformer: Transformer,
     primary_key: str,
     preprocessor: Callable[[DataFrame], DataFrame],
     new_col: str,
     lineage_dummy: Any,  # required for kedro to keep the lineage: this function should come _after_ cache_miss_resolver_wrapper.
 ) -> DataFrame:
+    api = transformer.version()
     report_on_cache_misses(cache, api)
     cache = (
         limit_cache_to_results_from_api(cache, api=api)
