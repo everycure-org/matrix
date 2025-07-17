@@ -49,10 +49,14 @@ install:
 	npm install
 
 populate-infores-source:
+	curl -sL "https://github.com/biolink/information-resource-registry/releases/latest/download/infores_catalog.jsonl" -o scripts/temp_infores_catalog.jsonl
 	node ./scripts/load-infores.cjs
+	rm -f scripts/temp_infores_catalog.jsonl
 
 populate-valid-edge-types-source:
+	curl -sL "https://github.com/everycure-org/matrix-schema/releases/latest/download/valid_biolink_edge_types.tsv" -o scripts/temp_valid_edge_types.tsv
 	node ./scripts/load-valid-edge-types.cjs
+	rm -f scripts/temp_valid_edge_types.tsv
 
 run-sources: populate-infores-source populate-valid-edge-types-source
 	npm run sources
