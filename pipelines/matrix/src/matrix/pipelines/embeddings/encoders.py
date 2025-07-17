@@ -1,3 +1,4 @@
+import functools
 import logging
 from abc import ABC, abstractmethod
 from typing import Optional, Sequence, TypeAlias, TypeVar
@@ -27,6 +28,7 @@ class AttributeEncoder(ABC):
         self._random_seed = random_seed
         self._version = version
 
+    @functools.cache
     def version(self) -> str:
         return self._version
 
@@ -62,6 +64,7 @@ class LangChainEncoder(AttributeEncoder):
             timeout: Timeout for OpenAI API requests
         """
         super().__init__(version, dimensions, random_seed)
+        encoder.model = version
         self._client = encoder
 
     @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(5))
@@ -155,8 +158,8 @@ class PubmedBERTEncoder(AttributeEncoder):
 
 
 class DummyResolver(AttributeEncoder):
-    def __init__(self, version: str, **kwargs):
-        super().__init__("dummy-version", 0, 0)
+    def __init__(self, version: str = "dummy-version", **kwargs):
+        super().__init__(version, 0, 0)
 
     async def apply(self, documents: Sequence[str]) -> list[list[float]]:
         return [[1.0, 2.0]] * len(documents)
