@@ -156,8 +156,9 @@ class DummyNodeNormalizer(Normalizer):
 
     def __init__(
         self,
-        conflate: bool,
-        drug_chemical_conflate: bool,
+        api: str,
+        conflate: bool = True,
+        drug_chemical_conflate: bool = True,
         domain: str = "",
         get_normalized_nodes_path: str = "",
         description: bool = False,
@@ -166,10 +167,10 @@ class DummyNodeNormalizer(Normalizer):
         super().__init__(
             conflate, drug_chemical_conflate, domain, get_normalized_nodes_path, description, items_per_request
         )
+        self._api = api
 
-    @functools.cache
     def version(self) -> str:
-        return f"nodenorm-{self.get_source().lower()}"
+        return self._api
 
     def get_source(self) -> str:
         return "DUMMY"
