@@ -19,6 +19,7 @@ from matrix.pipelines.batch.pipeline import (
     resolve_cache_duplicates,
 )
 from matrix.pipelines.embeddings.pipeline import create_node_embeddings_pipeline
+from matrix.pipelines.integration.normalizers.normalizers import DummyNodeNormalizer
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import ArrayType, FloatType, StringType, StructField, StructType
 from pyspark.testing import assertDataFrameEqual
@@ -81,7 +82,7 @@ def sample_duplicate_cache(spark: SparkSession, cache_schema, sample_api1) -> Da
 
 @pytest.fixture
 def sample_api1():
-    return "gpt-4"
+    return DummyNodeNormalizer(True, True)
 
 
 @pytest.fixture
@@ -111,12 +112,12 @@ def test_derive_cache_misses(sample_input_df, sample_cache, sample_api1, sample_
     result_df = derive_cache_misses(
         df=sample_input_df,
         cache=sample_cache,
-        api=sample_api1,
+        transformer=sample_api1,
         primary_key=sample_primary_key,
         preprocessor=pass_through,
         cache_schema=embeddings_schema,
     )
-
+    print(result_df.head())
     assertDataFrameEqual(result_df, expected)
 
 
@@ -247,7 +248,6 @@ def test_no_resolver_calls_on_empty_cache_miss(spark: SparkSession):
     result = cache_miss_resolver_wrapper(
         df=spark.createDataFrame([], schema="key string"),
         transformer=AsyncMock(),
-        api="foo",
         batch_size=1,
         cache_schema=pa.schema({"foo": pa.string()}),
     )
