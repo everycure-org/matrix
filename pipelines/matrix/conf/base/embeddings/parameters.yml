@@ -100,10 +100,9 @@ embeddings.node:
   resolver:
     _object: matrix.pipelines.embeddings.encoders.LangChainEncoder
     dimensions: 512
-    version: &api text-embedding-3-small
+    version: text-embedding-3-small
     encoder:
       _object: langchain_openai.OpenAIEmbeddings
-      model: *api
       timeout: 10
   primary_key: *pkey
   target_col: embedding
