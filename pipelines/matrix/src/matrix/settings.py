@@ -17,7 +17,6 @@ from matrix.utils.hook_utilities import (
     disable_private_datasets,
     generate_dynamic_pipeline_mapping,
 )
-from matrix.utils.node_normalizer import get_node_normalization_settings
 
 from .resolvers import cast_to_int, env, get_kg_raw_path_for_source, if_null, merge_dicts
 
@@ -82,27 +81,9 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                     "stability_name": "rank_commonality"
                 },  # note - rank_commonality will be only used if you have a shared commonality@k and spearman@k metrics
             ],
-            "node_norm": get_node_normalization_settings(
-                NODE_NORMALIZER_CONFIGURATIONS["RENCI"]
-            ),  # could also be NCATS
         }
     )
 )
-
-NODE_NORMALIZER_CONFIGURATIONS = {
-    "RENCI": {
-        "source": "RENCI",
-        "protocol_and_domain": "https://nodenormalization-sri.renci.org",
-        "get_normalized_nodes_path": "/1.5/get_normalized_nodes",
-        "openapi_path": "/openapi.json",
-    },
-    "NCATS": {
-        "source": "NCATS",
-        "protocol_and_domain": "https://nodenorm.transltr.io",
-        "get_normalized_nodes_path": "/1.5/get_normalized_nodes",
-        "openapi_path": "/openapi.json",
-    },
-}
 
 
 def _load_setting(path):
