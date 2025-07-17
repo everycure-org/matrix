@@ -18,6 +18,7 @@ from matrix.pipelines.batch.pipeline import (
     pass_through,
     resolve_cache_duplicates,
 )
+from matrix.pipelines.embeddings.encoders import DummyResolver
 from matrix.pipelines.embeddings.pipeline import create_node_embeddings_pipeline
 from matrix.pipelines.integration.normalizers.normalizers import DummyNodeNormalizer
 from pyspark.sql import DataFrame, SparkSession
@@ -60,8 +61,8 @@ def filtered_cache_schema():
 @pytest.fixture
 def sample_cache(spark: SparkSession, cache_schema, sample_api1, sample_api2) -> DataFrame:
     data = [
-        ("A", [1.0, 2.0], sample_api1),
-        ("B", [4.0, 5.0], sample_api1),
+        ("A", [1.0, 2.0], sample_api1.version()),
+        ("B", [4.0, 5.0], sample_api1.version()),
         ("C", [7.0, 8.0], sample_api2),
         ("D", [8.0, 9.0], sample_api2),
     ]
@@ -71,11 +72,11 @@ def sample_cache(spark: SparkSession, cache_schema, sample_api1, sample_api2) ->
 @pytest.fixture
 def sample_duplicate_cache(spark: SparkSession, cache_schema, sample_api1) -> DataFrame:
     data = [
-        ("A", [1.0, 2.0], sample_api1),
-        ("B", [4.0, 5.0], sample_api1),
-        ("B", [4.0, 5.0], sample_api1),
-        ("D", [8.0, 9.0], sample_api1),
-        ("E", [9.0, 10.0], sample_api1),
+        ("A", [1.0, 2.0], sample_api1.version()),
+        ("B", [4.0, 5.0], sample_api1.version()),
+        ("B", [4.0, 5.0], sample_api1.version()),
+        ("D", [8.0, 9.0], sample_api1.version()),
+        ("E", [9.0, 10.0], sample_api1.version()),
     ]
     return spark.createDataFrame(data, schema=cache_schema)
 
@@ -88,6 +89,11 @@ def sample_api1():
 @pytest.fixture
 def sample_api2():
     return "gpt-3"
+
+
+@pytest.fixture
+def sample_api3():
+    return DummyResolver()
 
 
 @pytest.fixture
@@ -163,7 +169,6 @@ def test_cached_api_enrichment_pipeline(
     mock_encoder,
     sample_input_df: DataFrame,
     cache_schema: StructType,
-    sample_api1: str,
     embeddings_schema: pa.lib.Schema,
     sample_primary_key: str,
     sample_new_col: str,
@@ -202,7 +207,6 @@ def test_cached_api_enrichment_pipeline(
             "batch.node_embeddings.cache.reload": LazySparkDataset(
                 filepath=cache_path,
             ),
-            "params:embeddings.node.api": MemoryDataset(sample_api1),
             "params:embeddings.node.primary_key": MemoryDataset(sample_primary_key),
             "params:embeddings.node.preprocessor": MemoryDataset(pass_through),
             "params:embeddings.node.resolver": MemoryDataset(
