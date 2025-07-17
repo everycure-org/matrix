@@ -150,6 +150,8 @@ def sample_nodes_norm(spark):
             StructField("category", StringType(), False),
             StructField("description", StringType(), True),
             StructField("equivalent_identifiers", ArrayType(StringType()), True),
+            StructField("original_categories", ArrayType(StringType()), True),
+            StructField("normalized_categories", ArrayType(StringType()), True),
             StructField("all_categories", ArrayType(StringType()), True),
             StructField("publications", ArrayType(StringType()), True),
             StructField("labels", ArrayType(StringType()), True),
@@ -167,6 +169,8 @@ def sample_nodes_norm(spark):
             "Description1",
             ["CHEBI:119157"],
             ["biolink:Drug", "biolink:ChemicalEntity"],
+            ["biolink:Drug", "biolink:ChemicalEntity"],
+            ["biolink:Drug", "biolink:ChemicalEntity"],
             ["PMID:12345678"],
             ["Label1"],
             "http://example.com/1",
@@ -181,6 +185,8 @@ def sample_nodes_norm(spark):
             "Description2",
             ["MONDO:0005148"],
             ["biolink:Disease"],
+            ["biolink:Disease"],
+            ["biolink:Disease"],
             ["PMID:23456789"],
             ["Label2"],
             "http://example.com/2",
@@ -194,6 +200,8 @@ def sample_nodes_norm(spark):
             "biolink:Drug",
             "Description3",
             ["CHEBI:119157"],
+            ["biolink:Drug", "biolink:SmallMolecule"],
+            ["biolink:Drug", "biolink:SmallMolecule"],
             ["biolink:Drug", "biolink:SmallMolecule"],
             ["PMID:34567890"],
             ["Label3"],
@@ -382,14 +390,42 @@ def sample_biolink_category_hierarchy():
     ]
 
 
+@pytest.fixture
+def sample_mapping_df(spark):
+    schema = StructType(
+        [
+            StructField("id", StringType(), False),
+            StructField(
+                "normalization_struct",
+                StructType(
+                    [
+                        StructField("normalized_id", StringType(), True),
+                        StructField("normalized_categories", ArrayType(StringType()), True),
+                    ]
+                ),
+                True,
+            ),
+        ]
+    )
+
+    data = [
+        ("CHEBI:119157", ("CHEBI:119157", ["biolink:Drug", "biolink:ChemicalEntity"])),
+        ("MONDO:0005148", ("MONDO:0005148", ["biolink:Disease"])),
+        ("DRUGBANK:119157", ("DRUGBANK:119157", ["biolink:SmallMolecule"])),
+    ]
+
+    return spark.createDataFrame(data, schema)
+
+
 @pytest.mark.spark(
     help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
 )
-def test_normalization_summary_nodes_and_edges(spark, sample_nodes_norm, sample_edges_norm):
+def test_normalization_summary_nodes_and_edges(spark, sample_nodes_norm, sample_edges_norm, sample_mapping_df):
     # Call the normalization summary function
     result = nodes.normalization_summary_nodes_and_edges(
         sample_edges_norm,
         sample_nodes_norm,
+        sample_mapping_df,
         "source_kg",
     )
 

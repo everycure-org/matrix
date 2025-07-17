@@ -84,7 +84,7 @@ integration:
     # cache. Seehttps://github.com/everycure-org/matrix/pull/1269#issuecomment-2755674916
     preprocessor:
       _object: matrix.pipelines.batch.pipeline.pass_through
-    target_col: normalized_id
+    target_col: normalization_struct
     primary_key: id
 
 # TODO: Figure out whether to move to filtering or stay here
