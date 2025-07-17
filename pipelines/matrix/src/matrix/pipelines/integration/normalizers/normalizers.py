@@ -1,4 +1,5 @@
 import asyncio
+import functools
 import logging
 from abc import ABC, abstractmethod
 from collections.abc import Collection
@@ -98,6 +99,7 @@ class Normalizer(ABC):
 
         return {"normalized_id": None, "normalized_categories": [default_normalizer_category]}
 
+    @functools.cache
     def version(self) -> str:
         nn_openapi_json_url = f"https://{self._domain}/openapi.json"
         response = requests.get(nn_openapi_json_url, timeout=5)
@@ -165,6 +167,7 @@ class DummyNodeNormalizer(Normalizer):
             conflate, drug_chemical_conflate, domain, get_normalized_nodes_path, description, items_per_request
         )
 
+    @functools.cache
     def version(self) -> str:
         return f"nodenorm-{self.get_source().lower()}"
 
