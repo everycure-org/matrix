@@ -69,5 +69,5 @@ theme:
       light: "#BF616A"  # Muted crimson
       dark: "#BF616A"   # Muted crimson
     positive:
-      light: "#6FAF8C"  # Muted teal green
-      dark: "#6FAF8C"   # Muted teal green
+      light: "#73C991"  # Muted teal green
+      dark: "#73C991"   # Muted teal green
