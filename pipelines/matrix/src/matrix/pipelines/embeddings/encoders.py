@@ -16,7 +16,7 @@ T: TypeAlias = TypeVar("T")
 class AttributeEncoder(ABC):
     """Base class for encoders that convert text into embeddings."""
 
-    def __init__(self, output_dim: int = 512, random_seed: Optional[int] = None):
+    def __init__(self, version: str, output_dim: int = 512, random_seed: Optional[int] = None):
         """Initialize base encoder.
 
         Args:
@@ -25,6 +25,10 @@ class AttributeEncoder(ABC):
         """
         self._embedding_dim = output_dim
         self._random_seed = random_seed
+        self._version = version
+
+    def version(self) -> str:
+        return self._version
 
     @abstractmethod
     async def apply(self, documents: Sequence[str]) -> list[list[float]]:
@@ -46,6 +50,7 @@ class LangChainEncoder(AttributeEncoder):
         self,
         encoder: OpenAIEmbeddings,
         dimensions: int,
+        version: str,
         random_seed: Optional[int] = None,
     ):
         """Initialize OpenAI encoder.
@@ -56,7 +61,7 @@ class LangChainEncoder(AttributeEncoder):
             random_seed: Random seed for reproducibility
             timeout: Timeout for OpenAI API requests
         """
-        super().__init__(dimensions, random_seed)
+        super().__init__(version, dimensions, random_seed)
         self._client = encoder
 
     @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(5))
@@ -75,7 +80,13 @@ class LangChainEncoder(AttributeEncoder):
 class RandomizedEncoder(AttributeEncoder):
     """Encoder class for generating random embeddings."""
 
-    def __init__(self, dimensions: int, random_seed: Optional[int] = None, encoder: Optional[AttributeEncoder] = None):
+    def __init__(
+        self,
+        dimensions: int,
+        version: str,
+        random_seed: Optional[int] = None,
+        encoder: Optional[AttributeEncoder] = None,
+    ):
         """Initialize Randomized encoder.
 
         Args:
@@ -83,7 +94,7 @@ class RandomizedEncoder(AttributeEncoder):
             random_seed: Random seed for reproducibility
             encoder: Encoder to use for embedding generation (dummy)
         """
-        super().__init__(dimensions, random_seed)
+        super().__init__(version, dimensions, random_seed)
         if random_seed is not None:
             np.random.seed(random_seed)
 
@@ -102,7 +113,13 @@ class RandomizedEncoder(AttributeEncoder):
 class PubmedBERTEncoder(AttributeEncoder):
     """Encoder class for PubmedBERT embeddings."""
 
-    def __init__(self, dimensions: int, random_seed: Optional[int] = None, encoder: Optional[AttributeEncoder] = None):
+    def __init__(
+        self,
+        dimensions: int,
+        version: str,
+        random_seed: Optional[int] = None,
+        encoder: Optional[AttributeEncoder] = None,
+    ):
         """Initialize PubmedBERT encoder.
 
         Args:
@@ -110,7 +127,7 @@ class PubmedBERTEncoder(AttributeEncoder):
             random_seed: Random seed for reproducibility
             encoder: Encoder to use for embedding generation (dummy)
         """
-        super().__init__(dimensions, random_seed)
+        super().__init__(version, dimensions, random_seed)
         if random_seed is not None:
             np.random.seed(random_seed)
 
@@ -138,8 +155,8 @@ class PubmedBERTEncoder(AttributeEncoder):
 
 
 class DummyResolver(AttributeEncoder):
-    def __init__(self, **kwargs):
-        super().__init__(0, 0)
+    def __init__(self, version: str, **kwargs):
+        super().__init__("dummy-version", 0, 0)
 
     async def apply(self, documents: Sequence[str]) -> list[list[float]]:
         return [[1.0, 2.0]] * len(documents)
