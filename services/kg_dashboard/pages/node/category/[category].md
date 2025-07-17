@@ -1,5 +1,36 @@
 # {params.category}
 
+<script context="module">
+  import { getSeriesColors, sourceOrder } from '../../../_lib/colors';
+  
+  // Enhanced sortBySeries function that uses the color ordering
+  export function sortBySeriesOrdered(data, seriesColumn) {
+    // Use the existing sourceOrder from colors.js
+    return data.sort((a, b) => {
+      const aIndex = sourceOrder.indexOf(a[seriesColumn]);
+      const bIndex = sourceOrder.indexOf(b[seriesColumn]);
+      
+      // Both are known sources
+      if (aIndex !== -1 && bIndex !== -1) {
+        return aIndex - bIndex;
+      }
+      
+      // a is known, b is unknown - a comes first
+      if (aIndex !== -1 && bIndex === -1) {
+        return -1;
+      }
+      
+      // a is unknown, b is known - b comes first
+      if (aIndex === -1 && bIndex !== -1) {
+        return 1;
+      }
+      
+      // Both are unknown - sort alphabetically
+      return a[seriesColumn].localeCompare(b[seriesColumn]);
+    });
+  }
+</script>
+
 ```sql number_of_nodes
 select coalesce(sum(count), 0) as count
 from bq.merged_kg_nodes
@@ -74,10 +105,11 @@ order by count desc
 
 {#if node_prefixes_by_upstream_data_source.length !== 0}
 <BarChart 
-    data={node_prefixes_by_upstream_data_source}
+    data={sortBySeriesOrdered(node_prefixes_by_upstream_data_source, 'upstream_data_source')}
     x=prefix
     y=count
     series=upstream_data_source
+    seriesColors={getSeriesColors(node_prefixes_by_upstream_data_source, 'upstream_data_source')}
     swapXY=true    
     title="Prefix"
 />

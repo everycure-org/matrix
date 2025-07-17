@@ -3,32 +3,10 @@ title: EC Core Entities
 ---
 
 <script context="module">
-  import { sourceColorMap } from '../_lib/colors';
-  
-  // Function to get colors for pie chart data
-  export function getPieColors(data) {
-    return data.map(item => sourceColorMap[item.name] || "#6b7280");
-  }
-
-  // Create explicit series color mapping
-  export function getSeriesColors(data, seriesColumn) {
-    const uniqueSources = [...new Set(data.map(row => row[seriesColumn]))];
-    
-    const seriesColors = {};
-    uniqueSources.forEach(source => {
-      seriesColors[source] = sourceColorMap[source] || "#6272a4";
-    });
-    
-    return seriesColors;
-  }
-  
-  export function sortBySeries(data, seriesColumn) {
-    return data;
-  }
+  import { getSourceColor } from '../_lib/colors';
 </script>
 
 <script>
-
   // NOTE: This function was partially generated using AI assistance.
   function createHistogramBins(data, binWidth) {
     if (!data || !Array.isArray(data) || data.length === 0) return [];
@@ -140,8 +118,6 @@ title: EC Core Entities
       ]
     }
   }
-
-  
 </script>
 
 
@@ -216,6 +192,7 @@ order by
     data={disease_list_connected_categories} 
     x="category" 
     y="number_of_connections" 
+    colorPalette={[getSourceColor("disease_list")]}
     swapXY=true
     title="Categories connected to disease list node on average"
 />
@@ -230,7 +207,7 @@ from
 
 <ECharts
     style={{ height: '400px' }}
-    config={getHistogramEchartsOptions(disease_list_neighbour_counts, "disease", "unique_neighbours", 10, "#8a6bff",
+    config={getHistogramEchartsOptions(disease_list_neighbour_counts, "disease", "unique_neighbours", 10, getSourceColor("disease_list"),
          "Disease nodes neighbours")}
 />
 
@@ -282,9 +259,7 @@ order by
     data={drug_list_connected_categories} 
     x="category" 
     y="number_of_connections" 
-    colorPalette={[
-        "#79dae8",
-        ]}
+    colorPalette={[getSourceColor("drug_list")]}
     swapXY=true
     title="Categories connected to drug list node on average"
 />
@@ -298,6 +273,6 @@ from
 
 <ECharts
     style={{ height: '500px' }}
-    config={getHistogramEchartsOptions(drug_list_neighbour_counts, "drug", "unique_neighbours", 50, "#79dae8" , 
+    config={getHistogramEchartsOptions(drug_list_neighbour_counts, "drug", "unique_neighbours", 50, getSourceColor("drug_list"), 
     "Drug nodes neighbours")}
 />

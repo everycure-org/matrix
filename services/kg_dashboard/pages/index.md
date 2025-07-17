@@ -3,27 +3,11 @@ title: KG Dashboard
 ---
 
 <script context="module">
-  import { sourceColorMap } from './_lib/colors';
+  import { getSourceColor } from './_lib/colors';
   
   // Function to get colors for pie chart data
   export function getPieColors(data) {
-    return data.map(item => sourceColorMap[item.name] || "#6b7280");
-  }
-
-  // Create explicit series color mapping
-  export function getSeriesColors(data, seriesColumn) {
-    const uniqueSources = [...new Set(data.map(row => row[seriesColumn]))];
-    
-    const seriesColors = {};
-    uniqueSources.forEach(source => {
-      seriesColors[source] = sourceColorMap[source] || "#6272a4";
-    });
-    
-    return seriesColors;
-  }
-  
-  export function sortBySeries(data, seriesColumn) {
-    return data;
+    return data.map(item => getSourceColor(item.name));
   }
 </script>
 
@@ -32,15 +16,6 @@ title: KG Dashboard
   const build_time = import.meta.env.VITE_build_time;
   const robokop_version = import.meta.env.VITE_robokop_version;
   const rtx_kg2_version = import.meta.env.VITE_rtx_kg2_version;
-
-  function groupBy(arr, key) {
-    return arr.reduce((acc, item) => {
-      const group = item[key];
-      acc[group] = acc[group] || [];
-      acc[group].push(item);
-      return acc;
-    }, {});
-  }
 
   // NOTE: This function was partially generated using AI assistance.
   function createHistogramBins(data, binWidth) {
@@ -141,8 +116,6 @@ title: KG Dashboard
       ]
     }
   }
-
-  
 </script>
 
 This dashboard provides an overview of our integrated knowledge graph (KG), detailing its size, connectivity patterns, and provenance quality. 
@@ -317,6 +290,7 @@ order by
     data={disease_list_connected_categories} 
     x="category" 
     y="number_of_connections" 
+    colorPalette={[getSourceColor("disease_list")]}
     swapXY=true
     title="Categories connected to disease list node on average"
 />
@@ -377,9 +351,7 @@ order by
     data={drug_list_connected_categories} 
     x="category" 
     y="number_of_connections" 
-    colorPalette={[
-        "#79dae8",
-        ]}
+    colorPalette={[getSourceColor("drug_list")]}
     swapXY=true
     title="Categories connected to drug list node on average"
 />
