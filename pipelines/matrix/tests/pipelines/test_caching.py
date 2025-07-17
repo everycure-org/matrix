@@ -117,7 +117,6 @@ def test_derive_cache_misses(sample_input_df, sample_cache, sample_api1, sample_
         preprocessor=pass_through,
         cache_schema=embeddings_schema,
     )
-    print(result_df.head())
     assertDataFrameEqual(result_df, expected)
 
 
