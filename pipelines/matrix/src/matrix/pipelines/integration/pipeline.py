@@ -69,6 +69,7 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
                     else nodes.normalization_summary_nodes_only,
                     inputs={
                         "nodes": f"integration.int.{source}.nodes.norm@spark",
+                        "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
                         **({"edges": f"integration.int.{source}.edges.norm@spark"} if has_edges else {}),
                         "source": f"params:integration.sources.{source}.name",
                     },

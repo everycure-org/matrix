@@ -35,7 +35,10 @@ class Normalizer(ABC):
         self._conflate = conflate
         self._drug_chemical_conflate = drug_chemical_conflate
         self._description = description
-        self._json_parser = parse("$.id.identifier")  # FUTURE: Ensure we can update
+        self._json_parser = {
+            "id": parse("$.id.identifier"),
+            "category": parse("$.type.[*]"),  # category list from NN
+        }
         self._items_per_request = items_per_request
 
     async def apply(self, strings: Collection[str], **kwargs) -> list[str | None]:
@@ -72,15 +75,28 @@ class Normalizer(ABC):
 
                 resp.raise_for_status()
 
-        return [self._extract_id(curie, response_json, self._json_parser) for curie in batch]
+        return [self._extract(curie, response_json, self._json_parser) for curie in batch]
 
     @staticmethod
-    def _extract_id(id: str, response: dict[str, Any], json_parser: parse) -> str | None:
+    def _extract(
+        id: str, response: dict[str, Any], json_parser: parse, default_normalizer_category: str = "biolink:NamedThing"
+    ) -> dict[str, Any] | None:
         """Extract normalized IDs from the response using the json parser."""
         try:
-            return str(json_parser.find(response.get(id))[0].value)
+            curie_info = response.get(id)
+            if curie_info is None:
+                return {"normalized_id": None, "normalized_categories": [default_normalizer_category]}
+            normalized_id = str(json_parser["id"].find(curie_info)[0].value)
+            # Find categories for CURIE in NN. If no categories are present, use default
+            categories = [match.value for match in json_parser["category"].find(curie_info)] or [
+                default_normalizer_category
+            ]
+
+            return {"normalized_id": normalized_id, "normalized_categories": categories}
         except (IndexError, KeyError):
             logger.debug(f"Not able to normalize for {id}: {response.get(id)}, {json_parser}")
+
+        return {"normalized_id": None, "normalized_categories": [default_normalizer_category]}
 
     def version(self) -> str:
         nn_openapi_json_url = f"https://{self._domain}/openapi.json"
@@ -94,7 +110,7 @@ class Normalizer(ABC):
 
 
 class NCATSNodeNormalizer(Normalizer):
-    """Class to represent normalizer from translator."""
+    """Class to represent normalizer from NCATS."""
 
     def __init__(
         self,
@@ -114,7 +130,7 @@ class NCATSNodeNormalizer(Normalizer):
 
 
 class RENCINodeNormalizer(Normalizer):
-    """Class to represent normalizer from translator."""
+    """Class to represent normalizer from RENCI."""
 
     def __init__(
         self,
@@ -134,7 +150,7 @@ class RENCINodeNormalizer(Normalizer):
 
 
 class DummyNodeNormalizer(Normalizer):
-    """Class to represent normalizer from translator."""
+    """Class to represent a dummy normalizer."""
 
     def __init__(
         self,
