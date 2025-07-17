@@ -28,7 +28,6 @@ appearance:
   default: system
   switcher: true
 
-
 theme:
   colorPalettes:
     default:
@@ -41,14 +40,14 @@ theme:
       - "#EBCB8B"  # Pale amber
       - "#6FAF8C"  # Muted teal green
       - "#73C991"  # Bright mint green
-      - "#1b3e66"  # Deep navy
+      - "#1B3E66"  # Deep navy
       - "#BF616A"  # Muted crimson
       - "#7AA2F7"  # Soft cornflower blue
 
   colorScales:
     default:
       - "#AD8AE2"  # Updated to match new purple
-      - "#E88EE"  # Updated to match new pink
+      - "#E88EE8"  # Updated to match new pink
 
   colors:
     primary:
@@ -58,8 +57,8 @@ theme:
       light: "#C586C0"  # Light magenta
       dark: "#C586C0"   # Light magenta
     base:
-      light: "#f8f8f2"  # Foreground (keeping same)
-      dark: "#282a36"   # Background (keeping same)
+      light: "#F8F8F2"  # Foreground (keeping same)
+      dark: "#282A36"   # Background (keeping same)
     info:
       light: "#88C0D0"  # Soft cyan blue
       dark: "#88C0D0"   # Soft cyan blue
