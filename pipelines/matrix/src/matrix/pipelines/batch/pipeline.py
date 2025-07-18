@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class Transformer(Protocol):
     async def apply(self, strings: Collection[str], **kwargs) -> list: ...
+    def version(self) -> str: ...
 
 
 def cached_api_enrichment_pipeline(
@@ -69,10 +70,6 @@ def cached_api_enrichment_pipeline(
 
         cache_miss_resolver: Kedro reference to an object having an apply method,
             which is an asynchronous callable that will be used to look up any cache misses.
-
-        api: Kedro parameter to restrict the cache to use results from this
-            particular API. You will want to match this with the parameters of
-            the `cache_miss_resolver`.
 
         preprocessor: Kedro reference to a callable that will preprocess the
             `input` such that it has a column `primary_key` which is used in the
