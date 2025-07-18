@@ -53,7 +53,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "diseases": "integration.int.disease_list.nodes.norm@pandas",
                             "graph": "matrix_generation.feat.nodes@kg",
                             "clinical_trials": "integration.int.ec_clinical_trails.edges.norm@pandas",
-                            "off_label": "integration.int.off_label.edges.norm@pandas",
+                            # "off_label": "integration.int.off_label.edges.norm@pandas",
                         },
                         outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs@pandas",
                         name=f"generate_matrix_pairs_fold_{fold}",
