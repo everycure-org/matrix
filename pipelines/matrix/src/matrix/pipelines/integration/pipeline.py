@@ -7,7 +7,9 @@ from ...kedro4argo_node import ArgoNode, ArgoResourceConfig
 from . import nodes
 
 
-def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges: bool = True) -> Pipeline:
+def _create_integration_pipeline(
+    source: str, has_nodes: bool = True, has_edges: bool = True, is_core: bool = False
+) -> Pipeline:
     pipelines = []
 
     pipelines.append(
@@ -58,6 +60,7 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
                     inputs={
                         "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
                         "nodes": f"integration.int.{source}.nodes",
+                        "is_core": is_core,
                     },
                     outputs=f"integration.int.{source}.nodes.norm@spark",
                     name=f"normalize_{source}_nodes",
@@ -119,6 +122,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     source=source["name"],
                     has_nodes=source.get("has_nodes", True),
                     has_edges=source.get("has_edges", True),
+                    is_core=source.get("is_core", False),
                 ),
                 tags=[source["name"]],
             )

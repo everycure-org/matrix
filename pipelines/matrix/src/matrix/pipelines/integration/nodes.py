@@ -183,6 +183,7 @@ def normalize_edges(
 def normalize_nodes(
     mapping_df: ps.DataFrame,
     nodes: ps.DataFrame,
+    is_core: T.BooleanType,
 ) -> ps.DataFrame:
     """Function normalizes a KG using external API endpoint.
 
@@ -202,6 +203,20 @@ def normalize_nodes(
         .withColumnRenamed("id", "original_id")
         .withColumnRenamed("normalized_id", "id")
     )
+
+    # If this is a core source (drug and disease list), add core_id = original_id
+    # The core_id will be used as the id for all equivalent nodes  in the merged graph
+    if is_core == "True":
+        nodes_normalized = nodes_normalized.withColumn("core_id", F.col("original_id"))
+    else:
+        nodes_normalized = nodes_normalized.withColumn("core_id", F.lit(None).cast(T.StringType()))
+
+    if is_core == "True":
+        mismatches = nodes_normalized.filter(F.col("core_id") != F.col("id"))
+        mismatch_count = mismatches.count()
+        if mismatch_count > 0:
+            mismatches.show(50, truncate=False)
+            logger.warn(f"{mismatch_count} core IDs changed during normalization.")
 
     # Keep original_categories information if it is provided by the source KG
     if "all_categories" in nodes_normalized.columns:
