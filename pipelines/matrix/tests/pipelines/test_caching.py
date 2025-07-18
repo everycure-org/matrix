@@ -60,9 +60,10 @@ def filtered_cache_schema():
 
 @pytest.fixture
 def sample_cache(spark: SparkSession, cache_schema, sample_api1, sample_api2) -> DataFrame:
+    api = sample_api1.version()
     data = [
-        ("A", [1.0, 2.0], sample_api1.version()),
-        ("B", [4.0, 5.0], sample_api1.version()),
+        ("A", [1.0, 2.0], api),
+        ("B", [4.0, 5.0], api),
         ("C", [7.0, 8.0], sample_api2),
         ("D", [8.0, 9.0], sample_api2),
     ]
@@ -71,12 +72,13 @@ def sample_cache(spark: SparkSession, cache_schema, sample_api1, sample_api2) ->
 
 @pytest.fixture
 def sample_duplicate_cache(spark: SparkSession, cache_schema, sample_api1) -> DataFrame:
+    api = sample_api1.version()
     data = [
-        ("A", [1.0, 2.0], sample_api1.version()),
-        ("B", [4.0, 5.0], sample_api1.version()),
-        ("B", [4.0, 5.0], sample_api1.version()),
-        ("D", [8.0, 9.0], sample_api1.version()),
-        ("E", [9.0, 10.0], sample_api1.version()),
+        ("A", [1.0, 2.0], api),
+        ("B", [4.0, 5.0], api),
+        ("B", [4.0, 5.0], api),
+        ("D", [8.0, 9.0], api),
+        ("E", [9.0, 10.0], api),
     ]
     return spark.createDataFrame(data, schema=cache_schema)
 
@@ -182,8 +184,14 @@ def test_cached_api_enrichment_pipeline(
     async def dummy_resolver(docs: Sequence):
         return [[1.0, 2.0]] * len(docs)
 
-    resolver = mock_encoder()  # Because of the patch, we are guaranteed that this object is _identical_ to the one that will be created by Kedro (through the custom inject decorator).
+    def dummy_version() -> str:
+        return "dummy-version"
+
+    # Because of the patch, we are guaranteed that this object is _identical_ to the one
+    # that will be created by Kedro (through the custom inject decorator).
+    resolver = mock_encoder()
     resolver.apply.side_effect = dummy_resolver
+    resolver.version = dummy_version
 
     output = "embeddings.feat.graph.node_embeddings@spark"
     cache_path = str(tmp_path / "cache_dataset")
