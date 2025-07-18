@@ -88,6 +88,10 @@ modelling.model_input.splits:
   <<: [*_pandas_parquet, *_model_output_ds]
   filepath: ${globals:paths.modelling}/model_output/fold_{fold}/predictions
 
+"modelling.fold_{fold}.model_output.shap_values":
+  <<: [*_pandas_parquet, *_model_output_ds]
+  filepath: ${globals:paths.modelling}/model_output/fold_{fold}/shap_values
+
 # NOTE: Saving an artifact, saving both locally and in MLFlow
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/03_version_datasets.html#how-to-version-data-in-a-kedro-project
 "modelling.{shard}.fold_{fold}.reporting.tuning_convergence_plot":
@@ -120,7 +124,7 @@ modelling.reporting.gt_present:
   type: matplotlib.MatplotlibDataset
   filepath: ${globals:paths.tmp}/reporting/{shard}/fold_{fold}/weights.png
 
-"modelling.fold_{fold}.reporting.weight_plot":
+"modelling.reporting.weight_plot":
   <<: *_reporting_ds
   type: matplotlib.MatplotlibDataset
-  filepath: ${globals:paths.tmp}/reporting/fold_{fold}/weights.png
+  filepath: ${globals:paths.tmp}/reporting/weights.png

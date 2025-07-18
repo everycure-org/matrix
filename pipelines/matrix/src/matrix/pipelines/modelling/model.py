@@ -1,8 +1,8 @@
-from typing import Callable, List
+from typing import Callable, List, Sequence
 
 import numpy as np
 from sklearn.base import BaseEstimator
-from xgboost import XGBClassifier
+from xgboost import Booster, XGBClassifier, XGBModel
 
 
 class ModelWrapper:
@@ -55,6 +55,25 @@ class ModelWrapper:
         """
         all_preds = np.array([estimator.predict_proba(X) for estimator in self._estimators])
         return np.apply_along_axis(self._agg_func, 0, all_preds)
+
+    @property
+    def boosters(self) -> List[Booster]:
+        """
+        Return the underlying `xgboost.Booster` objects for every
+        XGBoost‑based estimator in the ensemble.
+
+        Non‑XGBoost estimators are filtered out.
+        """
+        boosters: Sequence[Booster] = []
+        for est in self._estimators:
+            if isinstance(est, XGBModel):
+                boosters.append(est.get_booster())
+        if not boosters:
+            raise AttributeError(
+                "None of the wrapped estimators exposes a Booster; "
+                "SHAP analysis requires at least one XGBoost model."
+            )
+        return list(boosters)
 
 
 class XGBClassifierWeighted(XGBClassifier):
