@@ -142,7 +142,7 @@ def test_enriched_keeps_same_size_with_cache_duplicates(
     enriched_df = lookup_from_cache(
         sample_input_df,
         sample_duplicate_cache,
-        sample_api1,
+        sample_api1.version(),
         sample_primary_key,
         pass_through,
         sample_new_col,
