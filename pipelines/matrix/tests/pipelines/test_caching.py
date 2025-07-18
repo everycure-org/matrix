@@ -59,8 +59,8 @@ def filtered_cache_schema():
 
 
 @pytest.fixture
-def sample_cache(spark: SparkSession, cache_schema, sample_api1, sample_api2) -> DataFrame:
-    api = sample_api1.version()
+def sample_cache(spark: SparkSession, cache_schema, sample_nodenormalizer, sample_api2) -> DataFrame:
+    api = sample_nodenormalizer.version()
     data = [
         ("A", [1.0, 2.0], api),
         ("B", [4.0, 5.0], api),
@@ -71,8 +71,8 @@ def sample_cache(spark: SparkSession, cache_schema, sample_api1, sample_api2) ->
 
 
 @pytest.fixture
-def sample_duplicate_cache(spark: SparkSession, cache_schema, sample_api1) -> DataFrame:
-    api = sample_api1.version()
+def sample_duplicate_cache(spark: SparkSession, cache_schema, sample_nodenormalizer) -> DataFrame:
+    api = sample_nodenormalizer.version()
     data = [
         ("A", [1.0, 2.0], api),
         ("B", [4.0, 5.0], api),
@@ -84,7 +84,7 @@ def sample_duplicate_cache(spark: SparkSession, cache_schema, sample_api1) -> Da
 
 
 @pytest.fixture
-def sample_api1():
+def sample_nodenormalizer():
     return DummyNodeNormalizer(True, True)
 
 
@@ -94,7 +94,7 @@ def sample_api2():
 
 
 @pytest.fixture
-def sample_api3():
+def sample_resolver():
     return DummyResolver()
 
 
@@ -108,7 +108,9 @@ def sample_new_col():
     return "resolved"
 
 
-def test_derive_cache_misses(sample_input_df, sample_cache, sample_api1, sample_primary_key, embeddings_schema, spark):
+def test_derive_cache_misses(
+    sample_input_df, sample_cache, sample_nodenormalizer, sample_primary_key, embeddings_schema, spark
+):
     expected = spark.createDataFrame(
         [
             ("D",),
@@ -120,7 +122,7 @@ def test_derive_cache_misses(sample_input_df, sample_cache, sample_api1, sample_
     result_df = derive_cache_misses(
         df=sample_input_df,
         cache=sample_cache,
-        transformer=sample_api1,
+        transformer=sample_nodenormalizer,
         primary_key=sample_primary_key,
         preprocessor=pass_through,
         cache_schema=embeddings_schema,
@@ -137,14 +139,14 @@ def test_cache_contains_duplicates_warning(sample_duplicate_cache, sample_id_col
 def test_enriched_keeps_same_size_with_cache_duplicates(
     sample_input_df,
     sample_duplicate_cache,
-    sample_api1,
+    sample_nodenormalizer,
     sample_primary_key,
     sample_new_col,
 ):
     enriched_df = lookup_from_cache(
         sample_input_df,
         sample_duplicate_cache,
-        sample_api1,
+        sample_nodenormalizer,
         sample_primary_key,
         pass_through,
         sample_new_col,
