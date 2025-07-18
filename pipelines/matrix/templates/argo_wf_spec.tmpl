@@ -85,7 +85,7 @@ spec:
         app: kedro-argo
         workflow_name: {% raw %}'{{ workflow.parameters.run_name }}'
         {% endraw %}
-        kedro_nodes: {% raw %}'{{ inputs.parameters.kedro_nodes }}'
+        kedro_nodes: {% raw %}'{{ inputs.parameters.trimmed_kedro_nodes }}'
         {% endraw %}
         cost-center: "matrix-pipeline"
         environment: {% raw %}'{{ workflow.parameters.env }}'
@@ -95,6 +95,7 @@ spec:
     inputs:
       parameters:
       - name: kedro_nodes
+      - name: trimmed_kedro_nodes
       - name: num_gpus
       - name: memory_limit
       - name: memory_request
@@ -228,7 +229,7 @@ spec:
           app: kedro-argo
           workflow_name: {% raw %}"{{ workflow.parameters.run_name }}"
           {% endraw %}
-          kedro_nodes: {% raw %}"{{ inputs.parameters.kedro_nodes }}"
+          kedro_nodes: {% raw %}"{{ inputs.parameters.trimmed_kedro_nodes }}"
           {% endraw %}
           cost-center: "matrix-pipeline"
           environment: {% raw %}"{{ workflow.parameters.env }}"
@@ -348,6 +349,8 @@ spec:
             value: {{ pipeline_name }}
           - name: kedro_nodes
             value: {{ task.nodes }}
+          - name: trimmed_kedro_nodes
+            value: {{ task.nodes[:63].rstrip('_-.').replace(',', '-') }}
           - name: num_gpus
             value: {{ task.resources.num_gpus }}
           - name: memory_request
