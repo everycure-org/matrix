@@ -54,8 +54,8 @@ data_sources:
   drugmech:
     # check releases here: https://github.com/SuLab/DrugMechDB/releases/
     version: 2.0.1
-  off_label:
-    version: v0.1
+  # off_label:
+  #   version: v0.1
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation. Will make PR.
 mlflow_artifact_root: null

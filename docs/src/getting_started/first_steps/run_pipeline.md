@@ -231,8 +231,8 @@ The pipeline runs multiple types of evaluations which are also configured in `se
     {"evaluation_name": "simple_classification_trials"}, # Clinical trials evaluation
     {"evaluation_name": "disease_specific_trials"},   # Disease-specific trials
     {"evaluation_name": "full_matrix_trials"},        # Full matrix trials
-    {"evaluation_name": "disease_specific_off_label"}, # Off-label evaluation
-    {"evaluation_name": "full_matrix_off_label"}      # Full matrix off-label
+    # {"evaluation_name": "disease_specific_off_label"}, # Off-label evaluation
+    # {"evaluation_name": "full_matrix_off_label"}      # Full matrix off-label
 ]
 ```
 

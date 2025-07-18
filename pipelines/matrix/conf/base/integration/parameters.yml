@@ -52,11 +52,11 @@ integration:
       transformer:
         _object: matrix.pipelines.integration.transformers.ground_truth.KGMLGroundTruthTransformer
         version: ${globals:data_sources.gt.version}
-    off_label:
-      name: off_label
-      transformer:
-        _object: matrix.pipelines.integration.transformers.off_label.OffLabelTransformer
-        version: ${globals:data_sources.off_label.version}
+    # off_label:
+    #   name: off_label
+    #   transformer:
+    #     _object: matrix.pipelines.integration.transformers.off_label.OffLabelTransformer
+    #     version: ${globals:data_sources.off_label.version}
 
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:
