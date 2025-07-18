@@ -1,3 +1,4 @@
+from inspect import signature
 from typing import List
 
 import numpy as np
@@ -75,7 +76,7 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
         self._n_calls = n_calls
         super().__init__()
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None, sample_weight=None, **params):
         """Function to tune the hyperparameters of the estimator.
 
         Args:
@@ -86,6 +87,8 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
         Returns:
             Fitted estimator.
         """
+
+        _scorer_accepts_weight = "sample_weight" in signature(self._scoring).parameters
 
         @use_named_args(self._dimensions)
         def evaluate_model(**params):
@@ -107,9 +110,20 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
 
             scores = []
             for train, test in self._splitter.split(X, y):
-                self.estimator.fit(X[train], y[train])
-                y_pred = self.estimator.predict(X[test])
-                scores.append(self._scoring(y_pred, y[test]))
+                X_train, y_train = X[train], y[train]
+                X_test, y_test = X[test], y[test]
+
+                weights_train = sample_weight[train] if _scorer_accepts_weight else None
+                weights_test = sample_weight[test] if _scorer_accepts_weight else None
+
+                self.estimator.fit(X_train, y_train, sample_weight=weights_train)
+
+                y_pred = self.estimator.predict(X_test)
+                if weights_test is not None and _scorer_accepts_weight:
+                    score = self._scoring(y_test, y_pred, sample_weight=weights_test)
+                else:
+                    score = self._scoring(y_test, y_pred)
+                scores.append(score)
 
             return 1.0 - np.average(scores)
 

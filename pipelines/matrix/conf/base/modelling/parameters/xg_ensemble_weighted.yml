@@ -13,13 +13,12 @@ modelling.xg_ensemble_weighted:
 
     transformers:
       weighting:
-        features:
-          - source
+        features: ["source"]
         transformer:
           _object: matrix.pipelines.modelling.transformers.WeightingTransformer
           head_col: source
-          # inverse / shomer / auto_cv
-          strategy: inverse
+          # inverse / shomer / auto_cv / simple_eta
+          strategy: auto_cv
           enabled: true
           eta: 40
           mix_k: 5
@@ -81,7 +80,6 @@ modelling.xg_ensemble_weighted:
         - source_+
         - target_+
       target_col_name: y
-
   # NOTE: This leverages the custom `merge` resolver to override
   # the base options with the override block above.
   model_options: ${merge:${.._model_options},${._overrides}}

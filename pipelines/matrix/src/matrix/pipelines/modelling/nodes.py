@@ -1,12 +1,18 @@
 import itertools
 import json
 import logging
-from typing import Any, Callable, Iterable, Union
+from typing import Any, Callable, Iterable, Sequence, Union
 
 import matplotlib.pyplot as plt
+import mlflow
+import numpy as np
 import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.types as T
+import seaborn as sns
+import shap
+import xgboost as xgb
+from matplotlib.figure import Figure
 from pyspark.sql import functions as f
 from sklearn.base import BaseEstimator
 from sklearn.impute._base import _BaseImputer
@@ -20,7 +26,6 @@ from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
 from .model import ModelWrapper
 from .model_selection import DiseaseAreaSplit
-from .utils import plot_gt_weights
 
 logger = logging.getLogger(__name__)
 
@@ -330,19 +335,14 @@ def fit_transformers(
     mask = data["split"].eq("TRAIN")
     target = data.loc[mask, target_col_name] if target_col_name else None
 
-    fitted, weight_fig = {}, None
+    fitted = {}
     for name, meta in transformers.items():
         feats = meta["features"]
         tr = meta["transformer"].fit(data.loc[mask, feats], target)
 
-        if weight_fig is None and isinstance(tr, WeightingTransformer):
-            weight_fig = plot_gt_weights(tr, data.loc[mask])
-
         fitted[name] = {"transformer": tr, "features": feats}
-    if weight_fig is None:
-        weight_fig = plt.figure()
-        plt.text(0.5, 0.5, "No WeightingTransformer fitted", horizontalalignment="center", verticalalignment="center")
-    return fitted, weight_fig
+
+    return fitted
 
 
 @inject_object()
@@ -376,18 +376,16 @@ def apply_transformers(
             axis="columns",
         )
 
+    if "weight" not in data.columns:
+        data["weight"] = 1.0
+
     return data
 
 
 @unpack_params()
 @inject_object()
 @make_list_regexable(source_df="data", make_regexable_kwarg="features")
-def tune_parameters(
-    data: pd.DataFrame,
-    tuner: Any,
-    features: list[str],
-    target_col_name: str,
-) -> tuple[dict,]:
+def tune_parameters(data: pd.DataFrame, tuner: Any, features: list[str], target_col_name: str) -> tuple[dict,]:
     """Function to apply hyperparameter tuning.
 
     Args:
@@ -403,9 +401,10 @@ def tune_parameters(
 
     X_train = data.loc[mask, features]
     y_train = data.loc[mask, target_col_name]
+    weights = data.loc[mask, "weight"].values.ravel() if "weight" in data.columns else None
 
     # Fit tuner
-    tuner.fit(X_train.values, y_train.values)
+    tuner.fit(X_train.values, y_train.values, sample_weight=weights)
 
     estimator = getattr(tuner, "estimator", None)
     if estimator is None:
@@ -431,10 +430,10 @@ def train_model(data: pd.DataFrame, estimator: BaseEstimator, features: list[str
     mask = data["split"].eq("TRAIN")
     X_train = data.loc[mask, features]
     y_train = data.loc[mask, target_col_name]
-    sample_weight = data.loc[mask, "weight"].values.ravel() if "weight" in data.columns else None
+    weights = data.loc[mask, "weight"].values.ravel() if "weight" in data.columns else None
 
     logger.info(f"Training model ({type(estimator).__name__}) ...")
-    estimator_fit = estimator.fit(X_train.values, y_train.values, sample_weight=sample_weight)
+    estimator_fit = estimator.fit(X_train.values, y_train.values, sample_weight=weights)
     logger.info("Model training completed.")
     return estimator_fit
 
@@ -450,6 +449,70 @@ def create_model(agg_func: Callable, *estimators) -> ModelWrapper:
         ModelWrapper encapsulating estimators
     """
     return ModelWrapper(estimators=estimators, agg_func=agg_func)
+
+
+def _tree_shap_values_single(
+    booster: xgb.Booster,
+    X: pd.DataFrame,
+    feature_names: list[str],
+    class_idx: int | None = 1,
+) -> np.ndarray:
+    """Compute SHAP values for a single booster model.
+
+    Args:
+        booster: xgboost.Booster model.
+        X: DataFrame containing the input features.
+        feature_names: List of feature names.
+        class_idx: Index of the class for which to compute SHAP values (default is 1).
+    Returns:
+        np.ndarray: SHAP values for the input features.
+    """
+    explainer = shap.TreeExplainer(booster, feature_perturbation="interventional")
+    shap_vals = explainer.shap_values(X)
+    if isinstance(shap_vals, list):
+        if class_idx is None:
+            shap_vals = np.mean(shap_vals, axis=0)
+        else:
+            shap_vals = shap_vals[class_idx]
+    elif shap_vals.ndim == 3:
+        if shap_vals.shape[1] == len(feature_names):
+            feat_axis, class_axis = 1, 2
+        else:
+            feat_axis, class_axis = 2, 1
+        if class_idx is None:
+            shap_vals = shap_vals.mean(axis=class_axis)
+        else:
+            shap_vals = np.take(shap_vals, class_idx, axis=class_axis)
+
+        if feat_axis != 1:
+            shap_vals = np.moveaxis(shap_vals, feat_axis, 1)
+
+    if shap_vals.shape[1] == len(feature_names) + 1:
+        shap_vals = shap_vals[:, :-1]
+
+    return shap_vals
+
+
+def _aggregate_like_model(stack: np.ndarray, agg_func: Callable) -> np.ndarray:
+    """Aggregate a stack of SHAP values using the specified aggregation function.
+    Args:
+        stack: 3‑D array of SHAP values (n_models, n_rows, n_features).
+        agg_func: Function to aggregate SHAP values across models.
+    Returns:
+        np.ndarray: Aggregated SHAP values (n_rows, n_features).
+    """
+    try:
+        out = agg_func(stack, axis=0)
+    except TypeError:
+        out = np.apply_along_axis(agg_func, 0, stack)
+
+    if out.ndim != 2:
+        raise ValueError(
+            f"Aggregation produced shape {out.shape}; "
+            "expected 2‑D (n_rows, n_features). "
+            "Make sure `agg_func` returns a scalar for a 1‑D input."
+        )
+    return out
 
 
 @inject_object()
@@ -473,8 +536,36 @@ def get_model_predictions(
     Returns:
         Data with predictions.
     """
-    data[target_col_name + prediction_suffix] = model.predict(data[features].values)
-    return data
+
+    preds = model.predict(data[features].values)
+
+    scored_df = data.copy()
+    scored_df[target_col_name + prediction_suffix] = preds
+
+    shap_arrays = [_tree_shap_values_single(bst, data[features], features, class_idx=1) for bst in model.boosters]
+
+    shap_stack = np.stack(shap_arrays)
+    shap_agg = _aggregate_like_model(shap_stack, model._agg_func)
+    shap_df = pd.DataFrame(
+        shap_agg,
+        index=data.index,
+        columns=[f"{c}_shap" for c in features],
+    )
+
+    if callable(model._agg_func) and model._agg_func in (np.mean, np.average, np.sum):
+        base = np.mean([shap.TreeExplainer(b).expected_value for b in model.boosters])
+        recon = base + shap_df.sum(axis=1).values
+
+    if mlflow.active_run():
+        explainer = shap.TreeExplainer(model.boosters[0], feature_perturbation="interventional")
+        mlflow.shap.log_explainer(explainer, artifact_path="shap")
+
+        fig = plt.figure()
+        shap.summary_plot(shap_df.values, data[features], show=False, max_display=20)
+        mlflow.log_figure(fig, "shap/summary_beeswarm.png")
+        plt.close(fig)
+
+    return scored_df, shap_df
 
 
 def combine_data(*predictions_all_folds: pd.DataFrame) -> pd.DataFrame:
@@ -526,3 +617,164 @@ def check_model_performance(
             report[f"{split.lower()}_{name}"] = func(y_true, y_pred)
 
     return json.loads(json.dumps(report, default=float))
+
+
+# def plot_gt_weights(
+#     fitted_tr: WeightingTransformer,
+#     train_df: ps.DataFrame,
+# ) -> plt.gcf():
+#     """
+#     Build a diagnostic plot for a *fitted* WeightingTransformer.
+
+#     Parameters
+#     ----------
+#     fitted_tr : WeightingTransformer
+#         Must already be fitted (weight_map_ exists).
+#     train_df : pd.DataFrame
+#         The TRAIN rows used in `.fit()`. Must contain `fitted_tr.head_col`.
+
+#     Returns
+#     -------
+#     matplotlib.figure.Figure
+#     """
+#     head_col = fitted_tr.head_col
+
+#     degrees = train_df.groupby(head_col).size()
+#     raw_cnt = train_df[head_col].map(degrees).to_numpy()
+
+#     weights = train_df[head_col].map(fitted_tr.weight_map_).fillna(fitted_tr.default_weight_).to_numpy()
+#     w_cnt = raw_cnt * weights
+
+#     bins = max(10, int(np.sqrt(raw_cnt.size)))
+#     strategy = fitted_tr.strategy
+
+#     fig, ax = plt.subplots(1, 2, figsize=(12, 6), dpi=110)
+#     ax[0].scatter(raw_cnt, w_cnt, s=18, alpha=0.6, ec="none")
+#     ax[0].set(
+#         xlabel="raw degree",
+#         ylabel="weighted degree",
+#         title=f"{strategy} – mapping",
+#     )
+
+#     for vec, col, lab in [
+#         (raw_cnt, "tab:blue", "raw"),
+#         (w_cnt, "tab:orange", "weighted"),
+#     ]:
+#         sns.histplot(
+#             vec,
+#             bins=bins,
+#             ax=ax[1],
+#             color=col,
+#             edgecolor="black",
+#             alpha=0.30,
+#             stat="count",
+#             label=f"{lab} (hist)",
+#         )
+#         sns.kdeplot(
+#             vec,
+#             ax=ax[1],
+#             color=col,
+#             bw_adjust=1.2,
+#             linewidth=2,
+#             fill=False,
+#             label=f"{lab} KDE",
+#         )
+
+#     ax[1].set(
+#         xlabel="degree",
+#         ylabel="entity count",
+#         title=f"{strategy} – distribution",
+#     )
+#     ax[1].legend()
+
+#     def _stats(v):
+#         m = v.mean()
+#         sd = v.std(ddof=1)
+#         return [m, np.median(v), sd, sd / m]
+
+#     rows = np.vstack([_stats(raw_cnt), _stats(w_cnt)])
+#     tbl = plt.table(
+#         cellText=np.round(rows, 3),
+#         colLabels=["mean", "median", "std", "RSD"],
+#         rowLabels=["raw", "weighted"],
+#         bbox=[0.65, -0.24, 0.33, 0.16],
+#     )
+#     tbl.auto_set_font_size(True)
+#     plt.tight_layout()
+
+#     return plt.gcf()
+
+
+def plot_gt_weights(*inputs) -> Figure:
+    """
+    Positional inputs:
+        0 … N‑1   : dicts produced by `fit_transformers`
+        N         : `modelling.model_input.splits@pandas`
+    """
+    all_splits = inputs[-1]  # the original DataFrame (with 'source')
+    if not isinstance(all_splits, pd.DataFrame):
+        all_splits = all_splits.to_pandas()
+
+    tr_dicts: Sequence[dict] = inputs[:-1]
+    n = len(tr_dicts)
+
+    fig, axes = plt.subplots(nrows=n, ncols=2, figsize=(12, 6 * n), dpi=110, squeeze=False)
+
+    for i, tr_dict in enumerate(tr_dicts):
+        tr: WeightingTransformer = tr_dict["weighting"]["transformer"]
+
+        # TRAIN rows that were used to fit this transformer
+        df = all_splits.loc[(all_splits["fold"] == i) & (all_splits["split"] == "TRAIN")]
+
+        head = tr.head_col  # 'source'
+        raw_cnt = df.groupby(head).size()
+        raw_cnt = df[head].map(raw_cnt).to_numpy()
+
+        weights = df[head].map(tr.weight_map_).fillna(tr.default_weight_).to_numpy()
+        w_cnt = raw_cnt * weights
+        bins = max(10, int(np.sqrt(raw_cnt.size)))
+
+        ax0, ax1 = axes[i]
+
+        # left panel – mapping
+        ax0.scatter(raw_cnt, w_cnt, s=18, alpha=0.6, ec="none")
+        ax0.set(
+            xlabel="raw degree",
+            ylabel="weighted degree",
+            title=f"{tr.strategy} – mapping (fold {i})",
+        )
+
+        # right panel – distribution
+        for vec, col, lab in [
+            (raw_cnt, "tab:blue", "raw"),
+            (w_cnt, "tab:orange", "weighted"),
+        ]:
+            sns.histplot(
+                vec,
+                bins=bins,
+                ax=ax1,
+                color=col,
+                edgecolor="black",
+                alpha=0.30,
+                stat="count",
+                label=f"{lab} (hist)",
+            )
+            sns.kdeplot(
+                vec,
+                ax=ax1,
+                color=col,
+                bw_adjust=1.2,
+                linewidth=2,
+                fill=False,
+                label=f"{lab} KDE",
+            )
+
+        ax1.set(
+            xlabel="degree",
+            ylabel="entity count",
+            title=f"{tr.strategy} – distribution (fold {i})",
+        )
+        ax1.legend()
+
+    plt.tight_layout()
+    return fig

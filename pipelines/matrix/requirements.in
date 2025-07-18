@@ -55,3 +55,4 @@ transformers
 # used for convenience libraries, to be moved to a dev requirements eventually
 typer
 xgboost
+shap

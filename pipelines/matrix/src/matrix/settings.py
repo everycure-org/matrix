@@ -39,49 +39,51 @@ DISABLE_HOOKS_FOR_PLUGINS = ("kedro-mlflow",)
 # https://getindata.com/blog/kedro-dynamic-pipelines/
 
 # Using lambda to delay the evaluation until the INCLUDE_PRIVATE_DATASETS env var is set, parsed from a cli option.
-DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
-    generate_dynamic_pipeline_mapping(
-        {
-            "cross_validation": {
-                "n_cross_val_folds": 3,
-            },
-            "integration": [
-                {"name": "rtx_kg2", "integrate_in_kg": True, "is_private": False},
-                {"name": "spoke", "integrate_in_kg": True, "is_private": True},
-                {"name": "embiology", "integrate_in_kg": True, "is_private": True},
-                {"name": "robokop", "integrate_in_kg": True, "is_private": False},
-                {"name": "ec_medical_team", "integrate_in_kg": True},
-                # {"name": "ec_medical_team", "integrate_in_kg": True},
-                {"name": "drug_list", "integrate_in_kg": False, "has_edges": False},
-                {"name": "disease_list", "integrate_in_kg": False, "has_edges": False},
-                {"name": "ground_truth", "integrate_in_kg": False, "has_nodes": False},
-                # {"name": "drugmech", "integrate_in_kg": False, "has_nodes": False},
-                {"name": "ec_clinical_trails", "integrate_in_kg": False},
-                {"name": "off_label", "integrate_in_kg": False, "has_nodes": False},
-            ],
-            "modelling": {
-                "model_name": "xg_ensemble",  # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth
-                "model_config": {"num_shards": 3},
-            },
-            "evaluation": [
-                {"evaluation_name": "simple_classification"},
-                {"evaluation_name": "disease_specific"},
-                {"evaluation_name": "full_matrix_negatives"},
-                {"evaluation_name": "full_matrix"},
-                {"evaluation_name": "simple_classification_trials"},
-                {"evaluation_name": "disease_specific_trials"},
-                {"evaluation_name": "full_matrix_trials"},
-                {"evaluation_name": "disease_specific_off_label"},
-                {"evaluation_name": "full_matrix_off_label"},
-            ],
-            "stability": [
-                {"stability_name": "stability_overlap"},
-                {"stability_name": "stability_ranking"},
-                {
-                    "stability_name": "rank_commonality"
-                },  # note - rank_commonality will be only used if you have a shared commonality@k and spearman@k metrics
-            ],
-        }
+DYNAMIC_PIPELINES_MAPPING = (
+    lambda: disable_private_datasets(
+        generate_dynamic_pipeline_mapping(
+            {
+                "cross_validation": {
+                    "n_cross_val_folds": 3,
+                },
+                "integration": [
+                    {"name": "rtx_kg2", "integrate_in_kg": True, "is_private": False},
+                    {"name": "spoke", "integrate_in_kg": True, "is_private": True},
+                    {"name": "embiology", "integrate_in_kg": True, "is_private": True},
+                    {"name": "robokop", "integrate_in_kg": True, "is_private": False},
+                    {"name": "ec_medical_team", "integrate_in_kg": True},
+                    # {"name": "ec_medical_team", "integrate_in_kg": True},
+                    {"name": "drug_list", "integrate_in_kg": False, "has_edges": False},
+                    {"name": "disease_list", "integrate_in_kg": False, "has_edges": False},
+                    {"name": "ground_truth", "integrate_in_kg": False, "has_nodes": False},
+                    # {"name": "drugmech", "integrate_in_kg": False, "has_nodes": False},
+                    {"name": "ec_clinical_trails", "integrate_in_kg": False},
+                    {"name": "off_label", "integrate_in_kg": False, "has_nodes": False},
+                ],
+                "modelling": {
+                    "model_name": "xg_ensemble_weighted",  # model_name suggestions: xg_baseline, xg_ensemble, xg_ensemble_weighted, rf, xg_synth
+                    "model_config": {"num_shards": 3},
+                },
+                "evaluation": [
+                    {"evaluation_name": "simple_classification"},
+                    {"evaluation_name": "disease_specific"},
+                    {"evaluation_name": "full_matrix_negatives"},
+                    {"evaluation_name": "full_matrix"},
+                    {"evaluation_name": "simple_classification_trials"},
+                    {"evaluation_name": "disease_specific_trials"},
+                    {"evaluation_name": "full_matrix_trials"},
+                    {"evaluation_name": "disease_specific_off_label"},
+                    {"evaluation_name": "full_matrix_off_label"},
+                ],
+                "stability": [
+                    {"stability_name": "stability_overlap"},
+                    {"stability_name": "stability_ranking"},
+                    {
+                        "stability_name": "rank_commonality"
+                    },  # note - rank_commonality will be only used if you have a shared commonality@k and spearman@k metrics
+                ],
+            }
+        )
     )
 )
 
