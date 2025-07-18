@@ -50,7 +50,6 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 {"name": "spoke", "integrate_in_kg": True, "is_private": True},
                 {"name": "embiology", "integrate_in_kg": True, "is_private": True},
                 {"name": "robokop", "integrate_in_kg": True, "is_private": False},
-                {"name": "ec_medical_team", "integrate_in_kg": True},
                 # {"name": "ec_medical_team", "integrate_in_kg": True},
                 {"name": "drug_list", "integrate_in_kg": False, "has_edges": False},
                 {"name": "disease_list", "integrate_in_kg": False, "has_edges": False},
