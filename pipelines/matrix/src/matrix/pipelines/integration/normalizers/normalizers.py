@@ -1,6 +1,7 @@
 import asyncio
 import functools
 import logging
+import time
 from abc import ABC, abstractmethod
 from collections.abc import Collection
 from typing import Any
@@ -102,7 +103,20 @@ class Normalizer(ABC):
     @functools.cache
     def version(self) -> str:
         nn_openapi_json_url = f"https://{self._domain}/openapi.json"
-        response = requests.get(nn_openapi_json_url, timeout=5)
+        retry_count = 0
+        retry_delay = 1  # seconds
+
+        while True:
+            try:
+                response = requests.get(nn_openapi_json_url, timeout=5)
+                break
+            except Exception:
+                if retry_count < 3:
+                    time.sleep(retry_delay)
+                    retry_delay *= 2
+                    retry_count += 1
+                else:
+                    raise
         json_response = response.json()
         version = json_response["info"]["version"]
         return f"nodenorm-{self.get_source().lower()}-{version}"
