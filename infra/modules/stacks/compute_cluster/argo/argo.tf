@@ -35,11 +35,14 @@ resource "kubernetes_secret" "argo_secret" {
 }
 
 resource "helm_release" "argo" {
-  depends_on = [kubernetes_namespace.argo_ns, kubernetes_secret.argo_secret]
-  name       = "argo"
-  repository = "https://argoproj.github.io/argo-helm"
-  chart      = "argo-cd"
-  namespace  = var.namespace
+  depends_on    = [kubernetes_namespace.argo_ns, kubernetes_secret.argo_secret]
+  name          = "argo"
+  repository    = "https://argoproj.github.io/argo-helm"
+  chart         = "argo-cd"
+  namespace     = var.namespace
+  timeout       = 600
+  atomic        = true
+  recreate_pods = true
 
   # pass through ssl to enable grpc/https for argocd CLI, see
   # https://argoproj.github.io/argo-cd/operator-manual/ingress/#kubernetesingress-nginx
@@ -69,6 +72,161 @@ resource "helm_release" "argo" {
   set {
     name  = "configs.params.reposerver\\.enable\\.git\\.submodule"
     value = "false"
+  }
+
+  # Configure ArgoCD components to run on management nodes
+  # Application Controller
+  set {
+    name  = "controller.nodeSelector.workload-type"
+    value = "management"
+  }
+  set {
+    name  = "controller.tolerations[0].key"
+    value = "workload-type"
+  }
+  set {
+    name  = "controller.tolerations[0].operator"
+    value = "Equal"
+  }
+  set {
+    name  = "controller.tolerations[0].value"
+    value = "management"
+  }
+  set {
+    name  = "controller.tolerations[0].effect"
+    value = "NoSchedule"
+  }
+
+  # Server
+  set {
+    name  = "server.nodeSelector.workload-type"
+    value = "management"
+  }
+  set {
+    name  = "server.tolerations[0].key"
+    value = "workload-type"
+  }
+  set {
+    name  = "server.tolerations[0].operator"
+    value = "Equal"
+  }
+  set {
+    name  = "server.tolerations[0].value"
+    value = "management"
+  }
+  set {
+    name  = "server.tolerations[0].effect"
+    value = "NoSchedule"
+  }
+
+  # Repo Server
+  set {
+    name  = "repoServer.nodeSelector.workload-type"
+    value = "management"
+  }
+  set {
+    name  = "repoServer.tolerations[0].key"
+    value = "workload-type"
+  }
+  set {
+    name  = "repoServer.tolerations[0].operator"
+    value = "Equal"
+  }
+  set {
+    name  = "repoServer.tolerations[0].value"
+    value = "management"
+  }
+  set {
+    name  = "repoServer.tolerations[0].effect"
+    value = "NoSchedule"
+  }
+
+  # ApplicationSet Controller
+  set {
+    name  = "applicationSet.nodeSelector.workload-type"
+    value = "management"
+  }
+  set {
+    name  = "applicationSet.tolerations[0].key"
+    value = "workload-type"
+  }
+  set {
+    name  = "applicationSet.tolerations[0].operator"
+    value = "Equal"
+  }
+  set {
+    name  = "applicationSet.tolerations[0].value"
+    value = "management"
+  }
+  set {
+    name  = "applicationSet.tolerations[0].effect"
+    value = "NoSchedule"
+  }
+
+  # Redis
+  set {
+    name  = "redis.nodeSelector.workload-type"
+    value = "management"
+  }
+  set {
+    name  = "redis.tolerations[0].key"
+    value = "workload-type"
+  }
+  set {
+    name  = "redis.tolerations[0].operator"
+    value = "Equal"
+  }
+  set {
+    name  = "redis.tolerations[0].value"
+    value = "management"
+  }
+  set {
+    name  = "redis.tolerations[0].effect"
+    value = "NoSchedule"
+  }
+
+  # Dex Server
+  set {
+    name  = "dex.nodeSelector.workload-type"
+    value = "management"
+  }
+  set {
+    name  = "dex.tolerations[0].key"
+    value = "workload-type"
+  }
+  set {
+    name  = "dex.tolerations[0].operator"
+    value = "Equal"
+  }
+  set {
+    name  = "dex.tolerations[0].value"
+    value = "management"
+  }
+  set {
+    name  = "dex.tolerations[0].effect"
+    value = "NoSchedule"
+  }
+
+  # Notifications Controller
+  set {
+    name  = "notifications.nodeSelector.workload-type"
+    value = "management"
+  }
+  set {
+    name  = "notifications.tolerations[0].key"
+    value = "workload-type"
+  }
+  set {
+    name  = "notifications.tolerations[0].operator"
+    value = "Equal"
+  }
+  set {
+    name  = "notifications.tolerations[0].value"
+    value = "management"
+  }
+  set {
+    name  = "notifications.tolerations[0].effect"
+    value = "NoSchedule"
   }
 }
 

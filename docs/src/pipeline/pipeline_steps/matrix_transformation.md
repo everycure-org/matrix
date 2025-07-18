@@ -1,5 +1,3 @@
-### Matrix transformation
-
 The matrix transformation pipeline applies changes to the full matrix after it’s generated. At the moment, the only transformation is for frequent flyer normalisation
 
 
