@@ -16,20 +16,19 @@ modelling.splitter:
   # Defines strategy for cross validation. Can be a function from sklearn.model_selection
   # or our custom DrugStratifiedSplit/DiseaseAreaSplit/DrugCVSplit
   # _object: matrix.pipelines.modelling.model_selection.DrugStratifiedSplit
-  _object: matrix.pipelines.modelling.model_selection.DiseaseAreaSplit
-  disease_grouping_type: 'mondo_txgnn' # options: 'harrisons_view', 'mondo_top_grouping', 'mondo_txgnn', 'txgnn'
-  holdout_disease_types:
-    - 'anemia'
-    - 'autoimmune_disease'
-    - 'cancer_or_benign_tumor'
-    - 'cardiovascular_disorder'
-    - 'metabolic_disease'
-    - 'neurodegenerative_disease'
-
+  # _object: matrix.pipelines.modelling.model_selection.DiseaseAreaSplit
+  # disease_grouping_type: 'mondo_txgnn' # options: 'harrisons_view', 'mondo_top_grouping', 'mondo_txgnn', 'txgnn'
+  # holdout_disease_types:
+  #   - 'anemia'
+  #   - 'autoimmune_disease'
+  #   - 'cancer_or_benign_tumor'
+  #   - 'cardiovascular_disorder'
+  #   - 'metabolic_disease'
+  #   - 'neurodegenerative_disease'
   # _object: matrix.pipelines.modelling.model_selection.DrugCVSplit
-  # _object: sklearn.model_selection.StratifiedShuffleSplit
-  # test_size: 0.1
-  # random_state: ${globals:random_state}
+  _object: sklearn.model_selection.StratifiedShuffleSplit
+  test_size: 0.1
+  random_state: ${globals:random_state}
   n_splits: ${setting:cross_validation.n_cross_val_folds}
 
 # Aggregation functions for cross-validation
@@ -84,10 +83,10 @@ _model_options:
         tree_method: hist
         max_depth: 10
         device: cuda
-      features: # Features use regex, source_0, source_1, .., target_0, target_1
-        - source_+
-        - target_+
-      target_col_name: y
+    features: # Features use regex, source_0, source_1, .., target_0, target_1
+      - source_+
+      - target_+
+    target_col_name: y
 
   # Define metrics to be used for check of performance 
   metrics:

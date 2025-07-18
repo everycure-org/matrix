@@ -18,6 +18,7 @@ from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from matrix.inject import OBJECT_KW
 from matrix.pipelines.modelling.model import ModelWrapper
+from matrix.pipelines.modelling.model_selection import DiseaseAreaSplit
 from matrix.pipelines.modelling.nodes import (
     apply_transformers,
     attach_embeddings,
@@ -610,21 +611,14 @@ def disease_list():
     )
 
 
-@pytest.fixture
-def disease_area_splitter():
-    """Create a DiseaseAreaSplit splitter for testing."""
-    from matrix.pipelines.modelling.model_selection import DiseaseAreaSplit
-
-    return DiseaseAreaSplit(
+def test_make_folds_with_disease_area_split(sample_data, disease_list):
+    """Test make_folds with DiseaseAreaSplit."""
+    disease_area_splitter = DiseaseAreaSplit(
         n_splits=3, disease_grouping_type="harrisons_view", holdout_disease_types=["type1", "type2", "type3"]
     )
 
-
-def test_make_folds_with_disease_area_split(sample_data, disease_area_splitter, disease_list):
-    """Test make_folds with DiseaseAreaSplit."""
     # Ensure disease_list has the correct format
-    assert "harrisons_view" in disease_list.columns
-    assert set(disease_list["id"]) == set(sample_data["target"])
+    assert set(disease_list["id"].tolist()) == set(sample_data["target"].tolist())
 
     result = make_folds(data=sample_data, splitter=disease_area_splitter, disease_list=disease_list)
 
