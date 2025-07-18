@@ -19,7 +19,7 @@ def sample_data():
 def disease_list_data():
     return pd.DataFrame(
         {
-            "category_class": ["disease1", "disease2", "disease3", "disease4", "disease5"],
+            "id": ["disease1", "disease2", "disease3", "disease4", "disease5"],
             "harrisons_view": [
                 "cancer_or_benign_tumor",
                 "hereditary_disease",
@@ -128,12 +128,12 @@ def test_disease_area_split_harrisons_view(sample_data, disease_list_data):
     # Check that the internal operations within DiseaseAreaSplit are correct
     for i, (train_indices, test_indices) in enumerate(splits):
         merged_data = sample_data.merge(
-            disease_list_data[["category_class", "harrisons_view"]],
+            disease_list_data[["id", "harrisons_view"]],
             left_on="target",
-            right_on="category_class",
+            right_on="id",
             how="left",
         )
-        matched_data = merged_data[~merged_data.category_class.isna()]
+        matched_data = merged_data[~merged_data.id.isna()]
         assert len(train_indices) + len(test_indices) == len(matched_data)
 
         # Check that train and test sets are disjoint
@@ -148,7 +148,7 @@ def test_disease_area_split_harrisons_view(sample_data, disease_list_data):
 
         # Verify all test diseases are of the selected holdout type
         for disease in test_diseases:
-            disease_type = disease_list_data[disease_list_data.category_class == disease]["harrisons_view"].iloc[0]
+            disease_type = disease_list_data[disease_list_data.id == disease]["harrisons_view"].iloc[0]
             assert disease_type == selected_disease_type
 
 
