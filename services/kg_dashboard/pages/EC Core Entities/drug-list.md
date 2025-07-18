@@ -3,12 +3,8 @@
 <script>
   const max_core_entities_normalization_errors = import.meta.env.VITE_max_core_entities_normalization_errors;
 
-  function getCSSColor(varName) {
-    return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-  }
-
-  const positiveColor = getCSSColor('--color-positive');
-  const negativeColor = getCSSColor('--color-negative');
+  const positiveColor = "#73C991";
+  const negativeColor = "#BF616A";
 </script>
 
 <Details title="Core entities' IDs should not change during normalization — click to learn why">
