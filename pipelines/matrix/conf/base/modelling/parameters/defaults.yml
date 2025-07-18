@@ -12,6 +12,7 @@ modelling.disease_types:
 modelling.training_gt_dataset:
   - drugbank #ec #kgml_xdtd
   - ec 
+  - kgml_xdtd
 
 modelling.splitter:
 
