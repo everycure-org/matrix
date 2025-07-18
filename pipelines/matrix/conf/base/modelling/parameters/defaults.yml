@@ -51,7 +51,7 @@ _model_options:
     _object: matrix.datasets.pair_generator.ReplacementDrugDiseasePairGenerator
     random_state: ${globals:random_state}
     y_label: 2
-    n_unknown: 2 
+    n_replacements: 2 
     drug_flags:
       - is_drug
     disease_flags:
