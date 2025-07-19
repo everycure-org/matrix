@@ -226,7 +226,8 @@ def make_folds(
     Args:
         data: Data to split.
         splitter: sklearn splitter object (BaseCrossValidator or its subclasses).
-        disease_list: disease list from https://github.com/everycure-org/matrix-disease-list/
+        disease_list: disease list from https://github.com/everycure-org/core-entities/
+            Required only when using DiseaseAreaSplit.
 
     Returns:
         Dataframe with test-train split for all folds.
@@ -238,6 +239,8 @@ def make_folds(
     all_data_frames = []
     # FUTURE: Ensure fields are reflected in GT dataset for future splitters
     if isinstance(splitter, DiseaseAreaSplit):
+        if disease_list is None:
+            raise ValueError("disease_list is required when using DiseaseAreaSplit")
         split_iterator = splitter.split(data, disease_list)
     else:
         split_iterator = splitter.split(data, data["y"])
@@ -277,6 +280,7 @@ def create_model_input_nodes(
     graph: KnowledgeGraph,
     splits: pd.DataFrame,
     generator: SingleLabelPairGenerator,
+    splitter: BaseCrossValidator = None,
 ) -> pd.DataFrame:
     """Function to enrich the splits with drug-disease pairs.
 
@@ -288,6 +292,7 @@ def create_model_input_nodes(
         graph: Knowledge graph.
         splits: Data splits.
         generator: SingleLabelPairGenerator instance.
+        splitter: The splitter used to create the splits. Required to ensure correct generator is used.
 
     Returns:
         Data with enriched splits.

@@ -25,11 +25,6 @@ on:
 defaults:
   run: 
     working-directory: docs/
-env:
-  # log into gcp
-  project_id: 'mtrx-hub-dev-3of'
-  workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
-  service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -62,6 +57,7 @@ jobs:
               - docs/
               - .github/workflows/docs-deploy.yml
   build_and_deploy:
+    environment: dev
     needs: [paths_filter]
     runs-on: ubuntu-latest
     name: Build Documentation
@@ -86,10 +82,10 @@ jobs:
       - uses: 'google-github-actions/auth@v2'
         if: github.ref == 'refs/heads/main'
         with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.workload_identity_provider}}
-          service_account: ${{env.service_account}}
-          
+          project_id: ${{vars.PROJECT_ID}}
+          workload_identity_provider: ${{vars.WORKLOAD_IDENTITY_PROVIDER_RW}}
+          service_account: ${{vars.SERVICE_ACCOUNT_RW}}
+
       # To prevent hitting the limit of 210 versions on Google App Engine
       - name: Limit the Number of Versions on Google App Engine
         if: github.ref == 'refs/heads/main'
@@ -103,4 +99,5 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: 'google-github-actions/deploy-appengine@v2'
         with:
+          project_id: ${{ vars.PROJECT_ID }}
           working_directory: docs/ #ignores above setting
