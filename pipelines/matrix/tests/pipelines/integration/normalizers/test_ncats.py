@@ -1,3 +1,4 @@
+import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -76,7 +77,8 @@ class AsyncMock(MagicMock):
     ],
 )
 async def test_apply(mock_post, input_df, expected_normalized_results):
-    normalizer = DummyNodeNormalizer(True, True, "http://mock-endpoint.com")
+    protocol_and_domain = os.getenv("NODENORM_PROTOCOL_AND_DOMAIN", "http://localhost:1080")
+    normalizer = DummyNodeNormalizer(True, True, protocol_and_domain=protocol_and_domain)
 
     mock_response = AsyncMock()
     mock_response.status = 200
