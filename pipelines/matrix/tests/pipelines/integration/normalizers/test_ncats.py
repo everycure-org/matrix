@@ -1,7 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from matrix.pipelines.integration.normalizers.normalizers import NCATSNodeNormalizer
+from matrix.pipelines.integration.normalizers.normalizers import DummyNodeNormalizer
 
 
 class AsyncMock(MagicMock):
@@ -76,8 +76,7 @@ class AsyncMock(MagicMock):
     ],
 )
 async def test_apply(mock_post, input_df, expected_normalized_results):
-    # Given an instance of the NCATSNodeNormalizer
-    normalizer = NCATSNodeNormalizer(True, True, "http://mock-endpoint.com")
+    normalizer = DummyNodeNormalizer(True, True, "http://mock-endpoint.com")
 
     mock_response = AsyncMock()
     mock_response.status = 200
