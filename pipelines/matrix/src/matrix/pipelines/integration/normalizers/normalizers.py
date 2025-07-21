@@ -64,7 +64,7 @@ class Normalizer(ABC):
         }
 
         endpoint = f"{self._protocol_and_domain}{self._get_normalized_nodes_path}"
-
+        logger.debug(f"endpoint: {endpoint}")
         async with aiohttp.ClientSession() as session:
             async with session.post(url=endpoint, json=request_json) as resp:
                 if resp.status == 200:
@@ -109,8 +109,8 @@ class Normalizer(ABC):
         before_sleep=print,
     )
     def version(self) -> str:
-        nn_openapi_json_url = f"https://{self._protocol_and_domain}/openapi.json"
-        response = requests.get(nn_openapi_json_url, timeout=5)
+        nn_openapi_json_url = f"{self._protocol_and_domain}/openapi.json"
+        response = requests.get(nn_openapi_json_url)
         json_response = response.json()
         version = json_response["info"]["version"]
         return f"nodenorm-{self.get_source().lower()}-{version}"
@@ -176,8 +176,8 @@ class DummyNodeNormalizer(Normalizer):
         self,
         conflate: bool,
         drug_chemical_conflate: bool,
-        protocol_and_domain: str = "",
-        get_normalized_nodes_path: str = "",
+        protocol_and_domain: str = "http://localhost:1080",
+        get_normalized_nodes_path: str = "/1.5/get_normalized_nodes",
         description: bool = False,
         items_per_request: int = 1000,
     ) -> None:
