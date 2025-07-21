@@ -27,12 +27,12 @@ class Normalizer(ABC):
         self,
         conflate: bool,
         drug_chemical_conflate: bool,
-        domain: str,
+        protocol_and_domain: str,
         get_normalized_nodes_path: str,
         description: bool = False,
         items_per_request: int = 1000,
     ) -> None:
-        self._domain = domain
+        self._protocol_and_domain = protocol_and_domain
         self._get_normalized_nodes_path = get_normalized_nodes_path
         self._conflate = conflate
         self._drug_chemical_conflate = drug_chemical_conflate
@@ -63,7 +63,7 @@ class Normalizer(ABC):
             "description": self._description,
         }
 
-        endpoint = f"https://{self._domain}{self._get_normalized_nodes_path}"
+        endpoint = f"{self._protocol_and_domain}{self._get_normalized_nodes_path}"
 
         async with aiohttp.ClientSession() as session:
             async with session.post(url=endpoint, json=request_json) as resp:
@@ -109,7 +109,7 @@ class Normalizer(ABC):
         before_sleep=print,
     )
     def version(self) -> str:
-        nn_openapi_json_url = f"https://{self._domain}/openapi.json"
+        nn_openapi_json_url = f"https://{self._protocol_and_domain}/openapi.json"
         response = requests.get(nn_openapi_json_url, timeout=5)
         json_response = response.json()
         version = json_response["info"]["version"]
@@ -126,13 +126,18 @@ class NCATSNodeNormalizer(Normalizer):
         self,
         conflate: bool,
         drug_chemical_conflate: bool,
-        domain: str = "nodenorm.transltr.io",
+        protocol_and_domain: str = "https://nodenorm.transltr.io",
         get_normalized_nodes_path: str = "/1.5/get_normalized_nodes",
         description: bool = False,
         items_per_request: int = 1000,
     ) -> None:
         super().__init__(
-            conflate, drug_chemical_conflate, domain, get_normalized_nodes_path, description, items_per_request
+            conflate,
+            drug_chemical_conflate,
+            protocol_and_domain,
+            get_normalized_nodes_path,
+            description,
+            items_per_request,
         )
 
     def get_source(self) -> str:
@@ -146,13 +151,18 @@ class RENCINodeNormalizer(Normalizer):
         self,
         conflate: bool,
         drug_chemical_conflate: bool,
-        domain: str = "nodenormalization-sri.renci.org",
+        protocol_and_domain: str = "https://nodenormalization-sri.renci.org",
         get_normalized_nodes_path: str = "/1.5/get_normalized_nodes",
         description: bool = False,
         items_per_request: int = 1000,
     ) -> None:
         super().__init__(
-            conflate, drug_chemical_conflate, domain, get_normalized_nodes_path, description, items_per_request
+            conflate,
+            drug_chemical_conflate,
+            protocol_and_domain,
+            get_normalized_nodes_path,
+            description,
+            items_per_request,
         )
 
     def get_source(self) -> str:
@@ -166,13 +176,18 @@ class DummyNodeNormalizer(Normalizer):
         self,
         conflate: bool,
         drug_chemical_conflate: bool,
-        domain: str = "",
+        protocol_and_domain: str = "",
         get_normalized_nodes_path: str = "",
         description: bool = False,
         items_per_request: int = 1000,
     ) -> None:
         super().__init__(
-            conflate, drug_chemical_conflate, domain, get_normalized_nodes_path, description, items_per_request
+            conflate,
+            drug_chemical_conflate,
+            protocol_and_domain,
+            get_normalized_nodes_path,
+            description,
+            items_per_request,
         )
 
     @functools.cache
