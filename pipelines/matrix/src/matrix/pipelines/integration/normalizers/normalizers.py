@@ -1,13 +1,13 @@
 import asyncio
 import functools
 import logging
-import time
 from abc import ABC, abstractmethod
 from collections.abc import Collection
 from typing import Any
 
 import aiohttp
 import requests
+import tenacity.stop
 from jsonpath_ng import parse
 from tenacity import (
     retry,
@@ -101,22 +101,16 @@ class Normalizer(ABC):
         return {"normalized_id": None, "normalized_categories": [default_normalizer_category]}
 
     @functools.cache
+    @retry(
+        wait=wait_exponential(multiplier=2, min=1, max=60),
+        retry=retry_if_exception_type(requests.exceptions.RequestException),
+        stop=tenacity.stop.stop_after_attempt(4),
+        reraise=True,
+        before_sleep=print,
+    )
     def version(self) -> str:
         nn_openapi_json_url = f"https://{self._domain}/openapi.json"
-        retry_count = 0
-        retry_delay = 1  # seconds
-
-        while True:
-            try:
-                response = requests.get(nn_openapi_json_url, timeout=5)
-                break
-            except Exception:
-                if retry_count < 3:
-                    time.sleep(retry_delay)
-                    retry_delay *= 2
-                    retry_count += 1
-                else:
-                    raise
+        response = requests.get(nn_openapi_json_url, timeout=5)
         json_response = response.json()
         version = json_response["info"]["version"]
         return f"nodenorm-{self.get_source().lower()}-{version}"
