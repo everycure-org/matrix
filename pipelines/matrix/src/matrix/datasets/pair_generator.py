@@ -40,6 +40,49 @@ class SingleLabelPairGenerator(DrugDiseasePairGenerator):
         random.seed(random_state)
 
 
+def _sample_random_pairs(
+    graph: KnowledgeGraph,
+    known_data_set: Set[tuple],
+    drug_samp_ids: List[str],
+    disease_samp_ids: List[str],
+    n_unknown: int,
+    y_label: int,
+) -> pd.DataFrame:
+    """Helper function to sample random drug-disease pairs.
+
+    Args:
+        graph: KnowledgeGraph instance.
+        known_data_set: Set of known drug-disease pairs to avoid.
+        drug_samp_ids: List of drug IDs to sample from.
+        disease_samp_ids: List of disease IDs to sample from.
+        n_unknown: Number of unknown pairs to generate.
+        y_label: Label to assign to generated pairs.
+
+    Returns:
+        DataFrame with sampled drug-disease pairs.
+    """
+    unknown_data = []
+    while len(unknown_data) < n_unknown:
+        drug = random.choice(drug_samp_ids)
+        disease = random.choice(disease_samp_ids)
+
+        if (drug, disease) not in known_data_set:
+            unknown_data.append(
+                [
+                    drug,
+                    graph._embeddings[drug],
+                    disease,
+                    graph._embeddings[disease],
+                    y_label,
+                ]
+            )
+
+    return pd.DataFrame(
+        columns=["source", "source_embedding", "target", "target_embedding", "y"],
+        data=unknown_data,
+    )
+
+
 ## Generators for negative sampling during training
 
 
@@ -89,26 +132,8 @@ class RandomDrugDiseasePairGenerator(SingleLabelPairGenerator):
         drug_samp_ids = graph.flags_to_ids(self._drug_flags)
         disease_samp_ids = graph.flags_to_ids(self._disease_flags)
 
-        # Sample pairs
-        unknown_data = []
-        while len(unknown_data) < self._n_unknown:
-            drug = random.choice(drug_samp_ids)
-            disease = random.choice(disease_samp_ids)
-
-            if (drug, disease) not in known_data_set:
-                unknown_data.append(
-                    [
-                        drug,
-                        graph._embeddings[drug],
-                        disease,
-                        graph._embeddings[disease],
-                        self._y_label,
-                    ]
-                )
-
-        return pd.DataFrame(
-            columns=["source", "source_embedding", "target", "target_embedding", "y"],
-            data=unknown_data,
+        return _sample_random_pairs(
+            graph, known_data_set, drug_samp_ids, disease_samp_ids, self._n_unknown, self._y_label
         )
 
 
@@ -217,6 +242,82 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
                         ]
                     )
         return unknown_data
+
+
+class DiseaseSplitDrugDiseasePairGenerator(SingleLabelPairGenerator):
+    """A pair generator that ensures negative sampling respects disease area splits.
+
+    This generator ensures that diseases in the test set are never used for negative sampling
+    during training, maintaining the integrity of disease area splits. This is important for
+    proper evaluation of model performance on unseen disease areas.
+    """
+
+    def __init__(
+        self,
+        y_label: int,
+        random_state: int,
+        n_unknown: int,
+        drug_flags: List[str],
+        disease_flags: List[str],
+    ) -> None:
+        """Initializes the DiseaseSplitDrugDiseasePairGenerator instance.
+
+        Args:
+            y_label: label to assign to generated pairs.
+            random_state: Random seed.
+            n_unknown: Number of unknown drug-disease pairs to generate.
+            drug_flags: List of knowledge graph flags defining drugs sample set.
+            disease_flags: List of knowledge graph flags defining diseases sample set.
+        """
+        self._n_unknown = n_unknown
+        self._drug_flags = drug_flags
+        self._disease_flags = disease_flags
+        super().__init__(y_label, random_state)
+
+    def generate(self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        """Function to generate drug-disease pairs according to the strategy.
+
+        Args:
+            graph: KnowledgeGraph instance.
+            known_pairs: DataFrame with known drug-disease pairs.
+            kwargs: additional kwargs to use
+        Returns:
+            DataFrame with unknown drug-disease pairs.
+        """
+        # Define ground truth dataset
+        known_data_set = {(drug, disease) for drug, disease in zip(known_pairs["source"], known_pairs["target"])}
+
+        # Get training and test diseases for this fold
+        train_diseases = set(known_pairs[known_pairs["split"] == "TRAIN"]["target"])
+        test_diseases = set(known_pairs[known_pairs["split"] == "TEST"]["target"])
+
+        # Get all diseases from graph that match disease flags
+        all_diseases = set(graph.flags_to_ids(self._disease_flags))
+
+        # Get training diseases that are in the graph and not in test set
+        disease_samp_ids = [d for d in train_diseases if d in all_diseases and d not in test_diseases]
+
+        if not disease_samp_ids:
+            raise ValueError("No training diseases found in the knowledge graph")
+
+        # Get drugs from graph that match drug flags
+        drug_samp_ids = graph.flags_to_ids(self._drug_flags)
+
+        # Sample pairs using the helper function
+        unknown_df = _sample_random_pairs(
+            graph, known_data_set, drug_samp_ids, disease_samp_ids, self._n_unknown, self._y_label
+        )
+
+        # Verify no test diseases appear in negative samples
+        negative_diseases = set(unknown_df[unknown_df["y"] == self._y_label]["target"])
+        test_diseases_in_negatives = test_diseases.intersection(negative_diseases)
+        if test_diseases_in_negatives:
+            raise ValueError(
+                f"Test diseases found in negative samples: {test_diseases_in_negatives}. "
+                "This indicates a potential data leakage issue."
+            )
+
+        return unknown_df
 
 
 ## Generators for evaluation datasets
@@ -385,7 +486,7 @@ class OnlyOverlappingPairs(DrugDiseasePairGenerator):
         """
         self.top_n = top_n
 
-    def _modify_matrices(self, matrices: Tuple[pd.DataFrame]) -> List[pd.DataFrame]:
+    def _modify_matrices(self, matrices: Tuple[pd.DataFrame], score_col_name: str) -> List[pd.DataFrame]:
         """Modify matrices to create id column and sort by treat score.
 
         Args:
@@ -395,7 +496,7 @@ class OnlyOverlappingPairs(DrugDiseasePairGenerator):
         """
         new_matrices = []
         for matrix in matrices:
-            matrix = matrix.sort_values(by="treat score", ascending=False).head(self.top_n)
+            matrix = matrix.sort_values(by=score_col_name, ascending=False).head(self.top_n)
             matrix["pair_id"] = matrix["source"] + "|" + matrix["target"]
             new_matrices.append(matrix)
         return new_matrices
@@ -413,9 +514,9 @@ class OnlyOverlappingPairs(DrugDiseasePairGenerator):
             overlapping_ids.intersection_update(set(matrix["pair_id"]))
         return overlapping_ids
 
-    def generate(self, matrices) -> List[pd.DataFrame]:
+    def generate(self, matrices, score_col_name: str) -> List[pd.DataFrame]:
         """Generates a dataframes of pairs that overlap across all matrices for top n."""
-        matrices = self._modify_matrices(matrices)
+        matrices = self._modify_matrices(matrices, score_col_name)
         overlapping_pairs = self._get_overlapping_pairs(matrices)
         return pd.DataFrame(overlapping_pairs, columns=["pair_id"])
 
@@ -433,6 +534,6 @@ class NoGenerator(DrugDiseasePairGenerator):
         """
         self.top_n = top_n
 
-    def generate(self, matrices) -> List[pd.DataFrame]:
+    def generate(self, matrices, score_col_name: str = None) -> List[pd.DataFrame]:
         """Generates an empty dataframe as we are not using a list of common pairs for commonality@k"""
         return pd.DataFrame({}, columns=["pair_id"])
