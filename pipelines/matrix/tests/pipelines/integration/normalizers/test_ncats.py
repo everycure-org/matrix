@@ -77,7 +77,7 @@ class AsyncMock(MagicMock):
     ],
 )
 async def test_apply(mock_post, input_df, expected_normalized_results):
-    protocol_and_domain = os.getenv("NODENORM_PROTOCOL_AND_DOMAIN", "http://localhost:1080")
+    protocol_and_domain = os.getenv("NODENORM_PROTOCOL_AND_DOMAIN", "http://mockserver:1080")
     normalizer = DummyNodeNormalizer(True, True, protocol_and_domain=protocol_and_domain)
 
     mock_response = AsyncMock()
