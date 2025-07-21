@@ -9,7 +9,7 @@ _bigquery_ds: &_bigquery_ds
       git_sha: ${globals:git_sha}
 
 
-matrix_transformations.fold_{fold}.transformed_matrix@spark:
+matrix_transformations.full_matrix_output@spark:
   <<: *_bigquery_ds
-  filepath: ${globals:paths.matrix_transformations}/fold_{fold}/transformed_matrix
-  table: transformed_matrix_fold_{fold}
+  filepath: ${globals:paths.matrix_transformations}/full_matrix_output
+  table: full_matrix_output
