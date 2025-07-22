@@ -52,31 +52,8 @@ continue to use them.
 
 ## Development Guidelines
 
-### Code Style
-
-- Follow the existing code style and conventions
-- Use meaningful variable and function names
-- Add comments for complex logic
-- Ensure your code passes all linting checks
-
-### Testing
-
-- Write tests for new functionality
-- Ensure all existing tests pass
-- Update tests when modifying existing code
-
-### Documentation
-
-- Update documentation for any new features
-- Add docstrings for new functions and classes
-- Update README files if necessary
-
-## Pull Request Process
-
-1. **Description**: Provide a clear description of your changes
-2. **Testing**: Confirm that your changes work as expected
-3. **Documentation**: Update relevant documentation
-4. **Review**: Address any feedback from code reviewers
+All development guidelines are documented
+[in our documentation](https://docs.dev.everycure.org/contribute/contribution_standards)
 
 ## Getting Help
 
