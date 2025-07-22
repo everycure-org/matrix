@@ -64,7 +64,7 @@ class Normalizer(ABC):
         }
 
         endpoint = f"{self._protocol_and_domain}{self._get_normalized_nodes_path}"
-        logger.debug(f"endpoint: {endpoint}")
+        logger.info(f"endpoint: {endpoint}")
         async with aiohttp.ClientSession() as session:
             async with session.post(url=endpoint, json=request_json) as resp:
                 if resp.status == 200:
@@ -176,7 +176,7 @@ class DummyNodeNormalizer(Normalizer):
         self,
         conflate: bool,
         drug_chemical_conflate: bool,
-        protocol_and_domain: str = "http://localhost:1080",
+        protocol_and_domain: str = "http://mockserver:1080",
         get_normalized_nodes_path: str = "/1.5/get_normalized_nodes",
         description: bool = False,
         items_per_request: int = 1000,
