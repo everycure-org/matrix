@@ -8,6 +8,7 @@ integration:
   normalization:
     normalizer:
       _object: matrix.pipelines.integration.normalizers.normalizers.DummyNodeNormalizer
+      protocol_and_domain: ${oc.env:NODENORM_PROTOCOL_AND_DOMAIN, http://localhost:1080}
       conflate: true
       drug_chemical_conflate: true
 
