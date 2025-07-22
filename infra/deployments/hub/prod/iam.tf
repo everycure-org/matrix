@@ -56,7 +56,8 @@ resource "google_storage_bucket_iam_member" "object_user_embiology_and_internal"
 resource "google_storage_bucket_iam_member" "bucket_list_embiology_and_internal" {
   for_each = toset([
     resource.google_service_account.sa["external_subcon_embiology"].member,
-    resource.google_service_account.sa["internal_data_science"].member
+    resource.google_service_account.sa["internal_data_science"].member,
+    resource.google_service_account.sa["external_subcon_standard"].member
   ])
   bucket = var.storage_bucket_name
   role   = "roles/storage.legacyBucketReader"
