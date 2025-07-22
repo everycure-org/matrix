@@ -493,7 +493,7 @@ def _tree_shap_values_single(
     return shap_vals
 
 
-def _aggregate_like_model(stack: np.ndarray, agg_func: Callable) -> np.ndarray:
+def _aggregate(stack: np.ndarray, agg_func: Callable) -> np.ndarray:
     """Aggregate a stack of SHAP values using the specified aggregation function.
     Args:
         stack: 3‑D array of SHAP values (n_models, n_rows, n_features).
@@ -545,7 +545,7 @@ def get_model_predictions(
     shap_arrays = [_tree_shap_values_single(bst, data[features], features, class_idx=1) for bst in model.boosters]
 
     shap_stack = np.stack(shap_arrays)
-    shap_agg = _aggregate_like_model(shap_stack, model._agg_func)
+    shap_agg = _aggregate(shap_stack, model._agg_func)
     shap_df = pd.DataFrame(
         shap_agg,
         index=data.index,

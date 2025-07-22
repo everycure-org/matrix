@@ -32,8 +32,8 @@ data_sources:
     version: v2.10.0_validated
   drugmech:
     version: 2.0.1
-  # off_label:
-  #   version: v0.1
+  off_label:
+    version: v0.1
 ```
 !!! info 
     Note that each dataset might have its own versioning convention decided by the maintainer of the dataset. These should be explained in detail in the data dictionary. 

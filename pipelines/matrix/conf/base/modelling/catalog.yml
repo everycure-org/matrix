@@ -92,6 +92,11 @@ modelling.model_input.splits:
   <<: [*_pandas_parquet, *_model_output_ds]
   filepath: ${globals:paths.modelling}/model_output/fold_{fold}/shap_values
 
+"modelling.fold_{fold}.reporting.shap_plot":
+  <<: *_reporting_ds
+  type: matplotlib.MatplotlibDataset
+  filepath: ${globals:paths.tmp}/reporting/fold_{fold}/shap_plot.png
+
 # NOTE: Saving an artifact, saving both locally and in MLFlow
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/03_version_datasets.html#how-to-version-data-in-a-kedro-project
 "modelling.{shard}.fold_{fold}.reporting.tuning_convergence_plot":
