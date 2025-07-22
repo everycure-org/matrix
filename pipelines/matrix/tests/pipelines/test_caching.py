@@ -1,3 +1,4 @@
+import os
 from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
@@ -85,7 +86,8 @@ def sample_duplicate_cache(spark: SparkSession, cache_schema, sample_nodenormali
 
 @pytest.fixture
 def sample_nodenormalizer():
-    return DummyNodeNormalizer(True, True)
+    protocol_and_domain = os.getenv("NODENORM_PROTOCOL_AND_DOMAIN", "http://localhost:1080")
+    return DummyNodeNormalizer(True, True, protocol_and_domain=protocol_and_domain)
 
 
 @pytest.fixture
