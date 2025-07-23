@@ -78,6 +78,25 @@ def union_edges(*edges, cols: list[str]) -> ps.DataFrame:
 )
 def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, cols: list[str]) -> ps.DataFrame:
     """Function to unify nodes datasets."""
+
+    # Detect and log cases where the same normalized ID maps to multiple core_ids
+    # conflicts = (
+    #     _union_datasets(*nodes).filter(F.col("core_id").isNotNull())
+    #       .groupBy("id")
+    #       .agg(F.countDistinct("core_id").alias("distinct_core_ids"))
+    #       .filter(F.col("distinct_core_ids") > 1)
+    # )
+
+    # conflict_count = conflicts.count()
+    # if conflict_count > 0:
+    #     logger.warning(f"{conflict_count} nodes have multiple distinct core_ids after normalization.")
+    #     conflicts.show(50, truncate=False)
+
+    # # Prefer rows where core_id is present ("core-promoted")
+    # window = Window.partitionBy("id").orderBy(F.col("core_id").isNull().cast("int"))
+    # core_premoted_nodes = _union_datasets(*nodes).withColumn("_rank", F.row_number().over(window)).filter(F.col("_rank") == 1).drop("_rank")
+    #
+
     unioned_datasets = (
         _union_datasets(*nodes)
         # first we group the dataset by id to deduplicate
@@ -183,7 +202,59 @@ def normalize_edges(
 def normalize_nodes(
     mapping_df: ps.DataFrame,
     nodes: ps.DataFrame,
-    is_core: T.BooleanType,
+) -> ps.DataFrame:
+    """Function normalizes a KG using external API endpoint.
+
+    This function takes the nodes and edges frames for a KG and leverages
+    an external API to map the nodes to their normalized IDs.
+    It returns the datasets with normalized IDs.
+
+    """
+    mapping_df = _format_mapping_df(mapping_df)
+
+    nodes_normalized = (
+        nodes.join(
+            mapping_df.select("id", "normalized_id", "normalized_categories", "normalization_success"),
+            on="id",
+            how="left",
+        )
+        .withColumnRenamed("id", "original_id")
+        .withColumnRenamed("normalized_id", "id")
+    )
+
+    # Keep original_categories information if it is provided by the source KG
+    if "all_categories" in nodes_normalized.columns:
+        nodes_normalized = nodes_normalized.withColumnRenamed("all_categories", "original_categories")
+    else:
+        nodes_normalized = nodes_normalized.withColumn(
+            "original_categories", F.lit([]).cast(T.ArrayType(T.StringType()))
+        )
+
+    # Determine the value of `all_categories` based on normalization results:
+    # - If `normalized_categories` is non-null and non-empty, use it.
+    # - Otherwise, if `original_categories` exists, fall back to it.
+    # - If neither is available, use an empty list as the default.
+    nodes_normalized = nodes_normalized.withColumn(
+        "all_categories",
+        F.when(
+            (F.col("normalized_categories").isNotNull()) & (F.size(F.col("normalized_categories")) > 0),
+            F.col("normalized_categories"),
+        )
+        .when(F.col("original_categories").isNotNull(), F.col("original_categories"))
+        .otherwise(F.lit([]).cast(T.ArrayType(T.StringType()))),
+    )
+
+    # Deduplicate rows by id
+    return (
+        nodes_normalized.withColumn("_rn", F.row_number().over(Window.partitionBy("id").orderBy("original_id")))
+        .filter(F.col("_rn") == 1)
+        .drop("_rn")
+    )
+
+
+def normalize_core_nodes(
+    mapping_df: ps.DataFrame,
+    nodes: ps.DataFrame,
 ) -> ps.DataFrame:
     """Function normalizes a KG using external API endpoint.
 
@@ -206,17 +277,16 @@ def normalize_nodes(
 
     # If this is a core source (drug and disease list), add core_id = original_id
     # The core_id will be used as the id for all equivalent nodes  in the merged graph
-    if is_core == "True":
-        nodes_normalized = nodes_normalized.withColumn("core_id", F.col("original_id"))
-    else:
-        nodes_normalized = nodes_normalized.withColumn("core_id", F.lit(None).cast(T.StringType()))
+    nodes_normalized = nodes_normalized.withColumn("core_id", F.col("original_id"))
 
-    if is_core == "True":
-        mismatches = nodes_normalized.filter(F.col("core_id") != F.col("id"))
-        mismatch_count = mismatches.count()
-        if mismatch_count > 0:
-            mismatches.show(50, truncate=False)
-            logger.warn(f"{mismatch_count} core IDs changed during normalization.")
+    mismatches = nodes_normalized.filter(F.col("core_id") != F.col("id"))
+    mismatch_count = mismatches.count()
+    if mismatch_count > 0:
+        mismatches.show(50, truncate=False)
+        logger.warn(f"{mismatch_count} core IDs changed during normalization.")
+
+    logger.info(f"Input nodes count: {nodes.count()}")
+    logger.info(f"Mapping DF count: {mapping_df.count()}")
 
     # Keep original_categories information if it is provided by the source KG
     if "all_categories" in nodes_normalized.columns:
