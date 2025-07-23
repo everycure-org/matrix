@@ -17,10 +17,12 @@ export VITE_build_time := $(shell date -u '+%B %d, %Y at %H:%M:%S UTC')
 
 # TODO: refactor BQ ingested tables to remove versions
 # Source KG versions, used for BQ queries
-export EVIDENCE_VAR__robokop_version=30fd1bfc18cd5ccb
-export EVIDENCE_VAR__rtx_kg2_version=v2_10_0_validated
-export VITE_robokop_version=30fd1bfc18cd5ccb
-export VITE_rtx_kg2_version=v2_10_0_validated
+ROBOKOP_VERSION = 30fd1bfc18cd5ccb
+RTX_KG2_VERSION = v2_10_0_validated
+export EVIDENCE_VAR__robokop_version := $(ROBOKOP_VERSION)
+export EVIDENCE_VAR__rtx_kg2_version := $(RTX_KG2_VERSION)
+export VITE_robokop_version := $(ROBOKOP_VERSION)
+export VITE_rtx_kg2_version := $(RTX_KG2_VERSION)
 
 MAX_CORE_ENTITIES_NORMALIZATION_ERRORS = 1000
 export EVIDENCE_VAR__max_core_entities_normalization_errors := $(MAX_CORE_ENTITIES_NORMALIZATION_ERRORS)
