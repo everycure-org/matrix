@@ -12,9 +12,10 @@ FROM bq.upstream_data_sources
 WHERE upstream_data_source = '${params.source_kg}'
 ```
 
+<!-- opening if statement for showing the whole page only if source KG exists -->
 {#if source_kg_info.length > 0}
 
-<Grid col=3 class="max-w-4xl mx-auto mb-6">
+<Grid col=2 class="max-w-4xl mx-auto mb-6">
   <div class="text-center text-lg">
     <span class="font-semibold text-2xl">
       <Value data={source_kg_info} column="n_nodes" fmt="num0" />
@@ -27,13 +28,15 @@ WHERE upstream_data_source = '${params.source_kg}'
     </span><br/>
     Edges
   </div>
-  <div class="text-center text-lg">
-    <span class="font-semibold text-2xl">
-      <Value data={source_kg_info} column="edges_per_node" fmt="num2" />
-    </span><br/>
-    Edges per Node
-  </div>
 </Grid>
+
+<div class="text-center text-lg">
+  <span class="font-semibold text-2xl">
+    <Value data={source_kg_info} column="edges_per_node" fmt="num2" />
+  </span><br/>
+  Edges per Node
+</div>
+
 
 ## Edge Categories Distribution
 
@@ -91,10 +94,14 @@ LIMIT 20
 ```
 
 {#if source_kg_nodes.length > 0}
-<DataTable data={source_kg_nodes} search=true>
-  <Column id="category" title="Node Category" />
-  <Column id="node_count" title="Node Count" fmt="num0" />
-</DataTable>
+<BarChart 
+  data={source_kg_nodes} 
+  x="category" 
+  y="node_count"
+  swapXY=true
+  title="Node Categories Distribution"
+/>
+
 {:else}
 <div class="text-center text-lg text-gray-500 mt-10">
   No node data found for source KG "{params.source_kg}".
@@ -190,32 +197,8 @@ ORDER BY validation_status DESC
 </div>
 {/if}
 
-## Most Connected Nodes
 
-```sql source_kg_top_nodes
-SELECT 
-  SPLIT(id, ':')[OFFSET(0)] as prefix,
-  replace(category,'biolink:','') as category,
-  sum(count) as total_connections
-FROM bq.merged_kg_nodes
-WHERE upstream_data_source LIKE '%${params.source_kg}%'
-GROUP BY id, category
-ORDER BY total_connections DESC
-LIMIT 10
-```
-
-{#if source_kg_top_nodes.length > 0}
-<DataTable data={source_kg_top_nodes}>
-  <Column id="prefix" title="Node Prefix" />
-  <Column id="category" title="Category" />
-  <Column id="total_connections" title="Connections" fmt="num0" />
-</DataTable>
-{:else}
-<div class="text-center text-lg text-gray-500 mt-10">
-  No connectivity data found for source KG "{params.source_kg}".
-</div>
-{/if}
-
+<!-- This is a closing if statement to ensure the page only renders if the source KG exists -->
 {:else}
 <div class="text-center text-lg text-red-500 mt-10">
   Source KG "{params.source_kg}" not found in upstream data sources.
