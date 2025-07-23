@@ -187,10 +187,15 @@ graph TD
 
 ## Implementation Changes Required
 
-1. Create User Environment Script
-2. Modify base/catalog.yml with Shared Anchors
-3. Update Child Catalogs to Use Inheritance
-4. Standardize All Paths
+1. Create User Environment Script.
+2. Remove Variables from `global.yml`.
+3. Create the variable_resolver.
+4. Modify base/catalog.yml with Shared Anchors and use the variable_resolver
+5. Write proper unit tests.
+6. Make sure that the test catalog doesn't write to dev or prod buckets.
+7. Update Child Catalogs to Use Inheritance.
+8. Standardize All Paths by moving the files to the decided folder structure.
+9. Modify the variable file to point to the new location.
 
 ## Nice to have feature
 
