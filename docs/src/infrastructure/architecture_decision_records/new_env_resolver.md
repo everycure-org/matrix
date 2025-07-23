@@ -202,6 +202,8 @@ graph TD
 1) Adding checksum to verify that the config file has not changed depending on the environment. This would be before running the workflow and also on-cloud.
 2) Refactor the `settings.py` file to remove the dynamic mapping to the variable file as well.
 
+## Benefits
+
 This approach would eliminate:
 - `.env.defaults` file (73 lines)
 - Environment variable duplication across globals files
