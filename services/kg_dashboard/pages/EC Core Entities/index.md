@@ -156,48 +156,6 @@ This page summarizes the connectivity of EC Core Entities by examining two key l
 <br/>
 
 
-```sql disease_list_connected_categories
-with total as (
-    select 
-        sum(n_connections) as sum_n_connections
-    from 
-        bq.disease_list_connected_categories
-)
-
-, cumulative_sum as (
-    select 
-        category
-        , n_connections
-        , 100.0 * sum(n_connections) over (order by n_connections desc) / sum_n_connections as cumsum_percentage
-    from 
-        bq.disease_list_connected_categories
-        , total
-)
-
-select 
-    category
-    , (n_edges_from_disease_list / n_nodes_from_disease_list) * (n_connections / sum_n_connections) as number_of_connections
-from 
-    cumulative_sum
-    , total
-    , bq.overall_metrics
-where 
-    -- TODO: parameterize this 
-    cumsum_percentage <= 90.0
-order by 
-    n_connections desc
-```
-
-<BarChart 
-    data={disease_list_connected_categories} 
-    x="category" 
-    y="number_of_connections" 
-    colorPalette={[getSourceColor("disease_list")]}
-    swapXY=true
-    title="Categories connected to disease list node on average"
-/>
-
-
 ```sql disease_list_neighbour_counts
 select 
   * 
@@ -224,45 +182,6 @@ from
 
 <br/>
 
-```sql drug_list_connected_categories
-with total as (
-    select 
-        sum(n_connections) as sum_n_connections
-    from 
-        bq.drug_list_connected_categories
-)
-
-, cumulative_sum as (
-    select 
-        category
-        , n_connections
-        , 100.0 * sum(n_connections) over (order by n_connections desc) / sum_n_connections as cumsum_percentage
-    from 
-        bq.drug_list_connected_categories, total
-)
-
-select 
-    category
-    , (n_edges_from_drug_list / n_nodes_from_drug_list) * (n_connections / sum_n_connections) as number_of_connections
-from 
-    cumulative_sum
-    , total
-    , bq.overall_metrics
-where 
-    -- TODO: parameterize this 
-    cumsum_percentage <= 90.0
-order by 
-    n_connections desc
-```
-
-<BarChart 
-    data={drug_list_connected_categories} 
-    x="category" 
-    y="number_of_connections" 
-    colorPalette={[getSourceColor("drug_list")]}
-    swapXY=true
-    title="Categories connected to drug list node on average"
-/>
 
 ```sql drug_list_neighbour_counts
 select 
