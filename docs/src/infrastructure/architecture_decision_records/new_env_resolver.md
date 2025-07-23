@@ -118,7 +118,7 @@ graph TD
 
 ## Environment Variable Resolution
 
-We will create a user script that would contain all of the env needed to run the project and would be our single source of truth. Only the versions of the datasets would be in the global.yml file. It would allow the user to easily switch between different environment without having the need to manually enter the environment variable into the `.env` file or rely on the `.env.defaults`.
+We will create a user script that would contain all of the env needed to run the project and would be our single source of truth. Only the versions of the datasets would be in the `global.yml` file. It would allow the user to easily switch between different environment without having the need to manually enter the environment variable into the `.env` file or rely on the `.env.defaults`.
 
 ## Datasets Standardization
 
