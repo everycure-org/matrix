@@ -16,6 +16,35 @@ GROUP BY primary_knowledge_source
 ORDER BY primary_knowledge_source
 ```
 
+## Knowledge Source Details
+
+```sql knowledge_source_table
+SELECT 
+  primary_knowledge_source.source,
+  catalog.name as name,
+  '/Knowledge Sources/' || primary_knowledge_source.source as link,
+  COALESCE(edge_counts.total_edges, 0) as n_edges
+FROM (
+  SELECT DISTINCT source 
+  FROM bq.primary_knowledge_source
+) primary_knowledge_source
+JOIN infores.catalog on infores.catalog.id = primary_knowledge_source.source
+LEFT JOIN (
+  SELECT 
+    primary_knowledge_source,
+    SUM(count) as total_edges
+  FROM bq.merged_kg_edges
+  GROUP BY primary_knowledge_source
+) edge_counts ON edge_counts.primary_knowledge_source = primary_knowledge_source.source
+ORDER BY n_edges DESC
+```
+
+<DataTable data={knowledge_source_table} link=link search=true>
+  <Column id="source" title="Knowledge Source ID" />
+  <Column id="name" title="Name" />
+  <Column id="n_edges" title="Edges" contentType="bar" barColor="#93c5fd" backgroundColor="#e5e7eb" fmt="num0" />
+</DataTable>
+
 ```sql distinct_upstream_knowledge_source
 SELECT 
   CASE 
@@ -156,31 +185,4 @@ Use the filters below to refine your view of associations in the Matrix Knowledg
   depthOverride={depthOverrides}
 />
 
-## Knowledge Source Details
 
-```sql knowledge_source_table
-SELECT 
-  primary_knowledge_source.source,
-  catalog.name as name,
-  '/Knowledge Sources/' || primary_knowledge_source.source as link,
-  COALESCE(edge_counts.total_edges, 0) as n_edges
-FROM (
-  SELECT DISTINCT source 
-  FROM bq.primary_knowledge_source
-) primary_knowledge_source
-JOIN infores.catalog on infores.catalog.id = primary_knowledge_source.source
-LEFT JOIN (
-  SELECT 
-    primary_knowledge_source,
-    SUM(count) as total_edges
-  FROM bq.merged_kg_edges
-  GROUP BY primary_knowledge_source
-) edge_counts ON edge_counts.primary_knowledge_source = primary_knowledge_source.source
-ORDER BY n_edges DESC
-```
-
-<DataTable data={knowledge_source_table} link=link search=true>
-  <Column id="source" title="Knowledge Source ID" />
-  <Column id="name" title="Name" />
-  <Column id="n_edges" title="Edges" fmt="num0" />
-</DataTable>
