@@ -80,28 +80,32 @@ def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, c
     """Function to unify nodes datasets."""
 
     # Detect and log cases where the same normalized ID maps to multiple core_ids
-    # conflicts = (
-    #     _union_datasets(*nodes).filter(F.col("core_id").isNotNull())
-    #       .groupBy("id")
-    #       .agg(F.countDistinct("core_id").alias("distinct_core_ids"))
-    #       .filter(F.col("distinct_core_ids") > 1)
-    # )
+    conflicts = (
+        _union_datasets(*nodes)
+        .filter(F.col("core_id").isNotNull())
+        .groupBy("id")
+        .agg(F.countDistinct("core_id").alias("distinct_core_ids"))
+        .filter(F.col("distinct_core_ids") > 1)
+    )
 
-    # conflict_count = conflicts.count()
-    # if conflict_count > 0:
-    #     logger.warning(f"{conflict_count} nodes have multiple distinct core_ids after normalization.")
-    #     conflicts.show(50, truncate=False)
+    conflict_count = conflicts.count()
+    if conflict_count > 0:
+        logger.warning(f"{conflict_count} nodes have multiple distinct core_ids after normalization.")
+        conflicts.show(50, truncate=False)
 
-    # # Prefer rows where core_id is present ("core-promoted")
-    # window = Window.partitionBy("id").orderBy(F.col("core_id").isNull().cast("int"))
-    # core_premoted_nodes = _union_datasets(*nodes).withColumn("_rank", F.row_number().over(window)).filter(F.col("_rank") == 1).drop("_rank")
-    #
+    # Prefer rows where core_id is present ("core-promoted")
+    window = Window.partitionBy("id").orderBy(F.col("core_id").isNull().cast("int"))
+    core_promoted_nodes = (
+        _union_datasets(*nodes)
+        .withColumn("_rank", F.row_number().over(window))
+        .filter(F.col("_rank") == 1)
+        .drop("_rank")
+    )
 
     unioned_datasets = (
-        _union_datasets(*nodes)
+        core_promoted_nodes
         # first we group the dataset by id to deduplicate
-        .groupBy("id")
-        .agg(
+        .groupBy("id").agg(
             F.first("name", ignorenulls=True).alias("name"),
             F.first("category", ignorenulls=True).alias("category"),
             F.first("description", ignorenulls=True).alias("description"),
@@ -284,9 +288,6 @@ def normalize_core_nodes(
     if mismatch_count > 0:
         mismatches.show(50, truncate=False)
         logger.warn(f"{mismatch_count} core IDs changed during normalization.")
-
-    logger.info(f"Input nodes count: {nodes.count()}")
-    logger.info(f"Mapping DF count: {mapping_df.count()}")
 
     # Keep original_categories information if it is provided by the source KG
     if "all_categories" in nodes_normalized.columns:
