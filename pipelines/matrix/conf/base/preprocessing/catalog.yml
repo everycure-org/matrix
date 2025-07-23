@@ -41,13 +41,13 @@ _pandas_parquet_ds: &_pandas_parquet
 # -------------------------------------------------------------------------
 preprocessing.raw.embiology.node_attributes:
   type: pandas.CSVDataset
-  filepath: ${globals:paths.kg_raw_private}/embiology/csv/attr.csv.gz
+  filepath: ${globals:paths.kg_raw_private}/source_data/raw_embiology/csv/attr.csv.gz
 
 # NOTE: references.csv.gz is a very large dataframe which cant be easily loaded into memory
 # so only load columns that are needed.
 preprocessing.raw.embiology.ref_pub:
   type: pandas.CSVDataset
-  filepath: ${globals:paths.kg_raw_private}/embiology/csv/reference.csv.gz
+  filepath: ${globals:paths.kg_raw_private}/source_data/raw_embiology/csv/reference.csv.gz
   load_args:
     usecols:
       - "id"
@@ -77,7 +77,7 @@ preprocessing.int.embiology.ref_pub@spark:
 
 preprocessing.raw.embiology.nodes:
   type: pandas.CSVDataset
-  filepath: ${globals:paths.kg_raw_private}/embiology/csv/node.csv.gz
+  filepath: ${globals:paths.kg_raw_private}/source_data/raw_embiology/csv/node.csv.gz
 
 preprocessing.int.embiology.nodes@pandas:
   <<: *_pandas_parquet
@@ -93,11 +93,11 @@ preprocessing.prm.embiology.nodes:
 
 preprocessing.raw.embiology.manual_id_mapping:
   type: pandas.CSVDataset
-  filepath: ${globals:prod_gcs_bucket}/data/temp/embiology/prm/id_curie_mapping.csv
+  filepath: ${globals:paths.kg_raw_private}/source_data/raw_embiology/temp/id_curie_mapping.csv
 
 preprocessing.raw.embiology.manual_name_mapping:
   type: pandas.CSVDataset
-  filepath: ${globals:prod_gcs_bucket}/data/temp/embiology/prm/name_curie_mapping.csv
+  filepath: ${globals:paths.kg_raw_private}/source_data/raw_embiology/temp/name_curie_mapping.csv
 
 preprocessing.int.embiology.manual_name_mapping@pandas:
   <<: *_pandas_parquet
@@ -130,7 +130,7 @@ preprocessing.prm.embiology.edges_final:
 
 preprocessing.raw.embiology.edges:
   type: pandas.CSVDataset
-  filepath: ${globals:paths.kg_raw_private}/embiology/csv/control.csv.gz
+  filepath: ${globals:paths.kg_raw_private}/source_data/raw_embiology/csv/control.csv.gz
 
 preprocessing.int.embiology.edges@pandas:
   <<: *_pandas_parquet

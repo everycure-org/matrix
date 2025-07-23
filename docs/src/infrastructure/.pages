@@ -5,7 +5,6 @@ nav:
     - public_data_zone.md
     - observability.md
     - gcp.md
-    - git-crypt.md
     - iap.md
     - setup.md
     - runbooks
