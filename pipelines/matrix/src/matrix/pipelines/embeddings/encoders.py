@@ -27,7 +27,18 @@ class AttributeEncoder(ABC):
         self._random_seed = random_seed
 
     @abstractmethod
-    def version(self) -> str: ...
+    def version(self) -> str:
+        """Provide version of the attribute encoder.
+
+        The version of the attribute encoder is leveraged to ensure
+        caching capabilities are able to properly invalidate the
+        cache when the underlying version changes.
+
+        For instance, the version can be the specific model used the LangChainEncoder,
+        when the model changes, the cache is subsequently invalidated ensuring
+        the new model is ran.
+        """
+        ...
 
     @abstractmethod
     async def apply(self, documents: Sequence[str]) -> list[list[float]]:
