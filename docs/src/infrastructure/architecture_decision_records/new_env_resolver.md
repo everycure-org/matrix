@@ -2,6 +2,10 @@
 title: Platform Refactor and Standardization.
 ---
 
+Status
+------
+Draft
+
 # Context
 
 As the MATRIX project has grown in the number of datasets it consumes from different sources, and the with the goal to open-source it, it is evident that the initially thought design for the variable resolution of the environment that determines the pipeline run and datasets sources, has become too complex. As we have introduced a public bucket alongside `dev` and `prod` bucket, switching between the three has proved that there is tight coupling between environments (base, cloud, and test). We aim to reduce the cognitive load and manual intervention that is needed to avoid human error.
@@ -202,10 +206,12 @@ graph TD
 1) Adding checksum to verify that the config file has not changed depending on the environment. This would be before running the workflow and also on-cloud.
 2) Refactor the `settings.py` file to remove the dynamic mapping to the variable file as well.
 
-## Benefits
+## Consequences
 
 This approach would eliminate:
 - `.env.defaults` file (73 lines)
 - Environment variable duplication across globals files
 - Manual `.env` file editing
 - individual YAML anchor definitions in catalog files and keep the ones that is absolutely needed.
+
+This would remove the cognitive load on the developer and greatly reduce human errors.
