@@ -65,7 +65,7 @@ SELECT * FROM bq.agent_type_distribution
   </div>
 </div>
 
-<Details title="Knowledge Level Definitions">
+<Details title="Understand more about Knowledge Level values">
   <div class="max-w-2xl mx-auto text-sm leading-tight text-gray-600 mt-.5 pl-0 ml-0">
     <strong>Knowledge Assertion:</strong> Direct statements such as 'X inhibits Y'.<br/>
     <strong>Logical Entailment:</strong> Inferred relationships (e.g., subclass_of).<br/>
