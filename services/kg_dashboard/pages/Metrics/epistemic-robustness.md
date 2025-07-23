@@ -148,7 +148,7 @@ SELECT * FROM bq.agent_type_distribution
   </div>
 </div>
 
-<Details title="Agent Type Definitions">
+<Details title="Understand more about Agent Type values">
   <div class="max-w-2xl mx-auto text-sm leading-tight text-gray-600 mt-.5 pl-0 ml-0">
     <strong>Manual Agent:</strong> Manually curated by domain experts.<br/>
     <strong>Manual Validation of Automated Agent:</strong> Machine generated then manually validated.<br/>
