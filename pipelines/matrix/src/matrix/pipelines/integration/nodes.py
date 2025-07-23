@@ -339,14 +339,18 @@ def check_nodes_and_edges_matching(edges: ps.DataFrame, nodes: ps.DataFrame):
     -------
     Nothing returned; error is thrown if mismatching
     """
-    match_count = (
-        edges.join(nodes.withColumnRenamed("id", "subject"), on="subject", how="inner")
-        .join(nodes.withColumnRenamed("id", "object"), on="object", how="inner")
-        .count()
-    )
-    if edges.count() != match_count:
-        raise Exception("Nodes and Edges are mismatching post-normalization; please investigate")
-    return None
+    edge_ids = edges.select(F.col("subject").alias("id")).union(edges.select(F.col("object").alias("id"))).distinct()
+    node_ids = nodes.select("id").distinct()
+
+    missing_ids = edge_ids.join(node_ids, on="id", how="left_anti")
+
+    missing_count = missing_ids.count()
+    if missing_count > 0:
+        logger.warning(f"{missing_count} edges refer to node IDs not found in nodes.")
+        missing_ids.show(50, truncate=False)
+        raise Exception("Nodes and Edges are mismatching; please investigate")
+    else:
+        logger.info("All edge node references are valid.")
 
 
 @check_output(

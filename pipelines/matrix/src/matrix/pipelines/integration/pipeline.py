@@ -184,6 +184,16 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="create_prm_unified_edges",
                     argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
                 ),
+                node(
+                    func=nodes.check_nodes_and_edges_matching,
+                    inputs={
+                        "nodes": "integration.prm.unified_nodes",
+                        "edges": "integration.prm.unified_edges",
+                    },
+                    outputs=None,
+                    name="check_merged_nodes_and_edges_consistency",
+                    tags=["validation", "argowf.fuse"],
+                ),
             ]
         )
     )
