@@ -47,8 +47,12 @@ def transform(transformer, **kwargs) -> dict[str, ps.DataFrame]:
     schema=BIOLINK_KG_EDGE_SCHEMA,
     pass_columns=True,
 )
-def union_edges(*edges, cols: list[str]) -> ps.DataFrame:
+def union_edges(*args, cols: list[str]) -> ps.DataFrame:
     """Function to unify edges datasets."""
+
+    # The mapping file is the last in the list
+    *edges, core_id_mapping = args
+
     unioned_dataset = (
         _union_datasets(*edges)
         .groupBy(["subject", "predicate", "object"])
@@ -76,7 +80,9 @@ def union_edges(*edges, cols: list[str]) -> ps.DataFrame:
     schema=BIOLINK_KG_NODE_SCHEMA,
     pass_columns=True,
 )
-def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, cols: list[str]) -> ps.DataFrame:
+def union_and_deduplicate_nodes(
+    retrieve_most_specific_category: bool, *nodes, cols: list[str]
+) -> tuple[ps.DataFrame, ps.DataFrame]:
     """Function to unify nodes datasets."""
 
     # Detect and log cases where the same normalized ID maps to multiple core_ids
@@ -102,6 +108,11 @@ def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, c
         .drop("_rank")
     )
 
+    core_id_mapping = _union_datasets(*nodes).select("id", "core_id").filter(F.col("core_id").isNotNull()).distinct()
+
+    # Replace normalized IDs with Core IDs when available
+    core_promoted_nodes = core_promoted_nodes.withColumn("id", F.coalesce("core_id", "id"))
+
     unioned_datasets = (
         core_promoted_nodes
         # first we group the dataset by id to deduplicate
@@ -123,7 +134,7 @@ def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, c
     if retrieve_most_specific_category:
         unioned_datasets = unioned_datasets.transform(determine_most_specific_category)
 
-    return unioned_datasets.select(*cols)
+    return (core_id_mapping, unioned_datasets.select(*cols))
 
 
 def _union_datasets(

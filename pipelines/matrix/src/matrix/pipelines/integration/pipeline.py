@@ -169,16 +169,19 @@ def create_pipeline(**kwargs) -> Pipeline:
                             if source.get("integrate_in_kg", True) or source.get("is_core", True)
                         ],
                     ],
-                    outputs="integration.prm.unified_nodes",
+                    outputs=["integration.int.core_node_mapping", "integration.prm.unified_nodes"],
                     name="create_prm_unified_nodes",
                 ),
                 # union edges
                 ArgoNode(
                     func=nodes.union_edges,
                     inputs=[
-                        f'integration.int.{source["name"]}.edges.norm@spark'
-                        for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
-                        if source.get("integrate_in_kg", True)
+                        *[
+                            f'integration.int.{source["name"]}.edges.norm@spark'
+                            for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
+                            if source.get("integrate_in_kg", True)
+                        ],
+                        "integration.int.core_node_mapping",
                     ],
                     outputs="integration.prm.unified_edges",
                     name="create_prm_unified_edges",

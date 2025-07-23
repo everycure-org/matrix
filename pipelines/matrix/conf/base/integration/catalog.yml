@@ -57,6 +57,11 @@ integration.int.{source}.nodes_norm_mapping:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.integration}/int/{source}/nodes_norm_mapping
 
+integration.int.core_node_mapping:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.integration}/int/core_norm_mapping
+
+
 # Unified KGs
 integration.prm.unified_nodes:
   <<: [*_spark_parquet, *_layer_prm]
