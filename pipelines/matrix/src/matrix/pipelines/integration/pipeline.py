@@ -166,7 +166,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         *[
                             f'integration.int.{source["name"]}.nodes.norm@spark'
                             for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
-                            if source.get("integrate_in_kg", True) and source.get("is_core", True)
+                            if source.get("integrate_in_kg", True) or source.get("is_core", True)
                         ],
                     ],
                     outputs="integration.prm.unified_nodes",
