@@ -162,7 +162,7 @@ Use the filters below to refine your view of associations in the Matrix Knowledg
 SELECT 
   primary_knowledge_source.source,
   catalog.name as name,
-  '/Knowedges Sources/' || primary_knowledge_source.source as link,
+  '/Knowledge Sources/' || primary_knowledge_source.source as link,
   COALESCE(edge_counts.total_edges, 0) as n_edges
 FROM (
   SELECT DISTINCT source 
