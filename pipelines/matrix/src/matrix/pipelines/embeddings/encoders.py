@@ -1,4 +1,3 @@
-import functools
 import logging
 from abc import ABC, abstractmethod
 from typing import Optional, Sequence, TypeAlias, TypeVar
@@ -17,7 +16,7 @@ T: TypeAlias = TypeVar("T")
 class AttributeEncoder(ABC):
     """Base class for encoders that convert text into embeddings."""
 
-    def __init__(self, version: str, output_dim: int = 512, random_seed: Optional[int] = None):
+    def __init__(self, output_dim: int = 512, random_seed: Optional[int] = None):
         """Initialize base encoder.
 
         Args:
@@ -26,11 +25,20 @@ class AttributeEncoder(ABC):
         """
         self._embedding_dim = output_dim
         self._random_seed = random_seed
-        self._version = version
 
-    @functools.cache
+    @abstractmethod
     def version(self) -> str:
-        return self._version
+        """Provide version of the attribute encoder.
+
+        The version of the attribute encoder is leveraged to ensure
+        caching capabilities are able to properly invalidate the
+        cache when the underlying version changes.
+
+        For instance, the version can be the specific model used the LangChainEncoder,
+        when the model changes, the cache is subsequently invalidated ensuring
+        the new model is ran.
+        """
+        ...
 
     @abstractmethod
     async def apply(self, documents: Sequence[str]) -> list[list[float]]:
@@ -52,7 +60,6 @@ class LangChainEncoder(AttributeEncoder):
         self,
         encoder: OpenAIEmbeddings,
         dimensions: int,
-        version: str,
         random_seed: Optional[int] = None,
     ):
         """Initialize OpenAI encoder.
@@ -63,9 +70,11 @@ class LangChainEncoder(AttributeEncoder):
             random_seed: Random seed for reproducibility
             timeout: Timeout for OpenAI API requests
         """
-        super().__init__(version, dimensions, random_seed)
-        encoder.model = version
+        super().__init__(dimensions, random_seed)
         self._client = encoder
+
+    def version(self) -> str:
+        return self._client.model
 
     @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(5))
     async def apply(self, documents: Sequence[str]) -> list[list[float]]:
@@ -86,20 +95,20 @@ class RandomizedEncoder(AttributeEncoder):
     def __init__(
         self,
         dimensions: int,
-        version: str,
         random_seed: Optional[int] = None,
-        encoder: Optional[AttributeEncoder] = None,
     ):
         """Initialize Randomized encoder.
 
         Args:
             dimensions: Dimension of the output embeddings
             random_seed: Random seed for reproducibility
-            encoder: Encoder to use for embedding generation (dummy)
         """
-        super().__init__(version, dimensions, random_seed)
+        super().__init__(dimensions, random_seed)
         if random_seed is not None:
             np.random.seed(random_seed)
+
+    def version(self) -> str:
+        return "random"
 
     async def encode(self, documents: Sequence[str]) -> list[list[float]]:
         """Generate random embeddings for the input dataframe.
@@ -119,23 +128,28 @@ class PubmedBERTEncoder(AttributeEncoder):
     def __init__(
         self,
         dimensions: int,
-        version: str,
         random_seed: Optional[int] = None,
         encoder: Optional[AttributeEncoder] = None,
+        model_path: str = "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext",
     ):
         """Initialize PubmedBERT encoder.
 
         Args:
+            model_path: path to model, e.g.,
             dimensions: Dimension of the output embeddings
             random_seed: Random seed for reproducibility
             encoder: Encoder to use for embedding generation (dummy)
         """
-        super().__init__(version, dimensions, random_seed)
+        super().__init__(dimensions, random_seed)
         if random_seed is not None:
             np.random.seed(random_seed)
 
-        self.tokenizer = AutoTokenizer.from_pretrained("microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext")
-        self.model = AutoModel.from_pretrained("microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext")
+        self._model_path
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        self.model = AutoModel.from_pretrained(model_path)
+
+    def version(self) -> str:
+        return self._model_path
 
     async def encode(self, documents: Sequence[str]) -> list[list[float]]:
         """Generate PubmedBERT embeddings for the input dataframe.
@@ -158,8 +172,11 @@ class PubmedBERTEncoder(AttributeEncoder):
 
 
 class DummyResolver(AttributeEncoder):
-    def __init__(self, version: str = "dummy-version", **kwargs):
-        super().__init__(version, 0, 0)
+    def __init__(self, **kwargs):
+        super().__init__(0, 0)
+
+    def version(self) -> str:
+        return "dummy"
 
     async def apply(self, documents: Sequence[str]) -> list[list[float]]:
         return [[1.0, 2.0]] * len(documents)
