@@ -501,3 +501,14 @@ If you attempt to delete files directly from the RAW data bucket, you may encoun
 - Once reviewed and merged, the automated cleanup process (see `.github/workflows/cleanup_raw_bucket.yml`) will safely delete the files using a controlled, auditable workflow.
 
 This process ensures data safety and compliance with our data governance policies.
+
+
+### Cache Error within the Integration Pipeline
+If you encounter an error like the following during normalization process (below shown for disease list):
+```
+Py4JJavaError: An error occurred while calling o624.collectToPython.: org.apache.spark.SparkException: Job aborted due to stage failure: Task 1 in stage 3.0 failed 1 times, most recent failure: Lost task 1.0 in stage 3.0 (TID 4) (normalized-run-v5-4dacb3a2-kedro-3393464924 executor driver): org.apache.spark.SparkException: Parquet column cannot be converted in file gs://mtrx-us-central1-hub-prod-storage/kedro/data/cache/normalization_source_disease_list/api=nodenorm-2.3.18/3067e5f8f9b5d0d1b5ab6205102ed243359cd0376b6d54240005b3d4439a993d.parquet. Column: [value], Expected: string, Found: INT32.
+```
+It most likely indicates that cache directory in our GCS bucket for this dataset got corrupted or was overwritten with different schema data. A quick fix is to remove the directory in question and re-run the workflow (can be done manually using Argo Workflows UI). In the example above, you would remove `cache/normalization_source_disease_list` directory (e.g. via `gsutil rm -rf gs://mtrx-us-central1-hub-prod-storage/kedro/data/cache/normalization_source_disease_list/`). If you don't have permissions for deletion, please consult EC team.
+
+
+

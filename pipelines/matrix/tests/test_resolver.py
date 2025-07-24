@@ -1,6 +1,7 @@
 import os
 
 import pytest
+from matrix.resolvers import env
 from matrix.utils.environment import load_environment_variables
 
 

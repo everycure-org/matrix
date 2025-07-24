@@ -133,7 +133,12 @@ class DiseaseAreaSplit(BaseCrossValidator):
             # contains multiple types in a pipe-separated string (e.g., 'hereditary_disease|metabolic_disease').
             # This ensures that any disease containing the selected type anywhere in the string
             # will be included in the test set for that split.
-            mask = X_copy[self.disease_grouping_type].fillna("").str.contains(selected_disease_types, na=False)
+            mask = (
+                X_copy[self.disease_grouping_type]
+                .fillna("")
+                .str.lower()
+                .str.contains(selected_disease_types.lower(), na=False)
+            )
             test_indices = X_copy[mask].index.tolist()
             train_indices = X_copy[~mask].index.tolist()
 

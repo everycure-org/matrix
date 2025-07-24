@@ -77,7 +77,7 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                     ArgoNode(
                         func=partial_fold(nodes.fit_transformers, fold),
                         inputs={
-                            "data": "modelling.model_input.splits",
+                            "data": "modelling.model_input.splits@pandas",
                             "transformers": f"params:modelling.{model_name}.model_options.transformers",
                         },
                         outputs=f"modelling.fold_{fold}.model_input.transformers",
@@ -105,7 +105,7 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                     ArgoNode(
                         func=partial_fold(nodes.apply_transformers, fold),
                         inputs={
-                            "data": "modelling.model_input.splits",
+                            "data": "modelling.model_input.splits@pandas",
                             "transformers": f"modelling.fold_{fold}.model_input.transformers",
                         },
                         outputs=f"modelling.fold_{fold}.model_input.transformed_splits",
@@ -150,7 +150,7 @@ def create_model_pipeline(model_name: str, num_shards: int, n_cross_val_folds: i
                     func=nodes.create_model_input_nodes,
                     inputs=[
                         "modelling.model_input.drugs_diseases_nodes@pandas",
-                        "modelling.model_input.splits",
+                        "modelling.model_input.splits@pandas",
                         f"params:modelling.{model_name}.model_options.generator",
                         "params:modelling.splitter",
                     ],
@@ -246,8 +246,12 @@ def create_shared_pipeline() -> Pipeline:
             ),
             ArgoNode(
                 func=nodes.make_folds,
-                inputs=["modelling.int.known_pairs@pandas", "params:modelling.splitter", "ingestion.raw.disease_list"],
-                outputs="modelling.model_input.splits",
+                inputs=[
+                    "modelling.int.known_pairs@pandas",
+                    "params:modelling.splitter",
+                    "integration.int.disease_list.nodes.norm@pandas",
+                ],
+                outputs="modelling.model_input.splits@pandas",
                 name="create_splits",
             ),
         ]
