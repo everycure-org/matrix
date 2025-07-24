@@ -450,8 +450,11 @@ def test_unify_nodes(spark, sample_nodes, sample_biolink_category_hierarchy):
     nodes1 = sample_nodes.filter(sample_nodes.id != "MONDO:0005148")
     nodes2 = sample_nodes.filter(sample_nodes.id != "CHEBI:119157")
 
+    # Create an empty core_id_mapping for the test
+    core_id_mapping = spark.createDatamFrame([], schema="normalized_id string, core_id string")
+
     # Call the unify_nodes function
-    result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, nodes1, nodes2)
+    result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, nodes1, nodes2, core_id_mapping)
 
     # Check the result
     assert isinstance(result, ps.DataFrame)
@@ -472,8 +475,11 @@ def test_correctly_identified_categories(spark, sample_nodes, sample_biolink_cat
     nodes1 = sample_nodes
     nodes2 = sample_nodes.withColumn("category", F.lit("biolink:NamedThing"))
 
+    # Create an empty core_id_mapping for the test
+    core_id_mapping = spark.createDatamFrame([], schema="normalized_id string, core_id string")
+
     # When: unifying the two datasets, putting nodes2 first -> meaning within each group, "first()" grabs the NamedThing
-    result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, nodes1, nodes2)
+    result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, nodes1, nodes2, core_id_mapping)
 
     # Then: the most specific category is correctly identified
     assert result.filter(F.col("category") == "biolink:NamedThing").count() == 0
@@ -487,8 +493,11 @@ def test_unify_edges(spark, sample_edges):
     edges1 = sample_edges.filter(sample_edges.subject != "CHEBI:120688")
     edges2 = sample_edges.filter(sample_edges.subject != "CHEBI:119157")
 
+    # Create an empty core_id_mapping for the test
+    core_id_mapping = spark.createDatamFrame([], schema="normalized_id string, core_id string")
+
     # Call the unify_edges function
-    result = nodes.union_edges(edges1, edges2)
+    result = nodes.union_edges(edges1, edges2, core_id_mapping)
 
     # Check the result
     assert isinstance(result, ps.DataFrame)
