@@ -242,7 +242,7 @@ SELECT * FROM bq.ec_core_components_drug_list_missing
 
 ## Drug List Connection Overview
 
-<Details title="Details">
+<Details title="Click to Understand This Chart">
 <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
 This section visualizes how entities from the drug list connect to other categories in the knowledge graph.
 The Sankey diagram shows the flow from incoming connection categories (left) through the drug list entities (center) 
@@ -289,7 +289,7 @@ ORDER BY count DESC
 
 ## Drug List Contents
 
-<Details title="Details">
+<Details title="Click to Understand This Chart">
 <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
 This table shows all entities in the drug list with their connectivity information. The Edge Count column displays 
 the total number of connections each drug has in the knowledge graph, providing insight into how well-connected 

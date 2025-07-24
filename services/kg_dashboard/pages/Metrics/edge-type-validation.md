@@ -2,6 +2,12 @@
 title: Edge Type Validation
 ---
 
+<script>
+  const positiveColor = '#73C991';
+  const negativeColor = '#5E81AC';
+</script>
+
+
 ```sql edge_validation
 WITH edge_validation AS (
   SELECT 
@@ -45,13 +51,13 @@ ORDER BY validation_status
 
 <Grid col=2 class="max-w-4xl mx-auto mb-8">
   <div class="text-center text-lg">
-    <span class="font-semibold text-4xl" style="color: #1e40af;">
+    <span class="font-semibold text-4xl" style="color: {positiveColor}">
       <Value data={edge_validation.filter(d => d.validation_status === 'Recognized')} column="total_edges" fmt="num2m" />
     </span><br/>
     <span class="text-xl">Recognized Edges</span>
   </div>
   <div class="text-center text-lg">
-    <span class="font-semibold text-4xl" style="color: #93c5fd;">
+    <span class="font-semibold text-4xl" style="color: {negativeColor}">
       <Value data={edge_validation.filter(d => d.validation_status === 'Unrecognized')} column="total_edges" fmt="num2m" />
     </span><br/>
     <span class="text-xl">Unrecognized Edges</span>
@@ -70,7 +76,7 @@ ORDER BY validation_status
       orient: 'vertical',
       left: 'left'
     },
-    color: ['#1e40af', '#93c5fd'],
+    color: [positiveColor, negativeColor],
     series: [{
       name: 'Edge Validation',
       type: 'pie',
@@ -129,13 +135,13 @@ group by validation_status
 
 <Grid col=2 class="max-w-4xl mx-auto mb-8">
   <div class="text-center text-lg">
-    <span class="font-semibold text-4xl" style="color: #1e40af;">
+    <span class="font-semibold text-4xl" style="color: {positiveColor}">
       <Value data={edge_type_schema_coverage.filter(d => d.validation_status === 'Recognized')} column="count" fmt="num0" />
     </span><br/>
     <span class="text-xl">Recognized Edge Types</span>
   </div>
   <div class="text-center text-lg">
-    <span class="font-semibold text-4xl" style="color: #93c5fd;">
+    <span class="font-semibold text-4xl" style="color: {negativeColor}">
       <Value data={edge_type_schema_coverage.filter(d => d.validation_status === 'Unrecognized')} column="count" fmt="num0" />
     </span><br/>
     <span class="text-xl">Unrecognized Edge Types</span>
@@ -158,7 +164,7 @@ group by validation_status
       orient: 'vertical',
       left: 'left'
     },
-    color: ['#1e40af', '#93c5fd'],
+    color: [positiveColor, negativeColor],
     series: [{
       name: 'Edge Type Coverage',
       type: 'pie',
