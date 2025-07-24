@@ -50,7 +50,7 @@ def transform(transformer, **kwargs) -> dict[str, ps.DataFrame]:
 def union_edges(*args, cols: list[str]) -> ps.DataFrame:
     """Function to unify edges datasets and promote subject/object to core_id."""
 
-    *edge_dfs, core_id_mapping = args
+    *edge_dfs, core_id_mapping = args  # Expect mapping as last argument
 
     edges_df = _union_datasets(*edge_dfs)
 
@@ -94,8 +94,10 @@ def union_edges(*args, cols: list[str]) -> ps.DataFrame:
     schema=BIOLINK_KG_NODE_SCHEMA,
     pass_columns=True,
 )
-def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, cols: list[str]) -> ps.DataFrame:
+def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *args, cols: list[str]) -> ps.DataFrame:
     """Function to unify nodes datasets."""
+
+    *nodes, core_id_mapping = args  # Expect mapping as last argument
 
     # Detect and log cases where the same normalized ID maps to multiple core_ids
     conflicts = (
@@ -111,17 +113,14 @@ def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, c
         logger.warning(f"{conflict_count} nodes have multiple distinct core_ids after normalization.")
         conflicts.show(50, truncate=False)
 
-    # Prefer rows where core_id is present ("core-promoted")
-    window = Window.partitionBy("id").orderBy(F.col("core_id").isNull().cast("int"))
-    core_promoted_nodes = (
-        _union_datasets(*nodes)
-        .withColumn("_rank", F.row_number().over(window))
-        .filter(F.col("_rank") == 1)
-        .drop("_rank")
-    )
+    unioned = _union_datasets(*nodes)
 
-    # Replace normalized IDs with Core IDs when available
-    core_promoted_nodes = core_promoted_nodes.withColumn("id", F.coalesce("core_id", "id"))
+    # Prefer rows where core_id is present ("core-promoted")
+    core_promoted_nodes = (
+        unioned.join(core_id_mapping.withColumnRenamed("normalized_id", "id"), on="id", how="left")
+        .withColumn("id", F.coalesce("core_id", "id"))
+        .drop("core_id")
+    )
 
     unioned_datasets = (
         core_promoted_nodes
