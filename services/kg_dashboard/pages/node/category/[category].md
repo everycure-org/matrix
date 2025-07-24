@@ -98,8 +98,8 @@ order by count desc
 
 {#if number_of_edges.length > 0 && number_of_nodes.length > 0}
 <Grid col=2>
-    <p class="text-center text-lg pt-4"><span class="font-semibold text-2xl"><Value data={number_of_edges} column="count" fmt="integer"/></span><br/>edges</p>
     <p class="text-center text-lg pt-4"><span class="font-semibold text-2xl"><Value data={number_of_nodes} column="count" fmt="integer"/></span><br/>nodes</p>
+    <p class="text-center text-lg pt-4"><span class="font-semibold text-2xl"><Value data={number_of_edges} column="count" fmt="integer"/></span><br/>edges</p>
 </Grid>
 {/if}
 
