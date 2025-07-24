@@ -16,9 +16,10 @@ export VITE_release_version := $(RELEASE_VERSION)
 export VITE_build_time := $(shell date -u '+%B %d, %Y at %H:%M:%S UTC')
 
 # TODO: refactor BQ ingested tables to remove versions
-# Source KG versions, used for BQ queries
-ROBOKOP_VERSION = 30fd1bfc18cd5ccb
-RTX_KG2_VERSION = v2_10_0_validated
+# Source KG versions, extracted from globals.yml
+KEDRO_BASE_GLOBALS_PATH = "../../pipelines/matrix/conf/base/globals.yml"
+ROBOKOP_VERSION = $(shell grep -A1 "robokop:" $(KEDRO_BASE_GLOBALS_PATH) | grep "version:" | sed 's/.*version: //')
+RTX_KG2_VERSION = $(shell grep -A1 "rtx_kg2:" $(KEDRO_BASE_GLOBALS_PATH) | grep "version:" | sed 's/.*version: //' | sed 's/^&_rtx_kg_version //')
 export EVIDENCE_VAR__robokop_version := $(ROBOKOP_VERSION)
 export EVIDENCE_VAR__rtx_kg2_version := $(RTX_KG2_VERSION)
 export VITE_robokop_version := $(ROBOKOP_VERSION)
