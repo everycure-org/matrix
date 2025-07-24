@@ -380,6 +380,7 @@ def check_nodes_and_edges_matching(edges: ps.DataFrame, nodes: ps.DataFrame):
         raise Exception("Nodes and Edges are mismatching; please investigate")
     else:
         logger.info("All edge node references are valid.")
+        return "validation_passed"
 
 
 @check_output(
@@ -436,7 +437,7 @@ def normalization_summary_nodes_and_edges(
     )
 
     # Check nodes and edges matching post-normalization
-    check_nodes_and_edges_matching(edges, nodes)
+    validation_check = check_nodes_and_edges_matching(edges, nodes)
 
     nodes_for_join = nodes.select("id", "original_categories", "all_categories").join(
         formatted_mapping, on="id", how="left"

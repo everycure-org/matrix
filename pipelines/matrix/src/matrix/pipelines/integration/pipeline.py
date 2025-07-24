@@ -207,7 +207,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         "nodes": "integration.prm.unified_nodes",
                         "edges": "integration.prm.unified_edges",
                     },
-                    outputs=None,
+                    outputs="integration.validation.nodes_edges_consistency_check",
                     name="check_merged_nodes_and_edges_consistency",
                     tags=["validation", "argowf.fuse"],
                 ),
