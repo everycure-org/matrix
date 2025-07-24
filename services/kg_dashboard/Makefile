@@ -19,7 +19,7 @@ export VITE_build_time := $(shell date -u '+%B %d, %Y at %H:%M:%S UTC')
 # Source KG versions, extracted from globals.yml
 KEDRO_BASE_GLOBALS_PATH = "../../pipelines/matrix/conf/base/globals.yml"
 ROBOKOP_VERSION = $(shell grep -A1 "robokop:" $(KEDRO_BASE_GLOBALS_PATH) | grep "version:" | sed 's/.*version: //')
-RTX_KG2_VERSION = $(shell grep -A1 "rtx_kg2:" $(KEDRO_BASE_GLOBALS_PATH) | grep "version:" | sed 's/.*version: //' | sed 's/^&_rtx_kg_version //')
+RTX_KG2_VERSION = $(shell grep -A1 "rtx_kg2:" $(KEDRO_BASE_GLOBALS_PATH) | grep "version:" | sed 's/.*version: //' | sed 's/^&_rtx_kg_version //' | sed -E 's/\./_/g')
 export EVIDENCE_VAR__robokop_version := $(ROBOKOP_VERSION)
 export EVIDENCE_VAR__rtx_kg2_version := $(RTX_KG2_VERSION)
 export VITE_robokop_version := $(ROBOKOP_VERSION)
