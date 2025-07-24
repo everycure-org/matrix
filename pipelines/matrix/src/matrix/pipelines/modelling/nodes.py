@@ -13,7 +13,7 @@ from sklearn.impute._base import _BaseImputer
 from sklearn.model_selection import BaseCrossValidator
 
 from matrix.datasets.graph import KnowledgeGraph
-from matrix.datasets.pair_generator import DiseaseSplitDrugDiseasePairGenerator, SingleLabelPairGenerator
+from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from matrix.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
 from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
@@ -144,6 +144,17 @@ def attach_embeddings(
     return pairs_df.transform(_add_embedding, from_=nodes, using="source").transform(
         _add_embedding, from_=nodes, using="target"
     )
+
+    # # Remove rows with null embeddings
+    # restricted_pairs_with_embeddings = pairs_with_embeddings.filter(
+    #     f.col("source_embedding").isNotNull() & f.col("target_embedding").isNotNull()
+    # )
+
+    # logger.warning(
+    #     f"{pairs_with_embeddings.count() - restricted_pairs_with_embeddings.count()} rows removed due to null embeddings"
+    # )
+
+    # return restricted_pairs_with_embeddings
 
 
 def _add_embedding(df: ps.DataFrame, from_: ps.DataFrame, using: str) -> ps.DataFrame:
