@@ -13,13 +13,9 @@ on:
         description: 'The git sha that triggered the kg_release'
         required: true
 
-env:
-  project_id: 'mtrx-hub-dev-3of'
-  workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-ro/providers/matrix-gh-provider-ro'
-  service_account: 'sa-github-actions-ro@mtrx-hub-dev-3of.iam.gserviceaccount.com'
-
 jobs:
   create_release_notes_draft:
+    environment: dev
     runs-on: ubuntu-latest
     name: Create Draft of the Release Notes
     permissions:
@@ -96,9 +92,9 @@ jobs:
       - name: Authenticate with Google Cloud
         uses: 'google-github-actions/auth@v2'
         with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.workload_identity_provider}}
-          service_account: ${{env.service_account}}
+          project_id: ${{vars.PROJECT_ID}}
+          workload_identity_provider: ${{vars.WORKLOAD_IDENTITY_PROVIDER_RO}}
+          service_account: ${{vars.SERVICE_ACCOUNT_RO}}
 
       - name: Download & commit release info file
         working-directory: docs/src/releases/changelog_files
@@ -162,7 +158,8 @@ jobs:
           uv run matrix releases template \
             --headless \
             --output-file "${{env.release}}/post.md" \
-            --until ${{env.gitref}}
+            --until ${{env.gitref}} \
+            --version ${{env.release}}
           
           mv "${{env.release}}" "${GITHUB_WORKSPACE}/${POSTS_DIR}"
           git add "$TARGET_DIR" && \

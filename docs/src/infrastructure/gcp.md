@@ -41,9 +41,8 @@ Google recommends the below diagram for separating a foundation pipeline, infras
 ## Key architectural principles
 *Our architectural principles are heavily inspired by the [enterprise foundations blueprint](https://cloud.google.com/architecture/security-foundations) and adapted to our needs. All changes from Googles recommended defaults are highlighted below:*
 
-
-- [X] **Github Actions**: Infrastructure resources are managed using a GitOps model. Declarative IaC is written in Terraform and managed in a version control system for review and approval, and resources are deployed using {--Cloud Build--} {++Github Actions++} as the continuous integration and continuous deployment (CI/CD) automation tool. The pipeline also enforces policy-as-code checks to validate that resources meet expected configurations before deployment.
-  - currently only for MATRIX, the Core resources are still manually applied by Pascal
+- [X] **GCP Cloud Build**: Infrastructure resources are managed using a GitOps model. Declarative IaC is written in Terraform and managed in a version control system for review and approval, and resources are deployed using GCP Cloud Build. For development environment (`dev`) it is automatic. For production environment (`prod`) a approval process in place. This applies to both `core` and `MATRIX` repo.
+- [X] **Github Actions**: it is used to automate the execution of test suites and ensure code quality and stability prior to merging pull requests.
 - [X] **Cloud Identity**: Users and group membership are synchronized from your existing identity provider. Controls for user account lifecycle management and single sign-on (SSO) rely on the existing controls and processes of your identity provider.
 - [X] **Identity and Access Management (IAM)**: Allow policies (formerly known as IAM policies) allow access to resources and are applied to groups based on job function. Users are added to the appropriate groups to receive view-only access to foundation resources. All changes to foundation resources are deployed through the CI/CD pipeline which uses privileged service account identities.
 - [X] **Resource Manager**: All resources are managed under a single organization, with a resource hierarchy of folders that organizes projects by {--environments--} {++major initiatives++}. Projects are labeled with metadata for governance including cost attribution.
@@ -185,52 +184,3 @@ The blueprint comes with a helper tool that rolls out all layers in one process.
     which is not set by default. To learn how to set your quota project, see
     https://cloud.google.com/docs/authentication/adc-troubleshooting/user-creds .
     ```
-
-  - setting the quota project in the gcloud config did not fix the issue though.
-  - resolution?
-
-     ```bash
-     export GOOGLE_IMPERSONATE_SERVICE_ACCOUNT=sa-terraform-proj@prj-b-seed-77e7.iam.gserviceaccount.com
-     ```
-
-- Decided to swap the entire "projects" layer out for a new one using terragrunt. this whole tf-wrapper.sh is just too much of a home baked solution. Bad Google! Bad!
-
-### Using Terragrunt
-
-Switching over to terragrunt
-
-```bash
-## create root
-touch terragrunt.hcl
-## create folders
-mkdir -p matrix/{hub,data_wg,modelling_wg,validation_wg}/{development,production}/
-touch matrix/initiative.hcl
-touch  matrix/{hub,data_wg,modelling_wg,validation_wg}//workinggroup.hcl
-touch  matrix/{hub,data_wg,modelling_wg,validation_wg}/{development,production}/terragrunt.hcl
-
-## Define the multiline string using a here document
-multiline_string=$(cat <<EOF
-## Include the root `terragrunt.hcl` configuration. The root configuration contains settings that are common across all
-## components and environments, such as how to configure remote state.
-include "root" {
- path = find_in_parent_folders("root.hcl")
-}
-EOF
-)
-
-## Use brace expansion to generate file paths and append the multiline string to each one
-for file in matrix/{hub,data_wg,modelling_wg,validation_wg}/{development,production}/terragrunt.hcl; do
-    # Append the multiline string to each generated file path
-    cat <<EOF >> "$file"
-$multiline_string
-EOF
-done
-
-```
-
-Rolling out groups, folders, projects, and budgets using terragrunt. Way easier!
-
-#### Remove networking & environments layers
-
-- We really don't want to deal with networking and the folders were also not what we want.
-- create hub/spoke setup in the projects created through terragrunt instead
