@@ -6,7 +6,7 @@ SELECT
   dl.category AS name,
   COUNT(*) AS count,
   'category' AS dimension
-FROM `mtrx-hub-dev-3of.release_${bq_release_version}.drug_list_nodes_normalized` dl
-LEFT JOIN `mtrx-hub-dev-3of.release_${bq_release_version}.nodes_unified` nu
+FROM `${project_id}.release_${bq_release_version}.drug_list_nodes_normalized` dl
+LEFT JOIN `${project_id}.release_${bq_release_version}.nodes_unified` nu
   ON dl.id = nu.id
 GROUP BY normalization_success, name;
