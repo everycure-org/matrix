@@ -99,10 +99,13 @@ def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *args, co
 
     *nodes, core_id_mapping = args  # Expect mapping as last argument
 
-    # Detect and log cases where the same normalized ID maps to multiple core_ids
+    unioned = _union_datasets(*nodes)
+
+    core_promoted_nodes = unioned.join(core_id_mapping.withColumnRenamed("normalized_id", "id"), on="id", how="left")
+
+    # Detect conflicts - same normalized ID mapping to multiple core_ids
     conflicts = (
-        _union_datasets(*nodes)
-        .filter(F.col("core_id").isNotNull())
+        core_promoted_nodes.filter(F.col("core_id").isNotNull())
         .groupBy("id")
         .agg(F.countDistinct("core_id").alias("distinct_core_ids"))
         .filter(F.col("distinct_core_ids") > 1)
@@ -113,14 +116,8 @@ def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *args, co
         logger.warning(f"{conflict_count} nodes have multiple distinct core_ids after normalization.")
         conflicts.show(50, truncate=False)
 
-    unioned = _union_datasets(*nodes)
-
-    # Prefer rows where core_id is present ("core-promoted")
-    core_promoted_nodes = (
-        unioned.join(core_id_mapping.withColumnRenamed("normalized_id", "id"), on="id", how="left")
-        .withColumn("id", F.coalesce("core_id", "id"))
-        .drop("core_id")
-    )
+    # Replace normalized IDs with Core IDs
+    core_promoted_nodes = core_promoted_nodes.withColumn("id", F.coalesce("core_id", "id")).drop("core_id")
 
     unioned_datasets = (
         core_promoted_nodes
