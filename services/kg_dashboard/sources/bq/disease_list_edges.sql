@@ -11,9 +11,9 @@ SELECT
             else 'incoming'
             end as direction,
        count(*) AS count
-FROM `mtrx-hub-dev-3of.release_${bq_release_version}.edges_unified` AS edges
-  JOIN `mtrx-hub-dev-3of.release_${bq_release_version}.nodes_unified` AS subject_nodes ON edges.subject = subject_nodes.id
-  JOIN `mtrx-hub-dev-3of.release_${bq_release_version}.nodes_unified` AS object_nodes ON edges.object = object_nodes.id
-  JOIN `mtrx-hub-dev-3of.release_${bq_release_version}.disease_list_nodes_normalized` as disease_list
+FROM `${project_id}.release_${bq_release_version}.edges_unified` AS edges
+  JOIN `${project_id}.release_${bq_release_version}.nodes_unified` AS subject_nodes ON edges.subject = subject_nodes.id
+  JOIN `${project_id}.release_${bq_release_version}.nodes_unified` AS object_nodes ON edges.object = object_nodes.id
+  JOIN `${project_id}.release_${bq_release_version}.disease_list_nodes_normalized` as disease_list
   on disease_list.id = subject or disease_list.id = object
 GROUP BY all

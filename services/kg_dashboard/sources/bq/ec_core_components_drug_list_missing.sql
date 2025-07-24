@@ -8,9 +8,9 @@ SELECT
   dl.id,
   dl.name
 FROM
-  `mtrx-hub-dev-3of.release_${bq_release_version}.drug_list_nodes_normalized` dl
+  `${project_id}.release_${bq_release_version}.drug_list_nodes_normalized` dl
 LEFT JOIN
-  `mtrx-hub-dev-3of.release_${bq_release_version}.nodes_unified` nu
+  `${project_id}.release_${bq_release_version}.nodes_unified` nu
   ON dl.id = nu.id
 GROUP BY status, dl.id, dl.name
 ORDER BY status, id
