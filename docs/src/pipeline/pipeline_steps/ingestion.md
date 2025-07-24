@@ -1,6 +1,3 @@
-
-### Ingestion
-
 The ingestion pipeline ingests all input data into the workspace of the pipeline. Data from different sources is assigned metadata for lineage tracking.
 
 We've established a lightweight data versioning system to ensure we can easily revert to
@@ -33,11 +30,11 @@ Finally, catalog entries should be defined to ensure the correct linkage of the 
 ```yaml
 # catalog.yml
 integration.raw.rtx_kg2.edges:
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/edges.tsv
+  filepath: ${globals:paths.public_kg_raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/edges.tsv
   ... # Remaining configuration here
 ```
 
-Note specifically the use of `globals:data_sources.rtx-kg2` in the definition of the catalog entry. Whenever new data becomes available, code changes are limited to bumping the `versions.sources.<source>` entry in the globals.
+Note specifically the use of `globals:data_sources.rtx-kg2` in the definition of the catalog entry. For public data sources like RTX-KG2, Robokop, and Ground Truth, we use the `public_kg_raw` path which points to our public data bucket. Whenever new data becomes available, code changes are limited to bumping the `versions.sources.<source>` entry in the globals.
 
 !!! info
     To date our pipeline only ingests 3rd party data from the RTX-KG2 and ROBOKOP sources.

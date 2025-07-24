@@ -1,0 +1,18 @@
+nav:
+    - index.md
+    - GCP:
+        - gcp_setup.md
+        - gcp_environments.md
+    - Kedro:
+        - kedro_extensions.md
+        - kedro_experiment.md
+        - Kedro Environments:
+          - base_environment.md
+          - test_environment.md
+          - sample_environment.md
+          - cloud_environment.md
+    - Jupyter:
+        - kedro_jupyter.md
+        - cross_environments.md
+    - debugging
+    - walkthroughs

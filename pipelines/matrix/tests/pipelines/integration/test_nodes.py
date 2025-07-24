@@ -4,13 +4,7 @@ import pyspark.sql as ps
 import pytest
 from matrix.pipelines.integration import nodes
 from pyspark.sql import functions as F
-from pyspark.sql.types import (
-    ArrayType,
-    IntegerType,
-    StringType,
-    StructField,
-    StructType,
-)
+from pyspark.sql.types import ArrayType, BooleanType, IntegerType, StringType, StructField, StructType
 
 
 @pytest.fixture
@@ -148,6 +142,172 @@ def sample_edges(spark):
 
 
 @pytest.fixture
+def sample_nodes_norm(spark):
+    schema = StructType(
+        [
+            StructField("original_id", StringType(), False),
+            StructField("name", StringType(), True),
+            StructField("category", StringType(), False),
+            StructField("description", StringType(), True),
+            StructField("equivalent_identifiers", ArrayType(StringType()), True),
+            StructField("original_categories", ArrayType(StringType()), True),
+            StructField("normalized_categories", ArrayType(StringType()), True),
+            StructField("all_categories", ArrayType(StringType()), True),
+            StructField("publications", ArrayType(StringType()), True),
+            StructField("labels", ArrayType(StringType()), True),
+            StructField("international_resource_identifier", StringType(), True),
+            StructField("upstream_data_source", ArrayType(StringType()), False),
+            StructField("id", StringType(), False),
+            StructField("normalization_success", BooleanType(), False),
+        ]
+    )
+    data = [
+        (
+            "Chembl:119157",
+            "Drug1",
+            "biolink:Drug",
+            "Description1",
+            ["CHEBI:119157"],
+            ["biolink:Drug", "biolink:ChemicalEntity"],
+            ["biolink:Drug", "biolink:ChemicalEntity"],
+            ["biolink:Drug", "biolink:ChemicalEntity"],
+            ["PMID:12345678"],
+            ["Label1"],
+            "http://example.com/1",
+            ["source1"],
+            "CHEBI:119157",
+            True,
+        ),
+        (
+            "EFO:1234",
+            "Disease1",
+            "biolink:Disease",
+            "Description2",
+            ["MONDO:0005148"],
+            ["biolink:Disease"],
+            ["biolink:Disease"],
+            ["biolink:Disease"],
+            ["PMID:23456789"],
+            ["Label2"],
+            "http://example.com/2",
+            ["source2"],
+            "MONDO:0005148",
+            True,
+        ),
+        (
+            "DRUGBANK:119157",
+            "Drug1",
+            "biolink:Drug",
+            "Description3",
+            ["CHEBI:119157"],
+            ["biolink:Drug", "biolink:SmallMolecule"],
+            ["biolink:Drug", "biolink:SmallMolecule"],
+            ["biolink:Drug", "biolink:SmallMolecule"],
+            ["PMID:34567890"],
+            ["Label3"],
+            "http://example.com/3",
+            ["source3"],
+            "DRUGBANK:119157",
+            False,
+        ),
+    ]
+    return spark.createDataFrame(data, schema)
+
+
+@pytest.fixture
+def sample_edges_norm(spark):
+    schema = StructType(
+        [
+            StructField("original_subject", StringType(), False),
+            StructField("predicate", StringType(), False),
+            StructField("original_object", StringType(), False),
+            StructField("knowledge_level", StringType(), True),
+            StructField("agent_type", StringType(), True),
+            StructField("primary_knowledge_source", StringType(), True),
+            StructField("aggregator_knowledge_source", ArrayType(StringType()), True),
+            StructField("publications", ArrayType(StringType()), True),
+            StructField("subject_aspect_qualifier", StringType(), True),
+            StructField("subject_direction_qualifier", StringType(), True),
+            StructField("object_aspect_qualifier", StringType(), True),
+            StructField("object_direction_qualifier", StringType(), True),
+            StructField("upstream_data_source", ArrayType(StringType()), False),
+            StructField("num_references", IntegerType(), True),
+            StructField("num_sentences", IntegerType(), True),
+            StructField("subject", StringType(), False),
+            StructField("subject_normalization_success", BooleanType(), False),
+            StructField("object", StringType(), False),
+            StructField("object_normalization_success", BooleanType(), False),
+        ]
+    )
+    data = [
+        (
+            "Chembl:119157",
+            "biolink:treats",
+            "EFO:1234",
+            "knowledge_assertion",
+            "manual_agent",
+            "infores:semmeddb",
+            ["infores:aggregator1"],
+            ["PMID:12345678"],
+            "aspect1",
+            "increased",
+            "aspect2",
+            "decreased",
+            ["source1"],
+            10,
+            10,
+            "CHEBI:119157",
+            True,
+            "MONDO:0005148",
+            True,
+        ),
+        (
+            "Chembl:119157",
+            "biolink:interacts_with",
+            "DRUGBANK:119157",
+            "prediction",
+            "computational_model",
+            "infores:gtex",
+            ["infores:aggregator2"],
+            ["PMID:23456789"],
+            "aspect3",
+            "decreased",
+            "aspect4",
+            "increased",
+            ["source2"],
+            10,
+            10,
+            "CHEBI:119157",
+            True,
+            "DRUGBANK:119157",
+            False,
+        ),
+        (
+            "DRUGBANK:119157",
+            "biolink:treats",
+            "EFO:1234",
+            "knowledge_assertion",
+            "manual_agent",
+            "infores:ubergraph",
+            ["infores:aggregator3"],
+            ["PMID:34567890"],
+            "aspect5",
+            "increased",
+            "aspect6",
+            "decreased",
+            ["source3"],
+            10,
+            10,
+            "DRUGBANK:119157",
+            False,
+            "MONDO:0005148",
+            True,
+        ),
+    ]
+    return spark.createDataFrame(data, schema)
+
+
+@pytest.fixture
 def sample_biolink_predicates():
     return [
         {
@@ -228,6 +388,58 @@ def sample_biolink_category_hierarchy():
             ],
         }
     ]
+
+
+@pytest.fixture
+def sample_mapping_df(spark):
+    schema = StructType(
+        [
+            StructField("id", StringType(), False),
+            StructField(
+                "normalization_struct",
+                StructType(
+                    [
+                        StructField("normalized_id", StringType(), True),
+                        StructField("normalized_categories", ArrayType(StringType()), True),
+                    ]
+                ),
+                True,
+            ),
+        ]
+    )
+
+    data = [
+        ("CHEBI:119157", ("CHEBI:119157", ["biolink:Drug", "biolink:ChemicalEntity"])),
+        ("MONDO:0005148", ("MONDO:0005148", ["biolink:Disease"])),
+        ("DRUGBANK:119157", ("DRUGBANK:119157", ["biolink:SmallMolecule"])),
+    ]
+
+    return spark.createDataFrame(data, schema)
+
+
+@pytest.mark.spark(
+    help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
+)
+def test_normalization_summary_nodes_and_edges(spark, sample_nodes_norm, sample_edges_norm, sample_mapping_df):
+    # Call the normalization summary function
+    result = nodes.normalization_summary_nodes_and_edges(
+        sample_edges_norm,
+        sample_nodes_norm,
+        sample_mapping_df,
+        "source_kg",
+    )
+
+    # Check if result column has correct summary data
+    assert result.filter(result.normalization_success == False).count() == 2
+    assert result.count() == sample_edges_norm.count() * 2
+
+    # Check whether error handling works in case of nodes-edges mismatch
+    with pytest.raises(Exception) as e_info:
+        nodes.normalization_summary_nodes_and_edges(
+            sample_edges_norm,
+            sample_nodes_norm.withColumns("id", F.regexp_replace("id", "DRUGBANK", "wrong_id")),
+            "source_kg",
+        )
 
 
 @pytest.mark.spark(

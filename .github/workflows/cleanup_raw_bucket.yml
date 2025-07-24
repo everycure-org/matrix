@@ -16,10 +16,6 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
-    env:
-      project_id: 'mtrx-hub-dev-3of'
-      workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
-      service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,9 +23,9 @@ jobs:
         id: auth
         uses: 'google-github-actions/auth@v2'
         with:
-          project_id: ${{ env.project_id }}
-          workload_identity_provider: ${{ env.workload_identity_provider }}
-          service_account: ${{ env.service_account }}
+          project_id: ${{ vars.PROJECT_ID }}
+          workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER_RW }}
+          service_account: ${{ vars.SERVICE_ACCOUNT_RW }}
           token_format: access_token
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
