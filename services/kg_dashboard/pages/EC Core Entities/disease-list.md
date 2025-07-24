@@ -255,7 +255,7 @@ SELECT * FROM bq.ec_core_components_disease_list_missing
 
 ## Disease List Connection Overview
 
-<Details title="Details">
+<Details title="Click to Understand This Chart">
 <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
 This section visualizes how entities from the disease list connect to other categories in the knowledge graph.
 The Sankey diagram shows the flow from incoming connection categories (left) through the disease list entities (center) 
@@ -302,7 +302,7 @@ ORDER BY count DESC
 
 ## Disease List Contents
 
-<Details title="Details">
+<Details title="Click to Understand This Chart">
 <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
 This table shows all entities in the disease list with their connectivity information. The Edge Count column displays 
 the total number of connections each disease has in the knowledge graph, providing insight into how well-connected 
