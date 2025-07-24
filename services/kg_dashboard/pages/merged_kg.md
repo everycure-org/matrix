@@ -7,26 +7,25 @@ title: Merged KG Composition
 </p>
 
 <script context="module">
-import { getSeriesColors, getOrderedColors } from '../_lib/colors';
-  
-  // function that uses the color ordering
+  import { getSeriesColors, sourceOrder } from '../_lib/colors';
+
+  // Reuse the sourceOrder logic from the central config
   export function sortBySeriesOrdered(data, seriesColumn) {
-    const uniqueSources = [...new Set(data.map(row => row[seriesColumn]))];
-    const orderedColors = getOrderedColors(uniqueSources);
-    
-    // Create a mapping of source to its priority order
-    const sourceOrder = {};
-    uniqueSources.forEach((source, index) => {
-      const aIndex = ['ec_medical', 'robokop', 'rtxkg2', 'disease_list', 'drug_list'].indexOf(source);
-      sourceOrder[source] = aIndex !== -1 ? aIndex : 1000 + index; // Put unknown sources after known ones
-    });
-    
-    // Sort the data based on the source order
-    return data.sort((a, b) => {
-      const aOrder = sourceOrder[a[seriesColumn]] || 9999;
-      const bOrder = sourceOrder[b[seriesColumn]] || 9999;
-      if (aOrder !== bOrder) return aOrder - bOrder;
-      return a[seriesColumn].localeCompare(b[seriesColumn]);
+    const knownSet = new Set(sourceOrder);
+
+    return [...data].sort((a, b) => {
+      const aSource = a[seriesColumn];
+      const bSource = b[seriesColumn];
+
+      const aIndex = sourceOrder.indexOf(aSource);
+      const bIndex = sourceOrder.indexOf(bSource);
+
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+
+      // Both unknown → sort alphabetically
+      return aSource.localeCompare(bSource);
     });
   }
 </script>
