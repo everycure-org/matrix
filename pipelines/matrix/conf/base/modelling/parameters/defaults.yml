@@ -2,11 +2,13 @@ modelling.drug_types:
   - biolink:Drug
   - biolink:SmallMolecule
 
+
 modelling.disease_types:
   - biolink:Disease
   - biolink:PhenotypicFeature
   - biolink:BehavioralFeature
   - biolink:DiseaseOrPhenotypicFeature
+
 
 
 modelling.splitter:
@@ -23,7 +25,6 @@ modelling.splitter:
     - 'cardiovascular_disorder'
     - 'metabolic_disease'
     - 'neurodegenerative_disease'
-
   # _object: matrix.pipelines.modelling.model_selection.DrugCVSplit
   # _object: sklearn.model_selection.StratifiedShuffleSplit
   # test_size: 0.1
@@ -51,7 +52,7 @@ _model_options:
     # _object: matrix.datasets.pair_generator.ReplacementDrugDiseasePairGenerator
     random_state: ${globals:random_state}
     y_label: 2
-    n_unknown: 2 
+    n_replacements: 2 
     drug_flags:
       - is_drug
     disease_flags:

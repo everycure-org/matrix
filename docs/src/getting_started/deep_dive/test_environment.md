@@ -53,6 +53,7 @@ versions:
 paths:
   raw: data/test/raw
   kg_raw: data/test/raw
+  public_kg_raw: data/test/raw
   ingestion: data/test/ingestion
   integration: data/test/releases/${versions.release}/datasets/integration
   filtering: data/test/releases/${versions.release}/runs/${run_name}/datasets/filtering

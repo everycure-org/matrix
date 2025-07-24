@@ -40,6 +40,49 @@ class SingleLabelPairGenerator(DrugDiseasePairGenerator):
         random.seed(random_state)
 
 
+def _sample_random_pairs(
+    graph: KnowledgeGraph,
+    known_data_set: Set[tuple],
+    drug_samp_ids: List[str],
+    disease_samp_ids: List[str],
+    n_unknown: int,
+    y_label: int,
+) -> pd.DataFrame:
+    """Helper function to sample random drug-disease pairs.
+
+    Args:
+        graph: KnowledgeGraph instance.
+        known_data_set: Set of known drug-disease pairs to avoid.
+        drug_samp_ids: List of drug IDs to sample from.
+        disease_samp_ids: List of disease IDs to sample from.
+        n_unknown: Number of unknown pairs to generate.
+        y_label: Label to assign to generated pairs.
+
+    Returns:
+        DataFrame with sampled drug-disease pairs.
+    """
+    unknown_data = []
+    while len(unknown_data) < n_unknown:
+        drug = random.choice(drug_samp_ids)
+        disease = random.choice(disease_samp_ids)
+
+        if (drug, disease) not in known_data_set:
+            unknown_data.append(
+                [
+                    drug,
+                    graph._embeddings[drug],
+                    disease,
+                    graph._embeddings[disease],
+                    y_label,
+                ]
+            )
+
+    return pd.DataFrame(
+        columns=["source", "source_embedding", "target", "target_embedding", "y"],
+        data=unknown_data,
+    )
+
+
 ## Generators for negative sampling during training
 
 
@@ -89,26 +132,8 @@ class RandomDrugDiseasePairGenerator(SingleLabelPairGenerator):
         drug_samp_ids = graph.flags_to_ids(self._drug_flags)
         disease_samp_ids = graph.flags_to_ids(self._disease_flags)
 
-        # Sample pairs
-        unknown_data = []
-        while len(unknown_data) < self._n_unknown:
-            drug = random.choice(drug_samp_ids)
-            disease = random.choice(disease_samp_ids)
-
-            if (drug, disease) not in known_data_set:
-                unknown_data.append(
-                    [
-                        drug,
-                        graph._embeddings[drug],
-                        disease,
-                        graph._embeddings[disease],
-                        self._y_label,
-                    ]
-                )
-
-        return pd.DataFrame(
-            columns=["source", "source_embedding", "target", "target_embedding", "y"],
-            data=unknown_data,
+        return _sample_random_pairs(
+            graph, known_data_set, drug_samp_ids, disease_samp_ids, self._n_unknown, self._y_label
         )
 
 
@@ -278,27 +303,9 @@ class DiseaseSplitDrugDiseasePairGenerator(SingleLabelPairGenerator):
         # Get drugs from graph that match drug flags
         drug_samp_ids = graph.flags_to_ids(self._drug_flags)
 
-        # Sample pairs
-        unknown_data = []
-        while len(unknown_data) < self._n_unknown:
-            drug = random.choice(drug_samp_ids)
-            disease = random.choice(disease_samp_ids)
-
-            if (drug, disease) not in known_data_set:
-                unknown_data.append(
-                    [
-                        drug,
-                        graph._embeddings[drug],
-                        disease,
-                        graph._embeddings[disease],
-                        self._y_label,
-                    ]
-                )
-
-        # Create DataFrame with generated pairs
-        unknown_df = pd.DataFrame(
-            columns=["source", "source_embedding", "target", "target_embedding", "y"],
-            data=unknown_data,
+        # Sample pairs using the helper function
+        unknown_df = _sample_random_pairs(
+            graph, known_data_set, drug_samp_ids, disease_samp_ids, self._n_unknown, self._y_label
         )
 
         # Verify no test diseases appear in negative samples

@@ -17,13 +17,11 @@ module "project_iam_bindings" {
 }
 
 # Binding for standard contractors (excludes embiology)
-resource "google_storage_bucket_iam_binding" "object_user_standard" {
+resource "google_storage_bucket_iam_member" "object_user_standard" {
   bucket = var.storage_bucket_name
   role   = google_project_iam_custom_role.read_and_no_delete_or_overwrite_storage_role.id
 
-  members = [
-    "serviceAccount:${resource.google_service_account.sa["external_subcon_standard"].email}"
-  ]
+  member = resource.google_service_account.sa["external_subcon_standard"].member
 
   condition {
     title       = "exclude_embiology_for_standard"
@@ -33,14 +31,15 @@ resource "google_storage_bucket_iam_binding" "object_user_standard" {
 }
 
 # Binding for embiology contractors and internal team (includes embiology)
-resource "google_storage_bucket_iam_binding" "object_user_embiology_and_internal" {
+resource "google_storage_bucket_iam_member" "object_user_embiology_and_internal" {
+  for_each = toset([
+    resource.google_service_account.sa["external_subcon_embiology"].member,
+    resource.google_service_account.sa["internal_data_science"].member
+  ])
   bucket = var.storage_bucket_name
   role   = google_project_iam_custom_role.read_and_no_delete_or_overwrite_storage_role.id
 
-  members = [
-    "serviceAccount:${resource.google_service_account.sa["external_subcon_embiology"].email}",
-    "serviceAccount:${resource.google_service_account.sa["internal_data_science"].email}"
-  ]
+  member = each.value
 
   condition {
     title       = "include_embiology_and_others"
@@ -50,6 +49,19 @@ resource "google_storage_bucket_iam_binding" "object_user_embiology_and_internal
       "resource.name.startsWith(\"${p}\")"
     ])
   }
+}
+
+# Unconditional bucket listing permissions for embiology and internal team
+# This is required because IAM conditions on storage.objects.list prevent bucket-level listing
+resource "google_storage_bucket_iam_member" "bucket_list_embiology_and_internal" {
+  for_each = toset([
+    resource.google_service_account.sa["external_subcon_embiology"].member,
+    resource.google_service_account.sa["internal_data_science"].member,
+    resource.google_service_account.sa["external_subcon_standard"].member
+  ])
+  bucket = var.storage_bucket_name
+  role   = "roles/storage.legacyBucketReader"
+  member = each.value
 }
 
 
