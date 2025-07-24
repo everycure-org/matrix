@@ -136,13 +136,9 @@ from
 ```
 
 
-This page summarizes the connectivity of EC Core Entities by examining two key lists: the disease list and the drug list. 
-  For each list, we report the mean and median number of direct neighbors (connections) per node, 
-  providing a view into how densely linked these entities are within the broader knowledge graph. 
-  Additional charts break down the typical categories connected to each node type, 
-  helping highlight which biological or clinical concepts most frequently co-occur. 
-  This analysis offers insight into the network structure surrounding diseases and drugs of interest, 
-  supporting downstream interpretations such as enrichment patterns or pathway overlaps.
+This page summarizes the connectivity of the EC Core Entities. For each, we display the distribution of direct neighbor 
+counts per node alongside summary statistics (mean and median). These charts help reveal how connectivity 
+varies across entities and highlight how well the disease and drug nodes are integrated into the graph.
 
 ## Disease list connections
 
