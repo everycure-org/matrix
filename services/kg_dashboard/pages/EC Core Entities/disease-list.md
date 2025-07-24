@@ -100,7 +100,7 @@ SELECT * FROM bq.disease_list_success
 
 ## Disease list normalization
 
-<Details title="Details">
+<Details title="Click to Understand This Chart">
 <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
 This section shows how successfully the entities in the disease list were normalized. 
 The donut chart summarizes the proportion of nodes that were successfully mapped to standardized identifiers (Success) 
@@ -186,7 +186,7 @@ by prefix and category.
 
 ## Disease list inclusion
 
-<Details title="Details">
+<Details title="Click to Understand This Chart">
 <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
 This section summarizes how successfully entities from the disease list were integrated into the merged knowledge graph.
 The donut chart shows the proportion of nodes that were included versus those that were missing.

@@ -234,11 +234,11 @@ from
 
 ## Disease list connections
 
-<Details title="Details">
+<Details title="Click to Understand This Chart">
 <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
   This section summarizes the connectivity of nodes in the disease list, measured by their number of direct neighbors in the 
   knowledge graph. The mean and median values reflect how many other entities (such as drugs, genes, or phenotypes) 
-  each drug node is linked to. This helps characterize the typical network context for diseases of interest, and highlights 
+  each disease node is linked to. This helps characterize the typical network context for diseases of interest, and highlights 
   how densely or sparsely connected different parts of the graph may be. For more details visit 
   <a class="underline text-blue-600" href="./EC%20Core%20Entities ">EC Core Entities</a>. 
 </div>
@@ -297,7 +297,7 @@ order by
 
 ## Drug list connections
 
-<Details title="Details">
+<Details title="Click to Understand This Chart">
 <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
   This section summarizes the connectivity of nodes in the drug list, measured by their number of direct neighbors in the 
   knowledge graph. The mean and median values reflect how many other entities (such as disease, genes, or phenotypes) 

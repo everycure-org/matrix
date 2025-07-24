@@ -89,7 +89,7 @@ SELECT * FROM bq.drug_list_success
 
 ## Drug list normalization
 
-<Details title="Details">
+<Details title="Click to Understand This Chart">
 <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
 This section shows how successfully the entities in the drug list were normalized. 
 The donut chart summarizes the proportion of nodes that were successfully mapped to standardized identifiers (Success) 
@@ -173,7 +173,7 @@ by prefix and category.
 
 ## Drug list inclusion
 
-<Details title="Details">
+<Details title="Click to Understand This Chart">
 <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
 This section summarizes how successfully entities from the drug list were integrated into the merged knowledge graph.
 The donut chart shows the proportion of nodes that were included versus those that were missing.
