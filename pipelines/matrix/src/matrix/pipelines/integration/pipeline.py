@@ -160,19 +160,6 @@ def create_pipeline(**kwargs) -> Pipeline:
         pipeline(
             [
                 node(
-                    func=nodes.union_and_deduplicate_nodes,
-                    inputs=[
-                        "params:integration.deduplication.retrieve_most_specific_category",
-                        *[
-                            f'integration.int.{source["name"]}.nodes.norm@spark'
-                            for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
-                            if source.get("integrate_in_kg", True) or source.get("is_core", True)
-                        ],
-                    ],
-                    outputs="integration.prm.unified_nodes",
-                    name="create_prm_unified_nodes",
-                ),
-                node(
                     func=nodes.create_core_id_mapping,
                     inputs=[
                         *[
@@ -183,6 +170,21 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ],
                     outputs="integration.int.core_node_mapping",
                     name="create_core_id_mapping",
+                ),
+                # union nodes
+                node(
+                    func=nodes.union_and_deduplicate_nodes,
+                    inputs=[
+                        "params:integration.deduplication.retrieve_most_specific_category",
+                        *[
+                            f'integration.int.{source["name"]}.nodes.norm@spark'
+                            for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
+                            if source.get("integrate_in_kg", True)
+                        ],
+                        "integration.int.core_node_mapping",
+                    ],
+                    outputs="integration.prm.unified_nodes",
+                    name="create_prm_unified_nodes",
                 ),
                 # union edges
                 ArgoNode(
