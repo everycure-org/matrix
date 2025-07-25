@@ -21,7 +21,7 @@ _model_input_ds: &_model_input_ds
 _model_ds: &_model_ds
   metadata:
     kedro-viz:
-      layer: models
+      layer: models   
 
 _reporting_ds: &_reporting_ds
   metadata:
