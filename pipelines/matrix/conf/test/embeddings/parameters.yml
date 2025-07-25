@@ -13,7 +13,6 @@ embeddings.topological:
 embeddings.node:
   resolver:
     _object: matrix.pipelines.embeddings.encoders.DummyResolver
-  api: "foo"
 
 embeddings.topological_estimator:
   iterations: 1
