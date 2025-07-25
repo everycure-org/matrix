@@ -7,27 +7,7 @@ title: Merged KG Composition
 </p>
 
 <script context="module">
-  import { getSeriesColors, sourceOrder } from '../_lib/colors';
-
-  // Reuse the sourceOrder logic from the central config
-  export function sortBySeriesOrdered(data, seriesColumn) {
-    const knownSet = new Set(sourceOrder);
-
-    return [...data].sort((a, b) => {
-      const aSource = a[seriesColumn];
-      const bSource = b[seriesColumn];
-
-      const aIndex = sourceOrder.indexOf(aSource);
-      const bIndex = sourceOrder.indexOf(bSource);
-
-      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
-      if (aIndex !== -1) return -1;
-      if (bIndex !== -1) return 1;
-
-      // Both unknown → sort alphabetically
-      return aSource.localeCompare(bSource);
-    });
-  }
+  import { getSeriesColors, sortDataBySource } from '../_lib/colors';
 </script>
 
 <!-- Node Queries -->
@@ -135,9 +115,8 @@ from bq.merged_kg_edges
           for more on  <a class="underline text-blue-600" href="https://biolink.github.io/biolink-model/#classes-visualization" target="_blank">categories</a> and 
           their associated Valid ID Prefixes.
         </p>
-        
         <BarChart 
-            data={sortBySeriesOrdered(node_categories_by_upstream_data_source, 'upstream_data_source')}
+            data={sortDataBySource(node_categories_by_upstream_data_source, 'upstream_data_source')}
             x=category
             y=count
             series=upstream_data_source
@@ -153,7 +132,7 @@ from bq.merged_kg_edges
         </Dropdown> 
         
         <BarChart 
-            data={sortBySeriesOrdered(node_prefix_by_upstream_data_source, 'upstream_data_source')}
+            data={sortDataBySource(node_prefix_by_upstream_data_source, 'upstream_data_source')}
             x=prefix
             y=count
             series=upstream_data_source
@@ -247,8 +226,8 @@ from bq.merged_kg_edges
             </Dropdown> 
         </div>
 
-        <BarChart 
-            data={sortBySeriesOrdered(predicates_by_upstream_data_source, 'upstream_data_source')}
+        <BarChart
+            data={sortDataBySource(predicates_by_upstream_data_source, 'upstream_data_source')}
             x=predicate
             y=count
             series=upstream_data_source
@@ -258,7 +237,7 @@ from bq.merged_kg_edges
         />
 
         <BarChart 
-            data={sortBySeriesOrdered(edge_types_by_upstream_data_source, 'upstream_data_source')}
+            data={sortDataBySource(edge_types_by_upstream_data_source, 'upstream_data_source')}
             x=edge_type
             y=count 
             series=upstream_data_source

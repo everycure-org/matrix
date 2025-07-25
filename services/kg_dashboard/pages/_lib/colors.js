@@ -58,10 +58,9 @@ function generateColorForSource(source) {
   return fallbackColors[colorIndex];
 }
 
-// Enhanced function to get colors in a consistent order
-export function getOrderedColors(uniqueSources) {
-  // Sort sources: known sources first (in predefined order), then unknown sources alphabetically
-  const orderedSources = uniqueSources.sort((a, b) => {
+// Centralized sorting logic for sources
+export function sortSourcesByOrder(sources) {
+  return sources.sort((a, b) => {
     const aIndex = sourceOrder.indexOf(a);
     const bIndex = sourceOrder.indexOf(b);
 
@@ -83,6 +82,30 @@ export function getOrderedColors(uniqueSources) {
     // Both are unknown - sort alphabetically
     return a.localeCompare(b);
   });
+}
+
+// Sort data array by a series column using the source order
+export function sortDataBySeriesOrder(data, seriesColumn) {
+  return [...data].sort((a, b) => {
+    const aSource = a[seriesColumn];
+    const bSource = b[seriesColumn];
+
+    const aIndex = sourceOrder.indexOf(aSource);
+    const bIndex = sourceOrder.indexOf(bSource);
+
+    if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+    if (aIndex !== -1) return -1;
+    if (bIndex !== -1) return 1;
+
+    // Both unknown → sort alphabetically
+    return aSource.localeCompare(bSource);
+  });
+}
+
+// Enhanced function to get colors in a consistent order
+export function getOrderedColors(uniqueSources) {
+  // Sort sources using the centralized logic
+  const orderedSources = sortSourcesByOrder([...uniqueSources]);
 
   return orderedSources.map(source =>
     sourceColorMap[source] || generateColorForSource(source)
@@ -96,22 +119,8 @@ export function getSeriesColors(data, seriesColumn) {
   const seriesColors = {};
   const orderedColors = getOrderedColors(uniqueSources);
 
-  // Sort sources the same way as getOrderedColors
-  const orderedSources = uniqueSources.sort((a, b) => {
-    const aIndex = sourceOrder.indexOf(a);
-    const bIndex = sourceOrder.indexOf(b);
-
-    if (aIndex !== -1 && bIndex !== -1) {
-      return aIndex - bIndex;
-    }
-    if (aIndex !== -1 && bIndex === -1) {
-      return -1;
-    }
-    if (aIndex === -1 && bIndex !== -1) {
-      return 1;
-    }
-    return a.localeCompare(b);
-  });
+  // Sort sources using the centralized logic
+  const orderedSources = sortSourcesByOrder([...uniqueSources]);
 
   // Map each source to its color
   orderedSources.forEach((source, index) => {
@@ -136,6 +145,35 @@ export function addKnownSource(sourceName, color, insertIndex = null) {
 // Utility function to get color for a single source
 export function getSourceColor(source) {
   return sourceColorMap[source] || generateColorForSource(source);
+}
+
+// Sort data by source column using consistent source ordering
+export function sortDataBySource(data, sourceColumn) {
+  return [...data].sort((a, b) => {
+    const aSource = a[sourceColumn];
+    const bSource = b[sourceColumn];
+
+    const aIndex = sourceOrder.indexOf(aSource);
+    const bIndex = sourceOrder.indexOf(bSource);
+
+    // Both are known sources - use sourceOrder priority
+    if (aIndex !== -1 && bIndex !== -1) {
+      return aIndex - bIndex;
+    }
+
+    // Known source comes before unknown source
+    if (aIndex !== -1 && bIndex === -1) {
+      return -1;
+    }
+
+    // Unknown source comes after known source
+    if (aIndex === -1 && bIndex !== -1) {
+      return 1;
+    }
+
+    // Both unknown - sort alphabetically
+    return aSource.localeCompare(bSource);
+  });
 }
 
 // Function to preview color assignments for a list of sources
