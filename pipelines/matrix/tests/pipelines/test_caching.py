@@ -1,3 +1,4 @@
+import os
 from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
@@ -18,7 +19,9 @@ from matrix.pipelines.batch.pipeline import (
     pass_through,
     resolve_cache_duplicates,
 )
+from matrix.pipelines.embeddings.encoders import DummyResolver
 from matrix.pipelines.embeddings.pipeline import create_node_embeddings_pipeline
+from matrix.pipelines.integration.normalizers.normalizers import DummyNodeNormalizer
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import ArrayType, FloatType, StringType, StructField, StructType
 from pyspark.testing import assertDataFrameEqual
@@ -57,10 +60,11 @@ def filtered_cache_schema():
 
 
 @pytest.fixture
-def sample_cache(spark: SparkSession, cache_schema, sample_api1, sample_api2) -> DataFrame:
+def sample_cache(spark: SparkSession, cache_schema, sample_nodenormalizer, sample_api2) -> DataFrame:
+    api = sample_nodenormalizer.version()
     data = [
-        ("A", [1.0, 2.0], sample_api1),
-        ("B", [4.0, 5.0], sample_api1),
+        ("A", [1.0, 2.0], api),
+        ("B", [4.0, 5.0], api),
         ("C", [7.0, 8.0], sample_api2),
         ("D", [8.0, 9.0], sample_api2),
     ]
@@ -68,25 +72,32 @@ def sample_cache(spark: SparkSession, cache_schema, sample_api1, sample_api2) ->
 
 
 @pytest.fixture
-def sample_duplicate_cache(spark: SparkSession, cache_schema, sample_api1) -> DataFrame:
+def sample_duplicate_cache(spark: SparkSession, cache_schema, sample_nodenormalizer) -> DataFrame:
+    api = sample_nodenormalizer.version()
     data = [
-        ("A", [1.0, 2.0], sample_api1),
-        ("B", [4.0, 5.0], sample_api1),
-        ("B", [4.0, 5.0], sample_api1),
-        ("D", [8.0, 9.0], sample_api1),
-        ("E", [9.0, 10.0], sample_api1),
+        ("A", [1.0, 2.0], api),
+        ("B", [4.0, 5.0], api),
+        ("B", [4.0, 5.0], api),
+        ("D", [8.0, 9.0], api),
+        ("E", [9.0, 10.0], api),
     ]
     return spark.createDataFrame(data, schema=cache_schema)
 
 
 @pytest.fixture
-def sample_api1():
-    return "gpt-4"
+def sample_nodenormalizer():
+    protocol_and_domain = os.getenv("NODENORM_PROTOCOL_AND_DOMAIN", "http://localhost:1080")
+    return DummyNodeNormalizer(True, True, protocol_and_domain=protocol_and_domain)
 
 
 @pytest.fixture
 def sample_api2():
     return "gpt-3"
+
+
+@pytest.fixture
+def sample_resolver():
+    return DummyResolver()
 
 
 @pytest.fixture
@@ -99,7 +110,9 @@ def sample_new_col():
     return "resolved"
 
 
-def test_derive_cache_misses(sample_input_df, sample_cache, sample_api1, sample_primary_key, embeddings_schema, spark):
+def test_derive_cache_misses(
+    sample_input_df, sample_cache, sample_nodenormalizer, sample_primary_key, embeddings_schema, spark
+):
     expected = spark.createDataFrame(
         [
             ("D",),
@@ -111,12 +124,11 @@ def test_derive_cache_misses(sample_input_df, sample_cache, sample_api1, sample_
     result_df = derive_cache_misses(
         df=sample_input_df,
         cache=sample_cache,
-        api=sample_api1,
+        transformer=sample_nodenormalizer,
         primary_key=sample_primary_key,
         preprocessor=pass_through,
         cache_schema=embeddings_schema,
     )
-
     assertDataFrameEqual(result_df, expected)
 
 
@@ -129,14 +141,14 @@ def test_cache_contains_duplicates_warning(sample_duplicate_cache, sample_id_col
 def test_enriched_keeps_same_size_with_cache_duplicates(
     sample_input_df,
     sample_duplicate_cache,
-    sample_api1,
+    sample_nodenormalizer,
     sample_primary_key,
     sample_new_col,
 ):
     enriched_df = lookup_from_cache(
         sample_input_df,
         sample_duplicate_cache,
-        sample_api1,
+        sample_nodenormalizer,
         sample_primary_key,
         pass_through,
         sample_new_col,
@@ -163,7 +175,6 @@ def test_cached_api_enrichment_pipeline(
     mock_encoder,
     sample_input_df: DataFrame,
     cache_schema: StructType,
-    sample_api1: str,
     embeddings_schema: pa.lib.Schema,
     sample_primary_key: str,
     sample_new_col: str,
@@ -177,8 +188,14 @@ def test_cached_api_enrichment_pipeline(
     async def dummy_resolver(docs: Sequence):
         return [[1.0, 2.0]] * len(docs)
 
-    resolver = mock_encoder()  # Because of the patch, we are guaranteed that this object is _identical_ to the one that will be created by Kedro (through the custom inject decorator).
+    def dummy_version() -> str:
+        return "dummy-version"
+
+    # Because of the patch, we are guaranteed that this object is _identical_ to the one
+    # that will be created by Kedro (through the custom inject decorator).
+    resolver = mock_encoder()
     resolver.apply.side_effect = dummy_resolver
+    resolver.version = dummy_version
 
     output = "embeddings.feat.graph.node_embeddings@spark"
     cache_path = str(tmp_path / "cache_dataset")
@@ -202,7 +219,6 @@ def test_cached_api_enrichment_pipeline(
             "batch.node_embeddings.cache.reload": LazySparkDataset(
                 filepath=cache_path,
             ),
-            "params:embeddings.node.api": MemoryDataset(sample_api1),
             "params:embeddings.node.primary_key": MemoryDataset(sample_primary_key),
             "params:embeddings.node.preprocessor": MemoryDataset(pass_through),
             "params:embeddings.node.resolver": MemoryDataset(
@@ -247,7 +263,6 @@ def test_no_resolver_calls_on_empty_cache_miss(spark: SparkSession):
     result = cache_miss_resolver_wrapper(
         df=spark.createDataFrame([], schema="key string"),
         transformer=AsyncMock(),
-        api="foo",
         batch_size=1,
         cache_schema=pa.schema({"foo": pa.string()}),
     )
