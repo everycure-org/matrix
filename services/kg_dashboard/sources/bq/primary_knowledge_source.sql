@@ -1,7 +1,7 @@
 SELECT
   primary_knowledge_source AS source,
   aggregator.element AS target,
-  COUNT(*) * 1.0 AS count
+  COUNT(*) AS count
 FROM
   `${project_id}.release_${bq_release_version}.edges_unified`,
   UNNEST(aggregator_knowledge_source.list) AS aggregator
