@@ -349,3 +349,63 @@ def visualise_pca(nodes: ps.DataFrame, column_name: str) -> plt.Figure:
 
 def embeddings_preprocessor(df: DataFrame, key_length: int, combine_cols: Sequence[str], new_col: str) -> DataFrame:
     return df.withColumn(new_col, F.concat_ws("", *combine_cols).substr(startPos=1, length=key_length))
+
+
+def generate_echarts_data(nodes: ps.DataFrame, drug_types: List[str], disease_types: List[str]) -> Dict:
+    """Generate ECharts-compatible data from PCA embeddings.
+
+    Args:
+        nodes: DataFrame with PCA embeddings
+        drug_types: List of drug category types
+        disease_types: List of disease category types
+
+    Returns:
+        Dictionary containing 'drugs' and 'diseases' arrays with ECharts-compatible data
+    """
+    # NOTE: This ECharts data generation function was partially generated using AI assistance.
+
+    # Convert to pandas
+    nodes_pdf = nodes.toPandas()
+
+    # Convert filtered dataframes to pandas
+    drugs_pdf = nodes_pdf[nodes_pdf["category"].isin(drug_types)]
+    diseases_pdf = nodes_pdf[nodes_pdf["category"].isin(disease_types)]
+
+    def extract_coordinates(pdf):
+        """Extract x and y coordinates from PCA embeddings."""
+        if len(pdf) > 0:
+            pdf["x"] = pdf["pca_embedding"].apply(lambda x: x[0] if len(x) > 0 else 0)
+            pdf["y"] = pdf["pca_embedding"].apply(lambda x: x[1] if len(x) > 1 else 0)
+        return pdf
+
+    # Extract x and y coordinates from PCA embeddings
+    drugs_pdf = extract_coordinates(drugs_pdf)
+    diseases_pdf = extract_coordinates(diseases_pdf)
+
+    # Prepare data with names for tooltip
+    drugs_with_names = []
+    for _, row in drugs_pdf.iterrows():
+        drugs_with_names.append(
+            {
+                "value": [float(row["x"]), float(row["y"])],
+                "name": str(row["name"]),
+                "id": str(row["id"]),
+                "category": "Drug",
+            }
+        )
+
+    diseases_with_names = []
+    for _, row in diseases_pdf.iterrows():
+        diseases_with_names.append(
+            {
+                "value": [float(row["x"]), float(row["y"])],
+                "name": str(row["name"]),
+                "id": str(row["id"]),
+                "category": "Disease",
+            }
+        )
+
+    return {
+        "drugs": drugs_with_names,
+        "diseases": diseases_with_names,
+    }

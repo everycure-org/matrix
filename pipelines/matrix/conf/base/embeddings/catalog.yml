@@ -97,3 +97,21 @@ embeddings.reporting.topological_pca:
 embeddings.reporting.topological_pca_plot:
   type: matplotlib.MatplotlibDataset
   filepath: ${globals:paths.embeddings}/reporting/pca_plot.png
+
+embeddings.reporting.echarts_drugs:
+  type: json.JSONDataset
+  filepath: ${globals:paths.embeddings}/reporting/echarts_drugs.json
+  save_args:
+    indent: 2
+  metadata:
+    kedro-viz:
+      layer: embeddings
+
+embeddings.reporting.echarts_diseases:
+  type: json.JSONDataset
+  filepath: ${globals:paths.embeddings}/reporting/echarts_diseases.json
+  save_args:
+    indent: 2
+  metadata:
+    kedro-viz:
+      layer: embeddings
