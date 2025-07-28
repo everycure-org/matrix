@@ -21,9 +21,7 @@ paths:
 
   # Run-based
 
-  # data/test/releases/test-release/runs/other-run/datasets/filtering
-
-  # Allow custom input of filtered graph
+  # Allow custom input of other runs
   filtering:          ${oc.env:FILTERING}
   embeddings:         ${oc.env:EMBEDDINGS}
   modelling:          data/test/releases/${versions.release}/runs/${run_name}/datasets/modelling
