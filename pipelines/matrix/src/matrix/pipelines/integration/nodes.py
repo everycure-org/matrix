@@ -47,12 +47,10 @@ def transform(transformer, **kwargs) -> dict[str, ps.DataFrame]:
     schema=BIOLINK_KG_EDGE_SCHEMA,
     pass_columns=True,
 )
-def union_edges(*args, cols: list[str]) -> ps.DataFrame:
+def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.DataFrame:
     """Function to unify edges datasets and promote subject/object to core_id."""
 
-    *edge_dfs, core_id_mapping = args  # Expect mapping as last argument
-
-    edges_df = _union_datasets(*edge_dfs)
+    edges_df = _union_datasets(*edges)
 
     # Promote subject to core_id
     edges_df = (
@@ -94,10 +92,10 @@ def union_edges(*args, cols: list[str]) -> ps.DataFrame:
     schema=BIOLINK_KG_NODE_SCHEMA,
     pass_columns=True,
 )
-def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *args, cols: list[str]) -> ps.DataFrame:
+def union_and_deduplicate_nodes(
+    retrieve_most_specific_category: bool, core_id_mapping: ps.DataFrame, *nodes, cols: list[str]
+) -> ps.DataFrame:
     """Function to unify nodes datasets."""
-
-    *nodes, core_id_mapping = args  # Expect mapping as last argument
 
     unioned = _union_datasets(*nodes)
 
