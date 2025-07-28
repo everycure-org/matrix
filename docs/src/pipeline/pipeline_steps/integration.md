@@ -10,6 +10,9 @@ There are 4 main steps in the integration pipeline:
 
 ![](../../assets/img/kg_integration_approach.excalidraw.svg)
 
+#### Retrieve most specific category
+
+After unioning nodes from different sources, while deduplicating them, we keep the most specific node category in the Biolink tree.
 
 #### Normalizing data from sources
 
@@ -58,7 +61,7 @@ Last but not least, finish up by registering the normalizer into `settings.py`. 
 ```python
 DYNAMIC_PIPELINES_MAPPING = {
     "integration": [
-        {"name": "<souce>"},
+        {"name": "<source>"},
         ...
     ]
 }

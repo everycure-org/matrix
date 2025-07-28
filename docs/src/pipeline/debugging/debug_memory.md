@@ -31,7 +31,7 @@ To fix this, we applied 70% of the pod's memory request as the neo4j heap size s
 
 Moreover, we noticed a similar problem in the Spark configuration, where the the Spark configuration was hardcoded to a specific value.
 
-> ⛔️ This still requires a fix, in the ideal case we would expect the resouces defined in the node to correctly propagate.
+> ⛔️ This still requires a fix, in the ideal case we would expect the resources defined in the node to correctly propagate.
 
 ```yaml
 # spark.yaml
