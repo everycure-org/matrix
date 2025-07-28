@@ -158,6 +158,23 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.fuse-group.topological_pca",
                 ],
             ),
+            ArgoNode(
+                func=nodes.generate_echarts_data,
+                inputs={
+                    "nodes": "embeddings.reporting.topological_pca",
+                    "drug_types": "params:modelling.drug_types",
+                    "disease_types": "params:modelling.disease_types",
+                },
+                outputs={
+                    "drugs": "embeddings.reporting.echarts_drugs",
+                    "diseases": "embeddings.reporting.echarts_diseases",
+                },
+                name="generate_echarts_data",
+                tags=[
+                    "argowf.fuse",
+                    "argowf.fuse-group.topological_pca",
+                ],
+            ),
         ],
     )
 

@@ -1,7 +1,7 @@
 run_name: ${oc.env:RUN_NAME}
 
 versions:
-  release: ${oc.env:RELEASE_VERSION,v0.6.0}
+  release: ${oc.env:RELEASE_VERSION,v0.8.0}
 
 release_folder_name: ${oc.env:RELEASE_FOLDER_NAME, releases}
 release_dir: ${runtime_gcs_bucket}/kedro/data/${release_folder_name}/${versions.release}
