@@ -375,6 +375,7 @@ ingestion.raw.robokop.nodes@pandas:
     index: false
   load_args:
     sep: "\t"
+    dtype: str
 
 ingestion.raw.robokop.edges@spark:
   <<: *_layer_raw
@@ -395,6 +396,7 @@ ingestion.raw.robokop.edges@pandas:
     index: false
   load_args:
     sep: "\t"
+    dtype: str
 
 ingestion.int.robokop.nodes:
    <<: [*_spark_parquet, *_layer_int]
@@ -426,6 +428,7 @@ ingestion.raw.spoke.nodes@pandas:
     index: false
   load_args:
     sep: "\t"
+    dtype: str
 
 ingestion.raw.spoke.edges@spark:
  <<: *_layer_raw
@@ -446,6 +449,7 @@ ingestion.raw.spoke.edges@pandas:
     index: false
   load_args:
     sep: "\t"
+    dtype: str
 
 ingestion.int.spoke.nodes:
  <<: [*_spark_parquet, *_layer_int]
