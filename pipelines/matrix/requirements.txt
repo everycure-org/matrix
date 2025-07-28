@@ -479,7 +479,7 @@ matplotlib-inline==0.1.7
     #   ipython
 matrix-schema==0.2.3
     # via matrix-validator
-matrix-validator @ git+https://github.com/everycure-org/matrix-validator.git@da99ece3d19ae6f21cfb0a85a9f81ce7b287d142#egg=matrix-validator
+matrix-validator @ git+https://github.com/everycure-org/matrix-validator.git@f9807edf91b45a1476f4f53eb188045d4f9fa358#egg=matrix-validator
     # via -r requirements.in
 mdurl==0.1.2
     # via markdown-it-py
@@ -1012,7 +1012,7 @@ tiktoken==0.9.0
     # via langchain-openai
 tinycss2==1.4.0
     # via bleach
-tokenizers==0.21.2
+tokenizers==0.21.4
     # via transformers
 toml==0.10.2
     # via kedro
