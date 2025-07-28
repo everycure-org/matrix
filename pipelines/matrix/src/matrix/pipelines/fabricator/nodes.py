@@ -10,8 +10,8 @@ logger = logging.getLogger(__name__)
 def validate_datasets(nodes: pd.DataFrame, edges: pd.DataFrame) -> str:
     """Function to run the Matrix Validator."""
 
-    # nodes = nodes.astype(str)
-    # edges = edges.astype(str)
+    nodes = nodes.astype(str)
+    edges = edges.astype(str)
 
     validator = ValidatorPolarsDataFrameImpl(nodes=pl.from_pandas(nodes), edges=pl.from_pandas(edges))
     validator.validate()
