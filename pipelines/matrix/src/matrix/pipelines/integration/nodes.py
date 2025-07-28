@@ -101,19 +101,6 @@ def union_and_deduplicate_nodes(
 
     core_promoted_nodes = unioned.join(core_id_mapping.withColumnRenamed("normalized_id", "id"), on="id", how="left")
 
-    # Detect conflicts - same normalized ID mapping to multiple core_ids
-    conflicts = (
-        core_promoted_nodes.filter(F.col("core_id").isNotNull())
-        .groupBy("id")
-        .agg(F.countDistinct("core_id").alias("distinct_core_ids"))
-        .filter(F.col("distinct_core_ids") > 1)
-    )
-
-    conflict_count = conflicts.count()
-    if conflict_count > 0:
-        logger.warning(f"{conflict_count} nodes have multiple distinct core_ids after normalization.")
-        conflicts.show(50, truncate=False)
-
     # Replace normalized IDs with Core IDs
     core_promoted_nodes = core_promoted_nodes.withColumn("id", F.coalesce("core_id", "id")).drop("core_id")
 
@@ -338,11 +325,28 @@ def create_core_id_mapping(*nodes: ps.DataFrame) -> ps.DataFrame:
     """Creates a mapping from normalized_id to core_id for core sources."""
     df = _union_datasets(*nodes)
 
+    df_filtered = df.select("id", "core_id").filter(  # 'id' is already the normalized_id at this point
+        (F.col("id").isNotNull()) & (F.col("core_id").isNotNull())
+    )
+
+    # Conflict detection: same normalized ID mapping to multiple core_ids
+    conflicts = (
+        df_filtered.groupBy("id")
+        .agg(F.countDistinct("core_id").alias("distinct_core_ids"))
+        .filter(F.col("distinct_core_ids") > 1)
+    )
+
+    conflict_count = conflicts.count()
+    if conflict_count > 0:
+        logger.warning(
+            f"{conflict_count} normalized IDs map to multiple core_ids. "
+            f"Proceeding despite core_id conflicts. Multiple core_ids found for the same normalized_id. "
+            f"Recommened to fix source data."
+        )
+        conflicts.show(50, truncate=False)
+
     return (
-        df.select("id", "core_id")  # 'id' is already the normalized_id at this point
-        .filter((F.col("id").isNotNull()) & (F.col("core_id").isNotNull()))
-        .dropDuplicates(["id"])
-        .withColumnRenamed("id", "normalized_id")  # Ensure consistent naming for join
+        df_filtered.dropDuplicates(["id"]).withColumnRenamed("id", "normalized_id")  # Ensure consistent naming for join
     )
 
 
