@@ -39,3 +39,26 @@ def create_pipeline(is_patch: bool, **kwargs) -> Pipeline:
             )
         ]
     )
+
+
+# NOTE: This file was partially generated using AI assistance.
+
+
+def get_modelling_sentinel_inputs() -> list[str]:
+    """Return the outputs that the modelling sentinel node should depend on."""
+    # The last output of the modelling/feature pipeline is the full matrix output after transformations
+    return ["matrix_transformations.full_matrix_output@spark"]
+
+
+def create_modelling_sentinel_pipeline(**kwargs) -> Pipeline:
+    """Create a sentinel pipeline for the end of the feature_and_modelling_run pipeline."""
+    return pipeline(
+        [
+            ArgoNode(
+                func=sentinel_function,
+                inputs=get_modelling_sentinel_inputs(),
+                outputs="modelling.dummy_sentinel",
+                name="sentinel_all_modelling_done",
+            )
+        ]
+    )
