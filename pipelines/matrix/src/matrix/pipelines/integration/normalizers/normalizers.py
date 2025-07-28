@@ -1,4 +1,3 @@
-import asyncio
 import functools
 import logging
 from abc import ABC, abstractmethod
@@ -52,7 +51,8 @@ class Normalizer(ABC):
 
     @retry(
         wait=wait_exponential(multiplier=2, min=1, max=60),
-        retry=retry_if_exception_type((aiohttp.ClientError, asyncio.TimeoutError)),
+        retry=retry_if_exception_type((aiohttp.ClientError)),
+        stop=tenacity.stop.stop_after_attempt(4),
         before_sleep=print,
     )
     async def normalize_batch(self, batch: Collection[str]):
