@@ -16,6 +16,18 @@ fabricator.int.disease_list:
     index: false
     sep: "\t"
 
+fabricator.int.rtx_kg2.violations:
+  type: text.TextDataset
+  filepath: ${globals:paths.public_kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/violations.txt
+
+fabricator.int.robokop.violations:
+  type: text.TextDataset
+  filepath: ${globals:paths.public_kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/violations.txt
+
+fabricator.int.spoke.violations:
+  type: text.TextDataset
+  filepath: ${globals:paths.public_kg_raw}/KGs/spoke/${globals:data_sources.spoke.version}/violations.txt
+
 fabricator.int.drug_list:
   <<: [*_pandas_csv, *_layer_raw]
   filepath: ${globals:paths.raw}/pre/drug_list
