@@ -42,7 +42,7 @@ The authentication process follows these steps:
 
 ### Authenticate with Service Accounts in GitHub Actions
 
-When we access IAP resouces in GitHub Actions, we need to set up the authentication using service accounts. The authentication process follows these steps:
+When we access IAP resources in GitHub Actions, we need to set up the authentication using service accounts. The authentication process follows these steps:
 
 1. **OAuth2 Client Configuration**:
    - Client ID and Secret are configured.
