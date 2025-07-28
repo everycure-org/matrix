@@ -25,7 +25,7 @@ paths:
 
   # Allow custom input of filtered graph
   filtering:          ${oc.env:FILTERING}
-  embeddings:         data/test/releases/${versions.release}/runs/${run_name}/datasets/embeddings
+  embeddings:         ${oc.env:EMBEDDINGS}
   modelling:          data/test/releases/${versions.release}/runs/${run_name}/datasets/modelling
   evaluation:         data/test/releases/${versions.release}/runs/${run_name}/datasets/evaluation
   matrix_generation:  data/test/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
