@@ -456,7 +456,7 @@ def test_unify_nodes(spark, sample_nodes, sample_biolink_category_hierarchy):
     core_id_mapping = spark.createDataFrame(core_mapping_data, schema="normalized_id string, core_id string")
 
     # Call the unify_nodes function
-    result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, nodes1, nodes2, core_id_mapping)
+    result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, core_id_mapping, nodes1, nodes2)
 
     # Check the result
     assert isinstance(result, ps.DataFrame)
@@ -487,7 +487,7 @@ def test_correctly_identified_categories(spark, sample_nodes, sample_biolink_cat
     core_id_mapping = spark.createDataFrame(core_mapping_data, schema="normalized_id string, core_id string")
 
     # When: unifying the two datasets, putting nodes2 first -> meaning within each group, "first()" grabs the NamedThing
-    result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, nodes1, nodes2, core_id_mapping)
+    result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, core_id_mapping, nodes1, nodes2)
 
     # Then: the most specific category is correctly identified
     assert result.filter(F.col("category") == "biolink:NamedThing").count() == 0
@@ -506,7 +506,7 @@ def test_unify_edges(spark, sample_edges):
     core_id_mapping = spark.createDataFrame(core_mapping_data, schema="normalized_id string, core_id string")
 
     # Call the unify_edges function
-    result = nodes.union_edges(edges1, edges2, core_id_mapping)
+    result = nodes.union_edges(core_id_mapping, edges1, edges2)
 
     # Check the result
     assert isinstance(result, ps.DataFrame)
