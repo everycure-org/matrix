@@ -87,7 +87,6 @@ integration:
     target_col: normalization_struct
     primary_key: id
 
-# TODO: Figure out whether to move to filtering or stay here
   deduplication:
     # choose if a node should have the most specific category.
     # E.g. if a node has all_categories [biolink:ChemicalEntity, biolink:NamedThing],
