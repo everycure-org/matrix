@@ -153,15 +153,13 @@ def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
 
         from_catalog = _extract_config(config, session)
 
-        # TODO:, pass in variables
-
+        # just for local run right now
         filtering_run = config.filtering_run or "test-run"
         embeddings_run = config.embeddings_run or "test-run"
-        release = "test-release"
-        os.environ["FILTERING"] = f"data/test/releases/{release}/runs/{filtering_run}/datasets/filtering"
-        os.environ["EMBEDDINGS"] = f"data/test/releases/{release}/runs/{embeddings_run}/datasets/embeddings"
 
-        # TODO: How do we preserve lineage? If embeddings have been generated from filtering, we need to ensure that the same filtering dataset is used.
+        # Would obviously do this in a programatic way - just making explicity for purposes of demo
+        os.environ["FILTERING"] = f"data/test/releases/test-release/runs/{filtering_run}/datasets/filtering"
+        os.environ["EMBEDDINGS"] = f"data/test/releases/test-release/runs/{embeddings_run}/datasets/embeddings"
 
         session.run(
             from_catalog=from_catalog,
