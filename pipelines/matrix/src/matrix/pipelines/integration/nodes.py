@@ -50,24 +50,24 @@ def transform(transformer, **kwargs) -> dict[str, ps.DataFrame]:
 def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.DataFrame:
     """Function to unify edges datasets and promote subject/object to core_id."""
 
-    edges_df = _union_datasets(*edges)
+    unioned_edges = _union_datasets(*edges)
 
     # Promote subject to core_id
-    edges_df = (
-        edges_df.join(core_id_mapping.withColumnRenamed("normalized_id", "subject"), on="subject", how="left")
+    unioned_edges = (
+        unioned_edges.join(core_id_mapping.withColumnRenamed("normalized_id", "subject"), on="subject", how="left")
         .withColumn("subject", F.coalesce("core_id", "subject"))
         .drop("core_id")
     )
 
     # Promote object to core_id
-    edges_df = (
-        edges_df.join(core_id_mapping.withColumnRenamed("normalized_id", "object"), on="object", how="left")
+    unioned_edges = (
+        unioned_edges.join(core_id_mapping.withColumnRenamed("normalized_id", "object"), on="object", how="left")
         .withColumn("object", F.coalesce("core_id", "object"))
         .drop("core_id")
     )
 
     unioned_dataset = (
-        edges_df.groupBy(["subject", "predicate", "object"])
+        unioned_edges.groupBy(["subject", "predicate", "object"])
         .agg(
             F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
             # TODO: we shouldn't just take the first one but collect these values from multiple upstream sources
@@ -97,9 +97,11 @@ def union_and_deduplicate_nodes(
 ) -> ps.DataFrame:
     """Function to unify nodes datasets."""
 
-    unioned = _union_datasets(*nodes)
+    unioned_nodes = _union_datasets(*nodes)
 
-    core_promoted_nodes = unioned.join(core_id_mapping.withColumnRenamed("normalized_id", "id"), on="id", how="left")
+    core_promoted_nodes = unioned_nodes.join(
+        core_id_mapping.withColumnRenamed("normalized_id", "id"), on="id", how="left"
+    )
 
     # Replace normalized IDs with Core IDs
     core_promoted_nodes = core_promoted_nodes.withColumn("id", F.coalesce("core_id", "id")).drop("core_id")
@@ -205,16 +207,15 @@ def normalize_edges(
     return edges
 
 
-def normalize_nodes(
+def _normalize_nodes_base(
     mapping_df: ps.DataFrame,
     nodes: ps.DataFrame,
 ) -> ps.DataFrame:
-    """Function normalizes a KG using external API endpoint.
+    """Base normalization function.
 
-    This function takes the nodes and edges frames for a KG and leverages
-    an external API to map the nodes to their normalized IDs.
-    It returns the datasets with normalized IDs.
-
+    This function handles the core normalization logic but leaves
+    deduplication to the calling functions so they can control
+    which rows to keep when there are conflicts.
     """
     mapping_df = _format_mapping_df(mapping_df)
 
@@ -228,7 +229,10 @@ def normalize_nodes(
         .withColumnRenamed("normalized_id", "id")
     )
 
-    # Keep original_categories information if it is provided by the source KG
+    # Determine the value of `all_categories` based on normalization results:
+    # - If `normalized_categories` is non-null and non-empty, use it.
+    # - Otherwise, if `original_categories` exists, fall back to it.
+    # - If neither is available, use an empty list as the default.
     if "all_categories" in nodes_normalized.columns:
         nodes_normalized = nodes_normalized.withColumnRenamed("all_categories", "original_categories")
     else:
@@ -249,6 +253,22 @@ def normalize_nodes(
         .when(F.col("original_categories").isNotNull(), F.col("original_categories"))
         .otherwise(F.lit([]).cast(T.ArrayType(T.StringType()))),
     )
+
+    return nodes_normalized
+
+
+def normalize_nodes(
+    mapping_df: ps.DataFrame,
+    nodes: ps.DataFrame,
+) -> ps.DataFrame:
+    """Function normalizes a KG using external API endpoint.
+
+    This function takes the nodes and edges frames for a KG and leverages
+    an external API to map the nodes to their normalized IDs.
+    It returns the datasets with normalized IDs.
+
+    """
+    nodes_normalized = _normalize_nodes_base(mapping_df, nodes)
 
     # Deduplicate rows by id
     return (
@@ -262,56 +282,18 @@ def normalize_core_nodes(
     mapping_df: ps.DataFrame,
     nodes: ps.DataFrame,
 ) -> ps.DataFrame:
-    """Function normalizes a KG using external API endpoint.
+    """Function normalizes core nodes (drugs/diseases) using external API endpoint.
 
     This function takes the nodes and edges frames for a KG and leverages
     an external API to map the nodes to their normalized IDs.
     It returns the datasets with normalized IDs.
 
     """
-    mapping_df = _format_mapping_df(mapping_df)
-
-    nodes_normalized = (
-        nodes.join(
-            mapping_df.select("id", "normalized_id", "normalized_categories", "normalization_success"),
-            on="id",
-            how="left",
-        )
-        .withColumnRenamed("id", "original_id")
-        .withColumnRenamed("normalized_id", "id")
-    )
+    nodes_normalized = _normalize_nodes_base(mapping_df, nodes)
 
     # If this is a core source (drug and disease list), add core_id = original_id
     # The core_id will be used as the id for all equivalent nodes  in the merged graph
     nodes_normalized = nodes_normalized.withColumn("core_id", F.col("original_id"))
-
-    mismatches = nodes_normalized.filter(F.col("core_id") != F.col("id"))
-    mismatch_count = mismatches.count()
-    if mismatch_count > 0:
-        mismatches.show(50, truncate=False)
-        logger.warn(f"{mismatch_count} core IDs changed during normalization.")
-
-    # Keep original_categories information if it is provided by the source KG
-    if "all_categories" in nodes_normalized.columns:
-        nodes_normalized = nodes_normalized.withColumnRenamed("all_categories", "original_categories")
-    else:
-        nodes_normalized = nodes_normalized.withColumn(
-            "original_categories", F.lit([]).cast(T.ArrayType(T.StringType()))
-        )
-
-    # Determine the value of `all_categories` based on normalization results:
-    # - If `normalized_categories` is non-null and non-empty, use it.
-    # - Otherwise, if `original_categories` exists, fall back to it.
-    # - If neither is available, use an empty list as the default.
-    nodes_normalized = nodes_normalized.withColumn(
-        "all_categories",
-        F.when(
-            (F.col("normalized_categories").isNotNull()) & (F.size(F.col("normalized_categories")) > 0),
-            F.col("normalized_categories"),
-        )
-        .when(F.col("original_categories").isNotNull(), F.col("original_categories"))
-        .otherwise(F.lit([]).cast(T.ArrayType(T.StringType()))),
-    )
 
     # Deduplicate rows by id
     return (
