@@ -1,6 +1,15 @@
 ---
 title: Association Summary
 ---
+<p>
+This Sankey diagram shows the flow of associations in the knowledge graph, from selected 
+<strong>subject categories</strong> <Info description="Subject categories represent the types of entities that appear as the starting point (subject) in an association, such as drugs, genes, or diseases." />
+through 
+<strong>predicates</strong> <Info description="A predicate represents the type of relationship between two entities (nodes) in the knowledge graph." /> 
+to 
+<strong>object categories</strong> <Info description="Object categories are the types of entities that appear as the endpoint (object) in an association, such as phenotypes, pathways, or other genes." />.
+The width of each flow represents the number of edges connecting the selected nodes and relationships.
+</p>
 
 ```sql subject_categories
 SELECT DISTINCT
@@ -57,9 +66,10 @@ ORDER BY sum(count) DESC
 
 </script>
 
-Dashboard pages on the left side of the screen are for exploring the data in the Matrix Knowledge Graph. Select categories from the dropdowns below to filter the knowledge graph visualization.
+
 
 ## Filter Knowledge Graph Categories
+Use the filters below to refine your view of associations in the Matrix Knowledge Graph. You can limit the visualization to specific subject categories, predicates, or object categories.
 
 <Grid columns=3>
 
@@ -136,8 +146,6 @@ ORDER BY count DESC
   valueCol='count'
   linkLabels='full'
   linkColor='gradient'
-  title='Filtered Knowledge Graph Flow'
-  subtitle='Flow from Selected Subject Categories through Selected Predicates to Selected Object Categories'
   chartAreaHeight={1400}
   depthOverride={depthOverrides}
 />
