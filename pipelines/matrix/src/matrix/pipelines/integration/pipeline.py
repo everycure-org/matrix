@@ -93,44 +93,24 @@ def _create_integration_pipeline(
             )
         )
 
-    if is_core:
-        pipelines.append(
-            pipeline(
-                [
-                    ArgoNode(
-                        func=nodes.normalize_core_nodes,
-                        inputs={
-                            "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
-                            "nodes": f"integration.int.{source}.nodes",
-                        },
-                        outputs=f"integration.int.{source}.nodes.norm@spark",
-                        name=f"normalize_{source}_nodes",
-                        tags=["argowf.fuse", f"argowf.fuse-group.{source}"],
-                        argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
-                    ),
-                ],
-                tags=source,
-            )
+    pipelines.append(
+        pipeline(
+            [
+                ArgoNode(
+                    func=nodes.normalize_core_nodes if is_core else nodes.normalize_nodes,
+                    inputs={
+                        "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
+                        "nodes": f"integration.int.{source}.nodes",
+                    },
+                    outputs=f"integration.int.{source}.nodes.norm@spark",
+                    name=f"normalize_{source}_nodes",
+                    tags=["argowf.fuse", f"argowf.fuse-group.{source}"],
+                    argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
+                ),
+            ],
+            tags=source,
         )
-    else:
-        pipelines.append(
-            pipeline(
-                [
-                    ArgoNode(
-                        func=nodes.normalize_nodes,
-                        inputs={
-                            "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
-                            "nodes": f"integration.int.{source}.nodes",
-                        },
-                        outputs=f"integration.int.{source}.nodes.norm@spark",
-                        name=f"normalize_{source}_nodes",
-                        tags=["argowf.fuse", f"argowf.fuse-group.{source}"],
-                        argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
-                    ),
-                ],
-                tags=source,
-            )
-        )
+    )
 
     return sum(pipelines)
 
