@@ -83,11 +83,7 @@ jobs:
             git push
           fi
 
-      - name: Setup Matrix CLI
-        working-directory: apps/matrix-cli
-        run: |
-          pip install uv
-          uv sync
+      # Removed matrix-cli setup - using placeholder content instead
 
       - name: Authenticate with Google Cloud
         uses: 'google-github-actions/auth@v2'
@@ -132,12 +128,9 @@ jobs:
           uv pip install -r requirements.txt 
           uv run scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
 
-      - name: Create Release Article Template
-        working-directory: apps/matrix-cli
+      - name: Create Release Article Template Placeholder
         env:
-          GH_TOKEN: ${{ github.token }}
           POSTS_DIR: docs/src/releases/posts
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         # only create release notes for minor, major, and intermediate bumps
         if: env.generate_article == 'True'
         run: |
@@ -151,19 +144,48 @@ jobs:
             exit 0
           fi
 
-          mkdir -p "${{env.release}}"
+          mkdir -p "$TARGET_DIR"
 
-          # If these fail, you may have crossed the quotas. See 
-          # https://cloud.google.com/vertex-ai/generative-ai/docs/quotas
-          uv run matrix releases template \
-            --headless \
-            --output-file "${{env.release}}/post.md" \
-            --until ${{env.gitref}} \
-            --version ${{env.release}}
+          # Create placeholder release article template
+          cat > "$FILE_PATH" << 'EOF'
+---
+title: Release ${{ env.release }}
+description: PLACEHOLDER - Please write release notes for ${{ env.release }}
+date: $(date +%Y-%m-%d)
+authors:
+  - name: PLACEHOLDER
+    title: PLACEHOLDER
+    image: PLACEHOLDER
+draft: true
+---
+
+# Release ${{ env.release }}
+
+**PLACEHOLDER CONTENT - PLEASE UPDATE**
+
+## Summary
+
+TODO: Write a summary of what's new in this release.
+
+## Key Changes
+
+TODO: List the main changes, improvements, and bug fixes.
+
+## Breaking Changes
+
+TODO: List any breaking changes that users need to be aware of.
+
+## What's Next
+
+TODO: Mention upcoming features or improvements.
+
+---
+
+*This release article was auto-generated and needs to be completed by developers.*
+EOF
           
-          mv "${{env.release}}" "${GITHUB_WORKSPACE}/${POSTS_DIR}"
           git add "$TARGET_DIR" && \
-          git commit -m "added release article template" && \
+          git commit -m "added release article template placeholder" && \
           git push
           
             

@@ -16,7 +16,6 @@ Key directories:
 
 - `/pipelines/matrix` - 🧬 [Drug Repurposing ML Pipeline](docs/src/pipeline)
 - `/infra` - 🏗️ [Infrastructure as Code (IaC) configuration](docs/src/infrastructure)
-- `/apps/matrix-cli` - 🛠️ Command Line Interface Tools
 - `/services` - ⚙️ Supporting Services and APIs
 
 ## 🎬 Getting Started
