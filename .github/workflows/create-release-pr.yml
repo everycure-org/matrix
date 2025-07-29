@@ -147,42 +147,10 @@ jobs:
           mkdir -p "$TARGET_DIR"
 
           # Create placeholder release article template
-          cat > "$FILE_PATH" << 'EOF'
----
-title: Release ${{ env.release }}
-description: PLACEHOLDER - Please write release notes for ${{ env.release }}
-date: $(date +%Y-%m-%d)
-authors:
-  - name: PLACEHOLDER
-    title: PLACEHOLDER
-    image: PLACEHOLDER
-draft: true
----
-
-# Release ${{ env.release }}
-
-**PLACEHOLDER CONTENT - PLEASE UPDATE**
-
-## Summary
-
-TODO: Write a summary of what's new in this release.
-
-## Key Changes
-
-TODO: List the main changes, improvements, and bug fixes.
-
-## Breaking Changes
-
-TODO: List any breaking changes that users need to be aware of.
-
-## What's Next
-
-TODO: Mention upcoming features or improvements.
-
----
-
-*This release article was auto-generated and needs to be completed by developers.*
-EOF
+          echo "TODO: Developers need to write release notes for ${{ env.release }}" > "$FILE_PATH"
+          echo "" >> "$FILE_PATH"
+          echo "This file was auto-created as a placeholder." >> "$FILE_PATH"
+          echo "Please replace this content with proper release notes." >> "$FILE_PATH"
           
           git add "$TARGET_DIR" && \
           git commit -m "added release article template placeholder" && \
