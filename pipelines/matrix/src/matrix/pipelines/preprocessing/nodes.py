@@ -8,7 +8,7 @@ import pyspark.sql as ps
 import pyspark.sql.functions as sf
 import requests
 from matrix.pipelines.preprocessing.normalization import resolve_ids_batch_async
-from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
+from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark.sql.functions import udf
 from pyspark.sql.types import StringType
 from tenacity import Retrying, stop_after_attempt, wait_exponential
