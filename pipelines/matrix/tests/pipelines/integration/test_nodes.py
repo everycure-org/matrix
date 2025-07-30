@@ -451,9 +451,7 @@ def test_unify_nodes(spark, sample_nodes, sample_biolink_category_hierarchy):
     nodes2 = sample_nodes.filter(sample_nodes.id != "CHEBI:119157")
 
     # Create an empty core_id_mapping for the test
-    # Create core_id_mapping that promotes CHEBI:119157 to a core ID
-    core_mapping_data = [("CHEBI:119157", "CORE_DRUG_1")]
-    core_id_mapping = spark.createDataFrame(core_mapping_data, schema="normalized_id string, core_id string")
+    core_id_mapping = spark.createDataFrame([], schema="normalized_id string, core_id string")
 
     # Call the unify_nodes function
     result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, core_id_mapping, nodes1, nodes2)
@@ -463,7 +461,7 @@ def test_unify_nodes(spark, sample_nodes, sample_biolink_category_hierarchy):
     assert result.count() == 2  # Should have deduplicated
 
     # Check if the promoted node has combined properties correctly
-    drug_node = result.filter(result.id == "CORE_DRUG_1").collect()[0]
+    drug_node = result.filter(result.id == "CHEBI:119157").collect()[0]
     assert set(drug_node.all_categories) == {"biolink:Drug", "biolink:ChemicalEntity", "biolink:SmallMolecule"}
     assert set(drug_node.publications) == {"PMID:12345678", "PMID:34567890"}
     assert set(drug_node.upstream_data_source) == {"source1", "source3"}
@@ -477,7 +475,6 @@ def test_core_promotion(spark, sample_nodes, sample_biolink_category_hierarchy):
     nodes1 = sample_nodes.filter(sample_nodes.id != "MONDO:0005148")
     nodes2 = sample_nodes.filter(sample_nodes.id != "CHEBI:119157")
 
-    # Create an empty core_id_mapping for the test
     # Create core_id_mapping that promotes CHEBI:119157 to a core ID
     core_mapping_data = [("CHEBI:119157", "CORE_DRUG_1")]
     core_id_mapping = spark.createDataFrame(core_mapping_data, schema="normalized_id string, core_id string")
@@ -503,9 +500,8 @@ def test_correctly_identified_categories(spark, sample_nodes, sample_biolink_cat
     nodes1 = sample_nodes
     nodes2 = sample_nodes.withColumn("category", F.lit("biolink:NamedThing"))
 
-    # Create core_id_mapping that promotes CHEBI:119157 to a core ID
-    core_mapping_data = [("CHEBI:119157", "CORE_DRUG_1")]
-    core_id_mapping = spark.createDataFrame(core_mapping_data, schema="normalized_id string, core_id string")
+    # Create an empty core_id_mapping for the test
+    core_id_mapping = spark.createDataFrame([], schema="normalized_id string, core_id string")
 
     # When: unifying the two datasets, putting nodes2 first -> meaning within each group, "first()" grabs the NamedThing
     result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, core_id_mapping, nodes1, nodes2)
@@ -522,9 +518,8 @@ def test_unify_edges(spark, sample_edges):
     edges1 = sample_edges.filter(sample_edges.subject != "CHEBI:120688")
     edges2 = sample_edges.filter(sample_edges.subject != "CHEBI:119157")
 
-    # Create core_id_mapping that promotes CHEBI:119157 to a core ID
-    core_mapping_data = [("CHEBI:119157", "CORE_DRUG_1")]
-    core_id_mapping = spark.createDataFrame(core_mapping_data, schema="normalized_id string, core_id string")
+    # Create empty core_id_mapping table
+    core_id_mapping = spark.createDataFrame([], schema="normalized_id string, core_id string")
 
     # Call the unify_edges function
     result = nodes.union_edges(core_id_mapping, edges1, edges2)
@@ -534,7 +529,7 @@ def test_unify_edges(spark, sample_edges):
     assert result.count() == 2  # Should have deduplicated
 
     # Check if the properties are combined correctly for the duplicated edge
-    treat_edge = result.filter((result.subject == "CORE_DRUG_1") & (result.object == "MONDO:0005148")).collect()[0]
+    treat_edge = result.filter((result.subject == "CHEBI:119157") & (result.object == "MONDO:0005148")).collect()[0]
     assert treat_edge.knowledge_level == "knowledge_assertion"
     assert treat_edge.agent_type == "manual_agent"
     assert treat_edge.primary_knowledge_source == "infores:semmeddb"

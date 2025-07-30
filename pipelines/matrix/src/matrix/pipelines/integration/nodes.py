@@ -421,7 +421,7 @@ def normalization_summary_nodes_and_edges(
     )
 
     # Check nodes and edges matching post-normalization
-    validation_check = check_nodes_and_edges_matching(edges, nodes)
+    check_nodes_and_edges_matching(edges, nodes)
 
     nodes_for_join = nodes.select("id", "original_categories", "all_categories").join(
         formatted_mapping, on="id", how="left"
