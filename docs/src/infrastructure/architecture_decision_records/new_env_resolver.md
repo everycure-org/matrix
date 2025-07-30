@@ -2,8 +2,8 @@
 title: Platform Refactor and Standardization.
 ---
 
-Status
-------
+## Status
+
 Draft
 
 # Context
