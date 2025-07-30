@@ -192,7 +192,7 @@ graph TD
 ## Implementation Changes Required
 
 1. Create User Environment Script.
-2. Remove Variables from `global.yml`.
+2. Remove Variables from `globals.yml`.
 3. Create the variable_resolver.
 4. Modify base/catalog.yml with Shared Anchors and use the variable_resolver
 5. Write proper unit tests.
