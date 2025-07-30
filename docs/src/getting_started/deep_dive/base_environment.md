@@ -45,8 +45,8 @@ The matrix project uses different data paths depending on the type and accessibi
 ### Raw Data Paths
 
 - **`kg_raw`**: Points to the dev bucket (`gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/`) for general raw KG data
-- **`kg_raw_private`**: Points to the prod bucket (`gs://mtrx-us-central1-hub-prod-storage/data/01_RAW/`) for private datasets (e.g., SPOKE, Embiology)
-- **`public_kg_raw`**: Points to the public bucket (`gs://data.dev.everycure.org/data/01_RAW/`) for publicly accessible data sources (e.g., RTX-KG2, Robokop, Ground Truth)
+- **`raw_private`**: Points to the prod bucket (`gs://mtrx-us-central1-hub-prod-storage/data/01_RAW/`) for private datasets (e.g., SPOKE, Embiology)
+- **`raw_public`**: Points to the public bucket (`gs://data.dev.everycure.org/data/01_RAW/`) for publicly accessible data sources (e.g., RTX-KG2, Robokop, Ground Truth)
 
 This separation ensures that:
 - Public data sources are available through the public data zone
