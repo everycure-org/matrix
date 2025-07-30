@@ -5,13 +5,12 @@ import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 from joblib import Memory
+from matrix_schema.datamodel.pandera import get_matrix_edge_schema, get_matrix_node_schema
+from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark.sql.window import Window
 
 from matrix.inject import inject_object
 from matrix.pipelines.integration.filters import determine_most_specific_category
-from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
-
-from .schema import BIOLINK_KG_EDGE_SCHEMA, BIOLINK_KG_NODE_SCHEMA
 
 # TODO move these into config
 memory = Memory(location=".cache/nodenorm", verbose=0)
@@ -44,7 +43,7 @@ def transform(transformer, **kwargs) -> dict[str, ps.DataFrame]:
 
 
 @check_output(
-    schema=BIOLINK_KG_EDGE_SCHEMA,
+    schema=get_matrix_edge_schema(validate_enumeration_values=False),
     pass_columns=True,
 )
 def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.DataFrame:
@@ -89,7 +88,7 @@ def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.Da
 
 
 @check_output(
-    schema=BIOLINK_KG_NODE_SCHEMA,
+    schema=get_matrix_node_schema(validate_enumeration_values=False),
     pass_columns=True,
 )
 def union_and_deduplicate_nodes(
