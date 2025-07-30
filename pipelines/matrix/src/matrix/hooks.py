@@ -19,9 +19,8 @@ from kedro_datasets.spark import SparkDataset
 from omegaconf import OmegaConf
 from pyspark import SparkConf
 
-from matrix.inject import inject_object
+from matrix.inject import _parse_for_objects
 from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
-from matrix.pipelines.integration.normalizers.normalizers import Normalizer
 
 logger = logging.getLogger(__name__)
 
@@ -362,9 +361,7 @@ class ReleaseInfoHooks:
 
     @staticmethod
     def extract_release_info(global_datasets: dict[str, Any]) -> dict[str, str]:
-        normalizer = ReleaseInfoHooks.extract_normalizer(
-            ReleaseInfoHooks._params["integration"]["normalization"]["normalizer"]
-        )
+        normalizer = _parse_for_objects(ReleaseInfoHooks._params["integration"]["normalization"]["normalizer"])
         info = {
             "Release Name": ReleaseInfoHooks._globals["versions"]["release"],
             "Datasets": global_datasets,
@@ -375,11 +372,6 @@ class ReleaseInfoHooks:
             "NodeNorm Endpoint": f"{normalizer.endpoint} ({normalizer.version()})",
         }
         return info
-
-    @staticmethod
-    @inject_object()
-    def extract_normalizer(normalizer: Normalizer) -> Normalizer:
-        return normalizer
 
     @staticmethod
     def upload_to_storage(release_info: dict[str, str]) -> None:
