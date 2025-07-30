@@ -99,12 +99,12 @@ def union_and_deduplicate_nodes(
 
     unioned_nodes = _union_datasets(*nodes)
 
-    core_promoted_nodes = unioned_nodes.join(
-        core_id_mapping.withColumnRenamed("normalized_id", "id"), on="id", how="left"
+    # Promote core nodes to use their core_id as the canonical id, while non-core nodes keep their normalized id
+    core_promoted_nodes = (
+        unioned_nodes.join(core_id_mapping.withColumnRenamed("normalized_id", "id"), on="id", how="left")
+        .withColumn("id", F.coalesce("core_id", "id"))
+        .drop("core_id")
     )
-
-    # Replace normalized IDs with Core IDs
-    core_promoted_nodes = core_promoted_nodes.withColumn("id", F.coalesce("core_id", "id")).drop("core_id")
 
     unioned_datasets = (
         core_promoted_nodes
