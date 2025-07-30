@@ -34,7 +34,7 @@ integration.raw.rtx_kg2.edges:
   ... # Remaining configuration here
 ```
 
-Note specifically the use of `globals:data_sources.rtx-kg2` in the definition of the catalog entry. For public data sources like RTX-KG2, Robokop, and Ground Truth, we use the `public_kg_raw` path which points to our public data bucket. Whenever new data becomes available, code changes are limited to bumping the `versions.sources.<source>` entry in the globals.
+Note specifically the use of `globals:data_sources.rtx-kg2` in the definition of the catalog entry. For public data sources like RTX-KG2, Robokop, and Ground Truth, we use the `raw_public` path which points to our public data bucket. Whenever new data becomes available, code changes are limited to bumping the `versions.sources.<source>` entry in the globals.
 
 !!! info
     To date our pipeline only ingests 3rd party data from the RTX-KG2 and ROBOKOP sources.
