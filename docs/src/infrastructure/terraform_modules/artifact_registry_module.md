@@ -135,24 +135,6 @@ module "prod_registry" {
 }
 ```
 
-### Maven Repository
-
-For Java/Maven artifacts:
-
-```terraform
-module "maven_registry" {
-  source = "../../../modules/artifact_registry"
-  
-  project_id              = "myproject"
-  location                = "us-central1"
-  repository_id           = "maven-repo"
-  format                  = "MAVEN"
-  description             = "Maven artifacts repository"
-  delete_older_than_days  = 90     # Keep Maven artifacts longer
-  keep_count              = 20     # Keep more versions for libraries
-}
-```
-
 ## Best Practices
 
 1. **Environment-Specific Configuration**: Use different retention policies for different environments:
