@@ -55,7 +55,7 @@ This separation ensures that:
 
 ### Path Configuration
 
-All paths are configured in `globals.yml` and referenced throughout the data catalog using template variables like `${globals:paths.public_kg_raw}`.
+All paths are configured in `globals.yml` and referenced throughout the data catalog using template variables like `${globals:paths.raw_public}`.
 
 ## MLFlow and Spark
 
