@@ -1,8 +1,3 @@
-# This local variable converts the number of days into the required seconds format.
-locals {
-  delete_older_than_seconds = var.delete_older_than_days > 0 ? format("%ds", var.delete_older_than_days * 86400) : null
-}
-
 resource "google_artifact_registry_repository" "this" {
   project       = var.project_id
   location      = var.location
@@ -12,25 +7,26 @@ resource "google_artifact_registry_repository" "this" {
 
   # Dynamic block to create the DELETE policy only if delete_older_than_days is greater than 0.
   dynamic "cleanup_policies" {
-    for_each = local.delete_older_than_seconds != null ? [1] : []
+    for_each = var.delete_older_than_days != null ? [1] : []
     content {
       id     = "delete-old-artifacts"
       action = "DELETE"
       condition {
-        older_than = local.delete_older_than_seconds
+        older_than = var.delete_older_than_days
         tag_state  = "ANY"
       }
     }
   }
 
-  # Dynamic block to create the KEEP policy only if keep_count is greater than 0.
+  # Policy to delete sample-run images after 1 day (configurable)
   dynamic "cleanup_policies" {
-    for_each = var.keep_count > 0 ? [1] : []
+    for_each = length(var.sample_run_tag_prefixes) > 0 ? [1] : []
     content {
-      id     = "keep-minimum-recent-versions"
-      action = "KEEP"
+      id     = "delete-sample-run-images"
+      action = "DELETE"
       condition {
-        tag_state = var.tag_state
+        tag_prefixes = var.sample_run_tag_prefixes
+        older_than   = "1d" # This is a fixed value for sample-run images
       }
     }
   }
