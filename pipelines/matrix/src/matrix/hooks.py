@@ -362,6 +362,9 @@ class ReleaseInfoHooks:
 
     @staticmethod
     def extract_release_info(global_datasets: dict[str, Any]) -> dict[str, str]:
+        normalizer = ReleaseInfoHooks.extract_normalizer(
+            ReleaseInfoHooks._params["integration"]["normalization"]["normalizer"]
+        )
         info = {
             "Release Name": ReleaseInfoHooks._globals["versions"]["release"],
             "Datasets": global_datasets,
@@ -369,16 +372,14 @@ class ReleaseInfoHooks:
             "KG dashboard": ReleaseInfoHooks.build_kg_dashboard_link(),
             "MLFlow": ReleaseInfoHooks.build_mlflow_link(),
             "Code": ReleaseInfoHooks.build_code_link(),
-            "NodeNorm Endpoint": ReleaseInfoHooks.extract_normalizer_endpoint(
-                ReleaseInfoHooks._params["integration"]["normalization"]["normalizer"]
-            ),
+            "NodeNorm Endpoint": f"{normalizer.endpoint} ({normalizer.version()})",
         }
         return info
 
     @staticmethod
     @inject_object()
-    def extract_normalizer_endpoint(normalizer: Normalizer) -> str:
-        return normalizer.endpoint
+    def extract_normalizer(normalizer: Normalizer) -> Normalizer:
+        return normalizer
 
     @staticmethod
     def upload_to_storage(release_info: dict[str, str]) -> None:
