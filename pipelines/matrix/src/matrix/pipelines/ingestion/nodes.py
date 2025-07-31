@@ -2,8 +2,7 @@ import logging
 from typing import Tuple
 
 import pandas as pd
-
-from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
+from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
 
 logger = logging.getLogger(__name__)
 
