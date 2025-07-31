@@ -144,7 +144,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                         *[
                             f'integration.int.{source["name"]}.nodes.norm@spark'
                             for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
-                            if source.get("is_core", True)
+                            if source.get(
+                                "is_core", False
+                            )  # Default False means only sources with explicit "is_core": True are included
                         ],
                     ],
                     outputs="integration.int.core_node_mapping",
