@@ -170,7 +170,11 @@ jobs:
           Save the output to the file at: $FILE_PATH"
 
           # Use Claude Code to generate the release notes
-          echo "$CLAUDE_INSTRUCTION" | claude --allowedTools "Bash(git log:*) Bash(git diff:*) Bash(gh pr view:*) Bash(ls:*)" --permission-mode acceptEdits 
+          echo "$CLAUDE_INSTRUCTION" | claude \
+          --allowedTools "Bash(for:*) Bash(git tag:*) Bash(git log:*) Bash(git diff:*) Bash(gh pr list:*) Bash(ls:*) Bash(awk:*) Bash(head:*)" \
+          --model sonnet \
+          --permission-mode acceptEdits \
+          --output-format stream-json --verbose -p | jq
           
           # If Claude Code failed, create a placeholder as fallback
           if [ ! -f "$FILE_PATH" ] || [ ! -s "$FILE_PATH" ]; then
