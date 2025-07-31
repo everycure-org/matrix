@@ -32,7 +32,7 @@ class NoTransformation(MatrixTransformation):
     def apply(self, matrix_df: ps.DataFrame, score_col: str) -> ps.DataFrame:
         # Add rank-based partitioning column for even distribution
         # Partition into chunks of 100,000 ranks each for manageable file sizes
-        return matrix_df.withColumn("rank_bucket", F.floor(F.col("rank") / 10))
+        return matrix_df.withColumn("rank_bucket", F.floor(F.col("rank") / 100000))
 
 
 class RankBasedFrequentFlyerTransformation(MatrixTransformation):
