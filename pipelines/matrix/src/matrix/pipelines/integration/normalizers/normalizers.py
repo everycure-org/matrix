@@ -33,6 +33,7 @@ class Normalizer(ABC):
     ) -> None:
         self._protocol_and_domain = protocol_and_domain
         self._get_normalized_nodes_path = get_normalized_nodes_path
+        self.endpoint = f"{self._protocol_and_domain}{self._get_normalized_nodes_path}"
         self._conflate = conflate
         self._drug_chemical_conflate = drug_chemical_conflate
         self._description = description
@@ -63,10 +64,9 @@ class Normalizer(ABC):
             "description": self._description,
         }
 
-        endpoint = f"{self._protocol_and_domain}{self._get_normalized_nodes_path}"
-        logger.info(f"endpoint: {endpoint}")
+        logger.info(f"endpoint: {self.endpoint}")
         async with aiohttp.ClientSession() as session:
-            async with session.post(url=endpoint, json=request_json) as resp:
+            async with session.post(url=self.endpoint, json=request_json) as resp:
                 if resp.status == 200:
                     response_json = await resp.json()
                     logger.debug(response_json)
