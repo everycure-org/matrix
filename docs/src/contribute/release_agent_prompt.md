@@ -61,7 +61,7 @@ And use this to get a sense of the changes which you can now describe in the nex
    categories:
      - Release
    authors:
-     - { unique_authors_from_prs }
+     - { unique_authors_from_prs } # make sure these are only github usernames
    ---
 
    ### Breaking Changes 🛠
