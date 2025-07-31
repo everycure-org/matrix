@@ -136,7 +136,7 @@ jobs:
           if [ "${{ env.BUMP_TYPE }}" == "minor" ]; then
             RELEASE_PIPELINE='kg_release'
           else
-            RELEASE_PIPELINE='kg_release_patch_full_run'
+            RELEASE_PIPELINE='e2e_kg_and_matrix_run'
           fi
           kedro experiment run \
             --username GH-Actions-bot \
