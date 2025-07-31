@@ -22,14 +22,14 @@ history, GitHub PRs, and their associated code changes.
 
 2. **Fetch PR Details with Labels**
 
-   - For each PR number, run
-     `gh pr view {pr_number} --json title,number,url,labels,author,mergeCommit`
-     - you can run this with a for loop by
-       `for pr_number in {pr_numbers}; do gh pr view {pr_number} --json title,number,url,labels,author,mergeCommit; done`
-   - Handle missing PRs gracefully
+   - find out when the git tag was created with `git log -1 --format=%ai {since}`
+   - Get all PRs merged since then with with
+     `gh pr list -L 100 --json title,number,url,labels,author,mergeCommit --search 'merged:>{tag_date}'`
+   - Ignore missing PRs, looking at 100 is enough
 
 Now you have all the PRs with their titles and labels. Next you should take a look at the entirety
-of the code changes since the `since` tag.
+of the code changes since the `since` tag. Make sure you look at the code, not just the line number
+changes.
 
 ```bash
 git diff --numstat {since}..{until} -- ':!*.ipynb' ':!*.lock' ':!*.svg' ':!*.xml' \
@@ -37,9 +37,9 @@ git diff --numstat {since}..{until} -- ':!*.ipynb' ':!*.lock' ':!*.svg' ':!*.xml
   | xargs git diff {since}..{until} --
 ```
 
-And use this to get a sense of the changes which you can now describe in the next step
+And use this to get a sense of the changes which you can now describe in the next step.
 
-3. **Categorize by Labels** Group PRs into categories based on their GitHub labels:
+1. **Categorize by Labels** Group PRs into categories based on their GitHub labels:
 
    - **Breaking Changes 🛠**: PRs with `breaking change` label
    - **Exciting New Features 🎉**: PRs with `Feature` label
@@ -50,7 +50,7 @@ And use this to get a sense of the changes which you can now describe in the nex
    - **Documentation ✏️**: PRs with `documentation` label
    - **Other Changes**: All remaining PRs (excluding `onboarding`, `Release`, `hide-from-release`)
 
-4. **Aggregate and Format Output** Using your knowledge of the code changes and PRs that drove them,
+2. **Aggregate and Format Output** Using your knowledge of the code changes and PRs that drove them,
    write a changelog in the following format:
 
    ```markdown
@@ -116,8 +116,3 @@ And use this to get a sense of the changes which you can now describe in the nex
 ## Error Handling
 
 - If no PRs found, create empty changelog with appropriate message
-
-## Example Usage
-
-"Generate a changelog since tag v0.8.0 for version v0.9.0" "Create changelog for changes in the last
-4 weeks for version v1.2.0"
