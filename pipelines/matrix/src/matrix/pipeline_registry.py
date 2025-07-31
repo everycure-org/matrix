@@ -13,7 +13,6 @@ from matrix.pipelines.matrix_generation.pipeline import create_pipeline as creat
 from matrix.pipelines.matrix_transformations.pipeline import create_pipeline as create_matrix_transformations_pipeline
 from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
 from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
-from matrix.pipelines.sentinel.pipeline import create_modelling_sentinel_pipeline
 from matrix.pipelines.sentinel.pipeline import create_pipeline as create_sentinel_pipeline
 
 
@@ -46,7 +45,7 @@ def register_pipelines() -> dict[str, Pipeline]:
         "ingest_to_N4J": create_ingest_to_N4J_pipeline(),
         "sentinel_kg_release_patch": create_sentinel_pipeline(is_patch=True),
         "sentinel_kg_release": create_sentinel_pipeline(is_patch=False),
-        "sentinel_modelling_run": create_modelling_sentinel_pipeline(),
+        "sentinel_modelling_run": create_sentinel_pipeline(full_e2e_run=True),
         # "inference": create_inference_pipeline(),  # Run manually based on medical input
     }
 
@@ -89,6 +88,11 @@ def register_pipelines() -> dict[str, Pipeline]:
         pipelines["data_engineering"]
         + pipelines["data_release"]
         + pipelines["feature_and_modelling_run"]
+        + pipelines["sentinel_modelling_run"]
+    )
+
+    pipelines["amy_test"] = (
+        pipelines["matrix_transformations"]
         + pipelines["sentinel_modelling_run"]
     )
 

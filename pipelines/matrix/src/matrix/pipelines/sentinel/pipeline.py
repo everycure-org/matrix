@@ -10,14 +10,18 @@ from matrix.pipelines.data_release import last_node_name
 # It _must_ be the very last node in this pipeline.
 
 
-def get_sentinel_inputs(is_patch: bool) -> list[str]:
+def get_sentinel_inputs(is_patch: bool, full_e2e_run: bool) -> list[str]:
     kg_release_patch_outputs = ["data_release.prm.kgx_edges", "data_release.prm.kgx_nodes"] + [
         f"integration.int.{source['name']}.normalization_summary"
         for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
     ]
     kg_release_outputs = kg_release_patch_outputs + ["data_release.prm.kg_edges", "data_release.prm.kg_nodes"]
 
-    if is_patch:
+    if full_e2e_run:
+        # Can add other modelling pipeline outputs.
+        return ["matrix_transformations.full_matrix_output@spark"]
+
+    elif is_patch:
         return kg_release_patch_outputs
     else:
         return kg_release_outputs
@@ -27,8 +31,10 @@ def sentinel_function(*args):
     return True
 
 
-def create_pipeline(is_patch: bool, **kwargs) -> Pipeline:
-    sentinel_inputs = get_sentinel_inputs(is_patch)
+def create_pipeline(is_patch: bool = False, full_e2e_run: bool = False, **kwargs) -> Pipeline:
+    # breakpoint()
+    sentinel_inputs = get_sentinel_inputs(is_patch, full_e2e_run)
+    # breakpoint()
     return pipeline(
         [
             ArgoNode(
@@ -41,24 +47,24 @@ def create_pipeline(is_patch: bool, **kwargs) -> Pipeline:
     )
 
 
-# NOTE: This file was partially generated using AI assistance.
+# # NOTE: This file was partially generated using AI assistance.
 
 
-def get_modelling_sentinel_inputs() -> list[str]:
-    """Return the outputs that the modelling sentinel node should depend on."""
-    # The last output of the modelling/feature pipeline is the full matrix output after transformations
-    return ["matrix_transformations.full_matrix_output@spark"]
+# def get_modelling_sentinel_inputs() -> list[str]:
+#     """Return the outputs that the modelling sentinel node should depend on."""
+#     # The last output of the modelling/feature pipeline is the full matrix output after transformations
+#     return ["matrix_transformations.full_matrix_output@spark"]
 
 
-def create_modelling_sentinel_pipeline(**kwargs) -> Pipeline:
-    """Create a sentinel pipeline for the end of the feature_and_modelling_run pipeline."""
-    return pipeline(
-        [
-            ArgoNode(
-                func=sentinel_function,
-                inputs=get_modelling_sentinel_inputs(),
-                outputs="modelling.dummy_sentinel",
-                name="sentinel_all_modelling_done",
-            )
-        ]
-    )
+# def create_modelling_sentinel_pipeline(**kwargs) -> Pipeline:
+#     """Create a sentinel pipeline for the end of the feature_and_modelling_run pipeline."""
+#     return pipeline(
+#         [
+#             ArgoNode(
+#                 func=sentinel_function,
+#                 inputs=get_modelling_sentinel_inputs(),
+#                 outputs="modelling.dummy_sentinel",
+#                 name="sentinel_all_modelling_done",
+#             )
+#         ]
+#     )
