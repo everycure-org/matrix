@@ -43,7 +43,7 @@ def register_pipelines() -> dict[str, Pipeline]:
         ),
         "create_sample": create_create_sample_pipeline(),
         "ingest_to_N4J": create_ingest_to_N4J_pipeline(),
-        "sentinel_kg_release_patch": create_sentinel_pipeline(is_patch=True),
+        # "sentinel_kg_release_patch": create_sentinel_pipeline(is_patch=True),
         "sentinel_kg_release": create_sentinel_pipeline(is_patch=False),
         "sentinel_modelling_run": create_sentinel_pipeline(full_e2e_run=True),
         # "inference": create_inference_pipeline(),  # Run manually based on medical input
@@ -84,7 +84,7 @@ def register_pipelines() -> dict[str, Pipeline]:
         + pipelines["feature_and_modelling_run"]
     )
 
-    pipelines["kg_release_patch_full_run"] = (
+    pipelines["e2e_kg_and_matrix_run"] = (
         pipelines["data_engineering"]
         + pipelines["data_release"]
         + pipelines["feature_and_modelling_run"]

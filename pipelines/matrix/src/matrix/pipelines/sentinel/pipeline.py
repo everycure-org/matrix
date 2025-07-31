@@ -21,6 +21,7 @@ def get_sentinel_inputs(is_patch: bool, full_e2e_run: bool) -> list[str]:
         # Can add other modelling pipeline outputs.
         return ["matrix_transformations.full_matrix_output@spark"]
 
+    # We might be able to remove this if we run the modelling pipeline every time we do a patch.
     elif is_patch:
         return kg_release_patch_outputs
     else:
@@ -32,9 +33,7 @@ def sentinel_function(*args):
 
 
 def create_pipeline(is_patch: bool = False, full_e2e_run: bool = False, **kwargs) -> Pipeline:
-    # breakpoint()
     sentinel_inputs = get_sentinel_inputs(is_patch, full_e2e_run)
-    # breakpoint()
     return pipeline(
         [
             ArgoNode(
@@ -45,26 +44,3 @@ def create_pipeline(is_patch: bool = False, full_e2e_run: bool = False, **kwargs
             )
         ]
     )
-
-
-# # NOTE: This file was partially generated using AI assistance.
-
-
-# def get_modelling_sentinel_inputs() -> list[str]:
-#     """Return the outputs that the modelling sentinel node should depend on."""
-#     # The last output of the modelling/feature pipeline is the full matrix output after transformations
-#     return ["matrix_transformations.full_matrix_output@spark"]
-
-
-# def create_modelling_sentinel_pipeline(**kwargs) -> Pipeline:
-#     """Create a sentinel pipeline for the end of the feature_and_modelling_run pipeline."""
-#     return pipeline(
-#         [
-#             ArgoNode(
-#                 func=sentinel_function,
-#                 inputs=get_modelling_sentinel_inputs(),
-#                 outputs="modelling.dummy_sentinel",
-#                 name="sentinel_all_modelling_done",
-#             )
-#         ]
-#     )
