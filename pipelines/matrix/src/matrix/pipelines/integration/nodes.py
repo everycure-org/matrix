@@ -294,6 +294,26 @@ def normalize_core_nodes(
     # The core_id will be used as the id for all equivalent nodes  in the merged graph
     nodes_normalized = nodes_normalized.withColumn("core_id", F.col("original_id"))
 
+    # Intra-source conflict detection: same normalized ID mapping to multiple core_ids
+    # checking here ensures that there are no conflicts at the per-source level
+    conflicts = (
+        nodes_normalized.groupBy("id")
+        .agg(F.countDistinct("core_id").alias("distinct_core_ids"))
+        .filter(F.col("distinct_core_ids") > 1)
+    )
+
+    conflict_count = conflicts.count()
+    if conflict_count > 0:
+        logger.error(
+            f"{conflict_count} normalized IDs map to multiple core_ids. "
+            f"Multiple core_ids found for the same normalized_id. "
+            f"Please fix source data."
+        )
+        conflicts.show(truncate=False)
+        raise Exception("Normalized ID conflicts detected; please investigate")
+    else:
+        logger.info("No normalized ID conflicts found.")
+
     # Deduplicate rows by id
     return (
         nodes_normalized.withColumn("_rn", F.row_number().over(Window.partitionBy("id").orderBy("original_id")))
@@ -310,7 +330,8 @@ def create_core_id_mapping(*nodes: ps.DataFrame) -> ps.DataFrame:
         (F.col("id").isNotNull()) & (F.col("core_id").isNotNull())
     )
 
-    # Conflict detection: same normalized ID mapping to multiple core_ids
+    # Inter-source conflict detection: same normalized ID mapping to multiple core_ids
+    # Checking at this step ensures that there are no duplicates across all core sources
     conflicts = (
         df_filtered.groupBy("id")
         .agg(F.countDistinct("core_id").alias("distinct_core_ids"))
