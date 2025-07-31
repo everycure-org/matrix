@@ -30,7 +30,9 @@ class NoTransformation(MatrixTransformation):
     """No transformation applied to the matrix."""
 
     def apply(self, matrix_df: ps.DataFrame, score_col: str) -> ps.DataFrame:
-        return matrix_df
+        # Add rank-based partitioning column for even distribution
+        # Partition into chunks of 100,000 ranks each for manageable file sizes
+        return matrix_df.withColumn("rank_bucket", F.floor(F.col("rank") / 10))
 
 
 class RankBasedFrequentFlyerTransformation(MatrixTransformation):
@@ -104,6 +106,11 @@ class RankBasedFrequentFlyerTransformation(MatrixTransformation):
         matrix_df = matrix_df.withColumn("rank", F.row_number().over(score_window)).withColumn(
             "quantile_rank", F.col("rank") / N_matrix
         )
+
+        # Add rank-based partitioning column for even distribution
+        # Partition into chunks of 100,000 ranks each for manageable file sizes
+        matrix_df = matrix_df.withColumn("rank_bucket", F.floor(F.col("rank") / 100000))
+
         return matrix_df
 
 
