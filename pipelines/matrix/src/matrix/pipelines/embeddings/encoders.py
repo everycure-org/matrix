@@ -27,6 +27,20 @@ class AttributeEncoder(ABC):
         self._random_seed = random_seed
 
     @abstractmethod
+    def version(self) -> str:
+        """Provide version of the attribute encoder.
+
+        The version of the attribute encoder is leveraged to ensure
+        caching capabilities are able to properly invalidate the
+        cache when the underlying version changes.
+
+        For instance, the version can be the specific model used the LangChainEncoder,
+        when the model changes, the cache is subsequently invalidated ensuring
+        the new model is ran.
+        """
+        ...
+
+    @abstractmethod
     async def apply(self, documents: Sequence[str]) -> list[list[float]]:
         """Encode text from documents into embeddings.
 
@@ -59,6 +73,9 @@ class LangChainEncoder(AttributeEncoder):
         super().__init__(dimensions, random_seed)
         self._client = encoder
 
+    def version(self) -> str:
+        return self._client.model
+
     @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(5))
     async def apply(self, documents: Sequence[str]) -> list[list[float]]:
         """Encode text from dataframe using OpenAI embeddings.
@@ -75,17 +92,23 @@ class LangChainEncoder(AttributeEncoder):
 class RandomizedEncoder(AttributeEncoder):
     """Encoder class for generating random embeddings."""
 
-    def __init__(self, dimensions: int, random_seed: Optional[int] = None, encoder: Optional[AttributeEncoder] = None):
+    def __init__(
+        self,
+        dimensions: int,
+        random_seed: Optional[int] = None,
+    ):
         """Initialize Randomized encoder.
 
         Args:
             dimensions: Dimension of the output embeddings
             random_seed: Random seed for reproducibility
-            encoder: Encoder to use for embedding generation (dummy)
         """
         super().__init__(dimensions, random_seed)
         if random_seed is not None:
             np.random.seed(random_seed)
+
+    def version(self) -> str:
+        return "random"
 
     async def encode(self, documents: Sequence[str]) -> list[list[float]]:
         """Generate random embeddings for the input dataframe.
@@ -102,10 +125,17 @@ class RandomizedEncoder(AttributeEncoder):
 class PubmedBERTEncoder(AttributeEncoder):
     """Encoder class for PubmedBERT embeddings."""
 
-    def __init__(self, dimensions: int, random_seed: Optional[int] = None, encoder: Optional[AttributeEncoder] = None):
+    def __init__(
+        self,
+        dimensions: int,
+        random_seed: Optional[int] = None,
+        encoder: Optional[AttributeEncoder] = None,
+        model_path: str = "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext",
+    ):
         """Initialize PubmedBERT encoder.
 
         Args:
+            model_path: path to model, e.g.,
             dimensions: Dimension of the output embeddings
             random_seed: Random seed for reproducibility
             encoder: Encoder to use for embedding generation (dummy)
@@ -114,8 +144,12 @@ class PubmedBERTEncoder(AttributeEncoder):
         if random_seed is not None:
             np.random.seed(random_seed)
 
-        self.tokenizer = AutoTokenizer.from_pretrained("microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext")
-        self.model = AutoModel.from_pretrained("microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext")
+        self._model_path
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        self.model = AutoModel.from_pretrained(model_path)
+
+    def version(self) -> str:
+        return self._model_path
 
     async def encode(self, documents: Sequence[str]) -> list[list[float]]:
         """Generate PubmedBERT embeddings for the input dataframe.
@@ -140,6 +174,9 @@ class PubmedBERTEncoder(AttributeEncoder):
 class DummyResolver(AttributeEncoder):
     def __init__(self, **kwargs):
         super().__init__(0, 0)
+
+    def version(self) -> str:
+        return "dummy"
 
     async def apply(self, documents: Sequence[str]) -> list[list[float]]:
         return [[1.0, 2.0]] * len(documents)
