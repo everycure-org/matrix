@@ -34,9 +34,9 @@ paths:
   # Raw data (read-only from central buckets)
   raw: ${dev_gcs_bucket}/kedro/data/01_raw
   kg_raw: ${dev_gcs_bucket}/data/01_RAW
-  kg_raw_private: ${prod_gcs_bucket}/data/01_RAW
+  raw_private: ${prod_gcs_bucket}/data/01_RAW
   # Public data sources
-  public_kg_raw: ${public_gcs_bucket}/data/01_RAW
+  raw_public: ${public_gcs_bucket}/data/01_RAW
   
   # Release-based storage
   ingestion: ${release_dir}/datasets/ingestion
