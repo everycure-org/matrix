@@ -128,9 +128,22 @@ jobs:
           uv pip install -r requirements.txt 
           uv run scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
 
-      - name: Create Release Article Template Placeholder
+      - name: Setup Node.js for Claude Code
+        # only create release notes for minor, major, and intermediate bumps
+        if: env.generate_article == 'True'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Claude Code
+        if: env.generate_article == 'True'
+        run: |
+          npm install -g @anthropic-ai/claude-code
+
+      - name: Generate Release Article with Claude Code
         env:
           POSTS_DIR: docs/src/releases/posts
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         # only create release notes for minor, major, and intermediate bumps
         if: env.generate_article == 'True'
         run: |
@@ -146,14 +159,30 @@ jobs:
 
           mkdir -p "$TARGET_DIR"
 
-          # Create placeholder release article template
-          echo "TODO: Developers need to write release notes for ${{ env.release }}" > "$FILE_PATH"
-          echo "" >> "$FILE_PATH"
-          echo "This file was auto-created as a placeholder." >> "$FILE_PATH"
-          echo "Please replace this content with proper release notes." >> "$FILE_PATH"
+          # Generate release notes using Claude Code with the agent prompt
+          PROMPT_CONTENT=$(cat docs/src/contribute/release_agent_prompt.md)
+          
+          # Create the instruction for Claude Code
+          CLAUDE_INSTRUCTION="$PROMPT_CONTENT
+
+          Generate a changelog since tag ${{ env.latest_official_release }} for version ${{ env.release }}.
+          Output the release article following the exact markdown structure specified in the instructions above.
+          Save the output to the file at: $FILE_PATH"
+
+          # Use Claude Code to generate the release notes
+          echo "$CLAUDE_INSTRUCTION" | claude-code --no-confirm --output "$FILE_PATH"
+          
+          # If Claude Code failed, create a placeholder as fallback
+          if [ ! -f "$FILE_PATH" ] || [ ! -s "$FILE_PATH" ]; then
+            echo "Claude Code generation failed, creating placeholder instead"
+            echo "TODO: Developers need to write release notes for ${{ env.release }}" > "$FILE_PATH"
+            echo "" >> "$FILE_PATH"
+            echo "This file was auto-created as a placeholder after Claude Code generation failed." >> "$FILE_PATH"
+            echo "Please replace this content with proper release notes." >> "$FILE_PATH"
+          fi
           
           git add "$TARGET_DIR" && \
-          git commit -m "added release article template placeholder" && \
+          git commit -m "added AI-generated release article for ${{ env.release }}" && \
           git push
           
             
