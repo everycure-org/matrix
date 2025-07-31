@@ -86,7 +86,7 @@ embeddings.model_output.topological:
 
 embeddings.feat.nodes:
   <<: *_spark_parquet
-  filepath: ${globals:paths.embeddings}/feat/nodes_with_embeddings
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/UNC10/rotatE_on_KG2/updated_feat_nodes
 
 embeddings.reporting.loss:
   type: kedro_datasets.matplotlib.MatplotlibWriter
