@@ -106,6 +106,8 @@ graph TD
     style CB fill:#e6ffe6
     style CC1 fill:#e6ffe6
     style CD fill:#ffcccc
+    classDef largeFontSize font-size:16px;
+    class A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z1,Z2,CA,CB,CC1,CD,AA,BB,CC,DD,EE largeFontSize;
 ```
 
 ### Current Issues Illustrated
