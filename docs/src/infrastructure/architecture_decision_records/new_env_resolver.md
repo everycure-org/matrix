@@ -71,6 +71,6 @@ This approach would eliminate:
 - `.env.defaults` file (73 lines)
 - Environment variable duplication across globals files
 - Manual `.env` file editing
-- individual YAML anchor definitions in catalog files and keep the ones that is absolutely needed.
+- individual variable definitions in global files and keep the ones that is absolutely needed.
 
 This would remove the cognitive load on the developer and greatly reduce human errors.
