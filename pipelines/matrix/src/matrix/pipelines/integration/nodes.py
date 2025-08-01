@@ -46,11 +46,27 @@ def transform(transformer, **kwargs) -> dict[str, ps.DataFrame]:
     schema=get_matrix_edge_schema(validate_enumeration_values=False),
     pass_columns=True,
 )
-def union_edges(*edges, cols: list[str]) -> ps.DataFrame:
-    """Function to unify edges datasets."""
+def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.DataFrame:
+    """Function to unify edges datasets and promote subject/object to core_id."""
+
+    unioned_edges = _union_datasets(*edges)
+
+    # Promote subject to core_id
+    unioned_edges = (
+        unioned_edges.join(core_id_mapping.withColumnRenamed("normalized_id", "subject"), on="subject", how="left")
+        .withColumn("subject", F.coalesce("core_id", "subject"))
+        .drop("core_id")
+    )
+
+    # Promote object to core_id
+    unioned_edges = (
+        unioned_edges.join(core_id_mapping.withColumnRenamed("normalized_id", "object"), on="object", how="left")
+        .withColumn("object", F.coalesce("core_id", "object"))
+        .drop("core_id")
+    )
+
     unioned_dataset = (
-        _union_datasets(*edges)
-        .groupBy(["subject", "predicate", "object"])
+        unioned_edges.groupBy(["subject", "predicate", "object"])
         .agg(
             F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
             # TODO: we shouldn't just take the first one but collect these values from multiple upstream sources
@@ -75,13 +91,26 @@ def union_edges(*edges, cols: list[str]) -> ps.DataFrame:
     schema=get_matrix_node_schema(validate_enumeration_values=False),
     pass_columns=True,
 )
-def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, cols: list[str]) -> ps.DataFrame:
+def union_and_deduplicate_nodes(
+    retrieve_most_specific_category: bool, core_id_mapping: ps.DataFrame, *nodes, cols: list[str]
+) -> ps.DataFrame:
     """Function to unify nodes datasets."""
+
+    unioned_nodes = _union_datasets(*nodes)
+
+    # Promote core nodes to use their core_id as the canonical id and core_name as canonical name
+    # non-core nodes keep their normalized id and original name
+    core_promoted_nodes = (
+        unioned_nodes.join(core_id_mapping.withColumnRenamed("normalized_id", "id"), on="id", how="left")
+        .withColumn("id", F.coalesce("core_id", "id"))
+        .withColumn("name", F.coalesce("core_name", "name"))
+        .drop("core_id", "core_name")
+    )
+
     unioned_datasets = (
-        _union_datasets(*nodes)
+        core_promoted_nodes
         # first we group the dataset by id to deduplicate
-        .groupBy("id")
-        .agg(
+        .groupBy("id").agg(
             F.first("name", ignorenulls=True).alias("name"),
             F.first("category", ignorenulls=True).alias("category"),
             F.first("description", ignorenulls=True).alias("description"),
@@ -179,16 +208,15 @@ def normalize_edges(
     return edges
 
 
-def normalize_nodes(
+def _normalize_nodes_base(
     mapping_df: ps.DataFrame,
     nodes: ps.DataFrame,
 ) -> ps.DataFrame:
-    """Function normalizes a KG using external API endpoint.
+    """Base normalization function.
 
-    This function takes the nodes and edges frames for a KG and leverages
-    an external API to map the nodes to their normalized IDs.
-    It returns the datasets with normalized IDs.
-
+    This function handles the core normalization logic but leaves
+    deduplication to the calling functions so they can control
+    which rows to keep when there are conflicts.
     """
     mapping_df = _format_mapping_df(mapping_df)
 
@@ -202,7 +230,10 @@ def normalize_nodes(
         .withColumnRenamed("normalized_id", "id")
     )
 
-    # Keep original_categories information if it is provided by the source KG
+    # Determine the value of `all_categories` based on normalization results:
+    # - If `normalized_categories` is non-null and non-empty, use it.
+    # - Otherwise, if `original_categories` exists, fall back to it.
+    # - If neither is available, use an empty list as the default.
     if "all_categories" in nodes_normalized.columns:
         nodes_normalized = nodes_normalized.withColumnRenamed("all_categories", "original_categories")
     else:
@@ -224,11 +255,105 @@ def normalize_nodes(
         .otherwise(F.lit([]).cast(T.ArrayType(T.StringType()))),
     )
 
+    return nodes_normalized
+
+
+def normalize_nodes(
+    mapping_df: ps.DataFrame,
+    nodes: ps.DataFrame,
+) -> ps.DataFrame:
+    """Function normalizes a KG using external API endpoint.
+
+    This function takes the nodes and edges frames for a KG and leverages
+    an external API to map the nodes to their normalized IDs.
+    It returns the datasets with normalized IDs.
+
+    """
+    nodes_normalized = _normalize_nodes_base(mapping_df, nodes)
+
     # Deduplicate rows by id
     return (
         nodes_normalized.withColumn("_rn", F.row_number().over(Window.partitionBy("id").orderBy("original_id")))
         .filter(F.col("_rn") == 1)
         .drop("_rn")
+    )
+
+
+def normalize_core_nodes(
+    mapping_df: ps.DataFrame,
+    nodes: ps.DataFrame,
+) -> ps.DataFrame:
+    """Function normalizes core nodes (drugs/diseases) using external API endpoint.
+
+    This function takes the nodes and edges frames for a KG and leverages
+    an external API to map the nodes to their normalized IDs.
+    It returns the datasets with normalized IDs.
+
+    """
+    nodes_normalized = _normalize_nodes_base(mapping_df, nodes)
+
+    # If this is a core source (drug and disease list), add core_id = original_id
+    # The core_id will be used as the id for all equivalent nodes  in the merged graph
+    nodes_normalized = nodes_normalized.withColumn("core_id", F.col("original_id"))
+
+    # Intra-source conflict detection: same normalized ID mapping to multiple core_ids
+    # checking here ensures that there are no conflicts at the per-source level
+    conflicts = (
+        nodes_normalized.groupBy("id")
+        .agg(F.countDistinct("core_id").alias("distinct_core_ids"))
+        .filter(F.col("distinct_core_ids") > 1)
+    )
+
+    conflict_count = conflicts.count()
+    if conflict_count > 0:
+        logger.error(
+            f"{conflict_count} normalized IDs map to multiple core_ids. "
+            f"Multiple core_ids found for the same normalized_id. "
+            f"Please fix source data."
+        )
+        conflicts.show(truncate=False)
+        raise Exception("Normalized ID conflicts detected; please investigate")
+    else:
+        logger.info("No normalized ID conflicts found.")
+
+    # Deduplicate rows by id
+    return (
+        nodes_normalized.withColumn("_rn", F.row_number().over(Window.partitionBy("id").orderBy("original_id")))
+        .filter(F.col("_rn") == 1)
+        .drop("_rn")
+    )
+
+
+def create_core_id_mapping(*nodes: ps.DataFrame) -> ps.DataFrame:
+    """Creates a mapping from normalized_id to core_id for core sources."""
+    df = _union_datasets(*nodes)
+
+    df_filtered = df.select("id", "core_id", "name").filter(  # 'id' is already the normalized_id at this point
+        (F.col("id").isNotNull()) & (F.col("core_id").isNotNull())
+    )
+
+    # Inter-source conflict detection: same normalized ID mapping to multiple core_ids
+    # Checking at this step ensures that there are no duplicates across all core sources
+    conflicts = (
+        df_filtered.groupBy("id")
+        .agg(F.countDistinct("core_id").alias("distinct_core_ids"))
+        .filter(F.col("distinct_core_ids") > 1)
+    )
+
+    conflict_count = conflicts.count()
+    if conflict_count > 0:
+        logger.warning(
+            f"{conflict_count} normalized IDs map to multiple core_ids. "
+            f"Proceeding despite core_id conflicts. Multiple core_ids found for the same normalized_id. "
+            f"Recommened to fix source data."
+        )
+        conflicts.show(50, truncate=False)
+
+    return (
+        df_filtered.dropDuplicates(["id"])
+        .withColumnRenamed("id", "normalized_id")  # Ensure consistent naming for join
+        .withColumnRenamed("name", "core_name")
+        .select("normalized_id", "core_id", "core_name")
     )
 
 
@@ -252,14 +377,19 @@ def check_nodes_and_edges_matching(edges: ps.DataFrame, nodes: ps.DataFrame):
     -------
     Nothing returned; error is thrown if mismatching
     """
-    match_count = (
-        edges.join(nodes.withColumnRenamed("id", "subject"), on="subject", how="inner")
-        .join(nodes.withColumnRenamed("id", "object"), on="object", how="inner")
-        .count()
-    )
-    if edges.count() != match_count:
-        raise Exception("Nodes and Edges are mismatching post-normalization; please investigate")
-    return None
+    edge_ids = edges.select(F.col("subject").alias("id")).union(edges.select(F.col("object").alias("id"))).distinct()
+    node_ids = nodes.select("id").distinct()
+
+    missing_ids = edge_ids.join(node_ids, on="id", how="left_anti")
+
+    missing_count = missing_ids.count()
+    if missing_count > 0:
+        logger.warning(f"{missing_count} edges refer to node IDs not found in nodes.")
+        missing_ids.show(50, truncate=False)
+        raise Exception("Nodes and Edges are mismatching; please investigate")
+    else:
+        logger.info("All edge node references are valid.")
+        return "validation_passed"
 
 
 @check_output(
