@@ -59,12 +59,7 @@ venv:
 	uv run python -m ensurepip --upgrade || true
 
 install: venv precommit-hooks 
-	uv pip install -r requirements.txt #force it to install in our venv
-
-install_compatibility: venv precommit-hooks
-	# expects the file requirements.overrides.txt to be present, allows devs to override
-	# versions for local machine limitations (e.g. newer pytorch on macos intel)
-	uv pip install -r requirements.txt --overrides requirements.overrides.txt
+	uv sync # UV-native approach to install dependencies
 
 install_argo:
 	curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
@@ -78,7 +73,7 @@ precommit: precommit-hooks
 	uv run pre-commit run --from-ref origin/main --to-ref HEAD
 
 precommit-hooks:
-	uv pip install pre-commit 
+	uv sync --group pre-commit
 	uv run pre-commit install --install-hooks
 
 check_release_version_environment_variable:
@@ -133,7 +128,7 @@ compose_down:
 	# docker compose -f compose/docker-compose.yml down
 
 lock:
-	uv pip compile requirements.in > requirements.txt
+	uv lock
 
 wipe_neo:
 	# assumes you have neo4j running using docker-compose from `compose_up`

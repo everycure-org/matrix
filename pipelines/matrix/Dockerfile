@@ -17,11 +17,11 @@ ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
 WORKDIR /app
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-ADD requirements.txt .
+COPY pyproject.toml uv.lock* ./
 
 # Install Python dependencies
 RUN --mount=type=cache,target=/root/.cache uv venv -p 3.11 && \
-    uv pip install -r requirements.txt
+    uv sync
 ENV PATH=/app/.venv/bin:$PATH
 
 # Cache drivers as part of image
