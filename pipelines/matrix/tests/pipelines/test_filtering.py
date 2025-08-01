@@ -373,13 +373,15 @@ def test_triple_pattern_filter_multiple_patterns(spark):
     assertDataFrameEqual(result, expected)
 
 
-def test_remove_rows_by_column_except_sources_filter_without_excluded_sources(spark, sample_nodes):
-    filter = filters.RemoveRowsByColumnExceptSourcesFilter(column="id", remove_list=["CHEBI:003"], excluded_sources=[])
+def test_remove_rows_by_column_overlap_except_sources_filter_without_excluded_sources(spark, sample_nodes):
+    filter = filters.RemoveRowsByColumnOverlapExceptSourcesFilter(
+        column="all_categories", remove_list=["biolink:Drug"], excluded_sources=[]
+    )
     result = filter.apply(sample_nodes)
     expected = spark.createDataFrame(
         [
-            ("CHEBI:001", ["biolink:NamedThing", "biolink:Drug"], ["rtxkg2", "robokop"]),
             ("CHEBI:002", ["biolink:NamedThing", "biolink:ChemicalEntity"], ["rtxkg2", "robokop"]),
+            ("CHEBI:003", ["biolink:NamedThing", "biolink:ChemicalEntity"], ["robokop"]),
             ("CHEBI:004", ["biolink:NamedThing", "biolink:ChemicalEntity"], ["rtxkg2"]),
         ],
         schema=StructType(
@@ -393,9 +395,23 @@ def test_remove_rows_by_column_except_sources_filter_without_excluded_sources(sp
     assertDataFrameEqual(result, expected)
 
 
-def test_remove_rows_by_column_except_sources_filter_with_excluded_sources(spark, sample_nodes):
-    filter = filters.RemoveRowsByColumnExceptSourcesFilter(
-        column="id", remove_list=["CHEBI:003"], excluded_sources=["robokop"]
+def test_remove_rows_by_column_overlap_except_sources_filter_with_excluded_sources(spark, sample_nodes):
+    filter = filters.RemoveRowsByColumnOverlapExceptSourcesFilter(
+        column="all_categories", remove_list=["biolink:ChemicalEntity"], excluded_sources=["robokop"]
     )
     result = filter.apply(sample_nodes)
-    assertDataFrameEqual(result, sample_nodes)
+    expected = spark.createDataFrame(
+        [
+            ("CHEBI:001", ["biolink:NamedThing", "biolink:Drug"], ["rtxkg2", "robokop"]),
+            ("CHEBI:002", ["biolink:NamedThing", "biolink:ChemicalEntity"], ["rtxkg2", "robokop"]),
+            ("CHEBI:003", ["biolink:NamedThing", "biolink:ChemicalEntity"], ["robokop"]),
+        ],
+        schema=StructType(
+            [
+                StructField("id", StringType(), False),
+                StructField("all_categories", ArrayType(StringType()), False),
+                StructField("upstream_data_source", ArrayType(StringType()), False),
+            ]
+        ),
+    )
+    assertDataFrameEqual(result, expected)

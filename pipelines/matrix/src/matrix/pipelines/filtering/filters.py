@@ -217,11 +217,9 @@ class TriplePatternFilter(Filter):
         return df.filter(filter_condition)
 
 
-class RemoveRowsByColumnExceptSourcesFilter(Filter):
-    """Filter that removes rows containing specified categories with optional source exclusion.
-    This filter implements the logic to remove rows where a specific column
-    contains any of the values in the provided categories list, with an optional
-    exclusion for rows from specified data sources.
+class RemoveRowsByColumnOverlapExceptSourcesFilter(Filter):
+    """
+    Filter that removes rows where a column contains any of the values in the provided remove list, with an optional source exclusion.
     """
 
     def __init__(self, column: str, remove_list: List[str], excluded_sources: Optional[List[str]] = None):
@@ -230,7 +228,7 @@ class RemoveRowsByColumnExceptSourcesFilter(Filter):
         self.excluded_sources = excluded_sources or []
 
     def apply(self, df: ps.DataFrame) -> ps.DataFrame:
-        filter_condition = sf.arrays_overlap(sf.col("upstream_data_source"), sf.lit(self.excluded_sources)) | ~sf.col(
-            self.column
-        ).isin(self.remove_list)
+        filter_condition = sf.arrays_overlap(
+            sf.col("upstream_data_source"), sf.lit(self.excluded_sources)
+        ) | ~sf.arrays_overlap(sf.col(self.column), sf.lit(self.remove_list))
         return df.filter(filter_condition)
