@@ -14,99 +14,7 @@ In the past, we had different needs when creating datasets and storing them in t
 
 ## Current Environment Resolution Structure
 
-```mermaid
-graph TD
-    A[Application Start] --> B["load_environment_variables()"]
-    B --> C[Load .env.defaults]
-    C --> D[Load .env - overwrites defaults]
-    D --> E[Kedro OmegaConfigLoader]
-    
-    E --> F[Load base/globals.yml]
-    E --> G[Load environment-specific globals]
-    E --> H[Load catalog files from subdirectories]
-    
-    F --> I[Base Configuration]
-    I --> J[hardcoded defaults]
-    I --> K["${oc.env:VAR,default} resolvers"]
-    
-    G --> L[Environment Overrides]
-    L --> M[test/globals.yml]
-    L --> N[cloud/globals.yml] 
-    L --> O[sample/globals.yml]
-    
-    H --> P[Catalog Files - NO Base Inheritance]
-    P --> Q["${globals:paths.*} references"]
-    P --> R1[Each catalog.yml defines own YAML anchors]
-    P --> R2[3 individual catalog files with local definitions]
-    
-    K --> R[Runtime Values]
-    N --> R
-    M --> R
-    O --> R
-    Q --> R
-    R1 --> R
-    R2 --> R
-    
-    R --> S[Final Configuration]
-    
-    subgraph "Environment Variables Sources"
-        T[.env.defaults<br/>73 lines of defaults]
-        U[.env<br/>User overrides]
-        V[OS Environment]
-    end
-    
-    subgraph "Configuration Files"
-        W[base/globals.yml<br/>91 lines]
-        X[cloud/globals.yml<br/>~50 lines]
-        Y[test/globals.yml<br/>33 lines]
-        Z1[NO base/catalog.yml exists]
-        Z2[3 individual catalog.yml files<br/>Each in own subdirectory]
-    end
-    
-    subgraph "Actual Catalog Pattern"
-        CA[base/integration/catalog.yml<br/>Defines _spark_parquet, _pandas_parquet]
-        CB[cloud/integration/catalog.yml<br/>Defines _bigquery_ds, overrides datasets]
-        CC1[test/filtering/catalog.yml<br/>Defines _spark_json locally]
-        CD[Each catalog defines own anchors independently]
-    end
-    
-    subgraph "Resolvers"
-        AA[oc.env resolver]
-        BB[get_kg_raw_path_for_source]
-        CC[merge_dicts]
-        DD[if_null]
-        EE[cast_to_int]
-    end
-    
-    T --> B
-    U --> B
-    V --> AA
-    W --> F
-    X --> G
-    Y --> G
-    Z2 --> H
-    AA --> K
-    BB --> K
-    CC --> K
-    DD --> K
-    EE --> K
-    
-    CA --> R2
-    CB --> R2
-    CC1 --> R2
-    CD --> R2
-    
-    style A fill:#ff9999
-    style S fill:#99ff99
-    style T fill:#ffcc99
-    style U fill:#ffcc99
-    style V fill:#ffcc99
-    style Z1 fill:#ffaaaa
-    style CA fill:#ffffcc
-    style CB fill:#e6ffe6
-    style CC1 fill:#e6ffe6
-    style CD fill:#ffcccc
-```
+![Old Architecture](../assets/old%20architecture.drawio.png)
 
 ### Current Issues Illustrated
 
@@ -124,87 +32,38 @@ graph TD
 
 We will create a new catalog file for production environment called `cloud-prod`. This way we will have a dedicated catalog for production. We will then move towards removing the `.env` and `.env.defaults` and move all variables that don't change and are not personal to `global.yml`. `cloud` would default to using dev as it's source.
 
+## Modification and separation of globals and catalog files
+
+Each Catalog file and it's global will be used to resolve it's own environment. This way we could directly use dev (`cloud/catalog.yml` and `cloud/global.yml`) in production without duplicating the variables. Keeping it clean and concise.
+
 ## Datasets Standardization
 
 We will move all of our datasets into a single folder structure `data/raw` for raw data and update the variables to point to the correct folders.
 
 ## Proposed Future State
 
-```mermaid
-graph TD
-    subgraph "Setup"
-        A[User Script<br/>Sets environment context & runtime variables]
-        A1[Variables file generated<br/>Contains all runtime config]
-    end
-
-    subgraph "Kedro Configuration Loading"
-        B[Kedro OmegaConfigLoader]
-        C[Custom env_file resolver<br/>Reads from variables file]
-        D[base/globals.yml<br/>Static project defaults + dataset versions]
-        E[base/catalog.yml<br/>Shared YAML anchors & dataset types]
-        F[Environment catalog overrides<br/>cloud/*, test/* catalogs inherit from base]
-    end
-
-    subgraph "Final Merged Configuration"
-        G[Final Configuration Object<br/>Clean, standardized paths]
-    end
-
-    A --> A1
-    A1 --> C
-    B --> C
-    B --> D
-    B --> E
-    B --> F
-    D --> G
-    E --> F
-    F --> G
-    C --> G
-
-    subgraph "Key Changes"
-        H[Eliminate .env.defaults]
-        I[Eliminate environment globals duplication]
-        J[Standardize all paths to data/raw/*]
-        K[Create base/catalog.yml with shared anchors]
-    end
-
-    style A fill:#99ccff
-    style A1 fill:#99ccff
-    style D fill:#ffffcc
-    style E fill:#ccffcc
-    style F fill:#e6ffe6
-    style G fill:#99ff99
-    style H fill:#ffaaaa
-    style I fill:#ffaaaa
-    style J fill:#ccffcc
-    style K fill:#ccffcc
-```
+![New Architecture](../assets/new_architecture.drawio.png)
 
 ### Benefits of Proposed Structure
 
-1. **Single Source of Truth**: All configuration defaults in `base/globals.yml`
-2. **User Script**: Simple environment selection without manual `.env` editing
-3. **Minimal Environment Variables**: Only secrets and deployment-specific values
-4. **Standardized Paths**: Consistent `data/raw/*` structure across all datasets
-5. **Reduced Complexity**: Fewer override layers and resolution paths
-6. **Catalog Inheritance**: edit the `ingestion/base/catalog.yml` with proper shared YAML anchors that the 2 catalog files can inherit from, eliminating massive duplication.
-7. **Separation of concerns**: Globals file would be limited to just having the versions number and fully owned by the team responsible.
+1. **Single Source of Truth**: All configuration for cloud (dev) defaults in `cloud/globals.yml`. This will act as the starting point for production without duplicating.
+2. **Creation of production catalog and global YAML file**: This will contain the variables and information required for production to work.
+3. **Minimal Environment Variables**: Only secrets and deployment-specific values will remain in the `.env`
+4. **Standardized Paths**: Consistent `data/raw/*` structure across all datasets.
+5. **Reduced Complexity**: No overrides, just importing another env if needed. variables will be isolated to it's own env, and should pass through `catalog.yaml` respectively.
+6. **Separation of concerns**: Globals file would be limited to just having the versions number and variables fully owned by the team responsible. No references should be there unless utterly necessary.
+7. **Allow catalogs to inherit from other catalogs**: This way we would not need to define dev variables again for production.
 
 ## Implementation Changes Required
 
-1. Create User Environment Script.
-2. Remove Variables from `global.yml`.
-3. Create the variable_resolver.
-4. Modify base/catalog.yml with Shared Anchors and use the variable_resolver
+1. Create production `/cloud-prod/catalog.yml` and `/cloud-prod/global.yml`.
+2. Remove Variables from `.env` and move it to `global.yml`.
+3. modify the cloud catalog file and make appropriate changes.
+4. Modify `run.py` to use `cloud` catalog and global as an input to production catalog.
 5. Write proper unit tests.
 6. Make sure that the test catalog doesn't write to dev or prod buckets.
 7. Update Child Catalogs to Use Inheritance.
 8. Standardize All Paths by moving the files to the decided folder structure.
-9. Modify the variable file to point to the new location.
-
-## Nice to have feature
-
-1) Adding checksum to verify that the config file has not changed depending on the environment. This would be before running the workflow and also on-cloud.
-2) Refactor the `settings.py` file to remove the dynamic mapping to the variable file as well.
 
 ## Consequences
 
