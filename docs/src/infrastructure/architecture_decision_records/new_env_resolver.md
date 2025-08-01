@@ -4,7 +4,7 @@ title: Platform Refactor and Standardization.
 
 Status
 ------
-Draft
+In Review
 
 # Context
 
@@ -71,7 +71,7 @@ This approach would eliminate:
 - `.env.defaults` file (73 lines)
 - Environment variable duplication across globals files
 - Manual `.env` file editing
-- individual variable definitions in global files and keep the ones that is absolutely needed.
+- individual variable definitions in global files. No reference in global.
 - Each environment will have statement related to it's own work. dev will have all dev configuration and prod will have it's own. Achieving Separation of concerns
 
 This would remove the cognitive load on the developer and greatly reduce human errors.
