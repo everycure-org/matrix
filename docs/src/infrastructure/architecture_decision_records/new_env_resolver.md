@@ -72,5 +72,6 @@ This approach would eliminate:
 - Environment variable duplication across globals files
 - Manual `.env` file editing
 - individual variable definitions in global files and keep the ones that is absolutely needed.
+- Each environment will have statement related to it's own work. dev will have all dev configuration and prod will have it's own. Achieving Separation of concerns
 
 This would remove the cognitive load on the developer and greatly reduce human errors.
