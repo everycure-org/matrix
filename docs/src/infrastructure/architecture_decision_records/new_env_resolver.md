@@ -16,30 +16,30 @@ In the past, we had different needs when creating datasets and storing them in t
 
 ```mermaid
 graph TD
-    A[Application Start] --> B["load_environment_variables()"]
-    B --> C[Load .env.defaults]
-    C --> D[Load .env - overwrites defaults]
-    D --> E[Kedro OmegaConfigLoader]
+    A[<font size=12>Application Start] --> B["<font size=12>load_environment_variables()"]
+    B --> C[<font size=12>Load .env.defaults]
+    C --> D[<font size=12>Load .env - overwrites defaults]
+    D --> E[<font size=12>Kedro OmegaConfigLoader]
     
-    E --> F[Load base/globals.yml]
-    E --> G[Load environment-specific globals]
-    E --> H[Load catalog files from subdirectories]
+    E --> F[<font size=12>Load base/globals.yml]
+    E --> G[<font size=12>Load environment-specific globals]
+    E --> H[<font size=12>Load catalog files from subdirectories]
     
-    F --> I[Base Configuration]
-    I --> J[hardcoded defaults]
-    I --> K["${oc.env:VAR,default} resolvers"]
+    F --> I[<font size=12>Base Configuration]
+    I --> J[<font size=12>hardcoded defaults]
+    I --> K["<font size=12>${oc.env:VAR,default} resolvers"]
     
-    G --> L[Environment Overrides]
-    L --> M[test/globals.yml]
-    L --> N[cloud/globals.yml] 
-    L --> O[sample/globals.yml]
+    G --> L[<font size=12>Environment Overrides]
+    L --> M[<font size=12>test/globals.yml]
+    L --> N[<font size=12>cloud/globals.yml] 
+    L --> O[<font size=12>sample/globals.yml]
     
-    H --> P[Catalog Files - NO Base Inheritance]
-    P --> Q["${globals:paths.*} references"]
-    P --> R1[Each catalog.yml defines own YAML anchors]
-    P --> R2[3 individual catalog files with local definitions]
+    H --> P[<font size=12>Catalog Files - NO Base Inheritance]
+    P --> Q["<font size=12>${globals:paths.*} references"]
+    P --> R1[<font size=12>Each catalog.yml defines own YAML anchors]
+    P --> R2[<font size=12>3 individual catalog files with local definitions]
     
-    K --> R[Runtime Values]
+    K --> R[<font size=12>Runtime Values]
     N --> R
     M --> R
     O --> R
@@ -47,35 +47,35 @@ graph TD
     R1 --> R
     R2 --> R
     
-    R --> S[Final Configuration]
+    R --> S[<font size=12>Final Configuration]
     
-    subgraph "Environment Variables Sources"
-        T[.env.defaults<br/>73 lines of defaults]
-        U[.env<br/>User overrides]
-        V[OS Environment]
+    subgraph "<font size=12>Environment Variables Sources"
+        T[<font size=12>.env.defaults<br/>73 lines of defaults]
+        U[<font size=12>.env<br/>User overrides]
+        V[<font size=12>OS Environment]
     end
     
-    subgraph "Configuration Files"
-        W[base/globals.yml<br/>91 lines]
-        X[cloud/globals.yml<br/>~50 lines]
-        Y[test/globals.yml<br/>33 lines]
-        Z1[NO base/catalog.yml exists]
-        Z2[3 individual catalog.yml files<br/>Each in own subdirectory]
+    subgraph "<font size=12>Configuration Files"
+        W[<font size=12>base/globals.yml<br/>91 lines]
+        X[<font size=12>cloud/globals.yml<br/>~50 lines]
+        Y[<font size=12>test/globals.yml<br/>33 lines]
+        Z1[<font size=12>NO base/catalog.yml exists]
+        Z2[<font size=12>3 individual catalog.yml files<br/>Each in own subdirectory]
     end
     
-    subgraph "Actual Catalog Pattern"
-        CA[base/integration/catalog.yml<br/>Defines _spark_parquet, _pandas_parquet]
-        CB[cloud/integration/catalog.yml<br/>Defines _bigquery_ds, overrides datasets]
-        CC1[test/filtering/catalog.yml<br/>Defines _spark_json locally]
-        CD[Each catalog defines own anchors independently]
+    subgraph "<font size=12>Actual Catalog Pattern"
+        CA[<font size=12>base/integration/catalog.yml<br/>Defines _spark_parquet, _pandas_parquet]
+        CB[<font size=12>cloud/integration/catalog.yml<br/>Defines _bigquery_ds, overrides datasets]
+        CC1[<font size=12>test/filtering/catalog.yml<br/>Defines _spark_json locally]
+        CD[<font size=12>Each catalog defines own anchors independently]
     end
     
-    subgraph "Resolvers"
-        AA[oc.env resolver]
-        BB[get_kg_raw_path_for_source]
-        CC[merge_dicts]
-        DD[if_null]
-        EE[cast_to_int]
+    subgraph "<font size=12>Resolvers"
+        AA[<font size=12>oc.env resolver]
+        BB[<font size=12>get_kg_raw_path_for_source]
+        CC[<font size=12>merge_dicts]
+        DD[<font size=12>if_null]
+        EE[<font size=12>cast_to_int]
     end
     
     T --> B
@@ -106,8 +106,7 @@ graph TD
     style CB fill:#e6ffe6
     style CC1 fill:#e6ffe6
     style CD fill:#ffcccc
-    classDef largeFontSize font-size:16px;
-    class A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z1,Z2,CA,CB,CC1,CD,AA,BB,CC,DD,EE largeFontSize;
+    classDef className fill:#f9f,stroke:#333,stroke-width:12px
 ```
 
 ### Current Issues Illustrated
