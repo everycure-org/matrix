@@ -141,7 +141,7 @@ node(
 
 ingestion.raw.rtx_kg2.nodes@spark:
   <<: *_spark_csv
-  filepath: ${globals:paths.public_kg_raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes_c.tsv
+  filepath: ${globals:paths.raw_public}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes_c.tsv
   file_format: csv
   load_args:
     sep: "\t"
