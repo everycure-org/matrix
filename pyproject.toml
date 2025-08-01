@@ -1,0 +1,33 @@
+# NOTE: This pyproject.toml was partially generated using AI assistance.
+# Root project, only defines child dependencies which all share one venv
+[project]
+name = "matrix"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "matrix-cli",
+    "matrix-pipeline",
+    "matrix-docs",
+    "tqdm>=4.67.1",
+    "pre-commit>=4.2.0",
+]
+
+[tool.uv.sources]
+matrix-cli = { workspace = true }
+matrix-pipeline = { workspace = true }
+matrix-docs = { workspace = true }
+
+[tool.uv.workspace]
+members = [
+    # applications
+    "apps/matrix-cli",
+    # pipelines, which may be run
+    "pipelines/matrix",
+    # docs which are built statically and then deployed
+    "docs",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.7",
+] 
