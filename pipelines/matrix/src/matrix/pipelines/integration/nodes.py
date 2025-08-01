@@ -98,11 +98,13 @@ def union_and_deduplicate_nodes(
 
     unioned_nodes = _union_datasets(*nodes)
 
-    # Promote core nodes to use their core_id as the canonical id, while non-core nodes keep their normalized id
+    # Promote core nodes to use their core_id as the canonical id and core_name as canonical name
+    # non-core nodes keep their normalized id and original name
     core_promoted_nodes = (
         unioned_nodes.join(core_id_mapping.withColumnRenamed("normalized_id", "id"), on="id", how="left")
         .withColumn("id", F.coalesce("core_id", "id"))
-        .drop("core_id")
+        .withColumn("name", F.coalesce("core_name", "name"))
+        .drop("core_id", "core_name")
     )
 
     unioned_datasets = (
@@ -326,7 +328,7 @@ def create_core_id_mapping(*nodes: ps.DataFrame) -> ps.DataFrame:
     """Creates a mapping from normalized_id to core_id for core sources."""
     df = _union_datasets(*nodes)
 
-    df_filtered = df.select("id", "core_id").filter(  # 'id' is already the normalized_id at this point
+    df_filtered = df.select("id", "core_id", "name").filter(  # 'id' is already the normalized_id at this point
         (F.col("id").isNotNull()) & (F.col("core_id").isNotNull())
     )
 
@@ -348,7 +350,10 @@ def create_core_id_mapping(*nodes: ps.DataFrame) -> ps.DataFrame:
         conflicts.show(50, truncate=False)
 
     return (
-        df_filtered.dropDuplicates(["id"]).withColumnRenamed("id", "normalized_id")  # Ensure consistent naming for join
+        df_filtered.dropDuplicates(["id"])
+        .withColumnRenamed("id", "normalized_id")  # Ensure consistent naming for join
+        .withColumnRenamed("name", "core_name")
+        .select("normalized_id", "core_id", "core_name")
     )
 
 
