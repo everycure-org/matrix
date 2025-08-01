@@ -2,13 +2,13 @@
 title: Platform Refactor and Standardization.
 ---
 
-## Status
-
+Status
+------
 Draft
 
 # Context
 
-As the MATRIX project has grown in the number of datasets it consumes from different sources, and the with the goal to open-source it, the initially thought design for the variable resolution of the environment that determines the pipeline run and datasets sources, has become too complex. As we have introduced a public bucket alongside `dev` and `prod` bucket, switching between the three has proved that there is tight coupling between environments (base, cloud, and test). We aim to reduce the cognitive load and manual intervention that is needed to avoid human error.
+As the MATRIX project has grown in the number of datasets it consumes from different sources, and the with the goal to open-source it, it is evident that the initially thought design for the variable resolution of the environment that determines the pipeline run and datasets sources, has become too complex. As we have introduced a public bucket alongside `dev` and `prod` bucket, switching between the three has proved that there is tight coupling between environments (base, cloud, and test). We aim to reduce the cognitive load and manual intervention that is needed to avoid human error.
 
 In the past, we had different needs when creating datasets and storing them in the GCP bucket and hence it has led to having different folder structure (`data/kedro/01_raw/<datasets>`, `data/01_raw/<datasets>`, `data/01_raw/KG/<datasets>`). Having different folder structure has made it harder to have a unified datasets resolver and causes a lot of confusion. We would now like to standardize it.
 
@@ -16,30 +16,30 @@ In the past, we had different needs when creating datasets and storing them in t
 
 ```mermaid
 graph TD
-    A[<font size=24>Application Start] --> B["<font size=24>load_environment_variables()"]
-    B --> C[<font size=24>Load .env.defaults]
-    C --> D[<font size=24>Load .env - overwrites defaults]
-    D --> E[<font size=24>Kedro OmegaConfigLoader]
+    A[Application Start] --> B["load_environment_variables()"]
+    B --> C[Load .env.defaults]
+    C --> D[Load .env - overwrites defaults]
+    D --> E[Kedro OmegaConfigLoader]
     
-    E --> F[<font size=24>Load base/globals.yml]
-    E --> G[<font size=24>Load environment-specific globals]
-    E --> H[<font size=24>Load catalog files from subdirectories]
+    E --> F[Load base/globals.yml]
+    E --> G[Load environment-specific globals]
+    E --> H[Load catalog files from subdirectories]
     
-    F --> I[<font size=24>Base Configuration]
-    I --> J[<font size=24>hardcoded defaults]
-    I --> K["<font size=24>${oc.env:VAR,default} resolvers"]
+    F --> I[Base Configuration]
+    I --> J[hardcoded defaults]
+    I --> K["${oc.env:VAR,default} resolvers"]
     
-    G --> L[<font size=24>Environment Overrides]
-    L --> M[<font size=24>test/globals.yml]
-    L --> N[<font size=24>cloud/globals.yml] 
-    L --> O[<font size=24>sample/globals.yml]
+    G --> L[Environment Overrides]
+    L --> M[test/globals.yml]
+    L --> N[cloud/globals.yml] 
+    L --> O[sample/globals.yml]
     
-    H --> P[<font size=24>Catalog Files - NO Base Inheritance]
-    P --> Q["<font size=24>${globals:paths.*} references"]
-    P --> R1[<font size=24>Each catalog.yml defines own YAML anchors]
-    P --> R2[<font size=24>3 individual catalog files with local definitions]
+    H --> P[Catalog Files - NO Base Inheritance]
+    P --> Q["${globals:paths.*} references"]
+    P --> R1[Each catalog.yml defines own YAML anchors]
+    P --> R2[3 individual catalog files with local definitions]
     
-    K --> R[<font size=24>Runtime Values]
+    K --> R[Runtime Values]
     N --> R
     M --> R
     O --> R
@@ -47,35 +47,35 @@ graph TD
     R1 --> R
     R2 --> R
     
-    R --> S[<font size=24>Final Configuration]
+    R --> S[Final Configuration]
     
-    subgraph "<font size=24>Environment Variables Sources"
-        T[<font size=24>.env.defaults<br/>73 lines of defaults]
-        U[<font size=24>.env<br/>User overrides]
-        V[<font size=24>OS Environment]
+    subgraph "Environment Variables Sources"
+        T[.env.defaults<br/>73 lines of defaults]
+        U[.env<br/>User overrides]
+        V[OS Environment]
     end
     
-    subgraph "<font size=24>Configuration Files"
-        W[<font size=24>base/globals.yml<br/>91 lines]
-        X[<font size=24>cloud/globals.yml<br/>~50 lines]
-        Y[<font size=24>test/globals.yml<br/>33 lines]
-        Z1[<font size=24>NO base/catalog.yml exists]
-        Z2[<font size=24>3 individual catalog.yml files<br/>Each in own subdirectory]
+    subgraph "Configuration Files"
+        W[base/globals.yml<br/>91 lines]
+        X[cloud/globals.yml<br/>~50 lines]
+        Y[test/globals.yml<br/>33 lines]
+        Z1[NO base/catalog.yml exists]
+        Z2[3 individual catalog.yml files<br/>Each in own subdirectory]
     end
     
-    subgraph "<font size=24>Actual Catalog Pattern"
-        CA[<font size=24>base/integration/catalog.yml<br/>Defines _spark_parquet, _pandas_parquet]
-        CB[<font size=24>cloud/integration/catalog.yml<br/>Defines _bigquery_ds, overrides datasets]
-        CC1[<font size=24>test/filtering/catalog.yml<br/>Defines _spark_json locally]
-        CD[<font size=24>Each catalog defines own anchors independently]
+    subgraph "Actual Catalog Pattern"
+        CA[base/integration/catalog.yml<br/>Defines _spark_parquet, _pandas_parquet]
+        CB[cloud/integration/catalog.yml<br/>Defines _bigquery_ds, overrides datasets]
+        CC1[test/filtering/catalog.yml<br/>Defines _spark_json locally]
+        CD[Each catalog defines own anchors independently]
     end
     
-    subgraph "<font size=24>Resolvers"
-        AA[<font size=24>oc.env resolver]
-        BB[<font size=24>get_kg_raw_path_for_source]
-        CC[<font size=24>merge_dicts]
-        DD[<font size=24>if_null]
-        EE[<font size=24>cast_to_int]
+    subgraph "Resolvers"
+        AA[oc.env resolver]
+        BB[get_kg_raw_path_for_source]
+        CC[merge_dicts]
+        DD[if_null]
+        EE[cast_to_int]
     end
     
     T --> B
@@ -106,7 +106,6 @@ graph TD
     style CB fill:#e6ffe6
     style CC1 fill:#e6ffe6
     style CD fill:#ffcccc
-    classDef className fill:#f9f,stroke:#333,stroke-width:12px
 ```
 
 ### Current Issues Illustrated
@@ -121,9 +120,9 @@ graph TD
 
 # Decision
 
-## Environment Variable Resolution
+## Creation of a new `--env` for production
 
-We will create a user script that would contain all of the env needed to run the project and would be our single source of truth. Only the versions of the datasets would be in the `global.yml` file. It would allow the user to easily switch between different environment without having the need to manually enter the environment variable into the `.env` file or rely on the `.env.defaults`.
+We will create a new catalog file for production environment called `cloud-prod`. This way we will have a dedicated catalog for production. We will then move towards removing the `.env` and `.env.defaults` and move all variables that don't change and are not personal to `global.yml`. `cloud` would default to using dev as it's source.
 
 ## Datasets Standardization
 
@@ -193,7 +192,7 @@ graph TD
 ## Implementation Changes Required
 
 1. Create User Environment Script.
-2. Remove Variables from `globals.yml`.
+2. Remove Variables from `global.yml`.
 3. Create the variable_resolver.
 4. Modify base/catalog.yml with Shared Anchors and use the variable_resolver
 5. Write proper unit tests.
