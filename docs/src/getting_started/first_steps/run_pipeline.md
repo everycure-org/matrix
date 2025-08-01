@@ -272,7 +272,7 @@ To run the pipeline with public data sources:
        version: v2.10.0_validated
    ```
 
-2. **Use the base environment** which is already configured to read from the public bucket for these data sources via the `public_kg_raw` path.
+2. **Use the base environment** which is already configured to read from the public bucket for these data sources via the `raw_public` path.
 
 3. **Run the data engineering pipeline** to process public datasets:
    ```bash
