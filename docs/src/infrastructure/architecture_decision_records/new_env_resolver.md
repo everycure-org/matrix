@@ -8,7 +8,7 @@ Draft
 
 # Context
 
-As the MATRIX project has grown in the number of datasets it consumes from different sources, and the with the goal to open-source it, it is evident that the initially thought design for the variable resolution of the environment that determines the pipeline run and datasets sources, has become too complex. As we have introduced a public bucket alongside `dev` and `prod` bucket, switching between the three has proved that there is tight coupling between environments (base, cloud, and test). We aim to reduce the cognitive load and manual intervention that is needed to avoid human error.
+As the MATRIX project has grown in the number of datasets it consumes from different sources, and the with the goal to open-source it, the initially thought design for the variable resolution of the environment that determines the pipeline run and datasets sources, has become too complex. As we have introduced a public bucket alongside `dev` and `prod` bucket, switching between the three has proved that there is tight coupling between environments (base, cloud, and test). We aim to reduce the cognitive load and manual intervention that is needed to avoid human error.
 
 In the past, we had different needs when creating datasets and storing them in the GCP bucket and hence it has led to having different folder structure (`data/kedro/01_raw/<datasets>`, `data/01_raw/<datasets>`, `data/01_raw/KG/<datasets>`). Having different folder structure has made it harder to have a unified datasets resolver and causes a lot of confusion. We would now like to standardize it.
 
