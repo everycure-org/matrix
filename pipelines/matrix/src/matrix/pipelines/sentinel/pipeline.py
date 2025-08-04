@@ -11,7 +11,11 @@ from matrix.pipelines.data_release import last_node_name
 
 
 def get_sentinel_inputs(is_patch: bool, full_e2e_run: bool) -> list[str]:
-    kg_release_patch_outputs = ["data_release.prm.kgx_edges", "data_release.prm.kgx_nodes"] + [
+    kg_release_patch_outputs = [
+        "data_release.prm.kgx_edges",
+        "data_release.prm.kgx_nodes",
+        "integration.prm.nodes_edges_consistency_check",
+    ] + [
         f"integration.int.{source['name']}.normalization_summary"
         for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
     ]
