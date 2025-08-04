@@ -1,7 +1,7 @@
 _bigquery_ds: &_bigquery_ds
   type: matrix.datasets.gcp.SparkDatasetWithBQExternalTable
   project_id: ${oc.env:RUNTIME_GCP_PROJECT_ID}
-  dataset: release_${globals:versions.release}
+  dataset: run_${globals:run_name}
   file_format: parquet
   save_args:
     mode: overwrite
