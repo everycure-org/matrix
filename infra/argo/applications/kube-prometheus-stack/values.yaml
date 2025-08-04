@@ -171,5 +171,6 @@ kube-prometheus-stack:
       - pods=[*]
     collectors:
       - pods
+      - podcontainers
     extraArgs:
-      - --metric-labels-allowlist=pods=[*]
+      - --metric-labels-allowlist=pods=[*],podcontainers=[*]
