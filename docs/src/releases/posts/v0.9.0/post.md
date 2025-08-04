@@ -17,19 +17,23 @@ authors:
   - Shilpasundar14
   - jdr0887
   - kevinschaper
-  - app/github-actions
 ---
 Please write the article following the categories below. The relevant PR numbers, covering changes from the selected last release (or the most recent minor release in headless mode) to the current release, are provided for each category:
 
 ### Breaking Changes 🛠
+- Removed kg_raw and kept raw as the single folder path for all dev related datasets [#1723](https://github.com/everycure-org/matrix/pull/1723)
+- Removed deprecated 'kedro submit' command in favor of 'kedro experiment run` [#1725](https://github.com/everycure-org/matrix/pull/1725)
+- Update catalog names after GCP directory cleanup [#1698](https://github.com/everycure-org/matrix/pull/1698)
 ### Exciting New Features 🎉
+- Add CLA and brand protection for open sourcing (AIP-339, AIP-340) [#1700](https://github.com/everycure-org/matrix/pull/1700)
+- Enable Kedro Nodes Monitoring and Cost Allocation for GKE Pods [#1679](https://github.com/everycure-org/matrix/pull/1679)
+- Knowledge Sources and EC Core Components dashboard update [#1628](https://github.com/everycure-org/matrix/pull/1628)
 ### Experiments 🧪
 ### Bugfixes 🐛
 - Update pandera version to 0.25.0 [#1670](https://github.com/everycure-org/matrix/pull/1670)
 - Remove EC medical team dataset [#1686](https://github.com/everycure-org/matrix/pull/1686)
 - Trim kedro nodes to 63 not 36 [#1694](https://github.com/everycure-org/matrix/pull/1694)
 - Add max retry attemps to node normalizer call [#1711](https://github.com/everycure-org/matrix/pull/1711)
-- Add git modules again [#1716](https://github.com/everycure-org/matrix/pull/1716)
 - Fix sentinel node's to read normalizer endpoint [#1719](https://github.com/everycure-org/matrix/pull/1719)
 - Fix codebase following Pandera 0.24.0 breaking change [#1659](https://github.com/everycure-org/matrix/pull/1659)
 - Revert pandera utils to previous pandera API [#1666](https://github.com/everycure-org/matrix/pull/1666)
@@ -41,6 +45,9 @@ Please write the article following the categories below. The relevant PR numbers
 - Added atomic and timeout to Helm release configuration in Terraform for stability [#1658](https://github.com/everycure-org/matrix/pull/1658)
 - Removed kedro nodes label [#1660](https://github.com/everycure-org/matrix/pull/1660)
 - Hotfix: Fix incorrect coalescing order for `normalize_edges` [#1663](https://github.com/everycure-org/matrix/pull/1663)
+- Add path filter to docs deploy github action [#1721](https://github.com/everycure-org/matrix/pull/1721)
+- Refactor CI tests to run sequentially for clarity and error handling [#1672](https://github.com/everycure-org/matrix/pull/1672)
+- Update registry variable in scheduled sampling pipeline [#1710](https://github.com/everycure-org/matrix/pull/1710)
 ### Technical Enhancements 🧰
 - Moved PVC for services into one region [#1667](https://github.com/everycure-org/matrix/pull/1667)
 - Hotfix/hardcode public kg raw folder in catalog [#1676](https://github.com/everycure-org/matrix/pull/1676)
@@ -63,47 +70,23 @@ Please write the article following the categories below. The relevant PR numbers
 - Removed dataminded from matrix repo [#1655](https://github.com/everycure-org/matrix/pull/1655)
 - Added atomic and timeout to Helm release configuration in Terraform for stability [#1658](https://github.com/everycure-org/matrix/pull/1658)
 - Removed kedro nodes label [#1660](https://github.com/everycure-org/matrix/pull/1660)
-- allow orchard dev compute sa to read matrix dev bucket [#1662](https://github.com/everycure-org/matrix/pull/1662)
+- Allow orchard dev compute sa to read matrix dev bucket [#1662](https://github.com/everycure-org/matrix/pull/1662)
 - Add normalized category assignment using Node Normalizer (DATA-539) [#1633](https://github.com/everycure-org/matrix/pull/1633)
 - Knowledge Sources and EC Core Components dashboard update [#1628](https://github.com/everycure-org/matrix/pull/1628)
 - Feat/more dynamic nn api [#1636](https://github.com/everycure-org/matrix/pull/1636)
-- Dynamic GCS bucket selection for data sources [#1638](https://github.com/everycure-org/matrix/pull/1638)
+- Delete local cached files with make clean [#1722](https://github.com/everycure-org/matrix/pull/1722)
 ### Documentation ✏️
 - Update common errors [#1674](https://github.com/everycure-org/matrix/pull/1674)
 - Add ADR on OSS Storage setup [#1684](https://github.com/everycure-org/matrix/pull/1684)
 - Fix broken neo4j link in references docs [#1690](https://github.com/everycure-org/matrix/pull/1690)
 - Make docs more suitable for external contributors [#1577](https://github.com/everycure-org/matrix/pull/1577)
 - Added document related to Main-Only Infrastructure Deployment Strategy [#1651](https://github.com/everycure-org/matrix/pull/1651)
-### Other Changes
-- Comment out EC medical team dataset [#1669](https://github.com/everycure-org/matrix/pull/1669)
-- Delete local cached files with make clean [#1722](https://github.com/everycure-org/matrix/pull/1722)
-- Add path filter to docs deploy github action [#1721](https://github.com/everycure-org/matrix/pull/1721)
-- Removed kg_raw and kept raw as the single folder path for all dev related datasets [#1723](https://github.com/everycure-org/matrix/pull/1723)
-- Removed deprecated 'kedro submit' command in favor of 'kedro experiment run` [#1725](https://github.com/everycure-org/matrix/pull/1725)
-- Added getting variables from the github env [#1642](https://github.com/everycure-org/matrix/pull/1642)
 - Refactor release documentation [#1657](https://github.com/everycure-org/matrix/pull/1657)
-- Refactor CI tests to run sequentially for clarity and error handling [#1672](https://github.com/everycure-org/matrix/pull/1672)
-- Fixes for release/v0.8.2 in prod [#1668](https://github.com/everycure-org/matrix/pull/1668)
 - Update onboarding issue link in 'Getting Started' [#1664](https://github.com/everycure-org/matrix/pull/1664)
+### Other Changes
+- Fixes for release/v0.8.2 in prod [#1668](https://github.com/everycure-org/matrix/pull/1668)
 - Add QC and unit tests fixes post normalization bug fix [#1673](https://github.com/everycure-org/matrix/pull/1673)
-- feat: Add CLA and brand protection for open sourcing (AIP-339, AIP-340) [#1700](https://github.com/everycure-org/matrix/pull/1700)
-- Update catalog names after GCP directory cleanup [#1698](https://github.com/everycure-org/matrix/pull/1698)
 - Setup Orchard access for wg2 [#1704](https://github.com/everycure-org/matrix/pull/1704)
-- fix: update registry variable in scheduled sampling pipeline [#1710](https://github.com/everycure-org/matrix/pull/1710)
 - Exp/dis split [#1560](https://github.com/everycure-org/matrix/pull/1560)
-- Filtering in BQ is per run, not release [#1727](https://github.com/everycure-org/matrix/pull/1727)
 - Expose ground truth train data (Take 2!) [#1639](https://github.com/everycure-org/matrix/pull/1639)
 - Import pandera schema from matrix-schema package [#1641](https://github.com/everycure-org/matrix/pull/1641)
-- Add public GCS bucket configuration and update data paths for public datasets. [#1677](https://github.com/everycure-org/matrix/pull/1677)
-- Dynamic GCS bucket selection for data sources [#1638](https://github.com/everycure-org/matrix/pull/1638)
-- Removed dataminded from matrix repo [#1655](https://github.com/everycure-org/matrix/pull/1655)
-- allow orchard dev compute sa to read matrix dev bucket [#1662](https://github.com/everycure-org/matrix/pull/1662)
-- Enable Kedro Nodes Monitoring and Cost Allocation for GKE Pods [#1679](https://github.com/everycure-org/matrix/pull/1679)
-- Add normalized category assignment using Node Normalizer (DATA-539) [#1633](https://github.com/everycure-org/matrix/pull/1633)
-- Knowledge Sources and EC Core Components dashboard update [#1628](https://github.com/everycure-org/matrix/pull/1628)
-- Refactor release documentation [#1657](https://github.com/everycure-org/matrix/pull/1657)
-- Add normalized category assignment using Node Normalizer (DATA-539) [#1633](https://github.com/everycure-org/matrix/pull/1633)
-- Knowledge Sources and EC Core Components dashboard update [#1628](https://github.com/everycure-org/matrix/pull/1628)
-- Knowledge Sources and EC Core Components dashboard update [#1628](https://github.com/everycure-org/matrix/pull/1628)
-- Added GPU monitoring and kublet metrics [#1602](https://github.com/everycure-org/matrix/pull/1602)
-- Added management pool for ArgoCD to put all workloads on it [#1643](https://github.com/everycure-org/matrix/pull/1643)
