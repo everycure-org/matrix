@@ -30,7 +30,7 @@ In the past, we had different needs when creating datasets and storing them in t
 
 ## Creation of a new `--env` for production
 
-We will create a new catalog file for production environment called `cloud-prod`. This way we will have a dedicated catalog for production. We will then move towards removing the `.env` and `.env.defaults` and move all variables that don't change and are not personal to `global.yml`. `cloud` would default to using dev as it's source.
+We will create a new catalog file for production environment called `cloud-prod`. This way we will have a dedicated catalog for production. We will then move towards removing the `.env` and `.env.defaults` and move all variables that don't change and are not personal to `globals.yml`. `cloud` would default to using dev as it's source.
 
 ## Modification and separation of globals and catalog files
 
