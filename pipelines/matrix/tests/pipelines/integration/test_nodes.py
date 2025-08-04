@@ -450,18 +450,52 @@ def test_unify_nodes(spark, sample_nodes, sample_biolink_category_hierarchy):
     nodes1 = sample_nodes.filter(sample_nodes.id != "MONDO:0005148")
     nodes2 = sample_nodes.filter(sample_nodes.id != "CHEBI:119157")
 
+    # Create an empty core_id_mapping for the test
+    core_id_mapping = spark.createDataFrame([], schema="normalized_id string, core_id string, core_name string")
+
     # Call the unify_nodes function
-    result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, nodes1, nodes2)
+    result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, core_id_mapping, nodes1, nodes2)
 
     # Check the result
     assert isinstance(result, ps.DataFrame)
     assert result.count() == 2  # Should have deduplicated
 
-    # Check if the properties are combined correctly for the duplicated node
+    # Check if the promoted node has combined properties correctly
     drug_node = result.filter(result.id == "CHEBI:119157").collect()[0]
     assert set(drug_node.all_categories) == {"biolink:Drug", "biolink:ChemicalEntity", "biolink:SmallMolecule"}
     assert set(drug_node.publications) == {"PMID:12345678", "PMID:34567890"}
     assert set(drug_node.upstream_data_source) == {"source1", "source3"}
+
+
+@pytest.mark.spark(
+    help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
+)
+def test_core_promotion(spark, sample_nodes, sample_biolink_category_hierarchy):
+    # Create two node datasets
+    nodes1 = sample_nodes.filter(sample_nodes.id != "MONDO:0005148")
+    nodes2 = sample_nodes.filter(sample_nodes.id != "CHEBI:119157")
+
+    # Create core_id_mapping that promotes CHEBI:119157 to a core ID
+    core_mapping_data = [("CHEBI:119157", "CORE_DRUG_1", "CORE_NAME_1")]
+    core_id_mapping = spark.createDataFrame(
+        core_mapping_data, schema="normalized_id string, core_id string, core_name string"
+    )
+
+    # Call the unify_nodes function
+    result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, core_id_mapping, nodes1, nodes2)
+
+    # Check the result
+    assert isinstance(result, ps.DataFrame)
+    assert result.count() == 2  # Should have deduplicated
+
+    # Check that core_id promotion worked
+    promoted_ids = [row.id for row in result.collect()]
+    assert "CORE_DRUG_1" in promoted_ids  # CHEBI:119157 should be promoted
+    assert "MONDO:0005148" in promoted_ids  # No mapping, keeps original
+
+    # Check that core_id promotion worked
+    promoted_names = [row.name for row in result.collect()]
+    assert "CORE_NAME_1" in promoted_names  # CORE_NAME_1 should be promoted
 
 
 @pytest.mark.spark(
@@ -472,8 +506,11 @@ def test_correctly_identified_categories(spark, sample_nodes, sample_biolink_cat
     nodes1 = sample_nodes
     nodes2 = sample_nodes.withColumn("category", F.lit("biolink:NamedThing"))
 
+    # Create an empty core_id_mapping for the test
+    core_id_mapping = spark.createDataFrame([], schema="normalized_id string, core_id string, core_name string")
+
     # When: unifying the two datasets, putting nodes2 first -> meaning within each group, "first()" grabs the NamedThing
-    result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, nodes1, nodes2)
+    result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, core_id_mapping, nodes1, nodes2)
 
     # Then: the most specific category is correctly identified
     assert result.filter(F.col("category") == "biolink:NamedThing").count() == 0
@@ -487,8 +524,11 @@ def test_unify_edges(spark, sample_edges):
     edges1 = sample_edges.filter(sample_edges.subject != "CHEBI:120688")
     edges2 = sample_edges.filter(sample_edges.subject != "CHEBI:119157")
 
+    # Create empty core_id_mapping table
+    core_id_mapping = spark.createDataFrame([], schema="normalized_id string, core_id string")
+
     # Call the unify_edges function
-    result = nodes.union_edges(edges1, edges2)
+    result = nodes.union_edges(core_id_mapping, edges1, edges2)
 
     # Check the result
     assert isinstance(result, ps.DataFrame)
