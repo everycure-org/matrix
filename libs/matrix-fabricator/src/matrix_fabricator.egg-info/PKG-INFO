@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: matrix-fabricator
+Version: 0.1.0
+Summary: Data fabrication and generation utilities for Matrix platform
+Requires-Python: >=3.11
+Requires-Dist: kedro>=0.19.0
+Requires-Dist: pandas
+Requires-Dist: numpy
+Requires-Dist: faker
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: pytest-mock; extra == "dev"
+Requires-Dist: ruff; extra == "dev"

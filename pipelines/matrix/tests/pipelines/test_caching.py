@@ -10,7 +10,6 @@ from kedro.framework.session import KedroSession
 from kedro.io import DataCatalog, MemoryDataset
 from kedro.runner import SequentialRunner
 from kedro_datasets.pandas import ParquetDataset
-from matrix.datasets.gcp import LazySparkDataset, PartitionedAsyncParallelDataset
 from matrix.pipelines.batch.pipeline import (
     cache_miss_resolver_wrapper,
     derive_cache_misses,
@@ -22,6 +21,7 @@ from matrix.pipelines.batch.pipeline import (
 from matrix.pipelines.embeddings.encoders import DummyResolver
 from matrix.pipelines.embeddings.pipeline import create_node_embeddings_pipeline
 from matrix.pipelines.integration.normalizers.normalizers import DummyNodeNormalizer
+from matrix_gcp_datasets.gcp import LazySparkDataset, PartitionedAsyncParallelDataset
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import ArrayType, FloatType, StringType, StructField, StructType
 from pyspark.testing import assertDataFrameEqual
@@ -154,9 +154,9 @@ def test_enriched_keeps_same_size_with_cache_duplicates(
         sample_new_col,
         lineage_dummy="foo",
     )
-    assert (
-        enriched_df.count() == sample_input_df.count()
-    ), "The enriched DataFrame should have the same number of rows as the input DataFrame"
+    assert enriched_df.count() == sample_input_df.count(), (
+        "The enriched DataFrame should have the same number of rows as the input DataFrame"
+    )
 
 
 def test_different_api(sample_cache, sample_api2, spark: SparkSession, filtered_cache_schema: StructType):

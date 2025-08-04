@@ -1,6 +1,6 @@
 import json
 
-from matrix.utils.system import run_subprocess
+from matrix_auth.system import run_subprocess
 
 
 def argo_template_lint(file_path: str, verbose: bool) -> str:

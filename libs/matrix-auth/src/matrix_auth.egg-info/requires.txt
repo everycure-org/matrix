@@ -1,0 +1,12 @@
+click
+requests
+google-auth
+google-auth-oauthlib
+google-oauth2-tool
+rich
+
+[dev]
+pytest
+pytest-asyncio
+pytest-mock
+ruff
