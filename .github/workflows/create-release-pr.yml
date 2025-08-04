@@ -83,7 +83,6 @@ jobs:
             git push
           fi
 
-      # Removed matrix-cli setup - using placeholder content instead
 
       - name: Authenticate with Google Cloud
         uses: 'google-github-actions/auth@v2'
