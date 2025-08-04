@@ -62,7 +62,7 @@ We will move all of our datasets into a single folder structure `data/raw` for r
 4. Modify `run.py` to use `cloud` catalog and global as an input to production catalog.
 5. Write proper unit tests.
 6. Make sure that the test catalog doesn't write to dev or prod buckets.
-7. Update Child Catalogs to Use Inheritance.
+7. Update child catalogs to use inheritance.
 8. Standardize All Paths by moving the files to the decided folder structure.
 
 ## Consequences
