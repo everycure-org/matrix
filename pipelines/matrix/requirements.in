@@ -21,7 +21,7 @@ kedro==0.19.13
 langchain
 langchain-openai
 matplotlib
-git+https://github.com/everycure-org/matrix-validator.git@main#egg=matrix-validator
+git+https://github.com/everycure-org/matrix-validator.git@v0.0.6#egg=matrix-validator
 mlflow==2.20.3
 neo4j>=5.5.0
 notebook
