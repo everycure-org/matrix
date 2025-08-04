@@ -134,9 +134,9 @@ jobs:
         run: |
           echo "Submit the kedro pipeline"
           if [ "${{ env.BUMP_TYPE }}" == "minor" ]; then
-            RELEASE_PIPELINE='kg_release'
+            RELEASE_PIPELINE='kg_release_and_matrix_run'
           else
-            RELEASE_PIPELINE='e2e_kg_and_matrix_run'
+            RELEASE_PIPELINE='kg_patch_and_matrix_run'
           fi
           kedro experiment run \
             --username GH-Actions-bot \
