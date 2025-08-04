@@ -21,7 +21,7 @@ annotated-types==0.7.0
     # via pydantic
 antlr4-python3-runtime==4.9.3
     # via omegaconf
-anyio==4.9.0
+anyio==4.10.0
     # via
     #   httpx
     #   jupyter-server
@@ -56,8 +56,10 @@ beautifulsoup4==4.13.4
     #   nbconvert
 binaryornot==0.4.4
     # via cookiecutter
-biolink-model==4.2.5
-    # via matrix-schema
+biolink-model==4.2.6rc4
+    # via
+    #   matrix-schema
+    #   matrix-validator
 bleach==6.2.0
     # via nbconvert
 blinker==1.9.0
@@ -66,14 +68,14 @@ bmt==1.4.5
     # via -r requirements.in
 botocore==1.39.8
     # via aiobotocore
-build==1.2.2.post1
+build==1.3.0
     # via kedro
 cachetools==5.5.2
     # via
     #   google-auth
     #   kedro
     #   mlflow-skinny
-certifi==2025.7.14
+certifi==2025.8.3
     # via
     #   httpcore
     #   httpx
@@ -109,7 +111,7 @@ contourpy==1.3.2
     # via matplotlib
 cookiecutter==2.6.0
     # via kedro
-coverage==7.10.1
+coverage==7.10.2
     # via
     #   pytest-cov
     #   pytest-testmon
@@ -120,7 +122,7 @@ curies==0.7.10
     #   prefixmaps
 cycler==0.12.1
     # via matplotlib
-databricks-sdk==0.60.0
+databricks-sdk==0.61.0
     # via mlflow-skinny
 db-dtypes==1.4.3
     # via -r requirements.in
@@ -148,7 +150,7 @@ et-xmlfile==2.0.0
     # via openpyxl
 executing==2.2.0
     # via stack-data
-faker==37.4.2
+faker==37.5.3
     # via -r requirements.in
 fastapi==0.116.1
     # via kedro-viz
@@ -440,7 +442,7 @@ langchain-openai==0.3.28
     # via -r requirements.in
 langchain-text-splitters==0.3.9
     # via langchain
-langsmith==0.4.8
+langsmith==0.4.10
     # via
     #   langchain
     #   langchain-core
@@ -466,7 +468,7 @@ markupsafe==3.0.2
     #   mako
     #   nbconvert
     #   werkzeug
-matplotlib==3.10.3
+matplotlib==3.10.5
     # via
     #   -r requirements.in
     #   mlflow
@@ -475,8 +477,11 @@ matplotlib-inline==0.1.7
     # via
     #   ipykernel
     #   ipython
-matrix-validator @ git+https://github.com/everycure-org/matrix-validator.git@f9807edf91b45a1476f4f53eb188045d4f9fa358#egg=matrix-validator
 matrix-schema==0.4.0
+    # via
+    #   -r requirements.in
+    #   matrix-validator
+matrix-validator @ git+https://github.com/everycure-org/matrix-validator.git@31179ef2919b996c22c7c2526c8d7b1ab0ae72b8#egg=matrix-validator
     # via -r requirements.in
 mdurl==0.1.2
     # via markdown-it-py
@@ -678,9 +683,9 @@ pluggy==1.6.0
     #   pytest-cov
 ply==3.11
     # via jsonpath-ng
-polars==1.31.0
+polars==1.32.0
     # via patito
-polars-lts-cpu==1.31.0
+polars-lts-cpu==1.32.0
     # via matrix-validator
 pre-commit-hooks==5.0.0
     # via kedro
@@ -844,7 +849,7 @@ pyyaml==6.0.2
     #   transformers
     #   uvicorn
     #   yamllint
-pyzmq==27.0.0
+pyzmq==27.0.1
     # via
     #   ipykernel
     #   jupyter-client
@@ -856,7 +861,7 @@ referencing==0.36.2
     #   jsonschema
     #   jsonschema-specifications
     #   jupyter-events
-regex==2025.7.31
+regex==2025.7.34
     # via
     #   tiktoken
     #   transformers
@@ -1131,7 +1136,7 @@ wrapt==1.17.2
     # via
     #   aiobotocore
     #   deprecated
-xgboost==3.0.2
+xgboost==3.0.3
     # via -r requirements.in
 yamllint==1.37.1
     # via biolink-model
