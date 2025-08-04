@@ -503,171 +503,129 @@ fabricator.off_label:
             - off-label use
 
 fabricator.robokop:
-  edges:
-    columns:
-      agent_type:
-        sample_values:
-          - manual_agent
-          - automated_agent
-          - data_analysis_pipeline
-          - computational_model
-          - text_mining_agent
-          - image_processing_agent
-          - manual_validation_of_automated_agent
-          - not_provided
-        type: generate_values
-      aggregator_knowledge_source:
-        sample_values:
-          - infores:robokop-kg
-        type: generate_values
-      category:
-        sample_values:
-          - ''
-        type: generate_values
-      description:
-        sample_values:
-          - ''
-        type: generate_values
-      knowledge_level:
-        sample_values:
-          - knowledge_assertion
-          - logical_entailment
-          - prediction
-          - statistical_association
-          - observation
-          - not_provided
-        type: generate_values
-      object:
-        sample_values:
-          - NCBITaxon:2604474
-          - UniProtKB:A0A1D6HKQ5
-          - UniProtKB:Q92838-1
-          - NCBIGene:29930
-          - NCBITaxon:2604474
-          - NCBITaxon:2617518
-          - NCBITaxon:2604474
-        type: generate_values
-      object_aspect_qualifier:
-        sample_values:
-          - ''
-        type: generate_values
-      object_direction_qualifier:
-        sample_values:
-          - knowledge_assertion
-          - logical_entailment
-          - prediction
-          - statistical_association
-          - observation
-          - not_provided
-        type: generate_values
-      original_object:
-        sample_values:
-          - ''
-        type: generate_values
-      original_subject:
-        sample_values:
-          - ''
-        type: generate_values
-      predicate:
-        sample_values:
-          - biolink:subclass_of
-          - biolink:directly_physically_interacts_with
-          - biolink:coexpressed_with
-          - biolink:subclass_of
-        type: generate_values
-      primary_knowledge_source:
-        sample_values:
-          - infores:ubergraph
-          - infores:intact
-          - infores:string
-          - infores:ubergraph
-        type: generate_values
-      publications:
-        sample_values:
-          - PMID:36581701
-        type: generate_values
-      subject:
-        sample_values:
-          - NCBITaxon:1344898
-          - NCBIGene:542346
-          - UniProtKB:Q8IZF6-1
-          - UniProtKB:Q92838-1
-          - NCBITaxon:3036266
-          - NCBITaxon:3036270
-          - NCBITaxon:1253963
-          - NCBITaxon:1689466
-          - NCBITaxon:3154246
-          - NCBITaxon:1250738
-        type: generate_values
-    num_rows: 500
   nodes:
-    columns:
-      category:
-        sample_values:
-          - biolink:NamedThing|biolink:Gene|biolink:PhysicalEssence|biolink:BiologicalEntity|biolink:GenomicEntity|biolink:Polypeptide|biolink:MacromolecularMachineMixin|biolink:PhysicalEssenceOrOccurrent|biolink:OntologyClass|biolink:ChemicalEntityOrProteinOrPolypeptide|biolink:ChemicalEntityOrGeneOrGeneProduct|biolink:GeneOrGeneProduct|biolink:ThingWithTaxon|biolink:GeneProductMixin|biolink:Protein
-          - biolink:Gene|biolink:GeneOrGeneProduct|biolink:GenomicEntity|biolink:ChemicalEntityOrGeneOrGeneProduct|biolink:PhysicalEssence|biolink:OntologyClass|biolink:BiologicalEntity|biolink:ThingWithTaxon|biolink:NamedThing|biolink:PhysicalEssenceOrOccurrent|biolink:MacromolecularMachineMixin|biolink:Protein|biolink:GeneProductMixin|biolink:Polypeptide|biolink:ChemicalEntityOrProteinOrPolypeptide
-          - biolink:OrganismTaxon|biolink:NamedThing
-          - biolink:Protein|biolink:GeneProductMixin|biolink:Polypeptide|biolink:ChemicalEntityOrGeneOrGeneProduct|biolink:ChemicalEntityOrProteinOrPolypeptide|biolink:BiologicalEntity|biolink:ThingWithTaxon|biolink:NamedThing|biolink:GeneOrGeneProduct|biolink:MacromolecularMachineMixin
-          - biolink:NamedThing|biolink:BiologicalEntity|biolink:Polypeptide|biolink:MacromolecularMachineMixin|biolink:ChemicalEntityOrProteinOrPolypeptide|biolink:ChemicalEntityOrGeneOrGeneProduct|biolink:GeneOrGeneProduct|biolink:ThingWithTaxon|biolink:GeneProductMixin|biolink:Protein
-        type: generate_values
-      description:
-        sample_values:
-          - A protocadherin beta-1 that is encoded in the genome of human.
-          - An adhesion G-protein coupled receptor G4 (human) that is a translation product of some mRNA whose exon structure and start site selection renders it capable of giving rise to a protein with the amino acid sequence represented by UniProtKB:Q8IZF6-1.
-          - An ectodysplasin-A (human) that is a translation product of some mRNA whose exon structure and start site selection renders it capable of giving rise to a protein with the amino acid sequence represented by UniProtKB:Q92838-1.
-        type: generate_values
-      equivalent_identifiers:
-        sample_values:
-          - HGNC:8680|NCBIGene:29930|UniProtKB:Q9Y5F3|PR:Q9Y5F3|ENSEMBL:ENSG00000171815|ENSEMBL:ENSP00000517176|ENSEMBL:ENSP00000517176.1|ENSEMBL:ENSP00000307234|OMIM:606327|UMLS:C1418329|ENSEMBL:ENSP00000307234.4
-          - NCBIGene:542346|UniProtKB:A0A1Q0XH42|UniProtKB:A0A3L6GBB2|UniProtKB:O24585
-          - NCBITaxon:1250738
-          - NCBITaxon:1253963
-          - NCBITaxon:1344898
-          - NCBITaxon:1689466
-          - NCBITaxon:2604474
-          - NCBITaxon:2617518
-          - NCBITaxon:3036266
-          - NCBITaxon:3036270
-          - NCBITaxon:3154246
-          - UniProtKB:A0A1D6HKQ5
-          - ENSEMBL:ENSP00000377699|ENSEMBL:ENSP00000359686.1|PR:Q8IZF6-1|ENSEMBL:ENSP00000359686|UniProtKB:Q8IZF6-1|ENSEMBL:ENSP00000377699.1
-          - ENSEMBL:ENSP00000363680|ENSEMBL:ENSP00000363680.4|PR:Q92838-1|UniProtKB:Q92838-1
-        type: generate_values
-      id:
-        sample_values:
-          - NCBIGene:29930
-          - NCBIGene:542346
-          - NCBITaxon:1250738
-          - NCBITaxon:1253963
-          - NCBITaxon:1344898
-          - NCBITaxon:1689466
-          - NCBITaxon:2604474
-          - NCBITaxon:2617518
-          - NCBITaxon:3036266
-          - NCBITaxon:3036270
-          - NCBITaxon:3154246
-          - UniProtKB:A0A1D6HKQ5
-          - UniProtKB:Q8IZF6-1
-          - UniProtKB:Q92838-1
-        type: generate_values
-      name:
-        sample_values:
-          - PCDHB1
-          - LOC542346
-          - Mortierella sp. 6767-R1
-          - Mortierella sp. 02NH02
-          - Mortierella sp. FSU 10537
-          - Mortierella sp. 6 GB-2015
-          - unclassified Mortierella
-          - unclassified Micromonospora
-          - Mortierella sp. 3 KVS-2023
-          - Mortierella sp. 7 KVS-2023
-          - Micromonospora sp. NPDC000207
-          - A0A1D6HKQ5_MAIZE Myb domain protein 93 (trembl)
-          - adhesion G-protein coupled receptor G4 isoform h1 (human)
-          - ectodysplasin-A isoform h1 (human)
-        type: generate_values
     num_rows: 500
+    columns:
+      id:
+        type: generate_unique_id
+        prefix: "ROBO:"
+        id_length: 8
+      "name:string":
+        type: generate_unique_id
+        prefix: "rs"
+      category:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
+          - biolink:Entity
+          - biolink:ThingWithTaxon
+          - biolink:BiologicalEntity
+          - biolink:Drug
+          - biolink:Disease
+          - biolink:SequenceVariant
+          - biolink:NamedThing
+          - biolink:OntologyClass
+          - biolink:PhysicalEssence
+          - biolink:PhysicalEssenceOrOccurrent
+          - biolink:GenomicEntity
+          - biolink:OrganismTaxon
+      "description:string":
+        type: faker
+        provider: sentence
+      equivalent_identifiers:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
+          - NCBITaxon:2
+          - UMLS:C0004611
+          - MESH:D001419
+          - HGVS:NG_029620.1:g.16582A>G
+          - HGVS:CM000669.1:g.149423729A>G
+          - ROBO_VARIANT:HG38|7|149726637|149726638|A|G
+          - HGVS:CM000669.2:g.149726638A>G
+          - HGVS:NC_000007.12:g.149054662A>G
+      information_content:float:
+        type: faker
+        provider: pydecimal
+        provider_args:
+          left_digits: 3
+          right_digits: 2
+          positive: True
+          min_value: 1
+          max_value: 100
+      publications:string[]:
+        type: generate_random_arrays
+        delimiter: "\u001f"
+        sample_values:
+          - "PMID:12345678"
+          - "DOI:10.1234/example.5678"
+
+  edges:
+    num_rows: 500
+    columns:
+      subject:
+        type: copy_column
+        source_column: "nodes.id"
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 590590
+      predicate:
+        type: generate_values
+        sample_values:
+          - biolink:treats
+          - biolink:interacts_with
+          - biolink:affects
+          - biolink:subclass_of
+          - biolink:is_nearby_variant_of
+      object:
+        type: copy_column
+        source_column: "nodes.id"
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 49494
+      primary_knowledge_source:
+        type: generate_values
+        sample_values:
+          - infores:semmeddb
+          - infores:gtex
+          - infores:ubergraph
+          - infores:snpeff
+      knowledge_level:
+        type: generate_values
+        sample_values:
+          - prediction
+          - knowledge_assertion
+      agent_type:
+        type: generate_values
+        sample_values:
+          - computational_model
+          - manual_agent
+      publications:string[]:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
+          - "PMID:12345678"
+          - "DOI:10.1234/example.5678"
+      object_aspect_qualifier:
+        type: faker
+        provider: word
+      object_direction_qualifier:
+        type: generate_values
+        sample_values:
+          - increased
+          - decreased
+      qualified_predicate:string:
+        type: generate_values
+        sample_values:
+          - biolink:causes
+          - biolink:treats
+      aggregator_knowledge_source:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
+          - infores:aggregator1
+          - infores:aggregator2
+          - infores:aggregator3
 
 fabricator.ec_medical_kg:
   nodes:
