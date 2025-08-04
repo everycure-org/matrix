@@ -143,7 +143,6 @@ jobs:
         env:
           POSTS_DIR: docs/src/releases/posts
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        # only create release notes for minor, major, and intermediate bumps
         if: env.generate_article == 'True'
         run: |
           set -eux
