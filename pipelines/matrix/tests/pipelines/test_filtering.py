@@ -209,30 +209,30 @@ def test_remove_rows_by_column_filter(spark):
     """
     test_nodes = spark.createDataFrame(
         [
-            ("CHEBI:001", "biolink:Drug"),
-            ("OT:001", "biolink:OrganismTaxon"),
-            ("CHEBI:002", "biolink:ChemicalEntity"),
+            ("CHEBI:001", ["biolink:Drug"]),
+            ("OT:001", ["biolink:OrganismTaxon"]),
+            ("CHEBI:002", ["biolink:ChemicalEntity"]),
         ],
         schema=StructType(
             [
                 StructField("id", StringType(), False),
-                StructField("category", StringType(), False),
+                StructField("all_categories", ArrayType(StringType()), False),
             ]
         ),
     )
 
     result = filters.RemoveRowsByColumnOverlap(
-        column="category", remove_list=["biolink:OrganismTaxon", "biolink:ChemicalEntity"]
+        column="all_categories", remove_list=["biolink:OrganismTaxon", "biolink:ChemicalEntity"]
     ).apply(test_nodes)
 
     expected = spark.createDataFrame(
         [
-            ("CHEBI:001", "biolink:Drug"),
+            ("CHEBI:001", ["biolink:Drug"]),
         ],
         schema=StructType(
             [
                 StructField("id", StringType(), False),
-                StructField("category", StringType(), False),
+                StructField("all_categories", ArrayType(StringType()), False),
             ]
         ),
     )
