@@ -19,6 +19,7 @@ from kedro_datasets.spark import SparkDataset
 from omegaconf import OmegaConf
 from pyspark import SparkConf
 
+from matrix.inject import _parse_for_objects
 from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
 
 logger = logging.getLogger(__name__)
@@ -360,6 +361,7 @@ class ReleaseInfoHooks:
 
     @staticmethod
     def extract_release_info(global_datasets: dict[str, Any]) -> dict[str, str]:
+        normalizer = _parse_for_objects(ReleaseInfoHooks._params["integration"]["normalization"]["normalizer"])
         info = {
             "Release Name": ReleaseInfoHooks._globals["versions"]["release"],
             "Datasets": global_datasets,
@@ -367,7 +369,7 @@ class ReleaseInfoHooks:
             "KG dashboard": ReleaseInfoHooks.build_kg_dashboard_link(),
             "MLFlow": ReleaseInfoHooks.build_mlflow_link(),
             "Code": ReleaseInfoHooks.build_code_link(),
-            "NodeNorm Endpoint": ReleaseInfoHooks._params["integration"]["normalization"]["normalizer"]["endpoint"],
+            "NodeNorm Endpoint": f"{normalizer.endpoint} ({normalizer.version()})",
         }
         return info
 
