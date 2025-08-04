@@ -12,6 +12,8 @@ from pyspark.sql import types as T
 tk = toolkit.Toolkit()
 logger = logging.getLogger(__name__)
 
+UPSTREAM_DATA_SOURCE_COLUMN = "upstream_data_source"
+
 
 class Filter(ABC):
     """Base class for all filters in the matrix pipeline.
@@ -46,7 +48,7 @@ def get_ancestors_for_category_delimited(category: str, mixin: bool = False) -> 
     return tk.get_ancestors(category, mixin=mixin, formatted=True, reflexive=True)
 
 
-class BiolinkDeduplicateEdgesFilter(Filter):
+class BiolinkDeduplicateEdges(Filter):
     """Filter that deduplicates biolink edges.
 
     Knowledge graphs in biolink format may contain multiple edges between nodes. Where
@@ -77,14 +79,6 @@ class BiolinkDeduplicateEdgesFilter(Filter):
         ),
     )
     def apply(self, df: ps.DataFrame) -> ps.DataFrame:
-        """Deduplicate biolink edges.
-
-        Args:
-            df: DataFrame with biolink edges
-
-        Returns:
-            Deduplicated DataFrame
-        """
         # Enrich edges with path to predicates in biolink hierarchy
         edges_df = df.withColumn(
             "parents", sf.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))(sf.col("predicate"))
@@ -119,7 +113,7 @@ class BiolinkDeduplicateEdgesFilter(Filter):
         )
 
 
-class KeepRowsContainingFilter(Filter):
+class KeepRowsContaining(Filter):
     """Filter that keeps only rows containing specified values in a column.
 
     This filter implements the logic to keep only rows where a specific column
@@ -139,49 +133,36 @@ class KeepRowsContainingFilter(Filter):
         self.keep_list = keep_list
 
     def apply(self, df: ps.DataFrame) -> ps.DataFrame:
-        """Keep only rows where the specified column contains any value from keep_list.
-
-        Args:
-            df: Input DataFrame to filter
-
-        Returns:
-            DataFrame with only matching rows kept
-        """
         keep_list_array = sf.array([sf.lit(x) for x in self.keep_list])
         return df.filter(sf.exists(self.column, lambda x: sf.array_contains(keep_list_array, x)))
 
 
-class RemoveRowsByColumnFilter(Filter):
-    """Filter that removes rows where a column value is in a specified list.
+class RemoveRowsByColumnOverlap(Filter):
+    """Filter that removes rows where a column array overlaps with a specified list, with an optional source exclusion where the filter won't be applied."""
 
-    This filter implements the logic to remove rows where a specific column
-    contains any of the values in the provided remove_list.
-    """
-
-    def __init__(self, column: str, remove_list: Iterable[str]):
+    def __init__(self, column: str, remove_list: Iterable[str], excluded_sources: Optional[List[str]] = None):
         """Initialize the filter with column and values to remove.
 
         Args:
             column: Name of the column to check
-            remove_list: List of values to remove
+            remove_list: List of values that will be looked for in the column
+            excluded_sources: List of sources that won't have the filter applied to them
         """
         self.column = column
         self.remove_list = remove_list
+        self.excluded_sources = excluded_sources or []
 
     def apply(self, df: ps.DataFrame) -> ps.DataFrame:
-        """Remove rows where the specified column contains any value from remove_list.
+        filter_condition = ~sf.arrays_overlap(sf.col(self.column), sf.lit(self.remove_list))
+        if self.excluded_sources:
+            filter_condition = filter_condition | sf.arrays_overlap(
+                sf.col(UPSTREAM_DATA_SOURCE_COLUMN), sf.lit(self.excluded_sources)
+            )
 
-        Args:
-            df: Input DataFrame to filter
-
-        Returns:
-            DataFrame with matching rows removed
-        """
-        filter_condition = ~sf.col(self.column).isin(self.remove_list)
         return df.filter(filter_condition)
 
 
-class TriplePatternFilter(Filter):
+class TriplePattern(Filter):
     """Filter that removes edges matching specific subject-predicate-object patterns.
 
     This filter implements the logic to remove edges that match any of the
@@ -198,14 +179,6 @@ class TriplePatternFilter(Filter):
         self.triples_to_exclude = triples_to_exclude
 
     def apply(self, df: ps.DataFrame) -> ps.DataFrame:
-        """Remove edges that match any of the specified triple patterns.
-
-        Args:
-            df: Input DataFrame to filter
-
-        Returns:
-            DataFrame with matching edges removed
-        """
         filter_condition = sf.lit(True)
         for subject_cat, predicate, object_cat in self.triples_to_exclude:
             filter_condition = filter_condition & ~(
@@ -213,21 +186,4 @@ class TriplePatternFilter(Filter):
                 & (sf.col("predicate") == predicate)
                 & (sf.col("object_category") == object_cat)
             )
-        return df.filter(filter_condition)
-
-
-class RemoveRowsByColumnOverlapExceptSourcesFilter(Filter):
-    """
-    Filter that removes rows where a column contains any of the values in the provided remove list, with an optional source exclusion.
-    """
-
-    def __init__(self, column: str, remove_list: List[str], excluded_sources: Optional[List[str]] = None):
-        self.column = column
-        self.remove_list = remove_list
-        self.excluded_sources = excluded_sources or []
-
-    def apply(self, df: ps.DataFrame) -> ps.DataFrame:
-        filter_condition = sf.arrays_overlap(
-            sf.col("upstream_data_source"), sf.lit(self.excluded_sources)
-        ) | ~sf.arrays_overlap(sf.col(self.column), sf.lit(self.remove_list))
         return df.filter(filter_condition)

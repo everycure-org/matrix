@@ -8,32 +8,32 @@ filtering:
         - ec_medical
         # - robokop
         
-    filter_node_labels:
-        _object: matrix.pipelines.filtering.filters.RemoveRowsByColumnExceptSourcesFilter
-        excluded_sources: ["ec_medical"]
-        column: category
-        remove_list:
-          - biolink:Activity
-          - biolink:Agent
-          - biolink:ClinicalIntervention
-          - biolink:Cohort
-          - biolink:Device
-          - biolink:EnvironmentalFeature
-          - biolink:EnvironmentalProcess
-          - biolink:Event
-          - biolink:GeographicLocation
-          - biolink:IndividualOrganism
-          - biolink:InformationContentEntity
-          - biolink:InformationResource
-          - biolink:LifeStage
-          - biolink:MaterialSample
-          - biolink:NamedThing
-          - biolink:Phenomenon
-          - biolink:PhysicalEntity
-          - biolink:PopulationOfIndividualOrganisms
-          - biolink:Procedure
-          - biolink:Publication
-          - biolink:Treatment
+    # filter_node_labels:
+    #     _object: matrix.pipelines.filtering.filters.RemoveRowsByColumnOverlap
+    #     excluded_sources: ["ec_medical"]
+    #     column: category
+    #     remove_list:
+    #       - biolink:Activity
+    #       - biolink:Agent
+    #       - biolink:ClinicalIntervention
+    #       - biolink:Cohort
+    #       - biolink:Device
+    #       - biolink:EnvironmentalFeature
+    #       - biolink:EnvironmentalProcess
+    #       - biolink:Event
+    #       - biolink:GeographicLocation
+    #       - biolink:IndividualOrganism
+    #       - biolink:InformationContentEntity
+    #       - biolink:InformationResource
+    #       - biolink:LifeStage
+    #       - biolink:MaterialSample
+    #       - biolink:NamedThing
+    #       - biolink:Phenomenon
+    #       - biolink:PhysicalEntity
+    #       - biolink:PopulationOfIndividualOrganisms
+    #       - biolink:Procedure
+    #       - biolink:Publication
+    #       - biolink:Treatment
 
 
     # remove_rows_by_category:
