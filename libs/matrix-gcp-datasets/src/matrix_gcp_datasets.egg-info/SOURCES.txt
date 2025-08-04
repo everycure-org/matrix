@@ -1,0 +1,8 @@
+pyproject.toml
+src/matrix_gcp_datasets/__init__.py
+src/matrix_gcp_datasets/gcp.py
+src/matrix_gcp_datasets.egg-info/PKG-INFO
+src/matrix_gcp_datasets.egg-info/SOURCES.txt
+src/matrix_gcp_datasets.egg-info/dependency_links.txt
+src/matrix_gcp_datasets.egg-info/requires.txt
+src/matrix_gcp_datasets.egg-info/top_level.txt

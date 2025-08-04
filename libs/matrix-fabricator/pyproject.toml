@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "matrix-fabricator"
+version = "0.1.0"
+description = "Data fabrication and generation utilities for Matrix platform"
+requires-python = ">=3.11"
+dependencies = [
+    "kedro>=0.19.0",
+    "pandas",
+    "numpy",
+    "faker",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-mock", 
+    "ruff",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = ["E501"]  # Line too long

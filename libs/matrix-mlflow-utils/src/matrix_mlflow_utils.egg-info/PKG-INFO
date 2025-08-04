@@ -1,0 +1,14 @@
+Metadata-Version: 2.4
+Name: matrix-mlflow-utils
+Version: 0.1.0
+Summary: MLFlow utilities and integrations for Matrix platform
+Requires-Python: >=3.11
+Requires-Dist: mlflow>=2.20.0
+Requires-Dist: kedro>=0.19.0
+Requires-Dist: pandas
+Requires-Dist: numpy
+Requires-Dist: scikit-learn
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: pytest-mock; extra == "dev"
+Requires-Dist: ruff; extra == "dev"

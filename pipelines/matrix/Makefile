@@ -2,8 +2,6 @@ docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
 
 TAG ?= ${USER}
 GIT_SHA ?= $(shell git rev-parse --short HEAD)
-export PYSPARK_PYTHON = .venv/bin/python
-export UV_PYTHON = .venv/bin/python
 export TQDM_DISABLE ?= 1
 TARGET_PLATFORM ?= linux/amd64
 PREREQUISITES := docker gcloud python3 java uv kubectl
@@ -132,7 +130,7 @@ lock:
 
 wipe_neo:
 	# assumes you have neo4j running using docker-compose from `compose_up`
-	uv run python scripts/wipe_neo4j.py 'everycure-test'
+	uv run scripts/wipe_neo4j.py 'everycure-test'
 
 integration_test: compose_up wipe_neo
 	ulimit -n 10000

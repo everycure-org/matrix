@@ -2,12 +2,12 @@ import subprocess
 from unittest.mock import MagicMock, patch
 
 import pytest
-from matrix.utils.system import command_exists, run_subprocess
+from matrix_auth.system import command_exists, run_subprocess
 
 
 @pytest.fixture
 def mock_run_subprocess():
-    with patch("matrix.utils.system.run_subprocess") as mock:
+    with patch("matrix_auth.system.run_subprocess") as mock:
         mock.return_value = MagicMock(stdout='{"metadata": {"name": "mocked-job-name"}}')
         yield mock
 

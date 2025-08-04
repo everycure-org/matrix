@@ -1,5 +1,0 @@
-pyproject.toml
-src/matrix_docs.egg-info/PKG-INFO
-src/matrix_docs.egg-info/SOURCES.txt
-src/matrix_docs.egg-info/dependency_links.txt
-src/matrix_docs.egg-info/top_level.txt

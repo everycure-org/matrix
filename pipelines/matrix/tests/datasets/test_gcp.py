@@ -1,7 +1,7 @@
 import kedro.io.core
 import pytest
 from kedro.framework.session import KedroSession
-from matrix.datasets.gcp import LazySparkDataset, RemoteSparkJDBCDataset, SparkDatasetWithBQExternalTable
+from matrix_gcp_datasets.gcp import LazySparkDataset, RemoteSparkJDBCDataset, SparkDatasetWithBQExternalTable
 from pyspark.sql.types import BooleanType, StructType
 
 

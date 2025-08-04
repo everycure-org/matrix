@@ -9,7 +9,7 @@ _pandas_parquet_ds: &_pandas_parquet
     engine: pyarrow
 
 _spark_parquet_ds: &_spark_parquet
-  type: matrix.datasets.gcp.LazySparkDataset
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
   file_format: parquet
   save_args:
     mode: overwrite
@@ -44,7 +44,7 @@ ingestion.raw.rtx_kg2.curie_to_pmids@pandas:
     if_exists: replace
 
 ingestion.raw.rtx_kg2.curie_to_pmids@spark:
-  type: matrix.datasets.gcp.RemoteSparkJDBCDataset
+  type: matrix_gcp_datasets.gcp.RemoteSparkJDBCDataset
   project: ${globals:dev_gcp_project_id}
   table: curie_to_pmids
   url: sqlite:${globals:paths.raw_public}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/curie_to_pmids.sqlite
@@ -64,7 +64,7 @@ ingestion.raw.rtx_kg2.nodes@pandas:
 
 ingestion.raw.rtx_kg2.nodes@spark:
   <<: *_layer_raw
-  type: matrix.datasets.gcp.LazySparkDataset
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.raw_public}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_nodes_v2-2.tsv
   file_format: csv
   load_args:
@@ -83,7 +83,7 @@ ingestion.raw.rtx_kg2.edges@pandas:
 
 ingestion.raw.rtx_kg2.edges@spark:
   <<: *_layer_raw
-  type: matrix.datasets.gcp.LazySparkDataset
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.raw_public}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_edges_v2-2.tsv
   file_format: csv
   load_args:
@@ -207,7 +207,7 @@ ingestion.raw.drugmech.edges@pandas:
   filepath: ${globals:paths.raw}/drugmech/${globals:data_sources.drugmech.version}/indication_paths.json
 
 # ingestion.raw.drugmech.edges@spark:
-#   type: matrix.datasets.gcp.LazySparkDataset
+#   type: matrix_gcp_datasets.gcp.LazySparkDataset
 #   filepath: https://raw.githubusercontent.com/SuLab/DrugMechDB/refs/tags/${globals:data_sources.drugmech.version}/indication_paths.json
 #   file_format: json
 #   load_args:
@@ -358,7 +358,7 @@ ingestion.int.ground_truth.edges:
 # -------------------------------------------------------------------------  
 ingestion.raw.robokop.nodes@spark:
   <<: *_layer_raw
-  type: matrix.datasets.gcp.LazySparkDataset
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
   file_format: csv
   load_args:
@@ -378,7 +378,7 @@ ingestion.raw.robokop.nodes@pandas:
 
 ingestion.raw.robokop.edges@spark:
   <<: *_layer_raw
-  type: matrix.datasets.gcp.LazySparkDataset
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
   file_format: csv
   load_args:
@@ -409,7 +409,7 @@ ingestion.int.robokop.edges:
 # -------------------------------------------------------------------------
 ingestion.raw.spoke.nodes@spark:
  <<: *_layer_raw
- type: matrix.datasets.gcp.LazySparkDataset
+ type: matrix_gcp_datasets.gcp.LazySparkDataset
  filepath: ${globals:paths.raw_private}/KGs/spoke/${globals:data_sources.spoke.version}/spoke-${globals:data_sources.spoke.version}_nodes.tsv
  file_format: csv
  load_args:
@@ -429,7 +429,7 @@ ingestion.raw.spoke.nodes@pandas:
 
 ingestion.raw.spoke.edges@spark:
  <<: *_layer_raw
- type: matrix.datasets.gcp.LazySparkDataset
+ type: matrix_gcp_datasets.gcp.LazySparkDataset
  filepath: ${globals:paths.raw_private}/KGs/spoke/${globals:data_sources.spoke.version}/spoke-${globals:data_sources.spoke.version}_edges.tsv
  file_format: csv
  load_args:
@@ -460,7 +460,7 @@ ingestion.int.spoke.edges:
 # -------------------------------------------------------------------------
 ingestion.raw.embiology.nodes@spark:
   <<: [*_spark_parquet, *_layer_raw]
-  type: matrix.datasets.gcp.LazySparkDataset
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.raw_private}/KGs/embiology/${globals:data_sources.embiology.version}/nodes.parquet
 
 ingestion.raw.embiology.nodes@pandas:
@@ -469,7 +469,7 @@ ingestion.raw.embiology.nodes@pandas:
 
 ingestion.raw.embiology.edges@spark:
   <<: [*_spark_parquet, *_layer_raw]
-  type: matrix.datasets.gcp.LazySparkDataset
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.raw_private}/KGs/embiology/${globals:data_sources.embiology.version}/edges.parquet
 
 ingestion.raw.embiology.edges@pandas:

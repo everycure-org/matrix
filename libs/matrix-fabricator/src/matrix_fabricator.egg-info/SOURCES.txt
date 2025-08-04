@@ -1,0 +1,10 @@
+pyproject.toml
+src/matrix_fabricator/__init__.py
+src/matrix_fabricator/fabrication.py
+src/matrix_fabricator/generators.py
+src/matrix_fabricator/pipeline.py
+src/matrix_fabricator.egg-info/PKG-INFO
+src/matrix_fabricator.egg-info/SOURCES.txt
+src/matrix_fabricator.egg-info/dependency_links.txt
+src/matrix_fabricator.egg-info/requires.txt
+src/matrix_fabricator.egg-info/top_level.txt

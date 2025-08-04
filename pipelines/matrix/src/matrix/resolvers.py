@@ -2,7 +2,7 @@ import os
 from copy import deepcopy
 from typing import Any, Dict, Optional
 
-from matrix.utils.environment import load_environment_variables
+from matrix_auth.environment import load_environment_variables
 
 # This ensures that environment variables are loaded at module import and thus
 # before the pipeline is run or any data is loaded.
