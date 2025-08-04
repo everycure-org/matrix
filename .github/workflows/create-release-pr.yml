@@ -128,7 +128,7 @@ jobs:
           uv run scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
 
       - name: Setup Node.js for Claude Code
-        # only create release notes for minor, major, and intermediate bumps
+        # only create release notes for minor and major
         if: env.generate_article == 'True'
         uses: actions/setup-node@v4
         with:
