@@ -1,10 +1,9 @@
 from typing import List
 
 import pyspark.sql as ps
+from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark.sql import types as T
 from pyspark.sql.functions import array_join
-
-from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
 SEPARATOR = "\x1f"
 
