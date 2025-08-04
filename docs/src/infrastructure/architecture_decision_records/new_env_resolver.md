@@ -57,7 +57,7 @@ We will move all of our datasets into a single folder structure `data/raw` for r
 ## Implementation Changes Required
 
 1. Create production `/cloud-prod/catalog.yml` and `/cloud-prod/global.yml`.
-2. Remove Variables from `.env` and move it to `global.yml`.
+2. Remove Variables from `.env` and move it to `globals.yml`.
 3. Modify the cloud catalog file and make appropriate changes.
 4. Modify `run.py` to use `cloud` catalog and global as an input to production catalog.
 5. Write proper unit tests.
