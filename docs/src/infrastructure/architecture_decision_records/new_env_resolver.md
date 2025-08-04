@@ -34,7 +34,7 @@ We will create a new catalog file for production environment called `cloud-prod`
 
 ## Modification and separation of globals and catalog files
 
-Each Catalog file and it's global will be used to resolve it's own environment. This way we could directly use dev (`cloud/catalog.yml` and `cloud/global.yml`) in production without duplicating the variables. Keeping it clean and concise.
+Each Catalog file and it's global will be used to resolve it's own environment. This way we could directly use dev (`cloud/catalog.yml` and `cloud/globals.yml`) in production without duplicating the variables. Keeping it clean and concise.
 
 ## Datasets Standardization
 
