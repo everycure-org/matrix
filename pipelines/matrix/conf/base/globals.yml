@@ -30,7 +30,7 @@ data_sources:
   rtx_kg2:
     version: &_rtx_kg_version v2.10.0_validated
   robokop:
-    version: 30fd1bfc18cd5ccb
+    version: 30fd1bfc18cd5ccb.1
   spoke:
     version: V5.7
   embiology:
