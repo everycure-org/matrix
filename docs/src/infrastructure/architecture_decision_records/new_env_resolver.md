@@ -50,7 +50,7 @@ We will move all of our datasets into a single folder structure `data/raw` for r
 2. **Creation of production catalog and global YAML file**: This will contain the variables and information required for production to work.
 3. **Minimal Environment Variables**: Only secrets and deployment-specific values will remain in the `.env`
 4. **Standardized Paths**: Consistent `data/raw/*` structure across all datasets.
-5. **Reduced Complexity**: No overrides, just importing another env if needed. variables will be isolated to it's own env, and should pass through `catalog.yaml` respectively.
+5. **Reduced Complexity**: No overrides, just importing another env if needed. Variables will be isolated to their own env, and should pass through `catalog.yaml` respectively.
 6. **Separation of concerns**: Globals file would be limited to just having the versions number and variables fully owned by the team responsible. No references should be there unless utterly necessary.
 7. **Allow catalogs to inherit from other catalogs**: This way we would not need to define dev variables again for production.
 
