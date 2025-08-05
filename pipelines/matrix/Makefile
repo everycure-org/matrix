@@ -104,7 +104,13 @@ docker_test: certificate docker_build
 
 docker_build:
 	# note the && operator is essential to catch docker buildx errors on linux systems
-	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(docker_image) --load ./ && \
+	docker buildx build \
+		--progress=plain \
+		--build-arg GIT_SHA=${GIT_SHA} \
+		--platform $(TARGET_PLATFORM) \
+		-t $(docker_image) \
+		--load \
+		-f Dockerfile ../../ && \
 	docker tag $(docker_image) $(docker_image):${TAG}
 
 docker_auth:
