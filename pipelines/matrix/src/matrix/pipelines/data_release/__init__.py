@@ -1,1 +1,1 @@
-last_node_name = "sentinel_all_data_release_and_modelling_done"
+last_node_name = "sentinel_data_release_and_modelling_done"
