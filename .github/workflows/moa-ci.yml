@@ -1,6 +1,8 @@
 name: MoA CI pipline
 
 on:
+    pull_request_review:
+      types: [submitted]
     pull_request:
       # Sequence of patterns matched against refs/heads
       branches:
@@ -53,7 +55,7 @@ jobs:
   ci:
     runs-on:  'self-hosted'
     needs: [paths_filter]
-    if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
+    if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main') && github.event.review.state == 'approved'
     defaults:
       run:
         working-directory: ./services/moa_visualizer
@@ -67,7 +69,7 @@ jobs:
 
   push_image:
       needs: [ci]
-      if: github.ref == 'refs/heads/main'
+      if: github.ref == 'refs/heads/main' && github.event.review.state == 'approved'
       runs-on: 'self-hosted'
       environment: dev
       permissions: write-all
