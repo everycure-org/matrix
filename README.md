@@ -38,8 +38,7 @@ project.
 - [MATRIX disease list](https://github.com/everycure-org/matrix-disease-list) - Repo to manage the
   MATRIX disease list.
 - [MATRIX drug list](https://github.com/everycure-org/matrix-drug-list) - Repo to manage the MATRIX
-  disease list. Note: this repository is private at the moment however will be open-sourced in the
-  future.
+  drug list. 
 
 ---
 
