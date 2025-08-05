@@ -3,9 +3,8 @@
 [project]
 name = "matrix"
 version = "0.1.0"
-requires-python = ">=3.11"
+requires-python = "==3.11.13"
 dependencies = [
-    "matrix-cli",
     "matrix-pipeline",
     "matrix-docs",
     "matrix-auth",
@@ -17,7 +16,6 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-matrix-cli = { workspace = true }
 matrix-pipeline = { workspace = true }
 matrix-docs = { workspace = true }
 matrix-auth = { workspace = true }
@@ -27,8 +25,6 @@ matrix-fabricator = { workspace = true }
 
 [tool.uv.workspace]
 members = [
-    # applications
-    "apps/matrix-cli",
     # pipelines, which may be run
     "pipelines/matrix",
     # docs which are built statically and then deployed
