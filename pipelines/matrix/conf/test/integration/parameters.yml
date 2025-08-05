@@ -4,8 +4,13 @@ integration:
       semmed_filters:
         publication_threshold: 0
         ngd_threshold: 1
-  nodenorm:
-    api_endpoint: ${oc.env:NODENORM_ENDPOINT, http://localhost:1080/1.5/get_normalized_nodes}
+
+  normalization:
+    normalizer:
+      _object: matrix.pipelines.integration.normalizers.normalizers.DummyNodeNormalizer
+      protocol_and_domain: ${oc.env:NODENORM_PROTOCOL_AND_DOMAIN, http://localhost:1080}
+      conflate: true
+      drug_chemical_conflate: true
 
   filtering:
     node_filters:

@@ -7,7 +7,9 @@ from ...kedro4argo_node import ArgoNode, ArgoResourceConfig
 from . import nodes
 
 
-def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges: bool = True) -> Pipeline:
+def _create_integration_pipeline(
+    source: str, has_nodes: bool = True, has_edges: bool = True, is_core: bool = False
+) -> Pipeline:
     pipelines = []
 
     pipelines.append(
@@ -47,22 +49,10 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
                     output=f"integration.int.{source}.nodes.nodes_norm_mapping",
                     preprocessor="params:integration.normalization.preprocessor",
                     cache_miss_resolver="params:integration.normalization.normalizer",
-                    api="params:integration.normalization.api",
                     new_col="params:integration.normalization.target_col",
                     primary_key="params:integration.normalization.primary_key",
                     batch_size="params:integration.normalization.batch_size",
                     cache_schema="params:integration.normalization.cache_schema",
-                ),
-                ArgoNode(
-                    func=nodes.normalize_nodes,
-                    inputs={
-                        "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
-                        "nodes": f"integration.int.{source}.nodes",
-                    },
-                    outputs=f"integration.int.{source}.nodes.norm@spark",
-                    name=f"normalize_{source}_nodes",
-                    tags=["argowf.fuse", f"argowf.fuse-group.{source}"],
-                    argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
                 ),
                 node(
                     func=nodes.normalization_summary_nodes_and_edges
@@ -103,6 +93,25 @@ def _create_integration_pipeline(source: str, has_nodes: bool = True, has_edges:
             )
         )
 
+    pipelines.append(
+        pipeline(
+            [
+                ArgoNode(
+                    func=nodes.normalize_core_nodes if is_core else nodes.normalize_nodes,
+                    inputs={
+                        "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
+                        "nodes": f"integration.int.{source}.nodes",
+                    },
+                    outputs=f"integration.int.{source}.nodes.norm@spark",
+                    name=f"normalize_{source}_nodes",
+                    tags=["argowf.fuse", f"argowf.fuse-group.{source}"],
+                    argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
+                ),
+            ],
+            tags=source,
+        )
+    )
+
     return sum(pipelines)
 
 
@@ -119,6 +128,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     source=source["name"],
                     has_nodes=source.get("has_nodes", True),
                     has_edges=source.get("has_edges", True),
+                    is_core=source.get("is_core", False),
                 ),
                 tags=[source["name"]],
             )
@@ -129,9 +139,24 @@ def create_pipeline(**kwargs) -> Pipeline:
         pipeline(
             [
                 node(
+                    func=nodes.create_core_id_mapping,
+                    inputs=[
+                        *[
+                            f'integration.int.{source["name"]}.nodes.norm@spark'
+                            for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
+                            if source.get(
+                                "is_core", False
+                            )  # Default False means only sources with explicit "is_core": True are included
+                        ],
+                    ],
+                    outputs="integration.int.core_node_mapping",
+                    name="create_core_id_mapping",
+                ),
+                node(
                     func=nodes.union_and_deduplicate_nodes,
                     inputs=[
                         "params:integration.deduplication.retrieve_most_specific_category",
+                        "integration.int.core_node_mapping",
                         *[
                             f'integration.int.{source["name"]}.nodes.norm@spark'
                             for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
@@ -141,17 +166,29 @@ def create_pipeline(**kwargs) -> Pipeline:
                     outputs="integration.prm.unified_nodes",
                     name="create_prm_unified_nodes",
                 ),
-                # union edges
                 ArgoNode(
                     func=nodes.union_edges,
                     inputs=[
-                        f'integration.int.{source["name"]}.edges.norm@spark'
-                        for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
-                        if source.get("integrate_in_kg", True)
+                        "integration.int.core_node_mapping",
+                        *[
+                            f'integration.int.{source["name"]}.edges.norm@spark'
+                            for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
+                            if source.get("integrate_in_kg", True)
+                        ],
                     ],
                     outputs="integration.prm.unified_edges",
                     name="create_prm_unified_edges",
                     argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
+                ),
+                node(
+                    func=nodes.check_nodes_and_edges_matching,
+                    inputs={
+                        "nodes": "integration.prm.unified_nodes",
+                        "edges": "integration.prm.unified_edges",
+                    },
+                    outputs="integration.prm.nodes_edges_consistency_check",
+                    name="check_merged_nodes_and_edges_consistency",
+                    tags=["validation"],
                 ),
             ]
         )
