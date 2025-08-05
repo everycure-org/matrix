@@ -1,7 +1,7 @@
 filtering:
   node_filters:
     filter_sources:
-      _object: matrix.pipelines.filtering.filters.KeepRowsContainingFilter
+      _object: matrix.pipelines.filtering.filters.KeepRowsContaining
       column: upstream_data_source
       keep_list:
         - rtxkg2
@@ -44,7 +44,7 @@ filtering:
 
   edge_filters:
     filter_sources:
-      _object: matrix.pipelines.filtering.filters.KeepRowsContainingFilter
+      _object: matrix.pipelines.filtering.filters.KeepRowsContaining
       column: upstream_data_source
       keep_list:
         - rtxkg2
@@ -52,10 +52,10 @@ filtering:
         # - robokop
 
     filter_biolink_edges:
-      _object: matrix.pipelines.filtering.filters.BiolinkDeduplicateEdgesFilter
+      _object: matrix.pipelines.filtering.filters.BiolinkDeduplicateEdges
 
     # filter_triples:
-    #   _object: matrix.pipelines.filtering.filters.TriplePatternFilter
+    #   _object: matrix.pipelines.filtering.filters.TriplePattern
     #   triples_to_exclude:
     #     - ["biolink:Drug", "biolink:interacts_with", "biolink:Drug"]
     #     - ["biolink:Drug", "biolink:subclass_of", "biolink:Drug"]
