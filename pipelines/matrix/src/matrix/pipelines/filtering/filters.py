@@ -5,9 +5,8 @@ from collections.abc import Iterable
 import pyspark.sql as ps
 import pyspark.sql.functions as sf
 from bmt import toolkit
+from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark.sql import types as T
-
-from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
 
 tk = toolkit.Toolkit()
 logger = logging.getLogger(__name__)

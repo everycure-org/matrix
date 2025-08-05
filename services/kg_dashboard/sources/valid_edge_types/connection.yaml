@@ -1,0 +1,4 @@
+name: valid_edge_types
+type: duckdb
+options:
+  filename: valid_edge_types.duckdb

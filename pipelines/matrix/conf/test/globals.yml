@@ -9,11 +9,10 @@ openai:
   api_key: dummy
 
 paths:
-  raw:                data/test/raw
-  kg_raw:             data/test/raw
+  raw:             data/test/raw
   # Public data sources
-  public_kg_raw:      data/test/raw
-  kg_raw_private:     data/test/raw
+  raw_public:      data/test/raw
+  raw_private:     data/test/raw
   # Upstream version-based
   ingestion:          data/test/ingestion
   # Release-based

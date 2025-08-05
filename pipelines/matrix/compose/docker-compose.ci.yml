@@ -48,7 +48,7 @@ services:
           kedro run -e test -p test
     environment:
       TQDM_DISABLE: 1
-      NODENORM_ENDPOINT: http://mockserver:1080/1.5/get_normalized_nodes
+      NODENORM_PROTOCOL_AND_DOMAIN: http://mockserver:1080
       NEO4J_HOST: bolt+ssc://neo4j:7687 # NOTE: Passing in bolt+s as our CLI Neo4J has SSL enabled
       NEO4J_USER: neo4j
       NEO4J_PASSWORD: admin

@@ -162,6 +162,8 @@ clean: clean_sa_key
 	rm -rf .pytest_cache .venv
 	uv cache clean
 	docker volume prune -f
+	rm -rf data/cache
+	rm -rf data/test/cache
 
 diagnostics:
 	echo "Collecting system diagnostics..."
