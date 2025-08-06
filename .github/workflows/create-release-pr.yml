@@ -149,9 +149,10 @@ jobs:
 
           TARGET_DIR="${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.release }}"
           FILE_PATH="${TARGET_DIR}/post.md"
-
+          
           if git ls-files --error-unmatch "$FILE_PATH" &> /dev/null; then
             echo "File '$FILE_PATH' is already committed to the repository. Skipping release notes creation."
+            cat $FILE_PATH
             exit 0
           fi
 
