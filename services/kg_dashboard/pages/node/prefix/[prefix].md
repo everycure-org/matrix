@@ -1,5 +1,36 @@
 # {params.prefix}
 
+<script context="module">
+  import { getSeriesColors, sourceOrder } from '../../../_lib/colors';
+  
+  // Enhanced sortBySeries function that uses the color ordering
+  export function sortBySeriesOrdered(data, seriesColumn) {
+    // Use the existing sourceOrder from colors.js
+    return data.sort((a, b) => {
+      const aIndex = sourceOrder.indexOf(a[seriesColumn]);
+      const bIndex = sourceOrder.indexOf(b[seriesColumn]);
+      
+      // Both are known sources
+      if (aIndex !== -1 && bIndex !== -1) {
+        return aIndex - bIndex;
+      }
+      
+      // a is known, b is unknown - a comes first
+      if (aIndex !== -1 && bIndex === -1) {
+        return -1;
+      }
+      
+      // a is unknown, b is known - b comes first
+      if (aIndex === -1 && bIndex !== -1) {
+        return 1;
+      }
+      
+      // Both are unknown - sort alphabetically
+      return a[seriesColumn].localeCompare(b[seriesColumn]);
+    });
+  }
+</script>
+
 ```sql number_of_nodes
 select COALESCE(sum(count), 0) as count
 from bq.merged_kg_nodes
@@ -65,18 +96,18 @@ order by count desc
   order by count desc
 ```
 
-
 <Grid col=2>
-    <p class="text-center text-lg pt-4"><span class="font-semibold text-2xl"><Value data={number_of_edges} column="count" fmt="integer"/></span><br/>edges</p>
     <p class="text-center text-lg pt-4"><span class="font-semibold text-2xl"><Value data={number_of_nodes} column="count" fmt="integer"/></span><br/>nodes</p>
+    <p class="text-center text-lg pt-4"><span class="font-semibold text-2xl"><Value data={number_of_edges} column="count" fmt="integer"/></span><br/>edges</p>
 </Grid>
 
 {#if node_categories_by_upstream_data_source.length !== 0}
 <BarChart 
-    data={node_categories_by_upstream_data_source}
+    data={sortBySeriesOrdered(node_categories_by_upstream_data_source, 'upstream_data_source')}
     x=category
     y=count
     series=upstream_data_source
+    seriesColors={getSeriesColors(node_categories_by_upstream_data_source, 'upstream_data_source')}
     swapXY=true    
     title="Category"
 />
@@ -92,7 +123,6 @@ order by count desc
 />
 {/if}
 
-
 {#if primary_knowledge_source_counts.length !== 0}
 <div>
     <Dropdown 
@@ -105,10 +135,11 @@ order by count desc
     </Dropdown>
 </div>
 {/if}
+
 {#if edge_type_with_connected_category.length !== 0}
 <DataTable
     data={edge_type_with_connected_category}
-    title="Edge Types Connectected to {params.prefix} Nodes"
+    title="Edge Types Connected to {params.prefix} Nodes"
     groupBy=connected_category
     subtotals=true
     totalRow=true
@@ -119,5 +150,3 @@ order by count desc
     <Column id="count" contentType="bar"/>
 </DataTable>
 {/if}
-
-

@@ -1,11 +1,14 @@
 ---
-title: Merged KG Dashboard
+title: Merged KG Composition
 ---
+<p class="text-md mt-2 mb-6">
+  This dashboard provides an overview of the merged knowledge graph, integrating multiple upstream data sources.
+  It highlights how different biological entities and relationships are represented across these sources.
+</p>
 
-<!-- <Details title='How to edit this page'>
-
-  This page can be found in your project at `/pages/index.md`. Make a change to the markdown file and save it to see the change take effect in your browser.
-</Details> -->
+<script context="module">
+  import { getSeriesColors, sortDataBySource } from '../_lib/colors';
+</script>
 
 <!-- Node Queries -->
 
@@ -23,7 +26,6 @@ group by all
 order by count desc
 limit ${inputs.node_prefix_limit.value}
 ```
-
 
 <!-- Edge Queries -->
 
@@ -104,17 +106,21 @@ from bq.merged_kg_edges
   limit ${inputs.edge_limit.value}  
 ```
 
-
-
-
 <Tabs>
     <Tab label="Nodes">
-        
+        <p class="text-sm mb-4">
+          The charts below show how various biological categories and identifier prefixes are distributed across data sources in the graph.
+          This helps assess the composition and provenance of nodes.
+          See the <a class="underline text-blue-600" href="https://biolink.github.io/biolink-model/" target="_blank">Biolink Model documentation</a> 
+          for more on  <a class="underline text-blue-600" href="https://biolink.github.io/biolink-model/#classes-visualization" target="_blank">categories</a> and 
+          their associated Valid ID Prefixes.
+        </p>
         <BarChart 
-            data={node_categories_by_upstream_data_source}
+            data={sortDataBySource(node_categories_by_upstream_data_source, 'upstream_data_source')}
             x=category
             y=count
             series=upstream_data_source
+            seriesColors={getSeriesColors(node_categories_by_upstream_data_source, 'upstream_data_source')}
             swapXY=true    
             title="Node Categories by Upstream Data Source"
         />
@@ -124,11 +130,13 @@ from bq.merged_kg_edges
             <DropdownOption value=20>20</DropdownOption>
             <DropdownOption value=50>50</DropdownOption>
         </Dropdown> 
+        
         <BarChart 
-            data={node_prefix_by_upstream_data_source}
+            data={sortDataBySource(node_prefix_by_upstream_data_source, 'upstream_data_source')}
             x=prefix
             y=count
             series=upstream_data_source
+            seriesColors={getSeriesColors(node_prefix_by_upstream_data_source, 'upstream_data_source')}
             swapXY=true
             title="Node Prefix by Upstream Data Source"
         />
@@ -140,7 +148,15 @@ from bq.merged_kg_edges
             <DropdownOption value=100>200</DropdownOption>
         </Dropdown> 
     </Tab>
-    <Tab label="Edges">    
+    <Tab label="Edges"> 
+        
+        <p class="text-sm mb-4">
+          These plots explore edge relationships in the graph, including the frequency of predicates, 
+          biological edge types, and the knowledge sources contributing to each. 
+          See the <a class="underline text-blue-600" href="https://biolink.github.io/biolink-model/" target="_blank">Biolink Model documentation</a> 
+          for more on <a class="underline text-blue-600" href="https://biolink.github.io/biolink-model/#predicates-visualization" target="_blank">predicates</a> and 
+          <a class="underline text-blue-600" href="https://biolink.github.io/biolink-model/#classes-visualization" target="_blank">categories</a>
+        </p>
 
         <div>
             <Dropdown data={edges}
@@ -210,21 +226,22 @@ from bq.merged_kg_edges
             </Dropdown> 
         </div>
 
-        <BarChart 
-            data={predicates_by_upstream_data_source}
+        <BarChart
+            data={sortDataBySource(predicates_by_upstream_data_source, 'upstream_data_source')}
             x=predicate
             y=count
             series=upstream_data_source
+            seriesColors={getSeriesColors(predicates_by_upstream_data_source, 'upstream_data_source')} 
             swapXY=true
             title="Predicates by Upstream Data Source"    
         />
 
-
         <BarChart 
-            data={edge_types_by_upstream_data_source}
+            data={sortDataBySource(edge_types_by_upstream_data_source, 'upstream_data_source')}
             x=edge_type
             y=count 
             series=upstream_data_source
+            seriesColors={getSeriesColors(edge_types_by_upstream_data_source, 'upstream_data_source')}
             swapXY=true
             title="Edge Types by Upstream Data Source"
         />
@@ -248,7 +265,4 @@ from bq.merged_kg_edges
         />
     </Tab>
 </Tabs>
-
-
-
 

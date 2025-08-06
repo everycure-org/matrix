@@ -53,8 +53,12 @@ modelling.model_input.drugs_diseases_nodes@pandas:
   <<: [*_kg_dataset, *_model_input_ds]
   filepath: ${globals:paths.modelling}/model_input/drugs_diseases_nodes/
 
-modelling.model_input.splits:
+modelling.model_input.splits@pandas:
   <<: [*_pandas_parquet, *_model_input_ds]
+  filepath: ${globals:paths.modelling}/model_input/splits
+
+modelling.model_input.splits@spark:
+  <<: [*_spark_parquet, *_model_input_ds]
   filepath: ${globals:paths.modelling}/model_input/splits
 
 "modelling.fold_{fold}.model_input.transformers":

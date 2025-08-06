@@ -174,7 +174,6 @@ def create_node_embeddings_pipeline() -> Pipeline:
         output="embeddings.feat.graph.node_embeddings@spark",
         preprocessor="params:embeddings.node.preprocessor",
         cache_miss_resolver="params:embeddings.node.resolver",
-        api="params:embeddings.node.api",
         new_col="params:embeddings.node.target_col",
         primary_key="params:embeddings.node.primary_key",
         batch_size="params:embeddings.node.batch_size",

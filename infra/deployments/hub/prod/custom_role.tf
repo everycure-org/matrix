@@ -5,23 +5,11 @@ resource "google_project_iam_custom_role" "read_and_no_delete_or_overwrite_stora
   description = "Custom role with read access to storage and metadata, without delete or overwrite permissions."
 
   permissions = [
-    "storage.folders.create",
-    "storage.folders.list",
-    "storage.folders.get",
-    "storage.managedFolders.create",
-    "storage.managedFolders.list",
-    "storage.managedFolders.get",
+    "storage.objects.create",
+    "storage.objects.get",
     "storage.multipartUploads.create",
     "storage.multipartUploads.abort",
     "storage.multipartUploads.listParts",
-    "storage.multipartUploads.list",
-    "storage.objects.create",
-    "storage.objects.get",
-    "storage.objects.list",
-    "storage.buckets.get",
-    "storage.managedFolders.get",
-    "storage.managedFolders.list",
-    "storage.multipartUploads.list",
   ]
 }
 

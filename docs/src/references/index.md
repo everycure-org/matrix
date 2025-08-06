@@ -18,8 +18,8 @@ Below is a curated list of useful links to various EveryCure resources and tools
 - **[GitHub Actions](https://github.com/everycure-org/matrix/actions)** – Continuous integration and delivery pipelines.
 - **[ArgoCD](https://argo.platform.dev.everycure.org/workflows/)** – Manage and deploy Kubernetes applications.
 - **[MLFlow](https://mlflow.platform.dev.everycure.org/)** – Experiment tracking and model management for machine learning projects.
-- **[Neo4j](https://neo4j.platform.dev.everycure.org/)** – Graph database for storing and querying data.
-- **[Bloom](https://neo4j.platform.dev.everycure.org/bloom)** – Bloom is a graph extension for Neo4j that provides a set of tools for graph exploration.
+- **[Neo4j](https://neo4j.dev.everycure.org/)** – Graph database for storing and querying data.
+- **[Bloom](https://neo4j.dev.everycure.org/bloom)** – Bloom is a graph extension for Neo4j that provides a set of tools for graph exploration.
 - **[Grafana](https://grafana.platform.dev.everycure.org/)** – Monitoring and observability platform for the platform.
 - **[KG Dashboard](https://data.dev.everycure.org/versions/latest/evidence/index.html)** - Knowledge Graph Dashboard providing key metrics about our Knowledge Graph.
 

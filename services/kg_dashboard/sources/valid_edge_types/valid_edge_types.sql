@@ -1,0 +1,1 @@
+select * from 'valid_edge_types'

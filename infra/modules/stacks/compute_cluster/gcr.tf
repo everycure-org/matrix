@@ -1,7 +1,11 @@
-resource "google_artifact_registry_repository" "image_repo" {
-  location      = var.default_region
-  project       = var.project_id
-  repository_id = "matrix-images"
-  description   = "images for matrix project"
-  format        = "DOCKER"
+module "image_repo" {
+  source = "../../artifact_registry"
+
+  project_id              = var.project_id
+  location                = var.default_region
+  repository_id           = "matrix-images"
+  description             = "images for matrix project"
+  format                  = "DOCKER"
+  delete_older_than_days  = "14d"
+  sample_run_tag_prefixes = ["sample-run-"]
 }
