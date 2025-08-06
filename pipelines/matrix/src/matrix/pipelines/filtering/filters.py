@@ -12,8 +12,6 @@ from pyspark.sql import types as T
 tk = toolkit.Toolkit()
 logger = logging.getLogger(__name__)
 
-UPSTREAM_DATA_SOURCE_COLUMN = "upstream_data_source"
-
 
 class Filter(ABC):
     """Base class for all filters in the matrix pipeline.
@@ -140,7 +138,13 @@ class KeepRowsContaining(Filter):
 class RemoveRowsByColumnOverlap(Filter):
     """Filter that removes rows where a column array overlaps with a specified list, with an optional source exclusion where the filter won't be applied."""
 
-    def __init__(self, column: str, remove_list: Iterable[str], excluded_sources: Optional[List[str]] = None):
+    def __init__(
+        self,
+        column: str,
+        remove_list: Iterable[str],
+        upstream_data_source_column: str = "upstream_data_source",
+        excluded_sources: Optional[List[str]] = None,
+    ):
         """Initialize the filter with column and values to remove.
 
         Args:
@@ -151,12 +155,13 @@ class RemoveRowsByColumnOverlap(Filter):
         self.column = column
         self.remove_list = remove_list
         self.excluded_sources = excluded_sources or []
+        self.upstream_data_source_column = upstream_data_source_column
 
     def apply(self, df: ps.DataFrame) -> ps.DataFrame:
         filter_condition = ~sf.arrays_overlap(sf.col(self.column), sf.lit(self.remove_list))
         if self.excluded_sources:
             filter_condition = filter_condition | sf.arrays_overlap(
-                sf.col(UPSTREAM_DATA_SOURCE_COLUMN), sf.lit(self.excluded_sources)
+                sf.col(self.upstream_data_source_column), sf.lit(self.excluded_sources)
             )
 
         return df.filter(filter_condition)
