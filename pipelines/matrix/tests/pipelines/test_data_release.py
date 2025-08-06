@@ -38,9 +38,6 @@ class TestDataReleasePipeline:
         # We expect at least these core components
         expected_component_prefixes = [
             "data_release",
-            "embeddings",
-            "modelling",
-            "matrix_generation",
             "matrix_transformations",
             "evaluation",
         ]
@@ -87,9 +84,6 @@ class TestDataReleasePipeline:
         expected_component_prefixes = [
             "data_release.prm.kg_edges",
             "data_release.prm.kg_nodes",
-            "embeddings",
-            "modelling",
-            "matrix_generation",
             "matrix_transformations",
             "evaluation",
         ]

@@ -20,13 +20,11 @@ def get_sentinel_inputs(is_patch: bool) -> list[str]:
             f"integration.int.{source['name']}.normalization_summary"
             for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
         ]
+        # The master evaluation report is the final node
+        # Also check for full matrix output as this runs in parallel with the evaluation pipeline and is critical
         + [
-            # Include an input from every pipeline
-            "embeddings.feat.nodes",
-            "modelling.0.model_input.enriched_splits",
-            "matrix_generation.fold_0.model_output.sorted_matrix_predictions@spark",
+            "evaluation.matrix_transformations.reporting.master_report",
             "matrix_transformations.full_matrix_output@spark",
-            "evaluation.matrix_transformations.fold_0.full_matrix.reporting.result",
         ]
     )
 
