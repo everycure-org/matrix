@@ -53,7 +53,7 @@ kedro run -p moa_entity_resolution -e  cloud
 ```  
 2. **Main MOA extraction pipeline** Performs all other functionality. To run this pipeline on the cluster, use the command: 
 ```
-kedro submit --username <your name> --pipeline <moa_extraction>
+kedro experiment run --username <your name> --pipeline <moa_extraction>
 ``` 
 
 The main MOA extraction pipeline itself has four separate components. 
