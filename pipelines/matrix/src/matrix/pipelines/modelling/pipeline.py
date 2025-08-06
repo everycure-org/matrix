@@ -119,10 +119,7 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                             "features": f"params:modelling.{model_name}.model_options.model_tuning_args.features",
                             "target_col_name": f"params:modelling.{model_name}.model_options.model_tuning_args.target_col_name",
                         },
-                        outputs=[
-                            f"modelling.fold_{fold}.model_output.predictions",
-                            f"modelling.fold_{fold}.model_output.shap_values",
-                        ],
+                        outputs=f"modelling.fold_{fold}.model_output.predictions",
                         name=f"get_model_predictions_fold_{fold}",
                         argo_config=ARGO_CPU_ONLY_NODE_MEDIUM,
                     ),
@@ -202,24 +199,24 @@ def create_model_pipeline(model_name: str, num_shards: int, n_cross_val_folds: i
         )
     )
 
-    fold_ids = list(range(n_cross_val_folds + 1))
+    # fold_ids = list(range(n_cross_val_folds + 1))
 
-    pipelines.append(
-        pipeline(
-            [
-                ArgoNode(
-                    func=nodes.plot_gt_weights,
-                    inputs=[
-                        *[f"modelling.fold_{f}.model_input.transformers" for f in fold_ids],
-                        "modelling.model_input.splits",
-                    ],
-                    outputs="modelling.reporting.weight_plot",
-                    name="plot_gt_weights",
-                    argo_config=ARGO_CPU_ONLY_NODE_MEDIUM,
-                )
-            ],
-        )
-    )
+    # pipelines.append(
+    #     pipeline(
+    #         [
+    #             ArgoNode(
+    #                 func=nodes.plot_gt_weights,
+    #                 inputs=[
+    #                     *[f"modelling.fold_{f}.model_input.transformers" for f in fold_ids],
+    #                     "modelling.model_input.splits",
+    #                 ],
+    #                 outputs="modelling.reporting.weight_plot",
+    #                 name="plot_gt_weights",
+    #                 argo_config=ARGO_CPU_ONLY_NODE_MEDIUM,
+    #             )
+    #         ],
+    #     )
+    # )
 
     return sum(pipelines)
 

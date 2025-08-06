@@ -4,7 +4,6 @@ import logging
 from typing import Any, Callable, Iterable, Sequence, Union
 
 import matplotlib.pyplot as plt
-import mlflow
 import numpy as np
 import pandas as pd
 import pyspark.sql as ps
@@ -452,70 +451,6 @@ def create_model(agg_func: Callable, *estimators) -> ModelWrapper:
     return ModelWrapper(estimators=estimators, agg_func=agg_func)
 
 
-def _tree_shap_values_single(
-    booster: xgb.Booster,
-    X: pd.DataFrame,
-    feature_names: list[str],
-    class_idx: int | None = 1,
-) -> np.ndarray:
-    """Compute SHAP values for a single booster model.
-
-    Args:
-        booster: xgboost.Booster model.
-        X: DataFrame containing the input features.
-        feature_names: List of feature names.
-        class_idx: Index of the class for which to compute SHAP values (default is 1).
-    Returns:
-        np.ndarray: SHAP values for the input features.
-    """
-    explainer = shap.TreeExplainer(booster, feature_perturbation="interventional")
-    shap_vals = explainer.shap_values(X)
-    if isinstance(shap_vals, list):
-        if class_idx is None:
-            shap_vals = np.mean(shap_vals, axis=0)
-        else:
-            shap_vals = shap_vals[class_idx]
-    elif shap_vals.ndim == 3:
-        if shap_vals.shape[1] == len(feature_names):
-            feat_axis, class_axis = 1, 2
-        else:
-            feat_axis, class_axis = 2, 1
-        if class_idx is None:
-            shap_vals = shap_vals.mean(axis=class_axis)
-        else:
-            shap_vals = np.take(shap_vals, class_idx, axis=class_axis)
-
-        if feat_axis != 1:
-            shap_vals = np.moveaxis(shap_vals, feat_axis, 1)
-
-    if shap_vals.shape[1] == len(feature_names) + 1:
-        shap_vals = shap_vals[:, :-1]
-
-    return shap_vals
-
-
-def _aggregate(stack: np.ndarray, agg_func: Callable) -> np.ndarray:
-    """Aggregate a stack of SHAP values using the specified aggregation function.
-    Args:
-        stack: 3‑D array of SHAP values (n_models, n_rows, n_features).
-        agg_func: Function to aggregate SHAP values across models.
-    Returns:
-        np.ndarray: Aggregated SHAP values (n_rows, n_features).
-    """
-    try:
-        out = agg_func(stack, axis=0)
-    except TypeError:
-        out = np.apply_along_axis(agg_func, 0, stack)
-
-    if out.ndim != 2:
-        raise ValueError(
-            f"Aggregation produced shape {out.shape}; "
-            "expected 2‑D (n_rows, n_features). "
-            "Make sure `agg_func` returns a scalar for a 1‑D input."
-        )
-    return out
-
-
 @inject_object()
 @make_list_regexable(source_df="data", make_regexable_kwarg="features")
 def get_model_predictions(
@@ -537,36 +472,8 @@ def get_model_predictions(
     Returns:
         Data with predictions.
     """
-
-    preds = model.predict(data[features].values)
-
-    scored_df = data.copy()
-    scored_df[target_col_name + prediction_suffix] = preds
-
-    shap_arrays = [_tree_shap_values_single(bst, data[features], features, class_idx=1) for bst in model.boosters]
-
-    shap_stack = np.stack(shap_arrays)
-    shap_agg = _aggregate(shap_stack, model._agg_func)
-    shap_df = pd.DataFrame(
-        shap_agg,
-        index=data.index,
-        columns=[f"{c}_shap" for c in features],
-    )
-
-    if callable(model._agg_func) and model._agg_func in (np.mean, np.average, np.sum):
-        base = np.mean([shap.TreeExplainer(b).expected_value for b in model.boosters])
-        recon = base + shap_df.sum(axis=1).values
-
-    if mlflow.active_run():
-        explainer = shap.TreeExplainer(model.boosters[0], feature_perturbation="interventional")
-        mlflow.shap.log_explainer(explainer, artifact_path="shap")
-
-        fig = plt.figure()
-        shap.summary_plot(shap_df.values, data[features], show=False, max_display=20)
-        mlflow.log_figure(fig, "shap/summary_beeswarm.png")
-        plt.close(fig)
-
-    return scored_df, shap_df
+    data[target_col_name + prediction_suffix] = model.predict(data[features].values)
+    return data
 
 
 def combine_data(*predictions_all_folds: pd.DataFrame) -> pd.DataFrame:
