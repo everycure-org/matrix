@@ -1,10 +1,9 @@
 import itertools
 import json
 import logging
-from typing import Any, Callable, Iterable, Sequence, Union
+from typing import Any, Callable, Iterable, Union
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.types as T
@@ -17,7 +16,6 @@ from sklearn.model_selection import BaseCrossValidator
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from matrix.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
-from matrix.pipelines.modelling.transformers import WeightingTransformer
 
 from .model import ModelWrapper
 from .model_selection import DiseaseAreaSplit
@@ -613,76 +611,76 @@ def check_model_performance(
 #     return plt.gcf()
 
 
-def plot_gt_weights(*inputs) -> Figure:
-    """
-    Positional inputs:
-        0 … N‑1   : dicts produced by `fit_transformers`
-        N         : `modelling.model_input.splits@pandas`
-    """
-    all_splits = inputs[-1]  # the original DataFrame (with 'source')
-    if not isinstance(all_splits, pd.DataFrame):
-        all_splits = all_splits.to_pandas()
+# def plot_gt_weights(*inputs) -> Figure:
+#     """
+#     Positional inputs:
+#         0 … N‑1   : dicts produced by `fit_transformers`
+#         N         : `modelling.model_input.splits@pandas`
+#     """
+#     all_splits = inputs[-1]  # the original DataFrame (with 'source')
+#     if not isinstance(all_splits, pd.DataFrame):
+#         all_splits = all_splits.to_pandas()
 
-    tr_dicts: Sequence[dict] = inputs[:-1]
-    n = len(tr_dicts)
+#     tr_dicts: Sequence[dict] = inputs[:-1]
+#     n = len(tr_dicts)
 
-    fig, axes = plt.subplots(nrows=n, ncols=2, figsize=(12, 6 * n), dpi=110, squeeze=False)
+#     fig, axes = plt.subplots(nrows=n, ncols=2, figsize=(12, 6 * n), dpi=110, squeeze=False)
 
-    for i, tr_dict in enumerate(tr_dicts):
-        tr: WeightingTransformer = tr_dict["weighting"]["transformer"]
+#     for i, tr_dict in enumerate(tr_dicts):
+#         tr: WeightingTransformer = tr_dict["weighting"]["transformer"]
 
-        # TRAIN rows that were used to fit this transformer
-        df = all_splits.loc[(all_splits["fold"] == i) & (all_splits["split"] == "TRAIN")]
+#         # TRAIN rows that were used to fit this transformer
+#         df = all_splits.loc[(all_splits["fold"] == i) & (all_splits["split"] == "TRAIN")]
 
-        head = tr.head_col  # 'source'
-        raw_cnt = df.groupby(head).size()
-        raw_cnt = df[head].map(raw_cnt).to_numpy()
+#         head = tr.head_col  # 'source'
+#         raw_cnt = df.groupby(head).size()
+#         raw_cnt = df[head].map(raw_cnt).to_numpy()
 
-        weights = df[head].map(tr.weight_map_).fillna(tr.default_weight_).to_numpy()
-        w_cnt = raw_cnt * weights
-        bins = max(10, int(np.sqrt(raw_cnt.size)))
+#         weights = df[head].map(tr.weight_map_).fillna(tr.default_weight_).to_numpy()
+#         w_cnt = raw_cnt * weights
+#         bins = max(10, int(np.sqrt(raw_cnt.size)))
 
-        ax0, ax1 = axes[i]
+#         ax0, ax1 = axes[i]
 
-        # left panel – mapping
-        ax0.scatter(raw_cnt, w_cnt, s=18, alpha=0.6, ec="none")
-        ax0.set(
-            xlabel="raw degree",
-            ylabel="weighted degree",
-            title=f"{tr.strategy} – mapping (fold {i})",
-        )
+#         # left panel – mapping
+#         ax0.scatter(raw_cnt, w_cnt, s=18, alpha=0.6, ec="none")
+#         ax0.set(
+#             xlabel="raw degree",
+#             ylabel="weighted degree",
+#             title=f"{tr.strategy} – mapping (fold {i})",
+#         )
 
-        # right panel – distribution
-        for vec, col, lab in [
-            (raw_cnt, "tab:blue", "raw"),
-            (w_cnt, "tab:orange", "weighted"),
-        ]:
-            sns.histplot(
-                vec,
-                bins=bins,
-                ax=ax1,
-                color=col,
-                edgecolor="black",
-                alpha=0.30,
-                stat="count",
-                label=f"{lab} (hist)",
-            )
-            sns.kdeplot(
-                vec,
-                ax=ax1,
-                color=col,
-                bw_adjust=1.2,
-                linewidth=2,
-                fill=False,
-                label=f"{lab} KDE",
-            )
+#         # right panel – distribution
+#         for vec, col, lab in [
+#             (raw_cnt, "tab:blue", "raw"),
+#             (w_cnt, "tab:orange", "weighted"),
+#         ]:
+#             sns.histplot(
+#                 vec,
+#                 bins=bins,
+#                 ax=ax1,
+#                 color=col,
+#                 edgecolor="black",
+#                 alpha=0.30,
+#                 stat="count",
+#                 label=f"{lab} (hist)",
+#             )
+#             sns.kdeplot(
+#                 vec,
+#                 ax=ax1,
+#                 color=col,
+#                 bw_adjust=1.2,
+#                 linewidth=2,
+#                 fill=False,
+#                 label=f"{lab} KDE",
+#             )
 
-        ax1.set(
-            xlabel="degree",
-            ylabel="entity count",
-            title=f"{tr.strategy} – distribution (fold {i})",
-        )
-        ax1.legend()
+#         ax1.set(
+#             xlabel="degree",
+#             ylabel="entity count",
+#             title=f"{tr.strategy} – distribution (fold {i})",
+#         )
+#         ax1.legend()
 
-    plt.tight_layout()
-    return fig
+#     plt.tight_layout()
+#     return fig
