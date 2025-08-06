@@ -3,18 +3,6 @@ name: MoA CI pipline
 on:
     pull_request_review:
       types: [submitted]
-    pull_request:
-      # Sequence of patterns matched against refs/heads
-      branches:
-        - main
-      types:
-        - opened
-        - reopened
-        - synchronize
-        - ready_for_review
-      paths: 
-        - services/moa_visualizer/**
-        - .github/workflows/moa-ci.yml
   
     push:
       branches:
