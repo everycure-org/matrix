@@ -23,7 +23,8 @@ history, GitHub PRs, and their associated code changes.
 2. **Fetch PR Details with Labels**
 
    - find out when the git tag was created with `git log -1 --format=%ai {since}`
-   - Get all PRs merged since then with with
+   - Get all PRs merged since then with with the below command. Note this is essential to get the
+     authors list
      `gh pr list -L 100 --json title,number,url,labels,author,mergeCommit --search 'merged:>{tag_date}'`
    - Ignore missing PRs, looking at 100 is enough
 
