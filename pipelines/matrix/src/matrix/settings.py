@@ -44,7 +44,7 @@ DYNAMIC_PIPELINES_MAPPING = (
         generate_dynamic_pipeline_mapping(
             {
                 "cross_validation": {
-                    "n_cross_val_folds": 3,
+                    "n_cross_val_folds": 5,
                 },
                 "integration": [
                     {"name": "rtx_kg2", "integrate_in_kg": True, "is_private": False},
@@ -58,11 +58,11 @@ DYNAMIC_PIPELINES_MAPPING = (
                     {"name": "ground_truth", "integrate_in_kg": False, "has_nodes": False},
                     # {"name": "drugmech", "integrate_in_kg": False, "has_nodes": False},
                     {"name": "ec_clinical_trails", "integrate_in_kg": False},
-                    # {"name": "off_label", "integrate_in_kg": False, "has_nodes": False},
+                    {"name": "off_label", "integrate_in_kg": False, "has_nodes": False},
                 ],
                 "modelling": {
                     "model_name": "xg_ensemble_weighted",  # model_name suggestions: xg_baseline, xg_ensemble, xg_ensemble_weighted, rf, xg_synth
-                    "model_config": {"num_shards": 3},
+                    "model_config": {"num_shards": 1},
                 },
                 "evaluation": [
                     {"evaluation_name": "simple_classification"},
@@ -72,8 +72,8 @@ DYNAMIC_PIPELINES_MAPPING = (
                     {"evaluation_name": "simple_classification_trials"},
                     {"evaluation_name": "disease_specific_trials"},
                     {"evaluation_name": "full_matrix_trials"},
-                    # {"evaluation_name": "disease_specific_off_label"},
-                    # {"evaluation_name": "full_matrix_off_label"},
+                    {"evaluation_name": "disease_specific_off_label"},
+                    {"evaluation_name": "full_matrix_off_label"},
                 ],
                 "stability": [
                     {"stability_name": "stability_overlap"},
