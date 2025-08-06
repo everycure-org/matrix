@@ -26,7 +26,7 @@ When you run this:
 * If an `--experiment-name` is provided, it will use this. Otherwise, it will attempt to use the current branch name, without the `experiment/` prefix. 
 * Next, it will look up this experiment name in MLFlow. If it doesn't exist, it will create a new experiment with this name.
 * If you have not defined a `--run-name`, you will be prompted to enter one.
-* Then, it will invoke `kedro submit` and submit the pipeline.
+* Then, it will submit the pipeline directly to the cluster using Argo Workflows.
 * All runs are logged in MLFlow under the experiment name provided.
 
 
