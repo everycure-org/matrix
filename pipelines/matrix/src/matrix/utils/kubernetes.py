@@ -115,7 +115,7 @@ def apply(namespace, file_path: Path, verbose: bool):
     `kubectl apply -f <file_path> -n <namespace>` will make the template available as a resource (but will not create any other resources, and will not trigger the workshop).
     """
 
-    cmd = f"kubectl apply -f {file_path} -n {namespace}"
+    cmd = f"kubectl apply --server-side -f {file_path} -n {namespace}"
     run_subprocess(
         cmd,
         check=True,
