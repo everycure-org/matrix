@@ -87,6 +87,23 @@ class LazySparkDataset(SparkDataset):
                 raise e
 
 
+class SparkBigQueryDataset(LazySparkDataset):
+    """
+    Spark dataset dat executes a BigQuery query and returns
+    the result as a Spark DataFrame.
+    """
+
+    def __init__(  # noqa: PLR0913
+        self, *, project: str, dataset: str, table: str, shard: Optional[str] = None
+    ) -> None:
+        super().__init__(
+            filepath="dummy", file_format="bigquery", load_args={"table": f"{project}.{dataset}.{table}_{shard}"}
+        )
+
+    def _save(self, data: Any) -> None:
+        raise NotImplementedError("Save not supported for BigQuerySparkQueryDataSet.")
+
+
 class SparkDatasetWithBQExternalTable(LazySparkDataset):
     """Spark Dataset that produces a BigQuery external table as a side output.
 

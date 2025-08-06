@@ -40,3 +40,10 @@ _pandas_parquet: &_pandas_parquet
 "evaluation.{matrix_input}.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.model_stability_output.pairs@pandas":
   <<: *_pandas_parquet  
   filepath: ${globals:paths.evaluation}/{matrix_input}/reporting/stability/fold_{fold_main}_fold_{fold_to_compare}/{evaluation}/pairs.parquet
+
+evaluation.orchard.feedback_data@spark:
+  type: matrix.datasets.gcp.SparkBigQueryDataset
+  project: ec-orchard-prod
+  dataset: orchard_us
+  table: latest_status
+  shard: 20250805
