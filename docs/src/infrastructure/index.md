@@ -161,6 +161,8 @@ Below is a screenshot of our favorite Kubernetes management tool `k9s` ([GitHub]
 
 To deploy our code onto our cluster, we need to *package it into [OCI images](https://opencontainers.org/)*. We leverage GitHub Actions to build and ship our code to the *Artifact Registry* which is simply a place where we store all our images.
 
+We've created a reusable [Artifact Registry Terraform module](terraform_modules/artifact_registry_module.md) that automatically manages image retention policies, helping to control storage costs while maintaining the images we need. The module is configured to delete images older than 3 days by default, with options to keep a minimum number of recent versions for production environments.
+
 At this stage we have our code built, tested, packaged and an API (Kubernetes) defined on how to execute it. All we need now is raw compute and storage. This is where Google Cloud comes in.
 
 ### Infrastructure Layer: Google Cloud

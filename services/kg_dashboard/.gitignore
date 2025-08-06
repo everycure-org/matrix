@@ -13,3 +13,4 @@ static/data
 
 
 sources/bq/connection.options.yaml
+*.duckdb

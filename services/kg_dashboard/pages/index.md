@@ -1,127 +1,29 @@
 ---
 title: KG Dashboard
 ---
+
+<script context="module">
+  import { getSourceColor } from './_lib/colors';
+  
+  // Function to get colors for pie chart data
+  export function getPieColors(data) {
+    return data.map(item => getSourceColor(item.name));
+  }
+</script>
+
 <script>
   const release_version = import.meta.env.VITE_release_version;
   const build_time = import.meta.env.VITE_build_time;
-  
-  function groupBy(arr, key) {
-    return arr.reduce((acc, item) => {
-      const group = item[key];
-      acc[group] = acc[group] || [];
-      acc[group].push(item);
-      return acc;
-    }, {});
-  }
+  const robokop_version = import.meta.env.VITE_robokop_version;
+  const rtx_kg2_version = import.meta.env.VITE_rtx_kg2_version;
 
-  // NOTE: This function was partially generated using AI assistance.
-  function createHistogramBins(data, binWidth) {
-    if (!data || !Array.isArray(data) || data.length === 0) return [];
-    
-    // Extract the column values
-    const values = data.filter(v => v !== null && v !== undefined);
-    if (values.length === 0) return [];
-    
-    // Calculate min and max if not provided
-    const min = 0;
-    const max = Math.max(...values);
-    
-    // Calculate number of bins based on width
-    const binCount = Math.ceil((max - min) / binWidth);
-    const bins = [];
-    
-    for (let i = 0; i < binCount; i++) {
-      const binStart = min + (i * binWidth);
-      const binEnd = min + ((i + 1) * binWidth);
-      
-      const count = values.filter(value => 
-        value >= binStart && (i === binCount - 1 ? value <= binEnd : value < binEnd)
-      ).length;
-      
-      bins.push({
-        count: count,
-        start: binStart,
-        end: binEnd
-      });
-    }
-    
-    return bins;
-  }
-
-  function getHistogramEchartsOptions(data, data_name, data_key, binWidth) {
-    const bins = !data || !Array.isArray(data) || data.length === 0 ? [] : createHistogramBins(data.map(d => d[data_key]), binWidth)
-    const xAxis = bins.map(d => d.start)
-    
-    // Create series data with bin labels included
-    const seriesData = bins.map(bin => ({
-      value: bin.count,
-      binStart: bin.start,
-      binEnd: bin.end - 1,
-    }))
-    
-    return {
-      grid: {
-        top: '2%',
-        bottom: '20%',
-      },
-      xAxis: {
-        data: xAxis,
-        silent: false,
-        splitLine: {
-          show: false
-        },
-        splitArea: {
-          show: false
-        }
-      },
-      yAxis: {
-        splitArea: {
-          show: false
-        }
-      },
-      tooltip: {
-        trigger: 'axis',
-        axisPointer: {
-          type: 'shadow'
-        },
-        formatter: function(params) {
-          const binStart = params[0].data.binStart;
-          const binEnd = params[0].data.binEnd;
-          const count = params[0].value;
-          return `${count} ${data_name}s have between ${binStart} and ${binEnd} neighbours`;
-        }
-      },
-      dataZoom: [
-        {
-          type: 'inside',
-          start: 0,
-          end: 2,
-          minValueSpan: 30
-        },
-        {
-          type: 'slider',
-          start: 0,
-          end: 2,
-          minValueSpan: 30
-        }
-      ],
-      series: [
-        {
-          type: 'bar',
-          data: seriesData
-        }
-      ]
-    }
-  }
-
-  
 </script>
 
+This dashboard provides an overview of our integrated knowledge graph (KG), detailing its size, connectivity patterns, and provenance quality. 
+It also examines how nodes from our curated disease and drug lists link to other entities within the graph.
 ## Version: {release_version}
 
 <p class="text-gray-500 text-sm italic">Last updated on {build_time}</p>
-
-This page provides key metrics about our knowledge graph (KG), including its size, density, and connectivity patterns, with a focus on how nodes from our disease and drug lists are connected within the graph.
 
 ```sql edges_per_node
 select 
@@ -171,6 +73,16 @@ select
 from 
     bq.upstream_data_sources   
 ```
+<Details title="Source details">
+  <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mt-2">
+    This release integrates nodes and edges from multiple upstream sources, shown in the charts below. 
+    The versions listed indicate the specific snapshots used for this build of the knowledge graph.<br/>
+    <br><strong>Knowledge Graph Versions:</strong><br/>
+    • <strong>ROBOKOP:</strong> <span class="font-mono">{robokop_version}</span> <br/>
+    • <strong>RTX-KG2:</strong> <span class="font-mono">{rtx_kg2_version}</span> <br/>
+   
+  </div>
+</Details>
 
 <Grid col=2>
     <ECharts 
@@ -183,6 +95,7 @@ from
                     fontWeight: 'normal'
                 }
             },
+            color: getPieColors(upstream_data_sources_nodes),
             tooltip: {
                 formatter: function(params) {
                     const count = params.data.value.toLocaleString();
@@ -205,6 +118,7 @@ from
                 fontWeight: 'normal'
             }
         },
+        color: getPieColors(upstream_data_sources_edges),
         tooltip: {
             formatter: function(params) {
                 const count = params.data.value.toLocaleString();
@@ -219,176 +133,17 @@ from
     }}/>
 </Grid>
 
+## Disease list connections
 
-
-## Epistemic Robustness
-
-```sql epistemic_score
-SELECT * FROM bq.epistemic_score
-```
-
-```sql epistemic_heatmap
-SELECT * FROM bq.epistemic_heatmap
-```
-
-<div class="text-center text-lg font-semibold mt-6 mb-2">
-    Epistemic Score
-    <div class="text-sm font-normal mt-1">
-        The Epistemic Score summarizes provenance quality across the graph by averaging values assigned to each edge's
-        knowledge level and agent type.
-    </div>
-    <div class="text-sm font-normal mt-1">
-        A more positive average reflects stronger overall provenance, while a more negative average indicates weaker 
-        or more speculative knowledge across the graph.
-    </div>
+<Details title="Click to Understand This Chart">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+  This section summarizes the connectivity of nodes in the disease list, measured by their number of direct neighbors in the 
+  knowledge graph. The mean and median values reflect how many other entities (such as drugs, genes, or phenotypes) 
+  each disease node is linked to. This helps characterize the typical network context for diseases of interest, and highlights 
+  how densely or sparsely connected different parts of the graph may be. For more details visit 
+  <a class="underline text-blue-600" href="./EC%20Core%20Entities ">EC Core Entities</a>. 
 </div>
-
-<!-- Spacer -->
-<div class="mb-6"></div>
-
-<!-- Metric row: Epistemic Score -->
-
-<div class="text-center text-lg">
-  <p>
-    <span class="font-semibold text-2xl">
-      <Value data={epistemic_score} column="average_epistemic_score" fmt="num2" />
-    </span><br/>
-    Epistemic Score
-  </p>
-</div>
-<Grid col=2>
-  <div class="text-center text-lg">
-    <p>
-      <span class="font-semibold text-2xl">
-        <Value data={epistemic_score} column="included_edges" fmt="num2m" />
-      </span><br/>
-      edges used in calculation
-    </p>
-  </div>
-  <div class="text-center text-lg">
-    <div>
-      <span class="font-semibold text-2xl">
-        <Value data={epistemic_score} column="null_or_not_provided_both" fmt="num2m" />
-      </span><br/>
-      edges with missing provenance
-      <div class="text-sm font-normal mt-1">
-        "Missing provenance" includes edges where both Knowledge Level and Agent Type are "Not Provided" or not present.
-      </div>
-     </div>
-  </div>
-</Grid>
-
-<!-- Spacer -->
-<div class="mb-6"></div>
-
-<!-- heatmap -->
-<ECharts
-  style={{ width: '100%', height: '2000px' }}
-  config={{
-    title: {
-      text: 'Epistemic Provenance',
-      left: 'center',
-      top: 10
-    },
-    tooltip: {
-      formatter: function (params) {
-        const [x, y, count, score] = params.value;
-        return `
-          Knowledge Level: ${x}<br/>
-          Agent Type: ${y}<br/>
-          Edges: ${count.toLocaleString()}<br/>
-          Score: ${score.toFixed(2)}
-        `;
-      }
-    },
-    grid: {
-      top: 30,
-      bottom: 100,
-      left: 120,
-      right: 120,
-      containLabel: false
-    },
-    xAxis: {
-      type: 'category',
-      data: [
-        "Prediction", 
-        "Observation", 
-        "Not Provided", 
-        "Statistical Association", 
-        "Logical Entailment", 
-        "Knowledge Assertion",
-      ],
-      axisLabel: {
-        rotate: 30,
-        fontSize: 10
-      }
-    },
-    yAxis: {
-      type: 'category',
-      data: [
-        "Text Mining Agent",
-        "Image Processing\nAgent",
-        "Not Provided", 
-        "Computational Model",
-        "Data Analysis Pipeline",
-        "Automated Agent",
-        "Manual Validation of\nAutomated Agent",
-        "Manual Agent"
-      ],
-      axisLabel: {
-        fontSize: 10
-      }
-    },
-    visualMap: {
-      min: -1.0,
-      max: 1.0,
-      orient: 'horizontal',
-      left: 'center',
-      bottom: 0,
-      itemHeight: 400,
-      itemWidth: 10,
-      precision: 2,
-      inRange: {
-        color: ['#bd93f9', '#8be9fd', '#50fa7b']
-      },
-      text: ['Stronger Provenance', 'Weaker Provenance']
-    },
-    series: [{
-      type: 'heatmap',
-      label: {
-        show: true,
-        formatter: function (param) {
-          const count = param.value[2];
-          return count >= 1e6
-            ? (count / 1e6).toFixed(1) + 'M'
-            : count >= 1e3
-            ? (count / 1e3).toFixed(0) + 'K'
-            : count.toString();
-        },
-        fontSize: 10,
-        color: '#000'
-      },
-      data: epistemic_heatmap.map(d => [
-        d.knowledge_level_label,
-        d.agent_type_label,
-        d.edge_count,
-        d.average_score
-      ]),
-      emphasis: {
-        itemStyle: {
-          borderColor: '#333',
-          borderWidth: 1
-        }
-      }
-    }]
-  }}
-/>
-
-<!-- Spacer -->
-<div class="mb-6"></div>
-
-
-## Disease list nodes connections
+</Details>
 
 <br/>
 
@@ -436,27 +191,22 @@ order by
     data={disease_list_connected_categories} 
     x="category" 
     y="number_of_connections" 
+    colorPalette={[getSourceColor("disease_list")]}
     swapXY=true
     title="Categories connected to disease list node on average"
 />
 
-### Disease nodes neighbours
+## Drug list connections
 
-```sql disease_list_neighbour_counts
-select 
-  * 
-from 
-  bq.disease_list_neighbour_counts
-```
-
-<ECharts
-    style={{ height: '400px' }}
-    config={getHistogramEchartsOptions(disease_list_neighbour_counts, "disease", "unique_neighbours", 10)}
-/>
-
-<br/>
-
-## Drug list nodes connections
+<Details title="Click to Understand This Chart">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+  This section summarizes the connectivity of nodes in the drug list, measured by their number of direct neighbors in the 
+  knowledge graph. The mean and median values reflect how many other entities (such as disease, genes, or phenotypes) 
+  each drug node is linked to. This helps characterize the typical network context for drug of interest, and highlights 
+  how densely or sparsely connected different parts of the graph may be. For more details visit 
+  <a class="underline text-blue-600" href="./EC%20Core%20Entities ">EC Core Entities</a>. 
+</div>
+</Details>
 
 <br/>
 
@@ -502,20 +252,7 @@ order by
     data={drug_list_connected_categories} 
     x="category" 
     y="number_of_connections" 
+    colorPalette={[getSourceColor("drug_list")]}
     swapXY=true
     title="Categories connected to drug list node on average"
-/>
-
-### Drug nodes neighbours
-
-```sql drug_list_neighbour_counts
-select 
-  * 
-from 
-  bq.drug_list_neighbour_counts
-```
-
-<ECharts
-    style={{ height: '400px' }}
-    config={getHistogramEchartsOptions(drug_list_neighbour_counts, "drug", "unique_neighbours", 50)}
 />
