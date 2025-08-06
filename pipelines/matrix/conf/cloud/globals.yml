@@ -33,7 +33,7 @@ paths:
   release: ${release_dir}/datasets/release
 
   # Run-based
-  filtering: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.8.2/runs/ff-paper-baseline-d2d28c6a/filtering
+  filtering: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.8.2/runs/ff-paper-baseline-d2d28c6a/datasets/filtering
   embeddings: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.8.2/runs/ff-paper-baseline-d2d28c6a/datasets/embeddings
   modelling: ${run_dir}/datasets/modelling
   evaluation: ${run_dir}/datasets/evaluation
