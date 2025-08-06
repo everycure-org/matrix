@@ -7,6 +7,7 @@ nav:
     - gcp.md
     - iap.md
     - setup.md
+    - terraform_modules
     - runbooks
     - architecture_decision_records
     - gcp_cloudbuild.md
