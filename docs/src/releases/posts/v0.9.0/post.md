@@ -34,6 +34,14 @@ authors:
 - Dynamic GCS bucket selection for data sources [#1638](https://github.com/everycure-org/matrix/pull/1638)
 - Expose ground truth train data (Take 2!) [#1639](https://github.com/everycure-org/matrix/pull/1639)
 ### Experiments 🧪
+- Experiment with degree weighting to address the frequent flyer issue. [See notebook here](https://github.com/everycure-org/lab-notebooks/blob/3c8ddb9b271d7e1ddfb48aba9f4105a5e3271f8c/alan/frequent_flyers/shomer_degree_weighting/reports/weighting_report.ipynb)
+- Experiment with degree bias to address the frequent flyer issue. [See notebook here](https://github.com/everycure-org/lab-notebooks/blob/3c8ddb9b271d7e1ddfb48aba9f4105a5e3271f8c/alan/frequent_flyers/shomer_degree_weighting/reports/gt_degree_bias_report.ipynb)
+- Does filtering for biologically-relevant edges improve our predictions? An experiment using PRIME-KG. [See notebook here](https://github.com/everycure-org/lab-notebooks/blob/main/jane/filtering_experiments/primekg_filtering_experiments/0_experiment_report_primekg_filtering.ipynb)
+- Identification of an optimal combinations of 3-5 large language models (LLMs) for biomedical publication validation - determining whether PubMed abstracts support given hypotheses/edges.	[See notebook here](https://github.com/everycure-org/lab-notebooks/blob/1a53ba3b0b4d2b52c6b258e523064249e5bb5cc0/uab-pubmed-embeddings/experiment-july-2025/UAB_PubMed_Embeddings_Tools_LLMs_selection.ipynb)
+- Test the feasibility and utility of applying TracIn to interpret predictions from KGE models. [See report here](https://uploads.linear.app/b1cd352f-57bb-4750-b354-9fc9bde1225d/420eb38f-5a12-4273-b063-a45339abccbc/865a0e10-6848-4313-8b3e-e514b2d0a61e)
+- Experiment with novel ensemble classifiers to increase prediction accuracy. [See notebook here](https://github.com/everycure-org/lab-notebooks/pull/180)
+- Experiment with weighting synthesized negative samples to increase prediction accuracy. [See notebook here](https://github.com/everycure-org/lab-notebooks/blob/757ec2081bcc8481b944a04e4cc16129be1fd67f/chunyu_experiments/reports/T1_accuracy_improvement/T1_experiment_final_report_txgnn-8-3ce4ab2d.ipynb)
+- Experiment with enhanced embeddings to increase prediction accuracy in zero shot settings. [See notebook here](https://github.com/everycure-org/lab-notebooks/blob/757ec2081bcc8481b944a04e4cc16129be1fd67f/chunyu_experiments/reports/T1_accuracy_improvement/T1_experiment_final_report_txgnn-8-3ce4ab2d.ipynb)
 ### Bugfixes 🐛
 - Fix pipeline for disease split experiments [#1560](https://github.com/everycure-org/matrix/pull/1560)
 - Update pandera version to 0.25.0 [#1670](https://github.com/everycure-org/matrix/pull/1670)
