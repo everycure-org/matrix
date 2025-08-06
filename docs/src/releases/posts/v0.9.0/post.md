@@ -42,6 +42,8 @@ authors:
 - Experiment with novel ensemble classifiers to increase prediction accuracy. [See notebook here](https://github.com/everycure-org/lab-notebooks/pull/180)
 - Experiment with weighting synthesized negative samples to increase prediction accuracy. [See notebook here](https://github.com/everycure-org/lab-notebooks/blob/757ec2081bcc8481b944a04e4cc16129be1fd67f/chunyu_experiments/reports/T1_accuracy_improvement/T1_experiment_final_report_txgnn-8-3ce4ab2d.ipynb)
 - Experiment with enhanced embeddings to increase prediction accuracy in zero shot settings. [See notebook here](https://github.com/everycure-org/lab-notebooks/blob/757ec2081bcc8481b944a04e4cc16129be1fd67f/chunyu_experiments/reports/T1_accuracy_improvement/T1_experiment_final_report_txgnn-8-3ce4ab2d.ipynb)
+- Experiment benchmarking different ground truth sets for training Matrix pipeline. [See notebook here](https://github.com/everycure-org/lab-notebooks/blob/main/gt_experiments_june2025/reports/gt_first_round.ipynb)
+
 ### Bugfixes 🐛
 - Fix pipeline for disease split experiments [#1560](https://github.com/everycure-org/matrix/pull/1560)
 - Update pandera version to 0.25.0 [#1670](https://github.com/everycure-org/matrix/pull/1670)
