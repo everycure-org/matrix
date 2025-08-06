@@ -16,17 +16,6 @@ name: CI pipeline
 on:
   pull_request_review:
     types: [submitted]
-  pull_request:
-    # Sequence of patterns matched against refs/heads
-    branches:
-      - main
-      - develop
-    # from https://github.com/reviewdog/action-eslint/issues/29#issuecomment-985939887
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - ready_for_review
 
   push:
     branches:
@@ -48,7 +37,7 @@ jobs:
   # FUTURE eventually github will likely fix this
   # https://github.com/orgs/community/discussions/26698
   paths_filter:
-    if: github.event.pull_request.draft == false || github.ref == 'refs/heads/main'
+    if: github.event.pull_request.draft == false || github.ref == 'refs/heads/main' && github.event.review.state == 'approved'
     runs-on: 'ubuntu-latest'
     permissions: 
       pull-requests: read
