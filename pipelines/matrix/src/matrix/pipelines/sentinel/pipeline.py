@@ -40,7 +40,7 @@ def sentinel_function(*args):
     return True
 
 
-def create_pipeline(is_patch, **kwargs) -> Pipeline:
+def create_pipeline(is_patch: bool, **kwargs) -> Pipeline:
     sentinel_inputs = get_sentinel_inputs(is_patch)
     return pipeline(
         [
