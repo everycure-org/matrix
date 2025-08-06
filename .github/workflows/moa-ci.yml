@@ -18,7 +18,7 @@ jobs:
   # FUTURE eventually github will likely fix this
   # https://github.com/orgs/community/discussions/26698
   paths_filter:
-    if: github.event.pull_request.draft == false || github.ref == 'refs/heads/main'
+    if: github.event.pull_request.draft == false || github.ref == 'refs/heads/main' && github.event.review.state == 'approved'
     runs-on: 'ubuntu-latest'
     permissions: 
       pull-requests: read
