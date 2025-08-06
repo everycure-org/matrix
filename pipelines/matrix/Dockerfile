@@ -30,7 +30,9 @@ COPY docs/pyproject.toml docs/pyproject.toml
 # deps for this project, not e.g. docs
 WORKDIR /matrix/pipelines/matrix
 COPY pipelines/matrix/pyproject.toml .
-RUN --mount=type=cache,target=/root/.cache uv sync --locked
+ENV UV_LINK_MODE=copy
+ENV UV_CACHE_DIR=/root/.cache/uv
+RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked
 
 # enables kedro & python to be in the path
 ENV PATH=/matrix/.venv/bin:$PATH

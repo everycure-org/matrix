@@ -52,11 +52,8 @@ prerequisites:
 		exit 1; \
 	fi
 
-venv: 
-	if [ ! -d .venv ]; then uv venv -p 3.11; fi
-	uv run python -m ensurepip --upgrade || true
 
-install: venv precommit-hooks 
+install: precommit-hooks 
 	uv sync # UV-native approach to install dependencies
 
 install_argo:
