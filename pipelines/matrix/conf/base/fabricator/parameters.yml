@@ -452,55 +452,55 @@ fabricator.clinical_trials:
           resize: True
           seed: 50004
 
-# fabricator.off_label:
-#   graph:
-#     nodes:
-#       num_rows: 50
-#       columns:
-#         curie:
-#           type: copy_column
-#           source_column: rtx_nodes.id
-#           sample:
-#             num_rows: "@nodes.num_rows"
-#             seed: 40589
-#         name:
-#           type: copy_column
-#           source_column: rtx_nodes.name
-#           sample:
-#             num_rows: "@nodes.num_rows"
-#             seed: 40589
+fabricator.off_label:
+  graph:
+    nodes:
+      num_rows: 50
+      columns:
+        curie:
+          type: copy_column
+          source_column: rtx_nodes.id
+          sample:
+            num_rows: "@nodes.num_rows"
+            seed: 40589
+        name:
+          type: copy_column
+          source_column: rtx_nodes.name
+          sample:
+            num_rows: "@nodes.num_rows"
+            seed: 40589
 
-#     edges:
-#       num_rows: 100
-#       columns:
-#         curie_drug:
-#           type: copy_column
-#           source_column: nodes.curie
-#           sample:
-#             num_rows: "@edges.num_rows"
-#             seed: 40599
-#         drug_name:
-#           type: copy_column
-#           source_column: nodes.name
-#           sample:
-#             num_rows: "@edges.num_rows"
-#             seed: 40599
-#         disease_name:
-#           type: copy_column
-#           source_column: nodes.name
-#           sample:
-#             num_rows: "@edges.num_rows"
-#             seed: 30599
-#         curie_disease:
-#           type: copy_column
-#           source_column: nodes.curie
-#           sample:
-#             num_rows: "@edges.num_rows"
-#             seed: 30599
-#         relation:
-#           type: generate_values
-#           sample_values:
-#             - off-label use
+    edges:
+      num_rows: 100
+      columns:
+        curie_drug:
+          type: copy_column
+          source_column: nodes.curie
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 40599
+        drug_name:
+          type: copy_column
+          source_column: nodes.name
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 40599
+        disease_name:
+          type: copy_column
+          source_column: nodes.name
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 30599
+        curie_disease:
+          type: copy_column
+          source_column: nodes.curie
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 30599
+        relation:
+          type: generate_values
+          sample_values:
+            - off-label use
 
 fabricator.robokop:
   nodes:
