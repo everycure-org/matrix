@@ -105,7 +105,10 @@ class RankBasedFrequentFlyerTransformation(MatrixTransformation):
             "quantile_rank", F.col("rank") / N_matrix
         )
 
-        matrix_df = matrix_df.repartition(100)
+        # Repartition by range using the transformed score to maintain ordering
+        # Without this, a single ~4GB partition was being created
+        matrix_df = matrix_df.repartitionByRange(100, "transformed_treat_score")
+
         return matrix_df
 
 
