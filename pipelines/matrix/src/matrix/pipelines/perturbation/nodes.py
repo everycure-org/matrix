@@ -15,6 +15,7 @@ def perturb_edges_rewire(
     perturbation_rate: float,
     random_seed: int = 42,
     strategy: str = "category_stratified",
+    enabled: bool = True,
 ) -> DataFrame:
     """
     Rewire a percentage of edges to different nodes of same category.
@@ -36,6 +37,11 @@ def perturb_edges_rewire(
         4. Randomly reassign object_ids within each category
         5. Union rewired edges with non-perturbed edges
     """
+
+    # Early return when disabled or zero rate
+    if not enabled or perturbation_rate <= 0:
+        logger.info("Perturbation disabled or zero rate - passing through edges unchanged")
+        return unified_edges
 
     logger.info(f"Starting edge rewiring with {perturbation_rate:.1%} perturbation rate")
     logger.info(f"Random seed: {random_seed}, Strategy: {strategy}")

@@ -19,6 +19,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "params:perturbation.rate",
                 "params:perturbation.random_seed",
                 "params:perturbation.strategy",
+                "params:perturbation.enabled",
             ],
             outputs="perturbation.prm.perturbed_edges",
             name="perturb_edges_rewire",
@@ -29,13 +30,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 cpu_limit=8,
                 cpu_request=2,
             ),
-        ),
-        node(
-            func=nodes.passthrough_edges,
-            inputs="filtering.prm.filtered_edges",
-            outputs="perturbation.prm.passthrough_edges",
-            name="passthrough_edges",
-            tags=["perturbation", "passthrough"],
         ),
         node(
             func=nodes.log_rewiring_stats,
