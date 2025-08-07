@@ -138,6 +138,7 @@ def create(experiment_name):
 @click.option(
     "--experiment-name", type=str, help="Optional: specify the MLFlow experiment name to use. Defaults to branch name"
 )
+@click.option("--params", type=str, help="Comma-separated list of parameter overrides (e.g. 'key1=value1,key2=value2')")
 @click.pass_context
 def run(
     ctx,
@@ -156,6 +157,7 @@ def run(
     skip_git_checks: bool,
     confirm_release: bool,
     experiment_name: str,
+    params: str,
 ):
     """Run an experiment."""
 
@@ -245,6 +247,7 @@ def run(
         allow_interactions=not headless,
         is_test=is_test,
         environment=environment,
+        params=params,
     )
 
     # construct description for mlflow run which we'll use to add some useful links
@@ -282,6 +285,7 @@ def _submit(
     mlflow_run_id: Optional[str] = None,
     allow_interactions: bool = True,
     is_test: bool = False,
+    params: Optional[str] = None,
 ) -> str:
     """Submit the end-to-end workflow.
 
@@ -333,6 +337,7 @@ def _submit(
             mlflow_url,
             is_test=is_test,
             mlflow_run_id=mlflow_run_id,
+            params=params,
         )
 
         file_path = save_argo_template(argo_template, template_directory)
@@ -441,6 +446,7 @@ def build_argo_template(
     mlflow_experiment_id: int,
     mlflow_url: str,
     is_test: bool,
+    params: Optional[str] = None,
     mlflow_run_id: Optional[str] = None,
 ) -> str:
     """Build Argo workflow template."""
@@ -467,6 +473,7 @@ def build_argo_template(
         pipeline=pipeline_obj,
         environment=environment,
         mlflow_run_id=mlflow_run_id,
+        params=params,
     )
     console.print("[green]✓[/green] Argo template built")
 
