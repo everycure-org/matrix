@@ -483,3 +483,13 @@ ingestion.int.embiology.nodes:
 ingestion.int.embiology.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/int/embiology/${globals:data_sources.embiology.version}/edges
+
+# -------------------------------------------------------------------------
+# Orchard
+# -------------------------------------------------------------------------
+evaluation.orchard.feedback_data@spark:
+  type: matrix.datasets.gcp.SparkBigQueryDataset
+  project: ec-orchard-prod
+  dataset: orchard_us
+  table: latest_status
+  shard: 20250805

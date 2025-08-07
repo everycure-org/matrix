@@ -46,6 +46,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="write_disease_list",
                 tags=["disease-list"],
             ),
+            node(
+                func=lambda x: x,
+                inputs=["ingestion.raw.orchard.feedback_data@spark"],
+                outputs="ingestion.raw.orchard.feedback_data.nodes@pandas",
+                name="write_orchard_feedback_data",
+                tags=["orchard"],
+            ),
         ]
     )
 
