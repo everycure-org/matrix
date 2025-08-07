@@ -26,8 +26,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             argo_config=ArgoResourceConfig(
                 memory_limit=50,
                 memory_request=25,
-                cpu_limit="8000m",
-                cpu_request="2000m",
+                cpu_limit=8,
+                cpu_request=2,
             ),
         ),
         node(

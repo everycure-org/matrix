@@ -46,17 +46,26 @@ def perturb_edges_rewire(
 
     # Step 1: Enrich edges with object node categories
     logger.info("Step 1: Enriching edges with object node categories")
+
+    # Drop any existing object_category column to avoid conflicts
+    edges_clean = unified_edges.drop("object_category") if "object_category" in unified_edges.columns else unified_edges
+
+    # Get edge columns excluding the basic ones
+    other_edge_cols = [c for c in edges_clean.columns if c not in ["subject", "predicate", "object"]]
+
     edges_with_categories = (
-        unified_edges.join(
-            unified_nodes.select("id", "category").alias("obj_nodes"), F.col("object") == F.col("obj_nodes.id"), "inner"
+        edges_clean.join(
+            unified_nodes.select("id", "category").alias("obj_nodes"),
+            edges_clean.object == F.col("obj_nodes.id"),
+            "inner",
         )
         .select(
-            "subject",
-            "predicate",
-            "object",
+            edges_clean.subject,
+            edges_clean.predicate,
+            edges_clean.object,
             F.col("obj_nodes.category").alias("object_category"),
             # Include all other edge columns dynamically
-            *[F.col(c) for c in unified_edges.columns if c not in ["subject", "predicate", "object"]],
+            *[edges_clean[c] for c in other_edge_cols],
         )
         .cache()
     )
@@ -99,25 +108,28 @@ def perturb_edges_rewire(
 
     # Step 4: Rewire edges within each category
     logger.info("Step 4: Rewiring edges within categories")
-    edges_to_rewire = edges_for_perturbation.join(
-        F.broadcast(target_pools_by_category), F.col("object_category") == F.col("category"), "inner"
+    # Alias both DataFrames to avoid column name conflicts
+    edges_aliased = edges_for_perturbation.alias("edges")
+    target_pools_aliased = target_pools_by_category.alias("pools")
+    edges_to_rewire = edges_aliased.join(
+        F.broadcast(target_pools_aliased), F.col("edges.object_category") == F.col("pools.category"), "inner"
     )
 
     # Create random reassignments within each category
     rewired_edges = (
         edges_to_rewire.withColumn(
-            "random_index", (F.rand(seed=random_seed + 1) * F.size(F.col("candidate_targets"))).cast("int")
+            "random_index", (F.rand(seed=random_seed + 1) * F.size(F.col("pools.candidate_targets"))).cast("int")
         )
-        .withColumn("new_object", F.expr("candidate_targets[random_index]"))
+        .withColumn("new_object", F.expr("pools.candidate_targets[random_index]"))
         .filter(
-            F.col("new_object") != F.col("object")  # Ensure we actually change the target
+            F.col("new_object") != F.col("edges.object")  # Ensure we actually change the target
         )
         .select(
-            F.col("subject"),
-            F.col("predicate"),
+            F.col("edges.subject"),
+            F.col("edges.predicate"),
             F.col("new_object").alias("object"),
             # Include all other original edge columns
-            *[F.col(c) for c in unified_edges.columns if c not in ["subject", "predicate", "object"]],
+            *[F.col(f"edges.{c}") for c in unified_edges.columns if c not in ["subject", "predicate", "object"]],
         )
     )
 

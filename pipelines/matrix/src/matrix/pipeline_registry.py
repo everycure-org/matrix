@@ -12,6 +12,7 @@ from matrix.pipelines.integration.pipeline import create_pipeline as create_inte
 from matrix.pipelines.matrix_generation.pipeline import create_pipeline as create_matrix_pipeline
 from matrix.pipelines.matrix_transformations.pipeline import create_pipeline as create_matrix_transformations_pipeline
 from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
+from matrix.pipelines.perturbation.pipeline import create_pipeline as create_perturbation_pipeline
 from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
 from matrix.pipelines.sentinel.pipeline import create_pipeline as create_sentinel_pipeline
 
@@ -35,6 +36,7 @@ def register_pipelines() -> dict[str, Pipeline]:
         "modelling": create_modelling_pipeline(),
         "matrix_generation": create_matrix_pipeline(),
         "matrix_transformations": create_matrix_transformations_pipeline(),
+        "perturbation": create_perturbation_pipeline(),
         "pre_transformed_evaluation": create_evaluation_pipeline(
             matrix_input="matrix_generation", score_col_name="treat score"
         ),
