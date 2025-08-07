@@ -133,7 +133,7 @@ The filtering pipeline allows you to control which data sources and relationship
 filtering:
   node_filters:
     filter_sources:
-      _object: matrix.pipelines.filtering.filters.KeepRowsContainingFilter
+      _object: matrix.pipelines.filtering.filters.KeepRowsContaining
       column: upstream_data_source
       keep_list:
         - rtxkg2
@@ -142,7 +142,7 @@ filtering:
   # ...
   edge_filters:
     filter_sources:
-      _object: matrix.pipelines.filtering.filters.KeepRowsContainingFilter
+      _object: matrix.pipelines.filtering.filters.KeepRowsContaining
       column: upstream_data_source
       keep_list:
         - rtxkg2
