@@ -34,6 +34,7 @@ paths:
 
   # Run-based
   filtering:          ${run_dir}/datasets/filtering
+  perturbation:       ${run_dir}/datasets/perturbation
   embeddings:         ${run_dir}/datasets/embeddings
   modelling:          ${run_dir}/datasets/modelling
   evaluation:         ${run_dir}/datasets/evaluation

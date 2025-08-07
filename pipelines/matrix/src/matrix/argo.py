@@ -29,6 +29,7 @@ def generate_argo_config(
     default_execution_resources: Optional[ArgoResourceConfig] = None,
     mlflow_run_id: Optional[str] = None,
     stress_test: bool = False,
+    params: Optional[str] = None,
 ) -> str:
     if default_execution_resources is None:
         default_execution_resources = ArgoResourceConfig()
@@ -63,6 +64,7 @@ def generate_argo_config(
         environment=environment,
         default_execution_resources=default_execution_resources.model_dump(),
         include_private_datasets=include_private_datasets,
+        params=params or "",
     )
     yaml_data = yaml.safe_load(rendered_template)
     yaml_without_anchors = yaml.dump(yaml_data, sort_keys=False, default_flow_style=False)
