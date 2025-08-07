@@ -32,7 +32,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.filter_edges_for_topological_embeddings,
                 inputs=[
                     "filtering.prm.filtered_nodes",
-                    "filtering.prm.filtered_edges",
+                    "perturbation.prm.perturbed_edges",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                 ],

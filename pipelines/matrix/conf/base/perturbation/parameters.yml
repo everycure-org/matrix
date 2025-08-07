@@ -1,0 +1,8 @@
+# Perturbation pipeline parameters
+
+perturbation:
+  enabled: true
+  rate: 0.01  # Default 1% perturbation rate
+  random_seed: 42
+  strategy: "category_stratified"  # Maintain node category distribution
+  rewire_mode: "object_only"  # Only rewire object nodes (preserve subject)

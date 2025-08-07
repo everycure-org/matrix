@@ -1,0 +1,17 @@
+# Perturbation pipeline catalog
+
+perturbation.prm.perturbed_edges:
+  type: spark.SparkDataSet
+  filepath: data/06_primary/perturbation/perturbed_edges.parquet
+  file_format: parquet
+  save_args:
+    mode: overwrite
+    partitionBy: []
+
+perturbation.prm.passthrough_edges:
+  type: spark.SparkDataSet
+  filepath: data/06_primary/perturbation/passthrough_edges.parquet
+  file_format: parquet
+  save_args:
+    mode: overwrite
+    partitionBy: []
