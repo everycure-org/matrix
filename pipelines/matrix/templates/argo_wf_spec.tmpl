@@ -63,6 +63,16 @@ spec:
               operator: NotIn
               values:
               - "true"
+    # Add tolerations for large memory nodes and GPU nodes
+    tolerations:
+    - key: "workload"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"
+    - key: "node-memory-size"
+      operator: "Equal"
+      value: "large"
+      effect: "NoSchedule"
     metadata:
       labels:
         {# Add label to have an ability to remove Kedro Pods easily #}
