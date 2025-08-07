@@ -69,6 +69,7 @@ def register_pipelines() -> dict[str, Pipeline]:
     )
     pipelines["feature"] = (
         pipelines["filtering"]
+        + pipelines["perturbation"]
         + pipelines["embeddings"]
     )
     pipelines["evaluation"] = (

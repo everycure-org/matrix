@@ -25,7 +25,7 @@ def submit_workflow(run_name: str, namespace: str, verbose: bool):
         ]
     )
 
-    result = run_subprocess(cmd)
+    result = run_subprocess(cmd, stream_output=verbose)
     job_name = json.loads(result.stdout).get("metadata", {}).get("name")
 
     if not job_name:
