@@ -105,7 +105,7 @@ class RankBasedFrequentFlyerTransformation(MatrixTransformation):
             "quantile_rank", F.col("rank") / N_matrix
         )
 
-        matrix_df = matrix_df.repartition()
+        matrix_df = matrix_df.repartition(100)
         return matrix_df
 
 
