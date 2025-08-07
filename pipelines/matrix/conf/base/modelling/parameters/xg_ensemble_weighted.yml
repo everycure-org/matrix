@@ -18,7 +18,7 @@ modelling.xg_ensemble_weighted:
           _object: matrix.pipelines.modelling.transformers.WeightingTransformer
           head_col: source
           # inverse / shomer / auto_cv / simple_eta
-          strategy: auto_cv
+          strategy: simta_eta
           enabled: true
           eta: 40
           mix_k: 5
