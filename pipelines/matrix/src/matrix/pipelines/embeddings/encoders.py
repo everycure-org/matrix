@@ -144,7 +144,7 @@ class PubmedBERTEncoder(AttributeEncoder):
         if random_seed is not None:
             np.random.seed(random_seed)
 
-        self._model_path
+        self._model_path = model_path
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
         self.model = AutoModel.from_pretrained(model_path)
 
