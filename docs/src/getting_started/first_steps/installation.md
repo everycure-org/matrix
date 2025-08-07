@@ -55,29 +55,29 @@ We advise managing your Python installation using [`pyenv`](https://github.com/p
 
 === "Linux"
 
-```bash
-# For Ubuntu/Debian
-sudo apt update
-sudo apt upgrade -y
-sudo apt install -y make build-essential gitpython libssl-dev zlib1g-dev \
-libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
-libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev \
-libffi-dev liblzma-dev
-curl -fsSL https://pyenv.run | bash # recommend. Else see here for alternative: https://github.com/pyenv/pyenv
-```
+    ```bash
+    # For Ubuntu/Debian
+    sudo apt update
+    sudo apt upgrade -y
+    sudo apt install -y make build-essential gitpython libssl-dev zlib1g-dev \
+    libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
+    libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev \
+    libffi-dev liblzma-dev
+    curl -fsSL https://pyenv.run | bash # recommend. Else see here for alternative: https://github.com/pyenv/pyenv
+    ```
 
-Once the above is completed. Please add the following code to either:
+    Once the above is completed. Please add the following code to either:
 
-1. ~/.bash_profile if it exists, otherwise ~/.profile (for login shells)
-2. ~/.bashrc (for interactive shells)
+    1. ~/.bash_profile if it exists, otherwise ~/.profile (for login shells)
+    2. ~/.bashrc (for interactive shells)
 
-This is the code that needs to be added:
-```bash
-export PYENV_ROOT="$HOME/.pyenv"
-[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init - bash)"
-eval "$(pyenv virtualenv-init -)"
-```
+    This is the code that needs to be added:
+    ```bash
+    export PYENV_ROOT="$HOME/.pyenv"
+    [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+    eval "$(pyenv init - bash)"
+    eval "$(pyenv virtualenv-init -)"
+    ```
 
 === "MacOS"
 
