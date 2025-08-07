@@ -11,7 +11,7 @@ filtering:
     # filter_node_labels:
     #     _object: matrix.pipelines.filtering.filters.RemoveRowsByColumnOverlap
     #     excluded_sources: ["ec_medical"]
-    #     column: category
+    #     column: all_categories
     #     remove_list:
     #       - biolink:Activity
     #       - biolink:Agent
@@ -34,13 +34,6 @@ filtering:
     #       - biolink:Procedure
     #       - biolink:Publication
     #       - biolink:Treatment
-
-
-    # remove_rows_by_category:
-    #   _object: matrix.pipelines.filtering.filters.RemoveRowsByColumnFilter
-    #   column: "category"
-    #   remove_list:
-    #     - biolink:OrganismTaxon
 
   edge_filters:
     filter_sources:

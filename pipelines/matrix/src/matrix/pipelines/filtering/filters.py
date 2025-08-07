@@ -135,6 +135,24 @@ class KeepRowsContaining(Filter):
         return df.filter(sf.exists(self.column, lambda x: sf.array_contains(keep_list_array, x)))
 
 
+class RemoveRowsByColumn(Filter):
+    """Filter that removes rows where a column value is in a specified list."""
+
+    def __init__(self, column: str, remove_list: Iterable[str]):
+        """Initialize the filter with column and values to remove.
+
+        Args:
+            column: Name of the column to check
+            remove_list: List of values to remove
+        """
+        self.column = column
+        self.remove_list = remove_list
+
+    def apply(self, df: ps.DataFrame) -> ps.DataFrame:
+        filter_condition = ~sf.col(self.column).isin(self.remove_list)
+        return df.filter(filter_condition)
+
+
 class RemoveRowsByColumnOverlap(Filter):
     """Filter that removes rows where a column array overlaps with a specified list, with an optional source exclusion where the filter won't be applied."""
 
