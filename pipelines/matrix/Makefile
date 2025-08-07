@@ -2,8 +2,6 @@ docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
 
 TAG ?= ${USER}
 GIT_SHA ?= $(shell git rev-parse --short HEAD)
-export PYSPARK_PYTHON = .venv/bin/python
-export UV_PYTHON = .venv/bin/python
 export TQDM_DISABLE ?= 1
 TARGET_PLATFORM ?= linux/amd64
 PREREQUISITES := docker gcloud python3 java uv kubectl
@@ -54,17 +52,9 @@ prerequisites:
 		exit 1; \
 	fi
 
-venv: 
-	if [ ! -d .venv ]; then uv venv -p 3.11; fi
-	uv run python -m ensurepip --upgrade || true
 
-install: venv precommit-hooks 
-	uv pip install -r requirements.txt #force it to install in our venv
-
-install_compatibility: venv precommit-hooks
-	# expects the file requirements.overrides.txt to be present, allows devs to override
-	# versions for local machine limitations (e.g. newer pytorch on macos intel)
-	uv pip install -r requirements.txt --overrides requirements.overrides.txt
+install: precommit-hooks 
+	uv sync # UV-native approach to install dependencies
 
 install_argo:
 	curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
@@ -78,7 +68,7 @@ precommit: precommit-hooks
 	uv run pre-commit run --from-ref origin/main --to-ref HEAD
 
 precommit-hooks:
-	uv pip install pre-commit 
+	uv sync --group pre-commit
 	uv run pre-commit install --install-hooks
 
 check_release_version_environment_variable:
@@ -111,7 +101,13 @@ docker_test: certificate docker_build
 
 docker_build:
 	# note the && operator is essential to catch docker buildx errors on linux systems
-	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(docker_image) --load ./ && \
+	docker buildx build \
+		--progress=plain \
+		--build-arg GIT_SHA=${GIT_SHA} \
+		--platform $(TARGET_PLATFORM) \
+		-t $(docker_image) \
+		--load \
+		-f Dockerfile ../../ && \
 	docker tag $(docker_image) $(docker_image):${TAG}
 
 docker_auth:
@@ -133,11 +129,11 @@ compose_down:
 	# docker compose -f compose/docker-compose.yml down
 
 lock:
-	uv pip compile requirements.in > requirements.txt
+	uv lock
 
 wipe_neo:
 	# assumes you have neo4j running using docker-compose from `compose_up`
-	uv run python scripts/wipe_neo4j.py 'everycure-test'
+	uv run scripts/wipe_neo4j.py 'everycure-test'
 
 integration_test: compose_up wipe_neo
 	ulimit -n 10000

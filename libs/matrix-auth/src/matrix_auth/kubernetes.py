@@ -3,7 +3,7 @@ import subprocess
 from os import environ
 from pathlib import Path
 
-from matrix.utils.system import run_subprocess
+from .system import run_subprocess
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ def can_talk_to_kubernetes(
         try:
             subprocess.check_output(s, shell=True, stderr=subprocess.PIPE, timeout=timeout)
         except FileNotFoundError as e:
-            raise EnvironmentError("gcloud is not installed. Please install it first.") from e
+            raise OSError("gcloud is not installed. Please install it first.") from e
         except subprocess.TimeoutExpired as e:
             raise RuntimeError(f"The command '{s}' took more than {timeout}s to complete.") from e
         except subprocess.CalledProcessError as e:
@@ -68,8 +68,8 @@ def can_talk_to_kubernetes(
 
     def pretty_report_on_error(e: subprocess.CalledProcessError):
         try:
-            raise EnvironmentError(f"Calling '{e.cmd}' failed, with stderr: '{e.stderr}'") from e
-        except EnvironmentError:
+            raise OSError(f"Calling '{e.cmd}' failed, with stderr: '{e.stderr}'") from e
+        except OSError:
             raise
 
     # Refresh credentials before running the test command.

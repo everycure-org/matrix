@@ -4,8 +4,8 @@ from typing import Dict
 import pytest
 from kedro.io import DataCatalog
 from kedro.pipeline import Pipeline
-from matrix.datasets.gcp import LazySparkDataset
 from matrix.pipeline_registry import register_pipelines
+from matrix_gcp_datasets.gcp import LazySparkDataset
 
 
 @pytest.fixture

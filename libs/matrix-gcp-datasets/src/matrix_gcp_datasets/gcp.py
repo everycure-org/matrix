@@ -4,7 +4,7 @@ import os
 import re
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import fsspec
 import google.api_core.exceptions as exceptions
@@ -24,7 +24,8 @@ from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
 from pygsheets import Spreadsheet, Worksheet
 from tqdm import tqdm
 
-from matrix.hooks import SparkHooks
+# TODO: This will need to be injected or made optional when extracting to library
+# from matrix.hooks import SparkHooks
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +62,8 @@ class LazySparkDataset(SparkDataset):
         )
 
     def load(self):
-        SparkHooks._initialize_spark()
+        # SparkHooks._initialize_spark()  # TODO: Make this configurable
+        pass
 
         # Spark cannot read http files directly
         if self._fs_prefix in ["http://", "https://"]:
@@ -102,7 +104,7 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         dataset: str,
         table: str,
         file_format: str,
-        identifier: Optional[str] = None,
+        identifier: str | None = None,
         load_args: dict[str, Any] = None,
         save_args: dict[str, Any] = None,
         version: Version = None,
@@ -288,7 +290,7 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
             wks.set_dataframe(data[[column]], (1, col_idx + 1))
 
     @staticmethod
-    def _get_wks_by_name(spreadsheet: Spreadsheet, sheet_name: str) -> Optional[Worksheet]:
+    def _get_wks_by_name(spreadsheet: Spreadsheet, sheet_name: str) -> Worksheet | None:
         for wks in spreadsheet.worksheets():
             if wks.title == sheet_name:
                 return wks
@@ -296,7 +298,7 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
         return None
 
     @staticmethod
-    def _get_col_index(sheet: Worksheet, col_name: str) -> Optional[int]:
+    def _get_col_index(sheet: Worksheet, col_name: str) -> int | None:
         for idx, col in enumerate(sheet.get_row(1)):
             if col == col_name:
                 return idx
@@ -368,7 +370,7 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
         return self._client
 
     def load(self) -> Any:
-        SparkHooks._initialize_spark()
+        # SparkHooks._initialize_spark()  # TODO: Make this configurable
 
         if self._bucket and not os.path.exists(self._blob_name):
             logger.info("downloading file to local")
@@ -492,7 +494,7 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
                     for task in asyncio.as_completed(tasks):
                         try:
                             await asyncio.wait_for(task, self._timeout)
-                        except asyncio.TimeoutError as e:
+                        except TimeoutError as e:
                             logger.error(
                                 f"Timeout error: partition processing took longer than {self._timeout} seconds."
                             )

@@ -14,9 +14,7 @@ serve:
 	.venv/bin/mkdocs serve
 
 install:
-	deactivate 2> /dev/null || echo 'no venv active, continuing'
-	if [ ! -d .venv ]; then uv venv -p 3.11; fi
-	uv pip install -r requirements.txt
+	uv sync
 
 test: install
 	uv run pytest

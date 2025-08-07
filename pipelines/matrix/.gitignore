@@ -167,4 +167,3 @@ compose/neo4j_data/
 # Ignore notebooks scratch directory
 notebooks/scratch/
 
-requirements.overrides.txt

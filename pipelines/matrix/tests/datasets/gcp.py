@@ -1,4 +1,4 @@
-from matrix.datasets.gcp import BigQueryTableDataset
+from matrix_gcp_datasets.gcp import BigQueryTableDataset
 
 
 def test_bigquery_table_dataset():

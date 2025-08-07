@@ -1,22 +1,23 @@
+# NOTE: This pyproject.toml was partially generated using AI assistance.
 [project]
 name = "matrix-cli"
 version = "0.1.0"
 description = "CLI for the Matrix project monorepo"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 dependencies = [
     "google-cloud-aiplatform>=1.71.1",
     "jinja2>=3.0.0",
     "joblib>=1.4.2",
     "openai>=1.53.0",
     "openpyxl>=3.1.5",
-    "pandas>=2.2.3",
+    "pandas>=2.0.0",
     "pydantic-settings>=2.6.1",
     "pydantic>=2.9.2",
     "pytest>=8.3.3",
     "pyyaml>=6.0.2",
     "questionary>=2.0.1",
-    "semver>=3.0.4",
+    "semver>=3.0.2",
     "tabulate>=0.9.0",
     "tenacity>=9.0.0",
     "typer>=0.12.5",

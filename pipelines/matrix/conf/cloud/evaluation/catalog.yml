@@ -1,7 +1,7 @@
 "evaluation.{evaluation}.reporting.result_aggregated_reduced":
-  type: matrix.datasets.mlflow.MlflowMetricsDataset
+  type: matrix_mlflow_utils.mlflow.MlflowMetricsDataset
   key_prefix: "{evaluation}"
 
 "evaluation.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.model_stability_output.result":
-  type: matrix.datasets.mlflow.MlflowMetricsDataset
+  type: matrix_mlflow_utils.mlflow.MlflowMetricsDataset
   key_prefix: "fold_{fold_main}_fold_{fold_to_compare}_{evaluation}"

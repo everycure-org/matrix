@@ -1,0 +1,45 @@
+infra/
+.venv/
+services/
+**/.venv/
+pipelines/matrix/data/
+
+**/*.egg-info/
+**/.ruff_cache/
+**/__pycache__/
+.mypy_cache/
+**/.cache/
+
+compose/
+.cache/
+
+# ignore Dockerfile and .dockerignore
+Dockerfile
+.dockerignore
+
+# ignore potentially sensitive credentials files
+.env
+.env.defaults
+
+# ignore all local configuration
+pipelines/matrix/conf/local
+!pipelines/matrix/conf/local/.gitkeep
+
+# ignore everything in the following folders
+pipelines/matrix/data
+pipelines/matrix/logs
+pipelines/matrix/notebooks
+pipelines/matrix/references
+pipelines/matrix/results
+pipelines/matrix/scratch
+pipelines/matrix/mlruns
+pipelines/matrix/compose/
+pipelines/matrix/build/
+pipelines/matrix/.viz/
+
+# except the following
+!pipelines/matrix/logs/.gitkeep
+!pipelines/matrix/notebooks/.gitkeep
+!pipelines/matrix/references/.gitkeep
+!pipelines/matrix/results/.gitkeep
+

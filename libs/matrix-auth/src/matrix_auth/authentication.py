@@ -124,7 +124,7 @@ def get_oauth_client_secret() -> str:
     """
     path = f"{LOCAL_PATH}/oauth_client_secret.txt"
 
-    with open(path, "r") as f:
+    with open(path) as f:
         return f.read().strip()
 
 

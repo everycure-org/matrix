@@ -1,0 +1,42 @@
+# NOTE: This pyproject.toml was partially generated using AI assistance.
+# Root project, only defines child dependencies which all share one venv
+[project]
+name = "matrix"
+version = "0.1.0"
+requires-python = "==3.11.13"
+dependencies = [
+    "matrix-pipeline",
+    "matrix-docs",
+    "matrix-auth",
+    "matrix-gcp-datasets", 
+    "matrix-mlflow-utils",
+    "matrix-fabricator",
+    "tqdm>=4.67.1",
+    "pre-commit>=4.2.0",
+]
+
+[tool.uv.sources]
+matrix-pipeline = { workspace = true }
+matrix-docs = { workspace = true }
+matrix-auth = { workspace = true }
+matrix-gcp-datasets = { workspace = true }
+matrix-mlflow-utils = { workspace = true }
+matrix-fabricator = { workspace = true }
+
+[tool.uv.workspace]
+members = [
+    # pipelines, which may be run
+    "pipelines/matrix",
+    # docs which are built statically and then deployed
+    "docs",
+    # shared libraries
+    "libs/matrix-auth",
+    "libs/matrix-gcp-datasets", 
+    "libs/matrix-mlflow-utils",
+    "libs/matrix-fabricator",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.7",
+] 

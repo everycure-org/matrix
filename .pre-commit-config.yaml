@@ -2,7 +2,7 @@ repos:
   # Code formatting
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.6.8
+    rev: v0.12.4
     hooks:
       # Run the linter.
       - id: ruff

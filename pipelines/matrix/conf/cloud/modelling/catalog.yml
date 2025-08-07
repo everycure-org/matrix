@@ -19,12 +19,12 @@ _reporting_ds: &_reporting_ds
   # FUTURE: The Kedro MLFlow plugin does not support metadata, 
   # add in when provided by the plugin.
   # <<: *_reporting_ds
-  type: matrix.datasets.mlflow.MlflowMetricsDataset
+  type: matrix_mlflow_utils.mlflow.MlflowMetricsDataset
 
 "modelling.{shard}.fold_{fold}.reporting.metrics_aggregated":
-  type: matrix.datasets.mlflow.MlflowMetricsDataset
+  type: matrix_mlflow_utils.mlflow.MlflowMetricsDataset
 
 modelling.reporting.gt_present:
-  type: matrix.datasets.mlflow.MlflowMetricsDataset
+  type: matrix_mlflow_utils.mlflow.MlflowMetricsDataset
   key_prefix: "gt_present"
 

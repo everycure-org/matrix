@@ -12,16 +12,28 @@ from kedro.framework.cli.utils import split_string
 from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.framework.startup import bootstrap_project
 from kedro.pipeline import Pipeline
+from matrix_auth.environment import load_environment_variables
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
 
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
 from matrix.cli_commands.run import _validate_env_vars_for_private_data
-from matrix.utils.environment import load_environment_variables
 
 # Load environment variables from .env.defaults and .env
 load_environment_variables()
+
+from matrix_auth.authentication import get_user_account_creds
+from matrix_auth.kubernetes import apply, can_talk_to_kubernetes, create_namespace, namespace_exists
+from matrix_auth.system import run_subprocess
+from matrix_mlflow_utils.mlflow_utils import (
+    DeletedExperimentExistsWithName,
+    ExperimentNotFound,
+    archive_runs_and_experiments,
+    create_mlflow_experiment,
+    get_experiment_id_from_name,
+    rename_soft_deleted_experiment,
+)
 
 from matrix.git_utils import (
     BRANCH_NAME_REGEX,
@@ -34,17 +46,6 @@ from matrix.git_utils import (
     has_unpushed_commits,
 )
 from matrix.utils.argo import argo_template_lint, submit_workflow
-from matrix.utils.authentication import get_user_account_creds
-from matrix.utils.kubernetes import apply, can_talk_to_kubernetes, create_namespace, namespace_exists
-from matrix.utils.mlflow_utils import (
-    DeletedExperimentExistsWithName,
-    ExperimentNotFound,
-    archive_runs_and_experiments,
-    create_mlflow_experiment,
-    get_experiment_id_from_name,
-    rename_soft_deleted_experiment,
-)
-from matrix.utils.system import run_subprocess
 
 logging.basicConfig(
     level=logging.INFO,

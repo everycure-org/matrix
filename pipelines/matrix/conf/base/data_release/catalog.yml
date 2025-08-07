@@ -7,7 +7,7 @@ _neo4j_ds: &_neo4j_ds
     mode: "overwrite"
 
 _spark_parquet_ds: &_spark_parquet
-  type: matrix.datasets.gcp.LazySparkDataset
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
   file_format: parquet
   save_args:
     mode: overwrite
@@ -16,7 +16,7 @@ _spark_parquet_ds: &_spark_parquet
       layer: embeddings
 
 _spark_kgx_ds: &_spark_kgx_ds
-  type: matrix.datasets.gcp.LazySparkDataset
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
   file_format: csv
   save_args:
     mode: overwrite

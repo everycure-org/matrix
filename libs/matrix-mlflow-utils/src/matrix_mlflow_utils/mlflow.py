@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Any, Dict, Union
+from typing import Any
 
 import mlflow
 from kedro_mlflow.io.metrics.mlflow_abstract_metric_dataset import (
@@ -24,8 +24,8 @@ class MlflowMetricsDataset(MlflowAbstractMetricDataset):
         self,
         *,
         run_id: str = None,
-        load_args: Dict[str, Any] = None,
-        save_args: Dict[str, Any] = None,
+        load_args: dict[str, Any] = None,
+        save_args: dict[str, Any] = None,
         key_prefix: str = None,
     ):
         """Initialise MlflowMetricDataset.
@@ -48,7 +48,7 @@ class MlflowMetricsDataset(MlflowAbstractMetricDataset):
         self.mode = self._save_args.pop("mode", self.DEFAULT_SAVE_MODE)
 
     @property
-    def run_id(self) -> Union[str, None]:
+    def run_id(self) -> str | None:
         """Get run id."""
         run = mlflow.active_run()
         if (self._run_id is None) and (run is not None):
@@ -68,7 +68,7 @@ class MlflowMetricsDataset(MlflowAbstractMetricDataset):
     def run_id(self, run_id: str):
         self._run_id = run_id
 
-    def load(self) -> Dict[str, Any]:
+    def load(self) -> dict[str, Any]:
         """Load metrics from MLflow using MLflowClient and run metadata.
 
         Returns:
@@ -93,7 +93,7 @@ class MlflowMetricsDataset(MlflowAbstractMetricDataset):
         """
         return False
 
-    def _describe(self) -> Dict[str, Any]:
+    def _describe(self) -> dict[str, Any]:
         """Describe MLflow metrics dataset.
 
         Returns:
@@ -103,7 +103,7 @@ class MlflowMetricsDataset(MlflowAbstractMetricDataset):
             "run_id": self.run_id,
         }
 
-    def save(self, data: Dict[str, Any]):
+    def save(self, data: dict[str, Any]):
         if self._logging_activated:
             self._validate_run_id()
             run_id = (
