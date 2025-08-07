@@ -10,7 +10,7 @@ class TestDataReleasePipeline:
         Tests that the sentinel node is a terminal node in the KG release patch pipeline.
         This ensures nothing runs after the sentinel node.
         """
-        pipeline = pipeline_registry["kg_patch_and_matrix_run"]
+        pipeline = pipeline_registry["kg_release_patch_and_matrix_run"]
 
         # Find all terminal nodes (nodes that nothing depends on)
         node_dependencies = pipeline.node_dependencies
@@ -30,7 +30,7 @@ class TestDataReleasePipeline:
         Tests that the sentinel node has inputs from the expected pipeline components in patch mode.
         This ensures the sentinel waits for critical outputs without being overly restrictive to ingest every terminal node.
         """
-        pipeline = pipeline_registry["kg_patch_and_matrix_run"]
+        pipeline = pipeline_registry["kg_release_patch_and_matrix_run"]
 
         sentinel_node = next(node for node in pipeline.nodes if node.name == last_node_name)
         sentinel_inputs = sentinel_node.inputs if hasattr(sentinel_node, "inputs") else []

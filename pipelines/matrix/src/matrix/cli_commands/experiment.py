@@ -191,7 +191,7 @@ def run(
     if not quiet:
         log.setLevel(logging.DEBUG)
 
-    if pipeline in ("data_release", "kg_release_and_matrix_run", "kg_patch_and_matrix_run"):
+    if pipeline in ("data_release", "kg_release_and_matrix_run", "kg_release_patch_and_matrix_run"):
         if not headless and not confirm_release:
             if not click.confirm(
                 "Manual release submission detected, releases must be submitted via the release pipeline. Are you sure you want to create a manual release?",

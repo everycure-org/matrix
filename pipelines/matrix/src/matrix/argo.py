@@ -299,6 +299,6 @@ def clean_name(name: str) -> str:
 
 
 def get_trigger_release_flag(pipeline: str) -> str:
-    pipeline_correct = pipeline in ("data_release", "kg_release_and_matrix_run", "kg_patch_and_matrix_run")
+    pipeline_correct = pipeline in ("data_release", "kg_release_and_matrix_run", "kg_release_patch_and_matrix_run")
     env_correct = "-dev-" in os.environ["RUNTIME_GCP_PROJECT_ID"].lower()
     return str(pipeline_correct and env_correct)

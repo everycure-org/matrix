@@ -17,7 +17,7 @@ def test_register_pipelines_returns_dict(pipelines: Dict[str, Pipeline]) -> None
 def test_all_pipeline_names_present(pipelines: Dict[str, Pipeline]) -> None:
     expected_pipelines = [
         "kg_release_and_matrix_run",
-        "kg_patch_and_matrix_run",
+        "kg_release_patch_and_matrix_run",
         "data_release",
         "feature_and_modelling_run",
         "__default__",

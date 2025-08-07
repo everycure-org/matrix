@@ -16,7 +16,7 @@ This runbook outlines the steps to create a release in our GitHub repository, ei
 2. **Determine which pipeline to run.**
     - A data release is created by running a kedro pipeline. You can run a dedicated pipeline called `data_release` or other pipeline, which contains it.
     - Consult the [pipeline registry](https://github.com/everycure-org/matrix/blob/main/pipelines/matrix/src/matrix/pipeline_registry.py) for the current pipeline definitions.
-    - Currently, data release will be triggered if one of the following pipelines are run: `data_release`, `kg_release_and_matrix_run`, `kg_patch_and_matrix_run`. (note: `kg_patch_and_matrix_run` is triggered only in weekly patch bumps, as releasing to Neo4J is not necessary and removed from `kg_patch_and_matrix_run`)
+    - Currently, data release will be triggered if one of the following pipelines are run: `data_release`, `kg_release_and_matrix_run`, `kg_release_patch_and_matrix_run`. (note: `kg_release_patch_and_matrix_run` is triggered only in weekly patch bumps, as releasing to Neo4J is not necessary and removed from `kg_release_patch_and_matrix_run`)
 3. **Trigger the pipeline.**
     - Activate the virtual environment, `source ./matrix/pipelines/matrix/.venv/bin/activate`
     - Build and run a kedro experiment run command, e.g.: `kedro experiment run --username <YOUR_NAME> --release-version <INTENDED_RELEASE_VERSION> --pipeline kg_release_and_matrix_run --experiment-name <YOUR_EXPERIMENT_NAME> --run-name <YOUR_RUN_NAME>`
