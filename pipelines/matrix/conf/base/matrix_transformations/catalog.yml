@@ -1,10 +1,8 @@
-_spark_parquet_partitioned_ds: &_spark_parquet_partitioned
+_spark_parquet_ds: &_spark_parquet
   type: matrix.datasets.gcp.LazySparkDataset
   file_format: parquet
   save_args:
     mode: overwrite
-    partitionBy:
-      - rank_bucket
 
 _pandas_parquet: &_pandas_parquet
   type: matrix.datasets.graph.PandasParquetDataset
@@ -14,7 +12,7 @@ _pandas_parquet: &_pandas_parquet
     engine: pyarrow
 
 matrix_transformations.fold_{fold}.model_output.sorted_matrix_predictions@spark:
-  <<: *_spark_parquet_partitioned
+  <<: *_spark_parquet
   filepath: ${globals:paths.matrix_transformations}/fold_{fold}/transformed_matrix
 
 matrix_transformations.fold_{fold}.model_output.sorted_matrix_predictions@pandas:
@@ -22,5 +20,5 @@ matrix_transformations.fold_{fold}.model_output.sorted_matrix_predictions@pandas
   filepath: ${globals:paths.matrix_transformations}/fold_{fold}/transformed_matrix
 
 matrix_transformations.full_matrix_output@spark:
-  <<: *_spark_parquet_partitioned
+  <<: *_spark_parquet
   filepath: ${globals:paths.matrix_transformations}/full_matrix_output
