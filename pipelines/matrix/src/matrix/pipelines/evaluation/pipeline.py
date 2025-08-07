@@ -114,19 +114,6 @@ def create_model_pipeline(
 
     pipelines = []
 
-    pipelines.append(
-        pipeline(
-            [
-                ArgoNode(
-                    func=foo,
-                    inputs=["evaluation.orchard.feedback_data@spark"],
-                    name="load_orchard_feedback_data",
-                    outputs=None,
-                )
-            ]
-        )
-    )
-
     # Evaluate each fold
     for fold in range(n_cross_val_folds):
         for evaluation in evaluation_names:
