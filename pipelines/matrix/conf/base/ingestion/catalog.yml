@@ -225,12 +225,12 @@ ingestion.raw.disease_list:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
   filepath: ${globals:paths.raw_public}/disease_list/${globals:data_sources.disease_list.version}/ec-drug-list.tsv
-    save_args:
-      sep: "\t"
-      header: true
-      index: false
-    load_args:
-      sep: "\t"
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
 
 ingestion.raw.disease_list.nodes@pandas:
   <<: [*_layer_raw]
