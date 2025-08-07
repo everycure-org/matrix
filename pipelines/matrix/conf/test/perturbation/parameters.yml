@@ -1,0 +1,8 @@
+# Test environment perturbation parameters
+
+perturbation:
+  enabled: true
+  rate: 0.05  # Use 5% for testing 
+  random_seed: 42
+  strategy: "category_stratified"
+  rewire_mode: "object_only"
