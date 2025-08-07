@@ -76,6 +76,7 @@ paths:
 
   # Run-based
   filtering:          data/releases/${versions.release}/runs/${run_name}/datasets/filtering
+  perturbation:       data/releases/${versions.release}/runs/${run_name}/datasets/perturbation
   embeddings:         data/releases/${versions.release}/runs/${run_name}/datasets/embeddings
   modelling:          data/releases/${versions.release}/runs/${run_name}/datasets/modelling
   matrix_generation:  data/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation

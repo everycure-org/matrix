@@ -20,6 +20,7 @@ paths:
 
   # Run-based
   filtering:          data/test/releases/${versions.release}/runs/${run_name}/datasets/filtering
+  perturbation:       data/test/releases/${versions.release}/runs/${run_name}/datasets/perturbation
   embeddings:         data/test/releases/${versions.release}/runs/${run_name}/datasets/embeddings
   modelling:          data/test/releases/${versions.release}/runs/${run_name}/datasets/modelling
   evaluation:         data/test/releases/${versions.release}/runs/${run_name}/datasets/evaluation
