@@ -18,13 +18,14 @@ from rich.logging import RichHandler
 from rich.panel import Panel
 
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
+from matrix.argo_hera import build_workflow_yaml
 from matrix.cli_commands.run import _validate_env_vars_for_private_data
 
 # Load environment variables from .env.defaults and .env
 load_environment_variables()
 
 from matrix_auth.authentication import get_user_account_creds
-from matrix_auth.kubernetes import apply, can_talk_to_kubernetes, create_namespace, namespace_exists
+from matrix_auth.kubernetes import can_talk_to_kubernetes, create_namespace, namespace_exists
 from matrix_auth.system import run_subprocess
 from matrix_mlflow_utils.mlflow_utils import (
     DeletedExperimentExistsWithName,
@@ -45,7 +46,7 @@ from matrix.git_utils import (
     has_legal_branch_name,
     has_unpushed_commits,
 )
-from matrix.utils.argo import argo_template_lint, submit_workflow
+from matrix.utils.argo import submit_workflow_from_file
 
 logging.basicConfig(
     level=logging.INFO,
@@ -322,24 +323,25 @@ def _submit(
         else:
             console.print("[green]✓[/green] kubectl authenticated")
 
-        argo_template = build_argo_template(
-            f"{image}:{run_name}",
-            run_name,
-            release_version,
-            username,
-            namespace,
-            pipeline_obj,
-            environment,
-            mlflow_experiment_id,
-            mlflow_url,
-            is_test=is_test,
+        # Build Hera Workflow (not WorkflowTemplate) and submit directly
+        argo_workflow_yaml = build_workflow_yaml(
+            image=f"{image}:{run_name}",
+            run_name=run_name,
+            release_version=release_version,
+            mlflow_experiment_id=mlflow_experiment_id,
+            mlflow_url=mlflow_url,
+            namespace=namespace,
+            username=username,
+            pipeline=pipeline_obj,
+            environment=environment,
+            package_name="matrix",  # metadata used only for legacy template; not needed by Hera
+            release_folder_name="tests" if is_test else "releases",
             mlflow_run_id=mlflow_run_id,
         )
 
-        file_path = save_argo_template(argo_template, template_directory)
-        console.print("Linting Argo template...")
-        argo_template_lint(file_path, verbose=verbose)
-        console.print("[green]✓[/green] Argo template linted")
+        # Persist to a temp file for CLI submission parity and easier debugging
+        file_path = save_argo_template(argo_workflow_yaml, template_directory)
+        console.print("Generated Hera Workflow YAML")
 
         if dry_run:
             return
@@ -355,11 +357,8 @@ def _submit(
         else:
             console.print("[green]✓[/green] Namespace exists")
 
-        apply(namespace, file_path, verbose=verbose)
-        console.print("[green]✓[/green] Argo template applied")
-
-        console.print("Submitting workflow for pipeline...")
-        job_name = submit_workflow(run_name, namespace, verbose=verbose)
+        console.print("Submitting workflow for pipeline via argo submit -f...")
+        job_name = submit_workflow_from_file(file_path, namespace, verbose=verbose)
         argo_url = f"{os.environ['ARGO_PLATFORM_URL']}/workflows/argo-workflows/{run_name}"
         console.print(f"\nSee your workflow in the ArgoCD UI here: [blue]{argo_url}[/blue]")
         console.print(f"Workflow submitted successfully with job name: {job_name}")

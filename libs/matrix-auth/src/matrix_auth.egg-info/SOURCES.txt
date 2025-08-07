@@ -1,0 +1,11 @@
+pyproject.toml
+src/matrix_auth/__init__.py
+src/matrix_auth/authentication.py
+src/matrix_auth/environment.py
+src/matrix_auth/kubernetes.py
+src/matrix_auth/system.py
+src/matrix_auth.egg-info/PKG-INFO
+src/matrix_auth.egg-info/SOURCES.txt
+src/matrix_auth.egg-info/dependency_links.txt
+src/matrix_auth.egg-info/requires.txt
+src/matrix_auth.egg-info/top_level.txt
