@@ -212,7 +212,7 @@ spec:
               name: gh-password
               key: GH_CREDS
       command: [kedro]
-      args: ["run", "-p", "{{ pipeline_name }}", "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
+      args: ["run", "-p", "{{ pipeline_name }}", "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}{% if params %}, "--params", {% raw %}"{{workflow.parameters.params}}"{% endraw %}{% endif %}]
 
   - <<: *_kedro_template
     name: neo4j
