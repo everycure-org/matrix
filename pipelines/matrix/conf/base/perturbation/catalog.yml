@@ -1,17 +1,21 @@
 # Perturbation pipeline catalog
 
-perturbation.prm.perturbed_edges:
-  type: spark.SparkDataSet
-  filepath: data/06_primary/perturbation/perturbed_edges.parquet
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
   file_format: parquet
+  load_args:
+    header: True
   save_args:
     mode: overwrite
-    partitionBy: []
+
+# -------------------------------------------------------------------------
+# Datasets
+# -------------------------------------------------------------------------
+
+perturbation.prm.perturbed_edges:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.perturbation}/prm/perturbed_edges
 
 perturbation.prm.passthrough_edges:
-  type: spark.SparkDataSet
-  filepath: data/06_primary/perturbation/passthrough_edges.parquet
-  file_format: parquet
-  save_args:
-    mode: overwrite
-    partitionBy: []
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.perturbation}/prm/passthrough_edges
