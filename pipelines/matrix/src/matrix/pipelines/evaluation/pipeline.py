@@ -76,6 +76,7 @@ def _create_core_stability_pipeline(
                 ],
                 outputs=f"evaluation.{matrix_input}.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.model_stability_output.result",
                 name=f"{matrix_input}.calculate_{fold_main}_{fold_to_compare}_{evaluation}",
+                argo_config=ARGO_NODE_MEDIUM_MATRIX_GENERATION,
             ),
         ]
     else:
