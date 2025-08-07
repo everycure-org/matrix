@@ -256,15 +256,18 @@ ingestion.raw.disease_list.nodes@spark:
      header: true
      index: false
 
+# TODO automate drug list and disease list ingestion from CE to public data dev bucket
 ingestion.raw.drug_list:
   <<: [*_layer_raw]
-  type: matrix.datasets.github.GitHubReleaseCSVDataset
-  repository_url: https://github.com/everycure-org/core-entities
-  release_name: ${globals:data_sources.drug_list.version}
-  release_asset_name: ec-drug-list.tsv
-  fs_args:
-    Accept: application/octet-stream
-    Authorization: token ${globals:gh_token}
+  type: pandas.CSVDataset
+  filepath: ${globals:raw_public}/disease_list/translator/${globals:data_sources.disease_list.version}/ec-disease-list.tsv
+  load_args:
+    sep: "\t"
+
+ingestion.raw.drug_list:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw_public}/drug_list/translator/${globals:data_sources.drug_list.version}/ec-drug-list.tsv
   load_args:
     sep: "\t"
 
