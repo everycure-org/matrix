@@ -224,7 +224,7 @@ ingestion.raw.drugmech.edges@pandas:
 ingestion.raw.disease_list:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_public}/disease_list/${globals:data_sources.disease_list.version}/ec-drug-list.tsv
+  filepath: ${globals:paths.raw_public}/disease_list/${globals:data_sources.disease_list.version}/ec-disease-list.tsv
   save_args:
     sep: "\t"
     header: true
