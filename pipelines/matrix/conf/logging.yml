@@ -7,7 +7,7 @@ disable_existing_loggers: True
   
 root:
   # by default only show warning level and above
-  level: WARNING
+  level: INFO
   handlers: [rich]
 
 handlers:
