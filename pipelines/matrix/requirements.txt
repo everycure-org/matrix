@@ -721,7 +721,7 @@ pyparsing==3.2.3
     #   rdflib
 pyproject-hooks==1.2.0
     # via build
-pyspark==3.5.1
+pyspark==3.5.6
     # via -r requirements.in
 pytest==8.4.1
     # via
