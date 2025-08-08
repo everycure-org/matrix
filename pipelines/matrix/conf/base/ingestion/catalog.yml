@@ -492,7 +492,7 @@ ingestion.raw.orchard.feedback_data.edges@spark:
   project: ec-orchard-prod
   dataset: orchard_us
   table: latest_status
-  shard: 20250805
+  shard: ${globals:data_sources.orchard.version}
 
 ingestion.int.orchard.feedback_data.edges@spark:
   <<: [*_spark_parquet, *_layer_int]
