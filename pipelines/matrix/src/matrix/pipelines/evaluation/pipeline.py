@@ -94,10 +94,6 @@ def _create_core_stability_pipeline(
     return pipeline(pipeline_nodes, tags=["stability-metrics"])
 
 
-def foo(x):
-    x.show()
-
-
 # def create_model_pipeline(model: str, evaluation_names: List[str], n_cross_val_folds: int) -> Pipeline:
 def create_model_pipeline(
     evaluation_names: List[str], n_cross_val_folds: int, matrix_input: str, score_col_name: str
