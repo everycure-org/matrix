@@ -1,0 +1,26 @@
+{# <project_root>/templates/argo_spec.tmpl #}
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+spec:
+  templates:
+
+  - name: pipeline
+    dag:
+      tasks:
+      {% for task in pipeline_tasks %}
+      - name: {{ task.name }}
+        template: {{ task.get('template', 'kedro') }}
+        {% if task.deps %}
+        dependencies:
+        {% for dep in task.deps %}
+          - {{ dep }}
+        {% endfor %}
+        {% endif %}
+        arguments:
+          parameters:
+          - name: pipeline
+            value: {{ pipeline_name }}
+          - name: kedro_nodes
+            value: {{ task.nodes }}
+
+      {% endfor %}
