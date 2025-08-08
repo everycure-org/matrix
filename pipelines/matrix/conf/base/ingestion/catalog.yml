@@ -487,13 +487,13 @@ ingestion.int.embiology.edges:
 # -------------------------------------------------------------------------
 # Orchard
 # -------------------------------------------------------------------------
-ingestion.raw.orchard.feedback_data.edges@spark:
+ingestion.raw.orchard.edges@spark:
   type: matrix.datasets.gcp.SparkBigQueryDataset
   project: ec-orchard-prod
   dataset: orchard_us
   table: latest_status
   shard: ${globals:data_sources.orchard.version}
 
-ingestion.int.orchard.feedback_data.edges@spark:
+ingestion.int.orchard.edges@spark:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/orchard/${globals:data_sources.orchard.version}/feedback_edges
+  filepath: ${globals:paths.ingestion}/int/orchard/${globals:data_sources.orchard.version}/edges
