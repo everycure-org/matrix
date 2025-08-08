@@ -204,7 +204,10 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=fabricate_datasets,
-                inputs={"fabrication_params": "params:fabricator.orchard"},
+                inputs={
+                    "fabrication_params": "params:fabricator.orchard",
+                    "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                },
                 outputs={
                     "nodes": "ingestion.raw.orchard.feedback_data.nodes@pandas",
                     "edges": "ingestion.raw.orchard.feedback_data.edges@pandas",
