@@ -176,19 +176,19 @@ ingestion.int.ec_clinical_trails.edges:
 # ------------------------------------------------------------------------- 
 ingestion.raw.off_label.nodes@pandas:
   <<: [*_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.raw}/off_label_data/translator/${globals:data_sources.off_label.version}/nodes_raw.csv
+  filepath: ${globals:paths.raw_public}/off_label_data/translator/${globals:data_sources.off_label.version}/nodes_raw.csv
 
 ingestion.raw.off_label.nodes@spark:
   <<: [*_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.raw}/off_label_data/translator/${globals:data_sources.off_label.version}/nodes_raw.csv
+  filepath: ${globals:paths.raw_public}/off_label_data/translator/${globals:data_sources.off_label.version}/nodes_raw.csv
 
 ingestion.raw.off_label.edges@pandas:
   <<: [*_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.raw}/off_label_data/translator/${globals:data_sources.off_label.version}/edges_raw.csv
+  filepath: ${globals:paths.raw_public}/off_label_data/translator/${globals:data_sources.off_label.version}/edges_raw.csv
 
 ingestion.raw.off_label.edges@spark:
   <<: [*_layer_int, *_spark_csv]
-  filepath: ${globals:paths.raw}/off_label_data/translator/${globals:data_sources.off_label.version}/edges_raw.csv
+  filepath: ${globals:paths.raw_public}/off_label_data/translator/${globals:data_sources.off_label.version}/edges_raw.csv
 
 ingestion.int.off_label.nodes:
   <<: [*_spark_parquet, *_layer_int]
