@@ -112,6 +112,7 @@ class RankBasedFrequentFlyerTransformation(MatrixTransformation):
             .withColumn("quantile_rank", F.col("rank") / N_matrix)
             .withColumn("rank_drug", F.col("rank_drug").cast("int"))
             .withColumn("rank_disease", F.col("rank_disease").cast("int"))
+            .withColumn("rank", F.col("rank").cast("int"))
         )
 
         return matrix_df
