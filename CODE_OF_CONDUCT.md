@@ -40,5 +40,3 @@ Instances of abusive, harassing, or otherwise unacceptable behavior must be repo
 ## Contact Information
 
 - MATRIX Project - [matrix-ecao@everycure.org](mailto:matrix-ecao@everycure.org);
-- Charlie Hempstead - [charlie@everycure.org](mailto:charlie@everycure.org);
-- Elliott Sharp - [elliott@everycure.org](mailto:elliott@everycure.org)

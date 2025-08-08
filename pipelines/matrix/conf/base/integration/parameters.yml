@@ -94,36 +94,3 @@ integration:
     # then node will be assigned biolink:ChemicalEntity as most specific category.
     # For RTX-KG2 reproduction from KGML-xDTD, choose false
     retrieve_most_specific_category: false
-
-  filtering:
-    node_filters:
-      filter_node_labels:
-        _object: matrix.pipelines.modelling.utils.partial_
-        func:
-          _object: matrix.pipelines.integration.filters.remove_rows_containing_category
-        exclude_sources: ["ec_medical"]
-        column: category
-        categories:
-        # TODO: We should likely not remove these before our data release stage but afterwards in the modelling pipeline (if the model so desires)
-          - biolink:Activity
-          - biolink:Agent
-          - biolink:ClinicalIntervention
-          - biolink:Cohort
-          - biolink:Device
-          - biolink:EnvironmentalFeature
-          - biolink:EnvironmentalProcess
-          - biolink:Event
-          - biolink:GeographicLocation
-          - biolink:IndividualOrganism
-          - biolink:InformationContentEntity
-          - biolink:InformationResource
-          - biolink:LifeStage
-          - biolink:MaterialSample
-          - biolink:NamedThing
-          - biolink:Phenomenon
-          - biolink:PhysicalEntity
-          - biolink:PopulationOfIndividualOrganisms
-          - biolink:Procedure
-          - biolink:Publication
-          - biolink:Treatment
-          # If you add anything here make sure the fabricator is not generating it, else we remove it

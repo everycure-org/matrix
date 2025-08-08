@@ -101,7 +101,7 @@ Save and commit the changes. Push your branch to the remote repository.
 Run the pipeline to update the data source.
 
 ```
- kedro experiment run -p kg_release -e cloud --release-version=experiment_rtx_2.10.0 --is-test --username=${USER} --experiment-name rtx-2-10-0
+ kedro experiment run -p data_engineering -e cloud --release-version=experiment_rtx_2.10.0 --is-test --username=${USER} --experiment-name rtx-2-10-0
 ```
 
 **Make sure to use the `--is-test` flag to run the pipeline in test mode** until we want to create an official release.
