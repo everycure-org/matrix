@@ -100,14 +100,17 @@ class RankBasedFrequentFlyerTransformation(MatrixTransformation):
         )
 
         # Recalculate rank and quantile_rank based on the new score
-        score_window = Window.orderBy(F.col(f"transformed_treat_score").desc())
-        matrix_df = matrix_df.withColumn("rank", F.row_number().over(score_window)).withColumn(
-            "quantile_rank", F.col("rank") / N_matrix
+        # Use zipWithIndex approach like matrix_generation to handle identical scores
+        # Add secondary ordering by original score to ensure deterministic ordering
+        matrix_df = matrix_df.orderBy(
+            F.col(f"transformed_treat_score").desc(), F.col("untransformed_treat_score").desc()
         )
-
-        # Repartition by range using the transformed score to maintain ordering
-        # Without this, a single ~4GB partition was being created
-        matrix_df = matrix_df.repartitionByRange(100, "transformed_treat_score")
+        matrix_df = (
+            matrix_df.rdd.zipWithIndex()
+            .toDF()
+            .select(F.col("_1.*"), (F.col("_2") + 1).alias("rank"))
+            .withColumn("quantile_rank", F.col("rank") / N_matrix)
+        )
 
         return matrix_df
 
