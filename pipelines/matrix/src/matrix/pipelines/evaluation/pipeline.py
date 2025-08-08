@@ -3,7 +3,7 @@ from typing import List, Union
 
 from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
-from matrix.kedro4argo_node import ArgoNode
+from matrix.kedro4argo_node import ARGO_NODE_MEDIUM_MATRIX_GENERATION, ArgoNode
 from matrix.pipelines.modelling.utils import partial_fold
 
 from . import nodes
@@ -76,6 +76,7 @@ def _create_core_stability_pipeline(
                 ],
                 outputs=f"evaluation.{matrix_input}.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.model_stability_output.result",
                 name=f"{matrix_input}.calculate_{fold_main}_{fold_to_compare}_{evaluation}",
+                argo_config=ARGO_NODE_MEDIUM_MATRIX_GENERATION,
             ),
         ]
     else:
@@ -88,6 +89,7 @@ def _create_core_stability_pipeline(
                 ],
                 outputs=f"evaluation.{matrix_input}.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.model_stability_output.result",
                 name=f"{matrix_input}.calculate_{fold_main}_{fold_to_compare}_{evaluation}",
+                argo_config=ARGO_NODE_MEDIUM_MATRIX_GENERATION,
             ),
         ]
     return pipeline(pipeline_nodes, tags=["stability-metrics"])
