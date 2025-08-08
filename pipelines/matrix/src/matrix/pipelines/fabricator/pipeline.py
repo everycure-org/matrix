@@ -209,8 +209,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                 },
                 outputs={
-                    "nodes": "ingestion.raw.orchard.feedback_data.nodes@pandas",
-                    "edges": "ingestion.raw.orchard.feedback_data.edges@pandas",
+                    "nodes": "ingestion.raw.orchard.nodes@pandas",
+                    "edges": "ingestion.raw.orchard.edges@pandas",
                 },
                 name="fabricate_orchard_datasets",
             ),
