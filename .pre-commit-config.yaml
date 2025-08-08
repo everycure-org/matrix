@@ -52,3 +52,19 @@ repos:
     rev: v0.1.26 # Get the latest from: https://github.com/gruntwork-io/pre-commit/releases
     hooks:
       - id: terragrunt-hclfmt
+  
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+    -   id: detect-secrets
+        args: [
+          '--baseline', '.secrets.baseline', 
+          '--disable-plugin', 'KeywordDetector',
+          '--exclude-files', 'docs/src/references/common_errors.md',
+          '--exclude-files', 'infra/modules/components/cloudbuild/slack_notifier/slack_failure.example',
+          '--exclude-files', 'infra/modules/components/dns/main.tf',
+          '--exclude-secrets', '1CioSCCQxUdACn1NfWU9XRyC-9j_ERc2hmZzaDd8XgcQ',
+          '--exclude-secrets', '1Wlrjr8ojUGCfWJg-QF5PzpJFqpD7LLH7b60u2XAngh0',
+          '--exclude-secrets', '1LMtOmA10t7a3lcKeTP7zmptOPIcCBIPFVJt9J7jZ2bQ',
+        ]
+        exclude: uv.lock

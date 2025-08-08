@@ -29,7 +29,8 @@ argo-workflows:
 
     # Add billing labels to Argo Workflows controller pods
     podLabels:
-      cost-center: infrastructure-management      workload-category: platform-services
+      cost-center: infrastructure-management      
+      workload-category: platform-services
       service-tier: management
       billing-category: infrastructure
       component: argo-workflows-controller

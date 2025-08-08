@@ -133,7 +133,7 @@ The filtering pipeline allows you to control which data sources and relationship
 filtering:
   node_filters:
     filter_sources:
-      _object: matrix.pipelines.filtering.filters.KeepRowsContainingFilter
+      _object: matrix.pipelines.filtering.filters.KeepRowsContaining
       column: upstream_data_source
       keep_list:
         - rtxkg2
@@ -142,7 +142,7 @@ filtering:
   # ...
   edge_filters:
     filter_sources:
-      _object: matrix.pipelines.filtering.filters.KeepRowsContainingFilter
+      _object: matrix.pipelines.filtering.filters.KeepRowsContaining
       column: upstream_data_source
       keep_list:
         - rtxkg2
@@ -272,7 +272,7 @@ To run the pipeline with public data sources:
        version: v2.10.0_validated
    ```
 
-2. **Use the base environment** which is already configured to read from the public bucket for these data sources via the `public_kg_raw` path.
+2. **Use the base environment** which is already configured to read from the public bucket for these data sources via the `raw_public` path.
 
 3. **Run the data engineering pipeline** to process public datasets:
    ```bash

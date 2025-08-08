@@ -12,7 +12,7 @@ from matrix.pipelines.matrix_generation.reporting_plots import ReportingPlotGene
 from matrix.pipelines.matrix_generation.reporting_tables import ReportingTableGenerator
 from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.nodes import apply_transformers
-from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
+from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark.sql.types import DoubleType, StructField, StructType
 from sklearn.impute._base import _BaseImputer
 from tqdm import tqdm
