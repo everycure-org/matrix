@@ -494,6 +494,13 @@ ingestion.raw.orchard.edges@spark:
   table: latest_status
   shard: ${globals:data_sources.orchard.version}
 
+ingestion.raw.orchard.edges@pandas:
+  type: matrix.datasets.gcp.PandasBigQueryDataset
+  project: ec-orchard-prod
+  dataset: orchard_us
+  table: latest_status
+  shard: ${globals:data_sources.orchard.version}
+
 ingestion.int.orchard.edges@spark:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/int/orchard/${globals:data_sources.orchard.version}/edges
