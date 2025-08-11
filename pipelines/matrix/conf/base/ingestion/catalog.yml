@@ -499,6 +499,6 @@ ingestion.raw.orchard.edges@pandas:
   <<: [*_orchard_bq]
   type: matrix.datasets.gcp.PandasBigQueryDataset
 
-ingestion.int.orchard.edges@spark:
+ingestion.int.orchard.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/int/orchard/${globals:data_sources.orchard.version}/edges
