@@ -524,7 +524,6 @@ fabricator.orchard:
         end_dt: 2022-12-31
         freq: Y
         date_format: "%Y-%m-%d"
-      # NOTE: This file was partially generated using AI assistance.
       first_non_null_status:
         type: generate_values
         sample_values:
