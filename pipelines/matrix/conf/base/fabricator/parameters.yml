@@ -522,20 +522,31 @@ fabricator.orchard:
         type: generate_dates
         start_dt: 2020-01-01
         end_dt: 2022-12-31
-        freq: Y
-        date_format: "%Y-%m-%d"
+        freq: D
+        date_format: "%Y-%m-%d %H:%M:%S"
       first_non_null_status:
         type: generate_values
         sample_values:
-          - orchard_value
+          - "ARCHIVED"
+          - "TRIAGE"
+          - "DEEP_DIVE"
+          - "SAB_ENDORSED"
+          - "MEDICAL_REVIEW"
+          - "UNKNOWN"
+          - "NULL"
       latest_non_null_source:
         type: generate_values
         sample_values:
-          - orchard_value
+          - "CROWDSOURCED"
+          - "MATRIX"
+          - "UNKNOWN"
       latest_non_null_reason:
         type: generate_values
         sample_values:
-          - orchard_value
+          - "POOR_BIOMEDICAL_RATIONALE"
+          - "POOR_STRATEGIC_RATIONALE"
+          - "POOR_BIOMEDICAL_AND_STRATEGIC_RATIONALE"
+          - "NULL"
 
 fabricator.robokop:
   nodes:
