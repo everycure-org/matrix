@@ -503,56 +503,40 @@ fabricator.off_label:
             - off-label use
 
 fabricator.orchard:
-  graph:
-    nodes:
-      num_rows: 100
-      columns:
-        curie:
-          type: copy_column
-          source_column: rtx_nodes.id
-          sample:
-            num_rows: "@nodes.num_rows"
-            seed: 40489
-        name:
-          type: copy_column
-          source_column: rtx_nodes.name
-          sample:
-            num_rows: "@nodes.num_rows"
-            seed: 40489
-
-    edges:
-      num_rows: 200
-      columns:
-        drug_kg_node_id:
-          type: copy_column
-          source_column: nodes.curie
-          sample:
-            num_rows: "@edges.num_rows"
-            seed: 40399
-        disease_kg_node_id:
-          type: copy_column
-          source_column: nodes.name
-          sample:
-            num_rows: "@edges.num_rows"
-            seed: 30399
-        last_update:
-          type: copy_column
-          source_column: nodes.curie
-          sample:
-            num_rows: "@edges.num_rows"
-            seed: 30399
-        first_non_null_status:
-          type: generate_values
-          sample_values:
-            - orchard_value
-        latest_non_null_source:
-          type: generate_values
-          sample_values:
-            - orchard_value
-        latest_non_null_reason:
-          type: generate_values
-          sample_values:
-            - orchard_value
+  edges:
+    num_rows: 200
+    columns:
+      drug_kg_node_id:
+        type: copy_column
+        source_column: rtx_nodes.id
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 40399
+      disease_kg_node_id:
+        type: copy_column
+        source_column: rtx_nodes.id
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 30399
+      last_update:
+        type: generate_dates
+        start_dt: 2020-01-01
+        end_dt: 2022-12-31
+        freq: Y
+        date_format: "%Y-%m-%d"
+      # NOTE: This file was partially generated using AI assistance.
+      first_non_null_status:
+        type: generate_values
+        sample_values:
+          - orchard_value
+      latest_non_null_source:
+        type: generate_values
+        sample_values:
+          - orchard_value
+      latest_non_null_reason:
+        type: generate_values
+        sample_values:
+          - orchard_value
 
 fabricator.robokop:
   nodes:

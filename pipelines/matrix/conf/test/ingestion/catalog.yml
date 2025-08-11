@@ -144,14 +144,6 @@ ingestion.int.rtx_kg2.curie_to_pmids:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx_kg2.version}/curie_to_pmids
 
-ingestion.raw.orchard.nodes@pandas:
-  <<: [*_pandas_parquet, *_layer_raw]
-  filepath: ${globals:paths.tmp}/orchard/${globals:data_sources.orchard.version}/nodes
-
-ingestion.raw.orchard.nodes@spark:
-  <<: [*_spark_parquet, *_layer_raw]
-  filepath: ${globals:paths.tmp}/orchard/${globals:data_sources.orchard.version}/nodes
-
 ingestion.raw.orchard.edges@pandas:
   <<: [*_pandas_parquet, *_layer_raw]
   filepath: ${globals:paths.tmp}/orchard/${globals:data_sources.orchard.version}/edges
