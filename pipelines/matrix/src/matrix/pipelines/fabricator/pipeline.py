@@ -122,7 +122,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=nodes.validate_datasets,
-                inputs={"nodes": "ingestion.raw.rtx_kg2.nodes@pandas", "edges": "ingestion.raw.rtx_kg2.edges@pandas"},
+                inputs={"nodes": "ingestion.raw.rtx_kg2.nodes@polars", "edges": "ingestion.raw.rtx_kg2.edges@polars"},
                 outputs="fabricator.int.rtx_kg2.violations",
                 name="validate_fabricated_kg2_datasets",
             ),
@@ -181,7 +181,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=nodes.validate_datasets,
-                inputs={"nodes": "ingestion.raw.robokop.nodes@pandas", "edges": "ingestion.raw.robokop.edges@pandas"},
+                inputs={"nodes": "ingestion.raw.robokop.nodes@polars", "edges": "ingestion.raw.robokop.edges@polars"},
                 outputs="fabricator.int.robokop.violations",
                 name="validate_fabricated_robokop_datasets",
             ),
@@ -196,7 +196,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=nodes.validate_datasets,
-                inputs={"nodes": "ingestion.raw.spoke.nodes@pandas", "edges": "ingestion.raw.spoke.edges@pandas"},
+                inputs={"nodes": "ingestion.raw.spoke.nodes@polars", "edges": "ingestion.raw.spoke.edges@polars"},
                 outputs="fabricator.int.spoke.violations",
                 name="validate_fabricated_spoke_datasets",
             ),
