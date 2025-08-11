@@ -1,4 +1,4 @@
-run_name: test-run
+run_name: test-run-3
 versions:
   release: test-release
 
@@ -18,11 +18,9 @@ paths:
   # Release-based
   integration:        data/test/releases/${versions.release}/datasets/integration
 
-  # Run-based
-
-  # Allow custom input of other runs
-  filtering:          ${oc.env:FILTERING}
-  embeddings:         ${oc.env:EMBEDDINGS}
+  # Run-based paths - these will be redirected by the catalog system when using --from-run
+  filtering:          data/test/releases/${versions.release}/runs/${run_name}/datasets/filtering
+  embeddings:         data/test/releases/${versions.release}/runs/${run_name}/datasets/embeddings
   modelling:          data/test/releases/${versions.release}/runs/${run_name}/datasets/modelling
   evaluation:         data/test/releases/${versions.release}/runs/${run_name}/datasets/evaluation
   matrix_generation:  data/test/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation

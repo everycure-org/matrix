@@ -55,8 +55,7 @@ class RunConfig(NamedTuple):
     conf_source: Optional[str]
     params: Dict[str, Any]
     from_env: Optional[str]
-    filtering_run: Optional[str]
-    embeddings_run: Optional[str]
+    from_run: Optional[str]
 
 
 # fmt: off
@@ -76,10 +75,9 @@ class RunConfig(NamedTuple):
 @click.option( "--conf-source",   type=click.Path(exists=True, file_okay=False, resolve_path=True), help=CONF_SOURCE_HELP,)
 @click.option( "--params",        type=click.UNPROCESSED, default="", help=PARAMS_ARG_HELP, callback=_split_params,)
 @click.option( "--from-env",      type=str, default=None, help="Custom env to read from, if specified will read from the `--from-env` and write to the `--env`",)
-@click.option( "--filtering-run",      type=str, default=None, help="Custom filtering run to read from, if specified will read from the `--filtering-run`")
-@click.option( "--embeddings-run",      type=str, default=None, help="Custom embeddings run to read from, if specified will read from the `--embeddings-run`")
+@click.option( "--from-run",      type=str, default=None, help="Custom run to read from, if specified will read all input datasets from the `--from-run` and write outputs to the current run",)
 # fmt: on
-def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async: bool, node_names: list[str], to_nodes: list[str], from_nodes: list[str], from_inputs: list[str], to_outputs: list[str], load_versions: list[str], pipeline: str, conf_source: str, params: dict[str, Any], from_env: Optional[str]=None, filtering_run: Optional[str]=None, embeddings_run: Optional[str]=None):
+def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async: bool, node_names: list[str], to_nodes: list[str], from_nodes: list[str], from_inputs: list[str], to_outputs: list[str], load_versions: list[str], pipeline: str, conf_source: str, params: dict[str, Any], from_env: Optional[str]=None, from_run: Optional[str]=None):
     """Run the pipeline."""
 
     _validate_env_vars_for_private_data()
@@ -104,8 +102,7 @@ def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async
         conf_source=conf_source,
         params=params,
         from_env=from_env,
-        filtering_run=filtering_run,
-        embeddings_run=embeddings_run
+        from_run=from_run
     )
 
     _run(config, KedroSessionWithFromCatalog)
@@ -152,15 +149,16 @@ def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
         )
 
         from_catalog = _extract_config(config, session)
-
-        # just for local run right now
-        filtering_run = config.filtering_run or "test-run"
-        embeddings_run = config.embeddings_run or "test-run"
-
-        # Would obviously do this in a programatic way - just making explicity for purposes of demo
-        os.environ["FILTERING"] = f"data/test/releases/test-release/runs/{filtering_run}/datasets/filtering"
-        os.environ["EMBEDDINGS"] = f"data/test/releases/test-release/runs/{embeddings_run}/datasets/embeddings"
-
+        
+        # If using --from-run, we want to use the from_catalog for inputs
+        # but still write outputs to the current run
+        if config.from_run:
+            # Use from_catalog for all input datasets
+            # This will make Kedro read inputs from the from_catalog
+            # while writing outputs to the current run
+            print(f"Using from_catalog for inputs from run: {config.from_run}")
+            print(f"Outputs will be written to current run")
+        
         session.run(
             from_catalog=from_catalog,
             tags=config.tags,
@@ -177,8 +175,9 @@ def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
 
 def _extract_config(config: RunConfig, session: KedroSessionWithFromCatalog) -> Optional[DataCatalog]:
     from_catalog: Optional[DataCatalog] = None
+    
     if config.from_env:
-        # Load second config loader instance
+        # Load second config loader instance for from-env
         config_loader_class = settings.CONFIG_LOADER_CLASS
         config_loader = config_loader_class(  # type: ignore[no-any-return]
                 conf_source=session._conf_source,
@@ -194,7 +193,144 @@ def _extract_config(config: RunConfig, session: KedroSessionWithFromCatalog) -> 
                 catalog=conf_catalog, credentials=conf_creds
             )
         from_catalog.add_feed_dict(_get_feed_dict(config_loader["parameters"]), replace=True)
+    
+    elif config.from_run:
+        # Load config for from-run: redirect input datasets to specified run
+        from_catalog = _create_from_run_catalog(config.from_run, config.env, session, config.pipeline_name)
+    
     return from_catalog
+
+
+def _create_from_run_catalog(from_run: str, env: str, session: KedroSessionWithFromCatalog, pipeline_name: str) -> DataCatalog:
+    """Create a catalog that contains datasets from the specified run.
+    
+    Args:
+        from_run: The run name to read input datasets from
+        env: The current environment
+        session: The Kedro session
+        pipeline_name: The pipeline name being run
+        
+    Returns:
+        DataCatalog with datasets from the specified run
+    """
+    # NOTE: This function was partially generated using AI assistance.
+    
+    print(f"Creating from-run catalog for run: {from_run}")
+    
+    # Load the current environment's catalog configuration
+    config_loader_class = settings.CONFIG_LOADER_CLASS
+    config_loader = config_loader_class(
+        conf_source=session._conf_source,
+        env=session.store.get("env", "base"),
+        **settings.CONFIG_LOADER_ARGS,
+    )
+    
+    # Get the catalog and credentials
+    conf_catalog = config_loader["catalog"]
+    conf_creds = config_loader["credentials"]
+    
+    # Create a new catalog from the current environment's config
+    from_catalog: DataCatalog = settings.DATA_CATALOG_CLASS.from_config(
+        catalog=conf_catalog, credentials=conf_creds
+    )
+    
+    # Get the pipeline to identify which datasets are inputs
+    pipeline = pipelines[pipeline_name]
+    
+    # Get the filtered pipeline based on the run configuration
+    # This will help us identify which datasets are actually needed
+    filtered_pipeline = pipeline.filter(
+        tags=config_loader.get("tags", []),
+        from_nodes=config_loader.get("from_nodes", []),
+        to_nodes=config_loader.get("to_nodes", []),
+        node_names=config_loader.get("node_names", []),
+        from_inputs=config_loader.get("from_inputs", []),
+        to_outputs=config_loader.get("to_outputs", []),
+    )
+    
+    # Get all input datasets that will be used
+    input_datasets = filtered_pipeline.inputs()
+    # print(f"Input datasets that will be used: {input_datasets}")
+    # print(f"Available datasets in catalog: {list(from_catalog._datasets.keys())}")
+    
+    # Filter to only datasets that actually exist in the catalog
+    # (some inputs are outputs from other pipelines that don't exist yet)
+    existing_input_datasets = [ds for ds in input_datasets if ds in from_catalog._datasets]
+    print(f"Existing input datasets in catalog: {existing_input_datasets}")
+    
+    # Filter out parameter datasets (those starting with 'params:')
+    # Parameters are not catalog entries and should not be redirected
+    data_input_datasets = [ds for ds in existing_input_datasets if not ds.startswith('params:')]
+    print(f"Data input datasets to redirect: {data_input_datasets}")
+    breakpoint()
+    # Redirect input datasets to the specified run
+    for dataset_name in data_input_datasets:
+        print(f"Checking dataset: {dataset_name}")
+        dataset = from_catalog._datasets[dataset_name]
+        print(f"Found dataset {dataset_name} with filepath: {getattr(dataset, '_filepath', 'No filepath')}")
+        breakpoint()
+        # Only redirect datasets that have filepaths (skip parameters and cache datasets)
+        if hasattr(dataset, '_filepath') and dataset._filepath:
+            # Convert PurePosixPath to string for string operations
+            filepath_str = str(dataset._filepath)
+            # Check if this dataset uses a run-based path
+            if '/runs/' in filepath_str and '/datasets/' in filepath_str:
+                # Redirect the filepath to the specified run
+                redirected_filepath = _redirect_filepath_to_run(filepath_str, from_run, env)
+                if redirected_filepath != filepath_str:
+                    print(f"Redirecting {dataset_name} from {filepath_str} to {redirected_filepath}")
+                    dataset._filepath = redirected_filepath
+                breakpoint()
+            else:
+                print(f"Skipping {dataset_name} - not a run-based dataset")
+        else:
+            print(f"Skipping {dataset_name} - no filepath (likely parameter or cache dataset)")
+    
+    return from_catalog
+
+
+def _redirect_filepath_to_run(filepath: str, from_run: str, env: str) -> str:
+    """Redirect a filepath to use the specified run.
+    
+    Args:
+        filepath: The original filepath
+        from_run: The run name to redirect to
+        env: The current environment
+        
+    Returns:
+        The redirected filepath
+    """
+    # NOTE: This function was partially generated using AI assistance.
+    
+    # Check if this is a run-based path that should be redirected
+    if env == "test":
+        # For test environment, redirect run-based paths
+        if "/runs/" in filepath and "/datasets/" in filepath:
+            # Extract the path components
+            parts = filepath.split("/")
+            run_index = parts.index("runs")
+            datasets_index = parts.index("datasets")
+            
+            if run_index < datasets_index:
+                # Replace the run name in the path
+                parts[run_index + 1] = from_run
+                return "/".join(parts)
+    
+    elif env == "cloud":
+        # For cloud environment, redirect run-based paths
+        if "/runs/" in filepath and "/datasets/" in filepath:
+            # Extract the path components
+            parts = filepath.split("/")
+            run_index = parts.index("runs")
+            datasets_index = parts.index("datasets")
+            
+            if run_index < datasets_index:
+                # Replace the run name in the path
+                parts[run_index + 1] = from_run
+                return "/".join(parts)
+    
+    # Return original filepath if no redirection needed
+    return filepath
 
 
 def _get_feed_dict(params: Dict) -> dict[str, Any]:
