@@ -42,7 +42,7 @@ embeddings.tmp.input_nodes:
     # `entity` label on which we generate a unique constraint. This has the side-effect
     # that an index is created which allows for quick edge inserts down the line.
     # https://neo4j.com/docs/cypher-manual/current/constraints/
-    mode: overwrite
+    # mode: overwrite
     script: >
       CREATE CONSTRAINT IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE;
     query: > 
