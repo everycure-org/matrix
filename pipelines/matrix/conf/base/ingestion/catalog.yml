@@ -32,6 +32,12 @@ _layer_int: &_layer_int
     kedro-viz:
       layer: integration
 
+_orchard_bq: &_orchard_bq
+  project: ec-orchard-prod
+  dataset: orchard_us
+  table: latest_status
+  shard: ${globals:data_sources.orchard.version}
+
 # -------------------------------------------------------------------------
 # RTX-KG2
 # -------------------------------------------------------------------------  
@@ -488,18 +494,12 @@ ingestion.int.embiology.edges:
 # Orchard
 # -------------------------------------------------------------------------
 ingestion.raw.orchard.edges@spark:
+  <<: [*_orchard_bq]
   type: matrix.datasets.gcp.SparkBigQueryDataset
-  project: ec-orchard-prod
-  dataset: orchard_us
-  table: latest_status
-  shard: ${globals:data_sources.orchard.version}
 
 ingestion.raw.orchard.edges@pandas:
+  <<: [*_orchard_bq]
   type: matrix.datasets.gcp.PandasBigQueryDataset
-  project: ec-orchard-prod
-  dataset: orchard_us
-  table: latest_status
-  shard: ${globals:data_sources.orchard.version}
 
 ingestion.int.orchard.edges@spark:
   <<: [*_spark_parquet, *_layer_int]
