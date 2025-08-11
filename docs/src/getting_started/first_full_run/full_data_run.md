@@ -86,7 +86,7 @@ The Feature pipeline can be used to extract only subgraph of interest from the r
 filtering:
   node_filters:
     filter_sources:
-      _object: matrix.pipelines.filtering.filters.KeepRowsContainingFilter
+      _object: matrix.pipelines.filtering.filters.KeepRowsContaining
       column: upstream_data_source
       keep_list:
         - rtxkg2
@@ -95,7 +95,7 @@ filtering:
   # ...
   edge_filters:
     filter_sources:
-      _object: matrix.pipelines.filtering.filters.KeepRowsContainingFilter
+      _object: matrix.pipelines.filtering.filters.KeepRowsContaining
       column: upstream_data_source
       keep_list:
         - rtxkg2
