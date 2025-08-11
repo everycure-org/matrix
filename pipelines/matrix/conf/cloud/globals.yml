@@ -32,7 +32,7 @@ paths:
   integration:        ${release_dir}/datasets/integration
   release:            ${release_dir}/datasets/release
 
-  # Run-based
+  # Run-based paths - these will be redirected by the catalog system when using --from-run
   filtering:          ${run_dir}/datasets/filtering
   embeddings:         ${run_dir}/datasets/embeddings
   modelling:          ${run_dir}/datasets/modelling
