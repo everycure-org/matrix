@@ -157,6 +157,7 @@ class SparkHooks:
                 parameters = {
                     k: v for k, v in parameters.items() if not k.startswith("spark.hadoop.google.cloud.auth.service")
                 }
+                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "conf/local/service-account.json"
             else:
                 logger.info(f"Executing for environment: {cls._kedro_context.env}")
                 logger.info(f'With ARGO_POD_UID set to: {os.environ.get("ARGO_NODE_ID", "")}')
