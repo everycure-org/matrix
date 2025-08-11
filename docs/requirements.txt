@@ -445,7 +445,7 @@ tzdata==2025.1
     # via pandas
 uri-template==1.3.0
     # via jsonschema
-urllib3==2.3.0
+urllib3==2.5.0
     # via requests
 watchdog==6.0.0
     # via mkdocs
