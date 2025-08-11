@@ -229,13 +229,12 @@ ingestion.raw.drugmech.edges@pandas:
 
 ingestion.raw.disease_list:
   <<: [*_layer_raw]
-  type: matrix.datasets.github.GitHubReleaseCSVDataset
-  repository_url: https://github.com/everycure-org/core-entities
-  release_name: ${globals:data_sources.disease_list.version}
-  release_asset_name: ec-disease-list.tsv
-  fs_args:
-    Accept: application/octet-stream
-    Authorization: token ${globals:gh_token}
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw_public}/disease_list/${globals:data_sources.disease_list.version}/ec-disease-list.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
   load_args:
     sep: "\t"
 
@@ -264,13 +263,12 @@ ingestion.raw.disease_list.nodes@spark:
 
 ingestion.raw.drug_list:
   <<: [*_layer_raw]
-  type: matrix.datasets.github.GitHubReleaseCSVDataset
-  repository_url: https://github.com/everycure-org/core-entities
-  release_name: ${globals:data_sources.drug_list.version}
-  release_asset_name: ec-drug-list.tsv
-  fs_args:
-    Accept: application/octet-stream
-    Authorization: token ${globals:gh_token}
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw_public}/drug_list/${globals:data_sources.drug_list.version}/ec-drug-list.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
   load_args:
     sep: "\t"
 
