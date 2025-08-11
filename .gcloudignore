@@ -1,13 +1,19 @@
-# NOTE: This .dockerignore was partially generated using AI assistance.
+# This file controls what Cloud Build includes in the build context
+# currently only used for experiment submissions
 
-# Exclude the biggest offenders first
-.venv/
+**/.venv/
 infra/
 services/
-scripts/
 apps/
-_scratchpad/
 
+# we ignore image files since we don't need them for building our pipeline 
+# remove this if we ever move towards building the docs also via google cloud build
+docs/**/*.png
+docs/**/*.svg
+docs/**/*.jpg
+
+# dev local work tools
+**/_scratchpad/
 # Exclude Python cache and build artifacts
 **/*.egg-info/
 **/.ruff_cache/
@@ -32,12 +38,6 @@ _scratchpad/
 **/*.tmp
 **/*.temp
 
-# Exclude Docker files (not needed in context)
-Dockerfile
-.dockerignore
-docker-compose*.yml
-docker-compose*.yaml
-
 # Exclude pipeline subdirectories that aren't needed
 pipelines/matrix/data/
 pipelines/matrix/logs/
@@ -55,5 +55,11 @@ pipelines/matrix/working_workflow.yaml
 
 # Exclude local configuration
 pipelines/matrix/conf/local/
-!pipelines/matrix/conf/local/.gitkeep
+!pipelines/matrix/conf/local/.gitkeep 
 
+**/.claude/
+**/.cursor/
+**/dist/*
+
+# we no longer need this folder, we're generating templates on the fly
+pipelines/matrix/templates/

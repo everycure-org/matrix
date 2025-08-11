@@ -31,7 +31,7 @@ default: prerequisites fetch_sa_key install fast_test integration_test
 
 local_test: install fast_test integration_test
 
-.PHONY: always
+.PHONY: always docker_cloud_build
 # steps here get run on _every_ make call, no matter the target. Make sure this is 100% idempotent and fast.
 always:
 	# never track notebooks in the pipeline subfolder
@@ -98,6 +98,14 @@ docker_test: certificate docker_build
 		--force-recreate \
 		--abort-on-container-exit \
 		--exit-code-from matrix-pipeline
+
+docker_cloud_build:
+	gcloud builds submit \
+		--region=us-central1 \
+		--project=$(GCP_PROJECT) \
+		--config=cloudbuild.yaml \
+		--substitutions=_IMAGE=$(docker_image),_TAG=$(TAG),_GIT_SHA=$(GIT_SHA),_TARGET_PLATFORM=$(TARGET_PLATFORM) \
+		../..
 
 docker_build:
 	# note the && operator is essential to catch docker buildx errors on linux systems

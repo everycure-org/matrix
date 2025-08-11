@@ -427,7 +427,7 @@ def summarize_submission(
 
 def build_push_docker(image: str, username: str, verbose: bool):
     """Build the docker image only once, push it to dev registry, and if running in prod, also to prod registry."""
-    run_subprocess(f"make docker_push TAG={username} docker_image={image}", stream_output=verbose)
+    run_subprocess(f"make docker_cloud_build TAG={username} docker_image={image}", stream_output=verbose)
 
 
 def build_argo_template(
