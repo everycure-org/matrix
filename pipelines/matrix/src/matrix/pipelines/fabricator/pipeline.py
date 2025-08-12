@@ -10,6 +10,8 @@ from kedro.pipeline import Pipeline, node, pipeline
 
 from matrix.utils.fabrication import fabricate_datasets
 
+from . import nodes
+
 
 def _create_random_pairs(
     drug_list: pd.DataFrame,
@@ -181,6 +183,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="fabricate_kg2_datasets",
             ),
             node(
+                func=nodes.validate_datasets,
+                inputs={"nodes": "ingestion.raw.rtx_kg2.nodes@polars", "edges": "ingestion.raw.rtx_kg2.edges@polars"},
+                outputs="fabricator.int.rtx_kg2.violations",
+                name="validate_fabricated_kg2_datasets",
+            ),
+            node(
                 func=remove_overlap,
                 inputs={
                     "disease_list": "fabricator.int.disease_list",
@@ -234,6 +242,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="fabricate_robokop_datasets",
             ),
             node(
+                func=nodes.validate_datasets,
+                inputs={"nodes": "ingestion.raw.robokop.nodes@polars", "edges": "ingestion.raw.robokop.edges@polars"},
+                outputs="fabricator.int.robokop.violations",
+                name="validate_fabricated_robokop_datasets",
+            ),
+            node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.spoke"},
                 outputs={
@@ -241,6 +255,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "edges": "ingestion.raw.spoke.edges@pandas",
                 },
                 name="fabricate_spoke_datasets",
+            ),
+            node(
+                func=nodes.validate_datasets,
+                inputs={"nodes": "ingestion.raw.spoke.nodes@polars", "edges": "ingestion.raw.spoke.edges@polars"},
+                outputs="fabricator.int.spoke.violations",
+                name="validate_fabricated_spoke_datasets",
             ),
             node(
                 func=fabricate_datasets,
