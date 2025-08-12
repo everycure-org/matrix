@@ -1,6 +1,6 @@
 # Running the Matrix Pipeline
 
-Now that you understand the different environments, have a good understanding of kedro, and have successfully run the pipeline end-to-end with test data, let's explore how to run specific parts of the pipeline in different environments.
+Now that you understand the different environments, have a good understanding of kedro, and have successfully run the pipeline end-to-end with real data, let's explore how to run specific parts of the pipeline in base environments.
 
 ## Pipeline Structure
 
@@ -10,7 +10,7 @@ As we explained at the beginning of this section, the Matrix pipeline is compose
 2. **Feature Pipeline** (`feature`): Performs filtering and generates embeddings
 3. **Modelling Pipeline** (`modelling_run`): Includes model training, matrix generation, evaluation and transformations
 
-In this section we will break them down in test environment to teach you how to run the specific part of the pipeline.
+In this section we will break them down in base environment to teach you how to run the specific part of the pipeline.
 
 
 ## Running Individual Pipeline Components
@@ -116,7 +116,7 @@ You can see how these nodes fit together with other parts of the pipeline by che
 
 The exact details on integration and ingestion pipeline can be found in [the pipeline section](../../pipeline/index.md). In short however, running the following command:
 ```
-kedro run -p data_engineering -e test
+kedro run -p data_engineering -e base
 ```
 Will create a unified knowledge graph. Such KG can then be used by the feature pipeline for generating embeddings and the modeling pipeline for training ML models. The `feature `pipeline consists of:
 
@@ -160,7 +160,7 @@ For example, to include ROBOKOP data in your pipeline:
 1. Uncomment the `robokop` line in the `keep_list`
 2. Run the filtering pipeline: 
 ```bash
-kedro run --pipeline=filtering -e test
+kedro run --pipeline=filtering -e base
 ```
 
 This will ensure that nodes and edges derived from ROBOKOP only are kept for the feature generation. You can try running the pipeline with and without robokop parameter and see how it affects the runtime of the pipeline
@@ -180,21 +180,45 @@ embeddings.topological_estimator:
   walks_per_node: 10
   window_size: 10
 ```
+!!! note "`OPENAI_API_KEY` needs to be set"
+    Before we run the embeddings pipeline, we will need to make sure that the `OPENAI_API_KEY` is set in the `.env` file. 
 
-Do note however that those are the parameters for the `base` environment. Topological Embedding generation is a time-consuming process therefore we have an alternative set of parameters in the `test` environment to allow for quick iterations & testing. You will see that parameters in `conf/test/embeddings/parameters.yaml` are much simpler:
+!!! note "Neo4J is set up and running"
+    The `embeddings` pipeline require that Neo4J is running and configured correctly. If you have Neo4J set up already, you could simply add the following to your `.env` file
 
-```yaml
-embeddings.topological_estimator:
-  iterations: 1
-  embedding_dim: 3
-  walk_length: 2
-```
+    ```bash
+    NEO4J_HOST: xxx
+    NEO4J_USER: xxx
+    NEO4J_PASSWORD: xxx 
+    ```
+    
+    For simplicity we will start Neo4J in docker.
+    
+    ```bash
+    docker run -d --name neo4j \
+      -p 7474:7474 -p 7687:7687 \
+      --restart unless-stopped \
+      --memory=80g \
+      -e NEO4J_AUTH=neo4j/admin \
+      -e NEO4J_dbms_security_auth__minimum__password__length=5 \
+      -e NEO4J_dbms_default__database=analytics \
+      -e NEO4J_PLUGINS='["apoc","graph-data-science"]' \
+      -e NEO4J_dbms_security_procedures_unrestricted='apoc.*,gds.*' \
+      -e NEO4J_dbms_security_procedures_allowlist='apoc.*,gds.*' \
+      -e NEO4J_server_memory_heap_initial__size=40g \
+      -e NEO4J_server_memory_heap_max__size=40g \
+      -e NEO4J_server_memory_pagecache_size=8g \
+      -v neo4j_data:/data -v neo4j_logs:/logs -v neo4j_plugins:/plugins \
+      neo4j:5
+    ```
 
-This is a good example showing the difference between test and base environment. If you try increasing the number of iterations in the `conf/base/embeddings/parameters.yaml` and run:
+!!! warning "Important: memory settings for Neo4J"
+    Please ensure that the machine you are running on has at least 128 GB of memory, as the embeddings is a intensive pipeline and require Neo4J to have at least 20 GB of ram. The above command assumes you have at least 80 GB of memory. Adjust accordingly
+    
+
 ```bash
-kedro run -p embeddings -e test
+kedro run -p embeddings -e base
 ```
-The number of iterations will not change, as we are running the pipeline in test environment. However if you do the same in the `conf/test/embeddings/parameters.yaml` - the runtime will extend accordingly. The same rule applies to all parameters across our codebase.
 
 ## Finding Data Products while running the modelling pipeline
 
@@ -211,7 +235,7 @@ This pipeline includes:
 - `evaluation`: Evaluates model performance
 - `matrix_transformations`: Applies post-processing transformations
 
-Just like we learnt earlier, we can run individual components (e.g. `kedro run -p modelling -e test`) of the pipeline or modify parameters (e.g. `conf/base/modelling/defaults.yml` to modify train-test splits). In the modelling pipeline we also have a choice of selecting different algorithms for modelling - these can be selected in settings.py, just like we learnt in the first section: 
+Just like we learnt earlier, we can run individual components (e.g. `kedro run -p modelling -e base`) of the pipeline or modify parameters (e.g. `conf/base/modelling/defaults.yml` to modify train-test splits). In the modelling pipeline we also have a choice of selecting different algorithms for modelling - these can be selected in settings.py, just like we learnt in the first section: 
 
 ```python
 "modelling": {
@@ -240,7 +264,7 @@ Each evaluation type produces different metrics, you can learn about them in det
 
 So once we run the pipeline:
 ```
-kedro run -p modelling_run -e test
+kedro run -p modelling_run -e base
 ```
 How do we find the results? There are many data products being generated in the matrix pipeline however you can find appropriate product based on pipeline data catalog. For instance, if you want to find the generated matrix, you can go to `conf/base/matrix_generation/catalog.yml` where once you follow the data layer convention, you can see the output:
 
@@ -284,7 +308,7 @@ This approach allows you to work with real, production-quality data without need
 After approximately 20-30 mins, the pipeline should have finished all stages. If that's the case - well done! You can now repeat the entire process with real data if you would like however note that it will take a very long time - without parallelization, you can expect it to run for +24hrs for KGs such as RTX-KG2. Smaller Graphs might be easier.
 
 !!! info
-    Remember that the pipeline is modular by design, allowing you to run and test components independently. It's very rare that we run the pipeline with real data e2e; we usually first run data_engineering pipeline to examine the generated KG, then we extract features and only after that's complete, we would start modelling.
+    Remember that the pipeline is modular by design, allowing you to run components independently. It's very rare that we run the pipeline with real data e2e; we usually first run data_engineering pipeline to examine the generated KG, then we extract features and only after that's complete, we would start modelling.
 
 
 [Go to Deep Dive Section :material-skip-next:](../deep_dive/index.md){ .md-button .md-button--primary }
