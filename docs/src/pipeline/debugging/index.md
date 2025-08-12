@@ -118,7 +118,9 @@ Debug a slice of your pipeline:
 
 1. **Missing debugpy**: Ensure debugpy is installed in your environment
    ```bash
-   pip install debugpy
+   uv add debugpy --dev
+   # or if you're not in the pipelines/matrix directory:
+   cd pipelines/matrix && uv add debugpy --dev
    ```
 2. **Wrong Working Directory**: Make sure the `cwd` in launch.json points to your pipeline directory
 3. **Environment Issues**: Verify VS Code is using the correct Python interpreter with your Kedro environment 

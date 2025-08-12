@@ -8,8 +8,7 @@ import yaml
 from click.testing import CliRunner
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
-from matrix.cli_commands.experiment import _submit, build_argo_template, get_run_name, run, save_argo_template
-from matrix.kedro4argo_node import ArgoResourceConfig
+from matrix.cli_commands.experiment import _submit, get_run_name, run, save_argo_template
 
 
 @pytest.fixture
@@ -83,23 +82,6 @@ def mock_multiple_pipelines():
 
     with patch("matrix.cli_commands.experiment.kedro_pipelines", new=pipeline_dict) as mock:
         yield mock
-
-
-@patch("matrix.cli_commands.experiment.generate_argo_config")
-def test_build_argo_template(mock_generate_argo_config: None) -> None:
-    build_argo_template(
-        "image",
-        "test_run",
-        "testuser",
-        "test_namespace",
-        {"test": MagicMock()},
-        ArgoResourceConfig(),
-        "cloud",
-        is_test=True,
-        mlflow_experiment_id=1,
-        mlflow_url="https://mlflow.platform.dev.everycure.org/",
-    )
-    mock_generate_argo_config.assert_called_once()
 
 
 @pytest.fixture()

@@ -20,7 +20,7 @@ ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /matrix
-COPY pyproject.toml uv.lock .
+COPY pyproject.toml uv.lock ./
 
 # we copy all workspace dependencies over for uv sync to work
 COPY libs/ libs/

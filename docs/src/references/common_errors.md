@@ -54,18 +54,17 @@ You may encounter the following error during install:
 
 `TypeError: generate_random_arrays() got an unexpected keyword argument 'delimiter'`
 
-This issue was caused when we updated a function in the `packages/data_fabricator` package. Since we cannot set a python version of a local dependency, `uv` caches this dependency and does not pull the latest version into the `venv.
+This issue can occur when local libraries in `libs/` have been updated but uv has cached an older version. Since uv manages the workspace dependencies automatically, cached versions can sometimes conflict with updates to local packages.
 
 **Solution**:
 Run this inside of `pipelines/matrix`
 ```bash
 rm -rf .venv/
-rm -rf $(uv cache dir)
-make venv
+uv cache clean
 make install
 ```
 
-This wipes the uv cache, which leads to a functioning installation of the library. This error does not occur in CI because our docker container is always built cleanly. 
+This clears the uv cache and reinstalls all dependencies cleanly, including the latest versions of local libraries from `libs/`. This error does not occur in CI because our docker container is always built cleanly. 
 
 Finally, try running the kedro pipeline test while docker is up and running:
 
@@ -78,8 +77,20 @@ kedro run -p test -e test
 ModuleNotFoundError: No module named <some_module>
 ```
 
-Someone added a new dependency to the project.
-Run `make install`
+Someone added a new dependency to the project, or there's an issue with the local libraries from `libs/`.
+
+**Solution**:
+Run `make install` to sync the workspace and install all dependencies including local packages:
+```bash
+make install
+```
+
+If the error persists, try cleaning the environment:
+```bash
+uv cache clean
+make clean
+make install
+```
 
 
 
@@ -405,15 +416,14 @@ ERROR    Node fabricate_kg2_datasets: fabricate_datasets() ->  failed with error
                              tuple index out of range  
 IndexError: tuple index out of range
 ```
-This error is most likely due to data fabricator version being outdated after the most recent updates to main. A simple solution is to clean your current venv, re-create and re-install the venv with needed dependencies:
-```
-uv cache clean # if you use pip or other library management tool, you should clean cache of that
-deactivate # ensure no venv is active
+This error is most likely due to the `matrix-fabricator` library being outdated after recent updates to main. A simple solution is to clean your current environment and reinstall:
+```bash
+uv cache clean
 make clean
-make
+make install
 ```
 
-However we noted that error persists if you have miniconda3 or conda installed on your system. Note that conda and uv (which is a preferred package management system) are very incompatible and using both might lead to errors. Therefore, if you run the command above and still get the IndexError, please make sure you have no miniconda installed. If you do have miniconda on your system, you might need to remove it or ensure it's completely separated. Once it's removed, you should re-do re-create the matrix repo and re-install venv as mentioned above
+However we noted that this error persists if you have miniconda3 or conda installed on your system. Note that conda and uv are incompatible and using both will lead to errors. Therefore, if you run the command above and still get the IndexError, please make sure you have no miniconda/conda installed or ensure it's completely separated from your MATRIX development environment. Once it's removed, re-create the matrix environment as mentioned above.
 
 
 ### Error reading data from cloud
@@ -438,10 +448,15 @@ gcloud config set project mtrx-hub-dev-3of
 filter_by_category() missing 1 required positional argument: 'categories
 ```
 
-This is due to our local libraries (e.g. `data_fabricator`) being cached in the uv cache
+This is due to local libraries from `libs/` (e.g. `matrix-fabricator`) being cached in the uv cache
 and thus not being installed to the latest version when running `make install`. Cleaning
-the uv cache solves this issue which you can do via `make clean` and then run a fresh
-`make install`.
+the uv cache solves this issue:
+
+```bash
+uv cache clean
+make clean
+make install
+```
 
 
 ### Issues with Neo4j authentication
@@ -467,24 +482,20 @@ brew services stop neo4j
 ```
 
 
-### Invalid requirement for './packages/data_fabricator': Expected package name at the start of dependency specifier
+### Legacy package reference errors
 
-The error above can occur if you set up MATRIX repo back when we were using data_fabricator package for fabricating data; we are no longer relying on this package however if you only recently made a change, you might encounter the .
+If you encounter errors referring to old package structures like `./packages/data_fabricator` or similar path-based dependencies, this indicates you're working with an outdated repository setup. We've migrated to a modern uv workspace structure with libraries in `libs/`.
 
+**Solution**:
+1. Ensure you're working with the latest version of the repository
+2. Clean your environment and reinstall:
 ```bash
-ERROR: Invalid requirement: './packages/data_fabricator': Expected package name at the start of dependency specifier
-    ./packages/data_fabricator
-    ^ (from line XX of requirements.txt)
-Hint: It looks like a path. File './packages/data_fabricator' does not exist.
+uv cache clean
+make clean
+make install
 ```
 
-you would need to run the command below. The command might fail if your `packages` folder already exists, in this case delete it. 
-
-```bash
-git submodule update --init --recursive
-```
-
-P.S: After running the above command, a browser would open to authenticate with Github. This is normal. If nothing happens (incase of using PyCharm IDE), suggestion would be run this through the shell (terminal).
+3. If you have old references to `packages/` directory, these are no longer used. The new structure uses `libs/` with individual `pyproject.toml` files for each library.
 
 
 ### Error: Permission Denied When Deleting RAW Data Files

@@ -33,9 +33,19 @@ from hera.workflows.user_container import UserContainer  # type: ignore[import]
 from hera.workflows.volume import SecretVolume  # type: ignore[import]
 from kedro.pipeline import Pipeline  # type: ignore[import]
 
-from matrix.argo import fuse, get_dependencies, get_trigger_release_flag
+from matrix.fuse import fuse, get_dependencies
 from matrix.git_utils import get_git_sha
 from matrix.kedro4argo_node import ArgoResourceConfig
+
+
+def get_trigger_release_flag(pipeline: str) -> str:
+    """Determine if this pipeline should trigger a release based on pipeline name and environment."""
+    import os
+
+    pipeline_correct = pipeline in ("data_release", "kg_release", "kg_release_patch")
+    env_correct = "-dev-" in os.environ["RUNTIME_GCP_PROJECT_ID"].lower()
+    return str(pipeline_correct and env_correct)
+
 
 # Constants
 DEFAULT_NEO4J_IMAGE = "neo4j:5.21.0-enterprise"

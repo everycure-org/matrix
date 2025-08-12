@@ -15,8 +15,6 @@ substitutions:
 
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    env:
-      - DOCKER_BUILDKIT=1
     args:
       - build
       - --build-arg
@@ -26,6 +24,8 @@ steps:
       # Simple cache strategy using existing images
       - --cache-from
       - $_IMAGE:$_CACHE_FROM_TAG
+      - --cache-from
+      - $_IMAGE:latest
       # tagging multiple names
       - -t
       - $_IMAGE

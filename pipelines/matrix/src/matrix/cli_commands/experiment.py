@@ -10,14 +10,12 @@ import click
 import mlflow
 from kedro.framework.cli.utils import split_string
 from kedro.framework.project import pipelines as kedro_pipelines
-from kedro.framework.startup import bootstrap_project
 from kedro.pipeline import Pipeline
 from matrix_auth.environment import load_environment_variables
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
 
-from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
 from matrix.argo_hera import build_workflow_yaml
 from matrix.cli_commands.run import _validate_env_vars_for_private_data
 
@@ -244,7 +242,6 @@ def run(
         pipeline_obj=pipeline_obj,
         verbose=not quiet,
         dry_run=dry_run,
-        template_directory=ARGO_TEMPLATES_DIR_PATH,
         mlflow_experiment_id=experiment_id,
         mlflow_run_id=mlflow_run_id,
         allow_interactions=not headless,
@@ -282,7 +279,6 @@ def _submit(
     verbose: bool,
     dry_run: bool,
     environment: str,
-    template_directory: Path,
     mlflow_experiment_id: int,
     mlflow_run_id: Optional[str] = None,
     allow_interactions: bool = True,
@@ -308,7 +304,6 @@ def _submit(
         pipeline_obj (Pipeline): Pipeline to execute.
         verbose (bool): If True, enable verbose output.
         dry_run (bool): If True, do not submit the workflow.
-        template_directory (Path): The directory containing the Argo template.
         allow_interactions (bool): If True, allow prompts for confirmation.
         is_test (bool): If True, submit to test folder, not release folder.
     """
@@ -343,7 +338,7 @@ def _submit(
         )
 
         # Persist to a temp file for CLI submission parity and easier debugging
-        file_path = save_argo_template(argo_workflow_yaml, template_directory)
+        file_path = save_argo_workflow(argo_workflow_yaml)
         console.print("Generated Hera Workflow YAML")
         console.print("Linting Hera Workflow YAML...")
         argo_lint(file_path, verbose=verbose)
@@ -438,55 +433,13 @@ def build_push_docker(image: str, tag_name: str, verbose: bool):
     run_subprocess(f"make docker_cloud_build TAG={tag_name} docker_image={image}", stream_output=verbose)
 
 
-def build_argo_template(
-    image_name: str,
-    run_name: str,
-    release_version: str,
-    username: str,
-    namespace: str,
-    pipeline_obj: Pipeline,
-    environment: str,
-    mlflow_experiment_id: int,
-    mlflow_url: str,
-    is_test: bool,
-    mlflow_run_id: Optional[str] = None,
-) -> str:
-    """Build Argo workflow template."""
-    matrix_root = Path(__file__).parent.parent.parent.parent
-    metadata = bootstrap_project(matrix_root)
-    package_name = metadata.package_name
-
-    if is_test:
-        release_folder_name = "tests"
-    else:
-        release_folder_name = "releases"
-
-    console.print("Building Argo template...")
-    generated_template = generate_argo_config(
-        image=image_name,
-        run_name=run_name,
-        release_version=release_version,
-        mlflow_experiment_id=mlflow_experiment_id,
-        mlflow_url=mlflow_url,
-        namespace=namespace,
-        username=username,
-        package_name=package_name,
-        release_folder_name=release_folder_name,
-        pipeline=pipeline_obj,
-        environment=environment,
-        mlflow_run_id=mlflow_run_id,
-    )
-    console.print("[green]✓[/green] Argo template built")
-
-    return generated_template
-
-
-def save_argo_template(argo_template: str, template_directory: Path) -> str:
-    console.print("Writing Argo template...")
-    file_path = template_directory / "argo-workflow-template.yml"
+def save_argo_workflow(argo_workflow: str) -> str:
+    console.print("Writing Argo workflow...")
+    # Use current working directory for generated workflow files
+    file_path = Path("argo-workflow.yml")
     with open(file_path, "w") as f:
-        f.write(argo_template)
-    console.print(f"[green]✓[/green] Argo template saved to {file_path}")
+        f.write(argo_workflow)
+    console.print(f"[green]✓[/green] Argo workflow saved to {file_path}")
     return str(file_path)
 
 

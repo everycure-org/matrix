@@ -130,10 +130,10 @@ python
 
 ### uv installation
 
-We leverage [`uv`](https://github.com/astral-sh/uv) to manage/install our Python
-requirements. Note that while many may be used to Conda, UV and Conda cannot be used in
-parallel. Using Conda is hence at your own risk.
+We leverage [`uv`](https://github.com/astral-sh/uv) to manage our Python dependencies and workspace structure. uv provides fast, reliable package management and replaces the need for pip, requirements.txt files, and virtual environment management.
 
+!!! warning "Conda Incompatibility"
+    uv and Conda cannot be used together. If you have Conda installed, you may encounter conflicts. We strongly recommend using uv exclusively for this project.
 
 Python 3.11 is currently **required** to build the matrix pipeline. If you attempt to use Python 3.12, you will likely encounter errors with the recently-removed `distutils` package (see the common errors document for how to solve this) 
 
