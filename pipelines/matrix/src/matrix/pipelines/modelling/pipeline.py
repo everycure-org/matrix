@@ -217,10 +217,9 @@ def create_shared_pipeline() -> Pipeline:
                 func=nodes.filter_valid_pairs,
                 inputs=[
                     "filtering.prm.filtered_nodes",
-                    "integration.prm.unified_ground_truth_edges",
+                    "integration.int.ground_truth.edges.norm@spark",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
-                    "params:modelling.training_gt_dataset",
                 ],
                 outputs={"pairs": "modelling.raw.known_pairs@spark", "metrics": "modelling.reporting.gt_present"},
                 name="filter_valid_pairs",

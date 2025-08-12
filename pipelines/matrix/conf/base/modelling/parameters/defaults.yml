@@ -9,9 +9,6 @@ modelling.disease_types:
   - biolink:BehavioralFeature
   - biolink:DiseaseOrPhenotypicFeature
 
-# Select Ground Truth for training
-modelling.training_gt_dataset:
-  - kgml_xdtd
 
 
 modelling.splitter:
