@@ -1,7 +1,7 @@
 # Perturbation pipeline parameters
 
 perturbation:
-  enabled: true
+  enabled: false
   rate: 0.01  # Default 1% perturbation rate
   random_seed: 42
   strategy: "category_stratified"  # Maintain node category distribution

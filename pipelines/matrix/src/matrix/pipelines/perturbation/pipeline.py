@@ -25,10 +25,10 @@ def create_pipeline(**kwargs) -> Pipeline:
             name="perturb_edges_rewire",
             tags=["argowf.fuse", "argowf.fuse-group.perturbation", "perturbation"],
             argo_config=ArgoResourceConfig(
-                memory_limit=50,
-                memory_request=25,
-                cpu_limit=8,
-                cpu_request=2,
+                memory_request=128,
+                memory_limit=128,
+                cpu_request=32,
+                cpu_limit=32,
             ),
         ),
         node(
