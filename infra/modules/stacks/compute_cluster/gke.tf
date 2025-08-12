@@ -25,21 +25,6 @@ locals {
     }
   ]
 
-  standard_node_pools = [for size in [4, 8, 16, 32, 48, 64] : {
-    name               = "n2-standard-${size}-nodes"
-    machine_type       = "n2-standard-${size}"
-    node_locations     = local.default_node_locations
-    min_count          = 0
-    max_count          = 20
-    local_ssd_count    = 0
-    disk_type          = size > 32 ? "pd-ssd" : "pd-standard"
-    disk_size_gb       = 200
-    enable_gcfs        = true
-    enable_gvnic       = true
-    initial_node_count = 0
-    }
-  ]
-
   gpu_node_pools = [
     {
       name               = "g2-standard-16-l4-nodes" # 1 GPU, 16vCPUs, 64GB RAM
@@ -78,7 +63,6 @@ locals {
 
   # Combine all node pools
   node_pools_combined = concat(
-    local.standard_node_pools,
     local.n2d_node_pools,
     local.gpu_node_pools,
     local.management_node_pools
@@ -184,12 +168,13 @@ module "gke" {
   enable_private_nodes            = true
   enable_private_endpoint         = false # FUTURE: switch this to true
   enable_vertical_pod_autoscaling = true
+  enable_cost_allocation          = true
   create_service_account          = true
   # see instructions here: https://cloud.google.com/kubernetes-engine/docs/how-to/google-groups-rbac
   authenticator_security_group = "gke-security-groups@everycure.org"
   service_account_name         = "sa-k8s-node"
   node_metadata                = "UNSPECIFIED"
-  gke_backup_agent_config      = true
+  gke_backup_agent_config      = false
 
   node_pools = local.node_pools_combined
 

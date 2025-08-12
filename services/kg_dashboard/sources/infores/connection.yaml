@@ -1,0 +1,4 @@
+name: infores
+type: duckdb
+options:
+  filename: infores.duckdb

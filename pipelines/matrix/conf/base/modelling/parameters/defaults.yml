@@ -2,6 +2,7 @@ modelling.drug_types:
   - biolink:Drug
   - biolink:SmallMolecule
 
+
 modelling.disease_types:
   - biolink:Disease
   - biolink:PhenotypicFeature
@@ -12,19 +13,21 @@ modelling.disease_types:
 modelling.training_gt_dataset:
   - kgml_xdtd
 
+
 modelling.splitter:
 
   # Defines strategy for cross validation. Can be a function from sklearn.model_selection
   # or our custom DrugStratifiedSplit/DiseaseAreaSplit/DrugCVSplit
   # _object: matrix.pipelines.modelling.model_selection.DrugStratifiedSplit
   # _object: matrix.pipelines.modelling.model_selection.DiseaseAreaSplit
-  # disease_grouping_type: 'harrisons_view' # options: 'harrisons_view', 'mondo_top_grouping', 'mondo_txgnn', 'txgnn'
+  # disease_grouping_type: 'mondo_txgnn' # options: 'harrisons_view', 'mondo_top_grouping', 'mondo_txgnn', 'txgnn'
   # holdout_disease_types:
+  #   - 'anemia'
+  #   - 'autoimmune_disease'
   #   - 'cancer_or_benign_tumor'
-  #   - 'inflammatory_disease'
-  #   - 'hereditary_disease'
-  #   - 'syndromic_disease'
+  #   - 'cardiovascular_disorder'
   #   - 'metabolic_disease'
+  #   - 'neurodegenerative_disease'
   # _object: matrix.pipelines.modelling.model_selection.DrugCVSplit
   _object: sklearn.model_selection.StratifiedShuffleSplit
   test_size: 0.1
@@ -51,7 +54,7 @@ _model_options:
     _object: matrix.datasets.pair_generator.ReplacementDrugDiseasePairGenerator
     random_state: ${globals:random_state}
     y_label: 2
-    n_replacements: 2
+    n_replacements: 2 
     drug_flags:
       - is_drug
     disease_flags:

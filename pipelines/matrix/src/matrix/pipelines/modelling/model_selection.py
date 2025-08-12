@@ -68,7 +68,6 @@ class DiseaseAreaSplit(BaseCrossValidator):
     def __init__(
         self,
         n_splits=1,
-        test_size=0.1,
         random_state=None,
         disease_grouping_type=None,
         holdout_disease_types=None,
@@ -78,7 +77,6 @@ class DiseaseAreaSplit(BaseCrossValidator):
 
         Args:
             n_splits (int): Number of re-shuffling & splitting iterations.
-            test_size (float): Proportion of the dataset to include in the test split.
             random_state (int): Controls the randomness of the training and testing indices produced.
             disease_grouping_type (str): The type of disease grouping to use.
             holdout_disease_types (list): The list of disease types to hold out.
@@ -97,7 +95,6 @@ class DiseaseAreaSplit(BaseCrossValidator):
             holdout_disease_types = ['mental_health_disorder', 'cancer', 'cardiovascular_disorder', 'inflammatory_disease', 'neurodegenerative_disease']
         """
         self.n_splits = n_splits
-        self.test_size = test_size
         self.random_state = random_state
         self.disease_grouping_type = disease_grouping_type
         self.holdout_disease_types = holdout_disease_types
@@ -120,11 +117,11 @@ class DiseaseAreaSplit(BaseCrossValidator):
         """
 
         if self.disease_grouping_type in disease_list.columns:
-            disease_list_copy = disease_list[["category_class", self.disease_grouping_type]]
+            disease_list_copy = disease_list[["id", self.disease_grouping_type]]
             # merge disease list with data
             X_copy = X.copy()
-            X_copy = X_copy.merge(disease_list_copy, left_on="target", right_on="category_class", how="left")
-            X_copy = X_copy[~X_copy.category_class.isna()]
+            X_copy = X_copy.merge(disease_list_copy, left_on="target", right_on="id", how="left")
+            X_copy = X_copy[~X_copy.id.isna()]
         else:
             raise ValueError(f"Disease grouping type {self.disease_grouping_type} not found in disease_list")
 
@@ -132,12 +129,20 @@ class DiseaseAreaSplit(BaseCrossValidator):
         for i in range(self.n_splits):
             selected_disease_types = self.holdout_disease_types[i]
 
-            # Handle NaN values by filling them with an empty string and then doing the contains check
-            mask = X_copy[self.disease_grouping_type].fillna("").str.contains(selected_disease_types, na=False)
-            holdout_indices = X_copy[mask].index.tolist()
+            # We use .str.contains() here to support cases where the disease grouping column
+            # contains multiple types in a pipe-separated string (e.g., 'hereditary_disease|metabolic_disease').
+            # This ensures that any disease containing the selected type anywhere in the string
+            # will be included in the test set for that split.
+            mask = (
+                X_copy[self.disease_grouping_type]
+                .fillna("")
+                .str.lower()
+                .str.contains(selected_disease_types.lower(), na=False)
+            )
+            test_indices = X_copy[mask].index.tolist()
             train_indices = X_copy[~mask].index.tolist()
 
-            yield train_indices, holdout_indices
+            yield train_indices, test_indices
 
     def get_n_splits(self, X=None, disease_list=None):
         """Returns the number of splitting iterations in the cross-validator.

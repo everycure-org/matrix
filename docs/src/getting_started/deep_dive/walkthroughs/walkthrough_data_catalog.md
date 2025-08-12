@@ -62,7 +62,7 @@ _layer_int: &_layer_int
 
 ingestion.raw.rtx_kg2.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes_c.tsv
+  filepath: ${globals:paths.raw_public}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes_c.tsv
   load_args:
     sep: "\t"
   save_args:
@@ -77,12 +77,12 @@ ingestion.raw.rtx_kg2.nodes@pandas:
         - `_pandas_csv` defines the use of the pandas.CSVDataset, so this dataset will use Pandas for reading and writing.
         - `_layer_raw` includes metadata specifying that this dataset belongs to the “raw” layer for visualization purposes.
     - By merging these, you avoid redefining the type: pandas.CSVDataset and the layer metadata here.
-- `filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes_c.tsv`
+- `filepath: ${globals:paths.raw_public}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes_c.tsv`
     - The filepath points to the location of the file that this dataset will load or save.
     - It uses variables from the globals section of the catalog.yml file, which is a common Kedro practice to centralize configuration values:
-        - `${globals:paths.raw}` refers to the base path for raw data files.
+        - `${globals:paths.raw_public}` refers to the base path for public raw KG data files from the public bucket.
         - `${globals:data_sources.rtx_kg2.version}` dynamically pulls the version of the rtx_kg2 data source.
-    - The full path likely resolves to something like `path_to_raw_folder/rtx_kg2/version_xxx/nodes_c.tsv`
+    - The full path resolves to something like `gs://data.dev.everycure.org/data/01_RAW/KGs/rtx_kg2/version_xxx/nodes_c.tsv`
 - `load_args`:
     - sep: `"\t"` indicates that the file being loaded is a tab-separated values (TSV) file.
     - These are the custom arguments passed to Pandas when loading the dataset, as TSV files use tab characters (`\t`) as the separator.
@@ -95,7 +95,7 @@ ingestion.raw.rtx_kg2.nodes@pandas:
 ```yaml
 ingestion.raw.rtx_kg2.nodes@spark:
   <<: [*_spark_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes_c.tsv
+  filepath: ${globals:paths.raw_public}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes_c.tsv
   file_format: csv
   load_args:
     sep: "\t"
@@ -105,12 +105,12 @@ ingestion.raw.rtx_kg2.nodes@spark:
 	      
 ingestion.raw.rtx_kg2.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/edges_c.tsv
+  filepath: ${globals:paths.raw_public}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/edges_c.tsv
 	...
 	
 ingestion.raw.rtx_kg2.edges@spark:
   <<: [*_spark_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/edges_c.tsv
+  filepath: ${globals:paths.raw_public}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/edges_c.tsv
 	...
 	
 ingestion.int.rtx_kg2.nodes:
