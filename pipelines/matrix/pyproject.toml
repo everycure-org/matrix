@@ -33,6 +33,7 @@ dependencies = [
     "matrix-gcp-datasets",
     "matrix-mlflow-utils", 
     "matrix-fabricator",
+    "matrix-validator",
     "bmt",  # biolink model toolkit
     "gcsfs==2024.3.1",
     "google-cloud-bigquery",
