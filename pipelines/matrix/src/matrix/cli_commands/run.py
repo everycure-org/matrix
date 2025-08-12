@@ -150,15 +150,6 @@ def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
 
         from_catalog = _extract_config(config, session)
         
-        # If using --from-run, we want to use the from_catalog for inputs
-        # but still write outputs to the current run
-        if config.from_run:
-            # Use from_catalog for all input datasets
-            # This will make Kedro read inputs from the from_catalog
-            # while writing outputs to the current run
-            print(f"Using from_catalog for inputs from run: {config.from_run}")
-            print(f"Outputs will be written to current run")
-        
         session.run(
             from_catalog=from_catalog,
             tags=config.tags,
@@ -177,7 +168,7 @@ def _extract_config(config: RunConfig, session: KedroSessionWithFromCatalog) -> 
     from_catalog: Optional[DataCatalog] = None
     
     if config.from_env:
-        # Load second config loader instance for from-env
+        # Load second config loader instance
         config_loader_class = settings.CONFIG_LOADER_CLASS
         config_loader = config_loader_class(  # type: ignore[no-any-return]
                 conf_source=session._conf_source,
@@ -219,47 +210,24 @@ def _create_from_run_catalog(from_run: str, env: str, session: KedroSessionWithF
     """
     # NOTE: This function was partially generated using AI assistance.
     
-    # Approach: Load the current environment's catalog, identify which input datasets
-    # the pipeline needs, and redirect their filepaths to point to the from_run.
-    # This allows the pipeline to read inputs from a previous run while writing
-    # outputs to the current run.
-    
     print(f"Creating from-run catalog for run: {from_run}")
     
-    # Load the catalog configuration from the current environment
-    # This includes dynamic catalog generation (e.g., integration.int.{source}.nodes)
     config_loader_class = settings.CONFIG_LOADER_CLASS
     config_loader = config_loader_class(
         conf_source=session._conf_source,
         env=session.store.get("env", "base"),
         **settings.CONFIG_LOADER_ARGS,
     )
-    
-    # Get the catalog and credentials
+
     conf_catalog = config_loader["catalog"]
     conf_creds = config_loader["credentials"]
-    
-    # Create a new catalog from the current environment's config
-    # This will include all dynamically generated datasets
     from_catalog: DataCatalog = settings.DATA_CATALOG_CLASS.from_config(
         catalog=conf_catalog, credentials=conf_creds
     )
     
     # Get the pipeline to identify which datasets are actually inputs
     pipeline = pipelines[pipeline_name]
-    
-    # Get the filtered pipeline based on the run configuration
-    filtered_pipeline = pipeline.filter(
-        tags=config_loader.get("tags", []),
-        from_nodes=config_loader.get("from_nodes", []),
-        to_nodes=config_loader.get("to_nodes", []),
-        node_names=config_loader.get("node_names", []),
-        from_inputs=config_loader.get("from_inputs", []),
-        to_outputs=config_loader.get("to_outputs", []),
-    )
-    
-    # Get only the input datasets that will be used by this pipeline
-    input_datasets = filtered_pipeline.inputs()
+    input_datasets = pipeline.inputs()
     print(f"Input datasets needed by {pipeline_name} pipeline: {input_datasets}")
     
     # Filter out parameter datasets (those starting with 'params:')
@@ -286,9 +254,6 @@ def _create_from_run_catalog(from_run: str, env: str, session: KedroSessionWithF
     # Load parameters from the current environment and add them to the from_catalog
     # This is the same pattern used by --from-env
     from_catalog.add_feed_dict(_get_feed_dict(config_loader["parameters"]), replace=True)
-    
-    print(f"Using from_catalog for inputs from run: {from_run}")
-    print(f"Outputs will be written to current run")
     
     return from_catalog
 
