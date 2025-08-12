@@ -340,38 +340,22 @@ ingestion.raw.ground_truth.negatives:
   save_args:
     sep: "\t"
 
-ingestion.raw.ground_truth.edges@pandas:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_raw.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
+ingestion.int.ground_truth.positive.edges@pandas:
+  <<: [*_pandas_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs
+  
+ingestion.int.ground_truth.negative.edges@pandas:
+  <<: [*_pandas_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/tn_pairs
 
-ingestion.raw.ground_truth.edges@spark:
-  <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_raw.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
-
-ingestion.int.ground_truth.edges:
-  <<: [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-    mode: overwrite
-
+ingestion.int.ground_truth.positive.edges@spark:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs
+  
+ingestion.int.ground_truth.negative.edges@spark:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/tn_pairs
+  
 # -------------------------------------------------------------------------
 # Robokop
 # -------------------------------------------------------------------------  

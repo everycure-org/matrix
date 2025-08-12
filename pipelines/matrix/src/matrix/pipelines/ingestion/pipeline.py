@@ -2,32 +2,11 @@ from kedro.pipeline import Pipeline, node, pipeline
 
 from matrix import settings
 
-from . import nodes
-
-
-def create_ground_truth_pipeline() -> list:
-    """Create pipeline nodes for ground truth processing."""
-    return [
-        node(
-            func=nodes.create_gt,
-            inputs={
-                "pos_df": "ingestion.raw.ground_truth.positives",
-                "neg_df": "ingestion.raw.ground_truth.negatives",
-            },
-            outputs="ingestion.raw.ground_truth.edges@pandas",
-            name="concatenate_gt_dataframe",
-            tags=["ground-truth"],
-        )
-    ]
-
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create ingestion pipeline."""
     # Create pipeline per source
     nodes_lst = []
-
-    # Ground truth
-    nodes_lst.extend(create_ground_truth_pipeline())
 
     # Drug list and disease list
     nodes_lst.extend(
@@ -73,12 +52,28 @@ def create_pipeline(**kwargs) -> Pipeline:
                 )
             )
 
-        if source.get("has_edges", True):
+        if (source.get("has_edges", True)) and (not source.get("is_ground_truth", True)):
             nodes_lst.append(
                 node(
                     func=lambda x: x,
                     inputs=[f'ingestion.raw.{source["name"]}.edges@spark'],
                     outputs=f'ingestion.int.{source["name"]}.edges',
+                    name=f'write_{source["name"]}_edges',
+                    tags=[f'{source["name"]}'],
+                )
+            )
+        if (source.get("has_edges", True)) and (source.get("is_ground_truth", False)):
+            nodes_lst.append(
+                node(
+                    func=lambda x, y: [x, y],
+                    inputs=[
+                        f"ingestion.raw.{source['name']}.positives",
+                        f"ingestion.raw.{source['name']}.negatives",
+                    ],
+                    outputs=[
+                        f"ingestion.int.{source['name']}.positive.edges@pandas",
+                        f"ingestion.int.{source['name']}.negative.edges@pandas",
+                    ],
                     name=f'write_{source["name"]}_edges',
                     tags=[f'{source["name"]}'],
                 )
