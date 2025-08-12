@@ -62,8 +62,9 @@ class LazySparkDataset(SparkDataset):
         )
 
     def load(self):
-        # SparkHooks._initialize_spark()  # TODO: Make this configurable
-        pass
+        from matrix_gcp_datasets.spark_utils import SparkManager
+
+        SparkManager.initialize_spark()
 
         # Spark cannot read http files directly
         if self._fs_prefix in ["http://", "https://"]:
@@ -370,7 +371,9 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
         return self._client
 
     def load(self) -> Any:
-        # SparkHooks._initialize_spark()  # TODO: Make this configurable
+        from matrix_gcp_datasets.spark_utils import SparkManager
+
+        SparkManager.initialize_spark()
 
         if self._bucket and not os.path.exists(self._blob_name):
             logger.info("downloading file to local")

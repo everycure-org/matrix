@@ -35,7 +35,7 @@ def mock_apply():
 
 @pytest.fixture
 def mock_submit_workflow():
-    with patch("matrix.cli_commands.experiment.submit_workflow") as mock:
+    with patch("matrix.cli_commands.experiment.submit_workflow_from_file") as mock:
         mock.return_value = "dummy_workflow_name"
         yield mock
 

@@ -46,7 +46,7 @@ from matrix.git_utils import (
     has_legal_branch_name,
     has_unpushed_commits,
 )
-from matrix.utils.argo import submit_workflow_from_file
+from matrix.utils.argo import argo_lint, submit_workflow_from_file
 
 logging.basicConfig(
     level=logging.INFO,
@@ -62,6 +62,9 @@ EXPERIMENT_BRANCH_PREFIX = "experiment/"
 
 def configure_mlflow_tracking(token: str) -> None:
     mlflow.set_tracking_uri(os.environ["MLFLOW_URL"])
+    # mutes errors logged to stdout by underlying tracking lib
+    os.environ["MLFLOW_ENABLE_SYSTEM_METRICS_LOGGING"] = "false"
+    # for authentication against MLFlow
     os.environ["MLFLOW_TRACKING_TOKEN"] = token
 
 
@@ -342,6 +345,9 @@ def _submit(
         # Persist to a temp file for CLI submission parity and easier debugging
         file_path = save_argo_template(argo_workflow_yaml, template_directory)
         console.print("Generated Hera Workflow YAML")
+        console.print("Linting Hera Workflow YAML...")
+        argo_lint(file_path, verbose=verbose)
+        console.print("[green]✓[/green] Workflow YAML linted")
 
         if dry_run:
             return
@@ -360,7 +366,7 @@ def _submit(
         console.print("Submitting workflow for pipeline via argo submit -f...")
         job_name = submit_workflow_from_file(file_path, namespace, verbose=verbose)
         argo_url = f"{os.environ['ARGO_PLATFORM_URL']}/workflows/argo-workflows/{run_name}"
-        console.print(f"\nSee your workflow in the ArgoCD UI here: [blue]{argo_url}[/blue]")
+        console.print(f"\nSee your workflow in the Argo UI here: [blue]{argo_url}[/blue]")
         console.print(f"Workflow submitted successfully with job name: {job_name}")
         console.print("\nTo watch the workflow progress, run the following command:")
         console.print(f"argo watch -n {namespace} {job_name}")
@@ -377,8 +383,10 @@ def _submit(
             )
         )
 
+        workflow_url = f"{os.environ['ARGO_PLATFORM_URL']}/workflows/{namespace}/{run_name}"
+        console.print(f"Argo Workflow URL: {workflow_url}")
+
         if allow_interactions and click.confirm("Do you want to open the workflow in your browser?", default=False):
-            workflow_url = f"{os.environ['ARGO_PLATFORM_URL']}/workflows/{namespace}/{run_name}"
             click.launch(workflow_url)
             console.print(f"[blue]Opened workflow in browser: {workflow_url}[/blue]")
 
@@ -425,9 +433,9 @@ def summarize_submission(
             raise click.Abort()
 
 
-def build_push_docker(image: str, username: str, verbose: bool):
+def build_push_docker(image: str, tag_name: str, verbose: bool):
     """Build the docker image only once, push it to dev registry, and if running in prod, also to prod registry."""
-    run_subprocess(f"make docker_cloud_build TAG={username} docker_image={image}", stream_output=verbose)
+    run_subprocess(f"make docker_cloud_build TAG={tag_name} docker_image={image}", stream_output=verbose)
 
 
 def build_argo_template(

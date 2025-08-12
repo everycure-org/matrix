@@ -104,14 +104,16 @@ docker_cloud_build:
 		--region=us-central1 \
 		--project=$(GCP_PROJECT) \
 		--config=cloudbuild.yaml \
-		--substitutions=_IMAGE=$(docker_image),_TAG=$(TAG),_GIT_SHA=$(GIT_SHA),_TARGET_PLATFORM=$(TARGET_PLATFORM) \
+		--substitutions=_IMAGE=$(docker_image),_TAG=$(TAG),_GIT_SHA=$(GIT_SHA),_TARGET_PLATFORM=$(TARGET_PLATFORM),_CACHE_FROM_TAG=$USER \
 		../..
 
 docker_build:
+	# NOTE: This Makefile was partially generated using AI assistance.
 	# note the && operator is essential to catch docker buildx errors on linux systems
 	docker buildx build \
 		--progress=plain \
 		--build-arg GIT_SHA=${GIT_SHA} \
+		--build-arg DISABLE_UV_CACHE=0 \
 		--platform $(TARGET_PLATFORM) \
 		-t $(docker_image) \
 		--load \

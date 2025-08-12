@@ -270,9 +270,12 @@ def get_dependencies(
             if fuse.argo_config
             else {"resources": default_execution_resources.model_dump()}
         )
+        # Defensive: some fused groups without a fuse-group tag could yield a `None` name if multiple nodes fused.
+        # Fallback to using the joined node names in that case.
+        fuse_display_name = fuse.name if fuse.name else fuse.nodes
         deps_dict.append(
             {
-                "name": clean_name(fuse.name),
+                "name": clean_name(fuse_display_name),
                 "nodes": fuse.nodes,
                 "deps": [clean_name(val.name) for val in sorted(fuse._parents)],
                 "tags": fuse.tags,

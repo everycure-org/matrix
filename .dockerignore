@@ -57,3 +57,5 @@ pipelines/matrix/working_workflow.yaml
 pipelines/matrix/conf/local/
 !pipelines/matrix/conf/local/.gitkeep
 
+pipelines/matrix/.env.defaults
+

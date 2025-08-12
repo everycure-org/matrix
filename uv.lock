@@ -703,6 +703,15 @@ wheels = [
 ]
 
 [[package]]
+name = "dnspython"
+version = "2.7.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b5/4a/263763cb2ba3816dd94b08ad3a33d5fdae34ecb856678773cc40a3605829/dnspython-2.7.0.tar.gz", hash = "sha256:ce9c432eda0dc91cf618a5cedf1a4e142651196bbcd2c80e89ed5a907e5cfaf1", size = 345197, upload-time = "2024-10-05T20:14:59.362Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/68/1b/e0a87d256e40e8c888847551b20a017a6b98139178505dc7ffb96f04e954/dnspython-2.7.0-py3-none-any.whl", hash = "sha256:b4c34b7d10b51bcc3a5071e7b8dee77939f1e878477eeecc965e9835f63c6c86", size = 313632, upload-time = "2024-10-05T20:14:57.687Z" },
+]
+
+[[package]]
 name = "docker"
 version = "7.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -729,6 +738,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/62/eb/e9d1249ff56b11e63fd8c7d0fcc1f94704e21693c16862bf0ebfb07bd61a/dynaconf-3.2.11.tar.gz", hash = "sha256:4cfc6a730c533bf1a1d0bf266ae202133a22236bb3227d23eff4b8542d4034a5", size = 234694, upload-time = "2025-05-06T15:44:59.16Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/36/64/580c74003a356c5662e7b1da43ecd7cbda6e8f970c87b30c5a654c8ccb53/dynaconf-3.2.11-py2.py3-none-any.whl", hash = "sha256:660de90879d4da236f79195692a7d197957224d7acf922bcc6899187dc7b4a27", size = 236536, upload-time = "2025-05-06T15:44:56.18Z" },
+]
+
+[[package]]
+name = "email-validator"
+version = "2.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "dnspython" },
+    { name = "idna" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/48/ce/13508a1ec3f8bb981ae4ca79ea40384becc868bfae97fd1c942bb3a001b1/email_validator-2.2.0.tar.gz", hash = "sha256:cb690f344c617a714f22e66ae771445a1ceb46821152df8e165c5f9a364582b7", size = 48967, upload-time = "2024-06-20T11:30:30.034Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d7/ee/bf0adb559ad3c786f12bcbc9296b3f5675f529199bef03e2df281fa1fadb/email_validator-2.2.0-py3-none-any.whl", hash = "sha256:561977c2d73ce3611850a06fa56b414621e0c8faa9d66f2611407d87465da631", size = 33521, upload-time = "2024-06-20T11:30:28.248Z" },
 ]
 
 [[package]]
@@ -1308,6 +1330,19 @@ dependencies = [
     { name = "six" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/29/c7/1be559eb10cb7cac0d26373f18656c8037553619ddd4098e50b04ea8b4ab/hdfs-2.7.3.tar.gz", hash = "sha256:752a21e43f82197dce43697c73f454ba490838108c73a57a9247efb66d1c0479", size = 43540, upload-time = "2023-10-13T00:06:06.144Z" }
+
+[[package]]
+name = "hera-workflows"
+version = "5.23.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic", extra = ["email"] },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d2/d7/29b2f61d3f958464e752d66ec028a5665c7b273407105c4c466700159f5a/hera_workflows-5.23.0.tar.gz", hash = "sha256:2564b58da2f39fde55d21c0455a62e8fa277476ad46b10f697485695706a06af", size = 291762, upload-time = "2025-07-24T16:35:42.109Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c9/52/9bca8239486ad6b91bb4b8e1e5184fa718158dd836d7f175de55992a4bef/hera_workflows-5.23.0-py3-none-any.whl", hash = "sha256:f0f9e84d9b32a01cc562ae54e31a68da965c41c909c086cdb5eab77506fd0e10", size = 338095, upload-time = "2025-07-24T16:35:40.787Z" },
+]
 
 [[package]]
 name = "hf-xet"
@@ -2527,6 +2562,7 @@ dependencies = [
     { name = "google-cloud-iam" },
     { name = "graphdatascience" },
     { name = "hdfs" },
+    { name = "hera-workflows" },
     { name = "ipython" },
     { name = "ipywidgets" },
     { name = "jsonpath-ng" },
@@ -2597,6 +2633,7 @@ requires-dist = [
     { name = "google-cloud-iam" },
     { name = "graphdatascience" },
     { name = "hdfs", specifier = "==2.7.3" },
+    { name = "hera-workflows", specifier = ">=5.6.0" },
     { name = "ipython", specifier = ">=8.10" },
     { name = "ipywidgets" },
     { name = "jsonpath-ng" },
@@ -3877,6 +3914,11 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/00/dd/4325abf92c39ba8623b5af936ddb36ffcfe0beae70405d456ab1fb2f5b8c/pydantic-2.11.7.tar.gz", hash = "sha256:d989c3c6cb79469287b1569f7447a17848c998458d49ebe294e975b9baf0f0db", size = 788350, upload-time = "2025-06-14T08:33:17.137Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6a/c0/ec2b1c8712ca690e5d61979dee872603e92b8a32f94cc1b72d53beab008a/pydantic-2.11.7-py3-none-any.whl", hash = "sha256:dde5df002701f6de26248661f6835bbe296a47bf73990135c7d07ce741b9623b", size = 444782, upload-time = "2025-06-14T08:33:14.905Z" },
+]
+
+[package.optional-dependencies]
+email = [
+    { name = "email-validator" },
 ]
 
 [[package]]

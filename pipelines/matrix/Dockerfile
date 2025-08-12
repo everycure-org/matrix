@@ -30,15 +30,16 @@ COPY docs/pyproject.toml docs/pyproject.toml
 # deps for this project, not e.g. docs
 WORKDIR /matrix/pipelines/matrix
 COPY pipelines/matrix/pyproject.toml .
-ENV UV_LINK_MODE=copy
-ENV UV_CACHE_DIR=/root/.cache/uv
-RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked
+
+ENV UV_NO_CACHE=1
+RUN uv sync --locked
 
 # enables kedro & python to be in the path
 ENV PATH=/matrix/.venv/bin:$PATH
 # Cache drivers as part of image
 COPY pipelines/matrix/conf/base/spark.yml ./conf/base/spark.yml
 COPY pipelines/matrix/scripts/maven-deps.py ./maven-deps.py
+
 RUN python maven-deps.py && rm -rf /root/.ivy2/cache
 # ---------- Dependencies end -----
 # ---------------------------------
