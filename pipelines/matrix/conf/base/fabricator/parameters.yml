@@ -563,18 +563,18 @@ fabricator.robokop:
         type: generate_random_arrays
         delimiter: "|"
         sample_values:
-            - biolink:Entity
-            - biolink:ThingWithTaxon
-            - biolink:BiologicalEntity
-            - biolink:Drug
-            - biolink:Disease
-            - biolink:SequenceVariant
-            - biolink:NamedThing
-            - biolink:OntologyClass
-            - biolink:PhysicalEssence
-            - biolink:PhysicalEssenceOrOccurrent
-            - biolink:GenomicEntity
-            - biolink:OrganismTaxon
+          - biolink:Entity
+          - biolink:ThingWithTaxon
+          - biolink:BiologicalEntity
+          - biolink:Drug
+          - biolink:Disease
+          - biolink:SequenceVariant
+          - biolink:NamedThing
+          - biolink:OntologyClass
+          - biolink:PhysicalEssence
+          - biolink:PhysicalEssenceOrOccurrent
+          - biolink:GenomicEntity
+          - biolink:OrganismTaxon
       "description:string":
         type: faker
         provider: sentence
