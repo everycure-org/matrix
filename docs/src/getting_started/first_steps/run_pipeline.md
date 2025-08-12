@@ -1,6 +1,6 @@
 # Running the Matrix Pipeline
 
-Now that you understand the different environments, have a good understanding of kedro, and have successfully run the pipeline end-to-end with real data, let's explore how to run specific parts of the pipeline in base environments.
+Now that you understand the different environments, have a good understanding of kedro, and have successfully run the pipeline end-to-end with test data, let's explore how to run specific parts of the pipeline in base environments.
 
 ## Pipeline Structure
 
