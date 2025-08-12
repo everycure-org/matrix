@@ -1,5 +1,3 @@
-# NOTE: This file was partially generated using AI assistance.
-
 import itertools
 import random
 
