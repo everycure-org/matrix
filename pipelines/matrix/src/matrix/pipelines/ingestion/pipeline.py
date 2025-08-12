@@ -96,7 +96,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 )
             )
 
-        if source.get("has_positive_edges", False):
+        if source.get("is_ground_truth", False):
             nodes_lst.append(
                 node(
                     func=lambda x: x,
