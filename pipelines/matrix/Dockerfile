@@ -44,11 +44,12 @@ RUN python maven-deps.py && rm -rf /root/.ivy2/cache
 # ---------- Dependencies end -----
 # ---------------------------------
 
-# Set git commit sha as env variable, useful for tracing back code to data
-ARG GIT_SHA
-ENV GIT_SHA=$GIT_SHA
-
 # finally bring in the code of the pipeline
 COPY pipelines/matrix/ .
+
+# Set git commit sha as env variable LAST to avoid cache invalidation
+# This should be the final layer that changes per commit
+ARG GIT_SHA
+ENV GIT_SHA=$GIT_SHA
 
 LABEL com.nvidia.volumes.needed="nvidia_driver"
