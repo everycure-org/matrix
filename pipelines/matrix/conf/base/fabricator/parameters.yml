@@ -533,7 +533,8 @@ fabricator.orchard:
           - "SAB_ENDORSED"
           - "MEDICAL_REVIEW"
           - "UNKNOWN"
-          - "NULL"
+        inject_nulls:
+          probability: 0.1
       latest_non_null_source:
         type: generate_values
         sample_values:
@@ -546,7 +547,8 @@ fabricator.orchard:
           - "POOR_BIOMEDICAL_RATIONALE"
           - "POOR_STRATEGIC_RATIONALE"
           - "POOR_BIOMEDICAL_AND_STRATEGIC_RATIONALE"
-          - "NULL"
+        inject_nulls:
+          probability: 0.5
 
 fabricator.robokop:
   nodes:
