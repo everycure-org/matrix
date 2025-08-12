@@ -20,7 +20,7 @@ The data engineering pipeline consists of two main stages:
 
 **Ingestion Stage** (`ingestion`):
 ```bash
-kedro run --pipeline=ingestion # also can do kedro run -p ingestion
+kedro run --pipeline=ingestion -e base # also can do kedro run -p ingestion
 ```
 This stage:
 
@@ -31,7 +31,7 @@ This stage:
 
 **Integration Stage** (`integration`):
 ```bash
-kedro run --pipeline=integration
+kedro run --pipeline=integration -e base
 ```
 This stage:
 
@@ -64,7 +64,7 @@ Therefore, the settings above reflect the Knowledge Graphs (eg RTX-KG2, SPOKE, R
 
 Now let's get back to running the pipeline. Try running the following command first:
 ```bash
-kedro run -p data_engineering
+kedro run -p data_engineering -e base
 ```
 
 You should see all different datasets present in the `integration` part of settings being processed. It should run to completion fairly quickly:
@@ -102,13 +102,13 @@ By controlling `settings.py` we can decide which datasets should be processed by
 For example, to run just the ingestion of drug list:
 
 ```bash
-kedro run --pipeline=ingestion --nodes=write_drug_list
+kedro run --pipeline=ingestion --nodes=write_drug_list -e base
 ```
 
 Or to run the node deduplication step in the integration pipeline:
 
 ```bash
-kedro run --pipeline=integration --nodes=create_prm_unified_nodes
+kedro run --pipeline=integration --nodes=create_prm_unified_nodes -e base
 ```
 You can see how these nodes fit together with other parts of the pipeline by checking `integration/pipeline.py` and `integration/nodes.py`.
 
@@ -301,7 +301,7 @@ To run the pipeline with public data sources:
 
 3. **Run the data engineering pipeline** to process public datasets:
    ```bash
-   kedro run --pipeline=data_engineering --tags=rtx_kg2,robokop
+   kedro run --pipeline=data_engineering --tags=rtx_kg2,robokop -e base
    ```
 
 This approach allows you to work with real, production-quality data without needing access to private datasets or development buckets.
