@@ -116,6 +116,7 @@ You can see how these nodes fit together with other parts of the pipeline by che
 
 The exact details on integration and ingestion pipeline can be found in [the pipeline section](../../pipeline/index.md). In short however, running the following command:
 ```
+# NOTE: Data engineering pipeline in base environment will take at least +1 hr to run on a single machine in base environment (as it lacks parallelization)
 kedro run -p data_engineering -e base
 ```
 Will create a unified knowledge graph. Such KG can then be used by the feature pipeline for generating embeddings and the modeling pipeline for training ML models. The `feature `pipeline consists of:
