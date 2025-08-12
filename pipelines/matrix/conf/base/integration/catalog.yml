@@ -57,6 +57,11 @@ integration.int.{source}.nodes_norm_mapping:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.integration}/int/{source}/nodes_norm_mapping
 
+integration.int.core_node_mapping:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.integration}/int/core_norm_mapping
+
+
 # Unified KGs
 integration.prm.unified_nodes:
   <<: [*_spark_parquet, *_layer_prm]
@@ -69,7 +74,11 @@ integration.prm.unified_edges:
 # Unified Ground Truth
 integration.prm.unified_ground_truth_edges:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/unified/ground_truth_v2_unified.parquet
+  filepath: ${globals:paths.integration}/prm/unified/ground_truth_unified
+  
+integration.prm.nodes_edges_consistency_check:
+  type: text.TextDataset
+  filepath: ${globals:paths.integration}/prm/nodes_edges_consistency_check.txt
 
 # ==============================
 # Original sources: only used for sampling

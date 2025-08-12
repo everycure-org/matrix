@@ -136,7 +136,7 @@ gs://<bucket>
 
 ```
 
-Separately, all data in our "landing zone" or "raw data" is stored at `gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/`. Our release runs get stored at `gs://mtrx-us-central1-hub-dev-storage/releases/<version>`.
+Separately, all data in our "landing zone" or "raw data" is stored at `gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/`. Public data sources (like RTX-KG2, Robokop, and Ground Truth) are stored in our public data bucket `gs://data.dev.everycure.org/data/01_RAW/`. Our release runs get stored at `gs://mtrx-us-central1-hub-dev-storage/releases/<version>`.
 
 #### Kubernetes
 
@@ -160,6 +160,8 @@ Below is a screenshot of our favorite Kubernetes management tool `k9s` ([GitHub]
 #### Artifact Registry
 
 To deploy our code onto our cluster, we need to *package it into [OCI images](https://opencontainers.org/)*. We leverage GitHub Actions to build and ship our code to the *Artifact Registry* which is simply a place where we store all our images.
+
+We've created a reusable [Artifact Registry Terraform module](terraform_modules/artifact_registry_module.md) that automatically manages image retention policies, helping to control storage costs while maintaining the images we need. The module is configured to delete images older than 3 days by default, with options to keep a minimum number of recent versions for production environments.
 
 At this stage we have our code built, tested, packaged and an API (Kubernetes) defined on how to execute it. All we need now is raw compute and storage. This is where Google Cloud comes in.
 

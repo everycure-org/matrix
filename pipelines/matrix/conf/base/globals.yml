@@ -48,7 +48,7 @@ data_sources:
     version: v0.1.1
   disease_list:
     # check releases here: https://github.com/everycure-org/matrix-disease-list/releases
-    version: v0.1.0
+    version: v0.1.3
   kgml_xdtd_gt:
     version: *_rtx_kg_version
   ec_gt:
@@ -66,12 +66,11 @@ mlflow_experiment_id: null
 mlflow_url: ${oc.env:MLFLOW_URL}
 paths:
   # Upstream-source versioned
-  raw:                ${dev_gcs_bucket}/kedro/data/01_raw
-  kg_raw:             ${dev_gcs_bucket}/data/01_RAW
-  kg_raw_private:     ${prod_gcs_bucket}/data/01_RAW
+  raw:             ${dev_gcs_bucket}/data/01_RAW
+  raw_private:     ${prod_gcs_bucket}/data/01_RAW
   ingestion:          data/ingestion
   # public data sources
-  public_kg_raw:      ${public_gcs_bucket}/data/01_RAW
+  raw_public:      ${public_gcs_bucket}/data/01_RAW
 
   # Release-based
   integration:        data/releases/${versions.release}/datasets/integration
