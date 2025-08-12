@@ -8,7 +8,7 @@ from . import nodes
 
 
 def _create_integration_pipeline(
-    source: str, has_nodes: bool = True, has_edges: bool = True, is_core: bool = False
+    source: str, has_nodes: bool = True, has_edges: bool = True, is_core: bool = False, is_ground_truth: bool = False
 ) -> Pipeline:
     pipelines = []
 
@@ -29,7 +29,17 @@ def _create_integration_pipeline(
                         # during node execution time, otherwise we could infer this based on
                         # the transformer.
                         **({"nodes_df": f"ingestion.int.{source}.nodes"} if has_nodes else {}),
-                        **({"edges_df": f"ingestion.int.{source}.edges"} if has_edges else {}),
+                        **(
+                            {"edges_df": f"ingestion.int.{source}.edges"} if (has_edges and not is_ground_truth) else {}
+                        ),
+                        **(
+                            {
+                                "positive_edges_df": f"ingestion.int.{source}.positive.edges@spark",
+                                "negative_edges_df": f"ingestion.int.{source}.negative.edges@spark",
+                            }
+                            if (has_edges and is_ground_truth)
+                            else {}
+                        ),
                     },
                     outputs={
                         "nodes": f"integration.int.{source}.nodes",
@@ -129,6 +139,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     has_nodes=source.get("has_nodes", True),
                     has_edges=source.get("has_edges", True),
                     is_core=source.get("is_core", False),
+                    is_ground_truth=source.get("is_ground_truth", False),
                 ),
                 tags=[source["name"]],
             )
