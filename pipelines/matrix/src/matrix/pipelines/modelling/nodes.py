@@ -1,7 +1,7 @@
 import itertools
 import json
 import logging
-from typing import Any, Callable, Iterable, List, Union
+from typing import Any, Callable, Iterable, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -30,13 +30,8 @@ def filter_valid_pairs(
     edges_gt: ps.DataFrame,
     drug_categories: Iterable[str],
     disease_categories: Iterable[str],
-    source_filter: List[str],
 ) -> tuple[ps.DataFrame, dict[str, float]]:
-    """Filter GT pairs to only include nodes that:
-       1) exist in the nodes DataFrame,
-       2) have the correct category,
-       3) are specified in params.
-    This is the ground truth which will be chosen for training the model and logged.
+    """Filter GT pairs to only include nodes that 1) exist in the nodes DataFrame, 2) have the correct category.
 
     Args:
         nodes: Nodes dataframe
@@ -49,8 +44,6 @@ def filter_valid_pairs(
         - DataFrame with combined filtered positive and negative pairs
         - Dictionary with retention statistics
     """
-    # only include ground truth pairs that are specified in source_filter
-    edges_gt = edges_gt.filter(f.col("upstream_source").isin(source_filter)).dropDuplicates(["subject", "object"])
     # Create set of categories to filter on
     categories = set(itertools.chain(drug_categories, disease_categories))
     categories_array = f.array([f.lit(cat) for cat in categories])
