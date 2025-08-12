@@ -285,13 +285,13 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=fabricate_datasets,
                 inputs={
-                    "fabrication_params": "params:fabricator.ec_gt.graph",
+                    "fabrication_params": "params:fabricator.ec_gt",
                     "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                 },
-                outputs=[
-                    "ingestion.raw.ec_ground_truth.positives",
-                    "ingestion.raw.ec_ground_truth.negatives",
-                ],
+                outputs={
+                    "positive_edges": "ingestion.raw.ec_ground_truth.positives",
+                    "negative_edges": "ingestion.raw.ec_ground_truth.negatives",
+                },
                 name="create_ec_gt_pairs",
             ),
             node(

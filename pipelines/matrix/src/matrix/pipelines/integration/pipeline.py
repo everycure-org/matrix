@@ -35,17 +35,15 @@ def _create_integration_pipeline(
                         **({"nodes_df": f"ingestion.int.{source}.nodes"} if has_nodes else {}),
                         **(
                             {"edges_df": f"ingestion.int.{source}.edges"}
-                            if (has_edges and not (has_positive_edges | has_negative_edges))
+                            if (has_edges and (not is_ground_truth))
                             else {}
                         ),
                         **(
-                            {"positive_edges": f"ingestion.int.{source}.positive.edges"}
-                            if (has_edges and (has_positive_edges | has_negative_edges))
-                            else {}
-                        ),
-                        **(
-                            {"negative_edges": f"ingestion.int.{source}.negative.edges"}
-                            if (has_edges and (has_positive_edges | has_negative_edges))
+                            {
+                                "positive_edges": f"ingestion.int.{source}.positive.edges",
+                                "negative_edges": f"ingestion.int.{source}.negative.edges",
+                            }
+                            if (has_edges and is_ground_truth)
                             else {}
                         ),
                     },
