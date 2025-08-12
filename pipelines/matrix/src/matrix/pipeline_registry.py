@@ -54,17 +54,7 @@ def register_pipelines() -> dict[str, Pipeline]:
           pipelines["ingestion"]
         + pipelines["integration"]
     )
-    pipelines["kg_release_patch"] = (
-        pipelines["data_engineering"]
-        + pipelines["data_release"]
-        + pipelines["sentinel_kg_release_patch"]
-    )
-    pipelines["kg_release"] = (
-        pipelines["data_engineering"]
-        + pipelines["data_release"]
-        + pipelines["ingest_to_N4J"]
-        + pipelines["sentinel_kg_release"]
-    )
+
     pipelines["feature"] = (
         pipelines["filtering"]
         + pipelines["embeddings"]
@@ -86,6 +76,22 @@ def register_pipelines() -> dict[str, Pipeline]:
     pipelines["__default__"] = (
           pipelines["data_engineering"]
         + pipelines["feature_and_modelling_run"]
+    )
+
+    pipelines["kg_release_and_matrix_run"] = (
+        pipelines["data_engineering"]
+        + pipelines["data_release"]
+        + pipelines["ingest_to_N4J"]
+        + pipelines["feature_and_modelling_run"]
+        + pipelines["sentinel_kg_release"]
+    )
+
+    pipelines["kg_release_patch_and_matrix_run"] = (
+        pipelines["data_engineering"]
+        + pipelines["data_release"]
+        + pipelines["ingest_to_N4J"]
+        + pipelines["feature_and_modelling_run"]
+        + pipelines["sentinel_kg_release_patch"]
     )
 
     # Test pipelines
