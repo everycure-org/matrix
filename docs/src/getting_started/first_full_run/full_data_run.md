@@ -66,10 +66,6 @@ The first part is modify your `.env` set up to ensure you are using the right pi
 Create or modify your `.env` file:
 
 ```bash
-# Set your runtime environment
-RUNTIME_GCP_PROJECT_ID=mtrx-hub-dev-3of
-RUNTIME_GCP_BUCKET=mtrx-us-central1-hub-dev-storage
-
 # Set a unique run name for your run
 RUN_NAME=my-full-data-run
 
