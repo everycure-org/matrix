@@ -55,6 +55,7 @@ class RunConfig(NamedTuple):
     conf_source: Optional[str]
     params: Dict[str, Any]
     from_env: Optional[str]
+    from_run: Optional[str]
 
 
 # fmt: off
@@ -74,8 +75,9 @@ class RunConfig(NamedTuple):
 @click.option( "--conf-source",   type=click.Path(exists=True, file_okay=False, resolve_path=True), help=CONF_SOURCE_HELP,)
 @click.option( "--params",        type=click.UNPROCESSED, default="", help=PARAMS_ARG_HELP, callback=_split_params,)
 @click.option( "--from-env",      type=str, default=None, help="Custom env to read from, if specified will read from the `--from-env` and write to the `--env`",)
+@click.option( "--from-run",      type=str, default=None, help="Run to read from, if specified will read from the `--from-run` datasets and write to the run_name datasets",)
 # fmt: on
-def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async: bool, node_names: list[str], to_nodes: list[str], from_nodes: list[str], from_inputs: list[str], to_outputs: list[str], load_versions: list[str], pipeline: str, conf_source: str, params: dict[str, Any], from_env: Optional[str]=None):
+def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async: bool, node_names: list[str], to_nodes: list[str], from_nodes: list[str], from_inputs: list[str], to_outputs: list[str], load_versions: list[str], pipeline: str, conf_source: str, params: dict[str, Any], from_env: Optional[str]=None, from_run: Optional[str]=None):
     """Run the pipeline."""
     
 
@@ -101,6 +103,7 @@ def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async
         conf_source=conf_source,
         params=params,
         from_env=from_env,
+        from_run=from_run,
     )
 
     _run(config, KedroSessionWithFromCatalog)
@@ -148,6 +151,9 @@ def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
 
         from_catalog = _extract_config(config, session)
 
+        # Then reset the env var back - TODO - see if can do without
+        os.environ["RUN_NAME"] = "test-run-7"
+
         session.run(
             from_catalog=from_catalog,
             tags=config.tags,
@@ -181,6 +187,28 @@ def _extract_config(config: RunConfig, session: KedroSessionWithFromCatalog) -> 
                 catalog=conf_catalog, credentials=conf_creds
             )
         from_catalog.add_feed_dict(_get_feed_dict(config_loader["parameters"]), replace=True)
+
+    elif config.from_run:
+        print(f"Using run {config.from_run}")
+        # Load second config loader instance for the from_run
+        config_loader_class = settings.CONFIG_LOADER_CLASS
+        os.environ["RUN_NAME"] = config.from_run
+        config_loader = config_loader_class(  # type: ignore[no-any-return]
+                conf_source=session._conf_source,
+                env=config.env,
+                **settings.CONFIG_LOADER_ARGS,
+            )
+
+        conf_catalog = config_loader["catalog"]
+        conf_catalog = _convert_paths_to_absolute_posix(
+                project_path=session._project_path, conf_dictionary=conf_catalog
+            )
+        conf_creds = config_loader["credentials"]
+        from_catalog: DataCatalog = settings.DATA_CATALOG_CLASS.from_config(
+                catalog=conf_catalog, credentials=conf_creds
+            )
+        from_catalog.add_feed_dict(_get_feed_dict(config_loader["parameters"]), replace=True)
+
     return from_catalog
 
 
