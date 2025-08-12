@@ -52,7 +52,7 @@ data_sources:
   kgml_xdtd_gt:
     version: *_rtx_kg_version
   ec_gt:
-    version: "Release v1.1.0"
+    version: "Release v1.3.3"
   drugmech:
     # check releases here: https://github.com/SuLab/DrugMechDB/releases/ 
     version: 2.0.1

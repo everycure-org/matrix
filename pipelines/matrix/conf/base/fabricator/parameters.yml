@@ -887,4 +887,106 @@ fabricator.embiology:
         delimiter: "|"
         sample_values:
           - "PMID:12345678"
+<<<<<<< Updated upstream
           - "DOI:10.1234/example.5678"
+=======
+          - "DOI:10.1234/example.5678"
+
+fabricator.ec_gt:
+    positive_edges:
+      num_rows: 50
+      columns:
+        "final normalized drug id":
+          type: copy_column
+          source_column: nodes.rtx_kg2.node
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 40399
+        "final normalized drug label":
+          type: copy_column
+          source_column: nodes.rtx_kg2.name
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 40399
+        "final normalized disease id":
+          type: copy_column
+          source_column: nodes.rtx_kg2.node
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 40389
+        "final normalized disease label":
+          type: copy_column
+          source_column: nodes.rtx_kg2.name
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 40389
+        "drug|disease":
+          type: copy_column
+          source_column: nodes.rtx_kg2.name
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 40389
+        "FDA":
+          type: generate_values
+          sample_values:
+            - 1.0
+            - Null
+        "EMA":
+          type: generate_values
+          sample_values:
+            - 1.0
+            - Null
+        "PMA":
+          type: generate_values
+          sample_values:
+            - 1.0
+            - Null
+    negative_edges:
+      num_rows: 50
+      columns:
+        "final normalized drug id":
+          type: copy_column
+          source_column: nodes.rtx_kg2.node
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 40399
+        "final normalized drug label":
+          type: copy_column
+          source_column: nodes.rtx_kg2.name
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 40399
+        "final normalized disease id":
+          type: copy_column
+          source_column: nodes.rtx_kg2.node
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 40389
+        "final normalized disease label":
+          type: copy_column
+          source_column: nodes.rtx_kg2.name
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 40389
+        "drug|disease":
+          type: copy_column
+          source_column: nodes.rtx_kg2.name
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 40389
+        "FDA":
+          type: generate_values
+          sample_values:
+            - 1.0
+            - Null
+        "EMA":
+          type: generate_values
+          sample_values:
+            - 1.0
+            - Null
+        "PMA":
+          type: generate_values
+          sample_values:
+            - 1.0
+            - Null
+>>>>>>> Stashed changes

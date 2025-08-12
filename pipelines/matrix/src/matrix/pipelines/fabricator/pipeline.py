@@ -283,11 +283,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_gt_pairs",
             ),
             node(
-                func=_create_ec_gt_pairs,
-                inputs=[
-                    "ingestion.raw.drug_list",
-                    "ingestion.raw.disease_list",
-                ],
+                func=fabricate_datasets,
+                inputs={
+                    "fabrication_params": "params:fabricator.ec_gt.graph",
+                    "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                },
                 outputs=[
                     "ingestion.raw.ec_ground_truth.positives",
                     "ingestion.raw.ec_ground_truth.negatives",
