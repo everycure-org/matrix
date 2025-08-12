@@ -6,8 +6,9 @@
 
 
 # IDE
-.vscode/
 .idea/
+.vscode/
+!.vscode/settings.json
 
 # Drawio
 *.bkp

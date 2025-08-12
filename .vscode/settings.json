@@ -1,0 +1,42 @@
+{
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "**/.venv/": true,
+        "docs/site": true,
+        "pipelines/matrix/dist": true,
+        "**/.cache/": true,
+        "pipelines/matrix/compose/neo4j_db": true,
+        "pipelines/matrix/compose/neo4j_data/": true,
+        "pipelines/matrix/build/": true
+
+    },
+    "search.exclude": {
+        "pipelines/matrix/data": true,
+    },
+    "python.analysis.extraPaths": [
+        "./pipelines/matrix/src"
+    ],
+    "[markdown]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.wordWrap": "off",
+        "editor.wrappingIndent": "same",
+        "editor.wordWrapColumn": 120,
+        "editor.formatOnSave": true,
+    },
+    "[python]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit",
+        },
+    },
+    "python.testing.cwd": "${workspaceFolder}/pipelines/matrix",
+    "python.defaultInterpreterPath": ".venv/bin/python",
+    "python.testing.pytestEnabled": true,
+}
