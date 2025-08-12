@@ -1,6 +1,9 @@
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
+_polars_csv: &_polars_csv
+  type:  polars.CSVDataset
+
 _pandas_parquet_ds: &_pandas_parquet
   type: matrix.datasets.graph.PandasParquetDataset
   save_args:
@@ -86,6 +89,24 @@ ingestion.raw.rtx_kg2.edges@pandas:
     index: false
   load_args:
     sep: "\t"
+
+ingestion.raw.rtx_kg2.nodes@polars:
+  <<: [*_polars_csv, *_layer_raw]
+  filepath: ${globals:paths.raw_public}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_nodes_v2-2.tsv
+  save_args:
+    separator: "\t"
+    has_header: true
+  load_args:
+    separator: "\t"
+
+ingestion.raw.rtx_kg2.edges@polars:
+  <<: [*_polars_csv, *_layer_raw]
+  filepath: ${globals:paths.raw_public}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_edges_v2-2.tsv
+  save_args:
+    separator: "\t"
+    has_header: true
+  load_args:
+    separator: "\t"
 
 ingestion.raw.rtx_kg2.edges@spark:
   <<: *_layer_raw
@@ -380,6 +401,15 @@ ingestion.raw.robokop.nodes@pandas:
   load_args:
     sep: "\t"
 
+ingestion.raw.robokop.nodes@polars:
+  <<: [*_polars_csv, *_layer_raw]
+  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
+  save_args:
+    separator: "\t"
+    has_header: true
+  load_args:
+    separator: "\t"
+
 ingestion.raw.robokop.edges@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
@@ -399,6 +429,15 @@ ingestion.raw.robokop.edges@pandas:
     index: false
   load_args:
     sep: "\t"
+
+ingestion.raw.robokop.edges@polars:
+  <<: [*_polars_csv, *_layer_raw]
+  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  save_args:
+    separator: "\t"
+    has_header: true
+  load_args:
+    separator: "\t"
 
 ingestion.int.robokop.nodes:
    <<: [*_spark_parquet, *_layer_int]
@@ -431,6 +470,15 @@ ingestion.raw.spoke.nodes@pandas:
   load_args:
     sep: "\t"
 
+ingestion.raw.spoke.nodes@polars:
+  <<: [*_polars_csv, *_layer_raw]
+  filepath: ${globals:paths.raw_private}/KGs/spoke/${globals:data_sources.spoke.version}/spoke-${globals:data_sources.spoke.version}_nodes.tsv
+  save_args:
+    separator: "\t"
+    has_header: true
+  load_args:
+    separator: "\t"
+
 ingestion.raw.spoke.edges@spark:
  <<: *_layer_raw
  type: matrix.datasets.gcp.LazySparkDataset
@@ -450,6 +498,15 @@ ingestion.raw.spoke.edges@pandas:
     index: false
   load_args:
     sep: "\t"
+
+ingestion.raw.spoke.edges@polars:
+  <<: [*_polars_csv, *_layer_raw]
+  filepath: ${globals:paths.raw_private}/KGs/spoke/${globals:data_sources.spoke.version}/spoke-${globals:data_sources.spoke.version}_edges.tsv
+  save_args:
+    separator: "\t"
+    has_header: true
+  load_args:
+    separator: "\t"
 
 ingestion.int.spoke.nodes:
  <<: [*_spark_parquet, *_layer_int]
