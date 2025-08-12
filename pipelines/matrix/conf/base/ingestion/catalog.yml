@@ -394,8 +394,7 @@ ingestion.raw.ec_ground_truth.positives:
   type: matrix.datasets.github.GitHubReleaseExcelDataset
   repository_url: https://github.com/everycure-org/matrix-indication-list
   release_name: ${globals:data_sources.ec_gt.version}
-  # NOTE: If you don't want to use downfilled version, use indicationList.xlsx
-  release_asset_name: indicationList_downfilled.xlsx 
+  release_asset_name: indicationList.xlsx 
   fs_args:
     Accept: application/octet-stream
     Authorization: token ${globals:gh_token}
@@ -405,8 +404,7 @@ ingestion.raw.ec_ground_truth.negatives:
   type: matrix.datasets.github.GitHubReleaseExcelDataset
   repository_url: https://github.com/everycure-org/matrix-indication-list
   release_name: ${globals:data_sources.ec_gt.version}
-  # NOTE: If you don't want to use downfilled version, use contraindicationList.xlsx
-  release_asset_name: contraindicationList_downfilled.xlsx
+  release_asset_name: contraindicationList.xlsx
   fs_args:
     Accept: application/octet-stream
     Authorization: token ${globals:gh_token}
