@@ -57,7 +57,7 @@ data_sources:
   off_label:
     version: v0.1
   orchard:
-    version: 20250805
+    version: 20250801
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation. Will make PR.
 mlflow_artifact_root: null
