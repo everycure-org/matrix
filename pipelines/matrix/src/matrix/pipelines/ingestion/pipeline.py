@@ -77,5 +77,21 @@ def create_pipeline(**kwargs) -> Pipeline:
                     tags=[f'{source["name"]}'],
                 )
             )
+        if (source.get("has_edges", True)) and (source.get("is_ground_truth", False)):
+            nodes_lst.append(
+                node(
+                    func=lambda x, y: [x, y],
+                    inputs=[
+                        f"ingestion.raw.{source['name']}.positives",
+                        f"ingestion.raw.{source['name']}.negatives",
+                    ],
+                    outputs=[
+                        f"ingestion.int.{source['name']}.positive.edges@pandas",
+                        f"ingestion.int.{source['name']}.negative.edges@pandas",
+                    ],
+                    name=f'write_{source["name"]}_edges',
+                    tags=[f'{source["name"]}'],
+                )
+            )
 
     return pipeline(nodes_lst)
