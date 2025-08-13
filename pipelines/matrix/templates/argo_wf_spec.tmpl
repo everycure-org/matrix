@@ -60,15 +60,15 @@ spec:
               value: "1"
     name: kedro
     affinity:
-      nodeAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          preference:
-            matchExpressions:
-            - key: gpu_node
-              operator: NotIn
-              values:
-              - "true"
+    nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: cloud.google.com/gke-spot
+                operator: Equal
+                values:
+                - true
     # Add tolerations for large memory nodes and GPU nodes
     tolerations:
     - key: "workload"
@@ -78,6 +78,10 @@ spec:
     - key: "node-memory-size"
       operator: "Equal"
       value: "large"
+      effect: "NoSchedule"
+    - key: "spot"
+      operator: "Equal"
+      value: "true"
       effect: "NoSchedule"
     metadata:
       labels:
@@ -110,6 +114,10 @@ spec:
           value: "large"
           effect: "NoSchedule"
         - key: "workload"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+        - key: "spot"
           operator: "Equal"
           value: "true"
           effect: "NoSchedule"
@@ -221,6 +229,10 @@ spec:
           value: "large"
           effect: "NoSchedule"
         - key: "workload"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+        - key: "spot"
           operator: "Equal"
           value: "true"
           effect: "NoSchedule"
