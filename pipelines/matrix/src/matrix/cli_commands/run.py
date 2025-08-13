@@ -151,8 +151,8 @@ def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
 
         from_catalog = _extract_config(config, session)
 
-        # Then reset the env var back - TODO - see if can do without
-        os.environ["RUN_NAME"] = "test-run-7"
+        # Then reset the env var back
+        os.environ["RUN_NAME"] = "test-run"
 
         session.run(
             from_catalog=from_catalog,

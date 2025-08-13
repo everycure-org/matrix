@@ -1,4 +1,4 @@
-run_name: ${oc.env:RUN_NAME,test-run-7}
+run_name: ${oc.env:RUN_NAME,test-run}
 versions:
   release: test-release
 
