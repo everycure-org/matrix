@@ -58,7 +58,6 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                     "integrate_in_kg": False,
                     "has_edges": True,
                     "has_nodes": False,
-                    "is_ground_truth": True,
                 },
                 # {"name": "drugmech", "integrate_in_kg": False, "has_nodes": False},
                 {"name": "ec_clinical_trails", "integrate_in_kg": False},
