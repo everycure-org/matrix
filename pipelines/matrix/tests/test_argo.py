@@ -309,8 +309,8 @@ def test_add_node(fused_node: FusedNode, simple_node: Node) -> None:
     assert fused_node._nodes[0] == simple_node
 
 
-# The following tests were disabled during refactoring.
-# These tests need to be re-evaluated and potentially rewritten.
+# The following tests were disabled during the migration from Jinja templates to Hera workflows.
+# These tests need to be re-evaluated and potentially rewritten for the new Hera system.
 # Many of these test unclear or undefined behavior that should be clarified before enabling.
 
 
