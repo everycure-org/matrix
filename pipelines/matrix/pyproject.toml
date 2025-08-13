@@ -51,7 +51,6 @@ dependencies = [
     "kedro-telemetry>=0.3.1",
     "kedro-viz>=11.0.0",
     "kedro==0.19.13",
-    "hera-workflows>=5.6.0",
     "langchain",
     "langchain-openai",
     "matplotlib",

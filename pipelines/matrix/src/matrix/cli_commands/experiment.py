@@ -10,29 +10,18 @@ import click
 import mlflow
 from kedro.framework.cli.utils import split_string
 from kedro.framework.project import pipelines as kedro_pipelines
+from kedro.framework.startup import bootstrap_project
 from kedro.pipeline import Pipeline
-from matrix_auth.environment import load_environment_variables
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
 
-from matrix.argo_hera import build_workflow_yaml
+from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
 from matrix.cli_commands.run import _validate_env_vars_for_private_data
+from matrix.utils.environment import load_environment_variables
 
 # Load environment variables from .env.defaults and .env
 load_environment_variables()
-
-from matrix_auth.authentication import get_user_account_creds
-from matrix_auth.kubernetes import can_talk_to_kubernetes, create_namespace, namespace_exists
-from matrix_auth.system import run_subprocess
-from matrix_mlflow_utils.mlflow_utils import (
-    DeletedExperimentExistsWithName,
-    ExperimentNotFound,
-    archive_runs_and_experiments,
-    create_mlflow_experiment,
-    get_experiment_id_from_name,
-    rename_soft_deleted_experiment,
-)
 
 from matrix.git_utils import (
     BRANCH_NAME_REGEX,
@@ -44,7 +33,18 @@ from matrix.git_utils import (
     has_legal_branch_name,
     has_unpushed_commits,
 )
-from matrix.utils.argo import argo_lint, submit_workflow_from_file
+from matrix.utils.argo import argo_template_lint, submit_workflow
+from matrix.utils.authentication import get_user_account_creds
+from matrix.utils.kubernetes import apply, can_talk_to_kubernetes, create_namespace, namespace_exists
+from matrix.utils.mlflow_utils import (
+    DeletedExperimentExistsWithName,
+    ExperimentNotFound,
+    archive_runs_and_experiments,
+    create_mlflow_experiment,
+    get_experiment_id_from_name,
+    rename_soft_deleted_experiment,
+)
+from matrix.utils.system import run_subprocess
 
 logging.basicConfig(
     level=logging.INFO,
@@ -60,9 +60,6 @@ EXPERIMENT_BRANCH_PREFIX = "experiment/"
 
 def configure_mlflow_tracking(token: str) -> None:
     mlflow.set_tracking_uri(os.environ["MLFLOW_URL"])
-    # mutes errors logged to stdout by underlying tracking lib
-    os.environ["MLFLOW_ENABLE_SYSTEM_METRICS_LOGGING"] = "false"
-    # for authentication against MLFlow
     os.environ["MLFLOW_TRACKING_TOKEN"] = token
 
 
@@ -194,7 +191,7 @@ def run(
     if not quiet:
         log.setLevel(logging.DEBUG)
 
-    if pipeline in ("data_release", "kg_release_and_matrix_run", "kg_release_patch_and_matrix_run"):
+    if pipeline in ("data_release", "kg_release"):
         if not headless and not confirm_release:
             if not click.confirm(
                 "Manual release submission detected, releases must be submitted via the release pipeline. Are you sure you want to create a manual release?",
@@ -242,6 +239,7 @@ def run(
         pipeline_obj=pipeline_obj,
         verbose=not quiet,
         dry_run=dry_run,
+        template_directory=ARGO_TEMPLATES_DIR_PATH,
         mlflow_experiment_id=experiment_id,
         mlflow_run_id=mlflow_run_id,
         allow_interactions=not headless,
@@ -279,6 +277,7 @@ def _submit(
     verbose: bool,
     dry_run: bool,
     environment: str,
+    template_directory: Path,
     mlflow_experiment_id: int,
     mlflow_run_id: Optional[str] = None,
     allow_interactions: bool = True,
@@ -304,6 +303,7 @@ def _submit(
         pipeline_obj (Pipeline): Pipeline to execute.
         verbose (bool): If True, enable verbose output.
         dry_run (bool): If True, do not submit the workflow.
+        template_directory (Path): The directory containing the Argo template.
         allow_interactions (bool): If True, allow prompts for confirmation.
         is_test (bool): If True, submit to test folder, not release folder.
     """
@@ -321,28 +321,24 @@ def _submit(
         else:
             console.print("[green]✓[/green] kubectl authenticated")
 
-        # Build Hera Workflow (not WorkflowTemplate) and submit directly
-        argo_workflow_yaml = build_workflow_yaml(
-            image=f"{image}:{run_name}",
-            run_name=run_name,
-            release_version=release_version,
-            mlflow_experiment_id=mlflow_experiment_id,
-            mlflow_url=mlflow_url,
-            namespace=namespace,
-            username=username,
-            pipeline=pipeline_obj,
-            environment=environment,
-            package_name="matrix",  # metadata used only for legacy template; not needed by Hera
-            release_folder_name="tests" if is_test else "releases",
+        argo_template = build_argo_template(
+            f"{image}:{run_name}",
+            run_name,
+            release_version,
+            username,
+            namespace,
+            pipeline_obj,
+            environment,
+            mlflow_experiment_id,
+            mlflow_url,
+            is_test=is_test,
             mlflow_run_id=mlflow_run_id,
         )
 
-        # Persist to a temp file for CLI submission parity and easier debugging
-        file_path = save_argo_workflow(argo_workflow_yaml)
-        console.print("Generated Hera Workflow YAML")
-        console.print("Linting Hera Workflow YAML...")
-        argo_lint(file_path, verbose=verbose)
-        console.print("[green]✓[/green] Workflow YAML linted")
+        file_path = save_argo_template(argo_template, template_directory)
+        console.print("Linting Argo template...")
+        argo_template_lint(file_path, verbose=verbose)
+        console.print("[green]✓[/green] Argo template linted")
 
         if dry_run:
             return
@@ -358,10 +354,13 @@ def _submit(
         else:
             console.print("[green]✓[/green] Namespace exists")
 
-        console.print("Submitting workflow for pipeline via argo submit -f...")
-        job_name = submit_workflow_from_file(file_path, namespace, verbose=verbose)
+        apply(namespace, file_path, verbose=verbose)
+        console.print("[green]✓[/green] Argo template applied")
+
+        console.print("Submitting workflow for pipeline...")
+        job_name = submit_workflow(run_name, namespace, verbose=verbose)
         argo_url = f"{os.environ['ARGO_PLATFORM_URL']}/workflows/argo-workflows/{run_name}"
-        console.print(f"\nSee your workflow in the Argo UI here: [blue]{argo_url}[/blue]")
+        console.print(f"\nSee your workflow in the ArgoCD UI here: [blue]{argo_url}[/blue]")
         console.print(f"Workflow submitted successfully with job name: {job_name}")
         console.print("\nTo watch the workflow progress, run the following command:")
         console.print(f"argo watch -n {namespace} {job_name}")
@@ -378,10 +377,8 @@ def _submit(
             )
         )
 
-        workflow_url = f"{os.environ['ARGO_PLATFORM_URL']}/workflows/{namespace}/{run_name}"
-        console.print(f"Argo Workflow URL: {workflow_url}")
-
         if allow_interactions and click.confirm("Do you want to open the workflow in your browser?", default=False):
+            workflow_url = f"{os.environ['ARGO_PLATFORM_URL']}/workflows/{namespace}/{run_name}"
             click.launch(workflow_url)
             console.print(f"[blue]Opened workflow in browser: {workflow_url}[/blue]")
 
@@ -428,18 +425,60 @@ def summarize_submission(
             raise click.Abort()
 
 
-def build_push_docker(image: str, tag_name: str, verbose: bool):
+def build_push_docker(image: str, username: str, verbose: bool):
     """Build the docker image only once, push it to dev registry, and if running in prod, also to prod registry."""
-    run_subprocess(f"make docker_cloud_build TAG={tag_name} docker_image={image}", stream_output=verbose)
+    run_subprocess(f"make docker_push TAG={username} docker_image={image}", stream_output=verbose)
 
 
-def save_argo_workflow(argo_workflow: str) -> str:
-    console.print("Writing Argo workflow...")
-    # Use current working directory for generated workflow files
-    file_path = Path("argo-workflow.yml")
+def build_argo_template(
+    image_name: str,
+    run_name: str,
+    release_version: str,
+    username: str,
+    namespace: str,
+    pipeline_obj: Pipeline,
+    environment: str,
+    mlflow_experiment_id: int,
+    mlflow_url: str,
+    is_test: bool,
+    mlflow_run_id: Optional[str] = None,
+) -> str:
+    """Build Argo workflow template."""
+    matrix_root = Path(__file__).parent.parent.parent.parent
+    metadata = bootstrap_project(matrix_root)
+    package_name = metadata.package_name
+
+    if is_test:
+        release_folder_name = "tests"
+    else:
+        release_folder_name = "releases"
+
+    console.print("Building Argo template...")
+    generated_template = generate_argo_config(
+        image=image_name,
+        run_name=run_name,
+        release_version=release_version,
+        mlflow_experiment_id=mlflow_experiment_id,
+        mlflow_url=mlflow_url,
+        namespace=namespace,
+        username=username,
+        package_name=package_name,
+        release_folder_name=release_folder_name,
+        pipeline=pipeline_obj,
+        environment=environment,
+        mlflow_run_id=mlflow_run_id,
+    )
+    console.print("[green]✓[/green] Argo template built")
+
+    return generated_template
+
+
+def save_argo_template(argo_template: str, template_directory: Path) -> str:
+    console.print("Writing Argo template...")
+    file_path = template_directory / "argo-workflow-template.yml"
     with open(file_path, "w") as f:
-        f.write(argo_workflow)
-    console.print(f"[green]✓[/green] Argo workflow saved to {file_path}")
+        f.write(argo_template)
+    console.print(f"[green]✓[/green] Argo template saved to {file_path}")
     return str(file_path)
 
 

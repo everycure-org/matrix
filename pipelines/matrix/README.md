@@ -2,15 +2,14 @@
 
 This directory is a codebase for data processing and ML modelling for our drug repurposing platform.
 Our pipeline is built using [Kedro documentation](https://docs.kedro.org) and deployed using
-[Hera workflows](https://hera-workflows.readthedocs.io/) for Argo Workflows orchestration on
-Kubernetes.
+Jinja template-based Argo Workflows for orchestration on Kubernetes.
 
 ## Architecture Overview
 
 The MATRIX pipeline consists of:
 
 - **Kedro pipelines** for data processing and ML workflows
-- **Hera workflows** for generating Argo Workflows that orchestrate pipeline execution on Kubernetes  
+- **Jinja templates** for generating Argo Workflows that orchestrate pipeline execution on Kubernetes  
 - **uv workspace** for managing dependencies across the entire monorepo
 - **Modular libraries** (from `/libs/`) for shared functionality across the platform:
   - `matrix-auth`: Authentication and environment utilities
@@ -96,10 +95,10 @@ Dependencies are declared in `pyproject.toml` and managed using uv package manag
 
 ## Running Workflows
 
-The MATRIX pipeline uses Hera to generate and submit Argo Workflows to Kubernetes. The workflow
+The MATRIX pipeline uses Jinja templates to generate and submit Argo Workflows to Kubernetes. The workflow
 system:
 
-- Converts Kedro pipelines into Argo Workflows using Hera's Pythonic API
+- Converts Kedro pipelines into Argo Workflows using Jinja templating
 - Supports resource configuration for CPU, memory, and GPU requirements
 - Integrates with Neo4j, MLflow, and GCP services
 - Provides automatic dependency resolution between pipeline nodes
@@ -119,17 +118,14 @@ uv run kedro run --pipeline <pipeline_name>
 
 ### Workflow Generation Architecture
 
-The new Hera-based workflow system (`src/matrix/argo_hera.py`) has replaced the previous Jinja
-templating approach and provides:
+The MATRIX workflow system uses Jinja templating (`src/matrix/argo.py`) to generate Argo Workflows and provides:
 
 #### Key Components:
 
-- **WorkflowConfig**: Central configuration object containing image, resources, environment settings
-- **EnvironmentBuilder**: Builds environment variables for different container types (standard and
-  Neo4j)
-- **TemplateBuilder**: Creates Hera Container templates for different execution contexts
-- **TaskBuilder**: Converts fused pipeline nodes into Argo Workflow tasks
-- **ResourceConverter**: Handles resource configuration translation to Kubernetes format
+- **generate_argo_config()**: Main function that orchestrates workflow generation using Jinja templates
+- **Pipeline Fusion System**: Intelligently groups Kedro nodes using the `fuse()` function
+- **Dependency Resolution**: Automatically resolves dependencies between pipeline nodes using `get_dependencies()`
+- **Resource Management**: Configurable CPU, memory, and GPU allocation per task through `ArgoResourceConfig`
 
 #### Pipeline Fusion System:
 
@@ -144,26 +140,22 @@ The system uses an intelligent fusion algorithm (`src/matrix/fuse.py`) that:
 
 #### Workflow Structure:
 
-1. **Direct Workflow Generation**: Creates Argo Workflows directly using Hera's Pythonic API (no
-   more WorkflowTemplates)
-2. **Container Templates**: Two main templates - standard Kedro tasks and Neo4j-enabled tasks with
-   sidecars
+1. **Template-based Generation**: Uses Jinja templates to generate Argo WorkflowTemplates from Kedro pipelines
+2. **Environment Configuration**: Automatic injection of secrets, config maps, and service endpoints
 3. **Resource Management**: Configurable CPU, memory, and GPU allocation per task
-4. **Environment Integration**: Automatic injection of secrets, config maps, and service endpoints
-5. **DAG-based Execution**: Tasks are organized in a Directed Acyclic Graph (DAG) with automatic
+4. **DAG-based Execution**: Tasks are organized in a Directed Acyclic Graph (DAG) with automatic
    dependency resolution
-6. **Resource-aware Fusion**: Nodes with different resource requirements can be fused while
-   preserving individual resource configurations
+5. **Flexible Templating**: Template system supports different workflow patterns including stress testing
+6. **Git Integration**: Automatic inclusion of git SHA and release information for reproducibility
 
-#### Migration from Jinja Templates
+#### Template System Features:
 
-The previous workflow generation system used Jinja templating (`templates/argo_wf_spec.tmpl`) to
-generate WorkflowTemplates. The new Hera-based system provides several advantages:
+The Jinja template-based workflow generation provides:
 
-- **Type Safety**: Pythonic API with compile-time error checking
-- **Direct Submission**: Generates Workflows directly instead of WorkflowTemplates
-- **Better Integration**: Native integration with Python-based configuration
-- **Maintainability**: Easier to extend and modify workflow generation logic
+- **Flexible Configuration**: Template variables allow customization of workflow behavior
+- **Environment Support**: Different templates can be used for different execution contexts
+- **YAML Output**: Generates clean YAML workflows compatible with Argo Workflows
+- **Resource Optimization**: Only includes resource specifications when they differ from defaults
 
 ## Rules and guidelines
 
