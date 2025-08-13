@@ -51,18 +51,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     tags=[f'{source["name"]}'],
                 )
             )
-
-        if (source.get("has_edges", True)) and (not source.get("is_ground_truth", True)):
-            nodes_lst.append(
-                node(
-                    func=lambda x: x,
-                    inputs=[f'ingestion.raw.{source["name"]}.edges@spark'],
-                    outputs=f'ingestion.int.{source["name"]}.edges',
-                    name=f'write_{source["name"]}_edges',
-                    tags=[f'{source["name"]}'],
-                )
-            )
-        if (source.get("has_edges", True)) and (source.get("is_ground_truth", False)):
+        if "ground_truth" in source.get("name", ""):
             nodes_lst.append(
                 node(
                     func=lambda x, y: [x, y],
@@ -74,6 +63,16 @@ def create_pipeline(**kwargs) -> Pipeline:
                         f"ingestion.int.{source['name']}.positive.edges@pandas",
                         f"ingestion.int.{source['name']}.negative.edges@pandas",
                     ],
+                    name=f'write_{source["name"]}',
+                    tags=[f'{source["name"]}'],
+                )
+            )
+        elif source.get("has_edges", True):
+            nodes_lst.append(
+                node(
+                    func=lambda x: x,
+                    inputs=[f'ingestion.raw.{source["name"]}.edges@spark'],
+                    outputs=f'ingestion.int.{source["name"]}.edges',
                     name=f'write_{source["name"]}_edges',
                     tags=[f'{source["name"]}'],
                 )
