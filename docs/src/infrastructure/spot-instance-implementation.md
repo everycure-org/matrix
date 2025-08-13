@@ -99,8 +99,7 @@ node_pools_labels = {
 
 #### 1.4 Fixed Terraform Compatibility Issues
 
-**Problem**: `can(pool.spot) && pool.spot` caused "Unsupported attribute" errors
-**Solution**: Used `lookup(pool, "spot", false)` for safe attribute access
+**Solution**: Used `lookup(pool, "spot", false)` for safe attribute access. This would explicitly add the `spot` attribute to all non-spot instances as well.
 
 ### 2. Argo Workflow Template Changes (`pipelines/matrix/templates/argo_wf_spec.tmpl`)
 
@@ -117,22 +116,6 @@ affinity:
         matchExpressions:
         - key: cloud.google.com/gke-spot
           operator: In
-          values: ["true"]
-    
-    # Secondary priority: Custom spot node labels
-    - weight: 50
-      preference:
-        matchExpressions:
-        - key: spot_node
-          operator: NotIn
-          values: ["false"]
-    
-    # Lower priority: Avoid GPU nodes for CPU workloads
-    - weight: 25
-      preference:
-        matchExpressions:
-        - key: gpu_node
-          operator: NotIn
           values: ["true"]
 ```
 
@@ -227,21 +210,6 @@ tolerations:
 - Spot instance utilization rates
 - Preemption frequency and impact
 - Cost savings achieved
-
-## Future Considerations
-
-### Potential Enhancements
-
-1. **Multi-Zone Spot Distribution**: Spread spot instances across zones
-2. **Dynamic Spot Bidding**: Implement cost-based spot selection
-3. **Workload-Specific Preferences**: Fine-tune affinity per pipeline type
-4. **Spot Instance Predictive Scaling**: Proactive capacity management
-
-### Maintenance Requirements
-
-1. **Regular Cost Analysis**: Monitor actual savings achieved
-2. **Capacity Planning**: Adjust max node counts based on usage patterns
-3. **Workload Optimization**: Identify workloads suitable for spot-only execution
 
 ## Deployment Notes
 
