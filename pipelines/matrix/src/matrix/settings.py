@@ -28,13 +28,6 @@ hooks = {
     "release": matrix_hooks.ReleaseInfoHooks(),
 }
 
-INTEGRATION_DEFAULTS = {
-    "integrate_in_kg": True,
-    "is_private": False,
-    "has_edges": True,
-    "has_nodes": True,
-    "is_core": False,
-}
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 HOOKS = determine_hooks_to_execute(hooks)
@@ -53,28 +46,26 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 "n_cross_val_folds": 3,
             },
             "integration": [
-                {**INTEGRATION_DEFAULTS, "name": "rtx_kg2"},
-                {**INTEGRATION_DEFAULTS, "name": "spoke", "is_private": True},
-                {**INTEGRATION_DEFAULTS, "name": "embiology", "is_private": True},
-                {**INTEGRATION_DEFAULTS, "name": "robokop"},
+                {"name": "rtx_kg2"},
+                {"name": "spoke", "is_private": True},
+                {"name": "embiology", "is_private": True},
+                {"name": "robokop"},
                 {
-                    **INTEGRATION_DEFAULTS,
                     "name": "drug_list",
                     "integrate_in_kg": False,
                     "has_edges": False,
                     "is_core": True,
                 },
                 {
-                    **INTEGRATION_DEFAULTS,
                     "name": "disease_list",
                     "integrate_in_kg": False,
                     "has_edges": False,
                     "is_core": True,
                 },
-                {**INTEGRATION_DEFAULTS, "name": "ground_truth", "integrate_in_kg": False, "has_nodes": False},
+                {"name": "ground_truth", "integrate_in_kg": False, "has_nodes": False},
                 # {"name": "drugmech", "integrate_in_kg": False, "has_nodes": False},
-                {**INTEGRATION_DEFAULTS, "name": "ec_clinical_trails", "integrate_in_kg": False},
-                {**INTEGRATION_DEFAULTS, "name": "off_label", "integrate_in_kg": False, "has_nodes": False},
+                {"name": "ec_clinical_trails", "integrate_in_kg": False},
+                {"name": "off_label", "integrate_in_kg": False, "has_nodes": False},
             ],
             "modelling": {
                 "model_name": "xg_ensemble",  # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth
@@ -98,7 +89,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                     "stability_name": "rank_commonality"
                 },  # note - rank_commonality will be only used if you have a shared commonality@k and spearman@k metrics
             ],
-        }
+        },
     )
 )
 
