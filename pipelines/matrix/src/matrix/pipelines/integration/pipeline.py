@@ -29,7 +29,16 @@ def _create_integration_pipeline(
                         # during node execution time, otherwise we could infer this based on
                         # the transformer.
                         **({"nodes_df": f"ingestion.int.{source}.nodes"} if has_nodes else {}),
-                        **({"edges_df": f"ingestion.int.{source}.edges"} if has_edges else {}),
+                        **(
+                            {
+                                "positive_edges_df": f"ingestion.int.{source}.positive.edges@spark",
+                                "negative_edges_df": f"ingestion.int.{source}.negative.edges@spark",
+                            }
+                            if ("ground_truth" in source)
+                            else {"edges_df": f"ingestion.int.{source}.edges"}
+                            if has_edges
+                            else {}
+                        ),
                     },
                     outputs={
                         "nodes": f"integration.int.{source}.nodes",
