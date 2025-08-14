@@ -1,16 +1,17 @@
 _spark_parquet_ds: &_spark_parquet
   type: spark.SparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
 
 input_dataframe_1:
   <<: *_spark_parquet
-  filepath:  data/review_list/input_dataframe_1
+  filepath: data/review_list/input_dataframe_1
 
 input_dataframe_2:
   <<: *_spark_parquet
-  filepath:  data/review_list/input_dataframe_2
+  filepath: data/review_list/input_dataframe_2
 
 combined_ranked_pair_dataframe:
   <<: *_spark_parquet
-  filepath:  data/review_list/combined_ranked_pair_dataframe
-  save_args:
-    mode: overwrite
+  filepath: data/review_list/combined_ranked_pair_dataframe

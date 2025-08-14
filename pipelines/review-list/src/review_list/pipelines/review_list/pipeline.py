@@ -20,12 +20,12 @@ def create_pipeline(**kwargs) -> Pipeline:
     input_datasets = {}
     weights = {}
 
-    for catalog_entry, config in inputs_config.items():
-        # catalog_entry is already the full catalog name (e.g., "input_dataframe_1@spark")
-        # Extract the base name for the key (remove @spark suffix)
-        base_name = catalog_entry.split("@")[0]
-        input_datasets[base_name] = catalog_entry
-        weights[base_name] = config.get("weight", 1.0)
+    for dataset_name, config in inputs_config.items():
+        # dataset_name is the base name (e.g., "input_dataframe_1")
+        input_datasets[dataset_name] = (
+            dataset_name  # Now catalog entries don't have @spark
+        )
+        weights[dataset_name] = config.get("weight", 1.0)
 
     return Pipeline(
         [
@@ -38,6 +38,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     **input_datasets,  # Unpack dataset catalog names
                     "weights": "params:inputs_to_review_list",  # Add weights as parameters
+                    "config": "params:review_list_config",  # Add config parameters
                 },
                 outputs="combined_ranked_pair_dataframe@spark",
                 name="combine_ranked_pair_dataframes_node",

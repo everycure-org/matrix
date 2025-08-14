@@ -3,3 +3,6 @@ inputs_to_review_list:
     weight: 0.7
   input_dataframe_2:
     weight: 0.3
+
+review_list_config:
+  limit: 1000  # Maximum number of rows in final combined result
