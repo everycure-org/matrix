@@ -163,7 +163,7 @@ jobs:
           mkdir -p "$TARGET_DIR"
 
           # Generate release notes using Claude Code with the agent prompt
-          PROMPT_CONTENT=$(cat ${{ env.RELEASE_AGENT_PROMPT }})
+          PROMPT_CONTENT=$(cat ${{github.workspace}}${{ env.RELEASE_AGENT_PROMPT }})
           
           # Create the instruction for Claude Code
           CLAUDE_INSTRUCTION="$PROMPT_CONTENT
