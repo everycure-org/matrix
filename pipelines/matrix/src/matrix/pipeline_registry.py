@@ -83,7 +83,7 @@ def register_pipelines() -> dict[str, Pipeline]:
         pipelines["feature"]
         + pipelines["modelling_run"]
     )
-    pipelines["__default__"] = (
+    pipelines["whole_run"] = (
           pipelines["data_engineering"]
         + pipelines["feature_and_modelling_run"]
     )
@@ -91,7 +91,7 @@ def register_pipelines() -> dict[str, Pipeline]:
     # Test pipelines
     pipelines["test"] = (
         pipelines["fabricator"]
-        + pipelines["__default__"]
+        + pipelines["whole_run"]
         + pipelines["data_release"]
         + pipelines["ingest_to_N4J"]
     )

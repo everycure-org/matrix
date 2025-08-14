@@ -84,7 +84,9 @@ embeddings.model_output.topological:
 
 embeddings.feat.nodes:
   <<: *_spark_parquet
-  filepath: ${globals:paths.embeddings}/feat/nodes_with_embeddings
+  #filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/UNC10/rotatE_on_KG2/rotate_emb_match_feat3 #${globals:paths.embeddings}/feat/nodes_with_embeddings
+  #filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/UNC10/rotatE_on_KG2/rtxonly_v902_rotate_emb
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/UNC10/rotatE_on_KG2/onefile_rtxonlg_v902_rotate_emb
 
 embeddings.reporting.loss:
   type: matplotlib.MatplotlibDataset

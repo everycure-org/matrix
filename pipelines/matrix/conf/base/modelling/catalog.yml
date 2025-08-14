@@ -40,6 +40,7 @@ modelling.int.known_pairs@pandas:
 modelling.raw.known_pairs@spark:
   <<: [*_spark_parquet, *_model_input_ds]
   filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth_pairs
+  
 
 modelling.int.known_pairs@spark:
   <<: [*_spark_parquet, *_model_input_ds]
