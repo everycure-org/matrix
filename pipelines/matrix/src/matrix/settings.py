@@ -28,7 +28,6 @@ hooks = {
     "release": matrix_hooks.ReleaseInfoHooks(),
 }
 
-
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 HOOKS = determine_hooks_to_execute(hooks)
 
@@ -38,6 +37,7 @@ DISABLE_HOOKS_FOR_PLUGINS = ("kedro-mlflow",)
 # Class that manages storing KedroSession data.
 
 # https://getindata.com/blog/kedro-dynamic-pipelines/
+
 # Using lambda to delay the evaluation until the INCLUDE_PRIVATE_DATASETS env var is set, parsed from a cli option.
 DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
     generate_dynamic_pipeline_mapping(
@@ -46,22 +46,13 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 "n_cross_val_folds": 3,
             },
             "integration": [
-                {"name": "rtx_kg2"},
-                {"name": "spoke", "is_private": True},
-                {"name": "embiology", "is_private": True},
-                {"name": "robokop"},
-                {
-                    "name": "drug_list",
-                    "integrate_in_kg": False,
-                    "has_edges": False,
-                    "is_core": True,
-                },
-                {
-                    "name": "disease_list",
-                    "integrate_in_kg": False,
-                    "has_edges": False,
-                    "is_core": True,
-                },
+                {"name": "rtx_kg2", "integrate_in_kg": True, "is_private": False},
+                {"name": "spoke", "integrate_in_kg": True, "is_private": True},
+                {"name": "embiology", "integrate_in_kg": True, "is_private": True},
+                {"name": "robokop", "integrate_in_kg": True, "is_private": False},
+                # {"name": "ec_medical_team", "integrate_in_kg": True},
+                {"name": "drug_list", "integrate_in_kg": False, "has_edges": False, "is_core": True},
+                {"name": "disease_list", "integrate_in_kg": False, "has_edges": False, "is_core": True},
                 {"name": "ground_truth", "integrate_in_kg": False, "has_nodes": False},
                 # {"name": "drugmech", "integrate_in_kg": False, "has_nodes": False},
                 {"name": "ec_clinical_trails", "integrate_in_kg": False},
@@ -89,7 +80,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                     "stability_name": "rank_commonality"
                 },  # note - rank_commonality will be only used if you have a shared commonality@k and spearman@k metrics
             ],
-        },
+        }
     )
 )
 
