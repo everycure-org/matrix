@@ -163,6 +163,8 @@ jobs:
           mkdir -p "$TARGET_DIR"
 
           # Generate release notes using Claude Code with the agent prompt
+          git status
+          git log --oneline | head -n 10
           find docs/src/contribute/
           PROMPT_CONTENT=$(cat ${{github.workspace}}${{ env.RELEASE_AGENT_PROMPT }})
           
