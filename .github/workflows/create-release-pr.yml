@@ -122,12 +122,10 @@ jobs:
   
       - name: Detect bump type
         working-directory: docs
+        # this script sets a 'generate_article' env variable
         run: |
-          pip install uv
-          uv venv -p 3.11
-          uv pip compile --quiet requirements.in --output-file requirements.txt
-          uv pip install -r requirements.txt 
-          uv run scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
+          pip install semver
+          python scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
 
       - name: Setup Node.js for Claude Code
         # only create release notes for minor and major
