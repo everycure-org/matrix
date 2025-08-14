@@ -30,66 +30,68 @@ def combine_ranked_pair_dataframes(
     if not dataframes:
         raise ValueError("At least one DataFrame must be provided")
 
-    # Convert to list for processing
+    # Convert to list of (dataframe, weight) tuples for processing
     df_names = list(dataframes.keys())
-    df_list = list(dataframes.values())
+    dfs_with_weights = []
+    
+    for df_name in df_names:
+        df = dataframes[df_name]
+        weight = weight_values.get(df_name, 1.0)
+        dfs_with_weights.append((df, weight))
 
-    if len(df_list) == 1:
-        return df_list[0]
+    if len(dfs_with_weights) == 1:
+        return dfs_with_weights[0][0]
 
-    # Start with first two dataframes
-    df1 = df_list[0]
-    df2 = df_list[1]
-    w1 = weight_values.get(df_names[0], 1.0)
-    w2 = weight_values.get(df_names[1], 1.0)
-
-    # Normalize weights
-    total_weight = w1 + w2
-    w1_norm = w1 / total_weight
-    w2_norm = w2 / total_weight
-
-    # Use the weighted merge function with configurable limit
-    result = weighted_merge_spark(df1, df2, w1_norm, w2_norm, limit)
-
-    # If there are more dataframes, merge them iteratively
-    for i in range(2, len(df_list)):
-        additional_df = df_list[i]
-        additional_weight = weight_values.get(df_names[i], 1.0)
-
-        # For subsequent merges, treat current result as one unit
-        # and new dataframe as another
-        current_weight = 1.0
-        total_weight = current_weight + additional_weight
-        w1_norm = current_weight / total_weight
-        w2_norm = additional_weight / total_weight
-
-        result = weighted_merge_spark(result, additional_df, w1_norm, w2_norm, limit)
+    # Use the multiple dataframe weighted merge function
+    result = weighted_merge_multiple(dfs_with_weights, limit)
 
     return result
 
 
-def weighted_merge_spark(df1, df2, w1, w2, limit):
-    # Calculate quotas
-    q1 = round(limit * w1)
-    q2 = limit - q1
+def weighted_merge_multiple(dfs_with_weights, limit):
+    """
+    Merge any number of Spark DataFrames according to weights and rank order.
 
-    # Assign row numbers based on rank
-    w_rank1 = Window.orderBy("rank")
-    w_rank2 = Window.orderBy("rank")
+    Args:
+        dfs_with_weights (list): List of tuples [(df1, weight1), (df2, weight2), ...]
+        limit (int): Maximum number of rows in the output.
 
-    df1_ranked = df1.withColumn("rn", row_number().over(w_rank1))
-    df2_ranked = df2.withColumn("rn", row_number().over(w_rank2))
+    Returns:
+        Spark DataFrame
+    """
+    # Ensure weights sum to 1
+    total_weight = sum(w for _, w in dfs_with_weights)
+    dfs_with_weights = [(df, w / total_weight) for df, w in dfs_with_weights]
 
-    # Select top rows based on quota
-    df1_top = df1_ranked.filter(col("rn") <= q1).drop("rn")
-    df2_top = df2_ranked.filter(col("rn") <= q2).drop("rn")
+    # Calculate quotas for each df
+    quotas = [round(limit * w) for _, w in dfs_with_weights]
 
-    # Combine, drop duplicates, sort by rank
-    merged = (
-        df1_top.union(df2_top)
-        .dropDuplicates(["source", "target"])
-        .orderBy("rank")
-        .limit(limit)
-    )
+    # Adjust quotas so sum matches limit (fix rounding issues)
+    diff = limit - sum(quotas)
+    if diff != 0:
+        quotas[0] += diff
+
+    # Window spec for rank ordering
+    w_rank = Window.orderBy("rank")
+
+    # Take top N from each DataFrame according to its quota
+    selected_dfs = []
+    for (df, _), quota in zip(dfs_with_weights, quotas):
+        if quota > 0:
+            df_ranked = df.withColumn("rn", row_number().over(w_rank))
+            selected = df_ranked.filter(col("rn") <= quota).drop("rn")
+            selected_dfs.append(selected)
+
+    # Union all
+    merged = selected_dfs[0]
+    for sdf in selected_dfs[1:]:
+        merged = merged.union(sdf)
+
+    # Drop duplicates and sort by rank
+    merged = merged.dropDuplicates(["source", "target"]).orderBy("rank").limit(limit)
+    
+    # Rewrite rank as row_number to ensure no duplicate ranks
+    final_rank_window = Window.orderBy("rank")
+    merged = merged.withColumn("rank", row_number().over(final_rank_window))
 
     return merged
