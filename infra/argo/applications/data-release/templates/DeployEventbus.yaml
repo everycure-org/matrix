@@ -12,7 +12,7 @@ spec:
       # Optional, authen strategy, "none" or "token", defaults to "none"
       auth: token
       # Increase max payload size to handle large workflow objects
-      maxPayload: "10MB"
+      maxPayload: "0"
 #      containerTemplate:
 #        resources:
 #          requests:
