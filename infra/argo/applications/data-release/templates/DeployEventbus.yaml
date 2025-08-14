@@ -13,7 +13,7 @@ spec:
       auth: token
       # Increase max payload size to handle large workflow objects. Setting to 100MB
       # https://argoproj.github.io/argo-events/eventbus/stan/
-      maxPayload: "100MB"
+      maxPayload: "0"
 #      containerTemplate:
 #        resources:
 #          requests:
