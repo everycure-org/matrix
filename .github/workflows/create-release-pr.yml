@@ -56,87 +56,89 @@ jobs:
           submodules: recursive
           token: ${{ secrets.PAT }}
 
-      - name: Configure Git
-        run: |
-          git config --global user.email "releasebot@everycure.org"
-          git config --global user.name "All of us at Every Cure"
-          git config --global push.autosetupremote true
+      # - name: Configure Git
+      #   run: |
+      #     git config --global user.email "releasebot@everycure.org"
+      #     git config --global user.name "All of us at Every Cure"
+      #     git config --global push.autosetupremote true
 
-      - name: Tag the commit from which the data release was triggered
-        run: |
-          if git ls-remote --tags origin | grep -q "refs/tags/${{env.release}}"; then
-            echo "Tag ${{env.release}} already exists. Skipping tag creation."
-          else
-            # Create an annotated tag, so that we can push it easily with the files using `follow-tags`.
-            git tag --annotate --message '' -- "${{env.release}}" "${{env.gitref}}" && \
-            git push --follow-tags
-          fi
-          
-      - name: Branch off
-        # To comply with the protected-branch policy, we checkout a different
-        # branch, but from the commit that created the release.
-        # It should have been pushed, otherwise this errors out.
-        run: |
-          if git ls-remote --exit-code origin release/${{env.release}}; then
-            git switch release/${{env.release}}
-            git pull --ff-only
-          else
-            git switch -C release/${{env.release}} "${{env.gitref}}"
-            git push
-          fi
+      # - name: Tag the commit from which the data release was triggered
+      #   run: |
+      #     if git ls-remote --tags origin | grep -q "refs/tags/${{env.release}}"; then
+      #       echo "Tag ${{env.release}} already exists. Skipping tag creation."
+      #     else
+      #       # Create an annotated tag, so that we can push it easily with the files using `follow-tags`.
+      #       git tag --annotate --message '' -- "${{env.release}}" "${{env.gitref}}" && \
+      #       git push --follow-tags
+      #     fi
+      #     
+      # - name: Branch off
+      #   # To comply with the protected-branch policy, we checkout a different
+      #   # branch, but from the commit that created the release.
+      #   # It should have been pushed, otherwise this errors out.
+      #   run: |
+      #     if git ls-remote --exit-code origin release/${{env.release}}; then
+      #       git switch release/${{env.release}}
+      #       git pull --ff-only
+      #     else
+      #       git switch -C release/${{env.release}} "${{env.gitref}}"
+      #       git push
+      #     fi
 
 
-      - name: Authenticate with Google Cloud
-        uses: 'google-github-actions/auth@v2'
-        with:
-          project_id: ${{vars.PROJECT_ID}}
-          workload_identity_provider: ${{vars.WORKLOAD_IDENTITY_PROVIDER_RO}}
-          service_account: ${{vars.SERVICE_ACCOUNT_RO}}
+      # - name: Authenticate with Google Cloud
+      #   uses: 'google-github-actions/auth@v2'
+      #   with:
+      #     project_id: ${{vars.PROJECT_ID}}
+      #     workload_identity_provider: ${{vars.WORKLOAD_IDENTITY_PROVIDER_RO}}
+      #     service_account: ${{vars.SERVICE_ACCOUNT_RO}}
 
-      - name: Download & commit release info file
-        working-directory: docs/src/releases/changelog_files
-        env:
-          RELEASE_DIR_GCS: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
-          FILENAME: ${{env.release}}_info.json
-        run: |
-          set -eux
-          BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
-          
-          if git ls-files --error-unmatch "$FILENAME" &> /dev/null; then
-            echo "File '$FILENAME' is already committed to the repository. Skipping download and commit."
-            exit 0
-          fi
+      # - name: Download & commit release info file
+      #   working-directory: docs/src/releases/changelog_files
+      #   env:
+      #     RELEASE_DIR_GCS: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
+      #     FILENAME: ${{env.release}}_info.json
+      #   run: |
+      #     set -eux
+      #     BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
+      #     
+      #     if git ls-files --error-unmatch "$FILENAME" &> /dev/null; then
+      #       echo "File '$FILENAME' is already committed to the repository. Skipping download and commit."
+      #       exit 0
+      #     fi
 
-          gcloud storage cp "$BLOB_PATH" "$FILENAME"
-          
-          git add "${FILENAME}" && \
-          git commit -m "added release info json" && \
-          git push
+      #     gcloud storage cp "$BLOB_PATH" "$FILENAME"
+      #     
+      #     git add "${FILENAME}" && \
+      #     git commit -m "added release info json" && \
+      #     git push
       
-      - name: Discover Latest Official Release on GitHub
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          latest_official_release=$(gh release list --jq '.[0].tagName' --json tagName --order desc)
-          echo "latest_official_release=${latest_official_release}" >> "$GITHUB_ENV"
+      # - name: Discover Latest Official Release on GitHub
+      #   env:
+      #     GH_TOKEN: ${{ github.token }}
+      #   run: |
+      #     latest_official_release=$(gh release list --jq '.[0].tagName' --json tagName --order desc)
+      #     echo "latest_official_release=${latest_official_release}" >> "$GITHUB_ENV"
   
-      - name: Detect bump type
-        working-directory: docs
-        run: |
-          pip install uv
-          uv venv -p 3.11
-          uv pip compile --quiet requirements.in --output-file requirements.txt
-          uv pip install -r requirements.txt 
-          uv run scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
+      # - name: Detect bump type
+      #   working-directory: docs
+      #   run: |
+      #     pip install uv
+      #     uv venv -p 3.11
+      #     uv pip compile --quiet requirements.in --output-file requirements.txt
+      #     uv pip install -r requirements.txt 
+      #     uv run scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
 
       - name: Setup Node.js for Claude Code
         # only create release notes for minor and major
+        # TODO uncomment
         # if: env.generate_article == 'True'
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
       - name: Install Claude Code
+        # TODO uncomment
         # if: env.generate_article == 'True'
         run: |
           npm install -g @anthropic-ai/claude-code
@@ -184,105 +186,102 @@ jobs:
           --permission-mode acceptEdits \
           --output-format stream-json --verbose -p | jq
 
-      - name: Commit Release Article
-        env:
-          POSTS_DIR: docs/src/releases/posts
-        # if: env.generate_article == 'True'
-        run: |
-          set -eux
-          
-          TARGET_DIR="${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.release }}"
-          FILE_PATH="${TARGET_DIR}/post.md"
-          
-          # Create directory if it doesn't exist
-          mkdir -p "$TARGET_DIR"
-          
-          # If Claude Code failed or timed out, create a placeholder as fallback
-          if [ ! -f "$FILE_PATH" ] || [ ! -s "$FILE_PATH" ]; then
-            echo "Claude Code generation failed or timed out, creating placeholder instead"
-            echo "TODO: Developers need to write release notes for ${{ env.release }}" > "$FILE_PATH"
-            echo "" >> "$FILE_PATH"
-            echo "This file was auto-created as a placeholder after Claude Code generation failed or timed out." >> "$FILE_PATH"
-            echo "Please replace this content with proper release notes." >> "$FILE_PATH"
-          fi
-          
-          # Commit the file (either from Claude or fallback)
-          git add "$TARGET_DIR" && \
-          git commit -m "added AI-generated release article for ${{ env.release }}" && \
-          git push
-          
-            
-      - name: Setup docs venv & generate yaml
-        working-directory: docs/scripts
-        run: |
-          uv run changelog_gen.py
+      # - name: Commit Release Article
+      #   env:
+      #     POSTS_DIR: docs/src/releases/posts
+      #   # if: env.generate_article == 'True'
+      #   run: |
+      #     set -eux
+      #     
+      #     TARGET_DIR="${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.release }}"
+      #     FILE_PATH="${TARGET_DIR}/post.md"
+      #     
+      #     # Create directory if it doesn't exist
+      #     mkdir -p "$TARGET_DIR"
+      #     
+      #     # If Claude Code failed or timed out, create a placeholder as fallback
+      #     if [ ! -f "$FILE_PATH" ] || [ ! -s "$FILE_PATH" ]; then
+      #       echo "Claude Code generation failed or timed out, creating placeholder instead"
+      #       echo "TODO: Developers need to write release notes for ${{ env.release }}" > "$FILE_PATH"
+      #       echo "" >> "$FILE_PATH"
+      #       echo "This file was auto-created as a placeholder after Claude Code generation failed or timed out." >> "$FILE_PATH"
+      #       echo "Please replace this content with proper release notes." >> "$FILE_PATH"
+      #     fi
+      #     
+      #     # Commit the file (either from Claude or fallback)
+      #     git add "$TARGET_DIR" && \
+      #     git commit -m "added AI-generated release article for ${{ env.release }}" && \
+      #     git push
+      #     
+      #       
+      # - name: Setup docs venv & generate yaml
+      #   working-directory: docs/scripts
+      #   run: |
+      #     uv run changelog_gen.py
 
-      - name: Commit YAML release info file
-        working-directory: docs/src/releases/changelog_files
-        env:
-          FILENAME: releases_aggregated.yaml
-        run: |
-          git add "${FILENAME}"
-          
-          # Otherwise this will error out if the generated file is identical to the one in repo
-          if git diff --cached --exit-code; then
-            echo "No changes to $FILENAME. Skipping commit."
-          else
-            echo "Changes detected in $FILENAME. Committing..."
-            git commit -m "Add or update $FILENAME"
-            git push
-          fi
+      # - name: Commit YAML release info file
+      #   working-directory: docs/src/releases/changelog_files
+      #   env:
+      #     FILENAME: releases_aggregated.yaml
+      #   run: |
+      #     git add "${FILENAME}"
+      #     
+      #     # Otherwise this will error out if the generated file is identical to the one in repo
+      #     if git diff --cached --exit-code; then
+      #       echo "No changes to $FILENAME. Skipping commit."
+      #     else
+      #       echo "Changes detected in $FILENAME. Committing..."
+      #       git commit -m "Add or update $FILENAME"
+      #       git push
+      #     fi
 
-      # quit here to avoid running next steps in my testing triggers
-      - name: EXIT!
-        run: exit 1
-      - name: Create Pull Request
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          gh pr create \
-            --title "Release/${{ env.release }}" \
-            --base main \
-            --body "$(cat <<EOM
-          This pull request was created because a release pipeline completed successfully. If this is a patch release (the release version does not end in 0, e.g. "v1.2.5") that was triggered as part of its weekly schedule, you may close this PR directly, unless you want it to [be logged on the website](https://docs.dev.everycure.org/releases/release_history/). A git tag was [created](https://github.com/everycure-org/matrix/tags) regardless, so people can check it out.
+      # - name: Create Pull Request
+      #   env:
+      #     GITHUB_TOKEN: ${{ github.token }}
+      #   run: |
+      #     gh pr create \
+      #       --title "Release/${{ env.release }}" \
+      #       --base main \
+      #       --body "$(cat <<EOM
+      #     This pull request was created because a release pipeline completed successfully. If this is a patch release (the release version does not end in 0, e.g. "v1.2.5") that was triggered as part of its weekly schedule, you may close this PR directly, unless you want it to [be logged on the website](https://docs.dev.everycure.org/releases/release_history/). A git tag was [created](https://github.com/everycure-org/matrix/tags) regardless, so people can check it out.
 
-          Please check the KG dashboard for this release [here](https://data.dev.everycure.org/versions/${{ env.release }}/evidence/)
+      #     Please check the KG dashboard for this release [here](https://data.dev.everycure.org/versions/${{ env.release }}/evidence/)
 
-          Note: 
-          - for minor and major releases, the release article should be created, meant as a kickstarter for the final release. The template is generated, please ask contributors to fill it out
-          - release information file is used for updating the release history page
-          EOM
-          )" \
-            --draft \
-            --label Release \
-            --label hide-from-release
+      #     Note: 
+      #     - for minor and major releases, the release article should be created, meant as a kickstarter for the final release. The template is generated, please ask contributors to fill it out
+      #     - release information file is used for updating the release history page
+      #     EOM
+      #     )" \
+      #       --draft \
+      #       --label Release \
+      #       --label hide-from-release
 
-      - name: Trigger creation of sample release
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.PAT }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'create-sample-release.yml',
-              ref: 'main',
-              inputs: {
-                release_version: '${{ env.release }}'
-              }
-            })
+      # - name: Trigger creation of sample release
+      #   uses: actions/github-script@v7
+      #   with:
+      #     github-token: ${{ secrets.PAT }}
+      #     script: |
+      #       await github.rest.actions.createWorkflowDispatch({
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         workflow_id: 'create-sample-release.yml',
+      #         ref: 'main',
+      #         inputs: {
+      #           release_version: '${{ env.release }}'
+      #         }
+      #       })
 
-      - name: Trigger KG dashboard deploy
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.PAT }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'kg-dashboard-deploy.yml',
-              ref: 'main',
-              inputs: {
-                "release_version": '${{ env.release }}' 
-              }
-            })
+      # - name: Trigger KG dashboard deploy
+      #   uses: actions/github-script@v7
+      #   with:
+      #     github-token: ${{ secrets.PAT }}
+      #     script: |
+      #       await github.rest.actions.createWorkflowDispatch({
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         workflow_id: 'kg-dashboard-deploy.yml',
+      #         ref: 'main',
+      #         inputs: {
+      #           "release_version": '${{ env.release }}' 
+      #         }
+      #       })
