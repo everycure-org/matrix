@@ -113,6 +113,8 @@ And use this to get a sense of the changes which you can now describe in the nex
 - **Consistent Formatting**: Use exact markdown structure with emojis and sections
 - **Empty Sections**: Include section headers even if no PRs match that category
 - **Author Attribution**: List all unique PR authors in the frontmatter
+- **TODO creation**: Leave TODOs in the changelog where a lead developer should fill out more
+  details. This way, very complex pieces can be described by one of the team members.
 
 ## Error Handling
 
