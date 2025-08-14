@@ -13,6 +13,8 @@ on:
         description: 'The git sha that triggered the kg_release'
         required: true
 
+env:
+  RELEASE_AGENT_PROMPT: docs/src/contribute/release_agent_prompt.md
 jobs:
   create_release_notes_draft:
     environment: dev
@@ -161,7 +163,7 @@ jobs:
           mkdir -p "$TARGET_DIR"
 
           # Generate release notes using Claude Code with the agent prompt
-          PROMPT_CONTENT=$(cat docs/src/contribute/release_agent_prompt.md)
+          PROMPT_CONTENT=$(cat ${{ env.RELEASE_AGENT_PROMPT }})
           
           # Create the instruction for Claude Code
           CLAUDE_INSTRUCTION="$PROMPT_CONTENT
