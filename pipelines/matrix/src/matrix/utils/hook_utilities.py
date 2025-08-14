@@ -33,27 +33,15 @@ def string_to_native(value: str):
 
 
 def generate_dynamic_pipeline_mapping(
-    mapping: Union[Any, Dict[str, str]],
-    path: Optional[List[str]] = None,
-    integrate_in_kg: bool = True,
-    is_private: bool = False,
-    has_edges: bool = True,
-    has_nodes: bool = True,
-    is_core: bool = False,
+    mapping: Union[Any, Dict[str, str]], path: Optional[List[str]] = None
 ) -> Dict[str, Any]:
     """Utility that we added to update the dynamic mapping through environment variables.
 
     It looks for env variables that start with KEDRO_DYNAMIC_PIPELINES_MAPPING, and if found update the
-    corresponding entry in the pipeline mapping. Also applies integration defaults to integration entries.
+    corresponding entry in the pipeline mapping.
 
     Parameters:
         mapping: Dictionary containing the dynamic pipeline mapping.
-        path: Current path in the mapping hierarchy.
-        integrate_in_kg: Default value for integrate_in_kg in integration entries.
-        is_private: Default value for is_private in integration entries.
-        has_edges: Default value for has_edges in integration entries.
-        has_nodes: Default value for has_nodes in integration entries.
-        is_core: Default value for is_core in integration entries.
 
     Returns:
         Dynamic pipeline mapping, updated with variables according to the environment.
@@ -62,43 +50,15 @@ def generate_dynamic_pipeline_mapping(
     if path is None:
         path = []
 
-    # Create integration defaults dict from function arguments
-    integration_defaults = {
-        "integrate_in_kg": integrate_in_kg,
-        "is_private": is_private,
-        "has_edges": has_edges,
-        "has_nodes": has_nodes,
-        "is_core": is_core,
-    }
-
     # NOTE: We're currently not touching lists, we should unify the settings format
     # to ensure everything is specified as a dict.
     if isinstance(mapping, List):
-        # Apply defaults to integration entries if we're in the integration section
-        if len(path) > 0 and path[-1] == "integration":
-            result = []
-            for item in mapping:
-                if isinstance(item, Dict) and "name" in item:
-                    # Apply defaults, but let existing values override
-                    updated_item = {**integration_defaults, **item}
-                    result.append(updated_item)
-                else:
-                    result.append(item)
-            return result
         return mapping
 
     if isinstance(mapping, Dict):
         result = {}
         for key, value in mapping.items():
-            result[key] = generate_dynamic_pipeline_mapping(
-                value,
-                path=[*path, key],
-                integrate_in_kg=integrate_in_kg,
-                is_private=is_private,
-                has_edges=has_edges,
-                has_nodes=has_nodes,
-                is_core=is_core,
-            )
+            result[key] = generate_dynamic_pipeline_mapping(value, path=[*path, key])
         return result
 
     env_var = f"KEDRO_DYNAMIC_PIPELINES_MAPPING_{'_'.join(path).upper()}"
