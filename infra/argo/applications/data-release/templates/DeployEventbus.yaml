@@ -11,6 +11,8 @@ spec:
       replicas: 3
       # Optional, authen strategy, "none" or "token", defaults to "none"
       auth: token
+      # Increase max payload size to handle large workflow objects
+      maxPayload: "10MB"
 #      containerTemplate:
 #        resources:
 #          requests:
