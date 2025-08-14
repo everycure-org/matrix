@@ -33,7 +33,7 @@ def combine_ranked_pair_dataframes(
     # Convert to list of (dataframe, weight) tuples for processing
     df_names = list(dataframes.keys())
     dfs_with_weights = []
-    
+
     for df_name in df_names:
         df = dataframes[df_name]
         weight = weight_values.get(df_name, 1.0)
@@ -89,7 +89,7 @@ def weighted_merge_multiple(dfs_with_weights, limit):
 
     # Drop duplicates and sort by rank
     merged = merged.dropDuplicates(["source", "target"]).orderBy("rank").limit(limit)
-    
+
     # Rewrite rank as row_number to ensure no duplicate ranks
     final_rank_window = Window.orderBy("rank")
     merged = merged.withColumn("rank", row_number().over(final_rank_window))

@@ -1,21 +1,25 @@
 # NOTE: This file was partially generated using AI assistance.
 
-import pytest
 import pyspark.sql as ps
+import pytest
 from pyspark.sql.types import IntegerType, StringType, StructField, StructType
-from pyspark.testing import assertDataFrameEqual
 
-from review_list.pipelines.review_list.nodes import combine_ranked_pair_dataframes, weighted_merge_multiple
+from review_list.pipelines.review_list.nodes import (
+    combine_ranked_pair_dataframes,
+    weighted_merge_multiple,
+)
 
 
 @pytest.fixture
 def sample_df1(spark):
     """Create first sample dataframe with ranked pairs."""
-    schema = StructType([
-        StructField("source", StringType(), False),
-        StructField("target", StringType(), False),
-        StructField("rank", IntegerType(), False),
-    ])
+    schema = StructType(
+        [
+            StructField("source", StringType(), False),
+            StructField("target", StringType(), False),
+            StructField("rank", IntegerType(), False),
+        ]
+    )
     data = [
         ("drug1", "disease1", 1),
         ("drug2", "disease2", 2),
@@ -29,11 +33,13 @@ def sample_df1(spark):
 @pytest.fixture
 def sample_df2(spark):
     """Create second sample dataframe with ranked pairs."""
-    schema = StructType([
-        StructField("source", StringType(), False),
-        StructField("target", StringType(), False),
-        StructField("rank", IntegerType(), False),
-    ])
+    schema = StructType(
+        [
+            StructField("source", StringType(), False),
+            StructField("target", StringType(), False),
+            StructField("rank", IntegerType(), False),
+        ]
+    )
     data = [
         ("drug6", "disease6", 1),
         ("drug7", "disease7", 2),
@@ -47,11 +53,13 @@ def sample_df2(spark):
 @pytest.fixture
 def sample_df3(spark):
     """Create third sample dataframe with ranked pairs and some duplicates."""
-    schema = StructType([
-        StructField("source", StringType(), False),
-        StructField("target", StringType(), False),
-        StructField("rank", IntegerType(), False),
-    ])
+    schema = StructType(
+        [
+            StructField("source", StringType(), False),
+            StructField("target", StringType(), False),
+            StructField("rank", IntegerType(), False),
+        ]
+    )
     data = [
         ("drug1", "disease1", 1),  # Duplicate with df1
         ("drug11", "disease11", 2),
@@ -66,7 +74,9 @@ def sample_df3(spark):
 class TestWeightedMergeMultiple:
     """Test suite for weighted_merge_multiple function following GivenWhenThen format."""
 
-    def test_weighted_merge_two_dataframes_equal_weights(self, spark, sample_df1, sample_df2):
+    def test_weighted_merge_two_dataframes_equal_weights(
+        self, spark, sample_df1, sample_df2
+    ):
         """
         Given: Two dataframes with equal weights
         When: Merging with limit 4 and equal weights (0.5, 0.5)
@@ -82,15 +92,19 @@ class TestWeightedMergeMultiple:
         # Then
         assert result.count() == 4
         # Check that we have 2 rows from each source pattern
-        df1_rows = result.filter(result.source.startswith("drug")).filter(
-            result.source.isin(["drug1", "drug2", "drug3", "drug4", "drug5"])
-        ).count()
-        df2_rows = result.filter(result.source.startswith("drug")).filter(
-            result.source.isin(["drug6", "drug7", "drug8", "drug9", "drug10"])
-        ).count()
+        df1_rows = (
+            result.filter(result.source.startswith("drug"))
+            .filter(result.source.isin(["drug1", "drug2", "drug3", "drug4", "drug5"]))
+            .count()
+        )
+        df2_rows = (
+            result.filter(result.source.startswith("drug"))
+            .filter(result.source.isin(["drug6", "drug7", "drug8", "drug9", "drug10"]))
+            .count()
+        )
         assert df1_rows == 2
         assert df2_rows == 2
-        
+
         # Check that ranks are sequential
         ranks = [row.rank for row in result.orderBy("rank").collect()]
         assert ranks == [1, 2, 3, 4]
@@ -111,8 +125,12 @@ class TestWeightedMergeMultiple:
         # Then
         assert result.count() == 8  # Limited by actual data: 5 from df1 + 3 from df2
         # With 70/30 split on limit 10: quota would be 7 and 3, but df1 only has 5 rows
-        df1_count = result.filter(result.source.isin(["drug1", "drug2", "drug3", "drug4", "drug5"])).count()
-        df2_count = result.filter(result.source.isin(["drug6", "drug7", "drug8", "drug9", "drug10"])).count()
+        df1_count = result.filter(
+            result.source.isin(["drug1", "drug2", "drug3", "drug4", "drug5"])
+        ).count()
+        df2_count = result.filter(
+            result.source.isin(["drug6", "drug7", "drug8", "drug9", "drug10"])
+        ).count()
         assert df1_count == 5  # Limited by actual data in df1 (wanted 7, got 5)
         assert df2_count == 3  # Got full quota from df2
 
@@ -131,9 +149,11 @@ class TestWeightedMergeMultiple:
 
         # Then
         # Should have deduplicated the (drug1, disease1) pair
-        drug1_count = result.filter((result.source == "drug1") & (result.target == "disease1")).count()
+        drug1_count = result.filter(
+            (result.source == "drug1") & (result.target == "disease1")
+        ).count()
         assert drug1_count == 1
-        
+
         # Check sequential ranking
         ranks = [row.rank for row in result.orderBy("rank").collect()]
         expected_ranks = list(range(1, result.count() + 1))
@@ -173,8 +193,12 @@ class TestWeightedMergeMultiple:
         # Then
         assert result.count() == 4
         # Should behave same as equal weights after normalization
-        df1_rows = result.filter(result.source.isin(["drug1", "drug2", "drug3", "drug4", "drug5"])).count()
-        df2_rows = result.filter(result.source.isin(["drug6", "drug7", "drug8", "drug9", "drug10"])).count()
+        df1_rows = result.filter(
+            result.source.isin(["drug1", "drug2", "drug3", "drug4", "drug5"])
+        ).count()
+        df2_rows = result.filter(
+            result.source.isin(["drug6", "drug7", "drug8", "drug9", "drug10"])
+        ).count()
         assert df1_rows == 2
         assert df2_rows == 2
 
@@ -211,7 +235,7 @@ class TestCombineRankedPairDataframes:
         # Given
         weights = {
             "input_dataframe_1": {"weight": 0.6},
-            "input_dataframe_2": {"weight": 0.4}
+            "input_dataframe_2": {"weight": 0.4},
         }
         config = {"limit": 6}
 
@@ -220,13 +244,13 @@ class TestCombineRankedPairDataframes:
             weights=weights,
             config=config,
             input_dataframe_1=sample_df1,
-            input_dataframe_2=sample_df2
+            input_dataframe_2=sample_df2,
         )
 
         # Then
         assert isinstance(result, ps.DataFrame)
         assert result.count() <= 6  # Should respect the limit
-        
+
         # Check that ranks are sequential
         ranks = [row.rank for row in result.orderBy("rank").collect()]
         expected_ranks = list(range(1, result.count() + 1))
@@ -244,9 +268,7 @@ class TestCombineRankedPairDataframes:
 
         # When
         result = combine_ranked_pair_dataframes(
-            weights=weights,
-            config=config,
-            input_dataframe_1=sample_df1
+            weights=weights, config=config, input_dataframe_1=sample_df1
         )
 
         # Then
@@ -260,10 +282,7 @@ class TestCombineRankedPairDataframes:
         Then: Should use default weight of 1.0 for all dataframes
         """
         # Given - weights dict without weight key
-        weights = {
-            "input_dataframe_1": {},
-            "input_dataframe_2": {}
-        }
+        weights = {"input_dataframe_1": {}, "input_dataframe_2": {}}
         config = {"limit": 8}
 
         # When
@@ -271,7 +290,7 @@ class TestCombineRankedPairDataframes:
             weights=weights,
             config=config,
             input_dataframe_1=sample_df1,
-            input_dataframe_2=sample_df2
+            input_dataframe_2=sample_df2,
         )
 
         # Then
@@ -290,9 +309,7 @@ class TestCombineRankedPairDataframes:
 
         # When
         result = combine_ranked_pair_dataframes(
-            weights=weights,
-            config=config,
-            input_dataframe_1=sample_df1
+            weights=weights, config=config, input_dataframe_1=sample_df1
         )
 
         # Then
