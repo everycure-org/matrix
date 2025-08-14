@@ -129,13 +129,13 @@ jobs:
 
       - name: Setup Node.js for Claude Code
         # only create release notes for minor and major
-        if: env.generate_article == 'True'
+        # if: env.generate_article == 'True'
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
       - name: Install Claude Code
-        if: env.generate_article == 'True'
+        # if: env.generate_article == 'True'
         run: |
           npm install -g @anthropic-ai/claude-code
 
@@ -144,7 +144,7 @@ jobs:
           POSTS_DIR: docs/src/releases/posts
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GH_TOKEN: ${{ github.token }}
-        if: env.generate_article == 'True'
+        # if: env.generate_article == 'True'
         timeout-minutes: 10
         run: |
           set -eux
@@ -184,7 +184,7 @@ jobs:
       - name: Commit Release Article
         env:
           POSTS_DIR: docs/src/releases/posts
-        if: env.generate_article == 'True'
+        # if: env.generate_article == 'True'
         run: |
           set -eux
           
@@ -230,6 +230,9 @@ jobs:
             git push
           fi
 
+      # quit here to avoid running next steps in my testing triggers
+      - name: EXIT!
+        run: exit 1
       - name: Create Pull Request
         env:
           GITHUB_TOKEN: ${{ github.token }}
