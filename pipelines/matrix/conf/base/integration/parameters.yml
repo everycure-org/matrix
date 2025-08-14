@@ -66,24 +66,24 @@ integration:
         # Thanks to them we can avoid hard-coding flags in the transformer class
         pair_flags:
           high_evidence_review:
-            latest_non_null_source: 
+            latest_source: 
             - CROWDSOURCED
-            first_non_null_status: 
+            latest_status: 
             - DEEP_DIVE
             - SAB_ENDORSED
             - HOLDING
           mid_evidence_review:
-            latest_non_null_source: 
+            latest_source: 
             - CROWDSOURCED
-            first_non_null_status: 
+            latest_status: 
             - DEEP_DIVE
             - SAB_ENDORSED
             - HOLDING
             - MEDICAL_REVIEW 
           archive_biomedical_review:
-            first_non_null_status: 
+            latest_status: 
             - ARCHIVE
-            latest_non_null_reason:
+            latest_reason:
             - POOR_BIOMEDICAL_RATIONALE
 
 

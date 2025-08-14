@@ -524,7 +524,7 @@ fabricator.orchard:
         end_dt: 2022-12-31
         freq: D
         date_format: "%Y-%m-%d %H:%M:%S"
-      first_non_null_status:
+      latest_status:
         type: generate_values
         sample_values:
           - "ARCHIVED"
@@ -533,20 +533,32 @@ fabricator.orchard:
           - "SAB_ENDORSED"
           - "MEDICAL_REVIEW"
           - "UNKNOWN"
-          - "NULL"
-      latest_non_null_source:
+        inject_nulls:
+          probability: 0.1
+      latest_source:
         type: generate_values
         sample_values:
           - "CROWDSOURCED"
           - "MATRIX"
           - "UNKNOWN"
-      latest_non_null_reason:
+      latest_directionality:
+        type: generate_values
+        sample_values:
+          - "POSITIVE"
+          - "NEGATIVE"
+          - "MIXED"
+          - "UNKNOWN"
+          - "MIXED"
+        inject_nulls:
+          probability: 0.5
+      latest_reason:
         type: generate_values
         sample_values:
           - "POOR_BIOMEDICAL_RATIONALE"
           - "POOR_STRATEGIC_RATIONALE"
           - "POOR_BIOMEDICAL_AND_STRATEGIC_RATIONALE"
-          - "NULL"
+        inject_nulls:
+          probability: 0.5
 
 fabricator.robokop:
   nodes:
@@ -563,18 +575,18 @@ fabricator.robokop:
         type: generate_random_arrays
         delimiter: "|"
         sample_values:
-            - biolink:Entity
-            - biolink:ThingWithTaxon
-            - biolink:BiologicalEntity
-            - biolink:Drug
-            - biolink:Disease
-            - biolink:SequenceVariant
-            - biolink:NamedThing
-            - biolink:OntologyClass
-            - biolink:PhysicalEssence
-            - biolink:PhysicalEssenceOrOccurrent
-            - biolink:GenomicEntity
-            - biolink:OrganismTaxon
+          - biolink:Entity
+          - biolink:ThingWithTaxon
+          - biolink:BiologicalEntity
+          - biolink:Drug
+          - biolink:Disease
+          - biolink:SequenceVariant
+          - biolink:NamedThing
+          - biolink:OntologyClass
+          - biolink:PhysicalEssence
+          - biolink:PhysicalEssenceOrOccurrent
+          - biolink:GenomicEntity
+          - biolink:OrganismTaxon
       "description:string":
         type: faker
         provider: sentence

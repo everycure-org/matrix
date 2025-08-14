@@ -43,5 +43,5 @@ class OrchardTransformer(Transformer):
 
             # Apply the master condition to generate a flag_name column
             edges_df = edges_df.withColumn(flag_name, f.when(combined_condition, f.lit(1)).otherwise(f.lit(0)))
-
-        return edges_df.drop("latest_non_null_source", "first_non_null_status", "last_update")
+        columns_to_drop = set([col for flag in self._pair_flags.values() for col in flag.keys()])
+        return edges_df.drop(*columns_to_drop)
