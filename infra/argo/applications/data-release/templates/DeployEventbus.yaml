@@ -11,9 +11,9 @@ spec:
       replicas: 3
       # Optional, authen strategy, "none" or "token", defaults to "none"
       auth: token
-      # Increase max payload size to handle large workflow objects. 0 means unlimited
+      # Increase max payload size to handle large workflow objects. Setting to 100MB
       # https://argoproj.github.io/argo-events/eventbus/stan/
-      maxPayload: 0
+      maxPayload: "0"
 #      containerTemplate:
 #        resources:
 #          requests:
