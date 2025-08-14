@@ -64,7 +64,7 @@ class Normalizer(ABC):
             "description": self._description,
         }
 
-        logger.info(f"endpoint: {self.endpoint}")
+        logger.debug(f"endpoint: {self.endpoint}")
         async with aiohttp.ClientSession() as session:
             async with session.post(url=self.endpoint, json=request_json) as resp:
                 if resp.status == 200:
