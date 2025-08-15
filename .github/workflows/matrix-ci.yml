@@ -130,7 +130,10 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: 'self-hosted'
     environment: dev
-    permissions: write-all
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
     defaults:
       run:
         working-directory: ./pipelines/matrix
