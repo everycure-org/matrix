@@ -1,0 +1,32 @@
+# This workflow triggers the main CI workflow when PR is approved
+# It acts as a simple approval-based trigger for the matrix CI
+
+name: Matrix CI Approval Trigger
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+  push:
+    branches:
+      - main
+    paths: 
+      - pipelines/matrix/**
+      - .github/workflows/matrix-ci*.yml
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Trigger the main CI workflow with approval condition
+  trigger_ci:
+    uses: ./.github/workflows/matrix-ci.yml
+    # Pass the main + approved condition as input
+    with:
+      run_on_main_approved: ${{ github.ref == 'refs/heads/main' && github.event.review.state == 'approved' }}
+    secrets: inherit
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+      pull-requests: 'read'

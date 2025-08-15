@@ -14,19 +14,17 @@
 name: CI pipeline
 
 on:
-  pull_request_review:
-    types: [submitted]
-
-  push:
-    branches:
-      - main
-    paths: 
-      - pipelines/matrix/**
-      - .github/workflows/matrix-ci.yml
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  workflow_call:
+    inputs:
+      run_on_main_approved:
+        description: 'Whether this is running on main branch with approved review'
+        required: false
+        type: boolean
+        default: false
+    outputs:
+      ci_status:
+        description: 'Status of the CI run'
+        value: ${{ jobs.ci.outputs.status }}
 
 env:
   TQDM_DISABLE: 1
@@ -37,7 +35,7 @@ jobs:
   # FUTURE eventually github will likely fix this
   # https://github.com/orgs/community/discussions/26698
   paths_filter:
-    if: github.event.pull_request.draft == false || github.ref == 'refs/heads/main' && github.event.review.state == 'approved'
+    if: github.event.pull_request.draft == false || github.ref == 'refs/heads/main'
     runs-on: 'ubuntu-latest'
     permissions: 
       pull-requests: read
@@ -57,13 +55,13 @@ jobs:
           filters: |
             src:
               - pipelines/matrix/**
-              - .github/workflows/matrix-ci.yml
+              - .github/workflows/matrix-ci*.yml
 
   ci:
     runs-on: 'self-hosted'
     needs: [paths_filter]
     # Only run if PR is approved, not just opened or synchronized
-    if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false && github.event.pull_request.mergeable_state == 'clean' && github.event.pull_request.state == 'open' || github.ref == 'refs/heads/main') && github.event.review.state == 'approved'
+    if: needs.paths_filter.outputs.changed == 'true'
     outputs:
       status: ${{ steps.finally.outputs.status }}
 
@@ -109,6 +107,7 @@ jobs:
       - id: finally
         if: failure()
         run: echo "status=failure" >> "$GITHUB_OUTPUT"
+
   # we use this check as required in our PRs to ensure that CI runs but only for our paths. 
   matrix_ci_check:
     name: Matrix CI PR Check
@@ -120,11 +119,10 @@ jobs:
         run: echo "CI failed, we are exiting" && exit 1
       - run: echo "Either no files were changed or we had happy CI, continuing"
 
-      
+
 
   push_image:
     needs: [ci]
-    if: github.ref == 'refs/heads/main' && github.event.review.state == 'approved'
     runs-on: 'self-hosted'
     environment: dev
     permissions: write-all
@@ -165,7 +163,7 @@ jobs:
     needs: [ci, push_image]
     # This condition ensures it runs only if any previous job fails
     # we notify on main branches only
-    if: failure() && github.ref == 'refs/heads/main' && github.event.review.state == 'approved'
+    if: failure()
     runs-on: "self-hosted"
     steps:
       - name: Post to a Slack channel
