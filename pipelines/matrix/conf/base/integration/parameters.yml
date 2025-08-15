@@ -59,6 +59,11 @@ integration:
       transformer:
         _object: matrix.pipelines.integration.transformers.off_label.OffLabelTransformer
         version: ${globals:data_sources.off_label.version}
+    orchard:
+      name: orchard
+      transformer:
+        _object: matrix.pipelines.integration.transformers.orchard.OrchardTransformer
+        version: ${globals:data_sources.orchard.version}
 
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:

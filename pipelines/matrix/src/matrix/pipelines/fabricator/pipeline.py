@@ -235,6 +235,17 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_ec_gt_pairs",
             ),
             node(
+                func=fabricate_datasets,
+                inputs={
+                    "fabrication_params": "params:fabricator.orchard",
+                    "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                },
+                outputs={
+                    "edges": "ingestion.raw.orchard.edges@pandas",
+                },
+                name="fabricate_orchard_datasets",
+            ),
+            node(
                 func=generate_paths,
                 inputs=[
                     "ingestion.raw.rtx_kg2.edges@pandas",

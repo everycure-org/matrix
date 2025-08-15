@@ -34,7 +34,9 @@ data_sources:
   spoke:
     version: V5.7
   embiology:
-    version: 03032025
+  # needs to be a string as otherwise it will be parsed as a octal number
+  # https://stackoverflow.com/questions/32965846/cant-parse-yaml-correctly-when-number-contains-leading-zeros-and-for-yes-no-val
+    version: "03032025"
 # Dataset with node and edge proposals by the
 # EveryCure medical team.
   ec_medical_team:
@@ -58,6 +60,8 @@ data_sources:
     version: 2.0.1
   off_label:
     version: v0.1
+  orchard:
+    version: 20250801
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation. Will make PR.
 mlflow_artifact_root: null

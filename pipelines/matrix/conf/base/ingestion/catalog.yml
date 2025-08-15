@@ -35,6 +35,12 @@ _layer_int: &_layer_int
     kedro-viz:
       layer: integration
 
+_orchard_bq: &_orchard_bq
+  project: ec-orchard-prod
+  dataset: orchard_us
+  table: latest_status
+  shard: ${globals:data_sources.orchard.version}
+
 # -------------------------------------------------------------------------
 # RTX-KG2
 # -------------------------------------------------------------------------  
@@ -170,19 +176,19 @@ ingestion.int.ec_medical_team.edges:
 
 ingestion.raw.ec_clinical_trails.nodes@pandas:
   <<: [*_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.raw}/clinical_trials_data/translator/${globals:data_sources.ec_clinical_trials.version}/nodes_raw.tsv
+  filepath: ${globals:paths.raw_public}/clinical_trials_data/translator/${globals:data_sources.ec_clinical_trials.version}/nodes_raw.tsv
 
 ingestion.raw.ec_clinical_trails.nodes@spark:
   <<: [*_layer_int, *_spark_csv]
-  filepath: ${globals:paths.raw}/clinical_trials_data/translator/${globals:data_sources.ec_clinical_trials.version}/nodes_raw.tsv
+  filepath: ${globals:paths.raw_public}/clinical_trials_data/translator/${globals:data_sources.ec_clinical_trials.version}/nodes_raw.tsv
 
 ingestion.raw.ec_clinical_trails.edges@pandas:
   <<: [*_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.raw}/clinical_trials_data/translator/${globals:data_sources.ec_clinical_trials.version}/edges_raw.tsv
+  filepath: ${globals:paths.raw_public}/clinical_trials_data/translator/${globals:data_sources.ec_clinical_trials.version}/edges_raw.tsv
 
 ingestion.raw.ec_clinical_trails.edges@spark:
   <<: [*_layer_int, *_spark_csv]
-  filepath: ${globals:paths.raw}/clinical_trials_data/translator/${globals:data_sources.ec_clinical_trials.version}/edges_raw.tsv
+  filepath: ${globals:paths.raw_public}/clinical_trials_data/translator/${globals:data_sources.ec_clinical_trials.version}/edges_raw.tsv
 
 ingestion.int.ec_clinical_trails.nodes:
   <<: [*_spark_parquet, *_layer_int]
@@ -197,19 +203,19 @@ ingestion.int.ec_clinical_trails.edges:
 # ------------------------------------------------------------------------- 
 ingestion.raw.off_label.nodes@pandas:
   <<: [*_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.raw}/off_label_data/translator/${globals:data_sources.off_label.version}/nodes_raw.csv
+  filepath: ${globals:paths.raw_public}/off_label_data/translator/${globals:data_sources.off_label.version}/nodes_raw.csv
 
 ingestion.raw.off_label.nodes@spark:
   <<: [*_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.raw}/off_label_data/translator/${globals:data_sources.off_label.version}/nodes_raw.csv
+  filepath: ${globals:paths.raw_public}/off_label_data/translator/${globals:data_sources.off_label.version}/nodes_raw.csv
 
 ingestion.raw.off_label.edges@pandas:
   <<: [*_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.raw}/off_label_data/translator/${globals:data_sources.off_label.version}/edges_raw.csv
+  filepath: ${globals:paths.raw_public}/off_label_data/translator/${globals:data_sources.off_label.version}/edges_raw.csv
 
 ingestion.raw.off_label.edges@spark:
   <<: [*_layer_int, *_spark_csv]
-  filepath: ${globals:paths.raw}/off_label_data/translator/${globals:data_sources.off_label.version}/edges_raw.csv
+  filepath: ${globals:paths.raw_public}/off_label_data/translator/${globals:data_sources.off_label.version}/edges_raw.csv
 
 ingestion.int.off_label.nodes:
   <<: [*_spark_parquet, *_layer_int]
@@ -340,69 +346,21 @@ ingestion.raw.kgml_xdtd_ground_truth.negatives:
   save_args:
     sep: "\t"
 
-ingestion.raw.kgml_xdtd_ground_truth.positive.edges@pandas:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/translator/${globals:data_sources.kgml_xdtd_gt.version}/tp_pairs_raw.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
+ingestion.int.kgml_xdtd_ground_truth.positive.edges@pandas:
+  <<: [*_pandas_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tp_pairs
 
-ingestion.raw.kgml_xdtd_ground_truth.negative.edges@pandas:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/translator/${globals:data_sources.kgml_xdtd_gt.version}/tn_pairs_raw.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
+ingestion.int.kgml_xdtd_ground_truth.negative.edges@pandas:
+  <<: [*_pandas_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tn_pairs
 
-ingestion.raw.kgml_xdtd_ground_truth.positive.edges@spark:
-  <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/translator/${globals:data_sources.kgml_xdtd_gt.version}/tp_pairs_raw.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
+ingestion.int.kgml_xdtd_ground_truth.positive.edges@spark:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tp_pairs
 
-ingestion.raw.kgml_xdtd_ground_truth.negative.edges@spark:
-  <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/translator/${globals:data_sources.kgml_xdtd_gt.version}/tn_pairs_raw.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
-
-ingestion.int.kgml_xdtd_ground_truth.positive.edges:
-  <<: [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tp_pairs_raw.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-    mode: overwrite
-
-ingestion.int.kgml_xdtd_ground_truth.negative.edges:
-  <<: [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tn_pairs_raw.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-    mode: overwrite
+ingestion.int.kgml_xdtd_ground_truth.negative.edges@spark:
+  <<: [*_pandas_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tn_pairs
 
 # -------------------------------------------------------------------------
 # Ground truth EC
@@ -428,70 +386,21 @@ ingestion.raw.ec_ground_truth.negatives:
     Accept: application/octet-stream
     Authorization: token ${globals:gh_token}
 
-ingestion.raw.ec_ground_truth.negative.edges@pandas:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs_raw.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
+ingestion.int.ec_ground_truth.negative.edges@pandas:
+  <<: [*_pandas_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs
 
-ingestion.raw.ec_ground_truth.negative.edges@spark:
-  <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs_raw.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
+ingestion.int.ec_ground_truth.positive.edges@pandas:
+  <<: [*_pandas_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs
 
-ingestion.raw.ec_ground_truth.positive.edges@pandas:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs_raw.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
+ingestion.int.ec_ground_truth.negative.edges@spark:
+  <<: [*_spark_parquet, *_layer_int] 
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs
 
-ingestion.raw.ec_ground_truth.positive.edges@spark:
-  <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs_raw.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
-
-ingestion.int.ec_ground_truth.negative.edges:
-  <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-    mode: overwrite
-  
-
-ingestion.int.ec_ground_truth.positive.edges:
-  <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-    mode: overwrite
+ingestion.int.ec_ground_truth.positive.edges@spark:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs
 
 # -------------------------------------------------------------------------
 # Robokop
@@ -659,3 +568,18 @@ ingestion.int.embiology.nodes:
 ingestion.int.embiology.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/int/embiology/${globals:data_sources.embiology.version}/edges
+
+# -------------------------------------------------------------------------
+# Orchard
+# -------------------------------------------------------------------------
+ingestion.raw.orchard.edges@spark:
+  <<: [*_orchard_bq]
+  type: matrix.datasets.gcp.SparkBigQueryDataset
+
+ingestion.raw.orchard.edges@pandas:
+  <<: [*_orchard_bq]
+  type: matrix.datasets.gcp.PandasBigQueryDataset
+
+ingestion.int.orchard.edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/orchard/${globals:data_sources.orchard.version}/edges

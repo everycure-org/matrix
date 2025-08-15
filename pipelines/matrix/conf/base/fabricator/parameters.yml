@@ -502,6 +502,64 @@ fabricator.off_label:
           sample_values:
             - off-label use
 
+fabricator.orchard:
+  edges:
+    num_rows: 200
+    columns:
+      drug_kg_node_id:
+        type: copy_column
+        source_column: rtx_nodes.id
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 40399
+      disease_kg_node_id:
+        type: copy_column
+        source_column: rtx_nodes.id
+        sample:
+          num_rows: "@edges.num_rows"
+          seed: 30399
+      last_update:
+        type: generate_dates
+        start_dt: 2020-01-01
+        end_dt: 2022-12-31
+        freq: D
+        date_format: "%Y-%m-%d %H:%M:%S"
+      latest_status:
+        type: generate_values
+        sample_values:
+          - "ARCHIVED"
+          - "TRIAGE"
+          - "DEEP_DIVE"
+          - "SAB_ENDORSED"
+          - "MEDICAL_REVIEW"
+          - "UNKNOWN"
+        inject_nulls:
+          probability: 0.1
+      latest_source:
+        type: generate_values
+        sample_values:
+          - "CROWDSOURCED"
+          - "MATRIX"
+          - "UNKNOWN"
+      latest_directionality:
+        type: generate_values
+        sample_values:
+          - "POSITIVE"
+          - "NEGATIVE"
+          - "MIXED"
+          - "UNKNOWN"
+          - "MIXED"
+        inject_nulls:
+          probability: 0.5
+      latest_reason:
+        type: generate_values
+        sample_values:
+          - "POOR_BIOMEDICAL_RATIONALE"
+          - "POOR_STRATEGIC_RATIONALE"
+          - "POOR_BIOMEDICAL_AND_STRATEGIC_RATIONALE"
+        inject_nulls:
+          probability: 0.5
+
 fabricator.robokop:
   nodes:
     num_rows: 500

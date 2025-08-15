@@ -3,42 +3,10 @@ from kedro.pipeline import Pipeline, node, pipeline
 from matrix import settings
 
 
-def create_ground_truth_pipeline() -> list:
-    """Create pipeline nodes for ground truth processing."""
-    return [
-        node(
-            func=lambda x, y: [x, y],
-            inputs=["ingestion.raw.kgml_xdtd_ground_truth.positives", "ingestion.raw.kgml_xdtd_ground_truth.negatives"],
-            outputs=[
-                "ingestion.raw.kgml_xdtd_ground_truth.positive.edges@pandas",
-                "ingestion.raw.kgml_xdtd_ground_truth.negative.edges@pandas",
-            ],
-            name="write_kgml_xdtd_gt",
-            tags=["kgml_xdtd_ground_truth"],
-        ),
-        node(
-            func=lambda x, y: [x, y],
-            inputs=[
-                "ingestion.raw.ec_ground_truth.positives",
-                "ingestion.raw.ec_ground_truth.negatives",
-            ],
-            outputs=[
-                "ingestion.raw.ec_ground_truth.positive.edges@pandas",
-                "ingestion.raw.ec_ground_truth.negative.edges@pandas",
-            ],
-            name="write_ec_indications_list",
-            tags=["ec_ground_truth"],
-        ),
-    ]
-
-
 def create_pipeline(**kwargs) -> Pipeline:
     """Create ingestion pipeline."""
     # Create pipeline per source
     nodes_lst = []
-
-    # Ground truth
-    nodes_lst.extend(create_ground_truth_pipeline())
 
     # Drug list and disease list
     nodes_lst.extend(
@@ -83,36 +51,29 @@ def create_pipeline(**kwargs) -> Pipeline:
                     tags=[f'{source["name"]}'],
                 )
             )
-        if source.get("has_edges", True) and not (
-            source.get("has_positive_edges", False) or source.get("has_negative_edges", False)
-        ):
+        if "ground_truth" in source.get("name", ""):
+            nodes_lst.append(
+                node(
+                    func=lambda x, y: [x, y],
+                    inputs=[
+                        f"ingestion.raw.{source['name']}.positives",
+                        f"ingestion.raw.{source['name']}.negatives",
+                    ],
+                    outputs=[
+                        f"ingestion.int.{source['name']}.positive.edges@pandas",
+                        f"ingestion.int.{source['name']}.negative.edges@pandas",
+                    ],
+                    name=f'write_{source["name"]}',
+                    tags=[f'{source["name"]}'],
+                )
+            )
+        elif source.get("has_edges", True):
             nodes_lst.append(
                 node(
                     func=lambda x: x,
                     inputs=[f'ingestion.raw.{source["name"]}.edges@spark'],
                     outputs=f'ingestion.int.{source["name"]}.edges',
                     name=f'write_{source["name"]}_edges',
-                    tags=[f'{source["name"]}'],
-                )
-            )
-
-        if source.get("is_ground_truth", False):
-            nodes_lst.append(
-                node(
-                    func=lambda x: x,
-                    inputs=f'ingestion.raw.{source["name"]}.positive.edges@spark',
-                    outputs=f'ingestion.int.{source["name"]}.positive.edges',
-                    name=f'write_{source["name"]}_positive_edges',
-                    tags=[f'{source["name"]}'],
-                ),
-            )
-        if source.get("has_negative_edges", False):
-            nodes_lst.append(
-                node(
-                    func=lambda x: x,
-                    inputs=f'ingestion.raw.{source["name"]}.negative.edges@spark',
-                    outputs=f'ingestion.int.{source["name"]}.negative.edges',
-                    name=f'write_{source["name"]}_negative_edges',
                     tags=[f'{source["name"]}'],
                 )
             )

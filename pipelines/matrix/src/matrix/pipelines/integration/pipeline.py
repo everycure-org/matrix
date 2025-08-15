@@ -34,16 +34,13 @@ def _create_integration_pipeline(
                         # the transformer.
                         **({"nodes_df": f"ingestion.int.{source}.nodes"} if has_nodes else {}),
                         **(
-                            {"edges_df": f"ingestion.int.{source}.edges"}
-                            if (has_edges and (not is_ground_truth))
-                            else {}
-                        ),
-                        **(
                             {
-                                "positive_edges": f"ingestion.int.{source}.positive.edges",
-                                "negative_edges": f"ingestion.int.{source}.negative.edges",
+                                "positive_edges_df": f"ingestion.int.{source}.positive.edges@spark",
+                                "negative_edges_df": f"ingestion.int.{source}.negative.edges@spark",
                             }
-                            if (has_edges and is_ground_truth)
+                            if ("ground_truth" in source)
+                            else {"edges_df": f"ingestion.int.{source}.edges"}
+                            if has_edges
                             else {}
                         ),
                     },

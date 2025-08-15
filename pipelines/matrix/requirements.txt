@@ -124,10 +124,12 @@ curies==0.7.10
     #   prefixmaps
 cycler==0.12.1
     # via matplotlib
-databricks-sdk==0.62.0
+databricks-sdk==0.63.0
     # via mlflow-skinny
 db-dtypes==1.4.3
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   pandas-gbq
 debugpy==1.8.16
     # via ipykernel
 decorator==5.2.1
@@ -197,7 +199,8 @@ google-api-core==2.25.1
     #   google-cloud-core
     #   google-cloud-iam
     #   google-cloud-storage
-google-api-python-client==2.178.0
+    #   pandas-gbq
+google-api-python-client==2.179.0
     # via pygsheets
 google-auth==2.40.3
     # via
@@ -212,14 +215,20 @@ google-auth==2.40.3
     #   google-cloud-core
     #   google-cloud-iam
     #   google-cloud-storage
+    #   pandas-gbq
+    #   pydata-google-auth
 google-auth-httplib2==0.2.0
     # via google-api-python-client
 google-auth-oauthlib==1.2.2
     # via
     #   gcsfs
+    #   pandas-gbq
+    #   pydata-google-auth
     #   pygsheets
 google-cloud-bigquery==3.35.1
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   pandas-gbq
 google-cloud-bigquery-storage==2.32.0
     # via -r requirements.in
 google-cloud-core==2.4.3
@@ -350,7 +359,7 @@ joblib==1.5.1
     #   scikit-optimize
 json-flattener==0.1.9
     # via linkml-runtime
-json5==0.12.0
+json5==0.12.1
     # via jupyterlab-server
 jsonasobj2==1.0.4
     # via linkml-runtime
@@ -438,11 +447,11 @@ langchain-core==0.3.74
     #   langchain
     #   langchain-openai
     #   langchain-text-splitters
-langchain-openai==0.3.29
+langchain-openai==0.3.30
     # via -r requirements.in
 langchain-text-splitters==0.3.9
     # via langchain
-langsmith==0.4.13
+langsmith==0.4.14
     # via
     #   langchain
     #   langchain-core
@@ -508,7 +517,7 @@ multimethod==2.0
     # via graphdatascience
 mypy-extensions==1.1.0
     # via typing-inspect
-narwhals==2.1.0
+narwhals==2.1.1
     # via plotly
 nbclient==0.10.2
     # via nbconvert
@@ -544,6 +553,7 @@ numpy==1.24.4
     #   matplotlib
     #   mlflow
     #   pandas
+    #   pandas-gbq
     #   scikit-learn
     #   scikit-optimize
     #   scipy
@@ -570,7 +580,7 @@ opentelemetry-sdk==1.36.0
     # via mlflow-skinny
 opentelemetry-semantic-conventions==0.57b0
     # via opentelemetry-sdk
-orjson==3.11.1
+orjson==3.11.2
     # via
     #   kedro-viz
     #   langsmith
@@ -596,6 +606,7 @@ packaging==24.2
     #   matplotlib
     #   mlflow-skinny
     #   nbconvert
+    #   pandas-gbq
     #   pandera
     #   plotly
     #   pytest
@@ -610,7 +621,10 @@ pandas==2.3.1
     #   kedro-viz
     #   matrix-validator
     #   mlflow
+    #   pandas-gbq
     #   seaborn
+pandas-gbq==0.29.2
+    # via -r requirements.in
 pandera==0.24.0
     # via
     #   -r requirements.in
@@ -637,7 +651,7 @@ platformdirs==4.3.8
     # via
     #   jupyter-core
     #   pytoolconfig
-plotly==6.2.0
+plotly==6.3.0
     # via kedro-viz
 pluggy==1.6.0
     # via
@@ -702,6 +716,7 @@ pyarrow==19.0.1
     #   db-dtypes
     #   graphdatascience
     #   mlflow
+    #   pandas-gbq
 pyasn1==0.6.1
     # via
     #   pyasn1-modules
@@ -726,6 +741,8 @@ pydantic==2.11.7
     #   patito
 pydantic-core==2.33.2
     # via pydantic
+pydata-google-auth==1.9.1
+    # via pandas-gbq
 pygments==2.19.2
     # via
     #   ipython
@@ -915,7 +932,11 @@ semver==3.0.2
 send2trash==1.8.3
     # via jupyter-server
 setuptools==80.9.0
-    # via jupyterlab
+    # via
+    #   jupyterlab
+    #   pandas-gbq
+    #   pydata-google-auth
+    #   triton
 shellingham==1.5.4
     # via typer
 six==1.17.0
@@ -1010,7 +1031,7 @@ traitlets==5.14.3
     #   nbclient
     #   nbconvert
     #   nbformat
-transformers==4.55.0
+transformers==4.55.2
     # via -r requirements.in
 typeguard==4.4.4
     # via pandera
