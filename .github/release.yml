@@ -1,3 +1,7 @@
+# Configuration for automated release note generation using Claude Code
+# This file is used by GitHub's built-in release notes generation
+# and also referenced by our custom Claude Code agent for consistency
+
 changelog:
   exclude:
     labels:
@@ -33,3 +37,10 @@ changelog:
     - title: Other Changes
       labels:
         - "*"
+
+# Claude Code configuration for enhanced release note generation
+claude_code:
+  enabled: true
+  agent_prompt_file: "docs/src/contribute/release_agent_prompt.md"
+  npm_package: "@anthropic-ai/claude-code"
+  node_version: "18"
