@@ -26,6 +26,10 @@ on:
         description: 'Status of the CI run'
         value: ${{ jobs.ci.outputs.status }}
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   TQDM_DISABLE: 1
 
