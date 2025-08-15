@@ -65,6 +65,7 @@ jobs:
     runs-on: 'self-hosted'
     needs: [paths_filter]
     if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
+
     outputs:
       status: ${{ steps.finally.outputs.status }}
 
@@ -115,6 +116,7 @@ jobs:
   matrix_ci_check:
     name: Matrix CI PR Check
     runs-on:  'self-hosted'
+    if: always()
     needs: [paths_filter, ci]
     steps:
       - if: ${{ needs.paths_filter.outputs.changed == 'true' && needs.ci.outputs.status == 'failure' }}
@@ -125,6 +127,7 @@ jobs:
 
   push_image:
     needs: [ci]
+    if: github.ref == 'refs/heads/main'
     runs-on: 'self-hosted'
     environment: dev
     permissions: write-all
@@ -165,7 +168,7 @@ jobs:
     needs: [ci, push_image]
     # This condition ensures it runs only if any previous job fails
     # we notify on main branches only
-    if: failure()
+    if: failure() && github.ref == 'refs/heads/main' 
     runs-on: "self-hosted"
     steps:
       - name: Post to a Slack channel
