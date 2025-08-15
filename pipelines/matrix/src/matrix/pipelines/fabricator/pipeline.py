@@ -217,10 +217,22 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "params:fabricator.ground_truth.num_rows_per_category",
                 ],
                 outputs=[
-                    "ingestion.raw.ground_truth.positives",
-                    "ingestion.raw.ground_truth.negatives",
+                    "ingestion.raw.kgml_xdtd_ground_truth.positives",
+                    "ingestion.raw.kgml_xdtd_ground_truth.negatives",
                 ],
                 name="create_gt_pairs",
+            ),
+            node(
+                func=fabricate_datasets,
+                inputs={
+                    "fabrication_params": "params:fabricator.ec_gt",
+                    "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                },
+                outputs={
+                    "positive_edges": "ingestion.raw.ec_ground_truth.positives",
+                    "negative_edges": "ingestion.raw.ec_ground_truth.negatives",
+                },
+                name="create_ec_gt_pairs",
             ),
             node(
                 func=fabricate_datasets,
@@ -237,8 +249,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=generate_paths,
                 inputs=[
                     "ingestion.raw.rtx_kg2.edges@pandas",
-                    "ingestion.raw.ground_truth.positives",
-                    "ingestion.raw.ground_truth.negatives",
+                    "ingestion.raw.kgml_xdtd_ground_truth.positives",
+                    "ingestion.raw.kgml_xdtd_ground_truth.negatives",
                 ],
                 outputs="ingestion.raw.drugmech.edges@pandas",
                 name="create_drugmech_pairs",

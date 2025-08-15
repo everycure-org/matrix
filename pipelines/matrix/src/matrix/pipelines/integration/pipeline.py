@@ -8,7 +8,11 @@ from . import nodes
 
 
 def _create_integration_pipeline(
-    source: str, has_nodes: bool = True, has_edges: bool = True, is_core: bool = False
+    source: str,
+    has_nodes: bool = True,
+    has_edges: bool = True,
+    is_core: bool = False,
+    is_ground_truth: bool = False,
 ) -> Pipeline:
     pipelines = []
 
@@ -138,11 +142,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                     has_nodes=source.get("has_nodes", True),
                     has_edges=source.get("has_edges", True),
                     is_core=source.get("is_core", False),
+                    is_ground_truth=source.get("is_ground_truth", False),
                 ),
                 tags=[source["name"]],
             )
         )
-
     # Add integration pipeline
     pipelines.append(
         pipeline(
@@ -160,6 +164,18 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ],
                     outputs="integration.int.core_node_mapping",
                     name="create_core_id_mapping",
+                ),
+                node(
+                    func=nodes.unify_ground_truth,
+                    inputs=[
+                        *[
+                            f'integration.int.{source["name"]}.edges.norm@spark'
+                            for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
+                            if ("ground_truth" in source["name"])
+                        ],
+                    ],
+                    outputs="integration.prm.unified_ground_truth_edges",
+                    name="unify_ground_truth_edges",
                 ),
                 node(
                     func=nodes.union_and_deduplicate_nodes,
@@ -202,5 +218,4 @@ def create_pipeline(**kwargs) -> Pipeline:
             ]
         )
     )
-
     return sum(pipelines)

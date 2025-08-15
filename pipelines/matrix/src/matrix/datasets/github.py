@@ -1,30 +1,14 @@
 import os
 import tempfile
+from abc import ABC, abstractmethod
 from typing import Any
 
 import requests
-from kedro_datasets.pandas import CSVDataset
+from kedro.io.core import PROTOCOL_DELIMITER
+from kedro_datasets.pandas import CSVDataset, ExcelDataset
 
 
-class GitHubReleaseCSVDataset(CSVDataset):
-    """
-    A Kedro dataset for loading CSV files from GitHub release assets.
-
-    This dataset downloads CSV files directly from GitHub release assets,
-    handling authentication and temporary file management automatically.
-
-    Example:
-        ```python
-        dataset = GitHubReleaseCSVDataset(
-            repository_url="https://github.com/owner/repo",
-            release_name="v1.0.0",
-            release_asset_name="data.csv",
-            fs_args={"Authorization": "token ghp_..."}
-        )
-        df = dataset.load()
-        ```
-    """
-
+class GitHubReleaseBaseDataset(ABC):
     def __init__(
         self,
         repository_url: str,
@@ -35,7 +19,7 @@ class GitHubReleaseCSVDataset(CSVDataset):
         metadata: dict[str, Any] | None = None,
     ) -> None:
         """
-        Initialize the GitHub Release CSV Dataset.
+        Initialize the GitHub Release Base Dataset.
 
         Args:
             repository_url: GitHub repository URL (e.g., "https://github.com/owner/repo")
@@ -168,6 +152,39 @@ class GitHubReleaseCSVDataset(CSVDataset):
             temp_file.write(content)
             return temp_file.name
 
+    @abstractmethod
+    def load(self):
+        pass
+
+
+class GitHubReleaseCSVDataset(GitHubReleaseBaseDataset, CSVDataset):
+    def __init__(
+        self,
+        repository_url: str,
+        release_name: str,
+        release_asset_name: str,
+        load_args: dict[str, Any] | None = None,
+        fs_args: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ):  # Initialize base GitHub functionality
+        GitHubReleaseBaseDataset.__init__(
+            self,
+            repository_url=repository_url,
+            release_name=release_name,
+            release_asset_name=release_asset_name,
+            load_args=load_args,
+            fs_args=fs_args,
+            metadata=metadata,
+        )
+        # Initialize CSV dataset functionality
+        CSVDataset.__init__(
+            self,
+            filepath=self.release_url,
+            fs_args=fs_args,
+            load_args=load_args,
+            metadata=metadata,
+        )
+
     def load(self):
         """
         Load CSV data from a GitHub release asset.
@@ -207,3 +224,41 @@ class GitHubReleaseCSVDataset(CSVDataset):
 
             if os.path.exists(temp_filepath):
                 os.unlink(temp_filepath)
+
+
+class GitHubReleaseExcelDataset(GitHubReleaseBaseDataset, ExcelDataset):
+    def __init__(
+        self,
+        repository_url: str,
+        release_name: str,
+        release_asset_name: str,
+        load_args: dict[str, Any] | None = None,
+        fs_args: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ):
+        GitHubReleaseBaseDataset.__init__(
+            self,
+            repository_url=repository_url,
+            release_name=release_name,
+            release_asset_name=release_asset_name,
+            load_args=load_args,
+            fs_args=fs_args,
+            metadata=metadata,
+        )
+        # Initialize Excel dataset functionality
+        ExcelDataset.__init__(
+            self,
+            filepath=self.release_url,
+            fs_args=fs_args,
+            load_args=load_args,
+            metadata=metadata,
+        )
+
+    def load(self):
+        release_json = self._get_release_json(self.release_url, self.fs_args)
+        asset_id = self._get_asset_id(release_json, self.release_name, self.release_asset_name)
+
+        asset_url = f"{self.release_url}/assets/{asset_id}".removeprefix(f"{self._protocol}{PROTOCOL_DELIMITER}")
+        self._filepath = asset_url
+
+        return ExcelDataset.load(self)
