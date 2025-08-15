@@ -442,23 +442,6 @@ If no project is listed, then it can be set by running:
 gcloud config set project mtrx-hub-dev-3of
 ```
 
-### Issue with kedro run -e test -p test after updating git pull.
-
-```
-filter_by_category() missing 1 required positional argument: 'categories
-```
-
-This is due to local libraries from `libs/` (e.g. `matrix-fabricator`) being cached in the uv cache
-and thus not being installed to the latest version when running `make install`. Cleaning
-the uv cache solves this issue:
-
-```bash
-uv cache clean
-make clean
-make install
-```
-
-
 ### Issues with Neo4j authentication
 
 ```
@@ -480,22 +463,6 @@ if you see neo4j running, try:
 ```bash
 brew services stop neo4j
 ```
-
-
-### Legacy package reference errors
-
-If you encounter errors referring to old package structures like `./packages/data_fabricator` or similar path-based dependencies, this indicates you're working with an outdated repository setup. We've migrated to a modern uv workspace structure with libraries in `libs/`.
-
-**Solution**:
-1. Ensure you're working with the latest version of the repository
-2. Clean your environment and reinstall:
-```bash
-uv cache clean
-make clean
-make install
-```
-
-3. If you have old references to `packages/` directory, these are no longer used. The new structure uses `libs/` with individual `pyproject.toml` files for each library.
 
 
 ### Error: Permission Denied When Deleting RAW Data Files
