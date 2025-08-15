@@ -42,6 +42,22 @@ def enrich_embeddings(
     )
 
 
+def _create_flag_column(matrix: pd.DataFrame, pairs: pd.DataFrame) -> pd.Series:
+    """Create a flag column for a given matrix and pairs dataframe
+    Args:
+        matrix: Drug-disease pairs dataset.
+        pairs: Labelled ground truth drug-disease pairs dataset.
+
+    Returns:
+        Matrix dataframe with flag column.
+    """
+    pairs_set = set(zip(pairs["source"], pairs["target"]))
+    # Ensure the function returns a Series
+    result = matrix.apply(lambda row: (row["source"], row["target"]) in pairs_set, axis=1)
+
+    return result.astype(bool)
+
+
 def _add_flag_columns(
     matrix: pd.DataFrame,
     known_pairs: pd.DataFrame,
@@ -59,35 +75,33 @@ def _add_flag_columns(
     Returns:
         Pairs dataset with flag columns.
     """
-
-    def create_flag_column(pairs):
-        pairs_set = set(zip(pairs["source"], pairs["target"]))
-        # Ensure the function returns a Series
-        result = matrix.apply(lambda row: (row["source"], row["target"]) in pairs_set, axis=1)
-
-        return result.astype(bool)
-
     # Flag known positives and negatives
     test_pairs = known_pairs[known_pairs["split"].eq("TEST")]
     test_pair_is_pos = test_pairs["y"].eq(1)
     test_pos_pairs = test_pairs[test_pair_is_pos]
     test_neg_pairs = test_pairs[~test_pair_is_pos]
-    matrix["is_known_positive"] = create_flag_column(test_pos_pairs)
-    matrix["is_known_negative"] = create_flag_column(test_neg_pairs)
+    matrix["is_known_positive"] = _create_flag_column(matrix, test_pos_pairs)
+    matrix["is_known_negative"] = _create_flag_column(matrix, test_neg_pairs)
 
     # TODO: Need to make this dynamic
     # Flag clinical trials data
     clinical_trials = clinical_trials.rename(columns={"subject": "source", "object": "target"})
-    matrix["trial_sig_better"] = create_flag_column(clinical_trials[clinical_trials["significantly_better"] == 1])
-    matrix["trial_non_sig_better"] = create_flag_column(
-        clinical_trials[clinical_trials["non_significantly_better"] == 1]
+    matrix["trial_sig_better"] = _create_flag_column(
+        matrix, clinical_trials[clinical_trials["significantly_better"] == 1]
     )
-    matrix["trial_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["non_significantly_worse"] == 1])
-    matrix["trial_non_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["significantly_worse"] == 1])
+    matrix["trial_non_sig_better"] = _create_flag_column(
+        matrix, clinical_trials[clinical_trials["non_significantly_better"] == 1]
+    )
+    matrix["trial_sig_worse"] = _create_flag_column(
+        matrix, clinical_trials[clinical_trials["non_significantly_worse"] == 1]
+    )
+    matrix["trial_non_sig_worse"] = _create_flag_column(
+        matrix, clinical_trials[clinical_trials["significantly_worse"] == 1]
+    )
 
     # Flag off label data
     off_label = off_label.rename(columns={"subject": "source", "object": "target"})
-    matrix["off_label"] = create_flag_column(off_label)  # all pairs are positive
+    matrix["off_label"] = _create_flag_column(matrix, off_label)  # all pairs are positive
     return matrix
 
 
@@ -159,6 +173,29 @@ def generate_pairs(
     matrix = matrix[~is_in_train]
     # Add flag columns for known positives and negatives
     matrix = _add_flag_columns(matrix, known_pairs, clinical_trials, off_label)
+    return matrix
+
+
+def map_private_pairs(
+    matrix: pd.DataFrame,
+    orchard: pd.DataFrame = None,
+) -> pd.DataFrame:
+    """Function to map private pairs to matrix dataframe
+
+    Args:
+        matrix: Matrix dataframe containing all combinations of drugs and diseases.
+        orchard: Orchard Pairs to be mapped to the matrix.
+
+    Returns:
+        Matrix dataframe with private pairs mapped (if present).
+    """
+    if orchard is not None:
+        orchard = orchard.rename(columns={"subject": "source", "object": "target"})
+        matrix["high_evidence_orchard"] = _create_flag_column(matrix, orchard[orchard["high_evidence_review"] == 1])
+        matrix["mid_evidence_orchard"] = _create_flag_column(matrix, orchard[orchard["mid_evidence_review"] == 1])
+        matrix["archive_biomedical_orchard"] = _create_flag_column(
+            matrix, orchard[orchard["archive_biomedical_review"] == 1]
+        )
     return matrix
 
 

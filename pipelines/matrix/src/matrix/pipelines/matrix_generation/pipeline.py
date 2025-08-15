@@ -13,6 +13,9 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create matrix generation pipeline."""
 
     model_name = settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")["model_name"]
+    private_sources = [
+        source["name"] for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration") if source.get("is_private")
+    ]
 
     # Load cross-validation information
     cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING().get("cross_validation")
@@ -20,7 +23,6 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # Initial nodes computing matrix pairs and flags
     pipelines = []
-
     # Add shared nodes
     pipelines.append(
         pipeline(
@@ -55,9 +57,22 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "clinical_trials": "integration.int.ec_clinical_trails.edges.norm@pandas",
                             "off_label": "integration.int.off_label.edges.norm@pandas",
                         },
-                        outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs@pandas",
+                        outputs=f"matrix_generation.int.fold_{fold}.matrix_pairs",
                         name=f"generate_matrix_pairs_fold_{fold}",
-                    )
+                    ),
+                    ArgoNode(
+                        func=nodes.map_private_pairs,
+                        inputs={
+                            "matrix": f"matrix_generation.int.fold_{fold}.matrix_pairs",
+                            **(
+                                {"orchard": "integration.int.orchard.edges.norm@pandas"}
+                                if "orchard" in private_sources
+                                else {}
+                            ),
+                        },
+                        outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs@pandas",
+                        name=f"map_private_pairs_fold_{fold}",
+                    ),
                 ]
             )
         )
