@@ -2,7 +2,6 @@ import itertools
 import random
 
 import networkx as nx
-import numpy as np
 import pandas as pd
 from kedro.pipeline import Pipeline, node, pipeline
 
@@ -11,13 +10,13 @@ from matrix.utils.fabrication import fabricate_datasets
 from . import nodes
 
 
-def _create_random_pairs(
+def _create_pairs(
     drug_list: pd.DataFrame,
     disease_list: pd.DataFrame,
     num: int,
     seed: int = 42,
 ) -> pd.DataFrame:
-    """Create random drug-disease pairs. Ensures no duplicate pairs.
+    """Creates 2 sets of random drug-disease pairs. Ensures no duplicate pairs.
 
     Args:
         drug_list: Dataframe containing the list of drugs.
@@ -26,7 +25,7 @@ def _create_random_pairs(
         seed: Random seed.
 
     Returns:
-        Dataframe containing unique drug-disease pairs.
+        Two dataframes, each containing 'num' unique drug-disease pairs.
     """
     random.seed(seed)
 
@@ -71,65 +70,6 @@ def remove_overlap(disease_list: pd.DataFrame, drug_list: pd.DataFrame):
     disease_list = disease_list[~overlap_mask_disease]
 
     return {"disease_list": disease_list, "drug_list": drug_list}
-
-
-def _create_ec_gt_pairs(
-    drug_list: pd.DataFrame,
-    disease_list: pd.DataFrame,
-    num: int = 100,
-    seed: int = 42,
-) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Create 2 sets of random drug-disease pairs with additional metadata. Wrapper for _create_random_pairs.
-
-    Returns:
-        Two dataframes containing unique drug-disease pairs with metadata.
-    """
-    positives, negatives = _create_random_pairs(drug_list, disease_list, num, seed)
-
-    BOOL_COLS = [
-        "is_diagnostic_agent",
-        "is_allergen",
-        "llm_nameres_correct",
-        "llm_nameres_correct_drug",
-        "downfilled from mondo",
-    ]
-    STRING_COLS = [
-        "final normalized drug label",
-        "final normalized disease label",
-        "active ingredient",
-        "contraindications",
-        "disease contraindicated",
-        "disease id nameres",
-        "disease label nameres",
-        "llm_nameres_correct",
-        "llm disease id",
-        "drug id nameres",
-        "drug label nameres",
-        "final normalized disease id",
-        "final normalized disease label",
-        "final normalized drug label",
-        "llm drug id",
-    ]
-    # Rename columns
-    positives = positives.rename(
-        columns={"source": "final normalized drug id", "target": "final normalized disease id"}
-    )
-    positives["final normalized disease label"] = positives["final normalized disease id"]
-    positives["final normalized drug label"] = positives["final normalized drug id"]
-    positives["downfilled from mondo"] = np.random.choice([True, False], len(positives), p=[0.3, 0.7])
-    negatives = negatives.rename(
-        columns={"source": "final normalized drug id", "target": "final normalized disease id"}
-    )
-    positives["id"] = positives["final normalized drug id"] + "|" + positives["final normalized disease id"]
-    negatives["id"] = negatives["final normalized drug id"] + "|" + negatives["final normalized disease id"]
-
-    for col in STRING_COLS:
-        negatives[col] = np.random.choice(["string", "dummy"], len(negatives), p=[0.3, 0.7])
-
-    for col in BOOL_COLS:
-        negatives[col] = np.random.choice([True, False], len(negatives), p=[0.3, 0.7])
-
-    return positives, negatives
 
 
 def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.DataFrame):
@@ -270,7 +210,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="fabricate_embiology_datasets",
             ),
             node(
-                func=_create_random_pairs,
+                func=_create_pairs,
                 inputs=[
                     "ingestion.raw.drug_list",
                     "ingestion.raw.disease_list",
