@@ -156,7 +156,6 @@ session_store.db
 
 mlruns
 pipelines/matrix/src/matrix/templates/*.yml
-argo-workflow.yml
 templates/*.yml
 templates/argo-workflow-template.yml
 
