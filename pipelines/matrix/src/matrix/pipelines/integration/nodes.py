@@ -104,6 +104,7 @@ def union_and_deduplicate_nodes(
         unioned_nodes.join(core_id_mapping.withColumnRenamed("normalized_id", "id"), on="id", how="left")
         .withColumn("id", F.coalesce("core_id", "id"))
         .withColumn("name", F.coalesce("core_name", "name"))
+        .withColumn("core_type", F.col("core_type"))
         .drop("core_id", "core_name")
     )
 
@@ -115,6 +116,7 @@ def union_and_deduplicate_nodes(
             F.first("category", ignorenulls=True).alias("category"),
             F.first("description", ignorenulls=True).alias("description"),
             F.first("international_resource_identifier", ignorenulls=True).alias("international_resource_identifier"),
+            F.first("core_type", ignorenulls=True).alias("core_type"),
             F.flatten(F.collect_set("equivalent_identifiers")).alias("equivalent_identifiers"),
             F.flatten(F.collect_set("all_categories")).alias("all_categories"),
             F.flatten(F.collect_set("labels")).alias("labels"),
