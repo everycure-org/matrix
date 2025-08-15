@@ -27,7 +27,7 @@ on:
         value: ${{ jobs.ci.outputs.status }}
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: matrix-ci-reusable-${{ github.ref }}
   cancel-in-progress: true
 
 env:
