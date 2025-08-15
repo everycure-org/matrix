@@ -114,24 +114,12 @@ embeddings.topological_estimator:
 ```
 
 
-Note that Feature pipeline at the moment also relies on neo4j instance with a lot of memory. Make sure that your docker instance of neo4j has appropriate amount of memory allocated (as we have specified in cloud parameters)
+Note that Feature pipeline at the moment also relies on neo4j instance with a lot of memory. Make sure that your docker instance of neo4j has appropriate amount of memory allocated (as we have specified in cloud parameters). Please add the following to the Neo4J Environment file or settings (as per your Neo4J instruction). Adjust accordingly.
 
 ```bash
-docker run -d --name neo4j \
-  -p 7474:7474 -p 7687:7687 \
-  --restart unless-stopped \
-  --memory=80g \
-  -e NEO4J_AUTH=neo4j/admin \
-  -e NEO4J_dbms_security_auth__minimum__password__length=5 \
-  -e NEO4J_dbms_default__database=analytics \
-  -e NEO4J_PLUGINS='["apoc","graph-data-science"]' \
-  -e NEO4J_dbms_security_procedures_unrestricted='apoc.*,gds.*' \
-  -e NEO4J_dbms_security_procedures_allowlist='apoc.*,gds.*' \
-  -e NEO4J_server_memory_heap_initial__size=40g \
-  -e NEO4J_server_memory_heap_max__size=40g \
-  -e NEO4J_server_memory_pagecache_size=8g \
-  -v neo4j_data:/data -v neo4j_logs:/logs -v neo4j_plugins:/plugins \
-  neo4j:5
+  NEO4J_server_memory_heap_initial__size=40g
+  NEO4J_server_memory_heap_max__size=40g
+  NEO4J_server_memory_pagecache_size=8g
 ```
 
 Once you have that ready, you can run
