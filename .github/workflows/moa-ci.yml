@@ -1,16 +1,21 @@
 name: MoA CI pipline
 
 on:
-    pull_request_review:
-      types: [submitted]
-  
-    push:
-      branches:
-        - main
-      paths: 
-        - services/moa_visualizer/**
-        - .github/workflows/moa-ci.yml
+  workflow_call:
+    inputs:
+      run_on_main_approved:
+        description: 'Whether this is running on main branch with approved review'
+        required: false
+        type: boolean
+        default: false
+    outputs:
+      ci_status:
+        description: 'Status of the CI run'
+        value: ${{ jobs.ci.outputs.status }}
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   # leveraging a paths-filter approach to be able to make this run required for all PRs while still
@@ -18,7 +23,7 @@ jobs:
   # FUTURE eventually github will likely fix this
   # https://github.com/orgs/community/discussions/26698
   paths_filter:
-    if: github.event.pull_request.draft == false || github.ref == 'refs/heads/main' && github.event.review.state == 'approved'
+    if: github.event.pull_request.draft == false || github.ref == 'refs/heads/main'
     runs-on: 'ubuntu-latest'
     permissions: 
       pull-requests: read
@@ -43,7 +48,7 @@ jobs:
   ci:
     runs-on:  'self-hosted'
     needs: [paths_filter]
-    if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main') && github.event.review.state == 'approved'
+    if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
     defaults:
       run:
         working-directory: ./services/moa_visualizer
@@ -57,7 +62,7 @@ jobs:
 
   push_image:
       needs: [ci]
-      if: github.ref == 'refs/heads/main' && github.event.review.state == 'approved'
+      if: github.ref == 'refs/heads/main'
       runs-on: 'self-hosted'
       environment: dev
       permissions: write-all
