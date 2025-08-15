@@ -8,6 +8,7 @@ from pyspark.sql.functions import col, row_number
 logger = logging.getLogger(__name__)
 
 
+# TODO: maybe use inject_object()
 def combine_ranked_pair_dataframes(
     weights: dict[str, dict], config: dict[str, any], **dataframes: ps.DataFrame
 ) -> ps.DataFrame:
@@ -19,38 +20,22 @@ def combine_ranked_pair_dataframes(
         config: Configuration parameters including limit
         **dataframes: Individual dataframes passed as keyword arguments
     """
-
-    # Extract weight values from the parameter structure
-    weight_values = {}
-    for dataset_name, weight_config in weights.items():
-        weight_values[dataset_name] = weight_config.get("weight", 1.0)
-
-    # Get limit from config
-    limit = config.get("limit", 1000)
-
-    print(f"Extracted weights: {weight_values}")  # noqa: T201
-    print(f"Using limit: {limit}")  # noqa: T201
-    print(f"Received dataframes: {list(dataframes.keys())}")  # noqa: T201
-
     if not dataframes:
         raise ValueError("At least one DataFrame must be provided")
 
-    # Convert to list of (dataframe, weight) tuples for processing
-    df_names = list(dataframes.keys())
-    dfs_with_weights = []
+    limit = config["limit"]
+    weight_values = {}
+    for dataset_name, weight_config in weights.items():
+        # TODO: handle all edge cases
+        if "weight" not in weight_config:
+            raise ValueError(f"Missing weight for dataset {dataset_name}")
+        weight_values[dataset_name] = weight_config["weight"]
 
-    for df_name in df_names:
-        df = dataframes[df_name]
-        weight = weight_values.get(df_name, 1.0)
-        dfs_with_weights.append((df, weight))
+    dfs_with_weights = [
+        (dataframes[name], weight_values[name]) for name in dataframes.keys()
+    ]
 
-    if len(dfs_with_weights) == 1:
-        return dfs_with_weights[0][0]
-
-    # Use the multiple dataframe weighted merge function
-    result = weighted_merge_multiple(dfs_with_weights, limit)
-
-    return result
+    return weighted_merge_multiple(dfs_with_weights, limit)
 
 
 def weighted_merge_multiple(dfs_with_weights, limit):
