@@ -1,6 +1,11 @@
+import logging
+from functools import reduce
+
 import pyspark.sql as ps
 from pyspark.sql import Window
 from pyspark.sql.functions import col, row_number
+
+logger = logging.getLogger(__name__)
 
 
 def combine_ranked_pair_dataframes(
@@ -61,42 +66,37 @@ def weighted_merge_multiple(dfs_with_weights, limit):
     """
     # Ensure weights sum to 1
     total_weight = sum(w for _, w in dfs_with_weights)
-    dfs_with_weights = [(df, w / total_weight) for df, w in dfs_with_weights]
+    if total_weight != 1:
+        raise ValueError("Weights must sum to 1")
 
-    # Calculate quotas for each df
+    # Calculate quota - number of rows for each dataframe
     quotas = [round(limit * w) for _, w in dfs_with_weights]
 
-    # Adjust quotas so sum matches limit (fix rounding issues)
+    # Adjust quota of first dataframe so sum matches limit (fix rounding issues)
     diff = limit - sum(quotas)
     if diff != 0:
         quotas[0] += diff
 
-    # Window spec for rank ordering
-    w_rank = Window.orderBy("rank")
-
     # Take top N from each DataFrame according to its quota
-    selected_dfs = []
+    selected_rows_from_dfs = []
     for i, ((df, weight), quota) in enumerate(zip(dfs_with_weights, quotas)):
         if quota > 0:
             df_count = df.count()
             if df_count < quota:
-                print(
+                logger.warning(
                     f"WARNING: DataFrame {i+1} has only {df_count} rows but quota is {quota}. Taking all available rows."
-                )  # noqa: T201
-            df_ranked = df.withColumn("rn", row_number().over(w_rank))
+                )
+            df_ranked = df.withColumn("rn", row_number().over(Window.orderBy("rank")))
             selected = df_ranked.filter(col("rn") <= quota).drop("rn")
-            selected_dfs.append(selected)
+            selected_rows_from_dfs.append(selected)
 
-    # Union all
-    merged = selected_dfs[0]
-    for sdf in selected_dfs[1:]:
-        merged = merged.union(sdf)
-
-    # Drop duplicates and sort by rank
+    # Union all dataframes
+    merged = reduce(lambda x, y: x.union(y), selected_rows_from_dfs)
     merged = merged.dropDuplicates(["source", "target"]).orderBy("rank").limit(limit)
 
+    # TODO: Optional - recalculate the quotas based on deduplicated data
+
     # Rewrite rank as row_number to ensure no duplicate ranks
-    final_rank_window = Window.orderBy("rank")
-    merged = merged.withColumn("rank", row_number().over(final_rank_window))
+    merged = merged.withColumn("rank", row_number().over(Window.orderBy("rank")))
 
     return merged
