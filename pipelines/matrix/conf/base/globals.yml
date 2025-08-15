@@ -34,7 +34,9 @@ data_sources:
   spoke:
     version: V5.7
   embiology:
-    version: 03032025
+  # needs to be a string as otherwise it will be parsed as a octal number
+  # https://stackoverflow.com/questions/32965846/cant-parse-yaml-correctly-when-number-contains-leading-zeros-and-for-yes-no-val
+    version: "03032025"
 # Dataset with node and edge proposals by the
 # EveryCure medical team.
   ec_medical_team:

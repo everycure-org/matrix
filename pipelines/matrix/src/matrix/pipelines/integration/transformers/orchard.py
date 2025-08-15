@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class OrchardTransformer(Transformer):
-    """Transformer for off label data"""
+    """Transformer for orchard data"""
 
     def __init__(self, version: str, pair_flags: dict[str, str]):
         super().__init__(version)
