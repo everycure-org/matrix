@@ -31,56 +31,60 @@ def sample_df1(spark):
 @pytest.fixture
 def sample_df2(spark):
     """Create second sample dataframe with ranked pairs."""
-    schema = StructType(
-        [
-            StructField("source", StringType(), False),
-            StructField("target", StringType(), False),
-            StructField("rank", IntegerType(), False),
-        ]
+    return spark.createDataFrame(
+        data=[
+            ("df2_drug6", "df2_disease6", 1),
+            ("df2_drug7", "df2_disease7", 2),
+            ("df2_drug8", "df2_disease8", 3),
+            ("df2_drug9", "df2_disease9", 4),
+            ("df2_drug10", "df1_disease10", 5),
+        ],
+        schema=StructType(
+            [
+                StructField("source", StringType(), False),
+                StructField("target", StringType(), False),
+                StructField("rank", IntegerType(), False),
+            ]
+        ),
     )
-    data = [
-        ("df2_drug6", "df2_disease6", 1),
-        ("df2_drug7", "df2_disease7", 2),
-        ("df2_drug8", "df2_disease8", 3),
-        ("df2_drug9", "df2_disease9", 4),
-        ("df2_drug10", "df1_disease10", 5),
-    ]
-    return spark.createDataFrame(data, schema)
 
 
 @pytest.fixture
 def sample_df3(spark):
     """Create third sample dataframe with ranked pairs and some duplicates."""
-    schema = StructType(
-        [
-            StructField("source", StringType(), False),
-            StructField("target", StringType(), False),
-            StructField("rank", IntegerType(), False),
-        ]
+    return spark.createDataFrame(
+        data=[
+            ("df1&df3_drug5", "df1&df3_disease5", 1),  # Duplicate with df1
+            ("df3_drug11", "df3_disease11", 2),
+            ("df3_drug12", "df3_disease12", 3),
+        ],
+        schema=StructType(
+            [
+                StructField("source", StringType(), False),
+                StructField("target", StringType(), False),
+                StructField("rank", IntegerType(), False),
+            ]
+        ),
     )
-    data = [
-        ("df1&df3_drug5", "df1&df3_disease5", 1),  # Duplicate with df1
-        ("df3_drug11", "df3_disease11", 2),
-        ("df3_drug12", "df3_disease12", 3),
-    ]
-    return spark.createDataFrame(data, schema)
 
 
 @pytest.fixture
 def sample_df4(spark):
     """Create fourth sample dataframe with only 2 rows."""
-    schema = StructType(
-        [
-            StructField("source", StringType(), False),
-            StructField("target", StringType(), False),
-            StructField("rank", IntegerType(), False),
-        ]
+
+    return spark.createDataFrame(
+        data=[
+            ("df4_drug13", "df4_disease13", 1),
+            ("df4_drug14", "df4_disease14", 2),
+        ],
+        schema=StructType(
+            [
+                StructField("source", StringType(), False),
+                StructField("target", StringType(), False),
+                StructField("rank", IntegerType(), False),
+            ]
+        ),
     )
-    data = [
-        ("df4_drug13", "df4_disease13", 1),
-        ("df4_drug14", "df4_disease14", 2),
-    ]
-    return spark.createDataFrame(data, schema)
 
 
 class TestWeightedMergeMultiple:
