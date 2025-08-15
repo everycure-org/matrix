@@ -1,0 +1,74 @@
+[build-system]
+requires = [ "setuptools",]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic.dependencies]
+ file = "requirements.txt"
+
+[tool.pytest.ini_options]
+pythonpath = "src"
+addopts = [
+    "--import-mode=importlib",
+    "--ignore=packages",
+
+]
+norecursedirs = [
+    ".venv",
+    "data",
+    "compose",
+    "packages",
+]
+markers = [
+    "integration: mark a test as an integration test.",
+    "spark: mark a test as a spark test & requires PYSPARK_PYTHON to be set appropriately",
+]
+
+[project]
+requires-python = ">=3.11"
+name = "review_list"
+readme = "README.md"
+dynamic = [ "version", "dependencies"]
+
+[project.scripts]
+review-list = "review_list.__main__:main"
+
+[project.optional-dependencies]
+dev = [ "pytest-cov~=3.0", "pytest-mock>=1.7.1, <2.0", "pytest~=7.2", "ruff~=0.12.0",]
+
+[tool.kedro]
+package_name = "review_list"
+project_name = "review-list"
+kedro_init_version = "0.19.13"
+tools = [ "Data Structure", "Kedro Viz",]
+example_pipeline = "False"
+source_dir = "src"
+
+[tool.ruff]
+line-length = 88
+show-fixes = true
+
+[project.entry-points."kedro.hooks"]
+
+
+
+[tool.coverage.report]
+fail_under = 0
+show_missing = true
+exclude_lines = [ "pragma: no cover", "raise NotImplementedError",]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = [ "F", "W", "E", "I", "UP", "PL", "T201",]
+ignore = [ "E501",]
+
+[tool.setuptools.dynamic.version]
+attr = "review_list.__version__"
+
+[tool.setuptools.packages.find]
+where = [ "src",]
+namespaces = false
+
+[tool.kedro_telemetry]
+project_id = "4f3a878a302e4832ac1adf52fcfd80b0"
