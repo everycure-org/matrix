@@ -13,7 +13,7 @@ variable "slack_webhook_url" {
 variable "cloud_build_event_filter" {
   description = "The CEL filter to apply to incoming Cloud Build events."
   type        = string
-  default     = "build.status in [Build.Status.FAILURE, Build.Status.TIMEOUT]"
+  default     = "'BRANCH_NAME' in build.substitutions && build.status in [Build.Status.FAILURE, Build.Status.TIMEOUT]"
 }
 
 variable "cloud_build_notifier_image" {
