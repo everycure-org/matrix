@@ -60,7 +60,6 @@ jobs:
   ci:
     runs-on: 'self-hosted'
     needs: [paths_filter]
-    # Only run if PR is approved, not just opened or synchronized
     if: needs.paths_filter.outputs.changed == 'true'
     outputs:
       status: ${{ steps.finally.outputs.status }}
@@ -112,7 +111,6 @@ jobs:
   matrix_ci_check:
     name: Matrix CI PR Check
     runs-on:  'self-hosted'
-    if: github.event.review.state == 'approved'
     needs: [paths_filter, ci]
     steps:
       - if: ${{ needs.paths_filter.outputs.changed == 'true' && needs.ci.outputs.status == 'failure' }}
