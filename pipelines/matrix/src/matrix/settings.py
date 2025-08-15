@@ -57,6 +57,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 # {"name": "drugmech", "integrate_in_kg": False, "has_nodes": False},
                 {"name": "ec_clinical_trails", "integrate_in_kg": False},
                 {"name": "off_label", "integrate_in_kg": False, "has_nodes": False},
+                {"name": "orchard", "integrate_in_kg": False, "has_nodes": False, "is_private": True},
             ],
             "modelling": {
                 "model_name": "xg_ensemble",  # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth
