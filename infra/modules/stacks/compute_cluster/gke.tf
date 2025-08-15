@@ -61,18 +61,63 @@ locals {
     }
   ]
 
+  # Spot node pools for cost-effective compute workloads
+  n2d_spot_node_pools = [for size in [8, 16, 32, 48, 64] : {
+    name           = "n2d-highmem-${size}-spot-nodes"
+    machine_type   = "n2d-highmem-${size}"
+    node_locations = local.default_node_locations
+    min_count      = 0
+    max_count      = 20 # Higher max count for spot instances
+    # NOTE: Local SSDs are only available to certain node groups, and hence cannot be set for the
+    # reguluar n2 nodes. The statement below allocates 2 SSDs to the node, each having a capacity of 375G.
+    # https://cloud.google.com/compute/docs/general-purpose-machines#n2d-high-mem
+    local_ssd_ephemeral_storage_count = size < 64 ? 2 : 4
+    disk_type                         = "pd-ssd"
+    disk_size_gb                      = 200
+    enable_gcfs                       = true
+    enable_gvnic                      = true
+    initial_node_count                = 0
+    spot                              = true
+    }
+  ]
+
+  # Spot GPU node pools for cost-effective GPU workloads
+  gpu_spot_node_pools = [
+    {
+      name               = "g2-standard-16-l4-spot-nodes" # 1 GPU, 16vCPUs, 64GB RAM
+      machine_type       = "g2-standard-16"
+      node_locations     = local.default_node_locations
+      min_count          = 0
+      max_count          = 30 # Higher max count for spot instances
+      local_ssd_count    = 0
+      disk_size_gb       = 200
+      disk_type          = "pd-ssd"
+      enable_gcfs        = true
+      enable_gvnic       = true
+      initial_node_count = 0
+      accelerator_count  = 1
+      accelerator_type   = "nvidia-l4"
+      gpu_driver_version = "LATEST"
+      spot               = true
+    }
+  ]
+
   # Combine all node pools
   node_pools_combined = concat(
     local.n2d_node_pools,
     local.gpu_node_pools,
-    local.management_node_pools
+    local.management_node_pools,
+    local.n2d_spot_node_pools,
+    local.gpu_spot_node_pools
   )
 
   # Define node pools that should have the large memory taint
   large_memory_pools = concat(
     [for size in [8, 16, 32, 48, 64] : "n2d-highmem-${size}-nodes"],
+    [for size in [8, 16, 32, 48, 64] : "n2d-highmem-${size}-spot-nodes"],
     [for size in [16, 32, 48, 64] : "n2-standard-${size}-nodes"],
-    ["g2-standard-16-l4-nodes"]
+    ["g2-standard-16-l4-nodes"],
+    ["g2-standard-16-l4-spot-nodes"]
   )
 
   # Create a map of node pool taints
@@ -93,6 +138,26 @@ locals {
         effect = "NO_SCHEDULE"
       }
     ],
+
+    # Add GPU and spot taints to GPU spot node pool
+    "g2-standard-16-l4-spot-nodes" = [
+      {
+        key    = "nvidia.com/gpu"
+        value  = "present"
+        effect = "NO_SCHEDULE"
+      },
+      {
+        key    = "spot"
+        value  = "true"
+        effect = "NO_SCHEDULE"
+      },
+      {
+        key    = "workload"
+        value  = "true"
+        effect = "NO_SCHEDULE"
+      }
+    ],
+
     # Small standard and highmem pools (restrict general scheduling)
     "n2-standard-4-nodes" = [
       {
@@ -128,6 +193,29 @@ locals {
         {
           key    = "node-memory-size"
           value  = "large"
+          effect = "NO_SCHEDULE"
+        },
+        {
+          key    = "workload"
+          value  = "true"
+          effect = "NO_SCHEDULE"
+        }
+      ] if !contains(keys(merge(local.node_pools_taints_map)), pool)
+    },
+    {
+      # Add spot taints for spot node pools
+      for pool in concat(
+        [for size in [8, 16, 32, 48, 64] : "n2d-highmem-${size}-spot-nodes"]
+      ) :
+      pool => [
+        {
+          key    = "node-memory-size"
+          value  = "large"
+          effect = "NO_SCHEDULE"
+        },
+        {
+          key    = "spot"
+          value  = "true"
           effect = "NO_SCHEDULE"
         },
         {
@@ -184,7 +272,8 @@ module "gke" {
   node_pools_labels = {
     for pool in local.node_pools_combined : pool.name => merge(
       {
-        gpu_node = can(pool.accelerator_count) ? "true" : "false"
+        gpu_node  = can(pool.accelerator_count) ? "true" : "false"
+        spot_node = lookup(pool, "spot", false) ? "true" : "false"
         # Billing labels for cost tracking
         cost-center       = pool.name == "management-nodes" ? "infrastructure-management" : "compute-workloads"
         workload-category = pool.name == "management-nodes" ? "platform-services" : "data-science"
@@ -196,11 +285,11 @@ module "gke" {
         service-tier     = "management"
         } : can(pool.accelerator_count) ? {
         workload-type    = "compute"
-        billing-category = "gpu-compute"
+        billing-category = lookup(pool, "spot", false) ? "gpu-compute-spot" : "gpu-compute"
         service-tier     = "compute"
         } : {
         workload-type    = "compute"
-        billing-category = "cpu-compute"
+        billing-category = lookup(pool, "spot", false) ? "cpu-compute-spot" : "cpu-compute"
         service-tier     = "compute"
       }
     )

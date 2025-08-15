@@ -199,7 +199,6 @@ google-api-core==2.25.1
     #   google-cloud-core
     #   google-cloud-iam
     #   google-cloud-storage
-    #   pandas-gbq
 google-api-python-client==2.179.0
     # via pygsheets
 google-auth==2.40.3
