@@ -104,6 +104,7 @@ def union_and_deduplicate_nodes(
         unioned_nodes.join(core_id_mapping.withColumnRenamed("normalized_id", "id"), on="id", how="left")
         .withColumn("id", F.coalesce("core_id", "id"))
         .withColumn("name", F.coalesce("core_name", "name"))
+        .withColumn("core_type", F.col("core_type"))
         .drop("core_id", "core_name")
     )
 
@@ -115,6 +116,7 @@ def union_and_deduplicate_nodes(
             F.first("category", ignorenulls=True).alias("category"),
             F.first("description", ignorenulls=True).alias("description"),
             F.first("international_resource_identifier", ignorenulls=True).alias("international_resource_identifier"),
+            F.first("core_type", ignorenulls=True).alias("core_type"),
             F.flatten(F.collect_set("equivalent_identifiers")).alias("equivalent_identifiers"),
             F.flatten(F.collect_set("all_categories")).alias("all_categories"),
             F.flatten(F.collect_set("labels")).alias("labels"),
@@ -126,6 +128,7 @@ def union_and_deduplicate_nodes(
     # this is especially important if we integrate multiple KGs
 
     if retrieve_most_specific_category:
+        # Get the updated categories
         unioned_datasets = unioned_datasets.transform(determine_most_specific_category)
 
     return unioned_datasets.select(*cols)
@@ -324,11 +327,32 @@ def normalize_core_nodes(
     )
 
 
-def create_core_id_mapping(*nodes: ps.DataFrame) -> ps.DataFrame:
-    """Creates a mapping from normalized_id to core_id for core sources."""
-    df = _union_datasets(*nodes)
+def create_core_id_mapping(**nodes: ps.DataFrame) -> ps.DataFrame:
+    """Creates a mapping from normalized_id to core_id for core sources.
 
-    df_filtered = df.select("id", "core_id", "name").filter(  # 'id' is already the normalized_id at this point
+    Args:
+        **nodes: Named DataFrames from core sources (e.g., drug_list=df1, disease_list=df2).
+
+    Returns:
+        DataFrame with columns: normalized_id, core_id, core_name, core_type.
+    """
+
+    dfs_with_core_type = []
+    for param_name, df in nodes.items():
+        # Extract core type from parameter name
+        if "drug" in param_name.lower():
+            core_type = "drug"
+        elif "disease" in param_name.lower():
+            core_type = "disease"
+
+        df_with_type = df.withColumn("core_type", F.lit(core_type))
+        dfs_with_core_type.append(df_with_type)
+
+    df = _union_datasets(*dfs_with_core_type)
+
+    df_filtered = df.select(
+        "id", "core_id", "name", "core_type"
+    ).filter(  # 'id' is already the normalized_id at this point
         (F.col("id").isNotNull()) & (F.col("core_id").isNotNull())
     )
 
@@ -353,7 +377,7 @@ def create_core_id_mapping(*nodes: ps.DataFrame) -> ps.DataFrame:
         df_filtered.dropDuplicates(["id"])
         .withColumnRenamed("id", "normalized_id")  # Ensure consistent naming for join
         .withColumnRenamed("name", "core_name")
-        .select("normalized_id", "core_id", "core_name")
+        .select("normalized_id", "core_id", "core_name", "core_type")
     )
 
 
