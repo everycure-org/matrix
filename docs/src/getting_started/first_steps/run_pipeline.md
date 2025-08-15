@@ -193,33 +193,36 @@ embeddings.topological_estimator:
     NEO4J_PASSWORD: xxx 
     ```
     
-    For simplicity we will start Neo4J in docker.
+    if not, you could start Neo4J from the `docker-compose` file.
     
     ```bash
-    docker run -d --name neo4j \
-      -p 7474:7474 -p 7687:7687 \
-      --restart unless-stopped \
-      --memory=80g \
-      -e NEO4J_AUTH=neo4j/admin \
-      -e NEO4J_dbms_security_auth__minimum__password__length=5 \
-      -e NEO4J_dbms_default__database=analytics \
-      -e NEO4J_PLUGINS='["apoc","graph-data-science"]' \
-      -e NEO4J_dbms_security_procedures_unrestricted='apoc.*,gds.*' \
-      -e NEO4J_dbms_security_procedures_allowlist='apoc.*,gds.*' \
-      -e NEO4J_server_memory_heap_initial__size=40g \
-      -e NEO4J_server_memory_heap_max__size=40g \
-      -e NEO4J_server_memory_pagecache_size=8g \
-      -v neo4j_data:/data -v neo4j_logs:/logs -v neo4j_plugins:/plugins \
-      neo4j:5
+    make compose_up
     ```
 
 !!! warning "Important: memory settings for Neo4J"
-    Please ensure that the machine you are running on has at least 128 GB of memory, as the embeddings is a intensive pipeline and require Neo4J to have at least 20 GB of ram. The above command assumes you have at least 80 GB of memory. Adjust accordingly
+    Please ensure that the machine you are running on has at least 128 GB of memory, as the embeddings is a intensive pipeline and require Neo4J to have at least 20 GB of ram. The above command assumes you have at least 80 GB of memory. Adjust accordingly. The following settings work:
+    ```bash
+        NEO4J_server_memory_heap_initial__size=40g
+        NEO4J_server_memory_heap_max__size=40g
+        NEO4J_server_memory_pagecache_size=8g
+    ```
+
+    You could add this to the Neo4J environment section of the `docker-compose` file or if you are running a standalone version, modify the settings accordingly. This is to prevent you from running into an OOM error as the `embeddings` pipeline is intensive.
+
     
 
 ```bash
 kedro run -p embeddings -e base
 ```
+
+!!! warning "Running into `UnsupportedAdministrationCommand` error"
+    if you run into the following error:
+    ```
+    {code: Neo.ClientError.Statement.UnsupportedAdministrationCommand} {message: Unsupported administration command: CREATE OR REPLACE DATABASE `analytics`}
+    ```
+    This is due to Neo4J Community Edition limitation. We are using the Neo4J Enterprise Edition and the command is supported. You would need to edit file [`pipelines/matrix/conf/base/embeddings/catalog.yml`](https://github.com/everycure-org/matrix/blob/3c5243cd4efef7b87200ce9a8cb09559bfbe7494/pipelines/matrix/conf/base/embeddings/catalog.yml#L45C6-L45C20) and remove the `mode: overwrite`.
+
+    Please note removing `mode: overwrite` will not delete the data when the pipeline is re-run. You would have to manually delete the data from the Neo4J folder.
 
 ## Finding Data Products while running the modelling pipeline
 
