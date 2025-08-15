@@ -34,10 +34,9 @@ concurrency:
 jobs:
   # Trigger the main CI workflow with approval condition
   trigger_ci:
+    if: github.ref == 'refs/heads/main' && github.event.review.state == 'approved'
     uses: ./.github/workflows/matrix-ci.yml
     # Pass the main + approved condition as input
-    with:
-      run_on_main_approved: ${{ github.ref == 'refs/heads/main' && github.event.review.state == 'approved' }}
     secrets: inherit
     permissions:
       contents: read
