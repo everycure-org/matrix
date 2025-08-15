@@ -49,11 +49,13 @@ integration:
     kgml_xdtd_ground_truth: 
       name: kgml_xdtd_ground_truth
       transformer:
-        _object: matrix.pipelines.integration.transformers.kgml_xdtd_ground_truth.GroundTruthTransformer
+        _object: matrix.pipelines.integration.transformers.kgml_xdtd_ground_truth.KGMLGroundTruthTransformer
+        version: ${globals:data_sources.kgml_xdtd_gt.version}
     ec_ground_truth: 
       name: ec_ground_truth
       transformer:
-        _object: matrix.pipelines.integration.transformers.ec_ground_truth.GroundTruthTransformer
+        _object: matrix.pipelines.integration.transformers.ec_ground_truth.ECGroundTruthTransformer
+        version: ${globals:data_sources.ec_gt.version}
     off_label:
       name: off_label
       transformer:

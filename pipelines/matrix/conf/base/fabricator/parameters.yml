@@ -1045,3 +1045,102 @@ fabricator.ec_gt:
           sample_values:
             - True
             - False
+
+# fabricator.drugbank_gt:
+#     positive_edges:
+#       num_rows: 50
+#       columns:
+#         "final normalized drug id":
+#           type: copy_column
+#           source_column: rtx_nodes.id
+#           sample:
+#             num_rows: "@positive_edges.num_rows"
+#             seed: 40399
+#         "final normalized drug label":
+#           type: copy_column
+#           source_column: rtx_nodes.name
+#           sample:
+#             num_rows: "@positive_edges.num_rows"
+#             seed: 40399
+#         "final normalized disease id":
+#           type: copy_column
+#           source_column: rtx_nodes.id
+#           sample:
+#             num_rows: "@positive_edges.num_rows"
+#             seed: 40389
+#         "final normalized disease label":
+#           type: copy_column
+#           source_column: rtx_nodes.name
+#           sample:
+#             num_rows: "@positive_edges.num_rows"
+#             seed: 40389
+#         "drug|disease":
+#           type: row_apply
+#           input_columns: [ "final normalized drug id", "final normalized disease id" ]
+#           row_func: "lambda row: f'{row[\"final normalized drug id\"]}|{row[\"final normalized disease id\"]}'"
+#           resize: True
+#           seed: 40189
+#         "FDA":
+#           type: generate_values
+#           sample_values:
+#             - 1.0
+#             - Null
+#         "EMA":
+#           type: generate_values
+#           sample_values:
+#             - 1.0
+#             - Null
+#         "PMA":
+#           type: generate_values
+#           sample_values:
+#             - 1.0
+#             - Null
+#     negative_edges:
+#       num_rows: 50
+#       columns:
+#         "active ingredients":
+#           type: copy_column
+#           source_column: rtx_nodes.name
+#           sample:
+#             num_rows: "@negative_edges.num_rows"
+#             seed: 40399
+#         "final normalized disease id":
+#           type: copy_column
+#           source_column: rtx_nodes.id
+#           sample:
+#             num_rows: "@negative_edges.num_rows"
+#             seed: 40189
+#         "final normalized disease label":
+#           type: copy_column
+#           source_column: rtx_nodes.name
+#           sample:
+#             num_rows: "@negative_edges.num_rows"
+#             seed: 40189
+#         "final normalized drug id":
+#           type: copy_column
+#           source_column: rtx_nodes.id
+#           sample:
+#             num_rows: "@negative_edges.num_rows"
+#             seed: 40199
+#         "final normalized drug label":
+#           type: copy_column
+#           source_column: rtx_nodes.name
+#           sample:
+#             num_rows: "@negative_edges.num_rows"
+#             seed: 40199
+#         "drug|disease":
+#           type: row_apply
+#           input_columns: ["negative_edges.active ingredients", "negative_edges.final normalized disease id"]
+#           row_func: "lambda row: f'{row[\"final normalized drug id\"]}|{row[\"final normalized disease id\"]}'"
+#           resize: True
+#           seed: 40189
+#         "is_allergen":
+#           type: generate_values
+#           sample_values:
+#             - True
+#             - False
+#         "is_diagnostic_agent":
+#           type: generate_values
+#           sample_values:
+#             - True
+#             - False

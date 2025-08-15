@@ -55,14 +55,14 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 {
                     "name": "kgml_xdtd_ground_truth",
                     "has_nodes": False,
+                    "has_edges": True,
                     "integrate_in_kg": False,
-                    "is_ground_truth": True,
                 },
                 {
                     "name": "ec_ground_truth",
                     "has_nodes": False,
+                    "has_edges": True,
                     "integrate_in_kg": False,
-                    "is_ground_truth": True,
                 },
                 # {"name": "drugmech", "integrate_in_kg": False, "has_nodes": False},
                 # {"name": "ec_medical_team", "integrate_in_kg": True},

@@ -171,7 +171,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         *[
                             f'integration.int.{source["name"]}.edges.norm@spark'
                             for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
-                            if source.get("ground_truth", False)
+                            if ("ground_truth" in source["name"])
                         ],
                     ],
                     outputs="integration.prm.unified_ground_truth_edges",
