@@ -4,15 +4,28 @@
 name: Matrix CI Approval Trigger
 
 on:
-  pull_request_review:
-    types: [submitted]
+
+  pull_request:
+    # Sequence of patterns matched against refs/heads
+    branches:
+      - main
+      - develop
+    # from https://github.com/reviewdog/action-eslint/issues/29#issuecomment-985939887
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
 
   push:
     branches:
       - main
     paths: 
       - pipelines/matrix/**
-      - .github/workflows/matrix-ci*.yml
+      - .github/workflows/matrix-ci.yml
+
+  pull_request_review:
+    types: [submitted]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
