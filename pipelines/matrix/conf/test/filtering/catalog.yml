@@ -1,5 +1,5 @@
 _spark_json: &_spark_json
-  type: matrix.datasets.gcp.LazySparkDataset
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
   file_format: json
   save_args:
     mode: overwrite

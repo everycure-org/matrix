@@ -6,8 +6,9 @@
 
 
 # IDE
-.vscode/
 .idea/
+.vscode/
+!.vscode/settings.json
 
 # Drawio
 *.bkp
@@ -51,3 +52,6 @@ gha-kubeconfig*
 /backend.tf
 **/*.gen.tf
 /provider.tf
+
+.claude/*
+**/*.egg-info/
