@@ -63,6 +63,7 @@ def _add_flag_columns(
     known_pairs: pd.DataFrame,
     clinical_trials: Optional[pd.DataFrame] = None,
     off_label: Optional[pd.DataFrame] = None,
+    orchard: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """Adds boolean columns flagging known positives and known negatives.
 
@@ -71,37 +72,48 @@ def _add_flag_columns(
         known_pairs: Labelled ground truth drug-disease pairs dataset.
         clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
         off_label: Pairs dataset representing off label usage.
+        orchard: Pairs dataset representing orchard feedback data.
 
     Returns:
         Pairs dataset with flag columns.
     """
+
+    def create_flag_column(pairs):
+        pairs_set = set(zip(pairs["source"], pairs["target"]))
+        # Ensure the function returns a Series
+        result = matrix.apply(lambda row: (row["source"], row["target"]) in pairs_set, axis=1)
+
+        return result.astype(bool)
+
     # Flag known positives and negatives
     test_pairs = known_pairs[known_pairs["split"].eq("TEST")]
     test_pair_is_pos = test_pairs["y"].eq(1)
     test_pos_pairs = test_pairs[test_pair_is_pos]
     test_neg_pairs = test_pairs[~test_pair_is_pos]
-    matrix["is_known_positive"] = _create_flag_column(matrix, test_pos_pairs)
-    matrix["is_known_negative"] = _create_flag_column(matrix, test_neg_pairs)
+    matrix["is_known_positive"] = create_flag_column(test_pos_pairs)
+    matrix["is_known_negative"] = create_flag_column(test_neg_pairs)
 
     # TODO: Need to make this dynamic
     # Flag clinical trials data
     clinical_trials = clinical_trials.rename(columns={"subject": "source", "object": "target"})
-    matrix["trial_sig_better"] = _create_flag_column(
-        matrix, clinical_trials[clinical_trials["significantly_better"] == 1]
+    matrix["trial_sig_better"] = create_flag_column(clinical_trials[clinical_trials["significantly_better"] == 1])
+    matrix["trial_non_sig_better"] = create_flag_column(
+        clinical_trials[clinical_trials["non_significantly_better"] == 1]
     )
-    matrix["trial_non_sig_better"] = _create_flag_column(
-        matrix, clinical_trials[clinical_trials["non_significantly_better"] == 1]
-    )
-    matrix["trial_sig_worse"] = _create_flag_column(
-        matrix, clinical_trials[clinical_trials["non_significantly_worse"] == 1]
-    )
-    matrix["trial_non_sig_worse"] = _create_flag_column(
-        matrix, clinical_trials[clinical_trials["significantly_worse"] == 1]
-    )
+    matrix["trial_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["non_significantly_worse"] == 1])
+    matrix["trial_non_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["significantly_worse"] == 1])
 
     # Flag off label data
     off_label = off_label.rename(columns={"subject": "source", "object": "target"})
-    matrix["off_label"] = _create_flag_column(matrix, off_label)  # all pairs are positive
+    matrix["off_label"] = create_flag_column(off_label)  # all pairs are positive
+
+    # Flag orchard data if available
+    if orchard is not None:
+        orchard = orchard.rename(columns={"subject": "source", "object": "target"})
+        matrix["high_evidence_orchard"] = create_flag_column(orchard[orchard["high_evidence_review"] == 1])
+        matrix["mid_evidence_orchard"] = create_flag_column(orchard[orchard["mid_evidence_review"] == 1])
+        matrix["archive_biomedical_orchard"] = create_flag_column(orchard[orchard["archive_biomedical_review"] == 1])
+
     return matrix
 
 
@@ -128,6 +140,7 @@ def generate_pairs(
     graph: KnowledgeGraph,
     clinical_trials: Optional[pd.DataFrame] = None,
     off_label: Optional[pd.DataFrame] = None,
+    orchard: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """Function to generate matrix dataset.
 
@@ -140,6 +153,7 @@ def generate_pairs(
         graph: Object containing node embeddings.
         clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
         off_label: Pairs dataset representing off label drug disease uses.
+        orchard: Pairs dataset representing orchard feedback data.
 
     Returns:
         Pairs dataframe containing all combinations of drugs and diseases that do not lie in the training set.
@@ -189,13 +203,6 @@ def map_private_pairs(
     Returns:
         Matrix dataframe with private pairs mapped (if present).
     """
-    if orchard is not None:
-        orchard = orchard.rename(columns={"subject": "source", "object": "target"})
-        matrix["high_evidence_orchard"] = _create_flag_column(matrix, orchard[orchard["high_evidence_review"] == 1])
-        matrix["mid_evidence_orchard"] = _create_flag_column(matrix, orchard[orchard["mid_evidence_review"] == 1])
-        matrix["archive_biomedical_orchard"] = _create_flag_column(
-            matrix, orchard[orchard["archive_biomedical_review"] == 1]
-        )
     return matrix
 
 

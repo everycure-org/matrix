@@ -56,22 +56,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "graph": "matrix_generation.feat.nodes@kg",
                             "clinical_trials": "integration.int.ec_clinical_trails.edges.norm@pandas",
                             "off_label": "integration.int.off_label.edges.norm@pandas",
-                        },
-                        outputs=f"matrix_generation.int.fold_{fold}.matrix_pairs",
-                        name=f"generate_matrix_pairs_fold_{fold}",
-                    ),
-                    ArgoNode(
-                        func=nodes.map_private_pairs,
-                        inputs={
-                            "matrix": f"matrix_generation.int.fold_{fold}.matrix_pairs",
                             **(
                                 {"orchard": "integration.int.orchard.edges.norm@pandas"}
                                 if "orchard" in private_sources
                                 else {}
                             ),
                         },
-                        outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs@pandas",
-                        name=f"map_private_pairs_fold_{fold}",
+                        outputs=f"matrix_generation.int.fold_{fold}.matrix_pairs",
+                        name=f"generate_matrix_pairs_fold_{fold}",
                     ),
                 ]
             )
