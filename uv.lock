@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = "==3.11.13"
 resolution-markers = [
     "sys_platform != 'win32'",
@@ -288,7 +288,7 @@ wheels = [
 
 [[package]]
 name = "biolink-model"
-version = "4.2.5"
+version = "4.2.6rc4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -301,9 +301,9 @@ dependencies = [
     { name = "stringcase" },
     { name = "yamllint" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/71/64/7647614058c5bab81c1ac86113e162a9d6487bae435377e2e14432ae40fc/biolink_model-4.2.5.tar.gz", hash = "sha256:1b8eb43ccbe133da52efacc90dd9599edc02db9d9be985e02cfd7b66b9d27d0b", size = 766629, upload-time = "2024-11-11T20:48:43.348Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/96/21/c9eddb330955f6e8d0a40cb48623f95368ef6e5302c32425c6d3ce4d804d/biolink_model-4.2.6rc4.tar.gz", hash = "sha256:044e0e55c0a575888e5bb8e1ae14c76d41a8ae0e20e96a008677e6392f38fd96", size = 771687, upload-time = "2025-03-01T01:00:07.734Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/47/03/20dc9427835b099bda3f2fea57ef0b432ddf8000614e20ab501a752e87b8/biolink_model-4.2.5-py3-none-any.whl", hash = "sha256:949079f33daa57d1a212fc756621bcc12746ec24bd85fd7fe2587848d18e4896", size = 236090, upload-time = "2024-11-11T20:48:42.034Z" },
+    { url = "https://files.pythonhosted.org/packages/8b/06/63067e130cdefaa148d90ccf45f4c519c438905af44f147ad5cb11145606/biolink_model-4.2.6rc4-py3-none-any.whl", hash = "sha256:b22aeb38a70fee451ac36fcc25b15a5256633c640529a02d16b3bd4a8e61e870", size = 246924, upload-time = "2025-03-01T01:00:05.15Z" },
 ]
 
 [[package]]
@@ -703,15 +703,6 @@ wheels = [
 ]
 
 [[package]]
-name = "dnspython"
-version = "2.7.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b5/4a/263763cb2ba3816dd94b08ad3a33d5fdae34ecb856678773cc40a3605829/dnspython-2.7.0.tar.gz", hash = "sha256:ce9c432eda0dc91cf618a5cedf1a4e142651196bbcd2c80e89ed5a907e5cfaf1", size = 345197, upload-time = "2024-10-05T20:14:59.362Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/68/1b/e0a87d256e40e8c888847551b20a017a6b98139178505dc7ffb96f04e954/dnspython-2.7.0-py3-none-any.whl", hash = "sha256:b4c34b7d10b51bcc3a5071e7b8dee77939f1e878477eeecc965e9835f63c6c86", size = 313632, upload-time = "2024-10-05T20:14:57.687Z" },
-]
-
-[[package]]
 name = "docker"
 version = "7.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -738,19 +729,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/62/eb/e9d1249ff56b11e63fd8c7d0fcc1f94704e21693c16862bf0ebfb07bd61a/dynaconf-3.2.11.tar.gz", hash = "sha256:4cfc6a730c533bf1a1d0bf266ae202133a22236bb3227d23eff4b8542d4034a5", size = 234694, upload-time = "2025-05-06T15:44:59.16Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/36/64/580c74003a356c5662e7b1da43ecd7cbda6e8f970c87b30c5a654c8ccb53/dynaconf-3.2.11-py2.py3-none-any.whl", hash = "sha256:660de90879d4da236f79195692a7d197957224d7acf922bcc6899187dc7b4a27", size = 236536, upload-time = "2025-05-06T15:44:56.18Z" },
-]
-
-[[package]]
-name = "email-validator"
-version = "2.2.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "dnspython" },
-    { name = "idna" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/48/ce/13508a1ec3f8bb981ae4ca79ea40384becc868bfae97fd1c942bb3a001b1/email_validator-2.2.0.tar.gz", hash = "sha256:cb690f344c617a714f22e66ae771445a1ceb46821152df8e165c5f9a364582b7", size = 48967, upload-time = "2024-06-20T11:30:30.034Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d7/ee/bf0adb559ad3c786f12bcbc9296b3f5675f529199bef03e2df281fa1fadb/email_validator-2.2.0-py3-none-any.whl", hash = "sha256:561977c2d73ce3611850a06fa56b414621e0c8faa9d66f2611407d87465da631", size = 33521, upload-time = "2024-06-20T11:30:28.248Z" },
 ]
 
 [[package]]
@@ -1330,19 +1308,6 @@ dependencies = [
     { name = "six" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/29/c7/1be559eb10cb7cac0d26373f18656c8037553619ddd4098e50b04ea8b4ab/hdfs-2.7.3.tar.gz", hash = "sha256:752a21e43f82197dce43697c73f454ba490838108c73a57a9247efb66d1c0479", size = 43540, upload-time = "2023-10-13T00:06:06.144Z" }
-
-[[package]]
-name = "hera-workflows"
-version = "5.23.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pydantic", extra = ["email"] },
-    { name = "requests" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/d2/d7/29b2f61d3f958464e752d66ec028a5665c7b273407105c4c466700159f5a/hera_workflows-5.23.0.tar.gz", hash = "sha256:2564b58da2f39fde55d21c0455a62e8fa277476ad46b10f697485695706a06af", size = 291762, upload-time = "2025-07-24T16:35:42.109Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c9/52/9bca8239486ad6b91bb4b8e1e5184fa718158dd836d7f175de55992a4bef/hera_workflows-5.23.0-py3-none-any.whl", hash = "sha256:f0f9e84d9b32a01cc562ae54e31a68da965c41c909c086cdb5eab77506fd0e10", size = 338095, upload-time = "2025-07-24T16:35:40.787Z" },
-]
 
 [[package]]
 name = "hf-xet"
@@ -2562,7 +2527,6 @@ dependencies = [
     { name = "google-cloud-iam" },
     { name = "graphdatascience" },
     { name = "hdfs" },
-    { name = "hera-workflows" },
     { name = "ipython" },
     { name = "ipywidgets" },
     { name = "jsonpath-ng" },
@@ -2580,6 +2544,7 @@ dependencies = [
     { name = "matrix-gcp-datasets" },
     { name = "matrix-mlflow-utils" },
     { name = "matrix-schema" },
+    { name = "matrix-validator" },
     { name = "mlflow" },
     { name = "neo4j" },
     { name = "notebook" },
@@ -2633,7 +2598,6 @@ requires-dist = [
     { name = "google-cloud-iam" },
     { name = "graphdatascience" },
     { name = "hdfs", specifier = "==2.7.3" },
-    { name = "hera-workflows", specifier = ">=5.6.0" },
     { name = "ipython", specifier = ">=8.10" },
     { name = "ipywidgets" },
     { name = "jsonpath-ng" },
@@ -2651,6 +2615,7 @@ requires-dist = [
     { name = "matrix-gcp-datasets", editable = "libs/matrix-gcp-datasets" },
     { name = "matrix-mlflow-utils", editable = "libs/matrix-mlflow-utils" },
     { name = "matrix-schema", specifier = "==0.4.0" },
+    { name = "matrix-validator", git = "https://github.com/everycure-org/matrix-validator.git?rev=v0.0.6" },
     { name = "mlflow", specifier = "==2.20.3" },
     { name = "neo4j", specifier = ">=5.5.0" },
     { name = "notebook" },
@@ -2702,6 +2667,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/5d/ce/b6df4bdd8172a9ce974116d764d4b68b7868abd07597c803d55ea0463698/matrix_schema-0.4.0.tar.gz", hash = "sha256:61d43816a4890b792c9477a015aa72bab3312a511c28cc849de6a1dcef4d2b9c", size = 1496073, upload-time = "2025-07-08T23:54:12.786Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0e/03/cb19d5bf7c4ceae224b537c19a39a0e37cab8c629635dc4cf6e835ca0890/matrix_schema-0.4.0-py3-none-any.whl", hash = "sha256:1930fecc6e8229ab349754932efce862f91460e7ed0a816f544e06c3107259aa", size = 1544493, upload-time = "2025-07-08T23:54:11.428Z" },
+]
+
+[[package]]
+name = "matrix-validator"
+version = "0.0.6"
+source = { git = "https://github.com/everycure-org/matrix-validator.git?rev=v0.0.6#31179ef2919b996c22c7c2526c8d7b1ab0ae72b8" }
+dependencies = [
+    { name = "biolink-model" },
+    { name = "click" },
+    { name = "importlib-metadata" },
+    { name = "matrix-schema" },
+    { name = "pandas" },
+    { name = "pandera" },
+    { name = "patito" },
+    { name = "polars-lts-cpu" },
+    { name = "tqdm" },
 ]
 
 [[package]]
@@ -3597,6 +3578,20 @@ wheels = [
 ]
 
 [[package]]
+name = "patito"
+version = "0.8.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "polars" },
+    { name = "pydantic" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4f/77/376b341a49cf5fb2db16daae561f248fb504d65453f137eeda2a1cbbb443/patito-0.8.3.tar.gz", hash = "sha256:aba7ac6bb640a075e1c22862dd577519a615724db0694ac3ae81a6a3f3993fb1", size = 42640, upload-time = "2024-12-26T18:15:32.582Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/72/f1/4a71d8a974d8f5625045b5351e91e4f93b9a3c14aacbd2777de63c53a851/patito-0.8.3-py3-none-any.whl", hash = "sha256:cc4dd90ec8a867806548a5161af4cf195f3d223fcae24d879285cc003ab89ed4", size = 43331, upload-time = "2024-12-26T18:15:30.644Z" },
+]
+
+[[package]]
 name = "pexpect"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3672,6 +3667,34 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/e5/69/882ee5c9d017149285cab114ebeab373308ef0f874fcdac9beb90e0ac4da/ply-3.11.tar.gz", hash = "sha256:00c7c1aaa88358b9c765b6d3000c6eec0ba42abca5351b095321aef446081da3", size = 159130, upload-time = "2018-02-15T19:01:31.097Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a3/58/35da89ee790598a0700ea49b2a66594140f44dec458c07e8e3d4979137fc/ply-3.11-py2.py3-none-any.whl", hash = "sha256:096f9b8350b65ebd2fd1346b12452efe5b9607f7482813ffca50c22722a807ce", size = 49567, upload-time = "2018-02-15T19:01:27.172Z" },
+]
+
+[[package]]
+name = "polars"
+version = "1.32.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/aa/f2/1a76a8bd902bc4942e435a480f362c8687bba60d438ff3283191e38568fa/polars-1.32.3.tar.gz", hash = "sha256:57c500dc1b5cba49b0589034478db031815f3d57a20cb830b05ecee1a9ba56b1", size = 4838448, upload-time = "2025-08-14T17:28:10.702Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4c/9b/5937ab9f8fa49c8e00617aeb817a5ffa5740434d5bb8a90f2afa657875aa/polars-1.32.3-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:c7c472ea1d50a5104079cb64e34f78f85774bcc69b875ba8daf21233f4c70d42", size = 37935794, upload-time = "2025-08-14T17:26:55.565Z" },
+    { url = "https://files.pythonhosted.org/packages/6e/e9/88f5332001b9dd5c8e0a4fab51015f740e01715a081c41bc0f7ad2bf76a5/polars-1.32.3-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:fd87275f0cc795e72a2030b58293198cfa748d4b009cf52218e27db5397ed07f", size = 34621102, upload-time = "2025-08-14T17:27:00.521Z" },
+    { url = "https://files.pythonhosted.org/packages/ab/8a/6f56af7e535c34c95decc8654786bfce4632ba32817dc2f8bad18571ef9a/polars-1.32.3-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c9a9b9668ef310e5a77a7e7daa9c753874779c8da52e93f654bfd7953eb4b60b", size = 38443071, upload-time = "2025-08-14T17:27:08.382Z" },
+    { url = "https://files.pythonhosted.org/packages/46/aa/63536ea5780edc0ef6850679dc81d519f3966c7bb11a5cf10ccecb541095/polars-1.32.3-cp39-abi3-manylinux_2_24_aarch64.whl", hash = "sha256:c8f5d2f43b80b68e39bfaa2948ce632563633466576f12e74e8560d6481f5851", size = 35639598, upload-time = "2025-08-14T17:27:12.261Z" },
+    { url = "https://files.pythonhosted.org/packages/d7/c8/226953cda6cf9ae63aa9714d396a9138029e31db3c504c15d6711b618f8f/polars-1.32.3-cp39-abi3-win_amd64.whl", hash = "sha256:db56a7cb4898e173d62634e182f74bdff744c62be5470e0fe20df8d10f659af7", size = 38038192, upload-time = "2025-08-14T17:27:15.993Z" },
+    { url = "https://files.pythonhosted.org/packages/ec/99/6b93c854e602927a778eabd7550204f700cc4e6c07be73372371583dda3e/polars-1.32.3-cp39-abi3-win_arm64.whl", hash = "sha256:a2e3f87c60f54eefe67b1bebd3105918d84df0fd6d59cc6b870c2f16d2d26ca1", size = 34198919, upload-time = "2025-08-14T17:27:21.423Z" },
+]
+
+[[package]]
+name = "polars-lts-cpu"
+version = "1.32.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f2/5f/e7cf1fa2c4f29985161364cd879b6137dcf448e04c19b1a6948759230c79/polars_lts_cpu-1.32.3.tar.gz", hash = "sha256:02749e5788c686040390544a0282308f2e3350901583fd2b0d4bd1da3e18cf67", size = 4838838, upload-time = "2025-08-14T17:28:12.725Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e3/f5/d460d06185558a307dd931868bfae924706ebb9ecb5c67e11af1f25bfcdf/polars_lts_cpu-1.32.3-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:4ffd1231cbca1c0fc947ac0057122f5954daf3681ae00b5eb569877be8436ae8", size = 37644429, upload-time = "2025-08-14T17:27:24.993Z" },
+    { url = "https://files.pythonhosted.org/packages/8f/73/769167e07ea97347b9b074abfb4179f33bc3490f3958ecf374288fd0cc0e/polars_lts_cpu-1.32.3-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:a81979937bc9f0f593b0f6c9939c92245060febddd195cd73b4e50604346b3dd", size = 34621214, upload-time = "2025-08-14T17:27:29.125Z" },
+    { url = "https://files.pythonhosted.org/packages/23/d5/1e3c30d737192124d15fbe064ab19e0a4598a94a669575e74a6cf32e0992/polars_lts_cpu-1.32.3-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9bcb52fcba7cabe76a5a511ef2c98054951cd68833071ecc8e7a57c54dff4ec3", size = 38226147, upload-time = "2025-08-14T17:27:33.17Z" },
+    { url = "https://files.pythonhosted.org/packages/33/c1/886719b41ee0fad129cf0bd77d6ab4572b7e5421500570e8aa76aa5d5413/polars_lts_cpu-1.32.3-cp39-abi3-manylinux_2_24_aarch64.whl", hash = "sha256:57b20b0c6aaae8d4cf31037f868cbf7085d084554dcef05953b8182cffaed52d", size = 35639674, upload-time = "2025-08-14T17:27:37.055Z" },
+    { url = "https://files.pythonhosted.org/packages/6d/d1/b976d4c9d917cce631702032968e0b98bf7e3148e46b1dd8ba03bc682c64/polars_lts_cpu-1.32.3-cp39-abi3-win_amd64.whl", hash = "sha256:2bf2c0edc079c6122ed1cc982f3da771c8013ee9f47516ab3942aa0e878d989f", size = 37795148, upload-time = "2025-08-14T17:27:41.175Z" },
+    { url = "https://files.pythonhosted.org/packages/ad/12/69fc9472fbf2972d48f306127201ca5c8526b9bd46a5e8fcddf5dd987580/polars_lts_cpu-1.32.3-cp39-abi3-win_arm64.whl", hash = "sha256:92c29464c12c9ff217b0840f08900310c93dbc9e21c7b1baec0c47af2b23d41f", size = 34198998, upload-time = "2025-08-14T17:27:44.916Z" },
 ]
 
 [[package]]
@@ -3914,11 +3937,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/00/dd/4325abf92c39ba8623b5af936ddb36ffcfe0beae70405d456ab1fb2f5b8c/pydantic-2.11.7.tar.gz", hash = "sha256:d989c3c6cb79469287b1569f7447a17848c998458d49ebe294e975b9baf0f0db", size = 788350, upload-time = "2025-06-14T08:33:17.137Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6a/c0/ec2b1c8712ca690e5d61979dee872603e92b8a32f94cc1b72d53beab008a/pydantic-2.11.7-py3-none-any.whl", hash = "sha256:dde5df002701f6de26248661f6835bbe296a47bf73990135c7d07ce741b9623b", size = 444782, upload-time = "2025-06-14T08:33:14.905Z" },
-]
-
-[package.optional-dependencies]
-email = [
-    { name = "email-validator" },
 ]
 
 [[package]]

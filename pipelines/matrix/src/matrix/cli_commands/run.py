@@ -29,7 +29,8 @@ from kedro.framework.project import pipelines, settings
 from kedro.io import DataCatalog
 from kedro.pipeline.pipeline import Pipeline
 from kedro.utils import load_obj
-from matrix_auth.environment import load_environment_variables
+
+from matrix.utils.environment import load_environment_variables
 
 # Load environment variables from .env.defaults and .env
 load_environment_variables()

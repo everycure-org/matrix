@@ -1,3 +1,5 @@
+import logging
+
 import click
 from kedro.framework.cli.utils import CONTEXT_SETTINGS, KedroCliError
 

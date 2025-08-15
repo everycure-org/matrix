@@ -54,3 +54,4 @@ gha-kubeconfig*
 /provider.tf
 
 .claude/*
+**/*.egg-info/
