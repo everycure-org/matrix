@@ -42,22 +42,6 @@ def enrich_embeddings(
     )
 
 
-def _create_flag_column(matrix: pd.DataFrame, pairs: pd.DataFrame) -> pd.Series:
-    """Create a flag column for a given matrix and pairs dataframe
-    Args:
-        matrix: Drug-disease pairs dataset.
-        pairs: Labelled ground truth drug-disease pairs dataset.
-
-    Returns:
-        Matrix dataframe with flag column.
-    """
-    pairs_set = set(zip(pairs["source"], pairs["target"]))
-    # Ensure the function returns a Series
-    result = matrix.apply(lambda row: (row["source"], row["target"]) in pairs_set, axis=1)
-
-    return result.astype(bool)
-
-
 def _add_flag_columns(
     matrix: pd.DataFrame,
     known_pairs: pd.DataFrame,
