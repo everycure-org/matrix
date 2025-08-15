@@ -51,9 +51,8 @@ import logging
 import math
 import random
 import re
-from collections.abc import Callable
 from copy import deepcopy
-from typing import Any, cast
+from typing import Any, Callable, Dict, List, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -167,8 +166,8 @@ def load_callable_with_libraries(function_string: str) -> Callable:
 
 
 def _apply_null_injection(
-    data: list[Any], null_config: dict[str, Any] | None, base_seed: int | None = None
-) -> list[Any]:
+    data: List[Any], null_config: Optional[Dict[str, Any]], base_seed: Optional[int] = None
+) -> List[Any]:
     """Inject null values into a list based on configuration.
 
     Internal helper function that handles null value injection based on probability.
@@ -221,8 +220,8 @@ def _apply_null_injection(
 def generate_unique_id(
     num_rows: int,
     prefix: str = "",
-    id_length: int | None = None,
-) -> list[str]:
+    id_length: Optional[int] = None,
+) -> List[str]:
     """Generate unique numeric IDs with optional prefix and fixed length.
 
     Creates a range of IDs by incrementing from 1, optionally prefixing them,
@@ -291,11 +290,11 @@ def generate_unique_id(
 def faker(
     num_rows: int,
     provider: str,
-    localisation: str | list[str] | None = None,
-    provider_args: dict[str, str | int] | None = None,
-    faker_seed: int | None = None,
-    seed: int | None = None,  # Derived column seed
-) -> list[Any]:
+    localisation: Optional[Union[str, List[str]]] = None,
+    provider_args: Optional[Dict[str, Union[str, int]]] = None,
+    faker_seed: Optional[int] = None,
+    seed: Optional[int] = None,  # Derived column seed
+) -> List[Any]:
     """Generate realistic fake data using the Faker library.
 
     Provides access to Faker's extensive collection of data providers for generating
@@ -358,10 +357,10 @@ def faker(
 def numpy_random(
     num_rows: int,
     distribution: str,
-    numpy_seed: int | None = None,
-    seed: int | None = None,  # Derived column seed
+    numpy_seed: Optional[int] = None,
+    seed: Optional[int] = None,  # Derived column seed
     **kwargs,
-) -> list[Any]:
+) -> List[Any]:
     """Generate random numbers using NumPy's probability distributions.
 
     Provides access to NumPy's extensive collection of probability distributions
@@ -422,15 +421,15 @@ def numpy_random(
 
 def generate_random_arrays(
     num_rows: int,
-    sample_values: list[Any],
+    sample_values: List[Any],
     allow_duplicates: bool = False,
     to_json: bool = False,
-    delimiter: str | None = None,
-    length: int | None = None,
+    delimiter: Optional[str] = None,
+    length: Optional[int] = None,
     min_length: int = 1,
-    max_length: int | None = None,
-    seed: int | None = None,
-) -> list[list[Any] | str]:
+    max_length: Optional[int] = None,
+    seed: Optional[int] = None,
+) -> List[Union[List[Any], str]]:
     """Generate random arrays (lists) by sampling from provided values.
 
     Creates a list where each element is itself a randomly generated array/list
@@ -486,7 +485,7 @@ def generate_random_arrays(
 
     value_pool = list(sample_values)
 
-    results: list[list[Any]] = []
+    results: List[List[Any]] = []
     max_len = max_length if max_length is not None else len(value_pool)
     if length is not None:
         min_len = max_len = length
@@ -532,10 +531,10 @@ def generate_random_arrays(
 
 def generate_values(
     num_rows: int,
-    sample_values: list[Any] | dict[str, int | float],
+    sample_values: Union[List[Any], Dict[str, Union[int, float]]],
     sort_values: bool = False,
-    seed: int | None = None,
-) -> list[Any]:
+    seed: Optional[int] = None,
+) -> List[Any]:
     """Generate values by sampling from a list or using weighted choice.
 
     Provides two main modes of operation:
@@ -614,9 +613,9 @@ def generate_values(
 
 def generate_weighted_choice(
     num_rows: int,
-    weights_dict: dict[str, int | float],
-    seed: int | None = None,
-) -> list[Any]:
+    weights_dict: Dict[str, Union[int, float]],
+    seed: Optional[int] = None,
+) -> List[Any]:
     """Generate list of values based on provided weights."""
     if num_rows <= 0:
         return []
@@ -642,10 +641,10 @@ def generate_weighted_choice(
 
 
 def map_values(
-    input_column: list[Any],
-    mapping: dict[Any, Any],
+    input_column: List[Any],
+    mapping: Dict[Any, Any],
     default_value: Any = None,
-) -> list[Any]:
+) -> List[Any]:
     """Map values from input_column to new values using a mapping dictionary.
 
     Transforms each value in the input list by looking it up in the mapping
@@ -683,9 +682,9 @@ def map_values(
 
 
 def hash_map(
-    input_column: list[Any],
-    buckets: list[Any],
-) -> list[Any]:
+    input_column: List[Any],
+    buckets: List[Any],
+) -> List[Any]:
     """Hash values from input_column to deterministically assign them to buckets.
 
     Uses MD5 hashing to consistently map input values to buckets. The same input
@@ -735,12 +734,12 @@ def hash_map(
 
 def generate_dates(
     num_rows: int,
-    start_dt: str | datetime.datetime,
-    end_dt: str | datetime.datetime,
+    start_dt: Union[str, datetime.datetime],
+    end_dt: Union[str, datetime.datetime],
     freq: str,
     sort_dates: bool = True,
-    date_format: str | None = None,
-) -> list[datetime.datetime | str]:
+    date_format: Optional[str] = None,
+) -> List[Union[datetime.datetime, str]]:
     """Generate a sequence of dates within a specified range.
 
     Uses pandas date_range to create a sequence of dates, then samples from this
@@ -795,10 +794,10 @@ def generate_dates(
         raise
 
     if not unique_dates:
-        logger.warning("Date range parameters resulted in zero dates.")
+        logger.warning(f"Date range parameters resulted in zero dates.")
         return []
 
-    dates: list[datetime.datetime]
+    dates: List[datetime.datetime]
     # If num_rows is specified, sample; otherwise, use all unique dates
     if len(unique_dates) == num_rows:
         dates = unique_dates
@@ -818,9 +817,9 @@ def generate_dates(
 
 
 def cross_product(
-    *input_columns: list[Any],
+    *input_columns: List[Any],
     position: int = 0,
-) -> list[Any]:
+) -> List[Any]:
     """Generate the Cartesian product of multiple columns and extract one dimension.
 
     Takes multiple input columns and computes their Cartesian product (all possible
@@ -873,13 +872,13 @@ def cross_product(
 
 
 def column_apply(
-    input_columns: list[list[Any]],
-    column_func: str | Callable,
-    column_func_kwargs: dict[str, Any] | None = None,
-    num_rows: int | None = None,
+    input_columns: List[List[Any]],
+    column_func: Union[str, Callable],
+    column_func_kwargs: Optional[Dict[str, Any]] = None,
+    num_rows: Optional[int] = None,
     check_all_inputs_same_length: bool = True,
     resize: bool = False,
-) -> list[Any]:
+) -> List[Any]:
     """Apply a function to entire columns at once.
 
     Takes one or more input columns and passes them as separate arguments to
@@ -958,7 +957,7 @@ def column_apply(
         try:
             results = list(results)
         except TypeError:
-            raise TypeError("Result of column_func could not be converted to a list.")
+            raise TypeError(f"Result of column_func could not be converted to a list.")
 
     if resize:
         if len(results) != num_rows:
@@ -978,13 +977,13 @@ def column_apply(
 
 
 def row_apply(
-    input_columns: list[list[Any]],
-    row_func: str | Callable,
-    row_func_kwargs: dict[str, Any] | None = None,
-    num_rows: int | None = None,
+    input_columns: List[List[Any]],
+    row_func: Union[str, Callable],
+    row_func_kwargs: Optional[Dict[str, Any]] = None,
+    num_rows: Optional[int] = None,
     resize: bool = False,
-    seed: int | None = None,
-) -> list[Any]:
+    seed: Optional[int] = None,
+) -> List[Any]:
     """Apply a function row-wise to values from input columns.
 
     Takes one or more input columns, conceptually 'zips' them together to form
@@ -1087,10 +1086,10 @@ def row_apply(
 
 
 def copy_column(
-    source_column: list[Any],
-    sample: dict[str, Any] | None = None,
-    seed: int | None = None,  # Derived column seed
-) -> list[Any]:
+    source_column: List[Any],
+    sample: Optional[Dict[str, Any]] = None,
+    seed: Optional[int] = None,  # Derived column seed
+) -> List[Any]:
     """
     Copies or samples values from a source column.
 
@@ -1226,7 +1225,7 @@ class MockDataGenerator:
         - Type inference follows pandas rules unless explicitly overridden
     """
 
-    def __init__(self, instructions: dict[str, Any], seed: int | None = None):
+    def __init__(self, instructions: Dict[str, Any], seed: Optional[int] = None):
         """
         Initializes the generator.
 
@@ -1253,7 +1252,7 @@ class MockDataGenerator:
 
         self.all_instructions = wrapped_instructions
         self.seed = seed
-        self.all_dataframes: dict[str, pd.DataFrame] = {}
+        self.all_dataframes: Dict[str, pd.DataFrame] = {}
 
         if self.seed is not None:
             logger.info(f"Using global seed: {self.seed} for derivations.")
@@ -1279,7 +1278,7 @@ class MockDataGenerator:
         logger.info("Data generation complete.")
         return self.all_dataframes
 
-    def generate_dataframe(self, namespace: str, table_name: str, table_instructions: dict[str, Any]):
+    def generate_dataframe(self, namespace: str, table_name: str, table_instructions: Dict[str, Any]):
         """Generates a single dataframe."""
         full_table_name = f"{namespace}.{table_name}"
         logger.info(f"Generating dataframe: {full_table_name}")
@@ -1305,7 +1304,7 @@ class MockDataGenerator:
             self.all_dataframes[full_table_name] = pd.DataFrame()
             return
 
-        temp_results: dict[str, pd.array] = {}
+        temp_results: Dict[str, pd.array] = {}
 
         for column_name, column_instr in column_definitions.items():
             logger.info(f"Generating column: {full_table_name}.{column_name}")
@@ -1360,13 +1359,13 @@ class MockDataGenerator:
         namespace: str,
         table_name: str,
         column_name: str,
-        column_instr: dict[str, Any],
-        current_num_rows: int | None,
+        column_instr: Dict[str, Any],
+        current_num_rows: Optional[int],
     ) -> pd.array:
         """Generates the data for a single column."""
 
         # Derive a deterministic seed for this column if a global seed exists
-        column_seed: int | None = None
+        column_seed: Optional[int] = None
         if self.seed is not None:
             column_seed_str = f"{self.seed}-{namespace}-{table_name}-{column_name}"
             # Use a hash function for better distribution and converting string to int seed
@@ -1426,10 +1425,10 @@ class MockDataGenerator:
                 generator_func = copy_column
             elif generator_type == "map_values":
                 # Cast to the correct type for map_values
-                generator_func = cast(Callable[..., list[Any]], map_values)
+                generator_func = cast(Callable[..., List[Any]], map_values)
             elif generator_type == "hash_map":
                 # Cast to the correct type for hash_map
-                generator_func = cast(Callable[..., list[Any]], hash_map)
+                generator_func = cast(Callable[..., List[Any]], hash_map)
             else:
                 generator_func = load_obj(generator_type)
 
@@ -1515,7 +1514,7 @@ class MockDataGenerator:
         else:
             return value
 
-    def _resolve_column_reference(self, reference: str, current_namespace: str) -> list[Any]:
+    def _resolve_column_reference(self, reference: str, current_namespace: str) -> List[Any]:
         """Parses 'namespace.table.column' or 'table.column' and returns the data as a list."""
         logger.debug(f"Resolving column reference: '{reference}' in namespace '{current_namespace}'")
         parts = reference.split(".")
@@ -1624,11 +1623,11 @@ _IGNORE_DATAFRAMES_WITH_PREFIX = ["_TEMP_", "_CATALOG_"]
 
 
 def fabricate_datasets(
-    fabrication_params: dict[str, Any],
-    ignore_prefix: list[str] | None = None,
-    seed: int | None = None,
-    **source_dfs: dict[str, pd.DataFrame | pyspark.sql.DataFrame],
-) -> dict[str, pd.DataFrame]:
+    fabrication_params: Dict[str, Any],
+    ignore_prefix: Optional[List[str]] = None,
+    seed: Optional[int] = None,
+    **source_dfs: Dict[str, Union[pd.DataFrame, pyspark.sql.DataFrame]],
+) -> Dict[str, pd.DataFrame]:
     """Fabricates datasets.
 
     This node passes configuration to ``MockDataGenerator`` data fabricator to fabricate
