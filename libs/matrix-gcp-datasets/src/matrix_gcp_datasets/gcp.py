@@ -19,6 +19,7 @@ from kedro.io.core import (
     DatasetError,
     Version,
 )
+from kedro_datasets.pandas import GBQTableDataset
 from kedro_datasets.partitions import PartitionedDataset
 from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
 from pygsheets import Spreadsheet, Worksheet
@@ -90,6 +91,48 @@ class LazySparkDataset(SparkDataset):
                 raise e
 
 
+class SparkBigQueryDataset(LazySparkDataset):
+    """
+    Spark dataset dat executes a BigQuery query and returns
+    the result as a Spark DataFrame.
+    """
+
+    def __init__(  # noqa: PLR0913
+        self, *, project: str, dataset: str, table: str, shard: str | None = None
+    ) -> None:
+        super().__init__(
+            filepath="dummy", file_format="bigquery", load_args={"table": f"{project}.{dataset}.{table}_{shard}"}
+        )
+
+    def _save(self, data: Any) -> None:
+        raise NotImplementedError("Save not supported for BigQuerySparkQueryDataSet.")
+
+
+class PandasBigQueryDataset(GBQTableDataset):
+    """
+    Pandas dataset that loads data from a BigQuery table and returns
+    the result as a Pandas DataFrame.
+    """
+
+    def __init__(  # noqa: PLR0913
+        self, *, dataset: str, table: str, project: str, shard: str, credentials: dict[str, Any] | None = None
+    ) -> None:
+        """Creates a new instance of PandasBigQueryDataset.
+
+        Args:
+            dataset: BigQuery dataset name.
+            table: BigQuery table name.
+            project: BigQuery project ID.
+            shard: Optional table shard identifier.
+            credentials: Optional credentials for BigQuery client.
+        """
+        super().__init__(dataset=dataset, table_name=f"{table}_{shard}", project=project, credentials=credentials)
+
+    def save(self, data: Any) -> None:
+        """Save operation is not supported for this dataset."""
+        raise NotImplementedError("Save not supported for PandasBigQueryDataset.")
+
+
 class SparkDatasetWithBQExternalTable(LazySparkDataset):
     """Spark Dataset that produces a BigQuery external table as a side output.
 
@@ -106,11 +149,11 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         table: str,
         file_format: str,
         identifier: str | None = None,
-        load_args: dict[str, Any] = None,
-        save_args: dict[str, Any] = None,
-        version: Version = None,
-        credentials: dict[str, Any] = None,
-        metadata: dict[str, Any] = None,
+        load_args: dict[str, Any] | None = None,
+        save_args: dict[str, Any] | None = None,
+        version: Version | None = None,
+        credentials: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
         **kwargs,
     ) -> None:
         """Creates a new instance of ``BigQueryTableDataset``.
@@ -132,7 +175,7 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         self._project_id = project_id
         self._path = filepath
         self._format = file_format
-        self._labels = save_args.pop("labels", {})
+        self._labels = save_args.pop("labels", {}) if save_args else {}
 
         self._table = self._sanitize_name("_".join(el for el in [table, identifier] if el is not None))
         self._dataset_id = f"{self._project_id}.{self._sanitize_name(dataset)}"
@@ -170,7 +213,7 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         except exceptions.Conflict:
             self._client.update_table(table, fields=["labels"])
 
-    def _create_dataset(self) -> str:
+    def _create_dataset(self) -> None:
         try:
             self._client.get_dataset(self._dataset_id)
             logger.info(f"Dataset {self._dataset_id} already exists")
@@ -226,7 +269,7 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
         """
         self._key = key
         self._service_file = service_file
-        self._sheet = None
+        self._sheet: Spreadsheet | None = None
 
         super().__init__(
             filepath=None,
@@ -275,7 +318,7 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
         wks = self._get_wks_by_name(self._sheet, sheet_name)
 
         # Create the worksheet if not exists
-        if wks is None:
+        if wks is None and self._sheet:  # type: ignore
             wks = self._sheet.add_worksheet(sheet_name)
 
         # NOTE: Upon writing, replace empty strings with "" to avoid NaNs in Excel
@@ -288,7 +331,7 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
             if col_idx is None:
                 raise DatasetError(f"Sheet with {sheet_name} does not contain column {column}!")
 
-            wks.set_dataframe(data[[column]], (1, col_idx + 1))
+            wks.set_dataframe(data[[column]], (1, col_idx + 1)) if wks else None
 
     @staticmethod
     def _get_wks_by_name(spreadsheet: Spreadsheet, sheet_name: str) -> Worksheet | None:

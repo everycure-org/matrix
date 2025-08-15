@@ -2,32 +2,11 @@ from kedro.pipeline import Pipeline, node, pipeline
 
 from matrix import settings
 
-from . import nodes
-
-
-def create_ground_truth_pipeline() -> list:
-    """Create pipeline nodes for ground truth processing."""
-    return [
-        node(
-            func=nodes.create_gt,
-            inputs={
-                "pos_df": "ingestion.raw.ground_truth.positives",
-                "neg_df": "ingestion.raw.ground_truth.negatives",
-            },
-            outputs="ingestion.raw.ground_truth.edges@pandas",
-            name="concatenate_gt_dataframe",
-            tags=["ground-truth"],
-        )
-    ]
-
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create ingestion pipeline."""
     # Create pipeline per source
     nodes_lst = []
-
-    # Ground truth
-    nodes_lst.extend(create_ground_truth_pipeline())
 
     # Drug list and disease list
     nodes_lst.extend(
@@ -72,8 +51,23 @@ def create_pipeline(**kwargs) -> Pipeline:
                     tags=[f'{source["name"]}'],
                 )
             )
-
-        if source.get("has_edges", True):
+        if "ground_truth" in source.get("name", ""):
+            nodes_lst.append(
+                node(
+                    func=lambda x, y: [x, y],
+                    inputs=[
+                        f"ingestion.raw.{source['name']}.positives",
+                        f"ingestion.raw.{source['name']}.negatives",
+                    ],
+                    outputs=[
+                        f"ingestion.int.{source['name']}.positive.edges@pandas",
+                        f"ingestion.int.{source['name']}.negative.edges@pandas",
+                    ],
+                    name=f'write_{source["name"]}',
+                    tags=[f'{source["name"]}'],
+                )
+            )
+        elif source.get("has_edges", True):
             nodes_lst.append(
                 node(
                     func=lambda x: x,
@@ -83,5 +77,4 @@ def create_pipeline(**kwargs) -> Pipeline:
                     tags=[f'{source["name"]}'],
                 )
             )
-
     return pipeline(nodes_lst)
