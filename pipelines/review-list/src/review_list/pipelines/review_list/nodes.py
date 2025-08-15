@@ -76,8 +76,13 @@ def weighted_merge_multiple(dfs_with_weights, limit):
 
     # Take top N from each DataFrame according to its quota
     selected_dfs = []
-    for (df, _), quota in zip(dfs_with_weights, quotas):
+    for i, ((df, weight), quota) in enumerate(zip(dfs_with_weights, quotas)):
         if quota > 0:
+            df_count = df.count()
+            if df_count < quota:
+                print(
+                    f"WARNING: DataFrame {i+1} has only {df_count} rows but quota is {quota}. Taking all available rows."
+                )  # noqa: T201
             df_ranked = df.withColumn("rn", row_number().over(w_rank))
             selected = df_ranked.filter(col("rn") <= quota).drop("rn")
             selected_dfs.append(selected)
