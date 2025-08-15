@@ -84,7 +84,8 @@ embeddings.model_output.topological:
 
 embeddings.feat.nodes:
   <<: *_spark_parquet
-  filepath: ${globals:paths.embeddings}/feat/nodes_with_embeddings
+  #filepath: ${globals:paths.embeddings}/feat/nodes_with_embeddings
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccb_biobert_emb_512_try2
 
 embeddings.reporting.loss:
   type: matplotlib.MatplotlibDataset

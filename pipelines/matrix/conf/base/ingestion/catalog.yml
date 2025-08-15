@@ -306,7 +306,8 @@ ingestion.int.disease_list.nodes:
 ingestion.raw.ground_truth.positives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_public}/ground_truth/kg2/${globals:data_sources.gt.version}/tp_pairs.txt
+  #filepath: ${globals:paths.raw_public}/ground_truth/kg2/${globals:data_sources.gt.version}/tp_pairs.txt
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/gt_ec_for_filtering_baseline2/tp_medi_filter_baseline2.txt
   load_args:
     sep: "\t"
   save_args:
@@ -315,7 +316,8 @@ ingestion.raw.ground_truth.positives:
 ingestion.raw.ground_truth.negatives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_public}/ground_truth/kg2/${globals:data_sources.gt.version}/tn_pairs.txt
+  #filepath: ${globals:paths.raw_public}/ground_truth/kg2/${globals:data_sources.gt.version}/tn_pairs.txt
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/gt_ec_for_filtering_baseline2/tn_medi_filter_baseline2.txt
   load_args:
     sep: "\t"
   save_args:
@@ -359,7 +361,8 @@ ingestion.int.ground_truth.edges:
 ingestion.raw.robokop.nodes@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
+  #filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccb/robokop_30fd_baseline2_nodes.tsv
   file_format: csv
   load_args:
     sep: "\t"
@@ -368,7 +371,8 @@ ingestion.raw.robokop.nodes@spark:
 
 ingestion.raw.robokop.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
+  #filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccb/robokop_30fd_baseline2_nodes.tsv
   save_args:
     sep: "\t"
     header: true
@@ -379,7 +383,8 @@ ingestion.raw.robokop.nodes@pandas:
 ingestion.raw.robokop.edges@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  #filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccb/robokop_30fd_baseline2_edges.tsv
   file_format: csv
   load_args:
     sep: "\t"
@@ -388,7 +393,8 @@ ingestion.raw.robokop.edges@spark:
 
 ingestion.raw.robokop.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  #filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/baseline2_30fd1bfc18cd5ccb/robokop_30fd_baseline2_edges.tsv
   save_args:
     sep: "\t"
     header: true
