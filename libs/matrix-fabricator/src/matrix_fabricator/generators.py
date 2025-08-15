@@ -1,5 +1,6 @@
 import random
 import uuid
+from typing import List, Tuple
 
 import pandas as pd
 from bmt import toolkit
@@ -7,7 +8,7 @@ from bmt import toolkit
 tk = toolkit.Toolkit()
 
 
-def filter_by_category(ids: list[str], categories: list[str], category: str, **kwargs):
+def filter_by_category(ids: List[str], categories: List[str], category: str, **kwargs):
     zipped = list(zip(ids, categories))
     drugs = [id for id, cat in zipped if cat == category]
     return drugs
@@ -18,7 +19,7 @@ def get_ancestors_for_category_delimited(category: str, delimiter: str) -> str:
     return output
 
 
-def generate_random_biolink_entities(num_rows: int, **kwargs) -> list[str]:
+def generate_random_biolink_entities(num_rows: int, **kwargs) -> List[str]:
     """Generate a list of random biolink entities."""
     return [generate_random_biolink_entity(**kwargs) for _ in range(num_rows)]
 
@@ -28,13 +29,13 @@ def generate_random_biolink_entity(**kwargs) -> str:
     return random.choice(tk.get_all_entities(formatted=True, **kwargs))
 
 
-def generate_random_biolink_entities_list(num_rows: int, **kwargs) -> list[list[str]]:
+def generate_random_biolink_entities_list(num_rows: int, **kwargs) -> List[List[str]]:
     """Generate a list of random biolink entities."""
     e = generate_random_biolink_entities(num_rows, **kwargs)
     return [tk.get_ancestors(e, formatted=True, **kwargs) for e in e]
 
 
-def get_random_biolink_predicates(subject_categories: list[str], object_categories: list[str]) -> str:
+def get_random_biolink_predicates(subject_categories: List[str], object_categories: List[str]) -> str:
     """Given a subject and object category, get a random predicate that is valid."""
     pairs = list(zip(subject_categories, object_categories))
     return [random.choice(get_valid_predicates(s, o)) for s, o in pairs]
@@ -67,7 +68,7 @@ def create_subject_predicate_object_mapping() -> pd.DataFrame:
     return subject_predicate_object
 
 
-def generate_biolink_sample_kg(nodes_per_type: int, edge_count: int) -> tuple[pd.DataFrame]:
+def generate_biolink_sample_kg(nodes_per_type: int, edge_count: int) -> Tuple[pd.DataFrame]:
     """
     Generates an initial knowledge graph with a given number of nodes per type and edges.
     We use this to generate various biolink compatible KGs
