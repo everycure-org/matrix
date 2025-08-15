@@ -10,6 +10,7 @@ def cli():
     pass
 
 
+logging.info("registering custom matrix kedro CLI extensions")
 cli.add_command(run)
 cli.add_command(experiment)
 
