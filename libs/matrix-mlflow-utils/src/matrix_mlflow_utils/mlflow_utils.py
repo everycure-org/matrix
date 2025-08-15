@@ -1,6 +1,7 @@
 import os
 import secrets
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+from typing import Optional
 
 import mlflow
 from mlflow.entities import Run, ViewType
@@ -38,7 +39,7 @@ EXPERIMENT_ARCHIVE_EXCLUSION_LIST = [
 ARCHIVE_EXPERIMENT_ID = 17365
 # Choose a cutoff date for experiments to archive
 # Note that MLflow uses millisecond timestamps
-CUTOFF_TIMESTAMP = int(datetime(2025, 2, 21, tzinfo=UTC).timestamp() * 1000)
+CUTOFF_TIMESTAMP = int(datetime(2025, 2, 21, tzinfo=timezone.utc).timestamp() * 1000)
 
 
 def create_mlflow_experiment(experiment_name: str) -> str:
@@ -67,7 +68,7 @@ def create_mlflow_experiment(experiment_name: str) -> str:
     return experiment_id
 
 
-def get_experiment_id_from_name(experiment_name: str) -> str | None:
+def get_experiment_id_from_name(experiment_name: str) -> Optional[str]:
     """Fetches the experiment ID from MLflow by experiment name."""
     experiment = mlflow.get_experiment_by_name(name=experiment_name)
 
