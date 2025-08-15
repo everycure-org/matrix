@@ -60,7 +60,7 @@ jobs:
   ci:
     runs-on: 'self-hosted'
     needs: [paths_filter]
-    if: needs.paths_filter.outputs.changed == 'true'
+    if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
     outputs:
       status: ${{ steps.finally.outputs.status }}
 
