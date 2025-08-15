@@ -62,7 +62,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                                 else {}
                             ),
                         },
-                        outputs=f"matrix_generation.int.fold_{fold}.matrix_pairs",
+                        outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs@pandas",
                         name=f"generate_matrix_pairs_fold_{fold}",
                     ),
                 ]
