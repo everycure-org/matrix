@@ -148,7 +148,7 @@ def test_determine_most_specific_category_namedthing_fallback(spark):
 def test_determine_most_specific_category_normal_hierarchy(spark):
     """Test Rule 4: Normal most-specific logic"""
     nodes = spark.createDataFrame(
-        [("CHEBI:002", "biolink:NamedThing", ["biolink:Drug", "biolink:ChemicalEntity", "biolink:NamedThing"])],
+        [("CHEBI:002", "biolink:NamedThing", ["biolink:Drug", "biolink:MolecularMixture", "biolink:NamedThing"])],
         schema=StructType(
             [
                 StructField("id", StringType(), False),
@@ -160,7 +160,7 @@ def test_determine_most_specific_category_normal_hierarchy(spark):
 
     result = filters.determine_most_specific_category(nodes)
     # Should pick most specific from all_categories
-    assert result.collect()[0].category == "biolink:ChemicalEntity"
+    assert result.collect()[0].category == "biolink:Drug"
 
 
 def test_determine_most_specific_category(spark, sample_nodes):
