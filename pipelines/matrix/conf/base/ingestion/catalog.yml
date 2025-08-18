@@ -534,11 +534,11 @@ ingestion.int.embiology.edges:
 # -------------------------------------------------------------------------
 ingestion.raw.orchard.edges@spark:
   <<: [*_orchard_bq]
-  type: matrix.datasets.gcp.SparkBigQueryDataset
+  type: matrix_gcp_datasets.gcp.SparkBigQueryDataset
 
 ingestion.raw.orchard.edges@pandas:
   <<: [*_orchard_bq]
-  type: matrix.datasets.gcp.PandasBigQueryDataset
+  type: matrix_gcp_datasets.gcp.PandasBigQueryDataset
 
 ingestion.int.orchard.edges:
   <<: [*_spark_parquet, *_layer_int]
