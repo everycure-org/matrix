@@ -15,24 +15,41 @@ RUN apt-get update && \
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
-WORKDIR /app
+# ------- Dependencies start ------
+# ---------------------------------
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-ADD requirements.txt .
 
-# Install Python dependencies
-RUN --mount=type=cache,target=/root/.cache uv venv -p 3.11 && \
-    uv pip install -r requirements.txt
-ENV PATH=/app/.venv/bin:$PATH
+WORKDIR /matrix
+COPY pyproject.toml uv.lock ./
 
+# we copy all workspace dependencies over for uv sync to work
+COPY libs/ libs/
+COPY docs/pyproject.toml docs/pyproject.toml
+
+# now we run this inside of the matrix pipeline folder. This only installs 
+# deps for this project, not e.g. docs
+WORKDIR /matrix/pipelines/matrix
+COPY pipelines/matrix/pyproject.toml .
+
+ENV UV_NO_CACHE=1
+RUN uv sync --locked
+
+# enables kedro & python to be in the path
+ENV PATH=/matrix/.venv/bin:$PATH
 # Cache drivers as part of image
-COPY conf/base/spark.yml conf/base/spark.yml
-COPY scripts/maven-deps.py maven-deps.py
-RUN python maven-deps.py && rm -rf /root/.ivy2/cache
+COPY pipelines/matrix/conf/base/spark.yml ./conf/base/spark.yml
+COPY pipelines/matrix/scripts/maven-deps.py ./maven-deps.py
 
-# Set git commit sha as env variable, useful for tracing back code to data
+RUN python maven-deps.py && rm -rf /root/.ivy2/cache
+# ---------- Dependencies end -----
+# ---------------------------------
+
+# finally bring in the code of the pipeline
+COPY pipelines/matrix/ .
+
+# Set git commit sha as env variable LAST to avoid cache invalidation
+# This should be the final layer that changes per commit
 ARG GIT_SHA
 ENV GIT_SHA=$GIT_SHA
-
-ADD . .
 
 LABEL com.nvidia.volumes.needed="nvidia_driver"

@@ -8,7 +8,7 @@ import pytest
 import requests
 import responses
 from google.oauth2.credentials import Credentials
-from matrix.utils.authentication import TOKEN_URI, get_user_account_creds, request_new_iap_token
+from matrix_auth.authentication import TOKEN_URI, get_user_account_creds, request_new_iap_token
 
 
 @pytest.fixture
@@ -20,14 +20,14 @@ def oauth2_token_response(monkeypatch):
         }
 
     monkeypatch.setattr(
-        "matrix.utils.authentication.id_token.verify_oauth2_token",
+        "matrix_auth.authentication.id_token.verify_oauth2_token",
         mock_oauth2_token_response,
     )
 
 
 @pytest.fixture
 def mock_oauth_client_secret(monkeypatch):
-    monkeypatch.setattr("matrix.utils.authentication.get_oauth_client_secret", lambda: "mock_client_secret")
+    monkeypatch.setattr("matrix_auth.authentication.get_oauth_client_secret", lambda: "mock_client_secret")
 
 
 @responses.activate
@@ -55,8 +55,8 @@ def test_oauth_flow(oauth2_token_response, tmpdir, monkeypatch):
     }
     responses.add(method="POST", url=TOKEN_URI, json=token_response)
 
-    with patch("matrix.utils.authentication.LOCAL_PATH", new=tmpdir):
-        monkeypatch.setattr("matrix.utils.authentication.get_oauth_client_secret", lambda: "mock_client_secret")
+    with patch("matrix_auth.authentication.LOCAL_PATH", new=tmpdir):
+        monkeypatch.setattr("matrix_auth.authentication.get_oauth_client_secret", lambda: "mock_client_secret")
         token = request_new_iap_token(random_port)
     assert token is not None
     assert isinstance(token, Credentials)

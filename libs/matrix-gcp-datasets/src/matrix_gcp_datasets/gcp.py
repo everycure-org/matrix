@@ -4,7 +4,7 @@ import os
 import re
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import fsspec
 import google.api_core.exceptions as exceptions
@@ -25,7 +25,8 @@ from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
 from pygsheets import Spreadsheet, Worksheet
 from tqdm import tqdm
 
-from matrix.hooks import SparkHooks
+# TODO: This will need to be injected or made optional when extracting to library
+# from matrix.hooks import SparkHooks
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +63,9 @@ class LazySparkDataset(SparkDataset):
         )
 
     def load(self):
-        SparkHooks._initialize_spark()
+        from matrix_gcp_datasets.spark_utils import SparkManager
+
+        SparkManager.initialize_spark()
 
         # Spark cannot read http files directly
         if self._fs_prefix in ["http://", "https://"]:
@@ -95,7 +98,7 @@ class SparkBigQueryDataset(LazySparkDataset):
     """
 
     def __init__(  # noqa: PLR0913
-        self, *, project: str, dataset: str, table: str, shard: Optional[str] = None
+        self, *, project: str, dataset: str, table: str, shard: str | None = None
     ) -> None:
         super().__init__(
             filepath="dummy", file_format="bigquery", load_args={"table": f"{project}.{dataset}.{table}_{shard}"}
@@ -145,12 +148,12 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         dataset: str,
         table: str,
         file_format: str,
-        identifier: Optional[str] = None,
-        load_args: dict[str, Any] = None,
-        save_args: dict[str, Any] = None,
-        version: Version = None,
-        credentials: dict[str, Any] = None,
-        metadata: dict[str, Any] = None,
+        identifier: str | None = None,
+        load_args: dict[str, Any] | None = None,
+        save_args: dict[str, Any] | None = None,
+        version: Version | None = None,
+        credentials: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
         **kwargs,
     ) -> None:
         """Creates a new instance of ``BigQueryTableDataset``.
@@ -172,7 +175,7 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         self._project_id = project_id
         self._path = filepath
         self._format = file_format
-        self._labels = save_args.pop("labels", {})
+        self._labels = save_args.pop("labels", {}) if save_args else {}
 
         self._table = self._sanitize_name("_".join(el for el in [table, identifier] if el is not None))
         self._dataset_id = f"{self._project_id}.{self._sanitize_name(dataset)}"
@@ -210,7 +213,7 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         except exceptions.Conflict:
             self._client.update_table(table, fields=["labels"])
 
-    def _create_dataset(self) -> str:
+    def _create_dataset(self) -> None:
         try:
             self._client.get_dataset(self._dataset_id)
             logger.info(f"Dataset {self._dataset_id} already exists")
@@ -266,7 +269,7 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
         """
         self._key = key
         self._service_file = service_file
-        self._sheet = None
+        self._sheet: Spreadsheet | None = None
 
         super().__init__(
             filepath=None,
@@ -315,7 +318,7 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
         wks = self._get_wks_by_name(self._sheet, sheet_name)
 
         # Create the worksheet if not exists
-        if wks is None:
+        if wks is None and self._sheet:  # type: ignore
             wks = self._sheet.add_worksheet(sheet_name)
 
         # NOTE: Upon writing, replace empty strings with "" to avoid NaNs in Excel
@@ -328,10 +331,10 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
             if col_idx is None:
                 raise DatasetError(f"Sheet with {sheet_name} does not contain column {column}!")
 
-            wks.set_dataframe(data[[column]], (1, col_idx + 1))
+            wks.set_dataframe(data[[column]], (1, col_idx + 1)) if wks else None
 
     @staticmethod
-    def _get_wks_by_name(spreadsheet: Spreadsheet, sheet_name: str) -> Optional[Worksheet]:
+    def _get_wks_by_name(spreadsheet: Spreadsheet, sheet_name: str) -> Worksheet | None:
         for wks in spreadsheet.worksheets():
             if wks.title == sheet_name:
                 return wks
@@ -339,7 +342,7 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
         return None
 
     @staticmethod
-    def _get_col_index(sheet: Worksheet, col_name: str) -> Optional[int]:
+    def _get_col_index(sheet: Worksheet, col_name: str) -> int | None:
         for idx, col in enumerate(sheet.get_row(1)):
             if col == col_name:
                 return idx
@@ -411,7 +414,9 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
         return self._client
 
     def load(self) -> Any:
-        SparkHooks._initialize_spark()
+        from matrix_gcp_datasets.spark_utils import SparkManager
+
+        SparkManager.initialize_spark()
 
         if self._bucket and not os.path.exists(self._blob_name):
             logger.info("downloading file to local")
@@ -535,7 +540,7 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
                     for task in asyncio.as_completed(tasks):
                         try:
                             await asyncio.wait_for(task, self._timeout)
-                        except asyncio.TimeoutError as e:
+                        except TimeoutError as e:
                             logger.error(
                                 f"Timeout error: partition processing took longer than {self._timeout} seconds."
                             )

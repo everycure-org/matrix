@@ -7,15 +7,27 @@
 Welcome to MATRIX! This repository contains our drug repurposing platform which includes data
 science pipelines, infrastructure, and documentation.
 
-MATRIX is organized as a monorepo containing infrastructure, machine learning pipelines,
-applications and services. Each component resides in a dedicated directory with its own README
-providing detailed setup and usage instructions.
+MATRIX is organized as a monorepo with multiple packages managed by **uv**. The repository contains infrastructure, machine learning pipelines, shared libraries, applications and services. Each component resides in a dedicated directory with its own README providing detailed setup and usage instructions.
 
-Key directories:
+## 📁 Repository Structure
 
-- `/pipelines/matrix` - 🧬 [Drug Repurposing ML Pipeline](docs/src/pipeline)
+### Core Directories:
+- `/pipelines/matrix` - 🧬 [Main Drug Repurposing ML Pipeline](pipelines/matrix/README.md)
+- `/libs/` - 📚 Shared Libraries:
+  - `matrix-auth/` - Authentication and environment utilities
+  - `matrix-fabricator/` - Data fabrication and generation tools  
+  - `matrix-gcp-datasets/` - GCP integration and Spark utilities
+  - `matrix-mlflow-utils/` - MLflow integration and metric utilities
 - `/infra` - 🏗️ [Infrastructure as Code (IaC) configuration](docs/src/infrastructure)
 - `/services` - ⚙️ Supporting Services and APIs
+- `/docs` - 📖 Documentation site generation
+
+### 🔧 uv Workspace
+The repository uses uv's workspace feature for efficient multi-package development:
+- **Root `pyproject.toml`**: Defines the workspace configuration
+- **Individual packages**: Each directory with a `pyproject.toml` is a separate package
+- **Shared dependencies**: Common dependencies managed at the workspace level
+- **Local development**: Libraries automatically linked in editable mode
 
 ## 🎬 Getting Started
 

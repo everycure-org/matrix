@@ -1,3 +1,5 @@
+import logging
+
 import click
 from kedro.framework.cli.utils import CONTEXT_SETTINGS, KedroCliError
 
@@ -10,6 +12,7 @@ def cli():
     pass
 
 
+logging.info("registering custom matrix kedro CLI extensions")
 cli.add_command(run)
 cli.add_command(experiment)
 

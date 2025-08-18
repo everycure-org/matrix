@@ -1,5 +1,5 @@
 _spark_parquet_ds: &_spark_parquet
-  type: matrix.datasets.gcp.LazySparkDataset
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
   file_format: parquet
   save_args:
     mode: overwrite
@@ -20,7 +20,7 @@ _pandas_parquet: &_pandas_parquet
 # -------------------------------------------------------------------------
 
 batch.int.{source}.{workers}.input_transformed@partitioned:
-  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
+  type: matrix_gcp_datasets.gcp.PartitionedAsyncParallelDataset
   overwrite: True # NOTE: Very important to ensure every run clear out previous partitions
   max_workers: "{workers}" # Used to enable API parallelization (note that filepath is not affected by this))
   path: ${globals:paths.tmp}/batch/{source}/transformed
@@ -34,12 +34,12 @@ batch.int.{source}.{workers}.input_transformed@spark:
 
 
 batch.{source}.cache.read: &cache_in
-  type: matrix.datasets.gcp.LazySparkDataset
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.cache}/{source}
   provide_empty_if_not_present: true
 
 batch.{source}.{workers}.cache.write:
-  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
+  type: matrix_gcp_datasets.gcp.PartitionedAsyncParallelDataset
   path: ${globals:paths.cache}/{source}
   dataset: kedro_datasets.pandas.ParquetDataset
   timeout: 1800  # if the batch size increases, you'll likely need to increase this too, as most APIs simply take longer to process larger batches.
