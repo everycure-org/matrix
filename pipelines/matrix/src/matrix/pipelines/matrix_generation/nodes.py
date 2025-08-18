@@ -170,7 +170,7 @@ def generate_pairs(
     is_in_train = matrix.apply(lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1)
     matrix = matrix[~is_in_train]
     # Add flag columns for known positives and negatives
-    matrix = _add_flag_columns(matrix, known_pairs, clinical_trials, off_label)
+    matrix = _add_flag_columns(matrix, known_pairs, clinical_trials, off_label, orchard)
     return matrix
 
 
