@@ -66,7 +66,7 @@ spec:
             preference:
               matchExpressions:
               - key: cloud.google.com/gke-spot
-                operator: Equal
+                operator: "Equal"
                 values:
                 - "true"
     # Add tolerations for large memory nodes and GPU nodes
