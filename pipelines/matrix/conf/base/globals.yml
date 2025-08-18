@@ -55,6 +55,8 @@ data_sources:
     version: *_rtx_kg_version
   ec_gt:
     version: "Release v1.3.3"
+  drugbank_gt:
+    version: 1332218
   drugmech:
     # check releases here: https://github.com/SuLab/DrugMechDB/releases/ 
     version: 2.0.1

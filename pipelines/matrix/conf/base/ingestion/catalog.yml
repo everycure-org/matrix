@@ -359,7 +359,7 @@ ingestion.int.kgml_xdtd_ground_truth.positive.edges@spark:
   filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tp_pairs
 
 ingestion.int.kgml_xdtd_ground_truth.negative.edges@spark:
-  <<: [*_pandas_parquet, *_layer_int]
+  <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tn_pairs
 
 # -------------------------------------------------------------------------
