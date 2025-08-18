@@ -31,7 +31,7 @@ class OrchardTransformer(Transformer):
         )
         # Apply dynamic filters based on pair_flags configuration in integration/parameters.yml
         for flag_name, filter_dict in self._pair_flags.items():
-            # For each flag name, create a list of filter conditions using list comprehensiom from filter_dict object
+            # For each flag name, create a list of filter conditions using list comprehension from filter_dict object
             filter_conditions = [
                 f.col(filter_col).isin(filter_values) for filter_col, filter_values in filter_dict.items()
             ]
