@@ -2377,11 +2377,12 @@ dependencies = [
     { name = "rich" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-mock" },
+    { name = "responses" },
     { name = "ruff" },
 ]
 
@@ -2391,14 +2392,18 @@ requires-dist = [
     { name = "google-auth" },
     { name = "google-auth-oauthlib" },
     { name = "google-oauth2-tool" },
-    { name = "pytest", marker = "extra == 'dev'" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'" },
-    { name = "pytest-mock", marker = "extra == 'dev'" },
     { name = "requests" },
     { name = "rich" },
-    { name = "ruff", marker = "extra == 'dev'" },
 ]
-provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-mock" },
+    { name = "responses" },
+    { name = "ruff" },
+]
 
 [[package]]
 name = "matrix-docs"
@@ -2465,8 +2470,9 @@ dependencies = [
     { name = "pandas" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
+    { name = "pyspark" },
     { name = "pytest" },
     { name = "pytest-mock" },
     { name = "ruff" },
@@ -2478,11 +2484,15 @@ requires-dist = [
     { name = "kedro", specifier = ">=0.19.0" },
     { name = "numpy" },
     { name = "pandas" },
-    { name = "pytest", marker = "extra == 'dev'" },
-    { name = "pytest-mock", marker = "extra == 'dev'" },
-    { name = "ruff", marker = "extra == 'dev'" },
 ]
-provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pyspark", specifier = ">=3.5.0" },
+    { name = "pytest" },
+    { name = "pytest-mock" },
+    { name = "ruff" },
+]
 
 [[package]]
 name = "matrix-gcp-datasets"
@@ -2494,16 +2504,19 @@ dependencies = [
     { name = "google-api-core" },
     { name = "google-cloud-bigquery" },
     { name = "google-cloud-storage" },
+    { name = "hdfs" },
     { name = "kedro" },
     { name = "kedro-datasets" },
     { name = "numpy" },
     { name = "pandas" },
+    { name = "pandas-gbq" },
     { name = "pygsheets" },
     { name = "pyspark" },
+    { name = "s3fs" },
     { name = "tqdm" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -2518,19 +2531,25 @@ requires-dist = [
     { name = "google-api-core" },
     { name = "google-cloud-bigquery" },
     { name = "google-cloud-storage" },
+    { name = "hdfs" },
     { name = "kedro", specifier = ">=0.19.0" },
     { name = "kedro-datasets", specifier = ">=6.0.0" },
     { name = "numpy" },
     { name = "pandas" },
+    { name = "pandas-gbq" },
     { name = "pygsheets", specifier = ">=2.0.0" },
     { name = "pyspark", specifier = ">=3.5.0" },
-    { name = "pytest", marker = "extra == 'dev'" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'" },
-    { name = "pytest-mock", marker = "extra == 'dev'" },
-    { name = "ruff", marker = "extra == 'dev'" },
+    { name = "s3fs" },
     { name = "tqdm" },
 ]
-provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-mock" },
+    { name = "ruff" },
+]
 
 [[package]]
 name = "matrix-mlflow-utils"
@@ -2544,7 +2563,7 @@ dependencies = [
     { name = "scikit-learn" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "pytest" },
     { name = "pytest-mock" },
@@ -2557,12 +2576,15 @@ requires-dist = [
     { name = "mlflow", specifier = ">=2.20.0" },
     { name = "numpy" },
     { name = "pandas" },
-    { name = "pytest", marker = "extra == 'dev'" },
-    { name = "pytest-mock", marker = "extra == 'dev'" },
-    { name = "ruff", marker = "extra == 'dev'" },
     { name = "scikit-learn" },
 ]
-provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-mock" },
+    { name = "ruff" },
+]
 
 [[package]]
 name = "matrix-pipeline"
@@ -2576,7 +2598,6 @@ dependencies = [
     { name = "google-cloud-bigquery-storage" },
     { name = "google-cloud-iam" },
     { name = "graphdatascience" },
-    { name = "hdfs" },
     { name = "ipython" },
     { name = "ipywidgets" },
     { name = "jsonpath-ng" },
@@ -2610,7 +2631,6 @@ dependencies = [
     { name = "python-cypher" },
     { name = "responses" },
     { name = "rich" },
-    { name = "s3fs" },
     { name = "scikit-learn" },
     { name = "scikit-optimize" },
     { name = "seaborn" },
@@ -2685,7 +2705,6 @@ requires-dist = [
     { name = "google-cloud-bigquery-storage" },
     { name = "google-cloud-iam" },
     { name = "graphdatascience" },
-    { name = "hdfs", specifier = "==2.7.3" },
     { name = "ipython", specifier = ">=8.10" },
     { name = "ipywidgets" },
     { name = "jsonpath-ng" },
@@ -2719,7 +2738,6 @@ requires-dist = [
     { name = "python-cypher", specifier = "==0.20.1" },
     { name = "responses" },
     { name = "rich" },
-    { name = "s3fs" },
     { name = "scikit-learn", specifier = "==1.5.0" },
     { name = "scikit-optimize" },
     { name = "seaborn" },
@@ -3675,6 +3693,28 @@ wheels = [
 ]
 
 [[package]]
+name = "pandas-gbq"
+version = "0.29.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "db-dtypes" },
+    { name = "google-api-core" },
+    { name = "google-auth" },
+    { name = "google-auth-oauthlib" },
+    { name = "google-cloud-bigquery" },
+    { name = "numpy" },
+    { name = "packaging" },
+    { name = "pandas" },
+    { name = "pyarrow" },
+    { name = "pydata-google-auth" },
+    { name = "setuptools" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a5/ff/a81b01f9657b1c4b3b021e604b15a4ad1e5ac086977acf5ab74265a00a51/pandas_gbq-0.29.2.tar.gz", hash = "sha256:a3a28e7de4f8456fc4b8e9b7472b9bc470d2566f89c4cd997599e504f5a0a706", size = 65625, upload-time = "2025-07-10T16:24:56.017Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5b/e5/8f3607a8827ff499ee4b841599c5e2998bf6bf8a7d997215726039d72747/pandas_gbq-0.29.2-py3-none-any.whl", hash = "sha256:99f6b642bd8340e96c2acdf7d717108aa0d31c703c2f284817ba7dc3b16110b2", size = 40971, upload-time = "2025-07-10T16:24:55.047Z" },
+]
+
+[[package]]
 name = "pandas-stubs"
 version = "2.3.0.250703"
 source = { registry = "https://pypi.org/simple" }
@@ -4142,6 +4182,20 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/b8/e9/1f7efbe20d0b2b10f6718944b5d8ece9152390904f29a78e68d4e7961159/pydantic_core-2.33.2-pp311-pypy311_pp73-musllinux_1_1_armv7l.whl", hash = "sha256:de4b83bb311557e439b9e186f733f6c645b9417c84e2eb8203f3f820a4b988bf", size = 2239013, upload-time = "2025-04-23T18:33:26.621Z" },
     { url = "https://files.pythonhosted.org/packages/3c/b2/5309c905a93811524a49b4e031e9851a6b00ff0fb668794472ea7746b448/pydantic_core-2.33.2-pp311-pypy311_pp73-musllinux_1_1_x86_64.whl", hash = "sha256:82f68293f055f51b51ea42fafc74b6aad03e70e191799430b90c13d643059ebb", size = 2238715, upload-time = "2025-04-23T18:33:28.656Z" },
     { url = "https://files.pythonhosted.org/packages/32/56/8a7ca5d2cd2cda1d245d34b1c9a942920a718082ae8e54e5f3e5a58b7add/pydantic_core-2.33.2-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:329467cecfb529c925cf2bbd4d60d2c509bc2fb52a20c1045bf09bb70971a9c1", size = 2066757, upload-time = "2025-04-23T18:33:30.645Z" },
+]
+
+[[package]]
+name = "pydata-google-auth"
+version = "1.9.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "google-auth" },
+    { name = "google-auth-oauthlib" },
+    { name = "setuptools" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3f/0d/455cb39f0d5a914412b57c55c6b16977c61a5ac74b615eea4fb0dc54e329/pydata-google-auth-1.9.1.tar.gz", hash = "sha256:0a51ce41c601ca0bc69b8795bf58bedff74b4a6a007c9106c7cbcdec00eaced2", size = 29814, upload-time = "2025-01-23T21:04:40.875Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ca/cb/cdeaba62aa3c48f0d8834afb82b4a21463cd83df34fe01f9daa89a08ec6c/pydata_google_auth-1.9.1-py2.py3-none-any.whl", hash = "sha256:75ffce5d106e34b717b31844c1639ea505b7d9550dc23b96fb6c20d086b53fa3", size = 15552, upload-time = "2025-01-23T21:04:38.97Z" },
 ]
 
 [[package]]
