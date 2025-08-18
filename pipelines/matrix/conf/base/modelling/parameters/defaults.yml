@@ -9,7 +9,10 @@ modelling.disease_types:
   - biolink:BehavioralFeature
   - biolink:DiseaseOrPhenotypicFeature
 
-
+modelling.training_data_sources:
+  - ec
+  - drugbank
+  - kgml_xdtd
 
 modelling.splitter:
 

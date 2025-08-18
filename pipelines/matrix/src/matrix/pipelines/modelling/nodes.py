@@ -28,6 +28,7 @@ plt.switch_backend("Agg")
 def filter_valid_pairs(
     nodes: ps.DataFrame,
     edges_gt: ps.DataFrame,
+    training_data_sources: list[str],
     drug_categories: Iterable[str],
     disease_categories: Iterable[str],
 ) -> tuple[ps.DataFrame, dict[str, float]]:
@@ -44,6 +45,11 @@ def filter_valid_pairs(
         - DataFrame with combined filtered positive and negative pairs
         - Dictionary with retention statistics
     """
+    # Select Ground truth from training data sources and drop potential duplicates
+    # (due to multiple sources for the same pair)
+    edges_gt = edges_gt.filter(f.col("upstream_data_source").isin(training_data_sources)).dropDuplicates(
+        ["subject", "object"]
+    )
     # Create set of categories to filter on
     categories = set(itertools.chain(drug_categories, disease_categories))
     categories_array = f.array([f.lit(cat) for cat in categories])
