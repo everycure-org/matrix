@@ -215,6 +215,15 @@ def test_generate_pairs(
         off_label=sample_off_label,
         orchard=sample_orchard,
     )
+    result_public_only = generate_pairs(
+        drugs=sample_drugs,
+        diseases=sample_diseases,
+        graph=sample_graph,
+        known_pairs=sample_known_pairs,
+        clinical_trials=sample_clinical_trials,
+        off_label=sample_off_label,
+        orchard=None,
+    )
 
     # Then the output is of the correct format and shape
     assert isinstance(result, pd.DataFrame)
@@ -236,12 +245,17 @@ def test_generate_pairs(
             "trial_non_sig_better",
             "trial_sig_worse",
             "trial_non_sig_worse",
-            "off_label",
-            "high_evidence_matrix",
-            "high_evidence_crowdsourced",
-            "mid_evidence_matrix",
-            "mid_evidence_crowdsourced",
-            "archive_biomedical_review",
+        ]
+    )
+    assert all(
+        check_col(col)
+        for col in [
+            "is_known_positive",
+            "is_known_negative",
+            "trial_sig_better",
+            "trial_non_sig_better",
+            "trial_sig_worse",
+            "trial_non_sig_worse",
         ]
     )
     # Flag columns set correctly
