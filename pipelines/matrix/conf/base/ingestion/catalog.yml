@@ -403,6 +403,44 @@ ingestion.int.ec_ground_truth.positive.edges@spark:
   filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs
 
 # -------------------------------------------------------------------------
+# Ground truth EC
+# -------------------------------------------------------------------------  
+
+ingestion.raw.drugbank_ground_truth.positives:
+  <<: [*_layer_raw]
+  filepath: ${globals:paths.raw_private}/ground_truth/ec/${globals:data_sources.drugbank_gt.version}/tn_pairs
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+
+ingestion.raw.drugbank_ground_truth.negatives:
+  <<: [*_layer_raw]
+  filepath: ${globals:paths.raw_private}/ground_truth/ec/${globals:data_sources.drugbank_gt.version}/tn_pairs
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+
+ingestion.int.drugbank_ground_truth.negative.edges@pandas:
+  <<: [*_pandas_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.drugbank_gt.version}/tn_pairs
+
+ingestion.int.drugbank_ground_truth.positive.edges@pandas:
+  <<: [*_pandas_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.drugbank_gt.version}/tp_pairs
+
+ingestion.int.drugbank_ground_truth.negative.edges@spark:
+  <<: [*_spark_parquet, *_layer_int] 
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.drugbank_gt.version}/tn_pairs
+
+ingestion.int.drugbank_ground_truth.positive.edges@spark:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.drugbank_gt.version}/tp_pairs
+
+# -------------------------------------------------------------------------
 # Robokop
 # -------------------------------------------------------------------------  
 ingestion.raw.robokop.nodes@spark:
