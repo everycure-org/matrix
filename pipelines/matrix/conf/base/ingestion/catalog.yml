@@ -432,6 +432,75 @@ ingestion.int.robokop.edges:
    filepath: ${globals:paths.ingestion}/int/robokop/${globals:data_sources.robokop.version}/edges
 
 # -------------------------------------------------------------------------
+# Prime KG
+# -------------------------------------------------------------------------
+ingestion.raw.primekg.nodes@spark:
+  <<: *_layer_raw
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_nodes.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+
+ingestion.raw.primekg.nodes@pandas:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_nodes.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
+
+ingestion.raw.prime.nodes@polars:
+  <<: [*_polars_csv, *_layer_raw]
+  filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_nodes.tsv
+  save_args:
+    separator: "\t"
+    has_header: true
+  load_args:
+    separator: "\t"
+
+ingestion.raw.primekg.edges@spark:
+  <<: *_layer_raw
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_edges.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+
+ingestion.raw.primekg.edges@pandas:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_edges.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
+
+ingestion.raw.primekg.edges@polars:
+  <<: [*_polars_csv, *_layer_raw]
+  filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_edges.tsv
+  save_args:
+    separator: "\t"
+    has_header: true
+  load_args:
+    separator: "\t"
+
+ingestion.int.primekg.nodes:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/prime-kg/${globals:data_sources.primekg.version}/nodes
+
+ingestion.int.primekg.edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/prime-kg/${globals:data_sources.primekg.version}/edges
+
+# -------------------------------------------------------------------------
 # SPOKE
 # -------------------------------------------------------------------------
 ingestion.raw.spoke.nodes@spark:
