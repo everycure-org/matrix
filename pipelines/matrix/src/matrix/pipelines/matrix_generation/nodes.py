@@ -174,22 +174,6 @@ def generate_pairs(
     return matrix
 
 
-def map_private_pairs(
-    matrix: pd.DataFrame,
-    orchard: pd.DataFrame = None,
-) -> pd.DataFrame:
-    """Function to map private pairs to matrix dataframe
-
-    Args:
-        matrix: Matrix dataframe containing all combinations of drugs and diseases.
-        orchard: Orchard Pairs to be mapped to the matrix.
-
-    Returns:
-        Matrix dataframe with private pairs mapped (if present).
-    """
-    return matrix
-
-
 @check_output(
     schema=DataFrameSchema(
         columns={
