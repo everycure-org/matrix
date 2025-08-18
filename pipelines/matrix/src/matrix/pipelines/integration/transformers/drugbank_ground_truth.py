@@ -23,25 +23,27 @@ class DrugbankGroundTruthTransformer(Transformer):
     @staticmethod
     def _rename_edges(edges_df: ps.DataFrame) -> ps.DataFrame:
         return (
-            edges_df.withColumnRenamed("final normalized drug id", "subject")
-            .withColumnRenamed("final normalized disease id", "object")
-            .withColumnRenamed("final normalized drug label", "subject_label")
-            .withColumnRenamed("final normalized disease label", "object_label")
-            .withColumnRenamed("drug|disease", "id")
+            edges_df.withColumnRenamed("primary_drug_id_norm", "subject")
+            .withColumnRenamed("condition_id_norm", "object")
+            .withColumn("id", f.concat(f.col("subject"), f.lit("|"), f.col("object")))
         )
 
     def _extract_pos_edges(self, edges_df: ps.DataFrame) -> ps.DataFrame:
         edges_df = self._rename_edges(edges_df)
         return (
-            edges_df.select("subject", "object", "subject_label", "object_label", "id")
+            edges_df.withColumnRenamed("primary_drug", "subject_label")
+            .withColumnRenamed("treated_condition", "object_label")
             .withColumn("predicate", f.lit("indication"))
             .withColumn("y", f.lit(1))
+            .select("subject", "object", "subject_label", "object_label", "id", "y", "predicate")
         )
 
     def _extract_neg_edges(self, edges_df: ps.DataFrame) -> ps.DataFrame:
         edges_df = self._rename_edges(edges_df)
         return (
-            edges_df.select("subject", "object", "subject_label", "object_label", "id")
+            edges_df.withColumnRenamed("primary_drug_name", "subject_label")
+            .withColumnRenamed("condition_name", "object_label")
             .withColumn("predicate", f.lit("contraindication"))
             .withColumn("y", f.lit(0))
+            .select("subject", "object", "subject_label", "object_label", "id", "y", "predicate")
         )

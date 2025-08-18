@@ -403,7 +403,7 @@ ingestion.int.ec_ground_truth.positive.edges@spark:
   filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs
 
 # -------------------------------------------------------------------------
-# Ground truth EC
+# Ground truth Drugbank
 # -------------------------------------------------------------------------  
 
 ingestion.raw.drugbank_ground_truth.positives:
