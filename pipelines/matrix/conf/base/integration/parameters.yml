@@ -95,7 +95,7 @@ integration:
             - SAB_ENDORSED
             - HOLDING
             - MEDICAL_REVIEW 
-          archive_biomedical_review:
+          archive_biomedical_crowdsourced:
             latest_status: 
             - ARCHIVE
             latest_reason:

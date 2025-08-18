@@ -94,9 +94,11 @@ def _add_flag_columns(
     # Flag orchard data if available
     if orchard is not None:
         orchard = orchard.rename(columns={"subject": "source", "object": "target"})
-        matrix["high_evidence_orchard"] = create_flag_column(orchard[orchard["high_evidence_review"] == 1])
-        matrix["mid_evidence_orchard"] = create_flag_column(orchard[orchard["mid_evidence_review"] == 1])
-        matrix["archive_biomedical_orchard"] = create_flag_column(orchard[orchard["archive_biomedical_review"] == 1])
+        matrix["high_evidence_matrix"] = create_flag_column(orchard[orchard["high_evidence_matrix"] == 1])
+        matrix["mid_evidence_matrix"] = create_flag_column(orchard[orchard["mid_evidence_matrix"] == 1])
+        matrix["high_evidence_crowdsourced"] = create_flag_column(orchard[orchard["high_evidence_crowdsourced"] == 1])
+        matrix["mid_evidence_crowdsourced"] = create_flag_column(orchard[orchard["mid_evidence_crowdsourced"] == 1])
+        matrix["archive_biomedical_review"] = create_flag_column(orchard[orchard["archive_biomedical_review"] == 1])
 
     return matrix
 
