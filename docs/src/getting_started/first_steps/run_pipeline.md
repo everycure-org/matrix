@@ -185,7 +185,7 @@ embeddings.topological_estimator:
     Before we run the embeddings pipeline, we will need to make sure that the `OPENAI_API_KEY` is set in the `.env` file. 
 
 !!! note "Neo4J is set up and running"
-    The `embeddings` pipeline require that Neo4J is running and configured correctly. If you have Neo4J set up already, you could simply add the following to your `.env` file
+    The `embeddings` pipeline require that Neo4J is running and configured correctly. If you have Neo4J set up already, you could simply add the username and password the following to your `.env` file
 
     ```bash
     NEO4J_HOST: xxx
@@ -199,15 +199,15 @@ embeddings.topological_estimator:
     make compose_up
     ```
 
-!!! warning "Important: memory settings for Neo4J"
-    Please ensure that the machine you are running on has at least 128 GB of memory, as the embeddings is a intensive pipeline and require Neo4J to have at least 20 GB of ram. The above command assumes you have at least 80 GB of memory. Adjust accordingly. The following settings work:
-    ```bash
-        NEO4J_server_memory_heap_initial__size=40g
-        NEO4J_server_memory_heap_max__size=40g
-        NEO4J_server_memory_pagecache_size=8g
-    ```
+    !!! warning "Important: memory settings for Neo4J"
+        Please ensure that the machine you are running on has at least 128 GB of memory, as the `embeddings` pipeline is an intensive pipeline and require Neo4J to have at least 20 GB of RAM. The above command assumes you have at least 80 GB of memory. Please adjust accordingly. The following settings work:
+        ```bash
+            NEO4J_server_memory_heap_initial__size=40g
+            NEO4J_server_memory_heap_max__size=40g
+            NEO4J_server_memory_pagecache_size=8g
+        ```
 
-    You could add this to the Neo4J environment section of the `docker-compose` file or if you are running a standalone version, modify the settings accordingly. This is to prevent you from running into an OOM error as the `embeddings` pipeline is intensive.
+        You could add this to the Neo4J environment section of the `docker-compose` file (if you are running Neo4J through it) or if you are running a standalone version, modify the settings in the environment file or settings of Neo4J accordingly. This is to prevent you from running into an OOM error as the `embeddings` pipeline is intensive and will be killed if there is insufficient memory.
 
     
 
@@ -222,7 +222,7 @@ kedro run -p embeddings -e base
     ```
     This is due to Neo4J Community Edition limitation. We are using the Neo4J Enterprise Edition and the command is supported. You would need to edit file [`pipelines/matrix/conf/base/embeddings/catalog.yml`](https://github.com/everycure-org/matrix/blob/3c5243cd4efef7b87200ce9a8cb09559bfbe7494/pipelines/matrix/conf/base/embeddings/catalog.yml#L45C6-L45C20) and remove the `mode: overwrite`.
 
-    Please note removing `mode: overwrite` will not delete the data when the pipeline is re-run. You would have to manually delete the data from the Neo4J folder.
+    Please note that removing `mode: overwrite` will not delete the data when the pipeline is re-run. You would have to manually delete the data from the Neo4J folder. Not deleting the data might result in inaccurate or duplicated data.
 
 ## Finding Data Products while running the modelling pipeline
 
