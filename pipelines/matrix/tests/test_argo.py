@@ -511,7 +511,7 @@ def test_argo_template_config_boilerplate(argo_default_resources: ArgoResourceCo
     match_expression = selector["preference"]["matchExpressions"][0]
     assert match_expression["key"] == "cloud.google.com/gke-spot"
     assert match_expression["operator"] == "Equal"
-    assert match_expression["values"] == [True]
+    assert match_expression["values"] == ["true"]
 
     # Verify resources based on GPU configuration
     assert "podSpecPatch" in kedro_template
