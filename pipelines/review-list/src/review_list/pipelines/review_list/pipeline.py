@@ -28,7 +28,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "weights": "params:inputs_to_review_list",
                     "config": "params:review_list_config",
                 },
-                outputs="combined_ranked_pair_dataframe@spark",
+                outputs="combined_ranked_pair_dataframe",
                 name="combine_ranked_pair_dataframes_node",
             ),
         ]

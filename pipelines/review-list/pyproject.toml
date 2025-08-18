@@ -2,8 +2,32 @@
 requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools.dynamic.dependencies]
- file = "requirements.txt"
+[project]
+requires-python = ">=3.11"
+name = "review_list"
+readme = "README.md"
+dynamic = ["version"]
+dependencies = [
+    "ipython>=8.10",
+    "jupyterlab>=3.0",
+    "notebook",
+    "kedro==0.19.13",
+    "kedro-datasets[spark.SparkDataSet]>=6.0.0",
+    "kedro-telemetry>=0.3.1",
+    "kedro-viz>=11.0.0",
+    "matplotlib",
+    "numpy==1.24.4",
+    "pandas",
+    "pandera==0.24.0",
+    "pyarrow>=14.0.2",
+    "pyspark==3.5.1",
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
+    "scikit-learn~=1.5.1",
+    "seaborn~=0.12.1",
+    "setuptools; python_version >= \"3.12\"",
+]
 
 [tool.pytest.ini_options]
 pythonpath = "src"
@@ -23,11 +47,6 @@ markers = [
     "spark: mark a test as a spark test & requires PYSPARK_PYTHON to be set appropriately",
 ]
 
-[project]
-requires-python = ">=3.11"
-name = "review_list"
-readme = "README.md"
-dynamic = [ "version", "dependencies"]
 
 [project.scripts]
 review-list = "review_list.__main__:main"
