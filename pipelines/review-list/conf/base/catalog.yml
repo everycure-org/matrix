@@ -15,3 +15,17 @@ input_dataframe_2:
 combined_ranked_pair_dataframe:
   <<: *_spark_parquet
   filepath: data/review_list/combined_ranked_pair_dataframe
+
+trimmed_{input_name}:
+  <<: *_spark_parquet
+  filepath: data/review_list/trimmed_{input_name}
+
+
+# prefetched_inputs:
+#   type: partitioned.PartitionedDataset
+#   path: data/review_list/prefetched_inputs
+#   dataset:
+#     type: spark.SparkDataset
+#     file_format: parquet
+#     save_args:
+#       mode: overwrite

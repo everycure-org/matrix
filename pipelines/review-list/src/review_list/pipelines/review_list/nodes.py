@@ -1,4 +1,5 @@
 import logging
+import math
 from functools import reduce
 
 import pyspark.sql as ps
@@ -7,35 +8,82 @@ from pyspark.sql.functions import col, row_number
 
 logger = logging.getLogger(__name__)
 
+# NOTE: This file was partially generated using AI assistance.
 
-# TODO: maybe use inject_object()
-def combine_ranked_pair_dataframes(
-    weights: dict[str, dict], config: dict[str, any], **dataframes: ps.DataFrame
-) -> ps.DataFrame:
+def prefetch_top_quota(
+    weights: dict[str, dict],
+    config: dict[str, any],
+    **dataframes: ps.DataFrame,
+) -> list[ps.DataFrame]:
     """
-    Combine ranked pair dataframes using weighted merge logic.
+    Return the top rows from each input DataFrame according to its quota with a 20% buffer.
+
+    - Quota is computed as round(limit * weight) per dataset, adjusted so the sum equals limit
+    - We then take ceil(quota * 1.2) rows ordered by rank (20% buffer)
 
     Args:
-        weights: Parameter structure with weights configuration
-        config: Configuration parameters including limit
-        **dataframes: Individual dataframes passed as keyword arguments
+        weights: Mapping of dataset name to a dict containing a 'weight' float
+        config: Mapping containing 'limit' int
+        **dataframes: Named input DataFrames keyed by dataset name
+
+    Returns:
+        List[DataFrame]: A list of trimmed DataFrames in the same order as inputs
     """
     if not dataframes:
         raise ValueError("At least one DataFrame must be provided")
 
+    if "limit" not in config:
+        raise ValueError("Missing limit in config")
     limit = config["limit"]
-    weight_values = {}
-    for dataset_name, weight_config in weights.items():
-        # TODO: handle all edge cases
-        if "weight" not in weight_config:
-            raise ValueError(f"Missing weight for dataset {dataset_name}")
-        weight_values[dataset_name] = weight_config["weight"]
 
-    dfs_with_weights = [
-        (dataframes[name], weight_values[name]) for name in dataframes.keys()
-    ]
+    total_weight = sum(w["weight"] for _, w in weights.items())
+    if total_weight != 1:
+        raise ValueError("Weights must sum to 1")
 
-    return weighted_merge_multiple(dfs_with_weights, limit)
+    # Compute quotas per dataset, adjust rounding diff onto first dataset
+    dataset_names = list(dataframes.keys())
+    raw_quotas = [round(limit * weights[name]["weight"]) for name in dataset_names]
+
+    # Apply 20% buffer and select top rows by rank
+
+    trimmed_dataframes: list[ps.DataFrame] = []
+    for name, quota in zip(dataset_names, raw_quotas):
+        buffer_n = int(math.ceil(quota * 1.2))
+        top_plus_buffer = dataframes[name].filter(col("rank") <= buffer_n)
+        trimmed_dataframes.append(top_plus_buffer)
+
+    breakpoint() 
+    return trimmed_dataframes
+
+
+# # TODO: maybe use inject_object()
+# def combine_ranked_pair_dataframes(
+#     weights: dict[str, dict], config: dict[str, any], **dataframes: ps.DataFrame
+# ) -> ps.DataFrame:
+#     """
+#     Combine ranked pair dataframes using weighted merge logic.
+
+#     Args:
+#         weights: Parameter structure with weights configuration
+#         config: Configuration parameters including limit
+#         **dataframes: Individual dataframes passed as keyword arguments
+#     """
+#     if not dataframes:
+#         raise ValueError("At least one DataFrame must be provided")
+
+#     limit = config["limit"]
+#     weight_values = {}
+#     for dataset_name, weight_config in weights.items():
+#         # TODO: handle all edge cases
+#         if "weight" not in weight_config:
+#             raise ValueError(f"Missing weight for dataset {dataset_name}")
+#         weight_values[dataset_name] = weight_config["weight"]
+
+#     dfs_with_weights = [
+#         (dataframes[name], weight_values[name]) for name in dataframes.keys()
+#     ]
+
+#     return weighted_merge_multiple(dfs_with_weights, limit)
 
 
 def weighted_merge_multiple(dfs_with_weights, limit):
@@ -85,3 +133,43 @@ def weighted_merge_multiple(dfs_with_weights, limit):
     merged = merged.withColumn("rank", row_number().over(Window.orderBy("rank")))
 
     return merged
+
+
+def combine_ranked_pair_dataframes(
+    weights: dict[str, dict], config: dict[str, any], **trimmed_dataframes: ps.DataFrame
+) -> ps.DataFrame:
+    """
+    Combine multiple ranked DataFrames according to weights and limit.
+
+    Args:
+        weights: Mapping of dataset name to a dict containing a 'weight' float
+        config: Mapping containing 'limit' int
+        **trimmed_dataframes: Named trimmed DataFrames keyed by dataset name
+
+    Returns:
+        DataFrame: Combined and deduplicated DataFrame with sequential ranks
+    """
+    if not trimmed_dataframes:
+        raise ValueError("At least one DataFrame must be provided")
+
+    if "limit" not in config:
+        raise ValueError("Missing limit in config")
+    limit = config["limit"]
+
+    # Extract weight values in the same order as trimmed_dataframes
+    dataset_names = list(trimmed_dataframes.keys())
+    weight_values = [weights[name]["weight"] for name in dataset_names]
+    
+    # Ensure weights sum to 1 (with small tolerance)
+    total_weight = sum(weight_values)
+    if abs(total_weight - 1.0) > 1e-10:
+        raise ValueError("Weights must sum to 1")
+
+    # Create list of (dataframe, weight) tuples
+    dfs_with_weights = [(trimmed_dataframes[name], weight) for name, weight in zip(dataset_names, weight_values)]
+
+    # Shortcut for single dataframe
+    if len(dfs_with_weights) == 1:
+        return dfs_with_weights[0][0].limit(limit)
+
+    return weighted_merge_multiple(dfs_with_weights, limit)
