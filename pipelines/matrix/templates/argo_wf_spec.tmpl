@@ -108,6 +108,7 @@ spec:
       - name: ephemeral_storage_request
       - name: ephemeral_storage_limit
     podSpecPatch: |
+      terminationGracePeriodSeconds: 30
       tolerations:
         - key: "node-memory-size"
           operator: "Equal"
@@ -223,6 +224,7 @@ spec:
   - <<: *_kedro_template
     name: neo4j
     podSpecPatch: |
+      terminationGracePeriodSeconds: 30
       tolerations:
         - key: "node-memory-size"
           operator: "Equal"
@@ -259,7 +261,7 @@ spec:
           env:
             - name: SPARK_DRIVER_MEMORY
               value: "60"
-            # NOTE: We're passing in a regular bolt connection as emphemeral Neo4J has no SSL
+            # NOTE: We're passing in a regular bolt connection as ephemeral Neo4J has no SSL
             - name: NEO4J_HOST
               value: "bolt://127.0.0.1:7687"
         - name: neo4j
