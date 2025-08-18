@@ -12,7 +12,6 @@ def _create_integration_pipeline(
     has_nodes: bool = True,
     has_edges: bool = True,
     is_core: bool = False,
-    is_ground_truth: bool = False,
 ) -> Pipeline:
     pipelines = []
 
