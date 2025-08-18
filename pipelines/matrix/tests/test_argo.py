@@ -510,7 +510,7 @@ def test_argo_template_config_boilerplate(argo_default_resources: ArgoResourceCo
     selector = kedro_template["affinity"]["nodeAffinity"]["preferredDuringSchedulingIgnoredDuringExecution"][0]
     match_expression = selector["preference"]["matchExpressions"][0]
     assert match_expression["key"] == "cloud.google.com/gke-spot"
-    assert match_expression["operator"] == "Equal"
+    assert match_expression["operator"] == "In"
     assert match_expression["values"] == ["true"]
 
     # Verify resources based on GPU configuration
