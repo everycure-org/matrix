@@ -1,12 +1,10 @@
 import logging
 import math
 import random
-from functools import reduce
 
 import pandas as pd
 import pyspark.sql as ps
-from pyspark.sql import Window
-from pyspark.sql.functions import col, row_number
+from pyspark.sql.functions import col
 
 logger = logging.getLogger(__name__)
 
@@ -59,20 +57,22 @@ def prefetch_top_quota(
 def weighted_interleave_dataframes(
     weights: dict[str, dict],
     config: dict[str, any],
+    rng: random.Random | None = None,
     **trimmed_dataframes: pd.DataFrame,
 ) -> pd.DataFrame:
     """
     Perform weighted interleaving of trimmed DataFrames.
-    
+
     For each row position, randomly select a dataset according to weights,
     then take the top-ranked item from that dataset.
     Avoid duplicates by tracking seen (source, target) pairs.
-    
+
     Args:
         weights: Mapping of dataset name to a dict containing a 'weight' float
         config: Mapping containing 'limit' int
+        rng: Optional random instance. If provided, used for deterministic tests.
         **trimmed_dataframes: Named trimmed pandas DataFrames keyed by dataset name
-        
+
     Returns:
         pandas.DataFrame: Interleaved DataFrame with sequential ranks
     """
@@ -83,79 +83,69 @@ def weighted_interleave_dataframes(
         raise ValueError("Missing limit in config")
     limit = config["limit"]
 
-    # Extract weight values
-    weight_values = {name: weights[name]["weight"] for name in trimmed_dataframes.keys()}
-    
-    # Ensure weights sum to 1 (with small tolerance)
-    total_weight = sum(weight_values.values())
-    if abs(total_weight - 1.0) > 1e-10:
+    # Extract weight values and validate
+    weight_values = {
+        name: weights[name]["weight"] for name in trimmed_dataframes.keys()
+    }
+    if abs(sum(weight_values.values())) != 1:  # noqa PLR2004
         raise ValueError("Weights must sum to 1")
 
-    # Make copies of the DataFrames to avoid modifying the originals
+    # Make copies and initialize tracking
     pandas_dfs = {name: df.copy() for name, df in trimmed_dataframes.items()}
-    
-    # Initialize result tracking
     result_rows = []
-    seen_pairs = set()  # Track (source, target) pairs to avoid duplicates
+    seen_pairs = set()
     dataset_names = list(trimmed_dataframes.keys())
-    
-    # Set random seed for reproducibility
-    random.seed(42)
-    
+
+    # Use provided RNG or fall back to module-level randomness (unseeded -> truly random)
+    _rng = rng or random
+
     # Continue until we reach the limit or run out of unique rows
     attempts = 0
-    max_attempts = limit * 10  # Prevent infinite loops
-    
-    while len(result_rows) < limit and attempts < max_attempts:
+    while len(result_rows) < limit and attempts < limit * 10:
         attempts += 1
-        
-        # Randomly select a dataset according to weights
-        selected_dataset = random.choices(dataset_names, weights=[weight_values[name] for name in dataset_names])[0]
-        
-        breakpoint()
-        # Get the top-ranked item from the selected dataset
+
+        # Select dataset by weight
+        selected_dataset = _rng.choices(
+            dataset_names,
+            weights=[weight_values[name] for name in dataset_names],
+        )[0]
+
         df = pandas_dfs[selected_dataset]
         if df.empty:
             continue
-            
+
         # Find the first available pair that hasn't been seen
         available_row = None
         rows_to_remove = []
-        
         for idx, row in df.iterrows():
             pair_key = (row["source"], row["target"])
             if pair_key in seen_pairs:
-                breakpoint()
+                # breakpoint()
                 rows_to_remove.append(idx)
             else:
-                breakpoint()
+                # breakpoint()
                 available_row = row
                 break
-        
+
         # If no available row found, skip this dataset
         if available_row is None:
             continue
-            
+
         # Add to results
         pair_key = (available_row["source"], available_row["target"])
         seen_pairs.add(pair_key)
         result_rows.append(available_row)
-        
+
         # Remove all rows from the beginning up to and including the available row
         pandas_dfs[selected_dataset] = df.drop(rows_to_remove + [available_row.name])
-    
+
     if not result_rows:
-        # Return empty DataFrame with same schema if no results
         return pd.DataFrame(columns=list(trimmed_dataframes[dataset_names[0]].columns))
-    
-    # Create result DataFrame
-    result_df = pd.DataFrame(result_rows)
-    
-    # Re-rank sequentially
+
+    # Create result with sequential ranks
+    result_df = pd.DataFrame(result_rows).reset_index(
+        drop=True
+    )  # reset original Series index
     result_df["rank"] = range(1, len(result_df) + 1)
 
-    breakpoint()
-    
     return result_df
-    
-    
