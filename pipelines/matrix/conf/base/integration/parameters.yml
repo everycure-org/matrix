@@ -65,16 +65,31 @@ integration:
         # Below are conditional flags in a format of 'flag_name':{'column_to_filter':['values','to','filter']}'
         # Thanks to them we can avoid hard-coding flags in the transformer class
         pair_flags:
-          high_evidence_review:
+          high_evidence_crowdsourced:
             latest_source: 
             - CROWDSOURCED
             latest_status: 
             - DEEP_DIVE
             - SAB_ENDORSED
             - HOLDING
-          mid_evidence_review:
+          high_evidence_matrix:
+            latest_source: 
+            - MATRIX
+            latest_status: 
+            - DEEP_DIVE
+            - SAB_ENDORSED
+            - HOLDING
+          mid_evidence_crowdsourced:
             latest_source: 
             - CROWDSOURCED
+            latest_status: 
+            - DEEP_DIVE
+            - SAB_ENDORSED
+            - HOLDING
+            - MEDICAL_REVIEW 
+          mid_evidence_matrix:
+            latest_source: 
+            - MATRIX
             latest_status: 
             - DEEP_DIVE
             - SAB_ENDORSED
