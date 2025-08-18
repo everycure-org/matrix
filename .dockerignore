@@ -59,3 +59,4 @@ pipelines/matrix/conf/local/
 
 pipelines/matrix/.env.defaults
 
+worktrees/
