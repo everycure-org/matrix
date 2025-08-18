@@ -19,7 +19,6 @@ MATRIX is organized as a monorepo with multiple packages managed by **uv**. The 
   - `matrix-gcp-datasets/` - GCP integration and Spark utilities
   - `matrix-mlflow-utils/` - MLflow integration and metric utilities
 - `/infra` - 🏗️ [Infrastructure as Code (IaC) configuration](docs/src/infrastructure)
-- `/apps/matrix-cli` - 🛠️ Command Line Interface Tools
 - `/services` - ⚙️ Supporting Services and APIs
 - `/docs` - 📖 Documentation site generation
 

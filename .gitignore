@@ -53,5 +53,7 @@ gha-kubeconfig*
 **/*.gen.tf
 /provider.tf
 
-.claude/*
 **/*.egg-info/
+
+# ignoring all claude related files for now
+.claude/**
