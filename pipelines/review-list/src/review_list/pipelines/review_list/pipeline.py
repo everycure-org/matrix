@@ -34,11 +34,13 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=weighted_interleave_dataframes,
                 inputs={
-                    **{name: f"trimmed_{name}@pandas" for name in input_datasets.keys()},
+                    **{
+                        name: f"trimmed_{name}@pandas" for name in input_datasets.keys()
+                    },
                     "weights": "params:inputs_to_review_list",
                     "config": "params:review_list_config",
                 },
-                outputs="combined_ranked_pair_dataframe@pandas",
+                outputs="combined_ranked_pairs_dataframe@pandas",
                 name="weighted_interleave_dataframes_node",
             ),
         ]
