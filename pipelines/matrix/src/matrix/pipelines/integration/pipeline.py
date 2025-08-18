@@ -141,7 +141,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                     has_nodes=source.get("has_nodes", True),
                     has_edges=source.get("has_edges", True),
                     is_core=source.get("is_core", False),
-                    is_ground_truth=source.get("is_ground_truth", False),
                 ),
                 tags=[source["name"]],
             )
