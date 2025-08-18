@@ -1,4 +1,3 @@
-# NOTE: This file was partially generated using AI assistance.
 import logging
 
 import pyspark.sql as ps
