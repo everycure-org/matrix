@@ -18,7 +18,7 @@ class ECGroundTruthTransformer(Transformer):
         neg_edges = self._extract_neg_edges(negative_edges_df)
         edges = pos_edges.union(neg_edges)
         id_list = edges.select("subject").union(edges.select("object")).distinct().withColumnRenamed("subject", "id")
-        return {"nodes": id_list, "edges": edges}
+        return {"nodes": id_list, "edges": edges.withColumn("upstream_data_source", f.lit("ec"))}
 
     @staticmethod
     def _rename_edges(edges_df: ps.DataFrame) -> ps.DataFrame:
