@@ -19,7 +19,6 @@ def edges_df(spark):
     )
 
     data = [
-        # Semmed edges
         ("curie1", "curie2", "2022-11-31 00:00:00", "SAB_ENDORSED", "MATRIX", "POSITIVE", "NULL"),
         ("curie3", "curie4", "2022-12-31 00:00:00", "SAB_ENDORSED", "CROWDSOURCED", "POSITIVE", "NULL"),
         ("curie3", "curie2", "2022-09-31 00:00:00", "MEDICAL_REVIEW", "MATRIX", "POSITIVE", "NULL"),
