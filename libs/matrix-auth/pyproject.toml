@@ -16,12 +16,13 @@ dependencies = [
     "rich",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "pytest",
     "pytest-asyncio",
     "pytest-mock",
     "ruff",
+    "responses",
 ]
 
 [tool.setuptools.packages.find]

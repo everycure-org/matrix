@@ -15,7 +15,7 @@ dependencies = [
     "scikit-learn",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "pytest",
     "pytest-mock",

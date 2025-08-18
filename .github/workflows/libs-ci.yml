@@ -1,0 +1,83 @@
+name: Libraries CI
+
+# This workflow automatically tests library modules when their code changes. 
+# It uses a dynamic matrix strategy to discover and test only the libraries 
+# that have modifications.
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'libs/**'  # Only trigger when library files change
+      - '.github/workflows/libs-ci.yml'
+    types: [opened, reopened, synchronize, ready_for_review]
+  push:
+    branches: [main]
+    paths:
+      - 'libs/**' 
+      - '.github/workflows/libs-ci.yml'
+
+# Prevent multiple workflows from running simultaneously
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Step 1: Dynamically discover library folders and build a matrix
+  # This job scans the libs/ directory and creates a matrix of library names
+  # so we don't have to manually maintain a list of libraries
+  generate-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            libs/  # Only checkout libs directory to save time
+      - id: set
+        run: |
+          # List all directories in libs/ and convert to JSON matrix format
+          # Output: {"lib": ["matrix-auth", "matrix-fabricator", ...]}
+          LIBS=$(ls -1 libs | jq -R . | jq -s '. as $a | {lib: $a}')
+          echo "matrix=$LIBS" >> "$GITHUB_OUTPUT"
+
+  # Step 2: Test each library in parallel using the matrix
+  # Each matrix job runs independently and only tests libraries that have changes
+  test-libs:
+    needs: generate-matrix  # Wait for matrix to be generated
+    runs-on: self-hosted    # Use self-hosted runner for better performance
+    strategy:
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      # Step 2a: Check if this specific library has any file changes
+      # This prevents running tests on libraries that weren't modified
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          list-files: none
+          filters: |
+            changed:
+              - libs/${{ matrix.lib }}/**  # Check all files in this library folder
+      
+      # Step 2b: Skip testing if no changes detected
+      # This saves CI time and resources
+      - name: Skip unchanged library
+        if: steps.filter.outputs.changed == 'false'
+        run: echo "No changes in ${{ matrix.lib }}. Skipping tests."
+      
+      # Step 2c: Run tests only if changes were detected
+      # Install dependencies and run pytest for the changed library
+      - name: Install & Test ${{ matrix.lib }}
+        if: steps.filter.outputs.changed == 'true'
+        run: |
+          echo "Running tests for ${{ matrix.lib }}"
+          cd libs/${{ matrix.lib }}
+          
+          # Install development dependencies (pytest, ruff, etc.)
+          uv sync --group dev
+          
+          # Run the test suite for this library
+          uv run pytest tests -v

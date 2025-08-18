@@ -14,15 +14,18 @@ dependencies = [
     "google-cloud-storage",
     "google-api-core",
     "fsspec",
+    "hdfs",
     "numpy",
     "pandas",
+    "pandas-gbq",
     "pygsheets>=2.0.0",
     "pyspark>=3.5.0",
+    "s3fs",
     "tqdm",
     "asyncio",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "pytest",
     "pytest-asyncio",

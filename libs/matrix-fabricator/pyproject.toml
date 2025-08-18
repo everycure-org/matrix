@@ -14,11 +14,12 @@ dependencies = [
     "faker",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "pytest",
     "pytest-mock", 
     "ruff",
+    "pyspark>=3.5.0",
 ]
 
 [tool.setuptools.packages.find]
