@@ -39,14 +39,22 @@ jobs:
         run: |
           # List all directories in libs/ and convert to JSON matrix format
           # Output: {"lib": ["matrix-auth", "matrix-fabricator", ...]}
-          LIBS=$(ls -1 libs | jq -R . | jq -s '. as $a | {lib: $a}')
+          echo "Available libraries:"
+          ls -1 libs
+          
+          # Create a simple JSON array without pretty formatting
+          LIBS=$(ls -1 libs | jq -R . | jq -s '. as $a | {lib: $a}' -c)
+          echo "Generated JSON: $LIBS"
+          
+          # Ensure proper output format for GitHub Actions
           echo "matrix=$LIBS" >> "$GITHUB_OUTPUT"
+          
 
   # Step 2: Test each library in parallel using the matrix
   # Each matrix job runs independently and only tests libraries that have changes
   test-libs:
     needs: generate-matrix  # Wait for matrix to be generated
-    runs-on: self-hosted    # Use self-hosted runner for better performance
+    runs-on: ubuntu-latest  # Use ubuntu-latest for local testing with act
     strategy:
       matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
     steps:
@@ -57,6 +65,7 @@ jobs:
       - id: filter
         uses: dorny/paths-filter@v3
         with:
+          base: main  # Specify the base branch for comparison
           list-files: none
           filters: |
             changed:
