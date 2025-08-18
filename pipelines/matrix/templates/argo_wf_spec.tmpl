@@ -96,6 +96,9 @@ spec:
         {% endraw %}
         pipeline: {% raw %}'{{ workflow.parameters.pipeline_name }}'
         {% endraw %}
+    retryStrategy:
+      limit: 2
+      retryPolicy: "Always"
     inputs:
       parameters:
       - name: kedro_nodes
