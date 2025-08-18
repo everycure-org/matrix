@@ -73,8 +73,8 @@ def test_weighted_interleave_two_dataframes_equal_weights(sample_df1, sample_df2
 
     # When
     result = weighted_interleave_dataframes(
-        weights,
-        config,
+        weights=weights,
+        config=config,
         rng=random.Random(1),
         sample_df1=sample_df1,
         sample_df2=sample_df2,
@@ -131,32 +131,38 @@ def test_weighted_interleave_with_duplicates_across_dataframes(sample_df1, sampl
     assert result.equals(expected_result)
 
 
-# def test_weighted_interleave_unequal_weights(sample_df1, sample_df2):
-#     """
-#     Given: Two dataframes with unequal weights
-#     When: Interleaving with limit 5 and weights (0.7, 0.3)
-#     Then: Should return 5 rows respecting the weight distribution
-#     """
-#     # Given
-#     weights = {"sample_df1": {"weight": 0.7}, "sample_df2": {"weight": 0.3}}
-#     config = {"limit": 5}
+def test_weighted_interleave_unequal_weights(sample_df1, sample_df2):
+    """
+    Given: Two dataframes with unequal weights
+    When: Interleaving with limit 5 and weights (0.7, 0.3)
+    Then: Should return 5 rows respecting the weight distribution
+    """
+    # Given
+    weights = {"sample_df1": {"weight": 0.7}, "sample_df2": {"weight": 0.3}}
+    config = {"limit": 5}
 
-#     # When
-#     result = weighted_interleave_dataframes(
-#         weights,
-#         config,
-#         rng=random.Random(123),  # Different seed for different deterministic result
-#         sample_df1=sample_df1,
-#         sample_df2=sample_df2,
-#     )
+    # When
+    result = weighted_interleave_dataframes(
+        weights,
+        config,
+        rng=random.Random(40),  # Different seed for different deterministic result
+        sample_df1=sample_df1,
+        sample_df2=sample_df2,
+    )
 
-#     # Then
-#     assert len(result) == 5
-#     assert list(result["rank"]) == [1, 2, 3, 4, 5]
+    # Then
+    expected_result = pd.DataFrame(
+        [
+            ("df1_drug1", "df1_disease1", 1),
+            ("df2_drug6", "df2_disease6", 2),
+            ("df1_drug2", "df1_disease2", 3),
+            ("df1_drug3", "df1_disease3", 4),
+            ("df2_drug7", "df2_disease7", 5),
+        ],
+        columns=["source", "target", "rank"],
+    )
 
-#     # Check no duplicates
-#     unique_pairs = result[["source", "target"]].drop_duplicates()
-#     assert len(unique_pairs) == 5
+    assert result.equals(expected_result)
 
 
 def test_weighted_interleave_single_dataframe(sample_df1):
@@ -177,6 +183,52 @@ def test_weighted_interleave_single_dataframe(sample_df1):
     # Then
     # All rows should come from sample_df1
     assert result.equals(sample_df1.head(3))
+
+
+def test_weighted_interleave_all_four_dataframes(
+    sample_df1, sample_df2, sample_df3, sample_df4
+):
+    """
+    Given: Four dataframes with various sizes and overlaps
+    When: Interleaving with equal weights among all four
+    Then: Should return 'limit' rows from all dataframes, deduplicated with sequential ranks
+    """
+    # Given
+    weights = {
+        "sample_df1": {"weight": 0.2},
+        "sample_df2": {"weight": 0.3},
+        "sample_df3": {"weight": 0.1},
+        "sample_df4": {"weight": 0.4},
+    }
+    config = {"limit": 8}
+
+    # When
+    result = weighted_interleave_dataframes(
+        weights=weights,
+        config=config,
+        rng=random.Random(7),
+        sample_df1=sample_df1,
+        sample_df2=sample_df2,
+        sample_df3=sample_df3,
+        sample_df4=sample_df4,
+    )
+
+    # Then
+    expected_result = pd.DataFrame(
+        [
+            ("df2_drug6", "df2_disease6", 1),
+            ("df1_drug1", "df1_disease1", 2),
+            ("df4_drug13", "df4_disease13", 3),
+            ("df1_drug2", "df1_disease2", 4),
+            ("df1&df3_drug5", "df1&df3_disease5", 5),
+            ("df2_drug7", "df2_disease7", 6),
+            ("df1_drug3", "df1_disease3", 7),
+            ("df3_drug11", "df3_disease11", 8),
+        ],
+        columns=["source", "target", "rank"],
+    )
+
+    assert result.equals(expected_result)
 
 
 def test_weighted_interleave_weights_sum_to_one(sample_df1, sample_df2):
@@ -201,33 +253,33 @@ def test_weighted_interleave_weights_sum_to_one(sample_df1, sample_df2):
     assert str(e.value) == "Weights must sum to 1"
 
 
-# TODO
-# def test_weighted_interleave_respects_limit(sample_df1, sample_df2):
-#     """
-#     Given: Two dataframes with more rows than limit
-#     When: Interleaving with limit 3
-#     Then: Should return exactly 3 rows
-#     """
-#     # Given
-#     weights = {
-#         "sample_df1": {"weight": 0.6},
-#         "sample_df2": {"weight": 0.4}
-#     }
-#     config = {"limit": 3}
+def test_weighted_interleave_limit_exceeds_available_data_warns(
+    sample_df1, sample_df2, caplog
+):
+    """
+    Given: Large limit that exceeds available data in dataframes
+    When: Interleaving with limit 15 and weights (0.7, 0.3)
+    Then: Should use all available data and show warning
+    """
+    # Given
+    total_available = len(sample_df1) + len(sample_df2)
+    weights = {
+        "sample_df1": {"weight": 0.7},
+        "sample_df2": {"weight": 0.3},
+    }
+    config = {"limit": 15}
 
-#     # When
-#     result = weighted_interleave_dataframes(
-#         weights,
-#         config,
-#         rng=random.Random(456),  # Different seed for different deterministic result
-#         sample_df1=sample_df1,
-#         sample_df2=sample_df2,
-#     )
+    # When
+    caplog.clear()
+    with caplog.at_level("WARNING"):
+        result = weighted_interleave_dataframes(
+            weights,
+            config,
+            rng=random.Random(5),
+            sample_df1=sample_df1,
+            sample_df2=sample_df2,
+        )
 
-#     # Then
-#     assert len(result) == 3
-#     assert list(result["rank"]) == [1, 2, 3]
-
-#     # Check no duplicates
-#     unique_pairs = result[["source", "target"]].drop_duplicates()
-#     assert len(unique_pairs) == 3
+    # Then
+    assert len(result) == total_available  # we cannot exceed available unique rows
+    assert any("Requested limit" in rec.message for rec in caplog.records)

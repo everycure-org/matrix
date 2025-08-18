@@ -87,7 +87,7 @@ def weighted_interleave_dataframes(
     weight_values = {
         name: weights[name]["weight"] for name in trimmed_dataframes.keys()
     }
-    if abs(sum(weight_values.values())) != 1:  # noqa PLR2004
+    if abs(sum(weight_values.values()) - 1.0) > 1e-10:  # noqa PLR2004
         raise ValueError("Weights must sum to 1")
 
     # Make copies and initialize tracking
@@ -96,7 +96,7 @@ def weighted_interleave_dataframes(
     seen_pairs = set()
     dataset_names = list(trimmed_dataframes.keys())
 
-    # Use provided RNG or fall back to module-level randomness (unseeded -> truly random)
+    # Use provided RNG for unit
     _rng = rng or random
 
     # Continue until we reach the limit or run out of unique rows
@@ -146,6 +146,10 @@ def weighted_interleave_dataframes(
     result_df = pd.DataFrame(result_rows).reset_index(
         drop=True
     )  # reset original Series index
+    if len(result_df) < limit:
+        logger.warning(
+            f"Requested limit {limit} but only {len(result_df)} unique rows exist."
+        )
     result_df["rank"] = range(1, len(result_df) + 1)
 
     return result_df
