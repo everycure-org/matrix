@@ -407,22 +407,37 @@ ingestion.int.ec_ground_truth.positive.edges@spark:
 # -------------------------------------------------------------------------  
 
 ingestion.raw.drugbank_ground_truth.positives:
-  <<: [*_layer_raw]
-  filepath: ${globals:paths.raw_private}/ground_truth/ec/${globals:data_sources.drugbank_gt.version}/tn_pairs
-  file_format: csv
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw_private}/source_data/drugbank/${globals:data_sources.drugbank_gt.version}/prm/indications.csv
   load_args:
-    sep: "\t"
-    header: true
-    index: false
+    sep: ","
+    columns:
+      - "treated_condition"
+      - "assoc_condition"
+      - "primary_drug"
+      - "primary_drug_id"
+      - "secondary_drug"
+      - "secondary_drug_id"
+      - "condition_id"
+      - "primary_drug_id_norm"
+      - "secondary_drug_id_norm"
+      - "condition_id_norm"
 
 ingestion.raw.drugbank_ground_truth.negatives:
-  <<: [*_layer_raw]
-  filepath: ${globals:paths.raw_private}/ground_truth/ec/${globals:data_sources.drugbank_gt.version}/tn_pairs
-  file_format: csv
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw_private}/source_data/drugbank/${globals:data_sources.drugbank_gt.version}/prm/contraindications.csv
   load_args:
-    sep: "\t"
-    header: true
-    index: false
+    sep: ","
+    columns:
+      - "primary_drug_name"
+      - "primary_drug_id"
+      - "secondary_drug_name"
+      - "secondary_drug_id"
+      - "condition_name"
+      - "condition_id"
+      - "primary_drug_id_norm"
+      - "secondary_drug_id_norm"
+      - "condition_id_norm"
 
 ingestion.int.drugbank_ground_truth.negative.edges@pandas:
   <<: [*_pandas_parquet, *_layer_int]

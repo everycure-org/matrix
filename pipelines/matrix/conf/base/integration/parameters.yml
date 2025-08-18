@@ -56,6 +56,11 @@ integration:
       transformer:
         _object: matrix.pipelines.integration.transformers.ec_ground_truth.ECGroundTruthTransformer
         version: ${globals:data_sources.ec_gt.version}
+    drugbank_ground_truth: 
+      name: drugbank_ground_truth
+      transformer:
+        _object: matrix.pipelines.integration.transformers.drugbank_ground_truth.DrugbankGroundTruthTransformer
+        version: ${globals:data_sources.drugbank_gt.version}
     off_label:
       name: off_label
       transformer:
