@@ -1,14 +1,15 @@
 import logging
 import math
+import random
 from functools import reduce
 
+import pandas as pd
 import pyspark.sql as ps
 from pyspark.sql import Window
 from pyspark.sql.functions import col, row_number
 
 logger = logging.getLogger(__name__)
 
-# NOTE: This file was partially generated using AI assistance.
 
 def prefetch_top_quota(
     weights: dict[str, dict],
@@ -52,102 +53,28 @@ def prefetch_top_quota(
         top_plus_buffer = dataframes[name].filter(col("rank") <= buffer_n)
         trimmed_dataframes.append(top_plus_buffer)
 
-    breakpoint() 
     return trimmed_dataframes
 
 
-# # TODO: maybe use inject_object()
-# def combine_ranked_pair_dataframes(
-#     weights: dict[str, dict], config: dict[str, any], **dataframes: ps.DataFrame
-# ) -> ps.DataFrame:
-#     """
-#     Combine ranked pair dataframes using weighted merge logic.
-
-#     Args:
-#         weights: Parameter structure with weights configuration
-#         config: Configuration parameters including limit
-#         **dataframes: Individual dataframes passed as keyword arguments
-#     """
-#     if not dataframes:
-#         raise ValueError("At least one DataFrame must be provided")
-
-#     limit = config["limit"]
-#     weight_values = {}
-#     for dataset_name, weight_config in weights.items():
-#         # TODO: handle all edge cases
-#         if "weight" not in weight_config:
-#             raise ValueError(f"Missing weight for dataset {dataset_name}")
-#         weight_values[dataset_name] = weight_config["weight"]
-
-#     dfs_with_weights = [
-#         (dataframes[name], weight_values[name]) for name in dataframes.keys()
-#     ]
-
-#     return weighted_merge_multiple(dfs_with_weights, limit)
-
-
-def weighted_merge_multiple(dfs_with_weights, limit):
+def weighted_interleave_dataframes(
+    weights: dict[str, dict],
+    config: dict[str, any],
+    **trimmed_dataframes: pd.DataFrame,
+) -> pd.DataFrame:
     """
-    Merge any number of Spark DataFrames according to weights and rank order.
-
-    Args:
-        dfs_with_weights (list): List of tuples [(df1, weight1), (df2, weight2), ...]
-        limit (int): Maximum number of rows in the output.
-
-    Returns:
-        Spark DataFrame
-    """
-    # Ensure weights sum to 1
-    total_weight = sum(w for _, w in dfs_with_weights)
-    if total_weight != 1:
-        raise ValueError("Weights must sum to 1")
-
-    # Calculate quota - number of rows for each dataframe
-    quotas = [round(limit * w) for _, w in dfs_with_weights]
-
-    # Adjust quota of first dataframe so sum matches limit (fix rounding issues)
-    diff = limit - sum(quotas)
-    if diff != 0:
-        quotas[0] += diff
-
-    # Take top N from each DataFrame according to its quota
-    selected_rows_from_dfs = []
-    for i, ((df, weight), quota) in enumerate(zip(dfs_with_weights, quotas)):
-        if quota > 0:
-            df_count = df.count()
-            if df_count < quota:
-                logger.warning(
-                    f"WARNING: DataFrame {i+1} has only {df_count} rows but quota is {quota}. Taking all available rows."
-                )
-            df_ranked = df.withColumn("rn", row_number().over(Window.orderBy("rank")))
-            selected = df_ranked.filter(col("rn") <= quota).drop("rn")
-            selected_rows_from_dfs.append(selected)
-
-    # Union all dataframes
-    merged = reduce(lambda x, y: x.union(y), selected_rows_from_dfs)
-    merged = merged.dropDuplicates(["source", "target"]).orderBy("rank").limit(limit)
-
-    # TODO: Optional - recalculate the quotas based on deduplicated data
-
-    # Rewrite rank as row_number to ensure no duplicate ranks
-    merged = merged.withColumn("rank", row_number().over(Window.orderBy("rank")))
-
-    return merged
-
-
-def combine_ranked_pair_dataframes(
-    weights: dict[str, dict], config: dict[str, any], **trimmed_dataframes: ps.DataFrame
-) -> ps.DataFrame:
-    """
-    Combine multiple ranked DataFrames according to weights and limit.
-
+    Perform weighted interleaving of trimmed DataFrames.
+    
+    For each row position, randomly select a dataset according to weights,
+    then take the top-ranked item from that dataset.
+    Avoid duplicates by tracking seen (source, target) pairs.
+    
     Args:
         weights: Mapping of dataset name to a dict containing a 'weight' float
         config: Mapping containing 'limit' int
-        **trimmed_dataframes: Named trimmed DataFrames keyed by dataset name
-
+        **trimmed_dataframes: Named trimmed pandas DataFrames keyed by dataset name
+        
     Returns:
-        DataFrame: Combined and deduplicated DataFrame with sequential ranks
+        pandas.DataFrame: Interleaved DataFrame with sequential ranks
     """
     if not trimmed_dataframes:
         raise ValueError("At least one DataFrame must be provided")
@@ -156,20 +83,79 @@ def combine_ranked_pair_dataframes(
         raise ValueError("Missing limit in config")
     limit = config["limit"]
 
-    # Extract weight values in the same order as trimmed_dataframes
-    dataset_names = list(trimmed_dataframes.keys())
-    weight_values = [weights[name]["weight"] for name in dataset_names]
+    # Extract weight values
+    weight_values = {name: weights[name]["weight"] for name in trimmed_dataframes.keys()}
     
     # Ensure weights sum to 1 (with small tolerance)
-    total_weight = sum(weight_values)
+    total_weight = sum(weight_values.values())
     if abs(total_weight - 1.0) > 1e-10:
         raise ValueError("Weights must sum to 1")
 
-    # Create list of (dataframe, weight) tuples
-    dfs_with_weights = [(trimmed_dataframes[name], weight) for name, weight in zip(dataset_names, weight_values)]
+    # Make copies of the DataFrames to avoid modifying the originals
+    pandas_dfs = {name: df.copy() for name, df in trimmed_dataframes.items()}
+    
+    # Initialize result tracking
+    result_rows = []
+    seen_pairs = set()  # Track (source, target) pairs to avoid duplicates
+    dataset_names = list(trimmed_dataframes.keys())
+    
+    # Set random seed for reproducibility
+    random.seed(42)
+    
+    # Continue until we reach the limit or run out of unique rows
+    attempts = 0
+    max_attempts = limit * 10  # Prevent infinite loops
+    
+    while len(result_rows) < limit and attempts < max_attempts:
+        attempts += 1
+        
+        # Randomly select a dataset according to weights
+        selected_dataset = random.choices(dataset_names, weights=[weight_values[name] for name in dataset_names])[0]
+        
+        breakpoint()
+        # Get the top-ranked item from the selected dataset
+        df = pandas_dfs[selected_dataset]
+        if df.empty:
+            continue
+            
+        # Find the first available pair that hasn't been seen
+        available_row = None
+        rows_to_remove = []
+        
+        for idx, row in df.iterrows():
+            pair_key = (row["source"], row["target"])
+            if pair_key in seen_pairs:
+                breakpoint()
+                rows_to_remove.append(idx)
+            else:
+                breakpoint()
+                available_row = row
+                break
+        
+        # If no available row found, skip this dataset
+        if available_row is None:
+            continue
+            
+        # Add to results
+        pair_key = (available_row["source"], available_row["target"])
+        seen_pairs.add(pair_key)
+        result_rows.append(available_row)
+        
+        # Remove all rows from the beginning up to and including the available row
+        pandas_dfs[selected_dataset] = df.drop(rows_to_remove + [available_row.name])
+    
+    if not result_rows:
+        # Return empty DataFrame with same schema if no results
+        return pd.DataFrame(columns=list(trimmed_dataframes[dataset_names[0]].columns))
+    
+    # Create result DataFrame
+    result_df = pd.DataFrame(result_rows)
+    
+    # Re-rank sequentially
+    result_df["rank"] = range(1, len(result_df) + 1)
 
-    # Shortcut for single dataframe
-    if len(dfs_with_weights) == 1:
-        return dfs_with_weights[0][0].limit(limit)
-
-    return weighted_merge_multiple(dfs_with_weights, limit)
+    breakpoint()
+    
+    return result_df
+    
+    

@@ -4,6 +4,7 @@ from pyspark.testing import assertDataFrameEqual
 
 from review_list.pipelines.review_list.nodes import (
     weighted_merge_multiple,
+    weighted_interleave_dataframes,
 )
 
 
@@ -255,3 +256,115 @@ def test_weighted_merge_weights_sum_to_one(self, spark, sample_df1, sample_df2):
     with pytest.raises(ValueError) as e:
         weighted_merge_multiple(dfs_with_weights, limit)
     assert str(e.value) == "Weights must sum to 1"
+
+
+@pytest.fixture
+def spark():
+    """Create a Spark session for testing."""
+    return SparkSession.builder.appName("test").master("local[2]").getOrCreate()
+
+
+@pytest.fixture
+def sample_df1(spark):
+    """Sample DataFrame 1 with 5 rows."""
+    data = [
+        ("df1_drug1", "df1_disease1", 1),
+        ("df1_drug2", "df1_disease2", 2),
+        ("df1_drug3", "df1_disease3", 3),
+        ("df1_drug4", "df1_disease4", 4),
+        ("df1_drug5", "df1_disease5", 5),
+    ]
+    return spark.createDataFrame(data, ["source", "target", "rank"])
+
+
+@pytest.fixture
+def sample_df2(spark):
+    """Sample DataFrame 2 with 5 rows."""
+    data = [
+        ("df2_drug6", "df2_disease6", 1),
+        ("df2_drug7", "df2_disease7", 2),
+        ("df2_drug8", "df2_disease8", 3),
+        ("df2_drug9", "df2_disease9", 4),
+        ("df2_drug10", "df2_disease10", 5),
+    ]
+    return spark.createDataFrame(data, ["source", "target", "rank"])
+
+
+@pytest.mark.spark
+class TestWeightedInterleaveDataframes:
+    """Test suite for weighted_interleave_dataframes function following GivenWhenThen format."""
+
+    def test_weighted_interleave_two_dataframes(self, spark, sample_df1, sample_df2):
+        """
+        Given: Two dataframes with equal weights
+        When: Interleaving with limit 6 and equal weights (0.5, 0.5)
+        Then: Should return 6 rows with no duplicates and sequential ranks
+        """
+        # Given
+        weights = {
+            "df1": {"weight": 0.5},
+            "df2": {"weight": 0.5}
+        }
+        config = {"limit": 6}
+
+        # When
+        result = weighted_interleave_dataframes(
+            weights=weights,
+            config=config,
+            df1=sample_df1,
+            df2=sample_df2
+        )
+
+        # Then
+        assert result.count() == 6
+        assert result.select("rank").distinct().count() == 6
+        
+        # Check no duplicates in source-target pairs
+        source_target_pairs = result.select("source", "target").collect()
+        unique_pairs = set((row.source, row.target) for row in source_target_pairs)
+        assert len(unique_pairs) == 6
+
+    def test_weighted_interleave_single_dataframe(self, spark, sample_df1):
+        """
+        Given: One dataframe
+        When: Interleaving with limit 3
+        Then: Should return 3 rows from the single dataframe
+        """
+        # Given
+        weights = {"df1": {"weight": 1.0}}
+        config = {"limit": 3}
+
+        # When
+        result = weighted_interleave_dataframes(
+            weights=weights,
+            config=config,
+            df1=sample_df1
+        )
+
+        # Then
+        assert result.count() == 3
+        assert result.select("rank").distinct().count() == 3
+
+    def test_weighted_interleave_respects_limit(self, spark, sample_df1, sample_df2):
+        """
+        Given: Two dataframes with more rows than limit
+        When: Interleaving with limit 3
+        Then: Should return exactly 3 rows
+        """
+        # Given
+        weights = {
+            "df1": {"weight": 0.6},
+            "df2": {"weight": 0.4}
+        }
+        config = {"limit": 3}
+
+        # When
+        result = weighted_interleave_dataframes(
+            weights=weights,
+            config=config,
+            df1=sample_df1,
+            df2=sample_df2
+        )
+
+        # Then
+        assert result.count() == 3

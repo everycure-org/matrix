@@ -1,7 +1,7 @@
 from kedro.config import OmegaConfigLoader
 from kedro.pipeline import Pipeline, node
 
-from .nodes import combine_ranked_pair_dataframes, prefetch_top_quota
+from .nodes import prefetch_top_quota, weighted_interleave_dataframes
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -17,7 +17,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         input_datasets[dataset_name] = dataset_name
 
     # Dynamically create output names for trimmed datasets
-    trimmed_outputs = [f"trimmed_{name}" for name in input_datasets.keys()]
+    trimmed_outputs = [f"trimmed_{name}@spark" for name in input_datasets.keys()]
 
     return Pipeline(
         [
@@ -32,14 +32,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="prefetch_top_quota_node",
             ),
             node(
-                func=combine_ranked_pair_dataframes,
+                func=weighted_interleave_dataframes,
                 inputs={
-                    **{name: f"trimmed_{name}" for name in input_datasets.keys()},
+                    **{name: f"trimmed_{name}@pandas" for name in input_datasets.keys()},
                     "weights": "params:inputs_to_review_list",
                     "config": "params:review_list_config",
                 },
-                outputs="combined_ranked_pair_dataframe",
-                name="combine_ranked_pair_dataframes_node",
+                outputs="combined_ranked_pair_dataframe@pandas",
+                name="weighted_interleave_dataframes_node",
             ),
         ]
     )

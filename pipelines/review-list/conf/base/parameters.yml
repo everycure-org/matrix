@@ -5,4 +5,4 @@ inputs_to_review_list:
     weight: 0.3
 
 review_list_config:
-  limit: 10  # Maximum number of rows in final combined result
+  limit: 5  # Maximum number of rows in final combined result
