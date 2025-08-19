@@ -192,10 +192,6 @@ Where to change it:
    - Secondary preference for custom `spot_node` labels
    - Graceful degradation to regular node pools
 
-3. **Resource Optimization**: 
-   - CPU workloads avoid expensive GPU nodes
-   - Proper resource isolation maintained
-
 ### Cost Optimization Strategy
 
 **Spot Instance Benefits**
