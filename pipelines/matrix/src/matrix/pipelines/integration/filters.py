@@ -72,7 +72,7 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
     # For Rule 3, we need to handle category validation and hierarchy replacement
     # First, identify nodes that only have biolink:NamedThing in all_categories
     namedthing_only_nodes = nodes.filter(
-        (F.array_size("all_categories") == 1) & (F.array_contains("all_categories", "biolink:NamedThing"))
+        (F.col("all_categories") == F.array("biolink:NamedThing"))
     )
 
     # Check if category column has a value in it and validate against biolink model
