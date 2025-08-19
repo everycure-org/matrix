@@ -16,7 +16,9 @@ Orchard ingests MATRIX output and exposes it to our medical team which is then l
 As shown, both Orchard and feedback dataset are private at the moment - meaning that only internal developers with suitable access can use it (which is also the case for other proprietary datasets in our systems). Thanks to our dynamic ingestion system, where we specify which datasets are private or public, we can dynamically without disrupting the flow of the pipeline. Meaning that external contributors can successfully run the matrix pipeline without feedback data (and other proprietary datasets) while internal contributors can leverage feedback data just by specifying their environment setup in the `.env` file.
 
 The feedback dataset is currently utilized in the following parts of the pipeline:
+ 
  * Matrix Generation - to flag which MATRIX pairs were reviewed by our medical team
+ 
  * Model Training (work in progress)
 
 [Flagging Reviews in Matrix :material-skip-previous:](./review_flags.md){ .md-button .md-button--secondary })
