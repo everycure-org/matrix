@@ -327,14 +327,7 @@ def normalize_core_nodes(
 
 
 def create_core_id_mapping(*nodes: ps.DataFrame) -> ps.DataFrame:
-    """Creates a mapping from normalized_id to core_id for core sources.
-
-    Args:
-        **nodes: Named DataFrames from core sources (e.g., drug_list=df1, disease_list=df2).
-
-    Returns:
-        DataFrame with columns: normalized_id, core_id, core_name, core_type.
-    """
+    """Creates a mapping from normalized_id to core_id for core sources."""
 
     df = _union_datasets(*nodes)
 
