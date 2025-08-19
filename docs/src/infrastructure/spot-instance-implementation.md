@@ -194,23 +194,9 @@ Where to change it:
 
 ## Implementation Impact
 
-### Immediate Benefits
-
-1. **Cost Reduction**: Significant savings on compute costs
-2. **Resource Efficiency**: Better utilization of available capacity
-3. **Scalability**: Higher max node counts for spot pools
-4. **Monitoring**: Clear cost attribution through labels
-
-### Operational Considerations
-
-1. **Spot Instance Preemption**: 
-   - Kubernetes handles rescheduling automatically
-   - Higher node pool limits provide buffer capacity
-   - Graceful fallback to regular instances
-
 2. **Workload Tolerance**:
-   - All pipeline tasks designed to be stateless
-   - Fault-tolerant architecture handles interruptions
+   - All pipeline tasks are stateless and fault-tolerant by design
+   - Retry through Argo Workflow if spot instances are reclaimed.
    - Retry mechanisms already in place
 
 3. **Management Workloads**:
