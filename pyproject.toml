@@ -11,6 +11,7 @@ dependencies = [
     "matrix-gcp-datasets", 
     "matrix-mlflow-utils",
     "matrix-fabricator",
+    "matrix-pca-uploader",
     "tqdm>=4.67.1",
     "pre-commit>=4.2.0",
 ]
@@ -22,6 +23,7 @@ matrix-auth = { workspace = true }
 matrix-gcp-datasets = { workspace = true }
 matrix-mlflow-utils = { workspace = true }
 matrix-fabricator = { workspace = true }
+matrix-pca-uploader = { workspace = true }
 
 [tool.uv.workspace]
 members = [
@@ -34,6 +36,8 @@ members = [
     "libs/matrix-gcp-datasets", 
     "libs/matrix-mlflow-utils",
     "libs/matrix-fabricator",
+    # applications
+    "apps/pca-uploader",
 ]
 
 [dependency-groups]
