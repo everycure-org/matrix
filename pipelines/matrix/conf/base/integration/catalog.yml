@@ -71,15 +71,9 @@ integration.prm.unified_edges:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/unified/edges
 
-# Unified Ground Truth
-integration.prm.unified_ground_truth_edges:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/unified/ground_truth_unified
-  
 integration.prm.nodes_edges_consistency_check:
   type: text.TextDataset
   filepath: ${globals:paths.integration}/prm/nodes_edges_consistency_check.txt
-
 # ==============================
 # Original sources: only used for sampling
 
