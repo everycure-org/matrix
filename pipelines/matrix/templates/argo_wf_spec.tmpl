@@ -106,8 +106,8 @@ spec:
         {# code 137 is for OOM. We are explicitly mention it so that in case of failure it is not retried #}
         ) && lastRetry.exitCode != 137
       backoff:
-        duration: "10"
-        factor: "2"
+        duration: "1"
+        factor: "5"
     inputs:
       parameters:
       - name: kedro_nodes

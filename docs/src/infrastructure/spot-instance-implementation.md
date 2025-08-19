@@ -119,6 +119,8 @@ affinity:
           values: ["true"]
 ```
 
+**Result**: the pipeline workloads now prefer spot instances because of the `affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution` strategy, this ensure it first tries for spot, and if it is not available, it would go for standard.
+
 #### 2.2 Tolerations for Spot Nodes
 
 **Updated Tolerations**
@@ -138,6 +140,8 @@ tolerations:
   effect: "NoSchedule"
 ```
 
+**Result**: Tolerations allow pods to run on spot nodes; affinity weights them as the first choice. If no spot nodes exist, they will still schedule on regular nodes.
+
 #### 2.3 Retry strategy and fallback
 
 To handle short-lived interruptions caused by spot instance reclamations, the Argo workflow template includes a targeted `retryStrategy` that will automatically retry a task when the failure looks like a spot eviction, and avoid retrying for other failure classes (for example, out-of-memory failures).
@@ -145,7 +149,7 @@ To handle short-lived interruptions caused by spot instance reclamations, the Ar
 Behaviour summary:
 - Retries are only attempted when the last failure message matches common eviction indicators such as `pod deleted`, `imminent node shutdown` or `node is draining`.
 - Retries are explicitly disabled for OOM failures by excluding `lastRetry.exitCode == 137` (the Linux OOM killer exit code).
-- The configured limits and backoff are conservative: `limit: 3` with an exponential backoff starting at `duration: "10"` and `factor: "2"`.
+- The configured limits and backoff are conservative: `limit: 3` with an exponential backoff starting at `duration: "1"` and `factor: "5"`.
 
 Snippet from the template (`pipelines/matrix/templates/argo_wf_spec.tmpl`):
 
@@ -159,8 +163,8 @@ retryStrategy:
       lastRetry.message matches '.*node is draining.*'
     ) && lastRetry.exitCode != 137
   backoff:
-    duration: "10"
-    factor: "2"
+    duration: "1"
+    factor: "5"
 ```
 
 Why this helps:
@@ -170,14 +174,6 @@ Why this helps:
 Where to change it:
 - Update the `retryStrategy` block in `pipelines/matrix/templates/argo_wf_spec.tmpl` to adjust match patterns, retry limits, or backoff behaviour.
 - If you change node affinity weights or tolerations, consider whether the retry behaviour should be updated as well (e.g., increasing retries if you expect more spot contention).
-
-#### 2.4 Template Coverage
-
-**Templates Updated**
-- `kedro` template: All CPU-based pipeline tasks
-- `neo4j` template: Database-intensive workloads
-
-**Result**: 100% of pipeline workloads now prefer spot instances because of the `affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution` strategy, this ensure it first tries for spot, and if it is not available, it would go for standard. Tolerations allow pods to run on spot nodes; affinity weights them as the first choice. If no spot nodes exist, they will still schedule on regular nodes.
 
 ## Technical Architecture
 
