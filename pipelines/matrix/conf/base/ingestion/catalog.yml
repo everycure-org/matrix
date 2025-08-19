@@ -454,7 +454,7 @@ ingestion.raw.primekg.nodes@pandas:
   load_args:
     sep: "\t"
 
-ingestion.raw.prime.nodes@polars:
+ingestion.raw.primekg.nodes@polars:
   <<: [*_polars_csv, *_layer_raw]
   filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_nodes.tsv
   save_args:
