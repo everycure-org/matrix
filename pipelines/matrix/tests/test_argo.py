@@ -594,8 +594,8 @@ def test_retry_strategy_in_argo_template() -> None:
     # Basic structure
     assert retry["limit"] == 3
     assert "backoff" in retry
-    assert retry["backoff"]["duration"] == "10"
-    assert retry["backoff"]["factor"] == "2"
+    assert retry["backoff"]["duration"] == "1"
+    assert retry["backoff"]["factor"] == "5"
 
     # Expression should contain our match clauses and the exitCode exclusion
     expr = retry.get("expression", "")
