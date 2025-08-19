@@ -144,7 +144,7 @@ tolerations:
 - `kedro` template: All CPU-based pipeline tasks
 - `neo4j` template: Database-intensive workloads
 
-**Result**: 100% of pipeline workloads now prefer spot instances
+**Result**: 100% of pipeline workloads now prefer spot instances because of the `affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution` strategy, this ensure that first it will try for spot, and if it is not available, it would go for standard.
 
 
 #### 2.4 Retry strategy and fallback
@@ -192,35 +192,10 @@ Where to change it:
    - Secondary preference for custom `spot_node` labels
    - Graceful degradation to regular node pools
 
-## Implementation Impact
-
-2. **Workload Tolerance**:
-   - All pipeline tasks are stateless and fault-tolerant by design
-   - Retry through Argo Workflow if spot instances are reclaimed.
-   - Retry mechanisms already in place
-
-3. **Management Workloads**:
-   - ArgoCD, Prometheus, MLflow remain on regular instances
-   - Critical infrastructure maintains high availability
-
-## Monitoring and Observability
-
-### Cost Tracking
-- Node labels enable granular cost analysis
-- Separate billing categories for spot vs regular instances
-- Environment and workload type labeling maintained
-
-### Operational Metrics
-- Spot instance utilization rates
-- Preemption frequency and impact
-- Cost savings achieved
-
 ## Deployment Notes
 
 ### Prerequisites
-- GKE cluster with autoscaling enabled
 - Proper IAM permissions for spot instance creation
-- Monitoring tools configured for cost tracking
 
 ### Rollback Strategy
 - Remove spot node pools from `node_pools_combined`
@@ -229,11 +204,8 @@ Where to change it:
 
 ## Conclusion
 
-The spot instance implementation provides significant cost optimization while maintaining system reliability. The changes are designed to be:
+With the above changes, we aim to save substantial cost due to our workloads being fault-tolerant and stateless by design, keeping the following in mind:
 
 - **Non-disruptive**: Graceful fallback ensures continuity
-- **Cost-effective**: Maximizes use of cheaper spot instances  
+- **Cost-effective**: Maximizes use of cheaper spot instances
 - **Operationally sound**: Maintains monitoring and troubleshooting capabilities
-- **Future-ready**: Architecture supports additional optimizations
-
-This implementation positions the Matrix pipeline infrastructure for substantial cost savings while preserving the high availability and reliability requirements of the data science workloads.
