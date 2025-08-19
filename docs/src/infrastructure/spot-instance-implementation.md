@@ -177,7 +177,7 @@ Where to change it:
 - `kedro` template: All CPU-based pipeline tasks
 - `neo4j` template: Database-intensive workloads
 
-**Result**: 100% of pipeline workloads now prefer spot instances because of the `affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution` strategy, this ensure that first it will try for spot, and if it is not available, it would go for standard. Tolerations allow pods to run on spot nodes; affinity weights them as the first choice. If no spot nodes exist, they will still schedule on regular nodes.
+**Result**: 100% of pipeline workloads now prefer spot instances because of the `affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution` strategy, this ensure it first tries for spot, and if it is not available, it would go for standard. Tolerations allow pods to run on spot nodes; affinity weights them as the first choice. If no spot nodes exist, they will still schedule on regular nodes.
 
 ## Technical Architecture
 
