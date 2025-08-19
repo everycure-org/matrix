@@ -71,9 +71,7 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
 
     # For Rule 3, we need to handle category validation and hierarchy replacement
     # First, identify nodes that only have biolink:NamedThing in all_categories
-    namedthing_only_nodes = nodes.filter(
-        (F.col("all_categories") == F.array("biolink:NamedThing"))
-    )
+    namedthing_only_nodes = nodes.filter((F.col("all_categories") == F.array(F.lit("biolink:NamedThing"))))
 
     # Check if category column has a value in it and validate against biolink model
     category_validation_udf = F.udf(is_valid_biolink_category, T.BooleanType())
@@ -82,9 +80,11 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
     namedthing_processed = namedthing_only_nodes.withColumn(
         "updated_all_categories",
         F.when(
-            F.col("category").isNotNull() & (F.col("category") != "biolink:NamedThing") & category_validation_udf(F.col("category")),
-            hierarchy_udf(F.col("category"))
-        ).otherwise(F.col("all_categories"))
+            F.col("category").isNotNull()
+            & (F.col("category") != "biolink:NamedThing")
+            & category_validation_udf(F.col("category")),
+            hierarchy_udf(F.col("category")),
+        ).otherwise(F.col("all_categories")),
     )
 
     # Replace all_categories in the original DataFrame for valid categories
@@ -100,7 +100,7 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
         .withColumn("candidate_category", F.explode("all_categories"))
         .withColumn(
             "parents",
-            F.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))(F.col("candidate_category")),
+            hierarchy_udf(F.col("candidate_category")),
         )
         # Our parents list is empty if the parent could not be found, we're removing
         # these elements and ensure there is a non_null check to ensure each element
