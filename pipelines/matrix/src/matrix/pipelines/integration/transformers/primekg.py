@@ -53,7 +53,7 @@ def transform_nodes_2_1_1(nodes_df: ps.DataFrame):
     df = (nodes_df
           .withColumn("upstream_data_source",              F.array(F.lit("primekg")))
           .withColumn("all_categories",                    F.split(F.col("category"), SEPARATOR))
-          .withColumn("equivalent_identifiers",            F.split(F.col("equivalent_identifiers"), SEPARATOR))
+          .withColumn("equivalent_identifiers",            F.lit(None).cast(T.ArrayType(T.StringType())))
           .withColumn("labels",                            F.col("all_categories"))
           .withColumn("publications",                      F.lit(None).cast(T.ArrayType(T.StringType())))
           .withColumn("international_resource_identifier", F.lit(None).cast(T.StringType()))
