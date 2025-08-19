@@ -62,6 +62,45 @@ integration:
       transformer:
         _object: matrix.pipelines.integration.transformers.orchard.OrchardTransformer
         version: ${globals:data_sources.orchard.version}
+        # Below are conditional flags in a format of 'flag_name':{'column_to_filter':['values','to','filter']}'
+        # Thanks to them we can avoid hard-coding flags in the transformer class
+        pair_flags:
+          high_evidence_crowdsourced:
+            latest_source: 
+            - CROWDSOURCED
+            latest_status: 
+            - DEEP_DIVE
+            - SAB_ENDORSED
+            - HOLDING
+          high_evidence_matrix:
+            latest_source: 
+            - MATRIX
+            latest_status: 
+            - DEEP_DIVE
+            - SAB_ENDORSED
+            - HOLDING
+          mid_evidence_crowdsourced:
+            latest_source: 
+            - CROWDSOURCED
+            latest_status: 
+            - DEEP_DIVE
+            - SAB_ENDORSED
+            - HOLDING
+            - MEDICAL_REVIEW 
+          mid_evidence_matrix:
+            latest_source: 
+            - MATRIX
+            latest_status: 
+            - DEEP_DIVE
+            - SAB_ENDORSED
+            - HOLDING
+            - MEDICAL_REVIEW 
+          archive_biomedical_review:
+            latest_status: 
+            - ARCHIVE
+            latest_reason:
+            - POOR_BIOMEDICAL_RATIONALE
+
 
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:
