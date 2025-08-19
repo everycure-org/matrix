@@ -51,6 +51,7 @@ class PrimeKGTransformer(GraphTransformer):
 def transform_nodes_2_1_1(nodes_df: ps.DataFrame):
     # fmt: off
     df = (nodes_df
+          .withColumn("aggregator_knowledge_source",       F.lit(None).cast(T.ArrayType(T.StringType())))
           .withColumn("upstream_data_source",              F.array(F.lit("primekg")))
           .withColumn("all_categories",                    F.split(F.col("category"), SEPARATOR))
           .withColumn("equivalent_identifiers",            F.lit(None).cast(T.ArrayType(T.StringType())))
@@ -67,6 +68,7 @@ def transform_edges_2_1_1(edges_df: ps.DataFrame):
     df = (edges_df
           .withColumn("publications",                             F.split(F.col("publications"), SEPARATOR))
           .withColumn("upstream_data_source",                     F.array(F.lit("primekg")))
+          .withColumn("aggregator_knowledge_source",              F.split(F.col("aggregator_knowledge_source"), SEPARATOR))
           .withColumn("num_references",                           F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
           .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
           )
