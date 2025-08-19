@@ -17,6 +17,8 @@ This ground truth dataset was developed and published as a part of MATRIX projec
 This proprietary ground truth dataset was extracted from [DrugBank Database](https://go.drugbank.com) provided to EveryCure. It contains a list of indications & contraindications which are present within the database. Versions follow DrugBank convention.
 
 # Evaluation Datasets
+Those datasets are used for evaluating performance of our ML classifiers in predicting good quality drug repurposing candidates. Note that we always evaluate our model performance on standard train-test split in a K-Fold cross-validated fashion however here we are only describing withheld / external datasets.
+
 ## Clinical Trials Data
 Clinical trials data (version 20230309) was manually curated by one of EveryCure Medical Team Members and it contains drug-disease pairs from March to September 2023 clinical trials. Provided that the KG time cut-off was before 2023.03.09, we can use this dataset for both unseen test validation as well as time-split validation for ML models. The `ClinicalTrialsTransformer` class handles preprocessing to standardize entity identifiers and remove duplicates.
 
