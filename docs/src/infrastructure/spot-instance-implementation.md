@@ -7,7 +7,7 @@ This document outlines the comprehensive changes made to implement Google Cloud 
 ## Executive Summary
 
 **Cost Impact**: Up to 80% cost reduction on compute resources by leveraging GCP Spot instances
-**Availability**: Graceful fallback to regular instances ensures pipeline reliability
+**Reliability**: Graceful fallback to regular instances ensures pipeline reliability
 **Scope**: Full coverage of all pipeline workloads (CPU and GPU compute)
 
 ## Changes Made
