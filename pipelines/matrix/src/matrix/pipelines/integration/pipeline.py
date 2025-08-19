@@ -177,6 +177,18 @@ def create_pipeline(**kwargs) -> Pipeline:
                     outputs="integration.prm.unified_nodes",
                     name="create_prm_unified_nodes",
                 ),
+                node(
+                    func=nodes.unify_ground_truth,
+                    inputs=[
+                        *[
+                            f'integration.int.{source["name"]}.edges.norm@spark'
+                            for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
+                            if "ground_truth" in source["name"]
+                        ],
+                    ],
+                    outputs="integration.prm.unified_ground_truth_edges",
+                    name="create_prm_unified_ground_truth_edges",
+                ),
                 ArgoNode(
                     func=nodes.union_edges,
                     inputs=[
