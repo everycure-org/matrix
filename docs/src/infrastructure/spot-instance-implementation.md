@@ -146,6 +146,40 @@ tolerations:
 
 **Result**: 100% of pipeline workloads now prefer spot instances
 
+
+#### 2.4 Retry strategy and fallback
+
+To handle short-lived interruptions caused by spot instance reclamations, the Argo workflow template includes a targeted `retryStrategy` that will automatically retry a task when the failure looks like a spot eviction, and avoid retrying for other failure classes (for example, out-of-memory failures).
+
+Behaviour summary:
+- Retries are only attempted when the last failure message matches common eviction indicators such as `pod deleted`, `imminent node shutdown` or `node is draining`.
+- Retries are explicitly disabled for OOM failures by excluding `lastRetry.exitCode == 137` (the Linux OOM killer exit code).
+- The configured limits and backoff are conservative: `limit: 3` with an exponential backoff starting at `duration: "10"` and `factor: "2"`.
+
+Snippet from the template (`pipelines/matrix/templates/argo_wf_spec.tmpl`):
+
+```yaml
+retryStrategy:
+  limit: 3
+  expression: |
+    (
+      lastRetry.message matches '.*pod deleted.*' ||
+      lastRetry.message matches '.*imminent node shutdown.*' ||
+      lastRetry.message matches '.*node is draining.*'
+    ) && lastRetry.exitCode != 137
+  backoff:
+    duration: "10"
+    factor: "2"
+```
+
+Why this helps:
+- Spot nodes are reclaimed unpredictably. The retry strategy lets a short interruption be retried automatically so the pod can be rescheduled (potentially onto a non-spot node given the template's preferred-but-not-required spot affinity).
+- Explicitly excluding OOM ensures we don't waste retries on failures that are unlikely to succeed by rescheduling.
+
+Where to change it:
+- Update the `retryStrategy` block in `pipelines/matrix/templates/argo_wf_spec.tmpl` to adjust match patterns, retry limits, or backoff behaviour.
+- If you change node affinity weights or tolerations, consider whether the retry behaviour should be updated as well (e.g., increasing retries if you expect more spot contention).
+
 ## Technical Architecture
 
 ### Scheduling Flow

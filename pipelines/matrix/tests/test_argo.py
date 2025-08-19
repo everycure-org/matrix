@@ -573,3 +573,33 @@ def test_resources_of_argo_template_config_pipelines() -> None:
     assert resource_params2["memory_limit"] == argo_default_resources.memory_limit
     assert resource_params2["cpu_request"] == argo_default_resources.cpu_request
     assert resource_params2["cpu_limit"] == argo_default_resources.cpu_limit
+
+
+def test_retry_strategy_in_argo_template() -> None:
+    """Ensure the kedro template contains the expected retryStrategy block."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
+    assert "retryStrategy" in kedro_template
+
+    retry = kedro_template["retryStrategy"]
+    # Basic structure
+    assert retry["limit"] == 3
+    assert "backoff" in retry
+    assert retry["backoff"]["duration"] == "10"
+    assert retry["backoff"]["factor"] == "2"
+
+    # Expression should contain our match clauses and the exitCode exclusion
+    expr = retry.get("expression", "")
+    assert "lastRetry.message matches '.*pod deleted.*'" in expr
+    assert "lastRetry.message matches '.*imminent node shutdown.*'" in expr
+    assert "lastRetry.message matches '.*node is draining.*'" in expr
+    assert "lastRetry.exitCode != 137" in expr
