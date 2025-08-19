@@ -192,18 +192,6 @@ Where to change it:
    - Secondary preference for custom `spot_node` labels
    - Graceful degradation to regular node pools
 
-### Cost Optimization Strategy
-
-**Spot Instance Benefits**
-- Up to 80% cost reduction compared to regular instances
-- Automatic scaling based on availability
-- No change to workload reliability due to fallback mechanism
-
-**Billing Categorization**
-- `cpu-compute-spot` vs `cpu-compute`
-- `gpu-compute-spot` vs `gpu-compute`
-- `infrastructure-management` (always regular nodes)
-
 ## Implementation Impact
 
 ### Immediate Benefits
