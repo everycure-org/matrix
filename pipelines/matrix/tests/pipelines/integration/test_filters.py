@@ -89,52 +89,45 @@ def sample_nodes(spark):
     )
 
 
-def test_determine_most_specific_category_core_drug_rule(spark):
-    """Test Rule 1: Core drugs always get biolink:Drug"""
+def test_determine_most_specific_category_core_entity_rule(spark):
+    """Test Rule 1: Core entities (with core_id) preserve their existing category"""
     nodes = spark.createDataFrame(
-        [("DRUG:001", "biolink:ChemicalEntity", "drug", ["biolink:ChemicalEntity", "biolink:NamedThing"])],
+        [
+            ("DRUG:001", "biolink:Drug", "DRUG:001", ["biolink:ChemicalEntity", "biolink:NamedThing"]),
+            ("DISEASE:001", "biolink:Disease", "DISEASE:001", ["biolink:Phenotype", "biolink:NamedThing"]),
+        ],
         schema=StructType(
             [
                 StructField("id", StringType(), False),
                 StructField("category", StringType(), True),
-                StructField("core_type", StringType(), True),
+                StructField("core_id", StringType(), True),
                 StructField("all_categories", ArrayType(StringType()), False),
             ]
         ),
     )
 
     result = filters.determine_most_specific_category(nodes)
-    assert result.collect()[0].category == "biolink:Drug"
+    results = result.collect()
 
+    # Core entities should preserve their existing categories
+    drug_result = [r for r in results if r.id == "DRUG:001"][0]
+    disease_result = [r for r in results if r.id == "DISEASE:001"][0]
 
-def test_determine_most_specific_category_core_disease_rule(spark):
-    """Test Rule 2: Core diseases always get biolink:Disease"""
-    nodes = spark.createDataFrame(
-        [("DISEASE:001", "biolink:Phenotype", "disease", ["biolink:Phenotype", "biolink:NamedThing"])],
-        schema=StructType(
-            [
-                StructField("id", StringType(), False),
-                StructField("category", StringType(), True),
-                StructField("core_type", StringType(), True),
-                StructField("all_categories", ArrayType(StringType()), False),
-            ]
-        ),
-    )
-
-    result = filters.determine_most_specific_category(nodes)
-    assert result.collect()[0].category == "biolink:Disease"
+    assert drug_result.category == "biolink:Drug"
+    assert disease_result.category == "biolink:Disease"
 
 
 def test_determine_most_specific_category_namedthing_fallback(spark):
     """Test Rule 3: NamedThing-only nodes preserve valid category"""
     nodes = spark.createDataFrame(
         [
-            ("CHEBI:001", "biolink:ChemicalEntity", ["biolink:NamedThing"])  # Only NamedThing in all_categories
+            ("CHEBI:001", "biolink:ChemicalEntity", None, ["biolink:NamedThing"])  # Only NamedThing in all_categories
         ],
         schema=StructType(
             [
                 StructField("id", StringType(), False),
                 StructField("category", StringType(), True),
+                StructField("core_id", StringType(), True),
                 StructField("all_categories", ArrayType(StringType()), False),
             ]
         ),
@@ -148,11 +141,12 @@ def test_determine_most_specific_category_namedthing_fallback(spark):
 def test_determine_most_specific_category_normal_hierarchy(spark):
     """Test Rule 4: Normal most-specific logic"""
     nodes = spark.createDataFrame(
-        [("CHEBI:002", "biolink:NamedThing", ["biolink:Drug", "biolink:MolecularMixture", "biolink:NamedThing"])],
+        [("CHEBI:002", "biolink:NamedThing", None, ["biolink:Drug", "biolink:MolecularMixture", "biolink:NamedThing"])],
         schema=StructType(
             [
                 StructField("id", StringType(), False),
                 StructField("category", StringType(), True),
+                StructField("core_id", StringType(), True),
                 StructField("all_categories", ArrayType(StringType()), False),
             ]
         ),
@@ -198,6 +192,7 @@ def test_determine_most_specific_category_unknown(spark):
             (
                 "CHEBI:001",
                 "biolink:NamedThing",
+                None,
                 ["biolink:foo"],  # Invalid category
             ),
         ],
@@ -205,6 +200,7 @@ def test_determine_most_specific_category_unknown(spark):
             [
                 StructField("id", StringType(), False),
                 StructField("category", StringType(), True),
+                StructField("core_id", StringType(), True),
                 StructField("all_categories", ArrayType(StringType()), False),
             ]
         ),

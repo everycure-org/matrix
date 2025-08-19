@@ -451,9 +451,7 @@ def test_unify_nodes(spark, sample_nodes, sample_biolink_category_hierarchy):
     nodes2 = sample_nodes.filter(sample_nodes.id != "CHEBI:119157")
 
     # Create an empty core_id_mapping for the test
-    core_id_mapping = spark.createDataFrame(
-        [], schema="normalized_id string, core_id string, " "core_name string, core_type string"
-    )
+    core_id_mapping = spark.createDataFrame([], schema="normalized_id string, core_id string, core_name string")
 
     # Call the unify_nodes function
     result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, core_id_mapping, nodes1, nodes2)
@@ -478,9 +476,9 @@ def test_core_promotion(spark, sample_nodes, sample_biolink_category_hierarchy):
     nodes2 = sample_nodes.filter(sample_nodes.id != "CHEBI:119157")
 
     # Create core_id_mapping that promotes CHEBI:119157 to a core ID
-    core_mapping_data = [("CHEBI:119157", "CORE_DRUG_1", "CORE_NAME_1", "drug")]
+    core_mapping_data = [("CHEBI:119157", "CORE_DRUG_1", "CORE_NAME_1")]
     core_id_mapping = spark.createDataFrame(
-        core_mapping_data, schema="normalized_id string, core_id string, core_name string, core_type string"
+        core_mapping_data, schema="normalized_id string, core_id string, core_name string"
     )
 
     # Call the unify_nodes function
@@ -509,9 +507,7 @@ def test_correctly_identified_categories(spark, sample_nodes, sample_biolink_cat
     nodes2 = sample_nodes.withColumn("category", F.lit("biolink:NamedThing"))
 
     # Create an empty core_id_mapping for the test
-    core_id_mapping = spark.createDataFrame(
-        [], schema="normalized_id string, core_id string, " "core_name string, core_type string"
-    )
+    core_id_mapping = spark.createDataFrame([], schema="normalized_id string, core_id string, core_name string")
 
     # When: unifying the two datasets, putting nodes2 first -> meaning within each group, "first()" grabs the NamedThing
     result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, core_id_mapping, nodes1, nodes2)
