@@ -5,7 +5,7 @@ The MATRIX pipeline integrates several ground truth datasets to train ML models 
 All those data sources require the identifers (subjects/objects) to be follow KGX format (see Matrix Validator). Like other data sources in our pipeline, each dataset has a dedicated transformer class that handles transformations and integration; each dataset also goes through normalization for CURIEs to be in the same universe.
 
 # Training Datasets
-Those datasets are used for training our ML classifiers for predicting drug repurposing candidates. They can be used on their own as well as standalone 
+Those datasets are used for training our ML classifiers for predicting drug repurposing candidates. They can be used on their own as well as standalone, dependent on parameters specifications within the modelling configuration file; note that private datasets are only accessible to internal MATRIX developers.
 
 ## KGML-xDTD Ground Truth Dataset 
 This ground truth dataset was developed and published as part of the KGML-xDTD [publication](https://academic.oup.com/gigascience/article/doi/10.1093/gigascience/giad057/7246583), and is used for model training and validation. It was specifically designed and validated for use with the RTX-KG2 knowledge graph, providing a comprehensive set of validated drug-disease treatment associations, however it has also been used with other KGs (e.g. ROBOKOP). The versions of this dataset are linked to the versions of RTX-KG2 knowledge graph. Integration is handled by the `KGMLTruthTransformer` class.
@@ -13,7 +13,7 @@ This ground truth dataset was developed and published as part of the KGML-xDTD [
 ## EC Ground Truth Dataset 
 This ground truth dataset was developed and published as a part of MATRIX project and can be found [within Matrix Indication List repo](https://github.com/everycure-org/matrix-indication-list). It's a curated datasets that was developed collaboratively with medical experts to ensure good quality training pairs can be provieded for the model. It should be KG-agnostic as it's directly extracted from regulatory authorities bodies. The versions of this dataset are linked to the [releases in Github](https://github.com/everycure-org/matrix-indication-list/releases).
 
-## DrugBank Ground Truth Dataset 
+## DrugBank Ground Truth Dataset (Private)
 This proprietary ground truth dataset was extracted from [DrugBank Database](https://go.drugbank.com) provided to EveryCure. It contains a list of indications & contraindications which are present within the database. Versions follow DrugBank convention.
 
 # Evaluation Datasets
