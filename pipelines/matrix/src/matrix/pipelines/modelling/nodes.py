@@ -41,11 +41,12 @@ def _filter_ground_truth(edges_gt: ps.DataFrame, training_data_sources: list[str
         DataFrame with ground truth pairs filtered to only include pairs from training data sources
         and dropped potential duplicates (due to multiple sources for the same pair).
     """
+    edges_gt.filter(f.col("upstreameee_data_source").isin(training_data_sources)).dropDuplicates(["subject", "object"])
     try:
         return edges_gt.filter(f.col("upstream_data_source").isin(training_data_sources)).dropDuplicates(
             ["subject", "object"]
         )
-    except Exception as e:
+    except ValueError as e:
         logger.error(f"Upstream data source column not found in ground truth; using full dataset")
         return edges_gt
 
