@@ -51,32 +51,36 @@ def is_valid_biolink_category(category: str) -> bool:
 def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
     """Function to retrieve most specific entry for each node.
 
-    This function uses the `all_categories` column to infer a final `category` for the
-    node based on the category that is the deepest in the hierarchy. We remove any categories
-    from `all_categories` that could not be resolved against biolink.
+     This function uses the `all_categories` column to infer a final `category` for the
+     node based on the category that is the deepest in the hierarchy. We remove any categories
+     from `all_categories` that could not be resolved against biolink.
 
+    Rules:
+     1. If node has core_id (is a core entity), preserve existing category (already set correctly in transformer)
+     2. If all_categories only contains "biolink:NamedThing", preserve existing category if more specific
+     3. Otherwise, use the most specific category from all_categories
 
-    1. If node has core_type='drug', category must be "biolink:Drug"
-    2. If node has core_type='disease', category must be "biolink:Disease"
-    3. If all_categories only contains "biolink:NamedThing", preserve existing category if more specific
-    4. Otherwise, use the most specific category from all_categories
+     Note: Expects nodes DataFrame to potentially have a 'core_id' column from core_id_mapping join
 
-    Note: Expects nodes DataFrame to have a 'core_type' column from core_id_mapping join
-
-    Example:
-    - node has all_categories [biolink:ChemicalEntity, biolink:NamedThing]
-    - then node will be assigned biolink:ChemicalEntity as most specific category
+     Example:
+     - node has all_categories [biolink:ChemicalEntity, biolink:NamedThing]
+     - then node will be assigned biolink:ChemicalEntity as most specific category
 
     """
 
-    # For Rule 3, we need to handle category validation and hierarchy replacement
+    # UDF Functions
+    category_validation_udf = F.udf(is_valid_biolink_category, T.BooleanType())
+    hierarchy_udf = F.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))
+
+    # Ensure core_id column exists (add as null if missing)
+    if "core_id" not in nodes.columns:
+        nodes = nodes.withColumn("core_id", F.lit(None).cast(T.StringType()))
+
+    # For Rule 2, we need to handle category validation and hierarchy replacement
     # First, identify nodes that only have biolink:NamedThing in all_categories
     namedthing_only_nodes = nodes.filter((F.col("all_categories") == F.array(F.lit("biolink:NamedThing"))))
 
     # Check if category column has a value in it and validate against biolink model
-    category_validation_udf = F.udf(is_valid_biolink_category, T.BooleanType())
-    hierarchy_udf = F.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))
-
     namedthing_processed = namedthing_only_nodes.withColumn(
         "updated_all_categories",
         F.when(
@@ -116,25 +120,16 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
     # Join with most specific categories
     nodes_with_all_info = nodes_with_updated_categories.join(most_specific_mapping, on="id", how="left")
 
-    # Ensure core_type column exists (add as null if missing)
-    if "core_type" not in nodes_with_all_info.columns:
-        nodes_with_all_info = nodes_with_all_info.withColumn("core_type", F.lit(None).cast(T.StringType()))
-
     # Apply rules logic to determine final category
     final_nodes = nodes_with_all_info.withColumn(
         "final_category",
         F.when(
-            # Rule 1: Core drug nodes must be biolink:Drug
-            F.col("core_type").isNotNull() & (F.col("core_type") == "drug"),
-            F.lit("biolink:Drug"),
+            # Rule 1: Core entities (have core_id) keep their existing category
+            F.col("core_id").isNotNull(),
+            F.col("category"),
         )
         .when(
-            # Rule 2: Core disease nodes must be biolink:Disease
-            F.col("core_type").isNotNull() & (F.col("core_type") == "disease"),
-            F.lit("biolink:Disease"),
-        )
-        .when(
-            # Rule 3: If all_categories only contains "biolink:NamedThing", keep existing category if more specific
+            # Rule 2: If all_categories only contains "biolink:NamedThing", keep existing category if more specific
             (F.array_size("all_categories") == 1)
             & (F.array_contains("all_categories", "biolink:NamedThing"))
             & (F.col("category") != "biolink:NamedThing")
@@ -142,7 +137,7 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
             F.col("category"),
         )
         .otherwise(
-            # Rule 4: Use most specific from all_categories
+            # Rule 3: Use most specific from all_categories
             F.coalesce("most_specific_from_all_categories", "category")
         ),
     )
