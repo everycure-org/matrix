@@ -51,3 +51,7 @@ gha-kubeconfig*
 /backend.tf
 **/*.gen.tf
 /provider.tf
+
+
+# ignoring all claude related files for now
+.claude/**

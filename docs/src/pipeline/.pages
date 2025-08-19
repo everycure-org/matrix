@@ -4,4 +4,5 @@ nav:
     - data
     - data_science
     - data_engineering
+    - feedback_loop
     - debugging
