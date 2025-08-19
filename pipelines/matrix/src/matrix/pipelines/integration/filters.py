@@ -80,14 +80,11 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
     hierarchy_udf = F.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))
 
     namedthing_processed = namedthing_only_nodes.withColumn(
-        "category_is_valid_biolink",
-        F.when(
-            F.col("category").isNotNull() & (F.col("category") != "biolink:NamedThing"),
-            category_validation_udf(F.col("category")),
-        ).otherwise(False),
-    ).withColumn(
         "updated_all_categories",
-        F.when(F.col("category_is_valid_biolink"), hierarchy_udf(F.col("category"))).otherwise(F.col("all_categories")),
+        F.when(
+            F.col("category").isNotNull() & (F.col("category") != "biolink:NamedThing") & category_validation_udf(F.col("category")),
+            hierarchy_udf(F.col("category"))
+        ).otherwise(F.col("all_categories"))
     )
 
     # Replace all_categories in the original DataFrame for valid categories
