@@ -88,6 +88,17 @@ def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.Da
 
 
 @check_output(
+    schema=get_matrix_edge_schema(validate_enumeration_values=False),
+    pass_columns=True,
+)
+def unify_ground_truth(*edges) -> ps.DataFrame:
+    """Function to unify edges datasets."""
+    # fmt: off
+    return _union_datasets(*edges)
+    # fmt: on
+
+
+@check_output(
     schema=get_matrix_node_schema(validate_enumeration_values=False),
     pass_columns=True,
 )

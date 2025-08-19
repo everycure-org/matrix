@@ -8,7 +8,10 @@ from . import nodes
 
 
 def _create_integration_pipeline(
-    source: str, has_nodes: bool = True, has_edges: bool = True, is_core: bool = False
+    source: str,
+    has_nodes: bool = True,
+    has_edges: bool = True,
+    is_core: bool = False,
 ) -> Pipeline:
     pipelines = []
 
@@ -142,7 +145,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=[source["name"]],
             )
         )
-
     # Add integration pipeline
     pipelines.append(
         pipeline(
@@ -202,5 +204,4 @@ def create_pipeline(**kwargs) -> Pipeline:
             ]
         )
     )
-
     return sum(pipelines)
