@@ -76,8 +76,7 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
     if "core_id" not in nodes.columns:
         nodes = nodes.withColumn("core_id", F.lit(None).cast(T.StringType()))
 
-    # For Rule 2, we need to handle category validation and hierarchy replacement
-    # First, identify nodes that only have biolink:NamedThing in all_categories
+    # For rule 2, if all_categories only contains "biolink:NamedThing", update it using the hierarchy of the category, only if it is biolink compliant.
     namedthing_only_nodes = nodes.filter((F.col("all_categories") == F.array(F.lit("biolink:NamedThing"))))
 
     # Check if category column has a value in it and validate against biolink model
