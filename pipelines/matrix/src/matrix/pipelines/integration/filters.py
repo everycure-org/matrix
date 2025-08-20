@@ -72,11 +72,10 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
     category_validation_udf = F.udf(is_valid_biolink_category, T.BooleanType())
     hierarchy_udf = F.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))
 
-    # Ensure core_id column exists (add as null if missing)
-    if "core_id" not in nodes.columns:
-        nodes = nodes.withColumn("core_id", F.lit(None).cast(T.StringType()))
+    # For Rule 1: Ensure cor_id column is present  - False if column doesn't exist, otherwise check if not null
+    core_id_present = F.lit(False) if "core_id" not in nodes.columns else F.col("core_id").isNotNull()
 
-    # For rule 2, if all_categories only contains "biolink:NamedThing", update it using the hierarchy of the category, only if it is biolink compliant.
+    # For Rule 2: if all_categories only contains "biolink:NamedThing", update it using the hierarchy of the category, only if it is biolink compliant.
     namedthing_processed = nodes.filter(F.col("all_categories") == F.array(F.lit("biolink:NamedThing"))).withColumn(
         "updated_all_categories",
         F.when(
@@ -104,10 +103,9 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
             hierarchy_udf(F.col("candidate_category")),
         )
         # If the parents list is empty, it means the parents could not be found, hence why we are removing those rows.
-        # was found in the hierarchy
         .withColumn("depth", F.array_size("parents"))
         .filter(F.col("depth") > 0)
-        # Keep the row with the maximum parents, i.e. the deepest one in the hierarchy
+        # Keep the row with the maximum parents, i.e. the deepest one in the hierarchy.
         .withColumn("row_num", F.row_number().over(ps.Window.partitionBy("id").orderBy(F.col("depth").desc())))
         .filter(F.col("row_num") == 1)
         .drop("row_num")
@@ -121,7 +119,7 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
         "final_category",
         F.when(
             # Rule 1: Core entities (have core_id) keep their existing category
-            F.col("core_id").isNotNull(),
+            core_id_present,
             F.col("category"),
         )
         .when(
