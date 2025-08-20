@@ -77,14 +77,12 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
         nodes = nodes.withColumn("core_id", F.lit(None).cast(T.StringType()))
 
     # For rule 2, if all_categories only contains "biolink:NamedThing", update it using the hierarchy of the category, only if it is biolink compliant.
-    namedthing_only_nodes = nodes.filter((F.col("all_categories") == F.array(F.lit("biolink:NamedThing"))))
-
-    # Check if category column has a value in it and validate against biolink model
-    namedthing_processed = namedthing_only_nodes.withColumn(
+    namedthing_processed = nodes.filter(F.col("all_categories") == F.array(F.lit("biolink:NamedThing"))).withColumn(
         "updated_all_categories",
         F.when(
             F.col("category").isNotNull()
             & (F.col("category") != "biolink:NamedThing")
+            # Check if category column has a value in it and validate against biolink model
             & category_validation_udf(F.col("category")),
             hierarchy_udf(F.col("category")),
         ).otherwise(F.col("all_categories")),
@@ -98,7 +96,7 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
     )
 
     # pre-calculate the mappping table of ID -> most specific category
-    most_specific_mapping = (
+    more_specific_node_category_mapping = (
         nodes_with_updated_categories.select("id", "all_categories")
         .withColumn("candidate_category", F.explode("all_categories"))
         .withColumn(
@@ -116,11 +114,10 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
         .select("id", F.col("candidate_category").alias("most_specific_from_all_categories"))
     )
 
-    # Join with most specific categories
-    nodes_with_all_info = nodes_with_updated_categories.join(most_specific_mapping, on="id", how="left")
-
     # Apply rules logic to determine final category
-    final_nodes = nodes_with_all_info.withColumn(
+    final_nodes = nodes_with_updated_categories.join(
+        more_specific_node_category_mapping, on="id", how="left"
+    ).withColumn(
         "final_category",
         F.when(
             # Rule 1: Core entities (have core_id) keep their existing category
@@ -129,7 +126,7 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
         )
         .when(
             # Rule 2: If all_categories only contains "biolink:NamedThing", keep existing category if more specific
-            (F.col("all_categories") == F.lit(["biolink:NamedThing")
+            (F.col("all_categories") == F.array(F.lit("biolink:NamedThing")))
             & (F.col("category") != "biolink:NamedThing")
             & (F.col("category").isNotNull()),
             F.col("category"),
@@ -141,5 +138,5 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
     )
 
     return final_nodes.withColumn("category", F.col("final_category")).drop(
-        "most_specific_from_all_categories", "core_type", "final_category"
+        "most_specific_from_all_categories", "final_category"
     )
