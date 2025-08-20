@@ -129,8 +129,7 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
         )
         .when(
             # Rule 2: If all_categories only contains "biolink:NamedThing", keep existing category if more specific
-            (F.array_size("all_categories") == 1)
-            & (F.array_contains("all_categories", "biolink:NamedThing"))
+            (F.col("all_categories") == F.lit(["biolink:NamedThing")
             & (F.col("category") != "biolink:NamedThing")
             & (F.col("category").isNotNull()),
             F.col("category"),
