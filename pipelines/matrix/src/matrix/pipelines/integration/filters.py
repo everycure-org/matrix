@@ -109,6 +109,7 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
         # was found in the hierarchy
         .withColumn("depth", F.array_size("parents"))
         .filter(F.col("depth") > 0)
+        # Keep the row with the maximum parents, i.e. the deepest one in the hierarchy
         .withColumn("row_num", F.row_number().over(ps.Window.partitionBy("id").orderBy(F.col("depth").desc())))
         .filter(F.col("row_num") == 1)
         .drop("row_num")
