@@ -8,20 +8,16 @@ locals {
   # node groups in 2 node locations, hence why the total amount of node groups.
   # https://console.cloud.google.com/kubernetes/clusters/details/us-central1/compute-cluster/logs/autoscaler_logs?chat=true&inv=1&invt=Abp5KQ&project=mtrx-hub-dev-3of
   n2d_node_pools = [for size in [8, 16, 32, 48, 64] : {
-    name           = "n2d-highmem-${size}-nodes"
-    machine_type   = "n2d-highmem-${size}"
-    node_locations = local.default_node_locations
-    min_count      = 0
-    max_count      = 10
-    # NOTE: Local SSDs are only available to certain node groups, and hence cannot be set for the
-    # reguluar n2 nodes. The statement below allocates 2 SSDs to the node, each having a capacity of 375G.
-    # https://cloud.google.com/compute/docs/general-purpose-machines#n2d-high-mem
-    local_ssd_ephemeral_storage_count = size < 64 ? 2 : 4
-    disk_type                         = "pd-ssd"
-    disk_size_gb                      = 200
-    enable_gcfs                       = true
-    enable_gvnic                      = true
-    initial_node_count                = 0
+    name               = "n2d-highmem-${size}-nodes"
+    machine_type       = "n2d-highmem-${size}"
+    node_locations     = local.default_node_locations
+    min_count          = 0
+    max_count          = 10
+    disk_type          = "pd-ssd"
+    disk_size_gb       = 1024
+    enable_gcfs        = true
+    enable_gvnic       = true
+    initial_node_count = 0
     }
   ]
 
@@ -63,21 +59,17 @@ locals {
 
   # Spot node pools for cost-effective compute workloads
   n2d_spot_node_pools = [for size in [8, 16, 32, 48, 64] : {
-    name           = "n2d-highmem-${size}-spot-nodes"
-    machine_type   = "n2d-highmem-${size}"
-    node_locations = local.default_node_locations
-    min_count      = 0
-    max_count      = 20 # Higher max count for spot instances
-    # NOTE: Local SSDs are only available to certain node groups, and hence cannot be set for the
-    # reguluar n2 nodes. The statement below allocates 2 SSDs to the node, each having a capacity of 375G.
-    # https://cloud.google.com/compute/docs/general-purpose-machines#n2d-high-mem
-    local_ssd_ephemeral_storage_count = size < 64 ? 2 : 4
-    disk_type                         = "pd-ssd"
-    disk_size_gb                      = 200
-    enable_gcfs                       = true
-    enable_gvnic                      = true
-    initial_node_count                = 0
-    spot                              = true
+    name               = "n2d-highmem-${size}-spot-nodes"
+    machine_type       = "n2d-highmem-${size}"
+    node_locations     = local.default_node_locations
+    min_count          = 0
+    max_count          = 20 # Higher max count for spot instances
+    disk_type          = "pd-ssd"
+    disk_size_gb       = 1024
+    enable_gcfs        = true
+    enable_gvnic       = true
+    initial_node_count = 0
+    spot               = true
     }
   ]
 

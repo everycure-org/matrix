@@ -2,15 +2,15 @@
 
 ## Provisioning correct machine types
 
-Initially, we noticed the machine type was not being allocated. This due to the emphemeral storage requirements not being satisfied by any of the nodes.
+Initially, we noticed the machine type was not being allocated. This due to the ephemeral storage requirements not being satisfied by any of the nodes.
 
-> ✅ Adding local SSDs for emphemeral storage is supported through the [GCP Terraform module](https://registry.terraform.io/modules/terraform-google-modules/kubernetes-engine/google/latest/submodules/private-cluster) using the `local_ssd_ephemeral_storage_count` attribute, but unfortunately is not available for all machine types. It turns out that the [N2D machine type](https://cloud.google.com/compute/docs/general-purpose-machines#n2d_machines) is one of the types that supports local SSDs. 
+> We have bumped the storage of the boot disk to 1 TB.
 
 ## Bumping memory spec
 
 Next, we noticed the Neo4J container going OOM. It turned out this was due to the hardcoded values in the Neo4J container, essentially capping it's resources.
 
-> ✅ This was solved by using the memory requirements as specifed in the pod's limits when setting up the environment variables for the Neo4J container.
+> ✅ This was solved by using the memory requirements as specified in the pod's limits when setting up the environment variables for the Neo4J container.
 
 ![](./assets/memory_usage.png)
 
@@ -31,7 +31,7 @@ To fix this, we applied 70% of the pod's memory request as the neo4j heap size s
 
 Moreover, we noticed a similar problem in the Spark configuration, where the the Spark configuration was hardcoded to a specific value.
 
-> ⛔️ This still requires a fix, in the ideal case we would expect the resouces defined in the node to correctly propagate.
+> ⛔️ This still requires a fix, in the ideal case we would expect the resources defined in the node to correctly propagate.
 
 ```yaml
 # spark.yaml
