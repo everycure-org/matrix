@@ -105,8 +105,7 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
             "parents",
             hierarchy_udf(F.col("candidate_category")),
         )
-        # Our parents list is empty if the parent could not be found, we're removing
-        # these elements and ensure there is a non_null check to ensure each element
+        # If the parents list is empty, it means the parents could not be found, hence why we are removing those rows.
         # was found in the hierarchy
         .withColumn("depth", F.array_size("parents"))
         .filter(F.col("depth") > 0)
