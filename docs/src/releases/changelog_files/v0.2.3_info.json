@@ -5,11 +5,9 @@
     "robokop": "c5ec1f282158182f",
     "ec_medical_team": 20241031
   },
-  "Topological Estimator": "matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec",
-  "Embeddings Encoder": "text-embedding-3-small",
-  "BigQuery Link": "https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_2_3",
-  "MLFlow Link": "https://mlflow.platform.dev.everycure.org/#/experiments/10804/runs/d71c046bf3fa49b9818a101be830e6f8",
-  "Code Link": "https://github.com/everycure-org/matrix/tree/v0.2.3",
-  "Neo4j Link": "coming soon!",
-  "NodeNorm Endpoint Link": "https://nodenorm.transltr.io/1.5/get_normalized_nodes"
+  "BigQuery": "https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_2_3",
+  "KG dashboard": "null",
+  "MLFlow": "https://mlflow.platform.dev.everycure.org/#/experiments/10804/runs/d71c046bf3fa49b9818a101be830e6f8",
+  "Code": "https://github.com/everycure-org/matrix/tree/v0.2.3",
+  "NodeNorm Endpoint": "https://nodenorm.transltr.io/1.5/get_normalized_nodes"
 }
