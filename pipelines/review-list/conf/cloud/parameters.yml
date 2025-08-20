@@ -1,0 +1,8 @@
+inputs_to_review_list:
+  jun_25_ff_t3:
+    weight: 0.7
+  piotrs_experiment:
+    weight: 0.3
+
+review_list_config:
+  limit: 500  # Maximum number of rows in final combined result

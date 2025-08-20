@@ -1,0 +1,33 @@
+_spark_parquet_ds: &_spark_parquet
+  type: spark.SparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+_pandas_parquet_ds: &_pandas_parquet
+  type: pandas.ParquetDataset
+  save_args:
+    engine: pyarrow
+  load_args:
+    engine: pyarrow
+
+# ==============================
+# Inputs
+# ==============================
+
+jun_25_ff_t3:
+  <<: *_spark_parquet
+  filepath: gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.4.5/runs/uniform-transformation-3/datasets/matrix_transformations/fold_3/transformed_matrix
+
+piotrs_experiment:
+  <<: *_spark_parquet
+  filepath: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.7.0/runs/robo-no-taxon-rtx-integrated-210-cea4c037/datasets/matrix_transformations/fold_3/transformed_matrix_manual.parquet
+
+
+# ==============================
+# Outputs
+# ==============================
+
+combined_ranked_pairs_dataframe@pandas:
+  <<: *_pandas_parquet
+  filepath: gs://mtrx-us-central1-hub-dev-storage/review-lists/20-aug-2025-list/list

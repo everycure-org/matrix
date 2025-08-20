@@ -11,15 +11,22 @@ dependencies = [
     "ipython>=8.10",
     "jupyterlab>=3.0",
     "notebook",
+    "gcsfs==2024.3.1",
+    "google-cloud-bigquery",
+    "google-cloud-bigquery-storage",
+    "google-cloud-iam",
     "kedro==0.19.13",
     "kedro-datasets[spark.SparkDataSet]>=6.0.0",
     "kedro-telemetry>=0.3.1",
     "kedro-viz>=11.0.0",
     "matplotlib",
+    "mlflow",
     "numpy==1.24.4",
     "pandas",
+    "pandas-gbq",
     "pandera==0.24.0",
     "pyarrow>=14.0.2",
+    "pygsheets==2.0.6",
     "pyspark==3.5.1",
     "pytest",
     "pytest-cov",
@@ -27,6 +34,8 @@ dependencies = [
     "scikit-learn~=1.5.1",
     "seaborn~=0.12.1",
     "setuptools; python_version >= \"3.12\"",
+    "tqdm",
+    "termplotlib"
 ]
 
 [tool.pytest.ini_options]

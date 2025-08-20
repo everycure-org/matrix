@@ -8,17 +8,13 @@ _pandas_parquet_ds: &_pandas_parquet
   type: pandas.ParquetDataset
   filepath: data/review_list/{input_name}
 
-input_dataframe_1:
-  <<: *_spark_parquet
-  filepath: data/review_list/input_dataframe_1
+# ==============================
+# Inputs
+# ==============================
 
-input_dataframe_2:
-  <<: *_spark_parquet
-  filepath: data/review_list/input_dataframe_2
-
-combined_ranked_pairs_dataframe:
-  <<: *_pandas_parquet
-  filepath: data/review_list/combined_ranked_pairs_dataframe
+# ==============================
+# Intermediate
+# ==============================
 
 trimmed_{input_name}@spark:
   <<: *_spark_parquet
@@ -28,3 +24,11 @@ trimmed_{input_name}@pandas:
   <<: *_pandas_parquet
   filepath: data/review_list/trimmed_{input_name}
 
+
+# ==============================
+# Outputs
+# ==============================
+
+combined_ranked_pairs_dataframe:
+  <<: *_pandas_parquet
+  filepath: data/review_list/combined_ranked_pairs_dataframe

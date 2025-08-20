@@ -21,10 +21,15 @@ The pipeline consists of two main stages:
 - Returns trimmed DataFrames containing only the top-ranked rows from each input
 
 ### 2. Weighted Interleaving (`weighted_interleave_dataframes`)
-- Performs weighted random selection of datasets for each output position
-- Maintains ranking order within each dataset
-- Tracks seen pairs to avoid duplicates
-- Produces a final DataFrame with sequential ranks
+- Iteratively builds the output list by repeating the following process:
+  1. Randomly select a dataset according to the specified weights
+  2. Take the next top-ranked unseen item from that dataset
+  3. Add it to the output and mark the (source, target) pair as seen
+  4. Continue until the limit is reached or no more unique items are available
+- Maintains ranking order within each dataset by always selecting the next available item
+- Tracks seen (source, target) pairs to avoid duplicates across all datasets
+- Produces a final DataFrame with sequential ranks starting from 1
+
 
 ## Input Data Requirements
 

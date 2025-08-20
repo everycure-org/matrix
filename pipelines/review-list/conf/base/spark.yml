@@ -6,3 +6,7 @@ spark.sql.execution.arrow.pyspark.enabled: true
 
 # https://docs.kedro.org/en/stable/integrations/pyspark_integration.html#tips-for-maximising-concurrency-using-threadrunner
 spark.scheduler.mode: FAIR
+
+# GCS connector configuration for reading from gs:// URLs
+spark.jars: gcs-connector-hadoop3-2.2.2-shaded.jar
+spark.hadoop.fs.gs.impl: com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem
