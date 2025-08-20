@@ -9,10 +9,6 @@ _pandas_parquet_ds: &_pandas_parquet
   filepath: data/review_list/{input_name}
 
 # ==============================
-# Inputs
-# ==============================
-
-# ==============================
 # Intermediate
 # ==============================
 
@@ -23,12 +19,3 @@ trimmed_{input_name}@spark:
 trimmed_{input_name}@pandas:
   <<: *_pandas_parquet
   filepath: data/review_list/trimmed_{input_name}
-
-
-# ==============================
-# Outputs
-# ==============================
-
-combined_ranked_pairs_dataframe:
-  <<: *_pandas_parquet
-  filepath: data/review_list/combined_ranked_pairs_dataframe

@@ -30,4 +30,4 @@ piotrs_experiment:
 
 combined_ranked_pairs_dataframe@pandas:
   <<: *_pandas_parquet
-  filepath: gs://mtrx-us-central1-hub-dev-storage/review-lists/20-aug-2025-list/list
+  filepath: gs://mtrx-us-central1-hub-dev-storage/review-lists/${env:REVIEW_LIST_NAME, base_list}/list

@@ -56,9 +56,8 @@ CONFIG_LOADER_ARGS = {
     },
     "custom_resolvers": {
         "merge": merge_dicts,
-        "oc.env": env,
-        "oc.int": cast_to_int,
-        # "setting": _load_setting,
+        "env": env,
+        "int": cast_to_int,
         "if_null": if_null,
     },
 }

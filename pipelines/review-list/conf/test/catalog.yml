@@ -1,6 +1,10 @@
 _spark_parquet_ds: &_spark_parquet
   type: spark.SparkDataset
 
+# ==============================
+# Inputs
+# ==============================
+
 input_dataframe_1:
   <<: *_spark_parquet
   filepath:  data/review_list/input_dataframe_1
@@ -8,6 +12,10 @@ input_dataframe_1:
 input_dataframe_2:
   <<: *_spark_parquet
   filepath:  data/review_list/input_dataframe_2
+
+# ==============================
+# Outputs
+# ==============================
 
 combined_ranked_pair_dataframe:
   <<: *_spark_parquet
