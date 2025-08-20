@@ -127,7 +127,7 @@ def union_and_deduplicate_nodes(
     # this is especially important if we integrate multiple KGs
 
     if retrieve_most_specific_category:
-        # Get the updated categories
+        # Get the updated categories and all_categories
         unioned_datasets = unioned_datasets.transform(determine_most_specific_category)
 
     return unioned_datasets.select(*cols)
