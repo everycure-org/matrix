@@ -4,7 +4,7 @@
 
 Initially, we noticed the machine type was not being allocated. This due to the ephemeral storage requirements not being satisfied by any of the nodes.
 
-> We have bumped the storage of the boot disk to 1 TB.
+> We have bumped the storage of the boot disk to 1.5 TB.
 
 ## Bumping memory spec
 
