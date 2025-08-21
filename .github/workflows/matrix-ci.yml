@@ -154,13 +154,16 @@ jobs:
       # Setup steps
       - run: env | sort
       - run: uv --version
-      - run: python --version
+      - run: python3 --version
       
       # Install dependencies
       - run: uv sync
       
-      # Run unit tests
-      - run: uv run pytest tests/ -v --tb=short
+      # Run unit tests and resolve catalogs
+      - run: uv run pytest tests/ -v --tb=short      # Run commands in parallel
+      - run: uv run kedro catalog resolve --env base
+      - run: uv run kedro catalog resolve --env cloud
+      - run: uv run kedro catalog resolve --env test
       
       # workaround as the `failure()` call did not work in downstream matrix_ci_check
       - id: finally
