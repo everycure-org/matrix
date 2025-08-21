@@ -64,6 +64,11 @@ def prefetch_top_quota(
             "target": Column(
                 str, nullable=False, description="Target entity identifier"
             ),
+            "from_input_datasets": Column(
+                str,
+                nullable=False,
+                description="Name of the input dataset(s) that provided the row",
+            ),
             "rank": Column(
                 int, nullable=False, description="Ranking position starting from 1"
             ),
@@ -71,7 +76,7 @@ def prefetch_top_quota(
         unique=["source", "target", "rank"],
     ),
 )
-def weighted_interleave_dataframes(
+def weighted_interleave_dataframes(  # noqa: PLR0912
     weights: dict[str, dict],
     config: dict[str, any],
     rng: random.Random | None = None,
@@ -128,36 +133,57 @@ def weighted_interleave_dataframes(
         )[0]
 
         df = pandas_dfs[selected_dataset]
+        # If the dataset is empty, skip it. This may happen if we exhaust all rows in the input list.
         if df.empty:
             continue
 
         # Find the first available pair that hasn't been seen
         available_row = None
         rows_to_remove = []
+
         for idx, row in df.iterrows():
             pair_key = (row["source"], row["target"])
             if pair_key in seen_pairs:
-                # breakpoint()
+                # Update the existing result row to include this dataset
+                for result_row in result_rows:
+                    if (
+                        result_row["source"] == row["source"]
+                        and result_row["target"] == row["target"]
+                    ):
+                        result_row["from_input_datasets"] += f",{selected_dataset}"
+                        break
                 rows_to_remove.append(idx)
             else:
-                # breakpoint()
+                # Found the first non-duplicate row
                 available_row = row
                 break
 
         # If no available row found, skip this dataset
         if available_row is None:
+            # We still need to remove duplicate rows
+            if rows_to_remove:
+                pandas_dfs[selected_dataset] = df.drop(rows_to_remove)
             continue
 
+        # Create new row with the new column
+        new_row = {
+            "source": available_row["source"],
+            "target": available_row["target"],
+            "from_input_datasets": selected_dataset,
+        }
         # Add to results
+        result_rows.append(new_row)
+
+        # Track seen pairs
         pair_key = (available_row["source"], available_row["target"])
         seen_pairs.add(pair_key)
-        result_rows.append(available_row)
 
-        # Remove all rows from the beginning up to and including the available row
+        # Remove the selected row and any duplicates
         pandas_dfs[selected_dataset] = df.drop(rows_to_remove + [available_row.name])
 
     if not result_rows:
-        return pd.DataFrame(columns=list(trimmed_dataframes[dataset_names[0]].columns))
+        # Return empty DataFrame with correct columns
+        return pd.DataFrame(columns=["source", "target", "from_input_datasets", "rank"])
 
     # Create result with sequential ranks
     result_df = pd.DataFrame(result_rows).reset_index(

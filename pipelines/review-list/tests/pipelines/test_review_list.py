@@ -87,14 +87,14 @@ def test_weighted_interleave_two_dataframes_equal_weights(sample_df1, sample_df2
     # Then
     expected_result = pd.DataFrame(
         [
-            ("df1_drug1", "df1_disease1", 1),
-            ("df2_drug6", "df2_disease6", 2),
-            ("df2_drug7", "df2_disease7", 3),
-            ("df1_drug2", "df1_disease2", 4),
-            ("df1_drug3", "df1_disease3", 5),
-            ("df1_drug4", "df1_disease4", 6),
+            ("df1_drug1", "df1_disease1", "sample_df1", 1),
+            ("df2_drug6", "df2_disease6", "sample_df2", 2),
+            ("df2_drug7", "df2_disease7", "sample_df2", 3),
+            ("df1_drug2", "df1_disease2", "sample_df1", 4),
+            ("df1_drug3", "df1_disease3", "sample_df1", 5),
+            ("df1_drug4", "df1_disease4", "sample_df1", 6),
         ],
-        columns=["source", "target", "rank"],
+        columns=["source", "target", "from_input_datasets", "rank"],
     )
 
     assert result.equals(expected_result)
@@ -108,7 +108,7 @@ def test_weighted_interleave_with_duplicates_across_dataframes(sample_df1, sampl
     """
     # Given
     weights = {"sample_df1": {"weight": 0.5}, "sample_df3": {"weight": 0.5}}
-    config = {"limit": 5}
+    config = {"limit": 8}
 
     # When
     result = weighted_interleave_dataframes(
@@ -123,13 +123,15 @@ def test_weighted_interleave_with_duplicates_across_dataframes(sample_df1, sampl
     # The duplicate pair "df1&df3_drug5" should only appear once
     expected_result = pd.DataFrame(
         [
-            ("df1&df3_drug5", "df1&df3_disease5", 1),
-            ("df1_drug1", "df1_disease1", 2),
-            ("df1_drug2", "df1_disease2", 3),
-            ("df1_drug3", "df1_disease3", 4),
-            ("df3_drug11", "df3_disease11", 5),
+            ("df1&df3_drug5", "df1&df3_disease5", "sample_df3,sample_df1", 1),
+            ("df1_drug1", "df1_disease1", "sample_df1", 2),
+            ("df1_drug2", "df1_disease2", "sample_df1", 3),
+            ("df1_drug3", "df1_disease3", "sample_df1", 4),
+            ("df3_drug11", "df3_disease11", "sample_df3", 5),
+            ("df3_drug12", "df3_disease12", "sample_df3", 6),
+            ("df1_drug4", "df1_disease4", "sample_df1", 7),
         ],
-        columns=["source", "target", "rank"],
+        columns=["source", "target", "from_input_datasets", "rank"],
     )
 
     assert result.equals(expected_result)
@@ -157,13 +159,13 @@ def test_weighted_interleave_unequal_weights(sample_df1, sample_df2):
     # Then
     expected_result = pd.DataFrame(
         [
-            ("df1_drug1", "df1_disease1", 1),
-            ("df2_drug6", "df2_disease6", 2),
-            ("df1_drug2", "df1_disease2", 3),
-            ("df1_drug3", "df1_disease3", 4),
-            ("df2_drug7", "df2_disease7", 5),
+            ("df1_drug1", "df1_disease1", "sample_df1", 1),
+            ("df2_drug6", "df2_disease6", "sample_df2", 2),
+            ("df1_drug2", "df1_disease2", "sample_df1", 3),
+            ("df1_drug3", "df1_disease3", "sample_df1", 4),
+            ("df2_drug7", "df2_disease7", "sample_df2", 5),
         ],
-        columns=["source", "target", "rank"],
+        columns=["source", "target", "from_input_datasets", "rank"],
     )
 
     assert result.equals(expected_result)
@@ -185,8 +187,13 @@ def test_weighted_interleave_single_dataframe(sample_df1):
     )
 
     # Then
-    # All rows should come from sample_df1
-    assert result.equals(sample_df1.head(3))
+    # All rows should come from sample_df1, but with the new column structure
+    expected_result = sample_df1.head(3).copy()
+    expected_result["from_input_datasets"] = "sample_df1"
+    expected_result = expected_result[
+        ["source", "target", "from_input_datasets", "rank"]
+    ]
+    assert result.equals(expected_result)
 
 
 def test_weighted_interleave_all_four_dataframes(
@@ -220,16 +227,17 @@ def test_weighted_interleave_all_four_dataframes(
     # Then
     expected_result = pd.DataFrame(
         [
-            ("df2_drug6", "df2_disease6", 1),
-            ("df1_drug1", "df1_disease1", 2),
-            ("df4_drug13", "df4_disease13", 3),
-            ("df1_drug2", "df1_disease2", 4),
-            ("df1&df3_drug5", "df1&df3_disease5", 5),
-            ("df2_drug7", "df2_disease7", 6),
-            ("df1_drug3", "df1_disease3", 7),
-            ("df3_drug11", "df3_disease11", 8),
+            ("df2_drug6", "df2_disease6", "sample_df2", 1),
+            ("df1_drug1", "df1_disease1", "sample_df1", 2),
+            ("df4_drug13", "df4_disease13", "sample_df4", 3),
+            ("df1_drug2", "df1_disease2", "sample_df1", 4),
+            # This row was only sampled from df3, not df1, hence why it's not in the from_input_datasets column
+            ("df1&df3_drug5", "df1&df3_disease5", "sample_df3", 5),
+            ("df2_drug7", "df2_disease7", "sample_df2", 6),
+            ("df1_drug3", "df1_disease3", "sample_df1", 7),
+            ("df3_drug11", "df3_disease11", "sample_df3", 8),
         ],
-        columns=["source", "target", "rank"],
+        columns=["source", "target", "from_input_datasets", "rank"],
     )
 
     assert result.equals(expected_result)
