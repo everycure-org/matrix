@@ -3,21 +3,13 @@ from the Kedro defaults. For further information, including these default values
 https://docs.kedro.org/en/stable/kedro_project_setup/settings.html."""
 
 import os
-import sys
 from datetime import datetime
-from pathlib import Path
 
 from kedro.config import OmegaConfigLoader  # noqa: E402
 
 # Instantiated project hooks.
 from review_list.hooks import SparkHooks  # noqa: E402
-
-# Add the matrix pipeline source to the Python path for local imports
-matrix_src_path = Path(__file__).parent.parent.parent.parent / "matrix" / "src"
-if matrix_src_path.exists():
-    sys.path.insert(0, str(matrix_src_path))
-
-from matrix.resolvers import cast_to_int, env, if_null, merge_dicts  # noqa: E402
+from review_list.resolvers import env, merge_dicts
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 HOOKS = (SparkHooks(),)
@@ -49,8 +41,6 @@ CONFIG_LOADER_ARGS = {
     "custom_resolvers": {
         "merge": merge_dicts,
         "env": env,
-        "int": cast_to_int,
-        "if_null": if_null,
     },
 }
 
