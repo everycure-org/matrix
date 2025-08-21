@@ -52,7 +52,8 @@ jobs:
       pull-requests: read
       contents: 'read'
     outputs: 
-      changed: ${{ steps.changes.outputs.src }}
+      matrix: ${{ steps.changes.outputs.matrix }}
+      review_list: ${{ steps.changes.outputs.review_list }}
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
@@ -64,14 +65,16 @@ jobs:
         id: changes
         with:
           filters: |
-            src:
+            matrix:
               - pipelines/matrix/**
               - .github/workflows/matrix-ci.yml
+            review_list:
+              - pipelines/review-list/**
 
-  ci:
+  matrix_ci:
     runs-on: 'self-hosted'
     needs: [paths_filter]
-    if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
+    if: needs.paths_filter.outputs.matrix == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
     
     outputs:
       status: ${{ steps.finally.outputs.status }}
@@ -118,21 +121,68 @@ jobs:
       - id: finally
         if: failure()
         run: echo "status=failure" >> "$GITHUB_OUTPUT"
+
+  review_list_ci:
+    runs-on: 'self-hosted'
+    needs: [paths_filter]
+    if: needs.paths_filter.outputs.review_list == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
+    
+    outputs:
+      status: ${{ steps.finally.outputs.status }}
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    defaults:
+      run:
+        working-directory: ./pipelines/review-list
+    steps:
+      - uses: actions/checkout@v4
+        with: 
+          sparse-checkout: |
+            pipelines/review-list/
+          submodules: recursive
+          token: ${{ secrets.PAT }}
+          persist-credentials: true
+      
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider}}
+          service_account: ${{vars.service_account}}
+
+      # Setup steps
+      - run: env | sort
+      - run: uv --version
+      - run: python --version
+      
+      # Install dependencies
+      - run: uv sync
+      
+      # Run unit tests
+      - run: uv run pytest tests/ -v --tb=short
+      
+      # workaround as the `failure()` call did not work in downstream matrix_ci_check
+      - id: finally
+        if: failure()
+        run: echo "status=failure" >> "$GITHUB_OUTPUT"
   # we use this check as required in our PRs to ensure that CI runs but only for our paths. 
   matrix_ci_check:
     name: Matrix CI PR Check
     runs-on:  'self-hosted'
     if: always()
-    needs: [paths_filter, ci]
+    needs: [paths_filter, matrix_ci, review_list_ci]
     steps:
-      - if: ${{ needs.paths_filter.outputs.changed == 'true' && needs.ci.outputs.status == 'failure' }}
-        run: echo "CI failed, we are exiting" && exit 1
+      - if: ${{ needs.paths_filter.outputs.matrix == 'true' && needs.matrix_ci.outputs.status == 'failure' }}
+        run: echo "Matrix CI failed, we are exiting" && exit 1
+      - if: ${{ needs.paths_filter.outputs.review_list == 'true' && needs.review_list_ci.outputs.status == 'failure' }}
+        run: echo "Review List CI failed, we are exiting" && exit 1
       - run: echo "Either no files were changed or we had happy CI, continuing"
 
       
 
   push_image:
-    needs: [ci]
+    needs: [matrix_ci]
     if: github.ref == 'refs/heads/main'
     runs-on: 'self-hosted'
     environment: dev
@@ -171,7 +221,7 @@ jobs:
   # Add this new job at the end of your jobs section
   # following this tutorial: https://github.com/slackapi/slack-github-action?tab=readme-ov-file
   notify_failure:
-    needs: [ci, push_image]
+    needs: [matrix_ci, review_list_ci, push_image]
     # This condition ensures it runs only if any previous job fails
     # we notify on main branches only
     if: failure() && github.ref == 'refs/heads/main' 
