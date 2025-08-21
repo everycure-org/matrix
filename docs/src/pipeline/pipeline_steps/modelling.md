@@ -56,8 +56,20 @@ The pipeline uses a cross-validation approach with multiple folds. We can adjust
 
 #### Ground Truth Data
 
-The pipeline pulls in ground truth data from the release containing known positive and negative examples. Please see the data documentation for more information.
-<!-- Add link when it exists -->
+The pipeline pulls in ground truth data from the release containing known positive and negative examples from different sources (e.g. KGML-xDTD, EC Indications). As of August 2025, the data releases contain a unified ground truth product which concatenates different training sets that EveryCure considers valuable. Using this unified ground truth set, you can now select which Ground Truth you want to use for model training by specifying sources in `defaults.yaml` configuration for modelling pipeline. 
+
+For instance, the following parameters specify that all datasets (ec, drugbank, kgml_xdtd) should be chosen for training e.g.
+```yaml
+modelling.training_data_sources:
+  - ec # EveryCure Indications
+  - drugbank # DrugBank Indications (private)
+  - kgml_xdtd # KGML-xDTD Indications
+```
+
+Configuration that can be found on `main` branch for `matrix` is our most up-to-date which leads to the most performing 
+
+Please see the [data documentation](../data/ground_truth_lists.md) for more information on the datasets.
+<!-- Add more precise link when it exists -->
 
 
 #### Split Generation
