@@ -2,7 +2,9 @@
 from the Kedro defaults. For further information, including these default values, see
 https://docs.kedro.org/en/stable/kedro_project_setup/settings.html."""
 
+import os
 import sys
+from datetime import datetime
 from pathlib import Path
 
 from kedro.config import OmegaConfigLoader  # noqa: E402
@@ -21,8 +23,9 @@ from matrix.resolvers import cast_to_int, env, if_null, merge_dicts  # noqa: E40
 HOOKS = (SparkHooks(),)
 
 # Dynamic configuration for review-list pipeline
-REVIEW_LIST_INPUTS: list[str] = ["input_dataframe_1", "input_dataframe_2"]
-
+REVIEW_LIST_INPUTS: list[str] = ["jun_25_ff_t3", "piotrs_experiment"]
+# Set output name to current datetime
+os.environ["REVIEW_LIST_NAME"] = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 # Class that manages how configuration is loaded.
 

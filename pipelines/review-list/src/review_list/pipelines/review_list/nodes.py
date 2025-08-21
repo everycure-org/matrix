@@ -18,8 +18,8 @@ def prefetch_top_quota(
     """
     Return the top rows from each input DataFrame according to its quota with a 20% buffer.
 
-    - Quota is computed as round(limit * weight) per dataset, adjusted so the sum equals limit
-    - We then take ceil(quota * 1.2) rows ordered by rank (20% buffer)
+    - Quota is computed as (limit * weight) per dataset.
+    - We double the quota as a buffer, in case there is significant similarity between datasets.
 
     Args:
         weights: Mapping of dataset name to a dict containing a 'weight' float
@@ -40,16 +40,15 @@ def prefetch_top_quota(
     if total_weight != 1:
         raise ValueError("Weights must sum to 1")
 
-    # Compute quotas per dataset, adjust rounding diff onto first dataset
+    # Apply 2x buffer to handle many duplicates when high commonality between datasets.
     dataset_names = list(dataframes.keys())
-    raw_quotas = [round(limit * weights[name]["weight"]) for name in dataset_names]
-
-    # Apply 20% buffer and select top rows by rank
+    buffered_quota = [
+        math.ceil((limit * weights[name]["weight"]) * 2) for name in dataset_names
+    ]
 
     trimmed_dataframes: list[ps.DataFrame] = []
-    for name, quota in zip(dataset_names, raw_quotas):
-        buffer_n = int(math.ceil(quota * 1.2))
-        top_plus_buffer = dataframes[name].filter(col("rank") <= buffer_n)
+    for name, buffered_quota in zip(dataset_names, buffered_quota):
+        top_plus_buffer = dataframes[name].filter(col("rank") <= buffered_quota)
         trimmed_dataframes.append(top_plus_buffer)
 
     return trimmed_dataframes
@@ -105,12 +104,12 @@ def weighted_interleave_dataframes(  # noqa: PLR0912
         raise ValueError("Missing limit in config")
     limit = config["limit"]
 
-    # Extract weight values and validate
-    weight_values = {
-        name: weights[name]["weight"] for name in trimmed_dataframes.keys()
+    # Extract and normalize weights to sum to 1
+    total_weight = sum(weights[name]["weight"] for name in trimmed_dataframes.keys())
+    normalized_weights = {
+        name: weights[name]["weight"] / total_weight
+        for name in trimmed_dataframes.keys()
     }
-    if abs(sum(weight_values.values()) - 1.0) > 1e-10:  # noqa PLR2004
-        raise ValueError("Weights must sum to 1")
 
     # Make copies and initialize tracking
     pandas_dfs = {name: df.copy() for name, df in trimmed_dataframes.items()}
@@ -129,7 +128,7 @@ def weighted_interleave_dataframes(  # noqa: PLR0912
         # Select dataset by weight
         selected_dataset = _rng.choices(
             dataset_names,
-            weights=[weight_values[name] for name in dataset_names],
+            weights=[normalized_weights[name] for name in dataset_names],
         )[0]
 
         df = pandas_dfs[selected_dataset]

@@ -243,26 +243,29 @@ def test_weighted_interleave_all_four_dataframes(
     assert result.equals(expected_result)
 
 
-def test_weighted_interleave_weights_sum_to_one(sample_df1, sample_df2):
+def test_weighted_interleave_weights_auto_normalize(sample_df1, sample_df2):
     """
     Given: Dataframes with weights that don't sum to 1
     When: Interleaving with weights that don't sum to 1
-    Then: Should raise an error
+    Then: Should automatically normalize weights and work correctly
     """
     # Given
-    weights = {"sample_df1": {"weight": 1.0}, "sample_df2": {"weight": 0.6}}
+    weights = {"sample_df1": {"weight": 10}, "sample_df2": {"weight": 6}}
     config = {"limit": 5}
 
-    # When/Then
-    with pytest.raises(ValueError) as e:
-        weighted_interleave_dataframes(
-            weights,
-            config,
-            rng=random.Random(789),
-            sample_df1=sample_df1,
-            sample_df2=sample_df2,
-        )
-    assert str(e.value) == "Weights must sum to 1"
+    # When
+    result = weighted_interleave_dataframes(
+        weights,
+        config,
+        rng=random.Random(789),
+        sample_df1=sample_df1,
+        sample_df2=sample_df2,
+    )
+
+    # Then
+    # Should work without error, weights automatically normalized to [0.625, 0.375]
+    assert len(result) == 5  # noqa: PLR2004
+    assert list(result.columns) == ["source", "target", "from_input_datasets", "rank"]
 
 
 def test_weighted_interleave_limit_exceeds_available_data_warns(
@@ -308,6 +311,7 @@ def sample_spark_df1(spark):
             ("df1_drug3", "df1_disease1", 3),
             ("df1_drug4", "df1_disease1", 4),
             ("df1_drug5", "df1_disease1", 5),
+            ("df1_drug6", "df1_disease1", 6),
         ],
         ["source", "target", "rank"],
     )
@@ -332,11 +336,11 @@ def test_prefetch_top_quota(spark, sample_spark_df1, sample_spark_df2):
     """
     Given: Two Spark DataFrames with unequal weights (0.7, 0.3)
     When: Prefetching with limit 10
-    Then: Should return DataFrames with proportional quotas + 20% buffer
+    Then: Should return DataFrames with proportional quotas + 2x buffer
     """
     # Given
     weights = {"sample_spark_df1": {"weight": 0.7}, "sample_spark_df2": {"weight": 0.3}}
-    config = {"limit": 5}
+    config = {"limit": 4}
 
     # When
     result = prefetch_top_quota(
@@ -349,7 +353,7 @@ def test_prefetch_top_quota(spark, sample_spark_df1, sample_spark_df2):
     # Then
 
     expected_result = [
-        # First DataFrame: quota = 4, buffer = ceil(4 * 1.2) = 5
+        # First DataFrame: ceil((0.7 * 4) * 2) = 6
         spark.createDataFrame(
             [
                 ("df1_drug1", "df1_disease1", 1),
@@ -357,10 +361,11 @@ def test_prefetch_top_quota(spark, sample_spark_df1, sample_spark_df2):
                 ("df1_drug3", "df1_disease1", 3),
                 ("df1_drug4", "df1_disease1", 4),
                 ("df1_drug5", "df1_disease1", 5),
+                ("df1_drug6", "df1_disease1", 6),
             ],
             ["source", "target", "rank"],
         ),
-        # Second DataFrame: quota = 1.5 -> 2, buffer = ceil(2 * 1.2) = 2.4  -> 3
+        # Second DataFrame: ceil((0.3 * 4) * 2) = 3
         spark.createDataFrame(
             [
                 ("df2_drug6", "df2_disease6", 1),
@@ -378,12 +383,12 @@ def test_prefetch_top_quota(spark, sample_spark_df1, sample_spark_df2):
 def test_prefetch_top_quota_single_dataframe(spark, sample_spark_df1):
     """
     Given: Single Spark DataFrame with weight 1.0
-    When: Prefetching with limit 3
-    Then: Should return single DataFrame with quota + 20% buffer
+    When: Prefetching with limit 2
+    Then: Should return single DataFrame with quota + 2x buffer
     """
     # Given
     weights = {"sample_spark_df1": {"weight": 1.0}}
-    config = {"limit": 3}
+    config = {"limit": 2}
 
     # When
     result = prefetch_top_quota(
@@ -391,34 +396,8 @@ def test_prefetch_top_quota_single_dataframe(spark, sample_spark_df1):
     )
 
     # Then
-    expected_result = sample_spark_df1.head(4)
+    expected_result = sample_spark_df1.head(4)  # quota = 3, buffer = ceil(3 * 2.0) = 6
     assertDataFrameEqual(result[0], expected_result)
-
-
-def test_prefetch_top_quota_weights_must_sum_to_one(
-    spark, sample_spark_df1, sample_spark_df2
-):
-    """
-    Given: Two Spark DataFrames with weights that don't sum to 1
-    When: Prefetching with invalid weights
-    Then: Should raise ValueError
-    """
-    # Given
-    weights = {
-        "sample_spark_df1": {"weight": 0.6},
-        "sample_spark_df2": {"weight": 0.5},  # Sum = 1.1, not 1.0
-    }
-    config = {"limit": 5}
-
-    # When/Then
-    with pytest.raises(ValueError) as e:
-        prefetch_top_quota(
-            weights=weights,
-            config=config,
-            sample_spark_df1=sample_spark_df1,
-            sample_spark_df2=sample_spark_df2,
-        )
-    assert str(e.value) == "Weights must sum to 1"
 
 
 def test_prefetch_top_quota_missing_limit(spark, sample_spark_df1):
