@@ -4,6 +4,7 @@ import random
 
 import pandas as pd
 import pyspark.sql as ps
+from pandera import Column, DataFrameSchema, check_output
 from pyspark.sql.functions import col
 
 logger = logging.getLogger(__name__)
@@ -54,6 +55,22 @@ def prefetch_top_quota(
     return trimmed_dataframes
 
 
+@check_output(
+    DataFrameSchema(
+        columns={
+            "source": Column(
+                str, nullable=False, description="Source entity identifier"
+            ),
+            "target": Column(
+                str, nullable=False, description="Target entity identifier"
+            ),
+            "rank": Column(
+                int, nullable=False, description="Ranking position starting from 1"
+            ),
+        },
+        unique=["source", "target", "rank"],
+    ),
+)
 def weighted_interleave_dataframes(
     weights: dict[str, dict],
     config: dict[str, any],

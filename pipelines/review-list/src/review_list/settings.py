@@ -20,22 +20,11 @@ from matrix.resolvers import cast_to_int, env, if_null, merge_dicts  # noqa: E40
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 HOOKS = (SparkHooks(),)
 
-# Installed plugins for which to disable hook auto-registration.
-# DISABLE_HOOKS_FOR_PLUGINS = ("kedro-viz",)
+# Dynamic configuration for review-list pipeline
+REVIEW_LIST_INPUTS: list[str] = ["input_dataframe_1", "input_dataframe_2"]
 
-# Class that manages storing KedroSession data.
-# from kedro.framework.session.store import BaseSessionStore
-# SESSION_STORE_CLASS = BaseSessionStore
-# Keyword arguments to pass to the `SESSION_STORE_CLASS` constructor.
-# SESSION_STORE_ARGS = {
-#     "path": "./sessions"
-# }
-
-# Directory that holds configuration.
-# CONF_SOURCE = "conf"
 
 # Class that manages how configuration is loaded.
-
 
 CONFIG_LOADER_CLASS = OmegaConfigLoader
 # Keyword arguments to pass to the `CONFIG_LOADER_CLASS` constructor.

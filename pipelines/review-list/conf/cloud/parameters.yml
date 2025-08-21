@@ -1,4 +1,4 @@
-inputs_to_review_list:
+weighted_inputs:
   jun_25_ff_t3:
     weight: 0.7
   piotrs_experiment:

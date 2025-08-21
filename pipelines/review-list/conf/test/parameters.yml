@@ -1,0 +1,8 @@
+weighted_inputs:
+  input_dataframe_1:
+    weight: 0.5
+  input_dataframe_2:
+    weight: 0.5
+
+review_list_config:
+  limit: 10  # Maximum number of rows in final combined result

@@ -17,8 +17,7 @@ input_dataframe_2:
 # Outputs
 # ==============================
 
-combined_ranked_pair_dataframe:
-  <<: *_spark_parquet
-  filepath:  data/review_list/combined_ranked_pair_dataframe
-  save_args:
-    mode: overwrite
+combined_ranked_pairs_dataframe@pandas:
+  type: pandas.ParquetDataset
+  filepath: data/review_list/combined_ranked_pairs_dataframe
+
