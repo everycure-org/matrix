@@ -14,7 +14,7 @@ locals {
     min_count          = 0
     max_count          = 10
     disk_type          = "pd-ssd"
-    disk_size_gb       = 1024
+    disk_size_gb       = 2048
     enable_gcfs        = true
     enable_gvnic       = true
     initial_node_count = 0
@@ -65,7 +65,7 @@ locals {
     min_count          = 0
     max_count          = 20 # Higher max count for spot instances
     disk_type          = "pd-ssd"
-    disk_size_gb       = 1024
+    disk_size_gb       = 2048
     enable_gcfs        = true
     enable_gvnic       = true
     initial_node_count = 0
