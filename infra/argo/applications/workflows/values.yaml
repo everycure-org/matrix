@@ -21,6 +21,8 @@ argo-workflows:
       keyFormat: "{{ \"{{workflow.namespace}}/{{workflow.name}}/{{pod.name}}\" }}"
   
   controller:
+    config:
+      archiveLogs: true
     metricsConfig:
       enabled: true
     # Schedule controller on management nodes
