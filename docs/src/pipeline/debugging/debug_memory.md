@@ -30,6 +30,16 @@ volumeMounts
     mountPath: /scratch
 ```
 
+To make sure that the volumes are deleted after a pod succeeds/fails/error, we have set the 
+
+```yaml
+spec:
+  podGC:
+    strategy: OnPodCompletion
+```
+
+This ensures that the cleanup happens automatically.
+
 ## Bumping memory spec
 
 Next, we noticed the Neo4J container going OOM. It turned out this was due to the hardcoded values in the Neo4J container, essentially capping it's resources.
