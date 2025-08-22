@@ -7,7 +7,7 @@
 
 ## Context
 
-The Matrix platform needed to access orchard datasets stored in separate GCP projects (`ec-orchard-dev` and `ec-orchard-prod`) to enable data scientists to include orchard data in their analysis and pipeline workflows. The orchard data is managed by a separate team and stored in their own GCP projects with their own access controls and billing.
+The Matrix platform (Production Environment) needed to access orchard datasets stored in separate GCP projects (`ec-orchard-dev` and `ec-orchard-prod`) to enable data scientists to include orchard data in their analysis and pipeline workflows. The orchard data is managed by a separate team and stored in their own GCP projects with their own access controls.
 
 ## Decision
 
@@ -41,7 +41,7 @@ We grant orchard access to multiple Matrix service accounts based on user roles:
 
 ### 4. Cross-Project IAM Binding Structure
 
-The IAM bindings are applied in the **orchard projects** (not the Matrix project), granting Matrix service accounts access to orchard resources:
+The IAM bindings are applied in the **orchard projects** (not the Matrix project), granting Matrix Production Kubernetes Service Accounts access to orchard resources:
 
 ```hcl
 # Example binding in orchard projects
