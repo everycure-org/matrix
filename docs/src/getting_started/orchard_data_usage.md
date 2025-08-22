@@ -2,7 +2,7 @@
 
 ## Quick Start
 
-The Matrix platform provides seamless access to orchard datasets from both development and production environments. This guide will show you how to configure and use orchard data in your Matrix pipelines.
+The Matrix platform provides seamless access to orchard datasets from the production environments. This guide will show you how to configure and use orchard data in your Matrix pipelines.
 
 ## Accessing Orchard Data
 
