@@ -329,43 +329,83 @@ ingestion.int.disease_list.nodes:
   filepath: ${globals:paths.ingestion}/disease_list/translator/${globals:data_sources.disease_list.version}/disease_list_conflated
 
 # -------------------------------------------------------------------------
-# Ground truth
+# KGML-xdtd Ground truth
 # -------------------------------------------------------------------------  
 # TODO: Remove raw suffix from all outputs of preprocessing pipeline once its in main
-ingestion.raw.ground_truth.positives:
+ingestion.raw.kgml_xdtd_ground_truth.positives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_public}/ground_truth/kg2/${globals:data_sources.gt.version}/tp_pairs.txt
+  filepath: ${globals:paths.raw_public}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tp_pairs.txt
   load_args:
     sep: "\t"
   save_args:
     sep: "\t"
 
-ingestion.raw.ground_truth.negatives:
+ingestion.raw.kgml_xdtd_ground_truth.negatives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_public}/ground_truth/kg2/${globals:data_sources.gt.version}/tn_pairs.txt
+  filepath: ${globals:paths.raw_public}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tn_pairs.txt
   load_args:
     sep: "\t"
   save_args:
     sep: "\t"
 
-ingestion.int.ground_truth.positive.edges@pandas:
+ingestion.int.kgml_xdtd_ground_truth.positive.edges@pandas:
   <<: [*_pandas_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs
-  
-ingestion.int.ground_truth.negative.edges@pandas:
-  <<: [*_pandas_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/tn_pairs
+  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tp_pairs
 
-ingestion.int.ground_truth.positive.edges@spark:
+ingestion.int.kgml_xdtd_ground_truth.negative.edges@pandas:
+  <<: [*_pandas_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tn_pairs
+
+ingestion.int.kgml_xdtd_ground_truth.positive.edges@spark:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs
-  
-ingestion.int.ground_truth.negative.edges@spark:
+  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tp_pairs
+
+ingestion.int.kgml_xdtd_ground_truth.negative.edges@spark:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.gt.version}/tn_pairs
-  
+  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tn_pairs
+
+# -------------------------------------------------------------------------
+# Ground truth EC
+# -------------------------------------------------------------------------  
+
+ingestion.raw.ec_ground_truth.positives:
+  <<: [*_layer_raw]
+  type: matrix.datasets.github.GitHubReleaseExcelDataset
+  repository_url: https://github.com/everycure-org/matrix-indication-list
+  release_name: ${globals:data_sources.ec_gt.version}
+  release_asset_name: indicationList.xlsx 
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: token ${globals:gh_token}
+
+ingestion.raw.ec_ground_truth.negatives:
+  <<: [*_layer_raw]
+  type: matrix.datasets.github.GitHubReleaseExcelDataset
+  repository_url: https://github.com/everycure-org/matrix-indication-list
+  release_name: ${globals:data_sources.ec_gt.version}
+  release_asset_name: contraindicationList.xlsx
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: token ${globals:gh_token}
+
+ingestion.int.ec_ground_truth.negative.edges@pandas:
+  <<: [*_pandas_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs
+
+ingestion.int.ec_ground_truth.positive.edges@pandas:
+  <<: [*_pandas_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs
+
+ingestion.int.ec_ground_truth.negative.edges@spark:
+  <<: [*_spark_parquet, *_layer_int] 
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs
+
+ingestion.int.ec_ground_truth.positive.edges@spark:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs
+
 # -------------------------------------------------------------------------
 # Robokop
 # -------------------------------------------------------------------------  
