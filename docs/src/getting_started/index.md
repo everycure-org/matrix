@@ -19,7 +19,7 @@ MATRIX is Every Cure's main pipeline for generating high-accuracy predictions of
     We are aiming to constantly improve our documentation and codebase. If you spot any typos/mistakes, please let us know _via_ GitHub Issues or create a PR correcting those changes. We always appreciate external contributions!
 
 !!! tip "Navigation"
-    Start with the First Steps section to learn about our tech stack and set up your local environment. Then proceed to the Deep Dive section to understand our pipeline in detail.
+    Start with the First Steps section to learn about our tech stack and set up your local environment. Then proceed to the Deep Dive section to understand our pipeline in detail. For working with orchard data, see our [Orchard Data Usage Guide](orchard_data_usage.md).
 
 ## Who is this guide for? 
 

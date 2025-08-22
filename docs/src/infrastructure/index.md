@@ -188,6 +188,10 @@ Furthermore, MLflow allows us to store and version machine learning models, faci
 
 MLflow also offers customizable dashboards and plots for visualizing results, supporting reproducibility by capturing the entire ML lifecycle. This integration streamlines our workflow and enables us to make data-driven decisions more efficiently, aligning perfectly with our goal of maintaining a fast learning loop and open scientific method.
 
+### Orchard Data Access Integration
+
+Our platform integrates with the orchard datasets to provide Matrix users access to both development and production orchard data. This cross-project integration is implemented through custom IAM roles and secure service account impersonation, enabling seamless access to orchard BigQuery datasets from within Matrix pipelines. For detailed information about the implementation and usage, see the [Orchard Data Access documentation](orchard_data_access.md).
+
 ### [Vertex AI](https://console.cloud.google.com/vertex-ai/workbench/instances)
 
 Vertex AI is GCP's machine learning platform that we leverage in two ways:
