@@ -72,7 +72,7 @@ def determine_most_specific_category(nodes: ps.DataFrame) -> ps.DataFrame:
     category_validation_udf = F.udf(is_valid_biolink_category, T.BooleanType())
     hierarchy_udf = F.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))
 
-    # For Rule 1: Ensure cor_id column is present  - False if column doesn't exist, otherwise check if not null
+    # For Rule 1: Ensure core_id column is present  - False if column doesn't exist, otherwise check if not null
     core_id_present = F.lit(False) if "core_id" not in nodes.columns else F.col("core_id").isNotNull()
 
     # For Rule 2: if all_categories only contains "biolink:NamedThing", update it using the hierarchy of the category, only if it is biolink compliant.
