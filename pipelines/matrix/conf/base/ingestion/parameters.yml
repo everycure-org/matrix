@@ -1,0 +1,8 @@
+ingestion:
+  sources:
+    rtx_kg2:
+      strict: False
+    robokop:
+      strict: False
+    spoke:
+      strict: False

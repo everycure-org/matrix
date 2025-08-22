@@ -2,6 +2,8 @@ from kedro.pipeline import Pipeline, node, pipeline
 
 from matrix import settings
 
+from . import nodes
+
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create ingestion pipeline."""
@@ -74,6 +76,20 @@ def create_pipeline(**kwargs) -> Pipeline:
                     inputs=[f'ingestion.raw.{source["name"]}.edges@spark'],
                     outputs=f'ingestion.int.{source["name"]}.edges',
                     name=f'write_{source["name"]}_edges',
+                    tags=[f'{source["name"]}'],
+                )
+            )
+        if source.get("validate", False):
+            nodes_lst.append(
+                node(
+                    func=nodes.validate,
+                    inputs={
+                        "nodes": f'ingestion.raw.{source["name"]}.nodes@polars',
+                        "edges": f'ingestion.raw.{source["name"]}.edges@polars',
+                        "strict": f'params:ingestion.sources.{source["name"]}.strict',
+                    },
+                    outputs=f'ingestion.int.{source["name"]}.violations',
+                    name=f'validate_{source["name"]}',
                     tags=[f'{source["name"]}'],
                 )
             )
