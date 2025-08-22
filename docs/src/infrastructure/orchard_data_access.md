@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Matrix platform has been configured to access orchard datasets from both development and production orchard environments. This enables Matrix users to query and analyze orchard data as part of their workflows.
+The Matrix platform (Production environment) has been configured to access orchard datasets from both development and production orchard environments. This enables Matrix Production users to query and analyze orchard data as part of their workflows.
 
 ## Implementation Details
 
