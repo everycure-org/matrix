@@ -215,12 +215,15 @@ jobs:
       - name: Setup Python Environment
         working-directory: docs/
         run: |
-          pip install -r requirements.txt
+          pip install uv
+          uv venv -p 3.11
+          uv pip compile --quiet requirements.in --output-file requirements.txt
+          uv pip install -r requirements.txt 
 
       - name: Setup docs venv & generate yaml
         working-directory: docs/scripts
         run: |
-          python changelog_gen.py
+          uv run changelog_gen.py
 
       - name: Commit YAML release info file
         working-directory: docs/src/releases/changelog_files
