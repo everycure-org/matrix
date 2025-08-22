@@ -141,4 +141,4 @@ integration:
     # E.g. if a node has all_categories [biolink:ChemicalEntity, biolink:NamedThing],
     # then node will be assigned biolink:ChemicalEntity as most specific category.
     # For RTX-KG2 reproduction from KGML-xDTD, choose false
-    retrieve_most_specific_category: false
+    retrieve_most_specific_category: true
