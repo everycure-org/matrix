@@ -238,53 +238,53 @@ jobs:
             git push
           fi
 
-      # - name: Create Pull Request
-      #   env:
-      #     GITHUB_TOKEN: ${{ github.token }}
-      #   run: |
-      #     gh pr create \
-      #       --title "Release/${{ env.release }}" \
-      #       --base main \
-      #       --body "$(cat <<EOM
-      #     This pull request was created because a release pipeline completed successfully. If this is a patch release (the release version does not end in 0, e.g. "v1.2.5") that was triggered as part of its weekly schedule, you may close this PR directly, unless you want it to [be logged on the website](https://docs.dev.everycure.org/releases/release_history/). A git tag was [created](https://github.com/everycure-org/matrix/tags) regardless, so people can check it out.
+      - name: Create Pull Request
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          gh pr create \
+            --title "Release/${{ env.release }}" \
+            --base main \
+            --body "$(cat <<EOM
+          This pull request was created because a release pipeline completed successfully. If this is a patch release (the release version does not end in 0, e.g. "v1.2.5") that was triggered as part of its weekly schedule, you may close this PR directly, unless you want it to [be logged on the website](https://docs.dev.everycure.org/releases/release_history/). A git tag was [created](https://github.com/everycure-org/matrix/tags) regardless, so people can check it out.
 
-      #     Please check the KG dashboard for this release [here](https://data.dev.everycure.org/versions/${{ env.release }}/evidence/)
+          Please check the KG dashboard for this release [here](https://data.dev.everycure.org/versions/${{ env.release }}/evidence/)
 
-      #     Note: 
-      #     - for minor and major releases, the release article should be created, meant as a kickstarter for the final release. The template is generated, please ask contributors to fill it out
-      #     - release information file is used for updating the release history page
-      #     EOM
-      #     )" \
-      #       --draft \
-      #       --label Release \
-      #       --label hide-from-release
+          Note: 
+          - for minor and major releases, the release article should be created, meant as a kickstarter for the final release. The template is generated, please ask contributors to fill it out
+          - release information file is used for updating the release history page
+          EOM
+          )" \
+            --draft \
+            --label Release \
+            --label hide-from-release
 
-      # - name: Trigger creation of sample release
-      #   uses: actions/github-script@v7
-      #   with:
-      #     github-token: ${{ secrets.PAT }}
-      #     script: |
-      #       await github.rest.actions.createWorkflowDispatch({
-      #         owner: context.repo.owner,
-      #         repo: context.repo.repo,
-      #         workflow_id: 'create-sample-release.yml',
-      #         ref: 'main',
-      #         inputs: {
-      #           release_version: '${{ env.release }}'
-      #         }
-      #       })
+      - name: Trigger creation of sample release
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PAT }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'create-sample-release.yml',
+              ref: 'main',
+              inputs: {
+                release_version: '${{ env.release }}'
+              }
+            })
 
-      # - name: Trigger KG dashboard deploy
-      #   uses: actions/github-script@v7
-      #   with:
-      #     github-token: ${{ secrets.PAT }}
-      #     script: |
-      #       await github.rest.actions.createWorkflowDispatch({
-      #         owner: context.repo.owner,
-      #         repo: context.repo.repo,
-      #         workflow_id: 'kg-dashboard-deploy.yml',
-      #         ref: 'main',
-      #         inputs: {
-      #           "release_version": '${{ env.release }}' 
-      #         }
-      #       })
+      - name: Trigger KG dashboard deploy
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PAT }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'kg-dashboard-deploy.yml',
+              ref: 'main',
+              inputs: {
+                "release_version": '${{ env.release }}' 
+              }
+            })
