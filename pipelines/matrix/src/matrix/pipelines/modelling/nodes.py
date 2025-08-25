@@ -336,7 +336,10 @@ def fit_transformers(
     fitted = {}
     for name, meta in transformers.items():
         feats = meta["features"]
-        tr = meta["transformer"].fit(data.loc[mask, feats], target)
+        if name == "weighting":
+            tr = meta["transformer"].fit(data.loc[mask, feats + ["y"]], target)
+        else:
+            tr = meta["transformer"].fit(data.loc[mask, feats], target)
 
         fitted[name] = {"transformer": tr, "features": feats}
 
@@ -374,8 +377,8 @@ def apply_transformers(
             axis="columns",
         )
 
-    if "weight" not in data.columns:
-        data["weight"] = 1.0
+    # if "weight" not in data.columns:
+    #     data["weight"] = 1.0
 
     return data
 
@@ -396,7 +399,6 @@ def tune_parameters(data: pd.DataFrame, tuner: Any, features: list[str], target_
         Refit compatible dictionary of best parameters.
     """
     mask = data["split"].eq("TRAIN")
-
     X_train = data.loc[mask, features]
     y_train = data.loc[mask, target_col_name]
     weights = data.loc[mask, "weight"].values.ravel() if "weight" in data.columns else None
