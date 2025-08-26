@@ -88,10 +88,8 @@ def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.Da
 
 
 def unify_ground_truth(*edges) -> ps.DataFrame:
-    """Function to unify edges datasets."""
-    # fmt: off
+    """Function to unify ground truth edges datasets."""
     return _union_datasets(*edges)
-    # fmt: on
 
 
 @check_output(

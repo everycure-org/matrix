@@ -66,7 +66,7 @@ modelling.training_data_sources:
   - kgml_xdtd # KGML-xDTD Indications
 ```
 
-Configuration that can be found on `main` branch for `matrix` is our most up-to-date which leads to the most performing 
+Configuration that can be found on `main` branch for `matrix` is our most up-to-date which leads to the most performing drug repurposing predictions.
 
 Please see the [data documentation](../data/ground_truth_lists.md) for more information on the datasets.
 <!-- Add more precise link when it exists -->

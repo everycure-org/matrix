@@ -412,16 +412,16 @@ ingestion.raw.drugbank_ground_truth.positives:
   load_args:
     sep: ","
     columns:
-      - "treated_condition"
-      - "assoc_condition"
-      - "primary_drug"
-      - "primary_drug_id"
-      - "secondary_drug"
-      - "secondary_drug_id"
-      - "condition_id"
-      - "primary_drug_id_norm"
-      - "secondary_drug_id_norm"
-      - "condition_id_norm"
+      - treated_condition
+      - assoc_condition
+      - primary_drug
+      - primary_drug_id
+      - secondary_drug
+      - secondary_drug_id
+      - condition_id
+      - primary_drug_id_norm
+      - secondary_drug_id_norm
+      - condition_id_norm
 
 ingestion.raw.drugbank_ground_truth.negatives:
   <<: [*_pandas_csv, *_layer_raw]
@@ -429,15 +429,15 @@ ingestion.raw.drugbank_ground_truth.negatives:
   load_args:
     sep: ","
     columns:
-      - "primary_drug_name"
-      - "primary_drug_id"
-      - "secondary_drug_name"
-      - "secondary_drug_id"
-      - "condition_name"
-      - "condition_id"
-      - "primary_drug_id_norm"
-      - "secondary_drug_id_norm"
-      - "condition_id_norm"
+      - primary_drug_name
+      - primary_drug_id
+      - secondary_drug_name
+      - secondary_drug_id
+      - condition_name
+      - condition_id
+      - primary_drug_id_norm
+      - secondary_drug_id_norm
+      - condition_id_norm
 
 ingestion.int.drugbank_ground_truth.negative.edges@pandas:
   <<: [*_pandas_parquet, *_layer_int]
