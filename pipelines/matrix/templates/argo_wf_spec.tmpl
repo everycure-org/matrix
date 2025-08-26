@@ -5,6 +5,7 @@ metadata:
   namespace: {{namespace}}
   name: {{run_name}}
 spec:
+  archiveLogs: true
   workflowMetadata:
     labels:
       run: {% raw %}'{{ workflow.parameters.run_name }}'
