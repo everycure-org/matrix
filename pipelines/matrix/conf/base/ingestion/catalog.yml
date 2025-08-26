@@ -411,7 +411,7 @@ ingestion.raw.drugbank_ground_truth.positives:
   filepath: ${globals:paths.raw_private}/source_data/drugbank/${globals:data_sources.drugbank_gt.version}/prm/indications.csv
   load_args:
     sep: ","
-    columns:
+    usecols:
       - treated_condition
       - assoc_condition
       - primary_drug
@@ -428,7 +428,7 @@ ingestion.raw.drugbank_ground_truth.negatives:
   filepath: ${globals:paths.raw_private}/source_data/drugbank/${globals:data_sources.drugbank_gt.version}/prm/contraindications.csv
   load_args:
     sep: ","
-    columns:
+    usecols:
       - primary_drug_name
       - primary_drug_id
       - secondary_drug_name
