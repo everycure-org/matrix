@@ -360,13 +360,19 @@ def apply_transformers(
     Returns:
         Transformed data.
     """
-    for transformer in transformers.values():
+    for name, transformer in transformers.items():
         # Apply transformer
         features = transformer["features"]
         features_selected = data[features]
 
+        if name == "weighting":
+            y = data["y"] if "y" in data.columns else None
+            transformed_array = transformer["transformer"].transform(features_selected, y=y)
+        else:
+            transformed_array = transformer["transformer"].transform(features_selected)
+
         transformed = pd.DataFrame(
-            transformer["transformer"].transform(features_selected),
+            transformed_array,
             index=features_selected.index,
             columns=transformer["transformer"].get_feature_names_out(features_selected),
         )
