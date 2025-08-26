@@ -1,6 +1,7 @@
 import itertools
 import json
 import logging
+from inspect import signature
 from typing import Any, Callable, Iterable, Union
 
 import matplotlib.pyplot as plt
@@ -520,15 +521,21 @@ def check_model_performance(
     if not data["split"].eq("TEST").any():
         return {name: None for name in metrics.keys()}
 
-    # Compute evaluation metrics and add to report
+    # Compute unweighted and (if supported) weighted metrics
     for name, func in metrics.items():
+        accepts_weight = "sample_weight" in signature(func).parameters
         for split in ["TEST", "TRAIN"]:
             split_index = data["split"].eq(split)
             y_true = data.loc[split_index, target_col_name]
             y_pred = data.loc[split_index, target_col_name + prediction_suffix]
 
-            # Execute metric
+            # Unweighted
             report[f"{split.lower()}_{name}"] = func(y_true, y_pred)
+
+            # Weighted (if metric supports it and weights exist)
+            if accepts_weight and "weight" in data.columns:
+                w = data.loc[split_index, "weight"]
+                report[f"{split.lower()}_{name}_weighted"] = func(y_true, y_pred, sample_weight=w)
 
     return json.loads(json.dumps(report, default=float))
 
