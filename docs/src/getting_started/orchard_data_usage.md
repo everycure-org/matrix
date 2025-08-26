@@ -12,22 +12,27 @@ Orchard datasets can be accessed through the existing BigQuery dataset configura
 
 ```yaml
 # Access orchard production data
-orchard_latest_status:
-  type: matrix.datasets.gcp.SparkBigQueryDataset
+_orchard_bq: &_orchard_bq
   project: ec-orchard-prod
   dataset: orchard_us
-  table: latest_status_20250801
-  load_args:
-    format: bigquery
+  table: latest_status
+  shard: ${globals:data_sources.orchard.version}
 
 # Access orchard development data
-orchard_dev_data:
-  type: matrix.datasets.gcp.SparkBigQueryDataset  
+_orchard_bq: &_orchard_bq
   project: ec-orchard-dev
   dataset: orchard_us
-  table: your_table_name
-  load_args:
-    format: bigquery
+  table: latest_status
+  shard: ${globals:data_sources.orchard.version}
+
+# and then using it as variable within pandas & spark ingestion datasets.
+ingestion.raw.orchard.edges@spark:
+ <<: [*_orchard_bq]
+ type: matrix.datasets.gcp.SparkBigQueryDataset
+
+ingestion.raw.orchard.edges@pandas:
+ <<: [*_orchard_bq]
+ type: matrix.datasets.gcp.PandasBigQueryDataset
 ```
 
 ### In Jupyter Notebooks
