@@ -1,0 +1,166 @@
+gha-runner-scale-set:
+  # GitHub Configuration
+  githubConfigUrl: "https://github.com/everycure-org"
+  
+  # Runner Scale Set Name - this becomes your runs-on value
+  runnerScaleSetName: "everycure-gha-runners"
+  
+  # GitHub App Authentication (preferred over PAT)
+  githubConfigSecret:
+    create: false  # Will be created by External Secrets
+    name: "github-app-auth"
+
+  # Runner Group (optional - leave empty for default)
+  runnerGroup: ""
+
+  # Maximum number of runners
+  maxRunners: 50
+
+  # Minimum number of runners (0 for cost optimization)
+  minRunners: 0
+
+  # Runner image - includes Docker-in-Docker support
+  template:
+    spec:
+      # Node affinity - prefer spot nodes
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: spot
+                    operator: In
+                    values:
+                      - "true"
+      
+      # Required tolerations for spot and workload taints
+      tolerations:
+        - key: spot
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
+        - key: workload
+          operator: Equal
+          value: "true"  
+          effect: NoSchedule
+        - key: github-actions
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
+
+      # Runner container configuration
+      containers:
+        - name: runner
+          image: ghcr.io/actions/actions-runner:2.319.1
+          command: ["/home/runner/run.sh"]
+          env:
+            - name: DOCKER_HOST
+              value: tcp://localhost:2376
+            - name: DOCKER_TLS_VERIFY
+              value: "1"
+            - name: DOCKER_CERT_PATH
+              value: /certs/client
+          
+          # Resource requests/limits
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "2Gi"
+              ephemeral-storage: "10Gi"
+            limits:
+              cpu: "2000m"
+              memory: "4Gi"
+              ephemeral-storage: "20Gi"
+
+          # Volume mounts for Docker certs and workspace
+          volumeMounts:
+            - name: docker-certs
+              mountPath: /certs/client
+              readOnly: true
+            - name: runner-workspace
+              mountPath: /home/runner/_work
+              
+      # Docker-in-Docker sidecar container
+      initContainers:
+        - name: docker-dind
+          image: docker:25.0.3-dind
+          securityContext:
+            privileged: true
+          env:
+            - name: DOCKER_TLS_CERTDIR
+              value: /certs
+          volumeMounts:
+            - name: docker-certs
+              mountPath: /certs/client
+            - name: docker-graph-storage
+              mountPath: /var/lib/docker
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "1000m"
+              memory: "2Gi"
+
+      # Volumes
+      volumes:
+        - name: docker-certs
+          emptyDir: {}
+        - name: docker-graph-storage
+          emptyDir: {}
+        - name: runner-workspace
+          emptyDir: {}
+
+      # Security context for runner pod
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+
+      # Pod labels for cost tracking and identification
+      metadata:
+        labels:
+          cost-center: compute-workloads
+          workload-category: ci-cd
+          service-tier: compute
+          billing-category: github-actions-spot
+          component: github-runner
+        annotations:
+          cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+
+  # Controller manager configuration  
+  controllerServiceAccount:
+    create: true
+    annotations: {}
+    name: ""
+
+  # RBAC
+  rbac:
+    create: true
+
+  # Pod disruption budget - allow disruption for spot instances
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 0
+
+  # Autoscaling based on GitHub Actions queue
+  autoscaling:
+    enabled: true
+    minReplicas: 0
+    maxReplicas: 50
+    
+    # Scale up quickly when jobs are queued
+    scaleUpFactor: 2
+    scaleUpGracePeriod: "1s"
+    
+    # Scale down after jobs complete (ephemeral runners)
+    scaleDownDelaySecondsAfterScaleOut: 300
+    scaleDownUnneededTime: "10s"
+
+  # Metrics and monitoring
+  metrics:
+    port: 8080
+    
+  # Log level
+  logLevel: "info"

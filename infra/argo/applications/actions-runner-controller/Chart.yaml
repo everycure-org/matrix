@@ -1,0 +1,10 @@
+apiVersion: v2
+name: actions-runner-controller
+description: Actions Runner Controller for GitHub Actions self-hosted runners
+type: application
+version: 0.1.0
+appVersion: "1.0"
+dependencies:
+  - name: gha-runner-scale-set-controller
+    version: "0.12.1"
+    repository: "https://actions-runner-controller.github.io/actions-runner-controller"

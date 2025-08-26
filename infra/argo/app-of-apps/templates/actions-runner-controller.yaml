@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: actions-runner-controller
+  namespace: github-actions-runner
+spec:
+  destination:
+    namespace: actions-runner-system
+    server: {{ .Values.spec.destination.server }}
+  project: default
+  source:
+    path: {{ .Values.spec.source.repoPath }}/actions-runner-controller
+    repoURL: {{ .Values.spec.source.repoURL }}
+    targetRevision: {{ .Values.spec.source.targetRevision }}
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: true
+      allowEmpty: true
