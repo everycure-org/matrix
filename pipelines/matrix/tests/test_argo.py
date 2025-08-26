@@ -769,3 +769,141 @@ def test_resource_limits_with_ephemeral_storage_in_containers() -> None:
 
     assert "ephemeral-storage:" in requests_section
     assert "ephemeral-storage:" in limits_section
+
+
+def test_docker_cleanup_exit_handler() -> None:
+    """Test that the Docker cleanup exit handler is properly configured."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    # Verify onExit handler is configured
+    assert "onExit" in spec
+    assert spec["onExit"] == "cleanup-handler"
+
+    # Find cleanup handler template
+    templates = spec["templates"]
+    cleanup_handler = next((t for t in templates if t["name"] == "cleanup-handler"), None)
+    assert cleanup_handler is not None, "cleanup-handler template should exist"
+
+    # Verify cleanup handler structure
+    assert "steps" in cleanup_handler
+    assert len(cleanup_handler["steps"]) == 1
+    assert len(cleanup_handler["steps"][0]) == 1
+
+    cleanup_step = cleanup_handler["steps"][0][0]
+    assert cleanup_step["name"] == "delete-docker-images"
+    assert cleanup_step["template"] == "delete-artifact-images"
+    assert cleanup_step["when"] == "{{workflow.status}} == Succeeded"
+
+    # Verify image parameter is passed to cleanup template
+    assert "arguments" in cleanup_step
+    assert "parameters" in cleanup_step["arguments"]
+    params = cleanup_step["arguments"]["parameters"]
+    image_param = next((p for p in params if p["name"] == "image_to_delete"), None)
+    assert image_param is not None
+    assert image_param["value"] == "{{workflow.parameters.image}}"
+
+
+def test_docker_cleanup_template() -> None:
+    """Test that the Docker cleanup template is properly configured."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    # Find cleanup template
+    templates = spec["templates"]
+    cleanup_template = next((t for t in templates if t["name"] == "delete-artifact-images"), None)
+    assert cleanup_template is not None, "delete-artifact-images template should exist"
+
+    # Verify template has input parameters
+    assert "inputs" in cleanup_template
+    assert "parameters" in cleanup_template["inputs"]
+    params = cleanup_template["inputs"]["parameters"]
+    image_param = next((p for p in params if p["name"] == "image_to_delete"), None)
+    assert image_param is not None
+
+    # Verify container configuration
+    assert "container" in cleanup_template
+    container = cleanup_template["container"]
+    assert container["image"] == "gcr.io/google.com/cloudsdktool/cloud-sdk:latest"
+    assert container["command"] == ["sh", "-c"]
+
+    # Verify the cleanup script contains expected elements
+    assert "args" in container
+    assert len(container["args"]) == 1
+    script = container["args"][0]
+
+    # Check that script contains key cleanup logic
+    assert "gcloud auth list" in script
+    assert "{{inputs.parameters.image_to_delete}}" in script
+    assert "gcloud artifacts docker images delete" in script
+    assert "--quiet --delete-tags" in script
+    assert "Successfully deleted Docker image" in script
+    assert "exit 0" in script  # Non-blocking error handling
+
+
+def test_workflow_template_structure() -> None:
+    """Test the overall structure of the workflow template includes cleanup components."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    # Verify all expected templates exist
+    templates = spec["templates"]
+    template_names = [t["name"] for t in templates]
+
+    # Original templates
+    assert "kedro" in template_names
+    assert "neo4j" in template_names
+    assert "pipeline" in template_names
+
+    # New cleanup templates
+    assert "cleanup-handler" in template_names
+    assert "delete-artifact-images" in template_names
+
+    # Should have 5 templates total
+    assert len(templates) == 5
+
+
+def test_image_parameter_in_workflow_arguments() -> None:
+    """Test that the image parameter is properly defined in workflow arguments."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    # Verify image parameter exists in workflow arguments
+    assert "arguments" in spec
+    assert "parameters" in spec["arguments"]
+
+    params = spec["arguments"]["parameters"]
+    image_param = next((p for p in params if p["name"] == "image"), None)
+    assert image_param is not None
+
+    # Verify it has the expected image registry format
+    expected_image = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
+    assert image_param["value"] == expected_image
