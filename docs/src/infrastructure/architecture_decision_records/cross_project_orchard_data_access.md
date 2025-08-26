@@ -1,7 +1,7 @@
 # ADR: Cross-Project Orchard Data Access Implementation
 
 **Status:** Accepted  
-**Date:** 2025-01-25  
+**Date:** 2025-08-25  
 **Authors:** Infrastructure Team  
 **Stakeholders:** Data Science Team, Pipeline Users  
 
