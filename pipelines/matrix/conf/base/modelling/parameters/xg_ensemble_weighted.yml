@@ -18,18 +18,18 @@ modelling.xg_ensemble_weighted:
           _object: matrix.pipelines.modelling.transformers.WeightingTransformer
           head_col: source
           tail_col: target
-          # inverse / shomer / auto_cv / simple_eta
-          # strategy: shomer
-          # enabled: true
-          # eta: 40
-          # mix_k: 5
-          # mix_beta: 1.0
-          # eps: 1.0e-6
-          # w_min: 1.0e-3
-          # w_max: 20.0
-          # per_class: True
-          # pos_label: 1
-          # normalize: "per_class"
+          inverse / shomer / auto_cv / simple_eta
+          strategy: auto_cv
+          enabled: true
+          eta: 40
+          mix_k: 5
+          mix_beta: 1.0
+          eps: 1.0e-6
+          w_min: 1.0e-3
+          w_max: 20.0
+          per_class: True
+          pos_label: 1
+          normalize: "per_class"
       flat_source_embedding:
         transformer:
           _object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
