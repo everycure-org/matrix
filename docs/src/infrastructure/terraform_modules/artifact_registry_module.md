@@ -203,7 +203,7 @@ module "compute_cluster" {
 - **Secure**: Uses existing infrastructure without additional service accounts
 - **Robust**: Graceful error handling doesn't impact workflow success
 
-For detailed implementation information about the workflow-based cleanup system, see the [Docker Cleanup Implementation Guide](../../../DOCKER_CLEANUP_IMPLEMENTATION.md).
+For detailed implementation information about the workflow-based cleanup system, see the [Docker Cleanup Implementation Guide](../DOCKER_CLEANUP_IMPLEMENTATION.md).
 
 ## Cost Optimization
 
