@@ -113,16 +113,21 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
                 X_train, y_train = X[train], y[train]
                 X_test, y_test = X[test], y[test]
 
-                weights_train = sample_weight[train] if _scorer_accepts_weight else None
-                weights_test = sample_weight[test] if _scorer_accepts_weight else None
+                weights_train = sample_weight[train] if sample_weight is not None else None
+                weights_test = sample_weight[test] if sample_weight is not None else None
 
-                self.estimator.fit(X_train, y_train, sample_weight=weights_train)
+                if weights_train is not None:
+                    self.estimator.fit(X_train, y_train, sample_weight=weights_train)
+                else:
+                    self.estimator.fit(X_train, y_train)
 
                 y_pred = self.estimator.predict(X_test)
-                if weights_test is not None and _scorer_accepts_weight:
+
+                if _scorer_accepts_weight and weights_test is not None:
                     score = self._scoring(y_test, y_pred, sample_weight=weights_test)
                 else:
                     score = self._scoring(y_test, y_pred)
+
                 scores.append(score)
 
             return 1.0 - np.average(scores)
@@ -130,7 +135,5 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
         result = gp_minimize(evaluate_model, self._dimensions, n_calls=self._n_calls)
 
         self.convergence_plot = plot_convergence(result).figure
-
         self.best_params_ = {param.name: val for param, val in zip(self._dimensions, result.x)}
-
         return self.estimator.set_params(**params)

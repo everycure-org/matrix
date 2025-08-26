@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import FunctionTransformer
+from sklearn.utils.validation import check_is_fitted
 
 
 class FlatArrayTransformer(FunctionTransformer):
@@ -57,6 +58,7 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         normalize="per_class",
         output_name="weight",
         default_class="neg",
+        rho=0.3,
     ):
         self.head_col = head_col
         self.tail_col = tail_col
@@ -71,6 +73,7 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         self.normalize = normalize
         self.output_name = output_name
         self.default_class = default_class
+        self.rho = rho
 
     def fit(self, X, y=None):
         X = X if isinstance(X, pd.DataFrame) else pd.DataFrame(X)
@@ -82,8 +85,9 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
                 return {}, {}
             u = df[self.head_col].unique()
             v = df[self.tail_col].unique()
-            a = pd.Series(1.0, index=u)
-            b = pd.Series(1.0, index=v)
+            a = pd.Series(1.0, index=u, dtype=float)
+            b = pd.Series(1.0, index=v, dtype=float)
+
             for _ in range(self.iters):
                 bv = df[self.tail_col].map(b).to_numpy()
                 sum_b_by_u = (
@@ -91,7 +95,11 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
                     .groupby(self.head_col)["bv"]
                     .sum()
                 )
-                a = (budget / np.maximum(sum_b_by_u, self.eps)).reindex(a.index).fillna(1.0)
+                a_new = (budget / np.maximum(sum_b_by_u, self.eps)).reindex(a.index).fillna(1.0)
+
+                La = np.log(np.maximum(a.to_numpy(), self.eps))
+                Lanew = np.log(np.maximum(a_new.to_numpy(), self.eps))
+                a = pd.Series(np.exp((1 - self.rho) * La + self.rho * Lanew), index=a.index)
 
                 au = df[self.head_col].map(a).to_numpy()
                 sum_a_by_v = (
@@ -99,7 +107,12 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
                     .groupby(self.tail_col)["au"]
                     .sum()
                 )
-                b = (budget / np.maximum(sum_a_by_v, self.eps)).reindex(b.index).fillna(1.0)
+                b_new = (budget / np.maximum(sum_a_by_v, self.eps)).reindex(b.index).fillna(1.0)
+
+                Lb = np.log(np.maximum(b.to_numpy(), self.eps))
+                Lbnew = np.log(np.maximum(b_new.to_numpy(), self.eps))
+                b = pd.Series(np.exp((1 - self.rho) * Lb + self.rho * Lbnew), index=b.index)
+
             return a.to_dict(), b.to_dict()
 
         a_pos, b_pos = _sinkhorn(X.loc[pos, [self.head_col, self.tail_col]], self.budget_pos)
@@ -112,6 +125,7 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
+        check_is_fitted(self, "n_features_in_")
         X = X if isinstance(X, pd.DataFrame) else pd.DataFrame(X)
 
         if y is None and self.label_col in X:
