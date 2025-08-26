@@ -313,8 +313,8 @@ def normalize_core_nodes(
     # checking here ensures that there are no conflicts at the per-source level
     conflicts = (
         nodes_normalized.groupBy("id")
-        .agg(F.countDistinct("core_id").alias("distinct_core_ids"))
-        .filter(F.col("distinct_core_ids") > 1)
+        .agg(F.collect_set("core_id").alias("distinct_core_ids"))
+        .filter(F.size(F.col("distinct_core_ids")) > 1)
     )
 
     conflict_count = conflicts.count()
@@ -324,9 +324,7 @@ def normalize_core_nodes(
             f"Multiple core_ids found for the same normalized_id. "
             f"Please fix source data."
         )
-        nodes_normalized.join(conflicts, on="id", how="inner").select("id", "core_id", "distinct_core_ids").orderBy(
-            "distinct_core_ids", "id", ascending=False
-        ).show(truncate=False)
+        conflicts.show(truncate=False)
         raise Exception("Normalized ID conflicts detected; please investigate")
     else:
         logger.info("No normalized ID conflicts found.")
