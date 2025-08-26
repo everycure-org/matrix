@@ -1,6 +1,6 @@
 # Running the Matrix Pipeline
 
-Now that you understand the different environments, have a good understanding of kedro, and have successfully run the pipeline end-to-end with test data, let's explore how to run specific parts of the pipeline in different environments.
+Now that you understand the different environments, have a good understanding of kedro, and have successfully run the pipeline end-to-end with test data, let's explore how to run specific parts of the pipeline in base environments.
 
 ## Pipeline Structure
 
@@ -10,7 +10,7 @@ As we explained at the beginning of this section, the Matrix pipeline is compose
 2. **Feature Pipeline** (`feature`): Performs filtering and generates embeddings
 3. **Modelling Pipeline** (`modelling_run`): Includes model training, matrix generation, evaluation and transformations
 
-In this section we will break them down in test environment to teach you how to run the specific part of the pipeline.
+In this section we will break them down in base environment to teach you how to run the specific part of the pipeline.
 
 
 ## Running Individual Pipeline Components
@@ -20,7 +20,7 @@ The data engineering pipeline consists of two main stages:
 
 **Ingestion Stage** (`ingestion`):
 ```bash
-kedro run --pipeline=ingestion # also can do kedro run -p ingestion
+kedro run --pipeline=ingestion -e base # also can do kedro run -p ingestion
 ```
 This stage:
 
@@ -31,7 +31,7 @@ This stage:
 
 **Integration Stage** (`integration`):
 ```bash
-kedro run --pipeline=integration
+kedro run --pipeline=integration -e base
 ```
 This stage:
 
@@ -64,7 +64,7 @@ Therefore, the settings above reflect the Knowledge Graphs (eg RTX-KG2, SPOKE, R
 
 Now let's get back to running the pipeline. Try running the following command first:
 ```bash
-kedro run -p data_engineering
+kedro run -p data_engineering -e base
 ```
 
 You should see all different datasets present in the `integration` part of settings being processed. It should run to completion fairly quickly:
@@ -102,13 +102,13 @@ By controlling `settings.py` we can decide which datasets should be processed by
 For example, to run just the ingestion of drug list:
 
 ```bash
-kedro run --pipeline=ingestion --nodes=write_drug_list
+kedro run --pipeline=ingestion --nodes=write_drug_list -e base
 ```
 
 Or to run the node deduplication step in the integration pipeline:
 
 ```bash
-kedro run --pipeline=integration --nodes=create_prm_unified_nodes
+kedro run --pipeline=integration --nodes=create_prm_unified_nodes -e base
 ```
 You can see how these nodes fit together with other parts of the pipeline by checking `integration/pipeline.py` and `integration/nodes.py`.
 
@@ -116,7 +116,8 @@ You can see how these nodes fit together with other parts of the pipeline by che
 
 The exact details on integration and ingestion pipeline can be found in [the pipeline section](../../pipeline/index.md). In short however, running the following command:
 ```
-kedro run -p data_engineering -e test
+# NOTE: Data engineering pipeline in base environment will take at least +1 hr to run on a single machine in base environment (as it lacks parallelization)
+kedro run -p data_engineering -e base
 ```
 Will create a unified knowledge graph. Such KG can then be used by the feature pipeline for generating embeddings and the modeling pipeline for training ML models. The `feature `pipeline consists of:
 
@@ -133,7 +134,7 @@ The filtering pipeline allows you to control which data sources and relationship
 filtering:
   node_filters:
     filter_sources:
-      _object: matrix.pipelines.filtering.filters.KeepRowsContainingFilter
+      _object: matrix.pipelines.filtering.filters.KeepRowsContaining
       column: upstream_data_source
       keep_list:
         - rtxkg2
@@ -142,7 +143,7 @@ filtering:
   # ...
   edge_filters:
     filter_sources:
-      _object: matrix.pipelines.filtering.filters.KeepRowsContainingFilter
+      _object: matrix.pipelines.filtering.filters.KeepRowsContaining
       column: upstream_data_source
       keep_list:
         - rtxkg2
@@ -160,7 +161,7 @@ For example, to include ROBOKOP data in your pipeline:
 1. Uncomment the `robokop` line in the `keep_list`
 2. Run the filtering pipeline: 
 ```bash
-kedro run --pipeline=filtering -e test
+kedro run --pipeline=filtering -e base
 ```
 
 This will ensure that nodes and edges derived from ROBOKOP only are kept for the feature generation. You can try running the pipeline with and without robokop parameter and see how it affects the runtime of the pipeline
@@ -180,21 +181,48 @@ embeddings.topological_estimator:
   walks_per_node: 10
   window_size: 10
 ```
+!!! note "`OPENAI_API_KEY` needs to be set"
+    Before we run the embeddings pipeline, we will need to make sure that the `OPENAI_API_KEY` is set in the `.env` file. 
 
-Do note however that those are the parameters for the `base` environment. Topological Embedding generation is a time-consuming process therefore we have an alternative set of parameters in the `test` environment to allow for quick iterations & testing. You will see that parameters in `conf/test/embeddings/parameters.yaml` are much simpler:
+!!! note "Neo4J is set up and running"
+    The `embeddings` pipeline require that Neo4J is running and configured correctly. If you have Neo4J set up already, you could simply add the username and password the following to your `.env` file
 
-```yaml
-embeddings.topological_estimator:
-  iterations: 1
-  embedding_dim: 3
-  walk_length: 2
-```
+    ```bash
+    NEO4J_HOST: xxx
+    NEO4J_USER: xxx
+    NEO4J_PASSWORD: xxx 
+    ```
+    
+    if not, you could start Neo4J from the `docker-compose` file.
+    
+    ```bash
+    make compose_up
+    ```
 
-This is a good example showing the difference between test and base environment. If you try increasing the number of iterations in the `conf/base/embeddings/parameters.yaml` and run:
+    !!! warning "Important: memory settings for Neo4J"
+        Please ensure that the machine you are running on has at least 128 GB of memory, as the `embeddings` pipeline is an intensive pipeline and require Neo4J to have at least 20 GB of RAM. The above command assumes you have at least 80 GB of memory. Please adjust accordingly. The following settings work:
+        ```bash
+            NEO4J_server_memory_heap_initial__size=40g
+            NEO4J_server_memory_heap_max__size=40g
+            NEO4J_server_memory_pagecache_size=8g
+        ```
+
+        You could add this to the Neo4J environment section of the `docker-compose` file (if you are running Neo4J through it) or if you are running a standalone version, modify the settings in the environment file or settings of Neo4J accordingly. This is to prevent you from running into an OOM error as the `embeddings` pipeline is intensive and will be killed if there is insufficient memory.
+
+    
+
 ```bash
-kedro run -p embeddings -e test
+kedro run -p embeddings -e base
 ```
-The number of iterations will not change, as we are running the pipeline in test environment. However if you do the same in the `conf/test/embeddings/parameters.yaml` - the runtime will extend accordingly. The same rule applies to all parameters across our codebase.
+
+!!! warning "Running into `UnsupportedAdministrationCommand` error"
+    if you run into the following error:
+    ```
+    {code: Neo.ClientError.Statement.UnsupportedAdministrationCommand} {message: Unsupported administration command: CREATE OR REPLACE DATABASE `analytics`}
+    ```
+    This is due to Neo4J Community Edition limitation. We are using the Neo4J Enterprise Edition and the command is supported. You would need to edit file [`pipelines/matrix/conf/base/embeddings/catalog.yml`](https://github.com/everycure-org/matrix/blob/3c5243cd4efef7b87200ce9a8cb09559bfbe7494/pipelines/matrix/conf/base/embeddings/catalog.yml#L45C6-L45C20) and remove the `mode: overwrite`.
+
+    Please note that removing `mode: overwrite` will not delete the data when the pipeline is re-run. You would have to manually delete the data from the Neo4J folder. Not deleting the data might result in inaccurate or duplicated data.
 
 ## Finding Data Products while running the modelling pipeline
 
@@ -211,7 +239,7 @@ This pipeline includes:
 - `evaluation`: Evaluates model performance
 - `matrix_transformations`: Applies post-processing transformations
 
-Just like we learnt earlier, we can run individual components (e.g. `kedro run -p modelling -e test`) of the pipeline or modify parameters (e.g. `conf/base/modelling/defaults.yml` to modify train-test splits). In the modelling pipeline we also have a choice of selecting different algorithms for modelling - these can be selected in settings.py, just like we learnt in the first section: 
+Just like we learnt earlier, we can run individual components (e.g. `kedro run -p modelling -e base`) of the pipeline or modify parameters (e.g. `conf/base/modelling/defaults.yml` to modify train-test splits). In the modelling pipeline we also have a choice of selecting different algorithms for modelling - these can be selected in settings.py, just like we learnt in the first section: 
 
 ```python
 "modelling": {
@@ -240,7 +268,7 @@ Each evaluation type produces different metrics, you can learn about them in det
 
 So once we run the pipeline:
 ```
-kedro run -p modelling_run -e test
+kedro run -p modelling_run -e base
 ```
 How do we find the results? There are many data products being generated in the matrix pipeline however you can find appropriate product based on pipeline data catalog. For instance, if you want to find the generated matrix, you can go to `conf/base/matrix_generation/catalog.yml` where once you follow the data layer convention, you can see the output:
 
@@ -255,14 +283,36 @@ The output contains several variables, such as `{folds}` for cross-validation fo
 
 Now that you understand how to run different parts of the pipeline, let's try to run the pipeline with _real_ data. The real KG is large and requires plenty of compute/time however we can run the pipeline with a subset of real data if you follow next steps.
 
-```
-TODO add instructions on runnign the sampled pipeline e2e with public data thats in GCS:
-```
+### Using Public Datasets
+
+The Matrix pipeline now supports public datasets that are available through our public GCS bucket at `gs://data.dev.everycure.org/data/01_RAW/`. This includes public knowledge graphs like RTX-KG2 and Robokop, as well as supporting datasets like ground truth data that don't require special access permissions.
+
+To run the pipeline with public data sources:
+
+1. **Enable public data sources** in your `globals.yml` by ensuring the data sources you want are uncommented:
+   ```yaml
+   data_sources:
+     rtx_kg2:
+       version: v2.7.3
+     robokop:
+       version: v1.5.0
+     gt:  # ground truth data
+       version: v2.10.0_validated
+   ```
+
+2. **Use the base environment** which is already configured to read from the public bucket for these data sources via the `raw_public` path.
+
+3. **Run the data engineering pipeline** to process public datasets:
+   ```bash
+   kedro run --pipeline=data_engineering --tags=rtx_kg2,robokop -e base
+   ```
+
+This approach allows you to work with real, production-quality data without needing access to private datasets or development buckets.
 
 After approximately 20-30 mins, the pipeline should have finished all stages. If that's the case - well done! You can now repeat the entire process with real data if you would like however note that it will take a very long time - without parallelization, you can expect it to run for +24hrs for KGs such as RTX-KG2. Smaller Graphs might be easier.
 
 !!! info
-    Remember that the pipeline is modular by design, allowing you to run and test components independently. It's very rare that we run the pipeline with real data e2e; we usually first run data_engineering pipeline to examine the generated KG, then we extract features and only after that's complete, we would start modelling.
+    Remember that the pipeline is modular by design, allowing you to run components independently. It's very rare that we run the pipeline with real data e2e; we usually first run data_engineering pipeline to examine the generated KG, then we extract features and only after that's complete, we would start modelling.
 
 
 [Go to Deep Dive Section :material-skip-next:](../deep_dive/index.md){ .md-button .md-button--primary }

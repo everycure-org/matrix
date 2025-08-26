@@ -5,13 +5,12 @@ import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 from joblib import Memory
+from matrix_schema.datamodel.pandera import get_matrix_edge_schema, get_matrix_node_schema
+from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark.sql.window import Window
 
 from matrix.inject import inject_object
 from matrix.pipelines.integration.filters import determine_most_specific_category
-from matrix.utils.pandera_utils import Column, DataFrameSchema, check_output
-
-from .schema import BIOLINK_KG_EDGE_SCHEMA, BIOLINK_KG_NODE_SCHEMA
 
 # TODO move these into config
 memory = Memory(location=".cache/nodenorm", verbose=0)
@@ -44,14 +43,30 @@ def transform(transformer, **kwargs) -> dict[str, ps.DataFrame]:
 
 
 @check_output(
-    schema=BIOLINK_KG_EDGE_SCHEMA,
+    schema=get_matrix_edge_schema(validate_enumeration_values=False),
     pass_columns=True,
 )
-def union_edges(*edges, cols: list[str]) -> ps.DataFrame:
-    """Function to unify edges datasets."""
+def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.DataFrame:
+    """Function to unify edges datasets and promote subject/object to core_id."""
+
+    unioned_edges = _union_datasets(*edges)
+
+    # Promote subject to core_id
+    unioned_edges = (
+        unioned_edges.join(core_id_mapping.withColumnRenamed("normalized_id", "subject"), on="subject", how="left")
+        .withColumn("subject", F.coalesce("core_id", "subject"))
+        .drop("core_id")
+    )
+
+    # Promote object to core_id
+    unioned_edges = (
+        unioned_edges.join(core_id_mapping.withColumnRenamed("normalized_id", "object"), on="object", how="left")
+        .withColumn("object", F.coalesce("core_id", "object"))
+        .drop("core_id")
+    )
+
     unioned_dataset = (
-        _union_datasets(*edges)
-        .groupBy(["subject", "predicate", "object"])
+        unioned_edges.groupBy(["subject", "predicate", "object"])
         .agg(
             F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
             # TODO: we shouldn't just take the first one but collect these values from multiple upstream sources
@@ -73,20 +88,45 @@ def union_edges(*edges, cols: list[str]) -> ps.DataFrame:
 
 
 @check_output(
-    schema=BIOLINK_KG_NODE_SCHEMA,
+    schema=get_matrix_edge_schema(validate_enumeration_values=False),
     pass_columns=True,
 )
-def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, cols: list[str]) -> ps.DataFrame:
+def unify_ground_truth(*edges) -> ps.DataFrame:
+    """Function to unify edges datasets."""
+    # fmt: off
+    return _union_datasets(*edges)
+    # fmt: on
+
+
+@check_output(
+    schema=get_matrix_node_schema(validate_enumeration_values=False),
+    pass_columns=True,
+)
+def union_and_deduplicate_nodes(
+    retrieve_most_specific_category: bool, core_id_mapping: ps.DataFrame, *nodes, cols: list[str]
+) -> ps.DataFrame:
     """Function to unify nodes datasets."""
+
+    unioned_nodes = _union_datasets(*nodes)
+
+    # Promote core nodes to use their core_id as the canonical id and core_name as canonical name
+    # non-core nodes keep their normalized id and original name
+    core_promoted_nodes = (
+        unioned_nodes.join(core_id_mapping.withColumnRenamed("normalized_id", "id"), on="id", how="left")
+        .withColumn("id", F.coalesce("core_id", "id"))
+        .withColumn("name", F.coalesce("core_name", "name"))
+        .drop("core_name")
+    )
+
     unioned_datasets = (
-        _union_datasets(*nodes)
+        core_promoted_nodes
         # first we group the dataset by id to deduplicate
-        .groupBy("id")
-        .agg(
+        .groupBy("id").agg(
             F.first("name", ignorenulls=True).alias("name"),
             F.first("category", ignorenulls=True).alias("category"),
             F.first("description", ignorenulls=True).alias("description"),
             F.first("international_resource_identifier", ignorenulls=True).alias("international_resource_identifier"),
+            F.first("core_id", ignorenulls=True).alias("core_id"),
             F.flatten(F.collect_set("equivalent_identifiers")).alias("equivalent_identifiers"),
             F.flatten(F.collect_set("all_categories")).alias("all_categories"),
             F.flatten(F.collect_set("labels")).alias("labels"),
@@ -98,6 +138,7 @@ def union_and_deduplicate_nodes(retrieve_most_specific_category: bool, *nodes, c
     # this is especially important if we integrate multiple KGs
 
     if retrieve_most_specific_category:
+        # Get the updated categories and all_categories
         unioned_datasets = unioned_datasets.transform(determine_most_specific_category)
 
     return unioned_datasets.select(*cols)
@@ -126,7 +167,10 @@ def _union_datasets(
 )
 def _format_mapping_df(mapping_df: ps.DataFrame) -> ps.DataFrame:
     return (
-        mapping_df.select("id", "normalized_id")
+        mapping_df.withColumn("normalized_id", F.col("normalization_struct.normalized_id"))
+        .withColumn("normalized_categories", F.col("normalization_struct.normalized_categories"))
+        .drop("normalization_struct")
+        .select("id", "normalized_id", "normalized_categories")
         .withColumn(
             "normalization_success",
             F.when((F.col("normalized_id").isNotNull() | (F.col("normalized_id") != "None")), True).otherwise(False),
@@ -146,7 +190,8 @@ def normalize_edges(
     an external API to map the nodes to their normalized IDs.
     It returns the datasets with normalized IDs.
     """
-    mapping_df = _format_mapping_df(mapping_df)
+    mapping_df = _format_mapping_df(mapping_df).select("id", "normalized_id", "normalization_success")
+
     # edges are a bit more complex, we need to map both the subject and object
     subject_normalized_mapping_df = mapping_df.withColumnsRenamed(
         {
@@ -176,6 +221,56 @@ def normalize_edges(
     return edges
 
 
+def _normalize_nodes_base(
+    mapping_df: ps.DataFrame,
+    nodes: ps.DataFrame,
+) -> ps.DataFrame:
+    """Base normalization function.
+
+    This function handles the core normalization logic but leaves
+    deduplication to the calling functions so they can control
+    which rows to keep when there are conflicts.
+    """
+    mapping_df = _format_mapping_df(mapping_df)
+
+    nodes_normalized = (
+        nodes.join(
+            mapping_df.select("id", "normalized_id", "normalized_categories", "normalization_success"),
+            on="id",
+            how="left",
+        )
+        .withColumnRenamed("id", "original_id")
+        .withColumnRenamed("normalized_id", "id")
+    )
+
+    # Determine the value of `all_categories` based on normalization results:
+    # - If `normalized_categories` is non-null and non-empty, use it.
+    # - Otherwise, if `original_categories` exists, fall back to it.
+    # - If neither is available, use an empty list as the default.
+    if "all_categories" in nodes_normalized.columns:
+        nodes_normalized = nodes_normalized.withColumnRenamed("all_categories", "original_categories")
+    else:
+        nodes_normalized = nodes_normalized.withColumn(
+            "original_categories", F.lit([]).cast(T.ArrayType(T.StringType()))
+        )
+
+    # Determine the value of `all_categories` based on normalization results:
+    # - If `normalized_categories` is non-null and non-empty, use it.
+    # - Otherwise, if `original_categories` exists, fall back to it.
+    # - If neither is available, use an empty list as the default.
+    nodes_normalized = nodes_normalized.withColumn(
+        "all_categories",
+        F.when(
+            (F.col("normalized_categories").isNotNull()) & (F.size(F.col("normalized_categories")) > 0),
+            F.col("normalized_categories"),
+        )
+        .when(F.col("original_categories").isNotNull(), F.col("original_categories"))
+        .otherwise(F.lit([]).cast(T.ArrayType(T.StringType()))),
+    )
+
+    return nodes_normalized
+
+
 def normalize_nodes(
     mapping_df: ps.DataFrame,
     nodes: ps.DataFrame,
@@ -187,17 +282,92 @@ def normalize_nodes(
     It returns the datasets with normalized IDs.
 
     """
-    mapping_df = _format_mapping_df(mapping_df)
+    nodes_normalized = _normalize_nodes_base(mapping_df, nodes)
 
-    # add normalized_id to nodes
+    # Deduplicate rows by id
     return (
-        nodes.join(mapping_df, on="id", how="left")
-        .withColumnsRenamed({"id": "original_id"})
-        .withColumnsRenamed({"normalized_id": "id"})
-        # Ensure deduplicated
-        .withColumn("_rn", F.row_number().over(Window.partitionBy("id").orderBy(F.col("original_id"))))
+        nodes_normalized.withColumn("_rn", F.row_number().over(Window.partitionBy("id").orderBy("original_id")))
         .filter(F.col("_rn") == 1)
         .drop("_rn")
+    )
+
+
+def normalize_core_nodes(
+    mapping_df: ps.DataFrame,
+    nodes: ps.DataFrame,
+) -> ps.DataFrame:
+    """Function normalizes core nodes (drugs/diseases) using external API endpoint.
+
+    This function takes the nodes and edges frames for a KG and leverages
+    an external API to map the nodes to their normalized IDs.
+    It returns the datasets with normalized IDs.
+
+    """
+    nodes_normalized = _normalize_nodes_base(mapping_df, nodes)
+
+    # If this is a core source (drug and disease list), add core_id = original_id
+    # The core_id will be used as the id for all equivalent nodes  in the merged graph
+    nodes_normalized = nodes_normalized.withColumn("core_id", F.col("original_id"))
+
+    # Intra-source conflict detection: same normalized ID mapping to multiple core_ids
+    # checking here ensures that there are no conflicts at the per-source level
+    conflicts = (
+        nodes_normalized.groupBy("id")
+        .agg(F.collect_set("core_id").alias("distinct_core_ids"))
+        .filter(F.size(F.col("distinct_core_ids")) > 1)
+    )
+
+    conflict_count = conflicts.count()
+    if conflict_count > 0:
+        logger.error(
+            f"{conflict_count} normalized IDs map to multiple core_ids. "
+            f"Multiple core_ids found for the same normalized_id. "
+            f"Please fix source data."
+        )
+        conflicts.show(truncate=False)
+        raise Exception("Normalized ID conflicts detected; please investigate")
+    else:
+        logger.info("No normalized ID conflicts found.")
+
+    # Deduplicate rows by id
+    return (
+        nodes_normalized.withColumn("_rn", F.row_number().over(Window.partitionBy("id").orderBy("original_id")))
+        .filter(F.col("_rn") == 1)
+        .drop("_rn")
+    )
+
+
+def create_core_id_mapping(*nodes: ps.DataFrame) -> ps.DataFrame:
+    """Creates a mapping from normalized_id to core_id for core sources."""
+
+    df = _union_datasets(*nodes)
+
+    df_filtered = df.select("id", "core_id", "name").filter(  # 'id' is already the normalized_id at this point
+        (F.col("id").isNotNull()) & (F.col("core_id").isNotNull())
+    )
+
+    # Inter-source conflict detection: same normalized ID mapping to multiple core_ids
+    # Checking at this step ensures that there are no duplicates across all core sources
+    conflicts = (
+        df_filtered.groupBy("id")
+        .agg(F.countDistinct("core_id").alias("distinct_core_ids"))
+        .filter(F.col("distinct_core_ids") > 1)
+    )
+
+    conflict_count = conflicts.count()
+    if conflict_count > 0:
+        logger.warning(
+            f"{conflict_count} normalized IDs map to multiple core_ids. "
+            f"Proceeding despite core_id conflicts. Multiple core_ids found for the same normalized_id. "
+            f"Recommened to fix source data."
+        )
+        conflicts.show(50, truncate=False)
+
+    return (
+        df_filtered.dropDuplicates(["id"])
+        .withColumnRenamed("id", "normalized_id")  # Ensure consistent naming for join
+        .withColumnRenamed("name", "core_name")
+        .select("normalized_id", "core_id", "core_name")
     )
 
 
@@ -221,14 +391,19 @@ def check_nodes_and_edges_matching(edges: ps.DataFrame, nodes: ps.DataFrame):
     -------
     Nothing returned; error is thrown if mismatching
     """
-    match_count = (
-        edges.join(nodes.withColumnRenamed("id", "subject"), on="subject", how="inner")
-        .join(nodes.withColumnRenamed("id", "object"), on="object", how="inner")
-        .count()
-    )
-    if edges.count() != match_count:
-        raise Exception("Nodes and Edges are mismatching post-normalization; please investigate")
-    return None
+    edge_ids = edges.select(F.col("subject").alias("id")).union(edges.select(F.col("object").alias("id"))).distinct()
+    node_ids = nodes.select("id").distinct()
+
+    missing_ids = edge_ids.join(node_ids, on="id", how="left_anti")
+
+    missing_count = missing_ids.count()
+    if missing_count > 0:
+        logger.warning(f"{missing_count} edges refer to node IDs not found in nodes.")
+        missing_ids.show(50, truncate=False)
+        raise Exception("Nodes and Edges are mismatching; please investigate")
+    else:
+        logger.info("All edge node references are valid.")
+        return "validation_passed"
 
 
 @check_output(
@@ -236,114 +411,149 @@ def check_nodes_and_edges_matching(edges: ps.DataFrame, nodes: ps.DataFrame):
         columns={
             "id": Column(T.StringType(), nullable=False),
             "original_id": Column(T.StringType(), nullable=False),
-            "category": Column(T.StringType(), nullable=True),
             "normalization_success": Column(T.BooleanType(), nullable=True),
-            "upstream_data_source": Column(T.StringType(), nullable=False),
+            "original_categories": Column(T.ArrayType(T.StringType()), nullable=True),
+            "normalized_categories": Column(T.ArrayType(T.StringType()), nullable=True),
+            "all_categories": Column(T.ArrayType(T.StringType()), nullable=True),
             "source_role": Column(T.StringType(), nullable=False),
+            "upstream_data_source": Column(T.StringType(), nullable=False),
         }
     )
 )
 def normalization_summary_nodes_and_edges(
     edges: ps.DataFrame,
     nodes: ps.DataFrame,
+    mapping_df: ps.DataFrame,
     source: str,
 ) -> ps.DataFrame:
     """
-    Generate a flattened per-source summary of node normalization success for both subjects and objects in edges.
+    Summarize normalization outcomes for all nodes referenced in an edge set.
 
-    This function processes a set of normalized edges and nodes to extract normalization outcomes,
-    linking original IDs with their normalized equivalents, and annotating each entry with source roles
-    ("subject" or "object"), categories (if available), and the originating data source.
+    Args:
+        edges (pyspark.sql.DataFrame):
+            Normalized edge data including subject/object and original IDs.
+        nodes (pyspark.sql.DataFrame):
+            Normalized node data, including original and final category assignments.
+        mapping_df (pyspark.sql.DataFrame):
+            Mapping output containing normalized_categories per node ID.
+        source (str):
+            Name of the upstream data source.
 
-    Parameters
-    ----------
-    edges : pyspark.sql.DataFrame
-        A DataFrame containing normalized edges, including columns such as
-        `subject`, `object`, `original_subject`, `original_object`,
-        `subject_normalization_success`, and `object_normalization_success`.
-    nodes : pyspark.sql.DataFrame
-        A DataFrame containing normalized nodes, including `id` and optionally `category`.
-    source : str
-        The name of the upstream data source providing the edges and nodes.
-
-    Returns
-    -------
-    pyspark.sql.DataFrame
-        A DataFrame summarizing normalization outcomes for all nodes referenced in the edge file.
-        Columns include:
-        - `id`: Normalized CURIE of the node
-        - `original_id`: Original (pre-normalization) CURIE
-        - `normalization_success`: Boolean or flag indicating whether normalization was successful
-        - `category`: Biolink category assigned to the node (if available)
-        - `source_role`: Indicates whether the node was a subject or object in the edge
-        - `upstream_data_source`: Name of the originating data source
+    Returns:
+        pyspark.sql.DataFrame:
+            Flattened summary DataFrame with columns:
+                - id: Normalized node ID
+                - original_id: Original node ID
+                - normalization_success: Whether normalization succeeded
+                - original_categories: Pre-normalization categories
+                - normalized_categories: Categories returned by the normalizer
+                - all_categories: Final categories used
+                - source_role: 'subject' or 'object'
+                - upstream_data_source: Name of the data source
     """
+
+    formatted_mapping = mapping_df.select(
+        "id",
+        F.col("normalization_struct.normalized_categories")
+        .cast(T.ArrayType(T.StringType()))
+        .alias("normalized_categories"),
+    )
 
     # Check nodes and edges matching post-normalization
     check_nodes_and_edges_matching(edges, nodes)
 
-    # Safe fallback for category column
-    if "category" in nodes.columns:
-        nodes_for_join = nodes.select("id", "category")
-    else:
-        nodes_for_join = nodes.select("id").withColumn("category", F.lit(None).cast("string"))
+    nodes_for_join = nodes.select("id", "original_categories", "all_categories").join(
+        formatted_mapping, on="id", how="left"
+    )
+
+    def summarize_role(role_edges: ps.DataFrame, role_nodes_to_join: ps.DataFrame, role: str):
+        return (
+            role_edges.selectExpr(
+                f"{role} as id",
+                f"original_{role} as original_id",
+                f"{role}_normalization_success as normalization_success",
+            )
+            .join(role_nodes_to_join, on="id", how="left")
+            .withColumn("source_role", F.lit(role))
+        )
 
     return (
-        edges.selectExpr(
-            "subject as id", "original_subject as original_id", "subject_normalization_success as normalization_success"
-        )
-        .join(nodes_for_join, on="id", how="left")
-        .withColumn("source_role", F.lit("subject"))
-        .unionByName(
-            edges.selectExpr(
-                "object as id",
-                "original_object as original_id",
-                "object_normalization_success as normalization_success",
-            )
-            .join(nodes_for_join, on="id", how="left")
-            .withColumn("source_role", F.lit("object"))
-        )
+        summarize_role(edges, nodes_for_join, "subject")
+        .unionByName(summarize_role(edges, nodes_for_join, "object"))
         .withColumn("upstream_data_source", F.lit(source))
+        .select(
+            "id",
+            "original_id",
+            "normalization_success",
+            "original_categories",
+            "normalized_categories",
+            "all_categories",
+            "source_role",
+            "upstream_data_source",
+        )
     )
 
 
+@check_output(
+    DataFrameSchema(
+        columns={
+            "id": Column(T.StringType(), nullable=False),
+            "original_id": Column(T.StringType(), nullable=False),
+            "normalization_success": Column(T.BooleanType(), nullable=True),
+            "original_categories": Column(T.ArrayType(T.StringType()), nullable=True),
+            "normalized_categories": Column(T.ArrayType(T.StringType()), nullable=True),
+            "all_categories": Column(T.ArrayType(T.StringType()), nullable=True),
+            "source_role": Column(T.StringType(), nullable=False),
+            "upstream_data_source": Column(T.StringType(), nullable=False),
+        }
+    )
+)
 def normalization_summary_nodes_only(
     nodes: ps.DataFrame,
+    mapping_df: ps.DataFrame,
     source: str,
 ) -> ps.DataFrame:
     """
-    Generate a flattened per-source summary of node normalization success from a node-only dataset.
+    Summarize normalization outcomes for a node-only dataset.
 
-    This function processes a set of normalized nodes and returns a summary table that includes
-    the normalized ID, original ID, category (if available), and normalization success flag,
-    along with source metadata for tracking.
+    Args:
+        nodes (pyspark.sql.DataFrame):
+            Normalized nodes, including original and final category assignments.
+        mapping_df (pyspark.sql.DataFrame):
+            Mapping output containing normalized_categories per node ID.
+        source (str):
+            Name of the upstream data source.
 
-    Parameters
-    ----------
-    nodes : pyspark.sql.DataFrame
-        A DataFrame containing normalized nodes with at least `id`, `original_id`,
-        and `normalization_success` columns. The `category` column is optional.
-    source : str
-        The name of the upstream data source providing the nodes.
-
-    Returns
-    -------
-    pyspark.sql.DataFrame
-        A DataFrame summarizing normalization outcomes for all nodes.
-        Columns include:
-        - `id`: Normalized CURIE of the node
-        - `original_id`: Original (pre-normalization) CURIE
-        - `category`: Biolink category assigned to the node (if available)
-        - `normalization_success`: Boolean or flag indicating whether normalization was successful
-        - `source_role`: Fixed value "node" indicating the entity type
-        - `upstream_data_source`: Name of the originating data source
+    Returns:
+        pyspark.sql.DataFrame:
+            Summary DataFrame with the following columns:
+                - id: Normalized node ID
+                - original_id: Original node ID
+                ...
     """
 
-    if "category" in nodes.columns:
-        selected = nodes.select("id", "original_id", "category", "normalization_success")
-    else:
-        selected = nodes.select("id", "original_id", "normalization_success").withColumn(
-            "category", F.lit(None).cast("string")
-        )
+    formatted_mapping = mapping_df.select(
+        "id",
+        F.col("normalization_struct.normalized_categories")
+        .cast(T.ArrayType(T.StringType()))
+        .alias("normalized_categories"),
+    )
 
-    return selected.withColumn("source_role", F.lit("node")).withColumn("upstream_data_source", F.lit(source))
+    nodes_for_join = nodes.select(
+        "id", "original_id", "normalization_success", "original_categories", "all_categories"
+    ).join(formatted_mapping, on="id", how="left")
+
+    return (
+        nodes_for_join.withColumn("source_role", F.lit("node"))
+        .withColumn("upstream_data_source", F.lit(source))
+        .select(
+            "id",
+            "original_id",
+            "normalization_success",
+            "original_categories",
+            "normalized_categories",
+            "all_categories",
+            "source_role",
+            "upstream_data_source",
+        )
+    )

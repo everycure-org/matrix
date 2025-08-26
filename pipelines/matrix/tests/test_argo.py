@@ -509,8 +509,8 @@ def test_argo_template_config_boilerplate(argo_default_resources: ArgoResourceCo
     assert "nodeAffinity" in kedro_template["affinity"]
     selector = kedro_template["affinity"]["nodeAffinity"]["preferredDuringSchedulingIgnoredDuringExecution"][0]
     match_expression = selector["preference"]["matchExpressions"][0]
-    assert match_expression["key"] == "gpu_node"
-    assert match_expression["operator"] == "NotIn"
+    assert match_expression["key"] == "cloud.google.com/gke-spot"
+    assert match_expression["operator"] == "In"
     assert match_expression["values"] == ["true"]
 
     # Verify resources based on GPU configuration
@@ -573,3 +573,199 @@ def test_resources_of_argo_template_config_pipelines() -> None:
     assert resource_params2["memory_limit"] == argo_default_resources.memory_limit
     assert resource_params2["cpu_request"] == argo_default_resources.cpu_request
     assert resource_params2["cpu_limit"] == argo_default_resources.cpu_limit
+
+
+def test_retry_strategy_in_argo_template() -> None:
+    """Ensure the kedro template contains the expected retryStrategy block."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
+    assert "retryStrategy" in kedro_template
+
+    retry = kedro_template["retryStrategy"]
+    # Basic structure
+    assert retry["limit"] == 3
+    assert "backoff" in retry
+    assert retry["backoff"]["duration"] == "1"
+    assert retry["backoff"]["factor"] == "5"
+
+    # Expression should contain our match clauses and the exitCode exclusion
+    expr = retry.get("expression", "")
+    assert "lastRetry.message matches '.*pod deleted.*'" in expr
+    assert "lastRetry.message matches '.*imminent node shutdown.*'" in expr
+    assert "lastRetry.message matches '.*node is draining.*'" in expr
+    assert "lastRetry.exitCode != 137" in expr
+
+
+def test_pod_gc_strategy_in_argo_template() -> None:
+    """Ensure the Argo workflow spec contains the expected podGC configuration."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    # Verify podGC configuration exists
+    assert "podGC" in spec
+    assert spec["podGC"]["strategy"] == "OnPodCompletion"
+
+
+def test_ephemeral_storage_in_pod_spec_patch() -> None:
+    """Ensure the kedro template contains ephemeral storage configuration in podSpecPatch."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+        ephemeral_storage_limit=256,  # Test with custom ephemeral storage
+        ephemeral_storage_request=64,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
+
+    # Verify podSpecPatch exists
+    assert "podSpecPatch" in kedro_template
+    pod_spec_patch = kedro_template["podSpecPatch"]
+
+    # Verify ephemeral volume configuration is present in podSpecPatch
+    assert "volumes:" in pod_spec_patch
+    assert "name: scratch" in pod_spec_patch
+    assert "ephemeral:" in pod_spec_patch
+    assert "volumeClaimTemplate:" in pod_spec_patch
+    assert 'accessModes: ["ReadWriteOnce"]' in pod_spec_patch
+    assert '"{{inputs.parameters.ephemeral_storage_limit}}Gi"' in pod_spec_patch
+
+    # Verify volume mounts are configured
+    assert "volumeMounts:" in pod_spec_patch
+    assert "name: scratch" in pod_spec_patch
+    assert "mountPath: /scratch" in pod_spec_patch
+
+
+def test_ephemeral_storage_parameters_in_template_tasks() -> None:
+    """Ensure template tasks include ephemeral storage parameters."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+        ephemeral_storage_limit=128,
+        ephemeral_storage_request=32,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    # Verify pipeline template exists
+    pipeline_template = next(t for t in spec["templates"] if t["name"] == "pipeline")
+    assert "dag" in pipeline_template
+
+    # Check that tasks have ephemeral storage parameters
+    if pipeline_template["dag"]["tasks"]:
+        task = pipeline_template["dag"]["tasks"][0]  # Check first task
+        parameters = {p["name"]: p["value"] for p in task["arguments"]["parameters"]}
+
+        # Verify ephemeral storage parameters are present
+        assert "ephemeral_storage_request" in parameters
+        assert "ephemeral_storage_limit" in parameters
+        assert parameters["ephemeral_storage_request"] == 0  # Default request is 0
+        assert parameters["ephemeral_storage_limit"] == argo_default_resources.ephemeral_storage_limit
+
+
+def test_kedro_template_input_parameters_include_ephemeral_storage() -> None:
+    """Ensure the kedro template declares ephemeral storage as input parameters."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
+
+    # Verify input parameters include ephemeral storage
+    assert "inputs" in kedro_template
+    assert "parameters" in kedro_template["inputs"]
+
+    parameter_names = [p["name"] for p in kedro_template["inputs"]["parameters"]]
+    assert "ephemeral_storage_request" in parameter_names
+    assert "ephemeral_storage_limit" in parameter_names
+
+
+def test_neo4j_template_ephemeral_storage_configuration() -> None:
+    """Ensure the neo4j template includes ephemeral storage configuration."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+        ephemeral_storage_limit=200,
+        ephemeral_storage_request=50,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    neo4j_template = next(t for t in spec["templates"] if t["name"] == "neo4j")
+
+    # Verify neo4j template has podSpecPatch with ephemeral storage
+    assert "podSpecPatch" in neo4j_template
+    pod_spec_patch = neo4j_template["podSpecPatch"]
+
+    # Verify ephemeral volume configuration
+    assert "volumes:" in pod_spec_patch
+    assert "name: scratch" in pod_spec_patch
+    assert "ephemeral:" in pod_spec_patch
+    assert "volumeClaimTemplate:" in pod_spec_patch
+    assert '"{{inputs.parameters.ephemeral_storage_limit}}Gi"' in pod_spec_patch
+
+    # Verify volume mounts for Neo4j sidecar
+    assert "volumeMounts" in pod_spec_patch
+    assert "mountPath: /scratch" in pod_spec_patch
+
+
+def test_resource_limits_with_ephemeral_storage_in_containers() -> None:
+    """Ensure container resources include ephemeral storage limits and requests."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=1,
+        cpu_request=4,
+        cpu_limit=8,
+        memory_request=32,
+        memory_limit=64,
+        ephemeral_storage_limit=150,
+        ephemeral_storage_request=75,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
+    pod_spec_patch = kedro_template["podSpecPatch"]
+
+    # Verify ephemeral storage is included in container resources
+    assert "ephemeral-storage:" in pod_spec_patch
+    assert '"{{inputs.parameters.ephemeral_storage_request}}Gi"' in pod_spec_patch
+    assert '"{{inputs.parameters.ephemeral_storage_limit}}Gi"' in pod_spec_patch
+
+    # Check that both requests and limits sections have ephemeral storage
+    requests_section = pod_spec_patch[pod_spec_patch.find("requests:") :]
+    limits_section = pod_spec_patch[pod_spec_patch.find("limits:") :]
+
+    assert "ephemeral-storage:" in requests_section
+    assert "ephemeral-storage:" in limits_section

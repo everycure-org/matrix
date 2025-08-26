@@ -21,6 +21,8 @@ argo-workflows:
       keyFormat: "{{ \"{{workflow.namespace}}/{{workflow.name}}/{{pod.name}}\" }}"
   
   controller:
+    config:
+      archiveLogs: true
     metricsConfig:
       enabled: true
     # Schedule controller on management nodes
@@ -29,7 +31,8 @@ argo-workflows:
 
     # Add billing labels to Argo Workflows controller pods
     podLabels:
-      cost-center: infrastructure-management      workload-category: platform-services
+      cost-center: infrastructure-management      
+      workload-category: platform-services
       service-tier: management
       billing-category: infrastructure
       component: argo-workflows-controller

@@ -18,7 +18,7 @@ from matrix.utils.hook_utilities import (
     generate_dynamic_pipeline_mapping,
 )
 
-from .resolvers import cast_to_int, env, get_kg_raw_path_for_source, if_null, merge_dicts
+from .resolvers import cast_to_int, env, if_null, merge_dicts
 
 hooks = {
     "node_timer": matrix_hooks.NodeTimerHooks(),
@@ -50,14 +50,25 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 {"name": "spoke", "integrate_in_kg": True, "is_private": True},
                 {"name": "embiology", "integrate_in_kg": True, "is_private": True},
                 {"name": "robokop", "integrate_in_kg": True, "is_private": False},
-                {"name": "ec_medical_team", "integrate_in_kg": True},
-                # {"name": "ec_medical_team", "integrate_in_kg": True},
-                {"name": "drug_list", "integrate_in_kg": False, "has_edges": False},
-                {"name": "disease_list", "integrate_in_kg": False, "has_edges": False},
-                {"name": "ground_truth", "integrate_in_kg": False, "has_nodes": False},
+                {"name": "drug_list", "integrate_in_kg": False, "has_edges": False, "is_core": True},
+                {"name": "disease_list", "integrate_in_kg": False, "has_edges": False, "is_core": True},
+                {
+                    "name": "kgml_xdtd_ground_truth",
+                    "has_nodes": False,
+                    "has_edges": True,
+                    "integrate_in_kg": False,
+                },
+                {
+                    "name": "ec_ground_truth",
+                    "has_nodes": False,
+                    "has_edges": True,
+                    "integrate_in_kg": False,
+                },
                 # {"name": "drugmech", "integrate_in_kg": False, "has_nodes": False},
                 {"name": "ec_clinical_trails", "integrate_in_kg": False},
                 {"name": "off_label", "integrate_in_kg": False, "has_nodes": False},
+                # TODO: enable orchard once permissions are clarified
+                # {"name": "orchard", "integrate_in_kg": False, "has_nodes": False, "is_private": True},
             ],
             "modelling": {
                 "model_name": "xg_ensemble",  # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth
@@ -89,11 +100,9 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
 def _load_setting(path):
     """Utility function to load a settings value from the data catalog."""
     path = path.split(".")
-
     obj = DYNAMIC_PIPELINES_MAPPING()
     for p in path:
         obj = obj[p]
-
     return obj
 
 
@@ -121,7 +130,6 @@ CONFIG_LOADER_ARGS = {
         "oc.int": cast_to_int,
         "setting": _load_setting,
         "if_null": if_null,
-        "get_kg_raw_path_for_source": get_kg_raw_path_for_source,
     },
 }
 

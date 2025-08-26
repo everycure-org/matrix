@@ -1,4 +1,5 @@
 faker
+matrix-schema==0.4.0
 bmt # biolink model toolkit
 gcsfs==2024.3.1
 google-cloud-bigquery
@@ -20,6 +21,7 @@ kedro==0.19.13
 langchain
 langchain-openai
 matplotlib
+git+https://github.com/everycure-org/matrix-validator.git@v0.0.6#egg=matrix-validator
 mlflow==2.20.3
 neo4j>=5.5.0
 notebook
@@ -27,6 +29,7 @@ numpy==1.24.4 # This was pinned during refit refactor; fabricator pipeline fails
 openai
 openpyxl
 pandera==0.24.0
+pandas-gbq
 # Temp. fix for the gcloud cli
 # https://github.com/googleapis/python-bigquery/issues/1908
 proto-plus==1.24.0.dev1

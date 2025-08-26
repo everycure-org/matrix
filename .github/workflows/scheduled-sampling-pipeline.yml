@@ -2,7 +2,7 @@ name: Scheduled Sampling Pipeline
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # every day at midnight GMT
+    - cron: '0 0 * * 1-5'  # every weekday (Monday to Friday) at midnight GMT
   workflow_dispatch: 
     inputs:
       release_version:
@@ -10,11 +10,6 @@ on:
         required: false
         type: string
 env:
-  project_id: 'mtrx-hub-dev-3of'
-  workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
-  service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
-  region: 'us-central1'
-  cluster: 'compute-cluster'
   # release version from input
   RELEASE_VERSION: ${{ inputs.release_version }}
 
@@ -81,22 +76,22 @@ jobs:
         id: auth
         uses: 'google-github-actions/auth@v2'
         with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.workload_identity_provider}}
-          service_account: ${{env.service_account}}
+          project_id: ${{vars.PROJECT_ID}}
+          workload_identity_provider: ${{vars.WORKLOAD_IDENTITY_PROVIDER_RW}}
+          service_account: ${{vars.SERVICE_ACCOUNT_RW}}
           token_format: access_token
 
       - uses: google-github-actions/get-gke-credentials@v1
       # configure authentication to a GKE cluster (configure kubectl)
         with:
-          cluster_name: ${{env.cluster}}
-          location: ${{env.region}}
-          project_id: ${{env.project_id}}
+          cluster_name: ${{vars.GKE_CLUSTER_NAME}}
+          location: ${{vars.REGION}}
+          project_id: ${{vars.PROJECT_ID}}
 
       - name: Login to Google Artifact Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{env.region}}-docker.pkg.dev
+          registry: ${{ vars.REGION }}-docker.pkg.dev
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
 
@@ -104,9 +99,9 @@ jobs:
         id: id_auth
         uses: 'google-github-actions/auth@v2'
         with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.workload_identity_provider}}
-          service_account: ${{env.service_account}}
+          project_id: ${{vars.PROJECT_ID}}
+          workload_identity_provider: ${{vars.WORKLOAD_IDENTITY_PROVIDER_RW}}
+          service_account: ${{vars.SERVICE_ACCOUNT_RW}}
           token_format: id_token
           id_token_audience: ${{ secrets.GCP_ID_TOKEN_AUDIENCE }}
           id_token_include_email: true

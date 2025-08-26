@@ -5,6 +5,9 @@ metadata:
   namespace: {{namespace}}
   name: {{run_name}}
 spec:
+  podGC:
+    strategy: OnPodCompletion
+  archiveLogs: true
   workflowMetadata:
     labels:
       run: {% raw %}'{{ workflow.parameters.run_name }}'
@@ -23,6 +26,8 @@ spec:
         value: "{{ image }}"
       - name: run_name
         value: "{{ run_name }}"
+      - name: pipeline_name
+        value: "{{ pipeline_name }}"
       - name: neo4j_host
         value: "bolt+ssc://neo4j.neo4j.svc.cluster.local:7687"
       - name: mlflow_endpoint
@@ -59,14 +64,14 @@ spec:
     name: kedro
     affinity:
       nodeAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          preference:
-            matchExpressions:
-            - key: gpu_node
-              operator: NotIn
-              values:
-              - "true"
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: cloud.google.com/gke-spot
+                operator: In
+                values:
+                - "true"
     # Add tolerations for large memory nodes and GPU nodes
     tolerations:
     - key: "workload"
@@ -77,15 +82,39 @@ spec:
       operator: "Equal"
       value: "large"
       effect: "NoSchedule"
+    - key: "spot"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"
     metadata:
       labels:
         {# Add label to have an ability to remove Kedro Pods easily #}
         app: kedro-argo
         workflow_name: {% raw %}'{{ workflow.parameters.run_name }}'
         {% endraw %}
+        kedro_nodes: {% raw %}'{{ inputs.parameters.trimmed_kedro_nodes }}'
+        {% endraw %}
+        cost-center: "matrix-pipeline"
+        environment: {% raw %}'{{ workflow.parameters.env }}'
+        {% endraw %}
+        pipeline: {% raw %}'{{ workflow.parameters.pipeline_name }}'
+        {% endraw %}
+    retryStrategy:
+      limit: 3
+      expression: |
+        (
+          lastRetry.message matches '.*pod deleted.*' ||
+          lastRetry.message matches '.*imminent node shutdown.*' ||
+          lastRetry.message matches '.*node is draining.*'
+        {# code 137 is for OOM. We are explicitly mention it so that in case of failure it is not retried #}
+        ) && lastRetry.exitCode != 137
+      backoff:
+        duration: "1"
+        factor: "5"
     inputs:
       parameters:
       - name: kedro_nodes
+      - name: trimmed_kedro_nodes
       - name: num_gpus
       - name: memory_limit
       - name: memory_request
@@ -94,12 +123,27 @@ spec:
       - name: ephemeral_storage_request
       - name: ephemeral_storage_limit
     podSpecPatch: |
+      volumes:
+          - name: scratch
+            ephemeral:
+              volumeClaimTemplate:
+                spec:
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: {% raw %}"{{inputs.parameters.ephemeral_storage_limit}}Gi"
+      {% endraw %}
+      terminationGracePeriodSeconds: 30
       tolerations:
         - key: "node-memory-size"
           operator: "Equal"
           value: "large"
           effect: "NoSchedule"
         - key: "workload"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+        - key: "spot"
           operator: "Equal"
           value: "true"
           effect: "NoSchedule"
@@ -125,6 +169,9 @@ spec:
               {% endraw %}
               ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_limit}}Gi"
               {% endraw %}
+            volumeMounts:
+              - name: scratch
+                mountPath: /scratch
     container: &_kedro_container
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}"
@@ -205,6 +252,43 @@ spec:
   - <<: *_kedro_template
     name: neo4j
     podSpecPatch: |
+      volumes:
+          - name: scratch
+            ephemeral:
+              volumeClaimTemplate:
+                spec:
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: {% raw %}"{{inputs.parameters.ephemeral_storage_limit}}Gi"
+        {% endraw %}
+      terminationGracePeriodSeconds: 30
+      tolerations:
+        - key: "node-memory-size"
+          operator: "Equal"
+          value: "large"
+          effect: "NoSchedule"
+        - key: "workload"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+        - key: "spot"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+      metadata:
+        labels:
+          app: kedro-argo
+          workflow_name: {% raw %}"{{ workflow.parameters.run_name }}"
+          {% endraw %}
+          kedro_nodes: {% raw %}"{{ inputs.parameters.trimmed_kedro_nodes }}"
+          {% endraw %}
+          cost-center: "matrix-pipeline"
+          environment: {% raw %}"{{ workflow.parameters.env }}"
+          {% endraw %}
+          pipeline: {% raw %}"{{ workflow.parameters.pipeline_name }}"
+          {% endraw %}
+          template: "neo4j"
       containers:
         - name: main
           resources:
@@ -215,9 +299,12 @@ spec:
           env:
             - name: SPARK_DRIVER_MEMORY
               value: "60"
-            # NOTE: We're passing in a regular bolt connection as emphemeral Neo4J has no SSL
+            # NOTE: We're passing in a regular bolt connection as ephemeral Neo4J has no SSL
             - name: NEO4J_HOST
               value: "bolt://127.0.0.1:7687"
+            volumeMounts
+              - name: scratch
+                mountPath: /scratch
         - name: neo4j
           resources:
             requests:
@@ -266,6 +353,9 @@ spec:
           - name: gds-key
             mountPath: /licences
             readOnly: true
+          - name: scratch
+            mountPath: /data
+
         env:
         - name: NEO4J_AUTH
           valueFrom:
@@ -317,6 +407,8 @@ spec:
             value: {{ pipeline_name }}
           - name: kedro_nodes
             value: {{ task.nodes }}
+          - name: trimmed_kedro_nodes
+            value: {{ task.nodes[:63].replace(',', '-').rstrip('_-.') }}
           - name: num_gpus
             value: {{ task.resources.num_gpus }}
           - name: memory_request

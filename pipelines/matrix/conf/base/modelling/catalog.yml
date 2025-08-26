@@ -35,15 +35,15 @@ _model_output_ds: &_model_output_ds
 
 modelling.int.known_pairs@pandas:
   <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth_embeddings
+  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.kgml_xdtd_gt.version}/ground_truth_embeddings
 
 modelling.raw.known_pairs@spark:
   <<: [*_spark_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth_pairs
+  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.kgml_xdtd_gt.version}/ground_truth_pairs
 
 modelling.int.known_pairs@spark:
   <<: [*_spark_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth_embeddings
+  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.kgml_xdtd_gt.version}/ground_truth_embeddings
 
 modelling.model_input.drugs_diseases_nodes@spark:
   <<: [*_spark_parquet, *_model_input_ds]
@@ -53,8 +53,12 @@ modelling.model_input.drugs_diseases_nodes@pandas:
   <<: [*_kg_dataset, *_model_input_ds]
   filepath: ${globals:paths.modelling}/model_input/drugs_diseases_nodes/
 
-modelling.model_input.splits:
+modelling.model_input.splits@pandas:
   <<: [*_pandas_parquet, *_model_input_ds]
+  filepath: ${globals:paths.modelling}/model_input/splits
+
+modelling.model_input.splits@spark:
+  <<: [*_spark_parquet, *_model_input_ds]
   filepath: ${globals:paths.modelling}/model_input/splits
 
 "modelling.fold_{fold}.model_input.transformers":

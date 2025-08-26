@@ -66,10 +66,6 @@ The first part is modify your `.env` set up to ensure you are using the right pi
 Create or modify your `.env` file:
 
 ```bash
-# Set your runtime environment
-RUNTIME_GCP_PROJECT_ID=mtrx-hub-dev-3of
-RUNTIME_GCP_BUCKET=mtrx-us-central1-hub-dev-storage
-
 # Set a unique run name for your run
 RUN_NAME=my-full-data-run
 
@@ -86,7 +82,7 @@ The Feature pipeline can be used to extract only subgraph of interest from the r
 filtering:
   node_filters:
     filter_sources:
-      _object: matrix.pipelines.filtering.filters.KeepRowsContainingFilter
+      _object: matrix.pipelines.filtering.filters.KeepRowsContaining
       column: upstream_data_source
       keep_list:
         - rtxkg2
@@ -95,7 +91,7 @@ filtering:
   # ...
   edge_filters:
     filter_sources:
-      _object: matrix.pipelines.filtering.filters.KeepRowsContainingFilter
+      _object: matrix.pipelines.filtering.filters.KeepRowsContaining
       column: upstream_data_source
       keep_list:
         - rtxkg2
@@ -118,9 +114,15 @@ embeddings.topological_estimator:
 ```
 
 
-Note that Feature pipeline at the moment also relies on neo4j instance with a lot of memory. Make sure that your docker instance of neo4j has appropriate amount of memory allocated (as we have specified in cloud parameters)
-
-TODO: neo4j 
+!!! warning "Neo4J Requirements"
+    The Feature pipeline at the moment also relies on neo4j instance with a lot of memory. Make sure that your docker instance of Neo4J has appropriate amount of memory allocated (as we have specified in cloud parameters). 
+    !!! note "Neo4J Memory Settings"
+        Please add the following to the Neo4J Environment file or settings (as per your Neo4J instruction). Adjust accordingly.
+        ```bash
+          NEO4J_server_memory_heap_initial__size=40g
+          NEO4J_server_memory_heap_max__size=40g
+          NEO4J_server_memory_pagecache_size=8g
+        ```
 
 Once you have that ready, you can run
 ```bash

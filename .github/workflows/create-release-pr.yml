@@ -14,12 +14,10 @@ on:
         required: true
 
 env:
-  project_id: 'mtrx-hub-dev-3of'
-  workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-ro/providers/matrix-gh-provider-ro'
-  service_account: 'sa-github-actions-ro@mtrx-hub-dev-3of.iam.gserviceaccount.com'
-
+  RELEASE_AGENT_PROMPT: docs/src/contribute/release_agent_prompt.md
 jobs:
   create_release_notes_draft:
+    environment: dev
     runs-on: ubuntu-latest
     name: Create Draft of the Release Notes
     permissions:
@@ -87,18 +85,13 @@ jobs:
             git push
           fi
 
-      - name: Setup Matrix CLI
-        working-directory: apps/matrix-cli
-        run: |
-          pip install uv
-          uv sync
 
       - name: Authenticate with Google Cloud
         uses: 'google-github-actions/auth@v2'
         with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.workload_identity_provider}}
-          service_account: ${{env.service_account}}
+          project_id: ${{vars.PROJECT_ID}}
+          workload_identity_provider: ${{vars.WORKLOAD_IDENTITY_PROVIDER_RO}}
+          service_account: ${{vars.SERVICE_ACCOUNT_RO}}
 
       - name: Download & commit release info file
         working-directory: docs/src/releases/changelog_files
@@ -129,48 +122,104 @@ jobs:
   
       - name: Detect bump type
         working-directory: docs
+        # this script sets a 'generate_article' env variable
         run: |
-          pip install uv
-          uv venv -p 3.11
-          uv pip compile --quiet requirements.in --output-file requirements.txt
-          uv pip install -r requirements.txt 
-          uv run scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
+          pip install semver
+          python scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
 
-      - name: Create Release Article Template
-        working-directory: apps/matrix-cli
-        env:
-          GH_TOKEN: ${{ github.token }}
-          POSTS_DIR: docs/src/releases/posts
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        # only create release notes for minor, major, and intermediate bumps
+      - name: Setup Node.js for Claude Code
+        # only create release notes for minor and major
         if: env.generate_article == 'True'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Claude Code
+        if: env.generate_article == 'True'
+        run: |
+          npm install -g @anthropic-ai/claude-code
+
+      - name: Generate Release Article with Claude Code
+        env:
+          POSTS_DIR: docs/src/releases/posts
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        if: env.generate_article == 'True'
+        timeout-minutes: 10
         run: |
           set -eux
 
           TARGET_DIR="${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.release }}"
           FILE_PATH="${TARGET_DIR}/post.md"
-
+          
           if git ls-files --error-unmatch "$FILE_PATH" &> /dev/null; then
             echo "File '$FILE_PATH' is already committed to the repository. Skipping release notes creation."
+            cat $FILE_PATH
             exit 0
           fi
 
-          mkdir -p "${{env.release}}"
+          mkdir -p "$TARGET_DIR"
 
-          # If these fail, you may have crossed the quotas. See 
-          # https://cloud.google.com/vertex-ai/generative-ai/docs/quotas
-          uv run matrix releases template \
-            --headless \
-            --output-file "${{env.release}}/post.md" \
-            --until ${{env.gitref}} \
-            --version ${{env.release}}
+          # Generate release notes using Claude Code with the agent prompt
+          find docs/src/contribute/
+          PROMPT_CONTENT=$(cat ${{ env.RELEASE_AGENT_PROMPT }})
           
-          mv "${{env.release}}" "${GITHUB_WORKSPACE}/${POSTS_DIR}"
+          # Create the instruction for Claude Code
+          CLAUDE_INSTRUCTION="$PROMPT_CONTENT
+
+          Generate a changelog since tag ${{ env.latest_official_release }} for version ${{ env.release }}.
+          Output the release article following the exact markdown structure specified in the instructions above.
+          Save the output to the file at: $FILE_PATH
+
+          Also make sure to not attempt to try any commands that are not whitelisted as you will end up in an infinite loop otherwise.
+          The allowed tools were passed to you as a parameter, e.g. git tag, git log, gh, awk, head etc. 
+          "
+
+          # Use Claude Code to generate the release notes
+          echo "$CLAUDE_INSTRUCTION" | claude \
+          --allowedTools "Bash(awk:*) Bash(head:*) Bash(for:*) Bash(git tag:*) Bash(git log:*) Bash(git diff:*) Bash(gh pr list:*) Bash(ls:*) Bash(awk:*) Bash(head:*)" \
+          --model sonnet \
+          --permission-mode acceptEdits \
+          --output-format stream-json --verbose -p | jq
+
+          echo "RELEASE ARTICLE: "
+          cat $FILE_PATH
+
+      - name: Commit Release Article
+        env:
+          POSTS_DIR: docs/src/releases/posts
+        if: env.generate_article == 'True'
+        run: |
+          set -eux
+          
+          TARGET_DIR="${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.release }}"
+          FILE_PATH="${TARGET_DIR}/post.md"
+          
+          # Create directory if it doesn't exist
+          mkdir -p "$TARGET_DIR"
+          
+          # If Claude Code failed or timed out, create a placeholder as fallback
+          if [ ! -f "$FILE_PATH" ] || [ ! -s "$FILE_PATH" ]; then
+            echo "Claude Code generation failed or timed out, creating placeholder instead"
+            echo "TODO: Developers need to write release notes for ${{ env.release }}" > "$FILE_PATH"
+            echo "" >> "$FILE_PATH"
+            echo "This file was auto-created as a placeholder after Claude Code generation failed or timed out." >> "$FILE_PATH"
+            echo "Please replace this content with proper release notes." >> "$FILE_PATH"
+          fi
+          
+          # Commit the file (either from Claude or fallback)
           git add "$TARGET_DIR" && \
-          git commit -m "added release article template" && \
+          git commit -m "added AI-generated release article for ${{ env.release }}" && \
           git push
-          
-            
+
+      - name: Setup Python Environment
+        working-directory: docs/
+        run: |
+          pip install uv
+          uv venv -p 3.11
+          uv pip compile --quiet requirements.in --output-file requirements.txt
+          uv pip install -r requirements.txt 
+
       - name: Setup docs venv & generate yaml
         working-directory: docs/scripts
         run: |

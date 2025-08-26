@@ -28,43 +28,46 @@ appearance:
   default: system
   switcher: true
 
-# Dracula theme, see https://draculatheme.com/
 theme:
   colorPalettes:
     default:
-      - "#bd93f9"  # Purple
-      - "#8be9fd"  # Cyan
-      - "#ff79c6"  # Pink
-      - "#50fa7b"  # Green
-      - "#ffb86c"  # Orange
-      - "#ff5555"  # Red
-      - "#f1fa8c"  # Yellow
-      - "#6272a4"  # Comment
-      
+      - "#88C0D0"  # Soft cyan blue
+      - "#9D79D6"  # Medium lavender
+      - "#7FADDB"  # sky blue
+      - "#5E81AC"  # Desaturated navy
+      - "#C586C0"  # Light magenta
+      - "#D08770"  # Warm terracotta
+      - "#EBCB8B"  # Pale amber
+      - "#6FAF8C"  # Muted teal green
+      - "#73C991"  # Bright mint green
+      - "#1B3E66"  # Deep navy
+      - "#BF616A"  # Muted crimson
+      - "#7AA2F7"  # Soft cornflower blue
+
   colorScales:
     default:
-      - "#bd93f9"  # Purple
-      - "#ff79c6" # Pink
-      
+      - "#AD8AE2"  # Updated to match new purple
+      - "#E88EE8"  # Updated to match new pink
+
   colors:
     primary:
-      light: "#bd93f9"  # Purple
-      dark: "#bd93f9"  # Purple
+      light: "#9D79D6"  # Medium lavender
+      dark: "#9D79D6"   # Medium lavender
     accent:
-      light: "#ff79c6"  # Pink
-      dark: "#ff79c6"  # Pink
+      light: "#C586C0"  # Light magenta
+      dark: "#C586C0"   # Light magenta
     base:
-      light: "#f8f8f2"  # Foreground
-      dark: "#282a36"  # Background
+      light: "#F8F8F2"  # Foreground (keeping same)
+      dark: "#282A36"   # Background (keeping same)
     info:
-      light: "#8be9fd"  # Cyan
-      dark: "#8be9fd"  # Cyan
+      light: "#88C0D0"  # Soft cyan blue
+      dark: "#88C0D0"   # Soft cyan blue
     warning:
-      light: "#ffb86c"  # Orange
-      dark: "#ffb86c"  # Orange
+      light: "#D08770"  # Warm terracotta
+      dark: "#D08770"   # Warm terracotta
     negative:
-      light: "#ff5555"  # Red
-      dark: "#ff5555"  # Red
+      light: "#BF616A"  # Muted crimson
+      dark: "#BF616A"   # Muted crimson
     positive:
-      light: "#50fa7b"  # Green
-      dark: "#50fa7b"  # Green
+      light: "#73C991"  # Muted teal green
+      dark: "#73C991"   # Muted teal green

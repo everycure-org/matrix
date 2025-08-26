@@ -19,6 +19,7 @@ from kedro_datasets.spark import SparkDataset
 from omegaconf import OmegaConf
 from pyspark import SparkConf
 
+from matrix.inject import _parse_for_objects
 from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
 
 logger = logging.getLogger(__name__)
@@ -336,6 +337,12 @@ class ReleaseInfoHooks:
         return tmpl
 
     @staticmethod
+    def build_nodenorm_link() -> str:
+        normalizer = _parse_for_objects(ReleaseInfoHooks._params["integration"]["normalization"]["normalizer"])
+        tmpl = f"[{normalizer.version()}]({normalizer.endpoint})"
+        return tmpl
+
+    @staticmethod
     def build_mlflow_link() -> str:
         run_id = ReleaseInfoHooks._kedro_context.mlflow.tracking.run.id
         experiment_name = ReleaseInfoHooks._kedro_context.mlflow.tracking.experiment.name
@@ -367,7 +374,7 @@ class ReleaseInfoHooks:
             "KG dashboard": ReleaseInfoHooks.build_kg_dashboard_link(),
             "MLFlow": ReleaseInfoHooks.build_mlflow_link(),
             "Code": ReleaseInfoHooks.build_code_link(),
-            "NodeNorm Endpoint": ReleaseInfoHooks._params["integration"]["normalization"]["normalizer"]["endpoint"],
+            "NodeNorm Endpoint": ReleaseInfoHooks.build_nodenorm_link(),
         }
         return info
 
