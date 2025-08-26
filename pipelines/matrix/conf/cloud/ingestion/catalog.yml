@@ -41,7 +41,7 @@ ingestion.int.robokop.edges:
 ingestion.int.valid_edge_types:
   <<: *_bigquery_ds
   filepath: ${globals:paths.ingestion}/int/valid_edge_types/${globals:data_sources.matrix_schema.version}/valid_edge_types
-  table: valid_edge_types
+  table: matrix_schema_valid_edge_types
 
 # Ingested Spoke nodes/edges
 ingestion.int.spoke.nodes:
