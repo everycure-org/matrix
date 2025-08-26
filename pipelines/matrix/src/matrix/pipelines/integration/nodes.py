@@ -313,8 +313,8 @@ def normalize_core_nodes(
     # checking here ensures that there are no conflicts at the per-source level
     conflicts = (
         nodes_normalized.groupBy("id")
-        .agg(F.countDistinct("core_id").alias("distinct_core_ids"))
-        .filter(F.col("distinct_core_ids") > 1)
+        .agg(F.collect_set("core_id").alias("distinct_core_ids"))
+        .filter(F.size(F.col("distinct_core_ids")) > 1)
     )
 
     conflict_count = conflicts.count()
