@@ -324,7 +324,9 @@ def normalize_core_nodes(
             f"Multiple core_ids found for the same normalized_id. "
             f"Please fix source data."
         )
-        conflicts.show(truncate=False)
+        nodes_normalized.join(conflicts, on="id", how="inner").select("id", "core_id", "distinct_core_ids").orderBy(
+            "distinct_core_ids", ascending=False
+        ).show(truncate=False)
         raise Exception("Normalized ID conflicts detected; please investigate")
     else:
         logger.info("No normalized ID conflicts found.")
