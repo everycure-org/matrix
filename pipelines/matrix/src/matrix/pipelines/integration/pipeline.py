@@ -184,8 +184,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                             if "ground_truth" in source["name"]
                         ],
                     ],
-                    outputs="integration.prm.unified_ground_truth_edges",
-                    name="create_prm_unified_ground_truth_edges",
+                    outputs="integration.int.unified_ground_truth_edges",
+                    name="create_unified_ground_truth_edges",
                 ),
                 ArgoNode(
                     func=nodes.union_edges,
