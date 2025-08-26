@@ -8,6 +8,7 @@ import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.types as T
 from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
+from pyspark.errors import AnalysisException
 from pyspark.sql import functions as f
 from sklearn.base import BaseEstimator
 from sklearn.impute._base import _BaseImputer
@@ -45,7 +46,7 @@ def _filter_ground_truth(edges_gt: ps.DataFrame, training_data_sources: list[str
         return edges_gt.filter(f.col("upstream_data_source").isin(training_data_sources)).dropDuplicates(
             ["subject", "object"]
         )
-    except ValueError as e:
+    except AnalysisException as e:
         logger.error(f"Upstream data source column not found in ground truth; using full dataset")
         return edges_gt
 

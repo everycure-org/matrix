@@ -10,8 +10,6 @@ modelling.disease_types:
   - biolink:DiseaseOrPhenotypicFeature
 
 modelling.training_data_sources:
-  - ec # EveryCure Indications
-  - drugbank # DrugBank Indications (private)
   - kgml_xdtd # KGML-xDTD Indications
 
 modelling.splitter:
