@@ -5,6 +5,8 @@ metadata:
   namespace: {{namespace}}
   name: {{run_name}}
 spec:
+  podGC:
+    strategy: OnPodCompletion
   archiveLogs: true
   workflowMetadata:
     labels:
@@ -121,6 +123,16 @@ spec:
       - name: ephemeral_storage_request
       - name: ephemeral_storage_limit
     podSpecPatch: |
+      volumes:
+          - name: scratch
+            ephemeral:
+              volumeClaimTemplate:
+                spec:
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: {% raw %}"{{inputs.parameters.ephemeral_storage_limit}}Gi"
+      {% endraw %}
       terminationGracePeriodSeconds: 30
       tolerations:
         - key: "node-memory-size"
@@ -157,6 +169,9 @@ spec:
               {% endraw %}
               ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_limit}}Gi"
               {% endraw %}
+            volumeMounts:
+              - name: scratch
+                mountPath: /scratch
     container: &_kedro_container
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}"
@@ -237,6 +252,16 @@ spec:
   - <<: *_kedro_template
     name: neo4j
     podSpecPatch: |
+      volumes:
+          - name: scratch
+            ephemeral:
+              volumeClaimTemplate:
+                spec:
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: {% raw %}"{{inputs.parameters.ephemeral_storage_limit}}Gi"
+        {% endraw %}
       terminationGracePeriodSeconds: 30
       tolerations:
         - key: "node-memory-size"
@@ -277,6 +302,9 @@ spec:
             # NOTE: We're passing in a regular bolt connection as ephemeral Neo4J has no SSL
             - name: NEO4J_HOST
               value: "bolt://127.0.0.1:7687"
+            volumeMounts
+              - name: scratch
+                mountPath: /scratch
         - name: neo4j
           resources:
             requests:
@@ -325,6 +353,9 @@ spec:
           - name: gds-key
             mountPath: /licences
             readOnly: true
+          - name: scratch
+            mountPath: /data
+
         env:
         - name: NEO4J_AUTH
           valueFrom:
