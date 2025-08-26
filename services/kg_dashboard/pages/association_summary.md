@@ -193,22 +193,31 @@ ORDER BY count DESC
 />
 
 ```sql filtered_edge_stats
-SELECT 
+WITH dimension_filter AS (
+  SELECT 
     replace(subject_category,'biolink:','') as subject_category,
-    '/Graph Components/Node Category/' || replace(subject_category,'biolink:','') as subject_category_link,
     replace(predicate,'biolink:','') as predicate,
-    '/Graph Components/Edge Predicate/' || replace(predicate,'biolink:','') as predicate_link,
     replace(object_category,'biolink:','') as object_category,
-    '/Graph Components/Node Category/' || replace(object_category,'biolink:','') as object_category_link,
+    primary_knowledge_source,
+    sum(count) as count
+  FROM bq.merged_kg_edges
+  WHERE replace(subject_category,'biolink:','') IN ${inputs.selected_subjects.value}
+    AND replace(predicate,'biolink:','') IN ${inputs.selected_predicates.value}
+    AND replace(object_category,'biolink:','') IN ${inputs.selected_objects.value}
+  GROUP BY all
+)
+SELECT 
+    subject_category,
+    '/Graph Components/Node Category/' || subject_category as subject_category_link,
+    predicate,
+    '/Graph Components/Edge Predicate/' || predicate as predicate_link,
+    object_category,
+    '/Graph Components/Node Category/' || object_category as object_category_link,
     primary_knowledge_source,
     '/Knowledge Sources/' || primary_knowledge_source as primary_knowledge_source_link,
-    sum(count) as count
-FROM bq.merged_kg_edges
-WHERE replace(subject_category,'biolink:','') IN ${inputs.selected_subjects.value}
-  AND replace(predicate,'biolink:','') IN ${inputs.selected_predicates.value}
-  AND replace(object_category,'biolink:','') IN ${inputs.selected_objects.value}
-  AND ${inputs.selected_edge_stats}
-GROUP BY all
+    count
+FROM dimension_filter
+WHERE ${inputs.selected_edge_stats}
 ORDER BY count DESC
 ```
 
