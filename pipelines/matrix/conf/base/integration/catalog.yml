@@ -73,10 +73,6 @@ integration.prm.unified_edges:
 
 integration.int.unified_ground_truth_edges:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/int/ground_truth/
-
-integration.int.unified_ground_truth_edges:
-  <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/int/ground_truth/edges.norm
 
 integration.prm.nodes_edges_consistency_check:
