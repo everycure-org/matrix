@@ -290,6 +290,12 @@ class ReleaseInfoHooks:
         return tmpl
 
     @staticmethod
+    def build_nodenorm_link() -> str:
+        normalizer = _parse_for_objects(ReleaseInfoHooks._params["integration"]["normalization"]["normalizer"])
+        tmpl = f"[{normalizer.version()}]({normalizer.endpoint})"
+        return tmpl
+
+    @staticmethod
     def build_mlflow_link() -> str:
         run_id = ReleaseInfoHooks._kedro_context.mlflow.tracking.run.id
         experiment_name = ReleaseInfoHooks._kedro_context.mlflow.tracking.experiment.name
@@ -314,7 +320,6 @@ class ReleaseInfoHooks:
 
     @staticmethod
     def extract_release_info(global_datasets: dict[str, Any]) -> dict[str, str]:
-        normalizer = _parse_for_objects(ReleaseInfoHooks._params["integration"]["normalization"]["normalizer"])
         info = {
             "Release Name": ReleaseInfoHooks._globals["versions"]["release"],
             "Datasets": global_datasets,
@@ -322,7 +327,7 @@ class ReleaseInfoHooks:
             "KG dashboard": ReleaseInfoHooks.build_kg_dashboard_link(),
             "MLFlow": ReleaseInfoHooks.build_mlflow_link(),
             "Code": ReleaseInfoHooks.build_code_link(),
-            "NodeNorm Endpoint": f"{normalizer.endpoint} ({normalizer.version()})",
+            "NodeNorm Endpoint": ReleaseInfoHooks.build_nodenorm_link(),
         }
         return info
 

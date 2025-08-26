@@ -8,7 +8,10 @@ from . import nodes
 
 
 def _create_integration_pipeline(
-    source: str, has_nodes: bool = True, has_edges: bool = True, is_core: bool = False
+    source: str,
+    has_nodes: bool = True,
+    has_edges: bool = True,
+    is_core: bool = False,
 ) -> Pipeline:
     pipelines = []
 
@@ -142,7 +145,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=[source["name"]],
             )
         )
-
     # Add integration pipeline
     pipelines.append(
         pipeline(
@@ -153,10 +155,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                         *[
                             f'integration.int.{source["name"]}.nodes.norm@spark'
                             for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
-                            if source.get(
-                                "is_core", False
-                            )  # Default False means only sources with explicit "is_core": True are included
-                        ],
+                            if source.get("is_core", False)
+                        ]
                     ],
                     outputs="integration.int.core_node_mapping",
                     name="create_core_id_mapping",
@@ -202,5 +202,4 @@ def create_pipeline(**kwargs) -> Pipeline:
             ]
         )
     )
-
     return sum(pipelines)

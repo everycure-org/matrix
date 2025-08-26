@@ -79,6 +79,22 @@ def sample_off_label():
 
 
 @pytest.fixture
+def sample_orchard():
+    """Fixture that provides sample orchard data for testing."""
+    return pd.DataFrame(
+        {
+            "source": ["drug_1"],
+            "target": ["disease_2"],
+            "high_evidence_matrix": [1],
+            "high_evidence_crowdsourced": [0],
+            "mid_evidence_matrix": [0],
+            "mid_evidence_crowdsourced": [0],
+            "archive_biomedical_review": [0],
+        }
+    )
+
+
+@pytest.fixture
 def sample_node_embeddings():
     """Fixture that provides a sample KnowledgeGraph for testing."""
     nodes = pd.DataFrame(
@@ -179,7 +195,13 @@ def sample_data():
 
 
 def test_generate_pairs(
-    sample_drugs, sample_diseases, sample_graph, sample_known_pairs, sample_clinical_trials, sample_off_label
+    sample_drugs,
+    sample_diseases,
+    sample_graph,
+    sample_known_pairs,
+    sample_clinical_trials,
+    sample_off_label,
+    sample_orchard,
 ):
     """Test the generate_pairs function."""
     # Given drug list, disease list and ground truth pairs
@@ -191,6 +213,16 @@ def test_generate_pairs(
         known_pairs=sample_known_pairs,
         clinical_trials=sample_clinical_trials,
         off_label=sample_off_label,
+        orchard=sample_orchard,
+    )
+    result_public_only = generate_pairs(
+        drugs=sample_drugs,
+        diseases=sample_diseases,
+        graph=sample_graph,
+        known_pairs=sample_known_pairs,
+        clinical_trials=sample_clinical_trials,
+        off_label=sample_off_label,
+        orchard=None,
     )
 
     # Then the output is of the correct format and shape
@@ -209,10 +241,21 @@ def test_generate_pairs(
         for col in [
             "is_known_positive",
             "is_known_negative",
-            # "trial_sig_better",
-            # "trial_non_sig_better",
-            # "trial_sig_worse",
-            # "trial_non_sig_worse",
+            "trial_sig_better",
+            "trial_non_sig_better",
+            "trial_sig_worse",
+            "trial_non_sig_worse",
+        ]
+    )
+    assert all(
+        check_col(col)
+        for col in [
+            "is_known_positive",
+            "is_known_negative",
+            "trial_sig_better",
+            "trial_non_sig_better",
+            "trial_sig_worse",
+            "trial_non_sig_worse",
         ]
     )
     # Flag columns set correctly
@@ -221,7 +264,8 @@ def test_generate_pairs(
             sum(result[col_name]) == 1
             for col_name in (
                 "is_known_negative",
-                # "trial_sig_better",
+                "trial_sig_better",
+                "high_evidence_matrix",
             )
         ]
     )
@@ -230,9 +274,12 @@ def test_generate_pairs(
             sum(result[col_name]) == 0
             for col_name in (
                 "is_known_positive",
-                # "trial_non_sig_better",
-                # "trial_sig_worse",
-                # "trial_non_sig_worse",
+                "trial_non_sig_better",
+                "trial_sig_worse",
+                "trial_non_sig_worse",
+                "mid_evidence_matrix",
+                "mid_evidence_crowdsourced",
+                "archive_biomedical_review",
             )
         ]
     )
