@@ -3,275 +3,152 @@ fabricator.ground_truth:
 
 fabricator.rtx_kg2:
   nodes:
+    num_rows: 500
     columns:
       id:
         type: generate_unique_id
         prefixes:
-          - PUBCHEM_COMPOUND
-          - CHEBI
-          - ATC
-          - UMLS
-        delimiter: ':'
-      original_id:
-        type: generate_values
-        sample_values:
-          - ATC:A02BD05
-          - ATC:A02BD07
-          - ATC:A02BD08
-          - ATC:A02BD14
-          - CHEBI:65265
-          - CHEBI:94758
-          - PUBCHEM_COMPOUND:123995
-          - PUBCHEM_COMPOUND:23257
-          - PUBCHEM_COMPOUND:517072
-          - PUBCHEM_COMPOUND:5460514
-          - PUBCHEM_COMPOUND:6918582
-          - PUBCHEM_COMPOUND:91276
-          - PUBCHEM_COMPOUND:9793815
-          - UMLS:C0003138
-          - UMLS:C0677814
-          - UMLS:C0717419
-          - UMLS:C0772481
-          - UMLS:C2928684
-          - UMLS:C3652662
-          - UMLS:C5227844
+          - "RTX"
+        delimiter: ":"
+        id_length: 8
       name:
-        type: generate_values
-        sample_values:
-          - AMOXICILLIN/CLARITHROMYCIN/LANSOPRAZOLE
-          - AMOXICILLIN/CLARITHROMYCIN/OMEPRAZOLE
-          - AMOXICILLIN/CLARITHROMYCIN/VONOPRAZAN
-          - Antacids
-          - Dexol
-          - Dihydroxyaluminum Sodium Carbonate
-          - Disodium tetrahydroxidodi-mu-peroxido-diborate
-          - Elmex
-          - Olaflur
-          - Roxane
-          - Roxatidine
-          - Tibezonium iodide
-          - antacid
-          - bismuth subcitrate / metronidazole / tetracycline
-          - bismuth subcitrate, tetracycline and metronidazole
-          - dihydroxialumini sodium carbonate
-          - lansoprazole, amoxicillin and clarithromycin
-          - omeprazole, amoxicillin and clarithromycin
-          - tibezonium iodide
-          - vonoprazan, amoxicillin and clarithromycin
+        type: generate_unique_id
+        prefixes:
+          - name
+        delimiter: "_"
+        inject_nulls:
+          probability: 0.2
+      all_names:string[]:
+        type: faker
+        provider: name
       category:
         type: generate_values
         sample_values:
-          - biolink:ChemicalEntity
           - biolink:Drug
-          - biolink:MolecularMixture
-          - biolink:SmallMolecule
-      all_names:
-        type: generate_values
-        sample_values:
-          - AMOXICILLIN/CLARITHROMYCIN/LANSOPRAZOLE
-          - AMOXICILLIN/CLARITHROMYCIN/OMEPRAZOLE|Amoxicillin/Clarithromycin/Omeprazole|amoxicillin/clarithromycin/omeprazole
-          - AMOXICILLIN/CLARITHROMYCIN/VONOPRAZAN
-          - Antacids
-          - Antacids|antacid|ANTACIDS
-          - Olaflur
-          - Olaflur|amine fluoride 297|OLAFLUR|olaflur
-          - ROXATIDINE|Roxane|ROXATIDINE ACETATE|roxatidine|Roxatidine acetate
-            (BAN)|aceroxatidine|roxatidine acetate|roxatidine acetate
-            hydrochloride|Roxatidine acetate
-          - ROXATIDINE|roxatidine|Roxatidine|desacetyl-TZU-0460
-          - Sodium perborate monohydrate (USAN)|Sodium Perborate|SODIUM
-            PERBORATE|sodium perborate
-          - Tibezonium Iodide|tibezonium iodide|TIBEZONIUM IODIDE|Tibezonium iodide
-          - Vonoprazan, amoxicillin and clarithromycin|vonoprazan, amoxicillin and
-            clarithromycin
-          - bismuth subcitrate / metronidazole / tetracycline
-          - bismuth subcitrate, tetracycline and metronidazole|Bismuth subcitrate,
-            tetracycline and metronidazole
-          - dihydroxialumini sodium carbonate
-          - dihydroxyaluminum sodium carbonate Chewable Tablet|dihydroxialumini
-            sodium carbonate|dihydroxyaluminum sodium carbonate|DIHYDROXIALUMINI
-            SODIUM CARBONATE|Dihydroxyaluminum sodium carbonate|Dihydroxyaluminum
-            Sodium Carbonate
-          - lansoprazole, amoxicillin and clarithromycin
-          - omeprazole, amoxicillin and clarithromycin
-          - sodium perborate|sodium perborate Oral Liquid Product|sodium perborate
-            686 MG/ML Mouthwash|sodium perborate Dental Product|sodium perborate
-            tetrahydrate|sodium perborate Mouthwash Product|sodium perborate
-            Mouthwash|sodium perborate monohydrate|sodium perborate 686 MG/ML|Sodium
-            Perborate Monohydrate
-          - tibezonium iodide
+          - biolink:Disease
+          - biolink:Gene
+          - biolink:ChemicalSubstance
+          - biolink:Protein
       all_categories:
-        type: generate_values
-        sample_values:
-          - biolink:ChemicalEntity
-          - biolink:ChemicalEntity|biolink:Drug
-          - biolink:Drug
-          - biolink:MolecularMixture
-          - biolink:MolecularMixture|biolink:Drug
-          - biolink:SmallMolecule|biolink:Drug
-          - biolink:SmallMolecule|biolink:Drug|biolink:MolecularEntity
+        type: row_apply
+        input_columns: [ "nodes.category" ]
+        row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
+        row_func_kwargs:
+          delimiter: "|"
+        resize: True
+        seed: 590590
       iri:
-        type: generate_values
-        sample_values:
-          - http://purl_bioontology.org/ontology/ATC/A02BD05
-          - http://purl_bioontology.org/ontology/ATC/A02BD07
-          - http://purl_bioontology.org/ontology/ATC/A02BD08
-          - http://purl_bioontology.org/ontology/ATC/A02BD14
-          - http://purl_obolibrary.org/obo/CHEBI_65265
-          - http://purl_obolibrary.org/obo/CHEBI_94758
-          - https://identifiers_org/umls:C0003138
-          - https://identifiers_org/umls:C0677814
-          - https://identifiers_org/umls:C0717419
-          - https://identifiers_org/umls:C0772481
-          - https://identifiers_org/umls:C2928684
-          - https://identifiers_org/umls:C3652662
-          - https://identifiers_org/umls:C5227844
+        type: faker
+        provider: url
       description:
-        type: generate_values
-        sample_values:
-          - Any substance which is used to neutralise stomach acidity_
-          - 'DIHYDROXIALUMINI SODIUM CARBONATE; FULL_MW:143_99; MAX_FDA_APPROVAL_PHASE:
-          -1.0'
-          - Olaflur which is also referred to as elmex gel is an ingredient used in
-            toothpaste which helps in the prevention of dental caries_
-          - 'ROXATIDINE; FULL_MW:306_41; MAX_FDA_APPROVAL_PHASE: -1.0'
-          - 'Roxatidine acetate is only found in individuals that have used or taken this
-          drug_ It is a specific and competitive H2 receptor antagonist. It is currently
-          approved in South Africa under the tradename Roxit.The H2 antagonists are
-          competitive inhibitors of histamine at the parietal cell H2 receptor. They
-          suppress the normal secretion of acid by parietal cells and the meal-stimulated
-          secretion of acid. They accomplish this by two mechanisms: histamine released
-          by ECL cells in the stomach is blocked from binding on parietal cell H2 receptors
-          which stimulate acid secretion, and other substances that promote acid secretion
-          (such as gastrin and acetylcholine) have a reduced effect on parietal cells
-          when the H2 receptors are blocked.'
-          - 'SODIUM PERBORATE; FULL_MW:199_63; MAX_FDA_APPROVAL_PHASE: 4.0'
-          - 'Substances that counteract or neutralize acidity of the GASTROINTESTINAL
-          TRACT_; Natural or synthetic compounds or mixtures, Antiacid Preparations
-          such as sodium bicarbonate, sodium citrate, and phosphate salts act as proton
-          acceptors, neutralizing the acidity of a biologic environment (skin, gastric
-          content, urine, etc.) and raising the pH. These agents are used topically
-          or systemically for management of metabolic acidosis, improved muscle contraction,
-          and hyper-acidic conditions (preventing, counteracting, or neutralizing stomach
-          acidity). (NCI04); UMLS Semantic Type: STY:T121'
-          - 'TIBEZONIUM IODIDE; FULL_MW:601_62; MAX_FDA_APPROVAL_PHASE: -1.0'
-          - 'UMLS Semantic Type: STY:T109; UMLS Semantic Type: STY:T121'
-          - 'UMLS Semantic Type: STY:T109; UMLS Semantic Type: STY:T195'
-          - 'UMLS Semantic Type: STY:T121'
-          - 'UMLS Semantic Type: STY:T121; UMLS Semantic Type: STY:T197'
+        type: generate_unique_id
+        prefixes:
+          - description
+        delimiter: "_"
       equivalent_curies:
-        type: generate_values
+        type: generate_random_arrays
+        delimiter: "|"
         sample_values:
-          - ATC:A01AA03|CHEMBL_COMPOUND:CHEMBL2106575|NCIT:C175173|MESH:C036238|UMLS:C0051602|CAS:6818-37-7|UNII:8NY9L8837D|DRUGBANK:DB13290|PUBCHEM.COMPOUND:23257|INCHIKEY:ZVVSSOQAYNYNPP-UHFFFAOYSA-N
-          - ATC:A02BD05
-          - ATC:A02BD07
-          - ATC:A02BD14|KEGG_DRUG:D10775
-          - CHEMBL_COMPOUND:CHEMBL3707333|KEGG.DRUG:D07066|VANDF:4020415|NDDF:003159|RXNORM:36702|ATC:A01AB19|CAS:15120-21-5|PUBCHEM.COMPOUND:5460514|DrugCentral:4777|INCHIKEY:JBUKJLNBQDQXLI-UHFFFAOYSA-N|NCIT:C84164|CHV:0000014832|CHEBI:30178
-          - CHEMBL_COMPOUND:CHEMBL4802233|HMDB:HMDB0257317|UNII:IV9VHT3YUM|NCIT:C152265|RXNORM:114817|CHEBI:230550|MESH:C050717|UMLS:C0057506|NDDF:006256|ATC:A02BA06|CAS:78273-80-0|PUBCHEM.COMPOUND:91276|INCHIKEY:BCCREUFCSIMJFS-UHFFFAOYSA-N
-          - DRUGBANK:DB13702|UNII:E9P274AJEW|NCIT:C72650|CAS:54663-47-7|CHEMBL_COMPOUND:CHEMBL2107065|ATC:A01AB15|RXNORM:237141|PUBCHEM.COMPOUND:6918582|INCHIKEY:YTSPICCNZMNDQT-UHFFFAOYSA-M
-          - INCHIKEY:GBVKIUSFVYOQEA-UHFFFAOYSA-N|PUBCHEM_COMPOUND:123995|MESH:C495399|UMLS:C0772032|CAS:37357-55-4
-          - KEGG_DRUG:D08495|RXNORM:35803|DRUGBANK:DB08806|CHEMBL.COMPOUND:CHEMBL46102|VANDF:4025267|INCHIKEY:SMTZFNFIKUPEJC-UHFFFAOYSA-N|MESH:C053742|DrugCentral:2408|CAS:78628-28-1|RXCUI:35803|HMDB:HMDB0015695|RXCUI:114817|KEGG.DRUG:D01467|NDDF:006257|UMLS:C0771830|PUBCHEM.COMPOUND:5105|UNII:ZUP3LSD0DO|RXCUI:236543|VANDF:4025268|UMLS:C0378091|PathWhiz.Compound:9942|CHEBI:94758|UMLS:C0073601
-          - KEGG_DRUG:D10245|ATC:A02BD08
-          - NDDF:001130|VANDF:4021616|MESH:D000863|CHV:0000001233|CHEBI:65265|ATC:A02A
-          - PUBCHEM_COMPOUND:23676691|RXNORM:1991500|RXNORM:1159679|UNII:822HSQ655R|NCIT:C84165|CAS:7632-04-4|RXCUI:106161|UMLS:C3214062|UMLS:C0074750|RXCUI:2104324|MESH:C027707|RXNORM:2104324|RXNORM:106161|UMLS:C1132610|RXCUI:402834|RXCUI:1159679|INCHIKEY:BXULPSCUJWIATB-UHFFFAOYSA-M|UNII:Y52BK1W96C|RXCUI:1295191|RXNORM:1159680|RXCUI:36702|PUBCHEM.COMPOUND:517072|UMLS:C0357871|RXCUI:1159680|UMLS:C1657500|RXCUI:335589|RXNORM:402834|UMLS:C1322266|INCHIKEY:YKLJGMBLPUQQOI-UHFFFAOYSA-M|UMLS:C3214063|UMLS:C3465855|UMLS:C1655125|RXNORM:335589|RXNORM:1295191|RXCUI:1991500
-          - UMLS:C0003138
-          - UMLS:C0677814|VANDF:4036187|NCIT:C11322|PDQ:CDR0000042883
-          - UMLS:C0772481|RXCUI:237141
-          - UMLS:C2928684|RXNORM:1007769
-          - UMLS:C3652662
-          - UNII:84H8Z9550J|RXNORM:23163|INCHIKEY:SEIGJEJVIMIXIU-UHFFFAOYSA-J|UMLS:C1245893|ATC:A02AB04|DRUGBANK:DB15825|RXCUI:23163|NDDF:001129|CHEMBL_COMPOUND:CHEMBL3707202|RXCUI:371851|PUBCHEM.COMPOUND:9793815|RXNORM:371851|UMLS:C0058135|NCIT:C76484|MESH:C016386
-          - VANDF:4024120|UMLS:C0717419
-          - VANDF:4041455|UMLS:C5227844
+          - "CHEMBL:CHEMBL25"
+          - "DRUGBANK:DB00316"
+          - "HGNC:1177"
+          - "UNIPROT:P00533"
+          - "NCBIGene:1956"
+          - "MESH:D009369"
+          - "OMIM:114480"
+          - "UMLS:C0017636"
+          - "DOID:14330"
+          - "CL:0000236"
+          - "MONDO:0005148"
       publications:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
+          - "PMID:12345678"
+          - "DOI:10.1234/example.5678"
+      international_resource_identifier:
+        type: faker
+        provider: url
+      :LABEL:
         type: generate_values
         sample_values:
-          - PMID:12729649|PMID:15646539|PMID:16220969|PMID:7904648
-          - PMID:31557052
-    num_rows: 100
+          - biolink:ThingWithTaxon
+          - biolink:BiologicalProcess
+          - biolink:NamedThing
+          - biolink:OntologyClass
+      date_discovered:
+        type: generate_dates
+        start_dt: 2010-01-01
+        end_dt: 2020-01-01
+        freq: M
+
   edges:
+    num_rows: 5000
     columns:
       subject:
         type: copy_column
-        source_column: nodes.id
-        seed: 590590
+        source_column: "nodes.id"
         sample:
-          num_rows: '@edges.num_rows'
+          num_rows: "@edges.num_rows"
+          seed: 590590
       object:
         type: copy_column
-        source_column: nodes.id
-        seed: 590590
+        source_column: "nodes.id"
         sample:
-          num_rows: '@edges.num_rows'
+          num_rows: "@edges.num_rows"
+          seed: 49494
       predicate:
         type: generate_values
         sample_values:
-          - biolink:close_match
-      primary_knowledge_source:
-        type: generate_values
-        sample_values:
-          - infores:atc-codes-umls
-      publications:
-        type: generate_values
-        sample_values:
-          - ''
-      publications_info:
-        type: generate_values
-        sample_values:
-          - ''
-      kg2_ids:
-        type: generate_values
-        sample_values:
-          - ATC:A01AA03---UMLS:xref---None---None---None---UMLS:C0772032---umls_source:ATC
-          - ATC:A01AB15---UMLS:xref---None---None---None---UMLS:C0772481---umls_source:ATC
-          - ATC:A01AB19---UMLS:xref---None---None---None---UMLS:C0074750---umls_source:ATC
-          - ATC:A02A---UMLS:xref---None---None---None---UMLS:C0003138---umls_source:ATC
-          - ATC:A02AB04---UMLS:xref---None---None---None---UMLS:C3652662---umls_source:ATC
-          - ATC:A02BA06---UMLS:xref---None---None---None---UMLS:C0378091---umls_source:ATC
-          - ATC:A02BD05---UMLS:xref---None---None---None---UMLS:C0677814---umls_source:ATC
-          - ATC:A02BD07---UMLS:xref---None---None---None---UMLS:C0717419---umls_source:ATC
-          - ATC:A02BD08---UMLS:xref---None---None---None---UMLS:C2928684---umls_source:ATC
-          - ATC:A02BD14---UMLS:xref---None---None---None---UMLS:C5227844---umls_source:ATC
-      qualified_predicate:
-        type: generate_values
-        sample_values:
-          - ''
-      qualified_object_aspect:
-        type: generate_values
-        sample_values:
-          - ''
-      qualified_object_direction:
-        type: generate_values
-        sample_values:
-          - ''
-      domain_range_exclusion:
-        type: generate_values
-        sample_values:
-          - 'False'
+          - biolink:treats
+          - biolink:interacts_with
+          - biolink:affects
+          - biolink:subclass_of
+          - biolink:is_nearby_variant_of
+          - biolink:ChemicalToChemicalDerivationAssociation
       knowledge_level:
         type: generate_values
         sample_values:
-          - knowledge_assertion
-          - logical_entailment
           - prediction
-          - statistical_association
-          - observation
-          - not_provided
+          - knowledge_assertion
       agent_type:
         type: generate_values
         sample_values:
-          - manual_agent
-          - automated_agent
-          - data_analysis_pipeline
           - computational_model
-          - text_mining_agent
-          - image_processing_agent
-          - manual_validation_of_automated_agent
-          - not_provided
+          - manual_agent
       aggregator_knowledge_source:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
+          - infores:semmeddb
+          - infores:gtex
+          - infores:ubergraph
+          - infores:snpeff
+      primary_knowledge_source:
+        type: faker
+        provider: name
+      publications:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
+          - "PMID:12345678"
+          - "DOI:10.1234/example.5678"
+      subject_aspect_qualifier:
+        type: faker
+        provider: word
+      subject_direction_qualifier:
         type: generate_values
         sample_values:
-          - infores:rtx-kg2
-    num_rows: 100
+          - "increased"
+          - "decreased"
+      object_aspect_qualifier:
+        type: faker
+        provider: word
+      object_direction_qualifier:
+        type: generate_values
+        sample_values:
+          - "increased"
+          - "decreased"
 
   pubmed_ids_mapping:
     num_rows: 50
