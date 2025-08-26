@@ -1,5 +1,6 @@
 import os
 from copy import deepcopy
+from importlib.metadata import version
 from typing import Any, Dict, Optional
 
 from matrix.utils.environment import load_environment_variables
@@ -66,3 +67,12 @@ def env(key: str, default: str = None, allow_null: str = False) -> Optional[str]
 def if_null(val: Optional[Any], if_null_val: str, else_val: str):
     """Resolver to conditionally load a configuration entry."""
     return if_null_val if val is None else else_val
+
+
+def get_matrix_schema_version() -> str:
+    """Get the version of the installed matrix-schema package with 'v' prefix.
+
+    Returns:
+        The version string with 'v' prefix (e.g., "v0.4.0").
+    """
+    return f"v{version('matrix-schema')}"

@@ -64,7 +64,7 @@ data_sources:
   orchard:
     version: 20250801
   matrix_schema:
-    version: v0.2.3
+    version: ${get_matrix_schema_version:}
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation. Will make PR.
 mlflow_artifact_root: null
