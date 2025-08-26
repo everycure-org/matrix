@@ -121,7 +121,7 @@ def union_and_deduplicate_nodes(
         unioned_nodes.join(core_id_mapping.withColumnRenamed("normalized_id", "id"), on="id", how="left")
         .withColumn("id", F.coalesce("core_id", "id"))
         .withColumn("name", F.coalesce("core_name", "name"))
-        .drop("core_id", "core_name")
+        .drop("core_name")
     )
 
     unioned_datasets = (
@@ -132,6 +132,7 @@ def union_and_deduplicate_nodes(
             F.first("category", ignorenulls=True).alias("category"),
             F.first("description", ignorenulls=True).alias("description"),
             F.first("international_resource_identifier", ignorenulls=True).alias("international_resource_identifier"),
+            F.first("core_id", ignorenulls=True).alias("core_id"),
             F.flatten(F.collect_set("equivalent_identifiers")).alias("equivalent_identifiers"),
             F.flatten(F.collect_set("all_categories")).alias("all_categories"),
             F.flatten(F.collect_set("labels")).alias("labels"),
@@ -143,6 +144,7 @@ def union_and_deduplicate_nodes(
     # this is especially important if we integrate multiple KGs
 
     if retrieve_most_specific_category:
+        # Get the updated categories and all_categories
         unioned_datasets = unioned_datasets.transform(determine_most_specific_category)
 
     return unioned_datasets.select(*cols)
@@ -343,6 +345,7 @@ def normalize_core_nodes(
 
 def create_core_id_mapping(*nodes: ps.DataFrame) -> ps.DataFrame:
     """Creates a mapping from normalized_id to core_id for core sources."""
+
     df = _union_datasets(*nodes)
 
     df_filtered = df.select("id", "core_id", "name").filter(  # 'id' is already the normalized_id at this point
