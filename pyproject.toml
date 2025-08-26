@@ -3,14 +3,14 @@
 [project]
 name = "matrix"
 version = "0.1.0"
-requires-python = "==3.11.13"
+requires-python = "~=3.11.13"
 dependencies = [
-    "matrix-pipeline",
-    "matrix-docs",
-    "matrix-auth",
-    "matrix-gcp-datasets", 
-    "matrix-mlflow-utils",
-    "matrix-fabricator",
+    # "matrix-pipeline",
+    # "matrix-docs",
+    # "matrix-auth",
+    # "matrix-gcp-datasets", 
+    # "matrix-mlflow-utils",
+    # "matrix-fabricator",
     "tqdm>=4.67.1",
     "pre-commit>=4.2.0",
 ]

@@ -49,7 +49,6 @@ pipelines/matrix/mlruns/
 pipelines/matrix/compose/
 pipelines/matrix/build/
 pipelines/matrix/.viz/
-pipelines/matrix/tests/
 pipelines/matrix/example_notebook.ipynb
 pipelines/matrix/working_workflow.yaml
 

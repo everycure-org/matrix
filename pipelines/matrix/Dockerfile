@@ -17,7 +17,7 @@ ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
 # ------- Dependencies start ------
 # ---------------------------------
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.8.13 /uv /uvx /bin/
 
 WORKDIR /matrix
 COPY pyproject.toml uv.lock ./
@@ -31,8 +31,8 @@ COPY docs/pyproject.toml docs/pyproject.toml
 WORKDIR /matrix/pipelines/matrix
 COPY pipelines/matrix/pyproject.toml .
 
-ENV UV_NO_CACHE=1
-RUN uv sync --locked
+RUN echo 'this is a test, that should always be cached'
+RUN --mount=type=cache,target=/root/.cache uv sync --frozen --no-install-project
 
 # enables kedro & python to be in the path
 ENV PATH=/matrix/.venv/bin:$PATH
@@ -40,7 +40,7 @@ ENV PATH=/matrix/.venv/bin:$PATH
 COPY pipelines/matrix/conf/base/spark.yml ./conf/base/spark.yml
 COPY pipelines/matrix/scripts/maven-deps.py ./maven-deps.py
 
-RUN python maven-deps.py && rm -rf /root/.ivy2/cache
+RUN --mount=type=cache,target=/root/.ivy2/cache python maven-deps.py
 # ---------- Dependencies end -----
 # ---------------------------------
 
