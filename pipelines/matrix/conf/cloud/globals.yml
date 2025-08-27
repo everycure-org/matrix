@@ -41,8 +41,8 @@ paths:
   matrix_transformations:  ${run_dir}/datasets/matrix_transformations
   inference:          ${run_dir}/datasets/inference
   
-  # Tmp. directory using k8s emph. storage
-  tmp:           data/tmp
+  # Tmp. directory using k8s volume attached to the pod.
+  tmp:           /data/tmp
 
   # Embedding cache dataset
   cache:         ${runtime_gcs_bucket}/kedro/data/cache

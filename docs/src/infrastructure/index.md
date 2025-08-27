@@ -161,7 +161,12 @@ Below is a screenshot of our favorite Kubernetes management tool `k9s` ([GitHub]
 
 To deploy our code onto our cluster, we need to *package it into [OCI images](https://opencontainers.org/)*. We leverage GitHub Actions to build and ship our code to the *Artifact Registry* which is simply a place where we store all our images.
 
-We've created a reusable [Artifact Registry Terraform module](terraform_modules/artifact_registry_module.md) that automatically manages image retention policies, helping to control storage costs while maintaining the images we need. The module is configured to delete images older than 3 days by default, with options to keep a minimum number of recent versions for production environments.
+We've created a reusable [Artifact Registry Terraform module](terraform_modules/artifact_registry_module.md) that automatically manages image retention policies, helping to control storage costs while maintaining the images we need. The module provides dual-layer cleanup:
+
+- **Scheduled cleanup**: Automatically deletes images older than 14 days (configurable). This is added so that failed runs could be executed within the 14 days window.
+- **Workflow-based cleanup**: Immediately deletes Docker images after successful Argo Workflow completion.
+
+This approach minimizes storage costs by combining immediate cleanup with scheduled retention policies, ensuring optimal cost management without impacting development workflows.
 
 At this stage we have our code built, tested, packaged and an API (Kubernetes) defined on how to execute it. All we need now is raw compute and storage. This is where Google Cloud comes in.
 
@@ -187,6 +192,10 @@ Our Kedro pipeline integrates directly with MLflow using the [kedro-mlflow](http
 Furthermore, MLflow allows us to store and version machine learning models, facilitating model deployment and serving. It enables collaboration among team members by providing a centralized platform for experiment tracking. The plugin automates the logging of metrics, parameters, and artifacts during pipeline execution, which is crucial for maintaining a comprehensive record of our machine learning experiments.
 
 MLflow also offers customizable dashboards and plots for visualizing results, supporting reproducibility by capturing the entire ML lifecycle. This integration streamlines our workflow and enables us to make data-driven decisions more efficiently, aligning perfectly with our goal of maintaining a fast learning loop and open scientific method.
+
+### Orchard Data Access Integration
+
+Our platform integrates with the orchard datasets to provide Matrix production users access to both development and production orchard data. This cross-project integration is implemented through custom IAM roles and secure service account impersonation, enabling seamless access to orchard BigQuery datasets from within the Matrix Production pipelines. For detailed information about the implementation and usage, see the [Orchard Data Access documentation](orchard_data_access.md).
 
 ### [Vertex AI](https://console.cloud.google.com/vertex-ai/workbench/instances)
 

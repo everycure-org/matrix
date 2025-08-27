@@ -8,8 +8,7 @@ locals {
     "roles/dns.admin",
     "roles/bigquery.jobUser",
     "roles/aiplatform.user",
-    "roles/artifactregistry.writer",
-    "roles/artifactregistry.reader",
+    "roles/artifactregistry.admin", # Required for deleting images in cleanup workflows (includes reader/writer permissions)
   ]
 }
 

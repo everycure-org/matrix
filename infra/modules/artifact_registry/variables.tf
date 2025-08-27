@@ -48,10 +48,3 @@ variable "keep_count" {
   type        = number
   default     = 0
 }
-
-variable "sample_run_tag_prefixes" {
-  description = "The tag prefixes for sample-run images."
-  type        = list(string)
-  default     = []
-
-}

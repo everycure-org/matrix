@@ -519,8 +519,8 @@ def test_argo_template_config_boilerplate(argo_default_resources: ArgoResourceCo
     # Verify pipeline templates
     templates = spec["templates"]
     pipeline_names = [template["name"] for template in templates]
-    # assert that the template contains our 3 expected templates
-    assert ["kedro", "neo4j", "pipeline"] == pipeline_names
+    # assert that the template contains our 5 expected templates
+    assert ["kedro", "neo4j", "pipeline", "cleanup-handler", "delete-artifact-images"] == pipeline_names
 
 
 def test_resources_of_argo_template_config_pipelines() -> None:
@@ -538,7 +538,7 @@ def test_resources_of_argo_template_config_pipelines() -> None:
     # Verify pipeline templates
     templates = spec["templates"]
     pipeline_names = [template["name"] for template in templates]
-    assert ["kedro", "neo4j", "pipeline"] == pipeline_names
+    assert ["kedro", "neo4j", "pipeline", "cleanup-handler", "delete-artifact-images"] == pipeline_names
 
     # Verify pipeline_one template
 
@@ -603,3 +603,277 @@ def test_retry_strategy_in_argo_template() -> None:
     assert "lastRetry.message matches '.*imminent node shutdown.*'" in expr
     assert "lastRetry.message matches '.*node is draining.*'" in expr
     assert "lastRetry.exitCode != 137" in expr
+
+
+def test_pod_gc_strategy_in_argo_template() -> None:
+    """Ensure the Argo workflow spec contains the expected podGC configuration."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    # Verify podGC configuration exists
+    assert "podGC" in spec
+    assert spec["podGC"]["strategy"] == "OnPodCompletion"
+
+
+def test_ephemeral_storage_in_pod_spec_patch() -> None:
+    """Ensure the kedro template contains ephemeral storage configuration in podSpecPatch."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+        ephemeral_storage_limit=256,  # Test with custom ephemeral storage
+        ephemeral_storage_request=64,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
+
+    # Verify podSpecPatch exists
+    assert "podSpecPatch" in kedro_template
+    pod_spec_patch = kedro_template["podSpecPatch"]
+
+    # Verify ephemeral volume configuration is present in podSpecPatch
+    assert "volumes:" in pod_spec_patch
+    assert "name: scratch" in pod_spec_patch
+    assert "ephemeral:" in pod_spec_patch
+    assert "volumeClaimTemplate:" in pod_spec_patch
+    assert 'accessModes: ["ReadWriteOnce"]' in pod_spec_patch
+    assert '"{{inputs.parameters.ephemeral_storage_limit}}Gi"' in pod_spec_patch
+
+    # Verify volume mounts are configured
+    assert "volumeMounts:" in pod_spec_patch
+    assert "name: scratch" in pod_spec_patch
+    assert "mountPath: /data" in pod_spec_patch
+
+
+def test_ephemeral_storage_parameters_in_template_tasks() -> None:
+    """Ensure template tasks include ephemeral storage parameters."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+        ephemeral_storage_limit=128,
+        ephemeral_storage_request=32,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    # Verify pipeline template exists
+    pipeline_template = next(t for t in spec["templates"] if t["name"] == "pipeline")
+    assert "dag" in pipeline_template
+
+    # Check that tasks have ephemeral storage parameters
+    if pipeline_template["dag"]["tasks"]:
+        task = pipeline_template["dag"]["tasks"][0]  # Check first task
+        parameters = {p["name"]: p["value"] for p in task["arguments"]["parameters"]}
+
+        # Verify ephemeral storage parameters are present
+        assert "ephemeral_storage_request" in parameters
+        assert "ephemeral_storage_limit" in parameters
+        assert parameters["ephemeral_storage_request"] == 0  # Default request is 0
+        assert parameters["ephemeral_storage_limit"] == argo_default_resources.ephemeral_storage_limit
+
+
+def test_kedro_template_input_parameters_include_ephemeral_storage() -> None:
+    """Ensure the kedro template declares ephemeral storage as input parameters."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
+
+    # Verify input parameters include ephemeral storage
+    assert "inputs" in kedro_template
+    assert "parameters" in kedro_template["inputs"]
+
+    parameter_names = [p["name"] for p in kedro_template["inputs"]["parameters"]]
+    assert "ephemeral_storage_request" in parameter_names
+    assert "ephemeral_storage_limit" in parameter_names
+
+
+def test_neo4j_template_ephemeral_storage_configuration() -> None:
+    """Ensure the neo4j template includes ephemeral storage configuration."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+        ephemeral_storage_limit=200,
+        ephemeral_storage_request=50,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    neo4j_template = next(t for t in spec["templates"] if t["name"] == "neo4j")
+
+    # Verify neo4j template has podSpecPatch with ephemeral storage
+    assert "podSpecPatch" in neo4j_template
+    pod_spec_patch = neo4j_template["podSpecPatch"]
+
+    # Verify ephemeral volume configuration
+    assert "volumes:" in pod_spec_patch
+    assert "name: scratch" in pod_spec_patch
+    assert "ephemeral:" in pod_spec_patch
+    assert "volumeClaimTemplate:" in pod_spec_patch
+    assert '"{{inputs.parameters.ephemeral_storage_limit}}Gi"' in pod_spec_patch
+
+    # Verify volume mounts for Neo4j sidecar
+    assert "volumeMounts" in pod_spec_patch
+    assert "mountPath: /data" in pod_spec_patch
+
+
+def test_docker_cleanup_exit_handler() -> None:
+    """Test that the Docker cleanup exit handler is properly configured."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    # Verify onExit handler is configured
+    assert "onExit" in spec
+    assert spec["onExit"] == "cleanup-handler"
+
+    # Find cleanup handler template
+    templates = spec["templates"]
+    cleanup_handler = next((t for t in templates if t["name"] == "cleanup-handler"), None)
+    assert cleanup_handler is not None, "cleanup-handler template should exist"
+
+    # Verify cleanup handler structure
+    assert "steps" in cleanup_handler
+    assert len(cleanup_handler["steps"]) == 1
+    assert len(cleanup_handler["steps"][0]) == 1
+
+    cleanup_step = cleanup_handler["steps"][0][0]
+    assert cleanup_step["name"] == "delete-docker-images"
+    assert cleanup_step["template"] == "delete-artifact-images"
+    assert cleanup_step["when"] == "{{workflow.status}} == Succeeded"
+
+    # Verify image parameter is passed to cleanup template
+    assert "arguments" in cleanup_step
+    assert "parameters" in cleanup_step["arguments"]
+    params = cleanup_step["arguments"]["parameters"]
+    image_param = next((p for p in params if p["name"] == "image_to_delete"), None)
+    assert image_param is not None
+    assert image_param["value"] == "{{workflow.parameters.image}}"
+
+
+def test_docker_cleanup_template() -> None:
+    """Test that the Docker cleanup template is properly configured."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    # Find cleanup template
+    templates = spec["templates"]
+    cleanup_template = next((t for t in templates if t["name"] == "delete-artifact-images"), None)
+    assert cleanup_template is not None, "delete-artifact-images template should exist"
+
+    # Verify template has input parameters
+    assert "inputs" in cleanup_template
+    assert "parameters" in cleanup_template["inputs"]
+    params = cleanup_template["inputs"]["parameters"]
+    image_param = next((p for p in params if p["name"] == "image_to_delete"), None)
+    assert image_param is not None
+
+    # Verify container configuration
+    assert "container" in cleanup_template
+    container = cleanup_template["container"]
+    assert container["image"] == "gcr.io/google.com/cloudsdktool/cloud-sdk:latest"
+    assert container["command"] == ["sh", "-c"]
+
+    # Verify the cleanup script contains expected elements
+    assert "args" in container
+    assert len(container["args"]) == 1
+    script = container["args"][0]
+
+    # Check that script contains key cleanup logic
+    assert "gcloud auth list" in script
+    assert "{{inputs.parameters.image_to_delete}}" in script
+    assert "gcloud artifacts docker images delete" in script
+    assert "--quiet --delete-tags" in script
+    assert "Successfully deleted Docker image" in script
+    assert "exit 0" in script  # Non-blocking error handling
+
+
+def test_workflow_template_structure() -> None:
+    """Test the overall structure of the workflow template includes cleanup components."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    # Verify all expected templates exist
+    templates = spec["templates"]
+    template_names = [t["name"] for t in templates]
+
+    # Original templates
+    assert "kedro" in template_names
+    assert "neo4j" in template_names
+    assert "pipeline" in template_names
+
+    # New cleanup templates
+    assert "cleanup-handler" in template_names
+    assert "delete-artifact-images" in template_names
+
+    # Should have 5 templates total
+    assert len(templates) == 5
+
+
+def test_image_parameter_in_workflow_arguments() -> None:
+    """Test that the image parameter is properly defined in workflow arguments."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    # Verify image parameter exists in workflow arguments
+    assert "arguments" in spec
+    assert "parameters" in spec["arguments"]
+
+    params = spec["arguments"]["parameters"]
+    image_param = next((p for p in params if p["name"] == "image"), None)
+    assert image_param is not None
+
+    # Verify it has the expected image registry format
+    expected_image = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
+    assert image_param["value"] == expected_image
