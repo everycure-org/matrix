@@ -24,3 +24,13 @@ format:
 
 lock:
 	uv pip compile requirements.in > requirements.txt
+
+create-kg-schema-snapshot:
+	fabricator create-kg-schema-snapshot --nodes $(nodes) --edges $(edges) -o $(schema-snapshot)
+
+build-yaml-from-kg-schema-snapshot:
+	fabricator build-yaml-from-kg-schema-snapshot --nodes $(nodes) --edges $(edges) -s $(schema-snapshot) -o $(output)
+
+build-yaml-from-kgx:
+	fabricator build-yaml-from-kgx --nodes $(nodes) --edges $(edges) -o $(output)
+
