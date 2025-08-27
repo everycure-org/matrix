@@ -645,6 +645,10 @@ def test_ephemeral_storage_in_pod_spec_patch() -> None:
     # Verify ephemeral volume configuration is present in podSpecPatch
     assert "volumes:" in pod_spec_patch
     assert "name: scratch" in pod_spec_patch
+    assert "ephemeral:" in pod_spec_patch
+    assert "volumeClaimTemplate:" in pod_spec_patch
+    assert 'accessModes: ["ReadWriteOnce"]' in pod_spec_patch
+    assert '"{{inputs.parameters.ephemeral_storage_limit}}Gi"' in pod_spec_patch
 
     # Verify volume mounts are configured
     assert "volumeMounts:" in pod_spec_patch

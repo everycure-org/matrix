@@ -140,8 +140,14 @@ spec:
     podSpecPatch: |
       volumes:
           - name: scratch
-            persistentVolumeClaim:
-              claimName: {% raw %}"scratch-{{workflow.uid}}"{% endraw %}
+            ephemeral:
+                volumeClaimTemplate:
+                  spec:
+                    accessModes: ["ReadWriteOnce"]
+                    resources:
+                      requests:
+                        storage: {% raw %}"{{inputs.parameters.ephemeral_storage_limit}}Gi"
+      {% endraw %}
       terminationGracePeriodSeconds: 30
       tolerations:
         - key: "node-memory-size"
