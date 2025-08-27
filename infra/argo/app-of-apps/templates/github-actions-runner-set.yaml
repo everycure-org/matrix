@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: github-actions-runner-set
-  namespace: actions-runner-system
+  namespace: argocd
 spec:
   destination:
     namespace: actions-runner-system
