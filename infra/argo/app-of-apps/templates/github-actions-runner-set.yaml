@@ -9,9 +9,87 @@ spec:
     server: {{ .Values.spec.destination.server }}
   project: default
   source:
-    path: {{ .Values.spec.source.repoPath }}/github-actions-runner-set
+    path: {{ .Values.spec.source.repoPath }}/gha-runner-scale-set
     repoURL: {{ .Values.spec.source.repoURL }}
     targetRevision: {{ .Values.spec.source.targetRevision }}
+    helm:
+      valueFiles:
+        - values.yaml
+      values: |
+        # Override specific values here - these will override defaults in values.yaml
+        
+        # GitHub Configuration
+        githubConfigUrl: "https://github.com/everycure-org"
+        
+        # Runner Scale Set Name - this becomes your runs-on value
+        runnerScaleSetName: "everycure-gha-runners"
+        
+        # GitHub App Authentication (preferred over PAT)
+        githubConfigSecret:
+          create: false  # Will be created by External Secrets
+          name: "github-app-auth"
+
+        # Runner Group (optional - leave empty for default)
+        runnerGroup: ""
+
+        # Maximum number of runners
+        maxRunners: 50
+
+        # Minimum number of runners (0 for cost optimization)
+        minRunners: 0
+
+        # Runner template configuration
+        template:
+          spec:
+            # Node affinity - prefer spot nodes
+            affinity:
+              nodeAffinity:
+                preferredDuringSchedulingIgnoredDuringExecution:
+                  - weight: 1
+                    preference:
+                      matchExpressions:
+                        - key: spot
+                          operator: In
+                          values:
+                            - "true"
+            
+            # Required tolerations for spot and workload taints
+            tolerations:
+              - key: spot
+                operator: Equal
+                value: "true"
+                effect: NoSchedule
+              - key: workload
+                operator: Equal
+                value: "true"  
+                effect: NoSchedule
+              - key: github-actions
+                operator: Equal
+                value: "true"
+                effect: NoSchedule
+
+            # Security context for runner pod
+            securityContext:
+              runAsUser: 1001
+              runAsGroup: 1001
+              fsGroup: 1001
+
+            # Pod labels for cost tracking and identification
+            metadata:
+              labels:
+                cost-center: compute-workloads
+                workload-category: ci-cd
+                service-tier: compute
+                billing-category: github-actions-spot
+                component: github-runner
+              annotations:
+                cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+
+        # Controller manager configuration  
+        controllerServiceAccount:
+          create: true
+          annotations: {}
+          name: ""
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
