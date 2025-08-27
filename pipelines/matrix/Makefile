@@ -90,7 +90,7 @@ check_release_version_environment_variable:
 
 full_test:
 	# activate venv to ensure spark doesn't have python driver mismatches
-	uv run pytest -v tests/
+	uv run pytest -v tests/ -n auto
 
 # fast_test: export PYSPARK_PYTHON = uv run python
 fast_test: 
