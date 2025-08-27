@@ -441,19 +441,19 @@ ingestion.raw.drugbank_ground_truth.negatives:
 
 ingestion.int.drugbank_ground_truth.negative.edges@pandas:
   <<: [*_pandas_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.drugbank_gt.version}/tn_pairs
+  filepath: ${globals:paths.ingestion}/ground_truth/drugbank/${globals:data_sources.drugbank_gt.version}/tn_pairs
 
 ingestion.int.drugbank_ground_truth.positive.edges@pandas:
   <<: [*_pandas_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.drugbank_gt.version}/tp_pairs
+  filepath: ${globals:paths.ingestion}/ground_truth/drugbank/${globals:data_sources.drugbank_gt.version}/tp_pairs
 
 ingestion.int.drugbank_ground_truth.negative.edges@spark:
   <<: [*_spark_parquet, *_layer_int] 
-  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.drugbank_gt.version}/tn_pairs
+  filepath: ${globals:paths.ingestion}/ground_truth/drugbank/${globals:data_sources.drugbank_gt.version}/tn_pairs
 
 ingestion.int.drugbank_ground_truth.positive.edges@spark:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.drugbank_gt.version}/tp_pairs
+  filepath: ${globals:paths.ingestion}/ground_truth/drugbank/${globals:data_sources.drugbank_gt.version}/tp_pairs
 
 # -------------------------------------------------------------------------
 # Robokop
