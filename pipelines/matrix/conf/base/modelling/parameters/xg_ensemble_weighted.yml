@@ -27,9 +27,9 @@ modelling.xg_ensemble_weighted:
           # eps: 1.0e-6
           # w_min: 1.0e-3
           # w_max: 20.0
-          per_class: True
-          pos_label: 1
-          normalize: "per_class"
+          # per_class: True
+          # pos_label: 1
+          # normalize: "per_class"
       flat_source_embedding:
         transformer:
           _object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
