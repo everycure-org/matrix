@@ -73,6 +73,20 @@ spec:
               operator: In
               values:
               - "true"
+        - weight: 90
+          preference:
+            matchExpressions:
+            - key: node-memory-size
+              operator: In
+              values:
+              - "large"
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/arch
+              operator: In
+              values:
+              - amd64
     # Add tolerations for large memory nodes and GPU nodes
     tolerations:
     - key: "workload"
@@ -126,14 +140,8 @@ spec:
     podSpecPatch: |
       volumes:
           - name: scratch
-            ephemeral:
-              volumeClaimTemplate:
-                spec:
-                  accessModes: ["ReadWriteOnce"]
-                  resources:
-                    requests:
-                      storage: {% raw %}"{{inputs.parameters.ephemeral_storage_limit}}Gi"
-      {% endraw %}
+            persistentVolumeClaim:
+              claimName: {% raw %}"scratch-{{workflow.uid}}"{% endraw %}
       terminationGracePeriodSeconds: 30
       tolerations:
         - key: "node-memory-size"
@@ -168,7 +176,7 @@ spec:
               {% endraw %}
             volumeMounts:
               - name: scratch
-                mountPath: /scratch
+                mountPath: /data
     container: &_kedro_container
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}"
@@ -299,9 +307,9 @@ spec:
             # NOTE: We're passing in a regular bolt connection as ephemeral Neo4J has no SSL
             - name: NEO4J_HOST
               value: "bolt://127.0.0.1:7687"
-            volumeMounts:
+            volumeMounts
               - name: scratch
-                mountPath: /scratch
+                mountPath: /data
         - name: neo4j
           resources:
             requests:
