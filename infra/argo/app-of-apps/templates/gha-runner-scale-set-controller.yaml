@@ -66,12 +66,6 @@ spec:
         podAnnotations:
           cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
         
-        # Service account
-        serviceAccount:
-          create: true
-          annotations: {}
-          name: ""
-        
         # Controller flags and configuration
         flags:
           logLevel: "info"
