@@ -73,20 +73,6 @@ spec:
               operator: In
               values:
               - "true"
-        - weight: 90
-          preference:
-            matchExpressions:
-            - key: node-memory-size
-              operator: In
-              values:
-              - "large"
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: kubernetes.io/arch
-              operator: In
-              values:
-              - amd64
     # Add tolerations for large memory nodes and GPU nodes
     tolerations:
     - key: "workload"
