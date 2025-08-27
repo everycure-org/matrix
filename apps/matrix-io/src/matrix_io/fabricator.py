@@ -115,9 +115,9 @@ def build_yaml_from_kg_schema_snapshot(nodes: Path, edges: Path, schema_snapshot
     snapshot = json.loads(snapshot_content)
 
     usable_edges_columns = [c["name"] for c in snapshot.get("edges", [])]
-    size = int(round(limit / 2.0))
+    number_of_edges_to_generate = int(round(limit / 2.0))
 
-    edges_df = read_sampled_df_tsv(edges, limit=size, select=usable_edges_columns)
+    edges_df = read_sampled_df_tsv(edges, limit=number_of_edges_to_generate, select=usable_edges_columns)
 
     edge_id_columns_df = edges_df.select([pl.col("subject"), pl.col("object")])
     edge_ids_df = pl.concat(
@@ -153,7 +153,6 @@ def build_yaml_from_kg_schema_snapshot(nodes: Path, edges: Path, schema_snapshot
         yaml = ruamel.yaml.YAML()
         yaml.preserve_quotes = False
         yaml.dump(json.loads(json.dumps(data_map)), f)
-        # yaml.safe_dump(json.loads(json.dumps(data_map)), f, sort_keys=False, Dumper=yamlcore.CoreDumper)
 
 
 def build_yaml_from_kgx(nodes: Path, edges: Path, limit: int, rows: int, output: Path) -> None:
@@ -190,7 +189,6 @@ def build_yaml_from_kgx(nodes: Path, edges: Path, limit: int, rows: int, output:
         yaml = ruamel.yaml.YAML()
         yaml.preserve_quotes = False
         yaml.dump(json.loads(json.dumps(data_map)), f)
-        # yaml.safe_dump(json.loads(json.dumps(data_map)), f, sort_keys=False, Dumper=yamlcore.CoreDumper)
 
 
 def create_nodes_map(df: pl.DataFrame, rows: int) -> dict:
