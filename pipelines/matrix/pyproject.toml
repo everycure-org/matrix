@@ -23,7 +23,7 @@ markers = [
 
 [project]
 name = "matrix-pipeline"
-requires-python = "==3.11.13" #depends on unpinning numpy
+requires-python = "~=3.11.0" #depends on unpinning numpy
 readme = "README.md"
 dynamic = [ "version"]
 dependencies = [
