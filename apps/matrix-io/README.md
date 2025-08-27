@@ -13,6 +13,10 @@ This produces a json output that can be reviewed/edited and then included in a s
 ```shell
 fabricator create-kg-schema-snapshot --nodes <nodes_file> --edges <edges_file> -o schema-snapshot.json
 ```
+This produces a json output that can be reviewed/edited and then included in a subsequent 'build-yaml-from-kg-schema-snapshot' command with the CHEBI_ROLE and MONDO_SUPERCLASS columns excluded.
+```shell
+fabricator create-kg-schema-snapshot --nodes <nodes_file> --edges <edges_file> -x CHEBI_ROLE -x MONDO_SUPERCLASS -o schema-snapshot.json
+```
 
 ### Build YAML From KG Schema Snapshot
 This produces an output that can be a drop-in yaml intended for Fabricator use.
