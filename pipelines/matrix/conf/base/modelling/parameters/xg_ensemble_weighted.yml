@@ -17,7 +17,7 @@ modelling.xg_ensemble_weighted:
         transformer:
           _object: matrix.pipelines.modelling.transformers.WeightingTransformer
           head_col: source
-          tail_col: target
+          # tail_col: target
           # inverse / shomer / auto_cv / simple_eta
           strategy: auto_cv
           enabled: true
