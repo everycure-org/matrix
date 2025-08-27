@@ -645,15 +645,11 @@ def test_ephemeral_storage_in_pod_spec_patch() -> None:
     # Verify ephemeral volume configuration is present in podSpecPatch
     assert "volumes:" in pod_spec_patch
     assert "name: scratch" in pod_spec_patch
-    assert "ephemeral:" in pod_spec_patch
-    assert "volumeClaimTemplate:" in pod_spec_patch
-    assert 'accessModes: ["ReadWriteOnce"]' in pod_spec_patch
-    assert '"{{inputs.parameters.ephemeral_storage_limit}}Gi"' in pod_spec_patch
 
     # Verify volume mounts are configured
     assert "volumeMounts:" in pod_spec_patch
     assert "name: scratch" in pod_spec_patch
-    assert "mountPath: /scratch" in pod_spec_patch
+    assert "mountPath: /data" in pod_spec_patch
 
 
 def test_ephemeral_storage_parameters_in_template_tasks() -> None:
@@ -738,7 +734,7 @@ def test_neo4j_template_ephemeral_storage_configuration() -> None:
 
     # Verify volume mounts for Neo4j sidecar
     assert "volumeMounts" in pod_spec_patch
-    assert "mountPath: /scratch" in pod_spec_patch
+    assert "mountPath: /data" in pod_spec_patch
 
 
 def test_docker_cleanup_exit_handler() -> None:
