@@ -68,19 +68,6 @@ spec:
         rbac:
           create: true
         
-        # Service account
-        serviceAccount:
-          create: true
-          annotations: {}
-          name: ""
-        
-        # Auth secret configuration
-        authSecret:
-          enabled: true
-          create: false
-          name: "controller-manager"
-          annotations: {}
-        
         # Logging
         logFormat: text
   syncPolicy:
