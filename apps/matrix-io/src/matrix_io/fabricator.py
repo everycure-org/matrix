@@ -138,7 +138,7 @@ def build_yaml_from_kg_schema_snapshot(nodes: Path, edges: Path, schema_snapshot
 
     usable_nodes_columns = [c["name"] for c in snapshot.get("nodes", [])]
     nodes_df = read_sampled_df_tsv(nodes, select=usable_nodes_columns)
-    nodes_df.limit(limit)
+    nodes_df = nodes_df.limit(limit)
     try:
         nodes_df = nodes_df.filter(pl.col("id").cast(pl.Utf8).str.contains(pattern, literal=False))
     except Exception:
