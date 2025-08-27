@@ -2697,7 +2697,7 @@ requires-dist = [
     { name = "ipywidgets" },
     { name = "jsonpath-ng" },
     { name = "jupyterlab", specifier = ">=3.0" },
-    { name = "kedro", specifier = "==0.19.13" },
+    { name = "kedro", specifier = "~=0.19.13" },
     { name = "kedro-datasets", specifier = ">=6.0.0" },
     { name = "kedro-mlflow", specifier = "==0.13.4" },
     { name = "kedro-telemetry", specifier = ">=0.3.1" },
