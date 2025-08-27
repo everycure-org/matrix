@@ -37,6 +37,7 @@ jobs:
             libs/  # Only checkout libs directory to save time
       - id: set
         run: |
+          find ./
           # List all directories in libs/ and convert to JSON matrix format
           # Output: {"lib": ["matrix-auth", "matrix-fabricator", ...]}
           echo "Available libraries:"
