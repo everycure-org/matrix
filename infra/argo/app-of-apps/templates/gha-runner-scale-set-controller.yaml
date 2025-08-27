@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: actions-runner-controller
+  name: gha-runner-scale-set-controller
   namespace: argocd
 spec:
   destination:
@@ -9,7 +9,7 @@ spec:
     server: {{ .Values.spec.destination.server }}
   project: default
   source:
-    path: {{ .Values.spec.source.repoPath }}/actions-runner-controller
+    path: {{ .Values.spec.source.repoPath }}/gha-runner-scale-set-controller
     repoURL: {{ .Values.spec.source.repoURL }}
     targetRevision: {{ .Values.spec.source.targetRevision }}
     helm:
@@ -17,6 +17,8 @@ spec:
         - values.yaml
       values: |
         # Override specific values here - these will override defaults in values.yaml
+        
+        # Controller Configuration
         replicaCount: 1
         
         # Resource requests for the controller
@@ -58,15 +60,11 @@ spec:
           workload-category: platform-services
           service-tier: management
           billing-category: infrastructure
-          component: actions-runner-controller
+          component: gha-runner-scale-set-controller
         
         # Pod annotations for monitoring
         podAnnotations:
           cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
-        
-        # RBAC
-        rbac:
-          create: true
         
         # Service account
         serviceAccount:
@@ -74,15 +72,20 @@ spec:
           annotations: {}
           name: ""
         
-        # Auth secret configuration
-        authSecret:
-          enabled: true
-          create: false
-          name: "controller-manager"
-          annotations: {}
+        # Controller flags and configuration
+        flags:
+          logLevel: "info"
+          logFormat: "text"
+          runnerMaxConcurrentReconciles: 5
+          updateStrategy: "immediate"
+          excludeLabelPropagationPrefixes:
+            - "argocd.argoproj.io/instance"
         
-        # Logging
-        logFormat: text
+        # Enable metrics
+        metrics:
+          controllerManagerAddr: ":8080"
+          listenerAddr: ":8080"
+          listenerEndpoint: "/metrics"
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
