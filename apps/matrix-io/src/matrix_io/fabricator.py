@@ -47,11 +47,16 @@ def read_sampled_df_tsv(path: Path, limit: int | None = None, select: list[str] 
 
 
 def create_kg_schema_snapshot(
-    nodes: Path, edges: Path, nodes_prefix_exclusions: list[str] | None, edges_prefix_exclusions: list[str] | None, output: Path
+    nodes: Path,
+    edges: Path,
+    nodes_prefix_exclusions: list[str] | None,
+    edges_prefix_exclusions: list[str] | None,
+    output: Path,
+    n_snapshot_rows: int = 100,
 ) -> dict:
     """Create a KG schema snapshot."""
-    edges_df = read_sampled_df_tsv(edges, limit=100)
-    nodes_df = read_sampled_df_tsv(nodes, limit=100)
+    edges_df = read_sampled_df_tsv(edges, limit=n_snapshot_rows)
+    nodes_df = read_sampled_df_tsv(nodes, limit=n_snapshot_rows)
 
     # Determine columns after prefix exclusions
     def filtered_columns(df: pl.DataFrame, prefixes: list[str] | None) -> list[str]:
