@@ -46,6 +46,45 @@ def read_sampled_df_tsv(path: Path, limit: int | None = None, select: list[str] 
     return lf.collect()
 
 
+def build_column_summary(df: pl.DataFrame, colname: str) -> dict:
+    """Build a summary of a DataFrame column."""
+    s = df.get_column(colname)
+    datatype = s.dtype
+
+    try:
+        s_non_null = s.drop_nulls()
+    except Exception:
+        s_non_null = s
+    try:
+        sample = s_non_null.sample(n=6, with_replacement=True, shuffle=True)
+    except Exception:
+        sample = s_non_null.head()
+    if datatype.is_float() or datatype.is_integer():
+        values = [int(v) for v in sample.to_list() if v is not None]
+    else:
+        values = [v for v in sample.to_list() if v is not None]
+    # deduplicate while preserving order
+    seen = set()
+    deduped = []
+    for v in values:
+        if v not in seen:
+            seen.add(v)
+            deduped.append(v)
+    return {
+        "name": colname,
+        "datatype": str(s.dtype),
+        "samples": deduped,
+    }
+
+
+def filtered_columns(df: pl.DataFrame, prefixes: list[str] | None) -> list[str]:
+    """Determine columns after prefix exclusions."""
+    cols = list(df.columns)
+    if prefixes:
+        cols = [c for c in cols if not any(c.startswith(p) for p in prefixes)]
+    return cols
+
+
 def create_kg_schema_snapshot(
     nodes: Path,
     edges: Path,
@@ -58,48 +97,12 @@ def create_kg_schema_snapshot(
     edges_df = read_sampled_df_tsv(edges, limit=n_snapshot_rows)
     nodes_df = read_sampled_df_tsv(nodes, limit=n_snapshot_rows)
 
-    # Determine columns after prefix exclusions
-    def filtered_columns(df: pl.DataFrame, prefixes: list[str] | None) -> list[str]:
-        cols = list(df.columns)
-        if prefixes:
-            cols = [c for c in cols if not any(c.startswith(p) for p in prefixes)]
-        return cols
-
     edges_column_names = filtered_columns(edges_df, edges_prefix_exclusions)
     nodes_column_names = filtered_columns(nodes_df, nodes_prefix_exclusions)
 
-    def column_summary(df: pl.DataFrame, colname: str) -> dict:
-        s = df.get_column(colname)
-        datatype = s.dtype
+    edges_columns = [build_column_summary(edges_df, cn) for cn in edges_column_names]
+    nodes_columns = [build_column_summary(nodes_df, cn) for cn in nodes_column_names]
 
-        # sample non-null values cast to str
-        try:
-            s_non_null = s.drop_nulls()
-        except Exception:
-            s_non_null = s
-        try:
-            sample = s_non_null.sample(n=6, with_replacement=True, shuffle=True)
-        except Exception:
-            sample = s_non_null.head()
-        if datatype.is_float() or datatype.is_integer():
-            values = [int(v) for v in sample.to_list() if v is not None]
-        else:
-            values = [v for v in sample.to_list() if v is not None]
-        # deduplicate while preserving order
-        seen = set()
-        deduped = []
-        for v in values:
-            if v not in seen:
-                seen.add(v)
-                deduped.append(v)
-        return {
-            "name": colname,
-            "datatype": str(s.dtype),
-            "samples": deduped,
-        }
-
-    edges_columns = [column_summary(edges_df, cn) for cn in edges_column_names]
-    nodes_columns = [column_summary(nodes_df, cn) for cn in nodes_column_names]
     profile = {"nodes": nodes_columns, "edges": edges_columns}
 
     with output.open("w", encoding="utf-8") as f:
