@@ -9,7 +9,9 @@ from pathlib import Path
 import polars as pl
 import ruamel.yaml
 
-# Constants ported from Rust lazy_static
+# https://biolink.github.io/biolink-model/KnowledgeLevelEnum/
+# https://biolink.github.io/biolink-model/AgentTypeEnum/
+# https://biolink.github.io/biolink-model/DirectionQualifierEnum/
 KNOWN_TYPE_VALUES = {
     "agent_type": [
         "manual_agent",
@@ -29,22 +31,8 @@ KNOWN_TYPE_VALUES = {
         "observation",
         "not_provided",
     ],
-    "object_direction_qualifier": [
-        "knowledge_assertion",
-        "logical_entailment",
-        "prediction",
-        "statistical_association",
-        "observation",
-        "not_provided",
-    ],
-    "subject_direction_qualifier": [
-        "knowledge_assertion",
-        "logical_entailment",
-        "prediction",
-        "statistical_association",
-        "observation",
-        "not_provided",
-    ],
+    "object_direction_qualifier": ["increased", "upregulated", "decreased", "downregulated"],
+    "subject_direction_qualifier": ["increased", "upregulated", "decreased", "downregulated"],
 }
 
 
