@@ -38,7 +38,7 @@ dependencies = [
     "openpyxl",
     "jupyter",
     "pyyaml",
-    "mkdocs-drawio",
+    "mkdocs-drawio~=1.8.0",
     "mkdocs-git-committers-plugin-2<2.4.0",  # pinned due to https://github.com/ojacques/mkdocs-git-committers-plugin-2/issues/72
     "mkdocs-git-authors-plugin",
     "pytest",

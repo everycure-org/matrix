@@ -2441,7 +2441,7 @@ requires-dist = [
     { name = "jupyter" },
     { name = "mkdocs-awesome-pages-plugin" },
     { name = "mkdocs-blogging-plugin" },
-    { name = "mkdocs-drawio" },
+    { name = "mkdocs-drawio", specifier = "~=1.8.0" },
     { name = "mkdocs-git-authors-plugin" },
     { name = "mkdocs-git-committers-plugin-2", specifier = "<2.4.0" },
     { name = "mkdocs-git-revision-date-localized-plugin" },
@@ -2927,18 +2927,16 @@ wheels = [
 
 [[package]]
 name = "mkdocs-drawio"
-version = "1.11.2"
+version = "1.8.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beautifulsoup4" },
-    { name = "jinja2" },
     { name = "lxml" },
     { name = "mkdocs" },
-    { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6c/bc/0ea7ba44e4f4f065554e35b3e32a4d82d0c408bbe8f1d67ea36baa4d47cb/mkdocs_drawio-1.11.2.tar.gz", hash = "sha256:73f23f7aac3147807908afa800463ab415a714d11df1cd12424500f375c9ebfa", size = 5767, upload-time = "2025-05-23T09:33:38.154Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ec/07/fa879356ac1e6b536d91f0e6d3b3af99836d8a6038b88e4e8f4be0715279/mkdocs_drawio-1.8.2.tar.gz", hash = "sha256:5f494091e89e390d2e705ac77073713dab29153bcf3d221caa0e25edd8d93593", size = 4772, upload-time = "2025-03-03T11:43:06.886Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/68/0c/17a9c98ec2b71ab523f0dce728b81ee0d567857da1b4d5908ab1de188c09/mkdocs_drawio-1.11.2-py3-none-any.whl", hash = "sha256:754f224dd467a90d76d170c41d544322daa1ba1f3bd322a33f98b9884d96ec71", size = 7169, upload-time = "2025-05-23T09:33:36.476Z" },
+    { url = "https://files.pythonhosted.org/packages/9a/20/6a48b28b024ae68214da6e4cecb87177219b43c4b097f6433366bb515c17/mkdocs_drawio-1.8.2-py3-none-any.whl", hash = "sha256:62e2e39182ed1603461e013f92d3ab105090cea50aa0cd0749aceb29d9e8dd91", size = 5597, upload-time = "2025-03-03T11:43:05.257Z" },
 ]
 
 [[package]]
