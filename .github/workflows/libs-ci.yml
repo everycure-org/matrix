@@ -76,6 +76,9 @@ jobs:
       
       # Step 2c: Run tests only if changes were detected
       # Install dependencies and run pytest for the changed library
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.13"
       - name: Install & Test ${{ matrix.lib }}
         if: steps.filter.outputs.changed == 'true'
         run: |
