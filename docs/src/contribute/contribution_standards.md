@@ -1,159 +1,180 @@
 # Contribution Standards
 
-## Formatting and Style
+## Overview
 
-We install various style and formatting enforcers in our `pre-commit` command which is configured in `.pre-commit-config.yaml` in the root of the repository. These include `ruff` for python and `terraform` standards. 
+This document outlines the standards and practices for contributing to the MATRIX drug repurposing platform. These guidelines help maintain code quality, consistency, and facilitate collaboration across our development team.
+
+## Technology Stack & Language Standards
+
+### Languages to be used
+
+- **Python 3.11+** - Primary language for all business logic, data processing, and ML pipelines
+  - Package management via [uv](https://docs.astral.sh/uv/) (modern Python package manager)
+  - Formatting and linting with [Ruff](https://docs.astral.sh/ruff/)
+- **JavaScript/Node.js** - Dashboard applications using [Evidence.dev](https://evidence.dev/) framework only
+- **Shell/Bash** - Infrastructure automation and utility scripts
+- **SQL** - [BigQuery](https://cloud.google.com/bigquery/docs) analytics and data warehouse operations
+- **HCL** - [Terraform](https://www.terraform.io/docs)/[Terragrunt](https://terragrunt.gruntwork.io/docs/) infrastructure definitions
+
+### Restricted Languages
+
+No other programming languages should be introduced without explicit team approval and architectural justification. This includes but is not limited to Rust, Go (for application code), Java, or C++.
+
+## Development Workflow
+
+### Git Workflow
+
+- **Never commit directly** to `main` or `develop` branches
+- Always work on feature branches with descriptive names:
+  - `feat/descriptive-name` for new features
+  - `fix/descriptive-name` for bug fixes  
+  - `dev/your-name/task` for experimental work
+- Create [draft pull requests](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests#draft-pull-requests) early for feedback and collaboration
+- All PRs require core maintainer approval before merging
+- CI checks must pass (linting, testing, security scans) before review
+
+### Pull Request Process
+
+1. Create feature branch from `main`
+2. Make changes following code quality standards
+3. Run local tests: `make fast_test`
+4. Create draft PR with descriptive title and description
+5. Request review from relevant team members
+6. Address feedback and ensure CI passes
+7. Core maintainer approval required for merge
+
+## Code Quality Standards
+
+### Python Standards
+
+- **Formatting**: Use [Ruff](https://docs.astral.sh/ruff/) for formatting and linting (line length: 120)
+- **Docstrings**: Use [Google-style docstrings](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings) for complex functions and classes
+- **Import Organization**: Follow [PEP 8](https://pep8.org/) import ordering, automated by Ruff
+- **Type Hints**: Use [Python type hints](https://docs.python.org/3/library/typing.html) for function signatures where beneficial
+
+### Pre-commit Hooks
+
+All commits must pass [pre-commit hooks](https://pre-commit.com/) configured in `.pre-commit-config.yaml`:
+
+```bash
+# Install pre-commit hooks
+pre-commit install
+
+# Run hooks manually
+pre-commit run --all-files
+```
 
 !!! tip
-    Definitely recommend installing `ruff` into VSCode and make use of the automatic formatting, imports handling etc. [Extension link](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
+    Install the [Ruff VSCode extension](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff) for automatic formatting and import handling.
 
-## Documentation
+## Testing Requirements
 
-- All documentation is stored in the `docs` folder. To avoid duplication, if we want to store the same information somewhere else (e.g. as a README.md) we should use symbolic links (`ln`) to reference these documents from other parts of the repository. This makes the documentation easily discoverable when browsing the code in an IDE. For example, to link a `README.md`:
-    
-    ```
-    ln -s docs/data/datasets.md pipelines/src/matrix/datasets/readme.md
-    ```
-    
+### Test Hierarchy
 
-## Version Control and Branching
+Choose the appropriate test level based on your changes:
 
-- **Branch Naming Convention**: Use clear and descriptive branch names such as `feat/abc` for new features or `dev/abc` for developer centric work. This helps in identifying the purpose of each branch at a glance. Common prefixes are `dev/<person-name>`, `feat/feature-name` or `fix/fix-description`
-- **Early Feedback with Pull Requests**: Create Pull Requests (PRs) as drafts. This allows team members to provide early feedback and iterate quickly. Example workflow:
-    
-    ```
-    git checkout -b feat/new-feature
-    git push origin feat/new-feature
-    ```
-    
-    Then, create a draft PR on GitHub for initial feedback.
-    
-- **GitHub Releases**: We use [GitHub Releases](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) to manage and track software releases. This includes using semantic versioning to tag branches:
-    
-    ```
-    git tag -a v1.0.0 -m "Initial release"
-    git push origin v1.0.0
-    
-    ```
+- **`make fast_test`** - Quick validation during development using [pytest-testmon](https://testmon.org/)
+- **`make full_test`** - Complete test suite, required before PR submission
+- **`make integration_test`** - Required for data pipeline changes, includes Docker services
+- **`make docker_test`** - End-to-end functionality testing in containerized environment
 
-- **Special branches**: We have 2 *special* branches: `main` and `infra`. The main branch is used as is commonly done on GitHub. the `infra` branch on the other hand is used to deploy our infrastructure. Both are protected but `infra` may be operated on by our devops engineers to adjust parameters more quickly without sending many PRs. The flow across branches is visualized below. 
+### Testing Framework
 
-```mermaid
-%%{init: { 'logLevel': 'debug', 'theme': 'base', 'gitGraph': {'showBranches': true, 'showCommitLabel':true,'mainBranchName': 'production'}} }%%
-gitGraph
-   commit "init"
-   branch main
-   branch infra
-   branch "feat/k8s-cluster"
-   commit id: "cluster code"
-   checkout infra
-   merge feat/k8s-cluster
-   checkout main
-   merge infra tag: "v0.1"
-   branch "feat/new-project-x"
-   commit id: "some project code"
-   commit id: "SSO login"
-   checkout main
-   merge feat/new-project-x  tag: "v0.2"
+- **Primary**: [pytest](https://docs.pytest.org/) with plugins for coverage and mocking
+- **Coverage**: Maintain reasonable test coverage for new code
+- **Data Testing**: Use [Pandera](https://pandera.readthedocs.io/) for data validation testing
+
+## Infrastructure Standards
+
+### Infrastructure as Code
+
+All infrastructure changes must go through [Terraform](https://www.terraform.io/)/[Terragrunt](https://terragrunt.gruntwork.io/):
+
+```bash
+cd infra/deployments/hub/dev
+terragrunt validate     # Always run before commits
+terragrunt plan        # Review changes
 ```
-    
-## Code Review
 
-Code review is a crucial part of our collaborative development process and a fantastic opportunity for mutual learning and growth. We believe that every code review is a chance to:
+- Infrastructure PRs require DevOps team review
+- Test in development environment before production deployment
+- Follow [GCP best practices](https://cloud.google.com/docs/terraform/best-practices-for-terraform) for cloud resources
 
-- Share knowledge and best practices across the team
-- Learn new approaches and techniques from colleagues
-- Improve code quality through constructive feedback
-- Build a stronger, more cohesive engineering culture
+### Container Standards
 
-We encourage reviewers to:
-- Ask questions about implementation choices to understand different perspectives
-- Share alternative approaches that might be helpful
-- Point out clever solutions that they learned from
-- Take time to understand the context and goals of the changes
+- **Docker**: Use multi-stage builds and [security best practices](https://docs.docker.com/develop/security-best-practices/)
+- **Kubernetes**: Follow [Kubernetes best practices](https://kubernetes.io/docs/concepts/configuration/overview/) for resource definitions
+- **Monitoring**: Integration with [Prometheus](https://prometheus.io/docs/) and [Grafana](https://grafana.com/docs/) via kube-prometheus-stack
 
-Similarly, we encourage code authors to:
-- Explain their thought process and design decisions
-- Be open to suggestions and alternative viewpoints
-- Use the review process as an opportunity to mentor others
-- View feedback as a chance to improve and learn
+## Documentation Standards
 
-To facilitate efficient reviews:
-- Please assign reviewers to your PRs
-- Being assigned means that you are expected to review the PR, if you cannot due to workload, please let the author know so they can find someone else
+### Code Documentation
 
-!!! note
-    We have only one matrix core-maintainers group which is responsible for reviewing
-    PRs. Each PR gets auto assigned to 1 person but the creator of a PR is still expected
-    to manually assign someone who knows the codebase and can give proper feedback.
-    However, independent of what contribution, at least 1 core maintainer needs to
-    approve a PR before it can be merged.
-    
-    !!! tip
-    Remember, code review is not about finding fault - it's about learning from each
-    other and collectively improving our codebase. That said, if you spot a bug 🐛,
-    please point it out 🙃.
+- Google-style docstrings for complex functions and public APIs
+- Comments should explain "why" decisions were made, not "what" the code does
+- Keep documentation close to code - update docs with code changes
 
-## Core Maintainers
+### Development Documentation
 
-[This group](https://github.com/orgs/everycure-org/teams/core-maintainers/) is used to manage the matrix core maintainers. Please request access and let the team know if you need to be added. This enables you to approve PRs for the matrix monorepo.
+- All development documentation stored in `/docs` folder
+- Use [MkDocs](https://www.mkdocs.org/) for documentation site generation
+- Update relevant documentation when changing workflows or adding features
 
-## Project Organization
+## Code Review Guidelines
 
-- **Monorepo Approach**: We use a [monorepo](https://monorepo.tools/#what-is-a-monorepo) for MATRIX. This helps in maintaining a single repository for all parts, facilitating easier dependency management, and consistent development practices. It also encourages us all to look left and right and work together as a larger team rather than working in silos. If you want to understand the reason [why we went for this](https://monorepo.tools/#why-a-monorepo), the two links in this paragraph should give you an idea. 
-- **Makefile for Automation**: Use a `Makefile`s to streamline common development tasks, such as setting up the environment, running tests, and deploying code. Example Makefile:
-    
-    ```
-    setup:
-        pip install -r requirements.txt
-    
-    test:
-        pytest tests/
-    
-    run:
-        kedro run
-    ```
-    
+Code review is essential for knowledge sharing and code quality. 
 
-## Tools and Libraries
+### For Reviewers
 
-- **Pydantic and FastAPI**: For API creation, we use [Pydantic](https://pydantic-docs.helpmanual.io/) for data validation and settings management, and [FastAPI](https://fastapi.tiangolo.com/) for building fast, reliable, and high-performance APIs. Example usage of FastAPI and Pydantic:
-    
-    ```python
-    from fastapi import FastAPI
-    from pydantic import BaseModel
-    
-    app = FastAPI()
-    
-    class Item(BaseModel):
-        name: str
-        price: float
-        is_offer: bool = None
-    
-    @app.post("/items/")
-    async def create_item(item: Item):
-        return item
-    
-    ```
+- Ask questions to understand implementation choices
+- Share alternative approaches when helpful
+- Focus on learning opportunities and knowledge transfer
+- Point out potential bugs or security issues
+- Assign yourself if you have relevant expertise
 
-- **Pandera**: We (intend) to use [pandera](https://pandera.readthedocs.io/en/stable) for data validation of datasets in our pipeline. We currently still use a proprietary library ("data fabricator") but will remove this before going open source. Follow [this issue](https://github.com/everycure-org/matrix/issues/213) for more.
-    
+### For Authors
 
-## Rules on using AI to write code
+- Explain design decisions and trade-offs made  
+- Be receptive to suggestions and feedback
+- Use reviews as mentoring opportunities
+- Ensure PR description clearly explains the change
 
-We encourage the use of AI to write code. However, we ask that you follow these guidelines:
+### Review Requirements
 
-- Add the following headers/comments to each file / function that mainly or exclusively written by AI:
-    ```python
-    # NOTE: This file was partially generated using AI assistance.
-    <!-- NOTE: This file was partially generated using AI assistance. -->
-    // NOTE: This file was partially generated using AI assistance.
-    ```
+- At least one [core maintainer](https://github.com/orgs/everycure-org/teams/core-maintainers/) approval required
+- All CI checks must pass
+- Address reviewer feedback before merging
+- Self-review your changes before requesting review
 
-    Please add the comments _above_ a function or class or at the top of the file. Use in-line comments as we primarily want this as part of the codebase, not as part of the documentation.
+## Release Process
 
+- Use [GitHub Releases](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) with [semantic versioning](https://semver.org/)
+- Automated release PR creation with changelog generation
+- Test releases in sample environment before production
+- Follow [conventional commit](https://www.conventionalcommits.org/) format for clear release notes
 
+## Core Tools and Frameworks
 
-## Infrastructure Development
+### Machine Learning & Data Science
+- **[Kedro](https://docs.kedro.org/)** - ML pipeline framework and project structure
+- **[PySpark](https://spark.apache.org/docs/latest/api/python/)** - Distributed data processing
+- **[Neo4j](https://neo4j.com/docs/)** - Graph database for knowledge graphs
+- **[MLflow](https://mlflow.org/docs/latest/index.html)** - Experiment tracking and model registry
 
-- We use Terraform Cloud to codify our infrastructure. We have a central [`core`](https://github.com/everycure-org/core) inside our organization where we define all org-level infrastructure (such as creating GCP projects and adjusting quotas)
+### Cloud & Infrastructure  
+- **[Google Cloud Platform](https://cloud.google.com/docs)** - Primary cloud provider
+- **[Terraform](https://www.terraform.io/docs)** - Infrastructure provisioning
+- **[Kubernetes](https://kubernetes.io/docs/)** - Container orchestration via GKE
+
+### Development Tools
+- **[uv](https://docs.astral.sh/uv/)** - Python package and project management
+- **[Ruff](https://docs.astral.sh/ruff/)** - Python linting and formatting
+- **[pytest](https://docs.pytest.org/)** - Testing framework
+- **[Docker](https://docs.docker.com/)** - Containerization
+
+## Getting Help
+
+- Review existing issues and PRs for similar problems
+- Check the [development documentation](../index.md) for setup and workflow guidance
+- Ask questions in team communication channels
+- Tag relevant team members for domain-specific questions
