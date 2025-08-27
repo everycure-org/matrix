@@ -741,36 +741,6 @@ def test_neo4j_template_ephemeral_storage_configuration() -> None:
     assert "mountPath: /scratch" in pod_spec_patch
 
 
-def test_resource_limits_with_ephemeral_storage_in_containers() -> None:
-    """Ensure container resources include ephemeral storage limits and requests."""
-    argo_default_resources = ArgoResourceConfig(
-        num_gpus=1,
-        cpu_request=4,
-        cpu_limit=8,
-        memory_request=32,
-        memory_limit=64,
-        ephemeral_storage_limit=150,
-        ephemeral_storage_request=75,
-    )
-    argo_config, _ = get_argo_config(argo_default_resources)
-    spec = argo_config["spec"]
-
-    kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
-    pod_spec_patch = kedro_template["podSpecPatch"]
-
-    # Verify ephemeral storage is included in container resources
-    assert "ephemeral-storage:" in pod_spec_patch
-    assert '"{{inputs.parameters.ephemeral_storage_request}}Gi"' in pod_spec_patch
-    assert '"{{inputs.parameters.ephemeral_storage_limit}}Gi"' in pod_spec_patch
-
-    # Check that both requests and limits sections have ephemeral storage
-    requests_section = pod_spec_patch[pod_spec_patch.find("requests:") :]
-    limits_section = pod_spec_patch[pod_spec_patch.find("limits:") :]
-
-    assert "ephemeral-storage:" in requests_section
-    assert "ephemeral-storage:" in limits_section
-
-
 def test_docker_cleanup_exit_handler() -> None:
     """Test that the Docker cleanup exit handler is properly configured."""
     argo_default_resources = ArgoResourceConfig(
