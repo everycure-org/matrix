@@ -71,16 +71,20 @@ embeddings.models.topological:
 
 # NOTE: Dummy catalog entry to enforce Kedro dependency
 # between embedding and modelling pipeline.
+# embeddings.model_output.topological:
+#   <<: *_neo4j_ds
+#   save_args:
+#     # Dummy Query that never gets written to because we use GDS to execute the write-back of graphsage
+#     persist: false
+#   load_args:
+#     # NOTE: Using the `query` reader option highly impacts performance, hence resorting to `labels`.
+#     # https://neo4j.com/docs/spark/current/read/options/
+#     partitions: 16 # Should increase parallelism
+#     labels: ":Entity" # avoids query which drastically increases performance
+
 embeddings.model_output.topological:
-  <<: *_neo4j_ds
-  save_args:
-    # Dummy Query that never gets written to because we use GDS to execute the write-back of graphsage
-    persist: false
-  load_args:
-    # NOTE: Using the `query` reader option highly impacts performance, hence resorting to `labels`.
-    # https://neo4j.com/docs/spark/current/read/options/
-    partitions: 16 # Should increase parallelism
-    labels: ":Entity" # avoids query which drastically increases performance
+  <<: *_spark_parquet
+  filepath: gs://mtrx-us-central1-wg2-modeling-dev-storage/su-lab-data/data/residual2vec/rv2v_dim512_fp32.npy
 
 embeddings.feat.nodes:
   <<: *_spark_parquet
