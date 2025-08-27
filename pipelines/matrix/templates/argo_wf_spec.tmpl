@@ -8,6 +8,7 @@ spec:
   podGC:
     strategy: OnPodCompletion
   archiveLogs: true
+  onExit: cleanup-handler
   workflowMetadata:
     labels:
       run: {% raw %}'{{ workflow.parameters.run_name }}'
@@ -425,3 +426,53 @@ spec:
             value: {{ task.resources.ephemeral_storage_limit }}
 
       {% endfor %}
+
+  # Exit handler for cleanup - runs when workflow completes
+  - name: cleanup-handler
+    steps:
+    - - name: delete-docker-images
+        template: delete-artifact-images
+        when: {% raw %}"{{workflow.status}} == Succeeded"
+        {% endraw %}
+        arguments:
+          parameters:
+          - name: image_to_delete
+            value: {% raw %}"{{workflow.parameters.image}}"{% endraw %}
+
+  # Template for deleting Docker images from Artifact Registry
+  - name: delete-artifact-images
+    inputs:
+      parameters:
+      - name: image_to_delete
+    container:
+      image: gcr.io/google.com/cloudsdktool/cloud-sdk:latest
+      command: [sh, -c]
+      args:
+        - |
+          echo "Workflow completed successfully. Starting Docker image cleanup..."
+          
+          # In GKE with Workload Identity, authentication should be automatic
+          echo "Current authentication:"
+          gcloud auth list
+          
+          # Get image from input parameter
+          IMAGE_FULL={% raw %}"{{inputs.parameters.image_to_delete}}"
+          {% endraw %}
+          echo "Full image path: $IMAGE_FULL"
+          
+          # Validate image path
+          if [ -z "$IMAGE_FULL" ]; then
+            echo "Error: Image path is empty, skipping cleanup"
+            exit 0
+          fi
+          
+          # Delete the specific image tag
+          if gcloud artifacts docker images delete "$IMAGE_FULL" --quiet --delete-tags; then
+            echo "Successfully deleted Docker image: $IMAGE_FULL"
+          else
+            echo "Failed to delete Docker image: $IMAGE_FULL (image may not exist or already deleted)"
+            echo "This is non-fatal - workflow will continue normally"
+            exit 0  # Don't fail the workflow if image deletion fails
+          fi
+          
+          echo "Docker image cleanup completed successfully."
