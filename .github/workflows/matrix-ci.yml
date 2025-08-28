@@ -100,7 +100,7 @@ jobs:
           version: "0.8.13"
       - run: env | sort
 
-  # Run commands in parallel using matrix strategy
+  # Run commands in parallel using matrix strategy.
   parallel_commands:
     runs-on: 'gha-runner-scale-set'
     needs: [paths_filter, ci]
