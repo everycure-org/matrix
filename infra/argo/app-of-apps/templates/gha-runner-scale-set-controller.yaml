@@ -11,7 +11,7 @@ spec:
   source:
     chart: gha-runner-scale-set-controller
     repoURL: oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller
-    targetRevision: 0.9.3
+    targetRevision: 0.12.1
     helm:
       values: |
         # Override specific values here
