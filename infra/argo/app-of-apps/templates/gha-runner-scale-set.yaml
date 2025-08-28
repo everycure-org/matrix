@@ -17,8 +17,9 @@ spec:
     helm:
       values: |
         controllerServiceAccount:
-          namespace: actions-runner-system
+          name: gha-runner-scale-set-controller-gha-rs-controller
         githubConfigSecret: gh-creds-for-github-action-runner-set
+        githubConfigUrl: https://github.com/everycure-org/
 
   syncPolicy:
     syncOptions:
