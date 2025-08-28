@@ -11,6 +11,7 @@ dependencies = [
     "mlflow>=2.20.0",
     "kedro>=0.19.0",
     "pandas",
+    "kedro-mlflow==0.13.4",
     "numpy",
     "scikit-learn",
 ]
