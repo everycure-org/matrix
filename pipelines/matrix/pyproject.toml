@@ -76,7 +76,8 @@ dependencies = [
     "torch==2.7.1",
     "transformers",
     "typer", # used for convenience libraries, to be moved to a dev requirements eventually
-    "xgboost"
+    "xgboost",
+    "tqdm>=4.67.1",
 ]
 
 [project.scripts]
