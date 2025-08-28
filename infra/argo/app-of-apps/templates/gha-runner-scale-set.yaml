@@ -18,7 +18,7 @@ spec:
       values: |
         controllerServiceAccount:
           namespace: actions-runner-system
-        githubConfigSecret: gh_creds_for_github_action_runner_set
+        githubConfigSecret: gh-creds-for-github-action-runner-set
 
   syncPolicy:
     syncOptions:
