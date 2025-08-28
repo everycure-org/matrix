@@ -1,0 +1,3 @@
+controllerServiceAccount:
+    namespace: actions-runner-system
+    name: gha-runner-scale-set-controller-gha-rs-controller
