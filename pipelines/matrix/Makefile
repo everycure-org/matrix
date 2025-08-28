@@ -53,8 +53,8 @@ prerequisites:
 	fi
 
 
-install: precommit-hooks 
-	uv sync # UV-native approach to install dependencies
+install:
+	uv sync 
 
 install_argo:
 	curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
@@ -62,13 +62,6 @@ install_argo:
 	chmod +x argo-linux-amd64
 	sudo mv argo-linux-amd64 /usr/local/bin/argo
 	argo version
-
-precommit: precommit-hooks
-	git fetch origin
-	uv run pre-commit run --from-ref origin/main --to-ref HEAD
-
-precommit-hooks:
-	uv run pre-commit install --install-hooks
 
 check_release_version_environment_variable:
 	if [ -z "${RELEASE_VERSION}" ]; then
@@ -86,8 +79,6 @@ fast_test:
 	# activate venv to ensure spark doesn't have python driver mismatches
 	TESTMON_DATAFILE=/tmp/.testmondata uv run pytest --testmon -v tests/
 
-format:
-	uv run ruff check . --fix
 
 # executes E2E integration test fully in docker. 
 docker_test: certificate docker_build
