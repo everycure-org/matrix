@@ -367,6 +367,14 @@ spec:
           items:
             - key: gds_key
               path: gds-key
+      - name: scratch
+        ephemeral:
+          volumeClaimTemplate:
+            spec:
+              accessModes: ["ReadWriteOnce"]
+              resources:
+                requests:
+                  storage: {% raw %}"{{inputs.parameters.ephemeral_storage_limit}}Gi"
     sidecars:
       # Neo4j enterprise sidecar
       - name: neo4j
