@@ -74,9 +74,6 @@ jobs:
     runs-on: 'gha-runner-scale-set'
     needs: [paths_filter]
     if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
-    
-    outputs:
-      status: ${{ steps.finally.outputs.status }}
 
     permissions:
       contents: 'read'
@@ -119,39 +116,93 @@ jobs:
           curl -LsSf https://astral.sh/uv/install.sh | sh
 
       - run: make install
-      - run: make fetch_secrets
+
+  # Run commands in parallel using matrix strategy
+  parallel_commands:
+    runs-on: 'gha-runner-scale-set'
+    needs: [paths_filter, ci]
+    if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
+    
+    strategy:
+      fail-fast: true  # cancel other jobs if one fails
+      matrix:
+        command:
+          - name: "precommit"
+            run: "make precommit"
+          - name: "kedro-catalog-base"
+            run: "uv run kedro catalog resolve --env base"
+          - name: "fetch-secrets"
+            run: "make fetch_secrets"
+          - name: "kedro-catalog-cloud"
+            run: "uv run kedro catalog resolve --env cloud"
+          - name: "kedro-catalog-test"
+            run: "uv run kedro catalog resolve --env test"
+          - name: "full-test"
+            run: "make full_test"
+          - name: "docker-test"
+            run: 'make docker_test GIT_SHA="${{ github.sha }}"'
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    defaults:
+      run:
+        working-directory: ./pipelines/matrix
+
+    steps:
+      - uses: actions/checkout@v4
+        with: 
+          sparse-checkout: |
+            pipelines/matrix/
+          submodules: recursive
+          token: ${{ secrets.PAT }}
+          persist-credentials: true
       
-      # Run commands in parallel
-      - run: uv run kedro catalog resolve --env base
-      - run: uv run kedro catalog resolve --env cloud
-      - run: uv run kedro catalog resolve --env test
-      - run: make full_test
-      - run: make compose_down # ensures containers & state are removed
-      - run: make docker_test GIT_SHA="${GITHUB_SHA:0:7}" #we overwrite the GIT_SHA in the Makefile
-        # only if PR is labelled with "ready" or if branch is main
-        # if: contains(github.event.pull_request.labels.*.name, 'ready') || github.ref == 'refs/heads/main'
-      # workaround as the `failure()` call did not work in downstream matrix_ci_check
-      - run: docker volume prune -f #avoid running out of disk space
-      # Cleanup
-      - run: docker volume prune -f
-      - id: finally
-        if: failure()
-        run: echo "status=failure" >> "$GITHUB_OUTPUT"
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider}}
+          service_account: ${{vars.service_account}}
+
+      # Setup steps (same as main ci job)
+      - run: env | sort
+      - run: |
+          sudo apt update
+          sudo apt upgrade -y
+          sudo apt install -y make build-essential libssl-dev zlib1g-dev \
+          libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
+          libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev \
+          libffi-dev liblzma-dev openjdk-17-jdk openjdk-17-jre
+          curl -fsSL https://pyenv.run | bash # recommend. Else see here for alternative: https://github.com/pyenv/pyenv
+          export PYENV_ROOT="$HOME/.pyenv"
+          [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+          eval "$(pyenv init - bash)"
+          eval "$(pyenv virtualenv-init -)"
+          pyenv install 3.11
+          pyenv global 3.11 && pyenv global
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - run: make install
+
+      # Run the specific command for this matrix job
+      - name: "Run ${{ matrix.command.name }}"
+        run: ${{ matrix.command.run }}
+
   # we use this check as required in our PRs to ensure that CI runs but only for our paths. 
   matrix_ci_check:
     name: Matrix CI PR Check
     runs-on:  'gha-runner-scale-set'
     if: always()
-    needs: [paths_filter, ci]
+    needs: [paths_filter, ci, parallel_commands]
     steps:
-      - if: ${{ needs.paths_filter.outputs.changed == 'true' && needs.ci.outputs.status == 'failure' }}
+      - if: ${{ needs.paths_filter.outputs.changed == 'true' && (needs.ci.result == 'failure' || needs.parallel_commands.result == 'failure') }}
         run: echo "CI failed, we are exiting" && exit 1
       - run: echo "Either no files were changed or we had happy CI, continuing"
 
       
 
   push_image:
-    needs: [ci]
+    needs: [ci, parallel_commands]
     if: github.ref == 'refs/heads/main'
     runs-on: 'gha-runner-scale-set'
     environment: dev
@@ -190,7 +241,7 @@ jobs:
   # Add this new job at the end of your jobs section
   # following this tutorial: https://github.com/slackapi/slack-github-action?tab=readme-ov-file
   notify_failure:
-    needs: [ci, push_image]
+    needs: [ci, parallel_commands, push_image]
     # This condition ensures it runs only if any previous job fails
     # we notify on main branches only
     if: failure() && github.ref == 'refs/heads/main' 
