@@ -102,6 +102,7 @@ jobs:
           enable-cache: true
           version: "0.8.13"
       - run: env | sort
+      - run: sudo apt update -y && sudo apt install build-essential -y
       - run: make install
       - run: make fetch_secrets
       
@@ -124,7 +125,7 @@ jobs:
   # we use this check as required in our PRs to ensure that CI runs but only for our paths. 
   matrix_ci_check:
     name: Matrix CI PR Check
-    runs-on:  'self-hosted'
+    runs-on:  'gha-runner-scale-set'
     if: always()
     needs: [paths_filter, ci]
     steps:
@@ -164,7 +165,7 @@ jobs:
   # licenses:
   #   needs: [ci]
   #   # if: github.ref == 'refs/heads/main'
-  #   runs-on: "self-hosted"
+  #   runs-on: "gha-runner-scale-set"
   #   defaults:
   #     run:
   #       working-directory: ./pipelines/matrix
@@ -178,7 +179,7 @@ jobs:
     # This condition ensures it runs only if any previous job fails
     # we notify on main branches only
     if: failure() && github.ref == 'refs/heads/main' 
-    runs-on: "self-hosted"
+    runs-on: "gha-runner-scale-set"
     steps:
       - name: Post to a Slack channel
         id: slack
