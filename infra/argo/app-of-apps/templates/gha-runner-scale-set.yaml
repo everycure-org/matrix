@@ -15,8 +15,10 @@ spec:
     repoURL: ghcr.io/actions/actions-runner-controller-charts
     targetRevision: 0.12.1
     helm:
-      valueFiles:
-        - {{ .Values.spec.source.repoPath }}/gha-runner-scale-set/values.yaml
+      values: |
+        controllerServiceAccount:
+          namespace: actions-runner-system
+          name: gha-runner-scale-set-controller-gha-rs-controller
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
