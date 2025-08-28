@@ -62,7 +62,14 @@ jobs:
         with: 
           sparse-checkout: |
             services/moa_visualizer/
-      - run: sudo apt update -y && sudo apt install build-essential -y
+      - run: |
+          sudo apt update
+          sudo apt upgrade -y
+          sudo apt install -y make build-essential gitpython libssl-dev zlib1g-dev \
+          libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
+          libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev \
+          libffi-dev liblzma-dev
+          curl -fsSL https://pyenv.run | bash # recommend. Else see here for alternative: https://github.com/pyenv/pyenv
       - run: make docker_build
 
   push_image:
