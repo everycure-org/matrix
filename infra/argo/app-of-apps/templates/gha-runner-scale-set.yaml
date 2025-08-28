@@ -18,7 +18,8 @@ spec:
       values: |
         controllerServiceAccount:
           namespace: actions-runner-system
-          name: gha-runner-scale-set-controller-gha-rs-controller
+        githubConfigSecret: gh_creds_for_github_action_runner_set
+
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
