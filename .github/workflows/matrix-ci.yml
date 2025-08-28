@@ -110,6 +110,14 @@ jobs:
           libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev \
           libffi-dev liblzma-dev
           curl -fsSL https://pyenv.run | bash # recommend. Else see here for alternative: https://github.com/pyenv/pyenv
+          export PYENV_ROOT="$HOME/.pyenv"
+          [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+          eval "$(pyenv init - bash)"
+          eval "$(pyenv virtualenv-init -)"
+          pyenv install 3.11
+          pyenv global 3.11 && pyenv global
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+
       - run: make install
       - run: make fetch_secrets
       
