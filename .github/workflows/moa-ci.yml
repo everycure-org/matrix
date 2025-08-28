@@ -62,7 +62,7 @@ jobs:
         with: 
           sparse-checkout: |
             services/moa_visualizer/
-
+      - run: sudo apt update -y && sudo apt install build-essential -y
       - run: make docker_build
 
   push_image:
