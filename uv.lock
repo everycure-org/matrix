@@ -2349,7 +2349,6 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "pre-commit" },
-    { name = "tqdm" },
 ]
 
 [package.dev-dependencies]
@@ -2358,10 +2357,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "pre-commit", specifier = ">=4.2.0" },
-    { name = "tqdm", specifier = ">=4.67.1" },
-]
+requires-dist = [{ name = "pre-commit", specifier = ">=4.2.0" }]
 
 [package.metadata.requires-dev]
 dev = [{ name = "ruff", specifier = ">=0.12.7" }]
@@ -2641,6 +2637,7 @@ dependencies = [
     { name = "tenacity" },
     { name = "termplotlib" },
     { name = "torch" },
+    { name = "tqdm" },
     { name = "transformers" },
     { name = "typer" },
     { name = "xgboost" },
@@ -2748,6 +2745,7 @@ requires-dist = [
     { name = "tenacity" },
     { name = "termplotlib" },
     { name = "torch", specifier = "==2.7.1" },
+    { name = "tqdm", specifier = ">=4.67.1" },
     { name = "transformers" },
     { name = "typer" },
     { name = "xgboost" },
