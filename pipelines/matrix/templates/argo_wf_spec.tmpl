@@ -412,8 +412,6 @@ spec:
             value: {{ task.resources.cpu_request }}
           - name: cpu_limit
             value: {{ task.resources.cpu_limit }}
-          - name: ephemeral_storage_request
-            value: {{ task.resources.ephemeral_storage_request }}
 
       {% endfor %}
 
