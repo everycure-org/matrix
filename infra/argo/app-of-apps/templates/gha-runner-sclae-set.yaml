@@ -22,6 +22,26 @@ spec:
       allowEmpty: true
   helm:
     values: |
-      controllerServiceAccount:
-          namespace: actions-runner-system
-          name: gha-runner-scale-set-controller-gha-rs-controller
+      githubConfigSecret: gha-runner-scale-set-controller-github-secret
+      
+      # GitHub configuration for self-hosted runners
+      githubConfigUrl: "https://github.com/everycure-org"
+
+    additionalManifests: |
+      apiVersion: external-secrets.io/v1beta1
+      kind: ExternalSecret
+      metadata:
+        name: gha-runner-scale-set-controller-github-secret
+        namespace: actions-runner-system
+      spec:
+        refreshInterval: 30s
+        secretStoreRef:
+          name: gcp-store
+          kind: ClusterSecretStore
+        target:
+          name: gha-runner-scale-set-controller-github-secret
+          creationPolicy: Owner
+        data:
+        - secretKey: github_token
+          remoteRef:
+            key: gh_creds_for_github_action_runner_set
