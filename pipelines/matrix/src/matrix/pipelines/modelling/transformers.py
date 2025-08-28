@@ -90,7 +90,7 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         output_name="weight",
         default_class="neg",
         rho=0.3,
-        clip_factors=True,
+        clip_factors=False,
         a_min=0.5,
         a_max=2.0,
         beta=0.3,
