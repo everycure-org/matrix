@@ -11,7 +11,9 @@ modelling.disease_types:
 
 modelling.training_data_sources:
   - kgml_xdtd # KGML-xDTD Indications
-
+  - ec
+  - drugbank
+  
 modelling.splitter:
 
   # Defines strategy for cross validation. Can be a function from sklearn.model_selection
