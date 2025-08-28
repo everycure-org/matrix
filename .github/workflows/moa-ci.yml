@@ -68,7 +68,7 @@ jobs:
   push_image:
       needs: [ci]
       if: github.ref == 'refs/heads/main'
-      runs-on: 'self-hosted'
+      runs-on: 'gha-runner-scale-set'
       environment: dev
       permissions: write-all
       defaults:
