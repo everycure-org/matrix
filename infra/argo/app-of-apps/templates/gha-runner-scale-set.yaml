@@ -24,8 +24,25 @@ spec:
         containerMode:
           type: "dind"
         minRunners: 0
+        maxRunners: 50
+        # Handle spot interruptions gracefully
+        terminationGracePeriodSeconds: 30
         template:
           spec:
+            # Allow more time for graceful shutdown when spot instances are reclaimed
+            terminationGracePeriodSeconds: 30
+            # Resource requests and limits to match n2-standard-4 (4 vCPUs, 16GB RAM)
+            containers:
+            - name: runner
+              resources:
+                requests:
+                  cpu: "3800m"        # Reserve most of the 4 vCPUs (leave some for system)
+                  memory: "15Gi"      # Reserve most of the 16GB RAM (leave some for system)
+                  ephemeral-storage: "90Gi"  # Reserve most of the 100GB disk
+                limits:
+                  cpu: "4"            # Allow burst up to full 4 vCPUs
+                  memory: "16Gi"      # Hard limit at 16GB RAM
+                  ephemeral-storage: "100Gi"  # Hard limit at 100GB disk
             tolerations:
             - key: "github-runner"
               operator: "Equal"
