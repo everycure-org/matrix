@@ -3,8 +3,6 @@ kind: Application
 metadata:
   name: gha-runner-scale-set-controller
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "0"
 spec:
   destination:
     namespace: actions-runner-system
@@ -14,6 +12,9 @@ spec:
     chart: gha-runner-scale-set-controller
     repoURL: ghcr.io/actions/actions-runner-controller-charts
     targetRevision: 0.12.1
+    helm:
+      valueFiles:
+        - {{ .Values.spec.source.repoPath }}/gha-runner-scale-set-controller/values.yaml
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
