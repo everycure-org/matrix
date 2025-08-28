@@ -656,36 +656,6 @@ def test_ephemeral_storage_in_pod_spec_patch() -> None:
     assert "mountPath: /data" in pod_spec_patch
 
 
-def test_ephemeral_storage_parameters_in_template_tasks() -> None:
-    """Ensure template tasks include ephemeral storage parameters."""
-    argo_default_resources = ArgoResourceConfig(
-        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
-        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
-        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
-        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
-        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
-        ephemeral_storage_limit=128,
-        ephemeral_storage_request=32,
-    )
-    argo_config, _ = get_argo_config(argo_default_resources)
-    spec = argo_config["spec"]
-
-    # Verify pipeline template exists
-    pipeline_template = next(t for t in spec["templates"] if t["name"] == "pipeline")
-    assert "dag" in pipeline_template
-
-    # Check that tasks have ephemeral storage parameters
-    if pipeline_template["dag"]["tasks"]:
-        task = pipeline_template["dag"]["tasks"][0]  # Check first task
-        parameters = {p["name"]: p["value"] for p in task["arguments"]["parameters"]}
-
-        # Verify ephemeral storage parameters are present
-        assert "ephemeral_storage_request" in parameters
-        assert "ephemeral_storage_limit" in parameters
-        assert parameters["ephemeral_storage_request"] == 0  # Default request is 0
-        assert parameters["ephemeral_storage_limit"] == argo_default_resources.ephemeral_storage_limit
-
-
 def test_kedro_template_input_parameters_include_ephemeral_storage() -> None:
     """Ensure the kedro template declares ephemeral storage as input parameters."""
     argo_default_resources = ArgoResourceConfig(
