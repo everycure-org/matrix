@@ -5,7 +5,7 @@ import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 from joblib import Memory
-from matrix_schema.datamodel.pandera import get_matrix_edge_schema, get_matrix_node_schema
+from matrix_schema.datamodel.pandera import get_matrix_edge_schema, get_matrix_node_schema, get_unioned_edge_schema
 from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark.sql.window import Window
 
@@ -43,7 +43,7 @@ def transform(transformer, **kwargs) -> dict[str, ps.DataFrame]:
 
 
 @check_output(
-    schema=get_matrix_edge_schema(validate_enumeration_values=False),
+    schema=get_unioned_edge_schema(validate_enumeration_values=False),
     pass_columns=True,
 )
 def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.DataFrame:
