@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: gha-runner-scale-set-controller
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   destination:
     namespace: actions-runner-system
