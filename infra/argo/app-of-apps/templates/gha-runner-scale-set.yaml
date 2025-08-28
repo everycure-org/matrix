@@ -24,6 +24,34 @@ spec:
         containerMode:
           type: "dind"
         minRunners: 0
+        template:
+          spec:
+            tolerations:
+            - key: "github-runner"
+              operator: "Equal"
+              value: "true"
+              effect: "NoSchedule"
+            - key: "spot"
+              operator: "Equal"
+              value: "true"
+              effect: "NoSchedule"
+            nodeSelector:
+              workload-type: "ci-cd"
+            affinity:
+              nodeAffinity:
+                preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 100
+                  preference:
+                    matchExpressions:
+                    - key: "spot_node"
+                      operator: In
+                      values: ["true"]
+                requiredDuringSchedulingIgnoredDuringExecution:
+                  nodeSelectorTerms:
+                  - matchExpressions:
+                    - key: "workload-type"
+                      operator: In
+                      values: ["ci-cd"]
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
