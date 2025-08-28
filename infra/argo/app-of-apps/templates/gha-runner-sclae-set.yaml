@@ -22,6 +22,9 @@ spec:
       allowEmpty: true
   helm:
     values: |
+      controllerServiceAccount:
+          namespace: actions-runner-system
+          name: gha-runner-scale-set-controller-gha-rs-controller
       githubConfigSecret: gha-runner-scale-set-controller-github-secret
       
       # GitHub configuration for self-hosted runners
