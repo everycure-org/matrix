@@ -84,8 +84,8 @@ embeddings.model_output.topological:
 
 embeddings.feat.nodes:
   <<: *_spark_parquet
-  #filepath: ${globals:paths.embeddings}/feat/nodes_with_embeddings
-  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/UNC10/rotate_on_robokop_predicate_and_qualifier
+  filepath: ${globals:paths.embeddings}/feat/nodes_with_embeddings
+  #filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/UNC10/n2v_rotatE_combined_512_full_robokop_predicate_only2
 
 embeddings.reporting.loss:
   type: matplotlib.MatplotlibDataset
