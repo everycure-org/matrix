@@ -30,8 +30,11 @@ on:
     branches:
       - main
     paths: 
-      - pipelines/matrix/**
       - .github/workflows/matrix-ci.yml
+      - pipelines/matrix/**
+      - libs/*
+      - pyproject.toml
+      - uv.lock
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -94,6 +97,9 @@ jobs:
           service_account: ${{vars.service_account}}
 
       # Setup steps
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.13"
       - run: env | sort
       - run: make install
       - run: make precommit
