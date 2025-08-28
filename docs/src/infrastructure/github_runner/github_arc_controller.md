@@ -89,8 +89,10 @@ kubectl describe runnerscaleset everycure-gha-runners -n actions-runner-system
 ### Common Issues
 
 1. **No runners scaling**: Check GitHub App permissions and installation
-2. **Pod scheduling failures**: Verify node taints/tolerations
+2. **Pod scheduling failures**: Verify node taints/tolerations and ensure spot nodes are available
 3. **Docker issues**: Check DinD container logs in runner pods
+4. **Cannot connect to Docker daemon**: Ensure DinD sidecar is running properly
+5. **Docker build failures**: Check that both runner and DinD containers have adequate resources
 
 ### Scaling Configuration
 
