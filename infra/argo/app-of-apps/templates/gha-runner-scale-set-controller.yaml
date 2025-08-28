@@ -9,14 +9,12 @@ spec:
     server: {{ .Values.spec.destination.server }}
   project: default
   source:
-    path: {{ .Values.spec.source.repoPath }}/gha-runner-scale-set-controller
-    repoURL: {{ .Values.spec.source.repoURL }}
-    targetRevision: {{ .Values.spec.source.targetRevision }}
+    chart: gha-runner-scale-set-controller
+    repoURL: oci://ghcr.io/actions/actions-runner-controller-charts
+    targetRevision: 0.9.3
     helm:
-      valueFiles:
-        - values.yaml
       values: |
-        # Override specific values here - these will override defaults in values.yaml
+        # Override specific values here
         
         # Controller Configuration
         replicaCount: 1
