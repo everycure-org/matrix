@@ -127,12 +127,12 @@ spec:
       volumes:
           - name: scratch
             ephemeral:
-                volumeClaimTemplate:
-                  spec:
-                    accessModes: ["ReadWriteOnce"]
-                    resources:
-                      requests:
-                        storage: {% raw %}"{{inputs.parameters.ephemeral_storage_limit}}Gi"
+              volumeClaimTemplate:
+                spec:
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: {% raw %}"{{inputs.parameters.ephemeral_storage_limit}}Gi"
       {% endraw %}
       terminationGracePeriodSeconds: 30
       tolerations:
@@ -299,9 +299,9 @@ spec:
             # NOTE: We're passing in a regular bolt connection as ephemeral Neo4J has no SSL
             - name: NEO4J_HOST
               value: "bolt://127.0.0.1:7687"
-            volumeMounts
-              - name: scratch
-                mountPath: /data
+          volumeMounts:
+            - name: scratch
+              mountPath: /data
         - name: neo4j
           resources:
             requests:
@@ -346,8 +346,6 @@ spec:
           - name: gds-key
             mountPath: /licences
             readOnly: true
-          - name: scratch
-            mountPath: /data
 
         env:
         - name: NEO4J_AUTH
