@@ -18,6 +18,7 @@ spec:
       values: |
         controllerServiceAccount:
           name: gha-runner-scale-set-controller-gha-rs-controller
+          namespace: actions-runner-system
         githubConfigSecret: gh-creds-for-github-action-runner-set
         githubConfigUrl: https://github.com/everycure-org/
 
