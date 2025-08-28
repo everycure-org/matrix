@@ -68,7 +68,6 @@ precommit: precommit-hooks
 	uv run pre-commit run --from-ref origin/main --to-ref HEAD
 
 precommit-hooks:
-	uv sync --group pre-commit
 	uv run pre-commit install --install-hooks
 
 check_release_version_environment_variable:

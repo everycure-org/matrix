@@ -56,10 +56,6 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
-        with: 
-          sparse-checkout: |
-            pipelines/
-            .github/
       - uses: dorny/paths-filter@v3
         id: changes
         with:
@@ -67,6 +63,9 @@ jobs:
             src:
               - pipelines/matrix/**
               - .github/workflows/matrix-ci.yml
+              - pyproject.toml
+              - uv.lock
+              - .dockerignore
 
   ci:
     runs-on: 'self-hosted'
