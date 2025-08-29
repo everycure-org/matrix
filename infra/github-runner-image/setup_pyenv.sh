@@ -11,5 +11,3 @@ if ! pyenv versions | grep -q "3.11"; then
 pyenv install 3.11
 fi
 pyenv global 3.11
-
-curl -LsSf https://astral.sh/uv/install.sh | sh
