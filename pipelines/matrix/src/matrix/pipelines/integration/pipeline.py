@@ -174,7 +174,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ],
                     outputs="integration.prm.unified_nodes",
                     name="create_prm_unified_nodes",
-                    argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
+                    argo_config=ArgoResourceConfig(memory_request=144, memory_limit=144),
                 ),
                 node(
                     func=nodes.unify_ground_truth,
