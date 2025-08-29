@@ -99,6 +99,7 @@ jobs:
       # Setup steps
       - uses: astral-sh/setup-uv@v6
         with:
+          enable-cache: true
           version: "0.8.13"
       - run: env | sort
       - run: make install

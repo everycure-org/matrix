@@ -8,7 +8,7 @@ on:
   pull_request:
     branches: [main, develop]
     paths:
-      - 'libs/**'  # Only trigger when library files change
+      - 'libs/**' 
       - '.github/workflows/libs-ci.yml'
     types: [opened, reopened, synchronize, ready_for_review]
   push:
@@ -23,41 +23,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Step 1: Dynamically discover library folders and build a matrix
-  # This job scans the libs/ directory and creates a matrix of library names
-  # so we don't have to manually maintain a list of libraries
-  generate-matrix:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set.outputs.matrix }}
-    steps:
-      - uses: actions/checkout@v4
-      - id: set
-        run: |
-          # List all directories in libs/ and convert to JSON matrix format
-          # Output: {"lib": ["matrix-auth", "matrix-fabricator", ...]}
-          echo "Available libraries:"
-          ls -1 libs
-          
-          # Create a simple JSON array without pretty formatting
-          LIBS=$(ls -1 libs | jq -R . | jq -s '. as $a | {lib: $a}' -c)
-          echo "Generated JSON: $LIBS"
-          
-          # Ensure proper output format for GitHub Actions
-          echo "matrix=$LIBS" >> "$GITHUB_OUTPUT"
-          
-
-  # Step 2: Test each library in parallel using the matrix
-  # Each matrix job runs independently and only tests libraries that have changes
   test-libs:
-    needs: generate-matrix  # Wait for matrix to be generated
     runs-on: ubuntu-latest  # Use ubuntu-latest for local testing with act
     strategy:
-      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+      matrix: 
+        # add any new library folder here for automatic flow execution
+        lib: 
+          - matrix-auth
+          - matrix-fabricator
+          - matrix-gcp-datasets
+          - matrix-mlflow-utils
     steps:
       - uses: actions/checkout@v4
       
-      # Step 2a: Check if this specific library has any file changes
+      # Step 1: Check if this specific library has any file changes
       # This prevents running tests on libraries that weren't modified
       - id: filter
         uses: dorny/paths-filter@v3
@@ -67,18 +46,16 @@ jobs:
           filters: |
             changed:
               - libs/${{ matrix.lib }}/**  # Check all files in this library folder
-      
-      # Step 2b: Skip testing if no changes detected
-      # This saves CI time and resources
       - name: Skip unchanged library
         if: steps.filter.outputs.changed == 'false'
         run: echo "No changes in ${{ matrix.lib }}. Skipping tests."
       
-      # Step 2c: Run tests only if changes were detected
+      # Step 2: Run tests only if changes were detected
       # Install dependencies and run pytest for the changed library
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.8.13"
+          enable-cache: true
       - name: Install & Test ${{ matrix.lib }}
         if: steps.filter.outputs.changed == 'true'
         run: |
