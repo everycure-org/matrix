@@ -108,7 +108,7 @@ jobs:
     if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
     
     strategy:
-      fail-fast: true  # cancel other jobs if one fails
+      fail-fast: false  # do not cancel other jobs if one fails
       matrix:
         command:
           - name: "precommit"
