@@ -20,3 +20,5 @@ RUN apt-get update && \
     apt-get clean && rm -rf /var/lib/apt/lists/* && chmod +x setup_pyenv.sh && \
     ./setup_pyenv.sh && \
     rm -f setup_pyenv.sh
+  
+USER runner
