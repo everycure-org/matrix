@@ -14,7 +14,7 @@ permissions:
 
 env:
   # Change this if you want a different image name
-  IMAGE_NAME: runner-docker-compose
+  IMAGE_NAME: github-runner
 
 jobs:
   build-and-push:
