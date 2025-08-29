@@ -70,7 +70,12 @@ fast_test:
 
 # executes E2E integration test fully in docker. 
 docker_test: certificate docker_build
-	IMG="$(docker_image)" docker-compose -f compose/docker-compose.yml -f compose/docker-compose.ci.yml up --force-recreate --abort-on-container-exit --exit-code-from matrix-pipeline
+	IMG="$(docker_image)" docker compose -f compose/docker-compose.yml \
+		-f compose/docker-compose.ci.yml \
+		up \
+		--force-recreate \
+		--abort-on-container-exit \
+		--exit-code-from matrix-pipeline
 
 docker_build:
 	# NOTE: This Makefile was partially generated using AI assistance.
