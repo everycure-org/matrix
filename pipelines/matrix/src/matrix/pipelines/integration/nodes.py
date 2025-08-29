@@ -78,9 +78,7 @@ def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.Da
             F.first("object_aspect_qualifier", ignorenulls=True).alias("object_aspect_qualifier"),
             F.first("primary_knowledge_source", ignorenulls=True).alias("primary_knowledge_source"),
             F.flatten(F.collect_set("aggregator_knowledge_source")).alias("aggregator_knowledge_source"),
-            F.collect_set(F.when(F.col("primary_knowledge_source").isNotNull(), F.col("primary_knowledge_source")))
-            .cast(T.ArrayType(T.StringType(), True))
-            .alias("primary_knowledge_sources"),
+            F.collect_set(F.col("primary_knowledge_source")).alias("primary_knowledge_sources"),
             F.flatten(F.collect_set("publications")).alias("publications"),
             F.max("num_references").cast(T.IntegerType()).alias("num_references"),
             F.max("num_sentences").cast(T.IntegerType()).alias("num_sentences"),
