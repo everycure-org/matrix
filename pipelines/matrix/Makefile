@@ -4,7 +4,6 @@ TAG ?= ${USER}
 GIT_SHA ?= $(shell git rev-parse --short HEAD)
 export TQDM_DISABLE ?= 1
 TARGET_PLATFORM ?= linux/amd64
-PREREQUISITES := docker gcloud python3 java uv kubectl
 
 # Add GCP project variables
 GCP_PROJECT ?= mtrx-hub-dev-3of
@@ -12,6 +11,9 @@ SA_KEY_SECRET_NAME ?= storage-viewer-sa-key
 SA_KEY_PATH ?= conf/local/service-account.json
 OAUTH_CLIENT_SECRET_SECRET_NAME ?= oauth_client_secret
 OAUTH_CLIENT_SECRET_PATH ?= conf/local/oauth_client_secret.txt
+
+# ensures all make targets run in one shell (rather than line by line in new shell)
+.ONESHELL: 
 
 fetch_secrets:
 	echo "Fetching secrets from Secret Manager..."; \
@@ -24,34 +26,20 @@ fetch_secrets:
 		echo "Secret $$1 saved to $$2"; \
 	done
 
-# ensures all make targets run in one shell (rather than line by line in new shell)
-.ONESHELL: 
-
-default: prerequisites fetch_sa_key install fast_test integration_test
 
 local_test: install fast_test integration_test
 
 .PHONY: always 
+
 # steps here get run on _every_ make call, no matter the target. Make sure this is 100% idempotent and fast.
 always:
 	# never track notebooks in the pipeline subfolder
 	git update-index --assume-unchanged *.ipynb
 %: always
 	@:
-default: prerequisites fetch_secrets install fast_test integration_test
+
+default: fetch_secrets install fast_test integration_test
 	echo "done!"
-
-prerequisites:
-	$(info Checking if prerequisites are installed...)
-	$(foreach exec,$(PREREQUISITES),\
-        $(if $(shell command -v $(exec) 2>/dev/null),,$(error "$(exec) is not installed.")))
-	$(info All prerequisites are installed.)
-	$(info Checking gcloud auth...)
-	@if ! gcloud auth print-access-token >/dev/null 2>&1; then \
-		echo "Not logged into gcloud. Please run 'gcloud auth login' first."; \
-		exit 1; \
-	fi
-
 
 install:
 	uv sync 
