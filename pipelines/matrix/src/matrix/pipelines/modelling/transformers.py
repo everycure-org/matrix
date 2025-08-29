@@ -84,7 +84,7 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         pos_label=1,
         budget_pos=1.0,
         budget_neg=1.0,
-        iters=30,
+        iters=40,
         eps=1e-6,
         normalize="per_class",
         output_name="weight",
@@ -93,8 +93,8 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         clip_factors=False,
         a_min=0.5,
         a_max=2.0,
-        beta=0.3,
-        pos_budget_scale=2.0,
+        beta=0.5,
+        pos_budget_scale=5.0,
         base_weight_col=None,
     ):
         self.head_col = head_col

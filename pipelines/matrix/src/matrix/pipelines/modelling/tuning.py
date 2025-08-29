@@ -114,7 +114,7 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
                 X_test, y_test = X[test], y[test]
 
                 weights_train = sample_weight[train] if sample_weight is not None else None
-                # weights_test = sample_weight[test] if sample_weight is not None else None
+                weights_test = sample_weight[test] if sample_weight is not None else None
 
                 if weights_train is not None:
                     self.estimator.fit(X_train, y_train, sample_weight=weights_train)
@@ -123,11 +123,11 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
 
                 y_pred = self.estimator.predict(X_test)
 
-                # if _scorer_accepts_weight and weights_test is not None:
-                #     score = self._scoring(y_test, y_pred, sample_weight=weights_test)
-                # else:
-                #     score = self._scoring(y_test, y_pred)
-                score = self._scoring(y_test, y_pred)
+                if _scorer_accepts_weight and weights_test is not None:
+                    score = self._scoring(y_test, y_pred, sample_weight=weights_test)
+                else:
+                    score = self._scoring(y_test, y_pred)
+                # score = self._scoring(y_test, y_pred)
 
                 scores.append(score)
 
