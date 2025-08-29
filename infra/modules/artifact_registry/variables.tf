@@ -48,3 +48,9 @@ variable "keep_count" {
   type        = number
   default     = 0
 }
+
+variable "keep_number_of_last_images" {
+  description = "The minimum number of recent versions to keep. Disabled by default."
+  type        = number
+  default     = 0
+}

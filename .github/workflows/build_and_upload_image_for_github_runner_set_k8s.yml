@@ -38,7 +38,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ vars.REGION }}-docker.pkg.dev/${{ vars.PROJECT_ID }}/docker/${{ env.IMAGE_NAME }}
+          images: ${{ vars.REGION }}-docker.pkg.dev/${{ vars.PROJECT_ID }}/github-runner-images/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest
             type=sha
