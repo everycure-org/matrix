@@ -5,7 +5,7 @@ on:
     branches: [ main, nelson/aip-517-optimize-ci-process-to-reduce-runtime-from-50-minutes ]
     paths:
       - ./infra/github-runner-image/Dockerfile
-      - .github/workflows/publish-runner-image.yml
+      - .github/workflows/build_and_upload_image_for_github_runner_set_k8s.yml
   workflow_dispatch:
 
 permissions:
