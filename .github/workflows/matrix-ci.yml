@@ -148,15 +148,6 @@ jobs:
 
       # Setup steps (same as main ci job)
       - run: env | sort
-      
-      # Restore all caches in parallel for faster startup on ephemeral runners
-      - name: Cache APT packages
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/apt
-          key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list.d/**') }}
-          restore-keys: |
-            ${{ runner.os }}-apt-
             
       - name: Cache pyenv
         uses: actions/cache@v4
