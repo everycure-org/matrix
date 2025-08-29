@@ -1,0 +1,36 @@
+name: Precommit Checks
+
+on:
+  pull_request:
+    # Run on all PRs to any branch
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  precommit:
+    name: Run Precommit Checks
+    runs-on: 'ubuntu-latest'
+    if: github.event.pull_request.draft == false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.PAT }}
+          persist-credentials: true
+
+      - name: Setup UV
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.13"
+
+      - name: Run precommit checks
+        run: make precommit

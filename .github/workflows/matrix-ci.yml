@@ -102,7 +102,6 @@ jobs:
           version: "0.8.13"
       - run: env | sort
       - run: make install
-      - run: make precommit
       - run: make fetch_secrets
       
       # Run commands in parallel
