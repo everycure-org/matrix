@@ -31,6 +31,16 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           version: "0.8.13"
+      - name: cache pre-commit deps
+        id: cache_pre_commit
+        uses: actions/cache@v3
+        env:
+            cache-name: cache-pre-commit
+        with:
+          path: |
+            ~/.cache/pre-commit
+            .venv/
+          key: ${{ env.cache-name }}-${{ hashFiles('.pre-commit-config.yaml','~/.cache/pre-commit/*') }}
 
       - name: Run precommit checks
         run: make precommit
