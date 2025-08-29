@@ -41,6 +41,19 @@ spec:
           spec:
             # Allow more time for graceful shutdown when spot instances are reclaimed
             terminationGracePeriodSeconds: 30
+            containers:
+            - name: runner
+              image: ghcr.io/actions/actions-runner:latest
+              command: ["/home/runner/run.sh"]
+              resources:
+                requests:
+                  cpu: "3800m"        # Reserve most of the 4 vCPUs (leave some for system)
+                  memory: "15Gi"      # Reserve most of the 16GB RAM (leave some for system)
+                  ephemeral-storage: "90Gi"  # Reserve most of the 100GB disk
+                limits:
+                  cpu: "4"            # Allow burst up to full 4 vCPUs
+                  memory: "16Gi"      # Hard limit at 16GB RAM
+                  ephemeral-storage: "100Gi"  # Hard limit at 100GB disk
             tolerations:
             - key: "github-runner"
               operator: "Equal"
