@@ -26,13 +26,12 @@ services:
       - ./certs/bolt/private_and_public.pem:/var/lib/neo4j/certificates/bolt/private_and_public.pem
       - ./certs/bolt/public.crt:/var/lib/neo4j/certificates/bolt/public.crt
     healthcheck:
-      # More robust health check for DinD environments
-      # Use cypher-shell to test actual connectivity instead of just HTTP endpoint
-      test: ["CMD-SHELL", "cypher-shell -u neo4j -p admin 'RETURN 1;' || exit 1"]
-      interval: 15s
-      timeout: 30s
-      retries: 20
-      start_period: 60s
+      # Simpler health check for DinD environments with longer startup time
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:7474/db/data/"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
 
   mockserver:
     environment:
