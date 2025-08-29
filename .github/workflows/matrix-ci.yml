@@ -149,54 +149,13 @@ jobs:
       # Setup steps (same as main ci job)
       - run: env | sort
             
-      - name: Cache pyenv
-        uses: actions/cache@v4
-        with:
-          path: ~/.pyenv
-          key: ${{ runner.os }}-pyenv-3.11-${{ hashFiles('pipelines/matrix/pyproject.toml', 'pipelines/matrix/uv.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pyenv-3.11-
-            ${{ runner.os }}-pyenv-
-            
-      - name: Cache uv
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/uv
-            ~/.cache/uv
-          key: ${{ runner.os }}-uv-${{ hashFiles('pipelines/matrix/uv.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-uv-
-            
-      - name: Cache Python virtual environment
-        uses: actions/cache@v4
-        with:
-          path: pipelines/matrix/.venv
-          key: ${{ runner.os }}-venv-${{ hashFiles('pipelines/matrix/uv.lock', 'pipelines/matrix/pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-venv-
-
-      - name: Setup Python environment
-        run: |
-          # Setup pyenv if not cached
-          if [ ! -d "$HOME/.pyenv" ]; then
-            curl -fsSL https://pyenv.run | bash
-          fi
-          export PYENV_ROOT="$HOME/.pyenv"
-          [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
-          eval "$(pyenv init - bash)"
-          eval "$(pyenv virtualenv-init -)"
-          
-          # Install Python 3.11 if not available
-          if ! pyenv versions | grep -q "3.11"; then
-            pyenv install 3.11
-          fi
-          pyenv global 3.11
-          
-          # Install uv if not available
-          if [ ! -f "$HOME/.cargo/bin/uv" ]; then
-            curl -LsSf https://astral.sh/uv/install.sh | sh
-          fi
+      # - name: Cache Python virtual environment
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: pipelines/matrix/.venv
+      #     key: ${{ runner.os }}-venv-${{ hashFiles('pipelines/matrix/uv.lock', 'pipelines/matrix/pyproject.toml') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-venv-
 
       # Install Python dependencies (will use cache if available)
       - name: Install Python dependencies
