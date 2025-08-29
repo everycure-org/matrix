@@ -110,9 +110,9 @@ def create_namespace(namespace: str, verbose: bool):
 
 
 def apply(namespace, file_path: Path, verbose: bool):
-    """Apply file to kubernetes namespace
+    """Create file to kubernetes namespace
 
-    `kubectl apply -f <file_path> -n <namespace>` will make the template available as a resource (but will not create any other resources, and will not trigger the workshop).
+    `kubectl create -f <file_path> -n <namespace>` will make the template available as a resource (but will not create any other resources, and will not trigger the workshop).
     """
 
     cmd = f"kubectl apply --server-side -f {file_path} -n {namespace}"

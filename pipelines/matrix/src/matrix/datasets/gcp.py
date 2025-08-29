@@ -19,6 +19,7 @@ from kedro.io.core import (
     DatasetError,
     Version,
 )
+from kedro_datasets.pandas import GBQTableDataset
 from kedro_datasets.partitions import PartitionedDataset
 from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
 from pygsheets import Spreadsheet, Worksheet
@@ -85,6 +86,48 @@ class LazySparkDataset(SparkDataset):
                 )
             else:
                 raise e
+
+
+class SparkBigQueryDataset(LazySparkDataset):
+    """
+    Spark dataset dat executes a BigQuery query and returns
+    the result as a Spark DataFrame.
+    """
+
+    def __init__(  # noqa: PLR0913
+        self, *, project: str, dataset: str, table: str, shard: Optional[str] = None
+    ) -> None:
+        super().__init__(
+            filepath="dummy", file_format="bigquery", load_args={"table": f"{project}.{dataset}.{table}_{shard}"}
+        )
+
+    def _save(self, data: Any) -> None:
+        raise NotImplementedError("Save not supported for BigQuerySparkQueryDataSet.")
+
+
+class PandasBigQueryDataset(GBQTableDataset):
+    """
+    Pandas dataset that loads data from a BigQuery table and returns
+    the result as a Pandas DataFrame.
+    """
+
+    def __init__(  # noqa: PLR0913
+        self, *, dataset: str, table: str, project: str, shard: str, credentials: dict[str, Any] | None = None
+    ) -> None:
+        """Creates a new instance of PandasBigQueryDataset.
+
+        Args:
+            dataset: BigQuery dataset name.
+            table: BigQuery table name.
+            project: BigQuery project ID.
+            shard: Optional table shard identifier.
+            credentials: Optional credentials for BigQuery client.
+        """
+        super().__init__(dataset=dataset, table_name=f"{table}_{shard}", project=project, credentials=credentials)
+
+    def save(self, data: Any) -> None:
+        """Save operation is not supported for this dataset."""
+        raise NotImplementedError("Save not supported for PandasBigQueryDataset.")
 
 
 class SparkDatasetWithBQExternalTable(LazySparkDataset):
