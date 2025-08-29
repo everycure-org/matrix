@@ -74,7 +74,6 @@ integration.prm.unified_edges:
 integration.prm.nodes_edges_consistency_check:
   type: text.TextDataset
   filepath: ${globals:paths.integration}/prm/nodes_edges_consistency_check.txt
-
 # ==============================
 # Original sources: only used for sampling
 

@@ -5,6 +5,10 @@ metadata:
   namespace: {{namespace}}
   name: {{run_name}}
 spec:
+  podGC:
+    strategy: OnPodCompletion
+  archiveLogs: true
+  onExit: cleanup-handler
   workflowMetadata:
     labels:
       run: {% raw %}'{{ workflow.parameters.run_name }}'
@@ -65,8 +69,8 @@ spec:
         - weight: 100
           preference:
             matchExpressions:
-            - key: gpu_node
-              operator: NotIn
+            - key: cloud.google.com/gke-spot
+              operator: In
               values:
               - "true"
     # Add tolerations for large memory nodes and GPU nodes
@@ -78,6 +82,10 @@ spec:
     - key: "node-memory-size"
       operator: "Equal"
       value: "large"
+      effect: "NoSchedule"
+    - key: "spot"
+      operator: "Equal"
+      value: "true"
       effect: "NoSchedule"
     metadata:
       labels:
@@ -92,6 +100,18 @@ spec:
         {% endraw %}
         pipeline: {% raw %}'{{ workflow.parameters.pipeline_name }}'
         {% endraw %}
+    retryStrategy:
+      limit: 3
+      expression: |
+        (
+          lastRetry.message matches '.*pod deleted.*' ||
+          lastRetry.message matches '.*imminent node shutdown.*' ||
+          lastRetry.message matches '.*node is draining.*'
+        {# code 137 is for OOM. We are explicitly mention it so that in case of failure it is not retried #}
+        ) && lastRetry.exitCode != 137
+      backoff:
+        duration: "1"
+        factor: "5"
     inputs:
       parameters:
       - name: kedro_nodes
@@ -104,12 +124,27 @@ spec:
       - name: ephemeral_storage_request
       - name: ephemeral_storage_limit
     podSpecPatch: |
+      volumes:
+          - name: scratch
+            ephemeral:
+              volumeClaimTemplate:
+                spec:
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: {% raw %}"{{inputs.parameters.ephemeral_storage_limit}}Gi"
+      {% endraw %}
+      terminationGracePeriodSeconds: 30
       tolerations:
         - key: "node-memory-size"
           operator: "Equal"
           value: "large"
           effect: "NoSchedule"
         - key: "workload"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+        - key: "spot"
           operator: "Equal"
           value: "true"
           effect: "NoSchedule"
@@ -124,8 +159,6 @@ spec:
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
-              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_request}}Gi"
-              {% endraw %}
             limits:
               memory: {% raw %} "{{inputs.parameters.memory_limit}}Gi"
               {% endraw %}
@@ -133,8 +166,9 @@ spec:
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
-              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_limit}}Gi"
-              {% endraw %}
+            volumeMounts:
+              - name: scratch
+                mountPath: /data
     container: &_kedro_container
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}"
@@ -215,12 +249,27 @@ spec:
   - <<: *_kedro_template
     name: neo4j
     podSpecPatch: |
+      volumes:
+          - name: scratch
+            ephemeral:
+              volumeClaimTemplate:
+                spec:
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: {% raw %}"{{inputs.parameters.ephemeral_storage_limit}}Gi"
+        {% endraw %}
+      terminationGracePeriodSeconds: 30
       tolerations:
         - key: "node-memory-size"
           operator: "Equal"
           value: "large"
           effect: "NoSchedule"
         - key: "workload"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+        - key: "spot"
           operator: "Equal"
           value: "true"
           effect: "NoSchedule"
@@ -247,9 +296,12 @@ spec:
           env:
             - name: SPARK_DRIVER_MEMORY
               value: "60"
-            # NOTE: We're passing in a regular bolt connection as emphemeral Neo4J has no SSL
+            # NOTE: We're passing in a regular bolt connection as ephemeral Neo4J has no SSL
             - name: NEO4J_HOST
               value: "bolt://127.0.0.1:7687"
+          volumeMounts:
+            - name: scratch
+              mountPath: /data
         - name: neo4j
           resources:
             requests:
@@ -259,16 +311,12 @@ spec:
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
-              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_request}}Gi"
-              {% endraw %}
             limits:
               memory: {% raw %} "{{inputs.parameters.memory_limit}}Gi"
               {% endraw %}
               cpu: {% raw %} "{{inputs.parameters.cpu_limit}}"
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
-              {% endraw %}
-              ephemeral-storage: {% raw %} "{{inputs.parameters.ephemeral_storage_limit}}Gi"
               {% endraw %}
     container: 
       <<: *_kedro_container
@@ -298,6 +346,7 @@ spec:
           - name: gds-key
             mountPath: /licences
             readOnly: true
+
         env:
         - name: NEO4J_AUTH
           valueFrom:
@@ -367,3 +416,53 @@ spec:
             value: {{ task.resources.ephemeral_storage_limit }}
 
       {% endfor %}
+
+  # Exit handler for cleanup - runs when workflow completes
+  - name: cleanup-handler
+    steps:
+    - - name: delete-docker-images
+        template: delete-artifact-images
+        when: {% raw %}"{{workflow.status}} == Succeeded"
+        {% endraw %}
+        arguments:
+          parameters:
+          - name: image_to_delete
+            value: {% raw %}"{{workflow.parameters.image}}"{% endraw %}
+
+  # Template for deleting Docker images from Artifact Registry
+  - name: delete-artifact-images
+    inputs:
+      parameters:
+      - name: image_to_delete
+    container:
+      image: gcr.io/google.com/cloudsdktool/cloud-sdk:latest
+      command: [sh, -c]
+      args:
+        - |
+          echo "Workflow completed successfully. Starting Docker image cleanup..."
+          
+          # In GKE with Workload Identity, authentication should be automatic
+          echo "Current authentication:"
+          gcloud auth list
+          
+          # Get image from input parameter
+          IMAGE_FULL={% raw %}"{{inputs.parameters.image_to_delete}}"
+          {% endraw %}
+          echo "Full image path: $IMAGE_FULL"
+          
+          # Validate image path
+          if [ -z "$IMAGE_FULL" ]; then
+            echo "Error: Image path is empty, skipping cleanup"
+            exit 0
+          fi
+          
+          # Delete the specific image tag
+          if gcloud artifacts docker images delete "$IMAGE_FULL" --quiet --delete-tags; then
+            echo "Successfully deleted Docker image: $IMAGE_FULL"
+          else
+            echo "Failed to delete Docker image: $IMAGE_FULL (image may not exist or already deleted)"
+            echo "This is non-fatal - workflow will continue normally"
+            exit 0  # Don't fail the workflow if image deletion fails
+          fi
+          
+          echo "Docker image cleanup completed successfully."

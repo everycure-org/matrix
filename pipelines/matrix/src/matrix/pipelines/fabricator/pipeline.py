@@ -7,6 +7,8 @@ from kedro.pipeline import Pipeline, node, pipeline
 
 from matrix.utils.fabrication import fabricate_datasets
 
+from . import nodes
+
 
 def _create_pairs(
     drug_list: pd.DataFrame,
@@ -119,6 +121,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="fabricate_kg2_datasets",
             ),
             node(
+                func=nodes.validate_datasets,
+                inputs={"nodes": "ingestion.raw.rtx_kg2.nodes@polars", "edges": "ingestion.raw.rtx_kg2.edges@polars"},
+                outputs="fabricator.int.rtx_kg2.violations",
+                name="validate_fabricated_kg2_datasets",
+            ),
+            node(
                 func=remove_overlap,
                 inputs={
                     "disease_list": "fabricator.int.disease_list",
@@ -172,6 +180,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="fabricate_robokop_datasets",
             ),
             node(
+                func=nodes.validate_datasets,
+                inputs={"nodes": "ingestion.raw.robokop.nodes@polars", "edges": "ingestion.raw.robokop.edges@polars"},
+                outputs="fabricator.int.robokop.violations",
+                name="validate_fabricated_robokop_datasets",
+            ),
+            node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.spoke"},
                 outputs={
@@ -179,6 +193,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "edges": "ingestion.raw.spoke.edges@pandas",
                 },
                 name="fabricate_spoke_datasets",
+            ),
+            node(
+                func=nodes.validate_datasets,
+                inputs={"nodes": "ingestion.raw.spoke.nodes@polars", "edges": "ingestion.raw.spoke.edges@polars"},
+                outputs="fabricator.int.spoke.violations",
+                name="validate_fabricated_spoke_datasets",
             ),
             node(
                 func=fabricate_datasets,
@@ -197,17 +217,40 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "params:fabricator.ground_truth.num_rows_per_category",
                 ],
                 outputs=[
-                    "ingestion.raw.ground_truth.positives",
-                    "ingestion.raw.ground_truth.negatives",
+                    "ingestion.raw.kgml_xdtd_ground_truth.positives",
+                    "ingestion.raw.kgml_xdtd_ground_truth.negatives",
                 ],
                 name="create_gt_pairs",
+            ),
+            node(
+                func=fabricate_datasets,
+                inputs={
+                    "fabrication_params": "params:fabricator.ec_gt",
+                    "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                },
+                outputs={
+                    "positive_edges": "ingestion.raw.ec_ground_truth.positives",
+                    "negative_edges": "ingestion.raw.ec_ground_truth.negatives",
+                },
+                name="create_ec_gt_pairs",
+            ),
+            node(
+                func=fabricate_datasets,
+                inputs={
+                    "fabrication_params": "params:fabricator.orchard",
+                    "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                },
+                outputs={
+                    "edges": "ingestion.raw.orchard.edges@pandas",
+                },
+                name="fabricate_orchard_datasets",
             ),
             node(
                 func=generate_paths,
                 inputs=[
                     "ingestion.raw.rtx_kg2.edges@pandas",
-                    "ingestion.raw.ground_truth.positives",
-                    "ingestion.raw.ground_truth.negatives",
+                    "ingestion.raw.kgml_xdtd_ground_truth.positives",
+                    "ingestion.raw.kgml_xdtd_ground_truth.negatives",
                 ],
                 outputs="ingestion.raw.drugmech.edges@pandas",
                 name="create_drugmech_pairs",

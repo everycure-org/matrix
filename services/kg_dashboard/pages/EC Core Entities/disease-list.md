@@ -134,53 +134,27 @@ by prefix and category.
     />
     <Tabs fullWidth=true>
         <Tab label="Success">
-            <Tabs>
-              <Tab label="Prefixes">
-                <DataTable
-                          data={disease_list_success
-                            .filter(d => d.normalization_success === true && d.dimension === 'prefix')
-                            .map(({ name, count }) => ({ name, count }))}
-                          columns={['name', 'count']}
-                          pagination
-                          pageSize={10}
-                        />
-              </Tab>
-              <Tab label="Categories">
-                <DataTable
-                          data={disease_list_success
-                            .filter(d => d.normalization_success === true && d.dimension === 'category')
-                            .map(({ name, count }) => ({ name, count }))}
-                          columns={['name', 'count']}
-                          pagination
-                          pageSize={10}
-                        />
-              </Tab>
-            </Tabs>
+            <DataTable
+                data={disease_list_success
+                    .filter(d => d.normalization_success === true && d.dimension === 'prefix')
+                    .map(({ name, count }) => ({ name, count }))}
+                columns={['name', 'count']}
+                pagination
+                pageSize={10}
+            />
         </Tab>
+        {#if disease_list_success.filter(d => d.normalization_success === false && d.dimension === 'prefix').length > 0}
         <Tab label="Failure">
-            <Tabs>
-              <Tab label="Prefixes">
-                <DataTable
-                          data={disease_list_success
-                            .filter(d => d.normalization_success === false && d.dimension === 'prefix')
-                            .map(({ name, count }) => ({ name, count }))}
-                          columns={['name', 'count']}
-                          pagination
-                          pageSize={10}
-                        />
-              </Tab>
-              <Tab label="Categories">
-                <DataTable
-                          data={disease_list_success
-                            .filter(d => d.normalization_success === false && d.dimension === 'category')
-                            .map(({ name, count }) => ({ name, count }))}
-                          columns={['name', 'count']}
-                          pagination
-                          pageSize={10}
-                        />
-              </Tab>
-            </Tabs>
+            <DataTable
+                data={disease_list_success
+                    .filter(d => d.normalization_success === false && d.dimension === 'prefix')
+                    .map(({ name, count }) => ({ name, count }))}
+                columns={['name', 'count']}
+                pagination
+                pageSize={10}
+            />
         </Tab>
+        {/if}
     </Tabs>
 </Grid>
 
