@@ -1,0 +1,60 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gha-runner-scale-set
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  destination:
+    namespace: actions-runner-system
+    server: {{ .Values.spec.destination.server }}
+  project: default
+  source:
+    chart: gha-runner-scale-set
+    repoURL: ghcr.io/actions/actions-runner-controller-charts
+    targetRevision: 0.12.1
+    helm:
+      values: |
+        controllerServiceAccount:
+          name: gha-runner-scale-set-controller-gha-rs-controller
+          namespace: actions-runner-system
+        githubConfigSecret: gh-creds-for-github-action-runner-set
+        githubConfigUrl: https://github.com/everycure-org/
+        containerMode:
+          type: "dind"
+        minRunners: 0
+        maxRunners: 50
+        # Handle spot interruptions gracefully
+        terminationGracePeriodSeconds: 30
+        # Resource requests and limits to match n2-standard-4 (4 vCPUs, 16GB RAM)
+        resources:
+          requests:
+            cpu: "3800m"        # Reserve most of the 4 vCPUs (leave some for system)
+            memory: "15Gi"      # Reserve most of the 16GB RAM (leave some for system)
+            ephemeral-storage: "90Gi"  # Reserve most of the 100GB disk
+          limits:
+            cpu: "4"            # Allow burst up to full 4 vCPUs
+            memory: "16Gi"      # Hard limit at 16GB RAM
+            ephemeral-storage: "100Gi"  # Hard limit at 100GB disk
+        template:
+          spec:
+            # Allow more time for graceful shutdown when spot instances are reclaimed
+            terminationGracePeriodSeconds: 30
+            tolerations:
+            - key: "github-runner"
+              operator: "Equal"
+              value: "true"
+              effect: "NoSchedule"
+            - key: "spot"
+              operator: "Equal"
+              value: "true"
+              effect: "NoSchedule"
+            nodeSelector:
+              workload-type: "ci-cd"
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: true
+      allowEmpty: true
