@@ -2,7 +2,7 @@ name: Build & Push Runner Image (Google Artifact Registry)
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, nelson/aip-517-optimize-ci-process-to-reduce-runtime-from-50-minutes ]
     paths:
       - ./infra/github-runner-image/Dockerfile
       - .github/workflows/publish-runner-image.yml
