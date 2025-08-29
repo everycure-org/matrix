@@ -176,15 +176,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-venv-
 
-      # Install system dependencies (will use APT cache if available)
-      - name: Install system dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y make build-essential libssl-dev zlib1g-dev \
-          libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
-          libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev \
-          libffi-dev liblzma-dev openjdk-17-jdk openjdk-17-jre
-
       - name: Setup Python environment
         run: |
           # Setup pyenv if not cached
