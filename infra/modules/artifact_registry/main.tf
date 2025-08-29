@@ -17,4 +17,15 @@ resource "google_artifact_registry_repository" "this" {
       }
     }
   }
+  dynamic "cleanup_policies" {
+    for_each = var.keep_number_of_last_images > 0 ? [1] : []
+    content {
+      id     = "keep-last-images"
+      action = "KEEP"
+      condition {
+        newer_than = var.keep_number_of_last_images
+        tag_state  = "ANY"
+      }
+    }
+  }
 }
