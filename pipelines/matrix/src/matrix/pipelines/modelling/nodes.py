@@ -49,7 +49,16 @@ def filter_valid_pairs(
     categories_array = f.array([f.lit(cat) for cat in categories])
 
     # Get list of nodes in the KG
-    valid_nodes_in_kg = nodes.select("id").distinct().cache()
+    # TEMP: only choose nodes which are both in RTX AND ROBOKOP
+    valid_nodes_in_kg = (
+        nodes.filter(
+            f.array_contains(f.col("upstream_data_source"), "robokop")
+            & f.array_contains(f.col("upstream_data_source"), "rtx_kg2")
+        )
+        .select("id")
+        .distinct()
+        .cache()
+    )
     valid_nodes_with_categories = (
         nodes.filter(f.size(f.array_intersect(f.col("all_categories"), categories_array)) > 0).select("id").cache()
     )
