@@ -42,6 +42,7 @@ concurrency:
 
 env:
   TQDM_DISABLE: 1
+  TAG: ${{ github.sha }}
 
 jobs:
   # leveraging a paths-filter approach to be able to make this run required for all PRs while still
@@ -121,7 +122,7 @@ jobs:
           - name: "full-test"
             run: "make full_test"
           - name: "docker-test"
-            run: 'make fetch_secrets && make docker_test GIT_SHA="${{ github.sha }}"'
+            run: 'make fetch_secrets && make docker_test GIT_SHA="${{ github.sha }}" TAG="${{ github.sha }}"'
 
     permissions:
       contents: 'read'
@@ -148,7 +149,7 @@ jobs:
       # Setup steps (same as main ci job)
       - run: env | sort
       
-      # Cache system dependencies
+      # Restore all caches in parallel for faster startup on ephemeral runners
       - name: Cache APT packages
         uses: actions/cache@v4
         with:
@@ -156,8 +157,7 @@ jobs:
           key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list.d/**') }}
           restore-keys: |
             ${{ runner.os }}-apt-
-
-      # Cache pyenv installation and Python versions
+            
       - name: Cache pyenv
         uses: actions/cache@v4
         with:
@@ -166,8 +166,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pyenv-3.11-
             ${{ runner.os }}-pyenv-
-
-      # Cache uv binary and global cache
+            
       - name: Cache uv
         uses: actions/cache@v4
         with:
@@ -177,8 +176,7 @@ jobs:
           key: ${{ runner.os }}-uv-${{ hashFiles('pipelines/matrix/uv.lock') }}
           restore-keys: |
             ${{ runner.os }}-uv-
-
-      # Cache Python virtual environment
+            
       - name: Cache Python virtual environment
         uses: actions/cache@v4
         with:
@@ -187,9 +185,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-venv-
 
+      # Install system dependencies (will use APT cache if available)
       - name: Install system dependencies
         run: |
-          sudo apt update
+          # Skip apt update if cache hit (packages already installed)
+          if [ ! -f /var/cache/apt/archives/lock ]; then
+            sudo apt update
+          fi
           sudo apt install -y make build-essential libssl-dev zlib1g-dev \
           libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
           libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev \
