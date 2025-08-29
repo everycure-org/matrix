@@ -1,6 +1,5 @@
 import logging
 import os
-from typing import Union
 
 import mlflow
 
@@ -13,7 +12,7 @@ DISABlE_MLFLOW = (
 )
 
 
-def log_metric(context: str, name: str, value: Union[int, float]):
+def log_metric(context: str, name: str, value: int | float):
     if not DISABlE_MLFLOW:
         mlflow.log_metric(f"{context}/{name}", value)
     else:

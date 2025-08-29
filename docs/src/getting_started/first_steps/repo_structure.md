@@ -5,17 +5,52 @@ After getting familiar with the high-level overview of MATRIX and kedro, let's e
 !!! info
     As MATRIX is a monorepo, it contains codebase for the data science platform (`pipelines/matrix`) but also infrastructure (`infra`) , documentation (`docs`), and supplementary apps (`services`). Majority of this onboarding document refers to the sections within `pipelines/matrix`
 
+## Multi-Package Architecture
+
+MATRIX is structured as a **monorepo with multiple packages** using **uv** for dependency management:
+
+- **`pipelines/matrix/`** - Main pipeline development (where you'll spend most of your time)
+  - Uses `pyproject.toml` and `uv.lock` for dependency management
+  - Main `Makefile` for pipeline development commands
+  - Contains all Kedro pipelines and core application code
+- **`libs/`** - Modular libraries for shared functionality:
+  - `matrix-auth/` - Authentication and environment utilities
+  - `matrix-fabricator/` - Data fabrication and generation tools  
+  - `matrix-gcp-datasets/` - GCP integration and Spark utilities
+  - `matrix-mlflow-utils/` - MLflow integration and metric utilities
+  - Each lib has its own `pyproject.toml` and is managed as a separate package
+- **`infra/`** - Infrastructure as Code configuration
+- **`docs/`** - Documentation generation (also has its own `pyproject.toml`)
+- **`services/`** - Supporting services and APIs
+- **`apps/`** - CLI tools and applications (each with separate `pyproject.toml`)
+
+!!! warning "Important: Work in the Right Directory"
+    **Always run pipeline development commands from the `pipelines/matrix/` directory.** This is where the main `Makefile` and `pyproject.toml` for the pipeline are located.
+
+### uv Workspace Structure
+
+The repository uses uv's workspace feature to manage multiple packages efficiently:
+
+- **Root `pyproject.toml`**: Defines the workspace and shared configuration
+- **Individual packages**: Each directory with a `pyproject.toml` is a separate package
+- **Shared dependencies**: Common dependencies are managed at the workspace level
+- **Local development**: Libraries in `libs/` are installed in editable mode for development
+
 ## Core Project Files
 On a high-level, our pipeline repo management relies on the following files for environment configuration:
 
-- The most useful commands (such as creating and setting-up `.venv`, running pre-commits or tests) are conveniently handles by `Makefiles`. `Makefile` contains standardized commands for common operations; to see available clommands, run: `make help`. [You can learn more about Makefiles here](https://makefiletutorial.com/)
+- **Multiple `Makefiles`** for different purposes:
+  - `pipelines/matrix/Makefile` - **Main pipeline development (use this for most tasks)**
+  - `infra/Makefile` - Infrastructure deployment  
+  - `docs/Makefile` - Documentation generation
+  - Service-specific Makefiles in `services/*/Makefile`
 
 !!! Makefiles
-    Note that our `Makefile` script contains _very many_ commands, many are designed for GCP usage or facilitated debugging. You don't need to have an understanding of of every command there - we will show you the most relevant ones over this guide.
+    The `pipelines/matrix/Makefile` contains _very many_ commands, many are designed for GCP usage or facilitated debugging. You don't need to have an understanding of every command there - we will show you the most relevant ones over this guide.
 
 - We also utilize `.env.defaults` for sharing default environment variables for running the project. This version-controlled file serves as both default configuration and documentation. For local environment variables, we use a git ignored copy of that file which is called `.env` - this way you can store your personal credentials and variables without risk of commiting them.
 
-- Lastly, the environment set-up relies on `requirements.txt` and related files - these define Python dependencies, we manage them through `uv` for quick & reproducible builds.
+- **Dependencies are managed with `uv`**: Instead of `requirements.txt`, we now use `pyproject.toml` and `uv.lock` files to define Python dependencies. We use `uv` for fast & reproducible builds across all packages in the workspace. Each package manages its own dependencies, while shared dependencies are defined at the workspace level.
 
 ## Key Directories
 ### Source Code

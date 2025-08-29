@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "matrix-auth"
+version = "0.1.0"
+description = "Authentication and cloud utilities for Matrix platform"
+requires-python = ">=3.11"
+dependencies = [
+    "click",
+    "requests",
+    "google-auth",
+    "google-auth-oauthlib",
+    "google-oauth2-tool",
+    "rich",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-mock",
+    "ruff",
+    "responses",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

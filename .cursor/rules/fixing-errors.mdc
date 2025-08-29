@@ -1,0 +1,9 @@
+---
+description: when debugging or solving errors together with the user
+alwaysApply: false
+---
+
+When fixing errors with the user that appear complex, once you solved them and the user agrees after
+you asked them, add a snippet of the typical stacktrace or error log to the
+docs/src/references/common_errors.md file so that future developers may avoid the same errors or
+resolve them quickly.

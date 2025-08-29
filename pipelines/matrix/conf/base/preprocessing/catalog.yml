@@ -14,17 +14,17 @@ _layer_prm: &_layer_prm
       layer: primary
 
 _medical_clinical_trials_sheet_dataset: &_medical_clinical_trials_sheet_dataset
-  type: matrix.datasets.gcp.GoogleSheetsDataset
+  type: matrix_gcp_datasets.gcp.GoogleSheetsDataset
   key: 1Wlrjr8ojUGCfWJg-QF5PzpJFqpD7LLH7b60u2XAngh0
   service_file: conf/local/service-account.json
 
 _medical_kg_sheets_dataset: &_medical_kg_sheets_dataset
-  type: matrix.datasets.gcp.GoogleSheetsDataset
+  type: matrix_gcp_datasets.gcp.GoogleSheetsDataset
   key: 1LMtOmA10t7a3lcKeTP7zmptOPIcCBIPFVJt9J7jZ2bQ
   service_file: conf/local/service-account.json
 
 _spark_parquet_ds: &_spark_parquet
-  type: matrix.datasets.gcp.LazySparkDataset
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
   file_format: parquet
   save_args:
     mode: overwrite

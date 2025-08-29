@@ -1,5 +1,5 @@
 _bigquery_ds: &_bigquery_ds
-  type: matrix.datasets.gcp.SparkDatasetWithBQExternalTable
+  type: matrix_gcp_datasets.gcp.SparkDatasetWithBQExternalTable
   project_id: ${oc.env:RUNTIME_GCP_PROJECT_ID}
   dataset: run_${globals:run_name}
   file_format: parquet

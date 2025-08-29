@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 from scripts.bump_detection import get_generate_article_flag

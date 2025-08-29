@@ -60,7 +60,7 @@ jobs:
         working-directory: pipelines/matrix
         run: |
           make install_argo
-          pip install -r requirements.txt
+          uv sync
 
       - name: Authenticate with Google Cloud
         id: auth
