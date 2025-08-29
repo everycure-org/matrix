@@ -161,7 +161,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     outputs="integration.int.core_node_mapping",
                     name="create_core_id_mapping",
                 ),
-                node(
+                ArgoNode(
                     func=nodes.union_and_deduplicate_nodes,
                     inputs=[
                         "params:integration.deduplication.retrieve_most_specific_category",
@@ -174,6 +174,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ],
                     outputs="integration.prm.unified_nodes",
                     name="create_prm_unified_nodes",
+                    argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
                 ),
                 node(
                     func=nodes.unify_ground_truth,
