@@ -1,0 +1,38 @@
+steps:
+  # Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPOSITORY}/${_IMAGE_NAME}:latest'
+      - '.'
+    dir: 'infra/github-runner-image'
+
+  # Push the image with SHA tag
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPOSITORY}/${_IMAGE_NAME}:${COMMIT_SHA}'
+
+  # Push the image with latest tag
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPOSITORY}/${_IMAGE_NAME}:latest'
+
+# Configure logging
+options:
+  logging: CLOUD_LOGGING_ONLY
+  logStreamingOption: STREAM_ON
+  machineType: 'E2_HIGHCPU_8'
+  substitutionOption: ALLOW_LOOSE
+
+# Default values for substitutions
+substitutions:
+  _REGION: 'us-central1'
+  _PROJECT_ID: ''
+  _REPOSITORY: 'runner-docker-compose'
+  _IMAGE_NAME: 'runner-docker-compose'
+
+# Set timeout
+timeout: '1200s'
