@@ -37,9 +37,9 @@ spec:
               command: ["/home/runner/run.sh"]
               resources:
                 requests:
-                  cpu: "3800m"        # Reserve most of the 4 vCPUs (leave some for system)
-                  memory: "15Gi"      # Reserve most of the 16GB RAM (leave some for system)
-                  ephemeral-storage: "90Gi"  # Reserve most of the 100GB disk
+                  cpu: "3"        # Reserve most of the 4 vCPUs (leave 1 CPU for system)
+                  memory: "10Gi"      # Reserve most of the 16GB RAM (leave 6GB for system)
+                  ephemeral-storage: "50Gi"  # Reserve most of the 100GB disk (leave 50GB for system)
                 limits:
                   cpu: "4"            # Allow burst up to full 4 vCPUs
                   memory: "16Gi"      # Hard limit at 16GB RAM
