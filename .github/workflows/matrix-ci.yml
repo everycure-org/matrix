@@ -114,8 +114,6 @@ jobs:
             run: "make precommit"
           - name: "kedro-catalog-base"
             run: "uv run kedro catalog resolve --env base"
-          - name: "fetch-secrets"
-            run: "make fetch_secrets"
           - name: "kedro-catalog-cloud"
             run: "uv run kedro catalog resolve --env cloud"
           - name: "kedro-catalog-test"
@@ -123,7 +121,7 @@ jobs:
           - name: "full-test"
             run: "make full_test"
           - name: "docker-test"
-            run: 'make docker_test GIT_SHA="${{ github.sha }}"'
+            run: 'make fetch_secrets && make docker_test GIT_SHA="${{ github.sha }}"'
 
     permissions:
       contents: 'read'
@@ -149,23 +147,79 @@ jobs:
 
       # Setup steps (same as main ci job)
       - run: env | sort
-      - run: |
+      
+      # Cache system dependencies
+      - name: Cache APT packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt
+          key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list.d/**') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-
+
+      # Cache pyenv installation and Python versions
+      - name: Cache pyenv
+        uses: actions/cache@v4
+        with:
+          path: ~/.pyenv
+          key: ${{ runner.os }}-pyenv-3.11-${{ hashFiles('pipelines/matrix/pyproject.toml', 'pipelines/matrix/uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pyenv-3.11-
+            ${{ runner.os }}-pyenv-
+
+      # Cache uv binary and global cache
+      - name: Cache uv
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/uv
+            ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('pipelines/matrix/uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      # Cache Python virtual environment
+      - name: Cache Python virtual environment
+        uses: actions/cache@v4
+        with:
+          path: pipelines/matrix/.venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('pipelines/matrix/uv.lock', 'pipelines/matrix/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-venv-
+
+      - name: Install system dependencies
+        run: |
           sudo apt update
-          sudo apt upgrade -y
           sudo apt install -y make build-essential libssl-dev zlib1g-dev \
           libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
           libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev \
           libffi-dev liblzma-dev openjdk-17-jdk openjdk-17-jre
-          curl -fsSL https://pyenv.run | bash # recommend. Else see here for alternative: https://github.com/pyenv/pyenv
+
+      - name: Setup Python environment
+        run: |
+          # Setup pyenv if not cached
+          if [ ! -d "$HOME/.pyenv" ]; then
+            curl -fsSL https://pyenv.run | bash
+          fi
           export PYENV_ROOT="$HOME/.pyenv"
           [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
           eval "$(pyenv init - bash)"
           eval "$(pyenv virtualenv-init -)"
-          pyenv install 3.11
-          pyenv global 3.11 && pyenv global
-          curl -LsSf https://astral.sh/uv/install.sh | sh
+          
+          # Install Python 3.11 if not available
+          if ! pyenv versions | grep -q "3.11"; then
+            pyenv install 3.11
+          fi
+          pyenv global 3.11
+          
+          # Install uv if not available
+          if [ ! -f "$HOME/.cargo/bin/uv" ]; then
+            curl -LsSf https://astral.sh/uv/install.sh | sh
+          fi
 
-      - run: make install
+      # Install Python dependencies (will use cache if available)
+      - name: Install Python dependencies
+        run: make install
 
       # Run the specific command for this matrix job
       - name: "Run ${{ matrix.command.name }}"
