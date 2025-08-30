@@ -104,6 +104,11 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         head_max=None,
         tail_min=None,
         tail_max=None,
+        beta_head_pos=None,
+        beta_head_neg=None,
+        beta_tail_pos=None,
+        beta_tail_neg=None,
+        tol=1e-3,
     ):
         self.head_col = head_col
         self.tail_col = tail_col
@@ -131,6 +136,11 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         self.head_max = head_max
         self.tail_min = tail_min
         self.tail_max = tail_max
+        self.beta_head_pos = beta_head_pos
+        self.beta_head_neg = beta_head_neg
+        self.beta_tail_pos = beta_tail_pos
+        self.beta_tail_neg = beta_tail_neg
+        self.tol = tol
 
     def fit(self, X, y=None):
         X = self._to_df(X)
@@ -139,6 +149,11 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
 
         beta_h = self.beta_head if self.beta_head is not None else self.beta
         beta_t = self.beta_tail if self.beta_tail is not None else self.beta
+
+        beta_h_pos = self.beta_head_pos if self.beta_head_pos is not None else beta_h
+        beta_h_neg = self.beta_head_neg if self.beta_head_neg is not None else beta_h
+        beta_t_pos = self.beta_tail_pos if self.beta_tail_pos is not None else beta_t
+        beta_t_neg = self.beta_tail_neg if self.beta_tail_neg is not None else beta_t
 
         head_bounds = (
             self.head_min if self.head_min is not None else self.a_min,
@@ -167,8 +182,8 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
             ],
             base_budget_head=self.budget_pos * pos_scale_h,
             base_budget_tail=self.budget_pos * pos_scale_t,
-            beta_head=beta_h,
-            beta_tail=beta_t,
+            beta_head=beta_h_pos,
+            beta_tail=beta_t_pos,
             head_bounds=head_bounds,
             tail_bounds=tail_bounds,
         )
@@ -188,8 +203,8 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
             ],
             base_budget_head=self.budget_neg,
             base_budget_tail=self.budget_neg,
-            beta_head=beta_h,
-            beta_tail=beta_t,
+            beta_head=beta_h_neg,
+            beta_tail=beta_t_neg,
             head_bounds=head_bounds,
             tail_bounds=tail_bounds,
         )
@@ -222,6 +237,10 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
                 w[pos_mask] /= max(w[pos_mask].mean(), self.eps)
             if (~pos_mask).any():
                 w[~pos_mask] /= max(w[~pos_mask].mean(), self.eps)
+        elif self.normalize == "global":
+            w /= max(w.mean(), self.eps)
+        elif self.normalize in (None, "none"):
+            pass
         else:
             w /= max(w.mean(), self.eps)
 
@@ -274,6 +293,9 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         v_edges = df[self.tail_col].to_numpy()
 
         for _ in range(self.iters):
+            La_prev = np.log(np.maximum(a.to_numpy(), self.eps))
+            Lb_prev = np.log(np.maximum(b.to_numpy(), self.eps))
+
             b_on_edges = pd.Series(b).reindex(v_edges).fillna(1.0).to_numpy()
             sum_b_by_u = (
                 pd.DataFrame({self.head_col: u_edges, "val": b_on_edges * s}).groupby(self.head_col)["val"].sum()
@@ -299,6 +321,11 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
             if self.clip_factors:
                 Lb = np.clip(Lb, Lb_min, Lb_max)
             b = pd.Series(np.exp(Lb), index=b.index)
+
+            if self.tol is not None:
+                max_delta = max(float(np.max(np.abs(La - La_prev))), float(np.max(np.abs(Lb - Lb_prev))))
+                if max_delta < self.tol:
+                    break
 
         if self.clip_factors:
             a_log = np.log(np.maximum(a.to_numpy(), self.eps))
@@ -338,281 +365,3 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         if y_arr.ndim == 1 and len(y_arr) == len(X):
             return pd.Series(y_arr, index=X.index)
         raise ValueError(f"y must be None, scalar, or 1D array of length {len(X)}")
-
-
-# class WeightingTransformer(BaseEstimator, TransformerMixin):
-#     def __init__(
-#         self,
-#         head_col,
-#         strategy="auto_cv",
-#         enabled=True,
-#         eta=40,
-#         mix_k=5,
-#         mix_beta=1.0,
-#         eps=1e-6,
-#         w_min=1e-3,
-#         w_max=20.0,
-#         *,
-#         per_class=False,
-#         pos_label=1,
-#         normalize="per_class",
-#         default_class="neg",
-#     ):
-#         self.head_col = head_col
-#         self.strategy = strategy
-#         self.enabled = enabled
-#         self.eta = eta
-#         self.mix_k = mix_k
-#         self.mix_beta = mix_beta
-#         self.eps = eps
-#         self.w_min = w_min
-#         self.w_max = w_max
-
-#         self.per_class = per_class
-#         self.label_col = "y"
-#         self.pos_label = pos_label
-#         self.normalize = normalize
-#         self.default_class = default_class
-
-#         self.class_budget_pos = 1.0
-#         self.class_budget_neg = 1.0
-#         self.enforce_budget = True
-#         self.beta = None
-#         self.log_clip = True
-
-#     def fit(self, X, y=None):
-#         X = self._ensure_dataframe(X)
-#         y_series = self._get_y_series(X, y)
-
-#         if not self.enabled:
-#             w = np.ones(len(X), dtype=float)
-#             self._store_maps_from_row_weights(X, y_series, w)
-#             self.n_features_in_ = X.shape[1]
-#             return self
-
-#         if not self.per_class:
-#             cnt = X[self.head_col].value_counts()
-#             base_w = self._weights_from_counts(cnt)
-#             w = X[self.head_col].map(base_w).fillna(1.0).to_numpy()
-#             w = self._clip(w)
-#             w = self._normalize(w, y_series)
-#             self._store_maps_from_row_weights(X, y_series, w)
-#             self.n_features_in_ = X.shape[1]
-#             return self
-
-#         if y_series is None:
-#             raise ValueError("per_class requires labels")
-
-#         pos_mask = y_series == self.pos_label
-#         pos_mask = pos_mask.reindex(X.index, fill_value=False)
-#         neg_mask = ~pos_mask
-
-#         cnt_pos = X.loc[pos_mask, self.head_col].value_counts()
-#         cnt_neg = X.loc[neg_mask, self.head_col].value_counts()
-
-#         w_map_pos_raw = self._weights_from_counts(cnt_pos)
-#         w_map_neg_raw = self._weights_from_counts(cnt_neg)
-
-#         if self.strategy == "marginal":
-#             w_map_pos_raw = self.class_budget_pos * w_map_pos_raw
-#             w_map_neg_raw = self.class_budget_neg * w_map_neg_raw
-
-#         w = np.empty(len(X), dtype=float)
-#         w[pos_mask] = X.loc[pos_mask, self.head_col].map(w_map_pos_raw).fillna(1.0).to_numpy()
-#         w[neg_mask] = X.loc[neg_mask, self.head_col].map(w_map_neg_raw).fillna(1.0).to_numpy()
-
-#         # w = self._log_clip(w)
-
-#         if self.enforce_budget and pos_mask.any():
-#             w[pos_mask] = self._apply_budget(
-#                 X.loc[pos_mask, [self.head_col]], w[pos_mask], self.head_col, self.class_budget_pos
-#             )
-#         if self.enforce_budget and neg_mask.any():
-#             w[neg_mask] = self._apply_budget(
-#                 X.loc[neg_mask, [self.head_col]], w[neg_mask], self.head_col, self.class_budget_neg
-#             )
-
-#         if self.normalize == "per_class":
-#             if pos_mask.any():
-#                 w[pos_mask] /= max(w[pos_mask].mean(), self.eps)
-#             if neg_mask.any():
-#                 w[neg_mask] /= max(w[neg_mask].mean(), self.eps)
-#         else:
-#             w /= max(w.mean(), self.eps)
-
-#         if pos_mask.any():
-#             pos_scale = 1.0
-#             w_map_pos = w_map_pos_raw.copy()
-#             mu_pos = X.loc[pos_mask, self.head_col].map(w_map_pos).fillna(1.0).mean()
-#             if mu_pos > 0:
-#                 w_map_pos = w_map_pos / mu_pos
-#         else:
-#             w_map_pos = pd.Series(dtype=float)
-
-#         if neg_mask.any():
-#             w_map_neg = w_map_neg_raw.copy()
-#             mu_neg = X.loc[neg_mask, self.head_col].map(w_map_neg).fillna(1.0).mean()
-#             if mu_neg > 0:
-#                 w_map_neg = w_map_neg / mu_neg
-#         else:
-#             w_map_neg = pd.Series(dtype=float)
-
-#         self.weight_map_pos_ = w_map_pos.to_dict()
-#         self.weight_map_neg_ = w_map_neg.to_dict()
-#         self.default_weight_pos_ = 1.0
-#         self.default_weight_neg_ = 1.0
-
-#         self.n_features_in_ = X.shape[1]
-#         return self
-
-#     def transform(self, X, y=None):
-#         check_is_fitted(self, "n_features_in_")
-#         X = self._to_dataframe(X)
-#         y_series = self._get_y_series(X, y)
-
-#         if hasattr(self, "weight_map_pos_") and self.per_class:
-#             if y_series is None:
-#                 use_pos = self.default_class == "pos"
-#                 w = X[self.head_col].map(self.weight_map_pos_ if use_pos else self.weight_map_neg_).fillna(1.0)
-#             else:
-#                 pos_mask = y_series == self.pos_label
-#                 w = pd.Series(index=X.index, dtype=float)
-#                 w[pos_mask] = X.loc[pos_mask, self.head_col].map(self.weight_map_pos_).fillna(1.0)
-#                 w[~pos_mask] = X.loc[~pos_mask, self.head_col].map(self.weight_map_neg_).fillna(1.0)
-#             w = self._clip(w.to_numpy())
-#             return pd.DataFrame({"weight": w}, index=X.index)
-
-#         # single-map mode
-#         check_is_fitted(self, "weight_map_")
-#         w = X[self.head_col].map(self.weight_map_).fillna(self.default_weight_)
-#         w = self._clip(w.to_numpy())
-#         return pd.DataFrame({"weight": w.values}, index=X.index)
-
-#     def get_feature_names_out(self, input_features=None):
-#         return np.array(["weight"])
-
-#     @staticmethod
-#     def _to_dataframe(X):
-#         return X if isinstance(X, pd.DataFrame) else pd.DataFrame(X)
-
-#     def _ensure_dataframe(self, X):
-#         if isinstance(X, pd.Series):
-#             X = X.to_frame(name=self.head_col if isinstance(self.head_col, str) else "feature")
-#         elif not isinstance(X, pd.DataFrame):
-#             X = pd.DataFrame(X)
-
-#         if self.head_col not in X.columns:
-#             if X.shape[1] == 1:
-#                 X = X.copy()
-#                 X.columns = [self.head_col]
-#             else:
-#                 raise KeyError(f"head_col '{self.head_col}' not in X.columns: {list(X.columns)[:8]}...")
-#         return X
-
-#     def _log_clip(self, w):
-#         if not self.log_clip:
-#             return np.clip(w, self.w_min, self.w_max)
-#         lw = np.log(np.maximum(w, self.eps))
-#         lw = np.clip(lw, np.log(self.w_min), np.log(self.w_max))
-#         return np.exp(lw)
-
-#     def _weights_from_counts(self, cnt: pd.Series) -> pd.Series:
-#         strat = self.strategy
-#         if self.beta is not None:
-#             # explicit tempered inverse: w ∝ cnt^{-beta}
-#             w = (np.maximum(cnt, self.eps) ** (-self.beta)).astype(float)
-#         elif strat == "inverse":
-#             w = 1.0 / (cnt + self.eps)
-#         elif strat == "inverse_sqrt":
-#             w = 1.0 / np.sqrt(cnt + self.eps)
-#         elif strat == "marginal":  # NEW: per-entity budget / count
-#             # budget set later per-class; return just 1/cnt shape
-#             w = 1.0 / (cnt + self.eps)
-#         elif strat == "shomer":
-#             w = pd.Series(np.where(cnt < self.eta, 1.0 + self.mix_beta * self.mix_k, 1.0), index=cnt.index)
-#         elif strat == "auto_cv":
-#             w = pd.Series(self._weights_auto_cv(cnt), index=cnt.index)
-#         elif strat == "simple_eta":
-#             w = pd.Series(np.clip(self.eta / (cnt + self.eps), self.w_min, self.w_max), index=cnt.index)
-#         else:
-#             raise ValueError(f"Unknown strategy: {strat}")
-
-#         if isinstance(w, np.ndarray):
-#             w = pd.Series(w, index=cnt.index)
-#         # clip symmetrically
-#         # w = pd.Series(self._log_clip(w.to_numpy()), index=cnt.index)
-#         return w
-
-#     def _apply_budget(self, X_sub: pd.DataFrame, w_rows: np.ndarray, entity_col: str, budget: float) -> np.ndarray:
-#         """
-#         Per-entity exact budget enforcement on the already-mapped row weights.
-#         Scales rows per entity so sum_rows(entity) == budget (up to a class-wide scalar).
-#         """
-#         g = pd.DataFrame({entity_col: X_sub[entity_col].to_numpy(), "w": w_rows})
-#         sums = g.groupby(entity_col)["w"].sum()
-#         # avoid zero-division for unseen entities
-#         scale_per_entity = (budget / np.maximum(sums, self.eps)).to_dict()
-#         scales = X_sub[entity_col].map(scale_per_entity).to_numpy()
-#         return w_rows * scales
-
-#     def _get_y_series(self, X, y):
-#         if self.label_col is not None and isinstance(X, pd.DataFrame) and self.label_col in X.columns:
-#             s = X[self.label_col]
-#             return s if isinstance(s, pd.Series) else pd.Series(s, index=X.index)
-
-#         if y is None:
-#             return None
-
-#         if np.isscalar(y) or (hasattr(y, "ndim") and getattr(y, "ndim", 0) == 0):
-#             return pd.Series(np.full(len(X), y), index=X.index)
-
-#         y_arr = np.asarray(y)
-#         if y_arr.ndim == 1 and len(y_arr) == len(X):
-#             return pd.Series(y_arr, index=X.index)
-
-#         raise ValueError(f"y must be None, a scalar, or 1D array of length {len(X)}; got {getattr(y_arr,'shape',None)}")
-
-#     def _clip(self, w):
-#         return np.clip(w, self.w_min, self.w_max)
-
-#     def _weights_from_counts(self, cnt: pd.Series) -> pd.Series:
-#         if self.strategy == "inverse":
-#             w = 1.0 / (cnt + self.eps)
-#         elif self.strategy == "shomer":
-#             w = pd.Series(np.where(cnt < self.eta, 1.0 + self.mix_beta * self.mix_k, 1.0), index=cnt.index)
-#         elif self.strategy == "auto_cv":
-#             w = pd.Series(self._weights_auto_cv(cnt), index=cnt.index)
-#         elif self.strategy == "simple_eta":
-#             w = pd.Series(np.clip(self.eta / (cnt + self.eps), self.w_min, self.w_max), index=cnt.index)
-#         else:
-#             raise ValueError(f"Unknown strategy: {self.strategy}")
-
-#         if isinstance(w, np.ndarray):
-#             w = pd.Series(w, index=cnt.index)
-#         w = w.clip(lower=self.w_min, upper=self.w_max)
-#         return w
-
-#     def _weights_shomer(self, cnt):
-#         w = np.where(cnt < self.eta, 1.0 + self.mix_beta * self.mix_k, 1.0)
-#         w = np.clip(w, self.w_min, self.w_max)
-#         return (w / w.mean()).to_numpy()
-
-#     def _weights_inverse(self, cnt):
-#         w = 1.0 / (cnt + self.eps)
-#         w = np.clip(w, self.w_min, self.w_max)
-#         return (w / w.mean()).to_numpy()
-
-#     def _weights_auto_cv(self, cnt):
-#         raw_cv = cnt.std() / max(cnt.mean(), self.eps)
-#         target = raw_cv * 1e-3
-#         lo, hi = 0.0, 1.0
-#         for _ in range(300):
-#             mid = (lo + hi) / 2
-#             w = self._weights_beta(cnt, mid)
-#             cv_mid = (w * cnt).std() / max((w * cnt).mean(), self.eps)
-#             lo, hi = (mid, hi) if cv_mid > target else (lo, mid)
-#         return self._weights_beta(cnt, hi)
-
-#     def _weights_beta(self, cnt, beta):
-#         w = np.clip((cnt + self.eps) ** (-beta), self.w_min, self.w_max)
-#         return (w / max(w.mean(), self.eps)).to_numpy()
