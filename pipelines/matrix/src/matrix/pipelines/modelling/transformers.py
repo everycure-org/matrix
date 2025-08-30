@@ -96,6 +96,14 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         beta=0.2,
         pos_budget_scale=2.0,
         base_weight_col=None,
+        beta_head=None,
+        beta_tail=None,
+        pos_budget_scale_head=None,
+        pos_budget_scale_tail=None,
+        head_min=None,
+        head_max=None,
+        tail_min=None,
+        tail_max=None,
     ):
         self.head_col = head_col
         self.tail_col = tail_col
@@ -108,21 +116,41 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         self.normalize = normalize
         self.output_name = output_name
         self.default_class = default_class
-
         self.rho = rho
         self.clip_factors = clip_factors
         self.a_min = a_min
         self.a_max = a_max
-
         self.beta = beta
         self.pos_budget_scale = pos_budget_scale
-
         self.base_weight_col = base_weight_col
+        self.beta_head = beta_head
+        self.beta_tail = beta_tail
+        self.pos_budget_scale_head = pos_budget_scale_head
+        self.pos_budget_scale_tail = pos_budget_scale_tail
+        self.head_min = head_min
+        self.head_max = head_max
+        self.tail_min = tail_min
+        self.tail_max = tail_max
 
     def fit(self, X, y=None):
         X = self._to_df(X)
         y = self._resolve_y(X, y)
         pos_mask = y == self.pos_label
+
+        beta_h = self.beta_head if self.beta_head is not None else self.beta
+        beta_t = self.beta_tail if self.beta_tail is not None else self.beta
+
+        head_bounds = (
+            self.head_min if self.head_min is not None else self.a_min,
+            self.head_max if self.head_max is not None else self.a_max,
+        )
+        tail_bounds = (
+            self.tail_min if self.tail_min is not None else self.a_min,
+            self.tail_max if self.tail_max is not None else self.a_max,
+        )
+
+        pos_scale_h = self.pos_budget_scale_head if self.pos_budget_scale_head is not None else self.pos_budget_scale
+        pos_scale_t = self.pos_budget_scale_tail if self.pos_budget_scale_tail is not None else self.pos_budget_scale
 
         a_pos, b_pos, stats_pos = self._sinkhorn(
             X.loc[
@@ -137,9 +165,14 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
                     ),
                 ],
             ],
-            base_budget=self.budget_pos * self.pos_budget_scale,
-            beta=self.beta,
+            base_budget_head=self.budget_pos * pos_scale_h,
+            base_budget_tail=self.budget_pos * pos_scale_t,
+            beta_head=beta_h,
+            beta_tail=beta_t,
+            head_bounds=head_bounds,
+            tail_bounds=tail_bounds,
         )
+
         a_neg, b_neg, stats_neg = self._sinkhorn(
             X.loc[
                 ~pos_mask,
@@ -153,8 +186,12 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
                     ),
                 ],
             ],
-            base_budget=self.budget_neg,
-            beta=self.beta,
+            base_budget_head=self.budget_neg,
+            base_budget_tail=self.budget_neg,
+            beta_head=beta_h,
+            beta_tail=beta_t,
+            head_bounds=head_bounds,
+            tail_bounds=tail_bounds,
         )
 
         self.a_pos_, self.b_pos_ = a_pos, b_pos
@@ -193,7 +230,17 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
     def get_feature_names_out(self, input_features=None):
         return np.array([self.output_name])
 
-    def _sinkhorn(self, df, base_budget: float, beta: float):
+    def _sinkhorn(
+        self,
+        df,
+        *,
+        base_budget_head: float,
+        base_budget_tail: float,
+        beta_head: float,
+        beta_tail: float,
+        head_bounds: tuple[float, float],
+        tail_bounds: tuple[float, float],
+    ):
         if df.empty:
             return {}, {}, {"n_nodes_head": 0, "n_nodes_tail": 0, "pct_a_at_bounds": 0.0, "pct_b_at_bounds": 0.0}
 
@@ -205,25 +252,29 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         du = df[self.head_col].value_counts()
         dv = df[self.tail_col].value_counts()
 
-        if beta and beta > 0:
-            r = (du + self.eps) ** (-beta)
-            r = (r / r.mean()) * base_budget
-            c = (dv + self.eps) ** (-beta)
-            c = (c / c.mean()) * base_budget
+        if beta_head and beta_head > 0:
+            r = (du + self.eps) ** (-beta_head)
+            r = (r / r.mean()) * base_budget_head
         else:
-            r = pd.Series(base_budget, index=du.index, dtype=float)
-            c = pd.Series(base_budget, index=dv.index, dtype=float)
+            r = pd.Series(base_budget_head, index=du.index, dtype=float)
+
+        if beta_tail and beta_tail > 0:
+            c = (dv + self.eps) ** (-beta_tail)
+            c = (c / c.mean()) * base_budget_tail
+        else:
+            c = pd.Series(base_budget_tail, index=dv.index, dtype=float)
 
         a = pd.Series(1.0, index=du.index, dtype=float)
         b = pd.Series(1.0, index=dv.index, dtype=float)
-        Lmin, Lmax = np.log(self.a_min), np.log(self.a_max)
+
+        La_min, La_max = np.log(head_bounds[0]), np.log(head_bounds[1])
+        Lb_min, Lb_max = np.log(tail_bounds[0]), np.log(tail_bounds[1])
 
         u_edges = df[self.head_col].to_numpy()
         v_edges = df[self.tail_col].to_numpy()
 
         for _ in range(self.iters):
-            bv = pd.Series(b).reindex(dv.index, fill_value=1.0)  # ensure mapping has all tail nodes
-            b_on_edges = pd.Series(b).reindex_like(pd.Series(index=v_edges)).reindex(v_edges).fillna(1.0).to_numpy()
+            b_on_edges = pd.Series(b).reindex(v_edges).fillna(1.0).to_numpy()
             sum_b_by_u = (
                 pd.DataFrame({self.head_col: u_edges, "val": b_on_edges * s}).groupby(self.head_col)["val"].sum()
             )
@@ -233,10 +284,10 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
             Lanew = np.log(np.maximum(a_new.to_numpy(), self.eps))
             La = (1 - self.rho) * La + self.rho * Lanew
             if self.clip_factors:
-                La = np.clip(La, Lmin, Lmax)
+                La = np.clip(La, La_min, La_max)
             a = pd.Series(np.exp(La), index=a.index)
 
-            a_on_edges = pd.Series(a).reindex_like(pd.Series(index=u_edges)).reindex(u_edges).fillna(1.0).to_numpy()
+            a_on_edges = pd.Series(a).reindex(u_edges).fillna(1.0).to_numpy()
             sum_a_by_v = (
                 pd.DataFrame({self.tail_col: v_edges, "val": a_on_edges * s}).groupby(self.tail_col)["val"].sum()
             )
@@ -246,14 +297,14 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
             Lbnew = np.log(np.maximum(b_new.to_numpy(), self.eps))
             Lb = (1 - self.rho) * Lb + self.rho * Lbnew
             if self.clip_factors:
-                Lb = np.clip(Lb, Lmin, Lmax)
+                Lb = np.clip(Lb, Lb_min, Lb_max)
             b = pd.Series(np.exp(Lb), index=b.index)
 
         if self.clip_factors:
             a_log = np.log(np.maximum(a.to_numpy(), self.eps))
             b_log = np.log(np.maximum(b.to_numpy(), self.eps))
-            pct_a_at = np.mean((a_log <= Lmin + 1e-12) | (a_log >= Lmax - 1e-12))
-            pct_b_at = np.mean((b_log <= Lmin + 1e-12) | (b_log >= Lmax - 1e-12))
+            pct_a_at = np.mean((a_log <= La_min + 1e-12) | (a_log >= La_max - 1e-12))
+            pct_b_at = np.mean((b_log <= Lb_min + 1e-12) | (b_log >= Lb_max - 1e-12))
         else:
             pct_a_at = pct_b_at = 0.0
 
