@@ -1,5 +1,5 @@
 _pandas_csv: &_pandas_csv
-  type:  pandas.CSVDataset
+  type: pandas.CSVDataset
 
 _pandas_parquet_ds: &_pandas_parquet
   type: matrix.datasets.graph.PandasParquetDataset
@@ -57,7 +57,7 @@ ingestion.raw.drug_list:
 ingestion.raw.kgml_xdtd_ground_truth.positives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tp_pairs.txt
+  filepath: ${globals:paths.raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tp_pairs.txt
   load_args:
     sep: "\t"
   save_args:
@@ -66,7 +66,7 @@ ingestion.raw.kgml_xdtd_ground_truth.positives:
 ingestion.raw.kgml_xdtd_ground_truth.negatives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tn_pairs.txt
+  filepath: ${globals:paths.raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tn_pairs.txt
   load_args:
     sep: "\t"
   save_args:
@@ -99,10 +99,10 @@ ingestion.raw.drugmech.edges@spark:
 
 # -------------------------------------------------------------------------
 # RTX-KG2
-# -------------------------------------------------------------------------  
+# -------------------------------------------------------------------------
 ingestion.raw.rtx_kg2.curie_to_pmids@pandas:
   type: pandas.SQLTableDataset
-  table_name: curie_to_pmids  
+  table_name: curie_to_pmids
   credentials: sqlite_credentials
   save_args:
     if_exists: replace
@@ -124,7 +124,7 @@ ingestion.raw.rtx_kg2.nodes@pandas:
     header: true
     index: false
     sep: "\t"
-  
+
 ingestion.raw.rtx_kg2.nodes@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset

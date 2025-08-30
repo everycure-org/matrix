@@ -51,7 +51,7 @@ data_sources:
   disease_list:
     # check releases here: https://github.com/everycure-org/core-entities/releases
     version: v0.1.3
-  kgml_xdtd_gt:
+  gt:
     version: *_rtx_kg_version
   ec_gt:
     # check releases here: https://github.com/everycure-org/matrix-indication-list/releases

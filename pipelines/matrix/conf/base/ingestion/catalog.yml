@@ -1,8 +1,8 @@
 _pandas_csv: &_pandas_csv
-  type:  pandas.CSVDataset
+  type: pandas.CSVDataset
 
 _polars_csv: &_polars_csv
-  type:  polars.CSVDataset
+  type: polars.CSVDataset
 
 _pandas_parquet_ds: &_pandas_parquet
   type: matrix.datasets.graph.PandasParquetDataset
@@ -43,11 +43,11 @@ _orchard_bq: &_orchard_bq
 
 # -------------------------------------------------------------------------
 # RTX-KG2
-# -------------------------------------------------------------------------  
+# -------------------------------------------------------------------------
 
 ingestion.raw.rtx_kg2.curie_to_pmids@pandas:
   type: pandas.SQLTableDataset
-  table_name: curie_to_pmids  
+  table_name: curie_to_pmids
   credentials: sqlite_credentials
   save_args:
     if_exists: replace
@@ -133,7 +133,7 @@ ingestion.int.rtx_kg2.curie_to_pmids:
 
 # -------------------------------------------------------------------------
 # EveryCure Medical
-# -------------------------------------------------------------------------  
+# -------------------------------------------------------------------------
 # TODO: Remove raw suffix from all outputs of preprocessing pipeline once its in main
 ingestion.raw.ec_medical_team.nodes@pandas:
   <<: [*_layer_raw, *_pandas_csv]
@@ -149,7 +149,7 @@ ingestion.raw.ec_medical_team.nodes@spark:
     header: True
 
 ingestion.raw.ec_medical_team.edges@pandas:
-  <<: [ *_layer_int, *_pandas_csv]
+  <<: [*_layer_int, *_pandas_csv]
   filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/edges_conflated_raw.csv
 
 ingestion.raw.ec_medical_team.edges@spark:
@@ -169,10 +169,9 @@ ingestion.int.ec_medical_team.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/int/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/edges_conflated_raw
 
-
 # -------------------------------------------------------------------------
 # EveryCure Clinical trails
-# ------------------------------------------------------------------------- 
+# -------------------------------------------------------------------------
 
 ingestion.raw.ec_clinical_trails.nodes@pandas:
   <<: [*_layer_int, *_pandas_csv]
@@ -200,7 +199,7 @@ ingestion.int.ec_clinical_trails.edges:
 
 # -------------------------------------------------------------------------
 # Off-Label Data
-# ------------------------------------------------------------------------- 
+# -------------------------------------------------------------------------
 ingestion.raw.off_label.nodes@pandas:
   <<: [*_layer_int, *_pandas_csv]
   filepath: ${globals:paths.raw_public}/off_label_data/translator/${globals:data_sources.off_label.version}/nodes_raw.csv
@@ -227,7 +226,7 @@ ingestion.int.off_label.edges:
 
 # -------------------------------------------------------------------------
 # DrugMech
-# -------------------------------------------------------------------------  
+# -------------------------------------------------------------------------
 
 ingestion.raw.drugmech.edges@pandas:
   type: json.JSONDataset
@@ -246,7 +245,7 @@ ingestion.raw.drugmech.edges@pandas:
 
 # -------------------------------------------------------------------------
 # Drug and disease lists
-# -------------------------------------------------------------------------  
+# -------------------------------------------------------------------------
 
 ingestion.raw.disease_list:
   <<: [*_layer_raw]
@@ -278,9 +277,9 @@ ingestion.raw.disease_list.nodes@spark:
     header: true
     index: false
   save_args:
-     sep: "\t"
-     header: true
-     index: false
+    sep: "\t"
+    header: true
+    index: false
 
 ingestion.raw.drug_list:
   <<: [*_layer_raw]
@@ -312,9 +311,9 @@ ingestion.raw.drug_list.nodes@spark:
     header: true
     index: false
   save_args:
-     sep: "\t"
-     header: true
-     index: false
+    sep: "\t"
+    header: true
+    index: false
 
 ingestion.int.drug_list.nodes:
   <<: [*_spark_parquet, *_layer_int]
@@ -326,12 +325,12 @@ ingestion.int.disease_list.nodes:
 
 # -------------------------------------------------------------------------
 # KGML-xdtd Ground truth
-# -------------------------------------------------------------------------  
+# -------------------------------------------------------------------------
 # TODO: Remove raw suffix from all outputs of preprocessing pipeline once its in main
 ingestion.raw.kgml_xdtd_ground_truth.positives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_public}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tp_pairs.txt
+  filepath: ${globals:paths.raw_public}/ground_truth/kg2/${globals:data_sources.gt.version}/tp_pairs.txt
   load_args:
     sep: "\t"
   save_args:
@@ -340,7 +339,7 @@ ingestion.raw.kgml_xdtd_ground_truth.positives:
 ingestion.raw.kgml_xdtd_ground_truth.negatives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_public}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tn_pairs.txt
+  filepath: ${globals:paths.raw_public}/ground_truth/kg2/${globals:data_sources.gt.version}/tn_pairs.txt
   load_args:
     sep: "\t"
   save_args:
@@ -348,30 +347,30 @@ ingestion.raw.kgml_xdtd_ground_truth.negatives:
 
 ingestion.int.kgml_xdtd_ground_truth.positive.edges@pandas:
   <<: [*_pandas_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tp_pairs
+  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/kg2/${globals:data_sources.gt.version}/tp_pairs
 
 ingestion.int.kgml_xdtd_ground_truth.negative.edges@pandas:
   <<: [*_pandas_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tn_pairs
+  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/kg2/${globals:data_sources.gt.version}/tn_pairs
 
 ingestion.int.kgml_xdtd_ground_truth.positive.edges@spark:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tp_pairs
+  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/kg2/${globals:data_sources.gt.version}/tp_pairs
 
 ingestion.int.kgml_xdtd_ground_truth.negative.edges@spark:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tn_pairs
+  filepath: ${globals:paths.ingestion}/kgml_xdtd_ground_truth/kg2/${globals:data_sources.gt.version}/tn_pairs
 
 # -------------------------------------------------------------------------
 # Ground truth EC
-# -------------------------------------------------------------------------  
+# -------------------------------------------------------------------------
 
 ingestion.raw.ec_ground_truth.positives:
   <<: [*_layer_raw]
   type: matrix.datasets.github.GitHubReleaseExcelDataset
   repository_url: https://github.com/everycure-org/matrix-indication-list
   release_name: ${globals:data_sources.ec_gt.version}
-  release_asset_name: indicationList.xlsx 
+  release_asset_name: indicationList.xlsx
   fs_args:
     Accept: application/octet-stream
     Authorization: token ${globals:gh_token}
@@ -395,7 +394,7 @@ ingestion.int.ec_ground_truth.positive.edges@pandas:
   filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs
 
 ingestion.int.ec_ground_truth.negative.edges@spark:
-  <<: [*_spark_parquet, *_layer_int] 
+  <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs
 
 ingestion.int.ec_ground_truth.positive.edges@spark:
@@ -404,7 +403,7 @@ ingestion.int.ec_ground_truth.positive.edges@spark:
 
 # -------------------------------------------------------------------------
 # Robokop
-# -------------------------------------------------------------------------  
+# -------------------------------------------------------------------------
 ingestion.raw.robokop.nodes@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
@@ -464,25 +463,25 @@ ingestion.raw.robokop.edges@polars:
     separator: "\t"
 
 ingestion.int.robokop.nodes:
-   <<: [*_spark_parquet, *_layer_int]
-   filepath: ${globals:paths.ingestion}/int/robokop/${globals:data_sources.robokop.version}/nodes
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/robokop/${globals:data_sources.robokop.version}/nodes
 
 ingestion.int.robokop.edges:
-   <<: [*_spark_parquet, *_layer_int]
-   filepath: ${globals:paths.ingestion}/int/robokop/${globals:data_sources.robokop.version}/edges
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/robokop/${globals:data_sources.robokop.version}/edges
 
 # -------------------------------------------------------------------------
 # SPOKE
 # -------------------------------------------------------------------------
 ingestion.raw.spoke.nodes@spark:
- <<: *_layer_raw
- type: matrix.datasets.gcp.LazySparkDataset
- filepath: ${globals:paths.raw_private}/KGs/spoke/${globals:data_sources.spoke.version}/spoke-${globals:data_sources.spoke.version}_nodes.tsv
- file_format: csv
- load_args:
-   sep: "\t"
-   header: true
-   index: false
+  <<: *_layer_raw
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.raw_private}/KGs/spoke/${globals:data_sources.spoke.version}/spoke-${globals:data_sources.spoke.version}_nodes.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
 
 ingestion.raw.spoke.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
@@ -504,14 +503,14 @@ ingestion.raw.spoke.nodes@polars:
     separator: "\t"
 
 ingestion.raw.spoke.edges@spark:
- <<: *_layer_raw
- type: matrix.datasets.gcp.LazySparkDataset
- filepath: ${globals:paths.raw_private}/KGs/spoke/${globals:data_sources.spoke.version}/spoke-${globals:data_sources.spoke.version}_edges.tsv
- file_format: csv
- load_args:
-   sep: "\t"
-   header: true
-   index: false
+  <<: *_layer_raw
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.raw_private}/KGs/spoke/${globals:data_sources.spoke.version}/spoke-${globals:data_sources.spoke.version}_edges.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
 
 ingestion.raw.spoke.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
@@ -533,8 +532,8 @@ ingestion.raw.spoke.edges@polars:
     separator: "\t"
 
 ingestion.int.spoke.nodes:
- <<: [*_spark_parquet, *_layer_int]
- filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/nodes
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/nodes
 
 ingestion.int.spoke.edges:
   <<: [*_spark_parquet, *_layer_int]
