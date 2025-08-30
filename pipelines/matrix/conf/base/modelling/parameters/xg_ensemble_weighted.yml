@@ -19,11 +19,13 @@ modelling.xg_ensemble_weighted:
           head_col: source
           tail_col: target
           beta_head: 0.45
-          beta_tail: 0.0
-          tail_min: 1.0
-          tail_max: 1.0
+          beta_tail: 0.1
+          tail_min: 0.85
+          tail_max: 1.25
+          head_min: 0.5
+          head_max: 2.0
           pos_budget_scale_head: 2.0
-          pos_budget_scale_tail: 1.0
+          pos_budget_scale_tail: 1.2
           rho: 0.3
           clip_factors: true
           normalize: per_class
