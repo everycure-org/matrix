@@ -84,7 +84,7 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         pos_label=1,
         budget_pos=1.0,
         budget_neg=1.0,
-        iters=40,
+        iters=80,
         eps=1e-6,
         normalize="per_class",
         output_name="weight",

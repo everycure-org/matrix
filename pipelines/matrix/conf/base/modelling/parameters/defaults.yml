@@ -2,17 +2,13 @@ modelling.drug_types:
   - biolink:Drug
   - biolink:SmallMolecule
 
-
 modelling.disease_types:
   - biolink:Disease
   - biolink:PhenotypicFeature
   - biolink:BehavioralFeature
   - biolink:DiseaseOrPhenotypicFeature
 
-
-
 modelling.splitter:
-
   # Defines strategy for cross validation. Can be a function from sklearn.model_selection
   # or our custom DrugStratifiedSplit/DiseaseAreaSplit/DrugCVSplit
   # _object: matrix.pipelines.modelling.model_selection.DrugStratifiedSplit
@@ -26,7 +22,8 @@ modelling.splitter:
   #   - 'metabolic_disease'
   #   - 'neurodegenerative_disease'
   # _object: matrix.pipelines.modelling.model_selection.DrugCVSplit
-  _object: sklearn.model_selection.StratifiedShuffleSplit
+  # _object: sklearn.model_selection.StratifiedShuffleSplit
+  _object: matrix.pipelines.modelling.model_selection.DrugCVSplit
   test_size: 0.1
   random_state: ${globals:random_state}
   n_splits: ${setting:cross_validation.n_cross_val_folds}
@@ -39,19 +36,16 @@ modelling.aggregation_functions:
   - _object: numpy.min
   - _object: numpy.max
 
-
-
 # -------------------------------
 # Base options
 _model_options:
-
   # Defines strategy for generating drug-disease pairs. Should be a
   # class that implements the DrugDiseasePair generator interface.
   generator:
     _object: matrix.datasets.pair_generator.ReplacementDrugDiseasePairGenerator
     random_state: ${globals:random_state}
     y_label: 2
-    n_replacements: 2 
+    n_replacements: 2
     drug_flags:
       - is_drug
     disease_flags:
@@ -61,13 +55,13 @@ _model_options:
   # training, each of the should be a sklearn transformer.
   transformers:
     flat_source_embedding:
-      transformer: 
+      transformer:
         _object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
         prefix: source_
       features:
         - source_embedding # becomes n columns, named source_0, source_1, etc
     flat_target_embedding:
-      transformer: 
+      transformer:
         _object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
         prefix: target_
       features:
@@ -88,7 +82,7 @@ _model_options:
       - target_+
     target_col_name: y
 
-  # Define metrics to be used for check of performance 
+  # Define metrics to be used for check of performance
   metrics:
     accuracy:
       _object: sklearn.metrics.accuracy_score
