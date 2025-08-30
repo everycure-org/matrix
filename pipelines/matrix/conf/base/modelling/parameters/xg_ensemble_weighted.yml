@@ -30,8 +30,8 @@ modelling.xg_ensemble_weighted:
           rho: 0.5
           iters: 120
           # tol: 1.0e-3
-          clip_factors: true
-          normalize: global
+          clip_factors: false
+          normalize: per_class
       flat_source_embedding:
         transformer:
           _object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
