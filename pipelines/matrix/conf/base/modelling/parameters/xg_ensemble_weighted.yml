@@ -18,15 +18,15 @@ modelling.xg_ensemble_weighted:
           _object: matrix.pipelines.modelling.transformers.WeightingTransformer
           head_col: source
           tail_col: target
-          beta_head: 0.45
-          beta_tail: 0.1
+          beta_head: 0.7
+          beta_tail: 0.05
           tail_min: 0.85
           tail_max: 1.25
-          head_min: 0.5
-          head_max: 2.0
-          pos_budget_scale_head: 2.0
-          pos_budget_scale_tail: 1.2
-          rho: 0.3
+          head_min: 0.7
+          head_max: 1.3
+          pos_budget_scale_head: 2.5
+          pos_budget_scale_tail: 1.1
+          rho: 0.5
           clip_factors: true
           normalize: per_class
           # # inverse / shomer / auto_cv / simple_eta
