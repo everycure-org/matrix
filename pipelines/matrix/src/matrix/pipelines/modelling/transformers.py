@@ -109,6 +109,8 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         beta_tail_pos=None,
         beta_tail_neg=None,
         tol=1e-3,
+        gamma: float | None = None,
+        blend_alpha: float | None = None,
     ):
         self.head_col = head_col
         self.tail_col = tail_col
@@ -141,6 +143,8 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
         self.beta_tail_pos = beta_tail_pos
         self.beta_tail_neg = beta_tail_neg
         self.tol = tol
+        self.gamma = gamma
+        self.blend_alpha = blend_alpha
 
     def fit(self, X, y=None):
         X = self._to_df(X)
@@ -228,10 +232,41 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
             b = df[self.tail_col].map(b_map).fillna(1.0).to_numpy()
             return a * b
 
-        w = np.empty(len(X), dtype=float)
-        w[pos_mask] = _edge_weights(X.loc[pos_mask], self.a_pos_, self.b_pos_)
-        w[~pos_mask] = _edge_weights(X.loc[~pos_mask], self.a_neg_, self.b_neg_)
+        # --- NEW: optional blended maps to stabilize class divergence ---
+        a_pos_map, b_pos_map = self.a_pos_, self.b_pos_
+        a_neg_map, b_neg_map = self.a_neg_, self.b_neg_
+        if self.blend_alpha is not None:
+            a_pos_map = None  # sentinel to trigger blended path
 
+        if a_pos_map is None:
+            alpha = float(self.blend_alpha)
+
+            def _edge_weights_blend(df, a1, a2, b1, b2, alpha):
+                a_pos = df[self.head_col].map(a1).fillna(1.0).to_numpy()
+                a_neg = df[self.head_col].map(a2).fillna(1.0).to_numpy()
+                b_pos = df[self.tail_col].map(b1).fillna(1.0).to_numpy()
+                b_neg = df[self.tail_col].map(b2).fillna(1.0).to_numpy()
+                a_eff = np.power(a_pos, alpha) * np.power(a_neg, 1 - alpha)
+                b_eff = np.power(b_pos, alpha) * np.power(b_neg, 1 - alpha)
+                return a_eff * b_eff
+
+        w = np.empty(len(X), dtype=float)
+        if a_pos_map is None:
+            w[pos_mask] = _edge_weights_blend(
+                X.loc[pos_mask], self.a_pos_, self.a_neg_, self.b_pos_, self.b_neg_, alpha
+            )
+            w[~pos_mask] = _edge_weights_blend(
+                X.loc[~pos_mask], self.a_neg_, self.a_pos_, self.b_neg_, self.b_pos_, alpha
+            )
+        else:
+            w[pos_mask] = _edge_weights(X.loc[pos_mask], a_pos_map, b_pos_map)
+            w[~pos_mask] = _edge_weights(X.loc[~pos_mask], a_neg_map, b_neg_map)
+
+        # --- NEW: temperature compression before normalization ---
+        if self.gamma is not None and self.gamma > 0:
+            w = np.power(np.maximum(w, self.eps), float(self.gamma))
+
+        # normalization
         if self.normalize == "per_class":
             if pos_mask.any():
                 w[pos_mask] /= max(w[pos_mask].mean(), self.eps)
