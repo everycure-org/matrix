@@ -111,18 +111,18 @@ jobs:
       fail-fast: false  # do not cancel other jobs if one fails
       matrix:
         command:
-          # - name: "precommit"
-          #   run: "make precommit"
-          # - name: "kedro-catalog-base"
-          #   run: "uv run kedro catalog resolve --env base"
-          # - name: "kedro-catalog-cloud"
-          #   run: "uv run kedro catalog resolve --env cloud"
-          # - name: "kedro-catalog-test"
-          #   run: "uv run kedro catalog resolve --env test"
-          # - name: "full-test"
-          #   run: "make full_test"
+          - name: "precommit"
+            run: "make precommit"
+          - name: "kedro-catalog-base"
+            run: "uv run kedro catalog resolve --env base"
+          - name: "kedro-catalog-cloud"
+            run: "uv run kedro catalog resolve --env cloud"
+          - name: "kedro-catalog-test"
+            run: "uv run kedro catalog resolve --env test"
+          - name: "full-test"
+            run: "make full_test"
           - name: "docker-test"
-            run: 'make fetch_secrets && make docker_test GIT_SHA="${GITHUB_SHA:0:7}"'
+            run: 'make docker_test GIT_SHA="${GITHUB_SHA:0:7}"'
 
     permissions:
       contents: 'read'
@@ -149,17 +149,17 @@ jobs:
       # Setup steps (same as main ci job)
       - run: env | sort
             
-      # - name: Cache Python virtual environment
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: pipelines/matrix/.venv
-      #     key: ${{ runner.os }}-venv-${{ hashFiles('pipelines/matrix/uv.lock', 'pipelines/matrix/pyproject.toml') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-venv-
+      - name: Cache Python virtual environment
+        uses: actions/cache@v4
+        with:
+          path: pipelines/matrix/.venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('pipelines/matrix/uv.lock', 'pipelines/matrix/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-venv-
 
       # Install Python dependencies (will use cache if available)
-      # - name: Install Python dependencies
-      #   run: make install
+      - name: Install Python dependencies
+        run: make install
 
       # Run the specific command for this matrix job
       - name: "Run ${{ matrix.command.name }}"
