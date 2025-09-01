@@ -235,6 +235,8 @@ spec:
         - name: NUM_CPU
           value: {% raw %} "{{inputs.parameters.cpu_limit}}"
           {% endraw %}
+        - name: SPARK_LOCAL_DIRS
+          value: /data
         - name: SPARK_DRIVER_MEMORY
           value: {% raw %} "{{inputs.parameters.memory_limit}}"
           {% endraw %}
@@ -294,6 +296,8 @@ spec:
             limits:
               memory: 100Gi
           env:
+            - name: SPARK_LOCAL_DIRS
+              value: /data
             - name: SPARK_DRIVER_MEMORY
               value: "60"
             # NOTE: We're passing in a regular bolt connection as ephemeral Neo4J has no SSL
