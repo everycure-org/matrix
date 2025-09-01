@@ -53,7 +53,7 @@ def filter_valid_pairs(
     valid_nodes_in_kg = (
         nodes.filter(
             f.array_contains(f.col("upstream_data_source"), "robokop")
-            & f.array_contains(f.col("upstream_data_source"), "rtx_kg2")
+            & f.array_contains(f.col("upstream_data_source"), "rtxkg2")
         )
         .select("id")
         .distinct()
