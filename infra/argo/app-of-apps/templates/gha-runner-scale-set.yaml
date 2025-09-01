@@ -84,27 +84,22 @@ spec:
                   memory: "4Gi"      # Hard limit at 16GB RAM
                   ephemeral-storage: "10Gi"  # Hard limit at 80GB (within available space)
               env:
-                - name: ACTIONS_RUNNER_CONTAINER_HOOKS
-                  value: /home/runner/k8s/index.js
-                - name: ACTIONS_RUNNER_POD_NAME
-                  valueFrom:
-                    fieldRef:
-                      fieldPath: metadata.name
-                - name: ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER
-                  value: "true"
+                  - name: DOCKER_HOST
+                    value: unix:///var/run/docker.sock
+                  - name: RUNNER_WAIT_FOR_DOCKER_IN_SECONDS
+                    value: "120"
               volumeMounts:
+                  - name: work
+                    mountPath: /home/runner/_work
+                  - name: dind-sock
+                    mountPath: /var/run
+            volumes:
                 - name: work
-                  mountPath: /home/runner/_work
-              volumes:
-                - name: work
-                  ephemeral:
-                    volumeClaimTemplate:
-                      spec:
-                        accessModes: [ "ReadWriteOnce" ]
-                        storageClassName: "standard-rwo"
-                        resources:
-                          requests:
-                            storage: 10Gi
+                  emptyDir: {}
+                - name: dind-sock
+                  emptyDir: {}
+                - name: dind-externals
+                  emptyDir: {}
             tolerations:
             - key: "github-runner"
               operator: "Equal"
