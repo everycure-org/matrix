@@ -26,10 +26,22 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
         ),
         node(
-            func=nodes.filter_unified_kg_edges,
+            func=nodes.filter_edges_without_nodes,
             inputs=[
                 "filtering.prm.prefiltered_nodes",
                 "integration.prm.unified_edges",
+            ],
+            outputs=["filtering.int.filtered_edges"],
+            name="filter_edges_without_nodes",
+            tags=[
+                "argowf.fuse",
+                "argowf.fuse-group.filtering",
+            ],
+        ),
+        node(
+            func=nodes.filter_kg_edges,
+            inputs=[
+                "filtering.int.filtered_edges",
                 "params:filtering.edge_filters",
             ],
             outputs=["filtering.prm.filtered_edges", "filtering.prm.removed_edges"],

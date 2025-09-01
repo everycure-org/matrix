@@ -77,29 +77,23 @@ def prefilter_unified_kg_nodes(
 
 
 @inject_object()
-def filter_unified_kg_edges(
+def filter_edges_without_nodes(
     nodes: ps.DataFrame,
     edges: ps.DataFrame,
-    transformations: dict[str, Any],
-) -> tuple[ps.DataFrame, ps.DataFrame]:
-    """Function to filter the knowledge graph edges.
-
-    We first apply a series for filter transformations, and then deduplicate the edges based on the nodes that we dropped.
-    No edge can exist without its nodes.
+) -> ps.DataFrame:
+    """Filter edges to only include those that have valid subject and object nodes after filtering.
 
     Args:
         nodes: DataFrame containing node data
         edges: DataFrame containing edge data
-        transformations: Dictionary containing filter configurations
 
     Returns:
-        Tuple of (filtered edges DataFrame, removed edges DataFrame)
+        DataFrame containing only edges where both subject and object nodes exist
     """
-    # filter down edges to only include those that are present in the filtered nodes
     if logger.isEnabledFor(logging.INFO):
         edges_count = edges.count()
         logger.info(f"Number of edges before filtering: {edges_count}")
-    original_edges = edges
+
     edges = (
         edges.alias("edges")
         .join(nodes.alias("subject"), on=F.col("edges.subject") == F.col("subject.id"), how="inner")
@@ -110,7 +104,26 @@ def filter_unified_kg_edges(
             F.col("object.category").alias("object_category"),
         )
     )
+    return edges
 
+
+@inject_object()
+def filter_kg_edges(
+    edges: ps.DataFrame,
+    transformations: dict[str, Any],
+) -> tuple[ps.DataFrame, ps.DataFrame]:
+    """Apply filter transformations to knowledge graph edges.
+
+    This function applies a series of filter transformations to the edges DataFrame
+    and tracks which edges were removed during the filtering process.
+
+    Args:
+        edges: DataFrame containing edge data with 'subject', 'predicate', and 'object' columns
+        transformations: Dictionary containing filter configurations to apply
+
+    Returns:
+        Tuple of (filtered edges DataFrame, removed edges DataFrame)
+    """
     logger.info(f"Applying {len(transformations)} edge filters")
     return _apply_transformations(edges, transformations, key_cols=["subject", "predicate", "object"])
 
