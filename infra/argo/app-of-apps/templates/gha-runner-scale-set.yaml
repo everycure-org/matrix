@@ -62,7 +62,7 @@ spec:
               resources:
                 requests:
                   cpu: "2"        # Reserve most of the 4 vCPUs (leave 1 CPU for system)
-                  memory: "12Gi"      # Reserve most of the 16GB RAM (leave 6GB for system)
+                  memory: "7Gi"      # Reserve most of the 16GB RAM (leave 6GB for system)
                   ephemeral-storage: "40Gi"  # Reserve 40GB of available ephemeral storage
             containers:
             - name: runner
@@ -78,6 +78,9 @@ spec:
                     mountPath: /home/runner/_work
                   - name: dind-sock
                     mountPath: /var/run
+              requests:
+                  cpu: "2"        # Reserve most of the 4 vCPUs (leave 1 CPU for system)
+                  memory: "7Gi"      # Reserve most of the 16GB RAM (leave 6GB for system)
             volumes:
                 - name: work
                   emptyDir: {}
