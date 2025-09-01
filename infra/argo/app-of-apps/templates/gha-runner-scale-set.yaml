@@ -26,38 +26,16 @@ spec:
         template:
           spec:
             containers:
-            - name: buildkitd
-              image: moby/buildkit:latest
-              args: ["--addr", "unix:///run/buildkit/buildkitd.sock"]
-              securityContext:
-                privileged: true
-              volumeMounts:
-                - name: bk-sock
-                  mountPath: /run/buildkit
-                - name: bk-root
-                  mountPath: /var/lib/buildkit
             - name: runner
               image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/github-runner-images/github-runner:latest
               command: ["/home/runner/run.sh"]
               env:
-                - name: RUNNER_WAIT_FOR_DOCKER_IN_SECONDS
-                  value: "120"
-              volumeMounts:
-                - name: work
-                  mountPath: /home/runner/_work
-                - name: bk-sock
-                  mountPath: /run/buildkit
+                  - name: RUNNER_WAIT_FOR_DOCKER_IN_SECONDS
+                    value: "120"
               resources:
                 requests:
                   cpu: "3"        # Reserve most of the 4 vCPUs (leave 1 CPU for system)
                   memory: "12Gi"      # Reserve most of the 16GB RAM (leave 6GB for system)
-            volumes:
-              - name: bk-sock
-                emptyDir: {}
-              - name: bk-root
-                emptyDir: {}
-              - name: work
-                emptyDir: {}
             tolerations:
             - key: "github-runner"
               operator: "Equal"
