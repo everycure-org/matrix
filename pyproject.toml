@@ -29,10 +29,7 @@ members = [
     # docs which are built statically and then deployed
     "docs",
     # shared libraries
-    "libs/matrix-auth",
-    "libs/matrix-gcp-datasets", 
-    "libs/matrix-mlflow-utils",
-    "libs/matrix-fabricator",
+    "libs/*",
 ]
 
 [dependency-groups]

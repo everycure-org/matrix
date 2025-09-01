@@ -28,7 +28,7 @@ COPY pyproject.toml uv.lock ./
 # now we run this inside of the matrix pipeline folder.
 WORKDIR /matrix/pipelines/matrix
 COPY pipelines/matrix/pyproject.toml .
-RUN --mount=type=cache,target=/root/.cache uv sync --frozen --no-install-project --no-install-workspace
+RUN --mount=type=cache,target=/root/.cache uv sync --frozen  --no-install-workspace
 ENV PATH=/matrix/.venv/bin:$PATH
 
 # Cache spark drivers as part of image
@@ -38,7 +38,7 @@ RUN --mount=type=cache,target=/root/.ivy2/cache python maven-deps.py
 
 # bring in the dependent libraries and install those too
 COPY libs/ ../../libs/
-RUN uv sync --frozen --no-install-project
+RUN uv sync --frozen
 # ---------- Dependencies end -----
 # ---------------------------------
 
