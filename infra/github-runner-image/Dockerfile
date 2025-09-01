@@ -26,6 +26,6 @@ RUN apt-get update && \
     curl -LsSf https://astral.sh/uv/install.sh | sh && \
     mv /root/.local/bin/uv /usr/local/bin/ && \
     mv /root/.local/bin/uvx /usr/local/bin/ && \
-    chmod +x /usr/local/bin/uv /usr/local/bin/uvx
-  
+    chmod +x /usr/local/bin/uv /usr/local/bin/uvx && sudo systemctl enable docker && sudo systemctl start docker && sudo usermod -aG docker runner
+
 USER runner
