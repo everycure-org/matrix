@@ -1,4 +1,3 @@
-# NOTE: This pyproject.toml was partially generated using AI assistance.
 [build-system]
 requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
