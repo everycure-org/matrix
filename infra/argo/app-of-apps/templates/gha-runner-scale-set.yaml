@@ -30,12 +30,23 @@ spec:
               image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/github-runner-images/github-runner:latest
               command: ["/home/runner/run.sh"]
               env:
-                  - name: RUNNER_WAIT_FOR_DOCKER_IN_SECONDS
-                    value: "120"
+                # Only include these if your image/entrypoint doesn't already set them:
+                - name: XDG_RUNTIME_DIR
+                  value: /tmp/run
+                - name: DOCKER_HOST
+                  value: unix:///tmp/run/podman/podman.sock
+                - name: RUNNER_WAIT_FOR_DOCKER_IN_SECONDS
+                  value: "20"
               resources:
                 requests:
-                  cpu: "3"        # Reserve most of the 4 vCPUs (leave 1 CPU for system)
-                  memory: "12Gi"      # Reserve most of the 16GB RAM (leave 6GB for system)
+                  cpu: "3"
+                  memory: "12Gi"
+              readinessProbe:
+                exec:
+                  command: ["/bin/bash","-lc","docker version >/dev/null 2>&1"]
+                initialDelaySeconds: 5
+                periodSeconds: 5
+                timeoutSeconds: 3
             tolerations:
             - key: "github-runner"
               operator: "Equal"
