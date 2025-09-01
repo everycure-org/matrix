@@ -18,22 +18,22 @@ modelling.xg_ensemble_weighted:
           _object: matrix.pipelines.modelling.transformers.WeightingTransformer
           head_col: source
           tail_col: target
-          beta_head_pos: 0.4
-          beta_head_neg: 0.9
+          beta_head_pos: 0.35
+          beta_head_neg: 0.8
           beta_tail: 0.0
           head_min: 0.3
           head_max: 3.5
-          tail_min: 0.95
-          tail_max: 1.05
-          pos_budget_scale_head: 1.8
+          tail_min: 0.9
+          tail_max: 1.1
+          pos_budget_scale_head: 2.2
           pos_budget_scale_tail: 1.05
           rho: 0.5
           iters: 120
           tol: 1.0e-3
           clip_factors: true
           normalize: global
-          gamma: 0.8
-          blend_alpha: 0.2 
+          gamma: 0.92
+          blend_alpha: null
       flat_source_embedding:
         transformer:
           _object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
