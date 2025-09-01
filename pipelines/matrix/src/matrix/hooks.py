@@ -123,6 +123,8 @@ class SparkHooks:
     @classmethod
     def _initialize_spark(cls) -> None:
         """Initialize SparkSession using the SparkManager to avoid code duplication."""
+        # importing here to avoid loading spark at application boot time
+        # which makes loading times of the kedro CLI very slow
         from matrix_gcp_datasets.spark_utils import SparkManager
 
         SparkManager.initialize_spark()
