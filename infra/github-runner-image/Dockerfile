@@ -11,12 +11,9 @@ RUN apt-get update && \
           libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev \
           libffi-dev liblzma-dev openjdk-17-jdk openjdk-17-jre && \
     install -m 0755 -d /etc/apt/keyrings && \
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
-      | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
-    chmod a+r /etc/apt/keyrings/docker.gpg && \
-    sh -lc 'echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list' && \
-    apt-get update && \
-    apt-get install -y docker-ce docker-ce-cli docker-compose-plugin docker-buildx-plugin containerd.io && \
+    curl https://get.docker.com/builds/Linux/x86_64/docker-latest.tgz | tar xvz -C /tmp/ && mv /tmp/docker/docker /usr/bin/docker && \
+    curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/bin/docker-compose && \
+    chmod +x /usr/bin/docker-compose && \
     apt-get clean && rm -rf /var/lib/apt/lists/* && \
     chmod +x setup_pyenv.sh && \
     ./setup_pyenv.sh && \
