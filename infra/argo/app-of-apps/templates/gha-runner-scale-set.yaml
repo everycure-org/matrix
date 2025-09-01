@@ -65,17 +65,15 @@ spec:
             #       memory: "12Gi"      # Reserve most of the 16GB RAM (leave 6GB for system)
             containers:
             - name: buildkitd
-              image: moby/buildkit:rootless
+              image: moby/buildkit:latest
               args: ["--addr", "unix:///run/buildkit/buildkitd.sock"]
-              env:
-                - name: BUILDKITD_FLAGS
-                  value: ""
               securityContext:
-                runAsUser: 1000
-                runAsGroup: 1000
+                privileged: true
               volumeMounts:
-                - name: buildkit-sock
+                - name: bk-sock
                   mountPath: /run/buildkit
+                - name: bk-root
+                  mountPath: /var/lib/buildkit
             - name: runner
               image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/github-runner-images/github-runner:latest
               command: ["/home/runner/run.sh"]
@@ -94,7 +92,9 @@ spec:
             volumes:
               - name: work
                 emptyDir: {}
-              - name: buildkit-sock
+              - name: bk-sock
+                emptyDir: {}
+              - name: bk-root
                 emptyDir: {}
             tolerations:
             - key: "github-runner"
