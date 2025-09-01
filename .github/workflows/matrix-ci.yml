@@ -149,13 +149,13 @@ jobs:
       # Setup steps (same as main ci job)
       - run: env | sort
             
-      - name: Cache Python virtual environment
-        uses: actions/cache@v4
-        with:
-          path: pipelines/matrix/.venv
-          key: ${{ runner.os }}-venv-${{ hashFiles('pipelines/matrix/uv.lock', 'pipelines/matrix/pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-venv-
+      # - name: Cache Python virtual environment
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: pipelines/matrix/.venv
+      #     key: ${{ runner.os }}-venv-${{ hashFiles('pipelines/matrix/uv.lock', 'pipelines/matrix/pyproject.toml') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-venv-
 
       # Install Python dependencies (will use cache if available)
       - name: Install Python dependencies
