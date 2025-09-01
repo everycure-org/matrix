@@ -21,23 +21,90 @@ spec:
           namespace: actions-runner-system
         githubConfigSecret: gh-creds-for-github-action-runner-set
         githubConfigUrl: https://github.com/everycure-org/
+        containerMode:
+          type: "dind"
         minRunners: 0
         maxRunners: 50
         template:
           spec:
+            initContainers:
+            - name: init-dind-externals
+              image: ghcr.io/actions/actions-runner:latest
+              command: ["cp", "-r", "/home/runner/externals/.", "/home/runner/tmpDir/"]
+              volumeMounts:
+                - name: dind-externals
+                  mountPath: /home/runner/tmpDir
+            - name: dind
+              image: docker:dind
+              args:
+                - dockerd
+                - --host=unix:///var/run/docker.sock
+                - --group=$(DOCKER_GROUP_GID)
+              env:
+                - name: DOCKER_GROUP_GID
+                  value: "123"
+              securityContext:
+                privileged: true
+              restartPolicy: Always
+              startupProbe:
+                exec:
+                  command:
+                    - docker
+                    - info
+                initialDelaySeconds: 0
+                failureThreshold: 24
+                periodSeconds: 5
+              volumeMounts:
+                - name: work
+                  mountPath: /home/runner/_work
+                - name: dind-sock
+                  mountPath: /var/run
+                - name: dind-externals
+                  mountPath: /home/runner/externals
+              resources:
+                requests:
+                  cpu: "3"        # Reserve most of the 4 vCPUs (leave 1 CPU for system)
+                  memory: "12Gi"      # Reserve most of the 16GB RAM (leave 6GB for system)
+                  ephemeral-storage: "60Gi"  # Reserve 40GB of available ephemeral storage
+                limits:
+                  cpu: "4"            # Allow burst up to full 4 vCPUs
+                  memory: "14Gi"      # Hard limit at 16GB RAM
+                  ephemeral-storage: "70Gi"  # Hard limit at 80GB (within available space)
             containers:
             - name: runner
               image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/github-runner-images/github-runner:latest
               command: ["/home/runner/run.sh"]
               resources:
                 requests:
-                  cpu: "3"        # Reserve most of the 4 vCPUs (leave 1 CPU for system)
-                  memory: "10Gi"      # Reserve most of the 16GB RAM (leave 6GB for system)
-                  ephemeral-storage: "40Gi"  # Reserve 40GB of available ephemeral storage
+                  cpu: "0.5"        # Reserve most of the 4 vCPUs (leave 1 CPU for system)
+                  memory: "2Gi"      # Reserve most of the 16GB RAM (leave 6GB for system)
+                  ephemeral-storage: "5Gi"  # Reserve 40GB of available ephemeral storage
                 limits:
-                  cpu: "4"            # Allow burst up to full 4 vCPUs
-                  memory: "16Gi"      # Hard limit at 16GB RAM
-                  ephemeral-storage: "80Gi"  # Hard limit at 80GB (within available space)
+                  cpu: "1"            # Allow burst up to full 4 vCPUs
+                  memory: "4Gi"      # Hard limit at 16GB RAM
+                  ephemeral-storage: "10Gi"  # Hard limit at 80GB (within available space)
+              env:
+                - name: ACTIONS_RUNNER_CONTAINER_HOOKS
+                  value: /home/runner/k8s/index.js
+                - name: ACTIONS_RUNNER_POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+                - name: ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER
+                  value: "true"
+              volumeMounts:
+                - name: work
+                  mountPath: /home/runner/_work
+              volumes:
+                - name: work
+                  ephemeral:
+                    volumeClaimTemplate:
+                      spec:
+                        accessModes: [ "ReadWriteOnce" ]
+                        storageClassName: "standard-rwo"
+                        resources:
+                          requests:
+                            storage: 10Gi
             tolerations:
             - key: "github-runner"
               operator: "Equal"
