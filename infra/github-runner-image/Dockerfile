@@ -11,7 +11,7 @@ RUN apt-get update && \
 
 # --- Docker CLI + Compose v2 (client only, NO dockerd) ---
 # Docker CLI (static) – current stable
-RUN curl -fsSL https://download.docker.com/linux/static/stable/$(uname -m)/docker.tgz \
+RUN curl -fsSL https://download.docker.com/linux/static/stable/$(uname -m)/docker-$(curl -s https://api.github.com/repos/moby/moby/releases/latest | grep tag_name | cut -d '"' -f 4).tgz \
   | tar xz --strip-components=1 -C /usr/bin docker/docker
 
 # Compose v2 plugin (standalone binary also works)
