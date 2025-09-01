@@ -42,4 +42,4 @@ ENTRYPOINT ["/usr/local/bin/podman-docker-api.sh"]
 # Example default: print versions (override in your job)
 CMD ["bash", "-lc", "docker version && docker compose version"]
 
-USER: runner
+USER runner
