@@ -9,10 +9,17 @@ RUN apt-get update && \
       uidmap slirp4netns fuse-overlayfs podman && \
     rm -rf /var/lib/apt/lists/*
 
-# --- Docker CLI + Compose v2 (client only, NO dockerd) ---
-# Docker CLI (static) – current stable
-RUN curl -fsSL https://download.docker.com/linux/static/stable/$(uname -m)/docker-$(curl -s https://api.github.com/repos/moby/moby/releases/latest | grep tag_name | cut -d '"' -f 4).tgz \
-  | tar xz --strip-components=1 -C /usr/bin docker/docker
+# --- Docker CLI (client-only) ---
+ARG DOCKER_CLI_VERSION=27.2.0
+RUN set -eux; \
+    arch="$(uname -m)"; \
+    case "$arch" in \
+      x86_64)  dl_arch="x86_64" ;; \
+      aarch64) dl_arch="aarch64" ;; \
+      *) echo "Unsupported arch: $arch" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL "https://download.docker.com/linux/static/stable/${dl_arch}/docker-${DOCKER_CLI_VERSION}.tgz" \
+    | tar xz --strip-components=1 -C /usr/bin docker/docker
 
 # Compose v2 plugin (standalone binary also works)
 ARG COMPOSE_VERSION=2.29.7
