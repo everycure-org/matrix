@@ -22,15 +22,18 @@ spec:
         githubConfigSecret: gh-creds-for-github-action-runner-set
         githubConfigUrl: https://github.com/everycure-org/
         containerMode:
-          type: "dind"
+          type: "kubernetes"
+        kubernetesModeWorkVolumeClaim:
+          accessModes: ["ReadWriteOnce"]
+          # For local testing, use https://github.com/openebs/dynamic-localpv-provisioner/blob/develop/docs/quickstart.md to provide dynamic provision volume with storageClassName: openebs-hostpath
+          storageClassName: "standard-rwo"
+          resources:
+            requests:
+              storage: 10Gi
         minRunners: 0
         maxRunners: 50
-        # Handle spot interruptions gracefully
-        terminationGracePeriodSeconds: 30
         template:
           spec:
-            # Allow more time for graceful shutdown when spot instances are reclaimed
-            terminationGracePeriodSeconds: 30
             containers:
             - name: runner
               image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/github-runner-images/github-runner:latest
@@ -44,6 +47,28 @@ spec:
                   cpu: "4"            # Allow burst up to full 4 vCPUs
                   memory: "16Gi"      # Hard limit at 16GB RAM
                   ephemeral-storage: "80Gi"  # Hard limit at 80GB (within available space)
+              env:
+                - name: ACTIONS_RUNNER_CONTAINER_HOOKS
+                  value: /home/runner/k8s/index.js
+                - name: ACTIONS_RUNNER_POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+                - name: ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER
+                  value: "true"
+              volumeMounts:
+                - name: work
+                  mountPath: /home/runner/_work
+              volumes:
+                - name: work
+                  ephemeral:
+                    volumeClaimTemplate:
+                      spec:
+                        accessModes: [ "ReadWriteOnce" ]
+                        storageClassName: "standard-rwo"
+                        resources:
+                          requests:
+                            storage: 10Gi
             tolerations:
             - key: "github-runner"
               operator: "Equal"
