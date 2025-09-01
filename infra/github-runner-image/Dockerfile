@@ -11,8 +11,9 @@ RUN apt-get update && \
           libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev \
           libffi-dev liblzma-dev openjdk-17-jdk openjdk-17-jre && \
     install -m 0755 -d /etc/apt/keyrings && \
-    curl https://get.docker.com/builds/Linux/x86_64/docker-latest.tgz | tar xvz -C /tmp/ && mv /tmp/docker/docker /usr/bin/docker && \
-    curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/bin/docker-compose && \
+    curl -fsSL https://download.docker.com/linux/static/stable/$(uname -m)/docker-$(curl -s https://api.github.com/repos/moby/moby/releases/latest | grep tag_name | cut -d '"' -f4 | sed 's/v//').tgz \
+  | tar xz --strip-components=1 -C /usr/local/bin docker/docker && \
+    curl -L "https://github.com/docker/compose/releases/download/2.39.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/bin/docker-compose && \
     chmod +x /usr/bin/docker-compose && \
     apt-get clean && rm -rf /var/lib/apt/lists/* && \
     chmod +x setup_pyenv.sh && \
