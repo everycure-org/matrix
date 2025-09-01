@@ -28,18 +28,15 @@ _spark_parquet_ds: &_spark_parquet
 filtering.prm.removed_nodes_initial:
   <<: *_spark_parquet
   filepath: ${globals:paths.filtering}/prm/removed/nodes_initial
-  table: nodes_removed
 
 # Removed edges due to filtering or missing nodes
 filtering.prm.removed_edges:
   <<: *_spark_parquet
   filepath: ${globals:paths.filtering}/prm/removed/edges
-  table: edges_removed
 
 filtering.prm.removed_nodes_final:
   <<: *_spark_parquet
   filepath: ${globals:paths.filtering}/prm/removed/nodes_final
-  table: nodes_removed_final
 
 # Filtered PRM nodes/edges written to BigQuery
 filtering.prm.filtered_nodes:
