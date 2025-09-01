@@ -25,44 +25,44 @@ spec:
         maxRunners: 50
         template:
           spec:
-            initContainers:
-            - name: init-dind-externals
-              image: ghcr.io/actions/actions-runner:latest
-              command: ["cp", "-r", "/home/runner/externals/.", "/home/runner/tmpDir/"]
-              volumeMounts:
-                - name: dind-externals
-                  mountPath: /home/runner/tmpDir
-            - name: dind
-              image: docker:dind
-              args:
-                - dockerd
-                - --host=unix:///var/run/docker.sock
-                - --group=$(DOCKER_GROUP_GID)
-              env:
-                - name: DOCKER_GROUP_GID
-                  value: "123"
-              securityContext:
-                privileged: true
-              restartPolicy: Always
-              startupProbe:
-                exec:
-                  command:
-                    - docker
-                    - info
-                initialDelaySeconds: 0
-                failureThreshold: 24
-                periodSeconds: 5
-              volumeMounts:
-                - name: work
-                  mountPath: /home/runner/_work
-                - name: dind-sock
-                  mountPath: /var/run
-                - name: dind-externals
-                  mountPath: /home/runner/externals
-              resources:
-                requests:
-                  cpu: "3"        # Reserve most of the 4 vCPUs (leave 1 CPU for system)
-                  memory: "7Gi"      # Reserve most of the 16GB RAM (leave 6GB for system)
+            # initContainers:
+            # - name: init-dind-externals
+            #   image: ghcr.io/actions/actions-runner:latest
+            #   command: ["cp", "-r", "/home/runner/externals/.", "/home/runner/tmpDir/"]
+            #   volumeMounts:
+            #     - name: dind-externals
+            #       mountPath: /home/runner/tmpDir
+            # - name: dind
+            #   image: docker:dind
+            #   args:
+            #     - dockerd
+            #     - --host=unix:///var/run/docker.sock
+            #     - --group=$(DOCKER_GROUP_GID)
+            #   env:
+            #     - name: DOCKER_GROUP_GID
+            #       value: "123"
+            #   securityContext:
+            #     privileged: true
+            #   restartPolicy: Always
+            #   startupProbe:
+            #     exec:
+            #       command:
+            #         - docker
+            #         - info
+            #     initialDelaySeconds: 0
+            #     failureThreshold: 24
+            #     periodSeconds: 5
+            #   volumeMounts:
+            #     - name: work
+            #       mountPath: /home/runner/_work
+            #     - name: dind-sock
+            #       mountPath: /var/run
+            #     - name: dind-externals
+            #       mountPath: /home/runner/externals
+            #   resources:
+            #     requests:
+            #       cpu: "3"        # Reserve most of the 4 vCPUs (leave 1 CPU for system)
+            #       memory: "12Gi"      # Reserve most of the 16GB RAM (leave 6GB for system)
             containers:
             - name: runner
               image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/github-runner-images/github-runner:latest
@@ -80,7 +80,7 @@ spec:
               resources:
                 requests:
                   cpu: "3"        # Reserve most of the 4 vCPUs (leave 1 CPU for system)
-                  memory: "7Gi"      # Reserve most of the 16GB RAM (leave 6GB for system)
+                  memory: "12Gi"      # Reserve most of the 16GB RAM (leave 6GB for system)
             volumes:
                 - name: work
                   emptyDir: {}
