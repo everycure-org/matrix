@@ -122,7 +122,7 @@ jobs:
           # - name: "full-test"
           #   run: "make full_test"
           - name: "docker-test"
-            run: 'make fetch_secrets && make docker_test GIT_SHA="${{ github.sha }}" TAG="${{ github.sha }}"'
+            run: 'make fetch_secrets && make docker_test GIT_SHA="${GITHUB_SHA:0:7}"'
 
     permissions:
       contents: 'read'
