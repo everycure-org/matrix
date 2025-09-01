@@ -98,7 +98,7 @@ locals {
   github_runner_node_pools = [
     {
       name               = "github-runner-standard-nodes"
-      machine_type       = "n2-standard-4" # 4 vCPUs, 16GB RAM - good for CI/CD
+      machine_type       = "e2-standard-4" # 4 vCPUs, 16GB RAM - good for CI/CD
       node_locations     = local.default_node_locations
       min_count          = 0
       max_count          = 50
