@@ -64,23 +64,10 @@ spec:
                   cpu: "3"        # Reserve most of the 4 vCPUs (leave 1 CPU for system)
                   memory: "12Gi"      # Reserve most of the 16GB RAM (leave 6GB for system)
                   ephemeral-storage: "60Gi"  # Reserve 40GB of available ephemeral storage
-                limits:
-                  cpu: "4"            # Allow burst up to full 4 vCPUs
-                  memory: "14Gi"      # Hard limit at 16GB RAM
-                  ephemeral-storage: "70Gi"  # Hard limit at 80GB (within available space)
             containers:
             - name: runner
               image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/github-runner-images/github-runner:latest
               command: ["/home/runner/run.sh"]
-              resources:
-                requests:
-                  cpu: "0.5"        # Reserve most of the 4 vCPUs (leave 1 CPU for system)
-                  memory: "2Gi"      # Reserve most of the 16GB RAM (leave 6GB for system)
-                  ephemeral-storage: "5Gi"  # Reserve 40GB of available ephemeral storage
-                limits:
-                  cpu: "1"            # Allow burst up to full 4 vCPUs
-                  memory: "4Gi"      # Hard limit at 16GB RAM
-                  ephemeral-storage: "10Gi"  # Hard limit at 80GB (within available space)
               env:
                   - name: DOCKER_HOST
                     value: unix:///var/run/docker.sock
