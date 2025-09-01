@@ -8,6 +8,21 @@ spark.driver.maxResultSize: 18g
 spark.task.maxFailures: 5
 # Configure Spark to use mounted volume for temporary storage
 spark.local.dir: ${oc.env:SPARK_LOCAL_DIRS,/tmp}
+# Additional configurations to ensure all Spark temp operations use the mounted volume
+spark.sql.warehouse.dir: ${oc.env:SPARK_LOCAL_DIRS,/tmp}/spark-warehouse
+spark.sql.streaming.checkpointLocation: ${oc.env:SPARK_LOCAL_DIRS,/tmp}/checkpoints
+spark.sql.streaming.stateStore.providerClass: org.apache.spark.sql.execution.streaming.state.HDFSBackedStateStoreProvider
+spark.sql.streaming.stateStore.maintenanceInterval: 600s
+# Force Spark to use the scratch volume for shuffle operations
+spark.sql.adaptive.shuffle.localShuffleReader.enabled: false
+spark.shuffle.service.enabled: false
+# Ensure broadcast temp files use the mounted volume
+spark.broadcast.compress: true
+spark.io.compression.codec: lz4
+# Configure spill directories to use mounted volume
+spark.executor.logs.rolling.strategy: time
+spark.executor.logs.rolling.time.interval: daily
+spark.executor.logs.rolling.maxRetainedFiles: 1
 
 # FUTURE: Use Maven based dependency when fixed
 # https://github.com/GoogleCloudDataproc/hadoop-connectors/issues/1233#issuecomment-2262873434

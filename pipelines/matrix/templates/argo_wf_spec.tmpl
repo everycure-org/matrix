@@ -189,6 +189,15 @@ spec:
         - name: NEO4J_HOST
           value: {% raw %} "{{workflow.parameters.neo4j_host}}" 
           {% endraw %}
+        # Additional environment variables to force all temporary operations to use `/data` (which is our scratch volume attached)
+        - name: JAVA_OPTS
+          value: -Djava.io.tmpdir=/data
+        - name: TMPDIR
+          value: /data
+        - name: TMP
+          value: /data
+        - name: TEMP
+          value: /data
         - name: MLFLOW_ENDPOINT
           value: {% raw %} "{{workflow.parameters.mlflow_endpoint}}" 
           {% endraw %}
@@ -240,6 +249,15 @@ spec:
         - name: SPARK_DRIVER_MEMORY
           value: {% raw %} "{{inputs.parameters.memory_limit}}"
           {% endraw %}
+        # Additional environment variables to force all temporary operations to use `/data` (which is our scratch volume attached)
+        - name: JAVA_OPTS
+          value: -Djava.io.tmpdir=/data
+        - name: TMPDIR
+          value: /data
+        - name: TMP
+          value: /data
+        - name: TEMP
+          value: /data
         - name: GH_TOKEN
           valueFrom:
             secretKeyRef:
@@ -300,6 +318,15 @@ spec:
               value: /data
             - name: SPARK_DRIVER_MEMORY
               value: "60"
+            # Additional environment variables to force all temporary operations to use `/data` (which is our scratch volume attached)
+            - name: JAVA_OPTS
+              value: -Djava.io.tmpdir=/data
+            - name: TMPDIR
+              value: /data
+            - name: TMP
+              value: /data
+            - name: TEMP
+              value: /data
             # NOTE: We're passing in a regular bolt connection as ephemeral Neo4J has no SSL
             - name: NEO4J_HOST
               value: "bolt://127.0.0.1:7687"
