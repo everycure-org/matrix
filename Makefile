@@ -24,3 +24,6 @@ precommit-hooks:
 
 format:
 	uv run ruff check . --fix
+
+install:
+	uv sync

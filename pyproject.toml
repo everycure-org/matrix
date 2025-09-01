@@ -5,12 +5,17 @@ name = "matrix"
 version = "0.1.0"
 requires-python = "~=3.11.0"
 dependencies = [
-    # "matrix-pipeline",
-    # "matrix-docs",
-    # "matrix-auth",
-    # "matrix-gcp-datasets", 
-    # "matrix-mlflow-utils",
-    # "matrix-fabricator",
+    # we depend on all our workspace members here to enable a single
+    # 'uv sync' at the root to set up the entire monorepo development
+    # work. However the Dockerfile in pipelines/matrix does some tricks
+    # to avoid re-building at any file change. See Dockerfile for details
+    "matrix-pipeline",
+    "matrix-docs",
+    "matrix-auth",
+    "matrix-gcp-datasets", 
+    "matrix-mlflow-utils",
+    "matrix-fabricator",
+
     "pre-commit>=4.2.0",
 ]
 

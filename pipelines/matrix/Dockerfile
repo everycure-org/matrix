@@ -28,6 +28,8 @@ COPY pyproject.toml uv.lock ./
 # now we run this inside of the matrix pipeline folder.
 WORKDIR /matrix/pipelines/matrix
 COPY pipelines/matrix/pyproject.toml .
+# We use --no-install-workspace to avoid re-installing the the entire workspace
+# dependncies here, only installing the matrix pipeline dependencies
 RUN --mount=type=cache,target=/root/.cache uv sync --frozen  --no-install-workspace
 ENV PATH=/matrix/.venv/bin:$PATH
 
@@ -36,7 +38,9 @@ COPY pipelines/matrix/conf/base/spark.yml ./conf/base/spark.yml
 COPY pipelines/matrix/scripts/maven-deps.py ./maven-deps.py
 RUN --mount=type=cache,target=/root/.ivy2/cache python maven-deps.py
 
-# bring in the dependent libraries and install those too
+# We copy in the libs folder here and run a full sync which leads to only the delta
+# being installed which are... just the libs. the matrix pipeline 
+# pyproject.toml explicitly defines these as dependencies, thus it tries installing them now
 COPY libs/ ../../libs/
 RUN uv sync --frozen
 # ---------- Dependencies end -----

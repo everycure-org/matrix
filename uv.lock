@@ -2348,6 +2348,12 @@ name = "matrix"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "matrix-auth" },
+    { name = "matrix-docs" },
+    { name = "matrix-fabricator" },
+    { name = "matrix-gcp-datasets" },
+    { name = "matrix-mlflow-utils" },
+    { name = "matrix-pipeline" },
     { name = "pre-commit" },
 ]
 
@@ -2357,7 +2363,15 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pre-commit", specifier = ">=4.2.0" }]
+requires-dist = [
+    { name = "matrix-auth", editable = "libs/matrix-auth" },
+    { name = "matrix-docs", editable = "docs" },
+    { name = "matrix-fabricator", editable = "libs/matrix-fabricator" },
+    { name = "matrix-gcp-datasets", editable = "libs/matrix-gcp-datasets" },
+    { name = "matrix-mlflow-utils", editable = "libs/matrix-mlflow-utils" },
+    { name = "matrix-pipeline", editable = "pipelines/matrix" },
+    { name = "pre-commit", specifier = ">=4.2.0" },
+]
 
 [package.metadata.requires-dev]
 dev = [{ name = "ruff", specifier = ">=0.12.7" }]
