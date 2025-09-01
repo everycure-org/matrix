@@ -1,4 +1,3 @@
-# NOTE: This pyproject.toml was partially generated using AI assistance.
 # Root project, only defines child dependencies which all share one venv
 [project]
 name = "matrix"
