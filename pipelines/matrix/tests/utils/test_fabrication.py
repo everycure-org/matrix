@@ -42,7 +42,7 @@ def test_generate_unique_id():
 
 
 def test_generate_unique_id_prefix():
-    ids = generate_unique_id(num_rows=400, prefix="id")
+    ids = generate_unique_id(num_rows=400, prefixes=["id"])
 
     has_prefix = [x.startswith("id") for x in ids]
 
@@ -54,7 +54,8 @@ def test_generate_unique_id_prefix():
 def test_generate_unique_id_embiology_example():
     ids = generate_unique_id(
         num_rows=400,
-        prefix="EMBLG:",
+        prefixes=["EMBLG"],
+        delimiter=":",
         id_length=9,
     )
 
@@ -68,7 +69,8 @@ def test_generate_unique_id_embiology_example():
 def test_generate_unique_id_robokop_example():
     ids = generate_unique_id(
         num_rows=500,
-        prefix="ROBO:",
+        prefixes=["ROBO"],
+        delimiter=":",
         id_length=8,
     )
 
@@ -80,9 +82,9 @@ def test_generate_unique_id_robokop_example():
 
 
 def test_generate_unique_id_length():
-    ids = generate_unique_id(num_rows=400, id_length=10)
+    ids = generate_unique_id(num_rows=400, prefixes=["id"], delimiter=":", id_length=10)
 
-    id_length = list(set([len(x) for x in ids]))
+    id_length = list(set([len(x.split(":")[-1]) for x in ids]))
 
     assert id_length == [10]
     assert len(ids) == 400
@@ -98,7 +100,7 @@ def test_generate_unique_id_null():
                 "columns": {
                     "ids": {
                         "type": "generate_unique_id",
-                        "prefix": "id",
+                        "prefixes": ["id"],
                         "inject_nulls": {"probability": 0.5},
                     }
                 },
@@ -123,7 +125,7 @@ def test_generate_unique_id_replace_null():
                 "columns": {
                     "ids": {
                         "type": "generate_unique_id",
-                        "prefix": "id",
+                        "prefixes": ["id"],
                         "inject_nulls": {"probability": 0.5, "value": "unknown"},
                     }
                 },
@@ -142,10 +144,12 @@ def test_generate_unique_id_replace_null():
 def test_generate_unique_id_down_sampled():
     ids = generate_unique_id(
         num_rows=100,
+        prefixes=["id"],
+        delimiter=":",
         id_length=10,
     )
 
-    ids_as_integers = [int(x) for x in ids]
+    ids_as_integers = [int(x.split(":")[-1]) for x in ids]
 
     assert len(ids) == 100
     assert len(set(ids)) == 100
@@ -155,10 +159,12 @@ def test_generate_unique_id_down_sampled():
 def test_generate_unique_id_up_sampled():
     ids = generate_unique_id(
         num_rows=10000,
+        prefixes=["id"],
+        delimiter=":",
         id_length=10,
     )
 
-    ids_as_integers = [int(x) for x in ids]
+    ids_as_integers = [int(x.split(":")[-1]) for x in ids]
 
     assert len(ids) == 10000
     assert len(set(ids)) == 10000
@@ -463,7 +469,9 @@ def test_global_class():
         columns:
             physician_id:
                 type: generate_unique_id
-                prefix: phys
+                prefixes: 
+                  - phys
+                delimiter: ":"
                 id_length: 10
             physician_name:
                 type: faker
@@ -556,11 +564,15 @@ def test_lambda_tuple_ordering():
         columns:
             physician_id:
                 type: generate_unique_id
-                prefix: phys_
+                prefixes: 
+                  - phys
+                delimiter: "_"
                 id_length: 12
             patient_id:
                 type: generate_unique_id
-                prefix: patient_
+                prefixes: 
+                  - patient
+                delimiter: "_"
                 id_length: 12
                 inject_nulls:
                     probability: 0.5
@@ -631,7 +643,9 @@ def test_parse_column_reference_for_generate_values():
       columns:
         id:
           type: generate_unique_id
-          prefix: treat_
+          prefixes: 
+            - treat
+          delimiter: "_"
           id_length: 8
 
     encounters:
@@ -639,7 +653,9 @@ def test_parse_column_reference_for_generate_values():
       columns:
         id:
           type: generate_unique_id
-          prefix: enc_
+          prefixes: 
+            - enc
+          delimiter: "_"
           id_length: 7
         treatment_code:
           type: generate_values
@@ -669,7 +685,9 @@ def test_parse_column_reference_for_single_dt():
        columns:
          id:
            type: generate_unique_id
-           prefix: pat_
+           prefixes: 
+             - pat
+           delimiter: "_"
            id_length: 5
 
          admission_date:
@@ -683,7 +701,9 @@ def test_parse_column_reference_for_single_dt():
        columns:
          id:
            type: generate_unique_id
-           prefix: enc_
+           prefixes: 
+             - enc
+           delimiter: "_"
            id_length: 5
          patient_id:
            type: row_apply
@@ -733,7 +753,9 @@ def test_parse_column_reference_for_drop_filtered_condition_rows():
        columns:
          record_id:
            type: generate_unique_id
-           prefix: rec_
+           prefixes: 
+             - rec
+           delimiter: "_"  
            id_length: 8
          record_type:
            type: generate_values
@@ -827,14 +849,18 @@ def test_parse_column_reference_for_cross_product():
               columns:
                 patient_id:
                   type: generate_unique_id
-                  prefix: patient_
+                  prefixes: 
+                    - patient
+                  delimiter: "_"  
 
             treatments:
               num_rows: 2
               columns:
                 treatment_id:
                   type: generate_unique_id
-                  prefix: treatment_
+                  prefixes: 
+                    - treatment
+                  delimiter: "_"  
 
             dates:
               num_rows: 3
@@ -912,14 +938,18 @@ def test_parse_column_reference_for_cross_product_position_value_error():
                   columns:
                     patient_id:
                       type: generate_unique_id
-                      prefix: patient_
+                      prefixes: 
+                        - patient
+                      delimiter: "_"
 
                 treatments:
                   num_rows: 2
                   columns:
                     treatment_id:
                       type: generate_unique_id
-                      prefix: treatment_
+                      prefixes:
+                        - treatment
+                      delimiter: "_" 
 
                 dates: # Corrected Indentation
                   num_rows: 2
@@ -977,7 +1007,9 @@ def test_mock_generator_seed():
        columns:
          id:
            type: generate_unique_id
-           prefix: rec_
+           prefixes: 
+             - rec
+           delimiter: _
            id_length: 5
          random_flag:
            type: numpy_random
@@ -986,7 +1018,9 @@ def test_mock_generator_seed():
            p: 0.5
          patient_member_id:
            type: generate_unique_id
-           prefix: mem_
+           prefixes: 
+             - mem
+           delimiter: _
            id_length: 10
          period_start_date:
            type: generate_dates
@@ -1031,7 +1065,9 @@ def test_natural_columns_dtypes():
         columns:
             id_string:
                 type: generate_unique_id
-                prefix: pat
+                prefixes: 
+                  - pat
+                delimiter: _
                 id_length: 10
             gdt_05_date:
               type: generate_dates
@@ -1201,7 +1237,7 @@ def test_fabricate_datasets():
             "test_table": {
                 "num_rows": 10,
                 "columns": {
-                    "id": {"type": "generate_unique_id", "prefix": "ID_"},
+                    "id": {"type": "generate_unique_id", "prefixes": ["ID"], "delimiter": "_"},
                     "name": {"type": "faker", "provider": "name"},
                 },
             }
