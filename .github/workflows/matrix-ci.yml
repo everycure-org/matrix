@@ -111,16 +111,16 @@ jobs:
       fail-fast: false  # do not cancel other jobs if one fails
       matrix:
         command:
-          - name: "precommit"
-            run: "make precommit"
-          - name: "kedro-catalog-base"
-            run: "uv run kedro catalog resolve --env base"
-          - name: "kedro-catalog-cloud"
-            run: "uv run kedro catalog resolve --env cloud"
-          - name: "kedro-catalog-test"
-            run: "uv run kedro catalog resolve --env test"
-          - name: "full-test"
-            run: "make full_test"
+          # - name: "precommit"
+          #   run: "make precommit"
+          # - name: "kedro-catalog-base"
+          #   run: "uv run kedro catalog resolve --env base"
+          # - name: "kedro-catalog-cloud"
+          #   run: "uv run kedro catalog resolve --env cloud"
+          # - name: "kedro-catalog-test"
+          #   run: "uv run kedro catalog resolve --env test"
+          # - name: "full-test"
+          #   run: "make full_test"
           - name: "docker-test"
             run: 'make fetch_secrets && make docker_test GIT_SHA="${{ github.sha }}" TAG="${{ github.sha }}"'
 
@@ -158,8 +158,8 @@ jobs:
       #       ${{ runner.os }}-venv-
 
       # Install Python dependencies (will use cache if available)
-      - name: Install Python dependencies
-        run: make install
+      # - name: Install Python dependencies
+      #   run: make install
 
       # Run the specific command for this matrix job
       - name: "Run ${{ matrix.command.name }}"

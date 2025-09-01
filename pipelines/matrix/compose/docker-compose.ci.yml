@@ -29,9 +29,9 @@ services:
       # Simpler health check for DinD environments with longer startup time
       test: wget http://localhost:7474 || exit 1
       interval: 30s
-      timeout: 60s
+      timeout: 10s
       retries: 10
-      start_period: 120s
+      start_period: 30s
 
   mockserver:
     environment:
