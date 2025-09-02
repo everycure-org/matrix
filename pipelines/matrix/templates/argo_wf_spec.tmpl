@@ -407,7 +407,7 @@ spec:
             {% endraw %}
           - name: NEO4J_dbms_memory_heap_max__size
             value: {% raw %} "{{= sprig.int(inputs.parameters.memory_limit) * 0.7 }}G"
-            {% endraw %}  - name: pipeline
+            {% endraw %}
     dag:
       tasks:
       {% for task in pipeline_tasks %}
