@@ -44,7 +44,7 @@ class ArgoResourceConfig(BaseModel):
     cpu_limit: int = KUBERNETES_DEFAULT_LIMIT_CPU
     memory_request: int = KUBERNETES_DEFAULT_REQUEST_RAM
     memory_limit: int = KUBERNETES_DEFAULT_LIMIT_RAM
-    ephemeral_storage_request: int = 0
+    ephemeral_storage_request: int = 512
     ephemeral_storage_limit: int = 128
 
     model_config = {"validate_assignment": True, "extra": "forbid"}
