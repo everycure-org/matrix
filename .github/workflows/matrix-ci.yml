@@ -30,8 +30,11 @@ on:
     branches:
       - main
     paths: 
-      - pipelines/matrix/**
       - .github/workflows/matrix-ci.yml
+      - pipelines/matrix/**
+      - libs/*
+      - pyproject.toml
+      - uv.lock
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -56,10 +59,6 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
-        with: 
-          sparse-checkout: |
-            pipelines/
-            .github/
       - uses: dorny/paths-filter@v3
         id: changes
         with:
@@ -67,6 +66,9 @@ jobs:
             src:
               - pipelines/matrix/**
               - .github/workflows/matrix-ci.yml
+              - pyproject.toml
+              - uv.lock
+              - .dockerignore
 
   ci:
     runs-on: 'self-hosted'
@@ -85,8 +87,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: 
-          sparse-checkout: |
-            pipelines/matrix/
           submodules: recursive
           token: ${{ secrets.PAT }}
           persist-credentials: true
@@ -97,9 +97,12 @@ jobs:
           service_account: ${{vars.service_account}}
 
       # Setup steps
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          version: "0.8.13"
       - run: env | sort
       - run: make install
-      - run: make precommit
       - run: make fetch_secrets
       
       # Run commands in parallel
