@@ -189,15 +189,6 @@ spec:
         - name: NEO4J_HOST
           value: {% raw %} "{{workflow.parameters.neo4j_host}}" 
           {% endraw %}
-        # Additional environment variables to force all temporary operations to use `/data` (which is our scratch volume attached)
-        - name: JAVA_OPTS
-          value: -Djava.io.tmpdir=/data
-        - name: TMPDIR
-          value: /data
-        - name: TMP
-          value: /data
-        - name: TEMP
-          value: /data
         - name: MLFLOW_ENDPOINT
           value: {% raw %} "{{workflow.parameters.mlflow_endpoint}}" 
           {% endraw %}
@@ -245,26 +236,28 @@ spec:
           value: {% raw %} "{{inputs.parameters.cpu_limit}}"
           {% endraw %}
         - name: SPARK_LOCAL_DIRS
-          value: /data
+          value: /data/spark-temp
         - name: SPARK_DRIVER_MEMORY
           value: {% raw %} "{{inputs.parameters.memory_limit}}"
           {% endraw %}
-        # Additional environment variables to force all temporary operations to use `/data` (which is our scratch volume attached)
+        # Environment variables to force all temporary operations to use `/data` (scratch volume)
         - name: JAVA_OPTS
-          value: -Djava.io.tmpdir=/data
+          value: -Djava.io.tmpdir=/data/tmp
+        - name: _JAVA_OPTIONS
+          value: -Djava.io.tmpdir=/data/tmp
         - name: TMPDIR
-          value: /data
+          value: /data/tmp
         - name: TMP
-          value: /data
+          value: /data/tmp
         - name: TEMP
-          value: /data
+          value: /data/tmp
         - name: GH_TOKEN
           valueFrom:
             secretKeyRef:
               name: gh-password
               key: GH_CREDS
-      command: [kedro]
-      args: ["run", "-p", "{{ pipeline_name }}", "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
+      command: ["/bin/sh", "-c"]
+      args: ["mkdir -p /data/tmp /data/spark-temp /data/spark-warehouse /data/checkpoints && kedro run -p {{ pipeline_name }} -e {% raw %}\"{{workflow.parameters.env}}\"{% endraw %} -n {% raw %}\"{{inputs.parameters.kedro_nodes}}\"{% endraw %}"]
 
   - <<: *_kedro_template
     name: neo4j
@@ -315,21 +308,23 @@ spec:
               memory: 100Gi
           env:
             - name: SPARK_LOCAL_DIRS
-              value: /data
+              value: /data/spark-temp
             - name: SPARK_DRIVER_MEMORY
               value: "60"
-            # Additional environment variables to force all temporary operations to use `/data` (which is our scratch volume attached)
-            - name: JAVA_OPTS
-              value: -Djava.io.tmpdir=/data
-            - name: TMPDIR
-              value: /data
-            - name: TMP
-              value: /data
-            - name: TEMP
-              value: /data
             # NOTE: We're passing in a regular bolt connection as ephemeral Neo4J has no SSL
             - name: NEO4J_HOST
               value: "bolt://127.0.0.1:7687"
+            # Environment variables to force all temporary operations to use `/data` (scratch volume)
+            - name: JAVA_OPTS
+              value: -Djava.io.tmpdir=/data/tmp
+            - name: _JAVA_OPTIONS
+              value: -Djava.io.tmpdir=/data/tmp
+            - name: TMPDIR
+              value: /data/tmp
+            - name: TMP
+              value: /data/tmp
+            - name: TEMP
+              value: /data/tmp
           volumeMounts:
             - name: scratch
               mountPath: /data
@@ -354,6 +349,8 @@ spec:
       command: ["/bin/sh", "-c"]
       args:
         - |
+            echo "Setting up temporary directories..."
+            mkdir -p /data/tmp /data/spark-temp /data/spark-warehouse /data/checkpoints
             echo "Waiting for Neo4j to be ready..."
             until curl -s http://localhost:7474/ready; do
               echo "Waiting..."
