@@ -80,7 +80,7 @@ FROM (
     subject_normalization_success AS normalization_success,
     CASE WHEN original_subject = subject THEN true ELSE false END AS no_normalization_change 
   FROM 
-    `${project_id}.release_${bq_release_version}.ground_truth_edges_normalized`
+    `${project_id}.release_${bq_release_version}.kgml_xdtd_ground_truth_edges_normalized`
   UNION DISTINCT
   SELECT 
     object AS id,
@@ -89,7 +89,25 @@ FROM (
     object_normalization_success AS normalization_success,
     CASE WHEN original_object = object THEN true ELSE false END AS no_normalization_change 
   FROM 
-    `${project_id}.release_${bq_release_version}.ground_truth_edges_normalized`
+    `${project_id}.release_${bq_release_version}.kgml_xdtd_ground_truth_edges_normalized`
+  UNION DISTINCT
+  SELECT 
+    subject AS id,
+    original_subject AS original_id,
+    '' as category,
+    subject_normalization_success AS normalization_success,
+    CASE WHEN original_subject = subject THEN true ELSE false END AS no_normalization_change 
+  FROM 
+    `${project_id}.release_${bq_release_version}.ec_ground_truth_edges_normalized`
+  UNION DISTINCT
+  SELECT 
+    object AS id,
+    original_object AS original_id,
+    '' as category,
+    object_normalization_success AS normalization_success,
+    CASE WHEN original_object = object THEN true ELSE false END AS no_normalization_change 
+  FROM 
+    `${project_id}.release_${bq_release_version}.ec_ground_truth_edges_normalized`
 )
 GROUP BY ALL
 

@@ -6,8 +6,10 @@
 
 
 # IDE
-.vscode/
 .idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 
 # Drawio
 *.bkp
@@ -52,6 +54,7 @@ gha-kubeconfig*
 **/*.gen.tf
 /provider.tf
 
+**/*.egg-info/
 
 # ignoring all claude related files for now
 .claude/**

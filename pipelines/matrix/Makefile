@@ -2,11 +2,8 @@ docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
 
 TAG ?= ${USER}
 GIT_SHA ?= $(shell git rev-parse --short HEAD)
-export PYSPARK_PYTHON = .venv/bin/python
-export UV_PYTHON = .venv/bin/python
 export TQDM_DISABLE ?= 1
 TARGET_PLATFORM ?= linux/amd64
-PREREQUISITES := docker gcloud python3 java uv kubectl
 
 # Add GCP project variables
 GCP_PROJECT ?= mtrx-hub-dev-3of
@@ -14,6 +11,9 @@ SA_KEY_SECRET_NAME ?= storage-viewer-sa-key
 SA_KEY_PATH ?= conf/local/service-account.json
 OAUTH_CLIENT_SECRET_SECRET_NAME ?= oauth_client_secret
 OAUTH_CLIENT_SECRET_PATH ?= conf/local/oauth_client_secret.txt
+
+# ensures all make targets run in one shell (rather than line by line in new shell)
+.ONESHELL: 
 
 fetch_secrets:
 	echo "Fetching secrets from Secret Manager..."; \
@@ -26,45 +26,23 @@ fetch_secrets:
 		echo "Secret $$1 saved to $$2"; \
 	done
 
-# ensures all make targets run in one shell (rather than line by line in new shell)
-.ONESHELL: 
-
-default: prerequisites fetch_sa_key install fast_test integration_test
 
 local_test: install fast_test integration_test
 
-.PHONY: always
+.PHONY: always 
+
 # steps here get run on _every_ make call, no matter the target. Make sure this is 100% idempotent and fast.
 always:
 	# never track notebooks in the pipeline subfolder
 	git update-index --assume-unchanged *.ipynb
 %: always
 	@:
-default: prerequisites fetch_secrets install fast_test integration_test
+
+default: fetch_secrets install fast_test integration_test
 	echo "done!"
 
-prerequisites:
-	$(info Checking if prerequisites are installed...)
-	$(foreach exec,$(PREREQUISITES),\
-        $(if $(shell command -v $(exec) 2>/dev/null),,$(error "$(exec) is not installed.")))
-	$(info All prerequisites are installed.)
-	$(info Checking gcloud auth...)
-	@if ! gcloud auth print-access-token >/dev/null 2>&1; then \
-		echo "Not logged into gcloud. Please run 'gcloud auth login' first."; \
-		exit 1; \
-	fi
-
-venv: 
-	if [ ! -d .venv ]; then uv venv -p 3.11; fi
-	uv run python -m ensurepip --upgrade || true
-
-install: venv precommit-hooks 
-	uv pip install -r requirements.txt #force it to install in our venv
-
-install_compatibility: venv precommit-hooks
-	# expects the file requirements.overrides.txt to be present, allows devs to override
-	# versions for local machine limitations (e.g. newer pytorch on macos intel)
-	uv pip install -r requirements.txt --overrides requirements.overrides.txt
+install:
+	uv sync 
 
 install_argo:
 	curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
@@ -72,14 +50,6 @@ install_argo:
 	chmod +x argo-linux-amd64
 	sudo mv argo-linux-amd64 /usr/local/bin/argo
 	argo version
-
-precommit: precommit-hooks
-	git fetch origin
-	uv run pre-commit run --from-ref origin/main --to-ref HEAD
-
-precommit-hooks:
-	uv pip install pre-commit 
-	uv run pre-commit install --install-hooks
 
 check_release_version_environment_variable:
 	if [ -z "${RELEASE_VERSION}" ]; then
@@ -90,15 +60,13 @@ check_release_version_environment_variable:
 
 full_test:
 	# activate venv to ensure spark doesn't have python driver mismatches
-	uv run pytest -v tests/
+	uv run pytest -v tests/ -n auto
 
 # fast_test: export PYSPARK_PYTHON = uv run python
 fast_test: 
 	# activate venv to ensure spark doesn't have python driver mismatches
 	TESTMON_DATAFILE=/tmp/.testmondata uv run pytest --testmon -v tests/
 
-format:
-	uv run ruff check . --fix
 
 # executes E2E integration test fully in docker. 
 docker_test: certificate docker_build
@@ -110,8 +78,16 @@ docker_test: certificate docker_build
 		--exit-code-from matrix-pipeline
 
 docker_build:
+	# NOTE: This Makefile was partially generated using AI assistance.
 	# note the && operator is essential to catch docker buildx errors on linux systems
-	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(docker_image) --load ./ && \
+	docker buildx build \
+		--progress=plain \
+		--build-arg GIT_SHA=${GIT_SHA} \
+		--build-arg DISABLE_UV_CACHE=0 \
+		--platform $(TARGET_PLATFORM) \
+		-t $(docker_image) \
+		--load \
+		-f Dockerfile ../../ && \
 	docker tag $(docker_image) $(docker_image):${TAG}
 
 docker_auth:
@@ -133,11 +109,11 @@ compose_down:
 	# docker compose -f compose/docker-compose.yml down
 
 lock:
-	uv pip compile requirements.in > requirements.txt
+	uv lock
 
 wipe_neo:
 	# assumes you have neo4j running using docker-compose from `compose_up`
-	uv run python scripts/wipe_neo4j.py 'everycure-test'
+	uv run scripts/wipe_neo4j.py 'everycure-test'
 
 integration_test: compose_up wipe_neo
 	ulimit -n 10000
