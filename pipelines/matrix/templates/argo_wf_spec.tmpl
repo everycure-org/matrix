@@ -374,41 +374,40 @@ spec:
           - name: gds-key
             mountPath: /licences
             readOnly: true
-
+          - name: scratch
+            mountPath: /data
         env:
-        - name: NEO4J_AUTH
-          valueFrom:
-            secretKeyRef:
-              name: matrix-secrets
-              key: NEO4J_AUTH
-        - name: NEO4J_gds_enterprise_license__file
-          value: "/licences/gds-key"
-        - name: NEO4J_apoc_export_file_enabled
-          value: "true"
-        - name: NEO4J_apoc_import_file_enabled
-          value: "true"
-        - name: NEO4J_apoc_import_file_use__neo4j__config
-          value: "true"
-        - name: NEO4J_PLUGINS
-          value: '["apoc", "graph-data-science", "apoc-extended"]'
-        - name: NEO4J_dbms_security_auth__minimum__password__length
-          value: "4"
-        - name: NEO4J_dbms_security_procedures_whitelist
-          value: "gds.*, apoc.*"
-        - name: NEO4J_dbms_security_procedures_unrestricted
-          value: "gds.*, apoc.*"
-        - name: NEO4J_db_logs_query_enabled
-          value: "OFF"
-        - name: NEO4J_ACCEPT_LICENSE_AGREEMENT
-          value: "yes"
-        - name: NEO4J_dbms_memory_heap_initial__size
-          value: {% raw %} "{{= sprig.int(inputs.parameters.memory_limit) * 0.7 }}G"
-          {% endraw %}
-        - name: NEO4J_dbms_memory_heap_max__size
-          value: {% raw %} "{{= sprig.int(inputs.parameters.memory_limit) * 0.7 }}G"
-          {% endraw %}
-
-  - name: pipeline
+          - name: NEO4J_AUTH
+            valueFrom:
+              secretKeyRef:
+                name: matrix-secrets
+                key: NEO4J_AUTH
+          - name: NEO4J_gds_enterprise_license__file
+            value: "/licences/gds-key"
+          - name: NEO4J_apoc_export_file_enabled
+            value: "true"
+          - name: NEO4J_apoc_import_file_enabled
+            value: "true"
+          - name: NEO4J_apoc_import_file_use__neo4j__config
+            value: "true"
+          - name: NEO4J_PLUGINS
+            value: '["apoc", "graph-data-science", "apoc-extended"]'
+          - name: NEO4J_dbms_security_auth__minimum__password__length
+            value: "4"
+          - name: NEO4J_dbms_security_procedures_whitelist
+            value: "gds.*, apoc.*"
+          - name: NEO4J_dbms_security_procedures_unrestricted
+            value: "gds.*, apoc.*"
+          - name: NEO4J_db_logs_query_enabled
+            value: "OFF"
+          - name: NEO4J_ACCEPT_LICENSE_AGREEMENT
+            value: "yes"
+          - name: NEO4J_dbms_memory_heap_initial__size
+            value: {% raw %} "{{= sprig.int(inputs.parameters.memory_limit) * 0.7 }}G"
+            {% endraw %}
+          - name: NEO4J_dbms_memory_heap_max__size
+            value: {% raw %} "{{= sprig.int(inputs.parameters.memory_limit) * 0.7 }}G"
+            {% endraw %}  - name: pipeline
     dag:
       tasks:
       {% for task in pipeline_tasks %}
