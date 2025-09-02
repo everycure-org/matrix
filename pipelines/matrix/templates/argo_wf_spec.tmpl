@@ -271,7 +271,7 @@ spec:
                   resources:
                     requests:
                       storage: {% raw %}"{{inputs.parameters.ephemeral_storage_limit}}Gi"
-        {% endraw %}
+      {% endraw %}
       terminationGracePeriodSeconds: 30
       tolerations:
         - key: "node-memory-size"
