@@ -236,6 +236,18 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=fabricate_datasets,
                 inputs={
+                    "fabrication_params": "params:fabricator.drugbank_gt",
+                    "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                },
+                outputs={
+                    "positive_edges": "ingestion.raw.drugbank_ground_truth.positives",
+                    "negative_edges": "ingestion.raw.drugbank_ground_truth.negatives",
+                },
+                name="create_drugbank_gt_pairs",
+            ),
+            node(
+                func=fabricate_datasets,
+                inputs={
                     "fabrication_params": "params:fabricator.orchard",
                     "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                 },
