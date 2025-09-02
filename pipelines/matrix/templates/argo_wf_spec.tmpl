@@ -166,9 +166,9 @@ spec:
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
-            volumeMounts:
-              - name: scratch
-                mountPath: /data
+          volumeMounts:
+            - name: scratch
+              mountPath: /data
     container: &_kedro_container
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}"
