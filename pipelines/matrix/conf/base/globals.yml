@@ -26,6 +26,11 @@ run_name: ${oc.env:RUN_NAME, default-run-name}
 versions:
   release: local-release
 
+preprocessing:
+  primekg:
+    version: 2.1
+    patch: 1
+
 data_sources:
   rtx_kg2:
     version: &_rtx_kg_version v2.10.0_validated
@@ -88,7 +93,9 @@ paths:
   matrix_transformations:  data/releases/${versions.release}/runs/${run_name}/datasets/matrix_transformations
   evaluation:         data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
   inference:          data/releases/${versions.release}/runs/${run_name}/datasets/inference
- 
+
+  preprocessing:      data/preprocessing
+
   tmp:                data/tmp
 
   # Embedding cache dataset
