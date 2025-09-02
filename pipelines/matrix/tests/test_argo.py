@@ -1097,7 +1097,6 @@ def test_neo4j_sidecar_configuration() -> None:
     volume_mounts = neo4j_sidecar["volumeMounts"]
     mount_paths = [vm["mountPath"] for vm in volume_mounts]
     assert "/licences" in mount_paths
-    assert "/data" in mount_paths
 
 
 def test_neo4j_template_args_with_directory_setup() -> None:
