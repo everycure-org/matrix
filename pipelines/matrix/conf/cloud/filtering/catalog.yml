@@ -10,7 +10,7 @@ _bigquery_ds: &_bigquery_ds
 
 
 _spark_parquet_ds: &_spark_parquet
-  type: matrix.datasets.gcp.LazySparkDataset
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
   file_format: parquet
   load_args:
     header: True
