@@ -5,6 +5,34 @@ from . import nodes
 # NOTE: Preprocessing pipeline is not well optimized and thus might take a while to run.
 
 
+def create_primekg_pipeline() -> Pipeline:
+    """PrimeKG preprocessing"""
+    return pipeline(
+        [
+            node(
+                func=nodes.build_primekg_nodes,
+                inputs={
+                    "nodes": "preprocessing.raw.primekg.nodes@polars",
+                    "drug_features": "preprocessing.raw.primekg.drug_features@polars",
+                    "disease_features": "preprocessing.raw.primekg.disease_features@polars",
+                },
+                outputs="preprocessing.int.primekg.nodes",
+                name="build_primekg_nodes",
+                tags=["primekg"],
+            ),
+            node(
+                func=nodes.build_primekg_edges,
+                inputs=[
+                    "preprocessing.raw.primekg.kg@polars",
+                ],
+                outputs="preprocessing.int.primekg.edges",
+                name="build_primekg_edges",
+                tags=["primekg"],
+            ),
+        ]
+    )
+
+
 def create_embiology_pipeline() -> Pipeline:
     """Embiology cleaning and preprocessing"""
     return pipeline(
@@ -205,6 +233,7 @@ def create_pipeline() -> Pipeline:
     """Create preprocessing pipeline."""
     return pipeline(
         [
+            create_primekg_pipeline(),
             create_embiology_pipeline(),
             create_ec_clinical_data_pipeline(),
             create_ec_medical_team_pipeline(),
