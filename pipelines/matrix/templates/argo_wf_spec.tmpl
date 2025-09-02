@@ -169,16 +169,6 @@ spec:
           volumeMounts:
             - name: scratch
               mountPath: /data
-          volumes:
-            - name: scratch
-              ephemeral:
-                volumeClaimTemplate:
-                  spec:
-                    accessModes: ["ReadWriteOnce"]
-                    resources:
-                      requests:
-                        storage: {% raw %}"{{inputs.parameters.ephemeral_storage_limit}}Gi"
-                        {% endraw %}
           
     container: &_kedro_container
       imagePullPolicy: Always
