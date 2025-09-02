@@ -49,7 +49,7 @@ Orchard datasets can be accessed through the Matrix pipeline using the existing 
 
 ```yaml
 orchard_edges:
-  type: matrix.datasets.gcp.SparkBigQueryDataset
+  type: import matrix_gcp_datasets.gcp.SparkBigQueryDataset
   project: ec-orchard-prod
   dataset: orchard_us
   table: latest_status

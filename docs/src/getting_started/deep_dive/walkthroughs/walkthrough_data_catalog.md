@@ -12,7 +12,7 @@ _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
 _spark_parquet_ds: &_spark_parquet
-  type: matrix.datasets.gcp.LazySparkDataset
+  type: import matrix_gcp_datasets.gcp.LazySparkDataset
   file_format: parquet
   save_args:
     mode: overwrite
@@ -43,7 +43,7 @@ _layer_int: &_layer_int
 
 **_spark_parquet_ds: &_spark_parquet**
 
-- This defines a configuration for a Spark dataset using the `matrix.datasets.gcp.LazySparkDataset` class.
+- This defines a configuration for a Spark dataset using the `import matrix_gcp_datasets.gcp.LazySparkDataset` class.
 - The file_format is set to parquet, indicating that Parquet files are used.
 - The save_args section specifies that files should be saved in “overwrite” mode, which means any existing data will be replaced when writing.
 

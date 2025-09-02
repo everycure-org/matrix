@@ -95,7 +95,7 @@ Note that we are not tightly coupled to BigQuery or GCS. We've implemented custo
 ```yaml
 # writes this data to bigquery
 embeddings.feat.edges:
-  type: matrix.datasets.gcp.BigQueryTableDataset
+  type: import matrix_gcp_datasets.gcp.BigQueryTableDataset
   project_id: ${oc.env:GCP_PROJECT_ID}
   dataset: runs
   identifier: "${globals:run_name}"
@@ -106,7 +106,7 @@ embeddings.feat.edges:
 
 # writes the data to a file system, either gcs://... or ./data/...
 embeddings.feat.edges:
-  type: matrix.datasets.gcp.LazySparkDataset
+  type: import matrix_gcp_datasets.gcp.LazySparkDataset
   file_format: parquet
   filepath: ${globals:paths.matrix_generation}/edges
 ```
