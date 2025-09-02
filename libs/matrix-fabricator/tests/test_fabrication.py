@@ -7,7 +7,7 @@ import pytest
 import yaml
 import random
 
-from matrix.utils.fabrication import (
+from matrix_fabricator.fabrication import (
     MockDataGenerator,
     faker,
     generate_dates,
@@ -1143,7 +1143,7 @@ def test_hash_map():
 
 def test_generate_weighted_choice():
     """Test the generate_weighted_choice function for weighted random sampling."""
-    from matrix.utils.fabrication import generate_weighted_choice
+    from matrix_fabricator.fabrication import generate_weighted_choice
 
     weights = {"option_a": 10, "option_b": 1}
     num_rows = 1000
@@ -1159,7 +1159,7 @@ def test_generate_weighted_choice():
 
 def test_numpy_random_distributions():
     """Test the numpy_random function with different distribution types."""
-    from matrix.utils.fabrication import numpy_random
+    from matrix_fabricator.fabrication import numpy_random
 
     # Normal distribution
     normal_values = numpy_random(
@@ -1192,7 +1192,7 @@ def test_numpy_random_distributions():
 
 def test_fabricate_datasets():
     """Test the fabricate_datasets function, which is the main entry point for the fabricator."""
-    from matrix.utils.fabrication import fabricate_datasets
+    from matrix_fabricator.fabrication import fabricate_datasets
     import pandas as pd
 
     # Create a simple fabrication configuration
@@ -1236,14 +1236,14 @@ def test_fabricate_datasets():
 
 def test_error_handling_and_logging():
     """Test error handling in the fabricator with invalid configurations."""
-    from matrix.utils.fabrication import MockDataGenerator
+    from matrix_fabricator.fabrication import MockDataGenerator
     import logging
     import io
 
     # Set up logging capture
     log_capture = io.StringIO()
     handler = logging.StreamHandler(log_capture)
-    logger = logging.getLogger("matrix.utils.fabrication")
+    logger = logging.getLogger("matrix_fabricator.fabrication")
     logger.addHandler(handler)
     original_level = logger.level
     logger.setLevel(logging.DEBUG)
@@ -1286,7 +1286,7 @@ def test_error_handling_and_logging():
 
 def test_custom_dtypes():
     """Test explicitly setting dtypes in the fabrication configuration."""
-    from matrix.utils.fabrication import MockDataGenerator
+    from matrix_fabricator.fabrication import MockDataGenerator
     import pandas as pd
 
     instructions = {

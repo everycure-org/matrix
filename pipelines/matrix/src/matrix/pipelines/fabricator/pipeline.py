@@ -4,8 +4,7 @@ import random
 import networkx as nx
 import pandas as pd
 from kedro.pipeline import Pipeline, node, pipeline
-
-from matrix.utils.fabrication import fabricate_datasets
+from matrix_fabricator.fabrication import fabricate_datasets
 
 from . import nodes
 

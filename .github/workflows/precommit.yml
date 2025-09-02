@@ -1,0 +1,36 @@
+name: Precommit Checks
+
+on:
+  pull_request:
+    # Run on all PRs to any branch
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  precommit:
+    name: Run Precommit Checks
+    runs-on: 'ubuntu-latest'
+    if: github.event.pull_request.draft == false
+    
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.13"
+      - id: cache_pre_commit
+        uses: actions/cache@v3
+        env:
+            cache-name: cache-pre-commit
+        with:
+          path: |
+            ~/.cache/pre-commit
+            .venv/
+          key: ${{ env.cache-name }}-${{ hashFiles('.pre-commit-config.yaml','~/.cache/pre-commit/*') }}
+      - run: make precommit
