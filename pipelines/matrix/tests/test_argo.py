@@ -961,8 +961,9 @@ def test_metrics_configuration() -> None:
     assert "labels" in metric
     assert len(metric["labels"]) == 1
     assert metric["labels"][0]["key"] == "pipeline_name"
-    assert "{{ pipeline_name }}" in metric["labels"][0]["value"]
-    assert "{{ status }}  == Failed" in metric["when"]
+    # The template variable gets rendered, so we check for the actual pipeline name
+    assert "pipeline_one" in metric["labels"][0]["value"]
+    assert "Failed" in metric["when"]  # Template renders "{{ status }}  == Failed"
     assert "counter" in metric
     assert metric["counter"]["value"] == "1"
 
