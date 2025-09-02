@@ -128,7 +128,7 @@ Next, we wish to process the dataframe in shards, we will be using Kedro's `Part
 
 ```yaml
 embeddings.feat.bucketized_nodes@partitioned:
-  type: import matrix_gcp_datasets.gcp.PartitionedAsyncParallelDataset 
+  type: matrix_gcp_datasets.gcpPartitionedAsyncParallelDataset 
   path: ${globals:paths.tmp}/feat/bucketized_nodes
   dataset: 
     # NOTE: Switching between spark/pandas thanks to underlying parquet structure
@@ -183,7 +183,7 @@ We've now setup the a Kedro dataset to load the hive partitioned dataset as a Ke
 
 ```yaml
 embeddings.feat.graph.node_embeddings@partitioned:
-  type: import matrix_gcp_datasets.gcp.PartitionedAsyncParallelDataset 
+  type: matrix_gcp_datasets.gcpPartitionedAsyncParallelDataset 
   overwrite: True # important otherwise not properly reset on rerun
   path: ${globals:paths.tmp}/feat/tmp_nodes_with_embeddings
   dataset: 
