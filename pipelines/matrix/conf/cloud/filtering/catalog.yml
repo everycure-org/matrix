@@ -1,5 +1,5 @@
 _bigquery_ds: &_bigquery_ds
-  type: matrix.datasets.gcp.SparkDatasetWithBQExternalTable
+  type: matrix_gcp_datasets.gcp.SparkDatasetWithBQExternalTable
   project_id: ${oc.env:RUNTIME_GCP_PROJECT_ID}
   dataset: run_${globals:run_name}
   file_format: parquet
@@ -7,6 +7,15 @@ _bigquery_ds: &_bigquery_ds
     mode: overwrite
     labels:
       git_sha: ${globals:git_sha}
+
+
+_spark_parquet_ds: &_spark_parquet
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
+  file_format: parquet
+  load_args:
+    header: True
+  save_args:
+    mode: overwrite
 
 # -------------------------------------------------------------------------
 # Datasets
@@ -17,15 +26,17 @@ _bigquery_ds: &_bigquery_ds
 
 # Removed nodes after initial filter step
 filtering.prm.removed_nodes_initial:
-  <<: *_bigquery_ds
+  <<: *_spark_parquet
   filepath: ${globals:paths.filtering}/prm/removed/nodes_initial
-  table: nodes_removed
 
 # Removed edges due to filtering or missing nodes
 filtering.prm.removed_edges:
-  <<: *_bigquery_ds
+  <<: *_spark_parquet
   filepath: ${globals:paths.filtering}/prm/removed/edges
-  table: edges_removed
+
+filtering.prm.removed_nodes_final:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.filtering}/prm/removed/nodes_final
 
 # Filtered PRM nodes/edges written to BigQuery
 filtering.prm.filtered_nodes:
@@ -38,7 +49,3 @@ filtering.prm.filtered_edges:
   filepath: ${globals:paths.filtering}/prm/filtered/edges
   table: edges_filtered
 
-filtering.prm.removed_nodes_final:
-  <<: *_bigquery_ds
-  filepath: ${globals:paths.filtering}/prm/removed/nodes_final
-  table: nodes_removed_final

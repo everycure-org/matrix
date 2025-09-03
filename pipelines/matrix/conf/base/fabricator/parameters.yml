@@ -28,7 +28,7 @@ fabricator.rtx_kg2:
       all_categories:
         type: row_apply
         input_columns: [ "nodes.category" ]
-        row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
+        row_func: matrix_fabricator.generators.get_ancestors_for_category_delimited
         row_func_kwargs:
           delimiter: "|"
         resize: True
@@ -710,7 +710,7 @@ fabricator.ec_medical_kg:
       types:
         type: row_apply
         input_columns: [ "nodes.type" ]
-        row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
+        row_func: matrix_fabricator.generators.get_ancestors_for_category_delimited
         row_func_kwargs:
           delimiter: "\u01c2"
         resize: True
@@ -814,7 +814,7 @@ fabricator.embiology:
       all_categories:
         type: row_apply
         input_columns: [ "nodes.category" ]
-        row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
+        row_func: matrix_fabricator.generators.get_ancestors_for_category_delimited
         row_func_kwargs:
           delimiter: "|"
         resize: True
@@ -1045,3 +1045,119 @@ fabricator.ec_gt:
           sample_values:
             - True
             - False
+
+fabricator.drugbank_gt:
+    positive_edges:
+      num_rows: 50
+      columns:
+        "treated_condition":
+          type: copy_column
+          source_column: rtx_nodes.name
+          sample:
+            num_rows: "@positive_edges.num_rows"
+            seed: 30399
+        "assoc_condition":
+          type: copy_column
+          source_column: rtx_nodes.name
+          sample:
+            num_rows: "@positive_edges.num_rows"
+            seed: 30398
+        "primary_drug":
+          type: copy_column
+          source_column: rtx_nodes.name
+          sample:
+            num_rows: "@positive_edges.num_rows"
+            seed: 40399
+        "primary_drug_id":
+          type: generate_unique_id
+          prefix: "DB:"
+          id_length: 8
+        "secondary_drug":
+          type: copy_column
+          source_column: rtx_nodes.name
+          sample:
+            num_rows: "@positive_edges.num_rows"
+            seed: 40199
+        "secondary_drug_id":
+          type: generate_unique_id
+          prefix: "DB:"
+          id_length: 8
+        "condition_id":
+          type: generate_unique_id
+          prefix: "DB_CONDITION:"
+          id_length: 18
+        "primary_drug_id_norm":
+          type: copy_column
+          source_column: rtx_nodes.id
+          sample:
+            num_rows: "@positive_edges.num_rows"
+            seed: 40399
+        "secondary_drug_id_norm":
+          type: copy_column
+          source_column: rtx_nodes.id
+          sample:
+            num_rows: "@positive_edges.num_rows"
+            seed: 40199
+        "condition_id_norm":
+          type: copy_column
+          source_column: rtx_nodes.id
+          sample:
+            num_rows: "@positive_edges.num_rows"
+            seed: 40399
+    negative_edges:
+      num_rows: 50
+      columns:
+        "primary_drug_name":
+          type: copy_column
+          source_column: rtx_nodes.name
+          sample:
+            num_rows: "@positive_edges.num_rows"
+            seed: 40399
+        "primary_drug_id":
+          type: generate_unique_id
+          prefix: "DB:"
+          id_length: 8
+        "secondary_drug_name":
+          type: copy_column
+          source_column: rtx_nodes.name
+          sample:
+            num_rows: "@positive_edges.num_rows"
+            seed: 40399
+        "secondary_drug_id":
+          type: generate_unique_id
+          prefix: "DB:"
+          id_length: 8
+        "condition_name":
+          type: copy_column
+          source_column: rtx_nodes.name
+          sample:
+            num_rows: "@positive_edges.num_rows"
+            seed: 30399
+        "condition_id":
+          type: generate_unique_id
+          prefix: "DB_CONDITION:"
+          id_length: 18
+        "drug_id_norm":
+          type: copy_column
+          source_column: rtx_nodes.id
+          sample:
+            num_rows: "@positive_edges.num_rows"
+            seed: 40399
+        "primary_drug_id_norm":
+          type: copy_column
+          source_column: rtx_nodes.id
+          sample:
+            num_rows: "@positive_edges.num_rows"
+            seed: 40399
+        "secondary_drug_id_norm":
+          type: copy_column
+          source_column: rtx_nodes.id
+          sample:
+            num_rows: "@positive_edges.num_rows"
+            seed: 40199
+        "condition_id_norm":
+          type: copy_column
+          source_column: rtx_nodes.id
+          sample:
+            num_rows: "@positive_edges.num_rows"
+            seed: 20399
