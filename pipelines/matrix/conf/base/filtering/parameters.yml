@@ -6,7 +6,7 @@ filtering:
       keep_list:
         - rtxkg2
         - ec_medical
-        - primekg
+        # - primekg
         # - robokop
         
     # filter_node_labels:
@@ -43,7 +43,7 @@ filtering:
       keep_list:
         - rtxkg2
         - ec_medical
-        - primekg
+        # - primekg
         # - robokop
 
     filter_biolink_edges:
