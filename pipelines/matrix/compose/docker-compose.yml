@@ -33,10 +33,10 @@ services:
       # - ./licenses:/licenses
     healthcheck:
       test: wget http://localhost:7474 || exit 1
-      interval: 30s
+      interval: 10s
       timeout: 10s
       retries: 10
-      start_period: 30s
+      start_period: 10s
 
   # MockServer instance that is used to mock a openai embeddings endpoint as well a synonimizer API.
   # This is used for local development and integration testing
