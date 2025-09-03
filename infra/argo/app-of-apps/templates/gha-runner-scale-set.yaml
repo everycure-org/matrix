@@ -36,7 +36,7 @@ spec:
               image: docker:dind
               resources:
                 requests:
-                  cpu: "3.5"
+                  cpu: "3"
                   memory: "15Gi"
               args:
                 - dockerd
@@ -79,7 +79,7 @@ spec:
                   mountPath: /var/run
               resources:
                 requests:
-                  cpu: "3.5"
+                  cpu: "3"
                   memory: "15Gi"
             volumes:
             - name: work
