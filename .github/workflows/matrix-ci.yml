@@ -153,32 +153,44 @@ jobs:
       # Setup steps (same as main ci job)
       - run: env | sort
             
+      - name: Get Python version
+        id: python-version
+        run: echo "version=$(python3 --version | cut -d' ' -f2)" >> $GITHUB_OUTPUT
+
       - name: Cache Python virtual environment
         id: cache-venv
         uses: actions/cache@v4
         with:
           path: .venv
-          key: ${{ runner.os }}-venv-${{ hashFiles('pipelines/matrix/uv.lock', 'pipelines/matrix/pyproject.toml') }}
-          restore-keys: ${{ runner.os }}-venv-${{ hashFiles('pipelines/matrix/uv.lock', 'pipelines/matrix/pyproject.toml') }}
+          key: ${{ runner.os }}-python-${{ steps.python-version.outputs.version }}-venv-${{ hashFiles('pipelines/matrix/uv.lock', 'pipelines/matrix/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-python-${{ steps.python-version.outputs.version }}-venv-
+            ${{ runner.os }}-python-
 
-
-      - name: Check cache status
+      - name: Check cache status and clean if needed
         run: |
           if [[ "${{ steps.cache-venv.outputs.cache-hit }}" == "true" ]]; then
-            echo "✅ Cache hit! Using cached virtual environment"
+            echo "✅ Cache hit! Checking virtual environment validity..."
+            # Check if the cached venv is still valid
+            if [[ -d ".venv" ]] && [[ -f ".venv/pyvenv.cfg" ]]; then
+              # Try to activate and check if Python works
+              if .venv/bin/python --version > /dev/null 2>&1; then
+                echo "✅ Cached virtual environment is valid"
+              else
+                echo "⚠️ Cached virtual environment is invalid, removing..."
+                rm -rf .venv
+              fi
+            else
+              echo "⚠️ Cached virtual environment directory is incomplete, removing..."
+              rm -rf .venv
+            fi
           else
             echo "❌ Cache miss. Will install dependencies"
           fi
 
-      # Install Python dependencies (will use cache if available)
+      # Install Python dependencies
       - name: Install Python dependencies
-        if: steps.cache-venv.outputs.cache-hit != 'true'
         run: uv sync
-
-      # Always run uv sync to ensure environment is up to date (but faster if cached)
-      - name: Sync dependencies (fast if cached)
-        if: steps.cache-venv.outputs.cache-hit == 'true'
-        run: uv sync --frozen
 
       # Run the specific command for this matrix job
       - name: "Run ${{ matrix.command.name }}"
