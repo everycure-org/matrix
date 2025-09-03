@@ -85,9 +85,9 @@ def test_no_nodes_fused_when_no_fuse_options(node_class):
 
     fused = fuse(pipeline_with_no_fusing_options)
 
-    assert len(fused) == len(
-        pipeline_with_no_fusing_options.nodes
-    ), "No nodes should be fused when no fuse options are provided"
+    assert len(fused) == len(pipeline_with_no_fusing_options.nodes), (
+        "No nodes should be fused when no fuse options are provided"
+    )
 
 
 @pytest.mark.parametrize("node_class", [Node, ArgoNode])
@@ -114,9 +114,9 @@ def test_simple_fusing(node_class):
 
     assert len(fused) == 1, "Only one node should be fused"
     assert fused[0].name == "dummy", "Fused node should have name 'dummy'"
-    assert fused[0].outputs == set(
-        ["dataset_1", "dataset_2"]
-    ), "Fused node should have outputs 'dataset_1' and 'dataset_2'"
+    assert fused[0].outputs == set(["dataset_1", "dataset_2"]), (
+        "Fused node should have outputs 'dataset_1' and 'dataset_2'"
+    )
     assert len(fused[0]._parents) == 0, "Fused node should have no parents"
 
 
@@ -150,9 +150,9 @@ def test_no_multiple_parents_no_fusing(node_class):
 
     fused = fuse(pipeline_one2many_fusing_possible)
 
-    assert len(fused) == len(
-        pipeline_one2many_fusing_possible.nodes
-    ), "No fusing has been performed, as child node can be fused to different parents."
+    assert len(fused) == len(pipeline_one2many_fusing_possible.nodes), (
+        "No fusing has been performed, as child node can be fused to different parents."
+    )
 
 
 @pytest.mark.parametrize("node_class", [Node, ArgoNode])
@@ -208,15 +208,15 @@ def test_fusing_multiple_parents(node_class):
 
     assert len(fused) == 4, "Fusing of child and grandchild node, ensure correct naming"
     assert fused[3].name == "dummy", "Fused node should have name 'dummy'"
-    assert (
-        fused[3].nodes == "child_node,grandchild_node,grandgrandchild_node"
-    ), "Fused node should have nodes 'child_node,grandchild_node,grandgrandchild_node'"
-    assert fused[3].outputs == set(
-        ["dataset_4", "dataset_5", "dataset_6"]
-    ), "Fused node should have outputs 'dataset_4', 'dataset_5' and 'dataset_6'"
-    assert set([parent.name for parent in fused[3]._parents]) == set(
-        ["first_node", "second_node", "third_node"]
-    ), "Fused node should have parents 'first_node', 'second_node' and 'third_node'"
+    assert fused[3].nodes == "child_node,grandchild_node,grandgrandchild_node", (
+        "Fused node should have nodes 'child_node,grandchild_node,grandgrandchild_node'"
+    )
+    assert fused[3].outputs == set(["dataset_4", "dataset_5", "dataset_6"]), (
+        "Fused node should have outputs 'dataset_4', 'dataset_5' and 'dataset_6'"
+    )
+    assert set([parent.name for parent in fused[3]._parents]) == set(["first_node", "second_node", "third_node"]), (
+        "Fused node should have parents 'first_node', 'second_node' and 'third_node'"
+    )
 
 
 def test_simple_fusing_with_argo_nodes(nodes_where_first_is_input_for_second: List[ArgoNode]):
@@ -877,3 +877,253 @@ def test_image_parameter_in_workflow_arguments() -> None:
     # Verify it has the expected image registry format
     expected_image = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     assert image_param["value"] == expected_image
+
+
+def test_spark_and_temp_directory_environment_variables() -> None:
+    """Test that Spark and temporary directory environment variables are properly configured."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
+    container_env = kedro_template["container"]["env"]
+    env_vars = {env["name"]: env["value"] for env in container_env if "value" in env}
+
+    # Verify Spark configuration
+    assert env_vars["SPARK_LOCAL_DIRS"] == "/data/spark-temp"
+    assert "{{inputs.parameters.memory_limit}}" in env_vars["SPARK_DRIVER_MEMORY"]
+
+    # Verify temporary directory environment variables
+    assert env_vars["JAVA_OPTS"] == "-Djava.io.tmpdir=/data/tmp"
+    assert env_vars["_JAVA_OPTIONS"] == "-Djava.io.tmpdir=/data/tmp"
+    assert env_vars["TMPDIR"] == "/data/tmp"
+    assert env_vars["TMP"] == "/data/tmp"
+    assert env_vars["TEMP"] == "/data/tmp"
+
+
+def test_directory_creation_in_args() -> None:
+    """Test that the container args include proper directory creation commands."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
+    container_args = kedro_template["container"]["args"]
+
+    assert len(container_args) == 1
+    command = container_args[0]
+
+    # Verify directory creation command is present
+    assert "mkdir -p /data/tmp /data/spark-temp /data/spark-warehouse /data/checkpoints" in command
+
+    # Verify the directories are in the expected order
+    expected_dirs = ["/data/tmp", "/data/spark-temp", "/data/spark-warehouse", "/data/checkpoints"]
+    for directory in expected_dirs:
+        assert directory in command
+
+
+def test_metrics_configuration() -> None:
+    """Test that Prometheus metrics are properly configured in the kedro template."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
+
+    # Verify metrics section exists
+    assert "metrics" in kedro_template
+    assert "prometheus" in kedro_template["metrics"]
+
+    prometheus_metrics = kedro_template["metrics"]["prometheus"]
+    assert len(prometheus_metrics) == 1
+
+    metric = prometheus_metrics[0]
+    assert metric["name"] == "argo_custom_workflow_error_counter"
+    assert metric["help"] == "Total number of failed workflows"
+    assert "labels" in metric
+    assert len(metric["labels"]) == 1
+    assert metric["labels"][0]["key"] == "pipeline_name"
+    # The template variable gets rendered, so we check for the actual pipeline name
+    assert "pipeline_one" in metric["labels"][0]["value"]
+    assert "Failed" in metric["when"]  # Template renders "{{ status }}  == Failed"
+    assert "counter" in metric
+    assert metric["counter"]["value"] == "1"
+
+
+def test_enhanced_tolerations() -> None:
+    """Test that all expected tolerations are properly configured."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
+
+    # Verify tolerations exist at template level
+    assert "tolerations" in kedro_template
+    template_tolerations = kedro_template["tolerations"]
+
+    expected_tolerations = [
+        {"key": "workload", "operator": "Equal", "value": "true", "effect": "NoSchedule"},
+        {"key": "node-memory-size", "operator": "Equal", "value": "large", "effect": "NoSchedule"},
+        {"key": "spot", "operator": "Equal", "value": "true", "effect": "NoSchedule"},
+    ]
+
+    assert len(template_tolerations) == len(expected_tolerations)
+    for expected_toleration in expected_tolerations:
+        assert expected_toleration in template_tolerations
+
+    # Verify podSpecPatch also contains tolerations
+    pod_spec_patch = kedro_template["podSpecPatch"]
+    assert "tolerations:" in pod_spec_patch
+
+    # Check that the tolerations in podSpecPatch include the expected ones
+    for toleration in expected_tolerations:
+        key_check = f'key: "{toleration["key"]}"'
+        assert key_check in pod_spec_patch
+
+
+def test_neo4j_template_environment_setup() -> None:
+    """Test that the neo4j template has proper environment variable configuration."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    neo4j_template = next(t for t in spec["templates"] if t["name"] == "neo4j")
+
+    # Verify neo4j template has podSpecPatch with enhanced container configuration
+    assert "podSpecPatch" in neo4j_template
+    pod_spec_patch = neo4j_template["podSpecPatch"]
+
+    # Check for main container environment variables
+    assert "SPARK_LOCAL_DIRS" in pod_spec_patch
+    assert "value: /data/spark-temp" in pod_spec_patch
+    assert "SPARK_DRIVER_MEMORY" in pod_spec_patch
+    assert 'value: "60"' in pod_spec_patch
+
+    # Check for Neo4j host override
+    assert "NEO4J_HOST" in pod_spec_patch
+    assert "bolt://127.0.0.1:7687" in pod_spec_patch
+
+    # Verify temporary directory environment variables
+    temp_env_vars = ["JAVA_OPTS", "_JAVA_OPTIONS", "TMPDIR", "TMP", "TEMP"]
+    for env_var in temp_env_vars:
+        assert env_var in pod_spec_patch
+
+    assert "-Djava.io.tmpdir=/data/tmp" in pod_spec_patch
+    assert "value: /data/tmp" in pod_spec_patch
+
+    # Verify volume mounts for scratch directory
+    assert "volumeMounts:" in pod_spec_patch
+    assert "mountPath: /data" in pod_spec_patch
+
+
+def test_neo4j_sidecar_configuration() -> None:
+    """Test that the neo4j sidecar is properly configured with environment variables and volumes."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    neo4j_template = next(t for t in spec["templates"] if t["name"] == "neo4j")
+
+    # Verify sidecar configuration exists
+    assert "sidecars" in neo4j_template
+    sidecars = neo4j_template["sidecars"]
+    assert len(sidecars) == 1
+
+    neo4j_sidecar = sidecars[0]
+    assert neo4j_sidecar["name"] == "neo4j"
+    assert neo4j_sidecar["image"] == "neo4j:5.21.0-enterprise"
+
+    # Verify sidecar environment variables
+    sidecar_env = neo4j_sidecar["env"]
+    env_names = [env["name"] for env in sidecar_env]
+
+    expected_env_vars = [
+        "NEO4J_AUTH",
+        "NEO4J_gds_enterprise_license__file",
+        "NEO4J_apoc_export_file_enabled",
+        "NEO4J_apoc_import_file_enabled",
+        "NEO4J_apoc_import_file_use__neo4j__config",
+        "NEO4J_PLUGINS",
+        "NEO4J_dbms_security_auth__minimum__password__length",
+        "NEO4J_dbms_security_procedures_whitelist",
+        "NEO4J_dbms_security_procedures_unrestricted",
+        "NEO4J_db_logs_query_enabled",
+        "NEO4J_ACCEPT_LICENSE_AGREEMENT",
+        "NEO4J_dbms_memory_heap_initial__size",
+        "NEO4J_dbms_memory_heap_max__size",
+    ]
+
+    for expected_env in expected_env_vars:
+        assert expected_env in env_names
+
+    # Verify volume mounts
+    volume_mounts = neo4j_sidecar["volumeMounts"]
+    mount_paths = [vm["mountPath"] for vm in volume_mounts]
+    assert "/licences" in mount_paths
+
+
+def test_neo4j_template_args_with_directory_setup() -> None:
+    """Test that the neo4j template args include proper directory setup and neo4j readiness check."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    neo4j_template = next(t for t in spec["templates"] if t["name"] == "neo4j")
+    container_args = neo4j_template["container"]["args"]
+
+    assert len(container_args) == 1
+    command = container_args[0]
+
+    # Verify directory creation
+    assert "mkdir -p /data/tmp /data/spark-temp /data/spark-warehouse /data/checkpoints" in command
+
+    # Verify Neo4j readiness check
+    assert "until curl -s http://localhost:7474/ready" in command
+    assert "Waiting for Neo4j to be ready..." in command
+    assert "Neo4j is ready. Starting main application..." in command
+
+    # Verify kedro command execution
+    assert "kedro run -p" in command
