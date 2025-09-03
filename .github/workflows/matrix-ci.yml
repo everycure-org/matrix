@@ -145,6 +145,11 @@ jobs:
           project_id: ${{vars.project_id}}
           workload_identity_provider: ${{vars.workload_identity_provider}}
           service_account: ${{vars.service_account}}
+      
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          version: "0.8.13"
 
       # Setup steps (same as main ci job)
       - run: env | sort
