@@ -36,8 +36,8 @@ spec:
               image: docker:dind
               resources:
                 requests:
-                  cpu: "2"
-                  memory: "14Gi"
+                  cpu: "3"
+                  # memory: "12Gi"
               args:
                 - dockerd
                 - --host=unix:///var/run/docker.sock
@@ -79,8 +79,8 @@ spec:
                   mountPath: /var/run
               resources:
                 requests:
-                  cpu: "2"
-                  memory: "14Gi"
+                  cpu: "3"
+                  # memory: "14Gi"
             volumes:
             - name: work
               emptyDir: {}
