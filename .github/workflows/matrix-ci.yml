@@ -122,7 +122,8 @@ jobs:
           - name: "full-test"
             run: "make full_test"
           - name: "docker-test"
-            run: 'make run_test_native_through_docker'
+            run: 'make docker_test GIT_SHA="${GITHUB_SHA:0:7}"' #we overwrite the GIT_SHA in the Makefile
+
 
     permissions:
       contents: 'read'

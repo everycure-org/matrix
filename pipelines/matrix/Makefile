@@ -219,6 +219,7 @@ start_neo4j: check_docker
 				break; \
 			fi; \
 			echo "Neo4j not ready yet, waiting... ($$elapsed/$$timeout seconds)"; \
+			docker logs neo4j-matrix --tail 1000; \
 			sleep 2; \
 			elapsed=$$((elapsed + 2)); \
 		done; \
