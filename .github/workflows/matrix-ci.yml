@@ -156,7 +156,7 @@ jobs:
         id: cache-venv
         uses: actions/cache@v4
         with:
-          path: pipelines/matrix/.venv
+          path: .venv
           key: ${{ runner.os }}-venv-${{ hashFiles('pipelines/matrix/uv.lock', 'pipelines/matrix/pyproject.toml') }}
           restore-keys: ${{ runner.os }}-venv-${{ hashFiles('pipelines/matrix/uv.lock', 'pipelines/matrix/pyproject.toml') }}
 
