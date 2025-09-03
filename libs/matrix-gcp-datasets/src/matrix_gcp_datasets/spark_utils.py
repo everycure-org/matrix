@@ -60,6 +60,24 @@ class SparkManager:
                 parameters["spark.hadoop.fs.gs.auth.impersonation.service.account"] = service_account
                 logger.info(f"Using service account: {service_account} for spark impersonation")
 
+            # Ensure all temporary operations use the mounted volume when SPARK_LOCAL_DIRS is set
+            if os.environ.get("SPARK_LOCAL_DIRS") is not None:
+                spark_local_dirs = os.environ["SPARK_LOCAL_DIRS"]
+                logger.info(f"SPARK_LOCAL_DIRS detected: {spark_local_dirs}. Configuring additional temp paths.")
+
+                # Override any relative temp paths to use the mounted volume
+                temp_configs = {
+                    "spark.sql.warehouse.dir": f"{spark_local_dirs}/spark-warehouse",
+                    "spark.sql.streaming.checkpointLocation": f"{spark_local_dirs}/checkpoints",
+                    "java.io.tmpdir": spark_local_dirs,
+                    "spark.driver.host.tmpdir": spark_local_dirs,
+                    "spark.executor.host.tmpdir": spark_local_dirs,
+                }
+
+                for key, value in temp_configs.items():
+                    parameters[key] = value
+                    logger.info(f"Setting {key} to {value}")
+
             logger.info(f"Starting Spark session with parameters: {parameters}")
             spark_conf = SparkConf().setAll(parameters.items())
 
