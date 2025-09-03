@@ -3,28 +3,28 @@ _reporting_ds: &_reporting_ds
     kedro-viz:
       layer: reporting
 
-# NOTE: Saving an artifact, saving both locally and in MLFlow
-# https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/03_version_datasets.html#how-to-version-data-in-a-kedro-project
-"modelling.{shard}.fold_{fold}.reporting.tuning_convergence_plot":
-  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
-  artifact_path: "{shard}.fold_{fold}"
-  dataset:
-    <<: *_reporting_ds
-    type: matplotlib.MatplotlibDataset
-    filepath: ${globals:paths.tmp}/{shard}/fold_{fold}/convergence_plot.png
+# # NOTE: Saving an artifact, saving both locally and in MLFlow
+# # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/03_version_datasets.html#how-to-version-data-in-a-kedro-project
+# "modelling.{shard}.fold_{fold}.reporting.tuning_convergence_plot":
+#   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+#   artifact_path: "{shard}.fold_{fold}"
+#   dataset:
+#     <<: *_reporting_ds
+#     type: matplotlib.MatplotlibDataset
+#     filepath: ${globals:paths.tmp}/{shard}/fold_{fold}/convergence_plot.png
 
-# NOTE: Saving a metric, more elaborate strategies possible, e.g., MlflowMetricHistoryDataset
-# https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/05_version_metrics.html#saving-a-single-float-as-a-metric-with-mlflowmetricdataset
-"modelling.{shard}.fold_{fold}.reporting.metrics":  
-  # FUTURE: The Kedro MLFlow plugin does not support metadata, 
-  # add in when provided by the plugin.
-  # <<: *_reporting_ds
-  type: matrix_mlflow_utils.mlflow.MlflowMetricsDataset
+# # NOTE: Saving a metric, more elaborate strategies possible, e.g., MlflowMetricHistoryDataset
+# # # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/05_version_metrics.html#saving-a-single-float-as-a-metric-with-mlflowmetricdataset
+# # "modelling.{shard}.fold_{fold}.reporting.metrics":  
+# #   # FUTURE: The Kedro MLFlow plugin does not support metadata, 
+# #   # add in when provided by the plugin.
+# #   # <<: *_reporting_ds
+# #   type: matrix_mlflow_utils.mlflow.MlflowMetricsDataset
 
-"modelling.{shard}.fold_{fold}.reporting.metrics_aggregated":
-  type: matrix_mlflow_utils.mlflow.MlflowMetricsDataset
+# # "modelling.{shard}.fold_{fold}.reporting.metrics_aggregated":
+# #   type: matrix_mlflow_utils.mlflow.MlflowMetricsDataset
 
-modelling.reporting.gt_present:
-  type: matrix_mlflow_utils.mlflow.MlflowMetricsDataset
-  key_prefix: "gt_present"
+# # modelling.reporting.gt_present:
+# #   type: matrix_mlflow_utils.mlflow.MlflowMetricsDataset
+# #   key_prefix: "gt_present"
 
