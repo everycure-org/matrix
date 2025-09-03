@@ -180,3 +180,98 @@ diagnostics:
 	echo "\nDiagnostics complete."
 
 
+# Docker service management (individual containers, Kedro runs natively)
+check_docker:
+	@echo "Checking Docker daemon..."
+	@docker version >/dev/null 2>&1 || (echo "❌ Docker daemon is not running. Please start Docker Desktop." && exit 1)
+	@echo "✅ Docker daemon is running"
+
+start_neo4j: check_docker
+	@echo "Starting Neo4j container..."
+	@set -e; \
+	if ! docker ps | grep -q neo4j-matrix; then \
+		docker run -d \
+			--name neo4j-matrix \
+			-p 7474:7474 -p 7687:7687 \
+			-e NEO4J_AUTH=neo4j/admin \
+			-e NEO4J_apoc_export_file_enabled=true \
+			-e NEO4J_apoc_import_file_enabled=true \
+			-e NEO4J_apoc_import_file_use__neo4j__config=true \
+			-e 'NEO4J_PLUGINS=["apoc", "graph-data-science", "apoc-extended"]' \
+			-e NEO4J_dbms_security_auth__minimum__password__length=4 \
+			-e 'NEO4J_dbms_security_procedures_whitelist=gds.*, apoc.*' \
+			-e 'NEO4J_dbms_security_procedures_unrestricted=gds.*, apoc.*' \
+			-e NEO4J_db_logs_query_enabled=OFF \
+			-e NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
+			-v $(PWD)/compose/neo4j_data/data:/data \
+			-v $(PWD)/compose/neo4j_data/logs:/logs \
+			-v $(PWD)/compose/neo4j_data/import:/var/lib/neo4j/import \
+			--restart unless-stopped \
+			neo4j:5.21.0-enterprise; \
+		echo "Waiting for Neo4j to start..."; \
+		sleep 15; \
+	else \
+		echo "Neo4j container already running"; \
+	fi
+
+start_mlflow: check_docker
+	@echo "Starting MLflow container..."
+	@set -e; \
+	if ! docker ps | grep -q mlflow-matrix; then \
+		docker build -t mlflow-matrix compose/services/mlflow/; \
+		docker run -d \
+			--name mlflow-matrix \
+			-p 5001:5000 \
+			--restart unless-stopped \
+			mlflow-matrix \
+			mlflow server --host 0.0.0.0 --serve-artifacts; \
+		echo "Waiting for MLflow to start..."; \
+		sleep 5; \
+	else \
+		echo "MLflow container already running"; \
+	fi
+
+start_mockserver: check_docker
+	@echo "Starting MockServer container..."
+	@set -e; \
+	if ! docker ps | grep -q mockserver-matrix; then \
+		docker run -d \
+			--name mockserver-matrix \
+			-p 1080:1080 \
+			-e MOCKSERVER_WATCH_INITIALIZATION_JSON=true \
+			-e MOCKSERVER_ENABLE_CORS_FOR_API=true \
+			-e MOCKSERVER_ENABLE_CORS_FOR_ALL_RESPONSES=true \
+			-e MOCKSERVER_INITIALIZATION_JSON_PATH=/openapi/initializer.json \
+			-e MOCKSERVER_LOG_LEVEL=DEBUG \
+			-v $(PWD)/compose/mockgenai-initializer.json:/openapi/initializer.json:ro \
+			--restart unless-stopped \
+			mockserver/mockserver:mockserver-5.15.0; \
+		echo "Waiting for MockServer to start..."; \
+		sleep 3; \
+	else \
+		echo "MockServer container already running"; \
+	fi
+
+start_services: check_docker start_neo4j start_mlflow start_mockserver
+	@echo "All services started successfully!"
+	@echo "Neo4j: http://127.0.0.1:7474 (bolt://127.0.0.1:7687)"
+	@echo "MLflow: http://127.0.0.1:5001"
+	@echo "MockServer: http://127.0.0.1:1080"
+
+stop_services: check_docker
+	@echo "Stopping Docker services..."
+	@-docker stop neo4j-matrix mlflow-matrix mockserver-matrix 2>/dev/null || true
+	@echo "Services stopped."
+
+remove_services: check_docker
+	@echo "Removing Docker services..."
+	@-docker stop neo4j-matrix mlflow-matrix mockserver-matrix 2>/dev/null || true
+	@-docker rm neo4j-matrix mlflow-matrix mockserver-matrix 2>/dev/null || true
+	@echo "Services removed."
+
+restart_services: check_docker stop_services start_services
+
+run_test_native_through_docker: start_services
+	@echo "Running test pipeline with Docker services, Kedro running natively..."
+	ulimit -n 10000
+	uv run kedro run --env test -p test
