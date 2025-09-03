@@ -27,7 +27,6 @@ title: KG Dashboard
         🔖 Benchmark Release ({benchmark_version})
     </a>
 </div>
-# release_version: {release_version}
 
 This dashboard provides an overview of our integrated knowledge graph (KG), detailing its size, connectivity patterns, and provenance quality. 
 It also examines how nodes from our curated disease and drug lists link to other entities within the graph.
