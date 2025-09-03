@@ -42,7 +42,10 @@ default: fetch_secrets install fast_test integration_test
 	echo "done!"
 
 install:
-	uv sync 
+	uv sync
+	@echo "Creating local Spark temp directories..."
+	@mkdir -p data/local/{spark-temp,spark-warehouse,spark-checkpoints,java-tmp}
+	@mkdir -p data/test/{spark-temp,spark-warehouse,spark-checkpoints,java-tmp} 
 
 install_argo:
 	curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
@@ -140,6 +143,8 @@ clean: clean_sa_key
 	docker volume prune -f
 	rm -rf data/cache
 	rm -rf data/test/cache
+	rm -rf data/local/spark-temp data/local/spark-warehouse data/local/spark-checkpoints data/local/java-tmp
+	rm -rf data/test/spark-temp data/test/spark-warehouse data/test/spark-checkpoints data/test/java-tmp
 
 diagnostics:
 	echo "Collecting system diagnostics..."
