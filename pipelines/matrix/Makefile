@@ -208,9 +208,6 @@ start_neo4j: check_docker
 			-e 'NEO4J_dbms_security_procedures_unrestricted=gds.*, apoc.*' \
 			-e NEO4J_db_logs_query_enabled=OFF \
 			-e NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
-			-v $(PWD)/compose/neo4j_data/data:/tmp/data \
-			-v $(PWD)/compose/neo4j_data/logs:/tmp/logs \
-			-v $(PWD)/compose/neo4j_data/import:/var/lib/neo4j/import \
 			--restart always \
 			neo4j:enterprise; \
 		echo "Waiting for Neo4j to become ready..."; \
@@ -227,7 +224,7 @@ start_neo4j: check_docker
 		done; \
 		if [ $$elapsed -ge $$timeout ]; then \
 			echo "❌ Neo4j failed to start within $$timeout seconds"; \
-			docker logs neo4j-matrix \
+			docker logs neo4j-matrix --tail 1000; \
 			exit 1; \
 		fi; \
 	else \
