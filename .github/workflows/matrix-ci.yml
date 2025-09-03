@@ -156,11 +156,10 @@ jobs:
         id: cache-venv
         uses: actions/cache@v4
         with:
-          path: ./pipelines/matrix/.venv
-          key: ${{ runner.os }}-venv-${{ hashFiles('**/uv.lock', '**/pyproject.toml') }}-${{ hashFiles('pipelines/matrix/uv.lock', 'pipelines/matrix/pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-venv-${{ hashFiles('**/uv.lock', '**/pyproject.toml') }}-
-            ${{ runner.os }}-venv-
+          path: pipelines/matrix/.venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('pipelines/matrix/uv.lock', 'pipelines/matrix/pyproject.toml') }}
+          restore-keys: ${{ runner.os }}-venv-${{ hashFiles('pipelines/matrix/uv.lock', 'pipelines/matrix/pyproject.toml') }}
+
 
       - name: Check cache status
         run: |

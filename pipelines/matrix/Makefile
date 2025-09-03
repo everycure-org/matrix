@@ -214,7 +214,7 @@ start_neo4j: check_docker
 			--restart always \
 			neo4j:enterprise; \
 		echo "Waiting for Neo4j to become ready..."; \
-		timeout=120; \
+		timeout=240; \
 		elapsed=0; \
 		while [ $$elapsed -lt $$timeout ]; do \
 			if curl -s -f http://127.0.0.1:7474/db/system/tx/commit -H "Content-Type: application/json" -H "Authorization: Basic bmVvNGo6YWRtaW4=" -d '{"statements":[{"statement":"CALL dbms.components() YIELD name RETURN name LIMIT 1"}]}' > /dev/null 2>&1; then \
@@ -227,7 +227,7 @@ start_neo4j: check_docker
 		done; \
 		if [ $$elapsed -ge $$timeout ]; then \
 			echo "❌ Neo4j failed to start within $$timeout seconds"; \
-			docker logs neo4j-matrix --tail 20; \
+			docker logs neo4j-matrix \
 			exit 1; \
 		fi; \
 	else \
