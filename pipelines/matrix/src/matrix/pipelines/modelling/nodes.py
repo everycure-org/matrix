@@ -55,7 +55,7 @@ def _filter_ground_truth(edges_gt: ps.DataFrame, training_data_sources: list[str
 def filter_valid_pairs(
     nodes: ps.DataFrame,
     edges_gt: ps.DataFrame,
-    training_data_sources: list[str],
+    # training_data_sources: list[str],
     drug_categories: Iterable[str],
     disease_categories: Iterable[str],
 ) -> tuple[ps.DataFrame, dict[str, float]]:
@@ -75,7 +75,7 @@ def filter_valid_pairs(
 
     # Select Ground truth from training data sources and drop potential duplicates
     # (due to multiple sources for the same pair)
-    edges_gt = _filter_ground_truth(edges_gt, training_data_sources)
+    # edges_gt = _filter_ground_truth(edges_gt, training_data_sources)
 
     # Create set of categories to filter on
     categories = set(itertools.chain(drug_categories, disease_categories))

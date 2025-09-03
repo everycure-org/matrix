@@ -528,7 +528,7 @@ ingestion.int.robokop.edges:
 # -------------------------------------------------------------------------
 ingestion.raw.spoke.nodes@spark:
  <<: *_layer_raw
- type: matrix.datasets.gcp.LazySparkDataset
+ type: matrix_gcp_datasets.gcp.LazySparkDataset
  filepath: ${globals:paths.raw_private}/KGs/spoke/${globals:data_sources.spoke.version}/spoke-${globals:data_sources.spoke.version}_nodes.tsv
  file_format: csv
  load_args:
@@ -557,7 +557,7 @@ ingestion.raw.spoke.nodes@polars:
 
 ingestion.raw.spoke.edges@spark:
  <<: *_layer_raw
- type: matrix.datasets.gcp.LazySparkDataset
+ type: matrix_gcp_datasets.gcp.LazySparkDataset
  filepath: ${globals:paths.raw_private}/KGs/spoke/${globals:data_sources.spoke.version}/spoke-${globals:data_sources.spoke.version}_edges.tsv
  file_format: csv
  load_args:
