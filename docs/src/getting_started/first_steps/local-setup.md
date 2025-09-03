@@ -25,11 +25,14 @@ make install
 
     This command wraps the following commands:
 
-    1. **Virtual Environment Creation**: Creates a virtual environment using `uv`
-    2. **Pre-commit setup**: Installs pre-commit hooks and executes pre-commits check on the repo
-    3. **Installs Dependencies**: Installs all dependencies from requirements.txt using uv
+    1. **Workspace Sync**: Uses `uv sync` to install all dependencies from `pyproject.toml` and create a virtual environment
+    2. **Library Installation**: Installs local libraries from `libs/` in editable mode (matrix-auth, matrix-fabricator, etc.)
+    3. **Pre-commit setup**: Installs pre-commit hooks and executes pre-commit checks on the repo
 
     We do encourage you to read through the `Makefile` to get a sense of how the codebase is structured. There are many commands (some are for diagnostics, others for GCP setup) there therefore we recommend focusing on the ones you are interested in running them!
+
+!!! tip "uv Workspace Benefits"
+    The uv workspace automatically handles dependencies across all packages in the monorepo. When you run `uv sync` in the `pipelines/matrix/` directory, it will automatically install and link all the local libraries from `libs/` so they're available for import in your pipeline code.
 
 
 ### Pre-commit hooks

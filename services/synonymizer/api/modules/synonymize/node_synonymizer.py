@@ -10,17 +10,17 @@ def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 
-import os
-import re
-import timeit
 import argparse
-import sqlite3
 import json
+import os
 import pickle
 import platform
+import re
+import sqlite3
+import timeit
 
-from .sri_node_normalizer import SriNodeNormalizer
 from .category_manager import CategoryManager
+from .sri_node_normalizer import SriNodeNormalizer
 
 # Testing and debugging flags
 DEBUG = False
@@ -2068,19 +2068,19 @@ class NodeSynonymizer:
                           FROM curies AS C
                          INNER JOIN nodes AS N ON C.unique_concept_curie == N.unique_concept_curie
                          INNER JOIN unique_concepts AS U ON C.unique_concept_curie == U.uc_curie
-                         WHERE C.uc_curie in ( '{batch['batch_str']}' )"""
+                         WHERE C.uc_curie in ( '{batch["batch_str"]}' )"""
                 else:
                     sql = f"""
                         SELECT C.curie,C.unique_concept_curie,U.curie,U.name,U.category
                           FROM curies AS C
                          INNER JOIN unique_concepts AS U ON C.unique_concept_curie == U.uc_curie
-                         WHERE C.uc_curie in ( '{batch['batch_str']}' )"""
+                         WHERE C.uc_curie in ( '{batch["batch_str"]}' )"""
             else:
                 sql = f"""
                     SELECT S.name,S.unique_concept_curie,U.curie,U.name,U.category
                       FROM names AS S
                      INNER JOIN unique_concepts AS U ON S.unique_concept_curie == U.uc_curie
-                     WHERE S.lc_name in ( '{batch['batch_str']}' )"""
+                     WHERE S.lc_name in ( '{batch["batch_str"]}' )"""
             # print(f"INFO: Processing {batch['batch_type']} batch: {batch['batch_str']}")
             cursor = self.connection.cursor()
             cursor.execute(sql)
@@ -2872,7 +2872,7 @@ def main():
         results = synonymizer.get_equivalent_nodes(curies)
         t1 = timeit.default_timer()
         print(json.dumps(results, indent=2, sort_keys=True))
-        print(f"INFO: Information retrieved in {t1-t0} sec")
+        print(f"INFO: Information retrieved in {t1 - t0} sec")
         return
 
     # If the --lookup option is provided, this takes precedence, perform the lookup and return
@@ -2885,7 +2885,7 @@ def main():
         if args.export:
             with open(args.export, "w") as outfile:
                 outfile.write(json.dumps(equivalence, indent=2, sort_keys=True) + "\n")
-        print(f"INFO: Information retrieved in {t1-t0} sec")
+        print(f"INFO: Information retrieved in {t1 - t0} sec")
         return
 
     # If the --node_list option is provided, just get the list of nodes that match and return that
