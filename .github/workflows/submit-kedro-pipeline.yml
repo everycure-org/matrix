@@ -52,7 +52,7 @@ jobs:
           df -h
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: '3.11'
 
@@ -60,7 +60,7 @@ jobs:
         working-directory: pipelines/matrix
         run: |
           make install_argo
-          uv sync
+          make install
 
       - name: Authenticate with Google Cloud
         id: auth
