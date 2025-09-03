@@ -43,7 +43,6 @@ The Dockerfile and setup scripts are located in:
 
 - `/infra/github-runner-image/Dockerfile`
 - `/infra/github-runner-image/setup_pyenv.sh`
-- `/infra/github-runner-image/podman-docker-api.sh`
 
 ### Image Build Process
 
@@ -54,7 +53,7 @@ The custom image is automatically built and pushed to Artifact Registry using Gi
   - Changes to files in `infra/github-runner-image/` directory
   - Changes to the workflow file itself
   - Manual dispatch via GitHub UI
-- **Branches**: Builds on `main` and feature branches (currently `nelson/aip-517-optimize-ci-process-to-reduce-runtime-from-50-minutes`)
+- **Branches**: Builds on `main` and feature branches
 - **Tags**: Creates both `latest` and SHA-based tags for each build
 
 ### Benefits
@@ -82,7 +81,7 @@ The ArgoCD applications have been added to app-of-apps. They will be automatical
 ### 3. Verify GitHub Integration
 
 1. Go to https://github.com/everycure-org/matrix/settings/actions/runners
-2. You should see "everycure-gha-runners" listed as a runner set
+2. You should see "gha-runner-scale-set" listed as a runner set
 3. Initially shows 0 runners (auto-scales on demand)
 
 ## Usage in GitHub Actions
@@ -95,7 +94,7 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: everycure-gha-runners # <-- Use this value
+    runs-on: gha-runner-scale-set # <-- Use this value
     steps:
       - uses: actions/checkout@v4
 
@@ -110,7 +109,7 @@ jobs:
 ### Cost Optimization
 
 - **Scale to Zero**: No runners when no jobs are queued
-- **Right-sizing**: n2d-standard-4 instances (8 vCPUs, 32GB RAM)
+- **Right-sizing**: e2-standard-8 instances (8 vCPUs, 32GB RAM)
 
 ### Security & Reliability
 
@@ -132,7 +131,7 @@ Docker Compose usually runs into situation where a docker container gets stuck d
 2. Security and Privileges
 3. Networking and Docker Compose Behavior
 
-It is advised to refrain from running docker compose and instead rely on natively running each component.
+It is advised to refrain from running docker compose and instead rely on natively running each component through `docker run`.
 
 ## Monitoring & Troubleshooting
 
@@ -153,7 +152,7 @@ kubectl logs -n actions-runner-system deployment/gha-runner-scale-set-controller
 
 ```bash
 # Check if runners are being created for queued jobs
-kubectl describe runnerscaleset everycure-gha-runners -n actions-runner-system
+kubectl describe runnerscaleset gha-runner-scale-set -n actions-runner-system
 ```
 
 ### Common Issues
@@ -163,7 +162,7 @@ kubectl describe runnerscaleset everycure-gha-runners -n actions-runner-system
 3. **Docker issues**: Check DinD container logs in runner pods
 4. **Cannot connect to Docker daemon**: Ensure DinD sidecar is running properly
 5. **Docker build failures**: Check that both runner and DinD containers have adequate resources
-6. **Certain containers are stuck when running `docker compose`**: Please do not use `docker compose`.
+6. **Certain containers are stuck when running through `docker compose`**: Please do not use `docker compose`.
 
 ### Scaling Configuration
 
@@ -178,6 +177,6 @@ Current limits:
 
 Runners are labeled for billing:
 
-- `billing-category: github-actions-spot`
+- `billing-category: github-actions`
 - `cost-center: compute-workloads`
 - `workload-category: ci-cd`
