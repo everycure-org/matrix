@@ -202,7 +202,7 @@ start_neo4j: check_docker
 			-e NEO4J_apoc_export_file_enabled=true \
 			-e NEO4J_apoc_import_file_enabled=true \
 			-e NEO4J_apoc_import_file_use__neo4j__config=true \
-			-e 'NEO4J_PLUGINS=["apoc", "graph-data-science", "apoc-extended"]' \
+			-e 'NEO4J_PLUGINS=["apoc", "graph-data-science"]' \
 			-e NEO4J_dbms_security_auth__minimum__password__length=4 \
 			-e 'NEO4J_dbms_security_procedures_whitelist=gds.*, apoc.*' \
 			-e 'NEO4J_dbms_security_procedures_unrestricted=gds.*, apoc.*' \
