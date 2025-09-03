@@ -16,7 +16,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 env:
-  # Change this if you want a different image name
   IMAGE_NAME: github-runner
 
 jobs:

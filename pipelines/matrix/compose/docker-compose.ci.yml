@@ -25,13 +25,6 @@ services:
       - neo4j_plugins:/plugins
       - ./certs/bolt/private_and_public.pem:/var/lib/neo4j/certificates/bolt/private_and_public.pem
       - ./certs/bolt/public.crt:/var/lib/neo4j/certificates/bolt/public.crt
-    healthcheck:
-      # Simpler health check for DinD environments with longer startup time
-      test: wget http://localhost:7474 || exit 1
-      interval: 30s
-      timeout: 10s
-      retries: 10
-      start_period: 30s
 
   mockserver:
     environment:
