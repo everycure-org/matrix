@@ -2,6 +2,9 @@
 FROM ghcr.io/actions/actions-runner:latest
 
 USER root
+
+COPY setup_pyenv.sh .
+
 RUN apt-get update && \
     apt-get install -y ca-certificates curl gnupg make build-essential libssl-dev zlib1g-dev \
           libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
