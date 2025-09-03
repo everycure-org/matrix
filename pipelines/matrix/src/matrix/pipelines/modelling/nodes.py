@@ -5,6 +5,7 @@ from inspect import signature
 from typing import Any, Callable, Iterable, Union
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.types as T
@@ -458,6 +459,433 @@ def tune_parameters(data: pd.DataFrame, tuner: Any, features: list[str], target_
             default=int,
         )
     ), tuner.convergence_plot if hasattr(tuner, "convergence_plot") else plt.figure()
+
+
+def _build_xyw_from_embeddings(df: pd.DataFrame, head_col="source", tail_col="target"):
+    # Build X by concatenating source/target embedding arrays.
+    # Assumes columns 'source_embedding' and 'target_embedding' exist with list/array values.
+    X = np.array(
+        [
+            np.concatenate([np.asarray(se, dtype=float), np.asarray(te, dtype=float)])
+            for se, te in zip(df["source_embedding"], df["target_embedding"])
+        ]
+    )
+    y = df["y"].to_numpy()
+    return X, y
+
+
+def _global_topn_metrics(
+    df_scores: pd.DataFrame, k: int, head_col: str = "source", head_universe_size: int | None = None
+):
+    # df_scores has: ['y', 'score', head_col]
+    k = max(1, min(k, len(df_scores)))
+    ranked = df_scores.nlargest(k, "score")
+
+    # recall@k
+    total_pos = int((df_scores["y"] == 1).sum())
+    tp_topk = int((ranked["y"] == 1).sum())
+    recall_at_k = tp_topk / total_pos if total_pos > 0 else 0.0
+
+    # head entropy@k (normalized by the universe size M)
+    counts = ranked[head_col].value_counts()  # counts over heads in top-N
+    M = (
+        head_universe_size if head_universe_size is not None else int(df_scores[head_col].nunique())
+    )  # total possible heads
+    p = counts / k  # probabilities over heads present
+    H = float(-(p * np.log(p)).sum())  # Shannon entropy (nats)
+    H_max = float(np.log(M)) if M > 1 else 0.0
+    entropy_norm = (H / H_max) if H_max > 0 else 0.0
+
+    # complementary diversity metrics
+    coverage_at_k = counts.size / M if M > 0 else 0.0  # fraction of heads touched in top-N
+    effective_heads_frac = float(np.exp(H)) / M if M > 0 else 0.0  # exp(H)/M ∈ [0,1]
+
+    return recall_at_k, entropy_norm, coverage_at_k, effective_heads_frac
+
+
+@inject_object()
+def tune_weighting_optuna(
+    data: pd.DataFrame,
+    base_transformers: dict,
+    tuning: dict,
+    estimator_params: dict,
+    features: list[str],
+    target_col_name: str,
+    seed: int,
+    storage_url: str | None = None,  # <-- NEW
+    study_name: str | None = None,  # <-- optional, auto-infer if not provided
+    load_if_exists: bool = True,
+) -> dict:
+    #  """
+    # Tune WeightingTransformer params with Optuna on the current fold.
+    # Returns a transformers dict identical to base_transformers, with 'weighting' params updated.
+    # If tuning['enabled'] is False, returns base_transformers unchanged.
+    # """
+    if not tuning or not tuning.get("enabled", False):
+        return base_transformers
+
+    try:
+        import optuna
+    except Exception as e:
+        logger.warning(f"Optuna not available ({e}); using base transformers without tuning.")
+        return base_transformers
+
+    df = data.copy()
+    mask_train = df["split"].eq("TRAIN")
+    df_train = df.loc[mask_train]
+    df_test = df.loc[~mask_train]
+    if df_test.empty or df_train.empty:
+        logger.warning("Empty TRAIN or TEST slice for weighting tuning; skipping.")
+        return base_transformers
+
+    k = int(tuning.get("k", 100))
+    obj = tuning.get("objective", {})
+    w_recall = float(obj.get("w_recall", 1.0))
+    w_entropy = float(obj.get("w_entropy", 0.0))
+    w_bounds = float(obj.get("w_bounds", 0.0))
+    bounds_target = float(obj.get("bounds_target", 0.2))
+    space = tuning.get("search_space", {}) or {}
+    w_head_bias = float(obj.get("w_head_bias", 0.0))
+    w_corr = float(obj.get("w_corr", 0.0))
+    from xgboost import XGBClassifier
+
+    est_kwargs = {}
+    if isinstance(estimator_params, BaseEstimator):
+        try:
+            est_kwargs = estimator_params.get_params()
+        except Exception:
+            est_kwargs = {}
+    elif isinstance(estimator_params, dict):
+        est_kwargs = dict(estimator_params)
+    else:
+        est_kwargs = {}
+
+    try:
+        if isinstance(estimator_params, dict) and "random_state" in estimator_params:
+            seed = int(estimator_params["random_state"])
+        elif "random_state" in tuning:
+            seed = int(tuning["random_state"])
+    except Exception:
+        seed = 42
+
+    est_kwargs.pop("_object", None)
+    try:
+        valid_params = set(signature(XGBClassifier.__init__).parameters.keys())
+        est_kwargs = {k: v for k, v in est_kwargs.items() if k in valid_params}
+    except Exception:
+        pass
+
+    est_kwargs.setdefault("n_estimators", 300)
+    est_kwargs.setdefault("learning_rate", 0.1)
+    est_kwargs.setdefault("max_depth", 6)
+    est_kwargs.setdefault("random_state", seed)
+
+    est = XGBClassifier(**est_kwargs)
+
+    X_tr, y_tr = _build_xyw_from_embeddings(df_train)
+    heads_tr = df_train["source"].to_numpy()
+
+    from sklearn.model_selection import StratifiedShuffleSplit
+
+    val_size = float(tuning.get("val_size", 0.2))
+    sss = StratifiedShuffleSplit(n_splits=1, test_size=val_size, random_state=seed)
+    idx_tr_in, idx_val_in = next(sss.split(X_tr, y_tr))
+
+    X_tr_in, y_tr_in = X_tr[idx_tr_in], y_tr[idx_tr_in]
+    X_val_in, y_val_in = X_tr[idx_val_in], y_tr[idx_val_in]
+    heads_tr_in = heads_tr[idx_tr_in]
+    heads_val_in = heads_tr[idx_val_in]
+
+    base_w_conf = (
+        base_transformers["weighting"]["transformer"].get_params()
+        if hasattr(base_transformers["weighting"]["transformer"], "get_params")
+        else base_transformers["weighting"]["transformer"]
+    )
+    base_conf = (
+        dict(base_w_conf) if isinstance(base_w_conf, dict) else dict(base_transformers["weighting"]["transformer"])
+    )
+
+    try:
+        fold_id = int(pd.unique(df["fold"])[0]) if "fold" in df.columns else None
+    except Exception:
+        fold_id = None
+    default_study_name = f"weighting_fold_{fold_id}" if fold_id is not None else "weighting"
+
+    import json
+
+    def _flatten_dict(d: dict | None, prefix: str = "") -> dict[str, object]:
+        out = {}
+        if not isinstance(d, dict):
+            return out
+        for k, v in d.items():
+            key = f"{prefix}.{k}" if prefix else str(k)
+            if isinstance(v, dict):
+                out.update(_flatten_dict(v, key))
+            else:
+                out[key] = v
+        return out
+
+    def _json_safe(v):
+        import numpy as np
+        import pandas as pd
+
+        if isinstance(v, (np.generic,)):
+            return v.item()
+        if isinstance(v, (np.ndarray,)):
+            return v.tolist()
+        if isinstance(v, (pd.Series, pd.Index)):
+            return v.to_list()
+        if isinstance(v, (float, int, str, bool)) or v is None:
+            return v
+        try:
+            json.dumps(v)
+            return v
+        except Exception:
+            try:
+                return str(v)
+            except Exception:
+                return None
+
+    def suggest_params(trial: "optuna.Trial") -> dict:
+        conf = dict(base_conf)
+        for key, bounds in space.items():
+            low, high = float(bounds[0]), float(bounds[1])
+            conf[key] = trial.suggest_float(key, low, high)
+        return conf
+
+    def objective(trial: "optuna.Trial") -> float:
+        conf = suggest_params(trial)
+        from matrix.pipelines.modelling.transformers import WeightingTransformer
+
+        wt = WeightingTransformer(**conf)
+
+        df_fit_in = df_train.iloc[idx_tr_in][["source", "target", "y"]].copy()
+        wt.fit(df_fit_in)
+
+        w_tr_in = wt.transform(df_train.iloc[idx_tr_in][["source", "target"]], y=y_tr_in).ravel()
+
+        fit_sig = signature(est.fit).parameters
+        fit_kwargs = {}
+
+        if "sample_weight" in fit_sig:
+            fit_kwargs["sample_weight"] = w_tr_in
+        if "eval_set" in fit_sig:
+            fit_kwargs["eval_set"] = [(X_val_in, y_val_in)]
+        if "eval_metric" in fit_sig:
+            fit_kwargs["eval_metric"] = tuning.get("eval_metric", "auc")
+
+        es_rounds = int(tuning.get("early_stopping_rounds", 50))
+        if "early_stopping_rounds" in fit_sig:
+            fit_kwargs["early_stopping_rounds"] = es_rounds
+            est.fit(X_tr_in, y_tr_in, **fit_kwargs)
+        elif "callbacks" in fit_sig:
+            try:
+                from xgboost.callback import EarlyStopping
+
+                fit_kwargs["callbacks"] = [EarlyStopping(rounds=es_rounds, save_best=True)]
+            except Exception:
+                pass
+            est.fit(X_tr_in, y_tr_in, **fit_kwargs)
+        else:
+            est.fit(X_tr_in, y_tr_in, **fit_kwargs)
+
+        y_score = est.predict_proba(X_val_in)[:, 1]
+        df_scores = pd.DataFrame({"y": y_val_in, "score": y_score, "source": heads_val_in})
+
+        recall_k, ent_k, cov_k, eff_k = _global_topn_metrics(
+            df_scores,
+            k=k,
+            head_col="source",
+            # Optionally: head_universe_size=int(df_train["source"].nunique())
+        )
+
+        df_bias = pd.DataFrame(
+            {
+                "source": heads_tr_in,
+                "w": w_tr_in,
+                "one": 1.0,
+            }
+        )
+        deg_raw = df_bias.groupby("source")["one"].sum().astype(float)
+        deg_w = df_bias.groupby("source")["w"].sum()
+
+        if len(deg_w) > 1:
+            p_w = deg_w / deg_w.sum()
+            H_w = float(-(p_w * np.log(p_w + 1e-12)).sum())
+            H_max = float(np.log(len(p_w)))
+            ent_train_norm = H_w / H_max
+        else:
+            ent_train_norm = 0.0
+        head_bias_penalty = 1.0 - ent_train_norm
+
+        if len(deg_raw) > 1:
+            aligned = deg_raw.align(deg_w, join="inner")
+            rho = float(aligned[0].corr(aligned[1], method="spearman"))
+            if np.isnan(rho):
+                rho = 0.0
+        else:
+            rho = 0.0
+        corr_penalty = abs(rho)
+
+        stats_neg = getattr(wt, "fit_stats_", {}).get("neg", {})
+        pct_at = float(stats_neg.get("pct_a_at_bounds", 0.0))
+        bounds_penalty = max(0.0, pct_at - bounds_target)
+
+        score = (
+            (w_recall * recall_k)
+            + (w_entropy * ent_k)
+            - (w_bounds * bounds_penalty)
+            - (w_head_bias * head_bias_penalty)
+            - (w_corr * corr_penalty)
+        )
+
+        trial.set_user_attr("k", int(k))
+        trial.set_user_attr("recall@N", float(recall_k))
+        trial.set_user_attr("entropy@N", float(ent_k))
+        trial.set_user_attr("coverage@N", float(cov_k))
+        trial.set_user_attr("effective_heads_frac@N", float(eff_k))
+
+        trial.set_user_attr("train_head_entropy_norm", float(ent_train_norm))
+        trial.set_user_attr("train_head_bias_penalty", float(head_bias_penalty))
+        trial.set_user_attr("train_spearman_raw_vs_weighted", float(rho))
+        trial.set_user_attr("pct_a_at_bounds_neg", float(pct_at))
+        trial.set_user_attr("bounds_penalty", float(bounds_penalty))
+        trial.set_user_attr("corr_penalty", float(corr_penalty))
+
+        wt_params = wt.get_params(deep=False) if hasattr(wt, "get_params") else conf
+        for p_key, p_val in wt_params.items():
+            trial.set_user_attr(f"wparam.{p_key}", _json_safe(p_val))
+
+        fit_stats = getattr(wt, "fit_stats_", {}) or {}
+        for f_key, f_val in _flatten_dict(fit_stats, prefix="wfit").items():
+            trial.set_user_attr(f_key, _json_safe(f_val))
+
+        try:
+            fold_id = int(pd.unique(df["fold"])[0]) if "fold" in df.columns else None
+        except Exception:
+            fold_id = None
+        if fold_id is not None:
+            trial.set_user_attr("fold", int(fold_id))
+
+        return score
+
+        y_score = est.predict_proba(X_val_in)[:, 1]
+        df_scores = pd.DataFrame({"y": y_val_in, "score": y_score, "source": heads_val_in})
+
+        recall_k, ent_k = _global_topn_metrics(df_scores, k=k, head_col="source")
+
+        stats_neg = getattr(wt, "fit_stats_", {}).get("neg", {})
+        pct_at = float(stats_neg.get("pct_a_at_bounds", 0.0))
+        penalty = max(0.0, pct_at - bounds_target)
+
+        score = (w_recall * recall_k) + (w_entropy * ent_k) - (w_bounds * penalty)
+        trial.set_user_attr("recall@N", recall_k)
+        trial.set_user_attr("entropy@N", ent_k)
+        trial.set_user_attr("pct_a_at_bounds_neg", pct_at)
+        return score
+
+    def _sqlite_local_path_from_url(url: str) -> str:
+        if url.startswith("sqlite:////"):
+            return url[len("sqlite:") :].lstrip("/")
+        if url.startswith("sqlite:///"):
+            return url[len("sqlite:///") :]
+        return url
+
+    import os
+    import tempfile
+    from pathlib import Path
+
+    def _make_sqlite_url(local_path: str) -> str:
+        p = Path(local_path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        if p.is_absolute():
+            return f"sqlite:////{p.as_posix().lstrip('/')}"
+        return f"sqlite:///{p.as_posix()}"
+
+    storage_for_optuna = None
+    post_sync = None
+
+    if storage_url:
+        s = str(storage_url)
+        if s.startswith("gs://"):
+            try:
+                import sqlite3
+
+                from google.cloud import storage as gcs
+
+                _, _, rest = s.partition("gs://")
+                bucket_name, _, blob_name = rest.partition("/")
+
+                cache_root = Path(os.environ.get("OPTUNA_GCS_CACHE", Path(tempfile.gettempdir()) / "optuna_gcs"))
+                local_db_path = cache_root / bucket_name / blob_name
+                local_db_path.parent.mkdir(parents=True, exist_ok=True)
+
+                client = gcs.Client()
+                bucket = client.bucket(bucket_name)
+                blob = bucket.blob(blob_name)
+
+                if blob.exists(client):
+                    blob.download_to_filename(local_db_path.as_posix())
+                else:
+                    sqlite3.connect(local_db_path.as_posix()).close()
+                    blob.upload_from_filename(local_db_path.as_posix())
+
+                storage_for_optuna = _make_sqlite_url(local_db_path.as_posix())
+
+                def _post_sync():
+                    try:
+                        blob.upload_from_filename(local_db_path.as_posix())
+                        logger.info(f"Uploaded Optuna DB to {storage_url}")
+                    except Exception as e:
+                        logger.warning(f"GCS sync (post) failed; DB remains only local at {local_db_path}: {e}")
+
+                post_sync = _post_sync
+
+            except Exception as e:
+                logger.warning(f"GCS sync disabled ({e}); falling back to local SQLite only.")
+                local_db_path = Path(tempfile.gettempdir()) / "optuna_gcs_fallback" / "study.db"
+                storage_for_optuna = _make_sqlite_url(local_db_path.as_posix())
+
+        elif s.startswith("sqlite:"):
+            storage_for_optuna = s
+        else:
+            storage_for_optuna = _make_sqlite_url(s)
+
+    sampler = optuna.samplers.TPESampler(seed=seed)
+    study = optuna.create_study(
+        direction="maximize",
+        sampler=sampler,
+        storage=storage_for_optuna,
+        study_name=(study_name or default_study_name),
+        load_if_exists=load_if_exists,
+    )
+    study.optimize(objective, n_trials=int(tuning.get("n_trials", 30)))
+
+    if post_sync:
+        post_sync()
+
+    best_conf = suggest_params(study.best_trial)
+
+    tuned = {k: (v.copy() if isinstance(v, dict) else v) for k, v in base_transformers.items()}
+    tr = tuned["weighting"]["transformer"]
+    if hasattr(tr, "get_params"):
+        try:
+            tr.set_params(**best_conf)
+        except Exception as e:
+            logger.warning(f"Failed to set_params on weighting transformer: {e}")
+        tuned["weighting"]["transformer"] = tr
+    else:
+        tr_conf = dict(tr) if isinstance(tr, dict) else {}
+        tr_conf.update(best_conf)
+        tuned["weighting"]["transformer"] = tr_conf
+
+    logger.info(
+        f"Weighting Optuna best: value={study.best_value:.4f}, "
+        f"recall@{k}={study.best_trial.user_attrs.get('recall@N'):.4f}, "
+        f"entropy@{k}={study.best_trial.user_attrs.get('entropy@N'):.4f}, "
+        f"pct_a_at_bounds_neg={study.best_trial.user_attrs.get('pct_a_at_bounds_neg'):.3f}"
+    )
+    return tuned
 
 
 @unpack_params()

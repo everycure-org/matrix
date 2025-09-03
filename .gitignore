@@ -58,3 +58,6 @@ gha-kubeconfig*
 
 # ignoring all claude related files for now
 .claude/**
+
+.continue/
+pipelines/matrix/su-lab-data_data_optuna_sinkhorn_optuna.db

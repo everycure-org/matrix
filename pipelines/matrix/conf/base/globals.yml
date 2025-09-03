@@ -34,11 +34,11 @@ data_sources:
   spoke:
     version: V5.7
   embiology:
-  # needs to be a string as otherwise it will be parsed as a octal number
-  # https://stackoverflow.com/questions/32965846/cant-parse-yaml-correctly-when-number-contains-leading-zeros-and-for-yes-no-val
+    # needs to be a string as otherwise it will be parsed as a octal number
+    # https://stackoverflow.com/questions/32965846/cant-parse-yaml-correctly-when-number-contains-leading-zeros-and-for-yes-no-val
     version: "03032025"
-# Dataset with node and edge proposals by the
-# EveryCure medical team.
+  # Dataset with node and edge proposals by the
+  # EveryCure medical team.
   ec_medical_team:
     version: 20241031
   # Cleaned clinical trial data from the
@@ -73,11 +73,11 @@ mlflow_experiment_id: null
 mlflow_url: ${oc.env:MLFLOW_URL}
 paths:
   # Upstream-source versioned
-  raw:             ${dev_gcs_bucket}/data/01_RAW
-  raw_private:     ${prod_gcs_bucket}/data/01_RAW
-  ingestion:          data/ingestion
+  raw: ${dev_gcs_bucket}/data/01_RAW
+  raw_private: ${prod_gcs_bucket}/data/01_RAW
+  ingestion: data/ingestion
   # public data sources
-  raw_public:      ${public_gcs_bucket}/data/01_RAW
+  raw_public: ${public_gcs_bucket}/data/01_RAW
 
   # Release-based
   integration: data/releases/${versions.release}/datasets/integration
@@ -91,6 +91,8 @@ paths:
   matrix_transformations: data/releases/${versions.release}/runs/${run_name}/datasets/matrix_transformations
   evaluation: data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
   inference: data/releases/${versions.release}/runs/${run_name}/datasets/inference
+
+  dev_data: gs://mtrx-us-central1-wg2-modeling-dev-storage/su-lab-data/data
 
   tmp: data/tmp
 

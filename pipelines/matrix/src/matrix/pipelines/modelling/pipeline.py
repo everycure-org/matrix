@@ -75,15 +75,41 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
             pipeline(
                 [
                     ArgoNode(
+                        func=partial_fold(nodes.tune_weighting_optuna, fold),
+                        inputs={
+                            "data": "modelling.model_input.splits@pandas",
+                            "base_transformers": f"params:modelling.{model_name}.model_options.transformers",
+                            "tuning": f"params:modelling.{model_name}.model_options.weighting_tuning",
+                            "estimator_params": f"params:modelling.{model_name}.model_options.model_tuning_args.tuner.estimator",
+                            "features": f"params:modelling.{model_name}.model_options.model_tuning_args.features",
+                            "target_col_name": f"params:modelling.{model_name}.model_options.model_tuning_args.target_col_name",
+                            "seed": f"params:modelling.splitter.random_state",
+                            "storage_url": f"params:modelling.optuna.storage_url.filepath",
+                        },
+                        outputs=f"modelling.fold_{fold}.model_input.transformers_params",
+                        name=f"tune_weighting_fold_{fold}",
+                        argo_config=ARGO_GPU_NODE_MEDIUM,
+                    ),
+                    ArgoNode(
                         func=partial_fold(nodes.fit_transformers, fold),
                         inputs={
                             "data": "modelling.model_input.splits@pandas",
-                            "transformers": f"params:modelling.{model_name}.model_options.transformers",
+                            "transformers": f"modelling.fold_{fold}.model_input.transformers_params",
                         },
                         outputs=f"modelling.fold_{fold}.model_input.transformers",
                         name=f"fit_transformers_fold_{fold}",
                         argo_config=ARGO_CPU_ONLY_NODE_MEDIUM,
-                    )
+                    ),
+                    # ArgoNode(
+                    #     func=partial_fold(nodes.fit_transformers, fold),
+                    #     inputs={
+                    #         "data": "modelling.model_input.splits@pandas",
+                    #         "transformers": f"params:modelling.{model_name}.model_options.transformers",
+                    #     },
+                    #     outputs=f"modelling.fold_{fold}.model_input.transformers",
+                    #     name=f"fit_transformers_fold_{fold}",
+                    #     argo_config=ARGO_CPU_ONLY_NODE_MEDIUM,
+                    # ),
                 ]
             ),
             *[

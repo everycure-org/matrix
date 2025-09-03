@@ -42,12 +42,6 @@ class FlatArrayTransformer(FunctionTransformer):
         return [f"{self.prefix}{i}" for i in range(len(input_features.iloc[0][0]))]
 
 
-import numpy as np
-import pandas as pd
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.utils.validation import check_is_fitted
-
-
 class WeightingTransformer(BaseEstimator, TransformerMixin):
     """
     Two-sided Sinkhorn weighting for bipartite edges (head_col, tail_col) with:
@@ -78,8 +72,8 @@ class WeightingTransformer(BaseEstimator, TransformerMixin):
 
     def __init__(
         self,
-        head_col,
-        tail_col,
+        head_col="source",
+        tail_col="target",
         label_col="y",
         pos_label=1,
         budget_pos=1.0,
