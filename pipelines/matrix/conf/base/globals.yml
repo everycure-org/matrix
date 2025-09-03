@@ -25,6 +25,7 @@ gh_token: ${oc.env:GH_TOKEN, dummy}
 run_name: ${oc.env:RUN_NAME, default-run-name}
 versions:
   release: local-release
+  benchmark_release: v0.4.5
 
 data_sources:
   rtx_kg2:
