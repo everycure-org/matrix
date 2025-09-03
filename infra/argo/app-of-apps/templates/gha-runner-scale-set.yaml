@@ -36,7 +36,7 @@ spec:
               image: docker:dind
               resources:
                 requests:
-                  cpu: "3"
+                  cpu: "2"
                   memory: "14Gi"
               args:
                 - dockerd
@@ -79,7 +79,7 @@ spec:
                   mountPath: /var/run
               resources:
                 requests:
-                  cpu: "3"
+                  cpu: "2"
                   memory: "14Gi"
             volumes:
             - name: work
@@ -90,10 +90,6 @@ spec:
               emptyDir: {}
             tolerations:
             - key: "github-runner"
-              operator: "Equal"
-              value: "true"
-              effect: "NoSchedule"
-            - key: "spot"
               operator: "Equal"
               value: "true"
               effect: "NoSchedule"
