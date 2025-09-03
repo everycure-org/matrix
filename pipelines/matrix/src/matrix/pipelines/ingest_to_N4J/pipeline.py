@@ -15,7 +15,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         [
             ArgoNode(
                 func=ingest_nodes,
-                inputs=["integration.prm.unified_nodes"],
+                inputs=["filtering.prm.filtered_nodes"],
                 outputs="data_release.prm.kg_nodes",
                 name="ingest_kg_nodes",
                 tags=["neo4j"],
@@ -23,7 +23,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             ArgoNode(
                 func=ingest_edges,
-                inputs=["data_release.prm.kg_nodes", "integration.prm.unified_edges"],
+                inputs=["data_release.prm.kg_nodes", "filtering.prm.filtered_edges"],
                 outputs="data_release.prm.kg_edges",
                 name="ingest_kg_edges",
                 tags=["neo4j"],
