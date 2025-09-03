@@ -47,6 +47,10 @@ spec:
         value: "{{ mlflow_url }}"
       - name: include_private_datasets
         value: "{{ include_private_datasets }}"
+      - name: ephemeral_storage_request
+        value: "{{ ephemeral_storage_request }}"
+      - name: ephemeral_storage_limit
+        value: "{{ ephemeral_storage_limit }}"
   templates:
   - &_kedro_template
     metrics:
