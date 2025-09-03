@@ -134,8 +134,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: 
-          sparse-checkout: |
-            pipelines/matrix/
           submodules: recursive
           token: ${{ secrets.PAT }}
           persist-credentials: true
@@ -164,7 +162,7 @@ jobs:
 
       # Install Python dependencies (will use cache if available)
       - name: Install Python dependencies
-        run: make install
+        run: uv sync
 
       # Run the specific command for this matrix job
       - name: "Run ${{ matrix.command.name }}"
