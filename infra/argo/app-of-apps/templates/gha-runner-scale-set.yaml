@@ -25,7 +25,7 @@ spec:
         maxRunners: 50
         template:
           spec:
-          initContainers:
+            initContainers:
             - name: init-dind-externals
               image: ghcr.io/actions/actions-runner:latest
               command: ["cp", "-r", "/home/runner/externals/.", "/home/runner/tmpDir/"]
@@ -34,6 +34,10 @@ spec:
                   mountPath: /home/runner/tmpDir
             - name: dind
               image: docker:dind
+              resources:
+                requests:
+                  cpu: "3.5"
+                  memory: "15Gi"
               args:
                 - dockerd
                 - --host=unix:///var/run/docker.sock
@@ -52,10 +56,6 @@ spec:
                 initialDelaySeconds: 0
                 failureThreshold: 24
                 periodSeconds: 5
-              resources:
-                requests:
-                  cpu: "3.5"
-                  memory: "15Gi"
               volumeMounts:
                 - name: work
                   mountPath: /home/runner/_work
@@ -77,7 +77,8 @@ spec:
                   mountPath: /home/runner/_work
                 - name: dind-sock
                   mountPath: /var/run
-              requests:
+              resources:
+                requests:
                   cpu: "3.5"
                   memory: "15Gi"
             volumes:
