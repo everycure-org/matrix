@@ -37,7 +37,7 @@ spec:
               resources:
                 requests:
                   cpu: "3"
-                  # memory: "12Gi"
+                  memory: "14Gi"
               args:
                 - dockerd
                 - --host=unix:///var/run/docker.sock
@@ -80,7 +80,7 @@ spec:
               resources:
                 requests:
                   cpu: "3"
-                  # memory: "14Gi"
+                  memory: "14Gi"
             volumes:
             - name: work
               emptyDir: {}
