@@ -488,7 +488,7 @@ matplotlib-inline==0.1.7
     # via
     #   ipykernel
     #   ipython
-matrix-schema==0.4.1
+matrix-schema==0.4.3
     # via
     #   -r requirements.in
     #   matrix-validator
