@@ -153,16 +153,32 @@ jobs:
       - run: env | sort
             
       - name: Cache Python virtual environment
+        id: cache-venv
         uses: actions/cache@v4
         with:
-          path: pipelines/matrix/.venv
-          key: ${{ runner.os }}-venv-${{ hashFiles('pipelines/matrix/uv.lock', 'pipelines/matrix/pyproject.toml') }}
+          path: ./pipelines/matrix/.venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('**/uv.lock', '**/pyproject.toml') }}-${{ hashFiles('pipelines/matrix/uv.lock', 'pipelines/matrix/pyproject.toml') }}
           restore-keys: |
+            ${{ runner.os }}-venv-${{ hashFiles('**/uv.lock', '**/pyproject.toml') }}-
             ${{ runner.os }}-venv-
+
+      - name: Check cache status
+        run: |
+          if [[ "${{ steps.cache-venv.outputs.cache-hit }}" == "true" ]]; then
+            echo "✅ Cache hit! Using cached virtual environment"
+          else
+            echo "❌ Cache miss. Will install dependencies"
+          fi
 
       # Install Python dependencies (will use cache if available)
       - name: Install Python dependencies
+        if: steps.cache-venv.outputs.cache-hit != 'true'
         run: uv sync
+
+      # Always run uv sync to ensure environment is up to date (but faster if cached)
+      - name: Sync dependencies (fast if cached)
+        if: steps.cache-venv.outputs.cache-hit == 'true'
+        run: uv sync --frozen
 
       # Run the specific command for this matrix job
       - name: "Run ${{ matrix.command.name }}"
