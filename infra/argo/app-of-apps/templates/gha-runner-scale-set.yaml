@@ -24,6 +24,11 @@ spec:
         minRunners: 0
         maxRunners: 50
         template:
+          metadata:
+            labels:
+              billing-category: github-actions
+              cost-center: compute-workloads
+              workload-category: ci-cd
           spec:
             initContainers:
             - name: init-dind-externals

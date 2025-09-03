@@ -208,13 +208,28 @@ start_neo4j: check_docker
 			-e 'NEO4J_dbms_security_procedures_unrestricted=gds.*, apoc.*' \
 			-e NEO4J_db_logs_query_enabled=OFF \
 			-e NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
-			-v $(PWD)/compose/neo4j_data/data:/data \
-			-v $(PWD)/compose/neo4j_data/logs:/logs \
+			-v $(PWD)/compose/neo4j_data/data:/tmp/data \
+			-v $(PWD)/compose/neo4j_data/logs:/tmp/logs \
 			-v $(PWD)/compose/neo4j_data/import:/var/lib/neo4j/import \
-			--restart unless-stopped \
-			neo4j:5.21.0-enterprise; \
-		echo "Waiting for Neo4j to start..."; \
-		sleep 15; \
+			--restart always \
+			neo4j:enterprise; \
+		echo "Waiting for Neo4j to become ready..."; \
+		timeout=120; \
+		elapsed=0; \
+		while [ $$elapsed -lt $$timeout ]; do \
+			if curl -s -f http://127.0.0.1:7474/db/system/tx/commit -H "Content-Type: application/json" -H "Authorization: Basic bmVvNGo6YWRtaW4=" -d '{"statements":[{"statement":"CALL dbms.components() YIELD name RETURN name LIMIT 1"}]}' > /dev/null 2>&1; then \
+				echo "✅ Neo4j is ready!"; \
+				break; \
+			fi; \
+			echo "Neo4j not ready yet, waiting... ($$elapsed/$$timeout seconds)"; \
+			sleep 2; \
+			elapsed=$$((elapsed + 2)); \
+		done; \
+		if [ $$elapsed -ge $$timeout ]; then \
+			echo "❌ Neo4j failed to start within $$timeout seconds"; \
+			docker logs neo4j-matrix --tail 20; \
+			exit 1; \
+		fi; \
 	else \
 		echo "Neo4j container already running"; \
 	fi
@@ -257,7 +272,7 @@ start_mockserver: check_docker
 		echo "MockServer container already running"; \
 	fi
 
-start_services: check_docker start_neo4j start_mlflow start_mockserver
+start_services: check_docker start_mlflow start_mockserver start_neo4j
 	@echo "All services started successfully!"
 	@echo "Neo4j: http://127.0.0.1:7474 (bolt://127.0.0.1:7687)"
 	@echo "MLflow: http://127.0.0.1:5001"
@@ -270,7 +285,8 @@ stop_services: check_docker
 
 remove_services: check_docker
 	@echo "Removing Docker services..."
-	@-docker stop neo4j-matrix mlflow-matrix mockserver-matrix 2>/dev/null || true
+	@-docker stop 
+	-matrix mlflow-matrix mockserver-matrix 2>/dev/null || true
 	@-docker rm neo4j-matrix mlflow-matrix mockserver-matrix 2>/dev/null || true
 	@echo "Services removed."
 
