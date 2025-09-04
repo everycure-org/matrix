@@ -9,6 +9,7 @@ import pyspark.sql as ps
 import pyspark.sql.functions as sf
 import requests
 from matrix.pipelines.preprocessing.normalization import resolve_ids_batch_async
+from matrix_io.primekg import coalesce_duplicate_columns, mondo_grouped_exploded
 from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark.sql.functions import udf
 from pyspark.sql.types import StringType
@@ -17,7 +18,6 @@ from tenacity import Retrying, stop_after_attempt, wait_exponential
 logger = logging.getLogger(__name__)
 
 import asyncio
-from typing import Dict, List
 
 # -------------------------------------------------------------------------
 # Embiology Dataset
@@ -669,42 +669,6 @@ def report_to_gsheets(df: pd.DataFrame, sheet_df: pd.DataFrame, primary_key_col:
     # TODO: in the future remove drop_duplicates function
     df = df.drop_duplicates(subset=primary_key_col, keep="first")
     return sheet_df.merge(df, on=primary_key_col, how="left").fillna("Not resolved")
-
-
-def coalesce_duplicate_columns(df: pl.DataFrame, keep: list[str]) -> pl.DataFrame:
-    """Coalesce duplicate columns."""
-    # If full join produced duplicate columns with suffixes, coalesce them left-to-right
-    cols = df.columns
-    out = df
-    # Group base names by removing Polars' default suffixes like "_right"; we coalesce pairs ending with "_right"
-    # Since we used full join with coalesce=True in lazy join, duplications might already be minimized; still be safe.
-    for c in list(cols):
-        if c.endswith("_right"):
-            base = c[:-6]
-            if base in out.columns:
-                out = out.with_columns(pl.coalesce([pl.col(base), pl.col(c)]).alias(base)).drop(c)
-    return out
-
-
-def mondo_grouped_exploded(edges_df: pl.DataFrame, x_or_y: str) -> pl.DataFrame:
-    source = f"{x_or_y}_source"
-    _id = f"{x_or_y}_id"
-    source_mondo = (
-        edges_df.lazy()
-        .filter(pl.col(source) == pl.lit("MONDO_grouped"))
-        .with_columns(
-            [
-                pl.col(_id).cast(pl.Utf8).str.split("_").alias(_id),
-                pl.when(pl.col(source) == pl.lit("MONDO_grouped"))
-                .then(pl.lit("MONDO"))
-                .otherwise(pl.col(source))
-                .alias(source),
-            ]
-        )
-        .explode(_id)
-    )
-    not_mondo = edges_df.lazy().filter(pl.col(source) != pl.lit("MONDO_grouped"))
-    return pl.concat([source_mondo, not_mondo]).collect()
 
 
 def build_primekg_nodes(
