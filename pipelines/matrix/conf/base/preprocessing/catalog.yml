@@ -215,19 +215,19 @@ preprocessing.reporting.mapped_clinical_trials_data:
 # PrimeKG
 preprocessing.raw.primekg.drug_features@polars:
   <<: [*_polars_csv]
-  filepath: ${globals:paths.raw}/KGs/prime-kg/2.1/drug_features.csv
+  filepath: ${globals:paths.raw}/KGs/prime-kg/${globals:preprocessing.primekg.version}/drug_features.csv
 
 preprocessing.raw.primekg.disease_features@polars:
   <<: [*_polars_csv]
-  filepath: ${globals:paths.raw}/KGs/prime-kg/2.1/disease_features.csv
+  filepath: ${globals:paths.raw}/KGs/prime-kg/${globals:preprocessing.primekg.version}/disease_features.csv
 
 preprocessing.raw.primekg.nodes@polars:
   <<: [*_polars_csv]
-  filepath: ${globals:paths.raw}/KGs/prime-kg/2.1/nodes.csv
+  filepath: ${globals:paths.raw}/KGs/prime-kg/${globals:preprocessing.primekg.version}/nodes.csv
 
 preprocessing.raw.primekg.kg@polars:
   <<: [*_polars_csv]
-  filepath: ${globals:paths.raw}/KGs/prime-kg/2.1/kg.csv
+  filepath: ${globals:paths.raw}/KGs/prime-kg/${globals:preprocessing.primekg.version}/kg.csv
 
 preprocessing.int.primekg.nodes:
   <<: [*_polars_csv]
