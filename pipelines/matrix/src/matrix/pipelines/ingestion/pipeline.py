@@ -3,10 +3,26 @@ from kedro.pipeline import Pipeline, node, pipeline
 from matrix import settings
 
 
+def create_valid_edge_type_pipeline() -> list:
+    """Create pipeline nodes for valid edge type processing."""
+    return [
+        node(
+            func=lambda x: x,
+            inputs=["ingestion.raw.valid_edge_types"],
+            outputs="ingestion.int.valid_edge_types",
+            name="write_valid_edge_types",
+            tags=["valid-edge-types"],
+        )
+    ]
+
+
 def create_pipeline(**kwargs) -> Pipeline:
     """Create ingestion pipeline."""
     # Create pipeline per source
     nodes_lst = []
+
+    # Ground truth
+    nodes_lst.extend(create_valid_edge_type_pipeline())
 
     # Drug list and disease list
     nodes_lst.extend(

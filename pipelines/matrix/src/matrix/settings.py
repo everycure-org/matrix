@@ -18,7 +18,7 @@ from matrix.utils.hook_utilities import (
     generate_dynamic_pipeline_mapping,
 )
 
-from .resolvers import cast_to_int, env, if_null, merge_dicts
+from .resolvers import cast_to_int, env, get_matrix_schema_version, if_null, merge_dicts
 
 hooks = {
     "node_timer": matrix_hooks.NodeTimerHooks(),
@@ -137,6 +137,7 @@ CONFIG_LOADER_ARGS = {
         "oc.int": cast_to_int,
         "setting": _load_setting,
         "if_null": if_null,
+        "get_matrix_schema_version": get_matrix_schema_version,
     },
 }
 
