@@ -529,7 +529,7 @@ ingestion.int.robokop.edges:
 # -------------------------------------------------------------------------
 ingestion.raw.primekg.nodes@spark:
   <<: *_layer_raw
-  type: matrix.datasets.gcp.LazySparkDataset
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_nodes.tsv
   file_format: csv
   load_args:
@@ -558,7 +558,7 @@ ingestion.raw.primekg.nodes@polars:
 
 ingestion.raw.primekg.edges@spark:
   <<: *_layer_raw
-  type: matrix.datasets.gcp.LazySparkDataset
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_edges.tsv
   file_format: csv
   load_args:
