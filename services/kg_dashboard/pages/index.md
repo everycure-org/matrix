@@ -9,21 +9,22 @@ title: KG Dashboard
     export function getPieColors(data) {
         return data.map(item => getSourceColor(item.name));
     }
+</script>
 
+<script>
     const release_version = import.meta.env.VITE_release_version;
     const build_time = import.meta.env.VITE_build_time;
     const robokop_version = import.meta.env.VITE_robokop_version;
     const rtx_kg2_version = import.meta.env.VITE_rtx_kg2_version;
     const benchmark_version = import.meta.env.VITE_benchmark_version;
-
 </script>
 
 
 <div class="mb-4 flex flex-col gap-2">
-    <a href="../../../releases/release_history/" class="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm">
+    <a href="https://docs.dev.everycure.org/releases/release_history/" class="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm">
         ← Release History 
     </a>
-    <a href={"../../" + benchmark_version + "/evidence/index.md"} class="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm">
+    <a href="https://data.dev.everycure.org/versions/{benchmark_version}/evidence/" target="_blank" class="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm">
         🔖 Benchmark Release ({benchmark_version})
     </a>
 </div>
