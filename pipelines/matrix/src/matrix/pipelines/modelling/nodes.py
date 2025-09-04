@@ -475,32 +475,142 @@ def _build_xyw_from_embeddings(df: pd.DataFrame, head_col="source", tail_col="ta
 
 
 def _global_topn_metrics(
-    df_scores: pd.DataFrame, k: int, head_col: str = "source", head_universe_size: int | None = None
-):
-    # df_scores has: ['y', 'score', head_col]
-    k = max(1, min(k, len(df_scores)))
-    ranked = df_scores.nlargest(k, "score")
+    df_scores: pd.DataFrame,
+    n_list: list[int],
+    y_col: str = "y",
+    score_col: str = "score",
+    source_col: str = "source",
+    target_col: str = "target",
+) -> dict[str, list[float]]:
+    """Compute global top-n metrics: recall@n, entropy@n, coverage@n, effective entities fraction@n.
 
-    # recall@k
-    total_pos = int((df_scores["y"] == 1).sum())
-    tp_topk = int((ranked["y"] == 1).sum())
-    recall_at_k = tp_topk / total_pos if total_pos > 0 else 0.0
+    Args:
+        df_scores: pandas DataFrame with at least columns [y_col, score_col, source_col, target_col].
+        n_list: list of n values (not necessarily sorted); cumulative metrics are computed for each n.
+        y_col: binary label column (1 = positive).
+        score_col: score used for ranking (higher is better).
+        source_col: column name for source entities (e.g., drug).
+        target_col: column name for target entities (e.g., disease).
 
-    # head entropy@k (normalized by the universe size M)
-    counts = ranked[head_col].value_counts()  # counts over heads in top-N
-    M = (
-        head_universe_size if head_universe_size is not None else int(df_scores[head_col].nunique())
-    )  # total possible heads
-    p = counts / k  # probabilities over heads present
-    H = float(-(p * np.log(p)).sum())  # Shannon entropy (nats)
-    H_max = float(np.log(M)) if M > 1 else 0.0
-    entropy_norm = (H / H_max) if H_max > 0 else 0.0
+    Returns:
+        A dictionary of lists (aligned to n_list, sorted ascending):
+          - recall_at_n
+          - source_entropy_at_n
+          - target_entropy_at_n
+          - source_coverage_at_n
+          - target_coverage_at_n
+          - source_effective_frac_at_n
+          - target_effective_frac_at_n
+    """
+    if df_scores.empty:
+        n_out = [int(n) for n in sorted({n for n in n_list if int(n) > 0})]
+        zeros = [0.0] * len(n_out)
+        return {
+            "n": n_out,
+            "recall_at_n": zeros,
+            "source_entropy_at_n": zeros,
+            "target_entropy_at_n": zeros,
+            "source_coverage_at_n": zeros,
+            "target_coverage_at_n": zeros,
+            "source_effective_frac_at_n": zeros,
+            "target_effective_frac_at_n": zeros,
+        }
 
-    # complementary diversity metrics
-    coverage_at_k = counts.size / M if M > 0 else 0.0  # fraction of heads touched in top-N
-    effective_heads_frac = float(np.exp(H)) / M if M > 0 else 0.0  # exp(H)/M ∈ [0,1]
+    n_vals = [int(n) for n in sorted({n for n in n_list if int(n) > 0})]
+    if not n_vals:
+        return {
+            "n": [],
+            "recall_at_n": [],
+            "source_entropy_at_n": [],
+            "target_entropy_at_n": [],
+            "source_coverage_at_n": [],
+            "target_coverage_at_n": [],
+            "source_effective_frac_at_n": [],
+            "target_effective_frac_at_n": [],
+        }
 
-    return recall_at_k, entropy_norm, coverage_at_k, effective_heads_frac
+    df = df_scores.sort_values(by=score_col, ascending=False).reset_index(drop=True)
+
+    N_pos = int((df[y_col] == 1).sum())
+    if N_pos == 0:
+        recall_at_n = [0.0 for _ in n_vals]
+    else:
+        pos_ranks = (df.index[df[y_col] == 1].to_series(index=None) + 1).to_numpy()
+        recall_at_n = [(pos_ranks <= n).sum() / N_pos for n in n_vals]
+
+    src_uniques = pd.Index(df[source_col].unique())
+    tgt_uniques = pd.Index(df[target_col].unique())
+    M_src = len(src_uniques)
+    M_tgt = len(tgt_uniques)
+
+    src_index = {ent: i for i, ent in enumerate(src_uniques)}
+    tgt_index = {ent: i for i, ent in enumerate(tgt_uniques)}
+
+    src_counts = np.zeros(M_src, dtype=np.int64)
+    tgt_counts = np.zeros(M_tgt, dtype=np.int64)
+
+    def _H_nat_and_norm(counts: np.ndarray, M: int) -> tuple[float, float]:
+        if M <= 1:
+            return 0.0, 0.0
+        total = counts.sum()
+        if total <= 0:
+            return 0.0, 0.0
+        p = counts / total
+        mask = p > 0
+        H_nat = float(-(p[mask] * np.log(p[mask])).sum())
+        H_norm = H_nat / float(np.log(M)) if M > 1 else 0.0
+        return H_nat, H_norm
+
+    source_entropy_at_n: list[float] = []
+    target_entropy_at_n: list[float] = []
+    source_coverage_at_n: list[float] = []
+    target_coverage_at_n: list[float] = []
+    source_effective_frac_at_n: list[float] = []
+    target_effective_frac_at_n: list[float] = []
+
+    prev = 0
+    N_rows = len(df)
+    for n in n_vals:
+        end = min(n, N_rows)
+        if end > prev:
+            seg = df.iloc[prev:end, [df.columns.get_loc(source_col), df.columns.get_loc(target_col)]]
+            src_vals, src_cnts = np.unique(seg[source_col].to_numpy(), return_counts=True)
+            for ent, c in zip(src_vals, src_cnts):
+                idx = src_index.get(ent)
+                if idx is not None:
+                    src_counts[idx] += int(c)
+            tgt_vals, tgt_cnts = np.unique(seg[target_col].to_numpy(), return_counts=True)
+            for ent, c in zip(tgt_vals, tgt_cnts):
+                idx = tgt_index.get(ent)
+                if idx is not None:
+                    tgt_counts[idx] += int(c)
+            prev = end
+
+        Hs_nat, Hs_norm = _H_nat_and_norm(src_counts, M_src)
+        Ht_nat, Ht_norm = _H_nat_and_norm(tgt_counts, M_tgt)
+        source_entropy_at_n.append(Hs_norm)
+        target_entropy_at_n.append(Ht_norm)
+
+        src_cov = (src_counts > 0).sum() / M_src if M_src > 0 else 0.0
+        tgt_cov = (tgt_counts > 0).sum() / M_tgt if M_tgt > 0 else 0.0
+        source_coverage_at_n.append(float(src_cov))
+        target_coverage_at_n.append(float(tgt_cov))
+
+        src_eff = float(np.exp(Hs_nat)) / M_src if M_src > 0 else 0.0
+        tgt_eff = float(np.exp(Ht_nat)) / M_tgt if M_tgt > 0 else 0.0
+        source_effective_frac_at_n.append(src_eff)
+        target_effective_frac_at_n.append(tgt_eff)
+
+    return {
+        "n": n_vals,
+        "recall_at_n": recall_at_n,
+        "source_entropy_at_n": source_entropy_at_n,
+        "target_entropy_at_n": target_entropy_at_n,
+        "source_coverage_at_n": source_coverage_at_n,
+        "target_coverage_at_n": target_coverage_at_n,
+        "source_effective_frac_at_n": source_effective_frac_at_n,
+        "target_effective_frac_at_n": target_effective_frac_at_n,
+    }
 
 
 @inject_object()
@@ -512,15 +622,10 @@ def tune_weighting_optuna(
     features: list[str],
     target_col_name: str,
     seed: int,
-    storage_url: str | None = None,  # <-- NEW
-    study_name: str | None = None,  # <-- optional, auto-infer if not provided
+    storage_url: str | None = None,
+    study_name: str | None = None,
     load_if_exists: bool = True,
 ) -> dict:
-    #  """
-    # Tune WeightingTransformer params with Optuna on the current fold.
-    # Returns a transformers dict identical to base_transformers, with 'weighting' params updated.
-    # If tuning['enabled'] is False, returns base_transformers unchanged.
-    # """
     if not tuning or not tuning.get("enabled", False):
         return base_transformers
 
@@ -584,6 +689,7 @@ def tune_weighting_optuna(
 
     X_tr, y_tr = _build_xyw_from_embeddings(df_train)
     heads_tr = df_train["source"].to_numpy()
+    tails_tr = df_train["target"].to_numpy()
 
     from sklearn.model_selection import StratifiedShuffleSplit
 
@@ -595,6 +701,8 @@ def tune_weighting_optuna(
     X_val_in, y_val_in = X_tr[idx_val_in], y_tr[idx_val_in]
     heads_tr_in = heads_tr[idx_tr_in]
     heads_val_in = heads_tr[idx_val_in]
+    tails_tr_in = tails_tr[idx_tr_in]
+    tails_val_in = tails_tr[idx_val_in]
 
     base_w_conf = (
         base_transformers["weighting"]["transformer"].get_params()
@@ -654,6 +762,8 @@ def tune_weighting_optuna(
         return conf
 
     def objective(trial: "optuna.Trial") -> float:
+        import numpy as np
+
         conf = suggest_params(trial)
         from matrix.pipelines.modelling.transformers import WeightingTransformer
 
@@ -690,22 +800,36 @@ def tune_weighting_optuna(
             est.fit(X_tr_in, y_tr_in, **fit_kwargs)
 
         y_score = est.predict_proba(X_val_in)[:, 1]
-        df_scores = pd.DataFrame({"y": y_val_in, "score": y_score, "source": heads_val_in})
+        df_scores = pd.DataFrame({"y": y_val_in, "score": y_score, "source": heads_val_in, "target": tails_val_in})
 
-        recall_k, ent_k, cov_k, eff_k = _global_topn_metrics(
+        metrics = _global_topn_metrics(
             df_scores,
-            k=k,
-            head_col="source",
-            # Optionally: head_universe_size=int(df_train["source"].nunique())
+            n_list=[k],
+            y_col="y",
+            score_col="score",
+            source_col="source",
+            target_col="target",
         )
+        recall_k = float(metrics["recall_at_n"][0])
+        ent_src_k = float(metrics["source_entropy_at_n"][0])
+        ent_tgt_k = float(metrics["target_entropy_at_n"][0])
+        cov_src_k = float(metrics["source_coverage_at_n"][0])
+        cov_tgt_k = float(metrics["target_coverage_at_n"][0])
+        eff_src_k = float(metrics["source_effective_frac_at_n"][0])
+        eff_tgt_k = float(metrics["target_effective_frac_at_n"][0])
 
-        df_bias = pd.DataFrame(
-            {
-                "source": heads_tr_in,
-                "w": w_tr_in,
-                "one": 1.0,
-            }
-        )
+        entropy_mode = str(tuning.get("objective", {}).get("entropy_mode", "source")).lower()
+        if entropy_mode in ("avg", "mean"):
+            ent_k = 0.5 * (ent_src_k + ent_tgt_k)
+            cov_k = 0.5 * (cov_src_k + cov_tgt_k)
+            eff_k = 0.5 * (eff_src_k + eff_tgt_k)
+        elif entropy_mode == "target":
+            ent_k, cov_k, eff_k = ent_tgt_k, cov_tgt_k, eff_tgt_k
+        else:
+            entropy_mode = "source"
+            ent_k, cov_k, eff_k = ent_src_k, cov_src_k, eff_src_k
+
+        df_bias = pd.DataFrame({"source": heads_tr_in, "w": w_tr_in, "one": 1.0})
         deg_raw = df_bias.groupby("source")["one"].sum().astype(float)
         deg_w = df_bias.groupby("source")["w"].sum()
 
@@ -740,17 +864,26 @@ def tune_weighting_optuna(
         )
 
         trial.set_user_attr("k", int(k))
-        trial.set_user_attr("recall@N", float(recall_k))
-        trial.set_user_attr("entropy@N", float(ent_k))
-        trial.set_user_attr("coverage@N", float(cov_k))
-        trial.set_user_attr("effective_heads_frac@N", float(eff_k))
+        trial.set_user_attr("entropy_mode", entropy_mode)
+        trial.set_user_attr("recall@N", recall_k)
+        trial.set_user_attr("entropy@N", ent_k)
 
-        trial.set_user_attr("train_head_entropy_norm", float(ent_train_norm))
-        trial.set_user_attr("train_head_bias_penalty", float(head_bias_penalty))
-        trial.set_user_attr("train_spearman_raw_vs_weighted", float(rho))
-        trial.set_user_attr("pct_a_at_bounds_neg", float(pct_at))
-        trial.set_user_attr("bounds_penalty", float(bounds_penalty))
-        trial.set_user_attr("corr_penalty", float(corr_penalty))
+        trial.set_user_attr("source_entropy@N", ent_src_k)
+        trial.set_user_attr("target_entropy@N", ent_tgt_k)
+
+        trial.set_user_attr("source_coverage@N", cov_src_k)
+        trial.set_user_attr("target_coverage@N", cov_tgt_k)
+        trial.set_user_attr("coverage@N", cov_k)
+
+        trial.set_user_attr("source_effective_frac@N", eff_src_k)
+        trial.set_user_attr("target_effective_frac@N", eff_tgt_k)
+        trial.set_user_attr("effective_entities_frac@N", eff_k)
+        trial.set_user_attr("effective_heads_frac@N", eff_k)
+
+        trial.set_user_attr("pct_a_at_bounds_neg", pct_at)
+
+        trial.set_user_attr("head_bias_penalty", head_bias_penalty)
+        trial.set_user_attr("corr_penalty", corr_penalty)
 
         wt_params = wt.get_params(deep=False) if hasattr(wt, "get_params") else conf
         for p_key, p_val in wt_params.items():
@@ -767,21 +900,6 @@ def tune_weighting_optuna(
         if fold_id is not None:
             trial.set_user_attr("fold", int(fold_id))
 
-        return score
-
-        y_score = est.predict_proba(X_val_in)[:, 1]
-        df_scores = pd.DataFrame({"y": y_val_in, "score": y_score, "source": heads_val_in})
-
-        recall_k, ent_k = _global_topn_metrics(df_scores, k=k, head_col="source")
-
-        stats_neg = getattr(wt, "fit_stats_", {}).get("neg", {})
-        pct_at = float(stats_neg.get("pct_a_at_bounds", 0.0))
-        penalty = max(0.0, pct_at - bounds_target)
-
-        score = (w_recall * recall_k) + (w_entropy * ent_k) - (w_bounds * penalty)
-        trial.set_user_attr("recall@N", recall_k)
-        trial.set_user_attr("entropy@N", ent_k)
-        trial.set_user_attr("pct_a_at_bounds_neg", pct_at)
         return score
 
     def _sqlite_local_path_from_url(url: str) -> str:
@@ -882,6 +1000,7 @@ def tune_weighting_optuna(
     logger.info(
         f"Weighting Optuna best: value={study.best_value:.4f}, "
         f"recall@{k}={study.best_trial.user_attrs.get('recall@N'):.4f}, "
+        f"entropy_mode={study.best_trial.user_attrs.get('entropy_mode')}, "
         f"entropy@{k}={study.best_trial.user_attrs.get('entropy@N'):.4f}, "
         f"pct_a_at_bounds_neg={study.best_trial.user_attrs.get('pct_a_at_bounds_neg'):.3f}"
     )

@@ -11,11 +11,11 @@ dependencies = [
     "matrix-pipeline",
     "matrix-docs",
     "matrix-auth",
-    "matrix-gcp-datasets", 
+    "matrix-gcp-datasets",
     "matrix-mlflow-utils",
     "matrix-fabricator",
-
     "pre-commit>=4.2.0",
+    "optuna>=4.5.0",
 ]
 
 [tool.uv.sources]
