@@ -9,15 +9,8 @@ prerequisites:
         $(if $(shell command -v $(exec) 2>/dev/null),,$(error "$(exec) is not installed.")))
 	$(info All prerequisites are installed.)
 
-venv:
-	if [ ! -d .venv ]; then uv venv -p 3.11; fi
-	uv run python -m ensurepip --upgrade || true
-
-install: venv
-	uv pip install -r requirements.txt #force it to install in our venv
-
-prerequisites:
-	pip install uv
+install:
+	uv sync
 
 format:
 	uv run ruff check . --fix
