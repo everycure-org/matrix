@@ -11,9 +11,10 @@ dependencies = [
     "matrix-pipeline",
     "matrix-docs",
     "matrix-auth",
-    "matrix-gcp-datasets", 
+    "matrix-gcp-datasets",
     "matrix-mlflow-utils",
     "matrix-fabricator",
+    "matrix-io",
 
     "pre-commit>=4.2.0",
 ]
@@ -25,6 +26,7 @@ matrix-auth = { workspace = true }
 matrix-gcp-datasets = { workspace = true }
 matrix-mlflow-utils = { workspace = true }
 matrix-fabricator = { workspace = true }
+matrix-io = { workspace = true }
 
 [tool.uv.workspace]
 members = [
