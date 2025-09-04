@@ -1,3 +1,0 @@
-polars-lts-cpu>=1.32
-click
-ruamel-yaml>=0.18
