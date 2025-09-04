@@ -709,6 +709,40 @@ def test_kedro_template_input_parameters_include_ephemeral_storage() -> None:
     assert "ephemeral_storage_limit" in parameter_names
 
 
+def test_pipeline_task_arguments_include_ephemeral_storage_parameters() -> None:
+    """Ensure pipeline task arguments include both ephemeral storage parameters."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+        ephemeral_storage_limit=128,
+        ephemeral_storage_request=32,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    # Verify pipeline template exists
+    pipeline_template = next(t for t in spec["templates"] if t["name"] == "pipeline")
+    assert "dag" in pipeline_template
+
+    # Check that tasks have both ephemeral storage parameters
+    if pipeline_template["dag"]["tasks"]:
+        task = pipeline_template["dag"]["tasks"][0]  # Check first task
+        parameters = {p["name"]: p["value"] for p in task["arguments"]["parameters"]}
+
+        # Verify both ephemeral storage parameters are present in task arguments
+        assert "ephemeral_storage_request" in parameters, (
+            "ephemeral_storage_request parameter missing from task arguments"
+        )
+        assert "ephemeral_storage_limit" in parameters, "ephemeral_storage_limit parameter missing from task arguments"
+
+        # Verify the values are correctly set
+        assert parameters["ephemeral_storage_request"] == 0  # Default request is 0
+        assert parameters["ephemeral_storage_limit"] == argo_default_resources.ephemeral_storage_limit
+
+
 def test_neo4j_template_ephemeral_storage_configuration() -> None:
     """Ensure the neo4j template includes ephemeral storage configuration."""
     argo_default_resources = ArgoResourceConfig(
