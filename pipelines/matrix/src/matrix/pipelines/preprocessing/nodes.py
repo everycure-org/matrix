@@ -891,8 +891,6 @@ def build_primekg_edges(edges: pl.DataFrame) -> pl.DataFrame:
         .collect()
     )
 
-    # print(edges.shape)
-
     orig_df = (
         # subject CURIE formatting
         edges.lazy()
@@ -980,8 +978,6 @@ def build_primekg_edges(edges: pl.DataFrame) -> pl.DataFrame:
         .collect()
         .rename({"relation": "predicate"})
     )
-
-    # print(orig_df.shape)
 
     final_df = (
         pl.concat(
