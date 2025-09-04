@@ -16,6 +16,7 @@ def coalesce_duplicate_columns(df: pl.DataFrame, keep: list[str]) -> pl.DataFram
 
 
 def mondo_grouped_exploded(edges_df: pl.DataFrame, x_or_y: str) -> pl.DataFrame:
+    """PrimeKG has represented groups of MONDO instances against a common object.  We are exploding those into separate triples here."""
     source = f"{x_or_y}_source"
     _id = f"{x_or_y}_id"
     source_mondo = (
