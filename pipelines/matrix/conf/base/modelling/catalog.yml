@@ -137,3 +137,8 @@ modelling.reporting.gt_present:
   <<: *_reporting_ds
   type: matplotlib.MatplotlibDataset
   filepath: ${globals:paths.tmp}/reporting/weights.png
+
+"modelling.fold_{fold}.model_input.transformers_params":
+  <<: *_model_input_ds
+  type: pickle.PickleDataset
+  filepath: ${globals:paths.modelling}/model_input/fold_{fold}/transformers_params.pickle
