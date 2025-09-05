@@ -5,6 +5,7 @@ title: Release Trends
 <script>
   const current_release_version = import.meta.env.VITE_release_version;
   const build_time = import.meta.env.VITE_build_time;
+  const benchmark_release = 'v0.4.5'; // This should come from the env, but until that branch is merged it's just hardcoded here
 </script>
 
 # Knowledge Graph Release Trends
@@ -55,7 +56,9 @@ order by
     lineColor="#88C0D0"
     lineWidth=3
     sort=false
-/>
+>
+    <ReferenceLine x={benchmark_release} label="Benchmark" hideValue=true/>
+</LineChart>
 
 <LineChart 
     data={release_metrics} 
@@ -68,7 +71,9 @@ order by
     lineColor="#9D79D6"
     lineWidth=3
     sort=false
-/>
+>
+    <ReferenceLine x={benchmark_release} label="Benchmark" hideValue=true/>
+</LineChart>
 
 </div>
 
@@ -87,7 +92,9 @@ order by
     lineColor="#73C991"
     lineWidth=3
     sort=false
-/>
+>
+    <ReferenceLine x={benchmark_release} label="Benchmark" hideValue=true/>
+</LineChart>
 
 <LineChart 
     data={release_metrics} 
@@ -100,7 +107,9 @@ order by
     lineColor="#6FAF8C"
     lineWidth=3
     sort=false
-/>
+>
+    <ReferenceLine x={benchmark_release} label="Benchmark" hideValue=true/>
+</LineChart>
 
 </div>
 
@@ -119,7 +128,9 @@ order by
     lineColor="#BF616A"
     lineWidth=3
     sort=false
-/>
+>
+    <ReferenceLine x={benchmark_release} label="Benchmark" hideValue=true/>
+</LineChart>
 
 <LineChart 
     data={release_metrics} 
@@ -132,7 +143,9 @@ order by
     lineColor="#D08770"
     lineWidth=3
     sort=false
-/>
+>
+    <ReferenceLine x={benchmark_release} label="Benchmark" hideValue=true/>
+</LineChart>
 
 </div>
 
@@ -149,6 +162,8 @@ order by
     lineColor="#7FADDB"
     lineWidth=3
     sort=false
-/>
+>
+    <ReferenceLine x={benchmark_release} label="Benchmark" hideValue=true/>
+</LineChart>
 
 
