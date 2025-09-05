@@ -84,13 +84,13 @@ paths:
   release:            data/releases/${versions.release}/datasets/release
 
   # Run-based
-  filtering:          data/releases/${versions.release}/temp_features/int-rtx-robo-n2v/datasets/filtering
-  embeddings:         data/releases/${versions.release}/temp_features/int-rtx-robo-n2v/datasets/embeddings
-  modelling:          data/releases/${versions.release}/temp_features/int-rtx-robo-n2v/runs/${run_name}/datasets/modelling
-  matrix_generation:  data/releases/${versions.release}/temp_features/int-rtx-robo-n2v/runs/${run_name}/datasets/matrix_generation
-  matrix_transformations:  data/releases/${versions.release}/temp_features/int-rtx-robo-n2v/runs/${run_name}/datasets/matrix_transformations
-  evaluation:         data/releases/${versions.release}/temp_features/int-rtx-robo-n2v/runs/${run_name}/datasets/evaluation
-  inference:          data/releases/${versions.release}/temp_features/int-rtx-robo-n2v/runs/${run_name}/datasets/inference
+  filtering:          data/releases/${versions.release}/temp_features/robokop-n2v/datasets/filtering
+  embeddings:         data/releases/${versions.release}/temp_features/robokop-n2v/datasets/embeddings
+  modelling:          data/releases/${versions.release}/temp_features/robokop-n2v/runs/${run_name}/datasets/modelling
+  matrix_generation:  data/releases/${versions.release}/temp_features/robokop-n2v/runs/${run_name}/datasets/matrix_generation
+  matrix_transformations:  data/releases/${versions.release}/temp_features/robokop-n2v/runs/${run_name}/datasets/matrix_transformations
+  evaluation:         data/releases/${versions.release}/temp_features/robokop-n2v/runs/${run_name}/datasets/evaluation
+  inference:          data/releases/${versions.release}/temp_features/robokop-n2v/runs/${run_name}/datasets/inference
  
   tmp:                data/tmp
 
