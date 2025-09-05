@@ -69,19 +69,27 @@ title: Knowledge Sources
         return (b.value || 0) - (a.value || 0); // Larger values first
       });
       
-      // Limit primary sources to top 15 for cleaner visualization
-      const primaryNodes = sortedNodes.filter(n => n.category === 'primary').slice(0, 15);
+      // Adjust primary sources for oval layout
+      const primaryNodes = sortedNodes.filter(n => n.category === 'primary').slice(0, 20);
       const aggregatorNodes = sortedNodes.filter(n => n.category === 'aggregator');
       const unifiedNodes = sortedNodes.filter(n => n.category === 'unified');
       const limitedNodes = [...primaryNodes, ...aggregatorNodes, ...unifiedNodes];
       
-      // Calculate dynamic positioning based on actual node counts
-      const primaryHeight = primaryNodes.length * 50; // 50px per primary source
-      const aggregatorStartY = Math.max(150, primaryHeight / 2); // Start aggregators at middle of primary column
-      const aggregatorSpacing = 100; // Restore spacing between aggregators
+      // Calculate oval layout for primary sources (left half)
+      const radiusX = 150; // Horizontal radius (narrower)
+      const radiusY = 250; // Vertical radius (taller for more space)
+      const centerX = 400; // Center X position of the oval
+      const centerY = 300; // Center Y position of the oval
+      const startAngle = Math.PI * 0.7; // Start at ~126 degrees (upper left)
+      const endAngle = Math.PI * 1.3; // End at ~234 degrees (lower left) - extends more to the right
+      const angleRange = endAngle - startAngle; // Total angle span
+      
+      // Position aggregators and unified KG relative to the circle
+      const aggregatorStartY = centerY - 50; // Position near center of circle
+      const aggregatorSpacing = 100;
       const unifiedY = aggregatorNodes.length > 1 ? 
-        aggregatorStartY + (aggregatorNodes.length - 1) * aggregatorSpacing / 2 : // Center between aggregators
-        aggregatorStartY; // Same level if only one aggregator
+        aggregatorStartY + (aggregatorNodes.length - 1) * aggregatorSpacing / 2 :
+        aggregatorStartY;
       
       let primaryCount = 0, aggregatorCount = 0, unifiedCount = 0;
       
@@ -91,15 +99,17 @@ title: Knowledge Sources
           let xPosition = 0, yPosition = 0;
           
           if (d.category === 'primary') {
-            xPosition = 400; // Move primary sources even further right
-            yPosition = 50 + primaryCount * 50;
+            // Calculate position on left half oval
+            const angle = startAngle + (primaryCount / (primaryNodes.length - 1)) * angleRange;
+            xPosition = centerX + Math.cos(angle) * radiusX; // Use horizontal radius
+            yPosition = centerY + Math.sin(angle) * radiusY; // Use vertical radius
             primaryCount++;
           } else if (d.category === 'aggregator') {
-            xPosition = 600; // Less space between primary sources and aggregators
+            xPosition = 350; // Move aggregators much closer to the oval
             yPosition = aggregatorStartY + aggregatorCount * aggregatorSpacing;
             aggregatorCount++;
           } else if (d.category === 'unified') {
-            xPosition = 800; // Less space between aggregators and unified KG
+            xPosition = 450; // Move unified KG much closer to aggregators
             yPosition = unifiedY;
             unifiedCount++;
           }
@@ -113,7 +123,7 @@ title: Knowledge Sources
             y: yPosition,
             symbol: 'circle', // All circles
             symbolSize: d.category === 'primary' ? 
-              Math.max(15, Math.min(40, Math.log10((d.value || 1) + 1) * 4 + 10)) : // Primary: smaller circles, log scale
+              Math.max(15, Math.min(45, (d.value || 0) / 1000000 * 0.4 + 15)) : // Primary: same scaling formula as aggregators/unified
               d.category === 'unified' ?
                 Math.max(60, Math.min(100, (d.value || 0) / 1000000 * 0.8 + 60)) : // Unified: largest circles
                 Math.max(45, Math.min(80, (d.value || 0) / 1000000 * 0.6 + 45)), // Aggregators: medium circles
@@ -225,8 +235,7 @@ title: Knowledge Sources
         roam: false, // Disable zoom/pan
         draggable: false, // Disable dragging
         itemStyle: {
-          borderWidth: 1,
-          borderColor: '#333'
+          borderWidth: 0
         },
         lineStyle: {
           color: 'rgba(157, 121, 214, 0.6)',
