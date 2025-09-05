@@ -24,6 +24,12 @@ authors:
 
 ### Exciting New Features 🎉
 
+- **Orchard Feedback Dataset Addition**: Added Orchard feedback dataset integration for external validation and feedback loop improvements
+  [#1740](https://github.com/everycure-org/matrix/pull/1740)
+  
+- **Orchard Feedback Data Integration**: Updated orchard transformer to map feedback data to MATRIX format, enabling integration of external validation data
+  [#1782](https://github.com/everycure-org/matrix/pull/1782)
+  
 - **Enhanced Validation for Fabricator Pipeline**: Added comprehensive data validation to the fabricator pipeline using Pandera schemas, improving data quality assurance and early error detection during synthetic data generation
   [#1714](https://github.com/everycure-org/matrix/pull/1714)
 
@@ -124,9 +130,6 @@ authors:
 - **BigQuery Output Optimization**: Only write final filtered tables to BigQuery, reducing storage costs and improving query performance
   [#1819](https://github.com/everycure-org/matrix/pull/1819)
 
-- **Orchard Feedback Data Integration**: Updated orchard transformer to map feedback data to MATRIX format, enabling integration of external validation data
-  [#1782](https://github.com/everycure-org/matrix/pull/1782)
-
 - **BigQuery Access Permissions**: Allowed MATRIX PROD environment to access Orchard Datasets in BigQuery for cross-project data integration
   [#1803](https://github.com/everycure-org/matrix/pull/1803)
 
@@ -135,9 +138,6 @@ authors:
 
 - **Payload Size Optimization**: Increased payload size limits and fixed string conversion issues for better data handling capacity
   [#1773](https://github.com/everycure-org/matrix/pull/1773), [#1776](https://github.com/everycure-org/matrix/pull/1776)
-
-- **Orchard Feedback Dataset Addition**: Added Orchard feedback dataset integration for external validation and feedback loop improvements
-  [#1740](https://github.com/everycure-org/matrix/pull/1740)
 
 - **PySpark Version Update**: Updated PySpark to version 3.5.6 for improved performance and bug fixes
   [#1753](https://github.com/everycure-org/matrix/pull/1753)
