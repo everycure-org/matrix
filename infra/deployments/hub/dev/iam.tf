@@ -13,6 +13,7 @@ locals {
   ]
   github_actions_rw     = ["serviceAccount:sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com"]
   custom_cloud_build_sa = ["serviceAccount:custom-cloud-build-sa@mtrx-hub-prod-sms.iam.gserviceaccount.com"]
+  arpah_read_only_group = ["group:arpah-read-only@everycure.org"]
 }
 
 module "project_iam_bindings" {
@@ -35,7 +36,8 @@ module "project_iam_bindings" {
     "roles/iam.workloadIdentityPoolAdmin"  = local.tech_team_group
     "roles/iam.serviceAccountTokenCreator" = local.tech_team_group
     "roles/storage.objectUser"             = local.tech_team_group
-    "roles/storage.objectViewer"           = local.cross_account_sas
+    "roles/storage.objectViewer"           = flatten([local.cross_account_sas, local.arpah_read_only_group])
+    "roles/storage.legacyBucketReader"     = local.arpah_read_only_group
     "roles/artifactregistry.writer"        = flatten([local.tech_team_group, [local.matrix_all_group]]) # enables people to run kedro experiment run
     "roles/viewer"                         = flatten([local.matrix_viewers_group, local.cross_account_sas, local.custom_cloud_build_sa])
     "roles/bigquery.jobUser"               = flatten([local.matrix_viewers_group, local.cross_account_sas])
