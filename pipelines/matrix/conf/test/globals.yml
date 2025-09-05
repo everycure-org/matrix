@@ -27,5 +27,7 @@ paths:
   matrix_transformations:  data/test/releases/${versions.release}/runs/${run_name}/datasets/matrix_transformations
   inference:          data/test/releases/${versions.release}/runs/${run_name}/datasets/inference
 
+  preprocessing:      data/preprocessing
+
   tmp:                data/test/tmp
   cache:              data/test/cache
