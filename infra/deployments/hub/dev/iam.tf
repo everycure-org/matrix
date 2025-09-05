@@ -13,7 +13,7 @@ locals {
   ]
   github_actions_rw     = ["serviceAccount:sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com"]
   custom_cloud_build_sa = ["serviceAccount:custom-cloud-build-sa@mtrx-hub-prod-sms.iam.gserviceaccount.com"]
-  arpah_read_only_group = ["group:arpah-read-only@everycure.org"]
+  arpah_read_only_group = ["group:arpah_read_only@everycure.org"]
 }
 
 module "project_iam_bindings" {
