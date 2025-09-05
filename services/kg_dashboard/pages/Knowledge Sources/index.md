@@ -151,6 +151,23 @@ title: Knowledge Sources
           value: d.value,
           lineStyle: {
             width: Math.max(1, Math.min(10, Math.sqrt(d.value / 10000) * 5 + 1)) // Thickness based on count
+          },
+          label: {
+            show: false,
+            position: 'middle',
+            formatter: function(params) {
+              return params.value.toLocaleString();
+            },
+            fontSize: 10,
+            color: '#333',
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            borderRadius: 3,
+            padding: [2, 4]
+          },
+          emphasis: {
+            label: {
+              show: true
+            }
           }
         }));
       
@@ -246,6 +263,43 @@ title: Knowledge Sources
           position: 'inside',
           fontSize: 10,
           color: '#000'
+        },
+        tooltip: {
+          show: true,
+          position: function(point, params, dom, rect, size) {
+            if (params.dataType === 'node' && params.data.category === 'primary') {
+              // Position tooltip to the left for primary sources
+              return [point[0] - size.contentSize[0] - 20, point[1] - size.contentSize[1] / 2];
+            }
+            // Default positioning for other nodes
+            return [point[0] + 20, point[1] - size.contentSize[1] / 2];
+          },
+          formatter: function(params) {
+            if (params.dataType === 'node' && params.data.category === 'primary') {
+              // Find all connections from this primary source to aggregators
+              const sourceId = params.data.id;
+              const connections = links.filter(link => link.source === sourceId);
+              
+              let tooltipContent = `<strong>${sourceId.replace('infores:', '')}</strong><br/>`;
+              tooltipContent += `Total connections: ${params.data.value.toLocaleString()}`;
+              
+              if (connections.length > 1) {
+                tooltipContent += `<br/><br/>`;
+                connections.forEach(conn => {
+                  const targetName = conn.target.replace('infores:', '');
+                  tooltipContent += `${targetName}: ${conn.value.toLocaleString()}<br/>`;
+                });
+              }
+              
+              return tooltipContent;
+            } else if (params.dataType === 'node') {
+              // Default tooltip for other nodes
+              return `<strong>${params.data.id.replace('infores:', '')}</strong><br/>Total connections: ${params.data.value.toLocaleString()}`;
+            } else if (params.dataType === 'edge') {
+              // Tooltip for edges
+              return `${params.data.source.replace('infores:', '')} → ${params.data.target.replace('infores:', '')}<br/>Connections: ${params.data.value.toLocaleString()}`;
+            }
+          }
         },
         emphasis: {
           focus: 'adjacency',
