@@ -1,0 +1,10 @@
+# Test environment Spark configuration overrides
+# Use local test temp directories instead of /data (which is for Docker containers) running in CI (GitHub Actions Runner in Kubernetes with Docker in Docker Mode)
+
+# Use local data directory for Spark operations in test environment
+spark.local.dir: ./data/test/spark-temp
+spark.sql.warehouse.dir: ./data/test/spark-warehouse
+spark.sql.streaming.checkpointLocation: ./data/test/spark-checkpoints
+
+# Ensure Java temp dir uses local path
+java.io.tmpdir: ./data/test/java-tmp
