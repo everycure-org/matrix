@@ -461,9 +461,7 @@ def tune_parameters(data: pd.DataFrame, tuner: Any, features: list[str], target_
     ), tuner.convergence_plot if hasattr(tuner, "convergence_plot") else plt.figure()
 
 
-def _build_xyw_from_embeddings(df: pd.DataFrame, head_col="source", tail_col="target"):
-    # Build X by concatenating source/target embedding arrays.
-    # Assumes columns 'source_embedding' and 'target_embedding' exist with list/array values.
+def _build_xyw_from_embeddings(df: pd.DataFrame):
     X = np.array(
         [
             np.concatenate([np.asarray(se, dtype=float), np.asarray(te, dtype=float)])
@@ -613,6 +611,82 @@ def _global_topn_metrics(
     }
 
 
+def _area_under_recall_curve(metrics: dict[str, list[float]]) -> float:
+    """
+    Trapezoidal area under the recall@n curve over metrics['n'].
+    Normalized by max(n) so the result is in [0, 1].
+    """
+    n_vals = metrics.get("n", []) or []
+    r_vals = metrics.get("recall_at_n", []) or []
+    if not n_vals or not r_vals or len(n_vals) != len(r_vals):
+        return 0.0
+    pairs = sorted(zip(n_vals, r_vals), key=lambda x: int(x[0]))
+    n_sorted = [int(p[0]) for p in pairs]
+    r_sorted = [float(p[1]) for p in pairs]
+
+    n_aug = [0] + n_sorted
+    r_aug = [0.0] + r_sorted
+
+    area = 0.0
+    for i in range(1, len(n_aug)):
+        dx = float(n_aug[i] - n_aug[i - 1])
+        if dx <= 0:
+            continue
+        area += dx * 0.5 * (r_aug[i] + r_aug[i - 1])
+
+    max_n = float(n_sorted[-1]) if n_sorted[-1] > 0 else 1.0
+    return area / max_n
+
+
+def _compute_entropy_weights(n_list, mode: str = "uniform", params=None):
+    """
+    Compute non-increasing weights over n to aggregate entropy@n.
+    Returns weights normalized to sum to 1. If n_list is empty, returns an empty array.
+    Supported modes:
+      - "uniform" (default)
+      - "inverse" (1/n)
+      - "inverse_sqrt" (1/sqrt(n))
+      - "exponential" (exp(-lambda * scaled_n)), params: {"lambda": 2.0}
+      - "topk" (1 if n <= k else 0), params: {"k": <int>}
+      - "log_inv" (1/log(n + c)), params: {"c": 2.0}
+    """
+    params = params or {}
+    n = np.asarray(list(n_list), dtype=float)
+    if n.size == 0:
+        return np.array([])
+
+    m = (mode or "uniform").lower()
+    if m in ("uniform",):
+        w = np.ones_like(n)
+    elif m in ("inverse", "inv"):
+        w = 1.0 / np.maximum(n, 1.0)
+    elif m in ("inverse_sqrt", "inv_sqrt"):
+        w = 1.0 / np.sqrt(np.maximum(n, 1.0))
+    elif m in ("exponential", "exp"):
+        lam = float(params.get("lambda", params.get("lam", params.get("lmbda", 2.0))))
+        n_min = float(n.min())
+        n_max = float(n.max())
+        denom = n_max - n_min
+        t = (n - n_min) / denom if denom > 0 else np.zeros_like(n)
+        w = np.exp(-lam * t)
+    elif m in ("topk",):
+        k_param = float(params.get("k", float(np.min(n))))
+        w = (n <= k_param).astype(float)
+    elif m in ("log_inv", "logarithmic_inverse"):
+        c = float(params.get("c", 2.0))
+        w = 1.0 / np.log(n + c)
+    else:
+        w = np.ones_like(n)
+
+    w = np.clip(w, 0.0, None)
+    s = float(w.sum())
+    if s <= 0.0:
+        w = np.ones_like(n) / n.size
+    else:
+        w = w / s
+    return w
+
+
 @inject_object()
 def tune_weighting_optuna(
     data: pd.DataFrame,
@@ -622,8 +696,6 @@ def tune_weighting_optuna(
     features: list[str],
     target_col_name: str,
     seed: int,
-    storage_url: str | None = None,
-    study_name: str | None = None,
     load_if_exists: bool = True,
 ) -> dict:
     if not tuning or not tuning.get("enabled", False):
@@ -644,14 +716,12 @@ def tune_weighting_optuna(
         return base_transformers
 
     k = int(tuning.get("k", 100))
+    n_list = list(tuning.get("n_list", [k]))
     obj = tuning.get("objective", {})
-    w_recall = float(obj.get("w_recall", 1.0))
-    w_entropy = float(obj.get("w_entropy", 0.0))
-    w_bounds = float(obj.get("w_bounds", 0.0))
-    bounds_target = float(obj.get("bounds_target", 0.2))
+    # bounds_target = float(obj.get("bounds_target", 0.2))
+    group_split = bool(tuning.get("group_split", True))
     space = tuning.get("search_space", {}) or {}
-    w_head_bias = float(obj.get("w_head_bias", 0.0))
-    w_corr = float(obj.get("w_corr", 0.0))
+
     from xgboost import XGBClassifier
 
     est_kwargs = {}
@@ -685,17 +755,23 @@ def tune_weighting_optuna(
     est_kwargs.setdefault("max_depth", 6)
     est_kwargs.setdefault("random_state", seed)
 
-    est = XGBClassifier(**est_kwargs)
-
     X_tr, y_tr = _build_xyw_from_embeddings(df_train)
     heads_tr = df_train["source"].to_numpy()
     tails_tr = df_train["target"].to_numpy()
 
-    from sklearn.model_selection import StratifiedShuffleSplit
+    deg_train = df_train.groupby("source").size()
 
     val_size = float(tuning.get("val_size", 0.2))
-    sss = StratifiedShuffleSplit(n_splits=1, test_size=val_size, random_state=seed)
-    idx_tr_in, idx_val_in = next(sss.split(X_tr, y_tr))
+    if group_split:
+        from sklearn.model_selection import GroupShuffleSplit
+
+        gss = GroupShuffleSplit(n_splits=1, test_size=val_size, random_state=seed)
+        idx_tr_in, idx_val_in = next(gss.split(X_tr, y_tr, groups=heads_tr))
+    else:
+        from sklearn.model_selection import StratifiedShuffleSplit
+
+        sss = StratifiedShuffleSplit(n_splits=1, test_size=val_size, random_state=seed)
+        idx_tr_in, idx_val_in = next(sss.split(X_tr, y_tr))
 
     X_tr_in, y_tr_in = X_tr[idx_tr_in], y_tr[idx_tr_in]
     X_val_in, y_val_in = X_tr[idx_val_in], y_tr[idx_val_in]
@@ -704,55 +780,22 @@ def tune_weighting_optuna(
     tails_tr_in = tails_tr[idx_tr_in]
     tails_val_in = tails_tr[idx_val_in]
 
-    base_w_conf = (
-        base_transformers["weighting"]["transformer"].get_params()
-        if hasattr(base_transformers["weighting"]["transformer"], "get_params")
-        else base_transformers["weighting"]["transformer"]
-    )
-    base_conf = (
-        dict(base_w_conf) if isinstance(base_w_conf, dict) else dict(base_transformers["weighting"]["transformer"])
-    )
+    tr0 = base_transformers["weighting"]["transformer"]
+    if hasattr(tr0, "get_params"):
+        try:
+            base_conf = dict(tr0.get_params())
+        except Exception:
+            base_conf = {}
+    elif isinstance(tr0, dict):
+        base_conf = dict(tr0)
+    else:
+        base_conf = {}
 
     try:
         fold_id = int(pd.unique(df["fold"])[0]) if "fold" in df.columns else None
     except Exception:
         fold_id = None
     default_study_name = f"weighting_fold_{fold_id}" if fold_id is not None else "weighting"
-
-    import json
-
-    def _flatten_dict(d: dict | None, prefix: str = "") -> dict[str, object]:
-        out = {}
-        if not isinstance(d, dict):
-            return out
-        for k, v in d.items():
-            key = f"{prefix}.{k}" if prefix else str(k)
-            if isinstance(v, dict):
-                out.update(_flatten_dict(v, key))
-            else:
-                out[key] = v
-        return out
-
-    def _json_safe(v):
-        import numpy as np
-        import pandas as pd
-
-        if isinstance(v, (np.generic,)):
-            return v.item()
-        if isinstance(v, (np.ndarray,)):
-            return v.tolist()
-        if isinstance(v, (pd.Series, pd.Index)):
-            return v.to_list()
-        if isinstance(v, (float, int, str, bool)) or v is None:
-            return v
-        try:
-            json.dumps(v)
-            return v
-        except Exception:
-            try:
-                return str(v)
-            except Exception:
-                return None
 
     def suggest_params(trial: "optuna.Trial") -> dict:
         conf = dict(base_conf)
@@ -762,11 +805,9 @@ def tune_weighting_optuna(
         return conf
 
     def objective(trial: "optuna.Trial") -> float:
-        import numpy as np
-
-        conf = suggest_params(trial)
         from matrix.pipelines.modelling.transformers import WeightingTransformer
 
+        conf = suggest_params(trial)
         wt = WeightingTransformer(**conf)
 
         df_fit_in = df_train.iloc[idx_tr_in][["source", "target", "y"]].copy()
@@ -774,9 +815,9 @@ def tune_weighting_optuna(
 
         w_tr_in = wt.transform(df_train.iloc[idx_tr_in][["source", "target"]], y=y_tr_in).ravel()
 
+        est = XGBClassifier(**est_kwargs)
         fit_sig = signature(est.fit).parameters
         fit_kwargs = {}
-
         if "sample_weight" in fit_sig:
             fit_kwargs["sample_weight"] = w_tr_in
         if "eval_set" in fit_sig:
@@ -803,95 +844,61 @@ def tune_weighting_optuna(
         df_scores = pd.DataFrame({"y": y_val_in, "score": y_score, "source": heads_val_in, "target": tails_val_in})
 
         metrics = _global_topn_metrics(
-            df_scores,
-            n_list=[k],
-            y_col="y",
-            score_col="score",
-            source_col="source",
-            target_col="target",
+            df_scores, n_list=n_list, y_col="y", score_col="score", source_col="source", target_col="target"
         )
-        recall_k = float(metrics["recall_at_n"][0])
-        ent_src_k = float(metrics["source_entropy_at_n"][0])
-        ent_tgt_k = float(metrics["target_entropy_at_n"][0])
-        cov_src_k = float(metrics["source_coverage_at_n"][0])
-        cov_tgt_k = float(metrics["target_coverage_at_n"][0])
-        eff_src_k = float(metrics["source_effective_frac_at_n"][0])
-        eff_tgt_k = float(metrics["target_effective_frac_at_n"][0])
+        aur = float(_area_under_recall_curve(metrics))
 
         entropy_mode = str(tuning.get("objective", {}).get("entropy_mode", "source")).lower()
         if entropy_mode in ("avg", "mean"):
-            ent_k = 0.5 * (ent_src_k + ent_tgt_k)
-            cov_k = 0.5 * (cov_src_k + cov_tgt_k)
-            eff_k = 0.5 * (eff_src_k + eff_tgt_k)
+            ent_list = [0.5 * (s + t) for s, t in zip(metrics["source_entropy_at_n"], metrics["target_entropy_at_n"])]
         elif entropy_mode == "target":
-            ent_k, cov_k, eff_k = ent_tgt_k, cov_tgt_k, eff_tgt_k
+            ent_list = metrics["target_entropy_at_n"]
         else:
             entropy_mode = "source"
-            ent_k, cov_k, eff_k = ent_src_k, cov_src_k, eff_src_k
+            ent_list = metrics["source_entropy_at_n"]
+
+        obj_conf = tuning.get("objective", {}) or {}
+        ew_mode = str(obj_conf.get("entropy_weighting", "uniform")).lower()
+        ew_params = obj_conf.get("entropy_weighting_params", {}) or {}
+        if ew_mode == "topk":
+            ew_params = dict(ew_params)
+            ew_params.setdefault("k", k)
+
+        weights = _compute_entropy_weights(metrics.get("n", []), mode=ew_mode, params=ew_params)
+        ent_mean = float(np.dot(weights, np.asarray(ent_list, dtype=float))) if len(ent_list) else 0.0
 
         df_bias = pd.DataFrame({"source": heads_tr_in, "w": w_tr_in, "one": 1.0})
-        deg_raw = df_bias.groupby("source")["one"].sum().astype(float)
         deg_w = df_bias.groupby("source")["w"].sum()
-
-        if len(deg_w) > 1:
+        if len(deg_w) > 1 and float(deg_w.sum()) > 0.0:
             p_w = deg_w / deg_w.sum()
-            H_w = float(-(p_w * np.log(p_w + 1e-12)).sum())
-            H_max = float(np.log(len(p_w)))
-            ent_train_norm = H_w / H_max
+            p_w = p_w[p_w > 0]  # avoid log(0)
+            H_w = float(-(p_w * np.log(p_w)).sum())
+            H_max = float(np.log(len(deg_w)))
+            ent_train_norm = H_w / H_max if H_max > 0 else 0.0
         else:
             ent_train_norm = 0.0
         head_bias_penalty = 1.0 - ent_train_norm
 
-        if len(deg_raw) > 1:
-            aligned = deg_raw.align(deg_w, join="inner")
-            rho = float(aligned[0].corr(aligned[1], method="spearman"))
-            if np.isnan(rho):
-                rho = 0.0
-        else:
-            rho = 0.0
-        corr_penalty = abs(rho)
+        per_head_pred = df_scores.groupby("source")["score"].mean()
+        al = per_head_pred.align(deg_train, join="inner")
+        rho_pred = al[0].corr(al[1], method="spearman")
+        pred_corr_penalty = float(abs(rho_pred)) if not np.isnan(rho_pred) else 0.0
 
-        stats_neg = getattr(wt, "fit_stats_", {}).get("neg", {})
-        pct_at = float(stats_neg.get("pct_a_at_bounds", 0.0))
-        bounds_penalty = max(0.0, pct_at - bounds_target)
-
-        score = (
-            (w_recall * recall_k)
-            + (w_entropy * ent_k)
-            - (w_bounds * bounds_penalty)
-            - (w_head_bias * head_bias_penalty)
-            - (w_corr * corr_penalty)
-        )
-
-        trial.set_user_attr("k", int(k))
+        trial.set_user_attr("n_list", [int(n) for n in metrics["n"]])
+        trial.set_user_attr("recall@N_list", list(metrics["recall_at_n"]))
         trial.set_user_attr("entropy_mode", entropy_mode)
-        trial.set_user_attr("recall@N", recall_k)
-        trial.set_user_attr("entropy@N", ent_k)
-
-        trial.set_user_attr("source_entropy@N", ent_src_k)
-        trial.set_user_attr("target_entropy@N", ent_tgt_k)
-
-        trial.set_user_attr("source_coverage@N", cov_src_k)
-        trial.set_user_attr("target_coverage@N", cov_tgt_k)
-        trial.set_user_attr("coverage@N", cov_k)
-
-        trial.set_user_attr("source_effective_frac@N", eff_src_k)
-        trial.set_user_attr("target_effective_frac@N", eff_tgt_k)
-        trial.set_user_attr("effective_entities_frac@N", eff_k)
-        trial.set_user_attr("effective_heads_frac@N", eff_k)
-
-        trial.set_user_attr("pct_a_at_bounds_neg", pct_at)
-
+        trial.set_user_attr("entropy@N_list", list(ent_list))
+        trial.set_user_attr("entropy_weighting_mode", ew_mode)
+        try:
+            trial.set_user_attr("entropy_weights", list(map(float, weights)))
+        except Exception:
+            pass
         trial.set_user_attr("head_bias_penalty", head_bias_penalty)
-        trial.set_user_attr("corr_penalty", corr_penalty)
+        trial.set_user_attr("pred_corr_penalty_val", pred_corr_penalty)
 
-        wt_params = wt.get_params(deep=False) if hasattr(wt, "get_params") else conf
-        for p_key, p_val in wt_params.items():
-            trial.set_user_attr(f"wparam.{p_key}", _json_safe(p_val))
-
-        fit_stats = getattr(wt, "fit_stats_", {}) or {}
-        for f_key, f_val in _flatten_dict(fit_stats, prefix="wfit").items():
-            trial.set_user_attr(f_key, _json_safe(f_val))
+        stats_neg = getattr(wt, "fit_stats_", {}).get("neg", {}) or {}
+        pct_at = float(stats_neg.get("pct_a_at_bounds", 0.0))
+        trial.set_user_attr("pct_a_at_bounds_neg", pct_at)
 
         try:
             fold_id = int(pd.unique(df["fold"])[0]) if "fold" in df.columns else None
@@ -900,93 +907,93 @@ def tune_weighting_optuna(
         if fold_id is not None:
             trial.set_user_attr("fold", int(fold_id))
 
-        return score
-
-    def _sqlite_local_path_from_url(url: str) -> str:
-        if url.startswith("sqlite:////"):
-            return url[len("sqlite:") :].lstrip("/")
-        if url.startswith("sqlite:///"):
-            return url[len("sqlite:///") :]
-        return url
+        return aur, ent_mean, pred_corr_penalty, head_bias_penalty
 
     import os
-    import tempfile
-    from pathlib import Path
 
-    def _make_sqlite_url(local_path: str) -> str:
-        p = Path(local_path)
-        p.parent.mkdir(parents=True, exist_ok=True)
-        if p.is_absolute():
-            return f"sqlite:////{p.as_posix().lstrip('/')}"
-        return f"sqlite:///{p.as_posix()}"
+    storage = os.environ.get("OPTUNA_STORAGE_URL")
 
-    storage_for_optuna = None
-    post_sync = None
+    directions = ["maximize", "maximize", "minimize", "minimize"]
 
-    if storage_url:
-        s = str(storage_url)
-        if s.startswith("gs://"):
-            try:
-                import sqlite3
+    try:
+        existing = optuna.study.get_study(study_name=default_study_name, storage=storage)
+        try:
+            existing_dirs = list(existing.directions)
+        except Exception:
+            existing_dirs = []
+        if len(existing_dirs) != len(directions):
+            default_study_name = f"{default_study_name}-mo-{len(directions)}"
+    except Exception:
+        pass
 
-                from google.cloud import storage as gcs
-
-                _, _, rest = s.partition("gs://")
-                bucket_name, _, blob_name = rest.partition("/")
-
-                cache_root = Path(os.environ.get("OPTUNA_GCS_CACHE", Path(tempfile.gettempdir()) / "optuna_gcs"))
-                local_db_path = cache_root / bucket_name / blob_name
-                local_db_path.parent.mkdir(parents=True, exist_ok=True)
-
-                client = gcs.Client()
-                bucket = client.bucket(bucket_name)
-                blob = bucket.blob(blob_name)
-
-                if blob.exists(client):
-                    blob.download_to_filename(local_db_path.as_posix())
-                else:
-                    sqlite3.connect(local_db_path.as_posix()).close()
-                    blob.upload_from_filename(local_db_path.as_posix())
-
-                storage_for_optuna = _make_sqlite_url(local_db_path.as_posix())
-
-                def _post_sync():
-                    try:
-                        blob.upload_from_filename(local_db_path.as_posix())
-                        logger.info(f"Uploaded Optuna DB to {storage_url}")
-                    except Exception as e:
-                        logger.warning(f"GCS sync (post) failed; DB remains only local at {local_db_path}: {e}")
-
-                post_sync = _post_sync
-
-            except Exception as e:
-                logger.warning(f"GCS sync disabled ({e}); falling back to local SQLite only.")
-                local_db_path = Path(tempfile.gettempdir()) / "optuna_gcs_fallback" / "study.db"
-                storage_for_optuna = _make_sqlite_url(local_db_path.as_posix())
-
-        elif s.startswith("sqlite:"):
-            storage_for_optuna = s
-        else:
-            storage_for_optuna = _make_sqlite_url(s)
-
-    sampler = optuna.samplers.TPESampler(seed=seed)
+    sampler = optuna.samplers.NSGAIISampler(seed=seed)
     study = optuna.create_study(
-        direction="maximize",
+        directions=directions,
         sampler=sampler,
-        storage=storage_for_optuna,
-        study_name=(study_name or default_study_name),
-        load_if_exists=load_if_exists,
+        storage=storage,
+        load_if_exists=True,
+        study_name=default_study_name,
     )
+
+    objective_names = tuning.get("objective_names") or [
+        "AUR@N",
+        "entropy_mean",
+        "pred_corr_penalty",
+        "head_bias_penalty",
+    ]
+    try:
+        study.set_user_attr("objective_names", list(objective_names))
+        study.set_user_attr("target_names", list(objective_names))
+    except Exception as e:
+        logger.debug(f"Could not set objective names on study: {e}")
+
+    try:
+        backend = getattr(study, "_storage", None)
+        study_id = getattr(study, "_study_id", None)
+        if backend is not None and study_id is not None:
+            backend.set_study_system_attr(study_id, "objective_names", list(objective_names))
+            backend.set_study_system_attr(study_id, "target_names", list(objective_names))
+    except Exception as e:
+        logger.debug(f"Could not set study.system_attrs objective names: {e}")
+
     study.optimize(objective, n_trials=int(tuning.get("n_trials", 30)))
 
-    if post_sync:
-        post_sync()
+    def _trial_sort_key(t: "optuna.trial.FrozenTrial"):
+        v = t.values or ()
+        a = -float(v[0]) if len(v) > 0 and v[0] is not None else float("inf")
+        b = -float(v[1]) if len(v) > 1 and v[1] is not None else float("inf")
+        c = float(v[2]) if len(v) > 2 and v[2] is not None else float("inf")
+        d = float(v[3]) if len(v) > 3 and v[3] is not None else float("inf")
+        return (a, b, c, d)
 
-    best_conf = suggest_params(study.best_trial)
+    pareto_all = list(getattr(study, "best_trials", []))
+    pareto = [t for t in pareto_all if t.values and len(t.values) == len(directions)]
 
-    tuned = {k: (v.copy() if isinstance(v, dict) else v) for k, v in base_transformers.items()}
+    if not pareto:
+        complete = [
+            t
+            for t in study.trials
+            if getattr(t, "state", None)
+            and t.state.name == "COMPLETE"
+            and t.values
+            and len(t.values) == len(directions)
+        ]
+        if not complete:
+            logger.warning("Optuna produced no valid trials; using base transformers.")
+            return base_transformers
+        selected = sorted(complete, key=_trial_sort_key)[0]
+    else:
+        selected = sorted(pareto, key=_trial_sort_key)[0]
+
+    best_conf = dict(base_conf)
+    best_conf.update(selected.params)
+
+    import copy
+
+    tuned = copy.deepcopy(base_transformers)
+
     tr = tuned["weighting"]["transformer"]
-    if hasattr(tr, "get_params"):
+    if hasattr(tr, "set_params"):
         try:
             tr.set_params(**best_conf)
         except Exception as e:
@@ -997,13 +1004,27 @@ def tune_weighting_optuna(
         tr_conf.update(best_conf)
         tuned["weighting"]["transformer"] = tr_conf
 
+    vals = list(selected.values) if selected.values else []
+
+    def _fmt(i: int) -> str:
+        return f"{vals[i]:.4f}" if len(vals) > i and vals[i] is not None else "NA"
+
+    aur_v = _fmt(0)
+    ent_v = _fmt(1)
+    pcorr_v = _fmt(2)
+    hbias_v = _fmt(3)
+
     logger.info(
-        f"Weighting Optuna best: value={study.best_value:.4f}, "
-        f"recall@{k}={study.best_trial.user_attrs.get('recall@N'):.4f}, "
-        f"entropy_mode={study.best_trial.user_attrs.get('entropy_mode')}, "
-        f"entropy@{k}={study.best_trial.user_attrs.get('entropy@N'):.4f}, "
-        f"pct_a_at_bounds_neg={study.best_trial.user_attrs.get('pct_a_at_bounds_neg'):.3f}"
+        "Weighting Optuna MO selected trial:\n"
+        f"  AUR@N={aur_v}, entropy_mean={ent_v}, pred_corr_penalty={pcorr_v}, head_bias_penalty={hbias_v}\n"
+        f"  study_name={default_study_name}\n"
+        f"  n_list={selected.user_attrs.get('n_list')}\n"
+        f"  recall@N_list={selected.user_attrs.get('recall@N_list')}\n"
+        f"  entropy_mode={selected.user_attrs.get('entropy_mode')}\n"
+        f"  entropy@N_list={selected.user_attrs.get('entropy@N_list')}\n"
+        f"  pct_a_at_bounds_neg={selected.user_attrs.get('pct_a_at_bounds_neg')}"
     )
+
     return tuned
 
 

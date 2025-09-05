@@ -96,6 +96,3 @@ _model_options:
   ensemble:
     agg_func:
       _object: numpy.mean
-
-modelling.optuna.storage_url:
-  filepath: ${globals:paths.dev_data}/optuna_sinkhorn/optuna.db

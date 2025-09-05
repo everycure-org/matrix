@@ -84,7 +84,6 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                             "features": f"params:modelling.{model_name}.model_options.model_tuning_args.features",
                             "target_col_name": f"params:modelling.{model_name}.model_options.model_tuning_args.target_col_name",
                             "seed": f"params:modelling.splitter.random_state",
-                            "storage_url": f"params:modelling.optuna.storage_url.filepath",
                         },
                         outputs=f"modelling.fold_{fold}.model_input.transformers_params",
                         name=f"tune_weighting_fold_{fold}",
