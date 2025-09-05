@@ -3,6 +3,7 @@ title: Knowledge Sources
 ---
 
 <script>
+  import { getSourceColor } from '../_lib/colors';
   
   // Create depth overrides for proper Sankey layout (legacy - keeping for compatibility)
   let depthOverrides = {}
@@ -114,23 +115,33 @@ title: Knowledge Sources
             unifiedCount++;
           }
           
+          // Get color based on node ID and category
+          let nodeColor;
+          if (d.category === 'primary') {
+            nodeColor = '#88C0D0'; // Light blue for primary sources
+          } else if (d.category === 'aggregator' || d.category === 'unified') {
+            const sourceKey = d.node_id.replace('infores:', '');
+            nodeColor = getSourceColor(sourceKey);
+          }
+
           nodeMap.set(d.node_id, {
             id: d.node_id,
             name: d.node_id,
-            category: d.category,
+            nodeCategory: d.category, // Store as custom property, not ECharts category
             value: d.value || 0,
             x: xPosition,
             y: yPosition,
             symbol: 'circle', // All circles
             symbolSize: d.category === 'primary' ? 
               Math.max(15, Math.min(45, (d.value || 0) / 1000000 * 0.4 + 15)) : // Primary: same scaling formula as aggregators/unified
-              d.category === 'unified' ?
+              d.category === 'unified' ? 
                 Math.max(60, Math.min(100, (d.value || 0) / 1000000 * 0.8 + 60)) : // Unified: largest circles
                 Math.max(45, Math.min(80, (d.value || 0) / 1000000 * 0.6 + 45)), // Aggregators: medium circles
+            itemStyle: nodeColor ? { color: nodeColor } : undefined,
             label: {
               show: true,
               position: d.category === 'primary' ? 'left' : 'inside',
-              fontSize: d.category === 'primary' ? 9 : 11,
+              fontSize: d.category === 'primary' ? 12 : 11,
               color: d.category === 'primary' ? '#333' : '#fff',
               fontWeight: d.category === 'primary' ? 'normal' : 'bold',
               distance: d.category === 'primary' ? 8 : 0
@@ -145,31 +156,58 @@ title: Knowledge Sources
       // Create links, filtering out invalid ones
       links = linkData
         .filter(d => d.source && d.target && d.value)
-        .map(d => ({
-          source: d.source,
-          target: d.target,
-          value: d.value,
-          lineStyle: {
-            width: Math.max(1, Math.min(10, Math.sqrt(d.value / 10000) * 5 + 1)) // Thickness based on count
-          },
-          label: {
-            show: false,
-            position: 'middle',
-            formatter: function(params) {
-              return params.value.toLocaleString();
-            },
-            fontSize: 10,
-            color: '#333',
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
-            borderRadius: 3,
-            padding: [2, 4]
-          },
-          emphasis: {
-            label: {
-              show: true
-            }
+        .map(d => {
+          // Determine edge color based on aggregator node
+          let edgeColor = 'rgba(157, 121, 214, 0.6)'; // default purple
+          
+          // Find which node is the aggregator by checking if it's robokop or rtxkg2
+          const sourceNode = nodes.find(n => n.id === d.source);
+          const targetNode = nodes.find(n => n.id === d.target);
+          
+          let aggregatorNode = null;
+          
+          // Check if source is an aggregator (robokop or rtxkg2)
+          if (sourceNode && (sourceNode.id.includes('robokop') || sourceNode.id.includes('rtxkg2')) && 
+              !sourceNode.id.includes(',')) { // Single aggregator, not unified
+            aggregatorNode = sourceNode;
+          } 
+          // Check if target is an aggregator
+          else if (targetNode && (targetNode.id.includes('robokop') || targetNode.id.includes('rtxkg2')) && 
+                   !targetNode.id.includes(',')) { // Single aggregator, not unified
+            aggregatorNode = targetNode;
           }
-        }));
+          
+          if (aggregatorNode && aggregatorNode.itemStyle && aggregatorNode.itemStyle.color) {
+            edgeColor = aggregatorNode.itemStyle.color + '80'; // Add transparency
+          }
+          
+          return {
+            source: d.source,
+            target: d.target,
+            value: d.value,
+            lineStyle: {
+              width: Math.max(1, Math.min(10, Math.sqrt(d.value / 10000) * 5 + 1)), // Thickness based on count
+              color: edgeColor
+            },
+            label: {
+              show: false,
+              position: 'middle',
+              formatter: function(params) {
+                return params.value.toLocaleString();
+              },
+              fontSize: 10,
+              color: '#333',
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              borderRadius: 3,
+              padding: [2, 4]
+            },
+            emphasis: {
+              label: {
+                show: true
+              }
+            }
+          };
+        });
       
       console.log('Final nodes count:', nodes.length);
       console.log('Final links count:', links.length);
@@ -208,6 +246,9 @@ title: Knowledge Sources
     }
     
     networkOption = {
+      legend: {
+        show: false
+      },
       title: {
         text: 'Knowledge Source Flow Network',
         left: 'center'
@@ -244,11 +285,6 @@ title: Knowledge Sources
         // },
         data: nodes,
         links: links,
-        categories: [
-          {name: 'primary', itemStyle: {color: '#88C0D0'}},
-          {name: 'aggregator', itemStyle: {color: '#9D79D6'}}, 
-          {name: 'unified', itemStyle: {color: '#73C991'}}
-        ],
         roam: false, // Disable zoom/pan
         draggable: false, // Disable dragging
         itemStyle: {
