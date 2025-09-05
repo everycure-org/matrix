@@ -24,6 +24,8 @@ select
     edges_per_node,
     n_nodes_from_disease_list,
     n_nodes_from_drug_list,
+    median_drug_node_degree,
+    median_disease_node_degree,
     nodes_change,
     edges_change,
     nodes_pct_change,
@@ -38,16 +40,20 @@ order by
     release_order
 ```
 
-## Graph Size Trends
+## Graph Size
 
-### Nodes and Edges Over Time
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
 
 <LineChart 
     data={release_metrics} 
     x="semantic_version" 
     y="n_nodes"
     title="Total Nodes Across Releases"
-    yAxisTitle="Number of Nodes"
+    yGridlines=false
+    xBaseline=false
+    markers=false
+    lineColor="#88C0D0"
+    lineWidth=3
     sort=false
 />
 
@@ -56,29 +62,79 @@ order by
     x="semantic_version" 
     y="n_edges"
     title="Total Edges Across Releases" 
-    yAxisTitle="Number of Edges"
+    yGridlines=false
+    xBaseline=false
+    markers=false
+    lineColor="#9D79D6"
+    lineWidth=3
     sort=false
 />
 
-## Drug and Disease lists over time
+</div>
+
+## Drug List
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
 
 <LineChart 
     data={release_metrics} 
     x="semantic_version" 
     y="n_nodes_from_drug_list"
     title="Drug Nodes Across Releases"
-    yAxisTitle="Number of Drug Nodes"
+    yGridlines=false
+    xBaseline=false
+    markers=false
+    lineColor="#73C991"
+    lineWidth=3
     sort=false
 />
 
 <LineChart 
     data={release_metrics} 
     x="semantic_version" 
-    y="n_nodes_from_disease_list"
-    title="Disease Nodes Across Releases" 
-    yAxisTitle="Number of Disease Nodes"
+    y="median_drug_node_degree"
+    title="Median Drug Node Degree"
+    yGridlines=false
+    xBaseline=false
+    markers=false
+    lineColor="#6FAF8C"
+    lineWidth=3
     sort=false
 />
+
+</div>
+
+## Disease List
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+
+<LineChart 
+    data={release_metrics} 
+    x="semantic_version" 
+    y="n_nodes_from_disease_list"
+    title="Disease Nodes Across Releases" 
+    yGridlines=false
+    xBaseline=false
+    markers=false
+    lineColor="#BF616A"
+    lineWidth=3
+    sort=false
+/>
+
+<LineChart 
+    data={release_metrics} 
+    x="semantic_version" 
+    y="median_disease_node_degree"
+    title="Median Disease Node Degree"
+    yGridlines=false
+    xBaseline=false
+    markers=false
+    lineColor="#D08770"
+    lineWidth=3
+    sort=false
+/>
+
+</div>
 
 ## Knowledge Sources
 
@@ -86,8 +142,12 @@ order by
     data={release_metrics} 
     x="semantic_version" 
     y="n_distinct_knowledge_sources"
-    title="Distinct Knowledge Sources Across Releases"
-    yAxisTitle="Number of Distinct Knowledge Sources"
+    title="Number of primary knowledge sources in each release"
+    yGridlines=false
+    xBaseline=false
+    markers=false
+    lineColor="#7FADDB"
+    lineWidth=3
     sort=false
 />
 
