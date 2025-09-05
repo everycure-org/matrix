@@ -1,7 +1,7 @@
 ```sql nodes_by_category
   select 
       category,
-      '/node/category/' || replace(category,'biolink:','') as link,
+      '/Graph Components/Node Category/' || replace(category,'biolink:','') as link,
       sum(count) as count
   from bq.merged_kg_nodes
   group by all

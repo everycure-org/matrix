@@ -1,4 +1,4 @@
-# {params.category}
+# {params.prefix}
 
 <script context="module">
   import { getSeriesColors, sourceOrder } from '../../../_lib/colors';
@@ -32,53 +32,53 @@
 </script>
 
 ```sql number_of_nodes
-select coalesce(sum(count), 0) as count
+select COALESCE(sum(count), 0) as count
 from bq.merged_kg_nodes
-where category = 'biolink:${params.category}'
+where prefix = '${params.prefix}'
 ```
 
 ```sql number_of_edges
-select coalesce(sum(count), 0) as count
+select COALESCE(sum(count), 0) as count
 from bq.merged_kg_edges
-where subject_category = 'biolink:${params.category}'
-   or object_category = 'biolink:${params.category}'    
+where subject_prefix = '${params.prefix}'
+   or object_prefix = '${params.prefix}'    
 ```
 
-```sql nodes_by_prefix
+```sql nodes_by_category
   select 
-      prefix,
-      '/node/prefix/' || prefix as link,
-      coalesce(sum(count), 0) as count
+      replace(category,'biolink:','') as category,
+      '/Graph Components/Node Category/' || replace(category,'biolink:','') as link,
+      sum(count) as count
   from bq.merged_kg_nodes
-  where category = 'biolink:${params.category}'
+  where prefix = '${params.prefix}'
   group by all
   order by count desc  
 ```
 
-```sql node_prefixes_by_upstream_data_source
-select prefix, 
+```sql node_categories_by_upstream_data_source
+select replace(category,'biolink:','') as category, 
        upstream_data_source, 
-       coalesce(sum(count), 0) as count 
+       sum(count) as count 
 from bq.merged_kg_nodes
-where category = 'biolink:${params.category}'
+where prefix = '${params.prefix}'
 group by all
 having count > 0
 order by count desc
 limit 50
 ```
 
-```sql edge_type_with_connected_prefix
+```sql edge_type_with_connected_category
 select 
       replace(subject_category,'biolink:','') || ' ' ||
       replace(predicate,'biolink:','') || ' ' || 
       replace(object_category,'biolink:','') as edge_type,
-      case when 'biolink:${params.category}' = subject_category 
-           then object_prefix 
-           else subject_prefix end as connected_prefix,
+      case when '${params.prefix}' = subject_prefix 
+           then replace(object_category,'biolink:','') 
+           else replace(subject_category,'biolink:','') end as connected_category,
       sum(count) as count   
 from bq.merged_kg_edges
-where (subject_category = 'biolink:${params.category}'
-   or object_category = 'biolink:${params.category}')
+where (subject_prefix = '${params.prefix}'
+   or object_prefix = '${params.prefix}')
    and ('${inputs.pks_filter.value}' = 'All' or primary_knowledge_source = '${inputs.pks_filter.value}')
 group by all
 order by count desc
@@ -89,29 +89,27 @@ order by count desc
       primary_knowledge_source,
       sum(count) as count
   from bq.merged_kg_edges
-  where subject_category = 'biolink:${params.category}'
-    or object_category = 'biolink:${params.category}'    
+  where subject_prefix = '${params.prefix}'
+    or object_prefix = '${params.prefix}'
   group by all
   having count > 0
   order by count desc
 ```
 
-{#if number_of_edges.length > 0 && number_of_nodes.length > 0}
 <Grid col=2>
     <p class="text-center text-lg pt-4"><span class="font-semibold text-2xl"><Value data={number_of_nodes} column="count" fmt="integer"/></span><br/>nodes</p>
     <p class="text-center text-lg pt-4"><span class="font-semibold text-2xl"><Value data={number_of_edges} column="count" fmt="integer"/></span><br/>edges</p>
 </Grid>
-{/if}
 
-{#if node_prefixes_by_upstream_data_source.length !== 0}
+{#if node_categories_by_upstream_data_source.length !== 0}
 <BarChart 
-    data={sortBySeriesOrdered(node_prefixes_by_upstream_data_source, 'upstream_data_source')}
-    x=prefix
+    data={sortBySeriesOrdered(node_categories_by_upstream_data_source, 'upstream_data_source')}
+    x=category
     y=count
     series=upstream_data_source
-    seriesColors={getSeriesColors(node_prefixes_by_upstream_data_source, 'upstream_data_source')}
+    seriesColors={getSeriesColors(node_categories_by_upstream_data_source, 'upstream_data_source')}
     swapXY=true    
-    title="Prefix"
+    title="Category"
 />
 {/if}
 
@@ -120,6 +118,7 @@ order by count desc
     data={primary_knowledge_source_counts}
     x=primary_knowledge_source
     y=count
+    split=upstream_data_source
     title="Edge Counts by Primary Knowledge Source"
 />
 {/if}
@@ -137,16 +136,16 @@ order by count desc
 </div>
 {/if}
 
-{#if edge_type_with_connected_prefix.length !== 0}
+{#if edge_type_with_connected_category.length !== 0}
 <DataTable
-    data={edge_type_with_connected_prefix}
-    title="Edge Types Connected to {params.category} Nodes"
-    groupBy=connected_prefix
+    data={edge_type_with_connected_category}
+    title="Edge Types Connected to {params.prefix} Nodes"
+    groupBy=connected_category
     subtotals=true
     totalRow=true
     groupsOpen=false>
     
-    <Column id="connected_prefix" title="Connected Prefix" />
+    <Column id="connected_category" title="Connected Category" />
     <Column id="edge_type" title="Edge Type" />
     <Column id="count" contentType="bar"/>
 </DataTable>
