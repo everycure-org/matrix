@@ -8,8 +8,8 @@ release_dir: ${runtime_gcs_bucket}/kedro/data/${release_folder_name}/${versions.
 feature_dir: ${release_dir}/temp_features/rtxkg2-n2v
 run_dir: ${feature_dir}/runs/${run_name}
 
-runtime_gcs_bucket: gs://${oc.env:RUNTIME_GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
-runtime_gcp_project: ${oc.env:RUNTIME_GCP_PROJECT_ID, mtrx-hub-dev-3of}
+runtime_gcs_bucket: gs://mtrx-us-central1-hub-dev-storage #${oc.env:RUNTIME_GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
+runtime_gcp_project: mtrx-hub-dev-3of #${oc.env:RUNTIME_GCP_PROJECT_ID, mtrx-hub-dev-3of}
 
 # These need to be duplicated in cloud/globals.yml even if defined in base/globals.yml because `paths` below references them.
 dev_gcs_bucket: gs://mtrx-us-central1-hub-dev-storage
