@@ -34,6 +34,9 @@ title: Knowledge Sources
 
   const smallSourceThreshold = 50000;
   
+  // Configuration
+  const TOP_N_PRIMARY_SOURCES = 25;
+  
   // Network graph configuration
   let networkOption = {};
   
@@ -71,7 +74,7 @@ title: Knowledge Sources
       });
       
       // Adjust primary sources for oval layout
-      const primaryNodes = sortedNodes.filter(n => n.category === 'primary').slice(0, 20);
+      const primaryNodes = sortedNodes.filter(n => n.category === 'primary').slice(0, TOP_N_PRIMARY_SOURCES).reverse();
       const aggregatorNodes = sortedNodes.filter(n => n.category === 'aggregator');
       const unifiedNodes = sortedNodes.filter(n => n.category === 'unified');
       const limitedNodes = [...primaryNodes, ...aggregatorNodes, ...unifiedNodes];
@@ -92,7 +95,23 @@ title: Knowledge Sources
         aggregatorStartY + (aggregatorNodes.length - 1) * aggregatorSpacing / 2 :
         aggregatorStartY;
       
+      // Pre-calculate primary node sizes for dynamic spacing
+      const primarySizes = primaryNodes.map(d => {
+        const size = Math.max(8, Math.min(35, Math.sqrt((d.value || 1) / 100000) * 3 + 8));
+        return { node: d, size: size };
+      });
+      
+      // Calculate cumulative spacing based on node sizes
+      const totalSpacing = primarySizes.reduce((total, item, index) => {
+        if (index === 0) return item.size;
+        return total + item.size + Math.max(20, item.size * 0.3); // Minimum 20px gap, or 30% of node size
+      }, 0);
+      
+      // Add padding at the end to ensure last node has proper spacing
+      const totalSpacingWithPadding = totalSpacing + Math.max(20, primarySizes[primarySizes.length - 1]?.size * 0.3 || 20);
+      
       let primaryCount = 0, aggregatorCount = 0, unifiedCount = 0;
+      let cumulativeSpacing = 0;
       
       limitedNodes.forEach(d => {
         if (d.node_id && !nodeMap.has(d.node_id)) {
@@ -100,10 +119,23 @@ title: Knowledge Sources
           let xPosition = 0, yPosition = 0;
           
           if (d.category === 'primary') {
-            // Calculate position on left half oval
-            const angle = startAngle + (primaryCount / (primaryNodes.length - 1)) * angleRange;
-            xPosition = centerX + Math.cos(angle) * radiusX; // Use horizontal radius
-            yPosition = centerY + Math.sin(angle) * radiusY; // Use vertical radius
+            // Find this node's size info
+            const sizeInfo = primarySizes.find(item => item.node.node_id === d.node_id);
+            const currentNodeSize = sizeInfo ? sizeInfo.size : 15;
+            
+            // Add spacing before this node (except for the first one)
+            if (primaryCount > 0) {
+              cumulativeSpacing += Math.max(20, currentNodeSize * 0.3);
+            }
+            
+            // Calculate position based on cumulative spacing (including space before this node)
+            const spacingRatio = cumulativeSpacing / totalSpacingWithPadding;
+            const angle = startAngle + spacingRatio * angleRange;
+            xPosition = centerX + Math.cos(angle) * radiusX;
+            yPosition = centerY + Math.sin(angle) * radiusY;
+            
+            // Add this node's size to cumulative spacing for next calculation
+            cumulativeSpacing += currentNodeSize;
             primaryCount++;
           } else if (d.category === 'aggregator') {
             xPosition = 350; // Move aggregators much closer to the oval
@@ -126,14 +158,14 @@ title: Knowledge Sources
 
           nodeMap.set(d.node_id, {
             id: d.node_id,
-            name: d.node_id,
+            name: d.node_name || d.node_id, // Use display name if available, fallback to ID
             nodeCategory: d.category, // Store as custom property, not ECharts category
             value: d.value || 0,
             x: xPosition,
             y: yPosition,
             symbol: 'circle', // All circles
             symbolSize: d.category === 'primary' ? 
-              Math.max(15, Math.min(45, (d.value || 0) / 1000000 * 0.4 + 15)) : // Primary: same scaling formula as aggregators/unified
+              Math.max(8, Math.min(35, Math.sqrt((d.value || 1) / 100000) * 3 + 8)) : // Primary: square root scaling for better differentiation
               d.category === 'unified' ? 
                 Math.max(60, Math.min(100, (d.value || 0) / 1000000 * 0.8 + 60)) : // Unified: largest circles
                 Math.max(45, Math.min(80, (d.value || 0) / 1000000 * 0.6 + 45)), // Aggregators: medium circles
@@ -144,7 +176,13 @@ title: Knowledge Sources
               fontSize: d.category === 'primary' ? 12 : 11,
               color: d.category === 'primary' ? '#333' : '#fff',
               fontWeight: d.category === 'primary' ? 'normal' : 'bold',
-              distance: d.category === 'primary' ? 8 : 0
+              distance: d.category === 'primary' ? 8 : 0,
+              formatter: function(params) {
+                if (d.category === 'primary' && params.name && params.name.length > 20) {
+                  return params.name.substring(0, 17) + '...';
+                }
+                return params.name;
+              }
             },
             fixed: true
           });
@@ -250,7 +288,7 @@ title: Knowledge Sources
         show: false
       },
       title: {
-        text: 'Knowledge Source Flow Network',
+        text: `Knowledge Source Flow Network - Top ${TOP_N_PRIMARY_SOURCES} Primary Sources`,
         left: 'center'
       },
       grid: {
@@ -311,12 +349,12 @@ title: Knowledge Sources
             return [point[0] + 20, point[1] - size.contentSize[1] / 2];
           },
           formatter: function(params) {
-            if (params.dataType === 'node' && params.data.category === 'primary') {
+            if (params.dataType === 'node' && params.data.nodeCategory === 'primary') {
               // Find all connections from this primary source to aggregators
               const sourceId = params.data.id;
               const connections = links.filter(link => link.source === sourceId);
               
-              let tooltipContent = `<strong>${sourceId.replace('infores:', '')}</strong><br/>`;
+              let tooltipContent = `<strong>${params.data.name}</strong><br/>`;
               tooltipContent += `Total connections: ${params.data.value.toLocaleString()}`;
               
               if (connections.length > 1) {
@@ -604,13 +642,15 @@ WITH base_data AS (
   GROUP BY 1, 2
 ),
 
--- Calculate totals for sizing
+-- Calculate totals for sizing and get display names
 primary_totals AS (
   SELECT 
-    primary_knowledge_source,
+    base_data.primary_knowledge_source,
+    COALESCE(infores.catalog.name, base_data.primary_knowledge_source) as display_name,
     SUM(edge_count) as total_from_primary
   FROM base_data
-  GROUP BY primary_knowledge_source
+  LEFT JOIN infores.catalog ON infores.catalog.id = base_data.primary_knowledge_source
+  GROUP BY base_data.primary_knowledge_source, infores.catalog.name
 ),
 
 upstream_totals AS (
@@ -637,6 +677,11 @@ SELECT
     WHEN total_from_primary < ${smallSourceThreshold} THEN 'Other (Small Sources)'
     ELSE primary_knowledge_source 
   END as node_id,
+  CASE 
+    WHEN '${inputs.view_mode}' = 'detailed' THEN display_name
+    WHEN total_from_primary < ${smallSourceThreshold} THEN 'Other (Small Sources)'
+    ELSE display_name 
+  END as node_name,
   'primary' as category,
   0 as x_position,
   total_from_primary as value,
@@ -649,6 +694,7 @@ UNION ALL
 SELECT 
   'node' as type,
   clean_upstream_source as node_id,
+  clean_upstream_source as node_name,
   'aggregator' as category, 
   1 as x_position,
   total_from_upstream as value,
@@ -661,6 +707,7 @@ UNION ALL
 SELECT 
   'node' as type,
   'Unified KG' as node_id,
+  'Unified KG' as node_name,
   'unified' as category,
   2 as x_position, 
   total_edges as value,
@@ -673,6 +720,7 @@ UNION ALL
 SELECT 
   'link' as type,
   NULL as node_id,
+  NULL as node_name,
   NULL as category,
   NULL as x_position,
   edge_count as value,
@@ -689,6 +737,7 @@ UNION ALL
 SELECT 
   'link' as type,
   NULL as node_id,
+  NULL as node_name,
   NULL as category,
   NULL as x_position,
   SUM(edge_count) as value,
@@ -698,4 +747,4 @@ FROM base_data
 GROUP BY clean_upstream_source
 ```
 
-<ECharts config={networkOption} data={network_data} height="800px" width="100%" />
+<ECharts config={networkOption} data={network_data} height="900px" width="100%" />
