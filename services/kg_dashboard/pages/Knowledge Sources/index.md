@@ -251,17 +251,6 @@ description="Choose between simplified view (groups small sources) or detailed v
 
 The network diagram below shows how knowledge flows from primary sources through aggregator knowledge graphs (RTX-KG2, ROBOKOP) to create our unified knowledge graph.
 
-**Understanding the visualization:**
-- **Primary Sources** (left): Original databases (e.g., DrugCentral, ChEMBL) containing assertions
-- **Aggregators** (center): Knowledge graphs (RTX-KG2, ROBOKOP) that ingest and process primary sources 
-- **Unified KG** (right): Our merged knowledge graph that combines assertions from all aggregators
-- **Edge thickness**: Proportional to the number of connections between sources
-
-**How overlaps are handled:**
-- Edge counts show total contributions from each primary source to each aggregator
-- The final count into Unified KG represents unique assertions (no double-counting)
-- Hover over connections to see detailed edge counts and overlap information
-
 ```sql network_data
 -- Get aggregator-level data for network visualization
 WITH base_data AS (
