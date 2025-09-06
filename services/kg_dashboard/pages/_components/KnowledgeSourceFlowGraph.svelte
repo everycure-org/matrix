@@ -1,6 +1,7 @@
-// THIS FILE IS LARGELY CLAUDE GENERATED
+
 
 <script>
+  // THIS FILE IS LARGELY CLAUDE GENERATED
   import { getSourceColor } from '../_lib/colors';
   import { ECharts } from '@evidence-dev/core-components';
   
