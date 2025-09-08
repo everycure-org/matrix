@@ -211,7 +211,11 @@ def normalize_edges(
     edges = edges.withColumnsRenamed({"subject": "original_subject", "object": "original_object"})
     edges = edges.withColumnsRenamed({"subject_normalized": "subject", "object_normalized": "object"})
 
-    edges = edges.dropDuplicates(subset=["subject", "predicate", "object"])
+    dedup_cols = ["subject", "predicate", "object"]
+    if "primary_knowledge_source" in edges.columns:
+        dedup_cols.append("primary_knowledge_source")
+
+    edges = edges.dropDuplicates(subset=dedup_cols)
 
     return edges
 
