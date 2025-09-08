@@ -186,6 +186,8 @@ diagnostics:
 
 
 # Docker service management (individual containers, Kedro runs natively)
+# This is done because docker compose does not work reliably in docker in docker. Suspected is apoc-extended plugin in neo4j.
+# So we run the services in docker individually and let kedro run natively on host machine.
 check_docker:
 	@echo "Checking Docker daemon..."
 	@docker version >/dev/null 2>&1 || (echo "❌ Docker daemon is not running. Please start Docker Desktop." && exit 1)
