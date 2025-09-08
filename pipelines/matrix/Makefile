@@ -43,6 +43,8 @@ default: fetch_secrets install fast_test integration_test
 
 install:
 	uv sync
+
+create_spark_dirs:
 	@echo "Creating local Spark temp directories..."
 	@mkdir -p data/local/{spark-temp,spark-warehouse,spark-checkpoints,java-tmp}
 	@mkdir -p data/test/{spark-temp,spark-warehouse,spark-checkpoints,java-tmp} 
@@ -292,7 +294,7 @@ remove_services: check_docker
 
 restart_services: check_docker stop_services start_services
 
-run_test_native_through_docker: start_services
+run_test_native_through_docker: create_spark_dirs start_services
 	@echo "Running test pipeline with Docker services, Kedro running natively..."
 	ulimit -n 10000
 	uv run kedro run --env test -p test
