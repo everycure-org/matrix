@@ -30,6 +30,11 @@ spec:
               cost-center: compute-workloads
               workload-category: ci-cd
           spec:
+            # initContainers run before app containers and must succeed in sequence.
+            # This init container ("init-dind-externals") likely prepares Docker-in-Docker
+            # (DinD) dependencies (e.g., tooling/certs/images or a shared volume) so the
+            # main container starts with everything ready. DinD setups often require
+            # privileged mode or Docker socket access—review the security trade-offs.
             initContainers:
             - name: init-dind-externals
               image: ghcr.io/actions/actions-runner:latest
