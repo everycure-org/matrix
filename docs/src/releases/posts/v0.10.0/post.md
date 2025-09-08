@@ -46,6 +46,16 @@ authors:
 
 - **Features and Modelling Integration**: Added features and modelling components to the weekly pipeline run, enabling regular evaluation of model performance and feature engineering improvements
   [#1631](https://github.com/everycure-org/matrix/pull/1631)
+- **Graph Rewiring**: Experiment with random shuffling of edges and also of embeddings to assess impact on model performance
+  [Report](https://github.com/everycure-org/lab-notebooks/blob/42398eca13dee3bc7c454268dd7ffc481a438994/michael_strasser/perturbation_experiment/perturbation%20report.ipynb)
+- **Graph Slicing**: Experiment filtering out certain node types to assess impact on model performance if 'noise' is removed
+  [Report](https://github.com/everycure-org/lab-notebooks/blob/80480ae8b2bd96d35a4b309a0f674bf80a35cf2b/michael_strasser/slicing_experiment/slicing_report.ipynb)
+- **Ground Truth Experiments**: Experiment benchmarking different ground truth sets for training our ML system
+  [Several Reports Here](https://github.com/everycure-org/lab-notebooks/blob/main/gt_experiments_june2025/reports/)
+- **Ground Truth Experiments- Negative Sampling**: Experiment benchmarking different ground truth sets for training our ML system, comparing different negative sampling strategies. 
+  [Several Reports Here](https://github.com/everycure-org/lab-notebooks/blob/main/gt_experiments_june2025/reports/)
+- **Evidence Synthesis**: Evidence Synthesis Benchmark and Comparison with Matrix Predictions
+  [Report](https://github.com/everycure-org/lab-notebooks/pull/193)
 
 ### Bugfixes 🐛
 
