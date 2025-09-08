@@ -30,11 +30,11 @@ spec:
               cost-center: compute-workloads
               workload-category: ci-cd
           spec:
-            # initContainers run before app containers and must succeed in sequence.
-            # This init container ("init-dind-externals") likely prepares Docker-in-Docker
-            # (DinD) dependencies (e.g., tooling/certs/images or a shared volume) so the
-            # main container starts with everything ready. DinD setups often require
-            # privileged mode or Docker socket access—review the security trade-offs.
+          # initContainers run before app containers and must succeed in sequence.
+          # This init container ("init-dind-externals") likely prepares Docker-in-Docker
+          # (DinD) dependencies (e.g., tooling/certs/images or a shared volume) so the
+          # main container starts with everything ready. DinD setups often require
+          # privileged mode or Docker socket access—review the security trade-offs.
             initContainers:
             - name: init-dind-externals
               image: ghcr.io/actions/actions-runner:latest
@@ -55,6 +55,9 @@ spec:
               env:
                 - name: DOCKER_GROUP_GID
                   value: "123"
+              # Concerns about security arise with privileged mode, as it grants extensive access to the host system.
+              # This is acceptable in our environment as we have disabled running untrusted code on our self-hosted runners through Workflow approvals.
+              # see here: https://docs.github.com/en/actions/how-tos/manage-workflow-runs/approve-runs-from-forks
               securityContext:
                 privileged: true
               restartPolicy: Always
