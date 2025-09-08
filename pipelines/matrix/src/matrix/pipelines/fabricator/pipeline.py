@@ -4,8 +4,7 @@ import random
 import networkx as nx
 import pandas as pd
 from kedro.pipeline import Pipeline, node, pipeline
-
-from matrix.utils.fabrication import fabricate_datasets
+from matrix_fabricator.fabrication import fabricate_datasets
 
 from . import nodes
 
@@ -233,6 +232,18 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "negative_edges": "ingestion.raw.ec_ground_truth.negatives",
                 },
                 name="create_ec_gt_pairs",
+            ),
+            node(
+                func=fabricate_datasets,
+                inputs={
+                    "fabrication_params": "params:fabricator.drugbank_gt",
+                    "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                },
+                outputs={
+                    "positive_edges": "ingestion.raw.drugbank_ground_truth.positives",
+                    "negative_edges": "ingestion.raw.drugbank_ground_truth.negatives",
+                },
+                name="create_drugbank_gt_pairs",
             ),
             node(
                 func=fabricate_datasets,

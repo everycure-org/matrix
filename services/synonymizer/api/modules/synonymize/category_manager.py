@@ -9,10 +9,10 @@ def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 
-import os
-import json
-import pickle
 import copy
+import json
+import os
+import pickle
 
 import requests
 import requests_cache

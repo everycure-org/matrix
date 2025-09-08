@@ -4,7 +4,41 @@
 
 Initially, we noticed the machine type was not being allocated. This due to the ephemeral storage requirements not being satisfied by any of the nodes.
 
-> We have bumped the storage of the boot disk to 1 TB.
+> To solve this, we have now added a volume to each node as a **Persistent Volume Claim (PVC)**. This size of this volume is calculated from the `ephemeral_storage_limit`. 
+
+The volume code:
+
+```yaml
+podSpecPatch: |
+  volumes:
+      - name: scratch
+        ephemeral:
+          volumeClaimTemplate:
+            spec:
+              accessModes: ["ReadWriteOnce"]
+              resources:
+                requests:
+                  storage: {% raw %}"{{inputs.parameters.ephemeral_storage_limit}}Gi"
+    {% endraw %}
+```
+
+And to mount this volume we do:
+
+```yaml
+volumeMounts
+  - name: scratch
+    mountPath: /scratch
+```
+
+To make sure that the volumes are deleted after a pod succeeds/fails/error, we have set the 
+
+```yaml
+spec:
+  podGC:
+    strategy: OnPodCompletion
+```
+
+This ensures that the cleanup happens automatically.
 
 ## Bumping memory spec
 

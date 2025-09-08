@@ -13,13 +13,15 @@ These are standalone modules for specific infrastructure components:
 #### [Artifact Registry](artifact_registry_module.md)
 **Path**: `modules/artifact_registry`
 
-Creates Google Cloud Artifact Registry repositories with automated cleanup policies.
+Creates Google Cloud Artifact Registry repositories with automated cleanup policies and workflow integration.
 
 **Key Features**:
 - Automatic deletion of old artifacts (default: 3 days)
+- Workflow-based immediate cleanup after successful Argo Workflow completion
 - Configurable retention policies for different environments
-- Support for multiple artifact formats (Docker, Maven, NPM, etc.)
-- Cost optimization through intelligent cleanup
+- Dual-layer cost optimization through scheduled and immediate cleanup
+- Active cleanup policies (no dry-run mode)
+- Delete failed workflow images after 14 days. Allowing room for retries.
 
 **Usage**:
 ```terraform

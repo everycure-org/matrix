@@ -9,7 +9,8 @@ modelling.disease_types:
   - biolink:BehavioralFeature
   - biolink:DiseaseOrPhenotypicFeature
 
-
+modelling.training_data_sources:
+  - kgml_xdtd # KGML-xDTD Indications
 
 modelling.splitter:
 

@@ -12,13 +12,13 @@ def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 
-import os
 import json
-import time
+import os
 import pickle
-import re
 import platform
+import re
 import shelve
+import time
 
 import requests
 import requests_cache

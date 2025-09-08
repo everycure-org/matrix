@@ -2,8 +2,7 @@
 requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools.dynamic.dependencies]
- file = "requirements.txt"
+
 
 [tool.pytest.ini_options]
 pythonpath = "src"
@@ -19,8 +18,34 @@ norecursedirs = [
     "packages",
 ]
 
+# NOTE: This pyproject.toml was partially generated using AI assistance.
 [project]
-name = "docs"
+name = "matrix-docs"
 requires-python = ">=3.11"
 readme = "README.md"
 dynamic = [ "version"]
+dependencies = [
+    "mkdocs-material==9.5.47",
+    "mkdocs-material-extensions",
+    "pymdown-extensions",
+    "mkdocs-glightbox",
+    "mkdocs-git-revision-date-localized-plugin",
+    "mkdocs-awesome-pages-plugin",
+    "mkdocs-table-reader-plugin",
+    "mkdocs-blogging-plugin",
+    "mkdocs-simple-hooks",
+    "mkdocs-jupyter",
+    "openpyxl",
+    "jupyter",
+    "pyyaml",
+    "mkdocs-drawio~=1.8.0",
+    "mkdocs-git-committers-plugin-2<2.4.0",  # pinned due to https://github.com/ojacques/mkdocs-git-committers-plugin-2/issues/72
+    "mkdocs-git-authors-plugin",
+    "pytest",
+    "semver",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+]

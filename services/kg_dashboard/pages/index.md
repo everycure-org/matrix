@@ -2,6 +2,12 @@
 title: KG Dashboard
 ---
 
+<div class="mb-4">
+  <a href="https://docs.dev.everycure.org/releases/release_history/" class="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm">
+    ← Release History
+  </a>
+</div>
+
 <script context="module">
   import { getSourceColor } from './_lib/colors';
   
