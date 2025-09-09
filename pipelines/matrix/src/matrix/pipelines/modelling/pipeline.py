@@ -153,6 +153,7 @@ def create_model_pipeline(model_name: str, num_shards: int, n_cross_val_folds: i
                         "modelling.model_input.splits@pandas",
                         f"params:modelling.{model_name}.model_options.generator",
                         "params:modelling.splitter",
+                        "filtering.prm.filtered_edges",
                     ],
                     outputs=f"modelling.{shard}.model_input.enriched_splits",
                     name=f"enrich_{shard}_splits",

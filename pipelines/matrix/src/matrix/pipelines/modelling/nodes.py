@@ -15,7 +15,7 @@ from sklearn.impute._base import _BaseImputer
 from sklearn.model_selection import BaseCrossValidator
 
 from matrix.datasets.graph import KnowledgeGraph
-from matrix.datasets.pair_generator import SingleLabelPairGenerator
+from matrix.datasets.pair_generator import DegreeAwarePairGenerator, SingleLabelPairGenerator
 from matrix.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
 
 from .model import ModelWrapper
@@ -312,6 +312,7 @@ def create_model_input_nodes(
     graph: KnowledgeGraph,
     splits: pd.DataFrame,
     generator: SingleLabelPairGenerator,
+    edges: ps.DataFrame = None,
     splitter: BaseCrossValidator = None,
 ) -> pd.DataFrame:
     """Function to enrich the splits with drug-disease pairs.
@@ -324,6 +325,8 @@ def create_model_input_nodes(
         graph: Knowledge graph.
         splits: Data splits.
         generator: SingleLabelPairGenerator instance.
+        edges: filtered edges dataframe
+            Required only when using DegreeAwarePairGenerator.
         splitter: The splitter used to create the splits. Required to ensure correct generator is used.
 
     Returns:
@@ -338,7 +341,11 @@ def create_model_input_nodes(
     num_folds = splits["fold"].max() + 1
     for fold in range(num_folds):
         splits_fold = splits[splits["fold"] == fold]
-        generated = generator.generate(graph, splits_fold)
+
+        if isinstance(generator, DegreeAwarePairGenerator):
+            generated = generator.generate(graph, splits_fold, edges)
+        else:
+            generated = generator.generate(graph, splits_fold)
         generated["split"] = "TRAIN"
         generated["fold"] = fold
         all_generated.append(generated)

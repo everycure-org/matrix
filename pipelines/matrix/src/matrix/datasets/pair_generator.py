@@ -320,6 +320,114 @@ class DiseaseSplitDrugDiseasePairGenerator(SingleLabelPairGenerator):
         return unknown_df
 
 
+class DegreeAwarePairGenerator(SingleLabelPairGenerator):
+    """Degree aware drug-disease pair implementation, following DANs approach.
+
+    Strategy implementing a drug-disease pair generator using existing drug-disease edges from KG and 'swapping' head & tail between two edges.
+
+    """
+
+    def __init__(
+        self,
+        y_label: int,
+        random_state: int,
+        n_replacements: int,
+        drug_flags: List[str],
+        disease_flags: List[str],
+    ) -> None:
+        """Initializes the ReplacementDrugDiseasePairGenerator instance.
+
+        Args:
+            y_label: label to assign to generated pairs.
+            random_state: Random seed.
+            n_replacements: Number of replacements to make.
+            drug_flags: List of knowledge graph flags defining drugs sample set.
+            disease_flags: List of knowledge graph flags defining diseases sample set.
+        """
+        self._n_replacements = n_replacements
+        self._drug_flags = drug_flags
+        self._disease_flags = disease_flags
+        super().__init__(y_label, random_state)
+
+    def generate(self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        """Function to generate drug-disease pairs according to the strategy.
+
+        Args:
+            graph: KnowledgeGraph instance.
+            known_pairs: DataFrame with known drug-disease pairs.
+            kwargs: additional kwargs to use
+        Returns:
+            DataFrame with unknown drug-disease pairs.
+        """
+
+        known_data_set = {(drug, disease) for drug, disease in zip(known_pairs["source"], known_pairs["target"])}
+
+        # Extract known positive training set
+        kp_train_pairs = known_pairs[(known_pairs["y"] == 1) & (known_pairs["split"] == "TRAIN")]
+        kp_train_set = {(drug, disease) for drug, disease in zip(kp_train_pairs["source"], kp_train_pairs["target"])}
+
+        # Defining list of node id's to sample from
+        drug_samp_ids = graph.flags_to_ids(self._drug_flags)
+        disease_samp_ids = graph.flags_to_ids(self._disease_flags)
+
+        # Generate unknown data
+        unknown_data = []
+        for kp_drug, kp_disease in tqdm(kp_train_set):
+            unknown_data += ReplacementDrugDiseasePairGenerator._make_replacements(
+                graph,
+                kp_drug,
+                kp_disease,
+                drug_samp_ids,
+                disease_samp_ids,
+                self._n_replacements,
+                known_data_set,
+                self._y_label,
+            )
+
+        return pd.DataFrame(
+            columns=["source", "source_embedding", "target", "target_embedding", "y"],
+            data=unknown_data,
+        )
+
+    @staticmethod
+    def _make_replacements(
+        graph: KnowledgeGraph,
+        kp_drug: str,
+        kp_disease: str,
+        drug_samp_ids: List[str],
+        disease_samp_ids: List[str],
+        n_replacements: int,
+        known_data_set: Set[tuple],
+        y_label: int,
+    ) -> List[str]:
+        """Helper function to generate list of drug-disease pairs through replacements."""
+        # Sample pairs
+        unknown_data = []
+        while len(unknown_data) < 2 * n_replacements:
+            # Sample a random drug and disease
+            rand_drug = random.choice(drug_samp_ids)
+            rand_disease = random.choice(disease_samp_ids)
+            # Perform replacements
+            if (kp_drug, rand_disease) not in known_data_set and (
+                rand_drug,
+                kp_disease,
+            ) not in known_data_set:
+                for drug, disease in [
+                    (kp_drug, rand_disease),
+                    (rand_drug, kp_disease),
+                ]:
+                    unknown_data.append(
+                        [
+                            drug,
+                            graph.get_embedding(drug),
+                            disease,
+                            graph.get_embedding(disease),
+                            y_label,
+                        ]
+                    )
+        return unknown_data
+
+
 ## Generators for evaluation datasets
 
 
