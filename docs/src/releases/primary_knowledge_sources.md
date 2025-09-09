@@ -227,7 +227,7 @@ _A comprehensive, free-to-access, online database containing information on drug
 - **Matrix manual curation**: [CC BY-NC 4.0 (Complete Database including structures, external links, protein identifiers, target sequences, drug sequences), CC0 1.0 (Open Data)](https://go.drugbank.com/releases/latest#open-data)
 - **KG Registry**: https://go.drugbank.com/legal/terms_of_use
 - **Reusable Data**: CC-BY-NC-4.0 (restrictive)
-   - _Issues_: [{'criteria': 'D.1.1', 'comment': 'The NC license allows for liberal non-commercial reuse.'}, {'criteria': 'E.1.1', 'comment': 'The NC license allows for non-commercial reuse with other non-commercial interests.'}]
+   - _Issues_: The NC license allows for liberal non-commercial reuse. (D.1.1); The NC license allows for non-commercial reuse with other non-commercial interests. (E.1.1)
    - _Commentary_: There is also an open (CC0) data subset for vocabulary and structures that could be evaluated separately; it is ~5mb vs ~150mb for the complete "academic" set(about 3%).<hr />This seems to be mostly a standard NC/commercial licensing split, with DrugBank+ supporting commerical licensing for fees.<hr />To download the full academic set, one must create an account (https://go.drugbank.com/public_users/sign_up), which is a multi-step and human mediated process, with varying turnaround times and follow-up questions.
 
 #### Review information for this resource
@@ -373,7 +373,7 @@ _A freely available electronic database containing detailed information about sm
 
 - **Matrix manual curation**: [CC BY 4.0](https://hmdb.ca/about)
 - **Reusable Data**: custom (restrictive)
-   - _Issues_: [{'criteria': 'A.2.2', 'comment': 'Custom terms at linked license and on downloads page.'}, {'criteria': 'D.1.1', 'comment': 'The custom license would appear to allow for liberal non-commercial reuse.'}, {'criteria': 'E.1.1', 'comment': 'The custom license would appear to explicitly allow for non-commercial reuse with other non-commercial interests.'}]
+   - _Issues_: Custom terms at linked license and on downloads page. (A.2.2); The custom license would appear to allow for liberal non-commercial reuse. (D.1.1); The custom license would appear to explicitly allow for non-commercial reuse with other non-commercial interests. (E.1.1)
    - _Commentary_: While the terms are minimal, they seem intended to act a bit the CC-BY-NC; it was evaluated similarly.<hr />Given their upstream resources mentioned in http://www.hmdb.ca/sources , it would be interesting to know their pass-through negotiations and differences with Canadian law..
 
 #### Review information for this resource
@@ -440,7 +440,6 @@ _Stub Resource page for ncit. This page was automatically generated because it w
 
 - **Matrix manual curation**: [CC BY 4.0](https://evs.nci.nih.gov/license)
 - **Reusable Data**: CC-BY-4.0 (permissive)
-   - _Issues_: []
    - _Commentary_: The Terms of Use puts a trademark restriction on re-releasing the data using the name "NCI Thesaurus".  This was evaluated as be outside the scope of data (re)use.
 
 #### Review information for this resource
@@ -467,7 +466,6 @@ _Bgee is a database for retrieval and comparison of gene expression patterns acr
 - **Matrix manual curation**: [CC0 1.0](https://www.bgee.org/about/)
 - **KG Registry**: https://creativecommons.org/licenses/by/4.0/
 - **Reusable Data**: CC0-1.0 (permissive)
-   - _Issues_: []
    - _Commentary_: In footer, two download pages are given in the footer (/download/processed-expression-values and /download/gene-expression-calls) and a third in the menu (/download/data-dumps); on all of these pages we see "All data are available under the Creative Commons Zero license (CC0)."<hr />Also noting that on /about/, there is similarly affirming text.<hr />A little unclear on how this practically interacts with the sources list on /about/sources, but does not affect evaluation with current standards.<hr />While there is manual iteration needed for the TSVs, the mysql and rdf available on the data-dumps page sufficiently bridges the bulk criteria in C.1.
 
 #### Review information for this resource
@@ -537,7 +535,7 @@ _PANTHER is a Protein ANalysis THrough Evolutionary Relationships Classification
 
 - **Matrix manual curation**: [CC BY 4.0](https://pantherdb.org/tou.jsp)
 - **Reusable Data**: all rights reserved (copyright)
-   - _Issues_: [{'criteria': 'D.1.2', 'comment': 'Given the all rights reserved copyright statement, any downstream reuse would require negotiation.'}, {'criteria': 'E.1.2', 'comment': 'Given the all rights reserved copyright statement, all user/agent types would need to negotiate downstream reuse.'}]
+   - _Issues_: Given the all rights reserved copyright statement, any downstream reuse would require negotiation. (D.1.2); Given the all rights reserved copyright statement, all user/agent types would need to negotiate downstream reuse. (E.1.2)
    - _Commentary_: There is an alternate curation for this resource that bases itself off of 'http://www.pantherdb.org/tou.jsp', which was found using a narrow Google search and not given consideration due to the difficulties in finding it--we have found no access to this document yet except for the Google search.<hr />Considering the alternate license, downloads are under a permissive minimal license that states '...as long as the following copyright statement is placed at the top of each file: Copyright © 2005 SRI International', which besides being likely out of data, is custom and does not cover APIs, remixing, and the like. It is hard to interpret the consequences of this license.
 
 #### Review information for this resource
@@ -597,7 +595,7 @@ _Reactome from Biopax_
 
 - **Matrix manual curation**: [CC0 1.0 (All Data), CC BY 4.0 (Pathway art/branding), Apache 2.0 (Software/code - some exceptions)](https://reactome.org/license)
 - **Reusable Data**: CC-BY-4.0 (permissive)
-   - _Issues_: [{'criteria': 'B.2.2', 'comment': 'KEGG gene and pathway annotations used to construct Reactome Functional Interaction (FI) Network are not licenced CC-BY-4.0. There is a comment that "the recipient may not distribute this data to other users without a license from Pathway Solutions, Inc."'}]
+   - _Issues_: KEGG gene and pathway annotations used to construct Reactome Functional Interaction (FI) Network are not licenced CC-BY-4.0. There is a comment that "the recipient may not distribute this data to other users without a license from Pathway Solutions, Inc." (B.2.2)
    - _Commentary_: The issue with criteria B.2.2 could be rectified if Reactome provided a clean copy of the data that can be redistributed without negotiation.
 
 #### Review information for this resource
@@ -701,7 +699,7 @@ _OMIM (Online Mendelian Inheritance in Man) is a continuously updated, expert-cu
 - **Matrix manual curation**: [Custom Johns Hopkins University OMIM Use Agreement](https://www.omim.org/help/agreement)
 - **KG Registry**: https://www.omim.org/help/agreement
 - **Reusable Data**: custom (restrictive)
-   - _Issues_: [{'criteria': 'A.2.2', 'comment': 'The license at link is custom.'}, {'criteria': 'B.1', 'comment': 'Agreement section 13 requires downloads to be updated by downstream; section 14 discussion arbitrary API key revocation.'}, {'criteria': 'C.2', 'comment': 'Downloads and access are provided post-registration; as the API key is used for access control, it violates the C.2 example.'}, {'criteria': 'D.1.2', 'comment': 'Sections 8, 9, and 10 of the agreement make it seems that while a non-profit reasearcher may access the data, there is no reuse (pass-through) possible.'}, {'criteria': 'E.1.2', 'comment': 'Sections 8, 9, and 10 of the agreement make it seems that while a non-profit reasearcher may access the data, there is no reuse (pass-through) possible.'}]
+   - _Issues_: The license at link is custom. (A.2.2); Agreement section 13 requires downloads to be updated by downstream; section 14 discussion arbitrary API key revocation. (B.1); Downloads and access are provided post-registration; as the API key is used for access control, it violates the C.2 example. (C.2); Sections 8, 9, and 10 of the agreement make it seems that while a non-profit reasearcher may access the data, there is no reuse (pass-through) possible. (D.1.2); Sections 8, 9, and 10 of the agreement make it seems that while a non-profit reasearcher may access the data, there is no reuse (pass-through) possible. (E.1.2)
    - _Commentary_: Assuming that one registered, it seems that data access would be relatively pain-free; so no C.1 violation.<hr />See also: https://omim.org/downloads and https://omim.org/api for additional access information.<hr />It is worth reading through the linked agreement; there are many sections that are restrictive or would be best interpreted with legal advice.
 
 #### Review information for this resource
@@ -726,7 +724,7 @@ _focusing on three of the most commonly drug-targeted protein families: G-protei
 
 - **Matrix manual curation**: [Aggregated data — follows licenses of primary data sources](https://pharos.nih.gov/about)
 - **Reusable Data**: inconsistent (unknown)
-   - _Issues_: [{'criteria': 'A.1.1', 'comment': 'While any novel data is under a CC license (CC-BY-SA-4.0), the integrated resources are under whatever license the upstream is, with the user expected to sort it out.'}]
+   - _Issues_: While any novel data is under a CC license (CC-BY-SA-4.0), the integrated resources are under whatever license the upstream is, with the user expected to sort it out. (A.1.1)
    - _Commentary_: Unfortunately, the API ToS link leads to a bad (404-type) Swagger page.<hr />From the license page: \"Please note that TCRD incoporates many data sources with a variety of associated licenses...Users of the TCRD downloads are resposible for compliance with these licenses.\"<hr />Given the variety and terms of the upstream resources, the inconsistency is not unexpected.<hr />The license is also found here at https://pharos.nih.gov/idg/about, which has similar wording to the README on the downloads page, but makes no note of the user responsibility to adhere to licenses from original data sources.
 
 #### Review information for this resource
@@ -870,7 +868,7 @@ _Gene integrates information from a wide range of species. A record may include 
 
 - **Matrix manual curation**: [CC0 1.0](https://kghub.org/kg-registry/resource/ncbigene/ncbigene.html)
 - **Reusable Data**: inconsistent (unknown)
-   - _Issues_: [{'criteria': 'A.1.1', 'comment': 'The license apparently uses language to declare something similar to "public domain", but with the caveat that it may contain data that is otherwise. This is judged to be a violation as any (re)use would depend on negotiating with all upstream copyright holders, which are not presented. It is implied that their license does not cover all data and could not find an explicit "clean" version of the data in the downloads.'}]
+   - _Issues_: The license apparently uses language to declare something similar to "public domain", but with the caveat that it may contain data that is otherwise. This is judged to be a violation as any (re)use would depend on negotiating with all upstream copyright holders, which are not presented. It is implied that their license does not cover all data and could not find an explicit "clean" version of the data in the downloads. (A.1.1)
    - _Commentary_: We specifically avoided the more general operation of the EUtils suite, focusing on the provided downloads.<hr />The following statements from the license page seem to support a custom "hands off" approach. To was difficult to decide if this was "restrictive" or "unknown" (although inconsistent in practice).<hr />...NCBI itself places no restrictions on the use or distribution of the data contained therein. Nor do we accept data when the submitter has requested restrictions on reuse or redistribution...<hr />...some submitters of the original data...may claim patent, copyright, or other intellectual property rights in all or a portion of the data (that has been submitted)...<hr />...NCBI cannot provide comment or unrestricted permission concerning the use, copying, or distribution of the information contained in the molecular databases...
 
 #### Review information for this resource
@@ -962,7 +960,7 @@ _A robust, publicly available database that aims to advance understanding about 
 - **Matrix manual curation**: [Custom CTD License — free for research/education; commercial use requires written permission; attribution, linking, and usage notification required](https://ctdbase.org/about/legal.jsp)
 - **KG Registry**: https://ctdbase.org/about/legal.jsp
 - **Reusable Data**: custom (restrictive)
-   - _Issues_: [{'criteria': 'A.2.2', 'comment': 'Custom license with interesting use restrictions.'}, {'criteria': 'B.1', 'comment': 'For quality control purposes, you must provide CTD with periodic access to your publication of our data.'}, {'criteria': 'D.1.2', 'comment': 'Given the four statements in the Additional Terms of Data Use, notably number 4, it looks like any downstream user would have to renegotiate with CTD.'}, {'criteria': 'E.1.1', 'comment': 'Without negotiation: "It is to be used only for research and educational purposes."'}]
+   - _Issues_: Custom license with interesting use restrictions. (A.2.2); For quality control purposes, you must provide CTD with periodic access to your publication of our data. (B.1); Given the four statements in the Additional Terms of Data Use, notably number 4, it looks like any downstream user would have to renegotiate with CTD. (D.1.2); Without negotiation: "It is to be used only for research and educational purposes." (E.1.1)
    - _Commentary_: There are statements made in the Additional Terms of Data Use that would make it very difficult to re-use the data provided without a air amount o coordination with the resource and changes to information handling.
 
 #### Review information for this resource
@@ -1032,7 +1030,7 @@ _MGI is the international database resource for the laboratory mouse, providing 
 
 - **Matrix manual curation**: [CC BY 4.0](https://www.informatics.jax.org/mgihome/other/copyright.shtml)
 - **Reusable Data**: custom (permissive)
-   - _Issues_: [{'criteria': 'A.2.2', 'comment': 'Custom license.'}, {'criteria': 'E.1.1', 'comment': 'distinguishes groups, allowing for research/academic. Commercial groups can negotiate.'}]
+   - _Issues_: Custom license. (A.2.2); distinguishes groups, allowing for research/academic. Commercial groups can negotiate. (E.1.1)
    - _Commentary_: -This software and data are provided to enhance knowledge and encourage progress in the scientific community and are to be used only for research and educational purposes.<hr />-Any reproduction or use for commercial purpose is prohibited without the prior express written permission of the Jackson Laboratory.
 
 #### Review information for this resource
@@ -1154,7 +1152,7 @@ _a manually knowledge_assertion database of bioactive molecules with drug-like p
 - **Matrix manual curation**: [CC BY-SA 3.0](https://chembl.gitbook.io/chembl-interface-documentation/about)
 - **KG Registry**: https://creativecommons.org/licenses/by-sa/3.0/
 - **Reusable Data**: CC-BY-SA-3.0 (copyleft)
-   - _Issues_: [{'criteria': 'D.1.2', 'comment': 'CC SA prevents some types of reuse, such and modification and redistribution with data from different license types.'}, {'criteria': 'E.1.2', 'comment': 'CC SA prevents all parties from reusing the data as D.1.2.'}]
+   - _Issues_: CC SA prevents some types of reuse, such and modification and redistribution with data from different license types. (D.1.2); CC SA prevents all parties from reusing the data as D.1.2. (E.1.2)
    - _Commentary_: There was no centralized licensing/terms information on the main site, but all download FTP directories we looked at contained terms for the CC SA 3.0; we used as single example as the license link.
 
 #### Review information for this resource
@@ -1404,7 +1402,7 @@ _Online drug information resource created and maintained by Division of Translat
 - **Matrix manual curation**: [CC BY-SA 4.0](https://drugcentral.org/privacy)
 - **KG Registry**: https://creativecommons.org/licenses/by/4.0/
 - **Reusable Data**: CC-BY-SA-4.0 (copyleft)
-   - _Issues_: [{'criteria': 'D.1.2', 'comment': 'By using a copyleft-style license, there may be issues in mixing and redistributing this data with licenses that have incompatible terms.'}, {'criteria': 'E.1.2', 'comment': 'By using a copyleft-style license, there may be some parties with issues in mixing and redistributing this data with licenses that have incompatible terms.'}]
+   - _Issues_: By using a copyleft-style license, there may be issues in mixing and redistributing this data with licenses that have incompatible terms. (D.1.2); By using a copyleft-style license, there may be some parties with issues in mixing and redistributing this data with licenses that have incompatible terms. (E.1.2)
    - _Commentary_: While there is upstream data integtration, there seems to be no mention of upstream licenses or terms. Not necessarily our issue here.
 
 #### Review information for this resource
@@ -1512,7 +1510,7 @@ _A curated database of human hereditary syndromes from OMIM, Orphanet, and DECIP
 
 - **Matrix manual curation**: [Custom HPO License — free use with attribution, version/date display, and no content alteration without approval](https://hpo.jax.org/license)
 - **Reusable Data**: custom (restrictive)
-   - _Issues_: [{'criteria': 'A.2.2', 'comment': 'HPO is copyrighted to protect ontologies and all changes must be made by hpo developers.'}, {'criteria': 'D.1.2', 'comment': 'Restricted downstream use. May not be edited.'}, {'criteria': 'E.1.2', 'comment': 'Restricted downstream use translates to agents as well.'}]
+   - _Issues_: HPO is copyrighted to protect ontologies and all changes must be made by hpo developers. (A.2.2); Restricted downstream use. May not be edited. (D.1.2); Restricted downstream use translates to agents as well. (E.1.2)
    - _Commentary_: immutability<hr />unclear derivatives<hr />That the Human Phenotype Ontology Consortium is acknowledged and cited properly.<hr />That neither the content of the HPO file(s) nor the logical relationships embedded within the HPO file(s) be altered in any way.
 
 #### Review information for this resource
@@ -1604,7 +1602,7 @@ _Zebrafish Information Network, including the Zebrafish Anatomical Ontology_
 - **Matrix manual curation**: [CC BY 4.0](https://zfin.atlassian.net/wiki/spaces/general/pages/1942160112/WARRANTY+AND+LIABILITY+DISCLAIMER+OWNERSHIP+AND+LIMITS+ON+USE)
 - **KG Registry**: https://creativecommons.org/licenses/by/4.0/
 - **Reusable Data**: custom (restrictive)
-   - _Issues_: [{'criteria': 'A.2.2', 'comment': 'Custom license with non-academic and non-research use restrictions.'}, {'criteria': 'B.1', 'comment': 'The license explicity requires intervention for downstream reuse and redistribution.'}, {'criteria': 'D.1.2', 'comment': 'The license requires written permission for redistribution.'}, {'criteria': 'E.1.2', 'comment': 'The license requires written premission for redistribution even for academic and non commerical parties.'}]
+   - _Issues_: Custom license with non-academic and non-research use restrictions. (A.2.2); The license explicity requires intervention for downstream reuse and redistribution. (B.1); The license requires written permission for redistribution. (D.1.2); The license requires written premission for redistribution even for academic and non commerical parties. (E.1.2)
    - _Commentary_: -ZFIN Software and Data are provided to enhance knowledge and encourage progress in the scientific community, and are to be used only for research and educational purposes. ZFIN reserves all rights not expressly granted. Further, ZFIN retains all rights, title, and interest in and to the Software and Data. Any reproduction or use for a commercial purpose is prohibited without the prior express written permission of ZFIN. Distribution of the Software or Data to any third party, without a separate written agreement with ZFIN, is prohibited.
 
 #### Review information for this resource
@@ -1673,7 +1671,7 @@ _A Database of Drosophila Genes & Genomes_
 
 - **Matrix manual curation**: [CC BY 4.0](https://wiki.flybase.org/wiki/FlyBase:About#FlyBase_Licenses_and_Availability)
 - **Reusable Data**: custom (restrictive)
-   - _Issues_: [{'criteria': 'A.2.2', 'comment': "Copyright statement includes 'This publication may be copied for non-commercial, scientific uses by individuals or organizations (including for-profit organizations). FlyBase is freely distributed to the scientific community on the understanding that it will not be used for commercial gain by any organization. Any commercial use of this publication, or any parts thereof, is expressly prohibited without permission in writing from the FlyBase consortium.'"}, {'criteria': 'B.1', 'comment': "Copyright statement includes 'Certain portions of FlyBase are copyrighted separately.'"}, {'criteria': 'B.2.1', 'comment': "Copyright statement includes 'Certain portions of FlyBase are copyrighted separately.'"}, {'criteria': 'D.1.1', 'comment': 'As stated copyright may be interpreted by non-legal professional that the contents may be reused/remixed in a non-commercial context.'}, {'criteria': 'E.1.1', 'comment': 'As stated copyright may be interpreted by non-legal professional that the contents may be reused/remixed in a non-commercial context.'}]
+   - _Issues_: Copyright statement includes 'This publication may be copied for non-commercial, scientific uses by individuals or organizations (including for-profit organizations). FlyBase is freely distributed to the scientific community on the understanding that it will not be used for commercial gain by any organization. Any commercial use of this publication, or any parts thereof, is expressly prohibited without permission in writing from the FlyBase consortium.' (A.2.2); Copyright statement includes 'Certain portions of FlyBase are copyrighted separately.' (B.1); Copyright statement includes 'Certain portions of FlyBase are copyrighted separately.' (B.2.1); As stated copyright may be interpreted by non-legal professional that the contents may be reused/remixed in a non-commercial context. (D.1.1); As stated copyright may be interpreted by non-legal professional that the contents may be reused/remixed in a non-commercial context. (E.1.1)
    - _Commentary_: Copyright statement is not co-located with the data source.
 
 #### Review information for this resource
@@ -1720,7 +1718,7 @@ _The Saccharomyces Genome Database (SGD) project collects information and mainta
 
 - **Matrix manual curation**: [CC BY 4.0](https://sites.google.com/view/yeastgenome-help/about)
 - **Reusable Data**: CC-BY-4.0 (permissive)
-   - _Issues_: [{'criteria': 'B.2.1', 'comment': 'While the downloadable data seems quite clearly CC-BY-4.0, the API footer has terms that indicate that all data may not be covered under the same license (see comments).'}, {'criteria': 'B.2.2', 'comment': 'The API does not seem to be any easy way to differentiate the \\"clean\\" CC-BY-4.0 data from other licenses.'}]
+   - _Issues_: While the downloadable data seems quite clearly CC-BY-4.0, the API footer has terms that indicate that all data may not be covered under the same license (see comments). (B.2.1); The API does not seem to be any easy way to differentiate the \"clean\" CC-BY-4.0 data from other licenses. (B.2.2)
    - _Commentary_: The license information found in the "About SGD" paragraph on the SGD Help page at https://sites.google.com/view/yeastgenome-help/about<hr />SGD operates under the Creative Commons Attribution 4.0 International license (CC BY 4.0).<hr />However, the license information for the API is much less clear, reading: "Permission to use the information contained in this database was given by the researchers/institutes who contributed or published the information. Users of the database are solely responsible for compliance with any copyright restrictions, including those applying to the author abstracts."<hr />The API did not seem to offer any way of filter out things with other licenses.<hr />Without ascending, noting that various upstream for the SGD API could have other terms: https://yeastmine.yeastgenome.org/yeastmine/dataCategories.do
 
 #### Review information for this resource
@@ -1940,7 +1938,6 @@ _The RGD API_
 
 - **Matrix manual curation**: [CC BY 4.0](https://rgd.mcw.edu/wg/disclaimer/#:~:text=Data%20in%20RGD%20are%20provided,You%20are%20free%20to%E2%80%A6&text=Adapt:%20remix%2C%20transform%2C%20and,for%20any%20purpose%2C%20even%20commercially.)
 - **Reusable Data**: CC-BY-4.0 (permissive)
-   - _Issues_: []
    - _Commentary_: Information found in the "Legal Disclaimer" footer on all pages, next to CC BY 4.0 link.
 
 #### Review information for this resource
