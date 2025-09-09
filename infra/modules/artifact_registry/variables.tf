@@ -37,8 +37,8 @@ variable "delete_older_than_days" {
   description = "The number of days after which to delete images. Set to 0 to disable. Currently set to 3 days."
   type        = string
   validation {
-    condition     = can(regex("^[0-9]+[dD]$", var.delete_older_than_days))
-    error_message = "delete_older_than_days must be a number followed by 'd' (e.g., '3d' for 3 days)."
+    condition     = var.delete_older_than_days == null || can(regex("^[0-9]+[dD]$", var.delete_older_than_days))
+    error_message = "delete_older_than_days must be null or a number followed by 'd' (e.g., '3d' for 3 days)."
   }
   default = "3d" # Default value is set to 3 days
 }
