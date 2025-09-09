@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gha-runner-scale-set-controller
+  namespace: argocd
+spec:
+  destination:
+    namespace: actions-runner-system
+    server: {{ .Values.spec.destination.server }}
+  project: default
+  source:
+    chart: gha-runner-scale-set-controller
+    repoURL: ghcr.io/actions/actions-runner-controller-charts
+    targetRevision: 0.12.1
+    helm:
+      values: |
+        # Grant additional RBAC permissions for the controller
+        rbac:
+          create: true
+        serviceAccount:
+          create: true
+          name: "gha-runner-scale-set-controller-gha-rs-controller"
+        # Additional cluster role rules for managing RBAC resources
+        clusterRole:
+          rules:
+          - apiGroups: [""]
+            resources: ["pods", "pods/status", "pods/log", "secrets", "configmaps", "events", "serviceaccounts"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+          - apiGroups: ["apps"]
+            resources: ["deployments", "replicasets"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+          - apiGroups: ["rbac.authorization.k8s.io"]
+            resources: ["roles", "rolebindings"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+          - apiGroups: ["actions.github.com"]
+            resources: ["*"]
+            verbs: ["*"]
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: true
+      allowEmpty: true
