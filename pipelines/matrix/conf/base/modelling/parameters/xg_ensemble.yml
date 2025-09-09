@@ -9,23 +9,16 @@ modelling.xg_ensemble:
 
         # NOTE: the following set-up is only using ground truth positive edges from training data for neg sampling
         drug_flags:
+          - is_drug
           - in_ground_pos
         disease_flags:
+          - is_disease
           - in_ground_pos
-        # To use edges from KG specifically for neg sampling:
+        # To use edges from KG specifically for neg sampling (note some might be contraindications!)
         # drug_flags:
         #   - is_drug
         # disease_flags:
         #   - is_disease
-
-        # To use edges which ARE in ground truth positives AND are in KG for neg sampling:
-        # drug_flags:
-        #   - is_drug
-        #   - in_ground_pos
-        # disease_flags:
-        #   - is_disease
-        #   - in_ground_pos
-
         
       model_tuning_args:
         tuner:
