@@ -42,6 +42,7 @@ concurrency:
 
 env:
   TQDM_DISABLE: 1
+  TAG: ${{ github.sha }}
 
 jobs:
   # leveraging a paths-filter approach to be able to make this run required for all PRs while still
@@ -71,12 +72,9 @@ jobs:
               - .dockerignore
 
   ci:
-    runs-on: 'self-hosted'
+    runs-on: 'gha-runner-scale-set'
     needs: [paths_filter]
     if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
-    
-    outputs:
-      status: ${{ steps.finally.outputs.status }}
 
     permissions:
       contents: 'read'
@@ -102,42 +100,88 @@ jobs:
           enable-cache: true
           version: "0.8.13"
       - run: env | sort
-      - run: make install
-      - run: make fetch_secrets
+
+  # Run commands in parallel using matrix strategy.
+  parallel_commands:
+    runs-on: 'gha-runner-scale-set'
+    needs: [paths_filter, ci]
+    if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
+    
+    strategy:
+      fail-fast: false  # do not cancel other jobs if one fails
+      matrix:
+        command:
+          - name: "precommit"
+            run: "make precommit"
+          - name: "kedro-catalog-base"
+            run: "uv run kedro catalog resolve --env base"
+          - name: "kedro-catalog-cloud"
+            run: "uv run kedro catalog resolve --env cloud"
+          - name: "kedro-catalog-test"
+            run: "uv run kedro catalog resolve --env test"
+          - name: "full-test"
+            run: "make full_test"
+          - name: "docker-test"
+            run: 'make run_test_native_through_docker' #we overwrite the GIT_SHA in the Makefile
+
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    defaults:
+      run:
+        working-directory: ./pipelines/matrix
+
+    steps:
+      - uses: actions/checkout@v4
+        with: 
+          submodules: recursive
+          token: ${{ secrets.PAT }}
+          persist-credentials: true
       
-      # Run commands in parallel
-      - run: uv run kedro catalog resolve --env base
-      - run: uv run kedro catalog resolve --env cloud
-      - run: uv run kedro catalog resolve --env test
-      - run: make full_test
-      - run: make compose_down # ensures containers & state are removed
-      - run: make docker_test GIT_SHA="${GITHUB_SHA:0:7}" #we overwrite the GIT_SHA in the Makefile
-        # only if PR is labelled with "ready" or if branch is main
-        # if: contains(github.event.pull_request.labels.*.name, 'ready') || github.ref == 'refs/heads/main'
-      # workaround as the `failure()` call did not work in downstream matrix_ci_check
-      - run: docker volume prune -f #avoid running out of disk space
-      # Cleanup
-      - run: docker volume prune -f
-      - id: finally
-        if: failure()
-        run: echo "status=failure" >> "$GITHUB_OUTPUT"
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider}}
+          service_account: ${{vars.service_account}}
+      
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          version: "0.8.13"
+
+      # Setup steps (same as main ci job)
+      - run: env | sort
+            
+      - name: Get Python version
+        id: python-version
+        run: echo "version=$(python3 --version | cut -d' ' -f2)" >> $GITHUB_OUTPUT
+
+      # Install Python dependencies
+      - name: Install Python dependencies
+        run: uv sync
+
+      # Run the specific command for this matrix job
+      - name: "Run ${{ matrix.command.name }}"
+        run: ${{ matrix.command.run }}
+
   # we use this check as required in our PRs to ensure that CI runs but only for our paths. 
   matrix_ci_check:
     name: Matrix CI PR Check
-    runs-on:  'self-hosted'
+    runs-on:  'gha-runner-scale-set'
     if: always()
-    needs: [paths_filter, ci]
+    needs: [paths_filter, ci, parallel_commands]
     steps:
-      - if: ${{ needs.paths_filter.outputs.changed == 'true' && needs.ci.outputs.status == 'failure' }}
+      - if: ${{ needs.paths_filter.outputs.changed == 'true' && (needs.ci.result == 'failure' || needs.parallel_commands.result == 'failure') }}
         run: echo "CI failed, we are exiting" && exit 1
       - run: echo "Either no files were changed or we had happy CI, continuing"
 
       
 
   push_image:
-    needs: [ci]
+    needs: [ci, parallel_commands]
     if: github.ref == 'refs/heads/main'
-    runs-on: 'self-hosted'
+    runs-on: 'gha-runner-scale-set'
     environment: dev
     permissions: write-all
     defaults:
@@ -164,7 +208,7 @@ jobs:
   # licenses:
   #   needs: [ci]
   #   # if: github.ref == 'refs/heads/main'
-  #   runs-on: "self-hosted"
+  #   runs-on: "gha-runner-scale-set"
   #   defaults:
   #     run:
   #       working-directory: ./pipelines/matrix
@@ -174,11 +218,11 @@ jobs:
   # Add this new job at the end of your jobs section
   # following this tutorial: https://github.com/slackapi/slack-github-action?tab=readme-ov-file
   notify_failure:
-    needs: [ci, push_image]
+    needs: [ci, parallel_commands, push_image]
     # This condition ensures it runs only if any previous job fails
     # we notify on main branches only
     if: failure() && github.ref == 'refs/heads/main' 
-    runs-on: "self-hosted"
+    runs-on: "gha-runner-scale-set"
     steps:
       - name: Post to a Slack channel
         id: slack

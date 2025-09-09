@@ -1,0 +1,116 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gha-runner-scale-set
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  destination:
+    namespace: actions-runner-system
+    server: {{ .Values.spec.destination.server }}
+  project: default
+  source:
+    chart: gha-runner-scale-set
+    repoURL: ghcr.io/actions/actions-runner-controller-charts
+    targetRevision: 0.12.1
+    helm:
+      values: |
+        controllerServiceAccount:
+          name: gha-runner-scale-set-controller-gha-rs-controller
+          namespace: actions-runner-system
+        githubConfigSecret: gh-creds-for-github-action-runner-set
+        githubConfigUrl: https://github.com/everycure-org/
+        minRunners: 0
+        maxRunners: 50
+        template:
+          metadata:
+            labels:
+              billing-category: github-actions
+              cost-center: compute-workloads
+              workload-category: ci-cd
+          spec:
+          # initContainers run before app containers and must succeed in sequence.
+          # This init container ("init-dind-externals") likely prepares Docker-in-Docker
+          # (DinD) dependencies (e.g., tooling/certs/images or a shared volume) so the
+          # main container starts with everything ready. DinD setups often require
+          # privileged mode or Docker socket access—review the security trade-offs.
+            initContainers:
+            - name: init-dind-externals
+              image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/github-runner-images/github-runner:latest
+              command: ["cp", "-r", "/home/runner/externals/.", "/home/runner/tmpDir/"]
+              volumeMounts:
+                - name: dind-externals
+                  mountPath: /home/runner/tmpDir
+            - name: dind
+              image: docker:dind
+              resources:
+                requests:
+                  cpu: "3"
+                  memory: "12Gi"
+              args:
+                - dockerd
+                - --host=unix:///var/run/docker.sock
+                - --group=$(DOCKER_GROUP_GID)
+              env:
+                - name: DOCKER_GROUP_GID
+                  value: "123"
+              # Concerns about security arise with privileged mode, as it grants extensive access to the host system.
+              # This is acceptable in our environment as we have disabled running untrusted code on our self-hosted runners through Workflow approvals.
+              # see here: https://docs.github.com/en/actions/how-tos/manage-workflow-runs/approve-runs-from-forks
+              securityContext:
+                privileged: true
+              restartPolicy: Always
+              startupProbe:
+                exec:
+                  command:
+                    - docker
+                    - info
+                initialDelaySeconds: 0
+                failureThreshold: 24
+                periodSeconds: 5
+              volumeMounts:
+                - name: work
+                  mountPath: /home/runner/_work
+                - name: dind-sock
+                  mountPath: /var/run
+                - name: dind-externals
+                  mountPath: /home/runner/externals
+            containers:
+            - name: runner
+              image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/github-runner-images/github-runner:latest
+              command: ["/home/runner/run.sh"]
+              env:
+                - name: DOCKER_HOST
+                  value: unix:///var/run/docker.sock
+                - name: RUNNER_WAIT_FOR_DOCKER_IN_SECONDS
+                  value: "120"
+              volumeMounts:
+                - name: work
+                  mountPath: /home/runner/_work
+                - name: dind-sock
+                  mountPath: /var/run
+              resources:
+                requests:
+                  cpu: "3"
+                  memory: "12Gi"
+            volumes:
+            - name: work
+              emptyDir: {}
+            - name: dind-sock
+              emptyDir: {}
+            - name: dind-externals
+              emptyDir: {}
+            tolerations:
+            - key: "github-runner"
+              operator: "Equal"
+              value: "true"
+              effect: "NoSchedule"
+            nodeSelector:
+              workload-type: "ci-cd"
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: true
+      allowEmpty: true
