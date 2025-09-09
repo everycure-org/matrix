@@ -6,13 +6,27 @@ modelling.xg_ensemble:
         random_state: ${globals:random_state}
         y_label: 2
         n_replacements: 2
+
+        # NOTE: the following set-up is only using ground truth positive edges from training data for neg sampling
         drug_flags:
-          - is_drug
           - in_ground_pos
         disease_flags:
-          - is_disease
+          - in_ground_pos
+        # To use edges from KG specifically for neg sampling:
+        # drug_flags:
+        #   - is_drug
+        # disease_flags:
+        #   - is_disease
 
+        # To use edges which ARE in ground truth positives AND are in KG for neg sampling:
+        # drug_flags:
+        #   - is_drug
+        #   - in_ground_pos
+        # disease_flags:
+        #   - is_disease
+        #   - in_ground_pos
 
+        
       model_tuning_args:
         tuner:
           _object: matrix.pipelines.modelling.tuning.GaussianSearch

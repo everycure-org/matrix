@@ -382,7 +382,7 @@ class DegreeAwarePairGenerator(SingleLabelPairGenerator):
         drug_disease_edges.extend(
             [(dr, di) for dr, di in kp_train_set if ((dr in drug_samp_ids) & (di in disease_samp_ids))]
         )
-        drug_disease_edges = set(drug_disease_edges)
+        drug_disease_edges = list(set(drug_disease_edges))
         # Generate unknown data
         unknown_data = []
         for kp_drug, kp_disease in tqdm(kp_train_set):
