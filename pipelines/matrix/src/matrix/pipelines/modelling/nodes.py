@@ -312,8 +312,8 @@ def create_model_input_nodes(
     graph: KnowledgeGraph,
     splits: pd.DataFrame,
     generator: SingleLabelPairGenerator,
-    edges: ps.DataFrame = None,
     splitter: BaseCrossValidator = None,
+    edges: ps.DataFrame = None,
 ) -> pd.DataFrame:
     """Function to enrich the splits with drug-disease pairs.
 
