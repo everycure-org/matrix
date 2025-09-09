@@ -4,4 +4,4 @@ The MATRIX platform leverages and produces comprehensive knowledge graphs to stu
 
 ## Related resources:
 
-- [Overview of the primary knowledge sources included in our merged knowledge graph](primary_knowledge_sources.md) 
+- [Overview of the primary knowledge sources included in our merged knowledge graph](../../releases/primary_knowledge_sources.md) 

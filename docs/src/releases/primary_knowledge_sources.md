@@ -121,21 +121,22 @@ _SemMedDB is a repository of semantic predications (subject-predicate-object tri
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/SemMedDB
-- https://lhncbc.nlm.nih.gov/temp/SemRep_SemMedDB_SKR/SemMedDB_download.html
-- https://w3id.org/information-resource-registry/semmeddb
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/SemMedDB](https://github.com/NCATSTranslator/Translator-All/wiki/SemMedDB)
+- [https://lhncbc.nlm.nih.gov/temp/SemRep_SemMedDB_SKR/SemMedDB_download.html](https://lhncbc.nlm.nih.gov/temp/SemRep_SemMedDB_SKR/SemMedDB_download.html)
+- [https://w3id.org/information-resource-registry/semmeddb](https://w3id.org/information-resource-registry/semmeddb)
 
 
 #### License information
 
 - **Matrix manual curation**: [UMLS Metathesaurus](https://academic.oup.com/bioinformatics/article/28/23/3158/195282)
 - **KG Registry**: https://www.nlm.nih.gov/web_policies.html
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
 
 <details><summary>Expand to see detailed review</summary>
+<div markdown="1">
 Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
 
 - **Reviewer**: https://orcid.org/0000-0003-4097-3395
@@ -145,6 +146,7 @@ Review information was generated specifically for the Matrix project and may not
 - **Domain Coverage**: `2` - Entities: drug,target,disease via UMLS CUIs; Relations: TREATS, INHIBITS, ASSOCIATED_WITH (~30 predicate types). Rich coverage but many edges generic/ambiguous.
 - **Source Scope**: `3` - Broad, cross-disease; >21M PubMed citations; 57.6M predications; thousands of drugs, diseases, genes; multi-relation subtypes
 - **Drug Repurposing Utility**: `1` - Direct edges: TREATS, INHIBITS, CAUSES, etc. present but NLP-extracted, noisy; predicates often generic; PubMed links but no confidence scores; precision ~70–80% → heavy filtering required
+</div>
 </details>
 
 
@@ -154,10 +156,11 @@ _STRING is a database of known and predicted protein-protein interactions. The i
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/STRING
-- https://string-db.org
-- https://string-db.org/
-- https://w3id.org/information-resource-registry/string
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/STRING](https://github.com/NCATSTranslator/Translator-All/wiki/STRING)
+- [https://string-db.org](https://string-db.org)
+- [https://string-db.org/](https://string-db.org/)
+- [https://w3id.org/information-resource-registry/string](https://w3id.org/information-resource-registry/string)
 
 
 #### License information
@@ -171,6 +174,7 @@ _STRING is a database of known and predicted protein-protein interactions. The i
 
 
 <details><summary>Expand to see detailed review</summary>
+<div markdown="1">
 Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
 
 - **Reviewer**: https://orcid.org/0000-0003-4097-3395
@@ -180,6 +184,7 @@ Review information was generated specifically for the Matrix project and may not
 - **Domain Coverage**: `3` - Comprehensive gene/protein coverage with dense functional/physical associations and rich UniProt-based descriptors.
 - **Source Scope**: `3` - Global-scale, multi-species PPI/functional knowledgebase with millions of high-confidence edges from heterogeneous evidence.
 - **Drug Repurposing Utility**: `3` - Directly usable as a backbone for repurposing pipelines; confidence-scored PPI edges integrate seamlessly once drug and disease mappings are added.
+</div>
 </details>
 
 
@@ -189,15 +194,14 @@ _No description._
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/PathWhiz
-- https://w3id.org/information-resource-registry/pathwhiz
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/PathWhiz](https://github.com/NCATSTranslator/Translator-All/wiki/PathWhiz)
+- [https://w3id.org/information-resource-registry/pathwhiz](https://w3id.org/information-resource-registry/pathwhiz)
 
 
 #### License information
 
 - **Matrix manual curation**: [David Wishart, Departments of Computing Science & Biological Sciences, University of Alberta.](https://smpdb.ca/pathwhiz)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -211,10 +215,11 @@ _A comprehensive, free-to-access, online database containing information on drug
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/DrugBank
-- https://go.drugbank.com
-- https://w3id.org/information-resource-registry/drugbank
-- https://www.drugbank.com/
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/DrugBank](https://github.com/NCATSTranslator/Translator-All/wiki/DrugBank)
+- [https://go.drugbank.com](https://go.drugbank.com)
+- [https://w3id.org/information-resource-registry/drugbank](https://w3id.org/information-resource-registry/drugbank)
+- [https://www.drugbank.com/](https://www.drugbank.com/)
 
 
 #### License information
@@ -237,16 +242,16 @@ _A graph representation of Ubergraph, an integration of ontologies including GO,
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/Ubergraph
-- https://ubergraph.apps.renci.org/sparql
-- https://w3id.org/information-resource-registry/ubergraph
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/Ubergraph](https://github.com/NCATSTranslator/Translator-All/wiki/Ubergraph)
+- [https://ubergraph.apps.renci.org/sparql](https://ubergraph.apps.renci.org/sparql)
+- [https://w3id.org/information-resource-registry/ubergraph](https://w3id.org/information-resource-registry/ubergraph)
 
 
 #### License information
 
 - **Matrix manual curation**: [Aggregated data — follows licenses of primary data sources](https://github.com/INCATools/ubergraph?tab=BSD-3-Clause-1-ov-file)
 - **KG Registry**: https://creativecommons.org/licenses/by/4.0/
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -260,15 +265,14 @@ _No description._
 
 
 **Links**:
-- https://w3id.org/information-resource-registry/ensembl-gene
-- https://www.ebi.ac.uk/training/online/courses/ensembl-browsing-genomes/exploring-sources-of-biological-data/ensembl-genes/
+
+- [https://w3id.org/information-resource-registry/ensembl-gene](https://w3id.org/information-resource-registry/ensembl-gene)
+- [https://www.ebi.ac.uk/training/online/courses/ensembl-browsing-genomes/exploring-sources-of-biological-data/ensembl-genes/](https://www.ebi.ac.uk/training/online/courses/ensembl-browsing-genomes/exploring-sources-of-biological-data/ensembl-genes/)
 
 
 #### License information
 
 - **Matrix manual curation**: [Apache 2.0](https://useast.ensembl.org/info/about/legal/code_licence.html)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -282,16 +286,16 @@ _BindingDB is a public, web-accessible database of measured binding affinities, 
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/bindingdb
-- https://w3id.org/information-resource-registry/bindingdb
-- https://www.bindingdb.org/rwd/bind/index.jsp
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/bindingdb](https://github.com/NCATSTranslator/Translator-All/wiki/bindingdb)
+- [https://w3id.org/information-resource-registry/bindingdb](https://w3id.org/information-resource-registry/bindingdb)
+- [https://www.bindingdb.org/rwd/bind/index.jsp](https://www.bindingdb.org/rwd/bind/index.jsp)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 3.0 (BindingDB curated), CC BY-SA 3.0 (ChEMBL-derived)](https://www.bindingdb.org/rwd/bind/info.jsp)
 - **KG Registry**: https://www.bindingdb.org/rwd/bind/info.jsp
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -305,20 +309,20 @@ _DISEASES is a weekly updated web resource that integrates evidence on disease-g
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/Diseases
-- https://w3id.org/information-resource-registry/diseases
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/Diseases](https://github.com/NCATSTranslator/Translator-All/wiki/Diseases)
+- [https://w3id.org/information-resource-registry/diseases](https://w3id.org/information-resource-registry/diseases)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://diseases.jensenlab.org/About)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
 
 <details><summary>Expand to see detailed review</summary>
+<div markdown="1">
 Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
 
 - **Reviewer**: https://orcid.org/0000-0003-4097-3395
@@ -328,6 +332,7 @@ Review information was generated specifically for the Matrix project and may not
 - **Domain Coverage**: `2` - Entities: target,gene + disease; Relation: T–D (~millions); mapped to DOID, STRING/HGNC/Ensembl; confidence scoring robust. No drugs or D–D/AEs.
 - **Source Scope**: `3` - Broad, cross-disease; millions of T–D edges; >19k genes, >8k diseases; integrates curated, GWAS, text mining; updated weekly.
 - **Drug Repurposing Utility**: `2` - Direct edges: T–D; millions of associations; 1–5 star confidence; AUC=0.916 for text mining. No direct drug links, no mechanism or AE context → requires integration with drug–target DBs.
+</div>
 </details>
 
 
@@ -337,15 +342,14 @@ _No description._
 
 
 **Links**:
-- http://www.ncbi.nlm.nih.gov/taxonomy
-- https://w3id.org/information-resource-registry/ncbi-taxonomy
+
+- [http://www.ncbi.nlm.nih.gov/taxonomy](http://www.ncbi.nlm.nih.gov/taxonomy)
+- [https://w3id.org/information-resource-registry/ncbi-taxonomy](https://w3id.org/information-resource-registry/ncbi-taxonomy)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC0 1.0](https://kghub.org/kg-registry/resource/ncbitaxon/ncbitaxon.html)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -359,15 +363,15 @@ _A freely available electronic database containing detailed information about sm
 
 
 **Links**:
-- http://www.hmdb.ca
-- https://github.com/NCATSTranslator/Translator-All/wiki/HMDB
-- https://w3id.org/information-resource-registry/hmdb
+
+- [http://www.hmdb.ca](http://www.hmdb.ca)
+- [https://github.com/NCATSTranslator/Translator-All/wiki/HMDB](https://github.com/NCATSTranslator/Translator-All/wiki/HMDB)
+- [https://w3id.org/information-resource-registry/hmdb](https://w3id.org/information-resource-registry/hmdb)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://hmdb.ca/about)
-- **KG Registry**: No license information available.
 - **Reusable Data**: custom (restrictive)
    - _Issues_: [{'criteria': 'A.2.2', 'comment': 'Custom terms at linked license and on downloads page.'}, {'criteria': 'D.1.1', 'comment': 'The custom license would appear to allow for liberal non-commercial reuse.'}, {'criteria': 'E.1.1', 'comment': 'The custom license would appear to explicitly allow for non-commercial reuse with other non-commercial interests.'}]
    - _Commentary_: While the terms are minimal, they seem intended to act a bit the CC-BY-NC; it was evaluated similarly.<hr />Given their upstream resources mentioned in http://www.hmdb.ca/sources , it would be interesting to know their pass-through negotiations and differences with Canadian law..
@@ -384,15 +388,14 @@ _API serving explicitly targeted Biolink Associations extracted from sentences i
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/Text%E2%80%90mined-Assertion-KP
-- https://w3id.org/information-resource-registry/text-mining-provider-targeted
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/Text%E2%80%90mined-Assertion-KP](https://github.com/NCATSTranslator/Translator-All/wiki/Text%E2%80%90mined-Assertion-KP)
+- [https://w3id.org/information-resource-registry/text-mining-provider-targeted](https://w3id.org/information-resource-registry/text-mining-provider-targeted)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://smart-api.info/ui/978fe380a147a8641caf72320862697b)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -406,15 +409,14 @@ _Stub Resource page for intact. This page was automatically generated because it
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/IntAct
-- https://w3id.org/information-resource-registry/intact
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/IntAct](https://github.com/NCATSTranslator/Translator-All/wiki/IntAct)
+- [https://w3id.org/information-resource-registry/intact](https://w3id.org/information-resource-registry/intact)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0 (all datasets), Software/Tools: Apache License 2.0 (code, web services, curator tools, branding)](https://www.ebi.ac.uk/intact/about#license_privacy)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -428,15 +430,15 @@ _Stub Resource page for ncit. This page was automatically generated because it w
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/NCIT
-- https://ncithesaurus-stage.nci.nih.gov
-- https://w3id.org/information-resource-registry/ncit
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/NCIT](https://github.com/NCATSTranslator/Translator-All/wiki/NCIT)
+- [https://ncithesaurus-stage.nci.nih.gov](https://ncithesaurus-stage.nci.nih.gov)
+- [https://w3id.org/information-resource-registry/ncit](https://w3id.org/information-resource-registry/ncit)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://evs.nci.nih.gov/license)
-- **KG Registry**: No license information available.
 - **Reusable Data**: CC-BY-4.0 (permissive)
    - _Issues_: []
    - _Commentary_: The Terms of Use puts a trademark restriction on re-releasing the data using the name "NCI Thesaurus".  This was evaluated as be outside the scope of data (re)use.
@@ -453,10 +455,11 @@ _Bgee is a database for retrieval and comparison of gene expression patterns acr
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/Bgee
-- https://w3id.org/information-resource-registry/bgee
-- https://www.bgee.org
-- https://www.bgee.org/
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/Bgee](https://github.com/NCATSTranslator/Translator-All/wiki/Bgee)
+- [https://w3id.org/information-resource-registry/bgee](https://w3id.org/information-resource-registry/bgee)
+- [https://www.bgee.org](https://www.bgee.org)
+- [https://www.bgee.org/](https://www.bgee.org/)
 
 
 #### License information
@@ -479,16 +482,16 @@ _Hetionet is an integrative network of biomedical knowledge assembled from 29 di
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/Hetionet
-- https://het.io/
-- https://w3id.org/information-resource-registry/hetionet
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/Hetionet](https://github.com/NCATSTranslator/Translator-All/wiki/Hetionet)
+- [https://het.io/](https://het.io/)
+- [https://w3id.org/information-resource-registry/hetionet](https://w3id.org/information-resource-registry/hetionet)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://het.io/about/)
 - **KG Registry**: https://creativecommons.org/licenses/by/4.0/
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -502,15 +505,14 @@ _Stub Resource page for mesh. This page was automatically generated because it w
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/MeSH
-- https://w3id.org/information-resource-registry/mesh
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/MeSH](https://github.com/NCATSTranslator/Translator-All/wiki/MeSH)
+- [https://w3id.org/information-resource-registry/mesh](https://w3id.org/information-resource-registry/mesh)
 
 
 #### License information
 
 - **Matrix manual curation**: [UMLS Metathesaurus](https://uts.nlm.nih.gov/uts/assets/LicenseAgreement.pdf)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -524,16 +526,16 @@ _PANTHER is a Protein ANalysis THrough Evolutionary Relationships Classification
 
 
 **Links**:
-- http://pantherdb.org/
-- https://github.com/NCATSTranslator/Translator-All/wiki/PANTHER
-- https://w3id.org/information-resource-registry/panther
-- https://www.pantherdb.org/
+
+- [http://pantherdb.org/](http://pantherdb.org/)
+- [https://github.com/NCATSTranslator/Translator-All/wiki/PANTHER](https://github.com/NCATSTranslator/Translator-All/wiki/PANTHER)
+- [https://w3id.org/information-resource-registry/panther](https://w3id.org/information-resource-registry/panther)
+- [https://www.pantherdb.org/](https://www.pantherdb.org/)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://pantherdb.org/tou.jsp)
-- **KG Registry**: No license information available.
 - **Reusable Data**: all rights reserved (copyright)
    - _Issues_: [{'criteria': 'D.1.2', 'comment': 'Given the all rights reserved copyright statement, any downstream reuse would require negotiation.'}, {'criteria': 'E.1.2', 'comment': 'Given the all rights reserved copyright statement, all user/agent types would need to negotiate downstream reuse.'}]
    - _Commentary_: There is an alternate curation for this resource that bases itself off of 'http://www.pantherdb.org/tou.jsp', which was found using a narrow Google search and not given consideration due to the difficulties in finding it--we have found no access to this document yet except for the Google search.<hr />Considering the alternate license, downloads are under a permissive minimal license that states '...as long as the following copyright statement is placed at the top of each file: Copyright © 2005 SRI International', which besides being likely out of data, is custom and does not cover APIs, remixing, and the like. It is hard to interpret the consequences of this license.
@@ -550,21 +552,21 @@ _The Library of Integrated Network-based Cellular Signatures (LINCS) is a compre
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/LINCS
-- https://lincsportal.ccs.miami.edu/signatures/home
-- https://w3id.org/information-resource-registry/lincs
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/LINCS](https://github.com/NCATSTranslator/Translator-All/wiki/LINCS)
+- [https://lincsportal.ccs.miami.edu/signatures/home](https://lincsportal.ccs.miami.edu/signatures/home)
+- [https://w3id.org/information-resource-registry/lincs](https://w3id.org/information-resource-registry/lincs)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://lincsportal.ccs.miami.edu/datasets/terms)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
 
 <details><summary>Expand to see detailed review</summary>
+<div markdown="1">
 Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
 
 - **Reviewer**: https://orcid.org/0000-0003-4097-3395
@@ -574,6 +576,7 @@ Review information was generated specifically for the Matrix project and may not
 - **Domain Coverage**: `2` - Entities: drugs + genes (genetic perturbations), disease mainly as context; relations are perturbation→signature (L1000, P100/GCP, imaging). Rich metadata/FAIR, but no native D–T/T–D/D–D edges
 - **Source Scope**: `3` - Broad, cross-disease & multi-modality (L1000, proteomics, imaging, epigenetics); tens of thousands of perturbagens; hundreds of thousands of signatures; large multi-center program; FAIR & standardized.”
 - **Drug Repurposing Utility**: `2` - Strong for signature-based D→D (reversal/mimic) via CLUE/L1000CDS2; toxicity signatures (DToxS) aid filtering. Lacks curated D–T/T–D/D–D edges; needs join to DrugBank/ChEMBL/BindingDB and disease resources.
+</div>
 </details>
 
 
@@ -583,16 +586,16 @@ _Reactome from Biopax_
 
 
 **Links**:
-- http://www.reactome.org
-- https://github.com/NCATSTranslator/Translator-All/wiki/reactome
-- https://reactome.org
-- https://w3id.org/information-resource-registry/reactome
+
+- [http://www.reactome.org](http://www.reactome.org)
+- [https://github.com/NCATSTranslator/Translator-All/wiki/reactome](https://github.com/NCATSTranslator/Translator-All/wiki/reactome)
+- [https://reactome.org](https://reactome.org)
+- [https://w3id.org/information-resource-registry/reactome](https://w3id.org/information-resource-registry/reactome)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC0 1.0 (All Data), CC BY 4.0 (Pathway art/branding), Apache 2.0 (Software/code - some exceptions)](https://reactome.org/license)
-- **KG Registry**: No license information available.
 - **Reusable Data**: CC-BY-4.0 (permissive)
    - _Issues_: [{'criteria': 'B.2.2', 'comment': 'KEGG gene and pathway annotations used to construct Reactome Functional Interaction (FI) Network are not licenced CC-BY-4.0. There is a comment that "the recipient may not distribute this data to other users without a license from Pathway Solutions, Inc."'}]
    - _Commentary_: The issue with criteria B.2.2 could be rectified if Reactome provided a clean copy of the data that can be redistributed without negotiation.
@@ -609,20 +612,20 @@ _No description._
 
 
 **Links**:
-- https://w3id.org/information-resource-registry/umls-metathesaurus
-- https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/MTH/index.html
+
+- [https://w3id.org/information-resource-registry/umls-metathesaurus](https://w3id.org/information-resource-registry/umls-metathesaurus)
+- [https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/MTH/index.html](https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/MTH/index.html)
 
 
 #### License information
 
 - **Matrix manual curation**: [UMLS Metathesaurus](https://www.nlm.nih.gov/databases/umls.html)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
 
 <details><summary>Expand to see detailed review</summary>
+<div markdown="1">
 Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
 
 - **Reviewer**: https://orcid.org/0000-0003-4097-3395
@@ -632,6 +635,7 @@ Review information was generated specifically for the Matrix project and may not
 - **Domain Coverage**: `3` - Covers diseases, drugs/chemicals, genes/genomes, anatomy, phenotypes, procedures, functions; concepts standardized to CUIs with 134 semantic types and 54 relation families.
 - **Source Scope**: `3` - Unifies ~60 vocabularies (~900k concepts) spanning clinical medicine and life sciences, from MeSH and SNOMED to NCBI Taxonomy and early GO integration.
 - **Drug Repurposing Utility**: `2` - Provides schema-level relations (e.g., ‘Pharmacologic Substance TREATS Disease or Syndrome’, ‘interacts with’) but not instance-level curated edges, so mainly useful for normalization and relation templates.
+</div>
 </details>
 
 
@@ -641,15 +645,14 @@ _Stub Resource page for pr. This page was automatically generated because it was
 
 
 **Links**:
-- https://proconsortium.org/
-- https://w3id.org/information-resource-registry/pr
+
+- [https://proconsortium.org/](https://proconsortium.org/)
+- [https://w3id.org/information-resource-registry/pr](https://w3id.org/information-resource-registry/pr)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://obofoundry.org/ontology/pr.html)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -663,16 +666,16 @@ _DisGeNET is the world's largest and most extensive gene-disease association (GD
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/DisGeNET
-- https://w3id.org/information-resource-registry/disgenet
-- https://www.disgenet.com/
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/DisGeNET](https://github.com/NCATSTranslator/Translator-All/wiki/DisGeNET)
+- [https://w3id.org/information-resource-registry/disgenet](https://w3id.org/information-resource-registry/disgenet)
+- [https://www.disgenet.com/](https://www.disgenet.com/)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0 (for most of its sources)](https://disgenet.com/Legal)
 - **KG Registry**: https://www.disgenet.com/Legal
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -686,10 +689,11 @@ _OMIM (Online Mendelian Inheritance in Man) is a continuously updated, expert-cu
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/OMIM
-- https://w3id.org/information-resource-registry/omim
-- https://www.omim.org
-- https://www.omim.org/
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/OMIM](https://github.com/NCATSTranslator/Translator-All/wiki/OMIM)
+- [https://w3id.org/information-resource-registry/omim](https://w3id.org/information-resource-registry/omim)
+- [https://www.omim.org](https://www.omim.org)
+- [https://www.omim.org/](https://www.omim.org/)
 
 
 #### License information
@@ -712,15 +716,15 @@ _focusing on three of the most commonly drug-targeted protein families: G-protei
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/Pharos
-- https://pharos.nih.gov/
-- https://w3id.org/information-resource-registry/pharos
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/Pharos](https://github.com/NCATSTranslator/Translator-All/wiki/Pharos)
+- [https://pharos.nih.gov/](https://pharos.nih.gov/)
+- [https://w3id.org/information-resource-registry/pharos](https://w3id.org/information-resource-registry/pharos)
 
 
 #### License information
 
 - **Matrix manual curation**: [Aggregated data — follows licenses of primary data sources](https://pharos.nih.gov/about)
-- **KG Registry**: No license information available.
 - **Reusable Data**: inconsistent (unknown)
    - _Issues_: [{'criteria': 'A.1.1', 'comment': 'While any novel data is under a CC license (CC-BY-SA-4.0), the integrated resources are under whatever license the upstream is, with the user expected to sort it out.'}]
    - _Commentary_: Unfortunately, the API ToS link leads to a bad (404-type) Swagger page.<hr />From the license page: \"Please note that TCRD incoporates many data sources with a variety of associated licenses...Users of the TCRD downloads are resposible for compliance with these licenses.\"<hr />Given the variety and terms of the upstream resources, the inconsistency is not unexpected.<hr />The license is also found here at https://pharos.nih.gov/idg/about, which has similar wording to the README on the downloads page, but makes no note of the user responsibility to adhere to licenses from original data sources.
@@ -737,21 +741,22 @@ _a freely available dictionary of molecular entities focused on ‘small’ chem
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/ChEBI
-- https://w3id.org/information-resource-registry/chebi
-- https://www.ebi.ac.uk/chebi/
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/ChEBI](https://github.com/NCATSTranslator/Translator-All/wiki/ChEBI)
+- [https://w3id.org/information-resource-registry/chebi](https://w3id.org/information-resource-registry/chebi)
+- [https://www.ebi.ac.uk/chebi/](https://www.ebi.ac.uk/chebi/)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://www.ebi.ac.uk/chebi/aboutChebiForward.do)
 - **KG Registry**: https://creativecommons.org/licenses/by-sa/4.0/
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
 
 <details><summary>Expand to see detailed review</summary>
+<div markdown="1">
 Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
 
 - **Reviewer**: https://orcid.org/0000-0003-4097-3395
@@ -761,6 +766,7 @@ Review information was generated specifically for the Matrix project and may not
 - **Domain Coverage**: `2` - Rich ontology of small molecules with roles and structure descriptors; cross-referenced broadly; but lacks explicit gene/disease edges.
 - **Source Scope**: `3` - General-purpose backbone ontology of small molecules, roles, and classes; >400k entities; multi-resource integration; cross-disease, multi-use.
 - **Drug Repurposing Utility**: `1` - Great for harmonization (IDs, synonyms, chemical roles), but lacks curated D–T, T–D, or D–D edges; not plug-and-play for repurposing.
+</div>
 </details>
 
 
@@ -770,15 +776,14 @@ _No description._
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/HPO-Annotations
-- https://w3id.org/information-resource-registry/hpo-annotations
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/HPO-Annotations](https://github.com/NCATSTranslator/Translator-All/wiki/HPO-Annotations)
+- [https://w3id.org/information-resource-registry/hpo-annotations](https://w3id.org/information-resource-registry/hpo-annotations)
 
 
 #### License information
 
 - **Matrix manual curation**: [Custom HPO License — free use with attribution, version/date display, and no content alteration without approval](https://hpo.jax.org/license)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -792,15 +797,14 @@ _No description._
 
 
 **Links**:
-- http://www.geneontology.org/
-- https://w3id.org/information-resource-registry/goa
+
+- [http://www.geneontology.org/](http://www.geneontology.org/)
+- [https://w3id.org/information-resource-registry/goa](https://w3id.org/information-resource-registry/goa)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://geneontology.org/docs/go-citation-policy/)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -814,15 +818,14 @@ _The FDA Adverse Event Reporting System (FAERS) is a database that contains info
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/FAERS
-- https://w3id.org/information-resource-registry/faers
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/FAERS](https://github.com/NCATSTranslator/Translator-All/wiki/FAERS)
+- [https://w3id.org/information-resource-registry/faers](https://w3id.org/information-resource-registry/faers)
 
 
 #### License information
 
 - **Matrix manual curation**: [Public Domain and CC0 1.0](https://open.fda.gov/data/faers/)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -836,15 +839,14 @@ _No description._
 
 
 **Links**:
-- https://w3id.org/information-resource-registry/fma-umls
-- https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/FMA/index.html
+
+- [https://w3id.org/information-resource-registry/fma-umls](https://w3id.org/information-resource-registry/fma-umls)
+- [https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/FMA/index.html](https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/FMA/index.html)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 3.0](http://si.washington.edu/info-books/project-details/foundational-model-of-anatomy/accessing-the-fma-ontology/)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -858,15 +860,15 @@ _Gene integrates information from a wide range of species. A record may include 
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/ncbi-gene
-- https://w3id.org/information-resource-registry/ncbi-gene
-- https://www.ncbi.nlm.nih.gov/gene/
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/ncbi-gene](https://github.com/NCATSTranslator/Translator-All/wiki/ncbi-gene)
+- [https://w3id.org/information-resource-registry/ncbi-gene](https://w3id.org/information-resource-registry/ncbi-gene)
+- [https://www.ncbi.nlm.nih.gov/gene/](https://www.ncbi.nlm.nih.gov/gene/)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC0 1.0](https://kghub.org/kg-registry/resource/ncbigene/ncbigene.html)
-- **KG Registry**: No license information available.
 - **Reusable Data**: inconsistent (unknown)
    - _Issues_: [{'criteria': 'A.1.1', 'comment': 'The license apparently uses language to declare something similar to "public domain", but with the caveat that it may contain data that is otherwise. This is judged to be a violation as any (re)use would depend on negotiating with all upstream copyright holders, which are not presented. It is implied that their license does not cover all data and could not find an explicit "clean" version of the data in the downloads.'}]
    - _Commentary_: We specifically avoided the more general operation of the EUtils suite, focusing on the provided downloads.<hr />The following statements from the license page seem to support a custom "hands off" approach. To was difficult to decide if this was "restrictive" or "unknown" (although inconsistent in practice).<hr />...NCBI itself places no restrictions on the use or distribution of the data contained therein. Nor do we accept data when the submitter has requested restrictions on reuse or redistribution...<hr />...some submitters of the original data...may claim patent, copyright, or other intellectual property rights in all or a portion of the data (that has been submitted)...<hr />...NCBI cannot provide comment or unrestricted permission concerning the use, copying, or distribution of the information contained in the molecular databases...
@@ -883,16 +885,16 @@ _The Gene Ontology resource, the world’s largest source of information on the 
 
 
 **Links**:
-- https://geneontology.org/
-- https://github.com/NCATSTranslator/Translator-All/wiki/go
-- https://w3id.org/information-resource-registry/go
+
+- [https://geneontology.org/](https://geneontology.org/)
+- [https://github.com/NCATSTranslator/Translator-All/wiki/go](https://github.com/NCATSTranslator/Translator-All/wiki/go)
+- [https://w3id.org/information-resource-registry/go](https://w3id.org/information-resource-registry/go)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://geneontology.org/docs/go-citation-policy/)
 - **KG Registry**: https://creativecommons.org/licenses/by/4.0/
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -906,15 +908,14 @@ _No description._
 
 
 **Links**:
-- https://w3id.org/information-resource-registry/icd10pcs-umls
-- https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/ICD10PCS/index.html
+
+- [https://w3id.org/information-resource-registry/icd10pcs-umls](https://w3id.org/information-resource-registry/icd10pcs-umls)
+- [https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/ICD10PCS/index.html](https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/ICD10PCS/index.html)
 
 
 #### License information
 
 - **Matrix manual curation**: [UMLS Metathesaurus](https://bioportal.bioontology.org/ontologies/ICD10PCS)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -928,15 +929,14 @@ _No description._
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/Tissue-Expression-Database
-- https://w3id.org/information-resource-registry/tissues-expression-db
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/Tissue-Expression-Database](https://github.com/NCATSTranslator/Translator-All/wiki/Tissue-Expression-Database)
+- [https://w3id.org/information-resource-registry/tissues-expression-db](https://w3id.org/information-resource-registry/tissues-expression-db)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://tissues.jensenlab.org/About)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -950,10 +950,11 @@ _A robust, publicly available database that aims to advance understanding about 
 
 
 **Links**:
-- http://ctdbase.org
-- https://ctdbase.org/
-- https://github.com/NCATSTranslator/Translator-All/wiki/CTD
-- https://w3id.org/information-resource-registry/ctd
+
+- [http://ctdbase.org](http://ctdbase.org)
+- [https://ctdbase.org/](https://ctdbase.org/)
+- [https://github.com/NCATSTranslator/Translator-All/wiki/CTD](https://github.com/NCATSTranslator/Translator-All/wiki/CTD)
+- [https://w3id.org/information-resource-registry/ctd](https://w3id.org/information-resource-registry/ctd)
 
 
 #### License information
@@ -976,16 +977,16 @@ _SIDER (Side Effect Resource) contains information on marketed medicines and the
 
 
 **Links**:
-- http://sideeffects.embl.de/
-- https://github.com/NCATSTranslator/Translator-All/wiki/SIDER
-- https://w3id.org/information-resource-registry/sider
+
+- [http://sideeffects.embl.de/](http://sideeffects.embl.de/)
+- [https://github.com/NCATSTranslator/Translator-All/wiki/SIDER](https://github.com/NCATSTranslator/Translator-All/wiki/SIDER)
+- [https://w3id.org/information-resource-registry/sider](https://w3id.org/information-resource-registry/sider)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY-NC-SA 4.0](http://sideeffects.embl.de/about/)
 - **KG Registry**: https://creativecommons.org/licenses/by-nc-sa/4.0/
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -999,16 +1000,15 @@ _Orphanet is a unique resource for information and data on rare diseases and orp
 
 
 **Links**:
-- https://w3id.org/information-resource-registry/orphanet
-- https://www.orpha.net
-- https://www.orpha.net/
+
+- [https://w3id.org/information-resource-registry/orphanet](https://w3id.org/information-resource-registry/orphanet)
+- [https://www.orpha.net](https://www.orpha.net)
+- [https://www.orpha.net/](https://www.orpha.net/)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://www.orphadata.com/about-us/)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1022,15 +1022,15 @@ _MGI is the international database resource for the laboratory mouse, providing 
 
 
 **Links**:
-- http://www.informatics.jax.org/
-- https://github.com/NCATSTranslator/Translator-All/wiki/mgi
-- https://w3id.org/information-resource-registry/mgi
+
+- [http://www.informatics.jax.org/](http://www.informatics.jax.org/)
+- [https://github.com/NCATSTranslator/Translator-All/wiki/mgi](https://github.com/NCATSTranslator/Translator-All/wiki/mgi)
+- [https://w3id.org/information-resource-registry/mgi](https://w3id.org/information-resource-registry/mgi)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://www.informatics.jax.org/mgihome/other/copyright.shtml)
-- **KG Registry**: No license information available.
 - **Reusable Data**: custom (permissive)
    - _Issues_: [{'criteria': 'A.2.2', 'comment': 'Custom license.'}, {'criteria': 'E.1.1', 'comment': 'distinguishes groups, allowing for research/academic. Commercial groups can negotiate.'}]
    - _Commentary_: -This software and data are provided to enhance knowledge and encourage progress in the scientific community and are to be used only for research and educational purposes.<hr />-Any reproduction or use for commercial purpose is prohibited without the prior express written permission of the Jackson Laboratory.
@@ -1039,6 +1039,7 @@ _MGI is the international database resource for the laboratory mouse, providing 
 
 
 <details><summary>Expand to see detailed review</summary>
+<div markdown="1">
 Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
 
 - **Reviewer**: https://orcid.org/0000-0003-4097-3395
@@ -1048,6 +1049,7 @@ Review information was generated specifically for the Matrix project and may not
 - **Domain Coverage**: `2` - Entities: gene, disease, phenotype; Relations: gene–phenotype (MP), mouse model→human disease (DO/OMIM), gene→GO, gene→expression (GXD); IDs: MGI/DO/MP/NCBI/PMID.
 - **Source Scope**: `3` - Backbone mouse resource; cross-disease; many phenotypes/models; multiple relation subtypes (phenotype, expression, GO, disease models); regular releases / bulk access.
 - **Drug Repurposing Utility**: `2` - Direct edges: T–D (mouse model→human disease) with PMIDs; IDs clean (DO/OMIM/NCBI/MGI). No D–T/D–D/AE—needs drug databases for D→T→D.
+</div>
 </details>
 
 
@@ -1057,15 +1059,14 @@ _normalized names for clinical drugs and links its names to many of the drug voc
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/RxNORM
-- https://w3id.org/information-resource-registry/rxnorm
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/RxNORM](https://github.com/NCATSTranslator/Translator-All/wiki/RxNORM)
+- [https://w3id.org/information-resource-registry/rxnorm](https://w3id.org/information-resource-registry/rxnorm)
 
 
 #### License information
 
 - **Matrix manual curation**: [UMLS Metathesaurus](https://www.nlm.nih.gov/research/umls/rxnorm/faq.html#faq-about-rxnorm)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1079,15 +1080,14 @@ _No description._
 
 
 **Links**:
-- https://w3id.org/information-resource-registry/medrt-umls
-- https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/MED-RT/index.html
+
+- [https://w3id.org/information-resource-registry/medrt-umls](https://w3id.org/information-resource-registry/medrt-umls)
+- [https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/MED-RT/index.html](https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/MED-RT/index.html)
 
 
 #### License information
 
 - **Matrix manual curation**: [UMLS Metathesaurus](https://evs.nci.nih.gov/ftp1/MED-RT/MED-RT%20Documentation.pdf)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1101,15 +1101,14 @@ _No description._
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/GO-Plus
-- https://w3id.org/information-resource-registry/go-plus
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/GO-Plus](https://github.com/NCATSTranslator/Translator-All/wiki/GO-Plus)
+- [https://w3id.org/information-resource-registry/go-plus](https://w3id.org/information-resource-registry/go-plus)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://geneontology.org/docs/go-citation-policy/)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1123,15 +1122,14 @@ _No description._
 
 
 **Links**:
-- https://w3id.org/information-resource-registry/fma-obo
-- https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/FMA/index.html
+
+- [https://w3id.org/information-resource-registry/fma-obo](https://w3id.org/information-resource-registry/fma-obo)
+- [https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/FMA/index.html](https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/FMA/index.html)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 3.0](http://si.washington.edu/info-books/project-details/foundational-model-of-anatomy/accessing-the-fma-ontology/)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1145,9 +1143,10 @@ _a manually knowledge_assertion database of bioactive molecules with drug-like p
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/ChEMBL
-- https://w3id.org/information-resource-registry/chembl
-- https://www.ebi.ac.uk/chembl/
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/ChEMBL](https://github.com/NCATSTranslator/Translator-All/wiki/ChEMBL)
+- [https://w3id.org/information-resource-registry/chembl](https://w3id.org/information-resource-registry/chembl)
+- [https://www.ebi.ac.uk/chembl/](https://www.ebi.ac.uk/chembl/)
 
 
 #### License information
@@ -1170,15 +1169,14 @@ _No description._
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/VANDF
-- https://w3id.org/information-resource-registry/vandf-umls
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/VANDF](https://github.com/NCATSTranslator/Translator-All/wiki/VANDF)
+- [https://w3id.org/information-resource-registry/vandf-umls](https://w3id.org/information-resource-registry/vandf-umls)
 
 
 #### License information
 
 - **Matrix manual curation**: [UMLS Metathesaurus](https://bioportal.bioontology.org/ontologies/VANDF)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1192,16 +1190,16 @@ _The Orphanet Rare Disease Ontology (ORDO) is an open-access ontology developed 
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/Orphanet-Rare-Disease-Ontology
-- https://w3id.org/information-resource-registry/ordo
-- https://www.orphadata.com/ordo/
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/Orphanet-Rare-Disease-Ontology](https://github.com/NCATSTranslator/Translator-All/wiki/Orphanet-Rare-Disease-Ontology)
+- [https://w3id.org/information-resource-registry/ordo](https://w3id.org/information-resource-registry/ordo)
+- [https://www.orphadata.com/ordo/](https://www.orphadata.com/ordo/)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://www.orphadata.com/about-us/)
 - **KG Registry**: https://creativecommons.org/licenses/by/4.0/
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1215,16 +1213,16 @@ _UniProt Protein Knowledge Base_
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/UniProt
-- https://w3id.org/information-resource-registry/uniprot
-- https://www.uniprot.org/
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/UniProt](https://github.com/NCATSTranslator/Translator-All/wiki/UniProt)
+- [https://w3id.org/information-resource-registry/uniprot](https://w3id.org/information-resource-registry/uniprot)
+- [https://www.uniprot.org/](https://www.uniprot.org/)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://www.uniprot.org/help/license)
 - **KG Registry**: https://creativecommons.org/licenses/by/4.0/
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1238,16 +1236,16 @@ _The Experimental Factor Ontology (EFO) provides a systematic description of man
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/EFO
-- https://w3id.org/information-resource-registry/efo
-- https://www.ebi.ac.uk/efo/
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/EFO](https://github.com/NCATSTranslator/Translator-All/wiki/EFO)
+- [https://w3id.org/information-resource-registry/efo](https://w3id.org/information-resource-registry/efo)
+- [https://www.ebi.ac.uk/efo/](https://www.ebi.ac.uk/efo/)
 
 
 #### License information
 
 - **Matrix manual curation**: [Apache 2.0](https://kghub.org/kg-registry/resource/efo/efo.html)
 - **KG Registry**: https://www.apache.org/licenses/LICENSE-2.0
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1261,16 +1259,16 @@ _information on drug-gene interactions and druggable genes from publications, da
 
 
 **Links**:
-- https://dgidb.org
-- https://github.com/NCATSTranslator/Translator-All/wiki/dgidb
-- https://w3id.org/information-resource-registry/dgidb
+
+- [https://dgidb.org](https://dgidb.org)
+- [https://github.com/NCATSTranslator/Translator-All/wiki/dgidb](https://github.com/NCATSTranslator/Translator-All/wiki/dgidb)
+- [https://w3id.org/information-resource-registry/dgidb](https://w3id.org/information-resource-registry/dgidb)
 
 
 #### License information
 
 - **Matrix manual curation**: [MIT License](https://dgidb.org/about/overview/data-accessibility)
 - **KG Registry**: https://opensource.org/licenses/MIT
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1284,15 +1282,15 @@ _SIGNOR (SIGnaling Network Open Resource) is a manually curated repository of ex
 
 
 **Links**:
-- https://signor.uniroma2.it/
-- https://w3id.org/information-resource-registry/signor
+
+- [https://signor.uniroma2.it/](https://signor.uniroma2.it/)
+- [https://w3id.org/information-resource-registry/signor](https://w3id.org/information-resource-registry/signor)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://signor.uniroma2.it/)
 - **KG Registry**: https://creativecommons.org/licenses/by/4.0/
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1306,15 +1304,14 @@ _No description._
 
 
 **Links**:
-- http://www.obofoundry.org/ontology/foodon.html
-- https://w3id.org/information-resource-registry/foodon
+
+- [http://www.obofoundry.org/ontology/foodon.html](http://www.obofoundry.org/ontology/foodon.html)
+- [https://w3id.org/information-resource-registry/foodon](https://w3id.org/information-resource-registry/foodon)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://obofoundry.org/ontology/foodon.html)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1328,16 +1325,16 @@ _The Cell Ontology (CL) is a structured controlled vocabulary for cell types in 
 
 
 **Links**:
-- https://cell-ontology.github.io/
-- https://github.com/NCATSTranslator/Translator-All/wiki/CL
-- https://w3id.org/information-resource-registry/cl
+
+- [https://cell-ontology.github.io/](https://cell-ontology.github.io/)
+- [https://github.com/NCATSTranslator/Translator-All/wiki/CL](https://github.com/NCATSTranslator/Translator-All/wiki/CL)
+- [https://w3id.org/information-resource-registry/cl](https://w3id.org/information-resource-registry/cl)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://obofoundry.org/ontology/cl.html)
 - **KG Registry**: http://creativecommons.org/licenses/by/4.0/
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1351,16 +1348,16 @@ _HGNC is the HUGO Gene Nomenclature Committee. It is a resource for approved hum
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/HGNC
-- https://w3id.org/information-resource-registry/hgnc
-- https://www.genenames.org/
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/HGNC](https://github.com/NCATSTranslator/Translator-All/wiki/HGNC)
+- [https://w3id.org/information-resource-registry/hgnc](https://w3id.org/information-resource-registry/hgnc)
+- [https://www.genenames.org/](https://www.genenames.org/)
 
 
 #### License information
 
 - **Matrix manual curation**: [Public Domain and CC0](https://www.genenames.org/about/license/)
 - **KG Registry**: https://creativecommons.org/publicdomain/zero/1.0/
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1374,15 +1371,14 @@ _No description._
 
 
 **Links**:
-- https://w3id.org/information-resource-registry/icd9cm-umls
-- https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/ICD9CM/index.html
+
+- [https://w3id.org/information-resource-registry/icd9cm-umls](https://w3id.org/information-resource-registry/icd9cm-umls)
+- [https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/ICD9CM/index.html](https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/ICD9CM/index.html)
 
 
 #### License information
 
 - **Matrix manual curation**: [UMLS Metathesaurus](https://bioportal.bioontology.org/ontologies/ICD9CM)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1396,10 +1392,11 @@ _Online drug information resource created and maintained by Division of Translat
 
 
 **Links**:
-- http://drugcentral.org
-- https://drugcentral.org/
-- https://github.com/NCATSTranslator/Translator-All/wiki/DrugCentral
-- https://w3id.org/information-resource-registry/drugcentral
+
+- [http://drugcentral.org](http://drugcentral.org)
+- [https://drugcentral.org/](https://drugcentral.org/)
+- [https://github.com/NCATSTranslator/Translator-All/wiki/DrugCentral](https://github.com/NCATSTranslator/Translator-All/wiki/DrugCentral)
+- [https://w3id.org/information-resource-registry/drugcentral](https://w3id.org/information-resource-registry/drugcentral)
 
 
 #### License information
@@ -1422,14 +1419,13 @@ _No description._
 
 
 **Links**:
-- https://w3id.org/information-resource-registry/nddf-umls
+
+- [https://w3id.org/information-resource-registry/nddf-umls](https://w3id.org/information-resource-registry/nddf-umls)
 
 
 #### License information
 
 - **Matrix manual curation**: [UMLS Metathesaurus](https://bioportal.bioontology.org/ontologies/NDDF)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1443,15 +1439,14 @@ _No description._
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/Automat
-- https://w3id.org/information-resource-registry/chv-umls
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/Automat](https://github.com/NCATSTranslator/Translator-All/wiki/Automat)
+- [https://w3id.org/information-resource-registry/chv-umls](https://w3id.org/information-resource-registry/chv-umls)
 
 
 #### License information
 
 - **Matrix manual curation**: [nan](nan)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1465,15 +1460,14 @@ _No description._
 
 
 **Links**:
-- http://www.obofoundry.org/ontology/ncbitaxon.html
-- https://w3id.org/information-resource-registry/ncbi-taxon
+
+- [http://www.obofoundry.org/ontology/ncbitaxon.html](http://www.obofoundry.org/ontology/ncbitaxon.html)
+- [https://w3id.org/information-resource-registry/ncbi-taxon](https://w3id.org/information-resource-registry/ncbi-taxon)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC0 1.0](https://obofoundry.org/ontology/ncbitaxon.html)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1487,15 +1481,14 @@ _No description._
 
 
 **Links**:
-- https://w3id.org/information-resource-registry/psy-umls
-- https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/PSY/index.html#:~:text=PSY%20(Psychological%20Index%20Terms)%20%2D%20Synopsis,-Synopsis%20Metadata%20Statistics&text=The%20Thesaurus%20of%20Psychological%20Index%20Terms%20is%20a%20controlled%20vocabulary,provide%20subject%20searching%20of%20data.
+
+- [https://w3id.org/information-resource-registry/psy-umls](https://w3id.org/information-resource-registry/psy-umls)
+- [https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/PSY/index.html#:~:text=PSY%20(Psychological%20Index%20Terms)%20%2D%20Synopsis,-Synopsis%20Metadata%20Statistics&text=The%20Thesaurus%20of%20Psychological%20Index%20Terms%20is%20a%20controlled%20vocabulary,provide%20subject%20searching%20of%20data.](https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/PSY/index.html#:~:text=PSY%20(Psychological%20Index%20Terms)%20%2D%20Synopsis,-Synopsis%20Metadata%20Statistics&text=The%20Thesaurus%20of%20Psychological%20Index%20Terms%20is%20a%20controlled%20vocabulary,provide%20subject%20searching%20of%20data.)
 
 
 #### License information
 
 - **Matrix manual curation**: [UMLS Metathesaurus](https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/PSY/stats.html)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1509,15 +1502,15 @@ _A curated database of human hereditary syndromes from OMIM, Orphanet, and DECIP
 
 
 **Links**:
-- http://human-phenotype-ontology.github.io
-- https://github.com/NCATSTranslator/Translator-All/wiki/HPO
-- https://w3id.org/information-resource-registry/hpo
+
+- [http://human-phenotype-ontology.github.io](http://human-phenotype-ontology.github.io)
+- [https://github.com/NCATSTranslator/Translator-All/wiki/HPO](https://github.com/NCATSTranslator/Translator-All/wiki/HPO)
+- [https://w3id.org/information-resource-registry/hpo](https://w3id.org/information-resource-registry/hpo)
 
 
 #### License information
 
 - **Matrix manual curation**: [Custom HPO License — free use with attribution, version/date display, and no content alteration without approval](https://hpo.jax.org/license)
-- **KG Registry**: No license information available.
 - **Reusable Data**: custom (restrictive)
    - _Issues_: [{'criteria': 'A.2.2', 'comment': 'HPO is copyrighted to protect ontologies and all changes must be made by hpo developers.'}, {'criteria': 'D.1.2', 'comment': 'Restricted downstream use. May not be edited.'}, {'criteria': 'E.1.2', 'comment': 'Restricted downstream use translates to agents as well.'}]
    - _Commentary_: immutability<hr />unclear derivatives<hr />That the Human Phenotype Ontology Consortium is acknowledged and cited properly.<hr />That neither the content of the HPO file(s) nor the logical relationships embedded within the HPO file(s) be altered in any way.
@@ -1534,15 +1527,14 @@ _Aggregating and assessing experimental evidence for interpretable, explainable,
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/TIGA
-- https://w3id.org/information-resource-registry/tiga
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/TIGA](https://github.com/NCATSTranslator/Translator-All/wiki/TIGA)
+- [https://w3id.org/information-resource-registry/tiga](https://w3id.org/information-resource-registry/tiga)
 
 
 #### License information
 
 - **Matrix manual curation**: [BSD-2-Clause](https://academic.oup.com/bioinformatics/article/37/21/3865/6292081)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1556,16 +1548,16 @@ _The Mondo Disease Ontology (Mondo) aims to harmonize disease definitions across
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/mondo
-- https://mondo.monarchinitiative.org/
-- https://w3id.org/information-resource-registry/mondo
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/mondo](https://github.com/NCATSTranslator/Translator-All/wiki/mondo)
+- [https://mondo.monarchinitiative.org/](https://mondo.monarchinitiative.org/)
+- [https://w3id.org/information-resource-registry/mondo](https://w3id.org/information-resource-registry/mondo)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://mondo.monarchinitiative.org/#license)
 - **KG Registry**: https://creativecommons.org/licenses/by/4.0/
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1579,15 +1571,15 @@ _The Kyoto Encyclopedia of Genes and Genomes (KEGG) is a database resource for u
 
 
 **Links**:
-- https://w3id.org/information-resource-registry/kegg
-- https://www.genome.jp/kegg/
+
+- [https://w3id.org/information-resource-registry/kegg](https://w3id.org/information-resource-registry/kegg)
+- [https://www.genome.jp/kegg/](https://www.genome.jp/kegg/)
 
 
 #### License information
 
 - **Matrix manual curation**: [Proprietary (Kanehisa Laboratories) — free for academic web access; FTP subscription required for academic service use; commercial use requires paid license](https://www.kegg.jp/kegg/legal.html)
 - **KG Registry**: https://www.kegg.jp/feedback/copyright.html
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1601,9 +1593,10 @@ _Zebrafish Information Network, including the Zebrafish Anatomical Ontology_
 
 
 **Links**:
-- http://zfin.org
-- https://w3id.org/information-resource-registry/zfin
-- https://zfin.org/
+
+- [http://zfin.org](http://zfin.org)
+- [https://w3id.org/information-resource-registry/zfin](https://w3id.org/information-resource-registry/zfin)
+- [https://zfin.org/](https://zfin.org/)
 
 
 #### License information
@@ -1626,16 +1619,16 @@ _An integrated cross-species anatomy ontology representing a variety of anatomic
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/Uberon
-- https://obophenotype.github.io/uberon/
-- https://w3id.org/information-resource-registry/uberon
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/Uberon](https://github.com/NCATSTranslator/Translator-All/wiki/Uberon)
+- [https://obophenotype.github.io/uberon/](https://obophenotype.github.io/uberon/)
+- [https://w3id.org/information-resource-registry/uberon](https://w3id.org/information-resource-registry/uberon)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 3.0](https://obofoundry.org/ontology/uberon.html)
 - **KG Registry**: https://creativecommons.org/licenses/by/3.0/
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1649,15 +1642,14 @@ _No description._
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/disease-ontology
-- https://w3id.org/information-resource-registry/disease-ontology
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/disease-ontology](https://github.com/NCATSTranslator/Translator-All/wiki/disease-ontology)
+- [https://w3id.org/information-resource-registry/disease-ontology](https://w3id.org/information-resource-registry/disease-ontology)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC0 1.0](https://disease-ontology.org/about/)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1671,15 +1663,15 @@ _A Database of Drosophila Genes & Genomes_
 
 
 **Links**:
-- http://flybase.org
-- https://flybase.org
-- https://w3id.org/information-resource-registry/flybase
+
+- [http://flybase.org](http://flybase.org)
+- [https://flybase.org](https://flybase.org)
+- [https://w3id.org/information-resource-registry/flybase](https://w3id.org/information-resource-registry/flybase)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://wiki.flybase.org/wiki/FlyBase:About#FlyBase_Licenses_and_Availability)
-- **KG Registry**: No license information available.
 - **Reusable Data**: custom (restrictive)
    - _Issues_: [{'criteria': 'A.2.2', 'comment': "Copyright statement includes 'This publication may be copied for non-commercial, scientific uses by individuals or organizations (including for-profit organizations). FlyBase is freely distributed to the scientific community on the understanding that it will not be used for commercial gain by any organization. Any commercial use of this publication, or any parts thereof, is expressly prohibited without permission in writing from the FlyBase consortium.'"}, {'criteria': 'B.1', 'comment': "Copyright statement includes 'Certain portions of FlyBase are copyrighted separately.'"}, {'criteria': 'B.2.1', 'comment': "Copyright statement includes 'Certain portions of FlyBase are copyrighted separately.'"}, {'criteria': 'D.1.1', 'comment': 'As stated copyright may be interpreted by non-legal professional that the contents may be reused/remixed in a non-commercial context.'}, {'criteria': 'E.1.1', 'comment': 'As stated copyright may be interpreted by non-legal professional that the contents may be reused/remixed in a non-commercial context.'}]
    - _Commentary_: Copyright statement is not co-located with the data source.
@@ -1696,15 +1688,14 @@ _No description._
 
 
 **Links**:
-- https://w3id.org/information-resource-registry/pdq-umls
-- https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/PDQ/index.html
+
+- [https://w3id.org/information-resource-registry/pdq-umls](https://w3id.org/information-resource-registry/pdq-umls)
+- [https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/PDQ/index.html](https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/PDQ/index.html)
 
 
 #### License information
 
 - **Matrix manual curation**: [UMLS Metathesaurus](https://bioportal.bioontology.org/ontologies/PDQ)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1718,16 +1709,16 @@ _The Saccharomyces Genome Database (SGD) project collects information and mainta
 
 
 **Links**:
-- http://www.yeastgenome.org/
-- https://w3id.org/information-resource-registry/sgd
-- https://www.yeastgenome.org/
-- https://yeastgenome.org/
+
+- [http://www.yeastgenome.org/](http://www.yeastgenome.org/)
+- [https://w3id.org/information-resource-registry/sgd](https://w3id.org/information-resource-registry/sgd)
+- [https://www.yeastgenome.org/](https://www.yeastgenome.org/)
+- [https://yeastgenome.org/](https://yeastgenome.org/)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://sites.google.com/view/yeastgenome-help/about)
-- **KG Registry**: No license information available.
 - **Reusable Data**: CC-BY-4.0 (permissive)
    - _Issues_: [{'criteria': 'B.2.1', 'comment': 'While the downloadable data seems quite clearly CC-BY-4.0, the API footer has terms that indicate that all data may not be covered under the same license (see comments).'}, {'criteria': 'B.2.2', 'comment': 'The API does not seem to be any easy way to differentiate the \\"clean\\" CC-BY-4.0 data from other licenses.'}]
    - _Commentary_: The license information found in the "About SGD" paragraph on the SGD Help page at https://sites.google.com/view/yeastgenome-help/about<hr />SGD operates under the Creative Commons Attribution 4.0 International license (CC BY 4.0).<hr />However, the license information for the API is much less clear, reading: "Permission to use the information contained in this database was given by the researchers/institutes who contributed or published the information. Users of the database are solely responsible for compliance with any copyright restrictions, including those applying to the author abstracts."<hr />The API did not seem to offer any way of filter out things with other licenses.<hr />Without ascending, noting that various upstream for the SGD API could have other terms: https://yeastmine.yeastgenome.org/yeastmine/dataCategories.do
@@ -1744,15 +1735,14 @@ _No description._
 
 
 **Links**:
-- http://obofoundry.org/ontology/ehdaa2.html
-- https://w3id.org/information-resource-registry/ehdaa2
+
+- [http://obofoundry.org/ontology/ehdaa2.html](http://obofoundry.org/ontology/ehdaa2.html)
+- [https://w3id.org/information-resource-registry/ehdaa2](https://w3id.org/information-resource-registry/ehdaa2)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://obofoundry.org/ontology/ehdaa2.html)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1766,16 +1756,16 @@ _A database of paths that represent the mechanism of action from a drug to a dis
 
 
 **Links**:
-- https://github.com/SuLab/DrugMechDB
-- https://sulab.github.io/DrugMechDB/
-- https://w3id.org/information-resource-registry/drugmechdb
+
+- [https://github.com/SuLab/DrugMechDB](https://github.com/SuLab/DrugMechDB)
+- [https://sulab.github.io/DrugMechDB/](https://sulab.github.io/DrugMechDB/)
+- [https://w3id.org/information-resource-registry/drugmechdb](https://w3id.org/information-resource-registry/drugmechdb)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://www.nature.com/articles/s41597-023-02534-z#:~:text=(DrugMechDB)%2C%20a%20manually%20curated&text=Open%20Access%20This%20article%20is%20licensed%20under%20a%20Creative%20Commons%20Attribution%204.0%20International%20License)
 - **KG Registry**: https://creativecommons.org/publicdomain/zero/1.0/
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1789,16 +1779,16 @@ _An expert-knowledge_assertion resource of ligand-activity-target relationships,
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/GtoPdb
-- https://w3id.org/information-resource-registry/gtopdb
-- https://www.guidetopharmacology.org
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/GtoPdb](https://github.com/NCATSTranslator/Translator-All/wiki/GtoPdb)
+- [https://w3id.org/information-resource-registry/gtopdb](https://w3id.org/information-resource-registry/gtopdb)
+- [https://www.guidetopharmacology.org](https://www.guidetopharmacology.org)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY-SA 4.0](https://www.guidetopharmacology.org/download.jsp#:~:text=The%20Guide%20to%20PHARMACOLOGY%20database,Open%20Database%20License%20(ODbL).)
 - **KG Registry**: http://creativecommons.org/licenses/by-sa/4.0/
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1812,15 +1802,14 @@ _No description._
 
 
 **Links**:
-- https://medlineplus.gov/
-- https://w3id.org/information-resource-registry/medlineplus
+
+- [https://medlineplus.gov/](https://medlineplus.gov/)
+- [https://w3id.org/information-resource-registry/medlineplus](https://w3id.org/information-resource-registry/medlineplus)
 
 
 #### License information
 
 - **Matrix manual curation**: [UMLS Metathesaurus](https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/MEDLINEPLUS/index.html)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1834,15 +1823,14 @@ _No description._
 
 
 **Links**:
-- https://w3id.org/information-resource-registry/hl7-umls
-- https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/HL7V3.0/index.html
+
+- [https://w3id.org/information-resource-registry/hl7-umls](https://w3id.org/information-resource-registry/hl7-umls)
+- [https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/HL7V3.0/index.html](https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/HL7V3.0/index.html)
 
 
 #### License information
 
 - **Matrix manual curation**: [UMLS Metathesaurus](https://uts.nlm.nih.gov/uts/assets/LicenseAgreement.pdf)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1856,16 +1844,16 @@ _RepoDB is a standard dataset of drug repositioning successes and failures  that
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/repoDB
-- https://unmtid-shinyapps.net/shiny/repodb/
-- https://w3id.org/information-resource-registry/repodb
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/repoDB](https://github.com/NCATSTranslator/Translator-All/wiki/repoDB)
+- [https://unmtid-shinyapps.net/shiny/repodb/](https://unmtid-shinyapps.net/shiny/repodb/)
+- [https://w3id.org/information-resource-registry/repodb](https://w3id.org/information-resource-registry/repodb)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://www.nature.com/articles/sdata201729)
 - **KG Registry**: https://creativecommons.org/licenses/by/4.0/
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1879,15 +1867,14 @@ _No description._
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/HCPCS-Version-of-Current-Procedural-Terminology
-- https://w3id.org/information-resource-registry/hcp-codes-umls
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/HCPCS-Version-of-Current-Procedural-Terminology](https://github.com/NCATSTranslator/Translator-All/wiki/HCPCS-Version-of-Current-Procedural-Terminology)
+- [https://w3id.org/information-resource-registry/hcp-codes-umls](https://w3id.org/information-resource-registry/hcp-codes-umls)
 
 
 #### License information
 
 - **Matrix manual curation**: [UMLS Metathesaurus](https://uts.nlm.nih.gov/uts/assets/LicenseAgreement.pdf)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1901,15 +1888,14 @@ _No description._
 
 
 **Links**:
-- https://w3id.org/information-resource-registry/atc-codes-umls
-- https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/ATC/index.html
+
+- [https://w3id.org/information-resource-registry/atc-codes-umls](https://w3id.org/information-resource-registry/atc-codes-umls)
+- [https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/ATC/index.html](https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/ATC/index.html)
 
 
 #### License information
 
 - **Matrix manual curation**: [UMLS Metathesaurus](https://uts.nlm.nih.gov/uts/assets/LicenseAgreement.pdf)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1923,15 +1909,14 @@ _encyclopedia of rare disease annotations for precision medicine_
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/eRAM
-- https://w3id.org/information-resource-registry/eram
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/eRAM](https://github.com/NCATSTranslator/Translator-All/wiki/eRAM)
+- [https://w3id.org/information-resource-registry/eram](https://w3id.org/information-resource-registry/eram)
 
 
 #### License information
 
 - **Matrix manual curation**: [Custom eRAM License — free for academic/non-profit use; commercial use requires a paid license; provided “as-is” with no liability](http://119.3.41.228/eram/download.php)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1945,15 +1930,15 @@ _The RGD API_
 
 
 **Links**:
-- http://rgd.mcw.edu
-- https://rgd.mcw.edu/
-- https://w3id.org/information-resource-registry/rgd
+
+- [http://rgd.mcw.edu](http://rgd.mcw.edu)
+- [https://rgd.mcw.edu/](https://rgd.mcw.edu/)
+- [https://w3id.org/information-resource-registry/rgd](https://w3id.org/information-resource-registry/rgd)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://rgd.mcw.edu/wg/disclaimer/#:~:text=Data%20in%20RGD%20are%20provided,You%20are%20free%20to%E2%80%A6&text=Adapt:%20remix%2C%20transform%2C%20and,for%20any%20purpose%2C%20even%20commercially.)
-- **KG Registry**: No license information available.
 - **Reusable Data**: CC-BY-4.0 (permissive)
    - _Issues_: []
    - _Commentary_: Information found in the "Legal Disclaimer" footer on all pages, next to CC BY 4.0 link.
@@ -1970,15 +1955,14 @@ _No description._
 
 
 **Links**:
-- https://genepio.org/
-- https://w3id.org/information-resource-registry/genepio
+
+- [https://genepio.org/](https://genepio.org/)
+- [https://w3id.org/information-resource-registry/genepio](https://w3id.org/information-resource-registry/genepio)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 3.0](https://obofoundry.org/ontology/genepio.html)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -1992,15 +1976,14 @@ _provides comprehensive information and tools for the study of protein  post-tra
 
 
 **Links**:
-- https://w3id.org/information-resource-registry/psite-plus
-- https://www.phosphosite.org/homeAction.action
+
+- [https://w3id.org/information-resource-registry/psite-plus](https://w3id.org/information-resource-registry/psite-plus)
+- [https://www.phosphosite.org/homeAction.action](https://www.phosphosite.org/homeAction.action)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY-NC-SA 3.0](https://www.phosphosite.org/homeAction)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -2014,15 +1997,14 @@ _No description._
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/Monarch-Initiative
-- https://w3id.org/information-resource-registry/monarchinitiative
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/Monarch-Initiative](https://github.com/NCATSTranslator/Translator-All/wiki/Monarch-Initiative)
+- [https://w3id.org/information-resource-registry/monarchinitiative](https://w3id.org/information-resource-registry/monarchinitiative)
 
 
 #### License information
 
 - **Matrix manual curation**: [BSD-3-Clause](https://monarchinitiative.org/kg/terms)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -2036,15 +2018,14 @@ _No description._
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/UniChem
-- https://w3id.org/information-resource-registry/unichem
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/UniChem](https://github.com/NCATSTranslator/Translator-All/wiki/UniChem)
+- [https://w3id.org/information-resource-registry/unichem](https://w3id.org/information-resource-registry/unichem)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://www.ebi.ac.uk/training/online/courses/unichem-quick-tour/what-is-unichem/)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -2058,15 +2039,14 @@ _No description._
 
 
 **Links**:
-- https://w3id.org/information-resource-registry/mirbase
-- https://www.mirbase.org/
+
+- [https://w3id.org/information-resource-registry/mirbase](https://w3id.org/information-resource-registry/mirbase)
+- [https://www.mirbase.org/](https://www.mirbase.org/)
 
 
 #### License information
 
 - **Matrix manual curation**: [Public Domain](https://www.mirbase.org/download/CURRENT/LICENSE/#:~:text=miRBase%20is%20in%20the%20public,MIRBASE%20DATABASE%2C%20EVEN%20IF%20THE)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -2080,15 +2060,14 @@ _No description._
 
 
 **Links**:
-- https://epsd.biocuckoo.cn
-- https://w3id.org/information-resource-registry/epsd
+
+- [https://epsd.biocuckoo.cn](https://epsd.biocuckoo.cn)
+- [https://w3id.org/information-resource-registry/epsd](https://w3id.org/information-resource-registry/epsd)
 
 
 #### License information
 
 - **Matrix manual curation**: [No License Mentioned](nan)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -2102,16 +2081,16 @@ _Phenotype And Trait Ontology (PATO) is an ontology of phenotypic qualities (pro
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/PATO
-- https://github.com/pato-ontology/pato/
-- https://w3id.org/information-resource-registry/pato
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/PATO](https://github.com/NCATSTranslator/Translator-All/wiki/PATO)
+- [https://github.com/pato-ontology/pato/](https://github.com/pato-ontology/pato/)
+- [https://w3id.org/information-resource-registry/pato](https://w3id.org/information-resource-registry/pato)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 3.0](https://obofoundry.org/ontology/pato.html)
 - **KG Registry**: http://creativecommons.org/licenses/by/3.0/
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -2125,15 +2104,14 @@ _Stub Resource page for mi. This page was automatically generated because it was
 
 
 **Links**:
-- http://www.obofoundry.org/ontology/mi.html
-- https://w3id.org/information-resource-registry/mi
+
+- [http://www.obofoundry.org/ontology/mi.html](http://www.obofoundry.org/ontology/mi.html)
+- [https://w3id.org/information-resource-registry/mi](https://w3id.org/information-resource-registry/mi)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://obofoundry.org/ontology/mi.html)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -2147,15 +2125,14 @@ _No description._
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/NBO
-- https://w3id.org/information-resource-registry/nbo
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/NBO](https://github.com/NCATSTranslator/Translator-All/wiki/NBO)
+- [https://w3id.org/information-resource-registry/nbo](https://w3id.org/information-resource-registry/nbo)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 3.0](https://bioregistry.io/registry/nbo)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -2169,15 +2146,14 @@ _No description._
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/BioLink-OWL
-- https://w3id.org/information-resource-registry/biolink-ontology
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/BioLink-OWL](https://github.com/NCATSTranslator/Translator-All/wiki/BioLink-OWL)
+- [https://w3id.org/information-resource-registry/biolink-ontology](https://w3id.org/information-resource-registry/biolink-ontology)
 
 
 #### License information
 
 - **Matrix manual curation**: [Public Domain and CC0 1.0](https://www.ebi.ac.uk/ols4/ontologies/biolink)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -2191,15 +2167,14 @@ _iPTMnet is a bioinformatics resource for integrated understanding of protein po
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/iPTMnet
-- https://w3id.org/information-resource-registry/iptmnet
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/iPTMnet](https://github.com/NCATSTranslator/Translator-All/wiki/iPTMnet)
+- [https://w3id.org/information-resource-registry/iptmnet](https://w3id.org/information-resource-registry/iptmnet)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY-NC-SA 4.0](https://research.bioinformatics.udel.edu/iptmnet/license)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -2213,15 +2188,14 @@ _This service provides screening of novel psychoactive compounds for pharmacolog
 
 
 **Links**:
-- https://github.com/NCATSTranslator/Translator-All/wiki/PDSP
-- https://w3id.org/information-resource-registry/pdsp
+
+- [https://github.com/NCATSTranslator/Translator-All/wiki/PDSP](https://github.com/NCATSTranslator/Translator-All/wiki/PDSP)
+- [https://w3id.org/information-resource-registry/pdsp](https://w3id.org/information-resource-registry/pdsp)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY-NC-SA 4.0](https://www.nature.com/nature-index/institution-outputs/articles/all/global/United%20States%20of%20America%20%28USA%29/NIMH%20Psychoactive%20Drug%20Screening%20Program%20%28PDSP%29/)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -2235,15 +2209,14 @@ _Stub Resource page for ro. This page was automatically generated because it was
 
 
 **Links**:
-- http://www.obofoundry.org/ontology/ro.html
-- https://w3id.org/information-resource-registry/ro
+
+- [http://www.obofoundry.org/ontology/ro.html](http://www.obofoundry.org/ontology/ro.html)
+- [https://w3id.org/information-resource-registry/ro](https://w3id.org/information-resource-registry/ro)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC0 1.0](https://obofoundry.org/ontology/ro.html)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -2257,15 +2230,14 @@ _No description._
 
 
 **Links**:
-- http://www.obofoundry.org/ontology/ino.html
-- https://w3id.org/information-resource-registry/ino
+
+- [http://www.obofoundry.org/ontology/ino.html](http://www.obofoundry.org/ontology/ino.html)
+- [https://w3id.org/information-resource-registry/ino](https://w3id.org/information-resource-registry/ino)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 3.0](https://obofoundry.org/ontology/ino.html)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -2279,15 +2251,14 @@ _No description._
 
 
 **Links**:
-- https://obofoundry.org/ontology/bspo.html
-- https://w3id.org/information-resource-registry/bspo
+
+- [https://obofoundry.org/ontology/bspo.html](https://obofoundry.org/ontology/bspo.html)
+- [https://w3id.org/information-resource-registry/bspo](https://w3id.org/information-resource-registry/bspo)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC BY 3.0](https://obofoundry.org/ontology/bspo.html)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -2301,15 +2272,14 @@ _No description._
 
 
 **Links**:
-- http://www.obofoundry.org/ontology/ddanat.html
-- https://w3id.org/information-resource-registry/dda
+
+- [http://www.obofoundry.org/ontology/ddanat.html](http://www.obofoundry.org/ontology/ddanat.html)
+- [https://w3id.org/information-resource-registry/dda](https://w3id.org/information-resource-registry/dda)
 
 
 #### License information
 
 - **Matrix manual curation**: [CC0 1.0](https://bioregistry.io/registry/ddanat)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
@@ -2323,14 +2293,13 @@ _No description._
 
 
 **Links**:
-- https://w3id.org/information-resource-registry/medical team
+
+- [https://w3id.org/information-resource-registry/medical team](https://w3id.org/information-resource-registry/medical team)
 
 
 #### License information
 
 - **Matrix manual curation**: [nan](nan)
-- **KG Registry**: No license information available.
-- **Reusable Data**: No license information available.
 
 #### Review information for this resource
 
