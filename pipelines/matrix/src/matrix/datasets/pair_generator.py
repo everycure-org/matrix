@@ -387,10 +387,6 @@ class DegreeAwarePairGenerator(SingleLabelPairGenerator):
         for kp_drug, kp_disease in tqdm(kp_train_set):
             unknown_data += DegreeAwarePairGenerator._make_replacements(
                 graph,
-                kp_drug,
-                kp_disease,
-                drug_samp_ids,
-                disease_samp_ids,
                 self._n_replacements,
                 known_data_set,
                 self._y_label,
@@ -405,10 +401,6 @@ class DegreeAwarePairGenerator(SingleLabelPairGenerator):
     @staticmethod
     def _make_replacements(
         graph: KnowledgeGraph,
-        kp_drug: str,
-        kp_disease: str,
-        drug_samp_ids: List[str],
-        disease_samp_ids: List[str],
         n_replacements: int,
         known_data_set: Set[tuple],
         y_label: int,
