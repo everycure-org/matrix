@@ -189,6 +189,11 @@ jobs:
         working-directory: ./pipelines/matrix
 
     steps:
+      - uses: actions/checkout@v4
+        with: 
+          submodules: recursive
+          token: ${{ secrets.PAT }}
+          persist-credentials: true
       - uses: 'google-github-actions/auth@v2'
         with:
           project_id: ${{vars.project_id}}
