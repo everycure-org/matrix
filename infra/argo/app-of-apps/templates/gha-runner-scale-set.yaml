@@ -37,7 +37,7 @@ spec:
           # privileged mode or Docker socket access—review the security trade-offs.
             initContainers:
             - name: init-dind-externals
-              image: ghcr.io/actions/actions-runner:latest
+              image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/github-runner-images/github-runner:latest
               command: ["cp", "-r", "/home/runner/externals/.", "/home/runner/tmpDir/"]
               volumeMounts:
                 - name: dind-externals
