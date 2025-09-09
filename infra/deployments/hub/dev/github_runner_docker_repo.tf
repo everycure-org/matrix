@@ -7,4 +7,5 @@ module "github_runner_image" {
   description                = "images for GitHub runner"
   format                     = "DOCKER"
   keep_number_of_last_images = 1
+  delete_older_than_days     = null
 }

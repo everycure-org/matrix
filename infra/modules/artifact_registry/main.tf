@@ -22,9 +22,8 @@ resource "google_artifact_registry_repository" "this" {
     content {
       id     = "keep-last-images"
       action = "KEEP"
-      condition {
-        newer_than = var.keep_number_of_last_images
-        tag_state  = "ANY"
+      most_recent_versions {
+        keep_count = var.keep_number_of_last_images
       }
     }
   }
