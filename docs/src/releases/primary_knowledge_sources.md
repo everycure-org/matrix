@@ -130,24 +130,23 @@ _SemMedDB is a repository of semantic predications (subject-predicate-object tri
 #### License information
 
 - **Matrix manual curation**: [UMLS Metathesaurus](https://academic.oup.com/bioinformatics/article/28/23/3158/195282)
-- **KG Registry**: https://www.nlm.nih.gov/web_policies.html
+- **KG Registry**: [UMLS License](https://www.nlm.nih.gov/web_policies.html)
 
 #### Review information for this resource
 
 
-<details><summary>Expand to see detailed review</summary>
-<div markdown="1">
-Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
 
-- **Reviewer**: https://orcid.org/0000-0003-4097-3395
-- **Overall review score**:
-   - Reviewer: `Medium` - SemMedDB is a valuable pharmacology-facing resource because it systematically mines the biomedical literature to surface relationships among drugs, targets, and diseases. For pharmacology and repurposing work, this means one can quickly identify broad patterns of how drugs are reported to treat conditions, inhibit targets, or interact with biological processes across the entire PubMed corpus. The use of UMLS CUIs ensures standardized identifiers and allows integration with other biomedical datasets. However, because the relationships are automatically extracted via NLP rather than manually curated, there is considerable noise, and predicates are often generic. As a result, SemMedDB is best positioned as a hypothesis-generation tool rather than a plug-and-play backbone for drug–disease modeling. With careful filtering around higher-confidence predicates (e.g., TREATS, INHIBITS) and frequency thresholds, it can enrich repurposing pipelines by pointing to candidate mechanisms and literature support at scale
-   - Rubric: `Medium` - Conditional: with condition = “only use curated subsets (e.g., TREATS, INHIBITS) and filter by frequency/confidence
-- **Domain Coverage**: `2` - Entities: drug,target,disease via UMLS CUIs; Relations: TREATS, INHIBITS, ASSOCIATED_WITH (~30 predicate types). Rich coverage but many edges generic/ambiguous.
-- **Source Scope**: `3` - Broad, cross-disease; >21M PubMed citations; 57.6M predications; thousands of drugs, diseases, genes; multi-relation subtypes
-- **Drug Repurposing Utility**: `1` - Direct edges: TREATS, INHIBITS, CAUSES, etc. present but NLP-extracted, noisy; predicates often generic; PubMed links but no confidence scores; precision ~70–80% → heavy filtering required
-</div>
-</details>
+???+ note "Expand to see detailed review"
+
+    Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
+    
+    - **Reviewer**: https://orcid.org/0000-0003-4097-3395
+    - **Overall review score**:
+       - Reviewer: `Medium` - SemMedDB is a valuable pharmacology-facing resource because it systematically mines the biomedical literature to surface relationships among drugs, targets, and diseases. For pharmacology and repurposing work, this means one can quickly identify broad patterns of how drugs are reported to treat conditions, inhibit targets, or interact with biological processes across the entire PubMed corpus. The use of UMLS CUIs ensures standardized identifiers and allows integration with other biomedical datasets. However, because the relationships are automatically extracted via NLP rather than manually curated, there is considerable noise, and predicates are often generic. As a result, SemMedDB is best positioned as a hypothesis-generation tool rather than a plug-and-play backbone for drug–disease modeling. With careful filtering around higher-confidence predicates (e.g., TREATS, INHIBITS) and frequency thresholds, it can enrich repurposing pipelines by pointing to candidate mechanisms and literature support at scale
+       - Rubric: `Medium` - Conditional: with condition = “only use curated subsets (e.g., TREATS, INHIBITS) and filter by frequency/confidence
+    - **Domain Coverage**: `2` - Entities: drug,target,disease via UMLS CUIs; Relations: TREATS, INHIBITS, ASSOCIATED_WITH (~30 predicate types). Rich coverage but many edges generic/ambiguous.
+    - **Source Scope**: `3` - Broad, cross-disease; >21M PubMed citations; 57.6M predications; thousands of drugs, diseases, genes; multi-relation subtypes
+    - **Drug Repurposing Utility**: `1` - Direct edges: TREATS, INHIBITS, CAUSES, etc. present but NLP-extracted, noisy; predicates often generic; PubMed links but no confidence scores; precision ~70–80% → heavy filtering required
 
 
 ### Source: Search Tool for the Retrieval of Interacting Genes/Proteins (string)
@@ -166,26 +165,25 @@ _STRING is a database of known and predicted protein-protein interactions. The i
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://string-db.org/cgi/access?footer_active_subpage=licensing)
-- **KG Registry**: https://creativecommons.org/licenses/by/4.0/
+- **KG Registry**: [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)
 - **Reusable Data**: CC-BY-4.0 (permissive)
    - _Commentary_: While there are APIs available, we skipped evaluation as they explicitly state they are now meant for bulk use and downloads are available anyways.
 
 #### Review information for this resource
 
 
-<details><summary>Expand to see detailed review</summary>
-<div markdown="1">
-Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
 
-- **Reviewer**: https://orcid.org/0000-0003-4097-3395
-- **Overall review score**:
-   - Reviewer: `High` - STRING is highly relevant for repurposing and translational pharmacology because it captures the functional protein landscape that underlies drug action. By linking proteins in pathways, networks, and disease processes, it enables inference of indirect drug–disease relationships. The layered evidence and confidence scoring help distinguish biologically meaningful interactions from background noise, which is essential for pharmacology-driven hypotheses. Since drugs act through proteins, STRING provides the mechanistic bridge between drug targets and downstream phenotypes, making it a great source for evaluating new therapeutic opportunities
-   - Rubric: `High` - Nominate: as gets A=3 / B=3/ C=3; pretty good source
-- **Domain Coverage**: `3` - Comprehensive gene/protein coverage with dense functional/physical associations and rich UniProt-based descriptors.
-- **Source Scope**: `3` - Global-scale, multi-species PPI/functional knowledgebase with millions of high-confidence edges from heterogeneous evidence.
-- **Drug Repurposing Utility**: `3` - Directly usable as a backbone for repurposing pipelines; confidence-scored PPI edges integrate seamlessly once drug and disease mappings are added.
-</div>
-</details>
+???+ note "Expand to see detailed review"
+
+    Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
+    
+    - **Reviewer**: https://orcid.org/0000-0003-4097-3395
+    - **Overall review score**:
+       - Reviewer: `High` - STRING is highly relevant for repurposing and translational pharmacology because it captures the functional protein landscape that underlies drug action. By linking proteins in pathways, networks, and disease processes, it enables inference of indirect drug–disease relationships. The layered evidence and confidence scoring help distinguish biologically meaningful interactions from background noise, which is essential for pharmacology-driven hypotheses. Since drugs act through proteins, STRING provides the mechanistic bridge between drug targets and downstream phenotypes, making it a great source for evaluating new therapeutic opportunities
+       - Rubric: `High` - Nominate: as gets A=3 / B=3/ C=3; pretty good source
+    - **Domain Coverage**: `3` - Comprehensive gene/protein coverage with dense functional/physical associations and rich UniProt-based descriptors.
+    - **Source Scope**: `3` - Global-scale, multi-species PPI/functional knowledgebase with millions of high-confidence edges from heterogeneous evidence.
+    - **Drug Repurposing Utility**: `3` - Directly usable as a backbone for repurposing pipelines; confidence-scored PPI edges integrate seamlessly once drug and disease mappings are added.
 
 
 ### Source: PathWhiz (pathwhiz)
@@ -225,7 +223,7 @@ _A comprehensive, free-to-access, online database containing information on drug
 #### License information
 
 - **Matrix manual curation**: [CC BY-NC 4.0 (Complete Database including structures, external links, protein identifiers, target sequences, drug sequences), CC0 1.0 (Open Data)](https://go.drugbank.com/releases/latest#open-data)
-- **KG Registry**: https://go.drugbank.com/legal/terms_of_use
+- **KG Registry**: [Custom (free for academic research with license)](https://go.drugbank.com/legal/terms_of_use)
 - **Reusable Data**: CC-BY-NC-4.0 (restrictive)
    - _Issues_: The NC license allows for liberal non-commercial reuse. (D.1.1); The NC license allows for non-commercial reuse with other non-commercial interests. (E.1.1)
    - _Commentary_: There is also an open (CC0) data subset for vocabulary and structures that could be evaluated separately; it is ~5mb vs ~150mb for the complete "academic" set(about 3%).<hr />This seems to be mostly a standard NC/commercial licensing split, with DrugBank+ supporting commerical licensing for fees.<hr />To download the full academic set, one must create an account (https://go.drugbank.com/public_users/sign_up), which is a multi-step and human mediated process, with varying turnaround times and follow-up questions.
@@ -251,7 +249,7 @@ _A graph representation of Ubergraph, an integration of ontologies including GO,
 #### License information
 
 - **Matrix manual curation**: [Aggregated data — follows licenses of primary data sources](https://github.com/INCATools/ubergraph?tab=BSD-3-Clause-1-ov-file)
-- **KG Registry**: https://creativecommons.org/licenses/by/4.0/
+- **KG Registry**: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
 
 #### Review information for this resource
 
@@ -295,7 +293,7 @@ _BindingDB is a public, web-accessible database of measured binding affinities, 
 #### License information
 
 - **Matrix manual curation**: [CC BY 3.0 (BindingDB curated), CC BY-SA 3.0 (ChEMBL-derived)](https://www.bindingdb.org/rwd/bind/info.jsp)
-- **KG Registry**: https://www.bindingdb.org/rwd/bind/info.jsp
+- **KG Registry**: [CC BY 4.0](https://www.bindingdb.org/rwd/bind/info.jsp)
 
 #### Review information for this resource
 
@@ -321,19 +319,18 @@ _DISEASES is a weekly updated web resource that integrates evidence on disease-g
 #### Review information for this resource
 
 
-<details><summary>Expand to see detailed review</summary>
-<div markdown="1">
-Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
 
-- **Reviewer**: https://orcid.org/0000-0003-4097-3395
-- **Overall review score**:
-   - Reviewer: `Medium` - The DISEASES database is highly relevant for pharmacology and translational research as it aggregates gene–disease associations from multiple evidence streams — curated resources, GWAS, and large-scale text mining. From a therapeutic perspective, this makes it a powerful backbone for connecting disease biology to molecular targets, especially since all entities are mapped to standardized identifiers (Disease Ontology, UniProt, HGNC, Ensembl). The built-in confidence scoring (1–5 stars) and benchmarking against gold standards lend reliability that is rare in large-scale association resources. For drug repurposing, DISEASES does not provide drug–disease edges directly, but it plays a crucial enabling role: drugs can be linked in through their known targets (via resources like DrugBank or ChEMBL), making D→T→D inference feasible at scale. This indirect but evidence-weighted connection between disease and targets provides a structured way to prioritize repurposing opportunities grounded in genetic and literature support. It is not a plug-and-play repurposing tool on its own, but it is an excellent, trustworthy foundation for building disease–gene–drug networks that support pharmacological hypothesis generation and drug repositioning
-   - Rubric: `Medium` - Conditional: useful for repurposing only when linked with other drug→target resources
-- **Domain Coverage**: `2` - Entities: target,gene + disease; Relation: T–D (~millions); mapped to DOID, STRING/HGNC/Ensembl; confidence scoring robust. No drugs or D–D/AEs.
-- **Source Scope**: `3` - Broad, cross-disease; millions of T–D edges; >19k genes, >8k diseases; integrates curated, GWAS, text mining; updated weekly.
-- **Drug Repurposing Utility**: `2` - Direct edges: T–D; millions of associations; 1–5 star confidence; AUC=0.916 for text mining. No direct drug links, no mechanism or AE context → requires integration with drug–target DBs.
-</div>
-</details>
+???+ note "Expand to see detailed review"
+
+    Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
+    
+    - **Reviewer**: https://orcid.org/0000-0003-4097-3395
+    - **Overall review score**:
+       - Reviewer: `Medium` - The DISEASES database is highly relevant for pharmacology and translational research as it aggregates gene–disease associations from multiple evidence streams — curated resources, GWAS, and large-scale text mining. From a therapeutic perspective, this makes it a powerful backbone for connecting disease biology to molecular targets, especially since all entities are mapped to standardized identifiers (Disease Ontology, UniProt, HGNC, Ensembl). The built-in confidence scoring (1–5 stars) and benchmarking against gold standards lend reliability that is rare in large-scale association resources. For drug repurposing, DISEASES does not provide drug–disease edges directly, but it plays a crucial enabling role: drugs can be linked in through their known targets (via resources like DrugBank or ChEMBL), making D→T→D inference feasible at scale. This indirect but evidence-weighted connection between disease and targets provides a structured way to prioritize repurposing opportunities grounded in genetic and literature support. It is not a plug-and-play repurposing tool on its own, but it is an excellent, trustworthy foundation for building disease–gene–drug networks that support pharmacological hypothesis generation and drug repositioning
+       - Rubric: `Medium` - Conditional: useful for repurposing only when linked with other drug→target resources
+    - **Domain Coverage**: `2` - Entities: target,gene + disease; Relation: T–D (~millions); mapped to DOID, STRING/HGNC/Ensembl; confidence scoring robust. No drugs or D–D/AEs.
+    - **Source Scope**: `3` - Broad, cross-disease; millions of T–D edges; >19k genes, >8k diseases; integrates curated, GWAS, text mining; updated weekly.
+    - **Drug Repurposing Utility**: `2` - Direct edges: T–D; millions of associations; 1–5 star confidence; AUC=0.916 for text mining. No direct drug links, no mechanism or AE context → requires integration with drug–target DBs.
 
 
 ### Source: NCBI Taxonomy (ncbi-taxonomy)
@@ -464,7 +461,7 @@ _Bgee is a database for retrieval and comparison of gene expression patterns acr
 #### License information
 
 - **Matrix manual curation**: [CC0 1.0](https://www.bgee.org/about/)
-- **KG Registry**: https://creativecommons.org/licenses/by/4.0/
+- **KG Registry**: [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/)
 - **Reusable Data**: CC0-1.0 (permissive)
    - _Commentary_: In footer, two download pages are given in the footer (/download/processed-expression-values and /download/gene-expression-calls) and a third in the menu (/download/data-dumps); on all of these pages we see "All data are available under the Creative Commons Zero license (CC0)."<hr />Also noting that on /about/, there is similarly affirming text.<hr />A little unclear on how this practically interacts with the sources list on /about/sources, but does not affect evaluation with current standards.<hr />While there is manual iteration needed for the TSVs, the mysql and rdf available on the data-dumps page sufficiently bridges the bulk criteria in C.1.
 
@@ -489,7 +486,7 @@ _Hetionet is an integrative network of biomedical knowledge assembled from 29 di
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://het.io/about/)
-- **KG Registry**: https://creativecommons.org/licenses/by/4.0/
+- **KG Registry**: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
 
 #### Review information for this resource
 
@@ -563,19 +560,18 @@ _The Library of Integrated Network-based Cellular Signatures (LINCS) is a compre
 #### Review information for this resource
 
 
-<details><summary>Expand to see detailed review</summary>
-<div markdown="1">
-Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
 
-- **Reviewer**: https://orcid.org/0000-0003-4097-3395
-- **Overall review score**:
-   - Reviewer: `Medium` - The LINCS program is quite relevant to drug discovery and repurposing because it systematically catalogs how human cells respond to thousands of chemical and genetic perturbations across transcriptomic, proteomic, epigenetic, and imaging assays. From a pharmacology standpoint, this resource provides a unique way to understand mechanism of action, pathway involvement, and potential off-target or toxic effects. While LINCS does not natively contain curated drug–target or drug–disease links, its large-scale perturbation signatures [molecular response profile of a cell when it is exposed to a specific perturbation (e.g., a small molecule, genetic knockdown, overexpression, or other intervention)] serve as a critical hypothesis-generation layer. By integrating LINCS with drug–target resources (e.g., DrugBank, ChEMBL) and disease ontologies, one can systematically prioritize candidate therapies, explore polypharmacology, and filter out compounds with toxicity
-   - Rubric: `Medium` - Conditional: it’s a backbone-scale perturbation resource that’s excellent for signature-based repurposing and MOA illumination, but it must be joined to curated drug–target and disease sources to drive actionable D→D decisions.
-- **Domain Coverage**: `2` - Entities: drugs + genes (genetic perturbations), disease mainly as context; relations are perturbation→signature (L1000, P100/GCP, imaging). Rich metadata/FAIR, but no native D–T/T–D/D–D edges
-- **Source Scope**: `3` - Broad, cross-disease & multi-modality (L1000, proteomics, imaging, epigenetics); tens of thousands of perturbagens; hundreds of thousands of signatures; large multi-center program; FAIR & standardized.”
-- **Drug Repurposing Utility**: `2` - Strong for signature-based D→D (reversal/mimic) via CLUE/L1000CDS2; toxicity signatures (DToxS) aid filtering. Lacks curated D–T/T–D/D–D edges; needs join to DrugBank/ChEMBL/BindingDB and disease resources.
-</div>
-</details>
+???+ note "Expand to see detailed review"
+
+    Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
+    
+    - **Reviewer**: https://orcid.org/0000-0003-4097-3395
+    - **Overall review score**:
+       - Reviewer: `Medium` - The LINCS program is quite relevant to drug discovery and repurposing because it systematically catalogs how human cells respond to thousands of chemical and genetic perturbations across transcriptomic, proteomic, epigenetic, and imaging assays. From a pharmacology standpoint, this resource provides a unique way to understand mechanism of action, pathway involvement, and potential off-target or toxic effects. While LINCS does not natively contain curated drug–target or drug–disease links, its large-scale perturbation signatures [molecular response profile of a cell when it is exposed to a specific perturbation (e.g., a small molecule, genetic knockdown, overexpression, or other intervention)] serve as a critical hypothesis-generation layer. By integrating LINCS with drug–target resources (e.g., DrugBank, ChEMBL) and disease ontologies, one can systematically prioritize candidate therapies, explore polypharmacology, and filter out compounds with toxicity
+       - Rubric: `Medium` - Conditional: it’s a backbone-scale perturbation resource that’s excellent for signature-based repurposing and MOA illumination, but it must be joined to curated drug–target and disease sources to drive actionable D→D decisions.
+    - **Domain Coverage**: `2` - Entities: drugs + genes (genetic perturbations), disease mainly as context; relations are perturbation→signature (L1000, P100/GCP, imaging). Rich metadata/FAIR, but no native D–T/T–D/D–D edges
+    - **Source Scope**: `3` - Broad, cross-disease & multi-modality (L1000, proteomics, imaging, epigenetics); tens of thousands of perturbagens; hundreds of thousands of signatures; large multi-center program; FAIR & standardized.”
+    - **Drug Repurposing Utility**: `2` - Strong for signature-based D→D (reversal/mimic) via CLUE/L1000CDS2; toxicity signatures (DToxS) aid filtering. Lacks curated D–T/T–D/D–D edges; needs join to DrugBank/ChEMBL/BindingDB and disease resources.
 
 
 ### Source: Reactome (reactome)
@@ -622,19 +618,18 @@ _No description._
 #### Review information for this resource
 
 
-<details><summary>Expand to see detailed review</summary>
-<div markdown="1">
-Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
 
-- **Reviewer**: https://orcid.org/0000-0003-4097-3395
-- **Overall review score**:
-   - Reviewer: `High` - Although the rubric yields Conditional due to a Utility score of 2, UMLS is being elevated to Nominate status. Its unparalleled breadth across ~60 integrated vocabularies, extensive coverage of diseases, drugs, phenotypes, anatomy, and genomic entities, and its role as the canonical backbone for biomedical concept normalization make it a uniquely valuable resource. While it lacks curated instance-level D–D edges, its semantic network (134 semantic types, 54 relation families) provides strong relation templates and consistent categorization, enabling cross-walks and harmonization critical for downstream repurposing models—meriting Nmination despite a rubric-derived Conditional
-   - Rubric: `Medium` - Conditional: due to a Utility score of 2
-- **Domain Coverage**: `3` - Covers diseases, drugs/chemicals, genes/genomes, anatomy, phenotypes, procedures, functions; concepts standardized to CUIs with 134 semantic types and 54 relation families.
-- **Source Scope**: `3` - Unifies ~60 vocabularies (~900k concepts) spanning clinical medicine and life sciences, from MeSH and SNOMED to NCBI Taxonomy and early GO integration.
-- **Drug Repurposing Utility**: `2` - Provides schema-level relations (e.g., ‘Pharmacologic Substance TREATS Disease or Syndrome’, ‘interacts with’) but not instance-level curated edges, so mainly useful for normalization and relation templates.
-</div>
-</details>
+???+ note "Expand to see detailed review"
+
+    Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
+    
+    - **Reviewer**: https://orcid.org/0000-0003-4097-3395
+    - **Overall review score**:
+       - Reviewer: `High` - Although the rubric yields Conditional due to a Utility score of 2, UMLS is being elevated to Nominate status. Its unparalleled breadth across ~60 integrated vocabularies, extensive coverage of diseases, drugs, phenotypes, anatomy, and genomic entities, and its role as the canonical backbone for biomedical concept normalization make it a uniquely valuable resource. While it lacks curated instance-level D–D edges, its semantic network (134 semantic types, 54 relation families) provides strong relation templates and consistent categorization, enabling cross-walks and harmonization critical for downstream repurposing models—meriting Nmination despite a rubric-derived Conditional
+       - Rubric: `Medium` - Conditional: due to a Utility score of 2
+    - **Domain Coverage**: `3` - Covers diseases, drugs/chemicals, genes/genomes, anatomy, phenotypes, procedures, functions; concepts standardized to CUIs with 134 semantic types and 54 relation families.
+    - **Source Scope**: `3` - Unifies ~60 vocabularies (~900k concepts) spanning clinical medicine and life sciences, from MeSH and SNOMED to NCBI Taxonomy and early GO integration.
+    - **Drug Repurposing Utility**: `2` - Provides schema-level relations (e.g., ‘Pharmacologic Substance TREATS Disease or Syndrome’, ‘interacts with’) but not instance-level curated edges, so mainly useful for normalization and relation templates.
 
 
 ### Source: Protein Ontology (pr)
@@ -673,7 +668,7 @@ _DisGeNET is the world's largest and most extensive gene-disease association (GD
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0 (for most of its sources)](https://disgenet.com/Legal)
-- **KG Registry**: https://www.disgenet.com/Legal
+- **KG Registry**: [DisGeNET License](https://www.disgenet.com/Legal)
 
 #### Review information for this resource
 
@@ -697,7 +692,7 @@ _OMIM (Online Mendelian Inheritance in Man) is a continuously updated, expert-cu
 #### License information
 
 - **Matrix manual curation**: [Custom Johns Hopkins University OMIM Use Agreement](https://www.omim.org/help/agreement)
-- **KG Registry**: https://www.omim.org/help/agreement
+- **KG Registry**: [OMIM Use Agreement (research/educational use; license required for commercial/redistribution)](https://www.omim.org/help/agreement)
 - **Reusable Data**: custom (restrictive)
    - _Issues_: The license at link is custom. (A.2.2); Agreement section 13 requires downloads to be updated by downstream; section 14 discussion arbitrary API key revocation. (B.1); Downloads and access are provided post-registration; as the API key is used for access control, it violates the C.2 example. (C.2); Sections 8, 9, and 10 of the agreement make it seems that while a non-profit reasearcher may access the data, there is no reuse (pass-through) possible. (D.1.2); Sections 8, 9, and 10 of the agreement make it seems that while a non-profit reasearcher may access the data, there is no reuse (pass-through) possible. (E.1.2)
    - _Commentary_: Assuming that one registered, it seems that data access would be relatively pain-free; so no C.1 violation.<hr />See also: https://omim.org/downloads and https://omim.org/api for additional access information.<hr />It is worth reading through the linked agreement; there are many sections that are restrictive or would be best interpreted with legal advice.
@@ -748,24 +743,23 @@ _a freely available dictionary of molecular entities focused on ‘small’ chem
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://www.ebi.ac.uk/chebi/aboutChebiForward.do)
-- **KG Registry**: https://creativecommons.org/licenses/by-sa/4.0/
+- **KG Registry**: [CC-BY-SA-4.0](https://creativecommons.org/licenses/by-sa/4.0/)
 
 #### Review information for this resource
 
 
-<details><summary>Expand to see detailed review</summary>
-<div markdown="1">
-Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
 
-- **Reviewer**: https://orcid.org/0000-0003-4097-3395
-- **Overall review score**:
-   - Reviewer: `Medium` - ChEBI is an essential foundation for biomedical informatics because it provides a rigorously curated ontology of small molecules, drugs, metabolites, cofactors, and xenobiotics, each linked with standardized identifiers (InChI, SMILES, INNs, synonyms) and roles such as “antineoplastic agent” or “analgesic.” From a pharmacology perspective, this makes it an amazing source for harmonizing chemical vocabularies across databases and for ensuring consistent mapping of drug entities when integrating resources like ChEMBL, DrugBank, or Reactome. However, ChEBI does not itself provide direct therapeutic relationships such as drug–target, target–disease, or drug–disease edges. Its value in repurposing therefore lies in its ability to unify chemical definitions, facilitate cross-resource linkage, and provide chemical role annotations that can serve as indirect signals of therapeutic potential. In practice, ChEBI acts as the chemical backbone of larger repurposing pipelines, enabling clean integration rather than producing repurposing hypotheses on its own
-   - Rubric: `Medium` - Conditional: a backbone ontology for chemical harmonization and roles, but requires integration with drug–target and disease resources to support repurposing models.
-- **Domain Coverage**: `2` - Rich ontology of small molecules with roles and structure descriptors; cross-referenced broadly; but lacks explicit gene/disease edges.
-- **Source Scope**: `3` - General-purpose backbone ontology of small molecules, roles, and classes; >400k entities; multi-resource integration; cross-disease, multi-use.
-- **Drug Repurposing Utility**: `1` - Great for harmonization (IDs, synonyms, chemical roles), but lacks curated D–T, T–D, or D–D edges; not plug-and-play for repurposing.
-</div>
-</details>
+???+ note "Expand to see detailed review"
+
+    Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
+    
+    - **Reviewer**: https://orcid.org/0000-0003-4097-3395
+    - **Overall review score**:
+       - Reviewer: `Medium` - ChEBI is an essential foundation for biomedical informatics because it provides a rigorously curated ontology of small molecules, drugs, metabolites, cofactors, and xenobiotics, each linked with standardized identifiers (InChI, SMILES, INNs, synonyms) and roles such as “antineoplastic agent” or “analgesic.” From a pharmacology perspective, this makes it an amazing source for harmonizing chemical vocabularies across databases and for ensuring consistent mapping of drug entities when integrating resources like ChEMBL, DrugBank, or Reactome. However, ChEBI does not itself provide direct therapeutic relationships such as drug–target, target–disease, or drug–disease edges. Its value in repurposing therefore lies in its ability to unify chemical definitions, facilitate cross-resource linkage, and provide chemical role annotations that can serve as indirect signals of therapeutic potential. In practice, ChEBI acts as the chemical backbone of larger repurposing pipelines, enabling clean integration rather than producing repurposing hypotheses on its own
+       - Rubric: `Medium` - Conditional: a backbone ontology for chemical harmonization and roles, but requires integration with drug–target and disease resources to support repurposing models.
+    - **Domain Coverage**: `2` - Rich ontology of small molecules with roles and structure descriptors; cross-referenced broadly; but lacks explicit gene/disease edges.
+    - **Source Scope**: `3` - General-purpose backbone ontology of small molecules, roles, and classes; >400k entities; multi-resource integration; cross-disease, multi-use.
+    - **Drug Repurposing Utility**: `1` - Great for harmonization (IDs, synonyms, chemical roles), but lacks curated D–T, T–D, or D–D edges; not plug-and-play for repurposing.
 
 
 ### Source: Human Phenotype Ontology (hpo-annotations)
@@ -892,7 +886,7 @@ _The Gene Ontology resource, the world’s largest source of information on the 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://geneontology.org/docs/go-citation-policy/)
-- **KG Registry**: https://creativecommons.org/licenses/by/4.0/
+- **KG Registry**: [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/)
 
 #### Review information for this resource
 
@@ -958,7 +952,7 @@ _A robust, publicly available database that aims to advance understanding about 
 #### License information
 
 - **Matrix manual curation**: [Custom CTD License — free for research/education; commercial use requires written permission; attribution, linking, and usage notification required](https://ctdbase.org/about/legal.jsp)
-- **KG Registry**: https://ctdbase.org/about/legal.jsp
+- **KG Registry**: [Custom](https://ctdbase.org/about/legal.jsp)
 - **Reusable Data**: custom (restrictive)
    - _Issues_: Custom license with interesting use restrictions. (A.2.2); For quality control purposes, you must provide CTD with periodic access to your publication of our data. (B.1); Given the four statements in the Additional Terms of Data Use, notably number 4, it looks like any downstream user would have to renegotiate with CTD. (D.1.2); Without negotiation: "It is to be used only for research and educational purposes." (E.1.1)
    - _Commentary_: There are statements made in the Additional Terms of Data Use that would make it very difficult to re-use the data provided without a air amount o coordination with the resource and changes to information handling.
@@ -984,7 +978,7 @@ _SIDER (Side Effect Resource) contains information on marketed medicines and the
 #### License information
 
 - **Matrix manual curation**: [CC BY-NC-SA 4.0](http://sideeffects.embl.de/about/)
-- **KG Registry**: https://creativecommons.org/licenses/by-nc-sa/4.0/
+- **KG Registry**: [CC-BY-NC-4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
 #### Review information for this resource
 
@@ -1036,19 +1030,18 @@ _MGI is the international database resource for the laboratory mouse, providing 
 #### Review information for this resource
 
 
-<details><summary>Expand to see detailed review</summary>
-<div markdown="1">
-Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
 
-- **Reviewer**: https://orcid.org/0000-0003-4097-3395
-- **Overall review score**:
-   - Reviewer: `Medium` - MGI provides well-curated links between mouse genes, phenotypes, and human diseasesusing standard ontologies and published evidence. This makes it a strong reference for understanding disease mechanisms and validating target–disease associations. For drug repurposing, MGI is most useful when combined with drug–target databases, since it does not include drugs directly. It supports the pathway from drug → target → disease by supplying reliable target–disease information
-   - Rubric: `Medium` - Conditional — Use MGI’s T–D as high-quality disease biology and gene-prior layer; combine with D–T from DrugBank/ChEMBL/BindingDB to run D→T→D paths. (Consider filtering to curated HMDC disease links.)
-- **Domain Coverage**: `2` - Entities: gene, disease, phenotype; Relations: gene–phenotype (MP), mouse model→human disease (DO/OMIM), gene→GO, gene→expression (GXD); IDs: MGI/DO/MP/NCBI/PMID.
-- **Source Scope**: `3` - Backbone mouse resource; cross-disease; many phenotypes/models; multiple relation subtypes (phenotype, expression, GO, disease models); regular releases / bulk access.
-- **Drug Repurposing Utility**: `2` - Direct edges: T–D (mouse model→human disease) with PMIDs; IDs clean (DO/OMIM/NCBI/MGI). No D–T/D–D/AE—needs drug databases for D→T→D.
-</div>
-</details>
+???+ note "Expand to see detailed review"
+
+    Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
+    
+    - **Reviewer**: https://orcid.org/0000-0003-4097-3395
+    - **Overall review score**:
+       - Reviewer: `Medium` - MGI provides well-curated links between mouse genes, phenotypes, and human diseasesusing standard ontologies and published evidence. This makes it a strong reference for understanding disease mechanisms and validating target–disease associations. For drug repurposing, MGI is most useful when combined with drug–target databases, since it does not include drugs directly. It supports the pathway from drug → target → disease by supplying reliable target–disease information
+       - Rubric: `Medium` - Conditional — Use MGI’s T–D as high-quality disease biology and gene-prior layer; combine with D–T from DrugBank/ChEMBL/BindingDB to run D→T→D paths. (Consider filtering to curated HMDC disease links.)
+    - **Domain Coverage**: `2` - Entities: gene, disease, phenotype; Relations: gene–phenotype (MP), mouse model→human disease (DO/OMIM), gene→GO, gene→expression (GXD); IDs: MGI/DO/MP/NCBI/PMID.
+    - **Source Scope**: `3` - Backbone mouse resource; cross-disease; many phenotypes/models; multiple relation subtypes (phenotype, expression, GO, disease models); regular releases / bulk access.
+    - **Drug Repurposing Utility**: `2` - Direct edges: T–D (mouse model→human disease) with PMIDs; IDs clean (DO/OMIM/NCBI/MGI). No D–T/D–D/AE—needs drug databases for D→T→D.
 
 
 ### Source: RxNorm (rxnorm)
@@ -1150,7 +1143,7 @@ _a manually knowledge_assertion database of bioactive molecules with drug-like p
 #### License information
 
 - **Matrix manual curation**: [CC BY-SA 3.0](https://chembl.gitbook.io/chembl-interface-documentation/about)
-- **KG Registry**: https://creativecommons.org/licenses/by-sa/3.0/
+- **KG Registry**: [CC-BY-SA-3.0](https://creativecommons.org/licenses/by-sa/3.0/)
 - **Reusable Data**: CC-BY-SA-3.0 (copyleft)
    - _Issues_: CC SA prevents some types of reuse, such and modification and redistribution with data from different license types. (D.1.2); CC SA prevents all parties from reusing the data as D.1.2. (E.1.2)
    - _Commentary_: There was no centralized licensing/terms information on the main site, but all download FTP directories we looked at contained terms for the CC SA 3.0; we used as single example as the license link.
@@ -1197,7 +1190,7 @@ _The Orphanet Rare Disease Ontology (ORDO) is an open-access ontology developed 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://www.orphadata.com/about-us/)
-- **KG Registry**: https://creativecommons.org/licenses/by/4.0/
+- **KG Registry**: [CC BY 4.0 (Creative Commons Attribution 4.0 International)](https://creativecommons.org/licenses/by/4.0/)
 
 #### Review information for this resource
 
@@ -1220,7 +1213,7 @@ _UniProt Protein Knowledge Base_
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://www.uniprot.org/help/license)
-- **KG Registry**: https://creativecommons.org/licenses/by/4.0/
+- **KG Registry**: [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/)
 
 #### Review information for this resource
 
@@ -1243,7 +1236,7 @@ _The Experimental Factor Ontology (EFO) provides a systematic description of man
 #### License information
 
 - **Matrix manual curation**: [Apache 2.0](https://kghub.org/kg-registry/resource/efo/efo.html)
-- **KG Registry**: https://www.apache.org/licenses/LICENSE-2.0
+- **KG Registry**: [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
 #### Review information for this resource
 
@@ -1266,7 +1259,7 @@ _information on drug-gene interactions and druggable genes from publications, da
 #### License information
 
 - **Matrix manual curation**: [MIT License](https://dgidb.org/about/overview/data-accessibility)
-- **KG Registry**: https://opensource.org/licenses/MIT
+- **KG Registry**: [MIT](https://opensource.org/licenses/MIT)
 
 #### Review information for this resource
 
@@ -1288,7 +1281,7 @@ _SIGNOR (SIGnaling Network Open Resource) is a manually curated repository of ex
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://signor.uniroma2.it/)
-- **KG Registry**: https://creativecommons.org/licenses/by/4.0/
+- **KG Registry**: [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/)
 
 #### Review information for this resource
 
@@ -1332,7 +1325,7 @@ _The Cell Ontology (CL) is a structured controlled vocabulary for cell types in 
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://obofoundry.org/ontology/cl.html)
-- **KG Registry**: http://creativecommons.org/licenses/by/4.0/
+- **KG Registry**: [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/)
 
 #### Review information for this resource
 
@@ -1355,7 +1348,7 @@ _HGNC is the HUGO Gene Nomenclature Committee. It is a resource for approved hum
 #### License information
 
 - **Matrix manual curation**: [Public Domain and CC0](https://www.genenames.org/about/license/)
-- **KG Registry**: https://creativecommons.org/publicdomain/zero/1.0/
+- **KG Registry**: [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 
 #### Review information for this resource
 
@@ -1400,7 +1393,7 @@ _Online drug information resource created and maintained by Division of Translat
 #### License information
 
 - **Matrix manual curation**: [CC BY-SA 4.0](https://drugcentral.org/privacy)
-- **KG Registry**: https://creativecommons.org/licenses/by/4.0/
+- **KG Registry**: [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/)
 - **Reusable Data**: CC-BY-SA-4.0 (copyleft)
    - _Issues_: By using a copyleft-style license, there may be issues in mixing and redistributing this data with licenses that have incompatible terms. (D.1.2); By using a copyleft-style license, there may be some parties with issues in mixing and redistributing this data with licenses that have incompatible terms. (E.1.2)
    - _Commentary_: While there is upstream data integtration, there seems to be no mention of upstream licenses or terms. Not necessarily our issue here.
@@ -1555,7 +1548,7 @@ _The Mondo Disease Ontology (Mondo) aims to harmonize disease definitions across
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://mondo.monarchinitiative.org/#license)
-- **KG Registry**: https://creativecommons.org/licenses/by/4.0/
+- **KG Registry**: [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/)
 
 #### Review information for this resource
 
@@ -1577,7 +1570,7 @@ _The Kyoto Encyclopedia of Genes and Genomes (KEGG) is a database resource for u
 #### License information
 
 - **Matrix manual curation**: [Proprietary (Kanehisa Laboratories) — free for academic web access; FTP subscription required for academic service use; commercial use requires paid license](https://www.kegg.jp/kegg/legal.html)
-- **KG Registry**: https://www.kegg.jp/feedback/copyright.html
+- **KG Registry**: [By request](https://www.kegg.jp/feedback/copyright.html)
 
 #### Review information for this resource
 
@@ -1600,7 +1593,7 @@ _Zebrafish Information Network, including the Zebrafish Anatomical Ontology_
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://zfin.atlassian.net/wiki/spaces/general/pages/1942160112/WARRANTY+AND+LIABILITY+DISCLAIMER+OWNERSHIP+AND+LIMITS+ON+USE)
-- **KG Registry**: https://creativecommons.org/licenses/by/4.0/
+- **KG Registry**: [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/)
 - **Reusable Data**: custom (restrictive)
    - _Issues_: Custom license with non-academic and non-research use restrictions. (A.2.2); The license explicity requires intervention for downstream reuse and redistribution. (B.1); The license requires written permission for redistribution. (D.1.2); The license requires written premission for redistribution even for academic and non commerical parties. (E.1.2)
    - _Commentary_: -ZFIN Software and Data are provided to enhance knowledge and encourage progress in the scientific community, and are to be used only for research and educational purposes. ZFIN reserves all rights not expressly granted. Further, ZFIN retains all rights, title, and interest in and to the Software and Data. Any reproduction or use for a commercial purpose is prohibited without the prior express written permission of ZFIN. Distribution of the Software or Data to any third party, without a separate written agreement with ZFIN, is prohibited.
@@ -1626,7 +1619,7 @@ _An integrated cross-species anatomy ontology representing a variety of anatomic
 #### License information
 
 - **Matrix manual curation**: [CC BY 3.0](https://obofoundry.org/ontology/uberon.html)
-- **KG Registry**: https://creativecommons.org/licenses/by/3.0/
+- **KG Registry**: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/)
 
 #### Review information for this resource
 
@@ -1763,7 +1756,7 @@ _A database of paths that represent the mechanism of action from a drug to a dis
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://www.nature.com/articles/s41597-023-02534-z#:~:text=(DrugMechDB)%2C%20a%20manually%20curated&text=Open%20Access%20This%20article%20is%20licensed%20under%20a%20Creative%20Commons%20Attribution%204.0%20International%20License)
-- **KG Registry**: https://creativecommons.org/publicdomain/zero/1.0/
+- **KG Registry**: [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/)
 
 #### Review information for this resource
 
@@ -1786,7 +1779,7 @@ _An expert-knowledge_assertion resource of ligand-activity-target relationships,
 #### License information
 
 - **Matrix manual curation**: [CC BY-SA 4.0](https://www.guidetopharmacology.org/download.jsp#:~:text=The%20Guide%20to%20PHARMACOLOGY%20database,Open%20Database%20License%20(ODbL).)
-- **KG Registry**: http://creativecommons.org/licenses/by-sa/4.0/
+- **KG Registry**: [CC-BY-SA-4.0](http://creativecommons.org/licenses/by-sa/4.0/)
 
 #### Review information for this resource
 
@@ -1851,7 +1844,7 @@ _RepoDB is a standard dataset of drug repositioning successes and failures  that
 #### License information
 
 - **Matrix manual curation**: [CC BY 4.0](https://www.nature.com/articles/sdata201729)
-- **KG Registry**: https://creativecommons.org/licenses/by/4.0/
+- **KG Registry**: [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/)
 
 #### Review information for this resource
 
@@ -2087,7 +2080,7 @@ _Phenotype And Trait Ontology (PATO) is an ontology of phenotypic qualities (pro
 #### License information
 
 - **Matrix manual curation**: [CC BY 3.0](https://obofoundry.org/ontology/pato.html)
-- **KG Registry**: http://creativecommons.org/licenses/by/3.0/
+- **KG Registry**: [CC BY 3.0](http://creativecommons.org/licenses/by/3.0/)
 
 #### Review information for this resource
 
