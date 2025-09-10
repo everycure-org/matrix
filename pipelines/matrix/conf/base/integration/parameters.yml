@@ -46,17 +46,70 @@ integration:
       name: drugmech
       transformer:
          _object: matrix.pipelines.integration.transformers.drugmech.DrugMechTransformer
-         version: ${globals:data_sources.drugmech.version}
-    ground_truth:
-      name: ground_truth
+    kgml_xdtd_ground_truth: 
+      name: kgml_xdtd_ground_truth
       transformer:
-        _object: matrix.pipelines.integration.transformers.ground_truth.KGMLGroundTruthTransformer
-        version: ${globals:data_sources.gt.version}
+        _object: matrix.pipelines.integration.transformers.kgml_xdtd_ground_truth.KGMLGroundTruthTransformer
+        version: ${globals:data_sources.kgml_xdtd_gt.version}
+    ec_ground_truth: 
+      name: ec_ground_truth
+      transformer:
+        _object: matrix.pipelines.integration.transformers.ec_ground_truth.ECGroundTruthTransformer
+        version: ${globals:data_sources.ec_gt.version}
+    drugbank_ground_truth: 
+      name: drugbank_ground_truth
+      transformer:
+        _object: matrix.pipelines.integration.transformers.drugbank_ground_truth.DrugbankGroundTruthTransformer
+        version: ${globals:data_sources.drugbank_gt.version}
     off_label:
       name: off_label
       transformer:
         _object: matrix.pipelines.integration.transformers.off_label.OffLabelTransformer
         version: ${globals:data_sources.off_label.version}
+    orchard:
+      name: orchard
+      transformer:
+        _object: matrix.pipelines.integration.transformers.orchard.OrchardTransformer
+        version: ${globals:data_sources.orchard.version}
+        # Below are conditional flags in a format of 'flag_name':{'column_to_filter':['values','to','filter']}'
+        # Thanks to them we can avoid hard-coding flags in the transformer class
+        pair_flags:
+          high_evidence_crowdsourced:
+            latest_source: 
+            - CROWDSOURCED
+            latest_status: 
+            - DEEP_DIVE
+            - SAB_ENDORSED
+            - HOLDING
+          high_evidence_matrix:
+            latest_source: 
+            - MATRIX
+            latest_status: 
+            - DEEP_DIVE
+            - SAB_ENDORSED
+            - HOLDING
+          mid_evidence_crowdsourced:
+            latest_source: 
+            - CROWDSOURCED
+            latest_status: 
+            - DEEP_DIVE
+            - SAB_ENDORSED
+            - HOLDING
+            - MEDICAL_REVIEW 
+          mid_evidence_matrix:
+            latest_source: 
+            - MATRIX
+            latest_status: 
+            - DEEP_DIVE
+            - SAB_ENDORSED
+            - HOLDING
+            - MEDICAL_REVIEW 
+          archive_biomedical_review:
+            latest_status: 
+            - ARCHIVE
+            latest_reason:
+            - POOR_BIOMEDICAL_RATIONALE
+
 
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:
@@ -93,4 +146,4 @@ integration:
     # E.g. if a node has all_categories [biolink:ChemicalEntity, biolink:NamedThing],
     # then node will be assigned biolink:ChemicalEntity as most specific category.
     # For RTX-KG2 reproduction from KGML-xDTD, choose false
-    retrieve_most_specific_category: false
+    retrieve_most_specific_category: true

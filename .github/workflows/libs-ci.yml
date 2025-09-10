@@ -1,0 +1,71 @@
+name: Libraries CI
+
+# This workflow automatically tests library modules when their code changes. 
+# It uses a dynamic matrix strategy to discover and test only the libraries 
+# that have modifications.
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'libs/**' 
+      - '.github/workflows/libs-ci.yml'
+    types: [opened, reopened, synchronize, ready_for_review]
+  push:
+    branches: [main]
+    paths:
+      - 'libs/**' 
+      - '.github/workflows/libs-ci.yml'
+
+# Prevent multiple workflows from running simultaneously
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-libs:
+    runs-on: ubuntu-latest  # Use ubuntu-latest for local testing with act
+    strategy:
+      # NOTE: Matrix here is a github actions concept and is not related to our
+      # repository's concept of matrix
+      matrix: 
+        # add any new library folder here for automatic flow execution
+        lib: 
+          - matrix-auth
+          - matrix-fabricator
+          - matrix-gcp-datasets
+          - matrix-mlflow-utils
+    steps:
+      - uses: actions/checkout@v4
+      
+      # Step 1: Check if this specific library has any file changes
+      # This prevents running tests on libraries that weren't modified
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          base: main  # Specify the base branch for comparison
+          list-files: none
+          filters: |
+            changed:
+              - libs/${{ matrix.lib }}/**  # Check all files in this library folder
+      - name: Skip unchanged library
+        if: steps.filter.outputs.changed == 'false'
+        run: echo "No changes in ${{ matrix.lib }}. Skipping tests."
+      
+      # Step 2: Run tests only if changes were detected
+      # Install dependencies and run pytest for the changed library
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.13"
+          enable-cache: true
+      - name: Install & Test ${{ matrix.lib }}
+        if: steps.filter.outputs.changed == 'true'
+        run: |
+          echo "Running tests for ${{ matrix.lib }}"
+          cd libs/${{ matrix.lib }}
+          
+          # Install development dependencies (pytest, ruff, etc.)
+          uv sync --group dev
+          
+          # Run the test suite for this library
+          uv run pytest tests -v

@@ -2,11 +2,8 @@ docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
 
 TAG ?= ${USER}
 GIT_SHA ?= $(shell git rev-parse --short HEAD)
-export PYSPARK_PYTHON = .venv/bin/python
-export UV_PYTHON = .venv/bin/python
 export TQDM_DISABLE ?= 1
 TARGET_PLATFORM ?= linux/amd64
-PREREQUISITES := docker gcloud python3 java uv kubectl
 
 # Add GCP project variables
 GCP_PROJECT ?= mtrx-hub-dev-3of
@@ -14,6 +11,9 @@ SA_KEY_SECRET_NAME ?= storage-viewer-sa-key
 SA_KEY_PATH ?= conf/local/service-account.json
 OAUTH_CLIENT_SECRET_SECRET_NAME ?= oauth_client_secret
 OAUTH_CLIENT_SECRET_PATH ?= conf/local/oauth_client_secret.txt
+
+# ensures all make targets run in one shell (rather than line by line in new shell)
+.ONESHELL: 
 
 fetch_secrets:
 	echo "Fetching secrets from Secret Manager..."; \
@@ -26,45 +26,28 @@ fetch_secrets:
 		echo "Secret $$1 saved to $$2"; \
 	done
 
-# ensures all make targets run in one shell (rather than line by line in new shell)
-.ONESHELL: 
-
-default: prerequisites fetch_sa_key install fast_test integration_test
 
 local_test: install fast_test integration_test
 
-.PHONY: always
+.PHONY: always 
+
 # steps here get run on _every_ make call, no matter the target. Make sure this is 100% idempotent and fast.
 always:
 	# never track notebooks in the pipeline subfolder
 	git update-index --assume-unchanged *.ipynb
 %: always
 	@:
-default: prerequisites fetch_secrets install fast_test integration_test
+
+default: fetch_secrets install fast_test integration_test
 	echo "done!"
 
-prerequisites:
-	$(info Checking if prerequisites are installed...)
-	$(foreach exec,$(PREREQUISITES),\
-        $(if $(shell command -v $(exec) 2>/dev/null),,$(error "$(exec) is not installed.")))
-	$(info All prerequisites are installed.)
-	$(info Checking gcloud auth...)
-	@if ! gcloud auth print-access-token >/dev/null 2>&1; then \
-		echo "Not logged into gcloud. Please run 'gcloud auth login' first."; \
-		exit 1; \
-	fi
+install:
+	uv sync
 
-venv: 
-	if [ ! -d .venv ]; then uv venv -p 3.11; fi
-	uv run python -m ensurepip --upgrade || true
-
-install: venv precommit-hooks 
-	uv pip install -r requirements.txt #force it to install in our venv
-
-install_compatibility: venv precommit-hooks
-	# expects the file requirements.overrides.txt to be present, allows devs to override
-	# versions for local machine limitations (e.g. newer pytorch on macos intel)
-	uv pip install -r requirements.txt --overrides requirements.overrides.txt
+create_spark_dirs:
+	@echo "Creating local Spark temp directories..."
+	@mkdir -p data/local/{spark-temp,spark-warehouse,spark-checkpoints,java-tmp}
+	@mkdir -p data/test/{spark-temp,spark-warehouse,spark-checkpoints,java-tmp} 
 
 install_argo:
 	curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
@@ -72,14 +55,6 @@ install_argo:
 	chmod +x argo-linux-amd64
 	sudo mv argo-linux-amd64 /usr/local/bin/argo
 	argo version
-
-precommit: precommit-hooks
-	git fetch origin
-	uv run pre-commit run --from-ref origin/main --to-ref HEAD
-
-precommit-hooks:
-	uv pip install pre-commit 
-	uv run pre-commit install --install-hooks
 
 check_release_version_environment_variable:
 	if [ -z "${RELEASE_VERSION}" ]; then
@@ -90,15 +65,13 @@ check_release_version_environment_variable:
 
 full_test:
 	# activate venv to ensure spark doesn't have python driver mismatches
-	uv run pytest -v tests/
+	uv run pytest -v tests/ -n auto
 
 # fast_test: export PYSPARK_PYTHON = uv run python
 fast_test: 
 	# activate venv to ensure spark doesn't have python driver mismatches
 	TESTMON_DATAFILE=/tmp/.testmondata uv run pytest --testmon -v tests/
 
-format:
-	uv run ruff check . --fix
 
 # executes E2E integration test fully in docker. 
 docker_test: certificate docker_build
@@ -110,8 +83,16 @@ docker_test: certificate docker_build
 		--exit-code-from matrix-pipeline
 
 docker_build:
+	# NOTE: This Makefile was partially generated using AI assistance.
 	# note the && operator is essential to catch docker buildx errors on linux systems
-	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(docker_image) --load ./ && \
+	docker buildx build \
+		--progress=plain \
+		--build-arg GIT_SHA=${GIT_SHA} \
+		--build-arg DISABLE_UV_CACHE=0 \
+		--platform $(TARGET_PLATFORM) \
+		-t $(docker_image) \
+		--load \
+		-f Dockerfile ../../ && \
 	docker tag $(docker_image) $(docker_image):${TAG}
 
 docker_auth:
@@ -133,11 +114,11 @@ compose_down:
 	# docker compose -f compose/docker-compose.yml down
 
 lock:
-	uv pip compile requirements.in > requirements.txt
+	uv lock
 
 wipe_neo:
 	# assumes you have neo4j running using docker-compose from `compose_up`
-	uv run python scripts/wipe_neo4j.py 'everycure-test'
+	uv run scripts/wipe_neo4j.py 'everycure-test'
 
 integration_test: compose_up wipe_neo
 	ulimit -n 10000
@@ -164,6 +145,8 @@ clean: clean_sa_key
 	docker volume prune -f
 	rm -rf data/cache
 	rm -rf data/test/cache
+	rm -rf data/local/spark-temp data/local/spark-warehouse data/local/spark-checkpoints data/local/java-tmp
+	rm -rf data/test/spark-temp data/test/spark-warehouse data/test/spark-checkpoints data/test/java-tmp
 
 diagnostics:
 	echo "Collecting system diagnostics..."
@@ -204,3 +187,114 @@ diagnostics:
 	echo "\nDiagnostics complete."
 
 
+# Docker service management (individual containers, Kedro runs natively)
+# This is done because docker compose does not work reliably in docker in docker. Suspected is apoc-extended plugin in neo4j.
+# So we run the services in docker individually and let kedro run natively on host machine.
+check_docker:
+	@echo "Checking Docker daemon..."
+	@docker version >/dev/null 2>&1 || (echo "❌ Docker daemon is not running. Please start Docker Desktop." && exit 1)
+	@echo "✅ Docker daemon is running"
+
+start_neo4j: check_docker
+	@echo "Starting Neo4j container..."
+	@set -e; \
+	if ! docker ps | grep -q neo4j-matrix; then \
+		docker run -d \
+			--name neo4j-matrix \
+			-p 7474:7474 -p 7687:7687 \
+			-e NEO4J_AUTH=neo4j/admin \
+			-e NEO4J_apoc_export_file_enabled=true \
+			-e NEO4J_apoc_import_file_enabled=true \
+			-e NEO4J_apoc_import_file_use__neo4j__config=true \
+			-e 'NEO4J_PLUGINS=["apoc", "graph-data-science"]' \
+			-e NEO4J_dbms_security_auth__minimum__password__length=4 \
+			-e 'NEO4J_dbms_security_procedures_whitelist=gds.*, apoc.*' \
+			-e 'NEO4J_dbms_security_procedures_unrestricted=gds.*, apoc.*' \
+			-e NEO4J_db_logs_query_enabled=OFF \
+			-e NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
+			--restart always \
+			neo4j:enterprise; \
+		echo "Waiting for Neo4j to become ready..."; \
+		timeout=240; \
+		elapsed=0; \
+		while [ $$elapsed -lt $$timeout ]; do \
+			if curl -s -f http://127.0.0.1:7474/db/system/tx/commit -H "Content-Type: application/json" -H "Authorization: Basic bmVvNGo6YWRtaW4=" -d '{"statements":[{"statement":"CALL dbms.components() YIELD name RETURN name LIMIT 1"}]}' > /dev/null 2>&1; then \
+				echo "✅ Neo4j is ready!"; \
+				break; \
+			fi; \
+			echo "Neo4j not ready yet, waiting... ($$elapsed/$$timeout seconds)"; \
+			docker logs neo4j-matrix --tail 1000; \
+			sleep 2; \
+			elapsed=$$((elapsed + 2)); \
+		done; \
+		if [ $$elapsed -ge $$timeout ]; then \
+			echo "❌ Neo4j failed to start within $$timeout seconds"; \
+			docker logs neo4j-matrix --tail 1000; \
+			exit 1; \
+		fi; \
+	else \
+		echo "Neo4j container already running"; \
+	fi
+
+start_mlflow: check_docker
+	@echo "Starting MLflow container..."
+	@set -e; \
+	if ! docker ps | grep -q mlflow-matrix; then \
+		docker build -t mlflow-matrix compose/services/mlflow/; \
+		docker run -d \
+			--name mlflow-matrix \
+			-p 5001:5000 \
+			--restart unless-stopped \
+			mlflow-matrix \
+			mlflow server --host 0.0.0.0 --serve-artifacts; \
+		echo "Waiting for MLflow to start..."; \
+		sleep 5; \
+	else \
+		echo "MLflow container already running"; \
+	fi
+
+start_mockserver: check_docker
+	@echo "Starting MockServer container..."
+	@set -e; \
+	if ! docker ps | grep -q mockserver-matrix; then \
+		docker run -d \
+			--name mockserver-matrix \
+			-p 1080:1080 \
+			-e MOCKSERVER_WATCH_INITIALIZATION_JSON=true \
+			-e MOCKSERVER_ENABLE_CORS_FOR_API=true \
+			-e MOCKSERVER_ENABLE_CORS_FOR_ALL_RESPONSES=true \
+			-e MOCKSERVER_INITIALIZATION_JSON_PATH=/openapi/initializer.json \
+			-e MOCKSERVER_LOG_LEVEL=DEBUG \
+			-v $(PWD)/compose/mockgenai-initializer.json:/openapi/initializer.json:ro \
+			--restart unless-stopped \
+			mockserver/mockserver:mockserver-5.15.0; \
+		echo "Waiting for MockServer to start..."; \
+		sleep 3; \
+	else \
+		echo "MockServer container already running"; \
+	fi
+
+start_services: check_docker start_mlflow start_mockserver start_neo4j
+	@echo "All services started successfully!"
+	@echo "Neo4j: http://127.0.0.1:7474 (bolt://127.0.0.1:7687)"
+	@echo "MLflow: http://127.0.0.1:5001"
+	@echo "MockServer: http://127.0.0.1:1080"
+
+stop_services: check_docker
+	@echo "Stopping Docker services..."
+	@-docker stop neo4j-matrix mlflow-matrix mockserver-matrix 2>/dev/null || true
+	@echo "Services stopped."
+
+remove_services: check_docker
+	@echo "Removing Docker services..."
+	@-docker stop 
+	-matrix mlflow-matrix mockserver-matrix 2>/dev/null || true
+	@-docker rm neo4j-matrix mlflow-matrix mockserver-matrix 2>/dev/null || true
+	@echo "Services removed."
+
+restart_services: check_docker stop_services start_services
+
+run_test_native_through_docker: create_spark_dirs start_services
+	@echo "Running test pipeline with Docker services, Kedro running natively..."
+	ulimit -n 10000
+	uv run kedro run --env test -p test

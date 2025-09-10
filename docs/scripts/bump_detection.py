@@ -1,6 +1,5 @@
 """Script used in conjunction with the CICD system to flag the type of release."""
 
-import os
 import sys
 
 import semver

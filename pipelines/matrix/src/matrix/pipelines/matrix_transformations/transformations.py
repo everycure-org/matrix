@@ -100,10 +100,21 @@ class RankBasedFrequentFlyerTransformation(MatrixTransformation):
         )
 
         # Recalculate rank and quantile_rank based on the new score
-        score_window = Window.orderBy(F.col(f"transformed_treat_score").desc())
-        matrix_df = matrix_df.withColumn("rank", F.row_number().over(score_window)).withColumn(
-            "quantile_rank", F.col("rank") / N_matrix
+        # Use zipWithIndex approach like matrix_generation to handle identical scores
+        # Add secondary ordering by original score to ensure deterministic ordering
+        matrix_df = matrix_df.orderBy(
+            F.col(f"transformed_treat_score").desc(), F.col("untransformed_treat_score").desc()
         )
+        matrix_df = (
+            matrix_df.rdd.zipWithIndex()
+            .toDF()
+            .select(F.col("_1.*"), (F.col("_2") + 1).alias("rank"))
+            .withColumn("quantile_rank", F.col("rank") / N_matrix)
+            .withColumn("rank_drug", F.col("rank_drug").cast("int"))
+            .withColumn("rank_disease", F.col("rank_disease").cast("int"))
+            .withColumn("rank", F.col("rank").cast("int"))
+        )
+
         return matrix_df
 
 

@@ -1,0 +1,62 @@
+# NOTE: This .dockerignore was partially generated using AI assistance.
+
+# Exclude the biggest offenders first
+.venv/
+infra/
+services/
+scripts/
+apps/
+_scratchpad/
+
+# Exclude Python cache and build artifacts
+**/*.egg-info/
+**/.ruff_cache/
+**/__pycache__/
+**/.pytest_cache/
+**/.ipynb_checkpoints/
+**/.mypy_cache/
+**/.cache/
+**/venv/
+**/env/
+
+# Exclude VCS and editor files
+.git/
+.github/
+.vscode/
+.idea/
+.DS_Store
+
+# Exclude other build artifacts
+**/node_modules/
+**/*.log
+**/*.tmp
+**/*.temp
+
+# Exclude Docker files (not needed in context)
+Dockerfile
+.dockerignore
+docker-compose*.yml
+docker-compose*.yaml
+
+# Exclude pipeline subdirectories that aren't needed
+pipelines/matrix/data/
+pipelines/matrix/logs/
+pipelines/matrix/notebooks/
+pipelines/matrix/references/
+pipelines/matrix/results/
+pipelines/matrix/scratch/
+pipelines/matrix/mlruns/
+pipelines/matrix/compose/
+pipelines/matrix/build/
+pipelines/matrix/.viz/
+pipelines/matrix/example_notebook.ipynb
+pipelines/matrix/working_workflow.yaml
+
+# Exclude local configuration
+pipelines/matrix/conf/local/
+!pipelines/matrix/conf/local/.gitkeep
+
+pipelines/matrix/.env.defaults
+pipelines/matrix/.env
+
+worktrees/

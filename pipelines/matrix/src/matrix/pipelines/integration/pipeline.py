@@ -8,7 +8,10 @@ from . import nodes
 
 
 def _create_integration_pipeline(
-    source: str, has_nodes: bool = True, has_edges: bool = True, is_core: bool = False
+    source: str,
+    has_nodes: bool = True,
+    has_edges: bool = True,
+    is_core: bool = False,
 ) -> Pipeline:
     pipelines = []
 
@@ -29,7 +32,16 @@ def _create_integration_pipeline(
                         # during node execution time, otherwise we could infer this based on
                         # the transformer.
                         **({"nodes_df": f"ingestion.int.{source}.nodes"} if has_nodes else {}),
-                        **({"edges_df": f"ingestion.int.{source}.edges"} if has_edges else {}),
+                        **(
+                            {
+                                "positive_edges_df": f"ingestion.int.{source}.positive.edges@spark",
+                                "negative_edges_df": f"ingestion.int.{source}.negative.edges@spark",
+                            }
+                            if ("ground_truth" in source)
+                            else {"edges_df": f"ingestion.int.{source}.edges"}
+                            if has_edges
+                            else {}
+                        ),
                     },
                     outputs={
                         "nodes": f"integration.int.{source}.nodes",
@@ -133,7 +145,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=[source["name"]],
             )
         )
-
     # Add integration pipeline
     pipelines.append(
         pipeline(
@@ -144,10 +155,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                         *[
                             f'integration.int.{source["name"]}.nodes.norm@spark'
                             for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
-                            if source.get(
-                                "is_core", False
-                            )  # Default False means only sources with explicit "is_core": True are included
-                        ],
+                            if source.get("is_core", False)
+                        ]
                     ],
                     outputs="integration.int.core_node_mapping",
                     name="create_core_id_mapping",
@@ -165,6 +174,18 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ],
                     outputs="integration.prm.unified_nodes",
                     name="create_prm_unified_nodes",
+                ),
+                node(
+                    func=nodes.unify_ground_truth,
+                    inputs=[
+                        *[
+                            f'integration.int.{source["name"]}.edges.norm@spark'
+                            for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
+                            if "ground_truth" in source["name"]
+                        ],
+                    ],
+                    outputs="integration.int.unified_ground_truth_edges",
+                    name="create_unified_ground_truth_edges",
                 ),
                 ArgoNode(
                     func=nodes.union_edges,
@@ -193,5 +214,4 @@ def create_pipeline(**kwargs) -> Pipeline:
             ]
         )
     )
-
     return sum(pipelines)

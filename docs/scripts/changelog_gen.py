@@ -3,6 +3,7 @@ that can immediately be referenced by the Releases page on the documentation
 website."""
 
 import json
+import re
 from pathlib import Path
 from typing import Dict, Iterable, Iterator, List
 
@@ -24,15 +25,24 @@ def list_json_files(changelog_abs_path: Path, filename_pattern: str = "v*_info.j
     return json_files
 
 
+def is_markdown_link(text):
+    """Check if string has the shape [*](*)"""
+    pattern = r"^\[.*?\]\(.*?\)$"
+    return bool(re.match(pattern, text))
+
+
 def format_values(loaded_files):
     link_tmpl = "[Link]({value})"
-    code_tmpl = "`{value}`"
+
+    link_columns = ["BigQuery", "KG dashboard", "MLFlow", "Code", "NodeNorm Endpoint"]
+    already_formatted_link_columns = ["NodeNorm Endpoint"]
+
     for file in loaded_files:
         for key, value in file.items():
-            if key.lower().endswith("link"):
+            if key in already_formatted_link_columns and is_markdown_link(value):
+                file[key] = value
+            elif key in link_columns:
                 file[key] = link_tmpl.format(value=value)
-            elif key.lower().endswith(("encoder", "estimator")):
-                file[key] = code_tmpl.format(value=value)
     return loaded_files
 
 

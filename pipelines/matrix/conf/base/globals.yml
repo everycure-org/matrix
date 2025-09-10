@@ -34,7 +34,9 @@ data_sources:
   spoke:
     version: V5.7
   embiology:
-    version: 03032025
+  # needs to be a string as otherwise it will be parsed as a octal number
+  # https://stackoverflow.com/questions/32965846/cant-parse-yaml-correctly-when-number-contains-leading-zeros-and-for-yes-no-val
+    version: "03032025"
 # Dataset with node and edge proposals by the
 # EveryCure medical team.
   ec_medical_team:
@@ -49,13 +51,20 @@ data_sources:
   disease_list:
     # check releases here: https://github.com/everycure-org/core-entities/releases
     version: v0.1.3
-  gt:
-    version: *_rtx_kg_version # NOTE: This is the version of the GT dataset which was developed for rtx-kg2 as a part of KGML-xDTD pipeline
+  kgml_xdtd_gt:
+    version: *_rtx_kg_version
+  ec_gt:
+    # check releases here: https://github.com/everycure-org/matrix-indication-list/releases
+    version: "Release v1.3.3"
+  drugbank_gt:
+    version: 1332218
   drugmech:
     # check releases here: https://github.com/SuLab/DrugMechDB/releases/ 
     version: 2.0.1
   off_label:
     version: v0.1
+  orchard:
+    version: 20250801
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation. Will make PR.
 mlflow_artifact_root: null
