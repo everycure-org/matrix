@@ -14,6 +14,11 @@ modelling.lightGBM:
 
 
       model_tuning_args:
+        # Early stopping as a callback (modern, consistent with >=4.0)
+        fit_params:
+          callbacks:
+            - _object: lightgbm.early_stopping
+              stopping_rounds: 50
         tuner:
           _object: matrix.pipelines.modelling.tuning.GaussianSearch
           estimator:
