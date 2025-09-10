@@ -78,6 +78,7 @@ dependencies = [
     "transformers",
     "typer", # used for convenience libraries, to be moved to a dev requirements eventually
     "xgboost",
+    "lightgbm==4.6.0",
     "tqdm>=4.67.1",
 ]
 
