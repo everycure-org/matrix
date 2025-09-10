@@ -1,6 +1,6 @@
 from kedro.pipeline import Pipeline, node, pipeline
 
-from . import nodes
+from . import nodes, primekg_nodes
 
 # NOTE: Preprocessing pipeline is not well optimized and thus might take a while to run.
 
@@ -10,7 +10,7 @@ def create_primekg_pipeline() -> Pipeline:
     return pipeline(
         [
             node(
-                func=nodes.build_primekg_nodes,
+                func=primekg_nodes.build_nodes,
                 inputs={
                     "nodes": "preprocessing.raw.primekg.nodes@polars",
                     "drug_features": "preprocessing.raw.primekg.drug_features@polars",
@@ -21,7 +21,7 @@ def create_primekg_pipeline() -> Pipeline:
                 tags=["primekg"],
             ),
             node(
-                func=nodes.build_primekg_edges,
+                func=primekg_nodes.build_edges,
                 inputs=[
                     "preprocessing.raw.primekg.kg@polars",
                 ],
