@@ -1,22 +1,32 @@
 import logging
-from typing import Dict
 
-import pyspark.sql as ps
 import pyspark.sql.functions as f
+from pyspark.sql import DataFrame
 
-from .transformer import Transformer
+from .transformer import GraphTransformer
 
 logger = logging.getLogger(__name__)
 
 
-class DiseasesTransformer(Transformer):
-    """Transformer for disease input source."""
+class DiseasesTransformer(GraphTransformer):
+    def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
+        """Transform nodes to our target schema.
 
-    def transform(self, nodes_df: ps.DataFrame, **kwargs) -> Dict[str, ps.DataFrame]:
+        Args:
+            nodes_df: Nodes DataFrame.
+
+        Returns:
+            Transformed DataFrame.
+        """
         # fmt: off
         df = (
             nodes_df
-            .withColumn("category", f.lit("biolink:Disease"))
+            .withColumn("id",                                f.col("category_class"))
+            .withColumn("name",                              f.col("label"))
+            .withColumn("category",                          f.lit("biolink:Disease"))
         )
+        return df
         # fmt: on
-        return {"nodes": df}
+
+    def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
+        raise NotImplementedError("Not implemented!")

@@ -1,3 +1,23 @@
+# Configuration for node embeddings
+embeddings.node:
+  # Following configuration ensures that OpenAI requests are
+  # batches in batches of 500 input elements, where each input
+  # element is clipped at 100 characters. Max. token limit for 
+  # embeddings call is roughly 8500 tokens, approx (100 * 500) / 6.
+  batch_size: 500
+  max_input_len: 100
+
+  # NOTE: We currently only using the "most relevant" category
+  # to compute the attribute embedding.
+  input_features: ["name", "category"]
+  encoder:
+    _object: matrix.pipelines.embeddings.encoders.LangChainEncoder
+    dimensions: 512
+    encoder:
+      _object: langchain_openai.OpenAIEmbeddings
+      model: text-embedding-3-small
+      timeout: 10
+
 # Defines strategy used to reduce dimensions of the node embeddings
 # https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.feature.PCA.html
 embeddings.dimensionality_reduction:
@@ -61,7 +81,7 @@ embeddings.topological_estimator:
   negative_sampling_rate: 5
   walk_length: 30
   walks_per_node: 10
-  window_size: 10
+  window_size: 100
 
 # embeddings.topological_estimator:
 #   _object: matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage
@@ -88,22 +108,3 @@ embeddings.topological_pca:
   transformer:
     _object: pyspark.ml.feature.PCA
     k: 2
-
-embeddings.node:
-  cache_schema:
-    _object: matrix.pipelines.batch.schemas.embeddings
-  preprocessor:
-    _object: matrix.pipelines.embeddings.nodes.embeddings_preprocessor
-    key_length: 100
-    combine_cols: ["name", "category"]
-    new_col: &pkey text_to_embed
-  resolver:
-    _object: matrix.pipelines.embeddings.encoders.LangChainEncoder
-    dimensions: 512
-    encoder:
-      _object: langchain_openai.OpenAIEmbeddings
-      model: text-embedding-3-small
-      timeout: 10
-  primary_key: *pkey
-  target_col: embedding
-  batch_size: 40000  # Bigger batch sizes result in larger Parquet files. +-250MB/file is a good rule of thumb on object stores like GCS. However, a bigger batch size also means you need to keep more elements in memory, so too big of a size will result in Out-Of-Memory errors.

@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bte-trapi
+  namespace: argocd
+spec:
+  destination:
+    namespace: bte-trapi
+    server: {{ .Values.spec.destination.server }}
+  project: default
+  source:
+    path: {{ .Values.spec.source.repoPath }}/bte-trapi
+    repoURL: {{ .Values.spec.source.repoURL }}
+    targetRevision: dev/bte-infra
+  syncPolicy:
+    syncOptions:     # Sync options which modifies sync behavior
+    - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
+    automated: 
+      prune: true

@@ -1,135 +1,46 @@
-preprocessing.embiology:
-  attr:
-    identifiers_mapping:
-       InChIKey: "INCHIKEY:"
-       CAS ID: "CAS:"
-       PubChem SID: "PUBCHEM.COMPOUND:"
-       KEGG ID: "KEGG.COMPOUND:"
-       Uniprot ID: "UniProtKB:"
-       Swiss-Prot ID: "UniProtKB:"
-       Ensembl ID: "ENSEMBL:"
-       HMDB ID: "HMDB:"
-       Chebi ID: "CHEBI:"
-       OMIM ID: "OMIM:"
-       GO ID: "GO:"
-       MONDO ID: "MONDO:"
-       MeSH ID: "MESH:"
-       Tax ID: "NCBI.TAXON:" 
-       MGI ID: ""
-       Orphanet ID: "ORPHANET:"
-       Manual ID: ""
-  nodes:
-    biolink_mapping:
-      CellObject: "biolink:CellularComponent"
-      CellProcess: "biolink:BiologicalProcess" 
-      CellType: "biolink:Cell"
-      ClinicalParameter: "biolink:ClinicalMeasurement"
-      Complex: "biolink:ComplexMolecularMixture"
-      Disease: "biolink:Disease"
-      FunctionalClass: "biolink:MolecularActivity"
-      GeneticVariant: "biolink:SequenceVariant"
-      Organ: "biolink:GrossAnatomicalStructure"
-      Organism: "biolink:IndividualOrganism"
-      Pathogen: "biolink:Pathogen"
-      Protein: "biolink:Protein"
-      SemanticConcept: "biolink:InformationContentEntity"
-      SmallMol: "biolink:SmallMolecule"
-      Tissue: "biolink:AnatomicalEntity"
-      Treatment: "biolink:Treatment"
-      Virus: "biolink:Virus"
-  edges:
-    biolink_mapping:
-      Binding: biolink:binds
-      Biomarker: biolink:biomarker_for
-      Biomarker_resistance: biolink:associated_with_resistance_to
-      CellExpression: biolink:expressed_in
-      CellExpression_surface: biolink:has_plasma_membrane_part
-      ChemicalReaction: biolink:catalyzes
-      ClinicalTrial: biolink:in_clinical_trials_for
-      DirectRegulation_direct interaction: biolink:directly_physically_interacts_with
-      DirectRegulation_negative_direct interaction: biolink:acts_upstream_of_negative_effect
-      DirectRegulation_positive_direct interaction: biolink:acts_upstream_of_positive_effect
-      Expression: biolink:expresses
-      Expression_negative: biolink:decreases_amount_or_activity_of
-      Expression_positive: biolink:increases_amount_or_activity_of
-      FunctionalAssociation: biolink:associated_with
-      FunctionalAssociation_negative: biolink:disrupts
-      FunctionalAssociation_negative_resistance: biolink:resistance_associated_with
-      FunctionalAssociation_positive: biolink:enables
-      FunctionalAssociation_resistance: biolink:associated_with_resistance_to
-      GeneticChange: biolink:has_sequence_variant
-      MemberOf_Gene Ontology_is-a: biolink:subclass_of
-      MemberOf_Human Protein Atlas Expression Ontology_is-a: biolink:subclass_of
-      MemberOf_Pathway Studio Ontology_derivative-of: biolink:derives_from
-      MemberOf_Pathway Studio Ontology_is-a: biolink:subclass_of
-      MemberOf_Pathway Studio Ontology_part-of: biolink:part_of
-      MolSynthesis: biolink:produces
-      MolSynthesis_negative: biolink:disrupts
-      MolSynthesis_positive: biolink:produces
-      MolTransport: biolink:affects_response_to
-      MolTransport_negative: biolink:decreases_response_to
-      MolTransport_positive: biolink:increases_response_to
-      PromoterBinding: biolink:physically_interacts_with
-      PromoterBinding_negative: biolink:acts_upstream_of_negative_effect
-      PromoterBinding_positive: biolink:acts_upstream_of_positive_effect
-      ProtModification: biolink:has_molecular_consequence
-      ProtModification_acetylation: biolink:has_molecular_consequence
-      ProtModification_cleavage: biolink:disrupts
-      ProtModification_deacetylation: biolink:has_molecular_consequence
-      ProtModification_demethylation: biolink:has_molecular_consequence
-      ProtModification_dephosphorylation: biolink:has_molecular_consequence
-      ProtModification_desumoylation: biolink:has_molecular_consequence
-      ProtModification_deubiquitination: biolink:has_molecular_consequence
-      ProtModification_methylation: biolink:has_molecular_consequence
-      ProtModification_negative: biolink:decreases_amount_or_activity_of
-      ProtModification_negative_acetylation: biolink:decreases_amount_or_activity_of
-      ProtModification_negative_cleavage: biolink:decreases_amount_or_activity_of
-      ProtModification_negative_deacetylation: biolink:decreases_amount_or_activity_of
-      ProtModification_negative_demethylation: biolink:decreases_amount_or_activity_of
-      ProtModification_negative_dephosphorylation: biolink:decreases_amount_or_activity_of
-      ProtModification_negative_desumoylation: biolink:decreases_amount_or_activity_of
-      ProtModification_negative_deubiquitination: biolink:decreases_amount_or_activity_of
-      ProtModification_negative_methylation: biolink:decreases_amount_or_activity_of
-      ProtModification_negative_phosphorylation: biolink:decreases_amount_or_activity_of
-      ProtModification_negative_ubiquitination: biolink:decreases_amount_or_activity_of
-      ProtModification_phosphorylation: biolink:has_molecular_consequence
-      ProtModification_positive: biolink:increases_amount_or_activity_of
-      ProtModification_positive_acetylation: biolink:increases_amount_or_activity_of
-      ProtModification_positive_cleavage: biolink:increases_amount_or_activity_of
-      ProtModification_positive_deacetylation: biolink:increases_amount_or_activity_of
-      ProtModification_positive_demethylation: biolink:increases_amount_or_activity_of
-      ProtModification_positive_dephosphorylation: biolink:increases_amount_or_activity_of
-      ProtModification_positive_deubiquitination: biolink:increases_amount_or_activity_of
-      ProtModification_positive_methylation: biolink:increases_amount_or_activity_of
-      ProtModification_positive_phosphorylation: biolink:increases_amount_or_activity_of
-      ProtModification_positive_sumoylation: biolink:increases_amount_or_activity_of
-      ProtModification_positive_ubiquitination: biolink:increases_amount_or_activity_of
-      ProtModification_sumoylation: biolink:has_molecular_consequence
-      ProtModification_ubiquitination: biolink:has_molecular_consequence
-      QuantitativeChange: biolink:affects
-      QuantitativeChange_negative: biolink:decreased_amount_in
-      QuantitativeChange_positive: biolink:increased_amount_of
-      Regulation: biolink:regulates
-      Regulation_negative: biolink:acts_upstream_of_negative_effect
-      Regulation_negative_resistance: biolink:resistance_associated_with
-      Regulation_positive: biolink:acts_upstream_of_positive_effect
-      Regulation_positive_resistance: biolink:associated_with_resistance_to
-      Regulation_resistance: biolink:associated_with_resistance_to
-      StateChange: biolink:affects
-      StateChange_negative: biolink:disrupts
-      StateChange_positive: biolink:enables
-      StateChange_resistance: biolink:associated_with_resistance_to
-      miRNAEffect_negative: biolink:decreases_amount_or_activity_of
-  normalization:
-    url: "https://nodenorm.test.transltr.io/1.5/get_normalized_nodes"
-    batch_size: 10000
-    max_concurrent: 10
-
-
 preprocessing.name_resolution:
-  url: https://name-resolution-sri.renci.org/bulk-lookup
-  batch_size: 50
+  url: https://name-resolution-sri.renci.org/lookup?string={name}&autocomplete=True&highlighting=False&offset=0&limit=1
 
-preprocessing.medical_kg_gsheets:
-  nodes: ['name']
-  edges: ['Source', 'Target']
+preprocessing.enrichment:
+
+  model:
+    _object: langchain_openai.chat_models.base.ChatOpenAI
+    model: gpt-4o-mini
+    temperature: 0.8
+
+  tags: []
+#     - _object: matrix.pipelines.preprocessing.tagging.Tag
+#       output_col: is_pathogen_caused
+#       prompt: "Is {label} a disease usually caused by a pathogen such as bacteria, viruses, parasites, or fungi? Return TRUE or FALSE only"
+#       output_parser: &_boolean_parser
+#         _object: langchain.output_parsers.boolean.BooleanOutputParser
+#         false_val: "FALSE"
+#         true_val: "TRUE"
+#     - _object: matrix.pipelines.preprocessing.tagging.Tag  
+#       output_col: is_cancer
+#       prompt: "Is {label} a disease that is classified as a cancer? Return TRUE or FALSE only"
+#       output_parser: 
+#         <<: *_boolean_parser
+#     - _object: matrix.pipelines.preprocessing.tagging.Tag  
+#       output_col: is_glucose_dysfunction
+#       prompt: "Is {label} a disease which is primarily a disease of glucose dysregulation such as diabetes mellitus? Return TRUE or FALSE only"
+#       output_parser: 
+#         <<: *_boolean_parser
+#     - _object: matrix.pipelines.preprocessing.tagging.Tag
+#       output_col: tag_existing_treatment
+#       prompt: "Are there existing efficacious treatments that cure, prevent, or treat the disease named {label} ? Return TRUE if efficacious treatments exist, otherwise return FALSE"
+#       output_parser:
+#         <<: *_boolean_parser
+#     - _object: matrix.pipelines.preprocessing.tagging.Tag  
+#       output_col: tag_QALY_lost
+#       prompt: "Output only 'VERY HIGH', 'HIGH', 'MEDIUM', 'LOW', or 'NONE'. Categorize the Quality-Adjusted Life Years (QALYs) lost for {label} into the categories above, based on morbidity, mortality, and quality adjusted life years lost. To help, the following list - {synonyms} - contains synonyms of the disease and the following list - {definition} - provides a definition of the disease. If you are unable to determine QALYs lost for a given disease, used similar diseases to make an estimation"
+#       output_parser: 
+#         _object: matrix.pipelines.preprocessing.tagging.SetOutputParser
+#         allowed_outputs:
+#           - "VERY HIGH"
+#           - "HIGH"
+#           - "MEDIUM"
+#           - "LOW"
+#           - "NONE"
+
+

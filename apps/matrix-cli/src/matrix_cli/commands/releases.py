@@ -3,7 +3,6 @@ import platform
 import re
 import subprocess
 import tempfile
-from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 from pathlib import Path
@@ -19,16 +18,15 @@ from tqdm.rich import tqdm
 from matrix_cli.commands.code import get_ai_code_summary
 from matrix_cli.components.cache import memory
 from matrix_cli.components.gh_api import get_pr_details, update_prs
-from matrix_cli.components.git import get_code_diff, get_current_branch
+from matrix_cli.components.git import get_code_diff
 from matrix_cli.components.models import PRInfo
 from matrix_cli.components.settings import settings
 from matrix_cli.components.utils import (
     ask_for_release,
     console,
     get_git_root,
-    get_latest_minor_release,
+    get_latest_release,
     get_markdown_contents,
-    get_releases,
     invoke_model,
     run_command,
 )
@@ -49,43 +47,6 @@ def test():
     print(ask_for_release())
 
 
-@app.command(name="template")
-def write_article_template(
-    output_file: str = typer.Option(None, help="File to write the release article template to"),
-    since: str = typer.Option(None, help="Starting git reference for fetching PR"),
-    until: str = typer.Option(None, help="Ending git reference for fetching PR"),
-    headless: bool = typer.Option(False, help="Don't ask interactive questions."),
-    version: str = typer.Option(None, help="Version of the release"),
-):
-    """Write a template for a release article."""
-    # In headless mode, the starting git sha is the lastest minor release
-    since = select_release(headless)
-    if until is None:
-        until = get_current_branch()
-
-    pr_details_df = get_pr_details_since(since, until)
-    authors = pr_details_df["author"].unique()
-    PR_numbers = pr_details_df["number"].tolist()
-    labels = pr_details_df["current_labels"].tolist()
-    PR_urls = pr_details_df["url"].tolist()
-    PR_titles = pr_details_df["title"].tolist()
-    label_to_pr = defaultdict(list)
-    for combined_labels, number, title, url in zip(labels, PR_numbers, PR_titles, PR_urls):
-        for label in combined_labels.split(","):
-            label_to_pr[label.strip()].append({"number": number, "title": title, "url": url})
-    template = get_template("release_article.tmpl").render(
-        date=date.today().isoformat(),
-        authors=authors,
-        label_to_pr=label_to_pr.items(),
-        version=version,
-    )
-    if output_file:
-        Path(output_file).write_text(template)
-        console.print(f"Release article template written to: {output_file}")
-    else:
-        print(Markdown(template))
-
-
 @app.command(name="article")
 def write_release_article(
     output_file: str = typer.Option(None, help="File to write the release article to"),
@@ -93,15 +54,9 @@ def write_release_article(
     disable_rendering: bool = typer.Option(True, help="Disable rendering of the release article"),
     headless: bool = typer.Option(False, help="Don't ask interactive questions."),
     notes_file: str = typer.Option(None, help="File containing release notes"),
-    until: str = typer.Option(
-        None,
-        help="Ending git reference for fetching PR and code difference (default: current branch)",
-    ),
 ):
     """Write a release article for a given git reference."""
     since = select_release(headless)
-    if until is None:
-        until = get_current_branch()
 
     if notes_file:
         console.print("[green]Loading release notes")
@@ -109,27 +64,23 @@ def write_release_article(
         console.print(f"[green]Release notes loaded. Total length: {len(notes)} characters")
     else:
         console.print("[green]Collecting release notes...")
-        notes = get_release_notes(since, until, model=model)
+        notes = get_release_notes(since, model=model)
 
     console.print("[green]Collecting previous articles...")
     previous_articles = get_previous_articles()
 
     console.print("[green]Summarizing code changes...")
-    code_summary = get_ai_code_summary(since, until, model=model)
+    code_summary = get_ai_code_summary(since, model=model)
 
     focus_direction = ""
     if not headless:
         console.print(Markdown(notes))
         focus_direction = console.input(
-            "[bold green]Please provide guidance on what to focus on in the release article."
-            + "Note 'Enter' will end the prompt: "
+            "[bold green]Please provide guidance on what to focus on in the release article. Note 'Enter' will end the prompt: "
         )
 
     prompt = get_template("release_article.prompt.tmpl").render(
-        notes=notes,
-        code_summary=code_summary,
-        previous_articles=previous_articles,
-        focus_direction=focus_direction,
+        notes=notes, code_summary=code_summary, previous_articles=previous_articles, focus_direction=focus_direction
     )
     response = invoke_model(prompt, model=model)
 
@@ -150,21 +101,14 @@ def release_notes(
     model: str = typer.Option(settings.base_model, help="Model to use for summarization"),
     output_file: str = typer.Option(None, help="File to write the release notes to"),
     headless: bool = typer.Option(
-        False,
-        help="Don't ask interactive questions. The most recent release will be automatically used.",
-    ),
-    until: str = typer.Option(
-        None,
-        help="Ending git reference for fetching PR and code difference (default: current branch)",
+        False, help="Don't ask interactive questions. The most recent release will be automatically used."
     ),
 ):
     """Generate an AI summary of code changes since a specific git reference."""
     since = select_release(headless)
-    if until is None:
-        until = get_current_branch()
     try:
         console.print("Generating release notes...")
-        response = get_release_notes(since, until, model)
+        response = get_release_notes(since, model)
 
         if output_file:
             Path(output_file).write_text(response)
@@ -177,14 +121,13 @@ def release_notes(
         raise typer.Exit(1)
 
 
-def get_release_notes(since: str, until: str, model: str) -> str:
+def get_release_notes(since: str, model: str) -> str:
     console.print("[bold green]Collecting PR details...")
-    pr_details_df = get_pr_details_since(since, until)
-    pr_details_dict = (
-        pr_details_df[["title", "number"]].sort_values(by="number").to_dict(orient="records")
-    )
+    pr_details_df = get_pr_details_since(since)
+    pr_details_dict = pr_details_df[["title", "number"]].sort_values(by="number").to_dict(orient="records")
+
     console.print("[bold green]Collecting git diff...")
-    diff_output = get_code_diff(since, until)
+    diff_output = get_code_diff(since)
 
     release_template = get_release_template()
     release_yaml = yaml.load(release_template, Loader=yaml.FullLoader)
@@ -199,9 +142,7 @@ def get_release_notes(since: str, until: str, model: str) -> str:
     response = invoke_model(prompt, model)
 
     authors = pr_details_df["author"].unique()
-    return get_template("release_notes.tmpl").render(
-        date=date.today().isoformat(), authors=authors, notes=response
-    )
+    return get_template("release_notes.tmpl").render(date=date.today().isoformat(), authors=authors, notes=response)
 
 
 def get_release_template() -> str:
@@ -220,8 +161,7 @@ def prepare_release(
     no_cache: bool = typer.Option(False, "--no-cache", help="Disable caching of PR details"),
     skip_ai: bool = typer.Option(False, "--skip-ai", help="Skip AI title suggestions"),
     headless: bool = typer.Option(
-        False,
-        help="Don't ask interactive questions. The most recent release will be automatically used.",
+        False, help="Don't ask interactive questions. The most recent release will be automatically used."
     ),
 ):
     """
@@ -290,8 +230,8 @@ def _read_modified_excel_file(output_file: str) -> "pd.DataFrame":
         raise typer.Exit(1)
 
 
-def get_pr_details_since(previous_tag: str, end_git_ref: str) -> List[PRInfo]:
-    commit_messages = get_commit_logs(previous_tag, end_git_ref)
+def get_pr_details_since(previous_tag: str) -> List[PRInfo]:
+    commit_messages = get_commit_logs(previous_tag)
     pr_numbers = extract_pr_numbers(commit_messages)
     if not pr_numbers:
         typer.echo("No PRs found since the previous tag.")
@@ -299,8 +239,8 @@ def get_pr_details_since(previous_tag: str, end_git_ref: str) -> List[PRInfo]:
     return get_pr_details(pr_numbers)
 
 
-def get_commit_logs(previous_tag: str, end_git_ref: str) -> List[str]:
-    command = ["git", "log", f"{previous_tag}..{end_git_ref}", "--oneline"]
+def get_commit_logs(previous_tag: str) -> List[str]:
+    command = ["git", "log", f"{previous_tag}..origin/main", "--oneline"]
     return run_command(command).split("\n")
 
 
@@ -448,17 +388,12 @@ def enhance_pr_titles(df: "pd.DataFrame") -> "pd.DataFrame":
 
         # Process completed tasks with progress bar
         for future in tqdm(
-            as_completed(future_to_pr),
-            total=len(pr_items),
-            desc="Getting title suggestions",
-            unit="PR",
+            as_completed(future_to_pr), total=len(pr_items), desc="Getting title suggestions", unit="PR"
         ):
             try:
                 idx, suggested_title = future.result()
                 df.at[idx, "ai_suggested_title"] = suggested_title
-                df.at[idx, "new_title"] = df.at[
-                    idx, "ai_suggested_title"
-                ]  # Keep AI suggestion as default
+                df.at[idx, "new_title"] = df.at[idx, "ai_suggested_title"]  # Keep AI suggestion as default
             except Exception as e:
                 typer.echo(f"\nError processing PR: {e}", err=True)
 
@@ -504,8 +439,7 @@ def write_excel(df: "pd.DataFrame", filename: str):
 
 def select_release(headless: bool) -> str:
     if headless:
-        releases_list = get_releases()
-        return get_latest_minor_release(releases_list)
+        return get_latest_release()
     return ask_for_release()
 
 

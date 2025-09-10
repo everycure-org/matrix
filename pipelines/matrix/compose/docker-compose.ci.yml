@@ -1,8 +1,11 @@
 # overriding the default compose for CI. Several reasons:
 # 1) we override the neo4j image to Intel
 # 2) override the images to avoid keeping state in CI (no data mount)
-# 3) add an execution of the matrix-pipeline in a container to execute against the services defined in the base compose file 
+# 3) add an executino of the matrix-pipeline in a container to execute against the services defined in the base compose file 
 services:
+  # not executing the node-synonymizer in CI
+  node-synonymizer: !reset null
+
   neo4j:
     # FUTURE: Newever container version gives issues, due to `apoc-extended`
     # and `gds` versions not being released yet. Update when released.
@@ -45,23 +48,20 @@ services:
       - "/bin/sh"
       - -ecx
       - |
-          kedro run -e test -p test
+          kedro run -e test -p test --without-tags xg_ensemble,not-shared
     environment:
       TQDM_DISABLE: 1
-      NODENORM_PROTOCOL_AND_DOMAIN: http://mockserver:1080
+      NODENORM_ENDPOINT: http://mockserver:1080/1.5/get_normalized_nodes
       NEO4J_HOST: bolt+ssc://neo4j:7687 # NOTE: Passing in bolt+s as our CLI Neo4J has SSL enabled
       NEO4J_USER: neo4j
       NEO4J_PASSWORD: admin
       OPENAI_ENDPOINT: http://mockserver:1080/v1
       MLFLOW_ENDPOINT: http://mlflow:5000
-      MLFLOW_URL: https://mlflow.platform.prod.everycure.org/
       OPENAI_API_KEY: sk-proj-abc
-      RUNTIME_GCP_PROJECT_ID: mtrx-hub-prod-sms
-      RUNTIME_GCP_BUCKET: mtrx-us-central1-hub-prod-storage
-      INCLUDE_PRIVATE_DATASETS: 1
+      SYNONYMIZER_ENDPOINT: http://node-synonymizer:8081
+      GCP_PROJECT_ID: dummy
       KEDRO_DYNAMIC_PIPELINES_MAPPING_CROSS_VALIDATION_N_CROSS_VAL_FOLDS: 2
       KEDRO_DYNAMIC_PIPELINES_MAPPING_MODELLING_XG_ENSEMBLE_NUM_SHARDS: 2
-      SPARK_DRIVER_MEMORY: 30
     depends_on:
       neo4j:
         condition: service_healthy

@@ -4,7 +4,7 @@ import pandas as pd
 import pandera as pa
 import pyspark.sql as ps
 import pytest
-from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
+from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
 from pyspark.sql import types as T
 from pyspark.testing import assertDataFrameEqual
 

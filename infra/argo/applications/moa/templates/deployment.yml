@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: moa-viewer-deployment
+  labels:
+    app: moa-viewer
+spec:
+  replicas: 1
+  revisionHistoryLimit: 0
+  selector:
+    matchLabels:
+      app: moa-viewer
+  template:
+    metadata:
+      labels:
+        app: moa-viewer
+    spec:
+      volumes:
+        - name: shared-data
+          emptyDir: {}
+      initContainers:
+      - name: init-moa-viewer
+        image: "{{ .Values.app.registry }}:{{ .Files.Get "files/version" }}"
+        imagePullPolicy: Always
+        command: ["python", "src/init.py"]
+        volumeMounts:
+        - name: shared-data
+          mountPath: /data
+        env:
+          - name: DATA_INPUT_PATH
+            value: {{ .Values.app.config.data_path }}
+          - name: GCP_PROJECT
+            value: "mtrx-hub-dev-3of"
+          - name: MOA_DB_PATH
+            value: "/data/moa_extraction.db"
+          - name: MOA_INFO_IMG
+            value: "/assets/moa_info.svg"
+          - name: IMAGE_VERSION
+            value: "{{ .Files.Get "files/version" }}"
+      containers:
+      - name: moa-viewer
+        image: "{{ .Values.app.registry }}:{{ .Files.Get "files/version" }}"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8501
+        env:
+          - name: DATA_INPUT_PATH
+            value: {{ .Values.app.config.data_path }}
+          - name: GCP_PROJECT
+            value: "mtrx-hub-dev-3of"
+          - name: MOA_DB_PATH
+            value: "/data/moa_extraction.db"
+          - name: MOA_INFO_IMG
+            value: "/assets/moa_info.svg"
+          - name: IMAGE_VERSION
+            value: "{{ .Files.Get "files/version" }}"
+        volumeMounts:
+        - name: shared-data
+          mountPath: /data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: moa-viewer-service
+  labels:
+    app: moa-viewer
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8501
+  selector:
+    app:  moa-viewer

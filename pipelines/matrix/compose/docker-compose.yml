@@ -38,6 +38,18 @@ services:
       retries: 10
       start_period: 10s
 
+  # Node synonymizer
+  node-synonymizer:
+    build: "../../../services/synonymizer"
+    environment:
+      DB_CONNECTION_STR: /usr/src/app/assets/node_synonymizer_v1.0_KG2.7.3.sqlite
+    volumes:
+      # NOTE: Asset files are really big, so mounting them in
+      - "../../../services/synonymizer/assets:/usr/src/app/assets"
+    ports:
+      - 8081:8081
+
+
   # MockServer instance that is used to mock a openai embeddings endpoint as well a synonimizer API.
   # This is used for local development and integration testing
   mockserver:

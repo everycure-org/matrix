@@ -1,48 +1,34 @@
 run_name: ${oc.env:RUN_NAME}
 
 versions:
-  release: ${oc.env:RELEASE_VERSION,v0.6.0}
+  release: ${oc.env:RELEASE_VERSION,v0.2.3}
 
 release_folder_name: ${oc.env:RELEASE_FOLDER_NAME, releases}
-release_dir: ${runtime_gcs_bucket}/kedro/data/${release_folder_name}/${versions.release}
+release_dir: ${gcs_bucket}/kedro/data/${release_folder_name}/${versions.release}
 run_dir: ${release_dir}/runs/${run_name}
 
-runtime_gcs_bucket: gs://${oc.env:RUNTIME_GCP_BUCKET}
-runtime_gcp_project: ${oc.env:RUNTIME_GCP_PROJECT_ID}
-
-# These need to be duplicated in cloud/globals.yml even if defined in base/globals.yml because `paths` below references them.
-dev_gcs_bucket: gs://mtrx-us-central1-hub-dev-storage
-prod_gcs_bucket: gs://mtrx-us-central1-hub-prod-storage
-# Public GCS bucket for public datasets
-public_gcs_bucket: gs://data.dev.everycure.org
+gcs_bucket: gs://${oc.env:GCP_BUCKET}
+gcp_project: ${oc.env:GCP_PROJECT_ID}
 
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation.
 mlflow_artifact_root: ${run_dir}/mlflow
-mlflow_experiment_id: ${oc.env:MLFLOW_EXPERIMENT_ID, 1}
 
 paths:
-  raw:             ${dev_gcs_bucket}/data/01_RAW
-  raw_private:     ${prod_gcs_bucket}/data/01_RAW
-  # Public data sources
-  raw_public:      ${public_gcs_bucket}/data/01_RAW
+  raw:                ${gcs_bucket}/kedro/data/01_raw
+  kg_raw:             ${gcs_bucket}/data/01_RAW
 
   # Release-based
   ingestion:          ${release_dir}/datasets/ingestion
   integration:        ${release_dir}/datasets/integration
+  embeddings:         ${release_dir}/datasets/embeddings
   release:            ${release_dir}/datasets/release
 
   # Run-based
-  filtering:          ${run_dir}/datasets/filtering
-  embeddings:         ${run_dir}/datasets/embeddings
   modelling:          ${run_dir}/datasets/modelling
   evaluation:         ${run_dir}/datasets/evaluation
   matrix_generation:  ${run_dir}/datasets/matrix_generation
-  matrix_transformations:  ${run_dir}/datasets/matrix_transformations
   inference:          ${run_dir}/datasets/inference
-  
+
   # Tmp. directory using k8s emph. storage
   tmp:           data/tmp
-
-  # Embedding cache dataset
-  cache:         ${runtime_gcs_bucket}/kedro/data/cache

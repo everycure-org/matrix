@@ -1,3 +1,4 @@
+import pandas as pd
 import pytest
 from matrix.pipelines.integration import filters
 from pandera.errors import SchemaError
@@ -85,6 +86,38 @@ def sample_nodes(spark):
             ]
         ),
     )
+
+
+def test_biolink_deduplicate(spark, sample_edges):
+    # When applying the biolink deduplicate
+    result = filters.biolink_deduplicate_edges(sample_edges)
+    expected = spark.createDataFrame(
+        [
+            (
+                "CHEBI:001",
+                "CHEBI:002",
+                "biolink:composed_primarily_of",
+            ),
+            (
+                "CHEBI:001",
+                "CHEBI:002",
+                "biolink:related_to_at_concept_level",
+            ),
+            (
+                "CHEBI:002",
+                "CHEBI:003",
+                "biolink:related_to_at_concept_level",
+            ),
+        ],
+        schema=StructType(
+            [
+                StructField("subject", StringType(), False),
+                StructField("object", StringType(), False),
+                StructField("predicate", StringType(), False),
+            ]
+        ),
+    )
+    assertDataFrameEqual(result.select(*expected.columns), expected)
 
 
 def test_determine_most_specific_category(spark, sample_nodes):

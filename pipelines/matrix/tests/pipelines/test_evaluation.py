@@ -95,11 +95,11 @@ def test_discrete_metrics(sample_data):
     # Given standard and edge case datasets, and accuracy as the evaluation metric
     standard_case, edge_case = sample_data
     metrics = [accuracy_score]
-    evaluator = DiscreteMetrics(metrics, threshold=0.5)
+    evaluator = DiscreteMetrics(metrics, score_col_name="score", threshold=0.5)
 
     # When DiscreteMetrics is initialized with a threshold of 0.5 and evaluates both datasets
-    standard_result = evaluator.evaluate(standard_case, score_col_name="score")
-    edge_result = evaluator.evaluate(edge_case, score_col_name="score")
+    standard_result = evaluator.evaluate(standard_case)
+    edge_result = evaluator.evaluate(edge_case)
 
     # Then the accuracy scores should be correctly calculated for both cases
     assert "accuracy_score" in standard_result
@@ -114,11 +114,11 @@ def test_continuous_metrics(sample_data):
     # Given standard and edge case datasets, and ROC AUC as the evaluation metric
     standard_case, edge_case = sample_data
     metrics = [roc_auc_score]
-    evaluator = ContinuousMetrics(metrics)
+    evaluator = ContinuousMetrics(metrics, score_col_name="score")
 
     # When ContinuousMetrics evaluates both datasets
-    standard_result = evaluator.evaluate(standard_case, score_col_name="score")
-    edge_result = evaluator.evaluate(edge_case, score_col_name="score")
+    standard_result = evaluator.evaluate(standard_case)
+    edge_result = evaluator.evaluate(edge_case)
 
     # Then the ROC AUC scores should be correctly calculated for both cases
     assert "roc_auc_score" in standard_result
@@ -133,11 +133,11 @@ def test_specific_ranking(sample_data):
     # Given standard and edge case datasets, and MRR and Hit@1 as ranking metrics
     standard_case, edge_case = sample_data
     rank_funcs = [MRR(), HitK(k=1)]
-    evaluator = SpecificRanking(rank_funcs, specific_col="source")
+    evaluator = SpecificRanking(rank_funcs, specific_col="source", score_col_name="score")
 
     # When SpecificRanking evaluates both datasets with source-specific ranking
-    standard_result = evaluator.evaluate(standard_case, score_col_name="score")
-    edge_result = evaluator.evaluate(edge_case, score_col_name="score")
+    standard_result = evaluator.evaluate(standard_case)
+    edge_result = evaluator.evaluate(edge_case)
 
     # Then both MRR and Hit@1 scores should be correctly calculated for both cases
     assert "mrr" in standard_result and "hit-1" in standard_result
@@ -160,7 +160,7 @@ def test_full_matrix_ranking(sample_positives):
     evaluator = FullMatrixRanking(rank_func_lst=rank_funcs, quantile_func_lst=quantile_funcs)
 
     # And when it evaluates the dataset
-    result = evaluator.evaluate(data, score_col_name="score")
+    result = evaluator.evaluate(data)
 
     # Then the RecallAtN and AUROC scores should be correctly calculated
     assert "recall-2" in result
@@ -179,9 +179,9 @@ def test_recall_at_n(sample_data):
     """Test the RecallAtN class."""
 
     # Test with multiple N values
-    recall_evaluator = RecallAtN(n_values=[3, 5])
+    recall_evaluator = RecallAtN(n_values=[3, 5], score_col_name="score")
     data_standard_case = sample_data[0]
-    result = recall_evaluator.evaluate(data_standard_case, score_col_name="score")
+    result = recall_evaluator.evaluate(data_standard_case)
 
     assert "recall_at_3" in result
     assert np.isclose(result["recall_at_3"], 3 / 3, atol=1e-6)  # 2 out of 3 true positives in top 3
@@ -250,8 +250,9 @@ def test_spearman_at_n(sample_rank_sets):
     result_same = spearman_evaluator.generate()(
         (sample_rank_sets[0], sample_rank_sets[0]), common_items=pd.DataFrame({"pair_id": [1, 2, 3, 4]})
     )
+
     assert result["pvalue"] > 0.05
-    assert round(result_same["stat"]) == 1.0
+    assert round(result_same["correlation"]) == 1.0
     assert result_same["pvalue"] < 0.05
 
 

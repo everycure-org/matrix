@@ -1,14 +1,15 @@
+import re
 from unittest.mock import Mock
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pyspark.sql as ps
 import pytest
 from matrix.datasets.graph import KnowledgeGraph
+from matrix.inject import _extract_elements_in_list
 from matrix.pipelines.matrix_generation.nodes import (
     generate_pairs,
-    generate_reports,
+    generate_report,
+    make_batch_predictions,
     make_predictions_and_sort,
 )
 from matrix.pipelines.modelling.transformers import FlatArrayTransformer
@@ -67,34 +68,17 @@ def sample_clinical_trials():
 
 
 @pytest.fixture
-def sample_off_label():
-    """Fixture that provides sample off label data for testing."""
-    return pd.DataFrame(
-        {
-            "source": ["drug_1"],
-            "target": ["disease_2"],
-            "off_label": [1],
-        }
-    )
-
-
-@pytest.fixture
-def sample_node_embeddings():
+def sample_graph():
     """Fixture that provides a sample KnowledgeGraph for testing."""
     nodes = pd.DataFrame(
         {
             "id": ["drug_1", "drug_2", "disease_1", "disease_2"],
             "is_drug": [True, True, False, False],
             "is_disease": [False, False, True, True],
-            "topological_embedding": [np.ones(3).tolist() * n for n in range(4)],
+            "topological_embedding": [np.ones(3) * n for n in range(4)],
         }
     )
-    return nodes
-
-
-@pytest.fixture
-def sample_graph(sample_node_embeddings):
-    return KnowledgeGraph(sample_node_embeddings)
+    return KnowledgeGraph(nodes)
 
 
 @pytest.fixture
@@ -178,9 +162,7 @@ def sample_data():
     return drugs, diseases, known_pairs, graph
 
 
-def test_generate_pairs(
-    sample_drugs, sample_diseases, sample_graph, sample_known_pairs, sample_clinical_trials, sample_off_label
-):
+def test_generate_pairs(sample_drugs, sample_diseases, sample_graph, sample_known_pairs, sample_clinical_trials):
     """Test the generate_pairs function."""
     # Given drug list, disease list and ground truth pairs
     # When generating the matrix dataset
@@ -190,7 +172,6 @@ def test_generate_pairs(
         graph=sample_graph,
         known_pairs=sample_known_pairs,
         clinical_trials=sample_clinical_trials,
-        off_label=sample_off_label,
     )
 
     # Then the output is of the correct format and shape
@@ -238,74 +219,173 @@ def test_generate_pairs(
     )
 
 
-def test_make_predictions_and_sort(
-    spark,
-    sample_node_embeddings,
+def test_make_batch_predictions(
+    sample_graph,
     sample_matrix_data,
     transformers,
     mock_model,
 ):
-    result = make_predictions_and_sort(
-        node_embeddings=spark.createDataFrame(sample_node_embeddings),
-        pairs=spark.createDataFrame(sample_matrix_data),
+    # Given data, embeddings and a model
+    # When we make batched predictions
+    result = make_batch_predictions(
+        graph=sample_graph,
+        data=sample_matrix_data,
         transformers=transformers,
         model=mock_model,
         features=["source_+", "target_+"],
-        treat_score_col_name="treat score",
-        not_treat_score_col_name="not treat score",
-        unknown_score_col_name="unknown score",
+        treat_score_col_name="score",
+        not_treat_score_col_name="not_treat_score",
+        unknown_score_col_name="unknown_score",
+        batch_by="target",
     )
 
-    assert isinstance(result, ps.DataFrame)
-    result_pandas = result.toPandas()
-    assert "treat score" in result_pandas.columns
-    assert len(result_pandas) == 4
-    assert result_pandas["treat score"].is_monotonic_decreasing
+    # Then the scores are added for all datapoints in a new column
+    # and the model was called the correct number of times
+    assert "score" in result.columns
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) == 4
+    assert mock_model.predict_proba.call_count == 2  # Called 2x due to batching
 
 
-@pytest.fixture
-def mock_reporting_plot_strategies():
-    names = ["strategy_1", "strategy_2"]
-    generators = {name: Mock() for name in names}
-    for name, generator in generators.items():
-        generator.name = name
-        generator.generate.return_value = plt.Figure()
-    return generators
-
-
-@pytest.fixture
-def mock_reporting_table_strategies():
-    names = ["strategy_1", "strategy_2"]
-    generators = {name: Mock() for name in names}
-    for name, generator in generators.items():
-        generator.name = name
-        generator.generate.return_value = pd.DataFrame()
-    return generators
-
-
-def test_generate_report_plot(
+def test_make_predictions_and_sort(
+    sample_graph,
     sample_matrix_data,
-    mock_reporting_plot_strategies,
+    transformers,
+    mock_model,
 ):
-    # Given a list of reporting plot generator and a matrix dataframe
-    # When generating the report plot
-    reports_dict = generate_reports(sample_matrix_data, mock_reporting_plot_strategies)
-    # Then:
-    # The keys of the dictionary are the names of the reporting plot generator and have the correct suffix
-    assert list(reports_dict.keys()) == ["strategy_1", "strategy_2"]
-    # The values are the reporting plot generator's generate method's output
-    assert all(isinstance(value, plt.Figure) for value in reports_dict.values())
+    # Given a drug list, disease list and objects necessary for inference
+    # When running inference and sorting
+    result = make_predictions_and_sort(
+        graph=sample_graph,
+        data=sample_matrix_data,
+        transformers=transformers,
+        model=mock_model,
+        features=["source_+", "target_+"],
+        treat_score_col_name="score",
+        not_treat_score_col_name="not_treat_score",
+        unknown_score_col_name="unknown_score",
+        batch_by="target",
+    )
+
+    # Then the output is of the correct format and correctly sorted
+    assert "score" in result.columns
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) == 4
+    assert result["score"].is_monotonic_decreasing
 
 
-def test_generate_report_table(
-    sample_matrix_data,
-    mock_reporting_table_strategies,
-):
-    # Given a list of reporting table generator and a matrix dataframe
-    # When generating the report table
-    reports_dict = generate_reports(sample_matrix_data, mock_reporting_table_strategies)
-    # Then:
-    # The keys of the dictionary are the names of the reporting table generator and have the correct suffix
-    assert list(reports_dict.keys()) == ["strategy_1", "strategy_2"]
-    # The values are the reporting table generator's generate method's output
-    assert all(isinstance(value, pd.DataFrame) for value in reports_dict.values())
+def test_generate_report(sample_data):
+    """Test the generate_report function."""
+    # Given an input matrix, drug list and disease list
+    drugs, diseases, known_pairs, _ = sample_data
+
+    # Update the sample data to include the new required columns
+
+    data = pd.DataFrame(
+        {
+            "source": ["drug_1", "drug_2", "drug_3", "drug_4", "drug_2"],
+            "target": ["disease_1", "disease_2", "disease_3", "disease_3", "disease_2"],
+            "probability": [0.8, 0.6, 0.4, 0.2, 0.2],
+            "is_known_positive": [True, False, False, False, False],
+            "trial_sig_better": [False, False, False, False, False],
+            "trial_non_sig_better": [False, False, False, False, False],
+            "trial_sig_worse": [False, False, False, False, False],
+            "trial_non_sig_worse": [False, False, False, False, False],
+            "is_known_negative": [False, True, False, False, False],
+        }
+    )
+
+    n_reporting = 3
+    score_col_name = "probability"
+
+    # Mock the stats_col_names and meta_col_names dictionaries
+    matrix_params = {
+        "metadata": {
+            "drug_list": {"drug_id": "Drug ID", "drug_name": "Drug Name"},
+            "disease_list": {"disease_id": "Disease ID", "disease_name": "Disease Name"},
+            "kg_data": {
+                "pair_id": "Unique identifier for each pair",
+                "kg_drug_id": "KG Drug ID",
+                "kg_disease_id": "KG Disease ID",
+                "kg_drug_name": "KG Drug Name",
+                "kg_disease_name": "KG Disease Name",
+            },
+        },
+        "stats_col_names": {
+            "per_disease": {"top": {"mean": "Mean score"}, "all": {"mean": "Mean score"}},
+            "per_drug": {"top": {"mean": "Mean score"}, "all": {"mean": "Mean score"}},
+            "full": {"mean": "Mean score", "median": "Median score"},
+        },
+        "tags": {
+            "drugs": {"is_steroid": "Whether drug is a steroid"},
+            "pairs": {
+                "is_known_positive": "Whether the pair is a known positive, based on literature and clinical trials",
+                "is_known_negative": "Whether the pair is a known negative, based on literature and clinical trials",
+            },
+            "diseases": {"is_cancer": "Whether disease is a cancer"},
+            "master": {
+                "legend": "Excludes any pairs where the following conditions are met: xyz",
+                "conditions": [["is_known_positive"], ["is_known_negative"], ["is_steroid"]],
+            },
+        },
+    }
+    run_metadata = {
+        "run_name": "test_run",
+        "git_sha": "test_sha",
+        "data_version": "test_data_version",
+    }
+
+    # When generating the report
+    result = generate_report(data, n_reporting, drugs, diseases, score_col_name, matrix_params, run_metadata)
+    full_stats = result["statistics"]
+    # Check that the full matrix statistics are correct
+    assert (
+        full_stats["stats_type"]
+        .isin(
+            [
+                "mean_full_matrix",
+                "mean_top_n",
+                "median_full_matrix",
+                "median_top_n",
+            ]
+        )
+        .all()
+    )
+
+    result = result["matrix"]
+    # Then the report is of the correct structure
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) == n_reporting
+
+    expected_columns = {
+        "drug_id",
+        "drug_name",
+        "disease_id",
+        "disease_name",
+        "probability",
+        "pair_id",
+        "kg_drug_id",
+        "kg_disease_id",
+        "kg_drug_name",
+        "kg_disease_name",
+        "master_filter",
+        "is_steroid",
+        "is_known_positive",
+        "is_known_negative",
+        "is_cancer",
+        "mean_top_per_disease",
+        "mean_all_per_disease",
+        "mean_top_per_drug",
+        "mean_all_per_drug",
+    }
+    assert set(result.columns) == expected_columns
+
+    assert result["drug_name"].tolist() == ["Drug 1", "Drug 2", "Drug 3"]
+    assert result["disease_name"].tolist() == ["Disease 1", "Disease 2", "Disease 3"]
+    assert result["kg_drug_name"].tolist() == ["Drug 1", "Drug 2", "Drug 3"]
+    assert result["kg_disease_name"].tolist() == ["Disease 1", "Disease 2", "Disease 3"]
+    assert result["probability"].tolist() == pytest.approx([0.8, 0.6, 0.4])
+    assert result["mean_top_per_disease"].tolist() == pytest.approx([0.8, 0.6, 0.4])
+    assert result["mean_all_per_disease"].tolist() == pytest.approx([0.8, 0.4, 0.3])
+    assert result["mean_top_per_drug"].tolist() == pytest.approx([0.8, 0.6, 0.4])
+    assert result["mean_all_per_drug"].tolist() == pytest.approx([0.8, 0.4, 0.4])

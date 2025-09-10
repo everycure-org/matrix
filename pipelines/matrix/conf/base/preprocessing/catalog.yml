@@ -13,140 +13,50 @@ _layer_prm: &_layer_prm
     kedro-viz:
       layer: primary
 
-_medical_clinical_trials_sheet_dataset: &_medical_clinical_trials_sheet_dataset
-  type: matrix.datasets.gcp.GoogleSheetsDataset
-  key: 1Wlrjr8ojUGCfWJg-QF5PzpJFqpD7LLH7b60u2XAngh0
-  service_file: conf/local/service-account.json
-
 _medical_kg_sheets_dataset: &_medical_kg_sheets_dataset
   type: matrix.datasets.gcp.GoogleSheetsDataset
   key: 1LMtOmA10t7a3lcKeTP7zmptOPIcCBIPFVJt9J7jZ2bQ
   service_file: conf/local/service-account.json
 
-_spark_parquet_ds: &_spark_parquet
-  type: matrix.datasets.gcp.LazySparkDataset
-  file_format: parquet
-  save_args:
-    mode: overwrite
-
-_pandas_parquet_ds: &_pandas_parquet
-  type: matrix.datasets.graph.PandasParquetDataset
-  save_args:
-    engine: pyarrow
-  load_args:
-    engine: pyarrow
+_medical_clinical_trials_sheet_dataset: &_medical_clinical_trials_sheet_dataset
+  type: matrix.datasets.gcp.GoogleSheetsDataset
+  key: 1Wlrjr8ojUGCfWJg-QF5PzpJFqpD7LLH7b60u2XAngh0
+  service_file: conf/local/service-account.json
 
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
-preprocessing.raw.embiology.node_attributes:
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_private}/source_data/raw_embiology/csv/attr.csv.gz
 
-# NOTE: references.csv.gz is a very large dataframe which cant be easily loaded into memory
-# so only load columns that are needed.
-preprocessing.raw.embiology.ref_pub:
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_private}/source_data/raw_embiology/csv/reference.csv.gz
+preprocessing.raw.nodes:
+  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
   load_args:
-    usecols:
-      - "id"
-      - "unique_ref"
-      - "pmid"
-      - "doi"
+    sheet_name: new_nodes
+    columns: ["ID", "name", "category", "new_id", "description"]
 
-preprocessing.int.embiology.edge_attributes:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/embiology/int/edge_attributes
+preprocessing.int.nodes:
+  <<: [*_layer_int, *_medical_kg_sheets_dataset]
+  save_args:
+    sheet_name: new_nodes
+    write_columns: ["curie", "normalized_curie", "label", "types"]
 
-preprocessing.int.embiology.node_attributes@pandas:
-  <<: *_pandas_parquet
-  filepath: ${globals:paths.tmp}/embiology/raw/attr
+  load_args:
+    sheet_name: new_nodes
+    columns: ["ID", "category", "normalized_curie", "label", "types", "description"]
 
-preprocessing.int.embiology.node_attributes@spark:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/embiology/raw/attr
+preprocessing.raw.edges:
+  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
+  load_args:
+    sheet_name: new_edges
+    columns: ["Source", "Target", "Label"]
 
-preprocessing.int.embiology.ref_pub@pandas:
-  <<: *_pandas_parquet
-  filepath: ${globals:paths.tmp}/embiology/raw/ref_pub
-
-preprocessing.int.embiology.ref_pub@spark:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/embiology/raw/ref_pub
-
-preprocessing.raw.embiology.nodes:
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_private}/source_data/raw_embiology/csv/node.csv.gz
-
-preprocessing.int.embiology.nodes@pandas:
-  <<: *_pandas_parquet
-  filepath: ${globals:paths.tmp}/embiology/raw/nodes
-
-preprocessing.int.embiology.nodes@spark:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/embiology/raw/nodes
-
-preprocessing.prm.embiology.nodes:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/embiology/prm/nodes
-
-preprocessing.raw.embiology.manual_id_mapping:
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_private}/source_data/raw_embiology/temp/id_curie_mapping.csv
-
-preprocessing.raw.embiology.manual_name_mapping:
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_private}/source_data/raw_embiology/temp/name_curie_mapping.csv
-
-preprocessing.int.embiology.manual_name_mapping@pandas:
-  <<: *_pandas_parquet
-  filepath: ${globals:paths.tmp}/embiology/prm/name_curie_mapping
-
-preprocessing.int.embiology.manual_id_mapping@pandas:
-  <<: *_pandas_parquet
-  filepath: ${globals:paths.tmp}/embiology/prm/id_curie_mapping
-
-preprocessing.int.embiology.manual_name_mapping@spark:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/embiology/prm/name_curie_mapping
-
-preprocessing.int.embiology.manual_id_mapping@spark:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/embiology/prm/id_curie_mapping
-
-
-preprocessing.prm.embiology.edges:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/embiology/prm/edges
-
-preprocessing.prm.embiology.nodes_final:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/embiology/prm/nodes_final
-
-preprocessing.prm.embiology.edges_final:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/embiology/prm/edges_final
-
-preprocessing.raw.embiology.edges:
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_private}/source_data/raw_embiology/csv/control.csv.gz
-
-preprocessing.int.embiology.edges@pandas:
-  <<: *_pandas_parquet
-  filepath: ${globals:paths.tmp}/embiology/raw/edges
-
-preprocessing.int.embiology.edges@spark:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/embiology/raw/edges
-
-preprocessing.int.embiology.node_attributes_normalised_ids@pandas:
-  <<: *_pandas_parquet
-  filepath: ${globals:paths.tmp}/embiology/int/node_attributes_normalised_ids
-
-preprocessing.int.embiology.node_attributes_normalised_ids@spark:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/embiology/int/node_attributes_normalised_ids
+preprocessing.int.edges:
+  <<: [*_layer_prm, *_medical_kg_sheets_dataset]
+  save_args:
+    sheet_name: new_edges
+    write_columns: ["SourceId", "TargetId"]
+  load_args:
+    sheet_name: new_edges
+    columns: ["SourceId", "TargetId", "Label"]
 
 preprocessing.raw.clinical_trials_data:
   <<: *_medical_clinical_trials_sheet_dataset
@@ -163,39 +73,88 @@ preprocessing.raw.clinical_trials_data:
       - "significantly_worse"
 
 preprocessing.int.mapped_clinical_trials_data:
-  type:  pandas.CSVDataset
-  filepath: ${globals:paths.tmp}/preprocessing_clinical_trials.tsv
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
-
-preprocessing.raw.ec_medical_team.edges:
-  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
-  load_args:
-    sheet_name: new_edges
-    columns: ["Source", "Target", "Label"] 
-
-preprocessing.raw.ec_medical_team.nodes:
-  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
-  load_args:
-    sheet_name: new_nodes
-    columns: ["ID", "name", "category", "new_id", "description"]
-
-preprocessing.reporting.ec_medical_team.nodes:
-  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
-  save_args:
-    sheet_name: new_nodes
-    write_columns: ["curie", "normalized_curie", "label", "types"]
-
-preprocessing.reporting.ec_medical_team.edges:
-  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
-  save_args:
-    sheet_name: new_edges
-    write_columns: ["SourceId", "TargetId"]
-
-preprocessing.reporting.mapped_clinical_trials_data:
-  <<: [*_layer_raw, *_medical_clinical_trials_sheet_dataset]
+  <<: *_medical_clinical_trials_sheet_dataset
   save_args:
     sheet_name: new_clinical_trial_DD_pairs
     write_columns: ["drug_curie", "disease_curie"]
+  load_args:
+    sheet_name: new_clinical_trial_DD_pairs
+    columns:
+      - "clinical_trial_id"
+      - "reason_for_rejection"
+      - "drug_name"
+      - "disease_name"
+      - "significantly_better"
+      - "non_significantly_better"
+      - "non_significantly_worse"
+      - "significantly_worse"
+      - "drug_curie"
+      - "disease_curie"
+
+preprocessing.raw.disease_list:
+  <<: [*_layer_raw]
+  type: matrix.datasets.github.GitHubReleaseCSVDataset
+  repository_url: https://github.com/everycure-org/matrix-disease-list
+  release_name: ${globals:data_sources.disease_list.version}
+  release_asset_name: matrix-disease-list.tsv
+  fs_args:
+    Accept: application/octet-stream
+  load_args:
+    sep: "\t"
+
+preprocessing.raw.drug_list:
+  <<: [*_layer_raw]
+  type: matrix.datasets.github.GitHubReleaseCSVDataset
+  repository_url: https://github.com/everycure-org/matrix-drug-list
+  release_name: ${globals:data_sources.drug_list.version}
+  release_asset_name: drugList.tsv
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: token ${globals:gh_token}
+  load_args:
+    sep: "\t"
+
+preprocessing.raw.ground_truth.positives:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tp_pairs.txt
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"
+
+preprocessing.raw.ground_truth.negatives:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tn_pairs.txt
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"
+
+preprocessing.int.ground_truth.combined:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/gt_pairs.txt
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"
+
+preprocessing.int.ground_truth.nodes@pandas:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.tmp}/ground_truth/kg2/${globals:data_sources.gt.version}/nodes.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"
+
+preprocessing.int.ground_truth.edges@pandas:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.tmp}/ground_truth/kg2/${globals:data_sources.gt.version}/edges.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"

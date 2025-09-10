@@ -93,7 +93,7 @@ _kg_dataset: &_kg_dataset
 #   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
 #   artifact_path: "histogram"
 #   dataset:
-#     type: matplotlib.MatplotlibDataset
+#     type: matplotlib.MatplotlibWriter
 #     filepath: ${globals:paths.tmp}/reporting/histogram_plot.png  
 
 # inference.feat.nodes@spark:

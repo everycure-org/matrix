@@ -4,6 +4,7 @@
 # ignore all local configuration
 conf/local/**
 !conf/local/.gitkeep
+!conf/local/service-account.json
 
 # ignore potentially sensitive credentials files
 conf/**/*credentials*
@@ -166,5 +167,3 @@ compose/neo4j_data/
 
 # Ignore notebooks scratch directory
 notebooks/scratch/
-
-requirements.overrides.txt

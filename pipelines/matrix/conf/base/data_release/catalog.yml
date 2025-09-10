@@ -45,7 +45,7 @@ data_release.prm.kg_edges:
     query: > 
       MATCH (subject:Entity {id: event.subject}), (object:Entity {id: event.object})
       WITH subject, object, event
-      CALL apoc.create.relationship(subject, event.label, {kg_sources: event.upstream_data_source, primary_knowledge_source: event.primary_knowledge_source}, object) YIELD rel
+      CALL apoc.create.relationship(subject, event.label, {kg_sources: event.kg_sources}, object) YIELD rel
       RETURN rel
 
 # This entity belongs to commented out option of data_release pipeline.

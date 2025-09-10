@@ -1,6 +1,6 @@
-# data "google_dns_managed_zone" "cluster_zone" {
-#   name = var.dns_zone
-# }
+data "google_dns_managed_zone" "cluster_zone" {
+  name = var.dns_zone
+}
 # TODO remove, we use Gateway class instead
 # # Reserve a global IP address
 # resource "google_compute_global_address" "ingress_ip" {

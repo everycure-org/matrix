@@ -1,19 +1,14 @@
-fabricator.ground_truth:
-  num_rows_per_category: 100
-
 fabricator.rtx_kg2:
   nodes:
     num_rows: 500
     columns:
-      id:
+      id:ID:
         type: generate_unique_id
         prefix: "RTX:"
-        id_length: 8
       name:
         type: generate_unique_id
         prefix: name_
-        inject_nulls:
-          probability: 0.2
+        prob_null: 0.2
       all_names:string[]:
         type: faker
         provider: name
@@ -25,38 +20,28 @@ fabricator.rtx_kg2:
           - biolink:Gene
           - biolink:ChemicalSubstance
           - biolink:Protein
-      all_categories:
+      all_categories:string[]:
         type: row_apply
-        input_columns: [ "nodes.category" ]
+        list_of_values: [nodes.category]
+        # NOTE: This ensures the full path from root to child is added in the categories column
         row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
         row_func_kwargs:
-          delimiter: "|"
+          delimiter: "\u01c2"
         resize: True
         seed: 590590
       iri:
         type: faker
         provider: url
+
       description:
         type: generate_unique_id
         prefix: description_
-      equivalent_curies:
+      equivalent_curies:string[]:
+        type: faker
+        provider: name
+      publications:string[]:
         type: generate_random_arrays
-        delimiter: "|"
-        sample_values:
-          - "CHEMBL:CHEMBL25"
-          - "DRUGBANK:DB00316"
-          - "HGNC:1177"
-          - "UNIPROT:P00533"
-          - "NCBIGene:1956"
-          - "MESH:D009369"
-          - "OMIM:114480"
-          - "UMLS:C0017636"
-          - "DOID:14330"
-          - "CL:0000236"
-          - "MONDO:0005148"
-      publications:
-        type: generate_random_arrays
-        delimiter: "|"
+        delimiter: "\u01c2"
         sample_values:
           - "PMID:12345678"
           - "DOI:10.1234/example.5678"
@@ -64,12 +49,8 @@ fabricator.rtx_kg2:
         type: faker
         provider: url
       :LABEL:
-        type: generate_values
-        sample_values:
-          - biolink:ThingWithTaxon
-          - biolink:BiologicalProcess
-          - biolink:NamedThing
-          - biolink:OntologyClass
+        type: faker
+        provider: name
       date_discovered:
         type: generate_dates
         start_dt: 2010-01-01
@@ -77,20 +58,24 @@ fabricator.rtx_kg2:
         freq: M
 
   edges:
-    num_rows: 5000
+    num_rows: 100
     columns:
+      # NOTE: This is a rather complex syntax, but is results in a "subject"
+      # column that contains random values from the nodes table defined above.
       subject:
-        type: copy_column
-        source_column: "nodes.id"
-        sample:
-          num_rows: "@edges.num_rows"
-          seed: 590590
+        type: row_apply
+        list_of_values: [ nodes.id:ID ]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 590590
+      # NOTE: This is a rather complex syntax, but is results in an "object"
+      # column that contains random values from the nodes table defined above.
       object:
-        type: copy_column
-        source_column: "nodes.id"
-        sample:
-          num_rows: "@edges.num_rows"
-          seed: 49494
+        type: row_apply
+        list_of_values: [ nodes.id:ID ]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 49494
       predicate:
         type: generate_values
         sample_values:
@@ -100,30 +85,21 @@ fabricator.rtx_kg2:
           - biolink:subclass_of
           - biolink:is_nearby_variant_of
           - biolink:ChemicalToChemicalDerivationAssociation
-      knowledge_level:
-        type: generate_values
-        sample_values:
-          - prediction
-          - knowledge_assertion
-      agent_type:
-        type: generate_values
-        sample_values:
-          - computational_model
-          - manual_agent
-      aggregator_knowledge_source:
+      knowledge_source:string[]:
         type: generate_random_arrays
-        delimiter: "|"
+        delimiter: "\u001f"
         sample_values:
           - infores:semmeddb
           - infores:gtex
           - infores:ubergraph
           - infores:snpeff
-      primary_knowledge_source:
-        type: faker
-        provider: name
-      publications:
+      # For version 2.10
+      # primary_knowledge_source:
+      #   type: faker
+      #   provider: name
+      publications:string[]:
         type: generate_random_arrays
-        delimiter: "|"
+        delimiter: "\u01c2"
         sample_values:
           - "PMID:12345678"
           - "DOI:10.1234/example.5678"
@@ -144,378 +120,184 @@ fabricator.rtx_kg2:
           - "increased"
           - "decreased"
 
+  # NOTE: Lets see if this is needed later on
   pubmed_ids_mapping:
     num_rows: 50
     columns:
       curie:
-        type: copy_column
-        source_column: "nodes.id"
-        sample:
-          num_rows: "@pubmed_ids_mapping.num_rows"
+          type: row_apply
+          list_of_values: [nodes.id:ID]
+          row_func: "lambda *args: args[0]"
+          resize: True
           seed: 590590
       pmids:
-        type: generate_random_arrays
-        to_json: True
-        sample_values:
-          - 12345678
-          - 678
-          - 195959
-          - 5059595
+          type: generate_random_arrays
+          to_json: True
+          sample_values:
+            - 12345678
+            - 678
+            - 195959
+            - 5059595
 
+  # NOTE: Fabricated drug and disease lists can contain nodes which are not in the drug and disease categories resp.
   drug_list:
-    num_rows: 100
+    num_rows: 20
     columns:
-      id:
-        type: copy_column
-        source_column: "nodes.id"
-        sample:
-          num_rows: "@drug_list.num_rows"
-          seed: 6850
-      name:
-        type: copy_column
-        source_column: "nodes.name"
-        sample:
-          num_rows: "@drug_list.num_rows"
-          seed: 6850
-      default_med_view_filter_to_exclude:
+      curie: 
+        type: row_apply
+        list_of_values: [nodes.id:ID, nodes.name]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 6850
+      curie_label: 
+        type: row_apply
+        list_of_values: [nodes.id:ID, nodes.name]
+        row_func: "lambda *args: args[1]"
+        resize: True
+        seed: 6850
+      is_steroid: 
         type: generate_values
-        sample_values:
+        sample_values: 
           - True
           - False
-      is_combination_therapy:
+      is_antimicrobial: 
         type: generate_values
-        sample_values:
+        sample_values: 
           - True
           - False
-      approved_japan:
+      is_glucose_regulator: 
         type: generate_values
-        sample_values:
+        sample_values: 
           - True
           - False
-      marketing_status_europe:
+      is_chemotherapy: 
         type: generate_values
-        sample_values:
-          - "APPROVED"
-          - "WITHDRAWN"
-          - "PENDING"
-      approved_eu:
-        type: generate_values
-        sample_values:
+        sample_values: 
           - True
           - False
-      marketing_status_usa:
+      available_USA:
         type: generate_values
-        sample_values:
-          - "APPROVED"
-          - "WITHDRAWN"
-          - "PENDING"
-      approved_usa:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      approved_russia:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      approved_india:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_metallic_salt:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_steroid:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_antimicrobial:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_chemotherapy:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_glucose_regulator:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_vaccine_or_antigen:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_no_therapeutic_value:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      atc_main:
-        type: faker
-        provider: word
-      atc_level1:
-        type: faker
-        provider: word
-      atc_level2:
-        type: faker
-        provider: word
-      atc_level3:
-        type: faker
-        provider: word
-      atc_level4:
-        type: faker
-        provider: word
-      atc_level5:
-        type: faker
-        provider: word
-      l1_label:
-        type: faker
-        provider: word
-      l2_label:
-        type: faker
-        provider: word
-      atc_l3_drug_type:
-        type: faker
-        provider: word
-      atc_l4_drug_class:
-        type: faker
-        provider: word
-      l5_label:
-        type: faker
-        provider: word
-      is_psychiatric_drug:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-
+        sample_values: 
+          - DISCONTINUED
+          - RX
+          - AVAILABLE
+      
   disease_list:
-    num_rows: 100
+    num_rows: 30
     columns:
-      id:
-        type: copy_column
-        source_column: "nodes.id"
-        sample:
-          num_rows: "@disease_list.num_rows"
-          seed: 65690
-      name:
-        type: copy_column
-        source_column: "nodes.name"
-        sample:
-          num_rows: "@disease_list.num_rows"
-          seed: 65690
-      default_med_view_filter_to_exclude:
+      category_class: 
+        type: row_apply
+        list_of_values: [nodes.id:ID, nodes.name]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 65690
+      label: 
+        type: row_apply
+        list_of_values: [nodes.id:ID, nodes.name]
+        row_func: "lambda *args: args[1]"
+        resize: True
+        seed: 65690
+      is_cancer: 
         type: generate_values
-        sample_values:
+        sample_values: 
           - True
           - False
-      contains_nonactionaable_prefix:
+      is_pathogen_caused: 
         type: generate_values
-        sample_values:
+        sample_values: 
           - True
           - False
-      contains_itis:
+      is_glucose_dysfunction: 
         type: generate_values
-        sample_values:
+        sample_values: 
           - True
           - False
-      is_malignant_cancer:
+      tag_existing_treatment: 
         type: generate_values
-        sample_values:
+        sample_values: 
           - True
           - False
-      is_benign_tumour:
+      tag_QALY_lost: 
         type: generate_values
-        sample_values:
-          - True
-          - False
-      is_infectious_disease:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_psychiatric_disease:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_glucose_dysfunction:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      unmet_medical_need:
-        type: generate_values
-        sample_values:
-          - "LOW"
-          - "MEDIUM"
-          - "HIGH"
-      prevalence:
-        type: generate_values
-        sample_values:
-          - "RARE"
-          - "UNCOMMON"
-          - "COMMON"
-
+        sample_values: 
+          - LOW
+          - MEDIUM
+          - NONE
+          - VERY HIGH
+          - HIGH
+          - MODERATE
+        
 fabricator.clinical_trials:
-  pos_cols:
-    - significantly_better
-    - non_significantly_better
-  neg_cols:
-    - significantly_worse
-    - non_significantly_worse
-  graph:
-    nodes:
-      num_rows: 50
-      columns:
-        curie:
-          type: copy_column
-          source_column: rtx_nodes.id
-          sample:
-            num_rows: "@nodes.num_rows"
-            seed: 40599
-        name:
-          type: copy_column
-          source_column: rtx_nodes.name
-          sample:
-            num_rows: "@nodes.num_rows"
-            seed: 40599
+  nodes:
+    num_rows: 50
+    columns:
+      curie:
+        type: row_apply
+        list_of_values: [rtx_nodes.id:ID, rtx_nodes.name]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 40599
+      name:
+        type: row_apply
+        list_of_values: [rtx_nodes.id:ID, rtx_nodes.name]
+        row_func: "lambda *args: args[1]"
+        resize: True
+        seed: 40599
 
-    edges:
-      num_rows: 10
-      columns:
-        drug_curie:
-          type: copy_column
-          source_column: nodes.curie
-          sample:
-            num_rows: "@edges.num_rows"
-            seed: 40599
-        drug_name:
-          type: copy_column
-          source_column: nodes.name
-          sample:
-            num_rows: "@edges.num_rows"
-            seed: 40599
-        disease_curie:
-          type: copy_column
-          source_column: nodes.curie
-          sample:
-            num_rows: "@edges.num_rows"
-            seed: 30599
-        disease_name:
-          type: copy_column
-          source_column: nodes.name
-          sample:
-            num_rows: "@edges.num_rows"
-            seed: 30599
-        # 1. Generate a single outcome category first
-        _outcome:
-          type: generate_values
-          sample_values:
-            - sig_better
-            - non_sig_better
-            - non_sig_worse
-            - sig_worse
-
-        # 2. Derive binary flags from the outcome category
-        significantly_better:
-          type: row_apply
-          input_columns: ["edges._outcome"]
-          row_func: "lambda outcome: 1 if outcome == 'sig_better' else 0"
-          resize: True
-          seed: 50001
-        non_significantly_better:
-          type: row_apply
-          input_columns: ["edges._outcome"]
-          row_func: "lambda outcome: 1 if outcome == 'non_sig_better' else 0"
-          resize: True
-          seed: 50002
-        non_significantly_worse:
-          type: row_apply
-          input_columns: ["edges._outcome"]
-          row_func: "lambda outcome: 1 if outcome == 'non_sig_worse' else 0"
-          resize: True
-          seed: 50003
-        significantly_worse:
-          type: row_apply
-          input_columns: ["edges._outcome"]
-          row_func: "lambda outcome: 1 if outcome == 'sig_worse' else 0"
-          resize: True
-          seed: 50004
-
-fabricator.off_label:
-  graph:
-    nodes:
-      num_rows: 50
-      columns:
-        curie:
-          type: copy_column
-          source_column: rtx_nodes.id
-          sample:
-            num_rows: "@nodes.num_rows"
-            seed: 40589
-        name:
-          type: copy_column
-          source_column: rtx_nodes.name
-          sample:
-            num_rows: "@nodes.num_rows"
-            seed: 40589
-
-    edges:
-      num_rows: 100
-      columns:
-        curie_drug:
-          type: copy_column
-          source_column: nodes.curie
-          sample:
-            num_rows: "@edges.num_rows"
-            seed: 40599
-        drug_name:
-          type: copy_column
-          source_column: nodes.name
-          sample:
-            num_rows: "@edges.num_rows"
-            seed: 40599
-        disease_name:
-          type: copy_column
-          source_column: nodes.name
-          sample:
-            num_rows: "@edges.num_rows"
-            seed: 30599
-        curie_disease:
-          type: copy_column
-          source_column: nodes.curie
-          sample:
-            num_rows: "@edges.num_rows"
-            seed: 30599
-        relation:
-          type: generate_values
-          sample_values:
-            - off-label use
+  edges:
+    num_rows: 10
+    columns:
+      drug_curie:
+        type: row_apply
+        list_of_values: [nodes.curie, nodes.name]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 40599
+      drug_name:
+        type: row_apply
+        list_of_values: [nodes.curie, nodes.name]
+        row_func: "lambda *args: args[1]"
+        resize: True
+        seed: 40599
+      disease_curie:
+        type: row_apply
+        list_of_values: [nodes.curie, nodes.name]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 30599
+      disease_name:
+        type: row_apply
+        list_of_values: [nodes.curie, nodes.name]
+        row_func: "lambda *args: args[1]"
+        resize: True
+        seed: 30599
+      significantly_better: # NOTE: Unlike the real data, the fabricated data can have value 1 in more than one column.  
+        type: generate_values
+        sample_values: [1, 0]
+      non_significantly_better:
+        type: generate_values
+        sample_values: [1, 0]
+      non_significantly_worse:
+        type: generate_values
+        sample_values: [1, 0]
+      significantly_worse:
+        type: generate_values
+        sample_values: [1, 0]
 
 fabricator.robokop:
+  # robokop nodes definition
   nodes:
-    num_rows: 500
+    num_rows: 150
     columns:
-      id:
+      id:ID:
         type: generate_unique_id
         prefix: "ROBO:"
-        id_length: 8
-      "name:string":
+      name:string:
         type: generate_unique_id
         prefix: "rs"
-      category:
+      category:LABEL:
         type: generate_random_arrays
-        delimiter: "|"
+        delimiter: "\x1F"
         sample_values:
             - biolink:Entity
             - biolink:ThingWithTaxon
@@ -529,12 +311,12 @@ fabricator.robokop:
             - biolink:PhysicalEssenceOrOccurrent
             - biolink:GenomicEntity
             - biolink:OrganismTaxon
-      "description:string":
+      description:string:
         type: faker
         provider: sentence
-      equivalent_identifiers:
+      equivalent_identifiers:string[]:
         type: generate_random_arrays
-        delimiter: "|"
+        delimiter: "\x1F"
         sample_values:
           - NCBITaxon:2
           - UMLS:C0004611
@@ -559,17 +341,35 @@ fabricator.robokop:
         sample_values:
           - "PMID:12345678"
           - "DOI:10.1234/example.5678"
+      #all_categories:
+      #  type: generate_random_arrays
+      #  delimiter: "\u001f"
+      #  sample_values:
+      #    - "biolink:Entity"
+      #    - "biolink:ThingWithTaxon"
+      #    - "biolink:BiologicalEntity"
+      #    - "biolink:SequenceVariant"
+      #label:
+      #  type: generate_random_arrays
+      #  delimiter: "\u001f"
+      #  sample_values:
+      #    - "biolink:NucleicAcidEntity"
+      #    - "biolink:MolecularEntity"
+      #    - "biolink:ChemicalOrDrugOrTreatment"
 
+  # robokop edges definition
   edges:
     num_rows: 500
     columns:
-      subject:
-        type: copy_column
-        source_column: "nodes.id"
-        sample:
-          num_rows: "@edges.num_rows"
-          seed: 590590
-      predicate:
+      # NOTE: This is a rather complex syntax, but is results in a "subject"
+      # column that contains random values from the nodes table defined above.
+      subject:START_ID:
+        type: row_apply
+        list_of_values: [ nodes.id:ID ]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 590590
+      predicate:TYPE:
         type: generate_values
         sample_values:
           - biolink:treats
@@ -577,39 +377,48 @@ fabricator.robokop:
           - biolink:affects
           - biolink:subclass_of
           - biolink:is_nearby_variant_of
-      object:
-        type: copy_column
-        source_column: "nodes.id"
-        sample:
-          num_rows: "@edges.num_rows"
-          seed: 49494
-      primary_knowledge_source:
+      object:END_ID:
+        type: row_apply
+        list_of_values: [ nodes.id:ID ]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 49494
+      primary_knowledge_source:string:
         type: generate_values
         sample_values:
           - infores:semmeddb
           - infores:gtex
           - infores:ubergraph
           - infores:snpeff
-      knowledge_level:
+      knowledge_level:string:
         type: generate_values
         sample_values:
           - prediction
           - knowledge_assertion
-      agent_type:
+      agent_type:string:
         type: generate_values
         sample_values:
           - computational_model
           - manual_agent
       publications:string[]:
         type: generate_random_arrays
-        delimiter: "|"
+        delimiter: "\u001f"
         sample_values:
           - "PMID:12345678"
           - "DOI:10.1234/example.5678"
-      object_aspect_qualifier:
+      #p_value:float[]:
+      #  type: faker
+      #  provider: pyfloat
+      #  provider_args:
+      #    left_digits: 1
+      #    right_digits: 6
+      #    positive: True
+      #    min_value: 0.000001
+      #    max_value: 0.1
+      object_aspect_qualifier:string:
         type: faker
         provider: word
-      object_direction_qualifier:
+      object_direction_qualifier:string:
         type: generate_values
         sample_values:
           - increased
@@ -619,9 +428,9 @@ fabricator.robokop:
         sample_values:
           - biolink:causes
           - biolink:treats
-      aggregator_knowledge_source:
+      aggregator_knowledge_source:string[]:
         type: generate_random_arrays
-        delimiter: "|"
+        delimiter: "\u001f"
         sample_values:
           - infores:aggregator1
           - infores:aggregator2
@@ -631,92 +440,106 @@ fabricator.ec_medical_kg:
   nodes:
     num_rows: 30
     columns:
-      normalized_curie:
+      normalized_curie: 
         type: generate_unique_id
         prefix: ec_medical_node_
-        id_length: 20
+    
       label:
         type: faker
         provider: name
+
       description:
         type: faker
         provider: sentence
+
       type:
-        type: generate_values
-        sample_values:
-          - biolink:Drug
-          - biolink:Disease
-          - biolink:Gene
-          - biolink:ChemicalSubstance
-          - biolink:Protein
+          type: generate_values
+          sample_values:
+            - biolink:Drug
+            - biolink:Disease
+            - biolink:Gene
+            - biolink:ChemicalSubstance
+            - biolink:Protein
       types:
-        type: row_apply
-        input_columns: [ "nodes.type" ]
-        row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
-        row_func_kwargs:
-          delimiter: "\u01c2"
-        resize: True
-        seed: 590590
+          type: row_apply
+          list_of_values: [nodes.type]
+          # NOTE: This ensures the full path from root to child is added in the categories column
+          row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
+          row_func_kwargs:
+            delimiter: "\u01c2"
+          resize: True
+          seed: 590590
 
   edges:
     num_rows: 10
     columns:
       SourceId:
-        type: copy_column
-        source_column: "nodes.normalized_curie"
-        sample:
-          num_rows: "@edges.num_rows"
-          seed: 340590
-
+        type: row_apply
+        list_of_values: [nodes.normalized_curie]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 340590
+      
       TargetId:
-        type: copy_column
-        source_column: "nodes.normalized_curie"
-        sample:
-          num_rows: "@edges.num_rows"
-          seed: 57000
-
+        type: row_apply
+        list_of_values: [nodes.normalized_curie]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 57000
+      
       Label:
         type: generate_values
         sample_values:
           - treats
           - interacts_with
+      
       knowledge_source:
-         type: faker
-         provider: name
+        type: faker
+        provider: name
 
 fabricator.spoke:
+  # spoke nodes definition
   nodes:
     num_rows: 150
     columns:
       id:
         type: generate_unique_id
         prefix: "SPK:"
-        id_length: 8
       name:
         type: generate_unique_id
         prefix: "rs"
       category:
         type: generate_random_arrays
-        delimiter: "|"
+        delimiter: "\x1F"
         sample_values:
-          - biolink:NamedThing
+          - biolink:Entity
+          - biolink:ThingWithTaxon
+          - biolink:BiologicalEntity
           - biolink:Drug
           - biolink:Disease
-          - biolink:Gene
-          - biolink:Protein
+          - biolink:SequenceVariant
+          - biolink:NamedThing
+          - biolink:OntologyClass
+          - biolink:PhysicalEssence
+          - biolink:PhysicalEssenceOrOccurrent
+          - biolink:GenomicEntity
+          - biolink:OrganismTaxon
       description:
         type: faker
         provider: sentence
 
+  # spoke edges definition
   edges:
     num_rows: 500
     columns:
+      # NOTE: This is a rather complex syntax, but is results in a "subject"
+      # column that contains random values from the nodes table defined above.
       subject:
-        type: copy_column
-        source_column: "nodes.id"
-        sample:
-          num_rows: "@edges.num_rows"
-          seed: 590590
+        type: row_apply
+        list_of_values: [ nodes.id ]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 590590
       predicate:
         type: generate_values
         sample_values:
@@ -726,165 +549,8 @@ fabricator.spoke:
           - biolink:subclass_of
           - biolink:is_nearby_variant_of
       object:
-        type: copy_column
-        source_column: "nodes.id"
-        sample:
-          num_rows: "@edges.num_rows"
-          seed: 49494
-
-fabricator.embiology:
-  nodes:
-    num_rows: 500
-    columns:
-      id:
-        type: generate_unique_id
-        prefix: "EMBLG:"
-        id_length: 9
-      name:
-        type: generate_unique_id
-        prefix: name_
-        inject_nulls:
-          probability: 0.2
-      category:
-        type: generate_values
-        sample_values:
-          - biolink:Drug
-          - biolink:Disease
-          - biolink:Gene
-          - biolink:ChemicalSubstance
-          - biolink:Protein
-      all_categories:
         type: row_apply
-        input_columns: [ "nodes.category" ]
-        row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
-        row_func_kwargs:
-          delimiter: "|"
+        list_of_values: [ nodes.id ]
+        row_func: "lambda *args: args[0]"
         resize: True
-        seed: 590790
-      equivalent_identifiers:
-        type: generate_random_arrays
-        delimiter: "|"
-        sample_values:
-          - NCBITaxon:2
-          - UMLS:C0004611
-          - MESH:D001419
-          - HGVS:NG_029620.1:g.16582A>G
-          - HGVS:CM000669.1:g.149423729A>G
-          - ROBO_VARIANT:HG38|7|149726637|149726638|A|G
-          - HGVS:CM000669.2:g.149726638A>G
-          - HGVS:NC_000007.12:g.149054662A>G
-      original_id:
-        type: generate_unique_id
-        id_length: 8
-      nodetype:
-        type: generate_values
-        sample_values:
-          - SmallMol
-          - GeneticVariant
-          - Disease
-          - SemanticConcept
-          - Virus
-
-
-  edges:
-    num_rows: 2000
-    columns:
-      subject:
-        type: copy_column
-        source_column: "nodes.id"
-        sample:
-          num_rows: "@edges.num_rows"
-          seed: 590790
-      object:
-        type: copy_column
-        source_column: "nodes.id"
-        sample:
-          num_rows: "@edges.num_rows"
-          seed: 49294
-      predicate:
-        type: generate_values
-        sample_values:
-          - biolink:treats
-          - biolink:interacts_with
-          - biolink:affects
-          - biolink:subclass_of
-          - biolink:disrupts
-          - biolink:produces
-          - biolink:subclass_of
-      original_id:
-        type: generate_unique_id
-      original_subject:
-        type: generate_unique_id
-      original_object:
-        type: generate_unique_id
-      controltype:
-        type: generate_values
-        sample_values:
-          - MemberOf
-          - Regulation
-          - FunctionalAssociation
-          - CellExpression
-          - Binding
-          - MemberOf
-          - Expression
-          - ClinicalTrial
-          - DirectRegulation
-          - QuantitativeChange
-          - MolTransport
-          - MolSynthesis
-          - Biomarker
-          - StateChange
-          - miRNAEffect
-          - ProtModification
-          - ChemicalReaction
-          - PromoterBinding
-        seed: 39294
-      ontology:
-        type: generate_values
-        sample_values:
-          - Gene Ontology
-        inject_nulls:
-          probability: 0.8
-        seed: 39294
-      relationship:
-        type: generate_values
-        sample_values:
-          - is-a
-        inject_nulls:
-          probability: 0.8
-        seed: 39294
-      effect:
-        type: generate_values
-        sample_values:
-          - positive
-          - negative
-        inject_nulls:
-          probability: 0.8
-        seed: 39294
-      mechanism:
-        type: generate_values
-        sample_values:
-          - resistance
-          - sumoylation
-          - desumoylation
-        inject_nulls:
-          probability: 0.8
-        seed: 39294
-      num_references:
-        type: faker
-        provider: pyint
-        provider_args:
-          min_value: 1
-          max_value: 1000
-      num_sentences:
-        type: faker
-        provider: pyint
-        provider_args:
-          min_value: 1
-          max_value: 1000
-      publications:
-        type: generate_random_arrays
-        delimiter: "|"
-        sample_values:
-          - "PMID:12345678"
-          - "DOI:10.1234/example.5678"
+        seed: 49494

@@ -4,66 +4,109 @@ hide:
   - toc
   - navigation
 ---
-<!-- NOTE: This file was partially generated using AI assistance. -->
-# Matrix Project
-
-Welcome! This documentation provides an introduction to the project and the codebase, and guides you through the process of setting up your local environment.
 
 <div class="grid cards" markdown>
 
--   ![Developer](assets/img/hero.svg){: style="float: right; width: 150px; margin-left: 1em;" }
+-   :material-clock-fast:{ .lg .middle } __Onboarding Manual__ 
 
-    __I'm a Developer__
+    ---
 
-    I want to contribute to the codebase.
+    Follow our onboarding document on how to get started developing and contributing code to the Every Cure MATRIX Pipeline
 
-    [:octicons-arrow-right-24: Get started locally](./getting_started/index.md)
+    [:octicons-arrow-right-24: Onboarding](./onboarding/index.md)
 
--   ![Researcher](assets/img/researcher.svg){: style="float: right; width: 150px; margin-left: 1em;" }
+-   :material-book-open-page-variant:{ .lg .middle } __Useful Links__ 
 
-    __I'm a Researcher__
+    ---
 
-    I want to run the pipeline with real data.
+    Want to dive deeper into how the infrastructure is provided? Check out our infrastructure documentation!
 
-    [:octicons-arrow-right-24: Access the data](./contribute/get_access_to_data.md)
+    [:octicons-arrow-right-24: Infrastructure](./infrastructure/index.md)
 
--   ![Engineer](assets/img/engineer.svg){: style="float: right; width: 150px; margin-left: 1em;" }
+-   :simple-graphql:{ .lg .middle } __Data API Specification__
 
-    __I'm an Engineer__
+    ---
 
-    I want to build a new platform based on this work.
+    Check our Data API specification to understand how to read and work with our data (TODO)
 
-    [:octicons-arrow-right-24: See infrastructure](./infrastructure/index.md)
+    [:octicons-arrow-right-24: Data API](#)
+
+-   :material-matrix:{ .lg .middle } __MATRIX project specific documentation__
+
+    ---
+
+    To find documentation specific to the MATRIX project, check this link!
+
+    [:octicons-arrow-right-24: MATRIX](./pipeline/index.md)
+
+-   :material-matrix:{ .lg .middle } __Experiment Log__
+
+    ---
+
+    A collection of our executed experiments and insights generated from them can be found here:
+
+    [:octicons-arrow-right-24: Experiments](./experiments/index.md)
+
+-   :material-book-open-page-variant:{ .lg .middle } __Documentation__
+
+    ---
+
+    This documentation lives through all our contributions. See how to improve it.
+
+    [:octicons-arrow-right-24: Docs Contribution](./onboarding/contribute/documentation.md)
 
 </div>
 
-## What is Matrix?
 
-MATRIX is Every Cure's main pipeline for generating high-accuracy predictions of drug-disease pairs using an "all vs all" approach. The pipeline:
+## Useful Links to our resources
 
-- Ingests and integrates data from multiple sources
-- Builds a knowledge graph
-- Creates embeddings and trains models
-- Makes predictions on potential drug-disease treatments
-- Evaluates performance of the repurposing model
+Below is a curated list of useful links to various EveryCure resources and tools.
 
-The output of our pipeline is a so-called matrix of approx <strong>60 million drug-disease pairs</strong> with corresponding treat scores which are then examined by our team of physicians.
+## Infrastructure
 
-We provide extensive documentation about both the pipeline itself and the infrastructure that powers it, from local development to production deployment in the cloud.
+- **[EveryCure GCP Dashboard](https://console.cloud.google.com/home/dashboard)**
+- **[EveryCure GCP Vertex AI](https://console.cloud.google.com/vertex-ai)**
+- **[EveryCure GCP BigQuery](https://console.cloud.google.com/bigquery)**
+- **[EveryCure GKE Cluster Dashboard](https://console.cloud.google.com/kubernetes/clusters/details/us-central1/compute-cluster/details?project=mtrx-hub-dev-3of)** – Kubernetes Engine Cluster management for the Matrix platform.
 
-Sounds interesting? Here are instructions on [how to get started](./getting_started/index.md).
+## Tools & Platforms
 
-## Matrix pipeline overview
+- **[GitHub Actions](https://github.com/everycure-org/matrix/actions)** – Continuous integration and delivery pipelines.
+- **[ArgoCD](https://argo.platform.dev.everycure.org/workflows/)** – Manage and deploy Kubernetes applications.
+- **[MLFlow](https://mlflow.platform.dev.everycure.org/)** – Experiment tracking and model management for machine learning projects.
+- **[Neo4j](https://neo4j.platform.dev.everycure.org/)** – Graph database for storing and querying data.
+- **[Bloom](https://neo4j.platform.dev.everycure.org/bloom)** – Bloom is a graph extension for Neo4j that provides a set of tools for graph exploration.
+- **[Grafana](https://grafana.platform.dev.everycure.org/)** – Monitoring and observability platform for the platform.
 
-<img src="../../assets/getting_started/matrix_overview.png" alt="Matrix Pipeline Overview" style="width: 50%; margin: 2rem auto; display: block;">
+## Repositories & Issue Tracking
 
-Please note that the MATRIX project is still a work in progress. While we already actively use the pipeline for finding promising repurposing candidates, we are continuously improving it. 
+- **[Matrix Repository](https://github.com/everycure-org/matrix)** – Core project repository for EveryCure's Matrix platform.
+- **[Matrix Issues](https://github.com/everycure-org/matrix/issues)** – Current issues and backlog for the Matrix project.
+- **[Good First Issues Board](https://github.com/everycure-org/matrix/labels/good%20first%20issue)** – Ideal starting issues for new contributors.
 
-If you discover any typos, bugs, or technical debt, please let us know through [issues](https://github.com/everycure-org/matrix/issues/new?template=bug_report.md) or through PRs. We appreciate all contributions and believe that by open-sourcing this work-in-progress repository, we can create a truly great drug repurposing platform.
 
-## About Every Cure
+## Resources - learning
+- **[What is GitOps?](https://www.youtube.com/watch?v=f5EpcWp0THw)**
+- **[ArgoCD Tutorial](https://www.youtube.com/watch?v=MeU5_k9ssrs)**
+- **[Awesome Argo - Argo resources collection](https://github.com/akuity/awesome-argo)**
+- **[Demystifying Argo Workflows: An Architectural Deep Dive](https://www.youtube.com/watch?v=FBRMURQYbgw)**
 
-Matrix is a part of the Every Cure pipeline. [Every Cure](https://everycure.org/about/) is a non-profit organization on a mission to unlock the full potential of existing medicines to treat every disease and every patient we possibly can. You can find more resources below about the Every Cure, Matrix Project and AI Drug Repurposing in Every Cure.
+<!--
+Our technology stack below (1):
+{ .annotate }
 
-??? info "Every Cure videos"
-    <iframe width="640" height="390" src="https://www.youtube.com/embed/3ElaCVvDZfI?si=lk3b1rSMutyiierm" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+1.   *(if you see nothing, try hitting F5, the drawio integration is still a bit flaky)*
+
+![](./assets/img/mtrx_tech_stack.drawio)
+
+Our shared end to end vision of the pipeline is visualised below:
+
+???+ info
+
+    This is an interactive diagram. Feel free to click the controls in the top to change the visibility of different layers. 
+  
+
+![](./assets/img/mtrx_arch.drawio)
+
+-->
+

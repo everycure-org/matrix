@@ -12,13 +12,13 @@ locals {
 }
 
 resource "google_project_iam_member" "bindings" {
-  project  = var.project_id
+  project  = module.bootstrap_data.content.project_id
   for_each = toset(local.appengine_bindings)
   role     = each.value
   member   = "serviceAccount:mtrx-hub-dev-3of@appspot.gserviceaccount.com"
 }
 
 resource "google_app_engine_application" "appengine_app" {
-  project     = var.project_id
+  project     = module.bootstrap_data.content.project_id
   location_id = substr(var.default_region, 0, length(var.default_region) - 1)
 }

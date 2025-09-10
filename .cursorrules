@@ -23,4 +23,3 @@ reflecting about it)
 - we love performance and use joblib to cache expensive functions (.cache folder by default)
 - when writing unit tests, organise the test in a "GivenWhenThen" format, making the purpose of the test explicit
 - when writing unit tests, do not generate unit tests that hardly test anything of value. Only generate them when the full test is clean, intuitive and valuable. Else just generate a stub describing what to test so the developer completes the test themselves. 
-- comments should never describe _changes_ to the code, but _why_ behind the changes. When editing code, do not add comments explaining a change between two versions but only use comments to explain a broader _why_ of the code _as it is_ now.

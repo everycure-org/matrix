@@ -14,10 +14,25 @@ _pandas_parquet: &_pandas_parquet
   load_args:
     engine: pyarrow
     as_type: str
-
+      
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
+
+batch.int.{source}.input_bucketized@spark:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.tmp}/batch/{source}/bucketized
+  save_args:
+    mode: overwrite
+    partitionBy:
+      - bucket
+
+batch.int.{source}.input_bucketized@partitioned:
+  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
+  path: ${globals:paths.tmp}/batch/{source}/bucketized
+  dataset: 
+    <<: *_pandas_parquet
+  filename_suffix: ".parquet"
 
 batch.int.{source}.{workers}.input_transformed@partitioned:
   type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
@@ -31,29 +46,3 @@ batch.int.{source}.{workers}.input_transformed@partitioned:
 batch.int.{source}.{workers}.input_transformed@spark:
   <<: *_spark_parquet
   filepath: ${globals:paths.tmp}/batch/{source}/transformed
-
-
-batch.{source}.cache.read: &cache_in
-  type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.cache}/{source}
-  provide_empty_if_not_present: true
-
-batch.{source}.{workers}.cache.write:
-  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
-  path: ${globals:paths.cache}/{source}
-  dataset: kedro_datasets.pandas.ParquetDataset
-  timeout: 1800  # if the batch size increases, you'll likely need to increase this too, as most APIs simply take longer to process larger batches.
-  filename_suffix: ".parquet"
-  max_workers: "{workers}"  # Affects the number of concurrent threads, so more = faster. But more also implies more memory needed, as more transformed batches are returned, prior to writing.
-
-# NOTE: We're seeing some issues when running Kedro in a single
-# not process, where after appending to the cache read dataset, writes
-# are not reflected as the files seem to be cached in some way. This 
-# is currently a workaround to ensure all files are loaded upon re-reading
-# the cache.
-batch.{source}.cache.reload:  
-  <<: *cache_in
-
-batch.{source}.cache.misses:
-  <<: *_spark_parquet
-  filepath:  ${globals:paths.cache}/tmp/cache_misses/{source}

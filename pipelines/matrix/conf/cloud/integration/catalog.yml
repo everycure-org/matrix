@@ -1,6 +1,6 @@
 _bigquery_ds: &_bigquery_ds
   type: matrix.datasets.gcp.SparkDatasetWithBQExternalTable
-  project_id: ${oc.env:RUNTIME_GCP_PROJECT_ID}
+  project_id: ${oc.env:GCP_PROJECT_ID}
   dataset: release_${globals:versions.release}
   file_format: parquet
   save_args:
@@ -12,43 +12,13 @@ _bigquery_ds: &_bigquery_ds
 # Datasets
 # -------------------------------------------------------------------------
 
-# Overwriting the base catalog to use the bigquery datasets
-
-# Transformed nodes/edges
-integration.int.{source}.nodes:
+# overwriting the base catalog to use the bigquery datasets
+integration.prm.filtered_nodes:
   <<: *_bigquery_ds
-  filepath: ${globals:paths.integration}/int/{source}/nodes
-  table: "{source}_nodes_transformed"
+  filepath: ${globals:paths.integration}/prm/filtered/nodes
+  table: nodes
 
-integration.int.{source}.edges:
+integration.prm.filtered_edges:
   <<: *_bigquery_ds
-  filepath: ${globals:paths.integration}/int/{source}/edges
-  table: "{source}_edges_transformed"
-
-# Normalised nodes/edges
-integration.int.{source}.nodes.norm@spark:
-  <<: *_bigquery_ds
-  filepath: ${globals:paths.integration}/int/{source}/nodes.norm
-  table: "{source}_nodes_normalized"
-
-integration.int.{source}.edges.norm@spark:
-  <<: *_bigquery_ds
-  filepath: ${globals:paths.integration}/int/{source}/edges.norm
-  table: "{source}_edges_normalized"
-
-# Unified nodes/edges
-integration.prm.unified_nodes:
-  <<: *_bigquery_ds
-  filepath: ${globals:paths.integration}/prm/unified/nodes
-  table: nodes_unified
-
-integration.prm.unified_edges:
-  <<: *_bigquery_ds
-  filepath: ${globals:paths.integration}/prm/unified/edges
-  table: edges_unified
-
-# Normalization summary
-integration.int.{source}.normalization_summary:
-  <<: *_bigquery_ds
-  filepath: ${globals:paths.integration}/int/{source}/normalization_summary
-  table: "{source}_normalization_summary"
+  filepath: ${globals:paths.integration}/prm/filtered/edges
+  table: edges

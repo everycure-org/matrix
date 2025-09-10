@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from typing import Generator
 
@@ -7,9 +6,7 @@ import pytest
 from kedro.config import OmegaConfigLoader
 from kedro.framework.context import KedroContext
 from kedro.framework.hooks import _create_hook_manager
-from kedro.framework.project import configure_project, settings
-from kedro.framework.session import KedroSession
-from kedro.framework.startup import bootstrap_project
+from kedro.framework.project import settings
 from matrix.resolvers import cast_to_int, if_null, merge_dicts
 from matrix.settings import _load_setting
 from omegaconf.resolvers import oc
@@ -30,10 +27,11 @@ def conf_source(matrix_root: Path) -> Path:
     return matrix_root / settings.CONF_SOURCE
 
 
-def build_config_loader(env: str, conf_source: Path) -> OmegaConfigLoader:
+@pytest.fixture(scope="session")
+def config_loader(conf_source: Path) -> OmegaConfigLoader:
     """Instantiate a config loader."""
     return OmegaConfigLoader(
-        env=env,
+        env="base",
         base_env="base",
         default_run_env="base",
         conf_source=conf_source,
@@ -57,7 +55,8 @@ def build_config_loader(env: str, conf_source: Path) -> OmegaConfigLoader:
     )
 
 
-def build_kedro_context(config_loader: OmegaConfigLoader) -> KedroContext:
+@pytest.fixture(scope="session")
+def kedro_context(config_loader: OmegaConfigLoader) -> KedroContext:
     """Instantiate a KedroContext."""
     return KedroContext(
         env="cloud",
@@ -69,56 +68,14 @@ def build_kedro_context(config_loader: OmegaConfigLoader) -> KedroContext:
 
 
 @pytest.fixture(scope="session")
-def cloud_config_loader(conf_source: Path) -> OmegaConfigLoader:
-    return build_config_loader("cloud", conf_source)
-
-
-@pytest.fixture(scope="session")
-def base_config_loader(conf_source: Path) -> OmegaConfigLoader:
-    return build_config_loader("base", conf_source)
-
-
-@pytest.fixture(scope="session")
-def cloud_kedro_context(conf_source: Path) -> KedroContext:
-    config_loader = build_config_loader("cloud", conf_source)
-    return build_kedro_context(config_loader)
-
-
-@pytest.fixture(scope="session")
-def base_kedro_context(conf_source: Path) -> KedroContext:
-    config_loader = build_config_loader("base", conf_source)
-    return build_kedro_context(config_loader)
-
-
-@pytest.fixture(scope="session")
 def spark() -> Generator[ps.SparkSession, None, None]:
     """Instantiate the Spark session."""
     spark = (
         ps.SparkSession.builder.config("spark.sql.shuffle.partitions", 1)
         .config("spark.executorEnv.PYTHONPATH", "src")
         .config("spark.driver.bindAddress", "127.0.0.1")
-        .config("spark.ui.showConsoleProgress", "false")
-        # For the spark session tests that don't involve `OmegaConfig`, which in turns uses `spark.yml`
-        # that takes care of adding the unit (`g`), we make sure that the raw env var has the correct unit added.
-        .config("spark.driver.memory", f"{os.environ['SPARK_DRIVER_MEMORY']}g")
         .master("local")
         .appName("tests")
         .getOrCreate()
     )
     yield spark
-
-
-@pytest.fixture
-def kedro_session(spark):  # Ensure we have the pytest SparkSession fixture.
-    # If the spark fixture isn't added, the order in which tests are executed
-    # matters, which is bad practice. We want the Spark Kedro Hook NOT to stop
-    # the (test) SparkSession, and we don't want a full-blown SparkSession to
-    # be started by the Kedro hook either.
-    project_path = Path(__file__).resolve().parents[1]
-    bootstrap_project(project_path)
-    configure_project(project_path.name)
-
-    with KedroSession.create(project_path) as session:
-        session.load_context()
-
-        yield session

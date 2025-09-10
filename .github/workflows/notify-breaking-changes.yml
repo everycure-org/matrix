@@ -15,12 +15,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
       - name: print github event
-        run: |
-          # Use a here-doc to paste the entire json blob. 
-          # Adding the quotes around the EOM to ensure none of the contents in the blob are interpreted by the shell.
-          cat << 'EOM'
-          ${{ toJson(github.event) }}
-          EOM
+        run: echo "${{ toJson(github.event) }}"
       - name: Post to a Slack channel
         if: contains(github.event.pull_request.labels, 'breaking change') && github.event.pull_request.merged == 'true'
         id: slack

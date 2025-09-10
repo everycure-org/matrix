@@ -21,7 +21,7 @@ resource "google_secret_manager_secret" "secrets" {
 }
 
 resource "google_secret_manager_secret_version" "secret_values" {
-  for_each       = local.secret_keys
-  secret         = google_secret_manager_secret.secrets[each.key].id
-  secret_data_wo = var.k8s_secrets[each.key]
+  for_each    = local.secret_keys
+  secret      = google_secret_manager_secret.secrets[each.key].id
+  secret_data = var.k8s_secrets[each.key]
 }

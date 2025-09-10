@@ -10,7 +10,7 @@ spec:
   gatewayClassName: gke-l7-global-external-managed	
   listeners:
   - name: https
-    hostname: "*.platform.{{ .Values.spec.source.environment}}.everycure.org"
+    hostname: "*.platform.dev.everycure.org"
     protocol: HTTPS
     port: 443
     allowedRoutes:
@@ -22,7 +22,7 @@ spec:
         - name: gateway-cert
           kind: Secret
   - name: http
-    hostname: "*.platform.{{ .Values.spec.source.environment }}.everycure.org"
+    hostname: "*.platform.dev.everycure.org"
     protocol: HTTP
     port: 80
     allowedRoutes:

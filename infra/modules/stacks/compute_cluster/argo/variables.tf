@@ -21,19 +21,3 @@ variable "repo_revision" {
   description = "Revision to deploy by ArgoCD."
   type        = string
 }
-
-variable "environment" {
-  type = string
-}
-
-variable "project_id" {
-  type = string
-}
-
-variable "bucket_name" {
-  type = string
-}
-
-variable "aip_oauth_client_id" {
-  type = string
-}

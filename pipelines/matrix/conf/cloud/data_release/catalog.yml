@@ -1,6 +1,6 @@
 _bigquery_ds: &_bigquery_ds
   type: matrix.datasets.gcp.SparkDatasetWithBQExternalTable
-  project_id: ${oc.env:RUNTIME_GCP_PROJECT_ID}
+  project_id: ${oc.env:GCP_PROJECT_ID}
   dataset: release_${globals:versions.release}
   file_format: parquet
   save_args:
@@ -12,6 +12,16 @@ data_release.feat.nodes_with_embeddings:
   <<: *_bigquery_ds
   filepath: ${globals:paths.release}/prm/nodes_with_embeddings
   table: nodes_with_embeddings
+
+data_release.prm.bigquery_edges:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.release}/prm/bigquery_edges
+  table: edges
+
+data_release.prm.bigquery_nodes:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.release}/prm/bigquery_nodes
+  table: nodes
 
 data_release.dummy:
   type: yaml.YAMLDataset

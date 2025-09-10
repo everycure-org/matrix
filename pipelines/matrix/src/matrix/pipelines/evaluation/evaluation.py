@@ -1,4 +1,5 @@
 import abc
+import bisect
 import json
 from typing import Dict, List
 
@@ -12,7 +13,7 @@ from tqdm import tqdm
 class Evaluation(abc.ABC):
     """An abstract class representing evaluation methods for labelled test data."""
 
-    def evaluate(self, data: pd.DataFrame, score_col_name: str):
+    def evaluate(self, data: pd.DataFrame):
         """Performs evaluation on a dataset.
 
         Args:
@@ -24,7 +25,7 @@ class Evaluation(abc.ABC):
 class DiscreteMetrics(Evaluation):
     """A class representing metrics evaluating discrete binary class prediction."""
 
-    def __init__(self, metrics: dict, threshold: float = 0.5):
+    def __init__(self, metrics: dict, score_col_name: str, threshold: float = 0.5):
         """Initializes the DiscreteMetrics instance.
 
         Args:
@@ -34,11 +35,11 @@ class DiscreteMetrics(Evaluation):
         """
         self._metrics = metrics
         self._threshold = threshold
+        self._score_col_name = score_col_name
 
     def evaluate(
         self,
         data: pd.DataFrame,
-        score_col_name: str,
     ) -> Dict:
         """Evaluates metrics on a dataset.
 
@@ -47,7 +48,7 @@ class DiscreteMetrics(Evaluation):
             target_col_name: Target label column name.
         """
         # Binary class predictions and true labels
-        y_pred = data[score_col_name].ge(self._threshold)
+        y_pred = data[self._score_col_name].ge(self._threshold)
         y_true = data["y"]
 
         # Evaluate and report metrics
@@ -60,7 +61,7 @@ class DiscreteMetrics(Evaluation):
 class ContinuousMetrics(Evaluation):
     """A class representing metrics evaluating continuous binary class probability scores."""
 
-    def __init__(self, metrics: List[callable]):
+    def __init__(self, metrics: List[callable], score_col_name: str):
         """Initializes the ContinuousMetrics instance.
 
         Args:
@@ -68,11 +69,11 @@ class ContinuousMetrics(Evaluation):
             score_col_name: Probability score column name.
         """
         self._metrics = metrics
+        self._score_col_name = score_col_name
 
     def evaluate(
         self,
         data: pd.DataFrame,
-        score_col_name: str,
     ) -> Dict:
         """Evaluates metrics on a dataset.
 
@@ -81,7 +82,7 @@ class ContinuousMetrics(Evaluation):
 
         """
         # Binary class predictions and true labels
-        y_score = data[score_col_name]
+        y_score = data[self._score_col_name]
         y_true = data["y"]
 
         # Evaluate and report metrics
@@ -103,7 +104,7 @@ class SpecificRanking(Evaluation):
     not including the other known positives.
     """
 
-    def __init__(self, rank_func_lst: List[NamedFunction], specific_col: str) -> None:
+    def __init__(self, rank_func_lst: List[NamedFunction], specific_col: str, score_col_name: str) -> None:
         """Initializes the SpecificRanking instance.
 
         Args:
@@ -115,34 +116,40 @@ class SpecificRanking(Evaluation):
         """
         self._rank_func_lst = rank_func_lst
         self._specific_col = specific_col
+        self._score_col_name = score_col_name
 
     def evaluate(
         self,
         data: pd.DataFrame,
-        score_col_name: str,
     ) -> Dict:
         """Evaluates metrics on a dataset.
 
         Args:
             data: Labelled drug-disease dataset with probability scores.
         """
-        grouped = data.groupby(self._specific_col)
+        # Get items to loop over
+        items_lst = list(data[self._specific_col].unique())
+
+        # Compute ranks of known positives for each item
         ranks_lst = []
-        for _, pairs_for_item in tqdm(grouped):
+        for item in tqdm(items_lst):
+            pairs_for_item = data[data[self._specific_col] == item]
             is_pos = pairs_for_item["y"].eq(1)
-            pos_preds = list(pairs_for_item[is_pos][score_col_name])
-            neg_preds = list(pairs_for_item[~is_pos][score_col_name])
+            pos_preds = list(pairs_for_item[is_pos][self._score_col_name])
+            neg_preds = list(pairs_for_item[~is_pos][self._score_col_name])
             neg_preds.sort()
 
-            ranks = len(neg_preds) - np.searchsorted(neg_preds, pos_preds, side="left") + 1
-            ranks_lst.extend(ranks)
+            for prob in pos_preds:
+                rank = len(neg_preds) - bisect.bisect_left(neg_preds, prob) + 1
+                ranks_lst.append(rank)
 
-        ranks_arr = np.array(ranks_lst)
-        report = {
-            rank_func_generator.name(): np.mean(rank_func_generator.generate()(ranks_arr))
-            for rank_func_generator in self._rank_func_lst
-        }
-
+        # Compute average of rank functions and report metrics
+        report = {}
+        for rank_func_generator in self._rank_func_lst:
+            rank_func = rank_func_generator.generate()
+            ranks_arr = np.array(ranks_lst)
+            transformed_rank_lst = rank_func(ranks_arr)
+            report[f"{rank_func_generator.name()}"] = np.mean(transformed_rank_lst)
         return json.loads(json.dumps(report, default=float))
 
 
@@ -171,7 +178,6 @@ class FullMatrixRanking(Evaluation):
     def evaluate(
         self,
         data: pd.DataFrame,
-        score_col_name: str,
     ) -> Dict:
         """Evaluates metrics on a dataset.
 
@@ -201,7 +207,7 @@ class FullMatrixRanking(Evaluation):
 class RecallAtN(Evaluation):
     """A class representing the Recall@N metric for drug-disease pairs."""
 
-    def __init__(self, n_values: List[int]):
+    def __init__(self, n_values: List[int], score_col_name: str):
         """Initializes the RecallAtN instance.
 
         Args:
@@ -209,14 +215,15 @@ class RecallAtN(Evaluation):
             score_col_name: Probability score column name.
         """
         self._n_values = n_values
+        self._score_col_name = score_col_name
 
-    def evaluate(self, data: pd.DataFrame, score_col_name: str) -> Dict:
+    def evaluate(self, data: pd.DataFrame) -> Dict:
         """Evaluates Recall@N on a dataset.
 
         Args:
             data: Labelled drug-disease dataset with probability scores.
         """
-        y_score = data[score_col_name]
+        y_score = data[self._score_col_name]
         y_true = data["y"]
 
         # Sort indices by score in descending order
@@ -247,7 +254,7 @@ class RecallAtN(Evaluation):
 class StabilityMetricsMixin:
     """A mixin class to introduce ids for stability calculations."""
 
-    def _modify_matrices(self, matrices: List[pd.DataFrame], score_col_name: str) -> List[pd.DataFrame]:
+    def _modify_matrices(self, matrices: List[pd.DataFrame]) -> List[pd.DataFrame]:
         """Modify matrices to create id column and sort by treat score.
 
         Args:
@@ -258,7 +265,7 @@ class StabilityMetricsMixin:
         """
         new_matrices = []
         for matrix in matrices:
-            matrix = matrix.sort_values(by=score_col_name, ascending=False).reset_index(drop=True)
+            matrix = matrix.sort_values(by="treat score", ascending=False).reset_index(drop=True)
             matrix["pair_id"] = matrix["source"] + "|" + matrix["target"]
             matrix["rank"] = matrix.index
             new_matrices.append(matrix)
@@ -279,19 +286,19 @@ class StabilityCommonalityAtN(Evaluation, StabilityMetricsMixin):
         """
         self._rank_func_lst = rank_func_lst or []
 
-    def evaluate(self, pair_ids: pd.DataFrame, matrices: List[pd.DataFrame], score_col_name: str) -> Dict:
+    def evaluate(self, pair_ids: pd.DataFrame, matrices: List[pd.DataFrame]) -> Dict:
         """Evaluates StabilityCommonalityAtN on a dataset.
 
         Args:
-            pair_ids: Pair ids to evaluate.
+            pair_ids: Pair ids to evaluate. Dummy variable for commonality at k
             matrices: DataFrames to evaluate.
-            score_col_name: Name of the score column to use for sorting.
         """
-        matrices = self._modify_matrices(matrices, score_col_name)
+        matrices = self._modify_matrices(matrices)
         report = {}
         for rank_func_generator in self._rank_func_lst:
             rank_func = rank_func_generator.generate()
             report[f"{rank_func_generator.name()}"] = rank_func(matrices)
+
         return json.loads(json.dumps(report, default=float))
 
 
@@ -306,21 +313,18 @@ class StabilityRankingMetrics(Evaluation, StabilityMetricsMixin):
         """
         self._rank_func_lst = rank_func_lst or []
 
-    def evaluate(self, pair_ids: pd.DataFrame, matrices: List[pd.DataFrame], score_col_name: str) -> Dict:
+    def evaluate(self, pair_ids: pd.DataFrame, matrices: List[pd.DataFrame]) -> Dict:
         """Evaluates StabilityCommonalityAtN on a dataset.
 
         Args:
             pair_ids: Pair ids to evaluate.
             matrices: DataFrames to evaluate.
-            score_col_name: Name of the score column to use for sorting.
         """
-        matrices = self._modify_matrices(matrices, score_col_name)
+        matrices = self._modify_matrices(matrices)
         rank_sets_1 = matrices[0]
         rank_sets_2 = matrices[1]
         report = {}
         for rank_func_generator in self._rank_func_lst:
             rank_func = rank_func_generator.generate()
-            output = rank_func((rank_sets_1, rank_sets_2), pair_ids)
-            report[f"{rank_func_generator.name()}_stat"] = output["stat"]
-            report[f"{rank_func_generator.name()}_pvalue"] = output["pvalue"]
+            report[f"{rank_func_generator.name()}"] = rank_func((rank_sets_1, rank_sets_2), pair_ids)
         return json.loads(json.dumps(report, default=float))

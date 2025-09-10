@@ -10,7 +10,7 @@ from .transformer import GraphTransformer
 logger = logging.getLogger(__name__)
 
 
-RTX_SEPARATOR = r"\|"
+RTX_SEPARATOR = "\u01c2"
 
 
 class RTXTransformer(GraphTransformer):
@@ -23,102 +23,49 @@ class RTXTransformer(GraphTransformer):
         Returns:
             Transformed DataFrame.
         """
-        match self._version:
-            case "v2.7.3":
-                df = transform_nodes_v2_7_3(nodes_df)
-            case "v2.10.0_validated":
-                df = transform_nodes_v2_10_0_validated(nodes_df)
-            case _:
-                raise NotImplementedError(f"No nodes transformer code implemented for version: {self._version}")
-        return df
+        # fmt: off
+        return (
+            nodes_df
+            .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
+            .withColumn("labels",                            f.split(f.col(":LABEL"), RTX_SEPARATOR))
+            .withColumn("all_categories",                    f.split(f.col("all_categories:string[]"), RTX_SEPARATOR))
+            .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies:string[]"), RTX_SEPARATOR))
+            .withColumn("publications",                      f.split(f.col("publications:string[]"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
+            .withColumn("international_resource_identifier", f.col("iri"))
+            .withColumnRenamed("id:ID", "id")
+        )
+        # fmt: on
 
     def transform_edges(
-        self, edges_df: ps.DataFrame, curie_to_pmids: ps.DataFrame, semmed_filters: Dict[str, str], **kwargs
+        self,
+        edges_df: ps.DataFrame,
+        curie_to_pmids: ps.DataFrame,
+        semmed_filters: Dict[str, str],
+        **kwargs,
     ) -> ps.DataFrame:
         """Transform RTX KG2 edges to our target schema.
 
         Args:
             edges_df: Edges DataFrame.
+            pubmed_mapping: pubmed mapping
         Returns:
             Transformed DataFrame.
         """
-        match self._version:
-            case "v2.7.3":
-                df = transform_edges_v2_7_3(edges_df, curie_to_pmids, semmed_filters)
-            case "v2.10.0_validated":
-                df = transform_edges_v2_10_0_validated(edges_df, curie_to_pmids, semmed_filters)
-            case _:
-                raise NotImplementedError(f"No edges transformer code implemented for version: {self._version}")
 
-        return df
-
-
-def transform_nodes_v2_7_3(nodes_df: ps.DataFrame):
-    # fmt: off
-    df = (nodes_df
-          .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
-          .withColumn("labels",                            f.split(f.col(":LABEL"), RTX_SEPARATOR))
-          .withColumn("all_categories",                    f.split(f.col("all_categories:string[]"), RTX_SEPARATOR))
-          .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies:string[]"), RTX_SEPARATOR))
-          .withColumn("publications",                      f.split(f.col("publications:string[]"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
-          .withColumn("international_resource_identifier", f.col("iri"))
-          .withColumnRenamed("id:ID", "id")
-    )
-    # fmt: on
-    return df
-
-
-def transform_nodes_v2_10_0_validated(nodes_df: ps.DataFrame):
-    # fmt: off
-    df = (
-        nodes_df
-        .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
-        .withColumn("labels",                            f.lit(None).cast(T.ArrayType(T.StringType()))) # TODO: replace this with _LABEL once updated rtx-kg2 is available
-        .withColumn("all_categories",                    f.split(f.col("all_categories"), RTX_SEPARATOR))
-        .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies"), RTX_SEPARATOR))
-        .withColumn("publications",                      f.split(f.col("publications"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
-        .withColumn("international_resource_identifier", f.col("iri"))
-    )
-    # fmt: on
-    return df
-
-
-def transform_edges_v2_7_3(edges_df: ps.DataFrame, curie_to_pmids: ps.DataFrame, semmed_filters: Dict[str, str]):
-    # fmt: off
-    df = (edges_df
-          .withColumn("aggregator_knowledge_source",   f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR)) # RTX KG2 2.10 does not exist
-          .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
-          .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
-          .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
-          .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(0)) # RTX KG2 2.10 `primary_knowledge_source``
-          .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-          .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-          .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-          .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-          .transform(filter_semmed, curie_to_pmids, **semmed_filters)
-    )
-    # fmt: on
-    return df
-
-
-def transform_edges_v2_10_0_validated(
-    edges_df: ps.DataFrame, curie_to_pmids: ps.DataFrame, semmed_filters: Dict[str, str]
-):
-    # fmt: off
-    df = (edges_df
-            .withColumn("aggregator_knowledge_source",   f.split(f.col("aggregator_knowledge_source"), RTX_SEPARATOR)) #RTX KG2 2.10 has a column for aggregator knowledge source
-            .withColumn("publications",                  f.split(f.col("publications"), RTX_SEPARATOR)) # RTX KG2 2.10 no longer has type annotation on publication column
+        # fmt: off
+        return (
+            edges_df
             .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
+            .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
+            .withColumn("aggregator_knowledge_source",   f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR)) # RTX KG2 2.10 does not exist
+            .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(0)) # RTX KG2 2.10 `primary_knowledge_source``
+            .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
             .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-            .withColumn("num_references",                f.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
-            .withColumn("num_sentences",                 f.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
-            .transform(filter_semmed, curie_to_pmids, **semmed_filters)
-    )
-    # fmt: on
-    return df
+        ).transform(filter_semmed, curie_to_pmids, **semmed_filters)
+        # fmt: on
 
 
 def filter_semmed(
@@ -141,48 +88,51 @@ def filter_semmed(
     Returns
         Filtered dataframe
     """
-
-    sorted_pmids = f.sort_array(f.from_json("pmids", T.ArrayType(T.IntegerType())))
     curie_to_pmids = (
-        curie_to_pmids.withColumn("pmids", f.slice(sorted_pmids, 1, limit_pmids))
-        .withColumn("num_pmids", f.array_size("pmids"))
+        curie_to_pmids.withColumn("pmids", f.from_json("pmids", T.ArrayType(T.IntegerType())))
+        .withColumn("pmids", f.sort_array(f.col("pmids")))
+        .withColumn("limited_pmids", f.slice(f.col("pmids"), 1, limit_pmids))
+        .drop("pmids")
+        .withColumnRenamed("limited_pmids", "pmids")
+        .withColumn("num_pmids", f.array_size(f.col("pmids")))
         .withColumnRenamed("curie", "id")
-        .cache()
-    )
-    if logger.isEnabledFor(logging.INFO):
-        logger.info(
-            f'{{"curie_to_pmids shape": "{curie_to_pmids.count():_}x{len(curie_to_pmids.columns)}", "curie_to_pmids schema": "{curie_to_pmids.schema.simpleString()}"}}',
-        )
-        logger.info(
-            f'{{"edges_df shape": "{edges_df.count():_}x{len(edges_df.columns)}", "edges_df schema": "{edges_df.schema.simpleString()}"}}',
-        )
-
-    semmeddb_is_only_knowledge_source = (f.size("aggregator_knowledge_source") == 1) & (
-        f.col("aggregator_knowledge_source").getItem(0) == "infores:semmeddb"
+        .persist()
     )
     table = f.broadcast(curie_to_pmids)
     single_semmed_edges = (
-        edges_df.filter(semmeddb_is_only_knowledge_source)
-        .alias("edges")
+        edges_df.alias("edges")
+        .filter(
+            (f.size(f.col("aggregator_knowledge_source")) == 1)
+            & (f.col("aggregator_knowledge_source").getItem(0) == "infores:semmeddb")
+        )
+        # Enrich subject pubmed identifiers
         .join(
             table.alias("subj"),
             on=[f.col("edges.subject") == f.col("subj.id")],
             how="left",
         )
+        # Enrich object pubmed identifiers
         .join(
             table.alias("obj"),
             on=[f.col("edges.object") == f.col("obj.id")],
             how="left",
         )
         .transform(compute_ngd)
+        .withColumn("num_publications", f.size(f.col("publications")))
+        # fmt: off
         .filter(
             # Retain only semmed edges more than 10 publications or ndg score below/equal 0.6
-            (f.size("publications") >= f.lit(publication_threshold)) & (f.col("ngd") <= f.lit(ngd_threshold))
+            (f.col("num_publications") >= f.lit(publication_threshold)) & (f.col("ngd") <= f.lit(ngd_threshold))
         )
+        # fmt: on
         .select("edges.*")
     )
-    edges_filtered = edges_df.filter(~semmeddb_is_only_knowledge_source).unionByName(single_semmed_edges)
-    edges_filtered.explain()
+    edges_filtered = edges_df.filter(
+        ~(
+            (f.size(f.col("aggregator_knowledge_source")) == 1)
+            & (f.col("aggregator_knowledge_source").getItem(0) == "infores:semmeddb")
+        )
+    ).unionByName(single_semmed_edges)
     return edges_filtered
 
 
@@ -196,12 +146,16 @@ def compute_ngd(df: ps.DataFrame, num_pairs: int = 3.7e7 * 20) -> ps.DataFrame:
     Returns:
         Dataframe with ndg score
     """
-
-    nbr_common_pmids = f.array_size(f.array_intersect("subj.pmids", "obj.pmids"))
-    num_pmids = ("subj.num_pmids", "obj.num_pmids")
-
-    return df.withColumn(
-        "ngd",
-        (f.log2(f.greatest(*num_pmids)) - f.log2(nbr_common_pmids))
-        / (f.log2(f.lit(num_pairs)) - f.log2(f.least(*num_pmids))),
+    return (
+        # Take first max_pmids elements from each array
+        df.withColumn(
+            "num_common_pmids", f.array_size(f.array_intersect(f.col("subj.pmids"), f.col("obj.pmids")))
+        ).withColumn(
+            "ngd",
+            (
+                f.greatest(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))
+                - f.log2(f.col("num_common_pmids"))
+            )
+            / (f.log2(f.lit(num_pairs)) - f.least(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))),
+        )
     )

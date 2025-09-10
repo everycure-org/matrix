@@ -15,7 +15,7 @@ spec:
     rotationPolicy: Always  # Recommended for security best practices
   
   dnsNames:
-    - neo4j.{{ .Values.spec.source.environment }}.everycure.org
+    - neo4j.dev.everycure.org
   
   usages:
     - server auth

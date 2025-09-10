@@ -1,8 +1,24 @@
 import os
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Dict, Optional
 
-from matrix.utils.environment import load_environment_variables
+from dotenv import find_dotenv, load_dotenv
+
+
+def load_environment_variables():
+    """Load environment variables from .env.defaults and .env files.
+
+    .env.defaults is loaded first, then .env overwrites any existing values.
+    """
+    defaults_path = Path(".env.defaults")
+    if defaults_path.exists():
+        load_dotenv(dotenv_path=defaults_path, override=False)
+
+    env_path = find_dotenv(usecwd=True)
+    if env_path:
+        load_dotenv(dotenv_path=env_path, override=True)
+
 
 # This ensures that environment variables are loaded at module import and thus
 # before the pipeline is run or any data is loaded.

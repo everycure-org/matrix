@@ -20,6 +20,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ADD requirements.txt .
 
 # Install Python dependencies
+ADD packages/ ./packages/
 RUN --mount=type=cache,target=/root/.cache uv venv -p 3.11 && \
     uv pip install -r requirements.txt
 ENV PATH=/app/.venv/bin:$PATH
@@ -27,7 +28,7 @@ ENV PATH=/app/.venv/bin:$PATH
 # Cache drivers as part of image
 COPY conf/base/spark.yml conf/base/spark.yml
 COPY scripts/maven-deps.py maven-deps.py
-RUN python maven-deps.py && rm -rf /root/.ivy2/cache
+RUN python maven-deps.py
 
 # Set git commit sha as env variable, useful for tracing back code to data
 ARG GIT_SHA

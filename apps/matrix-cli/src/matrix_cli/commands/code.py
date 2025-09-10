@@ -100,9 +100,8 @@ def pr_summary(
         console.print(response)
 
 
-def get_ai_code_summary(since: str, until: str, model: str = settings.base_model):
+def get_ai_code_summary(since: str, until: str = "origin/main", model: str = settings.base_model):
     """Show code changes between two git references or time periods."""
-
     diff_output = get_code_diff(since, until)
 
     prompt = f"""

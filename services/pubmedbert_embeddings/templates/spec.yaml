@@ -1,0 +1,121 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pubmedbert-embedding-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pubmedbert-embedding-api
+  template:
+    metadata:
+      labels:
+        app: pubmedbert-embedding-api
+    spec:
+      # nodeSelector:
+      #   spot: "true"
+      containers:
+      - name: pubmedbert-embedding-api
+        image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/pubmedbert_embedding_api:pascalwhoop # TODO change if we make this more permanent
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+          limits:
+            cpu: "4"
+            memory: "4Gi"
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: pubmedbert-embedding-api-pdb
+spec:
+  maxUnavailable: 2
+  selector:
+    matchLabels:
+      app: pubmedbert-embedding-api
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pubmedbert-embedding-api-service
+spec:
+  selector:
+    app: pubmedbert-embedding-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: ClusterIP
+---
+# HTTP redirect to HTTPS
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: pubmedbert-route
+spec:
+  parentRefs:
+  - kind: Gateway
+    sectionName: https
+    namespace: gateway
+    name: api-gateway
+  hostnames:
+  - "pubmedbert.api.dev.everycure.org"
+  rules:
+  - backendRefs:
+    - name: pubmedbert-embedding-api-service
+      port: 80
+---
+apiVersion: networking.gke.io/v1
+kind: GCPBackendPolicy
+metadata:
+  name: embedding-backend-policy
+spec:
+  default:
+    # maintains 600 seconds before killing http request
+    timeoutSec: 600
+  targetRef:
+    group: ""
+    kind: Service
+    name: pubmedbert-embedding-api-service
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: pubmedbert-embedding-api-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: pubmedbert-embedding-api
+  minReplicas: 1
+  maxReplicas: 200
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
+  # TODO could not get this to work reliably just yet so defaulting to default algo instead (100% every 15s, i.e. keep doubling)
+  # Aggressive upscale behaviour because we just hammer our API in one big batch and then it's silence again
+  # behavior:
+  #   scaleUp:
+  #     policies:
+  #     # adds 10 pods right away
+  #     - type: Pods
+  #       value: 10
+  #       periodSeconds: 15
+  #     # if there's more than 10 pods already, then it doubles in size (100% scaleup)
+  #     - type: Percent
+  #       value: 100
+  #       periodSeconds: 15
+  #     stabilizationWindowSeconds: 0
+  #   scaleDown:
+  #     policies:
+  #     - type: Percent
+  #       value: 80
+  #       periodSeconds: 15

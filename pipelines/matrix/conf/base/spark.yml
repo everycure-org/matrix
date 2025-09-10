@@ -1,11 +1,9 @@
 spark.sql.execution.arrow.pyspark.enabled: true
 spark.scheduler.mode: FAIR
-spark.driver.memory: ${oc.env:SPARK_DRIVER_MEMORY}g
+spark.driver.memory: 30g
 # only using this due to 
 # https://github.com/fsspec/gcsfs/issues/632
-spark.driver.maxResultSize: 18g
-# only using this due to failures in the past. Default is 3
-spark.task.maxFailures: 5
+spark.driver.maxResultSize: 12g
 
 # FUTURE: Use Maven based dependency when fixed
 # https://github.com/GoogleCloudDataproc/hadoop-connectors/issues/1233#issuecomment-2262873434

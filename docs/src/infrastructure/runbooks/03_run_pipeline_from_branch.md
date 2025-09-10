@@ -22,18 +22,18 @@ gcloud auth configure-docker us-central1-docker.pkg.dev
 
 ## Submitting a Pipeline Run
 
-To submit a pipeline run, use the `kedro experiment run` command. This command builds a Docker image, creates an Argo workflow template, and submits the workflow to the Kubernetes cluster.
+To submit a pipeline run, use the `kedro submit` command. This command builds a Docker image, creates an Argo workflow template, and submits the workflow to the Kubernetes cluster.
 
 ### Basic Usage
 
 ```bash
-kedro experiment run --username <your-name>
+kedro submit --username <your-name>
 ```
 
 Use the `--help` flag to see all available options:
 
 ```bash
-kedro experiment run --help
+kedro submit --help
 ```
 
 ### Submitting to the tests folder
@@ -41,7 +41,7 @@ kedro experiment run --help
 To submit a pipeline run to the tests folder instead of the releases folder, use the `--is-test` flag:
 
 ```bash
-kedro experiment run --username <your-name> --is-test
+kedro submit --username <your-name> --is-test
 ```
 
 This will store all pipeline outputs under `gs://<bucket>/kedro/data/tests/<version>` instead of the default releases folder. This is useful for:
@@ -71,14 +71,14 @@ After submitting the workflow, you'll be provided with instructions on how to mo
 
 ## Understanding the Pipeline
 
-For a detailed overview of the pipeline stages (Preprocessing, Ingestion, Integration, Embeddings, Modelling, Evaluation, and Release), please refer to the [Pipeline documentation](../../getting_started/first_steps/environments_overview.md)
+For a detailed overview of the pipeline stages (Preprocessing, Ingestion, Integration, Embeddings, Modelling, Evaluation, and Release), please refer to the [Pipeline documentation](../../onboarding/environments_overview.md)
 
 ## Environments
 
 The Every Cure Platform supports multiple environments. When submitting a pipeline run,
 it will use the `cloud` environment by default, which is configured to read and write
 data from/to GCP resources. For more information on available environments and their
-configurations, see the [Pipeline documentation](../../getting_started/first_steps/environments_overview.md#environments).
+configurations, see the [Pipeline documentation](../../onboarding/environments_overview.md#environments).
 
 ## Troubleshooting
 

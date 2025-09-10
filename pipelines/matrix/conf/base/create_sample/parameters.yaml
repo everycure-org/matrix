@@ -2,5 +2,5 @@ create_sample.configuration:
   sampler:
     _object: matrix.pipelines.create_sample.samplers.GroundTruthRandomSampler
     knowledge_graph_nodes_sample_ratio: 0.005
-    ground_truth_edges_sample_ratio: 0.001
+    ground_truth_edges_sample_ratio: 0.01
     seed: 42

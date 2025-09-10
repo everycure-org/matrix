@@ -1,12 +1,14 @@
 import logging
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
+import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.functions as f
 from bmt import toolkit
-from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark.sql import types as T
+
+from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
 
 tk = toolkit.Toolkit()
 
@@ -26,6 +28,66 @@ def get_ancestors_for_category_delimited(category: str, mixin: bool = False) -> 
         List of ancestors in a string format
     """
     return tk.get_ancestors(category, mixin=mixin, formatted=True, reflexive=True)
+
+
+@check_output(
+    DataFrameSchema(
+        columns={
+            "subject": Column(T.StringType(), nullable=False),
+            "predicate": Column(T.StringType(), nullable=False),
+            "object": Column(T.StringType(), nullable=False),
+        },
+        unique=["subject", "object", "predicate"],
+    ),
+)
+def biolink_deduplicate_edges(r_edges_df: ps.DataFrame) -> ps.DataFrame:
+    """Function to deduplicate biolink edges.
+
+    Knowledge graphs in biolink format may contain multiple edges between nodes. Where
+    edges might represent predicates at various depths in the hierarchy. This function
+    deduplicates redundant edges.
+
+    The logic leverages the path to the predicate in the hierarchy, and removes edges
+    for which "deeper" paths in the hierarchy are specified. For example: there exists
+    the following edges (a)-[regulates]-(b), and (a)-[negatively-regulates]-(b). Regulates
+    is on the path (regulates) whereas (regulates, negatively-regulates). In this case
+    negatively-regulates is "deeper" than regulates and hence (a)-[regulates]-(b) is removed.
+
+    Args:
+        edges_df: dataframe with biolink edges
+    Returns:
+        Deduplicated dataframe
+    """
+    # Enrich edges with path to predicates in biolink hierarchy
+    edges_df = r_edges_df.withColumn(
+        "parents", F.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))(F.col("predicate"))
+    )
+    # Self join to find edges that are redundant
+    duplicates = (
+        edges_df.alias("A")
+        .join(
+            edges_df.alias("B"),
+            on=[
+                (f.col("A.subject") == f.col("B.subject"))
+                & ((f.col("A.object") == f.col("B.object")) & (f.col("A.predicate") != f.col("B.predicate")))
+            ],
+            how="left",
+        )
+        .withColumn(
+            "subpath", f.col("B.parents").isNotNull() & f.expr("forall(A.parents, x -> array_contains(B.parents, x))")
+        )
+        .filter(f.col("subpath"))
+        .select("A.*")
+        .select("subject", "object", "predicate")
+        .distinct()
+        .withColumn("is_redundant", f.lit(True))
+    )
+    return (
+        edges_df.alias("edges")
+        .join(duplicates, on=["subject", "object", "predicate"], how="left")
+        .filter(F.col("is_redundant").isNull())
+        .select("edges.*")
+    )
 
 
 @check_output(

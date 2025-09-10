@@ -1,23 +1,24 @@
-resource "google_dns_managed_zone" "dns_zone" {
-  name        = "${var.environment}-zone"
-  dns_name    = "${var.environment}.everycure.org."
-  description = "DNS zone for EveryCure ${var.environment}"
+# FUTURE need to also have one for non DEV
+resource "google_dns_managed_zone" "dev_zone" {
+  name        = "dev-zone"
+  dns_name    = "dev.everycure.org."
+  description = "DNS zone for EveryCure development"
   labels = {
-    environment = "${var.environment}"
+    environment = "dev"
   }
 }
 
 resource "google_dns_record_set" "docs_txt_validation" {
-  name         = "docs.${google_dns_managed_zone.dns_zone.dns_name}"
-  managed_zone = google_dns_managed_zone.dns_zone.name
+  name         = "docs.${google_dns_managed_zone.dev_zone.dns_name}"
+  managed_zone = google_dns_managed_zone.dev_zone.name
   type         = "TXT"
   ttl          = 300
   rrdatas      = ["google-site-verification=n2nDhJm8oiCTDYqg5zi_eq_IbZw1cawmyuEvjPMJ2w8"]
 }
 
 resource "google_dns_record_set" "a" {
-  name         = "docs.${google_dns_managed_zone.dns_zone.dns_name}"
-  managed_zone = google_dns_managed_zone.dns_zone.name
+  name         = "docs.${google_dns_managed_zone.dev_zone.dns_name}"
+  managed_zone = google_dns_managed_zone.dev_zone.name
   type         = "A"
   ttl          = 300
 
@@ -31,8 +32,8 @@ resource "google_dns_record_set" "a" {
 }
 
 resource "google_dns_record_set" "aaaa" {
-  name         = "docs.${google_dns_managed_zone.dns_zone.dns_name}"
-  managed_zone = google_dns_managed_zone.dns_zone.name
+  name         = "docs.${google_dns_managed_zone.dev_zone.dns_name}"
+  managed_zone = google_dns_managed_zone.dev_zone.name
   type         = "AAAA"
   ttl          = 300
 

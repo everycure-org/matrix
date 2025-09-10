@@ -1,19 +1,23 @@
-from typing import Any, Dict, List, Sequence
+import logging
+from typing import Any, Dict, List
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import pyspark.sql as ps
+import pyspark.sql.types as T
 import seaborn as sns
 from graphdatascience import GraphDataScience
-from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark.ml.functions import array_to_vector, vector_to_array
-from pyspark.sql import DataFrame
-from pyspark.sql import functions as F
-from pyspark.sql.types import ArrayType, FloatType, StringType
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 from matrix.inject import inject_object, unpack_params
+from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
 
+from .encoders import AttributeEncoder
 from .graph_algorithms import GDSGraphAlgorithm
+
+logger = logging.getLogger(__name__)
 
 
 class GraphDS(GraphDataScience):
@@ -39,12 +43,12 @@ class GraphDS(GraphDataScience):
 @check_output(
     schema=DataFrameSchema(
         columns={
-            "id": Column(StringType(), nullable=False),
-            "label": Column(StringType(), nullable=False),
-            "name": Column(StringType(), nullable=True),
-            "property_keys": Column(ArrayType(StringType()), nullable=False),
-            "property_values": Column(ArrayType(StringType()), nullable=False),
-            "upstream_data_source": Column(ArrayType(StringType()), nullable=False),
+            "id": Column(T.StringType(), nullable=False),
+            "label": Column(T.StringType(), nullable=False),
+            "name": Column(T.StringType(), nullable=True),
+            "property_keys": Column(T.ArrayType(T.StringType()), nullable=False),
+            "property_values": Column(T.ArrayType(T.StringType()), nullable=False),
+            "upstream_data_source": Column(T.ArrayType(T.StringType()), nullable=False),
         }
     )
 )
@@ -84,13 +88,123 @@ def ingest_nodes(df: ps.DataFrame) -> ps.DataFrame:
     )
 
 
+def bucketize_df(df: ps.DataFrame, bucket_size: int, input_features: List[str], max_input_len: int) -> ps.DataFrame:
+    """Function to bucketize input dataframe.
+
+    Function bucketizes the input dataframe in N buckets, each of size `bucket_size`
+    elements. Moreover, it concatenates the `features` into a single column and limits the
+    length to `max_input_len`.
+
+    Args:
+        df: Dataframe to bucketize
+        attributes: to keep
+        bucket_size: size of the buckets
+    """
+
+    # Order and bucketize elements
+    return (
+        df.transform(_bucketize, bucket_size=bucket_size)
+        .withColumn(
+            "text_to_embed",
+            ps.functions.concat(
+                *[ps.functions.coalesce(ps.functions.col(feature), ps.functions.lit("")) for feature in input_features]
+            ),
+        )
+        .withColumn("text_to_embed", ps.functions.substring(ps.functions.col("text_to_embed"), 1, max_input_len))
+        .select("id", "text_to_embed", "bucket")
+    )
+
+
+def _bucketize(df: ps.DataFrame, bucket_size: int) -> ps.DataFrame:
+    """Function to bucketize df in given number of buckets.
+
+    Args:
+        df: dataframe to bucketize
+        bucket_size: size of the buckets
+    Returns:
+        Dataframe augmented with `bucket` column
+    """
+
+    # Retrieve number of elements
+    num_elements = df.count()
+    num_buckets = (num_elements + bucket_size - 1) // bucket_size
+
+    # Construct df to bucketize
+    spark_session: ps.SparkSession = ps.SparkSession.builder.getOrCreate()
+
+    # Bucketize df
+    buckets = spark_session.createDataFrame(
+        data=[(bucket, bucket * bucket_size, (bucket + 1) * bucket_size) for bucket in range(num_buckets)],
+        schema=["bucket", "min_range", "max_range"],
+    )
+
+    return df.withColumn(
+        "row_num", ps.functions.row_number().over(ps.window.Window.orderBy("id")) - ps.functions.lit(1)
+    ).join(
+        buckets,
+        on=[
+            (ps.functions.col("row_num") >= (ps.functions.col("min_range")))
+            & (ps.functions.col("row_num") < ps.functions.col("max_range"))
+        ],
+    )
+
+
+@inject_object()
+def compute_embeddings(
+    dfs: Dict[str, Any],
+    encoder: AttributeEncoder,
+) -> Dict[str, Any]:
+    """Function to bucketize input data.
+
+    Args:
+        dfs: mapping of paths to df load functions
+        encoder: encoder to run
+    """
+
+    # NOTE: Inner function to avoid reference issues on unpacking
+    # the dataframe, therefore leading to only the latest shard
+    # being processed n times.
+    def _func(dataframe: pd.DataFrame):
+        return lambda df=dataframe: encoder.encode(df())
+
+    shards = {}
+    for path, df in dfs.items():
+        # Little bit hacky, but extracting batch from hive partitioning for input path
+        # As we know the input paths to this dataset are of the format /shard={num}
+        bucket = path.split("/")[0].split("=")[1]
+
+        # Invoke function to compute embeddings
+        shard_path = f"bucket={bucket}/shard"
+        shards[shard_path] = _func(df)
+
+    return shards
+
+
+@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
+async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.DataFrame:
+    try:
+        # Embed entities in batch mode
+        combined_texts = df["text_to_embed"].tolist()
+        df["embedding"] = await embedding_model.aembed_documents(combined_texts)
+
+        # Ensure floats
+        df["embedding"] = df["embedding"].apply(lambda emb: np.array(emb, dtype=np.float32))
+    except Exception as e:
+        print(f"Exception occurred: {e}")
+        raise e
+
+    # Drop added column
+    df = df.drop(columns=["text_to_embed"])
+    return df
+
+
 @unpack_params()
 @check_output(
     schema=DataFrameSchema(
         columns={
-            "id": Column(StringType(), nullable=False),
-            "embedding": Column(ArrayType(FloatType()), nullable=False),
-            "pca_embedding": Column(ArrayType(FloatType()), nullable=False),
+            "id": Column(T.StringType(), nullable=False),
+            "embedding": Column(T.ArrayType(T.FloatType()), nullable=False),
+            "pca_embedding": Column(T.ArrayType(T.FloatType()), nullable=False),
         },
         unique=["id"],
     )
@@ -303,9 +417,9 @@ def _cast_to_array(df, col: str) -> ps.DataFrame:
 @check_output(
     schema=DataFrameSchema(
         columns={
-            "id": Column(StringType(), nullable=False),
-            "topological_embedding": Column(ArrayType(FloatType()), nullable=False),
-            "pca_embedding": Column(ArrayType(FloatType()), nullable=False),
+            "id": Column(T.StringType(), nullable=False),
+            "topological_embedding": Column(T.ArrayType(T.FloatType()), nullable=False),
+            "pca_embedding": Column(T.ArrayType(T.FloatType()), nullable=False),
         },
         unique=["id"],
     )
@@ -345,7 +459,3 @@ def visualise_pca(nodes: ps.DataFrame, column_name: str) -> plt.Figure:
     plt.tight_layout(rect=[0, 0, 0.85, 1])
 
     return fig
-
-
-def embeddings_preprocessor(df: DataFrame, key_length: int, combine_cols: Sequence[str], new_col: str) -> DataFrame:
-    return df.withColumn(new_col, F.concat_ws("", *combine_cols).substr(startPos=1, length=key_length))

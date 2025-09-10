@@ -3,10 +3,8 @@ import logging
 import os
 import re
 from copy import deepcopy
-from pathlib import Path
 from typing import Any, Optional
 
-import fsspec
 import google.api_core.exceptions as exceptions
 import numpy as np
 import pandas as pd
@@ -21,10 +19,10 @@ from kedro.io.core import (
 )
 from kedro_datasets.partitions import PartitionedDataset
 from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
+from matrix.hooks import SparkHooks
+from matrix.inject import _parse_for_objects
 from pygsheets import Spreadsheet, Worksheet
 from tqdm import tqdm
-
-from matrix.hooks import SparkHooks
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +31,18 @@ class LazySparkDataset(SparkDataset):
     """Lazy loading spark datasets to avoid loading spark every run.
 
     A trick that makes our spark loading lazy so we never initiate
+    """
+
+    def load(self):
+        SparkHooks._initialize_spark()
+        return super().load()
+
+
+class SparkWithSchemaDataset(SparkDataset):
+    """Dataset to load BigQuery data.
+
+    Dataset extends the behaviour of the standard SparkDataset with
+    a schema load argument that can be specified in the Data catalog.
     """
 
     def __init__(  # noqa: PLR0913
@@ -45,46 +55,33 @@ class LazySparkDataset(SparkDataset):
         version: Version | None = None,
         credentials: dict[str, Any] | None = None,
         metadata: dict[str, Any] | None = None,
-        provide_empty_if_not_present: bool = False,
     ) -> None:
-        self._full_url = filepath
-        self._provide_empty_if_not_present = provide_empty_if_not_present
+        """Creates a new instance of ``SparkWithSchemaDataset``."""
+        self._load_args = deepcopy(load_args) or {}
+        self._df_schema = self._load_args.pop("schema")
 
         super().__init__(
             filepath=filepath,
             file_format=file_format,
             save_args=save_args,
-            load_args=load_args,
+            load_args=self._load_args,
             credentials=credentials,
             version=version,
             metadata=metadata,
         )
 
-    def load(self):
+    def load(self) -> ps.DataFrame:
         SparkHooks._initialize_spark()
+        load_path = self._strip_dbfs_prefix(self._fs_prefix + str(self._get_load_path()))
+        read_obj = ps.SparkSession.builder.getOrCreate()
 
-        # Spark cannot read http files directly
-        if self._fs_prefix in ["http://", "https://"]:
-            with fsspec.open(self._full_url, "rb") as remote_file:
-                name = f"/tmp/{Path(self._full_url).name}"
-                with open(name, "wb") as local_file:
-                    local_file.write(remote_file.read())
-                    self._filepath = Path(name)
-                    self._fs_prefix = "file://"
+        return read_obj.schema(_parse_for_objects(self._df_schema)).load(
+            load_path, self._file_format, **self._load_args
+        )
 
-        try:
-            return super().load()
-        except DatasetError as e:
-            if self._provide_empty_if_not_present and ("PATH_NOT_FOUND" in str(e.args)):
-                logger.warning(
-                    """{"warning": "Dataset not found at '%s'.",  "Resolution": "providing empty dataset with unrelated schema."}""",
-                    self._filepath,
-                )
-                return ps.SparkSession.getActiveSession().createDataFrame(
-                    [], schema=ps.types.StructType().add("foo", ps.types.BooleanType())
-                )
-            else:
-                raise e
+    @staticmethod
+    def _strip_dbfs_prefix(path: str, prefix: str = "/dbfs") -> str:
+        return path[len(prefix) :] if path.startswith(prefix) else path
 
 
 class SparkDatasetWithBQExternalTable(LazySparkDataset):
@@ -162,10 +159,7 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         table = bigquery.Table(f"{self._dataset_id}.{self._table}")
         table.labels = self._labels
         table.external_data_configuration = external_config
-        try:
-            self._client.create_table(table, exists_ok=False)
-        except exceptions.Conflict:
-            self._client.update_table(table, fields=["labels"])
+        table = self._client.create_table(table, exists_ok=True)
 
     def _create_dataset(self) -> str:
         try:
@@ -426,10 +420,8 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
         fs_args: dict[str, Any] | None = None,
         overwrite: bool = False,
         metadata: dict[str, Any] | None = None,
-        timeout: int = 90,
     ) -> None:
         self._max_workers = int(max_workers)
-        self._timeout = timeout
 
         super().__init__(
             path=path,
@@ -440,10 +432,9 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
             load_args=load_args,
             overwrite=overwrite,
             fs_args=fs_args,
-            metadata=metadata,
         )
 
-    def save(self, data: dict[str, Any]) -> None:
+    def save(self, data: dict[str, Any], timeout: int = 60) -> None:
         logger.info(f"saving with {self._max_workers} parallelism")
 
         if self._overwrite and self._filesystem.exists(self._normalized_path):
@@ -451,28 +442,25 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
 
         # Helper function to process a single partition
         async def process_partition(sem, partition_id, partition_data):
-            try:
-                # Set up arguments and path
-                kwargs = deepcopy(self._dataset_config)
-                partition = self._partition_to_path(partition_id)
-                kwargs[self._filepath_arg] = self._join_protocol(partition)
-                dataset = self._dataset_type(**kwargs)  # type: ignore
-                # Evaluate partition data if it's callable
-                if callable(partition_data):
-                    async with sem:
-                        partition_data = await partition_data()  # noqa: PLW2901
-                else:
-                    raise RuntimeError("not callable")
-                # Improve the chances of starting the calculation of a new
-                # partition (which is the bottleneck, not the saving), or any
-                # other async task, by using cooperative multitasking -> sleep.
-                await asyncio.sleep(0.01)
+            async with sem:
+                try:
+                    # Set up arguments and path
+                    kwargs = deepcopy(self._dataset_config)
+                    partition = self._partition_to_path(partition_id)
+                    kwargs[self._filepath_arg] = self._join_protocol(partition)
+                    dataset = self._dataset_type(**kwargs)  # type: ignore
 
-                # Save the partition data
-                dataset.save(partition_data)
-            except Exception as e:
-                logger.error(f"Error in process_partition with partition {partition_id}: {e}")
-                raise
+                    # Evaluate partition data if it's callable
+                    if callable(partition_data):
+                        partition_data = await partition_data()  # noqa: PLW2901
+                    else:
+                        raise RuntimeError("not callable")
+
+                    # Save the partition data
+                    dataset.save(partition_data)
+                except Exception as e:
+                    logger.error(f"Error in process_partition with partition {partition_id}: {e}")
+                    raise
 
         # Define function to run asyncio tasks within a synchronous function
         def run_async_tasks():
@@ -480,6 +468,7 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             sem = asyncio.Semaphore(self._max_workers)
+
             tasks = [
                 loop.create_task(process_partition(sem, partition_id, partition_data))
                 for partition_id, partition_data in sorted(data.items())
@@ -491,11 +480,9 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
                 async def monitor_tasks():
                     for task in asyncio.as_completed(tasks):
                         try:
-                            await asyncio.wait_for(task, self._timeout)
+                            await asyncio.wait_for(task, timeout)
                         except asyncio.TimeoutError as e:
-                            logger.error(
-                                f"Timeout error: partition processing took longer than {self._timeout} seconds."
-                            )
+                            logger.error(f"Timeout error: partition processing took longer than {timeout} seconds.")
                             raise e
                         except Exception as e:
                             logger.error(f"Error processing partition in tqdm loop: {e}")

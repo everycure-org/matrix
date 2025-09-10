@@ -41,11 +41,3 @@ loggers:
     level: INFO
   matrix.pipelines.preprocessing.nodes:
     level: DEBUG
-  matrix.pipelines.filtering.nodes:
-    level: WARNING
-  matrix.pipelines.batch.pipeline:
-    level: INFO
-  matrix.hooks:
-    level: INFO
-  matrix.pipelines.integration.pipeline:
-    level: INFO

@@ -1,28 +1,25 @@
-name: Create Pull Request to Add Release Info
+name: Create Pull Request to Verify AI Summary of Release Notes
 
 on:
+  push:
+    branches:
+      - 'debug/release*'
   repository_dispatch:
     types: distribute-release
-  workflow_dispatch:
-    inputs:
-      release_version:
-        description: 'The version of the release'
-        required: true
-        default: 'vx.y.z'
-      git_fingerprint:
-        description: 'The git sha that triggered the kg_release'
-        required: true
+
+env:
+  project_id: 'mtrx-hub-dev-3of'
+  workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
+  service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
 
 jobs:
   create_release_notes_draft:
-    environment: dev
     runs-on: ubuntu-latest
     name: Create Draft of the Release Notes
     permissions:
       contents: 'write'
       id-token: 'write'
       pull-requests: 'write'
-      actions: 'write' # Needed to trigger workflows
 
     steps:
       - name: store variables
@@ -30,9 +27,6 @@ jobs:
           if [[ "${{ github.event_name == 'repository_dispatch' }}" == "true" ]]; then
             release='${{ github.event.client_payload.release_version }}'
             gitref='${{ github.event.client_payload.git_fingerprint }}'
-          elif [[ "${{ github.event_name == 'workflow_dispatch' }}" == "true" ]]; then
-            release='${{ github.event.inputs.release_version }}'
-            gitref='${{ github.event.inputs.git_fingerprint }}'
           else
             release="debug-dont-release"
             gitref=${{github.ref_name}}
@@ -40,19 +34,12 @@ jobs:
           echo "release=${release}" >> "$GITHUB_ENV"
           echo "gitref=${gitref}" >> "$GITHUB_ENV"
 
-      - name: Print Release Version and Git SHA
-        run: |
-          echo "release=${release}"
-          echo "gitref=${gitref}"
-
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@main
         with:
           # note that repo dispatch will checkout main
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
-          submodules: recursive
-          token: ${{ secrets.PAT }}
 
       - name: Configure Git
         run: |
@@ -62,26 +49,15 @@ jobs:
 
       - name: Tag the commit from which the data release was triggered
         run: |
-          if git ls-remote --tags origin | grep -q "refs/tags/${{env.release}}"; then
-            echo "Tag ${{env.release}} already exists. Skipping tag creation."
-          else
-            # Create an annotated tag, so that we can push it easily with the files using `follow-tags`.
-            git tag --annotate --message '' -- "${{env.release}}" "${{env.gitref}}" && \
-            git push --follow-tags
-          fi
-          
+          # Create an annotated tag, so that we can push it easily with the files using `follow-tags`.
+          git tag --annotate --message '' -- "${{env.release}}" "${{env.gitref}}" && \
+          git push --follow-tags
+
       - name: Branch off
         # To comply with the protected-branch policy, we checkout a different
         # branch, but from the commit that created the release.
         # It should have been pushed, otherwise this errors out.
-        run: |
-          if git ls-remote --exit-code origin release/${{env.release}}; then
-            git switch release/${{env.release}}
-            git pull --ff-only
-          else
-            git switch -C release/${{env.release}} "${{env.gitref}}"
-            git push
-          fi
+        run: git switch -C release/${{env.release}} "${{env.gitref}}"
 
       - name: Setup Matrix CLI
         working-directory: apps/matrix-cli
@@ -92,9 +68,9 @@ jobs:
       - name: Authenticate with Google Cloud
         uses: 'google-github-actions/auth@v2'
         with:
-          project_id: ${{vars.PROJECT_ID}}
-          workload_identity_provider: ${{vars.WORKLOAD_IDENTITY_PROVIDER_RO}}
-          service_account: ${{vars.SERVICE_ACCOUNT_RO}}
+          project_id: ${{env.project_id}}
+          workload_identity_provider: ${{env.workload_identity_provider}}
+          service_account: ${{env.service_account}}
 
       - name: Download & commit release info file
         working-directory: docs/src/releases/changelog_files
@@ -104,69 +80,48 @@ jobs:
         run: |
           set -eux
           BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
-          
-          if git ls-files --error-unmatch "$FILENAME" &> /dev/null; then
-            echo "File '$FILENAME' is already committed to the repository. Skipping download and commit."
-            exit 0
-          fi
-
           gcloud storage cp "$BLOB_PATH" "$FILENAME"
           
           git add "${FILENAME}" && \
           git commit -m "added release info json" && \
           git push
-      
+
       - name: Discover Latest Official Release on GitHub
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           latest_official_release=$(gh release list --jq '.[0].tagName' --json tagName --order desc)
           echo "latest_official_release=${latest_official_release}" >> "$GITHUB_ENV"
-  
+
       - name: Detect bump type
         working-directory: docs
         run: |
           pip install uv
           uv venv -p 3.11
-          uv pip compile --quiet requirements.in --output-file requirements.txt
-          uv pip install -r requirements.txt 
-          uv run scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
+          uv pip install -r requirements.txt
+          uv run scripts/bump_detection.py >> "${GITHUB_ENV}"
 
-      - name: Create Release Article Template
+      - name: Create Release Notes
         working-directory: apps/matrix-cli
         env:
           GH_TOKEN: ${{ github.token }}
           POSTS_DIR: docs/src/releases/posts
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         # only create release notes for minor, major, and intermediate bumps
-        if: env.generate_article == 'True'
+        if: env.generate_notes == 'True'
         run: |
-          set -eux
-
-          TARGET_DIR="${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.release }}"
-          FILE_PATH="${TARGET_DIR}/post.md"
-
-          if git ls-files --error-unmatch "$FILE_PATH" &> /dev/null; then
-            echo "File '$FILE_PATH' is already committed to the repository. Skipping release notes creation."
-            exit 0
-          fi
-
           mkdir -p "${{env.release}}"
-
+          uv run matrix releases release-notes --headless --output-file "${{env.release}}/notes.md"
           # If these fail, you may have crossed the quotas. See 
           # https://cloud.google.com/vertex-ai/generative-ai/docs/quotas
-          uv run matrix releases template \
+          uv run matrix releases article \
             --headless \
             --output-file "${{env.release}}/post.md" \
-            --until ${{env.gitref}} \
-            --version ${{env.release}}
-          
+            --no-disable-rendering \
+            --notes-file "${{env.release}}/notes.md"
           mv "${{env.release}}" "${GITHUB_WORKSPACE}/${POSTS_DIR}"
-          git add "$TARGET_DIR" && \
-          git commit -m "added release article template" && \
-          git push
-          
-            
+          git add "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{env.release}}" && \
+          git commit -m "added release notes & article draft" 
+
       - name: Setup docs venv & generate yaml
         working-directory: docs/scripts
         run: |
@@ -193,48 +148,9 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           gh pr create \
-            --title "Release/${{ env.release }}" \
-            --base main \
-            --body "$(cat <<EOM
-          This pull request was created because a release pipeline completed successfully. If this is a patch release (the release version does not end in 0, e.g. "v1.2.5") that was triggered as part of its weekly schedule, you may close this PR directly, unless you want it to [be logged on the website](https://docs.dev.everycure.org/releases/release_history/). A git tag was [created](https://github.com/everycure-org/matrix/tags) regardless, so people can check it out.
-
-          Please check the KG dashboard for this release [here](https://data.dev.everycure.org/versions/${{ env.release }}/evidence/)
-
-          Note: 
-          - for minor and major releases, the release article should be created, meant as a kickstarter for the final release. The template is generated, please ask contributors to fill it out
-          - release information file is used for updating the release history page
-          EOM
-          )" \
-            --draft \
-            --label Release \
-            --label hide-from-release
-
-      - name: Trigger creation of sample release
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.PAT }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'create-sample-release.yml',
-              ref: 'main',
-              inputs: {
-                release_version: '${{ env.release }}'
-              }
-            })
-
-      - name: Trigger KG dashboard deploy
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.PAT }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'kg-dashboard-deploy.yml',
-              ref: 'main',
-              inputs: {
-                "release_version": '${{ env.release }}' 
-              }
-            })
+          --title "Release/${{env.release}}" \
+          --base main \
+          --body "Adds release information. For minor and major bump, the release article and associated notes are generated." \
+          --draft \
+          --label Release \
+          --label hide-from-release

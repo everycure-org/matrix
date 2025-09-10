@@ -1,3 +1,9 @@
+embeddings.node:
+  batch_size: 1 # NOTE: The MockApi does not support batching, hence disabled
+  encoder:
+    encoder:
+     openai_api_base: ${oc.env:OPENAI_ENDPOINT}
+
 # Reducing dimensionality reduction to speed up runtime
 embeddings.dimensionality_reduction:
   transformer:

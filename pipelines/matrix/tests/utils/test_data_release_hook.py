@@ -1,35 +1,64 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
 from kedro.framework.context import KedroContext
+from kedro.framework.hooks import _create_hook_manager
 from matrix.hooks import ReleaseInfoHooks
 
 
-def test_extract_release_info(cloud_kedro_context: KedroContext):
-    ReleaseInfoHooks.set_context(cloud_kedro_context)
-
-    global_datasets = ReleaseInfoHooks.extract_all_global_datasets([])
-
+@pytest.fixture
+def mock_context():
+    mock_context = MagicMock(spec=KedroContext)
+    mock_context.config_loader = {
+        "globals": {
+            "versions": {"release": "1.0.0"},
+            "gcp_project": "test-project",
+            "data_sources": {
+                "robokop": {"version": "v1"},
+                "spoke": {"version": "v2"},
+                "ec_medical_team": {"version": 20241031},
+            },
+        },
+        "parameters": {
+            "embeddings.topological_estimator": {"_object": "topological_estimator_v1"},
+            "embeddings.node": {"encoder": {"encoder": {"model": "node_encoder_v1"}}},
+        },
+    }
     mock_mlflow = MagicMock()
     mock_mlflow.tracking.run.id = "run123"
     mock_mlflow.tracking.experiment.name = "experiment123"
-    mock_mlflow.experiment_id = "555"
-    cloud_kedro_context.mlflow = mock_mlflow
+    mock_context.mlflow = mock_mlflow
+    return mock_context
 
-    expected_release_info_keys = set(
-        [
-            "Release Name",
-            "Datasets",
-            "BigQuery",
-            "MLFlow",
-            "Code",
-            "NodeNorm Endpoint",
-            "KG dashboard",
-        ]
-    )
+
+def test_extract_release_info(mock_context):
+    ReleaseInfoHooks.set_context(mock_context)
+
+    datasets_used = ["robokop"]
+    datasets_to_hide = ["spoke"]
+    global_datasets = ReleaseInfoHooks.extract_all_global_datasets(datasets_to_hide)
+    ReleaseInfoHooks.mark_unused_datasets(global_datasets, datasets_used)
+
+    expected_release_info = {
+        "Release Name": "1.0.0",
+        "Datasets": {
+            "robokop": "v1",
+            "ec_medical_team": "not included",
+        },
+        "Topological Estimator": "topological_estimator_v1",
+        "Embeddings Encoder": "node_encoder_v1",
+        "BigQuery Link": (
+            "https://console.cloud.google.com/bigquery?"
+            "project=test-project"
+            "&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_1_0_0"
+        ),
+        "MLFlow Link": ("https://mlflow.platform.dev.everycure.org/#/experiments/555/runs/run123"),
+        "Code Link": "https://github.com/everycure-org/matrix/tree/1.0.0",
+        "Neo4j Link": "coming soon!",
+        "NodeNorm Endpoint Link": "https://nodenorm.transltr.io/1.5/get_normalized_nodes",
+    }
 
     with patch("mlflow.get_experiment_by_name") as mock_mlflow:
         mock_mlflow.return_value.experiment_id = "555"
         release_info = ReleaseInfoHooks.extract_release_info(global_datasets)
-
-        release_info_keys = set(release_info.keys())
-        assert release_info_keys == expected_release_info_keys
+        assert release_info == expected_release_info

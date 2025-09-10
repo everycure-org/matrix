@@ -7,11 +7,21 @@ _reporting_ds: &_reporting_ds
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/03_version_datasets.html#how-to-version-data-in-a-kedro-project
 "modelling.{shard}.fold_{fold}.reporting.tuning_convergence_plot":
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
-  artifact_path: "{shard}.fold_{fold}"
+  artifact_path: "{shard}"
   dataset:
     <<: *_reporting_ds
-    type: matplotlib.MatplotlibDataset
-    filepath: ${globals:paths.tmp}/{shard}/fold_{fold}/convergence_plot.png
+    type: matplotlib.MatplotlibWriter
+    filepath: ${globals:paths.tmp}/{shard}/convergence_plot.png
+
+# NOTE: Tracking a model, other serialization formats possible.
+# https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/04_version_models.html#how-to-track-models-using-mlflow-in-kedro-project
+"modelling.{shard}.fold_{fold}.models.model":
+  # FUTURE: The Kedro MLFlow plugin does not support metadata, 
+  # add in when provided by the plugin.
+  # <<: *_model_ds
+  type: kedro_mlflow.io.models.MlflowModelTrackingDataset
+  flavor: mlflow.sklearn
+  pyfunc_workflow: python_model
 
 # NOTE: Saving a metric, more elaborate strategies possible, e.g., MlflowMetricHistoryDataset
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/05_version_metrics.html#saving-a-single-float-as-a-metric-with-mlflowmetricdataset

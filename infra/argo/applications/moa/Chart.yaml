@@ -1,0 +1,4 @@
+apiVersion: v2
+name: my-helm-chart
+description: A Helm chart for my application
+version: 0.1.1

@@ -9,23 +9,18 @@ openai:
   api_key: dummy
 
 paths:
-  raw:             data/test/raw
-  # Public data sources
-  raw_public:      data/test/raw
-  raw_private:     data/test/raw
+  raw:                data/test/raw
+  kg_raw:             data/test/raw
   # Upstream version-based
   ingestion:          data/test/ingestion
   # Release-based
   integration:        data/test/releases/${versions.release}/datasets/integration
+  embeddings:         data/test/releases/${versions.release}/datasets/embeddings
 
   # Run-based
-  filtering:          data/test/releases/${versions.release}/runs/${run_name}/datasets/filtering
-  embeddings:         data/test/releases/${versions.release}/runs/${run_name}/datasets/embeddings
   modelling:          data/test/releases/${versions.release}/runs/${run_name}/datasets/modelling
   evaluation:         data/test/releases/${versions.release}/runs/${run_name}/datasets/evaluation
   matrix_generation:  data/test/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
-  matrix_transformations:  data/test/releases/${versions.release}/runs/${run_name}/datasets/matrix_transformations
   inference:          data/test/releases/${versions.release}/runs/${run_name}/datasets/inference
 
   tmp:                data/test/tmp
-  cache:              data/test/cache

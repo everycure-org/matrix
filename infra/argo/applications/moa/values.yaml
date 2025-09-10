@@ -1,0 +1,4 @@
+app:
+  registry: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/moa_visualizer
+  config:
+    data_path: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.2.5-rtx-only/runs/feature-moa-extraction-4472893d/datasets/moa_extraction/reporting

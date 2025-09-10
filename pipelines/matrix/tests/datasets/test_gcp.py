@@ -1,8 +1,5 @@
-import kedro.io.core
 import pytest
-from kedro.framework.session import KedroSession
-from matrix.datasets.gcp import LazySparkDataset, RemoteSparkJDBCDataset, SparkDatasetWithBQExternalTable
-from pyspark.sql.types import BooleanType, StructType
+from matrix.datasets.gcp import RemoteSparkJDBCDataset, SparkDatasetWithBQExternalTable
 
 
 def test_remote_spark_dataset_split_path():
@@ -31,26 +28,3 @@ def test_remote_spark_dataset_split_path():
 )
 def test_sanitize_bq_strings(identifier, expected):
     assert SparkDatasetWithBQExternalTable._sanitize_name(identifier) == expected
-
-
-def test_lazysparkdataset_creation_when_missing(kedro_session: KedroSession):
-    """A dummy DataFrame is provided for a LazySparkDataset if provide_empty_if_not_present is True"""
-    dataset = LazySparkDataset(
-        filepath="file:///tmp/non_existent_path",
-        file_format="parquet",
-        provide_empty_if_not_present=True,
-    )
-    result_df = dataset.load()
-    assert result_df.isEmpty()
-    assert result_df.schema == StructType().add("foo", BooleanType(), True)
-
-
-def test_lazysparkdataset_error_when_missing(kedro_session: KedroSession):
-    """The usual Kedro exception is raised on loading a LazySparkDataset, when provide_empty_if_not_present is False"""
-    dataset = LazySparkDataset(
-        filepath="file:///tmp/non_existent_path",
-        file_format="parquet",
-        provide_empty_if_not_present=False,
-    )
-    with pytest.raises(kedro.io.core.DatasetError):
-        dataset.load()

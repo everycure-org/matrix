@@ -1,0 +1,18 @@
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: moa-route
+  namespace: moa
+spec:
+  parentRefs:
+  - kind: Gateway
+    sectionName: https
+    namespace: gateway
+    name: external-http
+  hostnames:
+  - "moa.platform.dev.everycure.org"
+  rules:
+  - backendRefs:
+    - name: moa-viewer-service
+      namespace: moa
+      port: 80

@@ -68,22 +68,8 @@ class MlflowMetricsDataset(MlflowAbstractMetricDataset):
     def run_id(self, run_id: str):
         self._run_id = run_id
 
-    def load(self) -> Dict[str, Any]:
-        """Load metrics from MLflow using MLflowClient and run metadata.
-
-        Returns:
-            Dict[str, Any]: Dictionary of metrics with their values
-        """
-        if not self.run_id:
-            raise ValueError("No run_id specified and no active run found")
-
-        mlflow_client = MlflowClient()
-        run_metadata = mlflow_client.get_run(self.run_id)
-        all_metrics = run_metadata.data.metrics
-        selected_metrics = {
-            metric: all_metrics[metric] for metric in all_metrics if metric.startswith(self._key_prefix)
-        }
-        return selected_metrics
+    def load(self):
+        raise NotImplementedError()
 
     def _exists(self) -> bool:
         """Check if the metric exists in remote mlflow storage exists.

@@ -1,0 +1,10 @@
+nav:
+    - index.md
+    - installation.md
+    - git-crypt.md
+    - kedro.md
+    - local-setup.md
+    - environments_overview.md
+    - kedro_extensions.md
+    - walkthroughs
+    - contribute

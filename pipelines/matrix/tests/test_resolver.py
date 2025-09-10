@@ -1,8 +1,7 @@
 import os
 
 import pytest
-from matrix.resolvers import env
-from matrix.utils.environment import load_environment_variables
+from matrix.resolvers import env, load_environment_variables
 
 
 @pytest.fixture

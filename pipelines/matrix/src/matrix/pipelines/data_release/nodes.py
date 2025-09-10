@@ -1,9 +1,10 @@
-from typing import List
+from typing import Collection, List, Type
 
 import pyspark.sql as ps
-from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark.sql import types as T
 from pyspark.sql.functions import array_join
+
+from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
 
 SEPARATOR = "\x1f"
 
@@ -28,7 +29,7 @@ def join_array_columns(df: ps.DataFrame, cols: List[str], sep: str = SEPARATOR) 
     ),
     pass_columns=True,
 )
-def unified_edges_to_kgx(df: ps.DataFrame, cols: List[str]) -> ps.DataFrame:
+def filtered_edges_to_kgx(df: ps.DataFrame, cols: List[str]) -> ps.DataFrame:
     """Function to create KGX formatted edges.
 
     Args:
@@ -56,7 +57,7 @@ def unified_edges_to_kgx(df: ps.DataFrame, cols: List[str]) -> ps.DataFrame:
     ),
     pass_columns=True,
 )
-def unified_nodes_to_kgx(df: ps.DataFrame, cols: List[str]) -> ps.DataFrame:
+def filtered_nodes_to_kgx(df: ps.DataFrame, cols: List[str]) -> ps.DataFrame:
     """Function to create KGX formatted nodes.
 
     Args:

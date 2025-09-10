@@ -18,7 +18,6 @@ from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from matrix.inject import OBJECT_KW
 from matrix.pipelines.modelling.model import ModelWrapper
-from matrix.pipelines.modelling.model_selection import DiseaseAreaSplit
 from matrix.pipelines.modelling.nodes import (
     apply_transformers,
     attach_embeddings,
@@ -111,8 +110,7 @@ def sample_data():
             "target": ["X", "Y", "Z", "W", "V", "U"],
             "target_embedding": [np.array([3, 4])] * 6,
             "y": [1, 0, 1, 0, 1, 0],
-        },
-        index=range(6),  # Add explicit index
+        }
     )
 
 
@@ -247,6 +245,7 @@ def test_prefilter_excludes_non_drug_disease_nodes(
     base_test_data: ps.DataFrame, ground_truth_data: ps.DataFrame
 ) -> None:
     result = prefilter_nodes(
+        full_nodes=base_test_data,
         nodes=base_test_data,
         gt=ground_truth_data,
         drug_types=["drug_type1", "drug_type2"],
@@ -262,6 +261,7 @@ def test_prefilter_correctly_identifies_drug_nodes(
     base_test_data: ps.DataFrame, ground_truth_data: ps.DataFrame
 ) -> None:
     result = prefilter_nodes(
+        full_nodes=base_test_data,
         nodes=base_test_data,
         gt=ground_truth_data,
         drug_types=["drug_type1", "drug_type2"],
@@ -284,6 +284,7 @@ def test_prefilter_correctly_identifies_disease_nodes(
     base_test_data: ps.DataFrame, ground_truth_data: ps.DataFrame
 ) -> None:
     result = prefilter_nodes(
+        full_nodes=base_test_data,
         nodes=base_test_data,
         gt=ground_truth_data,
         drug_types=["drug_type1", "drug_type2"],
@@ -301,6 +302,7 @@ def test_prefilter_correctly_identifies_ground_truth_positives(
     base_test_data: ps.DataFrame, ground_truth_data: ps.DataFrame
 ) -> None:
     result = prefilter_nodes(
+        full_nodes=base_test_data,
         nodes=base_test_data,
         gt=ground_truth_data,
         drug_types=["drug_type1", "drug_type2"],
@@ -597,40 +599,3 @@ def test_model_wrapper():
     proba_mean = model_mean.predict_proba([])
     # then median computed correctly
     assert np.all(proba_mean == [1.5, 2.5, 4.0])
-
-
-@pytest.fixture
-def disease_list():
-    """Create a sample disease list for testing."""
-    return pd.DataFrame(
-        {
-            "id": ["X", "Y", "Z", "W", "V", "U"],  # Match the target values in sample_data
-            "harrisons_view": ["type1", "type2", "type3", "type1", "type2", "type3"],
-        },
-        index=range(6),  # Add explicit index to match sample_data
-    )
-
-
-def test_make_folds_with_disease_area_split(sample_data, disease_list):
-    """Test make_folds with DiseaseAreaSplit."""
-    disease_area_splitter = DiseaseAreaSplit(
-        n_splits=3, disease_grouping_type="harrisons_view", holdout_disease_types=["type1", "type2", "type3"]
-    )
-
-    # Ensure disease_list has the correct format
-    assert set(disease_list["id"].tolist()) == set(sample_data["target"].tolist())
-
-    result = make_folds(data=sample_data, splitter=disease_area_splitter, disease_list=disease_list)
-
-    # Check that all required columns are present
-    required_columns = ["source", "source_embedding", "target", "target_embedding", "split", "fold"]
-    assert all(col in result.columns for col in required_columns)
-
-    # Check that we have the same number of rows as input
-    assert len(result) == len(sample_data) * 4  # 3 folds + 1 full training set
-
-    # Check that splits are properly labeled
-    assert set(result["split"].unique()) == {"TRAIN", "TEST"}
-
-    # Check that the folds column has the correct range
-    assert set(result["fold"].unique()) == {0, 1, 2, 3}

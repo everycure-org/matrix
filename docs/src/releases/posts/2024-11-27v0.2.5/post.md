@@ -1,5 +1,4 @@
 ---
-title: v0.2.5
 draft: false 
 date: 2024-11-28
 categories:
@@ -98,7 +97,7 @@ and select the release you want to explore.
 ### When developing a new kedro node 
 
 We would recommend building a clean python function in a notebook which consumes the
-datasets of interest (e.g. `integration.prm.unified_nodes`). When you are happy with the
+datasets of interest (e.g. `integration.prm.filtered_nodes`). When you are happy with the
 function, you can copy it into the right place in the pipeline (various `nodes.py` files in `pipelines/matrix/src/matrix/pipelines/`) and wire it up with the rest of the pipeline using the syntax shown in various `pipeline.py` files.
 
 ## Other Enhancements 🚀
@@ -119,7 +118,7 @@ To read only a specific knowledge graph from our combined data, you can filter t
 
 ```python
 from pyspark.sql import functions as f
-nodes = catalog.load("integration.prm.unified_nodes")
+nodes = catalog.load("integration.prm.filtered_nodes")
 nodes.show()
 # note this loads data from the cloud which may take a while depending on your internet connection
 nodes.filter(f.array_contains("upstream_data_source", "RTXKG2")).show()
@@ -170,7 +169,7 @@ We have progressed the following workstreams:
  -  We have developed a first version of adding timestamps to the edges, and now have ~27% timestamped. This should enable us to execute more robust time-split-validation experiments in the future. ([#588](https://github.com/everycure-org/matrix/issues/588))
  - Work to compare performance of existing models with TxGNN has made significant progress and our first experimental runs are now complete. Ongoing work will compare this method with our baseline KGML-xDTD approach. ([#586](https://github.com/everycure-org/matrix/issues/586))
 - We now have the ability to perform multiple folds of cross validation in the modeling and evaluation suite. This should enable us to better estimate stability and confidence in our model predictions ([#587](https://github.com/everycure-org/matrix/issues/587))
-- We have implemented the ability to run a full comparison of treat scores using various embedding models, such as Node2Vec, PubmedBERT, and OpenAI ([#301](https://github.com/everycure-org/matrix/issues/301).
+- We have implemented the ability to run a [full comparison of treat scores using various embedding models](../../../experiments/2024/e2e_stability_exp.ipynb), such as Node2Vec, PubmedBERT, and OpenAI ([#301](https://github.com/everycure-org/matrix/issues/301).
 
 ## Next Steps 🔮
 

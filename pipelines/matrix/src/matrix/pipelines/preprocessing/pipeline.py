@@ -1,137 +1,62 @@
 from kedro.pipeline import Pipeline, node, pipeline
 
 from . import nodes
+from .tagging import generate_tags
 
-# NOTE: Preprocessing pipeline is not well optimized and thus might take a while to run.
 
-
-def create_embiology_pipeline() -> Pipeline:
-    """Embiology cleaning and preprocessing"""
+def create_pipeline(**kwargs) -> Pipeline:
+    """Create preprocessing pipeline."""
     return pipeline(
         [
-            # Copying these data sources locally improves performance in the later steps.
+            # -------------------------------------------------------------------------
+            # EC Medical Team ingestion and enrichment
+            # -------------------------------------------------------------------------
             node(
-                func=lambda x: x,
-                inputs="preprocessing.raw.embiology.node_attributes",
-                outputs="preprocessing.int.embiology.node_attributes@pandas",
-                name="write_embiology_attr_to_tmp",
-                tags=["ingest-embiology-kg"],
+                func=nodes.process_medical_nodes,
+                inputs=["preprocessing.raw.nodes", "params:preprocessing.name_resolution.url"],
+                outputs="preprocessing.int.nodes",
+                name="normalize_ec_medical_team_nodes",
+                tags=["ec-medical-kg"],
             ),
             node(
-                func=lambda x: x,
-                inputs="preprocessing.raw.embiology.ref_pub",
-                outputs="preprocessing.int.embiology.ref_pub@pandas",
-                name="write_embiology_ref_pub_to_tmp",
-                tags=["ingest-embiology-kg"],
-            ),
-            node(
-                func=lambda x: x,
-                inputs="preprocessing.raw.embiology.nodes",
-                outputs="preprocessing.int.embiology.nodes@pandas",
-                name="write_embiology_nodes_to_tmp",
-                tags=["ingest-embiology-kg"],
-            ),
-            node(
-                func=lambda x: x,
-                inputs="preprocessing.raw.embiology.edges",
-                outputs="preprocessing.int.embiology.edges@pandas",
-                name="write_embiology_edges_to_tmp",
-                tags=["ingest-embiology-kg"],
-            ),
-            node(
-                func=lambda x: x,
-                inputs="preprocessing.raw.embiology.manual_id_mapping",
-                outputs="preprocessing.int.embiology.manual_id_mapping@pandas",
-                name="write_embiology_id_mapping_to_tmp",
-                tags=["ingest-embiology-kg"],
-            ),
-            node(
-                func=lambda x: x,
-                inputs="preprocessing.raw.embiology.manual_name_mapping",
-                outputs="preprocessing.int.embiology.manual_name_mapping@pandas",
-                name="write_embiology_name_mapping_to_tmp",
-                tags=["ingest-embiology-kg"],
-            ),
-            node(
-                func=nodes.get_embiology_node_attributes_normalised_ids,
+                func=nodes.process_medical_edges,
                 inputs=[
-                    "preprocessing.int.embiology.node_attributes@spark",
-                    "preprocessing.int.embiology.nodes@spark",
-                    "preprocessing.int.embiology.manual_id_mapping@spark",
-                    "preprocessing.int.embiology.manual_name_mapping@spark",
-                    "params:preprocessing.embiology.attr.identifiers_mapping",
-                    "params:preprocessing.embiology.normalization",
+                    "preprocessing.int.nodes",
+                    "preprocessing.raw.edges",
                 ],
-                outputs="preprocessing.int.embiology.node_attributes_normalised_ids@pandas",
-                name="get_embiology_node_attributes_normalised_ids",
-                tags=["embiology-kg"],
+                outputs="preprocessing.int.edges",
+                name="create_int_ec_medical_team_edges",
+                tags=["ec-medical-kg"],
             ),
             node(
-                func=nodes.normalise_embiology_nodes,
+                func=lambda x, y: [x, y],
                 inputs=[
-                    "preprocessing.int.embiology.nodes@spark",
-                    "preprocessing.int.embiology.node_attributes_normalised_ids@spark",
-                    "params:preprocessing.embiology.nodes.biolink_mapping",
+                    "preprocessing.int.nodes",
+                    "preprocessing.int.edges",
                 ],
-                outputs="preprocessing.prm.embiology.nodes",
-                name="normalise_embiology_nodes",
-                tags=["embiology-kg"],
+                outputs=["ingestion.raw.ec_medical_team.nodes@pandas", "ingestion.raw.ec_medical_team.edges@pandas"],
+                name="produce_medical_kg",
+                tags=["ec-medical-kg"],
             ),
-            node(
-                func=nodes.generate_embiology_edge_attributes,
-                inputs=[
-                    "preprocessing.int.embiology.ref_pub@spark",
-                ],
-                outputs="preprocessing.int.embiology.edge_attributes",
-                name="generate_embiology_edge_attributes",
-                tags=["embiology-kg"],
-            ),
-            node(
-                func=nodes.prepare_embiology_edges,
-                inputs=[
-                    "preprocessing.int.embiology.edges@spark",
-                    "preprocessing.int.embiology.edge_attributes",
-                    "params:preprocessing.embiology.edges.biolink_mapping",
-                ],
-                outputs="preprocessing.prm.embiology.edges",
-                name="prepare_embiology_edges",
-                tags=["embiology-kg"],
-            ),
-            node(
-                func=nodes.deduplicate_and_clean_embiology_kg,
-                inputs=[
-                    "preprocessing.prm.embiology.nodes",
-                    "preprocessing.prm.embiology.edges",
-                ],
-                outputs=[
-                    "preprocessing.prm.embiology.nodes_final",
-                    "preprocessing.prm.embiology.edges_final",
-                ],
-                name="deduplicate_and_clean_embiology_kg",
-                tags=["embiology-kg"],
-            ),
-        ]
-    )
-
-
-def create_ec_clinical_data_pipeline() -> Pipeline:
-    """EC Clinical Data ingestion and name->id mapping"""
-    return pipeline(
-        [
+            # -------------------------------------------------------------------------
+            # EC Clinical Trials ingestion and enrichment
+            # -------------------------------------------------------------------------
             node(
                 func=nodes.add_source_and_target_to_clinical_trails,
                 inputs={
                     "df": "preprocessing.raw.clinical_trials_data",
                     "resolver_url": "params:preprocessing.name_resolution.url",
-                    "batch_size": "params:preprocessing.name_resolution.batch_size",
                 },
                 outputs="preprocessing.int.mapped_clinical_trials_data",
                 name="mapped_clinical_trials_data",
                 tags=["ec-clinical-trials-data"],
             ),
+            # NOTE: Clean up the clinical trial data and write it to the GCS bucket
             node(
                 func=nodes.clean_clinical_trial_data,
-                inputs={"df": "preprocessing.int.mapped_clinical_trials_data"},
+                inputs=[
+                    "preprocessing.int.mapped_clinical_trials_data",
+                ],
                 outputs={
                     "nodes": "ingestion.raw.ec_clinical_trails.nodes@pandas",
                     "edges": "ingestion.raw.ec_clinical_trails.edges@pandas",
@@ -139,74 +64,59 @@ def create_ec_clinical_data_pipeline() -> Pipeline:
                 name="clean_clinical_trial_data",
                 tags=["ec-clinical-trials-data"],
             ),
+            # -------------------------------------------------------------------------
+            # Drug List ingestion
+            # -------------------------------------------------------------------------
             node(
                 func=lambda x: x,
-                inputs="preprocessing.int.mapped_clinical_trials_data",
-                outputs="preprocessing.reporting.mapped_clinical_trials_data",
-                name="report_clinical_trial_data",
-                tags=["ec-clinical-trials-data"],
+                inputs=["preprocessing.raw.drug_list"],
+                outputs="ingestion.raw.drug_list.nodes@pandas",
+                name="write_drug_list",
+                tags=["drug-list"],
             ),
-        ]
-    )
-
-
-def create_ec_medical_team_pipeline() -> Pipeline:
-    """EC Medical Team ingestion and name-> id mapping"""
-    return pipeline(
-        [
+            # -------------------------------------------------------------------------
+            # Disease List ingestion and enrichment
+            # -------------------------------------------------------------------------
             node(
-                func=nodes.process_medical_nodes,
-                inputs={
-                    "df": "preprocessing.raw.ec_medical_team.nodes",
-                    "resolver_url": "params:preprocessing.name_resolution.url",
-                    "batch_size": "params:preprocessing.name_resolution.batch_size",
-                },
-                outputs="ingestion.raw.ec_medical_team.nodes@pandas",
-                name="normalize_ec_medical_team_nodes",
-                tags=["ec-medical-kg"],
-            ),
-            node(
-                func=nodes.process_medical_edges,
-                inputs={
-                    "int_nodes": "ingestion.raw.ec_medical_team.nodes@pandas",
-                    "raw_edges": "preprocessing.raw.ec_medical_team.edges",
-                },
-                outputs="ingestion.raw.ec_medical_team.edges@pandas",
-                name="create_int_ec_medical_team_edges",
-                tags=["ec-medical-kg"],
-            ),
-            node(
-                func=nodes.report_to_gsheets,
+                func=generate_tags,
                 inputs=[
-                    "ingestion.raw.ec_medical_team.nodes@pandas",
-                    "preprocessing.raw.ec_medical_team.nodes",
-                    "params:preprocessing.medical_kg_gsheets.nodes",
+                    "preprocessing.raw.disease_list",
+                    "params:preprocessing.enrichment.model",
+                    "params:preprocessing.enrichment.tags",
                 ],
-                outputs="preprocessing.reporting.ec_medical_team.nodes",
-                name="report_ec_medical_team_nodes",
-                tags=["ec-medical-kg"],
+                outputs="ingestion.raw.disease_list.nodes@pandas",
+                name="enrich_disease_list",
+                tags=["disease-list"],
+            ),
+            # -------------------------------------------------------------------------
+            # Ground Truth ingestion and preprocessing
+            # -------------------------------------------------------------------------
+            node(
+                func=nodes.create_gt,
+                inputs={
+                    "pos_df": "preprocessing.raw.ground_truth.positives",
+                    "neg_df": "preprocessing.raw.ground_truth.negatives",
+                },
+                outputs="preprocessing.int.ground_truth.combined",
+                name="create_gt_dataframe",
+                tags=["ground-truth"],
             ),
             node(
-                func=nodes.report_to_gsheets,
-                inputs=[
-                    "ingestion.raw.ec_medical_team.edges@pandas",
-                    "preprocessing.raw.ec_medical_team.edges",
-                    "params:preprocessing.medical_kg_gsheets.edges",
-                ],
-                outputs="preprocessing.reporting.ec_medical_team.edges",
-                name="report_ec_medical_team_edges",
-                tags=["ec-medical-kg"],
+                func=nodes.create_gt_nodes_edges,
+                inputs="preprocessing.int.ground_truth.combined",
+                outputs=["preprocessing.int.ground_truth.nodes@pandas", "preprocessing.int.ground_truth.edges@pandas"],
+                name="create_nodes_and_edges",
+                tags=["ground-truth"],
             ),
-        ]
-    )
-
-
-def create_pipeline() -> Pipeline:
-    """Create preprocessing pipeline."""
-    return pipeline(
-        [
-            create_embiology_pipeline(),
-            create_ec_clinical_data_pipeline(),
-            create_ec_medical_team_pipeline(),
+            node(
+                func=lambda x, y: [x, y],
+                inputs=[
+                    "preprocessing.int.ground_truth.nodes@pandas",
+                    "preprocessing.int.ground_truth.edges@pandas",
+                ],
+                outputs=["ingestion.raw.ground_truth.nodes@pandas", "ingestion.raw.ground_truth.edges@pandas"],
+                name="produce_ground_truth_kg",
+                tags=["ground-truth"],
+            ),
         ]
     )

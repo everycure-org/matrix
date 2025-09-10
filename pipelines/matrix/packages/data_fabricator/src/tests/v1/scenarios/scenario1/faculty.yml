@@ -1,0 +1,15 @@
+tables:
+  - _target_: data_fabricator.v1.core.mock_generator.create_table
+    name: faculty
+    num_rows: 5
+    columns:
+      faculty_id:
+        _metadata_:
+          primary_key: True
+        _target_: data_fabricator.v1.core.mock_generator.UniqueId
+      name:
+        _target_: data_fabricator.v1.core.mock_generator.Faker
+        provider: name
+      course:
+        _target_: data_fabricator.v1.core.mock_generator.ValuesFromSamples
+        sample_values: ["engineering", "computer science", "mathematics"]

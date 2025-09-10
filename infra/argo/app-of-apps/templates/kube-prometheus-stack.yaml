@@ -12,21 +12,11 @@ spec:
     path: {{ .Values.spec.source.repoPath }}/kube-prometheus-stack
     repoURL: {{ .Values.spec.source.repoURL }}
     targetRevision: {{ .Values.spec.source.targetRevision }}
-    helm:
-      parameters:
-        - name: spec.source.targetRevision
-          value: {{ .Values.spec.source.targetRevision}}
-        - name: spec.source.environment
-          value: {{ .Values.spec.source.environment}}
-        - name: spec.source.project_id
-          value: {{ .Values.spec.source.project_id}}
-        - name: spec.source.aip_oauth_client_id
-          value: {{ .Values.spec.source.aip_oauth_client_id }}
   syncPolicy:
     syncOptions:     # Sync options which modifies sync behavior
     - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
     - ServerSideApply=true # to ensure CRDs are deployed
     - PruneLast=true
-    - Replace=false # must be false or else https://github.com/argoproj/argo-cd/issues/13100
+    - Replace=true
     automated: 
       prune: true

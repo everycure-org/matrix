@@ -1,5 +1,6 @@
 import logging
 
+import pandera.pyspark as pa
 import pyspark.sql as ps
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
@@ -10,13 +11,15 @@ logger = logging.getLogger(__name__)
 
 
 class MedicalTransformer(GraphTransformer):
-    """Transformer for medical data."""
-
-    def __init__(self, version: str, select_cols: str = True, drop_duplicates: bool = True):
-        super().__init__(version, select_cols)
-        self._drop_duplicates = drop_duplicates
-
     def transform_nodes(self, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
+        """Transform nodes to our target schema.
+
+        Args:
+            nodes_df: Nodes DataFrame.
+
+        Returns:
+            Transformed DataFrame.
+        """
         # fmt: off
         df = (
             nodes_df
@@ -33,23 +36,27 @@ class MedicalTransformer(GraphTransformer):
             # Filter nodes we could not correctly resolve
             .filter(f.col("id").isNotNull())
         )
-        # fmt: on
-
-        if self._drop_duplicates:
-            df = df.dropDuplicates(["id"])  # Drop any duplicate nodes
 
         return df
+        # fmt: on
 
     def transform_edges(self, edges_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
+        """Transform edges to our target schema.
+
+        Args:
+            edges_df: Edges DataFrame.
+            pubmed_mapping: pubmed mapping
+        Returns:
+            Transformed DataFrame.
+        """
         # fmt: off
-        df = (
+        edges = (
             edges_df
             .withColumn("subject",                       f.col("SourceId"))
             .withColumn("object",                        f.col("TargetId"))
             .withColumn("predicate",                     f.concat(f.lit("biolink:"), f.lit(":"), f.col("Label")))
             .withColumn("upstream_data_source",          f.array(f.lit("ec_medical")))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
-            .withColumn("agent_type",                    f.lit(None).cast(T.StringType()))
             .withColumn("aggregator_knowledge_source",   f.array(f.lit('medical team')))
             .withColumn("primary_knowledge_source",      f.lit('medical team').cast(T.StringType()))
             .withColumn("publications",                  f.array(f.lit('medical team')))
@@ -57,14 +64,9 @@ class MedicalTransformer(GraphTransformer):
             .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present
             .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present
             .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present
-            .withColumn("num_references",                f.lit(None).cast(T.IntegerType()))
-            .withColumn("num_sentences",                 f.lit(None).cast(T.IntegerType()))
+            
             # Filter edges we could not correctly resolve
             .filter(f.col("subject").isNotNull() & f.col("object").isNotNull())
         )
-        # fmt: on
 
-        if self._drop_duplicates:
-            df = df.dropDuplicates(["subject", "object", "predicate"])
-
-        return df
+        return edges

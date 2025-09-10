@@ -1,5 +1,4 @@
 ---
-title: v0.2.2
 draft: false 
 date: 2024-11-01
 categories:
@@ -114,7 +113,7 @@ Several improvements streamline development and deployment workflows based on co
 
 - **`make` and Onboarding Improvements:** Enhancements to the `make` targets and onboarding documentation streamline developer setup and project contribution.  A `make clean` target simplifies environment cleanup.
 - **Documentation Expansion:** Comprehensive documentation has been added for various aspects of the platform, including data science methodology, onboarding procedures, GraphSAGE comparison experiments and Node2Vec experiment results.
-- **Running one node locally with full cloud data:** `--from-env cloud` Enables reading data from specific environments as part of the `kedro run` command, enhancing flexibility during development and testing. This allows developers to test just their changes on full data locally, essentially "forking" off the cloud environment. [(Documentation)](../../../getting_started/first_steps/local-setup.md#plugging-into-cloud-outputs)
+- **Running one node locally with full cloud data:** `--from-env cloud` Enables reading data from specific environments as part of the `kedro run` command, enhancing flexibility during development and testing. This allows developers to test just their changes on full data locally, essentially "forking" off the cloud environment. [(Documentation)](../../../onboarding/local-setup.md#plugging-into-cloud-outputs)
 - **Kedro Submit Feature:**  Simplifies end-to-end pipeline execution on the current branch using the `kedro submit` feature. This feature will become more powerful going forward, allowing developers to submit workflows from their machine to our shared cluster for execution. [(Documentation)](../../../infrastructure/runbooks/03_run_pipeline_from_branch.md) 
 - **Neo4J Enterprise License Keys:** Enables access to enterprise features of Neo4J. We leverage this mainly for hosting several KG versions on a single server as well as using many CPU cores for the GDS library which is usually limited to a parallelism of 4.
 

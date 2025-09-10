@@ -50,10 +50,7 @@ variable "bucket_name" {
   type = string
 }
 
-variable "repo_revision" {
+variable "dns_zone" {
   type = string
-}
 
-variable "aip_oauth_client_id" {
-  type = string
 }

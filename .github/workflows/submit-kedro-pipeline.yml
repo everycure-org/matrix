@@ -3,16 +3,13 @@ name: Periodically run kedro kg-release
 on:
   schedule:
     - cron: '20 14 1 * 2' # At 15:20 CET on the 1st day of the month and on Tuesday.
-  workflow_dispatch:
-    inputs:
-      bump_type:
-        description: 'Type of version bump'
-        required: true
-        default: 'patch'
-        type: choice
-        options:
-          - patch
-          - minor
+
+env:
+  project_id: 'mtrx-hub-dev-3of'
+  workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
+  service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
+  region: 'us-central1'
+  cluster: 'compute-cluster'
 
 jobs:
 
@@ -20,7 +17,6 @@ jobs:
     runs-on: 
       labels: ubuntu-24.04
     name: Submit the Kedro Pipeline Periodically
-    environment: dev
     permissions:
       contents: 'write'
       id-token: 'write'
@@ -28,12 +24,10 @@ jobs:
  
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@main
         with:
-          token: ${{ secrets.PAT }}
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
-          submodules: recursive
 
       - name: Configure Git
         run: |
@@ -50,38 +44,42 @@ jobs:
               /usr/local/lib/android/sdk/ndk \
               "$AGENT_TOOLSDIRECTORY" && \
           df -h
-
+      
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install Argo & Python dependencies
+      - name: Set up kedro project dependencies
         working-directory: pipelines/matrix
         run: |
-          make install_argo
+          curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
+          gunzip argo-linux-amd64.gz
+          chmod +x argo-linux-amd64
+          sudo mv argo-linux-amd64 /usr/local/bin/argo
+          argo version
           pip install -r requirements.txt
 
       - name: Authenticate with Google Cloud
         id: auth
         uses: 'google-github-actions/auth@v2'
         with:
-          project_id: ${{ vars.PROJECT_ID }}
-          workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ vars.SERVICE_ACCOUNT }}
+          project_id: ${{env.project_id}}
+          workload_identity_provider: ${{env.workload_identity_provider}}
+          service_account: ${{env.service_account}}
           token_format: access_token
 
-      - uses: google-github-actions/get-gke-credentials@v1
+      - uses: google-github-actions/get-gke-credentials@v1 
       # configure authentication to a GKE cluster (configure kubectl)
         with:
-          cluster_name: ${{ vars.GKE_CLUSTER_NAME }}
-          location: ${{ vars.REGION }}
-          project_id: ${{ vars.PROJECT_ID }}
+          cluster_name: ${{env.cluster}}
+          location: ${{env.region}}
+          project_id: ${{env.project_id}}
 
       - name: Login to Google Artifact Registry 
         uses: docker/login-action@v3
         with:
-          registry: ${{ vars.REGION }}-docker.pkg.dev
+          registry: ${{env.region}}-docker.pkg.dev
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
 
@@ -92,80 +90,28 @@ jobs:
           echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
           echo "Latest tag is ${latest_tag}"
 
-      - name: Get bump type
-        run: |
-          if [[ "${{ github.event_name == 'schedule' }}" == "true" ]]; then
-            # If it's the first of the month, it's a minor bump, even if it's Tuesday. On all other Tuesdays, it's a patch.
-            [[ $(date +%-d) -eq 1 ]] && BUMP_TYPE='minor' || BUMP_TYPE='patch'
-          else
-            BUMP_TYPE="${{ github.event.inputs.bump_type }}"
-          fi
-          echo "Bump type is ${BUMP_TYPE}"
-          echo "BUMP_TYPE=${BUMP_TYPE}" >> "$GITHUB_ENV"
-
       - name: Increment version
         working-directory: docs/scripts
         run: |
           pip install semver
-          python bump_version.py --type="${{env.BUMP_TYPE}}" --tag="${{env.latest_tag}}" >> "$GITHUB_ENV"
-          echo "Release version is ${release_version}"
+          # If it's the first of the month, it's a minor bump, even if it's Tuesday. On all other Tuesdays, it's a patch.
+          [[ $(date +%-d) -eq 1 ]] && BUMP_TYPE='minor' || BUMP_TYPE='patch'
+          echo "Bumping version with type: ${BUMP_TYPE}"
+          python bump_version.py --type="${BUMP_TYPE}" >> "$GITHUB_ENV"
 
       - name: Branch off
         run: |
           git switch -C release/${{env.release_version}} "${{github.ref_name}}"
           git push
-      
-      - name: Authenticate with Google Cloud for ID token
-        id: id_auth
-        uses: 'google-github-actions/auth@v2'
-        with:
-          project_id: ${{ vars.PROJECT_ID }}
-          workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ vars.SERVICE_ACCOUNT }}
-          token_format: id_token
-          id_token_audience: ${{ secrets.GCP_ID_TOKEN_AUDIENCE }}
-          id_token_include_email: true
-
+          
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
-        env:
-          GH_TOKEN: ${{ secrets.PAT }}
-          GCP_TOKEN: ${{ steps.id_auth.outputs.id_token }}
         run: |
           echo "Submit the kedro pipeline"
-          if [ "${{ env.BUMP_TYPE }}" == "minor" ]; then
-            RELEASE_PIPELINE='kg_release'
-          else
-            RELEASE_PIPELINE='kg_release_patch'
-          fi
-          kedro experiment run \
+          kedro submit \
             --username GH-Actions-bot \
             --namespace argo-workflows \
-            --experiment-name scheduled-kg-release \
-            --run-name auto-kg-release-${{ env.release_version }} \
+            --run-name auto-kg-release \
             --release-version "${{ env.release_version }}" \
-            --pipeline ${RELEASE_PIPELINE} \
+            --pipeline kg_release \
             --headless
-
-  notify_failure:
-    # This condition ensures it runs only if any previous job fails
-    # we notify on main branches only
-    needs: submit_data_release_periodically
-    if: failure()
-    runs-on: "self-hosted"
-    steps:
-      - name: Post to a Slack channel
-        id: slack
-        uses: slackapi/slack-github-action@v1.26.0
-        with:
-          # Slack channel id, channel name, or user id to post message.
-          # See also: https://api.slack.com/methods/chat.postMessage#channels
-          # You can pass in multiple channels to post to by providing a comma-delimited list of channel IDs.
-          channel-id: 'C07HU35MKAQ' #github-notifications
-          # For posting a simple plain text message
-          slack-message: |
-            Release pipeline submission failed in GitHub Actions! 🚨
-
-            🚀 Action run link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

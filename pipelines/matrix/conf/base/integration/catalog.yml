@@ -17,7 +17,6 @@ _layer_int: &_layer_int
   metadata:
     kedro-viz:
       layer: integration
-
 _layer_prm: &_layer_prm
   metadata:
     kedro-viz:
@@ -26,6 +25,15 @@ _layer_prm: &_layer_prm
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
+
+
+# NOTE: We're plugging into the live source as we expect this to change rather,
+# moreover, we consider it highly unlikely that paths would suddently change
+# across biolink versions.
+
+integration.raw.biolink.categories:
+  type: kedro_datasets.json.JSONDataset
+  filepath: https://biolink.github.io/biolink-model/categories.json
 
 integration.int.{source}.nodes:
   <<: [*_spark_parquet, *_layer_int]
@@ -58,24 +66,38 @@ integration.int.{source}.nodes_norm_mapping:
   filepath: ${globals:paths.integration}/int/{source}/nodes_norm_mapping
 
 # Unified KGs
-integration.prm.unified_nodes:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/unified/nodes
-
 integration.prm.unified_edges:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/unified/edges
 
+integration.prm.unified_nodes:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.integration}/prm/unified/nodes
+
+# filtered KGs
+integration.prm.filtered_edges:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.integration}/prm/filtered/edges
+
+# FUTURE more elegant: Apply all node filters, then all edge filters, then a "cleanup" final step that removes
+# 1. all edges where nodes were deleted
+# 2. all nodes that have not one edge connected anymore
+integration.prm.prefiltered_nodes:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.integration}/prm/prefiltered/nodes
+
+integration.prm.filtered_nodes:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.integration}/prm/filtered/nodes
+
+
 # ==============================
 # Original sources: only used for sampling
 
-# The create_sample pipeline needs to pull data from the release, but write data in the sample environment
-# We need to define another entry in the base catalog, otherwise the sample environment integration.prm.unified_nodes will reference itself
-
-integration.prm.original.unified_nodes:
+integration.prm.original.filtered_nodes:
   <<: [*_spark_parquet]
-  filepath: ${globals:paths.integration}/prm/unified/nodes
-
-integration.prm.original.unified_edges:
+  filepath: ${globals:paths.integration}/prm/filtered/nodes
+  
+integration.prm.original.filtered_edges:
   <<: [*_spark_parquet]
-  filepath: ${globals:paths.integration}/prm/unified/edges
+  filepath: ${globals:paths.integration}/prm/filtered/edges

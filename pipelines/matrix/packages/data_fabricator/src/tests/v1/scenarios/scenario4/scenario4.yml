@@ -1,0 +1,21 @@
+tables:
+  - _target_: data_fabricator.v1.core.mock_generator.create_table
+    name: TestTable1
+    num_rows: 10
+    columns:
+      test1:
+        _target_: data_fabricator.v1.core.mock_generator.ValuesFromSamples
+        sample_values: [1, 2, 3]
+        prob_null_kwargs:
+          prob_null: 0.5
+      test2:
+        _target_: data_fabricator.v1.core.mock_generator.UniqueId
+        prob_null_kwargs:
+          prob_null: 0.2
+      test3:
+        _target_: data_fabricator.v1.core.mock_generator.RowApply
+        list_of_values: TestTable1.test2
+        row_func: "lambda x:x"
+        dtype:
+          _target_: hydra.utils.get_class # error is here
+          path: numpy.int64

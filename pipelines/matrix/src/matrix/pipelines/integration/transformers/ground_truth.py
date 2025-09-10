@@ -1,31 +1,34 @@
 import logging
 
-import pyspark.sql as ps
 import pyspark.sql.functions as f
 from pyspark.sql import DataFrame
 
-from .transformer import Transformer
+from .transformer import GraphTransformer
 
 logger = logging.getLogger(__name__)
 
 
-class KGMLGroundTruthTransformer(Transformer):
-    """Transformer for ground truth data"""
+class GroundTruthTransformer(GraphTransformer):
+    def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
+        """Transform nodes to our target schema.
 
-    def transform(self, edges_df: DataFrame, **kwargs) -> dict[str, DataFrame]:
-        edges = self._extract_edges(edges_df)
-        id_list = edges.select("subject").union(edges.select("object")).distinct().withColumnRenamed("subject", "id")
-        return {"nodes": id_list, "edges": edges}
+        Args:
+            nodes_df: Nodes DataFrame.
 
-    @staticmethod
-    def _extract_edges(edges_df: ps.DataFrame) -> ps.DataFrame:
-        return (
-            edges_df.withColumnRenamed("source", "subject")
-            .withColumnRenamed("target", "object")
-            .withColumn("disease", f.col("object"))
+        Returns:
+            Transformed DataFrame.
+        """
+        # fmt: off
+        return nodes_df
+        # fmt: on
+
+    def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
+        df = (
+            edges_df.withColumn("disease", f.col("object"))
             .withColumn("drug", f.col("subject"))
             .withColumn(
                 "y", f.when(f.col("indication").cast("boolean"), 1).when(f.col("contraindication").cast("boolean"), 0)
             )
             .withColumn("predicate", f.lit("clinical_trails"))
         )
+        return df

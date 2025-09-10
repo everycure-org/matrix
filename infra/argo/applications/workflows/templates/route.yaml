@@ -10,7 +10,7 @@ spec:
     namespace: gateway
     name: external-http
   hostnames:
-  - "argo.platform.{{ .Values.spec.source.environment }}.everycure.org"
+  - "argo.platform.dev.everycure.org"
   rules:
   - backendRefs:
     - name: argo-workflows-server

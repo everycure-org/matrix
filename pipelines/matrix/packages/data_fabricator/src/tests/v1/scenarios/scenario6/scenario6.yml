@@ -1,0 +1,61 @@
+accounts:
+  num_rows: 10
+  columns:
+    id:
+      type: generate_unique_id
+      id_start_range: 0
+      id_end_range: 10
+      id_length: 4
+    client_name:
+      type: faker
+      provider: name
+    acct_type:
+      type: generate_values
+      sample_values:
+        - savings
+        - current
+      seed: 1
+    acct_start_dt:
+      type: generate_dates
+      start_dt: 2020-01-01
+      end_dt: 2020-12-31
+      freq: M
+      seed: 1
+    random_val:
+      type: numpy_random
+      distribution: binomial
+      n: 1
+      p: 0.5
+transaction_statements:
+  num_rows: 20
+  columns:
+    transaction_id:
+      type: generate_unique_id
+      id_start_range: 00
+      id_end_range: 20
+      id_length: 6
+    acct_id:
+      type: explode
+      list_of_values:
+        - accounts.id
+        - accounts.acct_start_dt
+      explode_func: generate_dates
+      explode_func_kwargs:
+        start_dt: list_of_values[1]
+        end_dt: 2020-12-31
+        freq: M
+        num_rows: 2
+      position: 0
+    transaction_dt:
+      type: explode
+      list_of_values:
+        - accounts.id
+        - accounts.acct_start_dt
+      explode_func: generate_dates
+      explode_func_kwargs:
+        start_dt: list_of_values[1]
+        end_dt: 2020-12-31
+        freq: M
+        num_rows: 2
+      position: 2
+      

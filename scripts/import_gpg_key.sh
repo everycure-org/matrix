@@ -13,10 +13,4 @@ echo "The fingerprint is: $fingerprint"
 echo "$publicKey" | gpg --import
 
 echo "$fingerprint:6:" | gpg --import-ownertrust
-
-# Check if keyName is empty and conditionally pass it to git-crypt add-gpg-user
-if [ -z "$keyName" ] || [ "$keyName" == "default" ]; then
-    git-crypt add-gpg-user $fingerprint
-else
-    git-crypt add-gpg-user -k $keyName $fingerprint
-fi
+git-crypt add-gpg-user -k $keyName $fingerprint

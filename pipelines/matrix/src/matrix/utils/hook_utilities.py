@@ -63,9 +63,3 @@ def generate_dynamic_pipeline_mapping(
 
     env_var = f"KEDRO_DYNAMIC_PIPELINES_MAPPING_{'_'.join(path).upper()}"
     return string_to_native(os.getenv(env_var, mapping))
-
-
-def disable_private_datasets(config: dict) -> dict:
-    if not os.getenv("INCLUDE_PRIVATE_DATASETS", "") == "1":
-        config["integration"] = [item for item in config["integration"] if not item.get("is_private")]
-    return config

@@ -1,0 +1,15 @@
+tables:
+  - _target_: data_fabricator.v1.core.mock_generator.create_table
+    name: classes
+    num_rows: 10
+    columns:
+      student_id:
+        _target_: data_fabricator.v1.core.mock_generator.ForeignKey
+        foreign_key_cols:
+          - students.student_id
+        resize: True
+      course:
+        _target_: data_fabricator.v1.core.mock_generator.RowApply
+        list_of_values: "faculty.course"
+        row_func: "lambda x:x"
+        resize: True

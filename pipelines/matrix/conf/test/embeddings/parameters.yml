@@ -1,3 +1,11 @@
+# https://platform.openai.com/docs/guides/embeddings/faq
+# OpenAI embeddings support batching, up to 8000 tokens.
+embeddings.node:
+  batch_size: 1 # NOTE: The MockApi does not support batching, hence disabled
+  encoder:
+    encoder:
+     openai_api_base: ${oc.env:OPENAI_ENDPOINT}
+
 # Reducing dimensionality reduction to speed up runtime
 embeddings.dimensionality_reduction:
   transformer:
@@ -8,14 +16,3 @@ embeddings.topological:
     args:
       batchSize: 20
       embeddingDimension: 3
-
-
-embeddings.node:
-  resolver:
-    _object: matrix.pipelines.embeddings.encoders.DummyResolver
-
-embeddings.topological_estimator:
-  iterations: 1
-  embedding_dim: 3
-  walk_length: 2
-

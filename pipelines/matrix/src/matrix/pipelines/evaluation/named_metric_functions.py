@@ -129,7 +129,7 @@ class HypergeomAtN(NamedFunction):
 
             # Calculate expected overlap by chance
             expected_overlap = (self.n * self.n) / N
-            return {"stat": overlap / expected_overlap, "pvalue": hypergeom.sf(overlap - 1, N, self.n, self.n)}
+            return {"enrichment": overlap / expected_overlap, "pvalue": hypergeom.sf(overlap - 1, N, self.n, self.n)}
 
         return hypergeom_func
 
@@ -170,9 +170,9 @@ class SpearmanAtN(NamedFunction):
             ranks2 = [rank_set2[rank_set2.pair_id == item]["rank"].values.tolist()[0] for item in common_items]
             if len(ranks1) > 1:  # Ensure there are enough pairs to calculate correlation
                 out = spearmanr(ranks1, ranks2)
-                return {"stat": out.correlation, "pvalue": out.pvalue}
+                return {"correlation": out.correlation, "pvalue": out.pvalue}
             else:
-                return {"stat": float("nan"), "pvalue": float("nan")}
+                return {"correlation": float("nan"), "pvalue": float("nan")}
 
         return spearman_corr
 

@@ -40,6 +40,7 @@ repos:
     hooks:
     -   id: debug-statements
     -   id: check-merge-conflict
+    # FUTURE: Enable for yaml checks
     # -   id: check-yaml
 
   # checks github actions files for errors
@@ -47,8 +48,3 @@ repos:
     rev: v1.7.1
     hooks:
       - id: actionlint
-
-  - repo: https://github.com/gruntwork-io/pre-commit
-    rev: v0.1.26 # Get the latest from: https://github.com/gruntwork-io/pre-commit/releases
-    hooks:
-      - id: terragrunt-hclfmt

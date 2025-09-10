@@ -1,13 +1,9 @@
 import typer
-from dotenv import load_dotenv
 
 from matrix_cli.commands.code import app as code_app
-from matrix_cli.commands.comments import app as comments_app
 from matrix_cli.commands.data import data_app
 from matrix_cli.commands.gh_users import app as gh_users_app
 from matrix_cli.commands.releases import app as releases_app
-
-load_dotenv()
 
 app = typer.Typer(
     help="CLI tools for managing GitHub and releases",
@@ -37,12 +33,6 @@ app.add_typer(
     data_app,
     name="data",
     help="Data-related utility commands",
-)
-
-app.add_typer(
-    comments_app,
-    name="comments",
-    help="Github comment-related utility commands",
 )
 
 if __name__ == "__main__":

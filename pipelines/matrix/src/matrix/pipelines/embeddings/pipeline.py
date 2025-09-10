@@ -1,14 +1,29 @@
 from kedro.pipeline import Pipeline, pipeline
 
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
-from matrix.pipelines.embeddings import nodes
+from matrix.pipelines.batch import pipeline as batch_pipeline
+
+from . import nodes
 
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create embeddings pipeline."""
     return pipeline(
         [
-            *create_node_embeddings_pipeline().nodes,
+            batch_pipeline.create_pipeline(
+                # Source to uniquely identify dataset
+                source="node_embeddings",
+                # Input and output datasets
+                df="integration.prm.filtered_nodes",
+                output="embeddings.feat.graph.node_embeddings@spark",
+                # Transformer
+                columns="params:embeddings.node.input_features",
+                bucket_size="params:embeddings.node.batch_size",
+                transformer="params:embeddings.node.encoder",
+                # NOTE: These are kwargs
+                input_features="params:embeddings.node.input_features",
+                max_input_len="params:embeddings.node.max_input_len",
+            ),
             # Reduce dimension
             ArgoNode(
                 func=nodes.reduce_embeddings_dimension,
@@ -19,20 +34,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="embeddings.feat.graph.pca_node_embeddings",
                 name="apply_pca",
                 tags=["argowf.fuse", "argowf.fuse-group.node_embeddings"],
-                argo_config=ArgoResourceConfig(
-                    cpu_request=14,
-                    cpu_limit=14,
-                    memory_limit=120,
-                    memory_request=120,
-                    ephemeral_storage_request=256,
-                    ephemeral_storage_limit=256,
-                ),
             ),
             ArgoNode(
                 func=nodes.filter_edges_for_topological_embeddings,
                 inputs=[
-                    "filtering.prm.filtered_nodes",
-                    "filtering.prm.filtered_edges",
+                    "integration.prm.filtered_nodes",
+                    "integration.prm.filtered_edges",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                 ],
@@ -70,10 +77,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 argo_config=ArgoResourceConfig(
                     cpu_request=48,
                     cpu_limit=48,
-                    memory_limit=350,
-                    memory_request=350,
-                    ephemeral_storage_request=256,
-                    ephemeral_storage_limit=256,
+                    memory_limit=192,
+                    memory_request=120,
                 ),
             ),
             ArgoNode(
@@ -114,7 +119,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.extract_topological_embeddings,
                 inputs={
                     "embeddings": "embeddings.model_output.topological",
-                    "nodes": "filtering.prm.filtered_nodes",
+                    "nodes": "integration.prm.filtered_nodes",
                     "string_col": "params:embeddings.write_topological_col",
                 },
                 outputs="embeddings.feat.nodes",
@@ -138,12 +143,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.fuse",
                     "argowf.fuse-group.topological_pca",
                 ],
-                argo_config=ArgoResourceConfig(
-                    cpu_request=48,
-                    cpu_limit=48,
-                    memory_limit=350,
-                    memory_request=350,
-                ),
             ),
             ArgoNode(
                 func=nodes.visualise_pca,
@@ -159,23 +158,4 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
             ),
         ],
-    )
-
-
-def create_node_embeddings_pipeline() -> Pipeline:
-    from matrix.pipelines.batch.pipeline import cached_api_enrichment_pipeline  # resolve circular import
-
-    source = "node_embeddings"
-    workers = 20
-    return cached_api_enrichment_pipeline(
-        source=source,
-        workers=workers,
-        input="filtering.prm.filtered_nodes",
-        output="embeddings.feat.graph.node_embeddings@spark",
-        preprocessor="params:embeddings.node.preprocessor",
-        cache_miss_resolver="params:embeddings.node.resolver",
-        new_col="params:embeddings.node.target_col",
-        primary_key="params:embeddings.node.primary_key",
-        batch_size="params:embeddings.node.batch_size",
-        cache_schema="params:embeddings.node.cache_schema",
     )

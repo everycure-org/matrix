@@ -3,6 +3,7 @@ import pyspark.sql as ps
 import pytest
 from matrix.pipelines.embeddings.nodes import (
     _cast_to_array,
+    extract_topological_embeddings,
     ingest_nodes,
     reduce_embeddings_dimension,
 )
@@ -56,6 +57,22 @@ def pca_transformer() -> PCA:
 
 
 @pytest.fixture
+def sample_nodes_df(spark):
+    """Create sample nodes dataframe."""
+    schema = ps.types.StructType(
+        [
+            ps.types.StructField("id", ps.types.StringType(), False),
+            ps.types.StructField("name", ps.types.StringType(), True),
+            ps.types.StructField("category", ps.types.StringType(), True),
+        ]
+    )
+
+    data = [("node1", "Node 1", "Category A"), ("node2", "Node 2", "Category B"), ("node3", "Node 3", "Category A")]
+
+    return spark.createDataFrame(data, schema)
+
+
+@pytest.fixture
 def sample_string_embeddings_df(spark):
     """Create sample embeddings dataframe with string embeddings."""
     schema = ps.types.StructType(
@@ -69,6 +86,25 @@ def sample_string_embeddings_df(spark):
     data = [
         ("node1", "[1.0, 2.0, 3.0]", [0.1, 0.2]),
         ("node2", "[4.0, 5.0, 6.0]", [0.3, 0.4]),
+    ]
+
+    return spark.createDataFrame(data, schema)
+
+
+@pytest.fixture
+def sample_array_embeddings_df(spark):
+    """Create sample embeddings dataframe with array embeddings."""
+    schema = ps.types.StructType(
+        [
+            ps.types.StructField("id", ps.types.StringType(), False),
+            ps.types.StructField("topological_embedding", ps.types.ArrayType(ps.types.DoubleType()), True),
+            ps.types.StructField("pca_embedding", ps.types.ArrayType(ps.types.DoubleType()), True),
+        ]
+    )
+
+    data = [
+        ("node1", [1.0, 2.0, 3.0], [0.1, 0.2]),
+        ("node2", [4.0, 5.0, 6.0], [0.3, 0.4]),
     ]
 
     return spark.createDataFrame(data, schema)
@@ -109,7 +145,7 @@ def test_ingest_nodes_empty_df(spark: ps.SparkSession) -> None:
     )
 
     result = ingest_nodes(empty_df)
-    assert result.isEmpty()
+    assert result.count() == 0
 
 
 def test_reduce_embeddings_dimension_with_transformation(

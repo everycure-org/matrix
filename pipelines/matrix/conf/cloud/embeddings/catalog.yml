@@ -6,7 +6,7 @@ embeddings.reporting.loss:
     # to be able to upload to GCS. The ML Tracking server
     # is setup to not serve artifacts, thereby interacting
     # directly with GCS as a result.
-    type: kedro_datasets.matplotlib.MatplotlibDataset
+    type: kedro_datasets.matplotlib.MatplotlibWriter
     filepath: ${globals:paths.tmp}/convergence_plot.png
 
 embeddings.reporting.topological_pca_plot:
@@ -17,5 +17,5 @@ embeddings.reporting.topological_pca_plot:
     # to be able to upload to GCS. The ML Tracking server
     # is setup to not serve artifacts, thereby interacting
     # directly with GCS as a result.
-    type: kedro_datasets.matplotlib.MatplotlibDataset
+    type: kedro_datasets.matplotlib.MatplotlibWriter
     filepath: ${globals:paths.tmp}/pca_plot.png

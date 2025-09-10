@@ -1,112 +1,75 @@
-# When changing the score columns below, please change the panderas check for node make_predictions_and_sort to match the new schema
-matrix_generation.treat_score_col_name: &score-col "treat score"
-matrix_generation.not_treat_score_col_name: &score-col-not-treat "not treat score"
-matrix_generation.unknown_score_col_name:  &score-col-unknown "unknown score"
-
 matrix_generation.matrix_generation_options:
   batch_by: # Column to batch over when making predictions
     - target 
+  n_reporting: 100000 # Number of items in the final report
 
-# Strategies for reporting nodes
+matrix_generation.matrix:
+  metadata:
+    drug_list:
+      drug_id: "Drug identifier"
+      drug_name: "Drug name"
+    disease_list:
+      disease_id: "Disease identifier"
+      disease_name: "Disease name"
+    kg_data:
+      pair_id: "Unique identifier for each pair"
+      kg_drug_id: "Drug identifier in the knowledge graph"
+      kg_drug_name: "Drug name in the knowledge graph"
+      kg_disease_id: "Disease identifier in the knowledge graph"
+      kg_disease_name: "Disease name in the knowledge graph"
+  # Note that you can add any stats as long as they are compatible with pandas transform function
+  stats_col_names:
+    per_disease:
+      top:
+        mean: "Mean probability score"
+        median: "Median probability score"
+      all:
+        mean: "Mean probability score"
+        median: "Median probability score"
+    per_drug:
+      top:
+        mean: "Mean probability score"
+        median: "Median probability score"
+      all:
+        mean: "Mean probability score"
+        median: "Median probability score"
+    full:
+      mean: "Mean probability score"
+      median: "Median probability score"
+  tags:
+    drugs:
+      available_USA: "Whether drug is prescriped or discontinued in USA"
+      is_steroid: "Whether drug is a steroid"
+      is_antimicrobial: "Whether drug is an antimicrobial"
+      is_glucose_regulator: "Whether drug is a glucose regulator"
+      is_chemotherapy: "Whether drug is a chemotherapy"
+    pairs:
+      is_known_positive: "Whether the pair is a known positive, based on literature and clinical trials"
+      is_known_negative: "Whether the pair is a known negative, based on literature and clinical trials"
+    diseases:
+      is_cancer: "Whether disease is a cancer"
+      is_pathogen_caused: "Whether disease is a pathogen caused"
+      is_glucose_dysfunction: "Whether disease is a glucose dysfunction"
+      tag_existing_treatment: "Whether disease has existing treatments"
+      tag_QALY_lost: "Whether disease has Quality Adjusted Life Years (QALY) lost"
+    master: 
+      legend: "Excludes any pairs where the following conditions are met: known positive or negative status, antimicrobial drug with pathogen-caused disease, steroid drug, chemotherapy with cancer, or glucose regulator drug with glucose dysfunction disease"
+      conditions:
+        - [is_known_positive]
+        - [is_known_negative]
+        - [is_antimicrobial, is_pathogen_caused]
+        - [is_steroid]
+        - [is_glucose_regulator, is_glucose_dysfunction]
+        - [is_chemotherapy, is_cancer]
 
-matrix_generation.n_reporting: &n_reporting 10000 # Number of items "top pairs" reporting table
-matrix_generation.n_sample_scatter: &n-sample-scatter 1000000 # Number of sample pairs to take for the scatter plot
+matrix_generation.run:
+  workflow_id: ${oc.env:WORKFLOW_ID, local}
+  run_name: ${globals:run_name}
+  mlflow_link: ${globals:mlflow_url}
+  git_sha: ${globals:git_sha}
+  release_version: ${globals:versions.release}
+  versions: ${globals:data_sources}
 
-matrix_generation.reporting_nodes:
-  plots:
-    histogram_treat:
-      _object: matrix.pipelines.matrix_generation.reporting_plots.SingleScoreHistogram
-      name: "log_histogram_treat_score"
-      score_col: *score-col
-      is_log_y_scale: True
-
-    histogram_all:
-      _object: matrix.pipelines.matrix_generation.reporting_plots.MultiScoreHistogram
-      name: "log_histograms_all_scores"
-      score_cols_lst:
-        - *score-col
-        - *score-col-not-treat
-        - *score-col-unknown
-      is_log_y_scale: True
-
-    line_plot_treat:
-      _object: matrix.pipelines.matrix_generation.reporting_plots.SingleScoreLinePlot
-      name: "log_line_plot_treat_score"
-      score_col: *score-col
-      is_log_y_scale: True
-
-    scatter_plot_not_treat:
-      _object: matrix.pipelines.matrix_generation.reporting_plots.SingleScoreScatterPlot
-      name: "scatter_plot_not_treat"
-      score_col: *score-col-not-treat
-      n_sample: *n-sample-scatter
-
-    scatter_plot_unknown:
-      _object: matrix.pipelines.matrix_generation.reporting_plots.SingleScoreScatterPlot
-      name: "scatter_plot_unknown"
-      score_col: *score-col-unknown
-      n_sample: *n-sample-scatter
-
-  tables:
-    matrix_run_info:
-      _object: matrix.pipelines.matrix_generation.reporting_tables.MatrixRunInfo 
-      name: "matrix_run_info" 
-      workflow_id: ${oc.env:WORKFLOW_ID, local}
-      run_name: ${globals:run_name}
-      git_sha: ${globals:git_sha}
-      release_version:  ${globals:versions.release}
-      versions: ${globals:data_sources}
-
-    top_pairs_treat:
-      _object: matrix.pipelines.matrix_generation.reporting_tables.TopPairs
-      name: "top_pairs_treat_score" 
-      n_reporting: *n_reporting
-      score_col: *score-col
-
-    top_pairs_not_treat:
-      _object: matrix.pipelines.matrix_generation.reporting_tables.TopPairs
-      name: "top_pairs_not_treat_score" 
-      n_reporting: *n_reporting
-      score_col: *score-col-not-treat
-
-    top_pairs_unknown:
-      _object: matrix.pipelines.matrix_generation.reporting_tables.TopPairs 
-      name: "top_pairs_unknown_score" 
-      n_reporting: *n_reporting
-      score_col: *score-col-unknown
-
-    rank_to_treat:
-      _object: matrix.pipelines.matrix_generation.reporting_tables.RankToScore
-      name: "rank_to_treat_score"
-      ranks_lst:
-        - 1000
-        - 10000
-        - 100000
-        - 1000000
-      score_col: *score-col
-
-    frequent_flyer_drugs:
-      _object: matrix.pipelines.matrix_generation.reporting_tables.TopFrequentFlyers
-      name: "top_frequent_flyer_drugs" 
-      is_drug_mode: True # True for drug frequent flyers, False for disease frequent flyers
-      count_in_n_lst: # Count occurrence in top n for these values of n
-        - 1000
-        - 10000
-        - 100000
-      # Statistic to sort by. 
-      # Choose from: "count_in_{n}" for value of n  in count_in_n_lst, "mean", "max"
-      sort_by_col: "count_in_10000" 
-      score_col: *score-col
-
-    frequent_flyer_diseases:
-      _object: matrix.pipelines.matrix_generation.reporting_tables.TopFrequentFlyers
-      name: "top_frequent_flyer_diseases" 
-      is_drug_mode: False # True for drug freqent flyers, False for disease frequent flyers
-      count_in_n_lst: # Count occurrence in top n for these values of n
-        - 1000
-        - 10000
-        - 100000
-      # Statistic to sort by. 
-      # Choose from: "count_in_{n}" for value of n  in count_in_n_lst, "mean", "max"
-      sort_by_col: "count_in_10000" 
-      score_col: *score-col
+matrix_generation.treat_score_col_name: &score-col "treat score"
+matrix_generation.not_treat_score_col_name: "not treat score"
+matrix_generation.unknown_score_col_name: "unknown score"

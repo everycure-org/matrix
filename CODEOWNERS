@@ -1,5 +1,8 @@
-# See documentation: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#example-of-a-codeowners-file
+# we invite sub-teams to create their own team under the matrix-all team at https://github.com/orgs/everycure-org/teams and 
+# add themselves here to a specific path that they want to be responsible for
 
-# setting core maintainers for this repo, at least one of them needs to approve a PRs
+# -------------------------------------------------------------------------------------------------
 * @everycure-org/core-maintainers
-
+docs @everycure-org/code-reviewers
+infra/ @everycure-org/infra
+pipelines/matrix/ @everycure-org/core-maintainers @everycure-org/code-reviewers

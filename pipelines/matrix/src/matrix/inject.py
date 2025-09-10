@@ -1,6 +1,5 @@
 import functools
 import importlib
-import inspect
 import logging
 import re
 from copy import deepcopy
@@ -68,23 +67,16 @@ def _parse_for_objects(param, exclude_kwargs: List[str] = None) -> Dict:
         # for functions
         if isinstance(obj, (BuiltinFunctionType, FunctionType)):
             if new_dict or instantiate:
-                instantiated_obj = functools.partial(obj, **new_dict)
-                try:
-                    # backwards compatibility check where some invocations of inject_object expect the function to be fully called
-                    instantiated_obj = instantiated_obj()
-                except TypeError:
-                    pass  # keep it as partial
+                instantiated_obj = obj(**new_dict)
             else:
                 instantiated_obj = obj
 
         # for classes
-        elif inspect.isclass(obj):
+        else:
             if instantiate is False:
                 instantiated_obj = obj
             else:
                 instantiated_obj = obj(**new_dict)
-        else:
-            return obj
 
         return instantiated_obj
 

@@ -8,17 +8,9 @@ neo4j:
 
 # points at our central GCS_BUCKET where we store our ground truth data
 # Note: Overwrite with WG project ID & bucket if you want to write to a different project's BigQuery
-# We always ingest public datasets from the dev bucket, to avoid having to keep it in sync between prod and dev bucket.
-dev_gcs_bucket: gs://mtrx-us-central1-hub-dev-storage
-prod_gcs_bucket: gs://mtrx-us-central1-hub-prod-storage
-# Public GCS bucket for public datasets
-public_gcs_bucket: gs://data.dev.everycure.org
-
-runtime_gcs_bucket: gs://${oc.env:RUNTIME_GCP_BUCKET}
-runtime_gcp_project: ${oc.env:RUNTIME_GCP_PROJECT_ID}
-
-dev_gcp_project_id: mtrx-hub-dev-3of
-
+gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
+source_gcs_bucket: ${gcs_bucket}
+gcp_project: ${oc.env:GCP_PROJECT_ID, mtrx-hub-dev-3of}
 git_sha: ${oc.env:GIT_SHA, default-sha}
 gh_token: ${oc.env:GH_TOKEN, dummy}
 
@@ -28,13 +20,11 @@ versions:
 
 data_sources:
   rtx_kg2:
-    version: &_rtx_kg_version v2.10.0_validated
+    version: &_rtx_kg_version v2.7.3 #when bumping to 2.10, we should stop to limit PMID for the semmed filtering
   robokop:
-    version: 30fd1bfc18cd5ccb
+    version: c5ec1f282158182f
   spoke:
-    version: V5.7
-  embiology:
-    version: 03032025
+    version: V5.2
 # Dataset with node and edge proposals by the
 # EveryCure medical team.
   ec_medical_team:
@@ -44,46 +34,34 @@ data_sources:
   ec_clinical_trials:
     version: 20230309 # NOTE: Here 0309 is a period of time (here Mar to Sep 2023)
   drug_list:
-    # check releases here: https://github.com/everycure-org/core-entities/releases
-    version: v0.1.1
+    # check releases here: https://github.com/everycure-org/matrix-drug-list/releases
+    version: "Release v2.0.0"
   disease_list:
-    # check releases here: https://github.com/everycure-org/core-entities/releases
-    version: v0.1.3
+    # check releases here: https://github.com/everycure-org/matrix-disease-list/releases
+    version: "2024-12-20 release"
   gt:
     version: *_rtx_kg_version # NOTE: This is the version of the GT dataset which was developed for rtx-kg2 as a part of KGML-xDTD pipeline
-  drugmech:
-    # check releases here: https://github.com/SuLab/DrugMechDB/releases/ 
-    version: 2.0.1
-  off_label:
-    version: v0.1
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation. Will make PR.
 mlflow_artifact_root: null
-mlflow_experiment_id: null
 
-mlflow_url: ${oc.env:MLFLOW_URL}
+mlflow_url: https://mlflow.platform.dev.everycure.org/
+
 paths:
   # Upstream-source versioned
-  raw:             ${dev_gcs_bucket}/data/01_RAW
-  raw_private:     ${prod_gcs_bucket}/data/01_RAW
+  raw:                ${source_gcs_bucket}/kedro/data/01_raw
+  kg_raw:             ${gcs_bucket}/data/01_RAW
   ingestion:          data/ingestion
-  # public data sources
-  raw_public:      ${public_gcs_bucket}/data/01_RAW
 
   # Release-based
   integration:        data/releases/${versions.release}/datasets/integration
+  embeddings:         data/releases/${versions.release}/datasets/embeddings
   release:            data/releases/${versions.release}/datasets/release
 
   # Run-based
-  filtering:          data/releases/${versions.release}/runs/${run_name}/datasets/filtering
-  embeddings:         data/releases/${versions.release}/runs/${run_name}/datasets/embeddings
   modelling:          data/releases/${versions.release}/runs/${run_name}/datasets/modelling
-  matrix_generation:  data/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
-  matrix_transformations:  data/releases/${versions.release}/runs/${run_name}/datasets/matrix_transformations
   evaluation:         data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
+  matrix_generation:  data/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
   inference:          data/releases/${versions.release}/runs/${run_name}/datasets/inference
  
   tmp:                data/tmp
-
-  # Embedding cache dataset
-  cache:              data/cache

@@ -1,0 +1,212 @@
+name: Infrastructure Deploy
+
+# FUTURE
+# This will eventually need to be turned into a call'able workflow_call version where we
+# call this for each terragrunt module that should be deployed depending on the path
+# changed in the repo or the branch we're on. For now it's hard-coded to `hub/dev`
+
+
+on:
+  pull_request:
+    # Sequence of patterns matched against refs/heads
+    branches:
+      - infra
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+  push:
+    branches:
+      - infra
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+env:
+  tf_version: '1.5.7'
+  tg_version: '0.58.11'
+  working_dir: 'infra/'
+
+jobs:
+  # Uncomment this for debugging the JWT tokens
+  debug:
+    runs-on: 'ubuntu-latest'
+    environment: dev
+    if: github.ref == 'refs/heads/infra'
+    permissions:
+      id-token: 'write'
+      contents: 'read'
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+      # note this does NOT fail even if the credentials are invalid!
+      - name: Checkout actions-oidc-debugger
+        uses: actions/checkout@v3
+        with:
+          repository: github/actions-oidc-debugger
+          ref: main
+          path: ./.github/actions/actions-oidc-debugger
+      - name: Debug OIDC Claims
+        uses: ./.github/actions/actions-oidc-debugger
+        with:
+          audience: '${{ github.server_url }}/${{ github.repository_owner }}'
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider}}
+          service_account: ${{vars.service_account}}
+      - run: cat /home/runner/work/matrix/matrix/gha-creds*
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+        with:
+          version: '>= 363.0.0'
+  
+      - name: 'Use gcloud CLI'
+        run: 'gsutil ls gs://mtrx-us-central1-hub-dev-storage/'
+
+  # leveraging a paths-filter approach to be able to make this run required for all PRs while still
+  # not blocking merging with "Expected" for those runs that have a paths filter
+  # FUTURE eventually github will likely fix this
+  # https://github.com/orgs/community/discussions/26698
+  paths_filter:
+    if: github.event.pull_request.draft == false || github.ref == 'refs/heads/infra'
+    runs-on: 'ubuntu-latest'
+    permissions: 
+      pull-requests: read
+      contents: 'read'
+    outputs: 
+      changed: ${{ steps.changes.outputs.src }}
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            src:
+              - .github/workflows/infra-deploy.yml
+              - infra/modules/**
+              - infra/deployments/**
+              - infra/*.tf
+              - infra/*.hcl
+      
+
+  checks:
+    runs-on: ubuntu-latest
+    needs: [paths_filter]
+    if: needs.paths_filter.outputs.changed == 'true'
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+           terraform_version: "^1.5.7"
+           terraform_wrapper: false
+
+      - name: Check terragrunt HCL
+        uses: gruntwork-io/terragrunt-action@v2
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ env.working_dir }}/deployments
+          tg_command: 'hclfmt --terragrunt-check --terragrunt-diff'
+      - name: check terraform files
+        run: terraform fmt -check -recursive ${{ env.working_dir }}
+
+  plan:
+    # runs under RO user
+    runs-on: ubuntu-latest
+    name: Plan Terraform
+    needs: [ checks ]
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+           terraform_version: "^1.5.7"
+           terraform_wrapper: false
+      - name: Setup git-crypt
+        id: git-crypt
+        run: |
+          sudo apt-get install git-crypt -y
+          echo ${{ secrets.GIT_CRYPT_KEY }} | base64 -d > TMP_KEY
+          git-crypt unlock TMP_KEY
+          rm -rf TMP_KEY
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider}}
+          service_account: ${{vars.service_account}}
+
+      - name: Plan
+        uses: gruntwork-io/terragrunt-action@v2
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ env.working_dir }}/deployments/hub/dev
+          tg_command: 'plan -lock=false -refresh=false' #we do not check the remote state, this is a compromise that avoids giving read rights to secrets
+
+  deploy:
+    # runs under RW user
+    runs-on: ubuntu-latest
+    # TODO fix
+    if: github.ref == 'refs/heads/infra'
+    environment: dev
+    name: Apply Terraform
+    needs: [ checks, plan ]
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+      # FUTURE avoid duplicate boilerplate somehow on checkout/auth/crypt
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+           terraform_version: "^1.5.7"
+           terraform_wrapper: false
+      - name: Setup git-crypt
+        id: git-crypt
+        run: |
+          sudo apt-get install git-crypt -y
+          echo ${{ secrets.GIT_CRYPT_KEY }} | base64 -d > TMP_KEY
+          git-crypt unlock TMP_KEY
+          rm -rf TMP_KEY
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider}}
+          service_account: ${{vars.service_account}}
+
+      - name: Deploy
+        uses: gruntwork-io/terragrunt-action@v2
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ env.working_dir }}/deployments/hub/dev
+          tg_command: 'apply'
+      
+      - name: Post to a Slack channel
+        # Only post to Slack if the deployment failed and we're on the infra branch
+        if: failure() && github.ref == 'refs/heads/infra'
+        id: slack
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          # Slack channel id, channel name, or user id to post message.
+          # See also: https://api.slack.com/methods/chat.postMessage#channels
+          # You can pass in multiple channels to post to by providing a comma-delimited list of channel IDs.
+          channel-id: 'C07HU35MKAQ' #github-notifications
+          # For posting a simple plain text message
+          slack-message: |
+            **🚧 Terraform Deployment Failed! 🚨**
+            👩‍💻 Code URL: ${{ github.event.pull_request.html_url || github.event.head_commit.url }}
+            🚀 Action run link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

@@ -21,8 +21,7 @@ spec:
       # DNS01 solver configuration for wildcard certificate validation
       - selector:
           dnsNames:
-          - "neo4j.{{ .Values.spec.source.environment }}.everycure.org"
-          - "*.platform.{{ .Values.spec.source.environment }}.everycure.org"
+          - "neo4j.dev.everycure.org"
         dns01:
           cloudDNS:
-            project: {{ .Values.spec.source.project_id }}  # This should match your Google Cloud project ID
+            project: mtrx-hub-dev-3of  # This should match your Google Cloud project ID

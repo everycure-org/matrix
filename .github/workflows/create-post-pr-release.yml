@@ -51,14 +51,25 @@ jobs:
       - name: Create GitHub release
         env:
             GH_TOKEN: ${{ github.token }}
+            POSTS_DIR: docs/src/releases/posts
         run: |
           set -euxo pipefail
           echo "Creating release"
           # If intended release comes after latest_official_release, flag it with --latest. Otherwise, don't.
           highest_version=$(echo -e "${{env.intended_tag}}\n${{env.latest_official_release}}" | sort --version-sort | tail -n1)
           if [ "${{ env.intended_tag }}" = "${highest_version}" ]; then ARG_LATEST=(--latest); else ARG_LATEST=( ); fi
+          
+          # If the notes file is generated, pass it to --notes-file. Otherwise, pass a default note.
+          NOTES_FILE="${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.intended_tag }}/notes.md"
+          
+          if [ -f "$NOTES_FILE" ]; then 
+            # Remove the mkdocs frontmatter 
+            sed -i '1,/^---/d' "${NOTES_FILE}" 
+            ARG_NOTES=(--notes-file "${NOTES_FILE}") 
+          else ARG_NOTES=(--notes 'This is a patch bump.')
+          fi
 
           gh release create "${{ env.intended_tag }}" \
             --title "${{ env.intended_tag }}" \
-            --generate-notes \
+            "${ARG_NOTES[@]}" \
             "${ARG_LATEST[@]}"

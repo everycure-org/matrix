@@ -7,10 +7,10 @@ _spark_parquet_ds: &_spark_parquet
 # ==============================
 # Sampled sources
 
-integration.prm.unified_nodes:
+integration.prm.filtered_nodes:
   <<: [*_spark_parquet]
-  filepath: ${globals:paths.integration_sample}/prm/unified/nodes
+  filepath: ${globals:paths.integration_sample}/prm/filtered/nodes
 
-integration.prm.unified_edges:
+integration.prm.filtered_edges:
   <<: [*_spark_parquet]
-  filepath: ${globals:paths.integration_sample}/prm/unified/edges
+  filepath: ${globals:paths.integration_sample}/prm/filtered/edges

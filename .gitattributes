@@ -1,0 +1,4 @@
+infra/secrets/** filter=git-crypt diff=git-crypt
+infra/secrets/** filter=git-crypt diff=git-crypt
+
+pipelines/matrix/conf/local/service-account.json filter=git-crypt-HUB diff=git-crypt-HUB

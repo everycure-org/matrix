@@ -12,23 +12,6 @@ spec:
     path: {{ .Values.spec.source.repoPath }}/neo4j
     repoURL: {{ .Values.spec.source.repoURL }}
     targetRevision: {{ .Values.spec.source.targetRevision }}
-    helm:
-      parameters:
-        - name: spec.source.targetRevision
-          value: {{ .Values.spec.source.targetRevision}}
-        - name: spec.source.environment
-          value: {{ .Values.spec.source.environment}}
-        - name: spec.source.project_id
-          value: {{ .Values.spec.source.project_id}}
-      values: |
-        neo4j:
-          config:
-            server.default_advertised_address: "neo4j.{{ .Values.spec.source.environment }}.everycure.org"
-            server.bolt.advertised_address: "neo4j.{{ .Values.spec.source.environment }}.everycure.org:7687"
-          services:
-            neo4j:
-              annotations:
-                external-dns.alpha.kubernetes.io/hostname: "neo4j.{{ .Values.spec.source.environment }}.everycure.org"
   syncPolicy:
     syncOptions:     # Sync options which modifies sync behavior
     - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.

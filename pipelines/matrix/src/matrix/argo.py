@@ -1,4 +1,3 @@
-import os
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -11,6 +10,7 @@ from kedro.pipeline.node import Node
 from matrix.git_utils import get_git_sha
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
+ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
 
 
@@ -18,8 +18,7 @@ def generate_argo_config(
     image: str,
     run_name: str,
     release_version: str,
-    mlflow_experiment_id: int,
-    mlflow_url: str,
+    image_tag: str,
     namespace: str,
     username: str,
     pipeline: Pipeline,
@@ -27,23 +26,16 @@ def generate_argo_config(
     package_name: str,
     release_folder_name: str,
     default_execution_resources: Optional[ArgoResourceConfig] = None,
-    mlflow_run_id: Optional[str] = None,
-    stress_test: bool = False,
 ) -> str:
     if default_execution_resources is None:
         default_execution_resources = ArgoResourceConfig()
 
     loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
-
-    ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
-    if stress_test:
-        ARGO_TEMPLATE_FILE = "argo_wf_spec_stress_test.tmpl"
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
     pipeline_tasks = get_dependencies(fuse(pipeline), default_execution_resources)
     git_sha = get_git_sha()
     trigger_release = get_trigger_release_flag(pipeline.name)
-    include_private_datasets = os.getenv("INCLUDE_PRIVATE_DATASETS", "0")
 
     rendered_template = template.render(
         package_name=package_name,
@@ -51,9 +43,7 @@ def generate_argo_config(
         pipeline_name=pipeline.name,
         trigger_release=trigger_release,
         image=image,
-        mlflow_experiment_id=mlflow_experiment_id,
-        mlflow_url=mlflow_url,
-        mlflow_run_id=mlflow_run_id,
+        image_tag=image_tag,
         namespace=namespace,
         username=username,
         run_name=run_name,
@@ -62,7 +52,6 @@ def generate_argo_config(
         git_sha=git_sha,
         environment=environment,
         default_execution_resources=default_execution_resources.model_dump(),
-        include_private_datasets=include_private_datasets,
     )
     yaml_data = yaml.safe_load(rendered_template)
     yaml_without_anchors = yaml.dump(yaml_data, sort_keys=False, default_flow_style=False)
@@ -299,6 +288,4 @@ def clean_name(name: str) -> str:
 
 
 def get_trigger_release_flag(pipeline: str) -> str:
-    pipeline_correct = pipeline in ("data_release", "kg_release", "kg_release_patch")
-    env_correct = "-dev-" in os.environ["RUNTIME_GCP_PROJECT_ID"].lower()
-    return str(pipeline_correct and env_correct)
+    return str(pipeline in ("data_release", "kg_release"))

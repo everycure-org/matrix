@@ -29,17 +29,6 @@
         "httpResponse": {
             "body": {}
         }
-    },
-    {
-        "httpRequest": {
-            "path": "/openapi.json",
-            "method": "GET"
-        },
-        "httpResponse": {
-            "body": {
-                "info": { "version": "1.2.3" }
-            }
-        }
     }
 
 ]

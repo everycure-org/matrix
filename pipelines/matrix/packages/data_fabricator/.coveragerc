@@ -1,0 +1,15 @@
+###
+# This file contains configuration for the pytest plugin used in the whole test suite for this package
+# This describes which directories/files to omit during testing, test coverage minimum requirements etc. For more information
+# see https://pytest-cov.readthedocs.io/en/latest/config.html
+###
+
+[run]
+omit =
+    */tests/*
+[report]
+fail_under=95
+show_missing=True
+exclude_lines =
+    pragma: no cover
+    raise NotImplementedError

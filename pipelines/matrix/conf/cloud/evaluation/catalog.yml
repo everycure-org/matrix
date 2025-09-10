@@ -3,5 +3,6 @@
   key_prefix: "{evaluation}"
 
 "evaluation.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.model_stability_output.result":
+  filepath: ${globals:paths.evaluation}/reporting/stability/fold_{fold_main}_fold_{fold_to_compare}/{evaluation}/result.yml
   type: matrix.datasets.mlflow.MlflowMetricsDataset
-  key_prefix: "fold_{fold_main}_fold_{fold_to_compare}_{evaluation}"
+  key_prefix: "{fold_main}.{fold_to_compare}.{evaluation}"

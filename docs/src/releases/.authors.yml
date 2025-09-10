@@ -96,30 +96,14 @@ authors:
     description: Engineer
     avatar: https://github.com/jdr0887.png
   matej-macak:
-    name: Matei Macak
+    name: Matei Reilly
     description: Engineer
     avatar: https://github.com/matej-macak.png
   webyrd:
     name: William E. Byrd
     description: Engineer
     avatar: https://github.com/webyrd.png
-  eKathleenCarter:
-    name: Kathleen Carter
-    description: Engineer
-    avatar: https://github.com/eKathleenCarter.png
   app/github-actions:
     name: GitHub Actions bot
     description: bot
     avatar: https://octodex.github.com/images/securitocat.png
-  amyford:
-    name: Amy Ford
-    description: Engineer
-    avatar: https://github.com/amyford.png
-  kevinschaper:
-    name: Kevin Schaper
-    description: Engineer
-    avatar: https://github.com/kevinschaper.png
-  Dashing-Nelson:
-    name: Nelson Alonso
-    description: Engineer
-    avatar: https://github.com/dashing-nelson.png

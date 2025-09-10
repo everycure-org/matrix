@@ -1,15 +1,10 @@
 
 nav:
     - index.md
-    - kubernetes_cluster.md
-    - public_data_zone.md
+    - compute_cluster.md
     - observability.md
     - gcp.md
-    - iap.md
-    - setup.md
     - runbooks
-    - architecture_decision_records
-    - gcp_cloudbuild.md
-    - billing-labels.md
-    - gke-safe-eviction.md
-
+    - argo_workflows_locally.md
+    - glossary.md
+    - architecture_decision_records.md

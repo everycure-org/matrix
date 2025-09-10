@@ -53,12 +53,8 @@ modelling.model_input.drugs_diseases_nodes@pandas:
   <<: [*_kg_dataset, *_model_input_ds]
   filepath: ${globals:paths.modelling}/model_input/drugs_diseases_nodes/
 
-modelling.model_input.splits@pandas:
+modelling.model_input.splits:
   <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/model_input/splits
-
-modelling.model_input.splits@spark:
-  <<: [*_spark_parquet, *_model_input_ds]
   filepath: ${globals:paths.modelling}/model_input/splits
 
 "modelling.fold_{fold}.model_input.transformers":
@@ -96,7 +92,7 @@ modelling.model_input.splits@spark:
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/03_version_datasets.html#how-to-version-data-in-a-kedro-project
 "modelling.{shard}.fold_{fold}.reporting.tuning_convergence_plot":
   <<: *_reporting_ds
-  type: matplotlib.MatplotlibDataset
+  type: matplotlib.MatplotlibWriter
   filepath: ${globals:paths.tmp}/reporting/{shard}/fold_{fold}/convergence_plot.png
 
 # NOTE: Tracking a model, other serialization formats possible.

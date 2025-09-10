@@ -10,7 +10,7 @@ spec:
     namespace: gateway
     name: external-http
   hostnames:
-  - "grafana.platform.{{ .Values.spec.source.environment }}.everycure.org"
+  - "grafana.platform.dev.everycure.org"
   rules:
   - backendRefs:
     - name: kube-prometheus-stack-grafana
@@ -29,7 +29,7 @@ spec:
     namespace: gateway
     name: external-http
   hostnames:
-  - "prometheus.platform.{{ .Values.spec.source.environment }}.everycure.org"
+  - "prometheus.platform.dev.everycure.org"
   rules:
   - backendRefs:
     - name: kube-prometheus-stack-prometheus

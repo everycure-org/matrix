@@ -22,6 +22,8 @@ _spark_parquet_ds: &_spark_parquet
 # Datasets
 # -------------------------------------------------------------------------
 
+# NOTE: Loads the full partitioned dataframe, i.e., all buckets
+# in single Spark dataframe for downstream processing
 embeddings.feat.graph.node_embeddings@spark:
   <<: *_spark_parquet
   filepath: ${globals:paths.tmp}/feat/tmp_nodes_with_embeddings
@@ -87,7 +89,7 @@ embeddings.feat.nodes:
   filepath: ${globals:paths.embeddings}/feat/nodes_with_embeddings
 
 embeddings.reporting.loss:
-  type: matplotlib.MatplotlibDataset
+  type: kedro_datasets.matplotlib.MatplotlibWriter
   filepath: ${globals:paths.embeddings}/reporting/convergence_plot.png
 
 embeddings.reporting.topological_pca:
@@ -95,5 +97,5 @@ embeddings.reporting.topological_pca:
   filepath: ${globals:paths.embeddings}/reporting/topological_pca
 
 embeddings.reporting.topological_pca_plot:
-  type: matplotlib.MatplotlibDataset
+  type: kedro_datasets.matplotlib.MatplotlibWriter
   filepath: ${globals:paths.embeddings}/reporting/pca_plot.png

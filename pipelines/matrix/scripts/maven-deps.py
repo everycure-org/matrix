@@ -17,13 +17,6 @@ def main(*args, **kwargs):
     with open("conf/base/spark.yml") as f:
         parameters = yaml.safe_load(f)
 
-    # In the cloud env, we control the spark driver memory via an env var in the argo template.
-    # At this stage, it is not available yet, and is not relevant, as the purpose of maven deps is
-    # only to catch the dependencies, so we set it manually to an arbitrary value just to start the spark session.
-    # This approach is better than setting a fallback value in spark.yml which might mask the absence of the env var
-    # during pipeline runs.
-
-    parameters["spark.driver.memory"] = "10g"
     spark_conf = SparkConf().setAll(parameters.items())
 
     # Initialise the spark session
