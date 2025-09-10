@@ -16,10 +16,12 @@ Examples:
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Annotated
 
-import click
 import polars as pl
-from matrix_io.primekg import coalesce_duplicate_columns, mondo_grouped_exploded
+import typer
+
+app = typer.Typer()
 
 
 def read_tsv_lazy(path: Path) -> pl.LazyFrame:
@@ -34,15 +36,8 @@ def read_tsv_lazy(path: Path) -> pl.LazyFrame:
     )
 
 
-@click.group()
-def main() -> None:
-    """PrimeKG utilities (Python port)."""
-    pass
-
-
-@main.command("print-predicate-mappings")
-@click.option("kg", "-i", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True, help="Input PrimeKG TSV")
-def print_predicate_mappings_cmd(kg: Path) -> None:
+@app.command()
+def print_predicate_mappings(kg: Annotated[Path, typer.Option("--input", "-i")]) -> None:
     """Print mapping of relation/display_relation to Biolink predicate (JSON)."""
     orig_df = read_tsv_lazy(kg).with_columns(
         [
@@ -131,23 +126,29 @@ def print_predicate_mappings_cmd(kg: Path) -> None:
             ]
         )
         .unique(subset=["relation", "display_relation", "predicate"], keep="first")
-        .select(["relation", "display_relation", "predicate", "subject_aspect_qualifier", "subject_direction_qualifier", "negated"])
+        .select(
+            [
+                "relation",
+                "display_relation",
+                "predicate",
+                "subject_aspect_qualifier",
+                "subject_direction_qualifier",
+                "negated",
+            ]
+        )
         .collect()
     )
 
     print(final_df.write_json())
 
 
-@main.command("build-nodes")
-@click.option("drug_features", "-a", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True, help="Drug features TSV")
-@click.option(
-    "disease_features", "-b", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True, help="Disease features TSV"
-)
-@click.option("nodes", "-n", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True, help="Nodes TSV")
-@click.option(
-    "output", "-o", type=click.Path(dir_okay=False, writable=True, path_type=Path), required=True, help="Output TSV (tab-separated)"
-)
-def build_nodes_cmd(drug_features: Path, disease_features: Path, nodes: Path, output: Path) -> None:
+@app.command()
+def build_nodes(
+    drug_features: Annotated[Path, typer.Option("--drug-features", "-a")],
+    disease_features: Annotated[Path, typer.Option("--disease-features", "-b")],
+    nodes: Annotated[Path, typer.Option("--nodes", "-n")],
+    output: Annotated[Path, typer.Option("--output", "-o")],
+) -> None:
     """Build the nodes tsv file."""
     main = pl.DataFrame({"node_index": pl.Series([], dtype=pl.Utf8)})
 
@@ -187,7 +188,9 @@ def build_nodes_cmd(drug_features: Path, disease_features: Path, nodes: Path, ou
                 pl.when(pl.col("node_source").str.contains("HPO|MONDO|UBERON"))
                 .then(
                     pl.concat_str(
-                        [pl.col("node_source"), pl.col("node_id").cast(pl.Utf8).str.pad_start(7, "0")], separator=":", ignore_nulls=True
+                        [pl.col("node_source"), pl.col("node_id").cast(pl.Utf8).str.pad_start(7, "0")],
+                        separator=":",
+                        ignore_nulls=True,
                     )
                 )
                 .otherwise(pl.col("node_source"))
@@ -207,7 +210,9 @@ def build_nodes_cmd(drug_features: Path, disease_features: Path, nodes: Path, ou
                 pl.when(pl.col("node_source").str.contains("MONDO_grouped", literal=True))
                 .then(
                     pl.concat_str(
-                        [pl.lit("MONDO"), pl.col("mondo_id").cast(pl.Utf8).str.pad_start(7, "0")], separator=":", ignore_nulls=True
+                        [pl.lit("MONDO"), pl.col("mondo_id").cast(pl.Utf8).str.pad_start(7, "0")],
+                        separator=":",
+                        ignore_nulls=True,
                     )
                 )
                 .otherwise(pl.col("node_source"))
@@ -304,184 +309,99 @@ def build_nodes_cmd(drug_features: Path, disease_features: Path, nodes: Path, ou
     main.write_csv(output, separator="\t")
 
 
-@main.command("build-edges")
-@click.option("kg", "-i", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True, help="Input PrimeKG TSV")
-@click.option(
-    "output", "-o", type=click.Path(dir_okay=False, writable=True, path_type=Path), required=True, help="Output edges TSV (tab-separated)"
-)
-def build_edges_cmd(kg: Path, output: Path) -> None:
+@app.command()
+def build_edges(kg: Annotated[Path, typer.Option("--input", "-i")], output: Annotated[Path, typer.Option("--output", "-o")]) -> None:
     """Build the edges tsv file."""
-    edges = read_tsv_lazy(kg).collect()
+    edges = read_tsv_lazy(kg).with_columns(
+        [
+            pl.lit("knowledge_assertion").alias("knowledge_level"),
+            pl.lit("not_provided").alias("agent_type"),
+            pl.lit("infores:primekg").alias("primary_knowledge_source"),
+            pl.lit(None, dtype=pl.Utf8).alias("aggregator_knowledge_source"),
+            pl.lit(None, dtype=pl.Utf8).alias("original_subject"),
+            pl.lit(None, dtype=pl.Utf8).alias("original_object"),
+            pl.lit(None, dtype=pl.Boolean).alias("negated"),
+            pl.lit(None, dtype=pl.Utf8).alias("publications"),
+            pl.lit(None, dtype=pl.Utf8).alias("subject_aspect_qualifier"),
+            pl.lit(None, dtype=pl.Utf8).alias("subject_direction_qualifier"),
+            pl.lit(None, dtype=pl.Utf8).alias("object_aspect_qualifier"),
+            pl.lit(None, dtype=pl.Utf8).alias("object_direction_qualifier"),
+            pl.lit(None, dtype=pl.Utf8).alias("upstream_data_source"),
+        ]
+    )
 
-    edges = mondo_grouped_exploded(edges, "x")
-    edges = mondo_grouped_exploded(edges, "y")
+    edges = mondo_grouped_exploded(edges)
+    edges = fix_curies(edges)
 
     edges = (
-        edges.lazy()
-        .with_columns(
-            [
-                pl.lit("knowledge_assertion").alias("knowledge_level"),
-                pl.lit("not_provided").alias("agent_type"),
-                pl.lit("infores:primekg").alias("primary_knowledge_source"),
-                pl.lit(None, dtype=pl.Utf8).alias("aggregator_knowledge_source"),
-                pl.lit(None, dtype=pl.Utf8).alias("original_subject"),
-                pl.lit(None, dtype=pl.Utf8).alias("original_object"),
-                pl.lit(None, dtype=pl.Boolean).alias("negated"),
-                pl.lit(None, dtype=pl.Utf8).alias("publications"),
-                pl.lit(None, dtype=pl.Utf8).alias("subject_aspect_qualifier"),
-                pl.lit(None, dtype=pl.Utf8).alias("subject_direction_qualifier"),
-                pl.lit(None, dtype=pl.Utf8).alias("object_aspect_qualifier"),
-                pl.lit(None, dtype=pl.Utf8).alias("object_direction_qualifier"),
-                pl.lit(None, dtype=pl.Utf8).alias("upstream_data_source"),
-            ]
-        )
-        .collect()
-    )
-
-    # print(edges.shape)
-
-    orig_df = (
-        # subject CURIE formatting
-        edges.lazy()
-        .with_columns(
-            [
-                pl.when(pl.col("x_source") == pl.lit("NCBI"))
-                .then(pl.concat_str([pl.col("x_source"), pl.col("x_id")], separator="Gene:", ignore_nulls=True))
-                .otherwise(pl.col("x_source"))
-                .alias("subject"),
-            ]
-        )
-        .with_columns(
-            [
-                pl.when(pl.col("x_source") == pl.lit("REACTOME"))
-                .then(pl.concat_str([pl.lit("REACT"), pl.col("x_id")], separator=":", ignore_nulls=True))
-                .otherwise(pl.col("subject"))
-                .alias("subject"),
-            ]
-        )
-        .with_columns(
-            [
-                pl.when(pl.col("x_source").str.contains("HPO|MONDO|UBERON"))
-                .then(
-                    pl.concat_str(
-                        [pl.col("x_source"), pl.col("x_id").cast(pl.Utf8).str.pad_start(7, "0")], separator=":", ignore_nulls=True
-                    )
-                )
-                .otherwise(pl.col("subject"))
-                .alias("subject"),
-            ]
-        )
-        .with_columns(
-            [
-                pl.when(pl.col("x_source").str.contains("CTD|GO|DrugBank"))
-                .then(pl.concat_str([pl.col("x_source"), pl.col("x_id")], separator=":", ignore_nulls=True))
-                .otherwise(pl.col("subject"))
-                .alias("subject"),
-            ]
-        )
-        # object CURIE formatting
-        .with_columns(
-            [
-                pl.when(pl.col("y_source") == pl.lit("NCBI"))
-                .then(pl.concat_str([pl.col("y_source"), pl.col("y_id")], separator="Gene:", ignore_nulls=True))
-                .otherwise(pl.col("y_source"))
-                .alias("object"),
-            ]
-        )
-        .with_columns(
-            [
-                pl.when(pl.col("y_source") == pl.lit("REACTOME"))
-                .then(pl.concat_str([pl.lit("REACT"), pl.col("y_id")], separator=":", ignore_nulls=True))
-                .otherwise(pl.col("object"))
-                .alias("object"),
-            ]
-        )
-        .with_columns(
-            [
-                pl.when(pl.col("y_source").str.contains("HPO|MONDO|UBERON"))
-                .then(
-                    pl.concat_str(
-                        [pl.col("y_source"), pl.col("y_id").cast(pl.Utf8).str.pad_start(7, "0")], separator=":", ignore_nulls=True
-                    )
-                )
-                .otherwise(pl.col("object"))
-                .alias("object"),
-            ]
-        )
-        .with_columns(
-            [
-                pl.when(pl.col("y_source").str.contains("CTD|GO|DrugBank"))
-                .then(pl.concat_str([pl.col("y_source"), pl.col("y_id")], separator=":", ignore_nulls=True))
-                .otherwise(pl.col("object"))
-                .alias("object"),
-            ]
-        )
-        .drop(["x_index", "x_id", "x_type", "x_name", "x_source", "y_index", "y_id", "y_type", "y_name", "y_source"], strict=False)
-        .collect()
-        .rename({"relation": "predicate"})
-    )
-
-    # print(orig_df.shape)
+        edges.drop(
+            ["x_index", "x_id", "x_type", "x_name", "x_source", "y_index", "y_id", "y_type", "y_name", "y_source"],
+            strict=False,
+        ).rename({"relation": "predicate"})
+    ).collect()
 
     final_lf = (
         pl.concat(
             [
-                orig_df.filter(
+                edges.filter(
                     pl.col("predicate").str.contains(
                         "bioprocess_protein|cellcomp_protein|exposure_bioprocess|exposure_cellcomp|exposure_molfunc|exposure_protein|molfunc_protein|pathway_protein"
                     )
                 ).with_columns([pl.lit("biolink:interacts_with").alias("predicate")]),
-                orig_df.filter(pl.col("predicate").str.contains("disease_protein|phenotype_protein")).with_columns(
+                edges.filter(pl.col("predicate").str.contains("disease_protein|phenotype_protein")).with_columns(
                     [pl.lit("biolink:associated_with").alias("predicate")]
                 ),
-                orig_df.filter(
+                edges.filter(
                     pl.col("predicate").str.contains(
                         "anatomy_anatomy|bioprocess_bioprocess|cellcomp_cellcomp|disease_disease|exposure_exposure|molfunc_molfunc|pathway_pathway|phenotype_phenotype"
                     )
                 ).with_columns([pl.lit("biolink:superclass_of").alias("predicate")]),
-                orig_df.filter(pl.col("predicate") == pl.lit("protein_protein")).with_columns(
+                edges.filter(pl.col("predicate") == pl.lit("protein_protein")).with_columns(
                     [pl.lit("biolink:interacts_with").alias("predicate")]
                 ),
-                orig_df.filter(pl.col("predicate") == pl.lit("drug_effect")).with_columns(
+                edges.filter(pl.col("predicate") == pl.lit("drug_effect")).with_columns(
                     [pl.lit("biolink:has_side_effect").alias("predicate")]
                 ),
-                orig_df.filter(pl.col("predicate") == pl.lit("contraindication")).with_columns(
+                edges.filter(pl.col("predicate") == pl.lit("contraindication")).with_columns(
                     [pl.lit("biolink:contraindicated_in").alias("predicate")]
                 ),
-                orig_df.filter(pl.col("predicate") == pl.lit("anatomy_protein_absent")).with_columns(
+                edges.filter(pl.col("predicate") == pl.lit("anatomy_protein_absent")).with_columns(
                     [pl.lit(True).alias("negated"), pl.lit("biolink:expressed_in").alias("predicate")]
                 ),
-                orig_df.filter(pl.col("predicate") == pl.lit("anatomy_protein_present")).with_columns(
+                edges.filter(pl.col("predicate") == pl.lit("anatomy_protein_present")).with_columns(
                     [pl.lit("biolink:expressed_in").alias("predicate")]
                 ),
-                orig_df.filter(pl.col("predicate") == pl.lit("disease_phenotype_negative")).with_columns(
+                edges.filter(pl.col("predicate") == pl.lit("disease_phenotype_negative")).with_columns(
                     [pl.lit(True).alias("negated"), pl.lit("biolink:has_phenotype").alias("predicate")]
                 ),
-                orig_df.filter(pl.col("predicate") == pl.lit("disease_phenotype_positive")).with_columns(
+                edges.filter(pl.col("predicate") == pl.lit("disease_phenotype_positive")).with_columns(
                     [pl.lit("biolink:has_phenotype").alias("predicate")]
                 ),
-                orig_df.filter(pl.col("predicate") == pl.lit("exposure_disease")).with_columns(
+                edges.filter(pl.col("predicate") == pl.lit("exposure_disease")).with_columns(
                     [pl.lit("biolink:correlated_with").alias("predicate")]
                 ),
-                orig_df.filter(pl.col("predicate") == pl.lit("indication")).with_columns([pl.lit("biolink:treats").alias("predicate")]),
-                orig_df.filter(pl.col("predicate") == pl.lit("off-label use")).with_columns(
+                edges.filter(pl.col("predicate") == pl.lit("indication")).with_columns([pl.lit("biolink:treats").alias("predicate")]),
+                edges.filter(pl.col("predicate") == pl.lit("off-label use")).with_columns(
                     [pl.lit("biolink:applied_to_treat").alias("predicate")]
                 ),
-                orig_df.filter(pl.col("predicate") == pl.lit("drug_drug")).with_columns(
+                edges.filter(pl.col("predicate") == pl.lit("drug_drug")).with_columns(
                     [pl.lit("biolink:directly_physically_interacts_with").alias("predicate")]
                 ),
-                orig_df.filter(
+                edges.filter(
                     (pl.col("predicate") == pl.lit("drug_protein")) & (pl.col("display_relation") == pl.lit("enzyme"))
                 ).with_columns(
-                    [pl.lit("biolink:amount").alias("subject_aspect_qualifier"), pl.lit("biolink:affected_by").alias("predicate")]
+                    [
+                        pl.lit("biolink:amount").alias("subject_aspect_qualifier"),
+                        pl.lit("biolink:affected_by").alias("predicate"),
+                    ]
                 ),
-                orig_df.filter(
+                edges.filter(
                     (pl.col("predicate") == pl.lit("drug_protein")) & (pl.col("display_relation") == pl.lit("target"))
                 ).with_columns([pl.lit("biolink:directly_physically_interacts_with").alias("predicate")]),
-                orig_df.filter(
+                edges.filter(
                     (pl.col("predicate") == pl.lit("drug_protein")) & (pl.col("display_relation") == pl.lit("carrier"))
                 ).with_columns([pl.lit("biolink:affected_by").alias("predicate")]),
-                orig_df.filter(
+                edges.filter(
                     (pl.col("predicate") == pl.lit("drug_protein")) & (pl.col("display_relation") == pl.lit("transporter"))
                 ).with_columns(
                     [
@@ -499,6 +419,98 @@ def build_edges_cmd(kg: Path, output: Path) -> None:
     # print(final_lf.shape)
     output.parent.mkdir(parents=True, exist_ok=True)
     final_lf.write_csv(output, separator="\t")
+
+
+def coalesce_duplicate_columns(df: pl.DataFrame, keep: list[str]) -> pl.DataFrame:
+    """Coalesce columns generated by a join and appended with _right suffix."""
+    cols = df.columns
+    out = df
+    # Group base names by removing Polars' default suffixes like "_right"; we coalesce pairs ending with "_right"
+    # Since we used full join with coalesce=True in lazy join, duplications might already be minimized; still be safe.
+    for c in list(cols):
+        if c.endswith("_right"):
+            base = c[:-6]
+            if base in out.columns:
+                out = out.with_columns(pl.coalesce([pl.col(base), pl.col(c)]).alias(base)).drop(c)
+    return out
+
+
+def mondo_grouped_exploded(edges_df: pl.LazyFrame) -> pl.LazyFrame:
+    """PrimeKG has represented groups of MONDO instances against a common object.  We are exploding those into separate triples here."""
+    mappings = [{"source": "x_source", "id": "x_id"}, {"source": "y_source", "id": "y_id"}]
+    for map_item in mappings:
+        source_mondo = (
+            edges_df.filter(pl.col(map_item["source"]) == pl.lit("MONDO_grouped"))
+            .with_columns(
+                [
+                    pl.col(map_item["id"]).cast(pl.Utf8).str.split("_").alias(map_item["id"]),
+                    pl.when(pl.col(map_item["source"]) == pl.lit("MONDO_grouped"))
+                    .then(pl.lit("MONDO"))
+                    .otherwise(pl.col(map_item["source"]))
+                    .alias(map_item["source"]),
+                ]
+            )
+            .explode(map_item["id"])
+        )
+        not_mondo = edges_df.filter(pl.col(map_item["source"]) != pl.lit("MONDO_grouped"))
+        edges_df = pl.concat([source_mondo, not_mondo])
+    return edges_df
+
+
+def fix_curies(edges: pl.LazyFrame) -> pl.LazyFrame:
+    """Apply subject & object CURIE formatting."""
+    mapping = [
+        {"sub_or_obj_col": "subject", "source": "x_source", "id": "x_id"},
+        {"sub_or_obj_col": "object", "source": "y_source", "id": "y_id"},
+    ]
+
+    for map_item in mapping:
+        edges = (
+            edges.with_columns(
+                [
+                    pl.when(pl.col(map_item["source"]) == pl.lit("NCBI"))
+                    .then(pl.concat_str([pl.col(map_item["source"]), pl.col(map_item["id"])], separator="Gene:", ignore_nulls=True))
+                    .otherwise(pl.col(map_item["source"]))
+                    .alias(map_item["sub_or_obj_col"]),
+                ]
+            )
+            .with_columns(
+                [
+                    pl.when(pl.col(map_item["source"]) == pl.lit("REACTOME"))
+                    .then(pl.concat_str([pl.lit("REACT"), pl.col(map_item["id"])], separator=":", ignore_nulls=True))
+                    .otherwise(pl.col(map_item["sub_or_obj_col"]))
+                    .alias(map_item["sub_or_obj_col"]),
+                ]
+            )
+            .with_columns(
+                [
+                    pl.when(pl.col(map_item["source"]).str.contains("HPO|MONDO|UBERON"))
+                    .then(
+                        pl.concat_str(
+                            [pl.col(map_item["source"]), pl.col(map_item["id"]).cast(pl.Utf8).str.pad_start(7, "0")],
+                            separator=":",
+                            ignore_nulls=True,
+                        )
+                    )
+                    .otherwise(pl.col(map_item["sub_or_obj_col"]))
+                    .alias(map_item["sub_or_obj_col"]),
+                ]
+            )
+            .with_columns(
+                [
+                    pl.when(pl.col(map_item["source"]).str.contains("CTD|GO|DrugBank"))
+                    .then(pl.concat_str([pl.col(map_item["source"]), pl.col(map_item["id"])], separator=":", ignore_nulls=True))
+                    .otherwise(pl.col(map_item["sub_or_obj_col"]))
+                    .alias(map_item["sub_or_obj_col"]),
+                ]
+            )
+        )
+    return edges
+
+
+def main() -> None:
+    """Wrap the PrimeKG CLI options in a Typer app."""
+    app()
 
 
 if __name__ == "__main__":
