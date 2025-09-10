@@ -47,15 +47,16 @@ jobs:
           df -h
       
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: astral-sh/setup-uv@v6
         with:
-          python-version: '3.11'
+          enable-cache: true
+          version: "0.8.13"
 
       - name: Install Argo & Python dependencies
         working-directory: pipelines/matrix
         run: |
           make install_argo
-          pip install -r requirements.txt
+          make install
 
       - name: Authenticate with Google Cloud
         id: auth
