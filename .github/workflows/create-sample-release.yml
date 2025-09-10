@@ -99,7 +99,7 @@ jobs:
         run: |
           DATE=$(date +%Y%m%d)
           echo "Run the kedro sampling pipeline"
-          kedro experiment run \
+          uv run kedro experiment run \
             -e sample \
             --experiment-name create-sample-for-release \
             -p create_sample \
