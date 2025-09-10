@@ -78,7 +78,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 {"name": "orchard", "integrate_in_kg": False, "has_nodes": False, "is_private": True},
             ],
             "modelling": {
-                "model_name": "xg_ensemble",  # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth
+                "model_name": "xg_synth",  # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth
                 "model_config": {"num_shards": 3},
             },
             "evaluation": [
