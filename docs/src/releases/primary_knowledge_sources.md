@@ -136,7 +136,7 @@ _SemMedDB is a repository of semantic predications (subject-predicate-object tri
 
 
 
-???+ note "Expand to see detailed review"
+??? note "Expand to see detailed review"
 
     Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
     
@@ -173,7 +173,7 @@ _STRING is a database of known and predicted protein-protein interactions. The i
 
 
 
-???+ note "Expand to see detailed review"
+??? note "Expand to see detailed review"
 
     Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
     
@@ -320,7 +320,7 @@ _DISEASES is a weekly updated web resource that integrates evidence on disease-g
 
 
 
-???+ note "Expand to see detailed review"
+??? note "Expand to see detailed review"
 
     Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
     
@@ -561,7 +561,7 @@ _The Library of Integrated Network-based Cellular Signatures (LINCS) is a compre
 
 
 
-???+ note "Expand to see detailed review"
+??? note "Expand to see detailed review"
 
     Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
     
@@ -619,7 +619,7 @@ _No description._
 
 
 
-???+ note "Expand to see detailed review"
+??? note "Expand to see detailed review"
 
     Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
     
@@ -749,7 +749,7 @@ _a freely available dictionary of molecular entities focused on ‘small’ chem
 
 
 
-???+ note "Expand to see detailed review"
+??? note "Expand to see detailed review"
 
     Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
     
@@ -1031,7 +1031,7 @@ _MGI is the international database resource for the laboratory mouse, providing 
 
 
 
-???+ note "Expand to see detailed review"
+??? note "Expand to see detailed review"
 
     Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
     
