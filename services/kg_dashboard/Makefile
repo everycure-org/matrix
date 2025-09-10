@@ -9,6 +9,7 @@ EVIDENCE_BASE_PATH = gs://$(EC_DATA_DOMAIN)/versions
 # Change release version of the KG used in the dashboard
 
 RELEASE_VERSION ?= v0.9.9
+BENCHMARK_VERSION ?= v0.4.5
 
 
 export EVIDENCE_VAR__release_version := $(RELEASE_VERSION)
@@ -23,7 +24,6 @@ export VITE_build_time := $(shell date -u '+%B %d, %Y at %H:%M:%S UTC')
 KEDRO_BASE_GLOBALS_PATH = "../../pipelines/matrix/conf/base/globals.yml"
 ROBOKOP_VERSION = $(shell grep -A1 "robokop:" $(KEDRO_BASE_GLOBALS_PATH) | grep "version:" | sed 's/.*version: //')
 RTX_KG2_VERSION = $(shell grep -A1 "rtx_kg2:" $(KEDRO_BASE_GLOBALS_PATH) | grep "version:" | sed 's/.*version: //' | sed 's/^&_rtx_kg_version //' | sed -E 's/\./_/g')
-BENCHMARK_VERSION = $(shell grep -A1 "benchmark_release:" $(KEDRO_BASE_GLOBALS_PATH) | grep "benchmark_release:" | sed 's/.*benchmark_release: //')
 
 export EVIDENCE_VAR__robokop_version := $(ROBOKOP_VERSION)
 export EVIDENCE_VAR__rtx_kg2_version := $(RTX_KG2_VERSION)
@@ -72,7 +72,6 @@ run-sources: populate-infores-source populate-valid-edge-types-source
 	npm run sources
 
 run-dev:
-	echo "BENCHMARK_VERSION=$(BENCHMARK_VERSION)"
 	npm run dev
 
 clean:
