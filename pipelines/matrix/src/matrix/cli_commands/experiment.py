@@ -138,6 +138,12 @@ def create(experiment_name):
 @click.option(
     "--experiment-name", type=str, help="Optional: specify the MLFlow experiment name to use. Defaults to branch name"
 )
+@click.option(
+    "--from-run",
+    type=str,
+    default=None,
+    help="Run to read from, if specified will read from the `--from-run` datasets and write to the run_name datasets",
+)
 @click.pass_context
 def run(
     ctx,
@@ -156,6 +162,7 @@ def run(
     skip_git_checks: bool,
     confirm_release: bool,
     experiment_name: str,
+    from_run: Optional[str] = None,
 ):
     """Run an experiment."""
 
@@ -245,6 +252,7 @@ def run(
         allow_interactions=not headless,
         is_test=is_test,
         environment=environment,
+        from_run=from_run,
     )
 
     # construct description for mlflow run which we'll use to add some useful links
@@ -282,6 +290,7 @@ def _submit(
     mlflow_run_id: Optional[str] = None,
     allow_interactions: bool = True,
     is_test: bool = False,
+    from_run: Optional[str] = None,
 ) -> str:
     """Submit the end-to-end workflow.
 
@@ -333,6 +342,7 @@ def _submit(
             mlflow_url,
             is_test=is_test,
             mlflow_run_id=mlflow_run_id,
+            from_run=from_run,
         )
 
         file_path = save_argo_template(argo_template, template_directory)
@@ -442,6 +452,7 @@ def build_argo_template(
     mlflow_url: str,
     is_test: bool,
     mlflow_run_id: Optional[str] = None,
+    from_run: Optional[str] = None,
 ) -> str:
     """Build Argo workflow template."""
     matrix_root = Path(__file__).parent.parent.parent.parent
@@ -467,6 +478,7 @@ def build_argo_template(
         pipeline=pipeline_obj,
         environment=environment,
         mlflow_run_id=mlflow_run_id,
+        from_run=from_run,
     )
     console.print("[green]✓[/green] Argo template built")
 
