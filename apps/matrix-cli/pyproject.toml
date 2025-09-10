@@ -1,7 +1,3 @@
-[build-system]
-requires = [ "setuptools",]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "matrix-cli"
 description = "matrix-cli"
@@ -9,46 +5,23 @@ requires-python = ">=3.11"
 readme = "README.md"
 version = "0.1.0"
 dependencies = [
-    "click",
-    "polars-lts-cpu>=1.32" ,
-    "matrix-io" ,
+    "typer",
+    "polars-lts-cpu>=1.32",
+    "ruff"
 ]
 
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+]
 
 [project.scripts]
 primekg = "matrix_cli.io.primekg:main"
 
-[tool.black]
-line-length = 140
-target-version = ["py311"]
+[tool.setuptools.packages.find]
+where = ["src"]
 
-[tool.isort]
-line_length = 140
-
-[tool.ruff]
-lint.extend-ignore = [
-    "D211",  # `no-blank-line-before-class`
-    "D212",  # `multi-line-summary-first-line`
-    "D203",  # `blank-line-before-docstring`
-    ]
-line-length = 140
-ignore = ["S101"]
-
-# Allow autofix for all enabled rules (when `--fix`) is provided.
-lint.fixable = ["ALL"]
-
-# Select or ignore from https://beta.ruff.rs/docs/rules/
-lint.select = [
-    "B",  # bugbear
-    "D",  # pydocstyle
-    "E",  # pycodestyle errors
-    "F",  # Pyflakes
-    "I",  # isort
-    "S",  # flake8-bandit
-    "W",  # Warning
-]
-
-lint.unfixable = []
-target-version = "py311"
-
-
+[build-system]
+requires = [ "setuptools",]
+build-backend = "setuptools.build_meta"
