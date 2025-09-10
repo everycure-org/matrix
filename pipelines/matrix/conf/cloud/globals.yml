@@ -5,7 +5,7 @@ versions:
 
 release_folder_name: ${oc.env:RELEASE_FOLDER_NAME, releases}
 release_dir: ${runtime_gcs_bucket}/kedro/data/${release_folder_name}/${versions.release}
-feature_dir: ${release_dir}/temp_features/rtxkg2-n2v
+feature_dir: ${release_dir}/temp_features/int-rtx-robo-n2v
 run_dir: ${feature_dir}/runs/${run_name}
 
 runtime_gcs_bucket: gs://mtrx-us-central1-hub-dev-storage #${oc.env:RUNTIME_GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
