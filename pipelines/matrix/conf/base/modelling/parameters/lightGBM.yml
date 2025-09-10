@@ -1,0 +1,63 @@
+modelling.lightGBM:
+    _overrides:
+      
+      generator:
+        _object: matrix.datasets.pair_generator.ReplacementDrugDiseasePairGenerator
+        random_state: ${globals:random_state}
+        y_label: 2
+        n_replacements: 2
+        drug_flags:
+          - is_drug
+          - in_ground_pos
+        disease_flags:
+          - is_disease
+
+
+      model_tuning_args:
+        tuner:
+          _object: matrix.pipelines.modelling.tuning.GaussianSearch
+          estimator:
+            _object: lightgbm.LGBMClassifier
+            n_jobs: 16
+            random_state: ${globals:random_state}
+            device: cuda
+          n_calls: 20
+          dimensions:
+            - _object: skopt.space.Real
+              name: learning_rate
+              low: 0.01
+              high: 0.3
+            - _object: skopt.space.Integer
+              name: max_depth
+              low: 3
+              high: 20
+            - _object: skopt.space.Real
+              name: reg_lambda
+              low: 0
+              high: 10
+            - _object: skopt.space.Real
+              name: reg_alpha
+              low: 0
+              high: 10
+            - _object: skopt.space.Integer
+              name: n_estimators
+              low: 100
+              high: 2500
+          scoring: 
+              _object: matrix.pipelines.modelling.utils.partial_
+              func:
+                _object: sklearn.metrics.average_precision_score
+              average: macro
+          splitter:
+            _object: sklearn.model_selection.StratifiedKFold
+            n_splits: 2
+            random_state: ${globals:random_state}
+            shuffle: True
+        features: # Features use regex, source_0, source_1, .., target_0, target_1
+          - source_+
+          - target_+
+        target_col_name: y
+    
+    # NOTE: This leverages the custom `merge` resolver to override
+    # the base options with the override block above.
+    model_options: ${merge:${.._model_options},${._overrides}}
