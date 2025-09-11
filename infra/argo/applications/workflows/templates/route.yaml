@@ -11,7 +11,6 @@ spec:
     name: external-http
   hostnames:
   - "argo.platform.{{ .Values.spec.source.environment }}.everycure.org"
-  - "workflows.platform.{{ .Values.spec.source.environment }}.everycure.org"
   rules:
   - backendRefs:
     - name: argo-workflows-server
