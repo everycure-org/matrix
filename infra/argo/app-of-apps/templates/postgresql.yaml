@@ -12,6 +12,15 @@ spec:
     chart: cloudnative-pg
     repoURL: https://cloudnative-pg.github.io/charts
     targetRevision: 0.26.0
+    helm:
+      values: |
+        rbac:
+          create: true
+          aggregateClusterRoles: true
+        serviceAccount:
+          create: true
+        crds:
+          create: true
   ignoreDifferences:
   - group: apiextensions.k8s.io
     kind: CustomResourceDefinition
@@ -22,12 +31,27 @@ spec:
     kind: CustomResourceDefinition
     jsonPointers:
     - /metadata/annotations/kubectl.kubernetes.io~1last-applied-configuration
+  - group: rbac.authorization.k8s.io
+    kind: ClusterRole
+    jsonPointers:
+    - /metadata/annotations
+  - group: rbac.authorization.k8s.io
+    kind: ClusterRoleBinding
+    jsonPointers:
+    - /metadata/annotations
   syncPolicy:
     syncOptions:     # Sync options which modifies sync behavior
     - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
     - ServerSideApply=true # Use server-side apply to handle large CRDs
     - RespectIgnoreDifferences=true # Respect ignore differences
     - ApplyOutOfSyncOnly=true # Only apply out of sync resources
+    - Replace=true # Use kubectl replace instead of apply for problematic resources
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
     automated: 
       prune: true
       allowEmpty: true
