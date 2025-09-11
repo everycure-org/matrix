@@ -5,18 +5,17 @@ from matrix_io_utils.primekg import coalesce_duplicate_columns, fix_curies, mond
 def build_nodes(nodes: pl.DataFrame, drug_features: pl.DataFrame, disease_features: pl.DataFrame) -> pl.DataFrame:
     main = pl.DataFrame({"node_index": pl.Series([], dtype=pl.Utf8)})
 
-    main = main.lazy().join(nodes.lazy(), on=["node_index"], how="full", coalesce=True).collect()
+    main = main.join(nodes, on=["node_index"], how="full", coalesce=True)
 
-    main = main.lazy().join(drug_features.lazy(), on=["node_index"], how="full", coalesce=True).collect()
+    main = main.join(drug_features, on=["node_index"], how="full", coalesce=True)
     main = coalesce_duplicate_columns(main, keep=["node_index"])  # preserves first non-null among suffixed columns
 
-    main = main.lazy().join(disease_features.lazy(), on=["node_index"], how="full", coalesce=True).collect()
+    main = main.join(disease_features.lazy(), on=["node_index"], how="full", coalesce=True)
     main = coalesce_duplicate_columns(main, keep=["node_index"])  # again after join
 
     # Type/category mapping and CURIE formatting
     main = (
-        main.lazy()
-        .with_columns(
+        main.with_columns(
             [
                 pl.when(pl.col("node_source").str.contains("NCBI"))
                 .then(pl.concat_str([pl.col("node_source"), pl.col("node_id")], separator="Gene:", ignore_nulls=True))
@@ -151,7 +150,6 @@ def build_nodes(nodes: pl.DataFrame, drug_features: pl.DataFrame, disease_featur
         .drop(["node_id", "node_index"], strict=False)
         .rename({"node_source": "id", "node_name": "name", "category": "drug_category"})
         .rename({"node_type": "category"})
-        .collect()
     )
     return main
 
@@ -179,6 +177,7 @@ def build_edges(edges: pl.DataFrame) -> pl.DataFrame:
 
     edges = mondo_grouped_exploded(edges)
     edges = fix_curies(edges)
+
     edges = (
         edges.drop(
             ["x_index", "x_id", "x_type", "x_name", "x_source", "y_index", "y_id", "y_type", "y_name", "y_source"],
