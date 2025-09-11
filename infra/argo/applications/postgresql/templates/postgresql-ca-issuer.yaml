@@ -1,0 +1,41 @@
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: postgresql-selfsigned-issuer
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: postgresql-ca-certificate
+  namespace: default
+spec:
+  secretName: postgresql-ca-key-pair
+  isCA: true
+  commonName: "PostgreSQL Root CA"
+  subject:
+    organizationalUnits:
+      - "PostgreSQL"
+    organizations:
+      - "everycure-org"
+    countries:
+      - "US"
+  duration: 8760h # 1 year
+  renewBefore: 720h # 30 days
+  issuerRef:
+    name: postgresql-selfsigned-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
+  privateKey:
+    algorithm: RSA
+    size: 4096
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: postgresql-ca-issuer
+spec:
+  ca:
+    secretName: postgresql-ca-key-pair

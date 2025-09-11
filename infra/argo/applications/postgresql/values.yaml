@@ -1,0 +1,85 @@
+type: postgresql
+mode: standalone
+version:
+  postgresql: "17.6"
+cluster:
+  enableSuperuserAccess: true
+  superuserSecret: ""
+  logLevel: "debug"
+  instances: 2
+  monitoring:
+    enabled: true
+    podMonitor:
+      enabled: true
+    prometheusRule:
+      enabled: true
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
+  storage:
+    storageClass: "premium-rwo"
+  walStorage:
+    storageClass: "premium-rwo"
+    enabled: true
+  certificates:
+    serverCASecret: "postgresql-server-ca-secret"
+    serverTLSSecret: "postgresql-server-tls-secret"
+    replicationTLSSecret: "postgresql-replication-tls-secret"
+    clientCASecret: "postgresql-client-ca-secret"
+    serverAltDNSNames:
+      - postgresql
+      - postgresql.default
+      - postgresql.default.svc
+      - postgresql.default.svc.cluster.local
+  pg_hba:
+    - local all all trust
+    - hostssl all all all cert clientcert=verify-full
+    
+# Backup configuration
+backups:
+  enabled: true
+  data:
+    compression: "bzip2"
+  endpointCA:
+    create: false
+    key: "ca.crt"
+    name: "postgresql-backup-ca"
+    value: ""
+  provider: gcs
+  google:
+    gkeEnvironment: true
+    bucket: "everycure-infra-backups"
+    path: "/postgresql"
+  retentionPolicy: "7d"
+  scheduledBackups:
+    - name: "daily-backup"
+      schedule: "0 2 * * *"
+      backupOwnerReference: "self"
+      immediate: true
+      method: "volumeSnapshot"
+  wal:
+    compression: "bzip2"
+  
+# PGBouncer configuration
+poolers:
+  - name: rw
+    type: rw
+    instances: 1
+    monitoring:
+      enabled: true
+      podMonitor:
+        enabled: true
+        relabelings:
+          - targetLabel: type
+            replacement: rw
+  - name: ro
+    type: ro
+    instances: 1
+    monitoring:
+      enabled: true
+      podMonitor:
+        enabled: true
+        relabelings:
+          - targetLabel: type
+            replacement: ro

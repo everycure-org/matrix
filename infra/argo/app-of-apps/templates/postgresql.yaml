@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgresql-cloudnative-pg
+  namespace: argocd
+spec:
+  destination:
+    namespace: postgresql
+    server: {{ .Values.spec.destination.server }}
+  project: default
+  source:
+    repoURL: {{ .Values.spec.source.repoURL }}
+    targetRevision: {{ .Values.spec.source.targetRevision }}
+    path: {{ .Values.spec.source.repoPath }}/postgresql
+    helm:
+      parameters:
+        - name: spec.source.targetRevision
+          value: {{ .Values.spec.source.targetRevision}}
+        - name: spec.source.environment
+          value: {{ .Values.spec.source.environment}}
+        - name: spec.source.project_id
+          value: {{ .Values.spec.source.project_id}}
