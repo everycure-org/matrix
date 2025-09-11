@@ -11,7 +11,29 @@ spec:
     name: external-http
   hostnames:
   - "argo.platform.{{ .Values.spec.source.environment }}.everycure.org"
+  - "workflows.platform.{{ .Values.spec.source.environment }}.everycure.org"
   rules:
   - backendRefs:
     - name: argo-workflows-server
       port: 2746
+
+# --------------------------------
+
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: litellm-route
+  namespace: litellm  # Should be in the same namespace as the service
+spec:
+  parentRefs:
+  - kind: Gateway
+    sectionName: https
+    namespace: gateway
+    name: external-http
+  hostnames:
+  - "litellm.{{ .Values.spec.source.environment }}.everycure.org"
+  rules:
+  - backendRefs:
+    - name: litellm
+      port: 4000
+      namespace: litellm  # Explicit namespace reference
