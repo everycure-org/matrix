@@ -60,3 +60,4 @@ transformers
 typer
 xgboost
 optuna
+psycopg
