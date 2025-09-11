@@ -85,7 +85,9 @@ def print_predicate_mappings(kg: Annotated[Path, typer.Option("--input", "-i")])
                 orig_df.filter(pl.col("relation").str.contains("exposure_disease")).with_columns(
                     [pl.lit("biolink:correlated_with").alias("predicate")]
                 ),
-                orig_df.filter(pl.col("relation").str.contains("indication")).with_columns([pl.lit("biolink:treats").alias("predicate")]),
+                orig_df.filter(pl.col("relation").str.contains("indication")).with_columns(
+                    [pl.lit("biolink:treats").alias("predicate")]
+                ),
                 orig_df.filter(pl.col("relation").str.contains("off-label use")).with_columns(
                     [pl.lit("biolink:applied_to_treat").alias("predicate")]
                 ),
@@ -115,7 +117,8 @@ def print_predicate_mappings(kg: Annotated[Path, typer.Option("--input", "-i")])
                     ]
                 ),
                 orig_df.filter(
-                    (pl.col("relation") == pl.lit("drug_protein")) & (pl.col("display_relation") == pl.lit("transporter"))
+                    (pl.col("relation") == pl.lit("drug_protein"))
+                    & (pl.col("display_relation") == pl.lit("transporter"))
                 ).with_columns(
                     [
                         pl.lit("transport").alias("subject_aspect_qualifier"),
@@ -152,22 +155,20 @@ def build_nodes(
     """Build the nodes tsv file."""
     main = pl.DataFrame({"node_index": pl.Series([], dtype=pl.Utf8)})
 
-    nodes_df = read_tsv_lazy(nodes)
-    main = main.lazy().join(nodes_df, on=["node_index"], how="full", coalesce=True).collect()
+    nodes_df = read_tsv_lazy(nodes).collect()
+    main = main.join(nodes_df, on=["node_index"], how="full", coalesce=True)
 
-    drug_features_df = read_tsv_lazy(drug_features)
-    main = main.lazy().join(drug_features_df, on=["node_index"], how="full", coalesce=True).collect()
-
+    drug_features_df = read_tsv_lazy(drug_features).collect()
+    main = main.join(drug_features_df, on=["node_index"], how="full", coalesce=True)
     main = coalesce_duplicate_columns(main, keep=["node_index"])  # preserves first non-null among suffixed columns
 
-    disease_features_df = read_tsv_lazy(disease_features)
-    main = main.lazy().join(disease_features_df, on=["node_index"], how="full", coalesce=True).collect()
+    disease_features_df = read_tsv_lazy(disease_features).collect()
+    main = main.join(disease_features_df, on=["node_index"], how="full", coalesce=True)
     main = coalesce_duplicate_columns(main, keep=["node_index"])  # again after join
 
     # Type/category mapping and CURIE formatting
     main = (
-        main.lazy()
-        .with_columns(
+        main.with_columns(
             [
                 pl.when(pl.col("node_source").str.contains("NCBI"))
                 .then(pl.concat_str([pl.col("node_source"), pl.col("node_id")], separator="Gene:", ignore_nulls=True))
@@ -302,7 +303,6 @@ def build_nodes(
         .drop(["node_id", "node_index"], strict=False)
         .rename({"node_source": "id", "node_name": "name", "category": "drug_category"})
         .rename({"node_type": "category"})
-        .collect()
     )
 
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -310,7 +310,9 @@ def build_nodes(
 
 
 @app.command()
-def build_edges(kg: Annotated[Path, typer.Option("--input", "-i")], output: Annotated[Path, typer.Option("--output", "-o")]) -> None:
+def build_edges(
+    kg: Annotated[Path, typer.Option("--input", "-i")], output: Annotated[Path, typer.Option("--output", "-o")]
+) -> None:
     """Build the edges tsv file."""
     edges = read_tsv_lazy(kg).with_columns(
         [
@@ -380,7 +382,9 @@ def build_edges(kg: Annotated[Path, typer.Option("--input", "-i")], output: Anno
                 edges.filter(pl.col("predicate") == pl.lit("exposure_disease")).with_columns(
                     [pl.lit("biolink:correlated_with").alias("predicate")]
                 ),
-                edges.filter(pl.col("predicate") == pl.lit("indication")).with_columns([pl.lit("biolink:treats").alias("predicate")]),
+                edges.filter(pl.col("predicate") == pl.lit("indication")).with_columns(
+                    [pl.lit("biolink:treats").alias("predicate")]
+                ),
                 edges.filter(pl.col("predicate") == pl.lit("off-label use")).with_columns(
                     [pl.lit("biolink:applied_to_treat").alias("predicate")]
                 ),
@@ -402,7 +406,8 @@ def build_edges(kg: Annotated[Path, typer.Option("--input", "-i")], output: Anno
                     (pl.col("predicate") == pl.lit("drug_protein")) & (pl.col("display_relation") == pl.lit("carrier"))
                 ).with_columns([pl.lit("biolink:affected_by").alias("predicate")]),
                 edges.filter(
-                    (pl.col("predicate") == pl.lit("drug_protein")) & (pl.col("display_relation") == pl.lit("transporter"))
+                    (pl.col("predicate") == pl.lit("drug_protein"))
+                    & (pl.col("display_relation") == pl.lit("transporter"))
                 ).with_columns(
                     [
                         pl.lit("transport").alias("subject_aspect_qualifier"),
@@ -469,7 +474,11 @@ def fix_curies(edges: pl.LazyFrame) -> pl.LazyFrame:
             edges.with_columns(
                 [
                     pl.when(pl.col(map_item["source"]) == pl.lit("NCBI"))
-                    .then(pl.concat_str([pl.col(map_item["source"]), pl.col(map_item["id"])], separator="Gene:", ignore_nulls=True))
+                    .then(
+                        pl.concat_str(
+                            [pl.col(map_item["source"]), pl.col(map_item["id"])], separator="Gene:", ignore_nulls=True
+                        )
+                    )
                     .otherwise(pl.col(map_item["source"]))
                     .alias(map_item["sub_or_obj_col"]),
                 ]
@@ -499,7 +508,11 @@ def fix_curies(edges: pl.LazyFrame) -> pl.LazyFrame:
             .with_columns(
                 [
                     pl.when(pl.col(map_item["source"]).str.contains("CTD|GO|DrugBank"))
-                    .then(pl.concat_str([pl.col(map_item["source"]), pl.col(map_item["id"])], separator=":", ignore_nulls=True))
+                    .then(
+                        pl.concat_str(
+                            [pl.col(map_item["source"]), pl.col(map_item["id"])], separator=":", ignore_nulls=True
+                        )
+                    )
                     .otherwise(pl.col(map_item["sub_or_obj_col"]))
                     .alias(map_item["sub_or_obj_col"]),
                 ]
