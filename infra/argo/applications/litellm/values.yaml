@@ -17,13 +17,6 @@ resources:
     cpu: "1"
     memory: "2Gi"
 
-db:
-  useExisting: true
-  url: "$(DATABASE_URL)"   # provided via env (ExternalSecret/Secret)
-
-redis:
-  enabled: true
-
 proxy:
   configInline: |
     general_settings:
