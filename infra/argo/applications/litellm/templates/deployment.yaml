@@ -33,10 +33,6 @@ spec:
               name: {{ .Values.masterKey.existingSecret }}
               key: LITELLM_MASTER_KEY
         {{- end }}
-        # {{- if .Values.db.url }}
-        # - name: DATABASE_URL
-        #   value: {{ .Values.db.url }}
-        # {{- end }}
         {{- if .Values.proxy.configInline }}
         - name: LITELLM_CONFIG
           value: |
