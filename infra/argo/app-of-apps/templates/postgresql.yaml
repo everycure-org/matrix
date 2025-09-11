@@ -12,8 +12,22 @@ spec:
     chart: cloudnative-pg
     repoURL: https://cloudnative-pg.github.io/charts
     targetRevision: 0.26.0
+  ignoreDifferences:
+  - group: apiextensions.k8s.io
+    kind: CustomResourceDefinition
+    name: poolers.postgresql.cnpg.io
+    jsonPointers:
+    - /metadata/annotations
+  - group: apiextensions.k8s.io
+    kind: CustomResourceDefinition
+    jsonPointers:
+    - /metadata/annotations/kubectl.kubernetes.io~1last-applied-configuration
   syncPolicy:
     syncOptions:     # Sync options which modifies sync behavior
     - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
+    - ServerSideApply=true # Use server-side apply to handle large CRDs
+    - RespectIgnoreDifferences=true # Respect ignore differences
+    - ApplyOutOfSyncOnly=true # Only apply out of sync resources
     automated: 
       prune: true
+      allowEmpty: true
