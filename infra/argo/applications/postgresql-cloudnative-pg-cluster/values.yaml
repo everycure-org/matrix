@@ -3,6 +3,44 @@ mode: standalone
 version:
   postgresql: "17.6"
 cluster:
+  # PGBouncer configuration
+  poolers:
+    - name: rw
+      type: rw
+      instances: 1
+      monitoring:
+        enabled: true
+        podMonitor:
+          enabled: true
+          relabelings:
+            - targetLabel: type
+              replacement: rw
+      # PGBouncer scheduling configuration
+      nodeSelector:
+        workload-type: management
+      tolerations:
+        - key: "workload-type"
+          operator: "Equal"
+          value: "management"
+          effect: "NoSchedule"
+    - name: ro
+      type: ro
+      instances: 1
+      monitoring:
+        enabled: true
+        podMonitor:
+          enabled: true
+          relabelings:
+            - targetLabel: type
+              replacement: ro
+      # PGBouncer scheduling configuration
+      nodeSelector:
+        node-type: application
+      tolerations:
+        - key: "application"
+          operator: "Equal"
+          value: "pgbouncer"
+          effect: "NoSchedule"
   enableSuperuserAccess: true
   superuserSecret: ""
   logLevel: "debug"
@@ -53,51 +91,3 @@ backups:
       method: "volumeSnapshot"
   wal:
     compression: "bzip2"
-  
-# PGBouncer configuration
-poolers:
-  - name: rw
-    type: rw
-    instances: 1
-    monitoring:
-      enabled: true
-      podMonitor:
-        enabled: true
-        relabelings:
-          - targetLabel: type
-            replacement: rw
-    # PGBouncer scheduling configuration
-    nodeSelector:
-      workload-type: management
-    tolerations:
-      - key: "workload-type"
-        operator: "Equal"
-        value: "management"
-        effect: "NoSchedule"
-  - name: ro
-    type: ro
-    instances: 1
-    monitoring:
-      enabled: true
-      podMonitor:
-        enabled: true
-        relabelings:
-          - targetLabel: type
-            replacement: ro
-    # PGBouncer scheduling configuration
-    nodeSelector:
-      node-type: application
-    tolerations:
-      - key: "application"
-        operator: "Equal"
-        value: "pgbouncer"
-        effect: "NoSchedule"
-    affinity:
-      podAntiAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchLabels:
-                  postgresql: pooler-ro
-              topologyKey: kubernetes.io/hostname
