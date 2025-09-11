@@ -17,8 +17,9 @@ title: KG Dashboard
     const benchmark_version = import.meta.env.VITE_benchmark_version;
 </script>
 
+<p class="text-gray-500 text-sm italic mb-2">Dashboard last updated on {build_time}</p>
 
-<div class="mb-4 flex flex-col gap-2">
+<div class="my-4 flex flex-col gap-4">
     <a href="https://docs.dev.everycure.org/releases/release_history/" class="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm">
         ← Release History 
     </a>
@@ -27,7 +28,6 @@ title: KG Dashboard
     </a>
 </div>
 
-<p class="text-gray-500 text-sm italic">Last updated on {build_time}</p>
 
 ```sql edges_per_node
 select 
