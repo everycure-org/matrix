@@ -1,278 +1,278 @@
-# CloudNativePG Operator Configuration
-cloudnative-pg:
-  # Default values for CloudNativePG.
-  replicaCount: 1
+# # CloudNativePG Operator Configuration
+# cloudnative-pg:
+#   # Default values for CloudNativePG.
+#   replicaCount: 1
 
-  image:
-    repository: ghcr.io/cloudnative-pg/cloudnative-pg
-    pullPolicy: IfNotPresent
-    tag: "1.27.0"
+#   image:
+#     repository: ghcr.io/cloudnative-pg/cloudnative-pg
+#     pullPolicy: IfNotPresent
+#     tag: "1.27.0"
 
-  imagePullSecrets: []
-  nameOverride: ""
-  fullnameOverride: ""
-  namespaceOverride: ""
+#   imagePullSecrets: []
+#   nameOverride: ""
+#   fullnameOverride: ""
+#   namespaceOverride: ""
 
-  hostNetwork: false
-  dnsPolicy: ""
+#   hostNetwork: false
+#   dnsPolicy: ""
 
-  updateStrategy: {}
+#   updateStrategy: {}
 
-  crds:
-    create: true
+#   crds:
+#     create: true
 
-  webhook:
-    port: 9443
-    mutating:
-      create: true
-      failurePolicy: Fail
-    validating:
-      create: true
-      failurePolicy: Fail
-    livenessProbe:
-      initialDelaySeconds: 3
-    readinessProbe:
-      initialDelaySeconds: 3
-    startupProbe:
-      failureThreshold: 6
-      periodSeconds: 5
+#   webhook:
+#     port: 9443
+#     mutating:
+#       create: true
+#       failurePolicy: Fail
+#     validating:
+#       create: true
+#       failurePolicy: Fail
+#     livenessProbe:
+#       initialDelaySeconds: 3
+#     readinessProbe:
+#       initialDelaySeconds: 3
+#     startupProbe:
+#       failureThreshold: 6
+#       periodSeconds: 5
 
-  config:
-    create: true
-    name: cnpg-controller-manager-config
-    secret: false
-    clusterWide: true
-    data: {}
-    maxConcurrentReconciles: 10
+#   config:
+#     create: true
+#     name: cnpg-controller-manager-config
+#     secret: false
+#     clusterWide: true
+#     data: {}
+#     maxConcurrentReconciles: 10
 
-  additionalArgs: []
-  additionalEnv: []
+#   additionalArgs: []
+#   additionalEnv: []
 
-  serviceAccount:
-    create: true
-    name: ""
+#   serviceAccount:
+#     create: true
+#     name: ""
 
-  rbac:
-    create: true
-    aggregateClusterRoles: false
+#   rbac:
+#     create: true
+#     aggregateClusterRoles: false
 
-  commonAnnotations: {}
-  podAnnotations: {}
-  podLabels: {}
+#   commonAnnotations: {}
+#   podAnnotations: {}
+#   podLabels: {}
 
-  containerSecurityContext:
-    allowPrivilegeEscalation: false
-    readOnlyRootFilesystem: true
-    runAsUser: 10001
-    runAsGroup: 10001
-    seccompProfile:
-      type: RuntimeDefault
-    capabilities:
-      drop:
-        - "ALL"
+#   containerSecurityContext:
+#     allowPrivilegeEscalation: false
+#     readOnlyRootFilesystem: true
+#     runAsUser: 10001
+#     runAsGroup: 10001
+#     seccompProfile:
+#       type: RuntimeDefault
+#     capabilities:
+#       drop:
+#         - "ALL"
 
-  podSecurityContext:
-    runAsNonRoot: true
-    seccompProfile:
-      type: RuntimeDefault
+#   podSecurityContext:
+#     runAsNonRoot: true
+#     seccompProfile:
+#       type: RuntimeDefault
 
-  priorityClassName: ""
+#   priorityClassName: ""
 
-  service:
-    type: ClusterIP
-    name: cnpg-webhook-service
-    port: 443
-    ipFamilyPolicy: ""
-    ipFamilies: []
+#   service:
+#     type: ClusterIP
+#     name: cnpg-webhook-service
+#     port: 443
+#     ipFamilyPolicy: ""
+#     ipFamilies: []
 
-  resources: {}
+#   resources: {}
 
-  nodeSelector:
-    workload-type: management
+#   nodeSelector:
+#     workload-type: management
 
-  topologySpreadConstraints: []
+#   topologySpreadConstraints: []
 
-  tolerations:
-    - key: "workload-type"
-      operator: "Equal"
-      value: "management"
-      effect: "NoSchedule"
+#   tolerations:
+#     - key: "workload-type"
+#       operator: "Equal"
+#       value: "management"
+#       effect: "NoSchedule"
 
-  affinity: {}
+#   affinity: {}
 
-  monitoring:
-    podMonitorEnabled: false
-    podMonitorMetricRelabelings: []
-    podMonitorRelabelings: []
-    podMonitorAdditionalLabels: {}
+#   monitoring:
+#     podMonitorEnabled: false
+#     podMonitorMetricRelabelings: []
+#     podMonitorRelabelings: []
+#     podMonitorAdditionalLabels: {}
 
-    grafanaDashboard:
-      create: false
-      namespace: ""
-      configMapName: "cnpg-grafana-dashboard"
-      sidecarLabel: "grafana_dashboard"
-      sidecarLabelValue: "1"
-      labels: {}
-      annotations: {}
+#     grafanaDashboard:
+#       create: false
+#       namespace: ""
+#       configMapName: "cnpg-grafana-dashboard"
+#       sidecarLabel: "grafana_dashboard"
+#       sidecarLabelValue: "1"
+#       labels: {}
+#       annotations: {}
 
-  monitoringQueriesConfigMap:
-    name: cnpg-default-monitoring
-    queries: |
-      backends:
-        query: |
-         SELECT sa.datname
-             , sa.usename
-             , sa.application_name
-             , states.state
-             , COALESCE(sa.count, 0) AS total
-             , COALESCE(sa.max_tx_secs, 0) AS max_tx_duration_seconds
-             FROM ( VALUES ('active')
-                 , ('idle')
-                 , ('idle in transaction')
-                 , ('idle in transaction (aborted)')
-                 , ('fastpath function call')
-                 , ('disabled')
-                 ) AS states(state)
-             LEFT JOIN (
-                 SELECT datname
-                     , state
-                     , usename
-                     , COALESCE(application_name, '') AS application_name
-                     , COUNT(*)
-                     , COALESCE(EXTRACT (EPOCH FROM (max(now() - xact_start))), 0) AS max_tx_secs
-                 FROM pg_catalog.pg_stat_activity
-                 GROUP BY datname, state, usename, application_name
-             ) sa ON states.state = sa.state
-             WHERE sa.usename IS NOT NULL
-        metrics:
-          - datname:
-              usage: "LABEL"
-              description: "Name of the database"
-          - usename:
-              usage: "LABEL"
-              description: "Name of the user"
-          - application_name:
-              usage: "LABEL"
-              description: "Name of the application"
-          - state:
-              usage: "LABEL"
-              description: "State of the backend"
-          - total:
-              usage: "GAUGE"
-              description: "Number of backends"
-          - max_tx_duration_seconds:
-              usage: "GAUGE"
-              description: "Maximum duration of a transaction in seconds"
+#   monitoringQueriesConfigMap:
+#     name: cnpg-default-monitoring
+#     queries: |
+#       backends:
+#         query: |
+#          SELECT sa.datname
+#              , sa.usename
+#              , sa.application_name
+#              , states.state
+#              , COALESCE(sa.count, 0) AS total
+#              , COALESCE(sa.max_tx_secs, 0) AS max_tx_duration_seconds
+#              FROM ( VALUES ('active')
+#                  , ('idle')
+#                  , ('idle in transaction')
+#                  , ('idle in transaction (aborted)')
+#                  , ('fastpath function call')
+#                  , ('disabled')
+#                  ) AS states(state)
+#              LEFT JOIN (
+#                  SELECT datname
+#                      , state
+#                      , usename
+#                      , COALESCE(application_name, '') AS application_name
+#                      , COUNT(*)
+#                      , COALESCE(EXTRACT (EPOCH FROM (max(now() - xact_start))), 0) AS max_tx_secs
+#                  FROM pg_catalog.pg_stat_activity
+#                  GROUP BY datname, state, usename, application_name
+#              ) sa ON states.state = sa.state
+#              WHERE sa.usename IS NOT NULL
+#         metrics:
+#           - datname:
+#               usage: "LABEL"
+#               description: "Name of the database"
+#           - usename:
+#               usage: "LABEL"
+#               description: "Name of the user"
+#           - application_name:
+#               usage: "LABEL"
+#               description: "Name of the application"
+#           - state:
+#               usage: "LABEL"
+#               description: "State of the backend"
+#           - total:
+#               usage: "GAUGE"
+#               description: "Number of backends"
+#           - max_tx_duration_seconds:
+#               usage: "GAUGE"
+#               description: "Maximum duration of a transaction in seconds"
 
-# PostgreSQL Cluster Configuration (separate from operator)
-postgresql:
-  type: postgresql
-  mode: standalone
-  version:
-    postgresql: "17.6"
-  cluster:
-    enableSuperuserAccess: true
-    superuserSecret: ""
-    logLevel: "debug"
-    instances: 2
-    monitoring:
-      enabled: true
-      podMonitor:
-        enabled: true
-      prometheusRule:
-        enabled: true
-    resources:
-      requests:
-        cpu: "250m"
-        memory: "256Mi"
-    storage:
-      storageClass: "premium-rwo"
-    walStorage:
-      storageClass: "premium-rwo"
-      enabled: true
+# # PostgreSQL Cluster Configuration (separate from operator)
+# postgresql:
+#   type: postgresql
+#   mode: standalone
+#   version:
+#     postgresql: "17.6"
+#   cluster:
+#     enableSuperuserAccess: true
+#     superuserSecret: ""
+#     logLevel: "debug"
+#     instances: 2
+#     monitoring:
+#       enabled: true
+#       podMonitor:
+#         enabled: true
+#       prometheusRule:
+#         enabled: true
+#     resources:
+#       requests:
+#         cpu: "250m"
+#         memory: "256Mi"
+#     storage:
+#       storageClass: "premium-rwo"
+#     walStorage:
+#       storageClass: "premium-rwo"
+#       enabled: true
     
-    # Node scheduling configuration
-    nodeSelector:
-      workload-type: management
-    tolerations:
-      - key: "workload-type"
-        operator: "Equal"
-        value: "management"
-        effect: "NoSchedule"
-    certificates:
-      serverCASecret: "postgresql-server-ca-secret"
-      serverTLSSecret: "postgresql-server-tls-secret"
-      replicationTLSSecret: "postgresql-replication-tls-secret"
-      clientCASecret: "postgresql-client-ca-secret"
-      serverAltDNSNames:
-        - postgresql
-        - postgresql.postgresql
-        - postgresql.postgresql.svc
-        - postgresql.postgresql.svc.cluster.local
-    pg_hba:
-      - local all all trust
-      - hostssl all all all cert clientcert=verify-full
+#     # Node scheduling configuration
+#     nodeSelector:
+#       workload-type: management
+#     tolerations:
+#       - key: "workload-type"
+#         operator: "Equal"
+#         value: "management"
+#         effect: "NoSchedule"
+#     certificates:
+#       serverCASecret: "postgresql-server-ca-secret"
+#       serverTLSSecret: "postgresql-server-tls-secret"
+#       replicationTLSSecret: "postgresql-replication-tls-secret"
+#       clientCASecret: "postgresql-client-ca-secret"
+#       serverAltDNSNames:
+#         - postgresql
+#         - postgresql.postgresql
+#         - postgresql.postgresql.svc
+#         - postgresql.postgresql.svc.cluster.local
+#     pg_hba:
+#       - local all all trust
+#       - hostssl all all all cert clientcert=verify-full
       
-  # Backup configuration
-  backups:
-    enabled: true
-    data:
-      compression: "bzip2"
-    endpointCA:
-      create: false
-      key: "ca.crt"
-      name: "postgresql-backup-ca"
-      value: ""
-    provider: gcs
-    google:
-      gkeEnvironment: true
-      bucket: "everycure-infra-backups"
-      path: "/postgresql"
-    retentionPolicy: "7d"
-    scheduledBackups:
-      - name: "daily-backup"
-        schedule: "0 2 * * *"
-        backupOwnerReference: "self"
-        immediate: true
-        method: "volumeSnapshot"
-    wal:
-      compression: "bzip2"
+#   # Backup configuration
+#   backups:
+#     enabled: true
+#     data:
+#       compression: "bzip2"
+#     endpointCA:
+#       create: false
+#       key: "ca.crt"
+#       name: "postgresql-backup-ca"
+#       value: ""
+#     provider: gcs
+#     google:
+#       gkeEnvironment: true
+#       bucket: "everycure-infra-backups"
+#       path: "/postgresql"
+#     retentionPolicy: "7d"
+#     scheduledBackups:
+#       - name: "daily-backup"
+#         schedule: "0 2 * * *"
+#         backupOwnerReference: "self"
+#         immediate: true
+#         method: "volumeSnapshot"
+#     wal:
+#       compression: "bzip2"
     
-  # PGBouncer configuration
-  poolers:
-    - name: rw
-      type: rw
-      instances: 1
-      monitoring:
-        enabled: true
-        podMonitor:
-          enabled: true
-          relabelings:
-            - targetLabel: type
-              replacement: rw
-      # PGBouncer scheduling configuration
-      nodeSelector:
-        workload-type: management
-      tolerations:
-        - key: "workload-type"
-          operator: "Equal"
-          value: "management"
-          effect: "NoSchedule"
-    - name: ro
-      type: ro
-      instances: 1
-      monitoring:
-        enabled: true
-        podMonitor:
-          enabled: true
-          relabelings:
-            - targetLabel: type
-              replacement: ro
-      # PGBouncer scheduling configuration
-      nodeSelector:
-        workload-type: management
-      tolerations:
-        - key: "workload-type"
-          operator: "Equal"
-          value: "management"
-          effect: "NoSchedule"
+#   # PGBouncer configuration
+#   poolers:
+#     - name: rw
+#       type: rw
+#       instances: 1
+#       monitoring:
+#         enabled: true
+#         podMonitor:
+#           enabled: true
+#           relabelings:
+#             - targetLabel: type
+#               replacement: rw
+#       # PGBouncer scheduling configuration
+#       nodeSelector:
+#         workload-type: management
+#       tolerations:
+#         - key: "workload-type"
+#           operator: "Equal"
+#           value: "management"
+#           effect: "NoSchedule"
+#     - name: ro
+#       type: ro
+#       instances: 1
+#       monitoring:
+#         enabled: true
+#         podMonitor:
+#           enabled: true
+#           relabelings:
+#             - targetLabel: type
+#               replacement: ro
+#       # PGBouncer scheduling configuration
+#       nodeSelector:
+#         workload-type: management
+#       tolerations:
+#         - key: "workload-type"
+#           operator: "Equal"
+#           value: "management"
+#           effect: "NoSchedule"
