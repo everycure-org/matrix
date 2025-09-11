@@ -44,11 +44,10 @@ spec:
           limits:   { cpu: "1",    memory: "2Gi" }
 
         db:
-          useExisting: true
-          url: "$(DATABASE_URL)"
+          useExisting: false
 
         redis:
-          enabled: true
+          enabled: false
 
         proxy:
           configInline: |
