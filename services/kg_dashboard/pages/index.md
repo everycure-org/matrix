@@ -9,19 +9,12 @@ title: KG Dashboard
     export function getPieColors(data) {
         return data.map(item => getSourceColor(item.name));
     }
-    import { getSourceColor } from './_lib/colors';
-    
-    // Function to get colors for pie chart data
-    export function getPieColors(data) {
-        return data.map(item => getSourceColor(item.name));
-    }
 
     const release_version = import.meta.env.VITE_release_version;
     const build_time = import.meta.env.VITE_build_time;
     const robokop_version = import.meta.env.VITE_robokop_version;
     const rtx_kg2_version = import.meta.env.VITE_rtx_kg2_version;
     const benchmark_version = import.meta.env.VITE_benchmark_version;
-
 </script>
 
 
