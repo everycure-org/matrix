@@ -3,15 +3,15 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: postgresql-replication-tls
-  namespace: default
+  namespace: postgresql
 spec:
   secretName: postgresql-replication-tls-secret
   commonName: "postgresql-replication"
   dnsNames:
     - postgresql
-    - postgresql.default
-    - postgresql.default.svc
-    - postgresql.default.svc.cluster.local
+    - postgresql.postgresql
+    - postgresql.postgresql.svc
+    - postgresql.postgresql.svc.cluster.local
   subject:
     organizationalUnits:
       - "PostgreSQL Replication"
