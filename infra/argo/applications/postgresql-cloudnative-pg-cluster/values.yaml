@@ -31,19 +31,6 @@ cluster:
       operator: "Equal"
       value: "management"
       effect: "NoSchedule"
-  certificates:
-    serverCASecret: "postgresql-server-ca-secret"
-    serverTLSSecret: "postgresql-server-tls-secret"
-    replicationTLSSecret: "postgresql-replication-tls-secret"
-    clientCASecret: "postgresql-client-ca-secret"
-    serverAltDNSNames:
-      - postgresql
-      - postgresql.default
-      - postgresql.default.svc
-      - postgresql.default.svc.cluster.local
-  pg_hba:
-    - local all all trust
-    - hostssl all all all cert clientcert=verify-full
     
 # Backup configuration
 backups:
@@ -51,10 +38,7 @@ backups:
   data:
     compression: "bzip2"
   endpointCA:
-    create: false
-    key: "ca.crt"
-    name: "postgresql-backup-ca"
-    value: ""
+    create: true
   provider: gcs
   google:
     gkeEnvironment: true
