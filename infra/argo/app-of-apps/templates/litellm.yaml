@@ -43,12 +43,6 @@ spec:
           requests: { cpu: "250m", memory: "512Mi" }
           limits:   { cpu: "1",    memory: "2Gi" }
 
-        db:
-          useExisting: false
-
-        redis:
-          enabled: false
-
         proxy:
           configInline: |
             general_settings:
