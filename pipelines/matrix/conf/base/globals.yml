@@ -99,8 +99,6 @@ paths:
   evaluation:         data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
   inference:          data/releases/${versions.release}/runs/${run_name}/datasets/inference
 
-  preprocessing:      data/preprocessing
-
   tmp:                data/tmp
 
   # Embedding cache dataset

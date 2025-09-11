@@ -231,8 +231,8 @@ preprocessing.raw.primekg.kg@polars:
 
 preprocessing.int.primekg.nodes:
   <<: [*_polars_csv]
-  filepath: ${globals:paths.preprocessing}/int/prime-kg/${globals:preprocessing.primekg.version}.${globals:preprocessing.primekg.patch}/prime-kg-${globals:preprocessing.primekg.version}.${globals:preprocessing.primekg.patch}_nodes.tsv
+  filepath: ${globals:paths.tmp}/preprocessing/int/prime-kg/${globals:preprocessing.primekg.version}.${globals:preprocessing.primekg.patch}/prime-kg-${globals:preprocessing.primekg.version}.${globals:preprocessing.primekg.patch}_nodes.tsv
 
 preprocessing.int.primekg.edges:
   <<: [*_polars_csv]
-  filepath: ${globals:paths.preprocessing}/int/prime-kg/${globals:preprocessing.primekg.version}.${globals:preprocessing.primekg.patch}/prime-kg-${globals:preprocessing.primekg.version}.${globals:preprocessing.primekg.patch}_edges.tsv
+  filepath: ${globals:paths.tmp}/preprocessing/int/prime-kg/${globals:preprocessing.primekg.version}.${globals:preprocessing.primekg.patch}/prime-kg-${globals:preprocessing.primekg.version}.${globals:preprocessing.primekg.patch}_edges.tsv
