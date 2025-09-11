@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: litellm
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "10" # after cluster infra/secrets if you have them
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: litellm
+  source:
+    repoURL: https://github.com/BerriAI/litellm.git
+    targetRevision: v1.76.1-stable
+    path: {{ .Values.spec.source.repoPath }}/litellm
+    helm:
+      valueFiles:
+        - $values/apps/litellm/values.yaml
+      values: |
+        # you can put small overrides inline here if you prefer
+  sources:
+    - repoURL: https://your.git.repo/your-org/gitops.git   # this is where your values live
+      targetRevision: main
+      ref: values
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
