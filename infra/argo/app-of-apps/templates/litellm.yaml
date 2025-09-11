@@ -30,6 +30,8 @@ spec:
         ingress:
           enabled: true
           className: nginx
+          annotations:
+            external-dns.alpha.kubernetes.io/hostname: "litellm.{{ .Values.spec.source.environment }}.everycure.org"
           hosts:
             - host: litellm.{{ .Values.spec.source.environment }}.everycure.org
               paths:
