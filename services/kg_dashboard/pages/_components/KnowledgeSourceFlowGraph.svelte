@@ -312,7 +312,7 @@
         show: false
       },
       title: {
-        text: `${title} - Top ${topNPrimarySources} Primary Sources`,
+        text: `${title}`,
         left: 'center'
       },
       grid: {
