@@ -22,53 +22,6 @@ spec:
           value: {{ .Values.spec.source.environment}}
         - name: spec.source.project_id
           value: {{ .Values.spec.source.project_id}}
-      values: |
-        image:
-          repository: ghcr.io/berriai/litellm
-          tag: main-stable
-          pullPolicy: IfNotPresent
-
-        replicaCount: 3
-
-        service:
-          type: ClusterIP
-          port: 4000
-
-        resources:
-          requests: { cpu: "250m", memory: "512Mi" }
-          limits:   { cpu: "1",    memory: "2Gi" }
-
-        proxy:
-          configInline: |
-            general_settings:
-              telemetry: false
-            router_settings:
-              num_retries: 2
-            model_list:
-              - model_name: gpt-4o
-                litellm_params:
-                  model: openai/gpt-4o
-                  api_key: ${OPENAI_API_KEY}
-              - model_name: claude-3-5-sonnet
-                litellm_params:
-                  model: anthropic/claude-3-5-sonnet
-                  api_key: ${ANTHROPIC_API_KEY}
-            ui:
-              enabled: true
-
-        extraEnv:
-          - name: OPENAI_API_KEY
-            valueFrom:
-              secretKeyRef: { name: litellm-provider-keys, key: OPENAI_API_KEY }
-          - name: ANTHROPIC_API_KEY
-            valueFrom:
-              secretKeyRef: { name: litellm-provider-keys, key: ANTHROPIC_API_KEY }
-          - name: DATABASE_URL
-            valueFrom:
-              secretKeyRef: { name: litellm-db, key: DATABASE_URL }
-
-        masterKey:
-          existingSecret: litellm-master-key
   syncPolicy:
     automated:
       prune: true
