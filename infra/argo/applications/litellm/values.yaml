@@ -13,13 +13,13 @@ ingress:
   enabled: true
   className: nginx
   hosts:
-    - host: litellm.{{ .Values.spec.source.environment }}.everycure.org
+    - host: litellm.prod.everycure.org
       paths:
         - path: /
           pathType: Prefix
   tls:
     - secretName: litellm-tls
-      hosts: [litellm.{{ .Values.spec.source.environment }}.everycure.org]
+      hosts: [litellm.prod.everycure.org]
 
 resources:
   requests: { cpu: "250m", memory: "512Mi" }
