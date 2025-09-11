@@ -414,15 +414,25 @@ class DegreeAwarePairGenerator(SingleLabelPairGenerator):
             # Sample two random edges
             (s1, d1) = random.choice(drug_disease_edges)
             (s2, d2) = random.choice(drug_disease_edges)
-            candidate = (s1, d2)
+            candidate_1 = (s1, d2)
+            candidate_2 = (s2, d1)
             # Check if candidate is not in known data set
-            if candidate not in known_data_set:
+            if candidate_1 not in known_data_set and candidate_2 not in known_data_set:
                 unknown_data.append(
                     [
-                        candidate[0],
-                        graph.get_embedding(candidate[0]),
-                        candidate[1],
-                        graph.get_embedding(candidate[1]),
+                        candidate_1[0],
+                        graph.get_embedding(candidate_1[0]),
+                        candidate_1[1],
+                        graph.get_embedding(candidate_1[1]),
+                        y_label,
+                    ]
+                )
+                unknown_data.append(
+                    [
+                        candidate_2[0],
+                        graph.get_embedding(candidate_2[0]),
+                        candidate_2[1],
+                        graph.get_embedding(candidate_2[1]),
                         y_label,
                     ]
                 )
