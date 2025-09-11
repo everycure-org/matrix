@@ -3,7 +3,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: postgresql-server-ca
-  namespace: default
+  namespace: postgresql
 spec:
   secretName: postgresql-server-ca-secret
   isCA: true
@@ -29,15 +29,15 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: postgresql-server-tls
-  namespace: default
+  namespace: postgresql
 spec:
   secretName: postgresql-server-tls-secret
   commonName: "postgresql"
   dnsNames:
     - postgresql
-    - postgresql.default
-    - postgresql.default.svc
-    - postgresql.default.svc.cluster.local
+    - postgresql.postgresql
+    - postgresql.postgresql.svc
+    - postgresql.postgresql.svc.cluster.local
   subject:
     organizationalUnits:
       - "PostgreSQL Server"

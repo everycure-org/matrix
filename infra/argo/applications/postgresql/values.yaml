@@ -38,9 +38,9 @@ cluster:
     clientCASecret: "postgresql-client-ca-secret"
     serverAltDNSNames:
       - postgresql
-      - postgresql.default
-      - postgresql.default.svc
-      - postgresql.default.svc.cluster.local
+      - postgresql.postgresql
+      - postgresql.postgresql.svc
+      - postgresql.postgresql.svc.cluster.local
   pg_hba:
     - local all all trust
     - hostssl all all all cert clientcert=verify-full

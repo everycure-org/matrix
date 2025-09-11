@@ -10,7 +10,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: postgresql-ca-certificate
-  namespace: default
+  namespace: gateway
 spec:
   secretName: postgresql-ca-key-pair
   isCA: true
