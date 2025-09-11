@@ -27,14 +27,14 @@ Two PGBouncer instances configured:
 - **Type**: Read-write connections
 - **Instances**: 1
 - **Scheduling**: Management nodes (`workload-type: management`)
-- **Service Name**: `postgresql-rw` (in `postgresql` namespace)
+- **Service Name**: `postgresql-cloudnative-pg-cluster-pooler-rw` (in `postgresql` namespace)
 
 #### Read-Only Pool (`ro`)
 
 - **Type**: Read-only connections
 - **Instances**: 1
 - **Scheduling**: Application nodes (`node-type: application`)
-- **Service Name**: `postgresql-ro` (in `postgresql` namespace)
+- **Service Name**: `postgresql-cloudnative-pg-cluster-pooler-ro` (in `postgresql` namespace)
 
 ### 4. Backup Configuration
 
@@ -60,29 +60,30 @@ Two PGBouncer instances configured:
 
 **For Read-Write Operations:**
 
-````bash
+```bash
 # Service endpoint
-Host: postgresql-rw.postgresql.svc.cluster.local
+Host: postgresql-cloudnative-pg-cluster-pooler-rw.postgresql.svc.cluster.local
 Port: 5432
+```
 
 **For Read-Only Operations:**
 
-```bash
+````bash
 # Service endpoint
-Host: postgresql-ro.postgresql.svc.cluster.local
+Host: postgresql-cloudnative-pg-cluster-pooler-ro.postgresql.svc.cluster.local
 Port: 5432
 
 #### Direct Connection to Cluster (Not Recommended for Applications)
 
 ```bash
 # Primary instance (read-write)
-Host: postgresql-rw.postgresql.svc.cluster.local
+Host: postgresql-cloudnative-pg-cluster-pooler-rw.postgresql.svc.cluster.local
 Port: 5432
 
 # Read replica
-Host: postgresql-ro.postgresql.svc.cluster.local
+Host: postgresql-cloudnative-pg-cluster-pooler-ro.postgresql.svc.cluster.local
 Port: 5432
-```
+````
 
 ### Getting Database Credentials
 
@@ -111,7 +112,7 @@ import psycopg2
 
 # Read-write connection
 conn = psycopg2.connect(
-    host="postgresql-rw.postgresql.svc.cluster.local",
+    host="postgresql-cloudnative-pg-cluster-pooler-rw.postgresql.svc.cluster.local",
     port=5432,
     database="app",
     user="app",
@@ -120,7 +121,7 @@ conn = psycopg2.connect(
 
 # Read-only connection
 conn_ro = psycopg2.connect(
-    host="postgresql-ro.postgresql.svc.cluster.local",
+    host="postgresql-cloudnative-pg-cluster-pooler-ro.postgresql.svc.cluster.local",
     port=5432,
     database="app",
     user="app",
@@ -134,7 +135,7 @@ conn_ro = psycopg2.connect(
 # In your deployment YAML
 env:
   - name: DATABASE_URL
-    value: "postgresql://app:$(DB_PASSWORD)@postgresql-rw.postgresql.svc.cluster.local:5432/app"
+    value: "postgresql://app:$(DB_PASSWORD)@postgresql-cloudnative-pg-cluster-pooler-rw.postgresql.svc.cluster.local:5432/app"
   - name: DB_PASSWORD
     valueFrom:
       secretKeyRef:
@@ -144,12 +145,12 @@ env:
 
 #### Port Forwarding for Local Development
 
-```bash
+````bash
 # Forward PGBouncer read-write port
-kubectl port-forward -n postgresql svc/postgresql-rw 5432:5432
+kubectl port-forward -n postgresql svc/postgresql-cloudnative-pg-cluster-pooler-rw 5432:5432
 
 # Forward PGBouncer read-only port
-kubectl port-forward -n postgresql svc/postgresql-ro 5433:5432
+kubectl port-forward -n postgresql svc/postgresql-cloudnative-pg-cluster-pooler-ro 5433:5432
 
 ### Monitoring and Health Checks
 
@@ -164,7 +165,7 @@ kubectl describe cluster postgresql -n postgresql
 
 # Check PGBouncer pools
 kubectl get pooler -n postgresql
-```
+````
 
 #### View Logs
 
@@ -173,7 +174,7 @@ kubectl get pooler -n postgresql
 kubectl logs -n postgresql postgresql-1 -c postgres
 
 # PGBouncer logs
-kubectl logs -n postgresql postgresql-rw-<pod-id> -c pgbouncer
+kubectl logs -n postgresql postgresql-cloudnative-pg-cluster-pooler-rw-<pod-id> -c pgbouncer
 ```
 
 #### Prometheus Metrics
@@ -184,8 +185,8 @@ kubectl logs -n postgresql postgresql-rw-<pod-id> -c pgbouncer
 
 ### Important Notes
 
-1. **Always use PGBouncer**: Connect through the pooler services (`postgresql-rw`, `postgresql-ro`) rather than directly to PostgreSQL instances
-2. **Read/Write Separation**: Use `postgresql-rw` for writes and `postgresql-ro` for read-only operations to optimize performance
+1. **Always use PGBouncer**: Connect through the pooler services (`postgresql-cloudnative-pg-cluster-pooler-rw`, `postgresql-cloudnative-pg-cluster-pooler-ro`) rather than directly to PostgreSQL instances
+2. **Read/Write Separation**: Use `postgresql-cloudnative-pg-cluster-pooler-rw` for writes and `postgresql-cloudnative-pg-cluster-pooler-ro` for read-only operations to optimize performance
 3. **SSL/TLS**: Connections are encrypted by default with CloudNativePG
 4. **Backup Recovery**: Backups are stored in GCS and can be restored using CloudNativePG recovery procedures
 5. **High Availability**: The cluster automatically handles failover between the 2 PostgreSQL instances
@@ -199,15 +200,15 @@ kubectl logs -n postgresql postgresql-rw-<pod-id> -c pgbouncer
 ```bash
 # Check PGBouncer status
 kubectl get pooler -n postgresql
-kubectl describe pooler postgresql-rw -n postgresql
+kubectl describe pooler postgresql-cloudnative-pg-cluster-pooler-rw -n postgresql
 
 # Check PGBouncer logs
-kubectl logs -n postgresql -l cnpg.io/poolerName=postgresql-rw
+kubectl logs -n postgresql -l cnpg.io/poolerName=postgresql-cloudnative-pg-cluster-pooler-rw
 ```
 
 **Database Connection Issues:**
 
-```bash
+````bash
 # Test connectivity from a debug pod
 kubectl run debug --rm -it --image=postgres:17 -- bash
 
@@ -219,7 +220,7 @@ kubectl get svc -n postgresql
 
 # Check endpoints
 kubectl get endpoints -n postgresql
-```
+````
 
 ## Deployment Status
 
@@ -235,4 +236,7 @@ kubectl get application -n argocd | grep postgresql
 kubectl get cluster -n postgresql
 kubectl get pooler -n postgresql
 ```
-````
+
+```
+
+```
