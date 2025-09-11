@@ -37,12 +37,6 @@ spec:
     - RespectIgnoreDifferences=true # Respect ignore differences
     - ApplyOutOfSyncOnly=true # Only apply out of sync resources
     - Replace=true # Use kubectl replace instead of apply for problematic resources
-    retry:
-      limit: 5
-      backoff:
-        duration: 5s
-        factor: 2
-        maxDuration: 3m
     automated: 
       prune: true
       allowEmpty: true
