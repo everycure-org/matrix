@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: cloudnative-pg-cluster
+  name: postgresql-cloudnative-pg-cluster
   namespace: argocd
 spec:
   destination:
