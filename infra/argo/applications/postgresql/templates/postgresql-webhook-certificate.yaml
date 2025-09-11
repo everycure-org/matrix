@@ -1,0 +1,34 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: cnpg-webhook-cert
+  namespace: postgresql
+spec:
+  secretName: cnpg-webhook-cert
+  commonName: "cnpg-webhook-service.postgresql.svc"
+  dnsNames:
+    - cnpg-webhook-service
+    - cnpg-webhook-service.postgresql
+    - cnpg-webhook-service.postgresql.svc
+    - cnpg-webhook-service.postgresql.svc.cluster.local
+  subject:
+    organizationalUnits:
+      - "CloudNativePG Webhook"
+    organizations:
+      - "everycure-org"
+    countries:
+      - "US"
+  duration: 2160h # 90 days
+  renewBefore: 720h # 30 days
+  issuerRef:
+    name: postgresql-ca-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
