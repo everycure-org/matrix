@@ -25,14 +25,6 @@ resources:
   requests: { cpu: "250m", memory: "512Mi" }
   limits:   { cpu: "1",    memory: "2Gi" }
 
-# Use your existing Postgres/Redis, or enable chart-managed Redis if supported
-db:
-  useExisting: true
-  url: "$(DATABASE_URL)"   # provided via env (ExternalSecret/Secret)
-
-redis:
-  enabled: false           # point to your own if you have one
-
 proxy:
   configInline: |
     general_settings:
