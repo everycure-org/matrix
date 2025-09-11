@@ -12,9 +12,9 @@ spec:
     chart: redis
     repoURL: https://ot-container-kit.github.io/helm-charts
     targetRevision: 0.16.5
-syncPolicy:
-  syncOptions:
-    - CreateNamespace=true
-  automated:
-    prune: true
-    allowEmpty: true
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: true
+      allowEmpty: true
