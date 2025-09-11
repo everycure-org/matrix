@@ -1,0 +1,154 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgresql
+  namespace: postgresql
+  labels:
+    cost-center: infrastructure-management
+    workload-category: platform-services
+    service-tier: management
+    billing-category: infrastructure
+    component: postgresql-database
+spec:
+  instances: {{ .Values.cluster.instances }}
+  
+  # PostgreSQL configuration
+  postgresql:
+    parameters:
+      log_statement: "all"
+      log_min_duration_statement: "1000"
+      shared_preload_libraries: "pg_stat_statements"
+      
+  # Bootstrap configuration
+  bootstrap:
+    initdb:
+      database: postgres
+      owner: postgres
+      secret:
+        name: postgresql-superuser-secret
+  
+  # Superuser configuration
+  superuserSecret: postgresql-superuser-secret
+  
+  # Storage configuration
+  storage:
+    size: 20Gi
+    storageClass: {{ .Values.cluster.storage.storageClass }}
+  
+  # WAL storage configuration
+  {{- if .Values.cluster.walStorage.enabled }}
+  walStorage:
+    size: 10Gi
+    storageClass: {{ .Values.cluster.walStorage.storageClass }}
+  {{- end }}
+  
+  # Resource limits
+  resources:
+    requests:
+      cpu: {{ .Values.cluster.resources.requests.cpu }}
+      memory: {{ .Values.cluster.resources.requests.memory }}
+      
+  # Node scheduling
+  nodeSelector:
+    {{- toYaml .Values.cluster.nodeSelector | nindent 4 }}
+  
+  tolerations:
+    {{- toYaml .Values.cluster.tolerations | nindent 4 }}
+  
+  # Monitoring configuration
+  {{- if .Values.cluster.monitoring.enabled }}
+  monitoring:
+    enabled: true
+    {{- if .Values.cluster.monitoring.podMonitor.enabled }}
+    podMonitor:
+      enabled: true
+    {{- end }}
+    {{- if .Values.cluster.monitoring.prometheusRule.enabled }}
+    prometheusRule:
+      enabled: true
+    {{- end }}
+  {{- end }}
+  
+  # Certificate configuration
+  certificates:
+    serverCASecret: {{ .Values.cluster.certificates.serverCASecret }}
+    serverTLSSecret: {{ .Values.cluster.certificates.serverTLSSecret }}
+    replicationTLSSecret: {{ .Values.cluster.certificates.replicationTLSSecret }}
+    clientCASecret: {{ .Values.cluster.certificates.clientCASecret }}
+    serverAltDNSNames:
+      {{- toYaml .Values.cluster.certificates.serverAltDNSNames | nindent 6 }}
+  
+  # PostgreSQL HBA configuration
+  postgresql:
+    pg_hba:
+      {{- toYaml .Values.cluster.pg_hba | nindent 6 }}
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgresql-superuser-secret
+  namespace: postgresql
+type: kubernetes.io/basic-auth
+stringData:
+  username: postgres
+  password: "{{ randAlphaNum 32 }}"
+
+{{- if .Values.backups.enabled }}
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: postgresql-scheduled-backup
+  namespace: postgresql
+spec:
+  schedule: "{{ (index .Values.backups.scheduledBackups 0).schedule }}"
+  backupOwnerReference: "{{ (index .Values.backups.scheduledBackups 0).backupOwnerReference }}"
+  immediate: {{ (index .Values.backups.scheduledBackups 0).immediate }}
+  method: "{{ (index .Values.backups.scheduledBackups 0).method }}"
+  cluster:
+    name: postgresql
+{{- end }}
+
+{{- range .Values.poolers }}
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: postgresql-pooler-{{ .name }}
+  namespace: postgresql
+  labels:
+    cost-center: infrastructure-management
+    workload-category: platform-services
+    service-tier: management
+    billing-category: infrastructure
+    component: postgresql-pooler
+spec:
+  cluster:
+    name: postgresql
+  instances: {{ .instances }}
+  type: {{ .type }}
+  
+  # Node scheduling
+  template:
+    spec:
+      nodeSelector:
+        {{- toYaml .nodeSelector | nindent 8 }}
+      
+      tolerations:
+        {{- toYaml .tolerations | nindent 8 }}
+  
+  {{- if .monitoring.enabled }}
+  monitoring:
+    enabled: true
+    {{- if .monitoring.podMonitor.enabled }}
+    podMonitor:
+      enabled: true
+      {{- if .monitoring.podMonitor.relabelings }}
+      relabelings:
+        {{- toYaml .monitoring.podMonitor.relabelings | nindent 8 }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}
