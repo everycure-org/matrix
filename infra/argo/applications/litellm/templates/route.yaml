@@ -4,7 +4,7 @@ metadata:
   name: litellm-route
   namespace: litellm
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: "litellm.{{ .Values.spec.source.environment }}.everycure.org"
+    external-dns.alpha.kubernetes.io/hostname: "litellm.platform.{{ .Values.spec.source.environment }}.everycure.org"
 spec:
   parentRefs:
   - kind: Gateway
@@ -12,7 +12,7 @@ spec:
     namespace: gateway
     name: external-http
   hostnames:
-  - "litellm.{{ .Values.spec.source.environment }}.everycure.org"
+  - "litellm.platform.{{ .Values.spec.source.environment }}.everycure.org"
   rules:
   - backendRefs:
     - name: litellm
