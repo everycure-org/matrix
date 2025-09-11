@@ -5,7 +5,8 @@ versions:
 
 release_folder_name: ${oc.env:RELEASE_FOLDER_NAME, releases}
 release_dir: ${runtime_gcs_bucket}/kedro/data/${release_folder_name}/${versions.release}
-run_dir: ${release_dir}/runs/${run_name}
+feature_dir: ${release_dir}/temp_features/rtx-kg2
+run_dir: ${feature_dir}/runs/${run_name}
 
 runtime_gcs_bucket: gs://${oc.env:RUNTIME_GCP_BUCKET}
 runtime_gcp_project: ${oc.env:RUNTIME_GCP_PROJECT_ID}
