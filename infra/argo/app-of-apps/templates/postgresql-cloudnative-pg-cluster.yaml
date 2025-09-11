@@ -3,8 +3,6 @@ kind: Application
 metadata:
   name: cloudnative-pg-cluster
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "1" # Deploy after the operator
 spec:
   destination:
     namespace: postgresql
