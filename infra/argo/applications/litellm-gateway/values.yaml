@@ -1,0 +1,5 @@
+# Default values for litellm-gateway
+spec:
+  source:
+    environment: dev
+    aip_oauth_client_id: ""

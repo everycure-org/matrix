@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: litellm-config
-  namespace: litellm
-data:
-  config.yaml: |
-{{ .Values.proxy.configInline | indent 4 }}

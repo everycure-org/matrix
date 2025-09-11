@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: litellm-gateway
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "11" # after litellm app
+spec:
+  project: default
+  destination:
+    server: {{ .Values.spec.destination.server }}
+    namespace: litellm
+  source:
+    path: {{ .Values.spec.source.repoPath }}/litellm-gateway
+    repoURL: {{ .Values.spec.source.repoURL }}
+    targetRevision: {{ .Values.spec.source.targetRevision }}
+    helm:
+      parameters:
+        - name: spec.source.environment
+          value: {{ .Values.spec.source.environment}}
+        - name: spec.source.aip_oauth_client_id
+          value: {{ .Values.spec.source.aip_oauth_client_id }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ApplyOutOfSyncOnly=true
