@@ -16,6 +16,7 @@ dependencies = [
     "matrix-fabricator",
     "pre-commit>=4.2.0",
     "optuna>=4.5.0",
+    "psycopg>=3.2.9",
 ]
 
 [tool.uv.sources]
