@@ -26,7 +26,7 @@ spec:
         {{- if .Values.extraEnv }}
         {{- toYaml .Values.extraEnv | nindent 8 }}
         {{- end }}
-        {{- if .Values.masterKey.existingSecret }}
+        {{- if and .Values.masterKey .Values.masterKey.existingSecret }}
         - name: LITELLM_MASTER_KEY
           valueFrom:
             secretKeyRef:
