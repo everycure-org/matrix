@@ -4,3 +4,8 @@ description: LiteLLM proxy deployment
 type: application
 version: 0.1.0
 appVersion: "1.0.0"
+
+dependencies:
+  - name: litellm
+    version: "1.76.1-stable"
+    repository: "https://github.com/BerriAI/litellm.git"

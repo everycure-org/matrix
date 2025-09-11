@@ -8,13 +8,20 @@ metadata:
 spec:
   project: default
   destination:
-    server: https://kubernetes.default.svc
+    server: {{ .Values.spec.destination.server }}
     namespace: litellm
   source:
-    repoURL: https://github.com/BerriAI/litellm.git
-    targetRevision: v1.76.1-stable
-    path: deploy/charts/litellm-helm
+    path: {{ .Values.spec.source.repoPath }}/litellm
+    repoURL: {{ .Values.spec.source.repoURL }}
+    targetRevision: {{ .Values.spec.source.targetRevision }}
     helm:
+      parameters:
+        - name: spec.source.targetRevision
+          value: {{ .Values.spec.source.targetRevision}}
+        - name: spec.source.environment
+          value: {{ .Values.spec.source.environment}}
+        - name: spec.source.project_id
+          value: {{ .Values.spec.source.project_id}}
       values: |
         image:
           repository: ghcr.io/berriai/litellm
