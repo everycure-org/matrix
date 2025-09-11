@@ -20,19 +20,6 @@ spec:
         ports:
         - containerPort: 4000
           name: http
-        env:
-        {{- if .Values.extraEnv }}
-        {{- toYaml .Values.extraEnv | nindent 8 }}
-        {{- end }}
-        {{- if .Values.masterKey.existingSecret }}
-        - name: LITELLM_MASTER_KEY
-          valueFrom:
-            secretKeyRef:
-              name: {{ .Values.masterKey.existingSecret }}
-              key: LITELLM_MASTER_KEY
-        {{- end }}
-        resources:
-          {{- toYaml .Values.resources | nindent 10 }}
         volumeMounts:
         - name: config
           mountPath: /app/config.yaml
