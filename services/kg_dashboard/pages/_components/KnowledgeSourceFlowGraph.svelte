@@ -11,7 +11,7 @@
   export let height = '900px';
   
   let networkOption = {};
-  let useForceLayout = false; // Toggle between 'none' and 'force' layout
+  let useForceLayout = true; // Toggle between 'none' and 'force' layout
   
   // Debug variables to display current calculations
   let debugInfo = {
@@ -415,18 +415,6 @@
 </script>
 
 <ECharts config={networkOption} data={networkData} {height} width="100%" />
-
-<!-- Layout Toggle Control -->
-<div style="margin: 10px 0; padding: 10px; background-color: #e8f4f8; border-radius: 5px;">
-  <label style="display: flex; align-items: center; gap: 8px; font-weight: 500;">
-    <input 
-      type="checkbox" 
-      bind:checked={useForceLayout}
-      style="transform: scale(1.2);"
-    />
-    Use Force Layout (experimental - may ignore manual positioning)
-  </label>
-</div>
 
 <!-- Debug Information Display -->
 <div style="margin-top: 20px; padding: 15px; background-color: #f5f5f5; border-radius: 5px; font-family: monospace; font-size: 12px;">
