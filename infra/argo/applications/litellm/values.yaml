@@ -32,7 +32,13 @@ proxy:
       num_retries: 2
     model_list:
       - model_name: gpt-4o
+        litellm_params:
+          model: openai/gpt-4o
+          api_key: ${OPENAI_API_KEY}
       - model_name: claude-3-5-sonnet
+        litellm_params:
+          model: anthropic/claude-3-5-sonnet
+          api_key: ${ANTHROPIC_API_KEY}
     ui:
       enabled: true
 
