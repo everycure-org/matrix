@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm
+  namespace: litellm
+  labels:
+    app: litellm
+spec:
+  replicas: {{ .Values.replicaCount | default 3 }}
+  selector:
+    matchLabels:
+      app: litellm
+  template:
+    metadata:
+      labels:
+        app: litellm
+    spec:
+      containers:
+      - name: litellm
+        image: "{{ .Values.image.repository | default "ghcr.io/berriai/litellm" }}:{{ .Values.image.tag | default "main-stable" }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+        ports:
+        - containerPort: 4000
+          name: http
+        env:
+        {{- if .Values.extraEnv }}
+        {{- toYaml .Values.extraEnv | nindent 8 }}
+        {{- end }}
+        {{- if .Values.masterKey.existingSecret }}
+        - name: LITELLM_MASTER_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.masterKey.existingSecret }}
+              key: LITELLM_MASTER_KEY
+        {{- end }}
+        {{- if .Values.db.url }}
+        - name: DATABASE_URL
+          value: {{ .Values.db.url }}
+        {{- end }}
+        {{- if .Values.proxy.configInline }}
+        - name: LITELLM_CONFIG
+          value: |
+{{ .Values.proxy.configInline | indent 12 }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5

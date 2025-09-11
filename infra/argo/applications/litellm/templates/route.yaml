@@ -1,0 +1,17 @@
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: litellm-route
+  namespace: litellm
+spec:
+  parentRefs:
+  - kind: Gateway
+    sectionName: https
+    namespace: gateway
+    name: external-http
+  hostnames:
+  - "litellm.platform.{{ .Values.spec.source.environment }}.everycure.org"
+  rules:
+  - backendRefs:
+    - name: litellm
+      port: 4000
