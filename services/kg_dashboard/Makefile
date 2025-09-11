@@ -72,6 +72,7 @@ run-sources: populate-infores-source populate-valid-edge-types-source
 	npm run sources
 
 run-dev:
+	echo "BENCHMARK_VERSION=$(BENCHMARK_VERSION)"
 	npm run dev
 
 clean:
