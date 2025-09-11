@@ -9,18 +9,6 @@ service:
   type: ClusterIP
   port: 4000
 
-ingress:
-  enabled: true
-  className: nginx
-  hosts:
-    - host: litellm.prod.everycure.org
-      paths:
-        - path: /
-          pathType: Prefix
-  tls:
-    - secretName: litellm-tls
-      hosts: [litellm.prod.everycure.org]
-
 resources:
   requests: { cpu: "250m", memory: "512Mi" }
   limits:   { cpu: "1",    memory: "2Gi" }
@@ -43,16 +31,16 @@ proxy:
     ui:
       enabled: true
 
-# extraEnv:
-#   - name: OPENAI_API_KEY
-#     valueFrom:
-#       secretKeyRef: { name: litellm-provider-keys, key: OPENAI_API_KEY }
-#   - name: ANTHROPIC_API_KEY
-#     valueFrom:
-#       secretKeyRef: { name: litellm-provider-keys, key: ANTHROPIC_API_KEY }
-#   - name: DATABASE_URL
-#     valueFrom:
-#       secretKeyRef: { name: litellm-db, key: DATABASE_URL }
+extraEnv:
+  - name: OPENAI_API_KEY
+    valueFrom:
+      secretKeyRef: { name: litellm-provider-keys, key: OPENAI_API_KEY }
+  - name: ANTHROPIC_API_KEY
+    valueFrom:
+      secretKeyRef: { name: litellm-provider-keys, key: ANTHROPIC_API_KEY }
+  - name: DATABASE_URL
+    valueFrom:
+      secretKeyRef: { name: litellm-db, key: DATABASE_URL }
 
-# masterKey:
-#   existingSecret: litellm-master-key   # Secret with key LITELLM_MASTER_KEY
+masterKey:
+  existingSecret: litellm-master-key   # Secret with key LITELLM_MASTER_KEY

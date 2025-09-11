@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm
+  namespace: litellm
+spec:
+  replicas: {{ .Values.replicaCount | default 3 }}
+  selector:
+    matchLabels:
+      app: litellm
+  template:
+    metadata:
+      labels:
+        app: litellm
+    spec:
+      containers:
+      - name: litellm
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: 4000
+          name: http
+        env:
+        {{- if .Values.extraEnv }}
+        {{- toYaml .Values.extraEnv | nindent 8 }}
+        {{- end }}
+        {{- if .Values.masterKey.existingSecret }}
+        - name: LITELLM_MASTER_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.masterKey.existingSecret }}
+              key: LITELLM_MASTER_KEY
+        {{- end }}
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        volumeMounts:
+        - name: config
+          mountPath: /app/config.yaml
+          subPath: config.yaml
+      volumes:
+      - name: config
+        configMap:
+          name: litellm-config
