@@ -11,6 +11,22 @@
   export let height = '900px';
   
   let networkOption = {};
+  let useForceLayout = false; // Toggle between 'none' and 'force' layout
+  
+  // Debug variables to display current calculations
+  let debugInfo = {
+    nodeCount: 0,
+    arcDegrees: 0,
+    radiusY: 0,
+    centerY: 0,
+    centerX: 0,
+    positioning: 'unknown',
+    primarySpread: 0,
+    aggregatorSpacing: 0,
+    primaryYPositions: [],
+    aggregatorYPositions: [],
+    aggregatorCount: 0
+  };
   
   $: {
     // Process the network data
@@ -37,21 +53,88 @@
       const unifiedNodes = sortedNodes.filter(n => n.category === 'unified');
       const limitedNodes = [...primaryNodes, ...aggregatorNodes, ...unifiedNodes];
       
-      // Calculate oval layout for primary sources (left half)
+      // Calculate dynamic oval layout for primary sources
       const radiusX = 150; // Horizontal radius (narrower)
-      const radiusY = 250; // Vertical radius (taller for more space)
-      const centerX = 400; // Center X position of the oval
-      const centerY = 300; // Center Y position of the oval
-      const startAngle = Math.PI * 0.7; // Start at ~126 degrees (upper left)
-      const endAngle = Math.PI * 1.3; // End at ~234 degrees (lower left) - extends more to the right
-      const angleRange = endAngle - startAngle; // Total angle span
       
-      // Position aggregators and unified KG relative to the circle
-      const aggregatorStartY = centerY - 50; // Position near center of circle
-      const aggregatorSpacing = 100;
-      const unifiedY = aggregatorNodes.length > 1 ? 
-        aggregatorStartY + (aggregatorNodes.length - 1) * aggregatorSpacing / 2 :
-        aggregatorStartY;
+      // Dynamic sizing based on content
+      const totalNodes = primaryNodes.length + aggregatorNodes.length + unifiedNodes.length;
+      const baseRadiusY = Math.max(100, Math.min(250, totalNodes * 15)); // Scale radius with content
+      const baseCenterY = Math.max(200, Math.min(400, 150 + totalNodes * 8)); // Scale center with content
+      
+      // Adjust radius and center based on node count for better small-count layouts
+      let radiusY, centerY;
+      if (primaryNodes.length <= 5) {
+        // For small node counts, use fixed reasonable spacing centered in viewport
+        radiusY = Math.max(50, primaryNodes.length * 20); // 20px per node, minimum 50px
+        centerY = 300; // Fixed center position
+      } else {
+        // For larger node counts, use dynamic scaling
+        radiusY = baseRadiusY;
+        centerY = baseCenterY;
+      }
+      
+      const centerX = 300; // Move primary sources further right to use available space
+      
+      // Count-based arc sizing for better visual distribution
+      let dynamicAngleRange;
+      const nodeCount = primaryNodes.length;
+      
+      // Update debug info
+      debugInfo.nodeCount = nodeCount;
+      debugInfo.centerX = centerX;
+      debugInfo.centerY = centerY;
+      debugInfo.radiusY = radiusY;
+      
+      if (nodeCount <= 2) {
+        dynamicAngleRange = Math.PI * 0.5; // 90 degrees - quarter circle for breathing room
+        debugInfo.positioning = 'small (≤2)';
+      } else if (nodeCount <= 5) {
+        dynamicAngleRange = Math.PI * (2/3); // 120 degrees - comfortable spacing
+        debugInfo.positioning = 'small (3-5)';
+      } else if (nodeCount <= 10) {
+        dynamicAngleRange = Math.PI * (5/6); // 150 degrees - good distribution
+        debugInfo.positioning = 'medium (6-10)';
+      } else {
+        dynamicAngleRange = Math.PI * 0.65; // 117 degrees - slightly larger than original max to prevent collisions
+        debugInfo.positioning = 'large (11+)';
+      }
+      
+      // Convert to degrees for display
+      debugInfo.arcDegrees = Math.round(dynamicAngleRange * 180 / Math.PI);
+      
+      // Center the arc around the left side (Math.PI = 180 degrees = left side)
+      const arcCenter = Math.PI; // Left side of oval
+      const startAngle = arcCenter - (dynamicAngleRange / 2); // Start above center
+      const endAngle = arcCenter + (dynamicAngleRange / 2); // End below center
+      const angleRange = dynamicAngleRange;
+      
+      // Calculate primary Y positions using our current algorithm for matching aggregator spacing
+      const primaryYPositions = [];
+      for (let index = 0; index < primaryNodes.length; index++) {
+        // Use tight clustering with adaptive spacing based on node count
+        let spacing = 0;
+        if (nodeCount > 1) {
+          // Adaptive spacing: smaller angles for more nodes to keep them clustered
+          const maxTotalSpread = Math.PI * 0.4; // Maximum 72 degrees total spread
+          spacing = Math.min(Math.PI * 0.08, maxTotalSpread / (nodeCount - 1));
+        }
+        const centerOffset = (index - (nodeCount - 1) / 2) * spacing;
+        const angle = arcCenter + centerOffset;
+        const yPos = centerY + Math.sin(angle) * radiusY;
+        primaryYPositions.push(yPos);
+      }
+      
+      // Calculate actual primary Y spread
+      const primarySpread = primaryYPositions.length > 1 ? 
+        Math.max(...primaryYPositions) - Math.min(...primaryYPositions) : 0;
+      
+      // Update debug info
+      debugInfo.primarySpread = Math.round(primarySpread);
+      debugInfo.primaryYPositions = primaryYPositions.map(y => Math.round(y));
+      debugInfo.aggregatorYPositions = []; // Reset for new calculation
+      debugInfo.aggregatorCount = aggregatorNodes.length;
+      
+      // Note: Aggregator and unified positioning now calculated inline with the nodes
       
       // Pre-calculate primary node sizes for dynamic spacing
       const primarySizes = primaryNodes.map(d => {
@@ -79,31 +162,47 @@
           let xPosition = 0, yPosition = 0;
           
           if (d.category === 'primary') {
-            // Find this node's size info
-            const sizeInfo = primarySizes.find(item => item.node.node_id === d.node_id);
-            const currentNodeSize = sizeInfo ? sizeInfo.size : 15;
+            let angle;
             
-            // Add spacing before this node (except for the first one)
-            if (primaryCount > 0) {
-              cumulativeSpacing += Math.max(20, currentNodeSize * 0.3);
+            // Use tight clustering with adaptive spacing based on node count
+            let spacing = 0;
+            if (nodeCount > 1) {
+              // Adaptive spacing: smaller angles for more nodes to keep them clustered
+              const maxTotalSpread = Math.PI * 0.4; // Maximum 72 degrees total spread
+              spacing = Math.min(Math.PI * 0.08, maxTotalSpread / (nodeCount - 1));
             }
+            const centerOffset = (primaryCount - (nodeCount - 1) / 2) * spacing;
+            angle = arcCenter + centerOffset;
             
-            // Calculate position based on cumulative spacing (including space before this node)
-            const spacingRatio = cumulativeSpacing / totalSpacingWithPadding;
-            const angle = startAngle + spacingRatio * angleRange;
             xPosition = centerX + Math.cos(angle) * radiusX;
             yPosition = centerY + Math.sin(angle) * radiusY;
-            
-            // Add this node's size to cumulative spacing for next calculation
-            cumulativeSpacing += currentNodeSize;
             primaryCount++;
           } else if (d.category === 'aggregator') {
-            xPosition = 350; // Move aggregators much closer to the oval
-            yPosition = aggregatorStartY + aggregatorCount * aggregatorSpacing;
+            xPosition = centerX + radiusX - 200;
+            // Math that naturally centers and matches primary Y spread
+            let aggregatorSpacing;
+            if (aggregatorNodes.length > 1 && primarySpread > 0) {
+              // Use EXACTLY the same Y spread as primary nodes - no minimum override
+              aggregatorSpacing = primarySpread / (aggregatorNodes.length - 1);
+            } else {
+              aggregatorSpacing = 0; // Single aggregator stays at center
+            }
+            // Update debug info for first aggregator
+            if (aggregatorCount === 0) {
+              debugInfo.aggregatorSpacing = Math.round(aggregatorSpacing);
+            }
+            const centerOffset = (aggregatorCount - (aggregatorNodes.length - 1) / 2) * aggregatorSpacing;
+            yPosition = centerY + centerOffset;
+            
+            // Capture aggregator position for debug
+            debugInfo.aggregatorYPositions.push(Math.round(yPosition));
             aggregatorCount++;
           } else if (d.category === 'unified') {
-            xPosition = 450; // Move unified KG much closer to aggregators
-            yPosition = unifiedY;
+            xPosition = centerX + radiusX - 150;
+            // Math that naturally centers: when unifiedNodes.length=1, offset=0
+            const unifiedSpacing = 80; // doesn't matter much since usually only 1
+            const centerOffset = (unifiedCount - (unifiedNodes.length - 1) / 2) * unifiedSpacing;
+            yPosition = centerY + centerOffset;
             unifiedCount++;
           }
           
@@ -222,14 +321,26 @@
         top: '10%',
         bottom: '5%'
       },
+      xAxis: {
+        show: false,
+        type: 'value',
+        min: 0,
+        max: 500  // centerX(300) + radiusX(150) + margin = ~450-500
+      },
+      yAxis: {
+        show: false,
+        type: 'value',
+        min: 0,
+        max: 600  // centerY(374) + radiusY + margin = ~550-600
+      },
       tooltip: {
         show: true,
         position: function(point, params, dom, rect, size) {
-          if (params.dataType === 'node' && params.data.nodeCategory === 'primary') {
-            // Position tooltip to the left for primary sources
+          if (params.dataType === 'node' && (params.data.nodeCategory === 'primary' || params.data.nodeCategory === 'unified')) {
+            // Position tooltip to the left for primary sources and unified KG
             return [point[0] - size.contentSize[0] - 20, point[1] - size.contentSize[1] / 2];
           }
-          // Default positioning for other nodes
+          // Default positioning for aggregator nodes
           return [point[0] + 20, point[1] - size.contentSize[1] / 2];
         },
         formatter: function(params) {
@@ -261,7 +372,17 @@
       },
       series: [{
         type: 'graph',
-        layout: 'none', // Try disabling force layout to use our fixed positions
+        layout: useForceLayout ? 'force' : 'none',
+        coordinateSystem: useForceLayout ? null : 'cartesian2d',
+        ...(useForceLayout ? {
+          force: {
+            repulsion: 50,
+            gravity: 0.1,
+            edgeLength: 100,
+            layoutAnimation: false,
+            friction: 0.9
+          }
+        } : {}),
         data: nodes,
         links: links,
         roam: false, // Disable zoom/pan
@@ -294,3 +415,43 @@
 </script>
 
 <ECharts config={networkOption} data={networkData} {height} width="100%" />
+
+<!-- Layout Toggle Control -->
+<div style="margin: 10px 0; padding: 10px; background-color: #e8f4f8; border-radius: 5px;">
+  <label style="display: flex; align-items: center; gap: 8px; font-weight: 500;">
+    <input 
+      type="checkbox" 
+      bind:checked={useForceLayout}
+      style="transform: scale(1.2);"
+    />
+    Use Force Layout (experimental - may ignore manual positioning)
+  </label>
+</div>
+
+<!-- Debug Information Display -->
+<div style="margin-top: 20px; padding: 15px; background-color: #f5f5f5; border-radius: 5px; font-family: monospace; font-size: 12px;">
+  <h4 style="margin: 0 0 10px 0; color: #333;">Layout Debug Info:</h4>
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+    <div>
+      <strong>Node Count:</strong> {debugInfo.nodeCount}<br/>
+      <strong>Positioning:</strong> {debugInfo.positioning}<br/>
+      <strong>Arc Size:</strong> {debugInfo.arcDegrees}°
+    </div>
+    <div>
+      <strong>Center X:</strong> {debugInfo.centerX}px<br/>
+      <strong>Center Y:</strong> {debugInfo.centerY}px<br/>
+      <strong>Radius Y:</strong> {debugInfo.radiusY}px
+    </div>
+    <div>
+      <strong>Algorithm:</strong> {debugInfo.nodeCount <= 5 ? 'Equal Angular' : 'Cumulative Spacing'}<br/>
+      <strong>Y-Scaling:</strong> {debugInfo.nodeCount <= 5 ? 'Fixed' : 'Dynamic'}<br/>
+      <strong>Radius X:</strong> 150px (fixed)
+    </div>
+  </div>
+  <div style="margin-top: 10px; font-size: 11px;">
+    <strong>Primary Y Spread:</strong> {debugInfo.primarySpread}px<br/>
+    <strong>Aggregator Spacing:</strong> {debugInfo.aggregatorSpacing}px<br/>
+    <strong>Primary Y Positions:</strong> [{debugInfo.primaryYPositions.join(', ')}]<br/>
+    <strong>Aggregator Y Positions:</strong> [{debugInfo.aggregatorYPositions.join(', ')}] (Count: {debugInfo.aggregatorCount})
+  </div>
+</div>
