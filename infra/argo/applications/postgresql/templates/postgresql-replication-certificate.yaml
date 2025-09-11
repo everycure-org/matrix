@@ -1,0 +1,35 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: postgresql-replication-tls
+  namespace: default
+spec:
+  secretName: postgresql-replication-tls-secret
+  commonName: "postgresql-replication"
+  dnsNames:
+    - postgresql
+    - postgresql.default
+    - postgresql.default.svc
+    - postgresql.default.svc.cluster.local
+  subject:
+    organizationalUnits:
+      - "PostgreSQL Replication"
+    organizations:
+      - "everycure-org"
+    countries:
+      - "US"
+  duration: 2160h # 90 days
+  renewBefore: 720h # 30 days
+  issuerRef:
+    name: postgresql-ca-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  usages:
+    - digital signature
+    - key encipherment
+    - client auth
+    - server auth

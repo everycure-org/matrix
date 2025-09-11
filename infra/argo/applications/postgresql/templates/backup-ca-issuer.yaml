@@ -1,0 +1,28 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: postgresql-backup-ca-issuer
+  namespace: postgresql
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: postgresql-backup-ca-cert
+  namespace: postgresql
+spec:
+  secretName: postgresql-backup-ca
+  isCA: true
+  commonName: postgresql-backup-ca
+  subject:
+    organizationalUnits:
+      - Matrix PostgreSQL Backup CA
+  issuerRef:
+    name: postgresql-backup-ca-issuer
+    kind: Issuer
+  usages:
+    - cert sign
+    - crl sign
+    - digital signature
+    - key encipherment
