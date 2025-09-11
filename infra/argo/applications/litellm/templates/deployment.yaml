@@ -36,7 +36,7 @@ spec:
         # {{- if .Values.db.url }}
         # - name: DATABASE_URL
         #   value: {{ .Values.db.url }}
-        {{- end }}
+        # {{- end }}
         {{- if .Values.proxy.configInline }}
         - name: LITELLM_CONFIG
           value: |
