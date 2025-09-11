@@ -9,13 +9,29 @@ service:
   type: ClusterIP
   port: 4000
 
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: litellm.{{ .Values.spec.source.environment }}.everycure.org
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: litellm-tls
+      hosts: [litellm.{{ .Values.spec.source.environment }}.everycure.org]
+
 resources:
-  requests: 
-    cpu: "250m"
-    memory: "512Mi"
-  limits:   
-    cpu: "1"
-    memory: "2Gi"
+  requests: { cpu: "250m", memory: "512Mi" }
+  limits:   { cpu: "1",    memory: "2Gi" }
+
+# Use your existing Postgres/Redis, or enable chart-managed Redis if supported
+db:
+  useExisting: true
+  url: "$(DATABASE_URL)"   # provided via env (ExternalSecret/Secret)
+
+redis:
+  enabled: false           # point to your own if you have one
 
 proxy:
   configInline: |
@@ -38,19 +54,13 @@ proxy:
 # extraEnv:
 #   - name: OPENAI_API_KEY
 #     valueFrom:
-#       secretKeyRef: 
-#         name: litellm-provider-keys
-#         key: OPENAI_API_KEY
+#       secretKeyRef: { name: litellm-provider-keys, key: OPENAI_API_KEY }
 #   - name: ANTHROPIC_API_KEY
 #     valueFrom:
-#       secretKeyRef: 
-#         name: litellm-provider-keys
-#         key: ANTHROPIC_API_KEY
+#       secretKeyRef: { name: litellm-provider-keys, key: ANTHROPIC_API_KEY }
 #   - name: DATABASE_URL
 #     valueFrom:
-#       secretKeyRef: 
-#         name: litellm-db
-#         key: DATABASE_URL
+#       secretKeyRef: { name: litellm-db, key: DATABASE_URL }
 
 # masterKey:
 #   existingSecret: litellm-master-key   # Secret with key LITELLM_MASTER_KEY
