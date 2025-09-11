@@ -46,29 +46,29 @@ cluster:
     - hostssl all all all cert clientcert=verify-full
     
 # Backup configuration
-# backups:
-#   enabled: true
-#   data:
-#     compression: "bzip2"
-#   endpointCA:
-#     create: false
-#     key: "ca.crt"
-#     name: "postgresql-backup-ca"
-#     value: ""
-#   provider: gcs
-#   google:
-#     gkeEnvironment: true
-#     bucket: "everycure-infra-backups"
-#     path: "/postgresql"
-#   retentionPolicy: "7d"
-#   scheduledBackups:
-#     - name: "daily-backup"
-#       schedule: "0 2 * * *"
-#       backupOwnerReference: "self"
-#       immediate: true
-#       method: "volumeSnapshot"
-#   wal:
-#     compression: "bzip2"
+backups:
+  enabled: true
+  data:
+    compression: "bzip2"
+  endpointCA:
+    create: false
+    key: "ca.crt"
+    name: "postgresql-backup-ca"
+    value: ""
+  provider: gcs
+  google:
+    gkeEnvironment: true
+    bucket: "everycure-infra-backups"
+    path: "/postgresql"
+  retentionPolicy: "7d"
+  scheduledBackups:
+    - name: "daily-backup"
+      schedule: "0 2 * * *"
+      backupOwnerReference: "self"
+      immediate: true
+      method: "volumeSnapshot"
+  wal:
+    compression: "bzip2"
   
 # PGBouncer configuration
 poolers:
