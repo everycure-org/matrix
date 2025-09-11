@@ -22,6 +22,15 @@ cluster:
   walStorage:
     storageClass: "premium-rwo"
     enabled: true
+  
+  # Node scheduling configuration
+  nodeSelector:
+    workload-type: management
+  tolerations:
+    - key: "workload-type"
+      operator: "Equal"
+      value: "management"
+      effect: "NoSchedule"
   certificates:
     serverCASecret: "postgresql-server-ca-secret"
     serverTLSSecret: "postgresql-server-tls-secret"
@@ -73,6 +82,23 @@ poolers:
         relabelings:
           - targetLabel: type
             replacement: rw
+    # PGBouncer scheduling configuration
+    # nodeSelector:
+    #   node-type: application
+    # tolerations:
+    #   - key: "application"
+    #     operator: "Equal"
+    #     value: "pgbouncer"
+    #     effect: "NoSchedule"
+    # affinity:
+    #   podAntiAffinity:
+    #     preferredDuringSchedulingIgnoredDuringExecution:
+    #       - weight: 100
+    #         podAffinityTerm:
+    #           labelSelector:
+    #             matchLabels:
+    #               postgresql: pooler-rw
+    #           topologyKey: kubernetes.io/hostname
   - name: ro
     type: ro
     instances: 1
@@ -83,3 +109,20 @@ poolers:
         relabelings:
           - targetLabel: type
             replacement: ro
+    # PGBouncer scheduling configuration
+    # nodeSelector:
+    #   node-type: application
+    # tolerations:
+    #   - key: "application"
+    #     operator: "Equal"
+    #     value: "pgbouncer"
+    #     effect: "NoSchedule"
+    # affinity:
+    #   podAntiAffinity:
+    #     preferredDuringSchedulingIgnoredDuringExecution:
+    #       - weight: 100
+    #         podAffinityTerm:
+    #           labelSelector:
+    #             matchLabels:
+    #               postgresql: pooler-ro
+    #           topologyKey: kubernetes.io/hostname
