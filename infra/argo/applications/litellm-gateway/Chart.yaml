@@ -1,0 +1,6 @@
+apiVersion: v2
+name: litellm-gateway
+description: Gateway configuration for LiteLLM
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
