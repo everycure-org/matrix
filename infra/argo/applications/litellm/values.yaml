@@ -1,0 +1,65 @@
+image:
+  repository: ghcr.io/berriai/litellm
+  tag: main-stable
+  pullPolicy: IfNotPresent
+
+replicaCount: 3
+
+service:
+  type: ClusterIP
+  port: 4000
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: litellm.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: litellm-tls
+      hosts: [litellm.example.com]
+
+resources:
+  requests: { cpu: "250m", memory: "512Mi" }
+  limits:   { cpu: "1",    memory: "2Gi" }
+
+db:
+  useExisting: true
+  url: "$(DATABASE_URL)"   # provided via env (ExternalSecret/Secret)
+
+redis:
+  enabled: true
+
+proxy:
+  configInline: |
+    general_settings:
+      telemetry: false
+    router_settings:
+      num_retries: 2
+    model_list:
+      - model_name: gpt-4o
+        litellm_params:
+          model: openai/gpt-4o
+          api_key: ${OPENAI_API_KEY}
+      - model_name: claude-3-5-sonnet
+        litellm_params:
+          model: anthropic/claude-3-5-sonnet
+          api_key: ${ANTHROPIC_API_KEY}
+    ui:
+      enabled: true
+
+extraEnv:
+  - name: OPENAI_API_KEY
+    valueFrom:
+      secretKeyRef: { name: litellm-provider-keys, key: OPENAI_API_KEY }
+  - name: ANTHROPIC_API_KEY
+    valueFrom:
+      secretKeyRef: { name: litellm-provider-keys, key: ANTHROPIC_API_KEY }
+  - name: DATABASE_URL
+    valueFrom:
+      secretKeyRef: { name: litellm-db, key: DATABASE_URL }
+
+masterKey:
+  existingSecret: litellm-master-key   # Secret with key LITELLM_MASTER_KEY
