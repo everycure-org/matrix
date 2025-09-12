@@ -1,0 +1,3 @@
+document_kg.prm.pks: 
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.release}/pks.yaml # can also create a different directory specifically for documentation
