@@ -75,6 +75,10 @@ _kg_dataset: &_kg_dataset
 #   <<: *_pandas_parquet
 #   filepath: ${globals:paths.tmp}/model_output/predictions
 
+"inference.{model_name}.model_output.predictions@pandas":
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.tmp}/model_output/{model_name}/predictions
+
 # "inference.reporting.report":
 #   <<: [*_sheets_dataset]
 #   save_args:
@@ -89,12 +93,31 @@ _kg_dataset: &_kg_dataset
 #       - is_known_positive
 #       - is_known_negative
 
+"inference.{model_name}.reporting.plots":
+  type: partitions.PartitionedDataset
+  path: ${globals:paths.tmp}/reporting/{model_name}/plots
+  dataset: matplotlib.MatplotlibDataset
+  filename_suffix: .png
+
+"inference.{model_name}.reporting.tables":
+  type: partitions.PartitionedDataset
+  path: ${globals:paths.tmp}/reporting/{model_name}/tables
+  dataset: kedro_datasets.pandas.CSVDataset
+  filename_suffix: .csv
+
 # "inference.reporting.visualisations":
 #   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
 #   artifact_path: "histogram"
 #   dataset:
 #     type: matplotlib.MatplotlibDataset
-#     filepath: ${globals:paths.tmp}/reporting/histogram_plot.png  
+#     filepath: ${globals:paths.tmp}/reporting/histogram_plot.png
+
+"inference.{model_name}.reporting.visualisations":
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  artifact_path: "{model_name}/histogram"
+  dataset:
+    type: matplotlib.MatplotlibDataset
+    filepath: ${globals:paths.tmp}/reporting/{model_name}/histogram_plot.png
 
 # inference.feat.nodes@spark:
 #   <<: *_spark_parquet

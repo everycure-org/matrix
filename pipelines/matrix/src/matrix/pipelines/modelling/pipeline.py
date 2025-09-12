@@ -27,8 +27,8 @@ def _create_model_shard_pipeline(model_name: str, shard: int, fold: Union[str, i
                     "data": f"modelling.{shard}.model_input.enriched_splits",
                     "transformers": f"modelling.fold_{fold}.model_input.transformers",
                 },
-                outputs=f"modelling.{shard}.fold_{fold}.model_input.transformed_splits",
-                name=f"transform_{shard}_data_fold_{fold}",
+                outputs=f"{model_name}_modelling.{shard}.fold_{fold}.model_input.transformed_splits",
+                name=f"{model_name}_transform_{shard}_data_fold_{fold}",
             ),
             ArgoNode(
                 func=nodes.tune_parameters,
@@ -37,10 +37,10 @@ def _create_model_shard_pipeline(model_name: str, shard: int, fold: Union[str, i
                     "unpack": f"params:modelling.{model_name}.model_options.model_tuning_args",
                 },
                 outputs=[
-                    f"modelling.{shard}.fold_{fold}.models.model_params",
-                    f"modelling.{shard}.fold_{fold}.reporting.tuning_convergence_plot",
+                    f"{model_name}_modelling.{shard}.fold_{fold}.models.model_params",
+                    f"{model_name}_modelling.{shard}.fold_{fold}.reporting.tuning_convergence_plot",
                 ],
-                name=f"tune_model_{shard}_parameters_fold_{fold}",
+                name=f"{model_name}_tune_model_{shard}_parameters_fold_{fold}",
                 argo_config=ARGO_GPU_NODE_MEDIUM,
             ),
             ArgoNode(
@@ -51,8 +51,8 @@ def _create_model_shard_pipeline(model_name: str, shard: int, fold: Union[str, i
                     f"params:modelling.{model_name}.model_options.model_tuning_args.features",
                     f"params:modelling.{model_name}.model_options.model_tuning_args.target_col_name",
                 ],
-                outputs=f"modelling.{shard}.fold_{fold}.models.model",
-                name=f"train_{shard}_model_fold_{fold}",
+                outputs=f"{model_name}_modelling.{shard}.fold_{fold}.models.model",
+                name=f"{model_name}_train_{shard}_model_fold_{fold}",
                 argo_config=ARGO_GPU_NODE_MEDIUM,
             ),
         ],
@@ -80,8 +80,8 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                             "data": "modelling.model_input.splits@pandas",
                             "transformers": f"params:modelling.{model_name}.model_options.transformers",
                         },
-                        outputs=f"modelling.fold_{fold}.model_input.transformers",
-                        name=f"fit_transformers_fold_{fold}",
+                        outputs=f"{model_name}_modelling.fold_{fold}.model_input.transformers",
+                        name=f"{model_name}_fit_transformers_fold_{fold}",
                         argo_config=ARGO_CPU_ONLY_NODE_MEDIUM,
                     )
                 ]
@@ -98,8 +98,8 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                         func=nodes.create_model,
                         inputs=[f"params:modelling.{model_name}.model_options.ensemble.agg_func"]
                         + [f"modelling.{shard}.fold_{fold}.models.model" for shard in range(num_shards)],
-                        outputs=f"modelling.fold_{fold}.models.model",
-                        name=f"create_model_fold_{fold}",
+                        outputs=f"{model_name}_modelling.fold_{fold}.models.model",
+                        name=f"{model_name}_create_model_fold_{fold}",
                         argo_config=ARGO_CPU_ONLY_NODE_MEDIUM,
                     ),
                     ArgoNode(
@@ -119,8 +119,8 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                             "features": f"params:modelling.{model_name}.model_options.model_tuning_args.features",
                             "target_col_name": f"params:modelling.{model_name}.model_options.model_tuning_args.target_col_name",
                         },
-                        outputs=f"modelling.fold_{fold}.model_output.predictions",
-                        name=f"get_model_predictions_fold_{fold}",
+                        outputs=f"{model_name}_modelling.fold_{fold}.model_output.predictions",
+                        name=f"{model_name}_get_model_predictions_fold_{fold}",
                         argo_config=ARGO_CPU_ONLY_NODE_MEDIUM,
                     ),
                 ],
@@ -154,8 +154,8 @@ def create_model_pipeline(model_name: str, num_shards: int, n_cross_val_folds: i
                         f"params:modelling.{model_name}.model_options.generator",
                         "params:modelling.splitter",
                     ],
-                    outputs=f"modelling.{shard}.model_input.enriched_splits",
-                    name=f"enrich_{shard}_splits",
+                    outputs=f"{model_name}_modelling.{shard}.model_input.enriched_splits",
+                    name=f"{model_name}_enrich_{shard}_splits",
                 )
                 for shard in range(num_shards)
             ]
@@ -192,8 +192,8 @@ def create_model_pipeline(model_name: str, num_shards: int, n_cross_val_folds: i
                         "metrics": f"params:modelling.{model_name}.model_options.metrics",
                         "target_col_name": f"params:modelling.{model_name}.model_options.model_tuning_args.target_col_name",
                     },
-                    outputs="modelling.reporting.metrics",
-                    name="check_model_performance",
+                    outputs=f"{model_name}_modelling.reporting.metrics",
+                    name=f"{model_name}_check_model_performance",
                 )
             ]
         )
@@ -272,8 +272,6 @@ def create_pipeline(**kwargs) -> Pipeline:
     """
     # Unpack model
     model = settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")
-    model_name = model["model_name"]
-    model_config = model["model_config"]
 
     # Unpack Folds
     n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING().get("cross_validation").get("n_cross_val_folds")
@@ -281,8 +279,10 @@ def create_pipeline(**kwargs) -> Pipeline:
     # Add shared nodes
     pipelines = []
     pipelines.append(create_shared_pipeline())
-
-    # Generate pipeline for the model
-    pipelines.append(create_model_pipeline(model_name, model_config["num_shards"], n_cross_val_folds))
+    for model_entry in model:
+        model_name = model_entry["model_name"]
+        model_config = model_entry["model_config"]
+        # Generate pipeline for the model
+        pipelines.append(create_model_pipeline(model_name, model_config["num_shards"], n_cross_val_folds))
 
     return sum(pipelines)

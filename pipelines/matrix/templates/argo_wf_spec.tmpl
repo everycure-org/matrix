@@ -63,6 +63,14 @@ spec:
             counter:
               value: "1"
     name: kedro
+    memoize:
+      key: {% raw %}"{{inputs.parameters.kedro_nodes_cache_key}}"
+      {% endraw %}
+      maxAge: "72h"
+      cache:
+        configMap:
+          name: {% raw %}"{{workflow.parameters.mlflow_run_id}}"
+          {% endraw %}
     affinity:
       nodeAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
@@ -106,7 +114,8 @@ spec:
         (
           lastRetry.message matches '.*pod deleted.*' ||
           lastRetry.message matches '.*imminent node shutdown.*' ||
-          lastRetry.message matches '.*node is draining.*'
+          lastRetry.message matches '.*node is draining.*' ||
+          lastRetry.message matches '.*pod was rejected.*'
         {# code 137 is for OOM. We are explicitly mention it so that in case of failure it is not retried #}
         ) && lastRetry.exitCode != 137
       backoff:
@@ -116,6 +125,7 @@ spec:
       parameters:
       - name: kedro_nodes
       - name: trimmed_kedro_nodes
+      - name: kedro_nodes_cache_key
       - name: num_gpus
       - name: memory_limit
       - name: memory_request
@@ -258,7 +268,7 @@ spec:
               name: gh-password
               key: GH_CREDS
       command: ["/bin/sh", "-c"]
-      args: ["mkdir -p /data/tmp /data/spark-temp /data/spark-warehouse /data/checkpoints && kedro run -p {{ pipeline_name }} -e {% raw %}\"{{workflow.parameters.env}}\"{% endraw %} -n {% raw %}\"{{inputs.parameters.kedro_nodes}}\"{% endraw %}"]
+      args: ["mkdir -p /data/tmp /data/spark-temp /data/spark-warehouse /data/checkpoints && kedro run --async -p {{ pipeline_name }} -e {% raw %}\"{{workflow.parameters.env}}\"{% endraw %} -n {% raw %}\"{{inputs.parameters.kedro_nodes}}\"{% endraw %}"]
 
   - <<: *_kedro_template
     name: neo4j
@@ -292,7 +302,7 @@ spec:
           app: kedro-argo
           workflow_name: {% raw %}"{{ workflow.parameters.run_name }}"
           {% endraw %}
-          kedro_nodes: {% raw %}"{{ inputs.parameters.trimmed_kedro_nodes }}"
+          kedro_nodes: {% raw %}"{{inputs.parameters.trimmed_kedro_nodes}}"
           {% endraw %}
           cost-center: "matrix-pipeline"
           environment: {% raw %}"{{ workflow.parameters.env }}"
@@ -358,7 +368,7 @@ spec:
               sleep 5
             done
             echo "Neo4j is ready. Starting main application..."
-            kedro run -p {{ pipeline_name }} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
+            kedro run --async -p {{ pipeline_name }} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
     
     volumes:
       - name: gds-key
@@ -427,7 +437,9 @@ spec:
           - name: kedro_nodes
             value: {{ task.nodes }}
           - name: trimmed_kedro_nodes
-            value: {{ task.nodes[:63].replace(',', '-').rstrip('_-.') }}
+            value: {{task.nodes[:63].replace(',', '-').rstrip('_-.')}}
+          - name: kedro_nodes_cache_key
+            value: {{ (task.nodes.replace('_','').replace('-','').replace('.','').replace(',',''))[:63] }}
           - name: num_gpus
             value: {{ task.resources.num_gpus }}
           - name: memory_request
