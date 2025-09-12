@@ -64,7 +64,7 @@ spec:
               value: "1"
     name: kedro
     memoize:
-      key: {% raw %}"{{workflow.parameters.run_name}}-matrix-{{inputs.parameters.kedro_nodes}}-{{workflow.parameters.env}}-{{workflow.parameters.include_private_datasets}}"
+      key: {% raw %} "{{workflow.parameters.mlflow_run_id}}"
       {% endraw %}
       maxAge: "72h"
       cache:
