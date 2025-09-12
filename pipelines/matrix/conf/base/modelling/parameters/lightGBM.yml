@@ -21,7 +21,7 @@ modelling.lightGBM:
             n_jobs: 16
             random_state: ${globals:random_state}
             device: cuda
-            # objective: binary
+            # objective: binary Confirm with chunyu if this is needed as we are doing multiclass.
             boosting_type: gbdt
             force_row_wise: true
             # Built-in early stopping (works without fit_params)
