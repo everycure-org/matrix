@@ -66,7 +66,7 @@ spec:
     memoize:
       key: {% raw %}"{{workflow.parameters.run_name}}-matrix-{{inputs.parameters.kedro_nodes}}-{{workflow.parameters.env}}-{{workflow.parameters.include_private_datasets}}"
       {% endraw %}
-      maxAge: "48h"
+      maxAge: "72h"
       cache:
         configMap:
           name: argo-memoization-config
