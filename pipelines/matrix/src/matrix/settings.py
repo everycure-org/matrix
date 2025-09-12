@@ -79,7 +79,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
             ],
             "modelling": {
                 "model_name": "lightGBM",  # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth, lightGBM
-                "model_config": {"num_shards": 3},
+                "model_config": {"num_shards": 1},
             },
             "evaluation": [
                 {"evaluation_name": "simple_classification"},
