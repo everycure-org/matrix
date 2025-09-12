@@ -64,7 +64,7 @@ spec:
               value: "1"
     name: kedro
     memoize:
-      key: {% raw %}"{{workflow.parameters.mlflow_run_id}}-{{inputs.parameters.kedro_nodes_cache_key}}"
+      key: {% raw %}"{{workflow.parameters.mlflow_run_id}}-{{ inputs.parameters.trimmed_kedro_nodes }}"
       {% endraw %}
       maxAge: "72h"
       cache:
@@ -438,7 +438,7 @@ spec:
           - name: trimmed_kedro_nodes
             value: {{ task.nodes[:63].replace(',', '-').rstrip('_-.') }}
           - name: kedro_nodes_cache_key
-            value: {{ task.nodes | hash | abs }}
+            value: {{ task.nodes.replace(',', '-').replace('_', '-').replace('.', '-') | truncate(63, True, '') }}
           - name: num_gpus
             value: {{ task.resources.num_gpus }}
           - name: memory_request
