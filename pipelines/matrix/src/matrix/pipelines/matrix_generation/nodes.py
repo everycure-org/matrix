@@ -21,7 +21,8 @@ logger = logging.getLogger(__name__)
 
 
 def enrich_embeddings(
-    nodes: ps.DataFrame,
+    rtxkg2_nodes: ps.DataFrame,
+    robokop_nodes: ps.DataFrame,
     drugs: ps.DataFrame,
     diseases: ps.DataFrame,
 ) -> ps.DataFrame:
@@ -35,8 +36,19 @@ def enrich_embeddings(
     return (
         drugs.withColumn("is_drug", F.lit(True))
         .unionByName(diseases.withColumn("is_disease", F.lit(True)), allowMissingColumns=True)
-        .join(nodes, on="id", how="inner")
-        .select("is_drug", "is_disease", "id", "topological_embedding")
+        .join(
+            rtxkg2_nodes.withColumnRenamed("topological_embedding", "rtxkg2_topological_embedding"),
+            on="id",
+            how="inner",
+        )
+        .select("is_drug", "is_disease", "id", "rtxkg2_topological_embedding")
+        .join(
+            robokop_nodes.select("id", "topological_embedding").withColumnRenamed(
+                "topological_embedding", "robokop_topological_embedding"
+            ),
+            on="id",
+            how="inner",
+        )
         .withColumn("is_drug", F.coalesce(F.col("is_drug"), F.lit(False)))
         .withColumn("is_disease", F.coalesce(F.col("is_disease"), F.lit(False)))
     )
@@ -217,22 +229,39 @@ def make_predictions_and_sort(
         Pairs dataset sorted by score with their rank and quantile rank
     """
 
-    embeddings = node_embeddings.select("id", "topological_embedding")
+    embeddings = node_embeddings.select("id", "rtxkg2_topological_embedding", "robokop_topological_embedding")
 
     pairs_with_embeddings = (
         # TODO: remnant from pyarrow/pandas conversion, find in which node it is created
         pairs.drop("__index_level_0__")
         .join(
-            embeddings.withColumnsRenamed({"id": "target", "topological_embedding": "target_embedding"}),
+            embeddings.withColumnsRenamed(
+                {
+                    "id": "target",
+                    "rtxkg2_topological_embedding": "target_rtxkg2_embedding",
+                    "robokop_topological_embedding": "target_robokop_embedding",
+                }
+            ),
             on="target",
             how="left",
         )
         .join(
-            embeddings.withColumnsRenamed({"id": "source", "topological_embedding": "source_embedding"}),
+            embeddings.withColumnsRenamed(
+                {
+                    "id": "source",
+                    "rtxkg2_topological_embedding": "source_rtxkg2_embedding",
+                    "robokop_topological_embedding": "source_robokop_embedding",
+                }
+            ),
             on="source",
             how="left",
         )
-        .filter(F.col("source_embedding").isNotNull() & F.col("target_embedding").isNotNull())
+        .filter(
+            F.col("source_rtxkg2_embedding").isNotNull()
+            & F.col("target_rtxkg2_embedding").isNotNull()
+            & F.col("source_robokop_embedding").isNotNull()
+            & F.col("target_robokop_embedding").isNotNull()
+        )
     )
 
     def model_predict(partition_df: pd.DataFrame) -> pd.DataFrame:

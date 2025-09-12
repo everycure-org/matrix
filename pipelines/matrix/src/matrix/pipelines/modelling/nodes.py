@@ -83,10 +83,10 @@ def filter_valid_pairs(
     # Get list of nodes in the KG
     # TEMP: only choose nodes which are both in RTX AND ROBOKOP
     valid_nodes_in_kg = (
-        nodes.filter(
-            f.array_contains(f.col("upstream_data_source"), "robokop")
-            & f.array_contains(f.col("upstream_data_source"), "rtxkg2")
-        )
+        nodes  # .filter(
+        #    f.array_contains(f.col("upstream_data_source"), "robokop")
+        #    & f.array_contains(f.col("upstream_data_source"), "rtxkg2")
+        # )
         .select("id")
         .distinct()
         .cache()
@@ -184,10 +184,10 @@ def attach_embeddings(
         DataFrame with source and target embeddings attached
     """
     df = (
-        pairs_df.transform(_add_embedding, from_=nodes, using="source", name="rtxkg2")
-        .transform(_add_embedding, from_=nodes, using="source", name="robokop")
-        .transform(_add_embedding, from_=nodes, using="target", name="rtxkg2")
-        .transform(_add_embedding, from_=nodes, using="target", name="robokop")
+        pairs_df.transform(_add_embedding, from_=rtxkg2_nodes, using="source", name="rtxkg2")
+        .transform(_add_embedding, from_=robokop_nodes, using="source", name="robokop")
+        .transform(_add_embedding, from_=rtxkg2_nodes, using="target", name="rtxkg2")
+        .transform(_add_embedding, from_=robokop_nodes, using="target", name="robokop")
     )
     return df
 
@@ -260,9 +260,9 @@ def prefilter_nodes(
     schema=DataFrameSchema(
         columns={
             "source": Column(str, nullable=False),
-            "source_embedding": Column(object, nullable=False),
+            # "source_embedding": Column(object, nullable=False),
             "target": Column(str, nullable=False),
-            "target_embedding": Column(object, nullable=False),
+            # "target_embedding": Column(object, nullable=False),
             "split": Column(str, nullable=False),
             "fold": Column(int, nullable=False),
         },

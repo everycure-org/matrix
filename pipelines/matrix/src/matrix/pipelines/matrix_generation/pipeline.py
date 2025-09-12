@@ -30,7 +30,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ArgoNode(
                     func=nodes.enrich_embeddings,
                     inputs=[
-                        "embeddings.feat.nodes",
+                        "embeddings.feat.nodes.rtxkg2",
+                        "embeddings.feat.nodes.robokop",
                         "integration.int.drug_list.nodes.norm@spark",
                         "integration.int.disease_list.nodes.norm@spark",
                     ],
