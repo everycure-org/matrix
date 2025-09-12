@@ -64,7 +64,7 @@ spec:
               value: "1"
     name: kedro
     memoize:
-      key:{% raw %}"{{inputs.parameters.trimmed_kedro_nodes}}"
+      key: {% raw %}"{{inputs.parameters.trimmed_kedro_nodes}}"
       {% endraw %}
       maxAge: "72h"
       cache:
