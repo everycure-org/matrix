@@ -76,15 +76,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                             inputs=[
                                 "matrix_generation.feat.nodes@spark",
                                 f"matrix_generation.prm.fold_{fold}.matrix_pairs@spark",
-                                f"modelling.fold_{fold}.model_input.transformers",
-                                f"modelling.fold_{fold}.models.model",
+                                f"{model_name}_modelling.fold_{fold}.model_input.transformers",
+                                f"{model_name}_modelling.fold_{fold}.models.model",
                                 # TODO: can we get features from transformers directly?
                                 f"params:modelling.{model_name}.model_options.model_tuning_args.features",
                                 "params:matrix_generation.treat_score_col_name",
                                 "params:matrix_generation.not_treat_score_col_name",
                                 "params:matrix_generation.unknown_score_col_name",
                             ],
-                            outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark",
+                            outputs=f"matrix_generation.fold_{fold}.{model_name}.model_output.sorted_matrix_predictions@spark",
                             name=f"{model_name}_make_predictions_and_sort_fold_{fold}",
                             argo_config=ARGO_NODE_MEDIUM_MATRIX_GENERATION,
                         ),
@@ -92,31 +92,39 @@ def create_pipeline(**kwargs) -> Pipeline:
                 )
             )
 
-    pipelines.append(
-        pipeline(
-            [
-                ArgoNode(
-                    func=nodes.generate_reports,
-                    inputs=[
-                        f"matrix_generation.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@pandas",
-                        "params:matrix_generation.reporting_nodes.plots",
-                    ],
-                    outputs="matrix_generation.reporting.plots",
-                    name="generate_reporting_plots",
-                ),
-                ArgoNode(
-                    func=nodes.generate_reports,
-                    inputs={
-                        "sorted_matrix_df": f"matrix_generation.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@spark",
-                        "strategies": "params:matrix_generation.reporting_nodes.tables",
-                        "drugs_df": "integration.int.drug_list.nodes.norm@spark",
-                        "diseases_df": "integration.int.disease_list.nodes.norm@spark",
-                    },
-                    outputs="matrix_generation.reporting.tables",
-                    name="generate_reporting_tables",
-                ),
-            ]
+    # Create reporting nodes for ALL models
+    reporting_pipelines = []
+
+    for model in settings.DYNAMIC_PIPELINES_MAPPING().get("modelling"):
+        model_name = model["model_name"]
+
+        reporting_pipelines.append(
+            pipeline(
+                [
+                    ArgoNode(
+                        func=nodes.generate_reports,
+                        inputs=[
+                            f"matrix_generation.fold_{n_cross_val_folds}.{model_name}.model_output.sorted_matrix_predictions@pandas",
+                            "params:matrix_generation.reporting_nodes.plots",
+                        ],
+                        outputs=f"matrix_generation.{model_name}.reporting.plots",
+                        name=f"{model_name}_generate_reporting_plots",
+                    ),
+                    ArgoNode(
+                        func=nodes.generate_reports,
+                        inputs={
+                            "sorted_matrix_df": f"matrix_generation.fold_{n_cross_val_folds}.{model_name}.model_output.sorted_matrix_predictions@spark",
+                            "strategies": "params:matrix_generation.reporting_nodes.tables",
+                            "drugs_df": "integration.int.drug_list.nodes.norm@spark",
+                            "diseases_df": "integration.int.disease_list.nodes.norm@spark",
+                        },
+                        outputs=f"matrix_generation.{model_name}.reporting.tables",
+                        name=f"{model_name}_generate_reporting_tables",
+                    ),
+                ]
+            )
         )
-    )
+
+    pipelines.extend(reporting_pipelines)
 
     return sum(pipelines)
