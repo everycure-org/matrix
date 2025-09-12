@@ -20,7 +20,10 @@ modelling.lightGBM:
             _object: lightgbm.LGBMClassifier
             n_jobs: 16
             random_state: ${globals:random_state}
-            device: cuda
+            device: gpu
+            objective: binary
+            boosting_type: gbdt
+            force_row_wise: true
           n_calls: 20
           dimensions:
             - _object: skopt.space.Real
