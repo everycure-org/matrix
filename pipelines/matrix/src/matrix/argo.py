@@ -42,8 +42,8 @@ def generate_argo_config(
         ARGO_TEMPLATE_FILE = "argo_wf_spec_stress_test.tmpl"
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
     pipeline_tasks = get_dependencies(fuse(pipeline), default_execution_resources)
-    # Determine pipeline-level external input datasets (exclude params and transcoding)
-    pipeline_inputs = sorted(set(FusedNode.clean_dependencies(list(pipeline.inputs()))))
+    # Determine pipeline-level external input datasets (exclude params, keep transcoding)
+    pipeline_inputs = sorted({i for i in list(pipeline.inputs()) if not str(i).startswith("params:")})
     git_sha = get_git_sha()
     trigger_release = get_trigger_release_flag(pipeline.name)
     include_private_datasets = os.getenv("INCLUDE_PRIVATE_DATASETS", "0")

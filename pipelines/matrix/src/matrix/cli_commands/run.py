@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Any, Collection, Dict, List, NamedTuple, Optional, Set
 
@@ -36,6 +37,8 @@ from matrix.utils.environment import load_environment_variables
 load_environment_variables()
 
 from matrix.session import KedroSessionWithFromCatalog
+
+logger = logging.getLogger(__name__)
 
 
 class RunConfig(NamedTuple):
@@ -83,6 +86,9 @@ def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async
     """Run the pipeline."""
 
     _validate_env_vars_for_private_data()
+
+    if from_run:
+        logger.info(f"Taking input datasets from run: {from_run}. Specified datasets: {from_run_datasets}")
 
     pipeline_name = pipeline
     pipeline_obj = pipelines[pipeline_name]

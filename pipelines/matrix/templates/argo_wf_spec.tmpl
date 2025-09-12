@@ -268,7 +268,7 @@ spec:
               name: gh-password
               key: GH_CREDS
       command: ["/bin/sh", "-c"]
-      args: ["mkdir -p /data/tmp /data/spark-temp /data/spark-warehouse /data/checkpoints && kedro run -p {{ pipeline_name }} -e {% raw %}\"{{workflow.parameters.env}}\"{% endraw %} -n {% raw %}\"{{inputs.parameters.kedro_nodes}}\"{% endraw %}", "--from-run", {% raw %}"{{workflow.parameters.from_run}}"{% endraw %}, "--from-run-datasets", {% raw %}"{{workflow.parameters.from_run_datasets}}"{% endraw %}]
+      args: ["mkdir -p /data/tmp /data/spark-temp /data/spark-warehouse /data/checkpoints && kedro run -p {{ pipeline_name }} -e {% raw %}\"{{workflow.parameters.env}}\"{% endraw %} -n {% raw %}\"{{inputs.parameters.kedro_nodes}}\"{% endraw %} --from-run {% raw %}\"{{workflow.parameters.from_run}}\"{% endraw %} --from-run-datasets {% raw %}\"{{workflow.parameters.from_run_datasets}}\"{% endraw %}"]
 
   - <<: *_kedro_template
     name: neo4j
