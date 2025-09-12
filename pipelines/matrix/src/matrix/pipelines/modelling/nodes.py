@@ -171,7 +171,8 @@ def _filter_source_and_target_exist(df: ps.DataFrame, in_: ps.DataFrame) -> ps.D
 )
 def attach_embeddings(
     pairs_df: ps.DataFrame,
-    nodes: ps.DataFrame,
+    rtxkg2_nodes: ps.DataFrame,
+    robokop_nodes: ps.DataFrame,
 ) -> ps.DataFrame:
     """Attach node embeddings to the pairs DataFrame.
 
@@ -210,7 +211,8 @@ def _add_embedding(df: ps.DataFrame, from_: ps.DataFrame, using: str, name: str)
     )
 )
 def prefilter_nodes(
-    nodes: ps.DataFrame,
+    rtxkg2_nodes: ps.DataFrame,
+    robokop_nodes: ps.DataFrame,
     gt: ps.DataFrame,
     drug_types: list[str],
     disease_types: list[str],
@@ -234,8 +236,8 @@ def prefilter_nodes(
         .withColumn("in_ground_pos", f.lit(True))
     )
 
-    nodes = nodes.withColumnRenamed("topological_embedding", "rtxkg2_topological_embedding").join(
-        nodes.select("id", "topological_embedding").withColumnRenamed(
+    nodes = rtxkg2_nodes.withColumnRenamed("topological_embedding", "rtxkg2_topological_embedding").join(
+        robokop_nodes.select("id", "topological_embedding").withColumnRenamed(
             "topological_embedding", "robokop_topological_embedding"
         ),
         on="id",

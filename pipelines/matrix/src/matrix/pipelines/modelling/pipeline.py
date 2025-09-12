@@ -229,7 +229,8 @@ def create_shared_pipeline() -> Pipeline:
                 func=nodes.attach_embeddings,
                 inputs=[
                     "modelling.raw.known_pairs@spark",
-                    "embeddings.feat.nodes",
+                    "embeddings.feat.nodes.rtxkg2",
+                    "embeddings.feat.nodes.robokop",
                 ],
                 outputs="modelling.int.known_pairs@spark",
                 name="create_int_known_pairs",
@@ -237,7 +238,8 @@ def create_shared_pipeline() -> Pipeline:
             ArgoNode(
                 func=nodes.prefilter_nodes,
                 inputs=[
-                    "embeddings.feat.nodes",
+                    "embeddings.feat.nodes.rtxkg2",
+                    "embeddings.feat.nodes.robokop",
                     "modelling.raw.known_pairs@spark",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",

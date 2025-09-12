@@ -84,7 +84,15 @@ embeddings.model_output.topological:
 
 embeddings.feat.nodes:
   <<: *_spark_parquet
-  filepath: ${globals:paths.embeddings}/feat/nodes_with_embeddings
+  filepath: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.9.9/temp_features/rtxkg2-n2v/datasets/embeddings/feat/nodes_with_embeddings
+
+embeddings.feat.nodes.rtxkg2:
+  <<: *_spark_parquet
+  filepath: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.9.9/temp_features/robokop-n2v/datasets/embeddings/feat/nodes_with_embeddings
+
+embeddings.feat.nodes.robokop:
+  <<: *_spark_parquet
+  filepath:  #${globals:paths.embeddings}/feat/nodes_with_embeddings
 
 embeddings.reporting.loss:
   type: matplotlib.MatplotlibDataset
