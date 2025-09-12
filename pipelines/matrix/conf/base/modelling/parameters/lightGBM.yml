@@ -24,6 +24,8 @@ modelling.lightGBM:
             # objective: binary
             boosting_type: gbdt
             force_row_wise: true
+            # Built-in early stopping (works without fit_params)
+            early_stopping_round: 50
           n_calls: 20
           dimensions:
             - _object: skopt.space.Real
