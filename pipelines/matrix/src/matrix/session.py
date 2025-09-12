@@ -34,6 +34,7 @@ class KedroSessionWithFromCatalog(KedroSession):
         to_outputs: Iterable[str] | None = None,
         load_versions: dict[str, str] | None = None,
         namespace: str | None = None,
+        from_run_datasets: Iterable[str] | None = None,
     ) -> dict[str, Any]:
         """Runs the pipeline with a specified runner.
 
@@ -135,11 +136,18 @@ class KedroSessionWithFromCatalog(KedroSession):
         )
 
         if from_catalog:
-            # Update all pipeline inputs to read from
-            # the from catalog
-            for item in filtered_pipeline.inputs():
-                self._logger.info("Replacing %s", item)
-                catalog.add(item, from_catalog._get_dataset(item), replace=True)
+            if from_run_datasets:
+                for item in from_run_datasets:
+                    # Update specified datasets to read from tge from_catalog
+                    # Applicable on cluster runs where each node is it's own pipeline and we need to determine the relevant input datasets upfront
+                    self._logger.info("Replacing %s", item)
+                    catalog.add(item, from_catalog._get_dataset(item), replace=True)
+            else:
+                # Update all pipeline inputs to read from
+                # the from catalog
+                for item in filtered_pipeline.inputs():
+                    self._logger.info("Replacing %s", item)
+                    catalog.add(item, from_catalog._get_dataset(item), replace=True)
 
         # Run the runner
         hook_manager = self._hook_manager
