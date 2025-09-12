@@ -439,7 +439,7 @@ spec:
           - name: trimmed_kedro_nodes
             value: {{task.nodes[:63].replace(',', '-').rstrip('_-.')}}
           - name: kedro_nodes_cache_key
-            value: {{ (task.nodes.replace('_','').replace('-','').replace('.',''))[:63] }}
+            value: {{ (task.nodes.replace('_','').replace('-','').replace('.','').replace(',',''))[:63] }}
           - name: num_gpus
             value: {{ task.resources.num_gpus }}
           - name: memory_request
