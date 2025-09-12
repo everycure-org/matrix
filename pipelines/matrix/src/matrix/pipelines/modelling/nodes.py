@@ -163,8 +163,8 @@ def _filter_source_and_target_exist(df: ps.DataFrame, in_: ps.DataFrame) -> ps.D
         columns={
             "source": Column(T.StringType(), nullable=False),
             "target": Column(T.StringType(), nullable=False),
-            "source_embedding": Column(T.ArrayType(T.FloatType()), nullable=False),
-            "target_embedding": Column(T.ArrayType(T.FloatType()), nullable=False),
+            # "source_embedding": Column(T.ArrayType(T.FloatType()), nullable=False),
+            # "target_embedding": Column(T.ArrayType(T.FloatType()), nullable=False),
         },
         unique=["source", "target"],
     )
@@ -182,15 +182,19 @@ def attach_embeddings(
     Returns:
         DataFrame with source and target embeddings attached
     """
-    return pairs_df.transform(_add_embedding, from_=nodes, using="source").transform(
-        _add_embedding, from_=nodes, using="target"
+    df = (
+        pairs_df.transform(_add_embedding, from_=nodes, using="source", name="rtxkg2")
+        .transform(_add_embedding, from_=nodes, using="source", name="robokop")
+        .transform(_add_embedding, from_=nodes, using="target", name="rtxkg2")
+        .transform(_add_embedding, from_=nodes, using="target", name="robokop")
     )
+    return df
 
 
-def _add_embedding(df: ps.DataFrame, from_: ps.DataFrame, using: str) -> ps.DataFrame:
+def _add_embedding(df: ps.DataFrame, from_: ps.DataFrame, using: str, name: str) -> ps.DataFrame:
     from_ = from_.select(
         f.col("id").alias(using),
-        f.col("topological_embedding").cast(T.ArrayType(T.FloatType())).alias(f"{using}_embedding"),
+        f.col("topological_embedding").cast(T.ArrayType(T.FloatType())).alias(f"{using}_{name}_embedding"),
     )
     return df.join(from_, how="left", on=using)
 
@@ -230,11 +234,18 @@ def prefilter_nodes(
         .withColumn("in_ground_pos", f.lit(True))
     )
 
+    nodes = nodes.withColumnRenamed("topological_embedding", "rtxkg2_topological_embedding").join(
+        nodes.select("id", "topological_embedding").withColumnRenamed(
+            "topological_embedding", "robokop_topological_embedding"
+        ),
+        on="id",
+        how="inner",
+    )
     df = (
         nodes.withColumn("is_drug", f.arrays_overlap(f.col("all_categories"), f.lit(drug_types)))
         .withColumn("is_disease", f.arrays_overlap(f.col("all_categories"), f.lit(disease_types)))
         .filter(f.col("is_disease") | f.col("is_drug"))
-        .select("id", "topological_embedding", "is_drug", "is_disease")
+        .select("id", "robokop_topological_embedding", "rtxkg2_topological_embedding", "is_drug", "is_disease")
         # TODO: The integrated data product _should_ contain these nodes
         # TODO: Verify below does not have any undesired side effects
         .join(ground_truth_nodes, on="id", how="left")

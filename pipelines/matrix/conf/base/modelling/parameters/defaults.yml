@@ -66,13 +66,15 @@ _model_options:
         _object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
         prefix: source_
       features:
-        - source_embedding # becomes n columns, named source_0, source_1, etc
+        - source_rtxkg2_embedding # becomes n columns, named source_0, source_1, etc
+        - source_robokop_embedding # becomes n columns, named source_0, source_1, etc
     flat_target_embedding:
       transformer: 
         _object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
         prefix: target_
       features:
-        - target_embedding # becomes n columns, named target_0, target_1, etc
+        - target_rtxkg2_embedding # becomes n columns, named target_0, target_1, etc
+        - target_robokop_embedding # becomes n columns, named target_0, target_1, etc
 
   # Defines estimator used during model training, features can be
   # defined using a regex strategy.
@@ -85,8 +87,10 @@ _model_options:
         max_depth: 10
         device: cuda
     features: # Features use regex, source_0, source_1, .., target_0, target_1
-      - source_+
-      - target_+
+      - source_rtxkg2_+
+      - source_robokop_+
+      - target_rtxkg2_+
+      - target_robokop_+
     target_col_name: y
 
   # Define metrics to be used for check of performance 

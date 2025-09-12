@@ -51,8 +51,10 @@ modelling.xg_ensemble:
             test_size: 0.1
             random_state: ${globals:random_state}
         features: # Features use regex, source_0, source_1, .., target_0, target_1
-          - source_+
-          - target_+
+          - source_rtxkg2_+
+          - source_robokop_+
+          - target_rtxkg2_+
+          - target_robokop_+
         target_col_name: y
     
     # NOTE: This leverages the custom `merge` resolver to override
