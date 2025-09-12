@@ -438,7 +438,7 @@ spec:
           - name: trimmed_kedro_nodes
             value: {{ task.nodes[:63].replace(',', '-').rstrip('_-.') }}
           - name: kedro_nodes_cache_key
-            value: {{ =sprig.sha1(workflow.parameters.mlflow_run_id ~ '-' ~ task.nodes.replace(',', '-').rstrip('_-.')) }}
+            value: {{= sprig.sha1(workflow.parameters.mlflow_run_id ~ '-' ~ task.nodes.replace(',', '-').rstrip('_-.')) }}
           - name: num_gpus
             value: {{ task.resources.num_gpus }}
           - name: memory_request
