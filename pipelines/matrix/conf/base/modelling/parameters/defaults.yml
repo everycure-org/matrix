@@ -49,7 +49,7 @@ _model_options:
   # Defines strategy for generating drug-disease pairs. Should be a
   # class that implements the DrugDiseasePair generator interface.
   generator:
-    _object: matrix.datasets.pair_generator.ReplacementDrugDiseasePairGenerator
+    _object: matrix.datasets.pair_generator.DegreeAwarePairGenerator
     random_state: ${globals:random_state}
     y_label: 2
     n_replacements: 2 
