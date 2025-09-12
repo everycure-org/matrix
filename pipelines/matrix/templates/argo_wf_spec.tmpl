@@ -64,12 +64,13 @@ spec:
               value: "1"
     name: kedro
     memoize:
-      key: {% raw %}"{{workflow.parameters.mlflow_run_id}}-{{ inputs.parameters.kedro_nodes_cache_key }}"
+      key: {% raw %}"{{ inputs.parameters.trimmed_kedro_nodes }}"
       {% endraw %}
       maxAge: "72h"
       cache:
         configMap:
-          name: argo-memoization-config
+          name: {% raw %}"{{workflow.parameters.mlflow_run_id}}"
+          {% endraw %}
     affinity:
       nodeAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
@@ -124,7 +125,6 @@ spec:
       parameters:
       - name: kedro_nodes
       - name: trimmed_kedro_nodes
-      - name: kedro_nodes_cache_key
       - name: num_gpus
       - name: memory_limit
       - name: memory_request
@@ -437,8 +437,6 @@ spec:
             value: {{ task.nodes }}
           - name: trimmed_kedro_nodes
             value: {{ task.nodes[:63].replace(',', '-').rstrip('_-.') }}
-          - name: kedro_nodes_cache_key
-            value: {{ task.nodes.split(',')[0] }}
           - name: num_gpus
             value: {{ task.resources.num_gpus }}
           - name: memory_request
