@@ -84,7 +84,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                                 "params:matrix_generation.not_treat_score_col_name",
                                 "params:matrix_generation.unknown_score_col_name",
                             ],
-                            outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark",
+                            outputs=f"matrix_generation.fold_{fold}.{model_name}.model_output.sorted_matrix_predictions@spark",
                             name=f"{model_name}_make_predictions_and_sort_fold_{fold}",
                             argo_config=ARGO_NODE_MEDIUM_MATRIX_GENERATION,
                         ),
