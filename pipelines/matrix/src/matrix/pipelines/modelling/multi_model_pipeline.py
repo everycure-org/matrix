@@ -111,7 +111,7 @@ def _create_multi_model_shard_pipeline(model_name: str, shard: int, fold: Union[
             ArgoNode(
                 func=nodes.tune_parameters,
                 inputs={
-                    "data": f"modelling.{shard}.fold_{fold}.{model_name}_model_input.transformed_splits",
+                    "data": f"modelling.{shard}.fold_{fold}.{model_name}.model_input.transformed_splits",
                     "unpack": f"params:modelling.{model_name}.model_options.model_tuning_args",
                 },
                 outputs=[
@@ -124,7 +124,7 @@ def _create_multi_model_shard_pipeline(model_name: str, shard: int, fold: Union[
             ArgoNode(
                 func=nodes.train_model,
                 inputs=[
-                    f"modelling.{shard}.fold_{fold}.{model_name}_model_input.transformed_splits",
+                    f"modelling.{shard}.fold_{fold}.{model_name}.model_input.transformed_splits",
                     f"modelling.{shard}.fold_{fold}.{model_name}.models.model_params",
                     f"params:modelling.{model_name}.model_options.model_tuning_args.features",
                     f"params:modelling.{model_name}.model_options.model_tuning_args.target_col_name",
