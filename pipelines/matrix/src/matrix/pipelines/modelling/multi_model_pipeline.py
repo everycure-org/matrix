@@ -35,6 +35,8 @@ def create_multi_model_pipeline(models: list[dict], n_cross_val_folds: int) -> P
                             "modelling.model_input.splits@pandas",
                             f"params:modelling.model_options.generator",
                             "params:modelling.splitter",
+                            # needed to avoid multi-model running in parallel before shared completed
+                            "modelling.model_input.splits@pandas",
                         ],
                         outputs=f"modelling.{shard}.{model_name}.model_input.enriched_splits",
                         name=f"enrich_{model_name}_{shard}_splits",
