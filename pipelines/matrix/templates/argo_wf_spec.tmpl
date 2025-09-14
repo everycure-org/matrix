@@ -63,14 +63,6 @@ spec:
             counter:
               value: "1"
     name: kedro
-    memoize:
-      key: {% raw %}"{{inputs.parameters.kedro_nodes_cache_key}}"
-      {% endraw %}
-      maxAge: "72h"
-      cache:
-        configMap:
-          name: {% raw %}"{{workflow.parameters.mlflow_run_id}}"
-          {% endraw %}
     affinity:
       nodeAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
