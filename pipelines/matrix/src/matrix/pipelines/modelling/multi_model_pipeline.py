@@ -55,7 +55,10 @@ def create_multi_model_pipeline(models: list[dict], n_cross_val_folds: int) -> P
                 [
                     ArgoNode(
                         func=nodes.combine_data,
-                        inputs=[f"modelling.fold_{fold}.model_output.predictions" for fold in range(n_cross_val_folds)],
+                        inputs=[
+                            f"modelling.fold_{fold}.{model_name}.model_output.predictions"
+                            for fold in range(n_cross_val_folds)
+                        ],
                         outputs="modelling.model_output.combined_predictions",
                         name=f"combine_folds",
                     )
