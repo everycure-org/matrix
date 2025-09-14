@@ -67,22 +67,22 @@ def create_multi_model_pipeline(models: list[dict], n_cross_val_folds: int) -> P
         )
 
         # # Now check the performance on the combined folds
-        # pipelines.append(
-        #     pipeline(
-        #         [
-        #             ArgoNode(
-        #                 func=nodes.check_model_performance,
-        #                 inputs={
-        #                     "data": "modelling.model_output.combined_predictions",
-        #                     "metrics": f"params:modelling.{model_name}.model_options.metrics",
-        #                     "target_col_name": f"params:modelling.{model_name}.model_options.model_tuning_args.target_col_name",
-        #                 },
-        #                 outputs=f"modelling.{model_name}.reporting.metrics",
-        #                 name=f"check_{model_name}_model_performance",
-        #             )
-        #         ]
-        #     )
-        # )
+        pipelines.append(
+            pipeline(
+                [
+                    ArgoNode(
+                        func=nodes.check_model_performance,
+                        inputs={
+                            "data": "modelling.model_output.combined_predictions",
+                            "metrics": f"params:modelling.{model_name}.model_options.metrics",
+                            "target_col_name": f"params:modelling.{model_name}.model_options.model_tuning_args.target_col_name",
+                        },
+                        outputs=f"modelling.{model_name}.reporting.metrics",
+                        name=f"check_{model_name}_model_performance",
+                    )
+                ]
+            )
+        )
 
     return sum(pipelines)
 
