@@ -44,19 +44,19 @@ def register_pipelines() -> dict[str, Pipeline]:
 
     # Higher order pipelines
     # fmt: off
-    pipelines["data_engineering"] = (
-          pipelines["ingestion"]
-        + pipelines["integration"]
-    )
+    # pipelines["data_engineering"] = (
+    #       pipelines["ingestion"]
+    #     + pipelines["integration"]
+    # )
 
     pipelines["feature"] = (
         pipelines["filtering"]
         + pipelines["embeddings"]
     )
-    pipelines["evaluation"] = (
-        pipelines["pre_transformed_evaluation"] 
-        + pipelines["transformed_evaluation"]
-    )
+    # pipelines["evaluation"] = (
+    #     pipelines["pre_transformed_evaluation"] 
+    #     + pipelines["transformed_evaluation"]
+    # )
     pipelines["modelling_run"] = (
           pipelines["modelling"]
         # + pipelines["matrix_generation"]
@@ -67,36 +67,36 @@ def register_pipelines() -> dict[str, Pipeline]:
         pipelines["feature"]
         + pipelines["modelling_run"]
     )
-    pipelines["__default__"] = (
-          pipelines["data_engineering"]
-        + pipelines["feature_and_modelling_run"]
-    )
+    # pipelines["__default__"] = (
+    #       pipelines["data_engineering"]
+    #     + pipelines["feature_and_modelling_run"]
+    # )
 
-    pipelines["kg_release_and_matrix_run"] = (
-        pipelines["data_engineering"]
-        + pipelines["data_release"]
-        + pipelines["ingest_to_N4J"]
-        + pipelines["feature_and_modelling_run"]
-        + pipelines["sentinel_kg_release"]
-    )
+    # pipelines["kg_release_and_matrix_run"] = (
+    #     pipelines["data_engineering"]
+    #     + pipelines["data_release"]
+    #     + pipelines["ingest_to_N4J"]
+    #     + pipelines["feature_and_modelling_run"]
+    #     + pipelines["sentinel_kg_release"]
+    # )
 
-    pipelines["kg_release_patch_and_matrix_run"] = (
-        pipelines["data_engineering"]
-        + pipelines["data_release"]
-        + pipelines["feature_and_modelling_run"]
-        + pipelines["sentinel_kg_release_patch"]
-    )
+    # pipelines["kg_release_patch_and_matrix_run"] = (
+    #     pipelines["data_engineering"]
+    #     + pipelines["data_release"]
+    #     + pipelines["feature_and_modelling_run"]
+    #     + pipelines["sentinel_kg_release_patch"]
+    # )
 
-    # Test pipelines
-    pipelines["test"] = (
-        pipelines["fabricator"]
-        + pipelines["__default__"]
-        + pipelines["data_release"]
-        + pipelines["ingest_to_N4J"]
-    )
-    pipelines["test_sample"] = (
-        pipelines["feature_and_modelling_run"]
-    )
+    # # Test pipelines
+    # pipelines["test"] = (
+    #     pipelines["fabricator"]
+    #     + pipelines["__default__"]
+    #     + pipelines["data_release"]
+    #     + pipelines["ingest_to_N4J"]
+    # )
+    # pipelines["test_sample"] = (
+    #     pipelines["feature_and_modelling_run"]
+    # )
     # fmt: on
 
     return pipelines
