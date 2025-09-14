@@ -44,24 +44,24 @@ def create_multi_model_pipeline(models: list[dict], n_cross_val_folds: int) -> P
             )
         )
 
-        # # Generate pipeline to predict folds (NOTE: final fold is full training data)
-        # for fold in range(n_cross_val_folds + 1):
-        #     pipelines.append(pipeline(_create_multi_model_fold_pipeline(model_name, num_shards, fold)))
+        # Generate pipeline to predict folds (NOTE: final fold is full training data)
+        for fold in range(n_cross_val_folds + 1):
+            pipelines.append(pipeline(_create_multi_model_fold_pipeline(model_name, num_shards, fold)))
 
-        # # Gather all test set predictions from the different folds for the
-        # # model, and combine all the predictions.
-        # pipelines.append(
-        #     pipeline(
-        #         [
-        #             ArgoNode(
-        #                 func=nodes.combine_data,
-        #                 inputs=[f"modelling.fold_{fold}.model_output.predictions" for fold in range(n_cross_val_folds)],
-        #                 outputs="modelling.model_output.combined_predictions",
-        #                 name=f"combine_folds",
-        #             )
-        #         ]
-        #     )
-        # )
+        # Gather all test set predictions from the different folds for the
+        # model, and combine all the predictions.
+        pipelines.append(
+            pipeline(
+                [
+                    ArgoNode(
+                        func=nodes.combine_data,
+                        inputs=[f"modelling.fold_{fold}.model_output.predictions" for fold in range(n_cross_val_folds)],
+                        outputs="modelling.model_output.combined_predictions",
+                        name=f"combine_folds",
+                    )
+                ]
+            )
+        )
 
         # # Now check the performance on the combined folds
         # pipelines.append(
