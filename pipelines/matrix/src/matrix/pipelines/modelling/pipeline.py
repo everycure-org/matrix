@@ -4,6 +4,7 @@ from kedro.pipeline import Pipeline, pipeline
 
 from matrix import settings
 from matrix.kedro4argo_node import ARGO_CPU_ONLY_NODE_MEDIUM, ARGO_GPU_NODE_MEDIUM, ArgoNode
+from matrix.pipelines.modelling.multi_model_pipeline import create_multi_model_pipeline
 
 from . import nodes
 from .utils import partial_fold
@@ -272,8 +273,6 @@ def create_pipeline(**kwargs) -> Pipeline:
     """
     # Unpack model
     model = settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")
-    model_name = model["model_name"]
-    model_config = model["model_config"]
 
     # Unpack Folds
     n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING().get("cross_validation").get("n_cross_val_folds")
@@ -283,6 +282,6 @@ def create_pipeline(**kwargs) -> Pipeline:
     pipelines.append(create_shared_pipeline())
 
     # Generate pipeline for the model
-    pipelines.append(create_model_pipeline(model_name, model_config["num_shards"], n_cross_val_folds))
+    pipelines.append(create_multi_model_pipeline(model, n_cross_val_folds))
 
     return sum(pipelines)

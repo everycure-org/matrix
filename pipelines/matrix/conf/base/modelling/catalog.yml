@@ -70,9 +70,13 @@ modelling.model_input.splits@spark:
   <<: [*_pandas_parquet, *_model_output_ds]
   filepath: ${globals:paths.modelling}/model_input/fold_{fold}/transformed_splits
 
-"modelling.{shard}.model_input.enriched_splits":
+# "modelling.{shard}.model_input.enriched_splits":
+#   <<: [*_pandas_parquet, *_model_input_ds]
+#   filepath: ${globals:paths.modelling}/model_input/{shard}/enriched_splits
+
+"modelling.{shard}.{model_name}.model_input.enriched_splits":
   <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/model_input/{shard}/enriched_splits
+  filepath: ${globals:paths.modelling}/model_input/{shard}/{model_name}/enriched_splits
 
 "modelling.{shard}.fold_{fold}.model_input.transformed_splits":
   <<: [*_pandas_parquet, *_model_input_ds]
