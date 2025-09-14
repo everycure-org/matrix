@@ -33,7 +33,7 @@ def create_multi_model_pipeline(models: list[dict], n_cross_val_folds: int) -> P
                         inputs=[
                             "modelling.model_input.drugs_diseases_nodes@pandas",
                             "modelling.model_input.splits@pandas",
-                            f"params:modelling.{model_name}.model_options.generator",
+                            f"params:modelling.model_options.generator",
                             "params:modelling.splitter",
                         ],
                         outputs=f"modelling.{shard}.{model_name}.model_input.enriched_splits",
