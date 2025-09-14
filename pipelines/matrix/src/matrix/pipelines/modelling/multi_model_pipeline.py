@@ -59,8 +59,8 @@ def create_multi_model_pipeline(models: list[dict], n_cross_val_folds: int) -> P
                             f"modelling.fold_{fold}.{model_name}.model_output.predictions"
                             for fold in range(n_cross_val_folds)
                         ],
-                        outputs="modelling.model_output.combined_predictions",
-                        name=f"combine_folds",
+                        outputs=f"modelling.{model_name}.model_output.combined_predictions",
+                        name=f"combine_folds_{model_name}",
                     )
                 ]
             )

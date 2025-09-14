@@ -95,6 +95,10 @@ modelling.model_input.splits@spark:
 # "modelling.fold_{fold}.model_output.predictions":
 #   <<: [*_pandas_parquet, *_model_output_ds]
 #   filepath: ${globals:paths.modelling}/model_output/fold_{fold}/predictions
+
+"modelling.fold_{fold}.{model_name}.model_output.predictions":
+  <<: [*_pandas_parquet, *_model_output_ds]
+  filepath: ${globals:paths.modelling}/model_output/fold_{fold}/{model_name}/predictions
   
 # NOTE: Saving an artifact, saving both locally and in MLFlow
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/03_version_datasets.html#how-to-version-data-in-a-kedro-project
@@ -115,9 +119,13 @@ modelling.model_input.splits@spark:
   filepath: ${globals:paths.modelling}/reporting/sanity_metrics.yml
   type: yaml.YAMLDataset
 
-"modelling.model_output.combined_predictions":
+# "modelling.model_output.combined_predictions":
+#   <<: [*_pandas_parquet, *_model_output_ds]
+#   filepath: ${globals:paths.modelling}/model_output/combined_predictions
+
+"modelling.{model_name}.model_output.combined_predictions":
   <<: [*_pandas_parquet, *_model_output_ds]
-  filepath: ${globals:paths.modelling}/model_output/combined_predictions
+  filepath: ${globals:paths.modelling}/{model_name}/model_output/combined_predictions
 
 modelling.reporting.gt_present:
   filepath: ${globals:paths.modelling}/reporting/gt_present_metrics.yml
