@@ -1,0 +1,24 @@
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareSourceCode",
+  "name": "MATRIX - Drug Repurposing Platform",
+  "description": "Monorepo for Every Cure's AI-enabled drug repurposing platform, including ML pipelines (Kedro/PySpark), infrastructure as code (Terraform/Terragrunt on GCP), shared libraries, and services (Neo4j KG dashboard, MOA visualizer, synonymizer).",
+  "codeRepository": "https://github.com/everycure-org/matrix",
+  "programmingLanguage": [
+    "Python",
+    "HCL",
+    "Shell",
+    "Makefile",
+    "JavaScript",
+    "Jupyter Notebook"
+  ],
+  "version": "0.10.1",
+  "keywords": [
+    "bioinformatics",
+    "drug repurposing",
+    "knowledge graph",
+    "machine learning",
+    "medical",
+    "research"
+  ]
+}

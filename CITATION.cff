@@ -1,0 +1,8 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it as below.
+title: MATRIX - Drug Repurposing Platform
+abstract: Monorepo for Every Cure's AI-enabled drug repurposing platform, including
+  ML pipelines (Kedro/PySpark), infrastructure as code (Terraform/Terragrunt on GCP),
+  shared libraries, and services (Neo4j KG dashboard, MOA visualizer, synonymizer).
+version: 0.10.1
+repository-code: https://github.com/everycure-org/matrix
