@@ -16,6 +16,12 @@ spec:
     path: deploy/charts/litellm-helm
     helm:
       values: |
+        litellm_settings:
+        cache: true
+        cache_params:
+          type: redis
+          redis_host: redis.redis.svc.cluster.local
+          redis_port: 6379
         router_settings:
           redis_host: redis.redis.svc.cluster.local
           redis_port: 6379
