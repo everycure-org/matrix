@@ -200,31 +200,32 @@ def create_pipeline(matrix_input: str, score_col_name: str) -> Pipeline:
                                 for evaluation in evaluation_names
                             },
                         },
-                        outputs=f"evaluation.{matrix_input}.reporting.master_report",
-                        name=f"{matrix_input}.consolidate_evaluation_reports",
+                        outputs=f"evaluation.{matrix_input}.{model_name}.reporting.master_report",
+                        name=f"{matrix_input}.consolidate_evaluation_reports_for_{model_name}",
                     )
                 ]
             )
         )
 
-    # Calculate stability between folds
-    for stability in settings.DYNAMIC_PIPELINES_MAPPING().get("stability"):
-        for fold_main in range(n_cross_val_folds + 1):
-            for fold_to_compare in range(
-                n_cross_val_folds + 1
-            ):  # If we dont want to inclue the full training data, remove +1
-                if fold_main == fold_to_compare:
-                    continue
-                pipelines.append(
-                    pipeline(
-                        _create_core_stability_pipeline(
-                            fold_main,
-                            fold_to_compare,
-                            stability["stability_name"],
-                            matrix_input=matrix_input,
-                            score_col_name=score_col_name,
-                        ),
+        # Calculate stability between folds
+        for stability in settings.DYNAMIC_PIPELINES_MAPPING().get("stability"):
+            for fold_main in range(n_cross_val_folds + 1):
+                for fold_to_compare in range(
+                    n_cross_val_folds + 1
+                ):  # If we dont want to inclue the full training data, remove +1
+                    if fold_main == fold_to_compare:
+                        continue
+                    pipelines.append(
+                        pipeline(
+                            _create_core_stability_pipeline(
+                                model_name,
+                                fold_main,
+                                fold_to_compare,
+                                stability["stability_name"],
+                                matrix_input=matrix_input,
+                                score_col_name=score_col_name,
+                            ),
+                        )
                     )
-                )
 
     return sum(pipelines)
