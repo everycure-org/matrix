@@ -173,7 +173,7 @@ def create_pipeline(matrix_input: str, score_col_name: str) -> Pipeline:
 
     # Generate pipelines for each model
     pipelines = []
-    for model in settings.DYNAMIC_PIPELINES_MAPPING().get("models"):
+    for model in settings.DYNAMIC_PIPELINES_MAPPING().get("modelling"):
         model_name = model.get("model_name")
         pipelines.append(
             create_model_pipeline(
