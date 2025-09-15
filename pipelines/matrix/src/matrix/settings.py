@@ -84,7 +84,7 @@ DYNAMIC_PIPELINES_MAPPING = (
                         "model_config": {"num_shards": 1},
                     },
                     {
-                        "model_name": "xg_synth",
+                        "model_name": "xg_baseline",
                         "model_config": {"num_shards": 1},
                     },
                 ],
