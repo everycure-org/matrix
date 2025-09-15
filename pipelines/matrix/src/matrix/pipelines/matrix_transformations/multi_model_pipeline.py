@@ -44,7 +44,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "sorted_matrix_df": f"matrix_transformations.fold_{n_cross_val_folds}.{model_name}.model_output.sorted_matrix_predictions@spark",
                             "known_pairs": "modelling.model_input.splits@spark",
                         },
-                        outputs=f"matrix_transformations.full_matrix_output@spark",
+                        outputs=f"matrix_transformations.{model_name}.full_matrix_output@spark",
                         name=f"store_transformed_predictions_{model_name}",
                     ),
                 ]

@@ -12,7 +12,9 @@ from matrix.pipelines.integration.pipeline import create_pipeline as create_inte
 from matrix.pipelines.matrix_generation.multi_model_pipeline import (
     create_multi_model_pipeline as create_matrix_pipeline,
 )
-from matrix.pipelines.matrix_transformations.pipeline import create_pipeline as create_matrix_transformations_pipeline
+from matrix.pipelines.matrix_transformations.multi_model_pipeline import (
+    create_pipeline as create_matrix_transformations_pipeline,
+)
 from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
 from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
 from matrix.pipelines.sentinel.pipeline import create_pipeline as create_sentinel_pipeline
