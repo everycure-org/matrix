@@ -41,35 +41,35 @@ def create_multi_model_pipeline(**kwargs) -> Pipeline:
         )
     )
 
-    for model in models:
-        model_name = model.get("model_name")
-        # Nodes generating scores for each fold and model
-        for fold in range(n_cross_val_folds + 1):  # NOTE: final fold is full training data
-            # For each fold, generate the pairs
-            pipelines.append(
-                pipeline(
-                    [
-                        ArgoNode(
-                            func=partial_fold(nodes.generate_pairs, fold, arg_name="known_pairs"),
-                            inputs={
-                                "known_pairs": "modelling.model_input.splits@pandas",
-                                "drugs": "integration.int.drug_list.nodes.norm@pandas",
-                                "diseases": "integration.int.disease_list.nodes.norm@pandas",
-                                "graph": "matrix_generation.feat.nodes@kg",
-                                "clinical_trials": "integration.int.ec_clinical_trails.edges.norm@pandas",
-                                "off_label": "integration.int.off_label.edges.norm@pandas",
-                                **(
-                                    {"orchard": "integration.int.orchard.edges.norm@pandas"}
-                                    if "orchard" in private_sources
-                                    else {}
-                                ),
-                            },
-                            outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs@pandas",
-                            name=f"generate_matrix_pairs_fold_{fold}",
-                        ),
-                    ]
-                )
+    # Nodes generating scores for each fold and model
+    for fold in range(n_cross_val_folds + 1):  # NOTE: final fold is full training data
+        # For each fold, generate the pairs
+        pipelines.append(
+            pipeline(
+                [
+                    ArgoNode(
+                        func=partial_fold(nodes.generate_pairs, fold, arg_name="known_pairs"),
+                        inputs={
+                            "known_pairs": "modelling.model_input.splits@pandas",
+                            "drugs": "integration.int.drug_list.nodes.norm@pandas",
+                            "diseases": "integration.int.disease_list.nodes.norm@pandas",
+                            "graph": "matrix_generation.feat.nodes@kg",
+                            "clinical_trials": "integration.int.ec_clinical_trails.edges.norm@pandas",
+                            "off_label": "integration.int.off_label.edges.norm@pandas",
+                            **(
+                                {"orchard": "integration.int.orchard.edges.norm@pandas"}
+                                if "orchard" in private_sources
+                                else {}
+                            ),
+                        },
+                        outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs@pandas",
+                        name=f"generate_matrix_pairs_fold_{fold}",
+                    ),
+                ]
             )
+        )
+        for model in models:
+            model_name = model.get("model_name")
 
             pipelines.append(
                 pipeline(
