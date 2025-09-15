@@ -60,13 +60,6 @@ spec:
                 api_key: os.environ/ANTHROPIC_API_KEY
           ui:
             enabled: true
-
-        # Supply env to the deployment (the config reads them via os.environ/...)
-        environmentSecrets:
-          - name: litellm-provider-keys   # OPENAI_API_KEY, ANTHROPIC_API_KEY
-          - name: litellm-db              # optional DATABASE_URL if you use DB
-          # - name: my-redis-secret       # include if you set REDIS_PASSWORD
-
         # Or keep extraEnv if you prefer:
         extraEnv:
           - name: OPENAI_API_KEY
@@ -81,8 +74,6 @@ spec:
           # - name: REDIS_PASSWORD
           #   valueFrom:
           #     secretKeyRef: { name: my-redis-secret, key: REDIS_PASSWORD }
-
-        # ✅ Point the chart at your existing master key secret
         masterkeySecretName: litellm-master-key
         masterkeySecretKey: LITELLM_MASTER_KEY
   syncPolicy:
