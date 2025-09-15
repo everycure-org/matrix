@@ -29,7 +29,8 @@ class KnowledgeGraph:
         # Add type specific indexes
         self._drug_nodes = list(nodes[nodes["is_drug"]]["id"])
         self._disease_nodes = list(nodes[nodes["is_disease"]]["id"])
-        self._embeddings = dict(zip(nodes["id"], nodes["topological_embedding"]))
+        self._rtxkg2_embeddings = dict(zip(nodes["id"], nodes["rtxkg2_topological_embedding"]))
+        self._robokop_embeddings = dict(zip(nodes["id"], nodes["robokop_topological_embedding"]))
 
     def get_embedding(self, node_id: str, default: Any = None):
         """Retrieves embedding for node with the ID.
@@ -39,7 +40,7 @@ class KnowledgeGraph:
         Returns:
             Embedding or None if not found
         """
-        return self._embeddings[node_id]
+        return {"rtxkg2": self._rtxkg2_embeddings[node_id], "robokop": self._robokop_embeddings[node_id]}
 
     def flags_to_ids(self, flags: List[str]) -> List[str]:
         """Helper function for extracting nodes from flag columns.

@@ -70,15 +70,25 @@ def _sample_random_pairs(
             unknown_data.append(
                 [
                     drug,
-                    graph._embeddings[drug],
+                    graph.get_embedding(drug)["rtxkg2"],
+                    graph.get_embedding(drug)["robokop"],
                     disease,
-                    graph._embeddings[disease],
+                    graph.get_embedding(disease)["rtxkg2"],
+                    graph.get_embedding(disease)["robokop"],
                     y_label,
                 ]
             )
 
     return pd.DataFrame(
-        columns=["source", "source_embedding", "target", "target_embedding", "y"],
+        columns=[
+            "source",
+            "source_rtxkg2_embedding",
+            "source_robokop_embedding",
+            "target",
+            "target_rtxkg2_embedding",
+            "target_robokop_embedding",
+            "y",
+        ],
         data=unknown_data,
     )
 
@@ -201,7 +211,15 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
             )
 
         return pd.DataFrame(
-            columns=["source", "source_embedding", "target", "target_embedding", "y"],
+            columns=[
+                "source",
+                "source_rtxkg2_embedding",
+                "source_robokop_embedding",
+                "target",
+                "target_rtxkg2_embedding",
+                "target_robokop_embedding",
+                "y",
+            ],
             data=unknown_data,
         )
 
@@ -235,9 +253,11 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
                     unknown_data.append(
                         [
                             drug,
-                            graph.get_embedding(drug),
+                            graph.get_embedding(drug)["rtxkg2"],
+                            graph.get_embedding(drug)["robokop"],
                             disease,
-                            graph.get_embedding(disease),
+                            graph.get_embedding(disease)["rtxkg2"],
+                            graph.get_embedding(disease)["robokop"],
                             y_label,
                         ]
                     )

@@ -276,10 +276,25 @@ def make_predictions_and_sort(
         partition_df[treat_score_col_name] = model_predictions[:, 1]
         partition_df[unknown_score_col_name] = model_predictions[:, 2]
 
-        return partition_df.drop(columns=["source_embedding", "target_embedding"])
+        return partition_df.drop(
+            columns=[
+                "source_robokop_embedding",
+                "target_robokop_embedding",
+                "source_rtxkg2_embedding",
+                "target_rtxkg2_embedding",
+            ]
+        )
 
     structfields_to_keep = [
-        col for col in pairs_with_embeddings.schema if col.name not in ["target_embedding", "source_embedding"]
+        col
+        for col in pairs_with_embeddings.schema
+        if col.name
+        not in [
+            "target_robokop_embedding",
+            "source_robokop_embedding",
+            "target_rtxkg2_embedding",
+            "source_rtxkg2_embedding",
+        ]
     ]
     model_predict_schema = StructType(
         structfields_to_keep

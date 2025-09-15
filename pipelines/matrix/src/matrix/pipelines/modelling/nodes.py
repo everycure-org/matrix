@@ -321,9 +321,9 @@ def make_folds(
     schema=DataFrameSchema(
         columns={
             "source": Column(str, nullable=False),
-            "source_embedding": Column(object, nullable=False),
+            # "source_embedding": Column(object, nullable=False),
             "target": Column(str, nullable=False),
-            "target_embedding": Column(object, nullable=False),
+            # "target_embedding": Column(object, nullable=False),
             "split": Column(str, nullable=False),
             "fold": Column(int, nullable=False),
         },
@@ -427,13 +427,11 @@ def apply_transformers(
             index=features_selected.index,
             columns=transformer["transformer"].get_feature_names_out(features_selected),
         )
-
         # Overwrite columns
         data = pd.concat(
             [data.drop(columns=features), transformed],
             axis="columns",
         )
-
     return data
 
 

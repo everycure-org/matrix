@@ -117,7 +117,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "nodes": "filtering.prm.filtered_nodes",
                     "string_col": "params:embeddings.write_topological_col",
                 },
-                outputs="embeddings.feat.nodes",
+                outputs="embeddings.feat.nodes.rtxkg2",
                 name="extract_nodes_edges_from_db",
                 tags=[
                     "argowf.fuse",
@@ -129,7 +129,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ArgoNode(
                 func=nodes.reduce_dimension,
                 inputs={
-                    "df": "embeddings.feat.nodes",
+                    "df": "embeddings.feat.nodes.rtxkg2",
                     "unpack": "params:embeddings.topological_pca",
                 },
                 outputs="embeddings.reporting.topological_pca",

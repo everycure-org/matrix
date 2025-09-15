@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from sklearn.preprocessing import FunctionTransformer
 
@@ -20,7 +21,9 @@ class FlatArrayTransformer(FunctionTransformer):
     @staticmethod
     def _flatten_df_rows(df: pd.DataFrame):
         """Helper function to flat array column into individual columns."""
-        return pd.DataFrame(df[df.columns[0]].tolist()).to_numpy()
+        flattened_col0 = pd.DataFrame(df[df.columns[0]].tolist()).to_numpy()
+        flattened_col1 = pd.DataFrame(df[df.columns[1]].tolist()).to_numpy()
+        return np.hstack((flattened_col0, flattened_col1))
 
     def get_feature_names_out(self, input_features=None):
         """Get the feature names of the transformed data.
@@ -31,7 +34,15 @@ class FlatArrayTransformer(FunctionTransformer):
         Returns:
             List of feature names.
         """
-        if input_features.shape[1] > 1:
-            raise ValueError("Only one input column is supported.")
-
-        return [f"{self.prefix}{i}" for i in range(len(input_features.iloc[0].iloc[0]))]
+        # if input_features.shape[1] > 1:
+        #    raise ValueError("Only one input column is supported.")
+        features_rtx = [
+            f"{input_features.iloc[0].keys()[0].replace('embedding', '')}{i}"
+            for i in range(len(input_features.iloc[0].iloc[0]))
+        ]
+        features_robokop = [
+            f"{input_features.iloc[0].keys()[1].replace('embedding', '')}{i}"
+            for i in range(len(input_features.iloc[0].iloc[1]))
+        ]
+        features_rtx.extend(features_robokop)
+        return features_rtx
