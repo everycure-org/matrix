@@ -29,6 +29,7 @@ modelling.splitter:
   # _object: matrix.pipelines.modelling.model_selection.DrugCVSplit
   _object: sklearn.model_selection.KFold
   # test_size: 0.2
+  shuffle: true
   random_state: ${globals:random_state}
   n_splits: ${setting:cross_validation.n_cross_val_folds}
 
