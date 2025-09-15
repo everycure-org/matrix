@@ -48,9 +48,6 @@ spec:
             telemetry: false
           ui:
             enabled: true
-        environmentSecrets:
-          - litellm-provider-keys
-          - litellm-db
         masterkeySecretName: litellm-master-key
         masterkeySecretKey: LITELLM_MASTER_KEY
   syncPolicy:
