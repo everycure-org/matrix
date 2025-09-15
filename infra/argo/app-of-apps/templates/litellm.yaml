@@ -13,6 +13,7 @@ spec:
   source:
     repoURL: ghcr.io/berriai/litellm-helm
     targetRevision: 0.1.773
+    path: deploy/charts/litellm-helm
     helm:
       values: |
         redis:
