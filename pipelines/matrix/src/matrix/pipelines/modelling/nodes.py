@@ -83,10 +83,10 @@ def filter_valid_pairs(
     # Get list of nodes in the KG
     # TEMP: only choose nodes which are both in RTX AND ROBOKOP
     valid_nodes_in_kg = (
-        nodes  # .filter(
-        #    f.array_contains(f.col("upstream_data_source"), "robokop")
-        #    & f.array_contains(f.col("upstream_data_source"), "rtxkg2")
-        # )
+        nodes.filter(
+            f.array_contains(f.col("upstream_data_source"), "robokop")
+            & f.array_contains(f.col("upstream_data_source"), "rtxkg2")
+        )
         .select("id")
         .distinct()
         .cache()
