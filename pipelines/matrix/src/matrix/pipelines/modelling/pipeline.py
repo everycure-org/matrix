@@ -3,7 +3,7 @@ from typing import Union
 from kedro.pipeline import Pipeline, pipeline
 
 from matrix import settings
-from matrix.kedro4argo_node import ARGO_CPU_ONLY_NODE_MEDIUM, ARGO_GPU_NODE_MEDIUM, ArgoNode
+from matrix.kedro4argo_node import ARGO_CPU_ONLY_NODE_MEDIUM, ARGO_GPU_NODE_MEDIUM, ArgoNode, ArgoResourceConfig
 
 from . import nodes
 from .utils import partial_fold
@@ -157,6 +157,14 @@ def create_model_pipeline(model_name: str, num_shards: int, n_cross_val_folds: i
                     ],
                     outputs=f"modelling.{shard}.model_input.enriched_splits",
                     name=f"enrich_{shard}_splits",
+                    argo_config=ArgoResourceConfig(
+                        cpu_limit=48,
+                        cpu_request=48,
+                        ephemeral_storage_limit=512,
+                        ephemeral_storage_request=512,
+                        memory_limit=256,
+                        memory_request=256,
+                    ),
                 )
                 for shard in range(num_shards)
             ]
