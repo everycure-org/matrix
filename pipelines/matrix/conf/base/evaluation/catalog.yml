@@ -10,7 +10,7 @@ _pandas_parquet: &_pandas_parquet
 
 
 # -------------------------------------------------------------------------
-# Datasets
+# Single Model Datasets
 # -------------------------------------------------------------------------
 
 "evaluation.{matrix_input}.fold_{fold}.{evaluation}.model_output.pairs":
@@ -40,3 +40,36 @@ _pandas_parquet: &_pandas_parquet
 "evaluation.{matrix_input}.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.model_stability_output.pairs@pandas":
   <<: *_pandas_parquet  
   filepath: ${globals:paths.evaluation}/{matrix_input}/reporting/stability/fold_{fold_main}_fold_{fold_to_compare}/{evaluation}/pairs.parquet
+
+
+# -------------------------------------------------------------------------
+# Multi-Model Datasets
+# -------------------------------------------------------------------------
+
+"evaluation.{matrix_input}.fold_{fold}.{evaluation}.{model_name}.model_output.pairs":
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.evaluation}/{matrix_input}/model_output/fold_{fold}/{evaluation}/pairs/{model_name}/model_output.parquet
+
+"evaluation.{matrix_input}.fold_{fold}.{evaluation}.{model_name}.reporting.result":
+  filepath: ${globals:paths.evaluation}/{matrix_input}/reporting/fold_{fold}/{evaluation}/{model_name}/result.yml
+  type: yaml.YAMLDataset
+
+"evaluation.{matrix_input}.{evaluation}.{model_name}.reporting.result_aggregated":
+  filepath: ${globals:paths.evaluation}/{matrix_input}/reporting/{evaluation}/{model_name}/result_aggregated.yml
+  type: yaml.YAMLDataset
+
+"evaluation.{matrix_input}.{evaluation}.{model_name}.reporting.result_aggregated_reduced":
+  filepath: ${globals:paths.evaluation}/{matrix_input}/reporting/{evaluation}/{model_name}/result_aggregated_reduced.yml
+  type: yaml.YAMLDataset
+
+"evaluation.{matrix_input}.reporting.{model_name}.master_report":
+  filepath: ${globals:paths.evaluation}/{matrix_input}/reporting/{model_name}/master_report.yml
+  type: yaml.YAMLDataset
+
+"evaluation.{matrix_input}.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.{model_name}.model_stability_output.result":
+  filepath: ${globals:paths.evaluation}/{matrix_input}/reporting/stability/fold_{fold_main}_fold_{fold_to_compare}/{evaluation}/{model_name}/result.yml
+  type: yaml.YAMLDataset
+
+"evaluation.{matrix_input}.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.{model_name}.model_stability_output.pairs@pandas":
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.evaluation}/{matrix_input}/reporting/stability/fold_{fold_main}_fold_{fold_to_compare}/{evaluation}/{model_name}/pairs.parquet

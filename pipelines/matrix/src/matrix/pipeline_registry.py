@@ -3,7 +3,7 @@ from kedro.pipeline import Pipeline
 from matrix.pipelines.create_sample.pipeline import create_pipeline as create_create_sample_pipeline
 from matrix.pipelines.data_release.pipeline import create_pipeline as create_data_release_pipeline
 from matrix.pipelines.embeddings.pipeline import create_pipeline as create_embeddings_pipeline
-from matrix.pipelines.evaluation.pipeline import create_pipeline as create_evaluation_pipeline
+from matrix.pipelines.evaluation.multi_model_pipeline import create_pipeline as create_evaluation_pipeline
 from matrix.pipelines.fabricator.pipeline import create_pipeline as create_fabricator_pipeline
 from matrix.pipelines.filtering.pipeline import create_pipeline as create_filtering_pipeline
 from matrix.pipelines.ingest_to_N4J.pipeline import create_pipeline as create_ingest_to_N4J_pipeline
