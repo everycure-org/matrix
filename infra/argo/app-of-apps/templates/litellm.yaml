@@ -34,7 +34,7 @@ spec:
         # Use environmentSecrets to properly reference Kubernetes secrets
         environmentSecrets:
           - litellm-provider-keys
-          - litellm-db
+          # - litellm-db
 
         proxy_config:
           general_settings:
