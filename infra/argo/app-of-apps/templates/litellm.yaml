@@ -11,11 +11,14 @@ spec:
     server: {{ .Values.spec.destination.server }}
     namespace: litellm
   source:
-    repoURL: https://github.com/BerriAI/litellm.git
-    targetRevision: v1.76.1-stable
-    path: deploy/charts/litellm-helm
+    repoURL: ghcr.io/berriai/litellm-helm
+    targetRevision: 0.1.773
     helm:
       values: |
+        redis:
+          enabled: true
+          auth:
+            enabled: false
         image:
           repository: ghcr.io/berriai/litellm
           tag: main-stable
