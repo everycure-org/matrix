@@ -79,8 +79,8 @@ def create_multi_model_pipeline(**kwargs) -> Pipeline:
                             inputs=[
                                 "matrix_generation.feat.nodes@spark",
                                 f"matrix_generation.prm.fold_{fold}.matrix_pairs@spark",
-                                f"modelling.fold_{fold}.model_input.transformers",
-                                f"modelling.fold_{fold}.models.model",
+                                f"modelling.fold_{fold}.{model_name}.model_input.transformers",
+                                f"modelling.fold_{fold}.{model_name}.models.model",
                                 # TODO: can we get features from transformers directly?
                                 f"params:modelling.{model_name}.model_options.model_tuning_args.features",
                                 "params:matrix_generation.treat_score_col_name",
@@ -104,8 +104,8 @@ def create_multi_model_pipeline(**kwargs) -> Pipeline:
                         f"matrix_generation.fold_{n_cross_val_folds}.{model_name}.model_output.sorted_matrix_predictions@pandas",
                         "params:matrix_generation.reporting_nodes.plots",
                     ],
-                    outputs="matrix_generation.reporting.plots",
-                    name="generate_reporting_plots",
+                    outputs=f"matrix_generation.{model_name}.reporting.plots",
+                    name=f"generate_{model_name}_reporting_plots",
                 ),
                 ArgoNode(
                     func=nodes.generate_reports,
@@ -115,8 +115,8 @@ def create_multi_model_pipeline(**kwargs) -> Pipeline:
                         "drugs_df": "integration.int.drug_list.nodes.norm@spark",
                         "diseases_df": "integration.int.disease_list.nodes.norm@spark",
                     },
-                    outputs="matrix_generation.reporting.tables",
-                    name="generate_reporting_tables",
+                    outputs=f"matrix_generation.{model_name}.reporting.tables",
+                    name=f"generate_{model_name}_reporting_tables",
                 ),
             ]
         )
