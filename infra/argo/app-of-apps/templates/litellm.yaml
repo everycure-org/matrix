@@ -43,21 +43,9 @@ spec:
         resources:
           requests: { cpu: "250m", memory: "512Mi" }
           limits:   { cpu: "1",    memory: "2Gi" }
-
-        # ✅ Put the LiteLLM config under proxy_config (this becomes config.yaml)
         proxy_config:
           general_settings:
             telemetry: false
-            # If you use a DB, you can also put database_url here via os.environ/...
-        model_list:
-          - model_name: gpt-4o
-            litellm_params:
-              model: openai/gpt-4o
-              api_key: os.environ/OPENAI_API_KEY
-          - model_name: claude-3-5-sonnet
-            litellm_params:
-              model: anthropic/claude-3-5-sonnet
-              api_key: os.environ/ANTHROPIC_API_KEY
           ui:
             enabled: true
         environmentSecrets:
