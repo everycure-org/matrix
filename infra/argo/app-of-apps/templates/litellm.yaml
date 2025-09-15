@@ -4,7 +4,7 @@ metadata:
   name: litellm
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "10" # after cluster infra/secrets if you have them
+    argocd.argoproj.io/sync-wave: "10"
 spec:
   project: default
   destination:
@@ -16,15 +16,6 @@ spec:
     path: deploy/charts/litellm-helm
     helm:
       values: |
-        litellm_settings:
-        cache: true
-        cache_params:
-          type: redis
-          redis_host: redis.redis.svc.cluster.local
-          redis_port: 6379
-        router_settings:
-          redis_host: redis.redis.svc.cluster.local
-          redis_port: 6379
         image:
           repository: ghcr.io/berriai/litellm
           tag: main-stable
@@ -40,24 +31,43 @@ spec:
           requests: { cpu: "250m", memory: "512Mi" }
           limits:   { cpu: "1",    memory: "2Gi" }
 
-        proxy:
-          configInline: |
-            general_settings:
-              telemetry: false
-            router_settings:
-              num_retries: 2
-            model_list:
-              - model_name: gpt-4o
-                litellm_params:
-                  model: openai/gpt-4o
-                  api_key: ${OPENAI_API_KEY}
-              - model_name: claude-3-5-sonnet
-                litellm_params:
-                  model: anthropic/claude-3-5-sonnet
-                  api_key: ${ANTHROPIC_API_KEY}
-            ui:
-              enabled: true
+        # ✅ Put the LiteLLM config under proxy_config (this becomes config.yaml)
+        proxy_config:
+          general_settings:
+            telemetry: false
+            # If you use a DB, you can also put database_url here via os.environ/...
+          router_settings:
+            # Redis for cross-pod RPM/TPM + routing state
+            redis_host: redis.redis.svc.cluster.local
+            redis_port: 6379
+            # redis_password: os.environ/REDIS_PASSWORD   # uncomment if your Redis is authn-enabled
+            num_retries: 2
+          litellm_settings:
+            cache: true
+            cache_params:
+              type: redis
+              host: redis.redis.svc.cluster.local
+              port: 6379
+              # password: os.environ/REDIS_PASSWORD      # uncomment if your Redis is authn-enabled
+          model_list:
+            - model_name: gpt-4o
+              litellm_params:
+                model: openai/gpt-4o
+                api_key: os.environ/OPENAI_API_KEY
+            - model_name: claude-3-5-sonnet
+              litellm_params:
+                model: anthropic/claude-3-5-sonnet
+                api_key: os.environ/ANTHROPIC_API_KEY
+          ui:
+            enabled: true
 
+        # Supply env to the deployment (the config reads them via os.environ/...)
+        environmentSecrets:
+          - name: litellm-provider-keys   # OPENAI_API_KEY, ANTHROPIC_API_KEY
+          - name: litellm-db              # optional DATABASE_URL if you use DB
+          # - name: my-redis-secret       # include if you set REDIS_PASSWORD
+
+        # Or keep extraEnv if you prefer:
         extraEnv:
           - name: OPENAI_API_KEY
             valueFrom:
@@ -68,9 +78,13 @@ spec:
           - name: DATABASE_URL
             valueFrom:
               secretKeyRef: { name: litellm-db, key: DATABASE_URL }
+          # - name: REDIS_PASSWORD
+          #   valueFrom:
+          #     secretKeyRef: { name: my-redis-secret, key: REDIS_PASSWORD }
 
-        masterKey:
-          existingSecret: litellm-master-key
+        # ✅ Point the chart at your existing master key secret
+        masterkeySecretName: litellm-master-key
+        masterkeySecretKey: LITELLM_MASTER_KEY
   syncPolicy:
     automated:
       prune: true
