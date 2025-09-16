@@ -23,6 +23,7 @@ spec:
           dnsNames:
           - "neo4j.{{ .Values.spec.source.environment }}.everycure.org"
           - "*.platform.{{ .Values.spec.source.environment }}.everycure.org"
+          - "*.{{ .Values.spec.source.environment }}.everycure.org"
         dns01:
           cloudDNS:
             project: {{ .Values.spec.source.project_id }}  # This should match your Google Cloud project ID
