@@ -138,13 +138,12 @@ class KedroSessionWithFromCatalog(KedroSession):
         if from_catalog:
             if from_run_datasets:
                 for item in from_run_datasets:
-                    # Update specified datasets to read from tge from_catalog
+                    # Update specified datasets to read from the from_catalog
                     # Applicable on cluster runs where each node is it's own pipeline and we need to determine the relevant input datasets upfront
                     self._logger.info("Replacing %s", item)
                     catalog.add(item, from_catalog._get_dataset(item), replace=True)
             else:
-                # Update all pipeline inputs to read from
-                # the from catalog
+                # Update all pipeline inputs to read from the from_catalog
                 for item in filtered_pipeline.inputs():
                     self._logger.info("Replacing %s", item)
                     catalog.add(item, from_catalog._get_dataset(item), replace=True)

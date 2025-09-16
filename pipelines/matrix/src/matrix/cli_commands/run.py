@@ -198,6 +198,8 @@ def _extract_config(config: RunConfig, session: KedroSessionWithFromCatalog) -> 
         print(f"Using run {config.from_run}")
         # Load second config loader instance for the from_run
         config_loader_class = settings.CONFIG_LOADER_CLASS
+
+        # Use env var RUN_NAME to build a second loader; globals are already resolved and won't update paths.
         old_run_name = os.environ["RUN_NAME"]
         os.environ["RUN_NAME"] = config.from_run
         config_loader = config_loader_class(  # type: ignore[no-any-return]
@@ -215,7 +217,8 @@ def _extract_config(config: RunConfig, session: KedroSessionWithFromCatalog) -> 
                 catalog=conf_catalog, credentials=conf_creds
             )
         from_catalog.add_feed_dict(_get_feed_dict(config_loader["parameters"]), replace=True)
-
+    
+        # Restore the original RUN_NAME
         os.environ["RUN_NAME"] = old_run_name
 
     return from_catalog
