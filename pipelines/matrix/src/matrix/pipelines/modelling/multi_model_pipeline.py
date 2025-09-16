@@ -34,7 +34,7 @@ def create_multi_model_pipeline(models: list[dict], n_cross_val_folds: int) -> P
                             "modelling.model_input.drugs_diseases_nodes@pandas",
                             "modelling.model_input.splits@pandas",
                             f"params:modelling.{model_name}.model_options.generator",
-                            f"params:modelling.{model_name}.splitter",
+                            "params:modelling.splitter",
                         ],
                         outputs=f"modelling.{shard}.{model_name}.model_input.enriched_splits",
                         name=f"enrich_{model_name}_{shard}_splits",
@@ -193,7 +193,7 @@ def _create_multi_model_fold_pipeline(model_name: str, num_shards: int, fold: Un
                         func=nodes.get_model_predictions,
                         inputs={
                             "data": f"modelling.fold_{fold}.{model_name}.model_input.transformed_splits",
-                            "model": f"modelling.fold_{fold}.models.model",
+                            "model": f"modelling.fold_{fold}.{model_name}.models.model",
                             "features": f"params:modelling.{model_name}.model_options.model_tuning_args.features",
                             "target_col_name": f"params:modelling.{model_name}.model_options.model_tuning_args.target_col_name",
                         },
