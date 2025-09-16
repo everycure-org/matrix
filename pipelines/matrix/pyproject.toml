@@ -27,7 +27,7 @@ readme = "README.md"
 dynamic = [ "version"]
 dependencies = [
     "faker",
-    "matrix-schema==0.4.0",
+    "matrix-schema==0.4.3",
     "matrix-auth",
     "matrix-gcp-datasets",
     "matrix-io-utils",

@@ -166,9 +166,10 @@ spec:
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
-            volumeMounts:
-              - name: scratch
-                mountPath: /data
+          volumeMounts:
+            - name: scratch
+              mountPath: /data
+          
     container: &_kedro_container
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}"
@@ -235,16 +236,29 @@ spec:
         - name: NUM_CPU
           value: {% raw %} "{{inputs.parameters.cpu_limit}}"
           {% endraw %}
+        - name: SPARK_LOCAL_DIRS
+          value: /data/spark-temp
         - name: SPARK_DRIVER_MEMORY
           value: {% raw %} "{{inputs.parameters.memory_limit}}"
           {% endraw %}
+        # Environment variables to force all temporary operations to use `/data` (scratch volume)
+        - name: JAVA_OPTS
+          value: -Djava.io.tmpdir=/data/tmp
+        - name: _JAVA_OPTIONS
+          value: -Djava.io.tmpdir=/data/tmp
+        - name: TMPDIR
+          value: /data/tmp
+        - name: TMP
+          value: /data/tmp
+        - name: TEMP
+          value: /data/tmp
         - name: GH_TOKEN
           valueFrom:
             secretKeyRef:
               name: gh-password
               key: GH_CREDS
-      command: [kedro]
-      args: ["run", "-p", "{{ pipeline_name }}", "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
+      command: ["/bin/sh", "-c"]
+      args: ["mkdir -p /data/tmp /data/spark-temp /data/spark-warehouse /data/checkpoints && kedro run -p {{ pipeline_name }} -e {% raw %}\"{{workflow.parameters.env}}\"{% endraw %} -n {% raw %}\"{{inputs.parameters.kedro_nodes}}\"{% endraw %}"]
 
   - <<: *_kedro_template
     name: neo4j
@@ -258,7 +272,7 @@ spec:
                   resources:
                     requests:
                       storage: {% raw %}"{{inputs.parameters.ephemeral_storage_limit}}Gi"
-        {% endraw %}
+      {% endraw %}
       terminationGracePeriodSeconds: 30
       tolerations:
         - key: "node-memory-size"
@@ -294,11 +308,24 @@ spec:
             limits:
               memory: 100Gi
           env:
+            - name: SPARK_LOCAL_DIRS
+              value: /data/spark-temp
             - name: SPARK_DRIVER_MEMORY
               value: "60"
             # NOTE: We're passing in a regular bolt connection as ephemeral Neo4J has no SSL
             - name: NEO4J_HOST
               value: "bolt://127.0.0.1:7687"
+            # Environment variables to force all temporary operations to use `/data` (scratch volume)
+            - name: JAVA_OPTS
+              value: -Djava.io.tmpdir=/data/tmp
+            - name: _JAVA_OPTIONS
+              value: -Djava.io.tmpdir=/data/tmp
+            - name: TMPDIR
+              value: /data/tmp
+            - name: TMP
+              value: /data/tmp
+            - name: TEMP
+              value: /data/tmp
           volumeMounts:
             - name: scratch
               mountPath: /data
@@ -323,6 +350,8 @@ spec:
       command: ["/bin/sh", "-c"]
       args:
         - |
+            echo "Setting up temporary directories..."
+            mkdir -p /data/tmp /data/spark-temp /data/spark-warehouse /data/checkpoints
             echo "Waiting for Neo4j to be ready..."
             until curl -s http://localhost:7474/ready; do
               echo "Waiting..."
@@ -346,39 +375,38 @@ spec:
           - name: gds-key
             mountPath: /licences
             readOnly: true
-
         env:
-        - name: NEO4J_AUTH
-          valueFrom:
-            secretKeyRef:
-              name: matrix-secrets
-              key: NEO4J_AUTH
-        - name: NEO4J_gds_enterprise_license__file
-          value: "/licences/gds-key"
-        - name: NEO4J_apoc_export_file_enabled
-          value: "true"
-        - name: NEO4J_apoc_import_file_enabled
-          value: "true"
-        - name: NEO4J_apoc_import_file_use__neo4j__config
-          value: "true"
-        - name: NEO4J_PLUGINS
-          value: '["apoc", "graph-data-science", "apoc-extended"]'
-        - name: NEO4J_dbms_security_auth__minimum__password__length
-          value: "4"
-        - name: NEO4J_dbms_security_procedures_whitelist
-          value: "gds.*, apoc.*"
-        - name: NEO4J_dbms_security_procedures_unrestricted
-          value: "gds.*, apoc.*"
-        - name: NEO4J_db_logs_query_enabled
-          value: "OFF"
-        - name: NEO4J_ACCEPT_LICENSE_AGREEMENT
-          value: "yes"
-        - name: NEO4J_dbms_memory_heap_initial__size
-          value: {% raw %} "{{= sprig.int(inputs.parameters.memory_limit) * 0.7 }}G"
-          {% endraw %}
-        - name: NEO4J_dbms_memory_heap_max__size
-          value: {% raw %} "{{= sprig.int(inputs.parameters.memory_limit) * 0.7 }}G"
-          {% endraw %}
+          - name: NEO4J_AUTH
+            valueFrom:
+              secretKeyRef:
+                name: matrix-secrets
+                key: NEO4J_AUTH
+          - name: NEO4J_gds_enterprise_license__file
+            value: "/licences/gds-key"
+          - name: NEO4J_apoc_export_file_enabled
+            value: "true"
+          - name: NEO4J_apoc_import_file_enabled
+            value: "true"
+          - name: NEO4J_apoc_import_file_use__neo4j__config
+            value: "true"
+          - name: NEO4J_PLUGINS
+            value: '["apoc", "graph-data-science", "apoc-extended"]'
+          - name: NEO4J_dbms_security_auth__minimum__password__length
+            value: "4"
+          - name: NEO4J_dbms_security_procedures_whitelist
+            value: "gds.*, apoc.*"
+          - name: NEO4J_dbms_security_procedures_unrestricted
+            value: "gds.*, apoc.*"
+          - name: NEO4J_db_logs_query_enabled
+            value: "OFF"
+          - name: NEO4J_ACCEPT_LICENSE_AGREEMENT
+            value: "yes"
+          - name: NEO4J_dbms_memory_heap_initial__size
+            value: {% raw %} "{{= sprig.int(inputs.parameters.memory_limit) * 0.7 }}G"
+            {% endraw %}
+          - name: NEO4J_dbms_memory_heap_max__size
+            value: {% raw %} "{{= sprig.int(inputs.parameters.memory_limit) * 0.7 }}G"
+            {% endraw %}
 
   - name: pipeline
     dag:
