@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Matrix IO utilities"
 requires-python = ">=3.11"
 dependencies = [
-    "polars-lts-cpu>=1.32",
+    "polars-lts-cpu==1.30.0",
 ]
 
 [dependency-groups]
