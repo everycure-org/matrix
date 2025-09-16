@@ -45,33 +45,38 @@ order by
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
 
-<BarChart 
+<ScatterPlot 
     data={release_metrics} 
     x="semantic_version" 
     y="n_nodes"
     title="Total Nodes Across Releases"
     yGridlines=false
     xBaseline=false
-    markers=false
-    fillColor="#88C0D0"
+    markers=true
+    step=true
+    lineColor="#88C0D0"
     sort=false
 >
     <ReferenceLine x={benchmark_release} label="Benchmark" hideValue=true/>
-</BarChart>
+</ScatterPlot>
 
-<BarChart 
+<LineChart 
     data={release_metrics} 
     x="semantic_version" 
     y="n_edges"
     title="Total Edges Across Releases" 
     yGridlines=false
     xBaseline=false
-    markers=false
-    fillColor="#9D79D6"
+    markers=true
+    step=true
+    markerShape=emptyCircle
+    markerSize=5
+    lineColor="#9D79D6"    
+    lineWidth=2
     sort=false
 >
     <ReferenceLine x={benchmark_release} label="Benchmark" hideValue=true/>
-</BarChart>
+</LineChart>
 
 </div>
 
