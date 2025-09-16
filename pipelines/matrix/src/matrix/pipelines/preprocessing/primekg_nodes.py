@@ -10,7 +10,7 @@ def build_nodes(nodes: pl.DataFrame, drug_features: pl.DataFrame, disease_featur
     main = main.join(drug_features, on=["node_index"], how="full", coalesce=True)
     main = coalesce_duplicate_columns(main, keep=["node_index"])  # preserves first non-null among suffixed columns
 
-    main = main.join(disease_features.lazy(), on=["node_index"], how="full", coalesce=True)
+    main = main.join(disease_features, on=["node_index"], how="full", coalesce=True)
     main = coalesce_duplicate_columns(main, keep=["node_index"])  # again after join
 
     # Type/category mapping and CURIE formatting
