@@ -1,10 +1,7 @@
 default: prerequisites
 	echo "done!"
 
-venv:
-	if [ ! -d .venv ]; then uv venv -p 3.11; fi
-
-install: venv
+install:
 	uv sync
 
 prerequisites:
@@ -13,5 +10,3 @@ prerequisites:
 format:
 	uv run ruff check . --fix
 
-lock:
-	uv pip compile requirements.in > requirements.txt
