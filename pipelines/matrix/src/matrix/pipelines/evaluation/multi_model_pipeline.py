@@ -130,7 +130,7 @@ def create_model_pipeline(
                     ArgoNode(
                         func=nodes.aggregate_metrics,
                         inputs=[
-                            f"params:modelling.{model_name}.aggregation_functions",
+                            f"params:modelling.aggregation_functions",
                             *[
                                 f"evaluation.{matrix_input}.fold_{fold}.{evaluation}.{model_name}.reporting.result"
                                 for fold in range(n_cross_val_folds)
