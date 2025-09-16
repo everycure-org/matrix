@@ -47,6 +47,7 @@ def _add_flag_columns(
     known_pairs: pd.DataFrame,
     clinical_trials: Optional[pd.DataFrame] = None,
     off_label: Optional[pd.DataFrame] = None,
+    orchard: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """Adds boolean columns flagging known positives and known negatives.
 
@@ -55,6 +56,7 @@ def _add_flag_columns(
         known_pairs: Labelled ground truth drug-disease pairs dataset.
         clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
         off_label: Pairs dataset representing off label usage.
+        orchard: Pairs dataset representing orchard feedback data.
 
     Returns:
         Pairs dataset with flag columns.
@@ -88,6 +90,16 @@ def _add_flag_columns(
     # Flag off label data
     off_label = off_label.rename(columns={"subject": "source", "object": "target"})
     matrix["off_label"] = create_flag_column(off_label)  # all pairs are positive
+
+    # Flag orchard data if available
+    if orchard is not None:
+        orchard = orchard.rename(columns={"subject": "source", "object": "target"})
+        matrix["high_evidence_matrix"] = create_flag_column(orchard[orchard["high_evidence_matrix"] == 1])
+        matrix["mid_evidence_matrix"] = create_flag_column(orchard[orchard["mid_evidence_matrix"] == 1])
+        matrix["high_evidence_crowdsourced"] = create_flag_column(orchard[orchard["high_evidence_crowdsourced"] == 1])
+        matrix["mid_evidence_crowdsourced"] = create_flag_column(orchard[orchard["mid_evidence_crowdsourced"] == 1])
+        matrix["archive_biomedical_review"] = create_flag_column(orchard[orchard["archive_biomedical_review"] == 1])
+
     return matrix
 
 
@@ -114,6 +126,7 @@ def generate_pairs(
     graph: KnowledgeGraph,
     clinical_trials: Optional[pd.DataFrame] = None,
     off_label: Optional[pd.DataFrame] = None,
+    orchard: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """Function to generate matrix dataset.
 
@@ -126,6 +139,7 @@ def generate_pairs(
         graph: Object containing node embeddings.
         clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
         off_label: Pairs dataset representing off label drug disease uses.
+        orchard: Pairs dataset representing orchard feedback data.
 
     Returns:
         Pairs dataframe containing all combinations of drugs and diseases that do not lie in the training set.
@@ -158,7 +172,7 @@ def generate_pairs(
     is_in_train = matrix.apply(lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1)
     matrix = matrix[~is_in_train]
     # Add flag columns for known positives and negatives
-    matrix = _add_flag_columns(matrix, known_pairs, clinical_trials, off_label)
+    matrix = _add_flag_columns(matrix, known_pairs, clinical_trials, off_label, orchard)
     return matrix
 
 

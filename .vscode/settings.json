@@ -15,7 +15,6 @@
         "pipelines/matrix/compose/neo4j_db": true,
         "pipelines/matrix/compose/neo4j_data/": true,
         "pipelines/matrix/build/": true
-
     },
     "search.exclude": {
         "pipelines/matrix/data": true,

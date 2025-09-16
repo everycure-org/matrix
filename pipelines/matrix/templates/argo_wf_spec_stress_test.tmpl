@@ -84,6 +84,7 @@ spec:
           {% endraw %}
     # Pod specification with GPU resources
     podSpecPatch: |
+      terminationGracePeriodSeconds: 30
       tolerations:
         - key: "node-memory-size"
           operator: "Equal"

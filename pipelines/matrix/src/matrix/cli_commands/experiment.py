@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import re
@@ -23,6 +24,16 @@ from matrix.utils.environment import load_environment_variables
 # Load environment variables from .env.defaults and .env
 load_environment_variables()
 
+from matrix_auth.authentication import get_user_account_creds
+from matrix_mlflow_utils.mlflow_utils import (
+    DeletedExperimentExistsWithName,
+    ExperimentNotFound,
+    archive_runs_and_experiments,
+    create_mlflow_experiment,
+    get_experiment_id_from_name,
+    rename_soft_deleted_experiment,
+)
+
 from matrix.git_utils import (
     BRANCH_NAME_REGEX,
     abort_if_intermediate_release,
@@ -34,16 +45,7 @@ from matrix.git_utils import (
     has_unpushed_commits,
 )
 from matrix.utils.argo import argo_template_lint, submit_workflow
-from matrix.utils.authentication import get_user_account_creds
 from matrix.utils.kubernetes import apply, can_talk_to_kubernetes, create_namespace, namespace_exists
-from matrix.utils.mlflow_utils import (
-    DeletedExperimentExistsWithName,
-    ExperimentNotFound,
-    archive_runs_and_experiments,
-    create_mlflow_experiment,
-    get_experiment_id_from_name,
-    rename_soft_deleted_experiment,
-)
 from matrix.utils.system import run_subprocess
 
 logging.basicConfig(
@@ -256,6 +258,45 @@ def run(
     # see https://stackoverflow.com/questions/73320708/set-run-description-programmatically-in-mlflow
     # or https://mlflow.org/docs/latest/api_reference/python_api/mlflow.html
     mlflow.set_tag("mlflow.note.content", description)
+
+
+@experiment.command()
+@click.option("--run-name", type=str, required=True, help="Specify the run name to use")
+@click.option("--watch", is_flag=True, default=False, help="Watch the workflow after retrying")
+@click.option("--workflow-file", type=str, help="Specify the workflow file to use, instead of calling kubectl")
+def retry(run_name: str, watch: bool, workflow_file: Optional[str]):
+    # Grab workflow document from kubectl or from file
+    console.print("1. Grabbing the image name from the workflow spec")
+    if workflow_file:
+        workflow_doc = Path(workflow_file).read_text()
+    else:
+        workflow_doc = run_subprocess(
+            f"kubectl get workflow -n argo-workflows -o json {run_name}",
+        ).stdout.strip()
+    workflow_dict = json.loads(workflow_doc)
+
+    # grab all existing arguments and overwrite the image one
+    parameters = workflow_dict["status"]["storedWorkflowTemplateSpec"]["arguments"]["parameters"]
+    for par in parameters:
+        if par["name"] == "image":
+            image_name = par["value"]
+            assert "matrix-images" in image_name, f"Image name seems to be incorrect {image_name}"
+            image_without_tag = image_name.split(":")[0]
+            new_image_tag = f"{'-'.join(run_name.split('-')[:-1])}-rerun{os.urandom(4).hex()}"
+            new_image_name = f"{image_without_tag}:{new_image_tag}"
+            par["value"] = new_image_name
+            break
+
+    # convert params into '-p key=val pairs'
+    parameters_str = " ".join([f"-p {arg['name']}={arg['value']}" for arg in parameters])
+
+    console.print("2. Re-building the docker image")
+    build_push_docker(image_without_tag, new_image_tag, verbose=False)
+    # call argo retry
+    console.print("3. Calling Argo Retry")
+    watch_flag = "--watch" if watch else ""
+    run_subprocess(f"argo retry -n argo-workflows {parameters_str} {watch_flag} {run_name}")
+    console.print(f"4. Workflow {run_name} retried successfully")
 
 
 @experiment.command()

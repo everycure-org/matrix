@@ -1,1 +1,11 @@
-{"Release Name": "v0.3.6", "Datasets": {"rtx_kg2": "not included", "robokop": "c5ec1f282158182f", "spoke": "not included", "ec_medical_team": 20241031, "drugmech": "not included"}, "Topological Estimator": "matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec", "Embeddings Encoder": "text-embedding-3-small", "BigQuery Link": "https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_3_6", "MLFlow Link": "https://mlflow.platform.dev.everycure.org/#/experiments/17938/runs/855f04b2ae2543baa024e6f77c118ced", "Code Link": "https://github.com/everycure-org/matrix/tree/v0.3.6", "Neo4j Link": "coming soon!", "NodeNorm Endpoint Link": "https://nodenorm.transltr.io/1.5/get_normalized_nodes"}
+{
+  "Release Name": "v0.3.6",
+  "Datasets": {
+    "robokop": "c5ec1f282158182f",
+    "ec_medical_team": 20241031
+  },
+  "BigQuery": "https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_3_6",
+  "MLFlow": "https://mlflow.platform.dev.everycure.org/#/experiments/17938/runs/855f04b2ae2543baa024e6f77c118ced",
+  "Code": "https://github.com/everycure-org/matrix/tree/v0.3.6",
+  "NodeNorm Endpoint": "https://nodenorm.transltr.io/1.5/get_normalized_nodes"
+}

@@ -1,5 +1,5 @@
 _spark_parquet_ds: &_spark_parquet
-  type: matrix.datasets.gcp.LazySparkDataset
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
   file_format: parquet
   load_args:
     header: True
@@ -71,10 +71,13 @@ integration.prm.unified_edges:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/unified/edges
 
+integration.int.unified_ground_truth_edges:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.integration}/int/ground_truth/edges.norm
+
 integration.prm.nodes_edges_consistency_check:
   type: text.TextDataset
   filepath: ${globals:paths.integration}/prm/nodes_edges_consistency_check.txt
-
 # ==============================
 # Original sources: only used for sampling
 

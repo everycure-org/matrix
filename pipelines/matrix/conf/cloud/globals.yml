@@ -1,7 +1,7 @@
 run_name: ${oc.env:RUN_NAME}
 
 versions:
-  release: ${oc.env:RELEASE_VERSION,v0.6.0}
+  release: ${oc.env:RELEASE_VERSION,v0.9.0}
 
 release_folder_name: ${oc.env:RELEASE_FOLDER_NAME, releases}
 release_dir: ${runtime_gcs_bucket}/kedro/data/${release_folder_name}/${versions.release}
@@ -41,8 +41,8 @@ paths:
   matrix_transformations:  ${run_dir}/datasets/matrix_transformations
   inference:          ${run_dir}/datasets/inference
   
-  # Tmp. directory using k8s emph. storage
-  tmp:           data/tmp
+  # Tmp. directory using k8s volume attached to the pod.
+  tmp:           /data/tmp
 
   # Embedding cache dataset
   cache:         ${runtime_gcs_bucket}/kedro/data/cache

@@ -30,3 +30,35 @@ resource "google_project_iam_custom_role" "bigquery_read_write_no_delete" {
     "bigquery.tables.getData"
   ]
 }
+
+resource "google_project_iam_custom_role" "bigquery_read_from_orchard_dev" {
+  role_id     = "bigQueryReadFromOrchardDev"
+  title       = "BigQuery Read From Orchard Dev"
+  description = "Allows read access to BigQuery tables in the Orchard dev dataset."
+  project     = local.orchard_dev_project_id
+
+  permissions = [
+    "bigquery.datasets.get",
+    "bigquery.tables.get",
+    "bigquery.tables.list",
+    "bigquery.tables.getData",
+    "bigquery.jobs.create",
+    "bigquery.readsessions.create"
+  ]
+}
+
+resource "google_project_iam_custom_role" "bigquery_read_from_orchard_prod" {
+  role_id     = "bigQueryReadFromOrchardProd"
+  title       = "BigQuery Read From Orchard Prod"
+  description = "Allows read access to BigQuery tables in the Orchard prod dataset."
+  project     = local.orchard_prod_project_id
+
+  permissions = [
+    "bigquery.datasets.get",
+    "bigquery.tables.get",
+    "bigquery.tables.list",
+    "bigquery.tables.getData",
+    "bigquery.jobs.create",
+    "bigquery.readsessions.create"
+  ]
+}
