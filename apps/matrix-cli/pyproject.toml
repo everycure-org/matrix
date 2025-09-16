@@ -6,7 +6,7 @@ readme = "README.md"
 version = "0.1.0"
 dependencies = [
     "typer",
-    "polars-lts-cpu>=1.32",
+    "polars-lts-cpu==1.33.1",
     "ruff"
 ]
 
