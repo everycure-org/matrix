@@ -7,9 +7,8 @@ import pyspark.sql as ps
 from graphdatascience import GraphDataScience
 from kedro.io.core import Version
 from kedro_datasets.spark import SparkDataset
+from matrix_inject.inject import _parse_for_objects
 from neo4j import GraphDatabase
-
-from matrix.inject import _parse_for_objects
 
 logger = logging.Logger(__name__)
 
