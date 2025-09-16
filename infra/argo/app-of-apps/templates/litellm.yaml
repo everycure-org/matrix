@@ -24,8 +24,10 @@ spec:
         replicaCount: 3
 
         service:
-          type: ClusterIP
+          type: LoadBalancer
           port: 4000
+          annotations:
+            external-dns.alpha.kubernetes.io/hostname: "litellm.{{ .Values.spec.source.environment }}.everycure.org"
 
         resources:
           requests: { cpu: "250m", memory: "512Mi" }
