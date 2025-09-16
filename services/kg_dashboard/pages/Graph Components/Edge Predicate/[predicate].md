@@ -52,13 +52,10 @@ having count > 0
 order by count desc
 ```
 
-{#if number_of_edges.length > 0}
-<Grid col=1>
-    <p class="text-center text-lg py-4"><span class="font-semibold text-2xl"><Value data={number_of_edges} column="count" fmt="integer"/></span><br/>edges using this predicate</p>
-</Grid>
-{/if}
 
-{#if three_level_sankey.length !== 0}
+<p class="text-center text-lg py-4"><span class="font-semibold text-2xl"><Value data={number_of_edges} column="count" fmt="integer"/></span><br/>edges using this predicate</p>
+
+
 <SankeyDiagram 
     data={three_level_sankey}
     sourceCol='source'
@@ -69,14 +66,12 @@ order by count desc
     chartAreaHeight={600}
     title="Subject Category → {params.predicate} → Object Category Flow"
 />
-{/if}
 
-{#if primary_knowledge_source_counts.length !== 0}
 <BarChart
     data={primary_knowledge_source_counts}
     x=primary_knowledge_source
     y=count
     title="Edge Counts by Primary Knowledge Source"
 />
-{/if}
+
 
