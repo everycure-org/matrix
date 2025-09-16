@@ -11,11 +11,11 @@ dependencies = [
     "matrix-pipeline",
     "matrix-docs",
     "matrix-auth",
+    "matrix-cli",
     "matrix-gcp-datasets",
     "matrix-mlflow-utils",
     "matrix-fabricator",
     "matrix-io-utils",
-
     "pre-commit>=4.2.0",
 ]
 
@@ -27,6 +27,7 @@ matrix-gcp-datasets = { workspace = true }
 matrix-mlflow-utils = { workspace = true }
 matrix-fabricator = { workspace = true }
 matrix-io-utils = { workspace = true }
+matrix-cli = { workspace = true }
 
 [tool.uv.workspace]
 members = [
@@ -36,6 +37,7 @@ members = [
     "docs",
     # shared libraries
     "libs/*",
+    "apps/*",
 ]
 
 [dependency-groups]
