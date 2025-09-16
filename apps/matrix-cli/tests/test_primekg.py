@@ -3,7 +3,6 @@
 import unittest
 
 import polars as pl
-
 from matrix_cli.io.primekg import coalesce_duplicate_columns, fix_curies, mondo_grouped_exploded
 
 
