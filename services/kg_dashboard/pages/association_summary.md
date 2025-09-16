@@ -150,25 +150,6 @@ ORDER BY count DESC
   depthOverride={depthOverrides}
 />
 
-```sql edge_stats
-SELECT 
-    replace(subject_category,'biolink:','') as subject_category,
-    '/Graph Components/Node Category/' || replace(subject_category,'biolink:','') as subject_category_link,
-    replace(predicate,'biolink:','') as predicate,
-    '/Graph Components/Edge Predicate/' || replace(predicate,'biolink:','') as predicate_link,
-    replace(object_category,'biolink:','') as object_category,
-    '/Graph Components/Node Category/' || replace(object_category,'biolink:','') as object_category_link,
-    primary_knowledge_source,
-    '/Knowledge Sources/' || primary_knowledge_source as primary_knowledge_source_link,
-    sum(count) as count
-FROM bq.merged_kg_edges
-WHERE replace(subject_category,'biolink:','') IN ${inputs.selected_subjects.value}
-  AND replace(predicate,'biolink:','') IN ${inputs.selected_predicates.value}
-  AND replace(object_category,'biolink:','') IN ${inputs.selected_objects.value}
-GROUP BY all
-ORDER BY count DESC
-```
-
 ```sql edge_stats_for_grid
 SELECT 
     replace(subject_category,'biolink:','') as subject_category,
@@ -186,11 +167,15 @@ ORDER BY count DESC
 
 ## Edge Statistics
 
-<DimensionGrid 
-  data={edge_stats_for_grid} 
-  metric='sum(count)' 
+<DimensionGrid
+  data={edge_stats_for_grid}
+  metric='sum(count)'
   name=selected_edge_stats
 />
+
+<p class="text-sm mt-4 mb-4">
+Use the dimension grid above to filter the edge statistics. Select specific combinations of subject categories, predicates, object categories, and knowledge sources to refine the data shown in the table below.
+</p>
 
 ```sql filtered_edge_stats
 WITH dimension_filter AS (
