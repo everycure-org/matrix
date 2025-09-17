@@ -34,6 +34,8 @@ dependencies = [
     "matrix-cli",
     "matrix-mlflow-utils",
     "matrix-fabricator",
+    "matrix-inject",
+    "matrix-pandera",
     "matrix-validator @ git+https://github.com/everycure-org/matrix-validator.git@v0.0.6#egg=matrix-validator",
     "bmt", # biolink model toolkit
     "gcsfs==2024.3.1",

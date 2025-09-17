@@ -15,7 +15,8 @@ dependencies = [
     "matrix-gcp-datasets",
     "matrix-mlflow-utils",
     "matrix-fabricator",
-    "matrix-io-utils",
+    "matrix-io-utils",    "matrix-inject",
+    "matrix-pandera",
     "pre-commit>=4.2.0",
 ]
 
@@ -28,6 +29,8 @@ matrix-mlflow-utils = { workspace = true }
 matrix-fabricator = { workspace = true }
 matrix-io-utils = { workspace = true }
 matrix-cli = { workspace = true }
+matrix-inject = { workspace = true }
+matrix-pandera = { workspace = true }
 
 [tool.uv.workspace]
 members = [
