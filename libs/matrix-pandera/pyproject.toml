@@ -9,6 +9,7 @@ description = "Cross datatype validation for Matrix platform"
 requires-python = ">=3.11"
 dependencies = [
     "pandera==0.24.0",
+    "pandas",
 ]
 
 [dependency-groups]
