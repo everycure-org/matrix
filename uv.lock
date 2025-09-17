@@ -2573,6 +2573,10 @@ dev = [
 name = "matrix-inject"
 version = "0.1.0"
 source = { editable = "libs/matrix-inject" }
+dependencies = [
+    { name = "pandas" },
+    { name = "pyspark" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -2581,9 +2585,14 @@ dev = [
     { name = "pytest-mock" },
     { name = "responses" },
     { name = "ruff" },
+    { name = "scikit-learn" },
 ]
 
 [package.metadata]
+requires-dist = [
+    { name = "pandas" },
+    { name = "pyspark", specifier = ">=3.5.0" },
+]
 
 [package.metadata.requires-dev]
 dev = [
@@ -2592,6 +2601,7 @@ dev = [
     { name = "pytest-mock" },
     { name = "responses" },
     { name = "ruff" },
+    { name = "scikit-learn" },
 ]
 
 [[package]]
@@ -2636,6 +2646,7 @@ name = "matrix-pandera"
 version = "0.1.0"
 source = { editable = "libs/matrix-pandera" }
 dependencies = [
+    { name = "pandas" },
     { name = "pandera" },
 ]
 
@@ -2647,7 +2658,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pandera", specifier = "==0.24.0" }]
+requires-dist = [
+    { name = "pandas" },
+    { name = "pandera", specifier = "==0.24.0" },
+]
 
 [package.metadata.requires-dev]
 dev = [
@@ -2682,7 +2696,9 @@ dependencies = [
     { name = "matrix-auth" },
     { name = "matrix-fabricator" },
     { name = "matrix-gcp-datasets" },
+    { name = "matrix-inject" },
     { name = "matrix-mlflow-utils" },
+    { name = "matrix-pandera" },
     { name = "matrix-schema" },
     { name = "matrix-validator" },
     { name = "mlflow" },
@@ -2790,7 +2806,9 @@ requires-dist = [
     { name = "matrix-auth", editable = "libs/matrix-auth" },
     { name = "matrix-fabricator", editable = "libs/matrix-fabricator" },
     { name = "matrix-gcp-datasets", editable = "libs/matrix-gcp-datasets" },
+    { name = "matrix-inject", editable = "libs/matrix-inject" },
     { name = "matrix-mlflow-utils", editable = "libs/matrix-mlflow-utils" },
+    { name = "matrix-pandera", editable = "libs/matrix-pandera" },
     { name = "matrix-schema", specifier = "==0.4.3" },
     { name = "matrix-validator", git = "https://github.com/everycure-org/matrix-validator.git?rev=v0.0.6" },
     { name = "mlflow", specifier = "==2.20.3" },

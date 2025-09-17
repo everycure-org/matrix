@@ -8,6 +8,8 @@ version = "0.1.0"
 description = "Object injection for Matrix platform"
 requires-python = ">=3.11"
 dependencies = [
+    "pyspark>=3.5.0",
+    "pandas",
 ]
 
 [dependency-groups]
@@ -17,6 +19,7 @@ dev = [
     "pytest-mock",
     "ruff",
     "responses",
+    "scikit-learn"
 ]
 
 [tool.setuptools.packages.find]
