@@ -24,8 +24,16 @@
     primarySpread: 0,
     aggregatorSpacing: 0,
     primaryYPositions: [],
+    primaryXPositions: [],
+    primaryAngles: [],
     aggregatorYPositions: [],
-    aggregatorCount: 0
+    aggregatorXPositions: [],
+    unifiedYPositions: [],
+    unifiedXPositions: [],
+    aggregatorCount: 0,
+    unifiedCount: 0,
+    minMaxPrimaryX: { min: 0, max: 0 },
+    primaryXSpread: 0
   };
   
   $: {
@@ -108,8 +116,10 @@
       const endAngle = arcCenter + (dynamicAngleRange / 2); // End below center
       const angleRange = dynamicAngleRange;
       
-      // Calculate primary Y positions using our current algorithm for matching aggregator spacing
+      // Calculate primary Y and X positions using our current algorithm for matching aggregator spacing
       const primaryYPositions = [];
+      const primaryXPositions = [];
+      const primaryAngles = [];
       for (let index = 0; index < primaryNodes.length; index++) {
         // Use tight clustering with adaptive spacing based on node count
         let spacing = 0;
@@ -121,18 +131,38 @@
         const centerOffset = (index - (nodeCount - 1) / 2) * spacing;
         const angle = arcCenter + centerOffset;
         const yPos = centerY + Math.sin(angle) * radiusY;
+        const xPos = centerX + Math.cos(angle) * radiusX;
         primaryYPositions.push(yPos);
+        primaryXPositions.push(xPos);
+        primaryAngles.push(angle);
       }
       
-      // Calculate actual primary Y spread
-      const primarySpread = primaryYPositions.length > 1 ? 
+      // Calculate actual primary Y and X spreads
+      const primarySpread = primaryYPositions.length > 1 ?
         Math.max(...primaryYPositions) - Math.min(...primaryYPositions) : 0;
-      
+      const primaryXSpread = primaryXPositions.length > 1 ?
+        Math.max(...primaryXPositions) - Math.min(...primaryXPositions) : 0;
+      const minMaxPrimaryX = primaryXPositions.length > 0 ? {
+        min: Math.min(...primaryXPositions),
+        max: Math.max(...primaryXPositions)
+      } : { min: 0, max: 0 };
+
       // Update debug info
       debugInfo.primarySpread = Math.round(primarySpread);
+      debugInfo.primaryXSpread = Math.round(primaryXSpread);
       debugInfo.primaryYPositions = primaryYPositions.map(y => Math.round(y));
+      debugInfo.primaryXPositions = primaryXPositions.map(x => Math.round(x));
+      debugInfo.primaryAngles = primaryAngles.map(a => Math.round(a * 180 / Math.PI)); // Convert to degrees
+      debugInfo.minMaxPrimaryX = {
+        min: Math.round(minMaxPrimaryX.min),
+        max: Math.round(minMaxPrimaryX.max)
+      };
       debugInfo.aggregatorYPositions = []; // Reset for new calculation
+      debugInfo.aggregatorXPositions = []; // Reset for new calculation
+      debugInfo.unifiedYPositions = []; // Reset for new calculation
+      debugInfo.unifiedXPositions = []; // Reset for new calculation
       debugInfo.aggregatorCount = aggregatorNodes.length;
+      debugInfo.unifiedCount = unifiedNodes.length;
       
       // Note: Aggregator and unified positioning now calculated inline with the nodes
       
@@ -184,7 +214,11 @@
             if (aggregatorNodes.length > 1 && primarySpread > 0) {
               // Use 50% of the primary spread for more even aggregator spacing
               const fractionOfPrimarySpread = 0.5;
-              aggregatorSpacing = (primarySpread * fractionOfPrimarySpread) / (aggregatorNodes.length - 1);
+              const calculatedSpacing = (primarySpread * fractionOfPrimarySpread) / (aggregatorNodes.length - 1);
+
+              // Prevent overlap: ensure minimum spacing based on aggregator node size
+              const minimumSpacing = 12;
+              aggregatorSpacing = Math.max(calculatedSpacing, minimumSpacing);
             } else {
               aggregatorSpacing = 0; // Single aggregator stays at center
             }
@@ -197,6 +231,7 @@
             
             // Capture aggregator position for debug
             debugInfo.aggregatorYPositions.push(Math.round(yPosition));
+            debugInfo.aggregatorXPositions.push(Math.round(xPosition));
             aggregatorCount++;
           } else if (d.category === 'unified') {
             xPosition = centerX + radiusX - 150;
@@ -204,6 +239,10 @@
             const unifiedSpacing = 80; // doesn't matter much since usually only 1
             const centerOffset = (unifiedCount - (unifiedNodes.length - 1) / 2) * unifiedSpacing;
             yPosition = centerY + centerOffset;
+
+            // Capture unified position for debug
+            debugInfo.unifiedYPositions.push(Math.round(yPosition));
+            debugInfo.unifiedXPositions.push(Math.round(xPosition));
             unifiedCount++;
           }
           
@@ -337,8 +376,11 @@
       tooltip: {
         show: true,
         position: function(point, params, dom, rect, size) {
-          if (params.dataType === 'node' && (params.data.nodeCategory === 'primary' || params.data.nodeCategory === 'unified')) {
-            // Position tooltip to the left for primary sources and unified KG
+          if (params.dataType === 'node' && params.data.nodeCategory === 'primary') {
+            // Position tooltip to the right for primary sources
+            return [point[0] + 20, point[1] - size.contentSize[1] / 2];
+          } else if (params.dataType === 'node' && params.data.nodeCategory === 'unified') {
+            // Position tooltip to the left for unified KG
             return [point[0] - size.contentSize[0] - 20, point[1] - size.contentSize[1] / 2];
           }
           // Default positioning for aggregator nodes
@@ -439,8 +481,15 @@
   </div>
   <div style="margin-top: 10px; font-size: 11px;">
     <strong>Primary Y Spread:</strong> {debugInfo.primarySpread}px<br/>
+    <strong>Primary X Spread:</strong> {debugInfo.primaryXSpread}px<br/>
+    <strong>Primary X Range:</strong> {debugInfo.minMaxPrimaryX.min}px to {debugInfo.minMaxPrimaryX.max}px<br/>
     <strong>Aggregator Spacing:</strong> {debugInfo.aggregatorSpacing}px<br/>
     <strong>Primary Y Positions:</strong> [{debugInfo.primaryYPositions.join(', ')}]<br/>
-    <strong>Aggregator Y Positions:</strong> [{debugInfo.aggregatorYPositions.join(', ')}] (Count: {debugInfo.aggregatorCount})
+    <strong>Primary X Positions:</strong> [{debugInfo.primaryXPositions.join(', ')}]<br/>
+    <strong>Primary Angles (degrees):</strong> [{debugInfo.primaryAngles.join(', ')}]<br/>
+    <strong>Aggregator Y Positions:</strong> [{debugInfo.aggregatorYPositions.join(', ')}] (Count: {debugInfo.aggregatorCount})<br/>
+    <strong>Aggregator X Positions:</strong> [{debugInfo.aggregatorXPositions.join(', ')}]<br/>
+    <strong>Unified Y Positions:</strong> [{debugInfo.unifiedYPositions.join(', ')}] (Count: {debugInfo.unifiedCount})<br/>
+    <strong>Unified X Positions:</strong> [{debugInfo.unifiedXPositions.join(', ')}]
   </div>
 </div>
