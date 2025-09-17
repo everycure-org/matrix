@@ -6,7 +6,7 @@ This document explains how to configure and run multiple models in parallel with
 
 The Matrix pipeline supports running multiple machine learning models in parallel during training, matrix generation, transformation and evaluation. This capability allows you to:
 
-- Train different model types simultaneously (e.g., xg-synth, xg-ensemble)
+- Train different model types simultaneously (e.g., xg_ensemble, xg_synth)
 - Compare model performance across different configurations
 - Generate matrices and predictions from ALL models
 - Run inference on multiple models simultaneously
@@ -17,7 +17,7 @@ The Matrix pipeline supports running multiple machine learning models in paralle
 
 ### Model Definition
 
-Models are defined in the `DYNAMIC_PIPELINES_MAPPING` configuration in `pipelines/matrix/src/matrix/settings.py`:
+Models are defined in the `DYNAMIC_PIPELINES_MAPPING` configuration in [`matrix.settings.DYNAMIC_PIPELINES_MAPPING`](pipelines/matrix/src/matrix/settings.py), which is built with [`matrix.settings.generate_dynamic_pipeline_mapping`](pipelines/matrix/src/matrix/settings.py) and wrapped by [`matrix.settings.disable_private_datasets`](pipelines/matrix/src/matrix/settings.py):
 
 ```python
 DYNAMIC_PIPELINES_MAPPING = (
@@ -50,6 +50,21 @@ DYNAMIC_PIPELINES_MAPPING = (
 
 - **`model_name`**: Unique identifier for the model (must match parameter files)
 - **`model_config`**: Model-specific configuration including number of shards
+
+### Quickstart: run multi-model locally
+
+- Install and fetch secrets (see [pipelines/matrix/Makefile](pipelines/matrix/Makefile)):
+  - `make install`
+  - `make fetch_secrets`
+- Run training for all configured models:
+  - `uv run kedro run --pipeline modelling`
+- Generate matrices/predictions for all configured models:
+  - `uv run kedro run --pipeline matrix_generation`
+- Optionally run downstream transforms/evaluation similarly:
+  - `uv run kedro run --pipeline matrix_transformation`
+  - `uv run kedro run --pipeline evaluation`
+
+Note: pipelines use the dynamic mapping in [`pipelines/matrix/src/matrix/settings.py`](pipelines/matrix/src/matrix/settings.py), so the set of models is code-driven.
 
 ## How It Works
 
@@ -117,22 +132,21 @@ matrix_generation/
 - **Predictions**: `matrix_generation.fold_{fold}.{model_name}.model_output.sorted_matrix_predictions`
 - **Transformers**: `{model_name}_modelling.fold_{fold}.model_input.transformers`
 
+Tip: Ensure your catalog entries and any custom consumers expect the model_name segment in the dataset paths.
+
 ## Adding New Models
 
 To add a new model to the multi-model configuration:
 
-1. **Add model configuration** in `settings.py`:
-
+1. Add model configuration in [`pipelines/matrix/src/matrix/settings.py`](pipelines/matrix/src/matrix/settings.py):
    ```python
    {
        "model_name": "my_new_model",
        "model_config": {"num_shards": 1},
    }
    ```
-
-2. **Create parameter file** at `conf/base/modelling/parameters/my_new_model.yml`
-
-3. **Define model implementation** following the existing patterns in the modelling pipeline
+2. Create parameter file at `pipelines/matrix/conf/base/modelling/parameters/my_new_model.yml`
+3. Implement the model following existing patterns in the modelling pipeline code (see `pipelines/matrix/src/matrix/pipelines/modelling/`).
 
 ## Troubleshooting
 
@@ -161,27 +175,27 @@ Ensure that:
 
 ## Performance Considerations
 
-- **Parallel Execution**: Models train and generate predictions in parallel, improving overall pipeline performance
-- **Resource Usage**: Each model consumes compute resources independently
-- **Storage**: Each model's outputs are stored separately, increasing storage requirements
-- **Memory**: Matrix generation phase may require more memory when multiple models run simultaneously
+- Parallel Execution: Models train and generate predictions in parallel, improving overall pipeline performance
+- Resource Usage: Each model consumes compute resources independently
+- Storage: Each model's outputs are stored separately, increasing storage requirements
+- Memory: Matrix generation phase may require more memory when multiple models run simultaneously
 
 ## Best Practices
 
-1. **Consistent Naming**: Use descriptive and consistent model names
-2. **Parameter Organization**: Keep model parameters in separate files for maintainability
-3. **Resource Planning**: Consider compute and storage requirements when adding models
-4. **Testing**: Use dry-run mode to validate configuration before full execution
-5. **Model Comparison**: Leverage multi-model outputs to compare performance and choose the best model for production
+1. Consistent Naming: Use descriptive and consistent model names
+2. Parameter Organization: Keep model parameters in separate files for maintainability
+3. Resource Planning: Consider compute and storage requirements when adding models
+4. Testing: Use dry-run or run a single fold first to validate configuration before full execution
+5. Model Comparison: Leverage multi-model outputs to compare performance and choose the best model for production
 
 ## Migration from Single Model
 
 If migrating from a single-model setup:
 
-1. No changes needed - existing models will automatically participate in multi-model inference
+1. No changes needed—existing models will automatically participate in multi-model inference
 2. Ensure all consuming pipelines are updated to use the new naming convention
 3. Update any custom catalog entries to support model-specific paths
-4. Test with dry-run before production execution
+4. Test with a single fold before full production execution
 
 ## Related Documentation
 
