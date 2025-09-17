@@ -81,11 +81,11 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
             "modelling": [
                 {
                     "model_name": "xg_ensemble",
-                    "model_config": {"num_shards": 1},
+                    "model_config": {"num_shards": 3},
                 },
                 {
                     "model_name": "xg_synth",
-                    "model_config": {"num_shards": 1},
+                    "model_config": {"num_shards": 3},
                 },
             ],
             "evaluation": [
