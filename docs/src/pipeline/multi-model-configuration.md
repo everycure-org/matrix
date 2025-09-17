@@ -64,7 +64,7 @@ DYNAMIC_PIPELINES_MAPPING = (
   - `uv run kedro run --pipeline matrix_transformation`
   - `uv run kedro run --pipeline evaluation`
 
-Note: pipelines use the dynamic mapping in [`../../../pipelines/matrix/src/matrix/settings.py), which is built with [`matrix.settings.generate_dynamic_pipeline_mapping`](../../../pipelines/matrix/src/matrix/settings.py) and wrapped by [`matrix.settings.disable_private_datasets`](pipelines/matrix/src/matrix/settings.py`](../../../pipelines/matrix/src/matrix/settings.py), which is built with [`matrix.settings.generate_dynamic_pipeline_mapping`](../../../pipelines/matrix/src/matrix/settings.py) and wrapped by [`matrix.settings.disable_private_datasets`](../../../pipelines/matrix/src/matrix/settings.py), so the set of models is code-driven.
+Note: pipelines use the dynamic mapping in [`pipelines/matrix/src/matrix/settings.py, which is built with [`matrix.settings.generate_dynamic_pipeline_mapping`](pipelines/matrix/src/matrix/settings.py) and wrapped by [`matrix.settings.disable_private_datasets`](pipelines/matrix/src/matrix/settings.py`](../../../pipelines/matrix/src/matrix/settings.py), which is built with [`matrix.settings.generate_dynamic_pipeline_mapping`](../../../pipelines/matrix/src/matrix/settings.py) and wrapped by [`matrix.settings.disable_private_datasets`](../../../pipelines/matrix/src/matrix/settings.py), so the set of models is code-driven.
 
 ## How It Works
 

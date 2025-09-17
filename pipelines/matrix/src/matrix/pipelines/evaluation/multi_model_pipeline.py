@@ -200,7 +200,7 @@ def create_pipeline(matrix_input: str, score_col_name: str) -> Pipeline:
                                 for evaluation in evaluation_names
                             },
                         },
-                        outputs=f"evaluation.{matrix_input}.{model_name}.reporting.master_report",
+                        outputs=f"evaluation.{matrix_input}.reporting.{model_name}.master_report",
                         name=f"{matrix_input}.consolidate_evaluation_reports_for_{model_name}",
                     )
                 ]
