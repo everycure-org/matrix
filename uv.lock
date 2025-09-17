@@ -2646,8 +2646,12 @@ name = "matrix-pandera"
 version = "0.1.0"
 source = { editable = "libs/matrix-pandera" }
 dependencies = [
+    { name = "google-api-core" },
+    { name = "grpcio" },
     { name = "pandas" },
     { name = "pandera" },
+    { name = "pyarrow" },
+    { name = "pyspark" },
 ]
 
 [package.dev-dependencies]
@@ -2659,8 +2663,12 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "google-api-core" },
+    { name = "grpcio" },
     { name = "pandas" },
     { name = "pandera", specifier = "==0.24.0" },
+    { name = "pyarrow" },
+    { name = "pyspark", specifier = ">=3.5.0" },
 ]
 
 [package.metadata.requires-dev]
