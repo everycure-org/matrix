@@ -108,7 +108,7 @@ spec:
           lastRetry.message matches '.*imminent node shutdown.*' ||
           lastRetry.message matches '.*node is draining.*' ||
           lastRetry.message matches '.*pod was rejected.*' ||
-          lastRetry.message matches '*node is shutting down*'
+          lastRetry.message matches '.*node is shutting down*.'
         {# code 137 is for OOM. We are explicitly mention it so that in case of failure it is not retried #}
         ) && lastRetry.exitCode != 137
       backoff:
