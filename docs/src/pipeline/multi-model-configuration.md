@@ -4,9 +4,9 @@ This document explains how to configure and run multiple models in parallel with
 
 ## Overview
 
-The Matrix pipeline supports running multiple machine learning models in parallel during training, matrix generation, and inference phases. This capability allows you to:
+The Matrix pipeline supports running multiple machine learning models in parallel during training, matrix generation, transformation and evaluation. This capability allows you to:
 
-- Train different model types simultaneously (e.g., XGBoost, LightGBM, Random Forest)
+- Train different model types simultaneously (e.g., xg-synth, xg-ensemble)
 - Compare model performance across different configurations
 - Generate matrices and predictions from ALL models
 - Run inference on multiple models simultaneously
@@ -29,12 +29,10 @@ DYNAMIC_PIPELINES_MAPPING = (
                     {
                         "model_name": "xg_ensemble",
                         "model_config": {"num_shards": 1},
-                        "run_inference": True,  # Optional: kept for backward compatibility
                     },
                     {
                         "model_name": "xg_synth",
                         "model_config": {"num_shards": 1},
-                        "run_inference": False,  # Optional: kept for backward compatibility
                     },
                     {
                         "model_name": "lightgbm",
@@ -52,9 +50,6 @@ DYNAMIC_PIPELINES_MAPPING = (
 
 - **`model_name`**: Unique identifier for the model (must match parameter files)
 - **`model_config`**: Model-specific configuration including number of shards
-- **`run_inference`**: _(Optional, kept for backward compatibility)_ - All models now participate in inference by default
-
-⚠️ **Important**: The `run_inference` parameter is now optional and kept for backward compatibility. All configured models will participate in matrix generation and inference.
 
 ## How It Works
 
@@ -81,9 +76,9 @@ During matrix generation:
 
 All pipelines now support multi-model operations:
 
-- **Inference Pipeline**: Creates predictions and reports for ALL models
-- **Matrix Transformations**: Applies transformations to ALL models' outputs
-- **Reporting**: Generates separate reports for each model
+- **Matrix Transformations**: Applies transformations to ALL models' outputs.
+- **Matrix Evaluation**: Evaluates ALL models' outputs individually.
+- **Reporting**: Generates separate reports for each model.
 
 ## Data Organization
 
