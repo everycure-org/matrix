@@ -17,3 +17,29 @@ spec:
   - backendRefs:
     - name: litellm
       port: 4000
+---
+# Health check policy for LiteLLM service - use root path instead of /health
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  name: litellm-health-check
+  namespace: litellm
+spec:
+  default:
+    checkIntervalSec: 10
+    timeoutSec: 5
+    healthyThreshold: 1
+    unhealthyThreshold: 2
+    logConfig:
+      enabled: true
+    config:
+      type: HTTP
+      httpHealthCheck:
+        portSpecification: USE_FIXED_PORT
+        port: 4000
+        requestPath: /
+        proxyHeader: NONE
+  targetRef:
+    group: ""
+    kind: Service
+    name: litellm
