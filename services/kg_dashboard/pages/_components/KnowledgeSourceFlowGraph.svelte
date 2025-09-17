@@ -179,11 +179,12 @@
             primaryCount++;
           } else if (d.category === 'aggregator') {
             xPosition = centerX + radiusX - 200;
-            // Math that naturally centers and matches primary Y spread
+            // Math that naturally centers with a fraction of primary Y spread for more even spacing
             let aggregatorSpacing;
             if (aggregatorNodes.length > 1 && primarySpread > 0) {
-              // Use EXACTLY the same Y spread as primary nodes - no minimum override
-              aggregatorSpacing = primarySpread / (aggregatorNodes.length - 1);
+              // Use 50% of the primary spread for more even aggregator spacing
+              const fractionOfPrimarySpread = 0.5;
+              aggregatorSpacing = (primarySpread * fractionOfPrimarySpread) / (aggregatorNodes.length - 1);
             } else {
               aggregatorSpacing = 0; // Single aggregator stays at center
             }
