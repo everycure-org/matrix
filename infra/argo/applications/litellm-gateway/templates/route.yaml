@@ -10,7 +10,7 @@ spec:
   - kind: Gateway
     sectionName: https
     namespace: gateway
-    name: external-http
+    name: api-gateway
   hostnames:
   - "litellm.api.{{ .Values.spec.source.environment }}.everycure.org"
   rules:
