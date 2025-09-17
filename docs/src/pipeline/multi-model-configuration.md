@@ -17,7 +17,7 @@ The Matrix pipeline supports running multiple machine learning models in paralle
 
 ### Model Definition
 
-Models are defined in the `DYNAMIC_PIPELINES_MAPPING` configuration in [`matrix.settings.DYNAMIC_PIPELINES_MAPPING`](../../../pipelines/matrix/src/matrix/settings.py), which is built with [`matrix.settings.generate_dynamic_pipeline_mapping`](pipelines/matrix/src/matrix/settings.py) and wrapped by [`matrix.settings.disable_private_datasets`](pipelines/matrix/src/matrix/settings.py), which is built with [`matrix.settings.generate_dynamic_pipeline_mapping`](../../../pipelines/matrix/src/matrix/settings.py), which is built with [`matrix.settings.generate_dynamic_pipeline_mapping`](pipelines/matrix/src/matrix/settings.py) and wrapped by [`matrix.settings.disable_private_datasets`](pipelines/matrix/src/matrix/settings.py) and wrapped by [`matrix.settings.disable_private_datasets`](../../../pipelines/matrix/src/matrix/settings.py), which is built with [`matrix.settings.generate_dynamic_pipeline_mapping`](pipelines/matrix/src/matrix/settings.py) and wrapped by [`matrix.settings.disable_private_datasets`](pipelines/matrix/src/matrix/settings.py):
+Models are defined in the `DYNAMIC_PIPELINES_MAPPING` configuration in [`matrix.settings.DYNAMIC_PIPELINES_MAPPING`](../../../pipelines/matrix/src/matrix/settings.py), which is built with [`matrix.settings.generate_dynamic_pipeline_mapping`](../../../pipelines/matrix/src/matrix/settings.py) and wrapped by [`matrix.settings.disable_private_datasets`](../../../pipelines/matrix/src/matrix/settings.py), which is built with [`matrix.settings.generate_dynamic_pipeline_mapping`](../../../pipelines/matrix/src/matrix/settings.py), which is built with [`matrix.settings.generate_dynamic_pipeline_mapping`](../../../pipelines/matrix/src/matrix/settings.py) and wrapped by [`matrix.settings.disable_private_datasets`](../../../pipelines/matrix/src/matrix/settings.py) and wrapped by [`matrix.settings.disable_private_datasets`](../../../pipelines/matrix/src/matrix/settings.py), which is built with [`matrix.settings.generate_dynamic_pipeline_mapping`](../../../pipelines/matrix/src/matrix/settings.py) and wrapped by [`matrix.settings.disable_private_datasets`](../../../pipelines/matrix/src/matrix/settings.py):
 
 ```python
 DYNAMIC_PIPELINES_MAPPING = (
@@ -64,7 +64,7 @@ DYNAMIC_PIPELINES_MAPPING = (
   - `uv run kedro run --pipeline matrix_transformation`
   - `uv run kedro run --pipeline evaluation`
 
-Note: pipelines use the dynamic mapping in [`../../../pipelines/matrix/src/matrix/settings.py), which is built with [`matrix.settings.generate_dynamic_pipeline_mapping`](pipelines/matrix/src/matrix/settings.py) and wrapped by [`matrix.settings.disable_private_datasets`](pipelines/matrix/src/matrix/settings.py`](../../../pipelines/matrix/src/matrix/settings.py), which is built with [`matrix.settings.generate_dynamic_pipeline_mapping`](pipelines/matrix/src/matrix/settings.py) and wrapped by [`matrix.settings.disable_private_datasets`](pipelines/matrix/src/matrix/settings.py), so the set of models is code-driven.
+Note: pipelines use the dynamic mapping in [`../../../pipelines/matrix/src/matrix/settings.py), which is built with [`matrix.settings.generate_dynamic_pipeline_mapping`](../../../pipelines/matrix/src/matrix/settings.py) and wrapped by [`matrix.settings.disable_private_datasets`](pipelines/matrix/src/matrix/settings.py`](../../../pipelines/matrix/src/matrix/settings.py), which is built with [`matrix.settings.generate_dynamic_pipeline_mapping`](../../../pipelines/matrix/src/matrix/settings.py) and wrapped by [`matrix.settings.disable_private_datasets`](../../../pipelines/matrix/src/matrix/settings.py), so the set of models is code-driven.
 
 ## How It Works
 
@@ -138,7 +138,7 @@ Tip: Ensure your catalog entries and any custom consumers expect the model_name 
 
 To add a new model to the multi-model configuration:
 
-1. Add model configuration in [`../../../pipelines/matrix/src/matrix/settings.py), which is built with [`matrix.settings.generate_dynamic_pipeline_mapping`](pipelines/matrix/src/matrix/settings.py) and wrapped by [`matrix.settings.disable_private_datasets`](pipelines/matrix/src/matrix/settings.py`](../../../pipelines/matrix/src/matrix/settings.py), which is built with [`matrix.settings.generate_dynamic_pipeline_mapping`](pipelines/matrix/src/matrix/settings.py) and wrapped by [`matrix.settings.disable_private_datasets`](pipelines/matrix/src/matrix/settings.py):
+1. Add model configuration in [`../../../pipelines/matrix/src/matrix/settings.py), which is built with [`matrix.settings.generate_dynamic_pipeline_mapping`](../../../pipelines/matrix/src/matrix/settings.py) and wrapped by [`matrix.settings.disable_private_datasets`](pipelines/matrix/src/matrix/settings.py`](../../../pipelines/matrix/src/matrix/settings.py), which is built with [`matrix.settings.generate_dynamic_pipeline_mapping`](../../../pipelines/matrix/src/matrix/settings.py) and wrapped by [`matrix.settings.disable_private_datasets`](../../../pipelines/matrix/src/matrix/settings.py):
    ```python
    {
        "model_name": "my_new_model",
