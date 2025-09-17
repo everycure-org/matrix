@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "matrix-inject"
+version = "0.1.0"
+description = "Object injection for Matrix platform"
+requires-python = ">=3.11"
+dependencies = [
+    "pyspark>=3.5.0",
+    "pandas",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-mock",
+    "ruff",
+    "responses",
+    "scikit-learn"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = "src"

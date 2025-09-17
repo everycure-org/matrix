@@ -3,8 +3,8 @@ from typing import Any
 
 import pyspark.sql as ps
 import pyspark.sql.functions as F
+from matrix_inject.inject import inject_object
 
-from matrix.inject import inject_object
 from matrix.pipelines.filtering.filters import Filter
 
 logger = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ def _apply_transformations(
             new_count = df_new.cache().count()
             df.unpersist()
             logger.info(
-                f"Number of rows after transformation '{name}': {new_count}, " f"removed {last_count - new_count} rows"
+                f"Number of rows after transformation '{name}': {new_count}, removed {last_count - new_count} rows"
             )
             last_count = new_count
         df = df_new

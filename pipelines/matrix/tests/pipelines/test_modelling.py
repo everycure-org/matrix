@@ -16,7 +16,6 @@ import pytest
 # Local imports
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
-from matrix.inject import OBJECT_KW
 from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.model_selection import DiseaseAreaSplit
 from matrix.pipelines.modelling.nodes import (
@@ -28,6 +27,7 @@ from matrix.pipelines.modelling.nodes import (
     tune_parameters,
 )
 from matrix.pipelines.modelling.tuning import NopTuner
+from matrix_inject.inject import OBJECT_KW
 
 # Machine learning imports
 from sklearn.base import BaseEstimator

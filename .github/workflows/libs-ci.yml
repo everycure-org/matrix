@@ -35,6 +35,8 @@ jobs:
           - matrix-fabricator
           - matrix-gcp-datasets
           - matrix-mlflow-utils
+          - matrix-inject
+          - matrix-pandera
     steps:
       - uses: actions/checkout@v4
       
