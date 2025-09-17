@@ -12,6 +12,8 @@
   
   let networkOption = {};
   let useForceLayout = true; // Toggle between 'none' and 'force' layout
+  let dynamicHeight = height; // Dynamic height based on content
+  let primaryNodeCount = 0; // Store primary node count for tooltip positioning
   
   // Debug variables to display current calculations
   let debugInfo = {
@@ -33,7 +35,11 @@
     aggregatorCount: 0,
     unifiedCount: 0,
     minMaxPrimaryX: { min: 0, max: 0 },
-    primaryXSpread: 0
+    primaryXSpread: 0,
+    contentBounds: { minY: 0, maxY: 0 },
+    dynamicHeight: 0,
+    heightCalculation: '',
+    sampleNodeData: []
   };
   
   $: {
@@ -60,6 +66,9 @@
       const aggregatorNodes = sortedNodes.filter(n => n.category === 'aggregator');
       const unifiedNodes = sortedNodes.filter(n => n.category === 'unified');
       const limitedNodes = [...primaryNodes, ...aggregatorNodes, ...unifiedNodes];
+
+      // Store primary node count for tooltip positioning
+      primaryNodeCount = primaryNodes.length;
       
       // Calculate dynamic oval layout for primary sources
       const radiusX = 150; // Horizontal radius (narrower)
@@ -69,17 +78,9 @@
       const baseRadiusY = Math.max(100, Math.min(250, totalNodes * 15)); // Scale radius with content
       const baseCenterY = Math.max(200, Math.min(400, 150 + totalNodes * 8)); // Scale center with content
       
-      // Adjust radius and center based on node count for better small-count layouts
-      let radiusY, centerY;
-      if (primaryNodes.length <= 5) {
-        // For small node counts, use fixed reasonable spacing centered in viewport
-        radiusY = Math.max(50, primaryNodes.length * 20); // 20px per node, minimum 50px
-        centerY = 300; // Fixed center position
-      } else {
-        // For larger node counts, use dynamic scaling
-        radiusY = baseRadiusY;
-        centerY = baseCenterY;
-      }
+      // Use dynamic scaling for all node counts (removes stepped behavior)
+      let radiusY = baseRadiusY;
+      let centerY = baseCenterY;
       
       const centerX = 300; // Move primary sources further right to use available space
       
@@ -260,6 +261,7 @@
             name: d.node_name || d.node_id, // Use display name if available, fallback to ID
             nodeCategory: d.category, // Store as custom property, not ECharts category
             value: d.value || 0,
+            total_all_sources: d.total_all_sources, // Include unfiltered totals for tooltip context
             x: xPosition,
             y: yPosition,
             symbol: 'circle', // All circles
@@ -289,7 +291,32 @@
       });
       
       nodes = Array.from(nodeMap.values());
-      
+
+      // Calculate dynamic height using smooth function based on primary node count
+      if (primaryNodes.length > 0) {
+        const baseHeight = 300; // Minimum height for 1 source
+        const maxHeight = 900;  // Target height for 25 sources
+        const maxSources = 25;  // Reference point for maximum scaling
+
+        // Smooth linear interpolation from baseHeight to maxHeight
+        const scalingFactor = Math.min(primaryNodes.length, maxSources) / maxSources;
+        const calculatedHeight = baseHeight + (scalingFactor * (maxHeight - baseHeight));
+
+        dynamicHeight = Math.round(calculatedHeight) + 'px';
+
+        // Calculate content bounds for debug info
+        const allYPositions = nodes.map(n => n.y);
+        const minY = Math.min(...allYPositions);
+        const maxY = Math.max(...allYPositions);
+
+        // Update debug info
+        debugInfo.contentBounds = { minY: Math.round(minY), maxY: Math.round(maxY) };
+        debugInfo.dynamicHeight = parseInt(dynamicHeight);
+        debugInfo.heightCalculation = `${baseHeight} + (${primaryNodes.length}/${maxSources}) * ${maxHeight - baseHeight} = ${Math.round(calculatedHeight)}px`;
+      } else {
+        dynamicHeight = height; // Fallback to original height
+      }
+
       // Create links, filtering out invalid ones
       links = linkData
         .filter(d => d.source && d.target && d.value)
@@ -345,8 +372,16 @@
             }
           };
         });
+
+    // Update debug info with sample node data
+    debugInfo.sampleNodeData = nodes.slice(0, 3).map(n => ({
+      id: n.id,
+      category: n.nodeCategory,
+      value: n.value,
+      total_all_sources: n.total_all_sources
+    }));
     }
-    
+
     networkOption = {
       legend: {
         show: false
@@ -371,14 +406,19 @@
         show: false,
         type: 'value',
         min: 0,
-        max: 600  // centerY(374) + radiusY + margin = ~550-600
+        max: parseInt(dynamicHeight) // Dynamic based on actual content bounds
       },
       tooltip: {
         show: true,
         position: function(point, params, dom, rect, size) {
           if (params.dataType === 'node' && params.data.nodeCategory === 'primary') {
-            // Position tooltip to the right for primary sources
-            return [point[0] + 20, point[1] - size.contentSize[1] / 2];
+            // Position tooltip based on primary node count
+            // Right for ≤5 nodes, left for ≥6 nodes (labels get pushed off screen with fewer nodes)
+            if (primaryNodeCount <= 5) {
+              return [point[0] + 20, point[1] - size.contentSize[1] / 2]; // Right
+            } else {
+              return [point[0] - size.contentSize[0] - 20, point[1] - size.contentSize[1] / 2]; // Left
+            }
           } else if (params.dataType === 'node' && params.data.nodeCategory === 'unified') {
             // Position tooltip to the left for unified KG
             return [point[0] - size.contentSize[0] - 20, point[1] - size.contentSize[1] / 2];
@@ -393,7 +433,7 @@
             const connections = links.filter(link => link.source === sourceId);
             
             let tooltipContent = `<strong>${params.data.name}</strong><br/>`;
-            tooltipContent += `Total connections: ${params.data.value.toLocaleString()}`;
+            tooltipContent += `${params.data.value.toLocaleString()} total connections`;
             
             if (connections.length > 1) {
               tooltipContent += `<br/><br/>`;
@@ -405,8 +445,13 @@
             
             return tooltipContent;
           } else if (params.dataType === 'node') {
-            // Default tooltip for other nodes
-            return `<strong>${params.data.id.replace('infores:', '')}</strong><br/>Total connections: ${params.data.value.toLocaleString()}`;
+            // Enhanced tooltip for aggregator and unified nodes with dual counts
+            if (params.data.total_all_sources && params.data.total_all_sources !== params.data.value) {
+              return `<strong>${params.data.id.replace('infores:', '')}</strong><br/>${params.data.value.toLocaleString()} from selected sources<br/>(${params.data.total_all_sources.toLocaleString()} from all sources)`;
+            } else {
+              // Default tooltip for nodes without dual counts
+              return `<strong>${params.data.id.replace('infores:', '')}</strong><br/>${params.data.value.toLocaleString()} total connections`;
+            }
           } else if (params.dataType === 'edge') {
             // Tooltip for edges
             return `${params.data.source.replace('infores:', '')} → ${params.data.target.replace('infores:', '')}<br/>Connections: ${params.data.value.toLocaleString()}`;
@@ -457,7 +502,7 @@
   }
 </script>
 
-<ECharts config={networkOption} data={networkData} {height} width="100%" />
+<ECharts config={networkOption} data={networkData} height={dynamicHeight} width="100%" />
 
 <!-- Debug Information Display -->
 <div style="margin-top: 20px; padding: 15px; background-color: #f5f5f5; border-radius: 5px; font-family: monospace; font-size: 12px;">
@@ -474,8 +519,8 @@
       <strong>Radius Y:</strong> {debugInfo.radiusY}px
     </div>
     <div>
-      <strong>Algorithm:</strong> {debugInfo.nodeCount <= 5 ? 'Equal Angular' : 'Cumulative Spacing'}<br/>
-      <strong>Y-Scaling:</strong> {debugInfo.nodeCount <= 5 ? 'Fixed' : 'Dynamic'}<br/>
+      <strong>Algorithm:</strong> Equal Angular Spacing<br/>
+      <strong>Y-Scaling:</strong> Dynamic (all counts)<br/>
       <strong>Radius X:</strong> 150px (fixed)
     </div>
   </div>
@@ -490,6 +535,10 @@
     <strong>Aggregator Y Positions:</strong> [{debugInfo.aggregatorYPositions.join(', ')}] (Count: {debugInfo.aggregatorCount})<br/>
     <strong>Aggregator X Positions:</strong> [{debugInfo.aggregatorXPositions.join(', ')}]<br/>
     <strong>Unified Y Positions:</strong> [{debugInfo.unifiedYPositions.join(', ')}] (Count: {debugInfo.unifiedCount})<br/>
-    <strong>Unified X Positions:</strong> [{debugInfo.unifiedXPositions.join(', ')}]
+    <strong>Unified X Positions:</strong> [{debugInfo.unifiedXPositions.join(', ')}]<br/>
+    <strong>Content Y Bounds:</strong> {debugInfo.contentBounds.minY}px to {debugInfo.contentBounds.maxY}px<br/>
+    <strong>Dynamic Height:</strong> {debugInfo.dynamicHeight}px<br/>
+    <strong>Height Calculation:</strong> {debugInfo.heightCalculation}<br/>
+    <strong>Sample Node Data:</strong> {JSON.stringify(debugInfo.sampleNodeData, null, 2)}
   </div>
 </div>
