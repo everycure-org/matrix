@@ -24,3 +24,69 @@ resource "postgresql_role" "litellm" {
   create_database  = true
   create_role      = true
 }
+
+# Create dedicated schema for litellm
+resource "postgresql_schema" "litellm" {
+  name     = "litellm"
+  database = "app"
+  owner    = postgresql_role.litellm.name
+
+  depends_on = [postgresql_role.litellm]
+}
+
+# Grant ALL privileges on the litellm schema
+resource "postgresql_grant" "litellm_schema_all" {
+  database    = "app"
+  role        = postgresql_role.litellm.name
+  schema      = postgresql_schema.litellm.name
+  object_type = "schema"
+  privileges  = ["USAGE", "CREATE"]
+
+  depends_on = [postgresql_schema.litellm]
+}
+
+# Grant ALL privileges on all existing tables in litellm schema
+resource "postgresql_grant" "litellm_tables" {
+  database    = "app"
+  role        = postgresql_role.litellm.name
+  schema      = postgresql_schema.litellm.name
+  object_type = "table"
+  privileges  = ["ALL"]
+
+  depends_on = [postgresql_schema.litellm]
+}
+
+# Grant ALL privileges on all existing sequences in litellm schema
+resource "postgresql_grant" "litellm_sequences" {
+  database    = "app"
+  role        = postgresql_role.litellm.name
+  schema      = postgresql_schema.litellm.name
+  object_type = "sequence"
+  privileges  = ["ALL"]
+
+  depends_on = [postgresql_schema.litellm]
+}
+
+# Grant default privileges for future tables in litellm schema
+resource "postgresql_default_privileges" "litellm_future_tables" {
+  database    = "app"
+  role        = postgresql_role.litellm.name
+  schema      = postgresql_schema.litellm.name
+  owner       = postgresql_role.litellm.name
+  object_type = "table"
+  privileges  = ["ALL"]
+
+  depends_on = [postgresql_schema.litellm]
+}
+
+# Grant default privileges for future sequences in litellm schema
+resource "postgresql_default_privileges" "litellm_future_sequences" {
+  database    = "app"
+  role        = postgresql_role.litellm.name
+  schema      = postgresql_schema.litellm.name
+  owner       = postgresql_role.litellm.name
+  object_type = "sequence"
+  privileges  = ["ALL"]
+
+  depends_on = [postgresql_schema.litellm]
+}

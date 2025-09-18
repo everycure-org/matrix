@@ -18,8 +18,7 @@ spec:
       values: |
         db:
           useExisting: true
-          # Hardcode username since it's known, use env var for password
-          url: postgresql://litellm:$(DATABASE_PASSWORD)@postgresql-cloudnative-pg-cluster-pooler-rw.postgresql.svc.cluster.local:5432/app
+          url: postgresql://litellm:$(DATABASE_PASSWORD)@postgresql-cloudnative-pg-cluster-pooler-rw.postgresql.svc.cluster.local:5432/app??schema=litellm
 
         image:
           repository: ghcr.io/berriai/litellm
