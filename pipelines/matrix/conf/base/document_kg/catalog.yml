@@ -1,3 +1,68 @@
-document_kg.prm.pks: 
+## External data sources
+
+# This is the Information Resource Registry catalog (https://biolink.github.io/information-resource-registry/registry/) with various metadata about knowledge sources used in biolink-based KGs.
+document_kg.prm.infores: # what does prm mean?
   type: yaml.YAMLDataset
-  filepath: ${globals:paths.release}/pks.yaml # can also create a different directory specifically for documentation
+  filepath: https://raw.githubusercontent.com/biolink/information-resource-registry/refs/heads/main/infores_catalog.yaml
+
+# This is the Reusable Data catalog (https://reusabledata.org/), which contains metadata about various datasets, especially about licensing.
+document_kg.prm.reusabledata:
+  type: json.JSONDataset
+  filepath: https://raw.githubusercontent.com/reusabledata/reusabledata/refs/heads/master/data.json
+
+# This is the KG registry from KG-Hub. It contains various useful metadata about KGs and KG data sources.
+document_kg.prm.kgregistry:
+  type: yaml.YAMLDataset
+  filepath: https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-registry/refs/heads/main/registry/kgs.yml
+
+## Matrix-internal data sources
+
+document_kg.prm.matrix_curated_pks:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw_public}/kg/matrix-pks-curated-metadata.tsv #fix path
+  load_args:
+    sep: "\t"
+
+document_kg.prm.matrix_reviews_pks:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw_public}/kg/matrix-pks-reviews.tsv #fix path
+  load_args:
+    sep: "\t"
+
+### Matrix-curated mappings
+
+document_kg.prm.mapping_reusabledata_infores:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw_public}/mappings/reusabledata-infores.sssom.tsv #fix path
+  load_args:
+    sep: "\t"
+    comment: "#"
+
+document_kg.prm.mapping_kgregistry_infores:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw_public}/mappings/kgregistry-infores.sssom.tsv #fix path
+  load_args:
+    sep: "\t"
+    comment: "#"
+
+### Dynamically created list of primary knowledge sources relevant to Matrix
+
+# No idea what is needed here
+document_kg.prm.pks_integrated_kg_list: 
+  type: pandas.SQLTableDataset
+  table_name: primary_knowledge_sources
+  credentials: sqlite_credentials
+  save_args:
+    if_exists: replace
+
+## Output files
+
+document_kg.prm.pks_yaml: 
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.release}/kg/primary-knowledge-sources.yml #fix path
+  save_args:
+    default_flow_style: false
+
+document_kg.prm.pks_md: 
+  type: text.TextDataset
+  filepath: ${globals:paths.release}/primary-knowledge-sources.md #fix path
