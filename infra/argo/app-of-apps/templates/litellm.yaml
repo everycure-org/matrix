@@ -18,7 +18,8 @@ spec:
       values: |
         db:
           useExisting: true
-          url: postgresql://litellm:{{ `{{ .litellm_postgres_password }}` }}@postgresql-cloudnative-pg-cluster-pooler-rw.postgresql.svc.cluster.local:5432/app
+          # Use environment variable for password - more secure than embedding in URL
+          url: postgresql://litellm:${DATABASE_PASSWORD}@postgresql-cloudnative-pg-cluster-pooler-rw.postgresql.svc.cluster.local:5432/app
 
         image:
           repository: ghcr.io/berriai/litellm
@@ -39,6 +40,14 @@ spec:
         environmentSecrets:
           - litellm-provider-keys
           - postgres
+          
+        # Add database environment variables
+        env:
+          - name: DATABASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres
+                key: password  # Use standard 'password' key name
 
         proxy_config:
           general_settings:
