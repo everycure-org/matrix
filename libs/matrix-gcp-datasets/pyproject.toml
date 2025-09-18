@@ -18,7 +18,7 @@ dependencies = [
     "numpy",
     "pandas",
     "pandas-gbq",
-    "pygsheets>=2.0.0",
+    "gspread",
     "pyspark>=3.5.0",
     "s3fs",
     "tqdm",
