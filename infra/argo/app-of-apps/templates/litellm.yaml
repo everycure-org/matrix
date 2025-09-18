@@ -18,8 +18,8 @@ spec:
       values: |
         db:
           useExisting: true
-          # Use environment variables from the postgres secret (created by environmentSecrets)
-          url: postgresql://${USERNAME}:${PASSWORD}@postgresql-cloudnative-pg-cluster-pooler-rw.postgresql.svc.cluster.local:5432/app
+          # Hardcode username since it's known, use env var for password
+          url: postgresql://litellm:$(DATABASE_PASSWORD)@postgresql-cloudnative-pg-cluster-pooler-rw.postgresql.svc.cluster.local:5432/app
 
         image:
           repository: ghcr.io/berriai/litellm
@@ -39,6 +39,14 @@ spec:
         environmentSecrets:
           - litellm-provider-keys
           - postgres
+
+        # Explicitly define database credentials as environment variables
+        extraEnv:
+          - name: DATABASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres
+                key: password
 
         proxy_config:
           general_settings:
