@@ -45,20 +45,20 @@ order by
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
 
-<ScatterPlot 
+<LineChart 
     data={release_metrics} 
     x="semantic_version" 
     y="n_nodes"
     title="Total Nodes Across Releases"
     yGridlines=false
     xBaseline=false
-    markers=true
+    markers=false
     step=true
     lineColor="#88C0D0"
     sort=false
 >
     <ReferenceLine x={benchmark_release} label="Benchmark" hideValue=true/>
-</ScatterPlot>
+</LineChart>
 
 <LineChart 
     data={release_metrics} 
@@ -67,12 +67,9 @@ order by
     title="Total Edges Across Releases" 
     yGridlines=false
     xBaseline=false
-    markers=true
+    markers=false
     step=true
-    markerShape=emptyCircle
-    markerSize=5
-    lineColor="#9D79D6"    
-    lineWidth=2
+    lineColor="#9D79D6"
     sort=false
 >
     <ReferenceLine x={benchmark_release} label="Benchmark" hideValue=true/>
@@ -84,33 +81,35 @@ order by
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
 
-<BarChart 
-    data={release_metrics} 
-    x="semantic_version" 
+<LineChart
+    data={release_metrics}
+    x="semantic_version"
     y="n_nodes_from_drug_list"
     title="Drug Nodes Across Releases"
     yGridlines=false
     xBaseline=false
     markers=false
-    fillColor="#73C991"    
+    step=true
+    lineColor="#73C991"
     sort=false
 >
     <ReferenceLine x={benchmark_release} label="Benchmark" hideValue=true/>
-</BarChart>
+</LineChart>
 
-<BarChart 
-    data={release_metrics} 
-    x="semantic_version" 
+<LineChart
+    data={release_metrics}
+    x="semantic_version"
     y="median_drug_node_degree"
     title="Median Drug Node Degree"
     yGridlines=false
     xBaseline=false
     markers=false
-    fillColor="#6FAF8C"
+    step=true
+    lineColor="#6FAF8C"
     sort=false
 >
     <ReferenceLine x={benchmark_release} label="Benchmark" hideValue=true/>
-</BarChart>
+</LineChart>
 
 </div>
 
@@ -118,50 +117,53 @@ order by
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
 
-<BarChart 
-    data={release_metrics} 
-    x="semantic_version" 
+<LineChart
+    data={release_metrics}
+    x="semantic_version"
     y="n_nodes_from_disease_list"
-    title="Disease Nodes Across Releases" 
+    title="Disease Nodes Across Releases"
     yGridlines=false
     xBaseline=false
     markers=false
-    fillColor="#BF616A"
+    step=true
+    lineColor="#BF616A"
     sort=false
 >
     <ReferenceLine x={benchmark_release} label="Benchmark" hideValue=true/>
-</BarChart>
+</LineChart>
 
-<BarChart 
-    data={release_metrics} 
-    x="semantic_version" 
+<LineChart
+    data={release_metrics}
+    x="semantic_version"
     y="median_disease_node_degree"
     title="Median Disease Node Degree"
     yGridlines=false
     xBaseline=false
     markers=false
-    fillColor="#D08770"
+    step=true
+    lineColor="#D08770"
     sort=false
 >
     <ReferenceLine x={benchmark_release} label="Benchmark" hideValue=true/>
-</BarChart>
+</LineChart>
 
 </div>
 
 ## Knowledge Sources
 
-<BarChart 
-    data={release_metrics} 
-    x="semantic_version" 
+<LineChart
+    data={release_metrics}
+    x="semantic_version"
     y="n_distinct_knowledge_sources"
     title="Number of primary knowledge sources in each release"
     yGridlines=false
     xBaseline=false
     markers=false
-    fillColor="#7FADDB"
+    step=true
+    lineColor="#7FADDB"
     sort=false
 >
     <ReferenceLine x={benchmark_release} label="Benchmark" hideValue=true/>
-</BarChart>
+</LineChart>
 
 
