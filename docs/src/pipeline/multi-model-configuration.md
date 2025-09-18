@@ -170,14 +170,6 @@ This indicates that multiple models are trying to write to the same output datas
 - Storage: Each model's outputs are stored separately, increasing storage requirements
 - Memory: Matrix generation phase may require more memory when multiple models run simultaneously
 
-## Best Practices
-
-1. Consistent Naming: Use descriptive and consistent model names
-2. Parameter Organization: Keep model parameters in separate files for maintainability
-3. Resource Planning: Consider compute and storage requirements when adding models
-4. Testing: Use dry-run or run a single fold first to validate configuration before full execution
-5. Model Comparison: Leverage multi-model outputs to compare performance and choose the best model for production
-
 ## Migration from Single Model
 
 If migrating from a single-model setup:
