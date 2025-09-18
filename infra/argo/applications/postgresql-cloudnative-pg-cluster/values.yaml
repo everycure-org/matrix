@@ -41,7 +41,7 @@ cluster:
           operator: "Equal"
           value: "pgbouncer"
           effect: "NoSchedule"
-  enableSuperuserAccess: false
+  enableSuperuserAccess: true
   superuserSecret:
     name: superuser-secret
   logLevel: "debug"
