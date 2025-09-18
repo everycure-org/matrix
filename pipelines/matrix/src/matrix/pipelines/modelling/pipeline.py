@@ -152,7 +152,7 @@ def create_model_pipeline(model_name: str, num_shards: int, n_cross_val_folds: i
                     inputs=[
                         "modelling.model_input.drugs_diseases_nodes@pandas",
                         "modelling.model_input.splits@pandas",
-                        f"params:modelling.model_options.generator",
+                        f"params:modelling.{model_name}.model_options.generator",
                         "params:modelling.splitter",
                     ],
                     outputs=f"modelling.{shard}.model_input.enriched_splits",
