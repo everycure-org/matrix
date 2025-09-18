@@ -8,4 +8,4 @@ appVersion: "17.6"
 dependencies:
 - name: cluster
   version: 0.3.1
-  repository: https://cloudnative-pg.github.io/charts
+  repository: https://cloudnative-pg.io/charts/
