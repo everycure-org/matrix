@@ -5,11 +5,11 @@ import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 from joblib import Memory
+from matrix_inject.inject import inject_object
+from matrix_pandera.validator import Column, DataFrameSchema, check_output
 from matrix_schema.datamodel.pandera import get_matrix_node_schema, get_unioned_edge_schema
-from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
 from pyspark.sql.window import Window
 
-from matrix.inject import inject_object
 from matrix.pipelines.integration.filters import determine_most_specific_category
 
 # TODO move these into config
