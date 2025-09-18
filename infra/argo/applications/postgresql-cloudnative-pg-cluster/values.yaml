@@ -42,7 +42,7 @@ cluster:
           value: "pgbouncer"
           effect: "NoSchedule"
   enableSuperuserAccess: true
-  superuserSecret: superuser-secret
+  superuserSecret: "superuser-secret"
   logLevel: "debug"
   instances: 2
   monitoring:
