@@ -1,5 +1,5 @@
 ---
-title: Release Trends
+title: KG Release Trends
 ---
 
 <script>
