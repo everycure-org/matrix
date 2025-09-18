@@ -132,7 +132,7 @@ matrix_generation/
 - **Predictions**: `matrix_generation.fold_{fold}.{model_name}.model_output.sorted_matrix_predictions`
 - **Transformers**: `{model_name}_modelling.fold_{fold}.model_input.transformers`
 
-Tip: Ensure your catalog entries and any custom consumers expect the model_name segment in the dataset paths.
+> Tip: Ensure your catalog entries and any custom consumers expect the model_name segment in their datafactory definition.
 
 ## Adding New Models
 
