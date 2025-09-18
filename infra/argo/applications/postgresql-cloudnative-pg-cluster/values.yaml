@@ -3,6 +3,9 @@ mode: standalone
 version:
   postgresql: "17.6"
 cluster:
+  cluster:
+    superuserSecret: "superuser-secret"
+    enableSuperuserAccess: true
   # PGBouncer configuration
   poolers:
     - name: rw
@@ -41,8 +44,6 @@ cluster:
           operator: "Equal"
           value: "pgbouncer"
           effect: "NoSchedule"
-  superuserSecret: "superuser-secret"
-  enableSuperuserAccess: true
   logLevel: "debug"
   instances: 2
   monitoring:
