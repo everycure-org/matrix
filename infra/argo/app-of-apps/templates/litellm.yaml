@@ -18,8 +18,8 @@ spec:
       values: |
         db:
           useExisting: true
-          # Use environment variable for password - more secure than embedding in URL
-          url: postgresql://litellm:${DATABASE_PASSWORD}@postgresql-cloudnative-pg-cluster-pooler-rw.postgresql.svc.cluster.local:5432/app
+          # Try using the environment variable that should be created by environmentSecrets
+          url: postgresql://litellm:${PASSWORD}@postgresql-cloudnative-pg-cluster-pooler-rw.postgresql.svc.cluster.local:5432/app
 
         image:
           repository: ghcr.io/berriai/litellm
@@ -36,18 +36,16 @@ spec:
           requests: { cpu: "250m", memory: "512Mi" }
           limits:   { cpu: "1",    memory: "2Gi" }
 
-        # Use environmentSecrets to properly reference Kubernetes secrets
         environmentSecrets:
           - litellm-provider-keys
           - postgres
-          
-        # Add database environment variables
-        env:
+
+        extraEnv:
           - name: DATABASE_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: postgres
-                key: password  # Use standard 'password' key name
+                key: password
 
         proxy_config:
           general_settings:
