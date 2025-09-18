@@ -22,6 +22,7 @@ argo-workflows:
   
   controller:
     persistence:
+      nodeStatusOffLoad: true
       archive: true
       postgresql:
         host: postgresql-cloudnative-pg-cluster-pooler-rw.postgresql.svc.cluster.local
