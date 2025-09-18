@@ -23,14 +23,6 @@ argo-workflows:
   controller:
     config:
       archiveLogs: true
-      # Increase workflow size limits to handle large multi-model pipelines
-      workflowDefaults:
-        spec:
-          # Increase max workflow size from default 1Mi to 10Mi
-          maxWorkflowSize: "10Mi"
-      # Enable node status offloading to external storage
-      nodeStatusOffLoad: true
-      offloadNodeStatusTTL: "5m"
     metricsConfig:
       enabled: true
     # Schedule controller on management nodes
