@@ -3,6 +3,15 @@ from matrix_io_utils.primekg import coalesce_duplicate_columns, fix_curies, mond
 
 
 def build_nodes(nodes: pl.DataFrame, drug_features: pl.DataFrame, disease_features: pl.DataFrame) -> pl.DataFrame:
+    """Build a KGX Nodes file from PrimeKG inputs.
+
+    Please refer to this site for downloads: https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/IXA7BM
+
+    Args:
+        nodes: The nodes.csv file from a PrimeKG download
+        drug_features: A drug features file from PrimeKG.  Houses drug features associated with the nodes.csv.
+        disease_features: A disease features file from PrimeKG.  Houses disease features associated with the nodes.csv.
+    """
     main = pl.DataFrame({"node_index": pl.Series([], dtype=pl.Utf8)})
 
     main = main.join(nodes, on=["node_index"], how="full", coalesce=True)
