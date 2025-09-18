@@ -21,9 +21,48 @@ kedro run --env test -p matrix_transformations --from-run my-previous-run
 - This follows the same concept as the `--from-env` flag, which allows users to run the pipeline locally while pulling data from a different environment (e.g. `cloud`).
 - The `--from-env` flag introduced the concept of `from_catalog`, which constructs a secondary `DataCatalog` representing the source. Applicable catalog entries for pipeline inputs are overridden in the current run’s catalog to read from that source catalog.
 
-![](../../../assets/img/from_catalog.drawio.svg)
+<p align="center">
+<img src="../../../assets/img/from_catalog.drawio.svg" alt="from_catalog" />
+</p>
 
-<!-- TODO: Add some specific from_catalog examples! -->
+For example:
+
+Instantiated run catalog:
+
+```
+"model_output.sorted_matrix_predictions@pandas":
+  <<: *_pandas_parquet
+  filepath: runs/this_run/datasets/matrix_generation/model_output
+
+"some_unused_dataset":
+  <<: *_pandas_parquet
+  filepath: runs/this_run/datasets/unused_data
+```
+
+`from_catalog`:
+
+```
+"model_output.sorted_matrix_predictions@pandas":
+<<: \*\_pandas_parquet
+filepath: runs/previous_run_name/datasets/matrix_generation/model_output
+
+"some_unused_dataset":
+<<: \*\_pandas_parquet
+filepath: runs/previous_run_name/datasets/unused_data
+```
+
+Combined catalog:
+`--from-datasets: "model_output.sorted_matrix_predictions@pandas"`
+
+```
+"model_output.sorted_matrix_predictions@pandas":
+<<: \*\_pandas_parquet
+filepath: runs/previous_run_name/datasets/matrix_generation/model_output
+
+"some_unused_dataset":
+<<: \*\_pandas_parquet
+filepath: runs/this_run/datasets/unused_data
+```
 
 ## Running locally (`kedro run`)
 
@@ -65,7 +104,7 @@ Note that you do not have to define `--from-run-datasets` yourself. `kedro exper
 You can test out locally and define this in `kedro run` though. It is possible to run this locally too: Example (use only selected inputs from a previous run):
 
 ```bash
-kedro run -p my_pipeline -e dev \
-  --from-run previous-run-2025-09-01 \
-  --from-run-datasets "feature_table_raw,model_inputs_v1"
+kedro run -p my_pipeline -e test \
+  --from-run previous-run \
+  --from-run-datasets "dataset_1,dataset_2"
 ```
