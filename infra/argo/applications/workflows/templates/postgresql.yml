@@ -14,12 +14,12 @@ spec:
     template:
       type: Opaque
       data:
-        username: "{{ `{{ .username }}` }}"
-        password: "{{ `{{ .Argo_workflows_postgres_password }}` }}"
+        username: "{{ `{{ .argo_workflows_postgres_username }}` }}"
+        password: "{{ `{{ .argo_workflows_postgres_password }}` }}"
   data:
-    - secretKey: username
+    - secretKey: argo_workflows_postgres_username
       remoteRef:
-        key: argo_postgres_username
-    - secretKey: Argo_workflows_postgres_password
+        key: argo_workflows_postgres_username
+    - secretKey: argo_workflows_postgres_password
       remoteRef:
-        key: argo_postgres_Argo_workflows_postgres_password
+        key: argo_workflows_postgres_password
