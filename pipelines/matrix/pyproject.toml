@@ -31,7 +31,6 @@ dependencies = [
     "matrix-auth",
     "matrix-gcp-datasets",
     "matrix-io-utils",
-    "matrix-cli",
     "matrix-mlflow-utils",
     "matrix-fabricator",
     "matrix-inject",
