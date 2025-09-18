@@ -1,0 +1,25 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: argo-postgres-config-secret
+  namespace: litellm
+spec:
+  refreshInterval: "1h"
+  secretStoreRef:
+    name: gcp-store
+    kind: ClusterSecretStore
+  target:
+    name: argo-postgres-config
+    creationPolicy: 'Owner'
+    template:
+      type: Opaque
+      data:
+        username: "{{ `{{ .username }}` }}"
+        password: "{{ `{{ .Argo_workflows_postgres_password }}` }}"
+  data:
+    - secretKey: username
+      remoteRef:
+        key: argo_postgres_username
+    - secretKey: Argo_workflows_postgres_password
+      remoteRef:
+        key: argo_postgres_Argo_workflows_postgres_password

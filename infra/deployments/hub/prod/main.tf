@@ -47,8 +47,8 @@ module "cloudbuild" {
   require_manual_approval    = true
 }
 
-module "postgresql" {
-  source     = "../../../modules/components/postgresql"
-  project_id = var.project_id
-  host       = "localhost"
-}
+# module "postgresql" {
+#   source     = "../../../modules/components/postgresql"
+#   project_id = var.project_id
+#   host       = "localhost"
+# }
