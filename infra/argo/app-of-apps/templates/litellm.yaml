@@ -18,7 +18,7 @@ spec:
       values: |
         db:
           useExisting: true
-          url: postgresql://litellm:{{ `{{ .litellm_postgres_password }}` }}@postgresql-cloudnative-pg-cluster-pooler-rw.postgresql.svc.cluster.local:5432
+          url: postgresql://litellm:{{ `{{ .litellm_postgres_password }}` }}@postgresql-cloudnative-pg-cluster-pooler-rw.postgresql.svc.cluster.local:5432/app
 
         image:
           repository: ghcr.io/berriai/litellm
