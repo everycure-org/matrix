@@ -17,7 +17,7 @@ The Matrix pipeline supports running multiple machine learning models in paralle
 
 ### Model Definition
 
-Models are defined in the `DYNAMIC_PIPELINES_MAPPING` configuration in `matrix.settings.DYNAMIC_PIPELINES_MAPPING` in `pipelines/matrix/src/matrix/settings.py`, which is built with `matrix.settings.generate_dynamic_pipeline_mapping` and wrapped by `matrix.settings.disable_private_datasets`, which is built with `matrix.settings.generate_dynamic_pipeline_mapping`:
+Models are defined in the `DYNAMIC_PIPELINES_MAPPING` configuration in `matrix.settings.DYNAMIC_PIPELINES_MAPPING` in `pipelines/matrix/src/matrix/settings.py`, which is built with `matrix.settings.generate_dynamic_pipeline_mapping` and wrapped by `matrix.settings.disable_private_datasets`:
 
 ```python
 DYNAMIC_PIPELINES_MAPPING = (
