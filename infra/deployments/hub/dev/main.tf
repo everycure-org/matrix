@@ -44,3 +44,9 @@ module "cloudbuild" {
   slack_webhook_url          = var.slack_webhook_url
   gitcrypt_key               = var.gitcrypt_key
 }
+
+module "postgresql" {
+  source     = "../../../modules/components/postgresql"
+  project_id = var.project_id
+  host       = "localhost"
+}

@@ -46,3 +46,9 @@ module "cloudbuild" {
   gitcrypt_key               = var.gitcrypt_key
   require_manual_approval    = true
 }
+
+module "postgresql" {
+  source     = "../../../modules/components/postgresql"
+  project_id = var.project_id
+  host       = "localhost"
+}
