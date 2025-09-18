@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: redis-operator
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "7"
 spec:
   destination:
     namespace: redis
