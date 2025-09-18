@@ -164,7 +164,18 @@ def build_nodes(nodes: pl.DataFrame, drug_features: pl.DataFrame, disease_featur
 
 
 def build_edges(edges: pl.DataFrame) -> pl.DataFrame:
-    """Build the edges tsv file."""
+    """Build the edges tsv file.
+
+    Please refer to this site for downloads: https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/IXA7BM
+
+    1. Add a few columns to align with Matrix Schema
+    2. Explode the MONDO_grouped columns
+    3. Fix CURIE values...making them biolink compliant
+    4. Applying predicate mappings by filtering and then concatenating
+
+    Args:
+        edges: The edges.csv file from a PrimeKG download
+    """
 
     edges = edges.lazy().with_columns(
         [
