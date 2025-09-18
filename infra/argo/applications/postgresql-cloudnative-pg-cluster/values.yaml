@@ -6,70 +6,70 @@ cluster:
   cluster:
     superuserSecret: "superuser-secret"
     enableSuperuserAccess: true
-  # PGBouncer configuration
-  poolers:
-    - name: rw
-      type: rw
-      instances: 1
-      monitoring:
-        enabled: true
-        podMonitor:
+    # PGBouncer configuration
+    poolers:
+      - name: rw
+        type: rw
+        instances: 1
+        monitoring:
           enabled: true
-          relabelings:
-            - targetLabel: type
-              replacement: rw
-      # PGBouncer scheduling configuration
-      nodeSelector:
-        workload-type: management
-      tolerations:
-        - key: "workload-type"
-          operator: "Equal"
-          value: "management"
-          effect: "NoSchedule"
-    - name: ro
-      type: ro
-      instances: 1
-      monitoring:
-        enabled: true
-        podMonitor:
+          podMonitor:
+            enabled: true
+            relabelings:
+              - targetLabel: type
+                replacement: rw
+        # PGBouncer scheduling configuration
+        nodeSelector:
+          workload-type: management
+        tolerations:
+          - key: "workload-type"
+            operator: "Equal"
+            value: "management"
+            effect: "NoSchedule"
+      - name: ro
+        type: ro
+        instances: 1
+        monitoring:
           enabled: true
-          relabelings:
-            - targetLabel: type
-              replacement: ro
-      # PGBouncer scheduling configuration
-      nodeSelector:
-        node-type: application
-      tolerations:
-        - key: "application"
-          operator: "Equal"
-          value: "pgbouncer"
-          effect: "NoSchedule"
-  logLevel: "debug"
-  instances: 2
-  monitoring:
-    enabled: true
-    podMonitor:
+          podMonitor:
+            enabled: true
+            relabelings:
+              - targetLabel: type
+                replacement: ro
+        # PGBouncer scheduling configuration
+        nodeSelector:
+          node-type: application
+        tolerations:
+          - key: "application"
+            operator: "Equal"
+            value: "pgbouncer"
+            effect: "NoSchedule"
+    logLevel: "debug"
+    instances: 2
+    monitoring:
       enabled: true
-    prometheusRule:
+      podMonitor:
+        enabled: true
+      prometheusRule:
+        enabled: true
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "256Mi"
+    storage:
+      storageClass: "premium-rwo"
+    walStorage:
+      storageClass: "premium-rwo"
       enabled: true
-  resources:
-    requests:
-      cpu: "250m"
-      memory: "256Mi"
-  storage:
-    storageClass: "premium-rwo"
-  walStorage:
-    storageClass: "premium-rwo"
-    enabled: true
   
-  # Node scheduling configuration
-  nodeSelector:
-    workload-type: management
-  tolerations:
-    - key: "workload-type"
-      operator: "Equal"
-      value: "management"
-      effect: "NoSchedule"
+    # Node scheduling configuration
+    nodeSelector:
+      workload-type: management
+    tolerations:
+      - key: "workload-type"
+        operator: "Equal"
+        value: "management"
+        effect: "NoSchedule"
     
 # Backup configuration
 backups:
