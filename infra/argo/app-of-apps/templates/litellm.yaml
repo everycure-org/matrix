@@ -16,6 +16,11 @@ spec:
     path: deploy/charts/litellm-helm
     helm:
       values: |
+        db:
+          useExisting: true
+          url: 
+            name: litellm-db
+            key: POSTGRES_URL
         image:
           repository: ghcr.io/berriai/litellm
           tag: main-stable
@@ -34,7 +39,7 @@ spec:
         # Use environmentSecrets to properly reference Kubernetes secrets
         environmentSecrets:
           - litellm-provider-keys
-          # - litellm-db
+          - litellm-db
 
         proxy_config:
           general_settings:
