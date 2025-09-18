@@ -29,10 +29,10 @@ argo-workflows:
         database: app
         tableName: argo_workflows
         userNameSecret:
-          name: argo-postgres-config
+          name: argo-postgres-config-secret
           key: username
         passwordSecret:
-          name: argo-postgres-config
+          name: argo-postgres-config-secret
           key: password
     config:
       archiveLogs: true
