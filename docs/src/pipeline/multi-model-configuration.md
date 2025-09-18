@@ -64,8 +64,6 @@ DYNAMIC_PIPELINES_MAPPING = (
   - `uv run kedro run --pipeline matrix_transformation`
   - `uv run kedro run --pipeline evaluation`
 
-Note: pipelines use the dynamic mapping in `pipelines/matrix/src/matrix/settings.py`, which is built with `matrix.settings.generate_dynamic_pipeline_mapping` and wrapped by `matrix.settings.disable_private_datasets`, which is built with `matrix.settings.generate_dynamic_pipeline_mapping` and wrapped by `matrix.settings.disable_private_datasets`, so the set of models is code-driven.
-
 ## How It Works
 
 ### 1. Model Training Phase
@@ -128,7 +126,7 @@ matrix_generation/
 
 ### Dataset Naming Convention
 
-- **Training outputs**: `{model_name}_modelling.fold_{fold}.models.model`
+- **Training outputs**: `modelling.fold_{fold}.{model_name}.models.model`
 - **Predictions**: `matrix_generation.fold_{fold}.{model_name}.model_output.sorted_matrix_predictions`
 - **Transformers**: `{model_name}_modelling.fold_{fold}.model_input.transformers`
 
