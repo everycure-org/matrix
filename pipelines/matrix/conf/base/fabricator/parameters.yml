@@ -2124,7 +2124,9 @@ fabricator.drugbank_gt:
             seed: 40399
         "primary_drug_id":
           type: generate_unique_id
-          prefix: "DB:"
+          prefixes:
+            - "DB"
+          delimiter: ":"
           id_length: 8
         "secondary_drug":
           type: copy_column
@@ -2134,11 +2136,15 @@ fabricator.drugbank_gt:
             seed: 40199
         "secondary_drug_id":
           type: generate_unique_id
-          prefix: "DB:"
+          prefixes:
+            - "DB"
+          delimiter: ":"
           id_length: 8
         "condition_id":
           type: generate_unique_id
-          prefix: "DB_CONDITION:"
+          prefixes:
+            - "DB_CONDITION"
+          delimiter: ":"
           id_length: 18
         "primary_drug_id_norm":
           type: copy_column
@@ -2169,7 +2175,9 @@ fabricator.drugbank_gt:
             seed: 40399
         "primary_drug_id":
           type: generate_unique_id
-          prefix: "DB:"
+          prefixes:
+            - "DB"
+          delimiter: ":"
           id_length: 8
         "secondary_drug_name":
           type: copy_column
@@ -2179,7 +2187,9 @@ fabricator.drugbank_gt:
             seed: 40399
         "secondary_drug_id":
           type: generate_unique_id
-          prefix: "DB:"
+          prefixes:
+            - "DB"
+          delimiter: ":"
           id_length: 8
         "condition_name":
           type: copy_column
@@ -2189,7 +2199,9 @@ fabricator.drugbank_gt:
             seed: 30399
         "condition_id":
           type: generate_unique_id
-          prefix: "DB_CONDITION:"
+          prefixes:
+            - "DB_CONDITION"
+          delimiter: ":"
           id_length: 18
         "drug_id_norm":
           type: copy_column
