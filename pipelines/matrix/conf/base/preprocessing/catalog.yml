@@ -138,20 +138,6 @@ preprocessing.int.embiology.node_attributes_normalised_ids@spark:
   <<: *_spark_parquet
   filepath: ${globals:paths.tmp}/embiology/int/node_attributes_normalised_ids
 
-preprocessing.raw.clinical_trials_data:
-  <<: *_medical_clinical_trials_sheet_dataset
-  load_args:
-    sheet_name: new_clinical_trial_DD_pairs
-    columns:
-      - "clinical_trial_id"
-      - "reason_for_rejection"
-      - "drug_name"
-      - "disease_name"
-      - "significantly_better"
-      - "non_significantly_better"
-      - "non_significantly_worse"
-      - "significantly_worse"
-
 preprocessing.int.mapped_clinical_trials_data:
   type:  pandas.CSVDataset
   filepath: ${globals:paths.tmp}/preprocessing_clinical_trials.tsv
@@ -183,9 +169,3 @@ preprocessing.reporting.ec_medical_team.edges:
   save_args:
     sheet_name: new_edges
     write_columns: ["SourceId", "TargetId"]
-
-preprocessing.reporting.mapped_clinical_trials_data:
-  <<: [*_layer_raw, *_medical_clinical_trials_sheet_dataset]
-  save_args:
-    sheet_name: new_clinical_trial_DD_pairs
-    write_columns: ["drug_curie", "disease_curie"]

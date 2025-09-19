@@ -139,13 +139,6 @@ def create_ec_clinical_data_pipeline() -> Pipeline:
                 name="clean_clinical_trial_data",
                 tags=["ec-clinical-trials-data"],
             ),
-            node(
-                func=lambda x: x,
-                inputs="preprocessing.int.mapped_clinical_trials_data",
-                outputs="preprocessing.reporting.mapped_clinical_trials_data",
-                name="report_clinical_trial_data",
-                tags=["ec-clinical-trials-data"],
-            ),
         ]
     )
 
