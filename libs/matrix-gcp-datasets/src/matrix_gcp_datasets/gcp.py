@@ -251,7 +251,7 @@ class GoogleSheetsDataset(CSVDataset):
             service_account_file_path: Path to the service account file. The Google Sheet must be shared with this service account's email.
         """
         self._gc = gspread.service_account(filename=service_account_file_path)
-        self._worksheet = self._gc.open_by_url(spreadsheet_url).get_worksheet(worksheet_gid)
+        self._worksheet = self._gc.open_by_url(spreadsheet_url).get_worksheet_by_id(worksheet_gid)
 
         super().__init__(filepath=None)
 
