@@ -291,13 +291,14 @@ def test_make_predictions_and_sort(
     sample_matrix_data,
     transformers,
     mock_model,
+    mock_model_2,
 ):
     result = make_predictions_and_sort(
         node_embeddings=spark.createDataFrame(sample_node_embeddings),
         pairs=spark.createDataFrame(sample_matrix_data),
-        transformers=transformers,
-        model=mock_model,
-        features=["source_+", "target_+"],
+        transformers=[transformers, transformers],  # Use same transformers for both models
+        models=[mock_model, mock_model_2],  # Use both mock models
+        features=[["source_+", "target_+"], ["source_+", "target_+"]],  # Same features for both models
         treat_score_col_name="treat score",
         not_treat_score_col_name="not treat score",
         unknown_score_col_name="unknown score",

@@ -1,6 +1,7 @@
 import logging
 from typing import Dict, List, Optional, Union
 
+import numpy as np
 import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.functions as F
@@ -194,21 +195,21 @@ def generate_pairs(
 def make_predictions_and_sort(
     node_embeddings: ps.DataFrame,
     pairs: ps.DataFrame,
-    transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
-    model: ModelWrapper,
-    features: List[str],
+    transformers: List[Dict[str, Dict[str, Union[_BaseImputer, List[str]]]]],
+    models: List[ModelWrapper],
+    features: List[List[str]],
     treat_score_col_name: str,
     not_treat_score_col_name: str,
     unknown_score_col_name: str,
 ) -> ps.DataFrame:
-    """Generate and sort probability scores for a drug-disease dataset.
+    """Generate and sort probability scores for a drug-disease dataset using multiple models.
 
     Args:
         node_embeddings: Dataframe with node embeddings.
         pairs: drug disease pairs to predict scores for.
-        transformers: Dictionary of trained transformers.
-        model: Model making the predictions.
-        features: List of features, may be regex specified.
+        transformers: List of dictionaries of trained transformers for each model.
+        models: List of models making the predictions.
+        features: List of feature lists, one for each model (may be regex specified).
         treat_score_col_name: Probability score column name.
         not_treat_score_col_name: Probability score column name for not treat.
         unknown_score_col_name: Probability score column name for unknown.
@@ -236,16 +237,29 @@ def make_predictions_and_sort(
     )
 
     def model_predict(partition_df: pd.DataFrame) -> pd.DataFrame:
-        transformed = apply_transformers(partition_df, transformers)
+        all_not_treat_scores = []
+        all_treat_scores = []
+        all_unknown_scores = []
 
-        # TODO: can we get columns from transformers directly?
-        model_features = _extract_elements_in_list(transformed.columns, features, True)
+        # Iterate through each model and its corresponding transformers/features
+        for i, (transformer_dict, model, model_features_list) in enumerate(zip(transformers, models, features)):
+            transformed = apply_transformers(partition_df, transformer_dict)
 
-        model_predictions = model.predict_proba(transformed[model_features].values)
-        # TODO: assign scores in one pass?
-        partition_df[not_treat_score_col_name] = model_predictions[:, 0]
-        partition_df[treat_score_col_name] = model_predictions[:, 1]
-        partition_df[unknown_score_col_name] = model_predictions[:, 2]
+            # Extract features for this specific model
+            model_features = _extract_elements_in_list(transformed.columns, model_features_list, True)
+
+            # Get predictions from this model
+            model_predictions = model.predict_proba(transformed[model_features].values)
+
+            # Store predictions for each class
+            all_not_treat_scores.append(model_predictions[:, 0])
+            all_treat_scores.append(model_predictions[:, 1])
+            all_unknown_scores.append(model_predictions[:, 2])
+
+        # Aggregate predictions by averaging across models
+        partition_df[not_treat_score_col_name] = np.mean(all_not_treat_scores, axis=0)
+        partition_df[treat_score_col_name] = np.mean(all_treat_scores, axis=0)
+        partition_df[unknown_score_col_name] = np.mean(all_unknown_scores, axis=0)
 
         return partition_df.drop(columns=["source_embedding", "target_embedding"])
 
