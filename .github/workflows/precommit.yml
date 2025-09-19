@@ -21,6 +21,8 @@ jobs:
     
     steps:
       - uses: gruntwork-io/terragrunt-action@v3
+        with:
+          tg_version: '3.0.2'
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
