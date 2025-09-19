@@ -41,10 +41,11 @@ export EVIDENCE_VAR__max_edge_failed_normalization_by_normalization_set_prefix :
 bump_basepath:
 	node ./scripts/update-basepath.cjs $(RELEASE_VERSION)
 
-generate-release-sql:
-	RELEASE_VERSION=$(RELEASE_VERSION) PROJECT_ID=$(PROJECT_ID) node ./scripts/generate-release-trends-sql.cjs
+# Generate release trends SQL dynamically based on available BigQuery datasets
+generate-release-trends-sql:
+	node ./scripts/generate-release-trends-sql.cjs
 
-build: bump_basepath generate-release-sql
+build: bump_basepath generate-release-trends-sql
 	@echo "Building with EVIDENCE_VAR__release_version=$(EVIDENCE_VAR__release_version)"
 	npm run build:strict
 
@@ -66,7 +67,7 @@ populate-valid-edge-types-source:
 	node ./scripts/load-valid-edge-types.cjs
 	rm -f scripts/temp_valid_edge_types.tsv
 
-run-sources: populate-infores-source populate-valid-edge-types-source
+run-sources: populate-infores-source populate-valid-edge-types-source generate-release-trends-sql
 	npm run sources 
 
 run-dev:
