@@ -112,6 +112,7 @@ jobs:
       matrix:
         command:
           - name: "precommit"
+            uses: gruntwork-io/terragrunt-action@v3
             run: "make precommit"
           - name: "kedro-catalog-base"
             run: "uv run kedro catalog resolve --env base"
@@ -160,9 +161,6 @@ jobs:
       # Install Python dependencies
       - name: Install Python dependencies
         run: uv sync
-      
-      - name: Install Terragrunt and OpenTofu
-        uses: gruntwork-io/terragrunt-action@v3
 
       # Run the specific command for this matrix job
       - name: "Run ${{ matrix.command.name }}"
