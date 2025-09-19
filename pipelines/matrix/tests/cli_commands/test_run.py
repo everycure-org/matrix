@@ -175,6 +175,8 @@ def test_run_basic():
         conf_source=None,
         params={},
         from_env=None,
+        from_run=None,
+        from_run_datasets=[],
     )
     # Create the mock for kedro_session and its method 'create'
     kedro_session = MagicMock()
@@ -210,6 +212,8 @@ def test_run_with_fabricator_env_error():
                 conf_source=None,
                 params={},
                 from_env=None,
+                from_run=None,
+                from_run_datasets=[],
             ),
             kedro_session=MagicMock(),
         )
@@ -234,6 +238,8 @@ def mock_config():
         conf_source="",
         params={},
         from_env="test_from_env",
+        from_run=None,
+        from_run_datasets=[],
     )
 
 
@@ -288,6 +294,8 @@ def test_extract_config_without_from_env(mock_session):
         conf_source="",
         params={},
         from_env=None,
+        from_run=None,
+        from_run_datasets=[],
     )
     result = _extract_config(mock_config, mock_session)
     assert result is None

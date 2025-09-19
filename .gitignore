@@ -6,14 +6,17 @@
 
 
 # IDE
-.vscode/
 .idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 
 # Drawio
 *.bkp
 
 # Data
 data/
+!docs/**/data/
 neo4j_db/
 data.tar.gz
 
@@ -52,6 +55,7 @@ gha-kubeconfig*
 **/*.gen.tf
 /provider.tf
 
+**/*.egg-info/
 
 # ignoring all claude related files for now
 .claude/**

@@ -56,10 +56,10 @@ WITH ranked_data AS (
             name,
             SPLIT(subject, ':')[OFFSET(0)] AS prefix,
             category,
-            'ground_truth' AS normalization_set,
+            'kgml_xdtd_ground_truth' AS normalization_set,
         FROM 
-            `${project_id}.release_${bq_release_version}.ground_truth_edges_normalized`        
-            JOIN `${project_id}.release_${bq_release_version}.rtx_kg2_nodes_normalized` ON subject = id
+            `${project_id}.release_${bq_release_version}.kgml_xdtd_ground_truth_edges_normalized` k
+            JOIN `${project_id}.release_${bq_release_version}.rtx_kg2_nodes_normalized` r ON k.subject = r.id
         WHERE subject_normalization_success = false
         UNION DISTINCT
         SELECT 
@@ -67,10 +67,32 @@ WITH ranked_data AS (
             name,
             SPLIT(object, ':')[OFFSET(0)] AS prefix, 
             category,
-            'ground_truth' AS normalization_set,
+            'kgml_xdtd_ground_truth' AS normalization_set,
         FROM 
-            `${project_id}.release_${bq_release_version}.ground_truth_edges_normalized`        
-            JOIN `${project_id}.release_${bq_release_version}.rtx_kg2_nodes_normalized` ON object = id
+            `${project_id}.release_${bq_release_version}.kgml_xdtd_ground_truth_edges_normalized` k
+            JOIN `${project_id}.release_${bq_release_version}.rtx_kg2_nodes_normalized` r ON k.object = r.id
+        WHERE object_normalization_success = false
+        UNION DISTINCT
+        SELECT 
+            subject AS id,
+            name,
+            SPLIT(subject, ':')[OFFSET(0)] AS prefix,
+            category,
+            'ec_ground_truth' AS normalization_set,
+        FROM 
+            `${project_id}.release_${bq_release_version}.ec_ground_truth_edges_normalized` e
+            JOIN `${project_id}.release_${bq_release_version}.rtx_kg2_nodes_normalized` r ON e.subject = r.id
+        WHERE subject_normalization_success = false
+        UNION DISTINCT
+        SELECT 
+            object AS id,
+            name,
+            SPLIT(object, ':')[OFFSET(0)] AS prefix, 
+            category,
+            'ec_ground_truth' AS normalization_set,
+        FROM 
+            `${project_id}.release_${bq_release_version}.ec_ground_truth_edges_normalized` e
+            JOIN `${project_id}.release_${bq_release_version}.rtx_kg2_nodes_normalized` r ON e.object = r.id
         WHERE object_normalization_success = false
         UNION DISTINCT
         SELECT 

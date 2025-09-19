@@ -1,6 +1,8 @@
 ARG CUDA_IMAGE=nvidia/cuda:12.6.2-cudnn-runtime-ubuntu24.04
 FROM $CUDA_IMAGE AS build
 
+# ---------------------------------
+# ------- GPU/System start ------
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
 
@@ -14,25 +16,39 @@ RUN apt-get update && \
 # GPU setup
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+LABEL com.nvidia.volumes.needed="nvidia_driver"
+# ------- GPU/System end ----------
+# ---------------------------------
+# ------- Dependencies start ------
+COPY --from=ghcr.io/astral-sh/uv:0.8.13 /uv /uvx /bin/
 
-WORKDIR /app
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-ADD requirements.txt .
+WORKDIR /matrix
+COPY pyproject.toml uv.lock ./
 
-# Install Python dependencies
-RUN --mount=type=cache,target=/root/.cache uv venv -p 3.11 && \
-    uv pip install -r requirements.txt
-ENV PATH=/app/.venv/bin:$PATH
+# now we run this inside of the matrix pipeline folder.
+WORKDIR /matrix/pipelines/matrix
+COPY pipelines/matrix/pyproject.toml .
+# We use --no-install-workspace to avoid re-installing the the entire workspace
+# dependncies here, only installing the matrix pipeline dependencies
+RUN --mount=type=cache,target=/root/.cache uv sync --frozen  --no-install-workspace
+ENV PATH=/matrix/.venv/bin:$PATH
 
-# Cache drivers as part of image
-COPY conf/base/spark.yml conf/base/spark.yml
-COPY scripts/maven-deps.py maven-deps.py
-RUN python maven-deps.py && rm -rf /root/.ivy2/cache
+# Cache spark drivers as part of image
+COPY pipelines/matrix/conf/base/spark.yml ./conf/base/spark.yml
+COPY pipelines/matrix/scripts/maven-deps.py ./maven-deps.py
+RUN --mount=type=cache,target=/root/.ivy2/cache python maven-deps.py
 
-# Set git commit sha as env variable, useful for tracing back code to data
+# We copy in the libs folder here and run a full sync which leads to only the delta
+# being installed which are... just the libs. the matrix pipeline 
+# pyproject.toml explicitly defines these as dependencies, thus it tries installing them now
+COPY libs/ ../../libs/
+RUN uv sync --frozen
+# ---------- Dependencies end -----
+# ---------------------------------
+
+COPY pipelines/matrix/ .
+
+# Set git commit sha as env variable LAST to avoid cache invalidation
+# This should be the final layer that changes per commit
 ARG GIT_SHA
 ENV GIT_SHA=$GIT_SHA
-
-ADD . .
-
-LABEL com.nvidia.volumes.needed="nvidia_driver"

@@ -50,15 +50,32 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 {"name": "spoke", "integrate_in_kg": True, "is_private": True, "validate": True},
                 {"name": "embiology", "integrate_in_kg": True, "is_private": True},
                 {"name": "robokop", "integrate_in_kg": True, "is_private": False, "validate": True},
-                # {"name": "ec_medical_team", "integrate_in_kg": True},
                 {"name": "drug_list", "integrate_in_kg": False, "has_edges": False, "is_core": True},
                 {"name": "disease_list", "integrate_in_kg": False, "has_edges": False, "is_core": True},
-                {"name": "ground_truth", "integrate_in_kg": False, "has_nodes": False},
+                {
+                    "name": "kgml_xdtd_ground_truth",
+                    "has_nodes": False,
+                    "has_edges": True,
+                    "integrate_in_kg": False,
+                },
+                {
+                    "name": "ec_ground_truth",
+                    "has_nodes": False,
+                    "has_edges": True,
+                    "integrate_in_kg": False,
+                },
+                {
+                    "name": "drugbank_ground_truth",
+                    "has_nodes": False,
+                    "has_edges": True,
+                    "integrate_in_kg": False,
+                    "is_private": True,
+                },
                 # {"name": "drugmech", "integrate_in_kg": False, "has_nodes": False},
                 {"name": "ec_clinical_trails", "integrate_in_kg": False},
                 {"name": "off_label", "integrate_in_kg": False, "has_nodes": False},
                 # TODO: enable orchard once permissions are clarified
-                # {"name": "orchard", "integrate_in_kg": False, "has_nodes": False, "is_private": True},
+                {"name": "orchard", "integrate_in_kg": False, "has_nodes": False, "is_private": True},
             ],
             "modelling": {
                 "model_name": "xg_ensemble",  # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth
@@ -90,11 +107,9 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
 def _load_setting(path):
     """Utility function to load a settings value from the data catalog."""
     path = path.split(".")
-
     obj = DYNAMIC_PIPELINES_MAPPING()
     for p in path:
         obj = obj[p]
-
     return obj
 
 

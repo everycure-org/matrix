@@ -46,12 +46,21 @@ integration:
       name: drugmech
       transformer:
          _object: matrix.pipelines.integration.transformers.drugmech.DrugMechTransformer
-         version: ${globals:data_sources.drugmech.version}
-    ground_truth:
-      name: ground_truth
+    kgml_xdtd_ground_truth: 
+      name: kgml_xdtd_ground_truth
       transformer:
-        _object: matrix.pipelines.integration.transformers.ground_truth.KGMLGroundTruthTransformer
-        version: ${globals:data_sources.gt.version}
+        _object: matrix.pipelines.integration.transformers.kgml_xdtd_ground_truth.KGMLGroundTruthTransformer
+        version: ${globals:data_sources.kgml_xdtd_gt.version}
+    ec_ground_truth: 
+      name: ec_ground_truth
+      transformer:
+        _object: matrix.pipelines.integration.transformers.ec_ground_truth.ECGroundTruthTransformer
+        version: ${globals:data_sources.ec_gt.version}
+    drugbank_ground_truth: 
+      name: drugbank_ground_truth
+      transformer:
+        _object: matrix.pipelines.integration.transformers.drugbank_ground_truth.DrugbankGroundTruthTransformer
+        version: ${globals:data_sources.drugbank_gt.version}
     off_label:
       name: off_label
       transformer:
@@ -137,4 +146,4 @@ integration:
     # E.g. if a node has all_categories [biolink:ChemicalEntity, biolink:NamedThing],
     # then node will be assigned biolink:ChemicalEntity as most specific category.
     # For RTX-KG2 reproduction from KGML-xDTD, choose false
-    retrieve_most_specific_category: false
+    retrieve_most_specific_category: true

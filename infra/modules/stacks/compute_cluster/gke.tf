@@ -8,20 +8,16 @@ locals {
   # node groups in 2 node locations, hence why the total amount of node groups.
   # https://console.cloud.google.com/kubernetes/clusters/details/us-central1/compute-cluster/logs/autoscaler_logs?chat=true&inv=1&invt=Abp5KQ&project=mtrx-hub-dev-3of
   n2d_node_pools = [for size in [8, 16, 32, 48, 64] : {
-    name           = "n2d-highmem-${size}-nodes"
-    machine_type   = "n2d-highmem-${size}"
-    node_locations = local.default_node_locations
-    min_count      = 0
-    max_count      = 10
-    # NOTE: Local SSDs are only available to certain node groups, and hence cannot be set for the
-    # reguluar n2 nodes. The statement below allocates 2 SSDs to the node, each having a capacity of 375G.
-    # https://cloud.google.com/compute/docs/general-purpose-machines#n2d-high-mem
-    local_ssd_ephemeral_storage_count = size < 64 ? 2 : 4
-    disk_type                         = "pd-ssd"
-    disk_size_gb                      = 200
-    enable_gcfs                       = true
-    enable_gvnic                      = true
-    initial_node_count                = 0
+    name               = "n2d-highmem-${size}-nodes"
+    machine_type       = "n2d-highmem-${size}"
+    node_locations     = local.default_node_locations
+    min_count          = 0
+    max_count          = 10
+    disk_type          = "pd-ssd"
+    disk_size_gb       = 200
+    enable_gcfs        = true
+    enable_gvnic       = true
+    initial_node_count = 0
     }
   ]
 
@@ -63,21 +59,17 @@ locals {
 
   # Spot node pools for cost-effective compute workloads
   n2d_spot_node_pools = [for size in [8, 16, 32, 48, 64] : {
-    name           = "n2d-highmem-${size}-spot-nodes"
-    machine_type   = "n2d-highmem-${size}"
-    node_locations = local.default_node_locations
-    min_count      = 0
-    max_count      = 20 # Higher max count for spot instances
-    # NOTE: Local SSDs are only available to certain node groups, and hence cannot be set for the
-    # reguluar n2 nodes. The statement below allocates 2 SSDs to the node, each having a capacity of 375G.
-    # https://cloud.google.com/compute/docs/general-purpose-machines#n2d-high-mem
-    local_ssd_ephemeral_storage_count = size < 64 ? 2 : 4
-    disk_type                         = "pd-ssd"
-    disk_size_gb                      = 200
-    enable_gcfs                       = true
-    enable_gvnic                      = true
-    initial_node_count                = 0
-    spot                              = true
+    name               = "n2d-highmem-${size}-spot-nodes"
+    machine_type       = "n2d-highmem-${size}"
+    node_locations     = local.default_node_locations
+    min_count          = 0
+    max_count          = 20 # Higher max count for spot instances
+    disk_type          = "pd-ssd"
+    disk_size_gb       = 200
+    enable_gcfs        = true
+    enable_gvnic       = true
+    initial_node_count = 0
+    spot               = true
     }
   ]
 
@@ -102,13 +94,32 @@ locals {
     }
   ]
 
+  # GitHub Actions runner node pools for CI/CD workloads
+  github_runner_node_pools = [
+    {
+      name               = "github-runner-standard-nodes"
+      machine_type       = "e2-standard-8" # 8 vCPUs, 32GB RAM - good for CI/CD and Docker in Docker (dind)
+      node_locations     = local.default_node_locations
+      min_count          = 0
+      max_count          = 50
+      local_ssd_count    = 0
+      disk_size_gb       = 100 # Smaller disk for CI runners
+      disk_type          = "pd-ssd"
+      enable_gcfs        = true
+      enable_gvnic       = true
+      initial_node_count = 0
+      spot               = false
+    }
+  ]
+
   # Combine all node pools
   node_pools_combined = concat(
     local.n2d_node_pools,
     local.gpu_node_pools,
     local.management_node_pools,
     local.n2d_spot_node_pools,
-    local.gpu_spot_node_pools
+    local.gpu_spot_node_pools,
+    local.github_runner_node_pools
   )
 
   # Define node pools that should have the large memory taint
@@ -178,6 +189,15 @@ locals {
     "n2d-highmem-8-nodes" = [
       {
         key    = "workload"
+        value  = "true"
+        effect = "NO_SCHEDULE"
+      }
+    ]
+
+    # GitHub Actions runner node pools
+    "github-runner-standard-nodes" = [
+      {
+        key    = "github-runner"
         value  = "true"
         effect = "NO_SCHEDULE"
       }
@@ -275,14 +295,18 @@ module "gke" {
         gpu_node  = can(pool.accelerator_count) ? "true" : "false"
         spot_node = lookup(pool, "spot", false) ? "true" : "false"
         # Billing labels for cost tracking
-        cost-center       = pool.name == "management-nodes" ? "infrastructure-management" : "compute-workloads"
-        workload-category = pool.name == "management-nodes" ? "platform-services" : "data-science"
+        cost-center       = pool.name == "management-nodes" ? "infrastructure-management" : contains(["github-runner-standard-nodes", "github-runner-spot-nodes"], pool.name) ? "ci-cd-infrastructure" : "compute-workloads"
+        workload-category = pool.name == "management-nodes" ? "platform-services" : contains(["github-runner-standard-nodes", "github-runner-spot-nodes"], pool.name) ? "ci-cd" : "data-science"
         environment       = var.environment
       },
       pool.name == "management-nodes" ? {
         workload-type    = "management"
         billing-category = "infrastructure"
         service-tier     = "management"
+        } : contains(["github-runner-standard-nodes", "github-runner-spot-nodes"], pool.name) ? {
+        workload-type    = "ci-cd"
+        billing-category = lookup(pool, "spot", false) ? "github-runner-spot" : "github-runner-standard"
+        service-tier     = "ci-cd"
         } : can(pool.accelerator_count) ? {
         workload-type    = "compute"
         billing-category = lookup(pool, "spot", false) ? "gpu-compute-spot" : "gpu-compute"

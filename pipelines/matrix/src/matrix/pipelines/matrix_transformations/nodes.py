@@ -3,7 +3,7 @@ from typing import Any
 
 import pyspark.sql as ps
 from matrix import settings
-from matrix.inject import inject_object
+from matrix_inject.inject import inject_object
 from pyspark.sql import functions as F
 
 logger = logging.getLogger(__name__)

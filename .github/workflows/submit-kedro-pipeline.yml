@@ -52,7 +52,7 @@ jobs:
           df -h
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: '3.11'
 
@@ -60,7 +60,7 @@ jobs:
         working-directory: pipelines/matrix
         run: |
           make install_argo
-          pip install -r requirements.txt
+          make install
 
       - name: Authenticate with Google Cloud
         id: auth
@@ -138,7 +138,7 @@ jobs:
           else
             RELEASE_PIPELINE='kg_release_patch_and_matrix_run'
           fi
-          kedro experiment run \
+          uv run kedro experiment run \
             --username GH-Actions-bot \
             --namespace argo-workflows \
             --experiment-name scheduled-kg-release \
@@ -152,7 +152,7 @@ jobs:
     # we notify on main branches only
     needs: submit_data_release_periodically
     if: failure()
-    runs-on: "self-hosted"
+    runs-on: "gha-runner-scale-set"
     steps:
       - name: Post to a Slack channel
         id: slack

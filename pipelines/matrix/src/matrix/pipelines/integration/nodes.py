@@ -5,11 +5,11 @@ import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 from joblib import Memory
-from matrix_schema.datamodel.pandera import get_matrix_edge_schema, get_matrix_node_schema
-from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
+from matrix_inject.inject import inject_object
+from matrix_pandera.validator import Column, DataFrameSchema, check_output
+from matrix_schema.datamodel.pandera import get_matrix_node_schema, get_unioned_edge_schema
 from pyspark.sql.window import Window
 
-from matrix.inject import inject_object
 from matrix.pipelines.integration.filters import determine_most_specific_category
 
 # TODO move these into config
@@ -43,7 +43,7 @@ def transform(transformer, **kwargs) -> dict[str, ps.DataFrame]:
 
 
 @check_output(
-    schema=get_matrix_edge_schema(validate_enumeration_values=False),
+    schema=get_unioned_edge_schema(validate_enumeration_values=False),
     pass_columns=True,
 )
 def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.DataFrame:
@@ -78,6 +78,7 @@ def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.Da
             F.first("object_aspect_qualifier", ignorenulls=True).alias("object_aspect_qualifier"),
             F.first("primary_knowledge_source", ignorenulls=True).alias("primary_knowledge_source"),
             F.flatten(F.collect_set("aggregator_knowledge_source")).alias("aggregator_knowledge_source"),
+            F.collect_set(F.col("primary_knowledge_source")).alias("primary_knowledge_sources"),
             F.flatten(F.collect_set("publications")).alias("publications"),
             F.max("num_references").cast(T.IntegerType()).alias("num_references"),
             F.max("num_sentences").cast(T.IntegerType()).alias("num_sentences"),
@@ -85,6 +86,11 @@ def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.Da
         .select(*cols)
     )
     return unioned_dataset
+
+
+def unify_ground_truth(*edges) -> ps.DataFrame:
+    """Function to unify ground truth edges datasets."""
+    return _union_datasets(*edges)
 
 
 @check_output(
@@ -104,7 +110,7 @@ def union_and_deduplicate_nodes(
         unioned_nodes.join(core_id_mapping.withColumnRenamed("normalized_id", "id"), on="id", how="left")
         .withColumn("id", F.coalesce("core_id", "id"))
         .withColumn("name", F.coalesce("core_name", "name"))
-        .drop("core_id", "core_name")
+        .drop("core_name")
     )
 
     unioned_datasets = (
@@ -115,6 +121,7 @@ def union_and_deduplicate_nodes(
             F.first("category", ignorenulls=True).alias("category"),
             F.first("description", ignorenulls=True).alias("description"),
             F.first("international_resource_identifier", ignorenulls=True).alias("international_resource_identifier"),
+            F.first("core_id", ignorenulls=True).alias("core_id"),
             F.flatten(F.collect_set("equivalent_identifiers")).alias("equivalent_identifiers"),
             F.flatten(F.collect_set("all_categories")).alias("all_categories"),
             F.flatten(F.collect_set("labels")).alias("labels"),
@@ -126,6 +133,7 @@ def union_and_deduplicate_nodes(
     # this is especially important if we integrate multiple KGs
 
     if retrieve_most_specific_category:
+        # Get the updated categories and all_categories
         unioned_datasets = unioned_datasets.transform(determine_most_specific_category)
 
     return unioned_datasets.select(*cols)
@@ -203,7 +211,11 @@ def normalize_edges(
     edges = edges.withColumnsRenamed({"subject": "original_subject", "object": "original_object"})
     edges = edges.withColumnsRenamed({"subject_normalized": "subject", "object_normalized": "object"})
 
-    edges = edges.dropDuplicates(subset=["subject", "predicate", "object"])
+    dedup_cols = ["subject", "predicate", "object"]
+    if "primary_knowledge_source" in edges.columns:
+        dedup_cols.append("primary_knowledge_source")
+
+    edges = edges.dropDuplicates(subset=dedup_cols)
 
     return edges
 
@@ -300,8 +312,8 @@ def normalize_core_nodes(
     # checking here ensures that there are no conflicts at the per-source level
     conflicts = (
         nodes_normalized.groupBy("id")
-        .agg(F.countDistinct("core_id").alias("distinct_core_ids"))
-        .filter(F.col("distinct_core_ids") > 1)
+        .agg(F.collect_set("core_id").alias("distinct_core_ids"))
+        .filter(F.size(F.col("distinct_core_ids")) > 1)
     )
 
     conflict_count = conflicts.count()
@@ -326,6 +338,7 @@ def normalize_core_nodes(
 
 def create_core_id_mapping(*nodes: ps.DataFrame) -> ps.DataFrame:
     """Creates a mapping from normalized_id to core_id for core sources."""
+
     df = _union_datasets(*nodes)
 
     df_filtered = df.select("id", "core_id", "name").filter(  # 'id' is already the normalized_id at this point
