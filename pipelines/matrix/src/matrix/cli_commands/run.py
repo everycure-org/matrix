@@ -89,6 +89,8 @@ def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async
 
     if from_run:
         logger.info(f"Taking input datasets from run: {from_run}. Specified datasets: {from_run_datasets}")
+        if from_env:
+            raise ValueError("Cannot use --from-run and --from-env together")
 
     pipeline_name = pipeline
     pipeline_obj = pipelines[pipeline_name]
