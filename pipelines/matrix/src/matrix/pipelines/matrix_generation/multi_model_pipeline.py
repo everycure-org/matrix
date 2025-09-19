@@ -68,32 +68,39 @@ def create_multi_model_pipeline(**kwargs) -> Pipeline:
                 ]
             )
         )
-        for model in models:
-            model_name = model.get("model_name")
 
-            pipelines.append(
-                pipeline(
-                    [
-                        ArgoNode(
-                            func=nodes.make_predictions_and_sort,
-                            inputs=[
-                                "matrix_generation.feat.nodes@spark",
-                                f"matrix_generation.prm.fold_{fold}.matrix_pairs@spark",
-                                f"modelling.fold_{fold}.{model_name}.model_input.transformers",
-                                f"modelling.fold_{fold}.{model_name}.models.model",
-                                # TODO: can we get features from transformers directly?
-                                f"params:modelling.{model_name}.model_options.model_tuning_args.features",
-                                "params:matrix_generation.treat_score_col_name",
-                                "params:matrix_generation.not_treat_score_col_name",
-                                "params:matrix_generation.unknown_score_col_name",
+        pipelines.append(
+            pipeline(
+                [
+                    ArgoNode(
+                        func=nodes.make_predictions_and_sort,
+                        inputs=[
+                            "matrix_generation.feat.nodes@spark",
+                            f"matrix_generation.prm.fold_{fold}.matrix_pairs@spark",
+                            *[
+                                f"modelling.fold_{fold}.{model_name}.model_input.transformers"
+                                for model_name in [model["model_name"] for model in models]
                             ],
-                            outputs=f"matrix_generation.fold_{fold}.{model_name}.model_output.sorted_matrix_predictions@spark",
-                            name=f"make_{model_name}_predictions_and_sort_fold_{fold}",
-                            argo_config=ARGO_NODE_MEDIUM_MATRIX_GENERATION,
-                        ),
-                    ],
-                )
+                            *[
+                                f"modelling.fold_{fold}.{model_name}.models.model"
+                                for model_name in [model["model_name"] for model in models]
+                            ],
+                            # TODO: can we get features from transformers directly?
+                            *[
+                                f"params:modelling.{model_name}.model_options.model_tuning_args.features"
+                                for model_name in [model["model_name"] for model in models]
+                            ],
+                            "params:matrix_generation.treat_score_col_name",
+                            "params:matrix_generation.not_treat_score_col_name",
+                            "params:matrix_generation.unknown_score_col_name",
+                        ],
+                        outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark",
+                        name=f"make_predictions_and_sort_fold_{fold}",
+                        argo_config=ARGO_NODE_MEDIUM_MATRIX_GENERATION,
+                    ),
+                ],
             )
+        )
 
         pipelines.append(
             pipeline(
@@ -101,22 +108,22 @@ def create_multi_model_pipeline(**kwargs) -> Pipeline:
                     ArgoNode(
                         func=nodes.generate_reports,
                         inputs=[
-                            f"matrix_generation.fold_{n_cross_val_folds}.{model_name}.model_output.sorted_matrix_predictions@pandas",
+                            f"matrix_generation.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@pandas",
                             "params:matrix_generation.reporting_nodes.plots",
                         ],
-                        outputs=f"matrix_generation.{model_name}.reporting.plots",
-                        name=f"generate_{model_name}_reporting_plots",
+                        outputs=f"matrix_generation.reporting.plots",
+                        name=f"generate_reporting_plots",
                     ),
                     ArgoNode(
                         func=nodes.generate_reports,
                         inputs={
-                            "sorted_matrix_df": f"matrix_generation.fold_{n_cross_val_folds}.{model_name}.model_output.sorted_matrix_predictions@spark",
+                            "sorted_matrix_df": f"matrix_generation.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@spark",
                             "strategies": "params:matrix_generation.reporting_nodes.tables",
                             "drugs_df": "integration.int.drug_list.nodes.norm@spark",
                             "diseases_df": "integration.int.disease_list.nodes.norm@spark",
                         },
-                        outputs=f"matrix_generation.{model_name}.reporting.tables",
-                        name=f"generate_{model_name}_reporting_tables",
+                        outputs=f"matrix_generation.reporting.tables",
+                        name=f"generate_reporting_tables",
                     ),
                 ]
             )
