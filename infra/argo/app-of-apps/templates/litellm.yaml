@@ -16,7 +16,7 @@ spec:
     path: deploy/charts/litellm-helm
     helm:
       values: |
-        env:
+        extraEnv:
           DATABASE_SCHEMA: litellm
         db:
           useExisting: true
