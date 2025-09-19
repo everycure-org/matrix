@@ -75,6 +75,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                         inputs=[
                             "matrix_generation.feat.nodes@spark",
                             f"matrix_generation.prm.fold_{fold}.matrix_pairs@spark",
+                            "params:matrix_generation.treat_score_col_name",
+                            "params:matrix_generation.not_treat_score_col_name",
+                            "params:matrix_generation.unknown_score_col_name",
                         ]
                         + [
                             f"modelling.fold_{fold}.{model_name}.model_input.transformers"
@@ -93,11 +96,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                             for model_name in [
                                 x["model_name"] for x in settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")
                             ]
-                        ]
-                        + [
-                            "params:matrix_generation.treat_score_col_name",
-                            "params:matrix_generation.not_treat_score_col_name",
-                            "params:matrix_generation.unknown_score_col_name",
                         ],
                         outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark",
                         name=f"make_predictions_and_sort_fold_{fold}",

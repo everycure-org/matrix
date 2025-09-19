@@ -194,22 +194,25 @@ def generate_pairs(
 def make_predictions_and_sort(
     node_embeddings: ps.DataFrame,
     pairs: ps.DataFrame,
+    treat_score_col_name: str,
+    not_treat_score_col_name: str,
+    unknown_score_col_name: str,
     *args,
 ) -> ps.DataFrame:
     """Generate and sort probability scores for a drug-disease dataset using multiple models.
 
-    The function accepts variable arguments in the following order:
+    The function accepts variable arguments for model components in the following order:
     - N transformers (one per model)
     - N models (one per model)
     - N feature lists (one per model)
-    - treat_score_col_name
-    - not_treat_score_col_name
-    - unknown_score_col_name
 
     Args:
         node_embeddings: Dataframe with node embeddings.
         pairs: drug disease pairs to predict scores for.
-        *args: Variable arguments as described above
+        treat_score_col_name: Name of the column for treatment scores.
+        not_treat_score_col_name: Name of the column for non-treatment scores.
+        unknown_score_col_name: Name of the column for unknown scores.
+        *args: Variable arguments for transformers, models, and features
 
     Returns:
         Pairs dataset sorted by score with their rank and quantile rank
@@ -218,13 +221,10 @@ def make_predictions_and_sort(
     model_names = [x["model_name"] for x in settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")]
     num_models = len(model_names)
 
-    # Parse the arguments: transformers, models, features, then 3 score column names
+    # Parse the arguments: transformers, models, features
     transformers = list(args[:num_models])
     models = list(args[num_models : 2 * num_models])
     features = list(args[2 * num_models : 3 * num_models])
-    treat_score_col_name = args[3 * num_models]
-    not_treat_score_col_name = args[3 * num_models + 1]
-    unknown_score_col_name = args[3 * num_models + 2]
 
     embeddings = node_embeddings.select("id", "topological_embedding")
 
