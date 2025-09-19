@@ -72,31 +72,33 @@ def create_pipeline(**kwargs) -> Pipeline:
                 [
                     ArgoNode(
                         func=nodes.make_predictions_and_sort,
-                        inputs={
-                            "node_embeddings": "matrix_generation.feat.nodes@spark",
-                            "pairs": f"matrix_generation.prm.fold_{fold}.matrix_pairs@spark",
-                            "transformers": [
-                                f"modelling.fold_{fold}.{model_name}.model_input.transformers"
-                                for model_name in [
-                                    x["model_name"] for x in settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")
-                                ]
-                            ],
-                            "models": [
-                                f"modelling.fold_{fold}.{model_name}.models.model"
-                                for model_name in [
-                                    x["model_name"] for x in settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")
-                                ]
-                            ],
-                            "features": [
-                                f"params:modelling.{model_name}.model_options.model_tuning_args.features"
-                                for model_name in [
-                                    x["model_name"] for x in settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")
-                                ]
-                            ],
-                            "treat_score_col_name": "params:matrix_generation.treat_score_col_name",
-                            "not_treat_score_col_name": "params:matrix_generation.not_treat_score_col_name",
-                            "unknown_score_col_name": "params:matrix_generation.unknown_score_col_name",
-                        },
+                        inputs=[
+                            "matrix_generation.feat.nodes@spark",
+                            f"matrix_generation.prm.fold_{fold}.matrix_pairs@spark",
+                        ]
+                        + [
+                            f"modelling.fold_{fold}.{model_name}.model_input.transformers"
+                            for model_name in [
+                                x["model_name"] for x in settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")
+                            ]
+                        ]
+                        + [
+                            f"modelling.fold_{fold}.{model_name}.models.model"
+                            for model_name in [
+                                x["model_name"] for x in settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")
+                            ]
+                        ]
+                        + [
+                            f"params:modelling.{model_name}.model_options.model_tuning_args.features"
+                            for model_name in [
+                                x["model_name"] for x in settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")
+                            ]
+                        ]
+                        + [
+                            "params:matrix_generation.treat_score_col_name",
+                            "params:matrix_generation.not_treat_score_col_name",
+                            "params:matrix_generation.unknown_score_col_name",
+                        ],
                         outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark",
                         name=f"make_predictions_and_sort_fold_{fold}",
                         argo_config=ARGO_NODE_MEDIUM_MATRIX_GENERATION,

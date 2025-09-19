@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Optional, Union
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -7,15 +7,14 @@ import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 from matplotlib.figure import Figure
+from matrix import settings
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.pipelines.matrix_generation.reporting_plots import ReportingPlotGenerator
 from matrix.pipelines.matrix_generation.reporting_tables import ReportingTableGenerator
-from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.nodes import apply_transformers
 from matrix_inject.inject import _extract_elements_in_list, inject_object
 from matrix_pandera.validator import Column, DataFrameSchema, check_output
 from pyspark.sql.types import DoubleType, StructField, StructType
-from sklearn.impute._base import _BaseImputer
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -195,28 +194,37 @@ def generate_pairs(
 def make_predictions_and_sort(
     node_embeddings: ps.DataFrame,
     pairs: ps.DataFrame,
-    transformers: List[Dict[str, Dict[str, Union[_BaseImputer, List[str]]]]],
-    models: List[ModelWrapper],
-    features: List[List[str]],
-    treat_score_col_name: str,
-    not_treat_score_col_name: str,
-    unknown_score_col_name: str,
+    *args,
 ) -> ps.DataFrame:
     """Generate and sort probability scores for a drug-disease dataset using multiple models.
+
+    The function accepts variable arguments in the following order:
+    - N transformers (one per model)
+    - N models (one per model)
+    - N feature lists (one per model)
+    - treat_score_col_name
+    - not_treat_score_col_name
+    - unknown_score_col_name
 
     Args:
         node_embeddings: Dataframe with node embeddings.
         pairs: drug disease pairs to predict scores for.
-        transformers: List of dictionaries of trained transformers for each model.
-        models: List of models making the predictions.
-        features: List of feature lists, one for each model (may be regex specified).
-        treat_score_col_name: Probability score column name.
-        not_treat_score_col_name: Probability score column name for not treat.
-        unknown_score_col_name: Probability score column name for unknown.
+        *args: Variable arguments as described above
 
     Returns:
         Pairs dataset sorted by score with their rank and quantile rank
     """
+    # Calculate the number of models from the settings
+    model_names = [x["model_name"] for x in settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")]
+    num_models = len(model_names)
+
+    # Parse the arguments: transformers, models, features, then 3 score column names
+    transformers = list(args[:num_models])
+    models = list(args[num_models : 2 * num_models])
+    features = list(args[2 * num_models : 3 * num_models])
+    treat_score_col_name = args[3 * num_models]
+    not_treat_score_col_name = args[3 * num_models + 1]
+    unknown_score_col_name = args[3 * num_models + 2]
 
     embeddings = node_embeddings.select("id", "topological_embedding")
 

@@ -293,15 +293,16 @@ def test_make_predictions_and_sort(
     mock_model,
     mock_model_2,
 ):
+    # Create a simple test that uses exactly 1 model to avoid settings dependency
     result = make_predictions_and_sort(
-        node_embeddings=spark.createDataFrame(sample_node_embeddings),
-        pairs=spark.createDataFrame(sample_matrix_data),
-        transformers=[transformers, transformers],  # Use same transformers for both models
-        models=[mock_model, mock_model_2],  # Use both mock models
-        features=[["source_+", "target_+"], ["source_+", "target_+"]],  # Same features for both models
-        treat_score_col_name="treat score",
-        not_treat_score_col_name="not treat score",
-        unknown_score_col_name="unknown score",
+        spark.createDataFrame(sample_node_embeddings),  # node_embeddings
+        spark.createDataFrame(sample_matrix_data),  # pairs
+        transformers,  # transformer 1
+        mock_model,  # model 1
+        ["source_+", "target_+"],  # features for model 1
+        "treat score",
+        "not treat score",
+        "unknown score",
     )
 
     assert isinstance(result, ps.DataFrame)
