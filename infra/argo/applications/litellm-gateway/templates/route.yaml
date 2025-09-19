@@ -18,7 +18,6 @@ spec:
     - name: litellm
       port: 4000
 ---
-# Health check policy for LiteLLM service - use root path instead of /health
 apiVersion: networking.gke.io/v1
 kind: HealthCheckPolicy
 metadata:

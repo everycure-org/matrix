@@ -111,6 +111,10 @@ spec:
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true # Use server-side apply to handle large CRDs
+      - RespectIgnoreDifferences=true # Respect ignore differences
+      - ApplyOutOfSyncOnly=true # Only apply out of sync resources
     automated:
       prune: true
       allowEmpty: true
+      
