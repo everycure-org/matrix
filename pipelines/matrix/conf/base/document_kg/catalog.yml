@@ -1,68 +1,117 @@
-## External data sources
+# -------------------------------------------------------------------------
+# Common Dataset Templates
+# -------------------------------------------------------------------------
 
-# This is the Information Resource Registry catalog (https://biolink.github.io/information-resource-registry/registry/) with various metadata about knowledge sources used in biolink-based KGs.
-document_kg.prm.infores:
+_pandas_csv: &_pandas_csv
+  type: pandas.CSVDataset
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+
+_yaml_dataset: &_yaml_dataset
   type: yaml.YAMLDataset
+
+_json_dataset: &_json_dataset
+  type: json.JSONDataset
+
+_text_dataset: &_text_dataset
+  type: text.TextDataset
+
+_sql_dataset: &_sql_dataset
+  type: pandas.SQLTableDataset
+  credentials: sqlite_credentials
+  save_args:
+    if_exists: replace
+
+_layer_raw: &_layer_raw
+  metadata:
+    kedro-viz:
+      layer: raw
+
+_layer_primary: &_layer_primary
+  metadata:
+    kedro-viz:
+      layer: primary
+
+_layer_output: &_layer_output
+  metadata:
+    kedro-viz:
+      layer: model_output
+
+# -------------------------------------------------------------------------
+# External Data Sources
+# -------------------------------------------------------------------------
+
+# Information Resource Registry catalog (https://biolink.github.io/information-resource-registry/registry/)
+# Contains metadata about knowledge sources used in biolink-based KGs
+document_kg.prm.infores:
+  <<: [*_yaml_dataset, *_layer_raw]
   filepath: https://raw.githubusercontent.com/biolink/information-resource-registry/refs/heads/main/infores_catalog.yaml
 
-# This is the Reusable Data catalog (https://reusabledata.org/), which contains metadata about various datasets, especially about licensing.
+# Reusable Data catalog (https://reusabledata.org/)
+# Contains metadata about various datasets, especially licensing information
 document_kg.prm.reusabledata:
-  type: json.JSONDataset
+  <<: [*_json_dataset, *_layer_raw]
   filepath: https://raw.githubusercontent.com/reusabledata/reusabledata/refs/heads/master/data.json
 
-# This is the KG registry from KG-Hub. It contains various useful metadata about KGs and KG data sources.
+# KG registry from KG-Hub
+# Contains metadata about knowledge graphs and KG data sources
 document_kg.prm.kgregistry:
-  type: yaml.YAMLDataset
+  <<: [*_yaml_dataset, *_layer_raw]
   filepath: https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-registry/refs/heads/main/registry/kgs.yml
 
-## Matrix-internal data sources
+# -------------------------------------------------------------------------
+# Matrix-Internal Data Sources
+# -------------------------------------------------------------------------
 
 document_kg.prm.matrix_curated_pks:
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_public}/kg/matrix-pks-curated-metadata.tsv #fix path
-  load_args:
-    sep: "\t"
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw_public}/kg/matrix-pks-curated-metadata.tsv
 
 document_kg.prm.matrix_reviews_pks:
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_public}/kg/matrix-pks-reviews.tsv #fix path
-  load_args:
-    sep: "\t"
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw_public}/kg/matrix-pks-reviews.tsv
 
-### Matrix-curated mappings
+# -------------------------------------------------------------------------
+# Matrix-Curated Mappings
+# -------------------------------------------------------------------------
 
 document_kg.prm.mapping_reusabledata_infores:
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_public}/mappings/reusabledata-infores.sssom.tsv #fix path
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw_public}/mappings/reusabledata-infores.sssom.tsv
   load_args:
     sep: "\t"
     comment: "#"
 
 document_kg.prm.mapping_kgregistry_infores:
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_public}/mappings/kgregistry-infores.sssom.tsv #fix path
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw_public}/mappings/kgregistry-infores.sssom.tsv
   load_args:
     sep: "\t"
     comment: "#"
 
-### Dynamically created list of primary knowledge sources relevant to Matrix
+# -------------------------------------------------------------------------
+# Dynamic Data Sources
+# -------------------------------------------------------------------------
 
-# No idea what is needed here
-document_kg.prm.pks_integrated_kg_list: 
-  type: pandas.SQLTableDataset
+# Dynamically created list of primary knowledge sources relevant to Matrix
+document_kg.prm.pks_integrated_kg_list:
+  <<: [*_sql_dataset, *_layer_primary]
   table_name: primary_knowledge_sources
-  credentials: sqlite_credentials
-  save_args:
-    if_exists: replace
 
-## Output files
+# -------------------------------------------------------------------------
+# Output Files
+# -------------------------------------------------------------------------
 
-document_kg.prm.pks_yaml: 
-  type: yaml.YAMLDataset
-  filepath: ${globals:paths.release}/kg/primary-knowledge-sources.yml #fix path
+document_kg.prm.pks_yaml:
+  <<: [*_yaml_dataset, *_layer_output]
+  filepath: ${globals:paths.release}/kg/primary-knowledge-sources.yml
   save_args:
     default_flow_style: false
 
-document_kg.prm.pks_md: 
-  type: text.TextDataset
-  filepath: ${globals:paths.release}/primary-knowledge-sources.md #fix path
+document_kg.prm.pks_md:
+  <<: [*_text_dataset, *_layer_output]
+  filepath: ${globals:paths.release}/primary-knowledge-sources.md
