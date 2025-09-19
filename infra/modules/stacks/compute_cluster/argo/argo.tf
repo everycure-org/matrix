@@ -252,11 +252,11 @@ spec:
   source:
     path: ${var.repo_path}/app-of-apps
     repoURL: ${var.repo_url}
-    targetRevision: "nelson/aip-540-create-postgresql-and-pgbouncer-through-argocd-in-matrix-gke"
+    targetRevision: ${var.repo_revision}
     helm:
       parameters:
       - name: spec.source.targetRevision
-        value:  "nelson/aip-540-create-postgresql-and-pgbouncer-through-argocd-in-matrix-gke"
+        value:  ${var.repo_revision}
       - name: spec.source.environment
         value:  ${var.environment}
       - name: spec.source.project_id
