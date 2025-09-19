@@ -2812,7 +2812,7 @@ requires-dist = [
     { name = "google-cloud-bigquery-storage" },
     { name = "google-cloud-iam" },
     { name = "graphdatascience" },
-    { name = "gspread" },
+    { name = "gspread", specifier = ">=6.2.1" },
     { name = "ipython", specifier = ">=8.10" },
     { name = "ipywidgets" },
     { name = "jsonpath-ng" },

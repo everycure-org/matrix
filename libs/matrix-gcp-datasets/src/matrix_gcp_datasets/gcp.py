@@ -240,20 +240,18 @@ class GoogleSheetsDataset(CSVDataset):
 
     def __init__(
         self,
-        google_sheet_url: str,
+        spreadsheet_url: str,
+        worksheet_gid: str,
         service_account_file_path: str,
-        worksheet_number: int = 0,
     ) -> None:
         """
-
         Args:
-            google_sheet_url: URL of the Google sheet to load data from.
+            spreadsheet_url: URL of a spreadsheet as it appears in a browser.
+            worksheet_gid: The id of a worksheet. it can be seen in the url as the value of the parameter ‘gid’
             service_account_file_path: Path to the service account file. The Google Sheet must be shared with this service account's email.
-            worksheet_number: Index of the worksheet to load data from.
         """
-        self._google_sheet_url = google_sheet_url
         self._gc = gspread.service_account(filename=service_account_file_path)
-        self._worksheet = self._gc.open_by_url(google_sheet_url).get_worksheet(worksheet_number)
+        self._worksheet = self._gc.open_by_url(spreadsheet_url).get_worksheet(worksheet_gid)
 
         super().__init__(filepath=None)
 
