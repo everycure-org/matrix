@@ -20,7 +20,6 @@ jobs:
     if: github.event.pull_request.draft == false
     
     steps:
-      - uses: gruntwork-io/terragrunt-action@v3
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
@@ -34,4 +33,5 @@ jobs:
             ~/.cache/pre-commit
             .venv/
           key: ${{ env.cache-name }}-${{ hashFiles('.pre-commit-config.yaml','~/.cache/pre-commit/*') }}
+      - uses: gruntwork-io/terragrunt-action@v3
       - run: make precommit
