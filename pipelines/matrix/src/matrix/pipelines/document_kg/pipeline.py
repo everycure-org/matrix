@@ -1,11 +1,11 @@
-from kedro.pipeline import Pipeline, pipeline
+from kedro.pipeline import Pipeline, node, pipeline
 
 from . import nodes
 
 
 def create_pipeline(**kwargs) -> Pipeline:
-    """Create doc release pipeline."""
-    # example name/release pipeline, all names can be changed
+    """Generate documentation and metadata as part of the release process pipeline."""
+
     return pipeline(
         [
             node(
@@ -21,10 +21,20 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "document_kg.prm.mapping_kgregistry_infores",
                 ],
                 outputs=[
-                    "document_kg.prm.pks",
-                    "document_kg.prm.pks_md"
+                    "document_kg.prm.pks_yaml",
                 ],
                 name="create_pks_integrated_metadata",
+                tags=["document_kg"],
+            ), 
+            node(
+                func=nodes.create_pks_documentation,
+                inputs=[
+                    "document_kg.prm.pks_yaml",
+                ],
+                outputs=[
+                    "document_kg.prm.pks_md",
+                ],
+                name="create_pks_documentation",
                 tags=["document_kg"],
             )
         ]
