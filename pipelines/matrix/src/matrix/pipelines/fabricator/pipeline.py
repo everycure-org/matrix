@@ -6,7 +6,7 @@ import pandas as pd
 from kedro.pipeline import Pipeline, node, pipeline
 from matrix_fabricator.fabrication import fabricate_datasets
 
-from . import nodes
+from matrix.utils.validation import validate
 
 
 def _create_pairs(
@@ -120,7 +120,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="fabricate_kg2_datasets",
             ),
             node(
-                func=nodes.validate_datasets,
+                func=validate,
                 inputs={"nodes": "ingestion.raw.rtx_kg2.nodes@polars", "edges": "ingestion.raw.rtx_kg2.edges@polars"},
                 outputs="fabricator.int.rtx_kg2.violations",
                 name="validate_fabricated_kg2_datasets",
@@ -179,7 +179,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="fabricate_robokop_datasets",
             ),
             node(
-                func=nodes.validate_datasets,
+                func=validate,
                 inputs={"nodes": "ingestion.raw.robokop.nodes@polars", "edges": "ingestion.raw.robokop.edges@polars"},
                 outputs="fabricator.int.robokop.violations",
                 name="validate_fabricated_robokop_datasets",
@@ -194,7 +194,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="fabricate_spoke_datasets",
             ),
             node(
-                func=nodes.validate_datasets,
+                func=validate,
                 inputs={"nodes": "ingestion.raw.spoke.nodes@polars", "edges": "ingestion.raw.spoke.edges@polars"},
                 outputs="fabricator.int.spoke.violations",
                 name="validate_fabricated_spoke_datasets",
