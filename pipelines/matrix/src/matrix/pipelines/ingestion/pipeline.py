@@ -85,7 +85,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                     inputs={
                         "nodes": f"ingestion.raw.{source['name']}.nodes@polars",
                         "edges": f"ingestion.raw.{source['name']}.edges@polars",
-                        "strict": f"params:ingestion.validation.sources.{source['name']}.strict",
                     },
                     outputs=f"ingestion.int.{source['name']}.violations",
                     name=f"validate_{source['name']}",
