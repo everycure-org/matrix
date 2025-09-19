@@ -13,11 +13,11 @@ def create_pipeline(**kwargs) -> Pipeline:
     pipeline_nodes = [
         # Then perform each evaluation comparison in the existing notebook
         ArgoNode(
-            func=nodes.recall_at_n_plots,
+            func=nodes.recall_at_n_table,
             # NOTE: This node was partially generated using AI assistance.
             inputs=[name for name in INPUTS.keys()],
-            outputs=["run_comparison.plots.recall_at_n"],
-            name="plot_recall_at_n",
+            outputs="run_comparison.tables.recall_at_n",
+            name="table_recall_at_n",
         ),
         # Add recall@n off-label, commonality, entropy, etc
     ]
