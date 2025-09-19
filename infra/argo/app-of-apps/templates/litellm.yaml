@@ -60,7 +60,7 @@ spec:
             # Redis for cross-pod RPM/TPM + routing state
             redis_host: redis.redis.svc.cluster.local
             redis_port: 6379
-            # redis_password: os.environ/REDIS_PASSWORD   # uncomment if your Redis is authn-enabled
+            # redis_password: os.environ/REDIS_PASSWORD
             num_retries: 2
           litellm_settings:
             cache: true
@@ -68,8 +68,8 @@ spec:
               type: redis
               host: redis.redis.svc.cluster.local
               port: 6379
-              # password: os.environ/REDIS_PASSWORD      # uncomment if your Redis is authn-enabled
-              ttl: 3600  # Cache for 1 hour
+              # password: os.environ/REDIS_PASSWORD   
+              ttl: 86400  # Cache for 1 day
               namespace: "litellm_cache"
               redis_flush_size: 100
           ui:
