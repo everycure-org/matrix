@@ -145,27 +145,3 @@ preprocessing.int.mapped_clinical_trials_data:
     sep: "\t"
   save_args:
     sep: "\t"
-
-preprocessing.raw.ec_medical_team.edges:
-  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
-  load_args:
-    sheet_name: new_edges
-    columns: ["Source", "Target", "Label"] 
-
-preprocessing.raw.ec_medical_team.nodes:
-  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
-  load_args:
-    sheet_name: new_nodes
-    columns: ["ID", "name", "category", "new_id", "description"]
-
-preprocessing.reporting.ec_medical_team.nodes:
-  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
-  save_args:
-    sheet_name: new_nodes
-    write_columns: ["curie", "normalized_curie", "label", "types"]
-
-preprocessing.reporting.ec_medical_team.edges:
-  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
-  save_args:
-    sheet_name: new_edges
-    write_columns: ["SourceId", "TargetId"]
