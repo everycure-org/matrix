@@ -20,6 +20,7 @@ jobs:
     if: github.event.pull_request.draft == false
     
     steps:
+      - uses: gruntwork-io/terragrunt-action@v3
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
