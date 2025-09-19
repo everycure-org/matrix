@@ -89,7 +89,7 @@ async function generateReleaseTrendsSQL() {
       let drugTable = null;
       
       // Try different table name conventions for nodes
-      const nodeTables = ['nodes_unified', 'unified_nodes'];
+      const nodeTables = ['nodes_unified', 'nodes'];
       for (const tableName of nodeTables) {
         try {
           const testQuery = `SELECT 1 FROM \`${projectId}.${release.dataset_id}.${tableName}\` LIMIT 1`;
@@ -102,7 +102,7 @@ async function generateReleaseTrendsSQL() {
       }
       
       // Try different table name conventions for edges  
-      const edgeTables = ['edges_unified', 'unified_edges'];
+      const edgeTables = ['edges_unified', 'edges'];
       for (const tableName of edgeTables) {
         try {
           const testQuery = `SELECT 1 FROM \`${projectId}.${release.dataset_id}.${tableName}\` LIMIT 1`;
