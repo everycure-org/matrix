@@ -217,14 +217,19 @@ def make_predictions_and_sort(
     Returns:
         Pairs dataset sorted by score with their rank and quantile rank
     """
-    # Calculate the number of models from the settings
-    model_names = [x["model_name"] for x in settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")]
-    num_models = len(model_names)
 
-    # Parse the arguments: transformers, models, features
-    transformers = list(args[:num_models])
-    models = list(args[num_models : 2 * num_models])
-    features = list(args[2 * num_models : 3 * num_models])
+    def extract_and_parse_args():
+        # Calculate the number of models from the settings
+        model_names = [x["model_name"] for x in settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")]
+        num_models = len(model_names)
+
+        # Parse the arguments: transformers, models, features
+        transformers = list(args[:num_models])
+        models = list(args[num_models : 2 * num_models])
+        features = list(args[2 * num_models : 3 * num_models])
+        return transformers, models, features
+
+    transformers, models, features = extract_and_parse_args()
 
     embeddings = node_embeddings.select("id", "topological_embedding")
 
