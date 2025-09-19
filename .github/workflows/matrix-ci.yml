@@ -112,7 +112,6 @@ jobs:
       matrix:
         command:
           - name: "precommit"
-            uses: gruntwork-io/terragrunt-action@v3
             run: "make precommit"
           - name: "kedro-catalog-base"
             run: "uv run kedro catalog resolve --env base"
@@ -150,6 +149,9 @@ jobs:
         with:
           enable-cache: true
           version: "0.8.13"
+      
+      # install terragrunt
+      - uses: gruntwork-io/terragrunt-action@v3
 
       # Setup steps (same as main ci job)
       - run: env | sort
