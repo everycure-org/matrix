@@ -34,22 +34,22 @@ matrix_generation.feat.nodes@kg:
   <<: *_spark_parquet
   filepath: ${globals:paths.matrix_generation}/prm/fold_{fold}/matrix_pairs
 
-"matrix_generation.fold_{fold}.{model_name}.model_output.sorted_matrix_predictions@pandas":
+"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@pandas":
   <<: *_pandas_parquet
-  filepath: ${globals:paths.matrix_generation}/model_output/{model_name}/fold_{fold}/matrix_predictions
+  filepath: ${globals:paths.matrix_generation}/model_output/fold_{fold}/matrix_predictions
 
 "matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark":
   <<: *_spark_parquet
   filepath: ${globals:paths.matrix_generation}/model_output/fold_{fold}/matrix_predictions
 
-"matrix_generation.{model_name}.reporting.plots":
+matrix_generation.reporting.plots:
   type: partitions.PartitionedDataset
-  path: ${globals:paths.matrix_generation}/reporting/{model_name}/plots
+  path: ${globals:paths.matrix_generation}/reporting/plots
   dataset: matplotlib.MatplotlibDataset
   filename_suffix: .png
 
-"matrix_generation.{model_name}.reporting.tables":
+matrix_generation.reporting.tables:
   type: partitions.PartitionedDataset
-  path: ${globals:paths.matrix_generation}/reporting/{model_name}/tables
+  path: ${globals:paths.matrix_generation}/reporting/tables
   dataset: kedro_datasets.pandas.CSVDataset
   filename_suffix: .csv
