@@ -2,7 +2,7 @@
 ```sql nodes_by_prefix
     select 
         prefix,
-        '/node/prefix/' || prefix as link,
+        '/Graph Components/Node Prefix/' || prefix as link,
         sum(count) as count
     from bq.merged_kg_nodes
     group by all

@@ -12,7 +12,7 @@ from functools import wraps
 from typing import Dict, List, Optional
 
 import pandas as pd
-import pandera as pa
+import pandera.pandas as pa
 import pandera.pyspark as pas
 import pyspark.sql as ps
 from pandera.decorators import _handle_schema_error
