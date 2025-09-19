@@ -6,6 +6,8 @@ cluster:
   poolers:
       - name: rw
         type: rw
+        parameters:
+          ignore_startup_parameters: "search_path"
         instances: 1
         monitoring:
           enabled: true
@@ -24,6 +26,8 @@ cluster:
             effect: "NoSchedule"
       - name: ro
         type: ro
+        parameters:
+          ignore_startup_parameters: "search_path"
         instances: 1
         monitoring:
           enabled: true
