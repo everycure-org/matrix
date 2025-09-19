@@ -3,27 +3,31 @@ title: KG Dashboard
 ---
 
 <script context="module">
-  import { getSourceColor } from './_lib/colors';
-  
-  // Function to get colors for pie chart data
-  export function getPieColors(data) {
-    return data.map(item => getSourceColor(item.name));
-  }
+    import { getSourceColor } from './_lib/colors';
+    
+    // Function to get colors for pie chart data
+    export function getPieColors(data) {
+        return data.map(item => getSourceColor(item.name));
+    }
+
+    const release_version = import.meta.env.VITE_release_version;
+    const build_time = import.meta.env.VITE_build_time;
+    const robokop_version = import.meta.env.VITE_robokop_version;
+    const rtx_kg2_version = import.meta.env.VITE_rtx_kg2_version;
+    const benchmark_version = import.meta.env.VITE_benchmark_version;
 </script>
 
-<script>
-  const release_version = import.meta.env.VITE_release_version;
-  const build_time = import.meta.env.VITE_build_time;
-  const robokop_version = import.meta.env.VITE_robokop_version;
-  const rtx_kg2_version = import.meta.env.VITE_rtx_kg2_version;
+<p class="text-gray-500 text-sm italic mb-2">Dashboard last updated on {build_time}</p>
 
-</script>
+<div class="my-4 flex flex-col gap-4">
+    <a href="https://docs.dev.everycure.org/releases/release_history/" class="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm">
+        ← Release History 
+    </a>
+    <a href="https://data.dev.everycure.org/versions/{benchmark_version}/evidence/" target="_blank" class="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm">
+        🔖 Benchmark Release ({benchmark_version})
+    </a>
+</div>
 
-This dashboard provides an overview of our integrated knowledge graph (KG), detailing its size, connectivity patterns, and provenance quality. 
-It also examines how nodes from our curated disease and drug lists link to other entities within the graph.
-## Version: {release_version}
-
-<p class="text-gray-500 text-sm italic">Last updated on {build_time}</p>
 
 ```sql edges_per_node
 select 

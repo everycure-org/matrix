@@ -4,7 +4,7 @@ resource "google_artifact_registry_repository" "this" {
   repository_id          = var.repository_id
   format                 = var.format
   description            = var.description
-  cleanup_policy_dry_run = true
+  cleanup_policy_dry_run = false
   # Dynamic block to create the DELETE policy only if delete_older_than_days is greater than 0.
   dynamic "cleanup_policies" {
     for_each = var.delete_older_than_days != null ? [1] : []
@@ -17,16 +17,13 @@ resource "google_artifact_registry_repository" "this" {
       }
     }
   }
-
-  # Policy to delete sample-run images after 1 day (configurable)
   dynamic "cleanup_policies" {
-    for_each = length(var.sample_run_tag_prefixes) > 0 ? [1] : []
+    for_each = var.keep_number_of_last_images > 0 ? [1] : []
     content {
-      id     = "delete-sample-run-images"
-      action = "DELETE"
-      condition {
-        tag_prefixes = var.sample_run_tag_prefixes
-        older_than   = "1d" # This is a fixed value for sample-run images
+      id     = "keep-last-images"
+      action = "KEEP"
+      most_recent_versions {
+        keep_count = var.keep_number_of_last_images
       }
     }
   }

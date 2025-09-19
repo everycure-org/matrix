@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "matrix-gcp-datasets"
+version = "0.1.0"
+description = "Custom Kedro datasets for Google Cloud Platform services"
+requires-python = ">=3.11"
+dependencies = [
+    "kedro>=0.19.0",
+    "kedro-datasets>=6.0.0",
+    "google-cloud-bigquery",
+    "google-cloud-storage",
+    "google-api-core",
+    "fsspec",
+    "hdfs",
+    "numpy",
+    "pandas",
+    "pandas-gbq",
+    "gspread",
+    "pyspark>=3.5.0",
+    "s3fs",
+    "tqdm",
+    "asyncio",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-mock",
+    "ruff",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

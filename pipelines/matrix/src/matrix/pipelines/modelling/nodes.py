@@ -7,7 +7,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.types as T
-from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
+from matrix_inject.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
+from matrix_pandera.validator import Column, DataFrameSchema, check_output
+from pyspark.errors import AnalysisException
 from pyspark.sql import functions as f
 from sklearn.base import BaseEstimator
 from sklearn.impute._base import _BaseImputer
@@ -15,7 +17,6 @@ from sklearn.model_selection import BaseCrossValidator
 
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
-from matrix.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
 
 from .model import ModelWrapper
 from .model_selection import DiseaseAreaSplit
@@ -25,9 +26,35 @@ logger = logging.getLogger(__name__)
 plt.switch_backend("Agg")
 
 
+def _filter_ground_truth(edges_gt: ps.DataFrame, training_data_sources: list[str]) -> ps.DataFrame:
+    """
+    Filter ground truth to only include pairs from training data sources and drop potential duplicates
+    (due to multiple sources for the same pair).
+
+    NOTE: Adding try/except mechanism to avoid breaking main pipeline
+    when using older releases of the pipeline
+
+    Args:
+        edges_gt: DataFrame with ground truth pairs
+        training_data_sources: list of training data sources
+
+    Returns:
+        DataFrame with ground truth pairs filtered to only include pairs from training data sources
+        and dropped potential duplicates (due to multiple sources for the same pair).
+    """
+    try:
+        return edges_gt.filter(f.col("upstream_data_source").isin(training_data_sources)).dropDuplicates(
+            ["subject", "object"]
+        )
+    except AnalysisException as e:
+        logger.error(f"Upstream data source column not found in ground truth; using full dataset")
+        return edges_gt
+
+
 def filter_valid_pairs(
     nodes: ps.DataFrame,
     edges_gt: ps.DataFrame,
+    training_data_sources: list[str],
     drug_categories: Iterable[str],
     disease_categories: Iterable[str],
 ) -> tuple[ps.DataFrame, dict[str, float]]:
@@ -44,6 +71,11 @@ def filter_valid_pairs(
         - DataFrame with combined filtered positive and negative pairs
         - Dictionary with retention statistics
     """
+
+    # Select Ground truth from training data sources and drop potential duplicates
+    # (due to multiple sources for the same pair)
+    edges_gt = _filter_ground_truth(edges_gt, training_data_sources)
+
     # Create set of categories to filter on
     categories = set(itertools.chain(drug_categories, disease_categories))
     categories_array = f.array([f.lit(cat) for cat in categories])

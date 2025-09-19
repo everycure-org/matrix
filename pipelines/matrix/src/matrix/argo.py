@@ -29,6 +29,7 @@ def generate_argo_config(
     default_execution_resources: Optional[ArgoResourceConfig] = None,
     mlflow_run_id: Optional[str] = None,
     stress_test: bool = False,
+    from_run: Optional[str] = None,
 ) -> str:
     if default_execution_resources is None:
         default_execution_resources = ArgoResourceConfig()
@@ -41,6 +42,8 @@ def generate_argo_config(
         ARGO_TEMPLATE_FILE = "argo_wf_spec_stress_test.tmpl"
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
     pipeline_tasks = get_dependencies(fuse(pipeline), default_execution_resources)
+    # Determine pipeline-level external input datasets (exclude params, keep transcoding)
+    pipeline_inputs = sorted({i for i in list(pipeline.inputs()) if not str(i).startswith("params:")})
     git_sha = get_git_sha()
     trigger_release = get_trigger_release_flag(pipeline.name)
     include_private_datasets = os.getenv("INCLUDE_PRIVATE_DATASETS", "0")
@@ -63,6 +66,8 @@ def generate_argo_config(
         environment=environment,
         default_execution_resources=default_execution_resources.model_dump(),
         include_private_datasets=include_private_datasets,
+        from_run=from_run,
+        from_run_datasets=",".join(pipeline_inputs),
     )
     yaml_data = yaml.safe_load(rendered_template)
     yaml_without_anchors = yaml.dump(yaml_data, sort_keys=False, default_flow_style=False)
@@ -300,5 +305,6 @@ def clean_name(name: str) -> str:
 
 def get_trigger_release_flag(pipeline: str) -> str:
     pipeline_correct = pipeline in ("data_release", "kg_release_and_matrix_run", "kg_release_patch_and_matrix_run")
+
     env_correct = "-dev-" in os.environ["RUNTIME_GCP_PROJECT_ID"].lower()
     return str(pipeline_correct and env_correct)

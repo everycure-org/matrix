@@ -57,8 +57,8 @@ def test_invalid_resource_constraints(cpu_request, cpu_limit, memory_request, me
 @pytest.mark.parametrize(
     "cpu_limit, memory_limit, msg",
     [
-        (3 * KUBERNETES_DEFAULT_LIMIT_CPU, 2 * KUBERNETES_DEFAULT_LIMIT_RAM, "Some of the CPU settings*"),
-        (KUBERNETES_DEFAULT_LIMIT_CPU, 3 * KUBERNETES_DEFAULT_LIMIT_RAM, "Some of the memory settings*"),
+        (11 * KUBERNETES_DEFAULT_LIMIT_CPU, 11 * KUBERNETES_DEFAULT_LIMIT_RAM, "Some of the CPU settings*"),
+        (KUBERNETES_DEFAULT_LIMIT_CPU, 11 * KUBERNETES_DEFAULT_LIMIT_RAM, "Some of the memory settings*"),
     ],
 )
 def test_high_resource_values_warning(cpu_limit, memory_limit, msg):

@@ -6,7 +6,7 @@ from typing import List, Optional
 import pyspark.sql as ps
 import pyspark.sql.functions as sf
 from bmt import toolkit
-from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
+from matrix_pandera.validator import Column, DataFrameSchema, check_output
 from pyspark.sql import types as T
 
 tk = toolkit.Toolkit()

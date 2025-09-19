@@ -1,0 +1,45 @@
+# Root project, only defines child dependencies which all share one venv
+[project]
+name = "matrix"
+version = "0.1.0"
+requires-python = "~=3.11.0"
+dependencies = [
+    # we depend on all our workspace members here to enable a single
+    # 'uv sync' at the root to set up the entire monorepo development
+    # work. However the Dockerfile in pipelines/matrix does some tricks
+    # to avoid re-building at any file change. See Dockerfile for details
+    "matrix-pipeline",
+    "matrix-docs",
+    "matrix-auth",
+    "matrix-gcp-datasets", 
+    "matrix-mlflow-utils",
+    "matrix-fabricator",
+    "matrix-inject",
+    "matrix-pandera",
+    "pre-commit>=4.2.0",
+]
+
+[tool.uv.sources]
+matrix-pipeline = { workspace = true }
+matrix-docs = { workspace = true }
+matrix-auth = { workspace = true }
+matrix-gcp-datasets = { workspace = true }
+matrix-mlflow-utils = { workspace = true }
+matrix-fabricator = { workspace = true }
+matrix-inject = { workspace = true }
+matrix-pandera = { workspace = true }
+
+[tool.uv.workspace]
+members = [
+    # pipelines, which may be run
+    "pipelines/matrix",
+    # docs which are built statically and then deployed
+    "docs",
+    # shared libraries
+    "libs/*",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.7",
+] 

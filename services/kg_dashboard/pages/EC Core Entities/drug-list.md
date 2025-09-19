@@ -100,6 +100,7 @@ by prefix and category.
 
 <Grid col=2>
     <ECharts
+        style={{ height: '500px' }},
         config={{
             tooltip: {
                 formatter: function(params) {
@@ -110,6 +111,7 @@ by prefix and category.
             series: [{
                 type: 'pie', 
                 radius: ['30%', '50%'],
+                center: ['50%', '50%'],
                 data: drug_list_normalization.map(d => ({
                     ...d,
                     itemStyle: {
@@ -121,53 +123,27 @@ by prefix and category.
     />
     <Tabs fullWidth=true>
         <Tab label="Success">
-            <Tabs>
-              <Tab label="Prefixes">
-                <DataTable
-                          data={drug_list_success
-                            .filter(d => d.normalization_success === true && d.dimension === 'prefix')
-                            .map(({ name, count }) => ({ name, count }))}
-                          columns={['name', 'count']}
-                          pagination
-                          pageSize={10}
-                        />
-              </Tab>
-              <Tab label="Categories">
-                <DataTable
-                          data={drug_list_success
-                            .filter(d => d.normalization_success === true && d.dimension === 'category')
-                            .map(({ name, count }) => ({ name, count }))}
-                          columns={['name', 'count']}
-                          pagination
-                          pageSize={10}
-                        />
-              </Tab>
-            </Tabs>
+            <DataTable
+                data={drug_list_success
+                    .filter(d => d.normalization_success === true && d.dimension === 'prefix')
+                    .map(({ name, count }) => ({ name, count }))}
+                columns={['name', 'count']}
+                pagination
+                pageSize={10}
+            />
         </Tab>
+        {#if drug_list_success.filter(d => d.normalization_success === false && d.dimension === 'prefix').length > 0}
         <Tab label="Failure">
-            <Tabs>
-              <Tab label="Prefixes">
-                <DataTable
-                          data={drug_list_success
-                            .filter(d => d.normalization_success === false && d.dimension === 'prefix')
-                            .map(({ name, count }) => ({ name, count }))}
-                          columns={['name', 'count']}
-                          pagination
-                          pageSize={10}
-                        />
-              </Tab>
-              <Tab label="Categories">
-                <DataTable
-                          data={drug_list_success
-                            .filter(d => d.normalization_success === false && d.dimension === 'category')
-                            .map(({ name, count }) => ({ name, count }))}
-                          columns={['name', 'count']}
-                          pagination
-                          pageSize={10}
-                        />
-              </Tab>
-            </Tabs>
+            <DataTable
+                data={drug_list_success
+                    .filter(d => d.normalization_success === false && d.dimension === 'prefix')
+                    .map(({ name, count }) => ({ name, count }))}
+                columns={['name', 'count']}
+                pagination
+                pageSize={10}
+            />
         </Tab>
+        {/if}
     </Tabs>
 </Grid>
 
