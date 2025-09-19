@@ -120,7 +120,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="fabricate_kg2_datasets",
             ),
             node(
-                func=nodes.validate_datasets,
+                func=validate,
                 inputs={"nodes": "ingestion.raw.rtx_kg2.nodes@polars", "edges": "ingestion.raw.rtx_kg2.edges@polars"},
                 outputs="fabricator.int.rtx_kg2.violations",
                 name="validate_fabricated_kg2_datasets",
