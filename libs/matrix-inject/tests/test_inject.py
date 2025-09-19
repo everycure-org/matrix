@@ -5,7 +5,7 @@ import pandas as pd
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 import pytest
-from matrix.inject import (
+from matrix_inject.inject import (
     _inject_object,
     _parse_for_objects,
     _unpack_params,
