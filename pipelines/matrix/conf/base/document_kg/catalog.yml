@@ -1,7 +1,7 @@
 ## External data sources
 
 # This is the Information Resource Registry catalog (https://biolink.github.io/information-resource-registry/registry/) with various metadata about knowledge sources used in biolink-based KGs.
-document_kg.prm.infores: # what does prm mean?
+document_kg.prm.infores:
   type: yaml.YAMLDataset
   filepath: https://raw.githubusercontent.com/biolink/information-resource-registry/refs/heads/main/infores_catalog.yaml
 
