@@ -63,7 +63,7 @@ dependencies = [
     "pandas>=2.1.1", #due to pandera requiring this or higher
     "proto-plus==1.24.0.dev1", # Temp. fix for the gcloud cli
     "pyarrow>=14.0.2",
-    "gspread",
+    "gspread>=6.2.1",
     "pyspark==3.5.1",
     "python-cypher==0.20.1",
     "responses",
