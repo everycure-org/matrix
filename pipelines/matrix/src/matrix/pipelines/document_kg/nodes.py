@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 import pandas
 from jinja2 import Template
@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 ## Parsing and combining the PKS metadata source files
 
-def _parse_source(source_data, source_id, id_column, extracted_metadata, ignored_metadata,primary_knowledge_sources):
+def _parse_source(source_data: List[Dict[str, Any]], source_id: str, id_column: str, extracted_metadata: List[str], ignored_metadata: List[str], primary_knowledge_sources: Dict[str, Dict[str, Any]]) -> None:
     """Parse a single source of PKS metadata and integrate it into the main dictionary."""
     
     potentially_useful_keys = set()
@@ -36,13 +36,13 @@ def _parse_source(source_data, source_id, id_column, extracted_metadata, ignored
     if len(potentially_useful_keys) > 0:
         logger.warning(f"Warning: Found potentially useful keys in {source_id} that are not extracted: {potentially_useful_keys}")
 
-def _apply_infores_mapping(mapping, data_to_map, id_column):
+def _apply_infores_mapping(mapping: Optional[Dict[str, str]], data_to_map: List[Dict[str, Any]], id_column: str) -> None:
     """Apply mapping from source IDs to the canonical infores IDs."""
     if mapping:
         for record in data_to_map:
             record['updated_id'] = mapping.get(record[id_column], record[id_column])
 
-def _parse_infores(infores_d, primary_knowledge_sources):
+def _parse_infores(infores_d: Dict[str, Any], primary_knowledge_sources: Dict[str, Dict[str, Any]]) -> None:
     """Parse the infores metadata and integrate it into the primary knowledge sources."""
     source = 'infores'
     id_column = 'id'
@@ -50,7 +50,7 @@ def _parse_infores(infores_d, primary_knowledge_sources):
     extracted_metadata = ['id','status', 'name', 'description', 'knowledge_level', 'agent_type', 'url', 'xref', 'synonym', 'consumed_by', 'consumes']
     _parse_source(infores_d['information_resources'], source, id_column, extracted_metadata, ignored_metadata, primary_knowledge_sources)
 
-def _parse_reusabledata(reusabledata_d, primary_knowledge_sources, infores_mapping):
+def _parse_reusabledata(reusabledata_d: List[Dict[str, Any]], primary_knowledge_sources: Dict[str, Dict[str, Any]], infores_mapping: Optional[Dict[str, str]]) -> None:
     """Parse the reusabledata.org metadata and integrate it into the primary knowledge sources."""
     source = 'reusabledata'
     id_column = 'updated_id'
@@ -59,7 +59,7 @@ def _parse_reusabledata(reusabledata_d, primary_knowledge_sources, infores_mappi
     _apply_infores_mapping(infores_mapping, reusabledata_d, id_column='id')
     _parse_source(reusabledata_d, source, id_column, extracted_metadata, ignored_metadata, primary_knowledge_sources)
 
-def _parse_kgregistry(kgregistry_d, primary_knowledge_sources, infores_mapping):
+def _parse_kgregistry(kgregistry_d: Dict[str, Any], primary_knowledge_sources: Dict[str, Dict[str, Any]], infores_mapping: Optional[Dict[str, str]]) -> None:
     """Parse the kgregistry metadata and integrate it into the primary knowledge sources."""
     source = 'kgregistry'
     id_column = 'updated_id'
@@ -73,7 +73,7 @@ def _parse_kgregistry(kgregistry_d, primary_knowledge_sources, infores_mapping):
         record['updated_id'] = record.get('infores_id', record['id'])
     _parse_source(kgregistry_data, source, id_column, extracted_metadata, ignored_metadata, primary_knowledge_sources)
 
-def _parse_matrixcurated(matrixcurated_d, primary_knowledge_sources):
+def _parse_matrixcurated(matrixcurated_d: pandas.DataFrame, primary_knowledge_sources: Dict[str, Dict[str, Any]]) -> None:
     """Parse the matrixcurated metadata (mostly licensing information) and integrate it into the primary knowledge sources."""
     source = 'matrixcurated'
     id_column = 'primary_knowledge_source'
@@ -81,7 +81,7 @@ def _parse_matrixcurated(matrixcurated_d, primary_knowledge_sources):
     extracted_metadata = ['license_name', 'license_source_link']
     _parse_source(matrixcurated_d.to_dict(orient="records"), source, id_column, extracted_metadata, ignored_metadata, primary_knowledge_sources)
 
-def _parse_matrixreviews(matrixreviews_d, primary_knowledge_sources):
+def _parse_matrixreviews(matrixreviews_d: pandas.DataFrame, primary_knowledge_sources: Dict[str, Dict[str, Any]]) -> None:
     """Parse the manually curated pks reviews according to the rubric."""
     source = 'matrixreviews'
     id_column = 'primary_knowledge_source'
@@ -89,7 +89,7 @@ def _parse_matrixreviews(matrixreviews_d, primary_knowledge_sources):
     extracted_metadata = ['domain_coverage_score', 'domain_coverage_comments', 'source_scope_score', 'source_scope_score_comment', 'utility_drugrepurposing_score', 'utility_drugrepurposing_comment', 'label_rubric', 'label_rubric_rationale', 'label_manual', 'label_manual_comment', 'reviewer']
     _parse_source(matrixreviews_d.to_dict(orient="records"), source, id_column, extracted_metadata, ignored_metadata, primary_knowledge_sources)
 
-def _create_pks_subset_relevant_to_matrix(primary_knowledge_sources, relevant_sources):
+def _create_pks_subset_relevant_to_matrix(primary_knowledge_sources: Dict[str, Dict[str, Any]], relevant_sources: List[str]) -> Dict[str, Dict[str, Any]]:
     """Create a subset of the primary knowledge sources relevant to the Matrix project."""
     subset = {}
     for source in relevant_sources:
@@ -133,7 +133,7 @@ def _parse_raw_data_for_pks_metadata(
 
 ## Generating the PKS documentation
 
-def _get_property(source_info, property, default_value="Unknown"):
+def _get_property(source_info: Dict[str, Dict[str, Any]], property: str, default_value: str = "Unknown") -> str:
     """Get a property from the source info, checking multiple sources in order of priority."""
     property_value = default_value
     if 'infores' in source_info and property in source_info['infores']:
@@ -144,7 +144,7 @@ def _get_property(source_info, property, default_value="Unknown"):
         property_value = source_info['reusabledata'][property]
     return property_value
     
-def _get_property_from_source(source_info, source, property):
+def _get_property_from_source(source_info: Dict[str, Dict[str, Any]], source: str, property: str) -> Optional[Any]:
     """Get a property from a specific source in the source info."""
     if source in source_info:
         if property in source_info[source]:
@@ -155,7 +155,7 @@ def _get_property_from_source(source_info, source, property):
                 return value
     return None
 
-def _format_license(source_info):
+def _format_license(source_info: Dict[str, Dict[str, Any]]) -> str:
     """Format the license information for a source into markdown."""
     pks_jinja2_template = Template("""#### License information
 
@@ -197,7 +197,7 @@ def _format_license(source_info):
         reusabledata_license_commentary=reusabledata_license_commentary
     )
 
-def _format_review(source_info):
+def _format_review(source_info: Dict[str, Dict[str, Any]]) -> str:
     """Format the review information for a source into markdown."""
     pks_jinja2_template = Template("""#### Review information for this resource
 
@@ -244,7 +244,7 @@ No review information available.
         utility_drugrepurposing_score=utility_drugrepurposing_score
     )
 
-def _generate_list_of_pks_markdown_strings(source_data):
+def _generate_list_of_pks_markdown_strings(source_data: Dict[str, Dict[str, Any]]) -> List[str]:
     """Generate a list of markdown strings for each PKS in the source data."""
     pks_jinja2_template = Template("""### Source: {{ title }} ({{ id }})
 
@@ -293,7 +293,7 @@ _{{ description }}_
         pks_documentation_texts.append(pks_docstring)
     return pks_documentation_texts
 
-def _generate_pks_markdown_documentation(pks_documentation_texts, overview_table):
+def _generate_pks_markdown_documentation(pks_documentation_texts: List[str], overview_table: str) -> str:
     """Generate the full markdown documentation for the PKS."""
     pks_jinja2_template = Template("""# {{ title }}
                                    
@@ -324,7 +324,7 @@ This internally curated information is augmented with information from three ext
     )
     return pks_docs
 
-def _generate_overview_table_of_pks_markdown(source_data):
+def _generate_overview_table_of_pks_markdown(source_data: Dict[str, Dict[str, Any]]) -> str:
     """Generate an overview table of PKS in markdown format."""
     pks_jinja2_template = Template("""**Overview table**
 
@@ -365,7 +365,7 @@ def _sssom_to_mapping_dict(sssom_data: pandas.DataFrame) -> Dict[str, str]:
     }
     return mapping_dict
 
-def get_relevant_pks_ids(pks_integrated: pandas.DataFrame) -> list[str]:
+def get_relevant_pks_ids(pks_integrated: pandas.DataFrame) -> List[str]:
     """Get unique primary knowledge source IDs from the integrated KG data.
     
     Args:
