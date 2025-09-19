@@ -77,16 +77,16 @@ def create_pipeline(**kwargs) -> Pipeline:
                             f"matrix_generation.prm.fold_{fold}.matrix_pairs@spark",
                             [
                                 f"modelling.fold_{fold}.{model_name}.model_input.transformers"
-                                for model_name in cross_validation_settings.get("model_names")
+                                for model_name in settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")
                             ],
                             [
                                 f"modelling.fold_{fold}.{model_name}.models.model"
-                                for model_name in cross_validation_settings.get("model_names")
+                                for model_name in settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")
                             ],
                             # TODO: can we get features from transformers directly?
                             [
                                 f"params:modelling.{model_name}.model_options.model_tuning_args.features"
-                                for model_name in cross_validation_settings.get("model_names")
+                                for model_name in settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")
                             ],
                             "params:matrix_generation.treat_score_col_name",
                             "params:matrix_generation.not_treat_score_col_name",
