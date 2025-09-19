@@ -16,7 +16,6 @@ from tenacity import Retrying, stop_after_attempt, wait_exponential
 logger = logging.getLogger(__name__)
 
 import asyncio
-from typing import Dict, List
 
 # -------------------------------------------------------------------------
 # Embiology Dataset

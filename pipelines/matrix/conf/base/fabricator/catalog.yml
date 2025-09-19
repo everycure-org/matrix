@@ -24,6 +24,10 @@ fabricator.int.robokop.violations:
   type: text.TextDataset
   filepath: ${globals:paths.raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/violations.jsonl
 
+fabricator.int.primekg.violations:
+  type: text.TextDataset
+  filepath: ${globals:paths.raw}/KGs/prime-kg/${globals:data_sources.primekg.version}/violations.jsonl
+
 fabricator.int.spoke.violations:
   type: text.TextDataset
   filepath: ${globals:paths.raw}/KGs/spoke/${globals:data_sources.spoke.version}/violations.jsonl

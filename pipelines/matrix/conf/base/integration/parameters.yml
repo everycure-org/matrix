@@ -15,6 +15,11 @@ integration:
       transformer:
         _object: matrix.pipelines.integration.transformers.robokop.RobokopTransformer
         version: ${globals:data_sources.robokop.version}
+    primekg:
+      name: primekg
+      transformer:
+        _object: matrix.pipelines.integration.transformers.primekg.PrimeKGTransformer
+        version: ${globals:data_sources.primekg.version}
     embiology:
       name: embiology
       transformer:
