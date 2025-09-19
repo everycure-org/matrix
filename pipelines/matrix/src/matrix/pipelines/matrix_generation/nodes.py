@@ -245,29 +245,22 @@ def make_predictions_and_sort(
     )
 
     def model_predict(partition_df: pd.DataFrame) -> pd.DataFrame:
-        all_not_treat_scores = []
-        all_treat_scores = []
-        all_unknown_scores = []
+        # Get all predictions from all models at once
+        all_predictions = []
 
-        # Iterate through each model and its corresponding transformers/features
-        for i, (transformer_dict, model, model_features_list) in enumerate(zip(transformers, models, features)):
+        for transformer_dict, model, model_features_list in zip(transformers, models, features):
             transformed = apply_transformers(partition_df, transformer_dict)
-
-            # Extract features for this specific model
             model_features = _extract_elements_in_list(transformed.columns, model_features_list, True)
-
-            # Get predictions from this model
             model_predictions = model.predict_proba(transformed[model_features].values)
+            all_predictions.append(model_predictions)
 
-            # Store predictions for each class
-            all_not_treat_scores.append(model_predictions[:, 0])
-            all_treat_scores.append(model_predictions[:, 1])
-            all_unknown_scores.append(model_predictions[:, 2])
+        # Stack all predictions and compute mean across models (axis=0)
+        averaged_predictions = np.mean(all_predictions, axis=0)
 
-        # Aggregate predictions by averaging across models
-        partition_df[not_treat_score_col_name] = np.mean(all_not_treat_scores, axis=0)
-        partition_df[treat_score_col_name] = np.mean(all_treat_scores, axis=0)
-        partition_df[unknown_score_col_name] = np.mean(all_unknown_scores, axis=0)
+        # Assign averaged predictions to columns
+        partition_df[not_treat_score_col_name] = averaged_predictions[:, 0]
+        partition_df[treat_score_col_name] = averaged_predictions[:, 1]
+        partition_df[unknown_score_col_name] = averaged_predictions[:, 2]
 
         return partition_df.drop(columns=["source_embedding", "target_embedding"])
 

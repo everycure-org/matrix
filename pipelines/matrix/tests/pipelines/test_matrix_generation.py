@@ -293,13 +293,16 @@ def test_make_predictions_and_sort(
     mock_model,
     mock_model_2,
 ):
-    # Create a simple test that uses exactly 1 model to avoid settings dependency
+    # Test uses 2 models to match the settings (xg_ensemble, xg_synth)
     result = make_predictions_and_sort(
         spark.createDataFrame(sample_node_embeddings),  # node_embeddings
         spark.createDataFrame(sample_matrix_data),  # pairs
         transformers,  # transformer 1
+        transformers,  # transformer 2 (same as transformer 1 for testing)
         mock_model,  # model 1
+        mock_model_2,  # model 2
         ["source_+", "target_+"],  # features for model 1
+        ["source_+", "target_+"],  # features for model 2
         "treat score",
         "not treat score",
         "unknown score",
