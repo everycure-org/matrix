@@ -22,7 +22,7 @@ spec:
         db:
           useExisting: true
           deployStandalone: false
-          url: postgresql://litellm:$(DATABASE_PASSWORD)@postgresql-cloudnative-pg-cluster-pooler-rw.postgresql.svc.cluster.local:5432/app?schema=litellm&options=-c%20search_path=litellm,public
+          url: postgresql://litellm:$(DATABASE_PASSWORD)@postgresql-cloudnative-pg-cluster-pooler-rw.postgresql.svc.cluster.local:5432/app?schema=litellm
 
         image:
           repository: ghcr.io/berriai/litellm
