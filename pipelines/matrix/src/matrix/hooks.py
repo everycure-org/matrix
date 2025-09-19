@@ -359,3 +359,31 @@ class ReleaseInfoHooks:
                 self.upload_to_storage(release_info)
             except KeyError:
                 logger.warning("Could not upload release info after running Kedro node.", exc_info=True)
+
+
+class DynamicCatalogHook:
+    """Hook to dynamically create input datasets for specific pipelines."""
+
+    @hook_impl
+    def after_catalog_created(
+        self,
+        catalog: DataCatalog,
+        conf_catalog: Dict[str, Any],
+        conf_creds: Dict[str, Any],
+        feed_dict: Dict[str, Any],
+        save_version: str,
+        load_versions: Dict[str, str],
+    ) -> None:
+        # Lazy import to avoid import cycles
+        try:
+            from matrix.pipelines.run_comparison.settings import DYNAMIC_PIPELINE_MAPPING
+        except Exception:
+            return
+
+        mapping = DYNAMIC_PIPELINE_MAPPING.get("run_comparison", {}).get("inputs", {})
+        for name, config in mapping.items():
+            if name in catalog.list():
+                continue
+            if "filepath" not in config:
+                continue
+            catalog.add(name, SparkDataset(filepath=config["filepath"]))

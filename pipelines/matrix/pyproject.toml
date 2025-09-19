@@ -79,6 +79,7 @@ dependencies = [
     "typer", # used for convenience libraries, to be moved to a dev requirements eventually
     "xgboost",
     "tqdm>=4.67.1",
+    "pre-commit>=4.2.0",
 ]
 
 [project.scripts]

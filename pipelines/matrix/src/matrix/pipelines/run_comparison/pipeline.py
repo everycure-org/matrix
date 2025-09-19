@@ -2,19 +2,9 @@ from kedro.pipeline import Pipeline
 from matrix.kedro4argo_node import ArgoNode
 
 from . import nodes
+from .settings import DYNAMIC_PIPELINE_MAPPING
 
-# Can add runs here
-# Or auto generated based on current run
-RUNS_TO_COMPARE = [
-    {
-        "name": "june_2025_t3",
-        "storage_path": "gs://path/to/run_1",
-    },
-    {
-        "name": "july_2025_t3",
-        "storage_path": "gs://path/to/run_2",
-    },
-]
+INPUTS = DYNAMIC_PIPELINE_MAPPING["run_comparison"]["inputs"]
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -24,11 +14,8 @@ def create_pipeline(**kwargs) -> Pipeline:
         # Then perform each evaluation comparison in the existing notebook
         ArgoNode(
             func=nodes.recall_at_n_plots,
-            inputs={
-                # Add generic catalog entries
-                "matrices": [x["storage_path"] for x in RUNS_TO_COMPARE],
-                "model_names": [x["name"] for x in RUNS_TO_COMPARE],
-            },
+            # NOTE: This node was partially generated using AI assistance.
+            inputs=[name for name in INPUTS.keys()],
             outputs=["run_comparison.plots.recall_at_n"],
             name="plot_recall_at_n",
         ),
