@@ -2,6 +2,7 @@ from typing import Union
 
 from kedro.pipeline import Pipeline, pipeline
 
+from matrix import settings
 from matrix.kedro4argo_node import ARGO_CPU_ONLY_NODE_MEDIUM, ARGO_GPU_NODE_MEDIUM, ArgoNode
 
 from . import nodes
@@ -19,11 +20,11 @@ def create_multi_model_pipeline(models: list[dict], n_cross_val_folds: int) -> P
         Pipeline with model nodes
     """
     pipelines = []
+    num_shards = settings.DYNAMIC_PIPELINES_MAPPING().get("num_shards")
 
     for model in models:
         model_name = model["model_name"]
         model_config = model["model_config"]
-        num_shards = model_config.get("num_shards", 1)
         # Generate pipeline to enrich splits
         pipelines.append(
             pipeline(
