@@ -24,7 +24,6 @@ def create_multi_model_pipeline(models: list[dict], n_cross_val_folds: int) -> P
 
     for model in models:
         model_name = model["model_name"]
-        model_config = model["model_config"]
         # Generate pipeline to enrich splits
         pipelines.append(
             pipeline(
