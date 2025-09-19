@@ -16,6 +16,8 @@ spec:
     path: deploy/charts/litellm-helm
     helm:
       values: |
+        env:
+          DATABASE_SCHEMA: litellm
         db:
           useExisting: true
           deployStandalone: false
@@ -39,14 +41,6 @@ spec:
         environmentSecrets:
           - litellm-provider-keys
           - postgres
-
-        # Explicitly define database credentials as environment variables
-        extraEnv:
-          - name: DATABASE_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: postgres
-                key: password
 
         proxy_config:
           general_settings:
