@@ -7,11 +7,9 @@ module "project_iam_bindings" {
   mode = "additive"
 
   bindings = {
-
     "roles/container.clusterViewer" = local.binding_members
     "roles/artifactregistry.writer" = local.binding_members
     "roles/container.developer"     = local.binding_members
-
   }
   depends_on = [google_service_account.sa]
 }

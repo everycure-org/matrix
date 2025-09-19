@@ -33,4 +33,5 @@ jobs:
             ~/.cache/pre-commit
             .venv/
           key: ${{ env.cache-name }}-${{ hashFiles('.pre-commit-config.yaml','~/.cache/pre-commit/*') }}
+      - uses: gruntwork-io/terragrunt-action@v3
       - run: make precommit

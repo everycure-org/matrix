@@ -8,7 +8,9 @@ locals {
     "roles/dns.admin",
     "roles/bigquery.jobUser",
     "roles/aiplatform.user",
-    "roles/artifactregistry.admin", # Required for deleting images in cleanup workflows (includes reader/writer permissions)
+    "roles/artifactregistry.admin",    # Required for deleting images in cleanup workflows (includes reader/writer permissions)
+    "roles/compute.loadBalancerAdmin", # Required for Gateway API to manage load balancers
+    "roles/compute.securityAdmin",     # Required for Gateway API to manage SSL certificates
   ]
 }
 

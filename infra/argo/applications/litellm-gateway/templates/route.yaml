@@ -1,0 +1,44 @@
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: litellm-route
+  namespace: litellm
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: "litellm.api.{{ .Values.spec.source.environment }}.everycure.org"
+spec:
+  parentRefs:
+  - kind: Gateway
+    sectionName: https
+    namespace: gateway
+    name: api-gateway
+  hostnames:
+  - "litellm.api.{{ .Values.spec.source.environment }}.everycure.org"
+  rules:
+  - backendRefs:
+    - name: litellm
+      port: 4000
+---
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  name: litellm-health-check
+  namespace: litellm
+spec:
+  default:
+    checkIntervalSec: 10
+    timeoutSec: 5
+    healthyThreshold: 1
+    unhealthyThreshold: 2
+    logConfig:
+      enabled: true
+    config:
+      type: HTTP
+      httpHealthCheck:
+        portSpecification: USE_FIXED_PORT
+        port: 4000
+        requestPath: /
+        proxyHeader: NONE
+  targetRef:
+    group: ""
+    kind: Service
+    name: litellm
