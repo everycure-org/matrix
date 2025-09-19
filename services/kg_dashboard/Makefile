@@ -16,6 +16,8 @@ export EVIDENCE_VAR__release_version := $(RELEASE_VERSION)
 export EVIDENCE_VAR__bq_release_version := $(subst .,_,$(RELEASE_VERSION))
 export VITE_release_version := $(RELEASE_VERSION)
 
+# Previous release comparison is now handled via release_trends.sql
+
 # Build time to show when dashboard was last updated
 export VITE_build_time := $(shell date -u '+%B %d, %Y at %H:%M:%S UTC')
 
@@ -46,7 +48,11 @@ export EVIDENCE_VAR__max_edge_failed_normalization_by_normalization_set_prefix :
 bump_basepath:
 	node ./scripts/update-basepath.cjs $(RELEASE_VERSION)
 
-build: bump_basepath 
+# Generate release trends SQL dynamically based on available BigQuery datasets
+generate-release-trends-sql:
+	node ./scripts/generate-release-trends-sql.cjs
+
+build: bump_basepath generate-release-trends-sql
 	@echo "Building with EVIDENCE_VAR__release_version=$(EVIDENCE_VAR__release_version)"
 	npm run build:strict
 
@@ -68,8 +74,8 @@ populate-valid-edge-types-source:
 	node ./scripts/load-valid-edge-types.cjs
 	rm -f scripts/temp_valid_edge_types.tsv
 
-run-sources: populate-infores-source populate-valid-edge-types-source
-	npm run sources
+run-sources: populate-infores-source populate-valid-edge-types-source generate-release-trends-sql
+	npm run sources 
 
 run-dev:
 	npm run dev
