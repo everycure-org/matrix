@@ -10,7 +10,7 @@ This internally curated information is augmented with information from three ext
 2. [reusabledata.org](https://reusabledata.org/)
 3. [KG Registry](https://kghub.org/kg-registry/)
 
-For a visual overview of the data sources and their flow into the unified knowledge graph, see the [Matrix KG Dashboard](http://data.dev.everycure.org/versions/latest/evidence/Knowledge%20Sources/))
+For a visual overview of the data sources and their flow into the unified knowledge graph, see the [Matrix KG Dashboard](http://data.dev.everycure.org/versions/latest/evidence/Knowledge%20Sources/)
 
 ## Overview
 
