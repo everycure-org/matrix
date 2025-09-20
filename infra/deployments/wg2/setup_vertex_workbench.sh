@@ -70,12 +70,11 @@ if [ ! -d "matrix" ]; then
     pushd ./
     export GIT_TOKEN=$(gcloud secrets versions access latest --secret=github-token --project=mtrx-wg2-modeling-dev-9yj)
     git clone https://${GIT_TOKEN}@github.com/everycure-org/matrix.git
+    make install
     cd matrix/pipelines/matrix
     # reset the remote to the normal URL, users are required to provide their own credentials to access the repo
     git remote set-url origin https://github.com/everycure-org/matrix.git
     make fetch_sa_key
-    make venv
-    make install
     # Install the virtual environment's Python as a Jupyter kernel without activating the venv
     .venv/bin/python -m ipykernel install --user --name matrix --display-name "Python (matrix)"
     # .venv/bin/jupyter kernelspec set-default matrix

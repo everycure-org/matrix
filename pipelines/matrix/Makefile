@@ -41,9 +41,6 @@ always:
 default: fetch_secrets install fast_test integration_test
 	echo "done!"
 
-install:
-	uv sync
-
 create_spark_dirs:
 	@echo "Creating local Spark temp directories..."
 	@mkdir -p data/local/{spark-temp,spark-warehouse,spark-checkpoints,java-tmp}

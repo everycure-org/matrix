@@ -57,8 +57,8 @@ make                    # run full integration test locally
 **Setup and Installation:**
 
 ```bash
-cd pipelines/matrix
 make install                   # Install dependencies with uv
+cd pipelines/matrix
 make fetch_secrets             # Fetch secrets from GCP Secret Manager
 ```
 

@@ -56,11 +56,13 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install Python dependencies
+        run: make install
+
       - name: Install Argo & Python dependencies
         working-directory: pipelines/matrix
         run: |
           make install_argo
-          make install
 
       - name: Authenticate with Google Cloud
         id: auth

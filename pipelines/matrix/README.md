@@ -25,18 +25,16 @@ brew link --overwrite openjdk@17
 
 1. Create Virtual Enviroment & Install Dependencies
 ```
+# From the root directory
 make install
 ```
-2. M
-TODO:
 
-
-Declare any dependencies in `requirements.in` for `pip` installation.
+Declare any dependencies in `pyproject.toml`
 
 To install them, run the following within your virtual environment (we recommend using [uv](https://docs.astral.sh/uv/) & Python 3.11):
 
 ```
-uv pip install -r requirements.txt
+make install
 ```
 
 
@@ -58,23 +56,17 @@ pytest
 
 To configure the coverage threshold, look at the `.coveragerc` file.
 
-## Project dependencies
-
-To see and update the dependency requirements for your project use `requirements.txt`. Install the project requirements with `pip install -r requirements.txt`.
-
-[Further information about project dependencies](https://docs.kedro.org/en/stable/kedro_project_setup/dependencies.html#project-specific-dependencies)
-
 ## How to work with Kedro and notebooks
 
 > Note: Using `kedro jupyter` or `kedro ipython` to run your notebook provides these variables in scope: `catalog`, `context`, `pipelines` and `session`.
 >
-> Jupyter, JupyterLab, and IPython are already included in the project requirements by default, so once you have run `pip install -r requirements.txt` you will not need to take any extra steps before you use them.
+> Jupyter, JupyterLab, and IPython are already included in the project requirements by default, so once you have run `make install` you will not need to take any extra steps before you use them.
 
 ### Jupyter
 To use Jupyter notebooks in your Kedro project, you need to install Jupyter:
 
 ```
-pip install jupyter
+uv pip install jupyter
 ```
 
 After installing Jupyter, you can start a local notebook server:
@@ -87,7 +79,7 @@ kedro jupyter notebook
 To use JupyterLab, you need to install it:
 
 ```
-pip install jupyterlab
+uv pip install jupyterlab
 ```
 
 You can also start JupyterLab:

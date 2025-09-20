@@ -51,12 +51,14 @@ jobs:
         with:
           enable-cache: true
           version: "0.8.13"
+      
+      - name: Install Python dependencies
+        run: make install
 
-      - name: Install Argo & Python dependencies
+      - name: Install Argo dependencies
         working-directory: pipelines/matrix
         run: |
           make install_argo
-          make install
 
       - name: Authenticate with Google Cloud
         id: auth
