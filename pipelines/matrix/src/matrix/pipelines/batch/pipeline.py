@@ -8,9 +8,9 @@ from typing import Any, Callable, Collection, Coroutine, Iterable, Iterator, Pro
 
 import pyarrow as pa
 from kedro.pipeline import Pipeline, pipeline
-from matrix.inject import inject_object
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from matrix.pipelines.batch.schemas import to_spark_schema
+from matrix_inject.inject import inject_object
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import col, count, count_distinct
 
@@ -295,7 +295,7 @@ def report_on_cache_misses(df: DataFrame, api: str) -> None:
             nulls = 0
             no_nulls = 0
         logger.info(
-            json.dumps({"api": api, "cache size": f"{no_nulls+nulls:_}", "non null cache values": f"{no_nulls:_}"})
+            json.dumps({"api": api, "cache size": f"{no_nulls + nulls:_}", "non null cache values": f"{no_nulls:_}"})
         )
 
 

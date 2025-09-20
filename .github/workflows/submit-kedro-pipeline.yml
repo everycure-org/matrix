@@ -152,7 +152,7 @@ jobs:
     # we notify on main branches only
     needs: submit_data_release_periodically
     if: failure()
-    runs-on: "self-hosted"
+    runs-on: "gha-runner-scale-set"
     steps:
       - name: Post to a Slack channel
         id: slack

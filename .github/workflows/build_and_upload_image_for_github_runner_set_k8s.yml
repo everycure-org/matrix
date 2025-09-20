@@ -1,0 +1,70 @@
+name: Build & Push Runner Image (Google Artifact Registry)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - infra/github-runner-image/**
+      - .github/workflows/build_and_upload_image_for_github_runner_set_k8s.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write   # for Google Cloud authentication
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  IMAGE_NAME: github-runner
+
+jobs:
+  build-and-push:
+    environment: dev
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate with Google Cloud for access_token
+        id: auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{vars.PROJECT_ID}}
+          workload_identity_provider: ${{vars.WORKLOAD_IDENTITY_PROVIDER_RW}}
+          service_account: ${{vars.SERVICE_ACCOUNT_RW}}
+          token_format: access_token
+
+      # Derive image tags & labels (latest + sha)
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ vars.REGION }}-docker.pkg.dev/${{ vars.PROJECT_ID }}/github-runner-images/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Google Artifact Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.REGION }}-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: Build & Push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./infra/github-runner-image
+          push: true
+          platforms: linux/amd64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

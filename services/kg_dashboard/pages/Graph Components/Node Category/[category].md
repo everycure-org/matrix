@@ -1,34 +1,14 @@
 # {params.category}
 
+<p class="text-sm mb-4">
+  <a class="underline text-blue-600" href="https://biolink.github.io/biolink-model/{params.category}/" target="_blank">View biolink model definition →</a>
+</p>
+
 <script context="module">
-  import { getSeriesColors, sourceOrder } from '../../../_lib/colors';
+  import { getSeriesColors, sourceOrder, sortDataBySeriesOrder } from '../../../_lib/colors';
   
-  // Enhanced sortBySeries function that uses the color ordering
-  export function sortBySeriesOrdered(data, seriesColumn) {
-    // Use the existing sourceOrder from colors.js
-    return data.sort((a, b) => {
-      const aIndex = sourceOrder.indexOf(a[seriesColumn]);
-      const bIndex = sourceOrder.indexOf(b[seriesColumn]);
-      
-      // Both are known sources
-      if (aIndex !== -1 && bIndex !== -1) {
-        return aIndex - bIndex;
-      }
-      
-      // a is known, b is unknown - a comes first
-      if (aIndex !== -1 && bIndex === -1) {
-        return -1;
-      }
-      
-      // a is unknown, b is known - b comes first
-      if (aIndex === -1 && bIndex !== -1) {
-        return 1;
-      }
-      
-      // Both are unknown - sort alphabetically
-      return a[seriesColumn].localeCompare(b[seriesColumn]);
-    });
-  }
+  // Use the shared sorting function from colors.js
+  export const sortBySeriesOrdered = sortDataBySeriesOrder;
 </script>
 
 ```sql number_of_nodes
@@ -47,7 +27,7 @@ where subject_category = 'biolink:${params.category}'
 ```sql nodes_by_prefix
   select 
       prefix,
-      '/node/prefix/' || prefix as link,
+      '/Graph Components/Node Prefix/' || prefix as link,
       coalesce(sum(count), 0) as count
   from bq.merged_kg_nodes
   where category = 'biolink:${params.category}'
