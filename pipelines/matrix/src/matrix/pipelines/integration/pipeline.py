@@ -206,7 +206,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     inputs=[
                         *[
                             f"integration.int.{source['name']}.normalization_summary"
-                            for source in settings.DYNAMIC_PIPELINES_MApwdPPING().get("integration")
+                            for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")
                             # if source.get("has_edges", True)  # Only sources that have normalization summaries
                         ]
                     ],
