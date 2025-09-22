@@ -158,8 +158,6 @@ preprocessing.int.mapped_clinical_trials_data:
     sep: "\t"
 
 
-
-
 # PrimeKG
 preprocessing.raw.primekg.drug_features@polars:
   <<: [*_polars_csv]
