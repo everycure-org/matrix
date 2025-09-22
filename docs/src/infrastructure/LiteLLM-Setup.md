@@ -169,13 +169,12 @@ export DATABASE_PASSWORD="$(kubectl get secret postgres -n litellm -o jsonpath='
 
 ## Sample Client Usage (Python)
 
-> When using outside GKE, `LITELLM_BASE` should be set to `http://litellm.litellm.svc.cluster.local:4000`
+> When using outside GKE, `LITELLM_BASE` should be set to `https://litellm.api.prod.everycure.org`
 
 ```python
 import os, requests, json
 
 base_url = os.getenv("LITELLM_BASE", "https://litellm.api.prod.everycure.org")
-master_key = os.getenv("LITELLM_MASTER_KEY")
 
 payload = {
   "model": "gpt-4o",
