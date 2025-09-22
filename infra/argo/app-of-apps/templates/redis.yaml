@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: redis
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "9"
+spec:
+  destination:
+    namespace: redis
+    server: {{ .Values.spec.destination.server }}
+  project: default
+  source:
+    chart: redis
+    repoURL: https://ot-container-kit.github.io/helm-charts
+    targetRevision: 0.16.5
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: true
+      allowEmpty: true
