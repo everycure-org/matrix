@@ -1,7 +1,5 @@
 # Redis Setup & Connection Documentation
 
-## What Has Been Done
-
 ### 1. Redis Operator Deployment
 
 - **Operator**: `redis-operator` Helm chart (ot-container-kit) version `0.22.0`
@@ -19,7 +17,6 @@
 
 ### 3. Security & Access
 
-- **Authentication**: Password-based (typical for ot-container-kit Redis). Secret name varies by chart values; see retrieval section below.
 - **TLS**: Not enabled by default unless chart configured for it (assumed disabled — enable in future hardening phase if required)
 - **Network Access**: Cluster-internal only (ClusterIP service) — expose externally only via port-forward or jump tools.
 
@@ -42,41 +39,6 @@ kubectl get applications.argoproj.io -n argocd | grep redis
 ```
 Host: redis.redis.svc.cluster.local
 Port: 6379
-Password: <retrieved from secret>
-```
-
-### Getting the Redis Password
-
-Because the ot-container-kit chart may name the auth secret differently depending on values (commonly `redis-auth`, `redis`, or `<release-name>-auth`), first list secrets:
-
-```bash
-kubectl get secrets -n redis | grep -i redis
-```
-
-Inspect likely auth secret (look for a `password` key):
-
-```bash
-kubectl get secret redis-auth -n redis -o yaml # change name if needed
-```
-
-If unsure, describe all Redis-related secrets:
-
-```bash
-for s in $(kubectl get secret -n redis -o name | grep redis); do echo "--- $s"; kubectl get $s -n redis -o jsonpath='{.data}' | jq .; echo; done
-```
-
-Decode password (adjust secret + key if different):
-
-```bash
-kubectl get secret redis-auth -n redis -o jsonpath='{.data.password}' | base64 -d
-```
-
-(If the key is `auth` or `redis-password`, substitute accordingly.)
-
-Export for local use:
-
-```bash
-export REDIS_PASSWORD="$(kubectl get secret redis-auth -n redis -o jsonpath='{.data.password}' | base64 -d)"
 ```
 
 ### From Within the Cluster (Recommended)
@@ -90,11 +52,6 @@ env:
     value: "redis.redis.svc.cluster.local"
   - name: REDIS_PORT
     value: "6379"
-  - name: REDIS_PASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: redis-auth # adjust if secret name differs
-        key: password # adjust if key name differs
 ```
 
 ### Port Forward for Local Development
@@ -114,14 +71,14 @@ Then connect locally (CLI example below) using `localhost:6379`.
 brew install redis
 
 # Test auth (replace with actual password if not exported)
-redis-cli -h redis.redis.svc.cluster.local -p 6379 -a "$REDIS_PASSWORD" PING
+redis-cli -h redis.redis.svc.cluster.local -p 6379 PING
 # Expect: PONG
 ```
 
 If port-forwarded:
 
 ```bash
-redis-cli -h 127.0.0.1 -p 6379 -a "$REDIS_PASSWORD" INFO server | head
+redis-cli -h 127.0.0.1 -p 6379 INFO server | head
 ```
 
 ### Python Example (redis-py)
@@ -132,7 +89,6 @@ import redis, os
 r = redis.Redis(
     host=os.getenv("REDIS_HOST", "redis.redis.svc.cluster.local"),
     port=int(os.getenv("REDIS_PORT", "6379")),
-    password=os.getenv("REDIS_PASSWORD"),
     socket_timeout=3,
 )
 
@@ -159,8 +115,8 @@ kubectl get redis -n redis || echo "(No Redis CRD objects found — using raw He
 Memory / key metrics (requires redis-cli auth):
 
 ```bash
-redis-cli -a "$REDIS_PASSWORD" INFO memory | grep used_memory_human
-redis-cli -a "$REDIS_PASSWORD" DBSIZE
+redis-cli INFO memory | grep used_memory_human
+redis-cli DBSIZE
 ```
 
 ### Important Notes
@@ -173,11 +129,6 @@ redis-cli -a "$REDIS_PASSWORD" DBSIZE
 
 ### Troubleshooting
 
-#### Cannot Authenticate
-
-- Verify password secret and key name.
-- Ensure your client passes `-a <password>` or configured `password=` parameter.
-
 #### Connection Refused
 
 - Pod not ready: `kubectl get pods -n redis` and check readiness probes.
@@ -187,16 +138,12 @@ redis-cli -a "$REDIS_PASSWORD" DBSIZE
 #### High Latency / Timeouts
 
 - Check pod resource limits; adjust values in Helm chart if under-provisioned.
-- Run: `redis-cli -a "$REDIS_PASSWORD" INFO stats | grep instantaneous_ops_per_sec`
+- Run: `redis-cli INFO stats | grep instantaneous_ops_per_sec`
 
 #### Persistence Issues
 
 - Confirm PVCs: `kubectl get pvc -n redis`.
 - Check StatefulSet (if used): `kubectl get sts -n redis`.
-
-#### Password Unknown
-
-- Re-generate by rotating secret (if enabled) or reinstalling release (will cause data loss unless persistence retained). Document rotation procedure when implemented.
 
 ### Verifying Deployment via ArgoCD
 
@@ -210,6 +157,7 @@ kubectl describe application -n argocd redis | grep -i sync
 ## Next Improvements (Future Work)
 
 - Enable TLS and enforce in-transit encryption.
+- Use Password protection.
 - Add password rotation automation.
 - Add Prometheus exporter (e.g. redis-exporter) and alerting rules.
 - Evaluate HA deployment (Sentinel or Redis Cluster) if single instance becomes bottleneck.

@@ -1,7 +1,5 @@
 # LiteLLM Setup & Connection Documentation
 
-## What Has Been Done
-
 ### 1. Deployment via ArgoCD
 
 - **ArgoCD Application Name**: `litellm` (sync-wave 10)
@@ -89,7 +87,7 @@ High-level components:
 ```
 Host: litellm.litellm.svc.cluster.local
 Port: 4000
-Protocol: HTTP (consider TLS ingress in future)
+Protocol: HTTP (considering TLS ingress in future)
 ```
 
 Example curl (OpenAI-style chat completion):
@@ -111,7 +109,7 @@ curl -s \
 
 ```bash
 kubectl port-forward -n litellm svc/litellm 4000:4000
-# Now available at http://127.0.0.1:4000
+# Now available at http://litellm.api.prod.everycure.org
 ```
 
 Test locally:
@@ -119,15 +117,15 @@ Test locally:
 ```bash
 curl -H "Authorization: Bearer $LITELLM_MASTER_KEY" \
      -H "Content-Type: application/json" \
-     http://127.0.0.1:4000/v1/models | jq .
+     http://litellm.api.prod.everycure.org/v1/models | jq .
 ```
 
 ### UI Access
 
-Open (after port-forward) in browser:
+Open in browser:
 
 ```
-http://127.0.0.1:4000/
+http://litellm.api.prod.everycure.org/
 ```
 
 (Assess access control—if none, consider restricting with network policy or auth proxy.)
@@ -169,10 +167,12 @@ export DATABASE_PASSWORD="$(kubectl get secret postgres -n litellm -o jsonpath='
 
 ## Sample Client Usage (Python)
 
+> When using outside GKE, `LITELLM_BASE` should be set to `http://litellm.litellm.svc.cluster.local:4000`
+
 ```python
 import os, requests, json
 
-base_url = os.getenv("LITELLM_BASE", "http://litellm.litellm.svc.cluster.local:4000")
+base_url = os.getenv("LITELLM_BASE", "https://litellm.api.prod.everycure.org")
 master_key = os.getenv("LITELLM_MASTER_KEY")
 
 payload = {
@@ -307,5 +307,6 @@ curl -H "Authorization: Bearer $LITELLM_MASTER_KEY" \
 | Master Key Secret    | `litellm-master-key` / key `LITELLM_MASTER_KEY`                                                                                              |
 | Provider Keys Secret | `litellm-provider-keys`                                                                                                                      |
 | DB Password Secret   | `postgres` (env key: `DATABASE_PASSWORD`)                                                                                                    |
+| Public URL Link      | `https://litellm.api.prod.everycure.org`                                                                                                     |
 
 > Review and adjust if Helm values change or additional providers are added.

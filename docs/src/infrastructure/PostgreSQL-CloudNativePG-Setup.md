@@ -1,7 +1,5 @@
 # PostgreSQL CloudNativePG Setup Documentation
 
-## What Has Been Done
-
 ### 1. PostgreSQL CloudNativePG Operator Setup
 
 - **Operator Installation**: Deployed CloudNativePG operator v0.26.0 via ArgoCD
