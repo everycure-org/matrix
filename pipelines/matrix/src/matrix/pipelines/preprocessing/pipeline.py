@@ -17,16 +17,14 @@ def create_primekg_pipeline() -> Pipeline:
                     "disease_features": "preprocessing.raw.primekg.disease_features@polars",
                 },
                 outputs="preprocessing.int.primekg.nodes",
-                name="build_primekg_nodes",
+                name="primekg_build_nodes",
                 tags=["primekg"],
             ),
             node(
                 func=nodes.primekg_build_edges,
-                inputs=[
-                    "preprocessing.raw.primekg.kg@polars",
-                ],
+                inputs="preprocessing.raw.primekg.kg@polars",
                 outputs="preprocessing.int.primekg.edges",
-                name="build_primekg_edges",
+                name="primekg_build_edges",
                 tags=["primekg"],
             ),
         ]
@@ -88,7 +86,7 @@ def create_embiology_pipeline() -> Pipeline:
                     "preprocessing.int.embiology.manual_id_mapping@spark",
                     "preprocessing.int.embiology.manual_name_mapping@spark",
                     "params:preprocessing.embiology.attr.identifiers_mapping",
-                    "params:preprocessing.embiology.normalization",
+                    "params:preprocessing.normalization",
                 ],
                 outputs="preprocessing.int.embiology.node_attributes_normalised_ids@pandas",
                 name="get_embiology_node_attributes_normalised_ids",
