@@ -42,7 +42,7 @@ class PrimeKGTransformer(GraphTransformer):
         """
         match self._version:
             case "2.1.1":
-                df = transform_edges_2_1_1(edges_df)
+                df = transform_edges_2_1(edges_df)
             case _:
                 raise NotImplementedError(f"No edges transformer code implemented for version: {self._version}")
         return df
