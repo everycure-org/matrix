@@ -63,11 +63,13 @@ Flush Size: 100
 
 ## Architecture Overview
 
-```
-(Client) --> [Service: litellm:4000] --> Model Proxy Logic
-                                 |--> PostgreSQL (persistence: usage logs, metadata)
-                                 |--> Redis (cache + routing state)
-                                 |--> External LLM APIs (OpenAI, Anthropic, etc.)
+```mermaid
+graph TD
+    Client --> Service["Service: litellm.api.prod.everycure.org"]
+    Service --> Proxy[Model Proxy Logic]
+    Service --> Postgres["PostgreSQL (persistence: usage logs, metadata)"]
+    Service --> Redis["Redis (cache + routing state)"]
+    Service --> APIs["External LLM APIs (OpenAI, Anthropic, etc.)"]
 ```
 
 High-level components:
