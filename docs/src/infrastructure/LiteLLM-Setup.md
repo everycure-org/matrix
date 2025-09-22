@@ -105,9 +105,7 @@ response = llm.invoke("Tell me a joke.")
 `db.url` template (with secret expansion):
 
 ```
-
 postgresql://litellm:$(DATABASE_PASSWORD)@postgresql-cloudnative-pg-cluster-pooler-rw.postgresql.svc.cluster.local:5432/app?schema=litellm
-
 ```
 
 - **User**: `litellm`
