@@ -287,6 +287,6 @@ def create_pipeline(**kwargs) -> Pipeline:
     pipelines.append(create_shared_pipeline())
 
     # Generate pipeline for the model
-    pipelines.append(create_pipeline(model, n_cross_val_folds))
+    pipelines.append(create_model_pipeline(model, n_cross_val_folds))
 
     return sum(pipelines)
