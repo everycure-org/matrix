@@ -9,23 +9,30 @@ def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             node(
+                func=nodes.extract_pks_from_unified_edges,
+                inputs="document_kg.raw.unified_edges@spark",
+                outputs="document_kg.prm.pks_integrated_kg_list",
+                name="extract_pks_from_unified_edges",
+                tags=["document_kg"],
+            ),
+            node(
                 func=nodes.create_pks_integrated_metadata,
                 inputs=[
-                    "document_kg.prm.infores", 
-                    "document_kg.prm.reusabledata",
-                    "document_kg.prm.kgregistry",
-                    "document_kg.prm.matrix_curated_pks",
-                    "document_kg.prm.matrix_reviews_pks",
-                    "document_kg.prm.pks_integrated_kg_list",
-                    "document_kg.prm.mapping_reusabledata_infores",
-                    "document_kg.prm.mapping_kgregistry_infores",
+                    "document_kg.raw.infores",
+                    "document_kg.raw.reusabledata",
+                    "document_kg.raw.kgregistry",
+                    "document_kg.raw.matrix_curated_pks@pandas",
+                    "document_kg.raw.matrix_reviews_pks@pandas",
+                    "document_kg.int.pks_integrated_kg_list",
+                    "document_kg.raw.mapping_reusabledata_infores",
+                    "document_kg.raw.mapping_kgregistry_infores",
                 ],
                 outputs=[
                     "document_kg.prm.pks_yaml",
                 ],
                 name="create_pks_integrated_metadata",
                 tags=["document_kg"],
-            ), 
+            ),
             node(
                 func=nodes.create_pks_documentation,
                 inputs=[
@@ -36,6 +43,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 name="create_pks_documentation",
                 tags=["document_kg"],
-            )
+            ),
         ]
     )

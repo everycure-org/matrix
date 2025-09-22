@@ -1,15 +1,11 @@
-# -------------------------------------------------------------------------
-# Common Dataset Templates
-# -------------------------------------------------------------------------
+_spark_parquet_ds: &_spark_parquet
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
+  file_format: parquet
+  load_args:
+    header: True
 
 _pandas_csv: &_pandas_csv
   type: pandas.CSVDataset
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
 
 _yaml_dataset: &_yaml_dataset
   type: yaml.YAMLDataset
@@ -31,15 +27,15 @@ _layer_raw: &_layer_raw
     kedro-viz:
       layer: raw
 
-_layer_primary: &_layer_primary
+_layer_int: &_layer_int
+  metadata:
+    kedro-viz:
+      layer: integration
+
+_layer_prm: &_layer_prm
   metadata:
     kedro-viz:
       layer: primary
-
-_layer_output: &_layer_output
-  metadata:
-    kedro-viz:
-      layer: model_output
 
 # -------------------------------------------------------------------------
 # External Data Sources
@@ -47,71 +43,81 @@ _layer_output: &_layer_output
 
 # Information Resource Registry catalog (https://biolink.github.io/information-resource-registry/registry/)
 # Contains metadata about knowledge sources used in biolink-based KGs
-document_kg.prm.infores:
+document_kg.raw.infores:
   <<: [*_yaml_dataset, *_layer_raw]
   filepath: https://raw.githubusercontent.com/biolink/information-resource-registry/refs/heads/main/infores_catalog.yaml
 
 # Reusable Data catalog (https://reusabledata.org/)
 # Contains metadata about various datasets, especially licensing information
-document_kg.prm.reusabledata:
+document_kg.raw.reusabledata:
   <<: [*_json_dataset, *_layer_raw]
   filepath: https://raw.githubusercontent.com/reusabledata/reusabledata/refs/heads/master/data.json
 
 # KG registry from KG-Hub
 # Contains metadata about knowledge graphs and KG data sources
-document_kg.prm.kgregistry:
+document_kg.raw.kgregistry:
   <<: [*_yaml_dataset, *_layer_raw]
   filepath: https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-registry/refs/heads/main/registry/kgs.yml
+
+# -------------------------------------------------------------------------
+# Integration Pipeline Data Sources
+# -------------------------------------------------------------------------
+
+document_kg.raw.unified_edges@spark:
+  <<: [*_spark_parquet, *_layer_raw]
+  filepath: ${globals:paths.tmp}/integration/unified_edges
 
 # -------------------------------------------------------------------------
 # Matrix-Internal Data Sources
 # -------------------------------------------------------------------------
 
-document_kg.prm.matrix_curated_pks:
-  <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw_public}/kg/matrix-pks-curated-metadata.tsv
+document_kg.raw.matrix_curated_pks@pandas:
+  <<: [*_layer_raw, *_pandas_csv]
+  filepath: ${globals:paths.raw_public}/kg_metadata/matrix-pks-curated-metadata.tsv
+  load_args:
+    sep: "\t"
 
-document_kg.prm.matrix_reviews_pks:
+document_kg.raw.matrix_reviews_pks@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw_public}/kg/matrix-pks-reviews.tsv
+  filepath: ${globals:paths.raw_public}/kg_metadata/matrix-pks-reviews.tsv
+  load_args:
+    sep: "\t"
 
 # -------------------------------------------------------------------------
 # Matrix-Curated Mappings
 # -------------------------------------------------------------------------
 
-document_kg.prm.mapping_reusabledata_infores:
+document_kg.raw.mapping_reusabledata_infores:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw_public}/mappings/reusabledata-infores.sssom.tsv
+  filepath: ${globals:paths.raw_public}/kg_metadata/reusabledata-infores.sssom.tsv
   load_args:
     sep: "\t"
-    comment: "#"
 
-document_kg.prm.mapping_kgregistry_infores:
+document_kg.raw.mapping_kgregistry_infores:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw_public}/mappings/kgregistry-infores.sssom.tsv
+  filepath: ${globals:paths.raw_public}/kg_metadata/kgregistry-infores.sssom.tsv
   load_args:
     sep: "\t"
-    comment: "#"
 
 # -------------------------------------------------------------------------
 # Dynamic Data Sources
 # -------------------------------------------------------------------------
 
 # Dynamically created list of primary knowledge sources relevant to Matrix
-document_kg.prm.pks_integrated_kg_list:
-  <<: [*_sql_dataset, *_layer_primary]
-  table_name: primary_knowledge_sources
+document_kg.int.pks_integrated_kg_list:
+  <<: [*_pandas_csv, *_layer_int]
+  filepath: ${globals:paths.tmp}/document_kg/pks_integrated_kg_list.csv
 
 # -------------------------------------------------------------------------
 # Output Files
 # -------------------------------------------------------------------------
 
 document_kg.prm.pks_yaml:
-  <<: [*_yaml_dataset, *_layer_output]
+  <<: [*_yaml_dataset, *_layer_prm]
   filepath: ${globals:paths.release}/kg/primary-knowledge-sources.yml
   save_args:
     default_flow_style: false
 
 document_kg.prm.pks_md:
-  <<: [*_text_dataset, *_layer_output]
+  <<: [*_text_dataset, *_layer_prm]
   filepath: ${globals:paths.release}/primary-knowledge-sources.md
