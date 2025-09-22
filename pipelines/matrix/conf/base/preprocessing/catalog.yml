@@ -157,27 +157,30 @@ preprocessing.int.mapped_clinical_trials_data:
   save_args:
     sep: "\t"
 
+
+
+
 # PrimeKG
 preprocessing.raw.primekg.drug_features@polars:
   <<: [*_polars_csv]
-  filepath: ${globals:paths.raw}/KGs/prime-kg/${globals:preprocessing.primekg.version}/drug_features.csv
+  filepath: ${globals:paths.raw}/KGs/prime-kg/${globals:data_sources.primekg.version}/drug_features.csv
 
 preprocessing.raw.primekg.disease_features@polars:
   <<: [*_polars_csv]
-  filepath: ${globals:paths.raw}/KGs/prime-kg/${globals:preprocessing.primekg.version}/disease_features.csv
+  filepath: ${globals:paths.raw}/KGs/prime-kg/${globals:data_sources.primekg.version}/disease_features.csv
 
 preprocessing.raw.primekg.nodes@polars:
   <<: [*_polars_csv]
-  filepath: ${globals:paths.raw}/KGs/prime-kg/${globals:preprocessing.primekg.version}/nodes.csv
+  filepath: ${globals:paths.raw}/KGs/prime-kg/${globals:data_sources.primekg.version}/nodes.csv
 
 preprocessing.raw.primekg.kg@polars:
   <<: [*_polars_csv]
-  filepath: ${globals:paths.raw}/KGs/prime-kg/${globals:preprocessing.primekg.version}/kg.csv
+  filepath: ${globals:paths.raw}/KGs/prime-kg/${globals:data_sources.primekg.version}/kg.csv
 
 preprocessing.int.primekg.nodes:
   <<: [*_polars_csv]
-  filepath: ${globals:paths.tmp}/preprocessing/int/prime-kg/${globals:preprocessing.primekg.version}.${globals:preprocessing.primekg.patch}/prime-kg-${globals:preprocessing.primekg.version}.${globals:preprocessing.primekg.patch}_nodes.tsv
+  filepath: ${globals:paths.tmp}/preprocessing/int/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_nodes.tsv
 
 preprocessing.int.primekg.edges:
   <<: [*_polars_csv]
-  filepath: ${globals:paths.tmp}/preprocessing/int/prime-kg/${globals:preprocessing.primekg.version}.${globals:preprocessing.primekg.patch}/prime-kg-${globals:preprocessing.primekg.version}.${globals:preprocessing.primekg.patch}_edges.tsv
+  filepath: ${globals:paths.tmp}/preprocessing/int/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_edges.tsv
