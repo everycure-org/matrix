@@ -27,3 +27,6 @@ format:
 
 install:
 	uv sync
+
+clean:
+	uv cache clean
