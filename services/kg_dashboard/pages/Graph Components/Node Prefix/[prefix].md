@@ -1,34 +1,10 @@
 # {params.prefix}
 
 <script context="module">
-  import { getSeriesColors, sourceOrder } from '../../../_lib/colors';
+  import { getSeriesColors, sourceOrder, sortDataBySeriesOrder } from '../../../_lib/colors';
   
-  // Enhanced sortBySeries function that uses the color ordering
-  export function sortBySeriesOrdered(data, seriesColumn) {
-    // Use the existing sourceOrder from colors.js
-    return data.sort((a, b) => {
-      const aIndex = sourceOrder.indexOf(a[seriesColumn]);
-      const bIndex = sourceOrder.indexOf(b[seriesColumn]);
-      
-      // Both are known sources
-      if (aIndex !== -1 && bIndex !== -1) {
-        return aIndex - bIndex;
-      }
-      
-      // a is known, b is unknown - a comes first
-      if (aIndex !== -1 && bIndex === -1) {
-        return -1;
-      }
-      
-      // a is unknown, b is known - b comes first
-      if (aIndex === -1 && bIndex !== -1) {
-        return 1;
-      }
-      
-      // Both are unknown - sort alphabetically
-      return a[seriesColumn].localeCompare(b[seriesColumn]);
-    });
-  }
+  // Use the shared sorting function from colors.js
+  export const sortBySeriesOrdered = sortDataBySeriesOrder;
 </script>
 
 ```sql number_of_nodes
@@ -47,7 +23,7 @@ where subject_prefix = '${params.prefix}'
 ```sql nodes_by_category
   select 
       replace(category,'biolink:','') as category,
-      '/node/category/' || replace(category,'biolink:','') as link,
+      '/Graph Components/Node Category/' || replace(category,'biolink:','') as link,
       sum(count) as count
   from bq.merged_kg_nodes
   where prefix = '${params.prefix}'

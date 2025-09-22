@@ -1,6 +1,7 @@
 from kedro.pipeline import Pipeline, node, pipeline
 
 from matrix import settings
+from matrix.utils.validation import validate
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -45,10 +46,10 @@ def create_pipeline(**kwargs) -> Pipeline:
             nodes_lst.append(
                 node(
                     func=lambda x: x,
-                    inputs=[f'ingestion.raw.{source["name"]}.nodes@spark'],
-                    outputs=f'ingestion.int.{source["name"]}.nodes',
-                    name=f'write_{source["name"]}_nodes',
-                    tags=[f'{source["name"]}'],
+                    inputs=[f"ingestion.raw.{source['name']}.nodes@spark"],
+                    outputs=f"ingestion.int.{source['name']}.nodes",
+                    name=f"write_{source['name']}_nodes",
+                    tags=[f"{source['name']}"],
                 )
             )
         if "ground_truth" in source.get("name", ""):
@@ -63,18 +64,31 @@ def create_pipeline(**kwargs) -> Pipeline:
                         f"ingestion.int.{source['name']}.positive.edges@pandas",
                         f"ingestion.int.{source['name']}.negative.edges@pandas",
                     ],
-                    name=f'write_{source["name"]}',
-                    tags=[f'{source["name"]}'],
+                    name=f"write_{source['name']}",
+                    tags=[f"{source['name']}"],
                 )
             )
         elif source.get("has_edges", True):
             nodes_lst.append(
                 node(
                     func=lambda x: x,
-                    inputs=[f'ingestion.raw.{source["name"]}.edges@spark'],
-                    outputs=f'ingestion.int.{source["name"]}.edges',
-                    name=f'write_{source["name"]}_edges',
-                    tags=[f'{source["name"]}'],
+                    inputs=[f"ingestion.raw.{source['name']}.edges@spark"],
+                    outputs=f"ingestion.int.{source['name']}.edges",
+                    name=f"write_{source['name']}_edges",
+                    tags=[f"{source['name']}"],
+                )
+            )
+        if source.get("validate", False):
+            nodes_lst.append(
+                node(
+                    func=validate,
+                    inputs={
+                        "nodes": f"ingestion.raw.{source['name']}.nodes@polars",
+                        "edges": f"ingestion.raw.{source['name']}.edges@polars",
+                    },
+                    outputs=f"ingestion.int.{source['name']}.violations",
+                    name=f"validate_{source['name']}",
+                    tags=[f"{source['name']}"],
                 )
             )
     return pipeline(nodes_lst)

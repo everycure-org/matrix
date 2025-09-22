@@ -43,10 +43,10 @@ resource "helm_release" "argo" {
   timeout       = 600
   atomic        = true
   recreate_pods = true
+  version       = "8.3.1" # Pin to a specific version to avoid breaking changes
 
   # pass through ssl to enable grpc/https for argocd CLI, see
   # https://argoproj.github.io/argo-cd/operator-manual/ingress/#kubernetesingress-nginx
-
   set {
     name  = "server.ingress.annotations.kubernetes.io/ingress.class"
     value = "nginx"
