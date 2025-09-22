@@ -65,7 +65,7 @@ dependencies = [
     "polars-lts-cpu==1.30.0",
     "proto-plus==1.24.0.dev1", # Temp. fix for the gcloud cli
     "pyarrow>=14.0.2",
-    "pygsheets==2.0.6",
+    "gspread>=6.2.1",
     "pyspark==3.5.1",
     "python-cypher==0.20.1",
     "responses",
