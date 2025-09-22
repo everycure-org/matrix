@@ -25,7 +25,9 @@ import asyncio
 
 
 def primekg_build_nodes(
-    nodes: pl.DataFrame, drug_features: pl.DataFrame, disease_features: pl.DataFrame
+    nodes: pl.DataFrame,
+    drug_features: pl.DataFrame,
+    disease_features: pl.DataFrame,
 ) -> pl.DataFrame:
     """Build a KGX Nodes file from PrimeKG inputs.
 
@@ -183,7 +185,9 @@ def primekg_build_nodes(
         .drop(["node_id", "node_index"], strict=False)
         .rename({"node_source": "id", "node_name": "name", "category": "drug_category"})
         .rename({"node_type": "category"})
+        .unique(subset=["id", "category"], keep="first")
     )
+
     return main
 
 
