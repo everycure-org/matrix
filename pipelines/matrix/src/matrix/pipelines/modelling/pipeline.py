@@ -277,7 +277,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         - Shards, i.e., defined for ensemble models, non-ensemble models have shards = 1
     """
     # Unpack model
-    model = settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")
+    models = settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")
 
     # Unpack Folds
     n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING().get("cross_validation").get("n_cross_val_folds")
@@ -287,6 +287,6 @@ def create_pipeline(**kwargs) -> Pipeline:
     pipelines.append(create_shared_pipeline())
 
     # Generate pipeline for the model
-    pipelines.append(create_model_pipeline(model, n_cross_val_folds))
+    pipelines.append(create_model_pipeline(models, n_cross_val_folds))
 
     return sum(pipelines)
