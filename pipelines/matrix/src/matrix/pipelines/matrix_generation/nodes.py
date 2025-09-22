@@ -254,6 +254,7 @@ def make_predictions_and_sort(
         all_predictions = []
 
         for transformer_dict, model, model_features_list in zip(transformers, models, features):
+            # TODO: can we get columns from transformers directly?
             transformed = apply_transformers(partition_df, transformer_dict)
             model_features = _extract_elements_in_list(transformed.columns, model_features_list, True)
             model_predictions = model.predict_proba(transformed[model_features].values)
