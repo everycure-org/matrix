@@ -4,6 +4,7 @@
   // THIS FILE IS LARGELY CLAUDE GENERATED
   import { getSourceColor } from '../_lib/colors';
   import { ECharts } from '@evidence-dev/core-components';
+  import { showQueries } from '@evidence-dev/component-utilities/stores';
   
   export let networkData = [];
   export let title = 'Network Graph';
@@ -504,7 +505,8 @@
 
 <ECharts config={networkOption} data={networkData} height={dynamicHeight} width="100%" />
 
-<!-- Debug Information Display -->
+<!-- Debug Information Display - Only visible when Evidence's "Show Queries" is enabled -->
+{#if $showQueries}
 <div style="margin-top: 20px; padding: 15px; background-color: #f5f5f5; border-radius: 5px; font-family: monospace; font-size: 12px;">
   <h4 style="margin: 0 0 10px 0; color: #333;">Layout Debug Info:</h4>
   <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
@@ -542,3 +544,4 @@
     <strong>Sample Node Data:</strong> {JSON.stringify(debugInfo.sampleNodeData, null, 2)}
   </div>
 </div>
+{/if}
