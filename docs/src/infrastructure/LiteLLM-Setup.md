@@ -168,6 +168,7 @@ export DATABASE_PASSWORD="$(kubectl get secret postgres -n litellm -o jsonpath='
 import os, requests, json
 
 base_url = os.getenv("LITELLM_BASE", "https://litellm.api.prod.everycure.org")
+litellm_key = os.getenv("LITELLM_VIRTUAL_KEY", "")
 
 payload = {
   "model": "gpt-4o",
@@ -178,7 +179,7 @@ payload = {
 resp = requests.post(
   f"{base_url}/v1/chat/completions",
   headers={
-    "Authorization": f"Bearer {master_key}",
+    "Authorization": f"Bearer {litellm_key}",
     "Content-Type": "application/json"
   },
   data=json.dumps(payload),
