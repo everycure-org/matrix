@@ -135,7 +135,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="fabricate_primekg_datasets",
             ),
             node(
-                func=nodes.validate_datasets,
+                func=validate,
                 inputs={"nodes": "ingestion.raw.primekg.nodes@polars", "edges": "ingestion.raw.primekg.edges@polars"},
                 outputs="fabricator.int.primekg.violations",
                 name="validate_fabricated_primekg_datasets",
