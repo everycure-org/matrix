@@ -131,6 +131,10 @@ ingestion.int.rtx_kg2.curie_to_pmids:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx_kg2.version}/curie_to_pmids
 
+ingestion.int.rtx_kg2.violations:
+  type: text.TextDataset
+  filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx_kg2.version}/violations.jsonl
+
 # -------------------------------------------------------------------------
 # EveryCure Medical
 # -------------------------------------------------------------------------  
@@ -524,6 +528,10 @@ ingestion.int.robokop.edges:
    <<: [*_spark_parquet, *_layer_int]
    filepath: ${globals:paths.ingestion}/int/robokop/${globals:data_sources.robokop.version}/edges
 
+ingestion.int.robokop.violations:
+  type: text.TextDataset
+  filepath: ${globals:paths.ingestion}/int/robokop/${globals:data_sources.robokop.version}/violations.jsonl
+
 # -------------------------------------------------------------------------
 # Prime KG
 # -------------------------------------------------------------------------
@@ -661,6 +669,10 @@ ingestion.int.spoke.nodes:
 ingestion.int.spoke.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/edges
+
+ingestion.int.spoke.violations:
+  type: text.TextDataset
+  filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/violations.jsonl
 
 # -------------------------------------------------------------------------
 # Embiology
