@@ -24,8 +24,8 @@ class PrimeKGTransformer(GraphTransformer):
             Transformed DataFrame.
         """
         match self._version:
-            case "2.1.1":
-                df = transform_nodes_2_1_1(nodes_df)
+            case "2.1":
+                df = transform_nodes_2_1(nodes_df)
             case _:
                 raise NotImplementedError(f"No nodes transformer code implemented for version: {self._version}")
 
@@ -48,7 +48,7 @@ class PrimeKGTransformer(GraphTransformer):
         return df
 
 
-def transform_nodes_2_1_1(nodes_df: ps.DataFrame):
+def transform_nodes_2_1(nodes_df: ps.DataFrame):
     # fmt: off
     df = (nodes_df
           .withColumn("aggregator_knowledge_source",       F.lit(None).cast(T.ArrayType(T.StringType())))
@@ -63,7 +63,7 @@ def transform_nodes_2_1_1(nodes_df: ps.DataFrame):
     return df
 
 
-def transform_edges_2_1_1(edges_df: ps.DataFrame):
+def transform_edges_2_1(edges_df: ps.DataFrame):
     # fmt: off
     df = (edges_df
           .withColumn("publications",                             F.split(F.col("publications"), SEPARATOR))
