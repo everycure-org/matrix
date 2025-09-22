@@ -601,6 +601,10 @@ ingestion.int.primekg.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/int/prime-kg/${globals:data_sources.primekg.version}/edges
 
+ingestion.int.primekg.violations:
+  type: text.TextDataset
+  filepath: ${globals:paths.ingestion}/int/prime-kg/${globals:data_sources.primekg.version}/violations.jsonl
+
 # -------------------------------------------------------------------------
 # SPOKE
 # -------------------------------------------------------------------------
