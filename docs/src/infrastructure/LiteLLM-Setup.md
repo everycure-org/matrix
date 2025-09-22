@@ -107,13 +107,6 @@ curl -s \
   }' | jq .
 ```
 
-### Port Forward for Local Testing
-
-```bash
-kubectl port-forward -n litellm svc/litellm 4000:4000
-# Now available at http://litellm.api.prod.everycure.org
-```
-
 Test locally:
 
 ```bash
@@ -311,3 +304,10 @@ curl -H "Authorization: Bearer $LITELLM_MASTER_KEY" \
 | Public URL Link      | `https://litellm.api.prod.everycure.org`                                                                                                     |
 
 > Review and adjust if Helm values change or additional providers are added.
+
+### Port Forward for Local Testing
+
+```bash
+kubectl port-forward -n litellm svc/litellm 4000:4000
+# Now available at localhost:4000
+```
