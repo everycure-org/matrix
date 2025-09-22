@@ -49,45 +49,6 @@ def read_sampled_df_tsv(path: Path, limit: int | None = None, select: list[str] 
     return lf.collect()
 
 
-def build_column_summary(df: pl.DataFrame, colname: str) -> dict:
-    """Build a summary of a DataFrame column."""
-    s = df.get_column(colname)
-    datatype = s.dtype
-
-    try:
-        s_non_null = s.drop_nulls()
-    except Exception:
-        s_non_null = s
-    try:
-        sample = s_non_null.sample(n=6, with_replacement=True, shuffle=True)
-    except Exception:
-        sample = s_non_null.head()
-    if datatype.is_float() or datatype.is_integer():
-        values = [int(v) for v in sample.to_list() if v is not None]
-    else:
-        values = [v for v in sample.to_list() if v is not None]
-    # deduplicate while preserving order
-    seen = set()
-    deduped = []
-    for v in values:
-        if v not in seen:
-            seen.add(v)
-            deduped.append(v)
-    return {
-        "name": colname,
-        "datatype": str(s.dtype),
-        "samples": deduped,
-    }
-
-
-def filtered_columns(df: pl.DataFrame, prefixes: list[str] | None) -> list[str]:
-    """Determine columns after prefix exclusions."""
-    cols = list(df.columns)
-    if prefixes:
-        cols = [c for c in cols if not any(c.startswith(p) for p in prefixes)]
-    return cols
-
-
 @app.command(help="Create KG schema snapshot JSON")
 def create_kg_schema_snapshot(
     nodes: Annotated[Path, typer.Option("--nodes", "-n")],
@@ -208,6 +169,45 @@ def build_yaml_from_kgx(
         yaml = ruamel.yaml.YAML()
         yaml.preserve_quotes = False
         yaml.dump(json.loads(json.dumps(data_map)), f)
+
+
+def build_column_summary(df: pl.DataFrame, colname: str) -> dict:
+    """Build a summary of a DataFrame column."""
+    s = df.get_column(colname)
+    datatype = s.dtype
+
+    try:
+        s_non_null = s.drop_nulls()
+    except Exception:
+        s_non_null = s
+    try:
+        sample = s_non_null.sample(n=6, with_replacement=True, shuffle=True)
+    except Exception:
+        sample = s_non_null.head()
+    if datatype.is_float() or datatype.is_integer():
+        values = [int(v) for v in sample.to_list() if v is not None]
+    else:
+        values = [v for v in sample.to_list() if v is not None]
+    # deduplicate while preserving order
+    seen = set()
+    deduped = []
+    for v in values:
+        if v not in seen:
+            seen.add(v)
+            deduped.append(v)
+    return {
+        "name": colname,
+        "datatype": str(s.dtype),
+        "samples": deduped,
+    }
+
+
+def filtered_columns(df: pl.DataFrame, prefixes: list[str] | None) -> list[str]:
+    """Determine columns after prefix exclusions."""
+    cols = list(df.columns)
+    if prefixes:
+        cols = [c for c in cols if not any(c.startswith(p) for p in prefixes)]
+    return cols
 
 
 def create_nodes_map(df: pl.DataFrame, rows: int) -> dict:
