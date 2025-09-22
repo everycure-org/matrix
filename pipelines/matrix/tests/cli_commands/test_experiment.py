@@ -189,6 +189,7 @@ def test_workflow_submission(
         mlflow_experiment_id=1,
         allow_interactions=False,
         environment="cloud",
+        from_run=None,
     )
 
     yaml_file = temporary_directory / "argo-workflow-template.yml"

@@ -57,7 +57,7 @@ You may encounter the following error during install:
 This issue can occur when local libraries in `libs/` have been updated but uv has cached an older version. Since uv manages the workspace dependencies automatically, cached versions can sometimes conflict with updates to local packages.
 
 **Solution**:
-Run this inside of `pipelines/matrix`
+Run this inside of the root directory
 ```bash
 rm -rf .venv/
 uv cache clean
