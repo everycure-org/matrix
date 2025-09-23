@@ -71,7 +71,7 @@ modelling.reporting.gt_present:
   filepath: ${globals:paths.modelling}/model_input/{model_name}/fold_{fold}/transformers.pickle
 
 "modelling.fold_{fold}.{model_name}.model_input.transformed_splits":
-  <<: [*_pandas_parquet, *_model_input_ds]
+  <<: [*_pandas_parquet, *_model_output_ds]
   filepath: ${globals:paths.modelling}/model_input/{model_name}/fold_{fold}/transformed_splits
 
 "modelling.{shard}.{model_name}.model_input.enriched_splits":
