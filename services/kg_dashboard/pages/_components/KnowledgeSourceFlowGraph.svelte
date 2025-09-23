@@ -42,6 +42,51 @@
     sampleNodeData: []
   };
 
+  // === CONSTANTS ===
+  const LAYOUT_CONSTANTS = {
+    OVAL_RADIUS_X: 150,
+    MIN_RADIUS_Y: 100,
+    MAX_RADIUS_Y: 250,
+    RADIUS_Y_SCALE_FACTOR: 15,
+    CENTER_X: 300,
+    MIN_CENTER_Y: 200,
+    MAX_CENTER_Y: 400,
+    CENTER_Y_BASE: 150,
+    CENTER_Y_SCALE_FACTOR: 8,
+    MAX_TOTAL_SPREAD: Math.PI * 0.4, // 72 degrees
+    MIN_SPACING: Math.PI * 0.08,
+    ARC_CENTER: Math.PI,
+    AGGREGATOR_X_OFFSET: 200,
+    UNIFIED_X_OFFSET: 150,
+    AGGREGATOR_SPACING_FRACTION: 0.5,
+    MIN_AGGREGATOR_SPACING: 12,
+    UNIFIED_SPACING: 80
+  };
+
+  const NODE_SIZE_CONSTANTS = {
+    PRIMARY_MIN_SIZE: 8,
+    PRIMARY_MAX_SIZE: 35,
+    PRIMARY_SCALE_DIVISOR: 100000,
+    PRIMARY_SCALE_MULTIPLIER: 3,
+    PRIMARY_BASE_SIZE: 8,
+    UNIFIED_MIN_SIZE: 60,
+    UNIFIED_MAX_SIZE: 100,
+    UNIFIED_SCALE_DIVISOR: 1000000,
+    UNIFIED_SCALE_MULTIPLIER: 0.8,
+    UNIFIED_BASE_SIZE: 60,
+    AGGREGATOR_MIN_SIZE: 45,
+    AGGREGATOR_MAX_SIZE: 80,
+    AGGREGATOR_SCALE_DIVISOR: 1000000,
+    AGGREGATOR_SCALE_MULTIPLIER: 0.6,
+    AGGREGATOR_BASE_SIZE: 45
+  };
+
+  const COLORS = {
+    PRIMARY_NODE: '#88C0D0',
+    PRIMARY_LABEL: '#333',
+    NON_PRIMARY_LABEL: '#fff'
+  };
+
   // === UTILITY FUNCTIONS ===
   function calculateAngleRangeForNodeCount(nodeCount) {
     if (nodeCount <= 2) {
@@ -65,6 +110,122 @@
         positioning: 'large (11+)'
       };
     }
+  }
+
+  function calculateNodePosition(nodeData, category, counters, layout, positions) {
+    const { centerX, centerY, radiusX, radiusY, nodeCount, arcCenter } = layout;
+    const { primarySpread } = positions;
+
+    if (category === 'primary') {
+      let spacing = 0;
+      if (nodeCount > 1) {
+        spacing = Math.min(LAYOUT_CONSTANTS.MIN_SPACING, LAYOUT_CONSTANTS.MAX_TOTAL_SPREAD / (nodeCount - 1));
+      }
+      const centerOffset = (counters.primary - (nodeCount - 1) / 2) * spacing;
+      const angle = arcCenter + centerOffset;
+
+      return {
+        x: centerX + Math.cos(angle) * radiusX,
+        y: centerY + Math.sin(angle) * radiusY
+      };
+    } else if (category === 'aggregator') {
+      const aggregatorNodes = positions.aggregatorNodes || [];
+      let aggregatorSpacing = 0;
+
+      if (aggregatorNodes.length > 1 && primarySpread > 0) {
+        const calculatedSpacing = (primarySpread * LAYOUT_CONSTANTS.AGGREGATOR_SPACING_FRACTION) / (aggregatorNodes.length - 1);
+        aggregatorSpacing = Math.max(calculatedSpacing, LAYOUT_CONSTANTS.MIN_AGGREGATOR_SPACING);
+      }
+
+      const centerOffset = (counters.aggregator - (aggregatorNodes.length - 1) / 2) * aggregatorSpacing;
+
+      return {
+        x: centerX + radiusX - LAYOUT_CONSTANTS.AGGREGATOR_X_OFFSET,
+        y: centerY + centerOffset
+      };
+    } else if (category === 'unified') {
+      const unifiedNodes = positions.unifiedNodes || [];
+      const centerOffset = (counters.unified - (unifiedNodes.length - 1) / 2) * LAYOUT_CONSTANTS.UNIFIED_SPACING;
+
+      return {
+        x: centerX + radiusX - LAYOUT_CONSTANTS.UNIFIED_X_OFFSET,
+        y: centerY + centerOffset
+      };
+    }
+
+    return { x: 0, y: 0 };
+  }
+
+  function calculateNodeSize(value, category) {
+    const safeValue = value || 1;
+
+    switch (category) {
+      case 'primary':
+        return Math.max(
+          NODE_SIZE_CONSTANTS.PRIMARY_MIN_SIZE,
+          Math.min(
+            NODE_SIZE_CONSTANTS.PRIMARY_MAX_SIZE,
+            Math.sqrt(safeValue / NODE_SIZE_CONSTANTS.PRIMARY_SCALE_DIVISOR) * NODE_SIZE_CONSTANTS.PRIMARY_SCALE_MULTIPLIER + NODE_SIZE_CONSTANTS.PRIMARY_BASE_SIZE
+          )
+        );
+      case 'unified':
+        return Math.max(
+          NODE_SIZE_CONSTANTS.UNIFIED_MIN_SIZE,
+          Math.min(
+            NODE_SIZE_CONSTANTS.UNIFIED_MAX_SIZE,
+            safeValue / NODE_SIZE_CONSTANTS.UNIFIED_SCALE_DIVISOR * NODE_SIZE_CONSTANTS.UNIFIED_SCALE_MULTIPLIER + NODE_SIZE_CONSTANTS.UNIFIED_BASE_SIZE
+          )
+        );
+      case 'aggregator':
+      default:
+        return Math.max(
+          NODE_SIZE_CONSTANTS.AGGREGATOR_MIN_SIZE,
+          Math.min(
+            NODE_SIZE_CONSTANTS.AGGREGATOR_MAX_SIZE,
+            safeValue / NODE_SIZE_CONSTANTS.AGGREGATOR_SCALE_DIVISOR * NODE_SIZE_CONSTANTS.AGGREGATOR_SCALE_MULTIPLIER + NODE_SIZE_CONSTANTS.AGGREGATOR_BASE_SIZE
+          )
+        );
+    }
+  }
+
+  function createNodeFromData(nodeData, counters, layout, positions) {
+    const position = calculateNodePosition(nodeData, nodeData.category, counters, layout, positions);
+
+    let nodeColor;
+    if (nodeData.category === 'primary') {
+      nodeColor = COLORS.PRIMARY_NODE;
+    } else if (nodeData.category === 'aggregator' || nodeData.category === 'unified') {
+      const sourceKey = nodeData.node_id.replace('infores:', '');
+      nodeColor = getSourceColor(sourceKey);
+    }
+
+    return {
+      id: nodeData.node_id,
+      name: nodeData.node_name || nodeData.node_id,
+      nodeCategory: nodeData.category,
+      value: nodeData.value || 0,
+      total_all_sources: nodeData.total_all_sources,
+      x: position.x,
+      y: position.y,
+      symbol: 'circle',
+      symbolSize: calculateNodeSize(nodeData.value, nodeData.category),
+      itemStyle: nodeColor ? { color: nodeColor } : undefined,
+      label: {
+        show: true,
+        position: nodeData.category === 'primary' ? 'left' : 'inside',
+        fontSize: nodeData.category === 'primary' ? 12 : 11,
+        color: nodeData.category === 'primary' ? COLORS.PRIMARY_LABEL : COLORS.NON_PRIMARY_LABEL,
+        fontWeight: nodeData.category === 'primary' ? 'normal' : 'bold',
+        distance: nodeData.category === 'primary' ? 8 : 0,
+        formatter: function(params) {
+          if (nodeData.category === 'primary' && params.name && params.name.length > 20) {
+            return params.name.substring(0, 17) + '...';
+          }
+          return params.name;
+        }
+      },
+      fixed: true
+    };
   }
 
   // === DATA PROCESSING ===
@@ -114,10 +275,16 @@
     const totalNodes = primaryNodes.length + aggregatorNodes.length + unifiedNodes.length;
     const nodeCount = primaryNodes.length;
 
-    const radiusX = 150;
-    const radiusY = Math.max(100, Math.min(250, totalNodes * 15));
-    const centerX = 300;
-    const centerY = Math.max(200, Math.min(400, 150 + totalNodes * 8));
+    const radiusX = LAYOUT_CONSTANTS.OVAL_RADIUS_X;
+    const radiusY = Math.max(
+      LAYOUT_CONSTANTS.MIN_RADIUS_Y,
+      Math.min(LAYOUT_CONSTANTS.MAX_RADIUS_Y, totalNodes * LAYOUT_CONSTANTS.RADIUS_Y_SCALE_FACTOR)
+    );
+    const centerX = LAYOUT_CONSTANTS.CENTER_X;
+    const centerY = Math.max(
+      LAYOUT_CONSTANTS.MIN_CENTER_Y,
+      Math.min(LAYOUT_CONSTANTS.MAX_CENTER_Y, LAYOUT_CONSTANTS.CENTER_Y_BASE + totalNodes * LAYOUT_CONSTANTS.CENTER_Y_SCALE_FACTOR)
+    );
 
     const { dynamicAngleRange, positioning } = calculateAngleRangeForNodeCount(nodeCount);
 
@@ -129,12 +296,12 @@
       nodeCount,
       dynamicAngleRange,
       positioning,
-      arcCenter: Math.PI
+      arcCenter: LAYOUT_CONSTANTS.ARC_CENTER
     };
   })();
   // === POSITION CALCULATIONS ===
   $: positions = (() => {
-    const { primaryNodes } = processedData;
+    const { primaryNodes, aggregatorNodes, unifiedNodes } = processedData;
     const { centerX, centerY, radiusX, radiusY, nodeCount, arcCenter } = layout;
 
     const primaryYPositions = [];
@@ -144,8 +311,7 @@
     for (let index = 0; index < primaryNodes.length; index++) {
       let spacing = 0;
       if (nodeCount > 1) {
-        const maxTotalSpread = Math.PI * 0.4;
-        spacing = Math.min(Math.PI * 0.08, maxTotalSpread / (nodeCount - 1));
+        spacing = Math.min(LAYOUT_CONSTANTS.MIN_SPACING, LAYOUT_CONSTANTS.MAX_TOTAL_SPREAD / (nodeCount - 1));
       }
       const centerOffset = (index - (nodeCount - 1) / 2) * spacing;
       const angle = arcCenter + centerOffset;
@@ -171,7 +337,9 @@
       primaryAngles,
       primarySpread,
       primaryXSpread,
-      minMaxPrimaryX
+      minMaxPrimaryX,
+      aggregatorNodes,
+      unifiedNodes
     };
   })();
 
@@ -210,111 +378,38 @@
     const { centerX, centerY, radiusX, radiusY, nodeCount, arcCenter } = layout;
     const { primarySpread } = positions;
 
-    let primaryCount = 0, aggregatorCount = 0, unifiedCount = 0;
+    const counters = { primary: 0, aggregator: 0, unified: 0 };
     const nodeMap = new Map();
-      
-      limitedNodes.forEach(d => {
-        if (d.node_id && !nodeMap.has(d.node_id)) {
-          // Assign non-overlapping positions based on category
-          let xPosition = 0, yPosition = 0;
-          
-          if (d.category === 'primary') {
-            let angle;
-            
-            // Use tight clustering with adaptive spacing based on node count
-            let spacing = 0;
-            if (nodeCount > 1) {
-              // Adaptive spacing: smaller angles for more nodes to keep them clustered
-              const maxTotalSpread = Math.PI * 0.4; // Maximum 72 degrees total spread
-              spacing = Math.min(Math.PI * 0.08, maxTotalSpread / (nodeCount - 1));
-            }
-            const centerOffset = (primaryCount - (nodeCount - 1) / 2) * spacing;
-            angle = arcCenter + centerOffset;
-            
-            xPosition = centerX + Math.cos(angle) * radiusX;
-            yPosition = centerY + Math.sin(angle) * radiusY;
-            primaryCount++;
-          } else if (d.category === 'aggregator') {
-            xPosition = centerX + radiusX - 200;
-            // Math that naturally centers with a fraction of primary Y spread for more even spacing
-            let aggregatorSpacing;
-            if (aggregatorNodes.length > 1 && primarySpread > 0) {
-              // Use 50% of the primary spread for more even aggregator spacing
-              const fractionOfPrimarySpread = 0.5;
-              const calculatedSpacing = (primarySpread * fractionOfPrimarySpread) / (aggregatorNodes.length - 1);
 
-              // Prevent overlap: ensure minimum spacing based on aggregator node size
-              const minimumSpacing = 12;
-              aggregatorSpacing = Math.max(calculatedSpacing, minimumSpacing);
-            } else {
-              aggregatorSpacing = 0; // Single aggregator stays at center
-            }
-            // Update debug info for first aggregator
-            if (aggregatorCount === 0) {
-              debugInfo.aggregatorSpacing = Math.round(aggregatorSpacing);
-            }
-            const centerOffset = (aggregatorCount - (aggregatorNodes.length - 1) / 2) * aggregatorSpacing;
-            yPosition = centerY + centerOffset;
-            
-            // Capture aggregator position for debug
-            debugInfo.aggregatorYPositions.push(Math.round(yPosition));
-            debugInfo.aggregatorXPositions.push(Math.round(xPosition));
-            aggregatorCount++;
-          } else if (d.category === 'unified') {
-            xPosition = centerX + radiusX - 150;
-            // Math that naturally centers: when unifiedNodes.length=1, offset=0
-            const unifiedSpacing = 80; // doesn't matter much since usually only 1
-            const centerOffset = (unifiedCount - (unifiedNodes.length - 1) / 2) * unifiedSpacing;
-            yPosition = centerY + centerOffset;
+    limitedNodes.forEach(nodeData => {
+      if (nodeData.node_id && !nodeMap.has(nodeData.node_id)) {
+        const node = createNodeFromData(nodeData, counters, layout, positions);
 
-            // Capture unified position for debug
-            debugInfo.unifiedYPositions.push(Math.round(yPosition));
-            debugInfo.unifiedXPositions.push(Math.round(xPosition));
-            unifiedCount++;
-          }
-          
-          // Get color based on node ID and category
-          let nodeColor;
-          if (d.category === 'primary') {
-            nodeColor = '#88C0D0'; // Light blue for primary sources
-          } else if (d.category === 'aggregator' || d.category === 'unified') {
-            const sourceKey = d.node_id.replace('infores:', '');
-            nodeColor = getSourceColor(sourceKey);
-          }
-
-          nodeMap.set(d.node_id, {
-            id: d.node_id,
-            name: d.node_name || d.node_id, // Use display name if available, fallback to ID
-            nodeCategory: d.category, // Store as custom property, not ECharts category
-            value: d.value || 0,
-            total_all_sources: d.total_all_sources, // Include unfiltered totals for tooltip context
-            x: xPosition,
-            y: yPosition,
-            symbol: 'circle', // All circles
-            symbolSize: d.category === 'primary' ? 
-              Math.max(8, Math.min(35, Math.sqrt((d.value || 1) / 100000) * 3 + 8)) : // Primary: square root scaling for better differentiation
-              d.category === 'unified' ? 
-                Math.max(60, Math.min(100, (d.value || 0) / 1000000 * 0.8 + 60)) : // Unified: largest circles
-                Math.max(45, Math.min(80, (d.value || 0) / 1000000 * 0.6 + 45)), // Aggregators: medium circles
-            itemStyle: nodeColor ? { color: nodeColor } : undefined,
-            label: {
-              show: true,
-              position: d.category === 'primary' ? 'left' : 'inside',
-              fontSize: d.category === 'primary' ? 12 : 11,
-              color: d.category === 'primary' ? '#333' : '#fff',
-              fontWeight: d.category === 'primary' ? 'normal' : 'bold',
-              distance: d.category === 'primary' ? 8 : 0,
-              formatter: function(params) {
-                if (d.category === 'primary' && params.name && params.name.length > 20) {
-                  return params.name.substring(0, 17) + '...';
-                }
-                return params.name;
-              }
-            },
-            fixed: true
-          });
+        // Update debug info for positioning
+        if (nodeData.category === 'aggregator' && counters.aggregator === 0) {
+          debugInfo.aggregatorSpacing = Math.round(
+            positions.aggregatorNodes.length > 1 && positions.primarySpread > 0
+              ? Math.max(
+                  (positions.primarySpread * LAYOUT_CONSTANTS.AGGREGATOR_SPACING_FRACTION) / (positions.aggregatorNodes.length - 1),
+                  LAYOUT_CONSTANTS.MIN_AGGREGATOR_SPACING
+                )
+              : 0
+          );
         }
-      });
+
+        // Capture positions for debug
+        if (nodeData.category === 'aggregator') {
+          debugInfo.aggregatorYPositions.push(Math.round(node.y));
+          debugInfo.aggregatorXPositions.push(Math.round(node.x));
+        } else if (nodeData.category === 'unified') {
+          debugInfo.unifiedYPositions.push(Math.round(node.y));
+          debugInfo.unifiedXPositions.push(Math.round(node.x));
+        }
+
+        counters[nodeData.category]++;
+        nodeMap.set(nodeData.node_id, node);
+      }
+    });
 
     return Array.from(nodeMap.values());
   })();
@@ -542,7 +637,6 @@
         }
       }]
     };
-  }
 </script>
 
 <ECharts config={networkOption} data={networkData} height={dynamicHeight} width="100%" />
