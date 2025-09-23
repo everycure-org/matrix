@@ -845,14 +845,6 @@ fabricator.primekg:
         type: generate_values
         sample_values:
           - A primary or metastatic malignant neoplasm that affects the colon. Representative examples include carcinoma, lymphoma, and sarcoma.
-      umls_description:
-        type: generate_values
-        sample_values:
-          - ''
-      orphanet_definition:
-        type: generate_values
-        sample_values:
-          - ''
       orphanet_prevalence:
         type: generate_values
         sample_values:
