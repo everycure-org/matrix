@@ -685,6 +685,305 @@ fabricator.robokop:
           - infores:aggregator2
           - infores:aggregator3
 
+fabricator.primekg:
+  nodes:
+    columns:
+      category:
+        type: generate_values
+        sample_values:
+          - biolink:BiologicalProcess
+          - biolink:Disease
+          - biolink:Gene
+          - biolink:GrossAnatomicalStructure
+          - biolink:SmallMolecule
+      name:
+        type: generate_values
+        sample_values:
+          - Acefylline
+          - BCL2L1
+          - CANX
+          - CBY1
+          - Cevimeline
+          - Colchicine
+          - GCG
+          - MAP2K6
+          - MPDZ
+          - Oxolinic acid
+          - TEAD2
+          - cerebellar cortex
+          - cervix epithelium
+          - female gonad
+          - liver
+          - malignant colon neoplasm
+          - midbrain
+          - ovary
+          - peptidyl-L-cysteine S-palmitoylation
+          - peptidyl-S-diacylglycerol-L-cysteine biosynthetic process from peptidyl-cysteine
+          - spinal cord
+      id:
+        type: generate_unique_id
+        prefix: "PRIMEKG:"
+      description:
+        type: generate_values
+        sample_values:
+          - Cevimeline is a parasympathomimetic agent that act as an agonist at the muscarinic acetylcholine receptors M1 and M3. It is indicated by the Food and Drug Administration for the treatment of dry mouth associated with Sjögren's syndrome.
+          - First approved by the FDA in 1961, colchicine is an alkaloid drug commonly used in the management of gout, a condition associated with the painful deposition of urate crystals in the joints. It is derived from a plant belonging to the Lily family, known as Colchicum autumnale, or "autumn crocus". Other than its use in gout, colchicine has been approved for managing exacerbations of Familial Mediterranean Fever (FMF), a hereditary autoinflammatory condition.
+      half_life:
+        type: generate_values
+        sample_values:
+          - After several doses of 0.6 mg twice daily, the average elimination half-life of colchicine ranges from 26.6 to 31.2 hours. Another reference measures that the elimination half-life ranges from 20 to 40 hours.
+          - The half-life is 5 &plusmn; 1 hours
+      indication:
+        type: generate_values
+        sample_values:
+          - Colchicine is indicated for the prophylaxis and treatment of gout flares. It is also indicated in Familial Mediterranean fever (FMF) in children and adults of 4 years of age and older. It is important to note that this medication is not a pain reliever to be used for other painful conditions. Consider analgesics for this purpose. Some off-label uses of colchicine include the treatment of the manifestations of Behcet's syndrome, pericarditis, and postpericardiotomy syndrome.
+          - For the treatment of symptoms of dry mouth in patients with Sj&ouml;gren's Syndrome.
+      mechanism_of_action:
+        type: generate_values
+        sample_values:
+          - Muscarinic agonists such as cevimeline bind and activate the muscarinic M1 and M3 receptors. The M1 receptors are common in secretory glands (exocrine glands such as salivary and sweat glands), and their activation results in an increase in secretion from the secretory glands. The M3 receptors are found on smooth muscles and in many glands which help to stimulate secretion in salivary glands, and their activation generally results in smooth muscle contraction and increased glandular secretions. Therefore, as saliva excretion is increased, the symptoms of dry mouth are relieved.
+          - 'The exact mechanism of action of colchicine has not been fully established, however likely occurs via the downstream inhibition of inflammation caused by tubulin disruption. Studies have implied that that colchicine causes disruption of the inflammasome complex that is present in both monocytes and neutrophils, which normally leads to the activation of interleukin-1, an important mediator of inflammation. In addition to the above actions, colchicine acts to interfere with pathways including neutrophil adhesion and recruitment, superoxide production, the RhoA/Rho effector kinase (ROCK) pathway, as well as a type of nuclear factor κΒ (NF-κΒ) pathway, reducing inflammation. '
+      protein_binding:
+        type: generate_values
+        sample_values:
+          - < 20%
+          - The plasma protein binding for colchicine is low to moderate, at 39 ± 5%, and it is mainly bound to albumin.
+      pharmacodynamics:
+        type: generate_values
+        sample_values:
+          - Cevimeline is a cholinergic agonist which binds to muscarinic receptors. Muscarinic agonists in sufficient dosage can increase secretion of exocrine glands, such as salivary and sweat glands and increase tone of the smooth muscle in the gastrointestinal and urinary tracts.
+          - Colchicine reduces the pain resulting from gout and reduces flares of Familial Mediterranean fever by interfering with inflammatory pathways. This drug has a narrow therapeutic index.
+      state:
+        type: generate_values
+        sample_values:
+          - Cevimeline is a solid.
+          - Colchicine is a solid.
+      atc_1:
+        type: generate_values
+        sample_values:
+          - Acefylline is anatomically related to respiratory system.
+          - Cevimeline is anatomically related to nervous system.
+          - Colchicine is anatomically related to musculo-skeletal system.
+          - Oxolinic acid is anatomically related to antiinfectives for systemic use.
+      atc_2:
+        type: generate_values
+        sample_values:
+          - Acefylline is in the therapeutic group of drugs for obstructive airway diseases.
+          - Cevimeline is in the therapeutic group of other nervous system drugs.
+          - Colchicine is in the therapeutic group of antigout preparations.
+          - Oxolinic acid is in the therapeutic group of antibacterials for systemic use.
+      atc_3:
+        type: generate_values
+        sample_values:
+          - Acefylline is pharmacologically related to other systemic drugs for obstructive airway diseases.
+          - Cevimeline is pharmacologically related to parasympathomimetics.
+          - Colchicine is pharmacologically related to antigout preparations.
+          - Oxolinic acid is pharmacologically related to quinolone antibacterials.
+      atc_4:
+        type: generate_values
+        sample_values:
+          - The chemical and functional group of  is other parasympathomimetics.
+          - The chemical and functional group of  is other quinolones.
+          - The chemical and functional group of  is preparations with no effect on uric acid metabolism.
+          - The chemical and functional group of  is xanthines.
+      drug_category:
+        type: generate_values
+        sample_values:
+          - Acefylline is part of Alkaloids ; Cytochrome P-450 CYP1A2 Substrates ; Cytochrome P-450 Substrates ; Drugs for Obstructive Airway Diseases ; Heterocyclic Compounds, Fused-Ring ; Purines ; Purinones ; Xanthine derivatives.
+          - Cevimeline is part of Autonomic Agents ; Cholinergic Agents ; Cholinergic Agonists ; Cholinergic Receptor Agonist ; Cytochrome P-450 CYP2D6 Substrates ; Cytochrome P-450 CYP3A Substrates ; Cytochrome P-450 CYP3A4 Substrates ; Cytochrome P-450 Substrates ; Drugs that are Mainly Renally Excreted ; Muscarinic Agonists ; Nervous System ; Neurotransmitter Agents ; Parasympathomimetics ; Peripheral Nervous System Agents ; Sulfur Compounds.
+          - Colchicine is part of Agents Causing Muscle Toxicity ; Alkaloids ; Antigout Preparations ; Antimitotic Agents ; Cytochrome P-450 CYP2B6 Inhibitors ; Cytochrome P-450 CYP2B6 Inhibitors (strength unknown) ; Cytochrome P-450 CYP2C8 Inhibitors ; Cytochrome P-450 CYP2C8 Inhibitors (strength unknown) ; Cytochrome P-450 CYP2E1 Inducers ; Cytochrome P-450 CYP2E1 Inducers (strength unknown) ; Cytochrome P-450 CYP3A Inducers ; Cytochrome P-450 CYP3A Inhibitors ; Cytochrome P-450 CYP3A Substrates ; Cytochrome P-450 CYP3A4 Inducers ; Cytochrome P-450 CYP3A4 Inducers (strength unknown) ; Cytochrome P-450 CYP3A4 Inhibitors ; Cytochrome P-450 CYP3A4 Inhibitors (strength unknown) ; Cytochrome P-450 CYP3A4 Substrates ; Cytochrome P-450 Enzyme Inducers ; Cytochrome P-450 Enzyme Inhibitors ; Cytochrome P-450 Substrates ; Drugs that are Mainly Renally Excreted ; Experimental Unapproved Treatments for COVID-19 ; Immunosuppressive Agents ; Mitosis Modulators ; Musculo-Skeletal System ; P-glycoprotein inducers ; P-glycoprotein substrates ; Preparations With No Effect on Uric Acid Metabolism ; Tubulin Modulators.
+          - Oxolinic acid is part of 4-Quinolones ; Anti-Bacterial Agents ; Anti-Infective Agents ; Anti-Infective Agents, Urinary ; Antibacterials for Systemic Use ; Antiinfectives for Systemic Use ; Antineoplastic Agents ; Cytochrome P-450 CYP1A2 Inhibitors ; Cytochrome P-450 CYP1A2 Inhibitors (strength unknown) ; Cytochrome P-450 Enzyme Inhibitors ; Enzyme Inhibitors ; Fluoroquinolones ; Heterocyclic Compounds, Fused-Ring ; Potential QTc-Prolonging Agents ; QTc Prolonging Agents ; Quinolines ; Quinolones ; Renal Agents ; Topoisomerase II Inhibitors ; Topoisomerase Inhibitors.
+      group:
+        type: generate_values
+        sample_values:
+          - Acefylline is experimental.
+          - Cevimeline is approved.
+          - Colchicine is approved.
+          - Oxolinic acid is experimental.
+      pathway:
+        type: generate_values
+        sample_values:
+          - ''
+      molecular_weight:
+        type: generate_values
+        sample_values:
+          - The molecular weight is 199.31.
+          - The molecular weight is 238.2.
+          - The molecular weight is 261.23.
+          - The molecular weight is 399.44.
+      tpsa:
+        type: generate_values
+        sample_values:
+          - Acefylline has a topological polar surface area of 95.74.
+          - Cevimeline has a topological polar surface area of 12.47.
+          - Colchicine has a topological polar surface area of 83.09.
+          - Oxolinic acid has a topological polar surface area of 76.07.
+      clogp:
+        type: generate_values
+        sample_values:
+          - The log p value of  is -0.66.
+          - The log p value of  is 1.14.
+          - The log p value of  is 1.2.
+          - The log p value of  is 1.65.
+      mondo_id:
+        type: generate_values
+        sample_values:
+          - '21063'
+      mondo_name:
+        type: generate_values
+        sample_values:
+          - malignant colon neoplasm
+      group_id_bert:
+        type: generate_values
+        sample_values:
+          - ''
+      group_name_bert:
+        type: generate_values
+        sample_values:
+          - ''
+      mondo_definition:
+        type: generate_values
+        sample_values:
+          - A primary or metastatic malignant neoplasm that affects the colon. Representative examples include carcinoma, lymphoma, and sarcoma.
+      orphanet_prevalence:
+        type: generate_values
+        sample_values:
+          - ''
+      orphanet_epidemiology:
+        type: generate_values
+        sample_values:
+          - ''
+      orphanet_clinical_description:
+        type: generate_values
+        sample_values:
+          - ''
+      orphanet_management_and_treatment:
+        type: generate_values
+        sample_values:
+          - ''
+      mayo_symptoms:
+        type: generate_values
+        sample_values:
+          - ''
+      mayo_causes:
+        type: generate_values
+        sample_values:
+          - ''
+      mayo_risk_factors:
+        type: generate_values
+        sample_values:
+          - ''
+      mayo_complications:
+        type: generate_values
+        sample_values:
+          - ''
+      mayo_prevention:
+        type: generate_values
+        sample_values:
+          - ''
+      mayo_see_doc:
+        type: generate_values
+        sample_values:
+          - ''
+    num_rows: 100
+  edges:
+    columns:
+      predicate:
+        type: generate_values
+        sample_values:
+          - biolink:associated_with
+          - biolink:directly_physically_interacts_with
+          - biolink:expressed_in
+          - biolink:superclass_of
+      knowledge_level:
+        type: generate_values
+        sample_values:
+          - knowledge_assertion
+          - logical_entailment
+          - prediction
+          - statistical_association
+          - observation
+          - not_provided
+      agent_type:
+        type: generate_values
+        sample_values:
+          - manual_agent
+          - automated_agent
+          - data_analysis_pipeline
+          - computational_model
+          - text_mining_agent
+          - image_processing_agent
+          - manual_validation_of_automated_agent
+          - not_provided
+      primary_knowledge_source:
+        type: generate_values
+        sample_values:
+          - infores:primekg
+      aggregator_knowledge_source:
+        type: generate_values
+        sample_values:
+          - ''
+      original_subject:
+        type: generate_values
+        sample_values:
+          - ''
+      original_object:
+        type: generate_values
+        sample_values:
+          - ''
+      negated:
+        type: generate_values
+        sample_values:
+          - ''
+      publications:
+        type: generate_values
+        sample_values:
+          - ''
+      subject_aspect_qualifier:
+        type: generate_values
+        sample_values:
+          - ''
+      subject_direction_qualifier:
+        type: generate_values
+        sample_values:
+          - knowledge_assertion
+          - logical_entailment
+          - prediction
+          - statistical_association
+          - observation
+          - not_provided
+      object_aspect_qualifier:
+        type: generate_values
+        sample_values:
+          - ''
+      object_direction_qualifier:
+        type: generate_values
+        sample_values:
+          - knowledge_assertion
+          - logical_entailment
+          - prediction
+          - statistical_association
+          - observation
+          - not_provided
+      upstream_data_source:
+        type: generate_values
+        sample_values:
+          - ''
+      subject:
+        type: copy_column
+        source_column: nodes.id
+        seed: 590590
+        sample:
+          num_rows: '@edges.num_rows'
+      object:
+        type: copy_column
+        source_column: nodes.id
+        seed: 590590
+        sample:
+          num_rows: '@edges.num_rows'
+    num_rows: 100
+
+
 fabricator.ec_medical_kg:
   nodes:
     num_rows: 30

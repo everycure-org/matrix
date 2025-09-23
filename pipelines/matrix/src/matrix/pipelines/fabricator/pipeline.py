@@ -126,6 +126,21 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="validate_fabricated_kg2_datasets",
             ),
             node(
+                func=fabricate_datasets,
+                inputs={"fabrication_params": "params:fabricator.primekg"},
+                outputs={
+                    "nodes": "ingestion.raw.primekg.nodes@pandas",
+                    "edges": "ingestion.raw.primekg.edges@pandas",
+                },
+                name="fabricate_primekg_datasets",
+            ),
+            node(
+                func=validate,
+                inputs={"nodes": "ingestion.raw.primekg.nodes@polars", "edges": "ingestion.raw.primekg.edges@polars"},
+                outputs="fabricator.int.primekg.violations",
+                name="validate_fabricated_primekg_datasets",
+            ),
+            node(
                 func=remove_overlap,
                 inputs={
                     "disease_list": "fabricator.int.disease_list",
