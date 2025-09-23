@@ -5,8 +5,6 @@ from matrix_inject.inject import _extract_elements_in_list
 from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.nodes import apply_transformers
 
-# NOTE: This class was partially generated using AI assistance.
-
 
 class ModelWithPreprocessing:
     """Lightweight wrapper that applies preprocessing before scoring."""
