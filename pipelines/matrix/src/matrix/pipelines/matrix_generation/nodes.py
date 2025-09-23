@@ -9,8 +9,9 @@ from matplotlib.figure import Figure
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.pipelines.matrix_generation.reporting_plots import ReportingPlotGenerator
 from matrix.pipelines.matrix_generation.reporting_tables import ReportingTableGenerator
-from matrix.pipelines.modelling.model import ModelWrapper, TransformingModelWrapper
-from matrix_inject.inject import inject_object
+from matrix.pipelines.modelling.model import ModelWrapper
+from matrix.pipelines.modelling.nodes import apply_transformers
+from matrix_inject.inject import _extract_elements_in_list, inject_object
 from matrix_pandera.validator import Column, DataFrameSchema, check_output
 from pyspark.sql.types import DoubleType, StructField, StructType
 from tqdm import tqdm
@@ -299,7 +300,8 @@ def package_model_with_preprocessing(
     transformers: dict,
     model: ModelWrapper,
     features: list[str],
-) -> TransformingModelWrapper:
+) -> ModelWrapper:
     """Bundle transformers, features, and model into a single callable object."""
-
-    return TransformingModelWrapper(transformers=transformers, model=model, features=features)
+    transformed = apply_transformers(model, transformers)
+    model_features = _extract_elements_in_list(transformed.columns, features, True)
+    return ModelWrapper(transformed[model_features].values)
