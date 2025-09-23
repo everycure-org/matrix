@@ -48,10 +48,6 @@ export EVIDENCE_VAR__max_edge_failed_normalization_by_normalization_set_prefix :
 bump_basepath:
 	node ./scripts/update-basepath.cjs $(RELEASE_VERSION)
 
-# Generate release trends SQL dynamically based on available BigQuery datasets
-generate-release-trends-sql:
-	node ./scripts/generate-release-trends-sql.cjs
-
 build: bump_basepath generate-release-trends-sql
 	@echo "Building with EVIDENCE_VAR__release_version=$(EVIDENCE_VAR__release_version)"
 	npm run build:strict
@@ -73,6 +69,10 @@ populate-valid-edge-types-source:
 	curl -sL "https://github.com/everycure-org/matrix-schema/releases/latest/download/valid_biolink_edge_types.tsv" -o scripts/temp_valid_edge_types.tsv
 	node ./scripts/load-valid-edge-types.cjs
 	rm -f scripts/temp_valid_edge_types.tsv
+
+# Generate release trends SQL dynamically based on available BigQuery datasets
+generate-release-trends-sql:
+	node ./scripts/generate-release-trends-sql.cjs
 
 run-sources: populate-infores-source populate-valid-edge-types-source generate-release-trends-sql
 	npm run sources 
