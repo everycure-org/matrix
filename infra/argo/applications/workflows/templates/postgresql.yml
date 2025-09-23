@@ -1,0 +1,25 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: argo-postgres-config-secret
+  namespace: argo-workflows
+spec:
+  refreshInterval: "1h"
+  secretStoreRef:
+    name: gcp-store
+    kind: ClusterSecretStore
+  target:
+    name: argo-postgres-config
+    creationPolicy: 'Owner'
+    template:
+      type: Opaque
+      data:
+        username: "{{ `{{ .argo_workflows_postgres_username }}` }}"
+        password: "{{ `{{ .argo_workflows_postgres_password }}` }}"
+  data:
+    - secretKey: argo_workflows_postgres_username
+      remoteRef:
+        key: argo_workflows_postgres_username
+    - secretKey: argo_workflows_postgres_password
+      remoteRef:
+        key: argo_workflows_postgres_password
