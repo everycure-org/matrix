@@ -26,6 +26,17 @@ _pandas_parquet_ds: &_pandas_parquet
   load_args:
     engine: pyarrow
 
+_polars_csv_ds: &_polars_csv
+  type: polars.CSVDataset
+  save_args:
+    separator: "\t"
+    include_header: true
+  load_args:
+    infer_schema_length: 0
+    has_header: true
+    ignore_errors: true
+    truncate_ragged_lines: true
+
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
@@ -145,3 +156,29 @@ preprocessing.int.mapped_clinical_trials_data:
     sep: "\t"
   save_args:
     sep: "\t"
+
+
+# PrimeKG
+preprocessing.raw.primekg.drug_features@polars:
+  <<: [*_polars_csv]
+  filepath: ${globals:paths.raw}/KGs/prime-kg/${globals:data_sources.primekg.version}/drug_features.csv
+
+preprocessing.raw.primekg.disease_features@polars:
+  <<: [*_polars_csv]
+  filepath: ${globals:paths.raw}/KGs/prime-kg/${globals:data_sources.primekg.version}/disease_features.csv
+
+preprocessing.raw.primekg.nodes@polars:
+  <<: [*_polars_csv]
+  filepath: ${globals:paths.raw}/KGs/prime-kg/${globals:data_sources.primekg.version}/nodes.csv
+
+preprocessing.raw.primekg.kg@polars:
+  <<: [*_polars_csv]
+  filepath: ${globals:paths.raw}/KGs/prime-kg/${globals:data_sources.primekg.version}/kg.csv
+
+preprocessing.int.primekg.nodes:
+  <<: [*_polars_csv]
+  filepath: ${globals:paths.tmp}/preprocessing/int/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_nodes.tsv
+
+preprocessing.int.primekg.edges:
+  <<: [*_polars_csv]
+  filepath: ${globals:paths.tmp}/preprocessing/int/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_edges.tsv
