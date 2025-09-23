@@ -202,7 +202,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
                 ),
                 node(
-                    func=nodes._union_datasets,  # Reuse your existing union function
+                    func=nodes._union_datasets,
                     inputs=[
                         *[
                             f"integration.int.{source['name']}.normalization_summary"
