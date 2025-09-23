@@ -492,12 +492,11 @@
 
         let aggregatorNode = null;
 
-        if (sourceNode && (sourceNode.id.includes('robokop') || sourceNode.id.includes('rtxkg2')) &&
-            !sourceNode.id.includes(',')) {
+        // Find aggregator node by category instead of hardcoded names
+        if (sourceNode && sourceNode.nodeCategory === 'aggregator') {
           aggregatorNode = sourceNode;
         }
-        else if (targetNode && (targetNode.id.includes('robokop') || targetNode.id.includes('rtxkg2')) &&
-                 !targetNode.id.includes(',')) {
+        else if (targetNode && targetNode.nodeCategory === 'aggregator') {
           aggregatorNode = targetNode;
         }
 
