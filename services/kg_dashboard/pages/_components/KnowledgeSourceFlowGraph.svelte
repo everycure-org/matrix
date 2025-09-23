@@ -41,118 +41,177 @@
     heightCalculation: '',
     sampleNodeData: []
   };
-  
-  $: {
-    // === DATA PROCESSING ===
-    let nodes = [];
-    let links = [];
 
-    if (networkData && Array.isArray(networkData) && networkData.length > 0) {
-      // Separate and sort input data
-      const nodeData = networkData.filter(d => d.type === 'node');
-      const linkData = networkData.filter(d => d.type === 'link');
-
-      const sortedNodes = nodeData.sort((a, b) => {
-        if (a.category !== b.category) {
-          const categoryOrder = { 'primary': 0, 'aggregator': 1, 'unified': 2 };
-          return categoryOrder[a.category] - categoryOrder[b.category];
-        }
-        return (b.value || 0) - (a.value || 0);
-      });
-
-      // Group nodes by category
-      const primaryNodes = sortedNodes.filter(n => n.category === 'primary').slice(0, topNPrimarySources).reverse();
-      const aggregatorNodes = sortedNodes.filter(n => n.category === 'aggregator');
-      const unifiedNodes = sortedNodes.filter(n => n.category === 'unified');
-      const limitedNodes = [...primaryNodes, ...aggregatorNodes, ...unifiedNodes];
-
-      primaryNodeCount = primaryNodes.length;
-
-      // === LAYOUT CALCULATIONS ===
-      // Calculate dynamic oval layout dimensions
-      const totalNodes = primaryNodes.length + aggregatorNodes.length + unifiedNodes.length;
-      const radiusX = 150;
-      const radiusY = Math.max(100, Math.min(250, totalNodes * 15));
-      const centerX = 300;
-      const centerY = Math.max(200, Math.min(400, 150 + totalNodes * 8));
-
-      // Calculate arc sizing based on primary node count
-      const nodeCount = primaryNodes.length;
-      let dynamicAngleRange;
-      let positioning;
-
-      if (nodeCount <= 2) {
-        dynamicAngleRange = Math.PI * 0.5;
-        positioning = 'small (≤2)';
-      } else if (nodeCount <= 5) {
-        dynamicAngleRange = Math.PI * (2/3);
-        positioning = 'small (3-5)';
-      } else if (nodeCount <= 10) {
-        dynamicAngleRange = Math.PI * (5/6);
-        positioning = 'medium (6-10)';
-      } else {
-        dynamicAngleRange = Math.PI * 0.65;
-        positioning = 'large (11+)';
-      }
-
-      const arcCenter = Math.PI;
-      // === POSITION CALCULATIONS ===
-      // Calculate primary node positions around oval
-      const primaryYPositions = [];
-      const primaryXPositions = [];
-      const primaryAngles = [];
-
-      for (let index = 0; index < primaryNodes.length; index++) {
-        let spacing = 0;
-        if (nodeCount > 1) {
-          const maxTotalSpread = Math.PI * 0.4;
-          spacing = Math.min(Math.PI * 0.08, maxTotalSpread / (nodeCount - 1));
-        }
-        const centerOffset = (index - (nodeCount - 1) / 2) * spacing;
-        const angle = arcCenter + centerOffset;
-        const yPos = centerY + Math.sin(angle) * radiusY;
-        const xPos = centerX + Math.cos(angle) * radiusX;
-        primaryYPositions.push(yPos);
-        primaryXPositions.push(xPos);
-        primaryAngles.push(angle);
-      }
-
-      // Calculate spreads for aggregator positioning
-      const primarySpread = primaryYPositions.length > 1 ?
-        Math.max(...primaryYPositions) - Math.min(...primaryYPositions) : 0;
-      const primaryXSpread = primaryXPositions.length > 1 ?
-        Math.max(...primaryXPositions) - Math.min(...primaryXPositions) : 0;
-      const minMaxPrimaryX = primaryXPositions.length > 0 ? {
-        min: Math.min(...primaryXPositions),
-        max: Math.max(...primaryXPositions)
-      } : { min: 0, max: 0 };
-
-      // === DEBUG INFO UPDATES ===
-      debugInfo.nodeCount = nodeCount;
-      debugInfo.centerX = centerX;
-      debugInfo.centerY = centerY;
-      debugInfo.radiusY = radiusY;
-      debugInfo.positioning = positioning;
-      debugInfo.arcDegrees = Math.round(dynamicAngleRange * 180 / Math.PI);
-      debugInfo.primarySpread = Math.round(primarySpread);
-      debugInfo.primaryXSpread = Math.round(primaryXSpread);
-      debugInfo.primaryYPositions = primaryYPositions.map(y => Math.round(y));
-      debugInfo.primaryXPositions = primaryXPositions.map(x => Math.round(x));
-      debugInfo.primaryAngles = primaryAngles.map(a => Math.round(a * 180 / Math.PI));
-      debugInfo.minMaxPrimaryX = {
-        min: Math.round(minMaxPrimaryX.min),
-        max: Math.round(minMaxPrimaryX.max)
+  // === UTILITY FUNCTIONS ===
+  function calculateAngleRangeForNodeCount(nodeCount) {
+    if (nodeCount <= 2) {
+      return {
+        dynamicAngleRange: Math.PI * 0.5,
+        positioning: 'small (≤2)'
       };
-      debugInfo.aggregatorYPositions = [];
-      debugInfo.aggregatorXPositions = [];
-      debugInfo.unifiedYPositions = [];
-      debugInfo.unifiedXPositions = [];
-      debugInfo.aggregatorCount = aggregatorNodes.length;
-      debugInfo.unifiedCount = unifiedNodes.length;
+    } else if (nodeCount <= 5) {
+      return {
+        dynamicAngleRange: Math.PI * (2/3),
+        positioning: 'small (3-5)'
+      };
+    } else if (nodeCount <= 10) {
+      return {
+        dynamicAngleRange: Math.PI * (5/6),
+        positioning: 'medium (6-10)'
+      };
+    } else {
+      return {
+        dynamicAngleRange: Math.PI * 0.65,
+        positioning: 'large (11+)'
+      };
+    }
+  }
 
-      // === NODE CREATION ===
-      let primaryCount = 0, aggregatorCount = 0, unifiedCount = 0;
-      const nodeMap = new Map();
+  // === DATA PROCESSING ===
+  $: processedData = (() => {
+    if (!networkData || !Array.isArray(networkData) || networkData.length === 0) {
+      return {
+        nodeData: [],
+        linkData: [],
+        primaryNodes: [],
+        aggregatorNodes: [],
+        unifiedNodes: [],
+        limitedNodes: []
+      };
+    }
+
+    const nodeData = networkData.filter(d => d.type === 'node');
+    const linkData = networkData.filter(d => d.type === 'link');
+
+    const sortedNodes = nodeData.sort((a, b) => {
+      if (a.category !== b.category) {
+        const categoryOrder = { 'primary': 0, 'aggregator': 1, 'unified': 2 };
+        return categoryOrder[a.category] - categoryOrder[b.category];
+      }
+      return (b.value || 0) - (a.value || 0);
+    });
+
+    const primaryNodes = sortedNodes.filter(n => n.category === 'primary').slice(0, topNPrimarySources).reverse();
+    const aggregatorNodes = sortedNodes.filter(n => n.category === 'aggregator');
+    const unifiedNodes = sortedNodes.filter(n => n.category === 'unified');
+    const limitedNodes = [...primaryNodes, ...aggregatorNodes, ...unifiedNodes];
+
+    return {
+      nodeData,
+      linkData,
+      primaryNodes,
+      aggregatorNodes,
+      unifiedNodes,
+      limitedNodes
+    };
+  })();
+
+  $: primaryNodeCount = processedData.primaryNodes.length;
+
+  // === LAYOUT CALCULATIONS ===
+  $: layout = (() => {
+    const { primaryNodes, aggregatorNodes, unifiedNodes } = processedData;
+    const totalNodes = primaryNodes.length + aggregatorNodes.length + unifiedNodes.length;
+    const nodeCount = primaryNodes.length;
+
+    const radiusX = 150;
+    const radiusY = Math.max(100, Math.min(250, totalNodes * 15));
+    const centerX = 300;
+    const centerY = Math.max(200, Math.min(400, 150 + totalNodes * 8));
+
+    const { dynamicAngleRange, positioning } = calculateAngleRangeForNodeCount(nodeCount);
+
+    return {
+      radiusX,
+      radiusY,
+      centerX,
+      centerY,
+      nodeCount,
+      dynamicAngleRange,
+      positioning,
+      arcCenter: Math.PI
+    };
+  })();
+  // === POSITION CALCULATIONS ===
+  $: positions = (() => {
+    const { primaryNodes } = processedData;
+    const { centerX, centerY, radiusX, radiusY, nodeCount, arcCenter } = layout;
+
+    const primaryYPositions = [];
+    const primaryXPositions = [];
+    const primaryAngles = [];
+
+    for (let index = 0; index < primaryNodes.length; index++) {
+      let spacing = 0;
+      if (nodeCount > 1) {
+        const maxTotalSpread = Math.PI * 0.4;
+        spacing = Math.min(Math.PI * 0.08, maxTotalSpread / (nodeCount - 1));
+      }
+      const centerOffset = (index - (nodeCount - 1) / 2) * spacing;
+      const angle = arcCenter + centerOffset;
+      const yPos = centerY + Math.sin(angle) * radiusY;
+      const xPos = centerX + Math.cos(angle) * radiusX;
+      primaryYPositions.push(yPos);
+      primaryXPositions.push(xPos);
+      primaryAngles.push(angle);
+    }
+
+    const primarySpread = primaryYPositions.length > 1 ?
+      Math.max(...primaryYPositions) - Math.min(...primaryYPositions) : 0;
+    const primaryXSpread = primaryXPositions.length > 1 ?
+      Math.max(...primaryXPositions) - Math.min(...primaryXPositions) : 0;
+    const minMaxPrimaryX = primaryXPositions.length > 0 ? {
+      min: Math.min(...primaryXPositions),
+      max: Math.max(...primaryXPositions)
+    } : { min: 0, max: 0 };
+
+    return {
+      primaryYPositions,
+      primaryXPositions,
+      primaryAngles,
+      primarySpread,
+      primaryXSpread,
+      minMaxPrimaryX
+    };
+  })();
+
+  // === DEBUG INFO UPDATES ===
+  $: {
+    const { aggregatorNodes, unifiedNodes } = processedData;
+    const { nodeCount, centerX, centerY, radiusY, positioning, dynamicAngleRange } = layout;
+    const { primarySpread, primaryXSpread, primaryYPositions, primaryXPositions, primaryAngles, minMaxPrimaryX } = positions;
+
+    debugInfo.nodeCount = nodeCount;
+    debugInfo.centerX = centerX;
+    debugInfo.centerY = centerY;
+    debugInfo.radiusY = radiusY;
+    debugInfo.positioning = positioning;
+    debugInfo.arcDegrees = Math.round(dynamicAngleRange * 180 / Math.PI);
+    debugInfo.primarySpread = Math.round(primarySpread);
+    debugInfo.primaryXSpread = Math.round(primaryXSpread);
+    debugInfo.primaryYPositions = primaryYPositions.map(y => Math.round(y));
+    debugInfo.primaryXPositions = primaryXPositions.map(x => Math.round(x));
+    debugInfo.primaryAngles = primaryAngles.map(a => Math.round(a * 180 / Math.PI));
+    debugInfo.minMaxPrimaryX = {
+      min: Math.round(minMaxPrimaryX.min),
+      max: Math.round(minMaxPrimaryX.max)
+    };
+    debugInfo.aggregatorYPositions = [];
+    debugInfo.aggregatorXPositions = [];
+    debugInfo.unifiedYPositions = [];
+    debugInfo.unifiedXPositions = [];
+    debugInfo.aggregatorCount = aggregatorNodes.length;
+    debugInfo.unifiedCount = unifiedNodes.length;
+  }
+
+  // === NODE CREATION ===
+  $: nodes = (() => {
+    const { limitedNodes, aggregatorNodes, primaryNodes } = processedData;
+    const { centerX, centerY, radiusX, radiusY, nodeCount, arcCenter } = layout;
+    const { primarySpread } = positions;
+
+    let primaryCount = 0, aggregatorCount = 0, unifiedCount = 0;
+    const nodeMap = new Map();
       
       limitedNodes.forEach(d => {
         if (d.node_id && !nodeMap.has(d.node_id)) {
@@ -256,102 +315,107 @@
           });
         }
       });
-      
-      nodes = Array.from(nodeMap.values());
 
-      // Calculate dynamic height using smooth function based on primary node count
-      if (primaryNodes.length > 0) {
-        const baseHeight = 300; // Minimum height for 1 source
-        const maxHeight = 900;  // Target height for 25 sources
-        const maxSources = 25;  // Reference point for maximum scaling
+    return Array.from(nodeMap.values());
+  })();
 
-        // Smooth linear interpolation from baseHeight to maxHeight
-        const scalingFactor = Math.min(primaryNodes.length, maxSources) / maxSources;
-        const calculatedHeight = baseHeight + (scalingFactor * (maxHeight - baseHeight));
+  // === DYNAMIC HEIGHT CALCULATION ===
+  $: {
+    const { primaryNodes } = processedData;
 
-        dynamicHeight = Math.round(calculatedHeight) + 'px';
+    if (primaryNodes.length > 0) {
+      const baseHeight = 300;
+      const maxHeight = 900;
+      const maxSources = 25;
 
-        // Calculate content bounds for debug info
+      const scalingFactor = Math.min(primaryNodes.length, maxSources) / maxSources;
+      const calculatedHeight = baseHeight + (scalingFactor * (maxHeight - baseHeight));
+
+      dynamicHeight = Math.round(calculatedHeight) + 'px';
+
+      // Update debug info
+      if (nodes.length > 0) {
         const allYPositions = nodes.map(n => n.y);
         const minY = Math.min(...allYPositions);
         const maxY = Math.max(...allYPositions);
 
-        // Update debug info
         debugInfo.contentBounds = { minY: Math.round(minY), maxY: Math.round(maxY) };
         debugInfo.dynamicHeight = parseInt(dynamicHeight);
         debugInfo.heightCalculation = `${baseHeight} + (${primaryNodes.length}/${maxSources}) * ${maxHeight - baseHeight} = ${Math.round(calculatedHeight)}px`;
-      } else {
-        dynamicHeight = height; // Fallback to original height
       }
+    } else {
+      dynamicHeight = height;
+    }
+  }
 
-      // Create links, filtering out invalid ones
-      links = linkData
-        .filter(d => d.source && d.target && d.value)
-        .map(d => {
-          // Determine edge color based on aggregator node
-          let edgeColor = 'rgba(157, 121, 214, 0.6)'; // default purple
-          
-          // Find which node is the aggregator by checking if it's robokop or rtxkg2
-          const sourceNode = nodes.find(n => n.id === d.source);
-          const targetNode = nodes.find(n => n.id === d.target);
-          
-          let aggregatorNode = null;
-          
-          // Check if source is an aggregator (robokop or rtxkg2)
-          if (sourceNode && (sourceNode.id.includes('robokop') || sourceNode.id.includes('rtxkg2')) && 
-              !sourceNode.id.includes(',')) { // Single aggregator, not unified
-            aggregatorNode = sourceNode;
-          } 
-          // Check if target is an aggregator
-          else if (targetNode && (targetNode.id.includes('robokop') || targetNode.id.includes('rtxkg2')) && 
-                   !targetNode.id.includes(',')) { // Single aggregator, not unified
-            aggregatorNode = targetNode;
-          }
-          
-          if (aggregatorNode && aggregatorNode.itemStyle && aggregatorNode.itemStyle.color) {
-            edgeColor = aggregatorNode.itemStyle.color + '80'; // Add transparency
-          }
-          
-          return {
-            source: d.source,
-            target: d.target,
-            value: d.value,
-            lineStyle: {
-              width: Math.max(1, Math.min(10, Math.sqrt(d.value / 10000) * 5 + 1)), // Thickness based on count
-              color: edgeColor
+  // === LINKS CREATION ===
+  $: links = (() => {
+    const { linkData } = processedData;
+
+    return linkData
+      .filter(d => d.source && d.target && d.value)
+      .map(d => {
+        let edgeColor = 'rgba(157, 121, 214, 0.6)';
+
+        const sourceNode = nodes.find(n => n.id === d.source);
+        const targetNode = nodes.find(n => n.id === d.target);
+
+        let aggregatorNode = null;
+
+        if (sourceNode && (sourceNode.id.includes('robokop') || sourceNode.id.includes('rtxkg2')) &&
+            !sourceNode.id.includes(',')) {
+          aggregatorNode = sourceNode;
+        }
+        else if (targetNode && (targetNode.id.includes('robokop') || targetNode.id.includes('rtxkg2')) &&
+                 !targetNode.id.includes(',')) {
+          aggregatorNode = targetNode;
+        }
+
+        if (aggregatorNode && aggregatorNode.itemStyle && aggregatorNode.itemStyle.color) {
+          edgeColor = aggregatorNode.itemStyle.color + '80';
+        }
+
+        return {
+          source: d.source,
+          target: d.target,
+          value: d.value,
+          lineStyle: {
+            width: Math.max(1, Math.min(10, Math.sqrt(d.value / 10000) * 5 + 1)),
+            color: edgeColor
+          },
+          label: {
+            show: false,
+            position: 'middle',
+            formatter: function(params) {
+              return params.value.toLocaleString();
             },
+            fontSize: 10,
+            color: '#333',
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            borderRadius: 3,
+            padding: [2, 4]
+          },
+          emphasis: {
             label: {
-              show: false,
-              position: 'middle',
-              formatter: function(params) {
-                return params.value.toLocaleString();
-              },
-              fontSize: 10,
-              color: '#333',
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              borderRadius: 3,
-              padding: [2, 4]
-            },
-            emphasis: {
-              label: {
-                show: true
-              }
+              show: true
             }
-          };
-        });
+          }
+        };
+      });
+  })();
 
-    // Update debug info with sample node data and coordinate bounds
-    debugInfo.sampleNodeData = nodes.slice(0, 3).map(n => ({
-      id: n.id,
-      category: n.nodeCategory,
-      value: n.value,
-      x: n.x,
-      y: n.y,
-      total_all_sources: n.total_all_sources
-    }));
-
-    // Calculate actual coordinate bounds for debugging
+  // === FINAL DEBUG UPDATES ===
+  $: {
     if (nodes.length > 0) {
+      debugInfo.sampleNodeData = nodes.slice(0, 3).map(n => ({
+        id: n.id,
+        category: n.nodeCategory,
+        value: n.value,
+        x: n.x,
+        y: n.y,
+        total_all_sources: n.total_all_sources
+      }));
+
       const allX = nodes.map(n => n.x);
       const allY = nodes.map(n => n.y);
       debugInfo.actualBounds = {
@@ -361,9 +425,10 @@
         maxY: Math.max(...allY)
       };
     }
-    }
+  }
 
-    networkOption = {
+  // === ECHARTS CONFIGURATION ===
+  $: networkOption = {
       legend: {
         show: false
       },
