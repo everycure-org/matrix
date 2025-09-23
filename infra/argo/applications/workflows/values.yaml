@@ -21,6 +21,20 @@ argo-workflows:
       keyFormat: "{{ \"{{workflow.namespace}}/{{workflow.name}}/{{pod.name}}\" }}"
   
   controller:
+    persistence:
+      nodeStatusOffLoad: true
+      archive: true
+      postgresql:
+        host: postgresql-cloudnative-pg-cluster-pooler-rw.postgresql.svc.cluster.local
+        port: 5432
+        database: app
+        tableName: argo_workflows
+        userNameSecret:
+          name: argo-postgres-config
+          key: username
+        passwordSecret:
+          name: argo-postgres-config
+          key: password
     config:
       archiveLogs: true
     metricsConfig:

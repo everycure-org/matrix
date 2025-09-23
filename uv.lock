@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = "==3.11.*"
 resolution-markers = [
     "sys_platform == 'linux'",
@@ -1328,6 +1328,19 @@ wheels = [
 ]
 
 [[package]]
+name = "gspread"
+version = "6.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "google-auth" },
+    { name = "google-auth-oauthlib" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/91/83/42d1d813822ed016d77aabadc99b09de3b5bd68532fd6bae23fd62347c41/gspread-6.2.1.tar.gz", hash = "sha256:2c7c99f7c32ebea6ec0d36f2d5cbe8a2be5e8f2a48bde87ad1ea203eff32bd03", size = 82590, upload-time = "2025-05-14T15:56:25.254Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/27/76/563fb20dedd0e12794d9a12cfe0198458cc0501fdc7b034eee2166d035d5/gspread-6.2.1-py3-none-any.whl", hash = "sha256:6d4ec9f1c23ae3c704a9219026dac01f2b328ac70b96f1495055d453c4c184db", size = 59977, upload-time = "2025-05-14T15:56:24.014Z" },
+]
+
+[[package]]
 name = "gunicorn"
 version = "23.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2569,13 +2582,13 @@ dependencies = [
     { name = "google-api-core" },
     { name = "google-cloud-bigquery" },
     { name = "google-cloud-storage" },
+    { name = "gspread" },
     { name = "hdfs" },
     { name = "kedro" },
     { name = "kedro-datasets" },
     { name = "numpy" },
     { name = "pandas" },
     { name = "pandas-gbq" },
-    { name = "pygsheets" },
     { name = "pyspark" },
     { name = "s3fs" },
     { name = "tqdm" },
@@ -2596,13 +2609,13 @@ requires-dist = [
     { name = "google-api-core" },
     { name = "google-cloud-bigquery" },
     { name = "google-cloud-storage" },
+    { name = "gspread" },
     { name = "hdfs" },
     { name = "kedro", specifier = ">=0.19.0" },
     { name = "kedro-datasets", specifier = ">=6.0.0" },
     { name = "numpy" },
     { name = "pandas" },
     { name = "pandas-gbq" },
-    { name = "pygsheets", specifier = ">=2.0.0" },
     { name = "pyspark", specifier = ">=3.5.0" },
     { name = "s3fs" },
     { name = "tqdm" },
@@ -2737,6 +2750,7 @@ dependencies = [
     { name = "google-cloud-bigquery-storage" },
     { name = "google-cloud-iam" },
     { name = "graphdatascience" },
+    { name = "gspread" },
     { name = "ipython" },
     { name = "ipywidgets" },
     { name = "jsonpath-ng" },
@@ -2766,9 +2780,9 @@ dependencies = [
     { name = "openpyxl" },
     { name = "pandas" },
     { name = "pandera" },
+    { name = "polars-lts-cpu" },
     { name = "proto-plus" },
     { name = "pyarrow" },
-    { name = "pygsheets" },
     { name = "pyspark" },
     { name = "python-cypher" },
     { name = "responses" },
@@ -2849,6 +2863,7 @@ requires-dist = [
     { name = "google-cloud-bigquery-storage" },
     { name = "google-cloud-iam" },
     { name = "graphdatascience" },
+    { name = "gspread", specifier = ">=6.2.1" },
     { name = "ipython", specifier = ">=8.10" },
     { name = "ipywidgets" },
     { name = "jsonpath-ng" },
@@ -2878,9 +2893,9 @@ requires-dist = [
     { name = "openpyxl" },
     { name = "pandas", specifier = ">=2.1.1" },
     { name = "pandera", specifier = "==0.24.0" },
+    { name = "polars-lts-cpu", specifier = "==1.30.0" },
     { name = "proto-plus", specifier = "==1.24.0.dev1" },
     { name = "pyarrow", specifier = ">=14.0.2" },
-    { name = "pygsheets", specifier = "==2.0.6" },
     { name = "pyspark", specifier = "==3.5.1" },
     { name = "python-cypher", specifier = "==0.20.1" },
     { name = "responses" },
@@ -4043,16 +4058,16 @@ wheels = [
 
 [[package]]
 name = "polars-lts-cpu"
-version = "1.33.1"
+version = "1.30.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f4/93/a0c4200a5e0af2eee31ea79330cb1f5f4c58f604cb3de352f654e2010c81/polars_lts_cpu-1.33.1.tar.gz", hash = "sha256:0a5426d95ec9eec937a56d3e7cf7911a4b5486c42f4dbbcc9512aa706039322c", size = 4822741, upload-time = "2025-09-09T08:37:51.491Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8a/7f/1e420e6364db6bf28b1874eb9aa9ac0d578f5ada86e71cab6275d8abc343/polars_lts_cpu-1.30.0.tar.gz", hash = "sha256:b5149368fcf40dc00d3c8ea830eb0eee4ec98e6b5f47ee648c8f997a435e2830", size = 4668603, upload-time = "2025-05-21T13:33:25.942Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f1/9b/75916636b33724afabe820b0993f60dc243793421d6f680d5fcb531fe170/polars_lts_cpu-1.33.1-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:5db75d1b424bd8aa34c9a670a901592f1931cc94d9fb32bdd428dbaad8c33761", size = 38908638, upload-time = "2025-09-09T08:37:02.258Z" },
-    { url = "https://files.pythonhosted.org/packages/81/e2/dc77b81650ba0c631c06f05d8e81faacee87730600fceca372273facf77b/polars_lts_cpu-1.33.1-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:37cf3a56cf447c69cfb3f9cd0e714d5b0c754705d7b497b9ab86cbf56e36b3e7", size = 35638895, upload-time = "2025-09-09T08:37:07.575Z" },
-    { url = "https://files.pythonhosted.org/packages/27/fb/4dcff801d71dfa02ec682d6b32fd0ce5339de48797f663698d5f8348ffe7/polars_lts_cpu-1.33.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:656b530a672fe8fbd4c212b2a8481099e5cef63e84970975619ea7c25faeb833", size = 39585825, upload-time = "2025-09-09T08:37:11.631Z" },
-    { url = "https://files.pythonhosted.org/packages/54/31/0474c14dce2c0507bea40069daafb848980ba7c351ad991908e51ac895fb/polars_lts_cpu-1.33.1-cp39-abi3-manylinux_2_24_aarch64.whl", hash = "sha256:64574c784380b37167b3db3a7cfdb9839cd308e89b8818859d2ffb34a9c896b2", size = 36685020, upload-time = "2025-09-09T08:37:15.597Z" },
-    { url = "https://files.pythonhosted.org/packages/d4/0a/5ebba9b145388ffbbd09fa84ac3cd7d336b922e34256b1417abf0a1c2fb9/polars_lts_cpu-1.33.1-cp39-abi3-win_amd64.whl", hash = "sha256:6b849e0e1485acb8ac39bf13356d280ea7c924c2b41cd548ea6e4d102d70be77", size = 39191650, upload-time = "2025-09-09T08:37:19.541Z" },
-    { url = "https://files.pythonhosted.org/packages/ce/ad/bf3db68d30ac798ca31c80624709a0c03aa890e2e20e5ca987d7e55fcfc2/polars_lts_cpu-1.33.1-cp39-abi3-win_arm64.whl", hash = "sha256:c99ab56b059cee6bcabe9fb89e97f5813be1012a2251bf77f76e15c2d1cba934", size = 35445244, upload-time = "2025-09-09T08:37:22.97Z" },
+    { url = "https://files.pythonhosted.org/packages/4c/18/5291fe1da267f0d0a55f9e9557d3522233f41cd475b2683a044f48cd32b2/polars_lts_cpu-1.30.0-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:6d6ee52622e2428acdd4cc1c3de45b5b231e50008fbd3dd76dd1e75ae8f41eed", size = 35422965, upload-time = "2025-05-21T13:32:45.325Z" },
+    { url = "https://files.pythonhosted.org/packages/9b/9f/f07cbaf7532c5c84b11e023e0431a2a433e474e16acb1a3e398b16f362e9/polars_lts_cpu-1.30.0-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:82712e1a315beca16eb81eb71628fb445a464fce253507cab96f5ecf05b46b45", size = 32459970, upload-time = "2025-05-21T13:32:49.352Z" },
+    { url = "https://files.pythonhosted.org/packages/46/c4/c10368928c67405903e5b9440f32f4e93757caedafa883eebec4791799b6/polars_lts_cpu-1.30.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:73638aa8f2d5cef2c3913bfb1c0f8aad7b1a1c1c0bc69bb477f3fc7690c57240", size = 35976355, upload-time = "2025-05-21T13:32:52.401Z" },
+    { url = "https://files.pythonhosted.org/packages/3d/1e/fecd8c03fcf39deca79e1e3d774d6e40132a0fbfb61543b93b6c1d3b29af/polars_lts_cpu-1.30.0-cp39-abi3-manylinux_2_24_aarch64.whl", hash = "sha256:acd8aace38d6514f169663ee3cd25f7c7102d72234d3a70493b2a38f4c8cebd1", size = 33416949, upload-time = "2025-05-21T13:32:55.415Z" },
+    { url = "https://files.pythonhosted.org/packages/c3/a2/a0e324e8d2e8230de94878f4f9dad8a78d6ea40ceed24344cbba4162e4b6/polars_lts_cpu-1.30.0-cp39-abi3-win_amd64.whl", hash = "sha256:2a3d03e743e978f34bed4a576ecf7f579c2cb30d4a67cf8b202604ad2d8535d5", size = 36304753, upload-time = "2025-05-21T13:32:58.483Z" },
+    { url = "https://files.pythonhosted.org/packages/aa/ed/ab6a8bfac897b7b358dfa40b9853b7d9bc87b973aca039c37f25136cab4a/polars_lts_cpu-1.30.0-cp39-abi3-win_arm64.whl", hash = "sha256:1350edd5be2b29760476af173c1af6d2a7fbfacef11b33c9ab4b5b06a21610f8", size = 32643666, upload-time = "2025-05-21T13:33:01.454Z" },
 ]
 
 [[package]]
@@ -4352,19 +4367,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/b0/77/a5b8c569bf593b0140bde72ea885a803b82086995367bf2037de0159d924/pygments-2.19.2.tar.gz", hash = "sha256:636cb2477cec7f8952536970bc533bc43743542f70392ae026374600add5b887", size = 4968631, upload-time = "2025-06-21T13:39:12.283Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c7/21/705964c7812476f378728bdf590ca4b771ec72385c533964653c68e86bdc/pygments-2.19.2-py3-none-any.whl", hash = "sha256:86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b", size = 1225217, upload-time = "2025-06-21T13:39:07.939Z" },
-]
-
-[[package]]
-name = "pygsheets"
-version = "2.0.6"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "google-api-python-client" },
-    { name = "google-auth-oauthlib" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/76/87/4589262da7fdc9cc8c609099a5525dcbd05bd0f4ee22c28f640f261a4292/pygsheets-2.0.6.tar.gz", hash = "sha256:bff46c812e99f9b8b81a09b456581365281c797620ec08530b0d0e48fa9299e2", size = 154743, upload-time = "2022-11-30T17:27:27.065Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/07/c5/f462089614ae9d9f3354b34ec6e527c2d520d5cdad85925ad89f65beaf2d/pygsheets-2.0.6-py3-none-any.whl", hash = "sha256:3338c2eb8990fdee9f463b42a370ec0870c118d607d775471a6dfb8b08f6cd87", size = 158205, upload-time = "2022-11-30T17:27:23.164Z" },
 ]
 
 [[package]]
