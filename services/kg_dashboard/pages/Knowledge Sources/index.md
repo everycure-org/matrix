@@ -9,32 +9,6 @@ title: Knowledge Sources
   const TOP_N_PRIMARY_SOURCES = 25;
   const smallSourceThreshold = 50000;
   
-  // Legacy depth overrides (keeping for compatibility with other parts)
-  let depthOverrides = {}
-  
-  if (distinct_primary_knowledge_source && Array.isArray(distinct_primary_knowledge_source)) {    
-    distinct_primary_knowledge_source.forEach(pks => {
-      depthOverrides[pks.value] = 0;
-    });    
-  }
-
-  if (distinct_upstream_knowledge_source && Array.isArray(distinct_upstream_knowledge_source)) {
-    distinct_upstream_knowledge_source.forEach(uks => {
-      depthOverrides[uks.value] = 1;
-    });
-  }
-
-  // Unified KG is always at depth 2
-  depthOverrides['Unified KG'] = 2;
-  
-  // Add common cleaned upstream source names to ensure proper depth
-  const commonUpstreamSources = ['ec_medical', 'rtxkg2', 'robokop'];
-  commonUpstreamSources.forEach(source => {
-    depthOverrides[source] = 1;
-  });
-
-  // Add "Other" category to depth overrides
-  depthOverrides['Other (Small Sources)'] = 0;
 </script>
 
 <p>
