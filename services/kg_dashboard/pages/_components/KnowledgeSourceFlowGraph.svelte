@@ -234,6 +234,39 @@
     };
   }
 
+  function formatTooltip(params, links) {
+    if (params.dataType === 'node' && params.data.nodeCategory === 'primary') {
+      // Primary node tooltip with connections breakdown
+      const sourceId = params.data.id;
+      const connections = links.filter(link => link.source === sourceId);
+
+      let tooltipContent = `<strong>${params.data.name}</strong><br/>`;
+      tooltipContent += `${params.data.value.toLocaleString()} total connections`;
+
+      if (connections.length > 1) {
+        tooltipContent += `<br/><br/>`;
+        connections.forEach(conn => {
+          const targetName = conn.target.replace('infores:', '');
+          tooltipContent += `${targetName}: ${conn.value.toLocaleString()}<br/>`;
+        });
+      }
+
+      return tooltipContent;
+    } else if (params.dataType === 'node') {
+      // Aggregator and unified node tooltips with dual counts
+      if (params.data.total_all_sources && params.data.total_all_sources !== params.data.value) {
+        return `<strong>${params.data.id.replace('infores:', '')}</strong><br/>${params.data.value.toLocaleString()} from selected sources<br/>(${params.data.total_all_sources.toLocaleString()} from all sources)`;
+      } else {
+        return `<strong>${params.data.id.replace('infores:', '')}</strong><br/>${params.data.value.toLocaleString()} total connections`;
+      }
+    } else if (params.dataType === 'edge') {
+      // Edge tooltip
+      return `${params.data.source.replace('infores:', '')} → ${params.data.target.replace('infores:', '')}<br/>Connections: ${params.data.value.toLocaleString()}`;
+    }
+
+    return '';
+  }
+
   // === DATA PROCESSING ===
   $: processedData = (() => {
     if (!networkData || !Array.isArray(networkData) || networkData.length === 0) {
@@ -553,37 +586,7 @@
       },
       tooltip: {
         show: true,
-        formatter: function(params) {
-          if (params.dataType === 'node' && params.data.nodeCategory === 'primary') {
-            // Find all connections from this primary source to aggregators
-            const sourceId = params.data.id;
-            const connections = links.filter(link => link.source === sourceId);
-            
-            let tooltipContent = `<strong>${params.data.name}</strong><br/>`;
-            tooltipContent += `${params.data.value.toLocaleString()} total connections`;
-            
-            if (connections.length > 1) {
-              tooltipContent += `<br/><br/>`;
-              connections.forEach(conn => {
-                const targetName = conn.target.replace('infores:', '');
-                tooltipContent += `${targetName}: ${conn.value.toLocaleString()}<br/>`;
-              });
-            }
-            
-            return tooltipContent;
-          } else if (params.dataType === 'node') {
-            // Enhanced tooltip for aggregator and unified nodes with dual counts
-            if (params.data.total_all_sources && params.data.total_all_sources !== params.data.value) {
-              return `<strong>${params.data.id.replace('infores:', '')}</strong><br/>${params.data.value.toLocaleString()} from selected sources<br/>(${params.data.total_all_sources.toLocaleString()} from all sources)`;
-            } else {
-              // Default tooltip for nodes without dual counts
-              return `<strong>${params.data.id.replace('infores:', '')}</strong><br/>${params.data.value.toLocaleString()} total connections`;
-            }
-          } else if (params.dataType === 'edge') {
-            // Tooltip for edges
-            return `${params.data.source.replace('infores:', '')} → ${params.data.target.replace('infores:', '')}<br/>Connections: ${params.data.value.toLocaleString()}`;
-          }
-        }
+        formatter: (params) => formatTooltip(params, links)
       },
       series: [{
         type: 'graph',
