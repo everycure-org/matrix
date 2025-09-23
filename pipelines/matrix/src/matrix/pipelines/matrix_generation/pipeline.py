@@ -101,7 +101,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "params:matrix_generation.treat_score_col_name",
                             "params:matrix_generation.not_treat_score_col_name",
                             "params:matrix_generation.unknown_score_col_name",
-                            f"matrix_generation.fold_{fold}.model_wrapper",
+                            f"matrix_generation.fold_{fold}.wrapper",
                         ],
                         outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark",
                         name=f"make_predictions_and_sort_fold_{fold}",
