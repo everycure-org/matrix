@@ -6,6 +6,7 @@ from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.nodes import apply_transformers
 
 
+# TODO: Thinking of creating ModelWrapper as an abstract base class and have this and ModelWrapper inherit from it.
 class ModelWithPreprocessing:
     """Lightweight wrapper that applies preprocessing before scoring."""
 
