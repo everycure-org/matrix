@@ -56,20 +56,9 @@ ORDER BY n_edges DESC
 </DataTable>
 
 ```sql distinct_upstream_knowledge_source
-SELECT 
-  CASE 
-    WHEN TRIM(upstream_source) LIKE '%''unnest'':%'
-    THEN TRIM(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(upstream_source), '{''unnest'': ''', ''), '''}', ''), '{''unnest'': ', ''), '}', ''))
-    ELSE TRIM(upstream_source)
-  END AS value,
-  concat(
-    CASE 
-      WHEN TRIM(upstream_source) LIKE '%''unnest'':%'
-      THEN TRIM(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(upstream_source), '{''unnest'': ''', ''), '''}', ''), '{''unnest'': ', ''), '}', ''))
-      ELSE TRIM(upstream_source)
-    END,
-    ' (', sum(count), ' connections)'
-  ) AS label
+SELECT
+  TRIM(upstream_source) AS value,
+  concat(TRIM(upstream_source), ' (', sum(count), ' connections)') AS label
 FROM bq.merged_kg_edges
 CROSS JOIN UNNEST(SPLIT(upstream_data_source, ',')) AS t(upstream_source)
 WHERE TRIM(upstream_source) IS NOT NULL
@@ -142,22 +131,14 @@ The network diagram below shows how knowledge flows from primary sources through
 ```sql network_data
 -- Get aggregator-level data for network visualization
 WITH base_data AS (
-  SELECT 
+  SELECT
     primary_knowledge_source,
-    CASE 
-      WHEN TRIM(upstream_source) LIKE '%''unnest'':%'
-      THEN TRIM(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(upstream_source), '{''unnest'': ''', ''), '''}', ''), '{''unnest'': ', ''), '}', ''))
-      ELSE TRIM(upstream_source)
-    END as clean_upstream_source,
+    TRIM(upstream_source) as clean_upstream_source,
     SUM(count) as edge_count
   FROM bq.merged_kg_edges
   CROSS JOIN UNNEST(SPLIT(upstream_data_source, ',')) as t(upstream_source)
   WHERE primary_knowledge_source IN ${inputs.selected_primary_sources.value}
-    AND CASE 
-      WHEN TRIM(upstream_source) LIKE '%''unnest'':%'
-      THEN TRIM(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(upstream_source), '{''unnest'': ''', ''), '''}', ''), '{''unnest'': ', ''), '}', ''))
-      ELSE TRIM(upstream_source)
-    END IN ${inputs.selected_upstream_sources.value}
+    AND TRIM(upstream_source) IN ${inputs.selected_upstream_sources.value}
     AND TRIM(upstream_source) IS NOT NULL
     AND TRIM(upstream_source) != ''
   GROUP BY 1, 2
@@ -193,11 +174,7 @@ unified_total AS (
 -- Get unfiltered totals for context in tooltips
 all_upstream_totals AS (
   SELECT
-    CASE
-      WHEN TRIM(upstream_source) LIKE '%''unnest'':%'
-      THEN TRIM(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(upstream_source), '{''unnest'': ''', ''), '''}', ''), '{''unnest'': ', ''), '}', ''))
-      ELSE TRIM(upstream_source)
-    END as clean_upstream_source,
+    TRIM(upstream_source) as clean_upstream_source,
     SUM(count) as total_all_sources
   FROM bq.merged_kg_edges
   CROSS JOIN UNNEST(SPLIT(upstream_data_source, ',')) as t(upstream_source)
