@@ -90,10 +90,61 @@
   const COLORS = {
     PRIMARY_NODE: '#88C0D0',
     PRIMARY_LABEL: '#333',
-    NON_PRIMARY_LABEL: '#fff'
+    NON_PRIMARY_LABEL: '#fff',
+    DEFAULT_EDGE: 'rgba(157, 121, 214, 0.6)' // Default purple edge color
+  };
+
+  const EDGE_CONSTANTS = {
+    AGGREGATOR_ALPHA: 0.5, // 50% transparency for aggregator-colored edges
+    DEFAULT_ALPHA: 0.6     // Default edge transparency
   };
 
   // === UTILITY FUNCTIONS ===
+  function addTransparencyToColor(color, alpha = 0.5) {
+    if (!color) {
+      return COLORS.DEFAULT_EDGE;
+    }
+
+    // Handle hex colors (e.g., '#FF5733')
+    if (color.startsWith('#')) {
+      const hex = color.slice(1);
+
+      // Validate hex format
+      if (!/^[0-9A-Fa-f]{6}$/.test(hex)) {
+        console.warn(`Invalid hex color format: ${color}, using default`);
+        return COLORS.DEFAULT_EDGE;
+      }
+
+      // Convert hex to RGB
+      const r = parseInt(hex.slice(0, 2), 16);
+      const g = parseInt(hex.slice(2, 4), 16);
+      const b = parseInt(hex.slice(4, 6), 16);
+
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    // Handle rgb/rgba colors
+    if (color.startsWith('rgb')) {
+      // Extract RGB values
+      const rgbMatch = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+      if (rgbMatch) {
+        const [, r, g, b] = rgbMatch;
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      }
+
+      // Already rgba, replace alpha
+      const rgbaMatch = color.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*[\d.]+\)/);
+      if (rgbaMatch) {
+        const [, r, g, b] = rgbaMatch;
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      }
+    }
+
+    // Fallback for unsupported formats
+    console.warn(`Unsupported color format: ${color}, using default`);
+    return COLORS.DEFAULT_EDGE;
+  }
+
   function calculateAngleRangeForNodeCount(nodeCount) {
     if (nodeCount <= 2) {
       return {
@@ -485,14 +536,13 @@
     return linkData
       .filter(d => d.source && d.target && d.value)
       .map(d => {
-        let edgeColor = 'rgba(157, 121, 214, 0.6)';
+        let edgeColor = COLORS.DEFAULT_EDGE;
 
         const sourceNode = nodes.find(n => n.id === d.source);
         const targetNode = nodes.find(n => n.id === d.target);
 
+        // Find aggregator node by category to use its color for the edge
         let aggregatorNode = null;
-
-        // Find aggregator node by category instead of hardcoded names
         if (sourceNode && sourceNode.nodeCategory === 'aggregator') {
           aggregatorNode = sourceNode;
         }
@@ -500,8 +550,9 @@
           aggregatorNode = targetNode;
         }
 
+        // Apply aggregator color with proper transparency
         if (aggregatorNode && aggregatorNode.itemStyle && aggregatorNode.itemStyle.color) {
-          edgeColor = aggregatorNode.itemStyle.color + '80';
+          edgeColor = addTransparencyToColor(aggregatorNode.itemStyle.color, EDGE_CONSTANTS.AGGREGATOR_ALPHA);
         }
 
         return {
