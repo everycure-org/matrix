@@ -81,6 +81,12 @@
     AGGREGATOR_BASE_SIZE: 45
   };
 
+  const HEIGHT_CONSTANTS = {
+    BASE_HEIGHT: 300,      // Minimum height for 1 source
+    MAX_HEIGHT: 900,       // Target height for 25 sources
+    MAX_SOURCES: 25        // Reference point for maximum scaling
+  };
+
   const COLORS = {
     PRIMARY_NODE: '#88C0D0',
     PRIMARY_LABEL: '#333',
@@ -419,12 +425,8 @@
     const { primaryNodes } = processedData;
 
     if (primaryNodes.length > 0) {
-      const baseHeight = 300;
-      const maxHeight = 900;
-      const maxSources = 25;
-
-      const scalingFactor = Math.min(primaryNodes.length, maxSources) / maxSources;
-      const calculatedHeight = baseHeight + (scalingFactor * (maxHeight - baseHeight));
+      const scalingFactor = Math.min(primaryNodes.length, HEIGHT_CONSTANTS.MAX_SOURCES) / HEIGHT_CONSTANTS.MAX_SOURCES;
+      const calculatedHeight = HEIGHT_CONSTANTS.BASE_HEIGHT + (scalingFactor * (HEIGHT_CONSTANTS.MAX_HEIGHT - HEIGHT_CONSTANTS.BASE_HEIGHT));
 
       dynamicHeight = Math.round(calculatedHeight) + 'px';
 
@@ -436,7 +438,7 @@
 
         debugInfo.contentBounds = { minY: Math.round(minY), maxY: Math.round(maxY) };
         debugInfo.dynamicHeight = parseInt(dynamicHeight);
-        debugInfo.heightCalculation = `${baseHeight} + (${primaryNodes.length}/${maxSources}) * ${maxHeight - baseHeight} = ${Math.round(calculatedHeight)}px`;
+        debugInfo.heightCalculation = `${HEIGHT_CONSTANTS.BASE_HEIGHT} + (${primaryNodes.length}/${HEIGHT_CONSTANTS.MAX_SOURCES}) * ${HEIGHT_CONSTANTS.MAX_HEIGHT - HEIGHT_CONSTANTS.BASE_HEIGHT} = ${Math.round(calculatedHeight)}px`;
       }
     } else {
       dynamicHeight = height;
