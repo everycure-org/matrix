@@ -52,3 +52,8 @@ integration.int.{source}.normalization_summary:
   <<: *_bigquery_ds
   filepath: ${globals:paths.integration}/int/{source}/normalization_summary
   table: "{source}_normalization_summary"
+
+integration.prm.unified_normalization_summary:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.integration}/prm/unified_normalization_summary
+  table: "unified_normalization_summary"
