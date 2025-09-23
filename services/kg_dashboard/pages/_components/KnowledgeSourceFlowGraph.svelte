@@ -553,22 +553,6 @@
       },
       tooltip: {
         show: true,
-        position: function(point, params, dom, rect, size) {
-          if (params.dataType === 'node' && params.data.nodeCategory === 'primary') {
-            // Position tooltip based on primary node count
-            // Right for ≤5 nodes, left for ≥6 nodes (labels get pushed off screen with fewer nodes)
-            if (primaryNodeCount <= 5) {
-              return [point[0] + 20, point[1] - size.contentSize[1] / 2]; // Right
-            } else {
-              return [point[0] - size.contentSize[0] - 20, point[1] - size.contentSize[1] / 2]; // Left
-            }
-          } else if (params.dataType === 'node' && params.data.nodeCategory === 'unified') {
-            // Position tooltip to the left for unified KG
-            return [point[0] - size.contentSize[0] - 20, point[1] - size.contentSize[1] / 2];
-          }
-          // Default positioning for aggregator nodes
-          return [point[0] + 20, point[1] - size.contentSize[1] / 2];
-        },
         formatter: function(params) {
           if (params.dataType === 'node' && params.data.nodeCategory === 'primary') {
             // Find all connections from this primary source to aggregators
