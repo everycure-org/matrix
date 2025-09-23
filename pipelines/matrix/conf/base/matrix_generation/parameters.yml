@@ -7,6 +7,10 @@ matrix_generation.matrix_generation_options:
   batch_by: # Column to batch over when making predictions
     - target 
 
+matrix_generation.model_ensemble:
+  agg_func:
+    _object: numpy.mean
+
 # Strategies for reporting nodes
 
 matrix_generation.n_reporting: &n_reporting 10000 # Number of items "top pairs" reporting table

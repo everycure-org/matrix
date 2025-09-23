@@ -1,18 +1,16 @@
 import logging
 from typing import Optional
 
-import numpy as np
 import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 from matplotlib.figure import Figure
-from matrix import settings
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.pipelines.matrix_generation.reporting_plots import ReportingPlotGenerator
 from matrix.pipelines.matrix_generation.reporting_tables import ReportingTableGenerator
-from matrix.pipelines.modelling.nodes import apply_transformers
-from matrix_inject.inject import _extract_elements_in_list, inject_object
+from matrix.pipelines.modelling.model import ModelWrapper, TransformingModelWrapper
+from matrix_inject.inject import inject_object
 from matrix_pandera.validator import Column, DataFrameSchema, check_output
 from pyspark.sql.types import DoubleType, StructField, StructType
 from tqdm import tqdm
@@ -197,39 +195,21 @@ def make_predictions_and_sort(
     treat_score_col_name: str,
     not_treat_score_col_name: str,
     unknown_score_col_name: str,
-    *args,
+    model: ModelWrapper,
 ) -> ps.DataFrame:
-    """Generate and sort probability scores for a drug-disease dataset using multiple models.
-
-    The function accepts variable arguments for model components in the following order:
-    - N transformers (one per model)
-    - N models (one per model)
-    - N feature lists (one per model)
+    """Generate and sort probability scores for a drug-disease dataset.
 
     Args:
         node_embeddings: Dataframe with node embeddings.
-        pairs: drug disease pairs to predict scores for.
+        pairs: Drug-disease pairs to predict scores for.
         treat_score_col_name: Name of the column for treatment scores.
         not_treat_score_col_name: Name of the column for non-treatment scores.
         unknown_score_col_name: Name of the column for unknown scores.
-        *args: Variable arguments for transformers, models, and features
+        model: Ensemble model capable of producing probability scores.
 
     Returns:
-        Pairs dataset sorted by score with their rank and quantile rank
+        Pairs dataset sorted by score with their rank and quantile rank.
     """
-
-    def extract_and_parse_args():
-        # Calculate the number of models from the settings
-        model_names = [x["model_name"] for x in settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")]
-        num_models = len(model_names)
-
-        # Parse the arguments: transformers, models, features
-        transformers = list(args[:num_models])
-        models = list(args[num_models : 2 * num_models])
-        features = list(args[2 * num_models : 3 * num_models])
-        return transformers, models, features
-
-    transformers, models, features = extract_and_parse_args()
 
     embeddings = node_embeddings.select("id", "topological_embedding")
 
@@ -250,23 +230,12 @@ def make_predictions_and_sort(
     )
 
     def model_predict(partition_df: pd.DataFrame) -> pd.DataFrame:
-        # Get all predictions from all models at once
-        all_predictions = []
-
-        for transformer_dict, model, model_features_list in zip(transformers, models, features):
-            # TODO: can we get columns from transformers directly?
-            transformed = apply_transformers(partition_df, transformer_dict)
-            model_features = _extract_elements_in_list(transformed.columns, model_features_list, True)
-            model_predictions = model.predict_proba(transformed[model_features].values)
-            all_predictions.append(model_predictions)
-
-        # Stack all predictions and compute mean across models (axis=0)
-        averaged_predictions = np.mean(all_predictions, axis=0)
+        model_predictions = model.predict_proba(partition_df)
 
         # Assign averaged predictions to columns
-        partition_df[not_treat_score_col_name] = averaged_predictions[:, 0]
-        partition_df[treat_score_col_name] = averaged_predictions[:, 1]
-        partition_df[unknown_score_col_name] = averaged_predictions[:, 2]
+        partition_df[not_treat_score_col_name] = model_predictions[:, 0]
+        partition_df[treat_score_col_name] = model_predictions[:, 1]
+        partition_df[unknown_score_col_name] = model_predictions[:, 2]
 
         return partition_df.drop(columns=["source_embedding", "target_embedding"])
 
@@ -324,3 +293,13 @@ def generate_reports(
         reports_dict[strategy.name] = strategy.generate(sorted_matrix_df, **kwargs)
 
     return reports_dict
+
+
+def package_model_with_preprocessing(
+    transformers: dict,
+    model: ModelWrapper,
+    features: list[str],
+) -> TransformingModelWrapper:
+    """Bundle transformers, features, and model into a single callable object."""
+
+    return TransformingModelWrapper(transformers=transformers, model=model, features=features)

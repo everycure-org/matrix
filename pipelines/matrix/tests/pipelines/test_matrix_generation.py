@@ -10,7 +10,9 @@ from matrix.pipelines.matrix_generation.nodes import (
     generate_pairs,
     generate_reports,
     make_predictions_and_sort,
+    package_model_with_preprocessing,
 )
+from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.transformers import FlatArrayTransformer
 
 
@@ -294,18 +296,29 @@ def test_make_predictions_and_sort(
     mock_model_2,
 ):
     # Test uses 2 models to match the settings (xg_ensemble, xg_synth)
+    base_wrapper_1 = ModelWrapper([mock_model], np.mean)
+    base_wrapper_2 = ModelWrapper([mock_model_2], np.mean)
+
+    model_wrapper_1 = package_model_with_preprocessing(
+        transformers,
+        base_wrapper_1,
+        ["source_+", "target_+"],
+    )
+    model_wrapper_2 = package_model_with_preprocessing(
+        transformers,
+        base_wrapper_2,
+        ["source_+", "target_+"],
+    )
+
+    ensemble_model = ModelWrapper([model_wrapper_1, model_wrapper_2], np.mean)
+
     result = make_predictions_and_sort(
         spark.createDataFrame(sample_node_embeddings),  # node_embeddings
         spark.createDataFrame(sample_matrix_data),  # pairs
-        transformers,  # transformer 1
-        transformers,  # transformer 2 (same as transformer 1 for testing)
-        mock_model,  # model 1
-        mock_model_2,  # model 2
-        ["source_+", "target_+"],  # features for model 1
-        ["source_+", "target_+"],  # features for model 2
         "treat score",
         "not treat score",
         "unknown score",
+        ensemble_model,
     )
 
     assert isinstance(result, ps.DataFrame)
