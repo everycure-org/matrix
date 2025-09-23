@@ -32,7 +32,7 @@ data_sources:
   robokop:
     version: 30fd1bfc18cd5ccb
   primekg:
-    version: 2.1
+    version: "2.1"
   spoke:
     version: V5.7
   embiology:
