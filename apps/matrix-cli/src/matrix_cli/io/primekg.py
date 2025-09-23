@@ -301,9 +301,24 @@ def build_nodes(
                 .alias("node_type"),
             ]
         )
-        .drop(["node_id", "node_index"], strict=False)
+        .drop(
+            [
+                "node_id",
+                "node_index",
+                "umls_description",
+                "orphanet_definition",
+                "mayo_symptoms",
+                "mayo_causes",
+                "mayo_risk_factors",
+                "mayo_complications",
+                "mayo_prevention",
+                "mayo_see_doc",
+            ],
+            strict=False,
+        )
         .rename({"node_source": "id", "node_name": "name", "category": "drug_category"})
         .rename({"node_type": "category"})
+        .unique(subset=["id", "category"], keep="first")
     )
 
     output.parent.mkdir(parents=True, exist_ok=True)
