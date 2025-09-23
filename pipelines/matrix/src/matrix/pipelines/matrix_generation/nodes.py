@@ -1,7 +1,6 @@
 import logging
 from typing import Optional
 
-import numpy as np
 import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.functions as F
@@ -11,8 +10,8 @@ from matrix.datasets.graph import KnowledgeGraph
 from matrix.pipelines.matrix_generation.reporting_plots import ReportingPlotGenerator
 from matrix.pipelines.matrix_generation.reporting_tables import ReportingTableGenerator
 from matrix.pipelines.modelling.model import ModelWrapper
-from matrix.pipelines.modelling.nodes import apply_transformers
-from matrix_inject.inject import _extract_elements_in_list, inject_object
+from matrix.pipelines.modelling.preprocessing_model import ModelWithPreprocessing
+from matrix_inject.inject import inject_object
 from matrix_pandera.validator import Column, DataFrameSchema, check_output
 from pyspark.sql.types import DoubleType, StructField, StructType
 from tqdm import tqdm
@@ -304,27 +303,4 @@ def package_model_with_preprocessing(
 ) -> ModelWrapper:
     """Bundle transformers, features, and model into a single callable object."""
 
-    class _ModelWithPreprocessing:
-        """Lightweight wrapper that applies preprocessing before scoring."""
-
-        def __init__(self, base_model: ModelWrapper, transformers_: dict, selected_features: list[str]) -> None:
-            self._base_model = base_model
-            self._transformers = transformers_
-            self._features = selected_features
-
-        def _transform(self, data: pd.DataFrame) -> pd.DataFrame:
-            transformed = apply_transformers(data.copy(), self._transformers)
-            feature_columns = _extract_elements_in_list(transformed.columns, self._features, True)
-            return transformed[feature_columns]
-
-        def predict_proba(self, data: pd.DataFrame) -> np.ndarray:
-            transformed = self._transform(data)
-            return self._base_model.predict_proba(transformed.values)
-
-        def predict(self, data: pd.DataFrame) -> np.ndarray:
-            return self.predict_proba(data).argmax(axis=1)
-
-        def __getattr__(self, item):
-            return getattr(self._base_model, item)
-
-    return _ModelWithPreprocessing(model, transformers, features)
+    return ModelWithPreprocessing(model, transformers, features)
