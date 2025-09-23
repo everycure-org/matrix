@@ -15,308 +15,8 @@
   let dynamicHeight = height; // Dynamic height based on content
   let primaryNodeCount = 0; // Store primary node count for tooltip positioning
   
-  // Debug variables to display current calculations
-  let debugInfo = {
-    nodeCount: 0,
-    arcDegrees: 0,
-    radiusY: 0,
-    centerY: 0,
-    centerX: 0,
-    positioning: 'unknown',
-    primarySpread: 0,
-    aggregatorSpacing: 0,
-    primaryYPositions: [],
-    primaryXPositions: [],
-    primaryAngles: [],
-    aggregatorYPositions: [],
-    aggregatorXPositions: [],
-    unifiedYPositions: [],
-    unifiedXPositions: [],
-    aggregatorCount: 0,
-    unifiedCount: 0,
-    minMaxPrimaryX: { min: 0, max: 0 },
-    primaryXSpread: 0,
-    contentBounds: { minY: 0, maxY: 0 },
-    dynamicHeight: 0,
-    heightCalculation: '',
-    sampleNodeData: []
-  };
 
-  // === CONSTANTS ===
-  const LAYOUT_CONSTANTS = {
-    OVAL_RADIUS_X: 150,
-    MIN_RADIUS_Y: 100,
-    MAX_RADIUS_Y: 250,
-    RADIUS_Y_SCALE_FACTOR: 15,
-    CENTER_X: 300,
-    MIN_CENTER_Y: 200,
-    MAX_CENTER_Y: 400,
-    CENTER_Y_BASE: 150,
-    CENTER_Y_SCALE_FACTOR: 8,
-    MAX_TOTAL_SPREAD: Math.PI * 0.4, // 72 degrees
-    MIN_SPACING: Math.PI * 0.08,
-    ARC_CENTER: Math.PI,
-    AGGREGATOR_X_OFFSET: 200,
-    UNIFIED_X_OFFSET: 150,
-    AGGREGATOR_SPACING_FRACTION: 0.5,
-    MIN_AGGREGATOR_SPACING: 12,
-    UNIFIED_SPACING: 80
-  };
 
-  const NODE_SIZE_CONSTANTS = {
-    PRIMARY_MIN_SIZE: 8,
-    PRIMARY_MAX_SIZE: 35,
-    PRIMARY_SCALE_DIVISOR: 100000,
-    PRIMARY_SCALE_MULTIPLIER: 3,
-    PRIMARY_BASE_SIZE: 8,
-    UNIFIED_MIN_SIZE: 60,
-    UNIFIED_MAX_SIZE: 100,
-    UNIFIED_SCALE_DIVISOR: 1000000,
-    UNIFIED_SCALE_MULTIPLIER: 0.8,
-    UNIFIED_BASE_SIZE: 60,
-    AGGREGATOR_MIN_SIZE: 45,
-    AGGREGATOR_MAX_SIZE: 80,
-    AGGREGATOR_SCALE_DIVISOR: 1000000,
-    AGGREGATOR_SCALE_MULTIPLIER: 0.6,
-    AGGREGATOR_BASE_SIZE: 45
-  };
-
-  const HEIGHT_CONSTANTS = {
-    BASE_HEIGHT: 300,      // Minimum height for 1 source
-    MAX_HEIGHT: 900,       // Target height for 25 sources
-    MAX_SOURCES: 25        // Reference point for maximum scaling
-  };
-
-  const COLORS = {
-    PRIMARY_NODE: '#88C0D0',
-    PRIMARY_LABEL: '#333',
-    NON_PRIMARY_LABEL: '#fff',
-    DEFAULT_EDGE: 'rgba(157, 121, 214, 0.6)' // Default purple edge color
-  };
-
-  const EDGE_CONSTANTS = {
-    AGGREGATOR_ALPHA: 0.5, // 50% transparency for aggregator-colored edges
-    DEFAULT_ALPHA: 0.6     // Default edge transparency
-  };
-
-  // === UTILITY FUNCTIONS ===
-  function addTransparencyToColor(color, alpha = 0.5) {
-    if (!color) {
-      return COLORS.DEFAULT_EDGE;
-    }
-
-    // Handle hex colors (e.g., '#FF5733')
-    if (color.startsWith('#')) {
-      const hex = color.slice(1);
-
-      // Validate hex format
-      if (!/^[0-9A-Fa-f]{6}$/.test(hex)) {
-        console.warn(`Invalid hex color format: ${color}, using default`);
-        return COLORS.DEFAULT_EDGE;
-      }
-
-      // Convert hex to RGB
-      const r = parseInt(hex.slice(0, 2), 16);
-      const g = parseInt(hex.slice(2, 4), 16);
-      const b = parseInt(hex.slice(4, 6), 16);
-
-      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-    }
-
-    // Handle rgb/rgba colors
-    if (color.startsWith('rgb')) {
-      // Extract RGB values
-      const rgbMatch = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-      if (rgbMatch) {
-        const [, r, g, b] = rgbMatch;
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-      }
-
-      // Already rgba, replace alpha
-      const rgbaMatch = color.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*[\d.]+\)/);
-      if (rgbaMatch) {
-        const [, r, g, b] = rgbaMatch;
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-      }
-    }
-
-    // Fallback for unsupported formats
-    console.warn(`Unsupported color format: ${color}, using default`);
-    return COLORS.DEFAULT_EDGE;
-  }
-
-  function calculateAngleRangeForNodeCount(nodeCount) {
-    if (nodeCount <= 2) {
-      return {
-        dynamicAngleRange: Math.PI * 0.5,
-        positioning: 'small (≤2)'
-      };
-    } else if (nodeCount <= 5) {
-      return {
-        dynamicAngleRange: Math.PI * (2/3),
-        positioning: 'small (3-5)'
-      };
-    } else if (nodeCount <= 10) {
-      return {
-        dynamicAngleRange: Math.PI * (5/6),
-        positioning: 'medium (6-10)'
-      };
-    } else {
-      return {
-        dynamicAngleRange: Math.PI * 0.65,
-        positioning: 'large (11+)'
-      };
-    }
-  }
-
-  function calculateNodePosition(nodeData, category, counters, layout, positions) {
-    const { centerX, centerY, radiusX, radiusY, nodeCount, arcCenter } = layout;
-    const { primarySpread } = positions;
-
-    if (category === 'primary') {
-      let spacing = 0;
-      if (nodeCount > 1) {
-        spacing = Math.min(LAYOUT_CONSTANTS.MIN_SPACING, LAYOUT_CONSTANTS.MAX_TOTAL_SPREAD / (nodeCount - 1));
-      }
-      const centerOffset = (counters.primary - (nodeCount - 1) / 2) * spacing;
-      const angle = arcCenter + centerOffset;
-
-      return {
-        x: centerX + Math.cos(angle) * radiusX,
-        y: centerY + Math.sin(angle) * radiusY
-      };
-    } else if (category === 'aggregator') {
-      const aggregatorNodes = positions.aggregatorNodes || [];
-      let aggregatorSpacing = 0;
-
-      if (aggregatorNodes.length > 1 && primarySpread > 0) {
-        const calculatedSpacing = (primarySpread * LAYOUT_CONSTANTS.AGGREGATOR_SPACING_FRACTION) / (aggregatorNodes.length - 1);
-        aggregatorSpacing = Math.max(calculatedSpacing, LAYOUT_CONSTANTS.MIN_AGGREGATOR_SPACING);
-      }
-
-      const centerOffset = (counters.aggregator - (aggregatorNodes.length - 1) / 2) * aggregatorSpacing;
-
-      return {
-        x: centerX + radiusX - LAYOUT_CONSTANTS.AGGREGATOR_X_OFFSET,
-        y: centerY + centerOffset
-      };
-    } else if (category === 'unified') {
-      const unifiedNodes = positions.unifiedNodes || [];
-      const centerOffset = (counters.unified - (unifiedNodes.length - 1) / 2) * LAYOUT_CONSTANTS.UNIFIED_SPACING;
-
-      return {
-        x: centerX + radiusX - LAYOUT_CONSTANTS.UNIFIED_X_OFFSET,
-        y: centerY + centerOffset
-      };
-    }
-
-    return { x: 0, y: 0 };
-  }
-
-  function calculateNodeSize(value, category) {
-    const safeValue = value || 1;
-
-    switch (category) {
-      case 'primary':
-        return Math.max(
-          NODE_SIZE_CONSTANTS.PRIMARY_MIN_SIZE,
-          Math.min(
-            NODE_SIZE_CONSTANTS.PRIMARY_MAX_SIZE,
-            Math.sqrt(safeValue / NODE_SIZE_CONSTANTS.PRIMARY_SCALE_DIVISOR) * NODE_SIZE_CONSTANTS.PRIMARY_SCALE_MULTIPLIER + NODE_SIZE_CONSTANTS.PRIMARY_BASE_SIZE
-          )
-        );
-      case 'unified':
-        return Math.max(
-          NODE_SIZE_CONSTANTS.UNIFIED_MIN_SIZE,
-          Math.min(
-            NODE_SIZE_CONSTANTS.UNIFIED_MAX_SIZE,
-            safeValue / NODE_SIZE_CONSTANTS.UNIFIED_SCALE_DIVISOR * NODE_SIZE_CONSTANTS.UNIFIED_SCALE_MULTIPLIER + NODE_SIZE_CONSTANTS.UNIFIED_BASE_SIZE
-          )
-        );
-      case 'aggregator':
-      default:
-        return Math.max(
-          NODE_SIZE_CONSTANTS.AGGREGATOR_MIN_SIZE,
-          Math.min(
-            NODE_SIZE_CONSTANTS.AGGREGATOR_MAX_SIZE,
-            safeValue / NODE_SIZE_CONSTANTS.AGGREGATOR_SCALE_DIVISOR * NODE_SIZE_CONSTANTS.AGGREGATOR_SCALE_MULTIPLIER + NODE_SIZE_CONSTANTS.AGGREGATOR_BASE_SIZE
-          )
-        );
-    }
-  }
-
-  function createNodeFromData(nodeData, counters, layout, positions) {
-    const position = calculateNodePosition(nodeData, nodeData.category, counters, layout, positions);
-
-    let nodeColor;
-    if (nodeData.category === 'primary') {
-      nodeColor = COLORS.PRIMARY_NODE;
-    } else if (nodeData.category === 'aggregator' || nodeData.category === 'unified') {
-      const sourceKey = nodeData.node_id.replace('infores:', '');
-      nodeColor = getSourceColor(sourceKey);
-    }
-
-    return {
-      id: nodeData.node_id,
-      name: nodeData.node_name || nodeData.node_id,
-      nodeCategory: nodeData.category,
-      value: nodeData.value || 0,
-      total_all_sources: nodeData.total_all_sources,
-      x: position.x,
-      y: position.y,
-      symbol: 'circle',
-      symbolSize: calculateNodeSize(nodeData.value, nodeData.category),
-      itemStyle: nodeColor ? { color: nodeColor } : undefined,
-      label: {
-        show: true,
-        position: nodeData.category === 'primary' ? 'left' : 'inside',
-        fontSize: nodeData.category === 'primary' ? 12 : 11,
-        color: nodeData.category === 'primary' ? COLORS.PRIMARY_LABEL : COLORS.NON_PRIMARY_LABEL,
-        fontWeight: nodeData.category === 'primary' ? 'normal' : 'bold',
-        distance: nodeData.category === 'primary' ? 8 : 0,
-        formatter: function(params) {
-          if (nodeData.category === 'primary' && params.name && params.name.length > 20) {
-            return params.name.substring(0, 17) + '...';
-          }
-          return params.name;
-        }
-      },
-      fixed: true
-    };
-  }
-
-  function formatTooltip(params, links) {
-    if (params.dataType === 'node' && params.data.nodeCategory === 'primary') {
-      // Primary node tooltip with connections breakdown
-      const sourceId = params.data.id;
-      const connections = links.filter(link => link.source === sourceId);
-
-      let tooltipContent = `<strong>${params.data.name}</strong><br/>`;
-      tooltipContent += `${params.data.value.toLocaleString()} total connections`;
-
-      if (connections.length > 1) {
-        tooltipContent += `<br/><br/>`;
-        connections.forEach(conn => {
-          const targetName = conn.target.replace('infores:', '');
-          tooltipContent += `${targetName}: ${conn.value.toLocaleString()}<br/>`;
-        });
-      }
-
-      return tooltipContent;
-    } else if (params.dataType === 'node') {
-      // Aggregator and unified node tooltips with dual counts
-      if (params.data.total_all_sources && params.data.total_all_sources !== params.data.value) {
-        return `<strong>${params.data.id.replace('infores:', '')}</strong><br/>${params.data.value.toLocaleString()} from selected sources<br/>(${params.data.total_all_sources.toLocaleString()} from all sources)`;
-      } else {
-        return `<strong>${params.data.id.replace('infores:', '')}</strong><br/>${params.data.value.toLocaleString()} total connections`;
-      }
-    } else if (params.dataType === 'edge') {
-      // Edge tooltip
-      return `${params.data.source.replace('infores:', '')} → ${params.data.target.replace('infores:', '')}<br/>Connections: ${params.data.value.toLocaleString()}`;
-    }
-
-    return '';
-  }
 
   // === DATA PROCESSING ===
   $: processedData = (() => {
@@ -676,6 +376,310 @@
         }
       }]
     };
+
+  // === DEBUG INFO ===
+  // Debug variables to display current calculations
+  let debugInfo = {
+    nodeCount: 0,
+    arcDegrees: 0,
+    radiusY: 0,
+    centerY: 0,
+    centerX: 0,
+    positioning: 'unknown',
+    primarySpread: 0,
+    aggregatorSpacing: 0,
+    primaryYPositions: [],
+    primaryXPositions: [],
+    primaryAngles: [],
+    aggregatorYPositions: [],
+    aggregatorXPositions: [],
+    unifiedYPositions: [],
+    unifiedXPositions: [],
+    aggregatorCount: 0,
+    unifiedCount: 0,
+    minMaxPrimaryX: { min: 0, max: 0 },
+    primaryXSpread: 0,
+    contentBounds: { minY: 0, maxY: 0 },
+    dynamicHeight: 0,
+    heightCalculation: '',
+    sampleNodeData: []
+  };
+
+  // === CONSTANTS ===
+  const LAYOUT_CONSTANTS = {
+    OVAL_RADIUS_X: 150,
+    MIN_RADIUS_Y: 100,
+    MAX_RADIUS_Y: 250,
+    RADIUS_Y_SCALE_FACTOR: 15,
+    CENTER_X: 300,
+    MIN_CENTER_Y: 200,
+    MAX_CENTER_Y: 400,
+    CENTER_Y_BASE: 150,
+    CENTER_Y_SCALE_FACTOR: 8,
+    MAX_TOTAL_SPREAD: Math.PI * 0.4, // 72 degrees
+    MIN_SPACING: Math.PI * 0.08,
+    ARC_CENTER: Math.PI,
+    AGGREGATOR_X_OFFSET: 200,
+    UNIFIED_X_OFFSET: 150,
+    AGGREGATOR_SPACING_FRACTION: 0.5,
+    MIN_AGGREGATOR_SPACING: 12,
+    UNIFIED_SPACING: 80
+  };
+
+  const NODE_SIZE_CONSTANTS = {
+    PRIMARY_MIN_SIZE: 8,
+    PRIMARY_MAX_SIZE: 35,
+    PRIMARY_SCALE_DIVISOR: 100000,
+    PRIMARY_SCALE_MULTIPLIER: 3,
+    PRIMARY_BASE_SIZE: 8,
+    UNIFIED_MIN_SIZE: 60,
+    UNIFIED_MAX_SIZE: 100,
+    UNIFIED_SCALE_DIVISOR: 1000000,
+    UNIFIED_SCALE_MULTIPLIER: 0.8,
+    UNIFIED_BASE_SIZE: 60,
+    AGGREGATOR_MIN_SIZE: 45,
+    AGGREGATOR_MAX_SIZE: 80,
+    AGGREGATOR_SCALE_DIVISOR: 1000000,
+    AGGREGATOR_SCALE_MULTIPLIER: 0.6,
+    AGGREGATOR_BASE_SIZE: 45
+  };
+
+  const HEIGHT_CONSTANTS = {
+    BASE_HEIGHT: 300,      // Minimum height for 1 source
+    MAX_HEIGHT: 900,       // Target height for 25 sources
+    MAX_SOURCES: 25        // Reference point for maximum scaling
+  };
+
+  const COLORS = {
+    PRIMARY_NODE: '#88C0D0',
+    PRIMARY_LABEL: '#333',
+    NON_PRIMARY_LABEL: '#fff',
+    DEFAULT_EDGE: 'rgba(157, 121, 214, 0.6)' // Default purple edge color
+  };
+
+  const EDGE_CONSTANTS = {
+    AGGREGATOR_ALPHA: 0.5, // 50% transparency for aggregator-colored edges
+    DEFAULT_ALPHA: 0.6     // Default edge transparency
+  };
+
+  // === UTILITY FUNCTIONS ===
+  function addTransparencyToColor(color, alpha = 0.5) {
+    if (!color) {
+      return COLORS.DEFAULT_EDGE;
+    }
+
+    // Handle hex colors (e.g., '#FF5733')
+    if (color.startsWith('#')) {
+      const hex = color.slice(1);
+
+      // Validate hex format
+      if (!/^[0-9A-Fa-f]{6}$/.test(hex)) {
+        console.warn(`Invalid hex color format: ${color}, using default`);
+        return COLORS.DEFAULT_EDGE;
+      }
+
+      // Convert hex to RGB
+      const r = parseInt(hex.slice(0, 2), 16);
+      const g = parseInt(hex.slice(2, 4), 16);
+      const b = parseInt(hex.slice(4, 6), 16);
+
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    // Handle rgb/rgba colors
+    if (color.startsWith('rgb')) {
+      // Extract RGB values
+      const rgbMatch = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+      if (rgbMatch) {
+        const [, r, g, b] = rgbMatch;
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      }
+
+      // Already rgba, replace alpha
+      const rgbaMatch = color.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*[\d.]+\)/);
+      if (rgbaMatch) {
+        const [, r, g, b] = rgbaMatch;
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      }
+    }
+
+    // Fallback for unsupported formats
+    console.warn(`Unsupported color format: ${color}, using default`);
+    return COLORS.DEFAULT_EDGE;
+  }
+
+  function calculateAngleRangeForNodeCount(nodeCount) {
+    if (nodeCount <= 2) {
+      return {
+        dynamicAngleRange: Math.PI * 0.5,
+        positioning: 'small (≤2)'
+      };
+    } else if (nodeCount <= 5) {
+      return {
+        dynamicAngleRange: Math.PI * (2/3),
+        positioning: 'small (3-5)'
+      };
+    } else if (nodeCount <= 10) {
+      return {
+        dynamicAngleRange: Math.PI * (5/6),
+        positioning: 'medium (6-10)'
+      };
+    } else {
+      return {
+        dynamicAngleRange: Math.PI * 0.65,
+        positioning: 'large (11+)'
+      };
+    }
+  }
+
+  function calculateNodePosition(nodeData, category, counters, layout, positions) {
+    const { centerX, centerY, radiusX, radiusY, nodeCount, arcCenter } = layout;
+    const { primarySpread } = positions;
+
+    if (category === 'primary') {
+      let spacing = 0;
+      if (nodeCount > 1) {
+        spacing = Math.min(LAYOUT_CONSTANTS.MIN_SPACING, LAYOUT_CONSTANTS.MAX_TOTAL_SPREAD / (nodeCount - 1));
+      }
+      const centerOffset = (counters.primary - (nodeCount - 1) / 2) * spacing;
+      const angle = arcCenter + centerOffset;
+
+      return {
+        x: centerX + Math.cos(angle) * radiusX,
+        y: centerY + Math.sin(angle) * radiusY
+      };
+    } else if (category === 'aggregator') {
+      const aggregatorNodes = positions.aggregatorNodes || [];
+      let aggregatorSpacing = 0;
+
+      if (aggregatorNodes.length > 1 && primarySpread > 0) {
+        const calculatedSpacing = (primarySpread * LAYOUT_CONSTANTS.AGGREGATOR_SPACING_FRACTION) / (aggregatorNodes.length - 1);
+        aggregatorSpacing = Math.max(calculatedSpacing, LAYOUT_CONSTANTS.MIN_AGGREGATOR_SPACING);
+      }
+
+      const centerOffset = (counters.aggregator - (aggregatorNodes.length - 1) / 2) * aggregatorSpacing;
+
+      return {
+        x: centerX + radiusX - LAYOUT_CONSTANTS.AGGREGATOR_X_OFFSET,
+        y: centerY + centerOffset
+      };
+    } else if (category === 'unified') {
+      const unifiedNodes = positions.unifiedNodes || [];
+      const centerOffset = (counters.unified - (unifiedNodes.length - 1) / 2) * LAYOUT_CONSTANTS.UNIFIED_SPACING;
+
+      return {
+        x: centerX + radiusX - LAYOUT_CONSTANTS.UNIFIED_X_OFFSET,
+        y: centerY + centerOffset
+      };
+    }
+
+    return { x: 0, y: 0 };
+  }
+
+  function calculateNodeSize(value, category) {
+    const safeValue = value || 1;
+
+    switch (category) {
+      case 'primary':
+        return Math.max(
+          NODE_SIZE_CONSTANTS.PRIMARY_MIN_SIZE,
+          Math.min(
+            NODE_SIZE_CONSTANTS.PRIMARY_MAX_SIZE,
+            Math.sqrt(safeValue / NODE_SIZE_CONSTANTS.PRIMARY_SCALE_DIVISOR) * NODE_SIZE_CONSTANTS.PRIMARY_SCALE_MULTIPLIER + NODE_SIZE_CONSTANTS.PRIMARY_BASE_SIZE
+          )
+        );
+      case 'unified':
+        return Math.max(
+          NODE_SIZE_CONSTANTS.UNIFIED_MIN_SIZE,
+          Math.min(
+            NODE_SIZE_CONSTANTS.UNIFIED_MAX_SIZE,
+            safeValue / NODE_SIZE_CONSTANTS.UNIFIED_SCALE_DIVISOR * NODE_SIZE_CONSTANTS.UNIFIED_SCALE_MULTIPLIER + NODE_SIZE_CONSTANTS.UNIFIED_BASE_SIZE
+          )
+        );
+      case 'aggregator':
+      default:
+        return Math.max(
+          NODE_SIZE_CONSTANTS.AGGREGATOR_MIN_SIZE,
+          Math.min(
+            NODE_SIZE_CONSTANTS.AGGREGATOR_MAX_SIZE,
+            safeValue / NODE_SIZE_CONSTANTS.AGGREGATOR_SCALE_DIVISOR * NODE_SIZE_CONSTANTS.AGGREGATOR_SCALE_MULTIPLIER + NODE_SIZE_CONSTANTS.AGGREGATOR_BASE_SIZE
+          )
+        );
+    }
+  }
+
+  function createNodeFromData(nodeData, counters, layout, positions) {
+    const position = calculateNodePosition(nodeData, nodeData.category, counters, layout, positions);
+
+    let nodeColor;
+    if (nodeData.category === 'primary') {
+      nodeColor = COLORS.PRIMARY_NODE;
+    } else if (nodeData.category === 'aggregator' || nodeData.category === 'unified') {
+      const sourceKey = nodeData.node_id.replace('infores:', '');
+      nodeColor = getSourceColor(sourceKey);
+    }
+
+    return {
+      id: nodeData.node_id,
+      name: nodeData.node_name || nodeData.node_id,
+      nodeCategory: nodeData.category,
+      value: nodeData.value || 0,
+      total_all_sources: nodeData.total_all_sources,
+      x: position.x,
+      y: position.y,
+      symbol: 'circle',
+      symbolSize: calculateNodeSize(nodeData.value, nodeData.category),
+      itemStyle: nodeColor ? { color: nodeColor } : undefined,
+      label: {
+        show: true,
+        position: nodeData.category === 'primary' ? 'left' : 'inside',
+        fontSize: nodeData.category === 'primary' ? 12 : 11,
+        color: nodeData.category === 'primary' ? COLORS.PRIMARY_LABEL : COLORS.NON_PRIMARY_LABEL,
+        fontWeight: nodeData.category === 'primary' ? 'normal' : 'bold',
+        distance: nodeData.category === 'primary' ? 8 : 0,
+        formatter: function(params) {
+          if (nodeData.category === 'primary' && params.name && params.name.length > 20) {
+            return params.name.substring(0, 17) + '...';
+          }
+          return params.name;
+        }
+      },
+      fixed: true
+    };
+  }
+
+  function formatTooltip(params, links) {
+    if (params.dataType === 'node' && params.data.nodeCategory === 'primary') {
+      // Primary node tooltip with connections breakdown
+      const sourceId = params.data.id;
+      const connections = links.filter(link => link.source === sourceId);
+
+      let tooltipContent = `<strong>${params.data.name}</strong><br/>`;
+      tooltipContent += `${params.data.value.toLocaleString()} total connections`;
+
+      if (connections.length > 1) {
+        tooltipContent += `<br/><br/>`;
+        connections.forEach(conn => {
+          const targetName = conn.target.replace('infores:', '');
+          tooltipContent += `${targetName}: ${conn.value.toLocaleString()}<br/>`;
+        });
+      }
+
+      return tooltipContent;
+    } else if (params.dataType === 'node') {
+      // Aggregator and unified node tooltips with dual counts
+      if (params.data.total_all_sources && params.data.total_all_sources !== params.data.value) {
+        return `<strong>${params.data.id.replace('infores:', '')}</strong><br/>${params.data.value.toLocaleString()} from selected sources<br/>(${params.data.total_all_sources.toLocaleString()} from all sources)`;
+      } else {
+        return `<strong>${params.data.id.replace('infores:', '')}</strong><br/>${params.data.value.toLocaleString()} total connections`;
+      }
+    } else if (params.dataType === 'edge') {
+      // Edge tooltip
+      return `${params.data.source.replace('infores:', '')} → ${params.data.target.replace('infores:', '')}<br/>Connections: ${params.data.value.toLocaleString()}`;
+    }
+
+    return '';
+  }
 </script>
 
 <ECharts config={networkOption} data={networkData} height={dynamicHeight} width="100%" />
