@@ -5,6 +5,8 @@ from matrix_inject.inject import _extract_elements_in_list
 from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.nodes import apply_transformers
 
+# NOTE: This class was partially generated using AI assistance.
+
 
 class ModelWithPreprocessing:
     """Lightweight wrapper that applies preprocessing before scoring."""
@@ -28,3 +30,13 @@ class ModelWithPreprocessing:
 
     def __getattr__(self, item):
         return getattr(self._base_model, item)
+
+    def __getstate__(self):
+        """Custom serialization for pickle compatibility."""
+        return {"base_model": self._base_model, "transformers": self._transformers, "features": self._features}
+
+    def __setstate__(self, state):
+        """Custom deserialization for pickle compatibility."""
+        self._base_model = state["base_model"]
+        self._transformers = state["transformers"]
+        self._features = state["features"]

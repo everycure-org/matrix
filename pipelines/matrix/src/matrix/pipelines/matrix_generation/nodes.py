@@ -302,5 +302,4 @@ def package_model_with_preprocessing(
     features: list[str],
 ) -> ModelWrapper:
     """Bundle transformers, features, and model into a single callable object."""
-
     return ModelWithPreprocessing(model, transformers, features)
