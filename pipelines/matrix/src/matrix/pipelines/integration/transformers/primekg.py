@@ -15,7 +15,7 @@ SEPARATOR = r"\|"
 
 class PrimeKGTransformer(GraphTransformer):
     def transform_nodes(self, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
-        """Transform Robokop nodes to our target schema.
+        """Transform PrimeKG nodes to our target schema.
 
         Args:
             nodes_df: Nodes DataFrame.
@@ -32,7 +32,7 @@ class PrimeKGTransformer(GraphTransformer):
         return df
 
     def transform_edges(self, edges_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
-        """Transform Robokop edges to our target schema.
+        """Transform PrimeKG edges to our target schema.
 
         Args:
             edges_df: Edges DataFrame.
