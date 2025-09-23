@@ -12,7 +12,6 @@
   export let height = '900px';
   
   let networkOption = {};
-  let useForceLayout = true; // Toggle between 'none' and 'force' layout
   let dynamicHeight = height; // Dynamic height based on content
   let primaryNodeCount = 0; // Store primary node count for tooltip positioning
   
@@ -114,9 +113,6 @@
       
       // Center the arc around the left side (Math.PI = 180 degrees = left side)
       const arcCenter = Math.PI; // Left side of oval
-      const startAngle = arcCenter - (dynamicAngleRange / 2); // Start above center
-      const endAngle = arcCenter + (dynamicAngleRange / 2); // End below center
-      const angleRange = dynamicAngleRange;
       
       // Calculate primary Y and X positions using our current algorithm for matching aggregator spacing
       const primaryYPositions = [];
@@ -168,23 +164,8 @@
       
       // Note: Aggregator and unified positioning now calculated inline with the nodes
       
-      // Pre-calculate primary node sizes for dynamic spacing
-      const primarySizes = primaryNodes.map(d => {
-        const size = Math.max(8, Math.min(35, Math.sqrt((d.value || 1) / 100000) * 3 + 8));
-        return { node: d, size: size };
-      });
-      
-      // Calculate cumulative spacing based on node sizes
-      const totalSpacing = primarySizes.reduce((total, item, index) => {
-        if (index === 0) return item.size;
-        return total + item.size + Math.max(20, item.size * 0.3); // Minimum 20px gap, or 30% of node size
-      }, 0);
-      
-      // Add padding at the end to ensure last node has proper spacing
-      const totalSpacingWithPadding = totalSpacing + Math.max(20, primarySizes[primarySizes.length - 1]?.size * 0.3 || 20);
       
       let primaryCount = 0, aggregatorCount = 0, unifiedCount = 0;
-      let cumulativeSpacing = 0;
       
       const nodeMap = new Map();
       
@@ -374,13 +355,27 @@
           };
         });
 
-    // Update debug info with sample node data
+    // Update debug info with sample node data and coordinate bounds
     debugInfo.sampleNodeData = nodes.slice(0, 3).map(n => ({
       id: n.id,
       category: n.nodeCategory,
       value: n.value,
+      x: n.x,
+      y: n.y,
       total_all_sources: n.total_all_sources
     }));
+
+    // Calculate actual coordinate bounds for debugging
+    if (nodes.length > 0) {
+      const allX = nodes.map(n => n.x);
+      const allY = nodes.map(n => n.y);
+      debugInfo.actualBounds = {
+        minX: Math.min(...allX),
+        maxX: Math.max(...allX),
+        minY: Math.min(...allY),
+        maxY: Math.max(...allY)
+      };
+    }
     }
 
     networkOption = {
@@ -401,13 +396,13 @@
         show: false,
         type: 'value',
         min: 0,
-        max: 500  // centerX(300) + radiusX(150) + margin = ~450-500
+        max: 600  // centerX(300) + radiusX(150) + aggregator offset(200) + margin = ~550
       },
       yAxis: {
         show: false,
         type: 'value',
         min: 0,
-        max: parseInt(dynamicHeight) // Dynamic based on actual content bounds
+        max: parseInt(dynamicHeight) + 50 // Add padding to ensure all nodes visible
       },
       tooltip: {
         show: true,
@@ -461,17 +456,14 @@
       },
       series: [{
         type: 'graph',
-        layout: useForceLayout ? 'force' : 'none',
-        coordinateSystem: useForceLayout ? null : 'cartesian2d',
-        ...(useForceLayout ? {
-          force: {
-            repulsion: 50,
-            gravity: 0.1,
-            edgeLength: 100,
-            layoutAnimation: false,
-            friction: 0.9
-          }
-        } : {}),
+        layout: 'force',
+        force: {
+          repulsion: 50,
+          gravity: 0.1,
+          edgeLength: 100,
+          layoutAnimation: false,
+          friction: 0.9
+        },
         data: nodes,
         links: links,
         roam: false, // Disable zoom/pan
@@ -541,7 +533,9 @@
     <strong>Content Y Bounds:</strong> {debugInfo.contentBounds.minY}px to {debugInfo.contentBounds.maxY}px<br/>
     <strong>Dynamic Height:</strong> {debugInfo.dynamicHeight}px<br/>
     <strong>Height Calculation:</strong> {debugInfo.heightCalculation}<br/>
-    <strong>Sample Node Data:</strong> {JSON.stringify(debugInfo.sampleNodeData, null, 2)}
+    <strong>Sample Node Data:</strong> {JSON.stringify(debugInfo.sampleNodeData, null, 2)}<br/>
+    <strong>Actual Coordinate Bounds:</strong> {JSON.stringify(debugInfo.actualBounds, null, 2)}<br/>
+    <strong>Axis Bounds:</strong> X: 0-600, Y: 0-{parseInt(dynamicHeight) + 50}
   </div>
 </div>
 {/if}
