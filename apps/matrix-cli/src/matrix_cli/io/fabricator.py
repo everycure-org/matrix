@@ -104,16 +104,15 @@ def build_yaml_from_kg_schema_snapshot(
     # Build regex: ^(id1|id2|...|idN)$ with escaping special chars
     if selected_edge_ids:
         escaped = [re.escape(x) for x in selected_edge_ids]
-        pattern = f"^({'|'.join(escaped)})$"
+        pattern = f"{'|'.join(escaped)}"
     else:
         # No ids; pattern that matches nothing
         pattern = "^(?:)$"
 
     usable_nodes_columns = [c["name"] for c in snapshot.get("nodes", [])]
     nodes_df = read_sampled_df_tsv(nodes, select=usable_nodes_columns)
-    nodes_df = nodes_df.limit(limit)
     try:
-        nodes_df = nodes_df.filter(pl.col("id").cast(pl.Utf8).str.contains(pattern, literal=False))
+        nodes_df = nodes_df.filter(pl.col("id").str.contains(pattern)).limit(limit)
     except Exception:
         # If id not present, keep empty
         nodes_df = nodes_df.head(0)
@@ -255,19 +254,22 @@ def create_nodes_map(df: pl.DataFrame, rows: int) -> dict:
                 column_map["type"] = "generate_values"
                 column_map["sample_values"] = uniq
             else:
-                # try:
-                #     s_str = s.cast(pl.Utf8)
-                # except Exception:
-                #     s_str = s.cast(pl.Utf8, strict=False)
-                values = [
-                    int(v)
-                    if str(v).isdigit()
-                    else float(v)
-                    if str(v).replace(".", "", 1).replace("-", "", 1).isdigit()
-                    else str(v).replace(".", "_", 1)
-                    for v in s.to_list()
-                    if v is not None
-                ]
+                values = []
+
+                for v in s.to_list():
+                    if v is None:
+                        continue
+
+                    if str(v).isdigit():
+                        values.append(int(v))
+                        continue
+
+                    if str(v).replace(".", "", 1).replace("-", "", 1).isdigit():
+                        values.append(float(v))
+                        continue
+
+                    values.append(str(v).replace(".", "_", 1))
+
                 # unique sorted strings
                 uniq = sorted(set(values))
                 if not uniq:
@@ -314,19 +316,21 @@ def create_edges_map(df: pl.DataFrame, rows: int) -> dict:
                 column_map["type"] = "generate_values"
                 column_map["sample_values"] = uniq
             else:
-                # try:
-                #     s_str = s.cast(pl.Utf8)
-                # except Exception:
-                #     s_str = s.cast(pl.Utf8, strict=False)
-                values = [
-                    int(v)
-                    if str(v).isdigit()
-                    else float(v)
-                    if str(v).replace(".", "", 1).replace("-", "", 1).isdigit()
-                    else str(v).replace(".", "_", 1)
-                    for v in s.to_list()
-                    if v is not None
-                ]
+                values = []
+                for v in s.to_list():
+                    if v is None:
+                        continue
+
+                    if str(v).isdigit():
+                        values.append(int(v))
+                        continue
+
+                    if str(v).replace(".", "", 1).replace("-", "", 1).isdigit():
+                        values.append(float(v))
+                        continue
+
+                    values.append(str(v).replace(".", "_", 1))
+
                 uniq = sorted(set(values))
                 if not uniq:
                     uniq = [""]
