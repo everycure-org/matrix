@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import os
 import re
@@ -239,28 +240,19 @@ class GoogleSheetsDataset(CSVDataset):
     """Dataset to load and save data from Google sheets."""
 
     def __init__(
-        self,
-        spreadsheet_url: str,
-        worksheet_gid: str,
-        service_account_file_path: str,
+        self, spreadsheet_url: str, worksheet_gid: str, service_account_key_environment_variable: str, **kwargs
     ) -> None:
         """
         Args:
             spreadsheet_url: URL of a spreadsheet as it appears in a browser.
             worksheet_gid: The id of a worksheet. it can be seen in the url as the value of the parameter ‘gid’
-            service_account_file_path: Path to the service account file. The Google Sheet must be shared with this service account's email.
+            service_account_key_environment_variable: Environment variable containing the service account key. The Google Sheet must be shared with this service account's email.
         """
-        self._gc = gspread.service_account(filename=service_account_file_path)
-        spreadsheet = self._gc.open_by_url(spreadsheet_url)
+        service_account_key = json.loads(os.getenv(service_account_key_environment_variable))
+        gc = gspread.service_account_from_dict(service_account_key)
+        self._worksheet = self._get_worksheet(gc, spreadsheet_url, worksheet_gid)
 
-        try:
-            self._worksheet = self._gc.open_by_url(spreadsheet_url).get_worksheet_by_id(worksheet_gid)
-        except gspread.WorksheetNotFound as e:
-            raise gspread.WorksheetNotFound(
-                f"Could not find worksheet with gid {worksheet_gid} in spreadsheet {spreadsheet_url}.\nAvailable worksheets: {spreadsheet.worksheets()}"
-            )
-
-        super().__init__(filepath=None)
+        super().__init__(filepath=None, **kwargs)
 
     def load(self) -> pd.DataFrame:
         df = pd.DataFrame(self._worksheet.get_all_records())
@@ -268,6 +260,19 @@ class GoogleSheetsDataset(CSVDataset):
 
     def save(self, df: pd.DataFrame) -> None:
         self._worksheet.update([df.columns.values.tolist()] + df.values.tolist())
+
+    @staticmethod
+    def _get_worksheet(gc: gspread.Client, spreadsheet_url: str, worksheet_gid: str):
+        spreadsheet = gc.open_by_url(spreadsheet_url)
+
+        try:
+            worksheet = gc.open_by_url(spreadsheet_url).get_worksheet_by_id(worksheet_gid)
+        except gspread.WorksheetNotFound as e:
+            raise gspread.WorksheetNotFound(
+                f"Could not find worksheet with gid {worksheet_gid} in spreadsheet {spreadsheet_url}.\nAvailable worksheets: {spreadsheet.worksheets()}"
+            )
+
+        return worksheet
 
 
 class RemoteSparkJDBCDataset(SparkJDBCDataset):
