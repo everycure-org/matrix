@@ -4,6 +4,7 @@ import logging
 from typing import Any, Callable, Iterable, Union
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.types as T
@@ -11,6 +12,7 @@ from matrix_inject.inject import OBJECT_KW, inject_object, make_list_regexable, 
 from matrix_pandera.validator import Column, DataFrameSchema, check_output
 from pyspark.errors import AnalysisException
 from pyspark.sql import functions as f
+from pyspark.sql.types import ArrayType, FloatType
 from sklearn.base import BaseEstimator
 from sklearn.impute._base import _BaseImputer
 from sklearn.model_selection import BaseCrossValidator
@@ -149,6 +151,29 @@ def _filter_source_and_target_exist(df: ps.DataFrame, in_: ps.DataFrame) -> ps.D
     )
 
 
+def reshuffle_pairs(pairs_df: ps.DataFrame) -> ps.DataFrame:
+    """Experimental function for GT reshuffling experiment. Reshuffle pairs dataframe for assessment of the model performance."""
+    target_collect = pairs_df.select("target_embedding").collect()
+    target_collect = [row["target_embedding"] for row in target_collect]
+    source_collect = pairs_df.select("source_embedding").collect()
+    source_collect = [row["source_embedding"] for row in source_collect]
+
+    np.random.seed(42)
+    np.random.shuffle(source_collect)
+    np.random.seed(22)
+    np.random.shuffle(target_collect)
+
+    def add_labels(indx, embedding_list):
+        return embedding_list[indx - 1]  # since row num begins from 1
+
+    labels_udf = f.udf(add_labels, ArrayType(FloatType()))
+    return (
+        pairs_df.withColumn("id", f.monotonically_increasing_id())
+        .withColumn("target_embedding", labels_udf(f.col("id"), f.lit(target_collect)))
+        .withColumn("source_embedding", labels_udf(f.col("id"), f.lit(source_collect)))
+    )
+
+
 @check_output(
     schema=DataFrameSchema(
         columns={
@@ -173,9 +198,10 @@ def attach_embeddings(
     Returns:
         DataFrame with source and target embeddings attached
     """
-    return pairs_df.transform(_add_embedding, from_=nodes, using="source").transform(
+    pairs_df = pairs_df.transform(_add_embedding, from_=nodes, using="source").transform(
         _add_embedding, from_=nodes, using="target"
     )
+    return reshuffle_pairs(pairs_df)
 
 
 def _add_embedding(df: ps.DataFrame, from_: ps.DataFrame, using: str) -> ps.DataFrame:
