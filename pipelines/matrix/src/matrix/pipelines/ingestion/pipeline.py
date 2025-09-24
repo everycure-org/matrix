@@ -1,7 +1,7 @@
 from kedro.pipeline import Pipeline, node, pipeline
 
 from matrix import settings
-from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
+from matrix.kedro4argo_node import ArgoNode
 from matrix.utils.validation import validate
 
 
@@ -90,7 +90,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                     outputs=f"ingestion.int.{source['name']}.violations",
                     name=f"validate_{source['name']}",
                     tags=[f"{source['name']}"],
-                    argo_config=ArgoResourceConfig(memory_request=128, memory_limit=128),
                 )
             )
     return pipeline(nodes_lst)
