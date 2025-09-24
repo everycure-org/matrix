@@ -183,8 +183,10 @@ def build_column_summary(df: pl.DataFrame, colname: str) -> dict:
         sample = s_non_null.sample(n=6, with_replacement=True, shuffle=True)
     except Exception:
         sample = s_non_null.head()
-    if datatype.is_float() or datatype.is_integer():
+    if datatype.is_integer():
         values = [int(v) for v in sample.to_list() if v is not None]
+    if datatype.is_float():
+        values = [float(v) for v in sample.to_list() if v is not None]
     else:
         values = [v for v in sample.to_list() if v is not None]
     # deduplicate while preserving order
