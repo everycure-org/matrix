@@ -5,7 +5,8 @@ versions:
 
 release_folder_name: ${oc.env:RELEASE_FOLDER_NAME, releases}
 release_dir: ${runtime_gcs_bucket}/kedro/data/${release_folder_name}/${versions.release}
-run_dir: ${release_dir}/runs/${run_name}
+feature_dir: ${release_dir}/temp_features/rtx-kg2
+run_dir: ${feature_dir}/runs/${run_name}
 
 runtime_gcs_bucket: gs://${oc.env:RUNTIME_GCP_BUCKET}
 runtime_gcp_project: ${oc.env:RUNTIME_GCP_PROJECT_ID}
@@ -33,8 +34,8 @@ paths:
   release:            ${release_dir}/datasets/release
 
   # Run-based
-  filtering:          ${run_dir}/datasets/filtering
-  embeddings:         ${run_dir}/datasets/embeddings
+  filtering:          ${feature_dir}/datasets/filtering
+  embeddings:         ${feature_dir}/datasets/embeddings
   modelling:          ${run_dir}/datasets/modelling
   evaluation:         ${run_dir}/datasets/evaluation
   matrix_generation:  ${run_dir}/datasets/matrix_generation
