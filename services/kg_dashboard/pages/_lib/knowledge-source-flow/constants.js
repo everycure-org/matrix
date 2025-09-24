@@ -1,22 +1,55 @@
 export const LAYOUT_CONSTANTS = {
   OVAL_RADIUS_X: 150,
-  MIN_RADIUS_Y: 100,
-  MAX_RADIUS_Y: 250,
-  RADIUS_Y_SCALE_FACTOR: 15,
+  MIN_RADIUS_Y: 300,
+  MAX_RADIUS_Y: 600,
+  RADIUS_Y_SCALE_FACTOR: 25,
   CENTER_X: 300,
   MIN_CENTER_Y: 200,
   MAX_CENTER_Y: 400,
   CENTER_Y_BASE: 150,
   CENTER_Y_SCALE_FACTOR: 8,
-  MAX_TOTAL_SPREAD: Math.PI * 0.4, // 72 degrees
-  MIN_SPACING: Math.PI * 0.08,
-  ARC_CENTER: Math.PI,
-  AGGREGATOR_X_OFFSET: 200,
-  UNIFIED_X_OFFSET: 150,
-  AGGREGATOR_SPACING_FRACTION: 0.5,
-  MIN_AGGREGATOR_SPACING: 12,
-  UNIFIED_SPACING: 80
+  MAX_TOTAL_SPREAD: Math.PI * 0.4, // 72 degrees - narrower left side arc
+  MIN_SPACING: Math.PI * 0.05, // Smaller minimum spacing to allow more spread
+  ARC_CENTER: Math.PI, // 180 degrees - pointing straight left for left-side arc
+  TOTAL_WIDTH: 450,
+  VERTICAL_SPACING_FRACTION: 0.5,
+  MIN_VERTICAL_SPACING: 12,
+  DEFAULT_VERTICAL_SPACING: 80
 };
+
+export const DEFAULT_LEVEL_CONFIG = [
+  {
+    name: 'primary',
+    layout: 'arc',
+    label: { position: 'left', fontSize: 12, fontWeight: 'normal', distance: 8 },
+    arc: {
+      spread: Math.PI * 0.6, // 108 degrees - configurable arc spread
+      center: Math.PI, // 180 degrees - arc center position
+      radiusScaling: {
+        method: 'logarithmic',  // use logarithmic scaling for more aggressive scaling
+        reference: 10,          // lower reference for more aggressive scaling
+        minScale: 0.5,          // minimum scale factor (50% of max radius)
+        maxScale: 1.0           // maximum scale factor (100% of max radius)
+      },
+      spreadScaling: {
+        method: 'logarithmic',  // spread scales logarithmically with node count
+        reference: 25,          // reference node count
+        minScale: 0.4,          // minimum spread scale (40% of configured spread)
+        maxScale: 1.0           // maximum spread scale (100% of configured spread)
+      }
+    }
+  },
+  {
+    name: 'aggregator',
+    layout: 'vertical',
+    label: { position: 'inside', fontSize: 11, fontWeight: 'bold', distance: 0 }
+  },
+  {
+    name: 'unified',
+    layout: 'vertical',
+    label: { position: 'inside', fontSize: 11, fontWeight: 'bold', distance: 0 }
+  }
+];
 
 export const NODE_SIZE_CONSTANTS = {
   PRIMARY_MIN_SIZE: 8,

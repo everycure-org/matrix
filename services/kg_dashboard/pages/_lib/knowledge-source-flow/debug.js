@@ -1,4 +1,5 @@
-import { LAYOUT_CONSTANTS } from './constants.js';
+import { LAYOUT_CONSTANTS, DEFAULT_LEVEL_CONFIG } from './constants.js';
+import { calculateAdaptiveRadius, calculateAdaptiveSpread } from './utils.js';
 
 export function createDebugInfo() {
   return {
@@ -29,18 +30,37 @@ export function createDebugInfo() {
   };
 }
 
-export function updateDebugInfo(debugInfo, processedData, layout, positions, nodes, dynamicHeight) {
-  const { aggregatorNodes, unifiedNodes } = processedData;
+export function updateDebugInfo(debugInfo, processedData, layout, positions, nodes, dynamicHeight, levelConfig = DEFAULT_LEVEL_CONFIG) {
+  // Use semantic access for readability
+  const { primaryNodes, aggregatorNodes, unifiedNodes } = processedData;
+  const firstLevel = levelConfig[0];
+
   const { nodeCount, centerX, centerY, radiusY, positioning, dynamicAngleRange } = layout;
   const { primarySpread, primaryXSpread, primaryYPositions, primaryXPositions, primaryAngles, minMaxPrimaryX } = positions;
+
+  // Calculate adaptive values if arc layout
+  let actualRadiusY = radiusY;
+  let actualArcDegrees = Math.round((dynamicAngleRange || 0) * 180 / Math.PI);
+  let actualPositioning = positioning || 'unknown';
+
+  if (firstLevel.layout === 'arc' && firstLevel.arc) {
+    try {
+      actualRadiusY = calculateAdaptiveRadius(primaryNodes.length, firstLevel.arc);
+      const adaptiveSpread = calculateAdaptiveSpread(primaryNodes.length, firstLevel.arc);
+      actualArcDegrees = Math.round(adaptiveSpread * 180 / Math.PI);
+      actualPositioning = `arc (adaptive)`;
+    } catch (e) {
+      console.warn('Error calculating adaptive values:', e);
+    }
+  }
 
   // Basic layout info
   debugInfo.nodeCount = nodeCount;
   debugInfo.centerX = centerX;
   debugInfo.centerY = centerY;
-  debugInfo.radiusY = radiusY;
-  debugInfo.positioning = positioning;
-  debugInfo.arcDegrees = Math.round(dynamicAngleRange * 180 / Math.PI);
+  debugInfo.radiusY = actualRadiusY;
+  debugInfo.positioning = actualPositioning;
+  debugInfo.arcDegrees = actualArcDegrees;
   debugInfo.primarySpread = Math.round(primarySpread);
   debugInfo.primaryXSpread = Math.round(primaryXSpread);
   debugInfo.aggregatorCount = aggregatorNodes.length;
@@ -55,14 +75,16 @@ export function updateDebugInfo(debugInfo, processedData, layout, positions, nod
     max: Math.round(minMaxPrimaryX.max)
   };
 
-  // Calculate aggregator spacing
+  // Calculate aggregator spacing - use vertical spacing constants
   if (aggregatorNodes.length > 1 && primarySpread > 0) {
     debugInfo.aggregatorSpacing = Math.round(
       Math.max(
-        (primarySpread * LAYOUT_CONSTANTS.AGGREGATOR_SPACING_FRACTION) / (aggregatorNodes.length - 1),
-        LAYOUT_CONSTANTS.MIN_AGGREGATOR_SPACING
+        (primarySpread * LAYOUT_CONSTANTS.VERTICAL_SPACING_FRACTION) / (aggregatorNodes.length - 1),
+        LAYOUT_CONSTANTS.MIN_VERTICAL_SPACING
       )
     );
+  } else {
+    debugInfo.aggregatorSpacing = NaN;
   }
 
   // Node position tracking (reset arrays first)

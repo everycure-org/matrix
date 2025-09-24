@@ -4,7 +4,7 @@
   // THIS FILE IS LARGELY CLAUDE GENERATED
   import { ECharts } from '@evidence-dev/core-components';
   import { showQueries } from '@evidence-dev/component-utilities/stores';
-  import { HEIGHT_CONSTANTS, COLORS } from '../_lib/knowledge-source-flow/constants.js';
+  import { HEIGHT_CONSTANTS, COLORS, DEFAULT_LEVEL_CONFIG } from '../_lib/knowledge-source-flow/constants.js';
   import { formatTooltip } from '../_lib/knowledge-source-flow/utils.js';
   import { processNetworkData } from '../_lib/knowledge-source-flow/data.js';
   import { calculateLayout, calculatePositions } from '../_lib/knowledge-source-flow/layout.js';
@@ -17,6 +17,7 @@
   export let title = 'Network Graph';
   export let topNPrimarySources = 25;
   export let height = '900px';
+  export let levelConfig = DEFAULT_LEVEL_CONFIG;
   
   let networkOption = {};
   let dynamicHeight = height;
@@ -24,18 +25,18 @@
 
 
   // === DATA PROCESSING ===
-  $: processedData = processNetworkData(networkData, topNPrimarySources);
+  $: processedData = processNetworkData(networkData, levelConfig, topNPrimarySources);
 
   // === LAYOUT CALCULATIONS ===
-  $: layout = calculateLayout(processedData);
+  $: layout = calculateLayout(processedData, levelConfig);
   // === POSITION CALCULATIONS ===
-  $: positions = calculatePositions(processedData, layout);
+  $: positions = calculatePositions(processedData, layout, levelConfig);
 
   // === NODE CREATION ===
-  $: nodes = createNodes(processedData, layout, positions);
+  $: nodes = createNodes(processedData, layout, positions, levelConfig);
 
   // === DEBUG INFO UPDATES ===
-  $: debugInfo = updateDebugInfo(debugInfo, processedData, layout, positions, nodes, dynamicHeight);
+  $: debugInfo = updateDebugInfo(debugInfo, processedData, layout, positions, nodes, dynamicHeight, levelConfig);
 
   // === DYNAMIC HEIGHT CALCULATION ===
   $: dynamicHeight = calculateDynamicHeight(processedData.primaryNodes, height);

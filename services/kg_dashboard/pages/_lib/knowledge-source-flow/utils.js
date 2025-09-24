@@ -1,4 +1,4 @@
-import { COLORS, LAYOUT_CONSTANTS, NODE_SIZE_CONSTANTS } from './constants.js';
+import { COLORS, LAYOUT_CONSTANTS, NODE_SIZE_CONSTANTS, DEFAULT_LEVEL_CONFIG } from './constants.js';
 
 export function addTransparencyToColor(color, alpha = 0.5) {
   if (!color) {
@@ -101,48 +101,152 @@ export function calculateNodeSize(value, category) {
   }
 }
 
-export function calculateNodePosition(nodeData, category, counters, layout, positions) {
-  const { centerX, centerY, radiusX, radiusY, nodeCount, arcCenter } = layout;
-  const { primarySpread } = positions;
+const LAYOUT_STRATEGIES = {
+  arc: (nodeIndex, nodeCount, layout, levelX, referenceSpread, levelConfig) => {
+    const { centerY, radiusX } = layout;
 
-  if (category === 'primary') {
+    // Calculate adaptive values based on node count
+    const adaptiveRadiusY = calculateAdaptiveRadius(nodeCount, levelConfig?.arc);
+    const adaptiveSpread = calculateAdaptiveSpread(nodeCount, levelConfig?.arc);
+    const arcCenter = levelConfig?.arc?.center || LAYOUT_CONSTANTS.ARC_CENTER;
+
     let spacing = 0;
     if (nodeCount > 1) {
-      spacing = Math.min(LAYOUT_CONSTANTS.MIN_SPACING, LAYOUT_CONSTANTS.MAX_TOTAL_SPREAD / (nodeCount - 1));
+      spacing = adaptiveSpread / (nodeCount - 1);
     }
-    const centerOffset = (counters.primary - (nodeCount - 1) / 2) * spacing;
+    const centerOffset = (nodeIndex - (nodeCount - 1) / 2) * spacing;
     const angle = arcCenter + centerOffset;
 
     return {
-      x: centerX + Math.cos(angle) * radiusX,
-      y: centerY + Math.sin(angle) * radiusY
+      x: levelX + Math.cos(angle) * radiusX,
+      y: centerY + Math.sin(angle) * adaptiveRadiusY
     };
-  } else if (category === 'aggregator') {
-    const aggregatorNodes = positions.aggregatorNodes || [];
-    let aggregatorSpacing = 0;
+  },
 
-    if (aggregatorNodes.length > 1 && primarySpread > 0) {
-      const calculatedSpacing = (primarySpread * LAYOUT_CONSTANTS.AGGREGATOR_SPACING_FRACTION) / (aggregatorNodes.length - 1);
-      aggregatorSpacing = Math.max(calculatedSpacing, LAYOUT_CONSTANTS.MIN_AGGREGATOR_SPACING);
+  vertical: (nodeIndex, nodeCount, layout, levelX, referenceSpread) => {
+    const { centerY } = layout;
+
+    let spacing = LAYOUT_CONSTANTS.DEFAULT_VERTICAL_SPACING;
+    if (referenceSpread && nodeCount > 1) {
+      const calculatedSpacing = (referenceSpread * LAYOUT_CONSTANTS.VERTICAL_SPACING_FRACTION) / (nodeCount - 1);
+      spacing = Math.max(calculatedSpacing, LAYOUT_CONSTANTS.MIN_VERTICAL_SPACING);
     }
 
-    const centerOffset = (counters.aggregator - (aggregatorNodes.length - 1) / 2) * aggregatorSpacing;
+    const centerOffset = (nodeIndex - (nodeCount - 1) / 2) * spacing;
 
     return {
-      x: centerX + radiusX - LAYOUT_CONSTANTS.AGGREGATOR_X_OFFSET,
+      x: levelX,
       y: centerY + centerOffset
     };
-  } else if (category === 'unified') {
-    const unifiedNodes = positions.unifiedNodes || [];
-    const centerOffset = (counters.unified - (unifiedNodes.length - 1) / 2) * LAYOUT_CONSTANTS.UNIFIED_SPACING;
+  },
+
+  horizontal: (nodeIndex, nodeCount, layout, levelX) => {
+    const { centerY } = layout;
+    const spacing = 50; // Default horizontal spacing
+    const centerOffset = (nodeIndex - (nodeCount - 1) / 2) * spacing;
 
     return {
-      x: centerX + radiusX - LAYOUT_CONSTANTS.UNIFIED_X_OFFSET,
-      y: centerY + centerOffset
+      x: levelX + centerOffset,
+      y: centerY
     };
   }
+};
 
-  return { x: 0, y: 0 };
+export function calculateNodePosition(nodeData, category, counters, layout, positions, levelConfig) {
+  const levelInfo = levelConfig.find(level => level.name === category);
+  if (!levelInfo) {
+    return { x: 0, y: 0 };
+  }
+
+  const levelXPositions = positions.levelXPositions || {};
+  const levelX = levelXPositions[category] || 0;
+
+  const levelNodes = positions[`${category}Nodes`] || [];
+  const nodeCount = levelNodes.length;
+  const nodeIndex = counters[category];
+
+  const strategy = LAYOUT_STRATEGIES[levelInfo.layout] || LAYOUT_STRATEGIES.vertical;
+
+  // Use primary spread as reference for vertical layouts
+  const referenceSpread = positions.primarySpread || 0;
+
+  return strategy(nodeIndex, nodeCount, layout, levelX, referenceSpread, levelInfo);
+}
+
+export function calculateScaleFactor(nodeCount, scaling) {
+  if (!scaling) return 1.0;
+
+  const { method, reference, minScale, maxScale } = scaling;
+  const ratio = nodeCount / reference;
+
+  let scaleFactor;
+  switch (method) {
+    case 'logarithmic':
+      // Logarithmic scaling: smooth transition, less aggressive than linear
+      scaleFactor = Math.log(nodeCount + 1) / Math.log(reference + 1);
+      break;
+    case 'linear':
+      // Linear scaling: direct proportional relationship
+      scaleFactor = ratio;
+      break;
+    case 'proportional':
+    default:
+      // Proportional with square root smoothing for middle values
+      scaleFactor = Math.sqrt(ratio);
+      break;
+  }
+
+  // Clamp to min/max bounds
+  return Math.max(minScale, Math.min(maxScale, scaleFactor));
+}
+
+export function calculateAdaptiveRadius(nodeCount, arcConfig, maxCanvasHeight = 400) {
+  if (!arcConfig?.radiusScaling) {
+    // Fallback to original calculation
+    return Math.max(
+      LAYOUT_CONSTANTS.MIN_RADIUS_Y,
+      Math.min(LAYOUT_CONSTANTS.MAX_RADIUS_Y, nodeCount * LAYOUT_CONSTANTS.RADIUS_Y_SCALE_FACTOR)
+    );
+  }
+
+  const scaleFactor = calculateScaleFactor(nodeCount, arcConfig.radiusScaling);
+
+  // Simple approach: just make radius much smaller for few nodes
+  if (nodeCount <= 3) {
+    return Math.max(80, LAYOUT_CONSTANTS.MIN_RADIUS_Y * scaleFactor);
+  }
+
+  const baseRadius = LAYOUT_CONSTANTS.MIN_RADIUS_Y;
+  const maxRadius = LAYOUT_CONSTANTS.MAX_RADIUS_Y;
+
+  return baseRadius + (maxRadius - baseRadius) * scaleFactor;
+}
+
+export function calculateAdaptiveSpread(nodeCount, arcConfig) {
+  if (!arcConfig?.spreadScaling) {
+    return arcConfig?.spread || LAYOUT_CONSTANTS.MAX_TOTAL_SPREAD;
+  }
+
+  const scaleFactor = calculateScaleFactor(nodeCount, arcConfig.spreadScaling);
+  const baseSpread = arcConfig.spread * arcConfig.spreadScaling.minScale;
+  const maxSpread = arcConfig.spread;
+
+  return baseSpread + (maxSpread - baseSpread) * scaleFactor;
+}
+
+export function calculateLevelXPositions(levelConfig, totalWidth = LAYOUT_CONSTANTS.TOTAL_WIDTH) {
+  const numLevels = levelConfig.length;
+  const positions = {};
+
+  if (numLevels === 1) {
+    positions[levelConfig[0].name] = totalWidth / 2;
+  } else {
+    levelConfig.forEach((level, index) => {
+      positions[level.name] = (index / (numLevels - 1)) * totalWidth;
+    });
+  }
+
+  return positions;
 }
 
 export function formatTooltip(params, links) {

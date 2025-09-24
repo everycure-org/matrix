@@ -11,3 +11,8 @@ export function calculateDynamicHeight(primaryNodes, fallbackHeight) {
   return Math.round(calculatedHeight) + 'px';
 }
 
+// Convenience overload for direct node count
+export function calculateHeightFromCount(nodeCount, fallbackHeight = '900px') {
+  return calculateDynamicHeight({ length: nodeCount }, fallbackHeight);
+}
+

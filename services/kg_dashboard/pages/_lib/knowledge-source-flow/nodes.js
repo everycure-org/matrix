@@ -1,17 +1,29 @@
 import { getSourceColor } from '../colors';
-import { COLORS } from './constants.js';
+import { COLORS, DEFAULT_LEVEL_CONFIG } from './constants.js';
 import { calculateNodePosition, calculateNodeSize } from './utils.js';
 
-export function createNodeFromData(nodeData, counters, layout, positions) {
-  const position = calculateNodePosition(nodeData, nodeData.category, counters, layout, positions);
+export function createNodeFromData(nodeData, counters, layout, positions, levelConfig = DEFAULT_LEVEL_CONFIG) {
+  const position = calculateNodePosition(nodeData, nodeData.category, counters, layout, positions, levelConfig);
+
+  // Find level configuration for this node's category
+  const levelInfo = levelConfig.find(level => level.name === nodeData.category);
+  const isFirstLevel = levelInfo === levelConfig[0];
 
   let nodeColor;
-  if (nodeData.category === 'primary') {
+  if (isFirstLevel) {
     nodeColor = COLORS.PRIMARY_NODE;
-  } else if (nodeData.category === 'aggregator' || nodeData.category === 'unified') {
+  } else {
     const sourceKey = nodeData.node_id.replace('infores:', '');
     nodeColor = getSourceColor(sourceKey);
   }
+
+  // Use level-specific label configuration or defaults
+  const labelConfig = levelInfo?.label || {
+    position: isFirstLevel ? 'left' : 'inside',
+    fontSize: isFirstLevel ? 12 : 11,
+    fontWeight: isFirstLevel ? 'normal' : 'bold',
+    distance: isFirstLevel ? 8 : 0
+  };
 
   return {
     id: nodeData.node_id,
@@ -26,13 +38,13 @@ export function createNodeFromData(nodeData, counters, layout, positions) {
     itemStyle: nodeColor ? { color: nodeColor } : undefined,
     label: {
       show: true,
-      position: nodeData.category === 'primary' ? 'left' : 'inside',
-      fontSize: nodeData.category === 'primary' ? 12 : 11,
-      color: nodeData.category === 'primary' ? COLORS.PRIMARY_LABEL : COLORS.NON_PRIMARY_LABEL,
-      fontWeight: nodeData.category === 'primary' ? 'normal' : 'bold',
-      distance: nodeData.category === 'primary' ? 8 : 0,
+      position: labelConfig.position,
+      fontSize: labelConfig.fontSize,
+      color: isFirstLevel ? COLORS.PRIMARY_LABEL : COLORS.NON_PRIMARY_LABEL,
+      fontWeight: labelConfig.fontWeight,
+      distance: labelConfig.distance,
       formatter: function(params) {
-        if (nodeData.category === 'primary' && params.name && params.name.length > 20) {
+        if (isFirstLevel && params.name && params.name.length > 20) {
           return params.name.substring(0, 17) + '...';
         }
         return params.name;
@@ -42,14 +54,20 @@ export function createNodeFromData(nodeData, counters, layout, positions) {
   };
 }
 
-export function createNodes(processedData, layout, positions) {
+export function createNodes(processedData, layout, positions, levelConfig = DEFAULT_LEVEL_CONFIG) {
   const { limitedNodes } = processedData;
-  const counters = { primary: 0, aggregator: 0, unified: 0 };
+
+  // Initialize counters for each level
+  const counters = {};
+  levelConfig.forEach(level => {
+    counters[level.name] = 0;
+  });
+
   const nodeMap = new Map();
 
   limitedNodes.forEach(nodeData => {
     if (nodeData.node_id && !nodeMap.has(nodeData.node_id)) {
-      const node = createNodeFromData(nodeData, counters, layout, positions);
+      const node = createNodeFromData(nodeData, counters, layout, positions, levelConfig);
       counters[nodeData.category]++;
       nodeMap.set(nodeData.node_id, node);
     }
