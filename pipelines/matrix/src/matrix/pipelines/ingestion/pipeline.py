@@ -1,7 +1,7 @@
 from kedro.pipeline import Pipeline, node, pipeline
 
 from matrix import settings
-from matrix.kedro4argo_node import ArgoResourceConfig
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from matrix.utils.validation import validate
 
 
@@ -81,7 +81,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             )
         if source.get("validate", False):
             nodes_lst.append(
-                node(
+                ArgoNode(
                     func=validate,
                     inputs={
                         "nodes": f"ingestion.raw.{source['name']}.nodes@polars",
