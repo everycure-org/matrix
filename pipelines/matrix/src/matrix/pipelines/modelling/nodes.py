@@ -159,9 +159,9 @@ def reshuffle_pairs(pairs_df: ps.DataFrame) -> ps.DataFrame:
     source_collect = pairs_df.select("source_embedding").collect()
     source_collect = [row["source_embedding"] for row in source_collect]
 
-    np.random.seed(42)
+    np.random.seed(41)
     np.random.shuffle(source_collect)
-    np.random.seed(22)
+    np.random.seed(21)
     np.random.shuffle(target_collect)
 
     def add_target_embedding(indx):
