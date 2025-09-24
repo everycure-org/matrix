@@ -10,7 +10,7 @@ from matrix.datasets.graph import KnowledgeGraph
 from matrix.pipelines.matrix_generation.reporting_plots import ReportingPlotGenerator
 from matrix.pipelines.matrix_generation.reporting_tables import ReportingTableGenerator
 from matrix.pipelines.modelling.model import ModelWrapper
-from matrix.pipelines.modelling.preprocessing_model import ModelWithPreprocessing
+from matrix.pipelines.modelling.preprocessing_model import ModelWithTransformers
 from matrix_inject.inject import inject_object
 from matrix_pandera.validator import Column, DataFrameSchema, check_output
 from pyspark.sql.types import DoubleType, StructField, StructType
@@ -302,4 +302,4 @@ def package_model_with_preprocessing(
     features: list[str],
 ) -> ModelWrapper:
     """Bundle transformers, features, and model into a single callable object."""
-    return ModelWithPreprocessing(model, transformers, features)
+    return ModelWithTransformers(model, transformers, features)

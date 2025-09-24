@@ -5,7 +5,7 @@ This guide explains how to configure and run multiple modelling pipelines within
 ## Overview
 
 - Models listed in `matrix.settings.DYNAMIC_PIPELINES_MAPPING()["modelling"]` train in parallel across folds and shards.
-- Matrix generation wraps each trained model with its preprocessing (`ModelWithPreprocessing`) before scoring.
+- Matrix generation wraps each trained model with its preprocessing (`ModelWithTransformers`) before scoring.
 - A configurable aggregator (`matrix_generation.model_ensemble.agg_func`) combines per-model predictions into one matrix per fold.
 - Downstream pipelines (transformations, evaluation, inference) now consume those aggregated predictions by default.
 
@@ -41,7 +41,7 @@ This guide explains how to configure and run multiple modelling pipelines within
 
 ### Matrix Generation
 
-- `package_model_with_preprocessing` creates a `ModelWithPreprocessing` for every `(fold, model)` pairing and persists it at `matrix_generation.fold_{fold}.{model_name}.wrapper`.
+- `package_model_with_preprocessing` creates a `ModelWithTransformers` for every `(fold, model)` pairing and persists it at `matrix_generation.fold_{fold}.{model_name}.wrapper`.
 - These wrappers encapsulate the estimator, fitted transformers, and feature list so inference reuses the exact preprocessing stack.
 - `matrix_generation.fold_{fold}.wrapper` aggregates the per-model wrappers using `matrix_generation.model_ensemble.agg_func` (default: `numpy.mean`).
 - `make_predictions_and_sort` executes once per fold with the aggregated wrapper and emits a single predictions table per fold at `matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions`.
@@ -86,7 +86,7 @@ matrix_generation/
 ## Troubleshooting
 
 - `OutputNotUniqueError` for `matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions` indicates that multiple nodes are mapped to the same dataset; ensure only the updated matrix generation node writes to it.
-- If predictions ignore preprocessing, verify the fold-specific transformers exist and that `ModelWithPreprocessing` points to the expected feature list.
+- If predictions ignore preprocessing, verify the fold-specific transformers exist and that `ModelWithTransformers` points to the expected feature list.
 - Unexpected ensemble behaviour usually traces back to `matrix_generation.model_ensemble.agg_func` or per-model `ensemble.agg_func`; review those settings when scores diverge.
 - Alignment issues between modelling and matrix generation typically mean the pipelines were run with different model rosters—rerun modelling before scoring.
 
