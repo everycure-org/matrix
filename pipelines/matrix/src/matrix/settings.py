@@ -84,9 +84,9 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 {
                     "model_name": "xg_ensemble",
                 },
-                {
-                    "model_name": "xg_synth",
-                },
+                # {
+                #     "model_name": "xg_synth",
+                # },
             ],
             "evaluation": [
                 {"evaluation_name": "simple_classification"},
