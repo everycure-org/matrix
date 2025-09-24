@@ -11,6 +11,7 @@ import pyspark.sql.types as T
 from matrix_inject.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
 from matrix_pandera.validator import Column, DataFrameSchema, check_output
 from pyspark.errors import AnalysisException
+from pyspark.sql import Window
 from pyspark.sql import functions as f
 from pyspark.sql.types import ArrayType, FloatType
 from sklearn.base import BaseEstimator
@@ -163,15 +164,21 @@ def reshuffle_pairs(pairs_df: ps.DataFrame) -> ps.DataFrame:
     np.random.seed(22)
     np.random.shuffle(target_collect)
 
-    def add_labels(indx, embedding_list):
-        return embedding_list[indx - 1]  # since row num begins from 1
+    def add_target_embedding(indx):
+        return target_collect[indx - 1]  # since row num begins from 1
 
-    labels_udf = f.udf(add_labels, ArrayType(FloatType()))
-    return (
-        pairs_df.withColumn("id", f.monotonically_increasing_id())
-        .withColumn("target_embedding", labels_udf(f.col("id"), f.lit(target_collect)))
-        .withColumn("source_embedding", labels_udf(f.col("id"), f.lit(source_collect)))
+    def add_source_embedding(indx):
+        return source_collect[indx - 1]  # since row num begins from 1
+
+    target_labels_udf = f.udf(add_target_embedding, ArrayType(FloatType()))
+    source_labels_udf = f.udf(add_source_embedding, ArrayType(FloatType()))
+    shuffled_pairs_df = (
+        pairs_df.withColumn("row_num", f.row_number().over(Window.orderBy(f.monotonically_increasing_id())))
+        .withColumn("target_embedding", target_labels_udf(f.col("row_num")))
+        .withColumn("source_embedding", source_labels_udf(f.col("row_num")))
+        .drop("row_num")
     )
+    return shuffled_pairs_df
 
 
 @check_output(
