@@ -10,7 +10,6 @@ fabricator.rtx_kg2:
         prefixes:
           - "RTX"
         delimiter: ":"
-        id_length: 8
       name:
         type: generate_unique_id
         prefixes:
@@ -576,73 +575,66 @@ fabricator.robokop:
           - GO
           - MONDO
           - NCBIGene
-          - NCBITaxon
-          - PUBCHEM.COMPOUND
-          - UniProtKB
         delimiter: ':'
       name:string:
         type: generate_values
         sample_values:
-          - (S)-N-(3-((S)-1-amino-1-oxo-3-phenylpropan-2-ylamino)-3-oxo-1-phenylprop-1-en-2-yl)-1-((S)-2-amino-3-(4-hydroxyphenyl)propanoyl)pyrrolidine-2-carboxamide
-          - 2-[4''-(2-Benzyl-5-fluoro-benzofuran-3-yl)-biphenyl-4-yloxy]-3-phenyl-propionic
-            acid
-          - AT5G59670
-          - AT5G62710
+          - BTF3P10
+          - CG12307
+          - CG14931
+          - CG14932
+          - CG4983
+          - CG6614
           - FAM78A
+          - FHIP2A
           - IFNG
           - Oprd1
-          - P-selectin glycoprotein ligand 1 isoform h2 (human)
           - PPP1R14B
           - PTPN1
-          - Pseudomonas
-          - Pseudomonas benzenivorans
-          - RPS10
+          - RSPH4A
           - Rivaroxaban
-          - cadherin-13 isoform h4 (human)
-          - coatomer subunit alpha isoform h2 (human)
+          - Vha100-5
           - hepatitis
+          - kek2
+          - nhr-137
           - nucleocytoplasmic transport
-          - reticulon-3 isoform h1 (human)
-          - zinc finger and BTB domain-containing protein 18 isoform h2 (human)
+          - spag4
       category:
         type: generate_values
         sample_values:
+          - biolink:Gene|biolink:GeneOrGeneProduct|biolink:GenomicEntity|biolink:ChemicalEntityOrGeneOrGeneProduct|biolink:PhysicalEssence|biolink:OntologyClass|biolink:BiologicalEntity|biolink:ThingWithTaxon|biolink:NamedThing|biolink:PhysicalEssenceOrOccurrent|biolink:MacromolecularMachineMixin
           - biolink:Gene|biolink:GeneOrGeneProduct|biolink:GenomicEntity|biolink:ChemicalEntityOrGeneOrGeneProduct|biolink:PhysicalEssence|biolink:OntologyClass|biolink:BiologicalEntity|biolink:ThingWithTaxon|biolink:NamedThing|biolink:PhysicalEssenceOrOccurrent|biolink:MacromolecularMachineMixin|biolink:Protein|biolink:GeneProductMixin|biolink:Polypeptide|biolink:ChemicalEntityOrProteinOrPolypeptide
           - biolink:NamedThing|biolink:BiologicalEntity|biolink:Disease|biolink:ThingWithTaxon|biolink:DiseaseOrPhenotypicFeature
           - biolink:NamedThing|biolink:BiologicalEntity|biolink:PhysicalEssenceOrOccurrent|biolink:BiologicalProcess|biolink:BiologicalProcessOrActivity|biolink:ThingWithTaxon|biolink:OntologyClass|biolink:Occurrent
-          - biolink:NamedThing|biolink:BiologicalEntity|biolink:Polypeptide|biolink:MacromolecularMachineMixin|biolink:ChemicalEntityOrProteinOrPolypeptide|biolink:ChemicalEntityOrGeneOrGeneProduct|biolink:GeneOrGeneProduct|biolink:ThingWithTaxon|biolink:GeneProductMixin|biolink:Protein
           - biolink:NamedThing|biolink:Gene|biolink:PhysicalEssence|biolink:BiologicalEntity|biolink:GenomicEntity|biolink:Polypeptide|biolink:MacromolecularMachineMixin|biolink:PhysicalEssenceOrOccurrent|biolink:OntologyClass|biolink:ChemicalEntityOrProteinOrPolypeptide|biolink:ChemicalEntityOrGeneOrGeneProduct|biolink:GeneOrGeneProduct|biolink:ThingWithTaxon|biolink:GeneProductMixin|biolink:Protein
           - biolink:NamedThing|biolink:Gene|biolink:PhysicalEssence|biolink:GenomicEntity|biolink:BiologicalEntity|biolink:Polypeptide|biolink:Protein|biolink:MacromolecularMachineMixin|biolink:PhysicalEssenceOrOccurrent|biolink:ChemicalEntityOrProteinOrPolypeptide|biolink:ChemicalEntityOrGeneOrGeneProduct|biolink:GeneOrGeneProduct|biolink:ThingWithTaxon|biolink:GeneProductMixin|biolink:OntologyClass
           - biolink:NamedThing|biolink:PhysicalEssence|biolink:MolecularMixture|biolink:ChemicalEntity|biolink:SmallMolecule|biolink:PhysicalEssenceOrOccurrent|biolink:ChemicalEntityOrProteinOrPolypeptide|biolink:ChemicalEntityOrGeneOrGeneProduct|biolink:MolecularEntity|biolink:ChemicalMixture|biolink:OntologyClass|biolink:Drug|biolink:ChemicalOrDrugOrTreatment
-          - biolink:OrganismTaxon|biolink:NamedThing
-          - biolink:SmallMolecule|biolink:MolecularEntity|biolink:ChemicalEntity|biolink:PhysicalEssence|biolink:ChemicalOrDrugOrTreatment|biolink:ChemicalEntityOrGeneOrGeneProduct|biolink:ChemicalEntityOrProteinOrPolypeptide|biolink:NamedThing|biolink:PhysicalEssenceOrOccurrent
       equivalent_identifiers:
         type: generate_values
         sample_values:
-          - ENSEMBL:ENSP00000228463|UniProtKB:Q14242-2|PR:Q14242-2|ENSEMBL:ENSP00000228463_6
-          - ENSEMBL:ENSP00000268613|UniProtKB:P55290-4|PR:P55290-4|ENSEMBL:ENSP00000268613_10
           - ENSEMBL:ENSP00000310117_3|ENSEMBL:ENSG00000173457|ENSEMBL:ENSP00000310117|UniProtKB:Q96C90|PR:Q96C90|NCBIGene:26472|OMIM:601140|UMLS:C1418632|HGNC:9057
-          - ENSEMBL:ENSP00000357048|PR:P53621-2|ENSEMBL:ENSP00000357048_3|UniProtKB:P53621-2
+          - ENSEMBL:FBgn0015400|UniProtKB:Q9VKG1|FB:FBgn0015400|NCBIGene:34582
+          - FB:FBgn0032368|UniProtKB:Q9VKG2|ENSEMBL:FBgn0032368|NCBIGene:34581
           - GO:0006913
           - HGNC:5438|ENSEMBL:ENSG00000111537|UMLS:C1334085|ENSEMBL:ENSP00000229135|UniProtKB:A0A7R8GUN6|OMIM:147570|PR:P01579|UMLS:C0021745|NCBIGene:3458|UMLS:C3493224|ENSEMBL:ENSP00000229135_3|UniProtKB:P01579
           - MEDDRA:10019790|MESH:D006505|DOID:2237|MEDDRA:10078239|NCIT:C3095|MEDDRA:10019759|UMLS:C0149519|MEDDRA:10019717|MEDDRA:10029715|ICD9:571_4|MEDDRA:10009103|UMLS:C0019158|ICD9:570|UMLS:C0001308|SNOMEDCT:128241005|HP:0012115|ICD10:K73.9|MEDDRA:10019789|SNOMEDCT:41889008|SNOMEDCT:197268000|MONDO:0002251|MEDDRA:10019802|medgen:5515|ICD9:571.41
-          - NCBIGene:836392|UniProtKB:A0A1P8BCD1|UniProtKB:Q8GX94
-          - NCBITaxon:286|MESH:D011549|UMLS:C0033808
-          - NCBITaxon:556533|MESH:C000637717|UMLS:C2651910
-          - PR:O95197-1|ENSEMBL:ENSP00000367050_5|UniProtKB:O95197-1|ENSEMBL:ENSP00000367050
-          - PR:Q99592-2|ENSEMBL:ENSP00000351539|ENSEMBL:ENSP00000351539_4|UniProtKB:Q99592-2
-          - PUBCHEM_COMPOUND:44274699|INCHIKEY:RAAXNZBAEGXGAF-UHFFFAOYSA-N
-          - PUBCHEM_COMPOUND:46831096|CHEMBL.COMPOUND:CHEMBL1084185|INCHIKEY:WPBFUFSZAPUNPD-LTYLLROCSA-N
+          - NCBIGene:183865|WormBase:WBGene00003727|UniProtKB:B3WFU1|UniProtKB:B3WFU2|UniProtKB:G5EEX1
+          - NCBIGene:345829|HGNC:38570|UMLS:C3146700
+          - NCBIGene:34583|ENSEMBL:FBgn0032369|FB:FBgn0032369|UniProtKB:Q9VKG0|UniProtKB:X2J5P7
+          - NCBIGene:34584|ENSEMBL:FBgn0032370|FB:FBgn0032370|UniProtKB:Q9VKF9
+          - NCBIGene:34585|ENSEMBL:FBgn0032371|FB:FBgn0032371|UniProtKB:Q9VKF8
+          - NCBIGene:34587|ENSEMBL:FBgn0032373|FB:FBgn0032373|UniProtKB:Q9VKF6
+          - NCBIGene:34588|ENSEMBL:FBgn0032374|FB:FBgn0032374|UniProtKB:M9PCR1|UniProtKB:Q9VKF5
+          - NCBIGene:34589|ENSEMBL:FBgn0032375|FB:FBgn0032375|UniProtKB:E1JHF9|UniProtKB:Q9VKF4
           - RXCUI:1114200|UNII:9NDF7JZ4M3|RXCUI:1232082|PUBCHEM_COMPOUND:9875401|UMLS:C3248000|UMLS:C5564384|DRUGBANK:DB06228|RXCUI:1114201|UMLS:C5564383|RXCUI:2588066|CHEBI:68579|RXCUI:1114202|RXCUI:1232088|UMLS:C4731645|UMLS:C5561608|RXCUI:2589629|UMLS:C3874968|CAS:1429742-50-6|RXCUI:1232085|RXCUI:1186305|UMLS:C3248002|UMLS:C3162460|UMLS:C3248001|RXCUI:2059014|RXCUI:1232086|UMLS:C3248006|RXCUI:2589628|RXCUI:1114195|UMLS:C3247999|RXCUI:1114197|RXCUI:2589624|RXCUI:1157969|UMLS:C5564381|RXCUI:1549683|RXCUI:1232083|UMLS:C3240061|RXCUI:2589626|GTOPDB:6388|RXCUI:2059017|RXCUI:2589630|RXCUI:1157968|RXCUI:2059015|RXCUI:1114199|UMLS:C3248004|UMLS:C4731644|INCHIKEY:KGFYHTZWPPHNLQ-AWEZNQCLSA-N|CAS:366789-02-8|UMLS:C3248005|UMLS:C3159309|UMLS:C3162457|RXCUI:1232081|UMLS:C5564386|RXCUI:2588062|RXCUI:1186304|RXCUI:2059016|UMLS:C3162458|UMLS:C3240060|UMLS:C3248003|UMLS:C3212386|UMLS:C5563756|DrugCentral:4182|RXCUI:1549682|RXCUI:1114196|UMLS:C3162459|UMLS:C3212385|UMLS:C4731646|RXCUI:2589625|CHEMBL.COMPOUND:CHEMBL198362|RXCUI:1232087|MESH:D000069552|UMLS:C3162455|UMLS:C5564382|UMLS:C1739768|RXCUI:1114198|UMLS:C5564385|UMLS:C3162456|RXCUI:1232084
           - UMLS:C1335281|HGNC:9642|ENSEMBL:ENSP00000437732|UniProtKB:B4DSN5|UniProtKB:A8K3M3|OMIM:176885|ENSEMBL:ENSG00000196396|UniProtKB:P18031|ENSEMBL:ENSP00000437732_1|ENSEMBL:ENSP00000360683|ENSEMBL:ENSP00000360683.3|UMLS:C1335056|PR:P18031|NCBIGene:5770
+          - UMLS:C1427608|UniProtKB:B3KTA9|UMLS:C3851814|ENSEMBL:ENSG00000111834|PR:Q5TD94|UniProtKB:Q5TD94|HGNC:21558|OMIM:612647|NCBIGene:345895
           - UMLS:C1825150|ENSEMBL:ENSP00000516028|ENSEMBL:ENSP00000361345_3|NCBIGene:286336|ENSEMBL:ENSP00000361345|ENSEMBL:ENSP00000516028.1|PR:Q5JUQ0|UniProtKB:Q8N2W3|UniProtKB:Q5JUQ0|HGNC:25465|ENSEMBL:ENSG00000126882
-          - UMLS:C4549929|ENSEMBL:ENSP00000494190_1|NCBIGene:6204|HGNC:10383|UniProtKB:P46783|PR:P46783|UMLS:C5445012|ENSEMBL:ENSP00000497917.1|UMLS:C1419699|ENSEMBL:ENSP00000494190|ENSEMBL:ENSP00000494440|ENSEMBL:ENSP00000494440.1|OMIM:603632|ENSEMBL:ENSP00000481646.1|ENSEMBL:ENSP00000481646|ENSEMBL:ENSG00000124614|ENSEMBL:ENSP00000497917
-          - UniProtKB:A0A5S9YFJ6|UniProtKB:Q9FN94|NCBIGene:836088|PR:Q9FN94
           - UniProtKB:P32300|PR:P32300|ENSEMBL:ENSMUSP00000050077_2|ENSEMBL:ENSMUSP00000050077|ENSEMBL:ENSMUSG00000050511|MGI:97438|UniProtKB:Q8BLP9|NCBIGene:18386|UniProtKB:A2AD37
+          - UniProtKB:Q5W0V3|NCBIGene:57700|UMLS:C1428835|HGNC:29320|ENSEMBL:ENSG00000151553|PR:Q5W0V3|OMIM:617312
       information_content:float:
         type: generate_values
         sample_values:
-          - 32
           - 70
           - 73
           - 90
@@ -651,18 +643,6 @@ fabricator.robokop:
       description:string:
         type: generate_values
         sample_values:
-          - A P-selectin glycoprotein ligand 1 (human) that is a translation product
-            of some mRNA whose exon structure and start site selection renders it
-            capable of giving rise to a protein with the amino acid sequence
-            represented by UniProtKB:Q14242-2_
-          - A cadherin-13 (human) that is a translation product of some mRNA whose
-            exon structure and start site selection renders it capable of giving
-            rise to a protein with the amino acid sequence represented by
-            UniProtKB:P55290-4_
-          - A coatomer subunit alpha (human) that is a translation product of some
-            mRNA whose exon structure and start site selection renders it capable of
-            giving rise to a protein with the amino acid sequence represented by
-            UniProtKB:P53621-2_
           - A delta-type opioid receptor that is encoded in the genome of mouse_
           - A monocarboxylic acid amide obtained by formal condensation of the
             carboxy group of 5-chlorothiophene-2-carboxylic acid with the amino
@@ -673,20 +653,12 @@ fabricator.robokop:
           - A protein FAM78A that is encoded in the genome of human_
           - A protein phosphatase 1 regulatory subunit 14B that is encoded in the
             genome of human_
-          - A protein that is a translation product of the At5g59670 gene in
-            Arabidopsis thaliana_
-          - A reticulon-3 (human) that is a translation product of some mRNA whose
-            exon structure and start site selection renders it capable of giving
-            rise to a protein with the amino acid sequence represented by
-            UniProtKB:O95197-1_
-          - A small ribosomal subunit protein eS10 that is encoded in the genome of
+          - A radial spoke head protein 4 homolog A that is encoded in the genome of
             human_
           - A tyrosine-protein phosphatase non-receptor type 1 that is encoded in
             the genome of human_
-          - A zinc finger and BTB domain-containing protein 18 (human) that is a
-            translation product of some mRNA whose exon structure and start site
-            selection renders it capable of giving rise to a protein with the amino
-            acid sequence represented by UniProtKB:Q99592-2_
+          - An FHF complex subunit HOOK interacting protein 2A that is encoded in
+            the genome of human_
           - An active inflammatory process affecting the liver for more than six
             months_ Causes include viral infections, autoimmune disorders, drugs,
             and metabolic disorders.
@@ -793,27 +765,31 @@ fabricator.robokop:
       symbol:string:
         type: generate_values
         sample_values:
+          - FHIP2A
           - IFNG
           - PPP1R14B
           - PTPN1
-          - RPS10
+          - RSPH4A
       location:string:
         type: generate_values
         sample_values:
+          - 10q25_3
           - 11q13_1
           - 12q15
           - 20q13_13
-          - 6p21_31
+          - 6q22_1
       taxon:string:
         type: generate_values
         sample_values:
           - NCBITaxon10090
-          - NCBITaxon3702
+          - NCBITaxon6239
+          - NCBITaxon7227
           - NCBITaxon:9606
       NCBITaxon:string:
         type: generate_values
         sample_values:
           - 10090
+          - 10116
           - 36237
     num_rows: 100
   edges:
@@ -1174,7 +1150,8 @@ fabricator.primekg:
           - spinal cord
       id:
         type: generate_unique_id
-        prefix: "PRIMEKG:"
+        prefixes:
+          - "PRIMEKG"
       description:
         type: generate_values
         sample_values:
@@ -2186,7 +2163,6 @@ fabricator.embiology:
           - HGVS:NC_000007.12:g.149054662A>G
       original_id:
         type: generate_unique_id
-        id_length: 8
       nodetype:
         type: generate_values
         sample_values:
@@ -2426,7 +2402,6 @@ fabricator.drugbank_gt:
           prefixes:
             - "DB"
           delimiter: ":"
-          id_length: 8
         "secondary_drug":
           type: copy_column
           source_column: rtx_nodes.name
@@ -2438,7 +2413,6 @@ fabricator.drugbank_gt:
           prefixes:
             - "DB"
           delimiter: ":"
-          id_length: 8
         "condition_id":
           type: generate_unique_id
           prefixes:
@@ -2477,7 +2451,6 @@ fabricator.drugbank_gt:
           prefixes:
             - "DB"
           delimiter: ":"
-          id_length: 8
         "secondary_drug_name":
           type: copy_column
           source_column: rtx_nodes.name
@@ -2489,7 +2462,6 @@ fabricator.drugbank_gt:
           prefixes:
             - "DB"
           delimiter: ":"
-          id_length: 8
         "condition_name":
           type: copy_column
           source_column: rtx_nodes.name
