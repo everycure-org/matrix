@@ -16,6 +16,13 @@ In the following we acknowledge some of the core resources that drive our succes
     - [Primary knowledge sources](primary_knowledge_sources.md) are the raw data sources that are part of the knowledge graphs used for pair prediction.
     - [Ground Truth lists](../pipeline/data/ground_truth_lists.md) serve as evaluation data for drug-disease pair prediction algorithms.
     - [Mondo Disease Ontology](#mondo) is used as the backbone for the Every Cure disease list.
+    - [Core Non-KG data resources](#secondarydatasources)
+        - [Monarch Initiative](#monarch)
+        - [MalaCards](#malacards)
+        - [PubMed](#pubmed)
+        - [PubChem](#pubchem)
+        - [DrugBank](#drugbank)
+        - [ClinicalTrials.gov](#clinicaltrials)
 - **Software sources**
     - [Kedro](#kedro)
     - [PySpark](#pyspark)
@@ -117,6 +124,45 @@ For details, see the [GitHub repo](https://github.com/mims-harvard/PrimeKG) and 
 ```
 Chandak, P., Huang, K. & Zitnik, M. Building a knowledge graph to enable precision medicine. Sci Data 10, 67 (2023). https://doi.org/10.1038/s41597-023-01960-3  
 ```
+
+### Core Non-KG data resources
+
+<a id="monarch"></a>
+
+### [Monarch Initiative](https://monarchinitiative.org/)
+
+- Provides additional information about diseases during drug-disease medical reviews.
+- API access (https://api-v3.monarchinitiative.org/openapi.json)
+
+<a id="malacards"></a>
+
+### [MalaCards](https://www.malacards.org)
+
+Provides additional information about diseases during drug-disease medical reviews.
+
+<a id="pubmed"></a>
+
+### [PubMed (NCBI)](https://pubmed.ncbi.nlm.nih.gov)
+
+Literature search to provide additional evidence for drug-disease pairs during medical reviews.
+
+<a id="pubchem"></a>
+
+### [PubChem (NCBI)](https://pubchem.ncbi.nlm.nih.gov/)
+
+Provides additional information about drugs during drug-disease medical reviews.
+
+<a id="drugbank"></a>
+
+### [DrugBank](https://go.drugbank.com/drugs)
+
+Provides additional information about drugs during drug-disease medical reviews.
+
+<a id="clinicaltrials"></a>
+
+### [ClinicalTrials.gov](https://clinicaltrials.gov/)
+
+Clinical trials search to provide additional evidence for drug-disease pairs during medical reviews.
 
 <a id="mondo"></a>
 
