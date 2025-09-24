@@ -129,6 +129,9 @@ Chandak, P., Huang, K. & Zitnik, M. Building a knowledge graph to enable precisi
 
 ### Core Non-KG data resources
 
+Core Non-KG data resources are resources that are used throughout the Matrix ecosystem,
+but do not directly feed into its data infrastructure.
+
 <a id="monarch"></a>
 
 ### [Monarch Initiative](https://monarchinitiative.org/)
@@ -213,6 +216,11 @@ A containerization platform that ensures MATRIX software components run in consi
 
 A graph database optimized for querying and exploring biomedical relationships, used to host and analyze the integrated MATRIX knowledge graph.  
 
+!!! info "Acknowledgment"
+
+    Neo4J provides Every Cure with a free license.
+
+
 <a id="mlflow"></a>
 
 ### [MLflow](https://mlflow.org/)  
@@ -275,7 +283,7 @@ A collaborative platform for version control and open-source development, hostin
 
 !!! info "Acknowledgment"
 
-   Every Cure benefits from GitHub for Nonprofits.
+    Every Cure benefits from GitHub for Nonprofits.
 
 
 <a id="slack"></a>
@@ -286,7 +294,7 @@ A team communication platform used by MATRIX collaborators for coordination, dis
 
 !!! info "Acknowledgment"
 
-   Every Cure benefits from Slack for Charities.
+    Every Cure benefits from Slack for Charities.
 
 <a id="anthropic"></a>
 
@@ -296,7 +304,7 @@ An AI research company providing advanced language models, integrated in MATRIX 
 
 !!! info "Acknowledgment"
 
-   Anthropic provides Every Cure with free credits.
+    Anthropic provides Every Cure with free credits.
 
 <a id="googlecloud"></a>
 
@@ -306,4 +314,4 @@ A cloud services platform supporting MATRIX infrastructure, including compute, s
 
 !!! info "Acknowledgment"
 
-   Google Cloud provides Every Cure with free credits.
+    Google Cloud provides Every Cure with free credits.
