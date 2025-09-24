@@ -98,7 +98,7 @@ jobs:
         working-directory: docs/src/releases/changelog_files
         env:
           RELEASE_DIR_GCS: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
-          FILENAME: ${{env.release}}_info.json
+          FILENAME: ${{env.release}}.md
         run: |
           set -eux
           BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
@@ -118,8 +118,8 @@ jobs:
         # copy-pasting the run action above but we could modify it to be docs specific
         working-directory: docs/src/releases
         env:
-          RELEASE_DIR_GCS: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/${globals:paths.release}/pks.yaml # can also create a different directory specifically for documentation'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
-          FILENAME: # pks.yaml
+          RELEASE_DIR_GCS: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/${globals:paths.release}/pks.yaml 
+          FILENAME: pks.md
         run: |
           set -eux
           BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
@@ -132,7 +132,7 @@ jobs:
           gcloud storage cp "$BLOB_PATH" "$FILENAME"
           
           git add "${FILENAME}" && \
-          git commit -m "added release info json" && \
+          git commit -m "added primary knowledge source md file" && \
           git push
       
       - name: Discover Latest Official Release on GitHub
