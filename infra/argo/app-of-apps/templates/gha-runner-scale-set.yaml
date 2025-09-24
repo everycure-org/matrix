@@ -4,7 +4,7 @@ metadata:
   name: gha-runner-scale-set
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-wave: "3"
 spec:
   destination:
     namespace: actions-runner-system
@@ -111,6 +111,10 @@ spec:
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true # Use server-side apply to handle large CRDs
+      - RespectIgnoreDifferences=true # Respect ignore differences
+      - ApplyOutOfSyncOnly=true # Only apply out of sync resources
     automated:
       prune: true
       allowEmpty: true
+      
