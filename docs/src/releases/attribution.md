@@ -7,15 +7,15 @@
 In the following we acknowledge some of the core resources that drive our success.
 
 - **Data sources**
-    - [First level knowledge providers](#knowledgeproviders) are the immediate data sources included in the Matrix project, typically for the purpose of pair prediction.
+    - [First level knowledge sources](#knowledgesources) are the immediate data sources included in the Matrix project, typically for the purpose of pair prediction.
         - [RTX-KG2](#rtxkg2)
         - [ROBOKOP](#robokop)
         - [SPOKE KG](#spoke)
-        - [Embiology](#embiology)
+        - [EmBiology](#embiology)
         - [PrimeKG](#primekg)
     - [Primary knowledge sources](primary_knowledge_sources.md) are the raw data sources that are part of the knowledge graphs used for pair prediction.
     - [Ground Truth lists](../pipeline/data/ground_truth_lists.md) serve as evaluation data for drug-disease pair prediction algorithms.
-    - [Mondo Disease Ontology](#mondo) is used as the backbone for the disease list.
+    - [Mondo Disease Ontology](#mondo) is used as the backbone for the Every Cure disease list.
 - **Software sources**
     - [Kedro](#kedro)
     - [PySpark](#pyspark)
@@ -29,14 +29,23 @@ In the following we acknowledge some of the core resources that drive our succes
     - [NCATS Node Normalizer](#ncats-nn)
     - [NCATS Node Resolver](#ncats-nr)
     - [ARAX Node Normalizer](#arax-nn)
+    - [LiteLLM](#litellm)
+    - [GitHub](#github)
+    - [Slack](#slack)
+    - [Anthropic](#anthropic)
+    - [Google Cloud](#googlecloud)
 
-## Data sources
 
-<a id="knowledgeproviders"></a>
+## Data/knowledge sources
 
-### First-level data providers
+<a id="knowledgesources"></a>
 
-First-level data providers are those that we leverage directly in the context of the Matrix pipeline.
+### First-level knowledge sources
+
+First-level data sources are those that we leverage directly in the context of the Matrix pipeline.
+You can find a brief attribution with citation in the following.
+To get more information about use cases of these specific source,
+and applicability to drug repurposing, [see here](knowledge_sources.md).
 
 <a id="rtxkg2"></a>
 
@@ -75,7 +84,6 @@ Bizon C, Cox S, Balhoff J, Kebede Y, Wang P, Morton K, Fecho K, Tropsha A. ROBOK
 
     Note that Every Cure utilize this data source in the MATRIX pipeline but do not distribute it, please reach out to data owners directly for access.
 
-
 MATRIX builds on SPOKE (Scalable Precision Medicine Oriented Knowledge Engine), a large heterogeneous biomedical knowledge graph developed at UCSF.
 SPOKE integrates a wide variety of biomedical databases into a single graph, capturing relationships among genes, proteins, diseases, drugs, and clinical concepts.
 Its graph-based representations have informed MATRIX’s downstream analyses for identifying novel therapeutic opportunities.
@@ -87,16 +95,16 @@ Morris JH, Soman K, Akbas RE, Zhou X, Smith B, Meng EC, Huang CC, Cerono G, Sche
 
 <a id="embiology"></a>
 
-### Embiology
+### EmBiology
 
 !!! warning "Private data source"
 
     Note that Every Cure utilize this data source in the MATRIX pipeline but do not distribute it, please reach out to data owners directly for access.
 
-MATRIX leverages Embiology, a proprietary dataset from Elsevier that encodes curated relationships among biomedical entities extracted from the scientific literature.
-Embiology combines large-scale natural language processing with expert curation to capture connections between diseases, drugs, targets, and mechanisms of action to 
+MATRIX leverages EmBiology, a proprietary dataset from Elsevier that encodes curated relationships among biomedical entities extracted from the scientific literature.
+EmBiology combines large-scale natural language processing with expert curation to capture connections between diseases, drugs, targets, and mechanisms of action to 
 better understand disease biology.
-[Further information on Embiology](https://www.elsevier.com/products/embiology) is available from Elsevier.
+[Further information on EmBiology](https://www.elsevier.com/products/embiology) is available from Elsevier.
 
 <a id="primekg"></a>
 
@@ -205,4 +213,49 @@ A Translator service for resolving biomedical entity names into standardized ide
 
 An alternative node normalization service developed by the ARAX team, leveraged in MATRIX for identifier harmonization and redundancy checks.  
 
----
+<a id="litellm"></a>
+
+### [LiteLLM](https://github.com/BerriAI/litellm)  
+
+A lightweight library that unifies APIs for large language models, enabling MATRIX workflows to flexibly integrate multiple LLM providers.  
+
+<a id="github"></a>
+
+### [GitHub](https://github.com/)
+
+A collaborative platform for version control and open-source development, hosting MATRIX code, issues, and community contributions.  
+
+!!! info "Acknowledgment"
+
+   Every Cure benefits from GitHub for Nonprofits.
+
+
+<a id="slack"></a>
+
+### [Slack](https://slack.com/)
+
+A team communication platform used by MATRIX collaborators for coordination, discussions, and rapid issue resolution.  
+
+!!! info "Acknowledgment"
+
+   Every Cure benefits from Slack for Charities.
+
+<a id="anthropic"></a>
+
+### [Anthropic](https://www.anthropic.com/)
+
+An AI research company providing advanced language models, integrated in MATRIX exploratory workflows for curation and analysis.  
+
+!!! info "Acknowledgment"
+
+   Anthropic provides Every Cure with free credits.
+
+<a id="googlecloud"></a>
+
+### [Google Cloud](https://cloud.google.com/)  
+
+A cloud services platform supporting MATRIX infrastructure, including compute, storage, and scalable deployment environments.  
+
+!!! info "Acknowledgment"
+
+   Google Cloud provides Every Cure with free credits.
