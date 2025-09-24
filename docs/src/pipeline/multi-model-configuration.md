@@ -8,6 +8,7 @@ This guide explains how to configure and run multiple modelling pipelines within
 - Matrix generation wraps each trained model with its preprocessing (`ModelWithTransformers`) before scoring.
 - A configurable aggregator (`matrix_generation.model_ensemble.agg_func`) combines per-model predictions into one matrix per fold.
 - Downstream pipelines (transformations, evaluation, inference) now consume those aggregated predictions by default.
+- Every fold produces a persisted ensemble (`modelling.fold_{fold}.{model_name}.models.model`), and the last fold (`fold_{n_cross_val_folds}`) is the full-data “production” model used downstream.
 
 ## Dynamic Pipeline Configuration
 
@@ -38,6 +39,7 @@ This guide explains how to configure and run multiple modelling pipelines within
 - For every `model_name`, the pipeline fits preprocessing transformers per fold, trains shard-specific estimators, and aggregates them with `ModelWrapper`.
 - Outputs stored per model include transformers, fitted models, fold predictions, combined CV predictions, and sanity-check metrics.
 - Catalogue entries live under `modelling.fold_{fold}.{model_name}.*` (see catalog.yml for full list).
+- The persisted models resolve to `data/releases/${versions.release}/runs/${run_name}/datasets/modelling/models/{model_name}/fold_{fold}/model.pickle`, so the production artefact sits in the same tree with `fold_{n_cross_val_folds}`.
 
 ### Matrix Generation
 
@@ -51,6 +53,7 @@ This guide explains how to configure and run multiple modelling pipelines within
 - Matrix transformations, evaluation, stability, and inference pipelines read the aggregated predictions produced for each fold.
 - Reporting nodes reuse the same aggregated outputs for plots and tables; per-model wrappers remain available for bespoke analyses or ablations.
 - Inference reuses the full-data fold wrapper (`fold_{n_cross_val_folds}`) when serving predictions.
+- If you need a single deployed model, point consumers to the aggregated wrapper at `matrix_generation.fold_{n_cross_val_folds}.wrapper`, which already bundles preprocessing and the per-model ensembles.
 
 ## Data Layout
 
