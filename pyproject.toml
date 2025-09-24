@@ -30,7 +30,6 @@ matrix-gcp-datasets = { workspace = true }
 matrix-mlflow-utils = { workspace = true }
 matrix-fabricator = { workspace = true }
 matrix-io-utils = { workspace = true }
-matrix-cli = { workspace = true }
 matrix-inject = { workspace = true }
 matrix-cli = { workspace = true }
 matrix-pandera = { workspace = true }
