@@ -115,14 +115,14 @@ jobs:
           git push
 
       - name: Download & commit primary-knowledge-sources.md file
-        # copy-pasting the run action above but we could modify it to be docs specific
+      # TODO - update once kedro work is finished
         working-directory: docs/src/releases
         env:
-          RELEASE_DIR_GCS: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/${globals:paths.release}/primary-knowledge-sources.md # can also create a different directory specifically for documentation'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
+          RELEASE_DIR_GCS: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases
           FILENAME: primary-knowledge-sources.md
         run: |
           set -eux
-          BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
+          BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/datasets/release/${FILENAME}" 
           
           if git ls-files --error-unmatch "$FILENAME" &> /dev/null; then
             echo "File '$FILENAME' is already committed to the repository. Skipping download and commit."
