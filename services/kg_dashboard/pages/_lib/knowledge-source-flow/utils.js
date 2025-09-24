@@ -1,4 +1,4 @@
-import { COLORS, EDGE_CONSTANTS, LAYOUT_CONSTANTS, NODE_SIZE_CONSTANTS } from './constants.js';
+import { COLORS, LAYOUT_CONSTANTS, NODE_SIZE_CONSTANTS } from './constants.js';
 
 export function addTransparencyToColor(color, alpha = 0.5) {
   if (!color) {

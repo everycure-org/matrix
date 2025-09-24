@@ -4,8 +4,8 @@
   // THIS FILE IS LARGELY CLAUDE GENERATED
   import { ECharts } from '@evidence-dev/core-components';
   import { showQueries } from '@evidence-dev/component-utilities/stores';
-  import { HEIGHT_CONSTANTS, COLORS, EDGE_CONSTANTS } from '../_lib/knowledge-source-flow/constants.js';
-  import { addTransparencyToColor, formatTooltip } from '../_lib/knowledge-source-flow/utils.js';
+  import { HEIGHT_CONSTANTS, COLORS } from '../_lib/knowledge-source-flow/constants.js';
+  import { formatTooltip } from '../_lib/knowledge-source-flow/utils.js';
   import { processNetworkData } from '../_lib/knowledge-source-flow/data.js';
   import { calculateLayout, calculatePositions } from '../_lib/knowledge-source-flow/layout.js';
   import { createNodes } from '../_lib/knowledge-source-flow/nodes.js';
@@ -20,14 +20,11 @@
   
   let networkOption = {};
   let dynamicHeight = height;
-  let primaryNodeCount = 0;
   let debugInfo = createDebugInfo();
 
 
   // === DATA PROCESSING ===
   $: processedData = processNetworkData(networkData, topNPrimarySources);
-
-  $: primaryNodeCount = processedData.primaryNodes.length;
 
   // === LAYOUT CALCULATIONS ===
   $: layout = calculateLayout(processedData);

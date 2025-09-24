@@ -11,10 +11,3 @@ export function calculateDynamicHeight(primaryNodes, fallbackHeight) {
   return Math.round(calculatedHeight) + 'px';
 }
 
-export function getHeightCalculation(primaryNodes) {
-  if (!primaryNodes || primaryNodes.length === 0) {
-    return '';
-  }
-
-  return `${HEIGHT_CONSTANTS.BASE_HEIGHT} + (${primaryNodes.length}/${HEIGHT_CONSTANTS.MAX_SOURCES}) * ${HEIGHT_CONSTANTS.MAX_HEIGHT - HEIGHT_CONSTANTS.BASE_HEIGHT} = ${Math.round(HEIGHT_CONSTANTS.BASE_HEIGHT + (Math.min(primaryNodes.length, HEIGHT_CONSTANTS.MAX_SOURCES) / HEIGHT_CONSTANTS.MAX_SOURCES) * (HEIGHT_CONSTANTS.MAX_HEIGHT - HEIGHT_CONSTANTS.BASE_HEIGHT))}px`;
-}
