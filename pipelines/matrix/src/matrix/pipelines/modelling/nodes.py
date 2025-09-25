@@ -440,7 +440,7 @@ def tune_parameters(
 
     X_train = data.loc[mask, features]
     y_train = data.loc[mask, target_col_name]
-
+    logger.info(f"Starting hyperparameter tuning with tuner: {tuner}...")
     # Fit tuner
     tuner.fit(X_train.values, y_train.values)
 
