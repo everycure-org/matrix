@@ -154,16 +154,20 @@ def _filter_source_and_target_exist(df: ps.DataFrame, in_: ps.DataFrame) -> ps.D
 
 def reshuffle_pairs(pairs_df: ps.DataFrame) -> ps.DataFrame:
     """Experimental function for GT reshuffling experiment. Reshuffle pairs dataframe for assessment of the model performance."""
-    target_collect = pairs_df.select("target_embedding").collect()
+    target_df = pairs_df.select("target", "target_embedding").dropDuplicates()
+    source_df = pairs_df.select("source", "source_embedding").dropDuplicates()
+    target_collect = target_df.select("target_embedding").collect()
     target_collect = [row["target_embedding"] for row in target_collect]
-    source_collect = pairs_df.select("source_embedding").collect()
+    source_collect = source_df.select("source_embedding").collect()
     source_collect = [row["source_embedding"] for row in source_collect]
 
+    # shuffle
     np.random.seed(40)
     np.random.shuffle(source_collect)
     np.random.seed(20)
     np.random.shuffle(target_collect)
 
+    # update target and source dfs with embeddings
     def add_target_embedding(indx):
         return target_collect[indx - 1]  # since row num begins from 1
 
@@ -172,11 +176,26 @@ def reshuffle_pairs(pairs_df: ps.DataFrame) -> ps.DataFrame:
 
     target_labels_udf = f.udf(add_target_embedding, ArrayType(FloatType()))
     source_labels_udf = f.udf(add_source_embedding, ArrayType(FloatType()))
-    shuffled_pairs_df = (
-        pairs_df.withColumn("row_num", f.row_number().over(Window.orderBy(f.monotonically_increasing_id())))
+
+    target_df = (
+        target_df.withColumn("row_num", f.row_number().over(Window.orderBy(f.monotonically_increasing_id())))
         .withColumn("target_embedding", target_labels_udf(f.col("row_num")))
+        .drop("row_num")
+    )
+    source_df = (
+        source_df.withColumn("row_num", f.row_number().over(Window.orderBy(f.monotonically_increasing_id())))
         .withColumn("source_embedding", source_labels_udf(f.col("row_num")))
         .drop("row_num")
+    )
+
+    # create new pairs df
+    shuffled_pairs_df = (
+        pairs_df.drop(
+            "source_embedding",
+            "target_embedding",
+        )
+        .join(target_df, on="target", how="left")
+        .join(source_df, on="source", how="left")
     )
     return shuffled_pairs_df
 
