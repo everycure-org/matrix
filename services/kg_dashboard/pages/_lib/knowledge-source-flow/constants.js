@@ -23,8 +23,8 @@ export const DEFAULT_LEVEL_CONFIG = [
     layout: 'arc',
     label: { position: 'left', fontSize: 12, fontWeight: 'normal', distance: 8 },
     arc: {
-      spread: Math.PI * 0.6, // 108 degrees - configurable arc spread
-      center: Math.PI, // 180 degrees - arc center position
+      spread: Math.PI * 0.6,    // 108 degrees - configurable arc spread
+      center: Math.PI,          // 180 degrees - arc center position
       radiusScaling: {
         method: 'logarithmic',  // use logarithmic scaling for more aggressive scaling
         reference: 10,          // lower reference for more aggressive scaling
