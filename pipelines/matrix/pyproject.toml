@@ -79,6 +79,7 @@ dependencies = [
     "torch==2.7.1",
     "transformers",
     "typer", # used for convenience libraries, to be moved to a dev requirements eventually
+    "cupy-cuda12x", # GPU array backend for CUDA estimators
     "xgboost",
     "lightgbm @ https://storage.googleapis.com/data.dev.everycure.org/pypi/lightgbm-4.6.0-py3-none-linux_x86_64.whl ; sys_platform == 'linux'",
     "lightgbm ; sys_platform == 'darwin'",

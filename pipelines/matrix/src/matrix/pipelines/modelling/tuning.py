@@ -8,6 +8,8 @@ from skopt.plots import plot_convergence
 from skopt.space.space import Dimension
 from skopt.utils import use_named_args
 
+from .utils import to_estimator_device
+
 
 class NopTuner(BaseEstimator, MetaEstimatorMixin):
     """No-operation hyperparam tuner.
@@ -107,8 +109,10 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
 
             scores = []
             for train, test in self._splitter.split(X, y):
-                self.estimator.fit(X[train], y[train])
-                y_pred = self.estimator.predict(X[test])
+                X_train_split = to_estimator_device(X[train], self.estimator)
+                self.estimator.fit(X_train_split, y[train])
+                X_test_split = to_estimator_device(X[test], self.estimator)
+                y_pred = self.estimator.predict(X_test_split)
                 scores.append(self._scoring(y_pred, y[test]))
 
             return 1.0 - np.average(scores)
