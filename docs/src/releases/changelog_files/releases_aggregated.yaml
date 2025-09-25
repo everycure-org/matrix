@@ -1,3 +1,11 @@
+- Release Name: v0.10.4
+  Datasets: "\u2023 rtx_kg2: `v2.10.0_validated`<br/>\u2023 robokop: `30fd1bfc18cd5ccb`<br/>\u2023\
+    \ primekg: `2.1`"
+  BigQuery: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_10_4)'
+  KG dashboard: '[Link](https://data.dev.everycure.org/versions/v0.10.4/evidence/)'
+  MLFlow: '[Link](https://mlflow.platform.dev.everycure.org/#/experiments/18925/runs/f46f9ff460e244ffbad2e94066492305)'
+  Code: '[Link](https://github.com/everycure-org/matrix/tree/v0.10.4)'
+  NodeNorm Endpoint: '[nodenorm-renci-2.3.26](https://nodenormalization-sri.renci.org/1.5/get_normalized_nodes)'
 - Release Name: v0.10.0
   Datasets: "\u2023 rtx_kg2: `v2.10.0_validated`<br/>\u2023 robokop: `30fd1bfc18cd5ccb`"
   BigQuery: '[Link](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_10_0)'
