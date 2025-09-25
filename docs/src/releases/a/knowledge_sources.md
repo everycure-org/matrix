@@ -160,7 +160,7 @@ useful for repurposing hypothesis generation, target/biomarker discovery, and ev
 
 #### Funding / Supporting Programs
 
-* Proprietary product funded, developed and maintained by Elsevier
+* Proprietary product funded, developed and maintained by Elsevier (https://www.niso.org/niso-io/2023/04/elsevier-launches-embiology)
 
 #### Licensing & Accessibility
 
