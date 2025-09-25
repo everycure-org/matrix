@@ -11,6 +11,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.extract_pks_from_unified_edges,
                 inputs="integration.prm.unified_edges",
+                outputs="document_kg.int.pks_integrated_kg_list",
                 name="extract_pks_from_unified_edges",
                 tags=["document_kg"],
             ),
