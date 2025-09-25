@@ -3,6 +3,8 @@ from typing import Callable, List
 import numpy as np
 from sklearn.base import BaseEstimator
 
+from .utils import estimator_uses_cuda, to_estimator_device
+
 
 class ModelWrapper:
     """Class to represent models.
@@ -52,5 +54,16 @@ class ModelWrapper:
         Returns:
             Aggregated probabilities scores of the individual models.
         """
-        all_preds = np.array([estimator.predict_proba(X) for estimator in self._estimators])
-        return np.apply_along_axis(self._agg_func, 0, all_preds)
+        cached_inputs = {}
+        all_preds = []
+
+        for estimator in self._estimators:
+            key = "cuda" if estimator_uses_cuda(estimator) else "cpu"
+            if key not in cached_inputs:
+                cached_inputs[key] = to_estimator_device(X, estimator) if key == "cuda" else X
+
+            preds = estimator.predict_proba(cached_inputs[key])
+            all_preds.append(np.asarray(preds))
+
+        stacked_preds = np.stack(all_preds)
+        return np.apply_along_axis(self._agg_func, 0, stacked_preds)
