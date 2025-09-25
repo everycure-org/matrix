@@ -44,7 +44,7 @@ locals {
   management_node_pools = [
     {
       name               = "management-nodes"
-      machine_type       = "n2-standard-8" # 8 vCPUs, 32GB RAM
+      machine_type       = "n2-standard-16" # 8 vCPUs, 32GB RAM
       node_locations     = local.default_node_locations
       min_count          = 1 # Single instance, no HA
       max_count          = 1 # Single instance, no HA
