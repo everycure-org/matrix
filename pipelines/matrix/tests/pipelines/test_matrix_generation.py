@@ -10,7 +10,7 @@ from matrix.pipelines.matrix_generation.nodes import (
     generate_pairs,
     generate_reports,
     make_predictions_and_sort,
-    package_model_with_preprocessing,
+    package_model_with_transformers,
 )
 from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.transformers import FlatArrayTransformer
@@ -299,12 +299,12 @@ def test_make_predictions_and_sort(
     base_wrapper_1 = ModelWrapper([mock_model], np.mean)
     base_wrapper_2 = ModelWrapper([mock_model_2], np.mean)
 
-    model_wrapper_1 = package_model_with_preprocessing(
+    model_wrapper_1 = package_model_with_transformers(
         transformers,
         base_wrapper_1,
         ["source_+", "target_+"],
     )
-    model_wrapper_2 = package_model_with_preprocessing(
+    model_wrapper_2 = package_model_with_transformers(
         transformers,
         base_wrapper_2,
         ["source_+", "target_+"],

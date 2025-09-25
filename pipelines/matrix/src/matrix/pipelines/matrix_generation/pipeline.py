@@ -75,7 +75,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 [
                     *[
                         ArgoNode(
-                            func=nodes.package_model_with_preprocessing,
+                            func=nodes.package_model_with_transformers,
                             inputs={
                                 "transformers": f"modelling.fold_{fold}.{model_name}.model_input.transformers",
                                 "model": f"modelling.fold_{fold}.{model_name}.models.model",
