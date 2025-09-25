@@ -4,7 +4,7 @@
   // THIS FILE IS LARGELY CLAUDE GENERATED
   import { ECharts } from '@evidence-dev/core-components';
   import { showQueries } from '@evidence-dev/component-utilities/stores';
-  import { HEIGHT_CONSTANTS, COLORS, DEFAULT_LEVEL_CONFIG } from '../_lib/knowledge-source-flow/constants.js';
+  import { DEFAULT_LEVEL_CONFIG } from '../_lib/knowledge-source-flow/constants.js';
   import { formatTooltip } from '../_lib/knowledge-source-flow/utils.js';
   import { processNetworkData } from '../_lib/knowledge-source-flow/data.js';
   import { calculateLayout, calculatePositions } from '../_lib/knowledge-source-flow/layout.js';
@@ -13,6 +13,7 @@
   import { calculateDynamicHeight } from '../_lib/knowledge-source-flow/height.js';
   import { createLinks } from '../_lib/knowledge-source-flow/links.js';
   
+  // Component's parameters
   export let networkData = [];
   export let title = 'Network Graph';
   export let topNPrimarySources = 25;
@@ -24,28 +25,22 @@
   let debugInfo = createDebugInfo();
 
 
-  // === DATA PROCESSING ===
   $: processedData = processNetworkData(networkData, levelConfig, topNPrimarySources);
 
-  // === LAYOUT CALCULATIONS ===
   $: layout = calculateLayout(processedData, levelConfig);
-  // === POSITION CALCULATIONS ===
+  
   $: positions = calculatePositions(processedData, layout, levelConfig);
 
-  // === NODE CREATION ===
   $: nodes = createNodes(processedData, layout, positions, levelConfig);
 
-  // === DEBUG INFO UPDATES ===
-  $: debugInfo = updateDebugInfo(debugInfo, processedData, layout, positions, nodes, dynamicHeight, levelConfig);
-
-  // === DYNAMIC HEIGHT CALCULATION ===
   $: dynamicHeight = calculateDynamicHeight(processedData.primaryNodes, height);
 
-  // === LINKS CREATION ===
+  $: debugInfo = updateDebugInfo(debugInfo, processedData, layout, positions, nodes, dynamicHeight, levelConfig);
+
   $: links = createLinks(processedData, nodes);
 
 
-  // === ECHARTS CONFIGURATION ===
+  // FInal Echarts configuration
   $: networkOption = {
       legend: {
         show: false

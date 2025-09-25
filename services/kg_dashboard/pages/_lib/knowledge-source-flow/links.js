@@ -36,21 +36,7 @@ export function createLinks(processedData, nodes) {
         },
         label: {
           show: false,
-          position: 'middle',
-          formatter: function(params) {
-            return params.value.toLocaleString();
-          },
-          fontSize: 10,
-          color: '#333',
-          backgroundColor: 'rgba(255, 255, 255, 0.8)',
-          borderRadius: 3,
-          padding: [2, 4]
         },
-        emphasis: {
-          label: {
-            show: true
-          }
-        }
       };
     });
 }

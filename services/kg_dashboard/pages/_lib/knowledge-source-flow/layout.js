@@ -43,8 +43,8 @@ export function calculateLayout(processedData, levelConfig = DEFAULT_LEVEL_CONFI
 }
 
 export function calculatePositions(processedData, layout, levelConfig = DEFAULT_LEVEL_CONFIG) {
-  const { centerX, centerY, radiusX, radiusY, nodeCount, arcCenter } = layout;
-  const { primaryNodes, aggregatorNodes, unifiedNodes } = processedData;
+  const { centerY, radiusX, nodeCount } = layout;
+  const { primaryNodes } = processedData;
 
   // Calculate X positions for each level
   const levelXPositions = calculateLevelXPositions(levelConfig);

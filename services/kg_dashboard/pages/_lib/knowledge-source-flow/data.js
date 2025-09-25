@@ -1,6 +1,8 @@
 import { DEFAULT_LEVEL_CONFIG } from './constants.js';
 
-export function processNetworkData(networkData, levelConfig = DEFAULT_LEVEL_CONFIG, topNPrimarySources = 25) {
+export function processNetworkData(networkData, levelConfig = DEFAULT_LEVEL_CONFIG, topNPrimarySources) {
+  
+  // return empty array if no data is provided
   if (!networkData || !Array.isArray(networkData) || networkData.length === 0) {
     const emptyResult = {
       nodeData: [],
