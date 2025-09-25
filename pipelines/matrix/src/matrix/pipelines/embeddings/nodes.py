@@ -5,13 +5,12 @@ import pandas as pd
 import pyspark.sql as ps
 import seaborn as sns
 from graphdatascience import GraphDataScience
-from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
+from matrix_inject.inject import inject_object, unpack_params
+from matrix_pandera.validator import Column, DataFrameSchema, check_output
 from pyspark.ml.functions import array_to_vector, vector_to_array
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 from pyspark.sql.types import ArrayType, FloatType, StringType
-
-from matrix.inject import inject_object, unpack_params
 
 from .graph_algorithms import GDSGraphAlgorithm
 

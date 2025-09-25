@@ -15,7 +15,7 @@ As [mentioned earlier](./repo_structure.md#core-project-files), our codebase is 
 
 ### Virtual environment for python dependencies
 
-To execute the codebase, you need to set up a virtual environment for the python dependencies. This can be done by running the following command in the `pipelines/matrix` directory:
+To execute the codebase, you need to set up a virtual environment for the python dependencies. This can be done by running the following command in the root directory:
 
 ```bash
 make install
