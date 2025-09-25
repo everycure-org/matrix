@@ -41,3 +41,21 @@ fabricator.int.drug_list:
     header: true
     index: false
     sep: "\t"
+
+fabricator.int.document_kg.infores_catalog_raw:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.tmp}/fabricator/document_kg_infores_catalog_raw.csv
+  save_args:
+    index: false
+
+fabricator.int.document_kg.reusabledata_raw:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.tmp}/fabricator/document_kg_reusabledata_raw.csv
+  save_args:
+    index: false
+
+fabricator.int.document_kg.kgregistry_raw:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.tmp}/fabricator/document_kg_kgregistry_raw.csv
+  save_args:
+    index: false

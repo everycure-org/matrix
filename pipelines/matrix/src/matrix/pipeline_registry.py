@@ -89,6 +89,11 @@ def register_pipelines() -> dict[str, Pipeline]:
         + pipelines["sentinel_kg_release"]
     )
 
+    pipelines["doc_kg"] = (
+          pipelines["data_engineering"]
+        + pipelines["document_kg"]
+    )
+
     pipelines["kg_release_patch_and_matrix_run"] = (
         pipelines["data_engineering"]
         + pipelines["data_release"]

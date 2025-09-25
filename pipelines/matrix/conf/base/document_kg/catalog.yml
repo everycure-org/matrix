@@ -63,10 +63,6 @@ document_kg.raw.kgregistry:
 # Integration Pipeline Data Sources
 # -------------------------------------------------------------------------
 
-document_kg.raw.unified_edges@spark:
-  <<: [*_spark_parquet, *_layer_raw]
-  filepath: ${globals:paths.tmp}/integration/unified_edges
-
 # -------------------------------------------------------------------------
 # Matrix-Internal Data Sources
 # -------------------------------------------------------------------------

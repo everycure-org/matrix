@@ -1,0 +1,23 @@
+# Test environment integration catalog
+# Defines test data sources for integration pipeline
+
+_spark_parquet_ds: &_spark_parquet
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
+  file_format: parquet
+  load_args:
+    header: True
+
+_layer_prm: &_layer_prm
+  metadata:
+    kedro-viz:
+      layer: primary
+
+# Test unified edges dataset - points to test integration data
+integration.prm.unified_edges:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.integration}/prm/unified/edges
+
+# Test unified nodes dataset - points to test integration data
+integration.prm.unified_nodes:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.integration}/prm/unified/nodes
