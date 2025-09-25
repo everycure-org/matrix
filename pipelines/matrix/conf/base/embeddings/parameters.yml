@@ -50,7 +50,7 @@ embeddings.topological:
 # uncomment for node2vec
 embeddings.topological_estimator:
   _object: matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec 
-  concurrency: 64 # we run this on n2d-standard-64 machines.
+  concurrency: 63 # we run this on n2d-standard-64 machines.
   embedding_dim: 512
   random_seed: 42
   iterations: 10
