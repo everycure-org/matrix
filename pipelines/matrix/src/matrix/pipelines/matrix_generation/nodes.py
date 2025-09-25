@@ -296,7 +296,7 @@ def generate_reports(
     return reports_dict
 
 
-def package_model_with_preprocessing(
+def package_model_with_transformers(
     transformers: dict,
     model: ModelWrapper,
     features: list[str],
