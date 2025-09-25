@@ -14,6 +14,6 @@ def validate(nodes: pl.DataFrame, edges: pl.DataFrame, strict: bool = False) -> 
     if violations:
         logger.error("There were Matrix Validation violations")
         if strict:
-            raise Exception("There were Matrix Validation violations.  Please remedy before continuing.")
+            raise Exception("There were Matrix Validation violations. Please remedy before continuing.")
         return "\n".join(violations)
     return ""
