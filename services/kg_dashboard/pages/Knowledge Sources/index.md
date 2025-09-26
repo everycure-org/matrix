@@ -128,8 +128,8 @@ description="Choose between simplified view (groups small sources) or detailed v
 
 The network diagram below shows how knowledge flows from primary sources through aggregator knowledge graphs (RTX-KG2, ROBOKOP) to create our unified knowledge graph. **Node sizes reflect connections from your currently selected sources** - use the filters above to explore different subsets of the knowledge graph.
 
-```sql network_data
--- Get aggregator-level data for network visualization
+```sql network_nodes
+-- Get aggregator-level data for network visualization - NODES
 WITH base_data AS (
   SELECT
     primary_knowledge_source,
@@ -146,7 +146,7 @@ WITH base_data AS (
 
 -- Calculate totals for sizing and get display names
 primary_totals AS (
-  SELECT 
+  SELECT
     base_data.primary_knowledge_source,
     COALESCE(infores.catalog.name, base_data.primary_knowledge_source) as display_name,
     SUM(edge_count) as total_from_primary
@@ -189,9 +189,8 @@ unified_total_all AS (
   FROM bq.merged_kg_edges
 )
 
--- Network nodes and links with consistent column structure
+-- Primary source nodes
 SELECT
-  'node' as type,
   CASE
     WHEN '${inputs.view_mode}' = 'detailed' THEN primary_knowledge_source
     WHEN total_from_primary < ${smallSourceThreshold} THEN 'Other (Small Sources)'
@@ -205,51 +204,64 @@ SELECT
   'primary' as category,
   0 as x_position,
   total_from_primary as value,
-  NULL as total_all_sources,
-  NULL as source,
-  NULL as target
-FROM primary_totals 
+  NULL as total_all_sources
+FROM primary_totals
 
 UNION ALL
 
+-- Aggregator nodes
 SELECT
-  'node' as type,
   ut.clean_upstream_source as node_id,
   ut.clean_upstream_source as node_name,
   'aggregator' as category,
   1 as x_position,
   ut.total_from_upstream as value,
-  aut.total_all_sources as total_all_sources,
-  NULL as source,
-  NULL as target
+  aut.total_all_sources as total_all_sources
 FROM upstream_totals ut
 LEFT JOIN all_upstream_totals aut ON aut.clean_upstream_source = ut.clean_upstream_source
 
 UNION ALL
 
+-- Unified KG node
 SELECT
-  'node' as type,
   'Unified KG' as node_id,
   'Unified KG' as node_name,
   'unified' as category,
   2 as x_position,
   ut.total_edges as value,
-  uta.total_edges_all_sources as total_all_sources,
-  NULL as source,
-  NULL as target
+  uta.total_edges_all_sources as total_all_sources
 FROM unified_total ut
 CROSS JOIN unified_total_all uta
+```
 
-UNION ALL
+```sql network_links
+-- Get aggregator-level data for network visualization - LINKS
+WITH base_data AS (
+  SELECT
+    primary_knowledge_source,
+    TRIM(upstream_source) as clean_upstream_source,
+    SUM(count) as edge_count
+  FROM bq.merged_kg_edges
+  CROSS JOIN UNNEST(SPLIT(upstream_data_source, ',')) as t(upstream_source)
+  WHERE primary_knowledge_source IN ${inputs.selected_primary_sources.value}
+    AND TRIM(upstream_source) IN ${inputs.selected_upstream_sources.value}
+    AND TRIM(upstream_source) IS NOT NULL
+    AND TRIM(upstream_source) != ''
+  GROUP BY 1, 2
+),
 
+-- Calculate totals for sizing to determine grouping
+primary_totals AS (
+  SELECT
+    base_data.primary_knowledge_source,
+    SUM(edge_count) as total_from_primary
+  FROM base_data
+  GROUP BY base_data.primary_knowledge_source
+)
+
+-- Links from primary sources to aggregators
 SELECT
-  'link' as type,
-  NULL as node_id,
-  NULL as node_name,
-  NULL as category,
-  NULL as x_position,
   edge_count as value,
-  NULL as total_all_sources,
   CASE
     WHEN '${inputs.view_mode}' = 'detailed' THEN primary_knowledge_source
     WHEN (SELECT total_from_primary FROM primary_totals pt WHERE pt.primary_knowledge_source = bd.primary_knowledge_source) < ${smallSourceThreshold} THEN 'Other (Small Sources)'
@@ -260,23 +272,19 @@ FROM base_data bd
 
 UNION ALL
 
+-- Links from aggregators to unified KG
 SELECT
-  'link' as type,
-  NULL as node_id,
-  NULL as node_name,
-  NULL as category,
-  NULL as x_position,
   SUM(edge_count) as value,
-  NULL as total_all_sources,
   clean_upstream_source as source,
   'Unified KG' as target
 FROM base_data
 GROUP BY clean_upstream_source
 ```
 
-<KnowledgeSourceFlowGraph 
-  networkData={network_data} 
+<KnowledgeSourceFlowGraph
+  nodeData={network_nodes}
+  linkData={network_links}
   title="Knowledge Source Flow Network"
   topNPrimarySources={TOP_N_PRIMARY_SOURCES}
-  height="900px" 
+  height="900px"
 />

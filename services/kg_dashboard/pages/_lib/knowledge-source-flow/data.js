@@ -1,12 +1,12 @@
 import { DEFAULT_LEVEL_CONFIG } from './constants.js';
 
-export function processNetworkData(networkData, levelConfig = DEFAULT_LEVEL_CONFIG, topNPrimarySources) {
-  
-  // return empty array if no data is provided
-  if (!networkData || !Array.isArray(networkData) || networkData.length === 0) {
+export function processNetworkData(nodeData, linkData, levelConfig = DEFAULT_LEVEL_CONFIG, topNPrimarySources) {
+
+  // return empty result if no data is provided
+  if (!nodeData || !Array.isArray(nodeData) || nodeData.length === 0) {
     const emptyResult = {
       nodeData: [],
-      linkData: [],
+      linkData: linkData || [],
       limitedNodes: []
     };
 
@@ -17,9 +17,6 @@ export function processNetworkData(networkData, levelConfig = DEFAULT_LEVEL_CONF
 
     return emptyResult;
   }
-
-  const nodeData = networkData.filter(d => d.type === 'node');
-  const linkData = networkData.filter(d => d.type === 'link');
 
   // Create category order from levelConfig
   const categoryOrder = {};
@@ -36,7 +33,7 @@ export function processNetworkData(networkData, levelConfig = DEFAULT_LEVEL_CONF
 
   const result = {
     nodeData,
-    linkData,
+    linkData: linkData || [],
     limitedNodes: []
   };
 

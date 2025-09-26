@@ -14,7 +14,8 @@
   import { createLinks } from '../_lib/knowledge-source-flow/links.js';
   
   // Component's parameters
-  export let networkData = [];
+  export let nodeData = [];
+  export let linkData = [];
   export let title = 'Network Graph';
   export let topNPrimarySources = 25;
   export let height = '900px';
@@ -25,7 +26,7 @@
   let debugInfo = createDebugInfo();
 
 
-  $: processedData = processNetworkData(networkData, levelConfig, topNPrimarySources);
+  $: processedData = processNetworkData(nodeData, linkData, levelConfig, topNPrimarySources);
 
   $: layout = calculateLayout(processedData, levelConfig);
   
@@ -114,7 +115,7 @@
 
 </script>
 
-<ECharts config={networkOption} data={networkData} height={dynamicHeight} width="100%" />
+<ECharts config={networkOption} data={nodeData} height={dynamicHeight} width="100%" />
 
 <!-- Debug Information Display - Only visible when Evidence's "Show Queries" is enabled -->
 {#if $showQueries}
