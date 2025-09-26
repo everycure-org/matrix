@@ -5,7 +5,7 @@
 const { BigQuery } = require('@google-cloud/bigquery');
 
 async function generateReleaseTrendsSQL() {
-  const projectId = process.env.EVIDENCE_VAR__project_id || process.env.GOOGLE_CLOUD_PROJECT;
+  const projectId = process.env.EVIDENCE_VAR__project_id;
 
   // Use the current release version to filter trends up to this release
   // Alternative approach: Could fetch latest release from GitHub API if we want to show
@@ -13,7 +13,7 @@ async function generateReleaseTrendsSQL() {
   const currentReleaseVersion = process.env.EVIDENCE_VAR__release_version;
   
   if (!projectId) {
-    console.error('Error: EVIDENCE_VAR__project_id or GOOGLE_CLOUD_PROJECT environment variable not set');
+    console.error('Error: EVIDENCE_VAR__project_id environment variable not set');
     process.exit(1);
   }
 
