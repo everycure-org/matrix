@@ -45,6 +45,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
             "cross_validation": {
                 "n_cross_val_folds": 3,
             },
+            "num_shards": 3,
             "integration": [
                 {"name": "rtx_kg2", "integrate_in_kg": True, "is_private": False},
                 {"name": "spoke", "integrate_in_kg": True, "is_private": True},
@@ -78,10 +79,15 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 # TODO: enable orchard once permissions are clarified
                 {"name": "orchard", "integrate_in_kg": False, "has_nodes": False, "is_private": True},
             ],
-            "modelling": {
-                "model_name": "xg_ensemble",  # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth
-                "model_config": {"num_shards": 3},
-            },
+            # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth, lightGBM
+            "modelling": [
+                {
+                    "model_name": "xg_ensemble",
+                },
+                # {
+                #     "model_name": "xg_synth",
+                # },
+            ],
             "evaluation": [
                 {"evaluation_name": "simple_classification"},
                 {"evaluation_name": "disease_specific"},

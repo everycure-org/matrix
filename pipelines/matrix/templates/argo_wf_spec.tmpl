@@ -123,6 +123,7 @@ spec:
       parameters:
       - name: kedro_nodes
       - name: trimmed_kedro_nodes
+      - name: kedro_nodes_cache_key
       - name: num_gpus
       - name: memory_limit
       - name: memory_request
@@ -305,7 +306,7 @@ spec:
           app: kedro-argo
           workflow_name: {% raw %}"{{ workflow.parameters.run_name }}"
           {% endraw %}
-          kedro_nodes: {% raw %}"{{ inputs.parameters.trimmed_kedro_nodes }}"
+          kedro_nodes: {% raw %}"{{inputs.parameters.trimmed_kedro_nodes}}"
           {% endraw %}
           cost-center: "matrix-pipeline"
           environment: {% raw %}"{{ workflow.parameters.env }}"
@@ -440,7 +441,9 @@ spec:
           - name: kedro_nodes
             value: {{ task.nodes }}
           - name: trimmed_kedro_nodes
-            value: {{ task.nodes[:63].replace(',', '-').rstrip('_-.') }}
+            value: {{task.nodes[:63].replace(',', '-').rstrip('_-.')}}
+          - name: kedro_nodes_cache_key
+            value: {{ (task.nodes.replace('_','').replace('-','').replace('.','').replace(',',''))[:63] }}
           - name: num_gpus
             value: {{ task.resources.num_gpus }}
           - name: memory_request
