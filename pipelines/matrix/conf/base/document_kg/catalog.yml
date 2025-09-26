@@ -7,15 +7,6 @@ _spark_parquet_ds: &_spark_parquet
 _pandas_csv: &_pandas_csv
   type: pandas.CSVDataset
 
-_yaml_dataset: &_yaml_dataset
-  type: yaml.YAMLDataset
-
-_json_dataset: &_json_dataset
-  type: json.JSONDataset
-
-_text_dataset: &_text_dataset
-  type: text.TextDataset
-
 _sql_dataset: &_sql_dataset
   type: pandas.SQLTableDataset
   credentials: sqlite_credentials
@@ -44,19 +35,22 @@ _layer_prm: &_layer_prm
 # Information Resource Registry catalog (https://biolink.github.io/information-resource-registry/registry/)
 # Contains metadata about knowledge sources used in biolink-based KGs
 document_kg.raw.infores:
-  <<: [*_yaml_dataset, *_layer_raw]
+  type: yaml.YAMLDataset
+  <<: *_layer_raw
   filepath: https://raw.githubusercontent.com/biolink/information-resource-registry/refs/heads/main/infores_catalog.yaml
 
 # Reusable Data catalog (https://reusabledata.org/)
 # Contains metadata about various datasets, especially licensing information
 document_kg.raw.reusabledata:
-  <<: [*_json_dataset, *_layer_raw]
+  type: json.JSONDataset
+  <<: *_layer_raw
   filepath: https://raw.githubusercontent.com/reusabledata/reusabledata/refs/heads/master/data.json
 
 # KG registry from KG-Hub
 # Contains metadata about knowledge graphs and KG data sources
 document_kg.raw.kgregistry:
-  <<: [*_yaml_dataset, *_layer_raw]
+  type: yaml.YAMLDataset
+  <<: *_layer_raw
   filepath: https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-registry/refs/heads/main/registry/kgs.yml
 
 # -------------------------------------------------------------------------
@@ -68,7 +62,7 @@ document_kg.raw.kgregistry:
 # -------------------------------------------------------------------------
 
 document_kg.raw.matrix_curated_pks@pandas:
-  <<: [*_layer_raw, *_pandas_csv]
+  <<: [*_pandas_csv, *_layer_raw]
   filepath: ${globals:paths.raw_public}/kg_metadata/matrix-pks-curated-metadata.tsv
   load_args:
     sep: "\t"
@@ -109,11 +103,13 @@ document_kg.int.pks_integrated_kg_list:
 # -------------------------------------------------------------------------
 
 document_kg.prm.pks_yaml:
-  <<: [*_yaml_dataset, *_layer_prm]
+  type: yaml.YAMLDataset
+  <<: *_layer_prm
   filepath: ${globals:paths.release}/kg/primary-knowledge-sources.yml
   save_args:
     default_flow_style: false
 
 document_kg.prm.pks_md:
-  <<: [*_text_dataset, *_layer_prm]
+  type: text.TextDataset
+  <<: *_layer_prm
   filepath: ${globals:paths.release}/primary-knowledge-sources.md
