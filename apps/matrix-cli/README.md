@@ -16,6 +16,16 @@ Note: Use this if you would like to revise the schema that would then be used in
 fabricator create-kg-schema-snapshot --nodes <kgx_nodes_file> --edges <kgx_edges_file> --output <output_file>
 ```
 
+If there are known columns in the nodes file that a user would like to exclude from the schema snapshot, a nodes-column-exclusions flag can be used.
+```shell
+fabricator create-kg-schema-snapshot --nodes <kgx_nodes_file> --edges <kgx_edges_file> --output <output_file> --nodes-columns-exclusions BAD_COL_1 --nodes-columns-exclusions BAD_COL_2
+```
+
+Similarly, if there are known columns in the edges file that a user would like to exclude from the schema snapshot, a edges-column-exclusions flag can be used.
+```shell
+fabricator create-kg-schema-snapshot --nodes <kgx_nodes_file> --edges <kgx_edges_file> --output <output_file> --edges-columns-exclusions BAD_COL_1 --edges-columns-exclusions BAD_COL_2
+```
+
 ### Build YAML from a Knowledge Graph schema snapshot
 This script builds a yaml from a KG schema and KGX nodes and edges files. 
 
