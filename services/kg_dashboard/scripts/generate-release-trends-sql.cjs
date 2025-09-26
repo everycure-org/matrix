@@ -38,9 +38,9 @@ async function generateReleaseTrendsSQL() {
       ORDER BY schema_name
     `;
 
-    const [rows] = await bigquery.query(query);
-    
-    if (rows.length === 0) {
+    const [releases] = await bigquery.query(query);
+
+    if (releases.length === 0) {
       console.error('No release datasets found');
       process.exit(1);
     }
@@ -69,7 +69,7 @@ async function generateReleaseTrendsSQL() {
     };
 
     // Filter out releases that are newer than the current release version
-    const filteredReleases = rows.filter(row => {
+    const filteredReleases = releases.filter(row => {
       if (!row.bq_version || !row.semantic_version) {
         return false;
       }
