@@ -7,7 +7,7 @@
   import { DEFAULT_LEVEL_CONFIG } from '../_lib/knowledge-source-flow/constants.js';
   import { formatTooltip } from '../_lib/knowledge-source-flow/utils.js';
   import { processNetworkData } from '../_lib/knowledge-source-flow/data.js';
-  import { calculateLayout, calculatePositions } from '../_lib/knowledge-source-flow/layout.js';
+  import { calculateLayout, calculatePositions } from '../_lib/knowledge-source-flow/layout-utils.js';
   import { createNodes } from '../_lib/knowledge-source-flow/nodes.js';
   import { createDebugInfo, updateDebugInfo } from '../_lib/knowledge-source-flow/debug.js';
   import { calculateDynamicHeight } from '../_lib/knowledge-source-flow/height.js';
