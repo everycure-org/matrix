@@ -24,9 +24,20 @@ export function processNetworkData(nodeData, linkData, levelConfig = DEFAULT_LEV
     categoryOrder[level.name] = index;
   });
 
+  // Validate all node categories exist in levelConfig
+  const invalidCategories = nodeData
+    .map(node => node.category)
+    .filter(category => categoryOrder[category] === undefined);
+
+  if (invalidCategories.length > 0) {
+    const uniqueInvalid = [...new Set(invalidCategories)];
+    const expectedCategories = Object.keys(categoryOrder);
+    throw new Error(`Unknown node categories: ${uniqueInvalid.join(', ')}. Expected one of: ${expectedCategories.join(', ')}`);
+  }
+
   const sortedNodes = nodeData.sort((a, b) => {
     if (a.category !== b.category) {
-      return (categoryOrder[a.category] ?? 999) - (categoryOrder[b.category] ?? 999);
+      return categoryOrder[a.category] - categoryOrder[b.category];
     }
     return (b.value || 0) - (a.value || 0);
   });
