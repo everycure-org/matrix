@@ -662,5 +662,4 @@ def create_pks_integrated_metadata(
         mapping_kgregistry_infores=mapping_kgregistry_infores,
     )
     matrix_subset_relevant_sources = _create_pks_subset_relevant_to_matrix(primary_knowledge_sources, relevant_sources)
-
     return matrix_subset_relevant_sources
