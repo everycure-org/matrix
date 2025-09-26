@@ -61,11 +61,8 @@ export function processNetworkData(nodeData, linkData, levelConfig = DEFAULT_LEV
     result.limitedNodes.push(...levelNodes);
   });
 
-  // Add backward-compatible semantic properties for readability
-  // This hybrid approach allows flexible level configuration while maintaining readable code
-  result.primaryNodes = result[`${levelConfig[0]?.name}Nodes`] || [];
-  result.aggregatorNodes = result[`${levelConfig[1]?.name}Nodes`] || [];
-  result.unifiedNodes = result[`${levelConfig[2]?.name}Nodes`] || [];
+  // Dynamic properties like result.primaryNodes, result.aggregatorNodes, etc. are created above
+  // based on the level configuration names, providing both flexibility and semantic access
 
   return result;
 }
