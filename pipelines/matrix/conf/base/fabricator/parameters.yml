@@ -7,11 +7,14 @@ fabricator.rtx_kg2:
     columns:
       id:
         type: generate_unique_id
-        prefix: "RTX:"
-        id_length: 8
+        prefixes:
+          - "RTX"
+        delimiter: ":"
       name:
         type: generate_unique_id
-        prefix: name_
+        prefixes:
+          - name
+        delimiter: "_"
         inject_nulls:
           probability: 0.2
       all_names:string[]:
@@ -38,7 +41,9 @@ fabricator.rtx_kg2:
         provider: url
       description:
         type: generate_unique_id
-        prefix: description_
+        prefixes:
+          - description
+        delimiter: "_"
       equivalent_curies:
         type: generate_random_arrays
         delimiter: "|"
@@ -562,128 +567,851 @@ fabricator.orchard:
 
 fabricator.robokop:
   nodes:
-    num_rows: 500
     columns:
       id:
         type: generate_unique_id
-        prefix: "ROBO:"
-        id_length: 8
-      "name:string":
-        type: generate_unique_id
-        prefix: "rs"
+        prefixes:
+          - CHEBI
+          - GO
+          - MONDO
+          - NCBIGene
+        delimiter: ':'
+      name:string:
+        type: generate_values
+        sample_values:
+          - BTF3P10
+          - CG12307
+          - CG14931
+          - CG14932
+          - CG4983
+          - CG6614
+          - FAM78A
+          - FHIP2A
+          - IFNG
+          - Oprd1
+          - PPP1R14B
+          - PTPN1
+          - RSPH4A
+          - Rivaroxaban
+          - Vha100-5
+          - hepatitis
+          - kek2
+          - nhr-137
+          - nucleocytoplasmic transport
+          - spag4
       category:
-        type: generate_random_arrays
-        delimiter: "|"
+        type: generate_values
         sample_values:
-          - biolink:Entity
-          - biolink:ThingWithTaxon
-          - biolink:BiologicalEntity
-          - biolink:Drug
-          - biolink:Disease
-          - biolink:SequenceVariant
-          - biolink:NamedThing
-          - biolink:OntologyClass
-          - biolink:PhysicalEssence
-          - biolink:PhysicalEssenceOrOccurrent
-          - biolink:GenomicEntity
-          - biolink:OrganismTaxon
-      "description:string":
-        type: faker
-        provider: sentence
+          - biolink:Gene|biolink:GeneOrGeneProduct|biolink:GenomicEntity|biolink:ChemicalEntityOrGeneOrGeneProduct|biolink:PhysicalEssence|biolink:OntologyClass|biolink:BiologicalEntity|biolink:ThingWithTaxon|biolink:NamedThing|biolink:PhysicalEssenceOrOccurrent|biolink:MacromolecularMachineMixin
+          - biolink:Gene|biolink:GeneOrGeneProduct|biolink:GenomicEntity|biolink:ChemicalEntityOrGeneOrGeneProduct|biolink:PhysicalEssence|biolink:OntologyClass|biolink:BiologicalEntity|biolink:ThingWithTaxon|biolink:NamedThing|biolink:PhysicalEssenceOrOccurrent|biolink:MacromolecularMachineMixin|biolink:Protein|biolink:GeneProductMixin|biolink:Polypeptide|biolink:ChemicalEntityOrProteinOrPolypeptide
+          - biolink:NamedThing|biolink:BiologicalEntity|biolink:Disease|biolink:ThingWithTaxon|biolink:DiseaseOrPhenotypicFeature
+          - biolink:NamedThing|biolink:BiologicalEntity|biolink:PhysicalEssenceOrOccurrent|biolink:BiologicalProcess|biolink:BiologicalProcessOrActivity|biolink:ThingWithTaxon|biolink:OntologyClass|biolink:Occurrent
+          - biolink:NamedThing|biolink:Gene|biolink:PhysicalEssence|biolink:BiologicalEntity|biolink:GenomicEntity|biolink:Polypeptide|biolink:MacromolecularMachineMixin|biolink:PhysicalEssenceOrOccurrent|biolink:OntologyClass|biolink:ChemicalEntityOrProteinOrPolypeptide|biolink:ChemicalEntityOrGeneOrGeneProduct|biolink:GeneOrGeneProduct|biolink:ThingWithTaxon|biolink:GeneProductMixin|biolink:Protein
+          - biolink:NamedThing|biolink:Gene|biolink:PhysicalEssence|biolink:GenomicEntity|biolink:BiologicalEntity|biolink:Polypeptide|biolink:Protein|biolink:MacromolecularMachineMixin|biolink:PhysicalEssenceOrOccurrent|biolink:ChemicalEntityOrProteinOrPolypeptide|biolink:ChemicalEntityOrGeneOrGeneProduct|biolink:GeneOrGeneProduct|biolink:ThingWithTaxon|biolink:GeneProductMixin|biolink:OntologyClass
+          - biolink:NamedThing|biolink:PhysicalEssence|biolink:MolecularMixture|biolink:ChemicalEntity|biolink:SmallMolecule|biolink:PhysicalEssenceOrOccurrent|biolink:ChemicalEntityOrProteinOrPolypeptide|biolink:ChemicalEntityOrGeneOrGeneProduct|biolink:MolecularEntity|biolink:ChemicalMixture|biolink:OntologyClass|biolink:Drug|biolink:ChemicalOrDrugOrTreatment
       equivalent_identifiers:
-        type: generate_random_arrays
-        delimiter: "|"
+        type: generate_values
         sample_values:
-          - NCBITaxon:2
-          - UMLS:C0004611
-          - MESH:D001419
-          - HGVS:NG_029620.1:g.16582A>G
-          - HGVS:CM000669.1:g.149423729A>G
-          - ROBO_VARIANT:HG38|7|149726637|149726638|A|G
-          - HGVS:CM000669.2:g.149726638A>G
-          - HGVS:NC_000007.12:g.149054662A>G
+          - ENSEMBL:ENSP00000310117_3|ENSEMBL:ENSG00000173457|ENSEMBL:ENSP00000310117|UniProtKB:Q96C90|PR:Q96C90|NCBIGene:26472|OMIM:601140|UMLS:C1418632|HGNC:9057
+          - ENSEMBL:FBgn0015400|UniProtKB:Q9VKG1|FB:FBgn0015400|NCBIGene:34582
+          - FB:FBgn0032368|UniProtKB:Q9VKG2|ENSEMBL:FBgn0032368|NCBIGene:34581
+          - GO:0006913
+          - HGNC:5438|ENSEMBL:ENSG00000111537|UMLS:C1334085|ENSEMBL:ENSP00000229135|UniProtKB:A0A7R8GUN6|OMIM:147570|PR:P01579|UMLS:C0021745|NCBIGene:3458|UMLS:C3493224|ENSEMBL:ENSP00000229135_3|UniProtKB:P01579
+          - MEDDRA:10019790|MESH:D006505|DOID:2237|MEDDRA:10078239|NCIT:C3095|MEDDRA:10019759|UMLS:C0149519|MEDDRA:10019717|MEDDRA:10029715|ICD9:571_4|MEDDRA:10009103|UMLS:C0019158|ICD9:570|UMLS:C0001308|SNOMEDCT:128241005|HP:0012115|ICD10:K73.9|MEDDRA:10019789|SNOMEDCT:41889008|SNOMEDCT:197268000|MONDO:0002251|MEDDRA:10019802|medgen:5515|ICD9:571.41
+          - NCBIGene:183865|WormBase:WBGene00003727|UniProtKB:B3WFU1|UniProtKB:B3WFU2|UniProtKB:G5EEX1
+          - NCBIGene:345829|HGNC:38570|UMLS:C3146700
+          - NCBIGene:34583|ENSEMBL:FBgn0032369|FB:FBgn0032369|UniProtKB:Q9VKG0|UniProtKB:X2J5P7
+          - NCBIGene:34584|ENSEMBL:FBgn0032370|FB:FBgn0032370|UniProtKB:Q9VKF9
+          - NCBIGene:34585|ENSEMBL:FBgn0032371|FB:FBgn0032371|UniProtKB:Q9VKF8
+          - NCBIGene:34587|ENSEMBL:FBgn0032373|FB:FBgn0032373|UniProtKB:Q9VKF6
+          - NCBIGene:34588|ENSEMBL:FBgn0032374|FB:FBgn0032374|UniProtKB:M9PCR1|UniProtKB:Q9VKF5
+          - NCBIGene:34589|ENSEMBL:FBgn0032375|FB:FBgn0032375|UniProtKB:E1JHF9|UniProtKB:Q9VKF4
+          - RXCUI:1114200|UNII:9NDF7JZ4M3|RXCUI:1232082|PUBCHEM_COMPOUND:9875401|UMLS:C3248000|UMLS:C5564384|DRUGBANK:DB06228|RXCUI:1114201|UMLS:C5564383|RXCUI:2588066|CHEBI:68579|RXCUI:1114202|RXCUI:1232088|UMLS:C4731645|UMLS:C5561608|RXCUI:2589629|UMLS:C3874968|CAS:1429742-50-6|RXCUI:1232085|RXCUI:1186305|UMLS:C3248002|UMLS:C3162460|UMLS:C3248001|RXCUI:2059014|RXCUI:1232086|UMLS:C3248006|RXCUI:2589628|RXCUI:1114195|UMLS:C3247999|RXCUI:1114197|RXCUI:2589624|RXCUI:1157969|UMLS:C5564381|RXCUI:1549683|RXCUI:1232083|UMLS:C3240061|RXCUI:2589626|GTOPDB:6388|RXCUI:2059017|RXCUI:2589630|RXCUI:1157968|RXCUI:2059015|RXCUI:1114199|UMLS:C3248004|UMLS:C4731644|INCHIKEY:KGFYHTZWPPHNLQ-AWEZNQCLSA-N|CAS:366789-02-8|UMLS:C3248005|UMLS:C3159309|UMLS:C3162457|RXCUI:1232081|UMLS:C5564386|RXCUI:2588062|RXCUI:1186304|RXCUI:2059016|UMLS:C3162458|UMLS:C3240060|UMLS:C3248003|UMLS:C3212386|UMLS:C5563756|DrugCentral:4182|RXCUI:1549682|RXCUI:1114196|UMLS:C3162459|UMLS:C3212385|UMLS:C4731646|RXCUI:2589625|CHEMBL.COMPOUND:CHEMBL198362|RXCUI:1232087|MESH:D000069552|UMLS:C3162455|UMLS:C5564382|UMLS:C1739768|RXCUI:1114198|UMLS:C5564385|UMLS:C3162456|RXCUI:1232084
+          - UMLS:C1335281|HGNC:9642|ENSEMBL:ENSP00000437732|UniProtKB:B4DSN5|UniProtKB:A8K3M3|OMIM:176885|ENSEMBL:ENSG00000196396|UniProtKB:P18031|ENSEMBL:ENSP00000437732_1|ENSEMBL:ENSP00000360683|ENSEMBL:ENSP00000360683.3|UMLS:C1335056|PR:P18031|NCBIGene:5770
+          - UMLS:C1427608|UniProtKB:B3KTA9|UMLS:C3851814|ENSEMBL:ENSG00000111834|PR:Q5TD94|UniProtKB:Q5TD94|HGNC:21558|OMIM:612647|NCBIGene:345895
+          - UMLS:C1825150|ENSEMBL:ENSP00000516028|ENSEMBL:ENSP00000361345_3|NCBIGene:286336|ENSEMBL:ENSP00000361345|ENSEMBL:ENSP00000516028.1|PR:Q5JUQ0|UniProtKB:Q8N2W3|UniProtKB:Q5JUQ0|HGNC:25465|ENSEMBL:ENSG00000126882
+          - UniProtKB:P32300|PR:P32300|ENSEMBL:ENSMUSP00000050077_2|ENSEMBL:ENSMUSP00000050077|ENSEMBL:ENSMUSG00000050511|MGI:97438|UniProtKB:Q8BLP9|NCBIGene:18386|UniProtKB:A2AD37
+          - UniProtKB:Q5W0V3|NCBIGene:57700|UMLS:C1428835|HGNC:29320|ENSEMBL:ENSG00000151553|PR:Q5W0V3|OMIM:617312
       information_content:float:
-        type: faker
-        provider: pydecimal
-        provider_args:
-          left_digits: 3
-          right_digits: 2
-          positive: True
-          min_value: 1
-          max_value: 100
-      publications:string[]:
-        type: generate_random_arrays
-        delimiter: "\u001f"
+        type: generate_values
         sample_values:
-          - "PMID:12345678"
-          - "DOI:10.1234/example.5678"
-
+          - 70
+          - 73
+          - 90
+          - 95
+          - 100
+      description:string:
+        type: generate_values
+        sample_values:
+          - A delta-type opioid receptor that is encoded in the genome of mouse_
+          - A monocarboxylic acid amide obtained by formal condensation of the
+            carboxy group of 5-chlorothiophene-2-carboxylic acid with the amino
+            group of
+            4-{4-[(5S)-5-(aminomethyl)-2-oxo-1,3-oxazolidin-3-yl]phenyl}morpholin-3-one_
+            An anticoagulant used for prophylaxis of venous thromboembolism in
+            patients with knee or hip replacement surgery.
+          - A protein FAM78A that is encoded in the genome of human_
+          - A protein phosphatase 1 regulatory subunit 14B that is encoded in the
+            genome of human_
+          - A radial spoke head protein 4 homolog A that is encoded in the genome of
+            human_
+          - A tyrosine-protein phosphatase non-receptor type 1 that is encoded in
+            the genome of human_
+          - An FHF complex subunit HOOK interacting protein 2A that is encoded in
+            the genome of human_
+          - An active inflammatory process affecting the liver for more than six
+            months_ Causes include viral infections, autoimmune disorders, drugs,
+            and metabolic disorders.
+          - An interferon gamma that is encoded in the genome of human_
+          - The directed movement of molecules between the nucleus and the
+            cytoplasm_
+      cd_formula:string:
+        type: generate_values
+        sample_values:
+          - C19H18ClN3O5S
+      cd_molweight:float:
+        type: generate_values
+        sample_values:
+          - 435.88
+      clogp:float:
+        type: generate_values
+        sample_values:
+          - 2.39
+      alogs:float:
+        type: generate_values
+        sample_values:
+          - -4.64
+      tpsa:float:
+        type: generate_values
+        sample_values:
+          - 88.18
+      lipinski:int:
+        type: generate_values
+        sample_values:
+          - 0
+      mrdef:string:
+        type: generate_values
+        sample_values:
+          - A morpholine and thiophene derivative that functions as a FACTOR XA
+            INHIBITOR and is used in the treatment and prevention of DEEP-VEIN
+            THROMBOSIS and PULMONARY EMBOLISM_  It is also used for the prevention
+            of STROKE and systemic embolization in patients with non-valvular ATRIAL
+            FIBRILLATION, and for the prevention of atherothrombotic events in
+            patients after an ACUTE CORONARY SYNDROME.
+      arom_c:int:
+        type: generate_values
+        sample_values:
+          - 10
+      sp3_c:int:
+        type: generate_values
+        sample_values:
+          - 6
+      sp2_c:int:
+        type: generate_values
+        sample_values:
+          - 3
+      sp_c:int:
+        type: generate_values
+        sample_values:
+          - 0
+      halogen:int:
+        type: generate_values
+        sample_values:
+          - 1
+      hetero_sp2_c:int:
+        type: generate_values
+        sample_values:
+          - 3
+      rotb:int:
+        type: generate_values
+        sample_values:
+          - 5
+      o_n:int:
+        type: generate_values
+        sample_values:
+          - 8
+      oh_nh:int:
+        type: generate_values
+        sample_values:
+          - 1
+      smiles:string:
+        type: generate_values
+        sample_values:
+          - ClC1=CC=C(S1)C(=O)NC[C@H]1CN(C(=O)O1)C1=CC=C(C=C1)N1CCOCC1=O
+      rgb:int:
+        type: generate_values
+        sample_values:
+          - 25
+      status:string:
+        type: generate_values
+        sample_values:
+          - ONP
+      fda_labels:int:
+        type: generate_values
+        sample_values:
+          - 6
+      definition:string:
+        type: generate_values
+        sample_values:
+          - ''
+      url:string:
+        type: generate_values
+        sample_values:
+          - https://www_ebi.ac.uk/ols/ontologies/doid/terms?obo_id=DOID:2237
+      locus_group:string:
+        type: generate_values
+        sample_values:
+          - protein-coding gene
+      symbol:string:
+        type: generate_values
+        sample_values:
+          - FHIP2A
+          - IFNG
+          - PPP1R14B
+          - PTPN1
+          - RSPH4A
+      location:string:
+        type: generate_values
+        sample_values:
+          - 10q25_3
+          - 11q13_1
+          - 12q15
+          - 20q13_13
+          - 6q22_1
+      taxon:string:
+        type: generate_values
+        sample_values:
+          - NCBITaxon10090
+          - NCBITaxon6239
+          - NCBITaxon7227
+          - NCBITaxon:9606
+      NCBITaxon:string:
+        type: generate_values
+        sample_values:
+          - 10090
+          - 10116
+          - 36237
+    num_rows: 100
   edges:
-    num_rows: 500
     columns:
       subject:
         type: copy_column
-        source_column: "nodes.id"
+        source_column: nodes.id
+        seed: 590590
         sample:
-          num_rows: "@edges.num_rows"
-          seed: 590590
+          num_rows: '@edges.num_rows'
       predicate:
         type: generate_values
         sample_values:
-          - biolink:treats
-          - biolink:interacts_with
+          - biolink:actively_involved_in
           - biolink:affects
+          - biolink:coexpressed_with
+          - biolink:contributes_to
+          - biolink:directly_physically_interacts_with
+          - biolink:physically_interacts_with
           - biolink:subclass_of
-          - biolink:is_nearby_variant_of
       object:
         type: copy_column
-        source_column: "nodes.id"
+        source_column: nodes.id
+        seed: 590590
         sample:
-          num_rows: "@edges.num_rows"
-          seed: 49494
-      primary_knowledge_source:
+          num_rows: '@edges.num_rows'
+      ligand:string:
         type: generate_values
         sample_values:
-          - infores:semmeddb
-          - infores:gtex
-          - infores:ubergraph
-          - infores:snpeff
+          - PUBCHEM_COMPOUND:44274699
+          - PUBCHEM_COMPOUND:46831096
+      protein:string:
+        type: generate_values
+        sample_values:
+          - UniProtKB:P18031
+          - UniProtKB:P32300
+      affinity_parameter:string:
+        type: generate_values
+        sample_values:
+          - pIC50
+      supporting_affinities:float[]:
+        type: generate_values
+        sample_values:
+          - 5.72
+          - 6.89
+      publications:string[]:
+        type: generate_values
+        sample_values:
+          - PMC:5156547|PMC:2730547|PMC:5003057
+          - PMID:10753467
+          - PMID:20476738
+          - PMID:30806640
       knowledge_level:
         type: generate_values
         sample_values:
-          - prediction
           - knowledge_assertion
+          - logical_entailment
+          - prediction
+          - statistical_association
+          - observation
+          - not_provided
       agent_type:
         type: generate_values
         sample_values:
-          - computational_model
           - manual_agent
-      publications:string[]:
-        type: generate_random_arrays
-        delimiter: "|"
-        sample_values:
-          - "PMID:12345678"
-          - "DOI:10.1234/example.5678"
-      object_aspect_qualifier:
-        type: faker
-        provider: word
-      object_direction_qualifier:
+          - automated_agent
+          - data_analysis_pipeline
+          - computational_model
+          - text_mining_agent
+          - image_processing_agent
+          - manual_validation_of_automated_agent
+          - not_provided
+      affinity:float:
         type: generate_values
         sample_values:
-          - increased
+          - 5.72
+          - 6.89
+      primary_knowledge_source:
+        type: generate_values
+        sample_values:
+          - infores:bindingdb
+          - infores:hetionet
+          - infores:intact
+          - infores:string
+          - infores:text-mining-provider-targeted
+          - infores:ubergraph
+      object_aspect_qualifier:string:
+        type: generate_values
+        sample_values:
+          - activity
+      object_direction_qualifier:string:
+        type: generate_values
+        sample_values:
           - decreased
       qualified_predicate:string:
         type: generate_values
         sample_values:
           - biolink:causes
-          - biolink:treats
-      aggregator_knowledge_source:
-        type: generate_random_arrays
-        delimiter: "|"
+      Coexpression:string:
+        type: generate_values
         sample_values:
-          - infores:aggregator1
-          - infores:aggregator2
-          - infores:aggregator3
+          - 121
+          - 180
+      Coexpression_transferred:string:
+        type: generate_values
+        sample_values:
+          - 0
+          - 53
+      Experiments:string:
+        type: generate_values
+        sample_values:
+          - 0
+          - 193
+          - 292
+      Experiments_transferred:string:
+        type: generate_values
+        sample_values:
+          - 0
+          - 57
+      Database:string:
+        type: generate_values
+        sample_values:
+          - 0
+      Database_transferred:string:
+        type: generate_values
+        sample_values:
+          - 0
+      Textmining:string:
+        type: generate_values
+        sample_values:
+          - 0
+      Textmining_transferred:string:
+        type: generate_values
+        sample_values:
+          - 0
+          - 50
+      Cooccurance:string:
+        type: generate_values
+        sample_values:
+          - 0
+      Combined_score:string:
+        type: generate_values
+        sample_values:
+          - 154
+          - 179
+          - 193
+          - 292
+      species_context_qualifier:string:
+        type: generate_values
+        sample_values:
+          - NCBITaxon:9606
+      hetio_source:string[]:
+        type: generate_values
+        sample_values:
+          - NCBI gene2go
+      tmkp_confidence_score:float:
+        type: generate_values
+        sample_values:
+          - 0.6128887859621844
+      sentences:string:
+        type: generate_values
+        sample_values:
+          - 'Aside from bleeding, some of the additional side effects of rivaroxaban include
+          the following: dizziness (6%), peripheral edema (6%), hypersensitivity reactions
+          or rash (2%), syncope (2%), and though more rare, thrombocytopenia, agranulocytosis,
+          hepatitis, pruritis, and Stevens?Johnson syndrome_|NA|In the third patient,
+          rivaroxaban was stopped after 23 d, when hepatitis B with seroconversion was
+          diagnosed; the patient died of acute liver failure, mostly due to fatal hepatitis
+          B infection, 48 d after starting treatment.|NA|Non-hemorrhagic adverse effects
+          of rivaroxaban in the EINSTEIN-EXT study were upper abdominal pain, dyspepsia,
+          sinusitis, tooth ache, UTI, back pain and fatigue (all less than 5%) whereas
+          post marketing voluntary reporting of adverse effects include anaphylaxis,
+          angioedema, Stevens-Johnson syndrome, agranulocytosis, jaundice and hepatitis.|NA'
+      tmkp_ids:string[]:
+        type: generate_values
+        sample_values:
+          - tmkp:21709dfe811f66a9f620d41080651d41e3d1d379af32db099f3d5a7b494bb6cb|tmkp:fd2d3e43f75ceac886f3de1b65395369865a1648efc1371ea27bc5b724668584|tmkp:a62f721434da7ccccc0aee9c2709dc7e571c1caea24237d2ce5dee0cb76a9958
+      detection_method:string:
+        type: generate_values
+        sample_values:
+          - MI:0892
+      Homology:string:
+        type: generate_values
+        sample_values:
+          - 0
+      pubchem_assay_ids:string[]:
+        type: generate_values
+        sample_values:
+          - ''
+      patent_ids:string[]:
+        type: generate_values
+        sample_values:
+          - ''
+      aggregator_knowledge_source:
+        type: generate_values
+        sample_values:
+          - infores:robokop-kg
+      id:string:
+        type: generate_values
+        sample_values:
+          - ''
+      original_subject:string:
+        type: generate_values
+        sample_values:
+          - ''
+      category:string[]:
+        type: generate_values
+        sample_values:
+          - ''
+      provided_by:string[]:
+        type: generate_values
+        sample_values:
+          - ''
+      disease_context_qualifier:string:
+        type: generate_values
+        sample_values:
+          - ''
+      frequency_qualifier:string:
+        type: generate_values
+        sample_values:
+          - ''
+      has_evidence:string[]:
+        type: generate_values
+        sample_values:
+          - ''
+      negated:string:
+        type: generate_values
+        sample_values:
+          - ''
+      original_object:string:
+        type: generate_values
+        sample_values:
+          - ''
+      score:float:
+        type: generate_values
+        sample_values:
+          - ''
+      FAERS_llr:float:
+        type: generate_values
+        sample_values:
+          - ''
+      description:string[]:
+        type: generate_values
+        sample_values:
+          - ''
+      NCBITaxon:string:
+        type: generate_values
+        sample_values:
+          - ''
+      Fusion:string:
+        type: generate_values
+        sample_values:
+          - ''
+      has_count:string:
+        type: generate_values
+        sample_values:
+          - ''
+      has_percentage:string:
+        type: generate_values
+        sample_values:
+          - ''
+      has_quotient:string:
+        type: generate_values
+        sample_values:
+          - ''
+      has_total:string:
+        type: generate_values
+        sample_values:
+          - ''
+      qualifiers:string[]:
+        type: generate_values
+        sample_values:
+          - ''
+      stage_qualifier:string:
+        type: generate_values
+        sample_values:
+          - ''
+      primaryTarget:boolean:
+        type: generate_values
+        sample_values:
+          - ''
+      endogenous:boolean:
+        type: generate_values
+        sample_values:
+          - ''
+      anatomical_context_qualifier:string:
+        type: generate_values
+        sample_values:
+          - ''
+      phosphorylation_sites:string[]:
+        type: generate_values
+        sample_values:
+          - ''
+      onset_qualifier:string:
+        type: generate_values
+        sample_values:
+          - ''
+      object_specialization_qualifier:string:
+        type: generate_values
+        sample_values:
+          - ''
+      drugmechdb_path_id:string[]:
+        type: generate_values
+        sample_values:
+          - ''
+      complex_context:string[]:
+        type: generate_values
+        sample_values:
+          - ''
+      sex_qualifier:string:
+        type: generate_values
+        sample_values:
+          - ''
+      object_part_qualifier:string:
+        type: generate_values
+        sample_values:
+          - ''
+      subject_part_qualifier:string:
+        type: generate_values
+        sample_values:
+          - ''
+    num_rows: 100
+
+fabricator.primekg:
+  nodes:
+    columns:
+      category:
+        type: generate_values
+        sample_values:
+          - biolink:BiologicalProcess
+          - biolink:Disease
+          - biolink:Gene
+          - biolink:GrossAnatomicalStructure
+          - biolink:SmallMolecule
+      name:
+        type: generate_values
+        sample_values:
+          - Acefylline
+          - BCL2L1
+          - CANX
+          - CBY1
+          - Cevimeline
+          - Colchicine
+          - GCG
+          - MAP2K6
+          - MPDZ
+          - Oxolinic acid
+          - TEAD2
+          - cerebellar cortex
+          - cervix epithelium
+          - female gonad
+          - liver
+          - malignant colon neoplasm
+          - midbrain
+          - ovary
+          - peptidyl-L-cysteine S-palmitoylation
+          - peptidyl-S-diacylglycerol-L-cysteine biosynthetic process from peptidyl-cysteine
+          - spinal cord
+      id:
+        type: generate_unique_id
+        prefixes:
+          - "PRIMEKG"
+      description:
+        type: generate_values
+        sample_values:
+          - Cevimeline is a parasympathomimetic agent that act as an agonist at the muscarinic acetylcholine receptors M1 and M3. It is indicated by the Food and Drug Administration for the treatment of dry mouth associated with Sjögren's syndrome.
+          - First approved by the FDA in 1961, colchicine is an alkaloid drug commonly used in the management of gout, a condition associated with the painful deposition of urate crystals in the joints. It is derived from a plant belonging to the Lily family, known as Colchicum autumnale, or "autumn crocus". Other than its use in gout, colchicine has been approved for managing exacerbations of Familial Mediterranean Fever (FMF), a hereditary autoinflammatory condition.
+      half_life:
+        type: generate_values
+        sample_values:
+          - After several doses of 0.6 mg twice daily, the average elimination half-life of colchicine ranges from 26.6 to 31.2 hours. Another reference measures that the elimination half-life ranges from 20 to 40 hours.
+          - The half-life is 5 &plusmn; 1 hours
+      indication:
+        type: generate_values
+        sample_values:
+          - Colchicine is indicated for the prophylaxis and treatment of gout flares. It is also indicated in Familial Mediterranean fever (FMF) in children and adults of 4 years of age and older. It is important to note that this medication is not a pain reliever to be used for other painful conditions. Consider analgesics for this purpose. Some off-label uses of colchicine include the treatment of the manifestations of Behcet's syndrome, pericarditis, and postpericardiotomy syndrome.
+          - For the treatment of symptoms of dry mouth in patients with Sj&ouml;gren's Syndrome.
+      mechanism_of_action:
+        type: generate_values
+        sample_values:
+          - Muscarinic agonists such as cevimeline bind and activate the muscarinic M1 and M3 receptors. The M1 receptors are common in secretory glands (exocrine glands such as salivary and sweat glands), and their activation results in an increase in secretion from the secretory glands. The M3 receptors are found on smooth muscles and in many glands which help to stimulate secretion in salivary glands, and their activation generally results in smooth muscle contraction and increased glandular secretions. Therefore, as saliva excretion is increased, the symptoms of dry mouth are relieved.
+          - 'The exact mechanism of action of colchicine has not been fully established, however likely occurs via the downstream inhibition of inflammation caused by tubulin disruption. Studies have implied that that colchicine causes disruption of the inflammasome complex that is present in both monocytes and neutrophils, which normally leads to the activation of interleukin-1, an important mediator of inflammation. In addition to the above actions, colchicine acts to interfere with pathways including neutrophil adhesion and recruitment, superoxide production, the RhoA/Rho effector kinase (ROCK) pathway, as well as a type of nuclear factor κΒ (NF-κΒ) pathway, reducing inflammation. '
+      protein_binding:
+        type: generate_values
+        sample_values:
+          - < 20%
+          - The plasma protein binding for colchicine is low to moderate, at 39 ± 5%, and it is mainly bound to albumin.
+      pharmacodynamics:
+        type: generate_values
+        sample_values:
+          - Cevimeline is a cholinergic agonist which binds to muscarinic receptors. Muscarinic agonists in sufficient dosage can increase secretion of exocrine glands, such as salivary and sweat glands and increase tone of the smooth muscle in the gastrointestinal and urinary tracts.
+          - Colchicine reduces the pain resulting from gout and reduces flares of Familial Mediterranean fever by interfering with inflammatory pathways. This drug has a narrow therapeutic index.
+      state:
+        type: generate_values
+        sample_values:
+          - Cevimeline is a solid.
+          - Colchicine is a solid.
+      atc_1:
+        type: generate_values
+        sample_values:
+          - Acefylline is anatomically related to respiratory system.
+          - Cevimeline is anatomically related to nervous system.
+          - Colchicine is anatomically related to musculo-skeletal system.
+          - Oxolinic acid is anatomically related to antiinfectives for systemic use.
+      atc_2:
+        type: generate_values
+        sample_values:
+          - Acefylline is in the therapeutic group of drugs for obstructive airway diseases.
+          - Cevimeline is in the therapeutic group of other nervous system drugs.
+          - Colchicine is in the therapeutic group of antigout preparations.
+          - Oxolinic acid is in the therapeutic group of antibacterials for systemic use.
+      atc_3:
+        type: generate_values
+        sample_values:
+          - Acefylline is pharmacologically related to other systemic drugs for obstructive airway diseases.
+          - Cevimeline is pharmacologically related to parasympathomimetics.
+          - Colchicine is pharmacologically related to antigout preparations.
+          - Oxolinic acid is pharmacologically related to quinolone antibacterials.
+      atc_4:
+        type: generate_values
+        sample_values:
+          - The chemical and functional group of  is other parasympathomimetics.
+          - The chemical and functional group of  is other quinolones.
+          - The chemical and functional group of  is preparations with no effect on uric acid metabolism.
+          - The chemical and functional group of  is xanthines.
+      drug_category:
+        type: generate_values
+        sample_values:
+          - Acefylline is part of Alkaloids ; Cytochrome P-450 CYP1A2 Substrates ; Cytochrome P-450 Substrates ; Drugs for Obstructive Airway Diseases ; Heterocyclic Compounds, Fused-Ring ; Purines ; Purinones ; Xanthine derivatives.
+          - Cevimeline is part of Autonomic Agents ; Cholinergic Agents ; Cholinergic Agonists ; Cholinergic Receptor Agonist ; Cytochrome P-450 CYP2D6 Substrates ; Cytochrome P-450 CYP3A Substrates ; Cytochrome P-450 CYP3A4 Substrates ; Cytochrome P-450 Substrates ; Drugs that are Mainly Renally Excreted ; Muscarinic Agonists ; Nervous System ; Neurotransmitter Agents ; Parasympathomimetics ; Peripheral Nervous System Agents ; Sulfur Compounds.
+          - Colchicine is part of Agents Causing Muscle Toxicity ; Alkaloids ; Antigout Preparations ; Antimitotic Agents ; Cytochrome P-450 CYP2B6 Inhibitors ; Cytochrome P-450 CYP2B6 Inhibitors (strength unknown) ; Cytochrome P-450 CYP2C8 Inhibitors ; Cytochrome P-450 CYP2C8 Inhibitors (strength unknown) ; Cytochrome P-450 CYP2E1 Inducers ; Cytochrome P-450 CYP2E1 Inducers (strength unknown) ; Cytochrome P-450 CYP3A Inducers ; Cytochrome P-450 CYP3A Inhibitors ; Cytochrome P-450 CYP3A Substrates ; Cytochrome P-450 CYP3A4 Inducers ; Cytochrome P-450 CYP3A4 Inducers (strength unknown) ; Cytochrome P-450 CYP3A4 Inhibitors ; Cytochrome P-450 CYP3A4 Inhibitors (strength unknown) ; Cytochrome P-450 CYP3A4 Substrates ; Cytochrome P-450 Enzyme Inducers ; Cytochrome P-450 Enzyme Inhibitors ; Cytochrome P-450 Substrates ; Drugs that are Mainly Renally Excreted ; Experimental Unapproved Treatments for COVID-19 ; Immunosuppressive Agents ; Mitosis Modulators ; Musculo-Skeletal System ; P-glycoprotein inducers ; P-glycoprotein substrates ; Preparations With No Effect on Uric Acid Metabolism ; Tubulin Modulators.
+          - Oxolinic acid is part of 4-Quinolones ; Anti-Bacterial Agents ; Anti-Infective Agents ; Anti-Infective Agents, Urinary ; Antibacterials for Systemic Use ; Antiinfectives for Systemic Use ; Antineoplastic Agents ; Cytochrome P-450 CYP1A2 Inhibitors ; Cytochrome P-450 CYP1A2 Inhibitors (strength unknown) ; Cytochrome P-450 Enzyme Inhibitors ; Enzyme Inhibitors ; Fluoroquinolones ; Heterocyclic Compounds, Fused-Ring ; Potential QTc-Prolonging Agents ; QTc Prolonging Agents ; Quinolines ; Quinolones ; Renal Agents ; Topoisomerase II Inhibitors ; Topoisomerase Inhibitors.
+      group:
+        type: generate_values
+        sample_values:
+          - Acefylline is experimental.
+          - Cevimeline is approved.
+          - Colchicine is approved.
+          - Oxolinic acid is experimental.
+      pathway:
+        type: generate_values
+        sample_values:
+          - ''
+      molecular_weight:
+        type: generate_values
+        sample_values:
+          - The molecular weight is 199.31.
+          - The molecular weight is 238.2.
+          - The molecular weight is 261.23.
+          - The molecular weight is 399.44.
+      tpsa:
+        type: generate_values
+        sample_values:
+          - Acefylline has a topological polar surface area of 95.74.
+          - Cevimeline has a topological polar surface area of 12.47.
+          - Colchicine has a topological polar surface area of 83.09.
+          - Oxolinic acid has a topological polar surface area of 76.07.
+      clogp:
+        type: generate_values
+        sample_values:
+          - The log p value of  is -0.66.
+          - The log p value of  is 1.14.
+          - The log p value of  is 1.2.
+          - The log p value of  is 1.65.
+      mondo_id:
+        type: generate_values
+        sample_values:
+          - '21063'
+      mondo_name:
+        type: generate_values
+        sample_values:
+          - malignant colon neoplasm
+      group_id_bert:
+        type: generate_values
+        sample_values:
+          - ''
+      group_name_bert:
+        type: generate_values
+        sample_values:
+          - ''
+      mondo_definition:
+        type: generate_values
+        sample_values:
+          - A primary or metastatic malignant neoplasm that affects the colon. Representative examples include carcinoma, lymphoma, and sarcoma.
+      orphanet_prevalence:
+        type: generate_values
+        sample_values:
+          - ''
+      orphanet_epidemiology:
+        type: generate_values
+        sample_values:
+          - ''
+      orphanet_clinical_description:
+        type: generate_values
+        sample_values:
+          - ''
+      orphanet_management_and_treatment:
+        type: generate_values
+        sample_values:
+          - ''
+      mayo_symptoms:
+        type: generate_values
+        sample_values:
+          - ''
+      mayo_causes:
+        type: generate_values
+        sample_values:
+          - ''
+      mayo_risk_factors:
+        type: generate_values
+        sample_values:
+          - ''
+      mayo_complications:
+        type: generate_values
+        sample_values:
+          - ''
+      mayo_prevention:
+        type: generate_values
+        sample_values:
+          - ''
+      mayo_see_doc:
+        type: generate_values
+        sample_values:
+          - ''
+    num_rows: 100
+  edges:
+    columns:
+      predicate:
+        type: generate_values
+        sample_values:
+          - biolink:associated_with
+          - biolink:directly_physically_interacts_with
+          - biolink:expressed_in
+          - biolink:superclass_of
+      knowledge_level:
+        type: generate_values
+        sample_values:
+          - knowledge_assertion
+          - logical_entailment
+          - prediction
+          - statistical_association
+          - observation
+          - not_provided
+      agent_type:
+        type: generate_values
+        sample_values:
+          - manual_agent
+          - automated_agent
+          - data_analysis_pipeline
+          - computational_model
+          - text_mining_agent
+          - image_processing_agent
+          - manual_validation_of_automated_agent
+          - not_provided
+      primary_knowledge_source:
+        type: generate_values
+        sample_values:
+          - infores:primekg
+      aggregator_knowledge_source:
+        type: generate_values
+        sample_values:
+          - ''
+      original_subject:
+        type: generate_values
+        sample_values:
+          - ''
+      original_object:
+        type: generate_values
+        sample_values:
+          - ''
+      negated:
+        type: generate_values
+        sample_values:
+          - ''
+      publications:
+        type: generate_values
+        sample_values:
+          - ''
+      subject_aspect_qualifier:
+        type: generate_values
+        sample_values:
+          - ''
+      subject_direction_qualifier:
+        type: generate_values
+        sample_values:
+          - knowledge_assertion
+          - logical_entailment
+          - prediction
+          - statistical_association
+          - observation
+          - not_provided
+      object_aspect_qualifier:
+        type: generate_values
+        sample_values:
+          - ''
+      object_direction_qualifier:
+        type: generate_values
+        sample_values:
+          - knowledge_assertion
+          - logical_entailment
+          - prediction
+          - statistical_association
+          - observation
+          - not_provided
+      upstream_data_source:
+        type: generate_values
+        sample_values:
+          - ''
+      subject:
+        type: copy_column
+        source_column: nodes.id
+        seed: 590590
+        sample:
+          num_rows: '@edges.num_rows'
+      object:
+        type: copy_column
+        source_column: nodes.id
+        seed: 590590
+        sample:
+          num_rows: '@edges.num_rows'
+    num_rows: 100
+
 
 fabricator.ec_medical_kg:
   nodes:
@@ -691,7 +1419,8 @@ fabricator.ec_medical_kg:
     columns:
       normalized_curie:
         type: generate_unique_id
-        prefix: ec_medical_node_
+        prefixes:
+          - ec_medical_node_
         id_length: 20
       label:
         type: faker
@@ -744,51 +1473,649 @@ fabricator.ec_medical_kg:
 
 fabricator.spoke:
   nodes:
-    num_rows: 150
     columns:
       id:
         type: generate_unique_id
-        prefix: "SPK:"
-        id_length: 8
+        prefixes:
+          - UNIPROT
+          - pfam
+        delimiter: ':'
       name:
-        type: generate_unique_id
-        prefix: "rs"
-      category:
-        type: generate_random_arrays
-        delimiter: "|"
+        type: generate_values
         sample_values:
-          - biolink:NamedThing
-          - biolink:Drug
-          - biolink:Disease
-          - biolink:Gene
-          - biolink:Protein
+          - 7 transmembrane receptor (Secretin family)
+          - A0A024R2N2_HUMAN
+          - A0A024R6U7_HUMAN
+          - A0A024R9X9_HUMAN
+          - A0A024RC03_HUMAN
+          - A0A024RCW9_HUMAN
+          - A0A024RD26_HUMAN
+          - A0A087WWT7_HUMAN
+          - A0A087WYZ5_HUMAN
+          - A0A090N7T4_HUMAN
+      category:
+        type: generate_values
+        sample_values:
+          - "biolink:GeneGroupingMixin\x1Fbiolink:ChemicalEntityOrGeneOrGeneProduct\x1F\
+          biolink:BiologicalEntity\x1Fbiolink:ThingWithTaxon\x1Fbiolink:NamedThing\x1F\
+          biolink:Entity"
+          - "biolink:GeneProductMixin\x1Fbiolink:Polypeptide\x1Fbiolink:ChemicalEntityOrGeneOrGeneProduct\x1F\
+          biolink:ChemicalEntityOrProteinOrPolypeptide\x1Fbiolink:BiologicalEntity\x1F\
+          biolink:ThingWithTaxon\x1Fbiolink:NamedThing\x1Fbiolink:Entity\x1Fbiolink:GeneOrGeneProduct\x1F\
+          biolink:MacromolecularMachineMixin"
+      source:
+        type: generate_values
+        sample_values:
+          - UniProt
+      bto:
+        type: generate_values
+        sample_values:
+          - ''
+      mesh_id:
+        type: generate_values
+        sample_values:
+          - ''
+      license:
+        type: generate_values
+        sample_values:
+          - CC BY-NC 3_0
       description:
-        type: faker
-        provider: sentence
-
+        type: generate_values
+        sample_values:
+          - ADGRG1 C-terminal fragment (ADGRG1 N-terminal fragment) (Adhesion
+            G-protein coupled receptor G1) (G-protein coupled receptor 56) (GPR56
+            C-terminal fragment) (GPR56 N-terminal fragment) (GPR56 extracellular
+            subunit) (GPR56 seven-transmembrane subunit) (GPR56 subunit alpha)
+            (GPR56 subunit beta)
+          - Adhesion G-protein-coupled receptor D1
+          - Adhesion G-protein-coupled receptor D2
+          - Corticotropin releasing hormone receptor 1, isoform CRA_b
+          - Corticotropin releasing hormone receptor 2 (Corticotropin releasing
+            hormone receptor 2, isoform CRA_d)
+          - G protein-coupled receptor 116, isoform CRA_a
+          - G protein-coupled receptor 64, isoform CRA_a
+          - Glucagon-like peptide 1 receptor, isoform CRA_a
+          - Vasoactive intestinal peptide receptor 1, isoform CRA_b
+      url:
+        type: generate_values
+        sample_values:
+          - ''
+      vestige:
+        type: generate_values
+        sample_values:
+          - 'False'
+      synonyms:
+        type: generate_values
+        sample_values:
+          - ''
+      hybrid_node_name:
+        type: generate_values
+        sample_values:
+          - ''
+      aliases:
+        type: generate_values
+        sample_values:
+          - ''
+      reaction:
+        type: generate_values
+        sample_values:
+          - ''
+      class:
+        type: generate_values
+        sample_values:
+          - ''
+      subclass:
+        type: generate_values
+        sample_values:
+          - ''
+      subsubclass:
+        type: generate_values
+        sample_values:
+          - ''
+      serial:
+        type: generate_values
+        sample_values:
+          - ''
+      subset_list:
+        type: generate_values
+        sample_values:
+          - ''
+      obsolete:
+        type: generate_values
+        sample_values:
+          - ''
+      ensembl:
+        type: generate_values
+        sample_values:
+          - ''
+      chromosome:
+        type: generate_values
+        sample_values:
+          - ''
+      chembl_id:
+        type: generate_values
+        sample_values:
+          - 'Null'
+      accession:
+        type: generate_values
+        sample_values:
+          - ''
+      sources:
+        type: generate_values
+        sample_values:
+          - '["Pfam"]'
+      pre_mirna:
+        type: generate_values
+        sample_values:
+          - ''
+      reference:
+        type: generate_values
+        sample_values:
+          - ''
+      level:
+        type: generate_values
+        sample_values:
+          - ''
+      representative_strain:
+        type: generate_values
+        sample_values:
+          - ''
+      genome_size:
+        type: generate_values
+        sample_values:
+          - ''
+      strain:
+        type: generate_values
+        sample_values:
+          - ''
+      isolation_country:
+        type: generate_values
+        sample_values:
+          - ''
+      host_name:
+        type: generate_values
+        sample_values:
+          - ''
+      host_is_human:
+        type: generate_values
+        sample_values:
+          - ''
+      isolation_source:
+        type: generate_values
+        sample_values:
+          - ''
+      genbank_accessions:
+        type: generate_values
+        sample_values:
+          - ''
+      collection_date:
+        type: generate_values
+        sample_values:
+          - ''
+      usa_isolation_country:
+        type: generate_values
+        sample_values:
+          - ''
+      host_health:
+        type: generate_values
+        sample_values:
+          - ''
+      host_age:
+        type: generate_values
+        sample_values:
+          - ''
+      host_is_chicken:
+        type: generate_values
+        sample_values:
+          - ''
+      host_gender:
+        type: generate_values
+        sample_values:
+          - ''
+      host_is_pig:
+        type: generate_values
+        sample_values:
+          - ''
+      has_amr_phenotype:
+        type: generate_values
+        sample_values:
+          - ''
+      gram_stain:
+        type: generate_values
+        sample_values:
+          - ''
+      oxygen_requirement:
+        type: generate_values
+        sample_values:
+          - ''
+      temperature_range:
+        type: generate_values
+        sample_values:
+          - ''
+      motility:
+        type: generate_values
+        sample_values:
+          - ''
+      salinity:
+        type: generate_values
+        sample_values:
+          - ''
+      sporulation:
+        type: generate_values
+        sample_values:
+          - ''
+      host_is_cow:
+        type: generate_values
+        sample_values:
+          - ''
+      serovar:
+        type: generate_values
+        sample_values:
+          - ''
+      biovar:
+        type: generate_values
+        sample_values:
+          - ''
+      pathovar:
+        type: generate_values
+        sample_values:
+          - ''
+      disease:
+        type: generate_values
+        sample_values:
+          - ''
+      org_name:
+        type: generate_values
+        sample_values:
+          - Homo sapiens (Human)
+      reviewed:
+        type: generate_values
+        sample_values:
+          - Unreviewed, From TrEMBL
+      EC:
+        type: generate_values
+        sample_values:
+          - '[]'
+      org_ncbi_id:
+        type: generate_values
+        sample_values:
+          - 9606
+      gene:
+        type: generate_values
+        sample_values:
+          - '["ADGRD1"]'
+          - '["ADGRD2"]'
+          - '["CRHR1"]'
+          - '["CRHR2"]'
+          - '["GLP1R"]'
+          - '["GPR116"]'
+          - '["GPR56"]'
+          - '["GPR64"]'
+          - '["VIPR1"]'
+      polyprotein:
+        type: generate_values
+        sample_values:
+          - ''
+      isoform:
+        type: generate_values
+        sample_values:
+          - ''
+      entryName:
+        type: generate_values
+        sample_values:
+          - 7tm_2
+      reactome_id:
+        type: generate_values
+        sample_values:
+          - ''
+      version:
+        type: generate_values
+        sample_values:
+          - ''
+      ICD10:
+        type: generate_values
+        sample_values:
+          - ''
+      SNOMEDCT:
+        type: generate_values
+        sample_values:
+          - ''
+      EFO:
+        type: generate_values
+        sample_values:
+          - ''
+      ICD9:
+        type: generate_values
+        sample_values:
+          - ''
+      Allele_ID:
+        type: generate_values
+        sample_values:
+          - ''
+      frequency_Latin_American_1:
+        type: generate_values
+        sample_values:
+          - ''
+      frequency_European:
+        type: generate_values
+        sample_values:
+          - ''
+      frequency_East_Asian:
+        type: generate_values
+        sample_values:
+          - ''
+      frequency_Asian:
+        type: generate_values
+        sample_values:
+          - ''
+      frequency_African_Others:
+        type: generate_values
+        sample_values:
+          - ''
+      frequency_African_American:
+        type: generate_values
+        sample_values:
+          - ''
+      frequency_African:
+        type: generate_values
+        sample_values:
+          - ''
+      position:
+        type: generate_values
+        sample_values:
+          - ''
+      frequency_Total:
+        type: generate_values
+        sample_values:
+          - ''
+      frequency_South_Asian:
+        type: generate_values
+        sample_values:
+          - ''
+      frequency_Other_Asian:
+        type: generate_values
+        sample_values:
+          - ''
+      alternative_allele:
+        type: generate_values
+        sample_values:
+          - ''
+      frequency_Other:
+        type: generate_values
+        sample_values:
+          - ''
+      Variant_Chromosome:
+        type: generate_values
+        sample_values:
+          - ''
+      frequency_Latin_American_2:
+        type: generate_values
+        sample_values:
+          - ''
+      reference_allele:
+        type: generate_values
+        sample_values:
+          - ''
+    num_rows: 100
   edges:
-    num_rows: 500
     columns:
       subject:
         type: copy_column
-        source_column: "nodes.id"
+        source_column: nodes.id
+        seed: 590590
         sample:
-          num_rows: "@edges.num_rows"
-          seed: 590590
+          num_rows: '@edges.num_rows'
       predicate:
         type: generate_values
         sample_values:
-          - biolink:treats
-          - biolink:interacts_with
-          - biolink:affects
-          - biolink:subclass_of
-          - biolink:is_nearby_variant_of
+          - biolink:part_of
       object:
         type: copy_column
-        source_column: "nodes.id"
+        source_column: nodes.id
+        seed: 590590
         sample:
-          num_rows: "@edges.num_rows"
-          seed: 49494
+          num_rows: '@edges.num_rows'
+      source:
+        type: generate_values
+        sample_values:
+          - ''
+      category:
+        type: generate_values
+        sample_values:
+          - ''
+      sources:
+        type: generate_values
+        sample_values:
+          - '["InterPro"]'
+      license:
+        type: generate_values
+        sample_values:
+          - ''
+      distribution:
+        type: generate_values
+        sample_values:
+          - ''
+      ntpm:
+        type: generate_values
+        sample_values:
+          - ''
+      group:
+        type: generate_values
+        sample_values:
+          - ''
+      specific_ntpm:
+        type: generate_values
+        sample_values:
+          - ''
+      specificity_score:
+        type: generate_values
+        sample_values:
+          - ''
+      protein_is_a_cellMArker:
+        type: generate_values
+        sample_values:
+          - ''
+      level:
+        type: generate_values
+        sample_values:
+          - ''
+      reliability:
+        type: generate_values
+        sample_values:
+          - ''
+      marker:
+        type: generate_values
+        sample_values:
+          - ''
+      cell:
+        type: generate_values
+        sample_values:
+          - ''
+      gene_id:
+        type: generate_values
+        sample_values:
+          - ''
+      condition:
+        type: generate_values
+        sample_values:
+          - ''
+      species:
+        type: generate_values
+        sample_values:
+          - ''
+      tissue:
+        type: generate_values
+        sample_values:
+          - ''
+      cooccurrence_score:
+        type: generate_values
+        sample_values:
+          - ''
+      fusion_score:
+        type: generate_values
+        sample_values:
+          - ''
+      coexpression_score:
+        type: generate_values
+        sample_values:
+          - ''
+      exp_score:
+        type: generate_values
+        sample_values:
+          - ''
+      experiments_score:
+        type: generate_values
+        sample_values:
+          - ''
+      neighborhood_score:
+        type: generate_values
+        sample_values:
+          - ''
+      databases_score:
+        type: generate_values
+        sample_values:
+          - ''
+      score:
+        type: generate_values
+        sample_values:
+          - ''
+      textmining_score:
+        type: generate_values
+        sample_values:
+          - ''
+      confidence:
+        type: generate_values
+        sample_values:
+          - ''
+      is_directed:
+        type: generate_values
+        sample_values:
+          - ''
+      p_ni:
+        type: generate_values
+        sample_values:
+          - ''
+      p_wrong:
+        type: generate_values
+        sample_values:
+          - ''
+      p_int:
+        type: generate_values
+        sample_values:
+          - ''
+      domainInteraction:
+        type: generate_values
+        sample_values:
+          - ''
+      pubmedIDs:
+        type: generate_values
+        sample_values:
+          - ''
+      miscores:
+        type: generate_values
+        sample_values:
+          - ''
+      roleA:
+        type: generate_values
+        sample_values:
+          - ''
+      types:
+        type: generate_values
+        sample_values:
+          - ''
+      roleB:
+        type: generate_values
+        sample_values:
+          - ''
+      methods:
+        type: generate_values
+        sample_values:
+          - ''
+      article_id:
+        type: generate_values
+        sample_values:
+          - ''
+      method:
+        type: generate_values
+        sample_values:
+          - ''
+      PMID:
+        type: generate_values
+        sample_values:
+          - ''
+      p_value:
+        type: generate_values
+        sample_values:
+          - ''
+      log2fc:
+        type: generate_values
+        sample_values:
+          - ''
+      fdr:
+        type: generate_values
+        sample_values:
+          - ''
+      direction:
+        type: generate_values
+        sample_values:
+          - ''
+      Variant_Score:
+        type: generate_values
+        sample_values:
+          - ''
+      unbiased:
+        type: generate_values
+        sample_values:
+          - ''
+      evidence:
+        type: generate_values
+        sample_values:
+          - ''
+      vestige:
+        type: generate_values
+        sample_values:
+          - ''
+      version:
+        type: generate_values
+        sample_values:
+          - ''
+      zscore:
+        type: generate_values
+        sample_values:
+          - ''
+      gene_1_type:
+        type: generate_values
+        sample_values:
+          - ''
+      p_value_permuted:
+        type: generate_values
+        sample_values:
+          - ''
+      tissue_id:
+        type: generate_values
+        sample_values:
+          - ''
+      beta:
+        type: generate_values
+        sample_values:
+          - ''
+      alternative_allele:
+        type: generate_values
+        sample_values:
+          - ''
+      study:
+        type: generate_values
+        sample_values:
+          - ''
+      reference_allele:
+        type: generate_values
+        sample_values:
+          - ''
+      prediction_score:
+        type: generate_values
+        sample_values:
+          - ''
+    num_rows: 100
 
 fabricator.embiology:
   nodes:
@@ -796,11 +2123,14 @@ fabricator.embiology:
     columns:
       id:
         type: generate_unique_id
-        prefix: "EMBLG:"
+        prefixes:
+          - "EMBLG"
+        delimiter: ":"
         id_length: 9
       name:
         type: generate_unique_id
-        prefix: name_
+        prefixes:
+         - name_
         inject_nulls:
           probability: 0.2
       category:
@@ -833,7 +2163,6 @@ fabricator.embiology:
           - HGVS:NC_000007.12:g.149054662A>G
       original_id:
         type: generate_unique_id
-        id_length: 8
       nodetype:
         type: generate_values
         sample_values:
@@ -1070,8 +2399,9 @@ fabricator.drugbank_gt:
             seed: 40399
         "primary_drug_id":
           type: generate_unique_id
-          prefix: "DB:"
-          id_length: 8
+          prefixes:
+            - "DB"
+          delimiter: ":"
         "secondary_drug":
           type: copy_column
           source_column: rtx_nodes.name
@@ -1080,11 +2410,14 @@ fabricator.drugbank_gt:
             seed: 40199
         "secondary_drug_id":
           type: generate_unique_id
-          prefix: "DB:"
-          id_length: 8
+          prefixes:
+            - "DB"
+          delimiter: ":"
         "condition_id":
           type: generate_unique_id
-          prefix: "DB_CONDITION:"
+          prefixes:
+            - "DB_CONDITION"
+          delimiter: ":"
           id_length: 18
         "primary_drug_id_norm":
           type: copy_column
@@ -1115,8 +2448,9 @@ fabricator.drugbank_gt:
             seed: 40399
         "primary_drug_id":
           type: generate_unique_id
-          prefix: "DB:"
-          id_length: 8
+          prefixes:
+            - "DB"
+          delimiter: ":"
         "secondary_drug_name":
           type: copy_column
           source_column: rtx_nodes.name
@@ -1125,8 +2459,9 @@ fabricator.drugbank_gt:
             seed: 40399
         "secondary_drug_id":
           type: generate_unique_id
-          prefix: "DB:"
-          id_length: 8
+          prefixes:
+            - "DB"
+          delimiter: ":"
         "condition_name":
           type: copy_column
           source_column: rtx_nodes.name
@@ -1135,7 +2470,9 @@ fabricator.drugbank_gt:
             seed: 30399
         "condition_id":
           type: generate_unique_id
-          prefix: "DB_CONDITION:"
+          prefixes:
+            - "DB_CONDITION"
+          delimiter: ":"
           id_length: 18
         "drug_id_norm":
           type: copy_column

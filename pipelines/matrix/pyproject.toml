@@ -30,6 +30,7 @@ dependencies = [
     "matrix-schema==0.4.3",
     "matrix-auth",
     "matrix-gcp-datasets",
+    "matrix-io-utils",
     "matrix-mlflow-utils",
     "matrix-fabricator",
     "matrix-inject",
@@ -81,6 +82,7 @@ dependencies = [
     "xgboost",
     "tqdm>=4.67.1",
 ]
+
 
 [project.scripts]
 matrix = "matrix.__main__:main"

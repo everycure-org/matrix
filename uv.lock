@@ -10,10 +10,12 @@ resolution-markers = [
 members = [
     "matrix",
     "matrix-auth",
+    "matrix-cli",
     "matrix-docs",
     "matrix-fabricator",
     "matrix-gcp-datasets",
     "matrix-inject",
+    "matrix-io-utils",
     "matrix-mlflow-utils",
     "matrix-pandera",
     "matrix-pipeline",
@@ -2364,10 +2366,12 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "matrix-auth" },
+    { name = "matrix-cli" },
     { name = "matrix-docs" },
     { name = "matrix-fabricator" },
     { name = "matrix-gcp-datasets" },
     { name = "matrix-inject" },
+    { name = "matrix-io-utils" },
     { name = "matrix-mlflow-utils" },
     { name = "matrix-pandera" },
     { name = "matrix-pipeline" },
@@ -2382,10 +2386,12 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "matrix-auth", editable = "libs/matrix-auth" },
+    { name = "matrix-cli", editable = "apps/matrix-cli" },
     { name = "matrix-docs", editable = "docs" },
     { name = "matrix-fabricator", editable = "libs/matrix-fabricator" },
     { name = "matrix-gcp-datasets", editable = "libs/matrix-gcp-datasets" },
     { name = "matrix-inject", editable = "libs/matrix-inject" },
+    { name = "matrix-io-utils", editable = "libs/matrix-io-utils" },
     { name = "matrix-mlflow-utils", editable = "libs/matrix-mlflow-utils" },
     { name = "matrix-pandera", editable = "libs/matrix-pandera" },
     { name = "matrix-pipeline", editable = "pipelines/matrix" },
@@ -2433,6 +2439,33 @@ dev = [
     { name = "pytest-asyncio" },
     { name = "pytest-mock" },
     { name = "responses" },
+    { name = "ruff" },
+]
+
+[[package]]
+name = "matrix-cli"
+version = "0.1.0"
+source = { editable = "apps/matrix-cli" }
+dependencies = [
+    { name = "polars-lts-cpu" },
+    { name = "typer" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "polars-lts-cpu", specifier = "==1.30.0" },
+    { name = "typer" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest" },
     { name = "ruff" },
 ]
 
@@ -2618,6 +2651,29 @@ dev = [
 ]
 
 [[package]]
+name = "matrix-io-utils"
+version = "0.1.0"
+source = { editable = "libs/matrix-io-utils" }
+dependencies = [
+    { name = "polars-lts-cpu" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "polars-lts-cpu", specifier = "==1.30.0" }]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[[package]]
 name = "matrix-mlflow-utils"
 version = "0.1.0"
 source = { editable = "libs/matrix-mlflow-utils" }
@@ -2719,6 +2775,7 @@ dependencies = [
     { name = "matrix-fabricator" },
     { name = "matrix-gcp-datasets" },
     { name = "matrix-inject" },
+    { name = "matrix-io-utils" },
     { name = "matrix-mlflow-utils" },
     { name = "matrix-pandera" },
     { name = "matrix-schema" },
@@ -2830,6 +2887,7 @@ requires-dist = [
     { name = "matrix-fabricator", editable = "libs/matrix-fabricator" },
     { name = "matrix-gcp-datasets", editable = "libs/matrix-gcp-datasets" },
     { name = "matrix-inject", editable = "libs/matrix-inject" },
+    { name = "matrix-io-utils", editable = "libs/matrix-io-utils" },
     { name = "matrix-mlflow-utils", editable = "libs/matrix-mlflow-utils" },
     { name = "matrix-pandera", editable = "libs/matrix-pandera" },
     { name = "matrix-schema", specifier = "==0.4.3" },
