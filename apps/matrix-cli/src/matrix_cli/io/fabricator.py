@@ -12,6 +12,7 @@ import typer
 
 app = typer.Typer()
 
+# Known type values coming from:
 # https://biolink.github.io/biolink-model/KnowledgeLevelEnum/
 # https://biolink.github.io/biolink-model/AgentTypeEnum/
 # https://biolink.github.io/biolink-model/DirectionQualifierEnum/
