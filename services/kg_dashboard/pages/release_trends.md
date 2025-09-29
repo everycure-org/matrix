@@ -88,6 +88,7 @@ order by
     title="Drug Nodes Across Releases"
     yGridlines=false
     xBaseline=false
+    xAxisLabels=false
     markers=false
     step=true
     lineColor="#73C991"
@@ -103,6 +104,7 @@ order by
     title="Median Drug Node Degree"
     yGridlines=false
     xBaseline=false
+    xAxisLabels=false
     markers=false
     step=true
     lineColor="#6FAF8C"
@@ -124,6 +126,7 @@ order by
     title="Disease Nodes Across Releases"
     yGridlines=false
     xBaseline=false
+    xAxisLabels=false
     markers=false
     step=true
     lineColor="#BF616A"
@@ -139,6 +142,7 @@ order by
     title="Median Disease Node Degree"
     yGridlines=false
     xBaseline=false
+    xAxisLabels=false
     markers=false
     step=true
     lineColor="#D08770"
@@ -158,6 +162,7 @@ order by
     title="Number of primary knowledge sources in each release"
     yGridlines=false
     xBaseline=false
+    xAxisLabels=false
     markers=false
     step=true
     lineColor="#7FADDB"
