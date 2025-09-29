@@ -70,7 +70,7 @@
       },
       tooltip: {
         show: true,
-        formatter: (params) => formatTooltip(params, links)
+        formatter: (params) => formatTooltip(params, links, nodes)
       },
       series: [{
         type: 'graph',

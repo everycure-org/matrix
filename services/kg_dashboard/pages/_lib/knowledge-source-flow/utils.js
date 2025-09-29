@@ -249,7 +249,7 @@ export function calculateLevelXPositions(levelConfig, totalWidth = LAYOUT_CONSTA
   return positions;
 }
 
-export function formatTooltip(params, links) {
+export function formatTooltip(params, links, nodes = []) {
   if (params.dataType === 'node' && params.data.nodeCategory === 'primary') {
     // Primary node tooltip with connections breakdown
     const sourceId = params.data.id;
@@ -275,8 +275,14 @@ export function formatTooltip(params, links) {
       return `<strong>${params.data.id.replace('infores:', '')}</strong><br/>${params.data.value.toLocaleString()} total connections`;
     }
   } else if (params.dataType === 'edge') {
-    // Edge tooltip
-    return `${params.data.source.replace('infores:', '')} → ${params.data.target.replace('infores:', '')}<br/>Connections: ${params.data.value.toLocaleString()}`;
+    // Edge tooltip - use node display names instead of IDs
+    const sourceNode = nodes.find(node => node.id === params.data.source);
+    const targetNode = nodes.find(node => node.id === params.data.target);
+
+    const sourceName = sourceNode ? sourceNode.name : params.data.source.replace('infores:', '');
+    const targetName = targetNode ? targetNode.name : params.data.target.replace('infores:', '');
+
+    return `${sourceName} → ${targetName}<br/>Connections: ${params.data.value.toLocaleString()}`;
   }
 
   return '';
