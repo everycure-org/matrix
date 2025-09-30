@@ -42,6 +42,10 @@ argo-workflows:
     # Schedule controller on management nodes
     nodeSelector:
       workload-type: management
+    
+    # Enable ConfigMap creation permissions for memoization and caching
+    rbac:
+      writeConfigMaps: true
 
     # Add billing labels to Argo Workflows controller pods
     podLabels:
