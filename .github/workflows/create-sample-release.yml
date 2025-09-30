@@ -47,15 +47,18 @@ jobs:
           df -h
       
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: astral-sh/setup-uv@v6
         with:
-          python-version: '3.11'
+          enable-cache: true
+          version: "0.8.13"
+      
+      - name: Install Python dependencies
+        run: make install
 
-      - name: Install Argo & Python dependencies
+      - name: Install Argo dependencies
         working-directory: pipelines/matrix
         run: |
           make install_argo
-          pip install -r requirements.txt
 
       - name: Authenticate with Google Cloud
         id: auth
@@ -98,7 +101,7 @@ jobs:
         run: |
           DATE=$(date +%Y%m%d)
           echo "Run the kedro sampling pipeline"
-          kedro experiment run \
+          uv run kedro experiment run \
             -e sample \
             --experiment-name create-sample-for-release \
             -p create_sample \

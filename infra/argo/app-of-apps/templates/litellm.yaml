@@ -1,0 +1,112 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: litellm
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+spec:
+  project: default
+  destination:
+    server: {{ .Values.spec.destination.server }}
+    namespace: litellm
+  source:
+    repoURL: https://github.com/BerriAI/litellm.git
+    targetRevision: v1.76.1-stable
+    path: deploy/charts/litellm-helm
+    helm:
+      values: |
+        db:
+          useExisting: true
+          deployStandalone: false
+          url: postgresql://litellm:$(DATABASE_PASSWORD)@postgresql-cloudnative-pg-cluster-pooler-rw.postgresql.svc.cluster.local:5432/app?schema=litellm
+
+        image:
+          repository: ghcr.io/berriai/litellm
+          tag: main-stable
+          pullPolicy: IfNotPresent
+
+        replicaCount: 3
+
+        service:
+          type: ClusterIP
+          port: 4000
+
+        resources:
+          requests: { cpu: "250m", memory: "512Mi" }
+          limits:   { cpu: "1",    memory: "2Gi" }
+
+        environmentSecrets:
+          - litellm-provider-keys
+          - postgres
+
+        proxy_config:
+          general_settings:
+            telemetry: false
+          model_list:
+            - model_name: gpt-4o
+              litellm_params:
+                model: openai/gpt-4o
+                api_key: os.environ/OPENAI_API_KEY
+              model_info:
+                cache: true
+            - model_name: claude-3-5-sonnet
+              litellm_params:
+                model: anthropic/claude-3-5-sonnet-20240620
+                api_key: os.environ/ANTHROPIC_API_KEY
+            - model_name: claude-4-sonnet-20250514
+              litellm_params:
+                model: anthropic/claude-4-sonnet-20250514
+                api_key: os.environ/ANTHROPIC_API_KEY
+              model_info:
+                cache: true
+
+            - model_name: gpt-4o-mini
+              litellm_params:
+                model: openai/gpt-4o-mini
+                api_key: os.environ/OPENAI_API_KEY
+              model_info:
+                cache: true
+            - model_name: text-embedding-3-large
+              litellm_params:
+                model: openai/text-embedding-3-large
+                api_key: os.environ/OPENAI_API_KEY
+            - model_name: text-embedding-3-small
+              litellm_params:
+                model: openai/text-embedding-3-small
+                api_key: os.environ/OPENAI_API_KEY
+            - model_name: claude-3-5-haiku
+              litellm_params:
+                model: anthropic/claude-3-5-haiku-20241022
+                api_key: os.environ/ANTHROPIC_API_KEY
+            - model_name: claude-3-haiku
+              litellm_params:
+                model: anthropic/claude-3-haiku-20240307
+                api_key: os.environ/ANTHROPIC_API_KEY
+          router_settings:
+            # Redis for cross-pod RPM/TPM + routing state
+            redis_host: redis.redis.svc.cluster.local
+            redis_port: 6379
+            # redis_password: os.environ/REDIS_PASSWORD
+            num_retries: 2
+          litellm_settings:
+            cache: true
+            cache_params:
+              type: redis
+              host: redis.redis.svc.cluster.local
+              port: 6379
+              # password: os.environ/REDIS_PASSWORD   
+              ttl: 86400  # Cache for 1 day
+              namespace: "litellm_cache"
+              redis_flush_size: 100
+          ui:
+            enabled: true
+        masterkeySecretName: litellm-master-key
+        masterkeySecretKey: LITELLM_MASTER_KEY
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true

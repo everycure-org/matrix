@@ -150,7 +150,7 @@ ORDER BY count DESC
   depthOverride={depthOverrides}
 />
 
-```sql edge_stats
+```sql edge_stats_for_grid
 SELECT 
     replace(subject_category,'biolink:','') as subject_category,
     replace(predicate,'biolink:','') as predicate,
@@ -167,15 +167,83 @@ ORDER BY count DESC
 
 ## Edge Statistics
 
-<DataTable 
-    data={edge_stats} 
-    search=true
-    pagination=true 
+<DimensionGrid
+  data={edge_stats_for_grid}
+  metric='sum(count)'
+  name=selected_edge_stats
 />
 
+<p class="text-sm mt-4 mb-4">
+Use the dimension grid above to filter the edge statistics. Select specific combinations of subject categories, predicates, object categories, and knowledge sources to refine the data shown in the table below.
+</p>
+
+```sql filtered_edge_stats
+WITH dimension_filter AS (
+  SELECT 
+    replace(subject_category,'biolink:','') as subject_category,
+    replace(predicate,'biolink:','') as predicate,
+    replace(object_category,'biolink:','') as object_category,
+    primary_knowledge_source,
+    sum(count) as count
+  FROM bq.merged_kg_edges
+  WHERE replace(subject_category,'biolink:','') IN ${inputs.selected_subjects.value}
+    AND replace(predicate,'biolink:','') IN ${inputs.selected_predicates.value}
+    AND replace(object_category,'biolink:','') IN ${inputs.selected_objects.value}
+  GROUP BY all
+)
+SELECT 
+    subject_category,
+    '/Graph Components/Node Category/' || subject_category as subject_category_link,
+    predicate,
+    '/Graph Components/Edge Predicate/' || predicate as predicate_link,
+    object_category,
+    '/Graph Components/Node Category/' || object_category as object_category_link,
+    primary_knowledge_source,
+    '/Knowledge Sources/' || primary_knowledge_source as primary_knowledge_source_link,
+    count
+FROM dimension_filter
+WHERE ${inputs.selected_edge_stats}
+ORDER BY count DESC
+```
+
+<DataTable 
+    data={filtered_edge_stats} 
+    pagination=true>
+    <Column 
+      id="subject_category_link" 
+      title="Subject Category" 
+      contentType="link" 
+      linkLabel="subject_category" 
+    />
+    <Column 
+      id="predicate_link" 
+      title="Predicate" 
+      contentType="link"
+      linkLabel="predicate"
+    />
+    <Column 
+      id="object_category_link" 
+      title="Object Category" 
+      contentType="link"
+      linkLabel="object_category"
+    />
+    <Column 
+      id="primary_knowledge_source_link" 
+      title="Primary Knowledge Source" 
+      contentType="link"
+      linkLabel="primary_knowledge_source" 
+    />
+    <Column 
+      id="count" 
+      title="Count" 
+      contentType="bar" 
+    />
+</DataTable>
+
 Example parameterized dashboards:
- - <a href="/node/prefix/MONDO">Mondo Dashboard</a>
- - <a href="/node/category/Disease">Disease Dashboard</a>
+ - <a href="/Graph Components/Node Prefix/MONDO">Mondo Dashboard</a>
+ - <a href="/Graph Components/Node Category/Disease">Disease Dashboard</a>
+ - <a href="/Graph Components/Edge Predicate/treats">Treats Predicate Dashboard</a>
  - <a href="/normalization">Normalization Dashboard</a>
 
 
