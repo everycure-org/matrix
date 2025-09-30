@@ -17,8 +17,8 @@ from sklearn.model_selection import BaseCrossValidator
 
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import DegreeAwarePairGenerator, SingleLabelPairGenerator
-from matrix.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
 
+# from matrix.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
 from .model import ModelWrapper
 from .model_selection import DiseaseAreaSplit
 
