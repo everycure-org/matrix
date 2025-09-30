@@ -141,14 +141,6 @@ Initial telemetry disabled. Next steps:
 
 # Alternatives Considered
 
-## Service Mesh
-
-**Nginx**: Too basic for service mesh requirements (primarily an ingress controller and works best at the L7 Layer)
-**Envoy**: Requires manual configuration, lacks control plane
-**Cilium**: While performant with eBPF, less mature and more complicated.
-**Kong + Custom Plugin**: More complex, requires custom development
-**Custom Solution**: High maintenance, long development time
-
 ## DNS Resolution (Load Balancer vs other)
 
 A key decision needed to be made was whether to use a GCP Private Load Balancer or not. Our current networking layer already fulfils present L7 and L4 requirements; we can introduce a Private Load Balancer later if/when needs evolve.
