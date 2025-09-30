@@ -9,8 +9,12 @@ from matrix.pipelines.filtering.pipeline import create_pipeline as create_filter
 from matrix.pipelines.ingest_to_N4J.pipeline import create_pipeline as create_ingest_to_N4J_pipeline
 from matrix.pipelines.ingestion.pipeline import create_pipeline as create_ingestion_pipeline
 from matrix.pipelines.integration.pipeline import create_pipeline as create_integration_pipeline
-from matrix.pipelines.matrix_generation.pipeline import create_pipeline as create_matrix_pipeline
-from matrix.pipelines.matrix_transformations.pipeline import create_pipeline as create_matrix_transformations_pipeline
+from matrix.pipelines.matrix_generation.pipeline import (
+    create_pipeline as create_matrix_pipeline,
+)
+from matrix.pipelines.matrix_transformations.pipeline import (
+    create_pipeline as create_matrix_transformations_pipeline,
+)
 from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
 from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
 from matrix.pipelines.sentinel.pipeline import create_pipeline as create_sentinel_pipeline
