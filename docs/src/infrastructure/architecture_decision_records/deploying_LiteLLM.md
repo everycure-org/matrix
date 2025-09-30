@@ -163,7 +163,7 @@ graph TD
    end
 
    subgraph "External Providers"
-      J[Gemini 2.0]
+      J[OpenAI]
       K[Other LLM Providers]
    end
 
