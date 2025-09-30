@@ -49,7 +49,7 @@ data_sources:
     version: 20230309 # NOTE: Here 0309 is a period of time (here Mar to Sep 2023)
   drug_list:
     # check releases here: https://github.com/everycure-org/core-entities/releases
-    version: v0.1.1
+    version: v0.1.4
   disease_list:
     # check releases here: https://github.com/everycure-org/core-entities/releases
     version: v0.1.3
