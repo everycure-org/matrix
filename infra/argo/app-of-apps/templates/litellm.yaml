@@ -48,6 +48,9 @@ spec:
               litellm_params:
                 model: openai/gpt-4o
                 api_key: os.environ/OPENAI_API_KEY
+                cache_control_injection_points:
+                  - location: message
+                    role: user
             - model_name: claude-3-5-sonnet
               litellm_params:
                 model: anthropic/claude-3-5-sonnet-20240620
@@ -83,7 +86,8 @@ spec:
             # redis_password: os.environ/REDIS_PASSWORD
             num_retries: 2
           litellm_settings:
-            cache: True
+            set_verbose: true
+            cache: true
             cache_params:
               type: redis
               host: redis.redis.svc.cluster.local
