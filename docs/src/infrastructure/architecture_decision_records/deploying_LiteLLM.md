@@ -148,33 +148,35 @@ A key decision needed to be made was whether to use a GCP Private Load Balancer 
 # Architecture Diagram
 
 ```mermaid
+%% Diagram shows dual access paths (external via HTTPS hostname + internal via cluster DNS)
 graph TD
-    A[Client Applications] --> C[LiteLLM Proxy<br/>Namespace: lite-llm]
+   %% External & Internal Clients
+   EXT[External Clients / Internet]
+   INT[Internal Platform Services]
 
-    C --> D[PostgreSQL<br/>Persistent Storage<br/>With PGBouncer]
-    C --> E[Redis<br/>Caching & State Management]
+   %% Subgraphs
+   subgraph "Kubernetes Cluster"
+      GW["API Gateway (Gateway API)<br/>Namespace: gateway"]
+      C[LiteLLM Proxy<br/>Namespace: litellm]
+      D["PostgreSQL (CloudNativePG Pooler)<br/>Schema: litellm"]
+      E[Redis<br/>Cache & Routing State]
+   end
 
-    F[ExternalDNS Controller] --> G[GCP Cloud DNS Private Zone<br/>Internal DNS Resolution]
+   subgraph "External Providers"
+      J[Gemini 2.0]
+      K[Other LLM Providers]
+   end
 
-    I[Terraform] --> D
-    I --> G
+   %% Access Paths
+   EXT -->|HTTPS: litellm.api.<env>.everycure.org| GW
+   INT -->|Cluster DNS: litellm.litellm.svc.cluster.local:4000| C
+   GW --> C
 
-    subgraph "Kubernetes Cluster"
-        C
-        D
-        E
-        F
-    end
+   %% Internal Dependencies
+   C --> D
+   C --> E
 
-    subgraph "GCP Services"
-        G
-    end
-
-    subgraph "External Providers"
-        J[Gemini 2.0]
-        K[Other LLM Providers]
-    end
-
-    C --> J
-    C --> K
+   %% Outbound to Providers
+   C --> J
+   C --> K
 ```
