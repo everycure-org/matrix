@@ -59,3 +59,15 @@ fabricator.int.document_kg.kgregistry_raw:
   filepath: ${globals:paths.tmp}/fabricator/document_kg_kgregistry_raw.csv
   save_args:
     index: false
+
+fabricator.int.document_kg.mapping_reusabledata_infores_raw:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.tmp}/fabricator/document_kg_mapping_reusabledata_infores_raw.csv
+  save_args:
+    index: false
+
+fabricator.int.document_kg.mapping_kgregistry_infores_raw:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.tmp}/fabricator/document_kg_mapping_kgregistry_infores_raw.csv
+  save_args:
+    index: false

@@ -1722,6 +1722,8 @@ fabricator.document_kg.matrix_reviews_pks:
           probability: 0.5
 
 fabricator.document_kg.mapping_reusabledata_infores:
+  mapping_set_id: "fabricated-reusabledata-infores-mappings"
+  description: "Fabricated mappings between reusabledata resources and Information Resource identifiers"
   mappings:
     num_rows: 20
     columns:
@@ -1755,6 +1757,8 @@ fabricator.document_kg.mapping_reusabledata_infores:
         provider: sentence
 
 fabricator.document_kg.mapping_kgregistry_infores:
+  mapping_set_id: "fabricated-kgregistry-infores-mappings"
+  description: "Fabricated mappings between KG-Registry resources and Information Resource identifiers"
   mappings:
     num_rows: 15
     columns:
