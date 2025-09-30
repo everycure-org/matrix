@@ -48,8 +48,6 @@ spec:
               litellm_params:
                 model: openai/gpt-4o
                 api_key: os.environ/OPENAI_API_KEY
-              model_info:
-                cache: true
             - model_name: claude-3-5-sonnet
               litellm_params:
                 model: anthropic/claude-3-5-sonnet-20240620
@@ -58,15 +56,10 @@ spec:
               litellm_params:
                 model: anthropic/claude-4-sonnet-20250514
                 api_key: os.environ/ANTHROPIC_API_KEY
-              model_info:
-                cache: true
-
             - model_name: gpt-4o-mini
               litellm_params:
                 model: openai/gpt-4o-mini
                 api_key: os.environ/OPENAI_API_KEY
-              model_info:
-                cache: true
             - model_name: text-embedding-3-large
               litellm_params:
                 model: openai/text-embedding-3-large
@@ -90,15 +83,13 @@ spec:
             # redis_password: os.environ/REDIS_PASSWORD
             num_retries: 2
           litellm_settings:
-            cache: true
+            cache: True
             cache_params:
               type: redis
               host: redis.redis.svc.cluster.local
               port: 6379
               # password: os.environ/REDIS_PASSWORD   
               ttl: 86400  # Cache for 1 day
-              namespace: "litellm_cache"
-              redis_flush_size: 100
           ui:
             enabled: true
         masterkeySecretName: litellm-master-key
