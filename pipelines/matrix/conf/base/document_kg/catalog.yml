@@ -1,18 +1,3 @@
-_spark_parquet_ds: &_spark_parquet
-  type: matrix_gcp_datasets.gcp.LazySparkDataset
-  file_format: parquet
-  load_args:
-    header: True
-
-_pandas_csv: &_pandas_csv
-  type: pandas.CSVDataset
-
-_sql_dataset: &_sql_dataset
-  type: pandas.SQLTableDataset
-  credentials: sqlite_credentials
-  save_args:
-    if_exists: replace
-
 _layer_raw: &_layer_raw
   metadata:
     kedro-viz:
@@ -78,6 +63,36 @@ document_kg.raw.mapping_kgregistry_infores:
     sep: "\t"
     skiprows: 11
     comment: "#"
+
+document_kg.int.infores_metadata:
+  type: yaml.YAMLDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.document_kg}/int/infores_metadata.yml
+
+document_kg.int.reusabledata_metadata:
+  type: yaml.YAMLDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.document_kg}/int/reusabledata_metadata.yml
+
+document_kg.int.kgregistry_metadata:
+  type: yaml.YAMLDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.document_kg}/int/kgregistry_metadata.yml
+
+document_kg.int.matrix_curated_metadata:
+  type: yaml.YAMLDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.document_kg}/int/matrix_curated_metadata.yml
+
+document_kg.int.matrix_reviews_metadata:
+  type: yaml.YAMLDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.document_kg}/int/matrix_reviews_metadata.yml
+
+document_kg.int.all_pks_metadata:
+  type: yaml.YAMLDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.document_kg}/int/all_pks_metadata.yml
 
 document_kg.int.pks_integrated_kg_list:
   type: pandas.CSVDataset
