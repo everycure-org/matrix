@@ -23,7 +23,6 @@ We will deploy LiteLLM Proxy Server as our LLM gateway within our matrix infrast
 LiteLLM Proxy deployed via Helm chart
 PostgreSQL for persistent storage and user management with PGBouncer for Connection pooling. (Patroni to be set up later when we need Active/Passive Failover and HA)
 Redis for caching and distributed state management.
-Istio as the service mesh for traffic management. This will work on L7 for HTTP service and L4 for other network intensive service that do not benefit from L7 (like postgreSQL)
 We will create a new **Cloud DNS Private Zone** for internal DNS Resolution.
 We will use **ExternalDNS** controller to tie A Records to services.
 
@@ -32,7 +31,6 @@ We will use **ExternalDNS** controller to tie A Records to services.
 1. **LiteLLM Configuration**: We will deploy it through Helm chart via ArgoCD in a namespace called `lite-llm`
 2. **PostgreSQL**: Deployment of an in-cluster database in a different namespace. Database users and tables to be managed through Terraform.
 3. **Redis**: In-cluster Deployment caching in a different namespace.
-4. **Istio**: In-cluster Deployment service mesh in a different namespace.
 
 # Alternatives Considered
 
@@ -46,14 +44,13 @@ We will use **ExternalDNS** controller to tie A Records to services.
 
 ## DNS Resolution (Load Balancer vs other)
 
-A key decision needed to be made was wether to use GCP Private Load Balancer or not. Right now, istio fulfils every need we have at L7 and L4 level, we could easily make the change needed down the line if we need it.
+A key decision needed to be made was whether to use a GCP Private Load Balancer or not. Our current networking layer already fulfils present L7 and L4 requirements; we can introduce a Private Load Balancer later if/when needs evolve.
 
 # Architecture Diagram
 
 ```mermaid
 graph TD
-    A[Client Applications] --> B[Istio Service Mesh]
-    B --> C[LiteLLM Proxy<br/>Namespace: lite-llm]
+    A[Client Applications] --> C[LiteLLM Proxy<br/>Namespace: lite-llm]
 
     C --> D[PostgreSQL<br/>Persistent Storage<br/>With PGBouncer]
     C --> E[Redis<br/>Caching & State Management]
@@ -64,7 +61,6 @@ graph TD
     I --> G
 
     subgraph "Kubernetes Cluster"
-        B
         C
         D
         E
