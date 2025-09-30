@@ -5,7 +5,7 @@ modelling.xg_ensemble:
         _object: matrix.datasets.pair_generator.DegreeAwarePairGenerator
         random_state: ${globals:random_state}
         y_label: 2
-        n_replacements: 2
+        n_replacements: 5
 
         # NOTE: the following set-up is only using ground truth positive edges from training data for neg sampling
         drug_flags:
