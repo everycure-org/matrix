@@ -7,9 +7,8 @@ EC_DATA_DOMAIN ?= data.dev.everycure.org
 EVIDENCE_BASE_PATH = gs://$(EC_DATA_DOMAIN)/versions
 
 # Change release version of the KG used in the dashboard
-
-RELEASE_VERSION ?= v0.9.9
-BENCHMARK_VERSION ?= v0.4.5
+RELEASE_VERSION ?= v0.10.4
+BENCHMARK_VERSION ?= v0.10.2
 
 
 export EVIDENCE_VAR__release_version := $(RELEASE_VERSION)
