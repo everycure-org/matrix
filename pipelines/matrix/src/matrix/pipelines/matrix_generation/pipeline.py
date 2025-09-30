@@ -4,6 +4,7 @@ from matrix.kedro4argo_node import (
     ARGO_NODE_MEDIUM_MATRIX_GENERATION,
     ArgoNode,
 )
+from matrix.pipelines.modelling import nodes as modelling_nodes
 from matrix.pipelines.modelling.utils import partial_fold
 
 from . import nodes
@@ -11,8 +12,6 @@ from . import nodes
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create matrix generation pipeline."""
-
-    model_name = settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")["model_name"]
     private_sources = [
         source["name"] for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration") if source.get("is_private")
     ]
@@ -69,21 +68,40 @@ def create_pipeline(**kwargs) -> Pipeline:
             )
         )
 
+        model_names = [x["model_name"] for x in settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")]
+
         pipelines.append(
             pipeline(
                 [
+                    *[
+                        ArgoNode(
+                            func=nodes.package_model_with_transformers,
+                            inputs={
+                                "transformers": f"modelling.fold_{fold}.{model_name}.model_input.transformers",
+                                "model": f"modelling.fold_{fold}.{model_name}.models.model",
+                                "features": f"params:modelling.{model_name}.model_options.model_tuning_args.features",
+                            },
+                            outputs=f"matrix_generation.fold_{fold}.{model_name}.wrapper",
+                            name=f"package_{model_name}_model_fold_{fold}",
+                        )
+                        for model_name in model_names
+                    ],
+                    ArgoNode(
+                        func=modelling_nodes.create_model,
+                        inputs=["params:matrix_generation.model_ensemble.agg_func"]
+                        + [f"matrix_generation.fold_{fold}.{model_name}.wrapper" for model_name in model_names],
+                        outputs=f"matrix_generation.fold_{fold}.wrapper",
+                        name=f"build_matrix_model_fold_{fold}",
+                    ),
                     ArgoNode(
                         func=nodes.make_predictions_and_sort,
                         inputs=[
                             "matrix_generation.feat.nodes@spark",
                             f"matrix_generation.prm.fold_{fold}.matrix_pairs@spark",
-                            f"modelling.fold_{fold}.model_input.transformers",
-                            f"modelling.fold_{fold}.models.model",
-                            # TODO: can we get features from transformers directly?
-                            f"params:modelling.{model_name}.model_options.model_tuning_args.features",
                             "params:matrix_generation.treat_score_col_name",
                             "params:matrix_generation.not_treat_score_col_name",
                             "params:matrix_generation.unknown_score_col_name",
+                            f"matrix_generation.fold_{fold}.wrapper",
                         ],
                         outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark",
                         name=f"make_predictions_and_sort_fold_{fold}",

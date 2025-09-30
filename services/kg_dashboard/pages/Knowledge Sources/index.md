@@ -3,34 +3,12 @@ title: Knowledge Sources
 ---
 
 <script>
-  // Create depth overrides for proper Sankey layout
-  let depthOverrides = {}
+  import KnowledgeSourceFlowGraph from '../_components/KnowledgeSourceFlowGraph.svelte';
   
-  if (distinct_primary_knowledge_source && Array.isArray(distinct_primary_knowledge_source)) {    
-    distinct_primary_knowledge_source.forEach(pks => {
-      depthOverrides[pks.value] = 0;
-    });    
-  }
-
-  if (distinct_upstream_knowledge_source && Array.isArray(distinct_upstream_knowledge_source)) {
-    distinct_upstream_knowledge_source.forEach(uks => {
-      depthOverrides[uks.value] = 1;
-    });
-  }
-
-  // Unified KG is always at depth 2
-  depthOverrides['Unified KG'] = 2;
+  // Configuration
+  const TOP_N_PRIMARY_SOURCES = 25;
+  const smallSourceThreshold = 50000;
   
-  // Add common cleaned upstream source names to ensure proper depth
-  const commonUpstreamSources = ['ec_medical', 'rtxkg2', 'robokop'];
-  commonUpstreamSources.forEach(source => {
-    depthOverrides[source] = 1;
-  });
-
-  // Add "Other" category to depth overrides
-  depthOverrides['Other (Small Sources)'] = 0;
-
- const smallSourceThreshold = 50000
 </script>
 
 <p>
@@ -78,93 +56,15 @@ ORDER BY n_edges DESC
 </DataTable>
 
 ```sql distinct_upstream_knowledge_source
-SELECT 
-  CASE 
-    WHEN TRIM(upstream_source) LIKE '%''unnest'':%'
-    THEN TRIM(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(upstream_source), '{''unnest'': ''', ''), '''}', ''), '{''unnest'': ', ''), '}', ''))
-    ELSE TRIM(upstream_source)
-  END AS value,
-  concat(
-    CASE 
-      WHEN TRIM(upstream_source) LIKE '%''unnest'':%'
-      THEN TRIM(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(upstream_source), '{''unnest'': ''', ''), '''}', ''), '{''unnest'': ', ''), '}', ''))
-      ELSE TRIM(upstream_source)
-    END,
-    ' (', sum(count), ' connections)'
-  ) AS label
+SELECT
+  TRIM(upstream_source) AS value,
+  concat(TRIM(upstream_source), ' (', sum(count), ' connections)') AS label
 FROM bq.merged_kg_edges
 CROSS JOIN UNNEST(SPLIT(upstream_data_source, ',')) AS t(upstream_source)
 WHERE TRIM(upstream_source) IS NOT NULL
   AND TRIM(upstream_source) != ''
 GROUP BY 1
 ORDER BY label
-```
-
-```sql knowledge_source_sankey
--- Wrap everything in a subquery so we can ORDER BY the source column
-SELECT * FROM (
-  -- Pre-calculate source totals for consistent grouping
-  WITH source_totals AS (
-    SELECT 
-      primary_knowledge_source,
-      SUM(count) as total_count
-    FROM bq.merged_kg_edges
-    WHERE primary_knowledge_source IN ${inputs.selected_primary_sources.value}
-    GROUP BY primary_knowledge_source
-  )
-
-  -- First level: Primary Knowledge Source to Upstream Data Source
-  SELECT 
-      CASE 
-        WHEN '${inputs.view_mode}' = 'detailed' THEN mke.primary_knowledge_source
-        WHEN st.total_count < ${smallSourceThreshold} THEN 'Other (Small Sources)'
-        ELSE mke.primary_knowledge_source 
-      END as source, 
-      CASE 
-        WHEN TRIM(upstream_source) LIKE '%''unnest'':%'
-        THEN TRIM(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(upstream_source), '{''unnest'': ''', ''), '''}', ''), '{''unnest'': ', ''), '}', ''))
-        ELSE TRIM(upstream_source)
-      END as target, 
-      SUM(mke.count) as count
-  FROM bq.merged_kg_edges mke
-  JOIN source_totals st ON st.primary_knowledge_source = mke.primary_knowledge_source
-  CROSS JOIN UNNEST(SPLIT(upstream_data_source, ',')) as t(upstream_source)
-  WHERE mke.primary_knowledge_source IN ${inputs.selected_primary_sources.value}
-    AND CASE 
-      WHEN TRIM(upstream_source) LIKE '%''unnest'':%'
-      THEN TRIM(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(upstream_source), '{''unnest'': ''', ''), '''}', ''), '{''unnest'': ', ''), '}', ''))
-      ELSE TRIM(upstream_source)
-    END IN ${inputs.selected_upstream_sources.value}
-    AND TRIM(upstream_source) IS NOT NULL
-    AND TRIM(upstream_source) != ''
-  GROUP BY 1, 2
-
-  UNION ALL
-
-  -- Second level: Upstream Data Source to Unified KG
-  SELECT 
-      CASE 
-        WHEN TRIM(upstream_source) LIKE '%''unnest'':%'
-        THEN TRIM(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(upstream_source), '{''unnest'': ''', ''), '''}', ''), '{''unnest'': ', ''), '}', ''))
-        ELSE TRIM(upstream_source)
-      END as source,
-      'Unified KG' as target,
-      SUM(count) as count
-  FROM bq.merged_kg_edges
-  CROSS JOIN UNNEST(SPLIT(upstream_data_source, ',')) as t(upstream_source)
-  WHERE CASE 
-    WHEN TRIM(upstream_source) LIKE '%''unnest'':%'
-    THEN TRIM(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(upstream_source), '{''unnest'': ''', ''), '''}', ''), '{''unnest'': ', ''), '}', ''))
-    ELSE TRIM(upstream_source)
-  END IN ${inputs.selected_upstream_sources.value}
-    AND primary_knowledge_source IN ${inputs.selected_primary_sources.value}
-    AND TRIM(upstream_source) IS NOT NULL
-    AND TRIM(upstream_source) != ''
-  GROUP BY source
-) 
-ORDER BY 
-  CASE WHEN source = 'Other (Small Sources)' THEN 1 ELSE 0 END,
-  count DESC
 ```
 
 ## Filter Knowledge Sources
@@ -226,14 +126,165 @@ description="Choose between simplified view (groups small sources) or detailed v
 
 ## Knowledge Source Flow
 
-<SankeyDiagram 
-  data={knowledge_source_sankey} 
-  sourceCol='source'
-  targetCol='target'
-  valueCol='count'
-  linkLabels='full'
-  linkColor='gradient'
-  chartAreaHeight={1200}
-  valueFmt='0,0'
-  depthOverride={depthOverrides}
+The network diagram below shows how knowledge flows from primary sources through aggregator knowledge graphs (RTX-KG2, ROBOKOP) to create our unified knowledge graph. **Node sizes reflect connections from your currently selected sources** - use the filters above to explore different subsets of the knowledge graph.
+
+```sql network_nodes
+-- Get aggregator-level data for network visualization - NODES
+WITH base_data AS (
+  SELECT
+    primary_knowledge_source,
+    TRIM(upstream_source) as clean_upstream_source,
+    SUM(count) as edge_count
+  FROM bq.merged_kg_edges
+  CROSS JOIN UNNEST(SPLIT(upstream_data_source, ',')) as t(upstream_source)
+  WHERE primary_knowledge_source IN ${inputs.selected_primary_sources.value}
+    AND TRIM(upstream_source) IN ${inputs.selected_upstream_sources.value}
+    AND TRIM(upstream_source) IS NOT NULL
+    AND TRIM(upstream_source) != ''
+  GROUP BY 1, 2
+),
+
+-- Calculate totals for sizing and get display names
+primary_totals AS (
+  SELECT
+    base_data.primary_knowledge_source,
+    COALESCE(infores.catalog.name, base_data.primary_knowledge_source) as display_name,
+    SUM(edge_count) as total_from_primary
+  FROM base_data
+  LEFT JOIN infores.catalog ON infores.catalog.id = base_data.primary_knowledge_source
+  GROUP BY base_data.primary_knowledge_source, infores.catalog.name
+),
+
+upstream_totals AS (
+  SELECT
+    clean_upstream_source,
+    SUM(edge_count) as total_from_upstream
+  FROM base_data
+  GROUP BY clean_upstream_source
+),
+
+-- Get unique edge count to unified KG
+unified_total AS (
+  SELECT
+    SUM(count) as total_edges
+  FROM bq.merged_kg_edges
+  WHERE primary_knowledge_source IN ${inputs.selected_primary_sources.value}
+),
+
+-- Get unfiltered totals for context in tooltips
+all_upstream_totals AS (
+  SELECT
+    TRIM(upstream_source) as clean_upstream_source,
+    SUM(count) as total_all_sources
+  FROM bq.merged_kg_edges
+  CROSS JOIN UNNEST(SPLIT(upstream_data_source, ',')) as t(upstream_source)
+  WHERE TRIM(upstream_source) IS NOT NULL
+    AND TRIM(upstream_source) != ''
+  GROUP BY 1
+),
+
+unified_total_all AS (
+  SELECT
+    SUM(count) as total_edges_all_sources
+  FROM bq.merged_kg_edges
+)
+
+-- Primary source nodes
+SELECT
+  CASE
+    WHEN '${inputs.view_mode}' = 'detailed' THEN primary_knowledge_source
+    WHEN total_from_primary < ${smallSourceThreshold} THEN 'Other (Small Sources)'
+    ELSE primary_knowledge_source
+  END as node_id,
+  CASE
+    WHEN '${inputs.view_mode}' = 'detailed' THEN display_name
+    WHEN total_from_primary < ${smallSourceThreshold} THEN 'Other (Small Sources)'
+    ELSE display_name
+  END as node_name,
+  'primary' as category,
+  0 as x_position,
+  total_from_primary as value,
+  NULL as total_all_sources
+FROM primary_totals
+
+UNION ALL
+
+-- Aggregator nodes
+SELECT
+  ut.clean_upstream_source as node_id,
+  ut.clean_upstream_source as node_name,
+  'aggregator' as category,
+  1 as x_position,
+  ut.total_from_upstream as value,
+  aut.total_all_sources as total_all_sources
+FROM upstream_totals ut
+LEFT JOIN all_upstream_totals aut ON aut.clean_upstream_source = ut.clean_upstream_source
+
+UNION ALL
+
+-- Unified KG node
+SELECT
+  'Unified KG' as node_id,
+  'Unified KG' as node_name,
+  'unified' as category,
+  2 as x_position,
+  ut.total_edges as value,
+  uta.total_edges_all_sources as total_all_sources
+FROM unified_total ut
+CROSS JOIN unified_total_all uta
+```
+
+```sql network_links
+-- Get aggregator-level data for network visualization - LINKS
+WITH base_data AS (
+  SELECT
+    primary_knowledge_source,
+    TRIM(upstream_source) as clean_upstream_source,
+    SUM(count) as edge_count
+  FROM bq.merged_kg_edges
+  CROSS JOIN UNNEST(SPLIT(upstream_data_source, ',')) as t(upstream_source)
+  WHERE primary_knowledge_source IN ${inputs.selected_primary_sources.value}
+    AND TRIM(upstream_source) IN ${inputs.selected_upstream_sources.value}
+    AND TRIM(upstream_source) IS NOT NULL
+    AND TRIM(upstream_source) != ''
+  GROUP BY 1, 2
+),
+
+-- Calculate totals for sizing to determine grouping
+primary_totals AS (
+  SELECT
+    base_data.primary_knowledge_source,
+    SUM(edge_count) as total_from_primary
+  FROM base_data
+  GROUP BY base_data.primary_knowledge_source
+)
+
+-- Links from primary sources to aggregators
+SELECT
+  edge_count as value,
+  CASE
+    WHEN '${inputs.view_mode}' = 'detailed' THEN primary_knowledge_source
+    WHEN (SELECT total_from_primary FROM primary_totals pt WHERE pt.primary_knowledge_source = bd.primary_knowledge_source) < ${smallSourceThreshold} THEN 'Other (Small Sources)'
+    ELSE primary_knowledge_source
+  END as source,
+  clean_upstream_source as target
+FROM base_data bd
+
+UNION ALL
+
+-- Links from aggregators to unified KG
+SELECT
+  SUM(edge_count) as value,
+  clean_upstream_source as source,
+  'Unified KG' as target
+FROM base_data
+GROUP BY clean_upstream_source
+```
+
+<KnowledgeSourceFlowGraph
+  nodeData={network_nodes}
+  linkData={network_links}
+  title="Knowledge Source Flow Network"
+  topNPrimarySources={TOP_N_PRIMARY_SOURCES}
+  height="900px"
 />
