@@ -8,9 +8,7 @@ cluster:
         type: rw
         parameters:
           ignore_startup_parameters: "search_path"
-          max_connections: "1000"
-          default_pool_size: "100"
-          min_pool_size: "20"
+          max_client_conn: "1000"
         instances: 1
         monitoring:
           enabled: true
@@ -31,9 +29,7 @@ cluster:
         type: ro
         parameters:
           ignore_startup_parameters: "search_path"
-          max_connections: "1000"
-          default_pool_size: "100"
-          min_pool_size: "20"
+          max_client_conn: "1000"
         instances: 1
         monitoring:
           enabled: true
