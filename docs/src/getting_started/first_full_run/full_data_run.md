@@ -86,7 +86,6 @@ filtering:
       column: upstream_data_source
       keep_list:
         - rtxkg2
-        - ec_medical
         # - robokop  # Uncomment to include ROBOKOP data
   # ...
   edge_filters:
@@ -95,7 +94,6 @@ filtering:
       column: upstream_data_source
       keep_list:
         - rtxkg2
-        - ec_medical
         # - robokop
 
 ```

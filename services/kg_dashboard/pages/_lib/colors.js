@@ -1,12 +1,12 @@
 // Base color palette for known sources
 export const sourceColorMap = {
-  "robokop": "#1CEAD0",                   // cyan
-  "rtxkg2": "#4C73F0",                    // lighter purple
-  "ec_medical": "#EF4C9E",                // hot pink
-  "robokop,rtxkg2": "#10D461",            // neon green
-  "ec_medical,robokop": "#ED953C",        // coral orange
-  "ec_medical,rtxkg2": "#604CEF",         // deep purple
-  "ec_medical,robokop,rtxkg2": "#E0BC05", // golden yellow
+  "robokop": "#1CEAD0",                // cyan
+  "rtxkg2": "#4C73F0",                 // lighter purple
+  "primekg": "#EF4C9E",                // hot pink
+  "robokop,rtxkg2": "#10D461",         // neon green
+  "primekg,robokop": "#ED953C",        // coral orange
+  "primekg,rtxkg2": "#604CEF",         // deep purple
+  "primekg,robokop,rtxkg2": "#E0BC05", // golden yellow
   "disease_list": "#C56492",
   "drug_list": "#51AFA6",
 };
@@ -32,15 +32,15 @@ export const fallbackColors = [
 
 // Define a consistent order for known data sources
 export const sourceOrder = [
-  "ec_medical",
+  "primekg",
   "robokop",
   "rtxkg2",
   "disease_list",
   "drug_list",
-  "ec_medical,robokop",
+  "primekg,robokop",
   "robokop,rtxkg2",
-  "rtxkg2,ec_medical",
-  "ec_medical,robokop,rtxkg2"
+  "rtxkg2,primekg",
+  "primekg,robokop,rtxkg2"
 ];
 
 // Generate a deterministic color for unknown sources
