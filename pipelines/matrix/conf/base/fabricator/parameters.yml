@@ -2505,7 +2505,8 @@ fabricator.document_kg.infores_catalog:
     columns:
       id:
         type: generate_unique_id
-        prefix: "infores:"
+        prefixes:
+          - "infores:"
         id_length: 10
       status:
         type: generate_values
@@ -2579,7 +2580,8 @@ fabricator.document_kg.reusabledata:
     columns:
       id:
         type: generate_unique_id
-        prefix: ""
+        prefixes:
+          - ""
         id_length: 8
       source:
         type: faker
@@ -2767,7 +2769,8 @@ fabricator.document_kg.mapping_reusabledata_infores:
     columns:
       subject_id:
         type: generate_unique_id
-        prefix: "reusabledata:"
+        prefixes:
+          - "reusabledata:"
         id_length: 15
       predicate_id:
         type: generate_values
@@ -2775,7 +2778,8 @@ fabricator.document_kg.mapping_reusabledata_infores:
           - "skos:exactMatch"
       object_id:
         type: generate_unique_id
-        prefix: "infores:"
+        prefixes:
+          - "infores:"
         id_length: 12
       mapping_justification:
         type: generate_values
@@ -2802,7 +2806,8 @@ fabricator.document_kg.mapping_kgregistry_infores:
     columns:
       subject_id:
         type: generate_unique_id
-        prefix: "kgregistry:"
+        prefixes:
+          - "kgregistry:"
         id_length: 15
       predicate_id:
         type: generate_values
@@ -2810,7 +2815,8 @@ fabricator.document_kg.mapping_kgregistry_infores:
           - "skos:exactMatch"
       object_id:
         type: generate_unique_id
-        prefix: "infores:"
+        prefixes:
+          - "infores:"
         id_length: 12
       mapping_justification:
         type: generate_values
