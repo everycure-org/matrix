@@ -44,21 +44,24 @@ document_kg.raw.kgregistry:
   filepath: https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-registry/refs/heads/main/registry/kgs.yml
 
 document_kg.raw.matrix_curated_pks@pandas:
-  <<: [*_pandas_csv, *_layer_raw]
+  type: pandas.CSVDataset
+  <<: *_layer_raw
   filepath: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQxpQU80dpW9bo7STfrX7k9Wv70jA_2C4BN6tDceM1LEOfF9YL22OisdmaUPf7Ptw/pub?gid=135786799&single=true&output=tsv"
   # ${globals:paths.raw_public}/kg_metadata/matrix-pks-curated-metadata.tsv
   load_args:
     sep: "\t"
 
 document_kg.raw.matrix_reviews_pks@pandas:
-  <<: [*_pandas_csv, *_layer_raw]
+  type: pandas.CSVDataset
+  <<: *_layer_raw
   filepath: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQxpQU80dpW9bo7STfrX7k9Wv70jA_2C4BN6tDceM1LEOfF9YL22OisdmaUPf7Ptw/pub?gid=1308154629&single=true&output=tsv"
   #${globals:paths.raw_public}/kg_metadata/matrix-pks-reviews.tsv
   load_args:
     sep: "\t"
 
 document_kg.raw.mapping_reusabledata_infores:
-  <<: [*_pandas_csv, *_layer_raw]
+  type: pandas.CSVDataset
+  <<: *_layer_raw
   filepath: "https://raw.githubusercontent.com/matentzn/pks-resource/refs/heads/main/mappings/reusabledata-infores.sssom.tsv"
   #${globals:paths.raw_public}/kg_metadata/reusabledata-infores.sssom.tsv
   load_args:
@@ -67,7 +70,8 @@ document_kg.raw.mapping_reusabledata_infores:
     comment: "#"
 
 document_kg.raw.mapping_kgregistry_infores:
-  <<: [*_pandas_csv, *_layer_raw]
+  type: pandas.CSVDataset
+  <<: *_layer_raw
   filepath: "https://raw.githubusercontent.com/matentzn/pks-resource/refs/heads/main/mappings/kgregistry-infores.sssom.tsv"
   #${globals:paths.raw_public}/kg_metadata/kgregistry-infores.sssom.tsv
   load_args:
@@ -76,7 +80,8 @@ document_kg.raw.mapping_kgregistry_infores:
     comment: "#"
 
 document_kg.int.pks_integrated_kg_list:
-  <<: [*_pandas_csv, *_layer_int]
+  type: pandas.CSVDataset
+  <<: *_layer_int
   filepath: ${globals:paths.release}/int/pks_integrated_kg_list.csv
 
 document_kg.prm.pks_yaml:

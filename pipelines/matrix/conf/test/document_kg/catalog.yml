@@ -1,15 +1,3 @@
-# Test environment overrides for document_kg pipeline
-# These override the external URLs with local fabricated data
-
-_yaml_dataset: &_yaml_dataset
-  type: yaml.YAMLDataset
-
-_json_dataset: &_json_dataset
-  type: json.JSONDataset
-
-_pandas_csv: &_pandas_csv
-  type: pandas.CSVDataset
-
 _layer_raw: &_layer_raw
   metadata:
     kedro-viz:
@@ -17,21 +5,25 @@ _layer_raw: &_layer_raw
 
 # Override external sources with fabricated data in test environment
 document_kg.raw.infores:
-  <<: [*_yaml_dataset, *_layer_raw]
+  type: yaml.YAMLDataset
+  <<: *_layer_raw
   filepath: ${globals:paths.tmp}/document_kg/fabricated_infores_catalog.yaml
   save_args:
     default_flow_style: false
 
 document_kg.raw.reusabledata:
-  <<: [*_json_dataset, *_layer_raw]
+  type: json.JSONDataset
+  <<: *_layer_raw
   filepath: ${globals:paths.tmp}/document_kg/fabricated_reusabledata.json
 
 document_kg.raw.kgregistry:
-  <<: [*_yaml_dataset, *_layer_raw]
+  type: yaml.YAMLDataset
+  <<: *_layer_raw
   filepath: ${globals:paths.tmp}/document_kg/fabricated_kgregistry.yml
 
 document_kg.raw.matrix_curated_pks@pandas:
-  <<: [*_pandas_csv, *_layer_raw]
+  type: pandas.CSVDataset
+  <<: *_layer_raw
   filepath: ${globals:paths.tmp}/document_kg/fabricated_matrix_curated_pks.tsv
   load_args:
     sep: "\t"
@@ -40,7 +32,8 @@ document_kg.raw.matrix_curated_pks@pandas:
     sep: "\t"
 
 document_kg.raw.matrix_reviews_pks@pandas:
-  <<: [*_pandas_csv, *_layer_raw]
+  type: pandas.CSVDataset
+  <<: *_layer_raw
   filepath: ${globals:paths.tmp}/document_kg/fabricated_matrix_reviews_pks.tsv
   load_args:
     sep: "\t"
@@ -49,7 +42,8 @@ document_kg.raw.matrix_reviews_pks@pandas:
     sep: "\t"
 
 document_kg.raw.mapping_reusabledata_infores:
-  <<: [*_pandas_csv, *_layer_raw]
+  type: pandas.CSVDataset
+  <<: *_layer_raw
   filepath: ${globals:paths.tmp}/document_kg/fabricated_mapping_reusabledata_infores.tsv
   load_args:
     sep: "\t"
@@ -58,7 +52,8 @@ document_kg.raw.mapping_reusabledata_infores:
     sep: "\t"
 
 document_kg.raw.mapping_kgregistry_infores:
-  <<: [*_pandas_csv, *_layer_raw]
+  type: pandas.CSVDataset
+  <<: *_layer_raw
   filepath: ${globals:paths.tmp}/document_kg/fabricated_mapping_kgregistry_infores.tsv
   load_args:
     sep: "\t"
