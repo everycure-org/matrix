@@ -26,15 +26,21 @@ Suitable for transparent provenance and iterative curation.
 
 #### Citations
 
-* **Primary**: `Bizon C. et al. ROBOKOP KG & KGB: integrated knowledge graphs from federated sources. J Chem Inf Model. 2019`, [PMID:31549975]().
-* `Morton K. et al. ROBOKOP: abstraction layer & UI for knowledge graph–based question answering. Bioinformatics. 2019`, [PMID:31077396]().
-* `Korn D. et al. COVID-KOP: Integrating Emerging COVID-19 Data with the ROBOKOP Database. Bioinformatics. 2021;37(4):586-587`, [PMID:33175089]().
+* **Primary**: `Bizon C. et al. ROBOKOP KG & KGB: integrated knowledge graphs from federated sources. J Chem Inf Model. 2019`, ([PMID:31769676](https://pubmed.ncbi.nlm.nih.gov/31769676/)).
+* `Morton K. et al. ROBOKOP: abstraction layer & UI for knowledge graph–based question answering. Bioinformatics. 2019`, ([PMID:31410449](https://pubmed.ncbi.nlm.nih.gov/31410449/)).
+* `Korn D. et al. COVID-KOP: Integrating Emerging COVID-19 Data with the ROBOKOP Database. Bioinformatics. 2021;37(4):586-587`, ([PMID:32601612](https://pubmed.ncbi.nlm.nih.gov/32601612/)).
+* `Foksinska A. et al. The precision medicine process for treating rare disease using the artificial intelligence tool mediKanren. Front Genet. 2022 Oct 6;13:952465`, ([PMID:36248623](https://pubmed.ncbi.nlm.nih.gov/36248623/)).
+* `Muratov E.N., et al. A critical overview of computational approaches employed for COVID-19 drug repurposing. Chemical Society Reviews. 2021`, ([PMID: 34212944](https://pubmed.ncbi.nlm.nih.gov/34212944/)).
+* `Olasunkanmi O. et al. Explainable Enrichment-Driven GrAph Reasoner (EDGAR) for Large Knowledge Graphs with Applications in Drug Repurposing. 2024 IEEE International Conference on Big Data (BigData), Washington, DC, USA. 2024, pp. 777-782.` (https://ieeexplore.ieee.org/document/10825589)
 
 #### Drug Repurposing-related Use Cases
 
-* Used to refine mechanism-of-action (MOA) hypotheses, resulting in more targeted identification of candidate drugs ([PMID:XXX]()).  
-* Applied to virtual screening workflows, resulting in prioritized drug–target associations for repurposing exploration ([PMID:31549975]()).  
-* Used to generate hypotheses for drug repurposing of known drugs and clinical candidates against COVID-19, resulting in mechanistic pathway suggestions ([PMID:33175089]()).
+* Used to refine mechanism-of-action (MOA) hypotheses, resulting in more targeted identification of candidate drugs ([PMID:31410449](https://pubmed.ncbi.nlm.nih.gov/31410449/)).  
+* Applied to virtual screening workflows, resulting in prioritized drug–target associations for repurposing exploration ([PMID:31769676](https://pubmed.ncbi.nlm.nih.gov/31769676/)).  
+* Used to generate hypotheses for drug repurposing of known drugs and clinical candidates against COVID-19, resulting in mechanistic pathway suggestions ([PMID:32601612](https://pubmed.ncbi.nlm.nih.gov/32601612/)).
+* Used within the NCATS Translator project to suggest drug-disease links for rare diseases, enabling precision medicine researchers to prioritize existing drugs for evaluation ([PMID:36248623](https://pubmed.ncbi.nlm.nih.gov/36248623/)).
+* Cited in review articles as an example of a KG (via COVID-KOP extension) used in COVID-19 drug repurposing pipelines ([PMID: 34212944](https://pubmed.ncbi.nlm.nih.gov/34212944/)).
+* Used by EDGAR to perform enrichment-based link inference on ROBOKOP, resulting in candidate drugs for Alzheimer’s disease; 1246 candidates predicted from top enriched paths, with top hits cross-validated against literature (https://ieeexplore.ieee.org/document/10825589).
 
 #### Funding / Supporting Programs
 
@@ -60,21 +66,20 @@ Suitable for transparent provenance and iterative curation.
 
 #### Rationale for inclusion in EC KG
 
-Large, semantically standardized translational KG integrating UMLS, SemMedDB, ChEMBL, DrugBank, 
-Reactome and many more sources. Strong coverage for Drug–Target–Disease reasoning and compatibility with 
-downstream reasoning agents.
+Large, semantically standardized translational KG integrating UMLS, SemMedDB, ChEMBL, DrugBank, Reactome and many more sources.
+Strong coverage for Drug–Target–Disease reasoning and compatibility with downstream reasoning agents.
 
 #### Citations
 
-* **Primary**: `Wood E. C. et al. RTX-KG2: a system for building a semantically standardized knowledge graph for translational biomedicine. BMC Bioinformatics. 2022`, [PMID:35423592]().
-* `Ma C. et al. KGML-xDTD: a knowledge graph-based machine learning framework for drug treatment prediction and mechanism description. (leveraging RTX-KG2 canonical graph) GigaScience / PMC / preprint. 2023`, [PMID:37228255]().
-* `Glen A.K.  et al. ARAX: a graph-based modular reasoning tool for translational biomedicine. Bioinformatics. 2023 Mar;39(3):btad082`, [PMID:36773175]().
+* **Primary**: `Wood E. C. et al. RTX-KG2: a system for building a semantically standardized knowledge graph for translational biomedicine. BMC Bioinformatics. 2022`, ([PMID:36175836](https://pubmed.ncbi.nlm.nih.gov/36175836/)).
+* `Ma C. et al. KGML-xDTD: a knowledge graph-based machine learning framework for drug treatment prediction and mechanism description. (leveraging RTX-KG2 canonical graph) GigaScience / PMC / preprint. 2023`, ([PMID:37602759](https://pubmed.ncbi.nlm.nih.gov/37602759/)).
+* `Glen A.K. et al. ARAX: a graph-based modular reasoning tool for translational biomedicine. Bioinformatics. 2023 Mar;39(3):btad082`, ([PMID:36752514](https://pubmed.ncbi.nlm.nih.gov/36752514/)).
 
 #### Drug Repurposing-related Use Cases
 
-* Used to train KGML-xDTD, which predicts drug–disease treatment probabilities and also provides explainable mechanism paths via RTX-KG2c; in comparisons, showed higher accuracy and fewer false positives in drug repurposing tasks ([PMID:37228255]()).  
-* Used as the foundational knowledge graph in the Translator system’s reasoning agents (ARAX, mediKanren, etc.) to generate drug repurposing hypotheses by linking drugs, targets, and diseases via the rich source integration in RTX-KG2 ([PMID:35423592]()).
-* ARAX’s “Recovering drug/disease relationships” use case: ARAX, which uses RTX-KG2 as a knowledge provider, has explicit workflows/query-types that recover known drug/disease pairs, which helps validate repurposing pipelines ([PMID:36773175]()).
+* Used to train KGML-xDTD, which predicts drug–disease treatment probabilities and also provides explainable mechanism paths via RTX-KG2c; in comparisons, showed higher accuracy and fewer false positives in drug repurposing tasks ([PMID:37602759](https://pubmed.ncbi.nlm.nih.gov/37602759/)).  
+* Used as the foundational knowledge graph in the Translator system’s reasoning agents (ARAX, mediKanren, etc.) to generate drug repurposing hypotheses by linking drugs, targets, and diseases via the rich source integration in RTX-KG2 ([PMIDs: 36175836, 36752514](https://pubmed.ncbi.nlm.nih.gov/36175836/, https://pubmed.ncbi.nlm.nih.gov/36752514/)).
+* ARAX’s “Recovering drug/disease relationships” use case: ARAX, which uses RTX-KG2 as a knowledge provider, has explicit workflows/query-types that recover known drug/disease pairs, which helps validate repurposing pipelines ([PMID:36752514](https://pubmed.ncbi.nlm.nih.gov/36752514/))..
 
 #### Funding / Supporting Programs
 
@@ -83,7 +88,7 @@ downstream reasoning agents.
 
 #### Licensing & Accessibility
 
-* **License**: Build and Software provided free-of-charge under the MIT License; documentation & downloadable build artifacts distributed under CC-BY 4.0
+* **License**: Build and Software provided free-of-charge under the MIT License; documentation & downloadable build artifacts distributed under CC-BY 4.0 (https://github.com/RTXteam/RTX-KG2?tab=readme-ov-file#what-licenses-cover-kg2)
 * **Accessibility**: Public GitHub repo, S3 buckets, and APIs available; programmatic access available
 * **Note on reuse**: Knowledge graph content inherits licenses from upstream sources; downstream users must comply with original source licenses when reusing KG2 content
 
@@ -104,15 +109,15 @@ aligns well with clinical and molecular use cases in repurposing.
 
 #### Citations
 
-* **Primary**: `Morris J.H. et al. The scalable precision medicine open knowledge engine (SPOKE): a massive knowledge graph of biomedical information. Bioinformatics. 2023 Feb;39(2):btad080`, [PMID:36759942]().
-* `Baranzini S.E. et al. A Biomedical Open Knowledge Network Harnesses the Power of AI to Understand Deep Human Biology. AI Magazine. 2022 Mar;43(1):46-58`, [PMID:36093122]().
-* `Soman K., et al. Biomedical knowledge graph-optimized prompt generation for large language models. Bioinformatics. 2024 Sep;40(9)`, [PMID:39288310]().
+* **Primary**: `Morris J.H. et al. The scalable precision medicine open knowledge engine (SPOKE): a massive knowledge graph of biomedical information. Bioinformatics. 2023 Feb;39(2):btad080`, ([PMID:36759942](https://pubmed.ncbi.nlm.nih.gov/36759942/)).
+* `Baranzini S.E. et al. A Biomedical Open Knowledge Network Harnesses the Power of AI to Understand Deep Human Biology. AI Magazine. 2022 Mar;43(1):46-58`, ([PMID:36093122](https://pubmed.ncbi.nlm.nih.gov/36093122/)).
+* `Soman K., et al. Biomedical knowledge graph-optimized prompt generation for large language models. Bioinformatics. 2024 Sep;40(9)`, ([PMID:39288310](https://pubmed.ncbi.nlm.nih.gov/39288310/)).
 
 #### Drug Repurposing-related Use Cases
 
-* Used to explore drug-disease neighborhoods via the Neighborhood Explorer; enabling hypothesis generation for repurposing, including exploring connections of SARS-CoV-2 spike protein to human proteins and compounds for potential interventions. (PMID:36759942).  
-* Used to uncover possible mechanistic pathways linking ACE2 upregulation through mechanical ventilation and its modulation by dexamethasone via the SPOKE graph; this generated a drug repurposing candidate in the COVID-19 context. (From *A Biomedical Open Knowledge Network Harnesses …*) (PMID:36093122).
-* Used to optimize prompt generation for large language models by incorporating SPOKE as the retrieval knowledge base; this helps with generating evidence-backed drug/disease associations in prompts, which may assist repurposing research workflows. (PMID:39288310\)
+* Used to explore drug-disease neighborhoods via the Neighborhood Explorer; enabling hypothesis generation for repurposing, including exploring connections of SARS-CoV-2 spike protein to human proteins and compounds for potential interventions. ([PMID:36759942](https://pubmed.ncbi.nlm.nih.gov/36759942/)).  
+* Used to uncover possible mechanistic pathways linking ACE2 upregulation through mechanical ventilation and its modulation by dexamethasone via the SPOKE graph; this generated a drug repurposing candidate in the COVID-19 context. ([PMID:36093122](https://pubmed.ncbi.nlm.nih.gov/36093122/)).
+* Used to optimize prompt generation for large language models by incorporating SPOKE as the retrieval knowledge base; this helps with generating evidence-backed drug/disease associations in prompts, which may assist repurposing research workflows. ([PMID:39288310](https://pubmed.ncbi.nlm.nih.gov/39288310/))
 
 #### Funding / Supporting Programs
 
@@ -122,7 +127,7 @@ aligns well with clinical and molecular use cases in repurposing.
 
 #### Licensing & Accessibility
 
-* **License**: [Build software provided free-of-charge under the MIT License](https://spoke.rbvi.ucsf.edu/license.html); documentation & downloadable build artifacts distributed under CC-BY 4.0
+* **License**: [Build software provided free-of-charge under the MIT License; documentation & downloadable build artifacts distributed under CC-BY 4.0] (https://spoke.rbvi.ucsf.edu/license.html)
 * **Accessibility**: Public GitHub repo, S3 buckets, and APIs available; downstream users must comply with original source licenses when reusing content
 * **Note on reuse**: Knowledge graph content inherits licenses from upstream sources; our CC-BY assertion applies only to creative products we generate
 
@@ -153,7 +158,7 @@ useful for repurposing hypothesis generation, target/biomarker discovery, and ev
 
 #### Funding / Supporting Programs
 
-* Proprietary product funded, developed and maintained by Elsevier
+* Proprietary product funded, developed and maintained by Elsevier (https://www.niso.org/niso-io/2023/04/elsevier-launches-embiology)
 
 #### Licensing & Accessibility
 
@@ -178,14 +183,16 @@ Frequently used as a benchmark and as input to downstream ML for repurposing and
 
 #### Citations
 
-* **Primary**: `Chandak P. et al. Building a knowledge graph to enable precision medicine. Scientific Data. 2023;10(1):67`, [PMID:36842935]().
-* `Perdomo-Quinteiro P. et al. Knowledge graphs for drug repurposing: a review of databases and methods. Briefings in Bioinformatics. 2024 Jul 3;25(4):bbae331`, [PMID:39325460]().
+* **Primary**: `Chandak P. et al. Building a knowledge graph to enable precision medicine. Scientific Data. 2023;10(1):67`, ([PMID:36732524](https://pubmed.ncbi.nlm.nih.gov/36732524/)).
+* `Perdomo-Quinteiro P. et al. Knowledge graphs for drug repurposing: a review of databases and methods. Briefings in Bioinformatics. 2024 Jul 3;25(4):bbae331`, ([PMID:39325460](https://pubmed.ncbi.nlm.nih.gov/39325460/)).
+* `Dang T. et al. Multimodal Contrastive Representation Learning in Augmented Biomedical Knowledge Graphs. arXiv preprint. 2025`, (https://arxiv.org/abs/2501.01644).
 
 #### Drug Repurposing-related Use Cases
 
-* Used to support drug-disease prediction by including an abundance of ‘indications’, ‘contradictions’, and ‘off-label use’ edges, enabling AI models to explore therapeutic action in less well-covered disease contexts ([PMID:36842935]()).
-* Used to improve coverage of rare and common diseases via connections across multiple biological scales (e.g. phenotypes, proteome perturbations, pathway nodes), increasing the graph’s utility for ML/AI models in predicting new repurposing hypotheses ([PMID:36842935]()).  
-* Employed in external review articles — for example “Knowledge Graphs for drug repurposing: a review” — as an example of a knowledge graph with strong drug entity coverage and use in inference of drug-gene/disease relations ([PMID:39325460]()).
+* Used to support drug-disease prediction by including an abundance of ‘indications’, ‘contradictions’, and ‘off-label use’ edges, enabling AI models to explore therapeutic action in less well-covered disease contexts ([PMID:36732524](https://pubmed.ncbi.nlm.nih.gov/36732524/)).
+* Used to improve coverage of rare and common diseases via connections across multiple biological scales (e.g. phenotypes, proteome perturbations, pathway nodes), increasing the graph’s utility for ML/AI models in predicting new repurposing hypotheses ([PMID:36732524](https://pubmed.ncbi.nlm.nih.gov/36732524/)).  
+* Employed in external review articles — for example “Knowledge Graphs for drug repurposing: a review” — as an example of a knowledge graph with strong drug entity coverage and use in inference of drug-gene/disease relations ([PMID:39325460](https://pubmed.ncbi.nlm.nih.gov/39325460/)).
+* In Multimodal Contrastive Representation Learning in Augmented Biomedical Knowledge Graphs, they use PrimeKG++, a multimodal extension of PrimeKG, to perform link prediction for drug-disease relations, demonstrating improved generalization for unseen nodes (i.e. suggesting new repurposing candidates) (https://arxiv.org/abs/2501.01644). 
 
 #### Funding / Supporting Programs
 
