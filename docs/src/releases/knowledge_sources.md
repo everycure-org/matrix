@@ -94,7 +94,6 @@ downstream reasoning agents.
 ### SPOKE (Scalable Precision Medicine Oriented Knowledge Engine)
 
 - **Homepage**: [https://spoke.rbvi.ucsf.edu/](https://spoke.rbvi.ucsf.edu/)
-- **Graph Version/ Release:** See [Matrix release pages](https://docs.dev.everycure.org/releases/release_history/)
 - **Current status:** Continuously maintained academic/enterprise offering with public web explorer for neighborhoods; full graph access under license
 
 #### Rationale for inclusion in EC KG
@@ -134,7 +133,6 @@ aligns well with clinical and molecular use cases in repurposing.
 ### EmBiology (Elsevier Biology Knowledge Graph)
 
 - **Homepage**: [https://www.elsevier.com/products/embiology](https://www.elsevier.com/products/embiology)
-- **Graph Version/ Release:** See [Matrix release pages](https://docs.dev.everycure.org/releases/release_history/)
 - **Current status:** Commercial, continuously updated product; vendor reports frequent KG refreshes (weekly to annual components)
 
 #### Rationale for inclusion in EC KG
