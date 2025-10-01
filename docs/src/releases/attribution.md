@@ -43,7 +43,7 @@ In the following we acknowledge some of the core resources that drive our succes
     - [Google Cloud](#googlecloud)
 
 
-## Data/knowledge sources
+## Data and knowledge sources
 
 <a id="knowledgesources"></a>
 
@@ -61,7 +61,7 @@ and applicability to drug repurposing, [see here](knowledge_sources.md).
 MATRIX integrates information from RTX-KG2, a large-scale biomedical knowledge graph developed by the Translator RTX team.
 RTX-KG2 aggregates and harmonizes knowledge from dozens of authoritative biomedical databases and ontologies into a single, semantically consistent graph aligned with the Biolink Model.
 It provides a rich source of curated biological and clinical associations that support reasoning and drug repurposing use cases.
-For details on sources and construction, see RTX-KG2 documentation and [this publication](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-022-04932-3):
+For details on sources and construction, see [RTX-KG2 documentation](https://github.com/RTXteam/RTX-KG2) and [this publication](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-022-04932-3):
 
 ```
 Wood, E.C., Glen, A.K., Kvarfordt, L.G. et al. 
