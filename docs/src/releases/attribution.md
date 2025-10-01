@@ -218,7 +218,7 @@ A graph database optimized for querying and exploring biomedical relationships, 
 
 !!! info "Acknowledgment"
 
-    Neo4J provides Every Cure with a free license.
+    Neo4J provides Every Cure with a free license as part of its Graphs4Good scheme (https://neo4j.com/graphs4good/).
 
 
 <a id="mlflow"></a>
