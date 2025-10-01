@@ -2,8 +2,8 @@
 
 First-level knowledge sources are those that we leverage directly in the context of the Matrix pipeline.
 
-- [RTX-KG2](#rtxkg2)
 - [ROBOKOP](#robokop)
+- [RTX-KG2](#rtxkg2)
 - [SPOKE KG](#spoke)
 - [EmBiology](#embiology)
 - [PrimeKG](#primekg)
@@ -88,7 +88,7 @@ Strong coverage for Drug–Target–Disease reasoning and compatibility with dow
 
 #### Licensing & Accessibility
 
-* **License**: Build and Software provided free-of-charge under the MIT License; documentation & downloadable build artifacts distributed under CC-BY 4.0 (https://github.com/RTXteam/RTX-KG2?tab=readme-ov-file#what-licenses-cover-kg2)
+* **License**: [Build and Software provided free-of-charge under the MIT License; documentation & downloadable build artifacts distributed under CC-BY 4.0](https://github.com/RTXteam/RTX-KG2?tab=readme-ov-file#what-licenses-cover-kg2)
 * **Accessibility**: Public GitHub repo, S3 buckets, and APIs available; programmatic access available
 * **Note on reuse**: Knowledge graph content inherits licenses from upstream sources; downstream users must comply with original source licenses when reusing KG2 content
 
@@ -127,7 +127,7 @@ aligns well with clinical and molecular use cases in repurposing.
 
 #### Licensing & Accessibility
 
-* **License**: [Build software provided free-of-charge under the MIT License; documentation & downloadable build artifacts distributed under CC-BY 4.0] (https://spoke.rbvi.ucsf.edu/license.html)
+* **License**: [Custom license](https://spoke.rbvi.ucsf.edu/license.html)
 * **Accessibility**: Public GitHub repo, S3 buckets, and APIs available; downstream users must comply with original source licenses when reusing content
 * **Note on reuse**: Knowledge graph content inherits licenses from upstream sources; our CC-BY assertion applies only to creative products we generate
 
