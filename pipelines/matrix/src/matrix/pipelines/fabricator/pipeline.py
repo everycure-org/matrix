@@ -151,41 +151,6 @@ def format_kgregistry_yaml(resources: pd.DataFrame) -> dict:
     return {"resources": resources_list}
 
 
-def format_sssom_mapping(mappings: pd.DataFrame, mapping_set_id: str, description: str) -> str:
-    """Format fabricated mapping data into SSSOM TSV format with proper headers.
-
-    Args:
-        mappings: DataFrame with mapping columns (subject_id, predicate_id, object_id, etc.)
-        mapping_set_id: Identifier for this mapping set
-        description: Description of the mapping set
-
-    Returns:
-        String content in SSSOM format with headers and data
-    """
-    # Generic SSSOM header template
-    header_lines = [
-        "# curie_map:",
-        '#   fabricated: "https://example.org/fabricated/"',
-        '#   infores: "https://bioregistry.io/registry/infores/"',
-        '#   skos: "http://www.w3.org/2004/02/skos/core#"',
-        '#   semapv: "https://w3id.org/semapv/vocab/"',
-        f"# mapping_set_id: {mapping_set_id}",
-        "# mapping_set_version: 1.0.0",
-        f'# mapping_set_description: "{description}"',
-        "# creator_id: fabricator",
-        "# mapping_date: 2025-01-03",
-        "# license: CC-BY-4.0",
-    ]
-
-    # Convert DataFrame to TSV format
-    tsv_content = mappings.to_csv(sep="\t", index=False)
-
-    # Combine headers and data
-    full_content = "\n".join(header_lines) + "\n" + tsv_content
-
-    return full_content
-
-
 def create_pipeline(**kwargs) -> Pipeline:
     """Create fabricator pipeline."""
     return pipeline(
@@ -415,34 +380,14 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.document_kg.mapping_reusabledata_infores"},
-                outputs={"mappings": "fabricator.int.document_kg.mapping_reusabledata_infores_raw"},
+                outputs={"mappings": "document_kg.raw.mapping_reusabledata_infores"},
                 name="fabricate_mapping_reusabledata_infores",
-            ),
-            node(
-                func=format_sssom_mapping,
-                inputs={
-                    "mappings": "fabricator.int.document_kg.mapping_reusabledata_infores_raw",
-                    "mapping_set_id": "params:fabricator.document_kg.mapping_reusabledata_infores.mapping_set_id",
-                    "description": "params:fabricator.document_kg.mapping_reusabledata_infores.description",
-                },
-                outputs="document_kg.raw.mapping_reusabledata_infores",
-                name="format_mapping_reusabledata_infores",
             ),
             node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.document_kg.mapping_kgregistry_infores"},
-                outputs={"mappings": "fabricator.int.document_kg.mapping_kgregistry_infores_raw"},
+                outputs={"mappings": "document_kg.raw.mapping_kgregistry_infores"},
                 name="fabricate_mapping_kgregistry_infores",
-            ),
-            node(
-                func=format_sssom_mapping,
-                inputs={
-                    "mappings": "fabricator.int.document_kg.mapping_kgregistry_infores_raw",
-                    "mapping_set_id": "params:fabricator.document_kg.mapping_kgregistry_infores.mapping_set_id",
-                    "description": "params:fabricator.document_kg.mapping_kgregistry_infores.description",
-                },
-                outputs="document_kg.raw.mapping_kgregistry_infores",
-                name="format_mapping_kgregistry_infores",
             ),
         ]
     )
