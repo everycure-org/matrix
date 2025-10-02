@@ -44,6 +44,49 @@ spec:
           general_settings:
             telemetry: false
           model_list:
+            # OpenAI
+            - model_name: gpt-5
+              litellm_params:
+                model: openai/gpt-5
+                api_key: os.environ/OPENAI_API_KEY
+                cache_control_injection_points:
+                  - location: message
+                    role: user
+            - model_name: gpt-5-2025-08-07
+              litellm_params:
+                model: openai/gpt-5-2025-08-07
+                api_key: os.environ/OPENAI_API_KEY
+                cache_control_injection_points:
+                  - location: message
+                    role: user
+            - model_name: gpt-5-mini
+              litellm_params:
+                model: openai/gpt-5-mini
+                api_key: os.environ/OPENAI_API_KEY
+                cache_control_injection_points:
+                  - location: message
+                    role: user
+            - model_name: gpt-5-mini-2025-08-07
+              litellm_params:
+                model: openai/gpt-5-mini-2025-08-07
+                api_key: os.environ/OPENAI_API_KEY
+                cache_control_injection_points:
+                  - location: message
+                    role: user
+            - model_name: gpt-5-nano
+              litellm_params:
+                model: openai/gpt-5-nano
+                api_key: os.environ/OPENAI_API_KEY
+                cache_control_injection_points:
+                  - location: message
+                    role: user
+            - model_name: gpt-5-nano-2025-08-07
+              litellm_params:
+                model: openai/gpt-5-nano-2025-08-07
+                api_key: os.environ/OPENAI_API_KEY
+                cache_control_injection_points:
+                  - location: message
+                    role: user
             - model_name: gpt-4o
               litellm_params:
                 model: openai/gpt-4o
@@ -86,6 +129,7 @@ spec:
                 cache_control_injection_points:
                   - location: message
                     role: user
+            # OpenAI
             - model_name: claude-3-5-haiku
               litellm_params:
                 model: anthropic/claude-3-5-haiku-20241022
