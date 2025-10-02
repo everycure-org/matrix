@@ -115,7 +115,6 @@ jobs:
           git push
 
       - name: Download & commit primary-knowledge-sources.md file
-      # TODO - update once kedro work is finished
         working-directory: docs/src/releases
         env:
           RELEASE_DIR_GCS: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases
