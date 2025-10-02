@@ -154,12 +154,8 @@ spec:
             set_verbose: true
             cache: true
             cache_params:
-              type: redis
-              host: redis.redis.svc.cluster.local
-              port: 6379
-              # password: os.environ/REDIS_PASSWORD   
-              ttl: 86400  # Cache for 1 day
-          ui:
+              type: gcs
+              gcs_bucket_name: {{ .Values.spec.destination.server }}-{{ .Values.spec.source.environment }}-litellm-cache
             enabled: true
         masterkeySecretName: litellm-master-key
         masterkeySecretKey: LITELLM_MASTER_KEY
