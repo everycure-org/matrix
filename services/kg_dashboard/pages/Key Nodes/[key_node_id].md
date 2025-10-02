@@ -5,7 +5,16 @@ SELECT * FROM bq.key_nodes_stats WHERE id = '${params.key_node_id}'
 ```
 
 ```sql key_node_edges_breakdown
-SELECT * FROM bq.key_nodes_edges_breakdown WHERE key_node_id = '${params.key_node_id}' ORDER BY edge_count DESC
+SELECT
+  key_node_id,
+  REPLACE(subject_category, 'biolink:', '') as subject_category,
+  REPLACE(predicate, 'biolink:', '') as predicate,
+  REPLACE(object_category, 'biolink:', '') as object_category,
+  REPLACE(primary_knowledge_source, 'infores:', '') as primary_knowledge_source,
+  edge_count
+FROM bq.key_nodes_edges_breakdown
+WHERE key_node_id = '${params.key_node_id}'
+ORDER BY edge_count DESC
 ```
 
 ```sql key_node_connected_categories
@@ -120,14 +129,13 @@ are most common for this entity.
     pagination=true
     pageSize={25}
     title="Edge Types (with descendants)">
-    
+
+    <Column id="edge_count" title="Edge Count" contentType="bar" fmt="num0" />
     <Column id="subject_category" title="Subject Category" />
     <Column id="predicate" title="Predicate" />
     <Column id="object_category" title="Object Category" />
     <Column id="primary_knowledge_source" title="Primary KS" />
-    <Column id="edge_count" title="Edge Count" contentType="bar" fmt="num0" />
-    <Column id="unique_subjects" title="Unique Subjects" fmt="num0" />
-    <Column id="unique_objects" title="Unique Objects" fmt="num0" />
+
 </DataTable>
 {:else}
 <div class="text-center text-lg text-gray-500 mt-10">
