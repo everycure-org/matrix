@@ -159,6 +159,7 @@ spec:
               port: 6379
               # password: os.environ/REDIS_PASSWORD
               ttl: 2592000  # Cache for 30 days
+              supported_call_types: ['completion', 'acompletion', 'embedding', 'aembedding', 'atranscription', 'transcription', 'atext_completion', 'text_completion', 'arerank', 'rerank', 'responses']
           ui:
             enabled: true
         masterkeySecretName: litellm-master-key
