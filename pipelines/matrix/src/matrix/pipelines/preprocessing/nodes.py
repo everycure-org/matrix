@@ -868,7 +868,6 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
     Args:
         df: Clinical trial dataset
     """
-    # Filter to only the required columns
     required_columns = [
         "clinical_trial_id",
         "reason_for_rejection",
@@ -879,11 +878,9 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
         "non_significantly_worse",
         "significantly_worse",
     ]
-
     # Check which columns are actually present in the dataframe
     available_columns = [col for col in required_columns if col in df.columns]
     df = df[available_columns]
-
     drug_names = df["drug_name"].dropna().unique().tolist()
     disease_names = df["disease_name"].dropna().unique().tolist()
 
