@@ -31,6 +31,35 @@ def create_primekg_pipeline() -> Pipeline:
     )
 
 
+def create_ec_clinical_data_pipeline() -> Pipeline:
+    """EC Clinical Data ingestion and name->id mapping"""
+    return pipeline(
+        [
+            node(
+                func=nodes.add_source_and_target_to_clinical_trails,
+                inputs={
+                    "df": "preprocessing.raw.clinical_trials_data",
+                    "resolver_url": "params:preprocessing.name_resolution.url",
+                    "batch_size": "params:preprocessing.name_resolution.batch_size",
+                },
+                outputs="preprocessing.int.mapped_clinical_trials_data",
+                name="mapped_clinical_trials_data",
+                tags=["ec-clinical-trials-data"],
+            ),
+            node(
+                func=nodes.clean_clinical_trial_data,
+                inputs={"df": "preprocessing.int.mapped_clinical_trials_data"},
+                outputs={
+                    "nodes": "ingestion.raw.ec_clinical_trails.nodes@pandas",
+                    "edges": "ingestion.raw.ec_clinical_trails.edges@pandas",
+                },
+                name="clean_clinical_trial_data",
+                tags=["ec-clinical-trials-data"],
+            ),
+        ]
+    )
+
+
 def create_embiology_pipeline() -> Pipeline:
     """Embiology cleaning and preprocessing"""
     return pipeline(
@@ -146,5 +175,6 @@ def create_pipeline() -> Pipeline:
         [
             create_primekg_pipeline(),
             create_embiology_pipeline(),
+            create_ec_clinical_data_pipeline(),
         ]
     )

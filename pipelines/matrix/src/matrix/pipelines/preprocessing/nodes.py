@@ -868,6 +868,21 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
     Args:
         df: Clinical trial dataset
     """
+    # Filter to only the required columns
+    required_columns = [
+        "clinical_trial_id",
+        "reason_for_rejection",
+        "drug_name",
+        "disease_name",
+        "significantly_better",
+        "non_significantly_better",
+        "non_significantly_worse",
+        "significantly_worse",
+    ]
+
+    # Check which columns are actually present in the dataframe
+    available_columns = [col for col in required_columns if col in df.columns]
+    df = df[available_columns]
 
     drug_names = df["drug_name"].dropna().unique().tolist()
     disease_names = df["disease_name"].dropna().unique().tolist()
@@ -966,6 +981,7 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
     drugs = df.rename(columns={"drug_curie": "curie", "drug_name": "name"})[["curie", "name"]]
     diseases = df.rename(columns={"disease_curie": "curie", "disease_name": "name"})[["curie", "name"]]
     nodes = pd.concat([drugs, diseases], ignore_index=True)
+
     return {"nodes": nodes, "edges": edges}
 
 
