@@ -28,6 +28,7 @@ paths:
   raw_public:      ${public_gcs_bucket}/data/01_RAW
 
   # Release-based
+  document_kg:        ${release_dir}/datasets/document_kg
   ingestion:          ${release_dir}/datasets/ingestion
   integration:        ${release_dir}/datasets/integration
   release:            ${release_dir}/datasets/release
