@@ -157,8 +157,8 @@ spec:
               type: redis
               host: redis.redis.svc.cluster.local
               port: 6379
-              # password: os.environ/REDIS_PASSWORD   
-              ttl: 86400  # Cache for 1 day
+              # password: os.environ/REDIS_PASSWORD
+              ttl: 2592000  # Cache for 30 days
           ui:
             enabled: true
         masterkeySecretName: litellm-master-key
