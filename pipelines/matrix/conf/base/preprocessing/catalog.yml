@@ -37,9 +37,30 @@ _polars_csv_ds: &_polars_csv
     ignore_errors: true
     truncate_ragged_lines: true
 
+_medical_clinical_trials_sheet_dataset: &_medical_clinical_trials_sheet_dataset
+  type: matrix_gcp_datasets.gcp.GoogleSheetsDataset
+  spreadsheet_url: https://docs.google.com/spreadsheets/d/1Wlrjr8ojUGCfWJg-QF5PzpJFqpD7LLH7b60u2XAngh0/edit?gid=0#gid=0
+  worksheet_gid: 0
+  service_account_file_path: conf/local/service-account.json
+
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
+
+
+
+# Medical Clinical Trials
+preprocessing.raw.clinical_trials_data:
+  <<: *_medical_clinical_trials_sheet_dataset
+
+preprocessing.int.mapped_clinical_trials_data:
+  type:  pandas.CSVDataset
+  filepath: ${globals:paths.tmp}/preprocessing_clinical_trials.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"
+
 preprocessing.raw.embiology.node_attributes:
   type: pandas.CSVDataset
   filepath: ${globals:paths.raw_private}/source_data/raw_embiology/csv/attr.csv.gz
@@ -148,15 +169,6 @@ preprocessing.int.embiology.node_attributes_normalised_ids@pandas:
 preprocessing.int.embiology.node_attributes_normalised_ids@spark:
   <<: *_spark_parquet
   filepath: ${globals:paths.tmp}/embiology/int/node_attributes_normalised_ids
-
-preprocessing.int.mapped_clinical_trials_data:
-  type:  pandas.CSVDataset
-  filepath: ${globals:paths.tmp}/preprocessing_clinical_trials.tsv
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
-
 
 # PrimeKG
 preprocessing.raw.primekg.drug_features@polars:
