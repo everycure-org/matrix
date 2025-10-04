@@ -1,0 +1,10 @@
+_spark_parquet_ds: &_spark_parquet
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+# Output placeholder for run comparison plots / results
+run_comparison.plots.recall_at_n:
+  <<: *_spark_parquet
+  filepath: data/run_comparison/recall_at_n
