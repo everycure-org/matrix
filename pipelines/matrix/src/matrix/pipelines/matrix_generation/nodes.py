@@ -172,6 +172,13 @@ def generate_pairs(
     matrix = matrix[~is_in_train]
     # Add flag columns for known positives and negatives
     matrix = _add_flag_columns(matrix, known_pairs, clinical_trials, off_label, orchard)
+
+    # Add ec id to matrix drugs
+    matrix = (
+        matrix.merge(drugs[["id", "ec_id"]], left_on="source", right_on="id", how="left")
+        .drop("id", axis=1)
+        .rename({"ec_id": "ec_id_source"}, axis=1)
+    )
     return matrix
 
 
