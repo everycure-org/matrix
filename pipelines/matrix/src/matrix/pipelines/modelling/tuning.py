@@ -71,10 +71,10 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
             n_calls: Number of calls to the objective function.
         """
         self.estimator = estimator
-        self._dimensions = dimensions
-        self._scoring = scoring
-        self._splitter = splitter
-        self._n_calls = n_calls
+        self.dimensions = dimensions
+        self.scoring = scoring
+        self.splitter = splitter
+        self.n_calls = n_calls
         super().__init__()
 
     def fit(self, X, y=None, **params):
@@ -89,7 +89,7 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
             Fitted estimator.
         """
 
-        @use_named_args(self._dimensions)
+        @use_named_args(self.dimensions)
         def evaluate_model(**params):
             """Function to evaluate model using the given splitter.
 
@@ -108,19 +108,19 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
             self.estimator.set_params(**params)
 
             scores = []
-            for train, test in self._splitter.split(X, y):
+            for train, test in self.splitter.split(X, y):
                 X_train_split = to_estimator_device(X[train], self.estimator)
                 self.estimator.fit(X_train_split, y[train])
                 X_test_split = to_estimator_device(X[test], self.estimator)
                 y_pred = self.estimator.predict(X_test_split)
-                scores.append(self._scoring(y_pred, y[test]))
+                scores.append(self.scoring(y_pred, y[test]))
 
             return 1.0 - np.average(scores)
 
-        result = gp_minimize(evaluate_model, self._dimensions, n_calls=self._n_calls)
+        result = gp_minimize(evaluate_model, self.dimensions, n_calls=self.n_calls)
 
         self.convergence_plot = plot_convergence(result).figure
 
-        self.best_params_ = {param.name: val for param, val in zip(self._dimensions, result.x)}
+        self.best_params_ = {param.name: val for param, val in zip(self.dimensions, result.x)}
 
         return self.estimator.set_params(**params)
