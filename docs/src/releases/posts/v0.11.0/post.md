@@ -96,7 +96,6 @@ authors:
 
 - **Make Install Fix**: Removed `make install` target from pipelines/matrix Makefile as it conflicted with workspace-level dependency management. [#1859](https://github.com/everycure-org/matrix/pull/1859)
 
-- **Google Sheets Dataset Fixes**: Fixed multiple issues with Google Sheets dataset including gid handling and worksheet selection. [#1858](https://github.com/everycure-org/matrix/pull/1858)
 
 - **Pod Rejection Regex Fix**: Corrected regex patterns for detecting pod rejection messages in workflow specifications. [#1863](https://github.com/everycure-org/matrix/pull/1863)
 
