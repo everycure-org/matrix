@@ -25,7 +25,7 @@ authors:
 
 - **PrimeKG Integration**: Integrated PrimeKG as a new knowledge source into the MATRIX pipeline. PrimeKG provides precision medicine knowledge with 129K nodes and 4M+ edges covering diseases, drugs, proteins, and biological pathways. [#1793](https://github.com/everycure-org/matrix/pull/1793)
 
-- **Branching from Previous Runs**: Added `--from-run` CLI parameter enabling pipeline execution to pull specific inputs from previous MLflow runs, allowing efficient branching and iterative experimentation without recomputing earlier pipeline stages. [#1769](https://github.com/everycure-org/matrix/pull/1769)
+- **Branching from Previous Runs**: Added `--from-run` CLI parameter enabling pipeline execution to pull specific inputs from a previous pipeline run, allowing efficient branching and iterative experimentation without recomputing earlier pipeline stages. [#1769](https://github.com/everycure-org/matrix/pull/1769)
 
 - **KG Release Trends Dashboard**: Created interactive dashboard page showing knowledge graph statistics and trends across MATRIX releases, providing insights into KG growth and evolution over time. [#1830](https://github.com/everycure-org/matrix/pull/1830)
 
