@@ -62,7 +62,7 @@ def remove_overlap(disease_list: pd.DataFrame, drug_list: pd.DataFrame):
     Returns:
         Two dataframes, clean drug and disease lists respectively.
     """
-    overlap = set(disease_list["id"]).intersection(set(drug_list["id"]))
+    overlap = set(disease_list["id"]).intersection(set(drug_list["translator_id"]))
     overlap_mask_drug = drug_list["translator_id"].isin(overlap)
     overlap_mask_disease = disease_list["id"].isin(overlap)
     drug_list = drug_list[~overlap_mask_drug]
