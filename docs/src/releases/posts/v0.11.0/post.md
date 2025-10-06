@@ -115,7 +115,6 @@ authors:
 
 - **Removed Update Dependencies Workflow**: Removed automated dependency update workflow to reduce maintenance overhead. [#1839](https://github.com/everycure-org/matrix/pull/1839)
 
-- **Benchmark Release Link**: Added link to benchmark release page from KG dashboard. [#1827](https://github.com/everycure-org/matrix/pull/1827)
 
 ---
 
