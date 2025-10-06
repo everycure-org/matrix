@@ -174,6 +174,7 @@ fabricator.rtx_kg2:
         prefixes:
           - "EC"
         delimiter: ":"
+        id_length: 5
       name:
         type: copy_column
         source_column: "nodes.name"
