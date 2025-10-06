@@ -166,104 +166,26 @@ fabricator.rtx_kg2:
           - 678
           - 195959
           - 5059595
-
   drug_list:
     num_rows: 100
     columns:
       id:
-        type: copy_column
-        source_column: "nodes.id"
-        sample:
-          num_rows: "@drug_list.num_rows"
-          seed: 6850
+        type: generate_unique_id
+        prefixes:
+          - "EC"
+        delimiter: ":"
       name:
         type: copy_column
         source_column: "nodes.name"
         sample:
           num_rows: "@drug_list.num_rows"
           seed: 6850
-      default_med_view_filter_to_exclude:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_combination_therapy:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      approved_japan:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      marketing_status_europe:
-        type: generate_values
-        sample_values:
-          - "APPROVED"
-          - "WITHDRAWN"
-          - "PENDING"
-      approved_eu:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      marketing_status_usa:
-        type: generate_values
-        sample_values:
-          - "APPROVED"
-          - "WITHDRAWN"
-          - "PENDING"
-      approved_usa:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      approved_russia:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      approved_india:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_metallic_salt:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_steroid:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_antimicrobial:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_chemotherapy:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_glucose_regulator:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_vaccine_or_antigen:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_no_therapeutic_value:
-        type: generate_values
-        sample_values:
-          - True
-          - False
+      translator_id:
+        type: copy_column
+        source_column: "nodes.id"
+        sample:
+          num_rows: "@drug_list.num_rows"
+          seed: 6850
       atc_main:
         type: faker
         provider: word
@@ -297,11 +219,9 @@ fabricator.rtx_kg2:
       l5_label:
         type: faker
         provider: word
-      is_psychiatric_drug:
-        type: generate_values
-        sample_values:
-          - True
-          - False
+      smiles:
+        type: faker
+        provider: word
 
   disease_list:
     num_rows: 100
