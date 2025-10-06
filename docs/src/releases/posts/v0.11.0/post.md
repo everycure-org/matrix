@@ -63,7 +63,6 @@ authors:
 
 - **Enhanced Node Pool Configuration**: Updated management node pool to n2-standard-16 machine type for improved cluster management performance. [#1873](https://github.com/everycure-org/matrix/pull/1873)
 
-- **Docker Ignore .env Files**: Added `.env` to .dockerignore preventing accidental inclusion of local environment files in Docker images. [#1835](https://github.com/everycure-org/matrix/pull/1835)
 
 ## Documentation ✏️
 
