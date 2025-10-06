@@ -37,6 +37,8 @@ authors:
 
 - **Inject Library for Cross-Repository Code Reuse**: Extracted dependency injection utilities into standalone `matrix-inject` library for sharing configuration patterns across MATRIX repositories. [#1853](https://github.com/everycure-org/matrix/pull/1853)
 
+- **Benchmark Release Link**: Added link to benchmark release page from KG dashboard. [#1827](https://github.com/everycure-org/matrix/pull/1827)
+
 ## Technical Enhancements 🧰
 
 - **Updated Baseline Model**: Main branch now reflects new baseline model using integrated knowledge graph (RTX-KG2 + ROBOKOP) embeddings, improving model performance and reproducibility. [#1875](https://github.com/everycure-org/matrix/pull/1875)
