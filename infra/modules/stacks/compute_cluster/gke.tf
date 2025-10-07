@@ -39,8 +39,8 @@ locals {
       gpu_driver_version = "LATEST"
     },
     {
-      name               = "g2-standard-48-l4-nodes" # 1 GPU, 48vCPUs, 192GB RAM
-      machine_type       = "g2-standard-48"
+      name               = "g2-standard-32-l4-nodes" # 1 GPU, 32vCPUs, 128GB RAM
+      machine_type       = "g2-standard-32"
       node_locations     = local.default_node_locations
       min_count          = 0
       max_count          = 20
@@ -109,8 +109,8 @@ locals {
       spot               = true
     },
     {
-      name               = "g2-standard-48-l4-spot-nodes" # 1 GPU, 48vCPUs, 192GB RAM
-      machine_type       = "g2-standard-48"
+      name               = "g2-standard-32-l4-spot-nodes" # 1 GPU, 32vCPUs, 128GB RAM
+      machine_type       = "g2-standard-32"
       node_locations     = local.default_node_locations
       min_count          = 0
       max_count          = 20
