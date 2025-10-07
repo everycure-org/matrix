@@ -19,7 +19,7 @@ from kedro.io.core import (
     DatasetError,
     Version,
 )
-from kedro_datasets.pandas import GBQTableDataset
+from kedro_datasets.pandas import GBQTableDataset, ParquetDataset
 from kedro_datasets.partitions import PartitionedDataset
 from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
 from pygsheets import Spreadsheet, Worksheet
@@ -235,6 +235,84 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         Returns:
             Sanitized name
         """
+        return re.sub(r"[^a-zA-Z0-9_]", "_", str(name))
+
+
+"""# NOTE: This class was partially generated using AI assistance."""
+
+
+class PandasDatasetWithBQExternalTable(ParquetDataset):
+    """Pandas dataset that writes Parquet and registers a BQ external table.
+
+    Mirrors ``SparkDatasetWithBQExternalTable`` but uses ``kedro_datasets.pandas.ParquetDataset``
+    for IO. After saving, it creates or updates a BigQuery external table pointing to the
+    saved location using a wildcard URI.
+    """
+
+    def __init__(  # noqa: PLR0913
+        self,
+        *,
+        filepath: str,
+        project_id: str,
+        dataset: str,
+        table: str,
+        identifier: str | None = None,
+        load_args: dict[str, Any] | None = None,
+        save_args: dict[str, Any] | None = None,
+        version: Version | None = None,
+        credentials: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        self._project_id = project_id
+        self._path = filepath
+        self._format = "parquet"
+        self._labels = save_args.pop("labels", {}) if save_args else {}
+
+        self._table = self._sanitize_name("_".join(el for el in [table, identifier] if el is not None))
+        self._dataset_id = f"{self._project_id}.{self._sanitize_name(dataset)}"
+        self._client = bigquery.Client(project=self._project_id)
+
+        super().__init__(
+            filepath=filepath,
+            load_args=load_args,
+            save_args=save_args,
+            version=version,
+            credentials=credentials,
+            metadata=metadata,
+        )
+
+    def save(self, data: pd.DataFrame) -> None:
+        # Invoke saving of the underlying pandas parquet dataset
+        super().save(data)
+
+        # Ensure dataset exists
+        self._create_dataset()
+
+        # Create external table, referencing the dataset in object storage
+        external_config = bigquery.ExternalConfig(self._format.upper())
+        external_config.source_uris = [f"{self._path}/*.{self._format}"]
+
+        # Register the external table within BigQuery
+        table = bigquery.Table(f"{self._dataset_id}.{self._table}")
+        table.labels = self._labels
+        table.external_data_configuration = external_config
+        try:
+            self._client.create_table(table, exists_ok=False)
+        except exceptions.Conflict:
+            self._client.update_table(table, fields=["labels"])
+
+    def _create_dataset(self) -> None:
+        try:
+            self._client.get_dataset(self._dataset_id)
+            logger.info(f"Dataset {self._dataset_id} already exists")
+        except exceptions.NotFound:
+            logger.info(f"Dataset {self._dataset_id} is not found, will attempt creating it now.")
+            dataset = bigquery.Dataset(self._dataset_id)
+            dataset = self._client.create_dataset(dataset, timeout=30)
+            logger.info(f"Created dataset {self._project_id}.{dataset.dataset_id}")
+
+    @staticmethod
+    def _sanitize_name(name: str) -> str:
         return re.sub(r"[^a-zA-Z0-9_]", "_", str(name))
 
 
