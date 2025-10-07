@@ -1,5 +1,5 @@
 import abc
-from typing import Iterable, List, Optional
+from typing import List
 
 import pandas as pd
 import polars as pl
@@ -17,45 +17,73 @@ class ComparisonEvaluation(abc.ABC):
 class RecallAtN(ComparisonEvaluation):
     """Recall@N evaluation"""
 
-    def __init__(self, n_values: Optional[Iterable[int]] = None):
-        self.n_values: List[int] = list(n_values) if n_values is not None else [10, 20, 50, 100]
-
     def evaluate(self, matrices: List[ps.DataFrame]) -> pd.DataFrame:
         """Evaluate recall@n against the provided matrix.
 
         Args:
-            matrix: PySpark DataFrame of predictions and labels.
+            matrices: list of PySpark DataFrame of predictions and labels.
+            bool_test_col: Boolean column in the matrix indicating the known positive test set
+            score_col: Column in the matrix containing the treat scores.
 
         Returns:
             pandas DataFrame with columns `n` and `recall_at_n`.
         """
-        # Just doing one matrix
-        matrix_pl = pl.from_pandas(matrices[0].toPandas())
 
-        n_lst: List[int] = self.n_values
-        bool_test_col: str = "is_known_positive"
-        score_col: str = "transformed_treat_score"
-        perform_sort: bool = True
-        out_of_matrix_mode: bool = False
+        n_lst = [10, 20, 50, 100]
 
-        # Number of known positives
-        N = len(matrix_pl.filter(pl.col(bool_test_col)))
-        if N == 0:
-            return [0] * len(n_lst)
+        result = []
 
-        if out_of_matrix_mode:
-            matrix_pl = matrix_pl.filter(pl.col("in_matrix") | pl.col(bool_test_col))
+        for matrix in matrices:
+            recall = give_recall_at_n(
+                matrix, n_lst, bool_test_col="is_known_positive", score_col="transformed_treat_score"
+            )
+            result.append(pd.DataFrame({"n": n_lst, "recall_at_n": recall}))
 
-        # Sort by treat score
-        if perform_sort or out_of_matrix_mode:
-            matrix_pl = matrix_pl.sort(by=score_col, descending=True)
+        return result
 
-        # Ranks of the known positives
-        ranks_series = (
-            matrix_pl.with_row_index("index").filter(pl.col(bool_test_col)).select(pl.col("index")).to_series() + 1
-        )
 
-        # Recall@n scores
-        recall_lst = [(ranks_series <= n).sum() / N for n in n_lst]
+# Direct copy-paste from lab-notebooks
+def give_recall_at_n(
+    matrix: pl.DataFrame,
+    n_lst: list[int],
+    bool_test_col: str = "is_known_positive",
+    score_col: str = "treat score",
+    perform_sort: bool = True,
+    out_of_matrix_mode: bool = False,
+) -> List[float]:
+    """
+    Returns the recall@n score for a list of n values.
 
-        return pd.DataFrame({"n": n_lst, "recall_at_n": recall_lst})
+    Args:
+        matrix: Dataframe of drug-disease pairs with treat scores.
+            Training set should have been taken out of the matrices.
+        n_lst: List of n values to calculate the recall@n score for.
+        bool_test_col: Boolean column in the matrix indicating the known positive test set
+        score_col: Column in the matrix containing the treat scores.
+        perform_sort: Whether to sort the matrix by the treat score, or expect the dataframe to be sorted already.
+        out_of_matrix_mode: Whether to use the out of matrix mode, where pairs outside the matrix may be used in the calculation.
+            In this case, the matrix dataframe must also contain a boolean column "in_matrix".
+    Returns:
+        A list of recall@n scores for the list of n values.
+    """
+    # We can figure out where to convert to polars in the future
+    matrix = pl.from_pandas(matrix.toPandas())
+    # Number of known positives
+    N = len(matrix.filter(pl.col(bool_test_col)))
+    if N == 0:
+        return [0] * len(n_lst)
+
+    if out_of_matrix_mode:
+        matrix = matrix.filter(pl.col("in_matrix") | pl.col(bool_test_col))
+
+    # Sort by treat score
+    if perform_sort or out_of_matrix_mode:
+        matrix = matrix.sort(by=score_col, descending=True)
+
+    # Ranks of the known positives
+    ranks_series = matrix.with_row_index("index").filter(pl.col(bool_test_col)).select(pl.col("index")).to_series() + 1
+
+    # Recall@n scores
+    recall_lst = [(ranks_series <= n).sum() / N for n in n_lst]
+
+    return recall_lst

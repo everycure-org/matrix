@@ -1,5 +1,4 @@
 import logging
-from typing import List
 
 import pandas as pd
 import pyspark.sql as ps
@@ -11,7 +10,10 @@ logger = logging.getLogger(__name__)
 
 
 @inject_object()
-def run_evaluation(evaluation: ComparisonEvaluation, *matrices: List[ps.DataFrame]) -> pd.DataFrame:
+def run_evaluation(
+    evaluation: ComparisonEvaluation,
+    *matrices: ps.DataFrame,
+) -> pd.DataFrame:
     """Function to apply evaluation.
 
     Args:

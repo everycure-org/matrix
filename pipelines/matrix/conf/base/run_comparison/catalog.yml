@@ -1,8 +1,0 @@
-_pandas_csv: &_pandas_csv
-  type:  pandas.CSVDataset
-
-
-# Output placeholder for run comparison plots / results
-run_comparison.tables.recall_at_n:
-  <<: *_pandas_csv
-  filepath: data/run_comparison/recall_at_n
