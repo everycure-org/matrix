@@ -31,6 +31,8 @@ data_sources:
     version: &_rtx_kg_version v2.10.0_validated
   robokop:
     version: 30fd1bfc18cd5ccb
+  primekg:
+    version: "2.1"
   spoke:
     version: V5.7
   embiology:
@@ -47,7 +49,7 @@ data_sources:
     version: 20230309 # NOTE: Here 0309 is a period of time (here Mar to Sep 2023)
   drug_list:
     # check releases here: https://github.com/everycure-org/core-entities/releases
-    version: v0.1.1
+    version: v0.1.4
   disease_list:
     # check releases here: https://github.com/everycure-org/core-entities/releases
     version: v0.1.3
@@ -91,7 +93,7 @@ paths:
   matrix_transformations:  data/releases/${versions.release}/runs/${run_name}/datasets/matrix_transformations
   evaluation:         data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
   inference:          data/releases/${versions.release}/runs/${run_name}/datasets/inference
- 
+
   tmp:                data/tmp
 
   # Embedding cache dataset

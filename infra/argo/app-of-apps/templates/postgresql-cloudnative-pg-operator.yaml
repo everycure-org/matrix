@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgresql-cloudnative-pg-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  destination:
+    namespace: postgresql
+    server: {{ .Values.spec.destination.server }}
+  project: default
+  source:
+    path: {{ .Values.spec.source.repoPath }}/postgresql-cloudnative-pg-operator
+    repoURL: {{ .Values.spec.source.repoURL }}
+    targetRevision: {{ .Values.spec.source.targetRevision }}
+  ignoreDifferences:
+  - group: apiextensions.k8s.io
+    kind: CustomResourceDefinition
+    name: poolers.postgresql.cnpg.io
+    jsonPointers:
+    - /metadata/annotations
+  - group: apiextensions.k8s.io
+    kind: CustomResourceDefinition
+    jsonPointers:
+    - /metadata/annotations/kubectl.kubernetes.io~1last-applied-configuration
+  - group: rbac.authorization.k8s.io
+    kind: ClusterRole
+    jsonPointers:
+    - /metadata/annotations
+  - group: rbac.authorization.k8s.io
+    kind: ClusterRoleBinding
+    jsonPointers:
+    - /metadata/annotations
+  syncPolicy:
+    syncOptions:     # Sync options which modifies sync behavior
+    - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
+    - ServerSideApply=true # Use server-side apply to handle large CRDs
+    - RespectIgnoreDifferences=true # Respect ignore differences
+    - ApplyOutOfSyncOnly=true # Only apply out of sync resources
+    - Replace=true # Use kubectl replace instead of apply for problematic resources
+    automated: 
+      prune: true
+      allowEmpty: true

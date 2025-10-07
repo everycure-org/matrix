@@ -1,0 +1,23 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: postgresql-cluster-secret-reader
+  namespace: postgresql
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: postgresql-cluster-secret-reader-binding
+  namespace: postgresql
+subjects:
+- kind: ServiceAccount
+  name: postgresql-cloudnative-pg-cluster
+  namespace: postgresql
+roleRef:
+  kind: Role
+  name: postgresql-cluster-secret-reader
+  apiGroup: rbac.authorization.k8s.io

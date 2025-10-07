@@ -1,0 +1,27 @@
+[project]
+name = "matrix-cli"
+description = "matrix-cli"
+requires-python = ">=3.11"
+readme = "README.md"
+version = "0.1.0"
+dependencies = [
+    "typer",
+    "polars-lts-cpu==1.30.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+]
+
+[project.scripts]
+fabricator = "matrix_cli.io.fabricator:main"
+primekg = "matrix_cli.io.primekg:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[build-system]
+requires = [ "setuptools",]
+build-backend = "setuptools.build_meta"
