@@ -1,7 +1,5 @@
 run_comparison_evaluations:
   ground_truth_recall_at_n:
     _object: matrix.pipelines.run_comparison.evaluations.RecallAtN
-    # We can implement this for the different recall e.g. off-label
-    # options:
-    #   bool_test_col: "is_known_positive"
-    #   score_col: "transformed_treat_score"
+    bool_test_col: "is_known_positive"
+    score_col: "transformed_treat_score"

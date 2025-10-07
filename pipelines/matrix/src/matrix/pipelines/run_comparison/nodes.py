@@ -11,9 +11,11 @@ logger = logging.getLogger(__name__)
 
 @inject_object()
 def run_evaluation(
+    matrix: ps.DataFrame,
     evaluation: ComparisonEvaluation,
-    *matrices: ps.DataFrame,
+    bool_test_col: str,
+    score_col: str,
 ) -> pd.DataFrame:
     """Function to apply evaluation."""
     logger.info(f"Evaluation is: {evaluation}")
-    return evaluation.evaluate(matrices)
+    return evaluation.evaluate(matrix)

@@ -1,10 +1,6 @@
-_spark_parquet_ds: &_spark_parquet
-  type: matrix_gcp_datasets.gcp.LazySparkDataset
-  file_format: parquet
-  save_args:
-    mode: overwrite
+_pandas_csv: &_pandas_csv
+  type: pandas.CSVDataset
 
-# We can discuss how we want to store the results
-run_comparison.tables.recall_at_n:
-  <<: *_spark_parquet
-  filepath: data/run_comparison/recall_at_n
+"run_comparison.{matrix}.{evaluation}":
+  <<: *_pandas_csv
+  filepath: data/run_comparison/{matrix}/{evaluation}.csv

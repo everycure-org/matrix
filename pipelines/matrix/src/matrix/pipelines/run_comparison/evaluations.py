@@ -9,15 +9,22 @@ import pyspark.sql as ps
 class ComparisonEvaluation(abc.ABC):
     """Abstract base class for run-comparison evaluations."""
 
+    def __init__(self, bool_test_col: str, score_col: str):
+        self.bool_test_col = bool_test_col
+        self.score_col = score_col
+
     @abc.abstractmethod
-    def evaluate(self, matrices: List[ps.DataFrame]) -> pd.DataFrame:
+    def evaluate(self, matrix: ps.DataFrame) -> pd.DataFrame:
         pass
 
 
 class RecallAtN(ComparisonEvaluation):
     """Recall@N evaluation"""
 
-    def evaluate(self, matrices: List[ps.DataFrame]) -> pd.DataFrame:
+    def __init__(self, bool_test_col: str, score_col: str):
+        super().__init__(bool_test_col=bool_test_col, score_col=score_col)
+
+    def evaluate(self, matrix: ps.DataFrame) -> pd.DataFrame:
         """Evaluate recall@n against the provided matrix.
 
         Args:
@@ -29,23 +36,17 @@ class RecallAtN(ComparisonEvaluation):
 
         n_lst = [10, 20, 50, 100]
 
-        result = []
+        recall = give_recall_at_n(matrix, n_lst, bool_test_col=self.bool_test_col, score_col=self.score_col)
 
-        for matrix in matrices:
-            recall = give_recall_at_n(
-                matrix, n_lst, bool_test_col="is_known_positive", score_col="transformed_treat_score"
-            )
-            result.append(pd.DataFrame({"n": n_lst, "recall_at_n": recall}))
-
-        return result
+        return pd.DataFrame({"n": n_lst, "recall_at_n": recall})
 
 
 # Direct copy-paste from lab-notebooks
 def give_recall_at_n(
     matrix: pl.DataFrame,
     n_lst: list[int],
-    bool_test_col: str = "is_known_positive",
-    score_col: str = "treat score",
+    bool_test_col: str,
+    score_col: str,
     perform_sort: bool = True,
     out_of_matrix_mode: bool = False,
 ) -> List[float]:
