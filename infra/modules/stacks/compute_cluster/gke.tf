@@ -37,6 +37,22 @@ locals {
       accelerator_count  = 1
       accelerator_type   = "nvidia-l4"
       gpu_driver_version = "LATEST"
+    },
+    {
+      name               = "g2-standard-48-l4-nodes" # 1 GPU, 48vCPUs, 192GB RAM
+      machine_type       = "g2-standard-48"
+      node_locations     = local.default_node_locations
+      min_count          = 0
+      max_count          = 20
+      local_ssd_count    = 0
+      disk_size_gb       = 200
+      disk_type          = "pd-ssd"
+      enable_gcfs        = true
+      enable_gvnic       = true
+      initial_node_count = 0
+      accelerator_count  = 1
+      accelerator_type   = "nvidia-l4"
+      gpu_driver_version = "LATEST"
     }
   ]
 
@@ -81,6 +97,23 @@ locals {
       node_locations     = local.default_node_locations
       min_count          = 0
       max_count          = 30 # Higher max count for spot instances
+      local_ssd_count    = 0
+      disk_size_gb       = 200
+      disk_type          = "pd-ssd"
+      enable_gcfs        = true
+      enable_gvnic       = true
+      initial_node_count = 0
+      accelerator_count  = 1
+      accelerator_type   = "nvidia-l4"
+      gpu_driver_version = "LATEST"
+      spot               = true
+    },
+    {
+      name               = "g2-standard-48-l4-nodes" # 1 GPU, 48vCPUs, 192GB RAM
+      machine_type       = "g2-standard-48"
+      node_locations     = local.default_node_locations
+      min_count          = 0
+      max_count          = 20
       local_ssd_count    = 0
       disk_size_gb       = 200
       disk_type          = "pd-ssd"
