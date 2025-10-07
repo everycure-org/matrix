@@ -1,9 +1,6 @@
-"""Dynamic settings for run_comparison pipeline.
+"""Dynamic settings for run_comparison pipeline."""
 
-# NOTE: This file was partially generated using AI assistance.
-"""
-
-DYNAMIC_PIPELINE_MAPPING = {
+RUN_COMPARISON_SETTINGS = {
     "run_comparison": {
         "inputs": {
             # # Example entries. Update filepaths as needed.
@@ -19,6 +16,11 @@ DYNAMIC_PIPELINE_MAPPING = {
             "test-release-9": {
                 "filepath": "data/test/releases/test-release/runs/test-run-9/datasets/matrix_transformations/fold_0/transformed_matrix"
             },
-        }
+        },
+        "evaluations": [
+            {
+                "evaluation_name": "ground_truth_recall_at_n",
+            }
+        ],
     }
 }

@@ -1,42 +1,27 @@
 import logging
+from typing import List
 
 import pandas as pd
-import polars as pl
 import pyspark.sql as ps
+from matrix_inject.inject import inject_object
 
-from .evaluation import give_recall_at_n
+from .evaluations import ComparisonEvaluation
 
 logger = logging.getLogger(__name__)
 
 
-def recall_at_n_table(*matrices: ps.DataFrame) -> pd.DataFrame:
-    """Function to calculate recall at n and return as a structured table.
-
+@inject_object()
+def run_evaluation(*matrices: List[ps.DataFrame], evaluation_object: ComparisonEvaluation) -> pd.DataFrame:
+    """Function to apply evaluation.
 
     Args:
-        *matrices: Variable number of matrix DataFrames
+        data: predictions to evaluate on
+        evaluation: metric to evaluate.
+        score_col_name: name of the score column to use
 
     Returns:
-        A Polars DataFrame with columns 'n' and 'recall_at_n' containing the recall@n results
+        Evaluation report
     """
-    # TODO: Figure out whether to change out of polars
-    # Convert PySpark DataFrame to Polars for evaluation
-    matrix_polars = pl.from_pandas(matrices[0].toPandas())
-
-    # Calculate recall@n scores
-    n_values = [10, 20, 50, 100, 1000, 2000, 5000, 10000]
-
-    recall_scores = give_recall_at_n(
-        matrix=matrix_polars,
-        n_lst=n_values,
-        bool_test_col="is_known_positive",
-        score_col="treat score",
-        perform_sort=False,
-        out_of_matrix_mode=False,
-    )
-
-    # Create structured table
-    recall_table = pl.DataFrame({"n": n_values, "recall_at_n": recall_scores})
-
-    # Return as Pandas DataFrame
-    return recall_table.to_pandas()
+    # logger.info(f"Evaluation data size: {data.shape}")
+    logger.info(f"Evaluation is: {evaluation_object}")
+    return evaluation_object.evaluate(matrices)
