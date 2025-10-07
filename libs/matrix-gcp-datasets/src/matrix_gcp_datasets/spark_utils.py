@@ -9,6 +9,49 @@ from pyspark import SparkConf
 logger = logging.getLogger(__name__)
 
 
+def detect_gpus() -> int:
+    """Detect the number of available GPUs.
+
+    Returns:
+        Number of GPUs available (0 if none detected).
+    """
+    try:
+        import cupy as cp
+
+        num_gpus = cp.cuda.runtime.getDeviceCount()
+        logger.info(f"Detected {num_gpus} GPU(s) via CuPy")
+        return num_gpus
+    except (ImportError, Exception) as e:
+        logger.debug(f"GPU detection via CuPy failed: {e}")
+
+    # Fallback: Check CUDA_VISIBLE_DEVICES environment variable
+    cuda_visible = os.environ.get("CUDA_VISIBLE_DEVICES")
+    if cuda_visible:
+        try:
+            num_gpus = len([d for d in cuda_visible.split(",") if d.strip()])
+            logger.info(f"Detected {num_gpus} GPU(s) via CUDA_VISIBLE_DEVICES")
+            return num_gpus
+        except Exception as e:
+            logger.debug(f"Failed to parse CUDA_VISIBLE_DEVICES: {e}")
+
+    # Check if nvidia-smi is available
+    try:
+        import subprocess
+
+        result = subprocess.run(
+            ["nvidia-smi", "--query-gpu=count", "--format=csv,noheader"], capture_output=True, text=True, timeout=5
+        )
+        if result.returncode == 0:
+            num_gpus = len(result.stdout.strip().split("\n"))
+            logger.info(f"Detected {num_gpus} GPU(s) via nvidia-smi")
+            return num_gpus
+    except (FileNotFoundError, subprocess.TimeoutExpired, Exception) as e:
+        logger.debug(f"GPU detection via nvidia-smi failed: {e}")
+
+    logger.info("No GPUs detected")
+    return 0
+
+
 class SparkManager:
     """Simplified Spark session manager to avoid circular dependencies."""
 
@@ -77,6 +120,28 @@ class SparkManager:
                 for key, value in temp_configs.items():
                     parameters[key] = value
                     logger.info(f"Setting {key} to {value}")
+
+            # Configure GPU resources if available
+            num_gpus = detect_gpus()
+            if num_gpus > 0:
+                logger.info(f"Configuring Spark for {num_gpus} GPU(s)")
+                gpu_configs = {
+                    "spark.executor.resource.gpu.amount": num_gpus,
+                    "spark.task.resource.gpu.amount": num_gpus,
+                    "spark.rapids.sql.enabled": "true",
+                    "spark.rapids.memory.pinnedPool.size": "2G",
+                    "spark.python.worker.reuse": "true",
+                    # Enable GPU-accelerated operations
+                    "spark.sql.execution.arrow.pyspark.enabled": "true",
+                }
+
+                # Only override if not already set in config
+                for key, value in gpu_configs.items():
+                    if key not in parameters:
+                        parameters[key] = value
+                        logger.info(f"Setting GPU config {key} to {value}")
+            else:
+                logger.info("No GPUs detected, using CPU-only Spark configuration")
 
             logger.info(f"Starting Spark session with parameters: {parameters}")
             spark_conf = SparkConf().setAll(parameters.items())
