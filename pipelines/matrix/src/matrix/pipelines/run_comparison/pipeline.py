@@ -27,12 +27,7 @@ def _create_evaluation_pipeline(evaluation: str, matrices: List[ps.DataFrame]) -
 
 
 def create_pipeline(**kwargs) -> Pipeline:
-    """Create cross-run comparison evaluation pipeline.
-
-    The pipeline mirrors the evaluation pipeline's parameter-driven pattern.
-    Evaluations to run are defined under `run_comparison` parameters in the
-    catalog, and a single dispatcher node invokes the requested evaluations.
-    """
+    """Create cross-run comparison evaluation pipeline."""
 
     pipeline_nodes = []
 

@@ -22,8 +22,6 @@ class RecallAtN(ComparisonEvaluation):
 
         Args:
             matrices: list of PySpark DataFrame of predictions and labels.
-            bool_test_col: Boolean column in the matrix indicating the known positive test set
-            score_col: Column in the matrix containing the treat scores.
 
         Returns:
             pandas DataFrame with columns `n` and `recall_at_n`.

@@ -4,7 +4,7 @@ _spark_parquet_ds: &_spark_parquet
   save_args:
     mode: overwrite
 
-# Output placeholder for run comparison plots / results
-run_comparison.plots.recall_at_n:
+# We can discuss how we want to store the results
+run_comparison.tables.recall_at_n:
   <<: *_spark_parquet
   filepath: data/run_comparison/recall_at_n

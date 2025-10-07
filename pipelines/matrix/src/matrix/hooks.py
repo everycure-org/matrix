@@ -362,28 +362,11 @@ class ReleaseInfoHooks:
 
 
 class DynamicCatalogHook:
-    """Hook to dynamically create input datasets for specific pipelines."""
+    """Hook to dynamically create input datasets."""
 
     @hook_impl
-    def after_catalog_created(
-        self,
-        catalog: DataCatalog,
-        conf_catalog: Dict[str, Any],
-        conf_creds: Dict[str, Any],
-        feed_dict: Dict[str, Any],
-        save_version: str,
-        load_versions: Dict[str, str],
-    ) -> None:
-        # Lazy import to avoid import cycles
-        try:
-            from matrix.pipelines.run_comparison.settings import RUN_COMPARISON_SETTINGS
-        except Exception:
-            return
+    def after_catalog_created(self, catalog) -> None:
+        from matrix.pipelines.run_comparison.settings import RUN_COMPARISON_SETTINGS
 
-        mapping = RUN_COMPARISON_SETTINGS.get("run_comparison", {}).get("inputs", {})
-        for name, config in mapping.items():
-            if name in catalog.list():
-                continue
-            if "filepath" not in config:
-                continue
+        for name, config in RUN_COMPARISON_SETTINGS["run_comparison"]["inputs"].items():
             catalog.add(name, SparkDataset(filepath=config["filepath"]))
