@@ -64,3 +64,11 @@ resource "google_workbench_instance" "user_workbench" {
     email               = local.sanitized_email
   }, var.labels)
 }
+
+# Grant the user Service Account User role on the workbench service account
+# This allows the user to use the service account when creating/accessing the workbench
+resource "google_service_account_iam_member" "workbench_user_sa_access" {
+  service_account_id = "projects/${var.project_id}/serviceAccounts/${var.service_account}"
+  role               = "roles/iam.serviceAccountUser"
+  member             = "user:${var.email}"
+}

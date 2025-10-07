@@ -16,9 +16,9 @@ from kedro.framework.project import pipelines
 from kedro.io.data_catalog import DataCatalog
 from kedro.pipeline.node import Node
 from kedro_datasets.spark import SparkDataset
+from matrix_inject.inject import _parse_for_objects
 from omegaconf import OmegaConf
 
-from matrix.inject import _parse_for_objects
 from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
 
 logger = logging.getLogger(__name__)

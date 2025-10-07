@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: gha-runner-scale-set-controller
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   destination:
     namespace: actions-runner-system
@@ -38,6 +40,10 @@ spec:
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true # Use server-side apply to handle large CRDs
+      - RespectIgnoreDifferences=true # Respect ignore differences
+      - ApplyOutOfSyncOnly=true # Only apply out of sync resources
+      - Replace=true # Use kubectl replace instead of apply for problematic resources
     automated:
       prune: true
       allowEmpty: true

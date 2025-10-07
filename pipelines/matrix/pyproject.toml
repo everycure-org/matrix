@@ -30,8 +30,11 @@ dependencies = [
     "matrix-schema==0.4.3",
     "matrix-auth",
     "matrix-gcp-datasets",
+    "matrix-io-utils",
     "matrix-mlflow-utils",
     "matrix-fabricator",
+    "matrix-inject",
+    "matrix-pandera",
     "matrix-validator @ git+https://github.com/everycure-org/matrix-validator.git@v0.0.6#egg=matrix-validator",
     "bmt", # biolink model toolkit
     "gcsfs==2024.3.1",
@@ -59,9 +62,10 @@ dependencies = [
     "openpyxl",
     "pandera==0.24.0",
     "pandas>=2.1.1", #due to pandera requiring this or higher
+    "polars-lts-cpu==1.30.0",
     "proto-plus==1.24.0.dev1", # Temp. fix for the gcloud cli
     "pyarrow>=14.0.2",
-    "pygsheets==2.0.6",
+    "gspread>=6.2.1",
     "pyspark==3.5.1",
     "python-cypher==0.20.1",
     "responses",
@@ -76,8 +80,11 @@ dependencies = [
     "transformers",
     "typer", # used for convenience libraries, to be moved to a dev requirements eventually
     "xgboost",
+    "lightgbm @ https://storage.googleapis.com/data.dev.everycure.org/pypi/lightgbm-4.6.0-py3-none-linux_x86_64.whl ; sys_platform == 'linux'",
+    "lightgbm ; sys_platform == 'darwin'",
     "tqdm>=4.67.1",
 ]
+
 
 [project.scripts]
 matrix = "matrix.__main__:main"
