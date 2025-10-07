@@ -23,9 +23,12 @@ descendants AS (
   FROM descendants
   JOIN `${project_id}.release_${bq_release_version}.edges_unified` edges
     ON edges.object = descendants.descendant_id
-    AND edges.predicate = 'biolink:subclass_of'    
-    AND edges.primary_knowledge_source in ('infores:mondo', 'infores:chebi')
+    AND edges.predicate = 'biolink:subclass_of'
   WHERE descendants.depth < 20
+    AND EXISTS(
+      SELECT 1 FROM UNNEST(edges.primary_knowledge_sources.list) AS pks
+      WHERE pks.element IN ('infores:mondo', 'infores:chebi')
+    )
 ),
 
 node_info AS (
@@ -60,33 +63,16 @@ descendant_stats AS (
     MAX(descendants.depth) as max_depth
   FROM descendants
   GROUP BY descendants.key_node_id
-),
-
--- Edges including all descendants
-descendant_edges AS (
-  SELECT
-    descendants.key_node_id,
-    COUNT(DISTINCT CASE WHEN edges.subject = descendants.descendant_id THEN edges.subject || '|' || edges.predicate || '|' || edges.object END) as outgoing_edges,
-    COUNT(DISTINCT CASE WHEN edges.object = descendants.descendant_id THEN edges.subject || '|' || edges.predicate || '|' || edges.object END) as incoming_edges,
-    COUNT(DISTINCT CASE WHEN edges.subject = descendants.descendant_id THEN edges.object END) as unique_outgoing_neighbors,
-    COUNT(DISTINCT CASE WHEN edges.object = descendants.descendant_id THEN edges.subject END) as unique_incoming_neighbors
-  FROM descendants
-  LEFT JOIN `${project_id}.release_${bq_release_version}.edges_unified` edges
-    ON edges.subject = descendants.descendant_id OR edges.object = descendants.descendant_id
-  GROUP BY descendants.key_node_id
 )
 
 SELECT
   node_info.key_node_id as id,
-  node_info.name,
-  node_info.category,
-  descendant_stats.descendant_count,
-  descendant_stats.max_depth as max_descendant_depth,
-  direct_edges.outgoing_edges + direct_edges.incoming_edges as direct_total_edges,
-  direct_edges.unique_outgoing_neighbors + direct_edges.unique_incoming_neighbors as direct_unique_neighbors,
-  descendant_edges.outgoing_edges + descendant_edges.incoming_edges as with_descendants_total_edges,
-  descendant_edges.unique_outgoing_neighbors + descendant_edges.unique_incoming_neighbors as with_descendants_unique_neighbors
+  COALESCE(node_info.name, node_info.key_node_id) as name,
+  COALESCE(node_info.category, 'Unknown') as category,
+  COALESCE(descendant_stats.descendant_count, 0) as descendant_count,
+  COALESCE(descendant_stats.max_depth, 0) as max_descendant_depth,
+  COALESCE(direct_edges.outgoing_edges, 0) + COALESCE(direct_edges.incoming_edges, 0) as direct_total_edges,
+  COALESCE(direct_edges.unique_outgoing_neighbors, 0) + COALESCE(direct_edges.unique_incoming_neighbors, 0) as direct_unique_neighbors
 FROM node_info
 LEFT JOIN direct_edges ON direct_edges.key_node_id = node_info.key_node_id
 LEFT JOIN descendant_stats ON descendant_stats.key_node_id = node_info.key_node_id
-LEFT JOIN descendant_edges ON descendant_edges.key_node_id = node_info.key_node_id

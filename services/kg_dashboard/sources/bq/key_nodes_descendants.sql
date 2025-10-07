@@ -26,8 +26,11 @@ descendants AS (
   JOIN `${project_id}.release_${bq_release_version}.edges_unified` edges
     ON edges.object = descendants.descendant_id
     AND edges.predicate = 'biolink:subclass_of'
-    AND edges.primary_knowledge_source in ('infores:mondo', 'infores:chebi')
   WHERE descendants.depth < 20
+    AND EXISTS(
+      SELECT 1 FROM UNNEST(edges.primary_knowledge_sources.list) AS pks
+      WHERE pks.element IN ('infores:mondo', 'infores:chebi')
+    )
 )
 
 SELECT

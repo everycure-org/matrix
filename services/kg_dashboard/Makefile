@@ -75,11 +75,11 @@ populate-valid-edge-types-source:
 	node ./scripts/load-valid-edge-types.cjs
 	rm -f scripts/temp_valid_edge_types.tsv
 
-# Generate release trends SQL dynamically based on available BigQuery datasets
-sources/bq/release_trends.sql:
-	node ./scripts/generate-release-trends-sql.cjs
+# Generate release SQL files dynamically based on available BigQuery datasets
+sources/bq/release_trends.sql sources/bq/key_nodes_release_trends.sql sources/bq/key_nodes_release_aggregate.sql:
+	node ./scripts/generate-release-sql.cjs
 
-run-sources: populate-infores-source populate-valid-edge-types-source sources/bq/release_trends.sql
+run-sources: populate-infores-source populate-valid-edge-types-source sources/bq/release_trends.sql sources/bq/key_nodes_release_trends.sql sources/bq/key_nodes_release_aggregate.sql
 	npm run sources 
 
 run-dev:
@@ -90,3 +90,5 @@ clean:
 	rm -rf node_modules
 	rm -rf .evidence
 	rm -f sources/bq/release_trends.sql
+	rm -f sources/bq/key_nodes_release_trends.sql
+	rm -f sources/bq/key_nodes_release_aggregate.sql
