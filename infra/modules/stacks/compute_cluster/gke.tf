@@ -109,7 +109,7 @@ locals {
       spot               = true
     },
     {
-      name               = "g2-standard-48-l4-nodes" # 1 GPU, 48vCPUs, 192GB RAM
+      name               = "g2-standard-48-l4-spot-nodes" # 1 GPU, 48vCPUs, 192GB RAM
       machine_type       = "g2-standard-48"
       node_locations     = local.default_node_locations
       min_count          = 0
