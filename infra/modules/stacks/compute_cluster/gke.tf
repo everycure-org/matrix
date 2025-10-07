@@ -50,7 +50,7 @@ locals {
       enable_gcfs        = true
       enable_gvnic       = true
       initial_node_count = 0
-      accelerator_count  = 2
+      accelerator_count  = 3
       accelerator_type   = "nvidia-l4"
       gpu_driver_version = "LATEST"
     }
@@ -120,7 +120,7 @@ locals {
       enable_gcfs        = true
       enable_gvnic       = true
       initial_node_count = 0
-      accelerator_count  = 2
+      accelerator_count  = 3
       accelerator_type   = "nvidia-l4"
       gpu_driver_version = "LATEST"
       spot               = true
