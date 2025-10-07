@@ -16,8 +16,8 @@ def _create_evaluation_pipeline(evaluation: str, matrices: List[ps.DataFrame]) -
         ArgoNode(
             func=nodes.run_evaluation,
             inputs=[
-                *matrices,
                 f"params:run_comparison_evaluations.{evaluation}",
+                *matrices,
             ],
             outputs=f"cross_run_comparison.{evaluation}.result",
             name=f"{evaluation}.create_{evaluation}_evaluation",

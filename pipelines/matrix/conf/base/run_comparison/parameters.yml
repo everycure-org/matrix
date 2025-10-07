@@ -1,4 +1,3 @@
 run_comparison_evaluations:
   ground_truth_recall_at_n:
-      evaluation:
         _object: matrix.pipelines.run_comparison.evaluations.RecallAtN

@@ -34,7 +34,7 @@ class RecallAtN(ComparisonEvaluation):
 
         n_lst: List[int] = self.n_values
         bool_test_col: str = "is_known_positive"
-        score_col: str = "treat score"
+        score_col: str = "transformed_treat_score"
         perform_sort: bool = True
         out_of_matrix_mode: bool = False
 

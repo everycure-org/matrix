@@ -376,11 +376,11 @@ class DynamicCatalogHook:
     ) -> None:
         # Lazy import to avoid import cycles
         try:
-            from matrix.pipelines.run_comparison.settings import DYNAMIC_PIPELINE_MAPPING
+            from matrix.pipelines.run_comparison.settings import RUN_COMPARISON_SETTINGS
         except Exception:
             return
 
-        mapping = DYNAMIC_PIPELINE_MAPPING.get("run_comparison", {}).get("inputs", {})
+        mapping = RUN_COMPARISON_SETTINGS.get("run_comparison", {}).get("inputs", {})
         for name, config in mapping.items():
             if name in catalog.list():
                 continue

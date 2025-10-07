@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 @inject_object()
-def run_evaluation(*matrices: List[ps.DataFrame], evaluation_object: ComparisonEvaluation) -> pd.DataFrame:
+def run_evaluation(evaluation: ComparisonEvaluation, *matrices: List[ps.DataFrame]) -> pd.DataFrame:
     """Function to apply evaluation.
 
     Args:
@@ -22,6 +22,5 @@ def run_evaluation(*matrices: List[ps.DataFrame], evaluation_object: ComparisonE
     Returns:
         Evaluation report
     """
-    # logger.info(f"Evaluation data size: {data.shape}")
-    logger.info(f"Evaluation is: {evaluation_object}")
-    return evaluation_object.evaluate(matrices)
+    logger.info(f"Evaluation is: {evaluation}")
+    return evaluation.evaluate(matrices)
