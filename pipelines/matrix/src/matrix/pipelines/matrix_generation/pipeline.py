@@ -107,8 +107,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                         name=f"make_predictions_and_sort_fold_{fold}",
                         argo_config=ArgoResourceConfig(
                             num_gpus=1,
-                            ephemeral_storage_request=512,
+                            cpu_limit=48,
+                            cpu_request=48,
                             ephemeral_storage_limit=512,
+                            ephemeral_storage_request=512,
+                            memory_limit=256,
+                            memory_request=256,
                         ),
                     ),
                 ],
