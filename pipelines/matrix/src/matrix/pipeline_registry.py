@@ -17,6 +17,7 @@ from matrix.pipelines.matrix_transformations.pipeline import (
 )
 from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
 from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
+from matrix.pipelines.run_comparison.pipeline import create_pipeline as create_run_comparison_pipeline
 from matrix.pipelines.sentinel.pipeline import create_pipeline as create_sentinel_pipeline
 
 
@@ -49,6 +50,7 @@ def register_pipelines() -> dict[str, Pipeline]:
         "ingest_to_N4J": create_ingest_to_N4J_pipeline(),
         "sentinel_kg_release_patch": create_sentinel_pipeline(is_patch=True),
         "sentinel_kg_release": create_sentinel_pipeline(is_patch=False),
+        "run_comparison": create_run_comparison_pipeline(),
         # "inference": create_inference_pipeline(),  # Run manually based on medical input
     }
 
