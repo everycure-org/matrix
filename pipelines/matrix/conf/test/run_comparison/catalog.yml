@@ -1,6 +1,0 @@
-_pandas_csv: &_pandas_csv
-  type: pandas.CSVDataset
-
-"run_comparison.{matrix}.{evaluation}":
-  <<: *_pandas_csv
-  filepath: data/run_comparison/{matrix}/{evaluation}.csv
