@@ -22,15 +22,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "transformations": "params:matrix_transformations.transformations",
                             "score_col": "params:matrix_transformations.score_col",
                         },
-                        outputs=f"matrix_transformations.fold_{fold}.model_output.sorted_matrix_predictions_temp@spark",
-                        name=f"apply_matrix_transformations_fold_{fold}",
-                        argo_config=ArgoResourceConfig(cpu_request=8, memory_request=64, memory_limit=64),
-                    ),
-                    ArgoNode(
-                        func=lambda x: x.drop("ec_id_source").withColumnsRenamed({"ec_id": "source"}),
-                        inputs=f"matrix_transformations.fold_{fold}.model_output.sorted_matrix_predictions_temp@spark",
                         outputs=f"matrix_transformations.fold_{fold}.model_output.sorted_matrix_predictions@spark",
-                        name=f"rename_id_column_matrix_transformations_fold_{fold}",
+                        name=f"apply_matrix_transformations_fold_{fold}",
                         argo_config=ArgoResourceConfig(cpu_request=8, memory_request=64, memory_limit=64),
                     ),
                 ]
