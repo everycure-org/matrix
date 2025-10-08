@@ -27,7 +27,7 @@ GPU configurations applied:
 
 ```yaml
 spark.executor.resource.gpu.amount: "1"
-spark.task.resource.gpu.amount: "1"
+spark.task.resource.gpu.amount: "0.1"  # Fractional to allow concurrent tasks
 spark.rapids.sql.enabled: "true"
 spark.rapids.memory.pinnedPool.size: "2G"
 spark.python.worker.reuse: "true"
@@ -107,7 +107,7 @@ Expected speedups for `make_predictions_and_sort`:
 ```yaml
 # spark.yml - had to manually configure for GPU nodes
 spark.executor.resource.gpu.amount: 1
-spark.task.resource.gpu.amount: 1
+spark.task.resource.gpu.amount: 0.1  # Fractional for task concurrency
 ```
 
 ### After (Automatic)

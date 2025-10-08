@@ -125,9 +125,15 @@ class SparkManager:
             num_gpus = detect_gpus()
             if num_gpus > 0:
                 logger.info(f"Configuring Spark for {num_gpus} GPU(s)")
+                # NOTE: spark.task.resource.gpu.amount is set to a fraction (0.1) to allow
+                # multiple tasks to share the same GPU concurrently. This prevents GPU resource
+                # constraints from limiting parallelism when there are more CPU cores than GPUs.
+                # For example, with 31 cores and 1 GPU:
+                #   - If spark.task.resource.gpu.amount = 1.0: only 1 task runs at a time (wastes 30 cores)
+                #   - If spark.task.resource.gpu.amount = 0.1: up to 10 tasks can share the GPU
                 gpu_configs = {
                     "spark.executor.resource.gpu.amount": num_gpus,
-                    "spark.task.resource.gpu.amount": num_gpus,
+                    "spark.task.resource.gpu.amount": 0.1,  # Allow ~10 tasks per GPU for better parallelism
                     "spark.rapids.sql.enabled": "true",
                     "spark.rapids.memory.pinnedPool.size": "2G",
                     "spark.python.worker.reuse": "true",

@@ -22,12 +22,16 @@ When GPUs are detected, Spark is automatically configured with:
 
 ```yaml
 spark.executor.resource.gpu.amount: 1
-spark.task.resource.gpu.amount: 1
+spark.task.resource.gpu.amount: 0.1  # Fractional to enable task concurrency
 spark.rapids.sql.enabled: true
 spark.rapids.memory.pinnedPool.size: 2G
 spark.python.worker.reuse: true
 spark.sql.execution.arrow.pyspark.enabled: true
 ```
+
+**Important**: `spark.task.resource.gpu.amount` is set to `0.1` (not `1.0`) to allow multiple tasks to share the same GPU concurrently. This prevents the GPU from becoming a bottleneck when you have many CPU cores. For example:
+- With 31 cores and `spark.task.resource.gpu.amount: 1.0` → only 1 task runs at a time (wastes 30 cores)
+- With 31 cores and `spark.task.resource.gpu.amount: 0.1` → up to 10 tasks can share the GPU in parallel
 
 ## Usage
 
