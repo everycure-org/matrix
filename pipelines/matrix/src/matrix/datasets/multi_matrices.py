@@ -1,27 +1,20 @@
-from kedro.io.core import AbstractDataset
 from kedro_datasets.polars import LazyPolarsDataset
+from kedro_datasets.yaml import YAMLDataset
 
-from matrix.pipelines.run_comparison.input_paths import InputPathsMultiFold
 
-
-class MultiMatricesDataset(AbstractDataset):
-    """Dataset for loading multiple predictions dataframes over several models and folds.
-
-    Different models can have different file formats but different folds must have the same format.
-    """
-
-    def __init__(self, input_paths: dict[str, InputPathsMultiFold]):
-        # Lazy Polars Datasets for each fold and model.
-        self._all_datasets = {
-            model_name: {
-                fold: LazyPolarsDataset(filepath=input_path.file_paths_list[fold], file_format=input_path.file_format)
-                for fold in range(input_path.num_folds)
-            }
-            for model_name, input_path in input_paths.items()
-        }
+class MultiMatricesDataset(YAMLDataset):
+    """Dataset for loading multiple predictions dataframes over several models and folds."""
 
     def load(self):
+        """Load a lazy Polars datasets for each fold and model."""
+        paths_dict = super().load()
         return {
-            model_name: {fold: dataset.load() for fold, dataset in self._all_datasets[model_name].items()}
-            for model_name in self._all_datasets.keys()
+            model_name: {
+                fold: LazyPolarsDataset(
+                    filepath=dict_for_model["file_paths_list"][fold],
+                    file_format=dict_for_model["file_format"],
+                ).load()
+                for fold in range(len(dict_for_model["file_paths_list"]))
+            }
+            for model_name, dict_for_model in paths_dict.items()
         }

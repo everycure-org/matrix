@@ -1,4 +1,4 @@
-"""A module containing classes for user input for input matrices for run comparison.
+"""A module containing classes for processing user for the run comparison pipeline.
 
 TODO: Add unit tests.
 """
@@ -19,7 +19,7 @@ class InputPathsMultiFold:
 
 
 class InputPathSingleFold(InputPathsMultiFold):
-    """Class for inputting single fold matrix predictions."""
+    """Class for inputting a single fold of matrix predictions."""
 
     def __init__(self, file_path: str, score_col_name: str, file_format: str = "parquet"):
         super().__init__(

@@ -1,2 +1,3 @@
-# run_comparison.input_matrices:
-#   type: matrix.datasets.multi_matrices.MultiMatricesDataset
+run_comparison.input_matrices:
+  type: matrix.datasets.multi_matrices.MultiMatricesDataset
+  filepath: ${globals:paths.run_comparison}/input_matrices.yml

@@ -1,44 +1,44 @@
 import abc
 from typing import List
 
-import pandas as pd
 import polars as pl
-import pyspark.sql as ps
+from matrix.pipelines.run_comparison.input_paths import InputPathsMultiFold
 
 
 class ComparisonEvaluation(abc.ABC):
     """Abstract base class for run-comparison evaluations."""
 
-    def __init__(self, bool_test_col: str, score_col: str):
-        self.bool_test_col = bool_test_col
-        self.score_col = score_col
-
     @abc.abstractmethod
-    def evaluate(self, matrix: ps.DataFrame) -> pd.DataFrame:
+    def evaluate(self, input_matrices: dict[str, dict[str, pl.LazyFrame]]) -> pl.DataFrame:
         pass
 
 
-class RecallAtN(ComparisonEvaluation):
+class FullMatrixRecallAtN(ComparisonEvaluation):
     """Recall@N evaluation"""
 
-    def __init__(self, bool_test_col: str, score_col: str):
-        super().__init__(bool_test_col=bool_test_col, score_col=score_col)
+    def __init__(self, bool_test_col: str, n_max: int):
+        self.bool_test_col = bool_test_col
+        self.n_max = n_max
 
-    def evaluate(self, matrix: ps.DataFrame) -> pd.DataFrame:
+    def evaluate(
+        self, input_matrices: dict[str, dict[str, pl.LazyFrame]], input_paths: InputPathsMultiFold
+    ) -> pl.DataFrame:
         """Evaluate recall@n against the provided matrix.
 
         Args:
-            matrices: list of PySpark DataFrame of predictions and labels.
+            matrices: list of polars LazyFrames of predictions and labels.
+            input_path: Object containing the score column name for each model.
 
         Returns:
-            pandas DataFrame with columns `n` and `recall_at_n`.
+            polars DataFrame with columns `n` and `recall_at_n`.
         """
 
-        n_lst = [10, 20, 50, 100]
+        n_lst = list(range(n_max))
+        return None
 
-        recall = give_recall_at_n(matrix, n_lst, bool_test_col=self.bool_test_col, score_col=self.score_col)
+        # recall = give_recall_at_n(matrix, n_lst, bool_test_col=self.bool_test_col, score_col=input_paths[model_name].score_col_name)
 
-        return pd.DataFrame({"n": n_lst, "recall_at_n": recall})
+        # return pd.DataFrame({"n": n_lst, "recall_at_n": recall})
 
 
 # Direct copy-paste from lab-notebooks

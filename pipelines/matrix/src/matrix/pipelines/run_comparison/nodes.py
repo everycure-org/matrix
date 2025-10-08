@@ -1,7 +1,7 @@
 import logging
+from dataclasses import asdict
 
-import pandas as pd
-import pyspark.sql as ps
+import polars as pl
 from matrix_inject.inject import inject_object
 
 from .evaluations import ComparisonEvaluation
@@ -15,18 +15,16 @@ def create_input_matrices_dataset(
     input_paths: dict[str, InputPathsMultiFold],
 ) -> InputPathsMultiFold:
     """Function to create input matrices dataset."""
-    # Return initialised InputPathsMultiFold object, which will be written as MultiMatricesDataset when the node runs in the pipeline.
-    # breakpoint()
-    return input_paths
+    # Return initialised dataclass objects as dictionaries
+    return {k: asdict(v) for k, v in input_paths.items()}
 
 
 @inject_object()
 def run_evaluation(
-    matrix: ps.DataFrame,
+    input_matrices: dict[str, dict[str, pl.LazyFrame]],
     evaluation: ComparisonEvaluation,
-    bool_test_col: str,
-    score_col: str,
-) -> pd.DataFrame:
+    input_paths: InputPathsMultiFold,
+) -> pl.DataFrame:
     """Function to apply evaluation."""
     logger.info(f"Evaluation is: {evaluation}")
-    return evaluation.evaluate(matrix)
+    return evaluation.evaluate(input_matrices)
