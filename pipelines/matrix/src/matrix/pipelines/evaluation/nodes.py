@@ -95,7 +95,7 @@ def generate_test_dataset(
     # Perform checks
     # NOTE: We're currently repeat it for each fold, should
     # we consider moving to matrix outputs?
-    check_no_train(matrix, known_pairs)
+    check_no_train(matrix, known_pairs.rename({"source", "ec_id_source"}))
     check_ordered(matrix, score_col_name)
 
     return generator.generate(matrix)
