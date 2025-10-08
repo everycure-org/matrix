@@ -2,7 +2,8 @@ data "google_client_config" "default" {
 }
 
 locals {
-  default_node_locations = "us-central1-c" # Single location for simplicity, can be expanded to multiple zones if needed
+  default_node_locations = "us-central1-c"                             # Single location for simplicity, can be expanded to multiple zones if needed
+  gpu_node_locations     = "us-central1-a,us-central1-b,us-central1-c" # GPU nodes in multiple zones for availability
 
   # NOTE: Debugging node group scaling can be done using the GCP cluster logs, we create
   # node groups in 2 node locations, hence why the total amount of node groups.
@@ -25,7 +26,7 @@ locals {
     {
       name               = "g2-standard-16-l4-nodes" # 1 GPU, 16vCPUs, 64GB RAM
       machine_type       = "g2-standard-16"
-      node_locations     = local.default_node_locations
+      node_locations     = local.gpu_node_locations
       min_count          = 0
       max_count          = 20
       local_ssd_count    = 0
@@ -40,8 +41,8 @@ locals {
     },
     {
       name               = "g2-standard-32-nodes"
-      machine_type       = "g2-standard-32" # 96 vCPUs, 360GB RAM
-      node_locations     = local.default_node_locations
+      machine_type       = "g2-standard-32" # 32 vCPUs, 128GB RAM
+      node_locations     = local.gpu_node_locations
       min_count          = 0
       max_count          = 20
       local_ssd_count    = 0
@@ -61,9 +62,9 @@ locals {
     {
       name               = "management-nodes"
       machine_type       = "n2-standard-16" # 8 vCPUs, 32GB RAM
-      node_locations     = local.default_node_locations
-      min_count          = 1 # Single instance, no HA
-      max_count          = 1 # Single instance, no HA
+      node_locations     = "us-central1-c"  # Single location.
+      min_count          = 1                # Single instance, no HA
+      max_count          = 1                # Single instance, no HA
       local_ssd_count    = 0
       disk_type          = "pd-standard" # Cost-effective for management workloads
       disk_size_gb       = 200
@@ -94,7 +95,7 @@ locals {
     {
       name               = "g2-standard-16-l4-spot-nodes" # 1 GPU, 16vCPUs, 64GB RAM
       machine_type       = "g2-standard-16"
-      node_locations     = local.default_node_locations
+      node_locations     = local.gpu_node_locations
       min_count          = 0
       max_count          = 30 # Higher max count for spot instances
       local_ssd_count    = 0
@@ -110,8 +111,8 @@ locals {
     },
     {
       name               = "g2-standard-32-spot-nodes"
-      machine_type       = "g2-standard-32" # 96 vCPUs, 360GB RAM
-      node_locations     = local.default_node_locations
+      machine_type       = "g2-standard-32" # 32 vCPUs, 128GB RAM
+      node_locations     = local.gpu_node_locations
       min_count          = 0
       max_count          = 20
       local_ssd_count    = 0
