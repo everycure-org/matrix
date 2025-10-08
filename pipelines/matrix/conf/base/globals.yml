@@ -82,7 +82,6 @@ paths:
   raw_public:      ${public_gcs_bucket}/data/01_RAW
 
   # Release-based
-  document_kg:        data/releases/${versions.release}/datasets/document_kg
   integration:        data/releases/${versions.release}/datasets/integration
   release:            data/releases/${versions.release}/datasets/release
 
