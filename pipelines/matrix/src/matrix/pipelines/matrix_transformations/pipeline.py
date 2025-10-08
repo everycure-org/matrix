@@ -18,7 +18,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ArgoNode(
                         func=nodes.apply_matrix_transformations,
                         inputs={
-                            "matrix": f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions_temp@spark",
+                            "matrix": f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark",
                             "transformations": "params:matrix_transformations.transformations",
                             "score_col": "params:matrix_transformations.score_col",
                         },

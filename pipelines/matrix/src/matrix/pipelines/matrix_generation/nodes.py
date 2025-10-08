@@ -271,6 +271,12 @@ def make_predictions_and_sort(
     pairs_ranked = pairs_sorted.rdd.zipWithIndex().toDF().select(F.col("_1.*"), (F.col("_2") + 1).alias("rank"))
 
     pairs_ranked_count = pairs_ranked.count()
+    pairs_ranked = pairs_ranked.withColumnRenamed("source", "translator_id_source").withColumnRenamed(
+        "ec_id_source", "source"
+    )
+    pairs_ranked_schema = pairs_ranked.columns
+    pairs_ranked_schema.remove("source")
+    pairs_ranked_schema.insert(0, "source")
     return pairs_ranked.withColumn("quantile_rank", F.col("rank") / pairs_ranked_count)
 
 

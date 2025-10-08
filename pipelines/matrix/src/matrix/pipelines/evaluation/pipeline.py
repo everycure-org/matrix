@@ -27,7 +27,7 @@ def _create_evaluation_fold_pipeline(
         [
             ArgoNode(
                 func=partial_fold(
-                    partial(nodes.generate_test_dataset, score_col_name=score_col_name), fold, arg_name="known_pairs"
+                    partial(nodes.generate_test_dataset, score_col_name=score_col_namep), fold, arg_name="known_pairs"
                 ),
                 inputs={
                     "known_pairs": "modelling.model_input.splits@pandas",
