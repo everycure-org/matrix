@@ -1,3 +1,5 @@
+from functools import partial
+
 from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
@@ -35,7 +37,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         pipeline(
             [
                 ArgoNode(
-                    func=nodes.return_predictions,
+                    func=partial(nodes.return_predictions, n_cross_val_folds),
                     inputs={
                         "sorted_matrix_df": f"matrix_transformations.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@spark",
                         "known_pairs": "modelling.model_input.splits@spark",
