@@ -74,14 +74,14 @@ class RankBasedFrequentFlyerTransformation(MatrixTransformation):
             Transformed DataFrame
         """
         # Count entities
-        N_drug = matrix_df.select("source").distinct().count()
+        N_drug = matrix_df.select("translator_id_source").distinct().count()
         N_disease = matrix_df.select("target").distinct().count()
         N_matrix = matrix_df.count()
 
         logger.info(f"Computing ranks for matrix with {N_drug} drugs, {N_disease} diseases, and {N_matrix} matrix rows")
 
         # Define windows for ranking
-        drug_window = Window.partitionBy("source").orderBy(F.col(score_col).desc())
+        drug_window = Window.partitionBy("translator_id_source").orderBy(F.col(score_col).desc())
         disease_window = Window.partitionBy("target").orderBy(F.col(score_col).desc())
 
         matrix_df = (

@@ -128,7 +128,7 @@ class TopPairs(ReportingTableGenerator):
             matrix_df.orderBy(self.score_col, ascending=False)
             .limit(self.n_reporting)
             .select(
-                F.col("source").alias("drug_id"),
+                F.col("translator_id_source").alias("drug_id"),
                 F.col("target").alias("disease_id"),
                 *self.columns_to_keep,
             )
@@ -244,7 +244,7 @@ class TopFrequentFlyers(ReportingTableGenerator):
         # Set up drug or disease mode
         if self.is_drug_mode:
             entity_df = drugs_df.select(F.col("id").alias("id"), F.col("name").alias("name"))
-            specific_col = "source"
+            specific_col = "translator_id_source"
         else:
             entity_df = diseases_df.select(F.col("id").alias("id"), F.col("name").alias("name"))
             specific_col = "target"
