@@ -11,6 +11,14 @@ _pandas_parquet: &_pandas_parquet
   load_args:
     engine: pyarrow
 
+matrix_transformations.fold_{fold}.model_output.sorted_matrix_predictions_temp@spark:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.matrix_transformations}/fold_{fold}/transformed_matrix_temp
+
+matrix_transformations.fold_{fold}.model_output.sorted_matrix_predictions_temp@pandas:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.matrix_transformations}/fold_{fold}/transformed_matrix_temp
+
 matrix_transformations.fold_{fold}.model_output.sorted_matrix_predictions@spark:
   <<: *_spark_parquet
   filepath: ${globals:paths.matrix_transformations}/fold_{fold}/transformed_matrix
