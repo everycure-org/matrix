@@ -2,6 +2,7 @@ import itertools
 import random
 
 import networkx as nx
+import numpy as np
 import pandas as pd
 from kedro.pipeline import Pipeline, node, pipeline
 from matrix_fabricator.fabrication import fabricate_datasets
@@ -101,6 +102,23 @@ def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.D
             rows.append({"graph": {"_id": str(idx)}, "links": path})
 
     return rows
+
+
+def generate_run_comparison_matrices(N: int = 15):
+    """Generate fabricated matrix predictions data to test the run comparison pipeline."""
+    numpy.random.seed(0)
+
+    # Generate base matrix for drug-disease pairs
+    drugs_df = pd.DataFrame({"source": [f"drug_{i}" for i in range(N)]})
+    diseases_df = pd.DataFrame({"target": [f"disease_{i}" for i in range(N)]})
+    base_matrix_fold_1 = pd.merge(drugs_df, diseases_df, how="cross")
+    base_matrix_fold_1["is_known_positive"] = np.random.randint([True, False], size=N**2, p=[0.25, 0.75])
+    base_matrix_fold_1["is_known_negative"] = np.random.randint([True, False], size=N**2, p=[0.25, 0.75])
+    base_matrix_fold_2 = base_matrix_fold_1.copy(deep=True)
+    base_matrix_fold_2["is_known_positive"] = np.random.randint([True, False], size=N**2, p=[0.25, 0.75])
+    base_matrix_fold_2["is_known_negative"] = np.random.randint([True, False], size=N**2, p=[0.25, 0.75])
+
+    # TODO finish
 
 
 def create_pipeline(**kwargs) -> Pipeline:
