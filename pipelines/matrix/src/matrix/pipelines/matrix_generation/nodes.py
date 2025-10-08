@@ -206,9 +206,9 @@ def make_predictions_and_sort(
     num_partitions: int = None,  # NEW: configurable partitions
 ) -> ps.DataFrame:
     """Generate and sort probability scores for a drug-disease dataset."""
-
+    logger.debug("make_predictions_and_sort: Starting make_predictions_and_sort")
     embeddings = node_embeddings.select("id", "topological_embedding").cache()
-
+    logger.debug("make_predictions_and_sort: Finished caching embeddings")
     pairs_with_embeddings = (
         pairs.drop("__index_level_0__")
         .join(
@@ -223,7 +223,7 @@ def make_predictions_and_sort(
         )
         .filter(F.col("source_embedding").isNotNull() & F.col("target_embedding").isNotNull())
     )
-
+    logger.debug("make_predictions_and_sort: Finished joining embeddings")
     # OPTIMIZATION: Calculate optimal partitions
     if num_partitions is None:
         spark = pairs_with_embeddings.sparkSession
@@ -231,23 +231,27 @@ def make_predictions_and_sort(
 
     # OPTIMIZATION: Repartition for better parallelism
     pairs_with_embeddings = pairs_with_embeddings.repartition(num_partitions)
+    logger.debug(f"make_predictions_and_sort: Repartitioned to {num_partitions} partitions")
 
     def model_predict(partition_df: pd.DataFrame) -> pd.DataFrame:
         if partition_df.empty:
             return partition_df
-
+        logger.debug("make_predictions_and_sort: Predicting on a partition")
         model_predictions = model.predict_proba(partition_df)
+        logger.debug("make_predictions_and_sort: Finished predicting on a partition")
 
         partition_df[not_treat_score_col_name] = model_predictions[:, 0]
         partition_df[treat_score_col_name] = model_predictions[:, 1]
         partition_df[unknown_score_col_name] = model_predictions[:, 2]
-
+        logger.debug("make_predictions_and_sort: Added score columns to partition")
         return partition_df.drop(columns=["source_embedding", "target_embedding"])
 
+    logger.debug("make_predictions_and_sort: Defined model_predict function")
     # Define schema for mapInPandas output
     structfields_to_keep = [
         col for col in pairs_with_embeddings.schema if col.name not in ["target_embedding", "source_embedding"]
     ]
+    logger.debug("make_predictions_and_sort: Defined structfields_to_keep")
     model_predict_schema = StructType(
         structfields_to_keep
         + [
@@ -256,15 +260,16 @@ def make_predictions_and_sort(
             StructField(unknown_score_col_name, DoubleType(), True),
         ]
     )
-
+    logger.debug("make_predictions_and_sort: Defined model_predict_schema")
     # Use mapInPandas for better parallelism
     pairs_with_scores = pairs_with_embeddings.mapInPandas(model_predict, model_predict_schema)
-
+    logger.debug("make_predictions_and_sort: Finished mapInPandas with model predictions")
     pairs_sorted = pairs_with_scores.orderBy(treat_score_col_name, ascending=False)
-
+    logger.debug("make_predictions_and_sort: Finished sorting")
     pairs_ranked = pairs_sorted.rdd.zipWithIndex().toDF().select(F.col("_1.*"), (F.col("_2") + 1).alias("rank"))
-
+    logger.debug("make_predictions_and_sort: Finished ranking")
     pairs_ranked_count = pairs_ranked.count()
+    logger.debug("make_predictions_and_sort: Finished counting")
     return pairs_ranked.withColumn("quantile_rank", F.col("rank") / pairs_ranked_count)
 
 
