@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Optional, Union
+from typing import Optional
 
 import pandas as pd
 import pyspark.sql as ps
@@ -7,14 +7,13 @@ import pyspark.sql.functions as F
 import pyspark.sql.types as T
 from matplotlib.figure import Figure
 from matrix.datasets.graph import KnowledgeGraph
-from matrix.inject import _extract_elements_in_list, inject_object
 from matrix.pipelines.matrix_generation.reporting_plots import ReportingPlotGenerator
 from matrix.pipelines.matrix_generation.reporting_tables import ReportingTableGenerator
 from matrix.pipelines.modelling.model import ModelWrapper
-from matrix.pipelines.modelling.nodes import apply_transformers
-from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
+from matrix.pipelines.modelling.preprocessing_model import ModelWithTransformers
+from matrix_inject.inject import inject_object
+from matrix_pandera.validator import Column, DataFrameSchema, check_output
 from pyspark.sql.types import DoubleType, StructField, StructType
-from sklearn.impute._base import _BaseImputer
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -194,27 +193,23 @@ def generate_pairs(
 def make_predictions_and_sort(
     node_embeddings: ps.DataFrame,
     pairs: ps.DataFrame,
-    transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
-    model: ModelWrapper,
-    features: List[str],
     treat_score_col_name: str,
     not_treat_score_col_name: str,
     unknown_score_col_name: str,
+    model: ModelWrapper,
 ) -> ps.DataFrame:
     """Generate and sort probability scores for a drug-disease dataset.
 
     Args:
         node_embeddings: Dataframe with node embeddings.
-        pairs: drug disease pairs to predict scores for.
-        transformers: Dictionary of trained transformers.
-        model: Model making the predictions.
-        features: List of features, may be regex specified.
-        treat_score_col_name: Probability score column name.
-        not_treat_score_col_name: Probability score column name for not treat.
-        unknown_score_col_name: Probability score column name for unknown.
+        pairs: Drug-disease pairs to predict scores for.
+        treat_score_col_name: Name of the column for treatment scores.
+        not_treat_score_col_name: Name of the column for non-treatment scores.
+        unknown_score_col_name: Name of the column for unknown scores.
+        model: Ensemble model capable of producing probability scores.
 
     Returns:
-        Pairs dataset sorted by score with their rank and quantile rank
+        Pairs dataset sorted by score with their rank and quantile rank.
     """
 
     embeddings = node_embeddings.select("id", "topological_embedding")
@@ -236,13 +231,9 @@ def make_predictions_and_sort(
     )
 
     def model_predict(partition_df: pd.DataFrame) -> pd.DataFrame:
-        transformed = apply_transformers(partition_df, transformers)
+        model_predictions = model.predict_proba(partition_df)
 
-        # TODO: can we get columns from transformers directly?
-        model_features = _extract_elements_in_list(transformed.columns, features, True)
-
-        model_predictions = model.predict_proba(transformed[model_features].values)
-        # TODO: assign scores in one pass?
+        # Assign averaged predictions to columns
         partition_df[not_treat_score_col_name] = model_predictions[:, 0]
         partition_df[treat_score_col_name] = model_predictions[:, 1]
         partition_df[unknown_score_col_name] = model_predictions[:, 2]
@@ -303,3 +294,12 @@ def generate_reports(
         reports_dict[strategy.name] = strategy.generate(sorted_matrix_df, **kwargs)
 
     return reports_dict
+
+
+def package_model_with_transformers(
+    transformers: dict,
+    model: ModelWrapper,
+    features: list[str],
+) -> ModelWrapper:
+    """Bundle transformers, features, and model into a single callable object."""
+    return ModelWithTransformers(model, transformers, features)

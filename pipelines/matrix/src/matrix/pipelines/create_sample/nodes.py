@@ -2,9 +2,9 @@ import logging
 from typing import Dict
 
 import pyspark.sql as ps
-from matrix_schema.utils.pandera_utils import DataFrameSchema, check_output
+from matrix_inject.inject import inject_object
+from matrix_pandera.validator import DataFrameSchema, check_output
 
-from matrix.inject import inject_object
 from matrix.pipelines.create_sample.samplers import Sampler
 
 logger = logging.getLogger(__name__)
