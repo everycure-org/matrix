@@ -10,15 +10,12 @@ def _create_source_parsing_pipeline(
     source_type: str = "external_registry",
     has_mapping: bool = False,
 ) -> Pipeline:
-    """Create parsing pipeline for a single PKS source.
+    """Create parsing pipeline for a PKS source.
 
     Args:
-        source: Name of the source (e.g., 'infores', 'reusabledata')
-        source_type: Type of source ('external_registry' or 'matrix_curated')
-        has_mapping: Whether this source requires ID mapping
-
-    Returns:
-        Pipeline for parsing this source
+        source: Source name (e.g., 'infores', 'reusabledata').
+        source_type: Either 'matrix_curated' or 'external_registry'.
+        has_mapping: Whether source requires ID mapping to infores.
     """
     pipelines = []
 
@@ -41,7 +38,7 @@ def _create_source_parsing_pipeline(
                 tags=source,
             )
         )
-    else:  # external_registry
+    else:
         pipelines.append(
             pipeline(
                 [
@@ -66,13 +63,9 @@ def _create_source_parsing_pipeline(
 
 
 def create_pipeline(**kwargs) -> Pipeline:
-    """Generate documentation and metadata as part of the release process pipeline.
-
-    Uses dynamic pipeline generation pattern similar to integration pipeline.
-    """
+    """Create PKS documentation pipeline."""
     pipelines = []
 
-    # Create pipeline per source
     for source in settings.DYNAMIC_PIPELINES_MAPPING()["document_kg"]:
         pipelines.append(
             pipeline(
@@ -85,7 +78,6 @@ def create_pipeline(**kwargs) -> Pipeline:
             )
         )
 
-    # Add merge, filter, and documentation pipeline
     pipelines.append(
         pipeline(
             [

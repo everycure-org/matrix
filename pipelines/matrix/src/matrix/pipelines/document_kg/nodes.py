@@ -12,37 +12,23 @@ logger = logging.getLogger(__name__)
 
 
 def extract_pks_from_unified_edges(unified_edges: ps.DataFrame) -> List[str]:
-    """Extract all unique primary knowledge sources from the unified edges data.
+    """Extract unique primary knowledge sources from unified edges."""
 
-    Args:
-        unified_edges (ps.DataFrame): The unified edges Spark DataFrame containing PKS information
-                                     in columns: primary_knowledge_source, primary_knowledge_sources,
-                                     aggregator_knowledge_source
-
-    Returns:
-        List[str]: List of unique PKS/infores IDs (with 'infores:' prefix stripped)
-    """
-    # Extract from single-value primary_knowledge_source column
     single_pks = (
         unified_edges.select("primary_knowledge_source")
         .filter(F.col("primary_knowledge_source").isNotNull())
         .select(F.col("primary_knowledge_source").alias("pks"))
     )
 
-    # Extract from array-valued primary_knowledge_sources column
     array_pks = unified_edges.select(F.explode("primary_knowledge_sources").alias("pks")).filter(
         F.col("pks").isNotNull()
     )
 
-    # Extract from array-valued aggregator_knowledge_source column
     agg_pks = unified_edges.select(F.explode("aggregator_knowledge_source").alias("pks")).filter(
         F.col("pks").isNotNull()
     )
 
-    # Union all PKS sources and get unique values
     unique_pks = single_pks.union(array_pks).union(agg_pks).distinct()
-
-    # Convert to list, strip infores: prefix
     relevant_sources = [src.replace("infores:", "") for src in unique_pks.toPandas()["pks"].tolist()]
 
     return relevant_sources
@@ -55,18 +41,7 @@ def parse_pks_source(
     config: Dict[str, Any],
     mapping_data: Optional[pd.DataFrame] = None,
 ) -> Dict[str, Dict[str, Any]]:
-    """Generic parser dispatcher that calls source-specific parser function.
-
-    Args:
-        parser: Parser function from source_parsers module
-        source_data: Raw data (format varies by source)
-        config: Configuration from parameters.yml for this source
-        mapping_data: Optional mapping DataFrame for sources that need ID mapping
-
-    Returns:
-        Dict keyed by PKS ID with extracted metadata for this source
-    """
-    # Call with or without mapping based on whether mapping_data was provided by pipeline
+    """Dispatch to source-specific parser function with optional ID mapping."""
     if mapping_data is not None:
         return parser(source_data, mapping_data, config)
     else:
@@ -74,26 +49,15 @@ def parse_pks_source(
 
 
 def merge_all_pks_metadata(*source_dicts: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
-    """Merge multiple PKS metadata dictionaries.
-
-    Args:
-        *source_dicts: Variable number of dictionary arguments
-
-    Returns:
-        Combined dictionary with all PKS metadata
-    """
+    """Merge PKS metadata from multiple sources."""
     result = {}
 
-    # Loop through all provided source dictionaries
     for source_dict in source_dicts:
         for pks_id, pks_data in source_dict.items():
-            # If pks_id not in result, initialize it as empty dict
             if pks_id not in result:
                 result[pks_id] = {}
-            # Update result[pks_id] with pks_data (merging metadata)
             result[pks_id].update(pks_data)
 
-    # Log the count of unique PKS and number of sources merged
     logger.info(f"Merged metadata for {len(result)} unique PKS from {len(source_dicts)} sources")
 
     return result
@@ -103,15 +67,7 @@ def integrate_all_metadata(
     all_pks_metadata: Dict[str, Dict[str, Any]],
     unified_edges: ps.DataFrame,
 ) -> Dict[str, Any]:
-    """Filter PKS metadata to only relevant sources found in unified edges.
-
-    Args:
-        all_pks_metadata: All PKS metadata from all sources
-        unified_edges: Unified edges to extract relevant PKS IDs from
-
-    Returns:
-        Filtered metadata for PKS relevant to the matrix
-    """
+    """Filter PKS metadata to sources found in unified edges."""
     relevant_sources = extract_pks_from_unified_edges(unified_edges)
     return _create_pks_subset_relevant_to_matrix(all_pks_metadata, relevant_sources)
 
@@ -138,11 +94,7 @@ def _create_default_pks_entry(source_id: str) -> Dict[str, Any]:
 def _create_pks_subset_relevant_to_matrix(
     primary_knowledge_sources: Dict[str, Dict[str, Any]], relevant_sources: List[str]
 ) -> Dict[str, Dict[str, Any]]:
-    """Create a subset of the primary knowledge sources relevant to the Matrix project.
-
-    For PKS that are not found in the metadata, default entries are created to ensure
-    the pipeline doesn't fail and clearly indicates missing information.
-    """
+    """Create subset of PKS metadata, generating defaults for missing sources."""
     subset = {}
     missing_sources = []
 
@@ -150,7 +102,6 @@ def _create_pks_subset_relevant_to_matrix(
         if source in primary_knowledge_sources:
             subset[source] = primary_knowledge_sources[source]
         else:
-            # Create default entry for missing PKS
             subset[source] = _create_default_pks_entry(source)
             missing_sources.append(source)
 
@@ -161,7 +112,7 @@ def _create_pks_subset_relevant_to_matrix(
 
 
 def _get_property(source_info: Dict[str, Dict[str, Any]], property: str, default_value: str = "Unknown") -> str:
-    """Get a property from the source info, checking multiple sources in order of priority."""
+    """Get property from source info, checking infores, kgregistry, then reusabledata."""
     property_value = default_value
     if "infores" in source_info and property in source_info["infores"]:
         property_value = source_info["infores"][property]
@@ -173,7 +124,7 @@ def _get_property(source_info: Dict[str, Dict[str, Any]], property: str, default
 
 
 def _get_property_from_source(source_info: Dict[str, Dict[str, Any]], source: str, property: str) -> Optional[Any]:
-    """Get a property from a specific source in the source info."""
+    """Get property from specific source."""
     if source in source_info:
         if property in source_info[source]:
             value = source_info[source][property]
@@ -185,7 +136,7 @@ def _get_property_from_source(source_info: Dict[str, Dict[str, Any]], source: st
 
 
 def _is_default_pks_entry(source_info: Dict[str, Dict[str, Any]]) -> bool:
-    """Check if this is a default PKS entry (no metadata available)."""
+    """Check if PKS entry has no metadata available."""
     return (
         len(source_info) == 1
         and "infores" in source_info
@@ -194,10 +145,16 @@ def _is_default_pks_entry(source_info: Dict[str, Dict[str, Any]]) -> bool:
     )
 
 
-def _format_license(source_info: Dict[str, Dict[str, Any]]) -> str:
-    """Format the license information for a source into markdown."""
+def _format_license_issues(license_issues: Optional[Any]) -> Optional[str]:
+    """Format license issues list as semicolon-separated string."""
+    if license_issues is None or not isinstance(license_issues, list):
+        return None
+    issue_strings = [f"{issue['comment']} ({issue['criteria']})" for issue in license_issues]
+    return "; ".join(issue_strings) if issue_strings else None
 
-    # Handle default entries with no metadata
+
+def _format_license(source_info: Dict[str, Dict[str, Any]]) -> str:
+    """Format license information as markdown."""
     if _is_default_pks_entry(source_info):
         return """#### License information
 **No license information available** - This primary knowledge source was found in the knowledge graph but no metadata could be located in external registries.
@@ -210,49 +167,29 @@ def _format_license(source_info: Dict[str, Dict[str, Any]]) -> str:
     - _Issues_: {{ reusabledata_license_issues }}{% endif %}{%if reusabledata_license_commentary is not none %}
     - _Commentary_: {{ reusabledata_license_commentary }}{% endif %}
 """)
-    matrix_license_name = _get_property_from_source(source_info, "matrixcurated", "license_name")
-    matrix_license_url = _get_property_from_source(source_info, "matrixcurated", "license_source_link")
-
-    kgregistry_license = _get_property_from_source(source_info, "kgregistry", "license")
-    kg_registry_license_name = (
-        kgregistry_license["label"] if kgregistry_license is not None and "label" in kgregistry_license else None
-    )
-    kg_registry_license_id = (
-        kgregistry_license["id"] if kgregistry_license is not None and "id" in kgregistry_license else None
-    )
-
-    reusabledata_license = _get_property_from_source(source_info, "reusabledata", "license")
-    reusabledata_license_commentary = _get_property_from_source(
-        source_info, "reusabledata", "license-commentary-embeddable"
-    )
-    reusabledata_license_issues = _get_property_from_source(source_info, "reusabledata", "license-issues")
-    reusabledata_license_issues_string = None
-    reusabledata_license_issues_list = []
-    if reusabledata_license_issues is not None:
-        if isinstance(reusabledata_license_issues, list):
-            for issue in reusabledata_license_issues:
-                issue_str = f"{issue['comment']} ({issue['criteria']})"
-                reusabledata_license_issues_list.append(issue_str)
-    if len(reusabledata_license_issues_list) > 0:
-        reusabledata_license_issues_string = "; ".join(reusabledata_license_issues_list)
-    reusabledata_license_type = _get_property_from_source(source_info, "reusabledata", "license-type")
-
     return pks_jinja2_template.render(
-        matrix_license_name=matrix_license_name,
-        matrix_license_url=matrix_license_url,
-        kg_registry_license_name=kg_registry_license_name,
-        kg_registry_license_id=kg_registry_license_id,
-        reusabledata_license=reusabledata_license,
-        reusabledata_license_type=reusabledata_license_type,
-        reusabledata_license_issues=reusabledata_license_issues_string,
-        reusabledata_license_commentary=reusabledata_license_commentary,
+        matrix_license_name=_get_property_from_source(source_info, "matrixcurated", "license_name"),
+        matrix_license_url=_get_property_from_source(source_info, "matrixcurated", "license_source_link"),
+        kg_registry_license_name=_get_property_from_source(source_info, "kgregistry", "license").get("label")
+        if _get_property_from_source(source_info, "kgregistry", "license")
+        else None,
+        kg_registry_license_id=_get_property_from_source(source_info, "kgregistry", "license").get("id")
+        if _get_property_from_source(source_info, "kgregistry", "license")
+        else None,
+        reusabledata_license=_get_property_from_source(source_info, "reusabledata", "license"),
+        reusabledata_license_type=_get_property_from_source(source_info, "reusabledata", "license-type"),
+        reusabledata_license_issues=_format_license_issues(
+            _get_property_from_source(source_info, "reusabledata", "license-issues")
+        ),
+        reusabledata_license_commentary=_get_property_from_source(
+            source_info, "reusabledata", "license-commentary-embeddable"
+        ),
     )
 
 
 def _format_review(source_info: Dict[str, Dict[str, Any]]) -> str:
-    """Format the review information for a source into markdown."""
+    """Format review information as markdown."""
 
-    # Handle default entries with no metadata
     if _is_default_pks_entry(source_info):
         return """#### Review information for this resource
 
@@ -278,39 +215,29 @@ def _format_review(source_info: Dict[str, Dict[str, Any]]) -> str:
 No review information available.
 {% endif %}
 """)
-    domain_coverage_comments = _get_property_from_source(source_info, "matrixreviews", "domain_coverage_comments")
-    domain_coverage_score = _get_property_from_source(source_info, "matrixreviews", "domain_coverage_score")
-    label_manual = _get_property_from_source(source_info, "matrixreviews", "label_manual")
-    label_manual_comment = _get_property_from_source(source_info, "matrixreviews", "label_manual_comment")
-    label_rubric = _get_property_from_source(source_info, "matrixreviews", "label_rubric")
-    label_rubric_rationale = _get_property_from_source(source_info, "matrixreviews", "label_rubric_rationale")
-    reviewer = _get_property_from_source(source_info, "matrixreviews", "reviewer")
-    source_scope_score = _get_property_from_source(source_info, "matrixreviews", "source_scope_score")
-    source_scope_score_comment = _get_property_from_source(source_info, "matrixreviews", "source_scope_score_comment")
-    utility_drugrepurposing_comment = _get_property_from_source(
-        source_info, "matrixreviews", "utility_drugrepurposing_comment"
-    )
-    utility_drugrepurposing_score = _get_property_from_source(
-        source_info, "matrixreviews", "utility_drugrepurposing_score"
-    )
-
     return pks_jinja2_template.render(
-        domain_coverage_comments=domain_coverage_comments,
-        domain_coverage_score=domain_coverage_score,
-        label_manual=label_manual,
-        label_manual_comment=label_manual_comment,
-        label_rubric=label_rubric,
-        label_rubric_rationale=label_rubric_rationale,
-        reviewer=reviewer,
-        source_scope_score=source_scope_score,
-        source_scope_score_comment=source_scope_score_comment,
-        utility_drugrepurposing_comment=utility_drugrepurposing_comment,
-        utility_drugrepurposing_score=utility_drugrepurposing_score,
+        domain_coverage_comments=_get_property_from_source(source_info, "matrixreviews", "domain_coverage_comments"),
+        domain_coverage_score=_get_property_from_source(source_info, "matrixreviews", "domain_coverage_score"),
+        label_manual=_get_property_from_source(source_info, "matrixreviews", "label_manual"),
+        label_manual_comment=_get_property_from_source(source_info, "matrixreviews", "label_manual_comment"),
+        label_rubric=_get_property_from_source(source_info, "matrixreviews", "label_rubric"),
+        label_rubric_rationale=_get_property_from_source(source_info, "matrixreviews", "label_rubric_rationale"),
+        reviewer=_get_property_from_source(source_info, "matrixreviews", "reviewer"),
+        source_scope_score=_get_property_from_source(source_info, "matrixreviews", "source_scope_score"),
+        source_scope_score_comment=_get_property_from_source(
+            source_info, "matrixreviews", "source_scope_score_comment"
+        ),
+        utility_drugrepurposing_comment=_get_property_from_source(
+            source_info, "matrixreviews", "utility_drugrepurposing_comment"
+        ),
+        utility_drugrepurposing_score=_get_property_from_source(
+            source_info, "matrixreviews", "utility_drugrepurposing_score"
+        ),
     )
 
 
 def _generate_list_of_pks_markdown_strings(source_data: Dict[str, Dict[str, Any]]) -> List[str]:
-    """Generate a list of markdown strings for each PKS in the source data."""
+    """Generate markdown documentation for each PKS."""
     pks_jinja2_template = Template("""### Source: {{ title }} ({{ id }})
 
 _{{ description }}_
@@ -355,7 +282,7 @@ _{{ description }}_
 
 
 def _generate_pks_markdown_documentation(pks_documentation_texts: List[str], overview_table: str) -> str:
-    """Generate the full markdown documentation for the PKS."""
+    """Generate complete PKS markdown documentation."""
     pks_jinja2_template = Template("""# {{ title }}
                                    
 This page is automatically generated with curated information about primary knowledge sources
@@ -387,7 +314,7 @@ This internally curated information is augmented with information from three ext
 
 
 def _generate_overview_table_of_pks_markdown(source_data: Dict[str, Dict[str, Any]]) -> str:
-    """Generate an overview table of PKS in markdown format."""
+    """Generate PKS overview table in markdown."""
     pks_jinja2_template = Template("""**Overview table**
 
 
@@ -416,14 +343,7 @@ def _generate_overview_table_of_pks_markdown(source_data: Dict[str, Dict[str, An
 
 
 def create_pks_documentation(matrix_subset_relevant_sources: Dict[str, Any]) -> str:
-    """Create markdown documentation for primary knowledge sources (PKS) used in the matrix.
-
-    Args:
-        matrix_subset_relevant_sources (Dict[str, Any]): Integrated metadata for PKS relevant to the provided matrix, keyed by PKS/infores ID.
-
-    Returns:
-        str: Markdown documentation string for the PKS used in the matrix.
-    """
+    """Generate markdown documentation for PKS used in the matrix."""
     pks_documentation_texts = _generate_list_of_pks_markdown_strings(matrix_subset_relevant_sources)
     overview_table = _generate_overview_table_of_pks_markdown(source_data=matrix_subset_relevant_sources)
     documentation_md = _generate_pks_markdown_documentation(pks_documentation_texts, overview_table)

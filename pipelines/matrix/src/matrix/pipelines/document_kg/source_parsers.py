@@ -7,19 +7,19 @@ logger = logging.getLogger(__name__)
 
 
 def _dataframe_to_mapping_dict(mapping_df: pd.DataFrame) -> Dict[str, str]:
-    """Convert DataFrame with subject_id/object_id columns to a mapping dictionary."""
+    """Convert mapping DataFrame to dictionary."""
     return {row["subject_id"]: row["object_id"] for _, row in mapping_df.iterrows()}
 
 
 def _extract_records(source_data: Any, config: Dict[str, Any]) -> Any:
-    """Extract records from source data, handling nested structures if data_path is configured."""
+    """Extract records from source data using optional data_path."""
     return source_data[config["data_path"]] if "data_path" in config else source_data
 
 
 def _add_parsed_record(
     result: Dict[str, Dict[str, Any]], pks_id: str, record: Dict[str, Any], id_value: Any, config: Dict[str, Any]
 ) -> None:
-    """Build extracted data and add to result dictionary, initializing nested dict if needed."""
+    """Add parsed record to result dictionary."""
     if pks_id not in result:
         result[pks_id] = {}
 
@@ -30,15 +30,7 @@ def _add_parsed_record(
 
 
 def parse_infores(source_data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
-    """Parse infores catalog - YAML format with data_path structure.
-
-    Args:
-        source_data: YAML dict containing information resources
-        config: Configuration for this source from parameters.yml
-
-    Returns:
-        Dict keyed by PKS ID with extracted metadata
-    """
+    """Parse infores catalog from YAML."""
     records = _extract_records(source_data, config)
     result = {}
 
@@ -53,16 +45,7 @@ def parse_infores(source_data: Dict[str, Any], config: Dict[str, Any]) -> Dict[s
 
 
 def parse_reusabledata(source_data: Any, mapping_df: pd.DataFrame, config: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
-    """Parse reusabledata.org - JSON list format that requires ID mapping.
-
-    Args:
-        source_data: JSON list of reusabledata records
-        mapping_df: DataFrame mapping reusabledata IDs to infores IDs
-        config: Configuration for this source from parameters.yml
-
-    Returns:
-        Dict keyed by PKS ID with extracted metadata
-    """
+    """Parse reusabledata.org JSON with ID mapping."""
     mapping_dict = _dataframe_to_mapping_dict(mapping_df)
     result = {}
 
@@ -82,16 +65,7 @@ def parse_reusabledata(source_data: Any, mapping_df: pd.DataFrame, config: Dict[
 def parse_kgregistry(
     source_data: Dict[str, Any], mapping_df: pd.DataFrame, config: Dict[str, Any]
 ) -> Dict[str, Dict[str, Any]]:
-    """Parse KG registry - YAML format with special infores_id handling.
-
-    Args:
-        source_data: YAML dict containing KG registry data
-        mapping_df: DataFrame mapping kgregistry IDs to infores IDs
-        config: Configuration for this source from parameters.yml
-
-    Returns:
-        Dict keyed by PKS ID with extracted metadata
-    """
+    """Parse KG registry YAML with ID mapping and infores_id handling."""
     mapping_dict = _dataframe_to_mapping_dict(mapping_df)
     records = _extract_records(source_data, config)
     result = {}
@@ -101,13 +75,11 @@ def parse_kgregistry(
         if not original_id:
             continue
 
-        # Special handling: prefer infores_id if present
         mapped_id = record["infores_id"] if record.get("infores_id") else mapping_dict.get(original_id, original_id)
         pks_id = str(mapped_id).replace("infores:", "")
 
         _add_parsed_record(result, pks_id, record, mapped_id, config)
 
-        # Add updated_id field for kgregistry special case
         if "infores_id" in record:
             result[pks_id][config["name"]]["updated_id"] = record["infores_id"]
 
@@ -115,15 +87,7 @@ def parse_kgregistry(
 
 
 def parse_matrix_dataframe(source_data: pd.DataFrame, config: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
-    """Parse Matrix pandas DataFrame sources (curated metadata or reviews).
-
-    Args:
-        source_data: pandas DataFrame with Matrix data
-        config: Configuration for this source from parameters.yml
-
-    Returns:
-        Dict keyed by PKS ID with extracted metadata
-    """
+    """Parse Matrix curated metadata or reviews from DataFrame."""
     result = {}
 
     for record in source_data.to_dict("records"):
