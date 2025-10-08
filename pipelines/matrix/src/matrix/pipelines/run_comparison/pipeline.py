@@ -4,6 +4,16 @@ from matrix.kedro4argo_node import ArgoNode
 from . import nodes
 from .settings import RUN_COMPARISON_SETTINGS
 
+# TODO:
+# - Add test env
+# - Add multi fold method for recall@n
+# - Add bootstrap method
+# - Add plotting method
+# - Add unit test for recall@n class
+# - Add matrix harmonisation + unit tests
+# - Test on real data
+# - Add unit test for input path classes
+
 # matrices_to_evaluate = RUN_COMPARISON_SETTINGS["run_comparison"]["inputs"]
 
 
@@ -50,7 +60,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ],
                     outputs=f"run_comparison.{evaluation}.results",
                     name=f"give_evaluation_results.{evaluation}",
-                )
+                ),
+                # # TODO: Add plotting node
             ]
         )
     return Pipeline(pipeline_nodes)
