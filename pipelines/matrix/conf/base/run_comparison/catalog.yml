@@ -1,0 +1,2 @@
+# run_comparison.input_matrices:
+#   type: matrix.datasets.multi_matrices.MultiMatricesDataset

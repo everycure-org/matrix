@@ -25,7 +25,7 @@ hooks = {
     "mlflow": MlflowHook(),
     "mlflow_kedro": matrix_hooks.MLFlowHooks(),
     "spark": matrix_hooks.SparkHooks(),
-    "dynamic_catalog": matrix_hooks.DynamicCatalogHook(),
+    # "dynamic_catalog": matrix_hooks.DynamicCatalogHook(),
     "release": matrix_hooks.ReleaseInfoHooks(),
 }
 

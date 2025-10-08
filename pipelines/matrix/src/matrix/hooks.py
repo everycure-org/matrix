@@ -361,12 +361,12 @@ class ReleaseInfoHooks:
                 logger.warning("Could not upload release info after running Kedro node.", exc_info=True)
 
 
-class DynamicCatalogHook:
-    """Hook to dynamically create input datasets."""
+# class DynamicCatalogHook:
+#     """Hook to dynamically create input datasets."""
 
-    @hook_impl
-    def after_catalog_created(self, catalog) -> None:
-        from matrix.pipelines.run_comparison.settings import RUN_COMPARISON_SETTINGS
+#     @hook_impl
+#     def after_catalog_created(self, catalog) -> None:
+#         from matrix.pipelines.run_comparison.settings import RUN_COMPARISON_SETTINGS
 
-        for name, config in RUN_COMPARISON_SETTINGS["run_comparison"]["inputs"].items():
-            catalog.add(name, SparkDataset(filepath=config["filepath"]))
+#         for name, config in RUN_COMPARISON_SETTINGS["run_comparison"]["inputs"].items():
+#             catalog.add(name, SparkDataset(filepath=config["filepath"]))

@@ -1,5 +1,23 @@
 run_comparison_evaluations:
+
+  # TODO: implement
+  # matrix_harmonisation_mode: "strict" # "strict" or "lenient_on_ground_truth", "lenient_on_ground_truth_and_pairs"
+
+  # TODO: implement
+  # uncertainty_estimation_mode: "None" # "None", "MultiFold", "Bootstrap"
+
+  input_paths:
+    matrix_1:
+      _object: matrix.pipelines.run_comparison.input_paths.InputPathsSingleFold # Options: InputPathsSingleFold, InputPathsModellingRun , InputPathsMultiFold
+      file_path: "data/run_comparison/matrix_1/matrix_1.csv"
+      score_col_name: "treat score"
+
+    matrix_2:
+      _object: matrix.pipelines.run_comparison.input_paths.InputPathsSingleFold
+      file_path: "data/run_comparison/matrix_2/matrix_2.csv"
+      score_col_name: "treat score"
+
+
   ground_truth_recall_at_n:
     _object: matrix.pipelines.run_comparison.evaluations.RecallAtN
     bool_test_col: "is_known_positive"
-    score_col: "transformed_treat_score"
