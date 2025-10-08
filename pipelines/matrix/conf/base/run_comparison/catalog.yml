@@ -1,3 +1,8 @@
 run_comparison.input_matrices:
   type: matrix.datasets.multi_matrices.MultiMatricesDataset
   filepath: ${globals:paths.run_comparison}/input_matrices.yml
+
+"run_comparison.{evaluation}.results":
+  type: polars.EagerPolarsDataset
+  file_format: parquet
+  filepath: ${globals:paths.run_comparison}/evaluation_values/results_{evaluation}
