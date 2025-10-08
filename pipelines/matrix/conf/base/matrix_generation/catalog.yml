@@ -50,6 +50,10 @@ matrix_generation.feat.nodes@kg:
   <<: *_spark_parquet
   filepath: ${globals:paths.matrix_generation}/model_output/fold_{fold}/matrix_predictions
 
+"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions.orchard@spark":
+  <<: *_spark_parquet
+  filepath: ${globals:paths.matrix_generation}/model_output/fold_{fold}/matrix_predictions_orchard
+
 matrix_generation.reporting.plots:
   type: partitions.PartitionedDataset
   path: ${globals:paths.matrix_generation}/reporting/plots
