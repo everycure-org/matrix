@@ -39,8 +39,8 @@ locals {
       gpu_driver_version = "LATEST"
     },
     {
-      name               = "g2-standard-32-l4-nodes" # 1 GPU, 32vCPUs, 128GB RAM
-      machine_type       = "g2-standard-32"
+      name               = "g2-standard-32-nodes"
+      machine_type       = "g2-standard-32" # 96 vCPUs, 360GB RAM
       node_locations     = local.default_node_locations
       min_count          = 0
       max_count          = 20
@@ -50,7 +50,7 @@ locals {
       enable_gcfs        = true
       enable_gvnic       = true
       initial_node_count = 0
-      accelerator_count  = 2
+      accelerator_count  = 1
       accelerator_type   = "nvidia-l4"
       gpu_driver_version = "LATEST"
     }
@@ -109,8 +109,8 @@ locals {
       spot               = true
     },
     {
-      name               = "g2-standard-32-l4-spot-nodes" # 1 GPU, 32vCPUs, 128GB RAM
-      machine_type       = "g2-standard-32"
+      name               = "g2-standard-32-spot-nodes"
+      machine_type       = "g2-standard-32" # 96 vCPUs, 360GB RAM
       node_locations     = local.default_node_locations
       min_count          = 0
       max_count          = 20
@@ -120,7 +120,7 @@ locals {
       enable_gcfs        = true
       enable_gvnic       = true
       initial_node_count = 0
-      accelerator_count  = 2
+      accelerator_count  = 1
       accelerator_type   = "nvidia-l4"
       gpu_driver_version = "LATEST"
       spot               = true

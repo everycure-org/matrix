@@ -106,7 +106,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark",
                         name=f"make_predictions_and_sort_fold_{fold}",
                         argo_config=ArgoResourceConfig(
-                            num_gpus=2,
+                            num_gpus=1,
                             cpu_limit=32,
                             cpu_request=32,
                             ephemeral_storage_limit=512,
