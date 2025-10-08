@@ -21,10 +21,19 @@ def create_input_matrices_dataset(
 
 @inject_object()
 def run_evaluation(
-    input_matrices: dict[str, dict[str, pl.LazyFrame]],
+    uncertainty_estimation_mode: str,
     evaluation: ComparisonEvaluation,
+    input_matrices: dict[str, dict[str, pl.LazyFrame]],
     input_paths: InputPathsMultiFold,
 ) -> pl.DataFrame:
     """Function to apply evaluation."""
     logger.info(f"Evaluation is: {evaluation}")
-    return evaluation.evaluate(input_matrices)
+
+    if uncertainty_estimation_mode == "single_fold":
+        return evaluation.evaluate_single_fold(input_matrices, input_paths)
+
+    if uncertainty_estimation_mode == "multi_fold":
+        return evaluation.evaluate_multi_fold(input_matrices, input_paths)
+
+    if uncertainty_estimation_mode == "bootstrap":
+        return evaluation.evaluate_bootstrap(input_matrices, input_paths)

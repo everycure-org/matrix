@@ -1,6 +1,7 @@
 import abc
 from typing import List
 
+import matplotlib.pyplot as plt
 import polars as pl
 from matrix.pipelines.run_comparison.input_paths import InputPathsMultiFold
 
@@ -9,7 +10,19 @@ class ComparisonEvaluation(abc.ABC):
     """Abstract base class for run-comparison evaluations."""
 
     @abc.abstractmethod
-    def evaluate(self, input_matrices: dict[str, dict[str, pl.LazyFrame]]) -> pl.DataFrame:
+    def evaluate_single_fold(self, input_matrices: dict[str, dict[str, pl.LazyFrame]]) -> pl.DataFrame:
+        pass
+
+    @abc.abstractmethod
+    def evaluate_multi_fold(self, input_matrices: dict[str, dict[str, pl.LazyFrame]]) -> pl.DataFrame:
+        pass
+
+    @abc.abstractmethod
+    def evaluate_bootstrap(self, input_matrices: dict[str, dict[str, pl.LazyFrame]]) -> pl.DataFrame:
+        pass
+
+    @abc.abstractmethod
+    def plot_results(results: pl.DataFrame) -> plt.Figure:
         pass
 
 
@@ -20,7 +33,7 @@ class FullMatrixRecallAtN(ComparisonEvaluation):
         self.bool_test_col = bool_test_col
         self.n_max = n_max
 
-    def evaluate(
+    def evaluate_single_fold(
         self, input_matrices: dict[str, dict[str, pl.LazyFrame]], input_paths: InputPathsMultiFold
     ) -> pl.DataFrame:
         """Evaluate recall@n against the provided matrix.
@@ -35,6 +48,19 @@ class FullMatrixRecallAtN(ComparisonEvaluation):
 
         n_lst = list(range(n_max))
         return None
+
+    def evaluate_single_fold(
+        self, input_matrices: dict[str, dict[str, pl.LazyFrame]], input_paths: InputPathsMultiFold
+    ) -> pl.DataFrame:
+        return  # TODO
+
+    def evaluate_bootstrap(
+        self, input_matrices: dict[str, dict[str, pl.LazyFrame]], input_paths: InputPathsMultiFold
+    ) -> pl.DataFrame:
+        return  # TODO
+
+    def plot_results(results: pl.DataFrame) -> plt.Figure:
+        return  # TODO
 
         # recall = give_recall_at_n(matrix, n_lst, bool_test_col=self.bool_test_col, score_col=input_paths[model_name].score_col_name)
 

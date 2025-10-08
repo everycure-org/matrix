@@ -31,7 +31,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         ArgoNode(
             func=nodes.create_input_matrices_dataset,
             inputs=[
-                "params:run_comparison_evaluations.input_paths",
+                "params:run_comparison.input_paths",
             ],
             outputs="run_comparison.input_matrices",
             name=f"create_input_matrices_dataset",
@@ -43,9 +43,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ArgoNode(
                     func=nodes.run_evaluation,
                     inputs=[
+                        "params:run_comparison.uncertainty_estimation_mode",
+                        f"params:run_comparison.evaluations.{evaluation}",
                         "run_comparison.input_matrices",
-                        f"params:run_comparison_evaluations.{evaluation}",
-                        "params:run_comparison_evaluations.input_paths",
+                        "params:run_comparison.input_paths",
                     ],
                     outputs=f"run_comparison.{evaluation}.results",
                     name=f"give_evaluation_results.{evaluation}",
