@@ -59,7 +59,7 @@ def test_spark_manager_gpu_configuration_enabled(kedro_session):
 
         # Check GPU-related configs were set
         assert spark_conf.get("spark.executor.resource.gpu.amount") == "1"
-        assert spark_conf.get("spark.task.resource.gpu.amount") == "1"
+        assert spark_conf.get("spark.task.resource.gpu.amount") == "0.1"  # Fractional for concurrency
         assert spark_conf.get("spark.rapids.sql.enabled") == "true"
 
 
