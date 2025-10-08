@@ -19,6 +19,7 @@ locals {
     enable_gcfs        = true
     enable_gvnic       = true
     initial_node_count = 0
+    location_policy    = "ANY"
     }
   ]
 
@@ -38,6 +39,7 @@ locals {
       accelerator_count  = 1
       accelerator_type   = "nvidia-l4"
       gpu_driver_version = "LATEST"
+      location_policy    = "ANY"
     },
     {
       name               = "g2-standard-32-nodes"
@@ -54,6 +56,7 @@ locals {
       accelerator_count  = 1
       accelerator_type   = "nvidia-l4"
       gpu_driver_version = "LATEST"
+      location_policy    = "ANY"
     }
   ]
 
@@ -71,6 +74,7 @@ locals {
       enable_gcfs        = true
       enable_gvnic       = true
       initial_node_count = 1
+      location_policy    = "ANY"
     }
   ]
 
@@ -87,6 +91,7 @@ locals {
     enable_gvnic       = true
     initial_node_count = 0
     spot               = true
+    location_policy    = "ANY"
     }
   ]
 
@@ -108,6 +113,7 @@ locals {
       accelerator_type   = "nvidia-l4"
       gpu_driver_version = "LATEST"
       spot               = true
+      location_policy    = "ANY"
     },
     {
       name               = "g2-standard-32-spot-nodes"
@@ -125,6 +131,7 @@ locals {
       accelerator_type   = "nvidia-l4"
       gpu_driver_version = "LATEST"
       spot               = true
+      location_policy    = "ANY"
     }
   ]
 
@@ -143,6 +150,7 @@ locals {
       enable_gvnic       = true
       initial_node_count = 0
       spot               = false
+      location_policy    = "ANY"
     }
   ]
 
