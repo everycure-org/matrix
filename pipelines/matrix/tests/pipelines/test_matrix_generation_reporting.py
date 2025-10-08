@@ -27,7 +27,7 @@ def sample_matrix_data_pandas():
     """Fixture that provides sample matrix data with multiple scores for testing."""
     return pd.DataFrame(
         {
-            "source": ["drug_1", "drug_2", "drug_2", "drug_3"],
+            "translator_id_source": ["drug_1", "drug_2", "drug_2", "drug_3"],
             "target": ["disease_1", "disease_1", "disease_2", "disease_3"],
             "score_1": [0.9, 0.7, 0.5, 0.3],
             "score_2": [0.1, 0.2, 0.3, 0.4],
@@ -46,7 +46,7 @@ def sample_matrix_data_spark(spark_session):
             ("drug_2", "disease_2", 0.5, 0.3, 3),
             ("drug_3", "disease_3", 0.3, 0.4, 4),
         ],
-        schema=["source", "target", "score_1", "score_2", "rank"],
+        schema=["translator_id_source", "target", "score_1", "score_2", "rank"],
     )
 
 

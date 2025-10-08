@@ -76,7 +76,7 @@ dependencies = [
     "seaborn",
     "tenacity",
     "termplotlib",
-    "torch==2.7.1",
+    "torch==2.4.1",
     "transformers",
     "typer", # used for convenience libraries, to be moved to a dev requirements eventually
     "xgboost",

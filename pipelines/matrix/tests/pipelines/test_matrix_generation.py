@@ -45,7 +45,7 @@ def sample_known_pairs():
     """Fixture that provides sample known pairs data for testing."""
     return pd.DataFrame(
         {
-            "source": ["drug_1", "drug_2", "drug_3"],
+            "translator_id_source": ["drug_1", "drug_2", "drug_3"],
             "target": ["disease_1", "disease_2", "disease_3"],
             "split": ["TRAIN", "TEST", "TRAIN"],
             "y": [1, 0, 1],
@@ -58,7 +58,7 @@ def sample_clinical_trials():
     """Fixture that provides sample clinical trials data for testing."""
     return pd.DataFrame(
         {
-            "source": ["drug_1"],
+            "translator_id_source": ["drug_1"],
             "target": ["disease_2"],
             "significantly_better": [1],
             "non_significantly_better": [0],
@@ -73,7 +73,7 @@ def sample_off_label():
     """Fixture that provides sample off label data for testing."""
     return pd.DataFrame(
         {
-            "source": ["drug_1"],
+            "translator_id_source": ["drug_1"],
             "target": ["disease_2"],
             "off_label": [1],
         }
@@ -85,7 +85,7 @@ def sample_orchard():
     """Fixture that provides sample orchard data for testing."""
     return pd.DataFrame(
         {
-            "source": ["drug_1"],
+            "translator_id_source": ["drug_1"],
             "target": ["disease_2"],
             "high_evidence_matrix": [1],
             "high_evidence_crowdsourced": [0],
@@ -119,10 +119,10 @@ def sample_graph(sample_node_embeddings):
 def sample_matrix_data():
     return pd.DataFrame(
         [
-            {"source": "drug_1", "target": "disease_1"},
-            {"source": "drug_2", "target": "disease_1"},
-            {"source": "drug_1", "target": "disease_2"},
-            {"source": "drug_2", "target": "disease_2"},
+            {"translator_id_source": "drug_1", "target": "disease_1"},
+            {"translator_id_source": "drug_2", "target": "disease_1"},
+            {"translator_id_source": "drug_1", "target": "disease_2"},
+            {"translator_id_source": "drug_2", "target": "disease_2"},
         ]
     )
 
