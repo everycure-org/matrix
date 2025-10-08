@@ -110,8 +110,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ArgoNode(
                         func=lambda x: x.drop("ec_id_source").withColumnsRenamed({"ec_id": "source"}),
                         inputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark",
-                        outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions.orchard@spark",
-                        name=f"copy_matrix_predictions_to_orchard_fold_{fold}",
+                        outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@spark",
+                        name=f"rename_id_column_matrix_predictions_fold_{fold}",
                         argo_config=ARGO_NODE_MEDIUM_MATRIX_GENERATION,
                     ),
                 ],
