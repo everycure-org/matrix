@@ -59,7 +59,7 @@ def perform_matrix_checks(matrix: pd.DataFrame, known_pairs: pd.DataFrame, score
     Raises:
         ValueError: If any of the checks fail.
     """
-    check_no_train(matrix, known_pairs)
+    check_no_train(matrix, known_pairs.rename({"source": "translator_id_source"}, axis=1))
     check_ordered(matrix, score_col_name)
 
 
@@ -95,7 +95,7 @@ def generate_test_dataset(
     # Perform checks
     # NOTE: We're currently repeat it for each fold, should
     # we consider moving to matrix outputs?
-    check_no_train(matrix, known_pairs.rename({"source", "ec_id_source"}))
+    check_no_train(matrix, known_pairs.rename({"source": "translator_id_source"}, axis=1))
     check_ordered(matrix, score_col_name)
 
     return generator.generate(matrix)
