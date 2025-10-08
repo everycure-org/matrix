@@ -259,7 +259,7 @@ class StabilityMetricsMixin:
         new_matrices = []
         for matrix in matrices:
             matrix = matrix.sort_values(by=score_col_name, ascending=False).reset_index(drop=True)
-            matrix["pair_id"] = matrix["source"] + "|" + matrix["target"]
+            matrix["pair_id"] = matrix["translator_id_source"] + "|" + matrix["target"]
             matrix["rank"] = matrix.index
             new_matrices.append(matrix)
         return new_matrices

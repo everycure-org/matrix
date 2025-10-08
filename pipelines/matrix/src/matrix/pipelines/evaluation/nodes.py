@@ -23,8 +23,8 @@ def check_no_train(data: pd.DataFrame, known_pairs: pd.DataFrame) -> None:
     """
     is_test = known_pairs["split"].eq("TEST")
     train_pairs = known_pairs[~is_test]
-    train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
-    data_pairs_set = set(zip(data["source"], data["target"]))
+    train_pairs_set = set(zip(train_pairs["translator_id_source"], train_pairs["target"]))
+    data_pairs_set = set(zip(data["translator_id_source"], data["target"]))
     overlapping_pairs = data_pairs_set.intersection(train_pairs_set)
 
     if overlapping_pairs:
@@ -66,11 +66,11 @@ def perform_matrix_checks(matrix: pd.DataFrame, known_pairs: pd.DataFrame, score
 @check_output(
     schema=DataFrameSchema(
         columns={
-            "source": Column(str, nullable=False),
+            "translator_id_source": Column(str, nullable=False),
             "target": Column(str, nullable=False),
             "y": Column(int, nullable=False),
         },
-        unique=["source", "target"],
+        unique=["translator_id_source", "target"],
     )
 )
 @inject_object()
