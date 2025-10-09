@@ -1,9 +1,12 @@
+import logging
 from typing import Callable, List
 
 import numpy as np
 from sklearn.base import BaseEstimator
 
 from .utils import to_estimator_device
+
+logger = logging.getLogger(__name__)
 
 
 class ModelWrapper:
@@ -55,8 +58,12 @@ class ModelWrapper:
             Aggregated probabilities scores of the individual models.
         """
         # Convert input to CUDA once for all estimators
+        logger.info("ModelWrapper: Converting input data to estimator device")
         X_cuda = to_estimator_device(X, self._estimators[0])
 
+        logger.info(f"ModelWrapper: Input data converted to estimator device: {X_cuda.device}")
         all_preds = [np.asarray(estimator.predict_proba(X_cuda)) for estimator in self._estimators]
+        logger.info(f"ModelWrapper: All predictions collected: {len(all_preds)}")
         stacked_preds = np.stack(all_preds)
+        logger.info(f"ModelWrapper: Stacked predictions shape: {stacked_preds.shape}")
         return np.apply_along_axis(self._agg_func, 0, stacked_preds)
