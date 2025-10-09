@@ -43,7 +43,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
     generate_dynamic_pipeline_mapping(
         {
             "cross_validation": {
-                "n_cross_val_folds": 3,
+                "n_cross_val_folds": 5,
             },
             "num_shards": 3,
             "integration": [
