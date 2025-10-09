@@ -266,6 +266,7 @@ def make_folds(
         By convention, folds 0 to k-1 are the proper test train splits for k-fold cross-validation,
         while fold k is the fold with full training data
     """
+
     # Split data into folds
     all_data_frames = []
     # FUTURE: Ensure fields are reflected in GT dataset for future splitters
