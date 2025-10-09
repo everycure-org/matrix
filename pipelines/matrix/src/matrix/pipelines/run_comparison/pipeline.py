@@ -5,7 +5,6 @@ from . import nodes
 from .settings import RUN_COMPARISON_SETTINGS
 
 # TODO:
-# - Add test env
 # - Add multi fold method for recall@n
 # - Add bootstrap method
 # - Add plotting method
@@ -13,6 +12,7 @@ from .settings import RUN_COMPARISON_SETTINGS
 # - Add matrix harmonisation + unit tests
 # - Test on real data
 # - Add unit test for input path classes
+# - Modify multi matrices dataset to copy matrices to pipeline data folder
 
 # matrices_to_evaluate = RUN_COMPARISON_SETTINGS["run_comparison"]["inputs"]
 
@@ -53,10 +53,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ArgoNode(
                     func=nodes.run_evaluation,
                     inputs=[
-                        "params:run_comparison.uncertainty_estimation_mode",
+                        "params:run_comparison.perform_multifold_uncertainty_estimation",
+                        "params:run_comparison.perform_bootstrap_uncertainty_estimation",
                         f"params:run_comparison.evaluations.{evaluation}",
                         "run_comparison.input_matrices",
-                        "params:run_comparison.input_paths",
                     ],
                     outputs=f"run_comparison.{evaluation}.results",
                     name=f"give_evaluation_results.{evaluation}",

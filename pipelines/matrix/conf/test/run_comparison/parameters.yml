@@ -3,22 +3,25 @@ run_comparison:
   # TODO: implement
   # matrix_harmonisation_mode: "strict" # "strict" or "lenient_on_ground_truth", "lenient_on_ground_truth_and_pairs"
 
-  uncertainty_estimation_mode: "none" # "none", "multi_fold", "bootstrap"
+  perform_multifold_uncertainty_estimation: True
+  perform_bootstrap_uncertainty_estimation: False
 
   input_paths:
     good_model:
-      _object: matrix.pipelines.run_comparison.input_paths.InputPathMultiFold # Options: InputPathsSingleFold, InputPathsModellingRun , InputPathsMultiFold
+      _object: matrix.pipelines.run_comparison.input_paths.InputPathsMultiFold # Options: InputPathsSingleFold, InputPathsModellingRun , InputPathsMultiFold
       file_paths_list: 
          - ${globals:paths.raw}/run_comparison_matrices/matrix_fold_1_good_model.csv
          - ${globals:paths.raw}/run_comparison_matrices/matrix_fold_2_good_model.csv
       score_col_name: "treat score"
+      file_format: "csv"
 
     bad_model:
-      _object: matrix.pipelines.run_comparison.input_paths.InputPathMultiFold
+      _object: matrix.pipelines.run_comparison.input_paths.InputPathsMultiFold
       file_paths_list: 
          - ${globals:paths.raw}/run_comparison_matrices/matrix_fold_1_bad_model.csv
          - ${globals:paths.raw}/run_comparison_matrices/matrix_fold_2_bad_model.csv
       score_col_name: "treat score"
+      file_format: "csv"
 
   evaluations:
     ground_truth_recall_at_n:

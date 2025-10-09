@@ -21,22 +21,24 @@ def create_input_matrices_dataset(
 
 @inject_object()
 def run_evaluation(
-    uncertainty_estimation_mode: str,
+    perform_multifold: bool,
+    perform_bootstrap: bool,
     evaluation: ComparisonEvaluation,
     input_matrices: dict[str, dict[str, pl.LazyFrame]],
-    input_paths: InputPathsMultiFold,
 ) -> pl.DataFrame:
     """Function to apply evaluation."""
     logger.info(f"Evaluation is: {evaluation}")
 
-    if uncertainty_estimation_mode == "none":
-        return evaluation.evaluate_single_fold(input_matrices, input_paths)
-
-    if uncertainty_estimation_mode == "multi_fold":
-        return evaluation.evaluate_multi_fold(input_matrices, input_paths)
-
-    if uncertainty_estimation_mode == "bootstrap":
-        return evaluation.evaluate_single_fold_bootstrap(input_matrices, input_paths)
+    if perform_multifold:
+        if perform_bootstrap:
+            return evaluation.evaluate_bootstrap_multi_fold(input_matrices)
+        else:
+            return evaluation.evaluate_multi_fold(input_matrices)
+    else:
+        if perform_bootstrap:
+            return evaluation.evaluate_bootstrap_single_fold(input_matrices)
+        else:
+            return evaluation.evaluate_single_fold(input_matrices)
 
 
 # TODO: Add plotting node
