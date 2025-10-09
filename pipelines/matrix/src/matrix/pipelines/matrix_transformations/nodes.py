@@ -2,7 +2,6 @@ import logging
 from typing import Any
 
 import pyspark.sql as ps
-from matrix import settings
 from matrix_inject.inject import inject_object
 from pyspark.sql import functions as F
 
@@ -38,6 +37,7 @@ def apply_matrix_transformations(
 
 
 def return_predictions(
+    n_cross_val_folds: int,
     sorted_matrix_df: ps.DataFrame,
     known_pairs: ps.DataFrame,
 ) -> ps.DataFrame:
@@ -48,15 +48,13 @@ def return_predictions(
     They are flagged with the is_known_positive and is_known_negative flags.
 
     Args:
+        n_cross_val_folds: Number of cross-validation folds
         sorted_matrix_df: DataFrame containing the sorted matrix with predictions
         known_pairs: DataFrame containing known drug-disease pairs with fold and split information
 
     Returns:
         DataFrame with training data rows appended to the sorted matrix
     """
-
-    n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING().get("cross_validation")["n_cross_val_folds"]
-
     # Filter known_pairs to get training data from the specified fold using PySpark operations
     train_data = known_pairs.filter((F.col("fold") == n_cross_val_folds) & (F.col("split") == "TRAIN")).select(
         "source", "target", "y"
