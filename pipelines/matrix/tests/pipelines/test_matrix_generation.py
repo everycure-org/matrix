@@ -21,6 +21,7 @@ def sample_drugs():
     """Fixture that provides sample drugs data for testing."""
     return pd.DataFrame(
         {
+            "ec_id": ["ec_drug_1", "ec_drug_2"],
             "id": ["drug_1", "drug_2"],
             "name": ["Drug 1", "Drug 2"],
             "description": ["Description 1", "Description 2"],
@@ -119,10 +120,10 @@ def sample_graph(sample_node_embeddings):
 def sample_matrix_data():
     return pd.DataFrame(
         [
-            {"source": "drug_1", "target": "disease_1"},
-            {"source": "drug_2", "target": "disease_1"},
-            {"source": "drug_1", "target": "disease_2"},
-            {"source": "drug_2", "target": "disease_2"},
+            {"ec_id_source": "ec_drug_1", "source": "drug_1", "target": "disease_1"},
+            {"ec_id_source": "ec_drug_2", "source": "drug_2", "target": "disease_1"},
+            {"ec_id_source": "ec_drug_1", "source": "drug_1", "target": "disease_2"},
+            {"ec_id_source": "ec_drug_2", "source": "drug_2", "target": "disease_2"},
         ]
     )
 
