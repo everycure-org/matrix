@@ -60,7 +60,18 @@ def create_pipeline(**kwargs) -> Pipeline:
                     outputs=f"run_comparison.{evaluation}.results",
                     name=f"give_evaluation_results.{evaluation}",
                 ),
-                # # TODO: Add plotting node
+                ArgoNode(
+                    func=nodes.plot_results,
+                    inputs=[
+                        "params:run_comparison.perform_multifold_uncertainty_estimation",
+                        "params:run_comparison.perform_bootstrap_uncertainty_estimation",
+                        f"params:run_comparison.evaluations.{evaluation}",
+                        f"run_comparison.{evaluation}.results",
+                        "run_comparison.input_matrices",
+                    ],
+                    outputs=f"run_comparison.{evaluation}.plot",
+                    name=f"plot_results.{evaluation}",
+                ),
             ]
         )
     return Pipeline(pipeline_nodes)

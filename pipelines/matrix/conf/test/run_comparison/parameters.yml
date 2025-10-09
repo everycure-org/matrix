@@ -7,7 +7,8 @@ run_comparison:
   perform_bootstrap_uncertainty_estimation: True
 
   input_paths:
-    good_model:
+    # TODO figure out how todo override
+    matrix_1:
       _object: matrix.pipelines.run_comparison.input_paths.InputPathsMultiFold # Options: InputPathsSingleFold, InputPathsModellingRun , InputPathsMultiFold
       file_paths_list: 
          - ${globals:paths.raw}/run_comparison_matrices/matrix_fold_1_good_model.csv
@@ -15,7 +16,7 @@ run_comparison:
       score_col_name: "treat score"
       file_format: "csv"
 
-    bad_model:
+    matrix_2:
       _object: matrix.pipelines.run_comparison.input_paths.InputPathsMultiFold
       file_paths_list: 
          - ${globals:paths.raw}/run_comparison_matrices/matrix_fold_1_bad_model.csv

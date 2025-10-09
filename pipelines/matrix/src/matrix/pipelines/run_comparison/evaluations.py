@@ -25,12 +25,25 @@ class ComparisonEvaluation(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def plot_results(results: pl.DataFrame) -> plt.Figure:
+    def plot_results(results: pl.DataFrame, input_matrices: dict[str, any], is_plot_errors: bool) -> plt.Figure:
         pass
 
 
 class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
     """Abstract base class for evaluations that produce a single curve for each model (e.g. recall@n, AUPRC, etc. )."""
+
+    def __init__(self, x_axis_label: str, y_axis_label: str, title: str, force_full_y_axis: bool = False):
+        """Initialize an instance of ComparisonEvaluationModelSpecific.
+
+        Args:
+            x_axis_label: Label for the x-axis.
+            y_axis_label: Label for the y-axis.
+            title: Title of the plot.
+        """
+        self.x_axis_label = x_axis_label
+        self.y_axis_label = y_axis_label
+        self.title = title
+        self.force_full_y_axis = force_full_y_axis
 
     @abc.abstractmethod
     def give_x_values(self) -> np.ndarray:
@@ -190,9 +203,39 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
 
         return output_dataframe
 
-    def plot_results(self, results: pl.DataFrame) -> plt.Figure:
+    def plot_results(self, results: pl.DataFrame, input_matrices: dict[str, any], is_plot_errors: bool) -> plt.Figure:
         """Plot the results."""
-        return  # TODO
+
+        # List of n values for recall@n plot
+        x_values = self.give_x_values()
+
+        # Set up the figure
+        fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+
+        # Plot curves
+        for model_name in input_matrices.keys():
+            if is_plot_errors:
+                av_y_values = results[f"y_{model_name}_mean"]
+                std_y_values = results[f"y_{model_name}_std"]
+                ax.plot(x_values, av_y_values, label=model_name)
+                ax.fill_between(x_values, av_y_values - std_y_values, av_y_values + std_y_values, alpha=0.2)
+            else:
+                av_y_values = results[f"y_{model_name}"]
+                ax.plot(x_values, av_y_values, label=model_name)
+
+        # Plot random classifier curve
+        y_values_random = self.give_y_values_random_classifier(input_matrices)
+        ax.plot(x_values, y_values_random, "k--", label="Random classifier", alpha=0.5)
+
+        # Configure figure
+        ax.set_xlabel(self.x_axis_label)
+        ax.set_ylabel(self.y_axis_label)
+        if self.force_full_y_axis:
+            ax.set_ylim(0, 1)
+        ax.grid()
+        ax.legend()
+        fig.suptitle(self.title)
+        return fig
 
 
 class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
@@ -203,9 +246,11 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
         bool_test_col: str,
         n_max: int,
         perform_sort: bool,
+        title: str,
         num_n_values: int = 1000,
         N_bootstraps: int = 100,
         seed_bootstraps: int = 42,
+        force_full_y_axis: bool = True,
     ):
         """Initialize an instance of FullMatrixRecallAtN.
 
@@ -213,10 +258,13 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
             bool_test_col: Boolean column in the matrix indicating the known positive test set.
             n_max: Maximum value of n to compute recall@n score for.
             perform_sort: Whether to sort the matrix or expect the dataframe to be sorted already.
+            title: Title of the plot.
             num_n_values: Number of n values to compute recall@n score for.
             N_bootstraps: Number of bootstrap samples to compute.
             seed_bootstraps: Seed for the bootstrap samples.
+            force_full_y_axis: Whether to force the y-axis to be between 0 and 1.
         """
+        super().__init__(x_axis_label="n", y_axis_label="Recall@n", title=title, force_full_y_axis=force_full_y_axis)
         self.bool_test_col = bool_test_col
         self.n_max = n_max
         self.perform_sort = perform_sort
@@ -271,6 +319,9 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
         # Calculate recall@n for each bootstrap
         return np.array([bootstrap_recall_lst(ranks_series, N, n_lst) for _ in range(self.N_bootstraps)])
 
-    def give_y_values_random_classifier(self, matrix: pl.DataFrame, score_col_name: str) -> np.ndarray:
+    def give_y_values_random_classifier(self, input_matrices: dict[str, any]) -> np.ndarray:
         """Compute Recall@n values for a random classifier."""
-        return  # TODO
+        first_model_data = list(input_matrices.values())[0]
+        first_fold_predictions = first_model_data[0]["predictions"]
+        matrix_length = first_fold_predictions.collect().shape[0]
+        return np.array([x / matrix_length for x in self.give_x_values()])

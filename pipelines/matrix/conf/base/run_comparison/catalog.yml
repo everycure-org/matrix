@@ -6,3 +6,9 @@ run_comparison.input_matrices:
   type: polars.EagerPolarsDataset
   file_format: parquet
   filepath: ${globals:paths.run_comparison}/evaluation_values/results_{evaluation}
+
+"run_comparison.{evaluation}.plot":
+  type: matplotlib.MatplotlibWriter
+  filepath: ${globals:paths.run_comparison}/evaluation_plots/{evaluation}.png
+  save_args:
+    format: png

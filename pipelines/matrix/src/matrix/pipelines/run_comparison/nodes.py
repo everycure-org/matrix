@@ -1,6 +1,7 @@
 import logging
 from dataclasses import asdict
 
+import matplotlib.pyplot as plt
 import polars as pl
 from matrix_inject.inject import inject_object
 
@@ -41,4 +42,14 @@ def run_evaluation(
             return evaluation.evaluate_single_fold(input_matrices)
 
 
-# TODO: Add plotting node
+@inject_object()
+def plot_results(
+    perform_multifold: bool,
+    perform_bootstrap: bool,
+    evaluation: ComparisonEvaluation,
+    results: pl.DataFrame,
+    input_matrices: dict[str, any],
+) -> plt.Figure:
+    """Function to plot results."""
+    is_plot_errors = perform_multifold or perform_bootstrap
+    return evaluation.plot_results(results, input_matrices, is_plot_errors)

@@ -9,18 +9,18 @@ run_comparison:
 
   # Enter the filepaths of the matrix predictions you would like to evaluate here. See documentation for more details.
   # TODO: Link to docs. 
-  input_paths:
-    matrix_1:
-      _object: matrix.pipelines.run_comparison.input_paths.InputPathSingleFold # Options: InputPathsSingleFold, InputPathsModellingRun , InputPathsMultiFold
-      file_path: "data/run_comparison/matrix_1.parquet"
-      file_format: "parquet"
-      score_col_name: "treat score"
+  # input_paths:
+  #   matrix_1:
+  #     _object: matrix.pipelines.run_comparison.input_paths.InputPathSingleFold # Options: InputPathsSingleFold, InputPathsModellingRun , InputPathsMultiFold
+  #     file_path: "data/run_comparison/matrix_1.parquet"
+  #     file_format: "parquet"
+  #     score_col_name: "treat score"
 
-    matrix_2:
-      _object: matrix.pipelines.run_comparison.input_paths.InputPathSingleFold
-      file_path: "data/run_comparison/matrix_2.parquet"
-      file_format: "parquet"
-      score_col_name: "treat score"
+  #   matrix_2:
+  #     _object: matrix.pipelines.run_comparison.input_paths.InputPathSingleFold
+  #     file_path: "data/run_comparison/matrix_2.parquet"
+  #     file_format: "parquet"
+  #     score_col_name: "treat score"
 
   # Configuration for the evaluations to perform. Usually it is not necessary to modify these.
   evaluations:
@@ -29,3 +29,4 @@ run_comparison:
       bool_test_col: "is_known_positive"
       n_max: 100000
       perform_sort: True
+      title: "Recall@n (standard ground truth)"
