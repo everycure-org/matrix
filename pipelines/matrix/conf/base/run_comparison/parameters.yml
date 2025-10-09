@@ -3,8 +3,10 @@ run_comparison:
   # TODO: implement
   # matrix_harmonisation_mode: "strict" # "strict" or "lenient_on_ground_truth", "lenient_on_ground_truth_and_pairs"
 
-  uncertainty_estimation_mode: "single_fold" # "single_fold", "multi_fold", "bootstrap"
+  # TODO: comment
+  uncertainty_estimation_mode: "none" # "none", "multi_fold", "bootstrap"
 
+  # TODO: comment
   input_paths:
     matrix_1:
       _object: matrix.pipelines.run_comparison.input_paths.InputPathSingleFold # Options: InputPathsSingleFold, InputPathsModellingRun , InputPathsMultiFold
@@ -16,8 +18,10 @@ run_comparison:
       file_path: "data/run_comparison/matrix_2.parquet"
       score_col_name: "treat score"
 
+  # TODO: comment
   evaluations:
     ground_truth_recall_at_n:
       _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtN
       bool_test_col: "is_known_positive"
+      uncertainty_estimation_mode: 
       n_max: 4

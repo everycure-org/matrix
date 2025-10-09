@@ -80,7 +80,7 @@ class FullMatrixRecallAtN(ComparisonEvaluation):
         """Evaluate recall@n against the provided single fold matrices.
 
         Args:
-            input_matrices: List of polars LazyFrames of predictions and labels.
+            input_matrices: Dictionary of polars LazyFrames of predictions and labels.
             input_path: Object containing the score column name for each model.
 
         Returns:

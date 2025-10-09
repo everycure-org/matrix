@@ -104,21 +104,55 @@ def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.D
     return rows
 
 
+def _attach_scores(base_matrix: pd.DataFrame, skew: float, seed: int) -> pd.DataFrame:
+    """Helper function to attach scores to fabricated run comparison matrices.
+
+    Args:
+        base_matrix: Base matrix of pairs to attach scores to.
+        skew: Positive float, higher corresponds to better model
+        seed: Seed for the random number generator.
+
+    Returns:
+        matrix with scores attached.
+    """
+    np.random.seed(seed)
+    size = len(base_matrix)
+
+    # Sample scores from Beta distributions
+    pos_scores = pd.Series(np.random.beta(a=skew, b=1, size=size))  # Skewed to 1
+    neg_scores = pd.Series(np.random.beta(a=1, b=skew, size=size))  # Skewed to 0
+    unk_scores = pd.Series(np.random.beta(a=2, b=2, size=size))  # Centered around 0.5
+
+    # Attach scores to matrix
+    matrix = base_matrix.copy(deep=True)
+    matrix["treat score"] = pos_scores.where(
+        pd.Series(matrix["is_known_positive"]), neg_scores.where(pd.Series(matrix["is_known_negative"]), unk_scores)
+    )
+
+    return matrix
+
+
 def generate_run_comparison_matrices(N: int = 15):
     """Generate fabricated matrix predictions data to test the run comparison pipeline."""
-    numpy.random.seed(0)
+    np.random.seed(0)
 
-    # Generate base matrix for drug-disease pairs
+    # Generate base matrices of drug-disease pairs
     drugs_df = pd.DataFrame({"source": [f"drug_{i}" for i in range(N)]})
     diseases_df = pd.DataFrame({"target": [f"disease_{i}" for i in range(N)]})
     base_matrix_fold_1 = pd.merge(drugs_df, diseases_df, how="cross")
-    base_matrix_fold_1["is_known_positive"] = np.random.randint([True, False], size=N**2, p=[0.25, 0.75])
-    base_matrix_fold_1["is_known_negative"] = np.random.randint([True, False], size=N**2, p=[0.25, 0.75])
+    base_matrix_fold_1["is_known_positive"] = np.random.choice([True, False], size=N**2, p=[0.25, 0.75])
+    base_matrix_fold_1["is_known_negative"] = np.random.choice([True, False], size=N**2, p=[0.25, 0.75])
     base_matrix_fold_2 = base_matrix_fold_1.copy(deep=True)
-    base_matrix_fold_2["is_known_positive"] = np.random.randint([True, False], size=N**2, p=[0.25, 0.75])
-    base_matrix_fold_2["is_known_negative"] = np.random.randint([True, False], size=N**2, p=[0.25, 0.75])
+    base_matrix_fold_2["is_known_positive"] = np.random.choice([True, False], size=N**2, p=[0.25, 0.75])
+    base_matrix_fold_2["is_known_negative"] = np.random.choice([True, False], size=N**2, p=[0.25, 0.75])
 
-    # TODO finish
+    # Generate scores and return
+    return {
+        "matrix_fold_1_good_model": _attach_scores(base_matrix_fold_1, 10, seed=1),
+        "matrix_fold_2_good_model": _attach_scores(base_matrix_fold_2, 10, seed=2),
+        "matrix_fold_1_bad_model": _attach_scores(base_matrix_fold_1, 2, seed=3),
+        "matrix_fold_2_bad_model": _attach_scores(base_matrix_fold_2, 2, seed=4),
+    }
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -298,6 +332,19 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="ingestion.raw.drugmech.edges@pandas",
                 name="create_drugmech_pairs",
+            ),
+            node(
+                func=generate_run_comparison_matrices,
+                inputs=[
+                    "params:fabricator.run_comparison.matrix_size",
+                ],
+                outputs={
+                    "matrix_fold_1_good_model": "fabricator.raw.run_comparison_matrices.matrix_fold_1_good_model",
+                    "matrix_fold_2_good_model": "fabricator.raw.run_comparison_matrices.matrix_fold_2_good_model",
+                    "matrix_fold_1_bad_model": "fabricator.raw.run_comparison_matrices.matrix_fold_1_bad_model",
+                    "matrix_fold_2_bad_model": "fabricator.raw.run_comparison_matrices.matrix_fold_2_bad_model",
+                },
+                name="generate_run_comparison_matrices",
             ),
         ]
     )

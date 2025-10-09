@@ -29,14 +29,14 @@ def run_evaluation(
     """Function to apply evaluation."""
     logger.info(f"Evaluation is: {evaluation}")
 
-    if uncertainty_estimation_mode == "single_fold":
+    if uncertainty_estimation_mode == "none":
         return evaluation.evaluate_single_fold(input_matrices, input_paths)
 
     if uncertainty_estimation_mode == "multi_fold":
         return evaluation.evaluate_multi_fold(input_matrices, input_paths)
 
     if uncertainty_estimation_mode == "bootstrap":
-        return evaluation.evaluate_bootstrap(input_matrices, input_paths)
+        return evaluation.evaluate_single_fold_bootstrap(input_matrices, input_paths)
 
 
 # TODO: Add plotting node

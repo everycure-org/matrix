@@ -41,3 +41,22 @@ fabricator.int.drug_list:
     header: true
     index: false
     sep: "\t"
+
+
+# Catalog entries for run comparison matrices
+
+fabricator.raw.run_comparison_matrices.matrix_fold_1_good_model:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw}/run_comparison_matrices/matrix_fold_1_good_model
+
+fabricator.raw.run_comparison_matrices.matrix_fold_2_good_model:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw}/run_comparison_matrices/matrix_fold_2_good_model
+
+fabricator.raw.run_comparison_matrices.matrix_fold_1_bad_model:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw}/run_comparison_matrices/matrix_fold_1_bad_model
+
+fabricator.raw.run_comparison_matrices.matrix_fold_2_bad_model:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw}/run_comparison_matrices/matrix_fold_2_bad_model
