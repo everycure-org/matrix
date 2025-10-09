@@ -28,7 +28,6 @@ def _create_source_parsing_pipeline(
                         inputs={
                             "parser": f"params:document_kg.pks_parsing.sources.{source}.parser",
                             "source_data": f"document_kg.raw.{source}_pks@pandas",
-                            "config": f"params:document_kg.pks_parsing.sources.{source}",
                         },
                         outputs=f"document_kg.int.{source}_metadata",
                         name=f"parse_{source}",
@@ -47,7 +46,6 @@ def _create_source_parsing_pipeline(
                         inputs={
                             "parser": f"params:document_kg.pks_parsing.sources.{source}.parser",
                             "source_data": f"document_kg.raw.{source}",
-                            "config": f"params:document_kg.pks_parsing.sources.{source}",
                             **({"mapping_data": f"document_kg.raw.mapping_{source}_infores"} if has_mapping else {}),
                         },
                         outputs=f"document_kg.int.{source}_metadata",

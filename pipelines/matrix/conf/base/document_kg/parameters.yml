@@ -2,133 +2,110 @@ document_kg:
   pks_parsing:
     sources:
       infores:
-        name: infores
         parser:
-          _object: matrix.pipelines.document_kg.source_parsers.parse_infores
-        source_type: external_registry
-        id_column: id
-        data_path: information_resources
-        requires_mapping: false
-        extracted_metadata:
-          - id
-          - status
-          - name
-          - description
-          - knowledge_level
-          - agent_type
-          - url
-          - xref
-          - synonym
-          - consumed_by
-          - consumes
-        ignored_metadata: []
+          _object: matrix.pipelines.document_kg.parsers.InforesParser
+          name: infores
+          id_column: id
+          extracted_metadata:
+            - id
+            - status
+            - name
+            - description
+            - knowledge_level
+            - agent_type
+            - url
+            - xref
+            - synonym
+            - consumed_by
+            - consumes
+          data_path: information_resources
 
       reusabledata:
-        name: reusabledata
         parser:
-          _object: matrix.pipelines.document_kg.source_parsers.parse_reusabledata
-        source_type: external_registry
-        id_column: updated_id
-        original_id_column: id
-        requires_mapping: true
-        extracted_metadata:
-          - id
-          - description
-          - source
-          - data-tags
-          - grade-automatic
-          - source-link
-          - source-type
-          - status
-          - data-field
-          - data-type
-          - data-categories
-          - data-access
-          - license
-          - license-type
-          - license-link
-          - license-hat-used
-          - license-issues
-          - license-commentary
-          - license-commentary-embeddable
-          - was-controversial
-          - provisional
-          - contacts
-        ignored_metadata:
-          - last-curated
-          - grants
+          _object: matrix.pipelines.document_kg.parsers.ReusableDataParser
+          name: reusabledata
+          id_column: updated_id
+          original_id_column: id
+          extracted_metadata:
+            - id
+            - description
+            - source
+            - data-tags
+            - grade-automatic
+            - source-link
+            - source-type
+            - status
+            - data-field
+            - data-type
+            - data-categories
+            - data-access
+            - license
+            - license-type
+            - license-link
+            - license-hat-used
+            - license-issues
+            - license-commentary
+            - license-commentary-embeddable
+            - was-controversial
+            - provisional
+            - contacts
 
       kgregistry:
-        name: kgregistry
         parser:
-          _object: matrix.pipelines.document_kg.source_parsers.parse_kgregistry
-        source_type: external_registry
-        id_column: updated_id
-        original_id_column: id
-        data_path: resources
-        requires_mapping: true
-        extracted_metadata:
-          - id
-          - activity_status
-          - category
-          - collection
-          - contacts
-          - creation_date
-          - curators
-          - description
-          - domains
-          - evaluation_page
-          - fairsharing_id
-          - homepage_url
-          - infores_id
-          - language
-          - last_modified_date
-          - layout
-          - license
-          - name
-          - publications
-          - repository
-          - tags
-          - usages
-          - version
-          - warnings
-        ignored_metadata:
-          - products
+          _object: matrix.pipelines.document_kg.parsers.KGRegistryParser
+          name: kgregistry
+          id_column: updated_id
+          original_id_column: id
+          extracted_metadata:
+            - id
+            - activity_status
+            - category
+            - collection
+            - contacts
+            - creation_date
+            - curators
+            - description
+            - domains
+            - evaluation_page
+            - fairsharing_id
+            - homepage_url
+            - infores_id
+            - language
+            - last_modified_date
+            - layout
+            - license
+            - name
+            - publications
+            - repository
+            - tags
+            - usages
+            - version
+            - warnings
+          data_path: resources
 
       matrix_curated:
-        name: matrixcurated
         parser:
-          _object: matrix.pipelines.document_kg.source_parsers.parse_matrix_dataframe
-        source_type: matrix_curated
-        id_column: primary_knowledge_source
-        requires_mapping: false
-        extracted_metadata:
-          - license_name
-          - license_source_link
-        ignored_metadata:
-          - aggregator_knowledge_source
-          - number_of_edges
-          - infores_name
-          - xref
+          _object: matrix.pipelines.document_kg.parsers.MatrixCuratedMetadataParser
+          name: matrixcurated
+          id_column: primary_knowledge_source
+          extracted_metadata:
+            - license_name
+            - license_source_link
 
       matrix_reviews:
-        name: matrixreviews
         parser:
-          _object: matrix.pipelines.document_kg.source_parsers.parse_matrix_dataframe
-        source_type: matrix_curated
-        id_column: primary_knowledge_source
-        requires_mapping: false
-        extracted_metadata:
-          - domain_coverage_score
-          - domain_coverage_comments
-          - source_scope_score
-          - source_scope_score_comment
-          - utility_drugrepurposing_score
-          - utility_drugrepurposing_comment
-          - label_rubric
-          - label_rubric_rationale
-          - label_manual
-          - label_manual_comment
-          - reviewer
-        ignored_metadata:
-          - infores_name
+          _object: matrix.pipelines.document_kg.parsers.MatrixReviewsParser
+          name: matrixreviews
+          id_column: primary_knowledge_source
+          extracted_metadata:
+            - domain_coverage_score
+            - domain_coverage_comments
+            - source_scope_score
+            - source_scope_score_comment
+            - utility_drugrepurposing_score
+            - utility_drugrepurposing_comment
+            - label_rubric
+            - label_rubric_rationale
+            - label_manual
+            - label_manual_comment
+            - reviewer

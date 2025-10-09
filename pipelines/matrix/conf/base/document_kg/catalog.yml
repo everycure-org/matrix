@@ -28,19 +28,19 @@ document_kg.raw.kgregistry:
   <<: *_layer_raw
   filepath: https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-registry/refs/heads/main/registry/kgs.yml
 
+#TODO add to preprocessing pipeline
 document_kg.raw.matrix_curated_pks@pandas:
   type: pandas.CSVDataset
   <<: *_layer_raw
-  filepath:  ${globals:paths.raw}/kg_metadata/matrix-pks-curated-metadata.tsv
-  #"https://docs.google.com/spreadsheets/d/e/2PACX-1vQxpQU80dpW9bo7STfrX7k9Wv70jA_2C4BN6tDceM1LEOfF9YL22OisdmaUPf7Ptw/pub?gid=135786799&single=true&output=tsv"
+  filepath: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQxpQU80dpW9bo7STfrX7k9Wv70jA_2C4BN6tDceM1LEOfF9YL22OisdmaUPf7Ptw/pub?gid=135786799&single=true&output=tsv"
   load_args:
     sep: "\t"
 
+#TODO add to preprocessing pipeline
 document_kg.raw.matrix_reviews_pks@pandas:
   type: pandas.CSVDataset
   <<: *_layer_raw
-  filepath: ${globals:paths.raw}/kg_metadata/matrix-pks-reviews.tsv
-  #"https://docs.google.com/spreadsheets/d/e/2PACX-1vQxpQU80dpW9bo7STfrX7k9Wv70jA_2C4BN6tDceM1LEOfF9YL22OisdmaUPf7Ptw/pub?gid=1308154629&single=true&output=tsv"
+  filepath: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQxpQU80dpW9bo7STfrX7k9Wv70jA_2C4BN6tDceM1LEOfF9YL22OisdmaUPf7Ptw/pub?gid=1308154629&single=true&output=tsv"
   load_args:
     sep: "\t"
 

@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 import pyspark.sql as ps
@@ -36,23 +36,23 @@ def extract_pks_from_unified_edges(unified_edges: ps.DataFrame) -> List[str]:
 
 @inject_object()
 def parse_pks_source(
-    parser: Callable,
+    parser,
     source_data: Any,
-    config: Dict[str, Any],
     mapping_data: Optional[pd.DataFrame] = None,
 ) -> Dict[str, Dict[str, Any]]:
-    """Dispatch to source-specific parser function with optional ID mapping."""
-    if mapping_data is not None:
-        return parser(source_data, mapping_data, config)
-    else:
-        return parser(source_data, config)
+    """Parse PKS source using parser instance."""
+    result = parser.parse(source_data, mapping_data)
+    logger.info(f"Parsed {len(result)} PKS entries from {parser.name}")
+    return result
 
 
 def merge_all_pks_metadata(*source_dicts: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
     """Merge PKS metadata from multiple sources."""
     result = {}
 
-    for source_dict in source_dicts:
+    for idx, source_dict in enumerate(source_dicts):
+        num_entries = len(source_dict) if source_dict else 0
+        logger.info(f"Source dict {idx}: {num_entries} PKS entries")
         for pks_id, pks_data in source_dict.items():
             if pks_id not in result:
                 result[pks_id] = {}
