@@ -132,7 +132,7 @@ def _attach_scores(base_matrix: pd.DataFrame, skew: float, seed: int) -> pd.Data
     return matrix
 
 
-def generate_run_comparison_matrices(N: int = 15):
+def fabricate_run_comparison_matrices(N: int = 15):
     """Generate fabricated matrix predictions data to test the run comparison pipeline."""
     np.random.seed(0)
 
@@ -334,7 +334,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_drugmech_pairs",
             ),
             node(
-                func=generate_run_comparison_matrices,
+                func=fabricate_run_comparison_matrices,
                 inputs=[
                     "params:fabricator.run_comparison.matrix_size",
                 ],
@@ -344,7 +344,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "matrix_fold_1_bad_model": "fabricator.raw.run_comparison_matrices.matrix_fold_1_bad_model",
                     "matrix_fold_2_bad_model": "fabricator.raw.run_comparison_matrices.matrix_fold_2_bad_model",
                 },
-                name="generate_run_comparison_matrices",
+                name="fabricate_run_comparison_matrices",
             ),
         ]
     )

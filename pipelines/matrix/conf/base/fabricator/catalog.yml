@@ -47,16 +47,16 @@ fabricator.int.drug_list:
 
 fabricator.raw.run_comparison_matrices.matrix_fold_1_good_model:
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/run_comparison_matrices/matrix_fold_1_good_model
+  filepath: ${globals:paths.raw}/run_comparison_matrices/matrix_fold_1_good_model.csv
 
 fabricator.raw.run_comparison_matrices.matrix_fold_2_good_model:
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/run_comparison_matrices/matrix_fold_2_good_model
+  filepath: ${globals:paths.raw}/run_comparison_matrices/matrix_fold_2_good_model.csv
 
 fabricator.raw.run_comparison_matrices.matrix_fold_1_bad_model:
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/run_comparison_matrices/matrix_fold_1_bad_model
+  filepath: ${globals:paths.raw}/run_comparison_matrices/matrix_fold_1_bad_model.csv
 
 fabricator.raw.run_comparison_matrices.matrix_fold_2_bad_model:
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/run_comparison_matrices/matrix_fold_2_bad_model
+  filepath: ${globals:paths.raw}/run_comparison_matrices/matrix_fold_2_bad_model.csv
