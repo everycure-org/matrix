@@ -89,3 +89,18 @@ def to_estimator_device(array: Any, estimator: Any) -> Any:
         return array
 
     return cp.asarray(array)
+
+
+def to_cpu(array: Any) -> Any:
+    """Move array from GPU to CPU if it's a CuPy array.
+
+    Args:
+        array: Array to move to CPU (can be CuPy ndarray, NumPy ndarray, or other array-like).
+
+    Returns:
+        NumPy array or the original array if it's not a CuPy array.
+    """
+    if cp is not None and isinstance(array, cp.ndarray):
+        return cp.asnumpy(array)
+
+    return array
