@@ -22,7 +22,7 @@ class ModelWithTransformers:
 
     def predict_proba(self, data: pd.DataFrame) -> np.ndarray:
         transformed = self._transform(data)
-        return self._base_model.predict_proba(transformed.values, gpu_only=True)
+        return self._base_model.predict_proba(transformed.values)
 
     def predict(self, data: pd.DataFrame) -> np.ndarray:
         return self.predict_proba(data).argmax(axis=1)
