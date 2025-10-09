@@ -198,21 +198,43 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
 class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
     """Recall@N evaluation"""
 
-    def __init__(self, bool_test_col: str, n_max: int, perform_sort: bool = True):
+    def __init__(
+        self,
+        bool_test_col: str,
+        n_max: int,
+        perform_sort: bool,
+        num_n_values: int = 1000,
+        N_bootstraps: int = 100,
+        seed_bootstraps: int = 42,
+    ):
         """Initialize an instance of FullMatrixRecallAtN.
 
         Args:
             bool_test_col: Boolean column in the matrix indicating the known positive test set.
             n_max: Maximum value of n to compute recall@n score for.
             perform_sort: Whether to sort the matrix or expect the dataframe to be sorted already.
+            num_n_values: Number of n values to compute recall@n score for.
+            N_bootstraps: Number of bootstrap samples to compute.
+            seed_bootstraps: Seed for the bootstrap samples.
         """
         self.bool_test_col = bool_test_col
         self.n_max = n_max
         self.perform_sort = perform_sort
+        self.num_n_values = num_n_values
+        self.N_bootstraps = N_bootstraps
+        self.seed_bootstraps = seed_bootstraps
 
     def give_x_values(self) -> np.ndarray:
         """Integer x-axis values from 0 to n_max, representing the n in recall@n."""
-        return np.arange(self.n_max)
+        return np.arange(0, self.n_max, self.num_n_values)
+
+    def _give_ranks_series(self, matrix: pl.DataFrame, score_col_name: str) -> pl.Series:
+        """Give the ranks of the known positives."""
+        # Sort by score
+        if self.perform_sort:
+            matrix = matrix.sort(by=score_col_name, descending=True)
+
+        return matrix.with_row_index("index").filter(pl.col(self.bool_test_col)).select(pl.col("index")).to_series() + 1
 
     def give_y_values(self, matrix: pl.DataFrame, score_col_name: str) -> np.ndarray:
         """Compute Recall@n values for a single set of predictions."""
@@ -223,67 +245,32 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
         if N == 0:
             raise ValueError("No known positives in the matrix.")
 
-        # Sort by score
-        if self.perform_sort:
-            matrix = matrix.sort(by=score_col_name, descending=True)
-
-        # Ranks of the known positives
-        ranks_series = (
-            matrix.with_row_index("index").filter(pl.col(self.bool_test_col)).select(pl.col("index")).to_series() + 1
-        )
-
         # Return Recall@n values
+        ranks_series = self._give_ranks_series(matrix, score_col_name)
         return np.array([(ranks_series <= n).sum() / N for n in n_lst])
 
     def give_y_values_bootstrap(self, matrix: pl.DataFrame, score_col_name: str) -> np.ndarray:
-        """Compute Recall@n values for a single set of predictions with bootstrap uncertainty estimation."""
-        return  # TODO
+        """Compute Recall@n values for all bootstrap samples of a single set of predictions."""
+        n_lst = self.give_x_values()
+
+        # Number of known positives
+        N = len(matrix.filter(pl.col(self.bool_test_col)))
+        if N == 0:
+            return np.zeros((self.N_bootstraps, len(n_lst)))
+
+        # Computed ranks of the known positives
+        ranks_series = self._give_ranks_series(matrix, score_col_name)
+
+        # Function for resampling and calculating recall@n
+        def bootstrap_recall_lst(ranks_series, N, n_lst):
+            ranks_series_resampled = ranks_series.sample(N, with_replacement=True, seed=self.seed_bootstraps).sort(
+                descending=False
+            )
+            return [(ranks_series_resampled <= n).sum() / N for n in n_lst]
+
+        # Calculate recall@n for each bootstrap
+        return np.array([bootstrap_recall_lst(ranks_series, N, n_lst) for _ in range(self.N_bootstraps)])
 
     def give_y_values_random_classifier(self, matrix: pl.DataFrame, score_col_name: str) -> np.ndarray:
         """Compute Recall@n values for a random classifier."""
         return  # TODO
-
-    # def evaluate_single_fold(
-    #     self, input_matrices: dict[str, dict[int, pl.LazyFrame]], input_paths: dict[str, InputPathsMultiFold]
-    # ) -> pl.DataFrame:
-    #     """Evaluate recall@n against the provided single fold matrices.
-
-    #     Args:
-    #         input_matrices: Dictionary of polars LazyFrames of predictions and labels.
-    #         input_path: Object containing the score column name for each model.
-
-    #     Returns:
-    #         polars DataFrame with columns `n` and `recall_at_n`.
-    #     """
-    #     n_lst = list(range(self.n_max))
-    #     output_dataframe = pl.DataFrame({"n": n_lst})
-
-    #     for model_name, matrices_for_model in input_matrices.items():
-    #         # Take first fold and materialize in memory as Polars dataframe
-    #         matrix = matrices_for_model[0].collect()
-
-    #         # Compute recall@n values and join to output results dataframe
-    #         score_col_name = input_paths[model_name].score_col_name
-    #         recall_at_n_values = self.give_recall_at_n_values(matrix, n_lst, score_col_name)
-    #         results_df_model = pl.DataFrame({"n": n_lst, f"recall_at_n_{model_name}": recall_at_n_values})
-    #         output_dataframe = output_dataframe.join(results_df_model, how="left", on="n")
-
-    #     return output_dataframe
-
-    # def evaluate_multi_fold(self, input_matrices: dict[str, dict[int, pl.LazyFrame]]) -> pl.DataFrame:
-    #     return  # TODO
-
-    # def evaluate_bootstrap_single_fold(
-    #     self, input_matrices: dict[str, dict[str, pl.LazyFrame]], input_paths: InputPathsMultiFold
-    # ) -> pl.DataFrame:
-    #     return  # TODO
-
-    # def evaluate_bootstrap_multi_fold(self, input_matrices: dict[str, dict[int, pl.LazyFrame]]) -> pl.DataFrame:
-    #     return  # TODO
-
-    # def plot_results(results: pl.DataFrame) -> plt.Figure:
-    #     return  # TODO
-
-    # recall = give_recall_at_n(matrix, n_lst, bool_test_col=self.bool_test_col, score_col=input_paths[model_name].score_col_name)
-
-    # return pd.DataFrame({"n": n_lst, "recall_at_n": recall})

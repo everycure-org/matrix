@@ -4,7 +4,7 @@ run_comparison:
   # matrix_harmonisation_mode: "strict" # "strict" or "lenient_on_ground_truth", "lenient_on_ground_truth_and_pairs"
 
   perform_multifold_uncertainty_estimation: True
-  perform_bootstrap_uncertainty_estimation: False
+  perform_bootstrap_uncertainty_estimation: True
 
   input_paths:
     good_model:
@@ -26,3 +26,4 @@ run_comparison:
   evaluations:
     ground_truth_recall_at_n:
       n_max: 4
+      N_bootstraps: 10

@@ -5,7 +5,6 @@ from . import nodes
 from .settings import RUN_COMPARISON_SETTINGS
 
 # TODO:
-# - Add multi fold method for recall@n
 # - Add bootstrap method
 # - Add plotting method
 # - Add unit test for recall@n class
