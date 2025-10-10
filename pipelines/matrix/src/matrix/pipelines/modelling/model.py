@@ -57,9 +57,6 @@ class ModelWrapper:
         Returns:
             Aggregated probabilities scores of the individual models.
         """
-        logger.info("ModelWrapper: Collecting predictions from all estimators")
         all_preds = [to_cpu(estimator.predict_proba(X)) for estimator in self._estimators]
-        logger.info(f"ModelWrapper: All predictions collected and converted to CPU: {len(all_preds)}")
         stacked_preds = np.stack(all_preds)
-        logger.info(f"ModelWrapper: Stacked predictions shape: {stacked_preds.shape}")
         return np.apply_along_axis(self._agg_func, 0, stacked_preds)

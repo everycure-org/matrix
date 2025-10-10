@@ -211,9 +211,7 @@ def make_predictions_and_sort(
     Returns:
         Pairs dataset sorted by score with their rank and quantile rank.
     """
-    logger.info("make_predictions_and_sort: Generating predictions and sorting")
     embeddings = node_embeddings.select("id", "topological_embedding")
-    logger.info(f"make_predictions_and_sort: Number of embeddings: {embeddings.count()}")
     pairs_with_embeddings = (
         # TODO: remnant from pyarrow/pandas conversion, find in which node it is created
         pairs.drop("__index_level_0__")
@@ -229,12 +227,10 @@ def make_predictions_and_sort(
         )
         .filter(F.col("source_embedding").isNotNull() & F.col("target_embedding").isNotNull())
     )
-    logger.info(f"make_predictions_and_sort: Number of pairs with embeddings: {pairs_with_embeddings.count()}")
 
     def model_predict(partition_df: pd.DataFrame) -> pd.DataFrame:
-        logger.info(f"Processing partition with {len(partition_df)} rows")
         model_predictions = model.predict_proba(partition_df)
-        logger.info(f"Model predictions shape: {model_predictions.shape}")
+
         # Assign averaged predictions to columns
         partition_df[not_treat_score_col_name] = model_predictions[:, 0]
         partition_df[treat_score_col_name] = model_predictions[:, 1]
@@ -242,11 +238,9 @@ def make_predictions_and_sort(
 
         return partition_df.drop(columns=["source_embedding", "target_embedding"])
 
-    logger.info("make_predictions_and_sort: Defining schema for predictions")
     structfields_to_keep = [
         col for col in pairs_with_embeddings.schema if col.name not in ["target_embedding", "source_embedding"]
     ]
-    logger.info(f"make_predictions_and_sort: Struct fields to keep: {[col.name for col in structfields_to_keep]}")
     model_predict_schema = StructType(
         structfields_to_keep
         + [
@@ -255,9 +249,7 @@ def make_predictions_and_sort(
             StructField(unknown_score_col_name, DoubleType(), True),
         ]
     )
-    logger.info("make_predictions_and_sort: Applying model to each partition")
     pairs_with_scores = pairs_with_embeddings.groupBy("target").applyInPandas(model_predict, model_predict_schema)
-    logger.info("make_predictions_and_sort: Sorting pairs by treat score")
     pairs_sorted = pairs_with_scores.orderBy(treat_score_col_name, ascending=False)
 
     # We are using the RDD.zipWithIndex function here. Getting it through the DataFrame API would involve a Window function without partition, effectively pulling all data into one single partition.
@@ -265,9 +257,7 @@ def make_predictions_and_sort(
     # 1. zipWithIndex creates a tuple with the shape (row, index)
     # 2. When moving from RDD to DataFrame, the column names are named after the Scala tuple fields: _1 for the row and _2 for the index
     # 3. We're adding 1 to the rank so that it is not zero indexed
-    logger.info("make_predictions_and_sort: Adding rank and quantile rank")
     pairs_ranked = pairs_sorted.rdd.zipWithIndex().toDF().select(F.col("_1.*"), (F.col("_2") + 1).alias("rank"))
-    logger.info(f"make_predictions_and_sort: Number of ranked pairs: {pairs_ranked.count()}")
     pairs_ranked_count = pairs_ranked.count()
     return pairs_ranked.withColumn("quantile_rank", F.col("rank") / pairs_ranked_count)
 

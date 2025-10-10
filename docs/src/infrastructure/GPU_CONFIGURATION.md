@@ -152,18 +152,6 @@ To disable automatic GPU detection and force CPU-only execution:
 - **I/O-bound operations**: Reading/writing data from storage
 - **Simple transformations**: Basic column operations
 
-### Optimal Configuration
-
-For the `make_predictions_and_sort` node:
-
-```python
-# Configure partitioning to match GPU count
-num_gpus = detect_gpus()
-num_partitions = max(num_gpus * 4, 32)  # 4x oversubscription
-
-pairs_with_embeddings = pairs_with_embeddings.repartition(num_partitions)
-```
-
 ## Troubleshooting
 
 ### GPUs Not Detected
