@@ -1,6 +1,15 @@
 # https://artifacthub.io/packages/helm/bitnami/mlflow
 mlflow:
-
+  image:
+    repository: bitnamilegacy/mlflow
+  gitImage:
+    repository: bitnamilegacy/git
+  volumePermissions:
+    image:
+      repository: bitnamilegacy/os-shell
+  waitContainer:
+    image:
+      repository: bitnamilegacy/os-shell
   # Disable tracking server password
   tracking: 
     # we see issues when uploading large files and this is a recommended workaround
@@ -41,6 +50,14 @@ mlflow:
   # Use our own PGSQL Secret
   # https://github.com/bitnami/charts/issues/28893
   postgresql:
+    image:
+      repository: bitnamilegacy/postgresql
+    volumePermissions:
+      image:
+        repository: bitnamilegacy/os-shell
+    metrics:
+      image:
+        repository: bitnamilegacy/postgres-exporter
     # Schedule PostgreSQL on management nodes
     primary:
       annotations:
