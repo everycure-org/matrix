@@ -10,19 +10,18 @@ from dataclasses import dataclass
 class InputPathsMultiFold:
     """Class for inputting multi-fold matrix predictions."""
 
+    name: str
     file_paths_list: list[str]
     score_col_name: str
     file_format: str = "parquet"
-
-    def __post_init__(self):
-        self.num_folds = len(self.file_paths_list)
 
 
 class InputPathSingleFold(InputPathsMultiFold):
     """Class for inputting a single fold of matrix predictions."""
 
-    def __init__(self, file_path: str, score_col_name: str, file_format: str = "parquet"):
+    def __init__(self, name: str, file_path: str, score_col_name: str, file_format: str = "parquet"):
         super().__init__(
+            name=name,
             file_paths_list=[file_path],
             score_col_name=score_col_name,
             file_format=file_format,
@@ -32,7 +31,7 @@ class InputPathSingleFold(InputPathsMultiFold):
 class InputPathsModellingRun(InputPathsMultiFold):
     """Class for inputting matrices from a MATRIX modelling run."""
 
-    def __init__(self, data_release: str, run_name: str, num_folds: int, is_transformed: bool = True):
+    def __init__(self, name: str, data_release: str, run_name: str, num_folds: int, is_transformed: bool = True):
         base_path = (
             f"gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/{data_release}/runs/{run_name}/datasets/"
         )
@@ -47,6 +46,7 @@ class InputPathsModellingRun(InputPathsMultiFold):
             file_paths_list = [f"{base_path}/model_output/fold_{fold}/matrix_predictions" for fold in range(num_folds)]
 
         super().__init__(
+            name=name,
             file_paths_list=file_paths_list,
             score_col_name=score_col_name,
             file_format="parquet",

@@ -13,11 +13,11 @@ logger = logging.getLogger(__name__)
 
 @inject_object()
 def create_input_matrices_dataset(
-    input_paths: dict[str, InputPathsMultiFold],
-) -> InputPathsMultiFold:
+    input_paths: list[InputPathsMultiFold],
+) -> list[dict]:
     """Function to create input matrices dataset."""
     # Return initialised dataclass objects as dictionaries
-    return {k: asdict(v) for k, v in input_paths.items()}
+    return [asdict(v) for v in input_paths]
 
 
 @inject_object()

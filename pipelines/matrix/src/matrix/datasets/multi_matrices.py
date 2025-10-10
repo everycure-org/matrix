@@ -8,17 +8,17 @@ class MultiMatricesDataset(YAMLDataset):
 
     def load(self):
         """Load a lazy Polars datasets and score column name for each fold and model."""
-        paths_dict = super().load()
+        data_dicts_list = super().load()
         return {
-            model_name: {
+            dict_for_model["name"]: {
                 fold: {
                     "predictions": LazyPolarsDataset(
-                        filepath=dict_for_model["file_paths_list"][fold],
+                        filepath=file_path,
                         file_format=dict_for_model["file_format"],
                     ).load(),
                     "score_col_name": dict_for_model["score_col_name"],
                 }
-                for fold in range(len(dict_for_model["file_paths_list"]))
+                for fold, file_path in enumerate(dict_for_model["file_paths_list"])
             }
-            for model_name, dict_for_model in paths_dict.items()
+            for dict_for_model in data_dicts_list
         }

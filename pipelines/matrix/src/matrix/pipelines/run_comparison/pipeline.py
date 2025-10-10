@@ -5,13 +5,12 @@ from . import nodes
 from .settings import RUN_COMPARISON_SETTINGS
 
 # TODO:
-# - Add bootstrap method
-# - Add plotting method
 # - Add unit test for recall@n class
 # - Add matrix harmonisation + unit tests
 # - Test on real data
 # - Add unit test for input path classes
 # - Modify multi matrices dataset to copy matrices to pipeline data folder
+# - Clean up PR
 
 # matrices_to_evaluate = RUN_COMPARISON_SETTINGS["run_comparison"]["inputs"]
 
