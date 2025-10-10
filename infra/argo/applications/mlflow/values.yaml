@@ -1,8 +1,7 @@
 # https://artifacthub.io/packages/helm/bitnami/mlflow
 mlflow:
-  image:
-  registry: docker.io
-  repository: bitnamilegacy/mlflow
+  Global:
+  imageRegistry: docker.io/bitnamilegacy
 
   # Disable tracking server password
   tracking: 
