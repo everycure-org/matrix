@@ -26,7 +26,7 @@ class SpokeTransformer(GraphTransformer):
                 df = transform_nodes_V5_2(nodes_df)
             case "V5.7":
                 df = transform_nodes_V5_7(nodes_df)
-            case "V5.8":
+            case "V5.9":
                 df = transform_nodes_V5_7(nodes_df)
             case _:
                 raise NotImplementedError(f"No nodes transformer code implemented for version: {self._version}")

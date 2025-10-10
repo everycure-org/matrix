@@ -34,7 +34,7 @@ data_sources:
   primekg:
     version: "2.1"
   spoke:
-    version: V5.8
+    version: V5.9
   embiology:
   # needs to be a string as otherwise it will be parsed as a octal number
   # https://stackoverflow.com/questions/32965846/cant-parse-yaml-correctly-when-number-contains-leading-zeros-and-for-yes-no-val
