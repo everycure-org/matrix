@@ -1,4 +1,8 @@
 # https://artifacthub.io/packages/helm/bitnami/mlflow
+global:
+  imageRegistry: docker.io/bitnamilegacy
+  security:
+    allowInsecureImages: true
 mlflow:
   global:
     imageRegistry: docker.io/bitnamilegacy
