@@ -1,4 +1,3 @@
-# NOTE: This spark_utils.py was partially generated using AI assistance.
 import logging
 import os
 
