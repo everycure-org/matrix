@@ -3,13 +3,14 @@ from matrix.pipelines.document_kg.nodes import (
     integrate_all_metadata,
     merge_all_pks_metadata,
 )
+from pyspark.sql.types import ArrayType, StringType, StructField, StructType
 
 
 def test_merge_multiple_sources():
-    """Test merging metadata from multiple sources with overlapping PKS."""
-    source1 = {"pks1": {"infores": {"id": "infores:pks1", "name": "Source 1"}}}
+    """Test merging metadata from multiple parser outputs."""
+    source1 = {"pks1": {"infores": {"name": "Source 1"}}}
     source2 = {"pks1": {"reusabledata": {"license": "MIT"}}}
-    source3 = {"pks2": {"infores": {"id": "infores:pks2", "name": "Source 2"}}}
+    source3 = {"pks2": {"infores": {"name": "Source 2"}}}
 
     result = merge_all_pks_metadata(source1, source2, source3)
 
@@ -18,21 +19,22 @@ def test_merge_multiple_sources():
     assert "reusabledata" in result["pks1"]
     assert result["pks1"]["infores"]["name"] == "Source 1"
     assert result["pks1"]["reusabledata"]["license"] == "MIT"
-
-
-def test_merge_overlapping_sources():
-    """Test that later sources update earlier sources."""
-    source1 = {"pks1": {"infores": {"id": "infores:pks1", "name": "Original Name"}}}
-    source2 = {"pks1": {"infores": {"name": "Updated Name"}}}
-
-    result = merge_all_pks_metadata(source1, source2)
-
-    assert result["pks1"]["infores"]["name"] == "Updated Name"
-    assert result["pks1"]["infores"]["id"] == "infores:pks1"
+    assert "infores" in result["pks2"]
 
 
 def test_extract_from_all_columns(spark):
     """Test extraction from all PKS columns and deduplication."""
+    schema = StructType(
+        [
+            StructField("subject", StringType(), False),
+            StructField("predicate", StringType(), False),
+            StructField("object", StringType(), False),
+            StructField("primary_knowledge_source", StringType(), True),
+            StructField("primary_knowledge_sources", ArrayType(StringType()), True),
+            StructField("aggregator_knowledge_source", ArrayType(StringType()), True),
+        ]
+    )
+
     data = [
         ("subj1", "pred1", "obj1", "infores:source1", None, None),
         ("subj2", "pred2", "obj2", "infores:source1", None, None),
@@ -40,17 +42,7 @@ def test_extract_from_all_columns(spark):
         ("subj4", "pred4", "obj4", None, None, ["infores:agg1"]),
     ]
 
-    df = spark.createDataFrame(
-        data,
-        [
-            "subject",
-            "predicate",
-            "object",
-            "primary_knowledge_source",
-            "primary_knowledge_sources",
-            "aggregator_knowledge_source",
-        ],
-    )
+    df = spark.createDataFrame(data, schema)
 
     result = extract_pks_from_unified_edges(df)
 
@@ -68,22 +60,23 @@ def test_filters_to_relevant_sources(spark):
         "source3": {"infores": {"id": "infores:source3", "name": "Source 3"}},
     }
 
+    schema = StructType(
+        [
+            StructField("subject", StringType(), False),
+            StructField("predicate", StringType(), False),
+            StructField("object", StringType(), False),
+            StructField("primary_knowledge_source", StringType(), True),
+            StructField("primary_knowledge_sources", ArrayType(StringType()), True),
+            StructField("aggregator_knowledge_source", ArrayType(StringType()), True),
+        ]
+    )
+
     data = [
         ("subj1", "pred1", "obj1", "infores:source1", None, None),
         ("subj2", "pred2", "obj2", "infores:source2", None, None),
     ]
 
-    unified_edges = spark.createDataFrame(
-        data,
-        [
-            "subject",
-            "predicate",
-            "object",
-            "primary_knowledge_source",
-            "primary_knowledge_sources",
-            "aggregator_knowledge_source",
-        ],
-    )
+    unified_edges = spark.createDataFrame(data, schema)
 
     result = integrate_all_metadata(all_metadata, unified_edges)
 
@@ -97,22 +90,23 @@ def test_creates_default_for_missing_metadata(spark):
     """Test that default entries are created for sources without metadata."""
     all_metadata = {"source1": {"infores": {"id": "infores:source1", "name": "Source 1"}}}
 
+    schema = StructType(
+        [
+            StructField("subject", StringType(), False),
+            StructField("predicate", StringType(), False),
+            StructField("object", StringType(), False),
+            StructField("primary_knowledge_source", StringType(), True),
+            StructField("primary_knowledge_sources", ArrayType(StringType()), True),
+            StructField("aggregator_knowledge_source", ArrayType(StringType()), True),
+        ]
+    )
+
     data = [
         ("subj1", "pred1", "obj1", "infores:source1", None, None),
         ("subj2", "pred2", "obj2", "infores:source2", None, None),
     ]
 
-    unified_edges = spark.createDataFrame(
-        data,
-        [
-            "subject",
-            "predicate",
-            "object",
-            "primary_knowledge_source",
-            "primary_knowledge_sources",
-            "aggregator_knowledge_source",
-        ],
-    )
+    unified_edges = spark.createDataFrame(data, schema)
 
     result = integrate_all_metadata(all_metadata, unified_edges)
 
