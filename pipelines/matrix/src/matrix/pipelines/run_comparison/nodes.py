@@ -20,6 +20,13 @@ def create_input_matrices_dataset(
     return [asdict(v) for v in input_paths]
 
 
+def harmize_matrices(
+    input_matrices: dict[str, dict[str, pl.LazyFrame]],
+) -> dict[str, dict[str, pl.LazyFrame]]:
+    """Function to harmonize matrices."""
+    return input_matrices
+
+
 @inject_object()
 def run_evaluation(
     perform_multifold: bool,
