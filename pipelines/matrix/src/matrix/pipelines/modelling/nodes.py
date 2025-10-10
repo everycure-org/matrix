@@ -6,7 +6,7 @@ from typing import Any, Callable, Iterable, Union
 import matplotlib.pyplot as plt
 
 try:
-    import cudf
+    import cudf.pandas
     from matrix_gcp_datasets.spark_utils import detect_gpus
 
     if detect_gpus() > 0:
