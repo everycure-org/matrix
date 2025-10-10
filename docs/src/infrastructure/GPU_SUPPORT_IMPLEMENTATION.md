@@ -86,15 +86,7 @@ The implementation works seamlessly with existing GPU features:
 - Falls back gracefully to CPU when no GPUs present
 - No environment-specific configuration needed
 
-### 2. Performance Improvements
-
-Expected speedups for `make_predictions_and_sort`:
-
-- **GPU-accelerated inference**: 5-10x faster for model predictions
-- **RAPIDS SQL operations**: 2-5x faster for data transformations
-- **Better parallelism**: Proper resource allocation for GPU tasks
-
-### 3. Cloud-Ready
+### 2. Cloud-Ready
 
 - Works in Kubernetes/Argo environments with GPU nodes
 - Respects `CUDA_VISIBLE_DEVICES` for multi-GPU systems
@@ -116,24 +108,6 @@ spark.task.resource.gpu.amount: 0.1 # Fractional for task concurrency
 # No configuration needed!
 SparkManager.initialize_spark()
 # Automatically detects and configures GPUs
-```
-
-### In Pipeline Nodes
-
-```python
-@inject_object()
-def make_predictions_and_sort(
-    node_embeddings: ps.DataFrame,
-    pairs: ps.DataFrame,
-    model: ModelWrapper,
-) -> ps.DataFrame:
-    # Spark session already GPU-configured if available
-    # Model inference will use GPU automatically
-    pairs_with_scores = pairs_with_embeddings.mapInPandas(
-        model_predict,
-        schema
-    )
-    # ...
 ```
 
 ## Testing
