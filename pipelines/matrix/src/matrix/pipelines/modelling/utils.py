@@ -79,21 +79,27 @@ def estimator_uses_cuda(estimator: Any) -> bool:
 
 def to_estimator_device(array: Any, estimator: Any) -> Any:
     """Move array to the estimator's preferred device when CUDA is requested."""
+    try:
+        if not estimator_uses_cuda(estimator):
+            return array
 
-    if not estimator_uses_cuda(estimator):
-        return array
+        if cp is None:
+            logger.warning(
+                "Estimator %s configured for CUDA but CuPy is not available; falling back to CPU arrays.",
+                estimator,
+            )
+            return array
 
-    if cp is None:
+        if isinstance(array, cp.ndarray):  # Already on GPU
+            return array
+
+        return cp.asarray(array)
+    except Exception as e:
         logger.warning(
-            "Estimator %s configured for CUDA but CuPy is not available; falling back to CPU arrays.",
-            estimator,
+            "Failed to move array to estimator's device: %s; falling back to CPU arrays.",
+            e,
         )
         return array
-
-    if isinstance(array, cp.ndarray):  # Already on GPU
-        return array
-
-    return cp.asarray(array)
 
 
 def to_cpu(array: Any) -> Any:
