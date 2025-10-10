@@ -249,7 +249,6 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
         title: str,
         num_n_values: int = 1000,
         N_bootstraps: int = 100,
-        seed_bootstraps: int = 42,
         force_full_y_axis: bool = True,
     ):
         """Initialize an instance of FullMatrixRecallAtN.
@@ -261,7 +260,6 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
             title: Title of the plot.
             num_n_values: Number of n values to compute recall@n score for.
             N_bootstraps: Number of bootstrap samples to compute.
-            seed_bootstraps: Seed for the bootstrap samples.
             force_full_y_axis: Whether to force the y-axis to be between 0 and 1.
         """
         super().__init__(x_axis_label="n", y_axis_label="Recall@n", title=title, force_full_y_axis=force_full_y_axis)
@@ -270,11 +268,10 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
         self.perform_sort = perform_sort
         self.num_n_values = num_n_values
         self.N_bootstraps = N_bootstraps
-        self.seed_bootstraps = seed_bootstraps
 
     def give_x_values(self) -> np.ndarray:
         """Integer x-axis values from 0 to n_max, representing the n in recall@n."""
-        return np.arange(0, self.n_max, self.num_n_values)
+        return np.linspace(0, self.n_max, self.num_n_values)
 
     def _give_ranks_series(self, matrix: pl.DataFrame, score_col_name: str) -> pl.Series:
         """Give the ranks of the known positives."""
@@ -310,14 +307,12 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
         ranks_series = self._give_ranks_series(matrix, score_col_name)
 
         # Function for resampling and calculating recall@n
-        def bootstrap_recall_lst(ranks_series, N, n_lst):
-            ranks_series_resampled = ranks_series.sample(N, with_replacement=True, seed=self.seed_bootstraps).sort(
-                descending=False
-            )
+        def bootstrap_recall_lst(ranks_series, N, n_lst, seed):
+            ranks_series_resampled = ranks_series.sample(N, with_replacement=True, seed=seed).sort(descending=False)
             return [(ranks_series_resampled <= n).sum() / N for n in n_lst]
 
         # Calculate recall@n for each bootstrap
-        return np.array([bootstrap_recall_lst(ranks_series, N, n_lst) for _ in range(self.N_bootstraps)])
+        return np.array([bootstrap_recall_lst(ranks_series, N, n_lst, seed) for seed in range(self.N_bootstraps)])
 
     def give_y_values_random_classifier(self, input_matrices: dict[str, any]) -> np.ndarray:
         """Compute Recall@n values for a random classifier."""

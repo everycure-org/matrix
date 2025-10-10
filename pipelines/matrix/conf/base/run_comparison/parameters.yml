@@ -4,7 +4,7 @@ run_comparison:
   # matrix_harmonisation_mode: "strict" # "strict" or "lenient_on_ground_truth", "lenient_on_ground_truth_and_pairs"
 
   # Options to select which uncertainty estimation methods to perform. Applies to all applicable evaluations. 
-  perform_multifold_uncertainty_estimation: False
+  perform_multifold_uncertainty_estimation: True
   perform_bootstrap_uncertainty_estimation: False
 
   # Enter the filepaths of the matrix predictions you would like to evaluate here. See documentation for more details.

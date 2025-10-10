@@ -132,7 +132,9 @@ def _attach_scores(base_matrix: pd.DataFrame, skew: float, seed: int) -> pd.Data
     return matrix
 
 
-def fabricate_run_comparison_matrices(N: int = 15):
+def fabricate_run_comparison_matrices(
+    N: int = 15, skew_good_model: float = 10, skew_bad_model: float = 2, test_set_proportion: float = 0.2
+):
     """Generate fabricated matrix predictions data to test the run comparison pipeline."""
     np.random.seed(0)
 
@@ -140,18 +142,26 @@ def fabricate_run_comparison_matrices(N: int = 15):
     drugs_df = pd.DataFrame({"source": [f"drug_{i}" for i in range(N)]})
     diseases_df = pd.DataFrame({"target": [f"disease_{i}" for i in range(N)]})
     base_matrix_fold_1 = pd.merge(drugs_df, diseases_df, how="cross")
-    base_matrix_fold_1["is_known_positive"] = np.random.choice([True, False], size=N**2, p=[0.25, 0.75])
-    base_matrix_fold_1["is_known_negative"] = np.random.choice([True, False], size=N**2, p=[0.25, 0.75])
+    base_matrix_fold_1["is_known_positive"] = np.random.choice(
+        [True, False], size=N**2, p=[test_set_proportion, 1 - test_set_proportion]
+    )
+    base_matrix_fold_1["is_known_negative"] = np.random.choice(
+        [True, False], size=N**2, p=[test_set_proportion, 1 - test_set_proportion]
+    )
     base_matrix_fold_2 = base_matrix_fold_1.copy(deep=True)
-    base_matrix_fold_2["is_known_positive"] = np.random.choice([True, False], size=N**2, p=[0.25, 0.75])
-    base_matrix_fold_2["is_known_negative"] = np.random.choice([True, False], size=N**2, p=[0.25, 0.75])
+    base_matrix_fold_2["is_known_positive"] = np.random.choice(
+        [True, False], size=N**2, p=[test_set_proportion, 1 - test_set_proportion]
+    )
+    base_matrix_fold_2["is_known_negative"] = np.random.choice(
+        [True, False], size=N**2, p=[test_set_proportion, 1 - test_set_proportion]
+    )
 
     # Generate scores and return
     return {
-        "matrix_fold_1_good_model": _attach_scores(base_matrix_fold_1, 10, seed=1),
-        "matrix_fold_2_good_model": _attach_scores(base_matrix_fold_2, 10, seed=2),
-        "matrix_fold_1_bad_model": _attach_scores(base_matrix_fold_1, 2, seed=3),
-        "matrix_fold_2_bad_model": _attach_scores(base_matrix_fold_2, 2, seed=4),
+        "matrix_fold_1_good_model": _attach_scores(base_matrix_fold_1, skew_good_model, seed=1),
+        "matrix_fold_2_good_model": _attach_scores(base_matrix_fold_2, skew_good_model, seed=2),
+        "matrix_fold_1_bad_model": _attach_scores(base_matrix_fold_1, skew_bad_model, seed=3),
+        "matrix_fold_2_bad_model": _attach_scores(base_matrix_fold_2, skew_bad_model, seed=4),
     }
 
 
@@ -337,6 +347,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=fabricate_run_comparison_matrices,
                 inputs=[
                     "params:fabricator.run_comparison.matrix_size",
+                    "params:fabricator.run_comparison.skew_good_model",
+                    "params:fabricator.run_comparison.skew_bad_model",
+                    "params:fabricator.run_comparison.test_set_proportion",
                 ],
                 outputs={
                     "matrix_fold_1_good_model": "fabricator.raw.run_comparison_matrices.matrix_fold_1_good_model",

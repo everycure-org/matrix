@@ -4,8 +4,8 @@ run_comparison.input_matrices:
 
 "run_comparison.{evaluation}.results":
   type: polars.EagerPolarsDataset
-  file_format: parquet
-  filepath: ${globals:paths.run_comparison}/evaluation_values/results_{evaluation}
+  file_format: csv
+  filepath: ${globals:paths.run_comparison}/evaluation_values/results_{evaluation}.csv
 
 "run_comparison.{evaluation}.plot":
   type: matplotlib.MatplotlibWriter
