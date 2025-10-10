@@ -144,22 +144,22 @@ def generate_pairs(
         Pairs dataframe containing all combinations of drugs and diseases that do not lie in the training set.
     """
     # Collect list of drugs and diseases
-    drugs_lst = drugs["id"].tolist()
+    drugs_df = drugs[["id", "ec_id"]]
     diseases_lst = diseases["id"].tolist()
 
     # Remove duplicates
-    drugs_lst = list(set(drugs_lst))
+    drugs_df = drugs_df.drop_duplicates()
     diseases_lst = list(set(diseases_lst))
 
     # Remove drugs and diseases without embeddings
     nodes_with_embeddings = set(graph._nodes["id"])
-    drugs_lst = [drug for drug in drugs_lst if drug in nodes_with_embeddings]
+    drugs_df = drugs_df[drugs_df["id"].isin(nodes_with_embeddings)]
     diseases_lst = [disease for disease in diseases_lst if disease in nodes_with_embeddings]
 
     # Generate all combinations
     matrix_slices = []
     for disease in tqdm(diseases_lst):
-        matrix_slice = pd.DataFrame({"source": drugs_lst, "target": disease})
+        matrix_slice = pd.DataFrame({"ec_drug_id": drugs_df["ec_id"], "source": drugs_df["id"], "target": disease})
         matrix_slices.append(matrix_slice)
 
     # Concatenate all slices at once
