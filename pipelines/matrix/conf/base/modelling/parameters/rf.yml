@@ -14,8 +14,8 @@ modelling.rf:
         tuner:
           _object: matrix.pipelines.modelling.tuning.GaussianSearch
           estimator:
-            _object: sklearn.ensemble.RandomForestClassifier
-            n_jobs: 16
+            _object: cuml.ensemble.RandomForestClassifier
+            n_streams: -1
             random_state: ${globals:random_state}
           n_calls: 20
           dimensions:
