@@ -3,10 +3,10 @@ name: MLFlow
 description: MLFlow deployment
 type: application
 version: 0.1.0
-appVersion: "1.0.0"
+appVersion: "3.3.2"
 
 dependencies:
 # https://neo4j.com/docs/operations-manual/current/kubernetes/quickstart-standalone/server-setup/
 - name: mlflow 
-  version: 1.4.22
+  version: 5.1.17
   repository: oci://registry-1.docker.io/bitnamicharts

@@ -1,14 +1,5 @@
 # https://artifacthub.io/packages/helm/bitnami/mlflow
-global:
-  imageRegistry: docker.io/bitnamilegacy
-  security:
-    allowInsecureImages: true
 mlflow:
-  global:
-    imageRegistry: docker.io/bitnamilegacy
-    security:
-      allowInsecureImages: true
-
   # Disable tracking server password
   tracking: 
     # we see issues when uploading large files and this is a recommended workaround
