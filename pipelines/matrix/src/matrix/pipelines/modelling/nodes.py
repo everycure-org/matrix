@@ -3,6 +3,8 @@ import json
 import logging
 from typing import Any, Callable, Iterable, Union
 
+logger = logging.getLogger(__name__)
+
 import matplotlib.pyplot as plt
 
 try:
@@ -10,6 +12,7 @@ try:
     from matrix_gcp_datasets.spark_utils import detect_gpus
 
     if detect_gpus() > 0:
+        logger.info("GPUs detected, enabling cuDF pandas backend")
         cudf.pandas.install()
 except ImportError:
     pass
@@ -31,8 +34,6 @@ from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from .model import ModelWrapper
 from .model_selection import DiseaseAreaSplit
 from .utils import to_estimator_device
-
-logger = logging.getLogger(__name__)
 
 plt.switch_backend("Agg")
 
@@ -450,6 +451,7 @@ def tune_parameters(
 
     X_train = data.loc[mask, features]
     y_train = data.loc[mask, target_col_name]
+    logger.info(f"tuner params: {tuner.get_xgb_params()}")
     logger.info(f"Starting hyperparameter tuning with tuner: {tuner}...")
     # Fit tuner
     tuner.fit(X_train.values, y_train.values)
