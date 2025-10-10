@@ -9,23 +9,43 @@ class ComparisonEvaluation(abc.ABC):
     """Abstract base class for run-comparison evaluations."""
 
     @abc.abstractmethod
-    def evaluate_single_fold(self, input_matrices: dict[str, dict[int, pl.LazyFrame]]) -> pl.DataFrame:
+    def evaluate_single_fold(
+        self,
+        harmonized_matrices: pl.LazyFrame,
+        predictions_info: dict[str, any],
+        available_ground_truth_cols: list[str],
+    ) -> pl.DataFrame:
         pass
 
     @abc.abstractmethod
-    def evaluate_multi_fold(self, input_matrices: dict[str, dict[int, pl.LazyFrame]]) -> pl.DataFrame:
+    def evaluate_multi_fold(
+        self,
+        harmonized_matrices: pl.LazyFrame,
+        predictions_info: dict[str, any],
+        available_ground_truth_cols: list[str],
+    ) -> pl.DataFrame:
         pass
 
     @abc.abstractmethod
-    def evaluate_bootstrap_single_fold(self, input_matrices: dict[str, dict[int, pl.LazyFrame]]) -> pl.DataFrame:
+    def evaluate_bootstrap_single_fold(
+        self,
+        harmonized_matrices: pl.LazyFrame,
+        predictions_info: dict[str, any],
+        available_ground_truth_cols: list[str],
+    ) -> pl.DataFrame:
         pass
 
     @abc.abstractmethod
-    def evaluate_bootstrap_multi_fold(self, input_matrices: dict[str, dict[int, pl.LazyFrame]]) -> pl.DataFrame:
+    def evaluate_bootstrap_multi_fold(
+        self,
+        harmonized_matrices: pl.LazyFrame,
+        predictions_info: dict[str, any],
+        available_ground_truth_cols: list[str],
+    ) -> pl.DataFrame:
         pass
 
     @abc.abstractmethod
-    def plot_results(results: pl.DataFrame, input_matrices: dict[str, any], is_plot_errors: bool) -> plt.Figure:
+    def plot_results(results: pl.DataFrame, harmonized_matrices: pl.LazyFrame, is_plot_errors: bool) -> plt.Figure:
         pass
 
 
@@ -81,11 +101,18 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         """
         pass
 
-    def evaluate_single_fold(self, input_matrices: dict[str, any]) -> pl.DataFrame:
+    def evaluate_single_fold(
+        self,
+        harmonized_matrices: pl.LazyFrame,
+        predictions_info: dict[str, any],
+        available_ground_truth_cols: list[str],
+    ) -> pl.DataFrame:
         """Compute evaluation curves for all models without any uncertainty estimation.
 
         Args:
-            input_matrices: Dictionary containing model predictions as Polars LazyFrames and score column name for each model and fold.
+            harmonized_matrices: Polars LazyFrame containing all harmonized matrix pairs with all scores
+            predictions_info: Dictionary containing model names and number of folds.
+            available_ground_truth_cols: List of available ground truth columns.
 
         Returns:
             Polars DataFrame with columns `x` and `y_{model_name}` for each model.
@@ -93,13 +120,14 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         x_lst = self.give_x_values()
         output_dataframe = pl.DataFrame({"x": x_lst})
 
-        for model_name, model_data in input_matrices.items():
+        for model_name in predictions_info["model_names"]:
             # Take fixed fold and materialize in memory as Polars dataframe
-            matrix = model_data[0]["predictions"].collect()
+            matrix = harmonized_matrices.select(
+                "source", "target", *available_ground_truth_cols, f"score_{model_name}_fold_0"
+            ).collect()
 
             # Compute y-values and join to output results dataframe
-            score_col_name = model_data[0]["score_col_name"]
-            y_values = self.give_y_values(matrix, score_col_name)
+            y_values = self.give_y_values(matrix, f"score_{model_name}_fold_0")
             results_df_model = pl.DataFrame({"x": x_lst, f"y_{model_name}": y_values})
             output_dataframe = output_dataframe.join(results_df_model, how="left", on="x")
 
@@ -107,12 +135,16 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
 
     def evaluate_multi_fold(
         self,
-        input_matrices: dict[str, any],
+        harmonized_matrices: pl.LazyFrame,
+        predictions_info: dict[str, any],
+        available_ground_truth_cols: list[str],
     ) -> pl.DataFrame:
         """Compute evaluation curves for all models with multi fold uncertainty estimation.
 
         Args:
-            input_matrices: Dictionary containing model predictions as Polars LazyFrames and score column name for each model and fold.
+            harmonized_matrices: Polars LazyFrame containing all harmonized matrix pairs with all scores
+            predictions_info: Dictionary containing model names and number of folds.
+            available_ground_truth_cols: List of available ground truth columns.
 
         Returns:
             Polars DataFrame with columns `x` and `y_{model_name}_mean` and `y_{model_name}_std` for each model.
@@ -120,15 +152,16 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         x_lst = self.give_x_values()
         output_dataframe = pl.DataFrame({"x": x_lst})
 
-        for model_name, model_data in input_matrices.items():
+        for model_name in predictions_info["model_names"]:
             y_values_all_folds = []
-            for fold, data in model_data.items():
+            for fold in range(predictions_info["num_folds"]):
                 # Materialize predictions in memory as Polars dataframe
-                matrix = data["predictions"].collect()
+                matrix = harmonized_matrices.select(
+                    "source", "target", *available_ground_truth_cols, f"score_{model_name}_fold_{fold}"
+                ).collect()
 
                 # Compute y-values for fold and append to list
-                score_col_name = data["score_col_name"]
-                y_values_all_folds.append(self.give_y_values(matrix, score_col_name))
+                y_values_all_folds.append(self.give_y_values(matrix, f"score_{model_name}_fold_{fold}"))
 
             # Take mean and std of y-values across folds
             y_values_mean = np.mean(y_values_all_folds, axis=0)
@@ -140,11 +173,18 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
 
         return output_dataframe
 
-    def evaluate_bootstrap_single_fold(self, input_matrices: dict[str, any]) -> pl.DataFrame:
+    def evaluate_bootstrap_single_fold(
+        self,
+        harmonized_matrices: pl.LazyFrame,
+        predictions_info: dict[str, any],
+        available_ground_truth_cols: list[str],
+    ) -> pl.DataFrame:
         """Compute evaluation curves for a single fold of models with bootstrap uncertainty estimation.
 
         Args:
-            input_matrices: Dictionary containing model predictions as Polars LazyFrames and score column name for each model and fold.
+            harmonized_matrices: Polars LazyFrame containing all harmonized matrix pairs with all scores
+            predictions_info: Dictionary containing model names and number of folds.
+            available_ground_truth_cols: List of available ground truth columns.
 
         Returns:
             Polars DataFrame with columns `x` and `y_{model_name}_mean` and `y_{model_name}_std` for each model.
@@ -152,13 +192,14 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         x_lst = self.give_x_values()
         output_dataframe = pl.DataFrame({"x": x_lst})
 
-        for model_name, model_data in input_matrices.items():
+        for model_name in predictions_info["model_names"]:
             # Take fixed fold and materialize in memory as Polars dataframe
-            matrix = model_data[0]["predictions"].collect()
+            matrix = harmonized_matrices.select(
+                "source", "target", *available_ground_truth_cols, f"score_{model_name}_fold_0"
+            ).collect()
 
             # Compute y-values for bootstrap then take mean and std.
-            score_col_name = model_data[0]["score_col_name"]
-            y_values_all_bootstraps = self.give_y_values_bootstrap(matrix, score_col_name)
+            y_values_all_bootstraps = self.give_y_values_bootstrap(matrix, f"score_{model_name}_fold_0")
             y_values_mean = np.mean(y_values_all_bootstraps, axis=0)
             y_values_std = np.std(y_values_all_bootstraps, axis=0)
 
@@ -170,11 +211,18 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
 
         return output_dataframe
 
-    def evaluate_bootstrap_multi_fold(self, input_matrices: dict[str, any]) -> pl.DataFrame:
+    def evaluate_bootstrap_multi_fold(
+        self,
+        harmonized_matrices: pl.LazyFrame,
+        predictions_info: dict[str, any],
+        available_ground_truth_cols: list[str],
+    ) -> pl.DataFrame:
         """Compute evaluation curves for all models with both multi fold and bootstrap uncertainty estimation.
 
         Args:
-            input_matrices: Dictionary containing model predictions as Polars LazyFrames and score column name for each model and fold.
+            harmonized_matrices: Polars LazyFrame containing all harmonized matrix pairs with all scores
+            predictions_info: Dictionary containing model names and number of folds.
+            available_ground_truth_cols: List of available ground truth columns.
 
         Returns:
             Polars DataFrame with columns `x` and `y_{model_name}_mean` and `y_{model_name}_std` for each model.
@@ -182,15 +230,16 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         x_lst = self.give_x_values()
         output_dataframe = pl.DataFrame({"x": x_lst})
 
-        for model_name, model_data in input_matrices.items():
+        for model_name in predictions_info["model_names"]:
             y_values_all_folds = []
-            for fold, data in model_data.items():
+            for fold in range(predictions_info["num_folds"]):
                 # Materialize predictions in memory as Polars dataframe
-                matrix = data["predictions"].collect()
+                matrix = harmonized_matrices.select(
+                    "source", "target", *available_ground_truth_cols, f"score_{model_name}_fold_{fold}"
+                ).collect()
 
                 # Compute y-values for bootstrap and append to list
-                score_col_name = data["score_col_name"]
-                y_values_all_folds.append(self.give_y_values_bootstrap(matrix, score_col_name))
+                y_values_all_folds.append(self.give_y_values_bootstrap(matrix, f"score_{model_name}_fold_{fold}"))
 
             # Stack bootstrap values for different folds then take mean and std over all
             y_values_all_folds = np.vstack(y_values_all_folds)
@@ -203,6 +252,7 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
 
         return output_dataframe
 
+    # TODO: Update, need test cols as well
     def plot_results(self, results: pl.DataFrame, input_matrices: dict[str, any], is_plot_errors: bool) -> plt.Figure:
         """Plot the results."""
 

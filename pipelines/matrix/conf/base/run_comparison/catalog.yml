@@ -2,6 +2,15 @@ run_comparison.input_matrices:
   type: matrix.datasets.multi_matrices.MultiMatricesDataset
   filepath: ${globals:paths.run_comparison}/input_matrices.yml
 
+run_comparison.harmonized_matrices:
+  type: polars.LazyPolarsDataset
+  filepath: ${globals:paths.run_comparison}/harmonized_matrices.parquet
+  file_format: parquet
+
+run_comparison.predictions_info:
+  type: text.YAMLDataset
+  filepath: ${globals:paths.run_comparison}/predictions_info.yml
+
 "run_comparison.{evaluation}.results":
   type: polars.EagerPolarsDataset
   file_format: csv

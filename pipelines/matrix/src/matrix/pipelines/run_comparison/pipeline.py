@@ -12,23 +12,6 @@ from .settings import RUN_COMPARISON_SETTINGS
 # - Modify multi matrices dataset to copy matrices to pipeline data folder
 # - Clean up PR
 
-# matrices_to_evaluate = RUN_COMPARISON_SETTINGS["run_comparison"]["inputs"]
-
-
-# def _create_evaluation_pipeline(evaluation: str, matrix: ps.DataFrame) -> Pipeline:
-#     pipeline_nodes = [
-#         ArgoNode(
-#             func=nodes.run_evaluation,
-#             inputs=[
-#                 matrix,
-#                 f"params:run_comparison_evaluations.{evaluation}",
-#             ],
-#             outputs=f"run_comparison.{matrix}.{evaluation}",
-#             name=f"cross_run_comparison.{matrix}.{evaluation}",
-#         )
-#     ]
-#     return pipeline_nodes
-
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create cross-run comparison evaluation pipeline."""
@@ -43,7 +26,18 @@ def create_pipeline(**kwargs) -> Pipeline:
             ],
             outputs="run_comparison.input_matrices",
             name=f"create_input_matrices_dataset",
-        )
+        ),
+        ArgoNode(
+            func=nodes.harmonize_matrices,
+            inputs=[
+                "run_comparison.input_matrices",
+                "params:run_comparison.available_ground_truth_cols",
+                "params:run_comparison.perform_multifold_uncertainty_estimation",
+                "params:run_comparison.assert_data_consistency",
+            ],
+            outputs=["run_comparison.harmonized_matrices", "run_comparison.predictions_info"],
+            name=f"harmonize_matrices",
+        ),
     )
     for evaluation in RUN_COMPARISON_SETTINGS["evaluations"]:
         pipeline_nodes.extend(
@@ -54,7 +48,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                         "params:run_comparison.perform_multifold_uncertainty_estimation",
                         "params:run_comparison.perform_bootstrap_uncertainty_estimation",
                         f"params:run_comparison.evaluations.{evaluation}",
-                        "run_comparison.input_matrices",
+                        "run_comparison.harmonized_matrices",
+                        "run_comparison.predictions_info",
+                        "params:run_comparison.available_ground_truth_cols",
                     ],
                     outputs=f"run_comparison.{evaluation}.results",
                     name=f"give_evaluation_results.{evaluation}",
@@ -66,7 +62,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         "params:run_comparison.perform_bootstrap_uncertainty_estimation",
                         f"params:run_comparison.evaluations.{evaluation}",
                         f"run_comparison.{evaluation}.results",
-                        "run_comparison.input_matrices",
+                        "run_comparison.harmonized_matrices",
                     ],
                     outputs=f"run_comparison.{evaluation}.plot",
                     name=f"plot_results.{evaluation}",

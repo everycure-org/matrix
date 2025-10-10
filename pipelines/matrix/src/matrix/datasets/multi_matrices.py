@@ -10,14 +10,14 @@ class MultiMatricesDataset(YAMLDataset):
         data_dicts_list = super().load()
         return {
             dict_for_model["name"]: {
-                fold: {
-                    "predictions": LazyPolarsDataset(
+                "predictions_list": [
+                    LazyPolarsDataset(
                         filepath=file_path,
                         file_format=dict_for_model["file_format"],
-                    ).load(),
-                    "score_col_name": dict_for_model["score_col_name"],
-                }
-                for fold, file_path in enumerate(dict_for_model["file_paths_list"])
+                    ).load()
+                    for file_path in dict_for_model["file_paths_list"]
+                ],
+                "score_col_name": dict_for_model["score_col_name"],
             }
             for dict_for_model in data_dicts_list
         }

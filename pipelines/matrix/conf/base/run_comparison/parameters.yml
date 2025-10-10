@@ -1,11 +1,12 @@
 run_comparison:
 
-  # TODO: implement
-  # matrix_harmonisation_mode: "strict" # "strict" or "lenient_on_ground_truth", "lenient_on_ground_truth_and_pairs"
-
   # Options to select which uncertainty estimation methods to perform. Applies to all applicable evaluations. 
-  perform_multifold_uncertainty_estimation: True
+  perform_multifold_uncertainty_estimation: True # If False, only the first fold of data is used.
   perform_bootstrap_uncertainty_estimation: False
+
+  # Option to assert consistent drug list, disease list, training set and test set across all models.
+  # If False, then matrix harmonization will be performed, which restricts pairs accordingly to ensure consistency between models.
+  assert_data_consistency: False
 
   # Enter the filepaths of the matrix predictions you would like to evaluate here. See documentation for more details.
   # TODO: Link to docs. 
@@ -22,6 +23,11 @@ run_comparison:
       score_col_name: "treat score"
 
   # Configuration for the evaluations to perform. Usually it is not necessary to modify these.
+  available_ground_truth_cols:
+    - "is_known_positive"
+    - "is_known_negative"
+    - "off_label"
+
   evaluations:
     ground_truth_recall_at_n:
       _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtN
