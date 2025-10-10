@@ -1,3 +1,4 @@
+import os
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional
 
@@ -148,7 +149,7 @@ class GDSNode2Vec(GDSGraphAlgorithm):
         """
         attr = gds.node2vec.write(
             G=graph,
-            concurrency=self._concurrency,
+            concurrency=self._concurrency if os.environ.get("is_test") is None else 4,
             writeProperty=write_property,
             walkLength=self._walk_length,
             walksPerNode=self._walks_per_node,
