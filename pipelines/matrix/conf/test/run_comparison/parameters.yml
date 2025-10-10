@@ -3,7 +3,7 @@ run_comparison:
   # TODO: implement
   # matrix_harmonisation_mode: "strict" # "strict" or "lenient_on_ground_truth", "lenient_on_ground_truth_and_pairs"
 
-  perform_multifold_uncertainty_estimation: False
+  perform_multifold_uncertainty_estimation: True
   perform_bootstrap_uncertainty_estimation: True
 
   input_paths:

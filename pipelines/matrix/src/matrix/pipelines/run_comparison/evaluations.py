@@ -131,10 +131,10 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
                 y_values_all_folds.append(self.give_y_values(matrix, score_col_name))
 
             # Take mean and std of y-values across folds
-            y_values_all_folds = np.mean(y_values_all_folds, axis=0)
-            y_values_all_folds_std = np.std(y_values_all_folds, axis=0)
+            y_values_mean = np.mean(y_values_all_folds, axis=0)
+            y_values_std = np.std(y_values_all_folds, axis=0)
             results_df_model = pl.DataFrame(
-                {"x": x_lst, f"y_{model_name}_mean": y_values_all_folds, f"y_{model_name}_std": y_values_all_folds_std}
+                {"x": x_lst, f"y_{model_name}_mean": y_values_mean, f"y_{model_name}_std": y_values_std}
             )
             output_dataframe = output_dataframe.join(results_df_model, how="left", on="x")
 
