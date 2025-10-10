@@ -85,7 +85,7 @@ dependencies = [
     "lightgbm ; sys_platform == 'darwin'",
     "tqdm>=4.67.1",
     "cudf-cu12==25.8.* ; sys_platform == 'linux'", # Pandas GPU support for CUDA (only install on Linux)
-    "cudf-cu12==25.8.*" "cuml-cu12==25.8.* ; sys_platform == 'linux'", # SKLearn GPU support for CUDA (only install on Linux)
+    "cuml-cu12==25.8.* ; sys_platform == 'linux'" # SKLearn GPU support for CUDA (only install on Linux)
 ]
 
 
