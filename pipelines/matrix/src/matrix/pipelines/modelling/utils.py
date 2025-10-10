@@ -2,8 +2,13 @@ import logging
 from functools import partial
 from typing import Any
 
+from matrix_gcp_datasets.spark_utils import detect_gpus
+
 try:  # Cupy is optional; only needed when running estimators on CUDA
-    import cupy as cp
+    if detect_gpus() > 0:
+        import cupy as cp
+    else:
+        raise ImportError("No GPUs detected")
 except ImportError:  # pragma: no cover - executed only on CPU-only setups
     cp = None  # type: ignore[assignment]
 
@@ -74,21 +79,27 @@ def estimator_uses_cuda(estimator: Any) -> bool:
 
 def to_estimator_device(array: Any, estimator: Any) -> Any:
     """Move array to the estimator's preferred device when CUDA is requested."""
+    try:
+        if not estimator_uses_cuda(estimator):
+            return array
 
-    if not estimator_uses_cuda(estimator):
-        return array
+        if cp is None:
+            logger.warning(
+                "Estimator %s configured for CUDA but CuPy is not available; falling back to CPU arrays.",
+                estimator,
+            )
+            return array
 
-    if cp is None:
+        if isinstance(array, cp.ndarray):  # Already on GPU
+            return array
+
+        return cp.asarray(array)
+    except Exception as e:
         logger.warning(
-            "Estimator %s configured for CUDA but CuPy is not available; falling back to CPU arrays.",
-            estimator,
+            "Failed to move array to estimator's device: %s; falling back to CPU arrays.",
+            e,
         )
         return array
-
-    if isinstance(array, cp.ndarray):  # Already on GPU
-        return array
-
-    return cp.asarray(array)
 
 
 def to_cpu(array: Any) -> Any:
