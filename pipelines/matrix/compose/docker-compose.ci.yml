@@ -62,7 +62,6 @@ services:
       KEDRO_DYNAMIC_PIPELINES_MAPPING_CROSS_VALIDATION_N_CROSS_VAL_FOLDS: 2
       KEDRO_DYNAMIC_PIPELINES_MAPPING_MODELLING_XG_ENSEMBLE_NUM_SHARDS: 2
       SPARK_DRIVER_MEMORY: 30
-      is_test: "1"
     depends_on:
       neo4j:
         condition: service_healthy
