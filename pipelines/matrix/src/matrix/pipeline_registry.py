@@ -2,6 +2,7 @@ from kedro.pipeline import Pipeline
 
 from matrix.pipelines.create_sample.pipeline import create_pipeline as create_create_sample_pipeline
 from matrix.pipelines.data_release.pipeline import create_pipeline as create_data_release_pipeline
+from matrix.pipelines.document_kg.pipeline import create_pipeline as create_document_kg_pipeline
 from matrix.pipelines.embeddings.pipeline import create_pipeline as create_embeddings_pipeline
 from matrix.pipelines.evaluation.pipeline import create_pipeline as create_evaluation_pipeline
 from matrix.pipelines.fabricator.pipeline import create_pipeline as create_fabricator_pipeline
@@ -47,6 +48,7 @@ def register_pipelines() -> dict[str, Pipeline]:
         ),
         "create_sample": create_create_sample_pipeline(),
         "ingest_to_N4J": create_ingest_to_N4J_pipeline(),
+        "document_kg": create_document_kg_pipeline(),
         "sentinel_kg_release_patch": create_sentinel_pipeline(is_patch=True),
         "sentinel_kg_release": create_sentinel_pipeline(is_patch=False),
         # "inference": create_inference_pipeline(),  # Run manually based on medical input
@@ -87,7 +89,13 @@ def register_pipelines() -> dict[str, Pipeline]:
         + pipelines["data_release"]
         + pipelines["ingest_to_N4J"]
         + pipelines["feature_and_modelling_run"]
+        + pipelines["document_kg"]
         + pipelines["sentinel_kg_release"]
+    )
+
+    pipelines["doc_kg"] = (
+          pipelines["data_engineering"]
+        + pipelines["document_kg"]
     )
 
     pipelines["kg_release_patch_and_matrix_run"] = (

@@ -1,0 +1,39 @@
+_layer_int: &_layer_int
+  metadata:
+    kedro-viz:
+      layer: integration
+
+document_kg.int.infores_metadata:
+  type: yaml.YAMLDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.release}/document_kg/infores_metadata.yml
+
+document_kg.int.reusabledata_metadata:
+  type: yaml.YAMLDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.release}/document_kg/reusabledata_metadata.yml
+
+document_kg.int.kgregistry_metadata:
+  type: yaml.YAMLDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.release}/document_kg/kgregistry_metadata.yml
+
+document_kg.int.matrix_curated_metadata:
+  type: yaml.YAMLDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.release}/document_kg/matrix_curated_metadata.yml
+
+document_kg.int.matrix_reviews_metadata:
+  type: yaml.YAMLDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.release}/document_kg/matrix_reviews_metadata.yml
+
+document_kg.int.all_pks_metadata:
+  type: yaml.YAMLDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.release}/document_kg/all_pks_metadata.yml
+
+document_kg.int.pks_integrated_kg_list:
+  type: pandas.CSVDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.release}/document_kg/pks_integrated_kg_list.csv

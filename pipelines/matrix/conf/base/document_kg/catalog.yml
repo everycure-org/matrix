@@ -1,0 +1,110 @@
+_layer_raw: &_layer_raw
+  metadata:
+    kedro-viz:
+      layer: raw
+
+_layer_int: &_layer_int
+  metadata:
+    kedro-viz:
+      layer: integration
+
+_layer_prm: &_layer_prm
+  metadata:
+    kedro-viz:
+      layer: primary
+
+document_kg.raw.infores:
+  type: yaml.YAMLDataset
+  <<: *_layer_raw
+  filepath: https://raw.githubusercontent.com/biolink/information-resource-registry/refs/heads/main/infores_catalog.yaml
+
+document_kg.raw.reusabledata:
+  type: json.JSONDataset
+  <<: *_layer_raw
+  filepath: https://raw.githubusercontent.com/reusabledata/reusabledata/refs/heads/master/data.json
+
+document_kg.raw.kgregistry:
+  type: yaml.YAMLDataset
+  <<: *_layer_raw
+  filepath: https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-registry/refs/heads/main/registry/kgs.yml
+
+#TODO add to preprocessing pipeline
+document_kg.raw.matrix_curated_pks@pandas:
+  type: pandas.CSVDataset
+  <<: *_layer_raw
+  filepath: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQxpQU80dpW9bo7STfrX7k9Wv70jA_2C4BN6tDceM1LEOfF9YL22OisdmaUPf7Ptw/pub?gid=135786799&single=true&output=tsv"
+  load_args:
+    sep: "\t"
+
+#TODO add to preprocessing pipeline
+document_kg.raw.matrix_reviews_pks@pandas:
+  type: pandas.CSVDataset
+  <<: *_layer_raw
+  filepath: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQxpQU80dpW9bo7STfrX7k9Wv70jA_2C4BN6tDceM1LEOfF9YL22OisdmaUPf7Ptw/pub?gid=1308154629&single=true&output=tsv"
+  load_args:
+    sep: "\t"
+
+document_kg.raw.mapping_reusabledata_infores:
+  type: pandas.CSVDataset
+  <<: *_layer_raw
+  filepath: "https://raw.githubusercontent.com/matentzn/pks-resource/refs/heads/main/mappings/reusabledata-infores.sssom.tsv"
+  load_args:
+    sep: "\t"
+    skiprows: 11
+    comment: "#"
+
+document_kg.raw.mapping_kgregistry_infores:
+  type: pandas.CSVDataset
+  <<: *_layer_raw
+  filepath: "https://raw.githubusercontent.com/matentzn/pks-resource/refs/heads/main/mappings/kgregistry-infores.sssom.tsv"
+  load_args:
+    sep: "\t"
+    skiprows: 11
+    comment: "#"
+
+document_kg.int.infores_metadata:
+  type: yaml.YAMLDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.tmp}/document_kg/infores_metadata.yml
+
+document_kg.int.reusabledata_metadata:
+  type: yaml.YAMLDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.tmp}/document_kg/reusabledata_metadata.yml
+
+document_kg.int.kgregistry_metadata:
+  type: yaml.YAMLDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.tmp}/document_kg/kgregistry_metadata.yml
+
+document_kg.int.matrix_curated_metadata:
+  type: yaml.YAMLDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.tmp}/document_kg/matrix_curated_metadata.yml
+
+document_kg.int.matrix_reviews_metadata:
+  type: yaml.YAMLDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.tmp}/document_kg/matrix_reviews_metadata.yml
+
+document_kg.int.all_pks_metadata:
+  type: yaml.YAMLDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.tmp}/document_kg/all_pks_metadata.yml
+
+document_kg.int.pks_integrated_kg_list:
+  type: pandas.CSVDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.tmp}/document_kg/pks_integrated_kg_list.csv
+
+document_kg.prm.pks_yaml:
+  type: yaml.YAMLDataset
+  <<: *_layer_prm
+  filepath: ${globals:paths.release}/primary-knowledge-sources.yml
+  save_args:
+    default_flow_style: false
+
+document_kg.prm.pks_md:
+  type: text.TextDataset
+  <<: *_layer_prm
+  filepath: ${globals:paths.release}/primary-knowledge-sources.md
