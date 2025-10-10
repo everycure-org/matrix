@@ -52,7 +52,7 @@ class GDSGraphSage(GDSGraphAlgorithm):
         concurrency: int = 4,
     ):
         """GraphSAGE attributes."""
-        super().__init__(embedding_dim, random_seed, concurrency)
+        super().__init__(embedding_dim, random_seed, concurrency if os.environ.get("is_test") is None else 4)
         self._sample_sizes = sample_sizes
         self._epochs = epochs
         self._learning_rate = learning_rate
