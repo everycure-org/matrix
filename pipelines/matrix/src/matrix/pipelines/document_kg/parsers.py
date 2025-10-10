@@ -1,11 +1,35 @@
 import logging
+from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
 import pandas as pd
 
-from .parser import ExternalRegistryParser, MatrixCuratedParser
-
 logger = logging.getLogger(__name__)
+
+
+class Parser(ABC):
+    """Abstract base class for PKS metadata parsers."""
+
+    def __init__(self, name: str, id_column: str, extracted_metadata: list[str], **config_params):
+        """Initialize parser with configuration.
+
+        Args:
+            name: Parser name (e.g., 'infores', 'reusabledata')
+            id_column: Column name containing the primary identifier
+            extracted_metadata: List of metadata fields to extract
+            **config_params: Additional configuration parameters
+        """
+        self.name = name
+        self.id_column = id_column
+        self.extracted_metadata = extracted_metadata
+        self.config = config_params
+
+    @abstractmethod
+    def parse(
+        self, source_data: Any, mapping_data: Optional[pd.DataFrame] = None, **kwargs
+    ) -> Dict[str, Dict[str, Any]]:
+        """Parse source data into standardized PKS metadata."""
+        raise NotImplementedError
 
 
 def _dataframe_to_mapping_dict(mapping_df: pd.DataFrame) -> Dict[str, str]:
@@ -31,7 +55,7 @@ def _add_parsed_record(
     }
 
 
-class InforesParser(ExternalRegistryParser):
+class InforesParser(Parser):
     """Parser for Information Resource Registry (biolink/infores).
 
     Parses the infores catalog YAML to extract PKS metadata.
@@ -65,7 +89,7 @@ class InforesParser(ExternalRegistryParser):
         return result
 
 
-class ReusableDataParser(ExternalRegistryParser):
+class ReusableDataParser(Parser):
     """Parser for reusabledata.org registry."""
 
     def __init__(self, *args, original_id_column: str, **kwargs):
@@ -107,7 +131,7 @@ class ReusableDataParser(ExternalRegistryParser):
         return result
 
 
-class KGRegistryParser(ExternalRegistryParser):
+class KGRegistryParser(Parser):
     """Parser for Knowledge Graph Hub Registry.
 
     Parses KG Registry YAML with optional SSSOM mapping.
@@ -157,7 +181,7 @@ class KGRegistryParser(ExternalRegistryParser):
         return result
 
 
-class MatrixCuratedMetadataParser(MatrixCuratedParser):
+class MatrixCuratedMetadataParser(Parser):
     """Parser for Matrix curated PKS metadata (license information)."""
 
     def parse(
@@ -184,7 +208,7 @@ class MatrixCuratedMetadataParser(MatrixCuratedParser):
         return result
 
 
-class MatrixReviewsParser(MatrixCuratedParser):
+class MatrixReviewsParser(Parser):
     """Parser for Matrix PKS reviews (drug repurposing relevancy scores)."""
 
     def parse(
