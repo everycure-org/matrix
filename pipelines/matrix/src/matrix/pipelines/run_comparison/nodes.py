@@ -7,6 +7,7 @@ from matrix_inject.inject import inject_object
 
 from .evaluations import ComparisonEvaluation
 from .input_paths import InputPathsMultiFold
+from .matrix_pairs import give_matrix_pairs_from_lazyframe
 
 logger = logging.getLogger(__name__)
 
@@ -49,8 +50,24 @@ def harmonize_matrices(
     else:
         num_folds = 1
 
-    # Create MatrixPairs objects list comprehension
-    # Check base matrix consistency across folds all(x == values[0] for x in values[1:])
+    # Create matrix pairs objects (sparse representations) for each model and fold
+    matrix_pairs_dict = {
+        (model_name, fold): give_matrix_pairs_from_lazyframe(lazy_df, available_ground_truth_cols)
+        for model_name, model_data in input_matrices.items()
+        for fold, lazy_df in enumerate(model_data["predictions_list"])
+    }
+
+    # Check drugs and diseases list consistency across folds
+    is_base_consistent = all(
+        all(
+            matrix_pairs_dict[(model_name, fold)].same_base_matrix(matrix_pairs_dict[(model_name, 0)])
+            for fold in range(1, num_folds)
+        )
+        for model_name in input_matrices.keys()
+    )
+    if not is_base_consistent:
+        raise ValueError("Base matrix is not consistent across folds.")
+
     # Check equality if requested all(x == values[0] for x in values[1:]), set combined lazyframe
     # Harmonize matrices with partial
 
@@ -63,6 +80,7 @@ def harmonize_matrices(
                 matrix.rename({score_col_name: f"score_{model_name}_fold_{fold}"}), on=["source", "target"], how="left"
             )
 
+    # Generate additional information about the predictions
     predictions_info = {
         "model_names": list(input_matrices.keys()),
         "num_folds": num_folds,
