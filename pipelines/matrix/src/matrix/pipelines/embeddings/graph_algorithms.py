@@ -124,7 +124,7 @@ class GDSNode2Vec(GDSGraphAlgorithm):
         walk_buffer_size: int = 1000,
     ):
         """Node2Vec Attributes. For more information see  https://neo4j.com/docs/graph-data-science/current/machine-learning/node-embeddings/node2vec/."""
-        super().__init__(embedding_dim, random_seed, concurrency)
+        super().__init__(embedding_dim, random_seed, concurrency if os.environ.get("is_test") is None else 4)
         self._walk_length = walk_length
         self._walks_per_node = walks_per_node
         self._in_out_factor = in_out_factor
@@ -149,7 +149,7 @@ class GDSNode2Vec(GDSGraphAlgorithm):
         """
         attr = gds.node2vec.write(
             G=graph,
-            concurrency=self._concurrency if os.environ.get("is_test") is None else 4,
+            concurrency=self._concurrency,
             writeProperty=write_property,
             walkLength=self._walk_length,
             walksPerNode=self._walks_per_node,
