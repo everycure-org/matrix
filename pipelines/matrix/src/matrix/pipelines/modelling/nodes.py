@@ -4,7 +4,17 @@ import logging
 from typing import Any, Callable, Iterable, Union
 
 import matplotlib.pyplot as plt
-import pandas as pd
+
+try:
+    import cudf
+    from matrix_gcp_datasets.spark_utils import detect_gpus
+
+    if detect_gpus() > 0:
+        cudf.pandas.install()
+except ImportError:
+    pass
+finally:
+    import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.types as T
 from matrix_inject.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
