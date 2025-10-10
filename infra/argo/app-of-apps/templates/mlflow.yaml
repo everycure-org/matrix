@@ -23,6 +23,8 @@ spec:
         - name: spec.source.aip_oauth_client_id
           value: {{ .Values.spec.source.aip_oauth_client_id }}
       values: |
+        global:
+          imageRegistry: docker.io/bitnamilegacy
         mlflow:
           tracking:
             args:
