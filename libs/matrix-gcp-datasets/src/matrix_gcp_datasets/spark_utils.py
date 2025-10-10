@@ -16,6 +16,7 @@ def detect_gpus() -> int:
         Number of GPUs available (0 if none detected).
     """
     try:
+        # This has to be imported inside as it is not installable on MacOS.
         import cupy as cp
 
         num_gpus = cp.cuda.runtime.getDeviceCount()
@@ -45,7 +46,7 @@ def detect_gpus() -> int:
             num_gpus = len(result.stdout.strip().split("\n"))
             logger.info(f"Detected {num_gpus} GPU(s) via nvidia-smi")
             return num_gpus
-    except (FileNotFoundError, subprocess.TimeoutExpired, Exception) as e:
+    except Exception as e:
         logger.debug(f"GPU detection via nvidia-smi failed: {e}")
 
     logger.info("No GPUs detected")
