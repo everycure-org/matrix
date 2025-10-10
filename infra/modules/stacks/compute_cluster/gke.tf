@@ -2,7 +2,8 @@ data "google_client_config" "default" {
 }
 
 locals {
-  default_node_locations = "us-central1-c" # Single location for simplicity, can be expanded to multiple zones if needed
+  default_node_locations = "us-central1-c"                             # Single location for simplicity, can be expanded to multiple zones if needed
+  gpu_node_locations     = "us-central1-a,us-central1-b,us-central1-c" # GPU nodes in multiple zones for availability
 
   # NOTE: Debugging node group scaling can be done using the GCP cluster logs, we create
   # node groups in 2 node locations, hence why the total amount of node groups.
@@ -18,6 +19,7 @@ locals {
     enable_gcfs        = true
     enable_gvnic       = true
     initial_node_count = 0
+    location_policy    = "ANY"
     }
   ]
 
@@ -25,7 +27,7 @@ locals {
     {
       name               = "g2-standard-16-l4-nodes" # 1 GPU, 16vCPUs, 64GB RAM
       machine_type       = "g2-standard-16"
-      node_locations     = local.default_node_locations
+      node_locations     = local.gpu_node_locations
       min_count          = 0
       max_count          = 20
       local_ssd_count    = 0
@@ -37,6 +39,7 @@ locals {
       accelerator_count  = 1
       accelerator_type   = "nvidia-l4"
       gpu_driver_version = "LATEST"
+      location_policy    = "ANY"
     }
   ]
 
@@ -45,15 +48,16 @@ locals {
     {
       name               = "management-nodes"
       machine_type       = "n2-standard-16" # 8 vCPUs, 32GB RAM
-      node_locations     = local.default_node_locations
-      min_count          = 1 # Single instance, no HA
-      max_count          = 1 # Single instance, no HA
+      node_locations     = "us-central1-c"  # Single location.
+      min_count          = 1                # Single instance, no HA
+      max_count          = 1                # Single instance, no HA
       local_ssd_count    = 0
       disk_type          = "pd-standard" # Cost-effective for management workloads
       disk_size_gb       = 200
       enable_gcfs        = true
       enable_gvnic       = true
       initial_node_count = 1
+      location_policy    = "ANY"
     }
   ]
 
@@ -70,6 +74,7 @@ locals {
     enable_gvnic       = true
     initial_node_count = 0
     spot               = true
+    location_policy    = "ANY"
     }
   ]
 
@@ -78,7 +83,7 @@ locals {
     {
       name               = "g2-standard-16-l4-spot-nodes" # 1 GPU, 16vCPUs, 64GB RAM
       machine_type       = "g2-standard-16"
-      node_locations     = local.default_node_locations
+      node_locations     = local.gpu_node_locations
       min_count          = 0
       max_count          = 30 # Higher max count for spot instances
       local_ssd_count    = 0
@@ -91,6 +96,7 @@ locals {
       accelerator_type   = "nvidia-l4"
       gpu_driver_version = "LATEST"
       spot               = true
+      location_policy    = "ANY"
     }
   ]
 
@@ -109,6 +115,7 @@ locals {
       enable_gvnic       = true
       initial_node_count = 0
       spot               = false
+      location_policy    = "ANY"
     }
   ]
 
