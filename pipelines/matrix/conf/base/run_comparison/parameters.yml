@@ -1,0 +1,31 @@
+run_comparison:
+
+  # TODO: implement
+  # matrix_harmonisation_mode: "strict" # "strict" or "lenient_on_ground_truth", "lenient_on_ground_truth_and_pairs"
+
+  # Options to select which uncertainty estimation methods to perform. Applies to all applicable evaluations. 
+  perform_multifold_uncertainty_estimation: True
+  perform_bootstrap_uncertainty_estimation: False
+
+  # Enter the filepaths of the matrix predictions you would like to evaluate here. See documentation for more details.
+  # TODO: Link to docs. 
+  input_paths:
+    - _object: matrix.pipelines.run_comparison.input_paths.InputPathSingleFold # Options: InputPathsSingleFold, InputPathsModellingRun , InputPathsMultiFold
+      name: matrix_1
+      file_path: "data/run_comparison/matrix_1.parquet"
+      file_format: "parquet"
+      score_col_name: "treat score"
+    - _object: matrix.pipelines.run_comparison.input_paths.InputPathSingleFold
+      name: matrix_2
+      file_path: "data/run_comparison/matrix_2.parquet"
+      file_format: "parquet"
+      score_col_name: "treat score"
+
+  # Configuration for the evaluations to perform. Usually it is not necessary to modify these.
+  evaluations:
+    ground_truth_recall_at_n:
+      _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtN
+      bool_test_col: "is_known_positive"
+      n_max: 100000
+      perform_sort: True
+      title: "Recall@n (standard ground truth)"

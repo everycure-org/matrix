@@ -2498,3 +2498,10 @@ fabricator.drugbank_gt:
           sample:
             num_rows: "@positive_edges.num_rows"
             seed: 20399
+
+
+fabricator.run_comparison:
+  matrix_size: 50
+  skew_good_model: 20
+  skew_bad_model: 2
+  test_set_proportion: 0.2

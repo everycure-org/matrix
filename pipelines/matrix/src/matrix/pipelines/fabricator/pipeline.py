@@ -2,6 +2,7 @@ import itertools
 import random
 
 import networkx as nx
+import numpy as np
 import pandas as pd
 from kedro.pipeline import Pipeline, node, pipeline
 from matrix_fabricator.fabrication import fabricate_datasets
@@ -101,6 +102,67 @@ def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.D
             rows.append({"graph": {"_id": str(idx)}, "links": path})
 
     return rows
+
+
+def _attach_scores(base_matrix: pd.DataFrame, skew: float, seed: int) -> pd.DataFrame:
+    """Helper function to attach scores to fabricated run comparison matrices.
+
+    Args:
+        base_matrix: Base matrix of pairs to attach scores to.
+        skew: Positive float, higher corresponds to better model
+        seed: Seed for the random number generator.
+
+    Returns:
+        matrix with scores attached.
+    """
+    np.random.seed(seed)
+    size = len(base_matrix)
+
+    # Sample scores from Beta distributions
+    pos_scores = pd.Series(np.random.beta(a=skew, b=1, size=size))  # Skewed to 1
+    neg_scores = pd.Series(np.random.beta(a=1, b=skew, size=size))  # Skewed to 0
+    unk_scores = pd.Series(np.random.beta(a=2, b=2, size=size))  # Centered around 0.5
+
+    # Attach scores to matrix
+    matrix = base_matrix.copy(deep=True)
+    matrix["treat score"] = pos_scores.where(
+        pd.Series(matrix["is_known_positive"]), neg_scores.where(pd.Series(matrix["is_known_negative"]), unk_scores)
+    )
+
+    return matrix
+
+
+def fabricate_run_comparison_matrices(
+    N: int = 15, skew_good_model: float = 10, skew_bad_model: float = 2, test_set_proportion: float = 0.2
+):
+    """Generate fabricated matrix predictions data to test the run comparison pipeline."""
+    np.random.seed(0)
+
+    # Generate base matrices of drug-disease pairs
+    drugs_df = pd.DataFrame({"source": [f"drug_{i}" for i in range(N)]})
+    diseases_df = pd.DataFrame({"target": [f"disease_{i}" for i in range(N)]})
+    base_matrix_fold_1 = pd.merge(drugs_df, diseases_df, how="cross")
+    base_matrix_fold_1["is_known_positive"] = np.random.choice(
+        [True, False], size=N**2, p=[test_set_proportion, 1 - test_set_proportion]
+    )
+    base_matrix_fold_1["is_known_negative"] = np.random.choice(
+        [True, False], size=N**2, p=[test_set_proportion, 1 - test_set_proportion]
+    )
+    base_matrix_fold_2 = base_matrix_fold_1.copy(deep=True)
+    base_matrix_fold_2["is_known_positive"] = np.random.choice(
+        [True, False], size=N**2, p=[test_set_proportion, 1 - test_set_proportion]
+    )
+    base_matrix_fold_2["is_known_negative"] = np.random.choice(
+        [True, False], size=N**2, p=[test_set_proportion, 1 - test_set_proportion]
+    )
+
+    # Generate scores and return
+    return {
+        "matrix_fold_1_good_model": _attach_scores(base_matrix_fold_1, skew_good_model, seed=1),
+        "matrix_fold_2_good_model": _attach_scores(base_matrix_fold_2, skew_good_model, seed=2),
+        "matrix_fold_1_bad_model": _attach_scores(base_matrix_fold_1, skew_bad_model, seed=3),
+        "matrix_fold_2_bad_model": _attach_scores(base_matrix_fold_2, skew_bad_model, seed=4),
+    }
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -280,6 +342,22 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="ingestion.raw.drugmech.edges@pandas",
                 name="create_drugmech_pairs",
+            ),
+            node(
+                func=fabricate_run_comparison_matrices,
+                inputs=[
+                    "params:fabricator.run_comparison.matrix_size",
+                    "params:fabricator.run_comparison.skew_good_model",
+                    "params:fabricator.run_comparison.skew_bad_model",
+                    "params:fabricator.run_comparison.test_set_proportion",
+                ],
+                outputs={
+                    "matrix_fold_1_good_model": "fabricator.raw.run_comparison_matrices.matrix_fold_1_good_model",
+                    "matrix_fold_2_good_model": "fabricator.raw.run_comparison_matrices.matrix_fold_2_good_model",
+                    "matrix_fold_1_bad_model": "fabricator.raw.run_comparison_matrices.matrix_fold_1_bad_model",
+                    "matrix_fold_2_bad_model": "fabricator.raw.run_comparison_matrices.matrix_fold_2_bad_model",
+                },
+                name="fabricate_run_comparison_matrices",
             ),
         ]
     )
