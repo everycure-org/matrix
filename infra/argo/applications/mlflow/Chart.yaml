@@ -3,7 +3,7 @@ name: MLFlow
 description: MLFlow deployment
 type: application
 version: 0.1.0
-appVersion: "3.3.2"
+appVersion: "1.0.0"
 
 dependencies:
 # https://neo4j.com/docs/operations-manual/current/kubernetes/quickstart-standalone/server-setup/
