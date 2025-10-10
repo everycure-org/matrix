@@ -2,8 +2,13 @@ import logging
 from functools import partial
 from typing import Any
 
+from matrix_gcp_datasets.spark_utils import detect_gpus
+
 try:  # Cupy is optional; only needed when running estimators on CUDA
-    import cupy as cp
+    if detect_gpus() > 0:
+        import cupy as cp
+    else:
+        raise ImportError("No GPUs detected")
 except ImportError:  # pragma: no cover - executed only on CPU-only setups
     cp = None  # type: ignore[assignment]
 
