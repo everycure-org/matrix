@@ -2,7 +2,6 @@ from kedro_datasets.polars import LazyPolarsDataset
 from kedro_datasets.yaml import YAMLDataset
 
 
-# TODO: I think in fact we should subclass this from LazyPolarsDataset and hence copy all matrices to the pipeline data folder. This will substantially reduce i/o time when running locally (download only once).
 class MultiMatricesDataset(YAMLDataset):
     """Dataset for loading multiple predictions dataframes over several models and folds."""
 
