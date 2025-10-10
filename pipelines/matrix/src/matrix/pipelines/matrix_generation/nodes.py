@@ -159,7 +159,7 @@ def generate_pairs(
     # Generate all combinations
     matrix_slices = []
     for disease in tqdm(diseases_lst):
-        matrix_slice = pd.DataFrame({"ec_id_source": drugs_df["ec_id"], "source": drugs_df["id"], "target": disease})
+        matrix_slice = pd.DataFrame({"ec_drug_id": drugs_df["ec_id"], "source": drugs_df["id"], "target": disease})
         matrix_slices.append(matrix_slice)
 
     # Concatenate all slices at once
