@@ -25,6 +25,8 @@ spec:
       values: |
         global:
           imageRegistry: docker.io/bitnamilegacy
+          security:
+            allowInsecureImages: true
         mlflow:
           tracking:
             args:
