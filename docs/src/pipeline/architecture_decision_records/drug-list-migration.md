@@ -20,13 +20,14 @@ The following parts of the pipeline were impacted:
 
 ### Ingestion & Drug Transformation
 
-![ingestion_changes](/Users/piotrkaniewski/work/matrix/docs/src/assets/pipeline/ingestion_changes.svg)
+Previously ingestion paper accepted single ID representing curies which was primary identifier for each drug. Now id primary key represents EC identifiers (with `EC:` prefix) and complementary `translator_id` are generated, representing CURIEs that can be mapped to our KGs. We implemented unique pandera check for both ID and translator ID.
+![ingestion_changes](../../assets/pipeline/ingestion_changes.svg)
 
 ### Matrix Generation
 
 Now we are no longer gener
 
-![matrix_generation](/Users/piotrkaniewski/work/matrix/docs/src/assets/pipeline/matrix_generation_changes.svg)
+![matrix_generation](../../assets/pipeline/matrix_generation_changes.svg)
 
 ## References
 [Pull Request with Changes](https://github.com/everycure-org/matrix/pull/1885)
