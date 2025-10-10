@@ -204,9 +204,8 @@ GPUs have limited memory. If you encounter OOM errors:
 
 ## Related Documentation
 
-- [Model Training and Inference](../pipeline/data_science/modelling.md)
+- [Model Training and Inference](../pipeline/pipeline_steps/modelling.md)
 - [Spark Configuration](./SPARK_TEMP_DIRECTORY_CONFIG.md)
-- [Performance Optimization](../getting_started/deep_dive/performance.md)
 
 ## References
 
