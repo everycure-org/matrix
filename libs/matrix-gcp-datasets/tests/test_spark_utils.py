@@ -1,4 +1,3 @@
-# NOTE: This file was partially generated using AI assistance.
 import os
 import sys
 from unittest.mock import MagicMock, patch
