@@ -1,4 +1,3 @@
-import os
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional
 
@@ -52,7 +51,7 @@ class GDSGraphSage(GDSGraphAlgorithm):
         concurrency: int = 4,
     ):
         """GraphSAGE attributes."""
-        super().__init__(embedding_dim, random_seed, concurrency if os.environ.get("is_test") is None else 4)
+        super().__init__(embedding_dim, random_seed, concurrency)
         self._sample_sizes = sample_sizes
         self._epochs = epochs
         self._learning_rate = learning_rate
@@ -149,7 +148,7 @@ class GDSNode2Vec(GDSGraphAlgorithm):
         """
         attr = gds.node2vec.write(
             G=graph,
-            concurrency=self._concurrency if os.environ.get("is_test") is None else 4,
+            concurrency=self._concurrency,
             writeProperty=write_property,
             walkLength=self._walk_length,
             walksPerNode=self._walks_per_node,
