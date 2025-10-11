@@ -452,7 +452,6 @@ def tune_parameters(
     X_train = data.loc[mask, features]
     y_train = data.loc[mask, target_col_name]
 
-    # NOTE: This code was partially generated using AI assistance.
     # Get base estimator parameters BEFORE tuning to preserve config like device, tree_method
     estimator = getattr(tuner, "estimator", None)
     if estimator is None:
