@@ -459,12 +459,19 @@ def tune_parameters(
     if estimator is None:
         raise ValueError("Tuner must have 'estimator' attribute")
 
+    # NOTE: This code was partially generated using AI assistance.
+    # Get base estimator parameters and merge with tuned parameters
+    # This preserves important parameters like device, tree_method, n_jobs, random_state
+    base_params = estimator.get_params(deep=False)
+    merged_params = {
+        OBJECT_KW: f"{type(estimator).__module__}.{type(estimator).__name__}",
+        **base_params,
+        **tuner.best_params_,
+    }
+
     return json.loads(
         json.dumps(
-            {
-                OBJECT_KW: f"{type(estimator).__module__}.{type(estimator).__name__}",
-                **tuner.best_params_,
-            },
+            merged_params,
             default=int,
         )
     ), tuner.convergence_plot if hasattr(tuner, "convergence_plot") else plt.figure()
