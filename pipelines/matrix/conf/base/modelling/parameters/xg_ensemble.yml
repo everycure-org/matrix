@@ -20,7 +20,7 @@ modelling.xg_ensemble:
             _object: xgboost.XGBClassifier
             n_jobs: -1
             random_state: ${globals:random_state}
-            tree_method: cuda_hist
+            tree_method: gpu_hist
             device: cuda
           n_calls: 20
           dimensions:
