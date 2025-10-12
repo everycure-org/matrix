@@ -440,20 +440,37 @@ def tune_parameters(
 
     X_train = data.loc[mask, features]
     y_train = data.loc[mask, target_col_name]
-    logger.info(f"Starting hyperparameter tuning with tuner: {tuner}...")
-    # Fit tuner
-    tuner.fit(X_train.values, y_train.values)
 
+    # Get base estimator parameters BEFORE tuning to preserve config like device, tree_method
     estimator = getattr(tuner, "estimator", None)
     if estimator is None:
         raise ValueError("Tuner must have 'estimator' attribute")
 
+    base_params = estimator.get_params(deep=False)
+    logger.info(f"Starting hyperparameter tuning with tuner: {tuner}...")
+    logger.info(f"Base estimator parameters: {base_params}")
+
+    # Fit tuner
+    tuner.fit(X_train.values, y_train.values)
+
+    # Merge base parameters with tuned parameters (tuned params override base)
+    # This preserves important parameters like device, tree_method, n_jobs, random_state
+    # Filter out None values from base_params to avoid overwriting tuned params with None
+    filtered_base_params = {k: v for k, v in base_params.items() if v is not None}
+
+    merged_params = {
+        OBJECT_KW: f"{type(estimator).__module__}.{type(estimator).__name__}",
+        **filtered_base_params,
+        **tuner.best_params_,
+    }
+
+    logger.info(f"Filtered base parameters: {filtered_base_params}")
+    logger.info(f"Tuned parameters: {tuner.best_params_}")
+    logger.info(f"Merged parameters after tuning: {merged_params}")
+
     return json.loads(
         json.dumps(
-            {
-                OBJECT_KW: f"{type(estimator).__module__}.{type(estimator).__name__}",
-                **tuner.best_params_,
-            },
+            merged_params,
             default=int,
         )
     ), tuner.convergence_plot if hasattr(tuner, "convergence_plot") else plt.figure()
