@@ -293,7 +293,7 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
 
     def __init__(
         self,
-        bool_test_col: str,
+        ground_truth_col: str,
         n_max: int,
         perform_sort: bool,
         title: str,
@@ -304,7 +304,7 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
         """Initialize an instance of FullMatrixRecallAtN.
 
         Args:
-            bool_test_col: Boolean column in the matrix indicating the known positive test set.
+            ground_truth_col: Boolean column in the matrix indicating the known positive test set.
             n_max: Maximum value of n to compute recall@n score for.
             perform_sort: Whether to sort the matrix or expect the dataframe to be sorted already.
             title: Title of the plot.
@@ -313,7 +313,7 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
             force_full_y_axis: Whether to force the y-axis to be between 0 and 1.
         """
         super().__init__(x_axis_label="n", y_axis_label="Recall@n", title=title, force_full_y_axis=force_full_y_axis)
-        self.bool_test_col = bool_test_col
+        self.ground_truth_col = ground_truth_col
         self.n_max = n_max
         self.perform_sort = perform_sort
         self.num_n_values = num_n_values

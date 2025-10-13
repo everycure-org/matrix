@@ -7,7 +7,7 @@ from matrix_inject.inject import inject_object
 
 from .evaluations import ComparisonEvaluation
 from .input_paths import InputPathsMultiFold
-from .matrix_pairs import give_matrix_pairs_from_lazyframe
+from .matrix_pairs import all_matrix_pairs_equal, give_matrix_pairs_from_lazyframe, harmonize_matrix_pairs
 
 logger = logging.getLogger(__name__)
 
@@ -19,19 +19,6 @@ def create_input_matrices_dataset(
     """Function to create input matrices dataset."""
     # Return initialized dataclass objects as dictionaries
     return [asdict(v) for v in input_paths]
-
-
-# def _intersection_pairs_dataframes(
-#     *dataframes: pl.DataFrame,
-# ) -> pl.DataFrame:
-#     """Function to take intersection of several drug-disease pairs dataframes."""
-#     return reduce(lambda x, y: x.join(y, on=["source", "target"], how="inner"), dataframes)
-
-# def _union_pairs_dataframes(
-#     *dataframes: pl.DataFrame,
-# ) -> pl.DataFrame:
-#     """Function to take union of several drug-disease pairs dataframes."""
-#     return reduce(lambda x, y: pl.concat([x, y]).unique(), dataframes)
 
 
 def harmonize_matrices(
@@ -68,15 +55,25 @@ def harmonize_matrices(
     if not is_base_consistent:
         raise ValueError("Base matrix is not consistent across folds.")
 
-    # Check equality if requested all(x == values[0] for x in values[1:]), set combined lazyframe
-    # Harmonize matrices with partial
+    # Check data consistency if requested, or else harmonize matrices
+    if assert_data_consistency:
+        if not all_matrix_pairs_equal(*matrix_pairs_dict.values()):
+            raise ValueError("assert_data_consistency is True and input data is not consistent across models.")
+        else:
+            combined_matrix_pairs = next(
+                iter(matrix_pairs_dict.values())
+            )  # Take any matrix pairs object as they are all equal
+
+    else:
+        combined_matrix_pairs = harmonize_matrix_pairs(*matrix_pairs_dict.values())
 
     # Join score columns to combined matrix
+    combined_matrix_pairs = combined_matrix_pairs.to_lazyframe()
     for model_name, model_data in input_matrices.items():
         for fold, lazy_matrix in enumerate(model_data["predictions_list"]):
             score_col_name = model_data["score_col_name"]
             matrix = lazy_matrix.select("source", "target", score_col_name)
-            harmonized_matrices = harmonized_matrices.join(
+            combined_matrix_pairs = combined_matrix_pairs.join(
                 matrix.rename({score_col_name: f"score_{model_name}_fold_{fold}"}), on=["source", "target"], how="left"
             )
 
@@ -86,8 +83,9 @@ def harmonize_matrices(
         "num_folds": num_folds,
     }
 
-    return harmonized_matrices, predictions_info
+    return combined_matrix_pairs, predictions_info
 
+    # Old approachfor reference: TODO delete
     # # Collect characterizing data: drugs lists, diseases lists, test pairs dicts, exclusion pairs dicts
     # # Note: Predictions = Drugs x Diseases - Exclusion pairs
     # drugs_lists_dict = {}
