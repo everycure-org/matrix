@@ -120,10 +120,10 @@ def sample_graph(sample_node_embeddings):
 def sample_matrix_data():
     return pd.DataFrame(
         [
-            {"ec_id_source": "ec_drug_1", "source": "drug_1", "target": "disease_1"},
-            {"ec_id_source": "ec_drug_2", "source": "drug_2", "target": "disease_1"},
-            {"ec_id_source": "ec_drug_1", "source": "drug_1", "target": "disease_2"},
-            {"ec_id_source": "ec_drug_2", "source": "drug_2", "target": "disease_2"},
+            {"ec_drug_id": "ec_drug_1", "source": "drug_1", "target": "disease_1"},
+            {"ec_drug_id": "ec_drug_2", "source": "drug_2", "target": "disease_1"},
+            {"ec_drug_id": "ec_drug_1", "source": "drug_1", "target": "disease_2"},
+            {"ec_drug_id": "ec_drug_2", "source": "drug_2", "target": "disease_2"},
         ]
     )
 
