@@ -376,5 +376,5 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
 
     def give_y_values_random_classifier(self, combined_predictions: pl.LazyFrame) -> np.ndarray:
         """Compute Recall@n values for a random classifier."""
-        matrix_length = combined_predictions.shape[0]
+        matrix_length = combined_predictions.select(pl.len()).collect().item()
         return np.array([x / matrix_length for x in self.give_x_values()])

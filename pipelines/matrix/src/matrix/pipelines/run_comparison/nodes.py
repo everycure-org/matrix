@@ -67,7 +67,7 @@ def combine_predictions(
         for model_name in input_matrices.keys()
     )
     if not is_base_consistent:
-        raise ValueError("Base matrix is not consistent across folds.")
+        raise ValueError("Drug and disease lists are not consistent across folds.")
 
     # Check data consistency if requested, or else harmonize matrices across all models and folds
     if assert_data_consistency:
@@ -104,21 +104,22 @@ def run_evaluation(
     perform_multifold: bool,
     perform_bootstrap: bool,
     evaluation: ComparisonEvaluation,
-    harmonized_matrices: pl.LazyFrame,
+    combined_predictions: pl.LazyFrame,
+    predictions_info: dict[str, any],
 ) -> pl.DataFrame:
     """Function to apply evaluation."""
     logger.info(f"Evaluation is: {evaluation}")
 
     if perform_multifold:
         if perform_bootstrap:
-            return evaluation.evaluate_bootstrap_multi_fold(harmonized_matrices)
+            return evaluation.evaluate_bootstrap_multi_fold(combined_predictions, predictions_info)
         else:
-            return evaluation.evaluate_multi_fold(harmonized_matrices)
+            return evaluation.evaluate_multi_fold(combined_predictions, predictions_info)
     else:
         if perform_bootstrap:
-            return evaluation.evaluate_bootstrap_single_fold(harmonized_matrices)
+            return evaluation.evaluate_bootstrap_single_fold(combined_predictions, predictions_info)
         else:
-            return evaluation.evaluate_single_fold(harmonized_matrices)
+            return evaluation.evaluate_single_fold(combined_predictions, predictions_info)
 
 
 @inject_object()
@@ -127,8 +128,9 @@ def plot_results(
     perform_bootstrap: bool,
     evaluation: ComparisonEvaluation,
     results: pl.DataFrame,
-    harmonized_matrices: pl.LazyFrame,
+    combined_predictions: pl.LazyFrame,
+    predictions_info: dict[str, any],
 ) -> plt.Figure:
     """Function to plot results."""
     is_plot_errors = perform_multifold or perform_bootstrap
-    return evaluation.plot_results(results, harmonized_matrices, is_plot_errors)
+    return evaluation.plot_results(results, combined_predictions, predictions_info, is_plot_errors)

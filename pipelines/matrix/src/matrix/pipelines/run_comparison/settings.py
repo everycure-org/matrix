@@ -2,6 +2,17 @@
 
 RUN_COMPARISON_SETTINGS = {
     "evaluations": [
-        "ground_truth_recall_at_n",
+        {
+            "name": "ground_truth_recall_at_n",
+            "is_activated": True,
+        },
+        {
+            "name": "negative_recall_at_n",
+            "is_activated": True,
+        },
+        {
+            "name": "off_label_recall_at_n",
+            "is_activated": True,
+        },
     ],
 }

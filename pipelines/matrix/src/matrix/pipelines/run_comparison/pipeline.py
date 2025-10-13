@@ -6,6 +6,10 @@ from .settings import RUN_COMPARISON_SETTINGS
 
 # TODO:
 # - Add unit tests
+#    - RecallAtN
+#    - MatrixPairs
+#    - combine_predictions nodes
+#    - InputPaths
 # - Test on real data
 
 
@@ -14,28 +18,32 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     pipeline_nodes = []
 
-    pipeline_nodes.append(
-        ArgoNode(
-            func=nodes.create_input_matrices_dataset,
-            inputs=[
-                "params:run_comparison.input_paths",
-            ],
-            outputs="run_comparison.input_matrices",
-            name=f"create_input_matrices_dataset",
-        ),
-        ArgoNode(
-            func=nodes.harmonize_matrices,
-            inputs=[
-                "run_comparison.input_matrices",
-                "params:run_comparison.available_ground_truth_cols",
-                "params:run_comparison.perform_multifold_uncertainty_estimation",
-                "params:run_comparison.assert_data_consistency",
-            ],
-            outputs=["run_comparison.combined_predictions", "run_comparison.predictions_info"],
-            name=f"harmonize_matrices",
-        ),
+    evaluations_to_perform = [ev["name"] for ev in RUN_COMPARISON_SETTINGS["evaluations"] if ev["is_activated"]]
+
+    pipeline_nodes.extend(
+        [
+            ArgoNode(
+                func=nodes.create_input_matrices_dataset,
+                inputs=[
+                    "params:run_comparison.input_paths",
+                ],
+                outputs="run_comparison.input_matrices",
+                name=f"create_input_matrices_dataset",
+            ),
+            ArgoNode(
+                func=nodes.combine_predictions,
+                inputs=[
+                    "run_comparison.input_matrices",
+                    "params:run_comparison.available_ground_truth_cols",
+                    "params:run_comparison.perform_multifold_uncertainty_estimation",
+                    "params:run_comparison.assert_data_consistency",
+                ],
+                outputs=["run_comparison.combined_predictions", "run_comparison.predictions_info"],
+                name=f"combine_predictions",
+            ),
+        ]
     )
-    for evaluation in RUN_COMPARISON_SETTINGS["evaluations"]:
+    for evaluation in evaluations_to_perform:
         pipeline_nodes.extend(
             [
                 ArgoNode(
@@ -58,6 +66,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         f"params:run_comparison.evaluations.{evaluation}",
                         f"run_comparison.{evaluation}.results",
                         "run_comparison.combined_predictions",
+                        "run_comparison.predictions_info",
                     ],
                     outputs=f"run_comparison.{evaluation}.plot",
                     name=f"plot_results.{evaluation}",

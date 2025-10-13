@@ -1,5 +1,6 @@
+from functools import reduce
+
 import polars as pl
-from func_tools import reduce
 
 
 class MatrixPairs:
@@ -47,7 +48,7 @@ class MatrixPairs:
         # Generate pairs dataframe
         matrix = (
             pl.LazyFrame(self.drugs_list)
-            .join(pl.LazyFrame(self.diseases_list), on=["source", "target"], how="cross")
+            .join(pl.LazyFrame(self.diseases_list), how="cross")
             .join(
                 pl.LazyFrame(self.exclusion_pairs).with_columns(pl.lit(True).alias("is_excluded")),
                 on=["source", "target"],
@@ -60,7 +61,7 @@ class MatrixPairs:
         # Join test pairs
         for col_name, test_pairs in self.test_pairs.items():
             matrix = matrix.join(
-                pl.LazyFrame(test_pairs[col_name]).with_columns(pl.lit(True).alias(col_name)),
+                pl.LazyFrame(test_pairs).with_columns(pl.lit(True).alias(col_name)),
                 on=["source", "target"],
                 how="left",
             ).fill_null(pl.lit(False))
@@ -70,7 +71,10 @@ class MatrixPairs:
     @staticmethod
     def _pairs_equal_as_sets(df1: pl.DataFrame, df2: pl.DataFrame) -> bool:
         """Check if two pairs dataframes are equal as sets."""
-        return (df1 == df1.join(df2, on=["source", "target"], how="inner")).all()
+        cols = df1.columns
+        if cols != df2.columns:
+            return ValueError("The columns must be the same to perform comparison.")
+        return df1.sort(cols).equals(df2.sort(cols))
 
     def same_base_matrix(self, other: "MatrixPairs") -> bool:
         """Check if two MatrixPairs objects have the same base matrix, i.e the same drugs and diseases lists."""
@@ -137,31 +141,38 @@ class MatrixPairs:
 
 
 def give_matrix_pairs_from_lazyframe(
-    matrix: pl.LazyFrame,
+    matrix_pairs: pl.LazyFrame,
     available_ground_truth_cols: list[str],
 ) -> MatrixPairs:
     """Create a MatrixPairs object from a Polars LazyFrame.
 
     Args:
-        matrix: Polars LazyFrame representing the matrix pairs.
+        matrix_pairs: Polars LazyFrame representing the matrix pairs.
             Columns: "source", "target", *available_ground_truth_cols
         available_ground_truth_cols: List of Boolean-valued ground truth columns.
     """
-    # Extract drugs and diseases lists
-    drugs_list = matrix["source"].unique()
-    diseases_list = matrix["target"].unique()
+    # Materialize the matrix into memory as Polars dataframe
+    matrix_pairs = matrix_pairs.collect()
 
-    # Compute  exclusion by taking set difference with full matrix drug_list x diseases_list
-    exclusion_pairs = drugs_list.join(diseases_list, how="cross").join(
-        matrix.select("source", "target"), on=["source", "target"], how="inner"
+    # Extract drugs and diseases lists
+    drugs_list = matrix_pairs.select("source").unique()
+    diseases_list = matrix_pairs.select("target").unique()
+
+    # Compute exclusion by taking set difference with full matrix drug_list x diseases_list
+    exclusion_pairs = (
+        drugs_list.join(diseases_list, how="cross")
+        .join(matrix_pairs.select("source", "target"), on=["source", "target"], how="anti")
+        .select("source", "target")
     )
 
     # Extract test pairs
     test_pairs = {
-        col_name: matrix.filter(col_name).select("source", "target") for col_name in available_ground_truth_cols
+        col_name: matrix_pairs.filter(pl.col(col_name)).select("source", "target")
+        for col_name in available_ground_truth_cols
     }
 
-    # Return a MatrixPairs object
+    # Free memory and return a MatrixPairs object
+    del matrix_pairs
     return MatrixPairs(
         drugs_list=drugs_list, diseases_list=diseases_list, exclusion_pairs=exclusion_pairs, test_pairs=test_pairs
     )

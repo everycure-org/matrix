@@ -35,4 +35,17 @@ run_comparison:
       n_max: 100000
       perform_sort: True
       title: "Recall@n (standard ground truth)"
-      available_ground_truth_cols: *available_ground_truth_cols
+
+    negative_recall_at_n:
+      _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtN
+      ground_truth_col: "is_known_negative"
+      n_max: 1000000
+      perform_sort: True
+      title: "Recall@n (negative ground truth) - lower is better"
+
+    off_label_recall_at_n:
+      _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtN
+      ground_truth_col: "off_label"
+      n_max: 100000
+      perform_sort: True
+      title: "Recall@n (off-label)"

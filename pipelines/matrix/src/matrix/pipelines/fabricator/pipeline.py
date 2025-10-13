@@ -120,16 +120,26 @@ def _attach_scores(base_matrix: pd.DataFrame, skew: float, seed: int) -> pd.Data
 
     # Sample scores from Beta distributions
     pos_scores = pd.Series(np.random.beta(a=skew, b=1, size=size))  # Skewed to 1
+    offlabel_scores = pd.Series(np.random.beta(a=skew / 2, b=1, size=size))  # Skewed to 1, but less than pos_scores
     neg_scores = pd.Series(np.random.beta(a=1, b=skew, size=size))  # Skewed to 0
     unk_scores = pd.Series(np.random.beta(a=2, b=2, size=size))  # Centered around 0.5
 
     # Attach scores to matrix
     matrix = base_matrix.copy(deep=True)
     matrix["treat score"] = pos_scores.where(
-        pd.Series(matrix["is_known_positive"]), neg_scores.where(pd.Series(matrix["is_known_negative"]), unk_scores)
+        pd.Series(matrix["is_known_positive"]),
+        offlabel_scores.where(
+            pd.Series(matrix["off_label"]), neg_scores.where(pd.Series(matrix["is_known_negative"]), unk_scores)
+        ),
     )
 
     return matrix
+
+
+def _add_test_set_columns(df: pd.DataFrame, test_set_proportion: float, test_set_name: str):
+    """Add a Random boolean valued column to the dataframe."""
+    df[test_set_name] = np.random.choice([True, False], size=len(df), p=[test_set_proportion, 1 - test_set_proportion])
+    return df
 
 
 def fabricate_run_comparison_matrices(
@@ -142,19 +152,13 @@ def fabricate_run_comparison_matrices(
     drugs_df = pd.DataFrame({"source": [f"drug_{i}" for i in range(N)]})
     diseases_df = pd.DataFrame({"target": [f"disease_{i}" for i in range(N)]})
     base_matrix_fold_1 = pd.merge(drugs_df, diseases_df, how="cross")
-    base_matrix_fold_1["is_known_positive"] = np.random.choice(
-        [True, False], size=N**2, p=[test_set_proportion, 1 - test_set_proportion]
-    )
-    base_matrix_fold_1["is_known_negative"] = np.random.choice(
-        [True, False], size=N**2, p=[test_set_proportion, 1 - test_set_proportion]
-    )
+    base_matrix_fold_1 = _add_test_set_columns(base_matrix_fold_1, test_set_proportion, "is_known_positive")
+    base_matrix_fold_1 = _add_test_set_columns(base_matrix_fold_1, test_set_proportion, "is_known_negative")
+    base_matrix_fold_1 = _add_test_set_columns(base_matrix_fold_1, test_set_proportion, "off_label")
     base_matrix_fold_2 = base_matrix_fold_1.copy(deep=True)
-    base_matrix_fold_2["is_known_positive"] = np.random.choice(
-        [True, False], size=N**2, p=[test_set_proportion, 1 - test_set_proportion]
-    )
-    base_matrix_fold_2["is_known_negative"] = np.random.choice(
-        [True, False], size=N**2, p=[test_set_proportion, 1 - test_set_proportion]
-    )
+    base_matrix_fold_2 = _add_test_set_columns(base_matrix_fold_2, test_set_proportion, "is_known_positive")
+    base_matrix_fold_2 = _add_test_set_columns(base_matrix_fold_2, test_set_proportion, "is_known_negative")
+    base_matrix_fold_2 = _add_test_set_columns(base_matrix_fold_2, test_set_proportion, "off_label")
 
     # Generate scores and return
     return {

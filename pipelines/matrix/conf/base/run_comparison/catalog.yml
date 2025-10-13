@@ -8,7 +8,7 @@ run_comparison.combined_predictions:
   file_format: parquet
 
 run_comparison.predictions_info:
-  type: text.YAMLDataset
+  type: yaml.YAMLDataset
   filepath: ${globals:paths.run_comparison}/predictions_info.yml
 
 "run_comparison.{evaluation}.results":

@@ -27,3 +27,11 @@ run_comparison:
       n_max: 1000
       N_bootstraps: 10
       num_n_values: 100
+    negative_recall_at_n:
+      n_max: 10000
+      N_bootstraps: 10
+      num_n_values: 100
+    off_label_recall_at_n:
+      n_max: 1000
+      N_bootstraps: 10
+      num_n_values: 100
