@@ -3,7 +3,9 @@ grafana-tempo:
     trace:
       backend: gcs
       gcs:
-        bucket: {{ .Values.spec.source.metrics_bucket_name }}
+        # Wrap Helm template in quotes so this file is valid YAML before Helm renders it.
+        # NOTE: This file was partially generated with AI assistance.
+        bucket: "{{ .Values.spec.source.metrics_bucket_name }}"
   usage_report:
     reportingEnabled: false
   distributor:
