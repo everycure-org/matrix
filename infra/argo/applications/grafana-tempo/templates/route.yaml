@@ -1,0 +1,17 @@
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: grafana-tempo-route
+  namespace: observability
+spec:
+  parentRefs:
+  - kind: Gateway
+    sectionName: https
+    namespace: gateway
+    name: external-http
+  hostnames:
+  - "tempo.platform.{{ .Values.spec.source.environment }}.everycure.org"
+  rules:
+  - backendRefs:
+    - name: grafana-tempo-query-frontend
+      port: 3000
