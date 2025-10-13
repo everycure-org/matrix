@@ -1,6 +1,6 @@
 # ADR: CI Optimization with GitHub Actions Self-Hosted Runners
 
-**Status**: Accepted  
+**Status**: Accepted
 **Date**: 2025-10-10  
 **Deciders**: Team Data
 **Technical Story**: [EC-DATA603] - Matrix Forward Compatibility with New Drug List (Part of Drug List Migration Project)
