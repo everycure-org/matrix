@@ -352,5 +352,17 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="document_kg.raw.infores",
                 name="format_infores_catalog",
             ),
+            node(
+                func=fabricate_datasets,
+                inputs={"fabrication_params": "params:fabricator.document_kg.matrix_curated_pks"},
+                outputs={"data": "document_kg.raw.matrix_curated_pks@pandas"},
+                name="fabricate_matrix_curated_pks",
+            ),
+            node(
+                func=fabricate_datasets,
+                inputs={"fabrication_params": "params:fabricator.document_kg.matrix_reviews_pks"},
+                outputs={"data": "document_kg.raw.matrix_reviews_pks@pandas"},
+                name="fabricate_matrix_reviews_pks",
+            ),
         ]
     )
