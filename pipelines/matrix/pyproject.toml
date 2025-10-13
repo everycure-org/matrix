@@ -63,7 +63,7 @@ dependencies = [
     "pandera==0.24.0",
     "pandas>=2.1.1", #due to pandera requiring this or higher
     "polars-lts-cpu==1.30.0",
-    "proto-plus==1.24.0.dev1", # Temp. fix for the gcloud cliN
+    "proto-plus==1.24.0.dev1", # Temp. fix for the gcloud cli
     "pyarrow>=14.0.2",
     "gspread>=6.2.1",
     "pyspark==3.5.1",
@@ -76,7 +76,7 @@ dependencies = [
     "seaborn",
     "tenacity",
     "termplotlib",
-    "torch==2.4.1",
+    "torch==2.7.1",
     "transformers",
     "typer", # used for convenience libraries, to be moved to a dev requirements eventually
     "xgboost",
