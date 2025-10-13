@@ -252,11 +252,11 @@ spec:
   source:
     path: ${var.repo_path}/app-of-apps
     repoURL: ${var.repo_url}
-    targetRevision: ${var.repo_revision}
+    targetRevision: nelson/aip-588-set-up-grafana-loki
     helm:
       parameters:
       - name: spec.source.targetRevision
-        value:  ${var.repo_revision}
+        value:  nelson/aip-588-set-up-grafana-loki
       - name: spec.source.environment
         value:  ${var.environment}
       - name: spec.source.project_id
@@ -265,6 +265,8 @@ spec:
         value: ${var.bucket_name}
       - name: spec.source.aip_oauth_client_id
         value: ${var.aip_oauth_client_id}
+      - name: spec.source.metrics_bucket_name
+        value: ${var.metrics_bucket_name}
   syncPolicy:
     syncOptions:
       - CreateNamespace=true

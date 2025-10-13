@@ -37,3 +37,7 @@ variable "bucket_name" {
 variable "aip_oauth_client_id" {
   type = string
 }
+
+variable "metrics_bucket_name" {
+  type = string
+}

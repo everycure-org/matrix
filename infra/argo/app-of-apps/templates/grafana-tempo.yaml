@@ -1,28 +1,25 @@
-# TODO: How can we ensure only .y*ml files are picked up?
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: argo-workflows
+  name: grafana-tempo
   namespace: argocd
 spec:
   destination:
-    namespace: argo-workflows
+    namespace: observability
     server: {{ .Values.spec.destination.server }}
   project: default
   source:
-    path: {{ .Values.spec.source.repoPath }}/workflows
+    path: {{ .Values.spec.source.repoPath }}/grafana-tempo
     repoURL: {{ .Values.spec.source.repoURL }}
     targetRevision: {{ .Values.spec.source.targetRevision }}
     helm:
       parameters:
         - name: spec.source.targetRevision
-          value: {{ .Values.spec.source.targetRevision }}
+          value: {{ .Values.spec.source.targetRevision}}
         - name: spec.source.environment
-          value: {{ .Values.spec.source.environment }}
+          value: {{ .Values.spec.source.environment}}
         - name: spec.source.project_id
-          value: {{ .Values.spec.source.project_id }}
-        - name: argo-workflows.artifactRepository.gcs.bucket
-          value: {{ .Values.spec.source.bucketname }}
+          value: {{ .Values.spec.source.project_id}}
         - name: spec.source.aip_oauth_client_id
           value: {{ .Values.spec.source.aip_oauth_client_id }}
         - name: spec.source.metrics_bucket_name
@@ -30,5 +27,8 @@ spec:
   syncPolicy:
     syncOptions:     # Sync options which modifies sync behavior
     - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
-    automated:
+    - ServerSideApply=true # to ensure CRDs are deployed
+    - PruneLast=true
+    - Replace=false # must be false or else https://github.com/argoproj/argo-cd/issues/13100
+    automated: 
       prune: true

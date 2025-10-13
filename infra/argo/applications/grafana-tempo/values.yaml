@@ -1,0 +1,14 @@
+grafana-tempo:
+  storage:
+    trace:
+      backend: gcs
+      gcs:
+        bucket: {{ .Values.spec.source.metrics_bucket_name }}
+  usage_report:
+    reportingEnabled: false
+  distributor:
+    receivers:
+      otlp:
+        protocols:
+          grpc: localhost:4317
+          http: localhost:4318
