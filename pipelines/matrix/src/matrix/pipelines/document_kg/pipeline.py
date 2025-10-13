@@ -34,7 +34,6 @@ def _create_source_parsing_pipeline(
                         tags=["document_kg", "parsing"],
                     ),
                 ],
-                tags=[source["name"]],
             )
         )
     else:
@@ -53,7 +52,6 @@ def _create_source_parsing_pipeline(
                         tags=["document_kg", "parsing"],
                     ),
                 ],
-                tags=[source["name"]],
             )
         )
 
@@ -72,8 +70,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     source_type=source.get("source_type", "external_registry"),
                     has_mapping=source.get("has_mapping", False),
                 ),
-            ),
-            tags=[source["name"]],
+            )
         )
 
     pipelines.append(
