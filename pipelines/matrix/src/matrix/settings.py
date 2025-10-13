@@ -82,7 +82,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
             # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth, lightGBM
             "modelling": [
                 {
-                    "model_name": "rf",
+                    "model_name": "xg_synth",
                 }
                 # {
                 #     "model_name": "xg_synth",
