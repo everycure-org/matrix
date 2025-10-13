@@ -153,20 +153,14 @@ def _format_license_issues(license_issues: Optional[Any]) -> Optional[str]:
     return "; ".join(issue_strings) if issue_strings else None
 
 
-def _format_license(source_info: Dict[str, Dict[str, Any]]) -> str:
+def _format_license(source_info: Dict[str, Dict[str, Any]], template: dict) -> str:
     """Format license information as markdown."""
     if _is_default_pks_entry(source_info):
         return """#### License information
 **No license information available** - This primary knowledge source was found in the knowledge graph but no metadata could be located in external registries.
 """
 
-    pks_jinja2_template = Template("""#### License information
-- **Matrix manual curation**: {%if matrix_license_name is not none %}[{{ matrix_license_name }}]({{ matrix_license_url }}){% else %}No license information curated.{% endif %}{%if kg_registry_license_id is not none %}
-- **KG Registry**: {%if kg_registry_license_name is not none %}[{{ kg_registry_license_name }}]({{ kg_registry_license_id }}){% else %}[{{ kg_registry_license_id }}]({{ kg_registry_license_id }}){% endif %}{% endif %}{%if reusabledata_license is not none %}
-- **Reusable Data**: {{ reusabledata_license }} ({{ reusabledata_license_type | default("Unknown license type") }}){% endif %}{%if reusabledata_license_issues is not none %}
-    - _Issues_: {{ reusabledata_license_issues }}{% endif %}{%if reusabledata_license_commentary is not none %}
-    - _Commentary_: {{ reusabledata_license_commentary }}{% endif %}
-""")
+    pks_jinja2_template = Template(template["license"])
     return pks_jinja2_template.render(
         matrix_license_name=_get_property_from_source(source_info, "matrixcurated", "license_name"),
         matrix_license_url=_get_property_from_source(source_info, "matrixcurated", "license_source_link"),
@@ -187,7 +181,7 @@ def _format_license(source_info: Dict[str, Dict[str, Any]]) -> str:
     )
 
 
-def _format_review(source_info: Dict[str, Dict[str, Any]]) -> str:
+def _format_review(source_info: Dict[str, Dict[str, Any]], template: dict) -> str:
     """Format review information as markdown."""
 
     if _is_default_pks_entry(source_info):
@@ -196,25 +190,7 @@ def _format_review(source_info: Dict[str, Dict[str, Any]]) -> str:
    **No review information available** - This primary knowledge source was found in the knowledge graph but no metadata could be located in external registries.
 """
 
-    pks_jinja2_template = Template("""#### Review information for this resource
-
-{%if label_rubric is not none %}
-
-??? note "Expand to see detailed review"
-
-    Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
-
-    - **Reviewer**: {{ reviewer }}
-    - **Overall review score**:
-        - Reviewer: `{{ label_manual }}` - {{ label_manual_comment }}
-        - Rubric: `{{ label_rubric }}` - {{ label_rubric_rationale }}
-    - **Domain Coverage**: `{{ domain_coverage_score }}` - {{ domain_coverage_comments }}
-    - **Source Scope**: `{{ source_scope_score }}` - {{ source_scope_score_comment }}
-    - **Drug Repurposing Utility**: `{{ utility_drugrepurposing_score }}` - {{ utility_drugrepurposing_comment }}
-{% else %}
-No review information available.
-{% endif %}
-""")
+    pks_jinja2_template = Template(template["review"])
     return pks_jinja2_template.render(
         domain_coverage_comments=_get_property_from_source(source_info, "matrixreviews", "domain_coverage_comments"),
         domain_coverage_score=_get_property_from_source(source_info, "matrixreviews", "domain_coverage_score"),
@@ -236,29 +212,16 @@ No review information available.
     )
 
 
-def _generate_list_of_pks_markdown_strings(source_data: Dict[str, Dict[str, Any]]) -> List[str]:
+def _generate_list_of_pks_markdown_strings(source_data: Dict[str, Dict[str, Any]], template: dict) -> List[str]:
     """Generate markdown documentation for each PKS."""
-    pks_jinja2_template = Template("""### Source: {{ title }} ({{ id }})
-
-_{{ description }}_
-
-{% if urls %}
-**Links**:
-
-{% for url in urls -%}
-- [{{ url }}]({{ url }})
-{% endfor %}{% endif %}
-
-{{ license }}
-
-{{ review }}""")
+    pks_jinja2_template = Template(template["pks_list"])
 
     pks_documentation_texts = []
     for source_id, source_info in source_data.items():
         name = _get_property(source_info, "name", default_value="No name")
         description = _get_property(source_info, "description", default_value="No description.")
-        license = _format_license(source_info)
-        review = _format_review(source_info)
+        license = _format_license(source_info, template)
+        review = _format_review(source_info, template)
         urls = []
         infores_url = _get_property_from_source(source_info, "infores", "xref")
         kgregistry_url = _get_property_from_source(source_info, "kgregistry", "homepage_url")
@@ -281,30 +244,11 @@ _{{ description }}_
     return pks_documentation_texts
 
 
-def _generate_pks_markdown_documentation(pks_documentation_texts: List[str], overview_table: str) -> str:
+def _generate_pks_markdown_documentation(
+    pks_documentation_texts: List[str], overview_table: str, template: dict
+) -> str:
     """Generate complete PKS markdown documentation."""
-    pks_jinja2_template = Template("""# {{ title }}
-                                   
-This page is automatically generated with curated information about primary knowledge sources
-leveraged in the MATRIX Knowledge Graph, mainly regarding licensing information and 
-potential relevancy assessments for drug repurposing.
-
-This internally curated information is augmented with information from three external resources:
-
-1. [Information Resource Registry](https://biolink.github.io/information-resource-registry/)
-2. [reusabledata.org](https://reusabledata.org/)
-3. [KG Registry](https://kghub.org/kg-registry/)
-
-## Overview
-
-{{ overview_table }}
-
-## Detailed information about each primary knowledge sources
-
-{% for doc in pks_documentation_texts %}
-{{ doc }}
-{% endfor %}
-""")
+    pks_jinja2_template = Template(template["main"])
     pks_docs = pks_jinja2_template.render(
         title="KG Primary Knowledge Sources",
         pks_documentation_texts=pks_documentation_texts,
@@ -313,18 +257,9 @@ This internally curated information is augmented with information from three ext
     return pks_docs
 
 
-def _generate_overview_table_of_pks_markdown(source_data: Dict[str, Dict[str, Any]]) -> str:
+def _generate_overview_table_of_pks_markdown(source_data: Dict[str, Dict[str, Any]], template: dict) -> str:
     """Generate PKS overview table in markdown."""
-    pks_jinja2_template = Template("""**Overview table**
-
-
-{% if data %}
-| Resource | License |
-| -------- | ------- |
-{% for rec in data -%}
-| {{ rec.name }} | {%if rec.license_name is not none %}[{{ rec.license_name }}]({{ rec.license_url }}){% else %}No license information curated.{% endif %} |
-{% endfor %}{% endif %}
-""")
+    pks_jinja2_template = Template(template["overview"])
 
     license_data = []
     for source_id, source_info in source_data.items():
@@ -342,9 +277,11 @@ def _generate_overview_table_of_pks_markdown(source_data: Dict[str, Dict[str, An
     return pks_table_docstring
 
 
-def create_pks_documentation(matrix_subset_relevant_sources: Dict[str, Any]) -> str:
+def create_pks_documentation(matrix_subset_relevant_sources: Dict[str, Any], templates: Dict[str, str]) -> str:
     """Generate markdown documentation for PKS used in the matrix."""
-    pks_documentation_texts = _generate_list_of_pks_markdown_strings(matrix_subset_relevant_sources)
-    overview_table = _generate_overview_table_of_pks_markdown(source_data=matrix_subset_relevant_sources)
-    documentation_md = _generate_pks_markdown_documentation(pks_documentation_texts, overview_table)
+    pks_documentation_texts = _generate_list_of_pks_markdown_strings(matrix_subset_relevant_sources, template=templates)
+    overview_table = _generate_overview_table_of_pks_markdown(matrix_subset_relevant_sources, template=templates)
+    documentation_md = _generate_pks_markdown_documentation(
+        matrix_subset_relevant_sources, overview_table, template=templates
+    )
     return documentation_md

@@ -109,3 +109,76 @@ document_kg:
             - label_manual
             - label_manual_comment
             - reviewer
+    templates: 
+      license: |
+        #### License information
+        - **Matrix manual curation**: {%if matrix_license_name is not none %}[{{ matrix_license_name }}]({{ matrix_license_url }}){% else %}No license information curated.{% endif %}{%if kg_registry_license_id is not none %}
+        - **KG Registry**: {%if kg_registry_license_name is not none %}[{{ kg_registry_license_name }}]({{ kg_registry_license_id }}){% else %}[{{ kg_registry_license_id }}]({{ kg_registry_license_id }}){% endif %}{% endif %}{%if reusabledata_license is not none %}
+        - **Reusable Data**: {{ reusabledata_license }} ({{ reusabledata_license_type | default("Unknown license type") }}){% endif %}{%if reusabledata_license_issues is not none %}
+            - _Issues_: {{ reusabledata_license_issues }}{% endif %}{%if reusabledata_license_commentary is not none %}
+            - _Commentary_: {{ reusabledata_license_commentary }}{% endif %}
+      main: |
+        # {{ title }}
+                                          
+        This page is automatically generated with curated information about primary knowledge sources
+        leveraged in the MATRIX Knowledge Graph, mainly regarding licensing information and 
+        potential relevancy assessments for drug repurposing.
+
+        This internally curated information is augmented with information from three external resources:
+
+        1. [Information Resource Registry](https://biolink.github.io/information-resource-registry/)
+        2. [reusabledata.org](https://reusabledata.org/)
+        3. [KG Registry](https://kghub.org/kg-registry/)
+
+        ## Overview
+
+        {{ overview_table }}
+
+        ## Detailed information about each primary knowledge sources
+
+        {% for doc in pks_documentation_texts %}
+        {{ doc }}
+        {% endfor %}
+      overview: |
+        **Overview table**
+        
+        {% if data %}
+        | Resource | License |
+        | -------- | ------- |
+        {% for rec in data -%}
+        | {{ rec.name }} | {%if rec.license_name is not none %}[{{ rec.license_name }}]({{ rec.license_url }}){% else %}No license information curated.{% endif %} |
+        {% endfor %}{% endif %}
+      pks_list: |
+        ### Source: {{ title }} ({{ id }})
+
+        _{{ description }}_
+
+        {% if urls %}
+        **Links**:
+
+        {% for url in urls -%}
+        - [{{ url }}]({{ url }})
+        {% endfor %}{% endif %}
+
+        {{ license }}
+
+        {{ review }}
+      review: |
+        #### Review information for this resource
+
+        {%if label_rubric is not none %}
+
+        ??? note "Expand to see detailed review"
+
+            Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
+
+            - **Reviewer**: {{ reviewer }}
+            - **Overall review score**:
+                - Reviewer: `{{ label_manual }}` - {{ label_manual_comment }}
+                - Rubric: `{{ label_rubric }}` - {{ label_rubric_rationale }}
+            - **Domain Coverage**: `{{ domain_coverage_score }}` - {{ domain_coverage_comments }}
+            - **Source Scope**: `{{ source_scope_score }}` - {{ source_scope_score_comment }}
+            - **Drug Repurposing Utility**: `{{ utility_drugrepurposing_score }}` - {{ utility_drugrepurposing_comment }}
+        {% else %}
+        No review information available.
+        {% endif %}

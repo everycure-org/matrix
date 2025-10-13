@@ -72,7 +72,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                     source_type=source.get("source_type", "external_registry"),
                     has_mapping=source.get("has_mapping", False),
                 ),
-                tags=[source["name"], "document_kg"],
+                tags=[
+                    source["name"],
+                    "argowf.fuse",
+                    "argowf.fuse-group.document_kg",
+                ],
             )
         )
 
@@ -89,7 +93,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ],
                     outputs="document_kg.int.all_pks_metadata",
                     name="merge_all_pks_metadata",
-                    tags=["document_kg"],
+                    tags=[
+                        source["name"],
+                        "argowf.fuse",
+                        "argowf.fuse-group.document_kg",
+                    ],
                 ),
                 node(
                     func=nodes.integrate_all_metadata,
@@ -99,14 +107,22 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ],
                     outputs="document_kg.prm.pks_yaml",
                     name="filter_to_relevant_pks",
-                    tags=["document_kg"],
+                    tags=[
+                        source["name"],
+                        "argowf.fuse",
+                        "argowf.fuse-group.document_kg",
+                    ],
                 ),
                 node(
                     func=nodes.create_pks_documentation,
-                    inputs="document_kg.prm.pks_yaml",
+                    inputs=["document_kg.prm.pks_yaml", "params:document_kg.pks_parsing.templates"],
                     outputs="document_kg.prm.pks_md",
                     name="create_pks_documentation",
-                    tags=["document_kg", "formatting"],
+                    tags=[
+                        source["name"],
+                        "argowf.fuse",
+                        "argowf.fuse-group.document_kg",
+                    ],
                 ),
             ]
         )
