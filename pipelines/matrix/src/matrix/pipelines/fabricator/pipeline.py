@@ -117,7 +117,7 @@ def format_infores_catalog(fabrication_params: dict) -> dict:
                 resource[key] = None
             elif isinstance(value, str) and "|" in value:
                 resource[key] = value.split("|")
-    return resources_list
+    return {"information_resources": resources_list}
 
 
 def format_reusabledata_json(fabrication_params: dict) -> list:
@@ -363,6 +363,18 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={"fabrication_params": "params:fabricator.document_kg.matrix_reviews_pks"},
                 outputs={"data": "document_kg.raw.matrix_reviews_pks@pandas"},
                 name="fabricate_matrix_reviews_pks",
+            ),
+            node(
+                func=fabricate_datasets,
+                inputs={"fabrication_params": "params:fabricator.document_kg.mapping_kgregistry_infores"},
+                outputs={"mappings": "document_kg.raw.mapping_kgregistry_infores"},
+                name="fabricate_mapping_kgregistry_infores",
+            ),
+            node(
+                func=fabricate_datasets,
+                inputs={"fabrication_params": "params:fabricator.document_kg.mapping_reusabledata_infores"},
+                outputs={"mappings": "document_kg.raw.mapping_reusabledata_infores"},
+                name="fabricate_mapping_reusabledata_infores",
             ),
         ]
     )
