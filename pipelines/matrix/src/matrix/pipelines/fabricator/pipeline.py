@@ -1,5 +1,6 @@
 import itertools
 import random
+from decimal import Decimal
 
 import networkx as nx
 import pandas as pd
@@ -103,10 +104,12 @@ def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.D
     return rows
 
 
-def format_infores_catalog(information_resources: pd.DataFrame) -> dict:
-    """Format fabricated data into infores catalog YAML structure.
+def format_infores_catalog(fabrication_params: dict) -> dict:
+    """Generate and format infores catalog YAML structure directly from params."""
+    result = fabricate_datasets(fabrication_params=fabrication_params)
+    information_resources = result["information_resources"]
 
-    Converts DF to a list of dictionaries and transforms NaN values to None for proper YAML serialization."""
+    # Format the data (existing logic)
     resources_list = information_resources.to_dict("records")
     for resource in resources_list:
         for key, value in resource.items():
@@ -117,30 +120,38 @@ def format_infores_catalog(information_resources: pd.DataFrame) -> dict:
     return {"information_resources": resources_list}
 
 
-def format_reusabledata_json(data: pd.DataFrame) -> list:
-    """Format fabricated data into reusabledata JSON structure."""
+def format_reusabledata_json(fabrication_params: dict) -> list:
+    """Generate and format reusabledata JSON structure directly from params."""
+    result = fabricate_datasets(fabrication_params=fabrication_params)
+    data = result["data"]
+
+    # Format the data (existing logic)
     resources_list = data.to_dict("records")
     for resource in resources_list:
         for key, value in resource.items():
             if pd.isna(value):
                 resource[key] = None
             elif key == "id":
-                # Ensure ID is always a string
                 resource[key] = str(value)
             elif isinstance(value, str) and "|" in value and "categories" in key:
                 resource[key] = value.split("|")
+            elif isinstance(value, Decimal):
+                resource[key] = float(value)
     return resources_list
 
 
-def format_kgregistry_yaml(resources: pd.DataFrame) -> dict:
-    """Format fabricated data into kg-registry YAML structure."""
+def format_kgregistry_yaml(fabrication_params: dict) -> dict:
+    """Generate and format kg-registry YAML structure directly from params."""
+    result = fabricate_datasets(fabrication_params=fabrication_params)
+    resources = result["resources"]
+
+    # Format the data (existing logic)
     resources_list = resources.to_dict("records")
     for resource in resources_list:
         for key, value in resource.items():
             if pd.isna(value):
                 resource[key] = None
             elif isinstance(value, str) and "|" in value and "domains" in key:
-                # Split pipe-delimited domains into lists
                 resource[key] = value.split("|")
     return {"resources": resources_list}
 
@@ -324,64 +335,22 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_drugmech_pairs",
             ),
             node(
-                func=fabricate_datasets,
-                inputs={"fabrication_params": "params:fabricator.document_kg.infores_catalog"},
-                outputs={"information_resources": "fabricator.int.document_kg.infores_catalog_raw"},
-                name="fabricate_infores_catalog",
-            ),
-            node(
-                func=format_infores_catalog,
-                inputs={"information_resources": "fabricator.int.document_kg.infores_catalog_raw"},
-                outputs="document_kg.raw.infores",
-                name="format_infores_catalog",
-            ),
-            node(
-                func=fabricate_datasets,
-                inputs={"fabrication_params": "params:fabricator.document_kg.reusabledata"},
-                outputs={"data": "fabricator.int.document_kg.reusabledata_raw"},
-                name="fabricate_reusabledata",
-            ),
-            node(
-                func=format_reusabledata_json,
-                inputs={"data": "fabricator.int.document_kg.reusabledata_raw"},
-                outputs="document_kg.raw.reusabledata",
-                name="format_reusabledata",
-            ),
-            node(
-                func=fabricate_datasets,
-                inputs={"fabrication_params": "params:fabricator.document_kg.kgregistry"},
-                outputs={"resources": "fabricator.int.document_kg.kgregistry_raw"},
-                name="fabricate_kgregistry",
-            ),
-            node(
                 func=format_kgregistry_yaml,
-                inputs={"resources": "fabricator.int.document_kg.kgregistry_raw"},
+                inputs={"fabrication_params": "params:fabricator.document_kg.kgregistry"},
                 outputs="document_kg.raw.kgregistry",
                 name="format_kgregistry",
             ),
             node(
-                func=fabricate_datasets,
-                inputs={"fabrication_params": "params:fabricator.document_kg.matrix_curated_pks"},
-                outputs={"data": "document_kg.raw.matrix_curated_pks@pandas"},
-                name="fabricate_matrix_curated_pks",
+                func=format_reusabledata_json,
+                inputs={"fabrication_params": "params:fabricator.document_kg.reusabledata"},
+                outputs="document_kg.raw.reusabledata",
+                name="format_reusabledata",
             ),
             node(
-                func=fabricate_datasets,
-                inputs={"fabrication_params": "params:fabricator.document_kg.matrix_reviews_pks"},
-                outputs={"data": "document_kg.raw.matrix_reviews_pks@pandas"},
-                name="fabricate_matrix_reviews_pks",
-            ),
-            node(
-                func=fabricate_datasets,
-                inputs={"fabrication_params": "params:fabricator.document_kg.mapping_reusabledata_infores"},
-                outputs={"mappings": "document_kg.raw.mapping_reusabledata_infores"},
-                name="fabricate_mapping_reusabledata_infores",
-            ),
-            node(
-                func=fabricate_datasets,
-                inputs={"fabrication_params": "params:fabricator.document_kg.mapping_kgregistry_infores"},
-                outputs={"mappings": "document_kg.raw.mapping_kgregistry_infores"},
-                name="fabricate_mapping_kgregistry_infores",
+                func=format_infores_catalog,
+                inputs={"fabrication_params": "params:fabricator.document_kg.infores_catalog"},
+                outputs="document_kg.raw.infores",
+                name="format_infores_catalog",
             ),
         ]
     )

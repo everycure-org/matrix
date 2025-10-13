@@ -1,6 +1,7 @@
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Pipeline, pipeline
 
 from matrix import settings
+from matrix.kedro4argo_node import ArgoNode
 
 from . import nodes
 
@@ -23,7 +24,7 @@ def _create_source_parsing_pipeline(
         pipelines.append(
             pipeline(
                 [
-                    node(
+                    ArgoNode(
                         func=nodes.parse_pks_source,
                         inputs={
                             "parser": f"params:document_kg.pks_parsing.sources.{source}.parser",
@@ -31,17 +32,19 @@ def _create_source_parsing_pipeline(
                         },
                         outputs=f"document_kg.int.{source}_metadata",
                         name=f"parse_{source}",
-                        tags=["document_kg", "parsing"],
+                        tags=[
+                            "argowf.fuse",
+                            "argowf.fuse-group.document_kg",
+                        ],
                     ),
                 ],
-                tags=source,
             )
         )
     else:
         pipelines.append(
             pipeline(
                 [
-                    node(
+                    ArgoNode(
                         func=nodes.parse_pks_source,
                         inputs={
                             "parser": f"params:document_kg.pks_parsing.sources.{source}.parser",
@@ -50,10 +53,12 @@ def _create_source_parsing_pipeline(
                         },
                         outputs=f"document_kg.int.{source}_metadata",
                         name=f"parse_{source}",
-                        tags=["document_kg", "parsing"],
+                        tags=[
+                            "argowf.fuse",
+                            "argowf.fuse-group.document_kg",
+                        ],
                     ),
                 ],
-                tags=source,
             )
         )
 
@@ -72,18 +77,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                     source_type=source.get("source_type", "external_registry"),
                     has_mapping=source.get("has_mapping", False),
                 ),
-                tags=[
-                    source["name"],
-                    "argowf.fuse",
-                    "argowf.fuse-group.document_kg",
-                ],
             )
         )
 
     pipelines.append(
         pipeline(
             [
-                node(
+                ArgoNode(
                     func=nodes.merge_all_pks_metadata,
                     inputs=[
                         *[
@@ -94,12 +94,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                     outputs="document_kg.int.all_pks_metadata",
                     name="merge_all_pks_metadata",
                     tags=[
-                        source["name"],
                         "argowf.fuse",
                         "argowf.fuse-group.document_kg",
                     ],
                 ),
-                node(
+                ArgoNode(
                     func=nodes.integrate_all_metadata,
                     inputs=[
                         "document_kg.int.all_pks_metadata",
@@ -108,24 +107,22 @@ def create_pipeline(**kwargs) -> Pipeline:
                     outputs="document_kg.prm.pks_yaml",
                     name="filter_to_relevant_pks",
                     tags=[
-                        source["name"],
                         "argowf.fuse",
                         "argowf.fuse-group.document_kg",
                     ],
                 ),
-                node(
+                ArgoNode(
                     func=nodes.create_pks_documentation,
                     inputs=["document_kg.prm.pks_yaml", "params:document_kg.pks_parsing.templates"],
                     outputs="document_kg.prm.pks_md",
                     name="create_pks_documentation",
                     tags=[
-                        source["name"],
                         "argowf.fuse",
                         "argowf.fuse-group.document_kg",
                     ],
                 ),
             ]
-        )
+        ),
     )
 
     return sum(pipelines)
