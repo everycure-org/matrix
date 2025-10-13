@@ -84,6 +84,7 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                             "features": f"params:modelling.{model_name}.model_options.model_tuning_args.features",
                             "target_col_name": f"params:modelling.{model_name}.model_options.model_tuning_args.target_col_name",
                             "seed": f"params:modelling.splitter.random_state",
+                            "sqlite_path": "params:modelling.optuna.sqlite_path",
                         },
                         outputs=f"modelling.fold_{fold}.model_input.transformers_params",
                         name=f"tune_weighting_fold_{fold}",
@@ -99,16 +100,6 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                         name=f"fit_transformers_fold_{fold}",
                         argo_config=ARGO_CPU_ONLY_NODE_MEDIUM,
                     ),
-                    # ArgoNode(
-                    #     func=partial_fold(nodes.fit_transformers, fold),
-                    #     inputs={
-                    #         "data": "modelling.model_input.splits@pandas",
-                    #         "transformers": f"params:modelling.{model_name}.model_options.transformers",
-                    #     },
-                    #     outputs=f"modelling.fold_{fold}.model_input.transformers",
-                    #     name=f"fit_transformers_fold_{fold}",
-                    #     argo_config=ARGO_CPU_ONLY_NODE_MEDIUM,
-                    # ),
                 ]
             ),
             *[
@@ -224,22 +215,23 @@ def create_model_pipeline(model_name: str, num_shards: int, n_cross_val_folds: i
         )
     )
 
-    # fold_ids = list(range(n_cross_val_folds + 1))
-
     # pipelines.append(
     #     pipeline(
     #         [
     #             ArgoNode(
-    #                 func=nodes.plot_gt_weights,
-    #                 inputs=[
-    #                     *[f"modelling.fold_{f}.model_input.transformers" for f in fold_ids],
-    #                     "modelling.model_input.splits",
+    #                 func=nodes.write_sqlite,
+    #                 inputs={
+    #                     "sqlite_path": "params:modelling.optuna.sqlite_path",
+    #                     "_trigger": "modelling.reporting.metrics",
+    #                 },
+    #                 outputs=[
+    #                     "modelling.reporting.optuna_backup_meta",
+    #                     "modelling.reporting.optuna_db",
     #                 ],
-    #                 outputs="modelling.reporting.weight_plot",
-    #                 name="plot_gt_weights",
+    #                 name="write_optuna_sqlite_to_gcs",
     #                 argo_config=ARGO_CPU_ONLY_NODE_MEDIUM,
     #             )
-    #         ],
+    #         ]
     #     )
     # )
 

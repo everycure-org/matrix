@@ -128,6 +128,15 @@ modelling.reporting.gt_present:
   filepath: ${globals:paths.modelling}/reporting/gt_present_metrics.yml
   type: yaml.YAMLDataset
 
+modelling.reporting.optuna_backup_meta:
+  <<: *_reporting_ds
+  filepath: ${globals:paths.modelling}/reporting/optuna_backup_meta.yml
+  type: yaml.YAMLDataset
+
+modelling.reporting.optuna_db:
+  filepath: ${globals:paths.modelling}/model_output/optuna.db
+  type: matrix.datasets.files.LocalFileDataset
+
 "modelling.{shard}.fold_{fold}.reporting.weight_plot":
   <<: *_reporting_ds
   type: matplotlib.MatplotlibDataset

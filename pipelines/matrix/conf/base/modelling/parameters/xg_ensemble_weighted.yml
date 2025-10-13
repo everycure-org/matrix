@@ -12,57 +12,38 @@ modelling.xg_ensemble_weighted:
         - is_disease
 
     weighting_tuning:
-      enabled: true
+      enabled: false
       n_trials: 100
       k: 500
-      n_list: [50, 100, 200, 500, 1000]
+      n_list: [50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000]
       group_split: true
       objective:
         entropy_mode: source
-        w_recall: 1.0
-        w_entropy: 0.7
-        w_bounds: 0.1
-        bounds_target: 0.20
-        w_head_bias: 0.7
-        w_corr: 0.3
-        w_pred_corr: 0.8
         entropy_weighting: inverse
       search_space:
-        beta_head_pos: [0.2, 0.6]
-        beta_head_neg: [0.7, 1.0]
-        head_min: [0.25, 0.8]
-        head_max: [2.0, 5.0]
-        pos_budget_scale_head: [1.6, 2.8]
-        gamma: [0.85, 0.995]
-        tail_min: [0.95, 1.0]
-        tail_max: [1.0, 1.08]
-        rho: [0.2, 0.8]
-        pos_budget_scale_tail: [1.0, 1.4]
-        blend_alpha: [0.1, 0.9]
+        eta: [5, 200]
+        mix_k: [1, 40]
+        mix_beta: [0.01, 10.0]
+        w_min: [1.0e-4, 1.0e-1]
+        w_max: [5.0, 50.0]
+        per_class: [false, true]
+        normalize: ["per_class", "global"]
 
     transformers:
       weighting:
-        features: ["source", "target"]
+        features: []
         transformer:
           _object: matrix.pipelines.modelling.transformers.WeightingTransformer
           head_col: source
-          tail_col: target
-          beta_head_pos: 0.3
-          beta_head_neg: 0.9
-          beta_tail: 0.0
-          head_min: 0.35
-          head_max: 3.5
-          tail_min: 0.95
-          tail_max: 1.05
-          pos_budget_scale_head: 2.2
-          pos_budget_scale_tail: 1.05
-          rho: 0.5
-          iters: 120
-          tol: 1.0e-3
-          clip_factors: true
-          normalize: global
-          gamma: 0.93
-          blend_alpha: null
+          strategy: simple_eta
+          enabled: false
+          per_class: true
+          normalize: per_class
+          eta: 40
+          mix_k: 5
+          mix_beta: 1.0
+          w_min: 1.0e-3
+          w_max: 20.0
       flat_source_embedding:
         transformer:
           _object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
@@ -103,11 +84,11 @@ modelling.xg_ensemble_weighted:
             name: n_estimators
             low: 50
             high: 2500
-        scoring:
-          _object: matrix.pipelines.modelling.utils.partial_
-          func:
-            _object: sklearn.metrics.f1_score
-          average: macro
+        scoring: 
+            _object: matrix.pipelines.modelling.utils.partial_
+            func:
+              _object: sklearn.metrics.f1_score
+            average: macro
         splitter:
           _object: sklearn.model_selection.StratifiedShuffleSplit
           n_splits: 1
@@ -120,3 +101,9 @@ modelling.xg_ensemble_weighted:
   # NOTE: This leverages the custom `merge` resolver to override
   # the base options with the override block above.
   model_options: ${merge:${.._model_options},${._overrides}}
+
+modelling:
+  optuna:
+    sqlite_path: /data/optuna/optuna.db
+    sqlite_timeout: 60.0
+    # gcs_backup_path: ${globals:paths.modelling}/model_output/optuna.db

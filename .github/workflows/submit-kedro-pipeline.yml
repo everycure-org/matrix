@@ -2,37 +2,36 @@ name: Periodically run kedro kg-release
 
 on:
   schedule:
-    - cron: '20 14 1 * 2' # At 15:20 CET on the 1st day of the month and on Tuesday.
+    - cron: "20 14 1 * 2" # At 15:20 CET on the 1st day of the month and on Tuesday.
   workflow_dispatch:
     inputs:
       bump_type:
-        description: 'Type of version bump'
+        description: "Type of version bump"
         required: true
-        default: 'patch'
+        default: "patch"
         type: choice
         options:
           - patch
           - minor
 
 jobs:
-
   submit_data_release_periodically:
-    runs-on: 
+    runs-on:
       labels: ubuntu-24.04
     name: Submit the Kedro Pipeline Periodically
     environment: dev
     permissions:
-      contents: 'write'
-      id-token: 'write'
-      pull-requests: 'write'
- 
+      contents: "write"
+      id-token: "write"
+      pull-requests: "write"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.PAT }}
           fetch-tags: true
-          fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
+          fetch-depth: 0 # full depth needed so we can pass the AI all logs since the last release.
           submodules: recursive
 
       - name: Configure Git
@@ -54,7 +53,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install Argo & Python dependencies
         working-directory: pipelines/matrix
@@ -64,7 +63,7 @@ jobs:
 
       - name: Authenticate with Google Cloud
         id: auth
-        uses: 'google-github-actions/auth@v2'
+        uses: "google-github-actions/auth@v2"
         with:
           project_id: ${{ vars.PROJECT_ID }}
           workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
@@ -72,13 +71,13 @@ jobs:
           token_format: access_token
 
       - uses: google-github-actions/get-gke-credentials@v1
-      # configure authentication to a GKE cluster (configure kubectl)
+        # configure authentication to a GKE cluster (configure kubectl)
         with:
           cluster_name: ${{ vars.GKE_CLUSTER_NAME }}
           location: ${{ vars.REGION }}
           project_id: ${{ vars.PROJECT_ID }}
 
-      - name: Login to Google Artifact Registry 
+      - name: Login to Google Artifact Registry
         uses: docker/login-action@v3
         with:
           registry: ${{ vars.REGION }}-docker.pkg.dev
@@ -114,10 +113,10 @@ jobs:
         run: |
           git switch -C release/${{env.release_version}} "${{github.ref_name}}"
           git push
-      
+
       - name: Authenticate with Google Cloud for ID token
         id: id_auth
-        uses: 'google-github-actions/auth@v2'
+        uses: "google-github-actions/auth@v2"
         with:
           project_id: ${{ vars.PROJECT_ID }}
           workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
@@ -161,7 +160,7 @@ jobs:
           # Slack channel id, channel name, or user id to post message.
           # See also: https://api.slack.com/methods/chat.postMessage#channels
           # You can pass in multiple channels to post to by providing a comma-delimited list of channel IDs.
-          channel-id: 'C07HU35MKAQ' #github-notifications
+          channel-id: "C07HU35MKAQ" #github-notifications
           # For posting a simple plain text message
           slack-message: |
             Release pipeline submission failed in GitHub Actions! 🚨

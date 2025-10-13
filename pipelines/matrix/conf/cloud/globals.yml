@@ -34,7 +34,8 @@ paths:
 
   # Run-based
   filtering: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.8.2/runs/ff-paper-baseline-d2d28c6a/datasets/filtering
-  embeddings: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.8.2/runs/ff-paper-baseline-d2d28c6a/datasets/embeddings
+  # embeddings: data/residual2vec/embeddings_r2v_annotated.parquet
+  embeddings: gs://mtrx-us-central1-hub-dev-storage/dev_work/alan/r2v_embeddings/annotated_rv2v_dim512_lam07.parquet
   modelling: ${run_dir}/datasets/modelling
   evaluation: ${run_dir}/datasets/evaluation
   matrix_generation: ${run_dir}/datasets/matrix_generation

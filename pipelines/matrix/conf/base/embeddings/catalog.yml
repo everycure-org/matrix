@@ -17,7 +17,7 @@ _spark_parquet_ds: &_spark_parquet
   metadata:
     kedro-viz:
       layer: embeddings
-      
+
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
@@ -33,7 +33,7 @@ embeddings.feat.graph.pca_node_embeddings:
 embeddings.feat.graph.edges_for_topological:
   <<: *_spark_parquet
   filepath: ${globals:paths.embeddings}/feat/edges_for_topological
-  
+
 # NOTE: Needs renaming
 embeddings.tmp.input_nodes:
   <<: [*_neo4j_ds]
@@ -45,7 +45,7 @@ embeddings.tmp.input_nodes:
     mode: overwrite
     script: >
       CREATE CONSTRAINT IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE;
-    query: > 
+    query: >
       CREATE (n:Entity {id: event.id, pca_embedding: event.pca_embedding})
       WITH event, n
       CALL apoc.create.addLabels(n, event.labels) YIELD node
@@ -67,28 +67,28 @@ embeddings.models.topological:
   # we do not actually do anything with this DS, thus it's a dummy
   # https://github.com/kedro-org/kedro/discussions/3758
   filepath: ${globals:paths.embeddings}/models/topological_result.yml
-  type:  yaml.YAMLDataset
+  type: yaml.YAMLDataset
 
 # NOTE: Dummy catalog entry to enforce Kedro dependency
 # between embedding and modelling pipeline.
-# embeddings.model_output.topological:
-#   <<: *_neo4j_ds
-#   save_args:
-#     # Dummy Query that never gets written to because we use GDS to execute the write-back of graphsage
-#     persist: false
-#   load_args:
-#     # NOTE: Using the `query` reader option highly impacts performance, hence resorting to `labels`.
-#     # https://neo4j.com/docs/spark/current/read/options/
-#     partitions: 16 # Should increase parallelism
-#     labels: ":Entity" # avoids query which drastically increases performance
-
 embeddings.model_output.topological:
-  <<: *_spark_parquet
-  filepath: gs://mtrx-us-central1-wg2-modeling-dev-storage/su-lab-data/data/residual2vec/rv2v_dim512_fp32.npy
+  <<: *_neo4j_ds
+  save_args:
+    # Dummy Query that never gets written to because we use GDS to execute the write-back of graphsage
+    persist: false
+  load_args:
+    # NOTE: Using the `query` reader option highly impacts performance, hence resorting to `labels`.
+    # https://neo4j.com/docs/spark/current/read/options/
+    partitions: 16 # Should increase parallelism
+    labels: ":Entity" # avoids query which drastically increases performance
+
+# embeddings.model_output.topological:
+#   <<: *_spark_parquet
+#   filepath: gs://mtrx-us-central1-wg2-modeling-dev-storage/su-lab-data/data/residual2vec/rv2v_dim512_fp32.npy
 
 embeddings.feat.nodes:
   <<: *_spark_parquet
-  filepath: ${globals:paths.embeddings}/feat/nodes_with_embeddings
+  filepath: ${globals:paths.embeddings}
 
 embeddings.reporting.loss:
   type: matplotlib.MatplotlibDataset

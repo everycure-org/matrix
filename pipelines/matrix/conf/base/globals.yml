@@ -85,7 +85,7 @@ paths:
 
   # Run-based
   filtering: data/releases/${versions.release}/runs/${run_name}/datasets/filtering
-  embeddings: data/releases/${versions.release}/runs/${run_name}/datasets/embeddings
+  embeddings: gs://mtrx-us-central1-hub-dev-storage/dev_work/alan/embeddings_r2v_annotated.parquet
   modelling: data/releases/${versions.release}/runs/${run_name}/datasets/modelling
   matrix_generation: data/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
   matrix_transformations: data/releases/${versions.release}/runs/${run_name}/datasets/matrix_transformations

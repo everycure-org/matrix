@@ -370,7 +370,10 @@ def fit_transformers(
     fitted = {}
     for name, meta in transformers.items():
         feats = meta["features"]
-        if name == "weighting":
+        # If no features are specified, pass the full TRAIN slice to the transformer
+        if not feats:
+            tr = meta["transformer"].fit(data.loc[mask], target)
+        elif name == "weighting":
             tr = meta["transformer"].fit(data.loc[mask, feats + ["y"]], target)
         else:
             tr = meta["transformer"].fit(data.loc[mask, feats], target)
@@ -397,7 +400,8 @@ def apply_transformers(
     for name, transformer in transformers.items():
         # Apply transformer
         features = transformer["features"]
-        features_selected = data[features]
+        # If no features specified, provide the entire DataFrame to the transformer
+        features_selected = data if not features else data[features]
 
         if name == "weighting":
             y = data["y"] if "y" in data.columns else None
@@ -411,11 +415,11 @@ def apply_transformers(
             columns=transformer["transformer"].get_feature_names_out(features_selected),
         )
 
-        # Overwrite columns
-        data = pd.concat(
-            [data.drop(columns=features), transformed],
-            axis="columns",
-        )
+        # If no features were specified, do not drop any columns; otherwise, replace the selected ones
+        if not features:
+            data = pd.concat([data, transformed], axis="columns")
+        else:
+            data = pd.concat([data.drop(columns=features), transformed], axis="columns")
 
     # if "weight" not in data.columns:
     #     data["weight"] = 1.0
@@ -697,7 +701,12 @@ def tune_weighting_optuna(
     target_col_name: str,
     seed: int,
     load_if_exists: bool = True,
+    sqlite_path: str | None = None,
 ) -> dict:
+    from inspect import signature
+
+    from sklearn.base import BaseEstimator
+
     if not tuning or not tuning.get("enabled", False):
         return base_transformers
 
@@ -718,7 +727,6 @@ def tune_weighting_optuna(
     k = int(tuning.get("k", 100))
     n_list = list(tuning.get("n_list", [k]))
     obj = tuning.get("objective", {})
-    # bounds_target = float(obj.get("bounds_target", 0.2))
     group_split = bool(tuning.get("group_split", True))
     space = tuning.get("search_space", {}) or {}
 
@@ -759,8 +767,6 @@ def tune_weighting_optuna(
     heads_tr = df_train["source"].to_numpy()
     tails_tr = df_train["target"].to_numpy()
 
-    deg_train = df_train.groupby("source").size()
-
     val_size = float(tuning.get("val_size", 0.2))
     if group_split:
         from sklearn.model_selection import GroupShuffleSplit
@@ -775,9 +781,7 @@ def tune_weighting_optuna(
 
     X_tr_in, y_tr_in = X_tr[idx_tr_in], y_tr[idx_tr_in]
     X_val_in, y_val_in = X_tr[idx_val_in], y_tr[idx_val_in]
-    heads_tr_in = heads_tr[idx_tr_in]
     heads_val_in = heads_tr[idx_val_in]
-    tails_tr_in = tails_tr[idx_tr_in]
     tails_val_in = tails_tr[idx_val_in]
 
     tr0 = base_transformers["weighting"]["transformer"]
@@ -798,13 +802,70 @@ def tune_weighting_optuna(
     default_study_name = f"weighting_fold_{fold_id}" if fold_id is not None else "weighting"
 
     def suggest_params(trial: "optuna.Trial") -> dict:
+        from inspect import signature
+
+        from matrix.pipelines.modelling.transformers import WeightingTransformer
+
         conf = dict(base_conf)
-        for key, bounds in space.items():
-            low, high = float(bounds[0]), float(bounds[1])
-            conf[key] = trial.suggest_float(key, low, high)
+
+        space_local = {k: v for k, v in (space or {}).items() if k != "strategy"}
+
+        chosen_strategy = conf.get("strategy", "auto_cv")
+        conf["strategy"] = chosen_strategy
+
+        strat = str(chosen_strategy).lower()
+        common_keys = {
+            "head_col",
+            "enabled",
+            "per_class",
+            "normalize",
+            "pos_label",
+            "default_class",
+            "eps",
+            "w_min",
+            "w_max",
+        }
+        relevant_by_strategy = {
+            "inverse": common_keys,
+            "inverse_sqrt": common_keys,
+            "auto_cv": common_keys,
+            "simple_eta": common_keys | {"eta"},
+            "shomer": common_keys | {"eta", "mix_k", "mix_beta"},
+        }
+        relevant = relevant_by_strategy.get(strat, common_keys)
+
+        for key, bounds in (space_local or {}).items():
+            if key not in relevant:
+                continue
+
+            if isinstance(bounds, dict) and "choices" in bounds:
+                conf[key] = trial.suggest_categorical(key, list(bounds["choices"]))
+                continue
+            if isinstance(bounds, (list, tuple)):
+                if all(isinstance(b, (str, bool)) for b in bounds):
+                    conf[key] = trial.suggest_categorical(key, list(bounds))
+                    continue
+                if len(bounds) >= 2 and all(isinstance(b, int) for b in bounds[:2]):
+                    conf[key] = trial.suggest_int(key, int(bounds[0]), int(bounds[1]))
+                    continue
+                if len(bounds) >= 2:
+                    lo, hi = float(bounds[0]), float(bounds[1])
+                    conf[key] = trial.suggest_float(key, lo, hi)
+                    continue
+            try:
+                lo, hi = float(bounds[0]), float(bounds[1])
+                conf[key] = trial.suggest_float(key, lo, hi)
+            except Exception:
+                pass
+
+        try:
+            valid = set(signature(WeightingTransformer.__init__).parameters.keys())
+            conf = {k: v for k, v in conf.items() if k in valid}
+        except Exception:
+            pass
         return conf
 
-    def objective(trial: "optuna.Trial") -> float:
+    def objective(trial: "optuna.Trial") -> tuple[float, float]:
         from matrix.pipelines.modelling.transformers import WeightingTransformer
 
         conf = suggest_params(trial)
@@ -813,7 +874,8 @@ def tune_weighting_optuna(
         df_fit_in = df_train.iloc[idx_tr_in][["source", "target", "y"]].copy()
         wt.fit(df_fit_in)
 
-        w_tr_in = wt.transform(df_train.iloc[idx_tr_in][["source", "target"]], y=y_tr_in).ravel()
+        w_df = wt.transform(df_train.iloc[idx_tr_in][["source", "target"]], y=y_tr_in)
+        w_tr_in = w_df["weight"].to_numpy()
 
         est = XGBClassifier(**est_kwargs)
         fit_sig = signature(est.fit).parameters
@@ -854,7 +916,6 @@ def tune_weighting_optuna(
         elif entropy_mode == "target":
             ent_list = metrics["target_entropy_at_n"]
         else:
-            entropy_mode = "source"
             ent_list = metrics["source_entropy_at_n"]
 
         obj_conf = tuning.get("objective", {}) or {}
@@ -867,23 +928,6 @@ def tune_weighting_optuna(
         weights = _compute_entropy_weights(metrics.get("n", []), mode=ew_mode, params=ew_params)
         ent_mean = float(np.dot(weights, np.asarray(ent_list, dtype=float))) if len(ent_list) else 0.0
 
-        df_bias = pd.DataFrame({"source": heads_tr_in, "w": w_tr_in, "one": 1.0})
-        deg_w = df_bias.groupby("source")["w"].sum()
-        if len(deg_w) > 1 and float(deg_w.sum()) > 0.0:
-            p_w = deg_w / deg_w.sum()
-            p_w = p_w[p_w > 0]  # avoid log(0)
-            H_w = float(-(p_w * np.log(p_w)).sum())
-            H_max = float(np.log(len(deg_w)))
-            ent_train_norm = H_w / H_max if H_max > 0 else 0.0
-        else:
-            ent_train_norm = 0.0
-        head_bias_penalty = 1.0 - ent_train_norm
-
-        per_head_pred = df_scores.groupby("source")["score"].mean()
-        al = per_head_pred.align(deg_train, join="inner")
-        rho_pred = al[0].corr(al[1], method="spearman")
-        pred_corr_penalty = float(abs(rho_pred)) if not np.isnan(rho_pred) else 0.0
-
         trial.set_user_attr("n_list", [int(n) for n in metrics["n"]])
         trial.set_user_attr("recall@N_list", list(metrics["recall_at_n"]))
         trial.set_user_attr("entropy_mode", entropy_mode)
@@ -893,27 +937,53 @@ def tune_weighting_optuna(
             trial.set_user_attr("entropy_weights", list(map(float, weights)))
         except Exception:
             pass
-        trial.set_user_attr("head_bias_penalty", head_bias_penalty)
-        trial.set_user_attr("pred_corr_penalty_val", pred_corr_penalty)
 
-        stats_neg = getattr(wt, "fit_stats_", {}).get("neg", {}) or {}
-        pct_at = float(stats_neg.get("pct_a_at_bounds", 0.0))
-        trial.set_user_attr("pct_a_at_bounds_neg", pct_at)
-
-        try:
-            fold_id = int(pd.unique(df["fold"])[0]) if "fold" in df.columns else None
-        except Exception:
-            fold_id = None
-        if fold_id is not None:
-            trial.set_user_attr("fold", int(fold_id))
-
-        return aur, ent_mean, pred_corr_penalty, head_bias_penalty
+        return aur, ent_mean
 
     import os
+    import re
+    from urllib.parse import unquote, urlparse
 
-    storage = os.environ.get("OPTUNA_STORAGE_URL")
+    path = str(sqlite_path).strip()
+    if re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", path):
+        storage = path
+    else:
+        if path.startswith("/"):
+            storage = f"sqlite:////{path.lstrip('/')}"
+        else:
+            storage = f"sqlite:///{path}"
 
-    directions = ["maximize", "maximize", "minimize", "minimize"]
+    if storage.startswith("sqlite") and "timeout=" not in storage:
+        timeout = float((tuning or {}).get("sqlite_timeout", 60.0))
+        sep = "&" if "?" in storage else "?"
+        storage = f"{storage}{sep}timeout={timeout}"
+
+    if storage.startswith("sqlite"):
+        try:
+            parsed = urlparse(storage)
+            db_path = unquote(parsed.path or "")
+            if not db_path:
+                raise ValueError(f"Resolved empty sqlite file path from storage URL: {storage}")
+
+            parent = os.path.dirname(db_path) or "/"
+            if not os.path.isdir(parent):
+                logger.info(f"Creating parent directory for Optuna SQLite DB: {parent}")
+                os.makedirs(parent, exist_ok=True)
+
+            if not os.access(parent, os.W_OK):
+                raise PermissionError(f"Parent directory not writable: {parent}. Check PVC mount path and permissions.")
+
+            if not os.path.exists(db_path):
+                open(db_path, "a").close()
+                logger.info(f"Pre-created Optuna SQLite DB file: {db_path}")
+
+            logger.info(f"Using Optuna storage: {storage} (db_path={db_path})")
+
+        except Exception as e:
+            logger.error(f"Failed to prepare SQLite DB at {storage}: {e}")
+            raise
+
+    directions = ["maximize", "maximize"]
 
     try:
         existing = optuna.study.get_study(study_name=default_study_name, storage=storage)
@@ -935,12 +1005,7 @@ def tune_weighting_optuna(
         study_name=default_study_name,
     )
 
-    objective_names = tuning.get("objective_names") or [
-        "AUR@N",
-        "entropy_mean",
-        "pred_corr_penalty",
-        "head_bias_penalty",
-    ]
+    objective_names = tuning.get("objective_names") or ["AUR@N", "entropy_mean"]
     try:
         study.set_user_attr("objective_names", list(objective_names))
         study.set_user_attr("target_names", list(objective_names))
@@ -960,15 +1025,12 @@ def tune_weighting_optuna(
 
     def _trial_sort_key(t: "optuna.trial.FrozenTrial"):
         v = t.values or ()
-        a = -float(v[0]) if len(v) > 0 and v[0] is not None else float("inf")
-        b = -float(v[1]) if len(v) > 1 and v[1] is not None else float("inf")
-        c = float(v[2]) if len(v) > 2 and v[2] is not None else float("inf")
-        d = float(v[3]) if len(v) > 3 and v[3] is not None else float("inf")
-        return (a, b, c, d)
+        a = -float(v[0]) if len(v) > 0 and v[0] is not None else float("inf")  # maximize AUR@N
+        b = -float(v[1]) if len(v) > 1 and v[1] is not None else float("inf")  # maximize entropy
+        return (a, b)
 
     pareto_all = list(getattr(study, "best_trials", []))
     pareto = [t for t in pareto_all if t.values and len(t.values) == len(directions)]
-
     if not pareto:
         complete = [
             t
@@ -993,16 +1055,32 @@ def tune_weighting_optuna(
     tuned = copy.deepcopy(base_transformers)
 
     tr = tuned["weighting"]["transformer"]
+    try:
+        from matrix.pipelines.modelling.transformers import WeightingTransformer
+
+        valid_tr_keys = set(signature(WeightingTransformer.__init__).parameters.keys())
+        best_conf = {k: v for k, v in best_conf.items() if k in valid_tr_keys}
+    except Exception:
+        pass
+
     if hasattr(tr, "set_params"):
         try:
             tr.set_params(**best_conf)
         except Exception as e:
             logger.warning(f"Failed to set_params on weighting transformer: {e}")
-        tuned["weighting"]["transformer"] = tr
     else:
         tr_conf = dict(tr) if isinstance(tr, dict) else {}
         tr_conf.update(best_conf)
-        tuned["weighting"]["transformer"] = tr_conf
+        tr = tr_conf
+
+    try:
+        df_fit_full = df_train[["source", "target", "y"]].copy()
+        if hasattr(tr, "fit"):
+            tr.fit(df_fit_full)
+    except Exception as e:
+        logger.warning(f"Failed to refit tuned weighting transformer; using previous fit: {e}")
+
+    tuned["weighting"]["transformer"] = tr
 
     vals = list(selected.values) if selected.values else []
 
@@ -1011,21 +1089,47 @@ def tune_weighting_optuna(
 
     aur_v = _fmt(0)
     ent_v = _fmt(1)
-    pcorr_v = _fmt(2)
-    hbias_v = _fmt(3)
 
     logger.info(
-        "Weighting Optuna MO selected trial:\n"
-        f"  AUR@N={aur_v}, entropy_mean={ent_v}, pred_corr_penalty={pcorr_v}, head_bias_penalty={hbias_v}\n"
+        "Weighting Optuna selected trial:\n"
+        f"  AUR@N={aur_v}, entropy_mean={ent_v}\n"
         f"  study_name={default_study_name}\n"
         f"  n_list={selected.user_attrs.get('n_list')}\n"
         f"  recall@N_list={selected.user_attrs.get('recall@N_list')}\n"
         f"  entropy_mode={selected.user_attrs.get('entropy_mode')}\n"
-        f"  entropy@N_list={selected.user_attrs.get('entropy@N_list')}\n"
-        f"  pct_a_at_bounds_neg={selected.user_attrs.get('pct_a_at_bounds_neg')}"
+        f"  entropy@N_list={selected.user_attrs.get('entropy@N_list')}"
     )
 
     return tuned
+
+
+@inject_object()
+def write_sqlite(sqlite_path: str, _trigger: Any = None) -> tuple[dict, str]:
+    """
+    Provide metadata for the local Optuna SQLite DB and return the local file path.
+    Kedro will persist the file to the configured dataset path (e.g., GCS).
+    """
+    import datetime as dt
+    import os
+
+    if not os.path.exists(sqlite_path):
+        raise FileNotFoundError(f"SQLite file not found: {sqlite_path}")
+
+    st = os.stat(sqlite_path)
+    meta = {
+        "source": sqlite_path,
+        "size_bytes": st.st_size,
+        "mtime_epoch": int(st.st_mtime),
+        "backed_up_at_utc": dt.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+    logger.info(f"Prepared Optuna SQLite for write from {sqlite_path} (size={st.st_size} bytes)")
+    return meta, sqlite_path
+
+
+def local_path_to_upload(local_path: str) -> str:
+    # Returning the local path makes Kedro call LocalFileDataset.save(local_path),
+    # which copies it to ${globals:paths.embeddings}/external/myfile.npy (GCS).
+    return local_path
 
 
 @unpack_params()
@@ -1138,164 +1242,3 @@ def check_model_performance(
                 report[f"{split.lower()}_{name}_weighted"] = func(y_true, y_pred, sample_weight=w)
 
     return json.loads(json.dumps(report, default=float))
-
-
-# def plot_gt_weights(
-#     fitted_tr: WeightingTransformer,
-#     train_df: ps.DataFrame,
-# ) -> plt.gcf():
-#     """
-#     Build a diagnostic plot for a *fitted* WeightingTransformer.
-
-#     Parameters
-#     ----------
-#     fitted_tr : WeightingTransformer
-#         Must already be fitted (weight_map_ exists).
-#     train_df : pd.DataFrame
-#         The TRAIN rows used in `.fit()`. Must contain `fitted_tr.head_col`.
-
-#     Returns
-#     -------
-#     matplotlib.figure.Figure
-#     """
-#     head_col = fitted_tr.head_col
-
-#     degrees = train_df.groupby(head_col).size()
-#     raw_cnt = train_df[head_col].map(degrees).to_numpy()
-
-#     weights = train_df[head_col].map(fitted_tr.weight_map_).fillna(fitted_tr.default_weight_).to_numpy()
-#     w_cnt = raw_cnt * weights
-
-#     bins = max(10, int(np.sqrt(raw_cnt.size)))
-#     strategy = fitted_tr.strategy
-
-#     fig, ax = plt.subplots(1, 2, figsize=(12, 6), dpi=110)
-#     ax[0].scatter(raw_cnt, w_cnt, s=18, alpha=0.6, ec="none")
-#     ax[0].set(
-#         xlabel="raw degree",
-#         ylabel="weighted degree",
-#         title=f"{strategy} – mapping",
-#     )
-
-#     for vec, col, lab in [
-#         (raw_cnt, "tab:blue", "raw"),
-#         (w_cnt, "tab:orange", "weighted"),
-#     ]:
-#         sns.histplot(
-#             vec,
-#             bins=bins,
-#             ax=ax[1],
-#             color=col,
-#             edgecolor="black",
-#             alpha=0.30,
-#             stat="count",
-#             label=f"{lab} (hist)",
-#         )
-#         sns.kdeplot(
-#             vec,
-#             ax=ax[1],
-#             color=col,
-#             bw_adjust=1.2,
-#             linewidth=2,
-#             fill=False,
-#             label=f"{lab} KDE",
-#         )
-
-#     ax[1].set(
-#         xlabel="degree",
-#         ylabel="entity count",
-#         title=f"{strategy} – distribution",
-#     )
-#     ax[1].legend()
-
-#     def _stats(v):
-#         m = v.mean()
-#         sd = v.std(ddof=1)
-#         return [m, np.median(v), sd, sd / m]
-
-#     rows = np.vstack([_stats(raw_cnt), _stats(w_cnt)])
-#     tbl = plt.table(
-#         cellText=np.round(rows, 3),
-#         colLabels=["mean", "median", "std", "RSD"],
-#         rowLabels=["raw", "weighted"],
-#         bbox=[0.65, -0.24, 0.33, 0.16],
-#     )
-#     tbl.auto_set_font_size(True)
-#     plt.tight_layout()
-
-#     return plt.gcf()
-
-
-# def plot_gt_weights(*inputs) -> Figure:
-#     """
-#     Positional inputs:
-#         0 … N‑1   : dicts produced by `fit_transformers`
-#         N         : `modelling.model_input.splits@pandas`
-#     """
-#     all_splits = inputs[-1]  # the original DataFrame (with 'source')
-#     if not isinstance(all_splits, pd.DataFrame):
-#         all_splits = all_splits.to_pandas()
-
-#     tr_dicts: Sequence[dict] = inputs[:-1]
-#     n = len(tr_dicts)
-
-#     fig, axes = plt.subplots(nrows=n, ncols=2, figsize=(12, 6 * n), dpi=110, squeeze=False)
-
-#     for i, tr_dict in enumerate(tr_dicts):
-#         tr: WeightingTransformer = tr_dict["weighting"]["transformer"]
-
-#         # TRAIN rows that were used to fit this transformer
-#         df = all_splits.loc[(all_splits["fold"] == i) & (all_splits["split"] == "TRAIN")]
-
-#         head = tr.head_col  # 'source'
-#         raw_cnt = df.groupby(head).size()
-#         raw_cnt = df[head].map(raw_cnt).to_numpy()
-
-#         weights = df[head].map(tr.weight_map_).fillna(tr.default_weight_).to_numpy()
-#         w_cnt = raw_cnt * weights
-#         bins = max(10, int(np.sqrt(raw_cnt.size)))
-
-#         ax0, ax1 = axes[i]
-
-#         # left panel – mapping
-#         ax0.scatter(raw_cnt, w_cnt, s=18, alpha=0.6, ec="none")
-#         ax0.set(
-#             xlabel="raw degree",
-#             ylabel="weighted degree",
-#             title=f"{tr.strategy} – mapping (fold {i})",
-#         )
-
-#         # right panel – distribution
-#         for vec, col, lab in [
-#             (raw_cnt, "tab:blue", "raw"),
-#             (w_cnt, "tab:orange", "weighted"),
-#         ]:
-#             sns.histplot(
-#                 vec,
-#                 bins=bins,
-#                 ax=ax1,
-#                 color=col,
-#                 edgecolor="black",
-#                 alpha=0.30,
-#                 stat="count",
-#                 label=f"{lab} (hist)",
-#             )
-#             sns.kdeplot(
-#                 vec,
-#                 ax=ax1,
-#                 color=col,
-#                 bw_adjust=1.2,
-#                 linewidth=2,
-#                 fill=False,
-#                 label=f"{lab} KDE",
-#             )
-
-#         ax1.set(
-#             xlabel="degree",
-#             ylabel="entity count",
-#             title=f"{tr.strategy} – distribution (fold {i})",
-#         )
-#         ax1.legend()
-
-#     plt.tight_layout()
-#     return fig
