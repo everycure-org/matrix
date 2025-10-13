@@ -117,7 +117,7 @@ def format_infores_catalog(fabrication_params: dict) -> dict:
                 resource[key] = None
             elif isinstance(value, str) and "|" in value:
                 resource[key] = value.split("|")
-    return {"information_resources": resources_list}
+    return resources_list
 
 
 def format_reusabledata_json(fabrication_params: dict) -> list:
