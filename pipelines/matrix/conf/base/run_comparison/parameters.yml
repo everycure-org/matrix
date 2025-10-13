@@ -23,7 +23,7 @@ run_comparison:
       score_col_name: "treat score"
 
   # Configuration for the evaluations to perform. Usually it is not necessary to modify these.
-  available_ground_truth_cols:
+  available_ground_truth_cols: &available_ground_truth_cols
     - "is_known_positive"
     - "is_known_negative"
     - "off_label"
@@ -35,3 +35,4 @@ run_comparison:
       n_max: 100000
       perform_sort: True
       title: "Recall@n (standard ground truth)"
+      available_ground_truth_cols: *available_ground_truth_cols

@@ -2,9 +2,9 @@ run_comparison.input_matrices:
   type: matrix.datasets.multi_matrices.MultiMatricesDataset
   filepath: ${globals:paths.run_comparison}/input_matrices.yml
 
-run_comparison.harmonized_matrices:
+run_comparison.combined_predictions:
   type: polars.LazyPolarsDataset
-  filepath: ${globals:paths.run_comparison}/harmonized_matrices.parquet
+  filepath: ${globals:paths.run_comparison}/combined_predictions.parquet
   file_format: parquet
 
 run_comparison.predictions_info:

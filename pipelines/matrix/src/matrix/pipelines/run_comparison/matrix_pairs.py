@@ -178,7 +178,14 @@ def harmonize_matrix_pairs(
     return reduce(lambda x, y: x.harmonize(y), matrix_pairs_all)
 
 
-def all_matrix_pairs_equal(
+def check_base_matrices_consistent(
+    *matrix_pairs_all: MatrixPairs,
+) -> bool:
+    """Check if a list of MatrixPairs objects have the same drugs and diseases lists."""
+    return all(x.same_base_matrix(y) for x in matrix_pairs_all for y in matrix_pairs_all[1:])
+
+
+def check_matrix_pairs_equal(
     *matrix_pairs_all: MatrixPairs,
 ) -> bool:
     """Check if a list of MatrixPairs objects are equal.
@@ -186,4 +193,4 @@ def all_matrix_pairs_equal(
     Args:
         *matrix_pairs_all: List of MatrixPairs objects to check.
     """
-    return all(x == y for x, y in zip(matrix_pairs_all[0], matrix_pairs_all[1:]))
+    return all(x == matrix_pairs_all[0] for x in matrix_pairs_all[1:])

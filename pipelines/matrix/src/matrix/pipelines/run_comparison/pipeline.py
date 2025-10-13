@@ -5,12 +5,8 @@ from . import nodes
 from .settings import RUN_COMPARISON_SETTINGS
 
 # TODO:
-# - Add unit test for recall@n class
-# - Add matrix harmonisation + unit tests
+# - Add unit tests
 # - Test on real data
-# - Add unit test for input path classes
-# - Modify multi matrices dataset to copy matrices to pipeline data folder
-# - Clean up PR
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -35,7 +31,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "params:run_comparison.perform_multifold_uncertainty_estimation",
                 "params:run_comparison.assert_data_consistency",
             ],
-            outputs=["run_comparison.harmonized_matrices", "run_comparison.predictions_info"],
+            outputs=["run_comparison.combined_predictions", "run_comparison.predictions_info"],
             name=f"harmonize_matrices",
         ),
     )
@@ -48,9 +44,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                         "params:run_comparison.perform_multifold_uncertainty_estimation",
                         "params:run_comparison.perform_bootstrap_uncertainty_estimation",
                         f"params:run_comparison.evaluations.{evaluation}",
-                        "run_comparison.harmonized_matrices",
+                        "run_comparison.combined_predictions",
                         "run_comparison.predictions_info",
-                        "params:run_comparison.available_ground_truth_cols",
                     ],
                     outputs=f"run_comparison.{evaluation}.results",
                     name=f"give_evaluation_results.{evaluation}",
@@ -62,7 +57,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         "params:run_comparison.perform_bootstrap_uncertainty_estimation",
                         f"params:run_comparison.evaluations.{evaluation}",
                         f"run_comparison.{evaluation}.results",
-                        "run_comparison.harmonized_matrices",
+                        "run_comparison.combined_predictions",
                     ],
                     outputs=f"run_comparison.{evaluation}.plot",
                     name=f"plot_results.{evaluation}",
