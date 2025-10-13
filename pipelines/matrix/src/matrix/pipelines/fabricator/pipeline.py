@@ -104,25 +104,22 @@ def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.D
 
 
 def format_infores_catalog(information_resources: pd.DataFrame) -> dict:
-    """Format fabricated data into infores catalog YAML structure."""
-    # Convert DataFrame to list of dictionaries
+    """Format fabricated data into infores catalog YAML structure.
+
+    Converts DF to a list of dictionaries and transforms NaN values to None for proper YAML serialization."""
     resources_list = information_resources.to_dict("records")
-    # Convert NaN values to None for proper YAML serialization
     for resource in resources_list:
         for key, value in resource.items():
             if pd.isna(value):
                 resource[key] = None
             elif isinstance(value, str) and "|" in value:
-                # Split pipe-delimited fields into lists
                 resource[key] = value.split("|")
     return {"information_resources": resources_list}
 
 
 def format_reusabledata_json(data: pd.DataFrame) -> list:
     """Format fabricated data into reusabledata JSON structure."""
-    # Convert DataFrame to list of dictionaries
     resources_list = data.to_dict("records")
-    # Convert NaN values to None and handle special fields
     for resource in resources_list:
         for key, value in resource.items():
             if pd.isna(value):
@@ -131,16 +128,13 @@ def format_reusabledata_json(data: pd.DataFrame) -> list:
                 # Ensure ID is always a string
                 resource[key] = str(value)
             elif isinstance(value, str) and "|" in value and "categories" in key:
-                # Split pipe-delimited categories into lists
                 resource[key] = value.split("|")
     return resources_list
 
 
 def format_kgregistry_yaml(resources: pd.DataFrame) -> dict:
     """Format fabricated data into kg-registry YAML structure."""
-    # Convert DataFrame to list of dictionaries
     resources_list = resources.to_dict("records")
-    # Convert NaN values to None and handle special fields
     for resource in resources_list:
         for key, value in resource.items():
             if pd.isna(value):

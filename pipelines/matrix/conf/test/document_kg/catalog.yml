@@ -3,7 +3,6 @@ _layer_raw: &_layer_raw
     kedro-viz:
       layer: raw
 
-# Override external sources with fabricated data in test environment
 document_kg.raw.infores:
   type: yaml.YAMLDataset
   <<: *_layer_raw
