@@ -1,5 +1,6 @@
 import itertools
 import random
+from decimal import Decimal
 
 import networkx as nx
 import pandas as pd
@@ -101,6 +102,58 @@ def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.D
             rows.append({"graph": {"_id": str(idx)}, "links": path})
 
     return rows
+
+
+def format_infores_catalog(fabrication_params: dict) -> dict:
+    """Generate and format infores catalog YAML structure directly from params."""
+    result = fabricate_datasets(fabrication_params=fabrication_params)
+    information_resources = result["information_resources"]
+
+    # Format the data (existing logic)
+    resources_list = information_resources.to_dict("records")
+    for resource in resources_list:
+        for key, value in resource.items():
+            if pd.isna(value):
+                resource[key] = None
+            elif isinstance(value, str) and "|" in value:
+                resource[key] = value.split("|")
+    return {"information_resources": resources_list}
+
+
+def format_reusabledata_json(fabrication_params: dict) -> list:
+    """Generate and format reusabledata JSON structure directly from params."""
+    result = fabricate_datasets(fabrication_params=fabrication_params)
+    data = result["data"]
+
+    # Format the data (existing logic)
+    resources_list = data.to_dict("records")
+    for resource in resources_list:
+        for key, value in resource.items():
+            if pd.isna(value):
+                resource[key] = None
+            elif key == "id":
+                resource[key] = str(value)
+            elif isinstance(value, str) and "|" in value and "categories" in key:
+                resource[key] = value.split("|")
+            elif isinstance(value, Decimal):
+                resource[key] = float(value)
+    return resources_list
+
+
+def format_kgregistry_yaml(fabrication_params: dict) -> dict:
+    """Generate and format kg-registry YAML structure directly from params."""
+    result = fabricate_datasets(fabrication_params=fabrication_params)
+    resources = result["resources"]
+
+    # Format the data (existing logic)
+    resources_list = resources.to_dict("records")
+    for resource in resources_list:
+        for key, value in resource.items():
+            if pd.isna(value):
+                resource[key] = None
+            elif isinstance(value, str) and "|" in value and "domains" in key:
+                resource[key] = value.split("|")
+    return {"resources": resources_list}
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -280,6 +333,48 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="ingestion.raw.drugmech.edges@pandas",
                 name="create_drugmech_pairs",
+            ),
+            node(
+                func=format_kgregistry_yaml,
+                inputs={"fabrication_params": "params:fabricator.document_kg.kgregistry"},
+                outputs="document_kg.raw.kgregistry",
+                name="format_kgregistry",
+            ),
+            node(
+                func=format_reusabledata_json,
+                inputs={"fabrication_params": "params:fabricator.document_kg.reusabledata"},
+                outputs="document_kg.raw.reusabledata",
+                name="format_reusabledata",
+            ),
+            node(
+                func=format_infores_catalog,
+                inputs={"fabrication_params": "params:fabricator.document_kg.infores_catalog"},
+                outputs="document_kg.raw.infores",
+                name="format_infores_catalog",
+            ),
+            node(
+                func=fabricate_datasets,
+                inputs={"fabrication_params": "params:fabricator.document_kg.matrix_curated_pks"},
+                outputs={"data": "document_kg.raw.matrix_curated_pks@pandas"},
+                name="fabricate_matrix_curated_pks",
+            ),
+            node(
+                func=fabricate_datasets,
+                inputs={"fabrication_params": "params:fabricator.document_kg.matrix_reviews_pks"},
+                outputs={"data": "document_kg.raw.matrix_reviews_pks@pandas"},
+                name="fabricate_matrix_reviews_pks",
+            ),
+            node(
+                func=fabricate_datasets,
+                inputs={"fabrication_params": "params:fabricator.document_kg.mapping_kgregistry_infores"},
+                outputs={"mappings": "document_kg.raw.mapping_kgregistry_infores"},
+                name="fabricate_mapping_kgregistry_infores",
+            ),
+            node(
+                func=fabricate_datasets,
+                inputs={"fabrication_params": "params:fabricator.document_kg.mapping_reusabledata_infores"},
+                outputs={"mappings": "document_kg.raw.mapping_reusabledata_infores"},
+                name="fabricate_mapping_reusabledata_infores",
             ),
         ]
     )
