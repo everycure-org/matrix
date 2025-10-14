@@ -78,6 +78,7 @@ authors:
 - **Drug–Target–Disease Triplets Experiment**: Evaluating Drug–Target–Disease Triplets for Improved Drug Repurposing Prediction. 
 - **K-Fold Cross Validation**: Our implementation of K-Fold CV into the Pipeline. [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/main/alexei/9_pipeline_experiments_2025/reports/robust_k_fold.md)
 - **DREAMwalk experiment**: We reimplemented the DREAMwalk algorithm for node embeddings. [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/076b5adc4714a99b9735d51bc7a1a153a9e611fc/michael_strasser/dreamwalk_experiment/dreamwalk-report.ipynb)
+
 ## Documentation ✏️
 
 - **Attribution Documentation**: Added comprehensive attribution documentation for the MATRIX project, acknowledging all knowledge sources, tools, and contributors. [#1867](https://github.com/everycure-org/matrix/pull/1867)
