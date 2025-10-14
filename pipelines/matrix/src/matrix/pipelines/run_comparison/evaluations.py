@@ -292,7 +292,7 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
             ax.set_ylim(0, 1)
         ax.grid()
         ax.legend()
-        fig.suptitle(self.title)
+        ax.set_title(self.title)
         return fig
 
 
