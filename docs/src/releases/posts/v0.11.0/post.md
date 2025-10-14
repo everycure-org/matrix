@@ -66,7 +66,18 @@ authors:
 
 - **Enhanced Node Pool Configuration**: Updated management node pool to n2-standard-16 machine type for improved cluster management performance. [#1873](https://github.com/everycure-org/matrix/pull/1873)
 
+### Experiments 🧪
 
+- **Evidence Synthesis Benchmark with Matrix**: We compared MATRIX predictions to those generated using LLM-based evidence synthesis [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/02fb72355700195a61bd3c946aa95a606f2526cc/maria/01_10k_pair_experiment/08_triage_yield_report.ipynb)
+- **Patent Scraping using LLMs**: This pilot experiment evaluated whether large language models (LLMs) can extract structured, ontology-aligned semantic triples from drug-related patents [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/main/uab-LLM-patent-scraping/experiment-august-2025/UAB_Initial_Patent_Scraping_Experiment_Report.ipynb)
+- **Experimenting with LogoFunc and Evo2**: Models to predict pathogenicity of single-nucleotide variants (SNVs) in human genes [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/main/uab-new-models-for-improved-performance/UAB_Milestone_2_UAB1/Milestone_2_Report_UAB1.ipynb)
+- **KG Edge Perturbation Experiment**: We evaluate robustness of drug–disease prediction to KG edge perturbations. [link to notebook](https://github.com/everycure-org/lab-notebooks/pull/202/files)
+- **Node and Edge Features for Treatment Link Prediction**: An experiment to determine whether using edge type and edge context (qualifiers) delivers an improvement in predictive model performance. 
+- **Cross-KG: Initial Benchmark & Aggregation Experiment**: We looked at various ways to combined models from individual and combined KGs. [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/main/cross-kg/sept-kg-aggregation/cross_kg_agg_report.ipynb)
+- **Negative Sampling Experiment**: We evaluate various strategies to generate negative sampling, including degree-aware methods [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/negative_sampling/negative_sampling/comparing_dans_neg_sampling.ipynb)
+- **Drug–Target–Disease Triplets Experiment**: Evaluating Drug–Target–Disease Triplets for Improved Drug Repurposing Prediction. 
+- **K-Fold Cross Validation**: Our implementation of K-Fold CV into the Pipeline. [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/main/alexei/9_pipeline_experiments_2025/reports/robust_k_fold.md)
+- **DREAMwalk experiment**: We reimplemented the DREAMwalk algorithm for node embeddings. [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/076b5adc4714a99b9735d51bc7a1a153a9e611fc/michael_strasser/dreamwalk_experiment/dreamwalk-report.ipynb)
 ## Documentation ✏️
 
 - **Attribution Documentation**: Added comprehensive attribution documentation for the MATRIX project, acknowledging all knowledge sources, tools, and contributors. [#1867](https://github.com/everycure-org/matrix/pull/1867)
