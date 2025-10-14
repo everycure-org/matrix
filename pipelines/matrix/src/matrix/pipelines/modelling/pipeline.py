@@ -41,7 +41,7 @@ def _create_model_shard_pipeline(model_name: str, shard: int, fold: Union[str, i
                     f"modelling.{shard}.fold_{fold}.{model_name}.reporting.tuning_convergence_plot",
                 ],
                 name=f"tune_{model_name}_model_{shard}_parameters_fold_{fold}",
-                argo_config=ARGO_GPU_NODE_MEDIUM,
+                argo_config=ARGO_CPU_ONLY_NODE_MEDIUM,
             ),
             ArgoNode(
                 func=nodes.train_model,
@@ -53,7 +53,7 @@ def _create_model_shard_pipeline(model_name: str, shard: int, fold: Union[str, i
                 ],
                 outputs=f"modelling.{shard}.fold_{fold}.{model_name}.models.model",
                 name=f"train_{shard}_{model_name}_model_fold_{fold}",
-                argo_config=ARGO_GPU_NODE_MEDIUM,
+                argo_config=ARGO_CPU_ONLY_NODE_MEDIUM,
             ),
         ],
         tags=["argowf.fuse", f"argowf.fuse-group.{model_name}.shard-{shard}.fold-{fold}"],
