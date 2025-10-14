@@ -15,6 +15,7 @@ authors:
   - eKathleenCarter
   - jdr0887
   - amyford
+  - leelancashire
 ---
 
 ## Exciting New Features 🎉
