@@ -78,6 +78,8 @@ dependencies = [
     "termplotlib",
     "torch==2.7.1",
     "transformers",
+    "datasets>=4.0.0",
+    "huggingface_hub>=0.20.0",
     "typer", # used for convenience libraries, to be moved to a dev requirements eventually
     "xgboost",
     "lightgbm @ https://storage.googleapis.com/data.dev.everycure.org/pypi/lightgbm-4.6.0-py3-none-linux_x86_64.whl ; sys_platform == 'linux'",
