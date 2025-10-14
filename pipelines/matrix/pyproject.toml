@@ -35,6 +35,8 @@ dependencies = [
     "matrix-fabricator",
     "matrix-inject",
     "matrix-pandera",
+    "huggingface-hub>=0.20.0",
+    "datasets>=2.16.0",
     "matrix-validator @ git+https://github.com/everycure-org/matrix-validator.git@v0.0.6#egg=matrix-validator",
     "bmt", # biolink model toolkit
     "gcsfs==2024.3.1",
