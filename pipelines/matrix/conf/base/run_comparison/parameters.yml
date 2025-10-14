@@ -11,16 +11,21 @@ run_comparison:
   # Enter the filepaths of the matrix predictions you would like to evaluate here. See documentation for more details.
   # TODO: Link to docs. 
   input_paths:
-    - _object: matrix.pipelines.run_comparison.input_paths.InputPathSingleFold # Options: InputPathsSingleFold, InputPathsModellingRun , InputPathsMultiFold
-      name: matrix_1
-      file_path: "data/run_comparison/matrix_1.parquet"
-      file_format: "parquet"
-      score_col_name: "treat score"
-    - _object: matrix.pipelines.run_comparison.input_paths.InputPathSingleFold
-      name: matrix_2
-      file_path: "data/run_comparison/matrix_2.parquet"
-      file_format: "parquet"
-      score_col_name: "treat score"
+    - _object: matrix.pipelines.run_comparison.input_paths.InputPathsModellingRun # Options: InputPathsSingleFold, InputPathsModellingRun , InputPathsMultiFold
+      name: xg_ensemble
+      data_release: v0.3.0
+      run_name: main-6b557c01
+      is_transformed: False
+    - _object: matrix.pipelines.run_comparison.input_paths.InputPathsModellingRun
+      name: xg_synth
+      data_release: v0.3.0
+      run_name: experiment-alexei-11-feb-25-xg-synth-main-d18d158b
+      is_transformed: False
+    - _object: matrix.pipelines.run_comparison.input_paths.InputPathsModellingRun
+      name: rf
+      data_release: v0.3.0
+      run_name: experiment_alexei_11_feb_25_rf_main_ee18a9ef_matrix
+      is_transformed: False
 
   # Configuration for the evaluations to perform. Usually it is not necessary to modify these.
   available_ground_truth_cols: &available_ground_truth_cols
