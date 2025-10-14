@@ -112,6 +112,26 @@ jobs:
           git add "${FILENAME}" && \
           git commit -m "added release info json" && \
           git push
+
+      - name: Download & commit primary-knowledge-sources.md file
+        working-directory: docs/src/releases
+        env:
+          RELEASE_DIR_GCS: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases
+          FILENAME: primary-knowledge-sources.md
+        run: |
+          set -eux
+          BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/datasets/release/${FILENAME}" 
+          
+          if git ls-files --error-unmatch "$FILENAME" &> /dev/null; then
+            echo "File '$FILENAME' is already committed to the repository. Skipping download and commit."
+            exit 0
+          fi
+
+          gcloud storage cp "$BLOB_PATH" "$FILENAME"
+          
+          git add "${FILENAME}" && \
+          git commit -m "added primary knowledge source md file" && \
+          git push
       
       - name: Discover Latest Official Release on GitHub
         env:

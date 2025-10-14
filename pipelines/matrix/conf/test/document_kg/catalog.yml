@@ -1,0 +1,61 @@
+_layer_raw: &_layer_raw
+  metadata:
+    kedro-viz:
+      layer: raw
+
+document_kg.raw.infores:
+  type: yaml.YAMLDataset
+  <<: *_layer_raw
+  filepath: ${globals:paths.tmp}/document_kg/fabricated_infores_catalog.yaml
+  save_args:
+    default_flow_style: false
+
+document_kg.raw.reusabledata:
+  type: json.JSONDataset
+  <<: *_layer_raw
+  filepath: ${globals:paths.tmp}/document_kg/fabricated_reusabledata.json
+
+document_kg.raw.kgregistry:
+  type: yaml.YAMLDataset
+  <<: *_layer_raw
+  filepath: ${globals:paths.tmp}/document_kg/fabricated_kgregistry.yml
+
+document_kg.raw.matrix_curated_pks@pandas:
+  type: pandas.CSVDataset
+  <<: *_layer_raw
+  filepath: ${globals:paths.tmp}/document_kg/fabricated_matrix_curated_pks.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    index: false
+    sep: "\t"
+
+document_kg.raw.matrix_reviews_pks@pandas:
+  type: pandas.CSVDataset
+  <<: *_layer_raw
+  filepath: ${globals:paths.tmp}/document_kg/fabricated_matrix_reviews_pks.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    index: false
+    sep: "\t"
+
+document_kg.raw.mapping_reusabledata_infores:
+  type: pandas.CSVDataset
+  <<: *_layer_raw
+  filepath: ${globals:paths.tmp}/document_kg/fabricated_mapping_reusabledata_infores.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    index: false
+    sep: "\t"
+
+document_kg.raw.mapping_kgregistry_infores:
+  type: pandas.CSVDataset
+  <<: *_layer_raw
+  filepath: ${globals:paths.tmp}/document_kg/fabricated_mapping_kgregistry_infores.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    index: false
+    sep: "\t"
