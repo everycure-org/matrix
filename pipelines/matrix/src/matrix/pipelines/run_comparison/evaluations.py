@@ -329,7 +329,7 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
 
     def give_x_values(self) -> np.ndarray:
         """Integer x-axis values from 0 to n_max, representing the n in recall@n."""
-        return np.linspace(0, self.n_max, self.num_n_values)
+        return np.linspace(1, self.n_max, self.num_n_values)
 
     def _give_ranks_series(self, matrix: pl.DataFrame, score_col_name: str) -> pl.Series:
         """Give the ranks of the known positives."""

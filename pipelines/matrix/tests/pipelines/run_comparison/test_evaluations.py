@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
 import pytest
-from matrix.pipelines.run_comparison.evaluations import ComparisonEvaluationModelSpecific
+from matrix.pipelines.run_comparison.evaluations import ComparisonEvaluationModelSpecific, FullMatrixRecallAtN
 from polars.testing import assert_frame_equal
 
 
@@ -132,3 +132,54 @@ def test_model_specific_abstract_class(constant_score_data):
     assert figure.get_axes()[0].get_legend().get_texts()[0].get_text() == "model_1"
     assert figure.get_axes()[0].get_legend().get_texts()[1].get_text() == "model_2"
     assert figure.get_axes()[0].get_legend().get_texts()[2].get_text() == "Random classifier"
+
+
+@pytest.fixture
+def matrix_data():
+    return pl.DataFrame(
+        {
+            "source": [0, 0, 1, 1],
+            "target": [0, 1, 0, 1],
+            "is_known_positive": [False, True, True, False],
+            "score": [1.0, 0.75, 0.5, 0.25],
+        }
+    )
+
+
+def test_model_full_matrix_recall_at_n(matrix_data):
+    """Test the FullMatrixRecallAtN class."""
+    # Given matrix data, combined predictions and an instance of FullMatrixRecallAtN
+    matrix = matrix_data
+    combined_predictions = pl.LazyFrame(matrix)
+    evaluation = FullMatrixRecallAtN(
+        ground_truth_col="is_known_positive",
+        n_max=4,
+        num_n_values=4,
+        N_bootstraps=10,
+        perform_sort=True,
+        title="Test Title",
+    )
+
+    # When the evaluate_single_fold method is called
+    x_values = evaluation.give_x_values()
+    y_values = evaluation.give_y_values(matrix, "score")
+    y_values_bootstrap = evaluation.give_y_values_bootstrap(matrix, "score")
+    y_values_random = evaluation.give_y_values_random_classifier(combined_predictions)
+
+    # Then the results are as expected
+    # x_values are as expected
+    assert np.allclose(x_values, np.array([1, 2, 3, 4]))
+    # y_values are as expected
+    assert np.allclose(y_values, np.array([0, 0.5, 1, 1]))
+    # y_values_bootstrap have the right shape, and values are as expected
+    assert y_values_bootstrap.shape == (10, 4)
+    assert all(y_values_bootstrap[i][0] == 0 for i in range(10))  # Recall@1 always 0 regardless of sample
+    assert all(
+        (y_values_bootstrap[i][1] >= 0) and (y_values_bootstrap[i][1] <= 1) for i in range(10)
+    )  # Recall@2 can be any value
+    assert all(
+        (y_values_bootstrap[i][2] >= 0.5) and (y_values_bootstrap[i][2] <= 1) for i in range(10)
+    )  # Recall@3 always >= 1/2 regardless of sample
+    assert all(y_values_bootstrap[i][3] == 1 for i in range(10))  # Recall@4 always 1 regardless of sample
+    # y_values_random are as expected
+    assert np.allclose(y_values_random, np.array([0.25, 0.5, 0.75, 1]))

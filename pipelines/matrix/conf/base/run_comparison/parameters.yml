@@ -2,7 +2,7 @@ run_comparison:
 
   # Options to select which uncertainty estimation methods to perform. Applies to all applicable evaluations. 
   perform_multifold_uncertainty_estimation: True # If False, only the first fold of data is used.
-  perform_bootstrap_uncertainty_estimation: False
+  perform_bootstrap_uncertainty_estimation: True
 
   # Option to assert consistent drug list, disease list, training set and test set across all models.
   # If False, then matrix harmonization will be performed, which restricts pairs accordingly to ensure consistency between models.
@@ -15,16 +15,19 @@ run_comparison:
       name: xg_ensemble
       data_release: v0.3.0
       run_name: main-6b557c01
+      num_folds: 3
       is_transformed: False
     - _object: matrix.pipelines.run_comparison.input_paths.InputPathsModellingRun
       name: xg_synth
       data_release: v0.3.0
       run_name: experiment-alexei-11-feb-25-xg-synth-main-d18d158b
+      num_folds: 3
       is_transformed: False
     - _object: matrix.pipelines.run_comparison.input_paths.InputPathsModellingRun
       name: rf
       data_release: v0.3.0
       run_name: experiment_alexei_11_feb_25_rf_main_ee18a9ef_matrix
+      num_folds: 3
       is_transformed: False
 
   # Configuration for the evaluations to perform. Usually it is not necessary to modify these.
