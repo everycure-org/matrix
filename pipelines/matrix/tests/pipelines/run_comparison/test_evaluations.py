@@ -176,7 +176,7 @@ def test_model_full_matrix_recall_at_n(matrix_data):
     assert all(y_values_bootstrap[i][0] == 0 for i in range(10))  # Recall@1 always 0 regardless of sample
     assert all(
         (y_values_bootstrap[i][1] >= 0) and (y_values_bootstrap[i][1] <= 1) for i in range(10)
-    )  # Recall@2 can be any value
+    )  # Recall@2 can be any value between 0 and 1
     assert all(
         (y_values_bootstrap[i][2] >= 0.5) and (y_values_bootstrap[i][2] <= 1) for i in range(10)
     )  # Recall@3 always >= 1/2 regardless of sample

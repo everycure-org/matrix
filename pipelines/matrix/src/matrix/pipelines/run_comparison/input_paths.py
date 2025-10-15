@@ -32,9 +32,7 @@ class InputPathsModellingRun(InputPathsMultiFold):
     """Class for inputting matrices from a MATRIX modelling run."""
 
     def __init__(self, name: str, data_release: str, run_name: str, num_folds: int, is_transformed: bool = True):
-        base_path = (
-            f"gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/{data_release}/runs/{run_name}/datasets/"
-        )
+        base_path = f"gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/{data_release}/runs/{run_name}/datasets"
 
         if is_transformed:
             score_col_name = "transformed_treat_score"
