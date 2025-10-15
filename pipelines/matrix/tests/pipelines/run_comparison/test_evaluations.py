@@ -18,6 +18,8 @@ def constant_score_data():
             "score_model_1_fold_1": 1 / 2 * np.ones(N),
             "score_model_2_fold_0": 1 / 2 * np.ones(N),
             "score_model_2_fold_1": 1 / 4 * np.ones(N),
+            "is_known_positive_fold_0": np.array([True] + [False for _ in range(N - 1)]),  # True in first position only
+            "is_known_positive_fold_1": np.array([False for _ in range(N - 1)] + [True]),  # True in last position only
         }
     )
 
@@ -25,7 +27,7 @@ def constant_score_data():
     predictions_info = {
         "model_names": ["model_1", "model_2"],
         "num_folds": 2,
-        "available_ground_truth_cols": [],
+        "available_ground_truth_cols": ["is_known_positive"],
     }
     return predictions, predictions_info
 
@@ -36,13 +38,13 @@ class TestComparisonEvaluationModelSpecific(ComparisonEvaluationModelSpecific):
     def give_x_values(self) -> np.ndarray:
         return np.array([0, 1])
 
-    def give_y_values(self, matrix: pl.DataFrame, score_col_name: str) -> np.ndarray:
+    def give_y_values(self, matrix: pl.DataFrame) -> np.ndarray:
         # Return constant y value equal to the mean score
-        return matrix[score_col_name].mean() * np.ones(2)
+        return matrix["score"].mean() * np.ones(2)
 
-    def give_y_values_bootstrap(self, matrix: pl.DataFrame, score_col_name: str) -> np.ndarray:
+    def give_y_values_bootstrap(self, matrix: pl.DataFrame) -> np.ndarray:
         # Return constant y value equal to the mean score plus/minus 1/4
-        mean_score_curve = self.give_y_values(matrix, score_col_name)
+        mean_score_curve = self.give_y_values(matrix)
         return np.array([mean_score_curve + 1 / 4, mean_score_curve - 1 / 4])
 
     def give_y_values_random_classifier(self, combined_predictions: pl.LazyFrame) -> np.ndarray:

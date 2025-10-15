@@ -1,5 +1,6 @@
 import logging
 from dataclasses import asdict
+from functools import reduce
 
 import matplotlib.pyplot as plt
 import polars as pl
@@ -8,6 +9,7 @@ from matrix_inject.inject import inject_object
 from .evaluations import ComparisonEvaluation
 from .input_paths import InputPathsMultiFold
 from .matrix_pairs import (
+    MatrixPairs,
     check_base_matrices_consistent,
     check_matrix_pairs_equal,
     give_matrix_pairs_from_lazyframe,
@@ -24,6 +26,58 @@ def create_input_matrices_dataset(
     """Function to create input matrices dataset."""
     # Return initialized dataclass objects as dictionaries
     return [asdict(v) for v in input_paths]
+
+
+def _combine_matrix_pairs_for_all_folds(
+    matrix_pairs_list: list[MatrixPairs],
+    available_ground_truth_cols: list[str],
+    num_folds: int,
+) -> pl.LazyFrame:
+    """Function to combine MatrixPairs objects for all folds into a single LazyFrame.
+
+    Args:
+        matrix_pairs_list: List of MatrixPairs objects for each fold.
+        available_ground_truth_cols: List of available ground truth columns.
+        num_folds: Number of folds.
+
+    Returns:
+        LazyFrame containing combined matrix pairs for all folds.
+        Ground truth columns are renamed to include fold information.
+    """
+    matrix_pairs_df_list = [
+        matrix_pairs_list[fold]
+        .to_lazyframe()
+        .rename({col: f"{col}_fold_{fold}" for col in available_ground_truth_cols})
+        for fold in range(num_folds)
+    ]
+    return reduce(lambda x, y: x.join(y, on=["source", "target"], how="left"), matrix_pairs_df_list)
+
+
+def _join_scores_to_combined_matrix_pairs(
+    combined_matrix_pairs: pl.LazyFrame,
+    input_matrices: dict[str, any],
+    num_folds: int,
+) -> pl.LazyFrame:
+    """Function to join scores to combined matrix pairs.
+
+    Args:
+        combined_matrix_pairs: LazyFrame containing combined matrix pairs for all folds.
+        input_matrices: Dictionary containing predictions for all models and folds.
+        num_folds: Number of folds.
+
+    Returns:
+        LazyFrame containing combined predictions with scores for models and folds joined.
+    """
+    for model_name, model_data in input_matrices.items():
+        for fold in range(num_folds):
+            lazy_matrix = model_data["predictions_list"][fold]
+            score_col_name = model_data["score_col_name"]
+            combined_matrix_pairs = combined_matrix_pairs.join(
+                lazy_matrix.select("source", "target", pl.col(score_col_name).alias(f"score_{model_name}_fold_{fold}")),
+                on=["source", "target"],
+                how="left",
+            )
+    return combined_matrix_pairs
 
 
 def combine_predictions(
@@ -69,25 +123,28 @@ def combine_predictions(
     if not is_base_consistent:
         raise ValueError("Drug and disease lists are not consistent across folds.")
 
-    # Check data consistency if requested, or else harmonize matrices across all models and folds
-    if assert_data_consistency:
-        if not check_matrix_pairs_equal(*list(matrix_pairs_dict.values())):
-            raise ValueError("assert_data_consistency is True and input data is not consistent across models.")
-        else:
-            combined_matrix_pairs = list(matrix_pairs_dict.values())[0]  # Take any matrix pairs as they are all equal
+    # For each fold, check data consistency if requested, or else harmonize matrices across models
+    combined_matrix_pairs_list = []  # List of harmonized MatrixPairs objects for each fold
+    for fold in range(num_folds):
+        matrix_pairs_for_fold = [matrix_pairs_dict[(model_name, fold)] for model_name in input_matrices.keys()]
+        if assert_data_consistency:
+            if not check_matrix_pairs_equal(*matrix_pairs_for_fold):
+                raise ValueError("assert_data_consistency is True and input data is not consistent across models.")
+            else:
+                combined_matrix_pairs_list.append(
+                    matrix_pairs_for_fold[0]
+                )  # Take any matrix pairs as they are all equal
 
-    else:
-        combined_matrix_pairs = harmonize_matrix_pairs(*list(matrix_pairs_dict.values()))
+        else:
+            combined_matrix_pairs_list.append(harmonize_matrix_pairs(*matrix_pairs_for_fold))
+
+    # Combine matrix pairs for all folds into a single LazyFrame
+    combined_matrix_pairs = _combine_matrix_pairs_for_all_folds(
+        combined_matrix_pairs_list, available_ground_truth_cols, num_folds
+    )
 
     # Join score columns to combined matrix
-    combined_predictions = combined_matrix_pairs.to_lazyframe()
-    for model_name, model_data in input_matrices.items():
-        for fold, lazy_matrix in enumerate(model_data["predictions_list"]):
-            score_col_name = model_data["score_col_name"]
-            matrix = lazy_matrix.select("source", "target", score_col_name)
-            combined_predictions = combined_predictions.join(
-                matrix.rename({score_col_name: f"score_{model_name}_fold_{fold}"}), on=["source", "target"], how="left"
-            )
+    combined_predictions = _join_scores_to_combined_matrix_pairs(combined_matrix_pairs, input_matrices, num_folds)
 
     # Generate additional information about the predictions
     predictions_info = {

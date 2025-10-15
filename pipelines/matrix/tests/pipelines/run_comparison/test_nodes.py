@@ -1,5 +1,7 @@
 import polars as pl
 import pytest
+from matrix.pipelines.run_comparison.nodes import combine_predictions
+from polars.testing import assert_frame_equal
 
 
 @pytest.fixture
@@ -32,16 +34,16 @@ def sample_data_inconsistent_models():
                     {
                         "source": [1, 2, 1, 2, 3],  # Extra drug in list compared to base model
                         "target": [1, 1, 2, 2, 1],
-                        "is_known_positive": [True, False, False, False],
-                        "transformed_score": [3 for _ in range(4)],
+                        "is_known_positive": [True, False, False, False, False],  # Same as fold 0 of base model
+                        "transformed_score": [3 for _ in range(5)],
                     }
                 ),
                 pl.LazyFrame(
                     {
                         "source": [1, 2, 1, 2, 3],  # Consistent drug list across the two folds
                         "target": [1, 1, 2, 2, 1],
-                        "is_known_positive": [False, True, False, False],
-                        "transformed_score": [4 for _ in range(4)],
+                        "is_known_positive": [False, True, False, False, False],  # Same as fold 1 of base model
+                        "transformed_score": [4 for _ in range(5)],
                     }
                 ),
             ],
@@ -67,8 +69,8 @@ def sample_data_inconsistent_folds():
                     {
                         "source": [1, 2, 1, 2, 3],  # Extra drug in the list compared to the first fold
                         "target": [1, 1, 2, 2, 1],
-                        "is_known_positive": [False, True, False, False],
-                        "score": [2 for _ in range(4)],
+                        "is_known_positive": [False, True, False, False, False],
+                        "score": [2 for _ in range(5)],
                     }
                 ),
             ],
@@ -81,48 +83,71 @@ def test_combine_predictions(sample_data_inconsistent_models, sample_data_incons
     # Given two sets of sample data:
     # 1) Inconsistent drugs list between models but consistent within folds,
     # 2) Inconsistent drugs list between folds
-    # When the combine_predictions function is called:
-    # a) On sample data 1 with data consistency assertion disabled
-    result_harmonization_performed = combine_predictions(
+    # When the combine_predictions function is called
+    # Then on sample data 1 with data consistency assertion disabled, matrix harmonization is performed
+    combined_predictions, predictions_info = combine_predictions(
         sample_data_inconsistent_models,
         available_ground_truth_cols=["is_known_positive"],
         perform_multifold=True,
         assert_data_consistency=False,
     )
-    # b) On sample data 1 with data consistency assertion enabled
-    result_model_inconsistency_exception = combine_predictions(
-        sample_data_inconsistent_models,
-        available_ground_truth_cols=["is_known_positive"],
-        perform_multifold=True,
-        assert_data_consistency=True,
-    )
-    # c) On sample data 1 with multifold disabled
-    result_multifold_disabled = combine_predictions(
-        sample_data_inconsistent_models,
-        available_ground_truth_cols=["is_known_positive"],
-        perform_multifold=False,
-        assert_data_consistency=False,
-    )
-    # d) On sample data 2
-    result_inconsistent_folds = combine_predictions(
-        sample_data_inconsistent_folds,
-        available_ground_truth_cols=["is_known_positive"],
-        perform_multifold=True,
-        assert_data_consistency=False,
-    )
-
-    # Then the result is as expected:
-    # a) Matrix harmonization is performed
-    combined_predictions, predictions_info = result_harmonization_performed
-    assert combined_predictions == pl.LazyFrame(
-        {
-            "source": [1, 2, 1, 2],
-            "target": [1, 1, 2, 2],
-            "is_known_positive": [True, False, False, False],
-        }
+    assert_frame_equal(
+        combined_predictions,
+        pl.LazyFrame(
+            {
+                "source": [1, 2, 1, 2],
+                "target": [1, 1, 2, 2],
+                "is_known_positive_fold_0": [True, False, False, False],
+                "is_known_positive_fold_1": [False, True, False, False],
+                "score_base_model_fold_0": [1 for _ in range(4)],
+                "score_base_model_fold_1": [2 for _ in range(4)],
+                "score_different_model_fold_0": [3 for _ in range(4)],
+                "score_different_model_fold_1": [4 for _ in range(4)],
+            }
+        ),
+        check_row_order=False,
+        check_column_order=False,
     )
     assert predictions_info == {
         "model_names": ["base_model", "different_model"],
         "num_folds": 2,
         "available_ground_truth_cols": ["is_known_positive"],
     }
+    # Then on sample data 1 with data consistency assertion enabled, an exception is raised
+    with pytest.raises(ValueError):
+        _ = combine_predictions(
+            sample_data_inconsistent_models,
+            available_ground_truth_cols=["is_known_positive"],
+            perform_multifold=True,
+            assert_data_consistency=True,
+        )
+    # Then on sample data 1 with multifold disabled, the first fold is used
+    combined_predictions, _ = combine_predictions(
+        sample_data_inconsistent_models,
+        available_ground_truth_cols=["is_known_positive"],
+        perform_multifold=False,
+        assert_data_consistency=False,
+    )
+    assert_frame_equal(
+        combined_predictions,
+        pl.LazyFrame(
+            {
+                "source": [1, 2, 1, 2],
+                "target": [1, 1, 2, 2],
+                "is_known_positive_fold_0": [True, False, False, False],
+                "score_base_model_fold_0": [1 for _ in range(4)],
+                "score_different_model_fold_0": [3 for _ in range(4)],
+            }
+        ),
+        check_row_order=False,
+        check_column_order=False,
+    )
+
+    # d) On sample data 2, an exception is raised due to fold inconsistency
+    with pytest.raises(ValueError):
+        _ = combine_predictions(
+            sample_data_inconsistent_folds,
+            available_ground_truth_cols=["is_known_positive"],
+            perform_multifold=True,
+            assert_data_consistency=False,
+        )
