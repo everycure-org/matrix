@@ -10,7 +10,8 @@ modelling.disease_types:
   - biolink:DiseaseOrPhenotypicFeature
 
 modelling.training_data_sources:
-  - kgml_xdtd # KGML-xDTD Indications
+  #- kgml_xdtd # KGML-xDTD Indications
+  - ec
 
 modelling.splitter:
 
