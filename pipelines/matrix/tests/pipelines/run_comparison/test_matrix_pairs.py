@@ -122,3 +122,43 @@ def test_equality_method(
     assert result_different_diseases == False
     assert result_different_exclusion == False
     assert result_different_test == False
+
+
+def test_equality_method(
+    matrix_pairs,
+    matrix_pairs_different_drugs,
+    matrix_pairs_different_diseases,
+    matrix_pairs_different_exclusion,
+    matrix_pairs_different_test,
+):
+    # Given several different instance of MatrixPairs with varying data as well as a copy with identical data
+    matrix_pairs_copy = deepcopy(matrix_pairs)
+    # When the harmonize method is called
+    result_copy = matrix_pairs.harmonize(matrix_pairs_copy)
+    result_different_drugs = matrix_pairs.harmonize(matrix_pairs_different_drugs)
+    result_different_diseases = matrix_pairs.harmonize(matrix_pairs_different_diseases)
+    result_different_exclusion = matrix_pairs.harmonize(matrix_pairs_different_exclusion)
+    result_different_test = matrix_pairs.harmonize(matrix_pairs_different_test)
+    result_different_test_no_exclusion = matrix_pairs.harmonize(
+        matrix_pairs_different_test, exclude_inconsistent_pairs=False
+    )
+
+    # Then the result is as expected
+    assert result_copy == matrix_pairs
+    assert result_different_drugs == matrix_pairs  # Extra drug on matrix_pairs_different_drugs gets dropped
+    assert result_different_diseases == matrix_pairs_different_diseases  # Extra disease in matrix_pairs gets dropped
+    assert result_different_exclusion == MatrixPairs(  # Union of exclusion sets
+        drugs_list=DRUGS,
+        diseases_list=DISEASES,
+        exclusion_pairs=pl.DataFrame({"source": [1, 1], "target": [1, 2]}),
+        test_pairs=TEST_SET,
+    )
+    assert result_different_test == MatrixPairs(  # Intersection of test sets. Inconsistent pair dropped.
+        drugs_list=DRUGS,
+        diseases_list=DISEASES,
+        exclusion_pairs=pl.DataFrame({"source": [1, 2], "target": [1, 1]}),
+        test_pairs=TEST_SET,
+    )
+    assert (
+        result_different_test_no_exclusion == matrix_pairs
+    )  # Intersection of test sets. Inconsistent pair not dropped.
