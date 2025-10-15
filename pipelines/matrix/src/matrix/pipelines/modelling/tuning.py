@@ -133,18 +133,37 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
             random_state=self.estimator.random_state if hasattr(self.estimator, "random_state") else None,
         )
 
-        # Determine number of parallel jobs
-        n_jobs = getattr(self.estimator, "n_jobs", 1)
-        if n_jobs == -1:
-            n_jobs = -1  # Use all available cores for parallel evaluation
+        # Determine optimal parallelism strategy
+        # When estimator uses n_jobs=-1, we need to balance between:
+        # 1. Parallel hyperparameter evaluations (outer parallelism)
+        # 2. Parallel tree building within each model (inner parallelism)
+        #
+        # Strategy: If estimator wants all cores, evaluate 2-4 configs in parallel
+        # and let each use remaining cores. This avoids resource contention.
+        import os
+
+        n_cpus = os.cpu_count() or 1
+        estimator_n_jobs = getattr(self.estimator, "n_jobs", 1)
+
+        if estimator_n_jobs == -1:
+            # Balance: evaluate fewer configs in parallel, give each more threads
+            # Rule of thumb: sqrt(n_cpus) for outer parallelism works well
+            n_parallel_evals = max(2, min(4, int(np.sqrt(n_cpus))))
+            # Update estimator to use proportional threads
+            threads_per_model = max(1, n_cpus // n_parallel_evals)
+            self.estimator.set_params(n_jobs=threads_per_model)
+        elif estimator_n_jobs > 0:
+            # Estimator has fixed thread count, evaluate sequentially
+            n_parallel_evals = 1
         else:
-            n_jobs = 1  # Sequential evaluation
+            # estimator_n_jobs is 1 or None, evaluate in parallel
+            n_parallel_evals = -1  # Use all cores for parallel evaluation
 
         # Run optimization with parallel evaluation
         all_results = []
         for _ in range(self.n_calls):
             # Ask for next point(s) to evaluate
-            if n_jobs == 1:
+            if n_parallel_evals == 1:
                 # Sequential: ask for one point at a time
                 next_x = optimizer.ask()
                 next_y = evaluate_model(next_x)
@@ -152,11 +171,11 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
                 all_results.append(result)
             else:
                 # Parallel: ask for multiple points and evaluate in parallel
-                n_points = min(n_jobs if n_jobs > 0 else 4, self.n_calls - len(all_results))
+                n_points = min(n_parallel_evals, self.n_calls - len(all_results))
                 next_xs = optimizer.ask(n_points=n_points)
 
                 # Evaluate all points in parallel using joblib
-                next_ys = Parallel(n_jobs=n_jobs)(delayed(evaluate_model)(x) for x in next_xs)
+                next_ys = Parallel(n_jobs=n_parallel_evals)(delayed(evaluate_model)(x) for x in next_xs)
 
                 # Tell optimizer about all results
                 result = optimizer.tell(next_xs, next_ys)
