@@ -178,15 +178,13 @@ def give_matrix_pairs_from_lazyframe(
     )
 
 
-def harmonize_matrix_pairs(
-    *matrix_pairs_all: MatrixPairs,
-) -> MatrixPairs:
+def harmonize_matrix_pairs(*matrix_pairs_all: MatrixPairs, **kwargs) -> MatrixPairs:
     """Harmonize a list of MatrixPairs objects.
 
     Args:
         *matrix_pairs_all: List of MatrixPairs objects to harmonize.
     """
-    return reduce(lambda x, y: x.harmonize(y), matrix_pairs_all)
+    return reduce(lambda x, y: x.harmonize(y, **kwargs), matrix_pairs_all)
 
 
 def check_base_matrices_consistent(

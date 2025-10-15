@@ -4,6 +4,9 @@ import polars as pl
 import pytest
 from matrix.pipelines.run_comparison.matrix_pairs import (
     MatrixPairs,
+    check_base_matrices_consistent,
+    give_matrix_pairs_from_lazyframe,
+    harmonize_matrix_pairs,
 )
 from polars.testing import assert_frame_equal
 
@@ -61,6 +64,11 @@ def matrix_pairs_different_test():
         exclusion_pairs=EXCLUSION_SET,
         test_pairs={"is_known_positive": pl.DataFrame({"source": [2, 2], "target": [2, 1]})},
     )
+
+
+@pytest.fixture
+def matrix_lazyframe():
+    return pl.LazyFrame({"source": [2, 1, 2], "target": [1, 2, 2], "is_known_positive": [False, False, True]})
 
 
 def test_to_lazyframe(matrix_pairs):
@@ -159,6 +167,87 @@ def test_equality_method(
         exclusion_pairs=pl.DataFrame({"source": [1, 2], "target": [1, 1]}),
         test_pairs=TEST_SET,
     )
-    assert (
+    assert (  # Intersection of test sets. Inconsistent pair not dropped.
         result_different_test_no_exclusion == matrix_pairs
-    )  # Intersection of test sets. Inconsistent pair not dropped.
+    )
+
+
+def test_give_matrix_pairs_from_lazyframe(matrix_pairs, matrix_lazyframe):
+    # Given a Polars LazyFrame representing the matrix pairs
+    # When generating an instance of the MatrixPairs object
+    matrix_pairs_generated = give_matrix_pairs_from_lazyframe(
+        matrix_lazyframe, available_ground_truth_cols=["is_known_positive"]
+    )
+    # Then the result is as expected
+    assert matrix_pairs_generated == matrix_pairs
+
+
+def test_harmonize_matrix_pairs(
+    matrix_pairs,
+    matrix_pairs_different_drugs,
+    matrix_pairs_different_exclusion,
+    matrix_pairs_different_test,
+):
+    # Given several instance of MatrixPairs with varying data
+    # When calling the harmonize_matrix_pairs function
+    harmonized_matrix_pairs = harmonize_matrix_pairs(
+        matrix_pairs,
+        matrix_pairs_different_drugs,
+        matrix_pairs_different_exclusion,
+        matrix_pairs_different_test,
+        exclude_inconsistent_pairs=False,
+    )
+
+    # Then the result is as expected
+    assert harmonized_matrix_pairs == MatrixPairs(
+        drugs_list=DRUGS,
+        diseases_list=DISEASES,
+        exclusion_pairs=pl.DataFrame({"source": [1, 1], "target": [1, 2]}),
+        test_pairs=TEST_SET,
+    )
+
+
+def test_check_base_matrices_consistent(
+    matrix_pairs,
+    matrix_pairs_different_drugs,
+    matrix_pairs_different_exclusion,
+    matrix_pairs_different_test,
+):
+    # Given several instance of MatrixPairs with varying data
+    # When calling the check_base_matrices_consistent function on matrices with different drugs list
+    result_different_drugs = check_base_matrices_consistent(
+        matrix_pairs,
+        matrix_pairs_different_drugs,
+        matrix_pairs_different_exclusion,
+        matrix_pairs_different_test,
+    )
+    # Or the same drug and disease lists
+    result_same_drugs = check_base_matrices_consistent(
+        matrix_pairs,
+        matrix_pairs_different_exclusion,
+        matrix_pairs_different_test,
+    )
+
+    # Then the result is as expected
+    assert result_different_drugs == False
+    assert result_same_drugs == True
+
+
+def check_matrix_pairs_equal(matrix_pairs, matrix_pairs_different_drugs):
+    # Given three identical MatrixPairs objects and a single different one
+    matrix_pairs_copy_1 = deepcopy(matrix_pairs)
+    matrix_pairs_copy_2 = deepcopy(matrix_pairs)
+    # When calling the check_matrix_pairs_equal function
+    result_equal = check_matrix_pairs_equal(
+        matrix_pairs,
+        matrix_pairs_copy_1,
+        matrix_pairs_copy_2,
+    )
+    result_different = check_matrix_pairs_equal(
+        matrix_pairs,
+        matrix_pairs_copy_1,
+        matrix_pairs_different_drugs,
+    )
+    # Then the result is as expected
+    assert result_equal == True
+    assert result_different == False
