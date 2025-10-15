@@ -1,7 +1,7 @@
 import itertools
 import json
 import logging
-from time import time
+import time
 from typing import Any, Callable, Iterable, Union
 
 import matplotlib.pyplot as plt
