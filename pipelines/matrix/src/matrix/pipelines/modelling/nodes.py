@@ -1,7 +1,6 @@
 import itertools
 import json
 import logging
-import time
 from typing import Any, Callable, Iterable, Union
 
 import matplotlib.pyplot as plt
@@ -437,33 +436,20 @@ def tune_parameters(
     Returns:
         Refit compatible dictionary of best parameters.
     """
-    start_time = time.time()
-    logger.info("masking start")
     mask = data["split"].eq("TRAIN")
-    logger.info(f"masking done in {time.time() - start_time:.2f} seconds")
-    start_time = time.time()
     X_train = data.loc[mask, features].values
-    logger.info(f"X_train selection done in {time.time() - start_time:.2f} seconds")
-    start_time = time.time()
     Y_train = data.loc[mask, target_col_name].values
-    logger.info(f"Y_train selection done in {time.time() - start_time:.2f} seconds")
 
     # Get base estimator parameters BEFORE tuning to preserve config like device, tree_method
-    start_time = time.time()
     estimator = getattr(tuner, "estimator", None)
     if estimator is None:
         raise ValueError("Tuner must have 'estimator' attribute")
-    logger.info(f"estimator selection done in {time.time() - start_time:.2f} seconds")
-    start_time = time.time()
     base_params = estimator.get_params(deep=False)
-    logger.info(f"base_params extraction done in {time.time() - start_time:.2f} seconds")
     logger.info(f"Starting hyperparameter tuning with tuner: {tuner}...")
     logger.info(f"Base estimator parameters: {base_params}")
 
     # Fit tuner
-    start_time = time.time()
     tuner.fit(X_train, Y_train)
-    logger.info(f"Tuner fitting done in {time.time() - start_time:.2f} seconds")
 
     # Merge base parameters with tuned parameters (tuned params override base)
     # This preserves important parameters like device, tree_method, n_jobs, random_state
