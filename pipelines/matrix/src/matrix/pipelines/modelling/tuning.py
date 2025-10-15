@@ -117,7 +117,7 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
 
             return 1.0 - np.average(scores)
 
-        result = gp_minimize(evaluate_model, self.dimensions, n_calls=self.n_calls)
+        result = gp_minimize(evaluate_model, self.dimensions, n_calls=self.n_calls, n_jobs=-1)
 
         self.convergence_plot = plot_convergence(result).figure
 
