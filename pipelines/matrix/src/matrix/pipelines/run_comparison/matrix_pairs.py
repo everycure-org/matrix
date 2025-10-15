@@ -76,7 +76,7 @@ class MatrixPairs:
             return ValueError("The columns must be the same to perform comparison.")
         return df1.sort(cols).equals(df2.sort(cols))
 
-    def same_base_matrix(self, other: "MatrixPairs") -> bool:
+    def is_same_base_matrix(self, other: "MatrixPairs") -> bool:
         """Check if two MatrixPairs objects have the same base matrix, i.e the same drugs and diseases lists."""
         return self._pairs_equal_as_sets(self.drugs_list, other.drugs_list) and self._pairs_equal_as_sets(
             self.diseases_list, other.diseases_list
@@ -88,7 +88,7 @@ class MatrixPairs:
         More precisely, check they represent the same set of drug-disease pairs and with the same test sets.
         """
         return (
-            self.same_base_matrix(other)
+            self.is_same_base_matrix(other)
             and self._pairs_equal_as_sets(self.exclusion_pairs, other.exclusion_pairs)
             and list(self.test_pairs.keys()) == list(other.test_pairs.keys())
             and all(
@@ -193,7 +193,7 @@ def check_base_matrices_consistent(
     *matrix_pairs_all: MatrixPairs,
 ) -> bool:
     """Check if a list of MatrixPairs objects have the same drugs and diseases lists."""
-    return all(x.same_base_matrix(y) for x in matrix_pairs_all for y in matrix_pairs_all[1:])
+    return all(x.is_same_base_matrix(y) for x in matrix_pairs_all for y in matrix_pairs_all[1:])
 
 
 def check_matrix_pairs_equal(
