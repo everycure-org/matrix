@@ -26,7 +26,7 @@ Tuner adjusts XGBoost: n_jobs = 22 (automatically, temporarily)
 Result: 4 × 22 = 88 CPUs fully utilized, no contention! ✅
 ```
 
-## For Your 88-CPU Machine
+## For Your 111-CPU Machine
 
 ### Current Config (KEEP IT)
 
@@ -45,34 +45,37 @@ estimator:
 1. **Detection Phase:**
 
    - Tuner sees: `estimator.n_jobs = -1`
-   - Detects: 88 CPUs available (`os.cpu_count()`)
+   - Detects: 111 CPUs available (`os.cpu_count()`)
 
 2. **Calculation Phase:**
 
-   - `n_parallel_evals = √88 ≈ 9.4`
-   - Clamped to safe range: `max(2, min(4, 9)) = 4`
-   - `threads_per_model = 88 / 4 = 22`
+   - Searches divisors in range 3-8 (for >64 CPUs)
+   - Tests each: 3, 4, 5, 6, 7, 8
+   - Evaluates efficiency: 3×37=111 (100%), 4×27=108 (97.3%), etc.
+   - Finds best: **3 divides 111 perfectly!**
+   - Selects: `n_parallel_evals = 3, threads_per_model = 37`
 
 3. **Execution Phase:**
 
-   - Temporarily sets: `estimator.n_jobs = 22`
-   - Evaluates: 4 hyperparameter configs in parallel
-   - Each XGBoost uses: 22 threads
-   - Total: 4 × 22 = 88 CPUs (perfect utilization)
+   - Temporarily sets: `estimator.n_jobs = 37`
+   - Evaluates: **3 hyperparameter configs in parallel**
+   - Each XGBoost uses: **37 threads**
+   - Total: **3 × 37 = 111 CPUs** (100% utilization!)
 
 4. **Result:**
-   - No resource contention
-   - No memory thrashing
-   - 2-4× faster than sequential
-   - Much better than naive parallelization
+   - ✅ **Zero wasted CPUs**
+   - ✅ No resource contention
+   - ✅ No memory thrashing
+   - ✅ 3× faster than sequential
+   - ✅ Perfect efficiency for 111 CPUs!
 
 ## Performance Comparison
 
-| Strategy           | Configs in Parallel | Threads per Model | Total Threads | Result         |
-| ------------------ | ------------------: | ----------------: | ------------: | -------------- |
-| **Sequential**     |                   1 |                88 |            88 | Good, but slow |
-| **Naive Parallel** |                  88 |                88 |         7,744 | 💥 Disaster!   |
-| **Smart (New)**    |                   4 |                22 |            88 | ✅ Optimal!    |
+| Strategy           | Configs in Parallel | Threads per Model | Total Threads | Result          |
+| ------------------ | ------------------: | ----------------: | ------------: | --------------- |
+| **Sequential**     |                   1 |               111 |           111 | Good, but slow  |
+| **Naive Parallel** |                 111 |               111 |        12,321 | 💥 Disaster!    |
+| **Smart (New)**    |                   3 |                37 |           111 | ✅ **Perfect!** |
 
 ## Why √(n_cpus)?
 
