@@ -132,7 +132,10 @@ locals {
       disk_type          = "pd-balanced"
       initial_node_count = 0
       location_policy    = "ANY"
-    },
+    }
+  ]
+
+  h3_spot_node_pools = [
     {
       name               = "h3-standard-88-nodes-spot" # 88 CPUs, 512GB RAM - for largest ML workloads
       machine_type       = "h3-standard-88"
@@ -236,6 +239,25 @@ locals {
     "github-runner-standard-nodes" = [
       {
         key    = "github-runner"
+        value  = "true"
+        effect = "NO_SCHEDULE"
+      }
+    ],
+    "h3-standard-88-nodes" = [
+      {
+        key    = "node-memory-size"
+        value  = "large"
+        effect = "NO_SCHEDULE"
+      },
+    ],
+    "h3-standard-88-nodes-spot" = [
+      {
+        key    = "node-memory-size"
+        value  = "large"
+        effect = "NO_SCHEDULE"
+      },
+      {
+        key    = "spot"
         value  = "true"
         effect = "NO_SCHEDULE"
       }
