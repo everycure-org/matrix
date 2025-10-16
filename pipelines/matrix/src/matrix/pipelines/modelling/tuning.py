@@ -145,7 +145,7 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
         # CPU utilization while avoiding resource contention.
         import os
 
-        n_cpus = os.cpu_count() or 1
+        n_cpus = os.cpu_count() - 1 or 1
         logger.info(f"Detected {n_cpus} CPUs for tuning.")
         estimator_n_jobs = getattr(self.estimator, "n_jobs", 1)
         logger.info(f"Estimator n_jobs={estimator_n_jobs}")
