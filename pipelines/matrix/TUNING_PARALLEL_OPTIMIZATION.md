@@ -143,3 +143,89 @@ print(tuner.best_params_)
 - Gaussian Process surrogate model training is still sequential (required for Bayesian optimization)
 - This change primarily speeds up the expensive model evaluation step
 - For datasets with long training times, the speedup will be more noticeable
+
+# Why Not Run All 20 Trials in Parallel?
+
+## TL;DR
+
+Running all 20 trials at once would **hurt performance** because:
+
+1. ❌ Breaks Bayesian optimization (no learning between trials)
+2. ❌ Would need 20 × 37 = 740 threads competing for 111 CPUs
+3. ❌ Memory explosion (20 XGBoost models in RAM simultaneously)
+4. ❌ Actually slower due to resource contention
+
+The current approach (3 at a time) is **optimal**! ✅
+
+---
+
+## Understanding Bayesian Optimization
+
+### What Makes It Smart
+
+Bayesian optimization **learns** from previous trials:
+
+```
+Trial 1-3:   Random exploration
+Trial 4-6:   "Hmm, high learning_rate + low max_depth seems good"
+Trial 7-9:   "Let me try variations around that region"
+Trial 10-12: "Found an even better combo!"
+Trial 13-20: "Refining the best region..."
+```
+
+### If We Run All 20 at Once
+
+```
+Trial 1-20: All random (no learning!)
+```
+
+This degrades to **random search** instead of intelligent Bayesian optimization.
+
+---
+
+## The Math: Why 3 Parallel Is Optimal
+
+### Current Approach (3 Parallel)
+
+```
+Iteration 1: Evaluate configs 1, 2, 3 in parallel (3 × 37 = 111 CPUs)
+            GP learns from results
+Iteration 2: Evaluate configs 4, 5, 6 in parallel (informed by 1-3)
+            GP learns from results
+Iteration 3: Evaluate configs 7, 8, 9 in parallel (informed by 1-6)
+            ...and so on
+
+Total: ~7 iterations of learning
+Result: Converges to optimal hyperparameters quickly
+```
+
+### If We Did 20 Parallel
+
+```
+Iteration 1: Evaluate all 20 configs (20 × 37 = 740 threads on 111 CPUs!!!)
+            - Massive resource contention
+            - Context switching overhead
+            - Memory pressure (20 models in RAM)
+
+Total: 1 iteration, no learning
+Result: Like throwing darts blindfolded
+```
+
+## Performance Analysis
+
+Let's assume each model takes **T** seconds to train:
+
+### Current (3 parallel, Bayesian learning)
+
+```
+Time: 7 iterations × T = 7T
+Quality: High (intelligent search finds good params early)
+Effective: Often finds optimal in 10-15 trials → ~5T actual time
+```
+
+### Sequential (1 at a time)
+
+```
+Time: 20 iterations × T = 20T
+Quality: High (full Bayesian learning)
+```
