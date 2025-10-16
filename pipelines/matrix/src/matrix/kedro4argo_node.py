@@ -152,6 +152,6 @@ ARGO_NODE_H3_MATRIX_GENERATION = ArgoResourceConfig(
     cpu_request=87,
     ephemeral_storage_limit=512,
     ephemeral_storage_request=512,
-    memory_limit=350,
-    memory_request=350,
+    memory_limit=340,
+    memory_request=340,
 )

@@ -1,6 +1,8 @@
 ARG CUDA_IMAGE=ubuntu:24.04
 FROM $CUDA_IMAGE AS build
 
+ENV UV_LINK_MODE=copy
+
 # ---------------------------------
 # ------- GPU/System start ------
 ENV DEBIAN_FRONTEND=noninteractive
@@ -11,12 +13,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     gcc curl g++ openjdk-17-jre-headless libomp-dev git && \
     apt-get clean
-
-
-# GPU setup
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
-LABEL com.nvidia.volumes.needed="nvidia_driver"
+    
 # ------- GPU/System end ----------
 # ---------------------------------
 # ------- Dependencies start ------
