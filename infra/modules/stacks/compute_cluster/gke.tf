@@ -4,6 +4,7 @@ data "google_client_config" "default" {
 locals {
   default_node_locations = "us-central1-c"                             # Single location for simplicity, can be expanded to multiple zones if needed
   gpu_node_locations     = "us-central1-a,us-central1-b,us-central1-c" # GPU nodes in multiple zones for availability
+  h3_node_locations      = "us-central1-a"                             # H3 nodes is only in the a zone
 
   # NOTE: Debugging node group scaling can be done using the GCP cluster logs, we create
   # node groups in 2 node locations, hence why the total amount of node groups.
@@ -123,16 +124,13 @@ locals {
     {
       name               = "h3-standard-88-nodes" # 88 CPUs, 512GB RAM - for largest ML workloads
       machine_type       = "h3-standard-88"
-      node_locations     = local.gpu_node_locations
+      node_locations     = local.h3_node_locations
       min_count          = 0
       max_count          = 10
       local_ssd_count    = 0
       disk_size_gb       = 200
-      disk_type          = "pd-ssd"
-      enable_gcfs        = true
-      enable_gvnic       = true
+      disk_type          = "pd-balanced"
       initial_node_count = 0
-      accelerator_count  = 1
       location_policy    = "ANY"
     }
   ]
@@ -154,7 +152,8 @@ locals {
     [for size in [8, 16, 32, 48, 64] : "n2d-highmem-${size}-spot-nodes"],
     [for size in [16, 32, 48, 64] : "n2-standard-${size}-nodes"],
     ["g2-standard-16-l4-nodes"],
-    ["g2-standard-16-l4-spot-nodes"]
+    ["g2-standard-16-l4-spot-nodes"],
+    ["h3-standard-88-nodes"]
   )
 
   # Create a map of node pool taints
