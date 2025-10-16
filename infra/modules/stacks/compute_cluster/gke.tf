@@ -119,6 +119,24 @@ locals {
     }
   ]
 
+  h3_node_pools = [
+    {
+      name               = "h3-standard-88-nodes" # 88 CPUs, 512GB RAM - for largest ML workloads
+      machine_type       = "h3-standard-88"
+      node_locations     = local.gpu_node_locations
+      min_count          = 0
+      max_count          = 10
+      local_ssd_count    = 0
+      disk_size_gb       = 200
+      disk_type          = "pd-ssd"
+      enable_gcfs        = true
+      enable_gvnic       = true
+      initial_node_count = 0
+      accelerator_count  = 1
+      location_policy    = "ANY"
+    }
+  ]
+
   # Combine all node pools
   node_pools_combined = concat(
     local.n2d_node_pools,
