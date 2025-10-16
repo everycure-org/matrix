@@ -15,9 +15,17 @@ def test_seed():
 
 def test_remove_overlap_with_overlap():
     # Given: DataFrames with overlapping CURIEs
-    drug_list = pd.DataFrame({"id": ["DRUG:1", "DRUG:2", "COMMON:1"], "other_drug_col": [1, 2, 3]})
+    drug_list = pd.DataFrame(
+        {
+            "id": ["DRUG:1", "DRUG:2", "COMMON:1"],
+            "translator_id": ["DRUG:1", "DRUG:2", "COMMON:1"],
+            "other_drug_col": [1, 2, 3],
+        }
+    )
     disease_list = pd.DataFrame({"id": ["DIS:A", "DIS:B", "COMMON:1"], "other_disease_col": ["a", "b", "c"]})
-    expected_drug_list = pd.DataFrame({"id": ["DRUG:1", "DRUG:2"], "other_drug_col": [1, 2]})
+    expected_drug_list = pd.DataFrame(
+        {"id": ["DRUG:1", "DRUG:2"], "translator_id": ["DRUG:1", "DRUG:2"], "other_drug_col": [1, 2]}
+    )
     expected_disease_list = pd.DataFrame({"id": ["DIS:A", "DIS:B"], "other_disease_col": ["a", "b"]})
 
     # When: remove_overlap is called
@@ -32,7 +40,9 @@ def test_remove_overlap_with_overlap():
 
 def test_remove_overlap_without_overlap():
     # Given: DataFrames with no overlapping CURIEs
-    drug_list = pd.DataFrame({"id": ["DRUG:1", "DRUG:2"], "other_drug_col": [1, 2]})
+    drug_list = pd.DataFrame(
+        {"id": ["DRUG:1", "DRUG:2"], "translator_id": ["DRUG:1", "DRUG:2"], "other_drug_col": [1, 2]}
+    )
     disease_list = pd.DataFrame({"id": ["DIS:A", "DIS:B"], "other_disease_col": ["a", "b"]})
 
     # When: remove_overlap is called
@@ -45,7 +55,7 @@ def test_remove_overlap_without_overlap():
 
 def test_remove_overlap_empty_inputs():
     # Given: Empty DataFrames
-    empty_drug_list = pd.DataFrame(columns=["id", "other_drug_col"])
+    empty_drug_list = pd.DataFrame(columns=["id", "translator_id", "other_drug_col"])
     empty_disease_list = pd.DataFrame(columns=["id", "other_disease_col"])
 
     # When: remove_overlap is called with two empty lists
@@ -55,7 +65,9 @@ def test_remove_overlap_empty_inputs():
     assert_frame_equal(result_both_empty["disease_list"], empty_disease_list, check_dtype=False, check_index_type=False)
 
     # Given: One empty DataFrame and one non-empty
-    drug_list = pd.DataFrame({"id": ["DRUG:1", "DRUG:2"], "other_drug_col": [1, 2]})
+    drug_list = pd.DataFrame(
+        {"id": ["DRUG:1", "DRUG:2"], "translator_id": ["DRUG:1", "DRUG:2"], "other_drug_col": [1, 2]}
+    )
     # When: remove_overlap is called with one empty list
     result_one_empty = remove_overlap(disease_list=empty_disease_list.copy(), drug_list=drug_list.copy())
     # Then: The original DataFrames are returned (one empty, one not)

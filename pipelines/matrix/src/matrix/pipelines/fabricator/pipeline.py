@@ -31,7 +31,7 @@ def _create_pairs(
     random.seed(seed)
 
     # Convert lists to sets of unique ids
-    drug_ids = list(drug_list["id"].unique())
+    drug_ids = list(drug_list["translator_id"].unique())
     disease_ids = list(disease_list["id"].unique())
 
     # Check that we have enough pairs
@@ -64,8 +64,8 @@ def remove_overlap(disease_list: pd.DataFrame, drug_list: pd.DataFrame):
     Returns:
         Two dataframes, clean drug and disease lists respectively.
     """
-    overlap = set(disease_list["id"]).intersection(set(drug_list["id"]))
-    overlap_mask_drug = drug_list["id"].isin(overlap)
+    overlap = set(disease_list["id"]).intersection(set(drug_list["translator_id"]))
+    overlap_mask_drug = drug_list["translator_id"].isin(overlap)
     overlap_mask_disease = disease_list["id"].isin(overlap)
     drug_list = drug_list[~overlap_mask_drug]
     disease_list = disease_list[~overlap_mask_disease]
