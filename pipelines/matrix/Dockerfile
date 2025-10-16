@@ -1,4 +1,4 @@
-ARG CUDA_IMAGE=nvidia/cuda:12.6.2-cudnn-runtime-ubuntu24.04
+ARG CUDA_IMAGE=ubuntu:24.04
 FROM $CUDA_IMAGE AS build
 
 # ---------------------------------
