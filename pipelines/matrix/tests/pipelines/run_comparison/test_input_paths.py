@@ -44,7 +44,7 @@ def test_input_path_modelling_run():
         for fold in range(num_folds)
     ]
     assert input_paths_instance_not_transformed.file_paths_list == [
-        f"gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/{data_release}/runs/{run_name}/datasets/model_output/fold_{fold}/matrix_predictions"
+        f"gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/{data_release}/runs/{run_name}/datasets/matrix_generation/model_output/fold_{fold}/matrix_predictions"
         for fold in range(num_folds)
     ]
     assert input_paths_instance_transformed.score_col_name == "transformed_treat_score"

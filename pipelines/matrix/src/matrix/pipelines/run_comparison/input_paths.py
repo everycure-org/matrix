@@ -38,7 +38,10 @@ class InputPathsModellingRun(InputPathsMultiFold):
             ]
         else:
             score_col_name = "treat score"
-            file_paths_list = [f"{base_path}/model_output/fold_{fold}/matrix_predictions" for fold in range(num_folds)]
+            file_paths_list = [
+                f"{base_path}/matrix_generation/model_output/fold_{fold}/matrix_predictions"
+                for fold in range(num_folds)
+            ]
 
         super().__init__(
             name=name,

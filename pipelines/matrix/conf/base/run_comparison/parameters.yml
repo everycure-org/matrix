@@ -12,23 +12,17 @@ run_comparison:
   # TODO: Link to docs. 
   input_paths:
     - _object: matrix.pipelines.run_comparison.input_paths.InputPathsModellingRun # Options: InputPathsSingleFold, InputPathsModellingRun , InputPathsMultiFold
-      name: xg_ensemble
-      data_release: v0.3.0
-      run_name: main-6b557c01
+      name: xg_ensemble_untransformed
+      data_release: v0.11.2
+      run_name: auto-kg-release-v0-11-2-39910042
       num_folds: 3
       is_transformed: False
     - _object: matrix.pipelines.run_comparison.input_paths.InputPathsModellingRun
-      name: xg_synth
-      data_release: v0.3.0
-      run_name: experiment-alexei-11-feb-25-xg-synth-main-d18d158b
+      name: xg_ensemble_transformed
+      data_release: v0.11.2
+      run_name: auto-kg-release-v0-11-2-39910042
       num_folds: 3
-      is_transformed: False
-    - _object: matrix.pipelines.run_comparison.input_paths.InputPathsModellingRun
-      name: rf
-      data_release: v0.3.0
-      run_name: experiment_alexei_11_feb_25_rf_main_ee18a9ef_matrix
-      num_folds: 3
-      is_transformed: False
+      is_transformed: True
 
   # Configuration for the evaluations to perform. Usually it is not necessary to modify these.
   available_ground_truth_cols: &available_ground_truth_cols
