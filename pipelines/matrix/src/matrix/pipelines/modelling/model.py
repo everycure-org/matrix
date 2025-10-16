@@ -4,8 +4,6 @@ from typing import Callable, List
 import numpy as np
 from sklearn.base import BaseEstimator
 
-from .utils import to_cpu
-
 logger = logging.getLogger(__name__)
 
 
@@ -57,6 +55,6 @@ class ModelWrapper:
         Returns:
             Aggregated probabilities scores of the individual models.
         """
-        all_preds = [to_cpu(estimator.predict_proba(X)) for estimator in self._estimators]
+        all_preds = [estimator.predict_proba(X) for estimator in self._estimators]
         stacked_preds = np.stack(all_preds)
         return np.apply_along_axis(self._agg_func, 0, stacked_preds)

@@ -126,7 +126,7 @@ locals {
       machine_type       = "h3-standard-88"
       node_locations     = local.h3_node_locations
       min_count          = 0
-      max_count          = 30
+      max_count          = 40
       local_ssd_count    = 0
       disk_size_gb       = 200
       disk_type          = "pd-balanced"
@@ -138,7 +138,7 @@ locals {
       machine_type       = "h3-standard-88"
       node_locations     = local.h3_node_locations
       min_count          = 0
-      max_count          = 30
+      max_count          = 40
       local_ssd_count    = 0
       disk_size_gb       = 200
       disk_type          = "pd-balanced"
