@@ -148,8 +148,8 @@ ARGO_NODE_MEDIUM_MATRIX_GENERATION = ArgoResourceConfig(
 ARGO_CPU_ONLY_NODE_MEDIUM = ArgoResourceConfig()
 
 ARGO_NODE_H3_MATRIX_GENERATION = ArgoResourceConfig(
-    cpu_limit=88,
-    cpu_request=88,
+    cpu_limit=87,
+    cpu_request=87,
     ephemeral_storage_limit=512,
     ephemeral_storage_request=512,
     memory_limit=350,
