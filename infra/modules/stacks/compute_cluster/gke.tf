@@ -14,7 +14,7 @@ locals {
     machine_type       = "n2d-highmem-${size}"
     node_locations     = local.default_node_locations
     min_count          = 0
-    max_count          = 10
+    max_count          = 30
     disk_type          = "pd-ssd"
     disk_size_gb       = 200
     enable_gcfs        = true
