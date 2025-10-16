@@ -93,7 +93,7 @@ paths:
   matrix_transformations:  data/releases/${versions.release}/runs/${run_name}/datasets/matrix_transformations
   evaluation:         data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
   inference:          data/releases/${versions.release}/runs/${run_name}/datasets/inference
-  run_comparison:     data/runs/${run_name}/datasets/run_comparison
+  run_comparison:     data/run_comparison/runs/${run_name}
 
   tmp:                data/tmp
 
