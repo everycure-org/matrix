@@ -30,7 +30,7 @@ locals {
       machine_type       = "g2-standard-16"
       node_locations     = local.gpu_node_locations
       min_count          = 0
-      max_count          = 20
+      max_count          = 16
       local_ssd_count    = 0
       disk_size_gb       = 200
       disk_type          = "pd-ssd"
@@ -86,7 +86,7 @@ locals {
       machine_type       = "g2-standard-16"
       node_locations     = local.gpu_node_locations
       min_count          = 0
-      max_count          = 30 # Higher max count for spot instances
+      max_count          = 16 # Higher max count for spot instances
       local_ssd_count    = 0
       disk_size_gb       = 200
       disk_type          = "pd-ssd"
@@ -126,12 +126,25 @@ locals {
       machine_type       = "h3-standard-88"
       node_locations     = local.h3_node_locations
       min_count          = 0
-      max_count          = 10
+      max_count          = 30
       local_ssd_count    = 0
       disk_size_gb       = 200
       disk_type          = "pd-balanced"
       initial_node_count = 0
       location_policy    = "ANY"
+    },
+    {
+      name               = "h3-standard-88-nodes-spot" # 88 CPUs, 512GB RAM - for largest ML workloads
+      machine_type       = "h3-standard-88"
+      node_locations     = local.h3_node_locations
+      min_count          = 0
+      max_count          = 30
+      local_ssd_count    = 0
+      disk_size_gb       = 200
+      disk_type          = "pd-balanced"
+      initial_node_count = 0
+      location_policy    = "ANY"
+      spot               = true
     }
   ]
 
