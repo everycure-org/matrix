@@ -170,7 +170,8 @@ locals {
     [for size in [16, 32, 48, 64] : "n2-standard-${size}-nodes"],
     ["g2-standard-16-l4-nodes"],
     ["g2-standard-16-l4-spot-nodes"],
-    ["h3-standard-88-nodes"]
+    ["h3-standard-88-nodes"],
+    ["h3-standard-88-nodes-spot"]
   )
 
   # Create a map of node pool taints
@@ -250,6 +251,11 @@ locals {
         value  = "large"
         effect = "NO_SCHEDULE"
       },
+      {
+        key    = "workload"
+        value  = "true"
+        effect = "NO_SCHEDULE"
+      }
     ],
     "h3-standard-88-nodes-spot" = [
       {
@@ -259,6 +265,11 @@ locals {
       },
       {
         key    = "spot"
+        value  = "true"
+        effect = "NO_SCHEDULE"
+      },
+      {
+        key    = "workload"
         value  = "true"
         effect = "NO_SCHEDULE"
       }
