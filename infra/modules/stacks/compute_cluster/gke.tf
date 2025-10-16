@@ -156,10 +156,10 @@ locals {
     local.n2d_node_pools,
     local.gpu_node_pools,
     local.management_node_pools,
-    # Disable spot node pools for now.
-    # var.environment == "dev" ? local.n2d_spot_node_pools : [],
-    # var.environment == "dev" ? local.gpu_spot_node_pools : [],
-    local.github_runner_node_pools
+    local.n2d_spot_node_pools,
+    local.gpu_spot_node_pools,
+    local.github_runner_node_pools,
+    local.h3_node_pools
   )
 
   # Define node pools that should have the large memory taint
