@@ -58,7 +58,7 @@ integration.prm.unified_normalization_summary:
   filepath: ${globals:paths.integration}/prm/unified_normalization_summary
   table: "unified_normalization_summary"
 
-integration.prm.metric_abox_tbox:
+integration.int.metric_abox_tbox:
   <<: *_bigquery_ds
   filepath: ${globals:paths.integration}/int/metric_abox_tbox
   table: "metric_abox_tbox"
