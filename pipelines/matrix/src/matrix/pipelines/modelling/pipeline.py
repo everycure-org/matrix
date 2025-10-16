@@ -5,7 +5,6 @@ from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
 from matrix.kedro4argo_node import (
     ARGO_CPU_ONLY_NODE_MEDIUM,
-    ARGO_GPU_NODE_MEDIUM,
     ArgoNode,
     ArgoResourceConfig,
 )
@@ -115,8 +114,7 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                         + [f"modelling.{shard}.fold_{fold}.{model_name}.models.model" for shard in range(num_shards)],
                         outputs=f"modelling.fold_{fold}.{model_name}.models.model",
                         name=f"create_{model_name}_model_fold_{fold}",
-                        # TODO: Change to CPU.
-                        argo_config=ARGO_GPU_NODE_MEDIUM,
+                        argo_config=ARGO_CPU_ONLY_NODE_MEDIUM,
                     ),
                     ArgoNode(
                         func=partial_fold(nodes.apply_transformers, fold),

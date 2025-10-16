@@ -2,22 +2,13 @@
 
 ## TL;DR: Keep `n_jobs=-1` - It's Now Smart! ✅
 
-Your current config is **optimal**. The tuner now automatically prevents resource contention.
-
 ## What Changed
 
-### Before (Your Concern)
+### Intelligent CPU Selection
 
 ```
-XGBoost: n_jobs=-1 → tries to use all 88 CPUs
-Parallel search: tries to evaluate many configs at once
-Result: Potential 88 × 88 = 7,744 threads → DISASTER! 🔥
-```
-
-### After (Now Intelligent)
-
-```
-XGBoost config: n_jobs=-1 (you keep this)
+# Example for 88 CPUs (SMT Off)
+XGBoost config: n_jobs=-1
 Tuner detects: 88 CPUs available
 Tuner calculates:
   - n_parallel_evals = max(2, min(4, √88)) = 4 configs in parallel
@@ -26,33 +17,20 @@ Tuner adjusts XGBoost: n_jobs = 22 (automatically, temporarily)
 Result: 4 × 22 = 88 CPUs fully utilized, no contention! ✅
 ```
 
-## For Your 111-CPU Machine
-
-### Current Config (KEEP IT)
-
-```yaml
-# pipelines/matrix/conf/base/modelling/parameters/xg_ensemble.yml
-estimator:
-  _object: xgboost.XGBClassifier
-  n_jobs: -1 # ✅ Keep this
-  random_state: ${globals:random_state}
-  tree_method: hist
-  device: cpu
-```
-
 ### What Happens Automatically
 
 1. **Detection Phase:**
 
    - Tuner sees: `estimator.n_jobs = -1`
-   - Detects: 111 CPUs available (`os.cpu_count()`)
+   - Detects: 88 CPUs available (`os.cpu_count()`)
+   - We deduct 1 CPU for other operations. Total 87 CPU is seen by tuner.
 
 2. **Calculation Phase:**
 
    - Searches divisors in range 3-8 (for >64 CPUs)
    - Tests each: 3, 4, 5, 6, 7, 8
    - Evaluates efficiency: 3×37=111 (100%), 4×27=108 (97.3%), etc.
-   - Finds best: **3 divides 111 perfectly!**
+   - Finds best: **3 divides 87 perfectly!**
    - Selects: `n_parallel_evals = 3, threads_per_model = 37`
 
 3. **Execution Phase:**
@@ -101,9 +79,9 @@ The cap at 2-4 parallel evals prevents:
 
 ### ✅ DO:
 
-- Keep your current config (`n_jobs=-1` in both places)
+- Keep our current config (`n_jobs=-1` in both places)
 - Let the tuner handle CPU allocation automatically
-- Monitor your first run to verify good CPU utilization
+- Monitor our first run to verify good CPU utilization
 
 ### ❌ DON'T:
 
@@ -113,7 +91,7 @@ The cap at 2-4 parallel evals prevents:
 
 ## Verification
 
-To verify it's working, you can add logging in your pipeline run. The tuner will:
+To verify it's working, you can add logging in our pipeline run. The tuner will:
 
 1. Detect 88 CPUs
 2. Calculate 4 parallel evaluations
@@ -122,15 +100,15 @@ To verify it's working, you can add logging in your pipeline run. The tuner will
 
 ## Summary
 
-**Your Question:** "Is n_jobs=-1 for both fine or needs to be set to something else?"
+**Question:** "Is n_jobs=-1 for both fine or needs to be set to something else?"
 
 **Answer:** ✅ **n_jobs=-1 is PERFECT!**
 
 The tuner is now smart enough to:
 
-- Detect your 88 CPUs
+- Detect our 88 CPUs
 - Calculate optimal parallelization (4 configs × 22 threads)
 - Prevent resource contention automatically
 - Give you 2-4× speedup without any manual tuning
 
-Just keep your current config and enjoy the automatic optimization! 🚀
+Just keep our current config and enjoy the automatic optimization! 🚀

@@ -62,10 +62,7 @@ def test_nop_tuner_repr() -> None:
 
 
 def test_gaussian_search_parallel():
-    """Test GaussianSearch with parallel evaluation support.
-
-    NOTE: This test was partially generated using AI assistance.
-    """
+    """Test GaussianSearch with parallel evaluation support."""
 
     # Create a simple estimator with n_jobs=-1
     class ParallelEstimator(BaseEstimator):

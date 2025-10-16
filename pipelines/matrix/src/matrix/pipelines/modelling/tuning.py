@@ -9,8 +9,6 @@ from skopt import Optimizer
 from skopt.plots import plot_convergence
 from skopt.space.space import Dimension
 
-from .utils import to_estimator_device
-
 logger = logging.getLogger(__name__)
 
 
@@ -56,8 +54,6 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
     parallel evaluation of hyperparameter configurations. When the underlying
     estimator has n_jobs=-1, multiple hyperparameter configurations will be
     evaluated in parallel.
-
-    NOTE: The parallel evaluation implementation was partially generated using AI assistance.
     """
 
     def __init__(
@@ -118,9 +114,9 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
 
             scores = []
             for train, test in self.splitter.split(X, y):
-                X_train_split = to_estimator_device(X[train], self.estimator)
+                X_train_split = X[train]
                 self.estimator.fit(X_train_split, y[train])
-                X_test_split = to_estimator_device(X[test], self.estimator)
+                X_test_split = X[test]
                 y_pred = self.estimator.predict(X_test_split)
                 scores.append(self.scoring(y_pred, y[test]))
 

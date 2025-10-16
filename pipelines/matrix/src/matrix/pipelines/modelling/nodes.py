@@ -20,7 +20,6 @@ from matrix.datasets.pair_generator import SingleLabelPairGenerator
 
 from .model import ModelWrapper
 from .model_selection import DiseaseAreaSplit
-from .utils import to_estimator_device
 
 logger = logging.getLogger(__name__)
 
@@ -500,7 +499,7 @@ def train_model(
     y_train = data.loc[mask, target_col_name].values
 
     logger.info(f"Starting model: {estimator} training...")
-    estimator_fit = estimator.fit(to_estimator_device(X_train, estimator), y_train)
+    estimator_fit = estimator.fit(X_train, y_train)
     logger.info("Model training completed...")
     return estimator_fit
 
