@@ -1,7 +1,4 @@
-"""A module containing classes for processing user for the run comparison pipeline.
-
-TODO: Add unit tests.
-"""
+"""A module containing classes for processing user for the run comparison pipeline."""
 
 from dataclasses import dataclass
 
