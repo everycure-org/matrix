@@ -255,27 +255,15 @@ def make_predictions_and_sort(
             StructField(unknown_score_col_name, DoubleType(), True),
         ]
     )
-    # Repartition to create more parallelism and better utilize Spark executors
-    # Using spark.sparkContext.defaultParallelism would be ideal, but we use a heuristic here
-    num_partitions = max(200, pairs_with_embeddings.rdd.getNumPartitions() * 4)
-    logger.info(f"Repartitioning to {num_partitions} partitions for model prediction.")
-    pairs_with_scores = (
-        pairs_with_embeddings.repartition(num_partitions, "target")
-        .groupBy("target")
-        .applyInPandas(model_predict, model_predict_schema)
-    )
-    logger.info("Model predictions completed.")
+    pairs_with_scores = pairs_with_embeddings.groupBy("target").applyInPandas(model_predict, model_predict_schema)
     pairs_sorted = pairs_with_scores.orderBy(treat_score_col_name, ascending=False)
-    logger.info("Sorting of pairs completed.")
 
     # We are using the RDD.zipWithIndex function here. Getting it through the DataFrame API would involve a Window function without partition, effectively pulling all data into one single partition.
     # Here is what happens in the next line:
     # 1. zipWithIndex creates a tuple with the shape (row, index)
     # 2. When moving from RDD to DataFrame, the column names are named after the Scala tuple fields: _1 for the row and _2 for the index
     # 3. We're adding 1 to the rank so that it is not zero indexed
-    logger.info("Generating ranks and quantile ranks.")
     pairs_ranked = pairs_sorted.rdd.zipWithIndex().toDF().select(F.col("_1.*"), (F.col("_2") + 1).alias("rank"))
-    logger.info("Rank generation completed.")
     pairs_ranked_count = pairs_ranked.count()
     return pairs_ranked.withColumn("quantile_rank", F.col("rank") / pairs_ranked_count)
 
