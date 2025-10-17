@@ -73,18 +73,17 @@ Please see the [data documentation](../data/ground_truth_lists.md) for more info
 
 #### Split Generation
 
-The `make_folds` function creates cross-validation splits using a defined splitter (e.g. Disease split, [StratifiedShuffleSplit](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedShuffleSplit.html)).
+The `make_folds` function creates cross-validation splits using a defined splitter (e.g. Disease split, [KFold](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.KFold.html)).
 
-For example, for a 3 fold model using a 90/10 train/test split (repeated per model configured in the dynamic mapping):
+For example, for a 5-fold cross-validation strategy ensures that each ground truth pair appears in the test split of exactly one fold  (repeated per model configured in the dynamic mapping):
 
-- Generates train/test splits for folds 0-2 using the specified splitter strategy
-  - Train 90%
-  - Test 10%
-- Creates a full training dataset for fold 3 (no test split)
-- Each split maintains the distribution of positive and negative examples
+- Generates train/test splits for folds 0-4 using the specified splitter strategy
+  - Train ~80%
+  - Test ~20%
+- Creates a full training dataset for fold 5 (no test split)
 
 !!! note
-The train/test proportions (90%/10%) can be adjusted in the configuration [settings](https://github.com/everycure-org/matrix/blob/main/pipelines/matrix/conf/base/modelling/parameters/defaults.yml#L27).
+The number of folds can be adjusted in the configuration [settings](https://github.com/everycure-org/matrix/blob/main/pipelines/matrix/conf/base/modelling/parameters/defaults.yml#L27).
 
 #### Hyperparameter Optimization Process
 

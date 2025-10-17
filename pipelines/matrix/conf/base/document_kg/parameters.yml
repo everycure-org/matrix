@@ -1,0 +1,184 @@
+document_kg:
+  pks_parsing:
+    sources:
+      infores:
+        parser:
+          _object: matrix.pipelines.document_kg.parsers.InforesParser
+          name: infores
+          id_column: id
+          extracted_metadata:
+            - id
+            - status
+            - name
+            - description
+            - knowledge_level
+            - agent_type
+            - url
+            - xref
+            - synonym
+            - consumed_by
+            - consumes
+          data_path: information_resources
+
+      reusabledata:
+        parser:
+          _object: matrix.pipelines.document_kg.parsers.ReusableDataParser
+          name: reusabledata
+          id_column: updated_id
+          original_id_column: id
+          extracted_metadata:
+            - id
+            - description
+            - source
+            - data-tags
+            - grade-automatic
+            - source-link
+            - source-type
+            - status
+            - data-field
+            - data-type
+            - data-categories
+            - data-access
+            - license
+            - license-type
+            - license-link
+            - license-hat-used
+            - license-issues
+            - license-commentary
+            - license-commentary-embeddable
+            - was-controversial
+            - provisional
+            - contacts
+
+      kgregistry:
+        parser:
+          _object: matrix.pipelines.document_kg.parsers.KGRegistryParser
+          name: kgregistry
+          id_column: updated_id
+          original_id_column: id
+          extracted_metadata:
+            - id
+            - activity_status
+            - category
+            - collection
+            - contacts
+            - creation_date
+            - curators
+            - description
+            - domains
+            - evaluation_page
+            - fairsharing_id
+            - homepage_url
+            - infores_id
+            - language
+            - last_modified_date
+            - layout
+            - license
+            - name
+            - publications
+            - repository
+            - tags
+            - usages
+            - version
+            - warnings
+          data_path: resources
+
+      matrix_curated:
+        parser:
+          _object: matrix.pipelines.document_kg.parsers.MatrixCuratedMetadataParser
+          name: matrixcurated
+          id_column: primary_knowledge_source
+          extracted_metadata:
+            - license_name
+            - license_source_link
+
+      matrix_reviews:
+        parser:
+          _object: matrix.pipelines.document_kg.parsers.MatrixReviewsParser
+          name: matrixreviews
+          id_column: primary_knowledge_source
+          extracted_metadata:
+            - domain_coverage_score
+            - domain_coverage_comments
+            - source_scope_score
+            - source_scope_score_comment
+            - utility_drugrepurposing_score
+            - utility_drugrepurposing_comment
+            - label_rubric
+            - label_rubric_rationale
+            - label_manual
+            - label_manual_comment
+            - reviewer
+    templates: 
+      license: |
+        #### License information
+        - **Matrix manual curation**: {%if matrix_license_name is not none %}[{{ matrix_license_name }}]({{ matrix_license_url }}){% else %}No license information curated.{% endif %}{%if kg_registry_license_id is not none %}
+        - **KG Registry**: {%if kg_registry_license_name is not none %}[{{ kg_registry_license_name }}]({{ kg_registry_license_id }}){% else %}[{{ kg_registry_license_id }}]({{ kg_registry_license_id }}){% endif %}{% endif %}{%if reusabledata_license is not none %}
+        - **Reusable Data**: {{ reusabledata_license }} ({{ reusabledata_license_type | default("Unknown license type") }}){% endif %}{%if reusabledata_license_issues is not none %}
+            - _Issues_: {{ reusabledata_license_issues }}{% endif %}{%if reusabledata_license_commentary is not none %}
+            - _Commentary_: {{ reusabledata_license_commentary }}{% endif %}
+      main: |
+        # {{ title }}
+                                          
+        This page is automatically generated with curated information about primary knowledge sources
+        leveraged in the MATRIX Knowledge Graph, mainly regarding licensing information and 
+        potential relevancy assessments for drug repurposing.
+
+        This internally curated information is augmented with information from three external resources:
+
+        1. [Information Resource Registry](https://biolink.github.io/information-resource-registry/)
+        2. [reusabledata.org](https://reusabledata.org/)
+        3. [KG Registry](https://kghub.org/kg-registry/)
+
+        ## Overview
+
+        {{ overview_table }}
+
+        ## Detailed information about each primary knowledge sources
+
+        {% for doc in pks_documentation_texts %}
+        {{ doc }}
+        {% endfor %}
+      overview: |
+        **Overview table**
+        
+        {% if data %}
+        | Resource | License |
+        | -------- | ------- |
+        {% for rec in data -%}
+        | {{ rec.name }} | {%if rec.license_name is not none %}[{{ rec.license_name }}]({{ rec.license_url }}){% else %}No license information curated.{% endif %} |
+        {% endfor %}{% endif %}
+      pks_list: |
+        ### Source: {{ title }} ({{ id }})
+
+        _{{ description }}_
+
+        {% if urls %}
+        **Links**:
+
+        {% for url in urls -%}
+        - [{{ url }}]({{ url }})
+        {% endfor %}{% endif %}
+
+        {{ license }}
+
+        {{ review }}
+      review: |
+        #### Review information for this resource
+
+        {%if label_rubric is not none %}
+
+        ??? note "Expand to see detailed review"
+
+            Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
+
+            - **Reviewer**: {{ reviewer }}
+            - **Overall review score**:
+                - Reviewer: `{{ label_manual }}` - {{ label_manual_comment }}
+                - Rubric: `{{ label_rubric }}` - {{ label_rubric_rationale }}
+            - **Domain Coverage**: `{{ domain_coverage_score }}` - {{ domain_coverage_comments }}
+            - **Source Scope**: `{{ source_scope_score }}` - {{ source_scope_score_comment }}
+            - **Drug Repurposing Utility**: `{{ utility_drugrepurposing_score }}` - {{ utility_drugrepurposing_comment }}
+        {% else %}
+        No review information available.
+        {% endif %}

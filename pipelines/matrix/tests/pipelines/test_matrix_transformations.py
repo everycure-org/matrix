@@ -409,7 +409,8 @@ def test_return_predictions(spark, sample_rank_based_transformed_matrix, sample_
     known_pairs = sample_known_pairs
 
     # When the return predictions function is applied
-    result = return_predictions(matrix, known_pairs)
+    n_cross_val_folds = 3
+    result = return_predictions(n_cross_val_folds, matrix, known_pairs)
 
     # The known_pairs from the final cross-validation fold should be included in the result with no scores, and with the correct is_known_positive and is_known_negative columns
     assert result.count() == 7
