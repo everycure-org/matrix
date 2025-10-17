@@ -2,6 +2,7 @@ import logging
 from typing import Callable, List
 
 import numpy as np
+from joblib import Parallel, delayed
 from sklearn.base import BaseEstimator
 
 logger = logging.getLogger(__name__)
@@ -54,7 +55,11 @@ class ModelWrapper:
 
         Returns:
             Aggregated probabilities scores of the individual models.
+
+        Note:
+            Uses joblib parallelization to speed up prediction across multiple estimators.
         """
-        all_preds = [estimator.predict_proba(X) for estimator in self._estimators]
+        # NOTE: This function was partially modified using AI assistance.
+        all_preds = Parallel(n_jobs=-1)(delayed(estimator.predict_proba)(X) for estimator in self._estimators)
         stacked_preds = np.stack(all_preds)
         return np.apply_along_axis(self._agg_func, 0, stacked_preds)
