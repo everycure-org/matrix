@@ -1,7 +1,7 @@
 run_comparison:
 
   # Options to select which uncertainty estimation methods to perform. Applies to all applicable evaluations. 
-  perform_multifold_uncertainty_estimation: True # If False, only the first fold of data is used.
+  perform_multifold_uncertainty_estimation: False # If False, only the first fold of data is used.
   perform_bootstrap_uncertainty_estimation: True
 
   # Option to assert consistent drug list, disease list, training set and test set across all models.
