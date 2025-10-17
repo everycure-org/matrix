@@ -9,7 +9,7 @@ import pyspark.sql as ps
 import pyspark.sql.functions as sf
 import requests
 from matrix.pipelines.preprocessing.normalization import resolve_ids_batch_async
-from matrix_io_utils.primekg import coalesce_duplicate_columns, fix_curies, mondo_grouped_exploded
+from matrix_io_utils.primekg import coalesce_duplicate_columns, fix_curies
 from matrix_pandera.validator import Column, DataFrameSchema, check_output
 from pyspark.sql.functions import udf
 from pyspark.sql.types import StringType
@@ -41,13 +41,10 @@ def primekg_build_nodes(
     main = pl.DataFrame({"node_index": pl.Series([], dtype=pl.Utf8)})
 
     main = main.join(nodes, on=["node_index"], how="full", coalesce=True)
-
     main = main.join(drug_features, on=["node_index"], how="full", coalesce=True)
     main = coalesce_duplicate_columns(main, keep=["node_index"])  # preserves first non-null among suffixed columns
-
-    main = main.join(disease_features, on=["node_index"], how="full", coalesce=True)
-    main = coalesce_duplicate_columns(main, keep=["node_index"])  # again after join
-
+    # main = main.join(disease_features, on=["node_index"], how="full", coalesce=True)
+    # main = coalesce_duplicate_columns(main, keep=["node_index"])  # again after join
     # Type/category mapping and CURIE formatting
     main = (
         main.with_columns(
@@ -88,20 +85,7 @@ def primekg_build_nodes(
                 .alias("node_source"),
             ]
         )
-        .with_columns(
-            [
-                pl.when(pl.col("node_source").str.contains("MONDO_grouped", literal=True))
-                .then(
-                    pl.concat_str(
-                        [pl.lit("MONDO"), pl.col("mondo_id").cast(pl.Utf8).str.pad_start(7, "0")],
-                        separator=":",
-                        ignore_nulls=True,
-                    )
-                )
-                .otherwise(pl.col("node_source"))
-                .alias("node_source"),
-            ]
-        )
+        # .with_columns([pl.when(pl.col("node_source").str.contains("MONDO_grouped", literal=True)).then(pl.concat_str([pl.lit("MONDO"), pl.col("mondo_id").cast(pl.Utf8).str.pad_start(7, "0")],separator=":",ignore_nulls=True,)).otherwise(pl.col("node_source")).alias("node_source"),])
         .with_columns(
             [
                 pl.when(pl.col("node_type") == pl.lit("exposure"))
@@ -201,11 +185,10 @@ def primekg_build_nodes(
         .rename({"node_type": "category"})
         .unique(subset=["id", "category"], keep="first")
     )
-
     return main
 
 
-def primekg_build_edges(edges: pl.DataFrame) -> pl.DataFrame:
+def primekg_build_edges(raw_edges: pl.DataFrame) -> pl.DataFrame:
     """Build the edges tsv file.
 
     Please refer to this site for downloads: https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/IXA7BM
@@ -219,7 +202,7 @@ def primekg_build_edges(edges: pl.DataFrame) -> pl.DataFrame:
         edges: The edges.csv file from a PrimeKG download
     """
 
-    edges = edges.lazy().with_columns(
+    edges = raw_edges.lazy().with_columns(
         [
             pl.lit("knowledge_assertion").alias("knowledge_level"),
             pl.lit("not_provided").alias("agent_type"),
@@ -237,7 +220,7 @@ def primekg_build_edges(edges: pl.DataFrame) -> pl.DataFrame:
         ]
     )
 
-    edges = mondo_grouped_exploded(edges)
+    # edges = mondo_grouped_exploded(edges)
     edges = fix_curies(edges)
 
     edges = (
@@ -325,7 +308,6 @@ def primekg_build_edges(edges: pl.DataFrame) -> pl.DataFrame:
         .drop(["display_relation"], strict=False)
         .unique(subset=["subject", "predicate", "object"], keep="first")
     )
-
     return final_df
 
 
