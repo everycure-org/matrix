@@ -5,11 +5,6 @@ from . import nodes
 from .settings import RUN_COMPARISON_SETTINGS
 
 # TODO:
-# - Add unit tests
-#    - RecallAtN
-#    - MatrixPairs
-#    - combine_predictions nodes
-#    - InputPaths
 # - Test on real data
 
 
@@ -23,23 +18,33 @@ def create_pipeline(**kwargs) -> Pipeline:
     pipeline_nodes.extend(
         [
             ArgoNode(
-                func=nodes.create_input_matrices_dataset,
+                func=nodes.process_input_filepaths,
                 inputs=[
                     "params:run_comparison.input_paths",
                 ],
                 outputs="run_comparison.input_matrices",
-                name=f"create_input_matrices_dataset",
+                name=f"process_input_filepaths",
             ),
             ArgoNode(
-                func=nodes.combine_predictions,
+                func=nodes.combine_matrix_pairs,
                 inputs=[
                     "run_comparison.input_matrices",
                     "params:run_comparison.available_ground_truth_cols",
                     "params:run_comparison.perform_multifold_uncertainty_estimation",
                     "params:run_comparison.assert_data_consistency",
                 ],
-                outputs=["run_comparison.combined_predictions", "run_comparison.predictions_info"],
-                name=f"combine_predictions",
+                outputs=["run_comparison.combined_pairs_dict", "run_comparison.predictions_info"],
+                name=f"combine_matrix_pairs",
+            ),
+            ArgoNode(
+                func=nodes.restrict_predictions,
+                inputs=[
+                    "run_comparison.input_matrices",
+                    "run_comparison.combined_pairs_dict",
+                    "run_comparison.predictions_info",
+                ],
+                outputs="run_comparison.combined_predictions",
+                name=f"restrict_predictions",
             ),
         ]
     )
