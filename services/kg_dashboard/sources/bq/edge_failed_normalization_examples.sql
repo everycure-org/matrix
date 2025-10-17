@@ -1,5 +1,5 @@
 WITH failed_normalizations AS (
-    SELECT
+    SELECT DISTINCT
         u.id,
         u.original_id,
         SPLIT(u.id, ':')[OFFSET(0)] AS prefix,
