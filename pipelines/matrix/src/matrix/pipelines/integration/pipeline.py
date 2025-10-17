@@ -229,7 +229,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     },
                     outputs="integration.int.metric_abox_tbox",
                     name="metric_abox_tbox",
-                    tags=["metrics"],
+                    tags=["metrics", "validation"],
                 ),
             ]
         )
