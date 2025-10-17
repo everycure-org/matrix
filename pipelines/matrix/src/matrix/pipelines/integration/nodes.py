@@ -4,6 +4,7 @@ from functools import partial, reduce
 import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
+from bmt import toolkit
 from joblib import Memory
 from matrix_inject.inject import inject_object
 from matrix_pandera.validator import Column, DataFrameSchema, check_output
@@ -15,6 +16,8 @@ from matrix.pipelines.integration.filters import determine_most_specific_categor
 # TODO move these into config
 memory = Memory(location=".cache/nodenorm", verbose=0)
 logger = logging.getLogger(__name__)
+
+tk = toolkit.Toolkit()
 
 
 @inject_object()
@@ -555,4 +558,25 @@ def normalization_summary_nodes_only(
             "source_role",
             "upstream_data_source",
         )
+    )
+
+
+def metric_abox_tbox(edges: ps.DataFrame) -> ps.DataFrame:
+    """
+    Count ABox (instance-level) and TBox (concept-level) edges by primary_knowledge_source.
+    Args:
+        edges: DataFrame with edge data including predicate and primary_knowledge_source columns
+    Returns:
+        DataFrame with counts by primary_knowledge_source
+    """
+
+    CONCEPT = "related_to_at_concept_level"
+    INSTANCE = "related_to_at_instance_level"
+
+    concept_desc = tk.get_descendants(CONCEPT, mixin=True, formatted=True, reflexive=True)
+    instance_desc = tk.get_descendants(INSTANCE, mixin=True, formatted=True, reflexive=True)
+
+    return edges.groupBy("primary_knowledge_source").agg(
+        F.sum(F.when(F.col("predicate").isin(instance_desc), 1).otherwise(0)).alias("abox"),
+        F.sum(F.when(F.col("predicate").isin(concept_desc), 1).otherwise(0)).alias("tbox"),
     )
