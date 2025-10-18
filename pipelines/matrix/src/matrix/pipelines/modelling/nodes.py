@@ -505,7 +505,7 @@ def train_model(
 
 
 @inject_object()
-def create_model(agg_func: Callable, *estimators, n_jobs: int = 1) -> ModelWrapper:
+def create_model(agg_func: Callable, *estimators) -> ModelWrapper:
     """Function to create final model.
 
     Args:
@@ -520,7 +520,7 @@ def create_model(agg_func: Callable, *estimators, n_jobs: int = 1) -> ModelWrapp
         n_jobs=1 is recommended when using the model in PySpark to avoid
         resource contention between Spark executors and joblib parallelization.
     """
-    return ModelWrapper(estimators=estimators, agg_func=agg_func, n_jobs=n_jobs)
+    return ModelWrapper(estimators=estimators, agg_func=agg_func)
 
 
 @inject_object()
