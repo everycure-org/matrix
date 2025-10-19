@@ -1,0 +1,76 @@
+name: Cleanup Stale Workbenches
+
+on:
+  schedule:
+    # Run every Sunday at 2 AM UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  cleanup-workbenches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Get list of stale compute instances
+        run: |
+          gcloud compute instances list \
+            --project=mtrx-wg2-modeling-dev-9yj \
+            --format="table(name, zone, status, lastStartTimestamp)" \
+            --sort-by="~lastStartTimestamp" > instances.txt
+          cat instances.txt
+
+      - name: Use Claude Code to cleanup stale workbenches
+        uses: anthropics/claude-code@v1
+        with:
+          prompt: |
+            I need you to help clean up stale workbench entries.
+
+            Here's the task:
+            1. Review the compute instances listed in instances.txt
+            2. Identify instances that haven't been running for more than 3 months (check lastStartTimestamp)
+            3. Cross-reference stale instances with infra/deployments/wg2/workbenches.yaml
+            4. Remove any lines from workbenches.yaml that correspond to stale instances
+            5. Create a summary comment of what was removed
+
+            The workbenches.yaml file maps usernames to email addresses. You should remove entries for instances that are stale.
+
+            Only modify the file if there are actual stale instances found. If no changes are needed, just report that.
+          claude_args: "--max-turns 5"
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Create Pull Request
+        if: success()
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: |
+            chore: remove stale workbenches
+
+            Automatically removed workbenches with instances inactive for >3 months.
+          title: 'chore: cleanup stale workbenches'
+          body: |
+            ## Description
+            Automated cleanup of stale workbench entries based on GCP compute instance activity.
+
+            Instances inactive for more than 3 months have been removed from `infra/deployments/wg2/workbenches.yaml`.
+
+            ### Changes
+            - Scanned GCP compute instances in `mtrx-wg2-modeling-dev-9yj` project
+            - Identified instances with `lastStartTimestamp` >3 months ago
+            - Removed corresponding entries from workbenches configuration
+          branch: chore/cleanup-stale-workbenches-${{ github.run_number }}
+          delete-branch: true
