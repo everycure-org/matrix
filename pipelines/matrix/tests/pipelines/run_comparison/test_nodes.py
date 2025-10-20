@@ -1,6 +1,6 @@
 import polars as pl
 import pytest
-from matrix.pipelines.run_comparison.nodes import combine_predictions
+from matrix.pipelines.run_comparison.nodes import combine_matrix_pairs, restrict_predictions
 from polars.testing import assert_frame_equal
 
 
@@ -79,30 +79,67 @@ def sample_data_inconsistent_folds():
     }
 
 
-def test_combine_predictions(sample_data_inconsistent_models, sample_data_inconsistent_folds):
+def test_combine_matrix_pairs(sample_data_inconsistent_models, sample_data_inconsistent_folds):
     # Given two sets of sample data:
     # 1) Inconsistent drugs list between models but consistent within folds,
     # 2) Inconsistent drugs list between folds
-    # When the combine_predictions function is called
-    # Then on sample data 1 with data consistency assertion disabled, matrix harmonization is performed
-    combined_predictions, predictions_info = combine_predictions(
+    # When the function is called
+    # Then on sample data 1 with data consistency assertion enabled, an exception is raised
+    with pytest.raises(ValueError):
+        _ = combine_matrix_pairs(
+            sample_data_inconsistent_models,
+            available_ground_truth_cols=["is_known_positive"],
+            perform_multifold=True,
+            assert_data_consistency=True,
+        )
+    # Then on sample data 1 with multifold disabled, matrix pairs are combined for first fold
+    combined_matrix_pairs, _ = combine_matrix_pairs(
+        sample_data_inconsistent_models,
+        available_ground_truth_cols=["is_known_positive"],
+        perform_multifold=False,
+        assert_data_consistency=False,
+    )
+    assert list(combined_matrix_pairs.keys()) == ["fold_0"]
+    assert_frame_equal(
+        combined_matrix_pairs["fold_0"],
+        pl.LazyFrame(
+            {
+                "source": [1, 2, 1, 2],
+                "target": [1, 1, 2, 2],
+                "is_known_positive": [True, False, False, False],
+            }
+        ),
+        check_row_order=False,
+        check_column_order=False,
+    )
+
+    # Then on sample data 1 with multifold enables, matrix pairs are combined for all fold
+    combined_matrix_pairs, predictions_info = combine_matrix_pairs(
         sample_data_inconsistent_models,
         available_ground_truth_cols=["is_known_positive"],
         perform_multifold=True,
         assert_data_consistency=False,
     )
+    assert set(combined_matrix_pairs.keys()) == {"fold_0", "fold_1"}
     assert_frame_equal(
-        combined_predictions,
+        combined_matrix_pairs["fold_0"],
         pl.LazyFrame(
             {
                 "source": [1, 2, 1, 2],
                 "target": [1, 1, 2, 2],
-                "is_known_positive_fold_0": [True, False, False, False],
-                "is_known_positive_fold_1": [False, True, False, False],
-                "score_base_model_fold_0": [1 for _ in range(4)],
-                "score_base_model_fold_1": [2 for _ in range(4)],
-                "score_different_model_fold_0": [3 for _ in range(4)],
-                "score_different_model_fold_1": [4 for _ in range(4)],
+                "is_known_positive": [True, False, False, False],
+            }
+        ),
+        check_row_order=False,
+        check_column_order=False,
+    )
+    assert_frame_equal(
+        combined_matrix_pairs["fold_1"],
+        pl.LazyFrame(
+            {
+                "source": [1, 2, 1, 2],
+                "target": [1, 1, 2, 2],
+                "is_known_positive": [False, True, False, False],
             }
         ),
         check_row_order=False,
@@ -113,41 +150,86 @@ def test_combine_predictions(sample_data_inconsistent_models, sample_data_incons
         "num_folds": 2,
         "available_ground_truth_cols": ["is_known_positive"],
     }
-    # Then on sample data 1 with data consistency assertion enabled, an exception is raised
-    with pytest.raises(ValueError):
-        _ = combine_predictions(
-            sample_data_inconsistent_models,
-            available_ground_truth_cols=["is_known_positive"],
-            perform_multifold=True,
-            assert_data_consistency=True,
-        )
-    # Then on sample data 1 with multifold disabled, the first fold is used
-    combined_predictions, _ = combine_predictions(
-        sample_data_inconsistent_models,
-        available_ground_truth_cols=["is_known_positive"],
-        perform_multifold=False,
-        assert_data_consistency=False,
-    )
-    assert_frame_equal(
-        combined_predictions,
-        pl.LazyFrame(
-            {
-                "source": [1, 2, 1, 2],
-                "target": [1, 1, 2, 2],
-                "is_known_positive_fold_0": [True, False, False, False],
-                "score_base_model_fold_0": [1 for _ in range(4)],
-                "score_different_model_fold_0": [3 for _ in range(4)],
-            }
-        ),
-        check_row_order=False,
-        check_column_order=False,
-    )
 
-    # d) On sample data 2, an exception is raised due to fold inconsistency
+    # The on sample data 2, an exception is raised due to fold inconsistency
     with pytest.raises(ValueError):
-        _ = combine_predictions(
+        _ = combine_matrix_pairs(
             sample_data_inconsistent_folds,
             available_ground_truth_cols=["is_known_positive"],
             perform_multifold=True,
             assert_data_consistency=False,
         )
+
+
+def test_restrict_predictions(sample_data_inconsistent_models):
+    # Given a set of input pairs and predictions over several folds and models
+    # When we generate the common set of pairs for both folds and call the function
+    combined_matrix_pairs, predictions_info = combine_matrix_pairs(
+        sample_data_inconsistent_models,
+        available_ground_truth_cols=["is_known_positive"],
+        perform_multifold=True,
+        assert_data_consistency=False,
+    )
+    restricted_predictions = restrict_predictions(
+        sample_data_inconsistent_models, combined_matrix_pairs, predictions_info
+    )
+
+    # Then the output produces a dataframe containing scores for common pairs for each fold and model
+    assert set(restricted_predictions.keys()) == {
+        "base_model_fold_0",
+        "base_model_fold_1",
+        "different_model_fold_0",
+        "different_model_fold_1",
+    }
+    assert_frame_equal(
+        restricted_predictions["base_model_fold_0"],
+        pl.LazyFrame(
+            {
+                "source": [1, 2, 1, 2],
+                "target": [1, 1, 2, 2],
+                "is_known_positive": [True, False, False, False],
+                "score": [1 for _ in range(4)],
+            }
+        ),
+        check_row_order=False,
+        check_column_order=False,
+    )
+    assert_frame_equal(
+        restricted_predictions["base_model_fold_1"],
+        pl.LazyFrame(
+            {
+                "source": [1, 2, 1, 2],
+                "target": [1, 1, 2, 2],
+                "is_known_positive": [False, True, False, False],
+                "score": [2 for _ in range(4)],
+            }
+        ),
+        check_row_order=False,
+        check_column_order=False,
+    )
+    assert_frame_equal(
+        restricted_predictions["different_model_fold_0"],
+        pl.LazyFrame(
+            {
+                "source": [1, 2, 1, 2],
+                "target": [1, 1, 2, 2],
+                "is_known_positive": [True, False, False, False],
+                "score": [3 for _ in range(4)],
+            }
+        ),
+        check_row_order=False,
+        check_column_order=False,
+    )
+    assert_frame_equal(
+        restricted_predictions["different_model_fold_1"],
+        pl.LazyFrame(
+            {
+                "source": [1, 2, 1, 2],
+                "target": [1, 1, 2, 2],
+                "is_known_positive": [False, True, False, False],
+                "score": [4 for _ in range(4)],
+            }
+        ),
+        check_row_order=False,
+        check_column_order=False,
+    )

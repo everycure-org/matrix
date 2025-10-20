@@ -5,41 +5,6 @@ import numpy as np
 import polars as pl
 
 
-def _materialize_predictions(
-    combined_predictions: pl.LazyFrame, available_ground_truth_cols: list[str], model_name: str, fold: int
-) -> pl.DataFrame:
-    """Materialize predictions into memory as a Polars dataframe for a single fold and model.
-
-    Args:
-        combined_predictions: Polars LazyFrame containing predictions and ground truth columns for all folds and models.
-            Columns:
-                - "source", "target"
-                - Ground truth columns marked with folds, e.g. "is_known_positive_fold_0"
-                - Score column marked with model name and fold, e.g. "score_model_1_fold_0"
-        available_ground_truth_cols: List of available ground truth columns.
-        model_name: Name of the model.
-        fold: Fold number.
-
-    Returns:
-        Polars DataFrame containing predictions and ground truth columns for a single fold and model.
-            Columns:
-                - "source", "target"
-                - Ground truth columns with fold information removed, e.g. "is_known_positive"
-                - "score" (i.e. score column with model and fold information removed)
-    """
-    ground_truth_cols_for_fold = [col + f"_fold_{fold}" for col in available_ground_truth_cols]
-    return (
-        combined_predictions
-        # Extract columns for specific model and fold
-        .select("source", "target", *ground_truth_cols_for_fold, f"score_{model_name}_fold_{fold}")
-        # Rename score column to remove model and fold information
-        .rename({f"score_{model_name}_fold_{fold}": "score"})
-        .rename({col + f"_fold_{fold}": col for col in available_ground_truth_cols})
-        # Materialize into memory as Polars dataframe
-        .collect()
-    )
-
-
 class ComparisonEvaluation(abc.ABC):
     """Abstract base class for run-comparison evaluations."""
 
@@ -163,9 +128,7 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         output_dataframe = pl.DataFrame({"x": x_lst})
 
         for model_name in predictions_info["model_names"]:
-            matrix = _materialize_predictions(
-                combined_predictions, predictions_info["available_ground_truth_cols"], model_name, 0
-            )
+            matrix = combined_predictions["model_name_" + model_name + "_fold_0"]().collect()
 
             # Compute y-values and join to output results dataframe
             y_values = self.give_y_values(matrix)
@@ -194,9 +157,7 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         for model_name in predictions_info["model_names"]:
             y_values_all_folds = []
             for fold in range(predictions_info["num_folds"]):
-                matrix = _materialize_predictions(
-                    combined_predictions, predictions_info["available_ground_truth_cols"], model_name, fold
-                )
+                matrix = combined_predictions[model_name + "_fold_" + str(fold)]().collect()
 
                 # Compute y-values for fold and append to list
                 y_values_all_folds.append(self.give_y_values(matrix))
@@ -229,9 +190,7 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         output_dataframe = pl.DataFrame({"x": x_lst})
 
         for model_name in predictions_info["model_names"]:
-            matrix = _materialize_predictions(
-                combined_predictions, predictions_info["available_ground_truth_cols"], model_name, 0
-            )
+            matrix = combined_predictions[model_name + "_fold_0"]().collect()
 
             # Compute y-values for bootstrap then take mean and std.
             y_values_all_bootstraps = self.give_y_values_bootstrap(matrix)
@@ -248,7 +207,7 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
 
     def evaluate_bootstrap_multi_fold(
         self,
-        combined_predictions: pl.LazyFrame,
+        combined_predictions: dict[str, pl.LazyFrame],
         predictions_info: dict[str, any],
     ) -> pl.DataFrame:
         """Compute evaluation curves for all models with both multi fold and bootstrap uncertainty estimation.
@@ -266,9 +225,7 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         for model_name in predictions_info["model_names"]:
             y_values_all_folds = []
             for fold in range(predictions_info["num_folds"]):
-                matrix = _materialize_predictions(
-                    combined_predictions, predictions_info["available_ground_truth_cols"], model_name, fold
-                )
+                matrix = combined_predictions[model_name + "_fold_" + str(fold)]().collect()
 
                 # Compute y-values for bootstrap and append to list
                 y_values_all_folds.append(self.give_y_values_bootstrap(matrix))
@@ -405,5 +362,6 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
 
     def give_y_values_random_classifier(self, combined_predictions: pl.LazyFrame) -> np.ndarray:
         """Compute Recall@n values for a random classifier."""
-        matrix_length = combined_predictions.select(pl.len()).collect().item()
+        matrix = list(combined_predictions.values())[0]()
+        matrix_length = matrix.select(pl.len()).collect().item()
         return np.array([x / matrix_length for x in self.give_x_values()])
