@@ -102,6 +102,6 @@ integration.prm.unified_normalization_summary:
   filepath: ${globals:paths.integration}/prm/unified_normalization_summary
 
 # Metrics
-integration.int.metric_abox_tbox:
+integration.prm.metric_abox_tbox:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.integration}/prm/metric_abox_tbox
