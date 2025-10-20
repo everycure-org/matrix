@@ -8,8 +8,8 @@ locals {
     "serviceAccount:299386668624-compute@developer.gserviceaccount.com",                       # orchard dev
     "serviceAccount:vertex-ai-workbench-sa@mtrx-wg1-data-dev-nb5.iam.gserviceaccount.com",     # wg1 data dev
     "serviceAccount:vertex-ai-workbench-sa@mtrx-wg2-modeling-dev-9yj.iam.gserviceaccount.com", # wg2 modeling dev
-    "serviceAccount:1084953836048-compute@developer.gserviceaccount.com",                      # orchard dev compute
-    "serviceAccount:860701827038-compute@developer.gserviceaccount.com",                       # orchard prod compute
+    "serviceAccount:1084953836048-compute@developer.gserviceaccount.com",                      # evidence dev compute
+    "serviceAccount:860701827038-compute@developer.gserviceaccount.com",                       # evidence prod compute
   ]
   github_actions_rw     = ["serviceAccount:sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com"]
   custom_cloud_build_sa = ["serviceAccount:custom-cloud-build-sa@mtrx-hub-prod-sms.iam.gserviceaccount.com"]
