@@ -1,0 +1,14 @@
+kg_edges_spark:
+  type: hf_kedro.datasets.hf_iterable_dataset.HFIterableDataset
+  repo_id: everycure/test-matrix-kg
+  split: train
+  credentials: hf
+  dataframe_type: spark
+  data_dir: data/edges/spark
+
+kg_edges_local_jsonl:
+  type: pandas.JSONDataset
+  filepath: data/08_reporting/kg_edges.jsonl
+  save_args:
+    orient: records
+    lines: true

@@ -1,0 +1,49 @@
+[build-system]
+requires = [ "setuptools",]
+build-backend = "setuptools.build_meta"
+
+[project]
+requires-python = ">=3.9"
+name = "huggingface_dataset_demo"
+readme = "README.md"
+dynamic = [ "version",]
+dependencies = [
+    "ipython>=8.10",
+    "jupyterlab>=3.0",
+    "notebook",
+    "kedro[jupyter]~=0.19.13",
+    "kedro-datasets[pandas-csvdataset, pandas-exceldataset, pandas-parquetdataset, spark-sparkdataset, plotly-plotlydataset, plotly-jsondataset, matplotlib-matplotlibwriter]>=3.0",
+    "kedro-viz>=6.7.0",
+    "scikit-learn~=1.5.1",
+    "seaborn~=0.12.1",
+    "datasets>=2.19.0",
+    "huggingface_hub>=0.32.0",
+    "pyarrow>=12",
+    "pyspark>=3.3",
+    "pydantic>=2.7",
+    "pandas>=2.0",
+    "setuptools; python_version >= '3.12'",
+]
+
+[project.scripts]
+huggingface-dataset-demo = "huggingface_dataset_demo.__main__:main"
+
+[tool.kedro]
+package_name = "huggingface_dataset_demo"
+project_name = "huggingface-dataset-demo"
+kedro_init_version = "0.19.13"
+tools = "['Data Structure', 'PySpark']"
+example_pipeline = "True"
+source_dir = "src"
+
+[project.entry-points."kedro.hooks"]
+
+[tool.setuptools.dynamic.version]
+attr = "huggingface_dataset_demo.__version__"
+
+[tool.setuptools.packages.find]
+where = [ "src",]
+namespaces = false
+
+[tool.kedro_telemetry]
+project_id = "183d5104da0f4379966c84ba73a34de0"
