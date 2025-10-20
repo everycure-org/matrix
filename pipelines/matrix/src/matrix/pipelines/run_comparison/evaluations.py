@@ -1,4 +1,5 @@
 import abc
+from collections.abc import Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,7 +12,7 @@ class ComparisonEvaluation(abc.ABC):
     @abc.abstractmethod
     def evaluate_single_fold(
         self,
-        combined_predictions: pl.LazyFrame,
+        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],  # Dictionary of PartitionedDataset load fn's
         predictions_info: dict[str, any],
     ) -> pl.DataFrame:
         pass
@@ -19,7 +20,7 @@ class ComparisonEvaluation(abc.ABC):
     @abc.abstractmethod
     def evaluate_multi_fold(
         self,
-        combined_predictions: pl.LazyFrame,
+        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
     ) -> pl.DataFrame:
         pass
@@ -27,7 +28,7 @@ class ComparisonEvaluation(abc.ABC):
     @abc.abstractmethod
     def evaluate_bootstrap_single_fold(
         self,
-        combined_predictions: pl.LazyFrame,
+        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
     ) -> pl.DataFrame:
         pass
@@ -35,7 +36,7 @@ class ComparisonEvaluation(abc.ABC):
     @abc.abstractmethod
     def evaluate_bootstrap_multi_fold(
         self,
-        combined_predictions: pl.LazyFrame,
+        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
     ) -> pl.DataFrame:
         pass
@@ -43,7 +44,7 @@ class ComparisonEvaluation(abc.ABC):
     @abc.abstractmethod
     def plot_results(
         results: pl.DataFrame,
-        combined_predictions: pl.LazyFrame,
+        combined_pairs: dict[str, Callable[[], pl.LazyFrame]],  # Dictionary of PartitionedDataset load fn's
         predictions_info: dict[str, any],
         is_plot_errors: bool,
     ) -> plt.Figure:
@@ -102,9 +103,11 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         pass
 
     @abc.abstractmethod
-    def give_y_values_random_classifier(self, combined_pairs: dict[str, pl.LazyFrame]) -> np.ndarray:
+    def give_y_values_random_classifier(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
         """Give the y-values of the curve for a random classifier, given a dictionary of reference matrices of drug-disease pairs for each fold.
 
+        Args:
+            combined_pairs: Dictionary of PartitionedDataset load fn's returning combined matrix pairs for each fold.
         Returns:
             A 1D numpy array of y-values.
         """
@@ -112,13 +115,13 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
 
     def evaluate_single_fold(
         self,
-        combined_predictions: dict[str, pl.LazyFrame],
+        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
     ) -> pl.DataFrame:
         """Compute evaluation curves for all models without any uncertainty estimation.
 
         Args:
-            combined_predictions: Dictionary of Polars LazyFrame predictions for all folds and models
+            combined_predictions: Dictionary PartitionedDataset load fn's returning predictions for all folds and models
             predictions_info: Dictionary containing model names and number of folds.
 
         Returns:
@@ -139,13 +142,13 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
 
     def evaluate_multi_fold(
         self,
-        combined_predictions: dict[str, pl.LazyFrame],
+        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
     ) -> pl.DataFrame:
         """Compute evaluation curves for all models with multi fold uncertainty estimation.
 
         Args:
-            combined_predictions: Dictionary of Polars LazyFrame predictions for all folds and models
+            combined_predictions: Dictionary PartitionedDataset load fn's returning predictions for all folds and models
             predictions_info: Dictionary containing model names and number of folds.
 
         Returns:
@@ -174,13 +177,13 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
 
     def evaluate_bootstrap_single_fold(
         self,
-        combined_predictions: dict[str, pl.LazyFrame],
+        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
     ) -> pl.DataFrame:
         """Compute evaluation curves for a single fold of models with bootstrap uncertainty estimation.
 
         Args:
-            combined_predictions: Dictionary of Polars LazyFrame predictions for all folds and models
+            combined_predictions: Dictionary PartitionedDataset load fn's returning predictions for all folds and models
             predictions_info: Dictionary containing model names and number of folds.
 
         Returns:
@@ -207,13 +210,13 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
 
     def evaluate_bootstrap_multi_fold(
         self,
-        combined_predictions: dict[str, pl.LazyFrame],
+        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
     ) -> pl.DataFrame:
         """Compute evaluation curves for all models with both multi fold and bootstrap uncertainty estimation.
 
         Args:
-            combined_predictions: Dictionary of Polars LazyFrame predictions for all folds and models
+            combined_predictions: Dictionary PartitionedDataset load fn's returning predictions for all folds and models
             predictions_info: Dictionary containing model names and number of folds.
 
         Returns:
@@ -244,7 +247,7 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
     def plot_results(
         self,
         results: pl.DataFrame,
-        combined_pairs: dict[str, pl.LazyFrame],
+        combined_pairs: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
         is_plot_errors: bool,
     ) -> plt.Figure:
@@ -360,7 +363,7 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
         # Calculate recall@n for each bootstrap
         return np.array([bootstrap_recall_lst(ranks_series, N, n_lst, seed) for seed in range(self.N_bootstraps)])
 
-    def give_y_values_random_classifier(self, combined_pairs: dict[str, pl.LazyFrame]) -> np.ndarray:
+    def give_y_values_random_classifier(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
         """Compute Recall@n values for a random classifier."""
         matrix = list(combined_pairs.values())[0]()
         matrix_length = matrix.select(pl.len()).collect().item()

@@ -139,7 +139,7 @@ def run_evaluation(
     perform_multifold: bool,
     perform_bootstrap: bool,
     evaluation: ComparisonEvaluation,
-    combined_predictions: pl.LazyFrame,
+    combined_predictions: dict[str, Callable[[], pl.LazyFrame]],  # Dictionary of PartitionedDataset load fn's
     predictions_info: dict[str, any],
 ) -> pl.DataFrame:
     """Function to apply evaluation."""
@@ -163,7 +163,7 @@ def plot_results(
     perform_bootstrap: bool,
     evaluation: ComparisonEvaluation,
     results: pl.DataFrame,
-    combined_pairs: dict[str, pl.LazyFrame],
+    combined_pairs: dict[str, Callable[[], pl.LazyFrame]],  # Dictionary of PartitionedDataset load fn's
     predictions_info: dict[str, any],
 ) -> plt.Figure:
     """Function to plot results."""
