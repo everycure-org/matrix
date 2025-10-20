@@ -22,6 +22,10 @@ dependencies = [
     "pyspark>=3.3",
     "pydantic>=2.7",
     "pandas>=2.0",
+    "polars>=0.20",
+    "pytest>=7.0",
+    "pytest-mock>=3.0",
+    "pytest-cov>=4.0",
     "setuptools; python_version >= '3.12'",
 ]
 

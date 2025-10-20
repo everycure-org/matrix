@@ -146,15 +146,14 @@ class HFIterableDataset(AbstractDataset):
             # Expecting a Spark DataFrame
             hf_ds = Dataset.from_spark(data)
         elif df_type == "polars":
-            # Convert Polars -> Arrow Table and build Dataset without pandas
+            # Use Dataset.from_polars for direct Polars support
             try:
                 import polars as pl  # type: ignore[import-not-found]
             except Exception as exc:  # pragma: no cover
                 raise RuntimeError("Polars requested but not installed. Please `uv add polars`.") from exc
             if not isinstance(data, pl.DataFrame):
                 raise TypeError("Configured dataframe_type='polars' but got different object")
-            arrow_tbl = data.to_arrow()
-            hf_ds = Dataset.from_arrow(arrow_tbl)
+            hf_ds = Dataset.from_polars(data)
         elif df_type == "pandas":
             # Avoid importing pandas types to keep linters happy without stubs
             try:
