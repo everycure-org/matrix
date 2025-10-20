@@ -1,4 +1,4 @@
-# Test Suite for Hugging Face Dataset Demo
+# Test Suite for Hugging Face Dataset Implementation
 
 This directory contains tests for the custom HFIterableDataset implementation that enables reading
 and writing to Hugging Face Hub across Spark, Pandas, and Polars formats.
@@ -8,6 +8,10 @@ and writing to Hugging Face Hub across Spark, Pandas, and Polars formats.
 ### Unit Tests (`tests/unit/`)
 
 - **`test_hf_dataset.py`**: Tests the custom HFIterableDataset implementation
+
+### Integration Tests (`tests/integration/`)
+
+- **`test_hf_dataset_integration.py`**: Integration tests for the HFIterableDataset implementation
 
 ## Test Design Philosophy
 

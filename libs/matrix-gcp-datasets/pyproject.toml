@@ -23,6 +23,8 @@ dependencies = [
     "s3fs",
     "tqdm",
     "asyncio",
+    "datasets",
+    "huggingface-hub",
 ]
 
 [dependency-groups]

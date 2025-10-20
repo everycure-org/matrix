@@ -10,7 +10,7 @@ import os
 import pandas as pd
 import polars as pl
 import pytest
-from huggingface_dataset_demo.hf_kedro.datasets.hf_iterable_dataset import HFIterableDataset
+from matrix_gcp_datasets.huggingface import HFIterableDataset
 
 
 @pytest.mark.integration

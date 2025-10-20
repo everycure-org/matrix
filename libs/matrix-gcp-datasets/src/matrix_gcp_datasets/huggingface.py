@@ -4,8 +4,8 @@ import logging
 import os
 from typing import Any, Literal, Optional
 
-from kedro.io import AbstractDataset  # type: ignore[import-not-found]
-from pydantic import BaseModel, Field, ValidationError  # type: ignore[import-not-found]
+from kedro.io import AbstractDataset
+from pydantic import BaseModel, Field, ValidationError
 
 log = logging.getLogger(__name__)
 
@@ -99,14 +99,14 @@ class HFIterableDataset(AbstractDataset):
         return {"config": repr(self.config)}
 
     def _load(self) -> Any:
-        from datasets import load_dataset  # type: ignore[import-not-found]
+        from datasets import load_dataset
 
         token = self._resolve_token()
         ds = load_dataset(self.config.repo_id, split=self.config.split, token=token)
         df_type = self.config.dataframe_type
         if df_type == "spark":
             try:
-                from pyspark.sql import SparkSession  # type: ignore[import-not-found]
+                from pyspark.sql import SparkSession
             except Exception as exc:  # pragma: no cover
                 raise RuntimeError("Spark is not installed but dataframe_type='spark'.") from exc
             spark = SparkSession.builder.getOrCreate()
@@ -127,7 +127,7 @@ class HFIterableDataset(AbstractDataset):
                 return spark.createDataFrame(pdf)
         if df_type == "polars":
             try:
-                return ds.to_polars()  # type: ignore[attr-defined]
+                return ds.to_polars()
             except Exception as exc:  # pragma: no cover
                 raise RuntimeError("Polars not available for conversion. `uv add polars`.") from exc
         if df_type == "pandas":
@@ -136,7 +136,7 @@ class HFIterableDataset(AbstractDataset):
 
     def _save(self, data: Any) -> None:
         # Local import to avoid importing heavy deps unless used
-        from datasets import Dataset  # type: ignore[import-not-found]
+        from datasets import Dataset
 
         token = self._resolve_token()
 
@@ -148,7 +148,7 @@ class HFIterableDataset(AbstractDataset):
         elif df_type == "polars":
             # Use Dataset.from_polars for direct Polars support
             try:
-                import polars as pl  # type: ignore[import-not-found]
+                import polars as pl
             except Exception as exc:  # pragma: no cover
                 raise RuntimeError("Polars requested but not installed. Please `uv add polars`.") from exc
             if not isinstance(data, pl.DataFrame):

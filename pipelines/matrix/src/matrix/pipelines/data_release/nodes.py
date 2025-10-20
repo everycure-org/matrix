@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 import pyspark.sql as ps
 from matrix_pandera.validator import Column, DataFrameSchema, check_output
@@ -28,15 +28,20 @@ def join_array_columns(df: ps.DataFrame, cols: List[str], sep: str = SEPARATOR) 
     ),
     pass_columns=True,
 )
-def unified_edges_to_kgx(df: ps.DataFrame, cols: List[str]) -> ps.DataFrame:
+def release_edges(df: ps.DataFrame, cols: List[str]) -> Tuple[ps.DataFrame, ps.DataFrame]:
     """Function to create KGX formatted edges.
 
     Args:
         df: Edges dataframe
+        cols: List of columns to select
+
+    Returns:
+        Tuple of (processed_df, processed_df) for dual output to release path and HF dataset
     """
-    return df.transform(
+    processed_df = df.transform(
         join_array_columns, cols=["upstream_data_source", "aggregator_knowledge_source", "publications"]
     ).select(*cols)
+    return processed_df, processed_df
 
 
 @check_output(
@@ -56,13 +61,18 @@ def unified_edges_to_kgx(df: ps.DataFrame, cols: List[str]) -> ps.DataFrame:
     ),
     pass_columns=True,
 )
-def unified_nodes_to_kgx(df: ps.DataFrame, cols: List[str]) -> ps.DataFrame:
+def release_nodes(df: ps.DataFrame, cols: List[str]) -> Tuple[ps.DataFrame, ps.DataFrame]:
     """Function to create KGX formatted nodes.
 
     Args:
         df: Nodes dataframe
+        cols: List of columns to select
+
+    Returns:
+        Tuple of (processed_df, processed_df) for dual output to release path and HF dataset
     """
-    return df.transform(
+    processed_df = df.transform(
         join_array_columns,
         cols=["equivalent_identifiers", "all_categories", "publications", "labels", "upstream_data_source"],
     ).select(*cols)
+    return processed_df, processed_df

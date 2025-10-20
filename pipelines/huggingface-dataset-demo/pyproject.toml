@@ -8,25 +8,16 @@ name = "huggingface_dataset_demo"
 readme = "README.md"
 dynamic = [ "version",]
 dependencies = [
-    "ipython>=8.10",
-    "jupyterlab>=3.0",
-    "notebook",
     "kedro[jupyter]~=0.19.13",
-    "kedro-datasets[pandas-csvdataset, pandas-exceldataset, pandas-parquetdataset, spark-sparkdataset, plotly-plotlydataset, plotly-jsondataset, matplotlib-matplotlibwriter]>=3.0",
+    "kedro-datasets[pandas-csvdataset, pandas-exceldataset, pandas-parquetdataset, spark-sparkdataset]>=3.0",
     "kedro-viz>=6.7.0",
-    "scikit-learn~=1.5.1",
-    "seaborn~=0.12.1",
-    "datasets>=2.19.0",
-    "huggingface_hub>=0.32.0",
     "pyarrow>=12",
-    "pyspark>=3.3",
-    "pydantic>=2.7",
-    "pandas>=2.0",
-    "polars>=0.20",
     "pytest>=7.0",
     "pytest-mock>=3.0",
     "pytest-cov>=4.0",
     "setuptools; python_version >= '3.12'",
+    "matrix-gcp-datasets",
+    "polars>=1.33.1",
 ]
 
 [project.scripts]
@@ -48,6 +39,9 @@ attr = "huggingface_dataset_demo.__version__"
 [tool.setuptools.packages.find]
 where = [ "src",]
 namespaces = false
+
+[tool.uv.sources]
+matrix-gcp-datasets = { workspace = true }
 
 [tool.kedro_telemetry]
 project_id = "183d5104da0f4379966c84ba73a34de0"

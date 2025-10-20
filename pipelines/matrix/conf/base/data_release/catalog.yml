@@ -83,3 +83,20 @@ data_release.prm.kgx_edges:
 data_release.dummy:
   type: yaml.YAMLDataset
   filepath: ${globals:paths.tmp}/foo.yaml
+
+# Hugging Face Hub datasets
+data_release.hf.kgx_nodes:
+  type: matrix_gcp_datasets.huggingface.HFIterableDataset
+  repo_id: everycure/test-matrix-kg
+  split: train
+  credentials: hf
+  dataframe_type: spark
+  data_dir: data/matrix/test/nodes
+
+data_release.hf.kgx_edges:
+  type: matrix_gcp_datasets.huggingface.HFIterableDataset
+  repo_id: everycure/test-matrix-kg
+  split: train
+  credentials: hf
+  dataframe_type: spark
+  data_dir: data/matrix/test/edges

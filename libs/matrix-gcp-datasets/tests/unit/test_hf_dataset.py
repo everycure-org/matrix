@@ -9,7 +9,7 @@ import os
 from unittest.mock import Mock, patch
 
 import pytest
-from huggingface_dataset_demo.hf_kedro.datasets.hf_iterable_dataset import (
+from matrix_gcp_datasets.huggingface import (
     HFIterableDataset,
     HFIterableDatasetConfig,
 )
