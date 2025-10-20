@@ -157,7 +157,7 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         for model_name in predictions_info["model_names"]:
             y_values_all_folds = []
             for fold in range(predictions_info["num_folds"]):
-                matrix = combined_predictions["model_name_" + model_name + "_fold_" + str(fold)]().collect()
+                matrix = combined_predictions[model_name + "_fold_" + str(fold)]().collect()
 
                 # Compute y-values for fold and append to list
                 y_values_all_folds.append(self.give_y_values(matrix))
@@ -190,7 +190,7 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         output_dataframe = pl.DataFrame({"x": x_lst})
 
         for model_name in predictions_info["model_names"]:
-            matrix = combined_predictions["model_name_" + model_name + "_fold_0"]().collect()
+            matrix = combined_predictions[model_name + "_fold_0"]().collect()
 
             # Compute y-values for bootstrap then take mean and std.
             y_values_all_bootstraps = self.give_y_values_bootstrap(matrix)
@@ -225,7 +225,7 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         for model_name in predictions_info["model_names"]:
             y_values_all_folds = []
             for fold in range(predictions_info["num_folds"]):
-                matrix = combined_predictions["model_name_" + model_name + "_fold_" + str(fold)]().collect()
+                matrix = combined_predictions[model_name + "_fold_" + str(fold)]().collect()
 
                 # Compute y-values for bootstrap and append to list
                 y_values_all_folds.append(self.give_y_values_bootstrap(matrix))

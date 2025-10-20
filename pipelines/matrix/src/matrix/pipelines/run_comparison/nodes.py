@@ -119,9 +119,8 @@ def restrict_predictions(
     Returns:
         Dictionary containing restricted predictions for all models and folds.
     """
-    print(type(combined_pairs_df_dict["fold_0"]))
     return {
-        "model_name_" + model_name + "_fold_" + str(fold): (
+        model_name + "_fold_" + str(fold): (
             combined_pairs_df_dict["fold_" + str(fold)].join(
                 input_matrices[model_name]["predictions_list"][fold].select(
                     "source", "target", pl.col(input_matrices[model_name]["score_col_name"]).alias("score")
