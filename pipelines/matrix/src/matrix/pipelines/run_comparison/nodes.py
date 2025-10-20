@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Callable
 from dataclasses import asdict
 
 import matplotlib.pyplot as plt
@@ -107,21 +108,21 @@ def combine_matrix_pairs(
 
 def restrict_predictions(
     input_matrices: dict[str, any],
-    combined_pairs_df_dict: dict[str, pl.LazyFrame],
+    combined_pairs: dict[str, Callable[[], pl.LazyFrame]],
     predictions_info: dict[str, any],
 ) -> dict[str, pl.LazyFrame]:
     """Function to restrict predictions to the common elements of the matrix pairs for all folds and models.
 
     Args:
         input_matrices: Dictionary containing predictions for all models and folds.
-        combined_pairs_df_dict: Dictionary of LazyFrames containing combined matrix pairs for all folds.
+        combined_pairs: Dictionary of PartitionedDataset load fn's returning combined matrix pairs for each fold
 
     Returns:
         Dictionary containing restricted predictions for all models and folds.
     """
     return {
         model_name + "_fold_" + str(fold): (
-            combined_pairs_df_dict["fold_" + str(fold)].join(
+            combined_pairs["fold_" + str(fold)]().join(
                 input_matrices[model_name]["predictions_list"][fold].select(
                     "source", "target", pl.col(input_matrices[model_name]["score_col_name"]).alias("score")
                 ),

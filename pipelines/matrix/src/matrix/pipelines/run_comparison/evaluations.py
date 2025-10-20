@@ -107,7 +107,7 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         """Give the y-values of the curve for a random classifier, given a dictionary of reference matrices of drug-disease pairs for each fold.
 
         Args:
-            combined_pairs: Dictionary of PartitionedDataset load fn's returning combined matrix pairs for each fold.
+            combined_pairs: Dictionary of PartitionedDataset load fn's returning combined matrix pairs for each fold
         Returns:
             A 1D numpy array of y-values.
         """

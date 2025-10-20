@@ -170,10 +170,15 @@ def test_restrict_predictions(sample_data_inconsistent_models):
         perform_multifold=True,
         assert_data_consistency=False,
     )
+    df_fold_0 = combined_matrix_pairs["fold_0"].collect()
+    df_fold_1 = combined_matrix_pairs["fold_1"].collect()
+    combined_matrix_pairs_fns = {  # Simulate input by Kedro Partitioned dataset
+        "fold_0": (lambda: pl.LazyFrame(df_fold_0)),
+        "fold_1": (lambda: pl.LazyFrame(df_fold_1)),
+    }
     restricted_predictions = restrict_predictions(
-        sample_data_inconsistent_models, combined_matrix_pairs, predictions_info
+        sample_data_inconsistent_models, combined_matrix_pairs_fns, predictions_info
     )
-
     # Then the output produces a dataframe containing scores for common pairs for each fold and model
     assert set(restricted_predictions.keys()) == {
         "base_model_fold_0",
