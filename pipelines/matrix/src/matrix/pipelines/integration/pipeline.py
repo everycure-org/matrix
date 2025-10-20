@@ -223,7 +223,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     tags=["validation"],
                 ),
                 node(
-                    func=nodes.metric_abox_tbox,
+                    func=nodes.compute_abox_tbox_metric,
                     inputs={
                         "edges": "integration.prm.unified_edges",
                     },
