@@ -163,9 +163,9 @@ def plot_results(
     perform_bootstrap: bool,
     evaluation: ComparisonEvaluation,
     results: pl.DataFrame,
-    combined_predictions: pl.LazyFrame,
+    combined_pairs: dict[str, pl.LazyFrame],
     predictions_info: dict[str, any],
 ) -> plt.Figure:
     """Function to plot results."""
     is_plot_errors = perform_multifold or perform_bootstrap
-    return evaluation.plot_results(results, combined_predictions, predictions_info, is_plot_errors)
+    return evaluation.plot_results(results, combined_pairs, predictions_info, is_plot_errors)

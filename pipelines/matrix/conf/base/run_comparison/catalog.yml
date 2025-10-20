@@ -2,10 +2,6 @@ run_comparison.input_matrices:
   type: matrix.datasets.multi_matrices.MultiMatricesDataset
   filepath: ${globals:paths.run_comparison}/input_matrices.yml
 
-# run_comparison.combined_matrix_pairs:
-#   type: polars.LazyPolarsDataset
-#   filepath: ${globals:paths.run_comparison}/combined_matrix_pairs.parquet
-#   file_format: parquet
 
 run_comparison.combined_pairs:
   type: partitions.PartitionedDataset

@@ -10,18 +10,40 @@ from polars.testing import assert_frame_equal
 def constant_score_data():
     # Generate predictions
     N = 10
-    predictions = pl.LazyFrame(
-        {
-            "source": list(range(N)),
-            "target": list(range(N)),
-            "score_model_1_fold_0": 3 / 4 * np.ones(N),
-            "score_model_1_fold_1": 1 / 2 * np.ones(N),
-            "score_model_2_fold_0": 1 / 2 * np.ones(N),
-            "score_model_2_fold_1": 1 / 4 * np.ones(N),
-            "is_known_positive_fold_0": np.array([True] + [False for _ in range(N - 1)]),  # True in first position only
-            "is_known_positive_fold_1": np.array([False for _ in range(N - 1)] + [True]),  # True in last position only
-        }
-    )
+    combined_predictions = {
+        "model_1_fold_0": lambda: pl.LazyFrame(
+            {
+                "source": list(range(N)),
+                "target": list(range(N)),
+                "score": 3 / 4 * np.ones(N),
+                "is_known_positive": np.array([True] + [False for _ in range(N - 1)]),  # True in first position only
+            },
+        ),
+        "model_1_fold_1": lambda: pl.LazyFrame(
+            {
+                "source": list(range(N)),
+                "target": list(range(N)),
+                "score": 1 / 2 * np.ones(N),
+                "is_known_positive": np.array([False for _ in range(N - 1)] + [True]),  # True in last position only
+            },
+        ),
+        "model_2_fold_0": lambda: pl.LazyFrame(
+            {
+                "source": list(range(N)),
+                "target": list(range(N)),
+                "score": 1 / 2 * np.ones(N),
+                "is_known_positive": np.array([True] + [False for _ in range(N - 1)]),  # True in first position only
+            },
+        ),
+        "model_2_fold_1": lambda: pl.LazyFrame(
+            {
+                "source": list(range(N)),
+                "target": list(range(N)),
+                "score": 1 / 4 * np.ones(N),
+                "is_known_positive": np.array([False for _ in range(N - 1)] + [True]),  # True in last position only
+            },
+        ),
+    }
 
     # Generate additional information
     predictions_info = {
@@ -29,7 +51,7 @@ def constant_score_data():
         "num_folds": 2,
         "available_ground_truth_cols": ["is_known_positive"],
     }
-    return predictions, predictions_info
+    return combined_predictions, predictions_info
 
 
 class TestComparisonEvaluationModelSpecific(ComparisonEvaluationModelSpecific):
@@ -47,7 +69,7 @@ class TestComparisonEvaluationModelSpecific(ComparisonEvaluationModelSpecific):
         mean_score_curve = self.give_y_values(matrix)
         return np.array([mean_score_curve + 1 / 4, mean_score_curve - 1 / 4])
 
-    def give_y_values_random_classifier(self, combined_predictions: pl.LazyFrame) -> np.ndarray:
+    def give_y_values_random_classifier(self, combined_predictions: dict[str, pl.LazyFrame]) -> np.ndarray:
         # Return constant zero values
         return np.zeros(2)
 
@@ -55,7 +77,7 @@ class TestComparisonEvaluationModelSpecific(ComparisonEvaluationModelSpecific):
 def test_model_specific_abstract_class(constant_score_data):
     """Test the abstract class ComparisonEvaluationModelSpecific."""
     # Given constant score data and an instance of a test subclass of ComparisonEvaluationModelSpecific
-    predictions, predictions_info = constant_score_data
+    combined_predictions, predictions_info = constant_score_data
     evaluation = TestComparisonEvaluationModelSpecific(
         x_axis_label="x",
         y_axis_label="y",
@@ -64,11 +86,11 @@ def test_model_specific_abstract_class(constant_score_data):
     )
 
     # When the concrete methods are called
-    single_fold_results = evaluation.evaluate_single_fold(predictions, predictions_info)
-    multi_fold_results = evaluation.evaluate_multi_fold(predictions, predictions_info)
-    bootstrap_single_fold_results = evaluation.evaluate_bootstrap_single_fold(predictions, predictions_info)
-    bootstrap_multi_fold_results = evaluation.evaluate_bootstrap_multi_fold(predictions, predictions_info)
-    figure = evaluation.plot_results(single_fold_results, predictions, predictions_info, is_plot_errors=False)
+    single_fold_results = evaluation.evaluate_single_fold(combined_predictions, predictions_info)
+    multi_fold_results = evaluation.evaluate_multi_fold(combined_predictions, predictions_info)
+    bootstrap_single_fold_results = evaluation.evaluate_bootstrap_single_fold(combined_predictions, predictions_info)
+    bootstrap_multi_fold_results = evaluation.evaluate_bootstrap_multi_fold(combined_predictions, predictions_info)
+    figure = evaluation.plot_results(single_fold_results, combined_predictions, predictions_info, is_plot_errors=False)
 
     # Then results are as expected
     # Single fold results take first fold as default
@@ -152,7 +174,9 @@ def test_model_full_matrix_recall_at_n(matrix_data):
     """Test the FullMatrixRecallAtN class."""
     # Given matrix data, combined predictions and an instance of FullMatrixRecallAtN
     matrix = matrix_data
-    combined_predictions = pl.LazyFrame(matrix)
+    combined_predictions = {
+        "model_fold_0": lambda: pl.LazyFrame(matrix)
+    }  # Dummy function to simulate a Kedro Partitioned dataset
     evaluation = FullMatrixRecallAtN(
         ground_truth_col="is_known_positive",
         n_max=4,
