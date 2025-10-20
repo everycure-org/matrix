@@ -227,7 +227,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     inputs={
                         "edges": "integration.prm.unified_edges",
                     },
-                    outputs="integration.int.metric_abox_tbox",
+                    outputs="integration.prm.metric_abox_tbox",
                     name="metric_abox_tbox",
                     tags=["metrics", "validation"],
                 ),
