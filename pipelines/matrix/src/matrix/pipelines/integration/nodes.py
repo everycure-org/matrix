@@ -561,7 +561,7 @@ def normalization_summary_nodes_only(
     )
 
 
-def metric_abox_tbox(edges: ps.DataFrame) -> ps.DataFrame:
+def compute_abox_tbox_metric(edges: ps.DataFrame) -> ps.DataFrame:
     """
     Count ABox (instance-level) and TBox (concept-level) edges by primary_knowledge_source.
     Args:
@@ -570,11 +570,11 @@ def metric_abox_tbox(edges: ps.DataFrame) -> ps.DataFrame:
         DataFrame with counts by primary_knowledge_source
     """
 
-    CONCEPT = "related_to_at_concept_level"
-    INSTANCE = "related_to_at_instance_level"
+    concept_predicate = "related_to_at_concept_level"
+    instance_predicate = "related_to_at_instance_level"
 
-    concept_desc = tk.get_descendants(CONCEPT, mixin=True, formatted=True, reflexive=True)
-    instance_desc = tk.get_descendants(INSTANCE, mixin=True, formatted=True, reflexive=True)
+    concept_desc = tk.get_descendants(concept_predicate, mixin=True, formatted=True, reflexive=True)
+    instance_desc = tk.get_descendants(instance_predicate, mixin=True, formatted=True, reflexive=True)
 
     return edges.groupBy("primary_knowledge_source").agg(
         F.sum(F.when(F.col("predicate").isin(instance_desc), 1).otherwise(0)).alias("abox"),
