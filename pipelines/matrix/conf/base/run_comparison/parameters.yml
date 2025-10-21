@@ -44,6 +44,7 @@ run_comparison:
       n_max: 1000000
       perform_sort: True
       title: "Recall@n (negative ground truth) - lower is better"
+      force_full_y_axis: False
 
     off_label_recall_at_n:
       _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtN
