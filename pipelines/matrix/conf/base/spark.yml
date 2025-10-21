@@ -35,3 +35,5 @@ spark.sql.adaptive.coalescePartitions.minPartitionSize: 16MB
 spark.jars: gcs-connector-hadoop3-2.2.2-shaded.jar
 spark.jars.packages: com.google.cloud.spark:spark-3.5-bigquery:0.39.0,org.neo4j:neo4j-connector-apache-spark_2.12:5.3.0_for_spark_3,org.xerial:sqlite-jdbc:3.47.0.0
 spark.hadoop.fs.gs.impl: com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem
+# Increase Py4J gateway startup timeout to prevent connection issues
+spark.driver.extraJavaOptions: -Dpy4j.gateway.startup.timeout=30000
