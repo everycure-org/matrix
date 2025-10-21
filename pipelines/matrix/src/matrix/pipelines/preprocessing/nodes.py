@@ -205,6 +205,24 @@ def primekg_build_nodes(
     return main
 
 
+def robokop_fix_nodes(nodes_df: pl.DataFrame) -> pl.DataFrame:
+    """Build the nodes tsv file.
+    Args:
+    nodes: The nodes.tsv file from a Robokop download
+    """
+    nodes_df = robokop_convert_boolean_columns_to_label_columns(nodes_df)
+    nodes_df = robokop_strip_type_from_column_names(nodes_df)
+    return nodes_df.collect()
+
+
+def robokop_fix_edges(edges: pl.DataFrame) -> pl.DataFrame:
+    """Build the edges tsv file.
+    Args:
+    nodes: The edges.tsv file from a Robokop download
+    """
+    return robokop_strip_type_from_column_names(edges).collect()
+
+
 def primekg_build_edges(edges: pl.DataFrame) -> pl.DataFrame:
     """Build the edges tsv file.
 
