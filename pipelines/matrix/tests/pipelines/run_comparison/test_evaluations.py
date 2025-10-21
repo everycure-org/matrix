@@ -244,7 +244,7 @@ def test_disease_specific_hit_at_k(disease_specific_hit_at_k_data):
     }  # Dummy functions to simulate a Kedro Partitioned dataset
     evaluation_disease_specific = SpecificHitAtK(
         ground_truth_col="is_known_positive",
-        k_max=4,  # Set k max larger than the number of known positives
+        k_max=4,  # Set k max larger than the number of drugs
         title="Test Title",
         specific_col="target",
         N_bootstraps=10,
