@@ -166,104 +166,27 @@ fabricator.rtx_kg2:
           - 678
           - 195959
           - 5059595
-
   drug_list:
     num_rows: 100
     columns:
       id:
-        type: copy_column
-        source_column: "nodes.id"
-        sample:
-          num_rows: "@drug_list.num_rows"
-          seed: 6850
+        type: generate_unique_id
+        prefixes:
+          - "EC"
+        delimiter: ":"
+        id_length: 5
       name:
         type: copy_column
         source_column: "nodes.name"
         sample:
           num_rows: "@drug_list.num_rows"
           seed: 6850
-      default_med_view_filter_to_exclude:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_combination_therapy:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      approved_japan:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      marketing_status_europe:
-        type: generate_values
-        sample_values:
-          - "APPROVED"
-          - "WITHDRAWN"
-          - "PENDING"
-      approved_eu:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      marketing_status_usa:
-        type: generate_values
-        sample_values:
-          - "APPROVED"
-          - "WITHDRAWN"
-          - "PENDING"
-      approved_usa:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      approved_russia:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      approved_india:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_metallic_salt:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_steroid:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_antimicrobial:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_chemotherapy:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_glucose_regulator:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_vaccine_or_antigen:
-        type: generate_values
-        sample_values:
-          - True
-          - False
-      is_no_therapeutic_value:
-        type: generate_values
-        sample_values:
-          - True
-          - False
+      translator_id:
+        type: copy_column
+        source_column: "nodes.id"
+        sample:
+          num_rows: "@drug_list.num_rows"
+          seed: 6850
       atc_main:
         type: faker
         provider: word
@@ -297,11 +220,9 @@ fabricator.rtx_kg2:
       l5_label:
         type: faker
         provider: word
-      is_psychiatric_drug:
-        type: generate_values
-        sample_values:
-          - True
-          - False
+      smiles:
+        type: faker
+        provider: word
 
   disease_list:
     num_rows: 100
@@ -2498,3 +2419,336 @@ fabricator.drugbank_gt:
           sample:
             num_rows: "@positive_edges.num_rows"
             seed: 20399
+
+fabricator.document_kg.infores_catalog:
+  information_resources:
+    num_rows: 20
+    columns:
+      id:
+        type: generate_unique_id
+        prefixes:
+          - "infores:"
+        id_length: 10
+      status:
+        type: generate_values
+        sample_values:
+          - "released"
+          - "deprecated"
+          - "modified"
+      name:
+        type: faker
+        provider: company
+      xref:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
+          - "https://example.org"
+          - "https://pubmed.ncbi.nlm.nih.gov"
+          - "https://www.ncbi.nlm.nih.gov"
+      synonym:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
+          - "Alternative Name 1"
+          - "Alternative Name 2"
+        inject_nulls:
+          probability: 0.5
+      description:
+        type: faker
+        provider: sentence
+        inject_nulls:
+          probability: 0.3
+      knowledge_level:
+        type: generate_values
+        sample_values:
+          - "knowledge_assertion"
+          - "statistical_association"
+          - "prediction"
+          - "logical_entailment"
+        inject_nulls:
+          probability: 0.2
+      agent_type:
+        type: generate_values
+        sample_values:
+          - "manual_agent"
+          - "computational_model"
+          - "not_provided"
+          - "automated_agent"
+        inject_nulls:
+          probability: 0.2
+      consumed_by:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
+          - "infores:rtx-kg2"
+          - "infores:robokop"
+          - "infores:spoken"
+        inject_nulls:
+          probability: 0.7
+      consumes:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
+          - "infores:semmeddb"
+          - "infores:gtex"
+          - "infores:ubergraph"
+        inject_nulls:
+          probability: 0.7
+
+fabricator.document_kg.reusabledata:
+  data:
+    num_rows: 25
+    columns:
+      id:
+        type: generate_unique_id
+        prefixes:
+          - ""
+        id_length: 8
+      source:
+        type: faker
+        provider: company
+      source-link:
+        type: faker
+        provider: url
+      status:
+        type: generate_values
+        sample_values:
+          - "complete"
+          - "active"
+          - "inactive"
+          - "deprecated"
+      description:
+        type: faker
+        provider: paragraph
+      data-field:
+        type: generate_values
+        sample_values:
+          - "biology"
+          - "chemistry"
+          - "medicine"
+          - "bioinformatics"
+      data-type:
+        type: generate_values
+        sample_values:
+          - "MOD"
+          - "database"
+          - "knowledge_graph"
+          - "ontology"
+      data-categories:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
+          - "functional annotation"
+          - "disease-gene association"
+          - "protein interaction"
+          - "pathway data"
+      last-curated:
+        type: generate_dates
+        start_dt: 2020-01-01
+        end_dt: 2024-01-01
+        freq: M
+        date_format: "%Y-%m-%d"
+        inject_nulls:
+          probability: 0.3
+      license:
+        type: generate_values
+        sample_values:
+          - "CC-BY-4.0"
+          - "CC0"
+          - "MIT"
+          - "Apache-2.0"
+          - "Custom"
+      license-type:
+        type: generate_values
+        sample_values:
+          - "copyleft"
+          - "copycenter"
+          - "copyright"
+          - "open"
+      license-link:
+        type: faker
+        provider: url
+        inject_nulls:
+          probability: 0.2
+      grade-automatic:
+        type: faker
+        provider: pydecimal
+        provider_args:
+          left_digits: 1
+          right_digits: 1
+          positive: True
+          min_value: 1.0
+          max_value: 5.0
+
+fabricator.document_kg.kgregistry:
+  resources:
+    num_rows: 15
+    columns:
+      activity_status:
+        type: generate_values
+        sample_values:
+          - "active"
+          - "inactive"
+          - "deprecated"
+      category:
+        type: generate_values
+        sample_values:
+          - "DataSource"
+          - "Aggregator"
+          - "KnowledgeGraph"
+          - "Tool"
+      id:
+        type: faker
+        provider: uuid4
+      infores_id:
+        type: faker
+        provider: uuid4
+      name:
+        type: faker
+        provider: company
+      description:
+        type: faker
+        provider: paragraph
+      homepage_url:
+        type: faker
+        provider: url
+      domains:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
+          - "biomedicine"
+          - "chemistry"
+          - "genomics"
+          - "pharmacology"
+
+fabricator.document_kg.matrix_curated_pks:
+  data:
+    num_rows: 30
+    columns:
+      primary_knowledge_source:
+        type: generate_values
+        sample_values:
+          - "infores:semmeddb"
+          - "infores:gtex"
+          - "infores:ubergraph"
+          - "infores:snpeff"
+          - "infores:rtx-kg2"
+          - "infores:robokop"
+      license_standard:
+        type: generate_values
+        sample_values:
+          - "CC-BY-4.0"
+          - "CC0"
+          - "MIT"
+          - "Custom"
+        inject_nulls:
+          probability: 0.2
+      license_restriction:
+        type: generate_values
+        sample_values:
+          - "none"
+          - "attribution"
+          - "academic_only"
+        inject_nulls:
+          probability: 0.3
+
+fabricator.document_kg.matrix_reviews_pks:
+  data:
+    num_rows: 25
+    columns:
+      primary_knowledge_source:
+        type: generate_values
+        sample_values:
+          - "infores:semmeddb"
+          - "infores:gtex"
+          - "infores:ubergraph"
+          - "infores:snpeff"
+          - "infores:rtx-kg2"
+          - "infores:robokop"
+      noise_penalty_adjustment:
+        type: faker
+        provider: pydecimal
+        provider_args:
+          left_digits: 1
+          right_digits: 2
+          positive: False
+          min_value: -1.0
+          max_value: 1.0
+        inject_nulls:
+          probability: 0.3
+      noise_penalty_adjustment_comment:
+        type: faker
+        provider: sentence
+        inject_nulls:
+          probability: 0.5
+
+fabricator.document_kg.mapping_reusabledata_infores:
+  mappings:
+    num_rows: 20
+    columns:
+      subject_id:
+        type: generate_unique_id
+        prefixes:
+          - "reusabledata:"
+        id_length: 15
+      predicate_id:
+        type: generate_values
+        sample_values:
+          - "skos:exactMatch"
+      object_id:
+        type: generate_unique_id
+        prefixes:
+          - "infores:"
+        id_length: 12
+      mapping_justification:
+        type: generate_values
+        sample_values:
+          - "semapv:LexicalMatching"
+      confidence:
+        type: faker
+        provider: pydecimal
+        provider_args:
+          left_digits: 1
+          right_digits: 2
+          positive: True
+          min_value: 0.8
+          max_value: 1.0
+      comment:
+        type: faker
+        provider: sentence
+
+fabricator.document_kg.mapping_kgregistry_infores:
+  mappings:
+    num_rows: 15
+    columns:
+      subject_id:
+        type: generate_unique_id
+        prefixes:
+          - "kgregistry:"
+        id_length: 15
+      predicate_id:
+        type: generate_values
+        sample_values:
+          - "skos:exactMatch"
+      object_id:
+        type: generate_unique_id
+        prefixes:
+          - "infores:"
+        id_length: 12
+      mapping_justification:
+        type: generate_values
+        sample_values:
+          - "semapv:LexicalMatching"
+      confidence:
+        type: faker
+        provider: pydecimal
+        provider_args:
+          left_digits: 1
+          right_digits: 2
+          positive: True
+          min_value: 0.8
+          max_value: 1.0
+      comment:
+        type: faker
+        provider: sentence
+
