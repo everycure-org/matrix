@@ -52,3 +52,21 @@ run_comparison:
       n_max: 100000
       perform_sort: True
       title: "Recall@n (off-label)"
+
+    disease_specific_hit_at_k:
+      _object: matrix.pipelines.run_comparison.evaluations.SpecificHitAtK
+      ground_truth_col: "is_known_positive"
+      k_max: 200
+      title: "Disease-specific Hit@k (standard ground truth)"
+      specific_col: "target"
+      N_bootstraps: 100
+      force_full_y_axis: True
+
+    disease_specific_hit_at_k_off_label:
+      _object: matrix.pipelines.run_comparison.evaluations.SpecificHitAtK
+      ground_truth_col: "off_label"
+      k_max: 200
+      title: "Disease-specific Hit@k (off-label)"
+      specific_col: "target"
+      N_bootstraps: 100
+      force_full_y_axis: True

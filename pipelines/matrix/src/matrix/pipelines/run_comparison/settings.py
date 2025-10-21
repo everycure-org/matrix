@@ -14,5 +14,13 @@ RUN_COMPARISON_SETTINGS = {
             "name": "off_label_recall_at_n",
             "is_activated": True,
         },
+        {
+            "name": "disease_specific_hit_at_k",
+            "is_activated": True,
+        },
+        {
+            "name": "disease_specific_hit_at_k_off_label",
+            "is_activated": True,
+        },
     ],
 }

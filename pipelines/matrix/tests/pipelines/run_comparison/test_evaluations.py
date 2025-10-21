@@ -2,7 +2,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
 import pytest
-from matrix.pipelines.run_comparison.evaluations import ComparisonEvaluationModelSpecific, FullMatrixRecallAtN
+from matrix.pipelines.run_comparison.evaluations import (
+    ComparisonEvaluationModelSpecific,
+    FullMatrixRecallAtN,
+    SpecificHitAtK,
+)
 from polars.testing import assert_frame_equal
 
 
@@ -158,6 +162,9 @@ def test_model_specific_abstract_class(constant_score_data):
     assert figure.get_axes()[0].get_legend().get_texts()[2].get_text() == "Random classifier"
 
 
+# FullMatrixRecallAtN
+
+
 @pytest.fixture
 def matrix_data():
     return pl.DataFrame(
@@ -170,11 +177,11 @@ def matrix_data():
     )
 
 
-def test_model_full_matrix_recall_at_n(matrix_data):
+def test_full_matrix_recall_at_n(matrix_data):
     """Test the FullMatrixRecallAtN class."""
-    # Given matrix data, combined predictions and an instance of FullMatrixRecallAtN
+    # Given matrix data, combined pairs data and an instance of FullMatrixRecallAtN
     matrix = matrix_data
-    combined_predictions = {
+    combined_pairs = {
         "model_fold_0": lambda: pl.LazyFrame(matrix)
     }  # Dummy function to simulate a Kedro Partitioned dataset
     evaluation = FullMatrixRecallAtN(
@@ -186,11 +193,11 @@ def test_model_full_matrix_recall_at_n(matrix_data):
         title="Test Title",
     )
 
-    # When the evaluate_single_fold method is called
+    # When the method of the class are called
     x_values = evaluation.give_x_values()
     y_values = evaluation.give_y_values(matrix, "score")
     y_values_bootstrap = evaluation.give_y_values_bootstrap(matrix, "score")
-    y_values_random = evaluation.give_y_values_random_classifier(combined_predictions)
+    y_values_random = evaluation.give_y_values_random_classifier(combined_pairs)
 
     # Then the results are as expected
     # x_values are as expected
@@ -209,3 +216,70 @@ def test_model_full_matrix_recall_at_n(matrix_data):
     assert all(y_values_bootstrap[i][3] == 1 for i in range(10))  # Recall@4 always 1 regardless of sample
     # y_values_random are as expected
     assert np.allclose(y_values_random, np.array([0.25, 0.5, 0.75, 1]))
+
+
+# SpecificHitAtK
+
+
+@pytest.fixture
+def disease_specific_hit_at_k_data():
+    return pl.DataFrame(
+        {
+            "source": [1, 2, 3, 1, 2, 3],
+            "target": [0, 0, 0, 1, 1, 1],
+            "is_known_positive": [False, True, True, False, True, False],
+            "score": [1, 2, 3, 1, 2, 3],
+        }
+    )
+
+
+def test_disease_specific_hit_at_k(disease_specific_hit_at_k_data):
+    """Test the SpecificHitAtK class."""
+    # Given sample predictions data, combined pairs data and instances of SpecificHitAtK for disease-specific and drug-specific ranking
+    matrix_disease_specific = disease_specific_hit_at_k_data
+    matrix_drug_specific = disease_specific_hit_at_k_data.rename({"target": "source", "source": "target"})
+    combined_pairs = {
+        "disease_specific_model_fold_0": lambda: pl.LazyFrame(matrix_disease_specific),
+        "drug_specific_model_fold_0": lambda: pl.LazyFrame(matrix_drug_specific),
+    }  # Dummy functions to simulate a Kedro Partitioned dataset
+    evaluation_disease_specific = SpecificHitAtK(
+        ground_truth_col="is_known_positive",
+        k_max=4,  # Set k max larger than the number of known positives
+        title="Test Title",
+        specific_col="target",
+        N_bootstraps=10,
+    )
+    evaluation_drug_specific = SpecificHitAtK(
+        ground_truth_col="is_known_positive",
+        k_max=4,
+        title="Test Title",
+        specific_col="source",
+        N_bootstraps=10,
+    )
+
+    # When the method of the classes are called
+    x_values_disease_specific = evaluation_disease_specific.give_x_values()
+    y_values_disease_specific = evaluation_disease_specific.give_y_values(matrix_disease_specific, "score")
+    y_values_bootstrap_disease_specific = evaluation_disease_specific.give_y_values_bootstrap(
+        matrix_disease_specific, "score"
+    )
+    y_values_random_disease_specific = evaluation_disease_specific.give_y_values_random_classifier(combined_pairs)
+    y_values_drug_specific = evaluation_drug_specific.give_y_values(matrix_drug_specific, "score")
+
+    # Then the results are as expected
+    assert np.allclose(x_values_disease_specific, np.array([0, 1, 2, 3, 4]))
+    # NOTE: The two drugs for disease 0 have rank 1 against negatives. The one drug for disease 1 has rank 2 against negatives.
+    assert np.allclose(y_values_disease_specific, np.array([0, 2 / 3, 1, 1, 1]))
+    assert y_values_bootstrap_disease_specific.shape == (10, 5)
+    assert all(y_values_bootstrap_disease_specific[i][0] == 0 for i in range(10))  # Hit@0 always 0 regardless of sample
+    assert all(
+        (y_values_bootstrap_disease_specific[i][1] >= 0) and (y_values_bootstrap_disease_specific[i][1] <= 1)
+        for i in range(10)
+    )  # Hit@1 can be any value between 0 and 1
+    assert all(
+        y_values_bootstrap_disease_specific[i][j] == 1 for i in range(10) for j in [2, 3, 4]
+    )  # Hit@2, Hit@3 and Hit@4 always 1 regardless of sample
+    assert np.allclose(y_values_random_disease_specific, np.array([0, 1 / 3, 2 / 3, 1, 1]))
+    assert np.allclose(
+        y_values_drug_specific, np.array([0, 2 / 3, 1, 1, 1])
+    )  # Same as disease-specific since the source and target columns were swapped

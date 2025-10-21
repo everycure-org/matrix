@@ -367,4 +367,151 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
         """Compute Recall@n values for a random classifier."""
         matrix = list(combined_pairs.values())[0]()
         matrix_length = matrix.select(pl.len()).collect().item()
-        return np.array([x / matrix_length for x in self.give_x_values()])
+        return np.array([min([1, x / matrix_length]) for x in self.give_x_values()])
+
+
+class SpecificHitAtK(ComparisonEvaluationModelSpecific):
+    """Drug or disease-specific Hit@k evaluation.
+
+    Note: This version of Hit@k is defined as the proportion of known positives that are in the top k when ranked
+    against all known negatives and unknown pairs with the same drug or disease (respectively).
+    """
+
+    def __init__(
+        self,
+        ground_truth_col: str,
+        k_max: int,
+        title: str,
+        specific_col: str = "target",
+        N_bootstraps: int = 100,
+        force_full_y_axis: bool = True,
+    ):
+        """Initialize an instance of SpecificHitAtK.
+
+        Args:
+            ground_truth_col: Boolean column in the matrix indicating the known positive test set.
+            k_max: Maximum value of k to compute Hit@k score for.
+            title: Title of the plot.
+            specific_col: Column to rank over.
+                Set to "source" for drug-specific ranking.
+                Set to "target" for disease-specific ranking.
+            N_bootstraps: Number of bootstrap samples to compute.
+            force_full_y_axis: Whether to force the y-axis to be between 0 and 1.
+        """
+        super().__init__(x_axis_label="n", y_axis_label="Recall@n", title=title, force_full_y_axis=force_full_y_axis)
+        self.ground_truth_col = ground_truth_col
+        self.k_max = k_max
+        if specific_col not in ["source", "target"]:
+            raise ValueError("specific_col must be either 'source' or 'target'.")
+        self.specific_col = specific_col
+        self.N_bootstraps = N_bootstraps
+
+    def give_x_values(self) -> np.ndarray:
+        """Integer x-axis values from 0 to k_max, representing the k in Hit@k."""
+        return list(range(0, self.k_max + 1))
+
+    def _give_ranks_for_test_set(self, matrix: pl.DataFrame, score_col_name: str = "score") -> pl.DataFrame:
+        """Compute specific ranks aginst negatives and unknowns for the test set."""
+        ## NOTE: Comments written for disease-specific ranking but same logic applies for drug-specific ranking.
+        # Restrict to test diseases
+        test_diseases = (
+            matrix.group_by(self.specific_col)
+            .agg(pl.col(self.ground_truth_col).sum().alias("num_known_positives"))
+            .filter(pl.col("num_known_positives") > 0)
+            .select(pl.col(self.specific_col))
+            .to_series()
+            .to_list()
+        )
+        matrix = matrix.filter(pl.col(self.specific_col).is_in(test_diseases))
+
+        # Add disease-specific ranks
+        matrix = matrix.with_columns(
+            specific_rank=pl.col(score_col_name).rank(descending=True, method="random").over(self.specific_col)
+        )
+
+        # Return dataframe containing specific ranks against negatives and unknowns for the test set
+        return (
+            matrix
+            # Restrict to test pairs inly
+            .filter(pl.col(self.ground_truth_col))
+            # Compute rank against negatives/unknowns only by taking away positives from the rank
+            .with_columns(
+                specific_rank_among_positives=pl.col(score_col_name)
+                .rank(descending=True, method="dense")
+                .over(self.specific_col)
+            )
+            .with_columns(
+                specific_rank_against_negatives=pl.col("specific_rank") - pl.col("specific_rank_among_positives") + 1
+            )
+        )
+
+    def _give_hit_at_k(self, ranks_for_test_set: pl.DataFrame, N_test_pairs: int) -> pl.DataFrame:
+        """Compute a numpy array of Hit@k values for k up to k_max, given specific ranks for the test set.
+
+        Args:
+            ranks_for_test_set: Polars DataFrame containing specific rank against unknown and negatives for the test set.
+                Columns must include: "specific_rank_against_negatives"
+            N_test_pairs: Number of known positive test pairs.
+
+        Returns:
+            1D numpy array of Hit@k values.
+        """
+
+        # Count number of positives at each rank and cumulative sum
+        num_pairs_within_rank = (
+            ranks_for_test_set.group_by("specific_rank_against_negatives")
+            .len()
+            .sort("specific_rank_against_negatives")
+            .with_columns(pl.col("len").cum_sum().alias("num_pairs_within_rank"))
+        )
+
+        # Compute hit@k for each k
+        df_hit_at_k = pl.DataFrame(
+            {
+                "k": num_pairs_within_rank["specific_rank_against_negatives"],
+                "hit_at_k": num_pairs_within_rank["num_pairs_within_rank"] / N_test_pairs,
+            }
+        )
+
+        # Prepend value 0 for k=0
+        df_hit_at_k = pl.concat(
+            [pl.DataFrame({"k": [0], "hit_at_k": [0]}).cast({"k": pl.UInt32, "hit_at_k": pl.Float64}), df_hit_at_k]
+        )
+
+        # Join to fill missing k values
+        df_hit_at_k = df_hit_at_k.join(
+            pl.DataFrame({"k": self.give_x_values()}).cast(pl.UInt32), on="k", how="right"
+        ).fill_null(strategy="forward")
+
+        return df_hit_at_k["hit_at_k"].to_numpy()
+
+    def give_y_values(self, matrix: pl.DataFrame, score_col_name: str = "score") -> np.ndarray:
+        """Compute specific Hit@k values for a single set of predictions."""
+        N_test_pairs = len(matrix.filter(pl.col(self.ground_truth_col)))
+        ranks_for_test_set = self._give_ranks_for_test_set(matrix, score_col_name)
+        return self._give_hit_at_k(ranks_for_test_set, N_test_pairs)
+
+    def give_y_values_bootstrap(self, matrix: pl.DataFrame, score_col_name: str = "score") -> np.ndarray:
+        """Compute Hit@k values for all bootstrap samples of a single set of predictions."""
+        N_test_pairs = len(matrix.filter(pl.col(self.ground_truth_col)))
+        ranks_for_test_set = self._give_ranks_for_test_set(matrix, score_col_name)
+
+        # Compute Hit@k values for each bootstrap sample
+        bootstrap_hit_at_k = []
+        for seed in range(self.N_bootstraps):
+            ranks_for_test_set_resampled = ranks_for_test_set.sample(N_test_pairs, with_replacement=True, seed=seed)
+            bootstrap_hit_at_k.append(self._give_hit_at_k(ranks_for_test_set_resampled, N_test_pairs))
+
+        # Return numpy array of Hit@k values for all bootstrap samples
+        return np.array(bootstrap_hit_at_k)
+
+    def give_y_values_random_classifier(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
+        """Compute Hit@k values for a random classifier.
+
+        NOTE: This is a good approximation when the number of positives per drug or disease
+        is much smaller than the total number of diseases or drugs respectively.
+        """
+        matrix = list(combined_pairs.values())[0]()
+        rank_entities_col = "source" if self.specific_col == "target" else "target"
+        num_entities_per_ranking = matrix.select(rank_entities_col).unique().select(pl.len()).collect().item()
+        return np.array([min([1, x / num_entities_per_ranking]) for x in self.give_x_values()])
