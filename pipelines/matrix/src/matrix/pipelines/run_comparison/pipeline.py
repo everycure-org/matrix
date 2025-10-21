@@ -1,11 +1,15 @@
 from kedro.pipeline import Pipeline
-from matrix.kedro4argo_node import ArgoNode
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 from . import nodes
 from .settings import RUN_COMPARISON_SETTINGS
 
-# TODO:
-# - Test on real data
+RUN_COMPARISON_RESOURCE_CONFIG = ArgoResourceConfig(
+    cpu_limit=24,
+    cpu_request=24,
+    memory_limit=256,
+    memory_request=256,
+)
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -35,6 +39,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs=["run_comparison.combined_pairs", "run_comparison.predictions_info"],
                 name=f"combine_matrix_pairs",
+                argo_config=RUN_COMPARISON_RESOURCE_CONFIG,
             ),
             ArgoNode(
                 func=nodes.restrict_predictions,
@@ -45,6 +50,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="run_comparison.combined_predictions",
                 name=f"restrict_predictions",
+                argo_config=RUN_COMPARISON_RESOURCE_CONFIG,
             ),
         ]
     )
