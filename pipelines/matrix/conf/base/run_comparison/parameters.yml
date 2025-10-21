@@ -1,7 +1,7 @@
 run_comparison:
 
   # Options to select which uncertainty estimation methods to perform. Applies to all applicable evaluations. 
-  perform_multifold_uncertainty_estimation: False # If False, only the first fold of data is used.
+  perform_multifold_uncertainty_estimation: True # If False, only the first fold of data is used.
   perform_bootstrap_uncertainty_estimation: True
 
   # Option to assert consistent drug list, disease list, training set and test set across all models.
@@ -25,7 +25,7 @@ run_comparison:
       is_transformed: True
 
   # Configuration for the evaluations to perform. Usually it is not necessary to modify these.
-  available_ground_truth_cols: &available_ground_truth_cols
+  available_ground_truth_cols: # These columns are expected to be present on the predictions dataframes for all models and folds.
     - "is_known_positive"
     - "is_known_negative"
     - "off_label"
