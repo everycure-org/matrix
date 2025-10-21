@@ -31,6 +31,28 @@ def create_primekg_pipeline() -> Pipeline:
     )
 
 
+def create_robokop_pipeline() -> Pipeline:
+    """Robokop preprocessing"""
+    return pipeline(
+        [
+            node(
+                func=nodes.robokop_fix_nodes,
+                inputs="preprocessing.raw.robokop.nodes@polars",
+                outputs="preprocessing.int.robokop.nodes",
+                name="robokop_fix_nodes",
+                tags=["robokop"],
+            ),
+            node(
+                func=nodes.robokop_fix_edges,
+                inputs="preprocessing.raw.robokop.edges@polars",
+                outputs="preprocessing.int.robokop.edges",
+                name="robokop_fix_edges",
+                tags=["robokop"],
+            ),
+        ]
+    )
+
+
 def create_embiology_pipeline() -> Pipeline:
     """Embiology cleaning and preprocessing"""
     return pipeline(
@@ -145,6 +167,7 @@ def create_pipeline() -> Pipeline:
     return pipeline(
         [
             create_primekg_pipeline(),
+            create_robokop_pipeline(),
             create_embiology_pipeline(),
         ]
     )
