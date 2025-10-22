@@ -22,7 +22,7 @@ The `GaussianSearch` tuner has been updated to support parallel evaluation of hy
 
 ### 2. Key Features
 
-- **Adaptive Parallelization**: Automatically detects `n_jobs` from the estimator
+- **Adaptive Parallelization**: Automatically detects `n_jobs` from the estimator (XGBoost)
   - If `n_jobs=-1`: Evaluates multiple hyperparameter configs in parallel
   - Otherwise: Falls back to sequential evaluation
 - **Bayesian Optimization**: Still uses Gaussian Process for intelligent hyperparameter search
@@ -35,7 +35,7 @@ The `GaussianSearch` tuner has been updated to support parallel evaluation of hy
 
 ### 3. Configuration
 
-**✅ Recommended: Keep `n_jobs=-1` in your config**
+**✅ Recommended: Keep `n_jobs=-1` in config**
 
 No changes required to `xg_ensemble.yml`. The tuner now automatically:
 
@@ -43,21 +43,21 @@ No changes required to `xg_ensemble.yml`. The tuner now automatically:
 2. **Intelligently adjusts** it to avoid resource contention
 3. Balances parallel hyperparameter search with parallel tree building
 
-**What Happens with 88 CPUs:**
+**What Happens with 87 CPUs:**
 
 ```yaml
 estimator:
   _object: xgboost.XGBClassifier
-  n_jobs: -1 # You specify this
+  n_jobs: -1 # We specify this
   # ... other params
 ```
 
 The tuner automatically:
 
-- Calculates: `n_parallel_evals = √88 ≈ 9` → rounds to 4 (safe range: 2-4)
-- Adjusts XGBoost: `n_jobs = 88 / 4 = 22 threads per model`
-- Evaluates: 4 hyperparameter configs in parallel, each using 22 threads
-- Result: Full CPU utilization (4 × 22 = 88) without contention
+- Calculates: `n_parallel_evals = √87 ≈ 8` → rounds to 4 (safe range: 2-4)
+- Adjusts XGBoost: `n_jobs = 87 / 4 = 21 threads per model`
+- Evaluates: 4 hyperparameter configs in parallel, each using 21 threads
+- Result: Full CPU utilization (4 × 21 = 84) without contention
 
 ### 4. Performance Impact & Intelligent CPU Allocation
 
@@ -72,19 +72,19 @@ The tuner automatically balances outer (hyperparameter) and inner (tree building
 
 **Strategy:**
 
-- Detects available CPUs (e.g., 88 CPUs)
+- Detects available CPUs (e.g., 87 CPUs)
 - Calculates optimal parallel evaluations: `√(n_cpus)` ≈ 2-4 configs in parallel
 - Allocates remaining threads to each XGBoost: `threads_per_model = n_cpus / n_parallel_evals`
-- Example with 88 CPUs:
+- Example with 87 CPUs:
   - 4 hyperparameter configs evaluated in parallel
-  - Each XGBoost uses 22 threads (88 / 4)
-  - Total CPU usage: 4 × 22 = 88 (full utilization, no contention!)
+  - Each XGBoost uses 21 threads (87 / 4)
+  - Total CPU usage: 4 × 22 = 87 (full utilization, no contention!)
 
 **Why Not Parallelize Everything?**
 
 If we naively evaluated many configs in parallel, each with `n_jobs=-1`:
 
-- 88 configs × 88 threads = 7,744 threads competing for 88 CPUs
+- 87 configs × 87 threads = 7,744 threads competing for 87 CPUs
 - Massive context switching and memory overhead
 - Actually **slower** than sequential execution!
 
@@ -93,6 +93,7 @@ If we naively evaluated many configs in parallel, each with `n_jobs=-1`:
 - Estimated speedup: 2-4× faster for the tuning phase
 - Optimal CPU utilization without resource contention
 - Lower memory pressure compared to full parallelization
+- <1% loss in accuracy.
 
 ## Testing
 
