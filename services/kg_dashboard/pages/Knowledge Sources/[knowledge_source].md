@@ -79,6 +79,69 @@ ORDER BY count DESC
 </div>
 {/if}
 
+## Epistemic Robustness
+
+```sql ks_epistemic_score
+SELECT * FROM bq.epistemic_score_by_knowledge_source
+WHERE primary_knowledge_source = '${params.knowledge_source}'
+```
+
+<div class="text-left text-md max-w-3xl mx-auto mb-4">
+  Epistemic Robustness measures the provenance quality of edges from this knowledge source, using Knowledge Level and Agent Type from the Biolink Model to assess evidence strength and reliability. Higher scores indicate stronger evidence and greater manual curation.
+</div>
+
+{#if ks_epistemic_score.length > 0}
+<div class="text-center mb-6">
+  <span class="font-semibold text-4xl" style="color: #9D79D6;">
+    <Value data={ks_epistemic_score} column="average_epistemic_score" fmt="num2" />
+  </span><br/>
+  <span class="text-xl">Average Epistemic Score</span>
+</div>
+
+<Grid col=2 class="max-w-4xl mx-auto mb-15">
+  <div class="text-center text-lg">
+    <span class="font-semibold text-3xl" style="color: #7C3AED;">
+      <Value data={ks_epistemic_score} column="average_knowledge_level_score" fmt="num2" />
+    </span><br/>
+    <span class="text-lg">Knowledge Level Score</span><br/>
+    <span class="text-sm text-gray-600 mt-1">
+      Most common: <span class="font-semibold">{ks_epistemic_score[0].most_common_knowledge_level}</span>
+    </span>
+  </div>
+  <div class="text-center text-lg">
+    <span class="font-semibold text-3xl" style="color: #7C3AED;">
+      <Value data={ks_epistemic_score} column="average_agent_type_score" fmt="num2" />
+    </span><br/>
+    <span class="text-lg">Agent Type Score</span><br/>
+    <span class="text-sm text-gray-600 mt-1">
+      Most common: <span class="font-semibold">{ks_epistemic_score[0].most_common_agent_type}</span>
+    </span>
+  </div>
+</Grid>
+
+## 
+
+<Grid col=2 class="max-w-4xl mx-auto mb-8, mt-15">
+  <div class="text-center text-lg">
+    <span class="font-semibold text-2xl">
+      <Value data={ks_epistemic_score} column="included_edges" fmt="num0" />
+    </span><br/>
+    <span class="text-lg">Edges Included</span>
+  </div>
+  <div class="text-center text-lg">
+    <span class="font-semibold text-2xl">
+      <Value data={ks_epistemic_score} column="null_or_not_provided_both" fmt="num0" />
+    </span><br/>
+    <span class="text-lg">Edges with Missing Provenance</span><br/>
+    <span class="text-xs text-gray-600">(Both Knowledge Level and Agent Type not provided)</span>
+  </div>
+</Grid>
+{:else}
+<div class="text-center text-lg text-gray-500 mb-6">
+  No epistemic score data available for this knowledge source.
+</div>
+{/if}
+
 ## Edge Type Validation
 
 ```sql ks_edge_validation

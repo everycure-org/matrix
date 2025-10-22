@@ -222,6 +222,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="check_merged_nodes_and_edges_consistency",
                     tags=["validation"],
                 ),
+                node(
+                    func=nodes.compute_abox_tbox_metric,
+                    inputs={
+                        "edges": "integration.prm.unified_edges",
+                    },
+                    outputs="integration.prm.metric_abox_tbox",
+                    name="metric_abox_tbox",
+                    tags=["metrics", "validation"],
+                ),
             ]
         )
     )

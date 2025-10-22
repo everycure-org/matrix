@@ -7,7 +7,14 @@ category: Metrics
 ## Epistemic Robustness
 
 ```sql epistemic_score
-SELECT * FROM bq.epistemic_score
+SELECT
+  SUM(included_edges) AS included_edges,
+  ROUND(
+    SUM(average_epistemic_score * included_edges) / SUM(included_edges),
+    4
+  ) AS average_epistemic_score,
+  SUM(null_or_not_provided_both) AS null_or_not_provided_both
+FROM bq.epistemic_score_by_knowledge_source
 ```
 
 ```sql epistemic_heatmap
