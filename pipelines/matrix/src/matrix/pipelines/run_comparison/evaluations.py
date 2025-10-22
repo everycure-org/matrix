@@ -4,6 +4,7 @@ from collections.abc import Callable
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
+from scipy.stats import entropy
 
 
 class ComparisonEvaluation(abc.ABC):
@@ -318,7 +319,8 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
 
     def give_x_values(self) -> np.ndarray:
         """Integer x-axis values from 0 to n_max, representing the n in recall@n."""
-        return np.linspace(1, self.n_max, self.num_n_values)
+        x_values_floats = np.linspace(1, self.n_max, self.num_n_values)
+        return np.round(x_values_floats).astype(int)
 
     def _give_ranks_series(self, matrix: pl.DataFrame, score_col_name: str = "score") -> pl.Series:
         """Give the ranks of the known positives."""
@@ -515,3 +517,96 @@ class SpecificHitAtK(ComparisonEvaluationModelSpecific):
         rank_entities_col = "source" if self.specific_col == "target" else "target"
         num_entities_per_ranking = matrix.select(rank_entities_col).unique().select(pl.len()).collect().item()
         return np.array([min([1, x / num_entities_per_ranking]) for x in self.give_x_values()])
+
+
+class EntropyAtN(ComparisonEvaluationModelSpecific):
+    """Drug-Entropy@N or Disease-Entropy@N evaluation."""
+
+    def __init__(
+        self,
+        count_col: str,
+        n_max: int,
+        perform_sort: bool,
+        title: str,
+        num_n_values: int = 1000,
+        force_full_y_axis: bool = True,
+    ):
+        """Initialize an instance of FullMatrixRecallAtN.
+
+        Args:
+            count_col: Column containing entities to count. Must be one of:
+                "source", for Drug-Entropy@n
+                "target", for Disease-Entropy@n
+            n_max: Maximum value of n to compute recall@n score for.
+            perform_sort: Whether to sort the matrix or expect the dataframe to be sorted already.
+            title: Title of the plot.
+            num_n_values: Number of n values to compute recall@n score for.
+            force_full_y_axis: Whether to force the y-axis to be between 0 and 1.
+        """
+        super().__init__(x_axis_label="n", y_axis_label="Recall@n", title=title, force_full_y_axis=force_full_y_axis)
+        self.n_max = n_max
+        self.perform_sort = perform_sort
+        self.num_n_values = num_n_values
+
+        def give_x_values(self) -> np.ndarray:
+            """Integer x-axis values from 0 to n_max, representing the n in recall@n."""
+            x_values_floats = np.linspace(0, self.n_max, self.num_n_values)
+            return np.round(x_values_floats).astype(int)
+
+        def give_y_values(self, matrix: pl.DataFrame, score_col_name: str = "score") -> np.ndarray:
+            """Compute Drug-Entropy@n or Disease-Entropy@n values for a single set of predictions."""
+            ## NOTE: Comments written for Drug-Entropy@n but same logic applies for Disease-Entropy@n.
+            # Sort by treat score
+            if perform_sort:
+                matrix = matrix.sort(by=score_col, descending=True)
+
+            # Total number of unique entities
+            n_entities = matrix.select(pl.col(self.count_col).n_unique()).to_series().to_list()[0]
+            entity_entropy_lst = []
+
+            # Initialize count DataFrames with all unique entities
+            entity_count = matrix.select(pl.col(self.count_col)).unique().with_columns(pl.lit(0).alias("count"))
+
+            for n in self.give_x_values():
+                # Get pairs in the new slice
+                matrix_slice = matrix.slice(n_lst[i], n_lst[i + 1] - n_lst[i])
+
+                # Count entities in the new slice
+                slice_count = matrix_slice.select(pl.col(self.count_col)).to_series().value_counts(name="count_new")
+
+                # Update total entity count
+                entity_count = (
+                    entity_count.join(slice_count, on=self.count_col, how="left")
+                    .with_columns(pl.col("count_new").fill_null(0))
+                    .with_columns((pl.col("count") + pl.col("count_new")).alias("count"))
+                    .drop("count_new")
+                )
+
+                # Compute entropy
+                entity_entropy_lst.append(entropy(entity_count.select("count").to_numpy().flatten(), base=n_entities))
+
+            return entity_entropy_lst
+
+    def give_y_values_bootstrap(self, matrix: pl.DataFrame) -> np.ndarray:
+        return NotImplemented(
+            "Entropy@n does not use ground truth data so bootstrap uncertainty estimation is not applicable."
+        )
+
+    def give_y_values_random_classifier(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
+        return np.array([1 for _ in self.give_x_values()])  # TODO: fill in
+
+    def evaluate_bootstrap_single_fold(
+        self,
+        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
+        predictions_info: dict[str, any],
+    ) -> pl.DataFrame:
+        """Override bootstrap single fold evaluation as bootstrap uncertainty estimation is not applicable."""
+        return self.evaluate_single_fold(combined_predictions, predictions_info)
+
+    def evaluate_bootstrap_multi_fold(
+        self,
+        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
+        predictions_info: dict[str, any],
+    ) -> pl.DataFrame:
+        """Override bootstrap multi fold evaluation as bootstrap uncertainty estimation is not applicable."""
+        return self.evaluate_multi_fold(combined_predictions, predictions_info)
