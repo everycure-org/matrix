@@ -4,7 +4,7 @@ import os
 import re
 from copy import deepcopy
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import fsspec
 import google.api_core.exceptions as exceptions
@@ -12,11 +12,7 @@ import gspread
 import pandas as pd
 import pyspark.sql as ps
 from google.cloud import bigquery, storage
-from kedro.io.core import (
-    AbstractDataset,
-    DatasetError,
-    Version,
-)
+from kedro.io.core import AbstractDataset, DatasetError, Version
 from kedro_datasets.pandas import CSVDataset, GBQTableDataset
 from kedro_datasets.partitions import PartitionedDataset
 from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
@@ -145,6 +141,7 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         dataset: str,
         table: str,
         file_format: str,
+        location: Optional[str] = None,
         identifier: str | None = None,
         load_args: dict[str, Any] | None = None,
         save_args: dict[str, Any] | None = None,
@@ -173,7 +170,7 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         self._path = filepath
         self._format = file_format
         self._labels = save_args.pop("labels", {}) if save_args else {}
-
+        self._location = location
         self._table = self._sanitize_name("_".join(el for el in [table, identifier] if el is not None))
         self._dataset_id = f"{self._project_id}.{self._sanitize_name(dataset)}"
 
@@ -219,6 +216,9 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
 
             # Dataset doesn't exist, so let's create it
             dataset = bigquery.Dataset(self._dataset_id)
+
+            if self._location:
+                dataset.location = self._location
 
             dataset = self._client.create_dataset(dataset, timeout=30)
             logger.info(f"Created dataset {self._project_id}.{dataset.dataset_id}")
