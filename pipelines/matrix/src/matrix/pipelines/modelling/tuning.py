@@ -9,7 +9,7 @@ from skopt import Optimizer
 from skopt.plots import plot_convergence
 from skopt.space.space import Dimension
 
-from matrix.pipelines.modelling.helper import get_best_parallel_eval
+from matrix.pipelines.modelling.utils import get_best_parallel_eval
 
 logger = logging.getLogger(__name__)
 
