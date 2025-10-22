@@ -534,7 +534,7 @@ def test_tune_parameters_regex_features_other_convention(
 def test_tune_parameters_train_test_split(tune_data: pd.DataFrame, grid_search_tuner: GridSearchCV) -> None:
     """Test proper handling of train/test splits."""
     mock_tuner = Mock()
-    mock_tuner._estimator = LogisticRegression()
+    mock_tuner.estimator = LogisticRegression()
     mock_tuner.best_params_ = {"C": 1.0, "max_iter": 100}
 
     result, _ = tune_parameters(
