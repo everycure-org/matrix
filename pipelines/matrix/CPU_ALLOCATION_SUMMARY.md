@@ -1,6 +1,6 @@
 # CPU Allocation Strategy for 88-CPU Machine
 
-## TL;DR: Keep `n_jobs=-1` - It's Now Smart! ✅
+## TL;DR: Keep `n_jobs=-1` for XGBoost - It's Now Smart! ✅
 
 ## What Changed
 
