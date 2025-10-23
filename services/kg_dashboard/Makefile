@@ -53,7 +53,7 @@ export EVIDENCE_VAR__key_drug_ids := $(KEY_DRUG_IDS)
 bump_basepath:
 	node ./scripts/update-basepath.cjs $(RELEASE_VERSION)
 
-build: bump_basepath generate-release-trends-sql
+build: bump_basepath sources/bq/release_trends.sql sources/bq/key_nodes_release_trends.sql sources/bq/key_nodes_release_aggregate.sql
 	@echo "Building with EVIDENCE_VAR__release_version=$(EVIDENCE_VAR__release_version)"
 	npm run build:strict
 

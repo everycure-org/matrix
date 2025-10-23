@@ -16,7 +16,6 @@ SELECT
   REPLACE(subject_category, 'biolink:', '') as subject_category,
   REPLACE(predicate, 'biolink:', '') as predicate,
   REPLACE(object_category, 'biolink:', '') as object_category,
-  REPLACE(primary_knowledge_source, 'infores:', '') as primary_knowledge_source,
   edge_count
 FROM bq.key_nodes_edges_breakdown
 WHERE key_node_id = '${params.key_node_id}'
@@ -205,7 +204,6 @@ are most common for this entity.
     <Column id="subject_category" title="Subject Category" />
     <Column id="predicate" title="Predicate" />
     <Column id="object_category" title="Object Category" />
-    <Column id="primary_knowledge_source" title="Primary KS" />
 
 </DataTable>
 {:else}
@@ -265,7 +263,6 @@ The comparison tables below show edge types that have been added, removed, or ch
     <Column id="subject_category" title="Subject Category" />
     <Column id="predicate" title="Predicate" />
     <Column id="object_category" title="Object Category" />
-    <Column id="primary_knowledge_source" title="Primary KS" />
 </DataTable>
 {:else}
 <div class="text-center text-lg text-gray-500 mt-4 mb-4">
@@ -286,7 +283,6 @@ The comparison tables below show edge types that have been added, removed, or ch
     <Column id="subject_category" title="Subject Category" />
     <Column id="predicate" title="Predicate" />
     <Column id="object_category" title="Object Category" />
-    <Column id="primary_knowledge_source" title="Primary KS" />
 </DataTable>
 {:else}
 <div class="text-center text-lg text-gray-500 mt-4 mb-4">
@@ -310,7 +306,6 @@ The comparison tables below show edge types that have been added, removed, or ch
     <Column id="subject_category" title="Subject Category" />
     <Column id="predicate" title="Predicate" />
     <Column id="object_category" title="Object Category" />
-    <Column id="primary_knowledge_source" title="Primary KS" />
 </DataTable>
 {:else}
 <div class="text-center text-lg text-gray-500 mt-4 mb-4">

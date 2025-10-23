@@ -36,7 +36,6 @@ SELECT
   edges.predicate,
   subject_nodes.category as subject_category,
   object_nodes.category as object_category,
-  edges.primary_knowledge_source,
   COUNT(*) as edge_count,
   COUNT(DISTINCT edges.subject) as unique_subjects,
   COUNT(DISTINCT edges.object) as unique_objects
@@ -47,5 +46,5 @@ JOIN `${project_id}.release_${bq_release_version}.nodes_unified` subject_nodes
   ON edges.subject = subject_nodes.id
 JOIN `${project_id}.release_${bq_release_version}.nodes_unified` object_nodes
   ON edges.object = object_nodes.id
-GROUP BY descendants.key_node_id, edges.predicate, subject_nodes.category, object_nodes.category, edges.primary_knowledge_source
+GROUP BY descendants.key_node_id, edges.predicate, subject_nodes.category, object_nodes.category
 ORDER BY descendants.key_node_id, edge_count DESC
