@@ -4,9 +4,7 @@ filtering:
       _object: matrix.pipelines.filtering.filters.KeepRowsContaining
       column: upstream_data_source
       keep_list:
-        - rtxkg2
-        - ec_medical
-        - robokop
+        - spoke
         
     # filter_node_labels:
     #     _object: matrix.pipelines.filtering.filters.RemoveRowsByColumnOverlap
@@ -40,9 +38,7 @@ filtering:
       _object: matrix.pipelines.filtering.filters.KeepRowsContaining
       column: upstream_data_source
       keep_list:
-        - rtxkg2
-        - ec_medical
-        - robokop
+        - spoke
 
     filter_biolink_edges:
       _object: matrix.pipelines.filtering.filters.BiolinkDeduplicateEdges
