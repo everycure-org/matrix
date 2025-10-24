@@ -26,6 +26,26 @@ ORDER BY edge_count DESC
 SELECT * FROM bq.key_nodes_connected_categories WHERE key_node_id = '${params.key_node_id}' ORDER BY count DESC
 ```
 
+```sql key_node_category_summary
+SELECT * FROM bq.key_nodes_category_summary WHERE key_node_id = '${params.key_node_id}' ORDER BY distinct_nodes DESC
+```
+
+```sql key_node_category_edges
+SELECT
+  parent_category,
+  subject,
+  subject_name,
+  subject_category,
+  predicate,
+  object,
+  object_name,
+  object_category,
+  primary_knowledge_sources
+FROM bq.key_nodes_category_edges
+WHERE key_node_id = '${params.key_node_id}'
+ORDER BY parent_category, subject, predicate, object
+```
+
 ```sql key_node_release_trends
 SELECT
   key_node_id,
@@ -45,6 +65,8 @@ ORDER BY release_order, edge_count DESC
 ```
 
 <script>
+  import KeyNodeChordDashboard from '../../_components/KeyNodeChordDashboard.svelte';
+
   const current_release_bq_version = import.meta.env.VITE_release_version?.replace(/\./g, '_') || 'v0_10_4';
   const benchmark_bq_version = import.meta.env.VITE_benchmark_version?.replace(/\./g, '_') || 'v0_10_2';
   const benchmark_semantic_version = import.meta.env.VITE_benchmark_version || 'v0.10.2';
@@ -153,6 +175,56 @@ This provides a comprehensive view of the entire hierarchy under this node.
     <span class="text-md">Direct Unique Neighbors</span>
   </div>
 </Grid>
+
+## Connected Categories
+
+<Details title="Understanding This Table">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+This table shows all biolink categories connected to this key node (including descendants), regardless of edge direction.
+Each row shows a category and the total number of edges connecting it to this key node.
+This provides a high-level view of what types of entities this key node is connected to in the knowledge graph.
+</div>
+</Details>
+
+{#if key_node_category_summary.length > 0}
+<DataTable
+    data={key_node_category_summary}
+    search=true
+    pagination=true
+    pageSize={20}
+    title="Categories Connected to This Key Node">
+
+    <Column id="total_edges" title="Total Edges" contentType="bar" fmt="num0" />
+    <Column id="connected_category" title="Connected Category" />
+
+</DataTable>
+{:else}
+<div class="text-center text-lg text-gray-500 mt-10">
+  No category connections found for this key node.
+</div>
+{/if}
+
+## Interactive Category Explorer
+
+<Details title="Understanding This Visualization">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+This interactive chord diagram shows the key node in the center with connected categories arranged in a circle around it.
+The size and color of each link represents the number of edges to that category. Click on any category node to see
+detailed edge information below. Click again or click the key node to deselect.
+</div>
+</Details>
+
+{#if key_node_category_summary.length > 0}
+<KeyNodeChordDashboard
+  categoryData={key_node_category_summary}
+  edgeData={key_node_category_edges}
+  keyNodeName={key_node_info.length > 0 ? key_node_info[0].name || params.key_node_id : params.key_node_id}
+/>
+{:else}
+<div class="text-center text-lg text-gray-500 mt-10">
+  No category data available for visualization.
+</div>
+{/if}
 
 ## Connection Flow
 
