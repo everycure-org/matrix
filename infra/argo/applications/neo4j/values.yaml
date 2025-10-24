@@ -133,6 +133,8 @@ neo4j: # the name of the helm dependency
     # server.directories.import: /var/lib/neo4j/import
     server.default_advertised_address: dummy-replaced-by-helm-override-from-app-of-apps
     server.bolt.advertised_address: dummy-replaced-by-helm-override-from-app-of-apps
+    db.logs.query.enabled: INFO
+
 
     # Enable SSL/TLS
     # https://neo4j.com/developer/kb/how-do-i-enable-remote-https-access-with-neo4j-30x/
@@ -209,7 +211,7 @@ neo4j: # the name of the helm dependency
                   <AppenderRef ref="SecurityLog"/>
               </Logger>
               <!-- The query log, must be named "QueryLogger" -->
-              <Logger name="QueryLogger" level="OFF" additivity="false">
+              <Logger name="QueryLogger" level="INFO" additivity="false">
                   <AppenderRef ref="QueryLog"/>
               </Logger>
           </Loggers>
