@@ -1,9 +1,11 @@
 import abc
 from collections.abc import Callable
+from math import floor, log
 
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
+from scipy.stats import entropy
 
 
 class ComparisonEvaluation(abc.ABC):
@@ -54,7 +56,14 @@ class ComparisonEvaluation(abc.ABC):
 class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
     """Abstract base class for evaluations that produce a single curve for each model (e.g. recall@n, AUPRC, etc. )."""
 
-    def __init__(self, x_axis_label: str, y_axis_label: str, title: str, force_full_y_axis: bool = False):
+    def __init__(
+        self,
+        x_axis_label: str,
+        y_axis_label: str,
+        title: str,
+        force_full_y_axis: bool = False,
+        baseline_curve_name: str = "Random classifier",
+    ):
         """Initialize an instance of ComparisonEvaluationModelSpecific.
 
         Args:
@@ -66,6 +75,7 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         self.y_axis_label = y_axis_label
         self.title = title
         self.force_full_y_axis = force_full_y_axis
+        self.baseline_curve_name = baseline_curve_name
 
     @abc.abstractmethod
     def give_x_values(self) -> np.ndarray:
@@ -103,11 +113,12 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         pass
 
     @abc.abstractmethod
-    def give_y_values_random_classifier(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
-        """Give the y-values of the curve for a random classifier, given a dictionary of reference matrices of drug-disease pairs for each fold.
+    def give_y_values_baseline(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
+        """Give the y-values of the curve for a baseline model, e.g. random classifier.
 
         Args:
             combined_pairs: Dictionary of PartitionedDataset load fn's returning combined matrix pairs for each fold
+
         Returns:
             A 1D numpy array of y-values.
         """
@@ -244,14 +255,20 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
 
         return output_dataframe
 
+    def _give_is_plot_errors(self, perform_multifold: bool, perform_bootstrap: bool) -> bool:
+        """Determine if error bars should be plotted."""
+        return perform_multifold or perform_bootstrap
+
     def plot_results(
         self,
         results: pl.DataFrame,
         combined_pairs: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
-        is_plot_errors: bool,
+        perform_multifold: bool,
+        perform_bootstrap: bool,
     ) -> plt.Figure:
         """Plot the results."""
+        is_plot_errors = self._give_is_plot_errors(perform_multifold, perform_bootstrap)
 
         # List of n values for recall@n plot
         x_values = self.give_x_values()
@@ -271,8 +288,8 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
                 ax.plot(x_values, av_y_values, label=model_name)
 
         # Plot random classifier curve
-        y_values_random = self.give_y_values_random_classifier(combined_pairs)
-        ax.plot(x_values, y_values_random, "k--", label="Random classifier", alpha=0.5)
+        y_values_random = self.give_y_values_baseline(combined_pairs)
+        ax.plot(x_values, y_values_random, "k--", label=self.baseline_curve_name, alpha=0.5)
 
         # Configure figure
         ax.set_xlabel(self.x_axis_label)
@@ -318,7 +335,8 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
 
     def give_x_values(self) -> np.ndarray:
         """Integer x-axis values from 0 to n_max, representing the n in recall@n."""
-        return np.linspace(1, self.n_max, self.num_n_values)
+        x_values_floats = np.linspace(1, self.n_max, self.num_n_values)
+        return np.round(x_values_floats).astype(int)
 
     def _give_ranks_series(self, matrix: pl.DataFrame, score_col_name: str = "score") -> pl.Series:
         """Give the ranks of the known positives."""
@@ -363,8 +381,278 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
         # Calculate recall@n for each bootstrap
         return np.array([bootstrap_recall_lst(ranks_series, N, n_lst, seed) for seed in range(self.N_bootstraps)])
 
-    def give_y_values_random_classifier(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
+    def give_y_values_baseline(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
         """Compute Recall@n values for a random classifier."""
         matrix = list(combined_pairs.values())[0]()
         matrix_length = matrix.select(pl.len()).collect().item()
-        return np.array([x / matrix_length for x in self.give_x_values()])
+        return np.array([min([1, x / matrix_length]) for x in self.give_x_values()])
+
+
+class SpecificHitAtK(ComparisonEvaluationModelSpecific):
+    """Drug or disease-specific Hit@k evaluation.
+
+    Note: This version of Hit@k is defined as the proportion of known positives that are in the top k when ranked
+    against all known negatives and unknown pairs with the same drug or disease (respectively).
+    """
+
+    def __init__(
+        self,
+        ground_truth_col: str,
+        k_max: int,
+        title: str,
+        specific_col: str = "target",
+        N_bootstraps: int = 100,
+        force_full_y_axis: bool = True,
+    ):
+        """Initialize an instance of SpecificHitAtK.
+
+        Args:
+            ground_truth_col: Boolean column in the matrix indicating the known positive test set.
+            k_max: Maximum value of k to compute Hit@k score for.
+            title: Title of the plot.
+            specific_col: Column to rank over.
+                Set to "source" for drug-specific ranking.
+                Set to "target" for disease-specific ranking.
+            N_bootstraps: Number of bootstrap samples to compute.
+            force_full_y_axis: Whether to force the y-axis to be between 0 and 1.
+        """
+        super().__init__(x_axis_label="n", y_axis_label="Recall@n", title=title, force_full_y_axis=force_full_y_axis)
+        self.ground_truth_col = ground_truth_col
+        self.k_max = k_max
+        if specific_col not in ["source", "target"]:
+            raise ValueError("specific_col must be either 'source' or 'target'.")
+        self.specific_col = specific_col
+        self.N_bootstraps = N_bootstraps
+
+    def give_x_values(self) -> np.ndarray:
+        """Integer x-axis values from 0 to k_max, representing the k in Hit@k."""
+        return list(range(0, self.k_max + 1))
+
+    def _give_ranks_for_test_set(self, matrix: pl.DataFrame, score_col_name: str = "score") -> pl.DataFrame:
+        """Compute specific ranks against negatives and unknowns for the test set."""
+        ## NOTE: Comments written for disease-specific ranking but same logic applies for drug-specific ranking.
+        # Restrict to test diseases
+        test_diseases = (
+            matrix.group_by(self.specific_col)
+            .agg(pl.col(self.ground_truth_col).sum().alias("num_known_positives"))
+            .filter(pl.col("num_known_positives") > 0)
+            .select(pl.col(self.specific_col))
+            .to_series()
+            .to_list()
+        )
+        matrix = matrix.filter(pl.col(self.specific_col).is_in(test_diseases))
+
+        # Add disease-specific ranks
+        matrix = matrix.with_columns(
+            specific_rank=pl.col(score_col_name).rank(descending=True, method="random").over(self.specific_col)
+        )
+
+        # Return dataframe containing specific ranks against negatives and unknowns for the test set
+        return (
+            matrix
+            # Restrict to test pairs inly
+            .filter(pl.col(self.ground_truth_col))
+            # Compute rank against negatives/unknowns only by taking away positives from the rank
+            .with_columns(
+                specific_rank_among_positives=pl.col(score_col_name)
+                .rank(descending=True, method="dense")
+                .over(self.specific_col)
+            )
+            .with_columns(
+                specific_rank_against_negatives=pl.col("specific_rank") - pl.col("specific_rank_among_positives") + 1
+            )
+        )
+
+    def _give_hit_at_k(self, ranks_for_test_set: pl.DataFrame, N_test_pairs: int) -> pl.DataFrame:
+        """Compute a numpy array of Hit@k values for k up to k_max, given specific ranks for the test set.
+
+        Args:
+            ranks_for_test_set: Polars DataFrame containing specific rank against unknown and negatives for the test set.
+                Columns must include: "specific_rank_against_negatives"
+            N_test_pairs: Number of known positive test pairs.
+
+        Returns:
+            1D numpy array of Hit@k values.
+        """
+
+        # Count number of positives at each rank and cumulative sum
+        num_pairs_within_rank = (
+            ranks_for_test_set.group_by("specific_rank_against_negatives")
+            .len()
+            .sort("specific_rank_against_negatives")
+            .with_columns(pl.col("len").cum_sum().alias("num_pairs_within_rank"))
+        )
+
+        # Compute hit@k for each k
+        df_hit_at_k = pl.DataFrame(
+            {
+                "k": num_pairs_within_rank["specific_rank_against_negatives"],
+                "hit_at_k": num_pairs_within_rank["num_pairs_within_rank"] / N_test_pairs,
+            }
+        )
+
+        # Prepend value 0 for k=0
+        df_hit_at_k = pl.concat(
+            [pl.DataFrame({"k": [0], "hit_at_k": [0]}).cast({"k": pl.UInt32, "hit_at_k": pl.Float64}), df_hit_at_k]
+        )
+
+        # Join to fill missing k values
+        df_hit_at_k = df_hit_at_k.join(
+            pl.DataFrame({"k": self.give_x_values()}).cast(pl.UInt32), on="k", how="right"
+        ).fill_null(strategy="forward")
+
+        return df_hit_at_k["hit_at_k"].to_numpy()
+
+    def give_y_values(self, matrix: pl.DataFrame, score_col_name: str = "score") -> np.ndarray:
+        """Compute specific Hit@k values for a single set of predictions."""
+        N_test_pairs = len(matrix.filter(pl.col(self.ground_truth_col)))
+        ranks_for_test_set = self._give_ranks_for_test_set(matrix, score_col_name)
+        return self._give_hit_at_k(ranks_for_test_set, N_test_pairs)
+
+    def give_y_values_bootstrap(self, matrix: pl.DataFrame, score_col_name: str = "score") -> np.ndarray:
+        """Compute Hit@k values for all bootstrap samples of a single set of predictions."""
+        N_test_pairs = len(matrix.filter(pl.col(self.ground_truth_col)))
+        ranks_for_test_set = self._give_ranks_for_test_set(matrix, score_col_name)
+
+        # Compute Hit@k values for each bootstrap sample
+        bootstrap_hit_at_k = []
+        for seed in range(self.N_bootstraps):
+            ranks_for_test_set_resampled = ranks_for_test_set.sample(N_test_pairs, with_replacement=True, seed=seed)
+            bootstrap_hit_at_k.append(self._give_hit_at_k(ranks_for_test_set_resampled, N_test_pairs))
+
+        # Return numpy array of Hit@k values for all bootstrap samples
+        return np.array(bootstrap_hit_at_k)
+
+    def give_y_values_baseline(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
+        """Compute Hit@k values for a random classifier.
+
+        NOTE: This is a good approximation when the number of positives per drug or disease
+        is much smaller than the total number of diseases or drugs respectively.
+        """
+        matrix = list(combined_pairs.values())[0]()
+        rank_entities_col = "source" if self.specific_col == "target" else "target"
+        num_entities_per_ranking = matrix.select(rank_entities_col).unique().select(pl.len()).collect().item()
+        return np.array([min([1, x / num_entities_per_ranking]) for x in self.give_x_values()])
+
+
+class EntropyAtN(ComparisonEvaluationModelSpecific):
+    """Drug-Entropy@N or Disease-Entropy@N evaluation."""
+
+    def __init__(
+        self,
+        count_col: str,
+        n_max: int,
+        perform_sort: bool,
+        title: str,
+        num_n_values: int = 1000,
+        force_full_y_axis: bool = True,
+    ):
+        """Initialize an instance of FullMatrixRecallAtN.
+
+        Args:
+            count_col: Column containing entities to count. Must be one of:
+                "source", for Drug-Entropy@n
+                "target", for Disease-Entropy@n
+            n_max: Maximum value of n to compute recall@n score for.
+            perform_sort: Whether to sort the matrix or expect the dataframe to be sorted already.
+            title: Title of the plot.
+            num_n_values: Number of n values to compute recall@n score for.
+            force_full_y_axis: Whether to force the y-axis to be between 0 and 1.
+        """
+        super().__init__(
+            x_axis_label="n",
+            y_axis_label="Recall@n",
+            title=title,
+            force_full_y_axis=force_full_y_axis,
+            baseline_curve_name="Maximum entropy",
+        )
+        self.count_col = count_col
+        self.n_max = n_max
+        self.perform_sort = perform_sort
+        self.num_n_values = num_n_values
+
+    def give_x_values(self) -> np.ndarray:
+        """Integer x-axis values from 0 to n_max, representing the n in recall@n."""
+        x_values_floats = np.linspace(0, self.n_max, self.num_n_values)
+        return np.round(x_values_floats).astype(int)
+
+    def give_y_values(self, matrix: pl.DataFrame, score_col_name: str = "score") -> np.ndarray:
+        """Compute Drug-Entropy@n or Disease-Entropy@n values for a single set of predictions."""
+        ## NOTE: Comments written for Drug-Entropy@n but same logic applies for Disease-Entropy@n.
+        # Sort by treat score
+        if self.perform_sort:
+            matrix = matrix.sort(by=score_col_name, descending=True)
+
+        # Total number of unique entities
+        n_entities = matrix.select(pl.col(self.count_col).n_unique()).to_series().to_list()[0]
+        entity_entropy_lst = [0]
+
+        # Initialize count DataFrames with all unique entities
+        entity_count = matrix.select(pl.col(self.count_col)).unique().with_columns(pl.lit(0).alias("count"))
+
+        n_lst = self.give_x_values()
+        for i in range(len(n_lst) - 1):
+            # Get pairs in the new slice
+            matrix_slice = matrix.slice(n_lst[i], n_lst[i + 1] - n_lst[i])
+
+            # Count entities in the new slice
+            slice_count = matrix_slice.select(pl.col(self.count_col)).to_series().value_counts(name="count_new")
+
+            # Update total entity count
+            entity_count = (
+                entity_count.join(slice_count, on=self.count_col, how="left")
+                .with_columns(pl.col("count_new").fill_null(0))
+                .with_columns((pl.col("count") + pl.col("count_new")).alias("count"))
+                .drop("count_new")
+            )
+
+            # Compute entropy
+            entity_entropy_lst.append(entropy(entity_count.select("count").to_numpy().flatten(), base=n_entities))
+
+        return entity_entropy_lst
+
+    def give_y_values_bootstrap(self, matrix: pl.DataFrame, score_col_name: str = "score") -> np.ndarray:
+        """ "Entropy@n does not use ground truth data so bootstrap uncertainty estimation is not applicable."""
+        # Return same values as no bootstraps
+        return self.give_y_values(matrix, score_col_name)
+
+    def _give_maximal_entropy(self, n: int, N: int) -> float:
+        """Compute maximum possible entropy value for n samples from N entities.
+
+        NOTES:
+            Let N be the number of entities and n be the number pairs (i.e the "n" in Entropy@n).
+            entropy = - sum_i (p_i * log_N(p_i))
+            maximal distribution has n mod N entities that appear floor(n / N) + 1 times and N - (n mod N) entities that appear floor(n / N) times.
+        """
+        prob_1 = (floor(n / N) + 1) / n
+        prob_2 = floor(n / N) / n
+        if n < N:
+            return -(n % N) * prob_1 * log(prob_1, N)
+        else:
+            return -(n % N) * prob_1 * log(prob_1, N) - (N - (n % N)) * prob_2 * log(prob_2, N)
+
+    def give_y_values_baseline(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
+        """Compute maximum possible Entropy@n values."""
+        matrix = list(combined_pairs.values())[0]().collect()
+        N = len(matrix.select(pl.col(self.count_col)).unique())
+        return np.array([self._give_maximal_entropy(n, N) for n in self.give_x_values()])
+
+    def evaluate_bootstrap_single_fold(
+        self,
+        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
+        predictions_info: dict[str, any],
+    ) -> pl.DataFrame:
+        """Override bootstrap single fold evaluation as bootstrap uncertainty estimation is not applicable."""
+        return self.evaluate_single_fold(combined_predictions, predictions_info)
+
+    def evaluate_bootstrap_multi_fold(
+        self,
+        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
+        predictions_info: dict[str, any],
+    ) -> pl.DataFrame:
+        """Override bootstrap multi-fold evaluation as bootstrap uncertainty estimation is not applicable."""
+        return self.evaluate_multi_fold(combined_predictions, predictions_info)
+
+    def _give_plot_errors(self, perform_multifold: bool, perform_bootstrap: bool) -> bool:
+        """Plot error bars if and only if multifold uncertainty estimation is performed, as bootstrap is not applicable."""
+        return perform_multifold
