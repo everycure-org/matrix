@@ -70,3 +70,19 @@ run_comparison:
       specific_col: "target"
       N_bootstraps: 100
       force_full_y_axis: True
+
+    drug_entropy_at_n:
+      _object: matrix.pipelines.run_comparison.evaluations.EntropyAtN
+      count_col: "source"
+      n_max: 100000
+      perform_sort: True
+      title: "Drug-Entropy@n"
+      force_full_y_axis: True
+
+    disease_entropy_at_n:
+      _object: matrix.pipelines.run_comparison.evaluations.EntropyAtN
+      count_col: "target"
+      n_max: 100000
+      perform_sort: True
+      title: "Disease-Entropy@n"
+      force_full_y_axis: True

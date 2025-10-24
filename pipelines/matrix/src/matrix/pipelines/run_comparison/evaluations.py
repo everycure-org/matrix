@@ -1,5 +1,6 @@
 import abc
 from collections.abc import Callable
+from math import floor, log
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -55,7 +56,14 @@ class ComparisonEvaluation(abc.ABC):
 class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
     """Abstract base class for evaluations that produce a single curve for each model (e.g. recall@n, AUPRC, etc. )."""
 
-    def __init__(self, x_axis_label: str, y_axis_label: str, title: str, force_full_y_axis: bool = False):
+    def __init__(
+        self,
+        x_axis_label: str,
+        y_axis_label: str,
+        title: str,
+        force_full_y_axis: bool = False,
+        baseline_curve_name: str = "Random classifier",
+    ):
         """Initialize an instance of ComparisonEvaluationModelSpecific.
 
         Args:
@@ -67,6 +75,7 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         self.y_axis_label = y_axis_label
         self.title = title
         self.force_full_y_axis = force_full_y_axis
+        self.baseline_curve_name = baseline_curve_name
 
     @abc.abstractmethod
     def give_x_values(self) -> np.ndarray:
@@ -104,11 +113,12 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         pass
 
     @abc.abstractmethod
-    def give_y_values_random_classifier(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
-        """Give the y-values of the curve for a random classifier, given a dictionary of reference matrices of drug-disease pairs for each fold.
+    def give_y_values_baseline(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
+        """Give the y-values of the curve for a baseline model, e.g. random classifier.
 
         Args:
             combined_pairs: Dictionary of PartitionedDataset load fn's returning combined matrix pairs for each fold
+
         Returns:
             A 1D numpy array of y-values.
         """
@@ -245,14 +255,20 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
 
         return output_dataframe
 
+    def _give_is_plot_errors(self, perform_multifold: bool, perform_bootstrap: bool) -> bool:
+        """Determine if error bars should be plotted."""
+        return perform_multifold or perform_bootstrap
+
     def plot_results(
         self,
         results: pl.DataFrame,
         combined_pairs: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
-        is_plot_errors: bool,
+        perform_multifold: bool,
+        perform_bootstrap: bool,
     ) -> plt.Figure:
         """Plot the results."""
+        is_plot_errors = self._give_is_plot_errors(perform_multifold, perform_bootstrap)
 
         # List of n values for recall@n plot
         x_values = self.give_x_values()
@@ -272,8 +288,8 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
                 ax.plot(x_values, av_y_values, label=model_name)
 
         # Plot random classifier curve
-        y_values_random = self.give_y_values_random_classifier(combined_pairs)
-        ax.plot(x_values, y_values_random, "k--", label="Random classifier", alpha=0.5)
+        y_values_random = self.give_y_values_baseline(combined_pairs)
+        ax.plot(x_values, y_values_random, "k--", label=self.baseline_curve_name, alpha=0.5)
 
         # Configure figure
         ax.set_xlabel(self.x_axis_label)
@@ -365,7 +381,7 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
         # Calculate recall@n for each bootstrap
         return np.array([bootstrap_recall_lst(ranks_series, N, n_lst, seed) for seed in range(self.N_bootstraps)])
 
-    def give_y_values_random_classifier(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
+    def give_y_values_baseline(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
         """Compute Recall@n values for a random classifier."""
         matrix = list(combined_pairs.values())[0]()
         matrix_length = matrix.select(pl.len()).collect().item()
@@ -413,7 +429,7 @@ class SpecificHitAtK(ComparisonEvaluationModelSpecific):
         return list(range(0, self.k_max + 1))
 
     def _give_ranks_for_test_set(self, matrix: pl.DataFrame, score_col_name: str = "score") -> pl.DataFrame:
-        """Compute specific ranks aginst negatives and unknowns for the test set."""
+        """Compute specific ranks against negatives and unknowns for the test set."""
         ## NOTE: Comments written for disease-specific ranking but same logic applies for drug-specific ranking.
         # Restrict to test diseases
         test_diseases = (
@@ -507,7 +523,7 @@ class SpecificHitAtK(ComparisonEvaluationModelSpecific):
         # Return numpy array of Hit@k values for all bootstrap samples
         return np.array(bootstrap_hit_at_k)
 
-    def give_y_values_random_classifier(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
+    def give_y_values_baseline(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
         """Compute Hit@k values for a random classifier.
 
         NOTE: This is a good approximation when the number of positives per drug or disease
@@ -543,57 +559,83 @@ class EntropyAtN(ComparisonEvaluationModelSpecific):
             num_n_values: Number of n values to compute recall@n score for.
             force_full_y_axis: Whether to force the y-axis to be between 0 and 1.
         """
-        super().__init__(x_axis_label="n", y_axis_label="Recall@n", title=title, force_full_y_axis=force_full_y_axis)
+        super().__init__(
+            x_axis_label="n",
+            y_axis_label="Recall@n",
+            title=title,
+            force_full_y_axis=force_full_y_axis,
+            baseline_curve_name="Maximum entropy",
+        )
+        self.count_col = count_col
         self.n_max = n_max
         self.perform_sort = perform_sort
         self.num_n_values = num_n_values
 
-        def give_x_values(self) -> np.ndarray:
-            """Integer x-axis values from 0 to n_max, representing the n in recall@n."""
-            x_values_floats = np.linspace(0, self.n_max, self.num_n_values)
-            return np.round(x_values_floats).astype(int)
+    def give_x_values(self) -> np.ndarray:
+        """Integer x-axis values from 0 to n_max, representing the n in recall@n."""
+        x_values_floats = np.linspace(0, self.n_max, self.num_n_values)
+        return np.round(x_values_floats).astype(int)
 
-        def give_y_values(self, matrix: pl.DataFrame, score_col_name: str = "score") -> np.ndarray:
-            """Compute Drug-Entropy@n or Disease-Entropy@n values for a single set of predictions."""
-            ## NOTE: Comments written for Drug-Entropy@n but same logic applies for Disease-Entropy@n.
-            # Sort by treat score
-            if perform_sort:
-                matrix = matrix.sort(by=score_col, descending=True)
+    def give_y_values(self, matrix: pl.DataFrame, score_col_name: str = "score") -> np.ndarray:
+        """Compute Drug-Entropy@n or Disease-Entropy@n values for a single set of predictions."""
+        ## NOTE: Comments written for Drug-Entropy@n but same logic applies for Disease-Entropy@n.
+        # Sort by treat score
+        if self.perform_sort:
+            matrix = matrix.sort(by=score_col_name, descending=True)
 
-            # Total number of unique entities
-            n_entities = matrix.select(pl.col(self.count_col).n_unique()).to_series().to_list()[0]
-            entity_entropy_lst = []
+        # Total number of unique entities
+        n_entities = matrix.select(pl.col(self.count_col).n_unique()).to_series().to_list()[0]
+        entity_entropy_lst = [0]
 
-            # Initialize count DataFrames with all unique entities
-            entity_count = matrix.select(pl.col(self.count_col)).unique().with_columns(pl.lit(0).alias("count"))
+        # Initialize count DataFrames with all unique entities
+        entity_count = matrix.select(pl.col(self.count_col)).unique().with_columns(pl.lit(0).alias("count"))
 
-            for n in self.give_x_values():
-                # Get pairs in the new slice
-                matrix_slice = matrix.slice(n_lst[i], n_lst[i + 1] - n_lst[i])
+        n_lst = self.give_x_values()
+        for i in range(len(n_lst) - 1):
+            # Get pairs in the new slice
+            matrix_slice = matrix.slice(n_lst[i], n_lst[i + 1] - n_lst[i])
 
-                # Count entities in the new slice
-                slice_count = matrix_slice.select(pl.col(self.count_col)).to_series().value_counts(name="count_new")
+            # Count entities in the new slice
+            slice_count = matrix_slice.select(pl.col(self.count_col)).to_series().value_counts(name="count_new")
 
-                # Update total entity count
-                entity_count = (
-                    entity_count.join(slice_count, on=self.count_col, how="left")
-                    .with_columns(pl.col("count_new").fill_null(0))
-                    .with_columns((pl.col("count") + pl.col("count_new")).alias("count"))
-                    .drop("count_new")
-                )
+            # Update total entity count
+            entity_count = (
+                entity_count.join(slice_count, on=self.count_col, how="left")
+                .with_columns(pl.col("count_new").fill_null(0))
+                .with_columns((pl.col("count") + pl.col("count_new")).alias("count"))
+                .drop("count_new")
+            )
 
-                # Compute entropy
-                entity_entropy_lst.append(entropy(entity_count.select("count").to_numpy().flatten(), base=n_entities))
+            # Compute entropy
+            entity_entropy_lst.append(entropy(entity_count.select("count").to_numpy().flatten(), base=n_entities))
 
-            return entity_entropy_lst
+        return entity_entropy_lst
 
-    def give_y_values_bootstrap(self, matrix: pl.DataFrame) -> np.ndarray:
-        return NotImplemented(
-            "Entropy@n does not use ground truth data so bootstrap uncertainty estimation is not applicable."
-        )
+    def give_y_values_bootstrap(self, matrix: pl.DataFrame, score_col_name: str = "score") -> np.ndarray:
+        """ "Entropy@n does not use ground truth data so bootstrap uncertainty estimation is not applicable."""
+        # Return same values as no bootstraps
+        return self.give_y_values(matrix, score_col_name)
 
-    def give_y_values_random_classifier(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
-        return np.array([1 for _ in self.give_x_values()])  # TODO: fill in
+    def _give_maximal_entropy(self, n: int, N: int) -> float:
+        """Compute maximum possible entropy value for n samples from N entities.
+
+        NOTES:
+            Let N be the number of entities and n be the number pairs (i.e the "n" in Entropy@n).
+            entropy = - sum_i (p_i * log_N(p_i))
+            maximal distribution has n mod N entities that appear floor(n / N) + 1 times and N - (n mod N) entities that appear floor(n / N) times.
+        """
+        prob_1 = (floor(n / N) + 1) / n
+        prob_2 = floor(n / N) / n
+        if n < N:
+            return -(n % N) * prob_1 * log(prob_1, N)
+        else:
+            return -(n % N) * prob_1 * log(prob_1, N) - (N - (n % N)) * prob_2 * log(prob_2, N)
+
+    def give_y_values_baseline(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
+        """Compute maximum possible Entropy@n values."""
+        matrix = list(combined_pairs.values())[0]().collect()
+        N = len(matrix.select(pl.col(self.count_col)).unique())
+        return np.array([self._give_maximal_entropy(n, N) for n in self.give_x_values()])
 
     def evaluate_bootstrap_single_fold(
         self,
@@ -608,5 +650,9 @@ class EntropyAtN(ComparisonEvaluationModelSpecific):
         combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
     ) -> pl.DataFrame:
-        """Override bootstrap multi fold evaluation as bootstrap uncertainty estimation is not applicable."""
+        """Override bootstrap multi-fold evaluation as bootstrap uncertainty estimation is not applicable."""
         return self.evaluate_multi_fold(combined_predictions, predictions_info)
+
+    def _give_plot_errors(self, perform_multifold: bool, perform_bootstrap: bool) -> bool:
+        """Plot error bars if and only if multifold uncertainty estimation is performed, as bootstrap is not applicable."""
+        return perform_multifold

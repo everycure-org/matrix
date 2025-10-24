@@ -168,5 +168,4 @@ def plot_results(
     predictions_info: dict[str, any],
 ) -> plt.Figure:
     """Function to plot results."""
-    is_plot_errors = perform_multifold or perform_bootstrap
-    return evaluation.plot_results(results, combined_pairs, predictions_info, is_plot_errors)
+    return evaluation.plot_results(results, combined_pairs, predictions_info, perform_multifold, perform_bootstrap)

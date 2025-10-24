@@ -41,3 +41,9 @@ run_comparison:
     disease_specific_hit_at_k_off_label:
       k_max: 10
       N_bootstraps: 10
+    drug_entropy_at_n:
+      n_max: 2500
+    num_n_values: 100
+    disease_entropy_at_n:
+      n_max: 2500
+      num_n_values: 100
