@@ -237,7 +237,6 @@ are most common for this entity.
 {#if key_node_edges_breakdown.length > 0}
 <DataTable
     data={key_node_edges_breakdown}
-    search=true
     pagination=true
     pageSize={25}
     title="Edge Types (with descendants)">
@@ -297,7 +296,6 @@ The comparison tables below show edge types that have been added, removed, or ch
 {#if edges_added.length > 0}
 <DataTable
     data={edges_added}
-    search=true
     pagination=true
     pageSize={10}
     title="Edge types present in current release but not in benchmark">
@@ -317,7 +315,6 @@ The comparison tables below show edge types that have been added, removed, or ch
 {#if edges_removed.length > 0}
 <DataTable
     data={edges_removed}
-    search=true
     pagination=true
     pageSize={10}
     title="Edge types present in benchmark but not in current release">
@@ -337,7 +334,6 @@ The comparison tables below show edge types that have been added, removed, or ch
 {#if edges_changed.length > 0}
 <DataTable
     data={edges_changed}
-    search=true
     pagination=true
     pageSize={10}
     title="Edge types with significant count changes (>10 edges difference)">
@@ -361,7 +357,7 @@ The comparison tables below show edge types that have been added, removed, or ch
 </div>
 {/if}
 
-{:else}
+{:else if key_node_info !== undefined}
 <div class="text-center text-lg text-red-500 mt-10">
   Key node "{params.key_node_id}" not found in the knowledge graph.
 </div>

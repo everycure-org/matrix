@@ -212,7 +212,6 @@
         {#key selectedCategory}
           <DataTable
             data={selectedEdgeData}
-            search=true
             pagination=true
             pageSize={25}
             title="Connected Edges for {selectedCategory}">
