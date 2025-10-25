@@ -4,10 +4,12 @@ export const LAYOUT_CONSTANTS = {
   CENTER_X: 350,
   CENTER_Y: 200,
   CENTER_NODE_SIZE: 50,
+  // Oval shape (280x150) instead of circle reduces vertical space
+  // while maintaining good node separation and readability
   OUTER_RADIUS_X: 280,  // Wider radius for oval shape
   OUTER_RADIUS_Y: 150,  // Shorter radius for oval shape
   CATEGORY_NODE_SIZE: 40,
-  LINK_CURVENESS: 0,
+  LINK_CURVENESS: 0,    // Straight lines for cleaner look
   CANVAS_WIDTH: 700,
   CANVAS_HEIGHT: 400
 };

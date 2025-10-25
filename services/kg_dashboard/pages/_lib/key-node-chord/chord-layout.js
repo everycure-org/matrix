@@ -9,11 +9,13 @@ export function calculateCategoryPositions(categories) {
   const count = categories.length;
 
   // Find min/max for scaling
-  const distinctNodeCounts = categories.map(c => c.distinct_nodes || 0);
+  const distinctNodeCounts = categories.map(category => category.distinct_nodes || 0);
   const minNodes = Math.min(...distinctNodeCounts);
   const maxNodes = Math.max(...distinctNodeCounts);
 
-  // Scale node sizes between 20 and 60
+  // Scale node sizes between 20 and 60 pixels
+  // Minimum of 20px ensures nodes are always clickable and visible
+  // Maximum of 60px prevents nodes from overlapping on the oval
   const minSize = 20;
   const maxSize = 60;
 
@@ -24,6 +26,7 @@ export function calculateCategoryPositions(categories) {
 
     // Scale node size based on distinct nodes
     const nodeCount = category.distinct_nodes || 0;
+    // If all categories have same count (maxNodes === minNodes), use default size
     const scaledSize = maxNodes > minNodes
       ? minSize + (maxSize - minSize) * (nodeCount - minNodes) / (maxNodes - minNodes)
       : CATEGORY_NODE_SIZE;
@@ -80,16 +83,19 @@ export function createLinks(keyNodeName, categoryNodes) {
   const { LINK_CURVENESS } = LAYOUT_CONSTANTS;
 
   // Find min/max for scaling link widths
-  const edgeCounts = categoryNodes.map(n => n.value || 0);
+  const edgeCounts = categoryNodes.map(node => node.value || 0);
   const minEdges = Math.min(...edgeCounts);
   const maxEdges = Math.max(...edgeCounts);
 
-  // Scale link widths between 2 and 12
+  // Scale link widths between 2 and 12 pixels
+  // Minimum of 2px keeps thin connections visible
+  // Maximum of 12px prevents dominant connections from overwhelming the viz
   const minWidth = 2;
   const maxWidth = 12;
 
   return categoryNodes.map(node => {
     const edgeCount = node.value || 0;
+    // If all links have same edge count, use default width of 4px
     const scaledWidth = maxEdges > minEdges
       ? minWidth + (maxWidth - minWidth) * (edgeCount - minEdges) / (maxEdges - minEdges)
       : 4;

@@ -1,8 +1,18 @@
 <script>
+  /**
+   * Interactive chord diagram for visualizing key node connections to biolink categories
+   *
+   * Design decisions:
+   * - Uses ECharts with direct initialization (not Evidence wrapper) to enable click event handling
+   * - Oval layout reduces vertical space while maintaining readability
+   * - Node sizes scaled by distinct_nodes, link widths scaled by total_edges
+   * - Selection state managed in component, not via ECharts' built-in selection
+   * - Drill-down table shows 10 example edges per primary_knowledge_source for diversity
+   */
   import { onMount } from 'svelte';
   import * as echarts from 'echarts';
   import { DataTable, Column } from '@evidence-dev/core-components';
-  import { LAYOUT_CONSTANTS, CATEGORY_COLORS, LABEL_CONFIG, SELECTION_STYLE } from '../_lib/key-node-chord/constants.js';
+  import { LAYOUT_CONSTANTS, LABEL_CONFIG, SELECTION_STYLE } from '../_lib/key-node-chord/constants.js';
   import { calculateCategoryPositions, createCenterNode, createLinks, formatTooltip } from '../_lib/key-node-chord/chord-layout.js';
 
   // Component props

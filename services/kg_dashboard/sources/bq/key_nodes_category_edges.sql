@@ -111,6 +111,9 @@ all_edges AS (
 ),
 
 -- Map to parent categories (same logic as key_nodes_category_summary.sql)
+-- This reduces 44+ specific biolink categories to ~14 parent groups for cleaner visualization
+-- We use the all_categories field to check the full category hierarchy, not just the primary category
+-- This ensures we group based on the biolink inheritance tree (e.g., Drug is a ChemicalEntity)
 categorized_edges AS (
   SELECT
     key_node_id,
@@ -210,11 +213,9 @@ SELECT
   parent_category,
   subject,
   subject_name,
-  REPLACE(subject_category, 'biolink:', '') as subject_category,
   REPLACE(predicate, 'biolink:', '') as predicate,
   object,
   object_name,
-  REPLACE(object_category, 'biolink:', '') as object_category,
   ARRAY_TO_STRING(
     ARRAY(
       SELECT REPLACE(pks.element, 'infores:', '')

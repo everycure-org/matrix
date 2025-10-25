@@ -72,6 +72,8 @@ categorized_edges AS (
   SELECT
     key_node_id,
     connected_node_id,
+    -- Map specific biolink categories to ~14 parent groups for cleaner visualization
+    -- Uses all_categories to check full biolink inheritance hierarchy
     CASE
       -- ChemicalEntity grouping
       WHEN EXISTS(

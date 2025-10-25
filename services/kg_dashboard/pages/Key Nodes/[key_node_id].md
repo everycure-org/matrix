@@ -35,11 +35,9 @@ SELECT
   parent_category,
   subject,
   subject_name,
-  subject_category,
   predicate,
   object,
   object_name,
-  object_category,
   primary_knowledge_sources
 FROM bq.key_nodes_category_edges
 WHERE key_node_id = '${params.key_node_id}'
@@ -175,34 +173,6 @@ This provides a comprehensive view of the entire hierarchy under this node.
     <span class="text-md">Direct Unique Neighbors</span>
   </div>
 </Grid>
-
-## Connected Categories
-
-<Details title="Understanding This Table">
-<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
-This table shows all biolink categories connected to this key node (including descendants), regardless of edge direction.
-Each row shows a category and the total number of edges connecting it to this key node.
-This provides a high-level view of what types of entities this key node is connected to in the knowledge graph.
-</div>
-</Details>
-
-{#if key_node_category_summary.length > 0}
-<DataTable
-    data={key_node_category_summary}
-    search=true
-    pagination=true
-    pageSize={20}
-    title="Categories Connected to This Key Node">
-
-    <Column id="total_edges" title="Total Edges" contentType="bar" fmt="num0" />
-    <Column id="connected_category" title="Connected Category" />
-
-</DataTable>
-{:else}
-<div class="text-center text-lg text-gray-500 mt-10">
-  No category connections found for this key node.
-</div>
-{/if}
 
 ## Interactive Category Explorer
 
