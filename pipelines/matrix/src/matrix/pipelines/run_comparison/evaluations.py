@@ -847,7 +847,7 @@ class CommonalityAtN(ComparisonEvaluation):
         n_values = self.give_n_values()
 
         # Set up the figure
-        fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+        fig, ax = plt.subplots(1, 1, figsize=(self.plot_width, self.plot_height))
 
         # Plot curves
         for model_name_1, model_name_2 in combinations(predictions_info["model_names"], 2):
