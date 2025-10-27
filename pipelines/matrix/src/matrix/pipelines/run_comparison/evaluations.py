@@ -409,6 +409,7 @@ class SpecificHitAtK(ComparisonEvaluationModelSpecific):
         ground_truth_col: str,
         k_max: int,
         title: str,
+        other_pos_cols: list[str] = [],
         specific_col: str = "target",
         N_bootstraps: int = 100,
         force_full_y_axis: bool = True,
@@ -417,6 +418,7 @@ class SpecificHitAtK(ComparisonEvaluationModelSpecific):
 
         Args:
             ground_truth_col: Boolean column in the matrix indicating the known positive test set.
+            other_pos_cols: List of other boolean columns indicating positive pairs to remove when computing Hit@k.
             k_max: Maximum value of k to compute Hit@k score for.
             title: Title of the plot.
             specific_col: Column to rank over.
@@ -425,8 +427,9 @@ class SpecificHitAtK(ComparisonEvaluationModelSpecific):
             N_bootstraps: Number of bootstrap samples to compute.
             force_full_y_axis: Whether to force the y-axis to be between 0 and 1.
         """
-        super().__init__(x_axis_label="n", y_axis_label="Recall@n", title=title, force_full_y_axis=force_full_y_axis)
+        super().__init__(x_axis_label="k", y_axis_label="Hit@k", title=title, force_full_y_axis=force_full_y_axis)
         self.ground_truth_col = ground_truth_col
+        self.other_pos_cols = other_pos_cols
         self.k_max = k_max
         if specific_col not in ["source", "target"]:
             raise ValueError("specific_col must be either 'source' or 'target'.")
@@ -450,6 +453,10 @@ class SpecificHitAtK(ComparisonEvaluationModelSpecific):
             .to_list()
         )
         matrix = matrix.filter(pl.col(self.specific_col).is_in(test_diseases))
+
+        # Remove other positive pairs unless they are in the  test set
+        for other_pos_col in self.other_pos_cols:
+            matrix = matrix.filter(~(pl.col(other_pos_col) & (~pl.col(self.ground_truth_col))))
 
         # Add disease-specific ranks
         matrix = matrix.with_columns(
@@ -562,15 +569,15 @@ class EntropyAtN(ComparisonEvaluationModelSpecific):
             count_col: Column containing entities to count. Must be one of:
                 "source", for Drug-Entropy@n
                 "target", for Disease-Entropy@n
-            n_max: Maximum value of n to compute recall@n score for.
+            n_max: Maximum value of n to compute Entropy@n score for.
             perform_sort: Whether to sort the matrix or expect the dataframe to be sorted already.
             title: Title of the plot.
-            num_n_values: Number of n values to compute recall@n score for.
+            num_n_values: Number of n values to compute Entropy@n score for.
             force_full_y_axis: Whether to force the y-axis to be between 0 and 1.
         """
         super().__init__(
             x_axis_label="n",
-            y_axis_label="Recall@n",
+            y_axis_label="Entropy@n",
             title=title,
             force_full_y_axis=force_full_y_axis,
             baseline_curve_name="Maximum entropy",
@@ -581,7 +588,7 @@ class EntropyAtN(ComparisonEvaluationModelSpecific):
         self.num_n_values = num_n_values
 
     def give_x_values(self) -> np.ndarray:
-        """Integer x-axis values from 0 to n_max, representing the n in recall@n."""
+        """Integer x-axis values from 0 to n_max, representing the n in Entropy@n."""
         x_values_floats = np.linspace(0, self.n_max, self.num_n_values)
         return np.round(x_values_floats).astype(int)
 

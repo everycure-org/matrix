@@ -239,10 +239,24 @@ def disease_specific_hit_at_k_data():
     )
 
 
-def test_disease_specific_hit_at_k(disease_specific_hit_at_k_data):
+@pytest.fixture
+def hit_at_k_data_with_other_pos_cols():
+    return pl.DataFrame(
+        {
+            "source": [1, 2, 3, 4],
+            "target": [0, 0, 0, 0],
+            "off_label": [False, False, True, False],  # Off label pair in overall 2nd place
+            "is_known_positive": [False, True, False, False],  # Known positive pair in overall 3rd place
+            "score": [1, 2, 3, 4],
+        }
+    )
+
+
+def test_disease_specific_hit_at_k(disease_specific_hit_at_k_data, hit_at_k_data_with_other_pos_cols):
     """Test the SpecificHitAtK class."""
     # Given sample predictions data, combined pairs data and instances of SpecificHitAtK for disease-specific and drug-specific ranking
     matrix_disease_specific = disease_specific_hit_at_k_data
+    matrix_with_other_pos_cols = hit_at_k_data_with_other_pos_cols
     matrix_drug_specific = disease_specific_hit_at_k_data.rename({"target": "source", "source": "target"})
     combined_pairs = {
         "disease_specific_model_fold_0": lambda: pl.LazyFrame(matrix_disease_specific),
@@ -255,6 +269,14 @@ def test_disease_specific_hit_at_k(disease_specific_hit_at_k_data):
         specific_col="target",
         N_bootstraps=10,
     )
+    evaluation_disease_specific_with_other_pos_cols = SpecificHitAtK(
+        ground_truth_col="is_known_positive",
+        k_max=3,
+        title="Test Title",
+        specific_col="target",
+        N_bootstraps=10,
+        other_pos_cols=["off_label"],
+    )
     evaluation_drug_specific = SpecificHitAtK(
         ground_truth_col="is_known_positive",
         k_max=4,
@@ -266,16 +288,26 @@ def test_disease_specific_hit_at_k(disease_specific_hit_at_k_data):
     # When the method of the classes are called
     x_values_disease_specific = evaluation_disease_specific.give_x_values()
     y_values_disease_specific = evaluation_disease_specific.give_y_values(matrix_disease_specific, "score")
+    y_values_disease_specific_with_other_pos_cols = evaluation_disease_specific_with_other_pos_cols.give_y_values(
+        matrix_with_other_pos_cols, "score"
+    )
     y_values_bootstrap_disease_specific = evaluation_disease_specific.give_y_values_bootstrap(
         matrix_disease_specific, "score"
     )
     y_values_random_disease_specific = evaluation_disease_specific.give_y_values_baseline(combined_pairs)
     y_values_drug_specific = evaluation_drug_specific.give_y_values(matrix_drug_specific, "score")
 
-    # Then the results are as expected
+    ## Then the results are as expected
+    # x values
     assert np.allclose(x_values_disease_specific, np.array([0, 1, 2, 3, 4]))
+    # Disease-specific y values
     # NOTE: The two drugs for disease 0 have rank 1 against negatives. The one drug for disease 1 has rank 2 against negatives.
     assert np.allclose(y_values_disease_specific, np.array([0, 2 / 3, 1, 1, 1]))
+    # Disease-specific y values with other positive columns
+    assert np.allclose(
+        y_values_disease_specific_with_other_pos_cols, np.array([0, 0, 1, 1])
+    )  # Off label pair correctly removed from ranking
+    # Disease-specific bootstrap values
     assert y_values_bootstrap_disease_specific.shape == (10, 5)
     assert all(y_values_bootstrap_disease_specific[i][0] == 0 for i in range(10))  # Hit@0 always 0 regardless of sample
     assert all(
@@ -285,7 +317,9 @@ def test_disease_specific_hit_at_k(disease_specific_hit_at_k_data):
     assert all(
         y_values_bootstrap_disease_specific[i][j] == 1 for i in range(10) for j in [2, 3, 4]
     )  # Hit@2, Hit@3 and Hit@4 always 1 regardless of sample
+    # Disease-specific random classifier values
     assert np.allclose(y_values_random_disease_specific, np.array([0, 1 / 3, 2 / 3, 1, 1]))
+    # Drug-specific y values
     assert np.allclose(
         y_values_drug_specific, np.array([0, 2 / 3, 1, 1, 1])
     )  # Same as disease-specific since the source and target columns were swapped
