@@ -823,6 +823,7 @@ class CommonalityAtN(ComparisonEvaluation):
     def plot_results(
         self,
         results: pl.DataFrame,
+        combined_pairs: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
         perform_multifold: bool,
         perform_bootstrap: bool,

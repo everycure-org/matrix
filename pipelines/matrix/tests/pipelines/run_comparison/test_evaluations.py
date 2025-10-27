@@ -457,7 +457,7 @@ def test_commonality_at_n(commonality_at_n_data):
     bootstrap_single_fold_results = evaluation.evaluate_bootstrap_single_fold(combined_predictions, predictions_info)
     bootstrap_multi_fold_results = evaluation.evaluate_bootstrap_multi_fold(combined_predictions, predictions_info)
     figure = evaluation.plot_results(
-        single_fold_results, predictions_info, perform_multifold=False, perform_bootstrap=False
+        single_fold_results, "combined_pairs", predictions_info, perform_multifold=False, perform_bootstrap=False
     )
 
     # Then the results are as expected
