@@ -22,10 +22,6 @@ WHERE key_node_id = '${params.key_node_id}'
 ORDER BY edge_count DESC
 ```
 
-```sql key_node_connected_categories
-SELECT * FROM bq.key_nodes_connected_categories WHERE key_node_id = '${params.key_node_id}' ORDER BY count DESC
-```
-
 ```sql key_node_category_summary
 SELECT * FROM bq.key_nodes_category_summary WHERE key_node_id = '${params.key_node_id}' ORDER BY distinct_nodes DESC
 ```
@@ -174,13 +170,13 @@ This provides a comprehensive view of the entire hierarchy under this node.
   </div>
 </Grid>
 
-## Interactive Category Explorer
+## {key_node_info.length > 0 ? key_node_info[0].name || params.key_node_id : params.key_node_id} Graph Edges
 
 <Details title="Understanding This Visualization">
 <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
-This interactive chord diagram shows the key node in the center with connected categories arranged in a circle around it.
-The size and color of each link represents the number of edges to that category. Click on any category node to see
-detailed edge information below. Click again or click the key node to deselect.
+This interactive diagram shows the key node in the center with connected biolink categories arranged around it.
+The size of each node represents the number of distinct connected entities, and link width represents total edge count.
+Click on any category to see example edges below. Click again or click the center node to deselect.
 </div>
 </Details>
 
@@ -193,34 +189,6 @@ detailed edge information below. Click again or click the key node to deselect.
 {:else}
 <div class="text-center text-lg text-gray-500 mt-10">
   No category data available for visualization.
-</div>
-{/if}
-
-## Connection Flow
-
-<Details title="Understanding This Diagram">
-<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
-This Sankey diagram shows how this key node and its descendants connect to other categories in the knowledge graph.
-Incoming connections (labeled [IN]) show categories that connect TO this node, while outgoing connections (labeled [OUT])
-show categories this node connects TO. Only connections with more than 100 edges are shown.
-</div>
-</Details>
-
-{#if key_node_connected_categories.length > 0}
-<SankeyDiagram
-  data={key_node_connected_categories}
-  sourceCol='source'
-  targetCol='target'
-  valueCol='count'
-  linkLabels='full'
-  linkColor='gradient'
-  title='Key Node Connection Flow (with descendants)'
-  subtitle='Flow from Incoming Categories through Key Node to Outgoing Categories (>100 connections)'
-  chartAreaHeight={500}
-/>
-{:else}
-<div class="text-center text-lg text-gray-500 mt-10">
-  No significant connections found (threshold: >100 edges).
 </div>
 {/if}
 
