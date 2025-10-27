@@ -62,6 +62,8 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         x_axis_label: str,
         y_axis_label: str,
         title: str,
+        plot_width: int = 15,
+        plot_height: int = 10,
         force_full_y_axis: bool = False,
         baseline_curve_name: str = "Random classifier",
     ):
@@ -71,12 +73,16 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
             x_axis_label: Label for the x-axis.
             y_axis_label: Label for the y-axis.
             title: Title of the plot.
+            plot_width: Width of the plot.
+            plot_height: Height of the plot.
             force_full_y_axis: Whether to force the y-axis to be between 0 and 1.
             baseline_curve_name: Name of the curve for baseline model (e.g. "Random classifier").
         """
         self.x_axis_label = x_axis_label
         self.y_axis_label = y_axis_label
         self.title = title
+        self.plot_width = plot_width
+        self.plot_height = plot_height
         self.force_full_y_axis = force_full_y_axis
         self.baseline_curve_name = baseline_curve_name
 
@@ -277,7 +283,7 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         x_values = self.give_x_values()
 
         # Set up the figure
-        fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+        fig, ax = plt.subplots(1, 1, figsize=(self.plot_width, self.plot_height))
 
         # Plot curves
         for model_name in predictions_info["model_names"]:
@@ -669,6 +675,8 @@ class CommonalityAtN(ComparisonEvaluation):
         n_max: int,
         perform_sort: bool,
         title: str,
+        plot_width: int = 15,
+        plot_height: int = 10,
         force_full_y_axis: bool = False,
         num_n_values: int = 1000,
     ):
@@ -678,12 +686,16 @@ class CommonalityAtN(ComparisonEvaluation):
             n_max: Maximum value of n to compute commonality@n score for.
             perform_sort: Whether to sort the predictions or expect the dataframes to be sorted already.
             title: Title of the plot.
+            plot_width: Width of the plot.
+            plot_height: Height of the plot.
             force_full_y_axis: Whether to force the y-axis to be between 0 and 1.
             num_n_values: Number of n values to compute commonality@n score for.
         """
         self.n_max = n_max
         self.perform_sort = perform_sort
         self.title = title
+        self.plot_width = plot_width
+        self.plot_height = plot_height
         self.force_full_y_axis = force_full_y_axis
         self.num_n_values = num_n_values
 
