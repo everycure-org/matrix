@@ -1,0 +1,136 @@
+_layer_raw: &_layer_raw
+  metadata:
+    kedro-viz:
+      layer: raw
+
+_layer_int: &_layer_int
+  metadata:
+    kedro-viz:
+      layer: integration
+
+_layer_prm: &_layer_prm
+  metadata:
+    kedro-viz:
+      layer: primary
+
+# Raw data sources
+disease_list.raw.mondo_owl:
+  type: text.TextDataset
+  <<: *_layer_raw
+  filepath: http://purl.obolibrary.org/obo/mondo.owl
+
+disease_list.raw.mondo_sssom:
+  type: pandas.CSVDataset
+  <<: *_layer_raw
+  filepath: http://purl.obolibrary.org/obo/mondo/mappings/mondo.sssom.tsv
+  load_args:
+    sep: "\t"
+    comment: "#"
+
+disease_list.raw.icd10_cm_codes:
+  type: text.TextDataset
+  <<: *_layer_raw
+  filepath: https://www.cms.gov/files/document/valid-icd-10-list.xlsx
+
+disease_list.raw.included_diseases_template:
+  type: pandas.CSVDataset
+  <<: *_layer_raw
+  filepath: https://raw.githubusercontent.com/everycure-org/matrix-disease-list/refs/heads/main/src/included-diseases.robot.tsv
+  load_args:
+    sep: "\t"
+
+disease_list.raw.excluded_diseases_template:
+  type: pandas.CSVDataset
+  <<: *_layer_raw
+  filepath: https://raw.githubusercontent.com/everycure-org/matrix-disease-list/refs/heads/main/src/excluded-diseases.robot.tsv
+  load_args:
+    sep: "\t"
+
+disease_list.raw.grouping_diseases_template:
+  type: pandas.CSVDataset
+  <<: *_layer_raw
+  filepath: https://raw.githubusercontent.com/everycure-org/matrix-disease-list/refs/heads/main/src/grouping-diseases.robot.tsv
+  load_args:
+    sep: "\t"
+
+# Integration layer
+disease_list.int.mondo_labels:
+  type: pandas.CSVDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.tmp}/disease_list/mondo_labels.tsv
+  save_args:
+    sep: "\t"
+
+disease_list.int.billable_icd10_template:
+  type: pandas.CSVDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.tmp}/disease_list/icd10_cm_billable_template.tsv
+  save_args:
+    sep: "\t"
+
+disease_list.int.subtypes_template:
+  type: pandas.CSVDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.tmp}/disease_list/subtypes_template.tsv
+  save_args:
+    sep: "\t"
+
+disease_list.int.mondo_with_subsets:
+  type: text.TextDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.tmp}/disease_list/mondo_with_subsets.owl
+
+disease_list.int.disease_list_unfiltered:
+  type: pandas.CSVDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.tmp}/disease_list/disease_list_unfiltered.tsv
+  save_args:
+    sep: "\t"
+
+disease_list.int.disease_list_metrics:
+  type: pandas.CSVDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.tmp}/disease_list/disease_list_metrics.tsv
+  save_args:
+    sep: "\t"
+
+# Primary outputs
+disease_list.prm.disease_list:
+  type: pandas.CSVDataset
+  <<: *_layer_prm
+  filepath: ${globals:paths.release}/matrix-disease-list.tsv
+  save_args:
+    sep: "\t"
+    index: false
+
+disease_list.prm.excluded_diseases:
+  type: pandas.CSVDataset
+  <<: *_layer_prm
+  filepath: ${globals:paths.release}/matrix-excluded-diseases-list.tsv
+  save_args:
+    sep: "\t"
+    index: false
+
+disease_list.prm.disease_groupings:
+  type: pandas.CSVDataset
+  <<: *_layer_prm
+  filepath: ${globals:paths.release}/matrix-disease-groupings.tsv
+  save_args:
+    sep: "\t"
+    index: false
+
+disease_list.prm.mondo_metadata:
+  type: pandas.CSVDataset
+  <<: *_layer_prm
+  filepath: ${globals:paths.release}/mondo-metadata.tsv
+  save_args:
+    sep: "\t"
+    index: false
+
+disease_list.prm.mondo_obsoletes:
+  type: pandas.CSVDataset
+  <<: *_layer_prm
+  filepath: ${globals:paths.release}/mondo-obsoletes.tsv
+  save_args:
+    sep: "\t"
+    index: false

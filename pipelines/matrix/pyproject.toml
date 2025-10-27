@@ -83,6 +83,9 @@ dependencies = [
     "lightgbm @ https://storage.googleapis.com/data.dev.everycure.org/pypi/lightgbm-4.6.0-py3-none-linux_x86_64.whl ; sys_platform == 'linux'",
     "lightgbm ; sys_platform == 'darwin'",
     "tqdm>=4.67.1",
+    # Ontology processing libraries
+    "rdflib>=7.0.0",        # For OWL/RDF processing and SPARQL queries
+    "oaklib>=0.6.0",        # Ontology Access Kit for ontology operations
 ]
 
 
