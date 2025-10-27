@@ -86,3 +86,11 @@ run_comparison:
       perform_sort: True
       title: "Disease-Entropy@n"
       force_full_y_axis: True
+
+    commonality_at_n:
+      _object: matrix.pipelines.run_comparison.evaluations.CommonalityAtN
+      n_max: 1000000
+      perform_sort: True
+      title: "Commonality@n"
+      force_full_y_axis: True
+      num_n_values: 1000

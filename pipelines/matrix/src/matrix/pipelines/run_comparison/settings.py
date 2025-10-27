@@ -30,5 +30,9 @@ RUN_COMPARISON_SETTINGS = {
             "name": "disease_entropy_at_n",
             "is_activated": True,
         },
+        {
+            "name": "commonality_at_n",
+            "is_activated": True,
+        },
     ],
 }

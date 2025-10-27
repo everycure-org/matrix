@@ -5,6 +5,7 @@ import numpy as np
 import polars as pl
 import pytest
 from matrix.pipelines.run_comparison.evaluations import (
+    CommonalityAtN,
     ComparisonEvaluationModelSpecific,
     EntropyAtN,
     FullMatrixRecallAtN,
@@ -376,3 +377,148 @@ def test_entropy_at_n(entropy_at_n_data_uniform, entropy_at_n_data_skewed):
     assert np.allclose(
         y_values_baseline_drug[6], 1, atol=1e-6
     )  # 3 drugs can uniformly fill top 6 so Entropy@6 = 1 for maximum entropy
+
+
+# CommonalityAtN
+
+
+@pytest.fixture
+def commonality_at_n_data():
+    scores = [1 / (i + 1) for i in range(4)]
+    combined_predictions = {
+        "model_1_fold_0": lambda: pl.LazyFrame(
+            {
+                "source": [1, 2, 3, 4],
+                "target": [1, 2, 3, 4],
+                "score": scores,
+            },
+        ),
+        "model_1_fold_1": lambda: pl.LazyFrame(  # Same as fold 0
+            {
+                "source": [1, 2, 3, 4],
+                "target": [1, 2, 3, 4],
+                "score": scores,
+            },
+        ),
+        "model_2_fold_0": lambda: pl.LazyFrame(  # Same as model 1 fold 0
+            {
+                "source": [1, 2, 3, 4],
+                "target": [1, 2, 3, 4],
+                "score": scores,
+            },
+        ),
+        "model_2_fold_1": lambda: pl.LazyFrame(  # Num in common with model 1 fold 1 is [0, 0, 2, 4]
+            {
+                "source": [4, 3, 2, 1],
+                "target": [4, 3, 2, 1],
+                "score": scores,
+            },
+        ),
+        "model_3_fold_0": lambda: pl.LazyFrame(  # Same as model 1 fold 0
+            {
+                "source": [1, 2, 3, 4],
+                "target": [1, 2, 3, 4],
+                "score": scores,
+            },
+        ),
+        "model_3_fold_1": lambda: pl.LazyFrame(  # Same as model 1 fold 1
+            {
+                "source": [1, 2, 3, 4],
+                "target": [1, 2, 3, 4],
+                "score": scores,
+            },
+        ),
+    }
+
+    # Generate additional information
+    predictions_info = {
+        "model_names": ["model_1", "model_2", "model_3"],
+        "num_folds": 2,
+        "available_ground_truth_cols": [],
+    }
+    return combined_predictions, predictions_info
+
+
+def test_commonality_at_n(commonality_at_n_data):
+    # Given sample predictions data and an instance of CommonalityAtN
+    combined_predictions = commonality_at_n_data[0]
+    predictions_info = commonality_at_n_data[1]
+    evaluation = CommonalityAtN(
+        n_max=4,
+        perform_sort=True,
+        title="Test Title",
+        force_full_y_axis=True,
+        num_n_values=4,
+    )
+
+    # When the method of the class are called
+    single_fold_results = evaluation.evaluate_single_fold(combined_predictions, predictions_info)
+    multi_fold_results = evaluation.evaluate_multi_fold(combined_predictions, predictions_info)
+    bootstrap_single_fold_results = evaluation.evaluate_bootstrap_single_fold(combined_predictions, predictions_info)
+    bootstrap_multi_fold_results = evaluation.evaluate_bootstrap_multi_fold(combined_predictions, predictions_info)
+    figure = evaluation.plot_results(
+        single_fold_results, predictions_info, perform_multifold=False, perform_bootstrap=False
+    )
+
+    # Then the results are as expected
+    n_values = [1, 2, 3, 4]
+    ones = [1.0, 1.0, 1.0, 1.0]
+    zeros = [0.0, 0.0, 0.0, 0.0]
+    # Single fold
+    assert_frame_equal(
+        single_fold_results,
+        pl.DataFrame(
+            {
+                "n": n_values,
+                "commonality_model_1_model_2": ones,  # All pairs identical since fold 0 is taken
+                "commonality_model_1_model_3": ones,
+                "commonality_model_2_model_3": ones,
+            }
+        ),
+        check_column_order=False,
+    )
+    # Multi fold
+    mean_commonality_at_3 = (2 / 3 + 1) / 2
+    std_commonality_at_3 = np.abs(mean_commonality_at_3 - 1)
+    assert_frame_equal(
+        multi_fold_results,
+        pl.DataFrame(
+            {
+                "n": n_values,
+                "commonality_model_1_model_2_mean": [
+                    0.5,
+                    0.5,
+                    mean_commonality_at_3,
+                    1,
+                ],  # Fold 1 commonality curve is: [0, 0, 2/3, 1]
+                "commonality_model_1_model_2_std": [0.5, 0.5, std_commonality_at_3, 0],
+                "commonality_model_1_model_3_mean": ones,
+                "commonality_model_1_model_3_std": zeros,
+                "commonality_model_2_model_3_mean": [
+                    0.5,
+                    0.5,
+                    mean_commonality_at_3,
+                    1,
+                ],  # Model 3 identical to model 1
+                "commonality_model_2_model_3_std": [0.5, 0.5, std_commonality_at_3, 0],
+            }
+        ),
+        check_column_order=False,
+    )
+    # Bootstrap single fold (check that it was overridden as expected)
+    assert_frame_equal(
+        bootstrap_single_fold_results,
+        single_fold_results,
+    )
+    # Bootstrap multi fold (check that it was overridden as expected)
+    assert_frame_equal(
+        bootstrap_multi_fold_results,
+        multi_fold_results,
+    )
+    # Plot results are as expected
+    # Check figure is a matplotlib Figure object
+    assert isinstance(figure, plt.Figure)
+    assert figure is not None
+    assert figure.get_axes()[0].get_xlabel() == "n"
+    assert figure.get_axes()[0].get_ylabel() == "Commonality@n"
+    assert figure.get_axes()[0].get_title() == "Test Title"

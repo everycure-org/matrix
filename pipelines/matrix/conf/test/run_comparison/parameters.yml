@@ -43,7 +43,10 @@ run_comparison:
       N_bootstraps: 10
     drug_entropy_at_n:
       n_max: 2500
-    num_n_values: 100
+      num_n_values: 100
     disease_entropy_at_n:
       n_max: 2500
+      num_n_values: 100
+    commonality_at_n:
+      n_max: 22500
       num_n_values: 100

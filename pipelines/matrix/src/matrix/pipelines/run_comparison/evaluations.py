@@ -1,5 +1,6 @@
 import abc
 from collections.abc import Callable
+from itertools import combinations
 from math import floor, log
 
 import matplotlib.pyplot as plt
@@ -70,6 +71,8 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
             x_axis_label: Label for the x-axis.
             y_axis_label: Label for the y-axis.
             title: Title of the plot.
+            force_full_y_axis: Whether to force the y-axis to be between 0 and 1.
+            baseline_curve_name: Name of the curve for baseline model (e.g. "Random classifier").
         """
         self.x_axis_label = x_axis_label
         self.y_axis_label = y_axis_label
@@ -136,7 +139,7 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
             predictions_info: Dictionary containing model names and number of folds.
 
         Returns:
-            Polars DataFrame with columns `x` and `y_{model_name}` for each model.
+            Polars DataFrame with columns "x" and "y_{model_name}" for each model.
         """
         x_lst = self.give_x_values()
         output_dataframe = pl.DataFrame({"x": x_lst})
@@ -656,3 +659,200 @@ class EntropyAtN(ComparisonEvaluationModelSpecific):
     def _give_plot_errors(self, perform_multifold: bool, perform_bootstrap: bool) -> bool:
         """Plot error bars if and only if multifold uncertainty estimation is performed, as bootstrap is not applicable."""
         return perform_multifold
+
+
+class CommonalityAtN(ComparisonEvaluation):
+    """Commonality@n evaluation for comparing similarity of pairs of predictions."""
+
+    def __init__(
+        self,
+        n_max: int,
+        perform_sort: bool,
+        title: str,
+        force_full_y_axis: bool = False,
+        num_n_values: int = 1000,
+    ):
+        """Initialize an instance of CommonalityAtN.
+
+        Args:
+            n_max: Maximum value of n to compute commonality@n score for.
+            perform_sort: Whether to sort the predictions or expect the dataframes to be sorted already.
+            title: Title of the plot.
+            force_full_y_axis: Whether to force the y-axis to be between 0 and 1.
+            num_n_values: Number of n values to compute commonality@n score for.
+        """
+        self.n_max = n_max
+        self.perform_sort = perform_sort
+        self.title = title
+        self.force_full_y_axis = force_full_y_axis
+        self.num_n_values = num_n_values
+
+    def give_n_values(self) -> np.ndarray:
+        """Integer values from 0 to n_max, representing the n in commonality@n."""
+        n_values = np.linspace(1, self.n_max, self.num_n_values)
+        return np.round(n_values).astype(int)
+
+    def give_commonality_values(
+        self, matrix_1: pl.DataFrame, matrix_2: pl.DataFrame, score_col_name: str = "score"
+    ) -> np.ndarray:
+        """Give the commonality@n values for a pair of predictions.
+
+        Args:
+            matrix_1: First set of predictions.
+            matrix_2: Second set of predictions.
+                Both dataframes must have the columns "source, "target" and, if perform_sort is True, the column score_col_name.
+        """
+        if self.perform_sort:
+            matrix_1 = matrix_1.sort(by=score_col_name, descending=True)
+            matrix_2 = matrix_2.sort(by=score_col_name, descending=True)
+
+        # Restrict to required rows and columns
+        matrix_1 = matrix_1.select("source", "target").head(self.n_max)
+        matrix_2 = matrix_2.select("source", "target").head(self.n_max)
+
+        # Add rank columns and join to a set of common pairs
+        matrix_common = (
+            pl.concat([matrix_1, matrix_2])
+            .unique()
+            .join(matrix_1.with_row_index(name="matrix_1_rank", offset=1), on=["source", "target"], how="left")
+            .join(matrix_2.with_row_index(name="matrix_2_rank", offset=1), on=["source", "target"], how="left")
+        )
+
+        # Compute number of common pairs in teh top n for each n
+        n_values = self.give_n_values()
+        num_common_at_n = np.array(
+            [
+                matrix_common.filter((pl.col("matrix_1_rank") <= n) & (pl.col("matrix_2_rank") <= n)).height
+                for n in n_values
+            ]
+        )
+
+        # Return proportion of pairs in common in the top n for each n
+        return num_common_at_n / n_values
+
+    def evaluate_single_fold(
+        self,
+        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
+        predictions_info: dict[str, any],
+    ) -> pl.DataFrame:
+        """Compute evaluation curves for all pairs of models without any uncertainty estimation.
+
+        Args:
+            combined_predictions: Dictionary PartitionedDataset load fn's returning predictions for all folds and models
+            predictions_info: Dictionary containing model names and number of folds.
+
+        Returns:
+            Polars DataFrame with columns "n" and "commonality_{model_name_1}_{model_name_2}" for each pair of models.
+        """
+        n_values = self.give_n_values()
+        output_dataframe = pl.DataFrame({"n": n_values})
+
+        for model_name_1, model_name_2 in combinations(predictions_info["model_names"], 2):
+            matrix_1 = combined_predictions[model_name_1 + "_fold_0"]().collect()
+            matrix_2 = combined_predictions[model_name_1 + "_fold_0"]().collect()
+
+            # Compute y-values and join to output results dataframe
+            commonality_values = self.give_commonality_values(matrix_1, matrix_2)
+            results_df_pair = pl.DataFrame(
+                {"n": n_values, f"commonality_{model_name_1}_{model_name_2}": commonality_values}
+            )
+            output_dataframe = output_dataframe.join(results_df_pair, how="left", on="n")
+
+        return output_dataframe
+
+    def evaluate_multi_fold(
+        self,
+        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
+        predictions_info: dict[str, any],
+    ) -> pl.DataFrame:
+        """Compute evaluation curves for all pairs of models with multi fold uncertainty estimation.
+
+        Args:
+            combined_predictions: Dictionary PartitionedDataset load fn's returning predictions for all folds and models
+            predictions_info: Dictionary containing model names and number of folds.
+
+        Returns:
+            Polars DataFrame with columns:
+              - "n"
+              - "commonality_{model_name_1}_{model_name_2}_mean"
+              - "commonality_{model_name_1}_{model_name_2}_std"
+            for each pair of models.
+        """
+        n_values = self.give_n_values()
+        output_dataframe = pl.DataFrame({"n": n_values})
+
+        for model_name_1, model_name_2 in combinations(predictions_info["model_names"], 2):
+            commonality_values_all_folds = []
+            for fold in range(predictions_info["num_folds"]):
+                matrix_1 = combined_predictions[model_name_1 + "_fold_" + str(fold)]().collect()
+                matrix_2 = combined_predictions[model_name_2 + "_fold_" + str(fold)]().collect()
+
+                # Compute y-values for fold and append to list
+                commonality_values_all_folds.append(self.give_commonality_values(matrix_1, matrix_2))
+
+            # Take mean and std of y-values across folds
+            commonality_values_mean = np.mean(commonality_values_all_folds, axis=0)
+            commonality_values_std = np.std(commonality_values_all_folds, axis=0)
+            results_df_pair = pl.DataFrame(
+                {
+                    "n": n_values,
+                    f"commonality_{model_name_1}_{model_name_2}_mean": commonality_values_mean,
+                    f"commonality_{model_name_1}_{model_name_2}_std": commonality_values_std,
+                }
+            )
+            output_dataframe = output_dataframe.join(results_df_pair, how="left", on="n")
+
+        return output_dataframe
+
+    def evaluate_bootstrap_single_fold(
+        self,
+        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
+        predictions_info: dict[str, any],
+    ) -> pl.DataFrame:
+        """Override bootstrap uncertainty estimation as it is not applicable (commonality does not use ground truth data)."""
+        return self.evaluate_single_fold(combined_predictions, predictions_info)
+
+    def evaluate_bootstrap_multi_fold(
+        self,
+        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
+        predictions_info: dict[str, any],
+    ) -> pl.DataFrame:
+        """Override bootstrap uncertainty estimation as it is not applicable (commonality does not use ground truth data)."""
+        return self.evaluate_multi_fold(combined_predictions, predictions_info)
+
+    def plot_results(
+        self,
+        results: pl.DataFrame,
+        predictions_info: dict[str, any],
+        perform_multifold: bool,
+        perform_bootstrap: bool,
+    ) -> plt.Figure:
+        """Plot the results."""
+        is_plot_errors = perform_multifold or perform_bootstrap
+
+        # List of n values for recall@n plot
+        n_values = self.give_n_values()
+
+        # Set up the figure
+        fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+
+        # Plot curves
+        for model_name_1, model_name_2 in combinations(predictions_info["model_names"], 2):
+            if is_plot_errors:
+                av_y_values = results[f"commonality_{model_name_1}_{model_name_2}_mean"]
+                std_y_values = results[f"commonality_{model_name_1}_{model_name_2}_std"]
+                ax.plot(n_values, av_y_values, label=f"{model_name_1} vs {model_name_2}")
+                ax.fill_between(n_values, av_y_values - std_y_values, av_y_values + std_y_values, alpha=0.2)
+            else:
+                av_y_values = results[f"commonality_{model_name_1}_{model_name_2}"]
+                ax.plot(n_values, av_y_values, label=f"{model_name_1} vs {model_name_2}")
+
+        # Configure figure
+        ax.set_xlabel("n")
+        ax.set_ylabel("Commonality@n")
+        if self.force_full_y_axis:
+            ax.set_ylim(0, 1.05)
+        ax.grid()
+        ax.legend()
+        ax.set_title(self.title)
+        return fig
