@@ -65,6 +65,12 @@ def create_billable_icd10_template(
     logger.info("Creating billable ICD-10-CM template")
     # TODO: Implement ICD-10-CM code extraction and mapping to MONDO
     # Should match logic from scripts/matrix-disease-list.py create-billable-icd10-template
+    # tmp/icd10-cm-billable.template.tsv: tmp/icd10-cm-codes.xlsx tmp/mondo.sssom.tsv
+	#python scripts/matrix-disease-list.py create-billable-icd10-template -i $< \
+	#	-i $< \
+	#	-m tmp/mondo.sssom.tsv \
+	#	-o $@
+
     raise NotImplementedError("create_billable_icd10_template not yet implemented")
 
 
@@ -90,9 +96,6 @@ def create_subtypes_template(
 
 def merge_templates_into_mondo(
     mondo_owl: str,
-    included_diseases: pd.DataFrame,
-    excluded_diseases: pd.DataFrame,
-    grouping_diseases: pd.DataFrame,
     billable_icd10: pd.DataFrame,
     subtypes: pd.DataFrame,
 ) -> str:
@@ -105,9 +108,6 @@ def merge_templates_into_mondo(
 
     Args:
         mondo_owl: Path to base MONDO ontology
-        included_diseases: Manually curated included diseases template
-        excluded_diseases: Manually curated excluded diseases template
-        grouping_diseases: Disease grouping annotations template
         billable_icd10: Billable ICD-10 template
         subtypes: Subtypes template
 
@@ -121,16 +121,9 @@ def merge_templates_into_mondo(
         tmpdir_path = Path(tmpdir)
 
         # Write DataFrames to temporary template files
-        included_path = tmpdir_path / "included.robot.tsv"
-        excluded_path = tmpdir_path / "excluded.robot.tsv"
-        grouping_path = tmpdir_path / "grouping.robot.tsv"
         billable_path = tmpdir_path / "billable.robot.tsv"
         subtypes_path = tmpdir_path / "subtypes.robot.tsv"
         output_path = tmpdir_path / "mondo-with-subsets.owl"
-
-        included_diseases.to_csv(included_path, sep="\t", index=False)
-        excluded_diseases.to_csv(excluded_path, sep="\t", index=False)
-        grouping_diseases.to_csv(grouping_path, sep="\t", index=False)
         billable_icd10.to_csv(billable_path, sep="\t", index=False)
         subtypes.to_csv(subtypes_path, sep="\t", index=False)
 
@@ -138,9 +131,6 @@ def merge_templates_into_mondo(
         # Note: We'll start simple - just template merging without SPARQL updates for now
         # SPARQL queries will need to be added based on the actual query files
         cmd = f"""robot template -i "{mondo_owl}" --merge-after \
-            --template "{excluded_path}" \
-            --template "{included_path}" \
-            --template "{grouping_path}" \
             --template "{billable_path}" \
             --template "{subtypes_path}" \
             -o "{output_path}" """
@@ -205,7 +195,7 @@ def extract_disease_list_unfiltered(
         return df
 
 
-def extract_disease_metrics(
+def extract_mondo_metrics(
     mondo_with_subsets: str,
     sparql_query_path: str,
 ) -> pd.DataFrame:
@@ -225,7 +215,7 @@ def extract_disease_metrics(
 
         # Write OWL content to temporary file
         input_owl = tmpdir_path / "mondo-with-subsets.owl"
-        output_tsv = tmpdir_path / "disease-metrics.tsv"
+        output_tsv = tmpdir_path / "mondo-metrics.tsv"
 
         with open(input_owl, "w") as f:
             f.write(mondo_with_subsets)
@@ -254,13 +244,13 @@ def extract_disease_metrics(
 
 def apply_disease_filters(
     disease_list_unfiltered: pd.DataFrame,
-    disease_metrics: pd.DataFrame,
+    mondo_metrics: pd.DataFrame,
 ) -> Dict[str, pd.DataFrame]:
     """Apply filters to create final disease lists.
 
     Args:
         disease_list_unfiltered: Unfiltered disease list with features
-        disease_metrics: Disease metrics for filtering
+        mondo_metrics: Disease metrics for filtering
 
     Returns:
         Dictionary containing:
@@ -334,7 +324,8 @@ def extract_mondo_obsoletes(
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
 
-        # Write OWL content to temporary file
+        # Write OWL content to temporary file 
+        # TODO is this necessary or can we pass the path directly?
         input_owl = tmpdir_path / "mondo.owl"
         output_tsv = tmpdir_path / "obsoletes.tsv"
 
@@ -387,30 +378,3 @@ def validate_disease_list(
     # - All required columns present
     # - Valid MONDO IDs
     raise NotImplementedError("validate_disease_list not yet implemented")
-
-
-def generate_disease_list_report(
-    disease_list: pd.DataFrame,
-    excluded_diseases: pd.DataFrame,
-    disease_groupings: pd.DataFrame,
-    mondo_metadata: pd.DataFrame,
-) -> str:
-    """Generate summary report about the disease list.
-
-    Args:
-        disease_list: Final disease list
-        excluded_diseases: Excluded diseases
-        disease_groupings: Disease groupings
-        mondo_metadata: MONDO version metadata
-
-    Returns:
-        Markdown formatted report
-    """
-    logger.info("Generating disease list report")
-    # TODO: Implement report generation
-    # Should include:
-    # - Number of included/excluded diseases
-    # - Breakdown by disease grouping
-    # - MONDO version information
-    # - Comparison with previous version if available
-    raise NotImplementedError("generate_disease_list_report not yet implemented")
