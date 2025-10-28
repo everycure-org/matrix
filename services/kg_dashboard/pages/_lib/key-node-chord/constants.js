@@ -14,24 +14,6 @@ export const LAYOUT_CONSTANTS = {
   CANVAS_HEIGHT: 400
 };
 
-// Color palette for different biolink categories
-export const CATEGORY_COLORS = {
-  'ChemicalEntity': '#51AFA6',      // teal - drugs/chemicals
-  'Gene': '#4C73F0',                // blue - genes
-  'Protein': '#604CEF',             // purple - proteins
-  'Disease': '#EF604C',             // red - diseases
-  'PhenotypicFeature': '#EF4C9E',   // pink - phenotypes
-  'AnatomicalEntity': '#B4D843',    // lime green - anatomy
-  'BiologicalProcess': '#3AC7B6',   // cyan - processes
-  'MolecularActivity': '#D8AB47',   // gold - molecular activity
-  'GenomicEntity': '#6287D3',       // light blue - genomic
-  'OrganismTaxon': '#B912D1',       // magenta - organisms
-  'Procedure': '#C66D3C',           // burnt orange - procedures
-  'Activity': '#E5F758',            // yellow-green - activities
-  'Population': '#C56492',          // mauve - populations
-  'Other': '#999999'                // gray - other
-};
-
 export const LABEL_CONFIG = {
   fontSize: 12,
   fontWeight: 'normal',

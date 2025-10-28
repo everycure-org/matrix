@@ -1,4 +1,5 @@
-import { LAYOUT_CONSTANTS, CATEGORY_COLORS } from './constants.js';
+import { LAYOUT_CONSTANTS } from './constants.js';
+import { CATEGORY_COLORS } from '../colors.js';
 
 /**
  * Calculate positions for category nodes arranged in an oval
