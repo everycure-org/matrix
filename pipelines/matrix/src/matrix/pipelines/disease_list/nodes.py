@@ -50,28 +50,49 @@ def extract_mondo_labels(mondo_owl: str) -> pd.DataFrame:
 
 
 def create_billable_icd10_template(
-    icd10_codes: str,
+    icd10_codes: pd.DataFrame,
     mondo_sssom: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Create template for billable ICD-10-CM codes mapped to MONDO.
+    """Create a list (formatted as a ROBOT template) for billable ICD-10-CM codes mapped to MONDO.
 
     Args:
-        icd10_codes: ICD-10-CM codes file
+        icd10_codes: ICD-10-CM codes file in XLSX format
         mondo_sssom: MONDO SSSOM mappings
 
     Returns:
         DataFrame with billable ICD-10 codes template
     """
     logger.info("Creating billable ICD-10-CM template")
-    # TODO: Implement ICD-10-CM code extraction and mapping to MONDO
-    # Should match logic from scripts/matrix-disease-list.py create-billable-icd10-template
-    # tmp/icd10-cm-billable.template.tsv: tmp/icd10-cm-codes.xlsx tmp/mondo.sssom.tsv
-	#python scripts/matrix-disease-list.py create-billable-icd10-template -i $< \
-	#	-i $< \
-	#	-m tmp/mondo.sssom.tsv \
-	#	-o $@
+    
+    # Transform ICD-10 codes in the first column
+    icd10_codes.iloc[:, 0] = icd10_codes.iloc[:, 0].apply(lambda x: f"ICD10CM:{x[:3]}.{x[3:]}" if pd.notna(x) and len(x) > 3 else x)
+    
+    # Extract exactMatch ICD10CM codes
+    icd10_code_mappings = mondo_sssom.loc[mondo_sssom['predicate_id'] == 'skos:exactMatch', 'object_id'].unique()
+    
+    # Filter the DataFrame for rows with ICD-10 codes present in mondo SSSOM
+    icd10_codes_billable = icd10_codes[icd10_codes.iloc[:, 0].isin(icd10_code_mappings)]["CODE"].unique()
 
-    raise NotImplementedError("create_billable_icd10_template not yet implemented")
+    rows = []
+    
+    for icd10_code in icd10_codes_billable:
+        row_to_add = icd10_code_mappings[(icd10_code_mappings['predicate_id'] == 'skos:exactMatch') & (icd10_code_mappings['object_id'] == icd10_code)][['subject_id', 'object_id']]
+        row_to_add['SUBSET']="http://purl.obolibrary.org/obo/mondo#icd10_billable"
+        row_to_add['ID']=row_to_add['subject_id']
+        row_to_add['ICD10CM_CODE']=row_to_add['object_id']
+        rows.append(row_to_add[['ID', 'SUBSET','ICD10CM_CODE']])
+    
+    robot_template_header = pd.DataFrame({
+        'ID': ['ID'],
+        'SUBSET': ['AI oboInOwl:inSubset'],
+        'ICD10CM_CODE': [""]
+        })
+    
+    df_icd10billable_subsets = pd.concat(rows)
+    df_icd10billable_subsets = pd.concat([robot_template_header, df_icd10billable_subsets]).reset_index(drop=True)
+
+    # Write the filtered DataFrame to a TSV file
+    return df_icd10billable_subsets
 
 
 def create_subtypes_template(
@@ -147,30 +168,30 @@ def merge_templates_into_mondo(
         return owl_content
 
 
-def extract_disease_list_unfiltered(
-    mondo_with_subsets: str,
+def extract_disease_list_raw(
+    mondo_preprocessed: str,
     sparql_query_path: str,
 ) -> pd.DataFrame:
-    """Extract unfiltered disease list with filter features using ROBOT query.
+    """Extract raw features of the disease list from Mondo using ROBOT query.
 
     Args:
-        mondo_with_subsets: MONDO ontology content with subset annotations
+        mondo_preprocessed: MONDO ontology content with subset annotations
         sparql_query_path: Path to SPARQL query file (matrix-disease-list-filters.sparql)
 
     Returns:
-        DataFrame with unfiltered disease list
+        DataFrame with raw disease list features
     """
-    logger.info("Extracting unfiltered disease list")
+    logger.info("Extracting raw disease list features")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
 
         # Write OWL content to temporary file
         input_owl = tmpdir_path / "mondo-with-subsets.owl"
-        output_tsv = tmpdir_path / "disease-list-unfiltered.tsv"
+        output_tsv = tmpdir_path / "disease-list-raw.tsv"
 
         with open(input_owl, "w") as f:
-            f.write(mondo_with_subsets)
+            f.write(mondo_preprocessed)
 
         # Run ROBOT query command
         cmd = f'robot query -i "{input_owl}" -f tsv --query "{sparql_query_path}" "{output_tsv}"'
@@ -179,7 +200,7 @@ def extract_disease_list_unfiltered(
         # Read the output TSV
         df = pd.read_csv(output_tsv, sep="\t")
 
-        # Post-process to clean up SPARQL output (mimicking sed commands in Makefile)
+        # Post-process to clean up SPARQL output
         # Remove ? prefix, angle brackets, and clean up IRIs
         for col in df.columns:
             if df[col].dtype == object:
@@ -191,18 +212,18 @@ def extract_disease_list_unfiltered(
                     .str.replace(">", "", regex=False)
                 )
 
-        logger.info(f"Extracted {len(df)} diseases in unfiltered list")
+        logger.info(f"Extracted {len(df)} diseases in raw list")
         return df
 
 
 def extract_mondo_metrics(
-    mondo_with_subsets: str,
+    mondo_preprocessed: str,
     sparql_query_path: str,
 ) -> pd.DataFrame:
     """Extract metrics for disease list filtering using ROBOT query.
 
     Args:
-        mondo_with_subsets: MONDO ontology content with subset annotations
+        mondo_preprocessed: MONDO ontology content with subset annotations
         sparql_query_path: Path to SPARQL query file (matrix-disease-list-metrics.sparql)
 
     Returns:
@@ -218,7 +239,7 @@ def extract_mondo_metrics(
         output_tsv = tmpdir_path / "mondo-metrics.tsv"
 
         with open(input_owl, "w") as f:
-            f.write(mondo_with_subsets)
+            f.write(mondo_preprocessed)
 
         # Run ROBOT query command
         cmd = f'robot query -i "{input_owl}" -f tsv --query "{sparql_query_path}" "{output_tsv}"'
