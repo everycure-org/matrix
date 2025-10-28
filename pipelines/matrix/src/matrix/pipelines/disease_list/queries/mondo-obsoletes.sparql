@@ -1,0 +1,31 @@
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX oboInOwl: <http://www.geneontology.org/formats/oboInOwl#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX IAO: <http://purl.obolibrary.org/obo/IAO_>
+
+SELECT
+    ?cls
+    ?label
+    ?deprecated
+    (GROUP_CONCAT(DISTINCT STR(?repl); separator="|") AS ?replacements)
+    (GROUP_CONCAT(DISTINCT STR(?cons); separator="|") AS ?considers)
+WHERE {
+    ?cls a owl:Class .
+    FILTER(STRSTARTS(STR(?cls), "http://purl.obolibrary.org/obo/MONDO_"))
+
+    OPTIONAL { ?cls rdfs:label ?label. }
+
+    # common OBO annotation properties for replacements / considers
+    OPTIONAL { ?cls IAO:0100001 ?repl. }
+    OPTIONAL { ?cls oboInOwl:consider ?cons. }
+
+    # detect obsoletion via owl:deprecated = true (robust to literal forms)
+    OPTIONAL { ?cls owl:deprecated ?deprecated. }
+    FILTER(BOUND(?deprecated) &&
+                 ( ?deprecated = true
+                     || STR(?deprecated) = "true"
+                     || ?deprecated = "true"^^xsd:boolean ))
+}
+GROUP BY ?cls ?label ?deprecated
+ORDER BY ?cls
