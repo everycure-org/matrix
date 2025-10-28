@@ -32,10 +32,27 @@ _polars_csv_ds: &_polars_csv
     separator: "\t"
     include_header: true
   load_args:
-    infer_schema_length: 0
+    infer_schema: 0
+    low_memory: true
+    rechunk: false
     has_header: true
     ignore_errors: true
     truncate_ragged_lines: true
+
+_polars_lazy_ds: &_polars_lazy_csv
+  type: matrix.datasets.polars.CSVLazyDataset
+  save_args:
+    separator: "\t"
+    include_header: true
+  load_args:
+    separator: "\t"
+    infer_schema_length: 0
+    low_memory: true
+    rechunk: false
+    has_header: true
+    ignore_errors: true
+    truncate_ragged_lines: true
+
 
 # -------------------------------------------------------------------------
 # Datasets
@@ -116,7 +133,6 @@ preprocessing.int.embiology.manual_id_mapping@spark:
   <<: *_spark_parquet
   filepath: ${globals:paths.tmp}/embiology/prm/id_curie_mapping
 
-
 preprocessing.prm.embiology.edges:
   <<: *_spark_parquet
   filepath: ${globals:paths.tmp}/embiology/prm/edges
@@ -186,18 +202,18 @@ preprocessing.int.primekg.edges:
 
 # Robokop
 preprocessing.raw.robokop.nodes@polars:
-  <<: [*_polars_csv]
-  filepath: ${globals:paths.raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-kg-${globals:data_sources.robokop.version}_nodes.tsv
+  <<: [*_polars_lazy_csv]
+  filepath: ${globals:paths.raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
 
 preprocessing.raw.robokop.edges@polars:
-  <<: [*_polars_csv]
-  filepath: ${globals:paths.raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-kg-${globals:data_sources.robokop.version}_edges.tsv
+  <<: [*_polars_lazy_csv]
+  filepath: ${globals:paths.raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
 
 preprocessing.int.robokop.nodes:
   <<: [*_polars_csv]
-  filepath: ${globals:paths.tmp}/preprocessing/int/robokop-kg/${globals:data_sources.robokop.version}/robokop-kg-${globals:data_sources.robokop.version}_nodes.tsv
+  filepath: ${globals:paths.tmp}/preprocessing/int/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
 
 preprocessing.int.robokop.edges:
   <<: [*_polars_csv]
-  filepath: ${globals:paths.tmp}/preprocessing/int/robokop-kg/${globals:data_sources.robokop.version}/robokop-kg-${globals:data_sources.robokop.version}_edges.tsv
+  filepath: ${globals:paths.tmp}/preprocessing/int/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
 
