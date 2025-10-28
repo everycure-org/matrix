@@ -38,9 +38,11 @@ disease_list.raw.mondo_obsoletion_candidates:
     sep: "\t"
 
 disease_list.raw.icd10_cm_codes:
-  type: text.TextDataset
+  type: pandas.ExcelDataset
   <<: *_layer_raw
   filepath: https://www.cms.gov/files/document/valid-icd-10-list.xlsx
+  load_args:
+    sheet_name: 0
 
 #############################################
 ########### Manually curated inputs #########
@@ -70,6 +72,7 @@ disease_list.int.billable_icd10_template:
   filepath: ${globals:paths.tmp}/disease_list/icd10_cm_billable_template.tsv
   save_args:
     sep: "\t"
+    index: false
 
 disease_list.int.subtypes_template:
   type: pandas.CSVDataset
@@ -77,6 +80,7 @@ disease_list.int.subtypes_template:
   filepath: ${globals:paths.tmp}/disease_list/subtypes_template.tsv
   save_args:
     sep: "\t"
+    index: false
 
 disease_list.int.mondo_metrics:
   type: pandas.CSVDataset
@@ -84,6 +88,7 @@ disease_list.int.mondo_metrics:
   filepath: ${globals:paths.tmp}/disease_list/mondo_metrics.tsv
   save_args:
     sep: "\t"
+    index: false
 
 disease_list.int.disease_list_raw:
   type: pandas.CSVDataset
@@ -91,6 +96,7 @@ disease_list.int.disease_list_raw:
   filepath: ${globals:paths.tmp}/disease_list/disease_list_raw.tsv
   save_args:
     sep: "\t"
+    index: false
 
 #############################################
 ########### Final Outputs ###################
