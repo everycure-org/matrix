@@ -29,6 +29,8 @@ def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             # Stage 1: Data preparation
+            # Stage 1: Data preparation
+            # Extract labels from MONDO ontology for disease identification
             node(
                 func=nodes.extract_mondo_labels,
                 inputs="disease_list.raw.mondo_owl",
@@ -36,6 +38,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="extract_mondo_labels",
                 tags=["disease_list", "preparation"],
             ),
+            # Create template for billable ICD-10 codes by mapping MONDO to ICD-10-CM
             node(
                 func=nodes.create_billable_icd10_template,
                 inputs={
@@ -46,6 +49,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_billable_icd10_template",
                 tags=["disease_list", "preparation"],
             ),
+            # Create template for disease subtypes based on MONDO hierarchy
             node(
                 func=nodes.create_subtypes_template,
                 inputs={
@@ -56,82 +60,89 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_subtypes_template",
                 tags=["disease_list", "preparation"],
             ),
-            node(
-                func=nodes.merge_templates_into_mondo,
-                inputs={
-                    "mondo_owl": "disease_list.raw.mondo_owl",
-                    "billable_icd10": "disease_list.int.billable_icd10_template",
-                    "subtypes": "disease_list.int.subtypes_template",
-                },
-                outputs="disease_list.int.mondo_with_subsets",
-                name="merge_templates_into_mondo",
-                tags=["disease_list", "ontology_processing"],
-            ),
-            node(
-                func=nodes.extract_disease_list_unfiltered,
-                inputs={
-                    "mondo_with_subsets": "disease_list.int.mondo_with_subsets",
-                    "sparql_query_path": str(QUERIES_DIR / "matrix-disease-list-filters.sparql"),
-                },
-                outputs="disease_list.int.disease_list_raw",
-                name="extract_disease_list_unfiltered",
-                tags=["disease_list", "ontology_processing"],
-            ),
-            node(
-                func=nodes.extract_mondo_metrics,
-                inputs={
-                    "mondo_with_subsets": "disease_list.int.mondo_with_subsets",
-                    "sparql_query_path": str(QUERIES_DIR / "matrix-disease-list-metrics.sparql"),
-                },
-                outputs="disease_list.int.mondo_metrics",
-                name="extract_mondo_metrics",
-                tags=["disease_list", "ontology_processing"],
-            ),
-            # Stage 2: List generation
-            node(
-                func=nodes.apply_disease_filters,
-                inputs={
-                    "disease_list_unfiltered": "disease_list.int.disease_list_raw",
-                    "mondo_metrics": "disease_list.int.mondo_metrics",
-                },
-                outputs={
-                    "disease_list": "disease_list.prm.disease_list",
-                    "excluded_diseases": "disease_list.prm.excluded_diseases",
-                    "disease_groupings": "disease_list.prm.disease_groupings",
-                },
-                name="apply_disease_filters",
-                tags=["disease_list", "filtering"],
-            ),
-            # Stage 3: Metadata extraction
-            node(
-                func=nodes.extract_mondo_metadata,
-                inputs={
-                    "mondo_owl": "disease_list.raw.mondo_owl",
-                    "sparql_query_path": str(QUERIES_DIR / "ontology-metadata.sparql"),
-                },
-                outputs="disease_list.prm.mondo_metadata",
-                name="extract_mondo_metadata",
-                tags=["disease_list", "metadata"],
-            ),
-            node(
-                func=nodes.extract_mondo_obsoletes,
-                inputs={
-                    "mondo_owl": "disease_list.raw.mondo_owl",
-                    "sparql_query_path": str(QUERIES_DIR / "mondo-obsoletes.sparql"),
-                },
-                outputs="disease_list.prm.mondo_obsoletes",
-                name="extract_mondo_obsoletes",
-                tags=["disease_list", "metadata"],
-            ),
+            # Stage 2: Ontology processing
+            # Merge ICD-10 and subtype templates into MONDO ontology
+            #node(
+            #    func=nodes.merge_templates_into_mondo,
+            #    inputs={
+            #        "mondo_owl": "disease_list.raw.mondo_owl",
+            #        "billable_icd10": "disease_list.int.billable_icd10_template",
+            #        "subtypes": "disease_list.int.subtypes_template",
+            #    },
+            #    outputs="disease_list.int.mondo_with_subsets",
+            #    name="merge_templates_into_mondo",
+            #    tags=["disease_list", "ontology_processing"],
+            #),
+            # Extract unfiltered disease list using SPARQL query
+            #node(
+            #    func=nodes.extract_disease_list_unfiltered,
+            #    inputs={
+            #        "mondo_with_subsets": "disease_list.int.mondo_with_subsets",
+            #        "sparql_query_path": str(QUERIES_DIR / "matrix-disease-list-filters.sparql"),
+            #    },
+            #    outputs="disease_list.int.disease_list_raw",
+            #    name="extract_disease_list_unfiltered",
+            #    tags=["disease_list", "ontology_processing"],
+            #),
+            # Extract disease metrics for filtering decisions
+            #node(
+            #    func=nodes.extract_mondo_metrics,
+            #    inputs={
+            #        "mondo_with_subsets": "disease_list.int.mondo_with_subsets",
+            #        "sparql_query_path": str(QUERIES_DIR / "matrix-disease-list-metrics.sparql"),
+            #    },
+            #    outputs="disease_list.int.mondo_metrics",
+            #    name="extract_mondo_metrics",
+            #    tags=["disease_list", "ontology_processing"],
+            #),
+            # Stage 3: List generation
+            # Apply filtering rules to generate final disease list
+            #node(
+            #    func=nodes.apply_disease_filters,
+            #    inputs={
+            #        "disease_list_unfiltered": "disease_list.int.disease_list_raw",
+            #        "mondo_metrics": "disease_list.int.mondo_metrics",
+            #    },
+            #    outputs={
+            #        "disease_list": "disease_list.prm.disease_list",
+            #        "excluded_diseases": "disease_list.prm.excluded_diseases",
+            #        "disease_groupings": "disease_list.prm.disease_groupings",
+            #    },
+            #    name="apply_disease_filters",
+            #    tags=["disease_list", "filtering"],
+            #),
+            # Stage 4: Metadata extraction
+            # Extract ontology metadata (version, date, etc.)
+            #node(
+            #    func=nodes.extract_mondo_metadata,
+            #    inputs={
+            #        "mondo_owl": "disease_list.raw.mondo_owl",
+            #        "sparql_query_path": str(QUERIES_DIR / "ontology-metadata.sparql"),
+            #    },
+            #    outputs="disease_list.prm.mondo_metadata",
+            #    name="extract_mondo_metadata",
+            #    tags=["disease_list", "metadata"],
+            #),
+            # Extract obsolete MONDO terms for tracking deprecated diseases
+            #node(
+            #    func=nodes.extract_mondo_obsoletes,
+            #    inputs={
+            #        "mondo_owl": "disease_list.raw.mondo_owl",
+            #        "sparql_query_path": str(QUERIES_DIR / "mondo-obsoletes.sparql"),
+            #    },
+            #    outputs="disease_list.prm.mondo_obsoletes",
+            #    name="extract_mondo_obsoletes",
+            #    tags=["disease_list", "metadata"],
+            #),
             # Stage 4: Validation
-            node(
-                func=nodes.validate_disease_list,
-                inputs={
-                    "disease_list": "disease_list.prm.disease_list",
-                },
-                outputs=None,
-                name="validate_disease_list",
-                tags=["disease_list", "validation"],
-            ),
+            #node(
+            #    func=nodes.validate_disease_list,
+            #    inputs={
+            #        "disease_list": "disease_list.prm.disease_list",
+            #    },
+            #    outputs=None,
+            #    name="validate_disease_list",
+            #    tags=["disease_list", "validation"],
+            #),
         ]
     )
