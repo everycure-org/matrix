@@ -13,7 +13,10 @@ _layer_prm: &_layer_prm
     kedro-viz:
       layer: primary
 
-# Raw data sources
+###################################
+########### INPUT DATA ############
+###################################
+
 disease_list.raw.mondo_owl:
   type: text.TextDataset
   <<: *_layer_raw
@@ -27,24 +30,21 @@ disease_list.raw.mondo_sssom:
     sep: "\t"
     comment: "#"
 
+disease_list.raw.mondo_obsoletion_candidates:
+  type: pandas.CSVDataset
+  <<: *_layer_raw
+  filepath: https://raw.githubusercontent.com/monarch-initiative/mondo/refs/heads/master/src/ontology/reports/mondo_obsoletioncandidates.tsv
+  load_args:
+    sep: "\t"
+
 disease_list.raw.icd10_cm_codes:
   type: text.TextDataset
   <<: *_layer_raw
   filepath: https://www.cms.gov/files/document/valid-icd-10-list.xlsx
 
-disease_list.raw.included_diseases_template:
-  type: pandas.CSVDataset
-  <<: *_layer_raw
-  filepath: https://raw.githubusercontent.com/everycure-org/matrix-disease-list/refs/heads/main/src/included-diseases.robot.tsv
-  load_args:
-    sep: "\t"
-
-disease_list.raw.excluded_diseases_template:
-  type: pandas.CSVDataset
-  <<: *_layer_raw
-  filepath: https://raw.githubusercontent.com/everycure-org/matrix-disease-list/refs/heads/main/src/excluded-diseases.robot.tsv
-  load_args:
-    sep: "\t"
+#############################################
+########### Manually curated inputs #########
+#############################################
 
 disease_list.raw.grouping_diseases_template:
   type: pandas.CSVDataset
@@ -53,7 +53,10 @@ disease_list.raw.grouping_diseases_template:
   load_args:
     sep: "\t"
 
-# Integration layer
+#############################################
+########### Intermediate Outputs ############
+#############################################
+
 disease_list.int.mondo_labels:
   type: pandas.CSVDataset
   <<: *_layer_int
@@ -75,50 +78,35 @@ disease_list.int.subtypes_template:
   save_args:
     sep: "\t"
 
-disease_list.int.mondo_with_subsets:
-  type: text.TextDataset
-  <<: *_layer_int
-  filepath: ${globals:paths.tmp}/disease_list/mondo_with_subsets.owl
-
-disease_list.int.disease_list_unfiltered:
+disease_list.int.mondo_metrics:
   type: pandas.CSVDataset
   <<: *_layer_int
-  filepath: ${globals:paths.tmp}/disease_list/disease_list_unfiltered.tsv
+  filepath: ${globals:paths.tmp}/disease_list/mondo_metrics.tsv
   save_args:
     sep: "\t"
 
-disease_list.int.disease_list_metrics:
+disease_list.int.disease_list_raw:
   type: pandas.CSVDataset
   <<: *_layer_int
-  filepath: ${globals:paths.tmp}/disease_list/disease_list_metrics.tsv
+  filepath: ${globals:paths.tmp}/disease_list/disease_list_raw.tsv
   save_args:
     sep: "\t"
 
-# Primary outputs
-disease_list.prm.disease_list:
+#############################################
+########### Final Outputs ###################
+#############################################
+
+# The final disease list
+disease_list.int.disease_list:
   type: pandas.CSVDataset
-  <<: *_layer_prm
-  filepath: ${globals:paths.release}/matrix-disease-list.tsv
+  <<: *_layer_int
+  filepath: ${globals:paths.release}/disease_list.tsv
   save_args:
     sep: "\t"
     index: false
 
-disease_list.prm.excluded_diseases:
-  type: pandas.CSVDataset
-  <<: *_layer_prm
-  filepath: ${globals:paths.release}/matrix-excluded-diseases-list.tsv
-  save_args:
-    sep: "\t"
-    index: false
-
-disease_list.prm.disease_groupings:
-  type: pandas.CSVDataset
-  <<: *_layer_prm
-  filepath: ${globals:paths.release}/matrix-disease-groupings.tsv
-  save_args:
-    sep: "\t"
-    index: false
-
+# A file containing basic metadata about the disease list run, in particular
+# which MONDO version was used to generate the disease list
 disease_list.prm.mondo_metadata:
   type: pandas.CSVDataset
   <<: *_layer_prm
@@ -127,10 +115,24 @@ disease_list.prm.mondo_metadata:
     sep: "\t"
     index: false
 
+# A full list of all obsoleted MONDO terms, along with their obsoletion reason 
+# and replacement term (if any)
 disease_list.prm.mondo_obsoletes:
   type: pandas.CSVDataset
   <<: *_layer_prm
   filepath: ${globals:paths.release}/mondo-obsoletes.tsv
+  save_args:
+    sep: "\t"
+    index: false
+
+# Obsoletion candidates are diseases that are marked for obsoletion in MONDO
+# These are needed so we can define a strategy on how to curate them in our d2d reviews
+# TODO: the weird thing about this one is that it is only downloaded, but not used 
+# in this specific pipeline - Jacques need to check where/how it is used
+disease_list.prm.mondo_obsoletion_candidates:
+  type: pandas.CSVDataset
+  <<: *_layer_prm
+  filepath: ${globals:paths.release}/mondo-obsoletion_candidates.tsv
   save_args:
     sep: "\t"
     index: false
