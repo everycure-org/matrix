@@ -63,6 +63,8 @@ disease_list.int.mondo_labels:
   type: pandas.CSVDataset
   <<: *_layer_int
   filepath: ${globals:paths.tmp}/disease_list/mondo_labels.tsv
+  load_args:
+    sep: "\t"
   save_args:
     sep: "\t"
 

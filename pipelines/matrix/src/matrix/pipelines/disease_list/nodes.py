@@ -26,29 +26,32 @@ def extract_mondo_labels(mondo_owl: str) -> pd.DataFrame:
     """Extract disease labels from MONDO ontology using ROBOT.
 
     Args:
-        mondo_owl: Path to MONDO ontology in OWL format
+        mondo_owl: MONDO ontology content in OWL format
 
     Returns:
         DataFrame with disease IDs and labels
     """
     logger.info("Extracting MONDO labels from ontology")
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".tsv", delete=False) as tmp_file:
-        output_path = tmp_file.name
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir_path = Path(tmpdir)
 
-    try:
+        # Write OWL content to temporary file
+        input_owl = tmpdir_path / "mondo.owl"
+        output_tsv = tmpdir_path / "mondo_labels.tsv"
+
+        with open(input_owl, "w") as f:
+            f.write(mondo_owl)
+
         # Run ROBOT export command to extract ID and LABEL columns
-        cmd = f'robot export -i "{mondo_owl}" -f tsv --header "ID|LABEL" --export "{output_path}"'
+        cmd = f'robot export -i "{input_owl}" -f tsv --header "ID|LABEL" --export "{output_tsv}"'
         run_subprocess(cmd, check=True, stream_output=True)
 
         # Read the exported TSV
-        df = pd.read_csv(output_path, sep="\t")
+        df = pd.read_csv(output_tsv, sep="\t")
         logger.info(f"Extracted {len(df)} MONDO labels")
 
         return df
-    finally:
-        # Clean up temporary file
-        Path(output_path).unlink(missing_ok=True)
 
 
 def create_billable_icd10_template(
@@ -65,24 +68,36 @@ def create_billable_icd10_template(
         DataFrame with billable ICD-10 codes template
     """
     logger.info("Creating billable ICD-10-CM template")
-    
-    # Transform ICD-10 codes in the first column
-    icd10_codes.iloc[:, 0] = icd10_codes.iloc[:, 0].apply(lambda x: f"ICD10CM:{x[:3]}.{x[3:]}" if pd.notna(x) and len(x) > 3 else x)
-    
-    # Extract exactMatch ICD10CM codes
-    icd10_code_mappings = mondo_sssom.loc[mondo_sssom['predicate_id'] == 'skos:exactMatch', 'object_id'].unique()
-    
-    # Filter the DataFrame for rows with ICD-10 codes present in mondo SSSOM
-    icd10_codes_billable = icd10_codes[icd10_codes.iloc[:, 0].isin(icd10_code_mappings)]["CODE"].unique()
+
+    # Transform ICD-10 codes in the first column to CURIE format
+    # Example: "A001" -> "ICD10CM:A00.1"
+    icd10_codes.iloc[:, 0] = icd10_codes.iloc[:, 0].apply(
+        lambda x: f"ICD10CM:{x[:3]}.{x[3:]}" if pd.notna(x) and len(x) > 3 else x
+    )
+
+    # Extract ICD-10 codes that have exactMatch in MONDO SSSOM
+    icd10_codes_in_mondo = mondo_sssom.loc[
+        mondo_sssom['predicate_id'] == 'skos:exactMatch', 'object_id'
+    ].unique()
+
+    # Filter to only billable codes that are in MONDO
+    icd10_codes_billable = icd10_codes[icd10_codes.iloc[:, 0].isin(icd10_codes_in_mondo)]["CODE"].unique()
+
+    logger.info(f"Found {len(icd10_codes_billable)} billable ICD-10 codes with MONDO mappings")
 
     rows = []
-    
+
     for icd10_code in icd10_codes_billable:
-        row_to_add = icd10_code_mappings[(icd10_code_mappings['predicate_id'] == 'skos:exactMatch') & (icd10_code_mappings['object_id'] == icd10_code)][['subject_id', 'object_id']]
-        row_to_add['SUBSET']="http://purl.obolibrary.org/obo/mondo#icd10_billable"
-        row_to_add['ID']=row_to_add['subject_id']
-        row_to_add['ICD10CM_CODE']=row_to_add['object_id']
-        rows.append(row_to_add[['ID', 'SUBSET','ICD10CM_CODE']])
+        # Find MONDO IDs that have exactMatch to this ICD-10 code
+        row_to_add = mondo_sssom[
+            (mondo_sssom['predicate_id'] == 'skos:exactMatch') &
+            (mondo_sssom['object_id'] == icd10_code)
+        ][['subject_id', 'object_id']].copy()
+
+        row_to_add['SUBSET'] = "http://purl.obolibrary.org/obo/mondo#icd10_billable"
+        row_to_add['ID'] = row_to_add['subject_id']
+        row_to_add['ICD10CM_CODE'] = row_to_add['object_id']
+        rows.append(row_to_add[['ID', 'SUBSET', 'ICD10CM_CODE']])
     
     robot_template_header = pd.DataFrame({
         'ID': ['ID'],
