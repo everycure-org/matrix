@@ -25,6 +25,9 @@ def get_best_parallel_eval(estimator, n_parallel_trials) -> int:
         # Strategy: Use n_parallel_trials to determine parallel evaluations,
         # and divide CPUs evenly to give each trial proportional threads.
         # This ensures we utilize all CPUs: n_parallel_trials * threads_per_trial = n_cpus
+        # With 87 CPUs and n_parallel_trials=3: 3 parallel evaluations × 29 threads = 87 CPUs
+        # With 87 CPUs and n_parallel_trials=10: 10 parallel evaluations × 8 threads = 80 CPUs (slight under-utilization)
+        # With 87 CPUs and n_parallel_trials=100: 87 parallel evaluations × 1 thread = 87 CPUs (capped at n_cpus)
 
         # Cap parallel trials at available CPUs (minimum 1 thread per trial)
         n_parallel_evals = min(n_parallel_trials, n_cpus)
