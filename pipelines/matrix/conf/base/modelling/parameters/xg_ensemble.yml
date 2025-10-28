@@ -22,7 +22,7 @@ modelling.xg_ensemble:
             random_state: ${globals:random_state}
             tree_method: hist
             device: cpu
-          n_calls: 20
+          n_calls: 21
           n_parallel_trials: 3
           dimensions:
             - _object: skopt.space.Real
