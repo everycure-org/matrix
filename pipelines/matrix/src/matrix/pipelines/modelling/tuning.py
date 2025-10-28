@@ -50,7 +50,7 @@ class NopTuner(BaseEstimator, MetaEstimatorMixin):
 
 
 class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
-    """Guassian Process based hyperparameter tuner with parallel evaluation support.
+    """Gaussian Process based hyperparameter tuner with parallel evaluation support.
 
     Adaptor class that uses skopt's Optimizer with ask/tell pattern to enable
     parallel evaluation of hyperparameter configurations. When the underlying
