@@ -48,7 +48,6 @@ _polars_lazy_ds: &_polars_lazy_csv
     separator: "\t"
     infer_schema_length: 0
     low_memory: true
-    rechunk: false
     has_header: true
     ignore_errors: true
     truncate_ragged_lines: true
