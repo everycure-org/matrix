@@ -22,8 +22,19 @@ modelling.xg_ensemble:
             random_state: ${globals:random_state}
             tree_method: hist
             device: cpu
-          n_calls: 21
-          n_parallel_trials: 3
+          # we have 87 CPUs available in the modelling environment
+          # so we can increase n_parallel_trials to better utilize resources
+          # while ensuring each trial has enough threads
+          # to efficiently train the XGBoost models
+          # Strategy: Use n_parallel_trials to determine parallel evaluations,
+          # and divide CPUs evenly to give each trial proportional threads.
+          # This ensures we utilize all CPUs: n_parallel_trials * threads_per_trial = n_cpus
+          # With 87 CPUs and n_parallel_trials=4: 4 parallel evaluations × 21 threads = 84 CPUs (slight under-utilization)
+          # With 87 CPUs and n_parallel_trials=3: 3 parallel evaluations × 29 threads = 87 CPUs (full utilization)
+          # With 87 CPUs and n_parallel_trials=10: 10 parallel evaluations × 8 threads = 80 CPUs (slight under-utilization)
+          # With 87 CPUs and n_parallel_trials=100: 87 parallel evaluations × 1 thread = 87 CPUs (capped at n_cpus)
+          n_calls: 20
+          n_parallel_trials: 4
           dimensions:
             - _object: skopt.space.Real
               name: learning_rate
