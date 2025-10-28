@@ -23,6 +23,7 @@ modelling.xg_ensemble:
             tree_method: hist
             device: cpu
           n_calls: 20
+          n_parallel_trials: 4
           dimensions:
             - _object: skopt.space.Real
               name: learning_rate

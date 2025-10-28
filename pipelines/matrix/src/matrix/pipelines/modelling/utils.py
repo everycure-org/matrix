@@ -9,7 +9,7 @@ from matrix_gcp_datasets.spark_utils import detect_gpus
 logger = logging.getLogger(__name__)
 
 
-def get_best_parallel_eval(estimator) -> int:
+def get_best_parallel_eval(estimator, n_parallel_trials) -> int:
     # Determine optimal parallelism strategy
     # When estimator uses n_jobs=-1, we need to balance between:
     # 1. Parallel hyperparameter evaluations (outer parallelism)
@@ -26,25 +26,28 @@ def get_best_parallel_eval(estimator) -> int:
     if estimator_n_jobs == -1:
         logger.info("Using n_jobs=-1 for estimator, determining parallel evaluation strategy.")
         # Balance: evaluate multiple configs in parallel, give each proportional threads
-        # For large CPU counts, use more parallel evaluations to better utilize resources
-        # Formula: Use factors that divide CPU count well, with preference for 3-8 parallel evals
+        # Use n_parallel_trials to limit the search range for parallel evaluations
+        # Formula: Use factors that divide CPU count well, constrained by n_parallel_trials
         #
-        # Strategy for different CPU counts:
-        # - 88 CPUs: 4 parallel × 22 threads = 88
-        # - 111 CPUs: 3 parallel × 37 threads = 111
-        # - 128 CPUs: 8 parallel × 16 threads = 128
+        # Strategy: Find the best divisor between 2 and min(n_parallel_trials, reasonable_max)
+        # to divide CPU count efficiently while maintaining good thread count per model
 
-        # Determine acceptable range for parallel evaluations based on CPU count
+        # Determine acceptable range for parallel evaluations based on CPU count and n_parallel_trials
         if n_cpus <= 32:
-            search_range = range(2, 5)  # 2-4 parallel
+            max_parallel = min(n_parallel_trials, 4)  # 2-4 parallel
             min_threads = 4
         elif n_cpus <= 64:
-            search_range = range(3, 7)  # 3-6 parallel
+            max_parallel = min(n_parallel_trials, 6)  # 3-6 parallel
             min_threads = 8
         else:
-            search_range = range(3, 9)  # 3-8 parallel
+            max_parallel = min(n_parallel_trials, 8)  # 3-8 parallel
             min_threads = 12
-        logger.info(f"Searching for parallel evaluations in range: {list(search_range)} with min_threads={min_threads}")
+
+        # Ensure we have at least 2 parallel evaluations
+        search_range = range(2, max_parallel + 1)
+        logger.info(
+            f"Searching for parallel evaluations in range: {list(search_range)} with min_threads={min_threads} (limited by n_parallel_trials={n_parallel_trials})"
+        )
 
         # Find the divisor that gives best CPU utilization while maintaining
         # good thread count per model for XGBoost performance

@@ -66,6 +66,7 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
         *,
         splitter: _BaseKFold = None,
         n_calls: int = 100,
+        n_parallel_trials: int = 1,
     ) -> None:
         """Initialize the tuner.
 
@@ -76,7 +77,7 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
             splitter: Splitter to use for cross-validation.
             n_calls: Number of calls to the objective function.
         """
-        self.estimator, self.n_parallel_evals = get_best_parallel_eval(estimator)
+        self.estimator, self.n_parallel_evals = get_best_parallel_eval(estimator, n_parallel_trials)
         self.dimensions = dimensions
         self.scoring = scoring
         self.splitter = splitter
