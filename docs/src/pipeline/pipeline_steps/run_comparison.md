@@ -26,8 +26,11 @@ In addition, the pipeline includes the following features:
 To use the run comparison pipeline, follow these steps:
 
   1. Ensure that the MATRIX repository is cloned and the environment set-up. Create and checkout a new branch off `main`.
-  2. Modify the parameters configuration file for the run comparison pipeline  `pipelines/matrix/conf/base/run_comparison/parameters.yml`
-  to specify the predictions dataframes you would like to include in the evaluation. Ensure that the prediction dataframes do not include pairs used in training. Details given below. 
+  2. Modify the parameters configuration file for the run comparison pipeline  
+  ```
+  conf/base/run_comparison/parameters.yml
+  ``` 
+  to specify the predictions dataframes you would like to include in the evaluation (**note:** ensure that the input prediction dataframes do not include pairs used in training). Details given below. 
   3. Run the command (hint: ensure your Docker daemon is running): 
   ```
   kedro experiment run --pipeline=run_comparison --username=<your name>--run-name=<your run name>
@@ -39,12 +42,6 @@ To use the run comparison pipeline, follow these steps:
 
 ## How do I configure the `parameters.yml` file?
 
-### Specify filepaths for input predictions
-
-#### Assumptions on custom input predictions 
-
-![Input dataframe](../../assets/run_comparison/input_dataframe.drawio.svg)
-
 ### Specify mode of uncertainty estimation
 Mode of uncertainty estimation is specified by two boolean parameters: 
 
@@ -55,8 +52,91 @@ For evaluations which don't ground truth data (e.g. Entropy@n and Commonality@n)
 
 If both parameters are set to true, multifold and bootstrap uncertainty estimation will be combined by performing ground truth resampling for each fold of data.  
 
+
+### Specify filepaths for input predictions
+
+Input paths are specified under the `key`. 
+There are three ways of specifying input paths, which correspond to three classes in `src/matrix/pipelines/run_comparison/input_paths.py`: 
+1. *Official MATRIX modelling run.* Corresponds to the `InputPathsModellingRun` class.
+2. *Custom GCS path for single folds.* Corresponds to the `InputPathSingleFold` class.
+3. *Custom GCS paths for several folds.* Corresponds to the `InputPathsMultiFold` class.
+
+Usage is best described by an example:
+
+```yaml
+input_paths:
+  # Official MATRIX modelling run
+  - _object: matrix.pipelines.run_comparison.input_paths.InputPathsModellingRun
+    # Name of the model as displayed in run_comparison output. Can be anything you like
+    name: xg_ensemble_untransformed
+    # Data release version   
+    data_release: v0.11.2 
+    # Run name
+    run_name: auto-kg-release-v0-11-2-39910042 
+    # The correct number of folds must be specified
+    num_folds: 5
+    # Whether the predictions are produced after the matrix_transformation pipeline, or else after matrix_generation
+    is_transformed: False 
+  # Custom GCS path a single fold
+  - _object: matrix.pipelines.run_comparison.input_paths.InputPathsMultiFold
+    name: single_fold_model
+    file_path:  gs://<GCS bucket>/<path>
+    # Name of the column containing the drug-disease score 
+    score_col_name: "treat score"
+    # Format of the file ("csv" or "parquet"). Defaults to "parquet". 
+    file_format: "csv" # Optional
+  # Custom GCS paths for several folds
+  - _object: matrix.pipelines.run_comparison.input_paths.InputPathsMultiFold
+    name: two_fold_model
+    # Specify a list of GCS paths, one for each fold
+    file_paths_list: 
+      - gs://<GCS bucket>/<path for fold 1>
+      - gs://<GCS bucket>/<path for fold 2>
+    score_col_name: "score"
+    file_format: "parquet" # Optional
+```
+
+#### Assumptions on custom input predictions 
+
+When inputting custom predictions, ensure that the following assumptions and schema are adhered to. 
+
+**Important:** The run comparison pipeline assumes that all drug-disease pairs appearing in the training set of the model have been taken out of the input dataframe. 
+
+
+We make the following assumptions on the input data: 
+
+1. Each row of the input dataframe corresponds to a drug-disease pair, with a column indicating the score and boolean
+ columns indicating whether each pair belongs to each test set. 
+2. The set of pairs described by the  
+3. The schema of the dataframe should be as follows: 
+    - **source**: drug ID
+    - **target**: disease ID 
+    - The names of the Boolean columns for test set are those specified in the `available_ground_truth_cols` key.
+    - The score column name must correspond to that specified in the corresponding entry  under the `input_paths` key.  
+
+Any additional columns will be ignored.
+
+![Input dataframe](../../assets/run_comparison/input_dataframe.drawio.svg)
+
 ### Specify data consistency procedure 
 
+The `assert_data_consistency` parameter determines whether to assert that the input data is consistent across model, 
+or else whether to perform additional post-processing which will ensure that all data is consistent. 
+Either option allows for a fair comparison. 
+
+More precisely, when `assert_data_consistency` is false we perform the following operations, which we refer to as *matrix harmonisation*:
+- Take the intersection of drug and disease lists across models.
+- For each fold, take the union of exclusion sets (i.e. training set) across models.
+- For each fold, take the intersection of test set across models. Any pairs that are in a given test set for one model but not another are added to the exclusion set.
+
+When `assert_data_consistency` is set to true, the pipeline throws an error unless the drug list, disease lists, exclusion set and tests sets are al  consistent across models for each fold. 
+
+Note that we require that drug and disease lists are consistent between folds for each single model, regardless of whether `assert_data_consistency` is true or false. 
+
+![Input dataframe](../../assets/run_comparison/matrix_harminisation.drawio.svg)
 
 
 ### (Optional) Custom evaluations
+
+  - Evaluations are specified under the `evaluations` key using classes found in `src/matrix/pipelines/run_comparison/evaluations.py`. 
+  - Evaluations may be easily disabled and enabled by modifying the file `src/matrix/pipelines/run_comparison/settings.py`.

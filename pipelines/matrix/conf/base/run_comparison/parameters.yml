@@ -9,19 +9,18 @@ run_comparison:
   assert_data_consistency: False
 
   # Enter the filepaths of the matrix predictions you would like to evaluate here. See documentation for more details.
-  # TODO: Link to docs. 
   input_paths:
     - _object: matrix.pipelines.run_comparison.input_paths.InputPathsModellingRun # Options: InputPathsSingleFold, InputPathsModellingRun , InputPathsMultiFold
       name: xg_ensemble_untransformed
       data_release: v0.11.2
       run_name: auto-kg-release-v0-11-2-39910042
-      num_folds: 3
+      num_folds: 5
       is_transformed: False
     - _object: matrix.pipelines.run_comparison.input_paths.InputPathsModellingRun
       name: xg_ensemble_transformed
       data_release: v0.11.2
       run_name: auto-kg-release-v0-11-2-39910042
-      num_folds: 3
+      num_folds: 5
       is_transformed: True
 
   # Configuration for the evaluations to perform. Usually it is not necessary to modify these.
