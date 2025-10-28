@@ -36,7 +36,7 @@ def convert_boolean_columns_to_label_columns(
 ) -> None:
     """Build the nodes tsv file."""
     nodes_df = read_tsv_lazy(nodes, delimiter="\t")
-    nodes_df = robokop_convert_boolean_columns_to_label_columns(nodes_df).collect()
+    nodes_df = robokop_convert_boolean_columns_to_label_columns(nodes_df)
     output.parent.mkdir(parents=True, exist_ok=True)
     nodes_df.write_csv(output, separator="\t")
 
@@ -48,7 +48,7 @@ def strip_type_from_column_names(
 ) -> None:
     """Build the nodes tsv file."""
     input_df = read_tsv_lazy(input, delimiter="\t")
-    input_df = robokop_strip_type_from_column_names(input_df).collect()
+    input_df = robokop_strip_type_from_column_names(input_df)
     output.parent.mkdir(parents=True, exist_ok=True)
     input_df.write_csv(output, separator="\t")
 
