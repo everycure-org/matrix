@@ -10,6 +10,10 @@ import pyspark.sql.functions as sf
 import requests
 from matrix.pipelines.preprocessing.normalization import resolve_ids_batch_async
 from matrix_io_utils.primekg import coalesce_duplicate_columns, fix_curies, mondo_grouped_exploded
+from matrix_io_utils.robokop import (
+    robokop_convert_boolean_columns_to_label_columns,
+    robokop_strip_type_from_column_names,
+)
 from matrix_pandera.validator import Column, DataFrameSchema, check_output
 from pyspark.sql.functions import udf
 from pyspark.sql.types import StringType
@@ -205,22 +209,24 @@ def primekg_build_nodes(
     return main
 
 
-def robokop_fix_nodes(nodes_df: pl.DataFrame) -> pl.DataFrame:
+def robokop_fix_nodes(nodes: pl.LazyFrame) -> pl.DataFrame:
     """Build the nodes tsv file.
+
     Args:
     nodes: The nodes.tsv file from a Robokop download
     """
-    nodes_df = robokop_convert_boolean_columns_to_label_columns(nodes_df)
-    nodes_df = robokop_strip_type_from_column_names(nodes_df)
-    return nodes_df.collect()
+    nodes = robokop_convert_boolean_columns_to_label_columns(nodes)
+    nodes = robokop_strip_type_from_column_names(nodes.lazy())
+    return nodes
 
 
-def robokop_fix_edges(edges: pl.DataFrame) -> pl.DataFrame:
+def robokop_fix_edges(edges: pl.LazyFrame) -> pl.DataFrame:
     """Build the edges tsv file.
+
     Args:
     nodes: The edges.tsv file from a Robokop download
     """
-    return robokop_strip_type_from_column_names(edges).collect()
+    return robokop_strip_type_from_column_names(edges)
 
 
 def primekg_build_edges(edges: pl.DataFrame) -> pl.DataFrame:
