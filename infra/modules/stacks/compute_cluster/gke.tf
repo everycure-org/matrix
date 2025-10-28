@@ -69,7 +69,7 @@ locals {
     enable_gcfs        = true
     enable_gvnic       = true
     initial_node_count = 0
-    spot               = true
+    spot               = false
     }
   ]
 
@@ -117,8 +117,8 @@ locals {
     local.n2d_node_pools,
     local.gpu_node_pools,
     local.management_node_pools,
-    local.n2d_spot_node_pools,
-    local.gpu_spot_node_pools,
+    var.environment == "dev" ? local.n2d_spot_node_pools : [],
+    var.environment == "dev" ? local.gpu_spot_node_pools : [],
     local.github_runner_node_pools
   )
 
