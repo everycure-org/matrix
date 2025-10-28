@@ -3,9 +3,6 @@ import os
 from functools import partial
 from typing import Any
 
-import numpy as np
-from matrix_gcp_datasets.spark_utils import detect_gpus
-
 logger = logging.getLogger(__name__)
 
 
@@ -25,58 +22,18 @@ def get_best_parallel_eval(estimator, n_parallel_trials) -> int:
 
     if estimator_n_jobs == -1:
         logger.info("Using n_jobs=-1 for estimator, determining parallel evaluation strategy.")
-        # Balance: evaluate multiple configs in parallel, give each proportional threads
-        # Use n_parallel_trials to limit the search range for parallel evaluations
-        # Formula: Use factors that divide CPU count well, constrained by n_parallel_trials
-        #
-        # Strategy: Find the best divisor between 2 and min(n_parallel_trials, reasonable_max)
-        # to divide CPU count efficiently while maintaining good thread count per model
+        # Strategy: Use n_parallel_trials to determine parallel evaluations,
+        # and divide CPUs evenly to give each trial proportional threads.
+        # This ensures we utilize all CPUs: n_parallel_trials * threads_per_trial = n_cpus
 
-        # Determine acceptable range for parallel evaluations based on CPU count and n_parallel_trials
-        if n_cpus <= 32:
-            max_parallel = min(n_parallel_trials, 4)  # 2-4 parallel
-            min_threads = 4
-        elif n_cpus <= 64:
-            max_parallel = min(n_parallel_trials, 6)  # 3-6 parallel
-            min_threads = 8
-        else:
-            max_parallel = min(n_parallel_trials, 8)  # 3-8 parallel
-            min_threads = 12
+        # Cap parallel trials at available CPUs (minimum 1 thread per trial)
+        n_parallel_evals = min(n_parallel_trials, n_cpus)
+        threads_per_model = max(1, n_cpus // n_parallel_evals)
 
-        # Ensure we have at least 2 parallel evaluations
-        search_range = range(2, max_parallel + 1)
         logger.info(
-            f"Searching for parallel evaluations in range: {list(search_range)} with min_threads={min_threads} (limited by n_parallel_trials={n_parallel_trials})"
+            f"Using {n_parallel_evals} parallel evaluations with {threads_per_model} threads per model "
+            f"(total CPU utilization: {n_parallel_evals * threads_per_model}/{n_cpus})"
         )
-
-        # Find the divisor that gives best CPU utilization while maintaining
-        # good thread count per model for XGBoost performance
-        best_divisor = None
-        best_efficiency = 0
-        best_threads = 0
-
-        for candidate in search_range:
-            threads = n_cpus // candidate
-            efficiency = (candidate * threads) / n_cpus
-
-            # Only consider if threads per model is sufficient for good performance
-            if threads >= min_threads:
-                # Prefer better efficiency, but also consider thread count
-                # (higher threads per model often performs better)
-                score = efficiency + (threads / n_cpus) * 0.1  # Slight bonus for more threads
-
-                if best_divisor is None or score > best_efficiency:
-                    best_divisor = candidate
-                    best_efficiency = score
-                    best_threads = threads
-
-        # Fallback if no good option found (shouldn't happen with current ranges)
-        if best_divisor is None:
-            best_divisor = max(2, int(np.sqrt(n_cpus)))
-            best_threads = max(1, n_cpus // best_divisor)
-
-        n_parallel_evals = best_divisor
-        threads_per_model = best_threads
 
         # Update estimator to use proportional threads
         estimator.set_params(n_jobs=threads_per_model)
@@ -87,18 +44,6 @@ def get_best_parallel_eval(estimator, n_parallel_trials) -> int:
         # estimator_n_jobs is 1 or None, evaluate in parallel
         n_parallel_evals = -1  # Use all cores for parallel evaluation
     return estimator, n_parallel_evals
-
-
-try:  # Cupy is optional; only needed when running estimators on CUDA
-    if detect_gpus() > 0:
-        import cupy as cp
-    else:
-        raise ImportError("No GPUs detected")
-except ImportError:  # pragma: no cover - executed only on CPU-only setups
-    cp = None  # type: ignore[assignment]
-
-
-logger = logging.getLogger(__name__)
 
 
 def partial_(func: callable, **kwargs):
