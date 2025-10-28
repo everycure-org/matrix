@@ -10,18 +10,6 @@ WHERE key_node_id = '${params.key_node_id}'
   AND bq_version = '${import.meta.env.VITE_release_version?.replace(/\./g, '_')}'
 ```
 
-```sql key_node_edges_breakdown
-SELECT
-  key_node_id,
-  REPLACE(subject_category, 'biolink:', '') as subject_category,
-  REPLACE(predicate, 'biolink:', '') as predicate,
-  REPLACE(object_category, 'biolink:', '') as object_category,
-  edge_count
-FROM bq.key_nodes_edges_breakdown
-WHERE key_node_id = '${params.key_node_id}'
-ORDER BY edge_count DESC
-```
-
 ```sql key_node_category_summary
 SELECT * FROM bq.key_nodes_category_summary WHERE key_node_id = '${params.key_node_id}' ORDER BY distinct_nodes DESC
 ```
@@ -34,7 +22,8 @@ SELECT
   predicate,
   object,
   object_name,
-  primary_knowledge_sources
+  primary_knowledge_sources,
+  upstream_data_source
 FROM bq.key_nodes_category_edges
 WHERE key_node_id = '${params.key_node_id}'
 ORDER BY parent_category, subject, predicate, object
@@ -56,6 +45,10 @@ SELECT
 FROM bq.key_nodes_release_trends
 WHERE key_node_id = '${params.key_node_id}'
 ORDER BY release_order, edge_count DESC
+```
+
+```sql key_node_source_breakdown
+SELECT * FROM bq.key_nodes_source_breakdown WHERE key_node_id = '${params.key_node_id}'
 ```
 
 <script>
@@ -174,9 +167,27 @@ This provides a comprehensive view of the entire hierarchy under this node.
 
 <Details title="Understanding This Visualization">
 <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
-This interactive diagram shows the key node in the center with connected biolink categories arranged around it.
-The size of each node represents the number of distinct connected entities, and link width represents total edge count.
-Click on any category to see example edges below. Click again or click the center node to deselect.
+
+**Interactive Components:**
+
+This visualization consists of three interactive, interconnected components that work together to help you explore the knowledge graph:
+
+1. **Network Diagram** (top): Shows the key node in the center with connected biolink categories arranged around it. Node size represents the number of distinct connected entities, and link width represents total edge count.
+
+2. **Source Filter Bar Charts** (middle): Two horizontal bar charts showing the distribution of edges across knowledge graph sources (KG Sources like RTX-KG2, ROBOKOP) and primary knowledge sources (like HPO, MONDO).
+
+3. **Edge Sample Table** (bottom): Displays actual example edges with their details including subject, predicate, object, KG source, and primary knowledge sources.
+
+**How Filtering Works:**
+
+- **Click a category** in the network diagram → Updates bar charts to show only sources for that category + displays sample edges for that category
+- **Click a bar segment** in the source charts → Updates the network diagram to show only categories with edges from that source + filters the edge table to matching edges
+- **Click multiple sources** → Combines filters (only edges matching ALL selected sources are shown)
+- **Active filters** are displayed in colored chips below the bar charts (purple=category, blue=KG source, green=primary source)
+- **Click "Clear all"** or click individual filter chips to remove filters and return to the full view
+
+All three components stay synchronized, ensuring you're always viewing consistent, filtered data across the visualization.
+
 </div>
 </Details>
 
@@ -184,40 +195,13 @@ Click on any category to see example edges below. Click again or click the cente
 <KeyNodeChordDashboard
   categoryData={key_node_category_summary}
   edgeData={key_node_category_edges}
+  sourceData={key_node_source_breakdown}
+  keyNodeId={params.key_node_id}
   keyNodeName={key_node_info.length > 0 ? key_node_info[0].name || params.key_node_id : params.key_node_id}
 />
 {:else}
 <div class="text-center text-lg text-gray-500 mt-10">
   No category data available for visualization.
-</div>
-{/if}
-
-## Edge Type Breakdown
-
-<Details title="Understanding This Table">
-<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
-This table shows all edge types involving this key node and its descendants, broken down by predicate (relationship type),
-subject category, object category, and primary knowledge source. This helps understand what types of relationships
-are most common for this entity.
-</div>
-</Details>
-
-{#if key_node_edges_breakdown.length > 0}
-<DataTable
-    data={key_node_edges_breakdown}
-    pagination=true
-    pageSize={25}
-    title="Edge Types (with descendants)">
-
-    <Column id="edge_count" title="Edge Count" contentType="bar" fmt="num0" />
-    <Column id="subject_category" title="Subject Category" />
-    <Column id="predicate" title="Predicate" />
-    <Column id="object_category" title="Object Category" />
-
-</DataTable>
-{:else}
-<div class="text-center text-lg text-gray-500 mt-10">
-  No edge data found for this key node.
 </div>
 {/if}
 

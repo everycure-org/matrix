@@ -46,8 +46,10 @@ outgoing_edges AS (
     edges.object,
     object_nodes.name as object_name,
     object_nodes.category as object_category,
+    object_nodes.category as other_category,
     object_nodes.all_categories as object_all_categories,
-    edges.primary_knowledge_sources as primary_knowledge_sources
+    edges.primary_knowledge_sources as primary_knowledge_sources,
+    edges.upstream_data_source.list[SAFE_OFFSET(0)].element as upstream_data_source
   FROM descendants
   JOIN `${project_id}.release_${bq_release_version}.edges_unified` edges
     ON edges.subject = descendants.descendant_id
@@ -68,8 +70,10 @@ incoming_edges AS (
     edges.object,
     object_nodes.name as object_name,
     object_nodes.category as object_category,
+    subject_nodes.category as other_category,
     subject_nodes.all_categories as other_all_categories,
-    edges.primary_knowledge_sources as primary_knowledge_sources
+    edges.primary_knowledge_sources as primary_knowledge_sources,
+    edges.upstream_data_source.list[SAFE_OFFSET(0)].element as upstream_data_source
   FROM descendants
   JOIN `${project_id}.release_${bq_release_version}.edges_unified` edges
     ON edges.object = descendants.descendant_id
@@ -90,8 +94,10 @@ all_edges AS (
     object,
     object_name,
     object_category,
+    other_category,
     object_all_categories as other_all_categories,
-    primary_knowledge_sources
+    primary_knowledge_sources,
+    upstream_data_source
   FROM outgoing_edges
 
   UNION ALL
@@ -105,8 +111,10 @@ all_edges AS (
     object,
     object_name,
     object_category,
+    other_category,
     other_all_categories,
-    primary_knowledge_sources
+    primary_knowledge_sources,
+    upstream_data_source
   FROM incoming_edges
 ),
 
@@ -125,6 +133,7 @@ categorized_edges AS (
     object_name,
     object_category,
     primary_knowledge_sources,
+    upstream_data_source,
     CASE
       -- ChemicalEntity grouping
       WHEN EXISTS(
@@ -133,7 +142,7 @@ categorized_edges AS (
       ) THEN 'ChemicalEntity'
 
       -- Gene (keep separate)
-      WHEN object_category = 'biolink:Gene' OR subject_category = 'biolink:Gene' THEN 'Gene'
+      WHEN other_category = 'biolink:Gene' THEN 'Gene'
 
       -- Protein (keep separate)
       WHEN EXISTS(
@@ -141,14 +150,22 @@ categorized_edges AS (
         WHERE cat.element = 'biolink:Protein'
       ) THEN 'Protein'
 
+      -- PhenotypicFeature (keep separate from Disease)
+      -- IMPORTANT: Check primary category field BEFORE checking all_categories hierarchy
+      -- PhenotypicFeature nodes have category='biolink:PhenotypicFeature' AND also have
+      -- 'biolink:DiseaseOrPhenotypicFeature' in their all_categories hierarchy.
+      -- By checking the specific category first, we correctly categorize them as PhenotypicFeature.
+      -- The Disease check below will then catch actual Disease nodes without miscategorizing PhenotypicFeatures.
+      -- NOTE: We use other_category to categorize edges by the connected node, not the key node itself.
+      WHEN other_category = 'biolink:PhenotypicFeature' THEN 'PhenotypicFeature'
+
       -- Disease grouping
+      -- Includes nodes with DiseaseOrPhenotypicFeature in their hierarchy
+      -- This catches Disease nodes but NOT PhenotypicFeature nodes (which were checked above)
       WHEN EXISTS(
         SELECT 1 FROM UNNEST(other_all_categories.list) AS cat
         WHERE cat.element IN ('biolink:Disease', 'biolink:DiseaseOrPhenotypicFeature')
       ) THEN 'Disease'
-
-      -- PhenotypicFeature (keep separate from Disease)
-      WHEN object_category = 'biolink:PhenotypicFeature' OR subject_category = 'biolink:PhenotypicFeature' THEN 'PhenotypicFeature'
 
       -- AnatomicalEntity grouping
       WHEN EXISTS(
@@ -175,10 +192,10 @@ categorized_edges AS (
       ) THEN 'GenomicEntity'
 
       -- OrganismTaxon (keep separate)
-      WHEN object_category = 'biolink:OrganismTaxon' OR subject_category = 'biolink:OrganismTaxon' THEN 'OrganismTaxon'
+      WHEN other_category = 'biolink:OrganismTaxon' THEN 'OrganismTaxon'
 
       -- Procedure (keep separate)
-      WHEN object_category = 'biolink:Procedure' OR subject_category = 'biolink:Procedure' THEN 'Procedure'
+      WHEN other_category = 'biolink:Procedure' THEN 'Procedure'
 
       -- Activity/Behavior grouping
       WHEN EXISTS(
@@ -187,8 +204,7 @@ categorized_edges AS (
       ) THEN 'Activity'
 
       -- Cohort/Population grouping
-      WHEN object_category IN ('biolink:Cohort', 'biolink:PopulationOfIndividualOrganisms')
-        OR subject_category IN ('biolink:Cohort', 'biolink:PopulationOfIndividualOrganisms') THEN 'Population'
+      WHEN other_category IN ('biolink:Cohort', 'biolink:PopulationOfIndividualOrganisms') THEN 'Population'
 
       -- Everything else
       ELSE 'Other'
@@ -223,6 +239,7 @@ SELECT
     ),
     ', '
   ) as primary_knowledge_sources,
+  upstream_data_source,
   ROW_NUMBER() OVER (
     PARTITION BY key_node_id, parent_category, primary_source
     ORDER BY subject, predicate, object
