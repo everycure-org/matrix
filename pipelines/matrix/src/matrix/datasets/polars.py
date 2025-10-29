@@ -68,7 +68,6 @@ class CSVLazyDataset(CSVDataset):
             return pl.scan_csv(load_path, **self._load_args)
 
         load_path = f"{self._protocol}{PROTOCOL_DELIMITER}{load_path}"
-        print(**self._load_args)
         return pl.scan_csv(load_path, storage_options=self._storage_options, **self._load_args)
 
     def save(self, data: pl.LazyFrame) -> None:
