@@ -1,0 +1,424 @@
+PREFIX IAO: <http://purl.obolibrary.org/obo/IAO_>
+PREFIX MONDO: <http://purl.obolibrary.org/obo/MONDO_>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
+PREFIX def: <http://purl.obolibrary.org/obo/IAO_0000115>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX mondo: <http://purl.obolibrary.org/obo/mondo#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT DISTINCT ?category_class ?label ?definition ?synonyms ?subsets ?crossreferences ?malacards_linkouts
+  (IF(SUM(IF(?filter_matrix_manually_excluded = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_matrix_manually_excluded)
+  (IF(SUM(IF(?filter_matrix_manually_included = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_matrix_manually_included)
+  (IF(SUM(IF(?filter_clingen = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_clingen)
+  (IF(SUM(IF(?filter_grouping_subset = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_grouping_subset)
+  (IF(SUM(IF(?filter_grouping_subset_ancestor = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_grouping_subset_ancestor)
+  (IF(SUM(IF(?filter_orphanet_subtype = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_orphanet_subtype)
+  (IF(SUM(IF(?filter_orphanet_subtype_descendant = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_orphanet_subtype_descendant)
+  (IF(SUM(IF(?filter_omimps = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_omimps)
+  (IF(SUM(IF(?filter_omimps_descendant = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_omimps_descendant)
+  (IF(SUM(IF(?filter_leaf = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_leaf) 
+  (IF(SUM(IF(?filter_leaf_direct_parent = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_leaf_direct_parent) 
+  (IF(SUM(IF(?filter_orphanet_disorder = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_orphanet_disorder) 
+  (IF(SUM(IF(?filter_omim = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_omim) 
+  (IF(SUM(IF(?filter_icd_category = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_icd_category)
+  (IF(SUM(IF(?filter_icd_chapter_code = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_icd_chapter_code)
+  (IF(SUM(IF(?filter_icd_chapter_header = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_icd_chapter_header)
+  (IF(SUM(IF(?filter_icd_billable = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_icd_billable)
+  (IF(SUM(IF(?filter_mondo_subtype = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_mondo_subtype)
+  (IF(SUM(IF(?filter_pathway_defect = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_pathway_defect)
+  (IF(SUM(IF(?filter_susceptibility = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_susceptibility)
+  (IF(SUM(IF(?filter_paraphilic = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_paraphilic)
+  (IF(SUM(IF(?filter_inflammatory = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_inflammatory)
+  (IF(SUM(IF(?filter_cancer_or_benign_tumor = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_cancer_or_benign_tumor)
+  (IF(SUM(IF(?filter_cardiovascular = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_cardiovascular)
+  (IF(SUM(IF(?filter_heart_disorder = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_filter_heart_disorder)
+  (IF(SUM(IF(?filter_psychiatric = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_psychiatric)
+  (IF(SUM(IF(?filter_acquired = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_acquired)
+  (IF(SUM(IF(?filter_andor = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_andor)
+  (IF(SUM(IF(?filter_withorwithout = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_withorwithout)
+  (IF(SUM(IF(?filter_obsoletion_candidate = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_obsoletion_candidate)
+  (IF(SUM(IF(?filter_unclassified_hereditary = "TRUE", 1, 0)) > 0, "TRUE", "") AS ?f_unclassified_hereditary)
+
+WHERE
+{
+  # We are only looking for classes that are specifically human diseases.
+  ?category_class rdfs:subClassOf* MONDO:0700096 .
+
+  ########################
+  #### Metadata ##########
+  ########################
+
+  OPTIONAL {
+    ?category_class rdfs:label ?label .
+  }
+
+  OPTIONAL {
+    ?category_class IAO:0000115 ?definition .
+  }
+
+  OPTIONAL {
+    {
+      SELECT ?category_class (GROUP_CONCAT(DISTINCT ?sorted_malacardslinkouts; separator="; ") AS ?malacards_linkouts)
+      WHERE {
+        ?category_class mondo:curated_content_resource ?malacards_linkout .
+        ?malacards_assertion a owl:Axiom ;
+          owl:annotatedSource ?category_class ;
+          owl:annotatedProperty mondo:curated_content_resource ;
+          owl:annotatedTarget ?malacards_linkout ;
+          oio:source "MONDO:MalaCards" .
+        FILTER(STRSTARTS(STR(?malacards_linkout), "https://www.malacards.org/"))
+        BIND(STR(?malacards_linkout) AS ?sorted_malacardslinkouts)
+      }
+      GROUP BY ?category_class
+      ORDER BY ?sorted_malacardslinkouts
+    }
+  }
+
+  # Optional Subquery for synonyms
+  OPTIONAL {
+    {
+      SELECT ?category_class (GROUP_CONCAT(DISTINCT ?sorted_synonym; separator="; ") AS ?synonyms)
+      WHERE {
+        ?category_class oio:hasExactSynonym ?synonym .
+        BIND(STR(?synonym) AS ?sorted_synonym)
+      }
+      GROUP BY ?category_class
+      ORDER BY ?sorted_synonym
+    }
+  }
+
+  # Optional Subquery for subsets
+  OPTIONAL {
+    {
+      SELECT ?category_class (GROUP_CONCAT(DISTINCT ?sorted_subset; separator="; ") AS ?subsets)
+      WHERE {
+        ?category_class oio:inSubset ?subset .
+        BIND(STR(?subset) AS ?sorted_subset)
+      }
+      GROUP BY ?category_class
+      ORDER BY ?sorted_subset
+    }
+  }
+
+  # Optional Subquery for crossreferences
+  OPTIONAL {
+    {
+      SELECT ?category_class (GROUP_CONCAT(DISTINCT ?sorted_xref; separator="; ") AS ?crossreferences)
+      WHERE {
+        ?category_class oio:hasDbXref ?xref .
+        BIND(STR(?xref) AS ?sorted_xref)
+      }
+      GROUP BY ?category_class
+      ORDER BY ?sorted_xref
+    }
+  }
+
+  #######################
+  #### Filters ##########
+  #######################
+
+  # Filter: Disease is manually included in the matrix
+  OPTIONAL {
+    ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#matrix_included> .
+    BIND("TRUE" as ?filter_matrix_manually_included)
+  }
+
+  # Filter: Disease is manually excluded from the matrix
+  OPTIONAL {
+    ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#matrix_excluded> .
+    BIND("TRUE" as ?filter_matrix_manually_excluded)
+  }
+
+  # Filter: Disease that are curated against by ClinGen
+  # Example: https://search.clinicalgenome.org/kb/conditions/MONDO:0020119
+  
+  OPTIONAL {
+    ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#clingen> .
+    BIND("TRUE" as ?filter_clingen)
+  }
+
+  # FILTER if the disease corresponds to a susceptibility match, see
+  # sparql/inject-susceptibility-subset.ru
+  # https://github.com/everycure-org/matrix-disease-list/issues/36
+  OPTIONAL {
+    ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#susceptibility_match> .
+    BIND("TRUE" as ?filter_susceptibility)
+  }
+
+  # FILTER if the disease corresponds to a paraphilic disorder
+  # https://github.com/everycure-org/matrix-disease-list/issues/42
+  OPTIONAL {
+    ?category_class rdfs:subClassOf* MONDO:0000596 .
+    BIND("TRUE" as ?filter_paraphilic)
+  }
+
+  # FILTER if the disease corresponds to a cardiovascular disorder
+  # https://github.com/everycure-org/matrix-disease-list/issues/90
+  OPTIONAL {
+    ?category_class rdfs:subClassOf* MONDO:0004995 .
+    BIND("TRUE" as ?filter_cardiovascular)
+  }
+
+  # FILTER if the disease corresponds to a heart disorder
+  # https://github.com/everycure-org/matrix-disease-list/issues/90
+  OPTIONAL {
+    ?category_class rdfs:subClassOf* MONDO:0005267 .
+    BIND("TRUE" as ?filter_heart_disorder)
+  }
+  
+  # FILTER if the disease corresponds to a inflammatory disease
+  # https://github.com/everycure-org/matrix-disease-list/issues/89
+  OPTIONAL {
+    ?category_class rdfs:subClassOf* MONDO:0021166 .
+    BIND("TRUE" as ?filter_inflammatory)
+  }
+
+  # FILTER if the disease corresponds to a psychiatric disorder
+  # https://github.com/everycure-org/matrix-disease-list/issues/88
+  OPTIONAL {
+    ?category_class rdfs:subClassOf* MONDO:0002025 .
+    BIND("TRUE" as ?filter_psychiatric)
+  }
+
+  # FILTER if the disease corresponds to a cancer
+  # https://github.com/everycure-org/matrix-disease-list/issues/87
+  OPTIONAL {
+    ?category_class rdfs:subClassOf* MONDO:0045024 .
+    BIND("TRUE" as ?filter_cancer_or_benign_tumor)
+  }
+
+
+  # FILTER if the disease corresponds to a grouping based on "with or without" in naming
+  # https://github.com/everycure-org/matrix-disease-list/issues/40
+  OPTIONAL {
+    FILTER(CONTAINS(?label,"with or without"))
+    BIND("TRUE" as ?filter_withorwithout)
+  }
+
+  # FILTER if the disease corresponds to a grouping based on "and/or" in naming
+  # https://github.com/everycure-org/matrix-disease-list/issues/39
+  OPTIONAL {
+    FILTER(CONTAINS(?label, "and/or"))
+    BIND("TRUE" AS ?filter_andor)
+  }
+
+  # FILTER if the disease corresponds to "acquired" disease
+  # https://github.com/everycure-org/matrix-disease-list/issues/53
+  OPTIONAL {
+    FILTER(STRSTARTS(?label,"acquired "))
+    BIND("TRUE" as ?filter_acquired)
+  }
+
+  # FILTER if the disease corresponds to a "weird stray child of hereditary disease" which has no further classification
+  # https://github.com/everycure-org/matrix-disease-list/issues/50
+  OPTIONAL {
+    ?entity rdfs:label ?label .
+    ?entity rdfs:subClassOf+ MONDO:0003847 .
+    
+    
+    FILTER NOT EXISTS {
+      # is a leaf (does not have children)
+      ?x rdfs:subClassOf ?entity .
+      FILTER(?x!=?entity)
+    }
+    
+    FILTER NOT EXISTS {
+      # does not have any other parent other than hereditary disease
+      ?entity rdfs:subClassOf ?y .
+      FILTER(
+        (?y!=MONDO:0003847) 
+        && (?y!= MONDO:0000001)
+        && (?y!= MONDO:0700096)
+        && (?y!= MONDO:0008577)
+        && (?entity!=?y))
+      
+    }
+    BIND("TRUE" as ?filter_unclassified_hereditary)
+  }
+
+  # FILTER if the disease corresponds to a subtype of a disease according to Mondo
+  # create_template_with_high_granularity_subtypes method in main disease list script
+  # https://github.com/everycure-org/matrix-disease-list/issues/36
+  OPTIONAL {
+    ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#mondo_subtype> .
+    BIND("TRUE" as ?filter_mondo_subtype)
+  }
+
+  # FILTER if the disease corresponds to a pathway defect
+  # https://github.com/everycure-org/matrix-disease-list/issues/51
+  OPTIONAL {
+    ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#pathway_defect> .
+    BIND("TRUE" as ?filter_pathway_defect)
+  }
+  
+  # Filter: Disease is a designated grouping class in Mondo
+  OPTIONAL {
+    VALUES ?_subset { 
+      <http://purl.obolibrary.org/obo/mondo#ordo_group_of_disorders> 
+      <http://purl.obolibrary.org/obo/mondo#disease_grouping> 
+      <http://purl.obolibrary.org/obo/mondo#matrix_grouping> 
+      <http://purl.obolibrary.org/obo/mondo#harrisons_view> 
+      <http://purl.obolibrary.org/obo/mondo#rare_grouping>
+    }
+    ?category_class oio:inSubset ?_subset .
+    BIND("TRUE" as ?filter_grouping_subset)
+  }
+
+  # Filter: Disease is an obsoletion candidate in Mondo
+  # 
+  OPTIONAL {
+    VALUES ?_subset { 
+      <http://purl.obolibrary.org/obo/mondo#obsoletion_candidate>
+    }
+    ?category_class oio:inSubset ?_subset .
+    BIND("TRUE" as ?filter_obsoletion_candidate)
+  }
+  
+  # Filter: Disease is an ancestor of a designated grouping class in Mondo
+  OPTIONAL {
+    ?grouping_class_subset rdfs:subClassOf+ ?category_class .
+    VALUES ?_subset { 
+      <http://purl.obolibrary.org/obo/mondo#ordo_group_of_disorders> 
+      <http://purl.obolibrary.org/obo/mondo#disease_grouping> 
+      <http://purl.obolibrary.org/obo/mondo#harrisons_view> 
+      <http://purl.obolibrary.org/obo/mondo#rare_grouping>
+    }
+    ?grouping_class_subset oio:inSubset ?_subset .
+    BIND("TRUE" as ?filter_grouping_subset_ancestor)
+  }
+  
+  # Filter: Disease corresponds to an Orphanet subtype
+  OPTIONAL {
+    VALUES ?_subset { 
+      <http://purl.obolibrary.org/obo/mondo#ordo_subtype_of_a_disorder>
+    }
+    ?category_class oio:inSubset ?_subset .
+    BIND("TRUE" as ?filter_orphanet_subtype)
+  }
+  
+  # Filter: Disease corresponds to an Orphanet disorder
+  OPTIONAL {
+    VALUES ?_subset { 
+      <http://purl.obolibrary.org/obo/mondo#ordo_disorder>
+    }
+    ?category_class oio:inSubset ?_subset .
+    BIND("TRUE" as ?filter_orphanet_disorder)
+  }
+  
+  # Filter: Disease corresponds to the descendant of an Orphanet subtype
+  OPTIONAL {
+    ?category_class rdfs:subClassOf+ ?subtype_subset .
+    VALUES ?_subset { 
+      <http://purl.obolibrary.org/obo/mondo#ordo_subtype_of_a_disorder>
+    }
+    ?subtype_subset oio:inSubset ?_subset .
+    BIND("TRUE" as ?filter_orphanet_subtype_descendant)
+  }
+  
+  # Filter: Disease corresponds to an OMIM Phenotypic Series
+  OPTIONAL {
+    ?category_class <http://www.w3.org/2004/02/skos/core#exactMatch> ?match .
+    FILTER(STRSTARTS(STR(?match), "https://omim.org/phenotypicSeries/PS"))
+    BIND("TRUE" as ?filter_omimps)
+  }
+  
+  # Filter: Disease corresponds to a descendant of an OMIM Phenotypic Series
+  OPTIONAL {
+    ?category_class rdfs:subClassOf+ ?omimps .
+    ?omimps <http://www.w3.org/2004/02/skos/core#exactMatch> ?match .
+    FILTER(STRSTARTS(STR(?match), "https://omim.org/phenotypicSeries/PS"))
+    BIND("TRUE" as ?filter_omimps_descendant)
+  }
+  
+  # Filter: Disease corresponds to a disease / phenotype in OMIM
+  OPTIONAL {
+    ?category_class <http://www.w3.org/2004/02/skos/core#exactMatch> ?match .
+    FILTER(STRSTARTS(STR(?match), "https://omim.org/entry/"))
+    BIND("TRUE" as ?filter_omim)
+  }
+
+  # Filter: Disease corresponds to a descendant of a disease / phenotype in OMIM
+  OPTIONAL {
+    ?category_class rdfs:subClassOf+ ?omim .
+    ?omim <http://www.w3.org/2004/02/skos/core#exactMatch> ?match .
+    FILTER(STRSTARTS(STR(?match), "https://omim.org/entry/"))
+    BIND("TRUE" as ?filter_omim_descendant)
+  }
+  
+  # Filter: Disease is a leaf node in the Mondo hierarchy (has no children)
+  OPTIONAL {
+    ?category_class rdf:type owl:Class .
+    FILTER NOT EXISTS {
+      ?leaf_x rdfs:subClassOf ?category_class 
+    }
+    BIND("TRUE" as ?filter_leaf)
+  }
+  
+  # Filter: Disease is a a direct parent of a leaf node in the Mondo hierarchy
+  OPTIONAL {
+    ?leaf rdfs:subClassOf ?category_class .
+    FILTER NOT EXISTS {
+      ?leaf_direct_parent_x rdfs:subClassOf ?leaf 
+    }
+    BIND("TRUE" as ?filter_leaf_direct_parent)
+  }
+
+   # Filter: Disease that correspond to billable ICD10 codes
+   # Example: https://icd.codes/icd10cm/R412
+  
+   OPTIONAL {
+     ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#icd10_billable> .
+     BIND("TRUE" as ?filter_icd_billable)
+   }
+  
+  # Filter: Disease corresponds to an ICD-10 category
+  OPTIONAL {
+    ?category_class oio:hasDbXref ?xref .
+    ?a owl:annotatedSource ?category_class ;
+       owl:annotatedProperty oio:hasDbXref ;
+       owl:annotatedTarget ?xref ;
+       oio:source ?type
+    FILTER (
+        STRSTARTS(str(?xref), "ICD10") &&
+        !CONTAINS(SUBSTR(str(?xref), 6), "-") &&
+        CONTAINS(SUBSTR(str(?xref), 6), ".")
+    )
+    BIND("TRUE" as ?filter_icd_category)
+  }
+
+  # Filter: Disease corresponds to an ICD-10 chapter code
+  OPTIONAL {
+    ?category_class oio:hasDbXref ?xref .
+    ?a owl:annotatedSource ?category_class ;
+       owl:annotatedProperty oio:hasDbXref ;
+       owl:annotatedTarget ?xref ;
+       oio:source ?type
+    FILTER (
+        STRSTARTS(str(?xref), "ICD10") &&
+        CONTAINS(SUBSTR(str(?xref), 6), "-") &&
+        !CONTAINS(SUBSTR(str(?xref), 6), ".")
+    )
+    BIND("TRUE" as ?filter_icd_chapter_code)
+  }
+
+  # Filter: Disease corresponds to an ICD-10 chapter header
+  OPTIONAL {
+    ?category_class oio:hasDbXref ?xref .
+    ?a owl:annotatedSource ?category_class ;
+       owl:annotatedProperty oio:hasDbXref ;
+       owl:annotatedTarget ?xref ;
+       oio:source ?type
+    FILTER (
+        STRSTARTS(str(?xref), "ICD10") &&
+        !CONTAINS(SUBSTR(str(?xref), 6), "-") &&
+        !CONTAINS(SUBSTR(str(?xref), 6), ".")
+    )
+    BIND("TRUE" as ?filter_icd_chapter_header)
+  }
+
+  FILTER( !isBlank(?category_class) && STRSTARTS(str(?category_class), "http://purl.obolibrary.org/obo/MONDO_"))
+} 
+GROUP BY ?category_class ?label ?definition ?synonyms ?subsets ?crossreferences ?malacards_linkouts
+ORDER BY DESC(?label)

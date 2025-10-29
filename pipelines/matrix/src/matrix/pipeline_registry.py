@@ -2,6 +2,7 @@ from kedro.pipeline import Pipeline
 
 from matrix.pipelines.create_sample.pipeline import create_pipeline as create_create_sample_pipeline
 from matrix.pipelines.data_release.pipeline import create_pipeline as create_data_release_pipeline
+from matrix.pipelines.disease_list.pipeline import create_pipeline as create_disease_list_pipeline
 from matrix.pipelines.document_kg.pipeline import create_pipeline as create_document_kg_pipeline
 from matrix.pipelines.embeddings.pipeline import create_pipeline as create_embeddings_pipeline
 from matrix.pipelines.evaluation.pipeline import create_pipeline as create_evaluation_pipeline
@@ -32,6 +33,7 @@ def register_pipelines() -> dict[str, Pipeline]:
         # Individual pipelines
         "preprocessing": create_preprocessing_pipeline(),  # Run manually for clinical trials and medical KG artifacts
         "fabricator": create_fabricator_pipeline(),
+        "disease_list": create_disease_list_pipeline(),
         "ingestion": create_ingestion_pipeline(),
         "integration": create_integration_pipeline(),
         "filtering": create_filtering_pipeline(),

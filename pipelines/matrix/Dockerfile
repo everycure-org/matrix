@@ -12,6 +12,11 @@ RUN apt-get update && \
     gcc curl g++ openjdk-17-jre-headless libomp-dev git && \
     apt-get clean
 
+# Install ROBOT (ontology processing tool)
+RUN curl -L -o /usr/local/bin/robot.jar https://github.com/ontodev/robot/releases/download/v1.9.6/robot.jar && \
+    echo '#!/bin/sh' > /usr/local/bin/robot && \
+    echo 'exec java -jar /usr/local/bin/robot.jar "$@"' >> /usr/local/bin/robot && \
+    chmod +x /usr/local/bin/robot
 
 # GPU setup
 ENV NVIDIA_VISIBLE_DEVICES=all

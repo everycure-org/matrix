@@ -1,0 +1,30 @@
+PREFIX IAO: <http://purl.obolibrary.org/obo/IAO_>
+PREFIX MONDO: <http://purl.obolibrary.org/obo/MONDO_>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
+PREFIX def: <http://purl.obolibrary.org/obo/IAO_0000115>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX mondo: <http://purl.obolibrary.org/obo/mondo#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT DISTINCT 
+  ?category_class
+  (COUNT(DISTINCT ?decendant_disease) AS ?count_descendants)
+WHERE
+{
+  # We are only looking for classes that are specifically human diseases.
+  ?category_class rdfs:subClassOf* MONDO:0700096 .
+
+  ########################
+  #### Metadata ##########
+  ########################
+
+  OPTIONAL {
+    ?decendant_disease rdfs:subClassOf+ ?category_class .
+  }
+
+  FILTER( !isBlank(?category_class) && STRSTARTS(str(?category_class), "http://purl.obolibrary.org/obo/MONDO_"))
+} 
+GROUP BY ?category_class
+ORDER BY DESC(?category_class)
