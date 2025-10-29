@@ -18,6 +18,7 @@ dev = [
 [project.scripts]
 fabricator = "matrix_cli.io.fabricator:main"
 primekg = "matrix_cli.io.primekg:main"
+robokop = "matrix_cli.io.robokop:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
