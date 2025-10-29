@@ -71,9 +71,13 @@ integration.prm.unified_edges:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/unified/edges
 
+# integration.int.unified_ground_truth_edges:
+#   <<: [*_spark_parquet, *_layer_prm]
+#   filepath: ${globals:paths.integration}/int/ground_truth/edges.norm
+
 integration.int.unified_ground_truth_edges:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/int/ground_truth/edges.norm
+  filepath: ${globals:paths.integration}/prm/spoke_gt.parquet
 
 integration.prm.nodes_edges_consistency_check:
   type: text.TextDataset
