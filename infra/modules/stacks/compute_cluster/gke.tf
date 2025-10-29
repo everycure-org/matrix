@@ -154,12 +154,10 @@ locals {
   # Combine all node pools
   node_pools_combined = concat(
     local.n2d_node_pools,
-    local.gpu_node_pools,
     local.management_node_pools,
-    local.n2d_spot_node_pools,
-    local.gpu_spot_node_pools,
     local.github_runner_node_pools,
-    local.h3_node_pools
+    local.h3_node_pools,
+    local.h3_spot_node_pools
   )
 
   # Define node pools that should have the large memory taint
