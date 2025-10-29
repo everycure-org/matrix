@@ -346,7 +346,6 @@ def merge_templates_into_mondo(
             query --update "{queries_dir / "inject-subset-declaration.ru"}" \
             query --update "{queries_dir / "downfill-disease-groupings.ru"}" \
             query --update "{queries_dir / "disease-groupings-other.ru"}" \
-            query --update "{queries_dir / "inject-subset-declaration.ru"}" \
             -o "{output_path}" """
 
         logger.info("Running ROBOT template merge command")
