@@ -319,6 +319,11 @@ def merge_templates_into_mondo(
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
 
+        # Write MONDO OWL content to temporary file
+        mondo_path = tmpdir_path / "mondo.owl"
+        with open(mondo_path, "w") as f:
+            f.write(mondo_owl)
+
         # Write DataFrames to temporary template files
         billable_path = tmpdir_path / "billable.robot.tsv"
         subtypes_path = tmpdir_path / "subtypes.robot.tsv"
@@ -329,7 +334,7 @@ def merge_templates_into_mondo(
         # Build ROBOT command to merge all templates
         # Note: We'll start simple - just template merging without SPARQL updates for now
         # SPARQL queries will need to be added based on the actual query files
-        cmd = f"""robot template -i "{mondo_owl}" --merge-after \
+        cmd = f"""robot template -i "{mondo_path}" --merge-after \
             --template "{billable_path}" \
             --template "{subtypes_path}" \
             -o "{output_path}" """
