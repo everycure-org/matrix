@@ -69,32 +69,26 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "billable_icd10": "disease_list.int.billable_icd10_template",
                     "subtypes": "disease_list.int.subtypes_template",
                 },
-                outputs="disease_list.int.mondo_with_subsets",
+                outputs="disease_list.int.mondo_preprocessed",
                 name="merge_templates_into_mondo",
                 tags=["disease_list", "ontology_processing"],
             ),
             # Extract unfiltered disease list using SPARQL query
-            #node(
-            #    func=nodes.extract_disease_list_unfiltered,
-            #    inputs={
-            #        "mondo_with_subsets": "disease_list.int.mondo_with_subsets",
-            #        "sparql_query_path": str(QUERIES_DIR / "matrix-disease-list-filters.sparql"),
-            #    },
-            #    outputs="disease_list.int.disease_list_raw",
-            #    name="extract_disease_list_unfiltered",
-            #    tags=["disease_list", "ontology_processing"],
-            #),
+            node(
+                func=nodes.extract_disease_list_raw,
+                inputs=["disease_list.int.mondo_preprocessed", "params:queries.matrix_disease_list_filters"],
+                outputs="disease_list.int.disease_list_raw",
+                name="extract_disease_list_raw",
+                tags=["disease_list", "ontology_processing"],
+            ),
             # Extract disease metrics for filtering decisions
-            #node(
-            #    func=nodes.extract_mondo_metrics,
-            #    inputs={
-            #        "mondo_with_subsets": "disease_list.int.mondo_with_subsets",
-            #        "sparql_query_path": str(QUERIES_DIR / "matrix-disease-list-metrics.sparql"),
-            #    },
-            #    outputs="disease_list.int.mondo_metrics",
-            #    name="extract_mondo_metrics",
-            #    tags=["disease_list", "ontology_processing"],
-            #),
+            node(
+                func=nodes.extract_mondo_metrics,
+                inputs=["disease_list.int.mondo_preprocessed", "params:queries.matrix_disease_list_metrics"],
+                outputs="disease_list.int.mondo_metrics",
+                name="extract_mondo_metrics",
+                tags=["disease_list", "ontology_processing"],
+            ),
             # Stage 3: List generation
             # Apply filtering rules to generate final disease list
             #node(
@@ -113,16 +107,16 @@ def create_pipeline(**kwargs) -> Pipeline:
             #),
             # Stage 4: Metadata extraction
             # Extract ontology metadata (version, date, etc.)
-            #node(
-            #    func=nodes.extract_mondo_metadata,
-            #    inputs={
-            #        "mondo_owl": "disease_list.raw.mondo_owl",
-            #        "sparql_query_path": str(QUERIES_DIR / "ontology-metadata.sparql"),
-            #    },
-            #    outputs="disease_list.prm.mondo_metadata",
-            #    name="extract_mondo_metadata",
-            #    tags=["disease_list", "metadata"],
-            #),
+            node(
+                func=nodes.extract_mondo_metadata,
+                inputs={
+                    "mondo_owl": "disease_list.raw.mondo_owl",
+                    "sparql_query_path": str(QUERIES_DIR / "ontology-metadata.sparql"),
+                },
+                outputs="disease_list.prm.mondo_metadata",
+                name="extract_mondo_metadata",
+                tags=["disease_list", "metadata"],
+            ),
             # Extract obsolete MONDO terms for tracking deprecated diseases
             #node(
             #    func=nodes.extract_mondo_obsoletes,

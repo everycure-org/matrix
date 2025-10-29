@@ -59,6 +59,11 @@ disease_list.raw.grouping_diseases_template:
 ########### Intermediate Outputs ############
 #############################################
 
+disease_list.int.mondo_preprocessed:
+  type: text.TextDataset
+  <<: *_layer_raw
+  filepath: ${globals:paths.tmp}/disease_list/mondo_preprocessed.owl
+
 disease_list.int.mondo_labels:
   type: pandas.CSVDataset
   <<: *_layer_int
