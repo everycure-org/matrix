@@ -17,7 +17,7 @@ export const LAYOUT_CONSTANTS = {
 export const LABEL_CONFIG = {
   fontSize: 12,
   fontWeight: 'normal',
-  color: '#333',
+  color: 'inherit', // Inherits from parent to support dark mode
   distance: 8
 };
 

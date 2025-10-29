@@ -70,7 +70,7 @@ export function createCenterNode(keyNodeName) {
       position: 'bottom',
       fontSize: 12,
       fontWeight: 'bold',
-      color: '#333',
+      color: 'inherit', // Inherits from parent to support dark mode
       distance: 8
     }
   };
