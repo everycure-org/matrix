@@ -51,3 +51,7 @@ gha-kubeconfig*
 /backend.tf
 **/*.gen.tf
 /provider.tf
+
+# libs and matrix_docs.egg-info
+docs/src/matrix_docs.egg-info/
+libs
