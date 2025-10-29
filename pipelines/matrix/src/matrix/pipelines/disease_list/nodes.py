@@ -332,17 +332,21 @@ def merge_templates_into_mondo(
 
         # Build ROBOT command to merge all templates
         output_path = tmpdir_path / "mondo-with-subsets.owl"
+
+        # Get the queries directory path
+        queries_dir = Path(__file__).parent / "queries"
+
         cmd = f"""robot \
             template -i "{mondo_path}" \
             --merge-after \
             --template "{billable_path}" \
             --template "{subtypes_path}" \
-            query --update sparql/inject-mondo-top-grouping.ru \
-            query --update sparql/inject-susceptibility-subset.ru \
-            query --update sparql/inject-subset-declaration.ru \
-            query --update sparql/downfill-disease-groupings.ru \
-            query --update sparql/disease-groupings-other.ru \
-            query --update sparql/inject-subset-declaration.ru \
+            query --update "{queries_dir / "inject-mondo-top-grouping.ru"}" \
+            query --update "{queries_dir / "inject-susceptibility-subset.ru"}" \
+            query --update "{queries_dir / "inject-subset-declaration.ru"}" \
+            query --update "{queries_dir / "downfill-disease-groupings.ru"}" \
+            query --update "{queries_dir / "disease-groupings-other.ru"}" \
+            query --update "{queries_dir / "inject-subset-declaration.ru"}" \
             -o "{output_path}" """
 
         logger.info("Running ROBOT template merge command")
