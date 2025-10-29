@@ -198,6 +198,7 @@ All three components stay synchronized, ensuring you're always viewing consisten
   sourceData={key_node_source_breakdown}
   keyNodeId={params.key_node_id}
   keyNodeName={key_node_info.length > 0 ? key_node_info[0].name || params.key_node_id : params.key_node_id}
+  keyNodeCategory={key_node_info.length > 0 ? key_node_info[0].category?.replace('biolink:', '') : null}
 />
 {:else}
 <div class="text-center text-lg text-gray-500 mt-10">

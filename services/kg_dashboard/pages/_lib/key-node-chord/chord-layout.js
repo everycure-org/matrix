@@ -49,9 +49,15 @@ export function calculateCategoryPositions(categories) {
 
 /**
  * Create the center node representing the key node
+ * Color is based on the key node's category if provided
  */
-export function createCenterNode(keyNodeName) {
+export function createCenterNode(keyNodeName, keyNodeCategory = null) {
   const { CENTER_X, CENTER_Y, CENTER_NODE_SIZE } = LAYOUT_CONSTANTS;
+
+  // Use category color if available, otherwise default to blue
+  const nodeColor = keyNodeCategory
+    ? (CATEGORY_COLORS[keyNodeCategory] || CATEGORY_COLORS['Other'])
+    : '#1e40af';
 
   return {
     name: keyNodeName,
@@ -61,9 +67,7 @@ export function createCenterNode(keyNodeName) {
     symbolSize: CENTER_NODE_SIZE,
     category: 'center',
     itemStyle: {
-      color: '#1e40af', // Blue color for key node
-      borderWidth: 2,
-      borderColor: '#fff'
+      color: nodeColor
     },
     label: {
       show: true,

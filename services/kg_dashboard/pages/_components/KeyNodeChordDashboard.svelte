@@ -20,6 +20,7 @@
   export let categoryData = [];
   export let edgeData = [];
   export let keyNodeName = 'Key Node';
+  export let keyNodeCategory = null;
   export let selectedKGs = [];
   export let selectedSources = [];
   export let sourceData = [];
@@ -221,7 +222,7 @@
   })();
 
   // Reactive computations for the chart
-  $: centerNode = createCenterNode(keyNodeName);
+  $: centerNode = createCenterNode(keyNodeName, keyNodeCategory);
   $: categoryNodes = calculateCategoryPositions(filteredCategoryData);
   $: links = createLinks(keyNodeName, categoryNodes);
   $: allNodes = [centerNode, ...categoryNodes];
@@ -627,7 +628,7 @@
     align-items: center;
     justify-content: center;
     border: none;
-    border-right: 1px solid white;
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
     cursor: pointer;
     transition: all 0.2s;
     padding: 0.5rem 0.25rem;
@@ -645,7 +646,7 @@
   }
 
   .stacked-segment.selected {
-    box-shadow: inset 0 0 0 2px #fff;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.5);
     filter: brightness(0.7);
   }
 
