@@ -117,7 +117,7 @@ def _is_parent(mondo, parent_id, child_id):
         parents = mondo.ancestors([child_id], predicates=[IS_A])  # get all superclasses
         return parent_id in parents
     except Exception as e:
-        print(f"Error checking relationship between {parent_id} and {child_id}: {e}")
+        logging.warning(f"Error checking relationship between {parent_id} and {child_id}: {e}")
         return False
 
 
@@ -179,31 +179,39 @@ def create_subtypes_template(
     from oaklib import get_adapter
     from oaklib.datamodels.vocabulary import IS_A
 
-    oak_adapter = "pronto:{}".format(mondo_owl)
-    mondo = get_adapter(oak_adapter)
-    
-    # We will exclude chromosomal diseases from the subtype process
-    # as they are usually subtyped by chromosomal location
-    # making them very different diseases
-    chromosomal_diseases = set(mondo.descendants(["MONDO:0019040"], predicates=[IS_A]))
-    human_diseases = set(mondo.descendants(["MONDO:0700096"], predicates=[IS_A]))
-    
-    # Some chromosomal diseases are indeed part of a series so we manually remove them
-    chromosomal_diseases.remove("MONDO:0010767")
-    chromosomal_diseases.remove("MONDO:0010763")
-    
-    # Load the data
-    mondo_labels = mondo_labels.dropna(subset=['LABEL'])
-    mondo_labels = mondo_labels[mondo_labels['ID'].str.startswith('MONDO:')]
-    mondo_labels = mondo_labels[~mondo_labels['ID'].isin(chromosomal_diseases)]
-    mondo_labels = mondo_labels[mondo_labels['ID'].isin(human_diseases)]
-    mondo_labels = mondo_labels[["ID", "LABEL"]]
-    mondo_labels.columns = ["category_class", "label"]
-    mondo_labels['label_lc'] = mondo_labels['label'].str.lower()
-    i_labels = {row['label_lc']: row['category_class'] for _, row in mondo_labels.iterrows()}
+    # Write MONDO OWL content to temporary file for OAK to read
+    tmp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".owl", delete=False)
+    tmp_file.write(mondo_owl)
+    tmp_file.flush()
+    tmp_file.close()
+    mondo_owl_path = tmp_file.name
 
-    # Define patterns
-    patterns = {
+    try:
+        oak_adapter = "pronto:{}".format(mondo_owl_path)
+        mondo = get_adapter(oak_adapter)
+
+        # We will exclude chromosomal diseases from the subtype process
+        # as they are usually subtyped by chromosomal location
+        # making them very different diseases
+        chromosomal_diseases = set(mondo.descendants(["MONDO:0019040"], predicates=[IS_A]))
+        human_diseases = set(mondo.descendants(["MONDO:0700096"], predicates=[IS_A]))
+
+        # Some chromosomal diseases are indeed part of a series so we manually remove them
+        chromosomal_diseases.remove("MONDO:0010767")
+        chromosomal_diseases.remove("MONDO:0010763")
+
+        # Load the data
+        mondo_labels = mondo_labels.dropna(subset=['LABEL'])
+        mondo_labels = mondo_labels[mondo_labels['ID'].str.startswith('MONDO:')]
+        mondo_labels = mondo_labels[~mondo_labels['ID'].isin(chromosomal_diseases)]
+        mondo_labels = mondo_labels[mondo_labels['ID'].isin(human_diseases)]
+        mondo_labels = mondo_labels[["ID", "LABEL"]]
+        mondo_labels.columns = ["category_class", "label"]
+        mondo_labels['label_lc'] = mondo_labels['label'].str.lower()
+        i_labels = {row['label_lc']: row['category_class'] for _, row in mondo_labels.iterrows()}
+
+        # Define patterns
+        patterns = {
         "autosomal_rd_o_x_d": r"autosomal[ ](?:recessive|dominant)[ ](?:juvenile|early[-]onset)(.*)[ ][0-9]+[0-9A-Za-z]*$",
         "x_typec_ad": r"(.*)[,][ ]type[ ][A-Z0-9]+$",
         "x_type_I": r"(.*)\s+type\s+(X?(IX|IV|V?I{1,3}))$",
@@ -236,50 +244,53 @@ def create_subtypes_template(
         "onset_x": r"(?:young|late|juvenile|early)[- ]onset[ ](.*)$",
         "onset_x_d": r"(?:young|late|juvenile|early)[- ]onset[ ](.*)[ ][0-9]+[0-9A-Za-z]*$",
         "persistent_x": r"persistent[ ](.*)$",
-        "xylinked_x": r"[xyXY][-]linked[ ](.*)$",
-    }
+            "xylinked_x": r"[xyXY][-]linked[ ](.*)$",
+        }
 
-    df_disease_list_matched = match_patterns_efficiently(mondo_labels, i_labels, patterns, mondo)
+        df_disease_list_matched = match_patterns_efficiently(mondo_labels, i_labels, patterns, mondo)
 
-    df_disease_list_matched_subset_with_matched_label_ids = df_disease_list_matched[["category_class", "label", "label_match", "curie_match", "label_pattern"]]
-    df_disease_list_matched_subset_with_matched_label_ids.sort_values(by="label_match", inplace=True)
-    
-    # Count the number of subtypes for each disease
-    df_disease_list_matched_subset_with_matched_label_ids = df_disease_list_matched_subset_with_matched_label_ids[
-        df_disease_list_matched_subset_with_matched_label_ids['label_match'].notna() &
-        (df_disease_list_matched_subset_with_matched_label_ids['label_match'].str.strip() != "")
-    ]
-    grouped_data_label_match = df_disease_list_matched_subset_with_matched_label_ids.groupby(["label_match"]).size()
-    grouped_df_label_match = grouped_data_label_match.reset_index(name="count")
-    
-    # TODO consider dropping this QC step?
-    processed = df_disease_list_matched_subset_with_matched_label_ids['label_pattern'].unique()
-    for label_pattern in patterns.keys():
-        if label_pattern not in processed:
-            logging.warning(f"Label pattern {label_pattern} not in patterns.keys()")
-    
-    # Get the subset of the DataFrame that matches the top groupings
-    top_subset_df = df_disease_list_matched_subset_with_matched_label_ids.copy()
-    
-    top_subset_df = pd.merge(top_subset_df, grouped_df_label_match, left_on="label_match", right_on='label_match', how="left")
+        df_disease_list_matched_subset_with_matched_label_ids = df_disease_list_matched[["category_class", "label", "label_match", "curie_match", "label_pattern"]]
+        df_disease_list_matched_subset_with_matched_label_ids.sort_values(by="label_match", inplace=True)
 
-    # Display the final filtered DataFrame
-    final_subset_df = top_subset_df[["curie_match", "label_match"]].drop_duplicates().sort_values(by="curie_match")
-    final_subset_df['subset'] = "http://purl.obolibrary.org/obo/mondo#mondo_subtype"
-    final_subset_df['contributor'] = "https://orcid.org/0000-0002-7356-1779"
-    final_subset_df.columns=["ID", "LABEL", "SUBSET", "CONTRIBUTOR"]
-    
-    robot_template_header = pd.DataFrame({
-        'ID': ['ID'],
-        'LABEL': [''],
-        'SUBSET': ['AI oboInOwl:inSubset SPLIT=|'],
-        'CONTRIBUTOR': ['>AI dc:contributor SPLIT=|'],
-        })
-    
-    output_df = pd.concat([robot_template_header, final_subset_df]).reset_index(drop=True)
-    output_df.sort_values(by='ID', inplace=True)
+        # Count the number of subtypes for each disease
+        df_disease_list_matched_subset_with_matched_label_ids = df_disease_list_matched_subset_with_matched_label_ids[
+            df_disease_list_matched_subset_with_matched_label_ids['label_match'].notna() &
+            (df_disease_list_matched_subset_with_matched_label_ids['label_match'].str.strip() != "")
+        ]
+        grouped_data_label_match = df_disease_list_matched_subset_with_matched_label_ids.groupby(["label_match"]).size()
+        grouped_df_label_match = grouped_data_label_match.reset_index(name="count")
 
-    return output_df
+        # TODO consider dropping this QC step?
+        processed = df_disease_list_matched_subset_with_matched_label_ids['label_pattern'].unique()
+        for label_pattern in patterns.keys():
+            if label_pattern not in processed:
+                logging.warning(f"Label pattern {label_pattern} not in patterns.keys()")
+
+        # Get the subset of the DataFrame that matches the top groupings
+        top_subset_df = df_disease_list_matched_subset_with_matched_label_ids.copy()
+
+        top_subset_df = pd.merge(top_subset_df, grouped_df_label_match, left_on="label_match", right_on='label_match', how="left")
+
+        # Display the final filtered DataFrame
+        final_subset_df = top_subset_df[["curie_match", "label_match"]].drop_duplicates().sort_values(by="curie_match")
+        final_subset_df['subset'] = "http://purl.obolibrary.org/obo/mondo#mondo_subtype"
+        final_subset_df['contributor'] = "https://orcid.org/0000-0002-7356-1779"
+        final_subset_df.columns=["ID", "LABEL", "SUBSET", "CONTRIBUTOR"]
+
+        robot_template_header = pd.DataFrame({
+            'ID': ['ID'],
+            'LABEL': [''],
+            'SUBSET': ['AI oboInOwl:inSubset SPLIT=|'],
+            'CONTRIBUTOR': ['>AI dc:contributor SPLIT=|'],
+            })
+
+        output_df = pd.concat([robot_template_header, final_subset_df]).reset_index(drop=True)
+        output_df.sort_values(by='ID', inplace=True)
+
+        return output_df
+    finally:
+        # Clean up temporary file
+        Path(mondo_owl_path).unlink(missing_ok=True)
 
 
 def merge_templates_into_mondo(

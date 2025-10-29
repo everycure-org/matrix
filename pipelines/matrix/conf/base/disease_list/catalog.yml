@@ -72,6 +72,8 @@ disease_list.int.billable_icd10_template:
   type: pandas.CSVDataset
   <<: *_layer_int
   filepath: ${globals:paths.tmp}/disease_list/icd10_cm_billable_template.tsv
+  load_args:
+    sep: "\t"
   save_args:
     sep: "\t"
     index: false
@@ -80,6 +82,8 @@ disease_list.int.subtypes_template:
   type: pandas.CSVDataset
   <<: *_layer_int
   filepath: ${globals:paths.tmp}/disease_list/subtypes_template.tsv
+  load_args:
+    sep: "\t"
   save_args:
     sep: "\t"
     index: false
@@ -88,6 +92,8 @@ disease_list.int.mondo_metrics:
   type: pandas.CSVDataset
   <<: *_layer_int
   filepath: ${globals:paths.tmp}/disease_list/mondo_metrics.tsv
+  load_args:
+    sep: "\t"
   save_args:
     sep: "\t"
     index: false
@@ -96,6 +102,8 @@ disease_list.int.disease_list_raw:
   type: pandas.CSVDataset
   <<: *_layer_int
   filepath: ${globals:paths.tmp}/disease_list/disease_list_raw.tsv
+  load_args:
+    sep: "\t"
   save_args:
     sep: "\t"
     index: false

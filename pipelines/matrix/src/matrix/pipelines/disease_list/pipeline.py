@@ -62,17 +62,17 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # Stage 2: Ontology processing
             # Merge ICD-10 and subtype templates into MONDO ontology
-            #node(
-            #    func=nodes.merge_templates_into_mondo,
-            #    inputs={
-            #        "mondo_owl": "disease_list.raw.mondo_owl",
-            #        "billable_icd10": "disease_list.int.billable_icd10_template",
-            #        "subtypes": "disease_list.int.subtypes_template",
-            #    },
-            #    outputs="disease_list.int.mondo_with_subsets",
-            #    name="merge_templates_into_mondo",
-            #    tags=["disease_list", "ontology_processing"],
-            #),
+            node(
+                func=nodes.merge_templates_into_mondo,
+                inputs={
+                    "mondo_owl": "disease_list.raw.mondo_owl",
+                    "billable_icd10": "disease_list.int.billable_icd10_template",
+                    "subtypes": "disease_list.int.subtypes_template",
+                },
+                outputs="disease_list.int.mondo_with_subsets",
+                name="merge_templates_into_mondo",
+                tags=["disease_list", "ontology_processing"],
+            ),
             # Extract unfiltered disease list using SPARQL query
             #node(
             #    func=nodes.extract_disease_list_unfiltered,
