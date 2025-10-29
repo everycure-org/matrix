@@ -78,6 +78,9 @@ integration.prm.unified_edges:
 integration.prm.unified_edges_simplified:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/unified/edges_simplified
+# integration.int.unified_ground_truth_edges:
+#   <<: [*_spark_parquet, *_layer_prm]
+#   filepath: ${globals:paths.integration}/int/ground_truth/edges.norm
 
 integration.prm.unified_edges_simplified:
   <<: [*_spark_parquet, *_layer_prm]
