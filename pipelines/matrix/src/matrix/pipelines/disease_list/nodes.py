@@ -327,16 +327,22 @@ def merge_templates_into_mondo(
         # Write DataFrames to temporary template files
         billable_path = tmpdir_path / "billable.robot.tsv"
         subtypes_path = tmpdir_path / "subtypes.robot.tsv"
-        output_path = tmpdir_path / "mondo-with-subsets.owl"
         billable_icd10.to_csv(billable_path, sep="\t", index=False)
         subtypes.to_csv(subtypes_path, sep="\t", index=False)
 
         # Build ROBOT command to merge all templates
-        # Note: We'll start simple - just template merging without SPARQL updates for now
-        # SPARQL queries will need to be added based on the actual query files
-        cmd = f"""robot template -i "{mondo_path}" --merge-after \
+        output_path = tmpdir_path / "mondo-with-subsets.owl"
+        cmd = f"""robot \
+            template -i "{mondo_path}" \
+            --merge-after \
             --template "{billable_path}" \
             --template "{subtypes_path}" \
+            query --update sparql/inject-mondo-top-grouping.ru \
+            query --update sparql/inject-susceptibility-subset.ru \
+            query --update sparql/inject-subset-declaration.ru \
+            query --update sparql/downfill-disease-groupings.ru \
+            query --update sparql/disease-groupings-other.ru \
+            query --update sparql/inject-subset-declaration.ru \
             -o "{output_path}" """
 
         logger.info("Running ROBOT template merge command")
