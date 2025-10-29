@@ -76,7 +76,9 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
             scoring: Scoring function to evaluate the model.
             splitter: Splitter to use for cross-validation.
             n_calls: Number of calls to the objective function.
+            n_parallel_trials: Number of parallel trials to evaluate.
         """
+        self.n_parallel_trials = n_parallel_trials
         self.estimator, self.n_parallel_evals = get_best_parallel_eval(estimator, n_parallel_trials)
         self.dimensions = dimensions
         self.scoring = scoring
