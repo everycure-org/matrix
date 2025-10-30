@@ -57,11 +57,15 @@ embeddings.tmp.input_edges:
   save_args:
     # NOTE: The `match:Entity` ensures that the index we created above is leveraged
     # while inserting edges, thereby speeding up the process massively.
+    # Performance optimizations:
+    # - batch.size: Process more rows per transaction (default is 5000, increased to 10000)
+    # - Using UNWIND for batch processing within the query for better throughput
+    batch.size: 10000
     query: >
+      UNWIND events as event
       MATCH (subject:Entity {id: event.subject}), (object:Entity {id: event.object})
-      WITH subject, object, event
       CALL apoc.create.relationship(subject, event.label, {}, object) YIELD rel
-      RETURN rel
+      RETURN count(rel) as created
 
 embeddings.models.topological:
   # we do not actually do anything with this DS, thus it's a dummy

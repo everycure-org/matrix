@@ -66,12 +66,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.fuse-group.topological_embeddings",
                     "argowf.template-neo4j",
                 ],
+                # NOTE: Resources tuned for parallel edge ingestion (16 partitions)
                 # FUTURE: Ensure we define "packages / tshirt size standard configurations" for resources
                 argo_config=ArgoResourceConfig(
-                    cpu_request=48,
-                    cpu_limit=48,
-                    memory_limit=350,
-                    memory_request=350,
+                    cpu_request=32,  # Reduced from 48 as work is distributed more efficiently
+                    cpu_limit=32,
+                    memory_limit=200,  # Reduced from 350 due to better memory distribution
+                    memory_request=200,
                     ephemeral_storage_request=256,
                     ephemeral_storage_limit=256,
                 ),

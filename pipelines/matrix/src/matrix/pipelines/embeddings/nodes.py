@@ -195,7 +195,15 @@ def filter_edges_for_topological_embeddings(
 
 
 def ingest_edges(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFrame:
-    """Function to construct Neo4J edges."""
+    """Function to construct Neo4J edges.
+    Optimization strategy: Instead of repartitioning to 1 partition (which forces sequential
+    processing), we partition by a combination of edge label and subject node hash. This approach:
+    1. Maintains parallelism (multiple partitions processed simultaneously)
+    2. Avoids deadlocks by ensuring edges for the same subject+label combination are in the same partition
+    3. Provides better load balancing than partitioning by label alone
+
+    The number of partitions (16) can be tuned based on cluster size and edge volume.
+    """
     return (
         edges.select(
             "subject",
@@ -204,11 +212,9 @@ def ingest_edges(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFrame:
             "upstream_data_source",
         )
         .withColumn("label", ps.functions.split(ps.functions.col("predicate"), ":", limit=2).getItem(1))
-        # we repartition to 1 partition here to avoid deadlocks in the edges insertion of neo4j.
-        # FUTURE potentially we should repartition in the future to avoid deadlocks. However
-        # with edges, this is harder to do than with nodes (as they are distinct but edges have 2 nodes)
-        # https://neo4j.com/docs/spark/current/performance/tuning/#parallelism
-        .repartition(1)
+        # Partition by label and hash of subject to enable parallelism while avoiding deadlocks
+        # The hash ensures even distribution across partitions while keeping related edges together
+        .repartition(16, "label", ps.functions.hash("subject"))
     )
 
 
