@@ -465,14 +465,7 @@
   <!-- Filtered Edges Table -->
   {#if selectedCategory || selectedKGs.length > 0 || selectedSources.length > 0}
     <div class="drill-down-container">
-      <h3 class="drill-down-title">
-        {#if selectedCategory}
-          Edges for: <span class="category-name">{selectedCategory}</span>
-          <button class="clear-button" on:click={() => selectedCategory = null}>✕ Clear Category</button>
-        {:else}
-          Filtered Edges
-        {/if}
-      </h3>
+      <h3 class="drill-down-title">Sample Edges</h3>
 
       {#if displayEdges.length > 0}
         <div class="edge-count-info">
@@ -713,15 +706,13 @@
     gap: 0.5rem;
     margin-top: 0.75rem;
     padding: 0.5rem 0.75rem;
-    background-color: #fef3c7;
-    border: 1px solid #fcd34d;
     border-radius: 4px;
   }
 
   .breadcrumb-label {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #4b5563;
+    color: inherit;
   }
 
   .breadcrumb-chip {
