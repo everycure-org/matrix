@@ -65,6 +65,8 @@ The CPU allocation logic explicitly balances outer parallelism (number of config
 
 - Simpler capacity planning: cores are fungible across the fleet.
 
+- Docker Image size reduction Initially, with the GPU, our Docker size was a **COLOSSAL 6.3 GB**. Removing the GPU libraries and installing CPU-only has brought it down to 1.5 GB.
+
 ## Negative / Trade‑offs
 
 - Individual XGBoost fits may be slower than on a large GPU, but end‑to‑end is faster thanks to eliminated queueing and better CPU packing.
