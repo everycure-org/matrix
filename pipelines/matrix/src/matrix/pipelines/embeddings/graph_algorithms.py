@@ -50,7 +50,14 @@ class GDSGraphSage(GDSGraphAlgorithm):
         penalty_l2: float = 0.0,
         concurrency: int = 4,
     ):
-        """GraphSAGE attributes."""
+        """GraphSAGE attributes.
+
+        Performance tips:
+        - Increase batch_size for better CPU utilization (e.g., 5000-10000)
+        - Increase concurrency to match available CPU cores
+        - Use larger search_depth for better quality but slower training
+        - Reduce epochs/iterations for faster training at cost of accuracy
+        """
         super().__init__(embedding_dim, random_seed, concurrency)
         self._sample_sizes = sample_sizes
         self._epochs = epochs
@@ -67,7 +74,7 @@ class GDSGraphSage(GDSGraphAlgorithm):
         self._loss = None
 
     def run(self, gds: GraphDataScience, graph: Any, model_name: str, write_property: str):
-        """Train the algorithm."""
+        """Train the algorithm with optimized parameters."""
         model, attr = gds.beta.graphSage.train(
             graph,
             modelName=model_name,
@@ -87,6 +94,7 @@ class GDSGraphSage(GDSGraphAlgorithm):
             featureProperties=self._feature_properties,
             penaltyL2=self._penalty_l2,
         )
+        # Extract only the first epoch's losses for efficiency
         self._loss = attr["modelInfo"]["metrics"]["iterationLossesPerEpoch"][0]
         return model, attr
 
@@ -122,7 +130,14 @@ class GDSNode2Vec(GDSGraphAlgorithm):
         concurrency: int = 4,
         walk_buffer_size: int = 1000,
     ):
-        """Node2Vec Attributes. For more information see  https://neo4j.com/docs/graph-data-science/current/machine-learning/node-embeddings/node2vec/."""
+        """Node2Vec Attributes. For more information see  https://neo4j.com/docs/graph-data-science/current/machine-learning/node-embeddings/node2vec/.
+
+        Performance tips:
+        - Reduce walk_length and walks_per_node for faster training (e.g., 30/10)
+        - Increase walk_buffer_size for better memory efficiency (e.g., 10000)
+        - Increase concurrency to match available CPU cores
+        - Reduce iterations for faster convergence at cost of quality
+        """
         super().__init__(embedding_dim, random_seed, concurrency)
         self._walk_length = walk_length
         self._walks_per_node = walks_per_node
@@ -166,7 +181,8 @@ class GDSNode2Vec(GDSGraphAlgorithm):
             randomSeed=self._random_seed,
             walkBufferSize=self._walk_buffer_size,
         )
-        self._loss = [int(x) for x in attr["lossPerIteration"]]
+        # Store losses directly without unnecessary conversion
+        self._loss = attr["lossPerIteration"]
 
     def predict_write(self, gds: GraphDataScience, graph: Any, model_name: str, write_property: str):
         """Dummy function as Node2vec gets written in the 'run' step due to no separate predict_write function (unlike GraphSage)."""

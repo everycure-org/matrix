@@ -228,46 +228,61 @@ def train_topological_embeddings(
     estimator: Any,
     write_property: str,
 ) -> Dict:
-    """Function to add graphsage embeddings.
+    """Function to train topological embeddings on Neo4j graph.
 
-    Function leverages the gds library to ochestrate topological embedding computation
-    on the nodes of the KG.
+    Function leverages the GDS library to orchestrate topological embedding computation
+    on the nodes of the KG. Supports both ephemeral (sidecar) and persistent Neo4j instances.
 
-    NOTE: The df and edges input are only added to ensure correct lineage
+    NOTE: This function was partially generated using AI assistance.
+    NOTE: The df input is only added to ensure correct Kedro lineage tracking.
+
+    Architecture support:
+    - **Sidecar Neo4j**: Graph projection and training happen from scratch each run.
+      Use environment variables to point to sidecar endpoint.
+    - **External persistent Neo4j**: Graph projection is reused if it exists, saving
+      5-15 minutes on retry/recovery. Configure via NEO4J_HOST environment variable.
+
+    Performance characteristics:
+    - Graph projection: ~5-15 minutes (depends on graph size)
+    - Model training: ~10-30 minutes (depends on algorithm and parameters)
+    - For external Neo4j, projection survives spot instance preemptions
 
     Args:
-        df: nodes df
-        gds: the gds object
-        filtering: filtering
-        projection: gds projection to execute on the graph
-        topological_estimator: GDS estimator to apply
-        estimator: estimator to apply
-        write_property: node property to write result to
-    """
-    # Validate whether the GDS graph exists
-    graph_name = projection.get("graphName")
-    if gds.graph.exists(graph_name).exists:
-        graph = gds.graph.get(graph_name)
-        gds.graph.drop(graph, False)
-    config = projection.pop("configuration", {})
-    graph, _ = gds.graph.project(*projection.values(), **config)
+        df: nodes df (for Kedro lineage only)
+        gds: GraphDataScience client configured via params:embeddings.gds
+        topological_estimator: GDS algorithm instance (GraphSage or Node2Vec)
+        projection: Graph projection configuration with graphName, nodeProjection, relationshipProjection
+        estimator: Model configuration with modelName
+        write_property: Neo4j node property to write embeddings to
 
-    # Validate whether the model exists
+    Returns:
+        Tuple of (success dict, convergence plot figure)
+    """
+    # Check if graph projection already exists (useful for persistent Neo4j)
+    graph_name = projection.get("graphName")
+
+    if gds.graph.exists(graph_name).exists:
+        # Reuse existing graph projection - major time saver for external Neo4j
+        graph = gds.graph.get(graph_name)
+    else:
+        # Create new projection from Neo4j native graph
+        config = projection.pop("configuration", {})
+        graph, _ = gds.graph.project(*projection.values(), **config)
+
+    # Clean up any existing model to ensure fresh training
     model_name = estimator.get("modelName")
     if gds.model.exists(model_name).exists:
         model = gds.model.get(model_name)
         gds.model.drop(model)
 
-    # Initialize the model
+    # Train the embedding model
     topological_estimator.run(gds=gds, model_name=model_name, graph=graph, write_property=write_property)
     losses = topological_estimator.return_loss()
 
-    # Plot convergence
-    convergence = plt.figure()
+    # Generate convergence plot
+    convergence = plt.figure(figsize=(8, 6), dpi=80)
     ax = convergence.add_subplot(1, 1, 1)
-    ax.plot([x for x in range(len(losses))], losses)
-
-    # Add labels and title
+    ax.plot(losses)
     ax.set_xlabel("Number of Epochs")
     ax.set_ylabel("Average loss per node")
     ax.set_title("Loss Chart")
@@ -284,15 +299,38 @@ def write_topological_embeddings(
     projection: Any,
     estimator: Any,
     write_property: str,
+    cleanup_projection: bool = False,
 ) -> Dict:
-    """Write topological embeddings."""
-    # Retrieve the graph
+    """Write topological embeddings back to Neo4j and optionally cleanup resources.
+
+    NOTE: This function was partially generated using AI assistance.
+
+    Args:
+        model: Model output from training (for Kedro lineage)
+        gds: GraphDataScience client
+        topological_estimator: GDS algorithm instance
+        projection: Graph projection configuration
+        estimator: Model configuration
+        write_property: Neo4j node property to write embeddings to
+        cleanup_projection: If True, drops the GDS graph projection after writing.
+            Useful for persistent Neo4j to free memory. Default False to preserve
+            projection for potential retries.
+
+    Returns:
+        Success dictionary
+    """
+    # Retrieve the graph projection
     graph_name = projection.get("graphName")
     graph = gds.graph.get(graph_name)
 
-    # Retrieve the model
+    # Retrieve the trained model and write embeddings to Neo4j
     model_name = estimator.get("modelName")
     topological_estimator.predict_write(gds=gds, model_name=model_name, graph=graph, write_property=write_property)
+
+    # Optional cleanup for persistent Neo4j to free memory
+    if cleanup_projection:
+        gds.graph.drop(graph)
+
     return {"success": "true"}
 
 

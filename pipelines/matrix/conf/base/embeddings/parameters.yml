@@ -46,6 +46,11 @@ embeddings.topological:
     modelName: topological_embeddings
   
   write_property: &_topological_property 'topological_embedding'
+  
+  # Set to true to drop graph projection after writing embeddings
+  # Useful for persistent Neo4j to reclaim memory between runs
+  # Keep false for spot resilience - allows reusing projection on retry
+  cleanup_projection: false
 
 # uncomment for node2vec
 embeddings.topological_estimator:
