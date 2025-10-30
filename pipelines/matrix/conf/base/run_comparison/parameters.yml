@@ -1,0 +1,54 @@
+run_comparison:
+
+  # Options to select which uncertainty estimation methods to perform. Applies to all applicable evaluations. 
+  perform_multifold_uncertainty_estimation: True # If False, only the first fold of data is used.
+  perform_bootstrap_uncertainty_estimation: True
+
+  # Option to assert consistent drug list, disease list, training set and test set across all models.
+  # If False, then matrix harmonization will be performed, which restricts pairs accordingly to ensure consistency between models.
+  assert_data_consistency: False
+
+  # Enter the filepaths of the matrix predictions you would like to evaluate here. See documentation for more details.
+  # TODO: Link to docs. 
+  input_paths:
+    - _object: matrix.pipelines.run_comparison.input_paths.InputPathsModellingRun # Options: InputPathsSingleFold, InputPathsModellingRun , InputPathsMultiFold
+      name: xg_ensemble_untransformed
+      data_release: v0.11.2
+      run_name: auto-kg-release-v0-11-2-39910042
+      num_folds: 3
+      is_transformed: False
+    - _object: matrix.pipelines.run_comparison.input_paths.InputPathsModellingRun
+      name: xg_ensemble_transformed
+      data_release: v0.11.2
+      run_name: auto-kg-release-v0-11-2-39910042
+      num_folds: 3
+      is_transformed: True
+
+  # Configuration for the evaluations to perform. Usually it is not necessary to modify these.
+  available_ground_truth_cols: # These columns are expected to be present on the predictions dataframes for all models and folds.
+    - "is_known_positive"
+    - "is_known_negative"
+    - "off_label"
+
+  evaluations:
+    ground_truth_recall_at_n:
+      _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtN
+      ground_truth_col: "is_known_positive"
+      n_max: 100000
+      perform_sort: True
+      title: "Recall@n (standard ground truth)"
+
+    negative_recall_at_n:
+      _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtN
+      ground_truth_col: "is_known_negative"
+      n_max: 1000000
+      perform_sort: True
+      title: "Recall@n (negative ground truth) - lower is better"
+      force_full_y_axis: False
+
+    off_label_recall_at_n:
+      _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtN
+      ground_truth_col: "off_label"
+      n_max: 100000
+      perform_sort: True
+      title: "Recall@n (off-label)"

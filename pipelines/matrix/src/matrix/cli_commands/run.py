@@ -87,6 +87,12 @@ def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async
 
     _validate_env_vars_for_private_data()
 
+    # TODO: See why this is being set to a string and fix
+    # Normalize optional inputs that might arrive as strings like "None"/"null"/""
+    if from_run is not None and str(from_run).strip().lower() in {"", "none", "null"}:
+        print("Setting --from-run to None")
+        from_run = None
+
     if from_run:
         logger.info(f"Taking input datasets from run: {from_run}. Specified datasets: {from_run_datasets}")
         if from_env:
@@ -180,6 +186,7 @@ def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
 
 def _extract_config(config: RunConfig, session: KedroSessionWithFromCatalog) -> Optional[DataCatalog]:
     from_catalog: Optional[DataCatalog] = None
+
     if config.from_env:
         # Load second config loader instance
         config_loader_class = settings.CONFIG_LOADER_CLASS
