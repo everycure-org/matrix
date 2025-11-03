@@ -24,7 +24,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ArgoNode(
                 func=nodes.process_input_filepaths,
                 inputs=[
-                    "params:run_comparison.input_paths",
+                    "params:run_comparison.input_data.input_paths",
                 ],
                 outputs="run_comparison.input_matrices",
                 name=f"process_input_filepaths",

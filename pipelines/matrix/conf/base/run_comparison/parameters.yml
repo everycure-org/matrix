@@ -4,25 +4,23 @@ run_comparison:
   perform_multifold_uncertainty_estimation: True # If False, only the first fold of data is used.
   perform_bootstrap_uncertainty_estimation: True
 
-  # Option to assert consistent drug list, disease list, training set and test set across all models.
-  # If False, then matrix harmonization will be performed, which restricts pairs accordingly to ensure consistency between models.
-  assert_data_consistency: False
-
-  # Enter the filepaths of the matrix predictions you would like to evaluate here. See documentation for more details.
-  # TODO: Link to docs. 
-  input_paths:
-    - _object: matrix.pipelines.run_comparison.input_paths.InputPathsModellingRun # Options: InputPathsSingleFold, InputPathsModellingRun , InputPathsMultiFold
-      name: xg_ensemble_untransformed
-      data_release: v0.11.2
-      run_name: auto-kg-release-v0-11-2-39910042
-      num_folds: 3
-      is_transformed: False
-    - _object: matrix.pipelines.run_comparison.input_paths.InputPathsModellingRun
-      name: xg_ensemble_transformed
-      data_release: v0.11.2
-      run_name: auto-kg-release-v0-11-2-39910042
-      num_folds: 3
-      is_transformed: True
+  input_data:
+    # Option to assert consistent drug list, disease list, training set and test set across all models.
+    # If False, then matrix harmonization will be performed, which restricts pairs accordingly to ensure consistency between models.
+    apply_harmonization: True # TODO: implement change from assert_data_consistency
+    # Enter the filepaths of the matrix predictions you would like to evaluate here. 
+    # Brace expansion patterns are accepted, e.g. "dir/fold_{0,1,2}/preds" or "dir/fold_{0..5}/preds"
+    input_paths:
+      - name: xg_ensemble_untransformed
+        file_paths_list: 
+          - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.11.2/runs/auto-kg-release-v0-11-2-39910042/datasets/matrix_generation/model_output/fold_{0..4}/matrix_predictions"
+        file_format: "parquet"
+        score_col_name: "treat score"
+      - name: xg_ensemble_transformed
+        file_paths_list: 
+          - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.11.2/runs/auto-kg-release-v0-11-2-39910042/datasets/matrix_transformations/fold_{0..4}/transformed_matrix""
+        file_format: "parquet"
+        score_col_name: "transformed_treat_score"
 
   # Configuration for the evaluations to perform. Usually it is not necessary to modify these.
   available_ground_truth_cols: # These columns are expected to be present on the predictions dataframes for all models and folds.

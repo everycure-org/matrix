@@ -1,13 +1,12 @@
 import logging
 from collections.abc import Callable
-from dataclasses import asdict
 
+import bracex
 import matplotlib.pyplot as plt
 import polars as pl
 from matrix_inject.inject import inject_object
 
 from .evaluations import ComparisonEvaluation
-from .input_paths import InputPathsMultiFold
 from .matrix_pairs import (
     check_base_matrices_consistent,
     check_matrix_pairs_equal,
@@ -18,13 +17,41 @@ from .matrix_pairs import (
 logger = logging.getLogger(__name__)
 
 
-@inject_object()
 def process_input_filepaths(
-    input_paths: list[InputPathsMultiFold],
+    input_paths: list[dict],
 ) -> list[dict]:
-    """Function to create input matrices dataset."""
-    # Return initialized dataclass objects as dictionaries
-    return [asdict(v) for v in input_paths]
+    """Function to create input matrices dataset.
+
+    This node will be outputted as a custom MultiPredictionsDataset which handles lazy loading of the predictions.
+
+    Args:
+        List containing dictionaries with keys:
+        name (str), file_paths_list (list[str]), file_format (str), score_col_name (str)
+    """
+    # Check names uniqueness
+    names = [info["name"] for info in input_paths]
+    if len(set(names)) != len(names):
+        raise ValueError("All model names must be unique.")
+
+    # Perform brace expansion
+    for idx in range(len(input_paths)):
+        expanded_paths_list = []
+        for path in input_paths[idx]["file_paths_list"]:
+            bracex.expand(path)
+        input_paths[idx]["file_paths_list"] = expanded_paths_list
+
+    # Check uniqueness of paths
+    all_paths = sum([info["file_paths_list"] for info in input_paths])
+    if len(set(all_paths)) != len(all_paths):
+        raise ValueError("All filepaths must be unique.")
+
+    # Check values of file-formats
+    file_formats = {info["file_format"] for info in input_paths}
+    allowed_formats = ["csv", "parquet"]
+    if not file_formats.issubset(set(allowed_formats)):
+        raise ValueError("File format must be one of the following:")
+
+    return input_paths
 
 
 def combine_matrix_pairs(
