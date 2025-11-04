@@ -111,7 +111,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.extract_mondo_metadata,
                 inputs={
                     "mondo_owl": "disease_list.raw.mondo_owl",
-                    "sparql_query_path": str(QUERIES_DIR / "ontology-metadata.sparql"),
+                    "sparql_query_path": "params:queries.ontology_metadata",
                 },
                 outputs="disease_list.prm.mondo_metadata",
                 name="extract_mondo_metadata",

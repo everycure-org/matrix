@@ -641,13 +641,17 @@ def extract_mondo_metadata(
         cmd = f'robot query -i "{input_owl}" -f tsv --query "{sparql_query_path}" "{output_tsv}"'
         run_subprocess(cmd, check=True, stream_output=True)
 
-        # Read the output TSV
-        df = pd.read_csv(output_tsv, sep="\t")
+        # Read the output TSV with dtype specification to handle mixed types
+        df = pd.read_csv(output_tsv, sep="\t", dtype=str, na_filter=False)
 
         # Post-process to clean up SPARQL output
         for col in df.columns:
-            if df[col].dtype == object:
-                df[col] = df[col].str.replace("?", "", regex=False).str.replace("<", "", regex=False).str.replace(">", "", regex=False)
+            df[col] = (
+                df[col]
+                .str.replace("?", "", regex=False)
+                .str.replace("<", "", regex=False)
+                .str.replace(">", "", regex=False)
+            )
 
         logger.info("Extracted MONDO metadata")
         return df
