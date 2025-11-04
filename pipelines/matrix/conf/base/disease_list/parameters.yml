@@ -1,0 +1,7 @@
+# Disease list pipeline parameters
+
+queries:
+  matrix_disease_list_filters: "src/matrix/pipelines/disease_list/queries/matrix-disease-list-filters.sparql"
+  matrix_disease_list_metrics: "src/matrix/pipelines/disease_list/queries/matrix-disease-list-metrics.sparql"
+  ontology_metadata: "src/matrix/pipelines/disease_list/queries/ontology-metadata.sparql"
+  mondo_obsoletes: "src/matrix/pipelines/disease_list/queries/mondo-obsoletes.sparql"

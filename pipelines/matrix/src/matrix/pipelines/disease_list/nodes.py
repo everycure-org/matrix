@@ -460,6 +460,14 @@ def apply_disease_filters(
 ) -> Dict[str, pd.DataFrame]:
     """Apply filters to create final disease lists.
 
+    This implements the filtering logic from matrix-disease-list.py:
+    - Includes manually curated diseases
+    - Includes leaf nodes
+    - Includes direct parents of leaves with OMIM/ICD/Orphanet mappings
+    - Includes ICD billable codes, Orphanet disorders, ClinGen diseases, OMIM diseases
+    - Excludes unclassified hereditary diseases, paraphilic disorders
+    - Excludes manually excluded diseases
+
     Args:
         disease_list_unfiltered: Unfiltered disease list with features
         mondo_metrics: Disease metrics for filtering
@@ -470,11 +478,138 @@ def apply_disease_filters(
         - excluded_diseases: Diseases excluded from list
         - disease_groupings: Disease grouping information
     """
-    logger.info("Applying disease filters")
-    # TODO: Implement filtering logic
-    # Should match scripts/matrix-disease-list.py create-matrix-disease-list
-    # Returns multiple outputs: included, excluded, groupings
-    raise NotImplementedError("apply_disease_filters not yet implemented")
+    logger.info("Applying disease filters to create final disease list")
+
+    # Rename columns: remove ? prefix and change f_ to is_ for convention
+    # https://github.com/everycure-org/matrix-disease-list/issues/75
+    df = disease_list_unfiltered.copy()
+
+    # First remove ? prefix, then handle f_ -> is_ conversion
+    new_columns = []
+    for col in df.columns:
+        # Remove leading ?
+        clean_col = col.lstrip('?')
+        # If it starts with f_, replace with is_
+        if clean_col.startswith('f_'):
+            clean_col = 'is_' + clean_col[2:]
+        new_columns.append(clean_col)
+
+    df.columns = new_columns
+
+    # Convert string TRUE/FALSE to boolean for filter columns
+    filter_cols = [col for col in df.columns if col.startswith('is_')]
+    for col in filter_cols:
+        # Handle empty strings as False
+        df[col] = df[col].astype(str).str.strip().str.upper() == 'TRUE'
+
+    filter_column = 'official_matrix_filter'
+
+    # By default, no disease is included
+    df[filter_column] = False
+
+    # QC: Check for conflicts where both manually_included and manually_excluded are True
+    conflicts = df[df['is_matrix_manually_included'] & df['is_matrix_manually_excluded']]
+    if not conflicts.empty:
+        conflict_str = conflicts[['category_class', 'label']].to_string(index=False)
+        raise ValueError(f"Conflicts found: The following entries are marked as both manually included and manually excluded:\n{conflict_str}")
+
+    # First, we add all manually curated classes to the list
+    df[filter_column] |= df['is_matrix_manually_included']
+
+    # Next, we add all leaf classes
+    df[filter_column] |= df['is_leaf']
+
+    # Now, we add all the immediate parents of leaf classes that are mapped to OMIM, ICD, or Orphanet
+    df[filter_column] |= (
+        df['is_leaf_direct_parent'] &
+        (
+            df['is_omim'] |
+            df['is_omimps_descendant'] |
+            df['is_icd_category'] |
+            df['is_orphanet_disorder'] |
+            df['is_orphanet_subtype']
+        )
+    )
+
+    # Next, we add all diseases corresponding to ICD 10 billable codes
+    df[filter_column] |= df['is_icd_category']
+
+    # Next, we add all diseases corresponding to Orphanet disorders
+    df[filter_column] |= df['is_orphanet_disorder']
+
+    # Next, we add all diseases corresponding to ClinGen curated conditions
+    df[filter_column] |= df['is_clingen']
+
+    # Next, we add all diseases corresponding to OMIM curated diseases
+    df[filter_column] |= df['is_omim']
+
+    # Remove all hereditary diseases without classification
+    # https://github.com/everycure-org/matrix-disease-list/issues/50
+    df.loc[df['is_unclassified_hereditary'], filter_column] = False
+
+    # Remove all paraphilic disorders
+    # https://github.com/everycure-org/matrix-disease-list/issues/42
+    df.loc[df['is_paraphilic'], filter_column] = False
+
+    # Remove disease that were manually excluded
+    df.loc[df['is_matrix_manually_excluded'], filter_column] = False
+
+    # Split the DataFrame into two parts: included and excluded diseases
+    df_included = df[df[filter_column]].copy()
+    df_excluded = df[~df[filter_column]].copy()
+
+    logger.info(f"Included {len(df_included)} diseases in final list")
+    logger.info(f"Excluded {len(df_excluded)} diseases from final list")
+
+    # Extract disease groupings from subsets
+    curated_disease_groupings = ["harrisons_view", "mondo_txgnn", "mondo_top_grouping"]
+    llm_disease_groupings = ["medical_specialization", "txgnn", "anatomical", "is_pathogen_caused",
+                              "is_cancer", "is_glucose_dysfunction", "tag_existing_treatment", "tag_qaly_lost"]
+    disease_groupings = curated_disease_groupings + llm_disease_groupings
+
+    df_disease_groupings = df[["category_class", "label", "subsets"]].copy()
+
+    # Extract groupings from subsets column
+    def extract_groupings(subsets_str, grouping_list):
+        """Extract groupings for list of subsets."""
+        result = {grouping: [] for grouping in grouping_list}
+
+        if pd.notna(subsets_str) and subsets_str:
+            for subset in subsets_str.split(";"):
+                subset = subset.strip()
+                for grouping in grouping_list:
+                    if subset.startswith(f"mondo:{grouping}"):
+                        subset_tag = subset.replace("mondo:", "").replace(grouping, "").replace(" ", "").strip("_")
+                        if (subset_tag != "member") and (subset_tag != ""):
+                            result[grouping].append(subset_tag.replace("|", ""))
+
+        # Join multiple values with pipe, excluding "other" if there are multiple values
+        return {
+            key: "|".join([v for v in values if v != "other"] if len(values) > 1 else values) if values else ""
+            for key, values in result.items()
+        }
+
+    df_disease_groupings_extracted = df_disease_groupings["subsets"].apply(
+        lambda x: extract_groupings(x, disease_groupings)
+    ).apply(pd.Series)
+
+    df_disease_groupings_out = pd.concat(
+        [df_disease_groupings[["category_class", "label"]], df_disease_groupings_extracted], axis=1
+    )
+    df_disease_groupings_out.sort_values(by="category_class", inplace=True)
+
+    # Filter to final columns for output
+    final_columns = ['category_class', 'label', 'definition', 'synonyms', 'subsets', 'crossreferences']
+    df_included_final = df_included[final_columns].copy()
+    df_excluded_final = df_excluded[final_columns].copy()
+
+    logger.info("Disease filtering completed successfully")
+
+    return {
+        "disease_list": df_included_final,
+        "excluded_diseases": df_excluded_final,
+        "disease_groupings": df_disease_groupings_out,
+    }
 
 
 def extract_mondo_metadata(
