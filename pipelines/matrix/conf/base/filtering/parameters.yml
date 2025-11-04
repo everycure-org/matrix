@@ -51,10 +51,12 @@ filtering:
 
     # filter_triples:
     #   _object: matrix.pipelines.filtering.filters.TriplePattern
-    #   triples_to_exclude:
-    #     - ["biolink:Drug", "biolink:interacts_with", "biolink:Drug"]
-    #     - ["biolink:Drug", "biolink:subclass_of", "biolink:Drug"]
-    #     - ["biolink:Drug", "biolink:has_part", "biolink:Drug"]
-    #     - ["biolink:Drug", "biolink:related_to", "biolink:Drug"]
-    #     - ["biolink:Drug", "biolink:close_match", "biolink:Drug"]
-    #     - ["biolink:Drug", "biolink:coexists_with", "biolink:Drug"]
+    #   exclude: False 
+    #   triples:
+        #- ["biolink:Disease", "biolink:superclass_of", "biolink:Disease"]
+        #- ["biolink:Drug", "biolink:subclass_of", "biolink:Drug"]
+        #- ["biolink:Protein", "biolink:subclass_of", "biolink:Drug"]
+        # - ["biolink:Drug", "biolink:has_part", "biolink:Drug"]
+        # - ["biolink:Drug", "biolink:related_to", "biolink:Drug"]
+        # - ["biolink:Drug", "biolink:close_match", "biolink:Drug"]
+        # - ["biolink:Drug", "biolink:coexists_with", "biolink:Drug"]

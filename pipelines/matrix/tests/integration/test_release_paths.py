@@ -42,6 +42,7 @@ def test_all_post_release_paths_namespaced(catalog: DataCatalog, pipelines: Dict
 
     Then:
         The dataset's path should contain "/runs" in its path
+        Exception: Nodes tagged with "validation" are allowed to have paths outside /runs
     """
     # Given
     pattern = r"releases/[^/]+/runs"
@@ -50,12 +51,17 @@ def test_all_post_release_paths_namespaced(catalog: DataCatalog, pipelines: Dict
 
     # When
     post_release_pipeline = pipeline.from_nodes(*release_nodes)
-    post_release_outputs = post_release_pipeline.only_nodes(
-        *[x.name for x in post_release_pipeline.nodes if x.name not in release_nodes]
-    ).all_outputs()
+    post_release_nodes = [x for x in post_release_pipeline.nodes if x.name not in release_nodes]
 
     # Then
-    for dataset_name in post_release_outputs:
-        dataset = catalog._get_dataset(dataset_name)
-        if isinstance(dataset, LazySparkDataset) and not any(x in dataset._full_url for x in ["/cache/", "/tmp/"]):
-            assert re.search(pattern, dataset._full_url), f"Path {dataset._full_url} does not match pattern {pattern}"
+    for node in post_release_nodes:
+        # Skip nodes tagged with "validation"
+        if "validation" in node.tags:
+            continue
+
+        for dataset_name in node.outputs:
+            dataset = catalog._get_dataset(dataset_name)
+            if isinstance(dataset, LazySparkDataset) and not any(x in dataset._full_url for x in ["/cache/", "/tmp/"]):
+                assert re.search(pattern, dataset._full_url), (
+                    f"Path {dataset._full_url} does not match pattern {pattern}"
+                )

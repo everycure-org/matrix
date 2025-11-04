@@ -186,27 +186,36 @@ class RemoveRowsByColumnOverlap(Filter):
 
 
 class TriplePattern(Filter):
-    """Filter that removes edges matching specific subject-predicate-object patterns.
+    """Filter that removes/only includes edges matching specific subject-predicate-object patterns.
 
-    This filter implements the logic to remove edges that match any of the
+    This filter implements the logic to remove or keep only edges that match any of the
     specified triple patterns.
     """
 
-    def __init__(self, triples_to_exclude: Iterable[list[str]]):
-        """Initialize the filter with triple patterns to exclude.
+    def __init__(self, triples: Iterable[list[str]], exclude: bool = True):
+        """Initialize the filter with triple patterns to exclude/include.
 
         Args:
-            triples_to_exclude: List of triples to exclude, where each triple is
+            triples: List of triples to exclude, where each triple is
                 [subject_category, predicate, object_category]
+            exclude: Whether to exclude the triples or include them (default: True - exclude).
         """
-        self.triples_to_exclude = triples_to_exclude
+        self.triples = triples
+        self.exclude = exclude
 
     def apply(self, df: ps.DataFrame) -> ps.DataFrame:
-        filter_condition = sf.lit(True)
-        for subject_cat, predicate, object_cat in self.triples_to_exclude:
-            filter_condition = filter_condition & ~(
-                (sf.col("subject_category") == subject_cat)
-                & (sf.col("predicate") == predicate)
-                & (sf.col("object_category") == object_cat)
-            )
+        filter_condition = sf.lit(self.exclude)
+        for subject_cat, predicate, object_cat in self.triples:
+            if self.exclude:
+                filter_condition = filter_condition & ~(
+                    (sf.col("subject_category") == subject_cat)
+                    & (sf.col("predicate") == predicate)
+                    & (sf.col("object_category") == object_cat)
+                )
+            else:
+                filter_condition = filter_condition | (
+                    (sf.col("subject_category") == subject_cat)
+                    & (sf.col("predicate") == predicate)
+                    & (sf.col("object_category") == object_cat)
+                )
         return df.filter(filter_condition)
