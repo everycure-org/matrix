@@ -53,13 +53,26 @@ spec:
           containers:
           - name: argo-cli
             image: argoproj/argocli:latest
+            command: ["/bin/sh"]
             args:
-            - template
-            - delete
-            - --older
-            - 30d
-            - --namespace
-            - argo-workflows
+            - -c
+            - |
+              # Calculate the cutoff date (30 days ago)
+              CUTOFF_DATE=$(date -u -d '30 days ago' '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || date -u -v-30d '+%Y-%m-%dT%H:%M:%SZ')
+              echo "Deleting workflow templates older than: $CUTOFF_DATE"
+              
+              # List all workflow templates with creation timestamps
+              argo template list -n argo-workflows -o json | \
+              jq -r --arg cutoff "$CUTOFF_DATE" \
+                '.[] | select(.metadata.creationTimestamp < $cutoff) | .metadata.name' | \
+              while read -r template_name; do
+                if [ -n "$template_name" ]; then
+                  echo "Deleting workflow template: $template_name"
+                  argo template delete "$template_name" -n argo-workflows || echo "Failed to delete $template_name"
+                fi
+              done
+              
+              echo "Workflow template cleanup completed"
             resources:
               requests:
                 cpu: 100m
