@@ -15,7 +15,7 @@ class MultiPredictionsDataset(YAMLDataset):
                         filepath=file_path,
                         file_format=dict_for_model["file_format"],
                     ).load()
-                    for file_path in dict_for_model["file_paths_list"]
+                    for file_path in dict_for_model["fold_paths_list"]
                 ],
                 "score_col_name": dict_for_model["score_col_name"],
             }

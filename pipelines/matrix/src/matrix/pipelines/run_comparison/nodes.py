@@ -36,12 +36,12 @@ def process_input_filepaths(
     # Perform brace expansion
     for idx in range(len(input_paths)):
         expanded_paths_list = []
-        for path in input_paths[idx]["file_paths_list"]:
+        for path in input_paths[idx]["fold_paths_list"]:
             bracex.expand(path)
-        input_paths[idx]["file_paths_list"] = expanded_paths_list
+        input_paths[idx]["fold_paths_list"] = expanded_paths_list
 
     # Check uniqueness of paths
-    all_paths = [path for model in input_paths for path in model["file_paths_list"]]
+    all_paths = [path for model in input_paths for path in model["fold_paths_list"]]
     if len(set(all_paths)) != len(all_paths):
         raise ValueError("All filepaths must be unique.")
 

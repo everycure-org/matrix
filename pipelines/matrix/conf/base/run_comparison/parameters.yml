@@ -17,12 +17,12 @@ run_comparison:
       #   file_format: "parquet" or "csv"
       #   score_col_name: <Name of column containing drug-disease pair scores>
       - name: xg_ensemble_untransformed
-        file_paths_list: 
+        fold_paths_list: 
           - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.11.2/runs/auto-kg-release-v0-11-2-39910042/datasets/matrix_generation/model_output/fold_{0..4}/matrix_predictions"
         file_format: "parquet"
         score_col_name: "treat score"
       - name: xg_ensemble_transformed
-        file_paths_list:
+        fold_paths_list:
           - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.11.2/runs/auto-kg-release-v0-11-2-39910042/datasets/matrix_transformations/fold_{0..4}/transformed_matrix"
         file_format: "parquet"
         score_col_name: "transformed_treat_score"

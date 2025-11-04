@@ -4,12 +4,12 @@ run_comparison:
     apply_harmonization: True
     input_paths:
       - name: good_model
-        file_paths_list: 
+        fold_paths_list: 
           - ${globals:paths.raw}/run_comparison_matrices/matrix_fold_{1,2}_good_model.csv
         score_col_name: "treat score"
         file_format: "csv"
       - name: bad_model
-        file_paths_list: 
+        fold_paths_list: 
           - ${globals:paths.raw}/run_comparison_matrices/matrix_fold_{1,2}_bad_model.csv
         score_col_name: "treat score"
         file_format: "csv"
