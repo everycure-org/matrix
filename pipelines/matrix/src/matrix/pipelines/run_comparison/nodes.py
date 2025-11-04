@@ -4,7 +4,7 @@ from functools import reduce
 
 import bracex
 import matplotlib.pyplot as plt
-import polars as plt
+import polars as pl
 from matrix_inject.inject import inject_object
 
 from .evaluations import ComparisonEvaluation
