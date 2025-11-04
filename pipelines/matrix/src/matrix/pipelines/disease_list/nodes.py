@@ -389,20 +389,19 @@ def extract_disease_list_raw(
         cmd = f'robot query -i "{input_owl}" -f tsv --query "{sparql_query_path}" "{output_tsv}"'
         run_subprocess(cmd, check=True, stream_output=True)
 
-        # Read the output TSV
-        df = pd.read_csv(output_tsv, sep="\t")
+        # Read the output TSV with dtype specification to handle mixed types
+        df = pd.read_csv(output_tsv, sep="\t", dtype=str, na_filter=False)
 
         # Post-process to clean up SPARQL output
         # Remove ? prefix, angle brackets, and clean up IRIs
         for col in df.columns:
-            if df[col].dtype == object:
-                df[col] = (
-                    df[col]
-                    .str.replace("?", "", regex=False)
-                    .str.replace("<http://purl.obolibrary.org/obo/MONDO_", "MONDO:", regex=False)
-                    .str.replace("http://purl.obolibrary.org/obo/mondo#", "mondo:", regex=False)
-                    .str.replace(">", "", regex=False)
-                )
+            df[col] = (
+                df[col]
+                .str.replace("?", "", regex=False)
+                .str.replace("<http://purl.obolibrary.org/obo/MONDO_", "MONDO:", regex=False)
+                .str.replace("http://purl.obolibrary.org/obo/mondo#", "mondo:", regex=False)
+                .str.replace(">", "", regex=False)
+            )
 
         logger.info(f"Extracted {len(df)} diseases in raw list")
         return df
@@ -570,13 +569,11 @@ def extract_mondo_obsoletes(
 
 def validate_disease_list(
     disease_list: pd.DataFrame,
-    excluded_diseases: pd.DataFrame,
 ) -> bool:
     """Validate the generated disease list.
 
     Args:
         disease_list: Final disease list
-        excluded_diseases: Excluded diseases list
 
     Returns:
         True if validation passes
@@ -587,8 +584,6 @@ def validate_disease_list(
     logger.info("Validating disease list")
     # TODO: Implement validation checks
     # - No duplicates
-    # - No overlap between included and excluded
     # - All required columns present
     # - Valid MONDO IDs
-    raise NotImplementedError("validate_disease_list not yet implemented")
     raise NotImplementedError("validate_disease_list not yet implemented")

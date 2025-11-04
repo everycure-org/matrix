@@ -91,20 +91,20 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # Stage 3: List generation
             # Apply filtering rules to generate final disease list
-            #node(
-            #    func=nodes.apply_disease_filters,
-            #    inputs={
-            #        "disease_list_unfiltered": "disease_list.int.disease_list_raw",
-            #        "mondo_metrics": "disease_list.int.mondo_metrics",
-            #    },
-            #    outputs={
-            #        "disease_list": "disease_list.prm.disease_list",
-            #        "excluded_diseases": "disease_list.prm.excluded_diseases",
-            #        "disease_groupings": "disease_list.prm.disease_groupings",
-            #    },
-            #    name="apply_disease_filters",
-            #    tags=["disease_list", "filtering"],
-            #),
+            node(
+                func=nodes.apply_disease_filters,
+                inputs={
+                    "disease_list_unfiltered": "disease_list.int.disease_list_raw",
+                    "mondo_metrics": "disease_list.int.mondo_metrics",
+                },
+                outputs={
+                    "disease_list": "disease_list.prm.disease_list",
+                    "excluded_diseases": "disease_list.prm.excluded_diseases",
+                    "disease_groupings": "disease_list.prm.disease_groupings",
+                },
+                name="apply_disease_filters",
+                tags=["disease_list", "filtering"],
+            ),
             # Stage 4: Metadata extraction
             # Extract ontology metadata (version, date, etc.)
             node(
@@ -118,25 +118,25 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["disease_list", "metadata"],
             ),
             # Extract obsolete MONDO terms for tracking deprecated diseases
-            #node(
-            #    func=nodes.extract_mondo_obsoletes,
-            #    inputs={
-            #        "mondo_owl": "disease_list.raw.mondo_owl",
-            #        "sparql_query_path": str(QUERIES_DIR / "mondo-obsoletes.sparql"),
-            #    },
-            #    outputs="disease_list.prm.mondo_obsoletes",
-            #    name="extract_mondo_obsoletes",
-            #    tags=["disease_list", "metadata"],
-            #),
+            node(
+                func=nodes.extract_mondo_obsoletes,
+                inputs={
+                    "mondo_owl": "disease_list.raw.mondo_owl",
+                    "sparql_query_path": str(QUERIES_DIR / "mondo-obsoletes.sparql"),
+                },
+                outputs="disease_list.prm.mondo_obsoletes",
+                name="extract_mondo_obsoletes",
+                tags=["disease_list", "metadata"],
+            ),
             # Stage 4: Validation
-            #node(
-            #    func=nodes.validate_disease_list,
-            #    inputs={
-            #        "disease_list": "disease_list.prm.disease_list",
-            #    },
-            #    outputs=None,
-            #    name="validate_disease_list",
-            #    tags=["disease_list", "validation"],
-            #),
+            node(
+                func=nodes.validate_disease_list,
+                inputs={
+                    "disease_list": "disease_list.prm.disease_list",
+                },
+                outputs=None,
+                name="validate_disease_list",
+                tags=["disease_list", "validation"],
+            ),
         ]
     )
