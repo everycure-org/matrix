@@ -6,7 +6,6 @@ runtime_gcs_bucket: gs://${oc.env:RUNTIME_GCP_BUCKET, mtrx-us-central1-hub-dev-s
 
 release_folder_name: ${oc.env:RELEASE_FOLDER_NAME, releases}
 cloud_release_path: ${runtime_gcs_bucket}/kedro/data/${release_folder_name}/${versions.release}
-cloud_run_comparison_path: ${runtime_gcs_bucket}/kedro/data/run_comparison/
 
 # ... we determine whether it's a Argo or local run based on the ARGO_NODE_ID environment variable's presence
 sample_temporary_base_path: ${if_null:${oc.env:ARGO_NODE_ID, null, True}, data/releases/${versions.release}/sample, ${cloud_release_path}/sample}
@@ -25,5 +24,4 @@ paths:
   matrix_generation:  ${sample_temporary_base_path}/datasets/matrix_generation
   matrix_transformations:  ${sample_temporary_base_path}/datasets/matrix_transformations
   inference:          ${sample_temporary_base_path}/datasets/inference
-  tst:                ${sample_temporary_base_path}/datasets/run_comparison
   cache:              ${sample_temporary_base_path}/datasets/cache
