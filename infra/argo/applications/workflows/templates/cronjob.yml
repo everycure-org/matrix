@@ -51,24 +51,24 @@ spec:
       template:
         spec:
           containers:
-          - name: argo-cli
-            image: argoproj/argocli:latest
-            command: ["/bin/sh"]
+          - name: kubectl
+            image: bitnami/kubectl:latest
+            command: ["/bin/bash"]
             args:
             - -c
             - |
-              # Calculate the cutoff date (30 days ago)
-              CUTOFF_DATE=$(date -u -d '30 days ago' '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || date -u -v-30d '+%Y-%m-%dT%H:%M:%SZ')
-              echo "Deleting workflow templates older than: $CUTOFF_DATE"
+              # Calculate the cutoff date (30 days ago in seconds)
+              CUTOFF_SECONDS=$(date -d '30 days ago' +%s 2>/dev/null || echo $(($(date +%s) - 2592000)))
+              echo "Deleting workflow templates older than 30 days (cutoff: $CUTOFF_SECONDS)"
               
-              # List all workflow templates with creation timestamps
-              argo template list -n argo-workflows -o json | \
-              jq -r --arg cutoff "$CUTOFF_DATE" \
-                '.[] | select(.metadata.creationTimestamp < $cutoff) | .metadata.name' | \
+              # List all workflow templates and delete old ones
+              kubectl get workflowtemplates -n argo-workflows -o json | \
+              jq -r --arg cutoff "$CUTOFF_SECONDS" \
+                '.items[] | select((.metadata.creationTimestamp | fromdateiso8601) < ($cutoff | tonumber)) | .metadata.name' | \
               while read -r template_name; do
                 if [ -n "$template_name" ]; then
                   echo "Deleting workflow template: $template_name"
-                  argo template delete "$template_name" -n argo-workflows || echo "Failed to delete $template_name"
+                  kubectl delete workflowtemplate "$template_name" -n argo-workflows || echo "Failed to delete $template_name"
                 fi
               done
               
