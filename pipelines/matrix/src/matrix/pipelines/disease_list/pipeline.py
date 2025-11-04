@@ -29,7 +29,6 @@ def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             # Stage 1: Data preparation
-            # Stage 1: Data preparation
             # Extract labels from MONDO ontology for disease identification
             node(
                 func=nodes.extract_mondo_labels,
@@ -56,7 +55,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "mondo_labels": "disease_list.int.mondo_labels",
                     "mondo_owl": "disease_list.raw.mondo_owl",
                 },
-                outputs="disease_list.int.subtypes_template",
+                outputs={
+                    "subtypes_template": "disease_list.int.subtypes_template", 
+                    "subtypes_counts": "disease_list.int.subtypes_counts"
+                    },
                 name="create_subtypes_template",
                 tags=["disease_list", "preparation"],
             ),
@@ -92,18 +94,17 @@ def create_pipeline(**kwargs) -> Pipeline:
             # Stage 3: List generation
             # Apply filtering rules to generate final disease list
             node(
-                func=nodes.apply_disease_filters,
+                func=nodes.create_disease_list,
                 inputs={
-                    "disease_list_unfiltered": "disease_list.int.disease_list_raw",
+                    "disease_list_raw": "disease_list.int.disease_list_raw",
                     "mondo_metrics": "disease_list.int.mondo_metrics",
+                    "subtype_counts": "disease_list.int.subtypes_counts",
                 },
                 outputs={
                     "disease_list": "disease_list.prm.disease_list",
-                    "excluded_diseases": "disease_list.prm.excluded_diseases",
-                    "disease_groupings": "disease_list.prm.disease_groupings",
                 },
-                name="apply_disease_filters",
-                tags=["disease_list", "filtering"],
+                name="create_disease_list",
+                tags=["disease_list"],
             ),
             # Stage 4: Metadata extraction
             # Extract ontology metadata (version, date, etc.)

@@ -59,6 +59,8 @@ disease_list.raw.grouping_diseases_template:
 ########### Intermediate Outputs ############
 #############################################
 
+#TODO: Do intermediate outputs need to be saved to disk? Or can they be kept in memory only?
+
 disease_list.int.mondo_preprocessed:
   type: text.TextDataset
   <<: *_layer_raw
