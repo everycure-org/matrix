@@ -30,8 +30,8 @@ spec:
                 cpu: 100m
                 memory: 512Mi
               limits:
-                cpu: 200m
-                memory: 4Gi
+                cpu: 20000m
+                memory: 8Gi
           restartPolicy: OnFailure
           serviceAccountName: argo-workflow-cleanup
 ---
@@ -78,7 +78,7 @@ spec:
                 cpu: 100m
                 memory: 1Gi
               limits:
-                cpu: 20000m
+                cpu: 200000m
                 memory: 8Gi
           restartPolicy: OnFailure
           serviceAccountName: argo-workflow-cleanup
