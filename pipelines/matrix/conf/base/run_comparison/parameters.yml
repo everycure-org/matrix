@@ -34,12 +34,18 @@ run_comparison:
     - &off_label_col "off_label"
 
   evaluations:
-    ground_truth_recall_at_n:
+    ground_truth_recall_at_n: &_ground_truth_recall_at_n
       _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtN
       ground_truth_col: *is_known_positive_col
       n_max: 100000
       perform_sort: True
       title: "Recall@n (standard ground truth)"
+
+    ground_truth_recall_at_n_bootstrap:
+      _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtNBootstrap
+      <<: _ground_truth_recall_at_n
+      # TODO: We could also infer title dynamically for bootstrapped
+      title: "Recall@n (standard ground truth) bootstrapped"
 
     negative_recall_at_n:
       _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtN
