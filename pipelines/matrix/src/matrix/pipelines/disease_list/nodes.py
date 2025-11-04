@@ -270,6 +270,8 @@ def create_subtypes_template(
         top_subset_df = df_disease_list_matched_subset_with_matched_label_ids.copy()
 
         top_subset_df = pd.merge(top_subset_df, grouped_df_label_match, left_on="label_match", right_on='label_match', how="left")
+        top_subset_df_out=top_subset_df[["category_class", "label","curie_match", "label_match","count"]]
+        top_subset_df_out.columns=["subset_id", "subset_label", "subset_group_id", "subset_group_label", "other_subsets_count"]
 
         # Display the final filtered DataFrame
         final_subset_df = top_subset_df[["curie_match", "label_match"]].drop_duplicates().sort_values(by="curie_match")
@@ -287,7 +289,10 @@ def create_subtypes_template(
         output_df = pd.concat([robot_template_header, final_subset_df]).reset_index(drop=True)
         output_df.sort_values(by='ID', inplace=True)
 
-        return output_df, grouped_df_label_match
+        return {
+            "subtypes_template": output_df,
+            "subtypes_counts": top_subset_df_out,
+        }
     finally:
         # Clean up temporary file
         Path(mondo_owl_path).unlink(missing_ok=True)
