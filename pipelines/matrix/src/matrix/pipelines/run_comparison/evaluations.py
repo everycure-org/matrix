@@ -9,45 +9,44 @@ import polars as pl
 class ComparisonEvaluation(abc.ABC):
     """Abstract base class for run-comparison evaluations."""
 
-    @abc.abstractmethod
-    def evaluate_single_fold(
-        self,
-        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],  # Dictionary of PartitionedDataset load fn's
-        predictions_info: dict[str, any],
-    ) -> pl.DataFrame:
-        pass
-
-    @abc.abstractmethod
-    def evaluate_multi_fold(
+    def evaluate(
         self,
         combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
+        perform_bootstrap: bool,
     ) -> pl.DataFrame:
-        pass
+        """Evaluate the results.
 
-    @abc.abstractmethod
-    def evaluate_bootstrap_single_fold(
-        self,
-        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
-        predictions_info: dict[str, any],
-    ) -> pl.DataFrame:
-        pass
+        Args:
+            combined_predictions: Dictionary of PartitionedDataset load fn's returning predictions for all folds and models
+            predictions_info: Dictionary containing model names and number of folds.
+            perform_bootstrap: Whether to perform bootstrap uncertainty estimation.
 
-    @abc.abstractmethod
-    def evaluate_bootstrap_multi_fold(
-        self,
-        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
-        predictions_info: dict[str, any],
-    ) -> pl.DataFrame:
+        Returns:
+            Polars DataFrame with the schema expected by the plot_results method.
+
+        """
         pass
 
     @abc.abstractmethod
     def plot_results(
+        self,
         results: pl.DataFrame,
         combined_pairs: dict[str, Callable[[], pl.LazyFrame]],  # Dictionary of PartitionedDataset load fn's
         predictions_info: dict[str, any],
-        is_plot_errors: bool,
+        perform_bootstrap: bool,
     ) -> plt.Figure:
+        """Plot the results.
+
+        Args:
+            results: Polars DataFrame with the evaluation results (output of evaluate method).
+            combined_pairs: Dictionary of PartitionedDataset load fn's returning combined matrix pairs for each fold
+            predictions_info: Dictionary containing model names and number of folds.
+            perform_bootstrap: Whether to perform bootstrap uncertainty estimation.
+
+        Returns:
+            Matplotlib Figure.
+        """
         pass
 
 
@@ -244,12 +243,34 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
 
         return output_dataframe
 
+    def evaluate(
+        self,
+        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
+        predictions_info: dict[str, any],
+        perform_bootstrap: bool,
+    ) -> pl.DataFrame:
+        """Evaluate the results."""
+        if predictions_info["num_folds"] > 1:
+            if perform_bootstrap:
+                return self.evaluate_bootstrap_multi_fold(combined_predictions, predictions_info)
+            else:
+                return self.evaluate_multi_fold(combined_predictions, predictions_info)
+        else:
+            if perform_bootstrap:
+                return self.evaluate_bootstrap_single_fold(combined_predictions, predictions_info)
+            else:
+                return self.evaluate_single_fold(combined_predictions, predictions_info)
+
+    def _is_plot_errors(self, predictions_info: dict[str, any], perform_bootstrap: bool) -> plt.Figure:
+        """Whether to plot the error bars."""
+        return (predictions_info["num_folds"] > 1) or perform_bootstrap
+
     def plot_results(
         self,
         results: pl.DataFrame,
         combined_pairs: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
-        is_plot_errors: bool,
+        perform_bootstrap: bool,
     ) -> plt.Figure:
         """Plot the results."""
 
@@ -261,7 +282,7 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
 
         # Plot curves
         for model_name in predictions_info["model_names"]:
-            if is_plot_errors:
+            if self._is_plot_errors(predictions_info, perform_bootstrap):
                 av_y_values = results[f"y_{model_name}_mean"]
                 std_y_values = results[f"y_{model_name}_std"]
                 ax.plot(x_values, av_y_values, label=model_name)
