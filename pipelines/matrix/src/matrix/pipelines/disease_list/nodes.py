@@ -687,20 +687,19 @@ def extract_mondo_obsoletes(
         cmd = f'robot query -i "{input_owl}" -f tsv --query "{sparql_query_path}" "{output_tsv}"'
         run_subprocess(cmd, check=True, stream_output=True)
 
-        # Read the output TSV
-        df = pd.read_csv(output_tsv, sep="\t")
+        # Read the output TSV with dtype specification to handle mixed types
+        df = pd.read_csv(output_tsv, sep="\t", dtype=str, na_filter=False)
 
         # Post-process to clean up SPARQL output (mimicking sed commands from Makefile lines 128-132)
         for col in df.columns:
-            if df[col].dtype == object:
-                df[col] = (
-                    df[col]
-                    .str.replace("?", "", regex=False)
-                    .str.replace("<", "", regex=False)
-                    .str.replace(">", "", regex=False)
-                    .str.replace('"', "", regex=False)
-                    .str.replace("http://purl.obolibrary.org/obo/MONDO_", "MONDO:", regex=False)
-                )
+            df[col] = (
+                df[col]
+                .str.replace("?", "", regex=False)
+                .str.replace("<", "", regex=False)
+                .str.replace(">", "", regex=False)
+                .str.replace('"', "", regex=False)
+                .str.replace("http://purl.obolibrary.org/obo/MONDO_", "MONDO:", regex=False)
+            )
 
         logger.info(f"Extracted {len(df)} obsolete MONDO terms")
         return df
@@ -721,8 +720,12 @@ def validate_disease_list(
         ValueError: If validation fails
     """
     logger.info("Validating disease list")
-    # TODO: Implement validation checks
-    # - No duplicates
-    # - All required columns present
-    # - Valid MONDO IDs
-    raise NotImplementedError("validate_disease_list not yet implemented")
+    # length should be greater than 15000
+    if len(disease_list) < 15000:
+        raise ValueError(f"Validation failed: Disease list has only {len(disease_list)} entries, expected at least 15000")
+    
+    # check for duplicate MONDO IDs
+    if disease_list['category_class'].duplicated().any():
+        duplicated_ids = disease_list[disease_list['category_class'].duplicated()]['category_class'].unique()
+        raise ValueError(f"Validation failed: Duplicate MONDO IDs found: {duplicated_ids}")
+

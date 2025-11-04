@@ -122,7 +122,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.extract_mondo_obsoletes,
                 inputs={
                     "mondo_owl": "disease_list.raw.mondo_owl",
-                    "sparql_query_path": str(QUERIES_DIR / "mondo-obsoletes.sparql"),
+                    "sparql_query_path": "params:queries.mondo_obsoletes",
                 },
                 outputs="disease_list.prm.mondo_obsoletes",
                 name="extract_mondo_obsoletes",
