@@ -1,8 +1,8 @@
 from kedro.pipeline import Pipeline
+from matrix import settings
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 from . import nodes
-from .settings import RUN_COMPARISON_SETTINGS
 
 RUN_COMPARISON_RESOURCE_CONFIG = ArgoResourceConfig(
     cpu_limit=24,
@@ -16,8 +16,8 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create cross-run comparison evaluation pipeline."""
 
     pipeline_nodes = []
-
-    evaluations_to_perform = [ev["name"] for ev in RUN_COMPARISON_SETTINGS["evaluations"] if ev["is_activated"]]
+    run_comparison_settings = settings.DYNAMIC_PIPELINES_MAPPING().get("run_comparison")
+    evaluations_to_perform = run_comparison_settings["evaluations"]
 
     pipeline_nodes.extend(
         [

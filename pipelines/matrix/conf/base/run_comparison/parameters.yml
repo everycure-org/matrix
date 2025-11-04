@@ -29,21 +29,21 @@ run_comparison:
 
   # Configuration for the evaluations to perform. Usually it is not necessary to modify these.
   available_ground_truth_cols: # These columns are expected to be present on the predictions dataframes for all models and folds.
-    - "is_known_positive"
-    - "is_known_negative"
-    - "off_label"
+    - &is_known_positive_col "is_known_positive"
+    - &is_known_negative_col "is_known_negative"
+    - &off_label_col "off_label"
 
   evaluations:
     ground_truth_recall_at_n:
       _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtN
-      ground_truth_col: "is_known_positive"
+      ground_truth_col: *is_known_positive_col
       n_max: 100000
       perform_sort: True
       title: "Recall@n (standard ground truth)"
 
     negative_recall_at_n:
       _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtN
-      ground_truth_col: "is_known_negative"
+      ground_truth_col: *is_known_negative_col
       n_max: 1000000
       perform_sort: True
       title: "Recall@n (negative ground truth) - lower is better"
@@ -51,7 +51,7 @@ run_comparison:
 
     off_label_recall_at_n:
       _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtN
-      ground_truth_col: "off_label"
+      ground_truth_col: *off_label_col
       n_max: 100000
       perform_sort: True
       title: "Recall@n (off-label)"
