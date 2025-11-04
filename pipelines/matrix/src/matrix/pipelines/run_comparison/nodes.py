@@ -1,18 +1,14 @@
 import logging
 from collections.abc import Callable
+from functools import reduce
 
 import bracex
 import matplotlib.pyplot as plt
-import polars as pl
+import polars as plt
 from matrix_inject.inject import inject_object
 
 from .evaluations import ComparisonEvaluation
-from .matrix_pairs import (
-    check_base_matrices_consistent,
-    check_matrix_pairs_equal,
-    give_matrix_pairs_from_lazyframe,
-    harmonize_matrix_pairs,
-)
+from .matrix_pairs import MatrixPairs, give_matrix_pairs_from_lazyframe
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +48,33 @@ def process_input_filepaths(
         raise ValueError("File format must be one of the following:", str(allowed_formats))
 
     return input_paths
+
+
+def harmonize_matrix_pairs(*matrix_pairs_all: MatrixPairs, **kwargs) -> MatrixPairs:
+    """Harmonize a list of MatrixPairs objects.
+
+    Args:
+        *matrix_pairs_all: List of MatrixPairs objects to harmonize.
+    """
+    return reduce(lambda x, y: x.harmonize(y, **kwargs), matrix_pairs_all)
+
+
+def check_base_matrices_consistent(
+    *matrix_pairs_all: MatrixPairs,
+) -> bool:
+    """Check if a list of MatrixPairs objects have the same drugs and diseases lists."""
+    return all(x.is_same_base_matrix(y) for x in matrix_pairs_all for y in matrix_pairs_all[1:])
+
+
+def check_matrix_pairs_equal(
+    *matrix_pairs_all: MatrixPairs,
+) -> bool:
+    """Check if a list of MatrixPairs objects are equal.
+
+    Args:
+        *matrix_pairs_all: List of MatrixPairs objects to check.
+    """
+    return all(x == matrix_pairs_all[0] for x in matrix_pairs_all[1:])
 
 
 def combine_matrix_pairs(

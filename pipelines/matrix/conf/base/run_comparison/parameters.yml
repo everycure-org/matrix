@@ -1,14 +1,14 @@
 run_comparison:
 
   # Option to perform bootstrap uncertainty estimation where applicable.
-  perform_bootstrap: True # TODO: Update code
-  # TODO: ensure apply multifold is determined automatically
+  perform_bootstrap: True 
 
   input_data:
     # Option to apply data harmonization to consistent drug list, disease list, training set and test set across all models.
     # If False, then the input data must be consistent to begin with, otherwise an error will be raised.
-    apply_harmonization: True # TODO: implement change from assert_data_consistency
+    apply_harmonization: True 
     # Specify the matrix predictions you would like to evaluate here. 
+    # Drug-disease pairs used in training MUST NOT be included in the predictions dataframe.
     input_paths:
       # Expected format:
       # - name: <Name of model>
