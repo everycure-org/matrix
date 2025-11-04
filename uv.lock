@@ -2799,6 +2799,7 @@ name = "matrix-pipeline"
 source = { editable = "pipelines/matrix" }
 dependencies = [
     { name = "bmt" },
+    { name = "bracex" },
     { name = "db-dtypes" },
     { name = "faker" },
     { name = "gcsfs" },
@@ -2913,6 +2914,7 @@ pre-commit = [
 [package.metadata]
 requires-dist = [
     { name = "bmt" },
+    { name = "bracex", specifier = ">=2.6" },
     { name = "db-dtypes" },
     { name = "faker" },
     { name = "gcsfs", specifier = "==2024.3.1" },
