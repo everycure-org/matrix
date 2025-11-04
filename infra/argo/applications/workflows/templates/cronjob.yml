@@ -76,10 +76,10 @@ spec:
             resources:
               requests:
                 cpu: 100m
-                memory: 512Mi
+                memory: 1Gi
               limits:
-                cpu: 200m
-                memory: 4Gi
+                cpu: 20000m
+                memory: 8Gi
           restartPolicy: OnFailure
           serviceAccountName: argo-workflow-cleanup
 ---
