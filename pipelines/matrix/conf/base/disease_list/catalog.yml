@@ -130,9 +130,9 @@ disease_list.int.disease_list_raw:
 #############################################
 
 # The final disease list
-disease_list.int.disease_list:
+disease_list.prm.disease_list:
   type: pandas.CSVDataset
-  <<: *_layer_int
+  <<: *_layer_prm
   filepath: ${globals:paths.release}/disease_list.tsv
   save_args:
     sep: "\t"

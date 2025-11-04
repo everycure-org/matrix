@@ -407,7 +407,7 @@ def extract_disease_list_raw(
                 .str.replace("http://purl.obolibrary.org/obo/mondo#", "mondo:", regex=False)
                 .str.replace(">", "", regex=False)
             )
-
+        df.columns = [col.replace("?", "") for col in df.columns]
         logger.info(f"Extracted {len(df)} diseases in raw list")
         return df
 
@@ -454,7 +454,7 @@ def extract_mondo_metrics(
                     .str.replace("http://purl.obolibrary.org/obo/mondo#", "mondo:", regex=False)
                     .str.replace(">", "", regex=False)
                 )
-
+        df.columns = [col.replace("?", "") for col in df.columns]
         logger.info(f"Extracted metrics for {len(df)} diseases")
         return df
 
