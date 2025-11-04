@@ -49,13 +49,39 @@ filtering:
     filter_biolink_edges:
       _object: matrix.pipelines.filtering.filters.BiolinkDeduplicateEdges
 
-    # filter_triples:
-    #   _object: matrix.pipelines.filtering.filters.TriplePattern
-    #   exclude: False 
-    #   triples:
-        #- ["biolink:Disease", "biolink:superclass_of", "biolink:Disease"]
-        #- ["biolink:Drug", "biolink:subclass_of", "biolink:Drug"]
-        #- ["biolink:Protein", "biolink:subclass_of", "biolink:Drug"]
+    filter_triples:
+      _object: matrix.pipelines.filtering.filters.TriplePattern
+      exclude: False 
+      triples:
+        - ["biolink:Drug", "biolink:affected_by", "biolink:Protein"]
+        - ["biolink:Protein", "biolink:affected_by", "biolink:Drug"]
+        - ["biolink:Drug",    "biolink:directly_physically_interacts_with", "biolink:Protein"]
+        - ["biolink:Protein", "biolink:directly_physically_interacts_with", "biolink:Drug"]
+        - ["biolink:Disease", "biolink:associated_with", "biolink:Protein"]
+        - ["biolink:Protein", "biolink:associated_with", "biolink:Disease"]
+        - ["biolink:Disease", "biolink:has_phenotype", "biolink:PhenotypicFeature"]
+        - ["biolink:PhenotypicFeature", "biolink:has_phenotype", "biolink:Disease"]
+        - ["biolink:PhenotypicFeature", "biolink:superclass_of", "biolink:PhenotypicFeature"]
+        - ["biolink:Disease", "biolink:superclass_of", "biolink:Disease"]
+# physical edge set
+        - ["biolink:Protein", "biolink:interacts_with", "biolink:Protein"]
+# pathway edges set 
+        - ["biolink:Pathway", "biolink:interacts_with", "biolink:Pathway"]
+        - ["biolink:Protein", "biolink:interacts_with", "biolink:Pathway"]
+        - ["biolink:Pathway", "biolink:interacts_with", "biolink:Protein"]
+# biological process edges set 
+        - ["biolink:BiologicalProcess", "biolink:superclass_of", "biolink:BiologicalProcess"]
+        - ["biolink:Protein", "biolink:interacts_with", "biolink:BiologicalProcess"]
+        - ["biolink:BiologicalProcess", "biolink:interacts_with", "biolink:Protein"]
+# molecular function edges set 
+        - ["biolink:MolecularFunction", "biolink:superclass_of", "biolink:MolecularFunction"]
+        - ["biolink:Protein", "biolink:interacts_with", "biolink:MolecularFunction"]
+        - ["biolink:MolecularFunction", "biolink:interacts_with", "biolink:Protein"]
+        # - ["biolink:BiologicalProcess", "biolink:interacts_with", "biolink:Protein"]
+
+
+        # - ["biolink:Drug", "biolink:subclass_of", "biolink:Drug"]
+        # - ["biolink:Protein", "biolink:subclass_of", "biolink:Drug"]
         # - ["biolink:Drug", "biolink:has_part", "biolink:Drug"]
         # - ["biolink:Drug", "biolink:related_to", "biolink:Drug"]
         # - ["biolink:Drug", "biolink:close_match", "biolink:Drug"]
