@@ -36,11 +36,6 @@ def process_input_filepaths(
             bracex.expand(path)
         input_paths[idx]["fold_paths_list"] = expanded_paths_list
 
-    # Check uniqueness of paths
-    all_paths = [path for model in input_paths for path in model["fold_paths_list"]]
-    if len(set(all_paths)) != len(all_paths):
-        raise ValueError("All filepaths must be unique.")
-
     # Check values of file-formats
     file_formats = {model["file_format"] for model in input_paths}
     allowed_formats = ["csv", "parquet"]
