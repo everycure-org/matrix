@@ -12,7 +12,7 @@ run_comparison:
     input_paths:
       # Expected format:
       # - name: <Name of model>
-      #   file_path_list: <List of filepaths for all folds. Brace expansion patterns are accepted. 
+      #   file_path_list: <List of filepaths for all folds. Brace expansion patterns are accepted to collect all folds. 
       #     -  e.g. "dir/fold_{0,1,2}/preds" or "dir/fold_{0..2}/preds"
       #   file_format: "parquet" or "csv"
       #   score_col_name: <Name of column containing drug-disease pair scores>
