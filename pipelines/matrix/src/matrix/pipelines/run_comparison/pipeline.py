@@ -24,7 +24,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ArgoNode(
                 func=nodes.process_input_filepaths,
                 inputs=[
-                    "params:run_comparison.input_paths",
+                    "params:run_comparison.input_data.input_paths",
                 ],
                 outputs="run_comparison.input_matrices",
                 name=f"process_input_filepaths",
@@ -34,8 +34,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "run_comparison.input_matrices",
                     "params:run_comparison.available_ground_truth_cols",
-                    "params:run_comparison.perform_multifold_uncertainty_estimation",
-                    "params:run_comparison.assert_data_consistency",
+                    "params:run_comparison.input_data.apply_harmonization",
                 ],
                 outputs=["run_comparison.combined_pairs", "run_comparison.predictions_info"],
                 name=f"combine_matrix_pairs",
@@ -60,8 +59,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ArgoNode(
                     func=nodes.run_evaluation,
                     inputs=[
-                        "params:run_comparison.perform_multifold_uncertainty_estimation",
-                        "params:run_comparison.perform_bootstrap_uncertainty_estimation",
+                        "params:run_comparison.perform_bootstrap",
                         f"params:run_comparison.evaluations.{evaluation}",
                         "run_comparison.combined_predictions",
                         "run_comparison.predictions_info",
@@ -72,8 +70,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ArgoNode(
                     func=nodes.plot_results,
                     inputs=[
-                        "params:run_comparison.perform_multifold_uncertainty_estimation",
-                        "params:run_comparison.perform_bootstrap_uncertainty_estimation",
+                        "params:run_comparison.perform_bootstrap",
                         f"params:run_comparison.evaluations.{evaluation}",
                         f"run_comparison.{evaluation}.results",
                         "run_comparison.combined_pairs",
