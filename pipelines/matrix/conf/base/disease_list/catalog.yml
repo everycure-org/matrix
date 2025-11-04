@@ -95,6 +95,16 @@ disease_list.int.subtypes_template:
     sep: "\t"
     index: false
 
+disease_list.int.subtypes_counts:
+  type: pandas.CSVDataset
+  <<: *_layer_int
+  filepath: ${globals:paths.tmp}/disease_list/subtypes_counts.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"
+    index: false
+
 disease_list.int.mondo_metrics:
   type: pandas.CSVDataset
   <<: *_layer_int
