@@ -86,11 +86,17 @@ def test_model_specific_abstract_class(constant_score_data):
     )
 
     # When the concrete methods are called
-    single_fold_results = evaluation.evaluate_single_fold(combined_predictions, predictions_info)
+    predictions_info_single_fold = predictions_info.copy()
+    predictions_info_single_fold["num_folds"] = 1
+    single_fold_results = evaluation.evaluate_single_fold(combined_predictions, predictions_info_single_fold)
     multi_fold_results = evaluation.evaluate_multi_fold(combined_predictions, predictions_info)
-    bootstrap_single_fold_results = evaluation.evaluate_bootstrap_single_fold(combined_predictions, predictions_info)
+    bootstrap_single_fold_results = evaluation.evaluate_bootstrap_single_fold(
+        combined_predictions, predictions_info_single_fold
+    )
     bootstrap_multi_fold_results = evaluation.evaluate_bootstrap_multi_fold(combined_predictions, predictions_info)
-    figure = evaluation.plot_results(single_fold_results, combined_predictions, predictions_info, is_plot_errors=False)
+    figure = evaluation.plot_results(
+        single_fold_results, combined_predictions, predictions_info_single_fold, perform_bootstrap=False
+    )
 
     # Then results are as expected
     # Single fold results take first fold as default
