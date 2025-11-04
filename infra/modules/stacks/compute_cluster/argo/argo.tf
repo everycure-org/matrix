@@ -252,11 +252,11 @@ spec:
   source:
     path: ${var.repo_path}/app-of-apps
     repoURL: ${var.repo_url}
-    targetRevision: ${var.repo_revision}
+    targetRevision: nelson/aip-593-no-pr-created-for-v0112-release-completion
     helm:
       parameters:
       - name: spec.source.targetRevision
-        value:  ${var.repo_revision}
+        value:  nelson/aip-593-no-pr-created-for-v0112-release-completion
       - name: spec.source.environment
         value:  ${var.environment}
       - name: spec.source.project_id
