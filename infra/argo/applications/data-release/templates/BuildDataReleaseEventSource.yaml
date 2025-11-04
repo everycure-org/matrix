@@ -25,3 +25,15 @@ spec:
           - key: workflows.argoproj.io/phase
             operation: ==
             value: "Succeeded"
+        fields:
+          - key: status.phase
+            operation: ==
+            value: "Succeeded"
+      # Extract only necessary fields to avoid NATS max payload exceeded errors
+      payloadFilter:
+        - key: metadata.name
+        - key: metadata.namespace
+        - key: metadata.labels
+        - key: status.phase
+        - key: status.finishedAt
+        - key: status.startedAt
