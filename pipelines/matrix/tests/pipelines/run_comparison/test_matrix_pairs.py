@@ -4,8 +4,11 @@ import polars as pl
 import pytest
 from matrix.pipelines.run_comparison.matrix_pairs import (
     MatrixPairs,
-    check_base_matrices_consistent,
     give_matrix_pairs_from_lazyframe,
+    harmonize_matrix_pairs,
+)
+from matrix.pipelines.run_comparison.nodes import (
+    check_base_matrices_consistent,
     harmonize_matrix_pairs,
 )
 from polars.testing import assert_frame_equal
