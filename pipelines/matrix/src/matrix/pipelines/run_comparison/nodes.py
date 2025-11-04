@@ -33,7 +33,7 @@ def process_input_filepaths(
     for idx in range(len(input_paths)):
         expanded_paths_list = []
         for path in input_paths[idx]["fold_paths_list"]:
-            bracex.expand(path)
+            expanded_paths_list.extend(bracex.expand(path))
         input_paths[idx]["fold_paths_list"] = expanded_paths_list
 
     # Check values of file-formats
