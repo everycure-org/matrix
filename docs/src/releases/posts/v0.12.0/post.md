@@ -19,11 +19,22 @@ authors:
 
 No breaking changes in this release.
 
+
+### Data Release Summary
+**Knowledge Graph**
+v0.12.0 contains RTX-KG2, ROBOKOP, and PrimeKG, see our [release history](https://docs.dev.everycure.org/releases/release_history/) page for versioning details of each KG. Please note that to make PrimeKG Biolink compliant, we have unmerged diseases which were merged into one concept, therefore this KG is not exactly the same as the KG used for TxGNN. 
+This release also introduces an ABox/TBox classification on all edges in the integrated graph based on the Biolink edge type, which can be used for filtering/modeling experiments. 
+The v0.12.0 release of the EC Integrated KG is constructed with the version 2.3.26 of Node Normalizer without issue, and can be used for modelling experiments with the new drugs list (see below)
+
+**Drug List**
+We are now using a new manually curated drug list in the MATRIX pipeline, which is shorter than the previous drugs list and mainly focused on FDA-approved drugs of therapeutic value which the EC Medical Team find most relevant with persisting EC IDs (more documentation to come). This means the size of the matrix will now be smaller, which is expected to change how modelling evaluation metrics look. The new drug list file can be [found here](https://console.cloud.google.com/storage/browser/data.dev.everycure.org/data/01_RAW/drug_list/v0.2.0-temp;tab=objects?hl=en&inv=1&invt=Ab409g&project=mtrx-hub-dev-3of&prefix=&forceOnObjectsSortingFiltering=false) (will also be available through core entities release)
+The MATRIX pipeline will consume the new drug list by default, but is backwards compatible with the previous drug list (any release before v0.11.3)
+
 ### Exciting New Features 🎉
 
 - **Automated primary knowledge source documentation pipeline**: Introduced a new documentation pipeline that automatically generates content for primary knowledge sources, streamlining the documentation process and ensuring consistency across knowledge graph sources [#1846](https://github.com/everycure-org/matrix/pull/1846)
 
-- **ABox/TBox node classification**: Added support for distinguishing between ABox (assertional) and TBox (terminological) nodes in the knowledge graph, enabling better ontological reasoning and knowledge representation [#1895](https://github.com/everycure-org/matrix/pull/1895)
+- **ABox/TBox node classification**: Added support for distinguishing between ABox (assertional) and TBox (terminological) edges in the knowledge graph, enabling better ontological reasoning and knowledge representation [#1895](https://github.com/everycure-org/matrix/pull/1895)
 
 ### Experiments 🧪
 
