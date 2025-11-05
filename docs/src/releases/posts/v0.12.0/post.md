@@ -25,13 +25,13 @@ No breaking changes in this release.
 
 - **ABox/TBox node classification**: Added support for distinguishing between ABox (assertional) and TBox (terminological) nodes in the knowledge graph, enabling better ontological reasoning and knowledge representation [#1895](https://github.com/everycure-org/matrix/pull/1895)
 
-- **MLflow image pull issue resolution**: Fixed critical MLflow deployment issues caused by Bitnami registry changes, ensuring reliable experiment tracking and model management [#1891](https://github.com/everycure-org/matrix/pull/1891)
-
 ### Experiments 🧪
 
-No experiment reports in this release.
+> Lee placeholder
 
 ### Bugfixes 🐛
+
+- **MLflow image pull issue resolution**: Fixed critical MLflow deployment issues caused by Bitnami registry changes, ensuring reliable experiment tracking and model management [#1891](https://github.com/everycure-org/matrix/pull/1891)
 
 - **Release patch pipeline fix**: Added missing `document_kg` to the release patch pipeline, ensuring all necessary components are included in patch releases [#1913](https://github.com/everycure-org/matrix/pull/1913)
 
