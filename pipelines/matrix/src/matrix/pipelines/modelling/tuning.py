@@ -1,12 +1,17 @@
+import logging
 from typing import List
 
 import numpy as np
+from joblib import Parallel, delayed
 from sklearn.base import BaseEstimator, MetaEstimatorMixin
 from sklearn.model_selection._split import _BaseKFold
-from skopt import gp_minimize
+from skopt import Optimizer
 from skopt.plots import plot_convergence
 from skopt.space.space import Dimension
-from skopt.utils import use_named_args
+
+from matrix.pipelines.modelling.utils import get_best_parallel_eval
+
+logger = logging.getLogger(__name__)
 
 
 class NopTuner(BaseEstimator, MetaEstimatorMixin):
@@ -45,9 +50,12 @@ class NopTuner(BaseEstimator, MetaEstimatorMixin):
 
 
 class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
-    """Guassian Process based hyperparameter tuner.
+    """Gaussian Process based hyperparameter tuner with parallel evaluation support.
 
-    Adaptor class to wrap skopt's gp_minimize into sklearn's BaseEstimator compatible type.
+    Adaptor class that uses skopt's Optimizer with ask/tell pattern to enable
+    parallel evaluation of hyperparameter configurations. When the underlying
+    estimator has n_jobs=-1, multiple hyperparameter configurations will be
+    evaluated in parallel.
     """
 
     def __init__(
@@ -58,6 +66,7 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
         *,
         splitter: _BaseKFold = None,
         n_calls: int = 100,
+        n_parallel_trials: int = 1,
     ) -> None:
         """Initialize the tuner.
 
@@ -67,12 +76,14 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
             scoring: Scoring function to evaluate the model.
             splitter: Splitter to use for cross-validation.
             n_calls: Number of calls to the objective function.
+            n_parallel_trials: Number of parallel trials to evaluate.
         """
-        self.estimator = estimator
-        self._dimensions = dimensions
-        self._scoring = scoring
-        self._splitter = splitter
-        self._n_calls = n_calls
+        self.n_parallel_trials = n_parallel_trials
+        self.estimator, self.n_parallel_evals = get_best_parallel_eval(estimator, n_parallel_trials)
+        self.dimensions = dimensions
+        self.scoring = scoring
+        self.splitter = splitter
+        self.n_calls = n_calls
         super().__init__()
 
     def fit(self, X, y=None, **params):
@@ -87,8 +98,7 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
             Fitted estimator.
         """
 
-        @use_named_args(self._dimensions)
-        def evaluate_model(**params):
+        def evaluate_model(param_values):
             """Function to evaluate model using the given splitter.
 
             Function evaluates function using the given splitter and scoring
@@ -101,22 +111,64 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
                 without including these columns as features in the trained model.
 
             Args:
-                **params: Parameters to set on the estimator.
+                param_values: List of parameter values to set on the estimator.
             """
-            self.estimator.set_params(**params)
+            # Convert parameter values to dictionary
+            params_dict = {param.name: val for param, val in zip(self.dimensions, param_values)}
+            self.estimator.set_params(**params_dict)
 
             scores = []
-            for train, test in self._splitter.split(X, y):
-                self.estimator.fit(X[train], y[train])
-                y_pred = self.estimator.predict(X[test])
-                scores.append(self._scoring(y_pred, y[test]))
+            for train, test in self.splitter.split(X, y):
+                X_train_split = X[train]
+                self.estimator.fit(X_train_split, y[train])
+                X_test_split = X[test]
+                y_pred = self.estimator.predict(X_test_split)
+                scores.append(self.scoring(y_pred, y[test]))
 
             return 1.0 - np.average(scores)
 
-        result = gp_minimize(evaluate_model, self._dimensions, n_calls=self._n_calls)
+        # Create optimizer with Gaussian Process
+        optimizer = Optimizer(
+            dimensions=self.dimensions,
+            base_estimator="GP",
+            acq_func="gp_hedge",
+            acq_optimizer="lbfgs",
+            n_initial_points=min(10, self.n_calls // 2),  # Initial random points
+            random_state=self.estimator.random_state if hasattr(self.estimator, "random_state") else None,
+        )
 
-        self.convergence_plot = plot_convergence(result).figure
+        # Run optimization with parallel evaluation
+        all_results = []
+        for _ in range(self.n_calls):
+            # Ask for next point(s) to evaluate
+            if self.n_parallel_evals == 1:
+                # Sequential: ask for one point at a time
+                next_x = optimizer.ask()
+                next_y = evaluate_model(next_x)
+                result = optimizer.tell(next_x, next_y)
+                all_results.append(result)
+            else:
+                # Parallel: ask for multiple points and evaluate in parallel
+                n_points = min(self.n_parallel_evals, self.n_calls - len(all_results))
+                next_xs = optimizer.ask(n_points=n_points)
 
-        self.best_params_ = {param.name: val for param, val in zip(self._dimensions, result.x)}
+                # Evaluate all points in parallel using joblib
+                next_ys = Parallel(n_jobs=self.n_parallel_evals)(delayed(evaluate_model)(x) for x in next_xs)
 
-        return self.estimator.set_params(**params)
+                # Tell optimizer about all results
+                result = optimizer.tell(next_xs, next_ys)
+                all_results.append(result)
+
+                # Break if we've reached n_calls
+                if len(optimizer.Xi) >= self.n_calls:
+                    break
+
+        # Get best parameters
+        best_idx = np.argmin(optimizer.yi)
+        best_x = optimizer.Xi[best_idx]
+
+        self.convergence_plot = plot_convergence(all_results[-1]).figure
+
+        self.best_params_ = {param.name: val for param, val in zip(self.dimensions, best_x)}
+
+        return self.estimator.set_params(**self.best_params_)
