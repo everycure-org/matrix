@@ -78,7 +78,10 @@ def test_filters_to_relevant_sources(spark):
 
     unified_edges = spark.createDataFrame(data, schema)
 
-    result = integrate_all_metadata(all_metadata, unified_edges)
+    # Provide minimal templates dict for table generation
+    templates = {"table_columns": []}
+
+    result, pks_table = integrate_all_metadata(all_metadata, unified_edges, templates)
 
     assert len(result) == 2
     assert "source1" in result
@@ -108,7 +111,10 @@ def test_creates_default_for_missing_metadata(spark):
 
     unified_edges = spark.createDataFrame(data, schema)
 
-    result = integrate_all_metadata(all_metadata, unified_edges)
+    # Provide minimal templates dict for table generation
+    templates = {"table_columns": []}
+
+    result, pks_table = integrate_all_metadata(all_metadata, unified_edges, templates)
 
     assert len(result) == 2
     assert result["source1"]["infores"]["name"] == "Source 1"
