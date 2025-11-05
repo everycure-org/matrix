@@ -22,11 +22,22 @@ logger = logging.getLogger(__name__)
 from oaklib.datamodels.vocabulary import IS_A
 
 
-def extract_metadata_from_mondo(mondo_owl: str) -> Dict[str, Any]:
-    """Process MONDO OWL to extract labels, metadata, and obsoletes in a single pass.
+def _clean_sparql_results(df: pd.DataFrame) -> pd.DataFrame:
+    for col in df.columns:
+        df[col] = (
+            df[col]
+            .str.replace("?", "", regex=False)
+            .str.replace("<", "", regex=False)
+            .str.replace(">", "", regex=False)
+            .str.replace("http://purl.obolibrary.org/obo/MONDO_", "MONDO:", regex=False)
+            .str.replace("http://purl.obolibrary.org/obo/mondo#", "mondo:", regex=False)
+        )
+    df.columns = [col.replace("?", "") for col in df.columns]
+    return df
 
-    This function combines multiple extraction operations that all depend on mondo_owl
-    to avoid redundant I/O operations.
+
+def extract_metadata_from_mondo(mondo_owl: str) -> Dict[str, Any]:
+    """Extract labels, metadata, and obsoletes from the Mondo ontology.
 
     Args:
         mondo_owl: MONDO ontology content in OWL format
@@ -37,61 +48,48 @@ def extract_metadata_from_mondo(mondo_owl: str) -> Dict[str, Any]:
             - mondo_metadata: DataFrame with MONDO version info
             - mondo_obsoletes: DataFrame with obsolete terms
     """
-    logger.info("Processing MONDO OWL: extracting labels, metadata, and obsoletes")
+    logger.info("Processing Mondo ontology: extracting labels, metadata, and obsoletes")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
 
         # Write OWL content to temporary file once
+        # TODO this probably needs to be done differently
         input_owl = tmpdir_path / "mondo.owl"
         with open(input_owl, "w") as f:
             f.write(mondo_owl)
 
-        # Extract labels
-        logger.info("Extracting MONDO labels")
+        # Define output paths
+        # TODO this probably needs to be done differently
         labels_tsv = tmpdir_path / "mondo_labels.tsv"
-        cmd = f'robot export -i "{input_owl}" -f tsv --header "ID|LABEL" --export "{labels_tsv}"'
+        metadata_tsv = tmpdir_path / "metadata.tsv"
+        obsoletes_tsv = tmpdir_path / "obsoletes.tsv"
+
+        # TODO this is probably wrong (use parameters.yaml?)
+        queries_dir = Path(__file__).parent / "queries"
+
+        # Run single ROBOT pipeline with chained commands
+        cmd = f"""robot \
+            export -i "{input_owl}" -f tsv --header "ID|LABEL" --export "{labels_tsv}" \
+            query -f tsv \
+                --query "{queries_dir / "ontology-metadata.sparql"}" "{metadata_tsv}" \
+                --query "{queries_dir / "mondo-obsoletes.sparql"}" "{obsoletes_tsv}" """
+
         run_subprocess(cmd, check=True, stream_output=True)
+
+        # Load and process labels
         mondo_labels = pd.read_csv(labels_tsv, sep="\t")
         logger.info(f"Extracted {len(mondo_labels)} MONDO labels")
 
-        # Extract metadata
-        logger.info("Extracting MONDO metadata")
-        queries_dir = Path(__file__).parent / "queries"
-        metadata_tsv = tmpdir_path / "metadata.tsv"
-        cmd = (
-            f'robot query -i "{input_owl}" -f tsv --query "{queries_dir / "ontology-metadata.sparql"}" "{metadata_tsv}"'
-        )
-        run_subprocess(cmd, check=True, stream_output=True)
+        # Load and post-process metadata
         mondo_metadata = pd.read_csv(metadata_tsv, sep="\t", dtype=str, na_filter=False)
-        # Post-process metadata
-        for col in mondo_metadata.columns:
-            mondo_metadata[col] = (
-                mondo_metadata[col]
-                .str.replace("?", "", regex=False)
-                .str.replace("<", "", regex=False)
-                .str.replace(">", "", regex=False)
-            )
+        mondo_metadata = _clean_sparql_results(mondo_metadata)
         logger.info("Extracted MONDO metadata")
 
-        # Extract obsoletes
-        logger.info("Extracting MONDO obsoletes")
-        obsoletes_tsv = tmpdir_path / "obsoletes.tsv"
-        cmd = (
-            f'robot query -i "{input_owl}" -f tsv --query "{queries_dir / "mondo-obsoletes.sparql"}" "{obsoletes_tsv}"'
-        )
-        run_subprocess(cmd, check=True, stream_output=True)
+        # Load and post-process obsoletes
         mondo_obsoletes = pd.read_csv(obsoletes_tsv, sep="\t", dtype=str, na_filter=False)
-        # Post-process obsoletes
-        for col in mondo_obsoletes.columns:
-            mondo_obsoletes[col] = (
-                mondo_obsoletes[col]
-                .str.replace("?", "", regex=False)
-                .str.replace("<", "", regex=False)
-                .str.replace(">", "", regex=False)
-                .str.replace('"', "", regex=False)
-                .str.replace("http://purl.obolibrary.org/obo/MONDO_", "MONDO:", regex=False)
-            )
+        mondo_obsoletes = _clean_sparql_results(mondo_obsoletes)
+
         logger.info(f"Extracted {len(mondo_obsoletes)} obsolete MONDO terms")
 
         return {
@@ -101,6 +99,7 @@ def extract_metadata_from_mondo(mondo_owl: str) -> Dict[str, Any]:
         }
 
 
+# TODO needs to be refactored!
 def create_billable_icd10_template(
     icd10_codes: pd.DataFrame,
     mondo_sssom: pd.DataFrame,
@@ -133,7 +132,6 @@ def create_billable_icd10_template(
     rows = []
 
     for icd10_code in icd10_codes_billable:
-        # Find MONDO IDs that have exactMatch to this ICD-10 code
         row_to_add = mondo_sssom[
             (mondo_sssom["predicate_id"] == "skos:exactMatch") & (mondo_sssom["object_id"] == icd10_code)
         ][["subject_id", "object_id"]].copy()
@@ -161,7 +159,7 @@ def _is_parent(mondo, parent_id, child_id):
         return False
 
 
-def match_patterns_efficiently(df_labels, i_labels, patterns, mondo):
+def _match_patterns_efficiently(df_labels, i_labels, patterns, mondo):
     label_match = []
     curie_match = []
     label_pattern = []
@@ -219,7 +217,7 @@ def create_subtypes_template(
     from oaklib import get_adapter
     from oaklib.datamodels.vocabulary import IS_A
 
-    # Write MONDO OWL content to temporary file for OAK to read
+    # TODO probably wrong: Write MONDO OWL content to temporary file for OAK to read
     tmp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".owl", delete=False)
     tmp_file.write(mondo_owl)
     tmp_file.flush()
@@ -287,7 +285,7 @@ def create_subtypes_template(
             "xylinked_x": r"[xyXY][-]linked[ ](.*)$",
         }
 
-        df_disease_list_matched = match_patterns_efficiently(mondo_labels, i_labels, patterns, mondo)
+        df_disease_list_matched = _match_patterns_efficiently(mondo_labels, i_labels, patterns, mondo)
 
         df_disease_list_matched_subset_with_matched_label_ids = df_disease_list_matched[
             ["category_class", "label", "label_match", "curie_match", "label_pattern"]
@@ -350,33 +348,35 @@ def create_subtypes_template(
         Path(mondo_owl_path).unlink(missing_ok=True)
 
 
-def merge_templates_into_mondo(
+def process_mondo_with_templates(
     mondo_owl: str,
     billable_icd10: pd.DataFrame,
     subtypes: pd.DataFrame,
-) -> str:
-    """Merge all disease templates into MONDO ontology using ROBOT.
+    disease_list_filters_query: str,
+    metrics_query: str,
+) -> Dict[str, Any]:
+    """Merge templates into MONDO and extract disease list data.
 
-    This function mimics the Makefile logic for mondo-with-manually-curated-subsets.owl:
-    - Merges multiple ROBOT templates into MONDO
-    - Runs SPARQL update queries to inject subsets and groupings
-    - Annotates and converts the final ontology
 
     Args:
-        mondo_owl: Path to base MONDO ontology
-        billable_icd10: Billable ICD-10 template
-        subtypes: Subtypes template
+        mondo_owl: Base MONDO ontology content
+        billable_icd10: Billable ICD-10 template DataFrame
+        subtypes: Subtypes template DataFrame
+        disease_list_filters_query: Path to disease list filters SPARQL query
+        metrics_query: Path to metrics SPARQL query
 
     Returns:
-        Path to modified MONDO ontology with subset annotations
+        Dictionary containing:
+            - disease_list_raw: DataFrame with raw disease list features
+            - mondo_metrics: DataFrame with disease metrics
+            - mondo_preprocessed: Preprocessed MONDO ontology content (for downstream use)
     """
-    logger.info("Merging disease templates into MONDO ontology")
+    logger.info("Processing MONDO with templates and extracting data in single ROBOT pipeline")
 
-    # Create temporary files for templates
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
 
-        # Write MONDO OWL content to temporary file
+        # TODO Fix: Write MONDO OWL content to temporary file
         mondo_path = tmpdir_path / "mondo.owl"
         with open(mondo_path, "w") as f:
             f.write(mondo_owl)
@@ -387,12 +387,13 @@ def merge_templates_into_mondo(
         billable_icd10.to_csv(billable_path, sep="\t", index=False)
         subtypes.to_csv(subtypes_path, sep="\t", index=False)
 
-        # Build ROBOT command to merge all templates
-        output_path = tmpdir_path / "mondo-with-subsets.owl"
-
-        # Get the queries directory path
+        # Define output paths
+        preprocessed_path = tmpdir_path / "mondo-with-subsets.owl"
+        disease_list_tsv = tmpdir_path / "disease-list-raw.tsv"
+        metrics_tsv = tmpdir_path / "mondo-metrics.tsv"
         queries_dir = Path(__file__).parent / "queries"
 
+        # Run single ROBOT pipeline with template merging, updates, and queries
         cmd = f"""robot \
             template -i "{mondo_path}" \
             --merge-after \
@@ -403,117 +404,41 @@ def merge_templates_into_mondo(
             query --update "{queries_dir / "inject-subset-declaration.ru"}" \
             query --update "{queries_dir / "downfill-disease-groupings.ru"}" \
             query --update "{queries_dir / "disease-groupings-other.ru"}" \
-            -o "{output_path}" """
+            query -f tsv \
+                --query "{disease_list_filters_query}" "{disease_list_tsv}" \
+                --query "{metrics_query}" "{metrics_tsv}" \
+            merge -o "{preprocessed_path}" """
 
-        logger.info("Running ROBOT template merge command")
+        logger.info("Running ROBOT pipeline")
         run_subprocess(cmd, check=True, stream_output=True)
 
-        # Read the output file and return its contents as a string
-        # For now, we'll return the path - the catalog should handle this as text.TextDataset
-        with open(output_path, "r") as f:
-            owl_content = f.read()
-
+        # Read preprocessed MONDO for downstream use
+        with open(preprocessed_path, "r") as f:
+            mondo_preprocessed = f.read()
         logger.info("Successfully merged templates into MONDO ontology")
-        return owl_content
+
+        # Load and post-process disease list
+        disease_list_raw = pd.read_csv(disease_list_tsv, sep="\t", dtype=str, na_filter=False)
+        disease_list_raw = _clean_sparql_results(disease_list_raw)
+        logger.info(f"Extracted {len(disease_list_raw)} diseases in raw list")
+
+        # Load and post-process metrics
+        mondo_metrics = pd.read_csv(metrics_tsv, sep="\t", dtype=str, na_filter=False)
+        mondo_metrics = _clean_sparql_results(mondo_metrics)
+
+        logger.info(f"Extracted metrics for {len(mondo_metrics)} diseases")
+
+        return {
+            "disease_list_raw": disease_list_raw,
+            "mondo_metrics": mondo_metrics,
+            "mondo_preprocessed": mondo_preprocessed,
+        }
 
 
-def extract_disease_list_raw(
-    mondo_preprocessed: str,
-    sparql_query_path: str,
-) -> pd.DataFrame:
-    """Extract raw features of the disease list from Mondo using ROBOT query.
-
-    Args:
-        mondo_preprocessed: MONDO ontology content with subset annotations
-        sparql_query_path: Path to SPARQL query file (matrix-disease-list-filters.sparql)
-
-    Returns:
-        DataFrame with raw disease list features
+# TODO the following function might not be needed anymore. It basically sets the "official_matrix_filter" which is not used in production
+def _matrix_disease_filter(df_disease_list_unfiltered):
     """
-    logger.info("Extracting raw disease list features")
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir_path = Path(tmpdir)
-
-        # Write OWL content to temporary file
-        input_owl = tmpdir_path / "mondo-with-subsets.owl"
-        output_tsv = tmpdir_path / "disease-list-raw.tsv"
-
-        with open(input_owl, "w") as f:
-            f.write(mondo_preprocessed)
-
-        # Run ROBOT query command
-        cmd = f'robot query -i "{input_owl}" -f tsv --query "{sparql_query_path}" "{output_tsv}"'
-        run_subprocess(cmd, check=True, stream_output=True)
-
-        # Read the output TSV with dtype specification to handle mixed types
-        df = pd.read_csv(output_tsv, sep="\t", dtype=str, na_filter=False)
-
-        # Post-process to clean up SPARQL output
-        # Remove ? prefix, angle brackets, and clean up IRIs
-        for col in df.columns:
-            df[col] = (
-                df[col]
-                .str.replace("?", "", regex=False)
-                .str.replace("<http://purl.obolibrary.org/obo/MONDO_", "MONDO:", regex=False)
-                .str.replace("http://purl.obolibrary.org/obo/mondo#", "mondo:", regex=False)
-                .str.replace(">", "", regex=False)
-            )
-        df.columns = [col.replace("?", "") for col in df.columns]
-        logger.info(f"Extracted {len(df)} diseases in raw list")
-        return df
-
-
-def extract_mondo_metrics(
-    mondo_preprocessed: str,
-    sparql_query_path: str,
-) -> pd.DataFrame:
-    """Extract metrics for disease list filtering using ROBOT query.
-
-    Args:
-        mondo_preprocessed: MONDO ontology content with subset annotations
-        sparql_query_path: Path to SPARQL query file (matrix-disease-list-metrics.sparql)
-
-    Returns:
-        DataFrame with disease metrics
-    """
-    logger.info("Extracting disease metrics")
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir_path = Path(tmpdir)
-
-        # Write OWL content to temporary file
-        input_owl = tmpdir_path / "mondo-with-subsets.owl"
-        output_tsv = tmpdir_path / "mondo-metrics.tsv"
-
-        with open(input_owl, "w") as f:
-            f.write(mondo_preprocessed)
-
-        # Run ROBOT query command
-        cmd = f'robot query -i "{input_owl}" -f tsv --query "{sparql_query_path}" "{output_tsv}"'
-        run_subprocess(cmd, check=True, stream_output=True)
-
-        # Read the output TSV
-        df = pd.read_csv(output_tsv, sep="\t")
-
-        # Post-process to clean up SPARQL output (mimicking sed commands in Makefile)
-        for col in df.columns:
-            if df[col].dtype == object:
-                df[col] = (
-                    df[col]
-                    .str.replace("?", "", regex=False)
-                    .str.replace("<http://purl.obolibrary.org/obo/MONDO_", "MONDO:", regex=False)
-                    .str.replace("http://purl.obolibrary.org/obo/mondo#", "mondo:", regex=False)
-                    .str.replace(">", "", regex=False)
-                )
-        df.columns = [col.replace("?", "") for col in df.columns]
-        logger.info(f"Extracted metrics for {len(df)} diseases")
-        return df
-
-
-def matrix_disease_filter(df_disease_list_unfiltered):
-    """
-    Filter a DataFrame by a specific column and value.
+    The original matrix disease filtering function
 
     Parameters
     ----------
@@ -600,24 +525,7 @@ def matrix_disease_filter(df_disease_list_unfiltered):
     return df_disease_list_unfiltered
 
 
-def matrix_filter_final_columns(df_disease_list):
-    """
-    Filter a DataFrame by a specific column and value.
-
-    Parameters
-    ----------
-    df_disease_list : pandas.DataFrame
-        The disease list with columns that are used for filtering.
-
-    Returns
-    -------
-    pandas.DataFrame
-        The disease list with only the relevant columns.
-    """
-    return df_disease_list[["category_class", "label", "definition", "synonyms", "subsets", "crossreferences"]]
-
-
-def extract_groupings(subsets, groupings):
+def _extract_groupings(subsets, groupings):
     """Extract groupings for list of subsets."""
     result = {grouping: [] for grouping in groupings}
 
@@ -637,7 +545,7 @@ def extract_groupings(subsets, groupings):
     }
 
 
-def is_grouping_heuristic(df):
+def _is_grouping_heuristic(df):
     col_out = "is_grouping_heuristic"
 
     not_grouping = [
@@ -697,7 +605,7 @@ def create_disease_list(
     subtype_group_counts.columns = ["category_class", "count_subtypes"]
 
     # Filter the DataFrame
-    df_matrix_disease_filter_modified = matrix_disease_filter(disease_list_raw)
+    df_matrix_disease_filter_modified = _matrix_disease_filter(disease_list_raw)
 
     curated_disease_groupings = ["harrisons_view", "mondo_txgnn", "mondo_top_grouping"]
     llm_disease_groupings = [
@@ -715,7 +623,7 @@ def create_disease_list(
 
     # Apply the function to extract groupings
     df_disease_groupings_extracted = (
-        df_disease_groupings["subsets"].apply(lambda x: extract_groupings(x, disease_groupings)).apply(pd.Series)
+        df_disease_groupings["subsets"].apply(lambda x: _extract_groupings(x, disease_groupings)).apply(pd.Series)
     )
 
     # Combine with the original DataFrame
@@ -767,7 +675,7 @@ def create_disease_list(
         columns_to_check.append("tag_existing_treatment")
 
     # Compute a general grouping heuristic for the all diseases in the list
-    df_matrix_disease_filter_modified = is_grouping_heuristic(df_matrix_disease_filter_modified)
+    df_matrix_disease_filter_modified = _is_grouping_heuristic(df_matrix_disease_filter_modified)
 
     for col in columns_to_check:
         df_matrix_disease_filter_modified[col] = df_matrix_disease_filter_modified[col].map(
