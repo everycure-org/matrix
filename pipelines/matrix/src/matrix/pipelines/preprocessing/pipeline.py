@@ -1,4 +1,5 @@
 from kedro.pipeline import Pipeline, node, pipeline
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 from . import nodes
 
@@ -35,19 +36,31 @@ def create_robokop_pipeline() -> Pipeline:
     """Robokop preprocessing"""
     return pipeline(
         [
-            node(
+            ArgoNode(
+                name="robokop_fix_nodes",
                 func=nodes.robokop_fix_nodes,
                 inputs="preprocessing.raw.robokop.nodes@polars",
                 outputs="preprocessing.int.robokop.nodes",
-                name="robokop_fix_nodes",
                 tags=["robokop"],
+                argo_config=ArgoResourceConfig(
+                    cpu_request=4,
+                    cpu_limit=4,
+                    memory_limit=256,
+                    memory_request=192,
+                ),
             ),
-            node(
+            ArgoNode(
+                name="robokop_fix_edges",
                 func=nodes.robokop_fix_edges,
                 inputs="preprocessing.raw.robokop.edges@polars",
                 outputs="preprocessing.int.robokop.edges",
-                name="robokop_fix_edges",
                 tags=["robokop"],
+                argo_config=ArgoResourceConfig(
+                    cpu_request=4,
+                    cpu_limit=4,
+                    memory_limit=256,
+                    memory_request=192,
+                ),
             ),
         ]
     )
