@@ -137,6 +137,8 @@ disease_list.prm.disease_list:
   save_args:
     sep: "\t"
     index: false
+  load_args:
+    sep: "\t"
 
 # A file containing basic metadata about the disease list run, in particular
 # which MONDO version was used to generate the disease list

@@ -56,9 +56,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "mondo_owl": "disease_list.raw.mondo_owl",
                 },
                 outputs={
-                    "subtypes_template": "disease_list.int.subtypes_template", 
-                    "subtypes_counts": "disease_list.int.subtypes_counts"
-                    },
+                    "subtypes_template": "disease_list.int.subtypes_template",
+                    "subtypes_counts": "disease_list.int.subtypes_counts",
+                },
                 name="create_subtypes_template",
                 tags=["disease_list", "preparation"],
             ),
