@@ -3,6 +3,16 @@ _layer_int: &_layer_int
     kedro-viz:
       layer: integration
 
+_bigquery_ds: &_bigquery_ds
+  type: matrix_gcp_datasets.gcp.SparkDatasetWithBQExternalTable
+  project_id: ${oc.env:RUNTIME_GCP_PROJECT_ID}
+  dataset: release_${globals:versions.release}
+  file_format: parquet
+  save_args:
+    mode: overwrite
+    labels:
+      git_sha: ${globals:git_sha}
+
 document_kg.int.infores_metadata:
   type: yaml.YAMLDataset
   <<: *_layer_int
@@ -37,3 +47,8 @@ document_kg.int.pks_integrated_kg_list:
   type: pandas.CSVDataset
   <<: *_layer_int
   filepath: ${globals:paths.release}/document_kg/pks_integrated_kg_list.csv
+
+document_kg.prm.all_pks_metadata_table:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.release}/prm/all_pks_metadata_table
+  table: "all_pks_metadata_table"

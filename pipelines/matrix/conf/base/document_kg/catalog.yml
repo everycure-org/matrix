@@ -13,6 +13,12 @@ _layer_prm: &_layer_prm
     kedro-viz:
       layer: primary
 
+_spark_parquet: &_spark_parquet
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
 document_kg.raw.infores:
   type: yaml.YAMLDataset
   <<: *_layer_raw
@@ -108,3 +114,7 @@ document_kg.prm.pks_md:
   type: text.TextDataset
   <<: *_layer_prm
   filepath: ${globals:paths.release}/primary-knowledge-sources.md
+
+document_kg.prm.all_pks_metadata_table:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.release}/prm/all_pks_metadata_table

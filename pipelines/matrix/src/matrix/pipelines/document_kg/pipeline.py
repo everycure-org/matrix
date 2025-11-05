@@ -89,11 +89,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ),
                 node(
                     func=nodes.integrate_all_metadata,
-                    inputs=[
-                        "document_kg.int.all_pks_metadata",
-                        "integration.prm.unified_edges",
-                    ],
-                    outputs="document_kg.prm.pks_yaml",
+                    inputs={
+                        "all_pks_metadata": "document_kg.int.all_pks_metadata",
+                        "unified_edges": "integration.prm.unified_edges",
+                        "templates": "params:document_kg.pks_parsing.templates",
+                    },
+                    outputs=["document_kg.prm.pks_yaml", "document_kg.prm.all_pks_metadata_table"],
                     name="filter_to_relevant_pks",
                 ),
                 node(
