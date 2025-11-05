@@ -1,5 +1,7 @@
-ARG CUDA_IMAGE=nvidia/cuda:12.6.2-cudnn-runtime-ubuntu24.04
+ARG CUDA_IMAGE=ubuntu:24.04
 FROM $CUDA_IMAGE AS build
+
+ENV UV_LINK_MODE=copy
 
 # ---------------------------------
 # ------- GPU/System start ------
@@ -22,6 +24,7 @@ RUN curl -L -o /usr/local/bin/robot.jar https://github.com/ontodev/robot/release
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 LABEL com.nvidia.volumes.needed="nvidia_driver"
+
 # ------- GPU/System end ----------
 # ---------------------------------
 # ------- Dependencies start ------
