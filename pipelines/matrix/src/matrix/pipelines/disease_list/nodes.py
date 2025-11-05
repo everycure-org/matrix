@@ -203,12 +203,18 @@ def _match_patterns_efficiently(df_labels, i_labels, patterns, mondo):
 def create_subtypes_template(
     mondo_labels: pd.DataFrame,
     mondo_owl: str,
+    chromosomal_diseases_root: str,
+    human_diseases_root: str,
+    chromosomal_diseases_exceptions: list,
 ) -> pd.DataFrame:
     """Create template with high granularity disease subtypes.
 
     Args:
         mondo_labels: DataFrame with MONDO labels
         mondo_owl: MONDO ontology
+        chromosomal_diseases_root: Root MONDO ID for chromosomal diseases to exclude
+        human_diseases_root: Root MONDO ID for human diseases to include
+        chromosomal_diseases_exceptions: List of chromosomal disease IDs that should NOT be excluded
 
     Returns:
         DataFrame with subtype template
@@ -231,12 +237,12 @@ def create_subtypes_template(
         # We will exclude chromosomal diseases from the subtype process
         # as they are usually subtyped by chromosomal location
         # making them very different diseases
-        chromosomal_diseases = set(mondo.descendants(["MONDO:0019040"], predicates=[IS_A]))
-        human_diseases = set(mondo.descendants(["MONDO:0700096"], predicates=[IS_A]))
+        chromosomal_diseases = set(mondo.descendants([chromosomal_diseases_root], predicates=[IS_A]))
+        human_diseases = set(mondo.descendants([human_diseases_root], predicates=[IS_A]))
 
         # Some chromosomal diseases are indeed part of a series so we manually remove them
-        chromosomal_diseases.remove("MONDO:0010767")
-        chromosomal_diseases.remove("MONDO:0010763")
+        for exception_id in chromosomal_diseases_exceptions:
+            chromosomal_diseases.remove(exception_id)
 
         # Load the data
         mondo_labels = mondo_labels.dropna(subset=["LABEL"])

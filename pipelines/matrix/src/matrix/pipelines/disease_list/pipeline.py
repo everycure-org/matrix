@@ -59,6 +59,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "mondo_labels": "disease_list.int.mondo_labels",
                     "mondo_owl": "disease_list.raw.mondo_owl",
+                    "chromosomal_diseases_root": "params:mondo_ids.chromosomal_diseases_root",
+                    "human_diseases_root": "params:mondo_ids.human_diseases_root",
+                    "chromosomal_diseases_exceptions": "params:mondo_ids.chromosomal_diseases_exceptions",
                 },
                 outputs={
                     "subtypes_template": "disease_list.int.subtypes_template",

@@ -5,3 +5,17 @@ queries:
   matrix_disease_list_metrics: "src/matrix/pipelines/disease_list/queries/matrix-disease-list-metrics.sparql"
   ontology_metadata: "src/matrix/pipelines/disease_list/queries/ontology-metadata.sparql"
   mondo_obsoletes: "src/matrix/pipelines/disease_list/queries/mondo-obsoletes.sparql"
+
+# MONDO IDs for disease classification and filtering
+mondo_ids:
+  # Root ID for chromosomal diseases (used to exclude from subtype processing)
+  chromosomal_diseases_root: "MONDO:0019040"
+
+  # Root ID for human diseases (used to filter disease list to human diseases only)
+  human_diseases_root: "MONDO:0700096"
+
+  # Chromosomal diseases that are part of a series and should NOT be excluded
+  # These are manually curated exceptions to the chromosomal disease exclusion rule
+  chromosomal_diseases_exceptions:
+    - "MONDO:0010767"  # chromosomal deletion syndrome
+    - "MONDO:0010763"  # chromosomal duplication syndrome
