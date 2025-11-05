@@ -29,12 +29,16 @@ def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             # Stage 1: Data preparation
-            # Extract labels from MONDO ontology for disease identification
+            # Process MONDO OWL once to extract labels, metadata, and obsoletes
             node(
-                func=nodes.extract_mondo_labels,
+                func=nodes.extract_metadata_from_mondo,
                 inputs="disease_list.raw.mondo_owl",
-                outputs="disease_list.int.mondo_labels",
-                name="extract_mondo_labels",
+                outputs={
+                    "mondo_labels": "disease_list.int.mondo_labels",
+                    "mondo_metadata": "disease_list.prm.mondo_metadata",
+                    "mondo_obsoletes": "disease_list.prm.mondo_obsoletes",
+                },
+                name="extract_metadata_from_mondo",
                 tags=["disease_list", "preparation"],
             ),
             # Create template for billable ICD-10 codes by mapping MONDO to ICD-10-CM
@@ -105,29 +109,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="create_disease_list",
                 tags=["disease_list"],
-            ),
-            # Stage 4: Metadata extraction
-            # Extract ontology metadata (version, date, etc.)
-            node(
-                func=nodes.extract_mondo_metadata,
-                inputs={
-                    "mondo_owl": "disease_list.raw.mondo_owl",
-                    "sparql_query_path": "params:queries.ontology_metadata",
-                },
-                outputs="disease_list.prm.mondo_metadata",
-                name="extract_mondo_metadata",
-                tags=["disease_list", "metadata"],
-            ),
-            # Extract obsolete MONDO terms for tracking deprecated diseases
-            node(
-                func=nodes.extract_mondo_obsoletes,
-                inputs={
-                    "mondo_owl": "disease_list.raw.mondo_owl",
-                    "sparql_query_path": "params:queries.mondo_obsoletes",
-                },
-                outputs="disease_list.prm.mondo_obsoletes",
-                name="extract_mondo_obsoletes",
-                tags=["disease_list", "metadata"],
             ),
             # Stage 4: Validation
             node(

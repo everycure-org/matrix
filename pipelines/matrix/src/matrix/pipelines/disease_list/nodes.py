@@ -11,7 +11,7 @@ import logging
 import re
 import tempfile
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict
 
 import pandas as pd
 
@@ -22,36 +22,83 @@ logger = logging.getLogger(__name__)
 from oaklib.datamodels.vocabulary import IS_A
 
 
-def extract_mondo_labels(mondo_owl: str) -> pd.DataFrame:
-    """Extract disease labels from MONDO ontology using ROBOT.
+def extract_metadata_from_mondo(mondo_owl: str) -> Dict[str, Any]:
+    """Process MONDO OWL to extract labels, metadata, and obsoletes in a single pass.
+
+    This function combines multiple extraction operations that all depend on mondo_owl
+    to avoid redundant I/O operations.
 
     Args:
         mondo_owl: MONDO ontology content in OWL format
 
     Returns:
-        DataFrame with disease IDs and labels
+        Dictionary containing:
+            - mondo_labels: DataFrame with disease IDs and labels
+            - mondo_metadata: DataFrame with MONDO version info
+            - mondo_obsoletes: DataFrame with obsolete terms
     """
-    logger.info("Extracting MONDO labels from ontology")
+    logger.info("Processing MONDO OWL: extracting labels, metadata, and obsoletes")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
 
-        # Write OWL content to temporary file
+        # Write OWL content to temporary file once
         input_owl = tmpdir_path / "mondo.owl"
-        output_tsv = tmpdir_path / "mondo_labels.tsv"
-
         with open(input_owl, "w") as f:
             f.write(mondo_owl)
 
-        # Run ROBOT export command to extract ID and LABEL columns
-        cmd = f'robot export -i "{input_owl}" -f tsv --header "ID|LABEL" --export "{output_tsv}"'
+        # Extract labels
+        logger.info("Extracting MONDO labels")
+        labels_tsv = tmpdir_path / "mondo_labels.tsv"
+        cmd = f'robot export -i "{input_owl}" -f tsv --header "ID|LABEL" --export "{labels_tsv}"'
         run_subprocess(cmd, check=True, stream_output=True)
+        mondo_labels = pd.read_csv(labels_tsv, sep="\t")
+        logger.info(f"Extracted {len(mondo_labels)} MONDO labels")
 
-        # Read the exported TSV
-        df = pd.read_csv(output_tsv, sep="\t")
-        logger.info(f"Extracted {len(df)} MONDO labels")
+        # Extract metadata
+        logger.info("Extracting MONDO metadata")
+        queries_dir = Path(__file__).parent / "queries"
+        metadata_tsv = tmpdir_path / "metadata.tsv"
+        cmd = (
+            f'robot query -i "{input_owl}" -f tsv --query "{queries_dir / "ontology-metadata.sparql"}" "{metadata_tsv}"'
+        )
+        run_subprocess(cmd, check=True, stream_output=True)
+        mondo_metadata = pd.read_csv(metadata_tsv, sep="\t", dtype=str, na_filter=False)
+        # Post-process metadata
+        for col in mondo_metadata.columns:
+            mondo_metadata[col] = (
+                mondo_metadata[col]
+                .str.replace("?", "", regex=False)
+                .str.replace("<", "", regex=False)
+                .str.replace(">", "", regex=False)
+            )
+        logger.info("Extracted MONDO metadata")
 
-        return df
+        # Extract obsoletes
+        logger.info("Extracting MONDO obsoletes")
+        obsoletes_tsv = tmpdir_path / "obsoletes.tsv"
+        cmd = (
+            f'robot query -i "{input_owl}" -f tsv --query "{queries_dir / "mondo-obsoletes.sparql"}" "{obsoletes_tsv}"'
+        )
+        run_subprocess(cmd, check=True, stream_output=True)
+        mondo_obsoletes = pd.read_csv(obsoletes_tsv, sep="\t", dtype=str, na_filter=False)
+        # Post-process obsoletes
+        for col in mondo_obsoletes.columns:
+            mondo_obsoletes[col] = (
+                mondo_obsoletes[col]
+                .str.replace("?", "", regex=False)
+                .str.replace("<", "", regex=False)
+                .str.replace(">", "", regex=False)
+                .str.replace('"', "", regex=False)
+                .str.replace("http://purl.obolibrary.org/obo/MONDO_", "MONDO:", regex=False)
+            )
+        logger.info(f"Extracted {len(mondo_obsoletes)} obsolete MONDO terms")
+
+        return {
+            "mondo_labels": mondo_labels,
+            "mondo_metadata": mondo_metadata,
+            "mondo_obsoletes": mondo_obsoletes,
+        }
 
 
 def create_billable_icd10_template(
@@ -730,99 +777,6 @@ def create_disease_list(
     return {
         "disease_list": df_matrix_disease_filter_modified,
     }
-
-
-def extract_mondo_metadata(
-    mondo_owl: str,
-    sparql_query_path: str,
-) -> pd.DataFrame:
-    """Extract metadata about MONDO version using ROBOT query.
-
-    Args:
-        mondo_owl: MONDO ontology content
-        sparql_query_path: Path to SPARQL query file (ontology-metadata.sparql)
-
-    Returns:
-        DataFrame with MONDO metadata (version, IRI, etc.)
-    """
-    logger.info("Extracting MONDO metadata")
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir_path = Path(tmpdir)
-
-        # Write OWL content to temporary file
-        input_owl = tmpdir_path / "mondo.owl"
-        output_tsv = tmpdir_path / "metadata.tsv"
-
-        with open(input_owl, "w") as f:
-            f.write(mondo_owl)
-
-        # Run ROBOT query command
-        cmd = f'robot query -i "{input_owl}" -f tsv --query "{sparql_query_path}" "{output_tsv}"'
-        run_subprocess(cmd, check=True, stream_output=True)
-
-        # Read the output TSV with dtype specification to handle mixed types
-        df = pd.read_csv(output_tsv, sep="\t", dtype=str, na_filter=False)
-
-        # Post-process to clean up SPARQL output
-        for col in df.columns:
-            df[col] = (
-                df[col]
-                .str.replace("?", "", regex=False)
-                .str.replace("<", "", regex=False)
-                .str.replace(">", "", regex=False)
-            )
-
-        logger.info("Extracted MONDO metadata")
-        return df
-
-
-def extract_mondo_obsoletes(
-    mondo_owl: str,
-    sparql_query_path: str,
-) -> pd.DataFrame:
-    """Extract list of obsolete MONDO terms using ROBOT query.
-
-    Args:
-        mondo_owl: MONDO ontology content
-        sparql_query_path: Path to SPARQL query file (mondo-obsoletes.sparql)
-
-    Returns:
-        DataFrame with obsolete disease IDs
-    """
-    logger.info("Extracting MONDO obsoletes")
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir_path = Path(tmpdir)
-
-        # Write OWL content to temporary file
-        # TODO is this necessary or can we pass the path directly?
-        input_owl = tmpdir_path / "mondo.owl"
-        output_tsv = tmpdir_path / "obsoletes.tsv"
-
-        with open(input_owl, "w") as f:
-            f.write(mondo_owl)
-
-        # Run ROBOT query command
-        cmd = f'robot query -i "{input_owl}" -f tsv --query "{sparql_query_path}" "{output_tsv}"'
-        run_subprocess(cmd, check=True, stream_output=True)
-
-        # Read the output TSV with dtype specification to handle mixed types
-        df = pd.read_csv(output_tsv, sep="\t", dtype=str, na_filter=False)
-
-        # Post-process to clean up SPARQL output (mimicking sed commands from Makefile lines 128-132)
-        for col in df.columns:
-            df[col] = (
-                df[col]
-                .str.replace("?", "", regex=False)
-                .str.replace("<", "", regex=False)
-                .str.replace(">", "", regex=False)
-                .str.replace('"', "", regex=False)
-                .str.replace("http://purl.obolibrary.org/obo/MONDO_", "MONDO:", regex=False)
-            )
-
-        logger.info(f"Extracted {len(df)} obsolete MONDO terms")
-        return df
 
 
 def validate_disease_list(
