@@ -32,7 +32,11 @@ def create_pipeline(**kwargs) -> Pipeline:
             # Extract labels, metadata, and obsoletes from Mondo ontology
             node(
                 func=nodes.extract_metadata_from_mondo,
-                inputs="disease_list.raw.mondo_owl",
+                inputs={
+                    "mondo_owl": "disease_list.raw.mondo_owl",
+                    "ontology_metadata_query": "params:queries.ontology_metadata",
+                    "mondo_obsoletes_query": "params:queries.mondo_obsoletes",
+                },
                 outputs={
                     "mondo_labels": "disease_list.int.mondo_labels",
                     "mondo_metadata": "disease_list.prm.mondo_metadata",

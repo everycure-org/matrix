@@ -36,11 +36,33 @@ def _clean_sparql_results(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def extract_metadata_from_mondo(mondo_owl: str) -> Dict[str, Any]:
+def _load_and_clean_sparql_dataframe(tsv_path: Path, clean: bool = True) -> pd.DataFrame:
+    """Load a TSV file and optionally clean SPARQL results.
+
+    Args:
+        tsv_path: Path to the TSV file
+        clean: Whether to apply SPARQL result cleaning (default: True)
+
+    Returns:
+        Loaded DataFrame, optionally cleaned
+    """
+    df = pd.read_csv(tsv_path, sep="\t", dtype=str, na_filter=False)
+    if clean:
+        df = _clean_sparql_results(df)
+    return df
+
+
+def extract_metadata_from_mondo(
+    mondo_owl: str,
+    ontology_metadata_query: str,
+    mondo_obsoletes_query: str,
+) -> Dict[str, Any]:
     """Extract labels, metadata, and obsoletes from the Mondo ontology.
 
     Args:
         mondo_owl: MONDO ontology content in OWL format
+        ontology_metadata_query: Path to ontology metadata SPARQL query
+        mondo_obsoletes_query: Path to mondo obsoletes SPARQL query
 
     Returns:
         Dictionary containing:
@@ -65,31 +87,23 @@ def extract_metadata_from_mondo(mondo_owl: str) -> Dict[str, Any]:
         metadata_tsv = tmpdir_path / "metadata.tsv"
         obsoletes_tsv = tmpdir_path / "obsoletes.tsv"
 
-        # TODO this is probably wrong (use parameters.yaml?)
-        queries_dir = Path(__file__).parent / "queries"
-
         # Run single ROBOT pipeline with chained commands
         cmd = f"""robot \
             export -i "{input_owl}" -f tsv --header "ID|LABEL" --export "{labels_tsv}" \
             query -f tsv \
-                --query "{queries_dir / "ontology-metadata.sparql"}" "{metadata_tsv}" \
-                --query "{queries_dir / "mondo-obsoletes.sparql"}" "{obsoletes_tsv}" """
+                --query "{ontology_metadata_query}" "{metadata_tsv}" \
+                --query "{mondo_obsoletes_query}" "{obsoletes_tsv}" """
 
         run_subprocess(cmd, check=True, stream_output=True)
 
-        # Load and process labels
+        # Load and process results
         mondo_labels = pd.read_csv(labels_tsv, sep="\t")
         logger.info(f"Extracted {len(mondo_labels)} MONDO labels")
 
-        # Load and post-process metadata
-        mondo_metadata = pd.read_csv(metadata_tsv, sep="\t", dtype=str, na_filter=False)
-        mondo_metadata = _clean_sparql_results(mondo_metadata)
+        mondo_metadata = _load_and_clean_sparql_dataframe(metadata_tsv)
         logger.info("Extracted MONDO metadata")
 
-        # Load and post-process obsoletes
-        mondo_obsoletes = pd.read_csv(obsoletes_tsv, sep="\t", dtype=str, na_filter=False)
-        mondo_obsoletes = _clean_sparql_results(mondo_obsoletes)
-
+        mondo_obsoletes = _load_and_clean_sparql_dataframe(obsoletes_tsv)
         logger.info(f"Extracted {len(mondo_obsoletes)} obsolete MONDO terms")
 
         return {
@@ -423,15 +437,11 @@ def process_mondo_with_templates(
             mondo_preprocessed = f.read()
         logger.info("Successfully merged templates into MONDO ontology")
 
-        # Load and post-process disease list
-        disease_list_raw = pd.read_csv(disease_list_tsv, sep="\t", dtype=str, na_filter=False)
-        disease_list_raw = _clean_sparql_results(disease_list_raw)
+        # Load and post-process results
+        disease_list_raw = _load_and_clean_sparql_dataframe(disease_list_tsv)
         logger.info(f"Extracted {len(disease_list_raw)} diseases in raw list")
 
-        # Load and post-process metrics
-        mondo_metrics = pd.read_csv(metrics_tsv, sep="\t", dtype=str, na_filter=False)
-        mondo_metrics = _clean_sparql_results(mondo_metrics)
-
+        mondo_metrics = _load_and_clean_sparql_dataframe(metrics_tsv)
         logger.info(f"Extracted metrics for {len(mondo_metrics)} diseases")
 
         return {
