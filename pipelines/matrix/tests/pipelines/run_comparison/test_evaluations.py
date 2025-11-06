@@ -108,9 +108,7 @@ def test_model_specific_abstract_class(constant_score_data):
     multi_fold_results = evaluation.evaluate(combined_predictions, predictions_info)
     bootstrap_single_fold_results = evaluation_bootstrap.evaluate(combined_predictions, predictions_info_single_fold)
     bootstrap_multi_fold_results = evaluation_bootstrap.evaluate(combined_predictions, predictions_info)
-    figure = evaluation.plot_results(
-        single_fold_results, combined_predictions, predictions_info_single_fold, perform_bootstrap=False
-    )
+    figure = evaluation.plot_results(single_fold_results, combined_predictions, predictions_info_single_fold)
 
     # Then results are as expected
     # Single fold results take first fold as default
