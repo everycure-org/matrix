@@ -70,6 +70,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "chromosomal_diseases_root": "params:mondo_ids.chromosomal_diseases_root",
                     "human_diseases_root": "params:mondo_ids.human_diseases_root",
                     "chromosomal_diseases_exceptions": "params:mondo_ids.chromosomal_diseases_exceptions",
+                    "subtype_patterns": "params:subtype_patterns",
+                    "mondo_prefix": "params:robot_template.mondo_prefix",
+                    "mondo_subtype_subset": "params:robot_template.mondo_subtype_subset",
+                    "default_contributor": "params:robot_template.default_contributor",
+                    "subset_annotation_split": "params:robot_template.subset_annotation_split",
+                    "contributor_annotation": "params:robot_template.contributor_annotation",
                 },
                 outputs={
                     "subtypes_template": "disease_list.int.subtypes_template",

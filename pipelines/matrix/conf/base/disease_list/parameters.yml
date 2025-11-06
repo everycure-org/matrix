@@ -28,8 +28,58 @@ robot_template:
   # Subset URI for billable ICD-10 codes
   icd10_billable_subset: "http://purl.obolibrary.org/obo/mondo#icd10_billable"
 
+  # Subset URI for MONDO subtypes
+  mondo_subtype_subset: "http://purl.obolibrary.org/obo/mondo#mondo_subtype"
+
   # ROBOT template header annotation for subset membership
   subset_annotation: "AI oboInOwl:inSubset"
 
+  # ROBOT template header annotation for subset membership with pipe splitting
+  subset_annotation_split: "AI oboInOwl:inSubset SPLIT=|"
+
+  # ROBOT template header annotation for contributor with pipe splitting
+  contributor_annotation: ">AI dc:contributor SPLIT=|"
+
   # ICD-10-CM CURIE prefix
   icd10cm_prefix: "ICD10CM"
+
+  # MONDO CURIE prefix
+  mondo_prefix: "MONDO:"
+
+  # Default contributor ORCID for generated templates
+  default_contributor: "https://orcid.org/0000-0002-7356-1779"
+
+# Disease subtype regex patterns for identifying disease groupings
+# These patterns extract parent disease names from child disease labels
+subtype_patterns:
+  autosomal_rd_o_x_d: "autosomal[ ](?:recessive|dominant)[ ](?:juvenile|early[-]onset)(.*)[ ][0-9]+[0-9A-Za-z]*$"
+  x_typec_ad: "(.*)[,][ ]type[ ][A-Z0-9]+$"
+  x_type_I: "(.*)\\s+type\\s+(X?(IX|IV|V?I{1,3}))$"
+  x_type_ad: "(.*)[ ]type[ ][A-Z0-9]+$"
+  x_group_a: "(.*)[ ]group [A-Z]+$"
+  x_xylinked_d: "(.*),[ ][xyXY][-]linked,[ ][0-9]+$"
+  x_xylinked: "(.*),[ ][xyXY][-]linked$"
+  autosomal_rd_x_d: "autosomal[ ](?:recessive|dominant)[ ](.*)[ ][0-9]+[0-9A-Za-z]*$"
+  x_variant_type: "(.*)[ ]variant[ ]type$"
+  x_autosomomal_dominant_mild: "(.*),[ ]autosomal[ ]dominant,[ ]mild$"
+  x_d_autosomomal_dominant: "(.*) [0-9]+[0-9A-Za-z]*,[ ]autosomal[ ]dominant$"
+  x_d_early_onset: "(.*) [0-9]+[0-9A-Za-z]*,[ ]early[- ]onset$"
+  x_mitochondrial: "(.*),[ ]mitochondrial$"
+  x_familial_d: "(.*),[ ]familial,[ ][0-9]+$"
+  x_autosomal_rd_d: "(.*),[ ]autosomal[ ](?:recessive|dominant),[ ][0-9]+$"
+  x_dueto_d: "(.*)[,]?[ ]due[ ]to[ ].*$"
+  x_dp: "(.*)[ ][0-9]+[qp]$"
+  x_d: "(.*)[ ][0-9]+[0-9A-Za-z]*$"
+  x_tda: "(.*)[ ]type[ ][0-9]+[A-Za-z0-9/_, ()-]+$"
+  x_d_ca: "(.*)[ ][0-9]+[0-9A-Za-z]*[,][ ][A-Za-z0-9/_, ()-]+$"
+  x_d_a: "(.*)[ ][0-9]+[0-9A-Za-z]*[ ][A-Za-z0-9/_, ()-]+$"
+  x_da_a: "(.*)[ ][0-9]+[a-z]*[ ][A-Za-z0-9/_, ()-]+$"
+  x_I: "(.*)\\s(X?(?:IX|IV|V?I{1,3}))$"
+  x_a: "(.*)[ ][A-Z]+$"
+  x_a_type: "(.*)[,][ ][A-Za-z0-9-_]+[ ]type$"
+  familial_x: "familial[ ](.*)$"
+  paroxysmal_x: "paroxysmal[ ](.*)$"
+  persistent_x: "persistent[ ](.*)$"
+  onset_x: "(?:young|late|juvenile|early)[- ]onset[ ](.*)$"
+  onset_x_d: "(?:young|late|juvenile|early)[- ]onset[ ](.*)[ ][0-9]+[0-9A-Za-z]*$"
+  xylinked_x: "[xyXY][-]linked[ ](.*)$"

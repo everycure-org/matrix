@@ -188,53 +188,118 @@ def create_billable_icd10_template(
 
 
 def _is_parent(mondo, parent_id, child_id):
+    """Check if parent_id is an ancestor of child_id in the ontology."""
     try:
-        parents = mondo.ancestors([child_id], predicates=[IS_A])  # get all superclasses
+        parents = mondo.ancestors([child_id], predicates=[IS_A])
         return parent_id in parents
     except Exception as e:
         logging.warning(f"Error checking relationship between {parent_id} and {child_id}: {e}")
         return False
 
 
-def _match_patterns_efficiently(df_labels, i_labels, patterns, mondo):
-    label_match = []
-    curie_match = []
-    label_pattern = []
+def _compile_patterns(patterns_dict):
+    """Compile regex patterns for better performance."""
+    return {name: re.compile(pattern) for name, pattern in patterns_dict.items()}
 
-    for _, row in df_labels.iterrows():
-        label = row["label"]
-        disease_id = row["category_class"]
-        match_found = False
 
-        for pattern_id, pattern in patterns.items():
-            match = re.match(pattern, label)
+def _find_parent_disease(label, disease_id, label_to_id_map, compiled_patterns, mondo):
+    """Find parent disease for a given label using pattern matching.
 
-            if match:
-                potential_disease_group_label = match.group(1)
-            else:
-                potential_disease_group_label = None
+    Returns:
+        Tuple of (parent_label, parent_id, pattern_name) or (None, None, None) if no match
+    """
+    for pattern_name, pattern in compiled_patterns.items():
+        match = pattern.match(label)
+        if not match:
+            continue
 
-            if potential_disease_group_label:
-                potential_disease_group_label = potential_disease_group_label.strip().lower()
-                if potential_disease_group_label in i_labels:
-                    potential_disease_group_id = i_labels[potential_disease_group_label]
-                    if _is_parent(mondo, potential_disease_group_id, disease_id):
-                        match_found = True
-                        label_match.append(potential_disease_group_label)
-                        label_pattern.append(pattern_id)
-                        curie_match.append(potential_disease_group_id)
-                        break
+        parent_label = match.group(1).strip().lower()
+        parent_id = label_to_id_map.get(parent_label)
 
-        if not match_found:
-            label_match.append(None)
-            label_pattern.append(None)
-            curie_match.append(None)
+        if parent_id and _is_parent(mondo, parent_id, disease_id):
+            return parent_label, parent_id, pattern_name
 
-    # Add the results to the DataFrame
-    df_labels["label_match"] = label_match
-    df_labels["label_pattern"] = label_pattern
-    df_labels["curie_match"] = curie_match
-    return df_labels
+    return None, None, None
+
+
+def _filter_mondo_labels(mondo_labels, chromosomal_diseases, human_diseases, mondo_prefix):
+    """Filter and prepare MONDO labels for subtype matching."""
+    filtered = (
+        mondo_labels
+        .dropna(subset=["LABEL"])
+        .query(f"ID.str.startswith('{mondo_prefix}')")
+        .loc[lambda df: ~df["ID"].isin(chromosomal_diseases)]
+        .loc[lambda df: df["ID"].isin(human_diseases)]
+        [["ID", "LABEL"]]
+        .rename(columns={"ID": "disease_id", "LABEL": "label"})
+    )
+    filtered["label_lower"] = filtered["label"].str.lower()
+    return filtered
+
+
+def _match_disease_subtypes(labels_df, compiled_patterns, mondo):
+    """Match diseases to their parent groups using patterns."""
+    label_to_id = dict(zip(labels_df["label_lower"], labels_df["disease_id"]))
+
+    matches = labels_df.apply(
+        lambda row: _find_parent_disease(
+            row["label"], row["disease_id"], label_to_id, compiled_patterns, mondo
+        ),
+        axis=1,
+        result_type="expand"
+    )
+    matches.columns = ["parent_label", "parent_id", "pattern_name"]
+
+    return pd.concat([labels_df, matches], axis=1)
+
+
+def _build_subtype_counts(matched_df):
+    """Build counts of subtypes per parent disease."""
+    valid_matches = matched_df.dropna(subset=["parent_label"])
+    valid_matches = valid_matches[valid_matches["parent_label"].str.strip() != ""]
+
+    counts = (
+        valid_matches
+        .groupby("parent_label")
+        .size()
+        .reset_index(name="count")
+    )
+
+    result = valid_matches.merge(counts, on="parent_label")
+
+    return result[["disease_id", "label", "parent_id", "parent_label", "count"]].rename(
+        columns={
+            "disease_id": "subset_id",
+            "label": "subset_label",
+            "parent_id": "subset_group_id",
+            "parent_label": "subset_group_label",
+            "count": "other_subsets_count",
+        }
+    )
+
+
+def _build_robot_template(matched_df, mondo_subtype_subset, contributor, subset_annotation, contributor_annotation):
+    """Build ROBOT template from matched subtypes."""
+    unique_parents = (
+        matched_df[["parent_id", "parent_label"]]
+        .drop_duplicates()
+        .dropna()
+        .sort_values("parent_id")
+        .rename(columns={"parent_id": "ID", "parent_label": "LABEL"})
+    )
+
+    unique_parents["SUBSET"] = mondo_subtype_subset
+    unique_parents["CONTRIBUTOR"] = contributor
+
+    header = pd.DataFrame({
+        "ID": ["ID"],
+        "LABEL": [""],
+        "SUBSET": [subset_annotation],
+        "CONTRIBUTOR": [contributor_annotation],
+    })
+
+    template = pd.concat([header, unique_parents], ignore_index=True)
+    return template.sort_values("ID", ignore_index=True)
 
 
 def create_subtypes_template(
@@ -243,22 +308,35 @@ def create_subtypes_template(
     chromosomal_diseases_root: str,
     human_diseases_root: str,
     chromosomal_diseases_exceptions: list,
-) -> pd.DataFrame:
+    subtype_patterns: dict,
+    mondo_prefix: str,
+    mondo_subtype_subset: str,
+    default_contributor: str,
+    subset_annotation_split: str,
+    contributor_annotation: str,
+) -> dict:
     """Create template with high granularity disease subtypes.
 
     Args:
-        mondo_labels: DataFrame with MONDO labels
-        mondo_owl: MONDO ontology
+        mondo_labels: DataFrame with MONDO labels (must have 'ID' and 'LABEL' columns)
+        mondo_owl: MONDO ontology content in OWL format
         chromosomal_diseases_root: Root MONDO ID for chromosomal diseases to exclude
         human_diseases_root: Root MONDO ID for human diseases to include
         chromosomal_diseases_exceptions: List of chromosomal disease IDs that should NOT be excluded
+        subtype_patterns: Dictionary of regex patterns for matching disease subtypes
+        mondo_prefix: CURIE prefix for MONDO IDs (e.g., "MONDO:")
+        mondo_subtype_subset: URI for MONDO subtype subset
+        default_contributor: ORCID URI for contributor attribution
+        subset_annotation_split: ROBOT template annotation for subset with splitting
+        contributor_annotation: ROBOT template annotation for contributor
 
     Returns:
-        DataFrame with subtype template
+        Dictionary containing:
+            - subtypes_template: ROBOT template DataFrame
+            - subtypes_counts: DataFrame with subtype counts per parent
     """
     logger.info("Creating subtypes template")
     from oaklib import get_adapter
-    from oaklib.datamodels.vocabulary import IS_A
 
     # TODO probably wrong: Write MONDO OWL content to temporary file for OAK to read
     tmp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".owl", delete=False)
@@ -268,123 +346,41 @@ def create_subtypes_template(
     mondo_owl_path = tmp_file.name
 
     try:
-        oak_adapter = "pronto:{}".format(mondo_owl_path)
-        mondo = get_adapter(oak_adapter)
+        # Load ontology and get disease hierarchies
+        mondo = get_adapter(f"pronto:{mondo_owl_path}")
 
-        # We will exclude chromosomal diseases from the subtype process
-        # as they are usually subtyped by chromosomal location
-        # making them very different diseases
         chromosomal_diseases = set(mondo.descendants([chromosomal_diseases_root], predicates=[IS_A]))
         human_diseases = set(mondo.descendants([human_diseases_root], predicates=[IS_A]))
 
-        # Some chromosomal diseases are indeed part of a series so we manually remove them
+        # Remove exceptions from chromosomal disease exclusion list
         for exception_id in chromosomal_diseases_exceptions:
-            chromosomal_diseases.remove(exception_id)
+            chromosomal_diseases.discard(exception_id)
 
-        # Load the data
-        mondo_labels = mondo_labels.dropna(subset=["LABEL"])
-        mondo_labels = mondo_labels[mondo_labels["ID"].str.startswith("MONDO:")]
-        mondo_labels = mondo_labels[~mondo_labels["ID"].isin(chromosomal_diseases)]
-        mondo_labels = mondo_labels[mondo_labels["ID"].isin(human_diseases)]
-        mondo_labels = mondo_labels[["ID", "LABEL"]]
-        mondo_labels.columns = ["category_class", "label"]
-        mondo_labels["label_lc"] = mondo_labels["label"].str.lower()
-        i_labels = {row["label_lc"]: row["category_class"] for _, row in mondo_labels.iterrows()}
-
-        # Define patterns
-        patterns = {
-            "autosomal_rd_o_x_d": r"autosomal[ ](?:recessive|dominant)[ ](?:juvenile|early[-]onset)(.*)[ ][0-9]+[0-9A-Za-z]*$",
-            "x_typec_ad": r"(.*)[,][ ]type[ ][A-Z0-9]+$",
-            "x_type_I": r"(.*)\s+type\s+(X?(IX|IV|V?I{1,3}))$",
-            "x_type_ad": r"(.*)[ ]type[ ][A-Z0-9]+$",
-            "x_group_a": r"(.*)[ ]group [A-Z]+$",
-            "x_xylinked_d": r"(.*),[ ][xyXY][-]linked,[ ][0-9]+$",
-            "x_xylinked": r"(.*),[ ][xyXY][-]linked$",
-            "autosomal_rd_x_d": r"autosomal[ ](?:recessive|dominant)[ ](.*)[ ][0-9]+[0-9A-Za-z]*$",
-            "x_variant_type": r"(.*)[ ]variant[ ]type$",
-            "x_autosomomal_dominant_mild": r"(.*),[ ]autosomal[ ]dominant,[ ]mild$",
-            "x_d_autosomomal_dominant": r"(.*) [0-9]+[0-9A-Za-z]*,[ ]autosomal[ ]dominant$",
-            "x_d_early_onset": r"(.*) [0-9]+[0-9A-Za-z]*,[ ]early[- ]onset$",
-            "x_mitochondrial": r"(.*),[ ]mitochondrial$",
-            "x_xylinked": r"(.*),[ ][xyXY][-]linked$",
-            "x_familial_d": r"(.*),[ ]familial,[ ][0-9]+$",
-            "x_autosomal_rd_d": r"(.*),[ ]autosomal[ ](?:recessive|dominant),[ ][0-9]+$",
-            "x_dueto_d": r"(.*)[,]?[ ]due[ ]to[ ].*$",
-            "x_dp": r"(.*)[ ][0-9]+[qp]$",
-            "x_d": r"(.*)[ ][0-9]+[0-9A-Za-z]*$",
-            "x_tda": r"(.*)[ ]type[ ][0-9]+[A-Za-z0-9/_, ()-]+$",
-            "x_d_ca": r"(.*)[ ][0-9]+[0-9A-Za-z]*[,][ ][A-Za-z0-9/_, ()-]+$",
-            "x_d_a": r"(.*)[ ][0-9]+[0-9A-Za-z]*[ ][A-Za-z0-9/_, ()-]+$",
-            "x_da_a": r"(.*)[ ][0-9]+[a-z]*[ ][A-Za-z0-9/_, ()-]+$",
-            "x_I": r"(.*)\s(X?(?:IX|IV|V?I{1,3}))$",
-            "x_a": r"(.*)[ ][A-Z]+$",
-            "x_a_type": r"(.*)[,][ ][A-Za-z0-9-_]+[ ]type$",
-            "familial_x": r"familial[ ](.*)$",
-            "paroxysmal_x": r"paroxysmal[ ](.*)$",
-            "persistent_x": r"persistent[ ](.*)$",
-            "onset_x": r"(?:young|late|juvenile|early)[- ]onset[ ](.*)$",
-            "onset_x_d": r"(?:young|late|juvenile|early)[- ]onset[ ](.*)[ ][0-9]+[0-9A-Za-z]*$",
-            "persistent_x": r"persistent[ ](.*)$",
-            "xylinked_x": r"[xyXY][-]linked[ ](.*)$",
-        }
-
-        df_disease_list_matched = _match_patterns_efficiently(mondo_labels, i_labels, patterns, mondo)
-
-        df_disease_list_matched_subset_with_matched_label_ids = df_disease_list_matched[
-            ["category_class", "label", "label_match", "curie_match", "label_pattern"]
-        ]
-        df_disease_list_matched_subset_with_matched_label_ids.sort_values(by="label_match", inplace=True)
-
-        # Count the number of subtypes for each disease
-        df_disease_list_matched_subset_with_matched_label_ids = df_disease_list_matched_subset_with_matched_label_ids[
-            df_disease_list_matched_subset_with_matched_label_ids["label_match"].notna()
-            & (df_disease_list_matched_subset_with_matched_label_ids["label_match"].str.strip() != "")
-        ]
-        grouped_data_label_match = df_disease_list_matched_subset_with_matched_label_ids.groupby(["label_match"]).size()
-        grouped_df_label_match = grouped_data_label_match.reset_index(name="count")
-
-        # TODO consider dropping this QC step?
-        processed = df_disease_list_matched_subset_with_matched_label_ids["label_pattern"].unique()
-        for label_pattern in patterns.keys():
-            if label_pattern not in processed:
-                logging.warning(f"Label pattern {label_pattern} not in patterns.keys()")
-
-        # Get the subset of the DataFrame that matches the top groupings
-        top_subset_df = df_disease_list_matched_subset_with_matched_label_ids.copy()
-
-        top_subset_df = pd.merge(
-            top_subset_df, grouped_df_label_match, left_on="label_match", right_on="label_match", how="left"
-        )
-        top_subset_df_out = top_subset_df[["category_class", "label", "curie_match", "label_match", "count"]]
-        top_subset_df_out.columns = [
-            "subset_id",
-            "subset_label",
-            "subset_group_id",
-            "subset_group_label",
-            "other_subsets_count",
-        ]
-
-        # Display the final filtered DataFrame
-        final_subset_df = top_subset_df[["curie_match", "label_match"]].drop_duplicates().sort_values(by="curie_match")
-        final_subset_df["subset"] = "http://purl.obolibrary.org/obo/mondo#mondo_subtype"
-        final_subset_df["contributor"] = "https://orcid.org/0000-0002-7356-1779"
-        final_subset_df.columns = ["ID", "LABEL", "SUBSET", "CONTRIBUTOR"]
-
-        robot_template_header = pd.DataFrame(
-            {
-                "ID": ["ID"],
-                "LABEL": [""],
-                "SUBSET": ["AI oboInOwl:inSubset SPLIT=|"],
-                "CONTRIBUTOR": [">AI dc:contributor SPLIT=|"],
-            }
+        # Filter labels to relevant human diseases
+        filtered_labels = _filter_mondo_labels(
+            mondo_labels, chromosomal_diseases, human_diseases, mondo_prefix
         )
 
-        output_df = pd.concat([robot_template_header, final_subset_df]).reset_index(drop=True)
-        output_df.sort_values(by="ID", inplace=True)
+        # Compile patterns for performance
+        compiled_patterns = _compile_patterns(subtype_patterns)
+
+        # Match diseases to their parent groups
+        matched = _match_disease_subtypes(filtered_labels, compiled_patterns, mondo)
+
+        # Build count information
+        subtype_counts = _build_subtype_counts(matched)
+
+        # Build ROBOT template
+        robot_template = _build_robot_template(
+            matched, mondo_subtype_subset, default_contributor,
+            subset_annotation_split, contributor_annotation
+        )
+
+        logger.info(f"Identified {len(subtype_counts)} disease subtypes")
 
         return {
-            "subtypes_template": output_df,
-            "subtypes_counts": top_subset_df_out,
+            "subtypes_template": robot_template,
+            "subtypes_counts": subtype_counts,
         }
     finally:
         # Clean up temporary file
