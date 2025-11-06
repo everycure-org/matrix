@@ -13,14 +13,12 @@ class ComparisonEvaluation(abc.ABC):
         self,
         combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
-        perform_bootstrap: bool,
     ) -> pl.DataFrame:
         """Evaluate the results.
 
         Args:
             combined_predictions: Dictionary of PartitionedDataset load fn's returning predictions for all folds and models
             predictions_info: Dictionary containing model names and number of folds.
-            perform_bootstrap: Whether to perform bootstrap uncertainty estimation.
 
         Returns:
             Polars DataFrame with the schema expected by the plot_results method.
@@ -34,7 +32,6 @@ class ComparisonEvaluation(abc.ABC):
         results: pl.DataFrame,
         combined_pairs: dict[str, Callable[[], pl.LazyFrame]],  # Dictionary of PartitionedDataset load fn's
         predictions_info: dict[str, any],
-        perform_bootstrap: bool,
     ) -> plt.Figure:
         """Plot the results.
 
@@ -42,7 +39,6 @@ class ComparisonEvaluation(abc.ABC):
             results: Polars DataFrame with the evaluation results (output of evaluate method).
             combined_pairs: Dictionary of PartitionedDataset load fn's returning combined matrix pairs for each fold
             predictions_info: Dictionary containing model names and number of folds.
-            perform_bootstrap: Whether to perform bootstrap uncertainty estimation.
 
         Returns:
             Matplotlib Figure.
@@ -69,9 +65,9 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
     @abc.abstractmethod
     def give_x_values(self) -> np.ndarray:
         """Give the common x-values for all curves.
-
-        Returns:
-            A 1D numpy array of x-values.
+        1
+                Returns:
+                    A 1D numpy array of x-values.
         """
         pass
 
@@ -139,7 +135,6 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         results: pl.DataFrame,
         combined_pairs: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
-        perform_bootstrap: bool,
     ) -> plt.Figure:
         """Plot the results."""
 
@@ -174,7 +169,9 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
 class ComparisonModelSpecificBootstrap(ComparisonEvaluationModelSpecific):
     """Abstract base class for evaluations that produce a single curve for each model with bootstrap uncertainty estimation."""
 
-    def __init__(self, x_axis_label: str, y_axis_label: str, title: str, force_full_y_axis: bool = False):
+    def __init__(
+        self, x_axis_label: str, y_axis_label: str, title: str, force_full_y_axis: bool = False, N_bootstraps: int = 100
+    ):
         """Initialize an instance of ComparisonModelSpecificBootstrap.
 
         Args:
@@ -186,6 +183,7 @@ class ComparisonModelSpecificBootstrap(ComparisonEvaluationModelSpecific):
         self.y_axis_label = y_axis_label
         self.title = title
         self.force_full_y_axis = force_full_y_axis
+        self.N_bootstraps = N_bootstraps
 
     @abc.abstractmethod
     def give_y_values(self, matrix: pl.DataFrame) -> np.ndarray:
@@ -247,7 +245,6 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
         perform_sort: bool,
         title: str,
         num_n_values: int = 1000,
-        N_bootstraps: int = 100,
         force_full_y_axis: bool = True,
     ):
         """Initialize an instance of FullMatrixRecallAtN.
@@ -258,7 +255,6 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
             perform_sort: Whether to sort the matrix or expect the dataframe to be sorted already.
             title: Title of the plot.
             num_n_values: Number of n values to compute recall@n score for.
-            N_bootstraps: Number of bootstrap samples to compute.
             force_full_y_axis: Whether to force the y-axis to be between 0 and 1.
         """
         super().__init__(x_axis_label="n", y_axis_label="Recall@n", title=title, force_full_y_axis=force_full_y_axis)
@@ -266,7 +262,6 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
         self.n_max = n_max
         self.perform_sort = perform_sort
         self.num_n_values = num_n_values
-        self.N_bootstraps = N_bootstraps
 
     def give_x_values(self) -> np.ndarray:
         """Integer x-axis values from 0 to n_max, representing the n in recall@n."""
@@ -294,6 +289,12 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
         # Return Recall@n values
         ranks_series = self._give_ranks_series(matrix, score_col_name)
         return np.array([(ranks_series <= n).sum() / N for n in n_lst])
+
+    def give_y_values_random_classifier(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
+        """Compute Recall@n values for a random classifier."""
+        matrix = list(combined_pairs.values())[0]()
+        matrix_length = matrix.select(pl.len()).collect().item()
+        return np.array([min([1, x / matrix_length]) for x in self.give_x_values()])
 
 
 class FullMatrixRecallAtNBootstrap(ComparisonModelSpecificBootstrap, FullMatrixRecallAtN):

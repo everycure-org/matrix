@@ -175,23 +175,24 @@ def restrict_predictions(
 
 @inject_object()
 def run_evaluation(
-    perform_bootstrap: bool,
     evaluation: ComparisonEvaluation,
     combined_predictions: dict[str, Callable[[], pl.LazyFrame]],  # Dictionary of PartitionedDataset load fn's
     predictions_info: dict[str, any],
 ) -> pl.DataFrame:
     """Function to apply evaluation."""
     logger.info(f"Evaluation is: {evaluation}")
-    return evaluation.evaluate(combined_predictions, predictions_info, perform_bootstrap)
+    return evaluation.evaluate(
+        combined_predictions,
+        predictions_info,
+    )
 
 
 @inject_object()
 def plot_results(
-    perform_bootstrap: bool,
     evaluation: ComparisonEvaluation,
     results: pl.DataFrame,
     combined_pairs: dict[str, Callable[[], pl.LazyFrame]],  # Dictionary of PartitionedDataset load fn's
     predictions_info: dict[str, any],
 ) -> plt.Figure:
     """Function to plot results."""
-    return evaluation.plot_results(results, combined_pairs, predictions_info, perform_bootstrap)
+    return evaluation.plot_results(results, combined_pairs, predictions_info)

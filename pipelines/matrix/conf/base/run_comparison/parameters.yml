@@ -1,14 +1,10 @@
 run_comparison:
-
-  # Option to perform bootstrap uncertainty estimation where applicable.
-  perform_bootstrap: True 
-
   input_data:
     # Option to apply data harmonization to consistent drug list, disease list, training set and test set across all models.
     # If False, then the input data must be consistent to begin with, otherwise an error will be raised.
     apply_harmonization: True 
     # Specify the matrix predictions you would like to evaluate here. 
-    # Drug-disease pairs used in training MUST NOT be included in the predictions dataframe.
+    # Known positive and negative drug-disease pairs used in training MUST NOT be included in the predictions dataframe.
     input_paths:
       # Expected format:
       # - name: <Name of model>
@@ -34,14 +30,20 @@ run_comparison:
     - &off_label_col "off_label"
 
   evaluations:
-    ground_truth_recall_at_n:
+    ground_truth_recall_at_n: 
+      &ground_truth_recall_at_n
       _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtN
       ground_truth_col: *is_known_positive_col
       n_max: 100000
       perform_sort: True
       title: "Recall@n (standard ground truth)"
 
-    negative_recall_at_n:
+    ground_truth_recall_at_n_bootstrap:
+      <<: *ground_truth_recall_at_n
+      _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtNBootstrap
+      N_bootstraps: 100
+
+    negative_recall_at_n: &negative_recall_at_n
       _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtN
       ground_truth_col: *is_known_negative_col
       n_max: 1000000
@@ -49,9 +51,19 @@ run_comparison:
       title: "Recall@n (negative ground truth) - lower is better"
       force_full_y_axis: False
 
-    off_label_recall_at_n:
+    negative_recall_at_n_bootstrap:
+      <<: *negative_recall_at_n
+      _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtNBootstrap
+      N_bootstraps: 100
+
+    off_label_recall_at_n: &off_label_recall_at_n
       _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtN
       ground_truth_col: *off_label_col
       n_max: 100000
       perform_sort: True
       title: "Recall@n (off-label)"
+
+    off_label_recall_at_n_bootstrap:
+      <<: *off_label_recall_at_n
+      _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtNBootstrap
+      N_bootstraps: 100
