@@ -4,7 +4,7 @@ import polars as pl
 
 logger = logging.getLogger(__name__)
 
-SEPARATOR = r"\|"
+SEPARATOR = "|"
 
 
 def robokop_convert_boolean_columns_to_label_columns(nodes_df: pl.LazyFrame) -> pl.DataFrame:
@@ -13,17 +13,25 @@ def robokop_convert_boolean_columns_to_label_columns(nodes_df: pl.LazyFrame) -> 
     mondo_superclass_column_names = [x for x in nodes_df.collect_schema().names() if "MONDO_SUPERCLASS" in x]
     chebi_role_column_names = [x for x in nodes_df.collect_schema().names() if "CHEBI_ROLE" in x]
 
-    ms_df = nodes_df.with_columns(
-        [
-            pl.lit(None, dtype=pl.Array(pl.String, 1)).alias("MONDO_SUPERCLASSES"),
-        ]
-    ).select([pl.col("id"), pl.col("category"), pl.col("MONDO_SUPERCLASSES"), pl.col("^MONDO_SUPERCLASS_.*$")])
+    ms_df = (
+        nodes_df.with_columns(
+            [
+                pl.lit([], dtype=pl.List(pl.String)).alias("MONDO_SUPERCLASSES"),
+            ]
+        )
+        .select([pl.col("id"), pl.col("category"), pl.col("MONDO_SUPERCLASSES"), pl.col("^MONDO_SUPERCLASS_.*$")])
+        .fill_null("false")
+    )
 
-    cr_df = nodes_df.with_columns(
-        [
-            pl.lit(None, dtype=pl.Array(pl.String, 1)).alias("CHEBI_ROLES"),
-        ]
-    ).select([pl.col("id"), pl.col("category"), pl.col("CHEBI_ROLES"), pl.col("^CHEBI_ROLE_.*$")])
+    cr_df = (
+        nodes_df.with_columns(
+            [
+                pl.lit([], dtype=pl.List(pl.String)).alias("CHEBI_ROLES"),
+            ]
+        )
+        .select([pl.col("id"), pl.col("category"), pl.col("CHEBI_ROLES"), pl.col("^CHEBI_ROLE_.*$")])
+        .fill_null("false")
+    )
 
     nodes_df = nodes_df.drop(mondo_superclass_column_names).drop(chebi_role_column_names).collect()
 
@@ -50,7 +58,7 @@ def _build_label_and_drop_bool(
         fixed_col_name = c.replace(bool_col_prefix, "").replace(":boolean", "")
         df = df.with_columns(
             [
-                pl.when(pl.col(c).str.contains("true"))
+                pl.when(pl.col(c).str.contains(pl.lit("true")))
                 .then(pl.col(bool_col_label).list.concat(pl.lit(fixed_col_name)))
                 .otherwise(pl.col(bool_col_label))
                 .alias(bool_col_label)
