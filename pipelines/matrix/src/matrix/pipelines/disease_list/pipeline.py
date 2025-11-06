@@ -51,6 +51,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "icd10_codes": "disease_list.raw.icd10_cm_codes",
                     "mondo_sssom": "disease_list.raw.mondo_sssom",
+                    "exact_match_predicate": "params:robot_template.exact_match_predicate",
+                    "icd10_billable_subset": "params:robot_template.icd10_billable_subset",
+                    "subset_annotation": "params:robot_template.subset_annotation",
+                    "icd10cm_prefix": "params:robot_template.icd10cm_prefix",
                 },
                 outputs="disease_list.int.billable_icd10_template",
                 name="create_billable_icd10_template",

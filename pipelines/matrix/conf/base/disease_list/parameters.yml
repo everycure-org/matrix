@@ -19,3 +19,17 @@ mondo_ids:
   chromosomal_diseases_exceptions:
     - "MONDO:0010767"  # chromosomal deletion syndrome
     - "MONDO:0010763"  # chromosomal duplication syndrome
+
+# ROBOT template constants
+robot_template:
+  # Predicate for exact matches in SSSOM mappings
+  exact_match_predicate: "skos:exactMatch"
+
+  # Subset URI for billable ICD-10 codes
+  icd10_billable_subset: "http://purl.obolibrary.org/obo/mondo#icd10_billable"
+
+  # ROBOT template header annotation for subset membership
+  subset_annotation: "AI oboInOwl:inSubset"
+
+  # ICD-10-CM CURIE prefix
+  icd10cm_prefix: "ICD10CM"

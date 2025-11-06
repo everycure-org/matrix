@@ -113,55 +113,78 @@ def extract_metadata_from_mondo(
         }
 
 
-# TODO needs to be refactored!
+def _format_icd10_code_to_curie(code: str, prefix: str) -> str:
+    """Convert ICD-10 code to CURIE format.
+
+    Args:
+        code: ICD-10 code (e.g., "A001")
+        prefix: CURIE prefix (e.g., "ICD10CM")
+
+    Returns:
+        CURIE formatted code (e.g., "ICD10CM:A00.1")
+    """
+    if pd.notna(code) and len(code) > 3:
+        return f"{prefix}:{code[:3]}.{code[3:]}"
+    return code
+
+
 def create_billable_icd10_template(
     icd10_codes: pd.DataFrame,
     mondo_sssom: pd.DataFrame,
+    exact_match_predicate: str,
+    icd10_billable_subset: str,
+    subset_annotation: str,
+    icd10cm_prefix: str,
 ) -> pd.DataFrame:
-    """Create a list (formatted as a ROBOT template) for billable ICD-10-CM codes mapped to MONDO.
+    """Create ROBOT template for billable ICD-10-CM codes mapped to MONDO.
 
     Args:
-        icd10_codes: ICD-10-CM codes file in XLSX format
-        mondo_sssom: MONDO SSSOM mappings
+        icd10_codes: DataFrame with ICD-10-CM codes (must have 'CODE' column)
+        mondo_sssom: MONDO SSSOM mappings (must have 'predicate_id', 'object_id', 'subject_id')
+        exact_match_predicate: SKOS predicate for exact matches (e.g., "skos:exactMatch")
+        icd10_billable_subset: URI for billable ICD-10 subset
+        subset_annotation: ROBOT template annotation for subset membership
+        icd10cm_prefix: CURIE prefix for ICD-10-CM codes (e.g., "ICD10CM")
 
     Returns:
-        DataFrame with billable ICD-10 codes template
+        ROBOT template DataFrame with billable ICD-10 codes
     """
     logger.info("Creating billable ICD-10-CM template")
 
-    # Transform ICD-10 codes in the first column to CURIE format
-    # Example: "A001" -> "ICD10CM:A00.1"
-    icd10_codes.iloc[:, 0] = icd10_codes.iloc[:, 0].apply(
-        lambda x: f"ICD10CM:{x[:3]}.{x[3:]}" if pd.notna(x) and len(x) > 3 else x
+    # Convert ICD-10 codes to CURIE format without mutating input
+    icd10_codes_formatted = icd10_codes.copy()
+    icd10_codes_formatted["CODE"] = icd10_codes_formatted["CODE"].apply(
+        lambda code: _format_icd10_code_to_curie(code, icd10cm_prefix)
     )
 
-    # Extract ICD-10 codes that have exactMatch in MONDO SSSOM
-    icd10_codes_in_mondo = mondo_sssom.loc[mondo_sssom["predicate_id"] == "skos:exactMatch", "object_id"].unique()
+    # Filter SSSOM mappings to only exact matches
+    exact_matches = mondo_sssom[mondo_sssom["predicate_id"] == exact_match_predicate].copy()
 
-    # Filter to only billable codes that are in MONDO
-    icd10_codes_billable = icd10_codes[icd10_codes.iloc[:, 0].isin(icd10_codes_in_mondo)]["CODE"].unique()
+    # Find billable codes that have MONDO mappings
+    billable_with_mappings = icd10_codes_formatted[
+        icd10_codes_formatted["CODE"].isin(exact_matches["object_id"])
+    ]
 
-    logger.info(f"Found {len(icd10_codes_billable)} billable ICD-10 codes with MONDO mappings")
+    logger.info(f"Found {len(billable_with_mappings)} billable ICD-10 codes with MONDO mappings")
 
-    rows = []
+    # Create template rows by joining billable codes with their MONDO mappings
+    template_data = exact_matches.merge(
+        billable_with_mappings[["CODE"]], left_on="object_id", right_on="CODE", how="inner"
+    )
 
-    for icd10_code in icd10_codes_billable:
-        row_to_add = mondo_sssom[
-            (mondo_sssom["predicate_id"] == "skos:exactMatch") & (mondo_sssom["object_id"] == icd10_code)
-        ][["subject_id", "object_id"]].copy()
+    # Build ROBOT template with required columns
+    robot_template = pd.DataFrame(
+        {
+            "ID": template_data["subject_id"],
+            "SUBSET": icd10_billable_subset,
+            "ICD10CM_CODE": template_data["object_id"],
+        }
+    )
 
-        row_to_add["SUBSET"] = "http://purl.obolibrary.org/obo/mondo#icd10_billable"
-        row_to_add["ID"] = row_to_add["subject_id"]
-        row_to_add["ICD10CM_CODE"] = row_to_add["object_id"]
-        rows.append(row_to_add[["ID", "SUBSET", "ICD10CM_CODE"]])
+    # Add ROBOT template header row
+    header = pd.DataFrame({"ID": ["ID"], "SUBSET": [subset_annotation], "ICD10CM_CODE": [""]})
 
-    robot_template_header = pd.DataFrame({"ID": ["ID"], "SUBSET": ["AI oboInOwl:inSubset"], "ICD10CM_CODE": [""]})
-
-    df_icd10billable_subsets = pd.concat(rows)
-    df_icd10billable_subsets = pd.concat([robot_template_header, df_icd10billable_subsets]).reset_index(drop=True)
-
-    # Write the filtered DataFrame to a TSV file
-    return df_icd10billable_subsets
+    return pd.concat([header, robot_template], ignore_index=True)
 
 
 def _is_parent(mondo, parent_id, child_id):
