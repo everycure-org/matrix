@@ -81,6 +81,7 @@ dependencies = [
     "typer", # used for convenience libraries, to be moved to a dev requirements eventually
     "xgboost-cpu",
     "tqdm>=4.67.1",
+    "bracex>=2.6",
 ]
 
 

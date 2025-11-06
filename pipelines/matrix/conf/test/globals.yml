@@ -26,6 +26,7 @@ paths:
   matrix_generation:  data/test/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
   matrix_transformations:  data/test/releases/${versions.release}/runs/${run_name}/datasets/matrix_transformations
   inference:          data/test/releases/${versions.release}/runs/${run_name}/datasets/inference
+  run_comparison:     data/test/run_comparison/runs/${run_name}
 
   tmp:                data/test/tmp
   cache:              data/test/cache
