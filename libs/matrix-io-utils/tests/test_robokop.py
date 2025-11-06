@@ -14,7 +14,7 @@ class RobokopKGTestCase(unittest.TestCase):
     """Suite of tests for Robokop functions."""
 
     def test_robokop_convert_boolean_columns_to_label_columns(self):
-        """Tests coalescing columns upon a full join."""
+        """Tests converting boolean columns to label columns."""
         orig_df = pl.DataFrame(
             {
                 "id": [1, 2, 3],
@@ -41,7 +41,7 @@ class RobokopKGTestCase(unittest.TestCase):
         assert_frame_equal(test_df, expected_df)
 
     def test_robokop_strip_type_from_column_names(self):
-        """Tests exploding MONDO groups."""
+        """Tests stripping type from column names."""
         orig_df = pl.DataFrame(
             {
                 "id": [1, 2, 3],
