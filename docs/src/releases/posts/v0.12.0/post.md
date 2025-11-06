@@ -39,7 +39,17 @@ The MATRIX pipeline will consume the new drug list by default, but is backwards 
 
 ### Experiments 🧪
 
-> Lee placeholder
+- **AggPath**: AggPath is a transformer-based path classifier that is trained using drug-disease pair indication data via aggregation functions. [link to report](https://github.com/everycure-org/lab-notebooks/pull/228/files#diff-c68de2b0e6a106ba77cfd6679430d8cf7cb61fce40382773e36603b59befff48)
+
+- **Ground Truth Reshuffling**: We examined whether with esentially random training data we get 'non-random' ranking predictions of drug diseases pairs.  [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/7d1253f2c3c3ee288ba7a67913cb43a2b16a6bba/negative_sampling/gt_reshuffling.ipynb)
+
+- **CBR-X Explainer**: Evaluation of a case-based reasoning explainer (CBR-X) for drug–disease link prediction that is designed to be both predictive and mechanistically interpretable. [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/carolina-gc-cbr-project/reports/Drug_Repurposing_Experiment_Report_Template.ipynb)
+
+- **Structural Bias in Drug Repurposing Model Predictions**: An experiment to understanding and quantifying the effect of structural bias in drug repurposing models [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/5f7d37deb573c8f36fdd1ff8ef4b6f2ededcafcc/lee/structural-bias/Structural_Bias_T3_Report.ipynb)
+
+- **Improved LLM descriptions of drug and diseases**: Experiment with LLM descriptions to Improve Drug/Disease Embeddings. [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/d5b25bdb22c85082ade58963a6b230461c5f1249/chunyu_experiments/Experiment_with_embedding_improvement_using_drug_and_disease_dscriptions_and_properties/reports/LLM_description_method_report.ipynb)
+
+- **Inclusion of additional information for drug and diseases**: Experiment with MONDO Hierarchy and SMILES to Improve Drug/Disease Embeddings. [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/d5b25bdb22c85082ade58963a6b230461c5f1249/chunyu_experiments/Experiment_with_embedding_improvement_using_drug_and_disease_dscriptions_and_properties/reports/MONDO_hierarchy_and_SMILES_method_report.ipynb)
 
 ### Bugfixes 🐛
 
