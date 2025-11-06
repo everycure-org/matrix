@@ -59,7 +59,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ArgoNode(
                     func=nodes.run_evaluation,
                     inputs=[
-                        "params:run_comparison.perform_bootstrap",
                         f"params:run_comparison.evaluations.{evaluation}",
                         "run_comparison.combined_predictions",
                         "run_comparison.predictions_info",
@@ -70,7 +69,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ArgoNode(
                     func=nodes.plot_results,
                     inputs=[
-                        "params:run_comparison.perform_bootstrap",
                         f"params:run_comparison.evaluations.{evaluation}",
                         f"run_comparison.{evaluation}.results",
                         "run_comparison.combined_pairs",

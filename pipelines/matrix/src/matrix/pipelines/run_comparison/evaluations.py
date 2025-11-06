@@ -13,14 +13,12 @@ class ComparisonEvaluation(abc.ABC):
         self,
         combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
-        perform_bootstrap: bool,
     ) -> pl.DataFrame:
         """Evaluate the results.
 
         Args:
             combined_predictions: Dictionary of PartitionedDataset load fn's returning predictions for all folds and models
             predictions_info: Dictionary containing model names and number of folds.
-            perform_bootstrap: Whether to perform bootstrap uncertainty estimation.
 
         Returns:
             Polars DataFrame with the schema expected by the plot_results method.
@@ -34,7 +32,6 @@ class ComparisonEvaluation(abc.ABC):
         results: pl.DataFrame,
         combined_pairs: dict[str, Callable[[], pl.LazyFrame]],  # Dictionary of PartitionedDataset load fn's
         predictions_info: dict[str, any],
-        perform_bootstrap: bool,
     ) -> plt.Figure:
         """Plot the results.
 
@@ -42,7 +39,6 @@ class ComparisonEvaluation(abc.ABC):
             results: Polars DataFrame with the evaluation results (output of evaluate method).
             combined_pairs: Dictionary of PartitionedDataset load fn's returning combined matrix pairs for each fold
             predictions_info: Dictionary containing model names and number of folds.
-            perform_bootstrap: Whether to perform bootstrap uncertainty estimation.
 
         Returns:
             Matplotlib Figure.
@@ -69,9 +65,9 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
     @abc.abstractmethod
     def give_x_values(self) -> np.ndarray:
         """Give the common x-values for all curves.
-
-        Returns:
-            A 1D numpy array of x-values.
+        1
+                Returns:
+                    A 1D numpy array of x-values.
         """
         pass
 
@@ -89,19 +85,6 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         pass
 
     @abc.abstractmethod
-    def give_y_values_bootstrap(self, matrix: pl.DataFrame) -> np.ndarray:
-        """Give the y-values of all curves for each bootstrap sample.
-
-        Args:
-            matrix: Polars DataFrame containing predictions and ground truth columns for a single fold and model.
-                Columns include "source", "target", "score"  plus any ground truth columns
-
-        Returns:
-            A 2D numpy array of y-values with shape (number of bootstrap samples, number of x-values).
-        """
-        pass
-
-    @abc.abstractmethod
     def give_y_values_random_classifier(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
         """Give the y-values of the curve for a random classifier, given a dictionary of reference matrices of drug-disease pairs for each fold.
 
@@ -112,34 +95,7 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
         """
         pass
 
-    def evaluate_single_fold(
-        self,
-        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
-        predictions_info: dict[str, any],
-    ) -> pl.DataFrame:
-        """Compute evaluation curves for all models without any uncertainty estimation.
-
-        Args:
-            combined_predictions: Dictionary PartitionedDataset load fn's returning predictions for all folds and models
-            predictions_info: Dictionary containing model names and number of folds.
-
-        Returns:
-            Polars DataFrame with columns `x` and `y_{model_name}` for each model.
-        """
-        x_lst = self.give_x_values()
-        output_dataframe = pl.DataFrame({"x": x_lst})
-
-        for model_name in predictions_info["model_names"]:
-            matrix = combined_predictions[model_name + "_fold_0"]().collect()
-
-            # Compute y-values and join to output results dataframe
-            y_values = self.give_y_values(matrix)
-            results_df_model = pl.DataFrame({"x": x_lst, f"y_{model_name}": y_values})
-            output_dataframe = output_dataframe.join(results_df_model, how="left", on="x")
-
-        return output_dataframe
-
-    def evaluate_multi_fold(
+    def evaluate(
         self,
         combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
@@ -174,40 +130,75 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
 
         return output_dataframe
 
-    def evaluate_bootstrap_single_fold(
+    def plot_results(
         self,
-        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
+        results: pl.DataFrame,
+        combined_pairs: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
-    ) -> pl.DataFrame:
-        """Compute evaluation curves for a single fold of models with bootstrap uncertainty estimation.
+    ) -> plt.Figure:
+        """Plot the results."""
+
+        # List of n values for recall@n plot
+        x_values = self.give_x_values()
+
+        # Set up the figure
+        fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+
+        # Plot curves
+        for model_name in predictions_info["model_names"]:
+            av_y_values = results[f"y_{model_name}_mean"]
+            std_y_values = results[f"y_{model_name}_std"]
+            ax.plot(x_values, av_y_values, label=model_name)
+            ax.fill_between(x_values, av_y_values - std_y_values, av_y_values + std_y_values, alpha=0.2)
+
+        # Plot random classifier curve
+        y_values_random = self.give_y_values_random_classifier(combined_pairs)
+        ax.plot(x_values, y_values_random, "k--", label="Random classifier", alpha=0.5)
+
+        # Configure figure
+        ax.set_xlabel(self.x_axis_label)
+        ax.set_ylabel(self.y_axis_label)
+        if self.force_full_y_axis:
+            ax.set_ylim(0, 1)
+        ax.grid()
+        ax.legend()
+        ax.set_title(self.title)
+        return fig
+
+
+class ComparisonModelSpecificBootstrap(ComparisonEvaluationModelSpecific):
+    """Abstract base class for evaluations that produce a single curve for each model with bootstrap uncertainty estimation."""
+
+    def __init__(
+        self, x_axis_label: str, y_axis_label: str, title: str, force_full_y_axis: bool = False, N_bootstraps: int = 100
+    ):
+        """Initialize an instance of ComparisonModelSpecificBootstrap.
 
         Args:
-            combined_predictions: Dictionary PartitionedDataset load fn's returning predictions for all folds and models
-            predictions_info: Dictionary containing model names and number of folds.
+            x_axis_label: Label for the x-axis.
+            y_axis_label: Label for the y-axis.
+            title: Title of the plot.
+        """
+        self.x_axis_label = x_axis_label
+        self.y_axis_label = y_axis_label
+        self.title = title
+        self.force_full_y_axis = force_full_y_axis
+        self.N_bootstraps = N_bootstraps
+
+    @abc.abstractmethod
+    def give_y_values(self, matrix: pl.DataFrame) -> np.ndarray:
+        """Give the y-values of the curve for a single set of predictions for all bootstrap samples.
+
+        Args:
+            matrix: Polars DataFrame containing predictions and ground truth columns for a single fold and model.
+                Columns include "source", "target", "score"  plus any ground truth columns
 
         Returns:
-            Polars DataFrame with columns `x` and `y_{model_name}_mean` and `y_{model_name}_std` for each model.
+            A 2D numpy array of y-values with shape (number of bootstrap samples, number of x-values).
         """
-        x_lst = self.give_x_values()
-        output_dataframe = pl.DataFrame({"x": x_lst})
+        pass
 
-        for model_name in predictions_info["model_names"]:
-            matrix = combined_predictions[model_name + "_fold_0"]().collect()
-
-            # Compute y-values for bootstrap then take mean and std.
-            y_values_all_bootstraps = self.give_y_values_bootstrap(matrix)
-            y_values_mean = np.mean(y_values_all_bootstraps, axis=0)
-            y_values_std = np.std(y_values_all_bootstraps, axis=0)
-
-            # Join to output results dataframe
-            results_df_model = pl.DataFrame(
-                {"x": x_lst, f"y_{model_name}_mean": y_values_mean, f"y_{model_name}_std": y_values_std}
-            )
-            output_dataframe = output_dataframe.join(results_df_model, how="left", on="x")
-
-        return output_dataframe
-
-    def evaluate_bootstrap_multi_fold(
+    def evaluate(
         self,
         combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
@@ -230,7 +221,7 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
                 matrix = combined_predictions[model_name + "_fold_" + str(fold)]().collect()
 
                 # Compute y-values for bootstrap and append to list
-                y_values_all_folds.append(self.give_y_values_bootstrap(matrix))
+                y_values_all_folds.append(self.give_y_values(matrix))
 
             # Stack bootstrap values for different folds then take mean and std over all
             y_values_all_folds = np.vstack(y_values_all_folds)
@@ -243,70 +234,70 @@ class ComparisonEvaluationModelSpecific(ComparisonEvaluation):
 
         return output_dataframe
 
-    def evaluate(
-        self,
-        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
-        predictions_info: dict[str, any],
-        perform_bootstrap: bool,
-    ) -> pl.DataFrame:
-        """Evaluate the results."""
-        if predictions_info["num_folds"] > 1:
-            if perform_bootstrap:
-                return self.evaluate_bootstrap_multi_fold(combined_predictions, predictions_info)
-            else:
-                return self.evaluate_multi_fold(combined_predictions, predictions_info)
-        else:
-            if perform_bootstrap:
-                return self.evaluate_bootstrap_single_fold(combined_predictions, predictions_info)
-            else:
-                return self.evaluate_single_fold(combined_predictions, predictions_info)
-
-    def _is_plot_errors(self, predictions_info: dict[str, any], perform_bootstrap: bool) -> plt.Figure:
-        """Whether to plot the error bars."""
-        return (predictions_info["num_folds"] > 1) or perform_bootstrap
-
-    def plot_results(
-        self,
-        results: pl.DataFrame,
-        combined_pairs: dict[str, Callable[[], pl.LazyFrame]],
-        predictions_info: dict[str, any],
-        perform_bootstrap: bool,
-    ) -> plt.Figure:
-        """Plot the results."""
-
-        # List of n values for recall@n plot
-        x_values = self.give_x_values()
-
-        # Set up the figure
-        fig, ax = plt.subplots(1, 1, figsize=(10, 10))
-
-        # Plot curves
-        for model_name in predictions_info["model_names"]:
-            if self._is_plot_errors(predictions_info, perform_bootstrap):
-                av_y_values = results[f"y_{model_name}_mean"]
-                std_y_values = results[f"y_{model_name}_std"]
-                ax.plot(x_values, av_y_values, label=model_name)
-                ax.fill_between(x_values, av_y_values - std_y_values, av_y_values + std_y_values, alpha=0.2)
-            else:
-                av_y_values = results[f"y_{model_name}"]
-                ax.plot(x_values, av_y_values, label=model_name)
-
-        # Plot random classifier curve
-        y_values_random = self.give_y_values_random_classifier(combined_pairs)
-        ax.plot(x_values, y_values_random, "k--", label="Random classifier", alpha=0.5)
-
-        # Configure figure
-        ax.set_xlabel(self.x_axis_label)
-        ax.set_ylabel(self.y_axis_label)
-        if self.force_full_y_axis:
-            ax.set_ylim(0, 1)
-        ax.grid()
-        ax.legend()
-        ax.set_title(self.title)
-        return fig
-
 
 class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
+    """Recall@N evaluation"""
+
+    def __init__(
+        self,
+        ground_truth_col: str,
+        n_max: int,
+        perform_sort: bool,
+        title: str,
+        num_n_values: int = 1000,
+        force_full_y_axis: bool = True,
+    ):
+        """Initialize an instance of FullMatrixRecallAtN.
+
+        Args:
+            ground_truth_col: Boolean column in the matrix indicating the known positive test set.
+            n_max: Maximum value of n to compute recall@n score for.
+            perform_sort: Whether to sort the matrix or expect the dataframe to be sorted already.
+            title: Title of the plot.
+            num_n_values: Number of n values to compute recall@n score for.
+            force_full_y_axis: Whether to force the y-axis to be between 0 and 1.
+        """
+        super().__init__(x_axis_label="n", y_axis_label="Recall@n", title=title, force_full_y_axis=force_full_y_axis)
+        self.ground_truth_col = ground_truth_col
+        self.n_max = n_max
+        self.perform_sort = perform_sort
+        self.num_n_values = num_n_values
+
+    def give_x_values(self) -> np.ndarray:
+        """Integer x-axis values from 0 to n_max, representing the n in recall@n."""
+        return np.linspace(1, self.n_max, self.num_n_values)
+
+    def _give_ranks_series(self, matrix: pl.DataFrame, score_col_name: str = "score") -> pl.Series:
+        """Give the ranks of the known positives."""
+        # Sort by score
+        if self.perform_sort:
+            matrix = matrix.sort(by=score_col_name, descending=True)
+
+        return (
+            matrix.with_row_index("index").filter(pl.col(self.ground_truth_col)).select(pl.col("index")).to_series() + 1
+        )
+
+    def give_y_values(self, matrix: pl.DataFrame, score_col_name: str = "score") -> np.ndarray:
+        """Compute Recall@n values for a single set of predictions."""
+        n_lst = self.give_x_values()
+
+        # Number of known positives
+        N = len(matrix.filter(pl.col(self.ground_truth_col)))
+        if N == 0:
+            raise ValueError("No known positives in the matrix.")
+
+        # Return Recall@n values
+        ranks_series = self._give_ranks_series(matrix, score_col_name)
+        return np.array([(ranks_series <= n).sum() / N for n in n_lst])
+
+    def give_y_values_random_classifier(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
+        """Compute Recall@n values for a random classifier."""
+        matrix = list(combined_pairs.values())[0]()
+        matrix_length = matrix.select(pl.len()).collect().item()
+        return np.array([min([1, x / matrix_length]) for x in self.give_x_values()])
+
+
+class FullMatrixRecallAtNBootstrap(ComparisonModelSpecificBootstrap, FullMatrixRecallAtN):
     """Recall@N evaluation"""
 
     def __init__(
@@ -337,34 +328,7 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
         self.num_n_values = num_n_values
         self.N_bootstraps = N_bootstraps
 
-    def give_x_values(self) -> np.ndarray:
-        """Integer x-axis values from 0 to n_max, representing the n in recall@n."""
-        return np.linspace(1, self.n_max, self.num_n_values)
-
-    def _give_ranks_series(self, matrix: pl.DataFrame, score_col_name: str = "score") -> pl.Series:
-        """Give the ranks of the known positives."""
-        # Sort by score
-        if self.perform_sort:
-            matrix = matrix.sort(by=score_col_name, descending=True)
-
-        return (
-            matrix.with_row_index("index").filter(pl.col(self.ground_truth_col)).select(pl.col("index")).to_series() + 1
-        )
-
     def give_y_values(self, matrix: pl.DataFrame, score_col_name: str = "score") -> np.ndarray:
-        """Compute Recall@n values for a single set of predictions."""
-        n_lst = self.give_x_values()
-
-        # Number of known positives
-        N = len(matrix.filter(pl.col(self.ground_truth_col)))
-        if N == 0:
-            raise ValueError("No known positives in the matrix.")
-
-        # Return Recall@n values
-        ranks_series = self._give_ranks_series(matrix, score_col_name)
-        return np.array([(ranks_series <= n).sum() / N for n in n_lst])
-
-    def give_y_values_bootstrap(self, matrix: pl.DataFrame, score_col_name: str = "score") -> np.ndarray:
         """Compute Recall@n values for all bootstrap samples of a single set of predictions."""
         n_lst = self.give_x_values()
 
@@ -383,9 +347,3 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
 
         # Calculate recall@n for each bootstrap
         return np.array([bootstrap_recall_lst(ranks_series, N, n_lst, seed) for seed in range(self.N_bootstraps)])
-
-    def give_y_values_random_classifier(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
-        """Compute Recall@n values for a random classifier."""
-        matrix = list(combined_pairs.values())[0]()
-        matrix_length = matrix.select(pl.len()).collect().item()
-        return np.array([x / matrix_length for x in self.give_x_values()])

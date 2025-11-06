@@ -2,7 +2,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
 import pytest
-from matrix.pipelines.run_comparison.evaluations import ComparisonEvaluationModelSpecific, FullMatrixRecallAtN
+from matrix.pipelines.run_comparison.evaluations import (
+    ComparisonEvaluationModelSpecific,
+    ComparisonModelSpecificBootstrap,
+    FullMatrixRecallAtN,
+    FullMatrixRecallAtNBootstrap,
+)
 from polars.testing import assert_frame_equal
 
 
@@ -64,14 +69,18 @@ class TestComparisonEvaluationModelSpecific(ComparisonEvaluationModelSpecific):
         # Return constant y value equal to the mean score
         return matrix["score"].mean() * np.ones(2)
 
-    def give_y_values_bootstrap(self, matrix: pl.DataFrame) -> np.ndarray:
-        # Return constant y value equal to the mean score plus/minus 1/4
-        mean_score_curve = self.give_y_values(matrix)
-        return np.array([mean_score_curve + 1 / 4, mean_score_curve - 1 / 4])
-
     def give_y_values_random_classifier(self, combined_predictions: dict[str, pl.LazyFrame]) -> np.ndarray:
         # Return constant zero values
         return np.zeros(2)
+
+
+class TestComparisonModelSpecificBootstrap(ComparisonModelSpecificBootstrap, TestComparisonEvaluationModelSpecific):
+    """A class to test the concrete methods of the abstract class ComparisonModelSpecificBootstrap."""
+
+    def give_y_values(self, matrix: pl.DataFrame) -> np.ndarray:
+        # Return constant y value equal to the mean score plus/minus 1/4
+        mean_score_curve = matrix["score"].mean() * np.ones(2)
+        return np.array([mean_score_curve + 1 / 4, mean_score_curve - 1 / 4])
 
 
 def test_model_specific_abstract_class(constant_score_data):
@@ -84,25 +93,36 @@ def test_model_specific_abstract_class(constant_score_data):
         title="Test Title",
         force_full_y_axis=False,
     )
+    evaluation_bootstrap = TestComparisonModelSpecificBootstrap(
+        x_axis_label="x",
+        y_axis_label="y",
+        title="Test Title",
+        force_full_y_axis=False,
+        N_bootstraps=10,
+    )
 
     # When the concrete methods are called
     predictions_info_single_fold = predictions_info.copy()
     predictions_info_single_fold["num_folds"] = 1
-    single_fold_results = evaluation.evaluate_single_fold(combined_predictions, predictions_info_single_fold)
-    multi_fold_results = evaluation.evaluate_multi_fold(combined_predictions, predictions_info)
-    bootstrap_single_fold_results = evaluation.evaluate_bootstrap_single_fold(
-        combined_predictions, predictions_info_single_fold
-    )
-    bootstrap_multi_fold_results = evaluation.evaluate_bootstrap_multi_fold(combined_predictions, predictions_info)
-    figure = evaluation.plot_results(
-        single_fold_results, combined_predictions, predictions_info_single_fold, perform_bootstrap=False
-    )
+    single_fold_results = evaluation.evaluate(combined_predictions, predictions_info_single_fold)
+    multi_fold_results = evaluation.evaluate(combined_predictions, predictions_info)
+    bootstrap_single_fold_results = evaluation_bootstrap.evaluate(combined_predictions, predictions_info_single_fold)
+    bootstrap_multi_fold_results = evaluation_bootstrap.evaluate(combined_predictions, predictions_info)
+    figure = evaluation.plot_results(single_fold_results, combined_predictions, predictions_info_single_fold)
 
     # Then results are as expected
     # Single fold results take first fold as default
     assert_frame_equal(
         single_fold_results,
-        pl.DataFrame({"x": [0, 1], "y_model_1": [3 / 4, 3 / 4], "y_model_2": [1 / 2, 1 / 2]}),
+        pl.DataFrame(
+            {
+                "x": [0, 1],
+                "y_model_1_mean": [3 / 4, 3 / 4],
+                "y_model_2_mean": [1 / 2, 1 / 2],
+                "y_model_1_std": [0, 0],
+                "y_model_2_std": [0, 0],
+            }
+        ),
         check_row_order=False,
         check_column_order=False,
     )
@@ -187,6 +207,13 @@ def test_model_full_matrix_recall_at_n(matrix_data):
         ground_truth_col="is_known_positive",
         n_max=4,
         num_n_values=4,
+        perform_sort=True,
+        title="Test Title",
+    )
+    evaluation_bootstrap = FullMatrixRecallAtNBootstrap(
+        ground_truth_col="is_known_positive",
+        n_max=4,
+        num_n_values=4,
         N_bootstraps=10,
         perform_sort=True,
         title="Test Title",
@@ -195,8 +222,8 @@ def test_model_full_matrix_recall_at_n(matrix_data):
     # When the evaluate_single_fold method is called
     x_values = evaluation.give_x_values()
     y_values = evaluation.give_y_values(matrix, "score")
-    y_values_bootstrap = evaluation.give_y_values_bootstrap(matrix, "score")
-    y_values_random = evaluation.give_y_values_random_classifier(combined_predictions)
+    y_values_bootstrap = evaluation_bootstrap.give_y_values(matrix, "score")
+    y_values_random = evaluation_bootstrap.give_y_values_random_classifier(combined_predictions)
 
     # Then the results are as expected
     # x_values are as expected
