@@ -13,6 +13,7 @@ authors:
   - lvijnck
   - eKathleenCarter
   - matentzn
+  - leelancashire
 ---
 
 ### Breaking Changes 🛠
