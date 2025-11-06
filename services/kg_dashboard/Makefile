@@ -8,7 +8,7 @@ EVIDENCE_BASE_PATH = gs://$(EC_DATA_DOMAIN)/versions
 
 # Change release version of the KG used in the dashboard
 RELEASE_VERSION ?= v0.10.4
-BENCHMARK_VERSION ?= v0.10.2
+BENCHMARK_VERSION ?= v0.11.3
 
 
 export EVIDENCE_VAR__release_version := $(RELEASE_VERSION)
