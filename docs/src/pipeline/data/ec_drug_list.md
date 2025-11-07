@@ -24,12 +24,12 @@ gs://data.dev.everycure.org/data/01_RAW/drug_list/{version}/ec-drug-list.tsv
 
 Full path for the current version:
 ```
-gs://data.dev.everycure.org/data/01_RAW/drug_list/v0.2.0/ec-drug-list.tsv
+gs://data.dev.everycure.org/data/01_RAW/drug_list/v1.0.0/ec-drug-list.tsv
 ```
 
 New versions of the drug list are released through the [core-entities GitHub repository](https://github.com/everycure-org/core-entities/releases). Check the releases page for the latest version and update the version number in the MATRIX configuration (`pipelines/matrix/conf/base/globals.yml`). EC Data Products team follow a versioning system where users should always use at least the current minor release to ensure compatibility with other systems:
 
-- PATCH (v0.1.0 → v0.1.1): Fixed incorrect data, corrected values or added a column
+- PATCH (v0.1.0 → v0.1.1): Fixed incorrect data, corrected values (including changes in translator_id) or added a column
 - MINOR (v0.1.1 → v0.2.0): Changes in spine (EC_ID) or translator_id (Name Resolver or Node Normalizer)
 - MAJOR (v0.2.0 → v1.0.0): Removed columns, changed data types, restructured
 
@@ -39,10 +39,10 @@ The EC Drug List is manually curated and maintained by the Every Cure team with 
 
 1. **Drug collation**: Drugs are listed by curators as they go through treatment guidelines, consolidating entries to the active ingredient level in a protected Google Sheet. At the request of the EC Medical Team, additional aggregations of multiple similar drugs into as single entry are done in some edge cases to avoid repeated effort of reviewing redundant pairs (e.g., drugs and prodrugs). Where this is the case, it is noted in the `aggregated_with` column
 2. **Manual annotations**: Manually curated columns are appended to the list in the Google Sheet. See [below](#features-of-the-List) which columns in the list are manual annotations
-2. **Stable identifier assignment**: The Google Sheet is ingested into Core Entities and each drug receives a unique EC identifier (format: `EC:XXXXX`) that will not be removed or modified over time, only superseded if necessary
-3. **Multi-source identifier mapping**: Each EC identifier is mapped to multiple identifier systems:
-    - **Translator IDs** (CURIEs): Used to join with knowledge graphs in the MATRIX pipeline (e.g., CHEBI, UNII, DRUGBANK). The drug name is first put through NCATS Name Resolver to return a CURIE, then normalized with NCATS Node Normalizer to be consistent with the MATRIX KG-based pipeline
-    - **DrugBank IDs**: Links to the DrugBank database for additional drug information, this is done through direct string-matching of the drug name
+3. **Stable identifier assignment**: The Google Sheet is ingested into Core Entities and each drug receives a unique EC identifier (format: `EC:XXXXX`) that will not be removed or modified over time, only superseded if necessary
+4. **Multi-source identifier mapping**: Each EC identifier is mapped to multiple identifier systems:
+    - **Translator IDs** (CURIEs): Used to join with knowledge graphs in the MATRIX pipeline (e.g., CHEBI, UNII, DRUGBANK). The drug name or synonym is first put through NCATS Name Resolver to return a CURIE, then normalized with NCATS Node Normalizer to be consistent with the MATRIX KG-based pipeline
+    - **DrugBank IDs**: Links to the DrugBank database for additional drug information, this is done through direct string-matching of the drug name or synonym
 5. **Additional feature generation**: Using the mappings above, additional features are programmatically generated for each drug, see [below](#features-of-the-List) which columns in the list are programmatically generated
 
 ### Data Validation
@@ -51,8 +51,10 @@ The EC Drug List undergoes validation during the ingestion pipeline with Pandera
 
 - **Unique EC identifiers**: Each `id` must be unique across the list
 - **Unique translator IDs**: Each `translator_id` must be unique across the list
+- **Unique DrugBank ID**: Each `drugbank_id` must be unique across the list
 - **Format validation**: EC identifiers must follow the `EC:` prefix format
 - **Boolean flag validation**: Therapeutic flag fields must contain valid boolean values
+- **String format validation**: Names and synonyms must be capitalized
 
 ### Integration with MATRIX Pipeline
 
@@ -67,7 +69,7 @@ For more details on the migration decision and its impact on the MATRIX pipeline
 
 ## Features of the List
 
-The EC Drug List is provided as a tab-separated values (TSV) file with the following columns:
+The EC Drug List is provided as a tab-separated values (TSV) file and parquet file with the following columns:
 
 | Column | Type | Description | Agent type |
 |--------|------|-------------|---------|
@@ -75,13 +77,18 @@ The EC Drug List is provided as a tab-separated values (TSV) file with the follo
 | `name` | String | Human-readable name of the drug | Manual  |
 | `translator_id` | String | CURIE identifier used for mapping to knowledge graph nodes (e.g., `CHEBI:421707`, `UNII:AVK0I6HY2U`) | Programmatic |
 | `drugbank_id` | String | DrugBank database identifier (e.g., `DB01048`) | Programmatic |
+| `synonyms` | String | Alternative human-readble names of the drug | Manual |
+| `aggregated_with` | String | Similar drugs that have been aggregated with this drug entity to avoid repeated effort of reviewing redundant pairs (e.g., drugs and prodrugs) | Manual |
 | `approved_usa` | Categorical | Indicates whether the drug is FDA-approved in the United States (`APPROVED`, `NOT_APPROVED`, `DISCONTINUED`) | Manual |
 | `is_antipsychotic` | Boolean | Flag indicating if the drug is classified as an antipsychotic medication | Manual |
 | `is_sedative` | Boolean | Flag indicating if the drug is classified as a sedative medication | Manual |
 | `is_antimicrobial` | Boolean | Flag indicating if the drug is classified as an antimicrobial agent | Manual |
 | `is_glucose_regulator` | Boolean | Flag indicating if the drug regulates glucose levels | Manual |
-| `is_chemotherapy` | Boolean | Flag indicating if the drug is used in chemotherapy treatment | Manual |
+| `is_chemotherapy` | Boolean | Flag indicating if the drug is a traditional cytotoxic chemotherapy treatment | Manual |
 | `is_steroid` | Boolean | Flag indicating if the drug is a steroid medication | Manual |
+| `is_analgesic` | Boolean | Flag indicating if the drug is primarily an analgesic medication | Manual |
+| `is_cardiovascular` | Boolean | Flag indicating if the drug is used to treat cardiovascular conditions | Manual |
+| `is_cell_therapy` | Boolean | Flag indicating if the drug is a cell or gene therapy | Manual |
 | `smiles` | String | Simplified Molecular Input Line Entry System (SMILES) representation of the chemical structure | Programmatic |
 | `atc_main` | String | ATC main code (abbreviated form) | Programmatic |
 | `atc_level_1` | String | ATC level 1 code - anatomical main group (e.g., `H` for systemic hormonal preparations) | Programmatic |
@@ -94,6 +101,9 @@ The EC Drug List is provided as a tab-separated values (TSV) file with the follo
 | `l3_label` | String | Human-readable label for ATC level 3 (e.g., "thyroid preparations") | Programmatic |
 | `l4_label` | String | Human-readable label for ATC level 4 (e.g., "thyroid hormones") | Programmatic |
 | `l5_label` | String | Human-readable label for ATC level 5 (e.g., "levothyroxine sodium") | Programmatic |
+| `deleted` | Boolean | Flag indicating if the drug has been deprecated from the list | Manual |
+| `deleted_reason` | String | Description of rationale for the drug being deprecated | Manual |
+| `new_id` | String | EC identifier of drug that should supercede deleted drug (if any) (format: `EC:XXXXX`) | Manual |
 
 ### Understanding the ATC Classification System
 
