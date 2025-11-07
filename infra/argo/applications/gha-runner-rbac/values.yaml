@@ -1,0 +1,3 @@
+# Default values for gha-runner-rbac
+namespace: actions-runner-system
+serviceAccountName: gha-runner-scale-set-controller-gha-rs-controller

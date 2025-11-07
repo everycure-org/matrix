@@ -1,0 +1,80 @@
+---
+# ClusterRole with permissions to manage RBAC resources
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: gha-runner-controller-manager-role
+  labels:
+    app.kubernetes.io/name: gha-runner-scale-set-controller
+    app.kubernetes.io/component: controller
+rules:
+  # Permissions for managing runner pods and related resources
+  - apiGroups: [""]
+    resources:
+      - pods
+      - pods/status
+      - pods/log
+      - secrets
+      - configmaps
+      - events
+      - serviceaccounts
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # Permissions for managing deployments
+  - apiGroups: ["apps"]
+    resources:
+      - deployments
+      - replicasets
+      - statefulsets
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # Permissions for managing RBAC resources (roles and rolebindings)
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources:
+      - roles
+      - rolebindings
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # Permissions for managing GitHub Actions CRDs
+  - apiGroups: ["actions.github.com"]
+    resources:
+      - ephemeralrunners
+      - ephemeralrunners/status
+      - ephemeralrunners/finalizers
+      - ephemeralrunnersets
+      - ephemeralrunnersets/status
+      - ephemeralrunnersets/finalizers
+      - autoscalinglisteners
+      - autoscalinglisteners/status
+      - autoscalinglisteners/finalizers
+      - autoscalingrunnersets
+      - autoscalingrunnersets/status
+      - autoscalingrunnersets/finalizers
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # Permissions to watch nodes for scheduling decisions
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+
+  # Permissions for leader election
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+# ClusterRoleBinding to bind the ClusterRole to the service account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: gha-runner-controller-manager-rolebinding
+  labels:
+    app.kubernetes.io/name: gha-runner-scale-set-controller
+    app.kubernetes.io/component: controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: gha-runner-controller-manager-role
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.serviceAccountName }}
+    namespace: {{ .Values.namespace }}
