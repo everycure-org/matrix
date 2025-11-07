@@ -1,10 +1,18 @@
 # Disease list pipeline parameters
 
 queries:
+  # SPARQL SELECT queries for extracting data
   matrix_disease_list_filters: "src/matrix/pipelines/disease_list/queries/matrix-disease-list-filters.sparql"
   matrix_disease_list_metrics: "src/matrix/pipelines/disease_list/queries/matrix-disease-list-metrics.sparql"
   ontology_metadata: "src/matrix/pipelines/disease_list/queries/ontology-metadata.sparql"
   mondo_obsoletes: "src/matrix/pipelines/disease_list/queries/mondo-obsoletes.sparql"
+
+  # SPARQL UPDATE queries for modifying ontology
+  inject_mondo_top_grouping: "src/matrix/pipelines/disease_list/queries/inject-mondo-top-grouping.ru"
+  inject_susceptibility_subset: "src/matrix/pipelines/disease_list/queries/inject-susceptibility-subset.ru"
+  inject_subset_declaration: "src/matrix/pipelines/disease_list/queries/inject-subset-declaration.ru"
+  downfill_disease_groupings: "src/matrix/pipelines/disease_list/queries/downfill-disease-groupings.ru"
+  disease_groupings_other: "src/matrix/pipelines/disease_list/queries/disease-groupings-other.ru"
 
 # MONDO IDs for disease classification and filtering
 mondo_ids:

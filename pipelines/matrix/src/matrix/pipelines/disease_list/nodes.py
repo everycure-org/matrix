@@ -387,22 +387,77 @@ def create_subtypes_template(
         Path(mondo_owl_path).unlink(missing_ok=True)
 
 
+def _build_robot_command(
+    input_owl: Path,
+    billable_template: Path,
+    subtypes_template: Path,
+    update_queries: list,
+    select_queries: dict,
+    output_owl: Path,
+) -> str:
+    """Build ROBOT command for merging templates and extracting data.
+
+    Args:
+        input_owl: Path to input OWL file
+        billable_template: Path to billable ICD-10 template
+        subtypes_template: Path to subtypes template
+        update_queries: List of paths to SPARQL UPDATE queries
+        select_queries: Dict mapping query paths to output TSV paths
+        output_owl: Path for output preprocessed OWL file
+
+    Returns:
+        ROBOT command string
+    """
+    # Build template merge command
+    cmd_parts = [
+        "robot",
+        f'template -i "{input_owl}"',
+        "--merge-after",
+        f'--template "{billable_template}"',
+        f'--template "{subtypes_template}"',
+    ]
+
+    # Add UPDATE queries
+    for query_path in update_queries:
+        cmd_parts.append(f'query --update "{query_path}"')
+
+    # Add SELECT queries
+    if select_queries:
+        cmd_parts.append("query -f tsv")
+        for query_path, output_path in select_queries.items():
+            cmd_parts.append(f'--query "{query_path}" "{output_path}"')
+
+    # Add final merge output
+    cmd_parts.append(f'merge -o "{output_owl}"')
+
+    return " \\\n    ".join(cmd_parts)
+
+
 def process_mondo_with_templates(
     mondo_owl: str,
     billable_icd10: pd.DataFrame,
     subtypes: pd.DataFrame,
+    inject_mondo_top_grouping_query: str,
+    inject_susceptibility_subset_query: str,
+    inject_subset_declaration_query: str,
+    downfill_disease_groupings_query: str,
+    disease_groupings_other_query: str,
     disease_list_filters_query: str,
     metrics_query: str,
 ) -> Dict[str, Any]:
     """Merge templates into MONDO and extract disease list data.
 
-
     Args:
         mondo_owl: Base MONDO ontology content
         billable_icd10: Billable ICD-10 template DataFrame
         subtypes: Subtypes template DataFrame
-        disease_list_filters_query: Path to disease list filters SPARQL query
-        metrics_query: Path to metrics SPARQL query
+        inject_mondo_top_grouping_query: Path to inject top grouping UPDATE query
+        inject_susceptibility_subset_query: Path to inject susceptibility UPDATE query
+        inject_subset_declaration_query: Path to inject subset declaration UPDATE query
+        downfill_disease_groupings_query: Path to downfill groupings UPDATE query
+        disease_groupings_other_query: Path to disease groupings other UPDATE query
+        disease_list_filters_query: Path to disease list filters SELECT query
+        metrics_query: Path to metrics SELECT query
 
     Returns:
         Dictionary containing:
@@ -430,28 +485,30 @@ def process_mondo_with_templates(
         preprocessed_path = tmpdir_path / "mondo-with-subsets.owl"
         disease_list_tsv = tmpdir_path / "disease-list-raw.tsv"
         metrics_tsv = tmpdir_path / "mondo-metrics.tsv"
-        queries_dir = Path(__file__).parent / "queries"
 
-        # Run single ROBOT pipeline with template merging, updates, and queries
-        cmd = f"""robot \
-            template -i "{mondo_path}" \
-            --merge-after \
-            --template "{billable_path}" \
-            --template "{subtypes_path}" \
-            query --update "{queries_dir / "inject-mondo-top-grouping.ru"}" \
-            query --update "{queries_dir / "inject-susceptibility-subset.ru"}" \
-            query --update "{queries_dir / "inject-subset-declaration.ru"}" \
-            query --update "{queries_dir / "downfill-disease-groupings.ru"}" \
-            query --update "{queries_dir / "disease-groupings-other.ru"}" \
-            query -f tsv \
-                --query "{disease_list_filters_query}" "{disease_list_tsv}" \
-                --query "{metrics_query}" "{metrics_tsv}" \
-            merge -o "{preprocessed_path}" """
+        # Build ROBOT command
+        update_queries = [
+            inject_mondo_top_grouping_query,
+            inject_susceptibility_subset_query,
+            inject_subset_declaration_query,
+            downfill_disease_groupings_query,
+            disease_groupings_other_query,
+        ]
+
+        select_queries = {
+            disease_list_filters_query: disease_list_tsv,
+            metrics_query: metrics_tsv,
+        }
+
+        cmd = _build_robot_command(
+            mondo_path, billable_path, subtypes_path,
+            update_queries, select_queries, preprocessed_path
+        )
 
         logger.info("Running ROBOT pipeline")
         run_subprocess(cmd, check=True, stream_output=True)
 
-        # Read preprocessed MONDO for downstream use
+        # Load preprocessed ontology
         with open(preprocessed_path, "r") as f:
             mondo_preprocessed = f.read()
         logger.info("Successfully merged templates into MONDO ontology")
