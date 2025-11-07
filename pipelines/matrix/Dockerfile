@@ -20,11 +20,6 @@ RUN curl -L -o /usr/local/bin/robot.jar https://github.com/ontodev/robot/release
     echo 'exec java -jar /usr/local/bin/robot.jar "$@"' >> /usr/local/bin/robot && \
     chmod +x /usr/local/bin/robot
 
-# GPU setup
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
-LABEL com.nvidia.volumes.needed="nvidia_driver"
-
 # ------- GPU/System end ----------
 # ---------------------------------
 # ------- Dependencies start ------
