@@ -617,69 +617,204 @@ def _matrix_disease_filter(df_disease_list_unfiltered):
     return df_disease_list_unfiltered
 
 
-def _extract_groupings(subsets, groupings):
-    """Extract groupings for list of subsets."""
+def _extract_groupings(subsets: str, groupings: list, subset_prefix: str, subset_delimiter: str, grouping_delimiter: str) -> dict:
+    """Extract groupings from semicolon-delimited subset string.
+
+    Args:
+        subsets: Semicolon-delimited string of subsets
+        groupings: List of grouping names to extract
+        subset_prefix: Prefix for subset names (e.g., "mondo:")
+        subset_delimiter: Delimiter between subsets (e.g., ";")
+        grouping_delimiter: Delimiter for joining multiple values (e.g., "|")
+
+    Returns:
+        Dictionary mapping grouping names to extracted values
+    """
     result = {grouping: [] for grouping in groupings}
 
     if subsets:
-        for subset in subsets.split(";"):
+        for subset in subsets.split(subset_delimiter):
             subset = subset.strip()
             for grouping in groupings:
-                if subset.startswith(f"mondo:{grouping}"):
-                    subset_tag = subset.replace("mondo:", "").replace(grouping, "").replace(" ", "").strip("_")
-                    if (subset_tag != "member") and (subset_tag != ""):
-                        result[grouping].append(subset_tag.replace("|", ""))
+                if subset.startswith(f"{subset_prefix}{grouping}"):
+                    # Extract tag by removing prefix, grouping name, spaces, and underscores
+                    subset_tag = (
+                        subset
+                        .replace(subset_prefix, "")
+                        .replace(grouping, "")
+                        .replace(" ", "")
+                        .strip("_")
+                        .replace(grouping_delimiter, "")
+                    )
+                    # Skip member tags and empty strings
+                    if subset_tag and subset_tag != "member":
+                        result[grouping].append(subset_tag)
 
-    # This looks very complex: if there are multiple values, we join them with a pipe, but we exclude "other" in this case
+    # Format results: join with pipe, exclude "other" if multiple values
     return {
-        key: "|".join([v for v in values if v != "other"] if len(values) > 1 else values) if values else ""
+        key: grouping_delimiter.join(
+            [v for v in values if v != "other"] if len(values) > 1 else values
+        ) if values else ""
         for key, values in result.items()
     }
 
 
-def _is_grouping_heuristic(df):
-    col_out = "is_grouping_heuristic"
+def _is_grouping_heuristic(
+    df: pd.DataFrame,
+    grouping_columns: list,
+    not_grouping_columns: list,
+    output_column: str
+) -> pd.DataFrame:
+    """Apply grouping heuristic to classify diseases as groupings or specific diseases.
 
-    not_grouping = [
-        "is_clingen",
-        "is_orphanet_subtype",
-        "is_orphanet_subtype_descendant",
-        "is_omimps_descendant",
-        "is_leaf",
-        "is_leaf_direct_parent",
-        "is_orphanet_disorder",
-        "is_omim",
-        "is_icd_billable",
-        "is_mondo_subtype",
-    ]
+    The heuristic works by checking positive indicators (grouping_columns) and negative
+    indicators (not_grouping_columns). A disease is marked as a grouping if any grouping
+    column is True, UNLESS any not_grouping column is also True (which takes precedence).
 
-    grouping = [
-        "is_grouping_subset",
-        "is_grouping_subset_ancestor",
-        "is_omimps",
-        "is_icd_chapter_header",
-        "is_icd_chapter_code",
-    ]
+    Args:
+        df: Input DataFrame with disease data
+        grouping_columns: List of columns that indicate a disease is a grouping
+        not_grouping_columns: List of columns that override grouping classification
+        output_column: Name of output column for heuristic result
 
-    # Ensure all expected grouping-related columns are present
-    expected_cols = set(grouping) | set(not_grouping)
+    Returns:
+        DataFrame with new heuristic column added
+    """
+    df = df.copy()
+
+    # Validate all expected columns are present
+    expected_cols = set(grouping_columns) | set(not_grouping_columns)
     missing = [c for c in expected_cols if c not in df.columns]
     if missing:
-        logging.warning("{df.columns}")
+        logging.warning(f"Missing columns: {df.columns}")
         raise ValueError(f"DataFrame is missing expected grouping columns: {', '.join(sorted(missing))}")
 
-    # Initialize the column to False
-    df[col_out] = False
+    # Initialize to False
+    df[output_column] = False
 
-    # Set True if any grouping column is True
-    for col in grouping:
-        if col in df.columns:
-            df[col_out] = df[col_out] | df[col].fillna(False)
+    # Apply positive grouping rules
+    for col in grouping_columns:
+        df[output_column] = df[output_column] | df[col].fillna(False)
 
-    # Override by setting False if any not_grouping column is True
-    for col in not_grouping:
-        if col in df.columns:
-            df.loc[df[col].fillna(False), col_out] = False
+    # Apply negative grouping rules (override)
+    for col in not_grouping_columns:
+        df.loc[df[col].fillna(False), output_column] = False
+
+    return df
+
+
+def _prepare_subtype_counts(subtype_counts: pd.DataFrame) -> pd.DataFrame:
+    """Prepare subtype counts DataFrame for merging.
+
+    Args:
+        subtype_counts: DataFrame with subtype information
+
+    Returns:
+        Simplified DataFrame with category_class and count_subtypes columns
+    """
+    return (
+        subtype_counts[["subset_group_id", "other_subsets_count"]]
+        .drop_duplicates()
+        .rename(columns={"subset_group_id": "category_class", "other_subsets_count": "count_subtypes"})
+    )
+
+
+def _extract_and_pivot_groupings(
+    df: pd.DataFrame,
+    groupings: list,
+    subset_prefix: str,
+    subset_delimiter: str,
+    grouping_delimiter: str
+) -> pd.DataFrame:
+    """Extract and pivot disease groupings from subset annotations.
+
+    Args:
+        df: DataFrame with category_class, label, and subsets columns
+        groupings: List of grouping names to extract
+        subset_prefix: Prefix for subset names
+        subset_delimiter: Delimiter between subsets
+        grouping_delimiter: Delimiter for joining multiple values
+
+    Returns:
+        DataFrame with category_class and one column per grouping
+    """
+    # Extract groupings from subsets column
+    groupings_extracted = df["subsets"].apply(
+        lambda x: _extract_groupings(x, groupings, subset_prefix, subset_delimiter, grouping_delimiter)
+    ).apply(pd.Series)
+
+    # Combine with category_class (drop label as not needed downstream)
+    result = pd.concat([df[["category_class"]], groupings_extracted], axis=1)
+    return result.sort_values("category_class")
+
+
+def _merge_disease_data_sources(
+    base_df: pd.DataFrame,
+    groupings_df: pd.DataFrame,
+    metrics_df: pd.DataFrame,
+    subtype_counts_df: pd.DataFrame,
+    full_subtype_counts: pd.DataFrame
+) -> pd.DataFrame:
+    """Merge all disease data sources into single DataFrame.
+
+    This optimizes 4 separate merges into a more efficient operation.
+
+    Args:
+        base_df: Base disease list with filters applied
+        groupings_df: Disease groupings pivoted data
+        metrics_df: MONDO metrics data
+        subtype_counts_df: Simplified subtype counts
+        full_subtype_counts: Full subtype information
+
+    Returns:
+        Merged DataFrame with all data sources
+    """
+    # Start with base and merge groupings
+    merged = base_df.merge(groupings_df, on="category_class", how="left")
+
+    # Merge metrics and subtype counts together first (both use category_class)
+    metrics_and_counts = metrics_df.merge(subtype_counts_df, on="category_class", how="outer")
+    merged = merged.merge(metrics_and_counts, on="category_class", how="left")
+
+    # Finally merge full subtype info
+    merged = merged.merge(
+        full_subtype_counts[["subset_id", "subset_group_id", "subset_group_label", "other_subsets_count"]],
+        left_on="category_class",
+        right_on="subset_id",
+        how="left"
+    )
+
+    # Clean up temporary column
+    return merged.drop(columns=["subset_id"], errors="ignore")
+
+
+def _normalize_boolean_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Convert boolean columns to 'True'/'False' string format.
+
+    Converts all columns starting with 'is_' and special case 'tag_existing_treatment'
+    to string boolean values.
+
+    Args:
+        df: DataFrame with boolean columns
+
+    Returns:
+        DataFrame with normalized boolean strings
+    """
+    df = df.copy()
+
+    # Find columns to convert
+    columns_to_convert = [col for col in df.columns if col.startswith("is_")]
+
+    # Special case for tag_existing_treatment
+    # See: https://github.com/everycure-org/matrix-disease-list/issues/75
+    if "tag_existing_treatment" in df.columns:
+        columns_to_convert.append("tag_existing_treatment")
+
+    # Convert to string booleans
+    for col in columns_to_convert:
+        df[col] = df[col].map(
+            lambda x: "True" if (isinstance(x, bool) and x) or (isinstance(x, str) and x.lower() == "true") else "False"
+        )
 
     return df
 
@@ -687,96 +822,90 @@ def _is_grouping_heuristic(df):
 def create_disease_list(
     disease_list_raw: pd.DataFrame,
     mondo_metrics: pd.DataFrame,
-    subtype_counts: str,
+    subtype_counts: pd.DataFrame,
+    curated_groupings: list,
+    llm_groupings: list,
+    subset_prefix: str,
+    subset_delimiter: str,
+    grouping_delimiter: str,
+    grouping_columns: list,
+    not_grouping_columns: list,
+    grouping_heuristic_column: str,
+    default_count: int,
 ) -> Dict[str, pd.DataFrame]:
-    """Apply filters to create final disease lists."""
+    """Apply filters and transformations to create final disease list.
+
+    Args:
+        disease_list_raw: Raw disease list with filter features
+        mondo_metrics: MONDO metrics DataFrame
+        subtype_counts: Subtype counts and relationships
+        curated_groupings: List of curated disease grouping names
+        llm_groupings: List of LLM-generated grouping names
+        subset_prefix: Prefix for subset parsing (e.g., "mondo:")
+        subset_delimiter: Delimiter for subset strings (e.g., ";")
+        grouping_delimiter: Delimiter for joining grouping values (e.g., "|")
+        grouping_columns: Columns indicating a disease is a grouping
+        not_grouping_columns: Columns that override grouping classification
+        grouping_heuristic_column: Name of output heuristic column
+        default_count: Default value for missing counts
+
+    Returns:
+        Dictionary with 'disease_list' key containing final DataFrame
+    """
     logger.info("Create final disease list")
 
-    # Load the TSV file
-    subtype_group_counts = subtype_counts[["subset_group_id", "other_subsets_count"]].drop_duplicates()
-    subtype_group_counts.columns = ["category_class", "count_subtypes"]
+    # Stage 1: Prepare subtype counts
+    subtype_group_counts = _prepare_subtype_counts(subtype_counts)
 
-    # Filter the DataFrame
-    df_matrix_disease_filter_modified = _matrix_disease_filter(disease_list_raw)
+    # Stage 2: Apply MATRIX disease filtering
+    filtered_df = _matrix_disease_filter(disease_list_raw)
 
-    curated_disease_groupings = ["harrisons_view", "mondo_txgnn", "mondo_top_grouping"]
-    llm_disease_groupings = [
-        "medical_specialization",
-        "txgnn",
-        "anatomical",
-        "is_pathogen_caused",
-        "is_cancer",
-        "is_glucose_dysfunction",
-        "tag_existing_treatment",
-        "tag_qaly_lost",
-    ]
-    disease_groupings = curated_disease_groupings + llm_disease_groupings
-    df_disease_groupings = df_matrix_disease_filter_modified[["category_class", "label", "subsets"]]
-
-    # Apply the function to extract groupings
-    df_disease_groupings_extracted = (
-        df_disease_groupings["subsets"].apply(lambda x: _extract_groupings(x, disease_groupings)).apply(pd.Series)
+    # Stage 3: Rename filter columns from f_ to is_ prefix
+    # See: https://github.com/everycure-org/matrix-disease-list/issues/75
+    filtered_df = filtered_df.rename(
+        columns=lambda x: re.sub(r"^f_", "is_", x) if x.startswith("f_") else x
     )
 
-    # Combine with the original DataFrame
-    df_disease_groupings_pivot = pd.concat(
-        [df_disease_groupings[["category_class", "label"]], df_disease_groupings_extracted], axis=1
-    )
-    df_disease_groupings_pivot.sort_values(by="category_class", inplace=True)
-    df_disease_groupings_pivot.drop(columns=["label"], inplace=True)
-
-    # As per convention, rewrite filter columns to is_
-    # https://github.com/everycure-org/matrix-disease-list/issues/75
-    df_matrix_disease_filter_modified.rename(
-        columns=lambda x: re.sub(r"^f_", "is_", x) if x.startswith("f_") else x, inplace=True
+    # Stage 4: Extract and pivot disease groupings
+    all_groupings = curated_groupings + llm_groupings
+    groupings_df = _extract_and_pivot_groupings(
+        filtered_df[["category_class", "label", "subsets"]],
+        all_groupings,
+        subset_prefix,
+        subset_delimiter,
+        grouping_delimiter
     )
 
-    df_matrix_disease_filter_modified = df_matrix_disease_filter_modified.merge(
-        df_disease_groupings_pivot, on="category_class", how="left"
-    )
-    df_matrix_disease_filter_modified = df_matrix_disease_filter_modified.merge(
-        mondo_metrics, on="category_class", how="left"
-    )
-    df_matrix_disease_filter_modified = df_matrix_disease_filter_modified.merge(
-        subtype_group_counts, on="category_class", how="left"
-    )
-    df_matrix_disease_filter_modified = df_matrix_disease_filter_modified.merge(
-        subtype_counts[["subset_id", "subset_group_id", "subset_group_label", "other_subsets_count"]],
-        left_on="category_class",
-        right_on="subset_id",
-        how="left",
-    )
-    df_matrix_disease_filter_modified["count_subtypes"] = df_matrix_disease_filter_modified["count_subtypes"].fillna(0)
-    df_matrix_disease_filter_modified["count_descendants"] = df_matrix_disease_filter_modified[
-        "count_descendants"
-    ].fillna(0)
-    df_matrix_disease_filter_modified["count_descendants_without_subtypes"] = (
-        df_matrix_disease_filter_modified["count_descendants"] - df_matrix_disease_filter_modified["count_subtypes"]
+    # Stage 5: Merge all data sources
+    merged_df = _merge_disease_data_sources(
+        filtered_df,
+        groupings_df,
+        mondo_metrics,
+        subtype_group_counts,
+        subtype_counts
     )
 
-    # Remove subset_id column after merge
-    df_matrix_disease_filter_modified.drop(columns=["subset_id"], inplace=True)
+    # Stage 6: Compute derived columns
+    merged_df["count_subtypes"] = merged_df["count_subtypes"].fillna(default_count)
+    merged_df["count_descendants"] = merged_df["count_descendants"].fillna(default_count)
+    merged_df["count_descendants_without_subtypes"] = (
+        merged_df["count_descendants"] - merged_df["count_subtypes"]
+    )
 
-    # Given all columns with start with is_ or tag_ should be boolean, we convert them to True/False
-    columns_to_check = [col for col in df_matrix_disease_filter_modified.columns if col.startswith("is_")]
+    # Stage 7: Apply grouping heuristic
+    merged_df = _is_grouping_heuristic(
+        merged_df,
+        grouping_columns,
+        not_grouping_columns,
+        grouping_heuristic_column
+    )
 
-    # Model this exceptoon, hopefully it will go away in a future iteration:
-    # https://github.com/everycure-org/matrix-disease-list/issues/75
+    # Stage 8: Normalize boolean columns to string format
+    final_df = _normalize_boolean_columns(merged_df)
 
-    if "tag_existing_treatment" in df_matrix_disease_filter_modified.columns:
-        columns_to_check.append("tag_existing_treatment")
+    logger.info(f"Created disease list with {len(final_df)} entries")
 
-    # Compute a general grouping heuristic for the all diseases in the list
-    df_matrix_disease_filter_modified = _is_grouping_heuristic(df_matrix_disease_filter_modified)
-
-    for col in columns_to_check:
-        df_matrix_disease_filter_modified[col] = df_matrix_disease_filter_modified[col].map(
-            lambda x: "True" if isinstance(x, bool) and x or (isinstance(x, str) and x.lower() == "true") else "False"
-        )
-
-    return {
-        "disease_list": df_matrix_disease_filter_modified,
-    }
+    return {"disease_list": final_df}
 
 
 def validate_disease_list(

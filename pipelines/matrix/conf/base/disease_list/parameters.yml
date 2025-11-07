@@ -57,6 +57,54 @@ robot_template:
   # Default contributor ORCID for generated templates
   default_contributor: "https://orcid.org/0000-0002-7356-1779"
 
+# Disease list processing configuration
+disease_list:
+  # Disease grouping categories for classification
+  curated_groupings:
+    - "harrisons_view"
+    - "mondo_txgnn"
+    - "mondo_top_grouping"
+  llm_groupings:
+    - "medical_specialization"
+    - "txgnn"
+    - "anatomical"
+    - "is_pathogen_caused"
+    - "is_cancer"
+    - "is_glucose_dysfunction"
+    - "tag_existing_treatment"
+    - "tag_qaly_lost"
+
+  # String parsing constants
+  subset_delimiter: ";"
+  subset_prefix: "mondo:"
+  grouping_delimiter: "|"
+
+  # Column name constants
+  official_filter_column: "official_matrix_filter"
+  grouping_heuristic_column: "is_grouping_heuristic"
+
+  # Default numeric values
+  default_count: 0
+
+  # Grouping heuristic classification columns
+  grouping_columns:
+    - "is_grouping_subset"
+    - "is_grouping_subset_ancestor"
+    - "is_omimps"
+    - "is_icd_chapter_header"
+    - "is_icd_chapter_code"
+  not_grouping_columns:
+    - "is_clingen"
+    - "is_orphanet_subtype"
+    - "is_orphanet_subtype_descendant"
+    - "is_omimps_descendant"
+    - "is_leaf"
+    - "is_leaf_direct_parent"
+    - "is_orphanet_disorder"
+    - "is_omim"
+    - "is_icd_billable"
+    - "is_mondo_subtype"
+
 # Disease subtype regex patterns for identifying disease groupings
 # These patterns extract parent disease names from child disease labels
 subtype_patterns:
