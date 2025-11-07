@@ -20,7 +20,7 @@ The EC Drug List is stored in the public GCS bucket and can be accessed at the f
 gs://data.dev.everycure.org/data/01_RAW/drug_list/{version}/ec-drug-list.tsv
 ```
 
-**Current version**: `v0.2.0`
+**Current version**: `v1.0.0`
 
 Full path for the current version:
 ```
@@ -39,7 +39,7 @@ The EC Drug List is manually curated and maintained by the Every Cure team with 
 
 1. **Drug collation**: Drugs are listed by curators as they go through treatment guidelines, consolidating entries to the active ingredient level in a protected Google Sheet. At the request of the EC Medical Team, additional aggregations of multiple similar drugs into as single entry are done in some edge cases to avoid repeated effort of reviewing redundant pairs (e.g., drugs and prodrugs). Where this is the case, it is noted in the `aggregated_with` column
 2. **Manual annotations**: Manually curated columns are appended to the list in the Google Sheet. See [below](#features-of-the-List) which columns in the list are manual annotations
-2. **Stable identifier assignment**: The Google Sheet is ingested into Core Entities and each drug receives a unique EC identifier (format: `EC:XXXXX`) that will not be removed or modified over time, only superceded if neccessary
+2. **Stable identifier assignment**: The Google Sheet is ingested into Core Entities and each drug receives a unique EC identifier (format: `EC:XXXXX`) that will not be removed or modified over time, only superseded if necessary
 3. **Multi-source identifier mapping**: Each EC identifier is mapped to multiple identifier systems:
     - **Translator IDs** (CURIEs): Used to join with knowledge graphs in the MATRIX pipeline (e.g., CHEBI, UNII, DRUGBANK). The drug name is first put through NCATS Name Resolver to return a CURIE, then normalized with NCATS Node Normalizer to be consistent with the MATRIX KG-based pipeline
     - **DrugBank IDs**: Links to the DrugBank database for additional drug information, this is done through direct string-matching of the drug name
