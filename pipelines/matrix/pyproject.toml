@@ -79,15 +79,25 @@ dependencies = [
     "torch==2.7.1",
     "transformers",
     "typer", # used for convenience libraries, to be moved to a dev requirements eventually
-    "xgboost",
-    "lightgbm @ https://storage.googleapis.com/data.dev.everycure.org/pypi/lightgbm-4.6.0-py3-none-linux_x86_64.whl ; sys_platform == 'linux'",
-    "lightgbm ; sys_platform == 'darwin'",
+    "xgboost-cpu",
     "tqdm>=4.67.1",
+    "bracex>=2.6",
 ]
 
 
 [project.scripts]
 matrix = "matrix.__main__:main"
+
+# 1) Tell uv where the CPU wheels live
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+# 2) Use that index for torch packages
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
+torchvision = [{ index = "pytorch-cpu" }]
 
 [tool.kedro]
 package_name = "matrix"

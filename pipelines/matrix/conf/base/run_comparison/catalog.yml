@@ -1,0 +1,34 @@
+run_comparison.input_matrices:
+  type: matrix.datasets.multi_predictions.MultiPredictionsDataset
+  filepath: ${globals:paths.run_comparison}/input_matrices.yml
+
+run_comparison.combined_pairs:
+  type: partitions.PartitionedDataset
+  path: ${globals:paths.run_comparison}/combined_pairs
+  dataset: 
+    type: polars.LazyPolarsDataset
+    file_format: parquet
+  filename_suffix: .parquet
+
+run_comparison.predictions_info:
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.run_comparison}/predictions_info.yml
+
+run_comparison.combined_predictions:
+  type: partitions.PartitionedDataset
+  path: ${globals:paths.run_comparison}/combined_predictions
+  dataset: 
+    type: polars.LazyPolarsDataset
+    file_format: parquet
+  filename_suffix: .parquet
+
+"run_comparison.{evaluation}.results":
+  type: polars.EagerPolarsDataset
+  file_format: csv
+  filepath: ${globals:paths.run_comparison}/evaluation_values/results_{evaluation}.csv
+
+"run_comparison.{evaluation}.plot":
+  type: matplotlib.MatplotlibWriter
+  filepath: ${globals:paths.run_comparison}/evaluation_plots/{evaluation}.png
+  save_args:
+    format: png

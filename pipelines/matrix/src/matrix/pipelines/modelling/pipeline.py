@@ -3,7 +3,11 @@ from typing import Union
 from kedro.pipeline import Pipeline, pipeline
 
 from matrix import settings
-from matrix.kedro4argo_node import ARGO_CPU_ONLY_NODE_MEDIUM, ARGO_GPU_NODE_MEDIUM, ArgoNode
+from matrix.kedro4argo_node import (
+    ARGO_CPU_ONLY_NODE_MEDIUM,
+    ARGO_NODE_H3_MATRIX_GENERATION,
+    ArgoNode,
+)
 
 from . import nodes
 from .utils import partial_fold
@@ -29,6 +33,7 @@ def _create_model_shard_pipeline(model_name: str, shard: int, fold: Union[str, i
                 },
                 outputs=f"modelling.{shard}.fold_{fold}.{model_name}.model_input.transformed_splits",
                 name=f"transform_{model_name}_{shard}_data_fold_{fold}",
+                argo_config=ARGO_NODE_H3_MATRIX_GENERATION,
             ),
             ArgoNode(
                 func=nodes.tune_parameters,
@@ -41,7 +46,7 @@ def _create_model_shard_pipeline(model_name: str, shard: int, fold: Union[str, i
                     f"modelling.{shard}.fold_{fold}.{model_name}.reporting.tuning_convergence_plot",
                 ],
                 name=f"tune_{model_name}_model_{shard}_parameters_fold_{fold}",
-                argo_config=ARGO_GPU_NODE_MEDIUM,
+                argo_config=ARGO_NODE_H3_MATRIX_GENERATION,
             ),
             ArgoNode(
                 func=nodes.train_model,
@@ -53,7 +58,7 @@ def _create_model_shard_pipeline(model_name: str, shard: int, fold: Union[str, i
                 ],
                 outputs=f"modelling.{shard}.fold_{fold}.{model_name}.models.model",
                 name=f"train_{shard}_{model_name}_model_fold_{fold}",
-                argo_config=ARGO_GPU_NODE_MEDIUM,
+                argo_config=ARGO_NODE_H3_MATRIX_GENERATION,
             ),
         ],
         tags=["argowf.fuse", f"argowf.fuse-group.{model_name}.shard-{shard}.fold-{fold}"],
