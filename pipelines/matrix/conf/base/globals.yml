@@ -52,7 +52,7 @@ data_sources:
     version: v1.0.0
   disease_list:
     # check releases here: gs://data.dev.everycure.org/data/01_RAW/disease_list
-    version: v1.0.0
+    version: v1.0.1
   kgml_xdtd_gt:
     version: *_rtx_kg_version
   ec_gt:
