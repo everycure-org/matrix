@@ -217,9 +217,7 @@ def make_predictions_and_sort(
     Returns:
         Pairs dataset sorted by score with their rank and quantile rank.
     """
-
     embeddings = node_embeddings.select("id", "topological_embedding")
-
     pairs_with_embeddings = (
         # TODO: remnant from pyarrow/pandas conversion, find in which node it is created
         pairs.drop("__index_level_0__")
@@ -257,9 +255,7 @@ def make_predictions_and_sort(
             StructField(unknown_score_col_name, DoubleType(), True),
         ]
     )
-
     pairs_with_scores = pairs_with_embeddings.groupBy("target").applyInPandas(model_predict, model_predict_schema)
-
     pairs_sorted = pairs_with_scores.orderBy(treat_score_col_name, ascending=False)
 
     # We are using the RDD.zipWithIndex function here. Getting it through the DataFrame API would involve a Window function without partition, effectively pulling all data into one single partition.
@@ -268,7 +264,6 @@ def make_predictions_and_sort(
     # 2. When moving from RDD to DataFrame, the column names are named after the Scala tuple fields: _1 for the row and _2 for the index
     # 3. We're adding 1 to the rank so that it is not zero indexed
     pairs_ranked = pairs_sorted.rdd.zipWithIndex().toDF().select(F.col("_1.*"), (F.col("_2") + 1).alias("rank"))
-
     pairs_ranked_count = pairs_ranked.count()
     return pairs_ranked.withColumn("quantile_rank", F.col("rank") / pairs_ranked_count)
 
