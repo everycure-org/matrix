@@ -2420,6 +2420,14 @@ fabricator.drugbank_gt:
             num_rows: "@positive_edges.num_rows"
             seed: 20399
 
+
+fabricator.run_comparison:
+  matrix_size: 150
+  skew_good_model: 20
+  skew_bad_model: 2
+  test_set_proportion: 0.1
+
+
 fabricator.document_kg.infores_catalog:
   information_resources:
     num_rows: 20

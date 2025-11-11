@@ -40,7 +40,8 @@ paths:
   evaluation:         ${run_dir}/datasets/evaluation
   matrix_generation:  ${run_dir}/datasets/matrix_generation
   matrix_transformations:  ${run_dir}/datasets/matrix_transformations
-  inference:          ${run_dir}/datasets/inference
+  inference:          ${run_dir}/datasets/inference 
+  run_comparison:  ${runtime_gcs_bucket}/kedro/data/run_comparison/runs/${run_name}
   
   # Tmp. directory using k8s volume attached to the pod.
   tmp:           /data/tmp

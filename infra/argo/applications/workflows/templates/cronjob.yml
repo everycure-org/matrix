@@ -28,10 +28,10 @@ spec:
             resources:
               requests:
                 cpu: 100m
-                memory: 128Mi
+                memory: 512Mi
               limits:
-                cpu: 200m
-                memory: 1Gi
+                cpu: 20000m
+                memory: 8Gi
           restartPolicy: OnFailure
           serviceAccountName: argo-workflow-cleanup
 ---
@@ -51,22 +51,35 @@ spec:
       template:
         spec:
           containers:
-          - name: argo-cli
-            image: argoproj/argocli:latest
+          - name: kubectl
+            image: bitnami/kubectl:latest
+            command: ["/bin/bash"]
             args:
-            - template
-            - delete
-            - --older
-            - 30d
-            - --namespace
-            - argo-workflows
+            - -c
+            - |
+              # Calculate the cutoff date (30 days ago in seconds)
+              CUTOFF_SECONDS=$(date -d '30 days ago' +%s 2>/dev/null || echo $(($(date +%s) - 2592000)))
+              echo "Deleting workflow templates older than 30 days (cutoff: $CUTOFF_SECONDS)"
+              
+              # List all workflow templates and delete old ones
+              kubectl get workflowtemplates -n argo-workflows -o json | \
+              jq -r --arg cutoff "$CUTOFF_SECONDS" \
+                '.items[] | select((.metadata.creationTimestamp | fromdateiso8601) < ($cutoff | tonumber)) | .metadata.name' | \
+              while read -r template_name; do
+                if [ -n "$template_name" ]; then
+                  echo "Deleting workflow template: $template_name"
+                  kubectl delete workflowtemplate "$template_name" -n argo-workflows || echo "Failed to delete $template_name"
+                fi
+              done
+              
+              echo "Workflow template cleanup completed"
             resources:
               requests:
                 cpu: 100m
-                memory: 128Mi
-              limits:
-                cpu: 200m
                 memory: 1Gi
+              limits:
+                cpu: 200000m
+                memory: 8Gi
           restartPolicy: OnFailure
           serviceAccountName: argo-workflow-cleanup
 ---
