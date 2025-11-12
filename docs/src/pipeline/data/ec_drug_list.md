@@ -20,6 +20,7 @@ The EC Drug List is stored in the public GCS bucket and can be accessed at the f
 gs://data.dev.everycure.org/data/01_RAW/drug_list/{version}/ec-drug-list.tsv
 ```
 
+You can also find them in the `datasets` repository [here](https://github.com/everycure-org/datasets/tree/main/datasets/drug_list)
 New versions of the drug list are released through the [core-entities GitHub repository](https://github.com/everycure-org/core-entities/releases). Check the releases page for the latest version and update the version number in the MATRIX configuration (`pipelines/matrix/conf/base/globals.yml`). EC Data Products team follow a versioning system where users should always use at least the current minor release to ensure compatibility with other systems:
 
 - PATCH (v0.1.0 → v0.1.1): Fixed incorrect data, corrected values (including changes in translator_id) or added a column
