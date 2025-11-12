@@ -40,6 +40,12 @@ export VITE_max_core_entities_normalization_errors := $(MAX_CORE_ENTITIES_NORMAL
 MAX_EDGE_FAILED_NORMALIZATION_BY_NORMALIZATION_SET_PREFIX = 100
 export EVIDENCE_VAR__max_edge_failed_normalization_by_normalization_set_prefix := $(MAX_EDGE_FAILED_NORMALIZATION_BY_NORMALIZATION_SET_PREFIX)
 
+# Key nodes to track (diseases and drugs)
+KEY_DISEASE_IDS ?= MONDO:0015564,MONDO:0005301,MONDO:0004975
+KEY_DRUG_IDS ?= CHEBI:15365,CHEBI:7773
+export EVIDENCE_VAR__key_disease_ids := $(KEY_DISEASE_IDS)
+export EVIDENCE_VAR__key_drug_ids := $(KEY_DRUG_IDS)
+
 .ONESHELL:
 
 .PHONY: clean install bump_basepath run-dev
@@ -47,7 +53,7 @@ export EVIDENCE_VAR__max_edge_failed_normalization_by_normalization_set_prefix :
 bump_basepath:
 	node ./scripts/update-basepath.cjs $(RELEASE_VERSION)
 
-build: bump_basepath generate-release-trends-sql
+build: bump_basepath sources/bq/release_trends.sql sources/bq/key_nodes_release_trends.sql sources/bq/key_nodes_release_aggregate.sql
 	@echo "Building with EVIDENCE_VAR__release_version=$(EVIDENCE_VAR__release_version)"
 	npm run build:strict
 
@@ -69,11 +75,11 @@ populate-valid-edge-types-source:
 	node ./scripts/load-valid-edge-types.cjs
 	rm -f scripts/temp_valid_edge_types.tsv
 
-# Generate release trends SQL dynamically based on available BigQuery datasets
-generate-release-trends-sql:
-	node ./scripts/generate-release-trends-sql.cjs
+# Generate release SQL files dynamically based on available BigQuery datasets
+sources/bq/release_trends.sql sources/bq/key_nodes_release_trends.sql sources/bq/key_nodes_release_aggregate.sql:
+	node ./scripts/generate-release-sql.cjs
 
-run-sources: populate-infores-source populate-valid-edge-types-source generate-release-trends-sql
+run-sources: populate-infores-source populate-valid-edge-types-source sources/bq/release_trends.sql sources/bq/key_nodes_release_trends.sql sources/bq/key_nodes_release_aggregate.sql
 	npm run sources 
 
 run-dev:
@@ -83,3 +89,6 @@ clean:
 	rm -rf build
 	rm -rf node_modules
 	rm -rf .evidence
+	rm -f sources/bq/release_trends.sql
+	rm -f sources/bq/key_nodes_release_trends.sql
+	rm -f sources/bq/key_nodes_release_aggregate.sql
