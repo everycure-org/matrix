@@ -7,9 +7,12 @@ import pytest
 from matrix.pipelines.run_comparison.evaluations import (
     CommonalityAtN,
     ComparisonEvaluationModelSpecific,
+    ComparisonModelSpecificBootstrap,
     EntropyAtN,
     FullMatrixRecallAtN,
+    FullMatrixRecallAtNBootstrap,
     SpecificHitAtK,
+    SpecificHitAtKBootstrap,
 )
 from polars.testing import assert_frame_equal
 
@@ -72,14 +75,18 @@ class TestComparisonEvaluationModelSpecific(ComparisonEvaluationModelSpecific):
         # Return constant y value equal to the mean score
         return matrix["score"].mean() * np.ones(2)
 
-    def give_y_values_bootstrap(self, matrix: pl.DataFrame) -> np.ndarray:
-        # Return constant y value equal to the mean score plus/minus 1/4
-        mean_score_curve = self.give_y_values(matrix)
-        return np.array([mean_score_curve + 1 / 4, mean_score_curve - 1 / 4])
-
     def give_y_values_baseline(self, combined_predictions: dict[str, pl.LazyFrame]) -> np.ndarray:
         # Return constant zero values
         return np.zeros(2)
+
+
+class TestComparisonModelSpecificBootstrap(ComparisonModelSpecificBootstrap, TestComparisonEvaluationModelSpecific):
+    """A class to test the concrete methods of the abstract class ComparisonModelSpecificBootstrap."""
+
+    def give_y_values(self, matrix: pl.DataFrame) -> np.ndarray:
+        # Return constant y value equal to the mean score plus/minus 1/4
+        mean_score_curve = matrix["score"].mean() * np.ones(2)
+        return np.array([mean_score_curve + 1 / 4, mean_score_curve - 1 / 4])
 
 
 def test_model_specific_abstract_class(constant_score_data):
@@ -92,21 +99,36 @@ def test_model_specific_abstract_class(constant_score_data):
         title="Test Title",
         force_full_y_axis=False,
     )
+    evaluation_bootstrap = TestComparisonModelSpecificBootstrap(
+        x_axis_label="x",
+        y_axis_label="y",
+        title="Test Title",
+        force_full_y_axis=False,
+        N_bootstraps=10,
+    )
 
     # When the concrete methods are called
-    single_fold_results = evaluation.evaluate_single_fold(combined_predictions, predictions_info)
-    multi_fold_results = evaluation.evaluate_multi_fold(combined_predictions, predictions_info)
-    bootstrap_single_fold_results = evaluation.evaluate_bootstrap_single_fold(combined_predictions, predictions_info)
-    bootstrap_multi_fold_results = evaluation.evaluate_bootstrap_multi_fold(combined_predictions, predictions_info)
-    figure = evaluation.plot_results(
-        single_fold_results, combined_predictions, predictions_info, perform_multifold=False, perform_bootstrap=False
-    )
+    predictions_info_single_fold = predictions_info.copy()
+    predictions_info_single_fold["num_folds"] = 1
+    single_fold_results = evaluation.evaluate(combined_predictions, predictions_info_single_fold)
+    multi_fold_results = evaluation.evaluate(combined_predictions, predictions_info)
+    bootstrap_single_fold_results = evaluation_bootstrap.evaluate(combined_predictions, predictions_info_single_fold)
+    bootstrap_multi_fold_results = evaluation_bootstrap.evaluate(combined_predictions, predictions_info)
+    figure = evaluation.plot_results(single_fold_results, combined_predictions, predictions_info_single_fold)
 
     # Then results are as expected
     # Single fold results take first fold as default
     assert_frame_equal(
         single_fold_results,
-        pl.DataFrame({"x": [0, 1], "y_model_1": [3 / 4, 3 / 4], "y_model_2": [1 / 2, 1 / 2]}),
+        pl.DataFrame(
+            {
+                "x": [0, 1],
+                "y_model_1_mean": [3 / 4, 3 / 4],
+                "y_model_2_mean": [1 / 2, 1 / 2],
+                "y_model_1_std": [0, 0],
+                "y_model_2_std": [0, 0],
+            }
+        ),
         check_row_order=False,
         check_column_order=False,
     )
@@ -168,9 +190,6 @@ def test_model_specific_abstract_class(constant_score_data):
     assert figure.get_axes()[0].get_legend().get_texts()[2].get_text() == "Random classifier"
 
 
-# FullMatrixRecallAtN
-
-
 @pytest.fixture
 def matrix_data():
     return pl.DataFrame(
@@ -183,14 +202,21 @@ def matrix_data():
     )
 
 
-def test_full_matrix_recall_at_n(matrix_data):
+def test_model_full_matrix_recall_at_n(matrix_data):
     """Test the FullMatrixRecallAtN class."""
-    # Given matrix data, combined pairs data and an instance of FullMatrixRecallAtN
+    # Given matrix data, combined predictions and an instance of FullMatrixRecallAtN
     matrix = matrix_data
-    combined_pairs = {
+    combined_predictions = {
         "model_fold_0": lambda: pl.LazyFrame(matrix)
     }  # Dummy function to simulate a Kedro Partitioned dataset
     evaluation = FullMatrixRecallAtN(
+        ground_truth_col="is_known_positive",
+        n_max=4,
+        num_n_values=4,
+        perform_sort=True,
+        title="Test Title",
+    )
+    evaluation_bootstrap = FullMatrixRecallAtNBootstrap(
         ground_truth_col="is_known_positive",
         n_max=4,
         num_n_values=4,
@@ -199,11 +225,11 @@ def test_full_matrix_recall_at_n(matrix_data):
         title="Test Title",
     )
 
-    # When the method of the class are called
+    # When the evaluate_single_fold method is called
     x_values = evaluation.give_x_values()
     y_values = evaluation.give_y_values(matrix, "score")
-    y_values_bootstrap = evaluation.give_y_values_bootstrap(matrix, "score")
-    y_values_random = evaluation.give_y_values_baseline(combined_pairs)
+    y_values_bootstrap = evaluation_bootstrap.give_y_values(matrix, "score")
+    y_values_random = evaluation_bootstrap.give_y_values_random_classifier(combined_predictions)
 
     # Then the results are as expected
     # x_values are as expected
@@ -267,6 +293,12 @@ def test_disease_specific_hit_at_k(disease_specific_hit_at_k_data, hit_at_k_data
         k_max=4,  # Set k max larger than the number of drugs
         title="Test Title",
         specific_col="target",
+    )
+    evaluation_disease_specific_bootstrap = SpecificHitAtKBootstrap(
+        ground_truth_col="is_known_positive",
+        k_max=4,
+        title="Test Title",
+        specific_col="target",
         N_bootstraps=10,
     )
     evaluation_disease_specific_with_other_pos_cols = SpecificHitAtK(
@@ -291,7 +323,7 @@ def test_disease_specific_hit_at_k(disease_specific_hit_at_k_data, hit_at_k_data
     y_values_disease_specific_with_other_pos_cols = evaluation_disease_specific_with_other_pos_cols.give_y_values(
         matrix_with_other_pos_cols, "score"
     )
-    y_values_bootstrap_disease_specific = evaluation_disease_specific.give_y_values_bootstrap(
+    y_values_bootstrap_disease_specific = evaluation_disease_specific_bootstrap.give_y_values(
         matrix_disease_specific, "score"
     )
     y_values_random_disease_specific = evaluation_disease_specific.give_y_values_baseline(combined_pairs)
@@ -380,14 +412,11 @@ def test_entropy_at_n(entropy_at_n_data_uniform, entropy_at_n_data_skewed):
     y_values_disease_uniform = evaluation_disease_entropy.give_y_values(entropy_at_n_data_uniform)
     y_values_drug_skewed = evaluation_drug_entropy.give_y_values(entropy_at_n_data_skewed)
     y_values_disease_skewed = evaluation_disease_entropy.give_y_values(entropy_at_n_data_skewed)
-    y_values_bootstraps_drug_uniform = evaluation_drug_entropy.give_y_values_bootstrap(entropy_at_n_data_uniform)
     y_values_baseline_drug = evaluation_drug_entropy.give_y_values_baseline(combined_pairs)
 
     # Then the results are as expected
     # Checking x values
     assert list(x_values_drug) == [0, 1, 2, 3, 4, 5, 6, 7, 8]
-    # Bootstrap values the same as no bootstraps
-    assert np.allclose(y_values_bootstraps_drug_uniform, y_values_drug_uniform, atol=1e-6)
     # Checking y values for uniformly distributed data
     assert np.allclose(y_values_drug_uniform[3], 1, atol=1e-6)  # All 3 drugs appear once in top 3 so Entropy@3 = 1
     assert np.allclose(y_values_drug_uniform[6], 1, atol=1e-6)  # All 3 drugs appear twice in top 6 so Entropy@6 = 1
@@ -486,36 +515,18 @@ def test_commonality_at_n(commonality_at_n_data):
     )
 
     # When the method of the class are called
-    single_fold_results = evaluation.evaluate_single_fold(combined_predictions, predictions_info)
-    multi_fold_results = evaluation.evaluate_multi_fold(combined_predictions, predictions_info)
-    bootstrap_single_fold_results = evaluation.evaluate_bootstrap_single_fold(combined_predictions, predictions_info)
-    bootstrap_multi_fold_results = evaluation.evaluate_bootstrap_multi_fold(combined_predictions, predictions_info)
-    figure = evaluation.plot_results(
-        single_fold_results, "combined_pairs", predictions_info, perform_multifold=False, perform_bootstrap=False
-    )
+    results = evaluation.evaluate(combined_predictions, predictions_info)
+    figure = evaluation.plot_results(results, combined_predictions, predictions_info)
 
     # Then the results are as expected
     n_values = [1, 2, 3, 4]
     ones = [1.0, 1.0, 1.0, 1.0]
     zeros = [0.0, 0.0, 0.0, 0.0]
-    # Single fold
-    assert_frame_equal(
-        single_fold_results,
-        pl.DataFrame(
-            {
-                "n": n_values,
-                "commonality_model_1_model_2": ones,  # All pairs identical since fold 0 is taken
-                "commonality_model_1_model_3": ones,
-                "commonality_model_2_model_3": ones,
-            }
-        ),
-        check_column_order=False,
-    )
-    # Multi fold
+    # Check commonality@n values
     mean_commonality_at_3 = (2 / 3 + 1) / 2
     std_commonality_at_3 = np.abs(mean_commonality_at_3 - 1)
     assert_frame_equal(
-        multi_fold_results,
+        results,
         pl.DataFrame(
             {
                 "n": n_values,
@@ -538,16 +549,6 @@ def test_commonality_at_n(commonality_at_n_data):
             }
         ),
         check_column_order=False,
-    )
-    # Bootstrap single fold (check that it was overridden as expected)
-    assert_frame_equal(
-        bootstrap_single_fold_results,
-        single_fold_results,
-    )
-    # Bootstrap multi fold (check that it was overridden as expected)
-    assert_frame_equal(
-        bootstrap_multi_fold_results,
-        multi_fold_results,
     )
     # Plot results are as expected
     # Check figure is a matplotlib Figure object

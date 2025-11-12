@@ -90,3 +90,11 @@ resource "google_project_iam_member" "bigquery_read_from_orchard_prod" {
   role    = google_project_iam_custom_role.bigquery_read_from_orchard_prod.id
   member  = local.prod_k8s_sas
 }
+
+// Granting read access to the dev bucket for prod service accounts.
+resource "google_storage_bucket_iam_member" "github_actions_rw_dev_bucket_access_to_prod_read_only" {
+  for_each = toset(local.binding_members)
+  bucket   = var.storage_bucket_name
+  role     = "roles/storage.objectViewer"
+  member   = local.matrix_hub_dev_github_sa_rw_member
+}

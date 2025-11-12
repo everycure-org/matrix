@@ -89,36 +89,14 @@ def test_combine_matrix_pairs(sample_data_inconsistent_models, sample_data_incon
         _ = combine_matrix_pairs(
             sample_data_inconsistent_models,
             available_ground_truth_cols=["is_known_positive"],
-            perform_multifold=True,
-            assert_data_consistency=True,
+            apply_harmonization=False,
         )
-    # Then on sample data 1 with multifold disabled, matrix pairs are combined for first fold
-    combined_matrix_pairs, _ = combine_matrix_pairs(
-        sample_data_inconsistent_models,
-        available_ground_truth_cols=["is_known_positive"],
-        perform_multifold=False,
-        assert_data_consistency=False,
-    )
-    assert list(combined_matrix_pairs.keys()) == ["fold_0"]
-    assert_frame_equal(
-        combined_matrix_pairs["fold_0"],
-        pl.LazyFrame(
-            {
-                "source": [1, 2, 1, 2],
-                "target": [1, 1, 2, 2],
-                "is_known_positive": [True, False, False, False],
-            }
-        ),
-        check_row_order=False,
-        check_column_order=False,
-    )
 
     # Then on sample data 1 with multifold enables, matrix pairs are combined for all fold
     combined_matrix_pairs, predictions_info = combine_matrix_pairs(
         sample_data_inconsistent_models,
         available_ground_truth_cols=["is_known_positive"],
-        perform_multifold=True,
-        assert_data_consistency=False,
+        apply_harmonization=True,
     )
     assert set(combined_matrix_pairs.keys()) == {"fold_0", "fold_1"}
     assert_frame_equal(
@@ -156,8 +134,7 @@ def test_combine_matrix_pairs(sample_data_inconsistent_models, sample_data_incon
         _ = combine_matrix_pairs(
             sample_data_inconsistent_folds,
             available_ground_truth_cols=["is_known_positive"],
-            perform_multifold=True,
-            assert_data_consistency=False,
+            apply_harmonization=True,
         )
 
 
@@ -167,8 +144,7 @@ def test_restrict_predictions(sample_data_inconsistent_models):
     combined_matrix_pairs, predictions_info = combine_matrix_pairs(
         sample_data_inconsistent_models,
         available_ground_truth_cols=["is_known_positive"],
-        perform_multifold=True,
-        assert_data_consistency=False,
+        apply_harmonization=True,
     )
     df_fold_0 = combined_matrix_pairs["fold_0"].collect()
     df_fold_1 = combined_matrix_pairs["fold_1"].collect()

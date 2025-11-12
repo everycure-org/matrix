@@ -1,8 +1,10 @@
 locals {
-  matrix_all_group     = "group:matrix-all@everycure.org"
-  prod_sas             = ["serviceAccount:sa-k8s-node@mtrx-hub-prod-sms.iam.gserviceaccount.com"]
-  matrix_viewers_group = [local.matrix_all_group, "group:matrix-viewers@everycure.org"]
-  tech_team_group      = ["group:techteam@everycure.org"]
+  matrix_all_group                     = "group:matrix-all@everycure.org"
+  prod_sas                             = ["serviceAccount:sa-k8s-node@mtrx-hub-prod-sms.iam.gserviceaccount.com"]
+  matrix_viewers_group                 = [local.matrix_all_group, "group:matrix-viewers@everycure.org"]
+  tech_team_group                      = ["group:techteam@everycure.org"]
+  orchard_prod_compute_service_account = "serviceAccount:342224594736-compute@developer.gserviceaccount.com"
+  orchard_dev_compute_service_account  = "serviceAccount:299386668624-compute@developer.gserviceaccount.com"
   cross_account_sas = [
     "serviceAccount:342224594736-compute@developer.gserviceaccount.com",                       # orchard prod
     "serviceAccount:299386668624-compute@developer.gserviceaccount.com",                       # orchard dev
@@ -10,6 +12,8 @@ locals {
     "serviceAccount:vertex-ai-workbench-sa@mtrx-wg2-modeling-dev-9yj.iam.gserviceaccount.com", # wg2 modeling dev
     "serviceAccount:1084953836048-compute@developer.gserviceaccount.com",                      # evidence dev compute
     "serviceAccount:860701827038-compute@developer.gserviceaccount.com",                       # evidence prod compute
+    local.orchard_dev_compute_service_account,                                                 # orchard dev
+    local.orchard_prod_compute_service_account                                                 # orchard prod
   ]
   github_actions_rw     = ["serviceAccount:sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com"]
   custom_cloud_build_sa = ["serviceAccount:custom-cloud-build-sa@mtrx-hub-prod-sms.iam.gserviceaccount.com"]

@@ -2,7 +2,7 @@ from kedro_datasets.polars import LazyPolarsDataset
 from kedro_datasets.yaml import YAMLDataset
 
 
-class MultiMatricesDataset(YAMLDataset):
+class MultiPredictionsDataset(YAMLDataset):
     """Dataset for loading multiple predictions dataframes over several models and folds."""
 
     def load(self):
@@ -15,7 +15,7 @@ class MultiMatricesDataset(YAMLDataset):
                         filepath=file_path,
                         file_format=dict_for_model["file_format"],
                     ).load()
-                    for file_path in dict_for_model["file_paths_list"]
+                    for file_path in dict_for_model["fold_paths_list"]
                 ],
                 "score_col_name": dict_for_model["score_col_name"],
             }
