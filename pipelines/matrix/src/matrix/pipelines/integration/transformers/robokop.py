@@ -92,8 +92,6 @@ def transform_nodes_30fd1bfc18cd5ccb_1(nodes_df: ps.DataFrame):
 def transform_nodes_30fd1bfc18cd5ccb(nodes_df: ps.DataFrame):
     # fmt: off
     df = (nodes_df
-          .withColumnRenamed("name:string", "name")
-          .withColumnRenamed("description:string", "description")
           .withColumn("upstream_data_source",              F.array(F.lit("robokop")))
           .withColumn("all_categories",                    F.split(F.col("category"), ROBOKOP_SEPARATOR))
           .withColumn("equivalent_identifiers",            F.split(F.col("equivalent_identifiers"), ROBOKOP_SEPARATOR))
@@ -111,14 +109,12 @@ def transform_edges_30fd1bfc18cd5ccb(edges_df: ps.DataFrame):
     # fmt: off
     df = (edges_df
           .withColumn("aggregator_knowledge_source",              F.split(F.col("aggregator_knowledge_source"), ROBOKOP_SEPARATOR))
-          .withColumn("publications",                             F.split(F.col("publications:string[]"), ROBOKOP_SEPARATOR))
+          .withColumn("publications",                             F.split(F.col("publications"), ROBOKOP_SEPARATOR))
           .withColumn("upstream_data_source",                     F.array(F.lit("robokop")))
           .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
           .withColumn("subject_direction_qualifier",              F.lit(None).cast(T.StringType()))
           .withColumn("num_references",                           F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
           .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
-          .withColumnRenamed("object_aspect_qualifier:string",    "object_aspect_qualifier")
-          .withColumnRenamed("object_direction_qualifier:string", "object_direction_qualifier")
     )
     # fmt: off
     return df

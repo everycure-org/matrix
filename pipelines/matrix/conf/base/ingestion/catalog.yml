@@ -1,8 +1,31 @@
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
-_polars_csv: &_polars_csv
-  type:  polars.CSVDataset
+_polars_csv_ds: &_polars_csv
+  type: polars.CSVDataset
+  save_args:
+    separator: "\t"
+    include_header: true
+  load_args:
+    infer_schema: 0
+    low_memory: true
+    rechunk: false
+    has_header: true
+    ignore_errors: true
+    truncate_ragged_lines: true
+
+_polars_lazy_ds: &_polars_lazy_csv
+  type: matrix.datasets.polars.CSVLazyDataset
+  save_args:
+    separator: "\t"
+    include_header: true
+  load_args:
+    separator: "\t"
+    infer_schema_length: 0
+    low_memory: true
+    has_header: true
+    ignore_errors: true
+    truncate_ragged_lines: true
 
 _pandas_parquet_ds: &_pandas_parquet
   type: matrix.datasets.graph.PandasParquetDataset
@@ -519,6 +542,42 @@ ingestion.raw.robokop.edges@polars:
     has_header: true
   load_args:
     separator: "\t"
+
+ingestion.raw.robokop.nodes@lazypolars:
+  <<: [*_polars_lazy_csv]
+  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
+
+ingestion.raw.robokop.edges@lazypolars:
+  <<: [*_polars_lazy_csv]
+  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+
+ingestion.int.preprocessing.robokop.nodes@polars:
+  <<: [*_polars_csv, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/preprocessing/robokop/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
+
+ingestion.int.preprocessing.robokop.nodes@spark:
+  <<: *_layer_raw
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.ingestion}/int/preprocessing/robokop/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+
+ingestion.int.preprocessing.robokop.edges@polars:
+  <<: [*_polars_csv, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/preprocessing/robokop/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+
+ingestion.int.preprocessing.robokop.edges@spark:
+  <<: *_layer_raw
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.ingestion}/int/preprocessing/robokop/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
 
 ingestion.int.robokop.nodes:
    <<: [*_spark_parquet, *_layer_int]

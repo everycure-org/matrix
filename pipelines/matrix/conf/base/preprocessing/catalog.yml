@@ -32,10 +32,26 @@ _polars_csv_ds: &_polars_csv
     separator: "\t"
     include_header: true
   load_args:
-    infer_schema_length: 0
+    infer_schema: 0
+    low_memory: true
+    rechunk: false
     has_header: true
     ignore_errors: true
     truncate_ragged_lines: true
+
+_polars_lazy_ds: &_polars_lazy_csv
+  type: matrix.datasets.polars.CSVLazyDataset
+  save_args:
+    separator: "\t"
+    include_header: true
+  load_args:
+    separator: "\t"
+    infer_schema_length: 0
+    low_memory: true
+    has_header: true
+    ignore_errors: true
+    truncate_ragged_lines: true
+
 
 # -------------------------------------------------------------------------
 # Datasets
@@ -116,7 +132,6 @@ preprocessing.int.embiology.manual_id_mapping@spark:
   <<: *_spark_parquet
   filepath: ${globals:paths.tmp}/embiology/prm/id_curie_mapping
 
-
 preprocessing.prm.embiology.edges:
   <<: *_spark_parquet
   filepath: ${globals:paths.tmp}/embiology/prm/edges
@@ -182,3 +197,4 @@ preprocessing.int.primekg.nodes:
 preprocessing.int.primekg.edges:
   <<: [*_polars_csv]
   filepath: ${globals:paths.tmp}/preprocessing/int/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_edges.tsv
+
