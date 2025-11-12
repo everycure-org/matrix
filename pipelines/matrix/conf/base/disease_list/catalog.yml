@@ -38,6 +38,8 @@ disease_list.raw.mondo_sssom:
     sep: "\t"
     comment: "#"
 
+# @JacquesVergine I only want to download this file, its the start and end point
+# Does it need to be mentioned in the pipeline at all?
 disease_list.raw.mondo_obsoletion_candidates:
   type: pandas.CSVDataset
   <<: *_layer_raw
@@ -53,17 +55,6 @@ disease_list.raw.icd10_cm_codes:
     sheet_name: 0
 
 #############################################
-########### Manually curated inputs #########
-#############################################
-
-disease_list.raw.grouping_diseases_template:
-  type: pandas.CSVDataset
-  <<: *_layer_raw
-  filepath: https://raw.githubusercontent.com/everycure-org/matrix-disease-list/refs/heads/main/src/grouping-diseases.robot.tsv
-  load_args:
-    sep: "\t"
-
-#############################################
 ########### Intermediate Outputs ############
 #############################################
 
@@ -76,16 +67,13 @@ disease_list.int.mondo_preprocessed:
   save_args:
     format: xml
 
-disease_list.int.mondo_labels:
-  type: pandas.CSVDataset
-  <<: *_layer_int
-  filepath: ${globals:paths.tmp}/disease_list/mondo_labels.tsv
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
+# DEPRECATED: mondo_labels is no longer persisted (handled in-memory in merged node)
+# disease_list.int.mondo_labels:
+#   type: pandas.CSVDataset
+#   <<: *_layer_int
+#   filepath: ${globals:paths.tmp}/disease_list/mondo_labels.tsv
 
-disease_list.int.billable_icd10_template:
+disease_list.int.billable_icd10_codes:
   type: pandas.CSVDataset
   <<: *_layer_int
   filepath: ${globals:paths.tmp}/disease_list/icd10_cm_billable_template.tsv
@@ -95,20 +83,16 @@ disease_list.int.billable_icd10_template:
     sep: "\t"
     index: false
 
-disease_list.int.subtypes_template:
-  type: pandas.CSVDataset
-  <<: *_layer_int
-  filepath: ${globals:paths.tmp}/disease_list/subtypes_template.tsv
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
-    index: false
+# DEPRECATED: subtypes_template is no longer persisted (handled in-memory in merged node)
+# disease_list.int.subtypes_template:
+#   type: pandas.CSVDataset
+#   <<: *_layer_int
+#   filepath: ${globals:paths.tmp}/disease_list/subtypes_template.tsv
 
-disease_list.int.subtypes_counts:
+disease_list.int.subtype_counts:
   type: pandas.CSVDataset
   <<: *_layer_int
-  filepath: ${globals:paths.tmp}/disease_list/subtypes_counts.tsv
+  filepath: ${globals:paths.tmp}/disease_list/subtype_counts.tsv
   load_args:
     sep: "\t"
   save_args:

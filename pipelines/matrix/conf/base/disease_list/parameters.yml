@@ -1,6 +1,6 @@
 # Disease list pipeline parameters
 
-# Parameters for create_billable_icd10_template node
+# Parameters for create_billable_icd10_codes node
 billable_icd10_params:
   # Predicate for exact matches in SSSOM mappings
   exact_match_predicate: "skos:exactMatch"

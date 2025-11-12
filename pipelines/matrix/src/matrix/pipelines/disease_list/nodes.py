@@ -17,143 +17,6 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 
-def _get_descendants_sparql(store, root_id: str) -> set[str]:
-    """Get all descendants (transitive children) of a node using SPARQL.
-
-    Args:
-        store: PyOxigraph Store object
-        root_id: Root node ID (e.g., "MONDO:0000001")
-
-    Returns:
-        Set of descendant IDs in CURIE format
-    """
-    # Convert CURIE to URI for SPARQL
-    uri = root_id.replace("MONDO:", "http://purl.obolibrary.org/obo/MONDO_")
-
-    # SPARQL query to find all descendants using property paths
-    # rdfs:subClassOf* means zero or more subClassOf relationships
-    query = f"""
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        PREFIX obo: <http://purl.obolibrary.org/obo/>
-
-        SELECT DISTINCT ?descendant WHERE {{
-            ?descendant rdfs:subClassOf* <{uri}> .
-            FILTER(?descendant != <{uri}>)
-        }}
-    """
-
-    results = store.query(query)
-    descendants = set()
-    for result in results:
-        desc_uri = str(result['descendant'])
-        # Convert URI back to CURIE
-        if 'MONDO_' in desc_uri:
-            curie = desc_uri.replace("http://purl.obolibrary.org/obo/MONDO_", "MONDO:")
-            descendants.add(curie)
-
-    return descendants
-
-
-def _get_ancestors_sparql(store, child_id: str) -> set[str]:
-    """Get all ancestors (transitive parents) of a node using SPARQL.
-
-    Args:
-        store: PyOxigraph Store object
-        child_id: Child node ID (e.g., "MONDO:0000001")
-
-    Returns:
-        Set of ancestor IDs in CURIE format
-    """
-    # Convert CURIE to URI for SPARQL
-    uri = child_id.replace("MONDO:", "http://purl.obolibrary.org/obo/MONDO_")
-
-    # SPARQL query to find all ancestors using property paths
-    query = f"""
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        PREFIX obo: <http://purl.obolibrary.org/obo/>
-
-        SELECT DISTINCT ?ancestor WHERE {{
-            <{uri}> rdfs:subClassOf* ?ancestor .
-            FILTER(?ancestor != <{uri}>)
-        }}
-    """
-
-    results = store.query(query)
-    ancestors = set()
-    for result in results:
-        anc_uri = str(result['ancestor'])
-        # Convert URI back to CURIE
-        if 'MONDO_' in anc_uri:
-            curie = anc_uri.replace("http://purl.obolibrary.org/obo/MONDO_", "MONDO:")
-            ancestors.add(curie)
-
-    return ancestors
-
-
-def _clean_sparql_results(df: pd.DataFrame) -> pd.DataFrame:
-    for col in df.columns:
-        df[col] = (
-            df[col]
-            .str.replace("?", "", regex=False)
-            .str.replace("<", "", regex=False)
-            .str.replace(">", "", regex=False)
-            .str.replace("http://purl.obolibrary.org/obo/MONDO_", "MONDO:", regex=False)
-            .str.replace("http://purl.obolibrary.org/obo/mondo#", "mondo:", regex=False)
-        )
-    df.columns = [col.replace("?", "") for col in df.columns]
-    return df
-
-
-def extract_metadata_from_mondo(
-    mondo_graph,
-) -> Dict[str, Any]:
-    """Extract labels, metadata, and obsoletes from the Mondo ontology using PyOxigraph.
-
-    Args:
-        mondo_graph: PyOxigraph Store object containing MONDO ontology
-
-    Returns:
-        Dictionary containing:
-            - mondo_labels: DataFrame with disease IDs and labels
-            - mondo_metadata: DataFrame with MONDO version info
-            - mondo_obsoletes: DataFrame with obsolete terms
-    """
-    logger.info("Processing Mondo ontology: extracting labels, metadata, and obsoletes using PyOxigraph")
-
-    from matrix.pipelines.disease_list.rdf_utils import run_sparql_select
-    from matrix.pipelines.disease_list.queries import (
-        query_mondo_labels,
-        query_ontology_metadata,
-        query_mondo_obsoletes,
-    )
-
-    # Count triples using SPARQL (PyOxigraph Store doesn't support len())
-    count_query = "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o }"
-    result = list(mondo_graph.query(count_query))
-    triple_count = result[0]['count'] if result else 0
-    logger.info(f"Working with MONDO graph containing {triple_count} triples")
-
-    # Extract labels using SPARQL
-    mondo_labels = run_sparql_select(mondo_graph, query_mondo_labels())
-    mondo_labels = _clean_sparql_results(mondo_labels)
-    logger.info(f"Extracted {len(mondo_labels)} MONDO labels")
-
-    # Extract metadata using SPARQL
-    mondo_metadata = run_sparql_select(mondo_graph, query_ontology_metadata())
-    mondo_metadata = _clean_sparql_results(mondo_metadata)
-    logger.info("Extracted MONDO metadata")
-
-    # Extract obsoletes using SPARQL
-    mondo_obsoletes = run_sparql_select(mondo_graph, query_mondo_obsoletes())
-    mondo_obsoletes = _clean_sparql_results(mondo_obsoletes)
-    logger.info(f"Extracted {len(mondo_obsoletes)} obsolete MONDO terms")
-
-    return {
-        "mondo_labels": mondo_labels,
-        "mondo_metadata": mondo_metadata,
-        "mondo_obsoletes": mondo_obsoletes,
-    }
-
 
 def _format_icd10_code_to_curie(code: str, prefix: str) -> str:
     """Convert ICD-10 code to CURIE format.
@@ -170,25 +33,22 @@ def _format_icd10_code_to_curie(code: str, prefix: str) -> str:
     return code
 
 
-def create_billable_icd10_template(
+def create_billable_icd10_codes(
     icd10_codes: pd.DataFrame,
     mondo_sssom: pd.DataFrame,
     parameters: Dict[str, Any],
 ) -> pd.DataFrame:
-    """Create template DataFrame for billable ICD-10-CM codes mapped to MONDO.
+    """Create dataframe for billable ICD-10-CM codes mapped to MONDO.
 
     Args:
         icd10_codes: DataFrame with ICD-10-CM codes (must have 'CODE' column)
         mondo_sssom: MONDO SSSOM mappings (must have 'predicate_id', 'object_id', 'subject_id')
-        parameters: Dictionary containing:
-            - exact_match_predicate: SKOS predicate for exact matches
-            - icd10_billable_subset: URI for billable ICD-10 subset
-            - icd10cm_prefix: CURIE prefix for ICD-10-CM codes
+        parameters: Dictionary containing various parameters from parameters.yml
 
     Returns:
         DataFrame with columns: subject_id (MONDO), predicate (subset URI), object_id (ICD10CM)
     """
-    logger.info("Creating billable ICD-10-CM template")
+    logger.info("Creating billable ICD-10-CM dataframe")
 
     # Extract parameters
     exact_match_predicate = parameters["exact_match_predicate"]
@@ -211,23 +71,23 @@ def create_billable_icd10_template(
 
     logger.info(f"Found {len(billable_with_mappings)} billable ICD-10 codes with MONDO mappings")
 
-    # Create template rows by joining billable codes with their MONDO mappings
-    template_data = exact_matches.merge(
+    # Create dataframe rows by joining billable codes with their MONDO mappings
+    icd10_data = exact_matches.merge(
         billable_with_mappings[["CODE"]], left_on="object_id", right_on="CODE", how="inner"
     )
 
     # Return simple DataFrame (no ROBOT header)
     return pd.DataFrame(
         {
-            "subject_id": template_data["subject_id"],
+            "subject_id": icd10_data["subject_id"],
             "predicate": icd10_billable_subset,
-            "object_id": template_data["object_id"],
+            "object_id": icd10_data["object_id"],
         }
     )
 
 
-def _is_parent(store, parent_id, child_id):
-    """Check if parent_id is an ancestor of child_id in the ontology using SPARQL.
+def _is_ancestor(store, parent_id, child_id):
+    """Check if parent_id is an ancestor of child_id in the ontology.
 
     Args:
         store: PyOxigraph Store object
@@ -238,7 +98,8 @@ def _is_parent(store, parent_id, child_id):
         True if parent_id is an ancestor of child_id, False otherwise
     """
     try:
-        ancestors = _get_ancestors_sparql(store, child_id)
+        from matrix.pipelines.disease_list.rdf_utils import query_get_ancestors
+        ancestors = query_get_ancestors(store, child_id)
         return parent_id in ancestors
     except Exception as e:
         logging.warning(f"Error checking relationship between {parent_id} and {child_id}: {e}")
@@ -271,7 +132,7 @@ def _find_parent_disease(label, disease_id, label_to_id_map, compiled_patterns, 
         parent_label = match.group(1).strip().lower()
         parent_id = label_to_id_map.get(parent_label)
 
-        if parent_id and _is_parent(store, parent_id, disease_id):
+        if parent_id and _is_ancestor(store, parent_id, disease_id):
             return parent_label, parent_id, pattern_name
 
     return None, None, None
@@ -279,6 +140,9 @@ def _find_parent_disease(label, disease_id, label_to_id_map, compiled_patterns, 
 
 def _filter_mondo_labels(mondo_labels, chromosomal_diseases, human_diseases, mondo_prefix):
     """Filter and prepare MONDO labels for subtype matching."""
+    # The fact that chromosomal diseases are excluded has been requested by EveryCure
+    # because they are likely to only _look_ like subtypes, but area actually full diseases
+    # with references to chromosomes.
     filtered = (
         mondo_labels
         .dropna(subset=["LABEL"])
@@ -342,8 +206,8 @@ def _build_subtype_counts(matched_df):
     )
 
 
-def _build_subtype_template_df(matched_df, mondo_subtype_subset, contributor):
-    """Build template DataFrame from matched subtypes (no ROBOT headers).
+def _build_subtype_df(matched_df, mondo_subtype_subset, contributor):
+    """Build dataframe from matched subtypes (no ROBOT headers).
 
     Returns DataFrame with columns: subject_id, subset_predicate, subset_object, contributor_predicate, contributor_object
     """
@@ -366,160 +230,156 @@ def _build_subtype_template_df(matched_df, mondo_subtype_subset, contributor):
     return subset_rows.reset_index(drop=True)
 
 
-def create_subtypes_template(
-    mondo_labels: pd.DataFrame,
+def _log_mondo_size(mondo_graph):
+    """Log the size of the MONDO graph in triples."""
+    count_query = "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o }"
+    result = list(mondo_graph.query(count_query))
+    triple_count = result[0]['count'].value if result else 0
+    logger.info(f"Working with MONDO graph containing {triple_count} triples")
+    return triple_count
+
+
+def extract_disease_data_from_mondo(
     mondo_graph,
+    billable_icd10: pd.DataFrame,
     subtypes_params: Dict[str, Any],
     subtype_patterns: dict,
-) -> dict:
-    """Create template with high granularity disease subtypes using PyOxigraph.
+) -> Dict[str, Any]:
+    """Extract all disease-related data from MONDO ontology.
+
+    This function performs the complete MONDO processing pipeline:
+    1. Extract metadata (version, labels, obsoletes)
+    2. Identify disease subtypes using hierarchy analysis
+    3. Enrich MONDO with subtype annotations and billable ICD-10 codes
+    4. Extract disease list data and metrics
+
+    All intermediate data (labels, dataframes) are kept in-memory for efficiency.
 
     Args:
-        mondo_labels: DataFrame with MONDO labels (must have 'ID' and 'LABEL' columns)
         mondo_graph: PyOxigraph Store object containing MONDO ontology
-        subtypes_params: Dictionary containing:
-            - chromosomal_diseases_root: Root MONDO ID for chromosomal diseases to exclude
-            - human_diseases_root: Root MONDO ID for human diseases to include
-            - chromosomal_diseases_exceptions: List of chromosomal disease IDs that should NOT be excluded
-            - mondo_prefix: CURIE prefix for MONDO IDs (e.g., "MONDO:")
-            - mondo_subtype_subset: URI for MONDO subtype subset
-            - default_contributor: ORCID URI for contributor attribution
+        billable_icd10: Billable ICD-10 dataframe
+        subtypes_params: Dictionary containing subtype identification parameters
         subtype_patterns: Dictionary of regex patterns for matching disease subtypes
 
     Returns:
         Dictionary containing:
-            - subtypes_template: DataFrame with subset and contributor triples
-            - subtypes_counts: DataFrame with subtype counts per parent
+            - mondo_metadata: DataFrame with MONDO version info
+            - mondo_obsoletes: DataFrame with obsolete terms
+            - disease_list_raw: DataFrame with raw disease list features
+            - mondo_metrics: DataFrame with disease metrics
+            - mondo_preprocessed: PyOxigraph Store with preprocessed ontology
+            - subtype_counts: DataFrame with subtype counts (for downstream filtering)
     """
-    logger.info("Creating subtypes template using PyOxigraph")
+    logger.info("Extracting disease data from MONDO ontology")
 
-    # Extract parameters
-    chromosomal_diseases_root = subtypes_params["chromosomal_diseases_root"]
-    human_diseases_root = subtypes_params["human_diseases_root"]
-    chromosomal_diseases_exceptions = subtypes_params["chromosomal_diseases_exceptions"]
-    mondo_prefix = subtypes_params["mondo_prefix"]
-    mondo_subtype_subset = subtypes_params["mondo_subtype_subset"]
-    default_contributor = subtypes_params["default_contributor"]
+    from matrix.pipelines.disease_list.queries import (query_get_descendants,
+                                                       query_mondo_labels,
+                                                       query_mondo_obsoletes,
+                                                       query_ontology_metadata,
+                                                       run_sparql_select)
+
+    _log_mondo_size(mondo_graph)
+
+    # Step 0: Extract metadata and labels from MONDO
+    logger.info("Step 0: Extracting metadata and labels from MONDO")
+
+    # Extract labels (for internal use in subtype identification)
+    mondo_labels = run_sparql_select(mondo_graph, query_mondo_labels())
+    logger.info(f"Extracted {len(mondo_labels)} MONDO labels")
+
+    # Extract metadata (primary output for documentation)
+    mondo_metadata = run_sparql_select(mondo_graph, query_ontology_metadata())
+    logger.info("Extracted MONDO metadata")
+
+    # Extract obsoletes (primary output for documentation)
+    mondo_obsoletes = run_sparql_select(mondo_graph, query_mondo_obsoletes())
+    logger.info(f"Extracted {len(mondo_obsoletes)} obsolete MONDO terms")
+
+    # Step 1: Identify disease subtypes using hierarchy analysis
+    logger.info("Step 1: Identifying disease subtypes")
 
     # Get disease hierarchies using SPARQL property paths
+    chromosomal_diseases_root = subtypes_params["chromosomal_diseases_root"]
+    chromosomal_diseases_exceptions = subtypes_params["chromosomal_diseases_exceptions"]
     logger.info(f"Getting descendants of {chromosomal_diseases_root} using SPARQL")
-    chromosomal_diseases = _get_descendants_sparql(mondo_graph, chromosomal_diseases_root)
-    chromosomal_diseases.add(chromosomal_diseases_root)  # Include root itself
-
-    logger.info(f"Getting descendants of {human_diseases_root} using SPARQL")
-    human_diseases = _get_descendants_sparql(mondo_graph, human_diseases_root)
-    human_diseases.add(human_diseases_root)  # Include root itself
-
-    # Remove exceptions from chromosomal disease exclusion list
+    chromosomal_diseases = query_get_descendants(mondo_graph, chromosomal_diseases_root)
+    chromosomal_diseases.add(chromosomal_diseases_root)
     for exception_id in chromosomal_diseases_exceptions:
         chromosomal_diseases.discard(exception_id)
 
+    human_diseases_root = subtypes_params["human_diseases_root"]
+    logger.info(f"Getting descendants of {human_diseases_root} using SPARQL")
+    human_diseases = query_get_descendants(mondo_graph, human_diseases_root)
+    human_diseases.add(human_diseases_root)
+
     logger.info(f"Found {len(chromosomal_diseases)} chromosomal diseases and {len(human_diseases)} human diseases")
 
-    # Filter labels to relevant human diseases
+    # Filter labels and match subtypes
+    mondo_prefix = subtypes_params["mondo_prefix"]
     filtered_labels = _filter_mondo_labels(
         mondo_labels, chromosomal_diseases, human_diseases, mondo_prefix
     )
-
-    # Compile patterns for performance
     compiled_patterns = _compile_patterns(subtype_patterns)
-
-    # Match diseases to their parent groups
     matched = _match_disease_subtypes(filtered_labels, compiled_patterns, mondo_graph)
-
-    # Build count information
     subtype_counts = _build_subtype_counts(matched)
-
-    # Build template DataFrame (no ROBOT headers)
-    template_df = _build_subtype_template_df(
+    mondo_subtype_subset = subtypes_params["mondo_subtype_subset"]
+    default_contributor = subtypes_params["default_contributor"]
+    
+    df_subtypes = _build_subtype_df(
         matched, mondo_subtype_subset, default_contributor
     )
-
     logger.info(f"Identified {len(subtype_counts)} disease subtypes")
 
-    return {
-        "subtypes_template": template_df,
-        "subtypes_counts": subtype_counts,
-    }
+    # Step 2: Enrich MONDO graph with additional information
+    logger.info("Step 2: Enriching MONDO graph with annotations")
 
+    from pyoxigraph import DefaultGraph, Literal, NamedNode, Quad
 
-def process_mondo_with_templates(
-    mondo_graph,
-    billable_icd10: pd.DataFrame,
-    subtypes: pd.DataFrame,
-) -> Dict[str, Any]:
-    """Merge templates into MONDO and extract disease list data using PyOxigraph.
-
-    Args:
-        mondo_graph: PyOxigraph Store object containing MONDO ontology
-        billable_icd10: Billable ICD-10 template DataFrame
-        subtypes: Subtypes template DataFrame
-
-    Returns:
-        Dictionary containing:
-            - disease_list_raw: DataFrame with raw disease list features (assembled from multiple queries)
-            - mondo_metrics: DataFrame with disease metrics
-            - mondo_preprocessed: PyOxigraph Store with preprocessed ontology
-    """
-    logger.info("Processing MONDO with templates using PyOxigraph")
-
-    from pyoxigraph import NamedNode, Literal, Quad, DefaultGraph
-
-    from matrix.pipelines.disease_list.rdf_utils import run_sparql_select
     from matrix.pipelines.disease_list.queries import (
-        query_inject_mondo_top_grouping,
-        query_inject_susceptibility_subset,
-        query_inject_subset_declaration,
-        query_downfill_disease_groupings,
-        query_disease_groupings_other,
-        query_matrix_disease_list_metrics,
-    )
+        query_disease_groupings_other, query_downfill_disease_groupings,
+        query_inject_mondo_top_grouping, query_inject_subset_declaration,
+        query_inject_susceptibility_subset, query_matrix_disease_list_metrics)
+    from matrix.pipelines.disease_list.rdf_utils import run_sparql_select
 
-    # Work with the store directly (will be modified in-place)
-    store = mondo_graph
+    _log_mondo_size(mondo_graph)
 
-    # Count initial triples
-    count_query = "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o }"
-    result = list(store.query(count_query))
-    initial_count = result[0]['count'] if result else 0
-    logger.info(f"Working with MONDO graph containing {initial_count} triples")
-
-    # Add billable ICD-10 template rows as RDF triples
+    # Add billable ICD-10 dataframe rows as RDF triples
     for _, row in billable_icd10.iterrows():
         subject = NamedNode(row["subject_id"].replace("MONDO:", "http://purl.obolibrary.org/obo/MONDO_"))
 
         # Add subset membership triple
         subset_pred = NamedNode(row["predicate"])
         quad = Quad(subject, subset_pred, subset_pred, DefaultGraph())  # subset URI is both predicate and object
-        store.add(quad)
+        mondo_graph.add(quad)
 
         # Add ICD10CM code annotation (using object_id column)
         predicate = NamedNode("http://www.geneontology.org/formats/oboInOwl#hasDbXref")
         obj = Literal(row["object_id"])
         quad = Quad(subject, predicate, obj, DefaultGraph())
-        store.add(quad)
+        mondo_graph.add(quad)
 
-    logger.info(f"Added {len(billable_icd10)} billable ICD-10 template rows to graph")
+    logger.info(f"Added {len(billable_icd10)} billable ICD-10 dataframe rows to graph")
 
-    # Add subtypes template rows as RDF triples
-    for _, row in subtypes.iterrows():
+    # Add subtypes rows as RDF triples (using in-memory dataframe)
+    for _, row in df_subtypes.iterrows():
         subject = NamedNode(row["subject_id"].replace("MONDO:", "http://purl.obolibrary.org/obo/MONDO_"))
 
         # Add subset membership
         subset_pred = NamedNode(row["subset_predicate"])
         subset_obj = NamedNode(row["subset_object"])
         quad = Quad(subject, subset_pred, subset_obj, DefaultGraph())
-        store.add(quad)
+        mondo_graph.add(quad)
 
         # Add contributor
         contrib_pred = NamedNode(row["contributor_predicate"])
         contrib_obj = NamedNode(row["contributor_object"])
         quad = Quad(subject, contrib_pred, contrib_obj, DefaultGraph())
-        store.add(quad)
+        mondo_graph.add(quad)
 
-    logger.info(f"Added {len(subtypes)} subtype template rows to graph")
+    logger.info(f"Added {len(df_subtypes)} subtypes rows to graph")
 
-    # Run SPARQL UPDATE queries to transform the store
+    # Step 3: Run SPARQL UPDATE queries to transform the store
+    logger.info("Step 3: Running SPARQL UPDATE transformations")
     update_queries = [
         ("inject-mondo-top-grouping.ru", query_inject_mondo_top_grouping()),
         ("inject-susceptibility-subset.ru", query_inject_susceptibility_subset()),
@@ -530,32 +390,31 @@ def process_mondo_with_templates(
 
     for query_name, query_string in update_queries:
         logger.info(f"Running SPARQL UPDATE: {query_name}")
-        store.update(query_string)
+        mondo_graph.update(query_string)
 
-    logger.info("Successfully merged templates and ran UPDATE queries")
+    logger.info("Successfully applied all SPARQL transformations")
 
-    # Run SPARQL SELECT queries to extract data using decomposed query approach
-    logger.info("Running SPARQL SELECT queries (decomposed into multiple focused queries)")
+    # Step 4: Extract disease data from enriched MONDO
+    logger.info("Step 4: Extracting disease data from enriched MONDO")
     from matrix.pipelines.disease_list.queries import assemble_disease_list
-    disease_list_raw = assemble_disease_list(store)
-    disease_list_raw = _clean_sparql_results(disease_list_raw)
+    disease_list_raw = assemble_disease_list(mondo_graph)
     logger.info(f"Extracted {len(disease_list_raw)} diseases in raw list")
 
-    # Run metrics query (still using single query as it's simple)
-    logger.info("Running metrics query")
-    mondo_metrics = run_sparql_select(store, query_matrix_disease_list_metrics())
-    mondo_metrics = _clean_sparql_results(mondo_metrics)
+    # Run metrics query
+    logger.info("Extracting disease metrics")
+    mondo_metrics = run_sparql_select(mondo_graph, query_matrix_disease_list_metrics())
     logger.info(f"Extracted metrics for {len(mondo_metrics)} diseases")
 
-    # Return the modified store directly
-    result = list(store.query(count_query))
-    final_count = result[0]['count'] if result else 0
-    logger.info(f"Preprocessed MONDO graph now contains {final_count} triples")
+    _log_mondo_size(mondo_graph)
 
+    logger.info("Successfully extracted all disease data from MONDO")
     return {
+        "mondo_metadata": mondo_metadata,
+        "mondo_obsoletes": mondo_obsoletes,
         "disease_list_raw": disease_list_raw,
         "mondo_metrics": mondo_metrics,
-        "mondo_preprocessed": store,
+        "mondo_preprocessed": mondo_graph,
+        "subtype_counts": subtype_counts,
     }
 
 

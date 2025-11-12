@@ -13,10 +13,52 @@ from typing import Set
 
 import pandas as pd
 
-from matrix.pipelines.disease_list.rdf_utils import run_sparql_select
-
 logger = logging.getLogger(__name__)
 
+
+def run_sparql_select(store, query: str) -> pd.DataFrame:
+    """Execute a SPARQL SELECT query using PyOxigraph for fast performance.
+
+    Args:
+        store: PyOxigraph Store object
+        query: SPARQL query string
+
+    Returns:
+        DataFrame with query results (columns match SELECT variables)
+    """
+    # Execute query using PyOxigraph (much faster than RDFLIB)
+    results = store.query(query)
+
+    # Get variable names from the query results (.variables is a property, not a method)
+    # Variables in PyOxigraph include the '?' prefix, remove it for cleaner column names
+    variables = [str(v)[1:] if str(v).startswith('?') else str(v) for v in results.variables]
+
+    # Convert to DataFrame
+    rows = []
+    for solution in results:
+        row_dict = {}
+        for i, var_with_prefix in enumerate(results.variables):
+            value = solution[var_with_prefix]  # Access with original variable (with ?)
+            clean_var = variables[i]  # Store with clean variable name (without ?)
+            # Convert to string, handle None values
+            row_dict[clean_var] = str(value) if value else ""
+        rows.append(row_dict)
+    
+    results_df = pd.DataFrame(rows)
+    return clean_sparql_results(results_df)
+
+def clean_sparql_results(df: pd.DataFrame) -> pd.DataFrame:
+    for col in df.columns:
+        df[col] = (
+            df[col]
+            .str.replace("?", "", regex=False)
+            .str.replace("<", "", regex=False)
+            .str.replace(">", "", regex=False)
+            .str.replace("http://purl.obolibrary.org/obo/MONDO_", "MONDO:", regex=False)
+            .str.replace("http://purl.obolibrary.org/obo/mondo#", "mondo:", regex=False)
+        )
+    df.columns = [col.replace("?", "") for col in df.columns]
+    return df
 
 def _extract_ids_from_query(store, query: str, column_name: str = 'category_class') -> Set[str]:
     """Helper function to run a query and extract IDs safely.
@@ -829,6 +871,78 @@ def assemble_disease_list(store) -> pd.DataFrame:
     logger.info(f"Assembled disease list with {len(df)} diseases and {len(df.columns)} columns")
 
     return df
+
+def query_get_ancestors(store, child_id: str) -> set[str]:
+    """Get all ancestors (transitive parents) of a node using SPARQL.
+
+    Args:
+        store: PyOxigraph Store object
+        child_id: Child node ID (e.g., "MONDO:0000001")
+
+    Returns:
+        Set of ancestor IDs in CURIE format
+    """
+    # Convert CURIE to URI for SPARQL
+    uri = child_id.replace("MONDO:", "http://purl.obolibrary.org/obo/MONDO_")
+
+    # SPARQL query to find all ancestors using property paths
+    query = f"""
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX obo: <http://purl.obolibrary.org/obo/>
+
+        SELECT DISTINCT ?ancestor WHERE {{
+            <{uri}> rdfs:subClassOf* ?ancestor .
+            FILTER(?ancestor != <{uri}>)
+        }}
+    """
+
+    results = store.query(query)
+    ancestors = set()
+    for result in results:
+        anc_uri = str(result['ancestor'])
+        # Convert URI back to CURIE
+        if 'MONDO_' in anc_uri:
+            curie = anc_uri.replace("http://purl.obolibrary.org/obo/MONDO_", "MONDO:")
+            ancestors.add(curie)
+
+    return ancestors
+
+
+def query_get_descendants(store, root_id: str) -> set[str]:
+    """Get all descendants (transitive children) of a node using SPARQL.
+
+    Args:
+        store: PyOxigraph Store object
+        root_id: Root node ID (e.g., "MONDO:0000001")
+
+    Returns:
+        Set of descendant IDs in CURIE format
+    """
+    # Convert CURIE to URI for SPARQL
+    uri = root_id.replace("MONDO:", "http://purl.obolibrary.org/obo/MONDO_")
+
+    # SPARQL query to find all descendants using property paths
+    # rdfs:subClassOf* means zero or more subClassOf relationships
+    query = f"""
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX obo: <http://purl.obolibrary.org/obo/>
+
+        SELECT DISTINCT ?descendant WHERE {{
+            ?descendant rdfs:subClassOf* <{uri}> .
+            FILTER(?descendant != <{uri}>)
+        }}
+    """
+
+    results = store.query(query)
+    descendants = set()
+    for result in results:
+        desc_uri = str(result['descendant'])
+        # Convert URI back to CURIE
+        if 'MONDO_' in desc_uri:
+            curie = desc_uri.replace("http://purl.obolibrary.org/obo/MONDO_", "MONDO:")
+            descendants.add(curie)
+
+    return descendants
 
 
 # =============================================================================

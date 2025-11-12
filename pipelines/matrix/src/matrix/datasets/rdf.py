@@ -102,7 +102,7 @@ class PyOxiGraphDataset(AbstractDataset):
             # Count triples
             count_query = "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o }"
             result = list(store.query(count_query))
-            triple_count = result[0]['count'] if result else 0
+            triple_count = result[0]['count'].value if result else 0
 
             logger.info(f"Loaded RDF graph with {triple_count} triples (using PyOxigraph)")
             return store
@@ -124,7 +124,7 @@ class PyOxiGraphDataset(AbstractDataset):
             # Count triples for logging
             count_query = "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o }"
             result = list(store.query(count_query))
-            triple_count = result[0]['count'] if result else 0
+            triple_count = result[0]['count'].value if result else 0
 
             logger.info(f"Saving RDF graph with {triple_count} triples to {self._filepath}")
 

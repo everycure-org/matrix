@@ -28,65 +28,37 @@ def create_pipeline(**kwargs) -> Pipeline:
     """
     return pipeline(
         [
-            # Stage 1: Data preparation
-            # Extract labels, metadata, and obsoletes from Mondo ontology
+            # Stage 1: Extract billable ICD-10 codes and map to Mondo
             node(
-                func=nodes.extract_metadata_from_mondo,
-                inputs={
-                    "mondo_graph": "disease_list.raw.mondo_graph",
-                },
-                outputs={
-                    "mondo_labels": "disease_list.int.mondo_labels",
-                    "mondo_metadata": "disease_list.prm.mondo_metadata",
-                    "mondo_obsoletes": "disease_list.prm.mondo_obsoletes",
-                },
-                name="extract_metadata_from_mondo",
-                tags=["disease_list", "preparation"],
-            ),
-            # Prepare Mondo metadata for billable ICD-10 codes by mapping MONDO to ICD-10-CM
-            node(
-                func=nodes.create_billable_icd10_template,
+                func=nodes.create_billable_icd10_codes,
                 inputs={
                     "icd10_codes": "disease_list.raw.icd10_cm_codes",
                     "mondo_sssom": "disease_list.raw.mondo_sssom",
                     "parameters": "params:billable_icd10_params",
                 },
-                outputs="disease_list.int.billable_icd10_template",
-                name="create_billable_icd10_template",
+                outputs="disease_list.int.billable_icd10_codes",
+                name="create_billable_icd10_codes",
                 tags=["disease_list", "preparation"],
             ),
-            # Prepare Mondo metadata for disease subtypes based on MONDO hierarchy
-            # Uses PyOxigraph SPARQL queries for hierarchy traversal
+            # Stage 2: Extract all disease data from MONDO
             node(
-                func=nodes.create_subtypes_template,
+                func=nodes.extract_disease_data_from_mondo,
                 inputs={
-                    "mondo_labels": "disease_list.int.mondo_labels",
                     "mondo_graph": "disease_list.raw.mondo_graph",
+                    "billable_icd10": "disease_list.int.billable_icd10_codes",
                     "subtypes_params": "params:subtypes_params",
                     "subtype_patterns": "params:subtype_patterns",
                 },
                 outputs={
-                    "subtypes_template": "disease_list.int.subtypes_template",
-                    "subtypes_counts": "disease_list.int.subtypes_counts",
-                },
-                name="create_subtypes_template",
-                tags=["disease_list", "preparation"],
-            ),
-            # Stage 2: Extract updated information from preprocessed Mondo ontology
-            node(
-                func=nodes.process_mondo_with_templates,
-                inputs={
-                    "mondo_graph": "disease_list.raw.mondo_graph",
-                    "billable_icd10": "disease_list.int.billable_icd10_template",
-                    "subtypes": "disease_list.int.subtypes_template",
-                },
-                outputs={
+                    "mondo_metadata": "disease_list.prm.mondo_metadata",
+                    "mondo_obsoletes": "disease_list.prm.mondo_obsoletes",
                     "disease_list_raw": "disease_list.int.disease_list_raw",
                     "mondo_metrics": "disease_list.int.mondo_metrics",
                     "mondo_preprocessed": "disease_list.int.mondo_preprocessed",
+                    "subtype_counts": "disease_list.int.subtype_counts",
                 },
-                name="process_mondo_with_templates",
-                tags=["disease_list", "ontology_processing"],
+                name="extract_disease_data_from_mondo",
+                tags=["disease_list", "extraction"],
             ),
             # Stage 3: Compute the final disease list
             node(
@@ -94,7 +66,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "disease_list_raw": "disease_list.int.disease_list_raw",
                     "mondo_metrics": "disease_list.int.mondo_metrics",
-                    "subtype_counts": "disease_list.int.subtypes_counts",
+                    "subtype_counts": "disease_list.int.subtype_counts",
                     "parameters": "params:disease_list_params",
                 },
                 outputs={
