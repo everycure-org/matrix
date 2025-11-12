@@ -1,64 +1,33 @@
 # Disease list pipeline parameters
 
-queries:
-  # SPARQL SELECT queries for extracting data
-  matrix_disease_list_filters: "src/matrix/pipelines/disease_list/queries/matrix-disease-list-filters.sparql"
-  matrix_disease_list_metrics: "src/matrix/pipelines/disease_list/queries/matrix-disease-list-metrics.sparql"
-  ontology_metadata: "src/matrix/pipelines/disease_list/queries/ontology-metadata.sparql"
-  mondo_obsoletes: "src/matrix/pipelines/disease_list/queries/mondo-obsoletes.sparql"
-
-  # SPARQL UPDATE queries for modifying ontology
-  inject_mondo_top_grouping: "src/matrix/pipelines/disease_list/queries/inject-mondo-top-grouping.ru"
-  inject_susceptibility_subset: "src/matrix/pipelines/disease_list/queries/inject-susceptibility-subset.ru"
-  inject_subset_declaration: "src/matrix/pipelines/disease_list/queries/inject-subset-declaration.ru"
-  downfill_disease_groupings: "src/matrix/pipelines/disease_list/queries/downfill-disease-groupings.ru"
-  disease_groupings_other: "src/matrix/pipelines/disease_list/queries/disease-groupings-other.ru"
-
-# MONDO IDs for disease classification and filtering
-mondo_ids:
-  # Root ID for chromosomal diseases (used to exclude from subtype processing)
-  chromosomal_diseases_root: "MONDO:0019040"
-
-  # Root ID for human diseases (used to filter disease list to human diseases only)
-  human_diseases_root: "MONDO:0700096"
-
-  # Chromosomal diseases that are part of a series and should NOT be excluded
-  # These are manually curated exceptions to the chromosomal disease exclusion rule
-  chromosomal_diseases_exceptions:
-    - "MONDO:0010767"  # chromosomal deletion syndrome
-    - "MONDO:0010763"  # chromosomal duplication syndrome
-
-# ROBOT template constants
-robot_template:
+# Parameters for create_billable_icd10_template node
+billable_icd10_params:
   # Predicate for exact matches in SSSOM mappings
   exact_match_predicate: "skos:exactMatch"
-
   # Subset URI for billable ICD-10 codes
   icd10_billable_subset: "http://purl.obolibrary.org/obo/mondo#icd10_billable"
-
-  # Subset URI for MONDO subtypes
-  mondo_subtype_subset: "http://purl.obolibrary.org/obo/mondo#mondo_subtype"
-
-  # ROBOT template header annotation for subset membership
-  subset_annotation: "AI oboInOwl:inSubset"
-
-  # ROBOT template header annotation for subset membership with pipe splitting
-  subset_annotation_split: "AI oboInOwl:inSubset SPLIT=|"
-
-  # ROBOT template header annotation for contributor with pipe splitting
-  contributor_annotation: ">AI dc:contributor SPLIT=|"
-
   # ICD-10-CM CURIE prefix
   icd10cm_prefix: "ICD10CM"
 
+# Parameters for create_subtypes_template node
+subtypes_params:
+  # Root ID for chromosomal diseases (used to exclude from subtype processing)
+  chromosomal_diseases_root: "MONDO:0019040"
+  # Root ID for human diseases (used to filter disease list to human diseases only)
+  human_diseases_root: "MONDO:0700096"
+  # Chromosomal diseases that are part of a series and should NOT be excluded
+  chromosomal_diseases_exceptions:
+    - "MONDO:0010767"  # chromosomal deletion syndrome
+    - "MONDO:0010763"  # chromosomal duplication syndrome
   # MONDO CURIE prefix
   mondo_prefix: "MONDO:"
-
+  # Subset URI for MONDO subtypes
+  mondo_subtype_subset: "http://purl.obolibrary.org/obo/mondo#mondo_subtype"
   # Default contributor ORCID for generated templates
   default_contributor: "https://orcid.org/0000-0002-7356-1779"
 
-# Disease list processing configuration
-disease_list:
+# Parameters for create_disease_list node
+disease_list_params:
   # Disease grouping categories for classification
   curated_groupings:
     - "harrisons_view"
@@ -80,7 +49,6 @@ disease_list:
   grouping_delimiter: "|"
 
   # Column name constants
-  official_filter_column: "official_matrix_filter"
   grouping_heuristic_column: "is_grouping_heuristic"
 
   # Default numeric values

@@ -82,8 +82,9 @@ dependencies = [
     "xgboost-cpu",
     "tqdm>=4.67.1",
     # Ontology processing libraries
-    "rdflib>=7.0.0",        # For OWL/RDF processing and SPARQL queries
-    "oaklib>=0.6.0",        # Ontology Access Kit for ontology operations
+    "rdflib>=7.0.0", # For OWL/RDF processing (used by RDFLibStringDataset)
+    "pyoxigraph>=0.4.5", # Fast RDF store with SPARQL support
+    "oxrdflib>=0.5.0",
 ]
 
 

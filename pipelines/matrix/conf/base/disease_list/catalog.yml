@@ -17,10 +17,18 @@ _layer_prm: &_layer_prm
 ########### INPUT DATA ############
 ###################################
 
-disease_list.raw.mondo_owl:
-  type: text.TextDataset
+# DEPRECATED: No longer used - PyOxigraph Store is used instead (via mondo_graph)
+# disease_list.raw.mondo_owl:
+#   type: text.TextDataset
+#   <<: *_layer_raw
+#   filepath: http://purl.obolibrary.org/obo/mondo.owl
+
+disease_list.raw.mondo_graph:
+  type: matrix.datasets.rdf.PyOxiGraphDataset
   <<: *_layer_raw
   filepath: http://purl.obolibrary.org/obo/mondo.owl
+  load_args:
+    format: xml
 
 disease_list.raw.mondo_sssom:
   type: pandas.CSVDataset
@@ -62,9 +70,11 @@ disease_list.raw.grouping_diseases_template:
 #TODO: Do intermediate outputs need to be saved to disk? Or can they be kept in memory only?
 
 disease_list.int.mondo_preprocessed:
-  type: text.TextDataset
-  <<: *_layer_raw
+  type: matrix.datasets.rdf.PyOxiGraphDataset
+  <<: *_layer_int
   filepath: ${globals:paths.tmp}/disease_list/mondo_preprocessed.owl
+  save_args:
+    format: xml
 
 disease_list.int.mondo_labels:
   type: pandas.CSVDataset

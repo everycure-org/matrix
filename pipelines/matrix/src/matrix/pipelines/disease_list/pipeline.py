@@ -33,9 +33,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.extract_metadata_from_mondo,
                 inputs={
-                    "mondo_owl": "disease_list.raw.mondo_owl",
-                    "ontology_metadata_query": "params:queries.ontology_metadata",
-                    "mondo_obsoletes_query": "params:queries.mondo_obsoletes",
+                    "mondo_graph": "disease_list.raw.mondo_graph",
                 },
                 outputs={
                     "mondo_labels": "disease_list.int.mondo_labels",
@@ -51,31 +49,21 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "icd10_codes": "disease_list.raw.icd10_cm_codes",
                     "mondo_sssom": "disease_list.raw.mondo_sssom",
-                    "exact_match_predicate": "params:robot_template.exact_match_predicate",
-                    "icd10_billable_subset": "params:robot_template.icd10_billable_subset",
-                    "subset_annotation": "params:robot_template.subset_annotation",
-                    "icd10cm_prefix": "params:robot_template.icd10cm_prefix",
+                    "parameters": "params:billable_icd10_params",
                 },
                 outputs="disease_list.int.billable_icd10_template",
                 name="create_billable_icd10_template",
                 tags=["disease_list", "preparation"],
             ),
             # Prepare Mondo metadata for disease subtypes based on MONDO hierarchy
-            # TODO uses OAK not ROBOT, so maybe can stream?
+            # Uses PyOxigraph SPARQL queries for hierarchy traversal
             node(
                 func=nodes.create_subtypes_template,
                 inputs={
                     "mondo_labels": "disease_list.int.mondo_labels",
-                    "mondo_owl": "disease_list.raw.mondo_owl",
-                    "chromosomal_diseases_root": "params:mondo_ids.chromosomal_diseases_root",
-                    "human_diseases_root": "params:mondo_ids.human_diseases_root",
-                    "chromosomal_diseases_exceptions": "params:mondo_ids.chromosomal_diseases_exceptions",
+                    "mondo_graph": "disease_list.raw.mondo_graph",
+                    "subtypes_params": "params:subtypes_params",
                     "subtype_patterns": "params:subtype_patterns",
-                    "mondo_prefix": "params:robot_template.mondo_prefix",
-                    "mondo_subtype_subset": "params:robot_template.mondo_subtype_subset",
-                    "default_contributor": "params:robot_template.default_contributor",
-                    "subset_annotation_split": "params:robot_template.subset_annotation_split",
-                    "contributor_annotation": "params:robot_template.contributor_annotation",
                 },
                 outputs={
                     "subtypes_template": "disease_list.int.subtypes_template",
@@ -88,16 +76,9 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.process_mondo_with_templates,
                 inputs={
-                    "mondo_owl": "disease_list.raw.mondo_owl",
+                    "mondo_graph": "disease_list.raw.mondo_graph",
                     "billable_icd10": "disease_list.int.billable_icd10_template",
                     "subtypes": "disease_list.int.subtypes_template",
-                    "inject_mondo_top_grouping_query": "params:queries.inject_mondo_top_grouping",
-                    "inject_susceptibility_subset_query": "params:queries.inject_susceptibility_subset",
-                    "inject_subset_declaration_query": "params:queries.inject_subset_declaration",
-                    "downfill_disease_groupings_query": "params:queries.downfill_disease_groupings",
-                    "disease_groupings_other_query": "params:queries.disease_groupings_other",
-                    "disease_list_filters_query": "params:queries.matrix_disease_list_filters",
-                    "metrics_query": "params:queries.matrix_disease_list_metrics",
                 },
                 outputs={
                     "disease_list_raw": "disease_list.int.disease_list_raw",
@@ -114,15 +95,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "disease_list_raw": "disease_list.int.disease_list_raw",
                     "mondo_metrics": "disease_list.int.mondo_metrics",
                     "subtype_counts": "disease_list.int.subtypes_counts",
-                    "curated_groupings": "params:disease_list.curated_groupings",
-                    "llm_groupings": "params:disease_list.llm_groupings",
-                    "subset_prefix": "params:disease_list.subset_prefix",
-                    "subset_delimiter": "params:disease_list.subset_delimiter",
-                    "grouping_delimiter": "params:disease_list.grouping_delimiter",
-                    "grouping_columns": "params:disease_list.grouping_columns",
-                    "not_grouping_columns": "params:disease_list.not_grouping_columns",
-                    "grouping_heuristic_column": "params:disease_list.grouping_heuristic_column",
-                    "default_count": "params:disease_list.default_count",
+                    "parameters": "params:disease_list_params",
                 },
                 outputs={
                     "disease_list": "disease_list.prm.disease_list",
