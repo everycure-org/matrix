@@ -13,40 +13,33 @@ def robokop_convert_boolean_columns_to_label_columns(nodes_df: pl.LazyFrame) -> 
     mondo_superclass_column_names = [x for x in nodes_df.collect_schema().names() if "MONDO_SUPERCLASS" in x]
     chebi_role_column_names = [x for x in nodes_df.collect_schema().names() if "CHEBI_ROLE" in x]
 
-    ms_df = (
-        nodes_df.with_columns(
-            [
-                pl.lit([], dtype=pl.List(pl.String)).alias("MONDO_SUPERCLASSES"),
-            ]
-        )
-        .select([pl.col("id"), pl.col("category"), pl.col("MONDO_SUPERCLASSES"), pl.col("^MONDO_SUPERCLASS_.*$")])
-        .fill_null("false")
-    )
+    ms_df = nodes_df.with_columns(
+        [
+            pl.lit([], dtype=pl.List(pl.String)).alias("MONDO_SUPERCLASSES"),
+        ]
+    ).select([pl.col("id"), pl.col("category"), pl.col("MONDO_SUPERCLASSES"), pl.col("^MONDO_SUPERCLASS_.*$")])
 
-    cr_df = (
-        nodes_df.with_columns(
-            [
-                pl.lit([], dtype=pl.List(pl.String)).alias("CHEBI_ROLES"),
-            ]
-        )
-        .select([pl.col("id"), pl.col("category"), pl.col("CHEBI_ROLES"), pl.col("^CHEBI_ROLE_.*$")])
-        .fill_null("false")
-    )
+    cr_df = nodes_df.with_columns(
+        [
+            pl.lit([], dtype=pl.List(pl.String)).alias("CHEBI_ROLES"),
+        ]
+    ).select([pl.col("id"), pl.col("category"), pl.col("CHEBI_ROLES"), pl.col("^CHEBI_ROLE_.*$")])
 
     nodes_df = nodes_df.drop(mondo_superclass_column_names).drop(chebi_role_column_names).collect()
 
-    ms_df = _build_label_and_drop_bool(mondo_superclass_column_names, ms_df, "MONDO_SUPERCLASS_", "MONDO_SUPERCLASSES")
-    nodes_df = nodes_df.join(ms_df, on=["id", "category"], how="full", coalesce=True)
-
     cr_df = _build_label_and_drop_bool(chebi_role_column_names, cr_df, "CHEBI_ROLE_", "CHEBI_ROLES")
-    nodes_df = nodes_df.join(cr_df, on=["id", "category"], how="full", coalesce=True)
+    nodes_df = (
+        nodes_df.join(cr_df, on=["id", "category"], how="full", coalesce=True)
+        .with_columns(pl.col("CHEBI_ROLES").list.join(SEPARATOR).alias("CHEBI_ROLE"))
+        .drop(["CHEBI_ROLES"])
+    )
 
-    nodes_df = nodes_df.with_columns(
-        [
-            pl.col("MONDO_SUPERCLASSES").list.join(SEPARATOR).alias("MONDO_SUPERCLASS"),
-            pl.col("CHEBI_ROLES").list.join(SEPARATOR).alias("CHEBI_ROLE"),
-        ]
-    ).drop(["MONDO_SUPERCLASSES", "CHEBI_ROLES"])
+    ms_df = _build_label_and_drop_bool(mondo_superclass_column_names, ms_df, "MONDO_SUPERCLASS_", "MONDO_SUPERCLASSES")
+    nodes_df = (
+        nodes_df.join(ms_df, on=["id", "category"], how="full", coalesce=True)
+        .with_columns(pl.col("MONDO_SUPERCLASSES").list.join(SEPARATOR).alias("MONDO_SUPERCLASS"))
+        .drop(["MONDO_SUPERCLASSES"])
+    )
 
     return nodes_df
 
