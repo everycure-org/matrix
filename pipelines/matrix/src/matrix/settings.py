@@ -113,7 +113,17 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 {"name": "matrix_curated", "source_type": "matrix_curated"},
                 {"name": "matrix_reviews", "source_type": "matrix_curated"},
             ],
-        }
+            "run_comparison": {
+                "evaluations": [
+                    "ground_truth_recall_at_n_bootstrap",
+                    "negative_recall_at_n_bootstrap",
+                    "off_label_recall_at_n_bootstrap",
+                    # "ground_truth_recall_at_n",
+                    # "negative_recall_at_n",
+                    # "off_label_recall_at_n",
+                ],
+            },
+        },
     )
 )
 
