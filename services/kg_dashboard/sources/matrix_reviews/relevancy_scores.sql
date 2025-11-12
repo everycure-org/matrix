@@ -1,0 +1,1 @@
+select * from 'relevancy_scores'
