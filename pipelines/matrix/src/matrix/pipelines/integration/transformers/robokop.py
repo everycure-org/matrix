@@ -92,8 +92,6 @@ def transform_nodes_30fd1bfc18cd5ccb_1(nodes_df: ps.DataFrame):
 def transform_nodes_30fd1bfc18cd5ccb(nodes_df: ps.DataFrame):
     # fmt: off
     df = (nodes_df
-          .withColumnRenamed("name:string", "name")
-          .withColumnRenamed("description:string", "description")
           .withColumn("upstream_data_source",              F.array(F.lit("robokop")))
           .withColumn("all_categories",                    F.split(F.col("category"), ROBOKOP_SEPARATOR))
           .withColumn("equivalent_identifiers",            F.split(F.col("equivalent_identifiers"), ROBOKOP_SEPARATOR))
