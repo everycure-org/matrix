@@ -198,21 +198,3 @@ preprocessing.int.primekg.edges:
   <<: [*_polars_csv]
   filepath: ${globals:paths.tmp}/preprocessing/int/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_edges.tsv
 
-
-# Robokop
-preprocessing.raw.robokop.nodes@polars:
-  <<: [*_polars_lazy_csv]
-  filepath: ${globals:paths.raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
-
-preprocessing.raw.robokop.edges@polars:
-  <<: [*_polars_lazy_csv]
-  filepath: ${globals:paths.raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
-
-preprocessing.int.robokop.nodes:
-  <<: [*_polars_csv]
-  filepath: ${globals:paths.tmp}/preprocessing/int/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
-
-preprocessing.int.robokop.edges:
-  <<: [*_polars_csv]
-  filepath: ${globals:paths.tmp}/preprocessing/int/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
-
