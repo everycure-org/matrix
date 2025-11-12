@@ -43,7 +43,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
     generate_dynamic_pipeline_mapping(
         {
             "cross_validation": {
-                "n_cross_val_folds": 3,
+                "n_cross_val_folds": 5,
             },
             "num_shards": 3,
             "integration": [
@@ -109,7 +109,24 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                     "stability_name": "rank_commonality"
                 },  # note - rank_commonality will be only used if you have a shared commonality@k and spearman@k metrics
             ],
-        }
+            "document_kg": [
+                {"name": "infores", "source_type": "external_registry"},
+                {"name": "reusabledata", "source_type": "external_registry", "has_mapping": True},
+                {"name": "kgregistry", "source_type": "external_registry", "has_mapping": True},
+                {"name": "matrix_curated", "source_type": "matrix_curated"},
+                {"name": "matrix_reviews", "source_type": "matrix_curated"},
+            ],
+            "run_comparison": {
+                "evaluations": [
+                    "ground_truth_recall_at_n_bootstrap",
+                    "negative_recall_at_n_bootstrap",
+                    "off_label_recall_at_n_bootstrap",
+                    # "ground_truth_recall_at_n",
+                    # "negative_recall_at_n",
+                    # "off_label_recall_at_n",
+                ],
+            },
+        },
     )
 )
 
