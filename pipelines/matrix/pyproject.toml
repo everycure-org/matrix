@@ -84,7 +84,6 @@ dependencies = [
     # Ontology processing libraries
     "rdflib>=7.0.0", # For OWL/RDF processing (used by RDFLibStringDataset)
     "pyoxigraph>=0.4.5", # Fast RDF store with SPARQL support
-    "oxrdflib>=0.5.0",
 ]
 
 
