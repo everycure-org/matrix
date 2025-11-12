@@ -37,10 +37,10 @@ from matrix_mlflow_utils.mlflow_utils import (
 from matrix.git_utils import (
     BRANCH_NAME_REGEX,
     abort_if_intermediate_release,
+    get_changed_git_files,
     get_current_git_branch,
     get_current_git_sha,
     git_tag_exists,
-    has_dirty_git,
     has_legal_branch_name,
     has_unpushed_commits,
 )
@@ -569,8 +569,8 @@ def abort_if_unmet_git_requirements(release_version: str) -> None:
     """
     errors = []
 
-    if has_dirty_git():
-        errors.append("Repository has uncommitted changes or untracked files.")
+    if len(get_changed_git_files()) > 0:
+        errors.append(f"Repository has uncommitted changes or untracked files: {';'.join(get_changed_git_files())}")
 
     if not has_legal_branch_name():
         errors.append(f"Your branch name doesn't match the regex: {BRANCH_NAME_REGEX}")

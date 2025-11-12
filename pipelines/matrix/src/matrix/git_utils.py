@@ -26,10 +26,9 @@ def get_current_git_sha() -> str:
     return subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
 
 
-def has_dirty_git() -> bool:
-    """Checks for uncommitted or untracked files. Empty string return means no such files were found"""
-    is_dirty = subprocess.check_output(["git", "status", "--porcelain"], text=True).strip()
-    return bool(is_dirty)
+def get_changed_git_files() -> list[str]:
+    """Checks for uncommitted or untracked files. Empty list return means no such files were found"""
+    return subprocess.check_output(["git", "status", "--porcelain"], text=True).strip().split("\n")
 
 
 def has_legal_branch_name() -> bool:
