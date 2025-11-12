@@ -187,7 +187,7 @@ def test_model_specific_abstract_class(constant_score_data):
     assert figure.get_axes()[0].get_title() == "Test Title"
     assert figure.get_axes()[0].get_legend().get_texts()[0].get_text() == "model_1"
     assert figure.get_axes()[0].get_legend().get_texts()[1].get_text() == "model_2"
-    assert figure.get_axes()[0].get_legend().get_texts()[2].get_text() == "Random classifier"
+    assert figure.get_axes()[0].get_legend().get_texts()[2].get_text() == "Random Classifier"
 
 
 @pytest.fixture
@@ -229,7 +229,7 @@ def test_model_full_matrix_recall_at_n(matrix_data):
     x_values = evaluation.give_x_values()
     y_values = evaluation.give_y_values(matrix, "score")
     y_values_bootstrap = evaluation_bootstrap.give_y_values(matrix, "score")
-    y_values_random = evaluation_bootstrap.give_y_values_random_classifier(combined_predictions)
+    y_values_random = evaluation_bootstrap.give_y_values_baseline(combined_predictions)
 
     # Then the results are as expected
     # x_values are as expected
@@ -306,7 +306,6 @@ def test_disease_specific_hit_at_k(disease_specific_hit_at_k_data, hit_at_k_data
         k_max=3,
         title="Test Title",
         specific_col="target",
-        N_bootstraps=10,
         other_pos_cols=["off_label"],
     )
     evaluation_drug_specific = SpecificHitAtK(
@@ -314,7 +313,6 @@ def test_disease_specific_hit_at_k(disease_specific_hit_at_k_data, hit_at_k_data
         k_max=4,
         title="Test Title",
         specific_col="source",
-        N_bootstraps=10,
     )
 
     # When the method of the classes are called

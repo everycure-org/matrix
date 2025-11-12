@@ -539,7 +539,7 @@ class SpecificHitAtKBootstrap(ComparisonModelSpecificBootstrap, SpecificHitAtK):
         self.specific_col = specific_col
         self.N_bootstraps = N_bootstraps
 
-    def give_y_values_bootstrap(self, matrix: pl.DataFrame, score_col_name: str = "score") -> np.ndarray:
+    def give_y_values(self, matrix: pl.DataFrame, score_col_name: str = "score") -> np.ndarray:
         """Compute Hit@k values for all bootstrap samples of a single set of predictions."""
         N_test_pairs = len(matrix.filter(pl.col(self.ground_truth_col)))
         ranks_for_test_set = self._give_ranks_for_test_set(matrix, score_col_name)
@@ -787,14 +787,10 @@ class CommonalityAtN(ComparisonEvaluation):
 
         # Plot curves
         for model_name_1, model_name_2 in combinations(predictions_info["model_names"], 2):
-            if is_plot_errors:
-                av_y_values = results[f"commonality_{model_name_1}_{model_name_2}_mean"]
-                std_y_values = results[f"commonality_{model_name_1}_{model_name_2}_std"]
-                ax.plot(n_values, av_y_values, label=f"{model_name_1} vs {model_name_2}")
-                ax.fill_between(n_values, av_y_values - std_y_values, av_y_values + std_y_values, alpha=0.2)
-            else:
-                av_y_values = results[f"commonality_{model_name_1}_{model_name_2}"]
-                ax.plot(n_values, av_y_values, label=f"{model_name_1} vs {model_name_2}")
+            av_y_values = results[f"commonality_{model_name_1}_{model_name_2}_mean"]
+            std_y_values = results[f"commonality_{model_name_1}_{model_name_2}_std"]
+            ax.plot(n_values, av_y_values, label=f"{model_name_1} vs {model_name_2}")
+            ax.fill_between(n_values, av_y_values - std_y_values, av_y_values + std_y_values, alpha=0.2)
 
         # Configure figure
         ax.set_xlabel("n")
