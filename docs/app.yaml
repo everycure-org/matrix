@@ -1,4 +1,4 @@
-runtime: python39
+runtime: python313
 
 handlers:
 - url: /
