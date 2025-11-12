@@ -103,3 +103,4 @@ Any additional columns will be ignored.
 
 The class hierarchy structure of evaluations is summarised by the following diagram: 
 
+![Evaluations classes](../../assets/run_comparison/inheritance.drawio.svg)
