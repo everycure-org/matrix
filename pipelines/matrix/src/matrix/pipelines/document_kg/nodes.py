@@ -67,7 +67,7 @@ def integrate_all_metadata(
     all_pks_metadata: Dict[str, Dict[str, Any]],
     unified_edges: ps.DataFrame,
     templates: Dict[str, str],
-) -> tuple[Dict[str, Any], ps.DataFrame]:
+) -> tuple[Dict[str, Any], pd.DataFrame]:
     """Filter PKS metadata to sources found in unified edges and generate table.
 
     Args:
@@ -76,14 +76,13 @@ def integrate_all_metadata(
         templates: Template configuration including table_columns
 
     Returns:
-        Tuple of (filtered PKS metadata dict, PKS metadata table as Spark DataFrame)
+        Tuple of (filtered PKS metadata dict, PKS metadata table as Pandas DataFrame)
     """
     relevant_sources = extract_pks_from_unified_edges(unified_edges)
     matrix_subset = _create_pks_subset_relevant_to_matrix(all_pks_metadata, relevant_sources)
 
-    # Extract SparkSession for table generation
-    spark_session = unified_edges.sparkSession
-    pks_table = _generate_pks_table(matrix_subset, template=templates, spark_session=spark_session)
+    # Generate Pandas table
+    pks_table = _generate_pks_table(matrix_subset, template=templates)
 
     return matrix_subset, pks_table
 
@@ -273,16 +272,15 @@ def _generate_pks_markdown_documentation(
     return pks_docs
 
 
-def _generate_pks_table(source_data: Dict[str, Dict[str, Any]], template: dict, spark_session) -> ps.DataFrame:
+def _generate_pks_table(source_data: Dict[str, Dict[str, Any]], template: dict) -> pd.DataFrame:
     """Generate tabular representation of PKS metadata based on template configuration.
 
     Args:
         source_data: PKS metadata dictionary
         template: Template configuration including table_columns
-        spark_session: SparkSession to create DataFrame with
 
     Returns:
-        Spark DataFrame with flattened PKS metadata
+        Pandas DataFrame with flattened PKS metadata
     """
     table_columns = template.get("table_columns", [])
 
@@ -312,7 +310,7 @@ def _generate_pks_table(source_data: Dict[str, Dict[str, Any]], template: dict, 
 
         rows.append(row)
 
-    return spark_session.createDataFrame(rows)
+    return pd.DataFrame(rows)
 
 
 def _generate_overview_table_of_pks_markdown(source_data: Dict[str, Dict[str, Any]], template: dict) -> str:
