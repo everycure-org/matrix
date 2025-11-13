@@ -116,5 +116,6 @@ document_kg.prm.pks_md:
   filepath: ${globals:paths.release}/primary-knowledge-sources.md
 
 document_kg.prm.all_pks_metadata_table:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.release}/prm/all_pks_metadata_table
+  type: pandas.ParquetDataset
+  <<: *_layer_prm
+  filepath: ${globals:paths.release}/prm/all_pks_metadata_table.parquet
