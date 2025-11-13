@@ -326,3 +326,148 @@ ORDER BY validation_status DESC
 </div>
 {/if}
 
+
+## ABox / TBox Classification
+
+```sql ks_abox_tbox
+WITH total_edges_per_source AS (
+  SELECT
+    primary_knowledge_source,
+    SUM(count) as total_edges
+  FROM bq.merged_kg_edges
+  WHERE primary_knowledge_source = '${params.knowledge_source}'
+  GROUP BY primary_knowledge_source
+)
+SELECT
+  m.primary_knowledge_source,
+  m.abox,
+  m.tbox,
+  t.total_edges - (m.abox + m.tbox) as undefined,
+  t.total_edges,
+  ROUND(100.0 * m.tbox / NULLIF(t.total_edges, 0), 1) as tbox_percentage,
+  ROUND(100.0 * m.abox / NULLIF(t.total_edges, 0), 1) as abox_percentage,
+  ROUND(100.0 * (t.total_edges - (m.abox + m.tbox)) / NULLIF(t.total_edges, 0), 1) as undefined_percentage
+FROM bq.abox_tbox_metric m
+JOIN total_edges_per_source t ON m.primary_knowledge_source = t.primary_knowledge_source
+WHERE m.primary_knowledge_source = '${params.knowledge_source}'
+```
+
+```sql ks_abox_tbox_chart
+WITH total_edges_per_source AS (
+  SELECT
+    primary_knowledge_source,
+    SUM(count) as total_edges
+  FROM bq.merged_kg_edges
+  WHERE primary_knowledge_source = '${params.knowledge_source}'
+  GROUP BY primary_knowledge_source
+)
+SELECT
+  'ABox (Instance-level)' as edge_type,
+  m.abox as count
+FROM bq.abox_tbox_metric m
+JOIN total_edges_per_source t ON m.primary_knowledge_source = t.primary_knowledge_source
+WHERE m.primary_knowledge_source = '${params.knowledge_source}'
+
+UNION ALL
+
+SELECT
+  'TBox (Concept-level)' as edge_type,
+  m.tbox as count
+FROM bq.abox_tbox_metric m
+JOIN total_edges_per_source t ON m.primary_knowledge_source = t.primary_knowledge_source
+WHERE m.primary_knowledge_source = '${params.knowledge_source}'
+
+UNION ALL
+
+SELECT
+  'Undefined' as edge_type,
+  t.total_edges - (m.abox + m.tbox) as count
+FROM bq.abox_tbox_metric m
+JOIN total_edges_per_source t ON m.primary_knowledge_source = t.primary_knowledge_source
+WHERE m.primary_knowledge_source = '${params.knowledge_source}'
+```
+The TBox-to-ABox balance reflects how much a knowledge graph emphasizes abstract schema versus concrete instances—too much of either can hinder effective learning and reasoning.
+
+<Details title="About This Metric">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+ABox (Assertional Box) edges represent instance-level relationships between specific entities, while TBox 
+(Terminological Box) edges represent concept-level relationships between types or classes. 
+This classification helps understand the semantic nature of the knowledge graph.
+</div>
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+A high TBox ratio suggests the graph contains mostly general, ontological structure, which may add noise and limit the 
+discovery of meaningful, specific patterns by machine learning models.
+</div>
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+Conversely, a low TBox ratio might mean the graph is missing useful schema-level structure that could aid clustering or 
+reasoning - e.g., similar nodes may not be grouped efficiently in embedding space.
+</div>
+</Details>
+
+<div class="text-left text-md max-w-3xl mx-auto mb-6">
+</div>
+
+{#if ks_abox_tbox.length > 0}
+<Grid col=2 class="max-w-4xl mx-auto mb-6">
+  <div>
+    <ECharts config={{
+        title: {
+            text: 'Classification',
+            left: 'center',
+            top: 'center',
+            textStyle: {
+                fontWeight: 'normal'
+            }
+        },
+        color: ['#6287D3', '#D8AB47', '#AAAAAA'],
+        tooltip: {
+            formatter: function(params) {
+                const count = params.data.value.toLocaleString();
+                return `${params.name}: ${count} edges (${params.percent}%)`;
+            }
+        },
+        series: [{
+            type: 'pie',
+            data: ks_abox_tbox_chart.map(row => ({
+              value: row.count,
+              name: row.edge_type
+            })),
+            radius: ['40%', '65%']
+        }]
+    }}/>
+  </div>
+  <div class="text-center flex flex-col justify-center">
+    <div class="mb-3">
+      <span class="font-semibold text-2xl" style="color: #6287D3;">
+        <Value data={ks_abox_tbox} column="abox" fmt="num0" />
+      </span><br/>
+      <span class="text-base">ABox Edges</span><br/>
+      <span class="text-xs text-gray-600">
+        (<Value data={ks_abox_tbox} column="abox_percentage" fmt="num1" />%)
+      </span>
+    </div>
+    <div class="mb-3">
+      <span class="font-semibold text-2xl" style="color: #D8AB47;">
+        <Value data={ks_abox_tbox} column="tbox" fmt="num0" />
+      </span><br/>
+      <span class="text-base">TBox Edges</span><br/>
+      <span class="text-xs text-gray-600">
+        (<Value data={ks_abox_tbox} column="tbox_percentage" fmt="num1" />%)
+      </span>
+    </div>
+    <div class="mb-3">
+      <span class="font-semibold text-2xl" style="color: #AAAAAA;">
+        <Value data={ks_abox_tbox} column="undefined" fmt="num0" />
+      </span><br/>
+      <span class="text-base">Undefined</span><br/>
+      <span class="text-xs text-gray-600">
+        (<Value data={ks_abox_tbox} column="undefined_percentage" fmt="num1" />%)
+      </span>
+    </div>
+  </div>
+</Grid>
+{:else}
+<div class="text-center text-lg text-gray-500 mb-6">
+  No ABox/TBox data available for this knowledge source.
+</div>
+{/if}
