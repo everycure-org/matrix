@@ -82,8 +82,51 @@ ORDER BY count DESC
 ## Epistemic Robustness
 
 ```sql ks_epistemic_score
-SELECT * FROM bq.epistemic_score_by_knowledge_source
-WHERE primary_knowledge_source = '${params.knowledge_source}'
+-- Uses centralized scoring from epistemic_scores source
+WITH scored_edges AS (
+  SELECT
+    kl_score,
+    at_score,
+    kl_normalized,
+    at_normalized,
+    knowledge_level_label,
+    agent_type_label,
+    edge_count
+  FROM bq.epistemic_scores
+  WHERE primary_knowledge_source = '${params.knowledge_source}'
+),
+
+most_common_kl AS (
+  SELECT knowledge_level_label AS most_common_knowledge_level
+  FROM scored_edges
+  GROUP BY knowledge_level_label
+  ORDER BY SUM(edge_count) DESC
+  LIMIT 1
+),
+
+most_common_at AS (
+  SELECT agent_type_label AS most_common_agent_type
+  FROM scored_edges
+  GROUP BY agent_type_label
+  ORDER BY SUM(edge_count) DESC
+  LIMIT 1
+)
+
+SELECT
+  SUM(edge_count) AS included_edges,
+  ROUND(
+    SUM((kl_score + at_score) / 2 * edge_count) / SUM(edge_count),
+    4
+  ) AS average_epistemic_score,
+  ROUND(SUM(kl_score * edge_count) / SUM(edge_count), 4) AS average_knowledge_level_score,
+  ROUND(SUM(at_score * edge_count) / SUM(edge_count), 4) AS average_agent_type_score,
+  SUM(CASE
+    WHEN kl_normalized = 'not_provided' AND at_normalized = 'not_provided'
+    THEN edge_count ELSE 0
+  END) AS null_or_not_provided_both,
+  (SELECT most_common_knowledge_level FROM most_common_kl) AS most_common_knowledge_level,
+  (SELECT most_common_agent_type FROM most_common_at) AS most_common_agent_type
+FROM scored_edges
 ```
 
 <div class="text-left text-md max-w-3xl mx-auto mb-4">
