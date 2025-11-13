@@ -571,6 +571,7 @@ def abort_if_unmet_git_requirements(release_version: str) -> None:
     changed_files = get_changed_git_files()
     log.info(f"Changed files: {repr(changed_files)}")
     log.info(f"Length of changed files: {len(changed_files)}")
+    log.info(f"Length of changed files > 0: {len(changed_files) > 0}")
 
     if len(changed_files) > 0:
         errors.append(
