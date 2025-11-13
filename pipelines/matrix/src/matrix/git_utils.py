@@ -28,12 +28,11 @@ def get_current_git_sha() -> str:
 
 def get_changed_git_files() -> list[str]:
     """Checks for uncommitted or untracked files. Empty list return means no such files were found"""
-    logger.info("Checking for uncommitted or untracked files")
-    git_output = subprocess.check_output(["git", "status", "--porcelain"], text=True)
-    logger.info(f"Raw git status output: {repr(git_output)}")
-    pwal = subprocess.check_output(["git", "status", "--porcelain"], text=True).strip().split("\n")
-    logger.info(f"Function output: {repr(pwal)}")
-    return subprocess.check_output(["git", "status", "--porcelain"], text=True).strip().split("\n")
+    return [
+        line
+        for line in subprocess.check_output(["git", "status", "--porcelain"], text=True).strip().split("\n")
+        if line.strip() != ""
+    ]
 
 
 def has_legal_branch_name() -> bool:
