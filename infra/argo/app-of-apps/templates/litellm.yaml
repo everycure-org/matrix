@@ -12,7 +12,7 @@ spec:
     namespace: litellm
   source:
     repoURL: https://github.com/BerriAI/litellm.git
-    targetRevision: v1.76.1-stable
+    targetRevision: v1.79.1-stable
     path: deploy/charts/litellm-helm
     helm:
       values: |
