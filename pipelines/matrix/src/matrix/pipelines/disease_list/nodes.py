@@ -98,7 +98,7 @@ def _is_ancestor(store, parent_id, child_id):
         True if parent_id is an ancestor of child_id, False otherwise
     """
     try:
-        from matrix.pipelines.disease_list.rdf_utils import query_get_ancestors
+        from matrix.pipelines.disease_list.queries import query_get_ancestors
         ancestors = query_get_ancestors(store, child_id)
         return parent_id in ancestors
     except Exception as e:
@@ -177,6 +177,7 @@ def _match_disease_subtypes(labels_df, compiled_patterns, store):
         result_type="expand"
     )
     matches.columns = ["parent_label", "parent_id", "pattern_name"]
+    logger.info(f"Matched {matches['parent_id'].notna().sum()} diseases to parent groups ({len(matches)})")
 
     return pd.concat([labels_df, matches], axis=1)
 
@@ -185,6 +186,7 @@ def _build_subtype_counts(matched_df):
     """Build counts of subtypes per parent disease."""
     valid_matches = matched_df.dropna(subset=["parent_label"])
     valid_matches = valid_matches[valid_matches["parent_label"].str.strip() != ""]
+    logger.warning(f"Building subtype counts from {len(valid_matches)} valid matches")
 
     counts = (
         valid_matches
@@ -272,11 +274,13 @@ def extract_disease_data_from_mondo(
     """
     logger.info("Extracting disease data from MONDO ontology")
 
-    from matrix.pipelines.disease_list.queries import (query_get_descendants,
-                                                       query_mondo_labels,
-                                                       query_mondo_obsoletes,
-                                                       query_ontology_metadata,
-                                                       run_sparql_select)
+    from matrix.pipelines.disease_list.queries import (
+        query_get_descendants,
+        query_mondo_labels,
+        query_mondo_obsoletes,
+        query_ontology_metadata,
+        run_sparql_select,
+    )
 
     _log_mondo_size(mondo_graph)
 
@@ -289,7 +293,7 @@ def extract_disease_data_from_mondo(
 
     # Extract metadata (primary output for documentation)
     mondo_metadata = run_sparql_select(mondo_graph, query_ontology_metadata())
-    logger.info("Extracted MONDO metadata")
+    logger.info(f"Extracted MONDO metadata: {mondo_metadata}")
 
     # Extract obsoletes (primary output for documentation)
     mondo_obsoletes = run_sparql_select(mondo_graph, query_mondo_obsoletes())
@@ -306,6 +310,7 @@ def extract_disease_data_from_mondo(
     chromosomal_diseases.add(chromosomal_diseases_root)
     for exception_id in chromosomal_diseases_exceptions:
         chromosomal_diseases.discard(exception_id)
+    logger.info(f"Extracted {len(chromosomal_diseases)} chromosomal diseases")
 
     human_diseases_root = subtypes_params["human_diseases_root"]
     logger.info(f"Getting descendants of {human_diseases_root} using SPARQL")
@@ -313,15 +318,26 @@ def extract_disease_data_from_mondo(
     human_diseases.add(human_diseases_root)
 
     logger.info(f"Found {len(chromosomal_diseases)} chromosomal diseases and {len(human_diseases)} human diseases")
+    
+    logger.info(f"mondo_labels: {len(mondo_labels)}")
+    logger.info(mondo_labels.head())
+    
+    logger.info(f"human diseases: {list(human_diseases)[:10]}")
 
     # Filter labels and match subtypes
     mondo_prefix = subtypes_params["mondo_prefix"]
     filtered_labels = _filter_mondo_labels(
         mondo_labels, chromosomal_diseases, human_diseases, mondo_prefix
     )
+    logger.info(f"filtered_labels: {len(filtered_labels)}")
+    logger.info(filtered_labels.head())
     compiled_patterns = _compile_patterns(subtype_patterns)
+    logger.info(f"compiled_patterns: {len(compiled_patterns)}")
     matched = _match_disease_subtypes(filtered_labels, compiled_patterns, mondo_graph)
+    logger.info(f"matched: {len(matched)}")
+    logger.info(matched.head())
     subtype_counts = _build_subtype_counts(matched)
+    logger.info(f"subtype_counts: {len(subtype_counts)}")
     mondo_subtype_subset = subtypes_params["mondo_subtype_subset"]
     default_contributor = subtypes_params["default_contributor"]
     
@@ -336,10 +352,14 @@ def extract_disease_data_from_mondo(
     from pyoxigraph import DefaultGraph, Literal, NamedNode, Quad
 
     from matrix.pipelines.disease_list.queries import (
-        query_disease_groupings_other, query_downfill_disease_groupings,
-        query_inject_mondo_top_grouping, query_inject_subset_declaration,
-        query_inject_susceptibility_subset, query_matrix_disease_list_metrics)
-    from matrix.pipelines.disease_list.rdf_utils import run_sparql_select
+        query_disease_groupings_other,
+        query_downfill_disease_groupings,
+        query_inject_mondo_top_grouping,
+        query_inject_subset_declaration,
+        query_inject_susceptibility_subset,
+        query_matrix_disease_list_metrics,
+        run_sparql_select,
+    )
 
     _log_mondo_size(mondo_graph)
 

@@ -40,10 +40,18 @@ def run_sparql_select(store, query: str) -> pd.DataFrame:
         for i, var_with_prefix in enumerate(results.variables):
             value = solution[var_with_prefix]  # Access with original variable (with ?)
             clean_var = variables[i]  # Store with clean variable name (without ?)
-            # Convert to string, handle None values
-            row_dict[clean_var] = str(value) if value else ""
+            # Extract actual value from PyOxigraph objects
+            # Use .value attribute for Literals, str() for IRIs/URIs
+            if value is None:
+                row_dict[clean_var] = ""
+            elif hasattr(value, 'value'):
+                # PyOxigraph Literal - extract the actual Python value
+                row_dict[clean_var] = str(value.value)
+            else:
+                # IRI/URI - convert to string
+                row_dict[clean_var] = str(value)
         rows.append(row_dict)
-    
+
     results_df = pd.DataFrame(rows)
     return clean_sparql_results(results_df)
 
@@ -899,7 +907,7 @@ def query_get_ancestors(store, child_id: str) -> set[str]:
     results = store.query(query)
     ancestors = set()
     for result in results:
-        anc_uri = str(result['ancestor'])
+        anc_uri = str(result['ancestor']).replace("<", "").replace(">", "")
         # Convert URI back to CURIE
         if 'MONDO_' in anc_uri:
             curie = anc_uri.replace("http://purl.obolibrary.org/obo/MONDO_", "MONDO:")
@@ -936,7 +944,7 @@ def query_get_descendants(store, root_id: str) -> set[str]:
     results = store.query(query)
     descendants = set()
     for result in results:
-        desc_uri = str(result['descendant'])
+        desc_uri = str(result['descendant']).replace("<", "").replace(">", "")
         # Convert URI back to CURIE
         if 'MONDO_' in desc_uri:
             curie = desc_uri.replace("http://purl.obolibrary.org/obo/MONDO_", "MONDO:")
