@@ -29,7 +29,8 @@ def get_current_git_sha() -> str:
 def get_changed_git_files() -> list[str]:
     """Checks for uncommitted or untracked files. Empty list return means no such files were found"""
     logger.info("Checking for uncommitted or untracked files")
-    logger.info("Here\n" + subprocess.check_output(["git", "status", "--porcelain"], text=True))
+    git_output = subprocess.check_output(["git", "status", "--porcelain"], text=True)
+    logger.info(f"Raw git status output: {repr(git_output)}")
     return subprocess.check_output(["git", "status", "--porcelain"], text=True).strip().split("\n")
 
 
