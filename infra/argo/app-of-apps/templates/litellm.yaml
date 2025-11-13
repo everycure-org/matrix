@@ -151,6 +151,7 @@ spec:
             # redis_password: os.environ/REDIS_PASSWORD
             num_retries: 2
           litellm_settings:
+            enable_prompt_caching: true
             set_verbose: true
             cache: true
             cache_params:
