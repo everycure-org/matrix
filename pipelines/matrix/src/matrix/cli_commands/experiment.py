@@ -587,5 +587,3 @@ def abort_if_unmet_git_requirements(release_version: str) -> None:
     if errors:
         error_list = "\n".join(errors)
         raise RuntimeError(f"Submission failed due to the following issues:\n\n{error_list}")
-
-    raise RuntimeError("Test error")
