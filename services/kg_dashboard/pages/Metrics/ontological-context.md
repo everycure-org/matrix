@@ -169,11 +169,11 @@ ORDER BY t.total_edges DESC
 <DataTable data={ontological_by_source} link=link search=true>
   <Column id="source" title="Knowledge Source ID" />
   <Column id="name" title="Name" />
-  <Column id="total_edges" title="Total Edges" fmt="num0" />
-  <Column id="abox" title="ABox" fmt="num0" />
   <Column id="abox_pct" title="ABox %" fmt="num1" contentType="colorscale" scaleColor="#6287D3" />
-  <Column id="tbox" title="TBox" fmt="num0" />
   <Column id="tbox_pct" title="TBox %" fmt="num1" contentType="colorscale" scaleColor="#D8AB47" />
-  <Column id="undefined" title="Undefined" fmt="num0" />
   <Column id="undefined_pct" title="Undefined %" fmt="num1" contentType="colorscale" scaleColor="#AAAAAA" />
+  <Column id="abox" title="ABox" fmt="num0" />
+  <Column id="tbox" title="TBox" fmt="num0" />
+  <Column id="undefined" title="Undefined" fmt="num0" />
+  <Column id="total_edges" title="Total Edges" fmt="num0" />
 </DataTable>
