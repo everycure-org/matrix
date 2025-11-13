@@ -570,7 +570,9 @@ def abort_if_unmet_git_requirements(release_version: str) -> None:
     errors = []
 
     if len(get_changed_git_files()) > 0:
-        errors.append(f"Repository has uncommitted changes or untracked files: {';'.join(get_changed_git_files())}")
+        errors.append(
+            f"Repository has {len(get_changed_git_files())} uncommitted changes or untracked files: {';'.join(get_changed_git_files())}"
+        )
 
     if not has_legal_branch_name():
         errors.append(f"Your branch name doesn't match the regex: {BRANCH_NAME_REGEX}")
