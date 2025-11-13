@@ -117,10 +117,10 @@ jobs:
           python bump_version.py --type="${{env.BUMP_TYPE}}" --tag="${{env.latest_tag}}" >> "$GITHUB_ENV"
           echo "Release version is ${release_version}"
 
-      - name: Branch off
-        run: |
-          git switch -C release/${{env.release_version}} main
-          git push
+      # - name: Branch off
+      #   run: |
+      #     git switch -C release/${{env.release_version}} ""${{github.ref_name}}""
+      #     git push
       
       # - name: Authenticate with Google Cloud for ID token
       #   id: id_auth
