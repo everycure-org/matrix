@@ -119,7 +119,7 @@ jobs:
 
       - name: Branch off
         run: |
-          git switch -C release/${{env.release_version}} "main"
+          git switch -C release/${{env.release_version}} main
           git push
       
       # - name: Authenticate with Google Cloud for ID token
