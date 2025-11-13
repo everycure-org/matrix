@@ -108,7 +108,7 @@ class PandasBigQueryDataset(GBQTableDataset):
     """
 
     def __init__(  # noqa: PLR0913
-        self, *, dataset: str, table: str, project: str, shard: str, credentials: dict[str, Any] | None = None
+        self, *, dataset: str, table: str, project: str, credentials: dict[str, Any] | None = None
     ) -> None:
         """Creates a new instance of PandasBigQueryDataset.
 
@@ -116,10 +116,9 @@ class PandasBigQueryDataset(GBQTableDataset):
             dataset: BigQuery dataset name.
             table: BigQuery table name.
             project: BigQuery project ID.
-            shard: Optional table shard identifier.
             credentials: Optional credentials for BigQuery client.
         """
-        super().__init__(dataset=dataset, table_name=f"{table}_{shard}", project=project, credentials=credentials)
+        super().__init__(dataset=dataset, table_name=f"{table}", project=project, credentials=credentials)
 
     def save(self, data: Any) -> None:
         """Save operation is not supported for this dataset."""
