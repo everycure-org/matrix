@@ -66,25 +66,20 @@ def merge_all_pks_metadata(*source_dicts: Dict[str, Dict[str, Any]]) -> Dict[str
 def integrate_all_metadata(
     all_pks_metadata: Dict[str, Dict[str, Any]],
     unified_edges: ps.DataFrame,
-    templates: Dict[str, str],
-) -> tuple[Dict[str, Any], pd.DataFrame]:
-    """Filter PKS metadata to sources found in unified edges and generate table.
+) -> Dict[str, Any]:
+    """Filter PKS metadata to sources found in unified edges.
 
     Args:
         all_pks_metadata: Complete PKS metadata from all sources
         unified_edges: Unified edges to extract relevant PKS from
-        templates: Template configuration including table_columns
 
     Returns:
-        Tuple of (filtered PKS metadata dict, PKS metadata table as Pandas DataFrame)
+        Filtered PKS metadata dict containing only sources used in unified edges
     """
     relevant_sources = extract_pks_from_unified_edges(unified_edges)
     matrix_subset = _create_pks_subset_relevant_to_matrix(all_pks_metadata, relevant_sources)
 
-    # Generate Pandas table
-    pks_table = _generate_pks_table(matrix_subset, template=templates)
-
-    return matrix_subset, pks_table
+    return matrix_subset
 
 
 def _create_default_pks_entry(source_id: str) -> Dict[str, Any]:
@@ -333,9 +328,20 @@ def _generate_overview_table_of_pks_markdown(source_data: Dict[str, Dict[str, An
     return pks_table_docstring
 
 
-def create_pks_documentation(matrix_subset_relevant_sources: Dict[str, Any], templates: Dict[str, str]) -> str:
-    """Generate markdown documentation for PKS used in the matrix."""
+def create_pks_documentation(
+    matrix_subset_relevant_sources: Dict[str, Any], templates: Dict[str, str]
+) -> tuple[str, pd.DataFrame]:
+    """Generate markdown documentation and tabular data for PKS used in the matrix.
+
+    Args:
+        matrix_subset_relevant_sources: Filtered PKS metadata dict
+        templates: Template configuration including markdown templates and table_columns
+
+    Returns:
+        Tuple of (markdown documentation string, PKS metadata table as Pandas DataFrame)
+    """
     pks_documentation_texts = _generate_list_of_pks_markdown_strings(matrix_subset_relevant_sources, template=templates)
     overview_table = _generate_overview_table_of_pks_markdown(matrix_subset_relevant_sources, template=templates)
     documentation_md = _generate_pks_markdown_documentation(pks_documentation_texts, overview_table, template=templates)
-    return documentation_md
+    pks_table = _generate_pks_table(matrix_subset_relevant_sources, template=templates)
+    return documentation_md, pks_table
