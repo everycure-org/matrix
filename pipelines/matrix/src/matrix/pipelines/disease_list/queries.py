@@ -707,7 +707,7 @@ SELECT DISTINCT ?category_class WHERE {
 # ASSEMBLY FUNCTION
 # =============================================================================
 
-def assemble_disease_list(store) -> pd.DataFrame:
+def extract_raw_disease_list_data_from_mondo(store) -> pd.DataFrame:
     """Assemble complete disease list with all metadata and filters.
 
     This is the main orchestrator function that runs all queries and assembles
