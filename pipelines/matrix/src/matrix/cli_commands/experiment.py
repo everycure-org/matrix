@@ -568,14 +568,11 @@ def abort_if_unmet_git_requirements(release_version: str) -> None:
         ValueError
     """
     errors = []
-    changed_files = get_changed_git_files()
-    log.info(f"Changed files: {repr(changed_files)}")
-    log.info(f"Length of changed files: {len(changed_files)}")
-    log.info(f"Length of changed files > 0: {len(changed_files) > 0}")
 
+    changed_files = get_changed_git_files()
     if len(changed_files) > 0:
         errors.append(
-            f"Repository has {len(changed_files)} uncommitted changes or untracked files: {';'.join(changed_files)}"
+            f"Repository has {len(changed_files)} uncommitted changes or untracked files: {repr(changed_files)}"
         )
 
     if not has_legal_branch_name():
