@@ -31,6 +31,8 @@ def get_changed_git_files() -> list[str]:
     logger.info("Checking for uncommitted or untracked files")
     git_output = subprocess.check_output(["git", "status", "--porcelain"], text=True)
     logger.info(f"Raw git status output: {repr(git_output)}")
+    pwal = subprocess.check_output(["git", "status", "--porcelain"], text=True).strip().split("\n")
+    logger.info(f"Function output: {repr(pwal)}")
     return subprocess.check_output(["git", "status", "--porcelain"], text=True).strip().split("\n")
 
 
