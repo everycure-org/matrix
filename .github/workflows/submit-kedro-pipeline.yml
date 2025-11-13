@@ -114,7 +114,7 @@ jobs:
 
       - name: Branch off
         run: |
-          git switch -C release/${{env.release_version}} ""${{github.ref_name}}"
+          git switch -C release/${{env.release_version}} "${{github.ref_name}}"
           git push
       
       - name: Authenticate with Google Cloud for ID token
