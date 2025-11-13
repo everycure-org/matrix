@@ -26,10 +26,13 @@ def get_current_git_sha() -> str:
     return subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
 
 
-def has_dirty_git() -> bool:
-    """Checks for uncommitted or untracked files. Empty string return means no such files were found"""
-    is_dirty = subprocess.check_output(["git", "status", "--porcelain"], text=True).strip()
-    return bool(is_dirty)
+def get_changed_git_files() -> list[str]:
+    """Checks for uncommitted or untracked files. Empty list return means no such files were found"""
+    return [
+        line
+        for line in subprocess.check_output(["git", "status", "--porcelain"], text=True).strip().split("\n")
+        if line.strip() != ""
+    ]
 
 
 def has_legal_branch_name() -> bool:
@@ -42,7 +45,7 @@ def has_legal_branch_name() -> bool:
 def has_unpushed_commits() -> bool:
     try:
         result = subprocess.run(
-            ["git", "log", "@{upstream}.."], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True
+            ["git", "log", "@{upstream}.."], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False
         )
     except subprocess.CalledProcessError as e:
         if "no upstream configured for branch" in e.stderr:
