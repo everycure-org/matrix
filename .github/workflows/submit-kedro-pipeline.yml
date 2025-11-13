@@ -13,11 +13,6 @@ on:
         options:
           - patch
           - minor
-  pull_request:
-    # Sequence of patterns matched against refs/heads
-    branches:
-      - main
-      - develop
 
 jobs:
 
@@ -64,33 +59,33 @@ jobs:
       - name: Install Python dependencies
         run: make install
 
-      # - name: Install Argo & Python dependencies
-      #   working-directory: pipelines/matrix
-      #   run: |
-      #     make install_argo
+      - name: Install Argo & Python dependencies
+        working-directory: pipelines/matrix
+        run: |
+          make install_argo
 
-      # - name: Authenticate with Google Cloud
-      #   id: auth
-      #   uses: 'google-github-actions/auth@v2'
-      #   with:
-      #     project_id: ${{ vars.PROJECT_ID }}
-      #     workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
-      #     service_account: ${{ vars.SERVICE_ACCOUNT }}
-      #     token_format: access_token
+      - name: Authenticate with Google Cloud
+        id: auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{ vars.PROJECT_ID }}
+          workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.SERVICE_ACCOUNT }}
+          token_format: access_token
 
-      # - uses: google-github-actions/get-gke-credentials@v1
-      # # configure authentication to a GKE cluster (configure kubectl)
-      #   with:
-      #     cluster_name: ${{ vars.GKE_CLUSTER_NAME }}
-      #     location: ${{ vars.REGION }}
-      #     project_id: ${{ vars.PROJECT_ID }}
+      - uses: google-github-actions/get-gke-credentials@v1
+      # configure authentication to a GKE cluster (configure kubectl)
+        with:
+          cluster_name: ${{ vars.GKE_CLUSTER_NAME }}
+          location: ${{ vars.REGION }}
+          project_id: ${{ vars.PROJECT_ID }}
 
-      # - name: Login to Google Artifact Registry 
-      #   uses: docker/login-action@v3
-      #   with:
-      #     registry: ${{ vars.REGION }}-docker.pkg.dev
-      #     username: oauth2accesstoken
-      #     password: ${{ steps.auth.outputs.access_token }}
+      - name: Login to Google Artifact Registry 
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.REGION }}-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
 
       - name: Fetch latest tag
         id: fetch_latest_tag
@@ -105,7 +100,7 @@ jobs:
             # If it's the first of the month, it's a minor bump, even if it's Tuesday. On all other Tuesdays, it's a patch.
             [[ $(date +%-d) -eq 1 ]] && BUMP_TYPE='minor' || BUMP_TYPE='patch'
           else
-            BUMP_TYPE="patch"
+            BUMP_TYPE="${{ github.event.inputs.bump_type }}"
           fi
           echo "Bump type is ${BUMP_TYPE}"
           echo "BUMP_TYPE=${BUMP_TYPE}" >> "$GITHUB_ENV"
@@ -117,27 +112,27 @@ jobs:
           python bump_version.py --type="${{env.BUMP_TYPE}}" --tag="${{env.latest_tag}}" >> "$GITHUB_ENV"
           echo "Release version is ${release_version}"
 
-      # - name: Branch off
-      #   run: |
-      #     git switch -C release/${{env.release_version}} ""${{github.ref_name}}""
-      #     git push
+      - name: Branch off
+        run: |
+          git switch -C release/${{env.release_version}} ""${{github.ref_name}}""
+          git push
       
-      # - name: Authenticate with Google Cloud for ID token
-      #   id: id_auth
-      #   uses: 'google-github-actions/auth@v2'
-      #   with:
-      #     project_id: ${{ vars.PROJECT_ID }}
-      #     workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
-      #     service_account: ${{ vars.SERVICE_ACCOUNT }}
-      #     token_format: id_token
-      #     id_token_audience: ${{ secrets.GCP_ID_TOKEN_AUDIENCE }}
-      #     id_token_include_email: true
+      - name: Authenticate with Google Cloud for ID token
+        id: id_auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{ vars.PROJECT_ID }}
+          workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.SERVICE_ACCOUNT }}
+          token_format: id_token
+          id_token_audience: ${{ secrets.GCP_ID_TOKEN_AUDIENCE }}
+          id_token_include_email: true
 
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
         env:
           GH_TOKEN: ${{ secrets.PAT }}
-          # GCP_TOKEN: ${{ steps.id_auth.outputs.id_token }}
+          GCP_TOKEN: ${{ steps.id_auth.outputs.id_token }}
         run: |
           echo "Submit the kedro pipeline"
           if [ "${{ env.BUMP_TYPE }}" == "minor" ]; then

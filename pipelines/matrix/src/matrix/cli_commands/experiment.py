@@ -80,10 +80,10 @@ def experiment() -> None:
         # Running in GitHub Actions, get the IAP token of service acccount from the secrets
         click.echo("Running in GitHub Actions, using service account IAP token")
         token = os.getenv("GCP_TOKEN")
-    # else:
-    #     # Running locally, get the IAP token of user account
-    #     token = get_user_account_token()
-    # configure_mlflow_tracking(token)
+    else:
+        # Running locally, get the IAP token of user account
+        token = get_user_account_token()
+    configure_mlflow_tracking(token)
 
 
 @experiment.command()

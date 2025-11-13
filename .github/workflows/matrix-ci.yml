@@ -14,17 +14,17 @@
 name: CI pipeline
 
 on:
-  # pull_request:
-  #   # Sequence of patterns matched against refs/heads
-  #   branches:
-  #     - main
-  #     - develop
-  #   # from https://github.com/reviewdog/action-eslint/issues/29#issuecomment-985939887
-  #   types:
-  #     - opened
-  #     - reopened
-  #     - synchronize
-  #     - ready_for_review
+  pull_request:
+    # Sequence of patterns matched against refs/heads
+    branches:
+      - main
+      - develop
+    # from https://github.com/reviewdog/action-eslint/issues/29#issuecomment-985939887
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
 
   push:
     branches:
