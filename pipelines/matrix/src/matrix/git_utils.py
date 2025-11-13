@@ -41,7 +41,7 @@ def has_legal_branch_name() -> bool:
 def has_unpushed_commits() -> bool:
     try:
         result = subprocess.run(
-            ["git", "log", "@{upstream}.."], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True
+            ["git", "log", "@{upstream}.."], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False
         )
     except subprocess.CalledProcessError as e:
         if "no upstream configured for branch" in e.stderr:
