@@ -40,24 +40,19 @@ def create_billable_icd10_codes(
     Returns:
         DataFrame with columns: subject_id (MONDO), predicate (subset URI), object_id (ICD10CM)
     """
-    logger.info("Creating billable ICD-10-CM dataframe")
 
     exact_match_predicate = parameters["exact_match_predicate"]
     icd10_billable_subset = parameters["icd10_billable_subset"]
     icd10cm_prefix = parameters["icd10cm_prefix"]
 
-    icd10_codes_formatted = icd10_codes.copy()
-    icd10_codes_formatted["CODE"] = icd10_codes_formatted["CODE"].apply(
+    icd10_codes["code"] = icd10_codes["CODE"].apply(
         lambda code: _format_icd10_code_to_curie(code, icd10cm_prefix)
     )
 
-    exact_matches = mondo_sssom[mondo_sssom["predicate_id"] == exact_match_predicate].copy()
-    billable_with_mappings = icd10_codes_formatted[icd10_codes_formatted["CODE"].isin(exact_matches["object_id"])]
-
-    logger.info(f"Found {len(billable_with_mappings)} billable ICD-10 codes with MONDO mappings")
+    exact_matches = mondo_sssom[mondo_sssom["predicate_id"] == exact_match_predicate]
 
     icd10_data = exact_matches.merge(
-        billable_with_mappings[["CODE"]], left_on="object_id", right_on="CODE", how="inner"
+        icd10_codes[["code"]], left_on="object_id", right_on="code", how="inner"
     )
 
     icd10_data["predicate"] = icd10_billable_subset
@@ -219,12 +214,9 @@ def extract_disease_data_from_mondo(
     logger.info("Extracting disease data from MONDO ontology")
 
     from matrix.pipelines.disease_list.queries import (
-        query_matrix_disease_list_metrics,
-        query_mondo_labels,
-        query_mondo_obsoletes,
-        query_ontology_metadata,
-        query_raw_disease_list_data_from_mondo,
-    )
+        query_matrix_disease_list_metrics, query_mondo_labels,
+        query_mondo_obsoletes, query_ontology_metadata,
+        query_raw_disease_list_data_from_mondo)
 
     _log_mondo_size(mondo_graph)
 
