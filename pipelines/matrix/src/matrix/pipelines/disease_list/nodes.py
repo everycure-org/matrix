@@ -60,13 +60,8 @@ def create_billable_icd10_codes(
         billable_with_mappings[["CODE"]], left_on="object_id", right_on="CODE", how="inner"
     )
 
-    return pd.DataFrame(
-        {
-            "subject_id": icd10_data["subject_id"],
-            "predicate": icd10_billable_subset,
-            "object_id": icd10_data["object_id"],
-        }
-    )
+    icd10_data["predicate"] = icd10_billable_subset
+    return icd10_data[["subject_id", "predicate", "object_id"]]
 
 
 def _is_ancestor(store: Store, parent_id: str, child_id: str) -> bool:
