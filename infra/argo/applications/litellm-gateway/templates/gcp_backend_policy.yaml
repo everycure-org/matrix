@@ -1,0 +1,13 @@
+# NOTE: This file was partially generated using AI assistance.
+apiVersion: networking.gke.io/v1
+kind: GCPBackendPolicy
+metadata:
+  name: litellm-backend-policy
+  namespace: litellm
+spec:
+  default:
+    timeoutSec: 300  # 5 minutes timeout to allow for long-running LLM requests
+  targetRef:
+    group: ""
+    kind: Service
+    name: litellm
