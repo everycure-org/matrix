@@ -13,7 +13,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     gcc curl g++ openjdk-17-jre-headless libomp-dev git && \
     apt-get clean
-
+    
 # ------- GPU/System end ----------
 # ---------------------------------
 # ------- Dependencies start ------
