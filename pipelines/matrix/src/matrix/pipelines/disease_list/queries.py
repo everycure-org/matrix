@@ -921,13 +921,12 @@ def query_get_ancestors(store, child_id: str) -> set[str]:
         Set of ancestor IDs in CURIE format
     """
 
-    uri = child_id.replace("MONDO:", "http://purl.obolibrary.org/obo/MONDO_")
-
-    if not uri.startswith("MONDO:"):
+    if not child_id.startswith("MONDO:"):
         logging.error(f"Invalid child_id provided: {child_id}")
         return set()
 
-    # SPARQL query to find all ancestors using property paths
+    uri = child_id.replace("MONDO:", "http://purl.obolibrary.org/obo/MONDO_")
+
     query = (
         _get_sparql_prefixes()
         + f"""
@@ -1098,6 +1097,7 @@ ORDER BY DESC(?category_class)
 # =============================================================================
 # Update Queries/Operations
 # =============================================================================
+
 
 def _add_icd10_billable_data_to_graph(mondo_graph, billable_icd10):
     # Add billable ICD-10 dataframe rows as RDF triples
