@@ -877,6 +877,11 @@ def extract_raw_disease_list_data_from_mondo(store) -> pd.DataFrame:
     return df
 
 
+# =============================================================================
+# Additional Queries
+# =============================================================================
+
+
 def query_get_ancestors(store, child_id: str) -> set[str]:
     """Get all ancestors (transitive parents) of a node using SPARQL.
 
@@ -948,11 +953,6 @@ def query_get_descendants(store, root_id: str) -> set[str]:
             descendants.add(curie)
 
     return descendants
-
-
-# =============================================================================
-# Additional Queries (originally from separate .sparql/.ru files)
-# =============================================================================
 
 
 def query_mondo_labels() -> str:
@@ -1069,6 +1069,11 @@ WHERE
 GROUP BY ?category_class
 ORDER BY DESC(?category_class)
 """
+
+
+# =============================================================================
+# Update Queries
+# =============================================================================
 
 
 def query_inject_mondo_top_grouping() -> str:
