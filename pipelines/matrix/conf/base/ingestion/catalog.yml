@@ -253,14 +253,8 @@ ingestion.raw.drugmech.edges@pandas:
 
 ingestion.raw.disease_list:
   <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_public}/disease_list/${globals:data_sources.disease_list.version}/ec-disease-list.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
+  type: pandas.ParquetDataset
+  filepath: ${globals:paths.raw_public}/disease_list/${globals:data_sources.disease_list.version}/ec-disease-list.parquet
 
 ingestion.raw.disease_list.nodes@pandas:
   <<: [*_layer_raw]
@@ -287,14 +281,8 @@ ingestion.raw.disease_list.nodes@spark:
 
 ingestion.raw.drug_list:
   <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_public}/drug_list/${globals:data_sources.drug_list.version}/ec-drug-list.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
+  type: pandas.ParquetDataset
+  filepath: ${globals:paths.raw_public}/drug_list/${globals:data_sources.drug_list.version}/ec-drug-list.parquet
 
 ingestion.raw.drug_list.nodes@pandas:
   <<: [*_layer_raw]

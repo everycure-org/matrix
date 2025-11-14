@@ -25,8 +25,8 @@ def _create_integration_pipeline(
                         # NOTE: The datasets below are currently only picked up by RTX
                         # the goal is to ensure that semmed filtering occurs for all
                         # graphs in the future.
-                        "curie_to_pmids": "ingestion.int.rtx_kg2.curie_to_pmids",
-                        "semmed_filters": "params:integration.preprocessing.rtx.semmed_filters",
+                        # "curie_to_pmids": "ingestion.int.rtx_kg2.curie_to_pmids",
+                        # "semmed_filters": "params:integration.preprocessing.rtx.semmed_filters",
                         # NOTE: This dynamically wires the nodes and edges into each transformer.
                         # This is due to the fact that the Transformer objects are only created
                         # during node execution time, otherwise we could infer this based on
