@@ -6,6 +6,7 @@ curated list of diseases for drug repurposing.
 """
 
 from pathlib import Path
+from typing import Any
 
 from kedro.pipeline import Pipeline, node, pipeline
 
@@ -15,13 +16,16 @@ from . import nodes
 QUERIES_DIR = Path(__file__).parent / "queries"
 
 
-def create_pipeline(**kwargs) -> Pipeline:
+def create_pipeline(**kwargs: Any) -> Pipeline:
     """Create the disease list generation pipeline.
 
     The pipeline has three main stages:
     1. Data preparation: Extract labels, create templates
     2. Ontology processing: Merge templates into MONDO
     3. List generation: Apply filters and create final outputs
+
+    Args:
+        **kwargs: Additional keyword arguments (unused, for Kedro compatibility)
 
     Returns:
         Complete disease list pipeline
