@@ -92,7 +92,9 @@ def _clean_sparql_results(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def _extract_ids_from_query(store, query: str, column_name: str = "category_class") -> Set[str]:
+def _query_and_extract_ids_from_column(
+    store, query: str, column_name: str = "category_class", mondo_only: bool = True
+) -> Set[str]:
     """Helper function to run a query and extract IDs safely.
 
     Handles empty DataFrames and missing columns gracefully.
@@ -101,6 +103,7 @@ def _extract_ids_from_query(store, query: str, column_name: str = "category_clas
         store: PyOxigraph Store object
         query: SPARQL query string
         column_name: Name of column containing IDs (default: 'category_class')
+        mondo_only: If True, filter to only return IDs starting with 'MONDO:' (default: True)
 
     Returns:
         Set of IDs, or empty set if no results
@@ -108,7 +111,14 @@ def _extract_ids_from_query(store, query: str, column_name: str = "category_clas
     df = run_sparql_select(store, query)
     if df.empty or column_name not in df.columns:
         return set()
-    return set(df[column_name].tolist())
+
+    ids = set(df[column_name].tolist())
+
+    # Filter to MONDO IDs only if requested
+    if mondo_only:
+        ids = {id for id in ids if id.startswith("MONDO:")}
+
+    return ids
 
 
 # =============================================================================
@@ -265,7 +275,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_matrix_manually_excluded(store) -> Set[str]:
@@ -278,7 +288,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_clingen(store) -> Set[str]:
@@ -291,7 +301,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_susceptibility(store) -> Set[str]:
@@ -304,7 +314,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_mondo_subtype(store) -> Set[str]:
@@ -317,7 +327,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_pathway_defect(store) -> Set[str]:
@@ -330,7 +340,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_grouping_subset(store) -> Set[str]:
@@ -350,7 +360,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_obsoletion_candidate(store) -> Set[str]:
@@ -363,7 +373,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_orphanet_subtype(store) -> Set[str]:
@@ -376,7 +386,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_orphanet_disorder(store) -> Set[str]:
@@ -389,7 +399,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_icd_billable(store) -> Set[str]:
@@ -402,7 +412,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 # =============================================================================
@@ -420,7 +430,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_cardiovascular(store) -> Set[str]:
@@ -433,7 +443,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_heart_disorder(store) -> Set[str]:
@@ -446,7 +456,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_inflammatory(store) -> Set[str]:
@@ -459,7 +469,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_psychiatric(store) -> Set[str]:
@@ -472,7 +482,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_cancer_or_benign_tumor(store) -> Set[str]:
@@ -485,7 +495,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 # =============================================================================
@@ -504,7 +514,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_andor(store) -> Set[str]:
@@ -518,7 +528,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_acquired(store) -> Set[str]:
@@ -532,7 +542,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 # =============================================================================
@@ -568,7 +578,7 @@ SELECT ?entity WHERE {
 """
     )
     # Note: query uses ?entity instead of ?category_class
-    return _extract_ids_from_query(store, query, column_name="entity")
+    return _query_and_extract_ids_from_column(store, query, column_name="entity")
 
 
 def _query_filter_grouping_subset_ancestor(store) -> Set[str]:
@@ -588,7 +598,7 @@ SELECT DISTINCT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_orphanet_subtype_descendant(store) -> Set[str]:
@@ -602,7 +612,7 @@ SELECT DISTINCT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_omimps(store) -> Set[str]:
@@ -616,7 +626,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_omimps_descendant(store) -> Set[str]:
@@ -631,7 +641,7 @@ SELECT DISTINCT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_omim(store) -> Set[str]:
@@ -645,7 +655,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_leaf(store) -> Set[str]:
@@ -661,7 +671,7 @@ SELECT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_leaf_direct_parent(store) -> Set[str]:
@@ -677,7 +687,7 @@ SELECT DISTINCT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 # =============================================================================
@@ -704,7 +714,7 @@ SELECT DISTINCT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_icd_chapter_code(store) -> Set[str]:
@@ -726,7 +736,7 @@ SELECT DISTINCT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 def _query_filter_icd_chapter_header(store) -> Set[str]:
@@ -748,7 +758,7 @@ SELECT DISTINCT ?category_class WHERE {
 }
 """
     )
-    return _extract_ids_from_query(store, query)
+    return _query_and_extract_ids_from_column(store, query)
 
 
 # =============================================================================
@@ -945,16 +955,7 @@ def query_get_ancestors(store, child_id: str) -> set[str]:
     """
     )
 
-    results = store.query(query)
-    ancestors = set()
-    for result in results:
-        anc_uri = str(result["ancestor"]).replace("<", "").replace(">", "")
-        # Convert URI back to CURIE
-        if "MONDO_" in anc_uri:
-            curie = anc_uri.replace("http://purl.obolibrary.org/obo/MONDO_", "MONDO:")
-            ancestors.add(curie)
-
-    return ancestors
+    return _query_and_extract_ids_from_column(store, query, column_name="ancestor")
 
 
 def query_get_descendants(store, root_id: str) -> set[str]:
@@ -982,16 +983,7 @@ def query_get_descendants(store, root_id: str) -> set[str]:
     """
     )
 
-    results = store.query(query)
-    descendants = set()
-    for result in results:
-        desc_uri = str(result["descendant"]).replace("<", "").replace(">", "")
-        # Convert URI back to CURIE
-        if "MONDO_" in desc_uri:
-            curie = desc_uri.replace("http://purl.obolibrary.org/obo/MONDO_", "MONDO:")
-            descendants.add(curie)
-
-    return descendants
+    return _query_and_extract_ids_from_column(store, query, column_name="descendant")
 
 
 def query_mondo_labels() -> str:
