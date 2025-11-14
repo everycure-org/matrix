@@ -109,7 +109,58 @@ document_kg:
             - label_manual
             - label_manual_comment
             - reviewer
-    templates: 
+    templates:
+      table_columns:
+        - name: pks_id
+          source: pks_id
+        - name: name
+          source: infores
+          field: name
+        - name: description
+          source: infores
+          field: description
+        - name: status
+          source: infores
+          field: status
+        - name: license_name
+          source: matrixcurated
+          field: license_name
+        - name: license_url
+          source: matrixcurated
+          field: license_source_link
+        - name: domain_coverage_score
+          source: matrixreviews
+          field: domain_coverage_score
+        - name: domain_coverage_comments
+          source: matrixreviews
+          field: domain_coverage_comments
+        - name: source_scope_score
+          source: matrixreviews
+          field: source_scope_score
+        - name: source_scope_score_comment
+          source: matrixreviews
+          field: source_scope_score_comment
+        - name: utility_drugrepurposing_score
+          source: matrixreviews
+          field: utility_drugrepurposing_score
+        - name: utility_drugrepurposing_comment
+          source: matrixreviews
+          field: utility_drugrepurposing_comment
+        - name: label_manual
+          source: matrixreviews
+          field: label_manual
+        - name: label_rubric
+          source: matrixreviews
+          field: label_rubric
+        - name: reviewer
+          source: matrixreviews
+          field: reviewer
+        - name: homepage_url
+          source: kgregistry
+          field: homepage_url
+        - name: xref
+          source: infores
+          field: xref
       license: |
         #### License information
         - **Matrix manual curation**: {%if matrix_license_name is not none %}[{{ matrix_license_name }}]({{ matrix_license_url }}){% else %}No license information curated.{% endif %}{%if kg_registry_license_id is not none %}
