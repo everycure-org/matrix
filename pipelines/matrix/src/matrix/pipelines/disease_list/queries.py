@@ -38,7 +38,7 @@ PREFIX dc: <http://purl.org/dc/elements/1.1/>
 """
 
 
-def run_sparql_select(store, query: str) -> pd.DataFrame:
+def _run_sparql_select(store, query: str) -> pd.DataFrame:
     """Execute a SPARQL SELECT query using PyOxigraph for fast performance.
 
     Args:
@@ -108,7 +108,7 @@ def _query_and_extract_ids_from_column(
     Returns:
         Set of IDs, or empty set if no results
     """
-    df = run_sparql_select(store, query)
+    df = _run_sparql_select(store, query)
     if df.empty or column_name not in df.columns:
         return set()
 
@@ -122,7 +122,7 @@ def _query_and_extract_ids_from_column(
 
 
 # =============================================================================
-# BASE QUERY
+# METADATA QUERIES
 # =============================================================================
 
 
@@ -158,12 +158,7 @@ WHERE {
 """
     )
     logger.info("Running base disease list query")
-    return run_sparql_select(store, query)
-
-
-# =============================================================================
-# METADATA QUERIES
-# =============================================================================
+    return _run_sparql_select(store, query)
 
 
 def _query_metadata_synonyms(store) -> pd.DataFrame:
@@ -185,7 +180,7 @@ ORDER BY ?sorted_synonym
 """
     )
     logger.info("Running synonyms metadata query")
-    return run_sparql_select(store, query)
+    return _run_sparql_select(store, query)
 
 
 def _query_metadata_subsets(store) -> pd.DataFrame:
@@ -207,7 +202,7 @@ ORDER BY ?sorted_subset
 """
     )
     logger.info("Running subsets metadata query")
-    return run_sparql_select(store, query)
+    return _run_sparql_select(store, query)
 
 
 def _query_metadata_crossreferences(store) -> pd.DataFrame:
@@ -229,7 +224,7 @@ ORDER BY ?sorted_xref
 """
     )
     logger.info("Running cross-references metadata query")
-    return run_sparql_select(store, query)
+    return _run_sparql_select(store, query)
 
 
 def _query_metadata_malacards_linkouts(store) -> pd.DataFrame:
@@ -257,7 +252,7 @@ ORDER BY ?sorted_malacardslinkouts
 """
     )
     logger.info("Running MalaCards linkouts metadata query")
-    return run_sparql_select(store, query)
+    return _run_sparql_select(store, query)
 
 
 # =============================================================================
@@ -986,12 +981,16 @@ def query_get_descendants(store, root_id: str) -> set[str]:
     return _query_and_extract_ids_from_column(store, query, column_name="descendant")
 
 
-def query_mondo_labels() -> str:
-    """Get MONDO labels query string.
+def query_mondo_labels(store) -> pd.DataFrame:
+    """Get MONDO labels.
 
-    Returns SPARQL query to extract all MONDO labels.
+    Args:
+        store: PyOxigraph Store object
+
+    Returns:
+        DataFrame with columns: ID, LABEL
     """
-    return (
+    query = (
         _get_sparql_prefixes()
         + """
 SELECT ?ID ?LABEL
@@ -1002,14 +1001,19 @@ WHERE {
 }
 """
     )
+    return _run_sparql_select(store, query)
 
 
-def query_ontology_metadata() -> str:
-    """Get ontology metadata query string.
+def query_ontology_metadata(store) -> pd.DataFrame:
+    """Get ontology metadata.
 
-    Returns SPARQL query to extract ontology version and metadata.
+    Args:
+        store: PyOxigraph Store object
+
+    Returns:
+        DataFrame with columns: versionIRI, IRI, title
     """
-    return (
+    query = (
         _get_sparql_prefixes()
         + """
 SELECT ?versionIRI ?IRI ?title
@@ -1021,14 +1025,19 @@ WHERE {
 }
 """
     )
+    return _run_sparql_select(store, query)
 
 
-def query_mondo_obsoletes() -> str:
-    """Get MONDO obsolete terms query string.
+def query_mondo_obsoletes(store) -> pd.DataFrame:
+    """Get MONDO obsolete terms.
 
-    Returns SPARQL query to find all obsolete MONDO terms with replacements.
+    Args:
+        store: PyOxigraph Store object
+
+    Returns:
+        DataFrame with columns: cls, label, deprecated, replacements, considers
     """
-    return (
+    query = (
         _get_sparql_prefixes()
         + """
 SELECT
@@ -1058,14 +1067,19 @@ GROUP BY ?cls ?label ?deprecated
 ORDER BY ?cls
 """
     )
+    return _run_sparql_select(store, query)
 
 
-def query_matrix_disease_list_metrics() -> str:
-    """Get disease metrics query string.
+def query_matrix_disease_list_metrics(store) -> pd.DataFrame:
+    """Get disease metrics (descendant counts).
 
-    Returns SPARQL query to count descendants for each disease.
+    Args:
+        store: PyOxigraph Store object
+
+    Returns:
+        DataFrame with columns: category_class, count_descendants
     """
-    return (
+    query = (
         _get_sparql_prefixes()
         + """
 SELECT DISTINCT
@@ -1090,6 +1104,7 @@ GROUP BY ?category_class
 ORDER BY DESC(?category_class)
 """
     )
+    return _run_sparql_select(store, query)
 
 
 # =============================================================================

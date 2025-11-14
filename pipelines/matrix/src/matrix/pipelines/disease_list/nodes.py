@@ -328,12 +328,10 @@ def extract_disease_data_from_mondo(
 
     from matrix.pipelines.disease_list.queries import (
         extract_raw_disease_list_data_from_mondo,
-        query_get_descendants,
         query_matrix_disease_list_metrics,
         query_mondo_labels,
         query_mondo_obsoletes,
         query_ontology_metadata,
-        run_sparql_select,
     )
 
     _log_mondo_size(mondo_graph)
@@ -342,15 +340,15 @@ def extract_disease_data_from_mondo(
     logger.info("Step 0: Extracting metadata and labels from MONDO")
 
     # Extract labels (for internal use in subtype identification)
-    mondo_labels = run_sparql_select(mondo_graph, query_mondo_labels())
+    mondo_labels = query_mondo_labels(mondo_graph)
     logger.info(f"Extracted {len(mondo_labels)} MONDO labels")
 
     # Extract metadata (primary output for documentation)
-    mondo_metadata = run_sparql_select(mondo_graph, query_ontology_metadata())
+    mondo_metadata = query_ontology_metadata(mondo_graph)
     logger.info(f"Extracted MONDO metadata: {mondo_metadata}")
 
     # Extract obsoletes (primary output for documentation)
-    mondo_obsoletes = run_sparql_select(mondo_graph, query_mondo_obsoletes())
+    mondo_obsoletes = query_mondo_obsoletes(mondo_graph)
     logger.info(f"Extracted {len(mondo_obsoletes)} obsolete MONDO terms")
 
     # Step 1: Identify disease subtypes using hierarchy analysis
@@ -374,7 +372,7 @@ def extract_disease_data_from_mondo(
 
     # Run metrics query
     logger.info("Extracting disease metrics")
-    mondo_metrics = run_sparql_select(mondo_graph, query_matrix_disease_list_metrics())
+    mondo_metrics = query_matrix_disease_list_metrics(mondo_graph)
     logger.info(f"Extracted metrics for {len(mondo_metrics)} diseases")
 
     _log_mondo_size(mondo_graph)
