@@ -903,7 +903,6 @@ def query_get_descendants(store, root_id: str) -> set[str]:
     Returns:
         Set of descendant IDs in CURIE format
     """
-    # Convert CURIE to URI for SPARQL
     uri = root_id.replace("MONDO:", "http://purl.obolibrary.org/obo/MONDO_")
 
     # SPARQL query to find all descendants using property paths
@@ -992,11 +991,9 @@ WHERE {
 
     OPTIONAL { ?cls rdfs:label ?label. }
 
-    # common OBO annotation properties for replacements / considers
     OPTIONAL { ?cls IAO:0100001 ?repl. }
     OPTIONAL { ?cls oboInOwl:consider ?cons. }
 
-    # detect obsoletion via owl:deprecated = true (robust to literal forms)
     OPTIONAL { ?cls owl:deprecated ?deprecated. }
     FILTER(BOUND(?deprecated) &&
                  ( ?deprecated = true
@@ -1027,7 +1024,6 @@ SELECT DISTINCT
   (COUNT(DISTINCT ?decendant_disease) AS ?count_descendants)
 WHERE
 {
-  # We are only looking for classes that are specifically human diseases.
   ?category_class rdfs:subClassOf* MONDO:0700096 .
 
   ########################
@@ -1054,18 +1050,15 @@ ORDER BY DESC(?category_class)
 
 def _add_icd10_billable_data_to_graph(mondo_graph: Store, billable_icd10: pd.DataFrame) -> None:
     """Add billable ICD-10 codes as RDF triples to the MONDO graph."""
-    # Add billable ICD-10 dataframe rows as RDF triples
     from pyoxigraph import DefaultGraph, Literal, NamedNode, Quad
 
     for _, row in billable_icd10.iterrows():
         subject = NamedNode(row["subject_id"].replace("MONDO:", "http://purl.obolibrary.org/obo/MONDO_"))
 
-        # Add subset membership triple
         subset_pred = NamedNode(row["predicate"])
-        quad = Quad(subject, subset_pred, subset_pred, DefaultGraph())  # subset URI is both predicate and object
+        quad = Quad(subject, subset_pred, subset_pred, DefaultGraph())
         mondo_graph.add(quad)
 
-        # Add ICD10CM code annotation (using object_id column)
         predicate = NamedNode("http://www.geneontology.org/formats/oboInOwl#hasDbXref")
         obj = Literal(row["object_id"])
         quad = Quad(subject, predicate, obj, DefaultGraph())
@@ -1076,7 +1069,6 @@ def _add_icd10_billable_data_to_graph(mondo_graph: Store, billable_icd10: pd.Dat
 
 def _add_subtype_data_to_graph(mondo_graph: Store, df_subtypes: pd.DataFrame) -> None:
     """Add subtype annotations as RDF triples to the MONDO graph."""
-    # Add subtypes rows as RDF triples (using in-memory dataframe)
     from pyoxigraph import DefaultGraph, NamedNode, Quad
 
     for _, row in df_subtypes.iterrows():
@@ -1219,11 +1211,9 @@ WHERE {
   }
   ?subject rdfs:subClassOf+ <http://purl.obolibrary.org/obo/MONDO_0700096> .
 
-  # Bind ?memberSubset before checking filters
   BIND(IRI(CONCAT(STR(?subset), "_member")) AS ?memberSubset)
   BIND(IRI(CONCAT(STR(?subset), "_other")) AS ?otherSubset)
 
-  # Ensure ?subject is not already inSubset for ?subset or ?memberSubset
   FILTER NOT EXISTS {
     ?subject oboInOwl:inSubset ?subset .
   }
