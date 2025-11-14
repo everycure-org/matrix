@@ -17,7 +17,6 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 
-
 def _format_icd10_code_to_curie(code: str, prefix: str) -> str:
     """Convert ICD-10 code to CURIE format.
 
@@ -65,9 +64,7 @@ def create_billable_icd10_codes(
     exact_matches = mondo_sssom[mondo_sssom["predicate_id"] == exact_match_predicate].copy()
 
     # Find billable codes that have MONDO mappings
-    billable_with_mappings = icd10_codes_formatted[
-        icd10_codes_formatted["CODE"].isin(exact_matches["object_id"])
-    ]
+    billable_with_mappings = icd10_codes_formatted[icd10_codes_formatted["CODE"].isin(exact_matches["object_id"])]
 
     logger.info(f"Found {len(billable_with_mappings)} billable ICD-10 codes with MONDO mappings")
 
@@ -99,6 +96,7 @@ def _is_ancestor(store, parent_id, child_id):
     """
     try:
         from matrix.pipelines.disease_list.queries import query_get_ancestors
+
         ancestors = query_get_ancestors(store, child_id)
         return parent_id in ancestors
     except Exception as e:
@@ -144,12 +142,10 @@ def _filter_mondo_labels(mondo_labels, chromosomal_diseases, human_diseases, mon
     # because they are likely to only _look_ like subtypes, but area actually full diseases
     # with references to chromosomes.
     filtered = (
-        mondo_labels
-        .dropna(subset=["LABEL"])
+        mondo_labels.dropna(subset=["LABEL"])
         .query(f"ID.str.startswith('{mondo_prefix}')")
         .loc[lambda df: ~df["ID"].isin(chromosomal_diseases)]
-        .loc[lambda df: df["ID"].isin(human_diseases)]
-        [["ID", "LABEL"]]
+        .loc[lambda df: df["ID"].isin(human_diseases)][["ID", "LABEL"]]
         .rename(columns={"ID": "disease_id", "LABEL": "label"})
     )
     filtered["label_lower"] = filtered["label"].str.lower()
@@ -170,11 +166,9 @@ def _match_disease_subtypes(labels_df, compiled_patterns, store):
     label_to_id = dict(zip(labels_df["label_lower"], labels_df["disease_id"]))
 
     matches = labels_df.apply(
-        lambda row: _find_parent_disease(
-            row["label"], row["disease_id"], label_to_id, compiled_patterns, store
-        ),
+        lambda row: _find_parent_disease(row["label"], row["disease_id"], label_to_id, compiled_patterns, store),
         axis=1,
-        result_type="expand"
+        result_type="expand",
     )
     matches.columns = ["parent_label", "parent_id", "pattern_name"]
     logger.info(f"Matched {matches['parent_id'].notna().sum()} diseases to parent groups ({len(matches)})")
@@ -188,12 +182,7 @@ def _build_subtype_counts(matched_df):
     valid_matches = valid_matches[valid_matches["parent_label"].str.strip() != ""]
     logger.warning(f"Building subtype counts from {len(valid_matches)} valid matches")
 
-    counts = (
-        valid_matches
-        .groupby("parent_label")
-        .size()
-        .reset_index(name="count")
-    )
+    counts = valid_matches.groupby("parent_label").size().reset_index(name="count")
 
     result = valid_matches.merge(counts, on="parent_label")
 
@@ -213,21 +202,18 @@ def _build_subtype_df(matched_df, mondo_subtype_subset, contributor):
 
     Returns DataFrame with columns: subject_id, subset_predicate, subset_object, contributor_predicate, contributor_object
     """
-    unique_parents = (
-        matched_df[["parent_id", "parent_label"]]
-        .drop_duplicates()
-        .dropna()
-        .sort_values("parent_id")
-    )
+    unique_parents = matched_df[["parent_id", "parent_label"]].drop_duplicates().dropna().sort_values("parent_id")
 
     # Create rows for subset membership (one per parent)
-    subset_rows = pd.DataFrame({
-        "subject_id": unique_parents["parent_id"],
-        "subset_predicate": "http://www.geneontology.org/formats/oboInOwl#inSubset",
-        "subset_object": mondo_subtype_subset,
-        "contributor_predicate": "http://purl.org/dc/elements/1.1/contributor",
-        "contributor_object": contributor,
-    })
+    subset_rows = pd.DataFrame(
+        {
+            "subject_id": unique_parents["parent_id"],
+            "subset_predicate": "http://www.geneontology.org/formats/oboInOwl#inSubset",
+            "subset_object": mondo_subtype_subset,
+            "contributor_predicate": "http://purl.org/dc/elements/1.1/contributor",
+            "contributor_object": contributor,
+        }
+    )
 
     return subset_rows.reset_index(drop=True)
 
@@ -236,13 +222,15 @@ def _log_mondo_size(mondo_graph):
     """Log the size of the MONDO graph in triples."""
     count_query = "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o }"
     result = list(mondo_graph.query(count_query))
-    triple_count = result[0]['count'].value if result else 0
+    triple_count = result[0]["count"].value if result else 0
     logger.info(f"Working with MONDO graph containing {triple_count} triples")
     return triple_count
+
 
 def _add_icd10_billable_data_to_graph(mondo_graph, billable_icd10):
     # Add billable ICD-10 dataframe rows as RDF triples
     from pyoxigraph import DefaultGraph, Literal, NamedNode, Quad
+
     for _, row in billable_icd10.iterrows():
         subject = NamedNode(row["subject_id"].replace("MONDO:", "http://purl.obolibrary.org/obo/MONDO_"))
 
@@ -259,9 +247,11 @@ def _add_icd10_billable_data_to_graph(mondo_graph, billable_icd10):
 
     logger.info(f"Added {len(billable_icd10)} billable ICD-10 dataframe rows to graph")
 
+
 def _add_subtype_data_to_graph(mondo_graph, df_subtypes):
     # Add subtypes rows as RDF triples (using in-memory dataframe)
     from pyoxigraph import DefaultGraph, NamedNode, Quad
+
     for _, row in df_subtypes.iterrows():
         subject = NamedNode(row["subject_id"].replace("MONDO:", "http://purl.obolibrary.org/obo/MONDO_"))
 
@@ -277,12 +267,16 @@ def _add_subtype_data_to_graph(mondo_graph, df_subtypes):
         quad = Quad(subject, contrib_pred, contrib_obj, DefaultGraph())
         mondo_graph.add(quad)
 
+
 def _postprocess_mondo_graph(mondo_graph):
     from matrix.pipelines.disease_list.queries import (
-        query_disease_groupings_other, query_downfill_disease_groupings,
-        query_inject_mondo_top_grouping, query_inject_subset_declaration,
-        query_inject_susceptibility_subset)
-    
+        query_disease_groupings_other,
+        query_downfill_disease_groupings,
+        query_inject_mondo_top_grouping,
+        query_inject_subset_declaration,
+        query_inject_susceptibility_subset,
+    )
+
     logger.info("Mondo postprocessing: Running SPARQL UPDATE transformations")
     update_queries = [
         ("inject-mondo-top-grouping.ru", query_inject_mondo_top_grouping()),
@@ -333,9 +327,14 @@ def extract_disease_data_from_mondo(
     logger.info("Extracting disease data from MONDO ontology")
 
     from matrix.pipelines.disease_list.queries import (
-        extract_raw_disease_list_data_from_mondo, query_get_descendants,
-        query_matrix_disease_list_metrics, query_mondo_labels,
-        query_mondo_obsoletes, query_ontology_metadata, run_sparql_select)
+        extract_raw_disease_list_data_from_mondo,
+        query_get_descendants,
+        query_matrix_disease_list_metrics,
+        query_mondo_labels,
+        query_mondo_obsoletes,
+        query_ontology_metadata,
+        run_sparql_select,
+    )
 
     _log_mondo_size(mondo_graph)
 
@@ -369,7 +368,7 @@ def extract_disease_data_from_mondo(
 
     _postprocess_mondo_graph(mondo_graph)
 
-    logger.info("Step 3: Extracting disease data from enriched MONDO")       
+    logger.info("Step 3: Extracting disease data from enriched MONDO")
     disease_list_raw = extract_raw_disease_list_data_from_mondo(mondo_graph)
     logger.info(f"Extracted {len(disease_list_raw)} diseases in raw list")
 
@@ -390,9 +389,10 @@ def extract_disease_data_from_mondo(
         "subtype_counts": subtype_counts,
     }
 
+
 def _extract_subtype_data(mondo_graph, subtypes_params, subtype_patterns, mondo_labels):
     from matrix.pipelines.disease_list.queries import query_get_descendants
-    
+
     chromosomal_diseases_root = subtypes_params["chromosomal_diseases_root"]
     chromosomal_diseases_exceptions = subtypes_params["chromosomal_diseases_exceptions"]
     logger.info(f"Getting descendants of {chromosomal_diseases_root} using SPARQL")
@@ -408,21 +408,17 @@ def _extract_subtype_data(mondo_graph, subtypes_params, subtype_patterns, mondo_
     human_diseases.add(human_diseases_root)
 
     logger.info(f"Found {len(chromosomal_diseases)} chromosomal diseases and {len(human_diseases)} human diseases")
-    
+
     # Filter labels and match subtypes
     mondo_prefix = subtypes_params["mondo_prefix"]
-    filtered_labels = _filter_mondo_labels(
-        mondo_labels, chromosomal_diseases, human_diseases, mondo_prefix
-    )
+    filtered_labels = _filter_mondo_labels(mondo_labels, chromosomal_diseases, human_diseases, mondo_prefix)
     compiled_patterns = _compile_patterns(subtype_patterns)
     matched = _match_disease_subtypes(filtered_labels, compiled_patterns, mondo_graph)
     subtype_counts = _build_subtype_counts(matched)
     mondo_subtype_subset = subtypes_params["mondo_subtype_subset"]
     default_contributor = subtypes_params["default_contributor"]
-    
-    df_subtypes = _build_subtype_df(
-        matched, mondo_subtype_subset, default_contributor
-    )
+
+    df_subtypes = _build_subtype_df(matched, mondo_subtype_subset, default_contributor)
     logger.info(f"Identified {len(subtype_counts)} disease subtypes")
 
     return subtype_counts, df_subtypes
@@ -518,7 +514,9 @@ def _matrix_disease_filter(df_disease_list_unfiltered):
     return df_disease_list_unfiltered
 
 
-def _extract_groupings(subsets: str, groupings: list, subset_prefix: str, subset_delimiter: str, grouping_delimiter: str) -> dict:
+def _extract_groupings(
+    subsets: str, groupings: list, subset_prefix: str, subset_delimiter: str, grouping_delimiter: str
+) -> dict:
     """Extract groupings from semicolon-delimited subset string.
 
     Args:
@@ -540,8 +538,7 @@ def _extract_groupings(subsets: str, groupings: list, subset_prefix: str, subset
                 if subset.startswith(f"{subset_prefix}{grouping}"):
                     # Extract tag by removing prefix, grouping name, spaces, and underscores
                     subset_tag = (
-                        subset
-                        .replace(subset_prefix, "")
+                        subset.replace(subset_prefix, "")
                         .replace(grouping, "")
                         .replace(" ", "")
                         .strip("_")
@@ -553,18 +550,15 @@ def _extract_groupings(subsets: str, groupings: list, subset_prefix: str, subset
 
     # Format results: join with pipe, exclude "other" if multiple values
     return {
-        key: grouping_delimiter.join(
-            [v for v in values if v != "other"] if len(values) > 1 else values
-        ) if values else ""
+        key: grouping_delimiter.join([v for v in values if v != "other"] if len(values) > 1 else values)
+        if values
+        else ""
         for key, values in result.items()
     }
 
 
 def _is_grouping_heuristic(
-    df: pd.DataFrame,
-    grouping_columns: list,
-    not_grouping_columns: list,
-    output_column: str
+    df: pd.DataFrame, grouping_columns: list, not_grouping_columns: list, output_column: str
 ) -> pd.DataFrame:
     """Apply grouping heuristic to classify diseases as groupings or specific diseases.
 
@@ -621,11 +615,7 @@ def _prepare_subtype_counts(subtype_counts: pd.DataFrame) -> pd.DataFrame:
 
 
 def _extract_and_pivot_groupings(
-    df: pd.DataFrame,
-    groupings: list,
-    subset_prefix: str,
-    subset_delimiter: str,
-    grouping_delimiter: str
+    df: pd.DataFrame, groupings: list, subset_prefix: str, subset_delimiter: str, grouping_delimiter: str
 ) -> pd.DataFrame:
     """Extract and pivot disease groupings from subset annotations.
 
@@ -640,9 +630,11 @@ def _extract_and_pivot_groupings(
         DataFrame with category_class and one column per grouping
     """
     # Extract groupings from subsets column
-    groupings_extracted = df["subsets"].apply(
-        lambda x: _extract_groupings(x, groupings, subset_prefix, subset_delimiter, grouping_delimiter)
-    ).apply(pd.Series)
+    groupings_extracted = (
+        df["subsets"]
+        .apply(lambda x: _extract_groupings(x, groupings, subset_prefix, subset_delimiter, grouping_delimiter))
+        .apply(pd.Series)
+    )
 
     # Combine with category_class (drop label as not needed downstream)
     result = pd.concat([df[["category_class"]], groupings_extracted], axis=1)
@@ -654,7 +646,7 @@ def _merge_disease_data_sources(
     groupings_df: pd.DataFrame,
     metrics_df: pd.DataFrame,
     subtype_counts_df: pd.DataFrame,
-    full_subtype_counts: pd.DataFrame
+    full_subtype_counts: pd.DataFrame,
 ) -> pd.DataFrame:
     """Merge all disease data sources into single DataFrame.
 
@@ -682,7 +674,7 @@ def _merge_disease_data_sources(
         full_subtype_counts[["subset_id", "subset_group_id", "subset_group_label", "other_subsets_count"]],
         left_on="category_class",
         right_on="subset_id",
-        how="left"
+        how="left",
     )
 
     # Clean up temporary column
@@ -767,9 +759,7 @@ def create_disease_list(
 
     # Stage 3: Rename filter columns from f_ to is_ prefix
     # See: https://github.com/everycure-org/matrix-disease-list/issues/75
-    filtered_df = filtered_df.rename(
-        columns=lambda x: re.sub(r"^f_", "is_", x) if x.startswith("f_") else x
-    )
+    filtered_df = filtered_df.rename(columns=lambda x: re.sub(r"^f_", "is_", x) if x.startswith("f_") else x)
 
     # Stage 4: Extract and pivot disease groupings
     all_groupings = curated_groupings + llm_groupings
@@ -778,37 +768,26 @@ def create_disease_list(
         all_groupings,
         subset_prefix,
         subset_delimiter,
-        grouping_delimiter
+        grouping_delimiter,
     )
 
     # Stage 5: Merge all data sources
     merged_df = _merge_disease_data_sources(
-        filtered_df,
-        groupings_df,
-        mondo_metrics,
-        subtype_group_counts,
-        subtype_counts
+        filtered_df, groupings_df, mondo_metrics, subtype_group_counts, subtype_counts
     )
 
     # Stage 6: Compute derived columns
     # Convert count columns to numeric (PyOxigraph returns all values as strings)
-    merged_df["count_subtypes"] = pd.to_numeric(
-        merged_df["count_subtypes"], errors="coerce"
-    ).fillna(default_count).astype(int)
-    merged_df["count_descendants"] = pd.to_numeric(
-        merged_df["count_descendants"], errors="coerce"
-    ).fillna(default_count).astype(int)
-    merged_df["count_descendants_without_subtypes"] = (
-        merged_df["count_descendants"] - merged_df["count_subtypes"]
+    merged_df["count_subtypes"] = (
+        pd.to_numeric(merged_df["count_subtypes"], errors="coerce").fillna(default_count).astype(int)
     )
+    merged_df["count_descendants"] = (
+        pd.to_numeric(merged_df["count_descendants"], errors="coerce").fillna(default_count).astype(int)
+    )
+    merged_df["count_descendants_without_subtypes"] = merged_df["count_descendants"] - merged_df["count_subtypes"]
 
     # Stage 7: Apply grouping heuristic
-    merged_df = _is_grouping_heuristic(
-        merged_df,
-        grouping_columns,
-        not_grouping_columns,
-        grouping_heuristic_column
-    )
+    merged_df = _is_grouping_heuristic(merged_df, grouping_columns, not_grouping_columns, grouping_heuristic_column)
 
     # Stage 8: Normalize boolean columns to string format
     final_df = _normalize_boolean_columns(merged_df)
@@ -842,5 +821,4 @@ def validate_disease_list(
     # check for duplicate MONDO IDs
     if disease_list["category_class"].duplicated().any():
         duplicated_ids = disease_list[disease_list["category_class"].duplicated()]["category_class"].unique()
-        raise ValueError(f"Validation failed: Duplicate MONDO IDs found: {duplicated_ids}")
         raise ValueError(f"Validation failed: Duplicate MONDO IDs found: {duplicated_ids}")

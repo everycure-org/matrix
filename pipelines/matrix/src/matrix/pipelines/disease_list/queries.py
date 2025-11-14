@@ -31,7 +31,7 @@ def run_sparql_select(store, query: str) -> pd.DataFrame:
 
     # Get variable names from the query results (.variables is a property, not a method)
     # Variables in PyOxigraph include the '?' prefix, remove it for cleaner column names
-    variables = [str(v)[1:] if str(v).startswith('?') else str(v) for v in results.variables]
+    variables = [str(v)[1:] if str(v).startswith("?") else str(v) for v in results.variables]
 
     # Convert to DataFrame
     rows = []
@@ -44,7 +44,7 @@ def run_sparql_select(store, query: str) -> pd.DataFrame:
             # Use .value attribute for Literals, str() for IRIs/URIs
             if value is None:
                 row_dict[clean_var] = ""
-            elif hasattr(value, 'value'):
+            elif hasattr(value, "value"):
                 # PyOxigraph Literal - extract the actual Python value
                 row_dict[clean_var] = str(value.value)
             else:
@@ -54,6 +54,7 @@ def run_sparql_select(store, query: str) -> pd.DataFrame:
 
     results_df = pd.DataFrame(rows)
     return clean_sparql_results(results_df)
+
 
 def clean_sparql_results(df: pd.DataFrame) -> pd.DataFrame:
     for col in df.columns:
@@ -68,7 +69,8 @@ def clean_sparql_results(df: pd.DataFrame) -> pd.DataFrame:
     df.columns = [col.replace("?", "") for col in df.columns]
     return df
 
-def _extract_ids_from_query(store, query: str, column_name: str = 'category_class') -> Set[str]:
+
+def _extract_ids_from_query(store, query: str, column_name: str = "category_class") -> Set[str]:
     """Helper function to run a query and extract IDs safely.
 
     Handles empty DataFrames and missing columns gracefully.
@@ -90,6 +92,7 @@ def _extract_ids_from_query(store, query: str, column_name: str = 'category_clas
 # =============================================================================
 # BASE QUERY
 # =============================================================================
+
 
 def query_base_disease_list(store) -> pd.DataFrame:
     """Get all human diseases with basic metadata (label, definition).
@@ -130,6 +133,7 @@ WHERE {
 # =============================================================================
 # METADATA QUERIES
 # =============================================================================
+
 
 def query_metadata_synonyms(store) -> pd.DataFrame:
     """Get concatenated synonyms for diseases.
@@ -226,6 +230,7 @@ ORDER BY ?sorted_malacardslinkouts
 # =============================================================================
 # FILTER QUERIES - Subset-based
 # =============================================================================
+
 
 def query_filter_matrix_manually_included(store) -> Set[str]:
     """Get diseases manually included in the matrix."""
@@ -370,6 +375,7 @@ SELECT ?category_class WHERE {
 # FILTER QUERIES - Hierarchy-based (rdfs:subClassOf*)
 # =============================================================================
 
+
 def query_filter_paraphilic(store) -> Set[str]:
     """Get paraphilic disorders (descendants of MONDO:0000596)."""
     query = """
@@ -452,6 +458,7 @@ SELECT ?category_class WHERE {
 # FILTER QUERIES - Label-based
 # =============================================================================
 
+
 def query_filter_withorwithout(store) -> Set[str]:
     """Get diseases with 'with or without' in the label."""
     query = """
@@ -495,6 +502,7 @@ SELECT ?category_class WHERE {
 # FILTER QUERIES - Complex
 # =============================================================================
 
+
 def query_filter_unclassified_hereditary(store) -> Set[str]:
     """Get unclassified hereditary diseases (leaf nodes under hereditary disease with no other parents)."""
     query = """
@@ -523,7 +531,7 @@ SELECT ?entity WHERE {
 }
 """
     # Note: query uses ?entity instead of ?category_class
-    return _extract_ids_from_query(store, query, column_name='entity')
+    return _extract_ids_from_query(store, query, column_name="entity")
 
 
 def query_filter_grouping_subset_ancestor(store) -> Set[str]:
@@ -637,6 +645,7 @@ SELECT DISTINCT ?category_class WHERE {
 # FILTER QUERIES - ICD-10 based
 # =============================================================================
 
+
 def query_filter_icd_category(store) -> Set[str]:
     """Get diseases corresponding to ICD-10 categories (has . but not -)."""
     query = """
@@ -707,6 +716,7 @@ SELECT DISTINCT ?category_class WHERE {
 # ASSEMBLY FUNCTION
 # =============================================================================
 
+
 def extract_raw_disease_list_data_from_mondo(store) -> pd.DataFrame:
     """Assemble complete disease list with all metadata and filters.
 
@@ -730,155 +740,142 @@ def extract_raw_disease_list_data_from_mondo(store) -> pd.DataFrame:
     logger.info("Adding metadata...")
 
     synonyms = query_metadata_synonyms(store)
-    df = df.merge(synonyms, on='category_class', how='left')
+    df = df.merge(synonyms, on="category_class", how="left")
 
     subsets = query_metadata_subsets(store)
-    df = df.merge(subsets, on='category_class', how='left')
+    df = df.merge(subsets, on="category_class", how="left")
 
     crossrefs = query_metadata_crossreferences(store)
-    df = df.merge(crossrefs, on='category_class', how='left')
+    df = df.merge(crossrefs, on="category_class", how="left")
 
     malacards = query_metadata_malacards_linkouts(store)
-    df = df.merge(malacards, on='category_class', how='left')
+    df = df.merge(malacards, on="category_class", how="left")
 
     # 3. Add filter flags
     logger.info("Adding filter flags...")
 
     # Subset-based filters
-    df['f_matrix_manually_included'] = df['category_class'].isin(
-        query_filter_matrix_manually_included(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_matrix_manually_included"] = (
+        df["category_class"].isin(query_filter_matrix_manually_included(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
-    df['f_matrix_manually_excluded'] = df['category_class'].isin(
-        query_filter_matrix_manually_excluded(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_matrix_manually_excluded"] = (
+        df["category_class"].isin(query_filter_matrix_manually_excluded(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
-    df['f_clingen'] = df['category_class'].isin(
-        query_filter_clingen(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_clingen"] = df["category_class"].isin(query_filter_clingen(store)).apply(lambda x: "TRUE" if x else "")
 
-    df['f_susceptibility'] = df['category_class'].isin(
-        query_filter_susceptibility(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_susceptibility"] = (
+        df["category_class"].isin(query_filter_susceptibility(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
-    df['f_mondo_subtype'] = df['category_class'].isin(
-        query_filter_mondo_subtype(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_mondo_subtype"] = (
+        df["category_class"].isin(query_filter_mondo_subtype(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
-    df['f_pathway_defect'] = df['category_class'].isin(
-        query_filter_pathway_defect(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_pathway_defect"] = (
+        df["category_class"].isin(query_filter_pathway_defect(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
-    df['f_grouping_subset'] = df['category_class'].isin(
-        query_filter_grouping_subset(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_grouping_subset"] = (
+        df["category_class"].isin(query_filter_grouping_subset(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
-    df['f_obsoletion_candidate'] = df['category_class'].isin(
-        query_filter_obsoletion_candidate(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_obsoletion_candidate"] = (
+        df["category_class"].isin(query_filter_obsoletion_candidate(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
-    df['f_orphanet_subtype'] = df['category_class'].isin(
-        query_filter_orphanet_subtype(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_orphanet_subtype"] = (
+        df["category_class"].isin(query_filter_orphanet_subtype(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
-    df['f_orphanet_disorder'] = df['category_class'].isin(
-        query_filter_orphanet_disorder(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_orphanet_disorder"] = (
+        df["category_class"].isin(query_filter_orphanet_disorder(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
-    df['f_icd_billable'] = df['category_class'].isin(
-        query_filter_icd_billable(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_icd_billable"] = (
+        df["category_class"].isin(query_filter_icd_billable(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
     # Hierarchy-based filters
-    df['f_paraphilic'] = df['category_class'].isin(
-        query_filter_paraphilic(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_paraphilic"] = df["category_class"].isin(query_filter_paraphilic(store)).apply(lambda x: "TRUE" if x else "")
 
-    df['f_cardiovascular'] = df['category_class'].isin(
-        query_filter_cardiovascular(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_cardiovascular"] = (
+        df["category_class"].isin(query_filter_cardiovascular(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
-    df['f_filter_heart_disorder'] = df['category_class'].isin(
-        query_filter_heart_disorder(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_filter_heart_disorder"] = (
+        df["category_class"].isin(query_filter_heart_disorder(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
-    df['f_inflammatory'] = df['category_class'].isin(
-        query_filter_inflammatory(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_inflammatory"] = (
+        df["category_class"].isin(query_filter_inflammatory(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
-    df['f_psychiatric'] = df['category_class'].isin(
-        query_filter_psychiatric(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_psychiatric"] = (
+        df["category_class"].isin(query_filter_psychiatric(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
-    df['f_cancer_or_benign_tumor'] = df['category_class'].isin(
-        query_filter_cancer_or_benign_tumor(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_cancer_or_benign_tumor"] = (
+        df["category_class"].isin(query_filter_cancer_or_benign_tumor(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
     # Label-based filters
-    df['f_withorwithout'] = df['category_class'].isin(
-        query_filter_withorwithout(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_withorwithout"] = (
+        df["category_class"].isin(query_filter_withorwithout(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
-    df['f_andor'] = df['category_class'].isin(
-        query_filter_andor(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_andor"] = df["category_class"].isin(query_filter_andor(store)).apply(lambda x: "TRUE" if x else "")
 
-    df['f_acquired'] = df['category_class'].isin(
-        query_filter_acquired(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_acquired"] = df["category_class"].isin(query_filter_acquired(store)).apply(lambda x: "TRUE" if x else "")
 
     # Complex filters
-    df['f_unclassified_hereditary'] = df['category_class'].isin(
-        query_filter_unclassified_hereditary(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_unclassified_hereditary"] = (
+        df["category_class"].isin(query_filter_unclassified_hereditary(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
-    df['f_grouping_subset_ancestor'] = df['category_class'].isin(
-        query_filter_grouping_subset_ancestor(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_grouping_subset_ancestor"] = (
+        df["category_class"].isin(query_filter_grouping_subset_ancestor(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
-    df['f_orphanet_subtype_descendant'] = df['category_class'].isin(
-        query_filter_orphanet_subtype_descendant(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_orphanet_subtype_descendant"] = (
+        df["category_class"].isin(query_filter_orphanet_subtype_descendant(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
-    df['f_omimps'] = df['category_class'].isin(
-        query_filter_omimps(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_omimps"] = df["category_class"].isin(query_filter_omimps(store)).apply(lambda x: "TRUE" if x else "")
 
-    df['f_omimps_descendant'] = df['category_class'].isin(
-        query_filter_omimps_descendant(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_omimps_descendant"] = (
+        df["category_class"].isin(query_filter_omimps_descendant(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
-    df['f_omim'] = df['category_class'].isin(
-        query_filter_omim(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_omim"] = df["category_class"].isin(query_filter_omim(store)).apply(lambda x: "TRUE" if x else "")
 
-    df['f_leaf'] = df['category_class'].isin(
-        query_filter_leaf(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_leaf"] = df["category_class"].isin(query_filter_leaf(store)).apply(lambda x: "TRUE" if x else "")
 
-    df['f_leaf_direct_parent'] = df['category_class'].isin(
-        query_filter_leaf_direct_parent(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_leaf_direct_parent"] = (
+        df["category_class"].isin(query_filter_leaf_direct_parent(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
     # ICD-10 filters
-    df['f_icd_category'] = df['category_class'].isin(
-        query_filter_icd_category(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_icd_category"] = (
+        df["category_class"].isin(query_filter_icd_category(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
-    df['f_icd_chapter_code'] = df['category_class'].isin(
-        query_filter_icd_chapter_code(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_icd_chapter_code"] = (
+        df["category_class"].isin(query_filter_icd_chapter_code(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
-    df['f_icd_chapter_header'] = df['category_class'].isin(
-        query_filter_icd_chapter_header(store)
-    ).apply(lambda x: "TRUE" if x else "")
+    df["f_icd_chapter_header"] = (
+        df["category_class"].isin(query_filter_icd_chapter_header(store)).apply(lambda x: "TRUE" if x else "")
+    )
 
     # Sort by label descending (matching original query)
-    df = df.sort_values('label', ascending=False)
+    df = df.sort_values("label", ascending=False)
 
     logger.info(f"Assembled disease list with {len(df)} diseases and {len(df.columns)} columns")
 
     return df
+
 
 def query_get_ancestors(store, child_id: str) -> set[str]:
     """Get all ancestors (transitive parents) of a node using SPARQL.
@@ -907,9 +904,9 @@ def query_get_ancestors(store, child_id: str) -> set[str]:
     results = store.query(query)
     ancestors = set()
     for result in results:
-        anc_uri = str(result['ancestor']).replace("<", "").replace(">", "")
+        anc_uri = str(result["ancestor"]).replace("<", "").replace(">", "")
         # Convert URI back to CURIE
-        if 'MONDO_' in anc_uri:
+        if "MONDO_" in anc_uri:
             curie = anc_uri.replace("http://purl.obolibrary.org/obo/MONDO_", "MONDO:")
             ancestors.add(curie)
 
@@ -944,9 +941,9 @@ def query_get_descendants(store, root_id: str) -> set[str]:
     results = store.query(query)
     descendants = set()
     for result in results:
-        desc_uri = str(result['descendant']).replace("<", "").replace(">", "")
+        desc_uri = str(result["descendant"]).replace("<", "").replace(">", "")
         # Convert URI back to CURIE
-        if 'MONDO_' in desc_uri:
+        if "MONDO_" in desc_uri:
             curie = desc_uri.replace("http://purl.obolibrary.org/obo/MONDO_", "MONDO:")
             descendants.add(curie)
 
