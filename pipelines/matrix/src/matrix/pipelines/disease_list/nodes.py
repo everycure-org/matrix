@@ -192,7 +192,7 @@ def _build_subtype_df(matched_df: pd.DataFrame, mondo_subtype_subset: str, contr
 def _log_mondo_size(mondo_graph: Store) -> int:
     """Log the size of the MONDO graph in triples."""
     count_query = "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o }"
-    result = list(mondo_graph.query(count_query))
+    result = list(mondo_graph.query(count_query))  # type: ignore[arg-type]
     triple_count = result[0]["count"].value if result else 0
     logger.info(f"Working with MONDO graph containing {triple_count} triples")
     return triple_count
@@ -424,7 +424,7 @@ def _extract_groupings(
     Returns:
         Dictionary mapping grouping names to extracted values
     """
-    result = {grouping: [] for grouping in groupings}
+    result: Dict[str, List[str]] = {grouping: [] for grouping in groupings}
 
     if subsets:
         for subset in subsets.split(subset_delimiter):
@@ -717,3 +717,5 @@ def validate_disease_list(
     if disease_list["category_class"].duplicated().any():
         duplicated_ids = disease_list[disease_list["category_class"].duplicated()]["category_class"].unique()
         raise ValueError(f"Validation failed: Duplicate MONDO IDs found: {duplicated_ids}")
+
+    return True
