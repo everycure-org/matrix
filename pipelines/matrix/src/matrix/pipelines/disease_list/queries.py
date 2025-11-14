@@ -12,19 +12,13 @@ import logging
 from typing import Set
 
 import pandas as pd
+from pyoxigraph import Store
 
 logger = logging.getLogger(__name__)
 
 
 def _get_sparql_prefixes() -> str:
-    """Get common SPARQL prefixes used across all queries.
-
-    Returns a string with all PREFIX declarations used in this module.
-    Some queries may not use all prefixes, but having them all ensures consistency.
-
-    Returns:
-        String containing all SPARQL PREFIX declarations
-    """
+    """Get common SPARQL prefixes used across all queries."""
     return """PREFIX MONDO: <http://purl.obolibrary.org/obo/MONDO_>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -38,16 +32,8 @@ PREFIX dc: <http://purl.org/dc/elements/1.1/>
 """
 
 
-def _run_sparql_select(store, query: str) -> pd.DataFrame:
-    """Execute a SPARQL SELECT query using PyOxigraph for fast performance.
-
-    Args:
-        store: PyOxigraph Store object
-        query: SPARQL query string
-
-    Returns:
-        DataFrame with query results (columns match SELECT variables)
-    """
+def _run_sparql_select(store: Store, query: str) -> pd.DataFrame:
+    """Execute a SPARQL SELECT query using PyOxigraph for fast performance."""
     results = store.query(query)
 
     variables = [str(v)[1:] if str(v).startswith("?") else str(v) for v in results.variables]
@@ -71,6 +57,7 @@ def _run_sparql_select(store, query: str) -> pd.DataFrame:
 
 
 def _clean_sparql_results(df: pd.DataFrame) -> pd.DataFrame:
+    """Clean SPARQL result strings by removing prefixes and special characters."""
     for col in df.columns:
         df[col] = (
             df[col]
@@ -85,21 +72,9 @@ def _clean_sparql_results(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _query_and_extract_ids_from_column(
-    store, query: str, column_name: str = "category_class", mondo_only: bool = True
+    store: Store, query: str, column_name: str = "category_class", mondo_only: bool = True
 ) -> Set[str]:
-    """Helper function to run a query and extract IDs safely.
-
-    Handles empty DataFrames and missing columns gracefully.
-
-    Args:
-        store: PyOxigraph Store object
-        query: SPARQL query string
-        column_name: Name of column containing IDs (default: 'category_class')
-        mondo_only: If True, filter to only return IDs starting with 'MONDO:' (default: True)
-
-    Returns:
-        Set of IDs, or empty set if no results
-    """
+    """Run a query and extract IDs safely, handling empty DataFrames and missing columns."""
     df = _run_sparql_select(store, query)
     if df.empty or column_name not in df.columns:
         return set()
@@ -117,18 +92,8 @@ def _query_and_extract_ids_from_column(
 # =============================================================================
 
 
-def _query_base_disease_list(store) -> pd.DataFrame:
-    """Get all human diseases with basic metadata (label, definition).
-
-    This is the foundation query that gets all MONDO diseases that are
-    descendants of 'human disease' (MONDO:0700096).
-
-    Args:
-        store: PyOxigraph Store object
-
-    Returns:
-        DataFrame with columns: category_class, label, definition
-    """
+def _query_base_disease_list(store: Store) -> pd.DataFrame:
+    """Get all human diseases with basic metadata (label, definition)."""
     query = (
         _get_sparql_prefixes()
         + """
@@ -152,12 +117,8 @@ WHERE {
     return _run_sparql_select(store, query)
 
 
-def _query_metadata_synonyms(store) -> pd.DataFrame:
-    """Get concatenated synonyms for diseases.
-
-    Returns:
-        DataFrame with columns: category_class, synonyms
-    """
+def _query_metadata_synonyms(store: Store) -> pd.DataFrame:
+    """Get concatenated synonyms for diseases."""
     query = (
         _get_sparql_prefixes()
         + """
@@ -174,12 +135,8 @@ ORDER BY ?sorted_synonym
     return _run_sparql_select(store, query)
 
 
-def _query_metadata_subsets(store) -> pd.DataFrame:
-    """Get concatenated subsets for diseases.
-
-    Returns:
-        DataFrame with columns: category_class, subsets
-    """
+def _query_metadata_subsets(store: Store) -> pd.DataFrame:
+    """Get concatenated subsets for diseases."""
     query = (
         _get_sparql_prefixes()
         + """
@@ -196,12 +153,8 @@ ORDER BY ?sorted_subset
     return _run_sparql_select(store, query)
 
 
-def _query_metadata_crossreferences(store) -> pd.DataFrame:
-    """Get concatenated cross-references for diseases.
-
-    Returns:
-        DataFrame with columns: category_class, crossreferences
-    """
+def _query_metadata_crossreferences(store: Store) -> pd.DataFrame:
+    """Get concatenated cross-references for diseases."""
     query = (
         _get_sparql_prefixes()
         + """
@@ -218,12 +171,8 @@ ORDER BY ?sorted_xref
     return _run_sparql_select(store, query)
 
 
-def _query_metadata_malacards_linkouts(store) -> pd.DataFrame:
-    """Get concatenated MalaCards linkouts for diseases.
-
-    Returns:
-        DataFrame with columns: category_class, malacards_linkouts
-    """
+def _query_metadata_malacards_linkouts(store: Store) -> pd.DataFrame:
+    """Get concatenated MalaCards linkouts for diseases."""
     query = (
         _get_sparql_prefixes()
         + """
@@ -251,7 +200,7 @@ ORDER BY ?sorted_malacardslinkouts
 # =============================================================================
 
 
-def _query_filter_matrix_manually_included(store) -> Set[str]:
+def _query_filter_matrix_manually_included(store: Store) -> Set[str]:
     """Get diseases manually included in the matrix."""
     query = (
         _get_sparql_prefixes()
@@ -264,7 +213,7 @@ SELECT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_matrix_manually_excluded(store) -> Set[str]:
+def _query_filter_matrix_manually_excluded(store: Store) -> Set[str]:
     """Get diseases manually excluded from the matrix."""
     query = (
         _get_sparql_prefixes()
@@ -277,7 +226,7 @@ SELECT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_clingen(store) -> Set[str]:
+def _query_filter_clingen(store: Store) -> Set[str]:
     """Get diseases curated by ClinGen."""
     query = (
         _get_sparql_prefixes()
@@ -290,7 +239,7 @@ SELECT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_susceptibility(store) -> Set[str]:
+def _query_filter_susceptibility(store: Store) -> Set[str]:
     """Get susceptibility match diseases."""
     query = (
         _get_sparql_prefixes()
@@ -303,7 +252,7 @@ SELECT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_mondo_subtype(store) -> Set[str]:
+def _query_filter_mondo_subtype(store: Store) -> Set[str]:
     """Get diseases that are MONDO subtypes."""
     query = (
         _get_sparql_prefixes()
@@ -316,7 +265,7 @@ SELECT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_pathway_defect(store) -> Set[str]:
+def _query_filter_pathway_defect(store: Store) -> Set[str]:
     """Get diseases that are pathway defects."""
     query = (
         _get_sparql_prefixes()
@@ -329,7 +278,7 @@ SELECT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_grouping_subset(store) -> Set[str]:
+def _query_filter_grouping_subset(store: Store) -> Set[str]:
     """Get diseases that are designated grouping classes in MONDO."""
     query = (
         _get_sparql_prefixes()
@@ -349,7 +298,7 @@ SELECT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_obsoletion_candidate(store) -> Set[str]:
+def _query_filter_obsoletion_candidate(store: Store) -> Set[str]:
     """Get diseases that are obsoletion candidates."""
     query = (
         _get_sparql_prefixes()
@@ -362,7 +311,7 @@ SELECT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_orphanet_subtype(store) -> Set[str]:
+def _query_filter_orphanet_subtype(store: Store) -> Set[str]:
     """Get diseases that correspond to Orphanet subtypes."""
     query = (
         _get_sparql_prefixes()
@@ -375,7 +324,7 @@ SELECT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_orphanet_disorder(store) -> Set[str]:
+def _query_filter_orphanet_disorder(store: Store) -> Set[str]:
     """Get diseases that correspond to Orphanet disorders."""
     query = (
         _get_sparql_prefixes()
@@ -388,7 +337,7 @@ SELECT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_icd_billable(store) -> Set[str]:
+def _query_filter_icd_billable(store: Store) -> Set[str]:
     """Get diseases with billable ICD-10 codes."""
     query = (
         _get_sparql_prefixes()
@@ -406,7 +355,7 @@ SELECT ?category_class WHERE {
 # =============================================================================
 
 
-def _query_filter_paraphilic(store) -> Set[str]:
+def _query_filter_paraphilic(store: Store) -> Set[str]:
     """Get paraphilic disorders (descendants of MONDO:0000596)."""
     query = (
         _get_sparql_prefixes()
@@ -419,7 +368,7 @@ SELECT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_cardiovascular(store) -> Set[str]:
+def _query_filter_cardiovascular(store: Store) -> Set[str]:
     """Get cardiovascular disorders (descendants of MONDO:0004995)."""
     query = (
         _get_sparql_prefixes()
@@ -432,7 +381,7 @@ SELECT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_heart_disorder(store) -> Set[str]:
+def _query_filter_heart_disorder(store: Store) -> Set[str]:
     """Get heart disorders (descendants of MONDO:0005267)."""
     query = (
         _get_sparql_prefixes()
@@ -445,7 +394,7 @@ SELECT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_inflammatory(store) -> Set[str]:
+def _query_filter_inflammatory(store: Store) -> Set[str]:
     """Get inflammatory diseases (descendants of MONDO:0021166)."""
     query = (
         _get_sparql_prefixes()
@@ -458,7 +407,7 @@ SELECT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_psychiatric(store) -> Set[str]:
+def _query_filter_psychiatric(store: Store) -> Set[str]:
     """Get psychiatric disorders (descendants of MONDO:0002025)."""
     query = (
         _get_sparql_prefixes()
@@ -471,7 +420,7 @@ SELECT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_cancer_or_benign_tumor(store) -> Set[str]:
+def _query_filter_cancer_or_benign_tumor(store: Store) -> Set[str]:
     """Get cancer or benign tumor (descendants of MONDO:0045024)."""
     query = (
         _get_sparql_prefixes()
@@ -489,7 +438,7 @@ SELECT ?category_class WHERE {
 # =============================================================================
 
 
-def _query_filter_withorwithout(store) -> Set[str]:
+def _query_filter_withorwithout(store: Store) -> Set[str]:
     """Get diseases with 'with or without' in the label."""
     query = (
         _get_sparql_prefixes()
@@ -503,7 +452,7 @@ SELECT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_andor(store) -> Set[str]:
+def _query_filter_andor(store: Store) -> Set[str]:
     """Get diseases with 'and/or' in the label."""
     query = (
         _get_sparql_prefixes()
@@ -517,7 +466,7 @@ SELECT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_acquired(store) -> Set[str]:
+def _query_filter_acquired(store: Store) -> Set[str]:
     """Get diseases starting with 'acquired' in the label."""
     query = (
         _get_sparql_prefixes()
@@ -536,7 +485,7 @@ SELECT ?category_class WHERE {
 # =============================================================================
 
 
-def _query_filter_unclassified_hereditary(store) -> Set[str]:
+def _query_filter_unclassified_hereditary(store: Store) -> Set[str]:
     """Get unclassified hereditary diseases (leaf nodes under hereditary disease with no other parents)."""
     query = (
         _get_sparql_prefixes()
@@ -566,7 +515,7 @@ SELECT ?entity WHERE {
     return _query_and_extract_ids_from_column(store, query, column_name="entity")
 
 
-def _query_filter_grouping_subset_ancestor(store) -> Set[str]:
+def _query_filter_grouping_subset_ancestor(store: Store) -> Set[str]:
     """Get ancestors of designated grouping classes."""
     query = (
         _get_sparql_prefixes()
@@ -586,7 +535,7 @@ SELECT DISTINCT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_orphanet_subtype_descendant(store) -> Set[str]:
+def _query_filter_orphanet_subtype_descendant(store: Store) -> Set[str]:
     """Get descendants of Orphanet subtypes."""
     query = (
         _get_sparql_prefixes()
@@ -600,7 +549,7 @@ SELECT DISTINCT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_omimps(store) -> Set[str]:
+def _query_filter_omimps(store: Store) -> Set[str]:
     """Get diseases corresponding to OMIM Phenotypic Series."""
     query = (
         _get_sparql_prefixes()
@@ -614,7 +563,7 @@ SELECT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_omimps_descendant(store) -> Set[str]:
+def _query_filter_omimps_descendant(store: Store) -> Set[str]:
     """Get descendants of OMIM Phenotypic Series."""
     query = (
         _get_sparql_prefixes()
@@ -629,7 +578,7 @@ SELECT DISTINCT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_omim(store) -> Set[str]:
+def _query_filter_omim(store: Store) -> Set[str]:
     """Get diseases with OMIM entries."""
     query = (
         _get_sparql_prefixes()
@@ -643,7 +592,7 @@ SELECT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_leaf(store) -> Set[str]:
+def _query_filter_leaf(store: Store) -> Set[str]:
     """Get leaf nodes (diseases with no children)."""
     query = (
         _get_sparql_prefixes()
@@ -659,7 +608,7 @@ SELECT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_leaf_direct_parent(store) -> Set[str]:
+def _query_filter_leaf_direct_parent(store: Store) -> Set[str]:
     """Get direct parents of leaf nodes."""
     query = (
         _get_sparql_prefixes()
@@ -680,7 +629,7 @@ SELECT DISTINCT ?category_class WHERE {
 # =============================================================================
 
 
-def _query_filter_icd_category(store) -> Set[str]:
+def _query_filter_icd_category(store: Store) -> Set[str]:
     """Get diseases corresponding to ICD-10 categories (has . but not -)."""
     query = (
         _get_sparql_prefixes()
@@ -702,7 +651,7 @@ SELECT DISTINCT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_icd_chapter_code(store) -> Set[str]:
+def _query_filter_icd_chapter_code(store: Store) -> Set[str]:
     """Get diseases corresponding to ICD-10 chapter codes (has - but not .)."""
     query = (
         _get_sparql_prefixes()
@@ -724,7 +673,7 @@ SELECT DISTINCT ?category_class WHERE {
     return _query_and_extract_ids_from_column(store, query)
 
 
-def _query_filter_icd_chapter_header(store) -> Set[str]:
+def _query_filter_icd_chapter_header(store: Store) -> Set[str]:
     """Get diseases corresponding to ICD-10 chapter headers (no . or -)."""
     query = (
         _get_sparql_prefixes()
@@ -751,7 +700,9 @@ SELECT DISTINCT ?category_class WHERE {
 # =============================================================================
 
 
-def query_raw_disease_list_data_from_mondo(store, billable_icd10, df_subtypes) -> pd.DataFrame:
+def query_raw_disease_list_data_from_mondo(
+    store: Store, billable_icd10: pd.DataFrame, df_subtypes: pd.DataFrame
+) -> pd.DataFrame:
     """Assemble complete disease list with all metadata and filters.
 
     This is the main orchestrator function that runs all queries and assembles
@@ -760,12 +711,14 @@ def query_raw_disease_list_data_from_mondo(store, billable_icd10, df_subtypes) -
 
     Args:
         store: PyOxigraph Store object
+        billable_icd10: DataFrame with billable ICD-10 codes to add to graph
+        df_subtypes: DataFrame with subtype annotations to add to graph
 
     Returns:
         DataFrame with all disease list columns
     """
     logger.info("Assembling disease list from multiple focused queries")
-    
+
     # 0. Postprocess Mondo
     _add_icd10_billable_data_to_graph(store, billable_icd10)
     _add_subtype_data_to_graph(store, df_subtypes)
@@ -968,7 +921,7 @@ def query_get_descendants(store, root_id: str) -> set[str]:
     return _query_and_extract_ids_from_column(store, query, column_name="descendant")
 
 
-def query_mondo_labels(store) -> pd.DataFrame:
+def query_mondo_labels(store: Store) -> pd.DataFrame:
     """Get MONDO labels.
 
     Args:
@@ -991,7 +944,7 @@ WHERE {
     return _run_sparql_select(store, query)
 
 
-def query_ontology_metadata(store) -> pd.DataFrame:
+def query_ontology_metadata(store: Store) -> pd.DataFrame:
     """Get ontology metadata.
 
     Args:
@@ -1015,7 +968,7 @@ WHERE {
     return _run_sparql_select(store, query)
 
 
-def query_mondo_obsoletes(store) -> pd.DataFrame:
+def query_mondo_obsoletes(store: Store) -> pd.DataFrame:
     """Get MONDO obsolete terms.
 
     Args:
@@ -1057,7 +1010,7 @@ ORDER BY ?cls
     return _run_sparql_select(store, query)
 
 
-def query_matrix_disease_list_metrics(store) -> pd.DataFrame:
+def query_matrix_disease_list_metrics(store: Store) -> pd.DataFrame:
     """Get disease metrics (descendant counts).
 
     Args:
@@ -1099,7 +1052,8 @@ ORDER BY DESC(?category_class)
 # =============================================================================
 
 
-def _add_icd10_billable_data_to_graph(mondo_graph, billable_icd10):
+def _add_icd10_billable_data_to_graph(mondo_graph: Store, billable_icd10: pd.DataFrame) -> None:
+    """Add billable ICD-10 codes as RDF triples to the MONDO graph."""
     # Add billable ICD-10 dataframe rows as RDF triples
     from pyoxigraph import DefaultGraph, Literal, NamedNode, Quad
 
@@ -1120,7 +1074,8 @@ def _add_icd10_billable_data_to_graph(mondo_graph, billable_icd10):
     logger.info(f"Added {len(billable_icd10)} billable ICD-10 dataframe rows to graph")
 
 
-def _add_subtype_data_to_graph(mondo_graph, df_subtypes):
+def _add_subtype_data_to_graph(mondo_graph: Store, df_subtypes: pd.DataFrame) -> None:
+    """Add subtype annotations as RDF triples to the MONDO graph."""
     # Add subtypes rows as RDF triples (using in-memory dataframe)
     from pyoxigraph import DefaultGraph, NamedNode, Quad
 
@@ -1140,7 +1095,7 @@ def _add_subtype_data_to_graph(mondo_graph, df_subtypes):
         mondo_graph.add(quad)
 
 
-def _postprocess_mondo_graph(mondo_graph):
+def _postprocess_mondo_graph(mondo_graph: Store) -> None:
     """Apply SPARQL UPDATE transformations to the MONDO graph."""
 
     logger.info("Mondo postprocessing: Running SPARQL UPDATE transformations")
@@ -1160,10 +1115,7 @@ def _postprocess_mondo_graph(mondo_graph):
 
 
 def _query_inject_mondo_top_grouping() -> str:
-    """Get SPARQL UPDATE query to inject mondo_top_grouping subset.
-
-    Returns SPARQL UPDATE query to add top-level grouping subset annotation.
-    """
+    """Get SPARQL UPDATE query to inject mondo_top_grouping subset."""
     return (
         _get_sparql_prefixes()
         + """
@@ -1178,10 +1130,7 @@ WHERE {
 
 
 def _query_inject_susceptibility_subset() -> str:
-    """Get SPARQL UPDATE query to inject susceptibility subset annotations.
-
-    Returns SPARQL UPDATE query to mark susceptibility diseases.
-    """
+    """Get SPARQL UPDATE query to inject susceptibility subset annotations."""
     return (
         _get_sparql_prefixes()
         + """
@@ -1207,10 +1156,7 @@ WHERE {
 
 
 def _query_inject_subset_declaration() -> str:
-    """Get SPARQL UPDATE query to declare all subsets as SubsetProperty.
-
-    Returns SPARQL UPDATE query to properly declare subset properties.
-    """
+    """Get SPARQL UPDATE query to declare all subsets as SubsetProperty."""
     return (
         _get_sparql_prefixes()
         + """
@@ -1226,10 +1172,7 @@ WHERE {
 
 
 def _query_downfill_disease_groupings() -> str:
-    """Get SPARQL UPDATE query to propagate groupings to descendants.
-
-    Returns SPARQL UPDATE query to downfill subset annotations from parents.
-    """
+    """Get SPARQL UPDATE query to propagate groupings to descendants."""
     return (
         _get_sparql_prefixes()
         + """
@@ -1253,10 +1196,7 @@ WHERE {
 
 
 def _query_disease_groupings_other() -> str:
-    """Get SPARQL UPDATE query to mark ungrouped diseases as 'other'.
-
-    Returns SPARQL UPDATE query to add 'other' grouping for diseases not in any grouping.
-    """
+    """Get SPARQL UPDATE query to mark ungrouped diseases as 'other'."""
     return (
         _get_sparql_prefixes()
         + """
