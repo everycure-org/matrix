@@ -18,6 +18,97 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 
+def ingest_mondo_graph(mondo_graph: Store) -> Store:
+    """Ingest and validate MONDO graph from raw source.
+
+    Args:
+        mondo_graph: PyOxigraph Store containing MONDO ontology
+
+    Returns:
+        Validated PyOxigraph Store
+    """
+    logger.info("Ingesting MONDO graph")
+
+    triple_count = len(list(mondo_graph))
+    logger.info(f"MONDO graph loaded with {triple_count:,} triples")
+
+    if triple_count == 0:
+        raise ValueError("MONDO graph is empty - no triples found")
+
+    return mondo_graph
+
+
+def ingest_mondo_sssom(mondo_sssom: pd.DataFrame) -> pd.DataFrame:
+    """Ingest and validate MONDO SSSOM mappings.
+
+    Args:
+        mondo_sssom: DataFrame with MONDO SSSOM mappings
+
+    Returns:
+        Validated DataFrame with SSSOM mappings
+    """
+    logger.info("Ingesting MONDO SSSOM mappings")
+
+    required_columns = ["subject_id", "predicate_id", "object_id"]
+    missing_columns = [col for col in required_columns if col not in mondo_sssom.columns]
+    if missing_columns:
+        raise ValueError(f"MONDO SSSOM missing required columns: {missing_columns}")
+
+    logger.info(f"MONDO SSSOM loaded with {len(mondo_sssom):,} mappings")
+
+    if mondo_sssom.empty:
+        raise ValueError("MONDO SSSOM is empty")
+
+    return mondo_sssom
+
+
+def ingest_mondo_obsoletion_candidates(obsoletion_candidates: pd.DataFrame) -> pd.DataFrame:
+    """Ingest and validate MONDO obsoletion candidates.
+
+    Args:
+        obsoletion_candidates: DataFrame with MONDO obsoletion candidates
+
+    Returns:
+        Validated DataFrame with obsoletion candidates
+    """
+    logger.info("Ingesting MONDO obsoletion candidates")
+    logger.info(f"MONDO obsoletion candidates loaded with {len(obsoletion_candidates):,} rows")
+
+    if obsoletion_candidates.empty:
+        logger.warning("MONDO obsoletion candidates is empty")
+
+    return obsoletion_candidates
+
+
+def ingest_icd10_cm_codes(icd10_codes: pd.DataFrame) -> pd.DataFrame:
+    """Ingest and validate ICD-10-CM codes.
+
+    Args:
+        icd10_codes: DataFrame with ICD-10-CM codes
+
+    Returns:
+        Validated DataFrame with ICD-10-CM codes
+    """
+    logger.info("Ingesting ICD-10-CM codes")
+
+    required_columns = ["CODE"]
+    missing_columns = [col for col in required_columns if col not in icd10_codes.columns]
+    if missing_columns:
+        raise ValueError(f"ICD-10-CM codes missing required columns: {missing_columns}")
+
+    logger.info(f"ICD-10-CM codes loaded with {len(icd10_codes):,} codes")
+
+    if icd10_codes.empty:
+        raise ValueError("ICD-10-CM codes is empty")
+
+    null_codes = icd10_codes["CODE"].isnull().sum()
+    if null_codes > 0:
+        logger.warning(f"Found {null_codes} null CODE values, dropping them")
+        icd10_codes = icd10_codes.dropna(subset=["CODE"])
+
+    return icd10_codes
+
+
 def _format_icd10_code_to_curie(code: str, prefix: str) -> str:
     """Format ICD-10 code as CURIE by inserting decimal point after third character."""
     if pd.notna(code) and len(code) > 3:

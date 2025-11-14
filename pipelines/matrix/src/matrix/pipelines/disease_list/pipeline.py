@@ -31,10 +31,38 @@ def create_pipeline(**kwargs: Any) -> Pipeline:
         [
             # Stage 1: Extract billable ICD-10 codes and map to Mondo
             node(
+                func=nodes.ingest_mondo_graph,
+                inputs="disease_list.raw.mondo_graph",
+                outputs="disease_list.int.mondo_graph",
+                name="ingest_mondo_graph",
+                tags=["disease_list", "ingestion"],
+            ),
+            node(
+                func=nodes.ingest_mondo_sssom,
+                inputs="disease_list.raw.mondo_sssom",
+                outputs="disease_list.int.mondo_sssom",
+                name="ingest_mondo_sssom",
+                tags=["disease_list", "ingestion"],
+            ),
+            node(
+                func=nodes.ingest_mondo_obsoletion_candidates,
+                inputs="disease_list.raw.mondo_obsoletion_candidates",
+                outputs="disease_list.int.mondo_obsoletion_candidates",
+                name="ingest_mondo_obsoletion_candidates",
+                tags=["disease_list", "ingestion"],
+            ),
+            node(
+                func=nodes.ingest_icd10_cm_codes,
+                inputs="disease_list.raw.icd10_cm_codes",
+                outputs="disease_list.int.icd10_cm_codes",
+                name="ingest_icd10_cm_codes",
+                tags=["disease_list", "ingestion"],
+            ),
+            node(
                 func=nodes.create_billable_icd10_codes,
                 inputs={
-                    "icd10_codes": "disease_list.raw.icd10_cm_codes",
-                    "mondo_sssom": "disease_list.raw.mondo_sssom",
+                    "icd10_codes": "disease_list.int.icd10_cm_codes",
+                    "mondo_sssom": "disease_list.int.mondo_sssom",
                     "parameters": "params:billable_icd10_params",
                 },
                 outputs="disease_list.int.billable_icd10_codes",
@@ -45,7 +73,7 @@ def create_pipeline(**kwargs: Any) -> Pipeline:
             node(
                 func=nodes.extract_disease_data_from_mondo,
                 inputs={
-                    "mondo_graph": "disease_list.raw.mondo_graph",
+                    "mondo_graph": "disease_list.int.mondo_graph",
                     "billable_icd10": "disease_list.int.billable_icd10_codes",
                     "subtypes_params": "params:subtypes_params",
                     "subtype_patterns": "params:subtype_patterns",
