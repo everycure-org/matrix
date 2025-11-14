@@ -26,11 +26,12 @@ import pandera.pandas as pa
                     )
                 ],
             ),
+            "deleted": pa.Column(bool, nullable=False, checks=[pa.Check(lambda col: col == False)]),
         },
     )
 )
 def write_drug_list(df: pd.DataFrame) -> pd.DataFrame:
-    return df
+    return df[~df["deleted"]]
 
 
 @pa.check_output(
@@ -46,8 +47,9 @@ def write_drug_list(df: pd.DataFrame) -> pd.DataFrame:
                     )
                 ],
             ),
+            "deleted": pa.Column(bool, nullable=False, checks=[pa.Check(lambda col: col == False)]),
         },
     )
 )
 def write_disease_list(df: pd.DataFrame) -> pd.DataFrame:
-    return df
+    return df[~df["deleted"]]
