@@ -223,6 +223,11 @@ fabricator.rtx_kg2:
       smiles:
         type: faker
         provider: word
+      deleted:
+        type: generate_values
+        sample_values:
+          True: 0.9
+          False: 0.1
 
   disease_list:
     num_rows: 100
@@ -291,6 +296,11 @@ fabricator.rtx_kg2:
           - "RARE"
           - "UNCOMMON"
           - "COMMON"
+      deleted:
+        type: generate_values
+        sample_values:
+          True: 0.9
+          False: 0.1
 
 fabricator.clinical_trials:
   pos_cols:
