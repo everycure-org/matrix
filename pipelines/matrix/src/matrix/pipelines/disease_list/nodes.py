@@ -227,72 +227,6 @@ def _log_mondo_size(mondo_graph):
     return triple_count
 
 
-def _add_icd10_billable_data_to_graph(mondo_graph, billable_icd10):
-    # Add billable ICD-10 dataframe rows as RDF triples
-    from pyoxigraph import DefaultGraph, Literal, NamedNode, Quad
-
-    for _, row in billable_icd10.iterrows():
-        subject = NamedNode(row["subject_id"].replace("MONDO:", "http://purl.obolibrary.org/obo/MONDO_"))
-
-        # Add subset membership triple
-        subset_pred = NamedNode(row["predicate"])
-        quad = Quad(subject, subset_pred, subset_pred, DefaultGraph())  # subset URI is both predicate and object
-        mondo_graph.add(quad)
-
-        # Add ICD10CM code annotation (using object_id column)
-        predicate = NamedNode("http://www.geneontology.org/formats/oboInOwl#hasDbXref")
-        obj = Literal(row["object_id"])
-        quad = Quad(subject, predicate, obj, DefaultGraph())
-        mondo_graph.add(quad)
-
-    logger.info(f"Added {len(billable_icd10)} billable ICD-10 dataframe rows to graph")
-
-
-def _add_subtype_data_to_graph(mondo_graph, df_subtypes):
-    # Add subtypes rows as RDF triples (using in-memory dataframe)
-    from pyoxigraph import DefaultGraph, NamedNode, Quad
-
-    for _, row in df_subtypes.iterrows():
-        subject = NamedNode(row["subject_id"].replace("MONDO:", "http://purl.obolibrary.org/obo/MONDO_"))
-
-        # Add subset membership
-        subset_pred = NamedNode(row["subset_predicate"])
-        subset_obj = NamedNode(row["subset_object"])
-        quad = Quad(subject, subset_pred, subset_obj, DefaultGraph())
-        mondo_graph.add(quad)
-
-        # Add contributor
-        contrib_pred = NamedNode(row["contributor_predicate"])
-        contrib_obj = NamedNode(row["contributor_object"])
-        quad = Quad(subject, contrib_pred, contrib_obj, DefaultGraph())
-        mondo_graph.add(quad)
-
-
-def _postprocess_mondo_graph(mondo_graph):
-    from matrix.pipelines.disease_list.queries import (
-        query_disease_groupings_other,
-        query_downfill_disease_groupings,
-        query_inject_mondo_top_grouping,
-        query_inject_subset_declaration,
-        query_inject_susceptibility_subset,
-    )
-
-    logger.info("Mondo postprocessing: Running SPARQL UPDATE transformations")
-    update_queries = [
-        ("inject-mondo-top-grouping.ru", query_inject_mondo_top_grouping()),
-        ("inject-susceptibility-subset.ru", query_inject_susceptibility_subset()),
-        ("inject-subset-declaration.ru", query_inject_subset_declaration()),
-        ("downfill-disease-groupings.ru", query_downfill_disease_groupings()),
-        ("disease-groupings-other.ru", query_disease_groupings_other()),
-    ]
-
-    for query_name, query_string in update_queries:
-        logger.info(f"Running SPARQL UPDATE: {query_name}")
-        mondo_graph.update(query_string)
-
-    logger.info("Successfully applied all SPARQL transformations")
-
-
 def extract_disease_data_from_mondo(
     mondo_graph,
     billable_icd10: pd.DataFrame,
@@ -327,12 +261,9 @@ def extract_disease_data_from_mondo(
     logger.info("Extracting disease data from MONDO ontology")
 
     from matrix.pipelines.disease_list.queries import (
-        extract_raw_disease_list_data_from_mondo,
-        query_matrix_disease_list_metrics,
-        query_mondo_labels,
-        query_mondo_obsoletes,
-        query_ontology_metadata,
-    )
+        query_matrix_disease_list_metrics, query_mondo_labels,
+        query_mondo_obsoletes, query_ontology_metadata,
+        query_raw_disease_list_data_from_mondo)
 
     _log_mondo_size(mondo_graph)
 
@@ -360,14 +291,8 @@ def extract_disease_data_from_mondo(
 
     _log_mondo_size(mondo_graph)
 
-    _add_icd10_billable_data_to_graph(mondo_graph, billable_icd10)
-
-    _add_subtype_data_to_graph(mondo_graph, df_subtypes)
-
-    _postprocess_mondo_graph(mondo_graph)
-
     logger.info("Step 3: Extracting disease data from enriched MONDO")
-    disease_list_raw = extract_raw_disease_list_data_from_mondo(mondo_graph)
+    disease_list_raw = query_raw_disease_list_data_from_mondo(mondo_graph, billable_icd10, df_subtypes)
     logger.info(f"Extracted {len(disease_list_raw)} diseases in raw list")
 
     # Run metrics query

@@ -48,29 +48,21 @@ def _run_sparql_select(store, query: str) -> pd.DataFrame:
     Returns:
         DataFrame with query results (columns match SELECT variables)
     """
-    # Execute query using PyOxigraph (much faster than RDFLIB)
     results = store.query(query)
 
-    # Get variable names from the query results (.variables is a property, not a method)
-    # Variables in PyOxigraph include the '?' prefix, remove it for cleaner column names
     variables = [str(v)[1:] if str(v).startswith("?") else str(v) for v in results.variables]
 
-    # Convert to DataFrame
     rows = []
     for solution in results:
         row_dict = {}
         for i, var_with_prefix in enumerate(results.variables):
-            value = solution[var_with_prefix]  # Access with original variable (with ?)
-            clean_var = variables[i]  # Store with clean variable name (without ?)
-            # Extract actual value from PyOxigraph objects
-            # Use .value attribute for Literals, str() for IRIs/URIs
+            value = solution[var_with_prefix]
+            clean_var = variables[i]
             if value is None:
                 row_dict[clean_var] = ""
             elif hasattr(value, "value"):
-                # PyOxigraph Literal - extract the actual Python value
                 row_dict[clean_var] = str(value.value)
             else:
-                # IRI/URI - convert to string
                 row_dict[clean_var] = str(value)
         rows.append(row_dict)
 
@@ -114,7 +106,6 @@ def _query_and_extract_ids_from_column(
 
     ids = set(df[column_name].tolist())
 
-    # Filter to MONDO IDs only if requested
     if mondo_only:
         ids = {id for id in ids if id.startswith("MONDO:")}
 
@@ -572,7 +563,6 @@ SELECT ?entity WHERE {
 }
 """
     )
-    # Note: query uses ?entity instead of ?category_class
     return _query_and_extract_ids_from_column(store, query, column_name="entity")
 
 
@@ -757,11 +747,11 @@ SELECT DISTINCT ?category_class WHERE {
 
 
 # =============================================================================
-# ASSEMBLY FUNCTION
+# Main Queries
 # =============================================================================
 
 
-def extract_raw_disease_list_data_from_mondo(store) -> pd.DataFrame:
+def query_raw_disease_list_data_from_mondo(store, billable_icd10, df_subtypes) -> pd.DataFrame:
     """Assemble complete disease list with all metadata and filters.
 
     This is the main orchestrator function that runs all queries and assembles
@@ -775,6 +765,11 @@ def extract_raw_disease_list_data_from_mondo(store) -> pd.DataFrame:
         DataFrame with all disease list columns
     """
     logger.info("Assembling disease list from multiple focused queries")
+    
+    # 0. Postprocess Mondo
+    _add_icd10_billable_data_to_graph(store, billable_icd10)
+    _add_subtype_data_to_graph(store, df_subtypes)
+    _postprocess_mondo_graph(store)
 
     # 1. Get base disease list
     df = _query_base_disease_list(store)
@@ -798,7 +793,6 @@ def extract_raw_disease_list_data_from_mondo(store) -> pd.DataFrame:
     # 3. Add filter flags
     logger.info("Adding filter flags...")
 
-    # Subset-based filters
     df["f_matrix_manually_included"] = (
         df["category_class"].isin(_query_filter_matrix_manually_included(store)).apply(lambda x: "TRUE" if x else "")
     )
@@ -841,7 +835,6 @@ def extract_raw_disease_list_data_from_mondo(store) -> pd.DataFrame:
         df["category_class"].isin(_query_filter_icd_billable(store)).apply(lambda x: "TRUE" if x else "")
     )
 
-    # Hierarchy-based filters
     df["f_paraphilic"] = df["category_class"].isin(_query_filter_paraphilic(store)).apply(lambda x: "TRUE" if x else "")
 
     df["f_cardiovascular"] = (
@@ -864,7 +857,6 @@ def extract_raw_disease_list_data_from_mondo(store) -> pd.DataFrame:
         df["category_class"].isin(_query_filter_cancer_or_benign_tumor(store)).apply(lambda x: "TRUE" if x else "")
     )
 
-    # Label-based filters
     df["f_withorwithout"] = (
         df["category_class"].isin(_query_filter_withorwithout(store)).apply(lambda x: "TRUE" if x else "")
     )
@@ -873,7 +865,6 @@ def extract_raw_disease_list_data_from_mondo(store) -> pd.DataFrame:
 
     df["f_acquired"] = df["category_class"].isin(_query_filter_acquired(store)).apply(lambda x: "TRUE" if x else "")
 
-    # Complex filters
     df["f_unclassified_hereditary"] = (
         df["category_class"].isin(_query_filter_unclassified_hereditary(store)).apply(lambda x: "TRUE" if x else "")
     )
@@ -900,7 +891,6 @@ def extract_raw_disease_list_data_from_mondo(store) -> pd.DataFrame:
         df["category_class"].isin(_query_filter_leaf_direct_parent(store)).apply(lambda x: "TRUE" if x else "")
     )
 
-    # ICD-10 filters
     df["f_icd_category"] = (
         df["category_class"].isin(_query_filter_icd_category(store)).apply(lambda x: "TRUE" if x else "")
     )
@@ -913,17 +903,11 @@ def extract_raw_disease_list_data_from_mondo(store) -> pd.DataFrame:
         df["category_class"].isin(_query_filter_icd_chapter_header(store)).apply(lambda x: "TRUE" if x else "")
     )
 
-    # Sort by label descending (matching original query)
     df = df.sort_values("label", ascending=False)
 
     logger.info(f"Assembled disease list with {len(df)} diseases and {len(df.columns)} columns")
 
     return df
-
-
-# =============================================================================
-# Additional Queries
-# =============================================================================
 
 
 def query_get_ancestors(store, child_id: str) -> set[str]:
@@ -936,8 +920,12 @@ def query_get_ancestors(store, child_id: str) -> set[str]:
     Returns:
         Set of ancestor IDs in CURIE format
     """
-    # Convert CURIE to URI for SPARQL
+
     uri = child_id.replace("MONDO:", "http://purl.obolibrary.org/obo/MONDO_")
+
+    if not uri.startswith("MONDO:"):
+        logging.error(f"Invalid child_id provided: {child_id}")
+        return set()
 
     # SPARQL query to find all ancestors using property paths
     query = (
@@ -1108,11 +1096,70 @@ ORDER BY DESC(?category_class)
 
 
 # =============================================================================
-# Update Queries
+# Update Queries/Operations
 # =============================================================================
 
+def _add_icd10_billable_data_to_graph(mondo_graph, billable_icd10):
+    # Add billable ICD-10 dataframe rows as RDF triples
+    from pyoxigraph import DefaultGraph, Literal, NamedNode, Quad
 
-def query_inject_mondo_top_grouping() -> str:
+    for _, row in billable_icd10.iterrows():
+        subject = NamedNode(row["subject_id"].replace("MONDO:", "http://purl.obolibrary.org/obo/MONDO_"))
+
+        # Add subset membership triple
+        subset_pred = NamedNode(row["predicate"])
+        quad = Quad(subject, subset_pred, subset_pred, DefaultGraph())  # subset URI is both predicate and object
+        mondo_graph.add(quad)
+
+        # Add ICD10CM code annotation (using object_id column)
+        predicate = NamedNode("http://www.geneontology.org/formats/oboInOwl#hasDbXref")
+        obj = Literal(row["object_id"])
+        quad = Quad(subject, predicate, obj, DefaultGraph())
+        mondo_graph.add(quad)
+
+    logger.info(f"Added {len(billable_icd10)} billable ICD-10 dataframe rows to graph")
+
+
+def _add_subtype_data_to_graph(mondo_graph, df_subtypes):
+    # Add subtypes rows as RDF triples (using in-memory dataframe)
+    from pyoxigraph import DefaultGraph, NamedNode, Quad
+
+    for _, row in df_subtypes.iterrows():
+        subject = NamedNode(row["subject_id"].replace("MONDO:", "http://purl.obolibrary.org/obo/MONDO_"))
+
+        # Add subset membership
+        subset_pred = NamedNode(row["subset_predicate"])
+        subset_obj = NamedNode(row["subset_object"])
+        quad = Quad(subject, subset_pred, subset_obj, DefaultGraph())
+        mondo_graph.add(quad)
+
+        # Add contributor
+        contrib_pred = NamedNode(row["contributor_predicate"])
+        contrib_obj = NamedNode(row["contributor_object"])
+        quad = Quad(subject, contrib_pred, contrib_obj, DefaultGraph())
+        mondo_graph.add(quad)
+
+
+def _postprocess_mondo_graph(mondo_graph):
+    """Apply SPARQL UPDATE transformations to the MONDO graph."""
+
+    logger.info("Mondo postprocessing: Running SPARQL UPDATE transformations")
+    update_queries = [
+        ("inject-mondo-top-grouping", _query_inject_mondo_top_grouping()),
+        ("inject-susceptibility-subset", _query_inject_susceptibility_subset()),
+        ("inject-subset-declaration", _query_inject_subset_declaration()),
+        ("downfill-disease-groupings", _query_downfill_disease_groupings()),
+        ("disease-groupings-other", _query_disease_groupings_other()),
+    ]
+
+    for query_name, query_string in update_queries:
+        logger.info(f"Running SPARQL UPDATE: {query_name}")
+        mondo_graph.update(query_string)
+
+    logger.info("Successfully applied all SPARQL transformations")
+
+
+def _query_inject_mondo_top_grouping() -> str:
     """Get SPARQL UPDATE query to inject mondo_top_grouping subset.
 
     Returns SPARQL UPDATE query to add top-level grouping subset annotation.
@@ -1130,7 +1177,7 @@ WHERE {
     )
 
 
-def query_inject_susceptibility_subset() -> str:
+def _query_inject_susceptibility_subset() -> str:
     """Get SPARQL UPDATE query to inject susceptibility subset annotations.
 
     Returns SPARQL UPDATE query to mark susceptibility diseases.
@@ -1159,7 +1206,7 @@ WHERE {
     )
 
 
-def query_inject_subset_declaration() -> str:
+def _query_inject_subset_declaration() -> str:
     """Get SPARQL UPDATE query to declare all subsets as SubsetProperty.
 
     Returns SPARQL UPDATE query to properly declare subset properties.
@@ -1178,7 +1225,7 @@ WHERE {
     )
 
 
-def query_downfill_disease_groupings() -> str:
+def _query_downfill_disease_groupings() -> str:
     """Get SPARQL UPDATE query to propagate groupings to descendants.
 
     Returns SPARQL UPDATE query to downfill subset annotations from parents.
@@ -1205,7 +1252,7 @@ WHERE {
     )
 
 
-def query_disease_groupings_other() -> str:
+def _query_disease_groupings_other() -> str:
     """Get SPARQL UPDATE query to mark ungrouped diseases as 'other'.
 
     Returns SPARQL UPDATE query to add 'other' grouping for diseases not in any grouping.
