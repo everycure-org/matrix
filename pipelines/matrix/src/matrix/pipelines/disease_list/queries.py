@@ -29,17 +29,12 @@ def _get_sparql_prefixes() -> str:
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
 PREFIX oboInOwl: <http://www.geneontology.org/formats/oboInOwl#>
 PREFIX IAO: <http://purl.obolibrary.org/obo/IAO_>
 PREFIX mondo: <http://purl.obolibrary.org/obo/mondo#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX dc: <http://purl.org/dc/elements/1.1/>
-PREFIX obo: <http://purl.obolibrary.org/obo/>
-PREFIX pattern: <http://purl.obolibrary.org/obo/mondo/patterns/>
-PREFIX def: <http://purl.obolibrary.org/obo/IAO_0000115>
-PREFIX : <http://www.test.com/ns/test#>
 """
 
 
@@ -172,7 +167,7 @@ def _query_metadata_synonyms(store) -> pd.DataFrame:
         + """
 SELECT ?category_class (GROUP_CONCAT(DISTINCT ?sorted_synonym; separator="; ") AS ?synonyms)
 WHERE {
-  ?category_class oio:hasExactSynonym ?synonym .
+  ?category_class oboInOwl:hasExactSynonym ?synonym .
   BIND(STR(?synonym) AS ?sorted_synonym)
 }
 GROUP BY ?category_class
@@ -194,7 +189,7 @@ def _query_metadata_subsets(store) -> pd.DataFrame:
         + """
 SELECT ?category_class (GROUP_CONCAT(DISTINCT ?sorted_subset; separator="; ") AS ?subsets)
 WHERE {
-  ?category_class oio:inSubset ?subset .
+  ?category_class oboInOwl:inSubset ?subset .
   BIND(STR(?subset) AS ?sorted_subset)
 }
 GROUP BY ?category_class
@@ -216,7 +211,7 @@ def _query_metadata_crossreferences(store) -> pd.DataFrame:
         + """
 SELECT ?category_class (GROUP_CONCAT(DISTINCT ?sorted_xref; separator="; ") AS ?crossreferences)
 WHERE {
-  ?category_class oio:hasDbXref ?xref .
+  ?category_class oboInOwl:hasDbXref ?xref .
   BIND(STR(?xref) AS ?sorted_xref)
 }
 GROUP BY ?category_class
@@ -243,7 +238,7 @@ WHERE {
     owl:annotatedSource ?category_class ;
     owl:annotatedProperty mondo:curated_content_resource ;
     owl:annotatedTarget ?malacards_linkout ;
-    oio:source "MONDO:MalaCards" .
+    oboInOwl:source "MONDO:MalaCards" .
   FILTER(STRSTARTS(STR(?malacards_linkout), "https://www.malacards.org/"))
   BIND(STR(?malacards_linkout) AS ?sorted_malacardslinkouts)
 }
@@ -266,7 +261,7 @@ def _query_filter_matrix_manually_included(store) -> Set[str]:
         _get_sparql_prefixes()
         + """
 SELECT ?category_class WHERE {
-  ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#matrix_included> .
+  ?category_class oboInOwl:inSubset <http://purl.obolibrary.org/obo/mondo#matrix_included> .
 }
 """
     )
@@ -279,7 +274,7 @@ def _query_filter_matrix_manually_excluded(store) -> Set[str]:
         _get_sparql_prefixes()
         + """
 SELECT ?category_class WHERE {
-  ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#matrix_excluded> .
+  ?category_class oboInOwl:inSubset <http://purl.obolibrary.org/obo/mondo#matrix_excluded> .
 }
 """
     )
@@ -292,7 +287,7 @@ def _query_filter_clingen(store) -> Set[str]:
         _get_sparql_prefixes()
         + """
 SELECT ?category_class WHERE {
-  ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#clingen> .
+  ?category_class oboInOwl:inSubset <http://purl.obolibrary.org/obo/mondo#clingen> .
 }
 """
     )
@@ -305,7 +300,7 @@ def _query_filter_susceptibility(store) -> Set[str]:
         _get_sparql_prefixes()
         + """
 SELECT ?category_class WHERE {
-  ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#susceptibility_match> .
+  ?category_class oboInOwl:inSubset <http://purl.obolibrary.org/obo/mondo#susceptibility_match> .
 }
 """
     )
@@ -318,7 +313,7 @@ def _query_filter_mondo_subtype(store) -> Set[str]:
         _get_sparql_prefixes()
         + """
 SELECT ?category_class WHERE {
-  ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#mondo_subtype> .
+  ?category_class oboInOwl:inSubset <http://purl.obolibrary.org/obo/mondo#mondo_subtype> .
 }
 """
     )
@@ -331,7 +326,7 @@ def _query_filter_pathway_defect(store) -> Set[str]:
         _get_sparql_prefixes()
         + """
 SELECT ?category_class WHERE {
-  ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#pathway_defect> .
+  ?category_class oboInOwl:inSubset <http://purl.obolibrary.org/obo/mondo#pathway_defect> .
 }
 """
     )
@@ -351,7 +346,7 @@ SELECT ?category_class WHERE {
     <http://purl.obolibrary.org/obo/mondo#harrisons_view>
     <http://purl.obolibrary.org/obo/mondo#rare_grouping>
   }
-  ?category_class oio:inSubset ?_subset .
+  ?category_class oboInOwl:inSubset ?_subset .
 }
 """
     )
@@ -364,7 +359,7 @@ def _query_filter_obsoletion_candidate(store) -> Set[str]:
         _get_sparql_prefixes()
         + """
 SELECT ?category_class WHERE {
-  ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#obsoletion_candidate> .
+  ?category_class oboInOwl:inSubset <http://purl.obolibrary.org/obo/mondo#obsoletion_candidate> .
 }
 """
     )
@@ -377,7 +372,7 @@ def _query_filter_orphanet_subtype(store) -> Set[str]:
         _get_sparql_prefixes()
         + """
 SELECT ?category_class WHERE {
-  ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#ordo_subtype_of_a_disorder> .
+  ?category_class oboInOwl:inSubset <http://purl.obolibrary.org/obo/mondo#ordo_subtype_of_a_disorder> .
 }
 """
     )
@@ -390,7 +385,7 @@ def _query_filter_orphanet_disorder(store) -> Set[str]:
         _get_sparql_prefixes()
         + """
 SELECT ?category_class WHERE {
-  ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#ordo_disorder> .
+  ?category_class oboInOwl:inSubset <http://purl.obolibrary.org/obo/mondo#ordo_disorder> .
 }
 """
     )
@@ -403,7 +398,7 @@ def _query_filter_icd_billable(store) -> Set[str]:
         _get_sparql_prefixes()
         + """
 SELECT ?category_class WHERE {
-  ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#icd10_billable> .
+  ?category_class oboInOwl:inSubset <http://purl.obolibrary.org/obo/mondo#icd10_billable> .
 }
 """
     )
@@ -589,7 +584,7 @@ SELECT DISTINCT ?category_class WHERE {
     <http://purl.obolibrary.org/obo/mondo#harrisons_view>
     <http://purl.obolibrary.org/obo/mondo#rare_grouping>
   }
-  ?grouping_class_subset oio:inSubset ?_subset .
+  ?grouping_class_subset oboInOwl:inSubset ?_subset .
 }
 """
     )
@@ -603,7 +598,7 @@ def _query_filter_orphanet_subtype_descendant(store) -> Set[str]:
         + """
 SELECT DISTINCT ?category_class WHERE {
   ?category_class rdfs:subClassOf+ ?subtype_subset .
-  ?subtype_subset oio:inSubset <http://purl.obolibrary.org/obo/mondo#ordo_subtype_of_a_disorder> .
+  ?subtype_subset oboInOwl:inSubset <http://purl.obolibrary.org/obo/mondo#ordo_subtype_of_a_disorder> .
 }
 """
     )
@@ -696,11 +691,11 @@ def _query_filter_icd_category(store) -> Set[str]:
         _get_sparql_prefixes()
         + """
 SELECT DISTINCT ?category_class WHERE {
-  ?category_class oio:hasDbXref ?xref .
+  ?category_class oboInOwl:hasDbXref ?xref .
   ?a owl:annotatedSource ?category_class ;
-     owl:annotatedProperty oio:hasDbXref ;
+     owl:annotatedProperty oboInOwl:hasDbXref ;
      owl:annotatedTarget ?xref ;
-     oio:source ?type
+     oboInOwl:source ?type
   FILTER (
       STRSTARTS(str(?xref), "ICD10") &&
       !CONTAINS(SUBSTR(str(?xref), 6), "-") &&
@@ -718,11 +713,11 @@ def _query_filter_icd_chapter_code(store) -> Set[str]:
         _get_sparql_prefixes()
         + """
 SELECT DISTINCT ?category_class WHERE {
-  ?category_class oio:hasDbXref ?xref .
+  ?category_class oboInOwl:hasDbXref ?xref .
   ?a owl:annotatedSource ?category_class ;
-     owl:annotatedProperty oio:hasDbXref ;
+     owl:annotatedProperty oboInOwl:hasDbXref ;
      owl:annotatedTarget ?xref ;
-     oio:source ?type
+     oboInOwl:source ?type
   FILTER (
       STRSTARTS(str(?xref), "ICD10") &&
       CONTAINS(SUBSTR(str(?xref), 6), "-") &&
@@ -740,11 +735,11 @@ def _query_filter_icd_chapter_header(store) -> Set[str]:
         _get_sparql_prefixes()
         + """
 SELECT DISTINCT ?category_class WHERE {
-  ?category_class oio:hasDbXref ?xref .
+  ?category_class oboInOwl:hasDbXref ?xref .
   ?a owl:annotatedSource ?category_class ;
-     owl:annotatedProperty oio:hasDbXref ;
+     owl:annotatedProperty oboInOwl:hasDbXref ;
      owl:annotatedTarget ?xref ;
-     oio:source ?type
+     oboInOwl:source ?type
   FILTER (
       STRSTARTS(str(?xref), "ICD10") &&
       !CONTAINS(SUBSTR(str(?xref), 6), "-") &&
@@ -1119,7 +1114,7 @@ def query_inject_mondo_top_grouping() -> str:
         _get_sparql_prefixes()
         + """
 INSERT {
-  ?subject oio:inSubset <http://purl.obolibrary.org/obo/mondo#mondo_top_grouping> .
+  ?subject oboInOwl:inSubset <http://purl.obolibrary.org/obo/mondo#mondo_top_grouping> .
 }
 WHERE {
   ?subject rdfs:subClassOf <http://purl.obolibrary.org/obo/MONDO_0700096> .
@@ -1185,8 +1180,8 @@ def query_downfill_disease_groupings() -> str:
         _get_sparql_prefixes()
         + """
 INSERT {
-  ?descendant oio:inSubset ?memberSubset .
-  ?descendant oio:inSubset ?subjectSubset .
+  ?descendant oboInOwl:inSubset ?memberSubset .
+  ?descendant oboInOwl:inSubset ?subjectSubset .
 }
 WHERE {
     VALUES ?subset {
@@ -1194,7 +1189,7 @@ WHERE {
       <http://purl.obolibrary.org/obo/mondo#harrisons_view>
       <http://purl.obolibrary.org/obo/mondo#mondo_top_grouping>
       }
-    ?subject oio:inSubset ?subset ; rdfs:label ?label .
+    ?subject oboInOwl:inSubset ?subset ; rdfs:label ?label .
     ?descendant rdfs:subClassOf+ ?subject .
     BIND(IRI(CONCAT(STR(?subset),"_member")) AS ?memberSubset)
     BIND(IRI(CONCAT(CONCAT(STR(?subset),"_"),REPLACE(LCASE(?label), "[^a-zA-Z0-9]", "_"))) AS ?subjectSubset)
@@ -1212,7 +1207,7 @@ def query_disease_groupings_other() -> str:
         _get_sparql_prefixes()
         + """
 INSERT {
-  ?subject oio:inSubset ?otherSubset .
+  ?subject oboInOwl:inSubset ?otherSubset .
 }
 WHERE {
   VALUES ?subset {
@@ -1236,10 +1231,10 @@ WHERE {
 
   # Ensure ?subject is not already inSubset for ?subset or ?memberSubset
   FILTER NOT EXISTS {
-    ?subject oio:inSubset ?subset .
+    ?subject oboInOwl:inSubset ?subset .
   }
   FILTER NOT EXISTS {
-    ?subject oio:inSubset ?memberSubset .
+    ?subject oboInOwl:inSubset ?memberSubset .
   }
 }
 """
