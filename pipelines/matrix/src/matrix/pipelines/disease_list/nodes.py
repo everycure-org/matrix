@@ -9,24 +9,17 @@ https://github.com/everycure-org/matrix-disease-list
 
 import logging
 import re
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional, Pattern, Set, Tuple
 
 import pandas as pd
+from pyoxigraph import Store
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 def _format_icd10_code_to_curie(code: str, prefix: str) -> str:
-    """Convert ICD-10 code to CURIE format.
-
-    Args:
-        code: ICD-10 code (e.g., "A001")
-        prefix: CURIE prefix (e.g., "ICD10CM")
-
-    Returns:
-        CURIE formatted code (e.g., "ICD10CM:A00.1")
-    """
+    """Format ICD-10 code as CURIE by inserting decimal point after third character."""
     if pd.notna(code) and len(code) > 3:
         return f"{prefix}:{code[:3]}.{code[3:]}"
     return code
@@ -83,17 +76,8 @@ def create_billable_icd10_codes(
     )
 
 
-def _is_ancestor(store, parent_id, child_id):
-    """Check if parent_id is an ancestor of child_id in the ontology.
-
-    Args:
-        store: PyOxigraph Store object
-        parent_id: Parent node ID (e.g., "MONDO:0000001")
-        child_id: Child node ID (e.g., "MONDO:0000002")
-
-    Returns:
-        True if parent_id is an ancestor of child_id, False otherwise
-    """
+def _is_ancestor(store: Store, parent_id: str, child_id: str) -> bool:
+    """Check if parent_id is an ancestor of child_id in ontology hierarchy."""
     try:
         from matrix.pipelines.disease_list.queries import query_get_ancestors
 
@@ -104,24 +88,19 @@ def _is_ancestor(store, parent_id, child_id):
         return False
 
 
-def _compile_patterns(patterns_dict):
+def _compile_patterns(patterns_dict: Dict[str, str]) -> Dict[str, Pattern[str]]:
     """Compile regex patterns for better performance."""
     return {name: re.compile(pattern) for name, pattern in patterns_dict.items()}
 
 
-def _find_parent_disease(label, disease_id, label_to_id_map, compiled_patterns, store):
-    """Find parent disease for a given label using pattern matching.
-
-    Args:
-        label: Disease label to match against patterns
-        disease_id: Disease CURIE ID
-        label_to_id_map: Dictionary mapping labels to IDs
-        compiled_patterns: Compiled regex patterns
-        store: PyOxigraph Store object for hierarchy queries
-
-    Returns:
-        Tuple of (parent_label, parent_id, pattern_name) or (None, None, None) if no match
-    """
+def _find_parent_disease(
+    label: str,
+    disease_id: str,
+    label_to_id_map: Dict[str, str],
+    compiled_patterns: Dict[str, Pattern[str]],
+    store: Store,
+) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+    """Match disease label against patterns to find parent disease with hierarchy validation."""
     for pattern_name, pattern in compiled_patterns.items():
         match = pattern.match(label)
         if not match:
@@ -136,7 +115,9 @@ def _find_parent_disease(label, disease_id, label_to_id_map, compiled_patterns, 
     return None, None, None
 
 
-def _filter_mondo_labels(mondo_labels, chromosomal_diseases, human_diseases, mondo_prefix):
+def _filter_mondo_labels(
+    mondo_labels: pd.DataFrame, chromosomal_diseases: Set[str], human_diseases: Set[str], mondo_prefix: str
+) -> pd.DataFrame:
     """Filter and prepare MONDO labels for subtype matching."""
     # The fact that chromosomal diseases are excluded has been requested by EveryCure
     # because they are likely to only _look_ like subtypes, but area actually full diseases
@@ -152,17 +133,10 @@ def _filter_mondo_labels(mondo_labels, chromosomal_diseases, human_diseases, mon
     return filtered
 
 
-def _match_disease_subtypes(labels_df, compiled_patterns, store):
-    """Match diseases to their parent groups using patterns.
-
-    Args:
-        labels_df: DataFrame with disease labels and IDs
-        compiled_patterns: Compiled regex patterns for matching
-        store: PyOxigraph Store object for hierarchy queries
-
-    Returns:
-        DataFrame with parent information added
-    """
+def _match_disease_subtypes(
+    labels_df: pd.DataFrame, compiled_patterns: Dict[str, Pattern[str]], store: Store
+) -> pd.DataFrame:
+    """Apply pattern matching to all disease labels to identify subtypes and their parents."""
     label_to_id = dict(zip(labels_df["label_lower"], labels_df["disease_id"]))
 
     matches = labels_df.apply(
@@ -176,7 +150,7 @@ def _match_disease_subtypes(labels_df, compiled_patterns, store):
     return pd.concat([labels_df, matches], axis=1)
 
 
-def _build_subtype_counts(matched_df):
+def _build_subtype_counts(matched_df: pd.DataFrame) -> pd.DataFrame:
     """Build counts of subtypes per parent disease."""
     valid_matches = matched_df.dropna(subset=["parent_label"])
     valid_matches = valid_matches[valid_matches["parent_label"].str.strip() != ""]
@@ -197,11 +171,8 @@ def _build_subtype_counts(matched_df):
     )
 
 
-def _build_subtype_df(matched_df, mondo_subtype_subset, contributor):
-    """Build dataframe from matched subtypes (no ROBOT headers).
-
-    Returns DataFrame with columns: subject_id, subset_predicate, subset_object, contributor_predicate, contributor_object
-    """
+def _build_subtype_df(matched_df: pd.DataFrame, mondo_subtype_subset: str, contributor: str) -> pd.DataFrame:
+    """Convert matched subtype parents into annotation dataframe for graph enrichment."""
     unique_parents = matched_df[["parent_id", "parent_label"]].drop_duplicates().dropna().sort_values("parent_id")
 
     # Create rows for subset membership (one per parent)
@@ -218,7 +189,7 @@ def _build_subtype_df(matched_df, mondo_subtype_subset, contributor):
     return subset_rows.reset_index(drop=True)
 
 
-def _log_mondo_size(mondo_graph):
+def _log_mondo_size(mondo_graph: Store) -> int:
     """Log the size of the MONDO graph in triples."""
     count_query = "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o }"
     result = list(mondo_graph.query(count_query))
@@ -228,10 +199,10 @@ def _log_mondo_size(mondo_graph):
 
 
 def extract_disease_data_from_mondo(
-    mondo_graph,
+    mondo_graph: Store,
     billable_icd10: pd.DataFrame,
     subtypes_params: Dict[str, Any],
-    subtype_patterns: dict,
+    subtype_patterns: Dict[str, str],
 ) -> Dict[str, Any]:
     """Extract all disease-related data from MONDO ontology.
 
@@ -261,9 +232,12 @@ def extract_disease_data_from_mondo(
     logger.info("Extracting disease data from MONDO ontology")
 
     from matrix.pipelines.disease_list.queries import (
-        query_matrix_disease_list_metrics, query_mondo_labels,
-        query_mondo_obsoletes, query_ontology_metadata,
-        query_raw_disease_list_data_from_mondo)
+        query_matrix_disease_list_metrics,
+        query_mondo_labels,
+        query_mondo_obsoletes,
+        query_ontology_metadata,
+        query_raw_disease_list_data_from_mondo,
+    )
 
     _log_mondo_size(mondo_graph)
 
@@ -313,7 +287,10 @@ def extract_disease_data_from_mondo(
     }
 
 
-def _extract_subtype_data(mondo_graph, subtypes_params, subtype_patterns, mondo_labels):
+def _extract_subtype_data(
+    mondo_graph: Store, subtypes_params: Dict[str, Any], subtype_patterns: Dict[str, str], mondo_labels: pd.DataFrame
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Extract and identify disease subtypes using pattern matching and hierarchy validation."""
     from matrix.pipelines.disease_list.queries import query_get_descendants
 
     chromosomal_diseases_root = subtypes_params["chromosomal_diseases_root"]
@@ -348,19 +325,14 @@ def _extract_subtype_data(mondo_graph, subtypes_params, subtype_patterns, mondo_
 
 
 # TODO the following function might not be needed anymore. It basically sets the "official_matrix_filter" which is not used in production
-def _matrix_disease_filter(df_disease_list_unfiltered):
-    """
-    The original matrix disease filtering function
+def _matrix_disease_filter(df_disease_list_unfiltered: pd.DataFrame) -> pd.DataFrame:
+    """Apply MATRIX filter rules to determine which diseases are included in the platform.
 
-    Parameters
-    ----------
-    df_disease_list_unfiltered : pandas.DataFrame
-        The disease list, unfiltered, but with columns that are used for filtering.
+    Args:
+        df_disease_list_unfiltered: Disease list with filter feature columns
 
-    Returns
-    -------
-    pandas.DataFrame, pandas.DataFrame
-        A tuple of two DataFrames: the first one contains the included diseases, and the second one contains the excluded diseases.
+    Returns:
+        DataFrame with 'official_matrix_filter' column added
     """
     filter_column = "official_matrix_filter"
 
@@ -438,8 +410,8 @@ def _matrix_disease_filter(df_disease_list_unfiltered):
 
 
 def _extract_groupings(
-    subsets: str, groupings: list, subset_prefix: str, subset_delimiter: str, grouping_delimiter: str
-) -> dict:
+    subsets: str, groupings: List[str], subset_prefix: str, subset_delimiter: str, grouping_delimiter: str
+) -> Dict[str, str]:
     """Extract groupings from semicolon-delimited subset string.
 
     Args:
@@ -481,7 +453,7 @@ def _extract_groupings(
 
 
 def _is_grouping_heuristic(
-    df: pd.DataFrame, grouping_columns: list, not_grouping_columns: list, output_column: str
+    df: pd.DataFrame, grouping_columns: List[str], not_grouping_columns: List[str], output_column: str
 ) -> pd.DataFrame:
     """Apply grouping heuristic to classify diseases as groupings or specific diseases.
 
@@ -538,7 +510,7 @@ def _prepare_subtype_counts(subtype_counts: pd.DataFrame) -> pd.DataFrame:
 
 
 def _extract_and_pivot_groupings(
-    df: pd.DataFrame, groupings: list, subset_prefix: str, subset_delimiter: str, grouping_delimiter: str
+    df: pd.DataFrame, groupings: List[str], subset_prefix: str, subset_delimiter: str, grouping_delimiter: str
 ) -> pd.DataFrame:
     """Extract and pivot disease groupings from subset annotations.
 
