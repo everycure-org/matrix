@@ -16,6 +16,33 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
+def _get_sparql_prefixes() -> str:
+    """Get common SPARQL prefixes used across all queries.
+
+    Returns a string with all PREFIX declarations used in this module.
+    Some queries may not use all prefixes, but having them all ensures consistency.
+
+    Returns:
+        String containing all SPARQL PREFIX declarations
+    """
+    return """PREFIX MONDO: <http://purl.obolibrary.org/obo/MONDO_>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
+PREFIX oboInOwl: <http://www.geneontology.org/formats/oboInOwl#>
+PREFIX IAO: <http://purl.obolibrary.org/obo/IAO_>
+PREFIX mondo: <http://purl.obolibrary.org/obo/mondo#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX obo: <http://purl.obolibrary.org/obo/>
+PREFIX pattern: <http://purl.obolibrary.org/obo/mondo/patterns/>
+PREFIX def: <http://purl.obolibrary.org/obo/IAO_0000115>
+PREFIX : <http://www.test.com/ns/test#>
+"""
+
+
 def run_sparql_select(store, query: str) -> pd.DataFrame:
     """Execute a SPARQL SELECT query using PyOxigraph for fast performance.
 
@@ -106,11 +133,9 @@ def _query_base_disease_list(store) -> pd.DataFrame:
     Returns:
         DataFrame with columns: category_class, label, definition
     """
-    query = """
-PREFIX MONDO: <http://purl.obolibrary.org/obo/MONDO_>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX IAO: <http://purl.obolibrary.org/obo/IAO_>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class ?label ?definition
 WHERE {
   ?category_class rdfs:subClassOf* MONDO:0700096 .
@@ -126,6 +151,7 @@ WHERE {
   FILTER(!isBlank(?category_class) && STRSTARTS(str(?category_class), "http://purl.obolibrary.org/obo/MONDO_"))
 }
 """
+    )
     logger.info("Running base disease list query")
     return run_sparql_select(store, query)
 
@@ -141,9 +167,9 @@ def _query_metadata_synonyms(store) -> pd.DataFrame:
     Returns:
         DataFrame with columns: category_class, synonyms
     """
-    query = """
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class (GROUP_CONCAT(DISTINCT ?sorted_synonym; separator="; ") AS ?synonyms)
 WHERE {
   ?category_class oio:hasExactSynonym ?synonym .
@@ -152,6 +178,7 @@ WHERE {
 GROUP BY ?category_class
 ORDER BY ?sorted_synonym
 """
+    )
     logger.info("Running synonyms metadata query")
     return run_sparql_select(store, query)
 
@@ -162,9 +189,9 @@ def _query_metadata_subsets(store) -> pd.DataFrame:
     Returns:
         DataFrame with columns: category_class, subsets
     """
-    query = """
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class (GROUP_CONCAT(DISTINCT ?sorted_subset; separator="; ") AS ?subsets)
 WHERE {
   ?category_class oio:inSubset ?subset .
@@ -173,6 +200,7 @@ WHERE {
 GROUP BY ?category_class
 ORDER BY ?sorted_subset
 """
+    )
     logger.info("Running subsets metadata query")
     return run_sparql_select(store, query)
 
@@ -183,9 +211,9 @@ def _query_metadata_crossreferences(store) -> pd.DataFrame:
     Returns:
         DataFrame with columns: category_class, crossreferences
     """
-    query = """
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class (GROUP_CONCAT(DISTINCT ?sorted_xref; separator="; ") AS ?crossreferences)
 WHERE {
   ?category_class oio:hasDbXref ?xref .
@@ -194,6 +222,7 @@ WHERE {
 GROUP BY ?category_class
 ORDER BY ?sorted_xref
 """
+    )
     logger.info("Running cross-references metadata query")
     return run_sparql_select(store, query)
 
@@ -204,11 +233,9 @@ def _query_metadata_malacards_linkouts(store) -> pd.DataFrame:
     Returns:
         DataFrame with columns: category_class, malacards_linkouts
     """
-    query = """
-PREFIX mondo: <http://purl.obolibrary.org/obo/mondo#>
-PREFIX owl: <http://www.w3.org/2002/07/owl#>
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class (GROUP_CONCAT(DISTINCT ?sorted_malacardslinkouts; separator="; ") AS ?malacards_linkouts)
 WHERE {
   ?category_class mondo:curated_content_resource ?malacards_linkout .
@@ -223,6 +250,7 @@ WHERE {
 GROUP BY ?category_class
 ORDER BY ?sorted_malacardslinkouts
 """
+    )
     logger.info("Running MalaCards linkouts metadata query")
     return run_sparql_select(store, query)
 
@@ -234,81 +262,87 @@ ORDER BY ?sorted_malacardslinkouts
 
 def _query_filter_matrix_manually_included(store) -> Set[str]:
     """Get diseases manually included in the matrix."""
-    query = """
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#matrix_included> .
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_matrix_manually_excluded(store) -> Set[str]:
     """Get diseases manually excluded from the matrix."""
-    query = """
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#matrix_excluded> .
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_clingen(store) -> Set[str]:
     """Get diseases curated by ClinGen."""
-    query = """
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#clingen> .
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_susceptibility(store) -> Set[str]:
     """Get susceptibility match diseases."""
-    query = """
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#susceptibility_match> .
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_mondo_subtype(store) -> Set[str]:
     """Get diseases that are MONDO subtypes."""
-    query = """
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#mondo_subtype> .
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_pathway_defect(store) -> Set[str]:
     """Get diseases that are pathway defects."""
-    query = """
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#pathway_defect> .
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_grouping_subset(store) -> Set[str]:
     """Get diseases that are designated grouping classes in MONDO."""
-    query = """
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   VALUES ?_subset {
     <http://purl.obolibrary.org/obo/mondo#ordo_group_of_disorders>
@@ -320,54 +354,59 @@ SELECT ?category_class WHERE {
   ?category_class oio:inSubset ?_subset .
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_obsoletion_candidate(store) -> Set[str]:
     """Get diseases that are obsoletion candidates."""
-    query = """
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#obsoletion_candidate> .
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_orphanet_subtype(store) -> Set[str]:
     """Get diseases that correspond to Orphanet subtypes."""
-    query = """
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#ordo_subtype_of_a_disorder> .
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_orphanet_disorder(store) -> Set[str]:
     """Get diseases that correspond to Orphanet disorders."""
-    query = """
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#ordo_disorder> .
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_icd_billable(store) -> Set[str]:
     """Get diseases with billable ICD-10 codes."""
-    query = """
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class oio:inSubset <http://purl.obolibrary.org/obo/mondo#icd10_billable> .
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
@@ -378,79 +417,79 @@ SELECT ?category_class WHERE {
 
 def _query_filter_paraphilic(store) -> Set[str]:
     """Get paraphilic disorders (descendants of MONDO:0000596)."""
-    query = """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX MONDO: <http://purl.obolibrary.org/obo/MONDO_>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class rdfs:subClassOf* MONDO:0000596 .
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_cardiovascular(store) -> Set[str]:
     """Get cardiovascular disorders (descendants of MONDO:0004995)."""
-    query = """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX MONDO: <http://purl.obolibrary.org/obo/MONDO_>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class rdfs:subClassOf* MONDO:0004995 .
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_heart_disorder(store) -> Set[str]:
     """Get heart disorders (descendants of MONDO:0005267)."""
-    query = """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX MONDO: <http://purl.obolibrary.org/obo/MONDO_>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class rdfs:subClassOf* MONDO:0005267 .
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_inflammatory(store) -> Set[str]:
     """Get inflammatory diseases (descendants of MONDO:0021166)."""
-    query = """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX MONDO: <http://purl.obolibrary.org/obo/MONDO_>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class rdfs:subClassOf* MONDO:0021166 .
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_psychiatric(store) -> Set[str]:
     """Get psychiatric disorders (descendants of MONDO:0002025)."""
-    query = """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX MONDO: <http://purl.obolibrary.org/obo/MONDO_>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class rdfs:subClassOf* MONDO:0002025 .
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_cancer_or_benign_tumor(store) -> Set[str]:
     """Get cancer or benign tumor (descendants of MONDO:0045024)."""
-    query = """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX MONDO: <http://purl.obolibrary.org/obo/MONDO_>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class rdfs:subClassOf* MONDO:0045024 .
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
@@ -461,40 +500,43 @@ SELECT ?category_class WHERE {
 
 def _query_filter_withorwithout(store) -> Set[str]:
     """Get diseases with 'with or without' in the label."""
-    query = """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class rdfs:label ?label .
   FILTER(CONTAINS(?label, "with or without"))
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_andor(store) -> Set[str]:
     """Get diseases with 'and/or' in the label."""
-    query = """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class rdfs:label ?label .
   FILTER(CONTAINS(?label, "and/or"))
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_acquired(store) -> Set[str]:
     """Get diseases starting with 'acquired' in the label."""
-    query = """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class rdfs:label ?label .
   FILTER(STRSTARTS(?label, "acquired "))
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
@@ -505,10 +547,9 @@ SELECT ?category_class WHERE {
 
 def _query_filter_unclassified_hereditary(store) -> Set[str]:
     """Get unclassified hereditary diseases (leaf nodes under hereditary disease with no other parents)."""
-    query = """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX MONDO: <http://purl.obolibrary.org/obo/MONDO_>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?entity WHERE {
   ?entity rdfs:subClassOf+ MONDO:0003847 .
 
@@ -530,16 +571,16 @@ SELECT ?entity WHERE {
   }
 }
 """
+    )
     # Note: query uses ?entity instead of ?category_class
     return _extract_ids_from_query(store, query, column_name="entity")
 
 
 def _query_filter_grouping_subset_ancestor(store) -> Set[str]:
     """Get ancestors of designated grouping classes."""
-    query = """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT DISTINCT ?category_class WHERE {
   ?grouping_class_subset rdfs:subClassOf+ ?category_class .
   VALUES ?_subset {
@@ -551,71 +592,72 @@ SELECT DISTINCT ?category_class WHERE {
   ?grouping_class_subset oio:inSubset ?_subset .
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_orphanet_subtype_descendant(store) -> Set[str]:
     """Get descendants of Orphanet subtypes."""
-    query = """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT DISTINCT ?category_class WHERE {
   ?category_class rdfs:subClassOf+ ?subtype_subset .
   ?subtype_subset oio:inSubset <http://purl.obolibrary.org/obo/mondo#ordo_subtype_of_a_disorder> .
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_omimps(store) -> Set[str]:
     """Get diseases corresponding to OMIM Phenotypic Series."""
-    query = """
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class skos:exactMatch ?match .
   FILTER(STRSTARTS(STR(?match), "https://omim.org/phenotypicSeries/PS"))
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_omimps_descendant(store) -> Set[str]:
     """Get descendants of OMIM Phenotypic Series."""
-    query = """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT DISTINCT ?category_class WHERE {
   ?category_class rdfs:subClassOf+ ?omimps .
   ?omimps skos:exactMatch ?match .
   FILTER(STRSTARTS(STR(?match), "https://omim.org/phenotypicSeries/PS"))
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_omim(store) -> Set[str]:
     """Get diseases with OMIM entries."""
-    query = """
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class skos:exactMatch ?match .
   FILTER(STRSTARTS(STR(?match), "https://omim.org/entry/"))
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_leaf(store) -> Set[str]:
     """Get leaf nodes (diseases with no children)."""
-    query = """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX owl: <http://www.w3.org/2002/07/owl#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT ?category_class WHERE {
   ?category_class rdf:type owl:Class .
   FILTER NOT EXISTS {
@@ -623,14 +665,15 @@ SELECT ?category_class WHERE {
   }
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_leaf_direct_parent(store) -> Set[str]:
     """Get direct parents of leaf nodes."""
-    query = """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT DISTINCT ?category_class WHERE {
   ?leaf rdfs:subClassOf ?category_class .
   FILTER NOT EXISTS {
@@ -638,6 +681,7 @@ SELECT DISTINCT ?category_class WHERE {
   }
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
@@ -648,10 +692,9 @@ SELECT DISTINCT ?category_class WHERE {
 
 def _query_filter_icd_category(store) -> Set[str]:
     """Get diseases corresponding to ICD-10 categories (has . but not -)."""
-    query = """
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-PREFIX owl: <http://www.w3.org/2002/07/owl#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT DISTINCT ?category_class WHERE {
   ?category_class oio:hasDbXref ?xref .
   ?a owl:annotatedSource ?category_class ;
@@ -665,15 +708,15 @@ SELECT DISTINCT ?category_class WHERE {
   )
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_icd_chapter_code(store) -> Set[str]:
     """Get diseases corresponding to ICD-10 chapter codes (has - but not .)."""
-    query = """
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-PREFIX owl: <http://www.w3.org/2002/07/owl#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT DISTINCT ?category_class WHERE {
   ?category_class oio:hasDbXref ?xref .
   ?a owl:annotatedSource ?category_class ;
@@ -687,15 +730,15 @@ SELECT DISTINCT ?category_class WHERE {
   )
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
 def _query_filter_icd_chapter_header(store) -> Set[str]:
     """Get diseases corresponding to ICD-10 chapter headers (no . or -)."""
-    query = """
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-PREFIX owl: <http://www.w3.org/2002/07/owl#>
-
+    query = (
+        _get_sparql_prefixes()
+        + """
 SELECT DISTINCT ?category_class WHERE {
   ?category_class oio:hasDbXref ?xref .
   ?a owl:annotatedSource ?category_class ;
@@ -709,6 +752,7 @@ SELECT DISTINCT ?category_class WHERE {
   )
 }
 """
+    )
     return _extract_ids_from_query(store, query)
 
 
@@ -896,15 +940,15 @@ def query_get_ancestors(store, child_id: str) -> set[str]:
     uri = child_id.replace("MONDO:", "http://purl.obolibrary.org/obo/MONDO_")
 
     # SPARQL query to find all ancestors using property paths
-    query = f"""
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        PREFIX obo: <http://purl.obolibrary.org/obo/>
-
+    query = (
+        _get_sparql_prefixes()
+        + f"""
         SELECT DISTINCT ?ancestor WHERE {{
             <{uri}> rdfs:subClassOf* ?ancestor .
             FILTER(?ancestor != <{uri}>)
         }}
     """
+    )
 
     results = store.query(query)
     ancestors = set()
@@ -933,15 +977,15 @@ def query_get_descendants(store, root_id: str) -> set[str]:
 
     # SPARQL query to find all descendants using property paths
     # rdfs:subClassOf* means zero or more subClassOf relationships
-    query = f"""
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        PREFIX obo: <http://purl.obolibrary.org/obo/>
-
+    query = (
+        _get_sparql_prefixes()
+        + f"""
         SELECT DISTINCT ?descendant WHERE {{
             ?descendant rdfs:subClassOf* <{uri}> .
             FILTER(?descendant != <{uri}>)
         }}
     """
+    )
 
     results = store.query(query)
     descendants = set()
@@ -960,10 +1004,9 @@ def query_mondo_labels() -> str:
 
     Returns SPARQL query to extract all MONDO labels.
     """
-    return """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX obo: <http://purl.obolibrary.org/obo/>
-
+    return (
+        _get_sparql_prefixes()
+        + """
 SELECT ?ID ?LABEL
 
 WHERE {
@@ -971,6 +1014,7 @@ WHERE {
   FILTER(STRSTARTS(STR(?ID), "http://purl.obolibrary.org/obo/MONDO_"))
 }
 """
+    )
 
 
 def query_ontology_metadata() -> str:
@@ -978,10 +1022,9 @@ def query_ontology_metadata() -> str:
 
     Returns SPARQL query to extract ontology version and metadata.
     """
-    return """
-PREFIX owl: <http://www.w3.org/2002/07/owl#>
-PREFIX dc: <http://purl.org/dc/elements/1.1/>
-
+    return (
+        _get_sparql_prefixes()
+        + """
 SELECT ?versionIRI ?IRI ?title
 
 WHERE {
@@ -990,6 +1033,7 @@ WHERE {
   OPTIONAL { ?IRI dc:title ?title . }
 }
 """
+    )
 
 
 def query_mondo_obsoletes() -> str:
@@ -997,13 +1041,9 @@ def query_mondo_obsoletes() -> str:
 
     Returns SPARQL query to find all obsolete MONDO terms with replacements.
     """
-    return """
-PREFIX owl: <http://www.w3.org/2002/07/owl#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX oboInOwl: <http://www.geneontology.org/formats/oboInOwl#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-PREFIX IAO: <http://purl.obolibrary.org/obo/IAO_>
-
+    return (
+        _get_sparql_prefixes()
+        + """
 SELECT
     ?cls
     ?label
@@ -1030,6 +1070,7 @@ WHERE {
 GROUP BY ?cls ?label ?deprecated
 ORDER BY ?cls
 """
+    )
 
 
 def query_matrix_disease_list_metrics() -> str:
@@ -1037,17 +1078,9 @@ def query_matrix_disease_list_metrics() -> str:
 
     Returns SPARQL query to count descendants for each disease.
     """
-    return """
-PREFIX IAO: <http://purl.obolibrary.org/obo/IAO_>
-PREFIX MONDO: <http://purl.obolibrary.org/obo/MONDO_>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-PREFIX def: <http://purl.obolibrary.org/obo/IAO_0000115>
-PREFIX owl: <http://www.w3.org/2002/07/owl#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-PREFIX mondo: <http://purl.obolibrary.org/obo/mondo#>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-
+    return (
+        _get_sparql_prefixes()
+        + """
 SELECT DISTINCT
   ?category_class
   (COUNT(DISTINCT ?decendant_disease) AS ?count_descendants)
@@ -1069,6 +1102,7 @@ WHERE
 GROUP BY ?category_class
 ORDER BY DESC(?category_class)
 """
+    )
 
 
 # =============================================================================
@@ -1081,11 +1115,9 @@ def query_inject_mondo_top_grouping() -> str:
 
     Returns SPARQL UPDATE query to add top-level grouping subset annotation.
     """
-    return """
-PREFIX mondo: <http://purl.obolibrary.org/obo/mondo#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-
+    return (
+        _get_sparql_prefixes()
+        + """
 INSERT {
   ?subject oio:inSubset <http://purl.obolibrary.org/obo/mondo#mondo_top_grouping> .
 }
@@ -1093,6 +1125,7 @@ WHERE {
   ?subject rdfs:subClassOf <http://purl.obolibrary.org/obo/MONDO_0700096> .
 }
 """
+    )
 
 
 def query_inject_susceptibility_subset() -> str:
@@ -1100,12 +1133,9 @@ def query_inject_susceptibility_subset() -> str:
 
     Returns SPARQL UPDATE query to mark susceptibility diseases.
     """
-    return """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX pattern: <http://purl.obolibrary.org/obo/mondo/patterns/>
-PREFIX oboInOwl: <http://www.geneontology.org/formats/oboInOwl#>
-PREFIX MONDO: <http://purl.obolibrary.org/obo/MONDO_>
-
+    return (
+        _get_sparql_prefixes()
+        + """
 INSERT {
     ?subset rdfs:subPropertyOf oboInOwl:SubsetProperty .
     ?entity oboInOwl:inSubset ?subset .
@@ -1124,6 +1154,7 @@ WHERE {
 
 }
 """
+    )
 
 
 def query_inject_subset_declaration() -> str:
@@ -1131,11 +1162,9 @@ def query_inject_subset_declaration() -> str:
 
     Returns SPARQL UPDATE query to properly declare subset properties.
     """
-    return """
-PREFIX : <http://www.test.com/ns/test#>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-
+    return (
+        _get_sparql_prefixes()
+        + """
 INSERT { ?y rdfs:subPropertyOf <http://www.geneontology.org/formats/oboInOwl#SubsetProperty> . }
 
 WHERE {
@@ -1144,6 +1173,7 @@ WHERE {
   FILTER(regex(str(?y),"^(http://purl.obolibrary.org/obo/)") || regex(str(?y),"^(http://www.ebi.ac.uk/efo/)") || regex(str(?y),"^(https://w3id.org/biolink/)") || regex(str(?y),"^(http://purl.obolibrary.org/obo)"))
 }
 """
+    )
 
 
 def query_downfill_disease_groupings() -> str:
@@ -1151,11 +1181,9 @@ def query_downfill_disease_groupings() -> str:
 
     Returns SPARQL UPDATE query to downfill subset annotations from parents.
     """
-    return """
-PREFIX mondo: <http://purl.obolibrary.org/obo/mondo#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-
+    return (
+        _get_sparql_prefixes()
+        + """
 INSERT {
   ?descendant oio:inSubset ?memberSubset .
   ?descendant oio:inSubset ?subjectSubset .
@@ -1172,6 +1200,7 @@ WHERE {
     BIND(IRI(CONCAT(CONCAT(STR(?subset),"_"),REPLACE(LCASE(?label), "[^a-zA-Z0-9]", "_"))) AS ?subjectSubset)
 }
 """
+    )
 
 
 def query_disease_groupings_other() -> str:
@@ -1179,11 +1208,9 @@ def query_disease_groupings_other() -> str:
 
     Returns SPARQL UPDATE query to add 'other' grouping for diseases not in any grouping.
     """
-    return """
-PREFIX mondo: <http://purl.obolibrary.org/obo/mondo#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
-
+    return (
+        _get_sparql_prefixes()
+        + """
 INSERT {
   ?subject oio:inSubset ?otherSubset .
 }
@@ -1216,3 +1243,4 @@ WHERE {
   }
 }
 """
+    )
