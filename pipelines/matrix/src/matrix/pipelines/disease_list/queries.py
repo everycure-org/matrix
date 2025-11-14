@@ -53,10 +53,10 @@ def run_sparql_select(store, query: str) -> pd.DataFrame:
         rows.append(row_dict)
 
     results_df = pd.DataFrame(rows)
-    return clean_sparql_results(results_df)
+    return _clean_sparql_results(results_df)
 
 
-def clean_sparql_results(df: pd.DataFrame) -> pd.DataFrame:
+def _clean_sparql_results(df: pd.DataFrame) -> pd.DataFrame:
     for col in df.columns:
         df[col] = (
             df[col]
@@ -94,7 +94,7 @@ def _extract_ids_from_query(store, query: str, column_name: str = "category_clas
 # =============================================================================
 
 
-def query_base_disease_list(store) -> pd.DataFrame:
+def _query_base_disease_list(store) -> pd.DataFrame:
     """Get all human diseases with basic metadata (label, definition).
 
     This is the foundation query that gets all MONDO diseases that are
@@ -135,7 +135,7 @@ WHERE {
 # =============================================================================
 
 
-def query_metadata_synonyms(store) -> pd.DataFrame:
+def _query_metadata_synonyms(store) -> pd.DataFrame:
     """Get concatenated synonyms for diseases.
 
     Returns:
@@ -156,7 +156,7 @@ ORDER BY ?sorted_synonym
     return run_sparql_select(store, query)
 
 
-def query_metadata_subsets(store) -> pd.DataFrame:
+def _query_metadata_subsets(store) -> pd.DataFrame:
     """Get concatenated subsets for diseases.
 
     Returns:
@@ -177,7 +177,7 @@ ORDER BY ?sorted_subset
     return run_sparql_select(store, query)
 
 
-def query_metadata_crossreferences(store) -> pd.DataFrame:
+def _query_metadata_crossreferences(store) -> pd.DataFrame:
     """Get concatenated cross-references for diseases.
 
     Returns:
@@ -198,7 +198,7 @@ ORDER BY ?sorted_xref
     return run_sparql_select(store, query)
 
 
-def query_metadata_malacards_linkouts(store) -> pd.DataFrame:
+def _query_metadata_malacards_linkouts(store) -> pd.DataFrame:
     """Get concatenated MalaCards linkouts for diseases.
 
     Returns:
@@ -232,7 +232,7 @@ ORDER BY ?sorted_malacardslinkouts
 # =============================================================================
 
 
-def query_filter_matrix_manually_included(store) -> Set[str]:
+def _query_filter_matrix_manually_included(store) -> Set[str]:
     """Get diseases manually included in the matrix."""
     query = """
 PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
@@ -244,7 +244,7 @@ SELECT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_matrix_manually_excluded(store) -> Set[str]:
+def _query_filter_matrix_manually_excluded(store) -> Set[str]:
     """Get diseases manually excluded from the matrix."""
     query = """
 PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
@@ -256,7 +256,7 @@ SELECT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_clingen(store) -> Set[str]:
+def _query_filter_clingen(store) -> Set[str]:
     """Get diseases curated by ClinGen."""
     query = """
 PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
@@ -268,7 +268,7 @@ SELECT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_susceptibility(store) -> Set[str]:
+def _query_filter_susceptibility(store) -> Set[str]:
     """Get susceptibility match diseases."""
     query = """
 PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
@@ -280,7 +280,7 @@ SELECT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_mondo_subtype(store) -> Set[str]:
+def _query_filter_mondo_subtype(store) -> Set[str]:
     """Get diseases that are MONDO subtypes."""
     query = """
 PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
@@ -292,7 +292,7 @@ SELECT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_pathway_defect(store) -> Set[str]:
+def _query_filter_pathway_defect(store) -> Set[str]:
     """Get diseases that are pathway defects."""
     query = """
 PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
@@ -304,7 +304,7 @@ SELECT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_grouping_subset(store) -> Set[str]:
+def _query_filter_grouping_subset(store) -> Set[str]:
     """Get diseases that are designated grouping classes in MONDO."""
     query = """
 PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
@@ -323,7 +323,7 @@ SELECT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_obsoletion_candidate(store) -> Set[str]:
+def _query_filter_obsoletion_candidate(store) -> Set[str]:
     """Get diseases that are obsoletion candidates."""
     query = """
 PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
@@ -335,7 +335,7 @@ SELECT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_orphanet_subtype(store) -> Set[str]:
+def _query_filter_orphanet_subtype(store) -> Set[str]:
     """Get diseases that correspond to Orphanet subtypes."""
     query = """
 PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
@@ -347,7 +347,7 @@ SELECT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_orphanet_disorder(store) -> Set[str]:
+def _query_filter_orphanet_disorder(store) -> Set[str]:
     """Get diseases that correspond to Orphanet disorders."""
     query = """
 PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
@@ -359,7 +359,7 @@ SELECT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_icd_billable(store) -> Set[str]:
+def _query_filter_icd_billable(store) -> Set[str]:
     """Get diseases with billable ICD-10 codes."""
     query = """
 PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
@@ -376,7 +376,7 @@ SELECT ?category_class WHERE {
 # =============================================================================
 
 
-def query_filter_paraphilic(store) -> Set[str]:
+def _query_filter_paraphilic(store) -> Set[str]:
     """Get paraphilic disorders (descendants of MONDO:0000596)."""
     query = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -389,7 +389,7 @@ SELECT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_cardiovascular(store) -> Set[str]:
+def _query_filter_cardiovascular(store) -> Set[str]:
     """Get cardiovascular disorders (descendants of MONDO:0004995)."""
     query = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -402,7 +402,7 @@ SELECT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_heart_disorder(store) -> Set[str]:
+def _query_filter_heart_disorder(store) -> Set[str]:
     """Get heart disorders (descendants of MONDO:0005267)."""
     query = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -415,7 +415,7 @@ SELECT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_inflammatory(store) -> Set[str]:
+def _query_filter_inflammatory(store) -> Set[str]:
     """Get inflammatory diseases (descendants of MONDO:0021166)."""
     query = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -428,7 +428,7 @@ SELECT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_psychiatric(store) -> Set[str]:
+def _query_filter_psychiatric(store) -> Set[str]:
     """Get psychiatric disorders (descendants of MONDO:0002025)."""
     query = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -441,7 +441,7 @@ SELECT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_cancer_or_benign_tumor(store) -> Set[str]:
+def _query_filter_cancer_or_benign_tumor(store) -> Set[str]:
     """Get cancer or benign tumor (descendants of MONDO:0045024)."""
     query = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -459,7 +459,7 @@ SELECT ?category_class WHERE {
 # =============================================================================
 
 
-def query_filter_withorwithout(store) -> Set[str]:
+def _query_filter_withorwithout(store) -> Set[str]:
     """Get diseases with 'with or without' in the label."""
     query = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -472,7 +472,7 @@ SELECT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_andor(store) -> Set[str]:
+def _query_filter_andor(store) -> Set[str]:
     """Get diseases with 'and/or' in the label."""
     query = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -485,7 +485,7 @@ SELECT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_acquired(store) -> Set[str]:
+def _query_filter_acquired(store) -> Set[str]:
     """Get diseases starting with 'acquired' in the label."""
     query = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -503,7 +503,7 @@ SELECT ?category_class WHERE {
 # =============================================================================
 
 
-def query_filter_unclassified_hereditary(store) -> Set[str]:
+def _query_filter_unclassified_hereditary(store) -> Set[str]:
     """Get unclassified hereditary diseases (leaf nodes under hereditary disease with no other parents)."""
     query = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -534,7 +534,7 @@ SELECT ?entity WHERE {
     return _extract_ids_from_query(store, query, column_name="entity")
 
 
-def query_filter_grouping_subset_ancestor(store) -> Set[str]:
+def _query_filter_grouping_subset_ancestor(store) -> Set[str]:
     """Get ancestors of designated grouping classes."""
     query = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -554,7 +554,7 @@ SELECT DISTINCT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_orphanet_subtype_descendant(store) -> Set[str]:
+def _query_filter_orphanet_subtype_descendant(store) -> Set[str]:
     """Get descendants of Orphanet subtypes."""
     query = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -568,7 +568,7 @@ SELECT DISTINCT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_omimps(store) -> Set[str]:
+def _query_filter_omimps(store) -> Set[str]:
     """Get diseases corresponding to OMIM Phenotypic Series."""
     query = """
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -581,7 +581,7 @@ SELECT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_omimps_descendant(store) -> Set[str]:
+def _query_filter_omimps_descendant(store) -> Set[str]:
     """Get descendants of OMIM Phenotypic Series."""
     query = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -596,7 +596,7 @@ SELECT DISTINCT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_omim(store) -> Set[str]:
+def _query_filter_omim(store) -> Set[str]:
     """Get diseases with OMIM entries."""
     query = """
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -609,7 +609,7 @@ SELECT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_leaf(store) -> Set[str]:
+def _query_filter_leaf(store) -> Set[str]:
     """Get leaf nodes (diseases with no children)."""
     query = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -626,7 +626,7 @@ SELECT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_leaf_direct_parent(store) -> Set[str]:
+def _query_filter_leaf_direct_parent(store) -> Set[str]:
     """Get direct parents of leaf nodes."""
     query = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -646,7 +646,7 @@ SELECT DISTINCT ?category_class WHERE {
 # =============================================================================
 
 
-def query_filter_icd_category(store) -> Set[str]:
+def _query_filter_icd_category(store) -> Set[str]:
     """Get diseases corresponding to ICD-10 categories (has . but not -)."""
     query = """
 PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
@@ -668,7 +668,7 @@ SELECT DISTINCT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_icd_chapter_code(store) -> Set[str]:
+def _query_filter_icd_chapter_code(store) -> Set[str]:
     """Get diseases corresponding to ICD-10 chapter codes (has - but not .)."""
     query = """
 PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
@@ -690,7 +690,7 @@ SELECT DISTINCT ?category_class WHERE {
     return _extract_ids_from_query(store, query)
 
 
-def query_filter_icd_chapter_header(store) -> Set[str]:
+def _query_filter_icd_chapter_header(store) -> Set[str]:
     """Get diseases corresponding to ICD-10 chapter headers (no . or -)."""
     query = """
 PREFIX oio: <http://www.geneontology.org/formats/oboInOwl#>
@@ -733,22 +733,22 @@ def extract_raw_disease_list_data_from_mondo(store) -> pd.DataFrame:
     logger.info("Assembling disease list from multiple focused queries")
 
     # 1. Get base disease list
-    df = query_base_disease_list(store)
+    df = _query_base_disease_list(store)
     logger.info(f"Base query returned {len(df)} diseases")
 
     # 2. Add metadata (left joins)
     logger.info("Adding metadata...")
 
-    synonyms = query_metadata_synonyms(store)
+    synonyms = _query_metadata_synonyms(store)
     df = df.merge(synonyms, on="category_class", how="left")
 
-    subsets = query_metadata_subsets(store)
+    subsets = _query_metadata_subsets(store)
     df = df.merge(subsets, on="category_class", how="left")
 
-    crossrefs = query_metadata_crossreferences(store)
+    crossrefs = _query_metadata_crossreferences(store)
     df = df.merge(crossrefs, on="category_class", how="left")
 
-    malacards = query_metadata_malacards_linkouts(store)
+    malacards = _query_metadata_malacards_linkouts(store)
     df = df.merge(malacards, on="category_class", how="left")
 
     # 3. Add filter flags
@@ -756,117 +756,117 @@ def extract_raw_disease_list_data_from_mondo(store) -> pd.DataFrame:
 
     # Subset-based filters
     df["f_matrix_manually_included"] = (
-        df["category_class"].isin(query_filter_matrix_manually_included(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_matrix_manually_included(store)).apply(lambda x: "TRUE" if x else "")
     )
 
     df["f_matrix_manually_excluded"] = (
-        df["category_class"].isin(query_filter_matrix_manually_excluded(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_matrix_manually_excluded(store)).apply(lambda x: "TRUE" if x else "")
     )
 
-    df["f_clingen"] = df["category_class"].isin(query_filter_clingen(store)).apply(lambda x: "TRUE" if x else "")
+    df["f_clingen"] = df["category_class"].isin(_query_filter_clingen(store)).apply(lambda x: "TRUE" if x else "")
 
     df["f_susceptibility"] = (
-        df["category_class"].isin(query_filter_susceptibility(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_susceptibility(store)).apply(lambda x: "TRUE" if x else "")
     )
 
     df["f_mondo_subtype"] = (
-        df["category_class"].isin(query_filter_mondo_subtype(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_mondo_subtype(store)).apply(lambda x: "TRUE" if x else "")
     )
 
     df["f_pathway_defect"] = (
-        df["category_class"].isin(query_filter_pathway_defect(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_pathway_defect(store)).apply(lambda x: "TRUE" if x else "")
     )
 
     df["f_grouping_subset"] = (
-        df["category_class"].isin(query_filter_grouping_subset(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_grouping_subset(store)).apply(lambda x: "TRUE" if x else "")
     )
 
     df["f_obsoletion_candidate"] = (
-        df["category_class"].isin(query_filter_obsoletion_candidate(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_obsoletion_candidate(store)).apply(lambda x: "TRUE" if x else "")
     )
 
     df["f_orphanet_subtype"] = (
-        df["category_class"].isin(query_filter_orphanet_subtype(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_orphanet_subtype(store)).apply(lambda x: "TRUE" if x else "")
     )
 
     df["f_orphanet_disorder"] = (
-        df["category_class"].isin(query_filter_orphanet_disorder(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_orphanet_disorder(store)).apply(lambda x: "TRUE" if x else "")
     )
 
     df["f_icd_billable"] = (
-        df["category_class"].isin(query_filter_icd_billable(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_icd_billable(store)).apply(lambda x: "TRUE" if x else "")
     )
 
     # Hierarchy-based filters
-    df["f_paraphilic"] = df["category_class"].isin(query_filter_paraphilic(store)).apply(lambda x: "TRUE" if x else "")
+    df["f_paraphilic"] = df["category_class"].isin(_query_filter_paraphilic(store)).apply(lambda x: "TRUE" if x else "")
 
     df["f_cardiovascular"] = (
-        df["category_class"].isin(query_filter_cardiovascular(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_cardiovascular(store)).apply(lambda x: "TRUE" if x else "")
     )
 
     df["f_filter_heart_disorder"] = (
-        df["category_class"].isin(query_filter_heart_disorder(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_heart_disorder(store)).apply(lambda x: "TRUE" if x else "")
     )
 
     df["f_inflammatory"] = (
-        df["category_class"].isin(query_filter_inflammatory(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_inflammatory(store)).apply(lambda x: "TRUE" if x else "")
     )
 
     df["f_psychiatric"] = (
-        df["category_class"].isin(query_filter_psychiatric(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_psychiatric(store)).apply(lambda x: "TRUE" if x else "")
     )
 
     df["f_cancer_or_benign_tumor"] = (
-        df["category_class"].isin(query_filter_cancer_or_benign_tumor(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_cancer_or_benign_tumor(store)).apply(lambda x: "TRUE" if x else "")
     )
 
     # Label-based filters
     df["f_withorwithout"] = (
-        df["category_class"].isin(query_filter_withorwithout(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_withorwithout(store)).apply(lambda x: "TRUE" if x else "")
     )
 
-    df["f_andor"] = df["category_class"].isin(query_filter_andor(store)).apply(lambda x: "TRUE" if x else "")
+    df["f_andor"] = df["category_class"].isin(_query_filter_andor(store)).apply(lambda x: "TRUE" if x else "")
 
-    df["f_acquired"] = df["category_class"].isin(query_filter_acquired(store)).apply(lambda x: "TRUE" if x else "")
+    df["f_acquired"] = df["category_class"].isin(_query_filter_acquired(store)).apply(lambda x: "TRUE" if x else "")
 
     # Complex filters
     df["f_unclassified_hereditary"] = (
-        df["category_class"].isin(query_filter_unclassified_hereditary(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_unclassified_hereditary(store)).apply(lambda x: "TRUE" if x else "")
     )
 
     df["f_grouping_subset_ancestor"] = (
-        df["category_class"].isin(query_filter_grouping_subset_ancestor(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_grouping_subset_ancestor(store)).apply(lambda x: "TRUE" if x else "")
     )
 
     df["f_orphanet_subtype_descendant"] = (
-        df["category_class"].isin(query_filter_orphanet_subtype_descendant(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_orphanet_subtype_descendant(store)).apply(lambda x: "TRUE" if x else "")
     )
 
-    df["f_omimps"] = df["category_class"].isin(query_filter_omimps(store)).apply(lambda x: "TRUE" if x else "")
+    df["f_omimps"] = df["category_class"].isin(_query_filter_omimps(store)).apply(lambda x: "TRUE" if x else "")
 
     df["f_omimps_descendant"] = (
-        df["category_class"].isin(query_filter_omimps_descendant(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_omimps_descendant(store)).apply(lambda x: "TRUE" if x else "")
     )
 
-    df["f_omim"] = df["category_class"].isin(query_filter_omim(store)).apply(lambda x: "TRUE" if x else "")
+    df["f_omim"] = df["category_class"].isin(_query_filter_omim(store)).apply(lambda x: "TRUE" if x else "")
 
-    df["f_leaf"] = df["category_class"].isin(query_filter_leaf(store)).apply(lambda x: "TRUE" if x else "")
+    df["f_leaf"] = df["category_class"].isin(_query_filter_leaf(store)).apply(lambda x: "TRUE" if x else "")
 
     df["f_leaf_direct_parent"] = (
-        df["category_class"].isin(query_filter_leaf_direct_parent(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_leaf_direct_parent(store)).apply(lambda x: "TRUE" if x else "")
     )
 
     # ICD-10 filters
     df["f_icd_category"] = (
-        df["category_class"].isin(query_filter_icd_category(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_icd_category(store)).apply(lambda x: "TRUE" if x else "")
     )
 
     df["f_icd_chapter_code"] = (
-        df["category_class"].isin(query_filter_icd_chapter_code(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_icd_chapter_code(store)).apply(lambda x: "TRUE" if x else "")
     )
 
     df["f_icd_chapter_header"] = (
-        df["category_class"].isin(query_filter_icd_chapter_header(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_icd_chapter_header(store)).apply(lambda x: "TRUE" if x else "")
     )
 
     # Sort by label descending (matching original query)
