@@ -42,31 +42,24 @@ def create_billable_icd10_codes(
     """
     logger.info("Creating billable ICD-10-CM dataframe")
 
-    # Extract parameters
     exact_match_predicate = parameters["exact_match_predicate"]
     icd10_billable_subset = parameters["icd10_billable_subset"]
     icd10cm_prefix = parameters["icd10cm_prefix"]
 
-    # Convert ICD-10 codes to CURIE format without mutating input
     icd10_codes_formatted = icd10_codes.copy()
     icd10_codes_formatted["CODE"] = icd10_codes_formatted["CODE"].apply(
         lambda code: _format_icd10_code_to_curie(code, icd10cm_prefix)
     )
 
-    # Filter SSSOM mappings to only exact matches
     exact_matches = mondo_sssom[mondo_sssom["predicate_id"] == exact_match_predicate].copy()
-
-    # Find billable codes that have MONDO mappings
     billable_with_mappings = icd10_codes_formatted[icd10_codes_formatted["CODE"].isin(exact_matches["object_id"])]
 
     logger.info(f"Found {len(billable_with_mappings)} billable ICD-10 codes with MONDO mappings")
 
-    # Create dataframe rows by joining billable codes with their MONDO mappings
     icd10_data = exact_matches.merge(
         billable_with_mappings[["CODE"]], left_on="object_id", right_on="CODE", how="inner"
     )
 
-    # Return simple DataFrame (no ROBOT header)
     return pd.DataFrame(
         {
             "subject_id": icd10_data["subject_id"],
@@ -175,7 +168,6 @@ def _build_subtype_df(matched_df: pd.DataFrame, mondo_subtype_subset: str, contr
     """Convert matched subtype parents into annotation dataframe for graph enrichment."""
     unique_parents = matched_df[["parent_id", "parent_label"]].drop_duplicates().dropna().sort_values("parent_id")
 
-    # Create rows for subset membership (one per parent)
     subset_rows = pd.DataFrame(
         {
             "subject_id": unique_parents["parent_id"],
@@ -241,22 +233,17 @@ def extract_disease_data_from_mondo(
 
     _log_mondo_size(mondo_graph)
 
-    # Step 0: Extract metadata and labels from MONDO
     logger.info("Step 0: Extracting metadata and labels from MONDO")
 
-    # Extract labels (for internal use in subtype identification)
     mondo_labels = query_mondo_labels(mondo_graph)
     logger.info(f"Extracted {len(mondo_labels)} MONDO labels")
 
-    # Extract metadata (primary output for documentation)
     mondo_metadata = query_ontology_metadata(mondo_graph)
     logger.info(f"Extracted MONDO metadata: {mondo_metadata}")
 
-    # Extract obsoletes (primary output for documentation)
     mondo_obsoletes = query_mondo_obsoletes(mondo_graph)
     logger.info(f"Extracted {len(mondo_obsoletes)} obsolete MONDO terms")
 
-    # Step 1: Identify disease subtypes using hierarchy analysis
     logger.info("Step 1: Identifying disease subtypes")
 
     subtype_counts, df_subtypes = _extract_subtype_data(mondo_graph, subtypes_params, subtype_patterns, mondo_labels)
@@ -269,7 +256,6 @@ def extract_disease_data_from_mondo(
     disease_list_raw = query_raw_disease_list_data_from_mondo(mondo_graph, billable_icd10, df_subtypes)
     logger.info(f"Extracted {len(disease_list_raw)} diseases in raw list")
 
-    # Run metrics query
     logger.info("Extracting disease metrics")
     mondo_metrics = query_matrix_disease_list_metrics(mondo_graph)
     logger.info(f"Extracted metrics for {len(mondo_metrics)} diseases")
@@ -309,7 +295,6 @@ def _extract_subtype_data(
 
     logger.info(f"Found {len(chromosomal_diseases)} chromosomal diseases and {len(human_diseases)} human diseases")
 
-    # Filter labels and match subtypes
     mondo_prefix = subtypes_params["mondo_prefix"]
     filtered_labels = _filter_mondo_labels(mondo_labels, chromosomal_diseases, human_diseases, mondo_prefix)
     compiled_patterns = _compile_patterns(subtype_patterns)
@@ -336,29 +321,22 @@ def _matrix_disease_filter(df_disease_list_unfiltered: pd.DataFrame) -> pd.DataF
     """
     filter_column = "official_matrix_filter"
 
-    # By default, no disease is included
     df_disease_list_unfiltered[filter_column] = False
 
-    # QC: Check for conflicts where both f_matrix_manually_included and f_matrix_manually_excluded are True
     conflicts = df_disease_list_unfiltered[
         df_disease_list_unfiltered["f_matrix_manually_included"]
         & df_disease_list_unfiltered["f_matrix_manually_excluded"]
     ]
 
     if not conflicts.empty:
-        # Format the conflicts nicely
         conflict_str = conflicts.to_string(index=False)
         raise ValueError(
             f"Conflicts found: The following entries are marked as both manually included and manually excluded:\n{conflict_str}"
         )
 
-    # First, we add all manually curated classes to the list
     df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_matrix_manually_included"] == True
-
-    # Next, we add all leaf classes
     df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_leaf"] == True
 
-    # Now, we add all the immediate parents of leaf classes that are mapped to OMIM, ICD, or Orphanet
     df_disease_list_unfiltered[filter_column] |= (df_disease_list_unfiltered["f_leaf_direct_parent"] == True) & (
         (df_disease_list_unfiltered["f_omim"] == True)
         | (df_disease_list_unfiltered["f_omimps_descendant"] == True)
@@ -367,41 +345,15 @@ def _matrix_disease_filter(df_disease_list_unfiltered: pd.DataFrame) -> pd.DataF
         | (df_disease_list_unfiltered["f_orphanet_subtype"] == True)
     )
 
-    # Next, we add all diseases corresponding to ICD 10 billable codes
     df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_icd_category"] == True
-
-    # Next, we add all diseases corresponding to Orphanet disorders
     df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_orphanet_disorder"] == True
-
-    # Next, we add all diseases corresponding to ClinGen curated conditions
     df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_clingen"] == True
-
-    # Next, we add all diseases corresponding to OMIM curated diseases
     df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_omim"] == True
 
-    # Next we remove all susceptibilities, mondo subtypes, and diseases with and/or or with/without
-    # UPDATE 13.02.2025: We will for now _not_ remove these, but provide filter columns for them instead
-    # df_disease_list_unfiltered.loc[df_disease_list_unfiltered['f_mondo_subtype'] == True, filter_column] = False
-    # df_disease_list_unfiltered.loc[df_disease_list_unfiltered['f_susceptibility'] == True, filter_column] = False
-    # df_disease_list_unfiltered.loc[df_disease_list_unfiltered['f_andor'] == True, filter_column] = False
-    # df_disease_list_unfiltered.loc[df_disease_list_unfiltered['f_withorwithout'] == True, filter_column] = False
-
-    ## Remove all hereditary diseases without classification. This is imo a dangerous default, but
-    ## @jxneli reviewed all 849 cases from the February 2025 release and found that all were indeed
-    ## "irrelevant" for drug repurposing, https://github.com/everycure-org/matrix-disease-list/issues/50
     df_disease_list_unfiltered.loc[df_disease_list_unfiltered["f_unclassified_hereditary"] == True, filter_column] = (
         False
     )
-
-    ## Remove all diseases that are candidates for obsoletion
-    ## https://github.com/everycure-org/matrix-disease-list/issues/48
-    # df_disease_list_unfiltered.loc[df_disease_list_unfiltered['f_obsoletion_candidate'] == True, filter_column] = False
-
-    ## Remove all paraphilic disorders
-    ## https://github.com/everycure-org/matrix-disease-list/issues/42
     df_disease_list_unfiltered.loc[df_disease_list_unfiltered["f_paraphilic"] == True, filter_column] = False
-
-    # Remove disease that were manually excluded
     df_disease_list_unfiltered.loc[df_disease_list_unfiltered["f_matrix_manually_excluded"] == True, filter_column] = (
         False
     )
@@ -431,7 +383,6 @@ def _extract_groupings(
             subset = subset.strip()
             for grouping in groupings:
                 if subset.startswith(f"{subset_prefix}{grouping}"):
-                    # Extract tag by removing prefix, grouping name, spaces, and underscores
                     subset_tag = (
                         subset.replace(subset_prefix, "")
                         .replace(grouping, "")
@@ -439,11 +390,9 @@ def _extract_groupings(
                         .strip("_")
                         .replace(grouping_delimiter, "")
                     )
-                    # Skip member tags and empty strings
                     if subset_tag and subset_tag != "member":
                         result[grouping].append(subset_tag)
 
-    # Format results: join with pipe, exclude "other" if multiple values
     return {
         key: grouping_delimiter.join([v for v in values if v != "other"] if len(values) > 1 else values)
         if values
@@ -472,21 +421,17 @@ def _is_grouping_heuristic(
     """
     df = df.copy()
 
-    # Validate all expected columns are present
     expected_cols = set(grouping_columns) | set(not_grouping_columns)
     missing = [c for c in expected_cols if c not in df.columns]
     if missing:
         logging.warning(f"Missing columns: {df.columns}")
         raise ValueError(f"DataFrame is missing expected grouping columns: {', '.join(sorted(missing))}")
 
-    # Initialize to False
     df[output_column] = False
 
-    # Apply positive grouping rules
     for col in grouping_columns:
         df[output_column] = df[output_column] | df[col].fillna(False)
 
-    # Apply negative grouping rules (override)
     for col in not_grouping_columns:
         df.loc[df[col].fillna(False), output_column] = False
 
@@ -524,14 +469,12 @@ def _extract_and_pivot_groupings(
     Returns:
         DataFrame with category_class and one column per grouping
     """
-    # Extract groupings from subsets column
     groupings_extracted = (
         df["subsets"]
         .apply(lambda x: _extract_groupings(x, groupings, subset_prefix, subset_delimiter, grouping_delimiter))
         .apply(pd.Series)
     )
 
-    # Combine with category_class (drop label as not needed downstream)
     result = pd.concat([df[["category_class"]], groupings_extracted], axis=1)
     return result.sort_values("category_class")
 
@@ -557,14 +500,11 @@ def _merge_disease_data_sources(
     Returns:
         Merged DataFrame with all data sources
     """
-    # Start with base and merge groupings
     merged = base_df.merge(groupings_df, on="category_class", how="left")
 
-    # Merge metrics and subtype counts together first (both use category_class)
     metrics_and_counts = metrics_df.merge(subtype_counts_df, on="category_class", how="outer")
     merged = merged.merge(metrics_and_counts, on="category_class", how="left")
 
-    # Finally merge full subtype info
     merged = merged.merge(
         full_subtype_counts[["subset_id", "subset_group_id", "subset_group_label", "other_subsets_count"]],
         left_on="category_class",
@@ -572,7 +512,6 @@ def _merge_disease_data_sources(
         how="left",
     )
 
-    # Clean up temporary column
     return merged.drop(columns=["subset_id"], errors="ignore")
 
 
@@ -590,7 +529,6 @@ def _normalize_boolean_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
     df = df.copy()
 
-    # Find columns to convert
     columns_to_convert = [col for col in df.columns if col.startswith("is_")]
 
     # Special case for tag_existing_treatment
@@ -598,7 +536,6 @@ def _normalize_boolean_columns(df: pd.DataFrame) -> pd.DataFrame:
     if "tag_existing_treatment" in df.columns:
         columns_to_convert.append("tag_existing_treatment")
 
-    # Convert to string booleans
     for col in columns_to_convert:
         df[col] = df[col].map(
             lambda x: "True" if (isinstance(x, bool) and x) or (isinstance(x, str) and x.lower() == "true") else "False"
@@ -635,7 +572,6 @@ def create_disease_list(
     """
     logger.info("Create final disease list")
 
-    # Extract parameters
     curated_groupings = parameters["curated_groupings"]
     llm_groupings = parameters["llm_groupings"]
     subset_prefix = parameters["subset_prefix"]
@@ -646,17 +582,11 @@ def create_disease_list(
     grouping_heuristic_column = parameters["grouping_heuristic_column"]
     default_count = parameters["default_count"]
 
-    # Stage 1: Prepare subtype counts
     subtype_group_counts = _prepare_subtype_counts(subtype_counts)
-
-    # Stage 2: Apply MATRIX disease filtering
     filtered_df = _matrix_disease_filter(disease_list_raw)
-
-    # Stage 3: Rename filter columns from f_ to is_ prefix
     # See: https://github.com/everycure-org/matrix-disease-list/issues/75
     filtered_df = filtered_df.rename(columns=lambda x: re.sub(r"^f_", "is_", x) if x.startswith("f_") else x)
 
-    # Stage 4: Extract and pivot disease groupings
     all_groupings = curated_groupings + llm_groupings
     groupings_df = _extract_and_pivot_groupings(
         filtered_df[["category_class", "label", "subsets"]],
@@ -666,13 +596,10 @@ def create_disease_list(
         grouping_delimiter,
     )
 
-    # Stage 5: Merge all data sources
     merged_df = _merge_disease_data_sources(
         filtered_df, groupings_df, mondo_metrics, subtype_group_counts, subtype_counts
     )
 
-    # Stage 6: Compute derived columns
-    # Convert count columns to numeric (PyOxigraph returns all values as strings)
     merged_df["count_subtypes"] = (
         pd.to_numeric(merged_df["count_subtypes"], errors="coerce").fillna(default_count).astype(int)
     )
@@ -681,10 +608,7 @@ def create_disease_list(
     )
     merged_df["count_descendants_without_subtypes"] = merged_df["count_descendants"] - merged_df["count_subtypes"]
 
-    # Stage 7: Apply grouping heuristic
     merged_df = _is_grouping_heuristic(merged_df, grouping_columns, not_grouping_columns, grouping_heuristic_column)
-
-    # Stage 8: Normalize boolean columns to string format
     final_df = _normalize_boolean_columns(merged_df)
 
     logger.info(f"Created disease list with {len(final_df)} entries")
