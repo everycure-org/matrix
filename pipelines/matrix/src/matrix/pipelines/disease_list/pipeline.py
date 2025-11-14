@@ -12,9 +12,6 @@ from kedro.pipeline import Pipeline, node, pipeline
 
 from . import nodes
 
-# Get path to queries directory
-QUERIES_DIR = Path(__file__).parent / "queries"
-
 
 def create_pipeline(**kwargs: Any) -> Pipeline:
     """Create the disease list generation pipeline.

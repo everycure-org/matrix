@@ -19,10 +19,6 @@ _layer_prm: &_layer_prm
 
 # DEPRECATED: No longer used - PyOxigraph Store is used instead (via mondo_graph)
 # disease_list.raw.mondo_owl:
-#   type: text.TextDataset
-#   <<: *_layer_raw
-#   filepath: http://purl.obolibrary.org/obo/mondo.owl
-
 disease_list.raw.mondo_graph:
   type: matrix.datasets.rdf.PyOxiGraphDataset
   <<: *_layer_raw
@@ -38,8 +34,6 @@ disease_list.raw.mondo_sssom:
     sep: "\t"
     comment: "#"
 
-# @JacquesVergine I only want to download this file, its the start and end point
-# Does it need to be mentioned in the pipeline at all?
 disease_list.raw.mondo_obsoletion_candidates:
   type: pandas.CSVDataset
   <<: *_layer_raw
@@ -58,20 +52,12 @@ disease_list.raw.icd10_cm_codes:
 ########### Intermediate Outputs ############
 #############################################
 
-#TODO: Do intermediate outputs need to be saved to disk? Or can they be kept in memory only?
-
 disease_list.int.mondo_preprocessed:
   type: matrix.datasets.rdf.PyOxiGraphDataset
   <<: *_layer_int
   filepath: ${globals:paths.tmp}/disease_list/mondo_preprocessed.owl
   save_args:
     format: xml
-
-# DEPRECATED: mondo_labels is no longer persisted (handled in-memory in merged node)
-# disease_list.int.mondo_labels:
-#   type: pandas.CSVDataset
-#   <<: *_layer_int
-#   filepath: ${globals:paths.tmp}/disease_list/mondo_labels.tsv
 
 disease_list.int.billable_icd10_codes:
   type: pandas.CSVDataset
@@ -82,12 +68,6 @@ disease_list.int.billable_icd10_codes:
   save_args:
     sep: "\t"
     index: false
-
-# DEPRECATED: subtypes_template is no longer persisted (handled in-memory in merged node)
-# disease_list.int.subtypes_template:
-#   type: pandas.CSVDataset
-#   <<: *_layer_int
-#   filepath: ${globals:paths.tmp}/disease_list/subtypes_template.tsv
 
 disease_list.int.subtype_counts:
   type: pandas.CSVDataset
@@ -156,8 +136,6 @@ disease_list.prm.mondo_obsoletes:
 
 # Obsoletion candidates are diseases that are marked for obsoletion in MONDO
 # These are needed so we can define a strategy on how to curate them in our d2d reviews
-# TODO: the weird thing about this one is that it is only downloaded, but not used 
-# in this specific pipeline - Jacques need to check where/how it is used
 disease_list.prm.mondo_obsoletion_candidates:
   type: pandas.CSVDataset
   <<: *_layer_prm
