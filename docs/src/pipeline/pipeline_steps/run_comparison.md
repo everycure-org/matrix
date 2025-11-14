@@ -104,3 +104,9 @@ Any additional columns will be ignored.
 The class hierarchy structure of evaluations is summarised by the following diagram: 
 
 ![Evaluations classes](../../assets/run_comparison/inheritance.drawio.svg)
+
+The abstract base class for all evaluations is `ComparisonEvaluation`, which requires two methods: `evaluate` and `plot_results`.
+All *model-specific* evaluations, that is those which produce one curve per model, such as Recall@n or Entropy@n, inherit from the abstract subclass `ComparisonEvaluationModelSpecific`, 
+which deals with the multifold uncertainty estimation logic and plotting. 
+Furthermore, evaluations using bootstrap uncertainty estimation inherit from ComparisonEvaluationModelSpecifiBootstrap.
+Evaluations that are not model specific, such as Commonality@n which produces one curve per pair of models inherit directly from `ComparisonEvaluation`
