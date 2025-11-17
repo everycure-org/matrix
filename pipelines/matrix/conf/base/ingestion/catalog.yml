@@ -61,8 +61,7 @@ _layer_int: &_layer_int
 _orchard_bq: &_orchard_bq
   project: ec-orchard-prod
   dataset: orchard_us
-  table: latest_status
-  shard: ${globals:data_sources.orchard.version}
+  table: latest_status_${globals:data_sources.orchard.version}
 
 # -------------------------------------------------------------------------
 # RTX-KG2
@@ -277,71 +276,31 @@ ingestion.raw.drugmech.edges@pandas:
 
 ingestion.raw.disease_list:
   <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_public}/disease_list/${globals:data_sources.disease_list.version}/ec-disease-list.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
+  type: pandas.ParquetDataset
+  filepath: ${globals:paths.raw_public}/disease_list/${globals:data_sources.disease_list.version}/ec-disease-list.parquet
 
 ingestion.raw.disease_list.nodes@pandas:
   <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.ingestion}/disease_list/translator/${globals:data_sources.disease_list.version}/raw_disease_list_conflated.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
+  type: pandas.ParquetDataset
+  filepath: ${globals:paths.ingestion}/disease_list/translator/${globals:data_sources.disease_list.version}/raw_disease_list_conflated.parquet
 
 ingestion.raw.disease_list.nodes@spark:
-  <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.ingestion}/disease_list/translator/${globals:data_sources.disease_list.version}/raw_disease_list_conflated.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
-  save_args:
-     sep: "\t"
-     header: true
-     index: false
+  <<: [*_layer_raw, *_spark_parquet]
+  filepath: ${globals:paths.ingestion}/disease_list/translator/${globals:data_sources.disease_list.version}/raw_disease_list_conflated.parquet
 
 ingestion.raw.drug_list:
   <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_public}/drug_list/${globals:data_sources.drug_list.version}/ec-drug-list.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
+  type: pandas.ParquetDataset
+  filepath: ${globals:paths.raw_public}/drug_list/${globals:data_sources.drug_list.version}/ec-drug-list.parquet
 
 ingestion.raw.drug_list.nodes@pandas:
   <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.ingestion}/drug_list/translator/${globals:data_sources.drug_list.version}/raw_drug_list_conflated.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
+  type: pandas.ParquetDataset
+  filepath: ${globals:paths.ingestion}/drug_list/translator/${globals:data_sources.drug_list.version}/raw_drug_list_conflated.parquet
 
 ingestion.raw.drug_list.nodes@spark:
-  <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.ingestion}/drug_list/translator/${globals:data_sources.drug_list.version}/raw_drug_list_conflated.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
-  save_args:
-     sep: "\t"
-     header: true
-     index: false
+  <<: [*_layer_raw, *_spark_parquet]
+  filepath: ${globals:paths.ingestion}/drug_list/translator/${globals:data_sources.drug_list.version}/raw_drug_list_conflated.parquet
 
 ingestion.int.drug_list.nodes:
   <<: [*_spark_parquet, *_layer_int]

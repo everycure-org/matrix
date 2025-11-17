@@ -1,3 +1,6 @@
+import pandas as pd
+import pandera.pandas as pa
+
 import polars as pl
 from matrix_io_utils.robokop import (
     robokop_convert_boolean_columns_to_label_columns,
@@ -23,3 +26,56 @@ def robokop_preprocessing_edges(edges: pl.LazyFrame) -> pl.DataFrame:
     nodes: The edges.tsv file from a Robokop download
     """
     return robokop_strip_type_from_column_names(edges)
+
+# FUTURE: make schema checks dynamic per transform function
+@pa.check_output(
+    pa.DataFrameSchema(
+        columns={
+            "id": pa.Column(
+                str,
+                nullable=False,
+                checks=[
+                    pa.Check(
+                        lambda col: len(col.unique()) == len(col),
+                        title="id must be unique",
+                    )
+                ],
+            ),
+            "translator_id": pa.Column(
+                str,
+                nullable=False,
+                checks=[
+                    pa.Check(
+                        lambda col: len(col.unique()) == len(col),
+                        title="translator_id must be unique",
+                    )
+                ],
+            ),
+            "deleted": pa.Column(bool, nullable=False, checks=[pa.Check(lambda col: col == False)]),
+        },
+    )
+)
+def write_drug_list(df: pd.DataFrame) -> pd.DataFrame:
+    return df[~df["deleted"]]
+
+
+@pa.check_output(
+    pa.DataFrameSchema(
+        columns={
+            "id": pa.Column(
+                str,
+                nullable=False,
+                checks=[
+                    pa.Check(
+                        lambda col: len(col.unique()) == len(col),
+                        title="id must be unique",
+                    )
+                ],
+            ),
+            "deleted": pa.Column(bool, nullable=False, checks=[pa.Check(lambda col: col == False)]),
+        },
+    )
+)
+def write_disease_list(df: pd.DataFrame) -> pd.DataFrame:
+    return df[~df["deleted"]]
+

@@ -1,37 +1,11 @@
-import pandas as pd
 from kedro.pipeline import Pipeline, node, pipeline
-from matrix_pandera.validator import Column, DataFrameSchema, check_output
 
+import matrix.pipelines.ingestion.nodes as nodes
 from matrix import settings
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from matrix.utils.validation import validate
 
 from . import nodes
-
-
-# FUTURE: make schema checks dynamic per transform function
-@check_output(
-    DataFrameSchema(
-        columns={
-            "id": Column(str, nullable=False),
-            "translator_id": Column(str, nullable=False),
-        },
-        unique=["id", "translator_id"],
-    )
-)
-def write_drug_list(df: pd.DataFrame) -> pd.DataFrame:
-    """Simple function to write drug list while preserving pandera schema checks.
-
-    Args:
-        df: Drug list dataframe
-
-    Raises:
-        SchemaError: If the input dataframe does not match the schema.
-
-    Returns:
-        Drug list dataframe
-    """
-    return df
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -43,14 +17,14 @@ def create_pipeline(**kwargs) -> Pipeline:
     nodes_lst.extend(
         [
             node(
-                func=write_drug_list,
+                func=nodes.write_drug_list,
                 inputs=["ingestion.raw.drug_list"],
                 outputs="ingestion.raw.drug_list.nodes@pandas",
                 name="write_drug_list",
                 tags=["drug-list"],
             ),
             node(
-                func=lambda x: x,
+                func=nodes.write_disease_list,
                 inputs=["ingestion.raw.disease_list"],
                 outputs="ingestion.raw.disease_list.nodes@pandas",
                 name="write_disease_list",
