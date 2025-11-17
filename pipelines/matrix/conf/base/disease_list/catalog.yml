@@ -60,14 +60,9 @@ disease_list.int.mondo_preprocessed:
     format: xml
 
 disease_list.int.billable_icd10_codes:
-  type: pandas.CSVDataset
+  type: pandas.ParquetDataset
   <<: *_layer_int
-  filepath: ${globals:paths.tmp}/disease_list/icd10_cm_billable_template.tsv
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
-    index: false
+  filepath: ${globals:paths.tmp}/disease_list/icd10_cm_billable_template.parquet
 
 disease_list.int.subtype_counts:
   type: pandas.CSVDataset
