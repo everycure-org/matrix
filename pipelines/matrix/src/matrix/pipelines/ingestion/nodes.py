@@ -1,6 +1,5 @@
 import pandas as pd
 import pandera.pandas as pa
-
 import polars as pl
 from matrix_io_utils.robokop import (
     robokop_convert_boolean_columns_to_label_columns,
@@ -26,6 +25,7 @@ def robokop_preprocessing_edges(edges: pl.LazyFrame) -> pl.DataFrame:
     nodes: The edges.tsv file from a Robokop download
     """
     return robokop_strip_type_from_column_names(edges)
+
 
 # FUTURE: make schema checks dynamic per transform function
 @pa.check_output(
@@ -78,4 +78,3 @@ def write_drug_list(df: pd.DataFrame) -> pd.DataFrame:
 )
 def write_disease_list(df: pd.DataFrame) -> pd.DataFrame:
     return df[~df["deleted"]]
-
