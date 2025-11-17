@@ -2,7 +2,7 @@
 Python port of src/bin/primekg.rs.
 
 Subcommands:
-- build-edges: Transform a PrimeKG edges TSV into KGX-like edges with Biolink predicates.
+- build-edges: Transform a Robokop edges TSV into KGX-like edges with Biolink predicates.
 - build-nodes: Join multiple node feature TSVs and map types/IDs to CURIEs.
 - print-predicate-mappings: Infer mapping table between relation/display_relation and Biolink predicate; print as pretty JSON to stdout.
 
