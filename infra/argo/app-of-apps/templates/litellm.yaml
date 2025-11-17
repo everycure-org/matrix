@@ -45,7 +45,7 @@ spec:
             telemetry: false
           model_list:
             # OpenAI Models
-            - model_name: openai
+            - model_name: openai/*
               litellm_params:
                 model: openai/*
                 api_key: os.environ/OPENAI_API_KEY
@@ -54,7 +54,7 @@ spec:
                   - location: message
                     role: user
             # Anthropic Models
-            - model_name: claude
+            - model_name: claude/*
               litellm_params:
                 model: anthropic/*
                 api_key: os.environ/ANTHROPIC_API_KEY
