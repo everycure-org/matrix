@@ -7,6 +7,13 @@ filtering:
         - rtxkg2
         - ec_medical
         - robokop
+  filter_primary_knowledge_source_exclude:
+    filter_sources:
+      _object: matrix.pipelines.filtering.filters.KeepRowsContaining
+      column: primary_knowledge_sources
+      keep_list:
+        - infores:semmeddb
+
         
     # filter_node_labels:
     #     _object: matrix.pipelines.filtering.filters.RemoveRowsByColumnOverlap
@@ -43,9 +50,6 @@ filtering:
         - rtxkg2
         - ec_medical
         - robokop
-
-    filter_biolink_edges:
-      _object: matrix.pipelines.filtering.filters.BiolinkDeduplicateEdges
 
     # filter_triples:
     #   _object: matrix.pipelines.filtering.filters.TriplePattern
