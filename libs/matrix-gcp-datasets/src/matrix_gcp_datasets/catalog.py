@@ -138,18 +138,20 @@ class DataCatalogDataset(AbstractDataset):
         ```yaml
             catalog_diseases:
                 type: matrix_gcp_datasets.catalog.DataCatalogDataset
-                dataset: disease_list
-
-                # Semver pattern to match
-                ver: ~0.2.0
-
-                # Ensures a dataset error is thrown if a newer version is
-                # available that no longer matches the semver pattern
-                assert_latest: false
+                dataset: name
 
                 # Used to define the engine to load the dataset
                 # consider supporting polars, spark and pandas.
                 engine: spark
+
+                load_args:
+                    # Version pattern to load, specified as npm version pattern
+                    version: ~0.0.1
+
+                    # Ensures a dataset error is thrown if a newer version is
+                    # available that no longer matches the semver pattern
+                    assert_latest: false
+
                 save_args:
                     # Save args required to correcly materialize file using corresponding
                     # Kedro dataset, `{version}` pattern can be used to parametrize.
@@ -158,6 +160,7 @@ class DataCatalogDataset(AbstractDataset):
 
                     # Additional save arguments are passed directly
                     # to the respective dataset using the engine.
+                    inferSchema: True
                     mode: overwrite
         ```
     """
@@ -181,7 +184,7 @@ class DataCatalogDataset(AbstractDataset):
         self._semvar_pattern = self._load_args.pop("version", "*")
         self._save_version = self._save_args.pop("version", None)
         self._message = self._save_args.pop("message", None)
-        self._format = self._save_args.pop("format", None)
+        self._format = self._save_args.pop("format", "parquet")
         self._name = self._save_args.pop("name", None)
         self._email = self._save_args.pop("email", None)
         self._tags = self._save_args.pop("tags", None)
@@ -197,6 +200,12 @@ class DataCatalogDataset(AbstractDataset):
         )
 
         return dataset.location.uri
+
+    @property
+    def versions(self) -> list[str]:
+        """Function to get versions for dataset."""
+        paths = self._storage_service.ls(Path(f"datasets/{self._dataset}/*"))
+        return [str(path.relative_to(Path(f"datasets/{self._dataset}"))) for path in paths]
 
     def load(self) -> Any:
         """Dataset loading
@@ -352,12 +361,6 @@ class DataCatalogDataset(AbstractDataset):
 
         message = typer.prompt("Optional message", default="", show_default=False)
         return str(new_version), message or None
-
-    @property
-    def versions(self) -> list[str]:
-        """Function to get versions for dataset."""
-        paths = self._storage_service.ls(Path(f"datasets/{self._dataset}/*"))
-        return [str(path.relative_to(Path(f"datasets/{self._dataset}"))) for path in paths]
 
     def _describe(self) -> dict[str, Any]:
         pass
