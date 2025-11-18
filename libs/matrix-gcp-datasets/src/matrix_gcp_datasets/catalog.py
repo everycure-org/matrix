@@ -304,7 +304,10 @@ class DataCatalogDataset(AbstractDataset):
             )
 
         if not self._save_version:
-            self._save_version, self._message = self.prompt_version_bump()
+            self._save_version = self.prompt_version_bump()
+
+        if not self._message:
+            self._message = typer.prompt("Optional message", default="", show_default=False) or None
 
         try:
             Version(self._save_version)
@@ -359,8 +362,7 @@ class DataCatalogDataset(AbstractDataset):
             typer.echo("Save cancelled.")
             return
 
-        message = typer.prompt("Optional message", default="", show_default=False)
-        return str(new_version), message or None
+        return str(new_version)
 
     def _describe(self) -> dict[str, Any]:
         pass
