@@ -62,6 +62,8 @@ primekg print-predicate-mappings --nodes <nodes_file> --edges <edges_file>
 
 ## Robokop
 
+This app reduces the columns in Robokop from around 2000 down to 35, which is better for downstream memory usage while still retaining all the data.
+
 ### Striping the types from the column names (eg, :string[]) 
 This script transforms the Robokop nodes and edges files to strip type from the column names.
 ```shell
