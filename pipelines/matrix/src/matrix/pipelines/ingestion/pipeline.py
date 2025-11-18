@@ -61,16 +61,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                                 memory_request=192,
                             ),
                         ),
-                        ArgoNode(
+                        node(
                             func=lambda x: x,
                             inputs=f"ingestion.int.preprocessing.{source['name']}.nodes@spark",
                             outputs=f"ingestion.int.{source['name']}.nodes",
                             name=f"write_{source['name']}_nodes",
-                            tags=[f"{source['name']}"],
-                            argo_config=ArgoResourceConfig(
-                                memory_limit=128,
-                                memory_request=64,
-                            ),
+                            tags=[f"{source['name']}"]
                         ),
                     ]
                 )
@@ -115,16 +111,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                                 memory_request=64,
                             ),
                         ),
-                        ArgoNode(
+                        node(
                             func=lambda x: x,
                             inputs=f"ingestion.int.preprocessing.{source['name']}.edges@spark",
                             outputs=f"ingestion.int.{source['name']}.edges",
                             name=f"write_{source['name']}_edges",
-                            tags=[f"{source['name']}"],
-                            argo_config=ArgoResourceConfig(
-                                memory_limit=128,
-                                memory_request=64,
-                            ),
+                            tags=[f"{source['name']}"]
                         ),
                     ]
                 )
