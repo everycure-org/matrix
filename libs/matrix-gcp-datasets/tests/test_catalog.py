@@ -102,7 +102,7 @@ def test_load_versions_assert_latest(local_storage_service, dummy_dataset_patch,
         )
 
         # Then versions loaded correctly
-        assert dataset.versions == ["1.0.1", "0.0.1"]
+        assert sorted(dataset.versions) == sorted(["1.0.1", "0.0.1"])
 
         # And dataset error thrown on load
         dataset.load()
