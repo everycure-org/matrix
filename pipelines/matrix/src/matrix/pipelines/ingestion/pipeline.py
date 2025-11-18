@@ -66,7 +66,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             inputs=f"ingestion.int.preprocessing.{source['name']}.nodes@spark",
                             outputs=f"ingestion.int.{source['name']}.nodes",
                             name=f"write_{source['name']}_nodes",
-                            tags=[f"{source['name']}"]
+                            tags=[f"{source['name']}"],
                         ),
                     ]
                 )
@@ -116,7 +116,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             inputs=f"ingestion.int.preprocessing.{source['name']}.edges@spark",
                             outputs=f"ingestion.int.{source['name']}.edges",
                             name=f"write_{source['name']}_edges",
-                            tags=[f"{source['name']}"]
+                            tags=[f"{source['name']}"],
                         ),
                     ]
                 )
