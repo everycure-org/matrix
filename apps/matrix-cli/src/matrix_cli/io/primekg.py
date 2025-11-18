@@ -1,5 +1,5 @@
 """
-Python port of src/bin/primekg.rs.
+Python port of https://github.com/jdr0887/rusty-matrix-io/blob/main/src/bin/primekg.rs.
 
 Subcommands:
 - build-edges: Transform a PrimeKG edges TSV into KGX-like edges with Biolink predicates.
