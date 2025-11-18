@@ -1,4 +1,4 @@
-"""Matrix CLI PrimeKG TestCase."""
+"""Matrix CLI Robokop TestCase."""
 
 import unittest
 
