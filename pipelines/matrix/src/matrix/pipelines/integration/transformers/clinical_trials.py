@@ -20,7 +20,7 @@ class ClinicalTrialsTransformer(GraphTransformer):
             .withColumn("id",                                f.col("curie"))
             .withColumn("name",                              f.lit(None).cast(T.StringType()))
             .withColumn("description",                       f.lit(None).cast(T.StringType()))
-            .withColumn("upstream_data_source",              f.array(f.lit("ec_clinical_trails")))
+            .withColumn("upstream_data_source",              f.array(f.lit("ec_clinical_trials")))
             .withColumn("labels",                            f.array(f.lit("entity label"))) # TODO: Fix entity labels for medical?
             .withColumn("category",                          f.lit("category")) # TODO fix
             .withColumn("all_categories",                    f.array(f.lit("biolink:"))) # TODO fix
@@ -41,9 +41,9 @@ class ClinicalTrialsTransformer(GraphTransformer):
             edges_df
             .withColumn("subject",                      f.col("drug_curie"))
             .withColumn("object",                       f.col("disease_curie"))
-            .withColumn("predicate",                    f.lit("clinical_trails"))
+            .withColumn("predicate",                    f.lit("clinical_trials"))
             .filter((f.col("subject").isNotNull()) & (f.col("object").isNotNull()))
-            .withColumn("upstream_data_source",         f.array(f.lit("clinical_trails")))
+            .withColumn("upstream_data_source",         f.array(f.lit("clinical_trials")))
             .withColumn("knowledge_level",              f.lit(None).cast(T.StringType()))
             .withColumn("agent_type",                   f.lit(None).cast(T.StringType()))
             .withColumn("primary_knowledge_source",     f.lit(None).cast(T.StringType()))

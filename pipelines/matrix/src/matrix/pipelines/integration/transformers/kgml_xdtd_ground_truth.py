@@ -26,7 +26,7 @@ class KGMLGroundTruthTransformer(Transformer):
             .withColumnRenamed("target", "object")
             .withColumn("disease", f.col("object"))
             .withColumn("drug", f.col("subject"))
-            .withColumn("predicate", f.lit("clinical_trails"))
+            .withColumn("predicate", f.lit("clinical_trials"))
             .withColumn("drug|disease", f.concat(f.col("subject"), f.lit("|"), f.col("object")))
         )
 
