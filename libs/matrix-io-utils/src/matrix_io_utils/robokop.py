@@ -45,16 +45,16 @@ def robokop_convert_boolean_columns_to_label_columns(nodes_df: pl.LazyFrame) -> 
 
 
 def _build_label_and_drop_bool(
-    column_names: list[str], df: pl.LazyFrame, bool_col_prefix: str, bool_col_label: str
+    column_names: list[str], df: pl.LazyFrame, bool_column_prefix: str, bool_column_label: str
 ) -> pl.DataFrame:
-    for c in column_names:
-        fixed_col_name = c.replace(bool_col_prefix, "").replace(":boolean", "")
+    for column_name in column_names:
+        fixed_column_name = column_name.replace(bool_column_prefix, "").replace(":boolean", "")
         df = df.with_columns(
             [
-                pl.when(pl.col(c).str.contains(pl.lit("true")))
-                .then(pl.col(bool_col_label).list.concat(pl.lit(fixed_col_name)))
-                .otherwise(pl.col(bool_col_label))
-                .alias(bool_col_label)
+                pl.when(pl.col(column_name).str.contains(pl.lit("true")))
+                .then(pl.col(bool_column_label).list.concat(pl.lit(fixed_column_name)))
+                .otherwise(pl.col(bool_column_label))
+                .alias(bool_column_label)
             ]
         )
 
@@ -69,15 +69,15 @@ def robokop_strip_type_from_column_names(input_df: pl.LazyFrame) -> pl.DataFrame
     rename_map = {}
 
     # Build the map in a single pass
-    for c in input_df.collect_schema().names():
-        new_name = c
+    for column_name in input_df.collect_schema().names():
+        new_name = column_name
         for suffix in suffixes:
-            if c.endswith(suffix):
-                new_name = c.removesuffix(suffix)
+            if column_name.endswith(suffix):
+                new_name = column_name.removesuffix(suffix)
                 break
 
-        if new_name != c:
-            rename_map[c] = new_name
+        if new_name != column_name:
+            rename_map[column_name] = new_name
 
     if rename_map:
         input_df = input_df.rename(rename_map)
