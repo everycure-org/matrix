@@ -7,7 +7,7 @@ from matrix_io_utils.robokop import (
 )
 
 
-def robokop_preprocessing_nodes(nodes: pl.LazyFrame) -> pl.DataFrame:
+def preprocess_robokop_nodes(nodes: pl.LazyFrame) -> pl.DataFrame:
     """Build the nodes tsv file.
 
     Args:
@@ -18,7 +18,7 @@ def robokop_preprocessing_nodes(nodes: pl.LazyFrame) -> pl.DataFrame:
     return nodes
 
 
-def robokop_preprocessing_edges(edges: pl.LazyFrame) -> pl.DataFrame:
+def preprocess_robokop_edges(edges: pl.LazyFrame) -> pl.DataFrame:
     """Build the edges tsv file.
 
     Args:

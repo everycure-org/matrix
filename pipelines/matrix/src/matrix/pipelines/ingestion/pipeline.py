@@ -52,7 +52,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     [
                         ArgoNode(
                             name="robokop_preprocessing_nodes",
-                            func=nodes.robokop_preprocessing_nodes,
+                            func=nodes.preprocess_robokop_nodes,
                             inputs=f"ingestion.raw.{source['name']}.nodes@lazypolars",
                             outputs=f"ingestion.int.preprocessing.{source['name']}.nodes@polars",
                             tags=[f"{source['name']}"],
@@ -106,7 +106,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     [
                         ArgoNode(
                             name="robokop_preprocessing_edges",
-                            func=nodes.robokop_preprocessing_edges,
+                            func=nodes.preprocess_robokop_edges,
                             inputs=f"ingestion.raw.{source['name']}.edges@lazypolars",
                             outputs=f"ingestion.int.preprocessing.{source['name']}.edges@polars",
                             tags=[f"{source['name']}"],
