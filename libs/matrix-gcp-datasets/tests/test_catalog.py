@@ -1,10 +1,13 @@
 import pandas as pd
 import pandas.testing as pdt
+import pyspark.sql as ps
 import pytest
 import yaml
 from kedro.io.core import DatasetError
 from matrix_gcp_datasets.catalog import DataCatalogDataset, DatasetModel, best_match
 from matrix_gcp_datasets.storage import GitStorageService, LocalStorageService
+from pyspark.sql import SparkSession
+from pyspark.testing import assertDataFrameEqual
 
 
 @pytest.fixture
@@ -16,12 +19,12 @@ def local_storage_service(tmpdir, monkeypatch):
 
 @pytest.fixture
 def patch_df() -> pd.DataFrame:
-    return pd.DataFrame({"a": range(5), "b": ["x", "y", "z", "w", "v"]})
+    return pd.DataFrame({"a": [1, 42, 999_999_999, 3_000_000_000, 8_000_000_000], "b": ["x", "y", "z", "w", "v"]})
 
 
 @pytest.fixture
 def major_df() -> pd.DataFrame:
-    return pd.DataFrame({"c": range(5), "d": ["x", "y", "z", "w", "v"]})
+    return pd.DataFrame({"c": [1, 42, 999_999_999, 3_000_000_000, 8_000_000_000], "d": ["x", "y", "z", "w", "v"]})
 
 
 @pytest.fixture
@@ -81,7 +84,7 @@ def test_best_match(versions, pattern, expected_match, expected_is_latest):
     assert is_latest == expected_is_latest
 
 
-def test_load_versions(local_storage_service, dummy_dataset_patch, patch_df):
+def test_load_versions_pandas(local_storage_service, dummy_dataset_patch, patch_df):
     # Given an instance of the catalog dataset
     dataset = DataCatalogDataset(
         dataset="dummy", engine="pandas", load_args={"version": "~0.0.0", "assert_latest": False}
@@ -92,6 +95,23 @@ def test_load_versions(local_storage_service, dummy_dataset_patch, patch_df):
     result = dataset.load()
     assert isinstance(result, pd.DataFrame)
     pdt.assert_frame_equal(dataset.load(), patch_df)
+
+
+def test_load_versions_spark(local_storage_service, dummy_dataset_patch, patch_df):
+    # Given an instance of the catalog dataset
+    dataset = DataCatalogDataset(
+        dataset="dummy", engine="spark", load_args={"version": "~0.0.0", "assert_latest": False, "inferSchema": True}
+    )
+
+    # Then versions loaded correctly
+    assert dataset.versions == ["0.0.1"]
+    result = dataset.load()
+    assert isinstance(result, ps.DataFrame)
+
+    # Assert output is correct Spark dataframe
+    spark = SparkSession.builder.getOrCreate()
+    patch_spark_df = spark.createDataFrame(patch_df)
+    assertDataFrameEqual(dataset.load(), patch_spark_df)
 
 
 def test_load_versions_assert_latest(local_storage_service, dummy_dataset_patch, dummy_dataset_major, monkeypatch):
