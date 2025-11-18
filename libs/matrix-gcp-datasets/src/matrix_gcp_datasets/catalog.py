@@ -137,7 +137,7 @@ class DataCatalogDataset(AbstractDataset):
 
         ```yaml
             catalog_diseases:
-                type: review_list.datasets.catalog.DataCatalogDataset
+                type: matrix_gcp_datasets.catalog.DataCatalogDataset
                 dataset: disease_list
 
                 # Semver pattern to match

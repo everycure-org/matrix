@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 import pytest
-from review_list.datasets.storage import LocalStorageService
+from matrix_gcp_datasets.storage import LocalStorageService
 
 
 def test_exists_false(tmpdir):
