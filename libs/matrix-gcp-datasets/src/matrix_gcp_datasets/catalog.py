@@ -261,7 +261,7 @@ class DataCatalogDataset(AbstractDataset):
             if format_ == "parquet":
                 return pandas.ParquetDataset(filepath=file_path, load_args=load_args, save_args=save_args)
 
-        raise ValueError(f"Unsupported engine: {(self._engine,)}")
+        raise ValueError(f"Unsupported engine and format: ({self._engine}, {format_})")
 
     def get_schema(self, data) -> dict[str, str]:
         if self._engine == "pandas":
