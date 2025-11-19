@@ -2608,6 +2608,7 @@ requires-dist = [
     { name = "pandas" },
     { name = "pandas-gbq" },
     { name = "pydantic" },
+    { name = "pyspark" },
     { name = "pyspark", specifier = ">=3.5.0" },
     { name = "s3fs" },
     { name = "semantic-version", specifier = ">=2.10.0" },

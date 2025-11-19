@@ -25,7 +25,8 @@ dependencies = [
     "asyncio",
     "semantic-version>=2.10.0",
     "typer>=0.20.0",
-    "pydantic"
+    "pydantic",
+    "pyspark"
 ]
 
 [dependency-groups]

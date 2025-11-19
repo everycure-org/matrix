@@ -135,6 +135,7 @@ def test_save(tmpdir, local_storage_service, patch_df):
         engine="pandas",
         save_args={
             "version": "0.1.1",
+            "message": "Dummy message",
             "filepath": f"{tmpdir}/patch.csv",
             "format": "csv",
             "name": "foo",
