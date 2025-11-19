@@ -30,21 +30,7 @@ resource "google_org_policy_policy" "public_access_prevention" {
     }
   }
 }
-# Allow service accounts in this project to create (manage) API keys. Some
-# toolchains and integrations need to be able to create service account
-# API keys; explicitly set the constraint to not enforce the organization
-# level policy for projects in this stack.
-resource "google_org_policy_policy" "disable_service_account_api_key_creation" {
-  depends_on = [google_org_policy_policy.public_access_prevention]
-  name       = "projects/${var.project_id}/policies/iam.managed.disableServiceAccountApiKeyCreation"
-  parent     = "projects/${var.project_id}"
 
-  spec {
-    rules {
-      enforce = "FALSE"
-    }
-  }
-}
 # wait for the org policies to propagate
 resource "time_sleep" "wait_for_org_policies" {
   create_duration = "30s"
