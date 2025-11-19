@@ -62,12 +62,14 @@ spec:
                 cache_control_injection_points:
                   - location: message
                     role: user
-            # Gemini Models
+            # Gemini Models (Google AI Studio API)
             - model_name: gemini/*
               litellm_params:
                 model: gemini/*
                 timeout: 300 # 5 minutes
                 api_key: os.environ/GEMINI_API_KEY
+                # Force using Google AI Studio, not Vertex AI
+                custom_llm_provider: gemini
                 cache_control_injection_points:
                   - location: message
                     role: user
