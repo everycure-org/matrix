@@ -580,3 +580,262 @@ def compute_abox_tbox_metric(edges: ps.DataFrame) -> ps.DataFrame:
         F.sum(F.when(F.col("predicate").isin(instance_desc), 1).otherwise(0)).alias("abox"),
         F.sum(F.when(F.col("predicate").isin(concept_desc), 1).otherwise(0)).alias("tbox"),
     )
+
+
+def simplify_graph_for_connectivity(edges: ps.DataFrame) -> ps.DataFrame:
+    """
+    Simplify a graph by removing duplicate edges between nodes.
+
+    For connectivity analysis, we only care whether two nodes are connected,
+    not the edge metadata (predicate, knowledge source, etc.). This function
+    creates a simplified edge list with unique (subject, object) pairs,
+    making connectivity calculations more efficient and accurate.
+
+    Args:
+        edges: DataFrame with at minimum 'subject' and 'object' columns
+
+    Returns:
+        DataFrame with unique (subject, object) pairs
+
+    Example:
+        Input edges:
+            subject='A', object='B', predicate='treats'
+            subject='A', object='B', predicate='affects'
+            subject='A', object='C', predicate='treats'
+
+        Output edges:
+            subject='A', object='B'
+            subject='A', object='C'
+    """
+    original_count = edges.count()
+    logger.info(f"Simplifying graph: {original_count:,} edges before deduplication")
+
+    # Filter self-loops and keep only unique (subject, object) pairs
+    simplified = (
+        edges.select("subject", "object")
+        .filter(F.col("subject") != F.col("object"))  # Remove self-loops
+        .distinct()
+    )
+
+    simplified_count = simplified.count()
+    reduction_pct = 100 * (1 - simplified_count / original_count) if original_count > 0 else 0
+
+    logger.info(
+        f"Graph simplified: {simplified_count:,} unique edges ({reduction_pct:.1f}% reduction from {original_count:,})"
+    )
+
+    return simplified
+
+
+def compute_connected_components_graphframes(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFrame:
+    """
+    Compute connected components using GraphFrames (Spark-native).
+
+    GraphFrames is a graph processing library built on Apache Spark DataFrames.
+    It leverages Spark's distributed computing for scalability on large graphs.
+
+    Args:
+        nodes: DataFrame with 'id' column
+        edges: DataFrame with 'subject' and 'object' columns (should be simplified)
+
+    Returns:
+        DataFrame with component statistics:
+            - component_id: Unique identifier for each component
+            - component_size: Number of nodes in the component
+            - num_components: Total number of connected components
+    """
+    from graphframes import GraphFrame
+
+    logger.info("Computing connected components using GraphFrames...")
+
+    # Prepare nodes for GraphFrame (needs 'id' column)
+    gf_nodes = nodes.select(F.col("id")).distinct()
+
+    # Prepare edges for GraphFrame (needs 'src' and 'dst' columns)
+    gf_edges = edges.select(F.col("subject").alias("src"), F.col("object").alias("dst"))
+
+    # Create GraphFrame
+    graph = GraphFrame(gf_nodes, gf_edges)
+
+    # Set checkpoint directory (required for connected components)
+    spark = nodes.sparkSession
+    checkpoint_dir = "/data/checkpoints/graphframes"
+    spark.sparkContext.setCheckpointDir(checkpoint_dir)
+
+    # Compute connected components
+    components = graph.connectedComponents()
+
+    # Compute component sizes
+    component_stats = (
+        components.groupBy("component")
+        .agg(F.count("*").alias("component_size"))
+        .withColumnRenamed("component", "component_id")
+    )
+
+    # Add total component count
+    num_components = component_stats.count()
+    component_stats = component_stats.withColumn("num_components", F.lit(num_components))
+
+    # Sort by component size descending
+    component_stats = component_stats.orderBy(F.desc("component_size"))
+
+    logger.info(
+        f"Found {num_components:,} connected components using GraphFrames. "
+        f"Largest component has {component_stats.first()['component_size']:,} nodes."
+    )
+
+    return component_stats
+
+
+def compute_connected_components_grape(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFrame:
+    """
+    Compute connected components using grape (Rust-based, ultra-fast).
+
+    grape/ensmallen is a Rust-based graph processing library designed for
+    billion-scale graphs with ultra-fast performance.
+
+    Args:
+        nodes: DataFrame with 'id' column
+        edges: DataFrame with 'subject' and 'object' columns (should be simplified)
+
+    Returns:
+        DataFrame with component statistics:
+            - component_id: Unique identifier for each component
+            - component_size: Number of nodes in the component
+            - num_components: Total number of connected components
+    """
+    from collections import Counter
+
+    from ensmallen import GraphBuilder
+
+    logger.info("Computing connected components using grape...")
+
+    # Build graph using GraphBuilder
+    builder = GraphBuilder()
+    builder.set_directed(False)
+    builder.set_name("Connectivity_Graph")
+
+    # Add all nodes
+    logger.info("Collecting nodes for grape...")
+    nodes_list = [row.id for row in nodes.select("id").distinct().collect()]
+    logger.info(f"Collected {len(nodes_list):,} nodes")
+
+    for node_id in nodes_list:
+        builder.add_node(name=node_id)
+
+    # Collect edges
+    logger.info("Collecting edges for grape GraphBuilder...")
+    edges_list = edges.select("subject", "object").collect()
+    logger.info(f"Collected {len(edges_list):,} edges. Adding to graph...")
+
+    edge_count = 0
+    for row in edges_list:
+        builder.add_edge(src=row.subject, dst=row.object)
+        edge_count += 1
+        if edge_count % 10_000_000 == 0:
+            logger.info(f"Added {edge_count:,} edges...")
+
+    logger.info(f"Building grape graph with {len(nodes_list):,} nodes and {edge_count:,} edges...")
+    graph = builder.build()
+
+    # Compute connected components using grape's API
+    logger.info("Computing connected components with grape...")
+    # connected_components() returns: (component_per_node, num_components, min_size, max_size)
+    component_per_node, num_components, min_size, max_size = graph.get_connected_components()
+
+    # Count component sizes
+    component_sizes = Counter(component_per_node)
+
+    # Create Spark DataFrame with component statistics
+    # Convert numpy types to Python int for Spark compatibility
+    spark = nodes.sparkSession
+    component_data = [
+        {"component_id": int(comp_id), "component_size": int(size), "num_components": int(num_components)}
+        for comp_id, size in component_sizes.items()
+    ]
+
+    component_stats = spark.createDataFrame(component_data).orderBy(F.desc("component_size"))
+
+    logger.info(
+        f"Found {num_components:,} connected components using grape. "
+        f"Largest component has {max(component_sizes.values()):,} nodes."
+    )
+
+    return component_stats
+
+
+def compute_connected_components_rustworkx(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFrame:
+    """
+    Compute connected components using rustworkx (Rust-based, high-performance).
+
+    rustworkx is a high-performance graph library written in Rust with Python bindings,
+    designed as a faster alternative to NetworkX.
+
+    Args:
+        nodes: DataFrame with 'id' column
+        edges: DataFrame with 'subject' and 'object' columns (should be simplified)
+
+    Returns:
+        DataFrame with component statistics:
+            - component_id: Unique identifier for each component
+            - component_size: Number of nodes in the component
+            - num_components: Total number of connected components
+    """
+    import rustworkx as rx
+
+    logger.info("Computing connected components using rustworkx...")
+
+    # Create undirected graph
+    graph = rx.PyGraph()
+
+    # Add all nodes and create mapping
+    logger.info("Collecting nodes for rustworkx...")
+    nodes_list = [row.id for row in nodes.select("id").distinct().collect()]
+    logger.info(f"Collected {len(nodes_list):,} nodes")
+
+    node_indices = {}
+    for node_id in nodes_list:
+        idx = graph.add_node(node_id)
+        node_indices[node_id] = idx
+
+    # Collect edges
+    logger.info("Collecting edges for rustworkx graph...")
+    edges_list = edges.select("subject", "object").collect()
+    logger.info(f"Collected {len(edges_list):,} edges. Adding to graph...")
+
+    edge_count = 0
+    for row in edges_list:
+        src_idx = node_indices[row.subject]
+        dst_idx = node_indices[row.object]
+        graph.add_edge(src_idx, dst_idx, None)
+        edge_count += 1
+        if edge_count % 10_000_000 == 0:
+            logger.info(f"Added {edge_count:,} edges...")
+
+    logger.info(f"Built rustworkx graph with {len(nodes_list):,} nodes and {edge_count:,} edges")
+
+    # Compute connected components
+    logger.info("Computing connected components with rustworkx...")
+    components = rx.connected_components(graph)
+
+    # components is a list of lists, where each inner list contains node indices
+    num_components = len(components)
+
+    # Create component statistics
+    spark = nodes.sparkSession
+    component_data = []
+    for comp_id, component in enumerate(components):
+        component_data.append(
+            {"component_id": comp_id, "component_size": len(component), "num_components": num_components}
+        )
+
+    component_stats = spark.createDataFrame(component_data).orderBy(F.desc("component_size"))
+
+    largest_component_size = max(len(c) for c in components) if components else 0
+
+    logger.info(
+        f"Found {num_components:,} connected components using rustworkx. "
+        f"Largest component has {largest_component_size:,} nodes."
+    )
+
+    return component_stats

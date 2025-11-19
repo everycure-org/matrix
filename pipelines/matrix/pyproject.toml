@@ -42,7 +42,9 @@ dependencies = [
     "google-cloud-bigquery-storage",
     "db-dtypes", # needed for bigquery in line queries in notebooks
     "google-cloud-iam",
+    "grape>=0.2.4",
     "graphdatascience",
+    "graphframes>=0.6",
     "ipython>=8.10",
     "ipywidgets",
     "jsonpath-ng",
@@ -67,6 +69,7 @@ dependencies = [
     "pyarrow>=14.0.2",
     "gspread>=6.2.1",
     "pyspark==3.5.1",
+    "rustworkx>=0.15.0",
     "python-cypher==0.20.1",
     "responses",
     "rich",
