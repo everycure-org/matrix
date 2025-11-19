@@ -256,7 +256,7 @@ class DiseaseSplitDrugDiseasePairGenerator(SingleLabelPairGenerator):
         self,
         y_label: int,
         random_state: int,
-        n_unknown: int,
+        n_replacements: int,
         drug_flags: List[str],
         disease_flags: List[str],
     ) -> None:
@@ -269,7 +269,7 @@ class DiseaseSplitDrugDiseasePairGenerator(SingleLabelPairGenerator):
             drug_flags: List of knowledge graph flags defining drugs sample set.
             disease_flags: List of knowledge graph flags defining diseases sample set.
         """
-        self._n_unknown = n_unknown
+        self._n_unknown = n_replacements
         self._drug_flags = drug_flags
         self._disease_flags = disease_flags
         super().__init__(y_label, random_state)
@@ -303,9 +303,12 @@ class DiseaseSplitDrugDiseasePairGenerator(SingleLabelPairGenerator):
         # Get drugs from graph that match drug flags
         drug_samp_ids = graph.flags_to_ids(self._drug_flags)
 
+        # NOTE: This function was partially generated using AI assistance.
+        _n_train_positives = len(known_pairs[(known_pairs["split"] == "TRAIN") & (known_pairs["y"] == 1)])
+        _n_unknown = self._n_unknown * _n_train_positives
         # Sample pairs using the helper function
         unknown_df = _sample_random_pairs(
-            graph, known_data_set, drug_samp_ids, disease_samp_ids, self._n_unknown, self._y_label
+            graph, known_data_set, drug_samp_ids, disease_samp_ids, _n_unknown, self._y_label
         )
 
         # Verify no test diseases appear in negative samples

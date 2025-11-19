@@ -114,7 +114,7 @@ def _add_flag_columns(
             "trial_sig_worse": Column(bool, nullable=False),
             "trial_non_sig_worse": Column(bool, nullable=False),
         },
-        unique=["source", "target"],
+        # unique=["source", "target"],
     )
 )
 @inject_object()
@@ -193,7 +193,7 @@ def generate_pairs(
             "rank": Column(T.LongType(), nullable=False),
             "quantile_rank": Column(T.DoubleType(), nullable=False),
         },
-        unique=["source", "target"],
+        # unique=["source", "target"],
     )
 )
 def make_predictions_and_sort(

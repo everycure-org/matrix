@@ -71,13 +71,17 @@ integration.prm.unified_edges:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/unified/edges
 
-# integration.int.unified_ground_truth_edges:
-#   <<: [*_spark_parquet, *_layer_prm]
-#   filepath: ${globals:paths.integration}/int/ground_truth/edges.norm
+integration.int.disease_list.nodes.norm@pandas:
+  <<: [*_pandas_parquet, *_layer_prm]
+  filepath: ${globals:paths.integration}/int/prime_disease_list_txgnn.parquet
+
+integration.int.disease_list.nodes.norm@spark:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.integration}/int/prime_disease_list_txgnn.parquet
 
 integration.int.unified_ground_truth_edges:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/prime_kg_gt.parquet
+  filepath: ${globals:paths.integration}/int/kgml_xdtd_ground_truth/edges.norm
 
 integration.prm.nodes_edges_consistency_check:
   type: text.TextDataset

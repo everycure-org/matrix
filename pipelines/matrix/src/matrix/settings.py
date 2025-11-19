@@ -53,7 +53,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 # {"name": "robokop", "integrate_in_kg": True, "is_private": False},
                 {"name": "primekg", "integrate_in_kg": True, "is_private": False, "validate": True},
                 {"name": "drug_list", "integrate_in_kg": False, "has_edges": False, "is_core": True},
-                {"name": "disease_list", "integrate_in_kg": False, "has_edges": False, "is_core": True},
+                # {"name": "disease_list", "integrate_in_kg": False, "has_edges": False, "is_core": True},
                 {
                     "name": "kgml_xdtd_ground_truth",
                     "has_nodes": False,

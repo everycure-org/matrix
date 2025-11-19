@@ -120,6 +120,7 @@ class DiseaseAreaSplit(BaseCrossValidator):
             disease_list_copy = disease_list[["id", self.disease_grouping_type]]
             # merge disease list with data
             X_copy = X.copy()
+            disease_list_copy = disease_list_copy.loc[~disease_list_copy["id"].duplicated()]
             X_copy = X_copy.merge(disease_list_copy, left_on="target", right_on="id", how="left")
             X_copy = X_copy[~X_copy.id.isna()]
         else:
@@ -141,7 +142,6 @@ class DiseaseAreaSplit(BaseCrossValidator):
             )
             test_indices = X_copy[mask].index.tolist()
             train_indices = X_copy[~mask].index.tolist()
-
             yield train_indices, test_indices
 
     def get_n_splits(self, X=None, disease_list=None):
