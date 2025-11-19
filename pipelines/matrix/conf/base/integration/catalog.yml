@@ -81,7 +81,7 @@ integration.int.disease_list.nodes.norm@spark:
 
 integration.int.unified_ground_truth_edges:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/int/kgml_xdtd_ground_truth/edges.norm
+  filepath: ${globals:paths.integration}/prm/prime_kg_gt_corr.parquet
 
 integration.prm.nodes_edges_consistency_check:
   type: text.TextDataset

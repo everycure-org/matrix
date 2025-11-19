@@ -48,35 +48,35 @@ embeddings.topological:
   write_property: &_topological_property 'topological_embedding'
 
 # uncomment for node2vec
-# embeddings.topological_estimator:
-#   _object: matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec 
-#   concurrency: 4
-#   embedding_dim: 512
-#   random_seed: 42
-#   iterations: 10
-#   in_out_factor: 1
-#   return_factor: 1
-#   initial_learning_rate: 0.025
-#   min_learning_rate: 0.000025
-#   negative_sampling_rate: 5
-#   walk_length: 30
-#   walks_per_node: 10
-#   window_size: 10
-
 embeddings.topological_estimator:
-  _object: matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage
+  _object: matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec 
   concurrency: 4
-  iterations: 100
-  sample_sizes: [25, 10]
-  tolerance: 1e-8
   embedding_dim: 512
-  batch_size: 5000
-  epochs: 10
-  search_depth: 100
-  learning_rate: 0.01
-  activation_function: ReLu
   random_seed: 42
-  feature_properties: [*_pca_property]
+  iterations: 10
+  in_out_factor: 1
+  return_factor: 1
+  initial_learning_rate: 0.025
+  min_learning_rate: 0.000025
+  negative_sampling_rate: 5
+  walk_length: 30
+  walks_per_node: 10
+  window_size: 10
+
+# embeddings.topological_estimator:
+#   _object: matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage
+#   concurrency: 4
+#   iterations: 100
+#   sample_sizes: [25, 10]
+#   tolerance: 1e-8
+#   embedding_dim: 512
+#   batch_size: 5000
+#   epochs: 10
+#   search_depth: 100
+#   learning_rate: 0.01
+#   activation_function: ReLu
+#   random_seed: 42
+#   feature_properties: [*_pca_property]
   # negative_sampling_weight: 20
 
 embeddings.write_topological_col: *_topological_property

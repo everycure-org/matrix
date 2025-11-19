@@ -303,7 +303,6 @@ class DiseaseSplitDrugDiseasePairGenerator(SingleLabelPairGenerator):
         # Get drugs from graph that match drug flags
         drug_samp_ids = graph.flags_to_ids(self._drug_flags)
 
-        # NOTE: This function was partially generated using AI assistance.
         _n_train_positives = len(known_pairs[(known_pairs["split"] == "TRAIN") & (known_pairs["y"] == 1)])
         _n_unknown = self._n_unknown * _n_train_positives
         # Sample pairs using the helper function
