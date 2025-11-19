@@ -63,7 +63,7 @@ spec:
                   - location: message
                     role: user
             # Gemini Models via Vertex AI (supports experimental models like gemini-3-pro-preview)
-            - model_name: gemini/*
+            - model_name: vertex_ai/*
               litellm_params:
                 model: vertex_ai/*
                 vertex_project: {{ .Values.spec.source.project_id }}
