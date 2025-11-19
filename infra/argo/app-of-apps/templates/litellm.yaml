@@ -44,117 +44,21 @@ spec:
           general_settings:
             telemetry: false
           model_list:
-            # OpenAI
-            - model_name: gpt-5
+            # OpenAI Models
+            - model_name: openai/*
               litellm_params:
-                model: openai/gpt-5
+                model: openai/*
                 api_key: os.environ/OPENAI_API_KEY
-                timeout: 300 # 5 minutes
+                timeout: 300
                 cache_control_injection_points:
                   - location: message
                     role: user
-            - model_name: gpt-5-2025-08-07
+            # Anthropic Models
+            - model_name: claude/*
               litellm_params:
-                model: openai/gpt-5-2025-08-07
-                timeout: 300 # 5 minutes
-                api_key: os.environ/OPENAI_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            - model_name: gpt-5-mini
-              litellm_params:
-                model: openai/gpt-5-mini
-                timeout: 300 # 5 minutes
-                api_key: os.environ/OPENAI_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            - model_name: gpt-5-mini-2025-08-07
-              litellm_params:
-                model: openai/gpt-5-mini-2025-08-07
-                timeout: 300 # 5 minutes
-                api_key: os.environ/OPENAI_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            - model_name: gpt-5-nano
-              litellm_params:
-                model: openai/gpt-5-nano
-                timeout: 300 # 5 minutes
-                api_key: os.environ/OPENAI_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            - model_name: gpt-5-nano-2025-08-07
-              litellm_params:
-                model: openai/gpt-5-nano-2025-08-07
-                timeout: 300 # 5 minutes
-                api_key: os.environ/OPENAI_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            - model_name: gpt-4o
-              litellm_params:
-                model: openai/gpt-4o
-                timeout: 300 # 5 minutes
-                api_key: os.environ/OPENAI_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            - model_name: claude-3-5-sonnet
-              litellm_params:
-                model: anthropic/claude-3-5-sonnet-20240620
-                timeout: 300 # 5 minutes
+                model: anthropic/*
                 api_key: os.environ/ANTHROPIC_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            - model_name: claude-4-sonnet-20250514
-              litellm_params:
-                model: anthropic/claude-4-sonnet-20250514
-                timeout: 300 # 5 minutes
-                api_key: os.environ/ANTHROPIC_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            - model_name: gpt-4o-mini
-              litellm_params:
-                model: openai/gpt-4o-mini
-                timeout: 300 # 5 minutes
-                api_key: os.environ/OPENAI_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            - model_name: text-embedding-3-large
-              litellm_params:
-                model: openai/text-embedding-3-large
-                timeout: 300 # 5 minutes
-                api_key: os.environ/OPENAI_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            - model_name: text-embedding-3-small
-              litellm_params:
-                model: openai/text-embedding-3-small
-                timeout: 300 # 5 minutes
-                api_key: os.environ/OPENAI_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            # OpenAI
-            - model_name: claude-3-5-haiku
-              litellm_params:
-                model: anthropic/claude-3-5-haiku-20241022
-                timeout: 300 # 5 minutes
-                api_key: os.environ/ANTHROPIC_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            - model_name: claude-3-haiku
-              litellm_params:
-                model: anthropic/claude-3-haiku-20240307
-                timeout: 300 # 5 minutes
-                api_key: os.environ/ANTHROPIC_API_KEY
+                timeout: 300
                 cache_control_injection_points:
                   - location: message
                     role: user
