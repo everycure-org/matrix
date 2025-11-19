@@ -74,7 +74,7 @@ def dummy_dataset_major(tmpdir, major_df):
         (["1.0.0", "1.2.0", "2.0.0"], "1.2.0", "1.2.0", False),
         # Range match (should pick highest satisfying version)
         (["1.0.0", "1.4.0", "2.0.0"], "^1.0.0", "1.4.0", False),
-        # 3️Latest version match (pattern allows all)
+        # Latest version match (pattern allows all)
         (["1.0.0", "1.5.0", "2.0.0"], "*", "2.0.0", True),
     ],
 )
