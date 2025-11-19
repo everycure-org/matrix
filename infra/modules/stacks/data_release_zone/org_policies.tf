@@ -30,7 +30,6 @@ resource "google_org_policy_policy" "public_access_prevention" {
     }
   }
 }
-
 # wait for the org policies to propagate
 resource "time_sleep" "wait_for_org_policies" {
   create_duration = "30s"
