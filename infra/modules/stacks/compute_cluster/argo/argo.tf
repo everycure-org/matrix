@@ -252,11 +252,11 @@ spec:
   source:
     path: ${var.repo_path}/app-of-apps
     repoURL: ${var.repo_url}
-    targetRevision: change_claude_to_anthrophic_in_litellm
+    targetRevision: ${var.repo_revision}
     helm:
       parameters:
       - name: spec.source.targetRevision
-        value:  change_claude_to_anthrophic_in_litellm
+        value:  ${var.repo_revision}
       - name: spec.source.environment
         value:  ${var.environment}
       - name: spec.source.project_id
