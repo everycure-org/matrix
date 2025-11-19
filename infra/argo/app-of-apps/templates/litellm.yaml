@@ -62,6 +62,17 @@ spec:
                 cache_control_injection_points:
                   - location: message
                     role: user
+            # Gemini Models via Vertex AI (supports experimental models like gemini-3-pro-preview)
+            # Note: Experimental models are in 'global' location, not regional
+            - model_name: vertex_ai/*
+              litellm_params:
+                model: vertex_ai/*
+                vertex_project: {{ .Values.spec.source.project_id }}
+                vertex_location: global
+                timeout: 300 # 5 minutes
+                cache_control_injection_points:
+                  - location: message
+                    role: user
           router_settings:
             timeout: 300 # 5 minutes
             # Redis for cross-pod RPM/TPM + routing state
