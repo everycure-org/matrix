@@ -2226,7 +2226,7 @@ fabricator.kgml_xdtd_ground_truth:
         source_column: disease_nodes.id
         sample:
           num_rows: "@positive_edges.num_rows"
-          seed: 12456
+          seed: 47856
 
 fabricator.ec_ground_truth:
     positive_edges:
