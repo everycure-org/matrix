@@ -2,7 +2,6 @@
 
 This module provides dataset classes for loading and saving RDF/OWL ontologies:
 - PyOxiGraphDataset: Uses PyOxigraph Store for fast SPARQL querying
-- RDFLibStringDataset: Uses rdflib.Graph for string-based RDF processing
 """
 
 import logging
@@ -13,7 +12,6 @@ import pyoxigraph
 import requests
 from kedro.io.core import AbstractDataset, DatasetError
 from pyoxigraph import RdfFormat
-from rdflib import Graph
 
 logger = logging.getLogger(__name__)
 
@@ -160,93 +158,6 @@ class PyOxiGraphDataset(AbstractDataset):
         """
         return {
             "filepath": str(self._filepath),
-            "load_args": self._load_args,
-            "save_args": self._save_args,
-        }
-
-
-class RDFLibStringDataset(AbstractDataset):
-    """Kedro dataset for loading RDF/OWL from string content.
-
-    This dataset is useful when you have RDF/OWL content as a string
-    (e.g., from an API or another dataset) and want to work with it
-    as an RDFLIB Graph.
-
-    Example usage in catalog:
-        mondo_graph_from_string:
-            type: matrix.datasets.rdf.RDFLibStringDataset
-            load_args:
-                format: xml
-    """
-
-    def __init__(
-        self,
-        load_args: dict[str, Any] | None = None,
-        save_args: dict[str, Any] | None = None,
-        metadata: dict[str, Any] | None = None,
-    ) -> None:
-        """Initialize the RDFLibStringDataset.
-
-        Args:
-            load_args: Additional arguments for rdflib.Graph.parse()
-                - format: RDF format (xml, ttl, n3, nt, etc.). Default: "xml"
-            save_args: Additional arguments for rdflib.Graph.serialize()
-                - format: Output format. Default: "xml"
-            metadata: Any arbitrary metadata (used by Kedro)
-        """
-        self._load_args = load_args or {}
-        self._save_args = save_args or {}
-        self._metadata = metadata or {}
-
-        # Set default format
-        if "format" not in self._load_args:
-            self._load_args["format"] = "xml"
-        if "format" not in self._save_args:
-            self._save_args["format"] = "xml"
-
-        self._string_content = None
-
-    def _load(self) -> Graph:
-        """Load RDF/OWL string into an RDFLIB Graph.
-
-        Returns:
-            RDFLIB Graph object with parsed ontology
-
-        Raises:
-            DatasetError: If string cannot be parsed
-        """
-        if self._string_content is None:
-            raise DatasetError("No string content has been provided to load")
-
-        try:
-            logger.info("Parsing RDF string content into graph")
-            graph = Graph()
-            graph.parse(data=self._string_content, **self._load_args)
-            logger.info(f"Loaded RDF graph with {len(graph)} triples from string")
-            return graph
-        except Exception as e:
-            raise DatasetError(f"Failed to parse RDF string: {str(e)}") from e
-
-    def _save(self, graph: Graph) -> None:
-        """Save RDFLIB Graph as string content.
-
-        Args:
-            graph: RDFLIB Graph object to save
-        """
-        try:
-            logger.info(f"Serializing RDF graph with {len(graph)} triples to string")
-            self._string_content = graph.serialize(**self._save_args)
-            logger.info("Successfully serialized RDF graph to string")
-        except Exception as e:
-            raise DatasetError(f"Failed to serialize RDF graph: {str(e)}") from e
-
-    def _describe(self) -> dict[str, Any]:
-        """Return a description of the dataset.
-
-        Returns:
-            Dictionary describing the dataset configuration
-        """
-        return {
             "load_args": self._load_args,
             "save_args": self._save_args,
         }
