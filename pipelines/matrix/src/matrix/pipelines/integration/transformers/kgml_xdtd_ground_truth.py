@@ -25,10 +25,7 @@ class KGMLGroundTruthTransformer(Transformer):
             edges_df.withColumnRenamed("drug_id", "subject")
             .withColumnRenamed("drug_ec_id", "subject_ec_id")
             .withColumnRenamed("disease_id", "object")
-            .withColumn("predicate", f.lit("clinical_trials"))  # Is this correct? Should it be KGML? Ask Piotr
-            .withColumn(
-                "drug|disease", f.concat(f.col("subject"), f.lit("|"), f.col("object"))
-            )  # Not sure where this column is used. Ask Piotr
+            .withColumn("predicate", f.lit("kgml_xdtd"))
         )
 
     def _extract_pos_edges(self, edges_df: ps.DataFrame) -> ps.DataFrame:

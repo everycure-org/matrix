@@ -27,7 +27,6 @@ class ECGroundTruthTransformer(Transformer):
             .withColumnRenamed("final normalized disease id", "object")
             .withColumnRenamed("final normalized drug label", "subject_label")
             .withColumnRenamed("final normalized disease label", "object_label")
-            .withColumnRenamed("drug|disease", "id")  # Not sure where this column is used. Ask Piotr
         )
 
     def _extract_pos_edges(self, edges_df: ps.DataFrame) -> ps.DataFrame:

@@ -301,7 +301,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="fabricate_embiology_datasets",
             ),
             node(
-                func=fabricate_datasets,  # Ask to Piotr why we were not using fabricate datasets here
+                func=fabricate_datasets,
                 inputs={
                     "fabrication_params": "params:fabricator.kgml_xdtd_ground_truth",
                     "drug_nodes": "ingestion.raw.drug_list",
