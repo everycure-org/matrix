@@ -22,7 +22,8 @@ class ClinicalTrialsTransformer(Transformer):
         # fmt: off
         df = (
             edges_df
-            .withColumn("subject",                      f.col("drug_ec_id"))
+            .withColumn("subject",                      f.col("drug_curie"))
+            .withColumn("subject_ec_id",                f.col("drug_ec_id"))
             .withColumn("object",                       f.col("disease_curie"))
             .withColumn("predicate",                    f.lit("clinical_trials"))
             .filter((f.col("subject").isNotNull()) & (f.col("object").isNotNull()))
