@@ -9,7 +9,10 @@ import logging
 from pathlib import Path
 from typing import Any
 
+import pyoxigraph
+import requests
 from kedro.io.core import AbstractDataset, DatasetError
+from pyoxigraph import RdfFormat
 from rdflib import Graph
 
 logger = logging.getLogger(__name__)
@@ -69,13 +72,6 @@ class PyOxiGraphDataset(AbstractDataset):
             DatasetError: If file cannot be loaded or parsed
         """
         try:
-            import pyoxigraph
-            from pyoxigraph import RdfFormat
-            import requests
-
-            logger.info(f"Loading RDF graph from {self._filepath}")
-
-            # Create PyOxigraph store for fast SPARQL
             store = pyoxigraph.Store()
 
             # Map format string to PyOxigraph RdfFormat
