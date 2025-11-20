@@ -32,7 +32,7 @@ class ECGroundTruthTransformer(Transformer):
     def _extract_pos_edges(self, edges_df: ps.DataFrame) -> ps.DataFrame:
         edges_df = self._rename_edges(edges_df)
         return (
-            edges_df.select("subject", "subject_ec_id", "object", "subject_label", "object_label", "id")
+            edges_df.select("subject", "subject_ec_id", "object", "subject_label", "object_label")
             .withColumn("predicate", f.lit("indication"))
             .withColumn("y", f.lit(1))
         )
@@ -40,7 +40,7 @@ class ECGroundTruthTransformer(Transformer):
     def _extract_neg_edges(self, edges_df: ps.DataFrame) -> ps.DataFrame:
         edges_df = self._rename_edges(edges_df)
         return (
-            edges_df.select("subject", "subject_ec_id", "object", "subject_label", "object_label", "id")
+            edges_df.select("subject", "subject_ec_id", "object", "subject_label", "object_label")
             .withColumn("predicate", f.lit("contraindication"))
             .withColumn("y", f.lit(0))
         )

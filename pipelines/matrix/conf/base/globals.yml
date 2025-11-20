@@ -49,10 +49,10 @@ data_sources:
     version: 20230309-ec-id # NOTE: Here 0309 is a period of time (here Mar to Sep 2023)
   drug_list:
     # check releases here: gs://data.dev.everycure.org/data/01_RAW/drug_list
-    version: v1.0.0
+    version: v1.0.2
   disease_list:
     # check releases here: gs://data.dev.everycure.org/data/01_RAW/disease_list
-    version: v1.0.1
+    version: v1.0.3
   kgml_xdtd_gt:
     version: v2.10.0_validated-ec-id
   ec_gt:
