@@ -302,24 +302,12 @@ ingestion.int.kgml_xdtd_ground_truth.negative.edges@spark:
 # -------------------------------------------------------------------------  
 
 ingestion.raw.ec_ground_truth.positives:
-  <<: [*_layer_raw]
-  type: matrix.datasets.github.GitHubReleaseExcelDataset
-  repository_url: https://github.com/everycure-org/matrix-indication-list
-  release_name: ${globals:data_sources.ec_gt.version}
-  release_asset_name: indicationList.xlsx 
-  fs_args:
-    Accept: application/octet-stream
-    Authorization: token ${globals:gh_token}
+  <<: [*_layer_raw, *_pandas_parquet]
+  filepath: ${globals:paths.raw_public}/medic/${globals:data_sources.ec_gt.version}/indicationList.parquet
 
 ingestion.raw.ec_ground_truth.negatives:
-  <<: [*_layer_raw]
-  type: matrix.datasets.github.GitHubReleaseExcelDataset
-  repository_url: https://github.com/everycure-org/matrix-indication-list
-  release_name: ${globals:data_sources.ec_gt.version}
-  release_asset_name: contraindicationList.xlsx
-  fs_args:
-    Accept: application/octet-stream
-    Authorization: token ${globals:gh_token}
+  <<: [*_layer_raw, *_pandas_parquet]
+  filepath: ${globals:paths.raw_public}/medic/${globals:data_sources.ec_gt.version}/contraindicationList.parquet
 
 ingestion.int.ec_ground_truth.negative.edges@pandas:
   <<: [*_pandas_parquet, *_layer_int]

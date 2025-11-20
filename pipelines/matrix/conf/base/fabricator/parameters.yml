@@ -2228,7 +2228,7 @@ fabricator.kgml_xdtd_ground_truth:
           num_rows: "@positive_edges.num_rows"
           seed: 12456
 
-fabricator.ec_gt:
+fabricator.ec_ground_truth:
     positive_edges:
       num_rows: 50
       columns:
@@ -2277,6 +2277,12 @@ fabricator.ec_gt:
           sample_values:
             - 1.0
             - Null
+        "drug_ec_id":
+          type: copy_column
+          source_column: drug_nodes.id
+          sample:
+            num_rows: "@positive_edges.num_rows"
+            seed: 55555
     negative_edges:
       num_rows: 50
       columns:
@@ -2326,8 +2332,14 @@ fabricator.ec_gt:
           sample_values:
             - True
             - False
+        "drug_ec_id":
+          type: copy_column
+          source_column: drug_nodes.id
+          sample:
+            num_rows: "@negative_edges.num_rows"
+            seed: 55555
 
-fabricator.drugbank_gt:
+fabricator.drugbank_ground_truth:
     positive_edges:
       num_rows: 50
       columns:

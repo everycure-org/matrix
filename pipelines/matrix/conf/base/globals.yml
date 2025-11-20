@@ -56,8 +56,8 @@ data_sources:
   kgml_xdtd_gt:
     version: v2.10.0_validated-ec-id
   ec_gt:
-    # check releases here: https://github.com/everycure-org/matrix-indication-list/releases
-    version: "Release v1.3.3"
+    # check releases here: https://github.com/everycure-org/matrix-indication-list/releases or https://console.cloud.google.com/storage/browser/data.dev.everycure.org/data/01_RAW/medic
+    version: v1.3.3-ec-id
   drugbank_gt:
     version: 1332218-ec-id
   drugmech:
