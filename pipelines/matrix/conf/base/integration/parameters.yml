@@ -152,3 +152,12 @@ integration:
     # then node will be assigned biolink:ChemicalEntity as most specific category.
     # For RTX-KG2 reproduction from KGML-xDTD, choose false
     retrieve_most_specific_category: true
+
+  connectivity:
+    # Algorithm to use for connected components calculation
+    # Options: "graphframes", "grape", "rustworkx", "benchmark"
+    # - graphframes: Spark-native distributed graph processing
+    # - grape: Rust-based ultra-fast graph library (ensmallen)
+    # - rustworkx: High-performance Rust graph library with Python bindings
+    # - benchmark: Run all three algorithms and compare performance
+    algorithm: "graphframes"

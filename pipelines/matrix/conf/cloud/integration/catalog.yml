@@ -63,3 +63,14 @@ integration.prm.metric_abox_tbox:
   <<: *_bigquery_ds
   filepath: ${globals:paths.integration}/prm/metric_abox_tbox
   table: "metric_abox_tbox"
+
+# EC Core Connectivity Metrics
+integration.prm.metric_core_connectivity_summary:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.integration}/prm/metric_core_connectivity_summary
+  table: "metric_core_connectivity_summary"
+
+integration.prm.metric_core_connectivity_subgraph_details:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.integration}/prm/metric_core_connectivity_subgraph_details
+  table: "metric_core_connectivity_subgraph_details"
