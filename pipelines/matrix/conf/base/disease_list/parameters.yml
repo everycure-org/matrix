@@ -2,11 +2,7 @@
 
 # Parameters for create_billable_icd10_codes node
 billable_icd10_params:
-  # Predicate for exact matches in SSSOM mappings
-  exact_match_predicate: "skos:exactMatch"
-  # Subset URI for billable ICD-10 codes
   icd10_billable_subset: "http://purl.obolibrary.org/obo/mondo#icd10_billable"
-  # ICD-10-CM CURIE prefix
   icd10cm_prefix: "ICD10CM"
 
 # Parameters for create_subtypes_template node
@@ -72,7 +68,6 @@ disease_list_params:
     - "is_omim"
     - "is_icd_billable"
     - "is_mondo_subtype"
-
 # Disease subtype regex patterns for identifying disease groupings
 # These patterns extract parent disease names from child disease labels
 subtype_patterns:
