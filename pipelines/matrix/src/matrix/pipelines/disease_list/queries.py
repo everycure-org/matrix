@@ -36,21 +36,21 @@ def _run_sparql_select(store: Store, query: str) -> pd.DataFrame:
     """Execute a SPARQL SELECT query using PyOxigraph for fast performance."""
     results = store.query(query)
 
-    variables = [str(v)[1:] if str(v).startswith("?") else str(v) for v in results.variables]
-
     rows = []
+
     for solution in results:
-        row_dict = {}
-        for i, var_with_prefix in enumerate(results.variables):
-            value = solution[var_with_prefix]
-            clean_var = variables[i]
+        row = {}
+        for var in list(results.variables):
+            value = solution[var]
+
             if value is None:
-                row_dict[clean_var] = ""
-            elif hasattr(value, "value"):
-                row_dict[clean_var] = str(value.value)
-            else:
-                row_dict[clean_var] = str(value)
-        rows.append(row_dict)
+                row[var] = ""
+            elif hasattr(value, "value"):  # Literal
+                row[var] = str(value.value)
+            else:  # IRI or Blank node
+                row[var] = str(value)
+
+        rows.append(row)
 
     results_df = pd.DataFrame(rows)
     return _clean_sparql_results(results_df)
