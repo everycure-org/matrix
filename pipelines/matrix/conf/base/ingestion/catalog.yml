@@ -272,22 +272,14 @@ ingestion.int.disease_list.nodes:
 # -------------------------------------------------------------------------  
 # TODO: Remove raw suffix from all outputs of preprocessing pipeline once its in main
 ingestion.raw.kgml_xdtd_ground_truth.positives:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_public}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tp_pairs.txt
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
+  <<: [*_layer_raw, *_pandas_parquet]
+  filepath: ${globals:paths.raw_public}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tp_pairs.parquet
+  
 
 ingestion.raw.kgml_xdtd_ground_truth.negatives:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_public}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tn_pairs.txt
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
+  <<: [*_layer_raw, *_pandas_parquet]
+  filepath: ${globals:paths.raw_public}/ground_truth/kg2/${globals:data_sources.kgml_xdtd_gt.version}/tn_pairs.parquet
+  
 
 ingestion.int.kgml_xdtd_ground_truth.positive.edges@pandas:
   <<: [*_pandas_parquet, *_layer_int]

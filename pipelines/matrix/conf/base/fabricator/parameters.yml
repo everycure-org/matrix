@@ -1,6 +1,3 @@
-fabricator.ground_truth:
-  num_rows_per_category: 100
-
 fabricator.rtx_kg2:
   nodes:
     num_rows: 500
@@ -2186,6 +2183,50 @@ fabricator.embiology:
         sample_values:
           - "PMID:12345678"
           - "DOI:10.1234/example.5678"
+
+fabricator.kgml_xdtd_ground_truth:
+  positive_edges:
+    num_rows: 100
+    columns:
+      drug_id:
+        type: copy_column
+        source_column: drug_nodes.id
+        sample:
+          num_rows: "@positive_edges.num_rows"
+          seed: 40399
+      drug_ec_id:
+        type: copy_column
+        source_column: drug_nodes.id
+        sample:
+          num_rows: "@positive_edges.num_rows"
+          seed: 40399
+      disease_id:
+        type: copy_column
+        source_column: disease_nodes.id
+        sample:
+          num_rows: "@positive_edges.num_rows"
+          seed: 12456
+  negative_edges:
+    num_rows: 100
+    columns:
+      drug_id:
+        type: copy_column
+        source_column: drug_nodes.id
+        sample:
+          num_rows: "@positive_edges.num_rows"
+          seed: 40399
+      drug_ec_id:
+        type: copy_column
+        source_column: drug_nodes.id
+        sample:
+          num_rows: "@positive_edges.num_rows"
+          seed: 40399
+      disease_id:
+        type: copy_column
+        source_column: disease_nodes.id
+        sample:
+          num_rows: "@positive_edges.num_rows"
+          seed: 12456
 
 fabricator.ec_gt:
     positive_edges:

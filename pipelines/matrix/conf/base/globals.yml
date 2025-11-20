@@ -28,7 +28,7 @@ versions:
 
 data_sources:
   rtx_kg2:
-    version: &_rtx_kg_version v2.10.0_validated
+    version: v2.10.0_validated
   robokop:
     version: 30fd1bfc18cd5ccb
   primekg:
@@ -54,7 +54,7 @@ data_sources:
     # check releases here: gs://data.dev.everycure.org/data/01_RAW/disease_list
     version: v1.0.1
   kgml_xdtd_gt:
-    version: *_rtx_kg_version
+    version: v2.10.0_validated-ec-id
   ec_gt:
     # check releases here: https://github.com/everycure-org/matrix-indication-list/releases
     version: "Release v1.3.3"
