@@ -59,7 +59,7 @@ data_sources:
     # check releases here: https://github.com/everycure-org/matrix-indication-list/releases
     version: "Release v1.3.3"
   drugbank_gt:
-    version: 1332218
+    version: 1332218-ec-id
   drugmech:
     # check releases here: https://github.com/SuLab/DrugMechDB/releases/ 
     version: 2.0.1

@@ -2389,6 +2389,12 @@ fabricator.drugbank_gt:
           sample:
             num_rows: "@positive_edges.num_rows"
             seed: 40399
+        "drug_ec_id":
+          type: copy_column
+          source_column: drug_nodes.id
+          sample:
+            num_rows: "@positive_edges.num_rows"
+            seed: 55555
     negative_edges:
       num_rows: 50
       columns:
@@ -2450,6 +2456,12 @@ fabricator.drugbank_gt:
           sample:
             num_rows: "@positive_edges.num_rows"
             seed: 20399
+        "drug_ec_id":
+          type: copy_column
+          source_column: drug_nodes.id
+          sample:
+            num_rows: "@positive_edges.num_rows"
+            seed: 55555
 
 
 fabricator.run_comparison:
