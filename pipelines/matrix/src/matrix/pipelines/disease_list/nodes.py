@@ -421,6 +421,9 @@ def _is_grouping_heuristic(
         df[output_column] = df[output_column] | df[col].fillna(False)
 
     for col in not_grouping_columns:
+        if col not in df.columns:
+            logging.warning(f"Missing not-grouping column: {col}")
+            continue
         df.loc[df[col].fillna(False), output_column] = False
 
     return df
