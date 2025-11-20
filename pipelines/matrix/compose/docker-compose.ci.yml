@@ -45,7 +45,7 @@ services:
       - "/bin/sh"
       - -ecx
       - |
-          kedro run -e test -p test --runner ThreadRunner
+          kedro run -e test -p test
     environment:
       TQDM_DISABLE: 1
       NODENORM_PROTOCOL_AND_DOMAIN: http://mockserver:1080
