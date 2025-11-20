@@ -43,9 +43,9 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
     generate_dynamic_pipeline_mapping(
         {
             "cross_validation": {
-                "n_cross_val_folds": 5,
+                "n_cross_val_folds": 2,
             },
-            "num_shards": 3,
+            "num_shards": 2,
             "integration": [
                 {"name": "rtx_kg2", "integrate_in_kg": True, "is_private": False},
                 {"name": "spoke", "integrate_in_kg": True, "is_private": True},
