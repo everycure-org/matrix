@@ -13,6 +13,11 @@ filtering:
       column: primary_knowledge_sources
       keep_list:
         - infores:semmeddb
+        - infores:string
+        - infores:pathwhiz
+        - infores:ubergraph
+        - infores:drugbank
+        - infores:hmdb
 
         
     # filter_node_labels:
