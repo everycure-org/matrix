@@ -113,7 +113,24 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 {"name": "matrix_curated", "source_type": "matrix_curated"},
                 {"name": "matrix_reviews", "source_type": "matrix_curated"},
             ],
-        }
+            "run_comparison": {
+                "evaluations": [
+                    "ground_truth_recall_at_n_bootstrap",
+                    "negative_recall_at_n_bootstrap",
+                    "off_label_recall_at_n_bootstrap",
+                    "disease_specific_hit_at_k_bootstrap",
+                    "disease_specific_hit_at_k_off_label_bootstrap",
+                    "drug_entropy_at_n",
+                    "disease_entropy_at_n",
+                    "commonality_at_n",
+                    # "ground_truth_recall_at_n",
+                    # "negative_recall_at_n",
+                    # "off_label_recall_at_n",
+                    # "disease_specific_hit_at_k",
+                    # "disease_specific_hit_at_k_off_label",
+                ],
+            },
+        },
     )
 )
 

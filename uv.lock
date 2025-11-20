@@ -1,6 +1,6 @@
 version = 1
 revision = 2
-requires-python = "==3.11.*"
+requires-python = ">=3.11.0, <3.12"
 resolution-markers = [
     "sys_platform == 'linux'",
     "sys_platform == 'darwin'",
@@ -1989,7 +1989,7 @@ wheels = [
 
 [[package]]
 name = "kedro"
-version = "0.19.13"
+version = "0.19.15"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
@@ -2014,9 +2014,9 @@ dependencies = [
     { name = "toml" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b1/0e/376370d99670f823191b9d86cff87ec35eef0d4cb6b9b1ff21f73240c937/kedro-0.19.13.tar.gz", hash = "sha256:f3363e6a566631d24c8af0d5c5d08c9621f41cab1bf4562c52d680010c79b031", size = 164589, upload-time = "2025-05-22T13:51:27.091Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/13/8d/a0134b8b5cf0d096ae7372f302e4410c4af11736381a5ee332aafcb4a0b6/kedro-0.19.15.tar.gz", hash = "sha256:4f39a0f97f23ba895ea6893d4720fce834fe8fbc56a5633baa7695501179f7ea", size = 165234, upload-time = "2025-09-02T13:00:44.703Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3c/23/6d0d7e7f69421f743361b3437aa88f63e792c6aad5e0ee4e032545ff459f/kedro-0.19.13-py3-none-any.whl", hash = "sha256:fd5dd51c76c3f4916b23183e4ae89e60a2be42b4f82db424e62e8e868bcb7e7b", size = 198553, upload-time = "2025-05-22T13:51:25.824Z" },
+    { url = "https://files.pythonhosted.org/packages/2a/d5/ecfbf563c92e40f2e3e15703a46d55e31ff36cbee5c4586d1d0a4e183d97/kedro-0.19.15-py3-none-any.whl", hash = "sha256:65a2bad75c6ac196b96e6d59444a2f170f9f52529bbacd1f000405556e88de70", size = 199236, upload-time = "2025-09-02T13:00:43.556Z" },
 ]
 
 [[package]]
@@ -2577,9 +2577,12 @@ dependencies = [
     { name = "numpy" },
     { name = "pandas" },
     { name = "pandas-gbq" },
+    { name = "pydantic" },
     { name = "pyspark" },
     { name = "s3fs" },
+    { name = "semantic-version" },
     { name = "tqdm" },
+    { name = "typer" },
 ]
 
 [package.dev-dependencies]
@@ -2604,9 +2607,13 @@ requires-dist = [
     { name = "numpy" },
     { name = "pandas" },
     { name = "pandas-gbq" },
+    { name = "pydantic" },
+    { name = "pyspark" },
     { name = "pyspark", specifier = ">=3.5.0" },
     { name = "s3fs" },
+    { name = "semantic-version", specifier = ">=2.10.0" },
     { name = "tqdm" },
+    { name = "typer", specifier = ">=0.20.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -2754,6 +2761,7 @@ name = "matrix-pipeline"
 source = { editable = "pipelines/matrix" }
 dependencies = [
     { name = "bmt" },
+    { name = "bracex" },
     { name = "db-dtypes" },
     { name = "faker" },
     { name = "gcsfs" },
@@ -2808,7 +2816,7 @@ dependencies = [
     { name = "tqdm" },
     { name = "transformers" },
     { name = "typer" },
-    { name = "xgboost" },
+    { name = "xgboost-cpu" },
 ]
 
 [package.dev-dependencies]
@@ -2867,6 +2875,7 @@ pre-commit = [
 [package.metadata]
 requires-dist = [
     { name = "bmt" },
+    { name = "bracex", specifier = ">=2.6" },
     { name = "db-dtypes" },
     { name = "faker" },
     { name = "gcsfs", specifier = "==2024.3.1" },
@@ -2879,7 +2888,7 @@ requires-dist = [
     { name = "ipywidgets" },
     { name = "jsonpath-ng" },
     { name = "jupyterlab", specifier = ">=3.0" },
-    { name = "kedro", specifier = "~=0.19.13" },
+    { name = "kedro", specifier = "~=0.19.15" },
     { name = "kedro-datasets", specifier = ">=6.0.0" },
     { name = "kedro-telemetry", specifier = ">=0.3.1" },
     { name = "kedro-viz", specifier = ">=11.0.0" },
@@ -2920,7 +2929,7 @@ requires-dist = [
     { name = "tqdm", specifier = ">=4.67.1" },
     { name = "transformers" },
     { name = "typer" },
-    { name = "xgboost" },
+    { name = "xgboost-cpu" },
 ]
 
 [package.metadata.requires-dev]
@@ -3536,15 +3545,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/22/97/dfb1a31bb46686f09e68ea6ac5c63fdee0d22d7b23b8f3f7ea07712869ef/numpy-1.24.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7215847ce88a85ce39baf9e89070cb860c98fdddacbaa6c0da3ffb31b3350bd5", size = 17278923, upload-time = "2023-06-26T13:26:25.658Z" },
     { url = "https://files.pythonhosted.org/packages/35/e2/76a11e54139654a324d107da1d98f99e7aa2a7ef97cfd7c631fba7dbde71/numpy-1.24.4-cp311-cp311-win32.whl", hash = "sha256:4979217d7de511a8d57f4b4b5b2b965f707768440c17cb70fbf254c4b225238d", size = 12422446, upload-time = "2023-06-26T13:26:49.302Z" },
     { url = "https://files.pythonhosted.org/packages/d8/ec/ebef2f7d7c28503f958f0f8b992e7ce606fb74f9e891199329d5f5f87404/numpy-1.24.4-cp311-cp311-win_amd64.whl", hash = "sha256:b7b1fc9864d7d39e28f41d089bfd6353cb5f27ecd9905348c24187a768c79694", size = 14834466, upload-time = "2023-06-26T13:27:16.029Z" },
-]
-
-[[package]]
-name = "nvidia-nccl-cu12"
-version = "2.26.2"
-source = { registry = "https://pypi.org/simple" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/69/5b/ca2f213f637305633814ae8c36b153220e40a07ea001966dcd87391f3acb/nvidia_nccl_cu12-2.26.2-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:5c196e95e832ad30fbbb50381eb3cbd1fadd5675e587a548563993609af19522", size = 291671495, upload-time = "2025-03-13T00:30:07.805Z" },
-    { url = "https://files.pythonhosted.org/packages/67/ca/f42388aed0fddd64ade7493dbba36e1f534d4e6fdbdd355c6a90030ae028/nvidia_nccl_cu12-2.26.2-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:694cf3879a206553cc9d7dbda76b13efaf610fdb70a50cba303de1b0d1530ac6", size = 201319755, upload-time = "2025-03-13T00:29:55.296Z" },
 ]
 
 [[package]]
@@ -4958,6 +4958,15 @@ wheels = [
 ]
 
 [[package]]
+name = "semantic-version"
+version = "2.10.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/7d/31/f2289ce78b9b473d582568c234e104d2a342fd658cc288a7553d83bb8595/semantic_version-2.10.0.tar.gz", hash = "sha256:bdabb6d336998cbb378d4b9db3a4b56a1e3235701dc05ea2690d9a997ed5041c", size = 52289, upload-time = "2022-05-26T13:35:23.454Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6a/23/8146aad7d88f4fcb3a6218f41a60f6c2d4e3a72de72da1825dc7c8f7877c/semantic_version-2.10.0-py2.py3-none-any.whl", hash = "sha256:de78a3b8e0feda74cabc54aab2da702113e33ac9d9eb9d2389bcf1f58b7d9177", size = 15552, upload-time = "2022-05-26T13:35:21.206Z" },
+]
+
+[[package]]
 name = "semver"
 version = "3.0.2"
 source = { registry = "https://pypi.org/simple" }
@@ -5399,7 +5408,7 @@ wheels = [
 
 [[package]]
 name = "typer"
-version = "0.16.0"
+version = "0.20.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -5407,9 +5416,9 @@ dependencies = [
     { name = "shellingham" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c5/8c/7d682431efca5fd290017663ea4588bf6f2c6aad085c7f108c5dbc316e70/typer-0.16.0.tar.gz", hash = "sha256:af377ffaee1dbe37ae9440cb4e8f11686ea5ce4e9bae01b84ae7c63b87f1dd3b", size = 102625, upload-time = "2025-05-26T14:30:31.824Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8f/28/7c85c8032b91dbe79725b6f17d2fffc595dff06a35c7a30a37bef73a1ab4/typer-0.20.0.tar.gz", hash = "sha256:1aaf6494031793e4876fb0bacfa6a912b551cf43c1e63c800df8b1a866720c37", size = 106492, upload-time = "2025-10-20T17:03:49.445Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/76/42/3efaf858001d2c2913de7f354563e3a3a2f0decae3efe98427125a8f441e/typer-0.16.0-py3-none-any.whl", hash = "sha256:1f79bed11d4d02d4310e3c1b7ba594183bcedb0ac73b27a9e5f28f6fb5b98855", size = 46317, upload-time = "2025-05-26T14:30:30.523Z" },
+    { url = "https://files.pythonhosted.org/packages/78/64/7713ffe4b5983314e9d436a90d5bd4f63b6054e2aca783a3cfc44cb95bbf/typer-0.20.0-py3-none-any.whl", hash = "sha256:5b463df6793ec1dca6213a3cf4c0f03bc6e322ac5e16e13ddd622a889489784a", size = 47028, upload-time = "2025-10-20T17:03:47.617Z" },
 ]
 
 [[package]]
@@ -6072,23 +6081,19 @@ wheels = [
 ]
 
 [[package]]
-name = "xgboost"
-version = "3.0.3"
+name = "xgboost-cpu"
+version = "3.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
-    { name = "nvidia-nccl-cu12", marker = "platform_machine != 'aarch64' and sys_platform == 'linux'" },
     { name = "scipy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3f/8b/859cb4384a22244a29b45335f83fbe4b1614a0093c32f24602b052400768/xgboost-3.0.3.tar.gz", hash = "sha256:5cd13796b4eb8ca72c994f1f76aae74a977082c0dee6b4af5ab7c2826ad6045d", size = 1159612, upload-time = "2025-07-30T16:02:31.922Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/33/39/68b4bad51f8993ca4bef69af5fba962cdbff80b6acaab74671446db6845f/xgboost_cpu-3.1.1.tar.gz", hash = "sha256:d8615d2a83ff524fb15e9d36948dca0c56e73b255d9c874b568c9c985839ef40", size = 1237559, upload-time = "2025-10-21T21:11:44.191Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/14/9e/05a55c603bbbf16262128ca11d0b039071a89230af8e56e1afa6ae263c3d/xgboost-3.0.3-py3-none-macosx_10_15_x86_64.whl", hash = "sha256:bb6e1b7d63276b9a95b1142b0e9e736137214a8dd108605b1d7d93841b631989", size = 2249191, upload-time = "2025-07-30T16:03:02.889Z" },
-    { url = "https://files.pythonhosted.org/packages/68/15/43fbfd7e6ba5bd049a016dd74d96b1221f20a5ab7f0b33da8980fc103b44/xgboost-3.0.3-py3-none-macosx_12_0_arm64.whl", hash = "sha256:fd8309499243c60e441503259e9e39b644bbc3041d05f25d597f7fe01e4102bc", size = 2025918, upload-time = "2025-07-30T16:03:20.484Z" },
-    { url = "https://files.pythonhosted.org/packages/13/bb/3e37e07dfc42429c3369c8075a2268d99e0a5bdb18a6554e666b7d4abb43/xgboost-3.0.3-py3-none-manylinux2014_aarch64.whl", hash = "sha256:06e7fa513bbf70ae106e9f231e08908b42ce08b5cafeec898b62f6b13cb9573b", size = 4841617, upload-time = "2025-07-30T16:04:44.076Z" },
-    { url = "https://files.pythonhosted.org/packages/6c/e1/788f865a8a62c6ed936a24d6d2bc8defec7b51c749ff727d1ece5cc0eaef/xgboost-3.0.3-py3-none-manylinux2014_x86_64.whl", hash = "sha256:5b755051749a718feacb9bf863fa2478f8ac17c106477c4457a018991387765e", size = 4906208, upload-time = "2025-07-30T16:05:06.023Z" },
-    { url = "https://files.pythonhosted.org/packages/16/1a/e46343ad32e37d58b121829ead1a4b5db04d308ee1d89d71ed02f7db6870/xgboost-3.0.3-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:5b0ecfd62abd52869444c15aadd6db6f899e47aa8855541e574cf65181957bf6", size = 4602625, upload-time = "2025-07-30T16:05:40.594Z" },
-    { url = "https://files.pythonhosted.org/packages/29/34/4457f29ba1b25c1fb9a34edd34b319d66ac26a48bab96ea8f99e28e7ef62/xgboost-3.0.3-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:93a198b3aee33b3b597f5b1502b32353c5055a022a3877f79e2c1bd8048ab8ec", size = 253797991, upload-time = "2025-07-30T16:06:26.112Z" },
-    { url = "https://files.pythonhosted.org/packages/b8/84/9d0618b1bc0d9dd421b9a44a472535e353c27703ae42ab8db86b2ea33a25/xgboost-3.0.3-py3-none-win_amd64.whl", hash = "sha256:a5dff641676fea3ac80641ffe3531969ac3a071f9e1bc6f04e90a5b3554c94a9", size = 149891207, upload-time = "2025-07-30T16:04:06.817Z" },
+    { url = "https://files.pythonhosted.org/packages/b1/65/638106a4fd7df80b98c5f5fa524c93baa96130f5688db1c4da5dea8242c0/xgboost_cpu-3.1.1-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:0a8a36a5895f8b0ba928f70909669ae44a29fd4b92e015d584bb4d840c25d9e4", size = 4952708, upload-time = "2025-10-21T21:12:28.598Z" },
+    { url = "https://files.pythonhosted.org/packages/b2/6c/b7031dc0bdf0eac2f67fad068dbf9def8bd6a85d80af6c5e517ef207b4c2/xgboost_cpu-3.1.1-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:a6621e32501433c4ec31da72734e151802a26bb9e68a71fe5d26e07ac146277e", size = 5303801, upload-time = "2025-10-21T21:13:07.616Z" },
+    { url = "https://files.pythonhosted.org/packages/ce/9b/54db6fe37c3d01cd21b4031d4aed3fe3a75616f4c9043f42a4c3736ddfa1/xgboost_cpu-3.1.1-py3-none-win_amd64.whl", hash = "sha256:c0cdf8e71ed87a6f4da738826ca69a7f228ddeb695b4a25595f5953a378df926", size = 2056424, upload-time = "2025-10-21T21:13:48.204Z" },
+    { url = "https://files.pythonhosted.org/packages/b6/1e/46e78dae2e7951be81663b4178b87d9645da7a401c13e6f7de2415ea27f5/xgboost_cpu-3.1.1-py3-none-win_arm64.whl", hash = "sha256:0e32b7360596818985b02371706e992173d861b2cbbb6ac1a16924d6ead3f87a", size = 2005462, upload-time = "2025-10-21T21:13:33.166Z" },
 ]
 
 [[package]]

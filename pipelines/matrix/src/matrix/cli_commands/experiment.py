@@ -37,10 +37,10 @@ from matrix_mlflow_utils.mlflow_utils import (
 from matrix.git_utils import (
     BRANCH_NAME_REGEX,
     abort_if_intermediate_release,
+    get_changed_git_files,
     get_current_git_branch,
     get_current_git_sha,
     git_tag_exists,
-    has_dirty_git,
     has_legal_branch_name,
     has_unpushed_commits,
 )
@@ -124,7 +124,7 @@ def create(experiment_name):
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
-@click.option("--release-version", type=str, required=True, help="Specify a custom release name")
+@click.option("--release-version", type=str, help="Specify a custom release name")
 @click.option("--pipeline", "-p", type=str, default="modelling_run", help="Specify which pipeline to execute")
 @click.option("--quiet", "-q", is_flag=True, default=False, help="Disable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
@@ -167,6 +167,9 @@ def run(
     from_run: Optional[str] = None,
 ):
     """Run an experiment."""
+    # Validate release_version requirement based on pipeline
+    if not release_version and pipeline != "run_comparison":
+        release_version = click.prompt("Please specify a release version", type=str)
 
     if not experiment_name:
         current_branch = get_current_git_branch()
@@ -569,8 +572,11 @@ def abort_if_unmet_git_requirements(release_version: str) -> None:
     """
     errors = []
 
-    if has_dirty_git():
-        errors.append("Repository has uncommitted changes or untracked files.")
+    changed_files = get_changed_git_files()
+    if len(changed_files) > 0:
+        errors.append(
+            f"Repository has {len(changed_files)} uncommitted changes or untracked files: {repr(changed_files)}"
+        )
 
     if not has_legal_branch_name():
         errors.append(f"Your branch name doesn't match the regex: {BRANCH_NAME_REGEX}")

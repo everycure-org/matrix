@@ -2,6 +2,10 @@
 requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["conf*", "data*", "compose*", "tests*", "tmp*", "docs*"]
+
 [tool.pytest.ini_options]
 pythonpath = "src"
 addopts = [
@@ -50,7 +54,7 @@ dependencies = [
     "kedro-datasets>=6.0.0",
     "kedro-telemetry>=0.3.1",
     "kedro-viz>=11.0.0",
-    "kedro~=0.19.13",
+    "kedro~=0.19.15",
     "langchain",
     "langchain-openai",
     "matplotlib",
@@ -81,9 +85,8 @@ dependencies = [
     "typer", # used for convenience libraries, to be moved to a dev requirements eventually
     "xgboost-cpu",
     "tqdm>=4.67.1",
-    # Ontology processing libraries
-    "rdflib>=7.0.0", # For OWL/RDF processing (used by RDFLibStringDataset)
-    "pyoxigraph>=0.4.5", # Fast RDF store with SPARQL support
+    "pyoxigraph>=0.4.5", # Needed for loading Mondo
+    "bracex>=2.6",
 ]
 
 
