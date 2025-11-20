@@ -2220,7 +2220,7 @@ fabricator.kgml_xdtd_ground_truth:
         source_column: drug_nodes.id
         sample:
           num_rows: "@positive_edges.num_rows"
-          seed: 40399
+          seed: 43399
       disease_id:
         type: copy_column
         source_column: disease_nodes.id
