@@ -494,7 +494,6 @@ def _merge_disease_data_sources(
     """
     merged = base_df.merge(groupings_df, on="category_class", how="left")
 
-    metrics_and_counts = metrics_df.merge(subtype_counts_df, on="category_class", how="outer")
     metrics_df_filtered = metrics_df[
         metrics_df["category_class"].notna() & (metrics_df["category_class"] != "")
     ]
