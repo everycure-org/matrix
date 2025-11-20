@@ -41,7 +41,6 @@ def create_billable_icd10_codes(
         DataFrame with columns: subject_id (MONDO), predicate (subset URI), object_id (ICD10CM)
     """
 
-    exact_match_predicate = parameters["exact_match_predicate"]
     icd10_billable_subset = parameters["icd10_billable_subset"]
     icd10cm_prefix = parameters["icd10cm_prefix"]
 
@@ -49,7 +48,7 @@ def create_billable_icd10_codes(
         lambda code: _format_icd10_code_to_curie(code, icd10cm_prefix)
     )
 
-    exact_matches = mondo_sssom[mondo_sssom["predicate_id"] == exact_match_predicate]
+    exact_matches = mondo_sssom[mondo_sssom["predicate_id"] == "skos:exactMatch"]
 
     icd10_data = exact_matches.merge(
         icd10_codes[["code"]], left_on="object_id", right_on="code", how="inner"
