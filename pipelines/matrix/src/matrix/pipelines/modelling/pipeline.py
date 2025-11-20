@@ -28,7 +28,7 @@ def _create_model_shard_pipeline(model_name: str, shard: int, fold: Union[str, i
             ArgoNode(
                 func=partial_fold(nodes.apply_transformers, fold),
                 inputs={
-                    "data": f"modelling.{shard}.{model_name}.model_input.enriched_splits",
+                    "data": f"modelling.{shard}.{model_name}.model_input.temp_enriched_splits",
                     "transformers": f"modelling.fold_{fold}.{model_name}.model_input.transformers",
                 },
                 outputs=f"modelling.{shard}.fold_{fold}.{model_name}.model_input.transformed_splits",
@@ -82,7 +82,7 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                     ArgoNode(
                         func=partial_fold(nodes.fit_transformers, fold),
                         inputs={
-                            "data": "modelling.model_input.splits@pandas",
+                            "data": "modelling.model_input.temp_splits@pandas",
                             "transformers": f"params:modelling.{model_name}.model_options.transformers",
                         },
                         outputs=f"modelling.fold_{fold}.{model_name}.model_input.transformers",
@@ -110,7 +110,7 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                     ArgoNode(
                         func=partial_fold(nodes.apply_transformers, fold),
                         inputs={
-                            "data": "modelling.model_input.splits@pandas",
+                            "data": "modelling.model_input.temp_splits@pandas",
                             "transformers": f"modelling.fold_{fold}.{model_name}.model_input.transformers",
                         },
                         outputs=f"modelling.fold_{fold}.{model_name}.model_input.transformed_splits",
@@ -151,24 +151,38 @@ def create_model_pipeline(models: list[dict], n_cross_val_folds: int) -> Pipelin
     for model in models:
         model_name = model["model_name"]
         # Generate pipeline to enrich splits
-        pipelines.append(
-            pipeline(
-                [
-                    ArgoNode(
-                        func=nodes.create_model_input_nodes,
-                        inputs=[
-                            "modelling.model_input.drugs_diseases_nodes@pandas",
-                            "modelling.model_input.splits@pandas",
-                            f"params:modelling.{model_name}.model_options.generator",
-                            "params:modelling.splitter",
-                        ],
-                        outputs=f"modelling.{shard}.{model_name}.model_input.enriched_splits",
-                        name=f"enrich_{model_name}_{shard}_splits",
-                    )
-                    for shard in range(num_shards)
-                ]
+        enrich_nodes = []
+        for shard in range(num_shards):
+            enrich_nodes.append(
+                ArgoNode(
+                    func=nodes.create_model_input_nodes,
+                    inputs=[
+                        "modelling.model_input.drugs_diseases_nodes@pandas",
+                        "modelling.model_input.splits@pandas",
+                        f"params:modelling.{model_name}.model_options.generator",
+                        "params:modelling.splitter",
+                    ],
+                    outputs=f"modelling.{shard}.{model_name}.model_input.enriched_splits",
+                    name=f"enrich_{model_name}_{shard}_splits",
+                )
             )
-        )
+            enrich_nodes.append(
+                ArgoNode(
+                    func=nodes.replace_embeddings,
+                    inputs=[
+                        "modelling.model_input.splits@pandas",
+                        f"modelling.{shard}.{model_name}.model_input.enriched_splits",
+                        "embeddings.tmp.llm_drug_embeddings",
+                        "embeddings.tmp.llm_disease_embeddings",
+                    ],
+                    outputs=[
+                        f"modelling.model_input.temp_splits@pandas",
+                        f"modelling.{shard}.{model_name}.model_input.temp_enriched_splits",
+                    ],
+                    name=f"replace_embeddings_{model_name}_{shard}",
+                )
+            )
+        pipelines.append(pipeline(enrich_nodes))
 
         # Generate pipeline to predict folds (NOTE: final fold is full training data)
         for fold in range(n_cross_val_folds + 1):

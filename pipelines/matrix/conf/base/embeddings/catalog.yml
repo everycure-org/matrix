@@ -97,3 +97,11 @@ embeddings.reporting.topological_pca:
 embeddings.reporting.topological_pca_plot:
   type: matplotlib.MatplotlibDataset
   filepath: ${globals:paths.embeddings}/reporting/pca_plot.png
+
+embeddings.tmp.llm_drug_embeddings:
+  type: pickle.PickleDataset
+  filepath: ${globals:paths.tmp_chunyu}/Experiment-with-embedding-improvement/LLM_embeddings/embeddings/drug_descriptions_embeddings_pubmedbert.pkl
+
+embeddings.tmp.llm_disease_embeddings:
+  type: pickle.PickleDataset
+  filepath: ${globals:paths.tmp_chunyu}/Experiment-with-embedding-improvement/LLM_embeddings/embeddings/disease_descriptions_embeddings_pubmedbert.pkl

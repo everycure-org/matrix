@@ -61,6 +61,14 @@ modelling.model_input.splits@spark:
   <<: [*_spark_parquet, *_model_input_ds]
   filepath: ${globals:paths.modelling}/model_input/splits
 
+modelling.model_input.temp_splits@pandas:
+  <<: [*_pandas_parquet, *_model_input_ds]
+  filepath: ${globals:paths.modelling}/model_input/temp_splits
+
+modelling.model_input.temp_splits@spark:
+  <<: [*_spark_parquet, *_model_input_ds]
+  filepath: ${globals:paths.modelling}/model_input/temp_splits
+
 modelling.reporting.gt_present:
   filepath: ${globals:paths.modelling}/reporting/gt_present_metrics.yml
   type:  yaml.YAMLDataset
@@ -77,6 +85,10 @@ modelling.reporting.gt_present:
 "modelling.{shard}.{model_name}.model_input.enriched_splits":
   <<: [*_pandas_parquet, *_model_input_ds]
   filepath: ${globals:paths.modelling}/model_input/{model_name}/{shard}/enriched_splits
+
+"modelling.{shard}.{model_name}.model_input.temp_enriched_splits":
+  <<: [*_pandas_parquet, *_model_input_ds]
+  filepath: ${globals:paths.modelling}/model_input/{model_name}/{shard}/temp_enriched_splits
 
 "modelling.{shard}.fold_{fold}.{model_name}.model_input.transformed_splits":
   <<: [*_pandas_parquet, *_model_input_ds]
