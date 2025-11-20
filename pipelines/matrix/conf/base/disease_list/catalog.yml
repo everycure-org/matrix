@@ -65,34 +65,19 @@ disease_list.int.billable_icd10_codes:
   filepath: ${globals:paths.tmp}/disease_list/icd10_cm_billable_template.parquet
 
 disease_list.int.subtype_counts:
-  type: pandas.CSVDataset
+  type: pandas.ParquetDataset
   <<: *_layer_int
-  filepath: ${globals:paths.tmp}/disease_list/subtype_counts.tsv
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
-    index: false
+  filepath: ${globals:paths.tmp}/disease_list/subtype_counts.parquet
 
 disease_list.int.mondo_metrics:
-  type: pandas.CSVDataset
+  type: pandas.ParquetDataset
   <<: *_layer_int
-  filepath: ${globals:paths.tmp}/disease_list/mondo_metrics.tsv
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
-    index: false
+  filepath: ${globals:paths.tmp}/disease_list/mondo_metrics.parquet
 
 disease_list.int.disease_list_raw:
-  type: pandas.CSVDataset
+  type: pandas.ParquetDataset
   <<: *_layer_int
-  filepath: ${globals:paths.tmp}/disease_list/disease_list_raw.tsv
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
-    index: false
+  filepath: ${globals:paths.tmp}/disease_list/disease_list_raw.parquet
 
 #############################################
 ########### Final Outputs ###################
@@ -100,41 +85,27 @@ disease_list.int.disease_list_raw:
 
 # The final disease list
 disease_list.prm.disease_list:
-  type: pandas.CSVDataset
+  type: pandas.ParquetDataset
   <<: *_layer_prm
-  filepath: ${globals:paths.release}/disease_list.tsv
-  save_args:
-    sep: "\t"
-    index: false
-  load_args:
-    sep: "\t"
+  filepath: ${globals:paths.release}/disease_list.parquet
 
 # A file containing basic metadata about the disease list run, in particular
 # which MONDO version was used to generate the disease list
 disease_list.prm.mondo_metadata:
-  type: pandas.CSVDataset
+  type: pandas.ParquetDataset
   <<: *_layer_prm
-  filepath: ${globals:paths.release}/mondo-metadata.tsv
-  save_args:
-    sep: "\t"
-    index: false
+  filepath: ${globals:paths.release}/mondo-metadata.parquet
 
 # A full list of all obsoleted MONDO terms, along with their obsoletion reason 
 # and replacement term (if any)
-disease_list.prm.mondo_obsoletes:
-  type: pandas.CSVDataset
+disease_list.prm.mondo_obsoletes: 
+  type: pandas.ParquetDataset
   <<: *_layer_prm
-  filepath: ${globals:paths.release}/mondo-obsoletes.tsv
-  save_args:
-    sep: "\t"
-    index: false
+  filepath: ${globals:paths.release}/mondo-obsoletes.parquet
 
 # Obsoletion candidates are diseases that are marked for obsoletion in MONDO
 # These are needed so we can define a strategy on how to curate them in our d2d reviews
 disease_list.prm.mondo_obsoletion_candidates:
-  type: pandas.CSVDataset
+  type: pandas.ParquetDataset
   <<: *_layer_prm
-  filepath: ${globals:paths.release}/mondo-obsoletion_candidates.tsv
-  save_args:
-    sep: "\t"
-    index: false
+  filepath: ${globals:paths.release}/mondo-obsoletion_candidates.parquet

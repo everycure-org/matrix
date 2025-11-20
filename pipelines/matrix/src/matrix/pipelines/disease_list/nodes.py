@@ -306,13 +306,15 @@ def _matrix_disease_filter(df_disease_list_unfiltered: pd.DataFrame) -> pd.DataF
     Returns:
         DataFrame with 'official_matrix_filter' column added
     """
+    df_disease_list_unfiltered = df_disease_list_unfiltered.reset_index(drop=True)
+
     filter_column = "official_matrix_filter"
 
     df_disease_list_unfiltered[filter_column] = False
 
     conflicts = df_disease_list_unfiltered[
-        df_disease_list_unfiltered["f_matrix_manually_included"]
-        & df_disease_list_unfiltered["f_matrix_manually_excluded"]
+        (df_disease_list_unfiltered["f_matrix_manually_included"])
+        & (df_disease_list_unfiltered["f_matrix_manually_excluded"])
     ]
 
     if not conflicts.empty:
@@ -321,27 +323,27 @@ def _matrix_disease_filter(df_disease_list_unfiltered: pd.DataFrame) -> pd.DataF
             f"Conflicts found: The following entries are marked as both manually included and manually excluded:\n{conflict_str}"
         )
 
-    df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_matrix_manually_included"] == True
-    df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_leaf"] == True
+    df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_matrix_manually_included"]
+    df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_leaf"]
 
-    df_disease_list_unfiltered[filter_column] |= (df_disease_list_unfiltered["f_leaf_direct_parent"] == True) & (
-        (df_disease_list_unfiltered["f_omim"] == True)
-        | (df_disease_list_unfiltered["f_omimps_descendant"] == True)
-        | (df_disease_list_unfiltered["f_icd_category"] == True)
-        | (df_disease_list_unfiltered["f_orphanet_disorder"] == True)
-        | (df_disease_list_unfiltered["f_orphanet_subtype"] == True)
+    df_disease_list_unfiltered[filter_column] |= (df_disease_list_unfiltered["f_leaf_direct_parent"]) & (
+        (df_disease_list_unfiltered["f_omim"])
+        | (df_disease_list_unfiltered["f_omimps_descendant"])
+        | (df_disease_list_unfiltered["f_icd_category"])
+        | (df_disease_list_unfiltered["f_orphanet_disorder"])
+        | (df_disease_list_unfiltered["f_orphanet_subtype"])
     )
 
-    df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_icd_category"] == True
-    df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_orphanet_disorder"] == True
-    df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_clingen"] == True
-    df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_omim"] == True
+    df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_icd_category"]
+    df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_orphanet_disorder"]
+    df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_clingen"]
+    df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_omim"]
 
-    df_disease_list_unfiltered.loc[df_disease_list_unfiltered["f_unclassified_hereditary"] == True, filter_column] = (
+    df_disease_list_unfiltered.loc[df_disease_list_unfiltered["f_unclassified_hereditary"], filter_column] = (
         False
     )
-    df_disease_list_unfiltered.loc[df_disease_list_unfiltered["f_paraphilic"] == True, filter_column] = False
-    df_disease_list_unfiltered.loc[df_disease_list_unfiltered["f_matrix_manually_excluded"] == True, filter_column] = (
+    df_disease_list_unfiltered.loc[df_disease_list_unfiltered["f_paraphilic"], filter_column] = False
+    df_disease_list_unfiltered.loc[df_disease_list_unfiltered["f_matrix_manually_excluded"], filter_column] = (
         False
     )
 
@@ -434,8 +436,12 @@ def _prepare_subtype_counts(subtype_counts: pd.DataFrame) -> pd.DataFrame:
     Returns:
         Simplified DataFrame with category_class and count_subtypes columns
     """
+    filtered_counts = subtype_counts[
+        subtype_counts["subset_group_id"].notna() & (subtype_counts["subset_group_id"] != "")
+    ]
+
     return (
-        subtype_counts[["subset_group_id", "other_subsets_count"]]
+        filtered_counts[["subset_group_id", "other_subsets_count"]]
         .drop_duplicates()
         .rename(columns={"subset_group_id": "category_class", "other_subsets_count": "count_subtypes"})
     )
@@ -490,10 +496,22 @@ def _merge_disease_data_sources(
     merged = base_df.merge(groupings_df, on="category_class", how="left")
 
     metrics_and_counts = metrics_df.merge(subtype_counts_df, on="category_class", how="outer")
+    metrics_df_filtered = metrics_df[
+        metrics_df["category_class"].notna() & (metrics_df["category_class"] != "")
+    ]
+    subtype_counts_df_filtered = subtype_counts_df[
+        subtype_counts_df["category_class"].notna() & (subtype_counts_df["category_class"] != "")
+    ]
+
+    metrics_and_counts = metrics_df_filtered.merge(subtype_counts_df_filtered, on="category_class", how="outer")
     merged = merged.merge(metrics_and_counts, on="category_class", how="left")
 
+    full_subtype_counts_filtered = full_subtype_counts[
+        full_subtype_counts["subset_id"].notna() & (full_subtype_counts["subset_id"] != "")
+    ]
+
     merged = merged.merge(
-        full_subtype_counts[["subset_id", "subset_group_id", "subset_group_label", "other_subsets_count"]],
+        full_subtype_counts_filtered[["subset_id", "subset_group_id", "subset_group_label", "other_subsets_count"]],
         left_on="category_class",
         right_on="subset_id",
         how="left",

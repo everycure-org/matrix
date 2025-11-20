@@ -67,7 +67,7 @@ def _clean_sparql_results(df: pd.DataFrame) -> pd.DataFrame:
             .str.replace("http://purl.obolibrary.org/obo/MONDO_", "MONDO:", regex=False)
             .str.replace("http://purl.obolibrary.org/obo/mondo#", "mondo:", regex=False)
         )
-    df.columns = [col.replace("?", "") for col in df.columns]
+    df.columns = [str(col).replace("?", "") for col in df.columns]
     return df
 
 
@@ -747,113 +747,113 @@ def query_raw_disease_list_data_from_mondo(
     logger.info("Adding filter flags...")
 
     df["f_matrix_manually_included"] = (
-        df["category_class"].isin(_query_filter_matrix_manually_included(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_matrix_manually_included(store)).apply(lambda x: True if x else False)
     )
 
     df["f_matrix_manually_excluded"] = (
-        df["category_class"].isin(_query_filter_matrix_manually_excluded(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_matrix_manually_excluded(store)).apply(lambda x: True if x else False)
     )
 
-    df["f_clingen"] = df["category_class"].isin(_query_filter_clingen(store)).apply(lambda x: "TRUE" if x else "")
+    df["f_clingen"] = df["category_class"].isin(_query_filter_clingen(store)).apply(lambda x: True if x else False)
 
     df["f_susceptibility"] = (
-        df["category_class"].isin(_query_filter_susceptibility(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_susceptibility(store)).apply(lambda x: True if x else False)
     )
 
     df["f_mondo_subtype"] = (
-        df["category_class"].isin(_query_filter_mondo_subtype(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_mondo_subtype(store)).apply(lambda x: True if x else False)
     )
 
     df["f_pathway_defect"] = (
-        df["category_class"].isin(_query_filter_pathway_defect(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_pathway_defect(store)).apply(lambda x: True if x else False)
     )
 
     df["f_grouping_subset"] = (
-        df["category_class"].isin(_query_filter_grouping_subset(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_grouping_subset(store)).apply(lambda x: True if x else False)
     )
 
     df["f_obsoletion_candidate"] = (
-        df["category_class"].isin(_query_filter_obsoletion_candidate(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_obsoletion_candidate(store)).apply(lambda x: True if x else False)
     )
 
     df["f_orphanet_subtype"] = (
-        df["category_class"].isin(_query_filter_orphanet_subtype(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_orphanet_subtype(store)).apply(lambda x: True if x else False)
     )
 
     df["f_orphanet_disorder"] = (
-        df["category_class"].isin(_query_filter_orphanet_disorder(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_orphanet_disorder(store)).apply(lambda x: True if x else False)
     )
 
     df["f_icd_billable"] = (
-        df["category_class"].isin(_query_filter_icd_billable(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_icd_billable(store)).apply(lambda x: True if x else False)
     )
 
-    df["f_paraphilic"] = df["category_class"].isin(_query_filter_paraphilic(store)).apply(lambda x: "TRUE" if x else "")
+    df["f_paraphilic"] = df["category_class"].isin(_query_filter_paraphilic(store)).apply(lambda x: True if x else False)
 
     df["f_cardiovascular"] = (
-        df["category_class"].isin(_query_filter_cardiovascular(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_cardiovascular(store)).apply(lambda x: True if x else False)
     )
 
     df["f_filter_heart_disorder"] = (
-        df["category_class"].isin(_query_filter_heart_disorder(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_heart_disorder(store)).apply(lambda x: True if x else False)
     )
 
     df["f_inflammatory"] = (
-        df["category_class"].isin(_query_filter_inflammatory(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_inflammatory(store)).apply(lambda x: True if x else False)
     )
 
     df["f_psychiatric"] = (
-        df["category_class"].isin(_query_filter_psychiatric(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_psychiatric(store)).apply(lambda x: True if x else False)
     )
 
     df["f_cancer_or_benign_tumor"] = (
-        df["category_class"].isin(_query_filter_cancer_or_benign_tumor(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_cancer_or_benign_tumor(store)).apply(lambda x: True if x else False)
     )
 
     df["f_withorwithout"] = (
-        df["category_class"].isin(_query_filter_withorwithout(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_withorwithout(store)).apply(lambda x: True if x else False)
     )
 
-    df["f_andor"] = df["category_class"].isin(_query_filter_andor(store)).apply(lambda x: "TRUE" if x else "")
+    df["f_andor"] = df["category_class"].isin(_query_filter_andor(store)).apply(lambda x: True if x else False)
 
-    df["f_acquired"] = df["category_class"].isin(_query_filter_acquired(store)).apply(lambda x: "TRUE" if x else "")
+    df["f_acquired"] = df["category_class"].isin(_query_filter_acquired(store)).apply(lambda x: True if x else False)
 
     df["f_unclassified_hereditary"] = (
-        df["category_class"].isin(_query_filter_unclassified_hereditary(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_unclassified_hereditary(store)).apply(lambda x: True if x else False)
     )
 
     df["f_grouping_subset_ancestor"] = (
-        df["category_class"].isin(_query_filter_grouping_subset_ancestor(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_grouping_subset_ancestor(store)).apply(lambda x: True if x else False)
     )
 
     df["f_orphanet_subtype_descendant"] = (
-        df["category_class"].isin(_query_filter_orphanet_subtype_descendant(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_orphanet_subtype_descendant(store)).apply(lambda x: True if x else False)
     )
 
-    df["f_omimps"] = df["category_class"].isin(_query_filter_omimps(store)).apply(lambda x: "TRUE" if x else "")
+    df["f_omimps"] = df["category_class"].isin(_query_filter_omimps(store)).apply(lambda x: True if x else False)
 
     df["f_omimps_descendant"] = (
-        df["category_class"].isin(_query_filter_omimps_descendant(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_omimps_descendant(store)).apply(lambda x: True if x else False)
     )
 
-    df["f_omim"] = df["category_class"].isin(_query_filter_omim(store)).apply(lambda x: "TRUE" if x else "")
+    df["f_omim"] = df["category_class"].isin(_query_filter_omim(store)).apply(lambda x: True if x else False)
 
-    df["f_leaf"] = df["category_class"].isin(_query_filter_leaf(store)).apply(lambda x: "TRUE" if x else "")
+    df["f_leaf"] = df["category_class"].isin(_query_filter_leaf(store)).apply(lambda x: True if x else False)
 
     df["f_leaf_direct_parent"] = (
-        df["category_class"].isin(_query_filter_leaf_direct_parent(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_leaf_direct_parent(store)).apply(lambda x: True if x else False)
     )
 
     df["f_icd_category"] = (
-        df["category_class"].isin(_query_filter_icd_category(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_icd_category(store)).apply(lambda x: True if x else False)
     )
 
     df["f_icd_chapter_code"] = (
-        df["category_class"].isin(_query_filter_icd_chapter_code(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_icd_chapter_code(store)).apply(lambda x: True if x else False)
     )
 
     df["f_icd_chapter_header"] = (
-        df["category_class"].isin(_query_filter_icd_chapter_header(store)).apply(lambda x: "TRUE" if x else "")
+        df["category_class"].isin(_query_filter_icd_chapter_header(store)).apply(lambda x: True if x else False)
     )
 
     df = df.sort_values("label", ascending=False)
