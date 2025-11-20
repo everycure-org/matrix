@@ -172,7 +172,6 @@ ingestion.int.ec_medical_team.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/int/ec_medical_team/translator/${globals:data_sources.ec_medical_team.version}/edges_conflated_raw
 
-
 # -------------------------------------------------------------------------
 # EveryCure Clinical trials
 # ------------------------------------------------------------------------- 
@@ -192,21 +191,14 @@ ingestion.int.ec_clinical_trials.edges:
 # -------------------------------------------------------------------------
 # Off-Label Data
 # ------------------------------------------------------------------------- 
-ingestion.raw.off_label.nodes@pandas:
-  <<: [*_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.raw_public}/off_label_data/translator/${globals:data_sources.off_label.version}/nodes_raw.csv
-
-ingestion.raw.off_label.nodes@spark:
-  <<: [*_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.raw_public}/off_label_data/translator/${globals:data_sources.off_label.version}/nodes_raw.csv
 
 ingestion.raw.off_label.edges@pandas:
-  <<: [*_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.raw_public}/off_label_data/translator/${globals:data_sources.off_label.version}/edges_raw.csv
+  <<: [*_layer_int, *_pandas_parquet]
+  filepath: ${globals:paths.raw_public}/off_label_data/translator/${globals:data_sources.off_label.version}/edges_raw.parquet
 
 ingestion.raw.off_label.edges@spark:
-  <<: [*_layer_int, *_spark_csv]
-  filepath: ${globals:paths.raw_public}/off_label_data/translator/${globals:data_sources.off_label.version}/edges_raw.csv
+  <<: [*_layer_int, *_spark_parquet]
+  filepath: ${globals:paths.raw_public}/off_label_data/translator/${globals:data_sources.off_label.version}/edges_raw.parquet
 
 ingestion.int.off_label.nodes:
   <<: [*_spark_parquet, *_layer_int]

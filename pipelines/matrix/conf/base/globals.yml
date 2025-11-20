@@ -64,7 +64,7 @@ data_sources:
     # check releases here: https://github.com/SuLab/DrugMechDB/releases/ 
     version: 2.0.1
   off_label:
-    version: v0.1
+    version: v0.1-ec-id
   orchard:
     version: 20250801
 # NOTE: MLflow does not like "new options" in the mlflow.yml

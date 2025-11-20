@@ -286,10 +286,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=fabricate_datasets,
                 inputs={
                     "fabrication_params": "params:fabricator.off_label.graph",
-                    "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                    "drug_nodes": "ingestion.raw.drug_list",
+                    "disease_nodes": "ingestion.raw.disease_list",
                 },
                 outputs={
-                    "nodes": "ingestion.raw.off_label.nodes@pandas",
                     "edges": "ingestion.raw.off_label.edges@pandas",
                 },
                 name="fabricate_off_label_datasets",
