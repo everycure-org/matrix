@@ -310,46 +310,36 @@ fabricator.clinical_trials:
     - significantly_worse
     - non_significantly_worse
   graph:
-    nodes:
-      num_rows: 50
-      columns:
-        curie:
-          type: copy_column
-          source_column: rtx_nodes.id
-          sample:
-            num_rows: "@nodes.num_rows"
-            seed: 40599
-        name:
-          type: copy_column
-          source_column: rtx_nodes.name
-          sample:
-            num_rows: "@nodes.num_rows"
-            seed: 40599
-
     edges:
       num_rows: 10
       columns:
+        drug_ec_id:
+          type: copy_column
+          source_column: drug_nodes.id
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 40599
         drug_curie:
           type: copy_column
-          source_column: nodes.curie
+          source_column: drug_nodes.translator_id
           sample:
             num_rows: "@edges.num_rows"
             seed: 40599
         drug_name:
           type: copy_column
-          source_column: nodes.name
+          source_column: drug_nodes.name
           sample:
             num_rows: "@edges.num_rows"
             seed: 40599
         disease_curie:
           type: copy_column
-          source_column: nodes.curie
+          source_column: disease_nodes.id
           sample:
             num_rows: "@edges.num_rows"
             seed: 30599
         disease_name:
           type: copy_column
-          source_column: nodes.name
+          source_column: disease_nodes.name
           sample:
             num_rows: "@edges.num_rows"
             seed: 30599

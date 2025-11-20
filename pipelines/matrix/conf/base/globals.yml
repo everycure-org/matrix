@@ -46,7 +46,7 @@ data_sources:
   # Cleaned clinical trial data from the
   # EveryCure medical team.
   ec_clinical_trials:
-    version: 20230309 # NOTE: Here 0309 is a period of time (here Mar to Sep 2023)
+    version: 20230309-ec-id # NOTE: Here 0309 is a period of time (here Mar to Sep 2023)
   drug_list:
     # check releases here: gs://data.dev.everycure.org/data/01_RAW/drug_list
     version: v1.0.0

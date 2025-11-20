@@ -35,7 +35,6 @@ integration:
       transformer:
         _object: matrix.pipelines.integration.transformers.clinical_trials.ClinicalTrialsTransformer
         version: ${globals:data_sources.ec_clinical_trials.version}
-        select_cols: false
         drop_duplicates: true
     drug_list:
       name: drug_list
