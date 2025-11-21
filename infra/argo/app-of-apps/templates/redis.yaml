@@ -25,10 +25,6 @@ spec:
         externalConfig:
           enabled: true
           data: |
-            # Enable RDB snapshots with reasonable frequency
-            save 900 1
-            save 300 10
-            save 60 10000
             # Enable AOF for better durability
             appendonly yes
             appendfsync everysec
