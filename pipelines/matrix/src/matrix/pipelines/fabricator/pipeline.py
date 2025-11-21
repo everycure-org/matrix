@@ -57,7 +57,7 @@ def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.D
     rows = []
     ground_truth = pd.concat([positives, negatives])
     for idx, row in ground_truth.iterrows():
-        if path := find_path(graph, row["source"], row["target"]):
+        if path := find_path(graph, row["drug_id"], row["disease_id"]):
             rows.append({"graph": {"_id": str(idx)}, "links": path})
 
     return rows
@@ -305,7 +305,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "fabrication_params": "params:fabricator.kgml_xdtd_ground_truth",
                     "drug_nodes": "ingestion.raw.drug_list",
-                    "disease_nodes": "ingestion.raw.disease_list",
+                    "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                 },
                 outputs={
                     "positive_edges": "ingestion.raw.kgml_xdtd_ground_truth.positives",
