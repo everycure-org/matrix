@@ -92,17 +92,10 @@ class PyOxiGraphDataset(AbstractDataset):
             else:
                 # Load from file using path parameter (more efficient)
                 store.load(path=self._filepath, format=rdf_format)
-
-            # Count triples
-            count_query = "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o }"
-            result = list(store.query(count_query))
-            triple_count = result[0]['count'].value if result else 0
-
-            logger.info(f"Loaded RDF graph with {triple_count} triples (using PyOxigraph)")
             return store
         except Exception as e:
             raise DatasetError(
-                f"Failed to load RDF graph from {self._filepath}: {str(e)}"
+                f"Failed to load RDF graph from {self._filepath}: {e}"
             ) from e
 
     def _save(self, store) -> None:
@@ -115,18 +108,6 @@ class PyOxiGraphDataset(AbstractDataset):
             DatasetError: If store cannot be saved
         """
         try:
-            # Count triples for logging
-            count_query = "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o }"
-            result = list(store.query(count_query))
-            triple_count = result[0]['count'].value if result else 0
-
-            logger.info(f"Saving RDF graph with {triple_count} triples to {self._filepath}")
-
-            # Check if filepath is a URL (can't save to URLs)
-            if self._filepath.startswith(("http://", "https://")):
-                raise DatasetError(
-                    f"Cannot save to URL: {self._filepath}. Please use a local file path."
-                )
 
             # Ensure parent directory exists for local files
             filepath_obj = Path(self._filepath)
@@ -134,7 +115,7 @@ class PyOxiGraphDataset(AbstractDataset):
 
             # PyOxigraph dump() requires dataset formats (N-Quads or TriG)
             # We always use N-Quads for serialization regardless of requested format
-            from pyoxigraph import RdfFormat
+            
 
             logger.info("Saving PyOxigraph store as N-Quads format")
             serialized = store.dump(format=RdfFormat.N_QUADS)
@@ -142,12 +123,11 @@ class PyOxiGraphDataset(AbstractDataset):
             with open(self._filepath, 'wb') as f:
                 f.write(serialized)
 
-            logger.info(f"Successfully saved RDF graph to {self._filepath}")
         except DatasetError:
             raise
         except Exception as e:
             raise DatasetError(
-                f"Failed to save RDF graph to {self._filepath}: {str(e)}"
+                f"Failed to save RDF graph: {e}"
             ) from e
 
     def _describe(self) -> dict[str, Any]:
