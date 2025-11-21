@@ -20,3 +20,11 @@ spec:
     automated:
       prune: true
       allowEmpty: true
+  helm:
+    values: |
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            resources:
+              requests:
+                storage: 100Gi
