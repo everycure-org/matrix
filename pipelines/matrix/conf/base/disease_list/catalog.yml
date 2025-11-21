@@ -62,7 +62,7 @@ disease_list.int.mondo_preprocessed:
 disease_list.int.billable_icd10_codes:
   type: pandas.ParquetDataset
   <<: *_layer_int
-  filepath: ${globals:paths.tmp}/disease_list/icd10_cm_billable_template.parquet
+  filepath: ${globals:paths.tmp}/disease_list/icd10_cm_billable.parquet
 
 disease_list.int.subtype_counts:
   type: pandas.ParquetDataset
