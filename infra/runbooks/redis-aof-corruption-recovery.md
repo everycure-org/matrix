@@ -5,11 +5,12 @@
 Redis fails to start with AOF (Append-Only File) corruption errors:
 
 ```
-# Bad file format reading the append only file appendonly.aof.X.incr.aof: 
+# Bad file format reading the append only file appendonly.aof.X.incr.aof:
 # make a backup of your AOF file, then use ./redis-check-aof --fix <filename.manifest>
 ```
 
 This leads to:
+
 - Redis pod in crash loop (continuous restarts)
 - LiteLLM caching failures with `MISCONF` errors
 - Redis refusing write operations: `MISCONF Redis is configured to save RDB snapshots, but it's currently unable to persist to disk`
@@ -31,28 +32,33 @@ This leads to:
 ## Diagnosis Steps
 
 ### 1. Check Redis Pod Status
+
 ```bash
 kubectl get pods -n redis
 kubectl logs -n redis redis-0 --tail=50
 ```
 
 Look for:
+
 - Restart count > 0
 - "Bad file format" errors
 - "MISCONF" errors
 
 ### 2. Check Disk Usage
+
 ```bash
 kubectl exec -n redis redis-0 -- df -h /data
 kubectl exec -n redis redis-0 -- ls -lah /data
 ```
 
 Look for:
+
 - Disk usage > 70%
 - Large `dump.rdb` or `appendonly.aof.*` files
 - Multiple AOF files accumulating
 
 ### 3. Check Redis Configuration
+
 ```bash
 kubectl exec -n redis redis-0 -- redis-cli CONFIG GET save appendonly appendfsync stop-writes-on-bgsave-error
 ```
@@ -157,7 +163,7 @@ storageSpec:
     spec:
       resources:
         requests:
-          storage: 10Gi  # Adjust based on cache size needs
+          storage: 10Gi # Adjust based on cache size needs
 ```
 
 ### 2. Disable Write Blocking on Save Errors
@@ -193,11 +199,13 @@ externalConfig:
 ### 4. Monitor Disk Usage
 
 Set up alerts for:
+
 - Redis disk usage > 70%
 - Redis pod restart count > 0
 - AOF file size growth rate
 
 Example Prometheus alert:
+
 ```yaml
 - alert: RedisHighDiskUsage
   expr: kubelet_volume_stats_used_bytes{persistentvolumeclaim="redis-redis-0"} / kubelet_volume_stats_capacity_bytes{persistentvolumeclaim="redis-redis-0"} > 0.7
