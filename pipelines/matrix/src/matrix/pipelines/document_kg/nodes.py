@@ -7,7 +7,6 @@ import pyspark.sql.functions as F
 from jinja2 import Template
 from matrix_inject.inject import inject_object
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
