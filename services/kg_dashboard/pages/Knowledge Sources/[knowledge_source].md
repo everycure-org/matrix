@@ -37,6 +37,66 @@ WHERE id = '${params.knowledge_source}'
 </div>
 {/if}
 
+```sql relevancy_score
+SELECT
+  primary_knowledge_source,
+  domain_coverage_score,
+  source_scope_score,
+  utility_drugrepurposing_score,
+  noise_penalty_adjustment,
+  label_rubric,
+  label_manual,
+  label_manual_comment,
+  reviewer
+FROM matrix_reviews.relevancy_scores
+WHERE primary_knowledge_source = '${params.knowledge_source}'
+```
+
+{#if relevancy_score.length > 0}
+## Relevancy Assessment
+
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+  This knowledge source has been reviewed by the Matrix team for its relevance to drug repurposing.
+Review information was generated specifically for the Matrix project and may not reflect the views of the broader community.
+</div>
+
+<div class="text-center mb-6">
+  <span class="font-semibold text-2xl" style="color: #9D79D6;">
+    <Value data={relevancy_score} column="label_manual" />
+  </span><br/>
+  <span class="text-xl">Relevancy Score</span>
+</div>
+
+<Grid col=3 class="max-w-4xl mx-auto mb-6">
+  <div class="text-center text-lg">
+    <span class="font-semibold text-xl" style="color: #9D79D6;">
+      <Value data={relevancy_score} column="domain_coverage_score" />
+    </span><br/>
+    <span class="text-lg">Domain Coverage</span><br/>
+    <span class="text-xs text-gray-600 mt-1">{relevancy_score[0].domain_coverage_comments}</span>
+  </div>
+  <div class="text-center text-lg">
+    <span class="font-semibold text-xl" style="color: #9D79D6;">
+      <Value data={relevancy_score} column="source_scope_score" />
+    </span><br/>
+    <span class="text-lg">Source Scope</span><br/>
+    <span class="text-xs text-gray-600 mt-1">{relevancy_score[0].source_scope_score_comment}</span>
+  </div>
+  <div class="text-center text-lg">
+    <span class="font-semibold text-xl" style="color: #9D79D6;">
+      <Value data={relevancy_score} column="utility_drugrepurposing_score" />
+    </span><br/>
+    <span class="text-lg">Drug Repurposing Utility</span><br/>
+    <span class="text-xs text-gray-600 mt-1">{relevancy_score[0].utility_drugrepurposing_comment}</span>
+  </div>
+</Grid>
+
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-6">
+  <strong>Overall Label:</strong> {relevancy_score[0].label_manual} (Rubric: {relevancy_score[0].label_rubric})<br/>
+  <strong>Reviewed by:</strong> {relevancy_score[0].reviewer}
+</div>
+{/if}
+
 ## Edge Categories Distribution
 
 ```sql sankey_data

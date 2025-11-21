@@ -69,11 +69,16 @@ populate-valid-edge-types-source:
 	node ./scripts/load-valid-edge-types.cjs
 	rm -f scripts/temp_valid_edge_types.tsv
 
+populate-matrix-reviews-source:
+	curl -sL "https://docs.google.com/spreadsheets/d/e/2PACX-1vQxpQU80dpW9bo7STfrX7k9Wv70jA_2C4BN6tDceM1LEOfF9YL22OisdmaUPf7Ptw/pub?gid=1308154629&single=true&output=csv" -o scripts/temp_matrix_reviews.csv
+	node ./scripts/load-matrix-reviews.cjs
+	rm -f scripts/temp_matrix_reviews.csv
+
 # Generate release trends SQL dynamically based on available BigQuery datasets
 generate-release-trends-sql:
 	node ./scripts/generate-release-trends-sql.cjs
 
-run-sources: populate-infores-source populate-valid-edge-types-source generate-release-trends-sql
+run-sources: populate-infores-source populate-valid-edge-types-source populate-matrix-reviews-source generate-release-trends-sql
 	npm run sources 
 
 run-dev:

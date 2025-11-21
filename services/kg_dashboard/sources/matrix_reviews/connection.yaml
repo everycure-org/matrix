@@ -1,0 +1,4 @@
+name: matrix_reviews
+type: duckdb
+options:
+  filename: matrix_reviews.duckdb
