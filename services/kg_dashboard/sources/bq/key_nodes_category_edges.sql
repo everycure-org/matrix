@@ -224,8 +224,8 @@ edges_with_primary_source AS (
 -- Return example edges for ALL categories (we'll filter in JavaScript)
 -- Limited to 10 edges per primary_knowledge_source per category per key node
 -- This ensures diverse representation across all knowledge sources
--- Using RAND() for true random sampling to show different examples each time,
--- providing better coverage of the data diversity over multiple page loads
+-- Using deterministic ordering (ORDER BY subject, predicate, object) to ensure
+-- consistent, reproducible examples across page loads for testing and debugging
 SELECT
   key_node_id,
   parent_category,
@@ -244,7 +244,7 @@ SELECT
   upstream_data_source,
   ROW_NUMBER() OVER (
     PARTITION BY key_node_id, parent_category, primary_source
-    ORDER BY RAND()
+    ORDER BY subject, predicate, object
   ) as row_num
 FROM edges_with_primary_source
 QUALIFY row_num <= 10
