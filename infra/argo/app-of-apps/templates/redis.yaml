@@ -21,15 +21,18 @@ spec:
             spec:
               resources:
                 requests:
-                  storage: 100Gi
+                  storage: 10Gi
         externalConfig:
           enabled: true
           data: |
-            # Disable RDB snapshotting entirely (ephemeral cache only)
-            save ""
-            # Disable AOF persistence
-            appendonly no
-            # Disable stop-writes-on-bgsave-error since we're not persisting
+            # Enable RDB snapshots with reasonable frequency
+            save 900 1
+            save 300 10
+            save 60 10000
+            # Enable AOF for better durability
+            appendonly yes
+            appendfsync everysec
+            # Allow Redis to handle background save errors gracefully
             stop-writes-on-bgsave-error no
   syncPolicy:
     syncOptions:
