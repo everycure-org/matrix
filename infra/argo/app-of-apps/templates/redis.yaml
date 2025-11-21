@@ -14,17 +14,17 @@ spec:
     chart: redis
     repoURL: https://ot-container-kit.github.io/helm-charts
     targetRevision: 0.16.5
+    helm:
+      values: |
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              resources:
+                requests:
+                  storage: 100Gi
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
     automated:
       prune: true
       allowEmpty: true
-  helm:
-    values: |
-      storageSpec:
-        volumeClaimTemplate:
-          spec:
-            resources:
-              requests:
-                storage: 100Gi
