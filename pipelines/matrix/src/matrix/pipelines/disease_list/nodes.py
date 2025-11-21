@@ -686,34 +686,6 @@ def _merge_disease_data_sources(
     return merged.drop(columns=["subset_id"], errors="ignore")
 
 
-def _normalize_boolean_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Convert boolean columns to 'True'/'False' string format.
-
-    Converts all columns starting with 'is_' and special case 'tag_existing_treatment'
-    to string boolean values.
-
-    Args:
-        df: DataFrame with boolean columns
-
-    Returns:
-        DataFrame with normalized boolean strings
-    """
-    df = df.copy()
-
-    columns_to_convert = [col for col in df.columns if col.startswith("is_")]
-
-    # Special case for tag_existing_treatment
-    # See: https://github.com/everycure-org/matrix-disease-list/issues/75
-    if "tag_existing_treatment" in df.columns:
-        columns_to_convert.append("tag_existing_treatment")
-
-    for col in columns_to_convert:
-        df[col] = df[col].map(
-            lambda x: "True" if (isinstance(x, bool) and x) or (isinstance(x, str) and x.lower() == "true") else "False"
-        )
-
-    return df
-
 @pa.check_input(
     pa.DataFrameSchema(
         {
@@ -916,7 +888,6 @@ def create_disease_list(
     merged_df["count_descendants_without_subtypes"] = merged_df["count_descendants"] - merged_df["count_subtypes"]
 
     merged_df = _is_grouping_heuristic(merged_df, grouping_columns, not_grouping_columns, grouping_heuristic_column)
-    #final_df = _normalize_boolean_columns(merged_df)
 
     logger.info(f"Created disease list with {len(merged_df)} entries")
 
