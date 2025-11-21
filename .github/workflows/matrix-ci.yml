@@ -31,6 +31,8 @@ on:
       - main
     paths: 
       - .github/workflows/matrix-ci.yml
+      - pipelines/matrix/compose/docker-compose.ci.yml
+      - pipelines/matrix/compose/docker-compose.yml
       - pipelines/matrix/**
       - libs/*
       - pyproject.toml
