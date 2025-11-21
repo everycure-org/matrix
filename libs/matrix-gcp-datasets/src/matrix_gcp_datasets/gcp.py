@@ -77,7 +77,8 @@ class LazySparkDataset(SparkDataset):
                     """{"warning": "Dataset not found at '%s'.",  "Resolution": "providing empty dataset with unrelated schema."}""",
                     self._filepath,
                 )
-                return ps.SparkSession.getActiveSession().createDataFrame(
+                # Using SparkManager to get session instead of getActiveSession() for thread safety
+                return SparkManager.get_or_create_session().createDataFrame(
                     [], schema=ps.types.StructType().add("foo", ps.types.BooleanType())
                 )
             else:
