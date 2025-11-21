@@ -76,15 +76,5 @@ def create_pipeline(**kwargs: Any) -> Pipeline:
                 name="create_disease_list",
                 tags=["disease_list"],
             ),
-            # Stage 4: Validation
-            node(
-                func=nodes.validate_disease_list,
-                inputs={
-                    "disease_list": "disease_list.prm.disease_list",
-                },
-                outputs=None,
-                name="validate_disease_list",
-                tags=["disease_list", "validation"],
-            ),
         ]
     )

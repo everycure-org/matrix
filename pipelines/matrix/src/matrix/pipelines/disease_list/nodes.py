@@ -12,11 +12,33 @@ import re
 from typing import Any, Dict, List, Optional, Pattern, Set, Tuple
 
 import pandas as pd
+import pandera.pandas as pa
 from pyoxigraph import Store
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
+@pa.check_output(
+    pa.DataFrameSchema(
+        {
+            "mondo_id": pa.Column(dtype=str, nullable=False),
+            "label": pa.Column(dtype=str, nullable=False),
+            "comment": pa.Column(dtype=str, nullable=True),
+            "issue": pa.Column(dtype=str, nullable=True),
+            "obsoletion_date": pa.Column(dtype=str, nullable=False),
+        },
+        unique=["mondo_id"],
+    )
+)
+def ingest_obsoletion_candidates(mondo_obsoletion_candidates: pd.DataFrame) -> pd.DataFrame:
+    """Ingest MONDO obsoletion candidates DataFrame.
+
+    Args:
+        mondo_obsoletion_candidates: Raw DataFrame with obsoletion candidates
+
+    Returns:
+        Processed DataFrame with obsoletion candidates
+    """
+    return mondo_obsoletion_candidates
 
 def _format_icd10_code_to_curie(code: str, prefix: str) -> str:
     """Format ICD-10 code as CURIE by inserting decimal point after third character."""
@@ -24,7 +46,34 @@ def _format_icd10_code_to_curie(code: str, prefix: str) -> str:
         return f"{prefix}:{code[:3]}.{code[3:]}"
     return code
 
-
+@pa.check_input(
+    pa.DataFrameSchema(
+        {
+            "CODE": pa.Column(dtype=str, nullable=False),
+        },
+        unique=["CODE"],
+        strict=False,
+    ), obj_getter="icd10_codes"
+)
+@pa.check_input(
+    pa.DataFrameSchema(
+        {
+            "subject_id": pa.Column(dtype=str, nullable=False),
+            "predicate_id": pa.Column(dtype=str, nullable=False),
+            "object_id": pa.Column(dtype=str, nullable=False),
+        },
+        strict=False,
+    ), obj_getter="mondo_sssom"
+)
+@pa.check_output(
+    pa.DataFrameSchema(
+        {
+            "subject_id": pa.Column(dtype=str, nullable=False),
+            "predicate": pa.Column(dtype=str, nullable=False),
+            "object_id": pa.Column(dtype=str, nullable=False),
+        },
+    )
+)
 def create_billable_icd10_codes(
     icd10_codes: pd.DataFrame,
     mondo_sssom: pd.DataFrame,
@@ -170,15 +219,129 @@ def _build_subtype_df(matched_df: pd.DataFrame, mondo_subtype_subset: str, contr
     return subset_rows.reset_index(drop=True)
 
 
-def _log_mondo_size(mondo_graph: Store) -> int:
-    """Log the size of the MONDO graph in triples."""
-    count_query = "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o }"
-    result = list(mondo_graph.query(count_query))  # type: ignore[arg-type]
-    triple_count = result[0]["count"].value if result else 0
-    logger.info(f"Working with MONDO graph containing {triple_count} triples")
+def _validate_mondo(mondo_graph, min_triples=1000000):
+    q = "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o }"
+    rows = list(mondo_graph.query(q))
+    if not rows:
+        raise ValueError("MONDO graph query returned no results")
+    
+    triple_count = int(rows[0]["count"].value) if rows else 0
+    
+    if triple_count < min_triples:
+        raise ValueError(
+            f"MONDO graph seems too small: only {triple_count} triples "
+            f"(expected ≥ {min_triples})."
+        )
+    logger.info(f"MONDO graph validated with {triple_count} triples")
     return triple_count
 
 
+@pa.check_input(
+    pa.DataFrameSchema(
+        {
+            "subject_id": pa.Column(dtype=str, nullable=False),
+            "predicate": pa.Column(dtype=str, nullable=False),
+            "object_id": pa.Column(dtype=str, nullable=False),
+        },
+        strict=True,
+    ), obj_getter="billable_icd10"
+)
+@pa.check_output(
+    pa.DataFrameSchema(
+        {
+            "versionIRI": pa.Column(dtype=str, nullable=False),
+            "IRI": pa.Column(dtype=str, nullable=False),
+            "title": pa.Column(dtype=str, nullable=False),
+        },
+        strict=True,
+    ), obj_getter="mondo_metadata"
+)
+@pa.check_output(
+    pa.DataFrameSchema(
+        {
+            "cls": pa.Column(dtype=str, nullable=False),
+            "label": pa.Column(dtype=str, nullable=False),
+            "deprecated": pa.Column(dtype=str, nullable=False),
+            "replacements": pa.Column(dtype=str, nullable=False),
+            "considers": pa.Column(dtype=str, nullable=False),
+        },
+        strict=True,
+    ), obj_getter="mondo_obsoletes"
+)
+@pa.check_output(
+    pa.DataFrameSchema(
+        {
+            "category_class": pa.Column(dtype=str, nullable=False),
+            "label": pa.Column(dtype=str, nullable=False),
+            "definition": pa.Column(dtype=str, nullable=True),
+            "synonyms": pa.Column(dtype=str, nullable=True),
+            "subsets": pa.Column(dtype=str, nullable=True),
+            "crossreferences": pa.Column(dtype=str, nullable=True),
+            "malacards_linkouts": pa.Column(dtype=str, nullable=True),
+            "f_matrix_manually_included": pa.Column(dtype=bool, nullable=False),
+            "f_matrix_manually_excluded": pa.Column(dtype=bool, nullable=False),
+            "f_clingen": pa.Column(dtype=bool, nullable=False),
+            "f_susceptibility": pa.Column(dtype=bool, nullable=False),
+            "f_mondo_subtype": pa.Column(dtype=bool, nullable=False),
+            "f_pathway_defect": pa.Column(dtype=bool, nullable=False),
+            "f_grouping_subset": pa.Column(dtype=bool, nullable=False),
+            "f_obsoletion_candidate": pa.Column(dtype=bool, nullable=False),
+            "f_orphanet_subtype": pa.Column(dtype=bool, nullable=False),
+            "f_orphanet_disorder": pa.Column(dtype=bool, nullable=False),
+            "f_icd_billable": pa.Column(dtype=bool, nullable=False),
+            "f_paraphilic": pa.Column(dtype=bool, nullable=False),
+            "f_cardiovascular": pa.Column(dtype=bool, nullable=False),
+            "f_filter_heart_disorder": pa.Column(dtype=bool, nullable=False),
+            "f_inflammatory": pa.Column(dtype=bool, nullable=False),
+            "f_psychiatric": pa.Column(dtype=bool, nullable=False),
+            "f_cancer_or_benign_tumor": pa.Column(dtype=bool, nullable=False),
+            "f_withorwithout": pa.Column(dtype=bool, nullable=False),
+            "f_andor": pa.Column(dtype=bool, nullable=False),
+            "f_acquired": pa.Column(dtype=bool, nullable=False),
+            "f_unclassified_hereditary": pa.Column(dtype=bool, nullable=False),
+            "f_grouping_subset_ancestor": pa.Column(dtype=bool, nullable=False),
+            "f_orphanet_subtype_descendant": pa.Column(dtype=bool, nullable=False),
+            "f_omimps": pa.Column(dtype=bool, nullable=False),
+            "f_omimps_descendant": pa.Column(dtype=bool, nullable=False),
+            "f_omim": pa.Column(dtype=bool, nullable=False),
+            "f_leaf": pa.Column(dtype=bool, nullable=False),
+            "f_leaf_direct_parent": pa.Column(dtype=bool, nullable=False),
+            "f_icd_category": pa.Column(dtype=bool, nullable=False),
+            "f_icd_chapter_code": pa.Column(dtype=bool, nullable=False),
+            "f_icd_chapter_header": pa.Column(dtype=bool, nullable=False),
+            
+        },
+        strict=True,
+    ), obj_getter="disease_list_raw"
+)
+@pa.check_output(
+    pa.DataFrameSchema(
+        {
+            "category_class": pa.Column(dtype=str, nullable=False),
+            "count_descendants": pa.Column(dtype=int, nullable=False),  
+        },
+        strict=True,
+    ), obj_getter="mondo_metrics"
+)
+@pa.check_output(
+    pa.DataFrameSchema(
+        {
+            "subset_id": pa.Column(dtype=str, nullable=False),
+            "subset_label": pa.Column(dtype=str, nullable=False),
+            "subset_group_id": pa.Column(dtype=str, nullable=False),
+            "subset_group_label": pa.Column(dtype=str, nullable=False),
+            "other_subsets_count": pa.Column(dtype=int, nullable=False),
+        },
+        checks=[
+            pa.Check(
+                lambda df: df.shape[0] >= 100,
+                name="min_rows",
+                error=f"subtype_counts must have at least 100 rows",
+            )
+        ],
+        strict=True,
+    ), obj_getter="subtype_counts"
+)
 def extract_disease_data_from_mondo(
     mondo_graph: Store,
     billable_icd10: pd.DataFrame,
@@ -213,11 +376,14 @@ def extract_disease_data_from_mondo(
     logger.info("Extracting disease data from MONDO ontology")
 
     from matrix.pipelines.disease_list.queries import (
-        query_matrix_disease_list_metrics, query_mondo_labels,
-        query_mondo_obsoletes, query_ontology_metadata,
-        query_raw_disease_list_data_from_mondo)
+        query_matrix_disease_list_metrics,
+        query_mondo_labels,
+        query_mondo_obsoletes,
+        query_ontology_metadata,
+        query_raw_disease_list_data_from_mondo,
+    )
 
-    _log_mondo_size(mondo_graph)
+    _validate_mondo(mondo_graph)
 
     logger.info("Step 0: Extracting metadata and labels from MONDO")
 
@@ -236,7 +402,7 @@ def extract_disease_data_from_mondo(
 
     logger.info("Step 2: Enriching MONDO graph with annotations")
 
-    _log_mondo_size(mondo_graph)
+    _validate_mondo(mondo_graph)
 
     logger.info("Step 3: Extracting disease data from enriched MONDO")
     disease_list_raw = query_raw_disease_list_data_from_mondo(mondo_graph, billable_icd10, df_subtypes)
@@ -244,9 +410,13 @@ def extract_disease_data_from_mondo(
 
     logger.info("Extracting disease metrics")
     mondo_metrics = query_matrix_disease_list_metrics(mondo_graph)
+    mondo_metrics["count_descendants"] = (
+        pd.to_numeric(mondo_metrics["count_descendants"], errors="raise")
+        .astype("int64")
+    )
     logger.info(f"Extracted metrics for {len(mondo_metrics)} diseases")
 
-    _log_mondo_size(mondo_graph)
+    _validate_mondo(mondo_graph)
 
     logger.info("Finished extracting all disease data from MONDO")
     return {
@@ -549,6 +719,141 @@ def _normalize_boolean_columns(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
+@pa.check_input(
+    pa.DataFrameSchema(
+        {
+            "category_class": pa.Column(dtype=str, nullable=False),
+            "label": pa.Column(dtype=str, nullable=False),
+            "definition": pa.Column(dtype=str, nullable=True),
+            "synonyms": pa.Column(dtype=str, nullable=True),
+            "subsets": pa.Column(dtype=str, nullable=True),
+            "crossreferences": pa.Column(dtype=str, nullable=True),
+            "malacards_linkouts": pa.Column(dtype=str, nullable=True),
+            "f_matrix_manually_included": pa.Column(dtype=bool, nullable=False),
+            "f_matrix_manually_excluded": pa.Column(dtype=bool, nullable=False),
+            "f_clingen": pa.Column(dtype=bool, nullable=False),
+            "f_susceptibility": pa.Column(dtype=bool, nullable=False),
+            "f_mondo_subtype": pa.Column(dtype=bool, nullable=False),
+            "f_pathway_defect": pa.Column(dtype=bool, nullable=False),
+            "f_grouping_subset": pa.Column(dtype=bool, nullable=False),
+            "f_obsoletion_candidate": pa.Column(dtype=bool, nullable=False),
+            "f_orphanet_subtype": pa.Column(dtype=bool, nullable=False),
+            "f_orphanet_disorder": pa.Column(dtype=bool, nullable=False),
+            "f_icd_billable": pa.Column(dtype=bool, nullable=False),
+            "f_paraphilic": pa.Column(dtype=bool, nullable=False),
+            "f_cardiovascular": pa.Column(dtype=bool, nullable=False),
+            "f_filter_heart_disorder": pa.Column(dtype=bool, nullable=False),
+            "f_inflammatory": pa.Column(dtype=bool, nullable=False),
+            "f_psychiatric": pa.Column(dtype=bool, nullable=False),
+            "f_cancer_or_benign_tumor": pa.Column(dtype=bool, nullable=False),
+            "f_withorwithout": pa.Column(dtype=bool, nullable=False),
+            "f_andor": pa.Column(dtype=bool, nullable=False),
+            "f_acquired": pa.Column(dtype=bool, nullable=False),
+            "f_unclassified_hereditary": pa.Column(dtype=bool, nullable=False),
+            "f_grouping_subset_ancestor": pa.Column(dtype=bool, nullable=False),
+            "f_orphanet_subtype_descendant": pa.Column(dtype=bool, nullable=False),
+            "f_omimps": pa.Column(dtype=bool, nullable=False),
+            "f_omimps_descendant": pa.Column(dtype=bool, nullable=False),
+            "f_omim": pa.Column(dtype=bool, nullable=False),
+            "f_leaf": pa.Column(dtype=bool, nullable=False),
+            "f_leaf_direct_parent": pa.Column(dtype=bool, nullable=False),
+            "f_icd_category": pa.Column(dtype=bool, nullable=False),
+            "f_icd_chapter_code": pa.Column(dtype=bool, nullable=False),
+            "f_icd_chapter_header": pa.Column(dtype=bool, nullable=False),
+            
+        },
+        strict=True,
+    ), obj_getter="disease_list_raw"
+)
+@pa.check_input(
+    pa.DataFrameSchema(
+        {
+            "category_class": pa.Column(dtype=str, nullable=False),
+            "count_descendants": pa.Column(dtype=int, nullable=False),  
+        },
+        strict=True,
+    ), obj_getter="mondo_metrics"
+)
+@pa.check_input(
+    pa.DataFrameSchema(
+        {
+            "subset_id": pa.Column(dtype=str, nullable=False),
+            "subset_label": pa.Column(dtype=str, nullable=False),
+            "subset_group_id": pa.Column(dtype=str, nullable=False),
+            "subset_group_label": pa.Column(dtype=str, nullable=False),
+            "other_subsets_count": pa.Column(dtype=int, nullable=False),
+        },
+        strict=True,
+    ), obj_getter="subtype_counts"
+)
+@pa.check_output(
+    pa.DataFrameSchema(
+        {
+            "category_class": pa.Column(dtype=str, nullable=False),
+            "label": pa.Column(dtype=str, nullable=False),
+            "definition": pa.Column(dtype=str, nullable=True),
+            "synonyms": pa.Column(dtype=str, nullable=True),
+            "subsets": pa.Column(dtype=str, nullable=True),
+            "crossreferences": pa.Column(dtype=str, nullable=True),
+            "malacards_linkouts": pa.Column(dtype=str, nullable=True),
+            "is_matrix_manually_included": pa.Column(dtype=bool, nullable=False),
+            "is_matrix_manually_excluded": pa.Column(dtype=bool, nullable=False),
+            "is_clingen": pa.Column(dtype=bool, nullable=False),
+            "is_susceptibility": pa.Column(dtype=bool, nullable=False),
+            "is_mondo_subtype": pa.Column(dtype=bool, nullable=False),
+            "is_pathway_defect": pa.Column(dtype=bool, nullable=False),
+            "is_grouping_subset": pa.Column(dtype=bool, nullable=False),
+            "is_obsoletion_candidate": pa.Column(dtype=bool, nullable=False),
+            "is_orphanet_subtype": pa.Column(dtype=bool, nullable=False),
+            "is_orphanet_disorder": pa.Column(dtype=bool, nullable=False),
+            "is_icd_billable": pa.Column(dtype=bool, nullable=False),
+            "is_paraphilic": pa.Column(dtype=bool, nullable=False),
+            "is_cardiovascular": pa.Column(dtype=bool, nullable=False),
+            "is_filter_heart_disorder": pa.Column(dtype=bool, nullable=False),
+            "is_inflammatory": pa.Column(dtype=bool, nullable=False),
+            "is_psychiatric": pa.Column(dtype=bool, nullable=False),
+            "is_cancer_or_benign_tumor": pa.Column(dtype=bool, nullable=False),
+            "is_withorwithout": pa.Column(dtype=bool, nullable=False),
+            "is_andor": pa.Column(dtype=bool, nullable=False),
+            "is_acquired": pa.Column(dtype=bool, nullable=False),
+            "is_unclassified_hereditary": pa.Column(dtype=bool, nullable=False),
+            "is_grouping_subset_ancestor": pa.Column(dtype=bool, nullable=False),
+            "is_orphanet_subtype_descendant": pa.Column(dtype=bool, nullable=False),
+            "is_omimps": pa.Column(dtype=bool, nullable=False),
+            "is_omimps_descendant": pa.Column(dtype=bool, nullable=False),
+            "is_omim": pa.Column(dtype=bool, nullable=False),
+            "is_leaf": pa.Column(dtype=bool, nullable=False),
+            "is_leaf_direct_parent": pa.Column(dtype=bool, nullable=False),
+            "is_icd_category": pa.Column(dtype=bool, nullable=False),
+            "is_icd_chapter_code": pa.Column(dtype=bool, nullable=False),
+            "is_icd_chapter_header": pa.Column(dtype=bool, nullable=False),
+            "official_matrix_filter": pa.Column(dtype=bool, nullable=False),
+            "harrisons_view": pa.Column(dtype=str, nullable=False),
+            "mondo_txgnn": pa.Column(dtype=str, nullable=False),
+            "mondo_top_grouping": pa.Column(dtype=str, nullable=False),
+            "medical_specialization": pa.Column(dtype=str, nullable=False),
+            "txgnn": pa.Column(dtype=str, nullable=False),
+            "anatomical": pa.Column(dtype=str, nullable=False),
+            "is_pathogen_caused": pa.Column(dtype=str, nullable=False),
+            "is_cancer": pa.Column(dtype=str, nullable=False),
+            "is_glucose_dysfunction": pa.Column(dtype=str, nullable=False),
+            "tag_existing_treatment": pa.Column(dtype=str, nullable=False),
+            "tag_qaly_lost": pa.Column(dtype=str, nullable=False),
+            "count_descendants": pa.Column(dtype=int, nullable=False),
+            "count_subtypes": pa.Column(dtype=int, nullable=False),
+            "subset_group_id": pa.Column(dtype=str, nullable=True),
+            "subset_group_label": pa.Column(dtype=str, nullable=True),
+            "other_subsets_count": pa.Column(dtype=int, nullable=True),
+            "count_descendants_without_subtypes": pa.Column(dtype=int, nullable=False),
+            "is_grouping_heuristic": pa.Column(dtype=bool, nullable=False),
+        },
+        strict=True,
+        unique=["category_class"],
+        checks=[
+            pa.Check(lambda df: df.shape[0] >= 15000, name="min_rows", error="disease_list must have at least 15000 rows")
+            ],
+    ), obj_getter="disease_list"
+)
 
 def create_disease_list(
     disease_list_raw: pd.DataFrame,
@@ -607,19 +912,22 @@ def create_disease_list(
     )
 
     merged_df["count_subtypes"] = (
-        pd.to_numeric(merged_df["count_subtypes"], errors="coerce").fillna(default_count).astype(int)
+        pd.to_numeric(merged_df["count_subtypes"], errors="coerce").fillna(0).astype(int)
     )
     merged_df["count_descendants"] = (
-        pd.to_numeric(merged_df["count_descendants"], errors="coerce").fillna(default_count).astype(int)
+        pd.to_numeric(merged_df["count_descendants"], errors="coerce").fillna(0).astype(int)
+    )
+    merged_df["other_subsets_count"] = (
+        pd.to_numeric(merged_df["other_subsets_count"], errors="coerce").astype("Int64")
     )
     merged_df["count_descendants_without_subtypes"] = merged_df["count_descendants"] - merged_df["count_subtypes"]
 
     merged_df = _is_grouping_heuristic(merged_df, grouping_columns, not_grouping_columns, grouping_heuristic_column)
-    final_df = _normalize_boolean_columns(merged_df)
+    #final_df = _normalize_boolean_columns(merged_df)
 
-    logger.info(f"Created disease list with {len(final_df)} entries")
+    logger.info(f"Created disease list with {len(merged_df)} entries")
 
-    return {"disease_list": final_df}
+    return {"disease_list": merged_df}
 
 
 def validate_disease_list(
