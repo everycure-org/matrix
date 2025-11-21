@@ -296,4 +296,4 @@ run_test_native_through_docker: create_spark_dirs start_services
 	ulimit -n 10000
 	export KEDRO_DYNAMIC_PIPELINES_MAPPING_CROSS_VALIDATION_N_CROSS_VAL_FOLDS=2
 	export KEDRO_DYNAMIC_PIPELINES_MAPPING_NUM_SHARDS=2
-	uv run kedro run --env test -p test --runner=ThreadRunner
+	uv run kedro run --env test -p test --runner=ParallelRunner
