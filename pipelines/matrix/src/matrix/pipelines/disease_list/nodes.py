@@ -419,7 +419,6 @@ def extract_disease_data_from_mondo(
         "mondo_obsoletes": mondo_obsoletes,
         "disease_list_raw": disease_list_raw,
         "mondo_metrics": mondo_metrics,
-        "mondo_preprocessed": mondo_graph,
         "subtype_counts": subtype_counts,
     }
 

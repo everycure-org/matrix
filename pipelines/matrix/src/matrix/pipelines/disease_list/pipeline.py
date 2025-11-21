@@ -64,7 +64,6 @@ def create_pipeline(**kwargs: Any) -> Pipeline:
                     "mondo_obsoletes": "disease_list.prm.mondo_obsoletes",
                     "disease_list_raw": "disease_list.int.disease_list_raw",
                     "mondo_metrics": "disease_list.int.mondo_metrics",
-                    "mondo_preprocessed": "disease_list.int.mondo_preprocessed",
                     "subtype_counts": "disease_list.int.subtype_counts",
                 },
                 name="extract_disease_data_from_mondo",
