@@ -1,9 +1,8 @@
 # Disease list pipeline parameters
 
 # Parameters for create_billable_icd10_codes node
-billable_icd10_params:
-  icd10_billable_subset: "http://purl.obolibrary.org/obo/mondo#icd10_billable"
-  icd10cm_prefix: "ICD10CM"
+icd10_billable_subset: "http://purl.obolibrary.org/obo/mondo#icd10_billable"
+icd10cm_prefix: "ICD10CM"
 
 # Parameters for create_subtypes_template node
 subtypes_params:
@@ -39,16 +38,8 @@ disease_list_params:
     - "tag_existing_treatment"
     - "tag_qaly_lost"
 
-  # String parsing constants
-  subset_delimiter: ";"
-  subset_prefix: "mondo:"
-  grouping_delimiter: "|"
-
   # Column name constants
   grouping_heuristic_column: "is_grouping_heuristic"
-
-  # Default numeric values
-  default_count: 0
 
   # Grouping heuristic classification columns
   grouping_columns:
