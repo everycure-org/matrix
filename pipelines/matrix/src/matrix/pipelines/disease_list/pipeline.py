@@ -5,7 +5,6 @@ It processes raw ontology data, applies filters, and generates the final
 curated list of diseases for drug repurposing.
 """
 
-from pathlib import Path
 from typing import Any
 
 from kedro.pipeline import Pipeline, node, pipeline

@@ -374,12 +374,9 @@ def extract_disease_data_from_mondo(
     logger.info("Extracting disease data from MONDO ontology")
 
     from matrix.pipelines.disease_list.queries import (
-        query_matrix_disease_list_metrics,
-        query_mondo_labels,
-        query_mondo_obsoletes,
-        query_ontology_metadata,
-        query_raw_disease_list_data_from_mondo,
-    )
+        query_matrix_disease_list_metrics, query_mondo_labels,
+        query_mondo_obsoletes, query_ontology_metadata,
+        query_raw_disease_list_data_from_mondo)
 
     _validate_mondo(mondo_graph)
 
@@ -924,32 +921,3 @@ def create_disease_list(
     logger.info(f"Created disease list with {len(merged_df)} entries")
 
     return {"disease_list": merged_df}
-
-
-def validate_disease_list(
-    disease_list: pd.DataFrame,
-) -> bool:
-    """Validate the generated disease list.
-
-    Args:
-        disease_list: Final disease list
-
-    Returns:
-        True if validation passes
-
-    Raises:
-        ValueError: If validation fails
-    """
-    logger.info("Validating disease list")
-    # length should be greater than 15000
-    if len(disease_list) < 15000:
-        raise ValueError(
-            f"Validation failed: Disease list has only {len(disease_list)} entries, expected at least 15000"
-        )
-
-    # check for duplicate MONDO IDs
-    if disease_list["category_class"].duplicated().any():
-        duplicated_ids = disease_list[disease_list["category_class"].duplicated()]["category_class"].unique()
-        raise ValueError(f"Validation failed: Duplicate MONDO IDs found: {duplicated_ids}")
-
-    return True
