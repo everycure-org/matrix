@@ -29,13 +29,23 @@ def create_pipeline(**kwargs: Any) -> Pipeline:
     """
     return pipeline(
         [
-            # Stage 1: Extract billable ICD-10 codes and map to Mondo
+            # Stage 1: Ingest data outside of Mondo
+            node(
+                func=nodes.ingest_obsoletion_candidates,
+                inputs={
+                    "mondo_obsoletion_candidates": "disease_list.raw.mondo_obsoletion_candidates",
+                },
+                outputs="disease_list.prm.mondo_obsoletion_candidates",
+                name="ingest_obsoletion_candidates",
+                tags=["disease_list", "preparation"],
+            ),
             node(
                 func=nodes.create_billable_icd10_codes,
                 inputs={
                     "icd10_codes": "disease_list.raw.icd10_cm_codes",
                     "mondo_sssom": "disease_list.raw.mondo_sssom",
-                    "parameters": "params:billable_icd10_params",
+                    "icd10_billable_subset": "params:icd10_billable_subset",
+                    "icd10cm_prefix": "params:icd10cm_prefix",
                 },
                 outputs="disease_list.int.billable_icd10_codes",
                 name="create_billable_icd10_codes",

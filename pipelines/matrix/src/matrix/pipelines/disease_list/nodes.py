@@ -77,7 +77,8 @@ def _format_icd10_code_to_curie(code: str, prefix: str) -> str:
 def create_billable_icd10_codes(
     icd10_codes: pd.DataFrame,
     mondo_sssom: pd.DataFrame,
-    parameters: Dict[str, Any],
+    icd10_billable_subset: str,
+    icd10cm_prefix: str,
 ) -> pd.DataFrame:
     """Create dataframe for billable ICD-10-CM codes mapped to MONDO.
 
@@ -89,9 +90,6 @@ def create_billable_icd10_codes(
     Returns:
         DataFrame with columns: subject_id (MONDO), predicate (subset URI), object_id (ICD10CM)
     """
-
-    icd10_billable_subset = parameters["icd10_billable_subset"]
-    icd10cm_prefix = parameters["icd10cm_prefix"]
 
     icd10_codes["code"] = icd10_codes["CODE"].apply(
         lambda code: _format_icd10_code_to_curie(code, icd10cm_prefix)
@@ -876,7 +874,6 @@ def create_disease_list(
             - grouping_columns: Columns indicating a disease is a grouping
             - not_grouping_columns: Columns that override grouping classification
             - grouping_heuristic_column: Name of output heuristic column
-            - default_count: Default value for missing counts
 
     Returns:
         Dictionary with 'disease_list' key containing final DataFrame
@@ -885,13 +882,12 @@ def create_disease_list(
 
     curated_groupings = parameters["curated_groupings"]
     llm_groupings = parameters["llm_groupings"]
-    subset_prefix = parameters["subset_prefix"]
-    subset_delimiter = parameters["subset_delimiter"]
-    grouping_delimiter = parameters["grouping_delimiter"]
+    subset_prefix = "mondo:"
+    subset_delimiter = ";"
+    grouping_delimiter = "|"
     grouping_columns = parameters["grouping_columns"]
     not_grouping_columns = parameters["not_grouping_columns"]
     grouping_heuristic_column = parameters["grouping_heuristic_column"]
-    default_count = parameters["default_count"]
 
     subtype_group_counts = _prepare_subtype_counts(subtype_counts)
     filtered_df = _matrix_disease_filter(disease_list_raw)
