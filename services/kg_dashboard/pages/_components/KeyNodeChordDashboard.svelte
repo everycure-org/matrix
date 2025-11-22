@@ -36,6 +36,12 @@
   let tooltipX = 0;
   let tooltipY = 0;
 
+  // Dark mode detection
+  let isDarkMode = false;
+
+  // Get label color based on theme
+  $: labelColor = isDarkMode ? '#e5e7eb' : '#1f2937';
+
   function showTooltip(event, content) {
     tooltipContent = content;
     tooltipX = event.clientX;
@@ -230,7 +236,14 @@
   // Apply selection styling to nodes
   $: styledNodes = allNodes.map(node => {
     if (node.category === 'center') {
-      return node; // Center node always fully visible
+      // Update center node label color for theme support
+      return {
+        ...node,
+        label: {
+          ...node.label,
+          color: labelColor
+        }
+      };
     }
 
     const isSelected = selectedCategory === node.name;
@@ -250,7 +263,7 @@
         position: 'right',
         fontSize: LABEL_CONFIG.fontSize,
         fontWeight: isSelected ? 'bold' : LABEL_CONFIG.fontWeight,
-        color: LABEL_CONFIG.color,
+        color: labelColor,
         distance: LABEL_CONFIG.distance,
         opacity: hasSelection ? (isSelected ? 1.0 : 0.5) : 1.0
       }
@@ -273,6 +286,29 @@
 
   // Initialize chart on mount
   onMount(() => {
+    // Check initial dark mode state
+    const checkDarkMode = () => {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const hasClassDark = document.documentElement.classList.contains('dark');
+      const hasClassThemeDark = document.documentElement.classList.contains('theme-dark');
+      const bodyClassDark = document.body.classList.contains('dark');
+
+      isDarkMode = prefersDark || hasClassDark || hasClassThemeDark || bodyClassDark;
+    };
+
+    checkDarkMode();
+
+    // Listen for changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', checkDarkMode);
+
+    // Watch for class and attribute changes on document element
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme', 'data-mode', 'style']
+    });
+
     const chartDom = document.getElementById(`chord-chart-${keyNodeName.replace(/\s+/g, '-')}`);
     if (chartDom) {
       chartInstance = echarts.init(chartDom);
@@ -287,6 +323,8 @@
     }
 
     return () => {
+      mediaQuery.removeEventListener('change', checkDarkMode);
+      observer.disconnect();
       if (chartInstance) {
         chartInstance.dispose();
       }

@@ -18,13 +18,13 @@ export const CATEGORY_COLORS = {
   'Protein': '#604CEF',             // purple - proteins
   'Disease': '#EF604C',             // red - diseases
   'PhenotypicFeature': '#EF4C9E',   // pink - phenotypes
-  'AnatomicalEntity': '#B4D843',    // lime green - anatomy
+  'AnatomicalEntity': '#7AB51D',    // lime green - anatomy
   'BiologicalProcess': '#3AC7B6',   // cyan - processes
   'MolecularActivity': '#D8AB47',   // gold - molecular activity
   'GenomicEntity': '#6287D3',       // light blue - genomic
   'OrganismTaxon': '#B912D1',       // magenta - organisms
   'Procedure': '#C66D3C',           // burnt orange - procedures
-  'Activity': '#E5F758',            // yellow-green - activities
+  'Activity': '#B8C91F',            // yellow-green - activities
   'Population': '#C56492',          // mauve - populations
   'Other': '#999999'                // gray - other
 };

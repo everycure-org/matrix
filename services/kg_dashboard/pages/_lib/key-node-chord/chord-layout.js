@@ -74,7 +74,7 @@ export function createCenterNode(keyNodeName, keyNodeCategory = null) {
       position: 'bottom',
       fontSize: 12,
       fontWeight: 'bold',
-      color: 'inherit', // Inherits from parent to support dark mode
+      color: '#1f2937',
       distance: 8
     }
   };
