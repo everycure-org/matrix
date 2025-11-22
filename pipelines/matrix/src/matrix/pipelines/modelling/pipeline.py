@@ -148,6 +148,24 @@ def create_model_pipeline(models: list[dict], n_cross_val_folds: int) -> Pipelin
     pipelines = []
     num_shards = settings.DYNAMIC_PIPELINES_MAPPING().get("num_shards")
 
+    # Replace embeddings for original splits
+    pipelines.append(
+        pipeline(
+            [
+                ArgoNode(
+                    func=nodes.replace_embeddings_for_splits,
+                    inputs=[
+                        "modelling.model_input.splits@pandas",
+                        "embeddings.tmp.llm_drug_embeddings",
+                        "embeddings.tmp.llm_disease_embeddings",
+                    ],
+                    outputs="modelling.model_input.temp_splits@pandas",
+                    name="replace_embeddings_for_splits",
+                )
+            ]
+        )
+    )
+
     for model in models:
         model_name = model["model_name"]
         # Generate pipeline to enrich splits
@@ -168,17 +186,13 @@ def create_model_pipeline(models: list[dict], n_cross_val_folds: int) -> Pipelin
             )
             enrich_nodes.append(
                 ArgoNode(
-                    func=nodes.replace_embeddings,
+                    func=nodes.replace_embeddings_for_enriched_splits,
                     inputs=[
-                        "modelling.model_input.splits@pandas",
                         f"modelling.{shard}.{model_name}.model_input.enriched_splits",
                         "embeddings.tmp.llm_drug_embeddings",
                         "embeddings.tmp.llm_disease_embeddings",
                     ],
-                    outputs=[
-                        f"modelling.model_input.temp_splits@pandas",
-                        f"modelling.{shard}.{model_name}.model_input.temp_enriched_splits",
-                    ],
+                    outputs=f"modelling.{shard}.{model_name}.model_input.temp_enriched_splits",
                     name=f"replace_embeddings_{model_name}_{shard}",
                 )
             )
