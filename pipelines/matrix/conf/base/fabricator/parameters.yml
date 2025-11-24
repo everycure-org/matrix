@@ -2291,9 +2291,15 @@ fabricator.ec_ground_truth:
           sample:
             num_rows: "@negative_edges.num_rows"
             seed: 40279
-        "final normalized disease id":
+        "final normalized drug id":
           type: copy_column
-          source_column: disease_nodes.translator_id
+          source_column: drug_nodes.id
+          sample:
+            num_rows: "@negative_edges.num_rows"
+            seed: 40279
+        "final normalized drug label":
+          type: copy_column
+          source_column: drug_nodes.name
           sample:
             num_rows: "@negative_edges.num_rows"
             seed: 40279
@@ -2303,21 +2309,15 @@ fabricator.ec_ground_truth:
           sample:
             num_rows: "@negative_edges.num_rows"
             seed: 40279
-        "final normalized disease label":
-          type: copy_column
-          source_column: disease_nodes.name
-          sample:
-            num_rows: "@negative_edges.num_rows"
-            seed: 40199
-        "final normalized drug id":
+        "final normalized disease id":
           type: copy_column
           source_column: disease_nodes.id
           sample:
             num_rows: "@negative_edges.num_rows"
             seed: 40199
-        "final normalized drug label":
+        "final normalized disease label":
           type: copy_column
-          source_column: rtx_nodes.name
+          source_column: disease_nodes.name
           sample:
             num_rows: "@negative_edges.num_rows"
             seed: 40199

@@ -317,7 +317,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=fabricate_datasets,
                 inputs={
                     "fabrication_params": "params:fabricator.ec_ground_truth",
-                    "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                    "disease_nodes": "ingestion.raw.disease_list",
                     "drug_nodes": "ingestion.raw.drug_list",
                 },
                 outputs={
