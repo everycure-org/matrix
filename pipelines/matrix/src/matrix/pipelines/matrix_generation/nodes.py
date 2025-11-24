@@ -145,7 +145,6 @@ def generate_pairs(
     """
     # Collect list of drugs and diseases
     diseases_lst = diseases["id"].tolist()
-    # This try/except is to make modelling_run pipeline compatible with old drug list (pre-migration)
     if "ec_id" in drugs.columns:
         drugs_df = drugs[["id", "ec_id"]]
         if "subject_ec_id" in known_pairs.columns:
