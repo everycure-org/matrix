@@ -131,35 +131,22 @@ def create_pipeline(**kwargs) -> Pipeline:
                     )
                 )
         if source.get("validate", False):
-            if "robokop" in source.get("name", ""):
-                nodes_lst.append(
-                    ArgoNode(
-                        func=validate,
-                        inputs={
-                            "nodes": f"ingestion.int.preprocessing.{source['name']}.nodes@polars",
-                            "edges": f"ingestion.int.preprocessing.{source['name']}.edges@polars",
-                        },
-                        outputs=f"ingestion.int.{source['name']}.violations",
-                        name=f"validate_{source['name']}",
-                        tags=[f"{source['name']}"],
-                        argo_config=ArgoResourceConfig(
-                            memory_limit=128,
-                            memory_request=64,
-                        ),
-                    )
+            robokop_config = ArgoResourceConfig(
+                memory_limit=128,
+                memory_request=64,
+            )
+            argo_config = robokop_config if "robokop" in source.get("name", "") else None
+            nodes_lst.append(
+                ArgoNode(
+                    func=validate,
+                    inputs={
+                        "nodes": f"ingestion.int.preprocessing.{source['name']}.nodes@polars",
+                        "edges": f"ingestion.int.preprocessing.{source['name']}.edges@polars",
+                    },
+                    outputs=f"ingestion.int.{source['name']}.violations",
+                    name=f"validate_{source['name']}",
+                    tags=[f"{source['name']}"],
+                    argo_config=argo_config,
                 )
-
-            else:
-                nodes_lst.append(
-                    ArgoNode(
-                        func=validate,
-                        inputs={
-                            "nodes": f"ingestion.raw.{source['name']}.nodes@polars",
-                            "edges": f"ingestion.raw.{source['name']}.edges@polars",
-                        },
-                        outputs=f"ingestion.int.{source['name']}.violations",
-                        name=f"validate_{source['name']}",
-                        tags=[f"{source['name']}"],
-                    )
-                )
+            )
     return pipeline(nodes_lst)
