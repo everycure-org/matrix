@@ -5,6 +5,8 @@ Pytest configuration and shared fixtures for the test suite.
 import os
 import random
 import string
+from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -16,9 +18,33 @@ def integration_test_setup():
 
     Yields:
         dict: Repository configuration
-
-    The fixture handles cleanup of the created repository automatically.
+        
     """
+    
+    # For library testing, we don't need a full Kedro session
+    # Just return a mock object that has the necessary attributes
+    class MockKedroContext:
+        """Mock Kedro context for testing."""
+
+        def __init__(self):
+            self.env = "test"
+            self.project_path = Path.cwd()
+            self.config_loader = MagicMock()
+            # Provide minimal Spark config for testing
+            self.config_loader.__getitem__.return_value = {
+                "spark.app.name": "test-app",
+                "spark.master": "local[*]",
+            }
+
+    class MockKedroSession:
+        """Mock Kedro session for testing."""
+
+        def __init__(self):
+            self._context = MockKedroContext()
+
+        def _get_context(self):
+            return self._context
+    
     # Generate 3-5 character random suffix
     suffix_length = random.randint(3, 5)
     suffix = "".join(random.choices(string.ascii_lowercase + string.digits, k=suffix_length))

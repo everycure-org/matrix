@@ -6,7 +6,7 @@
 make install
 ```
 
-## Running Fabricator
+## Fabricator
 
 ### Create a Knowledge Graph schema snapshot in JSON
 This script creates a KG schema in json format.
@@ -38,8 +38,9 @@ fabricator build-yaml-from-kg-schema-snapshot --nodes <kgx_nodes_file> --edges <
 This script bypasses any steps to revise columns and directly generates yaml based on the KGX nodes and edges files. 
 ```shell
 fabricator build_yaml_from_kgx --nodes <kgx_nodes_file> --edges <kgx_edges_file> --output <output_file>
+```
 
-## Running PrimeKG
+## PrimeKG
 
 ### Building a KGX Edges file from PrimeKG
 This script transforms the PrimeKG file into a Biolink compatible KGX edges file.
@@ -57,5 +58,21 @@ primekg build-nodes -a <primekg_drug_features_csv> -b <primekg_disease_features_
 This produces a json output that can be reviewed/edited and then included in a subsequent 'build-yaml-from-kg-schema-snapshot' command.
 ```shell
 primekg print-predicate-mappings --nodes <nodes_file> --edges <edges_file>
+```
+
+## Robokop
+
+This app reduces the columns in Robokop from around 2000 down to 35, which is better for downstream memory usage while still retaining all the data.
+
+### Striping the types from the column names (eg, :string[]) 
+This script transforms the Robokop nodes and edges files to strip type from the column names.
+```shell
+robokop strip-type-from-column-names -i <robokop_nodes_tsv> --output <new_robokop_nodes_tsv>
+```
+
+### Convert boolean columns to label columns (eg, MONDO_SUPERCLASS_* and CHEBI_ROLE_*)
+This script converts known boolean columns into label columns.
+```shell 
+robokop convert-boolean-columns-to-label-columns -n <robokop_nodes_tsv> -o <new_robokop_nodes_tsv>
 ```
 

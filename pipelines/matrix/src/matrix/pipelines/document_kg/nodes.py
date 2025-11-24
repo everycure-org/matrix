@@ -7,7 +7,6 @@ import pyspark.sql.functions as F
 from jinja2 import Template
 from matrix_inject.inject import inject_object
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -281,7 +280,5 @@ def create_pks_documentation(matrix_subset_relevant_sources: Dict[str, Any], tem
     """Generate markdown documentation for PKS used in the matrix."""
     pks_documentation_texts = _generate_list_of_pks_markdown_strings(matrix_subset_relevant_sources, template=templates)
     overview_table = _generate_overview_table_of_pks_markdown(matrix_subset_relevant_sources, template=templates)
-    documentation_md = _generate_pks_markdown_documentation(
-        matrix_subset_relevant_sources, overview_table, template=templates
-    )
+    documentation_md = _generate_pks_markdown_documentation(pks_documentation_texts, overview_table, template=templates)
     return documentation_md

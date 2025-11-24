@@ -8,6 +8,8 @@ https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
 # For example, after creating a hooks.py and defining a ProjectHooks class there, do
 # from pandas_viz.hooks import ProjectHooks
 # Class that manages how configuration is loaded.
+import os
+
 from kedro.config import OmegaConfigLoader  # noqa: E402
 from kedro_mlflow.framework.hooks import MlflowHook
 
@@ -43,14 +45,14 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
     generate_dynamic_pipeline_mapping(
         {
             "cross_validation": {
-                "n_cross_val_folds": 5,
+                "n_cross_val_folds": int(os.getenv("N_CROSS_VAL", 5)),
             },
-            "num_shards": 3,
+            "num_shards": int(os.getenv("N_SHARDS", 3)),
             "integration": [
                 {"name": "rtx_kg2", "integrate_in_kg": True, "is_private": False},
                 {"name": "spoke", "integrate_in_kg": True, "is_private": True},
                 {"name": "embiology", "integrate_in_kg": True, "is_private": True},
-                {"name": "robokop", "integrate_in_kg": True, "is_private": False},
+                {"name": "robokop", "integrate_in_kg": True, "is_private": False, "validate": True},
                 {"name": "primekg", "integrate_in_kg": True, "is_private": False, "validate": True},
                 {"name": "drug_list", "integrate_in_kg": False, "has_edges": False, "is_core": True},
                 {"name": "disease_list", "integrate_in_kg": False, "has_edges": False, "is_core": True},
@@ -113,7 +115,24 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 {"name": "matrix_curated", "source_type": "matrix_curated"},
                 {"name": "matrix_reviews", "source_type": "matrix_curated"},
             ],
-        }
+            "run_comparison": {
+                "evaluations": [
+                    "ground_truth_recall_at_n_bootstrap",
+                    "negative_recall_at_n_bootstrap",
+                    "off_label_recall_at_n_bootstrap",
+                    "disease_specific_hit_at_k_bootstrap",
+                    "disease_specific_hit_at_k_off_label_bootstrap",
+                    "drug_entropy_at_n",
+                    "disease_entropy_at_n",
+                    "commonality_at_n",
+                    # "ground_truth_recall_at_n",
+                    # "negative_recall_at_n",
+                    # "off_label_recall_at_n",
+                    # "disease_specific_hit_at_k",
+                    # "disease_specific_hit_at_k_off_label",
+                ],
+            },
+        },
     )
 )
 

@@ -8,17 +8,29 @@ category: Metrics
 
 ```sql epistemic_score
 SELECT
-  SUM(included_edges) AS included_edges,
+  SUM(edge_count) AS included_edges,
   ROUND(
-    SUM(average_epistemic_score * included_edges) / SUM(included_edges),
+    SUM((kl_score + at_score) / 2 * edge_count) / SUM(edge_count),
     4
   ) AS average_epistemic_score,
-  SUM(null_or_not_provided_both) AS null_or_not_provided_both
-FROM bq.epistemic_score_by_knowledge_source
+  SUM(CASE
+    WHEN kl_normalized = 'not_provided' AND at_normalized = 'not_provided'
+    THEN edge_count ELSE 0
+  END) AS null_or_not_provided_both
+FROM bq.epistemic_scores
 ```
 
 ```sql epistemic_heatmap
-SELECT * FROM bq.epistemic_heatmap
+SELECT
+  knowledge_level_label,
+  agent_type_label,
+  SUM(edge_count) AS edge_count,
+  ROUND(
+    SUM((kl_score + at_score) / 2 * edge_count) / SUM(edge_count),
+    3
+  ) AS average_score
+FROM bq.epistemic_scores
+GROUP BY knowledge_level_label, agent_type_label
 ```
 
 <div class="text-left text-md mt-6 mb-4">

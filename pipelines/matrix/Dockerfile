@@ -1,5 +1,7 @@
-ARG CUDA_IMAGE=nvidia/cuda:12.6.2-cudnn-runtime-ubuntu24.04
+ARG CUDA_IMAGE=ubuntu:24.04
 FROM $CUDA_IMAGE AS build
+
+ENV UV_LINK_MODE=copy
 
 # ---------------------------------
 # ------- GPU/System start ------
@@ -11,12 +13,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     gcc curl g++ openjdk-17-jre-headless libomp-dev git && \
     apt-get clean
-
-
-# GPU setup
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
-LABEL com.nvidia.volumes.needed="nvidia_driver"
+    
 # ------- GPU/System end ----------
 # ---------------------------------
 # ------- Dependencies start ------
@@ -27,7 +24,7 @@ COPY pyproject.toml uv.lock ./
 
 # now we run this inside of the matrix pipeline folder.
 WORKDIR /matrix/pipelines/matrix
-COPY pipelines/matrix/pyproject.toml .
+COPY pipelines/matrix/pyproject.toml pipelines/matrix/README.md ./
 # We use --no-install-workspace to avoid re-installing the the entire workspace
 # dependncies here, only installing the matrix pipeline dependencies
 RUN --mount=type=cache,target=/root/.cache uv sync --frozen  --no-install-workspace
@@ -42,6 +39,8 @@ RUN --mount=type=cache,target=/root/.ivy2/cache python maven-deps.py
 # being installed which are... just the libs. the matrix pipeline 
 # pyproject.toml explicitly defines these as dependencies, thus it tries installing them now
 COPY libs/ ../../libs/
+# Copy src directory so setuptools can find it during package build
+COPY pipelines/matrix/src/ ./src/
 RUN uv sync --frozen
 # ---------- Dependencies end -----
 # ---------------------------------
