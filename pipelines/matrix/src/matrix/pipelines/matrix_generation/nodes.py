@@ -236,8 +236,8 @@ def make_predictions_and_sort(
             how="left",
         )
         .join(
-            embeddings.withColumnsRenamed({"id": "source", "topological_embedding": "source_embedding"}),
-            on="source",
+            embeddings.withColumnsRenamed({"id": "source_curie", "topological_embedding": "source_embedding"}),
+            on="source_curie",
             how="left",
         )
         .filter(F.col("source_embedding").isNotNull() & F.col("target_embedding").isNotNull())
