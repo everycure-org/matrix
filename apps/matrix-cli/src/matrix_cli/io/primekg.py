@@ -177,10 +177,24 @@ def build_nodes(
         )
         .with_columns(
             [
-                pl.when(pl.col("node_source").str.contains("HPO|MONDO|UBERON"))
+                pl.when(pl.col("node_source").str.contains("MONDO|UBERON"))
                 .then(
                     pl.concat_str(
                         [pl.col("node_source"), pl.col("node_id").cast(pl.Utf8).str.pad_start(7, "0")],
+                        separator=":",
+                        ignore_nulls=True,
+                    )
+                )
+                .otherwise(pl.col("node_source"))
+                .alias("node_source"),
+            ]
+        )
+        .with_columns(
+            [
+                pl.when(pl.col("node_source").str.contains("HPO"))
+                .then(
+                    pl.concat_str(
+                        [pl.lit("HP"), pl.col("node_id").cast(pl.Utf8).str.pad_start(7, "0")],
                         separator=":",
                         ignore_nulls=True,
                     )

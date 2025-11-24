@@ -8,6 +8,8 @@ https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
 # For example, after creating a hooks.py and defining a ProjectHooks class there, do
 # from pandas_viz.hooks import ProjectHooks
 # Class that manages how configuration is loaded.
+import os
+
 from kedro.config import OmegaConfigLoader  # noqa: E402
 from kedro_mlflow.framework.hooks import MlflowHook
 
@@ -43,9 +45,9 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
     generate_dynamic_pipeline_mapping(
         {
             "cross_validation": {
-                "n_cross_val_folds": 5,
+                "n_cross_val_folds": int(os.getenv("N_CROSS_VAL", 5)),
             },
-            "num_shards": 3,
+            "num_shards": int(os.getenv("N_SHARDS", 3)),
             "integration": [
                 {"name": "rtx_kg2", "integrate_in_kg": True, "is_private": False},
                 {"name": "spoke", "integrate_in_kg": True, "is_private": True},
