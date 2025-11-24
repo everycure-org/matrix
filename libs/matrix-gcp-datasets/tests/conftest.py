@@ -18,7 +18,8 @@ def integration_test_setup():
 
     Yields:
         dict: Repository configuration
-        
+
+    The fixture handles cleanup of the created repository automatically.
     """
     
     # For library testing, we don't need a full Kedro session
