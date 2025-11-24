@@ -2220,6 +2220,18 @@ wheels = [
 ]
 
 [[package]]
+name = "lia-web"
+version = "0.2.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1e/4e/847404ca9d36e3f5468c9e460aed565a02cbca0fdf81247da9f87fabc1b8/lia_web-0.2.3.tar.gz", hash = "sha256:ccc9d24cdc200806ea96a20b22fb68f4759e6becdb901bd36024df7921e848d7", size = 156761 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/00/f2/c68a97c727c795119f1056ad2b7e716c23f26f004292517c435accf90b5c/lia_web-0.2.3-py3-none-any.whl", hash = "sha256:237c779c943cd4341527fc0adfcc3d8068f992ee051f4ef059b8474ee087f641", size = 13965 },
+]
+
+[[package]]
 name = "linkml-runtime"
 version = "1.9.5"
 source = { registry = "https://pypi.org/simple" }
@@ -2917,7 +2929,7 @@ requires-dist = [
     { name = "openpyxl" },
     { name = "pandas", specifier = ">=2.1.1" },
     { name = "pandera", specifier = "==0.24.0" },
-    { name = "polars-lts-cpu", specifier = "==1.30.0" },
+    { name = "polars-lts-cpu", specifier = ">=1.30.0" },
     { name = "proto-plus", specifier = "==1.24.0.dev1" },
     { name = "pyarrow", specifier = ">=14.0.2" },
     { name = "pyspark", specifier = "==3.5.1" },
@@ -4984,6 +4996,23 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/70/57/5739d3872f706cf53bfa365ef6e85f5df7ec5ee82ce3ed11f9af41a76af1/secure-1.0.1.tar.gz", hash = "sha256:942c10b8cfbde9e3a7961cf17833c9139d6e14ee39d23428230e4b8c8bc2de26", size = 21282 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f4/63/99c753d364c482e29f33ff63799680b37ea55c57cc879567a6bff650afcd/secure-1.0.1-py3-none-any.whl", hash = "sha256:f0bb7bb12c684e8e30026a5480833170197146163fcb61a80d1af1710c0478da", size = 26423, upload-time = "2024-10-18T09:24:57.098Z" },
+]
+
+[[package]]
+name = "selectolax"
+version = "0.4.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8f/93/19eb4bcefc0e678712211e7c4cb0b8e11ae78ff4b57220c5d73433701203/selectolax-0.4.3.tar.gz", hash = "sha256:55b1bae7cc18ee6a6beedcc99ed8a423488e8500d8ec32aeeaac92110a157df1", size = 4761144 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/82/97/0c2ec0c7f1a8b1bca465789884a0c46459430736a6c675a831369b0085c4/selectolax-0.4.3-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:1e4fcb1b06f88b32343feb31b5a89a23acc93f0a8656f4defae8e95c45af6e7b", size = 2016833 },
+    { url = "https://files.pythonhosted.org/packages/86/1b/a681c4d631ca15da1551c6da1c4a2d58e468e9431394f537d6399b0791e4/selectolax-0.4.3-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:1b466cb10cf04d58be60bdc2de97ae751fb37bbe4165b6ccfb3481276a2d0c69", size = 2009752 },
+    { url = "https://files.pythonhosted.org/packages/64/4e/c14fa141f02555d54493dd8b3e025b377e7f2031ef6543108146d7e79603/selectolax-0.4.3-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:b9b5ee2775ad6cace8e52ffe544c119dd458a660d76618e7a357d4df239ed188", size = 2200030 },
+    { url = "https://files.pythonhosted.org/packages/29/ed/3359d029c456d23187883666abf4be0742c45585f63941f3d58e73b145b3/selectolax-0.4.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:e3d37305e8b30b40a54ceb2c7901e6e575b8196f78f602da305292d9ae23cdc9", size = 2232892 },
+    { url = "https://files.pythonhosted.org/packages/24/c3/4ff7ab69eb18793dfb90eed47aa0366a7e86d51f2baee1480ba45453f006/selectolax-0.4.3-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:11b4248e21db3fce7ddf8858e7da6697f865ab9bbd8a6d3cf1bd5390f36585ba", size = 2211922 },
+    { url = "https://files.pythonhosted.org/packages/b4/9b/15682c2baa3e8b6ee082c13e8a5890942b19dd6dc9ccce9cba46b1b27b2c/selectolax-0.4.3-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:91e9a4fbc2870c4f192dcff2c6a44c65c4d1dfd0963a79399d15c580971d624b", size = 2240003 },
+    { url = "https://files.pythonhosted.org/packages/2a/21/4631690965c4e647a96a4e3cf51a3a3ff57fc91c0ef53725a1dafb06f84e/selectolax-0.4.3-cp311-cp311-win32.whl", hash = "sha256:61162868158f9c9e3fa0d815be5374b0eafcb82243d5152f7f3612ae5b635a8a", size = 1697074 },
+    { url = "https://files.pythonhosted.org/packages/93/bc/110a5f58accd1508a73f25b0a6fef986d877bb2b19ee1b75a494933c093e/selectolax-0.4.3-cp311-cp311-win_amd64.whl", hash = "sha256:8ea99e3b18bef5aa8b7d894c4b396325a1ec19222bd9dc9ff03b556800d17b10", size = 1794096 },
+    { url = "https://files.pythonhosted.org/packages/1a/db/eca0b00100c2866a65f045c41a73ac278475aa98b0146c31e7a5da3dfded/selectolax-0.4.3-cp311-cp311-win_arm64.whl", hash = "sha256:dfeb04541a7962c6ca244659ea63ceb34d26a82de5a0f33634407ab2b51e536c", size = 1745406 },
 ]
 
 [[package]]
