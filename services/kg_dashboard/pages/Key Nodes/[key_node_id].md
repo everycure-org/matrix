@@ -168,23 +168,23 @@ This provides a comprehensive view of the entire hierarchy under this node.
 <Details title="Understanding This Visualization">
 <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
 
-**Interactive Components:**
+<strong>Interactive Components:</strong>
 
 This visualization consists of three interactive, interconnected components that work together to help you explore the knowledge graph:
 
-1. **Network Diagram** (top): Shows the key node in the center with connected biolink categories arranged around it. Node size represents the number of distinct connected entities, and link width represents total edge count.
+1. <strong>Network Diagram</strong> (top): Shows the key node in the center with connected biolink categories arranged around it. Node size represents the number of distinct connected entities, and link width represents total edge count.
 
-2. **Source Filter Bar Charts** (middle): Two horizontal bar charts showing the distribution of edges across knowledge graph sources (KG Sources like RTX-KG2, ROBOKOP) and primary knowledge sources (like HPO, MONDO).
+2. <strong>Source Filter Bar Charts</strong> (middle): Two horizontal bar charts showing the distribution of edges across knowledge graph sources (KG Sources like RTX-KG2, ROBOKOP) and primary knowledge sources (like HPO, MONDO).
 
-3. **Edge Sample Table** (bottom): Displays actual example edges with their details including subject, predicate, object, KG source, and primary knowledge sources.
+3. <strong>Edge Sample Table</strong> (bottom): Displays actual example edges with their details including subject, predicate, object, KG source, and primary knowledge sources.
 
-**How Filtering Works:**
+<strong>How Filtering Works:</strong>
 
-- **Click a category** in the network diagram → Updates bar charts to show only sources for that category + displays sample edges for that category
-- **Click a bar segment** in the source charts → Updates the network diagram to show only categories with edges from that source + filters the edge table to matching edges
-- **Click multiple sources** → Combines filters (only edges matching ALL selected sources are shown)
-- **Active filters** are displayed in colored chips below the bar charts (purple=category, blue=KG source, green=primary source)
-- **Click "Clear all"** or click individual filter chips to remove filters and return to the full view
+- <strong>Click a category</strong> in the network diagram → Updates bar charts to show only sources for that category + displays sample edges for that category
+- <strong>Click a bar segment</strong> in the source charts → Updates the network diagram to show only categories with edges from that source + filters the edge table to matching edges
+- <strong>Click multiple sources</strong> → Combines filters (only edges matching ALL selected sources are shown)
+- <strong>Active filters</strong> are displayed in colored chips below the bar charts (purple=category, blue=KG source, green=primary source)
+- <strong>Click "Clear all"</strong> or click individual filter chips to remove filters and return to the full view
 
 All three components stay synchronized, ensuring you're always viewing consistent, filtered data across the visualization.
 
@@ -248,7 +248,7 @@ The comparison tables below show edge types that have been added, removed, or ch
 
 <Details title="Understanding This Table">
 <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
-These edge types are **completely new** in the current release - they did not exist in the benchmark release at all.
+These edge types are <strong>completely new</strong> in the current release - they did not exist in the benchmark release at all.
 Each row represents a unique combination of subject category, predicate, object category, and primary knowledge source that has been newly added to the knowledge graph.
 These are distinct from "significant changes" because there's no previous count to compare against - the entire edge type is brand new.
 </div>
@@ -276,7 +276,7 @@ These are distinct from "significant changes" because there's no previous count 
 
 <Details title="Understanding This Table">
 <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
-These edge types existed in the benchmark release but are **no longer present** in the current release.
+These edge types existed in the benchmark release but are <strong>no longer present</strong> in the current release.
 Each row represents a unique combination of subject category, predicate, object category, and primary knowledge source that has been removed.
 This could indicate data source changes, improved curation removing low-quality edges, or updates to ontology mappings.
 The edge count shown reflects how many edges of this type existed in the benchmark release before removal.
@@ -305,11 +305,11 @@ The edge count shown reflects how many edges of this type existed in the benchma
 
 <Details title="Understanding This Table">
 <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
-These edge types exist in **both** the benchmark and current releases, but their edge counts have changed by more than 10 edges.
+These edge types exist in <strong>both</strong> the benchmark and current releases, but their edge counts have changed by more than 10 edges.
 Each row represents the same edge type (same subject category, predicate, object category, and primary knowledge source) with a significant count difference.
 Large increases may indicate improved data coverage or new data sources, while decreases could reflect improved curation, deduplication, or source changes.
 The percentage change helps contextualize whether the absolute change represents a major shift in available knowledge.
-**Note:** Edge types that are completely new (added) or completely removed won't appear here - only edge types that existed in both releases.
+<strong>Note:</strong> Edge types that are completely new (added) or completely removed won't appear here - only edge types that existed in both releases.
 </div>
 </Details>
 
