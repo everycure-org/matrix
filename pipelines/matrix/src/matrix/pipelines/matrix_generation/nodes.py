@@ -244,7 +244,12 @@ def make_predictions_and_sort(
     )
 
     def model_predict(partition_df: pd.DataFrame) -> pd.DataFrame:
-        model_predictions = model.predict_proba(partition_df)
+        other_source_columns = [
+            col
+            for col in partition_df.columns
+            if col.startswith("source_") and col not in ["source_embedding", "target_embedding"]
+        ]
+        model_predictions = model.predict_proba(partition_df.drop(columns=other_source_columns))
 
         # Assign averaged predictions to columns
         partition_df[not_treat_score_col_name] = model_predictions[:, 0]
