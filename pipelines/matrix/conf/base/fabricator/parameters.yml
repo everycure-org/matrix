@@ -1320,7 +1320,6 @@ fabricator.primekg:
           num_rows: '@edges.num_rows'
     num_rows: 100
 
-
 fabricator.ec_medical_kg:
   nodes:
     num_rows: 30
@@ -2190,7 +2189,7 @@ fabricator.kgml_xdtd_ground_truth:
     columns:
       drug_id:
         type: copy_column
-        source_column: rtx_nodes.id
+        source_column: drug_nodes.translator_id
         sample:
           num_rows: "@positive_edges.num_rows"
           seed: 40399
@@ -2211,7 +2210,7 @@ fabricator.kgml_xdtd_ground_truth:
     columns:
       drug_id:
         type: copy_column
-        source_column: rtx_nodes.id
+        source_column: drug_nodes.translator_id
         sample:
           num_rows: "@positive_edges.num_rows"
           seed: 43399
@@ -2234,25 +2233,31 @@ fabricator.ec_ground_truth:
       columns:
         "final normalized drug id":
           type: copy_column
-          source_column: rtx_nodes.id
+          source_column: drug_nodes.translator_id
           sample:
             num_rows: "@positive_edges.num_rows"
             seed: 40399
         "final normalized drug label":
           type: copy_column
-          source_column: rtx_nodes.name
+          source_column: drug_nodes.name
+          sample:
+            num_rows: "@positive_edges.num_rows"
+            seed: 40399
+        "drug_ec_id":
+          type: copy_column
+          source_column: drug_nodes.id
           sample:
             num_rows: "@positive_edges.num_rows"
             seed: 40399
         "final normalized disease id":
           type: copy_column
-          source_column: rtx_nodes.id
+          source_column: disease_nodes.id
           sample:
             num_rows: "@positive_edges.num_rows"
             seed: 40389
         "final normalized disease label":
           type: copy_column
-          source_column: rtx_nodes.name
+          source_column: disease_nodes.name
           sample:
             num_rows: "@positive_edges.num_rows"
             seed: 40389
@@ -2277,36 +2282,36 @@ fabricator.ec_ground_truth:
           sample_values:
             - 1.0
             - Null
-        "drug_ec_id":
-          type: copy_column
-          source_column: drug_nodes.id
-          sample:
-            num_rows: "@positive_edges.num_rows"
-            seed: 55555
     negative_edges:
       num_rows: 50
       columns:
         "active ingredients":
           type: copy_column
-          source_column: rtx_nodes.name
+          source_column: drug_nodes.name
           sample:
             num_rows: "@negative_edges.num_rows"
-            seed: 40399
+            seed: 40279
         "final normalized disease id":
           type: copy_column
-          source_column: rtx_nodes.id
+          source_column: disease_nodes.translator_id
           sample:
             num_rows: "@negative_edges.num_rows"
-            seed: 40189
+            seed: 40279
+        "drug_ec_id":
+          type: copy_column
+          source_column: drug_nodes.id
+          sample:
+            num_rows: "@negative_edges.num_rows"
+            seed: 40279
         "final normalized disease label":
           type: copy_column
-          source_column: rtx_nodes.name
+          source_column: disease_nodes.name
           sample:
             num_rows: "@negative_edges.num_rows"
-            seed: 40189
+            seed: 40199
         "final normalized drug id":
           type: copy_column
-          source_column: rtx_nodes.id
+          source_column: disease_nodes.id
           sample:
             num_rows: "@negative_edges.num_rows"
             seed: 40199
@@ -2332,12 +2337,6 @@ fabricator.ec_ground_truth:
           sample_values:
             - True
             - False
-        "drug_ec_id":
-          type: copy_column
-          source_column: drug_nodes.id
-          sample:
-            num_rows: "@negative_edges.num_rows"
-            seed: 55555
 
 fabricator.drugbank_ground_truth:
     positive_edges:
@@ -2475,13 +2474,11 @@ fabricator.drugbank_ground_truth:
             num_rows: "@positive_edges.num_rows"
             seed: 55555
 
-
 fabricator.run_comparison:
   matrix_size: 150
   skew_good_model: 20
   skew_bad_model: 2
   test_set_proportion: 0.1
-
 
 fabricator.document_kg.infores_catalog:
   information_resources:
