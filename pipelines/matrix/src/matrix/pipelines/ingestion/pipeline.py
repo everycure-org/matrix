@@ -131,22 +131,30 @@ def create_pipeline(**kwargs) -> Pipeline:
                     )
                 )
         if source.get("validate", False):
-            robokop_config = ArgoResourceConfig(
-                memory_limit=128,
-                memory_request=64,
-            )
-            argo_config = robokop_config if "robokop" in source.get("name", "") else None
+            inputs = {
+                "nodes": f"ingestion.raw.{source['name']}.nodes@polars",
+                "edges": f"ingestion.raw.{source['name']}.edges@polars",
+            }
+            argo_config = None
+            if "robokop" in source.get("name", ""):
+                argo_config = ArgoResourceConfig(
+                    memory_limit=128,
+                    memory_request=64,
+                )
+                inputs = {
+                    "nodes": f"ingestion.int.preprocessing.{source['name']}.nodes@polars",
+                    "edges": f"ingestion.int.preprocessing.{source['name']}.edges@polars",
+                }
+
             nodes_lst.append(
                 ArgoNode(
                     func=validate,
-                    inputs={
-                        "nodes": f"ingestion.int.preprocessing.{source['name']}.nodes@polars",
-                        "edges": f"ingestion.int.preprocessing.{source['name']}.edges@polars",
-                    },
+                    inputs=inputs,
                     outputs=f"ingestion.int.{source['name']}.violations",
                     name=f"validate_{source['name']}",
                     tags=[f"{source['name']}"],
                     argo_config=argo_config,
                 )
             )
+
     return pipeline(nodes_lst)
