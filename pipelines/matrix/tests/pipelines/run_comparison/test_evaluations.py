@@ -121,13 +121,13 @@ def test_model_specific_abstract_class(constant_score_data):
     assert_frame_equal(
         single_fold_results,
         pl.DataFrame(
-            {
-                "x": [0, 1],
-                "y_model_1_mean": [3 / 4, 3 / 4],
-                "y_model_2_mean": [1 / 2, 1 / 2],
-                "y_model_1_std": [0, 0],
-                "y_model_2_std": [0, 0],
-            }
+            [
+                pl.Series("x", [0, 1], dtype=pl.Int64),
+                pl.Series("y_model_1_mean", [3 / 4, 3 / 4], dtype=pl.Float64),
+                pl.Series("y_model_2_mean", [1 / 2, 1 / 2], dtype=pl.Float64),
+                pl.Series("y_model_1_std", [0, 0], dtype=pl.Float64),
+                pl.Series("y_model_2_std", [0, 0], dtype=pl.Float64),
+            ]
         ),
         check_row_order=False,
         check_column_order=False,
