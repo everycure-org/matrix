@@ -246,6 +246,14 @@ The comparison tables below show edge types that have been added, removed, or ch
 
 ### Edge Types Added (Current vs Benchmark)
 
+<Details title="Understanding This Table">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+These edge types are **completely new** in the current release - they did not exist in the benchmark release at all.
+Each row represents a unique combination of subject category, predicate, object category, and primary knowledge source that has been newly added to the knowledge graph.
+These are distinct from "significant changes" because there's no previous count to compare against - the entire edge type is brand new.
+</div>
+</Details>
+
 {#if edges_added.length > 0}
 <DataTable
     data={edges_added}
@@ -256,6 +264,7 @@ The comparison tables below show edge types that have been added, removed, or ch
     <Column id="subject_category" title="Subject Category" />
     <Column id="predicate" title="Predicate" />
     <Column id="object_category" title="Object Category" />
+    <Column id="primary_knowledge_source" title="Primary Knowledge Source" />
 </DataTable>
 {:else}
 <div class="text-center text-lg text-gray-500 mt-4 mb-4">
@@ -264,6 +273,15 @@ The comparison tables below show edge types that have been added, removed, or ch
 {/if}
 
 ### Edge Types Removed (Current vs Benchmark)
+
+<Details title="Understanding This Table">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+These edge types existed in the benchmark release but are **no longer present** in the current release.
+Each row represents a unique combination of subject category, predicate, object category, and primary knowledge source that has been removed.
+This could indicate data source changes, improved curation removing low-quality edges, or updates to ontology mappings.
+The edge count shown reflects how many edges of this type existed in the benchmark release before removal.
+</div>
+</Details>
 
 {#if edges_removed.length > 0}
 <DataTable
@@ -275,6 +293,7 @@ The comparison tables below show edge types that have been added, removed, or ch
     <Column id="subject_category" title="Subject Category" />
     <Column id="predicate" title="Predicate" />
     <Column id="object_category" title="Object Category" />
+    <Column id="primary_knowledge_source" title="Primary Knowledge Source" />
 </DataTable>
 {:else}
 <div class="text-center text-lg text-gray-500 mt-4 mb-4">
@@ -283,6 +302,16 @@ The comparison tables below show edge types that have been added, removed, or ch
 {/if}
 
 ### Edge Types with Significant Changes
+
+<Details title="Understanding This Table">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+These edge types exist in **both** the benchmark and current releases, but their edge counts have changed by more than 10 edges.
+Each row represents the same edge type (same subject category, predicate, object category, and primary knowledge source) with a significant count difference.
+Large increases may indicate improved data coverage or new data sources, while decreases could reflect improved curation, deduplication, or source changes.
+The percentage change helps contextualize whether the absolute change represents a major shift in available knowledge.
+**Note:** Edge types that are completely new (added) or completely removed won't appear here - only edge types that existed in both releases.
+</div>
+</Details>
 
 {#if edges_changed.length > 0}
 <DataTable
@@ -297,6 +326,7 @@ The comparison tables below show edge types that have been added, removed, or ch
     <Column id="subject_category" title="Subject Category" />
     <Column id="predicate" title="Predicate" />
     <Column id="object_category" title="Object Category" />
+    <Column id="primary_knowledge_source" title="Primary Knowledge Source" />
 </DataTable>
 {:else}
 <div class="text-center text-lg text-gray-500 mt-4 mb-4">
