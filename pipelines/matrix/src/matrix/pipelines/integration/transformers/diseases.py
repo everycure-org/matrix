@@ -17,6 +17,7 @@ class DiseasesTransformer(Transformer):
         df = (
             nodes_df
             .withColumn("category", f.lit("biolink:Disease"))
+            .drop("synonyms") # Dropped because a) unused and b) causes issues later. Details in issue ECDATA-831
         )
         # fmt: on
         return {"nodes": df}
