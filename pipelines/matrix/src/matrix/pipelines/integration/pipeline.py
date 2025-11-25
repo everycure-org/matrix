@@ -229,7 +229,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     },
                     outputs="integration.prm.metric_abox_tbox",
                     name="metric_abox_tbox",
-                    tags=["metrics", "validation"],
+                    tags=["metrics", "ontological"],
                 ),
                 ArgoNode(
                     func=connectivity_metrics.compute_connected_components,
@@ -238,9 +238,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                         "edges": "integration.prm.unified_edges",
                         "algorithm": "params:integration.connectivity.algorithm",
                     },
-                    outputs="integration.prm.connected_components",
+                    outputs={
+                        "node_assignments": "integration.prm.connected_components_node_assignments",
+                        "component_stats": "integration.prm.connected_components_stats",
+                    },
                     name="compute_connected_components",
-                    tags=["connectivity", "metrics"],
+                    tags=["metrics", "connectivity"],
                     argo_config=ArgoResourceConfig(memory_request=96, memory_limit=96),
                 ),
                 node(
@@ -248,14 +251,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                     inputs={
                         "nodes": "integration.prm.unified_nodes",
                         "core_id_mapping": "integration.int.core_node_mapping",
-                        "connected_components": "integration.prm.connected_components",
+                        "connected_components": "integration.prm.connected_components_node_assignments",
                     },
                     outputs={
                         "summary_metrics": "integration.prm.metric_core_connectivity_summary",
                         "subgraph_details": "integration.prm.metric_core_connectivity_subgraph_details",
                     },
                     name="compute_core_connectivity_metrics",
-                    tags=["connectivity", "metrics", "core"],
+                    tags=["metrics", "connectivity"],
                 ),
             ]
         )

@@ -9,6 +9,7 @@ import gc
 import logging
 import time
 from collections import Counter
+from functools import reduce
 from typing import Dict
 
 import pyspark.sql as ps
@@ -42,27 +43,21 @@ def _simplify_graph_for_connectivity(edges: ps.DataFrame) -> ps.DataFrame:
             subject='A', object='B'
             subject='A', object='C'
     """
-    original_count = edges.count()
-    logger.info(f"Simplifying graph: {original_count:,} edges before deduplication")
+    logger.info(f"Simplifying graph: {edges.count():,} edges before deduplication")
 
     # Filter self-loops and keep only unique (subject, object) pairs
-    simplified = (
-        edges.select("subject", "object")
-        .filter(F.col("subject") != F.col("object"))  # Remove self-loops
-        .distinct()
-    )
+    simplified = edges.select("subject", "object").filter(F.col("subject") != F.col("object")).distinct()
 
-    simplified_count = simplified.count()
-    reduction_pct = 100 * (1 - simplified_count / original_count) if original_count > 0 else 0
+    reduction_pct = 100 * (1 - simplified.count() / edges.count()) if edges.count() > 0 else 0
 
     logger.info(
-        f"Graph simplified: {simplified_count:,} unique edges ({reduction_pct:.1f}% reduction from {original_count:,})"
+        f"Graph simplified: {simplified.count():,} unique edges ({reduction_pct:.1f}% reduction from {edges.count():,})"
     )
 
     return simplified
 
 
-def compute_connected_components_graphframes(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFrame:
+def compute_connected_components_graphframes(nodes: ps.DataFrame, edges: ps.DataFrame) -> Dict[str, ps.DataFrame]:
     """
     Compute connected components using GraphFrames (Spark-native).
 
@@ -74,56 +69,50 @@ def compute_connected_components_graphframes(nodes: ps.DataFrame, edges: ps.Data
         edges: DataFrame with 'subject' and 'object' columns (should be simplified)
 
     Returns:
-        DataFrame with component statistics:
-            - component_id: Unique identifier for each component
-            - component_size: Number of nodes in the component
-            - num_components: Total number of connected components
+        Dictionary with keys:
+        - "node_assignments": DataFrame with (id, component_id) - node-to-component mapping
+        - "component_stats": DataFrame with (component_id, component_size, num_components) - statistics
     """
     from graphframes import GraphFrame
 
     logger.info("Computing connected components using GraphFrames...")
 
-    # Prepare nodes for GraphFrame (needs 'id' column)
-    # Note: nodes are already deduplicated from union_and_deduplicate_nodes
     gf_nodes = nodes.select(F.col("id"))
 
     # Prepare edges for GraphFrame (needs 'src' and 'dst' columns)
     gf_edges = edges.select(F.col("subject").alias("src"), F.col("object").alias("dst"))
 
-    # Create GraphFrame
     graph = GraphFrame(gf_nodes, gf_edges)
 
-    # Set checkpoint directory (required for connected components)
     spark = nodes.sparkSession
     checkpoint_dir = "/data/checkpoints/graphframes"
     spark.sparkContext.setCheckpointDir(checkpoint_dir)
 
-    # Compute connected components
     components = graph.connectedComponents()
 
-    # Compute component sizes
+    node_assignments = components.select(F.col("id"), F.col("component").alias("component_id"))
+
+    num_components = components.select("component").distinct().count()
     component_stats = (
         components.groupBy("component")
         .agg(F.count("*").alias("component_size"))
         .withColumnRenamed("component", "component_id")
+        .withColumn("num_components", F.lit(num_components))
+        .orderBy(F.desc("component_size"))
     )
-
-    # Add total component count
-    num_components = component_stats.count()
-    component_stats = component_stats.withColumn("num_components", F.lit(num_components))
-
-    # Sort by component size descending
-    component_stats = component_stats.orderBy(F.desc("component_size"))
 
     logger.info(
         f"Found {num_components:,} connected components using GraphFrames. "
         f"Largest component has {component_stats.first()['component_size']:,} nodes."
     )
 
-    return component_stats
+    return {
+        "node_assignments": node_assignments,
+        "component_stats": component_stats,
+    }
 
 
-def compute_connected_components_grape(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFrame:
+def compute_connected_components_grape(nodes: ps.DataFrame, edges: ps.DataFrame) -> Dict[str, ps.DataFrame]:
     """
     Compute connected components using grape (Rust-based, ultra-fast).
 
@@ -135,60 +124,47 @@ def compute_connected_components_grape(nodes: ps.DataFrame, edges: ps.DataFrame)
         edges: DataFrame with 'subject' and 'object' columns (should be simplified)
 
     Returns:
-        DataFrame with component statistics:
-            - component_id: Unique identifier for each component
-            - component_size: Number of nodes in the component
-            - num_components: Total number of connected components
+        Dictionary with keys:
+        - "node_assignments": DataFrame with (id, component_id) - node-to-component mapping
+        - "component_stats": DataFrame with (component_id, component_size, num_components) - statistics
     """
     from ensmallen import GraphBuilder
 
     logger.info("Computing connected components using grape...")
 
-    # Build graph using GraphBuilder
+    # Collect to driver for in-memory processing (grape requires non-distributed data)
     builder = GraphBuilder()
     builder.set_directed(False)
     builder.set_name("Connectivity_Graph")
 
-    # Add all nodes
-    # Note: nodes are already deduplicated from union_and_deduplicate_nodes
-    logger.info("Collecting nodes for grape...")
     nodes_list = [row.id for row in nodes.select("id").collect()]
-    logger.info(f"Collected {len(nodes_list):,} nodes")
-
     for node_id in nodes_list:
         builder.add_node(name=node_id)
 
-    # Collect edges
-    logger.info("Collecting edges for grape GraphBuilder...")
     edges_list = edges.select("subject", "object").collect()
-    logger.info(f"Collected {len(edges_list):,} edges. Adding to graph...")
-
-    edge_count = 0
     for row in edges_list:
         builder.add_edge(src=row.subject, dst=row.object)
-        edge_count += 1
-        if edge_count % 10_000_000 == 0:
-            logger.info(f"Added {edge_count:,} edges...")
 
-    logger.info(f"Building grape graph with {len(nodes_list):,} nodes and {edge_count:,} edges...")
+    logger.info(f"Building grape graph with {len(nodes_list):,} nodes and {len(edges_list):,} edges...")
     graph = builder.build()
 
-    # Compute connected components using grape's API
     logger.info("Computing connected components with grape...")
-    # connected_components() returns: (component_per_node, num_components, min_size, max_size)
     component_per_node, num_components, min_size, max_size = graph.get_connected_components()
 
-    # Count component sizes
     component_sizes = Counter(component_per_node)
 
-    # Create Spark DataFrame with component statistics
-    # Convert numpy types to Python int for Spark compatibility
+    # Convert results back to Spark DataFrames for pipeline compatibility
     spark = nodes.sparkSession
+    node_assignment_data = [
+        {"id": node_id, "component_id": int(comp_id)} for node_id, comp_id in zip(nodes_list, component_per_node)
+    ]
+    node_assignments = spark.createDataFrame(node_assignment_data)
+
+    # Component statistics
     component_data = [
         {"component_id": int(comp_id), "component_size": int(size), "num_components": int(num_components)}
         for comp_id, size in component_sizes.items()
     ]
-
     component_stats = spark.createDataFrame(component_data).orderBy(F.desc("component_size"))
 
     logger.info(
@@ -196,10 +172,13 @@ def compute_connected_components_grape(nodes: ps.DataFrame, edges: ps.DataFrame)
         f"Largest component has {max(component_sizes.values()):,} nodes."
     )
 
-    return component_stats
+    return {
+        "node_assignments": node_assignments,
+        "component_stats": component_stats,
+    }
 
 
-def compute_connected_components_rustworkx(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFrame:
+def compute_connected_components_rustworkx(nodes: ps.DataFrame, edges: ps.DataFrame) -> Dict[str, ps.DataFrame]:
     """
     Compute connected components using rustworkx (Rust-based, high-performance).
 
@@ -211,53 +190,48 @@ def compute_connected_components_rustworkx(nodes: ps.DataFrame, edges: ps.DataFr
         edges: DataFrame with 'subject' and 'object' columns (should be simplified)
 
     Returns:
-        DataFrame with component statistics:
-            - component_id: Unique identifier for each component
-            - component_size: Number of nodes in the component
-            - num_components: Total number of connected components
+        Dictionary with keys:
+        - "node_assignments": DataFrame with (id, component_id) - node-to-component mapping
+        - "component_stats": DataFrame with (component_id, component_size, num_components) - statistics
     """
     import rustworkx as rx
 
     logger.info("Computing connected components using rustworkx...")
 
-    # --- Collect nodes ---
-    logger.info("Collecting nodes for rustworkx...")
-    nodes_list = [row.id for row in nodes.select("id").collect()]
-    logger.info(f"Collected {len(nodes_list):,} nodes")
-
-    # Create graph & add all nodes at once
+    # Collect to driver for in-memory processing (rustworkx requires non-distributed data)
     graph = rx.PyGraph()
+
+    nodes_list = [row.id for row in nodes.select("id").collect()]
     node_indices = graph.add_nodes_from(nodes_list)
 
-    # Build mapping id -> index
     id_to_index = {node_id: idx for node_id, idx in zip(nodes_list, node_indices)}
+    index_to_id = {idx: node_id for node_id, idx in id_to_index.items()}
 
-    # --- Collect edges ---
-    logger.info("Collecting edges for rustworkx...")
     edges_list = edges.select("subject", "object").collect()
-    num_edges = len(edges_list)
-    logger.info(f"Collected {num_edges:,} edges")
 
-    # Build edge list for add_edges_from
-    logger.info("Preparing edge list for bulk insertion...")
     edge_tuples = [
         (id_to_index[row.subject], id_to_index[row.object], None)
         for row in edges_list
         if row.subject in id_to_index and row.object in id_to_index
     ]
 
-    logger.info(f"Bulk inserting {len(edge_tuples):,} edges...")
     graph.add_edges_from(edge_tuples)
 
     logger.info(f"Built rustworkx graph with {graph.num_nodes():,} nodes and {graph.num_edges():,} edges")
 
-    # --- Connected components ---
     logger.info("Computing connected components with rustworkx...")
     components = rx.connected_components(graph)
     num_components = len(components)
 
-    # --- Output statistics ---
+    # Convert results back to Spark DataFrames for pipeline compatibility
     spark = nodes.sparkSession
+    node_assignment_data = [
+        {"id": index_to_id[node_idx], "component_id": component_id}
+        for component_id, node_indices_set in enumerate(components)
+        for node_idx in node_indices_set
+    ]
+    node_assignments = spark.createDataFrame(node_assignment_data)
+
     component_stats = spark.createDataFrame(
         [
             {"component_id": i, "component_size": len(c), "num_components": num_components}
@@ -265,17 +239,18 @@ def compute_connected_components_rustworkx(nodes: ps.DataFrame, edges: ps.DataFr
         ]
     ).orderBy(F.desc("component_size"))
 
-    largest_component_size = max((len(c) for c in components), default=0)
-
     logger.info(
         f"Found {num_components:,} connected components using rustworkx. "
-        f"Largest component has {largest_component_size:,} nodes."
+        f"Largest component has {component_stats.first()['component_size']:,} nodes."
     )
 
-    return component_stats
+    return {
+        "node_assignments": node_assignments,
+        "component_stats": component_stats,
+    }
 
 
-def compute_connected_components(nodes: ps.DataFrame, edges: ps.DataFrame, algorithm: str) -> ps.DataFrame:
+def compute_connected_components(nodes: ps.DataFrame, edges: ps.DataFrame, algorithm: str) -> Dict[str, ps.DataFrame]:
     """
     Compute connected components using specified algorithm or benchmark all.
 
@@ -291,7 +266,9 @@ def compute_connected_components(nodes: ps.DataFrame, edges: ps.DataFrame, algor
         algorithm: One of "graphframes", "grape", "rustworkx", or "benchmark"
 
     Returns:
-        DataFrame with component statistics (from selected algorithm or first in benchmark)
+        Dictionary with keys:
+        - "node_assignments": DataFrame with (id, component_id) - node-to-component mapping
+        - "component_stats": DataFrame with (component_id, component_size, num_components) - statistics
 
     Raises:
         ValueError: If algorithm is not one of the supported options
@@ -302,13 +279,11 @@ def compute_connected_components(nodes: ps.DataFrame, edges: ps.DataFrame, algor
 
     logger.info(f"Computing connected components with algorithm: {algorithm}")
 
-    # Simplify graph for connectivity analysis
     simplified_edges = _simplify_graph_for_connectivity(edges)
 
     if algorithm == "benchmark":
         return _run_benchmark(nodes, simplified_edges)
     else:
-        # Run single algorithm
         if algorithm == "graphframes":
             return compute_connected_components_graphframes(nodes, simplified_edges)
         elif algorithm == "grape":
@@ -317,7 +292,7 @@ def compute_connected_components(nodes: ps.DataFrame, edges: ps.DataFrame, algor
             return compute_connected_components_rustworkx(nodes, simplified_edges)
 
 
-def _run_benchmark(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFrame:
+def _run_benchmark(nodes: ps.DataFrame, edges: ps.DataFrame) -> Dict[str, ps.DataFrame]:
     """
     Run all three connected components algorithms and compare performance.
 
@@ -329,16 +304,12 @@ def _run_benchmark(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFrame:
         edges: DataFrame with 'subject' and 'object' columns (should be simplified)
 
     Returns:
-        DataFrame with component statistics from the first algorithm (graphframes)
+        Dictionary with node assignments and component statistics from graphframes algorithm
     """
-    logger.info("=" * 80)
-    logger.info("BENCHMARK MODE: Running all three connected components algorithms")
-    logger.info("=" * 80)
 
     benchmark_results = []
     algorithm_outputs = {}
 
-    # Run each algorithm and track performance
     algorithms = [
         ("graphframes", compute_connected_components_graphframes),
         ("grape", compute_connected_components_grape),
@@ -346,18 +317,15 @@ def _run_benchmark(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFrame:
     ]
 
     for algo_name, algo_func in algorithms:
-        logger.info(f"\n{'=' * 80}")
         logger.info(f"Running {algo_name.upper()}...")
-        logger.info(f"{'=' * 80}")
-
         start_time = time.time()
         results = algo_func(nodes, edges)
         end_time = time.time()
 
         execution_time = end_time - start_time
 
-        # Get metrics from results
-        first_row = results.first()
+        # Get stats from the component_stats DataFrame
+        first_row = results["component_stats"].first()
         num_components = first_row["num_components"]
         largest_component = first_row["component_size"]
 
@@ -371,63 +339,17 @@ def _run_benchmark(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFrame:
         )
 
         algorithm_outputs[algo_name] = results
-
         logger.info(f"{algo_name.upper()} completed in {execution_time:.2f} seconds")
-
-        # Force garbage collection between algorithms to free memory
-        logger.info("Running garbage collection to free memory...")
         gc.collect()
-        logger.info("Garbage collection complete")
 
-    # Verify all algorithms produced same results
-    logger.info(f"\n{'=' * 80}")
-    logger.info("VERIFICATION: Checking consistency across algorithms")
-    logger.info(f"{'=' * 80}")
-
-    ref_components = benchmark_results[0]["num_components"]
-    ref_largest = benchmark_results[0]["largest_component_size"]
-
-    all_match = True
-    for result in benchmark_results[1:]:
-        if result["num_components"] != ref_components or result["largest_component_size"] != ref_largest:
-            logger.warning(
-                f"MISMATCH: {result['algorithm']} produced different results! "
-                f"Components: {result['num_components']} vs {ref_components}, "
-                f"Largest: {result['largest_component_size']} vs {ref_largest}"
-            )
-            all_match = False
-
-    if all_match:
-        logger.info("✓ All algorithms produced identical results")
-        logger.info(f"  - Number of components: {ref_components:,}")
-        logger.info(f"  - Largest component size: {ref_largest:,}")
-    else:
-        logger.error("✗ Algorithms produced DIFFERENT results - investigation needed!")
-
-    # Create benchmark stats DataFrame
-    logger.info(f"\n{'=' * 80}")
-    logger.info("PERFORMANCE COMPARISON")
-    logger.info(f"{'=' * 80}")
-
-    spark = nodes.sparkSession
-    benchmark_df = spark.createDataFrame(benchmark_results).orderBy("execution_time_seconds")
-
-    # Log performance comparison
-    for row in benchmark_df.collect():
+    logger.info("Benchmark Results (sorted by execution time):")
+    for result in sorted(benchmark_results, key=lambda x: x["execution_time_seconds"]):
         logger.info(
-            f"{row['algorithm']:12s}: {row['execution_time_seconds']:8.2f}s "
-            f"| Components: {row['num_components']:,} "
-            f"| Largest: {row['largest_component_size']:,}"
+            f"{result['algorithm']:12s}: {result['execution_time_seconds']:8.2f}s "
+            f"| Components: {result['num_components']:,} "
+            f"| Largest: {result['largest_component_size']:,}"
         )
 
-    # Determine fastest algorithm
-    fastest = benchmark_df.first()
-    logger.info(f"\n Fastest algorithm: {fastest['algorithm']} ({fastest['execution_time_seconds']:.2f}s)")
-
-    logger.info(f"{'=' * 80}\n")
-
-    # Return results from first algorithm (all should produce identical results)
-    # Benchmark stats are logged above but not saved
     return algorithm_outputs["graphframes"]
 
 
@@ -472,17 +394,14 @@ def compute_core_connectivity_metrics(
     """
     logger.info("Computing EC Core Entities connectivity metrics...")
 
-    # Join nodes with component assignments
     nodes_with_components = nodes.join(connected_components.select("id", "component_id"), on="id", how="inner")
 
-    # Identify core entities by joining with core_id_mapping
     core_entities = nodes_with_components.join(
-        core_id_mapping.select("normalized_id"), nodes_with_components.id == core_id_mapping.normalized_id, how="inner"
-    ).select(nodes_with_components["*"])
+        core_id_mapping.select("normalized_id", "category"),
+        nodes_with_components.id == core_id_mapping.normalized_id,
+        how="inner",
+    ).select(nodes_with_components["*"], core_id_mapping["category"].alias("core_category"))
 
-    logger.info(f"Identified {core_entities.count():,} EC Core Entities in the graph")
-
-    # Calculate component sizes (all nodes, not just core)
     component_sizes = nodes_with_components.groupBy("component_id").agg(F.count("*").alias("component_size"))
 
     # Get LCC size
@@ -492,8 +411,8 @@ def compute_core_connectivity_metrics(
     # Calculate metrics for each category
     categories = [
         ("all_core", core_entities),
-        ("drugs", core_entities.filter(F.col("category") == "biolink:Drug")),
-        ("diseases", core_entities.filter(F.col("category") == "biolink:Disease")),
+        ("drugs", core_entities.filter(F.col("core_category") == "biolink:Drug")),
+        ("diseases", core_entities.filter(F.col("core_category") == "biolink:Disease")),
     ]
 
     summary_data = []
@@ -510,17 +429,13 @@ def compute_core_connectivity_metrics(
             logger.warning(f"  No entities found for {category_name}, skipping")
             continue
 
-        # Count core entities per component
+        # Count core entities per component and join with component sizes
         core_per_component = category_df.groupBy("component_id").agg(F.count("*").alias("core_entity_count"))
 
-        # Join with component sizes
-        component_stats = component_sizes.join(core_per_component, on="component_id", how="left").fillna(
-            0, subset=["core_entity_count"]
-        )
-
-        # Calculate additional metrics
         component_stats = (
-            component_stats.withColumn("core_entity_fraction", F.col("core_entity_count") / F.lit(n_ec))
+            component_sizes.join(core_per_component, on="component_id", how="left")
+            .fillna(0, subset=["core_entity_count"])
+            .withColumn("core_entity_fraction", F.col("core_entity_count") / F.lit(n_ec))
             .withColumn("size_relative_to_lcc", F.col("component_size") / F.lit(lcc_size))
             .withColumn("is_lcc", F.col("component_size") == F.lit(lcc_size))
         )
@@ -529,18 +444,16 @@ def compute_core_connectivity_metrics(
         lcc_stats = component_stats.filter(F.col("is_lcc")).select("core_entity_count").first()
         c_lcc = lcc_stats["core_entity_count"] if lcc_stats else 0
 
-        # Calculate LCC Fraction
         lcc_fraction = c_lcc / n_ec if n_ec > 0 else 0.0
 
-        # Calculate Weighted Connectivity Score
-        # Σ(C_i/N_EC × S_i/N_LCC)
-        weighted_score_df = component_stats.withColumn(
-            "weighted_contribution",
-            (F.col("core_entity_count") / F.lit(n_ec)) * (F.col("component_size") / F.lit(lcc_size)),
+        # Calculate Weighted Connectivity Score: Σ(C_i/N_EC × S_i/N_LCC)
+        weighted_score = (
+            component_stats.agg(
+                F.sum((F.col("core_entity_count") / F.lit(n_ec)) * (F.col("component_size") / F.lit(lcc_size)))
+            ).collect()[0][0]
+            or 0.0
         )
-        weighted_score = weighted_score_df.agg(F.sum("weighted_contribution")).collect()[0][0] or 0.0
 
-        # Count subgraphs
         num_subgraphs = component_stats.count()
 
         logger.info(f"  Number of subgraphs: {num_subgraphs:,}")
@@ -548,7 +461,6 @@ def compute_core_connectivity_metrics(
         logger.info(f"  LCC Fraction: {lcc_fraction:.4f}")
         logger.info(f"  Weighted Connectivity Score: {weighted_score:.4f}")
 
-        # Add to summary
         summary_data.append(
             {
                 "category": category_name,
@@ -574,21 +486,10 @@ def compute_core_connectivity_metrics(
 
         detail_data.append(category_details)
 
-    # Create summary DataFrame
-    spark = nodes.sparkSession
-    summary_metrics = spark.createDataFrame(summary_data)
+    summary_metrics = nodes.sparkSession.createDataFrame(summary_data)
+    subgraph_details = reduce(lambda df1, df2: df1.union(df2), detail_data)
 
-    # Union all detail DataFrames
-    subgraph_details = detail_data[0]
-    for df in detail_data[1:]:
-        subgraph_details = subgraph_details.union(df)
-
-    logger.info("\n" + "=" * 80)
     logger.info("EC Core Connectivity Metrics Summary:")
-    logger.info("=" * 80)
     summary_metrics.show(truncate=False)
 
-    return {
-        "summary_metrics": summary_metrics,
-        "subgraph_details": subgraph_details,
-    }
+    return {"summary_metrics": summary_metrics, "subgraph_details": subgraph_details}

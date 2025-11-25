@@ -111,9 +111,13 @@ integration.prm.metric_abox_tbox:
   filepath: ${globals:paths.integration}/prm/metric_abox_tbox
 
 # Connected Components
-integration.prm.connected_components:
+integration.prm.connected_components_node_assignments:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/connected_components
+  filepath: ${globals:paths.integration}/prm/connected_components_node_assignments
+
+integration.prm.connected_components_stats:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.integration}/prm/connected_components_stats
 
 # EC Core Connectivity Metrics
 integration.prm.metric_core_connectivity_summary:
