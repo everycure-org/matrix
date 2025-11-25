@@ -48,10 +48,10 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
             "num_shards": 3,
             "integration": [
                 {"name": "rtx_kg2", "integrate_in_kg": True, "is_private": False},
-                {"name": "spoke", "integrate_in_kg": False, "is_private": True},
-                {"name": "embiology", "integrate_in_kg": False, "is_private": True},
+                {"name": "spoke", "integrate_in_kg": True, "is_private": True},
+                {"name": "embiology", "integrate_in_kg": True, "is_private": True},
                 {"name": "robokop", "integrate_in_kg": True, "is_private": False},
-                {"name": "primekg", "integrate_in_kg": False, "is_private": False, "validate": True},
+                {"name": "primekg", "integrate_in_kg": True, "is_private": False, "validate": True},
                 {"name": "drug_list", "integrate_in_kg": False, "has_edges": False, "is_core": True},
                 {"name": "disease_list", "integrate_in_kg": False, "has_edges": False, "is_core": True},
                 {
@@ -63,13 +63,13 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 {
                     "name": "ec_ground_truth",
                     "has_nodes": False,
-                    "has_edges": False,
+                    "has_edges": True,
                     "integrate_in_kg": False,
                 },
                 {
                     "name": "drugbank_ground_truth",
                     "has_nodes": False,
-                    "has_edges": False,
+                    "has_edges": True,
                     "integrate_in_kg": False,
                     "is_private": True,
                 },
