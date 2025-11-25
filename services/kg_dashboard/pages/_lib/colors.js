@@ -11,6 +11,24 @@ export const sourceColorMap = {
   "drug_list": "#51AFA6",
 };
 
+// Color palette for different biolink categories
+export const CATEGORY_COLORS = {
+  'ChemicalEntity': '#51AFA6',      // teal - drugs/chemicals
+  'Gene': '#4C73F0',                // blue - genes
+  'Protein': '#604CEF',             // purple - proteins
+  'Disease': '#EF604C',             // red - diseases
+  'PhenotypicFeature': '#EF4C9E',   // pink - phenotypes
+  'AnatomicalEntity': '#7AB51D',    // lime green - anatomy
+  'BiologicalProcess': '#3AC7B6',   // cyan - processes
+  'MolecularActivity': '#D8AB47',   // gold - molecular activity
+  'GenomicEntity': '#6287D3',       // light blue - genomic
+  'OrganismTaxon': '#B912D1',       // magenta - organisms
+  'Procedure': '#C66D3C',           // burnt orange - procedures
+  'Activity': '#B8C91F',            // yellow-green - activities
+  'Population': '#C56492',          // mauve - populations
+  'Other': '#999999'                // gray - other
+};
+
 // Fallback color palette for unknown sources
 export const fallbackColors = [
   "#EF604C", // vibrant coral red
