@@ -1,10 +1,3 @@
-"""
-Connectivity metrics for knowledge graph analysis.
-
-This module contains functions for computing connected components and analyzing
-graph connectivity using various implementations (GraphFrames, grape, rustworkx).
-"""
-
 import gc
 import logging
 import time
