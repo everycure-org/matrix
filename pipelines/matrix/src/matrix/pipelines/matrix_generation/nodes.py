@@ -32,8 +32,9 @@ def enrich_embeddings(
         diseases: List of diseases
     """
     return (
-        drugs.withColumn("is_drug", F.lit(True))
-        .unionByName(diseases.withColumn("is_disease", F.lit(True)), allowMissingColumns=True)
+        drugs.select("id")
+        .withColumn("is_drug", F.lit(True))
+        .unionByName(diseases.select("id").withColumn("is_disease", F.lit(True)), allowMissingColumns=True)
         .join(nodes, on="id", how="inner")
         .select("is_drug", "is_disease", "id", "topological_embedding")
         .withColumn("is_drug", F.coalesce(F.col("is_drug"), F.lit(False)))
