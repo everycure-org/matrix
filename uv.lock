@@ -3006,7 +3006,7 @@ requires-dist = [
     { name = "openpyxl" },
     { name = "pandas", specifier = ">=2.1.1" },
     { name = "pandera", specifier = "==0.24.0" },
-    { name = "polars-lts-cpu", specifier = ">=1.30.0" },
+    { name = "polars-lts-cpu", specifier = "==1.30.0" },
     { name = "proto-plus", specifier = "==1.24.0.dev1" },
     { name = "pyarrow", specifier = ">=14.0.2" },
     { name = "pyspark", specifier = "==3.5.1" },
