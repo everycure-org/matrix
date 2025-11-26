@@ -1,7 +1,7 @@
 from kedro.pipeline import Pipeline, pipeline
 
 from matrix.kedro4argo_node import ArgoNode
-from matrix.pipelines.data_release.nodes import release_edges, release_nodes
+from matrix.pipelines.data_release.nodes import unified_edges_to_kgx, unified_nodes_to_kgx
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -9,16 +9,16 @@ def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             ArgoNode(
-                func=release_edges,
+                func=unified_edges_to_kgx,
                 inputs=["integration.prm.unified_edges"],
-                outputs=["data_release.prm.kgx_edges", "data_release.hf.kgx_edges"],
+                outputs="data_release.prm.kgx_edges",
                 name="write_edges_to_kgx",
                 tags=["kgx"],
             ),
             ArgoNode(
-                func=release_nodes,
+                func=unified_nodes_to_kgx,
                 inputs=["integration.prm.unified_nodes"],
-                outputs=["data_release.prm.kgx_nodes", "data_release.hf.kgx_nodes"],
+                outputs="data_release.prm.kgx_nodes",
                 name="write_nodes_to_kgx",
                 tags=["kgx"],
             ),
