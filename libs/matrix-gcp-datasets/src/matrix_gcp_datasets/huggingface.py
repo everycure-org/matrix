@@ -22,13 +22,11 @@ class HFIterableDatasetConfig(BaseModel):
     dataframe_type: Literal["spark", "polars", "pandas"] = Field(default="spark")
     data_dir: Optional[str] = None
     
-    # "create_pr": True, is needed because I cant get the fine grained tokens (which are much safer) to push the files directly
 
     def build_push_kwargs(self, token: str) -> dict[str, Any]:
         kwargs: dict[str, Any] = {
             "repo_id": self.repo_id,
             "token": token,
-            "create_pr": True,
             "split": self.split,
         }
         if self.config_name:
