@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Optional, Union
+from typing import Optional
 
 import pandas as pd
 import pyspark.sql as ps
@@ -7,14 +7,13 @@ import pyspark.sql.functions as F
 import pyspark.sql.types as T
 from matplotlib.figure import Figure
 from matrix.datasets.graph import KnowledgeGraph
-from matrix.inject import _extract_elements_in_list, inject_object
 from matrix.pipelines.matrix_generation.reporting_plots import ReportingPlotGenerator
 from matrix.pipelines.matrix_generation.reporting_tables import ReportingTableGenerator
 from matrix.pipelines.modelling.model import ModelWrapper
-from matrix.pipelines.modelling.nodes import apply_transformers
-from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
+from matrix.pipelines.modelling.preprocessing_model import ModelWithTransformers
+from matrix_inject.inject import inject_object
+from matrix_pandera.validator import Column, DataFrameSchema, check_output
 from pyspark.sql.types import DoubleType, StructField, StructType
-from sklearn.impute._base import _BaseImputer
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -145,22 +144,28 @@ def generate_pairs(
         Pairs dataframe containing all combinations of drugs and diseases that do not lie in the training set.
     """
     # Collect list of drugs and diseases
-    drugs_lst = drugs["id"].tolist()
     diseases_lst = diseases["id"].tolist()
+    # This try/except is to make modelling_run pipeline compatible with old drug list (pre-migration)
+    try:
+        drugs_df = drugs[["id", "ec_id"]]
+        column_remapping = {"ec_id": "ec_drug_id", "id": "source"}
+    except KeyError:
+        logger.warning("ec_id column not found in drugs dataframe; using id column instead")
+        column_remapping = {"id": "source"}
+        drugs_df = drugs[["id"]]
 
     # Remove duplicates
-    drugs_lst = list(set(drugs_lst))
+    drugs_df = drugs_df.drop_duplicates()
     diseases_lst = list(set(diseases_lst))
-
     # Remove drugs and diseases without embeddings
     nodes_with_embeddings = set(graph._nodes["id"])
-    drugs_lst = [drug for drug in drugs_lst if drug in nodes_with_embeddings]
+    drugs_df = drugs_df[drugs_df["id"].isin(nodes_with_embeddings)]
     diseases_lst = [disease for disease in diseases_lst if disease in nodes_with_embeddings]
 
     # Generate all combinations
     matrix_slices = []
     for disease in tqdm(diseases_lst):
-        matrix_slice = pd.DataFrame({"source": drugs_lst, "target": disease})
+        matrix_slice = pd.DataFrame(drugs_df.rename(column_remapping, axis=1).assign(target=disease))
         matrix_slices.append(matrix_slice)
 
     # Concatenate all slices at once
@@ -194,31 +199,25 @@ def generate_pairs(
 def make_predictions_and_sort(
     node_embeddings: ps.DataFrame,
     pairs: ps.DataFrame,
-    transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
-    model: ModelWrapper,
-    features: List[str],
     treat_score_col_name: str,
     not_treat_score_col_name: str,
     unknown_score_col_name: str,
+    model: ModelWrapper,
 ) -> ps.DataFrame:
     """Generate and sort probability scores for a drug-disease dataset.
 
     Args:
         node_embeddings: Dataframe with node embeddings.
-        pairs: drug disease pairs to predict scores for.
-        transformers: Dictionary of trained transformers.
-        model: Model making the predictions.
-        features: List of features, may be regex specified.
-        treat_score_col_name: Probability score column name.
-        not_treat_score_col_name: Probability score column name for not treat.
-        unknown_score_col_name: Probability score column name for unknown.
+        pairs: Drug-disease pairs to predict scores for.
+        treat_score_col_name: Name of the column for treatment scores.
+        not_treat_score_col_name: Name of the column for non-treatment scores.
+        unknown_score_col_name: Name of the column for unknown scores.
+        model: Ensemble model capable of producing probability scores.
 
     Returns:
-        Pairs dataset sorted by score with their rank and quantile rank
+        Pairs dataset sorted by score with their rank and quantile rank.
     """
-
     embeddings = node_embeddings.select("id", "topological_embedding")
-
     pairs_with_embeddings = (
         # TODO: remnant from pyarrow/pandas conversion, find in which node it is created
         pairs.drop("__index_level_0__")
@@ -236,13 +235,9 @@ def make_predictions_and_sort(
     )
 
     def model_predict(partition_df: pd.DataFrame) -> pd.DataFrame:
-        transformed = apply_transformers(partition_df, transformers)
+        model_predictions = model.predict_proba(partition_df)
 
-        # TODO: can we get columns from transformers directly?
-        model_features = _extract_elements_in_list(transformed.columns, features, True)
-
-        model_predictions = model.predict_proba(transformed[model_features].values)
-        # TODO: assign scores in one pass?
+        # Assign averaged predictions to columns
         partition_df[not_treat_score_col_name] = model_predictions[:, 0]
         partition_df[treat_score_col_name] = model_predictions[:, 1]
         partition_df[unknown_score_col_name] = model_predictions[:, 2]
@@ -260,9 +255,7 @@ def make_predictions_and_sort(
             StructField(unknown_score_col_name, DoubleType(), True),
         ]
     )
-
     pairs_with_scores = pairs_with_embeddings.groupBy("target").applyInPandas(model_predict, model_predict_schema)
-
     pairs_sorted = pairs_with_scores.orderBy(treat_score_col_name, ascending=False)
 
     # We are using the RDD.zipWithIndex function here. Getting it through the DataFrame API would involve a Window function without partition, effectively pulling all data into one single partition.
@@ -271,7 +264,6 @@ def make_predictions_and_sort(
     # 2. When moving from RDD to DataFrame, the column names are named after the Scala tuple fields: _1 for the row and _2 for the index
     # 3. We're adding 1 to the rank so that it is not zero indexed
     pairs_ranked = pairs_sorted.rdd.zipWithIndex().toDF().select(F.col("_1.*"), (F.col("_2") + 1).alias("rank"))
-
     pairs_ranked_count = pairs_ranked.count()
     return pairs_ranked.withColumn("quantile_rank", F.col("rank") / pairs_ranked_count)
 
@@ -303,3 +295,12 @@ def generate_reports(
         reports_dict[strategy.name] = strategy.generate(sorted_matrix_df, **kwargs)
 
     return reports_dict
+
+
+def package_model_with_transformers(
+    transformers: dict,
+    model: ModelWrapper,
+    features: list[str],
+) -> ModelWrapper:
+    """Bundle transformers, features, and model into a single callable object."""
+    return ModelWithTransformers(model, transformers, features)

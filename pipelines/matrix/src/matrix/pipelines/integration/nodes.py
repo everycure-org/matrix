@@ -4,17 +4,20 @@ from functools import partial, reduce
 import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
+from bmt import toolkit
 from joblib import Memory
-from matrix_schema.datamodel.pandera import get_matrix_edge_schema, get_matrix_node_schema
-from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
+from matrix_inject.inject import inject_object
+from matrix_pandera.validator import Column, DataFrameSchema, check_output
+from matrix_schema.datamodel.pandera import get_matrix_node_schema, get_unioned_edge_schema
 from pyspark.sql.window import Window
 
-from matrix.inject import inject_object
 from matrix.pipelines.integration.filters import determine_most_specific_category
 
 # TODO move these into config
 memory = Memory(location=".cache/nodenorm", verbose=0)
 logger = logging.getLogger(__name__)
+
+tk = toolkit.Toolkit()
 
 
 @inject_object()
@@ -43,7 +46,7 @@ def transform(transformer, **kwargs) -> dict[str, ps.DataFrame]:
 
 
 @check_output(
-    schema=get_matrix_edge_schema(validate_enumeration_values=False),
+    schema=get_unioned_edge_schema(validate_enumeration_values=False),
     pass_columns=True,
 )
 def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.DataFrame:
@@ -78,6 +81,7 @@ def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.Da
             F.first("object_aspect_qualifier", ignorenulls=True).alias("object_aspect_qualifier"),
             F.first("primary_knowledge_source", ignorenulls=True).alias("primary_knowledge_source"),
             F.flatten(F.collect_set("aggregator_knowledge_source")).alias("aggregator_knowledge_source"),
+            F.collect_set(F.col("primary_knowledge_source")).alias("primary_knowledge_sources"),
             F.flatten(F.collect_set("publications")).alias("publications"),
             F.max("num_references").cast(T.IntegerType()).alias("num_references"),
             F.max("num_sentences").cast(T.IntegerType()).alias("num_sentences"),
@@ -210,7 +214,11 @@ def normalize_edges(
     edges = edges.withColumnsRenamed({"subject": "original_subject", "object": "original_object"})
     edges = edges.withColumnsRenamed({"subject_normalized": "subject", "object_normalized": "object"})
 
-    edges = edges.dropDuplicates(subset=["subject", "predicate", "object"])
+    dedup_cols = ["subject", "predicate", "object"]
+    if "primary_knowledge_source" in edges.columns:
+        dedup_cols.append("primary_knowledge_source")
+
+    edges = edges.dropDuplicates(subset=dedup_cols)
 
     return edges
 
@@ -550,4 +558,25 @@ def normalization_summary_nodes_only(
             "source_role",
             "upstream_data_source",
         )
+    )
+
+
+def compute_abox_tbox_metric(edges: ps.DataFrame) -> ps.DataFrame:
+    """
+    Count ABox (instance-level) and TBox (concept-level) edges by primary_knowledge_source.
+    Args:
+        edges: DataFrame with edge data including predicate and primary_knowledge_source columns
+    Returns:
+        DataFrame with counts by primary_knowledge_source
+    """
+
+    concept_predicate = "related_to_at_concept_level"
+    instance_predicate = "related_to_at_instance_level"
+
+    concept_desc = tk.get_descendants(concept_predicate, mixin=True, formatted=True, reflexive=True)
+    instance_desc = tk.get_descendants(instance_predicate, mixin=True, formatted=True, reflexive=True)
+
+    return edges.groupBy("primary_knowledge_source").agg(
+        F.sum(F.when(F.col("predicate").isin(instance_desc), 1).otherwise(0)).alias("abox"),
+        F.sum(F.when(F.col("predicate").isin(concept_desc), 1).otherwise(0)).alias("tbox"),
     )

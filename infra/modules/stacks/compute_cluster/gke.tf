@@ -2,7 +2,9 @@ data "google_client_config" "default" {
 }
 
 locals {
-  default_node_locations = "us-central1-c" # Single location for simplicity, can be expanded to multiple zones if needed
+  default_node_locations = "us-central1-c"                             # Single location for simplicity, can be expanded to multiple zones if needed
+  gpu_node_locations     = "us-central1-a,us-central1-b,us-central1-c" # GPU nodes in multiple zones for availability
+  h3_node_locations      = "us-central1-a"                             # H3 nodes is only in the a zone
 
   # NOTE: Debugging node group scaling can be done using the GCP cluster logs, we create
   # node groups in 2 node locations, hence why the total amount of node groups.
@@ -12,12 +14,13 @@ locals {
     machine_type       = "n2d-highmem-${size}"
     node_locations     = local.default_node_locations
     min_count          = 0
-    max_count          = 10
+    max_count          = 30
     disk_type          = "pd-ssd"
     disk_size_gb       = 200
     enable_gcfs        = true
     enable_gvnic       = true
     initial_node_count = 0
+    location_policy    = "ANY"
     }
   ]
 
@@ -25,9 +28,9 @@ locals {
     {
       name               = "g2-standard-16-l4-nodes" # 1 GPU, 16vCPUs, 64GB RAM
       machine_type       = "g2-standard-16"
-      node_locations     = local.default_node_locations
+      node_locations     = local.gpu_node_locations
       min_count          = 0
-      max_count          = 20
+      max_count          = 16
       local_ssd_count    = 0
       disk_size_gb       = 200
       disk_type          = "pd-ssd"
@@ -37,6 +40,7 @@ locals {
       accelerator_count  = 1
       accelerator_type   = "nvidia-l4"
       gpu_driver_version = "LATEST"
+      location_policy    = "ANY"
     }
   ]
 
@@ -44,16 +48,17 @@ locals {
   management_node_pools = [
     {
       name               = "management-nodes"
-      machine_type       = "n2-standard-8" # 8 vCPUs, 32GB RAM
-      node_locations     = local.default_node_locations
-      min_count          = 1 # Single instance, no HA
-      max_count          = 1 # Single instance, no HA
+      machine_type       = "n2-standard-16" # 8 vCPUs, 32GB RAM
+      node_locations     = "us-central1-c"  # Single location.
+      min_count          = 1                # Single instance, no HA
+      max_count          = 1                # Single instance, no HA
       local_ssd_count    = 0
       disk_type          = "pd-standard" # Cost-effective for management workloads
       disk_size_gb       = 200
       enable_gcfs        = true
       enable_gvnic       = true
       initial_node_count = 1
+      location_policy    = "ANY"
     }
   ]
 
@@ -70,6 +75,7 @@ locals {
     enable_gvnic       = true
     initial_node_count = 0
     spot               = true
+    location_policy    = "ANY"
     }
   ]
 
@@ -78,9 +84,9 @@ locals {
     {
       name               = "g2-standard-16-l4-spot-nodes" # 1 GPU, 16vCPUs, 64GB RAM
       machine_type       = "g2-standard-16"
-      node_locations     = local.default_node_locations
+      node_locations     = local.gpu_node_locations
       min_count          = 0
-      max_count          = 30 # Higher max count for spot instances
+      max_count          = 16 # Higher max count for spot instances
       local_ssd_count    = 0
       disk_size_gb       = 200
       disk_type          = "pd-ssd"
@@ -91,16 +97,67 @@ locals {
       accelerator_type   = "nvidia-l4"
       gpu_driver_version = "LATEST"
       spot               = true
+      location_policy    = "ANY"
+    }
+  ]
+
+  # GitHub Actions runner node pools for CI/CD workloads
+  github_runner_node_pools = [
+    {
+      name               = "github-runner-standard-nodes"
+      machine_type       = "e2-standard-8" # 8 vCPUs, 32GB RAM - good for CI/CD and Docker in Docker (dind)
+      node_locations     = local.default_node_locations
+      min_count          = 0
+      max_count          = 50
+      local_ssd_count    = 0
+      disk_size_gb       = 100 # Smaller disk for CI runners
+      disk_type          = "pd-ssd"
+      enable_gcfs        = true
+      enable_gvnic       = true
+      initial_node_count = 0
+      spot               = false
+      location_policy    = "ANY"
+    }
+  ]
+
+  h3_node_pools = [
+    {
+      name               = "h3-standard-88-nodes" # 88 CPUs, 512GB RAM - for largest ML workloads
+      machine_type       = "h3-standard-88"
+      node_locations     = local.h3_node_locations
+      min_count          = 0
+      max_count          = 50
+      local_ssd_count    = 0
+      disk_size_gb       = 200
+      disk_type          = "pd-balanced"
+      initial_node_count = 0
+      location_policy    = "ANY"
+    }
+  ]
+
+  h3_spot_node_pools = [
+    {
+      name               = "h3-standard-88-nodes-spot" # 88 CPUs, 512GB RAM - for largest ML workloads
+      machine_type       = "h3-standard-88"
+      node_locations     = local.h3_node_locations
+      min_count          = 0
+      max_count          = 50
+      local_ssd_count    = 0
+      disk_size_gb       = 200
+      disk_type          = "pd-balanced"
+      initial_node_count = 0
+      location_policy    = "ANY"
+      spot               = true
     }
   ]
 
   # Combine all node pools
   node_pools_combined = concat(
     local.n2d_node_pools,
-    local.gpu_node_pools,
     local.management_node_pools,
-    local.n2d_spot_node_pools,
-    local.gpu_spot_node_pools
+    local.github_runner_node_pools,
+    local.h3_node_pools,
+    local.h3_spot_node_pools
   )
 
   # Define node pools that should have the large memory taint
@@ -109,7 +166,9 @@ locals {
     [for size in [8, 16, 32, 48, 64] : "n2d-highmem-${size}-spot-nodes"],
     [for size in [16, 32, 48, 64] : "n2-standard-${size}-nodes"],
     ["g2-standard-16-l4-nodes"],
-    ["g2-standard-16-l4-spot-nodes"]
+    ["g2-standard-16-l4-spot-nodes"],
+    ["h3-standard-88-nodes"],
+    ["h3-standard-88-nodes-spot"]
   )
 
   # Create a map of node pool taints
@@ -168,6 +227,44 @@ locals {
     ]
 
     "n2d-highmem-8-nodes" = [
+      {
+        key    = "workload"
+        value  = "true"
+        effect = "NO_SCHEDULE"
+      }
+    ]
+
+    # GitHub Actions runner node pools
+    "github-runner-standard-nodes" = [
+      {
+        key    = "github-runner"
+        value  = "true"
+        effect = "NO_SCHEDULE"
+      }
+    ],
+    "h3-standard-88-nodes" = [
+      {
+        key    = "node-memory-size"
+        value  = "large"
+        effect = "NO_SCHEDULE"
+      },
+      {
+        key    = "workload"
+        value  = "true"
+        effect = "NO_SCHEDULE"
+      }
+    ],
+    "h3-standard-88-nodes-spot" = [
+      {
+        key    = "node-memory-size"
+        value  = "large"
+        effect = "NO_SCHEDULE"
+      },
+      {
+        key    = "spot"
+        value  = "true"
+        effect = "NO_SCHEDULE"
+      },
       {
         key    = "workload"
         value  = "true"
@@ -267,14 +364,18 @@ module "gke" {
         gpu_node  = can(pool.accelerator_count) ? "true" : "false"
         spot_node = lookup(pool, "spot", false) ? "true" : "false"
         # Billing labels for cost tracking
-        cost-center       = pool.name == "management-nodes" ? "infrastructure-management" : "compute-workloads"
-        workload-category = pool.name == "management-nodes" ? "platform-services" : "data-science"
+        cost-center       = pool.name == "management-nodes" ? "infrastructure-management" : contains(["github-runner-standard-nodes", "github-runner-spot-nodes"], pool.name) ? "ci-cd-infrastructure" : "compute-workloads"
+        workload-category = pool.name == "management-nodes" ? "platform-services" : contains(["github-runner-standard-nodes", "github-runner-spot-nodes"], pool.name) ? "ci-cd" : "data-science"
         environment       = var.environment
       },
       pool.name == "management-nodes" ? {
         workload-type    = "management"
         billing-category = "infrastructure"
         service-tier     = "management"
+        } : contains(["github-runner-standard-nodes", "github-runner-spot-nodes"], pool.name) ? {
+        workload-type    = "ci-cd"
+        billing-category = lookup(pool, "spot", false) ? "github-runner-spot" : "github-runner-standard"
+        service-tier     = "ci-cd"
         } : can(pool.accelerator_count) ? {
         workload-type    = "compute"
         billing-category = lookup(pool, "spot", false) ? "gpu-compute-spot" : "gpu-compute"

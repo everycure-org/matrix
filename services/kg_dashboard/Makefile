@@ -7,10 +7,15 @@ EC_DATA_DOMAIN ?= data.dev.everycure.org
 EVIDENCE_BASE_PATH = gs://$(EC_DATA_DOMAIN)/versions
 
 # Change release version of the KG used in the dashboard
-RELEASE_VERSION ?= v0.9.9
+RELEASE_VERSION ?= v0.11.3
+BENCHMARK_VERSION ?= v0.11.3
+
+
 export EVIDENCE_VAR__release_version := $(RELEASE_VERSION)
 export EVIDENCE_VAR__bq_release_version := $(subst .,_,$(RELEASE_VERSION))
 export VITE_release_version := $(RELEASE_VERSION)
+
+# Previous release comparison is now handled via release_trends.sql
 
 # Build time to show when dashboard was last updated
 export VITE_build_time := $(shell date -u '+%B %d, %Y at %H:%M:%S UTC')
@@ -20,10 +25,13 @@ export VITE_build_time := $(shell date -u '+%B %d, %Y at %H:%M:%S UTC')
 KEDRO_BASE_GLOBALS_PATH = "../../pipelines/matrix/conf/base/globals.yml"
 ROBOKOP_VERSION = $(shell grep -A1 "robokop:" $(KEDRO_BASE_GLOBALS_PATH) | grep "version:" | sed 's/.*version: //')
 RTX_KG2_VERSION = $(shell grep -A1 "rtx_kg2:" $(KEDRO_BASE_GLOBALS_PATH) | grep "version:" | sed 's/.*version: //' | sed 's/^&_rtx_kg_version //' | sed -E 's/\./_/g')
+
 export EVIDENCE_VAR__robokop_version := $(ROBOKOP_VERSION)
 export EVIDENCE_VAR__rtx_kg2_version := $(RTX_KG2_VERSION)
+export EVIDENCE_VAR__benchmark_version := $(BENCHMARK_VERSION)
 export VITE_robokop_version := $(ROBOKOP_VERSION)
 export VITE_rtx_kg2_version := $(RTX_KG2_VERSION)
+export VITE_benchmark_version := $(BENCHMARK_VERSION)
 
 MAX_CORE_ENTITIES_NORMALIZATION_ERRORS = 1000
 export EVIDENCE_VAR__max_core_entities_normalization_errors := $(MAX_CORE_ENTITIES_NORMALIZATION_ERRORS)
@@ -32,6 +40,12 @@ export VITE_max_core_entities_normalization_errors := $(MAX_CORE_ENTITIES_NORMAL
 MAX_EDGE_FAILED_NORMALIZATION_BY_NORMALIZATION_SET_PREFIX = 100
 export EVIDENCE_VAR__max_edge_failed_normalization_by_normalization_set_prefix := $(MAX_EDGE_FAILED_NORMALIZATION_BY_NORMALIZATION_SET_PREFIX)
 
+# Key nodes to track (diseases and drugs)
+KEY_DISEASE_IDS ?= MONDO:0015564,MONDO:0005301,MONDO:0004975
+KEY_DRUG_IDS ?= CHEBI:15365,CHEBI:7773
+export EVIDENCE_VAR__key_disease_ids := $(KEY_DISEASE_IDS)
+export EVIDENCE_VAR__key_drug_ids := $(KEY_DRUG_IDS)
+
 .ONESHELL:
 
 .PHONY: clean install bump_basepath run-dev
@@ -39,7 +53,7 @@ export EVIDENCE_VAR__max_edge_failed_normalization_by_normalization_set_prefix :
 bump_basepath:
 	node ./scripts/update-basepath.cjs $(RELEASE_VERSION)
 
-build: bump_basepath 
+build: bump_basepath sources/bq/release_trends.sql sources/bq/key_nodes_release_trends.sql sources/bq/key_nodes_release_aggregate.sql
 	@echo "Building with EVIDENCE_VAR__release_version=$(EVIDENCE_VAR__release_version)"
 	npm run build:strict
 
@@ -61,8 +75,12 @@ populate-valid-edge-types-source:
 	node ./scripts/load-valid-edge-types.cjs
 	rm -f scripts/temp_valid_edge_types.tsv
 
-run-sources: populate-infores-source populate-valid-edge-types-source
-	npm run sources
+# Generate release SQL files dynamically based on available BigQuery datasets
+sources/bq/release_trends.sql sources/bq/key_nodes_release_trends.sql sources/bq/key_nodes_release_aggregate.sql:
+	node ./scripts/generate-release-sql.cjs
+
+run-sources: populate-infores-source populate-valid-edge-types-source sources/bq/release_trends.sql sources/bq/key_nodes_release_trends.sql sources/bq/key_nodes_release_aggregate.sql
+	npm run sources 
 
 run-dev:
 	npm run dev
@@ -71,3 +89,6 @@ clean:
 	rm -rf build
 	rm -rf node_modules
 	rm -rf .evidence
+	rm -f sources/bq/release_trends.sql
+	rm -f sources/bq/key_nodes_release_trends.sql
+	rm -f sources/bq/key_nodes_release_aggregate.sql

@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.types as T
-from matrix_schema.utils.pandera_utils import Column, DataFrameSchema, check_output
+from matrix_inject.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
+from matrix_pandera.validator import Column, DataFrameSchema, check_output
 from pyspark.errors import AnalysisException
 from pyspark.sql import functions as f
 from sklearn.base import BaseEstimator
@@ -16,7 +17,6 @@ from sklearn.model_selection import BaseCrossValidator
 
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
-from matrix.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
 
 from .model import ModelWrapper
 from .model_selection import DiseaseAreaSplit
@@ -436,23 +436,38 @@ def tune_parameters(
         Refit compatible dictionary of best parameters.
     """
     mask = data["split"].eq("TRAIN")
+    X_train = data.loc[mask, features].values
+    Y_train = data.loc[mask, target_col_name].values
 
-    X_train = data.loc[mask, features]
-    y_train = data.loc[mask, target_col_name]
-
-    # Fit tuner
-    tuner.fit(X_train.values, y_train.values)
-
+    # Get base estimator parameters BEFORE tuning to preserve config like device, tree_method
     estimator = getattr(tuner, "estimator", None)
     if estimator is None:
         raise ValueError("Tuner must have 'estimator' attribute")
+    base_params = estimator.get_params(deep=False)
+    logger.info(f"Starting hyperparameter tuning with tuner: {tuner}...")
+    logger.info(f"Base estimator parameters: {base_params}")
+
+    # Fit tuner
+    tuner.fit(X_train, Y_train)
+
+    # Merge base parameters with tuned parameters (tuned params override base)
+    # This preserves important parameters like device, tree_method, n_jobs, random_state
+    # Filter out None values from base_params to avoid overwriting tuned params with None
+    filtered_base_params = {k: v for k, v in base_params.items() if v is not None}
+
+    merged_params = {
+        OBJECT_KW: f"{type(estimator).__module__}.{type(estimator).__name__}",
+        **filtered_base_params,
+        **tuner.best_params_,
+    }
+
+    logger.info(f"Filtered base parameters: {filtered_base_params}")
+    logger.info(f"Tuned parameters: {tuner.best_params_}")
+    logger.info(f"Merged parameters after tuning: {merged_params}")
 
     return json.loads(
         json.dumps(
-            {
-                OBJECT_KW: f"{type(estimator).__module__}.{type(estimator).__name__}",
-                **tuner.best_params_,
-            },
+            merged_params,
             default=int,
         )
     ), tuner.convergence_plot if hasattr(tuner, "convergence_plot") else plt.figure()
@@ -480,11 +495,11 @@ def train_model(
     """
     mask = data["split"].eq("TRAIN")
 
-    X_train = data.loc[mask, features]
-    y_train = data.loc[mask, target_col_name]
+    X_train = data.loc[mask, features].values
+    y_train = data.loc[mask, target_col_name].values
 
     logger.info(f"Starting model: {estimator} training...")
-    estimator_fit = estimator.fit(X_train.values, y_train.values)
+    estimator_fit = estimator.fit(X_train, y_train)
     logger.info("Model training completed...")
     return estimator_fit
 

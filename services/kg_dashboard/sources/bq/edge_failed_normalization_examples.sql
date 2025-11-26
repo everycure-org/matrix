@@ -1,128 +1,47 @@
-WITH ranked_data AS (
-    SELECT 
+WITH failed_normalizations AS (
+    SELECT DISTINCT
+        u.id,
+        u.original_id,
+        SPLIT(u.id, ':')[OFFSET(0)] AS prefix,
+        u.all_categories.list[SAFE_OFFSET(0)].element AS category,
+        u.upstream_data_source AS normalization_set
+    FROM
+        `${project_id}.release_${bq_release_version}.unified_normalization_summary` u
+    WHERE
+        u.normalization_success = false
+        AND u.id != "['Error']"
+),
+with_names AS (
+    SELECT
+        f.id,
+        COALESCE(n.name, f.id) AS name,
+        f.prefix,
+        f.category,
+        f.normalization_set
+    FROM
+        failed_normalizations f
+    LEFT JOIN
+        `${project_id}.release_${bq_release_version}.nodes_unified` n
+        ON f.id = n.id
+),
+ranked_data AS (
+    SELECT
         id,
         name,
         prefix,
         category,
         normalization_set,
         ROW_NUMBER() OVER (PARTITION BY normalization_set, prefix ORDER BY id) AS row_num
-    FROM (
-        SELECT 
-            subject AS id,
-            name,
-            SPLIT(subject, ':')[OFFSET(0)] AS prefix,
-            category,
-            'rtx_kg2' AS normalization_set,
-        FROM 
-            `${project_id}.release_${bq_release_version}.rtx_kg2_edges_normalized`
-            JOIN `${project_id}.release_${bq_release_version}.rtx_kg2_nodes_normalized` ON subject = id
-        WHERE subject_normalization_success = false
-        UNION DISTINCT
-        SELECT 
-            object AS id,
-            name,
-            SPLIT(object, ':')[OFFSET(0)] AS prefix, 
-            category,
-            'rtx_kg2' AS normalization_set,
-        FROM 
-            `${project_id}.release_${bq_release_version}.rtx_kg2_edges_normalized`
-            JOIN `${project_id}.release_${bq_release_version}.rtx_kg2_nodes_normalized` ON object = id
-        WHERE object_normalization_success = false        
-        UNION DISTINCT
-        SELECT 
-            subject AS id,
-            name,
-            SPLIT(subject, ':')[OFFSET(0)] AS prefix,
-            category,
-            'robokop' AS normalization_set,
-        FROM 
-            `${project_id}.release_${bq_release_version}.robokop_edges_normalized`
-            JOIN `${project_id}.release_${bq_release_version}.robokop_nodes_normalized` ON subject = id
-        WHERE subject_normalization_success = false
-        UNION DISTINCT
-        SELECT 
-            object AS id,
-            name,
-            SPLIT(object, ':')[OFFSET(0)] AS prefix, 
-            category,
-            'robokop' AS normalization_set,
-        FROM 
-            `${project_id}.release_${bq_release_version}.robokop_edges_normalized`
-            JOIN `${project_id}.release_${bq_release_version}.robokop_nodes_normalized` ON object = id
-        WHERE object_normalization_success = false
-        UNION DISTINCT
-        SELECT 
-            subject AS id,
-            name,
-            SPLIT(subject, ':')[OFFSET(0)] AS prefix,
-            category,
-            'kgml_xdtd_ground_truth' AS normalization_set,
-        FROM 
-            `${project_id}.release_${bq_release_version}.kgml_xdtd_ground_truth_edges_normalized`        
-            JOIN `${project_id}.release_${bq_release_version}.rtx_kg2_nodes_normalized` ON subject = id
-        WHERE subject_normalization_success = false
-        UNION DISTINCT
-        SELECT 
-            object AS id,
-            name,
-            SPLIT(object, ':')[OFFSET(0)] AS prefix, 
-            category,
-            'kgml_xdtd_ground_truth' AS normalization_set,
-        FROM 
-            `${project_id}.release_${bq_release_version}.kgml_xdtd_ground_truth_edges_normalized`        
-            JOIN `${project_id}.release_${bq_release_version}.rtx_kg2_nodes_normalized` ON object = id
-        WHERE object_normalization_success = false
-        UNION DISTINCT
-        SELECT 
-            subject AS id,
-            name,
-            SPLIT(subject, ':')[OFFSET(0)] AS prefix,
-            category,
-            'ec_ground_truth' AS normalization_set,
-        FROM 
-            `${project_id}.release_${bq_release_version}.ec_ground_truth_edges_normalized`        
-            JOIN `${project_id}.release_${bq_release_version}.rtx_kg2_nodes_normalized` ON subject = id
-        WHERE subject_normalization_success = false
-        UNION DISTINCT
-        SELECT 
-            object AS id,
-            name,
-            SPLIT(object, ':')[OFFSET(0)] AS prefix, 
-            category,
-            'ec_ground_truth' AS normalization_set,
-        FROM 
-            `${project_id}.release_${bq_release_version}.ec_ground_truth_edges_normalized`        
-            JOIN `${project_id}.release_${bq_release_version}.rtx_kg2_nodes_normalized` ON object = id
-        WHERE object_normalization_success = false
-        UNION DISTINCT
-        SELECT 
-            id,
-            name,
-            SPLIT(id, ':')[OFFSET(0)] AS prefix,
-            '' AS category,
-            'drug_list' AS normalization_set,
-        FROM
-            `${project_id}.release_${bq_release_version}.drug_list_nodes_normalized`
-        WHERE normalization_success = false
-        UNION DISTINCT
-        SELECT 
-            id,
-            name,
-            SPLIT(id, ':')[OFFSET(0)] AS prefix,
-            '' AS category,
-            'disease_list' AS normalization_set,
-        FROM
-            `${project_id}.release_${bq_release_version}.disease_list_nodes_normalized`
-        WHERE normalization_success = false
-    )    
+    FROM
+        with_names
 )
-SELECT 
+SELECT
     id,
     name,
     prefix,
     category,
     normalization_set
-FROM 
+FROM
     ranked_data
-WHERE 
+WHERE
     row_num <= ${max_edge_failed_normalization_by_normalization_set_prefix}

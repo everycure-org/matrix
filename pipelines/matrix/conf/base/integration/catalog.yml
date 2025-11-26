@@ -91,3 +91,17 @@ integration.prm.original.unified_nodes:
 integration.prm.original.unified_edges:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.integration}/prm/unified/edges
+
+# Normalization summary tables
+integration.int.{source}.normalization_summary:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.integration}/int/{source}/normalization_summary
+
+integration.prm.unified_normalization_summary:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.integration}/prm/unified_normalization_summary
+
+# Metrics
+integration.prm.metric_abox_tbox:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.integration}/prm/metric_abox_tbox

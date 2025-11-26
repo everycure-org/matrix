@@ -4,25 +4,18 @@ import os
 import re
 from copy import deepcopy
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import fsspec
 import google.api_core.exceptions as exceptions
-import numpy as np
+import gspread
 import pandas as pd
-import pygsheets
 import pyspark.sql as ps
 from google.cloud import bigquery, storage
-from kedro.io.core import (
-    AbstractDataset,
-    AbstractVersionedDataset,
-    DatasetError,
-    Version,
-)
-from kedro_datasets.pandas import GBQTableDataset
+from kedro.io.core import AbstractDataset, DatasetError, Version
+from kedro_datasets.pandas import CSVDataset, GBQTableDataset
 from kedro_datasets.partitions import PartitionedDataset
 from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
-from pygsheets import Spreadsheet, Worksheet
 from tqdm import tqdm
 
 # TODO: This will need to be injected or made optional when extracting to library
@@ -84,7 +77,8 @@ class LazySparkDataset(SparkDataset):
                     """{"warning": "Dataset not found at '%s'.",  "Resolution": "providing empty dataset with unrelated schema."}""",
                     self._filepath,
                 )
-                return ps.SparkSession.getActiveSession().createDataFrame(
+                # Using SparkManager to get session instead of getActiveSession() for thread safety
+                return SparkManager.get_or_create_session().createDataFrame(
                     [], schema=ps.types.StructType().add("foo", ps.types.BooleanType())
                 )
             else:
@@ -115,7 +109,7 @@ class PandasBigQueryDataset(GBQTableDataset):
     """
 
     def __init__(  # noqa: PLR0913
-        self, *, dataset: str, table: str, project: str, shard: str, credentials: dict[str, Any] | None = None
+        self, *, dataset: str, table: str, project: str, credentials: dict[str, Any] | None = None
     ) -> None:
         """Creates a new instance of PandasBigQueryDataset.
 
@@ -123,10 +117,9 @@ class PandasBigQueryDataset(GBQTableDataset):
             dataset: BigQuery dataset name.
             table: BigQuery table name.
             project: BigQuery project ID.
-            shard: Optional table shard identifier.
             credentials: Optional credentials for BigQuery client.
         """
-        super().__init__(dataset=dataset, table_name=f"{table}_{shard}", project=project, credentials=credentials)
+        super().__init__(dataset=dataset, table_name=f"{table}", project=project, credentials=credentials)
 
     def save(self, data: Any) -> None:
         """Save operation is not supported for this dataset."""
@@ -148,6 +141,7 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         dataset: str,
         table: str,
         file_format: str,
+        location: Optional[str] = None,
         identifier: str | None = None,
         load_args: dict[str, Any] | None = None,
         save_args: dict[str, Any] | None = None,
@@ -176,7 +170,7 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         self._path = filepath
         self._format = file_format
         self._labels = save_args.pop("labels", {}) if save_args else {}
-
+        self._location = location
         self._table = self._sanitize_name("_".join(el for el in [table, identifier] if el is not None))
         self._dataset_id = f"{self._project_id}.{self._sanitize_name(dataset)}"
 
@@ -223,6 +217,9 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
             # Dataset doesn't exist, so let's create it
             dataset = bigquery.Dataset(self._dataset_id)
 
+            if self._location:
+                dataset.location = self._location
+
             dataset = self._client.create_dataset(dataset, timeout=30)
             logger.info(f"Created dataset {self._project_id}.{dataset.dataset_id}")
 
@@ -238,124 +235,39 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         return re.sub(r"[^a-zA-Z0-9_]", "_", str(name))
 
 
-class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
-    """Dataset to load data from Google sheets."""
+class GoogleSheetsDataset(CSVDataset):
+    """Dataset to load and save data from Google sheets."""
 
-    DEFAULT_LOAD_ARGS: dict[str, Any] = {}
-    DEFAULT_SAVE_ARGS: dict[str, Any] = {}
-
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
-        *,
-        key: str,
-        service_file: str,
-        load_args: dict[str, Any] | None = None,
-        save_args: dict[str, Any] | None = None,
-        version: Version | None = None,
-        credentials: dict[str, Any] | None = None,
-        metadata: dict[str, Any] | None = None,
+        spreadsheet_url: str,
+        worksheet_gid: str,
+        service_account_file_path: str,
     ) -> None:
-        """Creates a new instance of ``GoogleSheetsDataset``.
-
+        """
         Args:
-            key: Google sheets key
-            service_file: path to service accunt file.
-            load_args: Arguments to pass to the load method.
-            save_args: Arguments to pass to the save
-            version: Version of the dataset.
-            credentials: Credentials to connect to the Neo4J instance.
-            metadata: Metadata to pass to neo4j connector.
-            kwargs: Keyword Args passed to parent.
+            spreadsheet_url: URL of a spreadsheet as it appears in a browser.
+            worksheet_gid: The id of a worksheet. it can be seen in the url as the value of the parameter ‘gid’
+            service_account_file_path: Path to the service account file. The Google Sheet must be shared with this service account's email.
         """
-        self._key = key
-        self._service_file = service_file
-        self._sheet: Spreadsheet | None = None
+        self._gc = gspread.service_account(filename=service_account_file_path)
+        spreadsheet = self._gc.open_by_url(spreadsheet_url)
 
-        super().__init__(
-            filepath=None,
-            version=version,
-            exists_function=self._exists,
-            glob_function=None,
-        )
+        try:
+            self._worksheet = self._gc.open_by_url(spreadsheet_url).get_worksheet_by_id(worksheet_gid)
+        except gspread.WorksheetNotFound as e:
+            raise gspread.WorksheetNotFound(
+                f"Could not find worksheet with gid {worksheet_gid} in spreadsheet {spreadsheet_url}.\nAvailable worksheets: {spreadsheet.worksheets()}"
+            )
 
-        # Handle default load and save arguments
-        self._load_args = deepcopy(self.DEFAULT_LOAD_ARGS)
-        if load_args is not None:
-            self._load_args.update(load_args)
-        self._save_args = deepcopy(self.DEFAULT_SAVE_ARGS)
-        if save_args is not None:
-            self._save_args.update(save_args)
-
-    def _init_sheet(self):
-        """Function to initialize the spreadsheet.
-
-        This is executed lazily to avoid loading credentials on python runtime launch which creates issues
-        in unit tests.
-        """
-        if self._sheet is None:
-            gc = pygsheets.authorize(service_file=self._service_file)
-            self._sheet = gc.open_by_key(self._key)
+        super().__init__(filepath=None)
 
     def load(self) -> pd.DataFrame:
-        self._init_sheet()
+        df = pd.DataFrame(self._worksheet.get_all_records())
+        return df
 
-        sheet_name = self._load_args["sheet_name"]
-        wks = self._get_wks_by_name(self._sheet, sheet_name)
-        if wks is None:
-            raise DatasetError(f"Sheet with name {sheet_name} not found!")
-
-        df = wks.get_as_df()
-        if (cols := self._load_args.get("columns", None)) is not None:
-            df = df[cols]
-
-        # NOTE: Upon loading, replace empty strings with NaN
-        return df.replace(r"^\s*$|^N/A$", np.nan, regex=True)
-
-    def save(self, data: pd.DataFrame) -> None:
-        self._init_sheet()
-
-        sheet_name = self._save_args["sheet_name"]
-        wks = self._get_wks_by_name(self._sheet, sheet_name)
-
-        # Create the worksheet if not exists
-        if wks is None and self._sheet:  # type: ignore
-            wks = self._sheet.add_worksheet(sheet_name)
-
-        # NOTE: Upon writing, replace empty strings with "" to avoid NaNs in Excel
-        data = data.fillna("")
-
-        # Write columns
-        for column in self._save_args["write_columns"]:
-            col_idx = self._get_col_index(wks, column)
-
-            if col_idx is None:
-                raise DatasetError(f"Sheet with {sheet_name} does not contain column {column}!")
-
-            wks.set_dataframe(data[[column]], (1, col_idx + 1)) if wks else None
-
-    @staticmethod
-    def _get_wks_by_name(spreadsheet: Spreadsheet, sheet_name: str) -> Worksheet | None:
-        for wks in spreadsheet.worksheets():
-            if wks.title == sheet_name:
-                return wks
-
-        return None
-
-    @staticmethod
-    def _get_col_index(sheet: Worksheet, col_name: str) -> int | None:
-        for idx, col in enumerate(sheet.get_row(1)):
-            if col == col_name:
-                return idx
-
-        return None
-
-    def _describe(self) -> dict[str, Any]:
-        return {
-            "key": self._key,
-        }
-
-    def _exists(self) -> bool:
-        return False
+    def save(self, df: pd.DataFrame) -> None:
+        self._worksheet.update([df.columns.values.tolist()] + df.values.tolist())
 
 
 class RemoteSparkJDBCDataset(SparkJDBCDataset):

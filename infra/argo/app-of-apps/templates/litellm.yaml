@@ -1,0 +1,104 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: litellm
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+spec:
+  project: default
+  destination:
+    server: {{ .Values.spec.destination.server }}
+    namespace: litellm
+  source:
+    repoURL: https://github.com/BerriAI/litellm.git
+    targetRevision: v1.79.1-stable
+    path: deploy/charts/litellm-helm
+    helm:
+      values: |
+        db:
+          useExisting: true
+          deployStandalone: false
+          url: postgresql://litellm:$(DATABASE_PASSWORD)@postgresql-cloudnative-pg-cluster-pooler-rw.postgresql.svc.cluster.local:5432/app?schema=litellm
+
+        image:
+          repository: ghcr.io/berriai/litellm
+          tag: main-stable
+          pullPolicy: IfNotPresent
+
+        replicaCount: 3
+
+        service:
+          type: ClusterIP
+          port: 4000
+
+        resources:
+          requests: { cpu: "250m", memory: "512Mi" }
+          limits:   { cpu: "1",    memory: "2Gi" }
+
+        environmentSecrets:
+          - litellm-provider-keys
+          - postgres
+
+        proxy_config:
+          general_settings:
+            telemetry: false
+          model_list:
+            # OpenAI Models
+            - model_name: openai/*
+              litellm_params:
+                model: openai/*
+                api_key: os.environ/OPENAI_API_KEY
+                timeout: 300
+                cache_control_injection_points:
+                  - location: message
+                    role: user
+            # Anthropic Models
+            - model_name: anthropic/*
+              litellm_params:
+                model: anthropic/*
+                api_key: os.environ/ANTHROPIC_API_KEY
+                timeout: 300
+                cache_control_injection_points:
+                  - location: message
+                    role: user
+            # Gemini Models via Vertex AI (supports experimental models like gemini-3-pro-preview)
+            # Note: Experimental models are in 'global' location, not regional
+            - model_name: vertex_ai/*
+              litellm_params:
+                model: vertex_ai/*
+                vertex_project: {{ .Values.spec.source.project_id }}
+                vertex_location: global
+                timeout: 300 # 5 minutes
+                cache_control_injection_points:
+                  - location: message
+                    role: user
+          router_settings:
+            timeout: 300 # 5 minutes
+            # Redis for cross-pod RPM/TPM + routing state
+            redis_host: redis.redis.svc.cluster.local
+            redis_port: 6379
+            # redis_password: os.environ/REDIS_PASSWORD
+            num_retries: 2
+          litellm_settings:
+            enable_prompt_caching: true
+            set_verbose: true
+            cache: true
+            cache_params:
+              type: redis
+              host: redis.redis.svc.cluster.local
+              port: 6379
+              # password: os.environ/REDIS_PASSWORD
+              ttl: 2592000  # Cache for 30 days
+              supported_call_types: ['completion', 'acompletion', 'embedding', 'aembedding', 'atranscription', 'transcription', 'atext_completion', 'text_completion', 'arerank', 'rerank', 'responses', 'aresponses']
+          ui:
+            enabled: true
+        masterkeySecretName: litellm-master-key
+        masterkeySecretKey: LITELLM_MASTER_KEY
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true

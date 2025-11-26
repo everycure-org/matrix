@@ -10,7 +10,9 @@ from matrix.pipelines.matrix_generation.nodes import (
     generate_pairs,
     generate_reports,
     make_predictions_and_sort,
+    package_model_with_transformers,
 )
+from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.transformers import FlatArrayTransformer
 
 
@@ -19,6 +21,7 @@ def sample_drugs():
     """Fixture that provides sample drugs data for testing."""
     return pd.DataFrame(
         {
+            "ec_id": ["ec_drug_1", "ec_drug_2"],
             "id": ["drug_1", "drug_2"],
             "name": ["Drug 1", "Drug 2"],
             "description": ["Description 1", "Description 2"],
@@ -117,10 +120,10 @@ def sample_graph(sample_node_embeddings):
 def sample_matrix_data():
     return pd.DataFrame(
         [
-            {"source": "drug_1", "target": "disease_1"},
-            {"source": "drug_2", "target": "disease_1"},
-            {"source": "drug_1", "target": "disease_2"},
-            {"source": "drug_2", "target": "disease_2"},
+            {"ec_drug_id": "ec_drug_1", "source": "drug_1", "target": "disease_1"},
+            {"ec_drug_id": "ec_drug_2", "source": "drug_2", "target": "disease_1"},
+            {"ec_drug_id": "ec_drug_1", "source": "drug_1", "target": "disease_2"},
+            {"ec_drug_id": "ec_drug_2", "source": "drug_2", "target": "disease_2"},
         ]
     )
 
@@ -291,16 +294,32 @@ def test_make_predictions_and_sort(
     sample_matrix_data,
     transformers,
     mock_model,
+    mock_model_2,
 ):
+    # Test uses 2 models to match the settings (xg_ensemble, xg_synth)
+    base_wrapper_1 = ModelWrapper([mock_model], np.mean)
+    base_wrapper_2 = ModelWrapper([mock_model_2], np.mean)
+
+    model_wrapper_1 = package_model_with_transformers(
+        transformers,
+        base_wrapper_1,
+        ["source_+", "target_+"],
+    )
+    model_wrapper_2 = package_model_with_transformers(
+        transformers,
+        base_wrapper_2,
+        ["source_+", "target_+"],
+    )
+
+    ensemble_model = ModelWrapper([model_wrapper_1, model_wrapper_2], np.mean)
+
     result = make_predictions_and_sort(
-        node_embeddings=spark.createDataFrame(sample_node_embeddings),
-        pairs=spark.createDataFrame(sample_matrix_data),
-        transformers=transformers,
-        model=mock_model,
-        features=["source_+", "target_+"],
-        treat_score_col_name="treat score",
-        not_treat_score_col_name="not treat score",
-        unknown_score_col_name="unknown score",
+        spark.createDataFrame(sample_node_embeddings),  # node_embeddings
+        spark.createDataFrame(sample_matrix_data),  # pairs
+        "treat score",
+        "not treat score",
+        "unknown score",
+        ensemble_model,
     )
 
     assert isinstance(result, ps.DataFrame)

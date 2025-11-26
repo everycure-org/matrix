@@ -1,6 +1,7 @@
 deployment:
   # The version below should be automatically updated by "update-basepath.cjs" script, that is triggered in the Makefile
-  basePath: /versions/v0.7.0/evidence
+  basePath: /versions/v0.11.3/evidence
+
 
 plugins: 
   

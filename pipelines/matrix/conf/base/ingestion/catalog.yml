@@ -1,8 +1,31 @@
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
-_polars_csv: &_polars_csv
-  type:  polars.CSVDataset
+_polars_csv_ds: &_polars_csv
+  type: polars.CSVDataset
+  save_args:
+    separator: "\t"
+    include_header: true
+  load_args:
+    infer_schema: 0
+    low_memory: true
+    rechunk: false
+    has_header: true
+    ignore_errors: true
+    truncate_ragged_lines: true
+
+_polars_lazy_ds: &_polars_lazy_csv
+  type: matrix.datasets.polars.CSVLazyDataset
+  save_args:
+    separator: "\t"
+    include_header: true
+  load_args:
+    separator: "\t"
+    infer_schema_length: 0
+    low_memory: true
+    has_header: true
+    ignore_errors: true
+    truncate_ragged_lines: true
 
 _pandas_parquet_ds: &_pandas_parquet
   type: matrix.datasets.graph.PandasParquetDataset
@@ -38,8 +61,7 @@ _layer_int: &_layer_int
 _orchard_bq: &_orchard_bq
   project: ec-orchard-prod
   dataset: orchard_us
-  table: latest_status
-  shard: ${globals:data_sources.orchard.version}
+  table: latest_status_${globals:data_sources.orchard.version}
 
 # -------------------------------------------------------------------------
 # RTX-KG2
@@ -130,6 +152,10 @@ ingestion.int.rtx_kg2.edges:
 ingestion.int.rtx_kg2.curie_to_pmids:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx_kg2.version}/curie_to_pmids
+
+ingestion.int.rtx_kg2.violations:
+  type: text.TextDataset
+  filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx_kg2.version}/violations.jsonl
 
 # -------------------------------------------------------------------------
 # EveryCure Medical
@@ -250,71 +276,31 @@ ingestion.raw.drugmech.edges@pandas:
 
 ingestion.raw.disease_list:
   <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_public}/disease_list/${globals:data_sources.disease_list.version}/ec-disease-list.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
+  type: pandas.ParquetDataset
+  filepath: ${globals:paths.raw_public}/disease_list/${globals:data_sources.disease_list.version}/ec-disease-list.parquet
 
 ingestion.raw.disease_list.nodes@pandas:
   <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.ingestion}/disease_list/translator/${globals:data_sources.disease_list.version}/raw_disease_list_conflated.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
+  type: pandas.ParquetDataset
+  filepath: ${globals:paths.ingestion}/disease_list/translator/${globals:data_sources.disease_list.version}/raw_disease_list_conflated.parquet
 
 ingestion.raw.disease_list.nodes@spark:
-  <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.ingestion}/disease_list/translator/${globals:data_sources.disease_list.version}/raw_disease_list_conflated.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
-  save_args:
-     sep: "\t"
-     header: true
-     index: false
+  <<: [*_layer_raw, *_spark_parquet]
+  filepath: ${globals:paths.ingestion}/disease_list/translator/${globals:data_sources.disease_list.version}/raw_disease_list_conflated.parquet
 
 ingestion.raw.drug_list:
   <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_public}/drug_list/${globals:data_sources.drug_list.version}/ec-drug-list.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
+  type: pandas.ParquetDataset
+  filepath: ${globals:paths.raw_public}/drug_list/${globals:data_sources.drug_list.version}/ec-drug-list.parquet
 
 ingestion.raw.drug_list.nodes@pandas:
   <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.ingestion}/drug_list/translator/${globals:data_sources.drug_list.version}/raw_drug_list_conflated.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
+  type: pandas.ParquetDataset
+  filepath: ${globals:paths.ingestion}/drug_list/translator/${globals:data_sources.drug_list.version}/raw_drug_list_conflated.parquet
 
 ingestion.raw.drug_list.nodes@spark:
-  <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.ingestion}/drug_list/translator/${globals:data_sources.drug_list.version}/raw_drug_list_conflated.tsv
-  load_args:
-    sep: "\t"
-    header: true
-    index: false
-  save_args:
-     sep: "\t"
-     header: true
-     index: false
+  <<: [*_layer_raw, *_spark_parquet]
+  filepath: ${globals:paths.ingestion}/drug_list/translator/${globals:data_sources.drug_list.version}/raw_drug_list_conflated.parquet
 
 ingestion.int.drug_list.nodes:
   <<: [*_spark_parquet, *_layer_int]
@@ -516,6 +502,42 @@ ingestion.raw.robokop.edges@polars:
   load_args:
     separator: "\t"
 
+ingestion.raw.robokop.nodes@lazypolars:
+  <<: [*_polars_lazy_csv]
+  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
+
+ingestion.raw.robokop.edges@lazypolars:
+  <<: [*_polars_lazy_csv]
+  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+
+ingestion.int.preprocessing.robokop.nodes@polars:
+  <<: [*_polars_csv, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/preprocessing/robokop/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
+
+ingestion.int.preprocessing.robokop.nodes@spark:
+  <<: *_layer_raw
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.ingestion}/int/preprocessing/robokop/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+
+ingestion.int.preprocessing.robokop.edges@polars:
+  <<: [*_polars_csv, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/preprocessing/robokop/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+
+ingestion.int.preprocessing.robokop.edges@spark:
+  <<: *_layer_raw
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.ingestion}/int/preprocessing/robokop/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+
 ingestion.int.robokop.nodes:
    <<: [*_spark_parquet, *_layer_int]
    filepath: ${globals:paths.ingestion}/int/robokop/${globals:data_sources.robokop.version}/nodes
@@ -523,6 +545,83 @@ ingestion.int.robokop.nodes:
 ingestion.int.robokop.edges:
    <<: [*_spark_parquet, *_layer_int]
    filepath: ${globals:paths.ingestion}/int/robokop/${globals:data_sources.robokop.version}/edges
+
+ingestion.int.robokop.violations:
+  type: text.TextDataset
+  filepath: ${globals:paths.ingestion}/int/robokop/${globals:data_sources.robokop.version}/violations.jsonl
+
+# -------------------------------------------------------------------------
+# Prime KG
+# -------------------------------------------------------------------------
+ingestion.raw.primekg.nodes@spark:
+  <<: *_layer_raw
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_nodes.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+
+ingestion.raw.primekg.nodes@pandas:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_nodes.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
+
+ingestion.raw.primekg.nodes@polars:
+  <<: [*_polars_csv, *_layer_raw]
+  filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_nodes.tsv
+  save_args:
+    separator: "\t"
+    has_header: true
+  load_args:
+    separator: "\t"
+
+ingestion.raw.primekg.edges@spark:
+  <<: *_layer_raw
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_edges.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+
+ingestion.raw.primekg.edges@pandas:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_edges.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
+
+ingestion.raw.primekg.edges@polars:
+  <<: [*_polars_csv, *_layer_raw]
+  filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_edges.tsv
+  save_args:
+    separator: "\t"
+    has_header: true
+  load_args:
+    separator: "\t"
+
+ingestion.int.primekg.nodes:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/prime-kg/${globals:data_sources.primekg.version}/nodes
+
+ingestion.int.primekg.edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/prime-kg/${globals:data_sources.primekg.version}/edges
+
+ingestion.int.primekg.violations:
+  type: text.TextDataset
+  filepath: ${globals:paths.ingestion}/int/prime-kg/${globals:data_sources.primekg.version}/violations.jsonl
 
 # -------------------------------------------------------------------------
 # SPOKE
@@ -592,6 +691,10 @@ ingestion.int.spoke.nodes:
 ingestion.int.spoke.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/edges
+
+ingestion.int.spoke.violations:
+  type: text.TextDataset
+  filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/violations.jsonl
 
 # -------------------------------------------------------------------------
 # Embiology

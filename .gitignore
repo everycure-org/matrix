@@ -16,6 +16,7 @@
 
 # Data
 data/
+!docs/**/data/
 neo4j_db/
 data.tar.gz
 

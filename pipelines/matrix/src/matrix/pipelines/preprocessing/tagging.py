@@ -8,7 +8,7 @@ from langchain.chat_models.base import BaseChatModel
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import HumanMessage
 from langchain_core.output_parsers.transform import BaseTransformOutputParser
-from matrix.inject import inject_object
+from matrix_inject.inject import inject_object
 
 logger = logging.getLogger(__name__)
 

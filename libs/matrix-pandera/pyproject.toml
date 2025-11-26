@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "matrix-pandera"
+version = "0.1.0" 
+description = "Cross datatype validation for Matrix platform"
+requires-python = ">=3.11"
+dependencies = [
+    "pandera==0.24.0",
+    "pyspark>=3.5.0",
+    "pandas",
+    "pyarrow",
+    "grpcio",
+    "google-api-core"
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-mock",
+    "ruff",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = "src"

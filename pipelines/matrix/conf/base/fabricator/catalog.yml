@@ -24,6 +24,10 @@ fabricator.int.robokop.violations:
   type: text.TextDataset
   filepath: ${globals:paths.raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/violations.jsonl
 
+fabricator.int.primekg.violations:
+  type: text.TextDataset
+  filepath: ${globals:paths.raw}/KGs/prime-kg/${globals:data_sources.primekg.version}/violations.jsonl
+
 fabricator.int.spoke.violations:
   type: text.TextDataset
   filepath: ${globals:paths.raw}/KGs/spoke/${globals:data_sources.spoke.version}/violations.jsonl
@@ -37,3 +41,22 @@ fabricator.int.drug_list:
     header: true
     index: false
     sep: "\t"
+
+
+# Catalog entries for run comparison matrices
+
+fabricator.raw.run_comparison_matrices.matrix_fold_1_good_model:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw}/run_comparison_matrices/matrix_fold_1_good_model.csv
+
+fabricator.raw.run_comparison_matrices.matrix_fold_2_good_model:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw}/run_comparison_matrices/matrix_fold_2_good_model.csv
+
+fabricator.raw.run_comparison_matrices.matrix_fold_1_bad_model:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw}/run_comparison_matrices/matrix_fold_1_bad_model.csv
+
+fabricator.raw.run_comparison_matrices.matrix_fold_2_bad_model:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw}/run_comparison_matrices/matrix_fold_2_bad_model.csv

@@ -6,9 +6,34 @@ spark.driver.memory: ${oc.env:SPARK_DRIVER_MEMORY}g
 spark.driver.maxResultSize: 18g
 # only using this due to failures in the past. Default is 3
 spark.task.maxFailures: 5
+# Configure Spark to use mounted volume for temporary storage
+spark.local.dir: ./data/spark-temp
+# Additional configurations to ensure all Spark temp operations use the mounted volume
+spark.sql.warehouse.dir: /data/spark-warehouse
+spark.sql.streaming.checkpointLocation: /data/checkpoints
+spark.sql.streaming.stateStore.providerClass: org.apache.spark.sql.execution.streaming.state.HDFSBackedStateStoreProvider
+spark.sql.streaming.stateStore.maintenanceInterval: 600s
+# Force Spark to use the scratch volume for shuffle operations
+spark.sql.adaptive.shuffle.localShuffleReader.enabled: false
+spark.shuffle.service.enabled: false
+# Ensure broadcast temp files use the mounted volume
+spark.broadcast.compress: true
+spark.io.compression.codec: lz4
+# Additional temp directory configurations
+spark.executor.logs.rolling.strategy: time
+spark.executor.logs.rolling.time.interval: daily
+spark.executor.logs.rolling.maxRetainedFiles: 1
+# Critical: Force all serialization and spill operations to use our temp directory
+spark.serializer.objectStreamReset: 100
+spark.sql.execution.arrow.maxRecordsPerBatch: 5000
+# Memory management to reduce spill to disk
+spark.sql.adaptive.coalescePartitions.enabled: true
+spark.sql.adaptive.coalescePartitions.minPartitionSize: 16MB
 
 # FUTURE: Use Maven based dependency when fixed
 # https://github.com/GoogleCloudDataproc/hadoop-connectors/issues/1233#issuecomment-2262873434
 spark.jars: gcs-connector-hadoop3-2.2.2-shaded.jar
 spark.jars.packages: com.google.cloud.spark:spark-3.5-bigquery:0.39.0,org.neo4j:neo4j-connector-apache-spark_2.12:5.3.0_for_spark_3,org.xerial:sqlite-jdbc:3.47.0.0
 spark.hadoop.fs.gs.impl: com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem
+# Increase Py4J gateway startup timeout to prevent connection issues
+spark.driver.extraJavaOptions: -Dpy4j.gateway.startup.timeout=30000

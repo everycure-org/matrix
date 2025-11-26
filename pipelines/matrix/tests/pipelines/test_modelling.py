@@ -16,7 +16,6 @@ import pytest
 # Local imports
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
-from matrix.inject import OBJECT_KW
 from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.model_selection import DiseaseAreaSplit
 from matrix.pipelines.modelling.nodes import (
@@ -28,6 +27,7 @@ from matrix.pipelines.modelling.nodes import (
     tune_parameters,
 )
 from matrix.pipelines.modelling.tuning import NopTuner
+from matrix_inject.inject import OBJECT_KW
 
 # Machine learning imports
 from sklearn.base import BaseEstimator
@@ -534,7 +534,7 @@ def test_tune_parameters_regex_features_other_convention(
 def test_tune_parameters_train_test_split(tune_data: pd.DataFrame, grid_search_tuner: GridSearchCV) -> None:
     """Test proper handling of train/test splits."""
     mock_tuner = Mock()
-    mock_tuner._estimator = LogisticRegression()
+    mock_tuner.estimator = LogisticRegression()
     mock_tuner.best_params_ = {"C": 1.0, "max_iter": 100}
 
     result, _ = tune_parameters(

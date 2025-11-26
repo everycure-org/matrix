@@ -10,7 +10,9 @@ static/data
 .env
 .evidence
 .npmrc
-
+sources/bq/release_trends.sql
+sources/bq/key_nodes_release_trends.sql
+sources/bq/key_nodes_release_aggregate.sql
 
 sources/bq/connection.options.yaml
 *.duckdb

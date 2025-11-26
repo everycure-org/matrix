@@ -58,5 +58,6 @@ pipelines/matrix/conf/local/
 !pipelines/matrix/conf/local/.gitkeep
 
 pipelines/matrix/.env.defaults
+pipelines/matrix/.env
 
 worktrees/
