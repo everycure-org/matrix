@@ -147,18 +147,20 @@ def compute_connected_components_grape(nodes: ps.DataFrame, edges: ps.DataFrame)
     component_sizes = Counter(component_per_node)
 
     # Convert results back to Spark DataFrames for pipeline compatibility
+    # Use RDD with explicit partitioning to avoid large task closures
     spark = nodes.sparkSession
     node_assignment_data = [
         {"id": node_id, "component_id": int(comp_id)} for node_id, comp_id in zip(nodes_list, component_per_node)
     ]
-    node_assignments = spark.createDataFrame(node_assignment_data)
+    node_assignments = spark.createDataFrame(spark.sparkContext.parallelize(node_assignment_data, numSlices=500))
 
-    # Component statistics
     component_data = [
         {"component_id": int(comp_id), "component_size": int(size), "num_components": int(num_components)}
         for comp_id, size in component_sizes.items()
     ]
-    component_stats = spark.createDataFrame(component_data).orderBy(F.desc("component_size"))
+    component_stats = spark.createDataFrame(spark.sparkContext.parallelize(component_data, numSlices=200)).orderBy(
+        F.desc("component_size")
+    )
 
     logger.info(
         f"Found {num_components:,} connected components using grape. "
@@ -217,19 +219,23 @@ def compute_connected_components_rustworkx(nodes: ps.DataFrame, edges: ps.DataFr
     num_components = len(components)
 
     # Convert results back to Spark DataFrames for pipeline compatibility
+    # Use RDD with explicit partitioning to avoid large task closures
     spark = nodes.sparkSession
     node_assignment_data = [
         {"id": index_to_id[node_idx], "component_id": component_id}
         for component_id, node_indices_set in enumerate(components)
         for node_idx in node_indices_set
     ]
-    node_assignments = spark.createDataFrame(node_assignment_data)
+    node_assignments = spark.createDataFrame(spark.sparkContext.parallelize(node_assignment_data, numSlices=500))
 
     component_stats = spark.createDataFrame(
-        [
-            {"component_id": i, "component_size": len(c), "num_components": num_components}
-            for i, c in enumerate(components)
-        ]
+        spark.sparkContext.parallelize(
+            [
+                {"component_id": i, "component_size": len(c), "num_components": num_components}
+                for i, c in enumerate(components)
+            ],
+            numSlices=200,
+        )
     ).orderBy(F.desc("component_size"))
 
     logger.info(
@@ -301,7 +307,7 @@ def _run_benchmark(nodes: ps.DataFrame, edges: ps.DataFrame) -> Dict[str, ps.Dat
     """
 
     benchmark_results = []
-    algorithm_outputs = {}
+    graphframes_output = None
 
     algorithms = [
         ("graphframes", compute_connected_components_graphframes),
@@ -313,26 +319,24 @@ def _run_benchmark(nodes: ps.DataFrame, edges: ps.DataFrame) -> Dict[str, ps.Dat
         logger.info(f"Running {algo_name.upper()}...")
         start_time = time.time()
         results = algo_func(nodes, edges)
-        end_time = time.time()
+        execution_time = time.time() - start_time
 
-        execution_time = end_time - start_time
-
-        # Get stats from the component_stats DataFrame
         first_row = results["component_stats"].first()
-        num_components = first_row["num_components"]
-        largest_component = first_row["component_size"]
-
         benchmark_results.append(
             {
                 "algorithm": algo_name,
                 "execution_time_seconds": round(execution_time, 2),
-                "num_components": num_components,
-                "largest_component_size": largest_component,
+                "num_components": first_row["num_components"],
+                "largest_component_size": first_row["component_size"],
             }
         )
 
-        algorithm_outputs[algo_name] = results
+        # Only keep graphframes results for return value, discard others to save memory
+        if algo_name == "graphframes":
+            graphframes_output = results
+
         logger.info(f"{algo_name.upper()} completed in {execution_time:.2f} seconds")
+        del results  # Explicitly delete to help garbage collection
         gc.collect()
 
     logger.info("Benchmark Results (sorted by execution time):")
@@ -343,7 +347,7 @@ def _run_benchmark(nodes: ps.DataFrame, edges: ps.DataFrame) -> Dict[str, ps.Dat
             f"| Largest: {result['largest_component_size']:,}"
         )
 
-    return algorithm_outputs["graphframes"]
+    return graphframes_output
 
 
 def compute_core_connectivity_metrics(
