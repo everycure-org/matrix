@@ -26,6 +26,7 @@ class HFIterableDatasetConfig(BaseModel):
         kwargs: dict[str, Any] = {
             "repo_id": self.repo_id,
             "token": token,
+            "create_pr": True,
             "split": self.split,
         }
         if self.config_name:
