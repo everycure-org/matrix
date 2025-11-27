@@ -6,7 +6,7 @@ filtering:
       keep_list:
         - rtxkg2
         - ec_medical
-        - robokop
+
   filter_primary_knowledge_source_exclude:
     filter_sources:
       _object: matrix.pipelines.filtering.filters.KeepRowsContaining
@@ -63,7 +63,6 @@ filtering:
       keep_list:
         - rtxkg2
         - ec_medical
-        - robokop
 
     # filter_triples:
     #   _object: matrix.pipelines.filtering.filters.TriplePattern
