@@ -1,19 +1,20 @@
-docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
-
-TAG ?= ${USER}
-GIT_SHA ?= $(shell git rev-parse --short HEAD)
-export TQDM_DISABLE ?= 1
-TARGET_PLATFORM ?= linux/amd64
-
 # Environment configuration (dev or prod)
 ENV ?= dev
 
 # GCP project mapping based on environment
 ifeq ($(ENV),prod)
-  GCP_PROJECT ?= mtrx-hub-prod-3of
+  GCP_PROJECT ?= mtrx-hub-prod-sms
 else
   GCP_PROJECT ?= mtrx-hub-dev-3of
 endif
+
+# Docker image path (must be after GCP_PROJECT is set)
+docker_image = us-central1-docker.pkg.dev/$(GCP_PROJECT)/matrix-images/matrix
+
+TAG ?= ${USER}
+GIT_SHA ?= $(shell git rev-parse --short HEAD)
+export TQDM_DISABLE ?= 1
+TARGET_PLATFORM ?= linux/amd64
 
 # Add GCP project variables
 SA_KEY_SECRET_NAME ?= storage-viewer-sa-key
