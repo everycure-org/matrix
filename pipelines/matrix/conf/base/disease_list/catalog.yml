@@ -34,6 +34,16 @@ disease_list.raw.mondo_sssom:
     sep: "\t"
     comment: "#"
 
+# TODO There is a disconnected subpipeline generating this file:
+# https://github.com/everycure-org/matrix-disease-list/blob/main/llm-disease-categorization
+# Consider integrating that into this pipeline or deprecating it
+disease_list.raw.disease_list_llm_tags:
+  type: pandas.CSVDataset
+  <<: *_layer_raw
+  filepath: https://raw.githubusercontent.com/everycure-org/matrix-disease-list/refs/heads/main/llm-disease-categorization/data/03_primary/disease_categories.tsv
+  load_args:
+    sep: "\t"
+
 disease_list.raw.mondo_obsoletion_candidates:
   type: pandas.CSVDataset
   <<: *_layer_raw

@@ -638,6 +638,35 @@ def _extract_and_pivot_groupings(
     result = pd.concat([df[["category_class"]], groupings_extracted], axis=1)
     return result.sort_values("category_class")
 
+def _clean_multi_value(value, repair_invalid=True):
+    if not isinstance(value, str) or not value.strip():
+        return ""
+
+    parts = [p.strip() for p in value.split("|")]
+
+    word_re = re.compile(r'^\w+$')
+    valid = [p.lower() for p in parts if word_re.match(p)]
+    invalid = [p for p in parts if not word_re.match(p)]
+
+    # repair invalid tokens ("foo bar" -> "foo_bar")
+    if repair_invalid:
+        repaired = [re.sub(r"\W", "_", p.lower()) for p in invalid]
+        valid += repaired
+
+    return "|".join(valid)
+
+def _clean_boolean(value):
+    # If actual boolean True/False, return as-is
+    if isinstance(value, bool):
+        return value
+
+    # If value is not a string or is empty/whitespace → treat as False
+    if not isinstance(value, str) or not value.strip():
+        return False
+
+    # Otherwise, check string contents
+    return value.strip().lower() == "true"
+
 
 def _merge_disease_data_sources(
     base_df: pd.DataFrame,
@@ -645,6 +674,7 @@ def _merge_disease_data_sources(
     metrics_df: pd.DataFrame,
     subtype_counts_df: pd.DataFrame,
     full_subtype_counts: pd.DataFrame,
+    disease_list_llm_tags: pd.DataFrame,
 ) -> pd.DataFrame:
     """Merge all disease data sources into single DataFrame.
 
@@ -682,6 +712,28 @@ def _merge_disease_data_sources(
         right_on="subset_id",
         how="left",
     )
+    
+    # Preprocess and merge LLM generated tags
+    # TODO this preprocessing might be better placed in the LLM tagging step and should be removed from here
+    disease_list_llm_tags.columns = [col.lower() for col in disease_list_llm_tags.columns]
+    llm_tag_str_columns = ["txgnn", "medical_specialization", "anatomical", "tag_qaly_lost"]
+    llm_tag_bool_columns = ["is_pathogen_caused", "is_cancer", "is_glucose_dysfunction", "tag_existing_treatment"]
+    llm_tag_columns = ["category_class"] + llm_tag_str_columns + llm_tag_bool_columns
+    
+    disease_list_llm_tags_sub = disease_list_llm_tags[llm_tag_columns]
+    merged = merged.merge(
+        disease_list_llm_tags_sub,
+        left_on="category_class",
+        right_on="category_class",
+        how="left",
+    )
+    
+    for col in llm_tag_str_columns:
+        merged[col] = merged[col].apply(_clean_multi_value)
+    
+    for col in llm_tag_bool_columns:
+        merged[col] = merged[col].apply(_clean_boolean)
+    # FINISH: Preprocess and merge LLM generated tags
 
     return merged.drop(columns=["subset_id"], errors="ignore")
 
@@ -744,6 +796,22 @@ def _merge_disease_data_sources(
 @pa.check_input(
     pa.DataFrameSchema(
         {
+            "category_class": pa.Column(dtype=str, nullable=True),
+            "txgnn": pa.Column(dtype=str, nullable=True),  
+            "medical_specialization": pa.Column(dtype=str, nullable=True),  
+            "anatomical": pa.Column(dtype=str, nullable=True),  
+            "is_pathogen_caused": pa.Column(dtype=bool, nullable=True),  
+            "is_cancer": pa.Column(dtype=bool, nullable=True),  
+            "is_glucose_dysfunction": pa.Column(dtype=bool, nullable=True),  
+            "tag_existing_treatment": pa.Column(dtype=str, nullable=True),  
+            "tag_QALY_lost": pa.Column(dtype=str, nullable=True),
+        },
+        strict=True,
+    ), obj_getter="disease_list_llm_tags"
+)
+@pa.check_input(
+    pa.DataFrameSchema(
+        {
             "subset_id": pa.Column(dtype=str, nullable=False),
             "subset_label": pa.Column(dtype=str, nullable=False),
             "subset_group_id": pa.Column(dtype=str, nullable=False),
@@ -798,14 +866,14 @@ def _merge_disease_data_sources(
             "harrisons_view": pa.Column(dtype=str, nullable=False),
             "mondo_txgnn": pa.Column(dtype=str, nullable=False),
             "mondo_top_grouping": pa.Column(dtype=str, nullable=False),
-            "medical_specialization": pa.Column(dtype=str, nullable=False),
-            "txgnn": pa.Column(dtype=str, nullable=False),
-            "anatomical": pa.Column(dtype=str, nullable=False),
-            "is_pathogen_caused": pa.Column(dtype=str, nullable=False),
-            "is_cancer": pa.Column(dtype=str, nullable=False),
-            "is_glucose_dysfunction": pa.Column(dtype=str, nullable=False),
-            "tag_existing_treatment": pa.Column(dtype=str, nullable=False),
-            "tag_qaly_lost": pa.Column(dtype=str, nullable=False),
+            "medical_specialization": pa.Column(dtype=str, nullable=True),
+            "txgnn": pa.Column(dtype=str, nullable=True),
+            "anatomical": pa.Column(dtype=str, nullable=True),
+            "is_pathogen_caused": pa.Column(dtype=bool, nullable=True),
+            "is_cancer": pa.Column(dtype=bool, nullable=True),
+            "is_glucose_dysfunction": pa.Column(dtype=bool, nullable=True),
+            "tag_existing_treatment": pa.Column(dtype=bool, nullable=True),
+            "tag_qaly_lost": pa.Column(dtype=str, nullable=True),
             "count_descendants": pa.Column(dtype=int, nullable=False),
             "count_subtypes": pa.Column(dtype=int, nullable=False),
             "subset_group_id": pa.Column(dtype=str, nullable=True),
@@ -826,6 +894,7 @@ def create_disease_list(
     disease_list_raw: pd.DataFrame,
     mondo_metrics: pd.DataFrame,
     subtype_counts: pd.DataFrame,
+    disease_list_llm_tags: pd.DataFrame,
     parameters: Dict[str, Any],
 ) -> Dict[str, pd.DataFrame]:
     """Apply filters and transformations to create final disease list.
@@ -850,7 +919,6 @@ def create_disease_list(
     logger.info("Create final disease list")
 
     curated_groupings = parameters["curated_groupings"]
-    llm_groupings = parameters["llm_groupings"]
     subset_prefix = "mondo:"
     subset_delimiter = ";"
     grouping_delimiter = "|"
@@ -863,7 +931,7 @@ def create_disease_list(
     # See: https://github.com/everycure-org/matrix-disease-list/issues/75
     filtered_df = filtered_df.rename(columns=lambda x: re.sub(r"^f_", "is_", x) if x.startswith("f_") else x)
 
-    all_groupings = curated_groupings + llm_groupings
+    all_groupings = curated_groupings
     groupings_df = _extract_and_pivot_groupings(
         filtered_df[["category_class", "label", "subsets"]],
         all_groupings,
@@ -873,7 +941,7 @@ def create_disease_list(
     )
 
     merged_df = _merge_disease_data_sources(
-        filtered_df, groupings_df, mondo_metrics, subtype_group_counts, subtype_counts
+        filtered_df, groupings_df, mondo_metrics, subtype_group_counts, subtype_counts, disease_list_llm_tags
     )
 
     merged_df["count_subtypes"] = (

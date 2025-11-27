@@ -28,15 +28,6 @@ disease_list_params:
     - "harrisons_view"
     - "mondo_txgnn"
     - "mondo_top_grouping"
-  llm_groupings:
-    - "medical_specialization"
-    - "txgnn"
-    - "anatomical"
-    - "is_pathogen_caused"
-    - "is_cancer"
-    - "is_glucose_dysfunction"
-    - "tag_existing_treatment"
-    - "tag_qaly_lost"
 
   # Column name constants
   grouping_heuristic_column: "is_grouping_heuristic"
