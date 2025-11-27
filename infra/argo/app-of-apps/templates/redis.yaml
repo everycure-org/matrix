@@ -14,6 +14,22 @@ spec:
     chart: redis
     repoURL: https://ot-container-kit.github.io/helm-charts
     targetRevision: 0.16.5
+    helm:
+      values: |
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              resources:
+                requests:
+                  storage: 10Gi
+        externalConfig:
+          enabled: true
+          data: |
+            # Enable AOF for better durability
+            appendonly yes
+            appendfsync everysec
+            # Allow Redis to handle background save errors gracefully
+            stop-writes-on-bgsave-error no
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
