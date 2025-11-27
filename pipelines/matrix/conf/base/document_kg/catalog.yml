@@ -108,3 +108,8 @@ document_kg.prm.pks_md:
   type: text.TextDataset
   <<: *_layer_prm
   filepath: ${globals:paths.release}/primary-knowledge-sources.md
+
+document_kg.prm.all_pks_metadata_table:
+  type: pandas.ParquetDataset
+  <<: *_layer_prm
+  filepath: ${globals:paths.release}/prm/all_pks_metadata_table.parquet
