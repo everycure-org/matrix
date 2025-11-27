@@ -91,6 +91,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.fuse-group.topological_embeddings",
                     "argowf.template-neo4j",
                 ],
+                argo_config=ArgoResourceConfig(
+                    ephemeral_storage_request=1024,
+                    ephemeral_storage_limit=1024,
+                ),
             ),
             ArgoNode(
                 func=nodes.write_topological_embeddings,
