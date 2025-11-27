@@ -389,7 +389,7 @@ def extract_disease_data_from_mondo(
     logger.info(f"Extracted MONDO metadata: {mondo_metadata}")
 
     mondo_obsoletes = query_mondo_obsoletes(mondo_graph)
-    mondo_obsoletes["deprecated"] = mondo_obsoletes["deprecated"].astype(bool)
+    mondo_obsoletes["deprecated"] = mondo_obsoletes["deprecated"].str.lower() == "true"
     logger.info(f"Extracted {len(mondo_obsoletes)} obsolete MONDO terms")
 
     logger.info("Step 1: Identifying disease subtypes")
