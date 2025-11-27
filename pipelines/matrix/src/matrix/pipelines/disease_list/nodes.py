@@ -407,8 +407,8 @@ def extract_disease_data_from_mondo(
     logger.info("Extracting disease metrics")
     mondo_metrics = query_matrix_disease_list_metrics(mondo_graph)
     mondo_metrics["count_descendants"] = (
-        pd.to_numeric(mondo_metrics["count_descendants"], errors="raise")
-        .astype("int64")
+        pd.to_numeric(mondo_metrics["count_descendants"], errors="raise").fillna(0)
+        .astype(int)
     )
     logger.info(f"Extracted metrics for {len(mondo_metrics)} diseases")
 
