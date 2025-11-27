@@ -301,8 +301,11 @@ def retry(run_name: str, watch: bool, workflow_file: Optional[str]):
     # convert params into '-p key=val pairs'
     parameters_str = " ".join([f"-p {arg['name']}={arg['value']}" for arg in parameters])
 
+    # Determine environment from image path
+    env = "prod" if "mtrx-hub-prod" in image_without_tag else "dev"
+
     console.print("2. Re-building the docker image")
-    build_push_docker(image_without_tag, new_image_tag, verbose=False)
+    build_push_docker(new_image_tag, env, verbose=False)
     # call argo retry
     console.print("3. Calling Argo Retry")
     watch_flag = "--watch" if watch else ""
@@ -397,9 +400,12 @@ def _submit(
         if dry_run:
             return
 
+        # Determine environment from GCP project
+        env = "prod" if "prod" in runtime_gcp_project_id else "dev"
+
         console.print("Building Docker image...")
-        build_push_docker(image, run_name, verbose=verbose)
-        console.print("[green]✓[/green] Docker image built and pushed to dev repository")
+        build_push_docker(run_name, env, verbose=verbose)
+        console.print(f"[green]✓[/green] Docker image built and pushed to {env} repository")
 
         console.print("Ensuring Kubernetes namespace...")
         if not namespace_exists(namespace):
@@ -479,9 +485,15 @@ def summarize_submission(
             raise click.Abort()
 
 
-def build_push_docker(image: str, username: str, verbose: bool):
-    """Build the docker image only once, push it to dev registry, and if running in prod, also to prod registry."""
-    run_subprocess(f"make docker_cloud_build TAG={username} docker_image={image}", stream_output=verbose)
+def build_push_docker(tag: str, env: str, verbose: bool):
+    """Build the docker image and push it to the appropriate registry.
+
+    Args:
+        tag: The tag to apply to the image
+        env: The environment to build for ('dev' or 'prod')
+        verbose: Whether to stream output
+    """
+    run_subprocess(f"make docker_cloud_build ENV={env} TAG={tag}", stream_output=verbose)
 
 
 def build_argo_template(
