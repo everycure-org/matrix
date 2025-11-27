@@ -5,8 +5,17 @@ GIT_SHA ?= $(shell git rev-parse --short HEAD)
 export TQDM_DISABLE ?= 1
 TARGET_PLATFORM ?= linux/amd64
 
+# Environment configuration (dev or prod)
+ENV ?= dev
+
+# GCP project mapping based on environment
+ifeq ($(ENV),prod)
+  GCP_PROJECT ?= mtrx-hub-prod-3of
+else
+  GCP_PROJECT ?= mtrx-hub-dev-3of
+endif
+
 # Add GCP project variables
-GCP_PROJECT ?= mtrx-hub-dev-3of
 SA_KEY_SECRET_NAME ?= storage-viewer-sa-key
 SA_KEY_PATH ?= conf/local/service-account.json
 OAUTH_CLIENT_SECRET_SECRET_NAME ?= oauth_client_secret
@@ -83,7 +92,7 @@ docker_cloud_build:
 		--region=us-central1 \
 		--project=$(GCP_PROJECT) \
 		--config=cloudbuild.yaml \
-		--substitutions=_IMAGE=$(docker_image),_TAG=$(TAG),_GIT_SHA=$(GIT_SHA),_TARGET_PLATFORM=$(TARGET_PLATFORM) \
+		--substitutions=_IMAGE=$(docker_image),_TAG=$(ENV),_GIT_SHA=$(GIT_SHA),_TARGET_PLATFORM=$(TARGET_PLATFORM),_GCP_PROJECT=$(GCP_PROJECT) \
 		../..
 
 docker_build:
