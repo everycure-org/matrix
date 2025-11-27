@@ -21,6 +21,7 @@ class OffLabelTransformer(Transformer):
     def _extract_edges(edges_df: ps.DataFrame) -> ps.DataFrame:
         return (
             edges_df.withColumnRenamed("curie_drug", "subject")
+            .withColumnRenamed("ec_drug_id", "subject_ec_id")
             .withColumnRenamed("curie_disease", "object")
             .withColumn("y", f.lit(1))  # all pairs are positive
             .withColumn("predicate", f.lit("off_label"))

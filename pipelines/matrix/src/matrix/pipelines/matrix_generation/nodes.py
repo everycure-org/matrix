@@ -32,8 +32,9 @@ def enrich_embeddings(
         diseases: List of diseases
     """
     return (
-        drugs.withColumn("is_drug", F.lit(True))
-        .unionByName(diseases.withColumn("is_disease", F.lit(True)), allowMissingColumns=True)
+        drugs.select("id")
+        .withColumn("is_drug", F.lit(True))
+        .unionByName(diseases.select("id").withColumn("is_disease", F.lit(True)), allowMissingColumns=True)
         .join(nodes, on="id", how="inner")
         .select("is_drug", "is_disease", "id", "topological_embedding")
         .withColumn("is_drug", F.coalesce(F.col("is_drug"), F.lit(False)))
@@ -145,33 +146,41 @@ def generate_pairs(
     """
     # Collect list of drugs and diseases
     diseases_lst = diseases["id"].tolist()
-    # This try/except is to make modelling_run pipeline compatible with old drug list (pre-migration)
-    try:
+    if "ec_id" in drugs.columns:
         drugs_df = drugs[["id", "ec_id"]]
-        column_remapping = {"ec_id": "ec_drug_id", "id": "source"}
-    except KeyError:
+        if "subject_ec_id" in known_pairs.columns:
+            drugs_column_remapping = {"ec_id": "source", "id": "source_curie"}
+            known_pairs_column_remapping = {"subject_ec_id": "source", "source": "source_curie"}
+        else:
+            logger.warning("subject_ec_id column not found in known pairs dataframe; using source column instead")
+            drugs_column_remapping = {"ec_id": "ec_drug_id", "id": "source"}
+            known_pairs_column_remapping = {}
+    else:
         logger.warning("ec_id column not found in drugs dataframe; using id column instead")
-        column_remapping = {"id": "source"}
+        drugs_column_remapping = {"id": "source"}
+        known_pairs_column_remapping = {}
         drugs_df = drugs[["id"]]
 
     # Remove duplicates
     drugs_df = drugs_df.drop_duplicates()
     diseases_lst = list(set(diseases_lst))
+
     # Remove drugs and diseases without embeddings
     nodes_with_embeddings = set(graph._nodes["id"])
     drugs_df = drugs_df[drugs_df["id"].isin(nodes_with_embeddings)]
     diseases_lst = [disease for disease in diseases_lst if disease in nodes_with_embeddings]
 
-    # Generate all combinations
+    # Generate all drug disease combinations
     matrix_slices = []
     for disease in tqdm(diseases_lst):
-        matrix_slice = pd.DataFrame(drugs_df.rename(column_remapping, axis=1).assign(target=disease))
+        matrix_slice = pd.DataFrame(drugs_df.rename(drugs_column_remapping, axis=1).assign(target=disease))
         matrix_slices.append(matrix_slice)
 
     # Concatenate all slices at once
     matrix = pd.concat(matrix_slices, ignore_index=True)
 
     # Remove training set
+    known_pairs = known_pairs.rename(known_pairs_column_remapping, axis=1)
     train_pairs = known_pairs[~known_pairs["split"].eq("TEST")]
     train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
     is_in_train = matrix.apply(lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1)
@@ -227,15 +236,20 @@ def make_predictions_and_sort(
             how="left",
         )
         .join(
-            embeddings.withColumnsRenamed({"id": "source", "topological_embedding": "source_embedding"}),
-            on="source",
+            embeddings.withColumnsRenamed({"id": "source_curie", "topological_embedding": "source_embedding"}),
+            on="source_curie",
             how="left",
         )
         .filter(F.col("source_embedding").isNotNull() & F.col("target_embedding").isNotNull())
     )
 
     def model_predict(partition_df: pd.DataFrame) -> pd.DataFrame:
-        model_predictions = model.predict_proba(partition_df)
+        other_source_columns = [
+            col
+            for col in partition_df.columns
+            if col.startswith("source_") and col not in ["source_embedding", "target_embedding"]
+        ]
+        model_predictions = model.predict_proba(partition_df.drop(columns=other_source_columns))
 
         # Assign averaged predictions to columns
         partition_df[not_treat_score_col_name] = model_predictions[:, 0]

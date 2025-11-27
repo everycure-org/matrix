@@ -28,7 +28,7 @@ versions:
 
 data_sources:
   rtx_kg2:
-    version: &_rtx_kg_version v2.10.0_validated
+    version: v2.10.0_validated
   robokop:
     version: 30fd1bfc18cd5ccb
   primekg:
@@ -46,25 +46,25 @@ data_sources:
   # Cleaned clinical trial data from the
   # EveryCure medical team.
   ec_clinical_trials:
-    version: 20230309 # NOTE: Here 0309 is a period of time (here Mar to Sep 2023)
+    version: 20230309-ec-id # NOTE: Here 0309 is a period of time (here Mar to Sep 2023)
   drug_list:
     # check releases here: gs://data.dev.everycure.org/data/01_RAW/drug_list
-    version: v1.0.0
+    version: v1.0.2
   disease_list:
     # check releases here: gs://data.dev.everycure.org/data/01_RAW/disease_list
-    version: v1.0.1
+    version: v1.0.3
   kgml_xdtd_gt:
-    version: *_rtx_kg_version
+    version: v2.10.0_validated-ec-id
   ec_gt:
-    # check releases here: https://github.com/everycure-org/matrix-indication-list/releases
-    version: "Release v1.3.3"
+    # check releases here: https://github.com/everycure-org/matrix-indication-list/releases or https://console.cloud.google.com/storage/browser/data.dev.everycure.org/data/01_RAW/medic
+    version: v1.3.3-ec-id
   drugbank_gt:
-    version: 1332218
+    version: 1332218-ec-id
   drugmech:
     # check releases here: https://github.com/SuLab/DrugMechDB/releases/ 
     version: 2.0.1
   off_label:
-    version: v0.1
+    version: v0.1-ec-id
   orchard:
     version: 20250801
 # NOTE: MLflow does not like "new options" in the mlflow.yml

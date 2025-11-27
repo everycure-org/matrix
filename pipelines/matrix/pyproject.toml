@@ -66,7 +66,7 @@ dependencies = [
     "openpyxl",
     "pandera==0.24.0",
     "pandas>=2.1.1", #due to pandera requiring this or higher
-    "polars-lts-cpu==1.30.0",
+    "polars-lts-cpu>=1.30.0",
     "proto-plus==1.24.0.dev1", # Temp. fix for the gcloud cli
     "pyarrow>=14.0.2",
     "gspread>=6.2.1",
@@ -86,6 +86,7 @@ dependencies = [
     "xgboost-cpu",
     "tqdm>=4.67.1",
     "bracex>=2.6",
+    "xgboost>=3.1.2",
 ]
 
 

@@ -76,7 +76,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                     "is_private": True,
                 },
                 # {"name": "drugmech", "integrate_in_kg": False, "has_nodes": False},
-                {"name": "ec_clinical_trails", "integrate_in_kg": False},
+                {"name": "ec_clinical_trials", "integrate_in_kg": False, "has_nodes": False},
                 {"name": "off_label", "integrate_in_kg": False, "has_nodes": False},
                 # TODO: enable orchard once permissions are clarified
                 {"name": "orchard", "integrate_in_kg": False, "has_nodes": False, "is_private": True},
