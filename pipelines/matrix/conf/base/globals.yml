@@ -99,3 +99,6 @@ paths:
 
   # Embedding cache dataset
   cache:              data/cache
+
+  # Temporarily add Chunyu dev workspace
+  tmp_chunyu:         ${dev_gcs_bucket}/dev_work/chunyu
