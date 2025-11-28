@@ -486,7 +486,7 @@ def summarize_submission(
 
 
 def build_push_docker(tag: str, env: str, verbose: bool):
-    """Build the docker image and push it to the appropriate registry.
+    """Build the docker image in the cloud and push it to the appropriate registry.
 
     Args:
         tag: The tag to apply to the image
