@@ -93,7 +93,7 @@ docker_cloud_build:
 		--region=us-central1 \
 		--project=$(GCP_PROJECT) \
 		--config=cloudbuild.yaml \
-		--substitutions=_IMAGE=$(docker_image),_TAG=$(ENV),_GIT_SHA=$(GIT_SHA),_TARGET_PLATFORM=$(TARGET_PLATFORM),_GCP_PROJECT=$(GCP_PROJECT) \
+		--substitutions=_IMAGE=$(docker_image),_TAG=$(TAG),_GIT_SHA=$(GIT_SHA),_TARGET_PLATFORM=$(TARGET_PLATFORM),_GCP_PROJECT=$(GCP_PROJECT) \
 		../..
 
 docker_build:
