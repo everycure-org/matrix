@@ -148,17 +148,19 @@ def generate_pairs(
     diseases_lst = diseases["id"].tolist()
     if "ec_id" in drugs.columns:
         drugs_df = drugs[["id", "ec_id"]]
+        drugs_column_remapping = {"ec_id": "source", "id": "source_curie"}
+        matrix_column_remapping = {"source": "ec_drug_id", "source_curie": "source"}
         if "subject_ec_id" in known_pairs.columns:
-            drugs_column_remapping = {"ec_id": "source", "id": "source_curie"}
             known_pairs_column_remapping = {"subject_ec_id": "source", "source": "source_curie"}
         else:
             logger.warning("subject_ec_id column not found in known pairs dataframe; using source column instead")
-            drugs_column_remapping = {"ec_id": "ec_drug_id", "id": "source"}
             known_pairs_column_remapping = {}
+            matrix_column_remapping = {}
     else:
         logger.warning("ec_id column not found in drugs dataframe; using id column instead")
         drugs_column_remapping = {"id": "source"}
         known_pairs_column_remapping = {}
+        matrix_column_remapping = {}
         drugs_df = drugs[["id"]]
 
     # Remove duplicates
@@ -187,6 +189,7 @@ def generate_pairs(
     matrix = matrix[~is_in_train]
     # Add flag columns for known positives and negatives
     matrix = _add_flag_columns(matrix, known_pairs, clinical_trials, off_label, orchard)
+    matrix = matrix.rename(matrix_column_remapping, axis=1)
     return matrix
 
 
