@@ -1,0 +1,38 @@
+timeout: "3600s"
+
+options:
+  machineType: "E2_HIGHCPU_8"
+
+serviceAccount: "projects/${_GCP_PROJECT}/serviceAccounts/custom-cloud-build-sa@${_GCP_PROJECT}.iam.gserviceaccount.com"
+logsBucket: "gs://${_GCP_PROJECT}_cloudbuild"
+
+substitutions:
+  _IMAGE: ""
+  _TAG: ""
+  _GIT_SHA: ""
+  _TARGET_PLATFORM: "linux/amd64"
+  _GCP_PROJECT: ""
+
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    env:
+      - DOCKER_BUILDKIT=1
+    args:
+      - build
+      - --build-arg
+      - GIT_SHA=$_GIT_SHA
+      - --platform
+      - $_TARGET_PLATFORM
+      - --cache-from 
+      - $_IMAGE:$_TAG
+      - -t
+      - $_IMAGE
+      - -t
+      - $_IMAGE:$_TAG
+      - -f
+      - pipelines/matrix/Dockerfile
+      - .
+
+images:
+  - '$_IMAGE'
+  - '$_IMAGE:$_TAG'
