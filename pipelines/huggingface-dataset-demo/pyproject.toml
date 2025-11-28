@@ -1,0 +1,47 @@
+[build-system]
+requires = [ "setuptools",]
+build-backend = "setuptools.build_meta"
+
+[project]
+requires-python = ">=3.9"
+name = "huggingface_dataset_demo"
+readme = "README.md"
+dynamic = [ "version",]
+dependencies = [
+    "kedro[jupyter]~=0.19.13",
+    "kedro-datasets[pandas-csvdataset, pandas-exceldataset, pandas-parquetdataset, spark-sparkdataset]>=3.0",
+    "kedro-viz>=6.7.0",
+    "pyarrow>=12",
+    "pytest>=7.0",
+    "pytest-mock>=3.0",
+    "pytest-cov>=4.0",
+    "setuptools; python_version >= '3.12'",
+    "matrix-gcp-datasets",
+    "polars>=1.33.1",
+]
+
+[project.scripts]
+huggingface-dataset-demo = "huggingface_dataset_demo.__main__:main"
+
+[tool.kedro]
+package_name = "huggingface_dataset_demo"
+project_name = "huggingface-dataset-demo"
+kedro_init_version = "0.19.13"
+tools = "['Data Structure', 'PySpark']"
+example_pipeline = "True"
+source_dir = "src"
+
+[project.entry-points."kedro.hooks"]
+
+[tool.setuptools.dynamic.version]
+attr = "huggingface_dataset_demo.__version__"
+
+[tool.setuptools.packages.find]
+where = [ "src",]
+namespaces = false
+
+[tool.uv.sources]
+matrix-gcp-datasets = { workspace = true }
+
+[tool.kedro_telemetry]
+project_id = "183d5104da0f4379966c84ba73a34de0"

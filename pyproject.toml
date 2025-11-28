@@ -19,6 +19,7 @@ dependencies = [
     "matrix-io-utils",    
     "matrix-inject",
     "matrix-pandera",
+    "huggingface-dataset-demo",
     "pre-commit>=4.2.0",
 ]
 
@@ -33,11 +34,13 @@ matrix-io-utils = { workspace = true }
 matrix-inject = { workspace = true }
 matrix-cli = { workspace = true }
 matrix-pandera = { workspace = true }
+huggingface-dataset-demo = { workspace = true }
 
 [tool.uv.workspace]
 members = [
     # pipelines, which may be run
     "pipelines/matrix",
+    "pipelines/huggingface-dataset-demo",
     # docs which are built statically and then deployed
     "docs",
     # shared libraries
