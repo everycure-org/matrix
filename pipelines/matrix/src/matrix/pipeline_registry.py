@@ -1,6 +1,7 @@
 from kedro.pipeline import Pipeline
 
 from matrix.pipelines.create_sample.pipeline import create_pipeline as create_create_sample_pipeline
+from matrix.pipelines.data_publication.pipeline import create_pipeline as create_data_publication_pipeline
 from matrix.pipelines.data_release.pipeline import create_pipeline as create_data_release_pipeline
 from matrix.pipelines.document_kg.pipeline import create_pipeline as create_document_kg_pipeline
 from matrix.pipelines.embeddings.pipeline import create_pipeline as create_embeddings_pipeline
@@ -38,6 +39,7 @@ def register_pipelines() -> dict[str, Pipeline]:
         "filtering": create_filtering_pipeline(),
         "embeddings": create_embeddings_pipeline(),
         "data_release": create_data_release_pipeline(),
+        "data_publication": create_data_publication_pipeline(),
         "modelling": create_modelling_pipeline(),
         "matrix_generation": create_matrix_pipeline(),
         "matrix_transformations": create_matrix_transformations_pipeline(),
