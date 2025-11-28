@@ -1,0 +1,51 @@
+integration.prm.unified_nodes_pandas:
+  type: pandas.ParquetDataset
+  filepath: ${globals:paths.integration}/prm/unified/nodes
+
+integration.prm.unified_edges_pandas:
+  type: pandas.ParquetDataset
+  filepath: ${globals:paths.integration}/prm/unified/edges
+
+# Hugging Face Hub datasets (write) - datasets to publish
+kg_edges_hf_published:
+  type: matrix_gcp_datasets.huggingface.HFIterableDataset
+  repo_id: matentzn/kg-edges-test
+  split: train
+  credentials: hf
+  dataframe_type: pandas
+  data_dir: data/edges
+
+kg_nodes_hf_published:
+  type: matrix_gcp_datasets.huggingface.HFIterableDataset
+  repo_id: matentzn/kg-nodes-test
+  split: train
+  credentials: hf
+  dataframe_type: pandas
+  data_dir: data/nodes
+
+# Hugging Face Hub datasets (read) - for verification
+kg_edges_hf_published_read:
+  type: matrix_gcp_datasets.huggingface.HFIterableDataset
+  repo_id: matentzn/kg-edges-test
+  split: train
+  credentials: hf
+  dataframe_type: pandas
+  data_dir: data/edges
+
+kg_nodes_hf_published_read:
+  type: matrix_gcp_datasets.huggingface.HFIterableDataset
+  repo_id: matentzn/kg-nodes-test
+  split: train
+  credentials: hf
+  dataframe_type: pandas
+  data_dir: data/nodes
+
+# Publication statistics output
+publication_stats_nodes:
+  type: json.JSONDataset
+  filepath: data/08_reporting/publication_stats_nodes.json
+
+publication_stats_edges:
+  type: json.JSONDataset
+  filepath: data/08_reporting/publication_stats_edges.json
+
